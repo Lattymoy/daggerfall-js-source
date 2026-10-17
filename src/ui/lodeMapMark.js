@@ -7,12 +7,12 @@
 //
 // The host hands the maps a FUNCTION (`lodes: () => marks[]`, beside BOUNTY1's `bounties` and RVN7c's `revenants`) and
 // neither map learns what a Motherlode is: a mark is the bounty's circle in map pixels - `{cx, cy, r, label}` - read by
-// the bounty's own reader (ui/bountyMapMark.js readBountyMarks) and painted by its own painter (ui/inkMap.js
+// the bounty's own reader (ui/bounty/bountyMapMark.js readBountyMarks) and painted by its own painter (ui/ink/inkMap.js
 // paintBountyRing; the classic page's bountyRingTexels).
 //
 // Not a DFU member. Ledger A (MINE-PERKS).
 import { MOTHERLODE_MARK_CSS } from './nodeMarks.js';
-import { BOUNTY_RING_R } from './bountyMapMark.js';
+import { BOUNTY_RING_R } from './bounty/bountyMapMark.js';
 import { t } from '../systems/textManager.js';   // L10N4: the words through the text core (tools/l10n/ROUTE-BRIEF.md)
 
 /** The held map's ink - a deep teal, the compass's aqua (LODE-MARK, MOTHERLODE_MARK_CSS) darkened to be read: the

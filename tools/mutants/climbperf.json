@@ -5,7 +5,7 @@
     "old": "      if (FIXED_POINT_STOP && low[0] === sx && low[1] === sy && low[2] === sz) break;\n",
     "new": "",
     "tests": [
-      "test/climbperf.test.js"
+      "test/player/climbperf.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (FIXED_POINT_STOP && low[0] === sx && low[1] === sy && low[2] === sz) break;",
     "new": "if (FIXED_POINT_STOP) break;",
     "tests": [
-      "test/climbperf.test.js"
+      "test/player/climbperf.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (FIXED_POINT_STOP && low[0] === sx && low[1] === sy && low[2] === sz) break;",
     "new": "if (FIXED_POINT_STOP && low[0] === sx && low[2] === sz) break;",
     "tests": [
-      "test/climbperf.test.js"
+      "test/player/climbperf.test.js"
     ]
   }
 ]

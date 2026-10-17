@@ -2,8 +2,8 @@
 
 `tools/bakeTownsfolk.mjs` (the bake) on `tools/bakeSteelPlate.mjs`'s machinery + `tools/skinWeights.mjs` (the joint law,
 and the hang over its joints) + `tools/fbxStrip.mjs` (the cut) + `tools/fbxMesh.mjs` (one material of an object) +
-`src/characters/ownClothingModels.js` (TOWNSFOLK_OUTFITS) + `src/characters/folkBodies.js` (folkLookOf) +
-`src/net/peerBodies.js` (the worn piece, the body key) + `src/formats/mwItemMap.js` (composeWornArmor,
+`src/characters/ownModels/ownClothingModels.js` (TOWNSFOLK_OUTFITS) + `src/characters/folkBodies.js` (folkLookOf) +
+`src/net/peer/peerBodies.js` (the worn piece, the body key) + `src/formats/morrowind/mwItemMap.js` (composeWornArmor,
 composeWornModest) + `src/combat/fpArm.js` (bareHeadRows, the card's rows) (MW-FOLK1, the owner, 2026-10-13)
 
 > "This is for the Townspeople outfits"
@@ -57,7 +57,7 @@ The outfits were made on a Morrowind body, and its leg is in seven of them (AUDI
 positions): 385's hose is that leg repainted, 388's and 389's the same mesh (270 of 270 positions), 386's and 390's
 breeches a part of it (138 of 138), and the boots of 384, 386, 387 and 390 share their lower legs with it (100 of
 192). Whether every piece's geometry is wholly the owner's own work is **the owner's to confirm**
-(`test/doctrine.test.js` says so on the export's row and on every outfit's).
+(`test/tooling/doctrine.test.js` says so on the export's row and on every outfit's).
 
 ## The pose they were made in
 
@@ -124,7 +124,7 @@ head bone's own frame where the bind put it, 11 up the bone over the crown.
   takes its slots (strictly greater), a garment after it at clothing's priority none (AUDIT MW-FOLK1 L3-F3, pinned). A
   second outfit, or an id the port does not carry, is a note. The paperdoll card names it `outfit <id>`, and the rebuild key reads it by its id.
 - **What it hides** is what every one of 80 rays out of a part's bone line meets, in the pose it was made in (16 round
-  at five places, reaching 5 to 16 - MW-FIT1's measure on `test/mwfolk1.test.js`'s own sampler; MW-FIT1's rings were 36
+  at five places, reaching 5 to 16 - MW-FIT1's measure on `test/tooling/mwfolk1.test.js`'s own sampler; MW-FIT1's rings were 36
   rays to 15, L3-F11) - and a leg part inside cloth hanging round BOTH legs all along its span, every ray out of the
   line between the legs meeting it (AUDIT MW-FOLK1 L2-F1: one leg's rays cross to the other inside a skirt and never met
   it, so 398's dress hid nothing of the thighs it closes round):
@@ -182,7 +182,7 @@ seen in game** (AUDIT MW-FOLK1 L2-F3, L3-F20).
 
 ## How it was proven
 
-`test/mwfolk1.test.js` (12): every outfit and painting re-made from the committed export, its fourteen paintings and
+`test/tooling/mwfolk1.test.js` (12): every outfit and painting re-made from the committed export, its fourteen paintings and
 retail's skeleton byte for byte, each DDS its painting, the export and each painting by hash, every polygon-carrying
 slot an owner's painting and every painting worn, the cut slot Morrowind's own skin and wearing nothing, each shape the
 painting the export names but the two recolours (each its twin's shapes in another painting), the bake's refusals; the
@@ -208,10 +208,10 @@ skeleton with no note, each arm piece on its arm, each leg piece on its leg, the
 385's tunic hem going with the leg less than its knee while its chest stays; striding, the leg inside the cloth that
 hangs round it, the body's side on the ribcage in the idle, no seam open; and a REAL BUILD - 398 bound where the port's
 archive loaded, and where it did not composed out again, her hair back, the shirt asked and the card saying why. PIN
-MOVED (AUDIT MW-FOLK1): `test/mwnpc17_wardrobe.test.js` MWNPC17e read on Nord women's 392 through folkLookOf;
-`test/fparm.test.js` MW-D29 and MW-D33 (the third person built again without a lost outfit, the card reading what it
-was built from). PIN MOVED: `test/mwnpc7_folk.test.js`
+MOVED (AUDIT MW-FOLK1): `test/characters/mwnpc17_wardrobe.test.js` MWNPC17e read on Nord women's 392 through folkLookOf;
+`test/formats/morrowind/fparm.test.js` MW-D29 and MW-D33 (the third person built again without a lost outfit, the card reading what it
+was built from). PIN MOVED: `test/characters/mwnpc7_folk.test.js`
 MWNPC7a (the eleven pictures their outfits, the wardrobe's variety read on Breton 391) and
-`test/mwnpc10c_roads.test.js` MWNPC10c-2 (383 its outfit, the wardrobe's resident a Breton 391's, the watch off duty in
+`test/characters/mwnpc10c_roads.test.js` MWNPC10c-2 (383 its outfit, the wardrobe's resident a Breton 391's, the watch off duty in
 381's). `tools/mutants/mwfolk1.json` (68: 65 dead, and 3 the audit judged equivalent and left alive, each with its reason).
-The audit: `01-Overview/Audit-MW-Heads-Folk.md`.
+The audit: `01-Overview/audits/Audit-MW-Heads-Folk.md`.

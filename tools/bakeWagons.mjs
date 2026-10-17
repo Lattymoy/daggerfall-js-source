@@ -35,7 +35,7 @@
 //            wheel of its own to turn - skipped (`minY`).
 //
 // EACH WAGON'S FRAME (`frame`): the port's wagon - metres, +x its right, +y up, +z the way it is pulled (Unity's, as
-// the Small Cart's model 41214 stands: the horse hitched ahead on +z, systems/horseCartLaw.js HITCHED_HORSE_LOCAL_Z) -
+// the Small Cart's model 41214 stands: the horse hitched ahead on +z, systems/horse/horseCartLaw.js HITCHED_HORSE_LOCAL_Z) -
 // with its origin ON THE GROUND UNDER ITS REAR WHEELS' CENTRES: `centre` the body object's own scene X (to the bit, as a
 // ship's centreline is her hull's Y - the cart's wheels stand 3.8 scene cm off it, as drawn), `rear` the rear wheels'
 // own origin Y (their turning centre), `ground` their lowest corner's Z. The caravan and the open wagon are drawn with
@@ -47,7 +47,7 @@
 // long, the caravan's body 5.8 m long, 2.7 m wide and 3.5 m to its roof, its floor 0.94 m up and 2.57 m under the
 // roof - a Daggerfall horse (the mod's 3 m billboard) to pull them and a body to stand in.
 //
-// The output is one JSON a wagon, each a test re-bakes byte for byte (test/wagons1_bake.test.js): the source is
+// The output is one JSON a wagon, each a test re-bakes byte for byte (test/tooling/wagons1_bake.test.js): the source is
 // committed beside them, so the files are a DERIVATION, never a blob.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';

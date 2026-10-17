@@ -1,130 +1,130 @@
 [
   {
     "name": "A0928-O1-table-ten",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "export const HULL_VARIANT_COUNTS = Object.freeze([0, 7, 0, 0, 0]);",
     "new": "export const HULL_VARIANT_COUNTS = Object.freeze([0, 10, 0, 0, 0]);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O1-door-dropped",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null;",
     "new": "    if (HULL_VARIANT_COUNTS[w[0]] < 0) return null;",
     "tests": [
-      "test/audit0928_online.test.js",
-      "test/csa_online.test.js"
+      "test/scenes/audit0928_online.test.js",
+      "test/systems/comeSailAway/csa_online.test.js"
     ]
   },
   {
     "name": "A0928-O1-door-off-by-one",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null;",
     "new": "w[1] > HULL_VARIANT_COUNTS[w[0]]) return null;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O1-build-uncontained",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "        if (boat) list[i] = { boat, hull: w.hull, variant: w.variant, wire: w.position, slot: i, shown: null, turn: null, helm: false, light: false };\n      } catch (e) { fail(owner, e); }",
     "new": "        if (boat) list[i] = { boat, hull: w.hull, variant: w.variant, wire: w.position, slot: i, shown: null, turn: null, helm: false, light: false };\n      } catch (e) { throw e; }",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O1-redress-uncontained",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "      try { realign(owner, l); } catch (e) { fail(owner, e); }",
     "new": "      realign(owner, l);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O1-said-every-time",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    if (said.has(text) || said.size >= SAID_MAX) return;",
     "new": "    if (said.size >= SAID_MAX) return;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O3-built-in-the-handler",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: true, age: 0 });\n    return true;",
     "new": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: false, age: 0 });\n    realign(owner, live.get(owner)); buildOne();\n    return true;",
     "tests": [
-      "test/audit0928_online.test.js",
-      "test/csa_online.test.js"
+      "test/scenes/audit0928_online.test.js",
+      "test/systems/comeSailAway/csa_online.test.js"
     ]
   },
   {
     "name": "A0928-O3-two-builds-a-frame",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    buildOne();\n    for (const [owner, l] of [...live]) {",
     "new": "    buildOne(); buildOne();\n    for (const [owner, l] of [...live]) {",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O3-no-bucket",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "      if (!l || i < 0 || !b || b.tokens < 1) continue;",
     "new": "      if (!l || i < 0 || !b) continue;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O3-bucket-reset-by-a-refused-word",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    if (!r) { live.delete(owner); drop(owner); return raw == null; }",
     "new": "    if (!r) { live.delete(owner); drop(owner); buckets.delete(owner); return raw == null; }",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O3-bucket-forgotten-owing",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "      if (b.tokens >= CSA_PEER_BUILD_BURST && !live.has(owner)) buckets.delete(owner);",
     "new": "      if (!live.has(owner)) buckets.delete(owner);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O3-refill-fast",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "b.tokens + ms / CSA_PEER_BUILD_REFILL_MS);",
     "new": "b.tokens + ms / 100);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O3-reuse-by-slot-alone",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "if (had[j].hull !== l.boats[i].hull) continue;",
     "new": "if (had[j].hull !== l.boats[i].hull || had[j].slot !== i) continue;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O3-nearest-dropped",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || a[3] - b[3]);",
     "new": "    pairs.sort((a, b) => a[2] - b[2] || a[3] - b[3]);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved)",
     "new": "exteriorFoes.foesFrame(full, _hccDirty || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved)",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -142,43 +142,43 @@
     "old": "    if (!full && key === _csaWordKey) return false;",
     "new": "    if (!full) return false;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O4-hidden-drawn",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    const hide = look === 'hidden' && w.helm;",
     "new": "    const hide = false;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O4-moored-hidden-too",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    const hide = look === 'hidden' && w.helm;",
     "new": "    const hide = look === 'hidden';",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O4-moored-concealed-too",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    s.boat.conceal = w.helm && look && look !== 'hidden' ? look : null;",
     "new": "    s.boat.conceal = look && look !== 'hidden' ? look : null;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-O4-flats-plain",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "        b.conceal = boat.conceal ?? null;",
     "new": "        b.conceal = null;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "  csaPeers.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));",
     "new": "  csaPeers.setPeerLook(() => null);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "const ai = f.dead || f.puppet || modes?.insideFoeIsPuppet?.(f) ? null : f.ai;",
     "new": "const ai = f.dead || f.puppet ? null : f.ai;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "    insideFoeIsPuppet(f) { return mode === 'dungeon' && !!dungeonCtx?.isPuppetFoe?.(f); },",
     "new": "    insideFoeIsPuppet(f) { return false; },",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "      const _puppet = isPuppetFoe(f, _fi);",
     "new": "      const _puppet = (!_authority && _roomFoe) || f._ownFrom != null;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -223,52 +223,52 @@
     "old": "f != null && ((!_authority && isRoomFoe(f, i)) || f._ownFrom != null);",
     "new": "f != null && (isRoomFoe(f, i) || f._ownFrom != null);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-R5-walk-allocates",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    else { multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls, _local), r.m); r.pver = p.ver; }",
     "new": "    else { r.m = multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls)); r.pver = p.ver; }",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-R5-draw-walks-again",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "return w && w.stamp === walkStamp && walkStamp > 0 ? w : walkBoat(boat, -1); };",
     "new": "return walkBoat(boat, -1); };",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-R5-redress-stale",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5: other objects active now - walked again",
     "new": "",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-R5-origin-stale",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5: moved - walked again",
     "new": "",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-R5-flat-scale-walks-again",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "        const s = n.lossyScaleOf(m);",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        const s = n.lossyScaleOf(m, _flatScale);",
     "new": "        const s = n.lossyScale;",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "mat4FromQuatPosScale(this.rotation, ZERO3, ONE3, _rotScratch)",
     "new": "mat4FromQuatPosScale(this.rotation, ZERO3, ONE3)",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "  const m = out ? quatToMat4Into(q, out) : quatToMat4(q);",
     "new": "  const m = quatToMat4(q);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
@@ -295,16 +295,16 @@
     "old": "out[1] = 2 * (xy + wz);",
     "new": "out[1] = 2 * (xy - wz);",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "A0928-R6-flats-dynamic",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "{ w, h }, [[0, 0, 0]]);   // AUDIT PRE-MERGE 0928 R6",
     "new": "{ w, h }, [[0, 0, 0]], { dynamic: true });   // AUDIT PRE-MERGE 0928 R6",
     "tests": [
-      "test/audit0928_online.test.js"
+      "test/scenes/audit0928_online.test.js"
     ]
   }
 ]

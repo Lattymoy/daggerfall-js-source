@@ -60,7 +60,7 @@ export const homeShunned = (score) => homeScoreOf(score) <= HOME_SHUN_AT;
  * out, and the paint on its outside. Always for its INSIDERS: the owner's own account (`mine` - any of its characters)
  * and, for a guild's hall, an account with any character in its guild (`insider` - AUDIT A5: the service's own line, the
  * account's as `mine` is; `member`, the playing character's, is one of them); for everyone else, unless the home is
- * shunned. `home` is the client's registry row (systems/onlineHomes.js homeAt); none - not an online home - shows what
+ * shunned. `home` is the client's registry row (systems/online/onlineHomes.js homeAt); none - not an online home - shows what
  * stands.
  */
 export function homeDecorShown(home) {

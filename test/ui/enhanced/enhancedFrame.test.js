@@ -1,0 +1,40 @@
+// FRAME1: the stone-and-brass kit (ui/enhanced/enhancedFrame.js).
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { FRAME_ROLES, FRAME_CSS, frameSvg, BAND, EDGE, OUTSET } from '../../../src/ui/enhanced/enhancedFrame.js';
+import { PLUS_CSS as ENHANCED_CSS, OVER_KIT_CSS, ITEM_FRAME_CSS, ONLINE_DRESS_CSS } from '../../../src/ui/enhanced/enhancedPlusStyle.js';   // PLUS1: the refresh's dress is the Enhanced Plus sheet
+
+test('FRAME1: the kit is the LAST thing in the sheet, so it dresses every screen by role - but for the layers named to stand over it (RARITY-UI\'s tier frames, PLUS-DRESS\'s online screens), in that order', () => {
+  assert.deepEqual(OVER_KIT_CSS, [ITEM_FRAME_CSS, ONLINE_DRESS_CSS]);
+  const at = ENHANCED_CSS.lastIndexOf(FRAME_CSS);
+  assert.ok(at > 0, 'the kit is in the sheet');
+  const bare = (css) => css.replace(/\/\*[^]*?\*\//g, '').replace(/\s+/g, ' ').trim();
+  assert.equal(bare(ENHANCED_CSS.slice(at + FRAME_CSS.length)), bare(OVER_KIT_CSS.join('\n')), 'nothing but the named layers follows the kit');
+});
+
+test('FRAME1: paint only - the kit never writes a width, padding or size', () => {
+  assert.doesNotMatch(FRAME_CSS, /(^|[\s;{])(width|height|padding|margin|border-width|min-height|min-width)\s*:/m);
+  assert.doesNotMatch(FRAME_CSS, /border(-(top|right|bottom|left))?\s*:\s*\d/, 'no border shorthand that could change a width');
+});
+
+test('FRAME1: every role selector is a single selector (a list keeps each one its own weight)', () => {
+  for (const [role, sels] of Object.entries(FRAME_ROLES)) {
+    for (const s of sels) assert.ok(!s.includes(','), `${role}: ${s}`);
+    assert.equal(new Set(sels).size, sels.length, `${role} has no duplicates`);
+  }
+});
+
+test('FRAME1: the window picture lands its inner 2px on the box border', () => {
+  assert.equal(OUTSET, EDGE - 2);
+  const svg = frameSvg();
+  assert.match(svg, new RegExp(`width='${BAND * 2 + 1}'`));
+  assert.match(svg, /shape-rendering='crispEdges'/);
+});
+
+test('FRAME1: pressable things answer the same way everywhere', () => {
+  for (const s of FRAME_ROLES.button) {
+    assert.ok(FRAME_CSS.includes(`${s}:hover`), `${s} hover`);
+    assert.ok(FRAME_CSS.includes(`${s}:active:not(:disabled)`), `${s} pressed`);
+    assert.ok(FRAME_CSS.includes(`${s}:disabled`), `${s} disabled`);
+  }
+});

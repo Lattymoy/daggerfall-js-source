@@ -5,7 +5,7 @@
     "old": "        gender, questBehaviour: behaviour, feetGiven: true,\n",
     "new": "        gender, questBehaviour: behaviour,\n",
     "tests": [
-      "test/rogueimp.test.js"
+      "test/characters/enemy/rogueimp.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "interiorCtx.parentPt(position.x, position.y + INTERIOR_MARKER_FEET_LIFT, position.z)",
     "new": "interiorCtx.parentPt(position.x, position.y, position.z)",
     "tests": [
-      "test/rogueimp.test.js"
+      "test/characters/enemy/rogueimp.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const INTERIOR_MARKER_FEET_LIFT = 0.1;",
     "new": "export const INTERIOR_MARKER_FEET_LIFT = 0;",
     "tests": [
-      "test/rogueimp.test.js"
+      "test/characters/enemy/rogueimp.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      } else if (behaviour === 'Flying' && !feetGiven) pending.feet[1] -= idleH / 2 + 0.1;",
     "new": "      } else if (behaviour === 'Flying') pending.feet[1] -= idleH / 2 + 0.1;",
     "tests": [
-      "test/rogueimp.test.js"
+      "test/characters/enemy/rogueimp.test.js"
     ]
   }
 ]

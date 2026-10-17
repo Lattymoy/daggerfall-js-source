@@ -16,11 +16,11 @@
 //     rasterizer the three masks share, and the Basic Roads classifier the context reads roads with;
 //   - SnowContextData's pure members (OutsideWeight, IsVanillaLocation) and BlanketSurfaceSamples.InterpolateQuad.
 // Single precision where the C# computes in float (Math.fround at every float operation), double where it computes
-// in double - pinned against the reference harness's traces (test/snowfall1_model.test.js).
+// in double - pinned against the reference harness's traces (test/systems/snowfall1_model.test.js).
 
 import { modSetting } from './modSettings.js';
 import { roundToInt, lerpF } from './mathf.js';   // Mathf.RoundToInt (banker's), Mathf.Lerp in float
-import { bytesToBase64, base64ToBytes } from './saveTransfer.js';   // Convert.ToBase64String / FromBase64String
+import { bytesToBase64, base64ToBytes } from './save/saveTransfer.js';   // Convert.ToBase64String / FromBase64String
 import { deflateRaw, inflateRaw } from '../formats/rawDeflate.js';   // DeflateStream
 
 const f32 = Math.fround;

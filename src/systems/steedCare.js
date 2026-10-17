@@ -3,15 +3,15 @@
 // feeding them grows your bond and improves their stats. Every horse should have different stats.") - HORSE CARE
 // (bible/06-Systems/Horse-Care.md). The law, pure: every horse's four stats, its bond with its owner, its hunger, what it
 // eats, its breath under a gallop. The runtime that runs it a frame at a time is systems/steedRuntime.js; the item's
-// fields are systems/itemFields.js's (`horseBond`, `horseFed`), on DFU's one Horse template alone (systems/itemLaw.js).
+// fields are systems/item/itemFields.js's (`horseBond`, `horseFed`), on DFU's one Horse template alone (systems/item/itemLaw.js).
 //
-//  - FOUR STATS, EACH HORSE ITS OWN. A horse's seed is the horse (systems/horseCoats.js - rolled at its birth, never
+//  - FOUR STATS, EACH HORSE ITS OWN. A horse's seed is the horse (systems/horse/horseCoats.js - rolled at its birth, never
 //    changed), and its stats are its seed's: SPEED (the ride's pace), STAMINA (how long it gallops), ENDURANCE (how fast
 //    its breath comes back, and how slowly a gallop spends it) and STRENGTH (what it pulls). Born 20-80, most near 50;
 //    no field holds them, so a horse born before STEED1 has had its stats all along.
 //  - THE BOND, 0-100 (`horseBond`, in tenths). Grown by feeding: a day's food a day's bond, more for what it loves.
 //    Every five points of it are a point on every stat (BOND_STEP) - a Kindred horse is twenty points better than the
-//    one bought. A horse traded away comes to its new owner a stranger (net/realmTradeLaw.js RECEIVER_MARKS).
+//    one bought. A horse traded away comes to its new owner a stranger (net/realm/realmTradeLaw.js RECEIVER_MARKS).
 //  - HUNGER (`horseFed`, the minute of the character's clock its food runs out). Fed, then Hungry (its stats ten down,
 //    its breath slower back), then STARVING two days on (twenty-five down, no gallop, and the bond fading two points a
 //    day). It never dies of it. A horse at the stable is fed there; one left waiting in the world grazes enough never to
@@ -21,14 +21,14 @@
 //    at a walk or standing, half as fast under a rider at the ride's own pace, slower hungry.
 //
 // HORSE-TIERS (2026-10-15, Mac: "Allow turn off. Rework this system to be more in line with how we handle climates and
-// calories boons."): what the horse PAYS is its tier's (systems/upkeepTiers.js - Boons, the default: nothing below
+// calories boons."): what the horse PAYS is its tier's (systems/upkeep/upkeepTiers.js - Boons, the default: nothing below
 // DFU's plain horse; Hard: the system above as it stood). The laws that charge take the tier's rules as an argument -
 // steedStats, stepBreath, steedSpeedScale, teamDraftScale, feedHorse and tendHorses - and a law handed none runs HARD,
 // so every pin written before the tiers still pins it. Everything else here is the world's, in every tier.
 
-import { isHorseItem } from './horseCoats.js';
-import { UPKEEP_ITEM } from './upkeepItemRows.js';
-import { HORSE_CARE_HARD } from './upkeepTiers.js';   // HORSE-TIERS: what a law handed no rules runs
+import { isHorseItem } from './horse/horseCoats.js';
+import { UPKEEP_ITEM } from './upkeep/upkeepItemRows.js';
+import { HORSE_CARE_HARD } from './upkeep/upkeepTiers.js';   // HORSE-TIERS: what a law handed no rules runs
 
 export const STEED_STATS = Object.freeze(['speed', 'stamina', 'endurance', 'strength']);
 export const STEED_STAT_TEXT = Object.freeze({ speed: 'Speed', stamina: 'Stamina', endurance: 'Endurance', strength: 'Strength' });
@@ -140,7 +140,7 @@ function holdStarving(item, now) {
 }
 
 // ── what a horse eats ───────────────────────────────────────────────
-/** STEED1's own: the Sack of Oats (systems/upkeepItemRows.js). */
+/** STEED1's own: the Sack of Oats (systems/upkeep/upkeepItemRows.js). */
 export const OATS_TEMPLATE = UPKEEP_ITEM.Oats;
 /** Climates & Calories' Apple, and Foraging's. */
 export const APPLE_TEMPLATES = Object.freeze([532, 1608]);

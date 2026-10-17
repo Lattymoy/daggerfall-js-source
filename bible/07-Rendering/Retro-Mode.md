@@ -15,9 +15,9 @@ offers all five, live, and Shift-F11 toggles the effect.
 
 | DFU | What it does | Port |
 |---|---|---|
-| `SettingsManager.cs:408-412` | `RetroRenderingMode` (0..2), `PostProcessingInRetroMode`, `UseMipMapsInRetroMode`, `RetroModeAspectCorrection` (0..2), `PalettizationLUTShift` | `systems/retroMode.js`, the five getters; LIVE-tier (`systems/settings.js`), with DFU's own words on the screen (`ui/settingsLaw.js` ENUM_LAW, RetroModeConfigPage.cs:39-73) |
+| `SettingsManager.cs:408-412` | `RetroRenderingMode` (0..2), `PostProcessingInRetroMode`, `UseMipMapsInRetroMode`, `RetroModeAspectCorrection` (0..2), `PalettizationLUTShift` | `systems/retroMode.js`, the five getters; LIVE-tier (`systems/settings/settings.js`), with DFU's own words on the screen (`ui/settings/settingsLaw.js` ENUM_LAW, RetroModeConfigPage.cs:39-73) |
 | `Assets/Resources/RetroTarget*.renderTexture`, `RetroRenderer.UpdateRenderTarget` (:414-447) | The camera's target: 320x200 / 640x400, or the `_HUD` twin (320x154 / 640x308) when `LargeHUD && LargeHUDDocked` | `retroTargetSize`; `retroFrameConfig` hands over both twins and the renderer takes the `_HUD` one when the host's world rect is a docked strip - the DRAWN bar, as the rect and the lens read it (AUDIT RETRO1 A1/C3); it draws the WORLD frame into an image of that size (`render/retroPass.js` `beginFrameTarget`) |
-| Unity's camera aspect | A camera rendering into a texture takes the texture's aspect, and the result is stretched over the screen rect | `ui/hudLarge.js` `largeHudWorldAspect` answers the texture's aspect under retro mode - every host's lens |
+| Unity's camera aspect | A camera rendering into a texture takes the texture's aspect, and the result is stretched over the screen rect | `ui/hud/hudLarge.js` `largeHudWorldAspect` answers the texture's aspect under retro mode - every host's lens |
 | `RetroRenderer.OnPostRender` (:495-506), `RetroPresentation.OnRenderImage` | Blit the texture into the 640x400 presentation target (with the material), then that to the screen; both Point | `RetroPass.present` - one quad, the coordinate snapped to the presentation texel first, so both Point blits are one fetch |
 | `DaggerfallRetroPosterization.shader` | `round(c * 15) / 15` per channel, between UnityCG's approximate `LinearToGammaSpace` and `GammaToLinearSpace`, in a linear 16-bit target the backbuffer encodes exactly | the port's frame holds display bytes: the present decodes them (exact sRGB), runs the effect between DFU's approximate pair and encodes again, so a level shows as DFU's screen shows it - 1/15 as 13, not 17 (AUDIT RETRO1 A3) |
 | `DaggerfallRetroPalettization.shader`, `InitLut` (:324-366), `art_pal` (:53-314), `FastColorPalette.cs` | A `256 >> shift` LUT, each texel the art palette's colour nearest to `(r,g,b) << shift`, found by a k-d tree; the shader looks the pixel up Point-filtered | `retroLutSteps` / `buildRetroLut` (the tree ported exactly; a candidate search per 8x8x8 block agrees with it wherever the nearest colour is unique and asks the tree where two tie - ~200 ms at the shipped shift against DFU's 850, built by the pass `RETRO_LUT_BUDGET_MS` a frame); the shader fetches the texel by integer index, `floor(g * size)` of the pixel in DFU's approximate gamma (palette grey 4 shows as 1, as in DFU) |
@@ -25,7 +25,7 @@ offers all five, live, and Shift-F11 toggles the effect.
 | `ViewportChanger.SetRetroAspectViewport` (:96-149), `retroClearerCamera` | 4:3 or 16:10 pillarbox from a 6x-classic ratio, the docked bar's height off the bottom; the bars cleared black | `retroAspectViewportRect` (C#'s float32 and integer casts kept); `worldViewportRect` is the rect every host sets and maps through (tap ray, lock point, name labels); the present clears the canvas black |
 | `TextureReader` (:93, :123, :206, :468) | No mip chain in retro mode unless `UseMipMapsInRetroMode`; replacement textures (`TryImportTexture`) never pass through it | `Renderer._applyRetroMips`: `TEXTURE_MAX_LEVEL` 0 over every cached world texture, emission map and tile array (and what loads meanwhile) - reversible, so it lands on what is already loaded too; a replacement and its emission map are flagged at upload and passed by (AUDIT RETRO1 A4) |
 | `PlayerActivate` (:286-297) | A cursor pick scaled into the texture | already exact: the port unprojects through the frame's own projection and the presented rect |
-| `DaggerfallHUD` (:320-326), `RetroRenderer.TogglePostprocessing` | Shift-F11 flips the effect off and on; dead under an open window | `ui/hudShortcuts.js`'s third arm; the flag is `systems/retroMode.js`'s, session state. Under a window it does nothing, and `retroToggleKey` keeps the two arms that let QuickLoad through a window from reading its F11 as a load (AUDIT RETRO1 C1) |
+| `DaggerfallHUD` (:320-326), `RetroRenderer.TogglePostprocessing` | Shift-F11 flips the effect off and on; dead under an open window | `ui/hud/hudShortcuts.js`'s third arm; the flag is `systems/retroMode.js`'s, session state. Under a window it does nothing, and `retroToggleKey` keeps the two arms that let QuickLoad through a window from reading its F11 as a load (AUDIT RETRO1 C1) |
 
 ## The frame, under both lanes
 
@@ -200,7 +200,7 @@ Dynamic Skies), and a shift-0 LUT is a 64 MiB 3D texture.
 
 Five lenses - fidelity to DFU, WebGL2 correctness, host integration,
 the pins and the docs, cost and robustness - and every confirmed
-finding fixed and pinned (`test/auditretro1.test.js`) or recorded above.
+finding fixed and pinned (`test/render/auditretro1.test.js`) or recorded above.
 
 - **HIGH, C1.** Shift-F11 under any open window quick-loaded with no
   prompt: the two arms that let QuickLoad through a window read F11's
@@ -233,7 +233,7 @@ Main merged in first (DISC22, OVH1-OVH4, FGH2H, QUEST-UID1), then five
 fresh lenses - the first pass's own fixes (F), integration with main and
 play in every host (G), fidelity (H), the pins and the docs (I), cost and
 robustness (J). Nothing HIGH; every confirmed finding fixed and pinned
-(`test/auditretro2.test.js`, the first pass's file where its own pin was
+(`test/ui/auditretro2.test.js`, the first pass's file where its own pin was
 the wrong one) or recorded above.
 
 - **MED (the pins).** A committed mutant survived: the first pass's D5
@@ -271,7 +271,7 @@ the wrong one) or recorded above.
 - **Outside retro, first left for their own slices, then fixed the same
   day (Mac: "Take care of those"):** DISC22-C's loot panel stood on the
   screen's middle where a docked bar re-centres the crosshair, and a tall
-  parchment reached over the bar (G5 - `01-Overview/Field-Bugs-2026-09-24.md`);
+  parchment reached over the bar (G5 - `01-Overview/bugs/Field-Bugs-2026-09-24.md`);
   OVH2's `_alphaArt` WeakSet add, the J7 shape (J7 -
   `10-UI/Overhauls.md`); a non-world frame's resolve opened a `?perf`
   `air` span after the meter had closed (J8, the lens's pre-existing
@@ -279,7 +279,7 @@ the wrong one) or recorded above.
 
 ## Testing
 
-`test/retro1.test.js` (20 pins): the settings and their clamps, the
+`test/render/retro1.test.js` (20 pins): the settings and their clamps, the
 targets, the pillarbox to the cast, the frame's config and the toggle;
 the palette, the tree's tie laws, the LUT against the tree texel for
 texel (whole cubes at shifts 3 and 4, five whole slices at the shipped
@@ -292,7 +292,7 @@ the words; Shift-F11; the muzzle and the bolts.
 `tools/mutants/retro1.json`: 54 mutants, all dead (thirteen re-aimed by
 content at the audit, two more at its second pass).
 
-`test/auditretro1.test.js` (30 pins), on a STATEFUL fake GL with
+`test/render/auditretro1.test.js` (30 pins), on a STATEFUL fake GL with
 WebGL2's own constants (units, attachments, each texture's parameters,
 the feedback-loop and sampler-type rules): one pin a finding, above,
 plus the LUT's and the palette's SHA-256 (D1), the pass's GL state
@@ -302,7 +302,7 @@ pass (D3), every late-upload cap (D4) and the lane's retro slot (D5).
 the second pass; B6's fix spans two sites, so its revert was checked by
 hand against the pre-audit renderer). The fake GL is `test/retroGl.mjs`.
 
-`test/auditretro2.test.js` (16 pins), the second pass's: a pack's frame
+`test/ui/auditretro2.test.js` (16 pins), the second pass's: a pack's frame
 flagged (F2), the lane's resolve under a scissor (F3), the LUT's jobs,
 failures, block cap and streamed slabs (F4-F7, J3-J6, I4 with shift 0's
 SHA-256), what the present hands the shader (I5), a stale modifier

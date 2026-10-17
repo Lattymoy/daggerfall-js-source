@@ -2,7 +2,7 @@
 // SHIPYARDS (2026-10-11): THE SHIPMASTER'S WINDOW'S HOST HALF. The window (ui/shipyardWindow.js) reads a model and asks
 // acts; this builds the one and carries out the other over the world host's runtimes - the Fleet's host half
 // (scenes/fleetHost.js: the ledger, where each ship lies, her summoning and laying up, her refits and her name), the sea
-// fight's state of each (scenes/navalHost.js: the shipwright's model, her named hands, the recruits signed on and paid
+// fight's state of each (scenes/naval/navalHost.js: the shipwright's model, her named hands, the recruits signed on and paid
 // off), Come Sail Away's runtime (laying a sold ship up, her hold let go) and the purse - and the laws:
 // systems/shipyards.js (the ships for sale, their price and their sale), systems/crewHall.js (the day's recruits).
 // Built by scenes/world.js, the one host that stands Come Sail Away and the ports.
@@ -13,7 +13,7 @@
 //   fleet  - every ship of the player's: where she lies (fleetHost's whereIs), her worth and the shipmaster's offer for
 //            her (shipWorth, shipSalePrice), why he will not buy her here (saleRefusal), her summoning, her laying up
 //            and her name;
-//   yard   - the shipwright's work on a ship at hand (scenes/navalHost.js yardModelOf - the yard's own window's model);
+//   yard   - the shipwright's work on a ship at hand (scenes/naval/navalHost.js yardModelOf - the yard's own window's model);
 //   refits - her four lines (scenes/fleetHost.js offer);
 //   crew   - the town's hall today (recruitsOf: none already serving a ship of the player's) against the crewed ships at
 //            hand, each with her named hands and her place for another (crewHall.js enlistPlan).
@@ -21,7 +21,7 @@
 // any port: the Fleet's own law).
 //
 //   deps = {
-//     fleet() -> scenes/fleetHost.js's | null     naval() -> scenes/navalHost.js's | null     csa() -> Come Sail Away's | null
+//     fleet() -> scenes/fleetHost.js's | null     naval() -> scenes/naval/navalHost.js's | null     csa() -> Come Sail Away's | null
 //     pack() -> the pack (live)    addToPack(item)    gold() -> the purse    pay(n)    credit(n)
 //     skills() -> { mercantile, personality } (live)    traded() -> a concluded deal's Mercantile tally (DFU OnTrade)
 //     mintUid() -> a new Come Sail Away UID    day() -> the world's day

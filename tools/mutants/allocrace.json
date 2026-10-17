@@ -5,7 +5,7 @@
     "old": "  '--import', fileURLToPath(new URL('./allocSettle.mjs', import.meta.url)),\n",
     "new": "",
     "tests": [
-      "test/allocchild.test.js"
+      "test/tooling/allocchild.test.js"
     ]
   },
   {
@@ -14,16 +14,16 @@
     "old": "globalThis.gc = () => { settle(); gc(); };",
     "new": "globalThis.gc = () => { gc(); };",
     "tests": [
-      "test/allocchild.test.js"
+      "test/tooling/allocchild.test.js"
     ]
   },
   {
     "name": "ALLOC-RACE-a-suite-spells-its-own-list",
-    "file": "test/techfx1.test.js",
+    "file": "test/systems/techfx1.test.js",
     "old": "[...ALLOC_CHILD_ARGS, '--input-type=module'",
     "new": "['--expose-gc', '--min-semi-space-size=64', '--max-semi-space-size=64', '--input-type=module'",
     "tests": [
-      "test/allocchild.test.js"
+      "test/tooling/allocchild.test.js"
     ]
   }
 ]

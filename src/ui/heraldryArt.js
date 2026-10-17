@@ -299,7 +299,7 @@ export function shieldSvg(heraldry, { size = 16 } = {}) {
 }
 
 /**
- * AUDIT HERALDRY H4: THE SHIELD ON A CANVAS - the Overworld's name face (ui/travelViewHud.js badgeSprite) draws on a
+ * AUDIT HERALDRY H4: THE SHIELD ON A CANVAS - the Overworld's name face (ui/travel/travelViewHud.js badgeSprite) draws on a
  * canvas, not the DOM: shieldSvg's drawing into `ctx` at (`x`, `y`), `size` pixels wide - the field (GUILD2c: a divided
  * one's second part in `field2`), the border inside the edge, the device in its own colour (the border's unless `charge`
  * names one) on the field, its holes the field beneath in each part, the dark edge. Drawn once into a kept sprite, never

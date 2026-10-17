@@ -23,7 +23,7 @@
 // idle anyway.
 //
 // WHAT THIS DOES NOT CLAIM. Unlike the GL-call work, the size of this
-// win is not measured here and cannot be: `test/glstate.test.js`
+// win is not measured here and cannot be: `test/render/glstate.test.js`
 // drives a stub, and a stub does not compile shaders. The claim is
 // structural - the program is built before the first draw needs it
 // rather than during it - and the number belongs to whatever driver

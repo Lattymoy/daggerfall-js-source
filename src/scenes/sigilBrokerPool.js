@@ -1,12 +1,12 @@
 // @ts-check
 // SET7 (2026-09-26, Sigil Sets - bible/11-Multiplayer/Sigil-Sets.md section 7; Mac: "Sigil stones become a currency to
 // trade for daily reset sigil items at a new NPC vendor that stands outside the oblivion gate"): THE SIGIL BROKER, WHERE
-// SHE STANDS - the pool on the runtime pools' shape (scenes/camps.js, scenes/gatePool.js): her body, the eye's box and
+// SHE STANDS - the pool on the runtime pools' shape (scenes/camps.js, scenes/gate/gatePool.js): her body, the eye's box and
 // her name, and the press on her.
 //
 // BROKER-CAGE (2026-10-02, Mac: "she should be present at the site in a jailed gate, and the gate opens after all the
 // enemies are cleared"): SHE IS THE FAITHFUL'S PRISONER, CAGED AT THEIR CIRCLE. Her cage stands at a spot in the circle's
-// own frame (net/gateRite.js riteLocalOf; world/riteModel.js: its heart, `facing` the bearing to the gate) - CAGE_R out,
+// own frame (net/gate/gateRite.js riteLocalOf; world/riteModel.js: its heart, `facing` the bearing to the gate) - CAGE_R out,
 // turned CAGE_TURN from the gate's bearing: outside the braziers, on the gate's side, away from the casket - so every
 // player in the Bay finds her where every other does, and a floating-origin recentre carries her with the land. She
 // stands there, caged or free, from the omen until the Wrath's midnight (cageStands): a Warden fallen early takes the
@@ -19,35 +19,35 @@
 // on her is shut (the host's `gone`).
 //
 // HER BODY is the Daedra Seducer's mortal guise (EnemyBasics 29, TEXTURE.284 - the game has no Dremora sprite), its idle
-// records by the eight orientations (characters/mobileUnit.js IDLE_ANIMS, read through world/gateBoss.js bossFrame, the
+// records by the eight orientations (characters/mobile/mobileUnit.js IDLE_ANIMS, read through world/gate/gateBoss.js bossFrame, the
 // court's own reader), a billboard on the flats' axis. She faces the gate through her cage's door, and turns to a player
 // come within BROKER_NOTICE_M of her - at a walk's pace, never a snap.
 //
 // NOTHING HERE IS SAVED OR SENT: where she stands is the breach's, and the breach is the clock's; her cage's word is the
-// rite's (scenes/riteHost.js). What she sells, and what a character bought of it, are the law's (systems/sigilBroker.js);
+// rite's (scenes/riteHost.js). What she sells, and what a character bought of it, are the law's (systems/sigil/sigilBroker.js);
 // the window is ui/brokerWindow.js behind ui/brokerDoor.js; the sale is the host's (scenes/world.js), through the law.
 //
 // Not a DFU member. Ledger A (SET).
-import { bossFrame } from '../world/gateBoss.js';
-import { IDLE_ANIMS, IDLE_ANIM_SPEED } from '../characters/mobileUnit.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { bossFrame } from '../world/gate/gateBoss.js';
+import { IDLE_ANIMS, IDLE_ANIM_SPEED } from '../characters/mobile/mobileUnit.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { RAY_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE, presentNpcInfoText } from '../player/activate.js';
 import { trs } from '../world/mat4.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
-import { riteLocalOf, riteWindow, cageStands, RITE_GRACE_MS } from '../net/gateRite.js';   // BROKER-CAGE: the faithful's circle, and her hours
-import { gateSpotLocal } from '../net/gateLaw.js';
+import { riteLocalOf, riteWindow, cageStands, RITE_GRACE_MS } from '../net/gate/gateRite.js';   // BROKER-CAGE: the faithful's circle, and her hours
+import { gateSpotLocal } from '../net/gate/gateLaw.js';
 import {
   buildCageModel, buildCageDoor, cageHinge, CAGE_WALLS, CAGE_DOOR_WALL, CAGE_W, CAGE_D, CAGE_H, CAGE_CAP, CAGE_FOOT, CAGE_FOOT_UNDER, CAGE_POST,
   CAGE_SILL, CAGE_SILL_OVER, CAGE_SILL_MAX, CAGE_LEAF_W, CAGE_WALL_OUT, CAGE_DOOR_OPEN, CAGE_DOOR_MS,
 } from '../world/cageModel.js';
-import { gateArt, GATE_ARCHIVE } from '../world/gateArt.js';
+import { gateArt, GATE_ARCHIVE } from '../world/gate/gateArt.js';
 
 /** The mobile whose sprite she wears: the Daedra Seducer, in her mortal guise. */
 export const BROKER_MOBILE = 29;
 /** BROKER-CAGE: where her cage stands at the faithful's circle (metres, in the circle's frame - world/riteModel.js): this
  *  far from its heart, outside its braziers (RITE_BRAZIER_R 8.5) and inside the clearing the rock keeps off
- *  (world/gateClearance.js RITE_CLEAR_M 20), turned this far from its bearing to the gate - the gate's side, away from
+ *  (world/gate/gateClearance.js RITE_CLEAR_M 20), turned this far from its bearing to the gate - the gate's side, away from
  *  the casket's (+π/2); the faithful's ring (4.6), their tents and their fire (behind, 13-15) clear of it. */
 export const CAGE_R = 11.5;
 export const CAGE_TURN = -Math.PI / 3;
@@ -105,7 +105,7 @@ export const BROKER_POST = Object.freeze((() => {
 })());
 
 /** BROKER-CAGE: her cage's spot in the gate pixel's frame ([east, north] metres from its south-west corner - the
- *  circle's, net/gateRite.js riteLocalOf) and the circle's bearing to its gate (scenes/riteHost.js enter's) - the day's
+ *  circle's, net/gate/gateRite.js riteLocalOf) and the circle's bearing to its gate (scenes/riteHost.js enter's) - the day's
  *  alone. Pure. */
 export function cageSpotLocal(day) {
   const [e, n] = riteLocalOf(day), [gx, gz] = gateSpotLocal(day);
@@ -114,7 +114,7 @@ export function cageSpotLocal(day) {
 }
 
 /**
- * Where she stands for the breach at `site` (`{day, px, py}` - the omen's, systems/gateOmen.js cageSite) at `nowMs`: her
+ * Where she stands for the breach at `site` (`{day, px, py}` - the omen's, systems/gate/gateOmen.js cageSite) at `nowMs`: her
  * cage's spot carried into the scene by the pixel's translation, on the ground there, facing the gate - or null with no
  * site, outside the omen to midnight (cageStands), or where the ground answers nothing (her pixel not built). Pure.
  * @param {{day: number, px: number, py: number}|null} site
@@ -174,7 +174,7 @@ export function turnToward(yaw, want, dt, rate = BROKER_TURN_RATE) {
  *   freedAt?: (day: number, px: number, py: number) => number,
  *   feet?: () => (number[]|null), cam?: () => (number[]|null),
  *   say?: (text: string) => void, open?: () => void, gone?: () => boolean, collider?: () => any,
- * }} deps  `site` the omen's breach (systems/gateOmen.js cageSite); `freed` whether every one of its faithful fell
+ * }} deps  `site` the omen's breach (systems/gate/gateOmen.js cageSite); `freed` whether every one of its faithful fell
  *   (scenes/riteHost.js isCleared) and `freedAt` when the hub said it (riteHost.js clearedAt; NaN unknown); `gone` is
  *   the host's: shut a window open on her, and say whether one was
  */
@@ -238,7 +238,7 @@ export function createSigilBroker({
   function drawBody() {
     if (!at || !body?.tex) return false;
     const eye = cam() ?? at.feet;
-    // the court's reader of an act (world/gateBoss.js bossFrame) - typed for his acts, read here for the one field set an
+    // the court's reader of an act (world/gate/gateBoss.js bossFrame) - typed for his acts, read here for the one field set an
     // idle act carries (its anims, its frame, its loop); `atk` and `t` are his alone and bossFrame never reads them
     act.frame = Math.floor((now() / 1000) * IDLE_ANIM_SPEED);
     const fr = bossFrame(act, yaw ?? at.rest, at.feet, eye, (rec) => body.tex.getFrameCount?.(rec) ?? 1);

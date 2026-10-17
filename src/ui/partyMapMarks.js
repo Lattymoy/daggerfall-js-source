@@ -8,7 +8,7 @@
 // The two travel maps could not be less alike - the enhanced one is a
 // parchment in the player's hands with the bay inked on (ui/heldMap.js), the classic
 // one is a 320x160 region page painted out of TRAV0I00's art
-// (ui/travelMapWindow.js) - and neither of them should be the place
+// (ui/travel/travelMapWindow.js) - and neither of them should be the place
 // that decides what a party member IS. So the host says it once, in
 // the plainest shape it can (`party: () => [{acct, name, px, py, in,
 // loc, online, leader}]`, scenes/world.js partyMarkers), and this
@@ -85,7 +85,7 @@ export const TRAVELLER_LEGEND_TEXT = 'Traveller';
  * `travellers` dep), as marks placed within their pixel to the mark's own 256th: `x`/`y` in map pixels (y counts
  * south, the fraction counts north, so it is turned round). OWS1: `ship` - the host's word that the row's traveller
  * is at sea (isShipMark: their mark's way), drawn as a ship. OW-KIN / OW-WHO (FIELD BUGS 2026-10-04e): `kin` - the
- * host's word of who they are to me ('friend' | 'guild', systems/travelViewFilters.js travellerKin) - and `lv` their
+ * host's word of who they are to me ('friend' | 'guild', systems/travel/travelViewFilters.js travellerKin) - and `lv` their
  * Renown, for the name's colour and the players' filters.
  * @returns {Array<{id:string, name:string, x:number, y:number, journey:boolean, ship:boolean, kin:string|null, lv:number|null}>}
  */
@@ -219,7 +219,7 @@ export function readPartyBodies(party) {
 /**
  * COMPASS-PARTY (2026-09-27, Discord - Ashley: "being able to see where party members are on compass? - just lil green
  * marks that point in that direction"; Satranath: "Party members show up on the map but not compass"): THE POINTS THE
- * COMPASS MARKS, in the scene's own XZ - the frame the Detect markers are measured in (ui/hud.js compassMarkerLerp).
+ * COMPASS MARKS, in the scene's own XZ - the frame the Detect markers are measured in (ui/hud/hud.js compassMarkerLerp).
  *
  * A mate whose BODY this client draws is marked where it stands (`bodies`, the plans' own dep - readPartyBodies). The
  * rest are marked only OUTDOORS (`here`, my travel pixel; indoors it is null and the bodies are the whole answer - a

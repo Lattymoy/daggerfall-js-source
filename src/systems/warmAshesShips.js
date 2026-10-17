@@ -47,7 +47,7 @@ export const WA_QUEST_LIST = 'WA_Ships';
 export const WA_RAID_QUEST = 'WAQ_SHIP_SMALLRAID';
 /** THE MERGE of NAV-D and OWS3: the raids a running quest makes, AS THE QUEST MACHINE NAMES THEM - each file's own
  *  `Quest:` header (quest/parser.js): the ambush's, and a pirate flagship's, which the sea fight's boarders start from
- *  its file WAQ_SHIP_ATTACK_PIRATE.txt (scenes/navalHost.js; systems/naval/navalBoarding.js WA_ATTACK_PIRATE) and whose
+ *  its file WAQ_SHIP_ATTACK_PIRATE.txt (scenes/naval/navalHost.js; systems/naval/navalBoarding.js WA_ATTACK_PIRATE) and whose
  *  header names it WAQ_SHIP_PIRATEATTACK. AUDIT NAV1 (B5): listed by its file's name, a flagship's raid was never read
  *  as running, and "one raid at a time" let an Overworld raider start a second on top of it. */
 export const WA_RAID_QUESTS = Object.freeze([WA_RAID_QUEST, 'WAQ_SHIP_PIRATEATTACK']);
@@ -97,7 +97,7 @@ export const boardPending = () => _boardIn !== null;
  *   setTransportModeShip() TransportManager.TransportMode = Ship (UpdateMode's ship arm: a board, or a landing)
  *   currentRegionIndex()   PlayerGPS.CurrentRegionIndex
  *   setBlockVariant        WorldDataVariants.SetBlockVariant (a seam for the tests; the registry by default)
- *   leaveShipGate(quest)   NAV-D: the sea fight's word on a "Leave Ship" - 'naval' | 'wait' | 'proceed' (scenes/navalHost.js)
+ *   leaveShipGate(quest)   NAV-D: the sea fight's word on a "Leave Ship" - 'naval' | 'wait' | 'proceed' (scenes/naval/navalHost.js)
  */
 let _host = null;
 export function setWarmAshesHost(host) { _host = host ?? null; }
@@ -172,7 +172,7 @@ export function raidRefusal() {
 /**
  * THE MERGE of NAV-D and OWS3 (2026-09-28): ONE RAID AT A TIME, WHOEVER STARTS IT. Beside the mod's own fast travel,
  * two starters make Warm Ashes' raid - a raider alongside on the Overworld (raidAtSea) and the sea fight's boarders on a
- * crewed Come Sail Away deck (scenes/navalHost.js beginFight) - and neither saw the other's: a raid on the deck with
+ * crewed Come Sail Away deck (scenes/naval/navalHost.js beginFight) - and neither saw the other's: a raid on the deck with
  * the mod's ship boarded under it, or a flagship's raid over an armed ambush. So each asks this one answer: an ambush
  * armed or boarding, a lent ship out, or a raid quest running - raidRefusal's, as a yes or no.
  */

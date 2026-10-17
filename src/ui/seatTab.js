@@ -22,7 +22,7 @@
 // levers, its Fealty and Pacts - AUDIT 657 B10); the holder's orders; the Works; and the Chronicle.
 //
 // Every act goes through the window's one-at-a-time door (`ui.run`), and the standings are read again after each.
-import { HALL_OF_RECORDS_SHUT } from '../systems/onlineHomes.js';   // AUDIT-SEATS: the Hall of Records' words where it cannot be read
+import { HALL_OF_RECORDS_SHUT } from '../systems/online/onlineHomes.js';   // AUDIT-SEATS: the Hall of Records' words where it cannot be read
 import { accountRefusalText } from '../net/accountClient.js';
 import {
   seatInfoLine, seatWeekLine, seatSpanWords, seatStandingLine, seatNoStandingsLine, seatMineLines, seatTributeLine, seatMay,
@@ -33,8 +33,8 @@ import {
   sideLine, siegeWindowText, SIEGE_WINDOW_DAYS, SIEGE_WINDOW_HOURS, SIEGE_WINDOW_DEFAULT, SELLSWORD_FEE_MAX, passOpens, passWindowEnds,
   CROWN_SIEGE_SLOT, CROWN_SEAT_REGIONS, STANDING_START, STANDING_UNREST, UNREST_BONUS, TITHE_CAP, SEAT_LEGACY_SHARE,
 } from '../net/townSeatLaw.js';
-import { fightAnnouncement } from '../net/siegeHerald.js';   // AUDIT-SEATS G1: the battle's line, its start in the service's seconds
-import { GUILD_RANK_MASTER } from '../net/guildLaw.js';
+import { fightAnnouncement } from '../net/siege/siegeHerald.js';   // AUDIT-SEATS G1: the battle's line, its start in the service's seconds
+import { GUILD_RANK_MASTER } from '../net/guild/guildLaw.js';
 import { tideLine } from '../net/tideLaw.js';
 import { drawSeatWorks } from './seatWorks.js';   // SEAT2b: the works
 import { towersText } from '../net/fortLaw.js';   // SEAT2b part two: the Watchtowers' word
@@ -486,7 +486,7 @@ export function createSeatTab(host, ui) {
       out.append(b);
     }
     // SEAT2a part four: THE BATTLE ENTERED from here, while its door is open (ten minutes before the start to its
-    // window's close) - a signed fighter to fight, anyone else to watch (net/siegeSession.js, through the world's hook)
+    // window's close) - a signed fighter to fight, anyone else to watch (net/siege/siegeSession.js, through the world's hook)
     const nowS = ui.nowS();
     if (host.enterBattle && f.startsAt && nowS >= passOpens({ starts_at: f.startsAt }) && nowS < passWindowEnds({ starts_at: f.startsAt, kind: f.kind, tier: f.tier })) {
       const b = button('notice-seat-enter', mine?.signed ? 'Enter the battle' : 'Watch the battle', () => ui.run(async () => {

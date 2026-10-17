@@ -834,7 +834,7 @@ const HANDLERS = {
 
   // ── E7 (2026-09-02): THE TABLE'S LAST THIRTY-SIX ROWS ──────────
   // M-X left thirty-seven of MacroHelper's rows RECORDED at their
-  // consumers rather than in the table (test/macrocoverage.test.js's
+  // consumers rather than in the table (test/systems/quest/macrocoverage.test.js's
   // ELSEWHERE map), with its own note: "Consolidating them into the
   // one table is the recorded follow-up, not a gap." This is that
   // consolidation. DFU has ONE macroHandlers dictionary and
@@ -1047,14 +1047,14 @@ const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef',
   // E7: %tcn joins them. C#'s row IS null (MacroHelper.cs:221), so
   // the table's answer is [unhandled]; the travel window's own
   // `Replace("%tcn", name)` (DaggerfallTravelMapWindow.cs:1694, and
-  // ui/travelMapWindow.js:"const text = (typeof r === 'string' ? r : r.text ?? '')" after it) is string surgery on TEXT.RSC
+  // ui/travel/travelMapWindow.js:"const text = (typeof r === 'string' ? r : r.text ?? '')" after it) is string surgery on TEXT.RSC
   // 31 that never reaches this ladder. M-X had recorded it as a port
   // handler standing where C# has null, with a carve-out in the
   // coverage gate; there was never a handler to carve out.
   '%tcn']);
 
 /** M-X: the coverage gate's surface - the table's whole membership,
- *  so test/macrocoverage.test.js can diff it against MacroHelper.cs
+ *  so test/systems/quest/macrocoverage.test.js can diff it against MacroHelper.cs
  *  itself and the count can never silently rot. */
 export const macroTableCoverage = () => ({ handled: Object.keys(HANDLERS), nulls: [...NULL_HANDLERS] });
 

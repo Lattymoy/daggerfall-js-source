@@ -44,7 +44,7 @@
 // section's frequency for anyone travelling together.
 import { chooseRandomEnemy, resolveEncounterTableIndex } from './encounters.js';
 import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
-import { factionOf, SOLITARY_TYPES, NIGHT_ONLY_FACTIONS } from '../characters/mobileFactions.js';
+import { factionOf, SOLITARY_TYPES, NIGHT_ONLY_FACTIONS } from '../characters/mobile/mobileFactions.js';
 import { CLASSIC_MINUTES_PER_SECOND } from './worldTick.js';   // real-seconds -> game-minutes, so the cadence below can be stated in real play time
 
 // A camp/pack seed roll that lands on a SOLITARY type (Dragonling,

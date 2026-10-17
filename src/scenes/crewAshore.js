@@ -27,7 +27,7 @@
 //    only once the portal has closed on it) and JUMPS through a pair (a catch-up: one opens where it was, one where it
 //    stands again). A change of place lifts the party at once - the place it leaves is going.
 //  - REVENANT-COMPANION: the layer stands any party of the crew's shape - the sworn revenants' too
-//    (systems/revenantCompanions.js) - a member's own `key` and `title` where it has them.
+//    (systems/revenant/revenantCompanions.js) - a member's own `key` and `title` where it has them.
 import { companionSlot } from '../systems/naval/crewCompanions.js';
 
 /** A companion further than this from the player (m, on the ground's plane) is stood behind the player again. */
@@ -44,7 +44,7 @@ export const TRAIL_MAX = 64;
 export const TRAIL_JUMP_M = 8;
 
 export const companionKeyOf = (c) => c.key ?? `${c.boat}:${c.name}`;
-/** FB1012d ALLY-RACE (bible/01-Overview/Field-Bugs-2026-10-12d.md): A COMPANION IS ONE PERSON - the seed his body's
+/** FB1012d ALLY-RACE (bible/01-Overview/bugs/Field-Bugs-2026-10-12d.md): A COMPANION IS ONE PERSON - the seed his body's
  *  race, face, head, hair and clothes are drawn by (characters/foeBodies.js ownPerson, which foeSeed reads before the
  *  stand's own): a member's own where the party keeps one (a sworn revenant's - its record's, revenantCompanions.js
  *  memberOf), else his party key's - his boat and his name, his for life (shipCrew.js handName) - so every door, every
@@ -72,7 +72,7 @@ export function companionPerson(c) {
  * }} deps
  *
  * WAGONS1: `seat(i, n)` - where the `i`th of `n` rides when the player's wagon carries companions in its back
- * (systems/wagonSeats.js companionSeats; null: on foot, at heel). A body with a seat takes no step (characters/
+ * (systems/wagon/wagonSeats.js companionSeats; null: on foot, at heel). A body with a seat takes no step (characters/
  * enemyMotor.js update) and is never caught up: it is where the wagon is. WAGONS2: `seatDraw(i, n)` - where that seat
  * is DRAWN (the wagon grown under the Overworld): the sprite stands there, the body on the seat itself.
  */

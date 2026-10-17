@@ -5,7 +5,7 @@
     "old": "    return [q[0] + dx * a, q[1] + dy * a, q[2] + dz * a];\n  }",
     "new": "    return [q[0] + dx * a, this._eyeFeetY ?? (q[1] + dy * a), q[2] + dz * a];\n  }",
     "tests": [
-      "test/disc18.test.js"
+      "test/player/disc18.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "this._snapSpan2()) return [p[0], p[1], p[2]];",
     "new": "this._snapSpan2()) { this._eyeFeetY = null; return [p[0], p[1], p[2]]; }",
     "tests": [
-      "test/disc18.test.js"
+      "test/player/disc18.test.js"
     ]
   },
   {
@@ -23,9 +23,9 @@
     "old": "mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw, face:",
     "new": "mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw, face:",
     "tests": [
-      "test/disc18.test.js",
-      "test/mac1_playreport.test.js",
-      "test/mwbody1.test.js"
+      "test/player/disc18.test.js",
+      "test/scenes/mac1_playreport.test.js",
+      "test/net/peer/mwbody1.test.js"
     ]
   },
   {
@@ -34,8 +34,8 @@
     "old": "mwViewDrawBody(canvas, { proj, view, eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "new": "mwViewDrawBody(canvas, { proj, view, eye, feet: player.feetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "tests": [
-      "test/disc18.test.js",
-      "test/mac1_playreport.test.js"
+      "test/player/disc18.test.js",
+      "test/scenes/mac1_playreport.test.js"
     ]
   },
   {
@@ -44,8 +44,8 @@
     "old": "if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "new": "if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "tests": [
-      "test/disc18.test.js",
-      "test/mac1_playreport.test.js"
+      "test/player/disc18.test.js",
+      "test/scenes/mac1_playreport.test.js"
     ]
   },
   {
@@ -54,9 +54,9 @@
     "old": "\n      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "new": "\n      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "tests": [
-      "test/disc18.test.js",
-      "test/mac1_playreport.test.js",
-      "test/mwbody1.test.js"
+      "test/player/disc18.test.js",
+      "test/scenes/mac1_playreport.test.js",
+      "test/net/peer/mwbody1.test.js"
     ]
   },
   {
@@ -65,9 +65,9 @@
     "old": "\n      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "new": "\n      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "tests": [
-      "test/disc18.test.js",
-      "test/mac1_playreport.test.js",
-      "test/mwbody1.test.js"
+      "test/player/disc18.test.js",
+      "test/scenes/mac1_playreport.test.js",
+      "test/net/peer/mwbody1.test.js"
     ]
   }
 ]

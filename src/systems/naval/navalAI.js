@@ -81,7 +81,7 @@
 // the pirates bold (BOLD_SHARE), and a boat lying still grappled only after GRAPPLE_STILL_S.
 
 import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, buildsStamp, SHIP_TOUGHNESS, shipBatteryWeight } from './navalShips.js';
-import { mulberry32 } from '../../combat/bloodArt.js';   // SEA-PEACE: the temper's draw (navalShips.js names on the same stream kind)
+import { mulberry32 } from '../../combat/blood/bloodArt.js';   // SEA-PEACE: the temper's draw (navalShips.js names on the same stream kind)
 import { createShipDamage, SHIP_STATES, STRUCK_AT, HOLED_BONUS, WATERLINE_BAND } from './navalDamage.js';
 import { createGunDeck, aimSolution, reloadSeconds } from './navalGunnery.js';
 import { NAVAL_DEG, rangeAt, SHOT_GRAVITY } from './navalBallistics.js';

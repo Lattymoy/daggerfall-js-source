@@ -69,7 +69,7 @@ check('a fresh shelf reads High - how the game ships', (await preset()) === 'Low
 await page.locator('#enhanced-menu .opt-preset .ft-segb', { hasText: /^Low$/ }).click(); await page.waitForTimeout(150);
 const stores = await page.evaluate(async () => {
   const p = await import('/src/systems/uiPrefs.js'); p._resetForTests();
-  const s = await import('/src/systems/settings.js'); s._resetForTests();
+  const s = await import('/src/systems/settings/settings.js'); s._resetForTests();
   return { view: p.getPref('landViewDistance'), ini: s.getInt('Experimental', 'TerrainDistance', 1, 4), grass: p.getPref('grassDensity'), water: p.getPref('waterQuality') };
 });
 check('Low wrote every row it sets, the view distance in BOTH stores', stores.view === 3 && stores.ini === 3 && stores.grass === 0.25 && stores.water === 'simple', JSON.stringify(stores));

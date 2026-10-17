@@ -1,7 +1,7 @@
 // MAC-R2 (2026-09-17, Mac: "The enhanced quickbar sometimes shows double
 // messages") - THE DIAMOND'S TAP PATH, COUNTED UNDER A REAL FINGER.
 //
-// The quickbar's cells are the phone's keys (ui/enhancedHud.js, QS3's
+// The quickbar's cells are the phone's keys (ui/enhanced/enhancedHud.js, QS3's
 // second departure): a tap performs the slot, a hold cycles it, and every
 // performer says its one line through the host's popup channel. A
 // "double message" is one press reaching a performer TWICE, and node
@@ -32,8 +32,8 @@ const PAGE_NAME = 'macr-hudtap.tmp.html';
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MAC-R2 probe</title>
 <style>html,body{margin:0;height:100%;background:#12141a;overflow:hidden;overscroll-behavior:none}</style></head><body>
 <script type="module">
-import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
-import { ITEM_TEMPLATES } from '/src/characters/paperdoll.js';
+import { drawEnhancedHud } from '/src/ui/enhanced/enhancedHud.js';
+import { ITEM_TEMPLATES } from '/src/characters/paperdoll/paperdoll.js';
 import { equipItem } from '/src/systems/equip.js';
 const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
 const mk = (n, group = 'Weapons') => { const tp = t(n); return tp && {

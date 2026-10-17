@@ -21,7 +21,7 @@
 // column through the helm, beside the plume: the rows of head above the shell's first row, over the rows of shell under
 // it - the ratio the screenshot measures. Mac's camera's height is not known, so three heights of eye are read; each
 // gives the raise at which the ratio crosses the screenshot's, and HELM_LIFT is held inside their span
-// (test/mwsteel5.test.js).
+// (test/tooling/mwsteel5.test.js).
 //
 // WHAT IT DOES NOT RULE OUT. A head bigger than the scene's Breton (the screenshot's race is not recorded) would show
 // the same scalp at a smaller raise, and a shot from behind sees nothing of an offset front to back.
@@ -31,8 +31,8 @@
 // the OPEN helm's lift alone - the one helm with a head under it. `wornSet('open')` wears it, and the shipped open helm
 // is what the head must stay inside.
 import { readFileSync } from 'node:fs';
-import { assembleFirstPersonArm } from '../src/formats/mwFirstPerson.js';
-import { composeWornArmor } from '../src/formats/mwItemMap.js';
+import { assembleFirstPersonArm } from '../src/formats/morrowind/mwFirstPerson.js';
+import { composeWornArmor } from '../src/formats/morrowind/mwItemMap.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { HELM_LIFT, SCENE_BODY, RETAIL_SKELETON, PIECES, plateBind } from './bakeSteelPlate.mjs';
 import { isMain } from './lib/isMain.mjs';

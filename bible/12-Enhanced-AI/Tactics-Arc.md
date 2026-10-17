@@ -18,7 +18,7 @@ overdoing it"*. His calls, asked the same day:
 ## Where it stands (measured on the code, 2026-10-02)
 
 - **The enhanced AI is a pathfinder, and only in dungeons.** `EnhancedEnemyAI` (`ai/enhancedMotor.js`) overrides one
-  question - where a foe walks next - on the navmesh. Senses, decisions and attacks are DFU's (`characters/enemyMotor.js`
+  question - where a foe walks next - on the navmesh. Senses, decisions and attacks are DFU's (`characters/enemy/enemyMotor.js`
   `_classicTick`): walk in to 2.25 m and swing; never strafe, back off, circle or wait. The only retreat is `flee()`,
   whose one caller is a guard frightened by a werewolf. Streets, interiors, guards and exterior foes always run the
   classic motor (`dungeonContext.js` is the switch's only reader).
@@ -28,7 +28,7 @@ overdoing it"*. His calls, asked the same day:
   the dungeon's, the street guards', the exterior encounters' and the interior watch's are separate pools, so a guard and
   a bandit stand in each other. The navmesh's `syncNavObstacles` and RVO `avoidHeading` are ported and called nowhere
   (the arc's 4b). Nothing keeps a foe out of a doorway.
-- **Telegraphs exist for the world boss alone** (`net/gateBrain.js`, `net/gateStrike.js`, `render/gateTelegraph.js`):
+- **Telegraphs exist for the world boss alone** (`net/gate/gateBrain.js`, `net/gate/gateStrike.js`, `render/gate/gateTelegraph.js`):
   shaped wind-ups resolved by where the feet stand at the landing. Ordinary foes swing on DFU's clock, with no tell.
 
 ## The design: four slices, each behind the Enhanced AI switch
@@ -121,8 +121,8 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
   3.2 m reach no longer takes the press, and the plaque names the door it opens; a hostile foe is still DFU's one hit.
 - Not built from the slice: attack tokens and ring slots (they need TACT2's ring); guards giving up a door they cannot
   pass (the doorway rule makes it moot for now).
-- Pins `test/tact3.test.js` (15); mutants `tools/mutants/tact3.json` (23), all dead.
-- DOOR-JAM (FIELD BUGS 2026-10-14b, `01-Overview/Field-Bugs-2026-10-14b.md`): the pushes (spaceAcross, the doorway's
+- Pins `test/player/tact3.test.js` (15); mutants `tools/mutants/tact3.json` (23), all dead.
+- DOOR-JAM (FIELD BUGS 2026-10-14b, `01-Overview/bugs/Field-Bugs-2026-10-14b.md`): the pushes (spaceAcross, the doorway's
   nudge, and every pool's spaceFoes) sweep a body at its controller's live height (`foeSpacing.js:"export const sweepHeight = (ai) =>"`),
   EnemyMotor.HeightAdjust's 1.65 duck while a foe taller than a doorway passes under its lintel.
 
@@ -146,7 +146,7 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
   and missiles).
 - **Off** - with the switch off `coverDistance` answers Infinity before the index is asked: DFU's sight to the bit.
 - The switch's Features note says it (+63 chars). Not looked at on a real install yet.
-- Pins `test/tact1.test.js` (9); mutants `tools/mutants/tact1.json` (23), all dead.
+- Pins `test/scenes/tact1.test.js` (9); mutants `tools/mutants/tact1.json` (23), all dead.
 
 ## TACT2 - BUILT 2026-10-02 (the Enhanced AI switch on, every host)
 
@@ -175,7 +175,7 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
 - **Not built** - the player's other open moments (mid-swing recovery, casting, drinking, staggered) are not read;
   ranged foes do not yet seek a clear line round cover; guards giving up a door is TACT3's doorway rule.
 - The switch's Features note says it. Not looked at on a real install yet.
-- Pins `test/tact2.test.js` (15); mutants `tools/mutants/tact2.json` (25), all dead.
+- Pins `test/characters/enemy/tact2.test.js` (15); mutants `tools/mutants/tact2.json` (25), all dead.
 
 ## TACT4 - BUILT 2026-10-02 (the Enhanced AI switch on, every host)
 
@@ -205,15 +205,15 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
   main), its verdict where that fighter stands, judged here (`judgedHere` - a peer's is the peer's own), and the
   foe-vs-foe hit paths asking `blowConnects` and `blowScaled` as the player's do; a dodge is told
   (`registerBlowDodgedListener`), a miss for the judges. The relay's ladder fighters throw the same shapes
-  (`net/arenaBrain.js`, the families in the leaf `ai/blowShapes.js`). A verdict is its mark's (AUDIT ARENA-LADDER 2,
+  (`net/arena/arenaBrain.js`, the families in the leaf `ai/blowShapes.js`). A verdict is its mark's (AUDIT ARENA-LADDER 2,
   `_blowFor`): a holder whose target changed before its damage frame swings the classic swing, unweighed; on the relay
   one fighter winds up at a time. Street infighting and a peer's foe still see none. The record:
-  `bible/01-Overview/Audit-Arena-Ladder.md`.
+  `bible/01-Overview/audits/Audit-Arena-Ladder.md`.
 - **The ground** - `render/foeTelegraph.js` (`renderer.drawFoeTelegraphs`): one flat quad at the foe's feet, the shape
   the fragment's own `inBlow` (pinned point for point), a dim rim at once, filling outward through the wind-up, a
   flash at the landing (since TELL2 the world boss's readable line - a keyline, a brighten "now", premultiplied over
   the floor, never lost near the player, `Feud-Arc.md` section 4.4); depth-tested, unwritten; drawn under the bodies beside the blood marks in the street,
-  the building, the dungeon and both standalone hosts. SNOW-TELL (`01-Overview/Field-Bugs-2026-10-11d.md`): over the
+  the building, the dungeon and both standalone hosts. SNOW-TELL (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): over the
   frame's deep snow, where it drew any (`telegraphLift` - the snow stood up to 0.8 m over the ground the blow was
   fitted to, and buried every mark under it).
   `tools/foeTelegraphProbe.mjs` compiles, links and draws the three shapes in a real WebGL2 context (Chromium) and
@@ -221,7 +221,7 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
   TACT4; 34 since AUDIT TELL - every shape, the keyline, iron, the contrast, the shatter).
 - **Not built** - a block halving it (the port has no player block). (Online - a peer seeing another's foe's
   telegraph, a blow at a peer - was built by TELL8, `Feud-Arc.md` section 10.)
-- Pins `test/tact4.test.js` (13); mutants `tools/mutants/tact4.json` (30), all dead.
+- Pins `test/characters/enemy/tact4.test.js` (13); mutants `tools/mutants/tact4.json` (30), all dead.
 - **Next:** `Feud-Arc.md` (FEUD, 2026-10-04: "player's can easily stun these enemies") - poise and the stagger, a held
   swing with a glint and cues, iron blows, the punish window, feints and chains, four new shapes, and the wind-ups on
   the foe stream: TELL1-TELL9 and AUDIT TELL shipped; its records there are the law from them on.
@@ -229,7 +229,7 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
 ## AUDIT TACT - 2026-10-02 (Mac: "Audit this and ensure perfection")
 
 Four lenses over the four slices - the brain, cover, the crowd and the door, the hosts and the ground - each finding
-reproduced on the TACT4 head, pinned red (`test/audittact.test.js`) and fixed. With the switch off DFU's motor was
+reproduced on the TACT4 head, pinned red (`test/scenes/audittact.test.js`) and fixed. With the switch off DFU's motor was
 proven unchanged by a seeded run against the pre-TACT tree (same hash, same 440 draws).
 
 - **The brain (A).** A1 an archer between 5 and 6 m jittered forever, never shooting or swinging (the kite band ended
@@ -266,7 +266,7 @@ proven unchanged by a seeded run against the pre-TACT tree (same hash, same 440 
   through fog - fogged as the ground. D7 the switch's effect line said the next dungeon - the tactics, cover and blows
   are at once; only the navmesh waits. D11 the cover's broad phase built a string a cell a ray - numeric keys, no
   allocation a test. `tools/foeTelegraphProbe.mjs` now holds the fog and the tilt too (14 held).
-- Pins `test/audittact.test.js` (32); mutants `tools/mutants/audittact.json` (47), all dead. The four slices' own lists re-run over the fixes.
+- Pins `test/scenes/audittact.test.js` (32); mutants `tools/mutants/audittact.json` (47), all dead. The four slices' own lists re-run over the fixes.
 
 ## TACT5 - THE FIRST FIELD REPORT (2026-10-02, the Enhanced AI switch on)
 
@@ -303,20 +303,20 @@ four of its rules stepped away from a player who pressed:
 - **No ring for a shooter.** Without a ranged token it stands off (the classic stand-off, its fire held); it never
   circles. A token of the kind a foe no longer fights as is handed back (a shooter that fought hand to hand kept its
   melee token for good).
-- **The motor** (`characters/enemyMotor.js _walkStep`): a brain step met by a wall also stops the walk for the rest of
+- **The motor** (`characters/enemy/enemyMotor.js _walkStep`): a brain step met by a wall also stops the walk for the rest of
   the classic tick - the next fixed steps walked on the way the foe FACED, which, turned to walk away, is into the wall,
   and started a classic detour along it.
 
 Unchanged: the token counts, the patience, the strike window's other rules, fleeing, the telegraphed blows; with the
 switch off, DFU's motor to the bit (TACT2's five-foe pin).
 
-- Pins `test/tact5_feedback.test.js` (8): a waiting foe walked up to fights within 1.2 s and gives at most a hop a
+- Pins `test/characters/enemy/tact5_feedback.test.js` (8): a waiting foe walked up to fights within 1.2 s and gives at most a hop a
   blow; pressed, a holder never backs past its hop; a hurt foe walks away facing its way, never backwards, once a
   cooldown; a chased archer kites once, facing its way, then fights hand to hand and hands its melee token back past
   the band; an archer walked up to without a token never circles (its slot pinned a quarter turn round, the case that
   circled); one walled in is cornered by the wall (not the clock) without a detour along it; one left alone walks out
   past the edge and shoots, never walking back in. All 8 red on the TACT head.
-  `test/tact2.test.js`'s source pin follows the motor line.
+  `test/characters/enemy/tact2.test.js`'s source pin follows the motor line.
 - Mutants `tools/mutants/tact5.json` (13), all dead; `tact2.json` and `audittact.json` records re-aimed at the moved
   lines (and two audit records widened to the new pins, which kill them where the audit's alone no longer can); the
   four TACT lists re-run, 161 dead.

@@ -5,7 +5,7 @@
     "old": "  if (accountKind(sender) !== 'linked') return { error: 'mail-needs-account' };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "sendLetter trusts its caller's wall - one refactor from a guest writing letters."
   },
@@ -15,7 +15,7 @@
     "old": "  if (isMuted(sender, nowS)) return { error: 'muted' };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A moderator's mute stops a player's chat and not their letters."
   },
@@ -25,7 +25,7 @@
     "old": "  if ('error' in words) return words;\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter the law refuses is written anyway (or crashes the route)."
   },
@@ -35,7 +35,7 @@
     "old": "  if (!account && !HANDLE_RE.test(handle)) return { error: 'no-reader' };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A shape no handle has spends the sender's rate on a lookup that cannot find anyone. NAME-AS (PIN MOVED): re-aimed by content - a letter by account (a friend's) asks no handle's shape."
   },
@@ -45,7 +45,7 @@
     "old": "  if (await overRate({ db, nowS }, `mail:${sender.id}`, LETTERS_SENT_MAX, LETTERS_SENT_WINDOW_S)) return { error: 'mail-rate' };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "One registered player writes to the whole server in an hour."
   },
@@ -55,7 +55,7 @@
     "old": "  if (await overRate({ db, nowS }, `mail:${sender.id}>${reader.id}`, LETTERS_PAIR_MAX, LETTERS_SENT_WINDOW_S)) return { error: 'mail-rate' };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "One player fills another's box."
   },
@@ -65,7 +65,7 @@
     "old": "  if (reader.id === sender.id) return { error: 'to-self' };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter to oneself takes a place in one's own box."
   },
@@ -75,7 +75,7 @@
     "old": "reader.id, LETTERS_INBOX_MAX).run();",
     "new": "reader.id, LETTERS_INBOX_MAX + 1).run();",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A box holds one past its bound."
   },
@@ -85,7 +85,7 @@
     "old": "  if (!r?.meta?.changes) return { error: 'inbox-full' };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter the full box refused is reported sent."
   },
@@ -95,7 +95,7 @@
     "old": "ORDER BY sent_at DESC, id DESC LIMIT ?",
     "new": "ORDER BY sent_at ASC, id DESC LIMIT ?",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "The newest letter is at the bottom of fifty."
   },
@@ -105,7 +105,7 @@
     "old": "    WHERE to_id = ? ORDER BY",
     "new": "    WHERE to_id != ? ORDER BY",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A reader's box lists everybody else's letters."
   },
@@ -115,7 +115,7 @@
     "old": "unread: letters.filter((l) => !l.read).length,",
     "new": "unread: letters.length,",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "The badge counts letters already read."
   },
@@ -125,7 +125,7 @@
     "old": "id: l.id, from: l.from_name, ...badgeOf(rows.get(l.from_id), env, nowS),",
     "new": "id: l.id, from: l.from_name, ...badgeOf(null, env, nowS),",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A moderator's letter wears no shield."
   },
@@ -135,7 +135,7 @@
     "old": "FROM letters WHERE id = ? AND to_id = ?')\n    .bind(id, reader.id).first();",
     "new": "FROM letters WHERE id = ?')\n    .bind(id).first();",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "Anyone who learns an id reads the letter."
   },
@@ -145,7 +145,7 @@
     "old": "  if (l.read_at == null) await db.prepare('UPDATE letters SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL').bind(nowS, id, reader.id).run();\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter opened stays unread for ever."
   },
@@ -155,7 +155,7 @@
     "old": "sentAt: l.sent_at, readAt: l.read_at ?? nowS,",
     "new": "sentAt: l.sent_at, readAt: nowS,",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A second opening moves the first."
   },
@@ -165,7 +165,7 @@
     "old": "DELETE FROM letters WHERE id = ? AND to_id = ?').bind(id, reader.id)",
     "new": "DELETE FROM letters WHERE id = ?').bind(id)",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A sender takes a letter back out of the reader's box."
   },
@@ -175,7 +175,7 @@
     "old": "        if (accountKind(who.player) !== 'linked') return no('mail-needs-account', 403, origin);\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A guest's device reads and writes letters."
   },
@@ -185,7 +185,7 @@
     "old": "          if (request.method !== 'GET') return no('method', 405, origin);\n          return json(await inboxOf(",
     "new": "          return json(await inboxOf(",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "The box answers a POST (a body that says nothing, read by nothing)."
   },
@@ -195,7 +195,7 @@
     "old": "r.error === 'inbox-full' ? 409 : 400;",
     "new": "r.error === 'inbox-full' ? 400 : 400;",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A full box is answered as a malformed request."
   },
@@ -205,7 +205,7 @@
     "old": "const status = r.error === 'muted' ? 403 :",
     "new": "const status = r.error === 'muted' ? 400 :",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A mute is answered as a malformed request."
   },
@@ -215,7 +215,7 @@
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
     "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/mail/inbox']);",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A stranger reaches the box without a credential."
   },
@@ -225,7 +225,7 @@
     "old": "  FOREIGN KEY (to_id) REFERENCES players(id) ON DELETE CASCADE\n",
     "new": "  FOREIGN KEY (to_id) REFERENCES players(id)\n",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A reader who is gone leaves their box behind (or cannot go)."
   },
@@ -235,7 +235,7 @@
     "old": "  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join('\\n');",
     "new": "  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join(' ');",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A contract laid out in lines arrives as one run-on line."
   },
@@ -245,8 +245,8 @@
     "old": "    if (!line && (!out.length || out[out.length - 1] === '')) continue;\n",
     "new": "    if (!line && !out.length) continue;\n",
     "tests": [
-      "test/mail1.test.js",
-      "test/journal1.test.js"
+      "test/server/mail1.test.js",
+      "test/net/journal1.test.js"
     ],
     "note": "Forty blank lines between two words - in a letter, and on a page (JOURNAL1 moved the law into wire.js, where both read it)."
   },
@@ -256,8 +256,8 @@
     "old": "  while (out.length && out[out.length - 1] === '') out.pop();\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js",
-      "test/journal1.test.js"
+      "test/server/mail1.test.js",
+      "test/net/journal1.test.js"
     ],
     "note": "A letter, or a page, that ends in a blank line (the law's home is wire.js since JOURNAL1)."
   },
@@ -267,8 +267,8 @@
     "old": "export const wordsLine = (line) => maskText(visibleText(String(line ?? '').replace(/\\t/g, ' ')).replace(/\\s+/g, ' ').trim());",
     "new": "export const wordsLine = (line) => maskText(String(line ?? '').replace(/\\t/g, ' ').replace(/\\s+/g, ' ').trim());",
     "tests": [
-      "test/mail1.test.js",
-      "test/journal1.test.js"
+      "test/server/mail1.test.js",
+      "test/net/journal1.test.js"
     ],
     "note": "A letter - or a page - carries a bidi override the chat would never pass: two laws for one keyboard."
   },
@@ -278,7 +278,7 @@
     "old": "  if (s.length > LETTER_SUBJECT_MAX) return { error: 'subject-long' };",
     "new": "  if (s.length > LETTER_SUBJECT_MAX + 1) return { error: 'subject-long' };",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A subject one past its bound."
   },
@@ -288,7 +288,7 @@
     "old": "  if (b.length > LETTER_BODY_MAX) return { error: 'body-long' };",
     "new": "  if (false) return { error: 'body-long' };",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter of any length, past the form's cap and the service's size."
   },
@@ -298,7 +298,7 @@
     "old": "  if (b.split('\\n').length > LETTER_LINES_MAX) return { error: 'body-lines' };",
     "new": "  if (b.split('\\n').length >= LETTER_LINES_MAX) return { error: 'body-lines' };",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter of exactly the bound's lines refused."
   },
@@ -308,7 +308,7 @@
     "old": "  return wordsLine(String(text ?? '').split(LINE_BREAK).join(' '));",
     "new": "  return wordsLine(String(text ?? ''));",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A subject's line break becomes a character the list draws as nothing."
   },
@@ -318,7 +318,7 @@
     "old": "    if (error === 'auth') { forgetSession(io?.storage); ",
     "new": "    if (error === 'auth') { ",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A secret the service stopped honouring is kept and every look fails the same way."
   },
@@ -328,7 +328,7 @@
     "old": "    else if (first && this.unread) this.onLetter?.({ kind: 'waiting', count: this.unread });",
     "new": "    else if (this.unread) this.onLetter?.({ kind: 'waiting', count: this.unread });",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "The chat says 'you have letters' every three minutes."
   },
@@ -338,7 +338,7 @@
     "old": "    const fresh = first ? [] : letters.filter((l) => !l.read && !this._known.has(l.id));",
     "new": "    const fresh = first ? [] : letters.filter((l) => !l.read);",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "Every unread letter is announced as new at every look."
   },
@@ -348,7 +348,7 @@
     "old": "    if (kept) return { ok: true, letter: kept };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter opened twice is fetched twice."
   },
@@ -358,7 +358,7 @@
     "old": "    if (head && !head.read) { head.read = true; this.unread = Math.max(0, this.unread - 1); }\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "The badge still counts a letter just read."
   },
@@ -368,7 +368,7 @@
     "old": "    if ('error' in words) return { ok: false, error: words.error };\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter the law refuses goes to the service to be refused there."
   },
@@ -378,7 +378,7 @@
     "old": "    // when the Letters tab opens.\n    this.at = this.now();\n",
     "new": "    // when the Letters tab opens.\n",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A signed-out box reads the store every frame."
   },
@@ -388,7 +388,7 @@
     "old": "    if (r.ok || r.error === 'no-letter') { this._drop(id); return { ok: true }; }",
     "new": "    if (r.ok) { this._drop(id); return { ok: true }; }",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter thrown away on another device stands in this box for ever."
   },
@@ -398,7 +398,7 @@
     "old": "  if (!l || typeof l !== 'object' || typeof l.id !== 'string' || !LETTER_ID_RE.test(l.id)) return null;",
     "new": "  if (!l || typeof l !== 'object' || typeof l.id !== 'string') return null;",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "An id no service minted is kept and handed back."
   },
@@ -408,7 +408,7 @@
     "old": "replace(/^(re:\\s*)+/i, '')",
     "new": "replace(/^re:\\s*/i, '')",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "Re: Re: Re:"
   },
@@ -418,7 +418,7 @@
     "old": "...(mail ? [['letters', 'Letters']] : [])",
     "new": "...[['letters', 'Letters']]",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A Letters tab over no letterbox."
   },
@@ -428,7 +428,7 @@
     "old": "id === 'letters' ? (mail?.unread ?? 0)",
     "new": "id === 'letters' ? 0",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "Unread letters and no number on the tab."
   },
@@ -438,7 +438,7 @@
     "old": "tab !== 'letters' ? social.version !== painted : letters.mode !== 'write' && (mail?.version ?? 0) !== paintedMail;",
     "new": "tab !== 'letters' ? social.version !== painted : (mail?.version ?? 0) !== paintedMail;",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A poll landing rebuilds the form under the player's caret."
   },
@@ -448,7 +448,7 @@
     "old": "    to.addEventListener('input', () => { d.to = to.value; d.account = null; });   // NAME-AS: a name typed is a username - the friend's account no longer addresses it\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "The name typed is not the name sent. NAME-AS (PIN MOVED): re-aimed by content - the typed name also lets the friend's account go."
   },
@@ -458,7 +458,7 @@
     "old": "      : btn('Delete', { run: () => { letters.del = l.id; letters.delAt = social.now(); ui++; if (open) repaint(); } }));",
     "new": "      : btn('Delete', { run: () => { mail.remove(l.id); } }));",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "One stray press throws a letter away."
   },
@@ -468,7 +468,7 @@
     "old": "        } else letters.word = letterWordText(r.error);",
     "new": "        } else { letters.word = letterWordText(r.error); letters.draft = { to: '', subject: '', body: '' }; }",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A refused letter is lost with the refusal."
   },
@@ -478,7 +478,7 @@
     "old": "run: () => writeTo(l.from, replySubject(l.subject))",
     "new": "run: () => writeTo('', replySubject(l.subject))",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "Reply opens a letter to nobody."
   },
@@ -488,7 +488,7 @@
     "old": "    _mailFrameAt = performance.now();   // MAIL1:",
     "new": "    // _mailFrameAt = performance.now();   // MAIL1:",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "Letters are found only when the tab is opened (SCALE4c: the lane's stamp is what lets the box's part ride the heartbeat)."
   },
@@ -498,7 +498,7 @@
     "old": "      onLetter: (event) => { chatLog.push(tab.id, { text: mailNoticeText(event), system: true }); },",
     "new": "      onLetter: null,",
     "tests": [
-      "test/mail1.test.js"
+      "test/server/mail1.test.js"
     ],
     "note": "A letter arrives and nothing says so."
   }

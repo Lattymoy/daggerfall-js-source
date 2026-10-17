@@ -5,11 +5,11 @@
 // stood there in one heap, every one of them swinging. Once a frame each pool pushes apart every two of its bodies
 // whose capsules overlap: softly (each takes half the overlap, at most FOE_SPACING_SPEED a second), through the
 // collider (no wall is crossed), and never off an edge (a walker the push would leave with no ground under its centre
-// stays where it was - the drop the motor's own fall check refuses, EnemyMotor's FallCheck, characters/enemyMotor.js
+// stays where it was - the drop the motor's own fall check refuses, EnemyMotor's FallCheck, characters/enemy/enemyMotor.js
 // _fallCheck). A departure: DFU's controllers block, the port's pools push.
 import { worldAabb } from '../player/activate.js';   // AUDIT TACT C6: an action door's box
 import { CAPSULE_HEIGHT, CAPSULE_RADIUS, STEP_OFFSET } from '../player/motor.js';   // FIELD BUGS 2026-10-04d CRATE-FREE: a freed body keeps its own floor, a step at most
-import { FALL_CHECK_DROP } from './enemyMotor.js';
+import { FALL_CHECK_DROP } from './enemy/enemyMotor.js';
 
 /** How fast a body is pushed out of another, metres a second. */
 export const FOE_SPACING_SPEED = 3;
@@ -17,7 +17,7 @@ export const FOE_SPACING_SPEED = 3;
 export const FOE_SPACING_GAP = 2 * CAPSULE_RADIUS;
 
 /** DOOR-JAM (FIELD BUGS 2026-10-14b): the height a body's controller sweeps at - its motor's own (`controllerHeight`,
- *  EnemyMotor.HeightAdjust's crouch under a doorway's lintel, characters/enemyMotor.js _heightAdjust), else its capsule.
+ *  EnemyMotor.HeightAdjust's crouch under a doorway's lintel, characters/enemy/enemyMotor.js _heightAdjust), else its capsule.
  *  Two controllers meet at their live heights, and a push at the full height would shove a crouched body back out from
  *  under the lintel it is passing. The ground check under a push keeps the body's own height (FallCheck's, `supported`). */
 export const sweepHeight = (ai) => ai.controllerHeight ?? ai.height ?? CAPSULE_HEIGHT;
@@ -281,19 +281,21 @@ export function bodyFits(collider, feet, height = CAPSULE_HEIGHT) {
  * meets the room's two walls first; under a table or a walkway with no underside the room is open round it). A room's
  * own shell looks in at it, and a model whose faces look both ways holds it in DFU too. Whatever its height: a body in a
  * crate taller than itself (41833, a 2.1 m cube) is held by its walls all the same. A collider that cannot answer - no
- * raycastHit to read a face's side by, no sphereOverlaps for the free's fit (bodyFits) - holds nobody.
+ * raycastHit to read a face's side by, no sphereOverlaps for the free's fit (bodyFits) - holds nobody. QUEST-FOE-WALL
+ * (FIELD BUGS 2026-10-15c, "Quest enemy spawned inside object"): and a COLUMN - a pillar to the ceiling has no lid in
+ * reach (no cap, or one past LODGE_REACH), so without one a body is held only when every bearing meets a face's back.
  */
 export function lodgedIn(collider, feet) {
   if (!feet || typeof collider?.raycastHit !== 'function' || typeof collider.sphereOverlaps !== 'function') return false;
   _knee[0] = feet[0]; _knee[1] = feet[1] + LODGE_KNEE; _knee[2] = feet[2];
   const lid = collider.raycastHit(_knee, UP, LODGE_REACH);
-  if (lid?.back !== true || !Number.isFinite(lid.dist)) return false;
+  const lidded = lid?.back === true && Number.isFinite(lid.dist);
   let walls = 0;
   for (const dir of KNEE_BEARINGS) {
     const h = collider.raycastHit(_knee, dir, LODGE_REACH);
     if (h?.back === true && Number.isFinite(h.dist)) walls++;
   }
-  return walls >= 2;
+  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);   // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin
 }
 
 /** CRATE-FREE: does the line from `from` along the unit `dir` run `dist` meeting no face that looks at it? The faces it

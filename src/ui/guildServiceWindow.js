@@ -26,8 +26,8 @@
 //   Services.GetServiceLabelText (guildServiceFlow.SERVICE_LABEL).
 //
 // The window is geometry and hit rects only; every law it obeys is in
-// systems/guildServiceFlow.js (routing, OnPush, the access refusal)
-// and systems/guilds.js (the join decision). The message boxes it
+// systems/guild/guildServiceFlow.js (routing, OnPush, the access refusal)
+// and systems/guild/guilds.js (the join decision). The message boxes it
 // stacks are the U11 parchment.
 //
 // THE HOTKEYS (D1, retiring the flag that stood here): the old note
@@ -49,14 +49,14 @@
 // because a member panel drops Join and because Spymaster's S and
 // SellMagicItems' S sit under a Talk that is T, never colliding.
 
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
-import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows, fitBoxRows } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { drawText, measureText } from './text.js';
-import { serviceLabel, serviceShortcutButton, isServiceBox } from '../systems/guildServiceFlow.js';
+import { serviceLabel, serviceShortcutButton, isServiceBox } from '../systems/guild/guildServiceFlow.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 
 /** mainPanel.Size (:124) - and the size of both IMGs. */
@@ -79,7 +79,7 @@ export const SERVICE_LABEL_OFFSET_Y = 1;
  *  offers a fourth press, the Reforge's window (ui/reforgeDoor.js), when its host hands `hooks.reforge`. DFU's 130x51
  *  art has no room for it, so this one row is the port's own, drawn under the panel in the parchment's dark (the
  *  classic skin's first port-drawn row - PORTAL1's Portal Stone row on the two shop popups took its law; the Enhanced
- *  Plus face lists it beside the service - ui/enhancedPorts.js), and
+ *  Plus face lists it beside the service - ui/enhanced/enhancedPorts.js), and
  *  its key is F. Panel-relative, as the four are. */
 export const REFORGE_RECT = Object.freeze([5, 53, 120, 10]);
 export const REFORGE_ROW = 'Reforge';
@@ -320,7 +320,9 @@ export class GuildServiceWindow {
     if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) { this._box = null; return; }   // ENH-NOTICE2
     if (top) {
       const buttons = top.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
-      this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);   // BOX1: a textId box reads its (random-variant) record ONCE
+      // BOX1: a textId box reads its (random-variant) record ONCE; AUDIT GUILD-WORDS II F-2: a row the port writes - a
+      // chair's service, a chair's house - wraps on the screen (SS5's fitBoxRows), where it ran past both edges
+      this._box = layoutMessageBox(font, fitBoxRows(font, latchBoxRows(top, this.hooks.rows)), buttons);
       if (!drawMessageBox(renderer, m, font, this._box)) {
         // art-less fallback keeps the text chain (the U11 shape)
         (this._box.rows ?? []).forEach((r, i) =>

@@ -5,7 +5,7 @@
     "old": "  rows.push({ text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`, kind: 'water', name: TAVERN_MENU_TEXT.water, price: cost(water) });   // ESSENTIALS-HALF: the water too\n",
     "new": "",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  rows.push({ text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`, kind: 'water', name: TAVERN_MENU_TEXT.water, price: cost(water) });   // ESSENTIALS-HALF: the water too\n",
     "new": "  if (!closed) rows.push({ text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`, kind: 'water', name: TAVERN_MENU_TEXT.water, price: cost(water) });   // ESSENTIALS-HALF: the water too\n",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return Math.min(...(soft.length ? soft : drinks).map((k) => k.price));",
     "new": "  return Math.max(...(soft.length ? soft : drinks).map((k) => k.price));",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const soft = drinks.filter((k) => !((k.strength | 0) > 0));",
     "new": "  const soft = drinks;",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return Math.min(...(soft.length ? soft : drinks).map((k) => k.price));",
     "new": "  return Math.min(...soft.map((k) => k.price));",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (!skins.length) return { ok: false, text: TAVERN_MENU_TEXT.noSkin };\n",
     "new": "",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (skins.every((i) => WATERSKIN_CAPACITY_KG - waterIn(i) <= 0)) return { ok: false, text: TAVERN_MENU_TEXT.skinsFull };\n",
     "new": "",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (skins.every((i) => WATERSKIN_CAPACITY_KG - waterIn(i) <= 0))",
     "new": "  if (skins.some((i) => WATERSKIN_CAPACITY_KG - waterIn(i) <= 0))",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  return { text: drinkAtSource(entity, now).text, minutes: 0 };",
     "new": "  return { text: drinkAtSource(entity, now).text, minutes: DRINK_MINUTES };",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  return { text: drinkAtSource(entity, now).text, minutes: 0 };",
     "new": "  const was = entity.survival?.thirst;\n  const text = drinkAtSource(entity, now).text;\n  if (entity.survival) entity.survival.thirst = was;\n  return { text, minutes: 0 };",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -95,16 +95,16 @@
     "old": "tavernEat(s, now, row.worth) : row.kind === 'water' ? tavernWater(h.entity, now) : tavernDrink(s, row.strength, { endurance, rules });\n        h.advanceMinutes",
     "new": "tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });\n        h.advanceMinutes",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
     "name": "INN-WATER-the-enhanced-window-pours-a-drink-for-the-water",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "tavernEat(s, now, row.worth) : row.kind === 'water' ? tavernWater(h.entity, now) : tavernDrink(s, row.strength, { endurance, rules });\n  h.advanceMinutes",
     "new": "tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });\n  h.advanceMinutes",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
@@ -113,16 +113,16 @@
     "old": "        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });",
     "new": "        const order = tavernOrder(s, now, row, { endurance, rules });",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   },
   {
     "name": "INN-WATER-the-enhanced-window-never-names-the-skins",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });",
     "new": "  const order = tavernOrder(s, now, row, { endurance, rules });",
     "tests": [
-      "test/fb0930_cc_innwater.test.js"
+      "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
   }
 ]

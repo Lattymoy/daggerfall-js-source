@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// FIRM1 (2026-10-13; bible/06-Systems/Firmament.md) - WHAT THE FIRMAMENT DOES. The law (net/firmamentLaw.js) sums and
+// FIRM1 (2026-10-13; bible/06-Systems/Firmament.md) - WHAT THE FIRMAMENT DOES. The law (net/firmament/firmamentLaw.js) sums and
 // caps every channel the stars allocated carry; the tree in force is firmamentLive.js's; this file lays those channels
 // onto the seams the Sigil Sets, the loot and the Arcane paths opened - registered here at import, each a no-op for
 // anyone but MY entity, the tree in force:
@@ -32,24 +32,24 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SKILLS, SKILL_KEYS, permanentSkillValue } from './skills.js';
-import { ATTRIBUTES, COMBAT_SKILLS, LIFE_SKILLS, FIRM_ELEMENTS, blowPct, castCostPct, statDef, pctOf } from '../net/firmamentLaw.js';
+import { ATTRIBUTES, COMBAT_SKILLS, LIFE_SKILLS, FIRM_ELEMENTS, blowPct, castCostPct, statDef, pctOf } from '../net/firmament/firmamentLaw.js';
 import { firmamentStats, onFirmamentChange, firmamentInForce } from './firmamentLive.js';
-import { sigilDueling } from './sigil.js';
+import { sigilDueling } from './sigil/sigil.js';
 import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS, NUMBER_BODY_PARTS, STANDING_CHANNELS, computeEntityMods } from './entityMods.js';
-import { registerSpellPowerMod, registerSpellPierceMod } from './spellPower.js';
+import { registerSpellPowerMod, registerSpellPierceMod } from './spell/spellPower.js';
 import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
 import { registerPlayerDamageMod, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
 import { registerPlayerKillListener } from './playerKills.js';
 import { registerMagicRoundHook } from './worldTick.js';
 import { registerAbsorptionChance } from './absorption.js';
-import { pendingPlayerBlow } from './sigilSetPowers.js';   // the door's one law of what a foe's blow is
-import { foeGroup } from './lootPowers.js';   // the loot's one foe group
+import { pendingPlayerBlow } from './sigil/sigilSetPowers.js';   // the door's one law of what a foe's blow is
+import { foeGroup } from './loot/lootPowers.js';   // the loot's one foe group
 import { healMine, manaMine } from './playerHeal.js';
 import { playerDoor } from './playerDoor.js';
 import { setOnlineLayerExtra, renownHpOf, renownMpOf } from './renownLayer.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
 
 /** @type {Readonly<Record<string, number>>} */
 const NONE = Object.freeze({});

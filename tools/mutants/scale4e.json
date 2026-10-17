@@ -5,7 +5,7 @@
     "old": "            if ! grep -qiE 'overloaded|code: 7429' \"$log\"; then",
     "new": "            if true; then",
     "tests": [
-      "test/scale4e.test.js"
+      "test/tooling/scale4e.test.js"
     ],
     "note": "an overload stops the deploy, as it did PR #755's"
   },
@@ -15,7 +15,7 @@
     "old": "            if ! grep -qiE 'overloaded|code: 7429' \"$log\"; then",
     "new": "            if false; then",
     "tests": [
-      "test/scale4e.test.js"
+      "test/tooling/scale4e.test.js"
     ],
     "note": "a migration that does not apply asked again for five and a half minutes"
   },
@@ -25,7 +25,7 @@
     "old": "            sleep \"$wait\"",
     "new": "            :",
     "tests": [
-      "test/scale4e.test.js"
+      "test/tooling/scale4e.test.js"
     ],
     "note": "six asks inside a second - all of them inside the wave"
   },
@@ -35,7 +35,7 @@
     "old": "            if [ \"$wait\" = 0 ]; then break; fi\n",
     "new": "",
     "tests": [
-      "test/scale4e.test.js"
+      "test/tooling/scale4e.test.js"
     ],
     "note": "a wait after the last ask, for nothing"
   },
@@ -45,7 +45,7 @@
     "old": "          echo \"::error::the database stayed overloaded for 5.5 minutes - re-run this job once it settles\"\n          exit 1",
     "new": "          echo \"::error::the database stayed overloaded for 5.5 minutes - re-run this job once it settles\"\n          exit 0",
     "tests": [
-      "test/scale4e.test.js"
+      "test/tooling/scale4e.test.js"
     ],
     "note": "a database that never answered taken as migrated - the Worker deployed over a schema it may not have"
   }

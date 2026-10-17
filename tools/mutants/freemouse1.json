@@ -5,9 +5,9 @@
     "old": "  'ActivateCenterObject', 'ActivateCursor',",
     "new": "  'ActivateCenterObject', 'ActivateCursor', 'FreeMouse',",
     "tests": [
-      "test/freemouse.test.js",
-      "test/inputactions.test.js",
-      "test/qs2_inputs.test.js"
+      "test/systems/freemouse.test.js",
+      "test/systems/inputactions.test.js",
+      "test/systems/qs2_inputs.test.js"
     ]
   },
   {
@@ -16,8 +16,8 @@
     "old": "  ['KeyY', 'FreeMouse'],",
     "new": "",
     "tests": [
-      "test/freemouse.test.js",
-      "test/inputactions.test.js"
+      "test/systems/freemouse.test.js",
+      "test/systems/inputactions.test.js"
     ]
   },
   {
@@ -26,7 +26,7 @@
     "old": "  ['KeyY', 'FreeMouse'],",
     "new": "  ['KeyK', 'FreeMouse'],",
     "tests": [
-      "test/freemouse.test.js"
+      "test/systems/freemouse.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "  ['KeyY', 'FreeMouse'],",
     "new": "  ['KeyJ', 'FreeMouse'],",
     "tests": [
-      "test/freemouse.test.js",
-      "test/inputactions.test.js"
+      "test/systems/freemouse.test.js",
+      "test/systems/inputactions.test.js"
     ]
   },
   {
@@ -45,9 +45,9 @@
     "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',",
     "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen',",
     "tests": [
-      "test/freemouse.test.js",
-      "test/qs2_inputs.test.js",
-      "test/soc5_interact.test.js"
+      "test/systems/freemouse.test.js",
+      "test/systems/qs2_inputs.test.js",
+      "test/ui/soc5_interact.test.js"
     ]
   },
   {
@@ -56,9 +56,9 @@
     "old": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],",
     "new": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'],",
     "tests": [
-      "test/freemouse.test.js",
-      "test/enhancedControls.test.js",
-      "test/kb1_keybinds.test.js"
+      "test/systems/freemouse.test.js",
+      "test/ui/enhanced/enhancedControls.test.js",
+      "test/ui/kb1_keybinds.test.js"
     ]
   },
   {
@@ -67,9 +67,9 @@
     "old": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n  ]),",
     "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'], ['FreeMouse', 'Free the mouse (press again to look)'],\n  ]),",
     "tests": [
-      "test/freemouse.test.js",
-      "test/qs2_inputs.test.js",
-      "test/enhancedControls.test.js"
+      "test/systems/freemouse.test.js",
+      "test/systems/qs2_inputs.test.js",
+      "test/ui/enhanced/enhancedControls.test.js"
     ]
   },
   {
@@ -78,8 +78,8 @@
     "old": "    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;",
     "new": "    if (!(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;",
     "tests": [
-      "test/freemouse.test.js",
-      "test/kb1_keybinds.test.js"
+      "test/systems/freemouse.test.js",
+      "test/ui/kb1_keybinds.test.js"
     ]
   },
   {
@@ -88,8 +88,8 @@
     "old": "    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;",
     "new": "    if (!acts.includes(FREE_MOUSE_ACTION)) return;",
     "tests": [
-      "test/freemouse.test.js",
-      "test/kb1_keybinds.test.js"
+      "test/systems/freemouse.test.js",
+      "test/ui/kb1_keybinds.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "  if (_cursorActive) releaseLook();\n  else if (canvas) requestLook(canvas);",
     "new": "  if (_cursorActive) releaseLook();",
     "tests": [
-      "test/freemouse.test.js"
+      "test/systems/freemouse.test.js"
     ]
   },
   {
@@ -107,8 +107,8 @@
     "old": "  if (_cursorActive || _cursorHolds.size) return;\n  _lastRequestAt = nowMs();",
     "new": "  if (_cursorHolds.size) return;\n  _lastRequestAt = nowMs();",
     "tests": [
-      "test/freemouse.test.js",
-      "test/menu_pointer_relock.test.js"
+      "test/systems/freemouse.test.js",
+      "test/scenes/menu_pointer_relock.test.js"
     ]
   }
 ]

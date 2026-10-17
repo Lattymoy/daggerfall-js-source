@@ -3,7 +3,7 @@
 // Mac: "with the logbook and history, I want them as one detailed UI."
 //
 // TWO WINDOWS BECAME ONE BECAUSE THEY ARE ONE SUBJECT. The logbook
-// (ui/questJournal.js) and the history (ui/playerHistory.js) are
+// (ui/quest/questJournal.js) and the history (ui/playerHistory.js) are
 // separate classic windows built at four sites between them:
 //
 //   ui/charSheetNav.js:"? () => new QuestJournalWindow"   the sheet's LOGBOOK button
@@ -31,15 +31,15 @@
 // exact shape AUDIT-EOTB spent a day on.
 //
 // The duplication the old note feared is answered where it actually
-// lives: the WALK is `scenes/questBridge.js`'s `questLog()` and the
-// rail it builds is `ui/questRail.js`, both shared with the pause tab,
+// lives: the WALK is `scenes/quest/questBridge.js`'s `questLog()` and the
+// rail it builds is `ui/quest/questRail.js`, both shared with the pause tab,
 // so the two faces cannot disagree about which quests are live or what
 // they say. What differs is the drawing, and two faces drawing one
 // model differently is the whole point of having two skins.
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
-import { QuestJournalWindow, questJournalArtLoaded } from './questJournal.js';
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
+import { QuestJournalWindow, questJournalArtLoaded } from './quest/questJournal.js';
 import { PlayerHistoryWindow, playerHistoryArtLoaded } from './playerHistory.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
@@ -89,7 +89,7 @@ export const historyDoorReady = () => isEnhanced() || playerHistoryArtLoaded();
  *   shareQuest            QUEST1: (uid, questName, displayName) => void
  *                         - the Share button's own click, wired to
  *                         net/online.js's shareQuest through
- *                         systems/questShare.js's prepareQuestShare.
+ *                         systems/quest/questShare.js's prepareQuestShare.
  *   pageShare             JOURNAL1, OURS not DFU's: () => null | {
  *                         readers, why, show, letter } - a NOTE's Share
  *                         in the enhanced Notes section. `readers` are
@@ -146,9 +146,9 @@ function enhancedChronicleOverlay(deps, section) {
   host.style.cssText = 'position:fixed;inset:0;z-index:11';
   document.body.append(host);
   unregister = registerOverlay(close);
-  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+  // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
   mountEnhancedChunk({
-    load: () => import('./enhancedChronicle.js'),
+    load: () => import('./enhanced/enhancedChronicle.js'),
     mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: close }); },
     alive: () => !done, host, onDismiss: close, label: 'chronicle',
   });
@@ -170,7 +170,7 @@ function enhancedChronicleOverlay(deps, section) {
     // is what L is) and Escape ('back'), which is the pause key. The
     // three sibling doors carry this comment BECAUSE they hit it first;
     // the rule was enforced by memory in three files and missed in the
-    // fourth. test/crash1_overlay_contract.test.js derives it now.
+    // fourth. test/ui/crash1_overlay_contract.test.js derives it now.
     isChoiceWindow: true,
     get done() { return done; },
     input() { /* the view's own capture keydown owns the keyboard */ },

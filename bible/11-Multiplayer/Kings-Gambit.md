@@ -96,7 +96,7 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
   ranged. 46 units, sorted by cost, then by name (ordinal).
 - THE KINGS: the host's the Knight (145), the guest's the Barbarian (143) - two sprites over one set of numbers: level 8,
   70 hp, attack 16, free.
-- THE TABLE, computed off the port's own `characters/enemyBasics.js` (ENEMY_BASICS, DFU's rows) at float32 and at
+- THE TABLE, computed off the port's own `characters/enemy/enemyBasics.js` (ENEMY_BASICS, DFU's rows) at float32 and at
   float64, with half to even and with half up: every unit the same - the vanilla rows meet no half. The last column is
   FACT: the card each creature already is (`cardSources.js:"export const FOE_CARDS = Object.freeze({"`).
 
@@ -266,10 +266,10 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
 - Motion: a walk at 3.5 cells a second (`MoveSpeed`), the lunge 0.28 s (`LungeTime`), the hit's shake and flash 0.45 s
   (`HitTime`), a shot's flight 0.3 s (`ProjectileTime`), a floating number 1 s (`FloatTime`), the heal's glow 0.6 s
   (`HealTime`), the death's fade 0.6 s (`DeathFade`) from 0.27 s after the blow lands; the sprites at 6, 10 and 4 frames a
-  second (`MoveFps`, `AttackFps`, `IdleFps` - DFU's own MOVE, PRIMARY_ATTACK and IDLE speeds, `characters/mobileUnit.js`).
+  second (`MoveFps`, `AttackFps`, `IdleFps` - DFU's own MOVE, PRIMARY_ATTACK and IDLE speeds, `characters/mobile/mobileUnit.js`).
 - Sounds - DFU's SoundClips by DAGGER.SND index (FACT: the names `systems/soundClips.js` carries; the rest are unnamed in
   the port and are named from SoundClips.cs by the slice that plays them): win 32 (ArenaFanfareLevelUp), lose 458
-  (`systems/arenaSound.js`'s groan), coin 361 (GoldPieces), challenge 300 (DiceRoll), start 78 (DrawWeapon), click 360
+  (`systems/arena/arenaSound.js`'s groan), coin 361 (GoldPieces), challenge 300 (DiceRoll), start 78 (DrawWeapon), click 360
   (ButtonClick), potion 365 (MakePotion), death 15 (BodyFall), a hazard's warning 1; a blow's hit 108-112 (Hit1, Hit2 and
   three unnamed), a calling's swing 105, 347, 106 (SwingLowPitch, SwingMediumPitch, SwingHighPitch); an archer's shot 3
   (ArrowShoot) and its hit 4; a mage's spell one of 81-85 and its hit 86; a calling hurt 299; fire 89, spikes 110,
@@ -299,20 +299,20 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
 THE MOD'S is ported the way the doctrine ports DFU: its logic verbatim, its constants and tables byte for byte, the
 structure ours.
 
-- THE LAW, `net/kingsGambit.js` (KG1) - pure, DOM-free, ONE HOME for the device and the relay, as `net/iliacHand.js` is:
+- THE LAW, `net/kingsGambit.js` (KG1) - pure, DOM-free, ONE HOME for the device and the relay, as `net/iliac/iliacHand.js` is:
   the board and its build, the hazards, the units and the roster, the deployment, the legal commands and their effect, a
   turn's end, the game's end, and each seat's view (KG1 found none to make - section 11). A refused command answers a
-  refusal word and changes nothing (a relay keeps the last good state - `net/cardLaw.js`'s way).
+  refusal word and changes nothing (a relay keeps the last good state - `net/card/cardLaw.js`'s way).
 - THE ROSTER IS DFU's TABLE: the units read `enemyBasics.js:"export const ENEMY_BASICS = Object.freeze({"` (ONE DFU
   MEMBER, ONE EXPORT - never a second literal of the levels and the health), at float32 with RoundToInt's half to even,
   pinned deepEqual against section 2.2's table. DECIDED: the vanilla rows, never a mod's overlay. Meaner Monsters is
-  applied at a foe's mint (`applyMeanerMonsters`, `characters/enemyEntity.js`), not to the table, and one roster for every
+  applied at a foe's mint (`applyMeanerMonsters`, `characters/enemy/enemyEntity.js`), not to the table, and one roster for every
   client and the relay is what the mod's own `RosterSig` asked for - two clients whose rosters differed refused to play.
 - THE DICE: the mod's `System.Random(seed)` is .NET's own stream; the port draws from the `rand32` it is handed
   (`net/dice.js` drawBelow: Rand(a, b) is a + drawBelow(b - a), NextDouble is rand32 / 2^32) - the same uniform law over
   another stream. No client must agree with the relay's stream (the relay rolls, 5.8). The ORDER of the draws is the mod's
   (BuildMap's, SpawnHazardPair's, a blow's one).
-- THE INNKEEPER'S PLAY (KG2), `systems/gambitPatrons.js`: AiAction, TryEscape, AiBlunder, the tiers and TierFor's
+- THE INNKEEPER'S PLAY (KG2), `systems/gambit/gambitPatrons.js`: AiAction, TryEscape, AiBlunder, the tiers and TierFor's
   bands, verbatim; the regular's army through the law's AutoFill (`autoFill`, KG1 - `regularArmy`; AUDIT KG C4). Unity's
   `Random.value` and `Random.Range` are the table's own source (the card table's crypto draw - never DFU's one stream).
 - KEPT BUG FOR BUG, each pinned: the Dragonling twice in the roster (rows 34 and 40, one card, one set of numbers); the two
@@ -335,7 +335,7 @@ structure ours.
   picture-only mode of `paintIliacCard`, pinned - so no Iliac number stands beside the gambit's own (AUDIT KG D12:
   `paintIliacCard` paints both on every face, the tile's included; section 14.1).
 - FACT: nine of the roster's 46 wear no card (2.2's table): seven monsters with no FOE_CARDS row and no card in
-  `net/iliacCards.js` - the Grizzly Bear, the Sabretooth Tiger, the Spider, the Slaughterfish, the Mummy, the Frost
+  `net/iliac/iliacCards.js` - the Grizzly Bear, the Sabretooth Tiger, the Spider, the Slaughterfish, the Mummy, the Frost
   Daedra, the Fire Daedra - and the Archer and the Ranger, for whom FOE_CARDS names none. Q3.
 - THE ARMY (Q2). DECIDED (section 10.2): the mod's roster whole - any unit, as often as 300 points buy - so every player
   sits down at once and the cards are the units' faces. NOT CHOSEN: an army only of the creature cards the binder holds,
@@ -355,7 +355,7 @@ structure ours.
 
 - DECIDED: the board is laid on the table's felt. FACT: the felt is 1.42 by 0.92 m inside its rail
   (`cardTableProp.js:"export const CARD_TABLE_RAIL = 0.04;"`, with CARD_TABLE_W 1.5 and CARD_TABLE_D 1), and the prop's
-  chairs stand two to a long side, 0.375 m either side of its middle, and one at each end (`world/cardTables.js`
+  chairs stand two to a long side, 0.375 m either side of its middle, and one at each end (`world/card/cardTables.js`
   seatSpots).
 - DECIDED (AUDIT KG C1): laid ALONG THE TABLE'S OWN AXES, square to the felt's edges, as Hold'em's board lies
   (`cardTables.js` tableFrame's axisYaw), its foot - the host's king's row - at the edge nearest the host's chair: from a
@@ -375,7 +375,7 @@ structure ours.
 - Hazards: the mod's drawn effects (`DrawHazard` - what the shipped mod shows when its particles fail, and near enough
   what its blobs show when they do not): fire's base and three flickering flames, spikes' six spikes, poison's rising
   bubbles, a warning's pulsing outline and "!".
-- THE PRESS IS A CELL: a press on the cloth reads the table point under it (`world/cardHand.js` tablePoint, CARDS3b) as a
+- THE PRESS IS A CELL: a press on the cloth reads the table point under it (`world/card/cardHand.js` tablePoint, CARDS3b) as a
   cell - the mod's OnCellClicked: select one's own piece, move to a lit cell, attack a ringed foe; the panel holds the
   rest. CARDS-TOUCH holds: a seated finger is the table's (`Tavern-Cards.md` section 31). Under a finger a press snaps to
   the nearest piece or lit cell and stages before it spends, and the keys and the pad reach every cell (section 14.3;
@@ -393,7 +393,7 @@ structure ours.
 - NOT CHOSEN (section 10.1): the creature's own DFU sprite as an animated miniature - the mod's look. FACT: the
   port can draw it with what it has - a billboard batch per figure (`renderer.createBillboardBatch`, `drawBillboards` in
   the interior's pass, lit by the room as every foe is), its frames uploaded off the player's own ARENA2 at runtime
-  (`scenes/dataPipeline.js` uploadRecordFrame), DFU's records by facing (`characters/mobileUnit.js`), sized by
+  (`scenes/dataPipeline.js` uploadRecordFrame), DFU's records by facing (`characters/mobile/mobileUnit.js`), sized by
   `world/rmbFlats.js` mobileBillboardSize scaled to the cell. `Tavern-Cards.md` 6.2 bars ARENA2 art as a CARD's picture,
   not as a piece's; A RENDER OF GAME DATA IS GAME DATA bars committing it, which a runtime read never does. It is the
   mod's picture, not the card system's, and nothing here can see it without the player's ARENA2. Its module would be its
@@ -411,14 +411,14 @@ structure ours.
   End turn, Forfeit (two presses); the information box, filled by a press as by a hover; the log; the result. Every
   surface, line and number is section 14's (AUDIT KG D2-D23).
 - Not the native-window rule's - no DFU window stands behind it (`Tavern-Cards.md` section 14) - and no free style
-  either: it wears the card tables' kit (`ui/cardPanelKit.js`, CARDS-PLUS), and the stone-and-brass kit paints it by
+  either: it wears the card tables' kit (`ui/card/cardPanelKit.js`, CARDS-PLUS), and the stone-and-brass kit paints it by
   role, as every Enhanced Plus screen (section 14.1). Its words are
   ours, plain, through the text core (14.4, 14.6); the mod's (section 2) are its record, never the screen's.
 
 ### 5.6 Sound
 
 - The mod's clips (2.10), each by its number - and THE TRAP: `scenes/world.js` installs PEERFX1's one-shot observer, and
-  `net/peerFx.js` isHurtClip reads clips 108-112 at volume exactly 1 as the player struck, told to the room. The mod plays
+  `net/peer/peerFx.js` isHurtClip reads clips 108-112 at volume exactly 1 as the player struck, told to the room. The mod plays
   its hits at volume 1 through PlayOneShot, so a verbatim port would tell every peer the player was hit at each blow on
   the cloth. DECIDED: the table's sounds are played at the table (`audio.play3d` at the cloth, as the room's other sounds
   are), never through the observed flat one-shot.
@@ -444,8 +444,8 @@ structure ours.
   topics any holder of a six-letter code can read; both clients run the game and each settles its own purse on its own
   word. `Tavern-Cards.md` section 7 holds: no client-dealt card online, ever - the relay deals, or nobody plays.
 - DECIDED (KG5): a King's Gambit table in the relay beside Hold'em's and Iliac Hand's, its law `net/kingsGambit.js` in the
-  relay's bundle (with `characters/enemyBasics.js`, 46 KB of data, and `systems/mathf.js` - the relay's graph pin,
-  `test/relayversion.test.js` RELAY_GRAPH, gains both). A room keeps its tables at the cloth's index - one
+  relay's bundle (with `characters/enemy/enemyBasics.js`, 46 KB of data, and `systems/mathf.js` - the relay's graph pin,
+  `test/net/relayversion.test.js` RELAY_GRAPH, gains both). A room keeps its tables at the cloth's index - one
   game a cloth, each game's sit refusing while either other game holds that index ('other game'). Two seats; each army
   told to the relay at Ready and to the other seat only when both are (the mod's ARMY at Ready); the relay builds the board
   and rolls every die from its own CSPRNG; a command is the law's (refused in words when not); the room told every event,
@@ -459,7 +459,7 @@ structure ours.
   the pins that name the version (`wire.js:"export const ILIAC_RELAY_MIN = 182;"` is the minimum's pattern); the client's
   send, its welcome gate and its frames in `net/online.js` and `scenes/world.js`; the alarm, the socket's close and the
   room's sweep.
-- BUILT (KG5, section 18): every seam above, the table's law `net/gambitTable.js`, relay world204.
+- BUILT (KG5, section 18): every seam above, the table's law `net/gambit/gambitTable.js`, relay world204.
 - BUILT (KG6, section 19): the gold table through CARDS6's escrow (an arm of its own in `server-account/src/cards.js`,
   AUDIT KG C24), and the season board with its GRANDMASTER (CARDS10's, the Arena's way).
 
@@ -489,8 +489,8 @@ structure ours.
 - ASYNC NEVER DROPS: the relay's frames folded into one view, a word on its way said again (Hold'em's and Iliac Hand's
   client mirrors).
 - A SLICE CLOSES ITS LEDGER ROW: each slice opens or narrows its section A row.
-- THE CARD TABLES' KIT BY ROLE (AUDIT KG D1-D4, D23): the panel wears `ui/cardPanelKit.js`'s chrome, as Hold'em's and
-  Iliac Hand's do (CARDS-PLUS), and the stone-and-brass kit paints its every surface by role (`ui/enhancedFrame.js`
+- THE CARD TABLES' KIT BY ROLE (AUDIT KG D1-D4, D23): the panel wears `ui/card/cardPanelKit.js`'s chrome, as Hold'em's and
+  Iliac Hand's do (CARDS-PLUS), and the stone-and-brass kit paints its every surface by role (`ui/enhanced/enhancedFrame.js`
   FRAME_ROLES; PLUS-DRESS), in the pixel face (FONT1), at the type floor (FONT3) - 14.1, 14.2.
 - A FINGER HAS NO HOVER, AND IT IS 44 PX: what a hover says a press says; every press a finger's size on a phone (Plain
   Words law 5; U51) - 14.3.
@@ -506,9 +506,9 @@ Each ships alone and is verifiable without the next.
 | Slice | What it builds |
 |---|---|
 | **KG1** SHIPPED (section 11) | THE LAW: `net/kingsGambit.js` - the board and its build, hazards, units and roster, the deployment, the turn, a blow, potions, the end (a seat's view: none to make, section 11); pins deepEqual against section 2's tables, whole games on a fixed source, mutants. |
-| **KG2** SHIPPED (section 12) | THE INNKEEPER'S PLAY: `systems/gambitPatrons.js` - AiAction, TryEscape, AiBlunder, the tiers over a regular's seed, the regular's army by the law's AutoFill (AUDIT KG C4). MEASURE: each tier against an Auto-filled 300 over seeded games. |
+| **KG2** SHIPPED (section 12) | THE INNKEEPER'S PLAY: `systems/gambit/gambitPatrons.js` - AiAction, TryEscape, AiBlunder, the tiers over a regular's seed, the regular's army by the law's AutoFill (AUDIT KG C4). MEASURE: each tier against an Auto-filled 300 over seeded games. |
 | **KG-SET** SHIPPED (section 15) | The nine creatures painted into the set (section 10.3) - cards, emblems, Iliac Hand's numbers and text, FOE_CARDS rows (so their foes drop them, CARDS9), Iliac Hand's balance measured again; a relay version (the catalog is relay law). Before KG3, whose grid shows every unit's card. |
-| **KG3** SHIPPED (section 16) | THE EVENING OFFLINE: the session (the mod's clock - the 0.9 s turn's end, the 1.2 s pauses, the 1.3 s result), the host's slot, the panel (setup, army, turn, result) to section 14 - in the card tables' kit (`ui/cardPanelKit.js`, CARDS-PLUS) and the roles, the face, the type, the finger, the keys, the four plain-words blocks, the phone - with its pins (14.9), the stake and the regulars' night's purse; the panel's words through the text core, `t(key, en)`, each new key with its drafts in the thirteen whole languages (L10N6's rule, the twelve drafting owing them - section 16.5; the law keeps keys, section 11); the board a flat mat with the pieces as their cards and the press as a cell, staged under a finger (14.3; AUDIT KG C13: the press had been KG4's alone, and the game cannot be played without it) - the first playable game. The mod vendored as it ships (its manifest, its IL, a README with its provenance and the owner's word - Q6) with its registry row, its credit and its Features row: the credits' test holds a credited mod to a Features row, which only the playable game has. |
+| **KG3** SHIPPED (section 16) | THE EVENING OFFLINE: the session (the mod's clock - the 0.9 s turn's end, the 1.2 s pauses, the 1.3 s result), the host's slot, the panel (setup, army, turn, result) to section 14 - in the card tables' kit (`ui/card/cardPanelKit.js`, CARDS-PLUS) and the roles, the face, the type, the finger, the keys, the four plain-words blocks, the phone - with its pins (14.9), the stake and the regulars' night's purse; the panel's words through the text core, `t(key, en)`, each new key with its drafts in the thirteen whole languages (L10N6's rule, the twelve drafting owing them - section 16.5; the law keeps keys, section 11); the board a flat mat with the pieces as their cards and the press as a cell, staged under a finger (14.3; AUDIT KG C13: the press had been KG4's alone, and the game cannot be played without it) - the first playable game. The mod vendored as it ships (its manifest, its IL, a README with its provenance and the owner's word - Q6) with its registry row, its credit and its Features row: the credits' test holds a credited mod to a Features row, which only the playable game has. |
 | **KG4** SHIPPED (section 17) | THE BOARD ON THE CLOTH: walls, pillars and water built; the hazards' drawn effects; the pieces' motion; the press on the built board (14.3); the cloth's marks in the house's coat (14.8); the lab (`cards.html` with a King's Gambit table) and its probes - the panel's at a desktop's and a phone's size (`tools/cardPanelsProbe.mjs`, the three panels' one probe - 14.9); the frame cost on the phone probe, as CARDS3c measured it. |
 | **KG5** SHIPPED (section 18) | ONLINE: the relay's table (a relay version), the wire, the client's mirror, spectators, the clock; friendly. |
 | **KG6** SHIPPED (section 19) | Gold tables online (the realm's escrow) and a season board with its title (section 10.7). |
@@ -584,7 +584,7 @@ point the record had left open. A number marked MEASURE is the first guess its s
   Archer and the Ranger drop theirs.
 - THE NINE, as cards of the set. Each effect below is a valid record of Iliac Hand's language (`fxRefusal` answers null for
   every one), and its words are exactly what `fxText` says of it. Iliac Hand's numbers are MEASURE at KG-SET: its 3,000
-  random games and the regulars' win rates are run again, and the curve (`net/iliacCards.js`'s header) is held.
+  random games and the regulars' win rates are run again, and the curve (`net/iliac/iliacCards.js`'s header) is held.
 
   | id | card | tier | cost | power | tags | emblem | text | flavor |
   |---|---|---|---|---|---|---|---|---|
@@ -600,15 +600,15 @@ point the record had left open. A number marked MEASURE is the first guess its s
 
 - AUDIT KG C21: the Grizzly Bear had been the Dreugh's twin - 3, 4, common, the same Reveal, a beast's copy of a sea
   card - and is a 3/5 that tires now, the Slaughterfish's 1/3 and the Zombie's 2/4 one step up (its effect checked as the
-  table's others are: `fxRefusal` null, `fxText` its words). KG-SET moves `test/cards8_catalog.test.js`'s pins: the
+  table's others are: `fxRefusal` null, `fxText` its words). KG-SET moves `test/systems/loot/cards8_catalog.test.js`'s pins: the
   cost-1 list (the Slaughterfish joins it), the kinds' and tiers' counts, the CARD_EMBLEMS literal and the digest.
 - THE REST OF KG-SET: six emblems painted in code (bear, cat, spider, fish, mummy, bow - `render/iliacCardFaces.js`, the
   painter's keys pinned equal to `CARD_EMBLEMS`); FOE_CARDS rows for mobile types 4, 5, 6, 11, 19, 25, 26, 141 and 142;
-  the cards in the house's packs and the regulars' decks by their tags; their worth by tier (`net/cardWorthLaw.js`); and a
+  the cards in the house's packs and the regulars' decks by their tags; their worth by tier (`net/card/cardWorthLaw.js`); and a
   relay version, because the catalog is relay law.
 - FOUND AT KG-SET (section 15): the set's words had no road to a player's language, and L10N4's ratchet would not let
   the nine's be written in English beside the others'. A card's rules and flavor are the display's now
-  (`systems/iliacCardWords.js`, through the text core); the catalog keeps the rules and the names.
+  (`systems/iliac/iliacCardWords.js`, through the text core); the catalog keeps the rules and the names.
 
 ### 10.4 The kings - THE BAY'S FOUR (Q4)
 
@@ -718,7 +718,7 @@ point the record had left open. A number marked MEASURE is the first guess its s
 
 The owner: **"Make the best and most detailed decisions. We also have permission"** - and the first slice after them.
 
-- **THE LAW** (`net/kingsGambit.js`): pure, DOM-free and plain data, importing only `characters/enemyBasics.js`,
+- **THE LAW** (`net/kingsGambit.js`): pure, DOM-free and plain data, importing only `characters/enemy/enemyBasics.js`,
   `net/dice.js` and `systems/mathf.js` (Unity's RoundToInt), so the relay can carry it at KG5. Every member of section
   2's game is one of its exports:
   - the board: `buildMap` (BuildMap - its layouts `KG_LAYOUTS` and `KG_OPEN_FIELD`, RandomChunks, PlaceWallCell, SetTile,
@@ -742,19 +742,19 @@ The owner: **"Make the best and most detailed decisions. We also have permission
 - **EVERY STEP A NEW STATE**: `gambitAct` and `finishTurn` answer `{state, events}` or `{refused}`, and never touch the
   state they were handed (a structuredClone, cardLaw's way), so a refused or broken step changes nothing and the relay
   can keep its last good state.
-- **ONE HOME, AND NAMES OF ITS OWN** (AUDIT 24's gate, `test/audit24_onehome.test.js`, which the first full run of the
+- **ONE HOME, AND NAMES OF ITS OWN** (AUDIT 24's gate, `test/systems/talk/audit24_onehome.test.js`, which the first full run of the
   tests that walk `src/` failed on five names the tree already declared): Mathf.RoundToInt is `systems/mathf.js`'s
   `roundToInt`, imported, not ported a second time. A cell's index, a blow's roll and InRange take names of their own
-  (`cellIndex`, `blowRoll`, `targetInRange`) beside `render/volumetricClouds.js`'s `cellOf`, `net/gateStrike.js`'s
+  (`cellIndex`, `blowRoll`, `targetInRange`) beside `render/volumetricClouds.js`'s `cellOf`, `net/gate/gateStrike.js`'s
   `blowOf` and `net/wire.js`'s `inRange`, three different things. The [0, 1) draw (NextDouble) was the module's own at
-  KG1, as `net/gateLaw.js`'s `unit` is; KG2 exports it as `nextDouble` (the regulars' choices draw through it, section
+  KG1, as `net/gate/gateLaw.js`'s `unit` is; KG2 exports it as `nextDouble` (the regulars' choices draw through it, section
   12), and AUDIT KG the checked source as `checkedRand32` (the regulars' steps draw through it). The ratchet stays at 42.
-- **THE WORDS ARE THE CLIENT'S** (L10N4, `test/l10n4_hardcoded.test.js`, which counted the layouts' five names in this
+- **THE WORDS ARE THE CLIENT'S** (L10N4, `test/systems/l10n4_hardcoded.test.js`, which counted the layouts' five names in this
   file once main's localization arc came in): the law keeps a layout's key (`pillared-hall`, ... `open-field`) and its
   floor tones, never its name. The mod's names (section 2.1) are words a player reads, so KG3's panel says them through
   the text core, as every word of the game it shows - the refusals, the log, the banners. The law's own strings are
   identities - keys, refusal words, event types - sent and compared, never shown. The ratchet holds this file at 0.
-- **A SEAT'S VIEW: NONE TO MAKE.** Section 4 planned each seat's view, as `net/iliacHand.js` has one. Nothing in a dealt
+- **A SEAT'S VIEW: NONE TO MAKE.** Section 4 planned each seat's view, as `net/iliac/iliacHand.js` has one. Nothing in a dealt
   game is hidden - both armies stand on the board, and the dice are the table's - so the state is each seat's view, and
   the guest's picture is the host's turned (the frame, above). The armies chosen before the deal are kept apart by
   whoever holds them: the relay's table at KG5.
@@ -777,7 +777,7 @@ The owner: **"Make the best and most detailed decisions. We also have permission
     the law's; the grid KG3 draws sorts a cost's ties by the names the player reads (10.2; AUDIT KG A15, C24).
   - THE LAW TRUSTS THE STATE IT IS HANDED: its steps refuse a command, never a state, and throw on one the law did not
     mint. KG5's relay checks a stored table's state when the room loads it (5.8; AUDIT KG A4).
-- **Pins:** `test/kg1_law.test.js`, 18 tests: the mod's numbers; the roster's 46 rows and the kings against section 2.2's
+- **Pins:** `test/net/kg1_law.test.js`, 18 tests: the mod's numbers; the roster's 46 rows and the kings against section 2.2's
   table, with RoundToInt's half to even; the army's law; Auto-fill on a scripted source; the Pillared hall, a sealed
   Guard rooms thrown away for a Moat and bridges, a kept Guard rooms, a Ruined keep's every chunk shape, and the Open field
   after thirty failures - each from scripted draws, its picture and its pairs; MapIsPlayable's 97% either side and the
@@ -804,9 +804,9 @@ The owner: **"Make the best and most detailed decisions. We also have permission
 
 The owner: **"Do KG2"**.
 
-- **THE PLAY** (`src/systems/gambitPatrons.js`): pure and DOM-free, the regulars' own half - the relay never plays one
+- **THE PLAY** (`src/systems/gambit/gambitPatrons.js`): pure and DOM-free, the regulars' own half - the relay never plays one
   (online is two players, section 5.8) - read off the law (`net/kingsGambit.js`: GetReachable, InRange, FoesInRange,
-  PathMap), as the Iliac Hand's regulars read theirs (`systems/iliacPatrons.js`). Its exports:
+  PathMap), as the Iliac Hand's regulars read theirs (`systems/iliac/iliacPatrons.js`). Its exports:
   - the tiers: `GAMBIT_TIERS` (Tiers - each its key, least stake, points, potions and blunders), `tierFor` (TierFor),
     `GAMBIT_TIER_HASH`, `GAMBIT_TIER_BANDS`;
   - the deal: `regularArmy` and `dealRegular` (StartBattle, then BeginMatch);
@@ -882,7 +882,7 @@ The owner: **"Do KG2"**.
   kings alone stood at 200 rounds in up to 13 games in a hundred (a Seasoned regular's), the fewest an Amateur's against a
   careful player (0.3).
 - **THE NIGHT'S PURSE** (section 10.7), against these: the bound stands as decided - see 10.7.
-- **Pins:** `test/kg2_patrons.test.js`, 11 tests: the Tiers table and TierFor against a BigInt reckoning of the C#'s
+- **Pins:** `test/tooling/kg2_patrons.test.js`, 11 tests: the Tiers table and TierFor against a BigInt reckoning of the C#'s
   int32 (4,008 seeds, a band's every edge, the shares over 200,000); the deal and its order of draws, and a stuck source
   refused; a blunder (each tier's float32 edge, the strike's draw taken only with a foe in range and its coin at
   float32, its foe by its place, a Grandmaster's draw taken); the potion's lines and its tie; an escape (a clear cell, a
@@ -910,7 +910,7 @@ The owner, of KG0-KG2: **"Audit this and ensure absolute perfection. Ensure any 
 and easily understandable/readable"**. Four cold lanes read a frozen snapshot (3b50a59b5) - the law against the mod's C#
 (A), the play and its measure against the C# (B), this record's every claim (C), the UI the record plans against
 Enhanced Plus and Plain Words (D) - and every finding was read again against the code or the C# before it was acted on.
-All held. The findings and their verdicts are `01-Overview/Audit-Kings-Gambit.md`; what changed is written into the
+All held. The findings and their verdicts are `01-Overview/audits/Audit-Kings-Gambit.md`; what changed is written into the
 sections above, each marked AUDIT KG and its id. In short:
 
 - THE LAW (A): Auto-fill's lean at float32, as the C#'s 0.5f (A1), and drawn through the checked source, so a stuck one
@@ -930,11 +930,11 @@ sections above, each marked AUDIT KG and its id. In short:
   px, a press for every hover, the four plain-words blocks with every number the law's, the words through the text core
   with no pronoun guessed, and the cloth's marks in the house's coat, never colour alone. Hold'em's and Iliac Hand's
   panels, which had shipped outside the kit, were dressed in it the same day by CARDS-PLUS (`Tavern-Cards.md` section
-  38) through a shared kit, `ui/cardPanelKit.js`; the game's panel is the third to wear it (D1).
+  38) through a shared kit, `ui/card/cardPanelKit.js`; the game's panel is the third to wear it (D1).
 - THE RECORD'S OWN WORDS (K1, the author's): the regulars are of both genders, and this record, the KG2 module, its
   tests and its Ledger row called every one "he". Each is the regular, or the regular's name, now.
 
-Pins: `test/kg1_law.test.js` 18 tests and `test/kg2_patrons.test.js` 11, every audit fix pinned; mutants 98 and 108, all
+Pins: `test/net/kg1_law.test.js` 18 tests and `test/tooling/kg2_patrons.test.js` 11, every audit fix pinned; mutants 98 and 108, all
 dead.
 
 ## 14. THE TABLE'S UI (AUDIT KG): Enhanced Plus, our own coat, plain words - binding KG3 and KG4
@@ -948,7 +948,7 @@ section (14.9).
 ### 14.1 ONE TABLE, ONE COAT - the card tables' kit
 
 - THE CARD TABLES' KIT (CARDS-PLUS, `Tavern-Cards.md` section 38, merged to main the same day; AUDIT KG D1). Hold'em's
-  `.dfcards` and Iliac Hand's `.dfiliac` wear the stone-and-brass kit through one home, `ui/cardPanelKit.js`: the chrome
+  `.dfcards` and Iliac Hand's `.dfiliac` wear the stone-and-brass kit through one home, `ui/card/cardPanelKit.js`: the chrome
   both wear (`cardPanelChromeCss` - the window's box, bounded by the screen's height and scrolling inside; the header
   band `.tablehead` and its `.fold`; the `.tablenote`; the line `.msg` and its tones; the presses' row `.tableacts` and
   their kinds, `data-kind` primary, quiet and warn; the `.log`), the classic skin's copy of the kit cut to the panels
@@ -959,7 +959,7 @@ section (14.9).
 - THE KIT BY ROLE. The panel is `ui/gambitTableHud.js` (KG3 writes it), Iliac Hand's two halves - `gambitHudModel` pure
   (every label, every flag and its reason, every number), `createGambitTableHud` the painter - its root `div.dfgambit`.
   The chrome's parts take the roles the other two panels' take; the game's own parts are words of their own,
-  `.dfgambit-<part>` (CARDS-PLUS's sweep, `test/cardsplus.test.js`, holds every panel's classes clear of the enhanced
+  `.dfgambit-<part>` (CARDS-PLUS's sweep, `test/ui/cardsplus.test.js`, holds every panel's classes clear of the enhanced
   sheets' bare components). Each selector with a leading `body`, the panels' sheets landing after the skin's:
 
   | Role | The chrome's parts, as the two panels' | The game's own parts |
@@ -998,7 +998,7 @@ section (14.9).
   the information box, the result's line - 15 at a line height of 1.55 (PLAIN-UI e's, the plain-words panels' size; the
   other two panels have no such blocks); a chip and a tile's numbers 12, the floor - nothing smaller; a unit's name under
   its tile 13, on up to two lines, whole; the result's headline 18. The panel's sheet joins FONT3's FLOOR_SHEETS
-  (`test/font3_readable.test.js`), so the floor's pin and the dim colour's pin hold it (`10-UI/Plain-Words.md`).
+  (`test/ui/font3_readable.test.js`), so the floor's pin and the dim colour's pin hold it (`10-UI/Plain-Words.md`).
 - Ink through the chrome's tokens - words in the bone, a lesser word in `--cp-dim`, a refusal's in `--cp-red`, Stone's
   lift already the chrome's - never the kit's `#7d7460` for a word, never a word faded by `opacity`. A refused press is
   `aria-disabled`, its word in the dim and its edge kept, and says why when pressed (MENU-ORDER g); the chrome's
@@ -1055,7 +1055,7 @@ The four blocks of PLAIN-UI a (`10-UI/Plain-Words.md`), on every stage, in this 
   KG_DAMAGE_PER_LEVEL, KG_RANGED_DAMAGE_FACTOR, KG_KING_LEVEL, KG_KING_HP, KG_KINGS, KG_ACTIONS_PER_TURN,
   KG_POTIONS_PER_SIDE, KG_POTION_HEAL, KG_MOVE_RANGE, KG_RANGED_RANGE, KG_BLOW_LOW, KG_BLOW_SPREAD, KG_HAZARD_KINDS,
   KG_HAZARD_DAMAGE, KG_HAZARD_PAIRS_AT_START, KG_HAZARD_SPAWN_EVERY, KG_MAX_HAZARDS, KG_AUTOFILL_RANGED,
-  KG_AUTOFILL_LEAN, KG_LAYOUTS, KG_OPEN_FIELD, KG_TILE; `systems/gambitPatrons.js` GAMBIT_TIERS, GAMBIT_BLUNDER_STRIKE.
+  KG_AUTOFILL_LEAN, KG_LAYOUTS, KG_OPEN_FIELD, KG_TILE; `systems/gambit/gambitPatrons.js` GAMBIT_TIERS, GAMBIT_BLUNDER_STRIKE.
   The stake's numbers have no export yet (D9): KG3 adds them where the stake's law lives - the multipliers (1, 2 and 5),
   the win's pay (twice the stake), a regular's night (15 times the least stake) and the book's 24 taverns - and the
   session's beats and the log's 12 lines beside its other constants. A typed number is a mutant the pins kill.
@@ -1116,7 +1116,7 @@ The four blocks of PLAIN-UI a (`10-UI/Plain-Words.md`), on every stage, in this 
 - Every word a player reads goes through `t(key, en, args)` under `cards.kingsGambit.*`, read when it is shown, never at
   a module's load (`tools/l10n/ROUTE-BRIEF.md`); one sentence one pattern, plurals by ICU, never fragments glued. The new
   modules hold no hard-coded prose (the ratchet holds a new file at 0) and the files they touch hold their counts:
-  `ui/cardTableHud.js` (80 at KG3), `ui/iliacTableHud.js` (63), `world/cardRegulars.js` (10), `systems/modSettings.js`
+  `ui/card/cardTableHud.js` (80 at KG3), `ui/iliacTableHud.js` (63), `world/card/cardRegulars.js` (10), `systems/modSettings.js`
   (243), `systems/tutorialCatalogue.js` (219), and at KG3 `ui/credits.js` (86), `systems/features.js` (135),
   `scenes/worldModes.js` (84) and `scenes/world.js` (350). Every key ships its drafts in the thirteen whole languages
   (L10N6's rule; the twelve drafting owe them - 16.5).
@@ -1163,7 +1163,7 @@ desktop, of the panel's column (MEASURE, by the probe).
   in words; a log line for every event type; the result's three gold lines; kings named off SUIT_CROWNS; units named
   through getLocalizedEnemyName.
 - THE COAT'S PINS: the panel built on `cardPanelChromeCss('.dfgambit')` and named by `isCardPanelSelector`; every
-  selector of 14.1 in FRAME_ROLES beside the two panels'; `test/cardsplus.test.js`'s sweeps - the classes clear of the
+  selector of 14.1 in FRAME_ROLES beside the two panels'; `test/ui/cardsplus.test.js`'s sweeps - the classes clear of the
   bare components, each panel's classic dressing read alone, every press's kind - run over the third panel too; the
   sheet writes no paint on a role and no size under 12 px; the sheet in FONT3's FLOOR_SHEETS.
 - THE WORDS' PINS: the ratchet's counts above; the tutorial's page within its limits and its seam swept both ways.
@@ -1179,23 +1179,23 @@ desktop, of the panel's column (MEASURE, by the probe).
 The owner: **"Dont come back until this is completed in full"** - the slice after AUDIT KG, before the table (KG3).
 
 - THE NINE (section 10.3, as decided): the Grizzly Bear, the Sabretooth Tiger, the Spider, the Slaughterfish, the
-  Mummy, the Frost Daedra, the Fire Daedra, the Archer and the Ranger are cards of the set (`net/iliacCards.js`) - units,
+  Mummy, the Frost Daedra, the Fire Daedra, the Archer and the Ranger are cards of the set (`net/iliac/iliacCards.js`) - units,
   their numbers, tags and effects 10.3's table's, every effect `fxRefusal`'s null and its words `fxText`'s. Every
   textured creature of the game now wears a card, and all 46 of the roster's units have their faces. Six emblems are
   theirs, painted in code and looked at in Chromium at the tile's and the large face's sizes (`render/iliacCardFaces.js`:
   the bear's head, the sabretooth's with its two sabres, the spider let down on its thread, the slaughterfish's jaw of
   teeth, the wrapped dead, the drawn bow - the Archer's and the Ranger's); the Frost and the Fire Daedra wear frost and
-  fire. Their foes drop them (`systems/cardSources.js` FOE_CARDS: mobile types 4, 5, 6, 11, 19, 25, 26, 141 and 142, at
+  fire. Their foes drop them (`systems/card/cardSources.js` FOE_CARDS: mobile types 4, 5, 6, 11, 19, 25, 26, 141 and 142, at
   their tiers' chances); the house's packs, the regulars' decks and a card's worth take them off the catalog, as they
   take every card.
 - FOUND AT THE SLICE - THE SET'S WORDS HAD NO ROAD TO A PLAYER'S LANGUAGE. L10N4's ratchet holds a file's English from
-  growing (`test/l10n4_hardcoded.test.js`), and the catalog held its 96 cards' rules and flavor in English (234
+  growing (`test/systems/l10n4_hardcoded.test.js`), and the catalog held its 96 cards' rules and flavor in English (234
   literals): the nine's could not be written beside them, and no card's words reached a French or a Korean player at
   all. The root, fixed: the relay's catalog keeps the rules and the canonical names - a card's name is Daggerfall's own,
   the name fxText's summons say, and `tools/l10n/ROUTE-BRIEF.md` does not route it - and no word. Every card's rules and
-  flavor are `systems/iliacCardWords.js`'s, said through the text core when they are shown (`cardRules`, `cardFlavor`;
+  flavor are `systems/iliac/iliacCardWords.js`'s, said through the text core when they are shown (`cardRules`, `cardFlavor`;
   the keys `cards.iliacSet.<card>.rules` and `.flavor`, 210), each rules line's English pinned EXACTLY `fxText`'s, as the
-  catalog's `text` was (`test/cards8_catalog.test.js`). The face painter takes the words beside the card
+  catalog's `text` was (`test/systems/loot/cards8_catalog.test.js`). The face painter takes the words beside the card
   (`paintIliacCard`'s `words`, the card's own by default); the binder's look and its tiles, a card item's lines and the
   table panel's card title read them; the binder's cached faces are painted again when a language is chosen or a
   translation's table laid (`textRevision`). The catalog's count fell to 52 - its names - and the words module holds
@@ -1210,10 +1210,10 @@ The owner: **"Dont come back until this is completed in full"** - the slice afte
   line's head and the space came back a plain one. The wrapper breaks on white space but never a no-break space now
   (`iliacCardFaces.js:"export const CARD_BREAK = "`) - U+00A0, U+2007 and U+202F - and keeps it; no French rules line
   opens on its colon at any width.
-- FOUND AT THE GATES - THE ACCOUNT WORKER CARRIES THE WORDS. The account service bundles `systems/iliacItems.js` (the
+- FOUND AT THE GATES - THE ACCOUNT WORKER CARRIES THE WORDS. The account service bundles `systems/iliac/iliacItems.js` (the
   item law reads a card item), so the words module a card item's lines read rides its bundle beside the text core it
   already carried; its deploy's path filter names it now (`.github/workflows/account-deploy.yml`, held to the Worker's
-  own import graph by `test/accountdeploy.test.js`), so a change to a card's words deploys the service that bundles
+  own import graph by `test/server/accountdeploy.test.js`), so a change to a card's words deploys the service that bundles
   them. The relay's bundle carries none.
 - THE RELAY: world203 (NOT YET DEPLOYED; world201, then world202, on its branch - renumbered past main's CHAT-TRADE world201 and FIVE-ASKS world202 at the merges) - the catalog is relay law, and a deck holding one of the nine is one an older
   relay refuses.
@@ -1236,7 +1236,7 @@ The owner: **"Dont come back until this is completed in full"** - the slice afte
   in most of a reckless village regular's decks (sampled over 3,000 seeds a grade). The curve holds - the tiring three sit one step
   up as the Zombie does (1/3, 2/4, 3/5), each with text that costs it power. B12's own figures came from another
   seeding; the before column is this tool's, so the two columns compare.
-- Pins: `test/kgset_cards.test.js` (5) - the nine as 10.3 writes them and their foes; the catalog's no word and the
+- Pins: `test/systems/kgset_cards.test.js` (5) - the nine as 10.3 writes them and their foes; the catalog's no word and the
   words' cover; every surface in French and back in English byte for byte, the faces painted again; a no-break space
   kept whole; the balance tool's decks and games - and the moved pins of `cards8_catalog`, `cards8_faces` (the six
   glyphs' measures), `cards8_binder`, `cards9_sources` and `auditcards5_items`. Mutants: `tools/mutants/kgset.json`, 13,
@@ -1255,7 +1255,7 @@ while the game's Features switch is on (Settings, the World tab: "The King’s G
 on by default). The press opens the third panel on the same seat: choose a regular, put down a stake, choose a king,
 build an army, play the battle on the board laid across the cloth.
 
-- THE SESSION (`systems/gambitTableSession.js`): the law's game (KG1) dealt against a regular by the innkeeper's play
+- THE SESSION (`systems/gambit/gambitTableSession.js`): the law's game (KG1) dealt against a regular by the innkeeper's play
   (KG2, `dealRegular`) and run on the mod's beats - 0.9 s to a turn's end, 1.2 s before each of the regular's actions,
   1.3 s before the result (`GAMBIT_TURN_END_MS`, `GAMBIT_REGULAR_PAUSE_MS`, `GAMBIT_RESULT_MS`). A command the law refuses
   changes nothing and answers the law's word; a source that breaks is no contest - no game, no gold. The stake's numbers
@@ -1359,7 +1359,7 @@ what the painter writes found five things wrong, each fixed at its root:
 
 The classic cut grew with the third panel's own roles (its list rows, its meter's fill, its sections' heads): CARDS-PLUS's
 weigh-in is "under half the kit's rules" now (it was a third). The cut, the face and the WARN role's pin take the third
-panel; the card panels' sheets and the chrome joined FONT3's floor (`test/font3_readable.test.js`).
+panel; the card panels' sheets and the chrome joined FONT3's floor (`test/ui/font3_readable.test.js`).
 
 ### 16.5 FOUND AT KG3
 
@@ -1393,13 +1393,13 @@ panel; the card panels' sheets and the chrome joined FONT3's floor (`test/font3_
   space was found.
 - THREE NAMES ALREADY TAKEN (found by the whole suite at the merge of main): `cursorStep` (the gamepad cursor's,
   `systems/gamepad.js`), `pieceLines` (a crafted piece's, `net/recipeLaw.js`) and `pieceKey` (the grass lab's) were
-  other modules' names, and the one-home ratchet (`test/audit24_onehome.test.js`) holds a name to one home. The board's
+  other modules' names, and the one-home ratchet (`test/systems/talk/audit24_onehome.test.js`) holds a name to one home. The board's
   are its own: `boardCursorStep`, `pieceInfoLines`, `pieceAtlasKey`.
 - THE BOARD'S KEYS ARE THE PANEL'S (found by CI's second shard on KG3's head): the cloth read bound keys raw in two
   hosts - `scenes/gambitTableGame.js` keyed its cursor table on the arrows and `scenes/worldModes.js`'s cloth listener
-  tested `e.code` for Escape, Enter and Space - which KB1 law 5 (`test/kb1_keybinds.test.js`) and I2
-  (`test/inputmap.test.js`) refuse in a host; and that listener's `window.addEventListener('keydown'` stood above the
-  host's own, so V4 (`test/modalkeys.test.js`) and U43, which read the host's handler from its registration, read the
+  tested `e.code` for Escape, Enter and Space - which KB1 law 5 (`test/ui/kb1_keybinds.test.js`) and I2
+  (`test/scenes/inputmap.test.js`) refuse in a host; and that listener's `window.addEventListener('keydown'` stood above the
+  host's own, so V4 (`test/systems/modalkeys.test.js`) and U43, which read the host's handler from its registration, read the
   cloth's instead. The keys are a window's own (ui/input.js's overlayAction is the precedent): the table and its reader
   live in the panel (`gambitTableHud.js:"export const gambitBoardKey = (code) =>"`), both hosts ask it, and the cloth's
   three listeners are taken and let go as one list. The chat's claim is asked of every press key, not Enter's alone -
@@ -1407,9 +1407,9 @@ panel; the card panels' sheets and the chrome joined FONT3's floor (`test/font3_
 
 ### 16.6 Pins and mutants
 
-`test/kg3_session.test.js` (7), `test/kg3_panel.test.js` (17), `test/kg3_host.test.js` (13 - the last the host's
+`test/systems/kg3_session.test.js` (7), `test/systems/kg3_panel.test.js` (17), `test/systems/kg3_host.test.js` (13 - the last the host's
 wiring: `scenes/worldModes.js`'s card block run as the six harness tests run it, and world.js's two save doors read and
-run) and `test/kg3_draw.test.js` (6); the moved pins of `cardsplus`, `font3_readable`, `plusdress1`, `ft9_mods` (the
+run) and `test/world/card/kg3_draw.test.js` (6); the moved pins of `cardsplus`, `font3_readable`, `plusdress1`, `ft9_mods` (the
 row's creator, one source with the credit), `features`, `ft18_features`, `hard4_registry`, `auditcards2_host`,
 `auditcards6_e` and `l10n3e_names` (the words module a name site), and the six harness tests' scopes. Mutants: `tools/mutants/kg3.json`, 139 - 138 dead and one recorded equivalent (a draw after the close: the board's own
 draw returns once it is destroyed). Ten survived the first run, each a pin that did not hold what its title claimed, and
@@ -1516,7 +1516,7 @@ cards, as sections 5.3, 5.4, 10.1, 10.7, 14.3, 14.7 and 14.8 decided.
 ### 17.2 FOUND AT KG4
 
 - THE BOARD'S KEYS, READ RAW (CI's second shard on KG3's head; section 16.5): the panel's own keys now, `gambitBoardKey`.
-- A BEAR'S CARD IN A CORPSE-FOOD PIN: KG-SET gave the Grizzly Bear its card, and `test/survtiers3.test.js`'s
+- A BEAR'S CARD IN A CORPSE-FOOD PIN: KG-SET gave the Grizzly Bear its card, and `test/systems/survival/survtiers3.test.js`'s
   CORPSE-FOOD, mounted held every item on a joiner's copy of a bear's body to raw meat "(a bear has none)" - so the
   death's card roll (`Math.random`'s) failed CI some runs. The roll is pinned to drop, and the card held to the bear's
   own, once.
@@ -1532,11 +1532,11 @@ cards, as sections 5.3, 5.4, 10.1, 10.7, 14.3, 14.7 and 14.8 decided.
 
 ### 17.3 Pins and mutants
 
-`test/kg4_board.test.js` (12): the walk's path against GetReachable's own walk; the motion on the mod's clock (the walk
+`test/world/kg4_board.test.js` (12): the walk's path against GetReachable's own walk; the motion on the mod's clock (the walk
 round a wall, the lunge, the shot, the hit, reduced motion, the number); the fall, the pile, the potion and the muster;
 the piles on the felt; the press on the built board; the lean in the clear screen and through the renderer's own lens;
 the clear screen; the built board's models; the cards standing; the effects' atlas; the draw's allocations; a whole
-seeded game's motion. `test/kg3_host.test.js` (15): KG4's host pins - the motion fed and the lean phased, eased and laid
+seeded game's motion. `test/systems/kg3_host.test.js` (15): KG4's host pins - the motion fed and the lean phased, eased and laid
 by the interior host; the built press and the card's-middle snap. The moved pins of `kg3_draw` (the slab; the five
 textures) and `kg3_host` (the press's finger by a card's middle; the muster before every piece is drawn). Mutants:
 `tools/mutants/kg4.json`, 35, all dead; `kg3.json`'s KG3-D-triangle and KG3-D-scale re-aimed (the builder's winding, the
@@ -1574,7 +1574,7 @@ SpellImpactPoison 87, SpellImpactFire 89, Hit3-5 110-112, PainSound 299, Groan 4
   the room's 3D sound at the cue's cell, or the board's middle for the table's own
   (`worldModes.js:"      play: (clip, at) => audio?.play3d?.(clip, at, 1, { maxDistance: 16 }),"`) - never the flat
   one-shot PEERFX1's observer reads, where Hit1..Hit5 at volume 1 would tell the room the player was struck.
-- PINS: `test/kg4_board.test.js` KG4b (the game's sounds on the clock), `test/kg3_host.test.js` KG4b (the table's, the
+- PINS: `test/world/kg4_board.test.js` KG4b (the game's sounds on the clock), `test/systems/kg3_host.test.js` KG4b (the table's, the
   result's groan at its beat, the 3D sound) and the win's fanfare and coins in KG3's game played by presses. MUTANTS:
   `tools/mutants/kg4.json`'s KG4b records, 11, all dead.
 
@@ -1584,7 +1584,7 @@ The owner: "Download daggerfall if you need to implement things. Fucking finish 
 days." Section 5.8's decisions, built: a King's Gambit table in the relay beside Hold'em's and Iliac Hand's, the client's
 mirror, spectators, the clock; friendly.
 
-- THE TABLE'S LAW (`net/gambitTable.js`, pure and plain data - the relay checkpoints it whole, Iliac Hand's table's
+- THE TABLE'S LAW (`net/gambit/gambitTable.js`, pure and plain data - the relay checkpoints it whole, Iliac Hand's table's
   twin): two seats of a cloth's chairs, the first the law's host (side 0, its king's row the board's foot at its chair);
   a sit names its chair and its crown (`gambitSitRefusal`'s words asked first); READY carries the army (roster ids,
   the law's `armyRefusal`) and, again, the crown - kept by the relay, never told: the room hears only that the seat is
@@ -1616,13 +1616,13 @@ mirror, spectators, the clock; friendly.
 - THE WIRE (`net/wire.js`): `parseClient`'s `gambit` arm after a hello only, GAMBIT_FRAME_MAX (a Ready at its longest
   - twelve ids and a crown - fits); `validGambitIn` (each op's fields, a command's numbers in range) and
   `validGambitOut` (a refusal, the room's events by kind, the table and its game the law's). GAMBIT_RELAY_MIN 204 (AUDIT KG II B14) and
-  `relaySupportsGambit` - an older relay closes the socket on the frame. RELAY world204 (world203 on its branch, renumbered past main's FIVE-ASKS world202 at the merge): `net/gambitTable.js`,
-  `net/kingsGambit.js`, `characters/enemyBasics.js` and `systems/mathf.js` joined the bundle (`test/relayversion.test.js`
+  `relaySupportsGambit` - an older relay closes the socket on the frame. RELAY world204 (world203 on its branch, renumbered past main's FIVE-ASKS world202 at the merge): `net/gambit/gambitTable.js`,
+  `net/kingsGambit.js`, `characters/enemy/enemyBasics.js` and `systems/mathf.js` joined the bundle (`test/net/relayversion.test.js`
   RELAY_GRAPH); world203 is KG-SET's, renumbered past main's CHAT-TRADE world201 and FIVE-ASKS world202 at the merges.
 - THE CLIENT: `net/online.js` - `sendGambit` through its own gate to a relay that runs the game, `gambitOk` at the
   welcome, a frame heard from the room the player stands in and checked by the table's law; `scenes/world.js` -
   `online.onGambit` to the modes, `host.gambitOnline` (Iliac Hand's hooks, its own send).
-- THE MIRROR (`systems/gambitRemoteTable.js`): `RemoteGambitTable` - the seats, readiness, the relay's clock through the
+- THE MIRROR (`systems/gambit/gambitRemoteTable.js`): `RemoteGambitTable` - the seats, readiness, the relay's clock through the
   skew; `RemoteGambitSession` - one dealt game with the offline session's own face (`state`, `act`, `tick`, `forfeit`,
   `drain`, `playing`, `over`, `shown`, `settlement`), so the panel, the log, the motion and the cloth read it as a game
   with a regular. THE GUEST'S EYE: seat 1 reads the board turned about its middle (`flipGambitState`; the four layouts
@@ -1650,13 +1650,13 @@ mirror, spectators, the clock; friendly.
 
 ### 18.1 Pins and mutants
 
-`test/kg5_table.test.js` (9): the seats and their refusals; the armies at Ready, never told, the deal's pause and the
+`test/net/gambit/kg5_table.test.js` (9): the seats and their refusals; the armies at Ready, never told, the deal's pause and the
 relay's dice; the commands, stale and refused, the turn's end on its beat and the other side's own clock; the clock's
 timeouts and idle stand-up, the count started again by an action; a forfeit and a stand; a whole game at the relay to a
 king's fall, every frame the client takes; the stored table checked; the wire both ways; the guest's eye (twice the
-board, the law reading the turned board as the board). `test/kg5_relay.test.js` (5): the relay itself on the fake room -
+board, the law reading the turned board as the board). `test/net/kg5_relay.test.js` (5): the relay itself on the fake room -
 two seated and a watcher, the alarm's deal and clock, a hibernation; a socket gone, the gold table, a hallway; one cloth
-one game all ways; the stored table dropped and the sweep; the wire's arm and the version. `test/kg5_client.test.js`
+one game all ways; the stored table dropped and the sweep; the wire's arm and the version. `test/net/kg5_client.test.js`
 (5): the room's table on the client; the online session (the guest's eye, the check, one command at a time, the gap,
 the result's beat); the guest's board on the cloth; the client's session (the gate, the room); two pages and a watcher
 over the relay - sit, Ready, the deal, a move on both boards in one place, the turn round, the watcher's board and keys,
@@ -1681,7 +1681,7 @@ the red table, at the mod's online stakes (10, 50, 200, 1,000 and 5,000 each), t
 and a season board the Arena's way, its Elo and its caps, whose #1 over 10 games against 5 foes (Iliac Hand's champion's
 floor) wears GRANDMASTER - the mod's highest tier's name."
 
-- THE STAKES' ONE HOME (`net/gambitStakes.js`, a leaf every end imports): GAMBIT_ONLINE_STAKES, the mod's five; and
+- THE STAKES' ONE HOME (`net/gambit/gambitStakes.js`, a leaf every end imports): GAMBIT_ONLINE_STAKES, the mod's five; and
   GAMBIT_STAKE_BB, the big blind a King's Gambit stake is held at in CARDS6's escrow - 1, which no Hold'em table plays
   (`holdemTable.js` HOLDEM_BBS 2, 10, 50) - so the escrow tells the games apart, and the service's bound on a cash-out
   (`cashoutCards`: no more than every stake that came to the room, table and big blind over the receipt's life) counts
@@ -1691,7 +1691,7 @@ floor) wears GRANDMASTER - the mod's highest tier's name."
 - THE ESCROW'S ARM (`server-account/src/cards.js` stakeCards; AUDIT KG C24, "an arm of their own"): a stake at
   GAMBIT_STAKE_BB is one of the five, at the room's gold table alone ('bad-table' elsewhere), never a top-up
   ('bad-buy-in'); held off the realm record and answered with the service's stake order, as a Hold'em buy-in is.
-- THE TABLE'S LAW (`net/gambitTable.js`): a table made at the gold table is gold. Its Ready carries the stake - the
+- THE TABLE'S LAW (`net/gambit/gambitTable.js`): a table made at the gold table is gold. Its Ready carries the stake - the
   relay's spent order's `{j, sub, amount}` - and is refused 'stake needed' without one; a friendly table's refuses one
   ('friendly table'); the second seat's must match the first's ('stake differs'); a seat says Ready once ('ready'), and
   `gambitReadyRefusal` asks all of it before anything is spent. The room is told each seat's stake and, once dealt, the
@@ -1708,11 +1708,11 @@ floor) wears GRANDMASTER - the mod's highest tier's name."
   back through Hold'em's own `void`), then spent once (`cstake:`) - a refusal after the spend hands the whole stake back
   in a 'refused' cash-out. `_gambitOwedOut` at every save: each cash-out by CARDS6's own `_holdemReceipt` (kept for its
   account, sent on the card table's word - the client's stake book claims it), each rated result minted
-  (`net/gambitReceipt.js` g1) and kept owed to both accounts (`gowed:`, Iliac Hand's law) until the device acks it,
+  (`net/gambit/gambitReceipt.js` g1) and kept owed to both accounts (`gowed:`, Iliac Hand's law) until the device acks it,
   told again at a look, a sit and a hello; each off its queue only once kept - but a result that will not mint (no key
   the relay can sign with) is let go, said on the console, never kept (AUDIT KG II A7: the sentence had said none was);
   an empty table never forgotten with one unsigned. The sweep lets expired `gowed:` go.
-- THE RECEIPT (`net/gambitReceipt.js`, `g1`): `{j, f, r, h, i, e}` - the game, the two accounts (the host's first), the
+- THE RECEIPT (`net/gambit/gambitReceipt.js`, `g1`): `{j, f, r, h, i, e}` - the game, the two accounts (the host's first), the
   winning seat (no draw: a game nobody won is no receipt), how (`king`, `forfeit`, `idle`, `left`), a week's life; the
   version inside the signed bytes, so an Iliac Hand receipt is never a King's Gambit one, nor the other way.
 - THE SEASON BOARD (`server-account/src/gambit.js`, migration `0115_gambit_ladder`): Iliac Hand's board's twin for a
@@ -1724,7 +1724,7 @@ floor) wears GRANDMASTER - the mod's highest tier's name."
   every Worker (`gambit_champions`), counted by the minute clock (`cron.js` 'gambit-champion'), laid on the badge's
   doors, letters and the notice board beside Iliac Hand's, lapsing when another takes the top - last in the token's titles, after main's I Love Lamp. ACCOUNT acct134.
 - THE CLIENT: `net/online.js` takes a rated result from the room just left too; `scenes/worldModes.js` carries it
-  (`host.gambitClaims` - `net/gambitClaims.js`, Iliac Hand's carrier, `net/iliacClaims.js` taught another reader and
+  (`host.gambitClaims` - `net/gambit/gambitClaims.js`, Iliac Hand's carrier, `net/iliac/iliacClaims.js` taught another reader and
   store) and acks it; `scenes/world.js` the door (`net/accountClient.js` accountGambit) and the town's word when a game
   counts. AT THE RED TABLE: a realm character at a relay that deals Hold'em's escrow plays another player for gold
   (anyone else plays the regulars there); the army's panel offers the five stakes - each the purse's to cover and the
@@ -1741,12 +1741,12 @@ floor) wears GRANDMASTER - the mod's highest tier's name."
 
 ### 19.1 Pins and mutants
 
-`test/kg6_gold.test.js` (5): the stakes' law; the gold table's Ready (needed, matched, refused at a friendly table, said
+`test/net/gambit/kg6_gold.test.js` (5): the stakes' law; the gold table's Ready (needed, matched, refused at a friendly table, said
 once, refunded by Not ready and a stand, the pot dealt and stored); the pot at the end (a forfeit, a stand mid-game, no
 contest, one account twice no rated game; the wire's `ack` and staked Ready); the relay at the gold table (the order's
 checks, refused unspent, spent once, the forfeit's cash-outs and the rated result signed, owed until acked, told again
 at a look, a spent order refused, Not ready's stake home); the escrow's arm and a pot's cash-out bounded by the table's
-King's Gambit stakes alone. `test/kg6_season.test.js` (5): the receipt; the claim; the board and its Grandmaster (the
+King's Gambit stakes alone. `test/net/gambit/kg6_season.test.js` (5): the receipt; the claim; the board and its Grandmaster (the
 mint, the minute clock, the lapse); the carrier; the gold table's panel (the picks' bounds, the staked Ready, the book
 told, the board shown). PINS MOVED: `kg5_relay`'s gold table (it seats now, its Ready a stake); every pin that names the
 account version (acct134 - acct133 on its branch, renumbered past main's LAMP-KEEPER II at the merge); the relay's law row (world204, its bundle with gambitStakes.js and gambitReceipt.js).
@@ -1760,7 +1760,7 @@ refusal it pinned (AUDIT KG II E6: the section had not said so).
 The owner: "Lets do last comprehensive audit and ensure perfection." Five cold lanes on a frozen snapshot (6e4441a72) -
 the money and the relay, the online client, the board and the offline game and its sounds, the UI and the words in
 every whole language, the record and its tests and mutants - 83 findings, every one reproduced before it was acted on;
-the page is `01-Overview/Audit-Kings-Gambit-II.md`, each finding with its verdict. What it changed, as the sections
+the page is `01-Overview/audits/Audit-Kings-Gambit-II.md`, each finding with its verdict. What it changed, as the sections
 above now say it:
 
 - A STAKE IS NEVER LOST TO A PRESS (A1, B1, B8, B12, C1-C3): every stand names the game its panel showed - one naming
@@ -1791,7 +1791,7 @@ above now say it:
   slips - ko, it, bg, fr, de, da, ru - and 17 French rows given the house's no-break space).
 - THE RECORD (A5-A7, B14, B15, C12, E6-E8, E16-E19): the four hosts named in sections 17, 18 and 19; the relay's
   minimum 204; the dead sentences deleted; the counts and the index made true.
-- **Pins:** `test/auditkg2_relay.test.js` (12), `auditkg2_online.test.js` (11), `auditkg2_board.test.js` (8),
+- **Pins:** `test/net/auditkg2_relay.test.js` (12), `auditkg2_online.test.js` (11), `auditkg2_board.test.js` (8),
   `auditkg2_panel.test.js` (6), `auditkg2_season.test.js` (3). **Mutants:** `tools/mutants/auditkg2.json`, 73, all
   dead; seventeen records re-aimed by content. RELAY world204 re-hashed in place (undeployed); ACCOUNT acct134
   (undeployed).

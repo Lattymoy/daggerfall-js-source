@@ -1,7 +1,7 @@
 // @ts-check
 // ETHER-SHIPS (2026-10-11, the owner: "The etheric sea is a infinite procedural oceanscape with procedural islands with
 // towns, dungeons, exotic resources, deadly legendary ships"; bible/03-World/Eltheric-Ocean.md ETHER-SHIPS, ETHER-LEGENDS) -
-// THE ELTHERIC OCEAN'S SHIPS. Pure: the naval host and its director read them (scenes/navalHost.js, navalDirector.js).
+// THE ELTHERIC OCEAN'S SHIPS. Pure: the naval host and its director read them (scenes/naval/navalHost.js, navalDirector.js).
 //
 // ITS TRAFFIC: corsairs and the isles' traders - the Bay's own classes under the Eltheric Ocean's names (`etherShipNames`,
 // her captain the Bay's own law's) and the Isles' colours on a trader, the black flag on a corsair; no crown's navy sails
@@ -16,7 +16,7 @@
 // she is gone LEGEND_RISE_DAYS - then the aether raises her again. The harbourmasters of the isles say where each was
 // last seen (`rumourOf`).
 
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classById, shipNames } from './navalShips.js';
 import { BANDS, LEAGUE_PX, VEIL_X, veilhaven, etherHash, etherRng, inEther, compassPoint } from '../../world/ethericSea.js';
 

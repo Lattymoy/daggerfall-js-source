@@ -6,7 +6,7 @@
 // can also add renown and it's own atheric + armor sets". The relay
 // keeps a town raid's ledger and, at its cleanse, signs a receipt for
 // each account that struck a raider and stood in the town
-// (src/net/raidReceipt.js - `w1`, under the relay's GATE_SIGNING_KEY).
+// (src/net/raid/raidReceipt.js - `w1`, under the relay's GATE_SIGNING_KEY).
 // This file is where that receipt is honoured: counted once, and paid
 // in Renown to the character that fought it. Design:
 // bible/03-World/Raiding-Parties.md, "The rewards (RAID4)".
@@ -48,8 +48,8 @@
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
 
-import { verifyRaidReceipt } from '../../src/net/raidReceipt.js';
-import { raidDayOfKey } from '../../src/net/raidLaw.js';
+import { verifyRaidReceipt } from '../../src/net/raid/raidReceipt.js';
+import { raidDayOfKey } from '../../src/net/raid/raidLaw.js';
 import { renownForXp, renownRaidXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
 

@@ -5,7 +5,7 @@
     "old": "        settleChallenge(playerEntity, region);",
     "new": "",
     "tests": [
-      "test/fb1014_finemends.test.js"
+      "test/systems/fb1014_finemends.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "Math.min(PENANCE_POINTS, KNOWN_CRIMINAL_BELOW - rep)",
     "new": "PENANCE_POINTS",
     "tests": [
-      "test/fb1014_finemends.test.js"
+      "test/systems/fb1014_finemends.test.js"
     ]
   }
 ]

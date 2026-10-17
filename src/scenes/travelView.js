@@ -19,7 +19,7 @@
 // WHAT THIS FILE OWNS: the view's four states, the input it captures
 // while up, the camera it hands the frame, and every way out. What it
 // does NOT own: the camera's numbers (player/travelCamera.js, pure), the
-// readout (ui/travelViewHud.js), the body (player/mwView.js holds it in
+// readout (ui/travel/travelViewHud.js), the body (player/mwView.js holds it in
 // third person), the cursor (player/pointerLock.js) - each reached
 // through the deps the host hands in, so the pins drive this whole
 // machine against a fake host.
@@ -116,7 +116,7 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   toSpotBySea: 'To the marked spot, by sea',
   needBoat: 'There is no way there by land - a boat would carry you across the water.',
   passenger: 'You are aboard another\'s boat - its helmsman sets the course.',
-  rider: 'You ride in another\'s wagon - its driver sets the course.',   // WAGONS2: seated in the back of another's wagon (scenes/wagonRiders.js)
+  rider: 'You ride in another\'s wagon - its driver sets the course.',   // WAGONS2: seated in the back of another's wagon (scenes/wagon/wagonRiders.js)
   climbing: 'You cannot set out on a journey from a wall - climb down first.',   // AUDIT FB1007b C2
   noLaunch: 'There is no water here for your boat to float in.',
   noWayAtSea: 'Your boat can make no way toward its mark.',
@@ -125,7 +125,7 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   noBoat: 'Your boat is not with you to cross the water.',
   aground: 'Your boat has run aground.',
   raidersAlongside: 'Pirates come alongside!',   // OWS3
-  enemiesSlow: 'Enemies near - you slow your pace.',   // OW6: the journey held for an enemy near (systems/travelThreat.js), said once as it begins
+  enemiesSlow: 'Enemies near - you slow your pace.',   // OW6: the journey held for an enemy near (systems/travel/travelThreat.js), said once as it begins
   // TV-WASD: the bar's line while the movement keys travel - the speed, and the governor's hold beside it (the land's; OW6: or an enemy's)
   travelling: (rate, held = null) => (held != null && held < rate ? `Travelling at ×${held} of ×${rate}` : `Travelling at ×${rate}`),   // the travel strip's own sign
   inPlace: (place, region) => (region ? `${place}, ${region}` : place),
@@ -210,7 +210,7 @@ export function travelViewLine({ place = null, near = null, region = '' } = {}) 
  * @param {() => string} [deps.trip] - TV2: the journey in words
  * @param {() => {move?:string, out?:string}} [deps.hintKeys] - AUDIT DEEP T1-12: the keys the hint names, read on the way up
  * @param {{show:Function, hide:Function, update:Function, pickAt?:(x:number, y:number) => string|null}} [deps.hud] -
- *   ui/travelViewHud.js (PERF-TV: `pickAt`, the pickable mark drawn under a click)
+ *   ui/travel/travelViewHud.js (PERF-TV: `pickAt`, the pickable mark drawn under a click)
  * @param {() => void} [deps.openMap] - OW-BLOCK: the block's Map button
  * @param {(id:string) => void} [deps.onWaypointGo] - WAYPOINTS: a followed waypoint's Go
  * @param {() => Record<string,string>|null} [deps.followDist] - WAYPOINTS: each followed waypoint's distance, in words
@@ -421,7 +421,7 @@ export function createTravelView(deps) {
     swallow(e);
   }
   /** AUDIT TV B3: a finger on the canvas is the view's (its pointer events orbit, pinch and pick) - the touch layer
-   *  (ui/touch.js) never starts a stick, a look or a tap under it. Only the START is taken: a finger down before the view
+   *  (ui/touch/touch.js) never starts a stick, a look or a tap under it. Only the START is taken: a finger down before the view
    *  rose ends as the touch layer's own, so its stick lets go. */
   function onTouchStart(e) {
     if (state === 'off' || gone() || !isCanvasEvent(e)) return;

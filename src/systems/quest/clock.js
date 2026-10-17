@@ -14,7 +14,7 @@
 // machine (Q2).
 
 import { QuestResource, matchFirst } from './questResource.js';
-import { calculateTravelTime } from '../travel.js';
+import { calculateTravelTime } from '../travel/travel.js';
 import { worldCoordToMapPixel } from '../../formats/mapsFile.js';
 import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
@@ -38,7 +38,7 @@ const getTimeInSeconds = (days, hours, minutes) => days * 86400 + hours * 3600 +
 /** TIME3: the quest clock's WHOLE seconds - DFU's sample is WorldTime.Now.ToSeconds(), whole seconds of a clock that
  *  keeps its fraction, so the gap between two samples loses nothing. The port sampled the fractional reading and cut
  *  the GAP to whole seconds instead, dropping the fraction at every tick: ten ticks a real second at TimeScale 12 left
- *  a fifth to a third of every countdown played uncharged (test/time3_quests.test.js). */
+ *  a fifth to a third of every countdown played uncharged (test/systems/quest/time3_quests.test.js). */
 const wholeSeconds = (caller) => Math.floor(caller?.nowSeconds?.() ?? 0);
 
 /** Clock.cs GetTravelTimeInSeconds (:422-460), Q3-i: the flag&16 /
@@ -145,7 +145,7 @@ export function clockCounts(quest, clock) {
  * 128 now, the main quest's deadlines 32. THE EDGE: a deadline read as a delay fires its end - a failure - two minutes in (as under TIMEFREE, whose
  * delays were cut the same); a delay read as a deadline now only waits its played days, where TIMEFREE froze it for
  * ever. The one harmful misreading is the first (R1's two were it, and AUDIT REST II's three), so the pins hold the
- * split, the table and the main quest's 32 deadlines, and test/rest8_questwaits.test.js ticks every vendored clock past
+ * split, the table and the main quest's 32 deadlines, and test/systems/quest/rest8_questwaits.test.js ticks every vendored clock past
  * the short wait. Offline none of it - DFU's clock. [SUPERSEDES QCLOCK-WORLD's delays on played time; TIMEFREE's frozen
  * deadlines stay reverted.]
  */

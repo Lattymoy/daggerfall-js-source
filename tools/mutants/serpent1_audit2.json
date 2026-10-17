@@ -1,32 +1,32 @@
 [
   {
     "name": "AUDIT-SERPENT-2-F2-kept-twice",
-    "file": "src/net/serpentBody.js",
+    "file": "src/net/serpent/serpentBody.js",
     "old": "  if (last && same(last, entry)) return list.length !== had;",
     "new": "  if (false) return list.length !== had;",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "A word that changes nothing kept a second time - on the relay and every client alike, so the bodies agree and only the no-twice pin sees it."
   },
   {
     "name": "AUDIT-SERPENT-2-F2-relay-keeps-the-duplicate",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "  if (!onTimeline(f.modes, d, sameMode)) return;\n",
     "new": "  if (!onTimeline(f.modes, d, () => false)) return;\n",
     "tests": [
-      "test/serpent1_audit2.test.js",
-      "test/serpent1_audit.test.js"
+      "test/net/serpent/serpent1_audit2.test.js",
+      "test/net/serpent/serpent1_audit.test.js"
     ],
     "note": "The relay's half of the finding: a second 'deep now' kept after a surfacing still to come is dropped."
   },
   {
     "name": "AUDIT-SERPENT-2-F2-client-asks-before-the-rule",
-    "file": "src/net/serpentLink.js",
+    "file": "src/net/serpent/serpentLink.js",
     "old": "      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;\n",
     "new": "      if (s.modes.some((d) => d.at === w.at && d.m === w.m)) return s;\n      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;\n",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "The client's half, as it shipped: the word taken for one it had before the rule dropped what the relay dropped."
   },
@@ -36,7 +36,7 @@
     "old": "const late = t - a.at > LAND_JUDGE_MS;",
     "new": "const late = false;",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "A landing seen after it landed (or past a stalled frame) judged against where my ship is now."
   },
@@ -46,37 +46,37 @@
     "old": "if (A === SERPENT_ATTACK_TABLE.spit) pools.push(poolOf(a));",
     "new": "if (A === SERPENT_ATTACK_TABLE.spit && !late) pools.push(poolOf(a));",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "The venom of a spit seen late never laid on the water."
   },
   {
     "name": "AUDIT-SERPENT-2-F5-far-share-brought",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "  if (near) { f.max += share; f.hp += share * frac; }",
     "new": "  f.max += share; f.hp += share * frac;",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "A newcomer's `in` from past ENGAGE_R brings her share into its health at once."
   },
   {
     "name": "AUDIT-SERPENT-2-F5-far-seen-now",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "seenAt: near ? now : now - SERPENT_ABSENT_RETIRE_MS - 1,",
     "new": "seenAt: now,",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "A far newcomer counted at the fight the moment she joins - the next beat brings her share in."
   },
   {
     "name": "AUDIT-SERPENT-2-F5-far-not-retired",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "retired: !near,",
     "new": "retired: false,",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "A far newcomer's share, never brought in, taken out of its health by the next beat."
   },
@@ -86,8 +86,8 @@
     "old": "const over = today.find(([, f]) => f.gone && !f.fell);",
     "new": "const over = today.find(([, f]) => (f.fell && f.said && f.told) || (f.gone && !f.fell));",
     "tests": [
-      "test/serpent1_audit2.test.js",
-      "test/serpent1_auditrelay.test.js"
+      "test/net/serpent/serpent1_audit2.test.js",
+      "test/net/serpent/serpent1_auditrelay.test.js"
     ],
     "note": "A slain fight let go for another site's while its waters stand open - an `in` that missed the hub's word bears it again at full health."
   },
@@ -97,17 +97,17 @@
     "old": "&& !this._serpentBodies(f).some((b) => Math.hypot(b.x, b.z) <= serpentBrain.FAN_R));",
     "new": "&& this._serpentBodies(f).filter((b) => Math.hypot(b.x, b.z) <= serpentBrain.FAN_R).length <= 1);",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "A lone ship's fight (no part yet) idle - let go for a forged site's."
   },
   {
     "name": "AUDIT-SERPENT-2-F7-ram-past-its-reach",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "phase: 1, range: 170, minGap: 60, w: 2 }),",
     "new": "phase: 1, range: 240, minGap: 60, w: 2 }),",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "The ram chosen at ships its lane ends short of."
   },
@@ -117,7 +117,7 @@
     "old": "        if (f.fell && !f.said) await this._serpentFall(id, f, now);",
     "new": "        await this._serpentSave(id, f, now, false);\n        if (f.fell && !f.said) await this._serpentFall(id, f, now);",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "Every kept fight written again on every checkpoint - a slain one's hundred kilobytes every 2 s beside a live one."
   },
@@ -127,7 +127,7 @@
     "old": "await this._serpentSave(id, f, now, serpentBrain.serpentSaysTrack(said));",
     "new": "await this._serpentSave(id, f, now, false);",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "Its sounding left to the next checkpoint, which never comes for a still fight."
   },
@@ -137,7 +137,7 @@
     "old": "      if (shown && shownAt === t) return shown;\n",
     "new": "",
     "tests": [
-      "test/serpent1_audit2.test.js"
+      "test/net/serpent/serpent1_audit2.test.js"
     ],
     "note": "The shots' targets made again at every ask of the frame."
   }

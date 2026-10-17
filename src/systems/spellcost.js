@@ -29,12 +29,12 @@
 // keys the shipping SPELLS.STD uses has a class here.
 
 import { skillValue, SKILLS } from './skills.js';
-import { isOnlinePage } from './onlineLane.js';   // SPELL-COST-PAST: online, a skill past 100 never prices a spell under nothing
+import { isOnlinePage } from './online/onlineLane.js';   // SPELL-COST-PAST: online, a skill past 100 never prices a spell under nothing
 import { pathCastSchool } from './arcanePaths.js';   // SCHOOLS3: a signature spell is cast in its path's two schools (a leaf)
 
 export const CAST_COST_FLOOR = 5;
 
-// SPELL-COST-PAST (FIELD BUGS 2026-10-12c, bible/01-Overview/Field-Bugs-2026-10-12c.md; from the field: "AoE buffing
+// SPELL-COST-PAST (FIELD BUGS 2026-10-12c, bible/01-Overview/bugs/Field-Bugs-2026-10-12c.md; from the field: "AoE buffing
 // infinitely still - creating negative spell costs which makes things only cost 5"). Both of DFU's cost formulas scale by
 // (110 - skill), which is 10 at DFU's 100 and nothing at 110. A mastered school reads up to 140 in a formula (SOFTCAP1),
 // and worn gear adds on top without bound (Enhances Skill +15 a piece, the rarity affixes, Mora's Forbidden Lore), so

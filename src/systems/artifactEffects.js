@@ -31,12 +31,12 @@
 // (statMaxMods) through the max-mod layer every live entry has.
 
 import { savingThrow, ELEMENTS, EFFECT_FLAGS } from './spellcast.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { equipTableOf } from './equip.js';   // AUDIT 58: no lowerCondition - the Namira payload bills nothing (FormulaHelper.cs:707)
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the FallExe enum at its V3 home - never through enchantments.js (cycle)
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { liveStat as liveStatOf, increaseDrainMagnitude } from './statMods.js';
-import { markWholeBlow } from './partyScale.js';   // AUDIT PSCALE1 DOORS-1: the Razor's strike is a kill
+import { markWholeBlow } from './party/partyScale.js';   // AUDIT PSCALE1 DOORS-1: the Razor's strike is a kill
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: the Masque raises ALL eleven groups (MasqueOfClavicusEffect.cs:39-43 over FactionFile.cs:552-566)
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 

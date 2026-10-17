@@ -1,7 +1,7 @@
 # UI-CALM - the quiet pass (2026-10-14)
 
-> Enhanced Plus and DFO Grimoire. The sheet is `ui/uiCalmStyle.js` (laid after Plus's by `ui/enhancedStyle.js`
-> injectEnhancedStyle); the behaviour lives in the modules named under each point. Pinned by `test/uicalm.test.js`
+> Enhanced Plus and DFO Grimoire. The sheet is `ui/uiCalmStyle.js` (laid after Plus's by `ui/enhanced/enhancedStyle.js`
+> injectEnhancedStyle); the behaviour lives in the modules named under each point. Pinned by `test/ui/enhanced/uicalm.test.js`
 > and `tools/mutants/uicalm.json`.
 
 ## The report
@@ -24,7 +24,7 @@ panels full of text constantly pull me out of that world."
 
 ## What changed
 
-### 1. The front door asks which world first (`ui/enhancedMenu.js` drawDoors)
+### 1. The front door asks which world first (`ui/enhanced/enhancedMenu.js` drawDoors)
 
 - The enhanced front door's first screen is two doors, **ONLINE** first, then **OFFLINE**, each with a line saying what
   lies behind it; **Settings** and **Overhauls** (`HOME_LINKS`) are plaques in the foot's box (see 7).
@@ -44,7 +44,7 @@ panels full of text constantly pull me out of that world."
   UICALM-FIRM1 L3 M1) or over the map, one page held up, in the page's ink.
 - The classic skin's door keeps its one list (Begin, Online, ...): `twoQuestionDoor` is the enhanced boot rail's alone.
 
-### 2. Character creation shows the class before it is read about (`ui/enhancedChargen.js`)
+### 2. Character creation shows the class before it is read about (`ui/enhanced/enhancedChargen.js`)
 
 - The class list stands in Daggerfall's three ways - Magic, Stealth, Combat (`CLASS_WAYS`, its manual's mages, thieves
   and warriors) - each under its head; each row says the two attributes the class leans on (`leadingAttributes`). A
@@ -80,7 +80,7 @@ panels full of text constantly pull me out of that world."
 
 ### 5. The gameplay HUD
 
-- **The saddle panel stands when it is wanted, and low** (`ui/enhancedSaddle.js` saddleShown). The whole panel when its
+- **The saddle panel stands when it is wanted, and low** (`ui/enhanced/enhancedSaddle.js` saddleShown). The whole panel when its
   key puts it up (F2, see 7 - the second pass's law, which replaced the first pass's "while the mouse is free": the
   code reads the key and the choice, never the mouse - AUDIT UICALM-FIRM1 L4 M7) or the choice is Always; away, one line
   when something needs the rider (`saddleAlert`/`saddleNote`: winded, short of breath, hungry, a wagon rickety or failing,
@@ -92,7 +92,7 @@ panels full of text constantly pull me out of that world."
   Stable page is its separate menu, every word of it there. The player's choice is the Horse care row's part
   **Saddle panel**: When needed (default), Always (STEED-UI's), Off.
 - **The temperature stands in the bottom-left corner** - the quick block's caption, its first word beside the mode's
-  (`ui/enhancedHud.js`), still a HUD piece of its own (`ui/hudLayout.js` 'temp', inside 'quick'). Comfortable it says
+  (`ui/enhanced/enhancedHud.js`), still a HUD piece of its own (`ui/hud/hudLayout.js` 'temp', inside 'quick'). Comfortable it says
   the glyph and the number alone; felt or costing, its word and its scale too. TEMP-UI's fit off the compass's end
   (`fitTemp`: beside, compact, hung, aside) is retired with the place it measured.
 
@@ -115,7 +115,7 @@ the summary board looks cut off ... massively polish all this and do the same fo
 - **No dotted rule anywhere in DFO Grimoire** (`ui/grimoireDress.js`): every dotted border is drawn whole, and a
   heading's rule is one plain line of the page's brown (`RULE_UNDER`) - the spellbook stroke with its dotted ends is
   no longer laid. No word wears a rule under it when the pointer is on it.
-- **The saddle panel is a block in the bottom-right corner** (`ui/enhancedSaddle.js` `.saddlepanel-bar`, 300px, its
+- **The saddle panel is a block in the bottom-right corner** (`ui/enhanced/enhancedSaddle.js` `.saddlepanel-bar`, 300px, its
   meters a grid and its presses two to a row), lifted over the hotbar or the vitals only where it would cover them. It
   goes up and away on its own key, **F2** (`SaddlePanel` in `systems/inputActions.js`, rebindable in Controls; the hosts'
   saddle frame reads it - `scenes/saddleHost.js` `toggle`), and the choice is kept (`saddlePanelOpen`). The hello names
@@ -157,7 +157,7 @@ the summary board looks cut off ... massively polish all this and do the same fo
 - **The Settings screen reads as one list** (`SETTINGS_CSS`): a Features row and a plain row are the same line; the tags
   under a name are words ("Enhanced · DFU Classic"), not boxed capitals; the card beside the list stands clear of the
   screen's top.
-- **The Firmament says why a read failed** (`ui/firmamentWindow.js` `readFailText`, `net/firmamentBook.js`
+- **The Firmament says why a read failed** (`ui/firmamentWindow.js` `readFailText`, `net/firmament/firmamentBook.js`
   `state.status`): a refused `/v1/firmament/state` had left the purses at their empty defaults - "0 of 0", Renown 1 - as
   if that were the answer (a test server whose account service had not been deployed with the Firmament, or whose
   migration 0114 (written as 0113) was not applied, showed a Renown 5 character no stars). It names a 404 (no Firmament on that service),

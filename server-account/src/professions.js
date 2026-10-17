@@ -83,7 +83,7 @@ import { levyOf, seatWeekOf, seasonZeroOf } from '../../src/net/townSeatLaw.js';
 import { tideNow } from './tides.js';   // SEASON1 part two: the land's Tide (9.3)
 import { tideYield } from '../../src/net/tideLaw.js';
 import { firmStatement, firmStatsFrom, firmStatsOf } from './firmament.js';   // FIRM1: the Firmament's hand on a harvest and a craft
-import { yieldPct, xpPct, scaleQty, scaleXp } from '../../src/net/firmamentLaw.js';
+import { yieldPct, xpPct, scaleQty, scaleXp } from '../../src/net/firmament/firmamentLaw.js';
 import { stationSteps } from '../../src/net/fortLaw.js';   // SEAT2b part two (7.5): a seat's crafting halls
 import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls standing at the seat
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
@@ -91,7 +91,7 @@ import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapid
 import { SURVEYOR } from '../../src/net/professionLaw.js';   // MINE-PERKS: Mining 100's Surveyor (the Stonebreaker's id)
 import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk, looseOrder, LOOSE_ORIGIN, STATION_ORIGINS, WRIT_ORIGINS } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
 import { hallWrits, hallWritCountIn, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT, chapterBandOf, chaptersSwitchOf, meritWeekOf, chapterFocusesOf, crackdownMerit, doctrineWritCount } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
-import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
+import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guild/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
 import { regionChapters } from './npcHalls.js';   // CHAP2a: the region's chapters, witnessed
 import { chaptersOpenFor } from './npcRoll.js';   // CHAP2a: hall writs while the Roll is open to the account
 import { receiptAsks, membersOf } from './npcReceipts.js';   // CHAP2b: a chapter's receipt asks beside its writs; CHAP3a: the reader's guilds

@@ -29,9 +29,9 @@ import { KG_COLS, KG_ROWS, KG_ROSTER, KG_TILE, KG_LAYOUTS, KG_OPEN_FIELD } from 
 import { plateModel } from './cardTableDraw.js';
 import { paintIliacCard, paintIliacBack } from './iliacCardFaces.js';
 import { paintFace, RANK_KING } from './cardFaces.js';
-import { cardById } from '../net/iliacCards.js';
-import { FOE_CARDS } from '../systems/cardSources.js';
-import { CARD_W, CARD_L, CARD_T, ARC_HEIGHT } from '../world/cardMotion.js';
+import { cardById } from '../net/iliac/iliacCards.js';
+import { FOE_CARDS } from '../systems/card/cardSources.js';
+import { CARD_W, CARD_L, CARD_T, ARC_HEIGHT } from '../world/card/cardMotion.js';
 import { toColor32 } from '../formats/color32Order.js';
 import {
   gambitCardYaw, GAMBIT_CARD_SHARE, GAMBIT_MAT_LIFT, GAMBIT_WALL_H, GAMBIT_PILLAR_H, GAMBIT_PILLAR_R, GAMBIT_WATER_DROP,
@@ -39,7 +39,7 @@ import {
 } from '../world/gambitCloth.js';
 import { gambitPileStep } from '../world/gambitMotion.js';
 
-export { GAMBIT_CARD_SHARE };   // KG3's import site (test/kg3_draw.test.js) - its home is the cloth's now (KG4: the press reads it)
+export { GAMBIT_CARD_SHARE };   // KG3's import site (test/world/card/kg3_draw.test.js) - its home is the cloth's now (KG4: the press reads it)
 
 /** The game's textures: one archive - the atlas of its pieces (and its hurt and healed tints), the board's mat, and the
  *  effects' atlas. */

@@ -1,81 +1,81 @@
 [
   {
     "name": "OW6-B-old-day-chance",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "export const BAND_CHANCE_DAY = 0.75;",
     "new": "export const BAND_CHANCE_DAY = 0.45;",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "The day's bands as sparse as before."
   },
   {
     "name": "OW6-B-old-night-chance",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "export const BAND_CHANCE_NIGHT = 0.9;",
     "new": "export const BAND_CHANCE_NIGHT = 0.6;",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "The night's as sparse as before."
   },
   {
     "name": "OW6-B-old-pace",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "export const BAND_WANDER_MPS = 2;",
     "new": "export const BAND_WANDER_MPS = 1.3;",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "A band that reads as standing still from the Overworld."
   },
   {
     "name": "OW6-B-old-leg",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "export const BAND_LEG_MS = 50 * 1000;",
     "new": "export const BAND_LEG_MS = 75 * 1000;",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "Legs as long as before: it turns less."
   },
   {
     "name": "OW6-B-size-weight-skipped",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "x -= BAND_SIZE_WEIGHTS[i]; if (x < 0) return i + 1; }",
     "new": "x -= BAND_SIZE_WEIGHTS[i]; if (x < 0) return Math.max(2, i + 1); }",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "No band of one: the lone beast never walks."
   },
   {
     "name": "OW6-B-size-off-birth-stream",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  let x = seededRng((band.seed ^ 0x53495a45) >>> 0)() * total;   // 'SIZE'",
     "new": "  let x = seededRng(band.seed)() * total;",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "The size off the birth stream, whose first draw is under the chance - the big bands never come."
   },
   {
     "name": "OW6-B-level-unsquared",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  return 1 + Math.floor(BAND_LEVEL_MAX * u * u);",
     "new": "  return 1 + Math.floor(BAND_LEVEL_MAX * u);",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "A band's level uniform: as many deadly bands as weak ones."
   },
   {
     "name": "OW6-B-lone-label-counted",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  if (n === 1) return k || 'A lone foe';",
     "new": "  if (n === 0) return k || 'A lone foe';",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "A lone band reads \"Giant, 1\"."
   },
@@ -85,7 +85,7 @@
     "old": "  const size = sized ? ctx.size : rolled;",
     "new": "  const size = rolled;",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "The band's own number thrown away: every band a camp's or a pack's."
   },
@@ -95,7 +95,7 @@
     "old": "    if (SOLITARY_TYPES.has(m) && !lone) continue;",
     "new": "    if (SOLITARY_TYPES.has(m)) continue;",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "A band of one is never a solitary kind."
   },
@@ -105,7 +105,7 @@
     "old": "    if (SOLITARY_TYPES.has(m) && !lone) continue;",
     "new": "    if (SOLITARY_TYPES.has(m) && lone) continue;",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "A group led by a solitary kind."
   },
@@ -115,7 +115,7 @@
     "old": "playerLevel: online ? bandLevelOf(b) : playerEntity.level, inLocationRect: false,",
     "new": "playerLevel: playerEntity.level, inLocationRect: false,",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "Each viewer's own level online: two players read two bands."
   },
@@ -125,7 +125,7 @@
     "old": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) * (wildBornHere(px, py) ? WILD_PACK_MULT : 1) }, seededRng(bandMakeSeed(b)));",
     "new": "gameMinutes: b.night ? 0 : 720 }, seededRng(bandMakeSeed(b)));",
     "tests": [
-      "test/ow6_bands.test.js"
+      "test/systems/travel/ow6_bands.test.js"
     ],
     "note": "The band's number dropped from its make."
   },
@@ -135,7 +135,7 @@
     "old": "  const campMembers = (types) => partyGroupMembers(types, partySize()).slice(0, encounterCap());",
     "new": "  const campMembers = (types) => partyGroupMembers(types, partySize());",
     "tests": [
-      "test/auditpscale1.test.js"
+      "test/systems/auditpscale1.test.js"
     ],
     "note": "A warband of six met by a full party grows past the pool, and none of it stands."
   }

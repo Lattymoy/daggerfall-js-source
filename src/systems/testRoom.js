@@ -28,7 +28,7 @@ import { resurrectionSpell } from './resurrect.js';   // RESURRECT1: the sorcere
 import { applyHeadlessChargen } from './chargenSession.js';
 import { addItem } from './inventory.js';
 import { equipItem } from './equip.js';
-import { mintCondition, templateByIndex, itemBaseValue, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { mintCondition, templateByIndex, itemBaseValue, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { WEAPONS_ENUM, ARMOR_ENUM, createWeapon, ARROW_TEMPLATE } from '../combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { TRANSPORT_HORSE_TEMPLATE, hasHorse } from './inventorySession.js';   // TSR4: the mount is the pack's own question
@@ -36,8 +36,8 @@ import { BOOK_TEMPLATE, createBook } from './books.js';   // EB3: books in the p
 import { BOOK_ID_TITLES } from './booksData.js';
 import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder on for the session
 import { setModSetting } from './modSettings.js';   // FIELD BUGS 2026-09-29 (the sea) #5: the sea door turns Come Sail Away on
-import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, ARCANE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, socketMax, addTechniqueLine } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique; BAL9c: the arcane three
-import { TECHNIQUE_IDS, TECHNIQUES, GAUNTLETS_TEMPLATE } from '../combat/techniqueRoster.js';   // TECH1: one piece a technique, to try them all
+import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, ARCANE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, socketMax, addTechniqueLine } from './loot/lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique; BAL9c: the arcane three
+import { TECHNIQUE_IDS, TECHNIQUES, GAUNTLETS_TEMPLATE } from '../combat/technique/techniqueRoster.js';   // TECH1: one piece a technique, to try them all
 import { AETHERIC_RECORDS, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole (RAID4b: and the raiding parties' three sets)
 import { mintHourlock, mintGilded, GILDED_RECORDS } from './gilded.js';   // GILDED1: the top rung's first record, to be seen and fired (its shot: createPellets, below); GILDED2: and the world's two
 import { welkyndStone, varlaStone } from './ayleidStones.js';   // LOOT21: the Ayleid stones
@@ -90,7 +90,7 @@ export const TEST_LOOT = Object.freeze({
 
 /** FIELD BUGS 2026-09-29 (the sea) #5 (the Discord, through Mac: "Add a ship combat test menu option"): THE SEA
  *  BATTLE. A spawn, as the ride is: the baseline preset landed on the open Bay south of Daggerfall - the map pixel
- *  FIELD-CSA2 proved floats a Small Ship (test/field_csa2.test.js) - put at the helm of an armed Small Ship of their
+ *  FIELD-CSA2 proved floats a Small Ship (test/systems/comeSailAway/field_csa2.test.js) - put at the helm of an armed Small Ship of their
  *  own there, and a pirate brig launched on open water to stand in and engage (the naval host's own spawn door). Come
  *  Sail Away and Naval Combat are turned on at the door (enableTestSea), as the loot door turns its ladder on. */
 export const TEST_SEA = Object.freeze({
@@ -363,7 +363,7 @@ export function seedTestLoot(entity, rolls = Math.random) {
   // to set in them from the pack's card - after every draw the room made before
   { const b = applyRarity(base(TEST_LOOT_BASES[3]), 'rare', rolls); b.sockets = Array(socketMax(b)).fill(SOCKET_EMPTY); put(b); }
   for (const id of TEST_GEMS) put(/** @type {any} */ (mintGem(id)));
-  // TRUE-CURSE (01-Overview/Field-Bugs-2026-10-10.md): a damned Legendary weapon, known - its bite at every blow tried,
+  // TRUE-CURSE (01-Overview/bugs/Field-Bugs-2026-10-10.md): a damned Legendary weapon, known - its bite at every blow tried,
   // and the temple's refusal; after every draw the room made before
   { const d = LEGENDARIES.find((rec) => rec.group === 'Weapons'); if (d) { const it = legendaryItem(d); cursePiece(it, rolls, { damned: true }); put(it); } }
   // TECH1 (bible/05-Combat/Weapon-Techniques.md): THE TECHNIQUES - one Rare a technique, on a piece of its family (a Long
@@ -464,7 +464,7 @@ export async function applyTestCharacter(playerEntity, preset, { fetchBytes, spe
  * (any Test Room entry) hands the armory to a character no save ever marked, straight into a live session.
  * `snap()` is the boot's own pick of the save its load door restores (AUDIT FINAL F9: world.js bootSnap, main's MW-EARLY
  * F3 one parse - the check asked the save a second time); without it, `loadSlot(key)` and `mostRecent()`, the save
- * slots' own synchronous readers (systems/saveSlots.js).
+ * slots' own synchronous readers (systems/save/saveSlots.js).
  * @param {URLSearchParams} params
  * @param {{ snap?: () => any, loadSlot?: (key: number) => any, mostRecent?: () => ({ snap: any } | null) }} saves
  */

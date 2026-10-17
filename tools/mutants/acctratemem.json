@@ -5,7 +5,7 @@
     "old": "      if (overAccountRate(who.player.id, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) {",
     "new": "      if (await overRate(ctx, `acct:${who.player.id}`, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) {",
     "tests": [
-      "test/acctratemem.test.js"
+      "test/server/acctratemem.test.js"
     ],
     "note": "The shape that took the service down: an `acct:` upsert in D1 on every authenticated request, every read a write."
   },
@@ -15,7 +15,7 @@
     "old": "  if (!w || w.start < start) {\n    if (!w && accountWindows.size >= ACCOUNT_RATE_KEYS) {",
     "new": "  if (!w || w.start !== start) {\n    if (!w && accountWindows.size >= ACCOUNT_RATE_KEYS) {",
     "tests": [
-      "test/acctratemem.test.js"
+      "test/server/acctratemem.test.js"
     ],
     "note": "AUDIT RENOWN1's hole again: a request stamped in a window already past starts a fresh one, and alternating the two resets the count for ever."
   },
@@ -25,7 +25,7 @@
     "old": "      for (const [k, v] of accountWindows) if (v.start < start) accountWindows.delete(k);",
     "new": "      for (const [k] of accountWindows) accountWindows.delete(k);",
     "tests": [
-      "test/acctratemem.test.js"
+      "test/server/acctratemem.test.js"
     ],
     "note": "Every window forgotten at the first prune, the open ones too - an abuser's count dropped whenever a new account arrives."
   },
@@ -35,7 +35,7 @@
     "old": "      if (accountWindows.size >= ACCOUNT_RATE_KEYS) accountWindows.clear();",
     "new": "      void 0;",
     "tests": [
-      "test/acctratemem.test.js"
+      "test/server/acctratemem.test.js"
     ],
     "note": "Every window open, nothing goes: the map grows without bound in a busy isolate."
   },
@@ -45,7 +45,7 @@
     "old": "  w.count++;\n  return w.count > max;",
     "new": "  w.count++;\n  return w.count > max + 1;",
     "tests": [
-      "test/acctratemem.test.js"
+      "test/server/acctratemem.test.js"
     ],
     "note": "The bound off by one: ACCOUNT_MAX + 1 a window."
   }

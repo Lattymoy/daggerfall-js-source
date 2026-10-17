@@ -46,7 +46,7 @@
 //     `deadDeg` off it.
 //
 // PURE: numbers in, keys out - pinned against the mod's own runtime
-// sailing a real hull (test/ows2_crossing.test.js).
+// sailing a real hull (test/systems/travel/ows2_crossing.test.js).
 // ═══════════════════════════════════════════════════════════════════
 
 export const SEA_HELM = Object.freeze({

@@ -8,7 +8,7 @@
 // whole town: both, every traveller given a home among the households' houses.
 //
 // A RESIDENT IS A DFU TOWNSPERSON WHO KEEPS THEIR IDENTITY FOR LIFE (LW0 decision 4): RandomiseNPC's own parts -
-// the climate's people for the billboard - a Redguard region's Redguards (REGIONAL-FOLK, characters/mobilePerson.js walkerRace;
+// the climate's people for the billboard - a Redguard region's Redguards (REGIONAL-FOLK, characters/mobile/mobilePerson.js walkerRace;
 // FIELD BUGS 2026-10-10) - (PERSON_TEXTURES, one of four outfits a sex), the talk portrait's record law
 // (PERSON_FACE_RECORDS + one of 24), the region's name bank (MobilePersonNPC.cs:214) - drawn ONCE from the resident's
 // seed instead of at every spawn. The watch rides GUARD_TEXTURE, male, outfit 0 (RandomiseNPC's guard arm). The armed -
@@ -16,20 +16,20 @@
 //
 // Slot ids are the town's and the slot's: `L<mapId>.<slot>` for a household, `L<mapId>.t<slot>` for a traveller,
 // `L<mapId>.w<slot>` for the watch - the same person for every reader, the key a relation is saved under (relations.js).
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace } from '../../characters/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace } from '../../characters/mobile/mobilePerson.js';
 import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
-import { MOBILE_TYPES } from '../../characters/mobileTypes.js';
-import { seededRng } from '../wind.js';
+import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
+import { seededRng } from '../wind/wind.js';
 import { lwSeed, rollInt, pickOf, pickWeighted } from './seed.js';
 
 /** The most residents one town keeps - the households trimmed past it, plain hands first (a city's two hundred houses
  *  would otherwise mint six hundred people, and a day is drawn for each). */
 export const CENSUS_MAX = 260;
 
-/** The climate's People -> the billboard tables' race: the walkers' one table (characters/mobilePerson.js, REGIONAL-FOLK). */
-export { RACE_OF_PEOPLE, raceOfPeople } from '../../characters/mobilePerson.js';
+/** The climate's People -> the billboard tables' race: the walkers' one table (characters/mobile/mobilePerson.js, REGIONAL-FOLK). */
+export { RACE_OF_PEOPLE, raceOfPeople } from '../../characters/mobile/mobilePerson.js';
 
 /** What a resident does - the day's plan reads it (dayPlan.js), the lines read it (lines.js). */
 export const JOBS = Object.freeze({

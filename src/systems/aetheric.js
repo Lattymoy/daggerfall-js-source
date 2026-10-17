@@ -8,7 +8,7 @@
 //
 // ═══ AETHERIC ══════════════════════════════════════════════════════
 //
-// The ladder's top rung under Artifact (systems/lootRarity.js RARITIES:
+// The ladder's top rung under Artifact (systems/loot/lootRarity.js RARITIES:
 // rank 4, the artifact's moved to 5): a colour of its own - the aether's
 // pale blue-white - a pip, a frame, a price. NOTHING ROLLS IT: the
 // ladder's roll (applyRarity) takes the rolled tiers alone, so no drop,
@@ -23,7 +23,7 @@
 // The set of Valkynaz Ruhn, Warden of the Burning Gate: nine pieces of
 // Daedric make - the nine places a set is worn - each a FIXED RECORD
 // (a name, a line of lore, three affixes at the TOP of the Legendary
-// band) wearing a sigil of its own set (systems/sigilSets.js 'ruhn',
+// band) wearing a sigil of its own set (systems/sigil/sigilSets.js 'ruhn',
 // whose tiers are the Burning Gate, Cleave and the Wrath of the
 // Warden). The Gatecleaver is a set weapon and carries the widest
 // band's top blow as well (SIGIL_POWER_MAX) - a BATTLE AXE, Daggerfall's
@@ -35,7 +35,7 @@
 //
 // ═══ THE DROP ══════════════════════════════════════════════════════
 //
-// A kill's spoils (systems/gateSpoils.js rollSpoils) roll ONE MORE THING
+// A kill's spoils (systems/gate/gateSpoils.js rollSpoils) roll ONE MORE THING
 // after everything they rolled before - so every earlier spoils, gold
 // to the last Magic piece, stays exactly what it was for its seed: a
 // Regalia piece REGALIA_CHANCE of the time, which one by the same seed.
@@ -44,7 +44,7 @@
 //
 // Mac, on World Events - Raiding Parties online: "3. We can also add
 // renown and it's own atheric + armor sets". Three more Aetheric sets,
-// one a raiding party (systems/sigilSets.js 'oath', 'thieftaker',
+// one a raiding party (systems/sigil/sigilSets.js 'oath', 'thieftaker',
 // 'orcsbane'), nine fixed records each - the nine places, a one-handed
 // weapon and a shield worn together - of the party's own make: the
 // knights' Mithril, the bandits' Elven, the orcs' own Orcish (the horde's
@@ -59,17 +59,17 @@
 //
 // Mac: "The serpent boss needs to use the currency from oblivion gate
 // and have its own equipment rewards". One more Aetheric set,
-// Sethrakul's Coilscale (systems/sigilSets.js 'coilscale'): nine fixed
+// Sethrakul's Coilscale (systems/sigil/sigilSets.js 'coilscale'): nine fixed
 // records of Ebony - the deep's own black - a one-handed Katana and a
 // shield among them. Its affixes and its blow stand at the Legendary
 // band's MIDDLE: a world boss at sea, over a town's thanks and under
 // the gate's Warden. A ship that dealt the serpent its share finds a
 // piece in its hoard SERPENT_SET_CHANCE of the time
-// (systems/serpentSpoils.js), rolled after everything the hoard rolled
+// (systems/serpent/serpentSpoils.js), rolled after everything the hoard rolled
 // before; no drop, shelf or Broker carries it, as no raid set's is.
 //
 // SD9d (2026-10-07, the Super Dungeons arc): and THE BRASS OF NUMIDIUM
-// (systems/sigilSets.js 'numidium'), what the Warp kept of the Walking
+// (systems/sigil/sigilSets.js 'numidium'), what the Warp kept of the Walking
 // Brass: nine fixed records of Dwarven make - the Dwemer's brass - a
 // round shield and a one-handed Longsword among them, every number at
 // the Legendary band's TOP, as the Regalia's (the hardest fight in the
@@ -77,14 +77,14 @@
 // of the time, rolled after everything they rolled before.
 // ═══════════════════════════════════════════════════════════════════
 
-import { setItemFields, mintCondition, itemBaseValue } from './itemTemplates.js';
+import { setItemFields, mintCondition, itemBaseValue } from './item/itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { affixesWorth, validAffix, AFFIX_RANGES, registerAethericLore } from './lootRarity.js';
+import { affixesWorth, validAffix, AFFIX_RANGES, registerAethericLore } from './loot/lootRarity.js';
 import { SKILLS } from './skills.js';
-import { SIGIL_POWER_MAX, SIGIL_BANDS } from './sigil.js';
-import { setPieceKind, setById, raidSetOf } from './sigilSets.js';   // AUDIT SET D6: the kinds a set counts, for the wire's cross-check
+import { SIGIL_POWER_MAX, SIGIL_BANDS } from './sigil/sigil.js';
+import { setPieceKind, setById, raidSetOf } from './sigil/sigilSets.js';   // AUDIT SET D6: the kinds a set counts, for the wire's cross-check
 
 /** The tier's id, as `item.rarity` wears it. */
 export const AETHERIC = 'aetheric';
@@ -293,7 +293,7 @@ export function mintAetheric(r, { party = 1 } = {}) {
 }
 
 /**
- * AUDIT SET D6: THE MARKS AGREE WITH THE ITEM - for an item off the wire (systems/loot.js validLootItem: a shelf, a
+ * AUDIT SET D6: THE MARKS AGREE WITH THE ITEM - for an item off the wire (systems/loot/loot.js validLootItem: a shelf, a
  * chest, a body every client in the room lands). Each field's own kind is itemFields.js's; these are the checks no one
  * field can make, and a peer's forged mark failed none of them - a Regalia sigil on any Daedric cuirass was a piece of
  * Ruhn's Regalia to every card and every power:
@@ -360,7 +360,7 @@ export function rollRaidSetPiece(party, rolls = Math.random) {
 /** SERPENT-SET: the share of a hoard - a ship that DEALT Sethrakul its share - that carries a piece of the Coilscale: a
  *  town's thanks' own share (RAID_SET_CHANCE), the set being the serpent's alone (no drop, shelf or Broker carries it). */
 export const SERPENT_SET_CHANCE = RAID_SET_CHANCE;
-/** SERPENT-SET, THE HOARD'S LAST ROLL (systems/serpentSpoils.js, after everything it rolled before - every earlier
+/** SERPENT-SET, THE HOARD'S LAST ROLL (systems/serpent/serpentSpoils.js, after everything it rolled before - every earlier
  *  hoard stays what it was for its seed): null most times; else one Coilscale piece, the same seed choosing which. One
  *  roll when nothing drops, two when a piece does. */
 export function rollSerpentSetPiece(rolls = Math.random) {
@@ -371,7 +371,7 @@ export function rollSerpentSetPiece(rolls = Math.random) {
 /** SD9d: the share of the Brass Remnant's spoils that carries a piece of the Brass of Numidium - a third (the design's: the
  *  hardest fight, the rarest feat - a Hollow rises after a rest and falls once). */
 export const NUMIDIUM_SET_CHANCE = 1 / 3;
-/** SD9d, THE SPOILS' LAST ROLL (systems/sdSpoils.js, after everything they rolled before - every earlier spoils stays what
+/** SD9d, THE SPOILS' LAST ROLL (systems/superDungeon/sdSpoils.js, after everything they rolled before - every earlier spoils stays what
  *  it was for its seed): null most times; else one Numidium piece, the same seed choosing which. One roll when nothing
  *  drops, two when a piece does. */
 export function rollNumidiumPiece(rolls = Math.random) {

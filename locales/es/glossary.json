@@ -298,5 +298,7 @@
  "innkeeper": "posadero",
  "purse": "bolsa",
  "pot (the winnings)": "bote",
- "No contest": "Sin resultado"
+ "No contest": "Sin resultado",
+ "first-time bonus (a craft's first-make XP)": "bonificación de primera vez",
+ "cloth (the Weavers' Linen and Wool)": "tela"
 }

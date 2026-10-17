@@ -84,7 +84,7 @@ export function tallyCrimeGuildRequirements(entity, thievingCrime, amount, nowCl
   if (!entity || nowClassicMinutes == null) return false;
   if (thievingCrime) {
     // The `?? 0` is load-bearing, not defensive noise: the port mints
-    // player entities lazily (systems/save.js reads every persistent
+    // player entities lazily (systems/save/save.js reads every persistent
     // field with its own `?? 0`), so a fresh character reaches here
     // with these UNDEFINED where PlayerEntity.cs:90-93 declares them
     // zero. A bare `=== 0` gate reads false against undefined and would

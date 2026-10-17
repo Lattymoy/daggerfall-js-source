@@ -74,7 +74,7 @@
 // JoystickAxisNButtonM as synthetic keydowns, the host's ladder hands
 // them to the overlay, and `input(code)` here is the capture.
 
-import { nativeMetrics, drawRect } from './nativePanel.js';
+import { nativeMetrics, drawRect } from './native/nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText } from './text.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
@@ -88,7 +88,7 @@ import {
   sliderThumb, indicatorText, SLIDER_HEIGHT, SLIDER_INDICATOR_OFFSET, TROUGH_COLOR, TINT,
 } from './horizontalSlider.js';
 import { ToolTip } from './toolTip.js';
-import { getBool, getFloat, setValue, saveSettings } from '../systems/settings.js';
+import { getBool, getFloat, setValue, saveSettings } from '../systems/settings/settings.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { MOUSE_PANEL, PANEL_COLOR, KEYBIND_BG, CONTINUE_BG, CONTINUE_RECT, TITLE_Y, ROW_SIZE, ROW_LABEL, ROW_BUTTON, SLIDER_PANEL, CHECK_SIZE, CHECK_TEXT_OFFSET, toNative } from './mouseControlsWindow.js';
@@ -132,7 +132,7 @@ export const JOY_SLIDERS = Object.freeze([
 ]);
 /** AddOption(20, 20, GetText("enableController")) (:140). */
 export const ENABLE_BOX = Object.freeze({ x: 20, y: 20, get label() { return gameSettingsText('enableController', 'Enable Controller'); } });
-const MULTIPLE_ASSIGNMENTS = 'You have multiple assignments...';   // ui/enhancedControls.js's line; not a second export (AUDIT 24)
+const MULTIPLE_ASSIGNMENTS = 'You have multiple assignments...';   // ui/enhanced/enhancedControls.js's line; not a second export (AUDIT 24)
 
 const TEXT_COLOR = [0.9, 0.9, 0.75, 1];
 const WHITE = [1, 1, 1, 1];

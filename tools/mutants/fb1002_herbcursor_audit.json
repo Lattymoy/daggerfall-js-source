@@ -5,7 +5,7 @@
     "old": "if (!off()) return; if (backButtonHeld) escRelock = relock; else relock(); };",
     "new": "if (!off()) return; relock(); };",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (e.code === 'Escape' && escRelock) { const r = escRelock; escRelock = null; r(); }",
     "new": "if (e.code === 'Escape' && escRelock) { escRelock = null; }",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (backButtonHeld) escRelock = relock; else relock(); };",
     "new": "if (backButtonHeld) escRelock = () => requestLook(canvas); else relock(); };",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (_cursorHolds.size) return;\n    // PL1:",
     "new": "    // PL1:",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      syncPointer();   // AUDIT HERB-CURSOR A3/B1: before anything of the frame can throw\n",
     "new": "",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "if (cursorActive()) { setCursorActive(false); relock(); } return null; }",
     "new": "if (cursorActive()) { setCursorActive(false); requestLook(canvas); } return null; }",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (controllerLook()) return null; const off = holdCursor();",
     "new": "const off = holdCursor();",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "!gatherHost?.acting() && !_actClick && !naval?.takesActivate?.() && profClickPress();",
     "new": "!gatherHost?.acting() && !naval?.takesActivate?.() && profClickPress();",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "export const ACT_POINTER = Object.freeze({ basket: 'cursor', mine: 'look', trace: 'look', fish: 'look' });",
     "new": "export const ACT_POINTER = Object.freeze({ basket: 'cursor', mine: 'look', trace: 'look' });",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "export const actPointer = (st) => (st?.gentle === true && st.kind !== 'fish' ? null : ACT_POINTER[st?.kind] ?? null);",
     "new": "export const actPointer = (st) => (ACT_POINTER[st?.kind] ?? null);",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const actPointer = (st) => (st?.gentle === true && st.kind !== 'fish' ? null : ACT_POINTER[st?.kind] ?? null);",
     "new": "export const actPointer = (st) => (st?.gentle === true ? null : ACT_POINTER[st?.kind] ?? null);",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "bruised: false, window, gentle,   // AUDIT HERB-CURSOR C2",
     "new": "bruised: false, window,   // AUDIT HERB-CURSOR C2",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
@@ -113,16 +113,16 @@
     "old": "label: plan.harvest === 'food' ? 'click the glint' :",
     "new": "label: plan.harvest === 'food' ? 'tap the glint' :",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-HERB-CURSOR-C3-gentle-hint",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "hint: (st, label) => (st.gentle ? t('prof.reticle.basket.searching', 'searching...') : label || t('prof.reticle.basket.glint', 'click the glint')),",
     "new": "hint: (st, label) => label || t('prof.reticle.basket.glint', 'click the glint'),",
     "tests": [
-      "test/fb1002_herbcursor_audit.test.js"
+      "test/systems/fb1002_herbcursor_audit.test.js"
     ]
   }
 ]

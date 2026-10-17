@@ -17,7 +17,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhanced/enhancedStyle.js';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const ROOT = normalize(join(fileURLToPath(import.meta.url), '..', '..'));

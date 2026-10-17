@@ -14,10 +14,10 @@
 // world while a box is open.
 
 import { drawText, measureText } from './text.js';
-import { nativeMetrics } from './nativePanel.js';
+import { nativeMetrics } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM3: the one DaggerfallInputMessageBox
-import { noticeDraw, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE1: the enhanced skin's panel
+import { noticeDraw, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE1: the enhanced skin's panel
 
 /** DaggerfallInputMessageBox maxCharacters. */
 export const MAX_INPUT = 20;
@@ -133,7 +133,7 @@ export class ActionTextBox {
 
   draw(renderer, canvas, font, s) {
     // ENH-NOTICE1: on the enhanced skin the rows go to the slide-in
-    // panel (ui/enhancedNotice.js) and nothing is painted here. The
+    // panel (ui/enhanced/enhancedNotice.js) and nothing is painted here. The
     // box is still the box - modal, chained, click-anywhere.
     if (noticeDraw(this, this.lines)) return;
     if (messageBoxArtLoaded() && font) {

@@ -28,7 +28,7 @@
 // and silently absent anywhere else - a cache that cannot open is a
 // cache miss, never an error.
 
-import { ROAD_DIALS } from './roadNetwork.js';
+import { ROAD_DIALS } from './road/roadNetwork.js';
 
 /** Bump when the generator changes shape. The dials are in the key on
  *  their own, so a tuned number does not need this.

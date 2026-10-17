@@ -1,0 +1,29 @@
+[
+  {
+    "name": "QUEST-RESIDENCE-the-quest-name-unsaid",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "  return questName ? `${questName} (${title})` : title;",
+    "new": "  return title;",
+    "tests": [
+      "test/systems/online/fb1015c_questresidence.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RESIDENCE-the-door-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "        displayName: home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : homeDoorName(",
+    "new": "        displayName: home ? homeDoorTitle(home, null) : homeDoorName(",
+    "tests": [
+      "test/systems/online/fb1015c_questresidence.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-RESIDENCE-the-click-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "    townTalk?.say?.(home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : db.displayName);",
+    "new": "    townTalk?.say?.(home ? homeDoorTitle(home) : db.displayName);",
+    "tests": [
+      "test/systems/online/fb1015c_questresidence.test.js"
+    ]
+  }
+]

@@ -40,5 +40,5 @@ here either.
 
 Nothing here is Daggerfall's or Come Sail Away's: a setup header is the
 encoder's tables, the same for every stream encoded at that mode.
-`test/csa_audio.test.js` holds each file to its CRC32 and parses it to
+`test/tooling/csa_audio.test.js` holds each file to its CRC32 and parses it to
 its mode table.

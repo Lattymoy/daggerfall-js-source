@@ -5,7 +5,7 @@
     "old": "{ patchFoe(foes[i], sf, wire); applyLoot(bodyRecords(w.loot, i)); }",
     "new": "{ patchFoe(foes[i], sf, wire); }",
     "tests": [
-      "test/corpsegold.test.js"
+      "test/systems/corpsegold.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "{ patchFoe(foes[i], sf, wire); applyLoot(bodyRecords(w.loot, i)); }",
     "new": "{ applyLoot(bodyRecords(w.loot, i)); patchFoe(foes[i], sf, wire); }",
     "tests": [
-      "test/corpsegold.test.js"
+      "test/systems/corpsegold.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "{ patchFoe(foes[i], sf, wire); applyLoot(bodyRecords(w.loot, i)); }",
     "new": "{ patchFoe(foes[i], sf, wire); applyLoot(w.loot); }",
     "tests": [
-      "test/corpsegold.test.js"
+      "test/systems/corpsegold.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    return Array.isArray(list) ? list.filter((rec) => lootKeyOf(rec?.k) === key) : [];",
     "new": "    return Array.isArray(list) ? list.filter((rec) => lootKeyOf(rec?.k)?.startsWith('corpse:')) : [];",
     "tests": [
-      "test/corpsegold.test.js"
+      "test/systems/corpsegold.test.js"
     ]
   },
   {
@@ -41,8 +41,8 @@
     "old": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes).map(validSharedFoe) : [];",
     "new": "      const sfoes = Array.isArray(shared.world.foes) ? shared.world.foes.slice(0, _layoutFoes).map(validSharedFoe).filter(Boolean) : [];",
     "tests": [
-      "test/corpsegold.test.js",
-      "test/respawn1.test.js"
+      "test/systems/corpsegold.test.js",
+      "test/net/respawn1.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "      if (!f || !sf) return;   // CORPSE-GOLD: a record the restore refused is a hole at its own index",
     "new": "      if (!f) return;   // CORPSE-GOLD: a record the restore refused is a hole at its own index",
     "tests": [
-      "test/corpsegold.test.js"
+      "test/systems/corpsegold.test.js"
     ]
   }
 ]

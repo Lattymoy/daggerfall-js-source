@@ -27,7 +27,7 @@
 //
 // TRUST is electron-updater's for latest.yml: the manifest comes over HTTPS from the same release as the installers, and
 // nothing it names is used before its bytes hash to it. Pure, no Electron (node:crypto and node:zlib only): the store
-// that applies it is app/lib/gameStore.cjs, the release side is scripts/desktopRelease.mjs, and test/da13_gamechannel.test.js
+// that applies it is app/lib/gameStore.cjs, the release side is scripts/desktopRelease.mjs, and test/tooling/da13_gamechannel.test.js
 // drives both.
 'use strict';
 

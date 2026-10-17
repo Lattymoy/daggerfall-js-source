@@ -8,7 +8,7 @@
 // "This is mostly with online in mind", and asked who holds it online,
 // "Server-owned". The law and every bound are src/net/npcChapterLaw.js;
 // the record is bible/11-Multiplayer/Chapters-Arc.md, section 3, and its
-// audit bible/01-Overview/Audit-Chapters.md (AUDIT CHAP).
+// audit bible/01-Overview/audits/Audit-Chapters.md (AUDIT CHAP).
 //
 // ═══ ONE CHARACTER, UNDER ITS LEASE, IN THE WRITE ITSELF ═══════════
 //
@@ -154,8 +154,10 @@ const same = (/** @type {RollRow} */ a, /** @type {RollRow} */ b) => a.rep === b
 
 /**
  * THE ROLL, READ - SEEDED the first time, and what is owed PAID: `body` `{ character, lease, seed?: { factions, members } }`.
- * Answers `{ roll, from, seeded? }` - `from` the Roll's sequence before this read moved it (a client's kept standing is
- * good only at that sequence), `seeded` when this read's seed made the Roll - `{ roll: null }` for a character with no
+ * Answers `{ roll, from, seeded?, paid? }` - `from` the Roll's sequence before this read moved it (a client's kept standing
+ * is good only at that sequence), `seeded` when this read's seed made the Roll, `paid` what this read paid of what was
+ * owed, `{ [faction]: n }` (AUDIT GUILD-WORDS II B-4, B-5: the client says it, and never what an earlier page said) -
+ * `{ roll: null }` for a character with no
  * Roll and no seed, or `{ error }`: heldUnder's, 'roll-seed' (a seed out of its shape), 'roll-busy' (a race lost).
  * @param {{ db: any, nowS: number, rand?: (b: Uint8Array) => Uint8Array }} ctx @param {{ id: string }} player @param {any} body
  */
@@ -171,12 +173,15 @@ export async function readRoll({ db, nowS, rand }, player, body) {
     const day = utcDay(nowS);
     /** @type {Array<[number, RollRow]>} */
     const paid = [];
+    /** @type {Record<number, number>} AUDIT GUILD-WORDS II (B-4, B-5): what this read paid of what was owed, by faction */
+    const drained = {};
     for (const [f, row] of rows) {
       if (!(row.owed > 0)) continue;
       const d = rollDrain(row, day);
       if (d.credited !== 0 || d.owed !== row.owed) paid.push([f, { ...row, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed }]);
+      if (d.credited > 0) drained[f] = d.credited;
     }
-    if (!paid.length) return { roll: viewOf(kseq, rows), from: kseq };
+    if (!paid.length) return { roll: viewOf(kseq, rows), from: kseq, paid: drained };
     const tag = mintTag(rand);
     const [moved] = await db.batch([headWrite(db, who, seq, tag, nowS), ...paid.map(([f, r]) => rowWrite(db, who.character, f, r, tag))]);
     if (!moved?.meta?.changes) {
@@ -184,7 +189,7 @@ export async function readRoll({ db, nowS, rand }, player, body) {
       return 'error' in why ? why : { error: 'roll-busy' };
     }
     for (const [f, r] of paid) rows.set(f, r);
-    return { roll: viewOf(kseq, rows), from: kseq };   // AUDIT CHAP2 C1: owed paid is the service's own credit
+    return { roll: viewOf(kseq, rows), from: kseq, paid: drained };   // AUDIT CHAP2 C1: owed paid is the service's own credit
   }
   const seed = body?.seed;
   if (seed == null) return { roll: null };
@@ -227,8 +232,9 @@ export async function readRoll({ db, nowS, rand }, player, body) {
 /**
  * A CLAIM: `body` `{ character, lease, rid, deltas, members }` - what moved on the client since the Roll's last word
  * (`deltas`, `{ [faction]: change }`, empty when only a membership moved) and the memberships it holds now (null: no book
- * known - the Roll's stand unchanged). Answers `{ roll, credited }` - `credited` what each line's own change moved the
- * reputation (what the day's room did not take is owed: `roll.owed`) - `{ roll, repeat: true }` for a claim already
+ * known - the Roll's stand unchanged). Answers `{ roll, credited, paid }` - `credited` what each line's own change moved
+ * the reputation (what the day's room did not take is owed: `roll.owed`), `paid` what the claim paid of what was owed
+ * before its lines (AUDIT GUILD-WORDS II B-4) - `{ roll, repeat: true }` for a claim already
  * taken, or `{ error }`: heldUnder's, 'roll-claim' (out of its shape), 'roll-unseeded' (no Roll to claim against: read it
  * first), 'roll-busy' (another write moved the Roll between this one's read and its write - ask again).
  * @param {{ db: any, nowS: number, rand?: (b: Uint8Array) => Uint8Array }} ctx @param {{ id: string }} player @param {any} body
@@ -262,6 +268,8 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
   const asleep = new Set((members ?? []).filter((/** @type {any} */ m) => m.d === 1).map((/** @type {any} */ m) => m.f));   // AUDIT CHAP4 D1
   /** @type {Record<number, number>} */
   const credited = {};
+  /** @type {Record<number, number>} AUDIT GUILD-WORDS II (B-4): what this claim paid of what was owed, apart from its own credit */
+  const drained = {};
   /** @type {Array<[number, RollRow, number]>} the rows that change, and the line each was asked */
   const changed = [];
   for (const [f, row] of rows) {
@@ -269,6 +277,7 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
     if (row.owed > 0) {
       const d = rollDrain(line, day);
       line = { ...line, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed };
+      if (d.credited > 0) drained[f] = d.credited;
     }
     const asked = Number(deltas[f] ?? 0);
     if (asked) {
@@ -280,7 +289,9 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
       // CHAP2a (AUDIT CHAP R1's line, Mac: "Approved"): a NEW membership is recorded only where the Roll's own standing
       // with the guild meets DFU's join (`joinRecordable` - AUDIT CHAP2 S7: what it owes counted; D2: the underworld two
       // at any standing) - one already on the Roll stays, whatever its standing since
-      const member = ranks.has(f) && (row.member || joinRecordable(line.rep + line.owed, f));
+      // AUDIT GUILD-WORDS (L6): the standing before the claim's lines or after them - a join the client made at 0 and a loss
+      // in the same claim's minute (a quest's script, a crime) left a real member off the Roll, and off its own writ
+      const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));
       // the tenure: kept while a member stays one, begun the first time the service sees one, ended when it leaves; the
       // rank never past what the Roll's own reputation allows (AUDIT CHAP S5), nor past the book's 7 (CHAP4a: 8 and 9 are
       // seats, Chapters-Arc 3.5)
@@ -296,7 +307,9 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
     }
     if (!same(line, row)) changed.push([f, line, asked]);
   }
-  if (!changed.length) return { roll: viewOf(kseq, rows), credited };   // AUDIT CHAP S7: nothing moved, nothing written
+  // AUDIT CHAP S7: nothing moved, nothing written - AUDIT GUILD-WORDS II B-3: and nothing paid, said so (a gain the most
+  // a standing holds turned away is then heard as lost, never as the pace's)
+  if (!changed.length) return { roll: viewOf(kseq, rows), credited, paid: drained };
   const tag = mintTag(rand);
   const lines = changed.filter(([, , asked]) => asked);
   // AUDIT CHAP2 S6: every claim that writes leaves its id in the record - one with no reputation line (a membership's
@@ -318,5 +331,5 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
     return { error: 'roll-busy' };
   }
   for (const [f, r] of changed) rows.set(f, r);
-  return { roll: viewOf(kseq + (lines.length > 0 ? 1 : 0), rows), credited };
+  return { roll: viewOf(kseq + (lines.length > 0 ? 1 : 0), rows), credited, paid: drained };
 }

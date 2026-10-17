@@ -24,11 +24,11 @@
 // Pure: no clock of its own, no DOM, no network. Both ends read it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { gateHash } from './gateLaw.js';   // the one mix every clock-law in the world rolls with
+import { gateHash } from './gate/gateLaw.js';   // the one mix every clock-law in the world rolls with
 import { skyClassicMinutes } from './skyLaw.js';   // TIME1: a UTC day's season and month are the SKY's (bible/06-Systems/Online-Time-Arc.md section 4)
 import { CLIMATES, REGION_NAMES } from '../formats/mapsTables.js';
 import { SEASONS, seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';
-import { basketBlock, BASKET_BLOCKS } from '../systems/foragingCore.js';   // the Basket's blocks and foods - the IL's, one home
+import { basketBlock, BASKET_BLOCKS } from '../systems/foraging/foragingCore.js';   // the Basket's blocks and foods - the IL's, one home
 import {
   herbKey, materialOf, foodKey, WRIT_UNITS, WRIT_TIER_WEIGHTS, writPay, writRenown, minedMaterial, CUT_RATIO,
   DEEP_DELVER_MULT, GEM_CHANCE, PROSPECTOR_GEM, HEARTWOOD_CHANCE, FORESTER_MULT, RESIN_CHANCE, RESIN, HEARTWOOD,
@@ -500,7 +500,7 @@ export function haulYield({ roll, clean = false, march = false, school = false, 
   if (slaughterfish) y += 1;
   return Math.max(1, wholeYield(y, chance));
 }
-/** PROF8: the sea, as Foraging's net reads it (systems/foragingLaw.js netHasWater): the Ocean's climate, or the sea
+/** PROF8: the sea, as Foraging's net reads it (systems/foraging/foragingLaw.js netHasWater): the Ocean's climate, or the sea
  *  coast's region. */
 export const SEA_REGION = 31;
 export const haulAtSea = (climate, region) => climate === CLIMATES.Ocean || region === SEA_REGION;

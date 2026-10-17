@@ -14,10 +14,10 @@
 // a partial fit silently took what fit, and a stack otherwise moved
 // whole. Both write the question as a field on the item's own card now,
 // beside the button that moves it - ONE constructor for both (AUDIT
-// 17i), the law (the words, the cap, the parse) in systems/itemTransfer.js.
+// 17i), the law (the words, the cap, the parse) in systems/item/itemTransfer.js.
 // ═══════════════════════════════════════════════════════════════════
 
-import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX } from '../systems/itemTransfer.js';
+import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX } from '../systems/item/itemTransfer.js';
 
 /**
  * A labelled numeric field: "How many [text] of max". `onInput(text)` hears every keystroke; the window keeps the text

@@ -29,12 +29,12 @@ const waitFrames = async (n) => {
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
 const bar = () => page.evaluate(async () => {
-  const m = await import('/src/ui/hud.js');
+  const m = await import('/src/ui/hud/hud.js');
   const b = m.largeHudBar();
   return b ? JSON.stringify(b) : null;
 });
 const setLarge = (on) => page.evaluate(async (v) => {
-  const s = await import('/src/systems/settings.js');
+  const s = await import('/src/systems/settings/settings.js');
   s.setValue('GUI', 'LargeHUD', v ? 'True' : 'False');
 }, on);
 
@@ -45,7 +45,7 @@ await setLarge(true);
 await waitFrames(4);
 // the art loads on the first frame the setting is on, so give it one
 await page.waitForFunction(async () => {
-  const m = await import('/src/ui/hud.js');
+  const m = await import('/src/ui/hud/hud.js');
   return m.largeHudBar() !== null;
 }, null, { timeout: 60000 });
 const b = JSON.parse(await bar());
@@ -56,7 +56,7 @@ if (Math.abs((b.y + b.h) - 720) > 0.01) fail('docked is flush to the bottom');
 
 console.log('\n== THE FOUR FILES ==');
 const art = await page.evaluate(async () => {
-  const m = await import('/src/ui/hudLarge.js');
+  const m = await import('/src/ui/hud/hudLarge.js');
   const o = m.largeHudOptions({}, window.__playerEntity);
   if (!o) return null;
   return {
@@ -82,8 +82,8 @@ console.log('\n== THE MODE PANEL WALKS ITS OWN CYCLE ==');
 // The panel's cycle is Steal > Talk > Grab > Info; the keyboard's is
 // Steal > Grab > Info > Talk. Driven through the real click router.
 const clickPanel = (key, button = 0) => page.evaluate(async ([k, b]) => {
-  const hl = await import('/src/ui/hudLarge.js');
-  const hud = await import('/src/ui/hud.js');
+  const hl = await import('/src/ui/hud/hudLarge.js');
+  const hud = await import('/src/ui/hud/hud.js');
   const pl = await import('/src/player/pointerLock.js');
   pl.setCursorActive(true);                       // IsLargeHUDInteractable
   const bar = hud.largeHudBar();
@@ -102,7 +102,7 @@ for (let i = 0; i < 4; i++) {
   const hit = JSON.parse(await clickPanel('interactionMode', 0));
   if (hit.action !== 'CycleModeForward') fail(`the mode panel posts CycleModeForward, got ${hit.action}`);
   await page.evaluate(async () => {
-    const hl = await import('/src/ui/hudLarge.js');
+    const hl = await import('/src/ui/hud/hudLarge.js');
     const im = await import('/src/player/interactionMode.js');
     im.setInteractionMode(hl.hudLargeNextMode(im.getInteractionMode()));
   });
@@ -137,8 +137,8 @@ for (const [key, button, want] of [['map', 0, 'AutoMap'], ['map', 2, 'TravelMap'
 console.log('\n== A REAL CLICK OPENS A REAL WINDOW ==');
 await page.evaluate(async () => { (await import('/src/player/pointerLock.js')).setCursorActive(true); });
 const inv = await page.evaluate(async () => {
-  const hl = await import('/src/ui/hudLarge.js');
-  const hud = await import('/src/ui/hud.js');
+  const hl = await import('/src/ui/hud/hudLarge.js');
+  const hud = await import('/src/ui/hud/hud.js');
   const bar = hud.largeHudBar();
   const [x, y, w, h] = hl.LARGE_HUD_RECTS.inventory;
   const c = document.querySelector('canvas');

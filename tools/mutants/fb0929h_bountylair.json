@@ -4,48 +4,48 @@
     "file": "src/scenes/world.js",
     "old": "    const places = spots.length ? spots : (d.foes ?? []).filter((f) => f?.ai?.feet && !f.puppet && f._ownFrom == null).map((f) => f.ai.feet);",
     "new": "    const places = (d.foes ?? []).filter((f) => f?.ai?.feet && !f.puppet && f._ownFrom == null).map((f) => f.ai.feet);",
-    "tests": ["test/fb0929h_bountylair.test.js"]
+    "tests": ["test/scenes/fb0929h_bountylair.test.js"]
   },
   {
     "name": "BOUNTY-LAIR-markers-and-foes-pooled",
     "file": "src/scenes/world.js",
     "old": "    const places = spots.length ? spots : (d.foes ?? []).filter((f) => f?.ai?.feet && !f.puppet && f._ownFrom == null).map((f) => f.ai.feet);",
     "new": "    const places = [...spots, ...(d.foes ?? []).filter((f) => f?.ai?.feet && !f.puppet && f._ownFrom == null).map((f) => f.ai.feet)];",
-    "tests": ["test/fb0929h_bountylair.test.js"]
+    "tests": ["test/scenes/fb0929h_bountylair.test.js"]
   },
   {
     "name": "BOUNTY-LAIR-an-item-marker-for-a-foe",
     "file": "src/systems/quest/place.js",
     "old": "      if ((m.archive ?? EDITOR_FLAT_ARCHIVE) !== EDITOR_FLAT_ARCHIVE || m.record !== SPAWN_MARKER_RECORD) continue;",
     "new": "      if ((m.archive ?? EDITOR_FLAT_ARCHIVE) !== EDITOR_FLAT_ARCHIVE || (m.record !== SPAWN_MARKER_RECORD && m.record !== ITEM_MARKER_RECORD)) continue;",
-    "tests": ["test/fb0929h_bountylair.test.js"]
+    "tests": ["test/scenes/fb0929h_bountylair.test.js"]
   },
   {
     "name": "BOUNTY-LAIR-a-treasure-flat-read-as-a-marker",
     "file": "src/systems/quest/place.js",
     "old": "      if ((m.archive ?? EDITOR_FLAT_ARCHIVE) !== EDITOR_FLAT_ARCHIVE || m.record !== SPAWN_MARKER_RECORD) continue;",
     "new": "      if (m.record !== SPAWN_MARKER_RECORD) continue;",
-    "tests": ["test/fb0929h_bountylair.test.js"]
+    "tests": ["test/scenes/fb0929h_bountylair.test.js"]
   },
   {
     "name": "BOUNTY-LAIR-the-block-origin-dropped",
     "file": "src/systems/quest/place.js",
     "old": "      const p = [m.x + b.originX, m.y, m.z + b.originZ];",
     "new": "      const p = [m.x, m.y, m.z];",
-    "tests": ["test/fb0929h_bountylair.test.js"]
+    "tests": ["test/scenes/fb0929h_bountylair.test.js"]
   },
   {
     "name": "BOUNTY-LAIR-the-context-never-answers",
     "file": "src/scenes/dungeonContext.js",
     "old": "    questSpawnSpots: () => dungeonQuestSpawnSpots(dungeon.blocks),",
     "new": "    questSpawnSpots: () => [],",
-    "tests": ["test/fb0929h_bountylair.test.js"]
+    "tests": ["test/scenes/fb0929h_bountylair.test.js"]
   },
   {
     "name": "BOUNTY-LAIR-the-band-forgotten",
     "file": "src/scenes/world.js",
     "old": "    const at = band.length ? band[Math.floor(Math.random() * band.length)] : places.reduce((a, b) => (dist(b) > dist(a) ? b : a));",
     "new": "    const at = places.reduce((a, b) => (dist(b) > dist(a) ? b : a));",
-    "tests": ["test/fb0929h_bountylair.test.js"]
+    "tests": ["test/scenes/fb0929h_bountylair.test.js"]
   }
 ]

@@ -40,7 +40,7 @@
 // over it in four-line chunks - the file names this table carried
 // were, as promised, all it had to look up.
 
-import { FACTION_FLAGS } from './factionRep.js';
+import { FACTION_FLAGS } from './faction/factionRep.js';
 import { FACTION_TYPES, GUILD_GROUPS } from '../formats/factionFile.js';
 import { getLocalizedFactionName, t } from './textManager.js';   // L10N3e: %dae, the prince's name in the player's language; SUMMON-OFFER: the summoner's word when no quest can be made
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page

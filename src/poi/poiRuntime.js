@@ -31,11 +31,11 @@
 
 import { applyTextureTransform } from './gltfImport.js';
 import { multiply } from '../world/mat4.js';   // the port's one column-major product (a fresh matrix each call here)
-import { mat4FromQuatPosScale } from '../world/quat.js';   // Unity's T * R(q) * S - outside the relay's bundle (test/relayversion.test.js)
+import { mat4FromQuatPosScale } from '../world/quat.js';   // Unity's T * R(q) * S - outside the relay's bundle (test/net/relayversion.test.js)
 
 /** The texture archive every POI picture is uploaded under - one record a look (render/meshAlpha.js keys the sampler
  *  apart). Numeric, so world art's mip chain is its own; clear of every archive the port draws (the classic 0-511 and
- *  its own 38001-38990, 56790, 112358-112395, 900000 - test/sd26_render.test.js ONE ARCHIVE, ONE OWNER). */
+ *  its own 38001-38990, 56790, 112358-112395, 900000 - test/world/superDungeon/sd26_render.test.js ONE ARCHIVE, ONE OWNER). */
 export const POI_TEXTURE_ARCHIVE = 600000;
 
 const r255 = (v) => Math.round(Math.min(Math.max(Number(v) || 0, 0), 1) * 255);

@@ -1,7 +1,7 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // FIRM1 (2026-10-13; bible/06-Systems/Firmament.md) - THE FIRMAMENT, DRAWN: the whole sky over the whole screen, as Path
-// of Exile opens its tree - and as the Ascension opens its stars (ui/enhancedLevelUp.js: a screen that is the whole screen,
+// of Exile opens its tree - and as the Ascension opens its stars (ui/enhanced/enhancedLevelUp.js: a screen that is the whole screen,
 // swapped in over the pause window, which it puts back when it closes).
 //
 // WHAT A PLAYER DOES HERE
@@ -13,30 +13,30 @@
 //     refunds and the silver a refund costs (free below Renown 10). The book asks the service the whole tree.
 //   Drag pans, the wheel (or a pinch) zooms, F finds your sign, the search lights every star whose words match.
 //
-// TWO DRESSES, ONE WINDOW. Its frames are the stone-and-brass kit's roles (ui/enhancedFrame.js FRAME_ROLES: the bar a
+// TWO DRESSES, ONE WINDOW. Its frames are the stone-and-brass kit's roles (ui/enhanced/enhancedFrame.js FRAME_ROLES: the bar a
 // window, the tip and the side panels, the presses buttons), so Enhanced Plus carves them and DFO Grimoire turns them into
 // its pages and planks with no rule of this file's. The SKY is a canvas, and reads the dress itself: on Plus a night of
 // brass and gold over a dithered dark; under the Grimoire a star-chart inked on the page - brown ink, red for what is held,
 // gold leaf on a held star's rim - drawn at half resolution and laid pixelated, as every surface of the dress is.
 //
-// The law is net/firmamentLaw.js, the sky net/firmamentTree.js, the purses and the asks net/firmamentBook.js. Nothing
+// The law is net/firmament/firmamentLaw.js, the sky net/firmament/firmamentTree.js, the purses and the asks net/firmament/firmamentBook.js. Nothing
 // here decides what may be allocated - it asks the law, and the service asks it again.
 // ═══════════════════════════════════════════════════════════════════
 
 import { t } from '../systems/textManager.js';   // UI-CALM: the read's failure, said
-import { FIRM_NODES, FIRM_EDGES, SIGNS, SERPENT, FIRM_RADII, signById } from '../net/firmamentTree.js';
+import { FIRM_NODES, FIRM_EDGES, SIGNS, SERPENT, FIRM_RADII, signById } from '../net/firmament/firmamentTree.js';
 import {
   pathTo, refundTakes, firmCostOf, fits, pointsLeft, treeDiff, refundSilver, statWords, statDef, overCap, treeStats, treeParts, FIRM_RESPEC_GOLD,
   buildCode, treeOfCode, treeFault,
-} from '../net/firmamentLaw.js';
-import { firmamentBook } from '../net/firmamentBook.js';
+} from '../net/firmament/firmamentLaw.js';
+import { firmamentBook } from '../net/firmament/firmamentBook.js';
 import { accountRefusalText } from '../net/accountClient.js';   // AUDIT UICALM-FIRM1 L4 L4: a refusal the window has no words for, in the account's
-import { FRAME_TONES } from './enhancedFrame.js';
+import { FRAME_TONES } from './enhanced/enhancedFrame.js';
 import { GRIM_TONES, GRIMOIRE_STACK, px } from './grimoireDress.js';
 import { artVar } from './grimoireArt.js';
 import { wrapAngle } from '../world/mat4.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { registerOverlay } from './enhancedOverlays.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { audio } from '../systems/audio.js';   // the UI's own click, for a press on the sky (its buttons click through ui/uiClickSound.js)
 import { SOUND } from '../systems/soundClips.js';
 
@@ -239,7 +239,7 @@ const cloneTree = (t) => ({ start: t?.start ?? null, keys: [...(t?.keys ?? [])] 
 function seeded(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
 
 /**
- * Mount the Firmament over `host`. `book` the page's (net/firmamentBook.js) - or `preview` for a sky with no service
+ * Mount the Firmament over `host`. `book` the page's (net/firmament/firmamentBook.js) - or `preview` for a sky with no service
  * (the lab page, an offline look): `{ tree, stars, craft, renown, commit? }`. `onExit` when it closes.
  * @param {HTMLElement} host
  * @param {{ book?: any, preview?: any, onExit?: () => void, doc?: Document }} [o]

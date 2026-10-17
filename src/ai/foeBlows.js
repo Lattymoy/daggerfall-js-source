@@ -4,7 +4,7 @@
 // level 10 and up, or an elite foe; since TELL7 a champion and a revenant too).
 //
 // The world boss's language at a foe's scale: a short wind-up with its shape drawn on the ground where it will land,
-// resolved by where the player's feet stand at the landing (net/gateStrike.js's law). Three shapes at TACT4 - the LUNGE
+// resolved by where the player's feet stand at the landing (net/gate/gateStrike.js's law). Three shapes at TACT4 - the LUNGE
 // (a short lane ahead), the SWEEP (a front cone), the SLAM (a disc just ahead) - and four since TELL6 (the RING, the
 // CHARGE, the LEAP, the AIMED shot: Feud-Arc.md 8.1), each family its own (ai/blowShapes.js). A blow is the foe's own
 // blow, delayed and shaped: at the landing the brain (ai/tactics.js) forces the swing, and the host's ordinary hit

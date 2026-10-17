@@ -1,6 +1,6 @@
 // Vendored from project-final's Rewrite Engine (rewrite/core/palette.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json
+// is pinned by test/characters/rig.test.js over fixtures/bare-body-parity.json
 // (captured from rewrite/rig at vendor time). Do not hand-diverge:
 // upstream first, then re-vendor + re-capture.
 // Palette + band-quantised flat shading (the voxel pixel-art look).

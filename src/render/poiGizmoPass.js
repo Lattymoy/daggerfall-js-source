@@ -2,7 +2,7 @@
 // POI-3 (2026-10-14, bible/06-Systems/POI-Editor-Arc.md): THE EDITOR'S LINES - the gizmo's handles (poi/poiGizmo.js
 // gizmoShape), a selection's box and the cursor's mark, drawn over the world in one foreign pass a batch.
 //
-// Lines as screen-width quads (render/sdStepsPass.js's law, never GL_LINES - WebGL caps those at one pixel, gone on a
+// Lines as screen-width quads (render/superDungeon/sdStepsPass.js's law, never GL_LINES - WebGL caps those at one pixel, gone on a
 // high-DPI screen), each segment its own colour; a dynamic buffer the editor fills a frame (`packLines` - grown, never
 // shrunk, so a frame makes nothing once the largest gizmo has drawn), its edges feathered. A batch is drawn ON TOP (no depth test: a handle
 // is never hidden behind the thing it moves) or IN the world (depth-tested, never written: a box seen where the model
@@ -11,7 +11,7 @@
 //
 // Not a DFU member. Ledger A (POI).
 import { buildProgram } from './glProgram.js';
-import { telegraphLineW } from './gateTelegraph.js';
+import { telegraphLineW } from './gate/gateTelegraph.js';
 
 const FLOATS = 12;   // aA xyz, aB xyz, aM (side, end), aC rgba
 const VERTS = 6;     // two triangles a segment

@@ -9,7 +9,7 @@
 // defaults without a DOM.
 
 import { appStorage } from './appStorage.js';   // the one storage seam - localStorage lives there alone
-import { onlineForcedModSetting, onlineWholeModKey } from './onlineLane.js';   // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's; REALM P0.2: and the balance mods whole
+import { onlineForcedModSetting, onlineWholeModKey } from './online/onlineLane.js';   // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's; REALM P0.2: and the balance mods whole
 import { FOOT_SKIN_COUNT, CLASS_SKINS, classSkinLabel } from '../player/classSkins.js';   // SKIN2: the class skins past the mod's sixteen
 import { t, localizedText } from './textManager.js';   // L10N4: every setting's description and option names in the player's language, read when they are read; DFU's own key where it has the same word
 
@@ -173,7 +173,7 @@ export const MOD_SETTINGS = Object.freeze({
       // WOD-PEAKS (2026-10-09, the owner of the pyramid massifs in the Wrothgarian Mountains: "i actually would prefer
       // [them removed everywhere] BUT can you place more rounded not SUPER HUGE mountains?"): the port's own switch, off -
       // the mod's Mountains layouts are ARCH3D pebbles stretched by hundreds and thousands into faceted spires up to 1.4 km
-      // tall (world/wodRockUv.js). The rounded mountains the land stands instead are the landforms' (world/landforms.js
+      // tall (world/worldOfDaggerfall/wodRockUv.js). The rounded mountains the land stands instead are the landforms' (world/landforms.js
       // LANDFORM8). Online the room's (onlineLane.js): the layouts level the ground and stand collidable rock.
       Mountains: Object.freeze({
         default: false,
@@ -219,7 +219,7 @@ export const MOD_SETTINGS = Object.freeze({
   // 7,317 and 410 places laid out again, their blocks with them - so one
   // switch each: the port's Enabled, read once when the game loads
   // (scenes/modWorldData.js latches it - a town never moves under the
-  // player), online the room's (systems/onlineLane.js).
+  // player), online the room's (systems/online/onlineLane.js).
   'beautiful-villages': Object.freeze({
     title: 'Beautiful Villages of Daggerfall',
     author: 'carademono',
@@ -441,7 +441,7 @@ export const MOD_SETTINGS = Object.freeze({
       // KEEP-BOATS (2026-09-30, Mac: ship ownership "less punishing" - "Keep boats & cargo"): A DEPARTURE FROM THE
       // MOD'S SHIPPED DEFAULT. The mod ships it off, and off a boat placed in a dungeon was destroyed once the player
       // was back outside - a packable one and its hold for good, a crewed one's hold with it (UpdateBoatVisibility).
-      // The port ships it ON; the switch stays the player's. Pinned: test/csa_registration.test.js DEPARTED.
+      // The port ships it ON; the switch stays the player's. Pinned: test/systems/csa_registration.test.js DEPARTED.
       'Compatibility.PersistentDungeonBoats': Object.freeze({ default: true, get description() { return t('mods.comeSailAway.Compatibility.PersistentDungeonBoats.description', 'Keep a boat placed indoors or underground when you leave it (off, it is gone once you are back outside).'); } }),
       'Map.RestrictPositionReadingTime': Object.freeze({ default: true, get description() { return t('mods.comeSailAway.Map.RestrictPositionReadingTime.description', 'Position can only be viewed around midday and midnight'); } }),
       'Map.RestrictPositionReadingWeather': Object.freeze({ default: true, get description() { return t('mods.comeSailAway.Map.RestrictPositionReadingWeather.description', 'Position can only be viewed in Sunny or Cloudy weather'); } }),
@@ -784,12 +784,12 @@ export const MOD_SETTINGS = Object.freeze({
       // free. It is not free here any more: SOC5 spends F on the port's own
       // SocialInteract action (systems/inputActions.js DEFAULT_BINDINGS), the
       // key Mac named, and online forces every vendored mod ON
-      // (systems/onlineLane.js) - so one press would both open the F-menu on a
+      // (systems/online/onlineLane.js) - so one press would both open the F-menu on a
       // player and light a torch, for every player online, by default. O is
       // unbound in DFU's own defaults and unused by this mod's other two keys
       // and by every other vendored mod, and it says what it does: on and off.
       // The player may still bind it wherever they like; this is about what
-      // SHIPS. test/ht1_handheldtorches.test.js HT4 is the gate that caught it.
+      // SHIPS. test/systems/ht1_handheldtorches.test.js HT4 is the gate that caught it.
       'Handling.ToggleLightInput': Object.freeze({ default: "O", text: true, get description() { return t('mods.handheldTorches.Handling.ToggleLightInput.description', 'Button used to quickly ignite or douse your light source'); } }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Handling.RememberLastLightSource': Object.freeze({ default: true, get description() { return t('mods.handheldTorches.Handling.RememberLastLightSource.description', 'Igniting with the key re-lights the light you last doused, if you still carry one.'); } }),
       // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
@@ -843,7 +843,7 @@ export const MOD_SETTINGS = Object.freeze({
       // first-person hand never holds it, and the light shines from the hip
       // (systems/playerTorch.js lanternAtWaist). Torches and candles are
       // still held. The vendored modsettings.json is untouched; the pane's
-      // pin names this key as the port's (test/ht1_handheldtorches.test.js).
+      // pin names this key as the port's (test/systems/ht1_handheldtorches.test.js).
       'Handling.LanternsAtWaist': Object.freeze({ default: true, get description() { return t('mods.handheldTorches.Handling.LanternsAtWaist.description', 'If enabled, lanterns hang at your waist instead of being held: they never need a free hand, are never stowed, and light you from the hip. Torches and candles are still held. (This port’s own switch - the mod has none.)'); } }),
       'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, get description() { return t('mods.handheldTorches.Throwing.ThrowTorchInput.description', 'Hold to wind up a throw, release to throw a torch.'); } }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, get description() { return t('mods.handheldTorches.Throwing.ThrowStrength.description', 'Multiplier on the throw\u2019s speed (25 at full Strength).'); } }),
@@ -1250,7 +1250,7 @@ export const MOD_SETTINGS = Object.freeze({
       // on Handheld Torches' - the vendored modsettings.json does not carry
       // it and its words say so. ON: a journey steers round buildings,
       // walls and rocks and pauses short of what it cannot pass
-      // (systems/travelSteer.js). OFF: the mod's own beeline, exactly.
+      // (systems/travel/travelSteer.js). OFF: the mod's own beeline, exactly.
       'GeneralOptions.AvoidObstacles': Object.freeze({ default: true, get description() { return t('mods.travelOptions.GeneralOptions.AvoidObstacles.description', 'Steers time accelerated travel around buildings, walls and rocks, and pauses the journey before walking into one it cannot get round. (This port’s own switch - the mod has none.)'); } }),
       // OW-TOGGLE (2026-09-28, Mac: "bring back the original travel option as a toggle. Off by default." - "The normal
       // first person travel accelerated was removed in favor of the overworld travel"): THE PORT'S OWN KEY on the mod's
@@ -1268,7 +1268,7 @@ export const MOD_SETTINGS = Object.freeze({
       // RATE-LAW (2026-10-04, Mac: "Remove travel options dials" / "Roads now travel at x100 and non roads at x60"): the
       // mod's TimeAcceleration section (DefaultStartingAcceleration, AlwaysUseStartingAcceleration, AccelerationLimit)
       // is not declared - the spinner it started and bounded is gone, and a journey runs at its ground's rate
-      // (systems/timeScale.js travelRateOf). The vendored modsettings.json keeps the three; test/to1_travelOptions.test.js
+      // (systems/timeScale.js travelRateOf). The vendored modsettings.json keeps the three; test/systems/travel/to1_travelOptions.test.js
       // names them as the one section the port leaves out.
       'Teleportation.EnablePaidTeleportation': Object.freeze({ default: false, get description() { return t('mods.travelOptions.Teleportation.EnablePaidTeleportation.description', "Enable paid Mages teleportation service for all guild members, before rank 8"); } }),
       // the shipped file's spacer section "__" carries no keys
@@ -1341,7 +1341,7 @@ export const MOD_SETTINGS = Object.freeze({
       // IT1: DEPARTURE FROM THE MOD'S SHIPPED DEFAULT (it ships true), on the owner's word that the carriage is instant
       // travel "as an option" - TO-FIELD2's shape. On, the travel map refuses every trip to a place (the mod's
       // ImmersiveTravelPopUp in DFU's) and Travel Options' walked journeys from the map go with it; online the room
-      // holds it off (systems/onlineLane.js). The key is still a key: turning it on restores the mod's own default.
+      // holds it off (systems/online/onlineLane.js). The key is still a key: turning it on restores the mod's own default.
       'General.DisableNormalTravel': Object.freeze({ default: false, description: 'If this option is eabled, you will no longer be able to travel from the map and you will have to use ONLY carriages and ships.' }),
       'General.DailyCarriageFee': Object.freeze({ default: 1, min: 0, max: 99, description: 'The fee you must pay to travel with a carriage for every day of travel' }),
       'General.ClearerMapDots': Object.freeze({ default: true, description: 'Draws larger dots depending on town size in the travel map.' }),

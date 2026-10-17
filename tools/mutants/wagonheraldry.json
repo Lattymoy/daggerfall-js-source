@@ -2,12 +2,12 @@
   {
     "name": "WAGONEMBLEM-1-the-side-a-bare-record-again",
     "file": "src/world/wagonArt.js",
-    "old": "[TEX.openSide]: emblemmedSide(DF.sailcloth, null)",
-    "new": "[TEX.openSide]: DF.sailcloth",
+    "old": "  paintWagonEmblem(pic, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0, EMBLEM_CELL, S, EMBLEM_M, arms);",
+    "new": "",
     "tests": [
       "test/wagonheraldry.test.js"
     ],
-    "note": "The whole of WAGON-EMBLEM undone: the open wagon's outer side is a bare Daggerfall record again, which is not a composed picture, so composedPicture's `paint` is unreachable and there is no emblem to paint. The reader's guild's arms vanish from the wagon, and the livery's cloth is a bare record with it."
+    "note": "The whole of WAGON-EMBLEM undone: the arms never painted over the side, so the reader's guild's arms vanish from the wagon and every livery is bare boards. The pool still remaps and uploads - there is simply no emblem in any of it."
   },
   {
     "name": "WAGONEMBLEM-2-the-emblem-at-the-tile's-corner",
@@ -27,7 +27,7 @@
     "tests": [
       "test/wagonheraldry.test.js"
     ],
-    "note": "The stamp's alpha blend replaced by the binary threshold composedPicture's insets use (classicArt.js): a shield's soft edge stops being paint on cloth and becomes a HOLE through it, and a half-covered texel is dropped rather than laid. test/wagons2.test.js holds every wagon texel whole or clear, and this stampRgba pin holds it too."
+    "note": "The stamp's alpha blend replaced by the binary threshold composedPicture's insets use (classicArt.js): a shield's soft edge stops being paint on cloth and becomes a HOLE through it, and a half-covered texel is dropped rather than laid. test/systems/wagon/wagons2.test.js holds every wagon texel whole or clear, and this stampRgba pin holds it too."
   },
   {
     "name": "WAGONEMBLEM-4-the-stamp-wraps-at-the-edge",
@@ -52,12 +52,12 @@
   {
     "name": "WAGONEMBLEM-6-the-repeat-not-suppressed",
     "file": "src/world/wagonArt.js",
-    "old": "    body: cloth, size: Object.freeze([COMPOSE, COMPOSE]), repeat: SIDE_CELLS,",
-    "new": "    body: cloth, size: Object.freeze([COMPOSE, COMPOSE]), repeat: 1,",
+    "old": "  for (let t = 0; t < SIDE_CELLS; t++)\n    for (let y = 0; y < S; y++) img.data.set(tile.data.subarray(y * S * 4, (y + 1) * S * 4), (y * W + t * S) * 4);",
+    "new": "  for (let t = 0; t < 1; t++)\n    for (let y = 0; y < S; y++) img.data.set(tile.data.subarray(y * S * 4, (y + 1) * S * 4), (y * W + t * S) * 4);",
     "tests": [
       "test/wagonheraldry.test.js"
     ],
-    "note": "THE REPEAT NOT SUPPRESSED - the operator's whole complaint. The picture is one cell again while WAGON_TILE.openSide[0] still spans four of them, so the face's u runs off the end of the picture: under REPEAT that is a 5.2 m cloth with the arms stretched to five times their width, once, on the second cell's metre. This is what \"suppress the repeat\" looks like when it is done to the TILE and not to the picture."
+    "note": "THE REPEAT NOT SUPPRESSED - the operator's whole complaint. The picture holds one cell of boards with three cells of nothing beside it: the u still spans four cells, so the wagon wears one tile of boards and three of black, and the arms stand on nothing. This is what \"suppress the repeat\" looks like when it is done halfway."
   },
   {
     "name": "WAGONEMBLEM-7-the-emblem-on-the-first-iteration",
@@ -87,6 +87,6 @@
     "tests": [
       "test/wagonheraldry.test.js"
     ],
-    "note": "planarUv's own far-side u flip put back (world/galleonMesh.js, \"a side\"): the far wall's picture mirrors about the wagon's middle, so the near side reads the arms at z 1.45 to 2.45 m and the far side reads the SAME texels at z 2.75 to 3.75 m. One pair of arms, a tile and a half apart, on one wagon."
+    "note": "planarUv's own far-side u flip put back (world/ships/galleonMesh.js, \"a side\"): the far wall's picture mirrors about the wagon's middle, so the near side reads the arms at z 1.45 to 2.45 m and the far side reads the SAME texels at z 2.75 to 3.75 m. One pair of arms, a tile and a half apart, on one wagon."
   }
 ]

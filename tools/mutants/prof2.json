@@ -5,8 +5,8 @@
     "old": "export const strikesFor = (tier) => (tier <= 2 ? 4 : tier <= 4 ? 5 : 7);",
     "new": "export const strikesFor = (tier) => 4;",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_client.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -15,9 +15,9 @@
     "old": "export const glintsMax = (tier) => Math.ceil(strikesFor(tier) / 2);",
     "new": "export const glintsMax = (tier) => Math.floor(strikesFor(tier) / 2);",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_service.test.js",
-      "test/prof2_client.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -26,7 +26,7 @@
     "old": "export const GEM_CHANCE = 0.03;",
     "new": "export const GEM_CHANCE = 0.3;",
     "tests": [
-      "test/prof2_law.test.js"
+      "test/net/prof2_law.test.js"
     ]
   },
   {
@@ -35,7 +35,7 @@
     "old": "  if (deep && deepDelver) y *= DEEP_DELVER_MULT;",
     "new": "  if (deepDelver) y *= DEEP_DELVER_MULT;",
     "tests": [
-      "test/prof2_law.test.js"
+      "test/net/prof2_law.test.js"
     ]
   },
   {
@@ -44,7 +44,7 @@
     "old": "  if (cut) return { material: 'stone:cut', qty: Math.max(1, wholeYield(y / CUT_RATIO, chance)) };",
     "new": "  if (cut) return { material: 'stone:cut', qty: Math.max(1, wholeYield(y, chance)) };",
     "tests": [
-      "test/prof2_law.test.js"
+      "test/net/prof2_law.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);",
     "new": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), 7);",
     "tests": [
-      "test/prof2_law.test.js"
+      "test/net/prof2_law.test.js"
     ]
   },
   {
@@ -62,8 +62,8 @@
     "old": "  const sig = confirmed && region !== null ? regionSignature(region) : null;",
     "new": "  const sig = region !== null ? regionSignature(region) : null;",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_client.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -72,7 +72,7 @@
     "old": "  if (k === 'daggerfall') return { ore: 'ore:moonstone', slots: 2 };",
     "new": "  if (k === 'daggerfall') return { ore: 'ore:moonstone', slots: 1 };",
     "tests": [
-      "test/prof2_law.test.js"
+      "test/net/prof2_law.test.js"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "old": "export const dungeonVeinCount = (dungeon, day) => 1 + (nodeRoll('dvein', dungeon, 0, day, 0, 0) % DUNGEON_VEINS_MAX);",
     "new": "export const dungeonVeinCount = (dungeon, day) => (nodeRoll('dvein', dungeon, 0, day, 0, 0) % DUNGEON_VEINS_MAX);",
     "tests": [
-      "test/prof2_law.test.js"
+      "test/net/prof2_law.test.js"
     ]
   },
   {
@@ -90,7 +90,7 @@
     "old": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);",
     "new": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4), 7);",
     "tests": [
-      "test/prof2_law.test.js"
+      "test/net/prof2_law.test.js"
     ]
   },
   {
@@ -99,8 +99,8 @@
     "old": "  if (!confirmed) return null;\n  const chance = GEM_CHANCE",
     "new": "  const chance = GEM_CHANCE",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_service.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -109,8 +109,8 @@
     "old": "regions: regions(23, 33, 34,",
     "new": "regions: regions(33, 34,",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_client.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -119,8 +119,8 @@
     "old": "  ingot('ingot:steel', [['ingot:iron', 1], ['wood:charcoal', 1]]),",
     "new": "  ingot('ingot:steel', [['ingot:iron', 1]]),",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_client.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -129,9 +129,9 @@
     "old": "  const xp = 10 * tier * units;",
     "new": "  const xp = 10 * units;",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_service.test.js",
-      "test/prof2_client.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "b = Math.max(b, Math.ceil(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
     "new": "b = Math.max(b, Math.floor(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
     "tests": [
-      "test/prof2_law.test.js"
+      "test/net/prof2_law.test.js"
     ]
   },
   {
@@ -149,8 +149,8 @@
     "old": "  return past >= CRAFTS_ABOVE_JOURNEYMAN ? xpForRank(JOURNEYMAN_RANK + 1) - 1 : PROF_XP_MAX;",
     "new": "  return PROF_XP_MAX;",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_service.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "  const glints = Number.isSafeInteger(act?.glints) ? Math.max(0, Math.min(most, act.glints)) : 0;",
     "new": "  const glints = Number.isSafeInteger(act?.glints) ? Math.max(0, act.glints) : 0;",
     "tests": [
-      "test/prof2_service.test.js"
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "  return { glints, clean: act?.clean === true && glints === most };",
     "new": "  return { glints, clean: act?.clean === true };",
     "tests": [
-      "test/prof2_service.test.js"
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "    tier = found.tier;\n    if (!tierOpen(rank, tier)) return { error: 'prof-rank' };\n    const s = strikesOf(act, tier);",
     "new": "    tier = found.tier;\n    const s = strikesOf(act, tier);",
     "tests": [
-      "test/prof2_service.test.js"
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  const wkind = deep ? 'dungeon' : 'pixel';",
     "new": "  const wkind = 'pixel';",
     "tests": [
-      "test/prof2_service.test.js"
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "        CASE WHEN COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?14), 0) < ?11 THEN ?14 END, ?13, ?2, ?3",
     "new": "        ?14, ?13, ?2, ?3",
     "tests": [
-      "test/prof2_service.test.js"
+      "test/net/prof2_service.test.js"
     ],
     "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the gem is ?14 now."
   },
@@ -205,7 +205,7 @@
     "old": "      WHERE ${held.join(' AND ')}\n",
     "new": "      WHERE 1\n",
     "tests": [
-      "test/prof2_service.test.js"
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "  if (!Number.isSafeInteger(count) || count < 1 || count > SMELT_MAX) return { error: 'bad-qty' };",
     "new": "  if (!Number.isSafeInteger(count) || count < 1) return { error: 'bad-qty' };",
     "tests": [
-      "test/prof2_service.test.js"
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "      SELECT ?1, ?3, ?2, ?4, ?5, ${per} * (?5 - MIN(?5, ${bought})), ${per} * (MIN(?5, ${bought}) - MIN(?5, ${loose})), ${per} * MIN(?5, ${loose}),\n",
     "new": "      SELECT ?1, ?3, ?2, ?4, ?5, ${per} * ?5, 0, 0,\n",
     "tests": [
-      "test/prof2_service.test.js"
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "      st.points += onGlint ? 2 : 1;",
     "new": "      st.points += 1;",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "      if (!attack || st.swing > 0) return;",
     "new": "      if (!attack) return;",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "      if (st.points >= st.need) { st.done = true; return; }\n      moveGlint();",
     "new": "      if (st.points >= st.need) { st.done = true; return; }",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "    if (gentle) { st.glint = -1; return; }\n",
     "new": "",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "clean: !gentle && st.glints === st.strikes };",
     "new": "clean: !gentle && st.glints > 0 };",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "    if (!claimed) continue;\n",
     "new": "",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "export const NODE_SPACING_M = 6;",
     "new": "export const NODE_SPACING_M = 0;",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "const at = nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, solid, clear, beach) ?? outside(natureStandsAt(",
     "new": "const at = outside(natureStandsAt(",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "  if (!pick) return { harvest, verb, rest: 'needs a Pick-Axe', ready: false };\n",
     "new": "",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "(h.nextAt ?? 0) <= now() && !sending.has(h.rid));",
     "new": "(h.nextAt ?? 0) <= now());",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -322,25 +322,25 @@
     "old": "      applyStore(r.data?.gemStore);   // PROF2: a gem the strikes found\n",
     "new": "",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
     "name": "PROF2-37-ingots-undyed",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "  if (Number.isFinite(t.iconDye)) return { archive, record, dye: t.iconDye, dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n",
     "new": "",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
     "name": "PROF2-38-iron-counted",
-    "file": "src/systems/profItems.js",
+    "file": "src/systems/professions/profItems.js",
     "old": "'Lead', 'Iron', 'Copper',",
     "new": "'Lead', 'Copper',",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -349,17 +349,17 @@
     "old": "enchant: 200_000, forge: 50_000, workbench: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
     "new": "enchant: 200_000, forge: 0, workbench: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
     "tests": [
-      "test/prof2_client.test.js",
-      "test/homestations.test.js"
+      "test/net/prof2_client.test.js",
+      "test/ui/homestations.test.js"
     ]
   },
   {
     "name": "PROF2-40-smeltable-past-the-most",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  let n = SMELT_MAX;\n  for (const inp of r.inputs)",
     "new": "  let n = Infinity;\n  for (const inp of r.inputs)",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   }
 ]

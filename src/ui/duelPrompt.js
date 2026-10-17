@@ -9,7 +9,7 @@
 // and the window so the pins drive it headless.
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
-import { DUEL_ASK_TTL_MS } from '../net/duelSession.js';
+import { DUEL_ASK_TTL_MS } from '../net/duel/duelSession.js';
 
 export const DUEL_PROMPT_STYLE_ID = 'dagger-duel-prompt-style';
 export const DUEL_PROMPT_CSS = `

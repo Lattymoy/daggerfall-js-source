@@ -1,0 +1,233 @@
+// @ts-check
+// HORSE CART AND CARGO - THE WIRE (HCC-ONLINE, 2026-09-23, Mac: "...and also enhance its online integration
+// functionality"). The mod is single-player: its wagon and its horse are objects in one Unity scene. Online, a
+// player's parked wagon, waiting horse, following horse and trailing team stand in a shared cell, so everyone
+// near should see them and the plaque should name whose they are. This is the record that says them - `hv` on
+// the cell's foes frame, beside the camps' `c` (scenes/camps.js), under the same owner law (an owner's word
+// replaces that owner's and no one else's; an owner gone quiet takes theirs with them). Nothing of the wagon's
+// STORAGE rides: a player's items are their own client's, and a peer's wagon is a thing to see and walk around,
+// not to open.
+//
+// THE LIVE WORD AND THE KEPT ONE (HCC-PARK). This record rides the owner's own foes frame, so it stands while its
+// owner is in the cell room to say it. What is PARKED outlives them: the cell keeps it on the relay (net/wire.js's
+// park law, the `park` frame), and a reader shows the live word's part where there is one and the cell's where there
+// is not (scenes/horseCartPool.js syncPeer) - a wagon left at a shop door stays standing while its owner is inside.
+//
+// The record is what the presentation shows, not the save: the WAGON shown (kind, base position, rotation as
+// Unity spells it, cargo tier, wheel angle) and the HORSE shown (base position, horizontal forward, walking), plus
+// the horse's name. The walk FRAME does not ride (AUDIT HCC O5): the stride is the reader's own
+// HorseWalkAnimationState over the pace it shows - a frame on the wire turned a standing horse's idle flicker into
+// a word twice a second, forever, to everyone in range. The NAME rides through the wire's label door
+// (sanitizeLabel: printable ASCII, the name filter - AUDIT HCC O4), as a player's name and a party's place do. Positions are in the wire frame (natives, the compensation-free height) as
+// every cell object's are; a reader converts at landing and every frame after (the floating origin, AUDIT
+// ONLINE D5). The orientation the horse billboard shows is the READER's camera's, computed there
+// (horseCartLaw calculateHorseOrientation) - a sprite faces whoever looks at it.
+//
+// WAGONS1 (2026-10-09): AND WHICH WAGON. Mac's three wagons (systems/wagon/wagonKinds.js) are drawn by their owner's kind, so
+// the word says it - `wk`, the kind's code (1 the Open Wagon, 2 the Caravan; absent, the Small Cart: every word before
+// WAGONS1 said a cart, and still reads as one) - and `wh` 1 when a horse is in a parked wagon's shafts (the cart is
+// borne level then, and rests tipped on its shafts without one - world/wagonModels.js). Both ride beside `w` at the
+// record's top, where an older reader drops what it does not know (validHccRecord rebuilds its record from w, h and n),
+// so an older client still draws the wagon, as the classic one; the reader here folds them into `w` (`model`,
+// `hitched`), where every copy of the word carries them.
+import { POSE_BOUND, POSE_Y_BOUND, sanitizeLabel, MAP_PIXELS_X, MAP_PIXELS_Y } from '../../net/wire.js';
+import { HORSE_NAME_MAX, CARGO_TIERS } from './horseCartLaw.js';
+import { wagonKindCode, wagonKindOfCode } from '../wagon/wagonKinds.js';
+import { validPassengers, validPeerId, MAX_SEATS } from '../wagon/wagonSeats.js';
+import { wagonLookCode, WAGON_LOOK_CODE_MAX } from '../wagon/wagonLooks.js';   // WAGON-TIMBER: and wagonLookOfWire below, which reads the paint's code through the paint's own law - this module no longer unpacks a look itself
+import { wagonTimberCode, wagonWheelCode, wagonLookOfWire, WAGON_TIMBER_CODE_MAX, WAGON_WHEEL_CODE_MAX } from '../wagonTimber.js';
+import { caravanEntryCode, caravanEntryOfCode, caravanGuildTag, CARAVAN_GUILD_CODE } from '../caravanVisit.js';
+import { horseLookCode, horseLookOfCode, HORSE_LOOK_CODE_MAX } from './horseCoats.js';
+
+// COATS1 (2026-10-11): AND THE HORSES' LOOK. An owner's horses wear their look (systems/horse/horseCoats.js - coat, pattern,
+// legs and the horse's own seed), so the word says it - `hc`, the look's code, at the record's top beside `n` (absent:
+// the bay as drawn - every word before COATS1), for the horse standing and the team in the wagon's shafts alike; an
+// older reader drops it and draws a bay.
+
+// WAGONS2 (2026-10-09): AND ITS PAINT. A wagon's paint (systems/wagon/wagonLooks.js - its outside, and a caravan's inside)
+// is one number, `wl`, beside `wk` at the record's top (absent: the wagon as built - every word before WAGONS2), folded
+// into `w` as `look`; an older reader drops it and draws the wagon as built.
+
+// WAGON-TIMBER (2026-10-16, Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden
+// parts which is cool. Lets make a selector for each of them and send them over the wire using the same system that
+// already exists"; "I want the wheel options to be separate from the wood options"): AND ITS TIMBER. The wagon's own
+// wood is TWO more numbers beside `wl`, in the same ladder and the same field: `ww` - the four wooden parts
+// (systems/wagonTimber.js `floor` + 6*`inner` + 36*`beam` + 216*`bench`, 1..1295) - and `wr`, the wheels' own digit
+// (1..5), which Mac asked to be separate from the wood's and is. Both absent at 0, so every word before this bump
+// reads a wagon as built, and both folded into `w.look` beside the paint's four: ONE `wagonLook`, nine keys
+// (wagonTimber.js wagonLookOfWire is what puts the nine back together, because the paint's law is not to be asked
+// about the timber).
+//
+// hccRecordKey CARRIES BOTH, and that is the gate: it is the change key, so a field missing from it publishes nothing
+// when it moves - the player dyes their beams, their own wagon and every peer's keep the wood they had, with no error
+// anywhere to notice it by. ValidHccRecord is the second gate: a code the law does not make is the wagon as built
+// (a look never refuses a word), so a tab on an older build loses its timber rather than its team.
+
+// WAGONS2-VISIT (2026-10-09): AND WHO MAY ENTER IT. A caravan's door is its owner's to open (systems/caravanVisit.js):
+// `we`, the entry's code (1 the owner's party, 2 anyone, 3 the owner's guild; absent, the owner alone - every word before
+// it), and with the guild's `wg`, the owner's guild tag - beside `wk` at the record's top, folded into `w` as `entry` and
+// `guild`; an older reader drops both, and to it every caravan is its owner's alone.
+
+// WAGON-ARMS (2026-10-16, Mac, of the arms on a wagon: "All player made guilds in the game have a coat of arms. It is a
+// requirement to make a guild. However, on teh safe side, I want the modification to work as such. If a player with no
+// guild has a wagon, nothing is overlayed. If they do, then their guilds heraldry is overlayed for others to see."):
+// WHOSE ARMS. ONE FIELD BESIDE THE CARAVAN'S DOOR AND NOT INSIDE IT - `og`, the OWNER's own guild tag. Mac asked for
+// one setting, not two: "put my heraldry on my wagon or not." The tag's presence IS the broadcast, so there is no
+// second `ob` flag and no separate permission byte - a withdrawn guild names no tag at all.
+//
+// WHY A NEW FIELD AND NOT A WIDER `wg`. `wg` is the DOOR's word: systems/caravanVisit.js writes it only for the guild
+// entry, and net/wire.js validParkData keeps it only beside `we = 3`, because the tag it names is the one that opens the
+// door. Re-using it would put two unrelated laws in one field and make every reader re-derive which of them it has: a
+// wagon whose owner's door is private still wears arms, and a caravan whose door is the guild's still wears arms the
+// owner may have withdrawn from the public view. A field per law is the only shape where an older reader dropping the
+// new one leaves the old one true.
+//
+// THE CONTRACT - two outcomes, and the tag's presence is the whole of it:
+//   `og` absent   - no guild, or withdrawn. Nothing is overlaid. (`arms` is null.)
+//   `og` present  - draw the arms OF THAT TAG. (`arms` is `{ tag }`.)
+// A receiver cannot tell "no guild" from "guild, withdrawn" - and never needs to: draw nothing either way. A guild is
+// REQUIRED to have heraldry, so the present tag always resolves: the arms behind it come from the account service
+// (POST /v1/guilds/arms, guilds.js guildArmsOf).
+
+// WAGONS1: AND WHO RIDES IN IT (systems/wagon/wagonSeats.js's word). An owner's word says who sits in which seat of their
+// WAGONS1: AND WHO RIDES IN IT (systems/wagon/wagonSeats.js's word). An owner's word says who sits in which seat of their
+// wagon's back (`ps`, `[[peer, seat], ...]`), who they turned away this moment (`pn`, peer ids - the rider's client says
+// so at once rather than waiting out the ask), and a journey their riders go on with them (`go`, `[x, y, n]`: the map
+// pixel of a fast travel the owner is setting out on, `n` counting the owner's journeys, so one is followed once).
+/** A journey names a pixel of the travel map, the only place one sets out from (the Bay's, MapsFile's 1000 x 500 -
+ *  WAGONS2 AUDIT: 4096 a side let a word send its riders off the map). */
+
+/** What the wagon shown is: the team's trailing wagon behind the cart, the parked wagon, the following team's. */
+export const HCC_WIRE_KIND = Object.freeze({ Trailing: 1, Deployed: 2, Following: 3 });
+const KINDS = new Set(Object.values(HCC_WIRE_KIND));
+const TIERS = new Set([0, ...CARGO_TIERS]);
+const r2 = (v) => Math.round(v * 100) / 100;
+const r4 = (v) => Math.round(v * 10000) / 10000;
+const finite3 = (p) => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite);
+const inBounds = (p) => Math.abs(p[0]) <= POSE_BOUND && Math.abs(p[2]) <= POSE_BOUND && Math.abs(p[1]) <= POSE_Y_BOUND;
+
+/**
+ * My word: the pool's view of the runtime as the wire says it. `view` is scenes/horseCartPool.js's
+ * `shown()` - `{ wagon: { kind, position, rotation, tier, angle } | null, horse: { position, forward, walking } | null,
+ * name }` in scene units; `toWire` converts a scene point to the wire frame.
+ * @returns {{ w?: number[], h?: number[], n?: string, hc?: number, wk?: number, wh?: number, wl?: number, ww?: number, wr?: number, we?: number, wg?: string, og?: string, ps?: any[], go?: number[], pn?: string[] } | null} null when nothing stands (the reader drops mine)
+ */
+export function hccWireRecord(view, toWire = (p) => p) {
+  if (!view) return null;
+  const out = {};
+  const w = view.wagon;
+  if (w && finite3(w.position) && Array.isArray(w.rotation) && w.rotation.length === 4) {
+    const p = toWire(w.position);
+    out.w = [w.kind | 0, r2(p[0]), r2(p[1]), r2(p[2]), r4(w.rotation[0]), r4(w.rotation[1]), r4(w.rotation[2]), r4(w.rotation[3]), w.tier | 0, r2(w.angle ?? 0)];
+    const wk = wagonKindCode(w.model);   // WAGONS1
+    if (wk) out.wk = wk;
+    if (w.hitched && (w.kind | 0) === HCC_WIRE_KIND.Deployed) out.wh = 1;
+    const wl = wagonLookCode(w.look);   // WAGONS2: its paint
+    if (wl) out.wl = wl;
+    // WAGON-TIMBER: and its own wood, in the same ladder - the four parts and then the wheels, each a number of its own
+    const ww = wagonTimberCode(w.look), wr = wagonWheelCode(w.look);
+    if (ww) out.ww = ww;
+    if (wr) out.wr = wr;
+    const we = caravanEntryCode(w.entry);   // WAGONS2-VISIT: who may enter it, and with the guild's, the guild's tag
+    if (we) { out.we = we; const wg = we === CARAVAN_GUILD_CODE ? caravanGuildTag(w.guild) : null; if (wg) out.wg = wg; }
+    // WAGON-ARMS: the OWNER's guild, on a wagon of any kind and whatever the door says. Read off `w.arms` - its OWN
+    // field, so the door's `wg` is never asked to mean two things - and the tag is taken through the SAME validator
+    // the door's is, because a guild tag is one shape (net/guild/guildLaw.js GUILD_TAG_RE) and a second one would drift.
+    // The tag's presence IS its broadcast: it travels only when its owner lets it be drawn, so no separate flag rides.
+    const og = caravanGuildTag(w.arms?.tag);
+    if (og) { out.og = og; }
+    const ps = validPassengers(w.passengers);   // WAGONS1
+    if (ps?.length) out.ps = ps;
+  }
+  if (Array.isArray(view.go) && view.go.length === 3 && view.go.every(Number.isInteger)) out.go = [...view.go];   // WAGONS1
+  if (Array.isArray(view.declined) && view.declined.length) out.pn = view.declined.filter(validPeerId).slice(0, MAX_SEATS * 2);
+  const h = view.horse;
+  if (h && finite3(h.position) && finite3(h.forward)) {
+    const p = toWire(h.position);
+    out.h = [r2(p[0]), r2(p[1]), r2(p[2]), r4(h.forward[0]), r4(h.forward[2]), h.walking ? 1 : 0];
+  }
+  const n = hccHorseNameOnWire(view.name);
+  if (n && out.h) out.n = n;
+  const hc = horseLookCode(horseLookOfCode(view.look ?? 0));   // COATS1
+  if (hc && (out.w || out.h)) out.hc = hc;
+  return out.w || out.h || out.go || out.pn ? out : null;
+}
+
+/** The horse's name as the wire carries it: the label door at the mod's 31 (NormalizeHorseName's bound); '' when
+ *  nothing printable is left or the filter refuses it - the horse is then named by the mod's own "Horse". */
+export const hccHorseNameOnWire = (name) => (typeof name === 'string' ? sanitizeLabel(name, HORSE_NAME_MAX) : '');
+
+/** A peer's word through the door: shape, bounds, a unit quaternion, a known kind, a known tier, a walking bit.
+ *  Anything else is null - the record is dropped whole. The name alone is cleaned rather than refused: a name
+ *  the label door will not carry leaves the horse unnamed, not unseen. */
+export function validHccRecord(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out = {};
+  if (raw.w !== undefined) {
+    const w = raw.w;
+    if (!Array.isArray(w) || w.length !== 10 || !w.every(Number.isFinite)) return null;
+    if (!KINDS.has(w[0])) return null;
+    const p = [w[1], w[2], w[3]];
+    if (!inBounds(p)) return null;
+    const q = [w[4], w[5], w[6], w[7]];
+    const len = Math.hypot(q[0], q[1], q[2], q[3]);
+    if (!(len > 0.5 && len < 2)) return null;
+    if (!TIERS.has(w[8])) return null;
+    out.w = { kind: w[0], position: p, rotation: q.map((v) => v / len), tier: w[8], angle: ((w[9] % 360) + 360) % 360, model: wagonKindOfCode(raw.wk ?? 0), hitched: raw.wh === 1, look: wagonLookOfWire(Number.isInteger(raw.wl) && raw.wl > 0 && raw.wl <= WAGON_LOOK_CODE_MAX ? raw.wl : 0, Number.isInteger(raw.ww) && raw.ww > 0 && raw.ww <= WAGON_TIMBER_CODE_MAX ? raw.ww : 0, Number.isInteger(raw.wr) && raw.wr > 0 && raw.wr <= WAGON_WHEEL_CODE_MAX ? raw.wr : 0), passengers: validPassengers(raw.ps) ?? [] };   // WAGONS1: an unknown kind is drawn as the cart; a passenger list that is not one seats nobody. WAGONS2 + WAGON-TIMBER: the look is all NINE keys - the paint's `wl`, the four parts' `ww` and the wheels' `wr`, each out of its own law's bound, and a code past it or absent is that half as built (the word is never refused for a look)
+    out.w.entry = caravanEntryOfCode(raw.we); out.w.guild = out.w.entry === 'guild' ? caravanGuildTag(raw.wg) : null;   // WAGONS2-VISIT: who may enter it - the owner alone for anything the law does not know
+    out.w.arms = wagonArmsOfWire(raw.og);   // WAGON-ARMS: whose arms this wagon wears - { tag } or null (no tag draws nothing)
+  }
+  // WAGONS1: a journey the owner's riders go on, and who was turned away - each dropped alone when it is not one
+  if (Array.isArray(raw.go) && raw.go.length === 3 && raw.go.every(Number.isInteger) && raw.go[0] >= 0 && raw.go[0] < MAP_PIXELS_X && raw.go[1] >= 0 && raw.go[1] < MAP_PIXELS_Y && raw.go[2] >= 0) out.go = [...raw.go];
+  if (Array.isArray(raw.pn) && raw.pn.length <= MAX_SEATS * 2) out.pn = raw.pn.filter(validPeerId);
+  if (raw.h !== undefined) {
+    const h = raw.h;
+    if (!Array.isArray(h) || h.length !== 6 || !h.every(Number.isFinite)) return null;
+    const p = [h[0], h[1], h[2]];
+    if (!inBounds(p)) return null;
+    const fl = Math.hypot(h[3], h[4]);
+    if (!(fl > 1e-6)) return null;
+    if (h[5] !== 0 && h[5] !== 1) return null;
+    out.h = { position: p, forward: [h[3] / fl, 0, h[4] / fl], walking: h[5] === 1 };
+  }
+  if (raw.n !== undefined) {
+    if (typeof raw.n !== 'string' || raw.n.length > HORSE_NAME_MAX * 4) return null;
+    out.n = hccHorseNameOnWire(raw.n);
+  }
+  if (Number.isInteger(raw.hc) && raw.hc >= 1 && raw.hc <= HORSE_LOOK_CODE_MAX && (out.w || out.h)) out.hc = raw.hc;   // COATS1: a look the law does not know is a bay, never a dropped record
+  if (!out.w && !out.h && !out.go && !out.pn?.length) return null;
+  return out;
+}
+
+/** WAGON-ARMS: the arms a wagon may wear as a reader takes them - `{ tag }` when the owner's guild is named on the
+ *  wire, `null` for one that is not. The tag's PRESENCE IS THE BROADCAST: a withdrawn guild names no tag, and a
+ *  receiver cannot tell "no guild" from "guild, withdrawn" - draw nothing either way. A tag the law does not admit is
+ *  no guild at all, because a renderer may not invent one (a guild is REQUIRED to have heraldry). Pure. */
+export const wagonArmsOfWire = (og) => {
+  const tag = caravanGuildTag(og);
+  return tag ? { tag } : null;
+};
+
+/** A change key, so a frame carries the record only when the word moved (the full frame always does).
+ *
+ *  WAGON-ARMS: `og` is IN it too - a player whose guild tag moves has said a thing, and a key blind to it
+ *  would leave the wagon wearing them for every peer until they reloaded.
+ *
+ *  WAGON-TIMBER: `ww` and `wr` are IN it, beside `wl` - and that is the whole of this slice's reach. A field absent
+ *  from here changes nothing the key can see, so the pool asks for no frame, the relay is told nothing, and a wagon
+ *  whose beams were dyed keeps the wood it had: for the player who dyed them and for every peer watching, with nothing
+ *  to see that anything went wrong. A number is on the wire only if the key can tell it moved. */
+export function hccRecordKey(rec) {
+  if (!rec) return '';
+  return JSON.stringify([rec.w ?? 0, rec.h ?? 0, rec.n ?? '', rec.wk ?? 0, rec.wh ?? 0, rec.ps ?? 0, rec.go ?? 0, rec.pn ?? 0, rec.wl ?? 0, rec.ww ?? 0, rec.wr ?? 0, rec.we ?? 0, rec.wg ?? '', rec.og ?? '', rec.hc ?? 0]);
+}
+
+/** The snap-or-ease a reader shows between two words: a step past `snap` metres is a teleport (the owner
+ *  crossed a pixel, summoned, or fast-travelled), anything nearer eases at `rate` per second. Pure. */
+export function easeToward(shown, target, dt, rate = 12, snap = 20) {
+  if (!shown) return [...target];
+  const dx = target[0] - shown[0], dy = target[1] - shown[1], dz = target[2] - shown[2];
+  if (dx * dx + dy * dy + dz * dz > snap * snap) return [...target];
+  const t = 1 - Math.exp(-Math.max(0, rate) * Math.max(0, dt));
+  return [shown[0] + dx * t, shown[1] + dy * t, shown[2] + dz * t];
+}

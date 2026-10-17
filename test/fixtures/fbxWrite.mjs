@@ -1,4 +1,4 @@
-// A MINIMAL BINARY-FBX WRITER, FOR FIXTURES ONLY (FIELD-GUN-MW1's, from test/fbxmesh.test.js; moved here when the
+// A MINIMAL BINARY-FBX WRITER, FOR FIXTURES ONLY (FIELD-GUN-MW1's, from test/tooling/fbxmesh.test.js; moved here when the
 // MW-FOLK1 audit's pins of tools/fbxStrip.mjs's cut needed one too - one writer, not two). Forty lines of the same
 // container tools/fbxRead.mjs reads, so a pin drives the reader against bytes this file wrote: if the two ever disagree
 // about the format, one of them is wrong and the suite says so. `blender` closes the file with the footer Blender's

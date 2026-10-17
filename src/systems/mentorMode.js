@@ -7,7 +7,7 @@
 // An OVERLAY, never a write. Nothing here changes entity.skills,
 // entity.stats, entity.level, entity.maxHealth or a single item: the
 // mentor's profile lives on `entity._mentor` (underscore = never saved,
-// see systems/save.js) and the READERS consult it - skills.js skillValue,
+// see systems/save/save.js) and the READERS consult it - skills.js skillValue,
 // statMods.js liveStat, formulas.js (the armour term and the blow's
 // tail), the dungeon's spawn level. Leave the group, or switch it off,
 // and `refreshMentor` clears the field: the real character is simply

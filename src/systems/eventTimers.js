@@ -3,7 +3,7 @@
 // gates, town raids, and anything else so the player can keep track of when things are and watch countdowns").
 //
 // THE SCHEDULE, AS ROWS. Every shared moment of the online world is already a pure function of the relay's clock in
-// its own law - the gate's day (net/gateLaw.js), the seat week's Reckoning and Turning (net/townSeatLaw.js), a game
+// its own law - the gate's day (net/gate/gateLaw.js), the seat week's Reckoning and Turning (net/townSeatLaw.js), a game
 // day's turnover and the UTC day's - or a fact the client already holds (the week's battles in the seats list, the
 // day's raids the mod rolled). This module derives nothing of its own: it asks those laws and lays their answers out
 // as one list a window can draw, each row either LIVE (running now, counting down to its end) or COMING (counting down
@@ -12,11 +12,11 @@
 // A row: { id, kind, title, where, detail, live, at, until }
 //   at     the moment the countdown runs to (ms, relay clock): the start of a coming row, the end of a live one
 //   until  a live row's end; null on a coming row
-import { gateAt, gateTimes, gatePhase, GATE_EVERY_DAYS, gameDayAt, GATE_DAY_MINUTES } from '../net/gateLaw.js';
+import { gateAt, gateTimes, gatePhase, GATE_EVERY_DAYS, gameDayAt, GATE_DAY_MINUTES } from '../net/gate/gateLaw.js';
 import { wallMsForClassicMinutes } from '../net/wire.js';
 import { seatWeekOf, seatWeekStartMs, seatPhaseOf, SEAT_RECKONING_MS, seasonOf, seatSeasonName, battleLengthMs, SIGN_CLOSES_MS, guildWords } from '../net/townSeatLaw.js';
-import { serpentAt, serpentTimes, serpentPhase, serpentBossOf, SERPENT_EVERY_DAYS } from '../net/serpentLaw.js';   // SERPENT-TIMERS: the sea serpent's day
-import { sdPhase, SD_COLLAPSE_MS } from '../net/sdLaw.js';   // SD2c: the Super dungeon's record, once it is news
+import { serpentAt, serpentTimes, serpentPhase, serpentBossOf, SERPENT_EVERY_DAYS } from '../net/serpent/serpentLaw.js';   // SERPENT-TIMERS: the sea serpent's day
+import { sdPhase, SD_COLLAPSE_MS } from '../net/superDungeon/sdLaw.js';   // SD2c: the Super dungeon's record, once it is news
 
 const DAY_MS = 86_400_000;
 
@@ -72,7 +72,7 @@ export function eventTimerRows(src) {
     coming(`serpent:${nextDay}`, 'serpent', 'Next sea serpent rises', serpentTimes(nextDay).riseAt);
   }
 
-  // ── THE SUPER DUNGEON (net/sdLaw.js: the hub's one record) ── SD2c (bible/11-Multiplayer/Super-Dungeons.md section
+  // ── THE SUPER DUNGEON (net/superDungeon/sdLaw.js: the hub's one record) ── SD2c (bible/11-Multiplayer/Super-Dungeons.md section
   // 4): a row once it is FOUND - news, by the finder's word - and none before (a Hollow that has only risen is a find:
   // its omen in the sky and a word in its city's taverns, never a countdown that says one stands); its fading unbeaten
   // while it stands, its collapse after the kill. Where it stands is the host's (`place`, its city), and its name.

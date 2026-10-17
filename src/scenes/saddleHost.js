@@ -1,11 +1,11 @@
 // @ts-check
-// STEED-UI: THE SADDLE PANEL'S HOST (ui/enhancedSaddle.js) - the one glue the two hosts that ride share
+// STEED-UI: THE SADDLE PANEL'S HOST (ui/enhanced/enhancedSaddle.js) - the one glue the two hosts that ride share
 // (scenes/world.js, scenes/exterior.js - createSaddleHost), so neither builds the panel's read or answers its buttons
 // on its own. scenes/worldModes.js (interiors) and scenes/dungeonContext.js (dungeons) stand no transport - a building
 // or a dungeon puts the rider on foot (systems/transport.js dismountOnTransition) - and are named, not wired.
 //
 // Its doors, the host's:
-//   upkeep          the host's upkeep (systems/upkeepRuntime.js createUpkeep) - its `saddle` read and its `act`
+//   upkeep          the host's upkeep (systems/upkeep/upkeepRuntime.js createUpkeep) - its `saddle` read and its `act`
 //   runtime()       Horse Cart and Cargo's runtime while its switch is on, else null (the hosts' hccRuntimeOn)
 //   items()         the pack                     wagonKg() / wagonLimit()   the wagon's load and its limit (kg)
 //   say(text)       a line on the HUD            pass(minutes)              the clock passed (the kit's hour)
@@ -16,10 +16,10 @@
 // and the gait it took (HORSE-TIERS: the motor's own `rideWalking` - a gallop asked and refused rides DFU's pace in
 // Boons and walks in Hard, which only the motor knows), and `frame` whether the panel may stand: Enhanced Plus, walking,
 // outdoors - and what covers it.
-import { drawEnhancedSaddle, hideEnhancedSaddle, enhancedSaddleMounted, toggleSaddlePanel } from '../ui/enhancedSaddle.js';
-import { upkeepReach } from '../systems/upkeepRuntime.js';
-import { activeWagonItem } from '../systems/wagonKinds.js';
-import { wagonWord } from '../systems/wagonUpkeep.js';
+import { drawEnhancedSaddle, hideEnhancedSaddle, enhancedSaddleMounted, toggleSaddlePanel } from '../ui/enhanced/enhancedSaddle.js';
+import { upkeepReach } from '../systems/upkeep/upkeepRuntime.js';
+import { activeWagonItem } from '../systems/wagon/wagonKinds.js';
+import { wagonWord } from '../systems/wagon/wagonUpkeep.js';
 
 /** The pace's smoothing, seconds (a frame's metres jitter with its length). */
 export const SADDLE_SPEED_TAU = 0.35;

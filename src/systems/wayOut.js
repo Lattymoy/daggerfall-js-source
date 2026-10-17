@@ -1,19 +1,19 @@
 // @ts-check
-import { TRAIL_CELL } from './automap.js';   // AUDIT DELVE C8: the trail's own grid
+import { TRAIL_CELL } from './automap/automap.js';   // AUDIT DELVE C8: the trail's own grid
 // WAYOUT1 (the delve arc, 2026-10-05 - the player, on the dungeon blocks: "removing the esoteric nature of dungeons"):
 // THE WAY OUT ON THE COMPASS.
 //
 // A Daggerfall dungeon is a maze, and the one place a lost player always wants is the way they came in. The held map
-// already keeps where they have STOOD - the walked trail, a one-metre grid at the reveal scan's 5 Hz (systems/automap.js
+// already keeps where they have STOOD - the walked trail, a one-metre grid at the reveal scan's 5 Hz (systems/automap/automap.js
 // automapTrailTick), saved with the map - so the way out is that trail walked backwards: a breadth-first field from the
 // way in over the cells stood in (a step between two cells may climb or drop WAY_STEP_DY, a storey's stair being a run
-// of such steps), each walked teleporter an edge from its entrance to its exit (systems/automap.js teleporters). The
+// of such steps), each walked teleporter an edge from its entrance to its exit (systems/automap/automap.js teleporters). The
 // compass points at the farthest cell along that path, WAY_LOOK_CELLS ahead at most, that the eye can see - so it turns
 // the corners the player turned, and never points through a wall. Where the trail does not reach the way in (a Recall
 // into the level, a save older than the trail), the mark stands on the way in itself, as the crow flies - the held
 // map's own beacon, said on the compass.
 //
-// AUDIT DELVE (bible/01-Overview/Audit-Delve.md): the trail is filled between the scan's samples (automapTrailTick - at
+// AUDIT DELVE (bible/01-Overview/audits/Audit-Delve.md): the trail is filled between the scan's samples (automapTrailTick - at
 // a run a sample is 1.6 m from the last and skipped a cell, and the field broke into pieces, the compass falling back to
 // the crow's line through the walls it promised never to point through); the cells are parsed once and added to as the
 // trail grows, on numeric column keys, and the field is built again only when the player stands off it (a crawl's
@@ -26,7 +26,7 @@ import { TRAIL_CELL } from './automap.js';   // AUDIT DELVE C8: the trail's own 
 /** The prefs key (the `dungeon-way-out` Features row). */
 export const WAY_PREF = 'dungeonWayOut';
 /** The compass mark's colour: the parchment's own light, an arrow pointing up and out - clear of the quest's gold, the
- *  party's green, the boats' teal, the Detect red and the professions' five (ui/enhancedHud.js drawWayOutMark). */
+ *  party's green, the boats' teal, the Detect red and the professions' five (ui/enhanced/enhancedHud.js drawWayOutMark). */
 export const WAY_MARK_CSS = '#efe6cf';
 /** AUDIT DELVE D9: the arrow's body - the ink the parchment's light rims (the pale alone was lost among the letters). */
 export const WAY_BODY_CSS = '#2b2418';

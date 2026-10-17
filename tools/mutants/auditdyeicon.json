@@ -5,16 +5,16 @@
     "old": "flat: it.piece.flat, item: it.piece.item ?? null, kind: 'decor',",
     "new": "flat: it.piece.flat, kind: 'decor',",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "AUDIT-DYE-ICON-1-the-mount-asked-undyed",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "if (decorIsMount(entry)) return deps.iconUrl?.(entry.flat[0], entry.flat[1], decorMountDye(entry.item), decorMountDyeTarget(entry.item)) ?? null;",
     "new": "if (decorIsMount(entry)) return deps.iconUrl?.(entry.flat[0], entry.flat[1]) ?? null;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -23,16 +23,16 @@
     "old": "  const key = iconKey(archive, record, scale, dye, dyeTarget);\n  await settling.get(key);",
     "new": "  const key = iconKey(archive, record, scale, dye, null);\n  await settling.get(key);",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "AUDIT-DYE-ICON-2-the-material-dropped-from-the-room's-key",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "const k = `${piece.flat[0]}.${piece.flat[1]}|${it.t}.${it.g}.${it.m}.${it.v}.${it.a}`;",
     "new": "const k = `${piece.flat[0]}.${piece.flat[1]}|${it.t}.${it.g}.${it.v}.${it.a}`;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        await preloadArmTextures(pieces, cat.archives, cat.gen);   // what renderGroundMesh's collectArmTextures reads\n",
     "new": "",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "if (api.mountPictureStamp() !== stamp) return null;",
     "new": "",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (api.mountPictureStamp() !== stamp) return null;",
     "new": "if (!built || built.catalog !== cat) return null;",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "if (api.mountPictureStamp() !== stamp) return null;",
     "new": "if (!api.mountPictureStamp()) return null;",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "? String(built.catalog.gen) : null; },",
     "new": "? built.catalog : null; },",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
@@ -86,53 +86,53 @@
     "old": "String(built.catalog.gen)",
     "new": "built.catalog.gen",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
     "name": "AUDIT-DYE-ICON-3-a-failed-picture-remembered",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "got.then((art) => { if (!art && arts.get(k) === got) arts.delete(k); });",
     "new": "",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
     "name": "AUDIT-DYE-ICON-5-the-release-dropped",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "for (const k of was) renderer?.releaseTexture?.('mw-mount', k);",
     "new": "",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
     "name": "AUDIT-DYE-ICON-5-the-keys-never-kept",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "if (pic?.key) mwKeys.add(pic.key); ",
     "new": "",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
     "name": "AUDIT-DYE-ICON-5-a-key-freed-at-every-refresh",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "    mwKeys.clear();\n    standKeys.clear();\n",
     "new": "    standKeys.clear();\n",
     "tests": [
-      "test/mwmount.test.js"
+      "test/formats/morrowind/mwmount.test.js"
     ]
   },
   {
     "name": "AUDIT-DYE-ICON-7-the-index-less-artifact-a-base-item",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "(bits & 1) ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN",
     "new": "(bits & 1) ? bits >> 1 : null",
     "tests": [
-      "test/dyeicon.test.js",
-      "test/decor2a.test.js"
+      "test/systems/item/dyeicon.test.js",
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "export const DECOR_ARTIFACT_UNKNOWN = 255;",
     "new": "export const DECOR_ARTIFACT_UNKNOWN = 256;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   }
 ]

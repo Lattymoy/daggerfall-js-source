@@ -2,7 +2,7 @@
 // DUEL1 (2026-09-24, Mac: "...traps both players in a surrounding transparent holographic wall that keeps them from
 // going outside of the duel space"): THE RING'S WALL, DRAWN.
 //
-// A cylinder of light around a duel's ring (net/duelSession.js DUEL_RADIUS_M): a faint tint, a grid of thin lines
+// A cylinder of light around a duel's ring (net/duel/duelSession.js DUEL_RADIUS_M): a faint tint, a grid of thin lines
 // around it, bands of light rising up it and one bright sweep climbing it every few seconds, fading out toward its
 // top. It is ADDED onto the frame (ONE, ONE) so it only ever brightens what stands behind it - see-through by
 // construction - it writes no depth, and it is tested against the depth the world wrote, so a hill or a house in

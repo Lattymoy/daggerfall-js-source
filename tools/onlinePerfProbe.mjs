@@ -139,7 +139,7 @@ for (const n of COUNTS) {
 console.log('');
 
 // ── THE DRAW ARM: what one peer's BODY costs the GL, per frame ──────
-// PERF-ON's own instrument (test/audit39_render.test.js's recording
+// PERF-ON's own instrument (test/render/audit39_render.test.js's recording
 // Proxy), pointed at drawBillboards instead of drawText. PERF-ON
 // dismissed this cost in one line - "a peer's doll is one billboard
 // batch created once, with only its `origin` written afterwards" -

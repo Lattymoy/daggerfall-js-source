@@ -22,7 +22,7 @@
 
 import { FlcFile } from '../formats/flcFile.js';
 import { FlcPlayer } from './flcPlayer.js';
-import { nativeMetrics, shadowText } from './nativePanel.js';
+import { nativeMetrics, shadowText } from './native/nativePanel.js';
 import { measureText } from './text.js';
 
 export const TEXT_LINES_PER_CHUNK = 4;   // :26

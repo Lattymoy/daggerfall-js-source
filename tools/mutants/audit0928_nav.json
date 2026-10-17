@@ -1,57 +1,57 @@
 [
   {
     "name": "N2-the-players-feet-leave-the-union-when-they-do-not-land",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ",
     "new": "const landed = [...feet, ",
     "tests": [
-      "test/audit0928_nav.test.js",
-      "test/enhancedAI.test.js"
+      "test/ai/nav/audit0928_nav.test.js",
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
     "name": "N3-the-anchor-tolerance-a-tenth-short",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "export const ANCHOR_Y_TOLERANCE = 0.6;",
     "new": "export const ANCHOR_Y_TOLERANCE = 0.5;",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "N3-the-anchor-tolerance-a-tenth-long",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "export const ANCHOR_Y_TOLERANCE = 0.6;",
     "new": "export const ANCHOR_Y_TOLERANCE = 0.7;",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "N4-the-workers-word-dropped",
-    "file": "src/ai/navClient.js",
+    "file": "src/ai/nav/navClient.js",
     "old": "{ failed = e; return null; });",
     "new": "{ return null; });",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "N4-a-small-soup-bakes-here-in-silence",
-    "file": "src/ai/navClient.js",
+    "file": "src/ai/nav/navClient.js",
     "old": "    if (!result && this._hadWorker) console.warn(`[enhanced-ai] the nav worker failed - baking ${input.tris} triangles on the main thread (the worker: ${workerWord(failed)})`);",
     "new": "",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "N5-a-cache-hit-re-cuts-a-dead-workers-large-soup-here",
-    "file": "src/ai/navClient.js",
+    "file": "src/ai/nav/navClient.js",
     "old": "if (this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {",
     "new": "if (false) {",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
@@ -60,8 +60,8 @@
     "old": "table == null || `../../vendor/handheld-torches/Textures/${file}` in table;",
     "new": "table == null || `../vendor/handheld-torches/Textures/${file}` in table;",
     "tests": [
-      "test/audit0928_nav.test.js",
-      "test/fieldconsole1.test.js"
+      "test/ai/nav/audit0928_nav.test.js",
+      "test/systems/fieldconsole1.test.js"
     ]
   },
   {
@@ -70,8 +70,8 @@
     "old": "table == null || `../../vendor/handheld-torches/Textures/${file}` in table;",
     "new": "table == null || !(`../../vendor/handheld-torches/Textures/${file}` in table);",
     "tests": [
-      "test/audit0928_nav.test.js",
-      "test/fieldconsole1.test.js"
+      "test/ai/nav/audit0928_nav.test.js",
+      "test/systems/fieldconsole1.test.js"
     ]
   },
   {
@@ -80,8 +80,8 @@
     "old": "if (!this._warned2dForeign) this._2dOpenedBy = new Error('PERF-2D: the 2D run opened here');",
     "new": "if (!this._warned2dForeign) this._2dOpenedBy = null;",
     "tests": [
-      "test/audit0928_nav.test.js",
-      "test/glstate.test.js"
+      "test/ai/nav/audit0928_nav.test.js",
+      "test/render/glstate.test.js"
     ]
   },
   {
@@ -90,8 +90,8 @@
     "old": "the pass that found it: ${new Error().stack?.split('\\n').slice(2, 6).join(' <- ') ?? '?'}",
     "new": "the pass that found it: ?",
     "tests": [
-      "test/audit0928_nav.test.js",
-      "test/glstate.test.js"
+      "test/ai/nav/audit0928_nav.test.js",
+      "test/render/glstate.test.js"
     ]
   },
   {
@@ -100,7 +100,7 @@
     "old": "const ctx = canvas.getContext('2d', { willReadFrequently: true });",
     "new": "const ctx = canvas.getContext('2d');",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
@@ -109,7 +109,7 @@
     "old": "    const ctx = canvas?.getContext('2d', { willReadFrequently: true });",
     "new": "    const ctx = canvas?.getContext('2d');",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
@@ -118,7 +118,7 @@
     "old": "const ctx = sheet.getContext?.('2d', { willReadFrequently: true });",
     "new": "const ctx = sheet.getContext?.('2d');",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
@@ -127,7 +127,7 @@
     "old": "const octx = off.getContext?.('2d', { willReadFrequently: true });",
     "new": "const octx = off.getContext?.('2d');",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
@@ -136,7 +136,7 @@
     "old": "const ctx = c.getContext('2d', { willReadFrequently: true });",
     "new": "const ctx = c.getContext('2d');",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
@@ -145,7 +145,7 @@
     "old": "const g2 = c.getContext('2d', { willReadFrequently: true });",
     "new": "const g2 = c.getContext('2d');",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "bc.getContext('2d', { willReadFrequently: true }).drawImage(bi, 0, 0);",
     "new": "bc.getContext('2d').drawImage(bi, 0, 0);",
     "tests": [
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   }
 ]

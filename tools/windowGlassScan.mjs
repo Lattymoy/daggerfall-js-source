@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // RW1 (2026-10-09), GLASS-ALL (2026-10-11): WHICH INTERIOR TEXELS ARE GLASS - read off the player's own ARENA2, so the
-// rule world/interiorGlass.js interiorGlassMask carries can be checked against the data.
+// rule world/interior/interiorGlass.js interiorGlassMask carries can be checked against the data.
 //
 //     node tools/windowGlassScan.mjs /path/to/ARENA2            every building interior set's window wall
 //     node tools/windowGlassScan.mjs /path/to/ARENA2 --all      and every record of those sets carrying the glass index
@@ -15,7 +15,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { isMain } from './lib/isMain.mjs';
 import { TextureFile } from '../src/formats/textureFile.js';
-import { isInteriorGlassArchive, interiorWindowOf, interiorGlassMask, GLASS_INDEX } from '../src/world/interiorGlass.js';
+import { isInteriorGlassArchive, interiorWindowOf, interiorGlassMask, GLASS_INDEX } from '../src/world/interior/interiorGlass.js';
 
 /** One archive's window wall and the glass the rule finds in it ({ glass: 0 } when it finds none), or null when the
  *  archive is not a building set or its set has no window. Pure over a TextureFile. */

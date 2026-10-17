@@ -6,7 +6,7 @@
 // connected as a gigantic map ... seen by players ingame", and "Performance should also not be affected".
 //
 // The held map's world sheet (ui/heldMap.js) draws the Iliac Bay from the data; this layer draws the rest of Tamriel
-// round it from the authored geography (world/tamrielGeography.js), in the same hand - the pen, the wash, the carets
+// round it from the authored geography (world/tamriel/tamrielGeography.js), in the same hand - the pen, the wash, the carets
 // for the high ground, the dashed borders, the letter-spaced province names - so the sheet reads as one map.
 //
 // HOW IT JOINS THE BAY. The Bay's own ground is a HOLE in this layer: every authored chain is CLIPPED to the outside
@@ -29,13 +29,13 @@
 // ═══════════════════════════════════════════════════════════════════
 import {
   PROVINCES, MOUNTAIN_RANGES, RIVERS, SEAS, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, seaAt, provinceByKey,
-} from '../world/tamrielGeography.js';
-import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFrameInBay } from '../world/tamrielFrame.js';
-// TAMRIEL3: the picture's own land where the world host traced it (world/tamrielLand.js) - the coast, the borders and
+} from '../world/tamriel/tamrielGeography.js';
+import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';
+// TAMRIEL3: the picture's own land where the world host traced it (world/tamriel/tamrielLand.js) - the coast, the borders and
 // the provinces' places come off the trace, the authored shape stands where there is none
-import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamrielLand.js';
-import { makeNoise, octaveNoise } from './introMap.js';   // the intro's own seeded value noise - ONE home for it
-import { PEN, NAME_FACE, HALO_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName, boundarySegments, linkSegments } from './inkMap.js';
+import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
+import { makeNoise, octaveNoise } from './intro/introMap.js';   // the intro's own seeded value noise - ONE home for it
+import { PEN, NAME_FACE, HALO_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName, boundarySegments, linkSegments } from './ink/inkMap.js';
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
 

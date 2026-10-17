@@ -1,447 +1,447 @@
 [
   {
     "name": "CSAK-wire-turn-only",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "if (way[0] || way[1] || way[2]) underWay = true;",
     "new": "if (way[0] || way[1]) underWay = true;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-wire-m-always",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "return { b, ...(underWay ? { m } : {}), ...(u.some(Boolean) ? { u } : {}), ...(named ? { n } : {}) };",
     "new": "return { b, m, ...(u.some(Boolean) ? { u } : {}), ...(named ? { n } : {}) };",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ],
     "note": "TOUGHER-SHIPS + HOLDINGS' merge of main's #574 (PIN MOVED): re-aimed by content - the record carries HOLDINGS' names (`n`) beside the uids."
   },
   {
     "name": "CSAK-wire-way-not-converted",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "const at = vel ? toWire([v.position[0] + vel[0], v.position[1] + vel[1], v.position[2] + vel[2]]) : p;",
     "new": "const at = vel ? [v.position[0] + vel[0], v.position[1] + vel[1], v.position[2] + vel[2]] : p;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-wire-m-length",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "if (!Array.isArray(m) || m.length !== raw.b.length) return null;",
     "new": "if (!Array.isArray(m) || m.length > raw.b.length) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-wire-way-three",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "if (!Array.isArray(way) || way.length !== 3 || !way.every(Number.isFinite)) return null;",
     "new": "if (!Array.isArray(way) || way.length < 3 || !way.every(Number.isFinite)) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-wire-way-finite",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "if (!Array.isArray(way) || way.length !== 3 || !way.every(Number.isFinite)) return null;",
     "new": "if (!Array.isArray(way) || way.length !== 3) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-wire-speed-one-axis",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
     "new": "if (Math.abs(way[0]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-wire-turn-one-side",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
     "new": "if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || way[2] > CSA_WIRE_TURN_MAX) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-wire-velocity-axes",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "boat.velocity = [way[0], 0, way[1]];",
     "new": "boat.velocity = [way[0], 0, way[0]];",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-wire-key-no-way",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "export const csaRecordKey = (rec) => (rec ? JSON.stringify(rec.u || rec.cabin || rec.n ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null] : rec.m ? [rec.b, rec.m] : rec.b) : '');",
     "new": "export const csaRecordKey = (rec) => (rec ? JSON.stringify(rec.u || rec.cabin || rec.n ? [rec.b, null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null] : rec.b) : '');",
     "tests": [
-      "test/csa_together.test.js",
-      "test/csa_online.test.js"
+      "test/systems/csa_together.test.js",
+      "test/systems/comeSailAway/csa_online.test.js"
     ],
     "note": "TOUGHER-SHIPS + HOLDINGS' merge of main's #574 (PIN MOVED): re-aimed by content - the key says HOLDINGS' names (`n`) beside the uids and the cabin."
   },
   {
     "name": "CSAK-peers-grow-step",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "const grow = lead - Math.min(Math.max(0, age - step), CSA_PEER_LEAD_MAX);",
     "new": "const grow = step;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-no-carry-on",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "if (shown && v && grow > 0) {",
     "new": "if (shown && v && grow < 0) {",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-target-unled",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "const at = v ? [w.position[0] + v[0] * lead, w.position[1], w.position[2] + v[2] * lead] : w.position;",
     "new": "const at = w.position;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-turn-unled",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "const turnTo = turn ? quatMultiply(w.rotation, quatAngleAxis(turn * lead, V_UP)) : w.rotation;",
     "new": "const turnTo = w.rotation;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-age-frozen",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "for (const l of live.values()) l.age += Math.max(0, dt);",
     "new": "for (const l of live.values()) l.age += 0;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-jump-forgotten",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    s.jumped = next.jumped;",
     "new": "    s.jumped = false;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-move-across-jump",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "return s.was && !s.jumped ? { before: s.was, after: { position: [...s.shown], rotation: [...s.turn] } } : null;",
     "new": "return s.was ? { before: s.was, after: { position: [...s.shown], rotation: [...s.turn] } } : null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-peek-late",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "const p = nextPose(s, w, l.toScene, dt, l.age + Math.max(0, dt));",
     "new": "const p = nextPose(s, w, l.toScene, dt, l.age);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-place-slot",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "if (list[i]?.boat === boat) return { owner, slot: i };",
     "new": "if (list[i]?.boat === boat) return { owner, slot: 0 };",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-peers-snap-threshold",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "(target[2] - shown[2]) ** 2 > snap * snap;",
     "new": "(target[2] - shown[2]) ** 2 > snap * snap * 100;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-step-high",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "return !!hit && hit.point[1] <= feet[1] + CSA_ABOARD_STEP;",
     "new": "return !!hit && hit.point[1] <= feet[1] + 5;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-ray-short",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "const hit = raycastColliders(boat.GameObject, centre, DOWN, h / 2 + CSA_ABOARD_BELOW, { triggers: false, geometry });",
     "new": "const hit = raycastColliders(boat.GameObject, centre, DOWN, h / 2, { triggers: false, geometry });",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-near-unbounded",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "return Math.hypot(p[0] - feet[0], p[2] - feet[2]) <= CSA_ABOARD_NEAR; };",
     "new": "return Math.hypot(p[0] - feet[0], p[2] - feet[2]) <= Infinity; };",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-not-allowed-ignored",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (!me.allowed) { leave(); return null; }",
     "new": "if (false) { leave(); return null; }",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-carry-backwards",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "const to = carriedPoint(before, after, feet);",
     "new": "const to = carriedPoint(after, before, feet);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-no-turn",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (delta[0] || delta[1] || delta[2] || yaw) me.carry(delta, yaw);",
     "new": "if (delta[0] || delta[1] || delta[2] || yaw) me.carry(delta, 0);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-grace-forever",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (aboard.grace > 0) aboard.grace--;",
     "new": "if (aboard.grace > 0) aboard.grace += 0;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-swim-stays",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "else if (me.swimming || !on(aboard.boat, me)) leave();",
     "new": "else if (!on(aboard.boat, me)) leave();",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-other-ground-stays",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "const on = (boat, me) => { const g = me.ground(boat); return g === 'boat' || (g == null && deckUnder(boat, me.feet(), me.height)); };",
     "new": "const on = (boat, me) => { const g = me.ground(boat); return g === 'boat' || deckUnder(boat, me.feet(), me.height); };",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-enter-off-pier",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (on(s.boat, me)) { board(s.boat); break; }",
     "new": "if (deckUnder(s.boat, feet, me.height)) { board(s.boat); break; }",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-enter-swimming",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (!aboard && !me.swimming) {",
     "new": "if (!aboard) {",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-word-unrounded",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "return l ? [aboard.owner, aboard.slot, r2(l[0]), r2(l[1]), r2(l[2])] : null;",
     "new": "return l ? [aboard.owner, aboard.slot, l[0], l[1], l[2]] : null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-rider-self",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (typeof from !== 'string' || !from || from === (selfId?.() ?? null)) return false;",
     "new": "if (typeof from !== 'string' || !from) return false;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-rider-new-boat-eased",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "const same = had && had.owner === w.owner && had.slot === w.slot;",
     "new": "const same = !!had;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-glue-no-ease",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "for (let k = 0; k < 3; k++) r.shown[k] += (r.local[k] - r.shown[k]) * t;",
     "new": "for (let k = 0; k < 3; k++) r.shown[k] = r.local[k];",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-glue-axis",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "shown: { ...d.shown, x: w[0], y: w[1], z: w[2], deck: [r.shown[0], r.shown[1], r.shown[2]]",
     "new": "shown: { ...d.shown, x: w[0], y: w[1], z: w[1], deck: [r.shown[0], r.shown[1], r.shown[2]]",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-sweep-room",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (!alive?.has?.(id) || (staleMs > 0 && nowMs - r.at > staleMs)) riders.delete(id);",
     "new": "if (staleMs > 0 && nowMs - r.at > staleMs) riders.delete(id);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-count-any-boat",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "for (const r of riders.values()) if (r.owner === owner && r.slot === slot) n++; return n; };",
     "new": "for (const r of riders.values()) if (r.owner === owner) n++; return n; };",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-word-slot-bound",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (!Number.isInteger(slot) || slot < 0 || slot >= CSA_WIRE_BOATS_MAX) return null;",
     "new": "if (!Number.isInteger(slot) || slot < 0 || slot > CSA_WIRE_BOATS_MAX) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-word-local-bound",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "if (!local.every((v) => Number.isFinite(v) && Math.abs(v) <= CSA_ABOARD_LOCAL_MAX)) return null;",
     "new": "if (!local.every((v) => Number.isFinite(v) && v <= CSA_ABOARD_LOCAL_MAX)) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-pick-no-triggers",
-    "file": "src/scenes/comeSailAwayAboard.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
     "old": "const hit = raycastColliders(s.boat.GameObject, eye, dir, reach, { triggers: true, geometry });",
     "new": "const hit = raycastColliders(s.boat.GameObject, eye, dir, reach, { triggers: false, geometry });",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-rt-pack-with-passengers",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "else if ((deps.passengersAboard?.(boat) ?? 0) > 0) deps.midScreenText(PASSENGERS_ABOARD_TEXT, 1.5);",
     "new": "else if ((deps.passengersAboard?.(boat) ?? 0) < 0) deps.midScreenText(PASSENGERS_ABOARD_TEXT, 1.5);",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "CSAK-rt-motion-beached",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "if (!isSailing() || boat == null || IsBeached(boat)) return null;\n      return { boat, velocity",
     "new": "if (!isSailing() || boat == null) return null;\n      return { boat, velocity",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "CSAK-rt-motion-local",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "return { boat, velocity: quatRotate(boat.GameObject.rotation, state.velocityCurrent), turn: state.TurnCurrent };",
     "new": "return { boat, velocity: [...state.velocityCurrent], turn: state.TurnCurrent };",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "CSAK-rt-panel-trim-owner",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "manualTrim: !trimAuto(), squareOnly: !foreAft,",
     "new": "manualTrim: trimAuto(), squareOnly: !foreAft,",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "CSAK-rt-panel-sails",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "hull: boat.hull, hasSails: boat.Sails.length > 0, sailsUp: state.sailPosition !== 0,",
     "new": "hull: boat.hull, hasSails: boat.Sails.length > 0, sailsUp: state.sailPosition === 0,",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "CSAK-rt-door-sounds",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "deps.audio?.dfClipAtPoint?.(bool ? 93 : 94, [...triggerNode.position], 1);",
     "new": "deps.audio?.dfClipAtPoint?.(bool ? 94 : 93, [...triggerNode.position], 1);",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "CSAK-rt-carried-point",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "export const carriedPoint = (before, after, p) => applyMatrix(after, applyInverse(before, p));",
     "new": "export const carriedPoint = (before, after, p) => applyMatrix(after, p);",
     "tests": [
-      "test/csa_sailing.test.js",
-      "test/csa_together.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js",
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-rt-board-place",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const child = parent.getChild(parent.children.indexOf(triggerNode) - 1);",
     "new": "const child = parent.getChild(parent.children.indexOf(triggerNode));",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {",
     "new": "for (const boat of csaColliderBoats()) {",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": "allowed: csaOn() && !!online && walkMode && playerSpawned && !_teleporting && !_traveling && (modes?.mode ?? 'exterior') === 'exterior'",
     "new": "allowed: csaOn() && !!online && walkMode && playerSpawned && !_teleporting && (modes?.mode ?? 'exterior') === 'exterior'",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": "player.carryBy(d[0], d[1], d[2]); cam.yaw += (yawDeg * Math.PI) / 180;",
     "new": "player.carryBy(d[0], d[1], d[2]); cam.yaw -= (yawDeg * Math.PI) / 180;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -477,7 +477,7 @@
     "old": "    if (!full && key === _csaAboardKey) return false;\n    if (frame) { frame.ab = w; _csaAboardKey = key; }",
     "new": "    if (key === _csaAboardKey) return false;\n    if (frame) { frame.ab = w; _csaAboardKey = key; }",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -486,7 +486,7 @@
     "old": "exteriorFoes.foesFrame(full, _hccDirty || csaMoved || csaAboardMoved || bandMoved || navalMoved || seaRaidMoved)",
     "new": "exteriorFoes.foesFrame(full, _hccDirty || csaMoved || bandMoved || navalMoved || seaRaidMoved)",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -495,7 +495,7 @@
     "old": "return csaDeckPose(boat, { position: pose.position.map((v, k) => v + way.velocity[k] * gdt),",
     "new": "return csaDeckPose(boat, { position: pose.position.map((v, k) => v + way.velocity[k] * dt),",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -504,7 +504,7 @@
     "old": "const gdt = gamePaused() ? 0 : dt * worldTimeScale();   // the mod's Time.deltaTime (csaUpdate's _csaDt)",
     "new": "const gdt = dt * worldTimeScale();   // the mod's Time.deltaTime (csaUpdate's _csaDt)",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -513,7 +513,7 @@
     "old": "distance: p.distance, yields: true, peer: true,",
     "new": "distance: p.distance, yields: false, peer: true,",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -522,7 +522,7 @@
     "old": "if (pick.modelId == null || !(pick.distance <= pick.reach)) return;",
     "new": "if (pick.modelId == null) return;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -531,7 +531,7 @@
     "old": "const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable();",
     "new": "const drawable = online.drawable();",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -540,7 +540,7 @@
     "old": "return i < 0 || !online?.id ? 0 : csaAboard.passengersOn(online.id, i); };",
     "new": "return 0; };",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -549,7 +549,7 @@
     "old": "    csaPeersFrame(dt);   // CSA-K: here when the mod's own step did not run this frame (a free camera, a mode's frame)\n    _csaPeersPosed = false;",
     "new": "    csaPeersFrame(dt);   // CSA-K: here when the mod's own step did not run this frame (a free camera, a mode's frame)",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -558,7 +558,7 @@
     "old": "    if (data.ab !== undefined) _onCsaAboard?.(from, data.ab, _now());",
     "new": "    if (data.ab === 42) _onCsaAboard?.(from, data.ab, _now());",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -567,7 +567,7 @@
     "old": "    this._prevPos[0] += dx; this._prevPos[1] += dy; this._prevPos[2] += dz;\n    if (this._eyeFeetY != null) this._eyeFeetY += dy;",
     "new": "    this._prevPos[1] += dy; this._prevPos[2] += dz;\n    if (this._eyeFeetY != null) this._eyeFeetY += dy;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -576,142 +576,142 @@
     "old": "    if (this.falling) this.fallStart += dy;\n  }\n\n  /** EV1",
     "new": "    this.fallStart += dy;\n  }\n\n  /** EV1",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-buttons-square-any",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "if (h.squareToggle) out.push(",
     "new": "if (h.hasSquare) out.push(",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-buttons-trim-auto",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "if (h.manualTrim && h.hasSails) {\n    out.push(",
     "new": "if (h.hasSails) {\n    out.push(",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-buttons-square-rig",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "if (h.hasSquare && !h.squareOnly) out.push(",
     "new": "if (h.hasSquare) out.push(",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-buttons-slower-at-one",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "kind: 'tap', action: A.slower, disabled: !(h.timeScaleIndex > 0) },",
     "new": "kind: 'tap', action: A.slower, disabled: !(h.timeScaleIndex >= 0) },",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-buttons-faster-at-top",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "disabled: !(h.timeScaleIndex < h.timeScaleMax) });",
     "new": "disabled: !(h.timeScaleIndex <= h.timeScaleMax) });",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-panel-chord-dropped",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "else hooks.press?.(b.action, b.withHeld ?? null);",
     "new": "else hooks.press?.(b.action, null);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-panel-hold-chord",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "        if (b.withHeld) hooks.hold?.(b.withHeld, true);\n        hooks.hold?.(b.action, true);",
     "new": "        hooks.hold?.(b.action, true);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-panel-covered-keeps-holds",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "if (last.covered !== true) { last.covered = true; parts.root.style.display = 'none'; releaseAll(); }",
     "new": "if (last.covered !== true) { last.covered = true; parts.root.style.display = 'none'; }",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-panel-hide-keeps-holds",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  if (!host) return;\n  releaseAll();\n  try { host.remove(); }",
     "new": "  if (!host) return;\n  try { host.remove(); }",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-panel-disabled-pressed",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "        if (n.disabled) return;\n        if (b.kind === 'hook')",
     "new": "        if (b.kind === 'hook')",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-panel-hint-mouse-free",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  if (!state.mouseFree) parts.push(`Free the mouse (${state.freeKey || 'Y'}) to use these`);",
     "new": "  parts.push(`Free the mouse (${state.freeKey || 'Y'}) to use these`);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-panel-keys-on-finger",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "const key = b.action && !state.touch ? (state.keyOf?.(b.action) ?? '') : '';",
     "new": "const key = b.action ? (state.keyOf?.(b.action) ?? '') : '';",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-panel-aboard-whose",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "`Aboard ${aboard.owner ? `${aboard.owner}'s` : \"another player's\"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`",
     "new": "`Aboard ${HULL_NAMES[aboard.hull] ?? 'boat'}`",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-css-buttons-dead",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": ".helmpanel-btn { pointer-events: auto;",
     "new": ".helmpanel-btn { pointer-events: none;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-dress-bar",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "    '.helmpanel-bar',",
     "new": "    '.helmpanel-bar-x',",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -720,7 +720,7 @@
     "old": "const helmUp = !overlay && !lb && !rb && !lootUp && !!hooks.helm?.up?.();",
     "new": "const helmUp = !overlay && !rb && !lootUp && !!hooks.helm?.up?.();",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -729,7 +729,7 @@
     "old": "          if (!st.fired) { if (glassTap) fireDpad('Spyglass', code); else hooks.helm?.gesture?.(dir, 'tap'); }",
     "new": "          if (st.fired || !st.fired) { if (glassTap) fireDpad('Spyglass', code); else hooks.helm?.gesture?.(dir, 'tap'); }",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -738,7 +738,7 @@
     "old": "          else if (st.held) hooks.helm?.gesture?.(dir, 'release');",
     "new": "          else if (st.held && false) hooks.helm?.gesture?.(dir, 'release');",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -747,7 +747,7 @@
     "old": "    if (P.helmUp && !helmUp) helmLetGo();",
     "new": "    if (P.helmUp && !helmUp && false) helmLetGo();",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -756,7 +756,7 @@
     "old": "        wanted.delete(code); swallowed.add(code);\n        const st = P.helm[code]",
     "new": "        const st = P.helm[code]",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -765,7 +765,7 @@
     "old": "        if (bare && !lootUp && !helmUp && !boardUp) {",
     "new": "        if (bare && !lootUp && !boardUp) {",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -774,7 +774,7 @@
     "old": "        if (now && !P.xbPrev.has(code)) { st.t = set === null && !lootUp && !helmUp && !boardUp ? 0 : -1; st.fired = false; }\n        if (st.t >= 0 && (set !== null || lootUp || helmUp || boardUp)) st.t = -1;",
     "new": "        if (now && !P.xbPrev.has(code)) { st.t = set === null && !lootUp && !boardUp ? 0 : -1; st.fired = false; }\n        if (st.t >= 0 && (set !== null || lootUp || boardUp)) st.t = -1;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -783,34 +783,34 @@
     "old": "    else if (plus && P.helmUp && usingController) showPrompts(hooks.helm?.prompts?.() ?? null, padFamilyOf(pad.id));",
     "new": "    else if (plus && P.helmUp && usingController && false) showPrompts(hooks.helm?.prompts?.() ?? null, padFamilyOf(pad.id));",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-gesture-down-hold",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  if (dir === 'down') { press(A.disembark); return false; }",
     "new": "  if (dir === 'down') { press(A.light); return false; }",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-gesture-trim-held",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  if (h.manualTrim && h.hasSails) { hold(trim, true); return true; }",
     "new": "  if (h.manualTrim && h.hasSails) { hold(trim, true); return false; }",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAL-gesture-left-normal",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  if (dir === 'left') press(A.normal); else press(A.faster);",
     "new": "  if (dir === 'left') press(A.slower); else press(A.faster);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -819,7 +819,7 @@
     "old": " || csaHelmInput.chord.has(action) || csaJourneyHelm.held.has(action) || (!!HELM_RUDDER_ACTIONS",
     "new": " || csaJourneyHelm.held.has(action) || (!!HELM_RUDDER_ACTIONS",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -828,7 +828,7 @@
     "old": "    csaHelmInput.edges.clear(); csaHelmInput.chord.clear();   // CSA-L: the helm panel's taps were this frame's",
     "new": "    csaHelmInput.edges.clear();   // CSA-L: the helm panel's taps were this frame's",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -837,25 +837,25 @@
     "old": "if (!csaRuntime || !csaOn() || !isEnhancedPlus() || typeof document === 'undefined' || !walkMode) {",
     "new": "if (!csaRuntime || !csaOn() || typeof document === 'undefined' || !walkMode) {",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "FB1009-peek-unnamed-place",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "if (!w || w.hull !== s.hull) return null;",
     "new": "if (w.hull !== s.hull) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "FB1009-peek-other-hull",
-    "file": "src/scenes/comeSailAwayPeers.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "if (!w || w.hull !== s.hull) return null;",
     "new": "if (!w) return null;",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   }
 ]

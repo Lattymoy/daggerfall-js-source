@@ -124,7 +124,7 @@ export function roomSigner(env, now = () => Date.now()) {
   return { token, signer };
 }
 
-export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
+export function fakeRoom(key, { now = () => Date.now(), ROOMS = null, poll = 'driven' } = {}) {
   const sockets = [];
   const store = new Map();
   const alarm = { at: null };
@@ -156,7 +156,9 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
   // ACC1g: the room's config, filled in by `signer()` before the first
   // hello reaches it. The object identity is what matters - the Room
   // captures it at construction and reads the key lazily.
-  const env = ROOMS ? { ROOMS } : {};   // HCC-PARK: a shared binding, so one object can reach another (fakeRooms below)
+  // HCC-PARK: a shared binding, so one object can reach another (fakeRooms below). HUB-PULL: a shard's poll is the
+  // harness's to ask (`_hubPoll`, in each world's settle) unless a pin asks for the loop the runtime runs (`poll: 'held'`)
+  const env = ROOMS ? { ROOMS, ...(poll === 'driven' ? { HUB_POLL: 'driven' } : {}) } : {};
   let room = new Room(state, env);
   const wake = () => { room = new Room(state, env); };
   const { token, signer } = roomSigner(env, now);
@@ -213,7 +215,7 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
  * park registry, a cell's drop) reaches a real Room over its own fake state. Each named object is made on its first
  * use and kept, as the runtime keeps a Durable Object's storage; `room(name)` is the harness of that one.
  */
-export function fakeRooms({ now = () => Date.now() } = {}) {
+export function fakeRooms({ now = () => Date.now(), poll = 'driven' } = {}) {
   const made = new Map();
   const ROOMS = {
     idFromName: (name) => name,
@@ -221,7 +223,7 @@ export function fakeRooms({ now = () => Date.now() } = {}) {
   };
   function room(name) {
     let r = made.get(name);
-    if (!r) { r = fakeRoom(name, { now, ROOMS }); made.set(name, r); }
+    if (!r) { r = fakeRoom(name, { now, ROOMS, poll }); made.set(name, r); }
     return r;
   }
   return { room, ROOMS, made };

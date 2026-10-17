@@ -9,7 +9,7 @@
 //   assets/<sha>.mesh    a mesh (poi/poiMesh.js), named by the sha256 of its bytes
 //   assets/<sha>.png     a picture (.png, .jpg or .webp by its own header), the same
 //
-// Written STORED (systems/saveTransfer.js zipStore - the meshes and pictures are already packed); read by the port's
+// Written STORED (systems/save/saveTransfer.js zipStore - the meshes and pictures are already packed); read by the port's
 // own zip reader (scenes/dataSource.js readZipEntries: stored and deflated, so a pack a builder zipped again still
 // opens - its files, or the folder that holds them). READ, NOTHING IS TRUSTED: each asset hashed against its name and
 // read as its kind (a mesh decoded, a picture by its header), each document and entry held to the law - its own shape,
@@ -21,7 +21,7 @@
 // Pure but for the hash (crypto.subtle). Not a DFU member. Ledger A (POI).
 // ═══════════════════════════════════════════════════════════════════
 
-import { zipStore } from '../systems/saveTransfer.js';
+import { zipStore } from '../systems/save/saveTransfer.js';
 import { poiDocProblems, poiShelfProblems, poiAssetsOf, poiAssetProblems, POI_LIMITS } from './poiLaw.js';
 import { decodePoiMesh, poiMeshFacts, POI_MESH_LIMITS } from './poiMesh.js';
 import { poiImageMetaOf, POI_IMAGE_LIMITS } from './poiImage.js';

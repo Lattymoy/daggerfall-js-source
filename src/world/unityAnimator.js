@@ -360,16 +360,40 @@ export function createAnimator(node, component, animation) {
     if (node0.type === 1) return weights2DDirectional(node0.positions, a.GetFloat(node0.param), a.GetFloat(node0.paramY));
     return weights1D(node0.thresholds, a.GetFloat(node0.param));
   };
-  const leafPose = (clip, normalizedTime) => {
-    const pose = props.map((p) => [...p.def]);
-    if (!clip) return pose;
-    const t = clipTime(clip, normalizedTime);
-    for (const cv of clip.curves) {
-      const i = propIndex.get(`${cv.path}:${ATTR[cv.attribute]}`);
-      if (i == null) continue;
-      const v = cv.components.map((c) => sampleComponent(c, t, clip));
-      pose[i] = cv.attribute === 'euler' ? quatEuler(v[0], v[1], v[2]) : v;
+  // PERF-SAILS4 (2026-10-14, the owner's client online in a port: a ship's animators 0.31 ms of the frame, every one of
+  // them standing - her sails stowed, her doors and gunports closed, her rudder home): A CLIP'S CURVES ARE BOUND ONCE,
+  // AND A CLIP THAT DOES NOT MOVE IS POSED ONCE. Each frame asked every curve's property by a string made for it, and
+  // posed every clip anew - 129 of the vendored 141 clips hold every component `constant`, so their pose is the same at
+  // any time. Its bindings are kept in its curves' order (a later curve on one property is the one that stands, as
+  // before), and a constant clip's pose is made at its first ask after the props are bound (their `def`, read once) and
+  // handed out as made - its readers (the write, the blend, a transition's snapshot) read it and never write it.
+  const clipBinds = new Map();   // clip -> { binds: [property index, curve, euler?] in its curves' order, constant, pose }
+  const bindsOf = (clip) => {
+    let b = clipBinds.get(clip);
+    if (!b) {
+      const binds = [];
+      for (const cv of clip.curves) {
+        const i = propIndex.get(`${cv.path}:${ATTR[cv.attribute]}`);
+        if (i != null) binds.push(i, cv, cv.attribute === 'euler');
+      }
+      b = { binds, constant: clip.curves.every((cv) => cv.components.every((c) => 'constant' in c)), pose: null };
+      clipBinds.set(clip, b);
     }
+    return b;
+  };
+  const leafPose = (clip, normalizedTime) => {
+    if (!clip) return props.map((p) => [...p.def]);
+    const b = bindsOf(clip);
+    if (b.pose) return b.pose;
+    const pose = props.map((p) => [...p.def]);
+    const t = clipTime(clip, normalizedTime);
+    const binds = b.binds;
+    for (let k = 0; k < binds.length; k += 3) {
+      const cv = binds[k + 1];
+      const v = cv.components.map((c) => sampleComponent(c, t, clip));
+      pose[binds[k]] = binds[k + 2] ? quatEuler(v[0], v[1], v[2]) : v;
+    }
+    if (b.constant) b.pose = pose;
     return pose;
   };
   const treePose = (m, at, normalizedTime) => {

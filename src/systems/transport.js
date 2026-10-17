@@ -83,7 +83,7 @@ let _canRun = null;
 export function setCanRunOverride(fn) { _canRun = typeof fn === 'function' ? fn : null; }
 // STEED1 (bible/06-Systems/Horse-Care.md): HORSE CARE'S WORD ON A GALLOP, after the mod's - `(mode, modsWord)` answers a
 // boolean, or null for no word (horse care off, or not a horse). A winded or starving horse will not gallop whatever the
-// mod allows; with no mod ruling, horse care lets a horse gallop on its breath. One a host (systems/upkeepRuntime.js).
+// mod allows; with no mod ruling, horse care lets a horse gallop on its breath. One a host (systems/upkeep/upkeepRuntime.js).
 let _gallop = null;
 export function setGallopGate(fn) { _gallop = typeof fn === 'function' ? fn : null; }
 export const canRunUnlessRiding = (mode) => {
@@ -96,7 +96,7 @@ export const canRunUnlessRiding = (mode) => {
 // (the motor's DF_WALK_BASE, undragged as every ride arm is), the run the gallop the gate above lets it. Anything but
 // true keeps DFU's ride base. Only where horse care rules the gallop - off it a horse is DFU's (one pace, no run in the
 // saddle, the mod's gallop where it rules), and a walk with no gallop to shift into would hold a rider to it. One a
-// host (systems/upkeepRuntime.js). HORSE-TIERS (2026-10-15): `(mode, runAsked)` - whether the rider asks the gallop (Run
+// host (systems/upkeep/upkeepRuntime.js). HORSE-TIERS (2026-10-15): `(mode, runAsked)` - whether the rider asks the gallop (Run
 // held or latched) rides with the question, because a tier that never puts a horse below DFU's (Boons) rides a gallop
 // asked and refused at DFU's own pace, where Hard holds it to the walk (upkeepRuntime.js rideWalks).
 let _walk = null;

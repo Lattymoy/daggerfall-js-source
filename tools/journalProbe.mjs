@@ -2,7 +2,7 @@
 //
 //   node tools/journalProbe.mjs        (SHOT_DIR=tools/shots by default)
 //
-// test/journal1.test.js drives the chronicle's Share, the reader's window and the Letters tab's Keep over fake documents,
+// test/net/journal1.test.js drives the chronicle's Share, the reader's window and the Letters tab's Keep over fake documents,
 // which proves what they DO and nothing about how they LOOK. This stands the real surfaces over the real enhanced sheet
 // in Chromium, at the widest content the law allows, and reads the layout back - at a desktop, a narrow window, and a
 // phone on the touch skin:
@@ -54,7 +54,7 @@ for (const [W, H, label, touch] of [[1440, 900, 'desktop', false], [480, 800, 'n
     const { PlayerNotebook, breakableNote } = await import('/src/systems/notebook.js');
     const { NAME_MAX } = await import('/src/net/wire.js');
     const { pageShownText } = await import('/src/net/journalPage.js');
-    const m = await import('/src/ui/enhancedChronicle.js');
+    const m = await import('/src/ui/enhanced/enhancedChronicle.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:#161412;height:100vh';
     const nb = new PlayerNotebook({ dateTimeString: () => 'Middas, 22nd of Morning Star, 3E 405, 12:00', cityName: () => 'The Isle of Balfiera' });
@@ -103,7 +103,7 @@ for (const [W, H, label, touch] of [[1440, 900, 'desktop', false], [480, 800, 'n
     const { PAGE_HEAD_MAX, PAGE_LINE_MAX, PAGE_LINES_MAX, NAME_MAX } = await import('/src/net/wire.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
-    (await import('/src/ui/enhancedStyle.js')).injectEnhancedStyle();
+    (await import('/src/ui/enhanced/enhancedStyle.js')).injectEnhancedStyle();
     const lines = Array.from({ length: PAGE_LINES_MAX }, (_, i) => (i === 0 ? 'W'.repeat(PAGE_LINE_MAX) : i % 7 === 0 ? '' : `Line ${i} of the widest page the law takes - eighty units at the most.`.slice(0, PAGE_LINE_MAX)));
     const widest = { head: `${'Middas, 22nd of Morning Star, 3E 405 in '.padEnd(PAGE_HEAD_MAX - 1, 'W')}:`, lines };
     const w = createPageWindow({ onKeep: () => true });
@@ -145,7 +145,7 @@ for (const [W, H, label, touch] of [[1440, 900, 'desktop', false], [480, 800, 'n
     const { LETTER_SUBJECT_MAX } = await import('/src/net/letterLaw.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
-    (await import('/src/ui/enhancedStyle.js')).injectEnhancedStyle();
+    (await import('/src/ui/enhanced/enhancedStyle.js')).injectEnhancedStyle();
     const now = Math.floor(Date.now() / 1000);
     const head = { id: 'letter000000000000001', from: 'W'.repeat(HANDLE_MAX_LEN), title: null, glyphs: [], subject: 'W'.repeat(LETTER_SUBJECT_MAX), sentAt: now, read: false };
     const answer = (data) => ({ ok: true, status: 200, json: async () => data });
@@ -190,7 +190,7 @@ for (const [W, H, label, touch] of [[1440, 900, 'desktop', false], [480, 800, 'n
     const { createSocialMenu } = await import('/src/ui/socialMenu.js');
     const { NAME_MAX } = await import('/src/net/wire.js');
     document.body.innerHTML = '';
-    (await import('/src/ui/enhancedStyle.js')).injectEnhancedStyle();
+    (await import('/src/ui/enhanced/enhancedStyle.js')).injectEnhancedStyle();
     const menu = createSocialMenu({});
     menu.show({ name: 'W'.repeat(NAME_MAX), peerId: 'peer-w', actions: { canInspect: true, canReadPage: true, canFriend: true, canInvite: false, whyNotInvite: 'their party is full' } });
   });

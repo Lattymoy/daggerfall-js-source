@@ -19,7 +19,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhanced/enhancedStyle.js';
 
 const ROOT = normalize(join(fileURLToPath(import.meta.url), '..', '..'));
 async function serveRepo(page) {
@@ -77,7 +77,7 @@ for (const [W, H, label] of [[1280, 720, 'desktop'], [1024, 640, 'narrow'], [420
   await serveRepo(p);
   await p.goto('http://probe.local/', { waitUntil: 'load' });
   const measured = await p.evaluate(async (cases) => {
-    const en = await import('/src/ui/enhancedNotice.js');
+    const en = await import('/src/ui/enhanced/enhancedNotice.js');
     const sk = await import('/src/systems/uiSkin.js');
     sk.setUiSkin('enhanced');
     en.destroyEnhancedNotice();

@@ -25,7 +25,7 @@
 // called (a moved light's cube drawn whole, a still one's from its cache), so a wrong name costs a redraw, never a
 // picture.
 //
-// test/lightid.test.js sweeps the source for a light written into a list anywhere else.
+// test/render/lightid.test.js sweeps the source for a light written into a list anywhere else.
 //
 // Not a DFU member: Unity's lights are components with their own identity, and the shadow pass is the Enhanced Lighting
 // lane's own (Ledger A's ENHANCED LIGHTING row).

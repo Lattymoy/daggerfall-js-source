@@ -24,7 +24,7 @@
 //   in x, then quarter turns about +Y), where it stands, and which of its triangles stand (a piece Kamer trimmed keeps
 //   only those). Where Kamer gave a copied triangle another of Daggerfall's pictures it is still the classic
 //   triangle - the piece names the picture (`retexture`). The runtime rebuilds each from the player's own ARCH3D
-//   (world/arenaModel.js) and gets these triangles back exactly. A triangle whose uv Kamer moved is his, and stays
+//   (world/arena/arenaModel.js) and gets these triangles back exactly. A triangle whose uv Kamer moved is his, and stays
 //   in the mesh.
 // - `Arena/ARENADAG.RMB.json` - the port's own block, built from the mod's DFARENA.RMB: its 118 classic props, the
 //   864102 placement, its 29 light flats, its ground and its automap, and no building. DFARENA is a re-saved
@@ -32,7 +32,7 @@
 //   header counts) - none of it is written: blockFromJson derives the counts and positions, and the name is the
 //   port's.
 // - `Arena/undercroft.json` - Kamer's 32-block dungeon off the mod's `locationnew-*-17.json`, as the arena's
-//   undercroft (world/arenaCity.js): the dungeon's blocks and its location id. The file is not strict JSON - a
+//   undercroft (world/arena/arenaCity.js): the dungeon's blocks and its location id. The file is not strict JSON - a
 //   trailing comma closes its exterior's block list - and is read leniently (the one comma before a `]` or `}`). His
 //   exterior (DFARENA + WYRSAA44, two map pixels north of the city) is not carried: the arena stands IN the city.
 //
@@ -53,7 +53,7 @@ import { openScene, bundleContainer, decodeMesh, UCLASS } from './lib/unityScene
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { dfMeshToModel } from '../src/world/meshReader.js';
-import { ARENA_MODEL_ID, PIECE_TURNS, pieceTransform } from '../src/world/arenaModel.js';
+import { ARENA_MODEL_ID, PIECE_TURNS, pieceTransform } from '../src/world/arena/arenaModel.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CLASS_TEXT_ASSET = 49;

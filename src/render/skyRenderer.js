@@ -33,7 +33,7 @@
 
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
-import { SD_BRASS_GLSL } from '../world/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
+import { SD_BRASS_GLSL } from '../world/superDungeon/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
 
 export const SKY_ANGLE_PER_PIXEL = Math.PI / 512;
 
@@ -212,7 +212,7 @@ export class SkyRenderer {
     this.fogMix = 0;
     /** EVENT1: the live event's grade over the panorama, 0..1 (world/dreadSky.js) - the host's. */
     this.dread = 0;
-    /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/sdBrassSky.js) - the host's. */
+    /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/superDungeon/sdBrassSky.js) - the host's. */
     this.brass = 0;
     this.fogColor = new Float32Array([0.5, 0.5, 0.5]);
 

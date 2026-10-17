@@ -87,7 +87,7 @@
 // it: the two curse refusals (:850-851), deleteSpell and sortSpells
 // (:956-957), enterSpellName (:954), effectNotFoundError (:958),
 // selectIcon (:950), and the ten target/element descriptions
-// (:940-949). All ten of those live in ui/spellIcons.js. The port
+// (:940-949). All ten of those live in ui/spell/spellIcons.js. The port
 // has no localization LOOKUP, so these are the en values held as
 // constants rather than TextManager calls - that is the departure,
 // and it is a mechanism one, not a content one.
@@ -115,7 +115,7 @@
 // (:651-660) puts one thing in its click-anywhere box - the effect's
 // own SpellBookDescription tokens - and the port had no per-effect
 // text id, so the box carried the group/subgroup pair instead. The
-// ids are systems/spellEffects.js's SPELLBOOK_DESCRIPTION_IDS now
+// ids are systems/spell/spellEffects.js's SPELLBOOK_DESCRIPTION_IDS now
 // (EntityEffect.cs:78/:395, overridden by 85 effect classes and
 // computed from the variant index by the two variant families), read
 // through the TEXT.RSC seam this window already had one method down.
@@ -126,7 +126,7 @@
 // STILL DEPARTED: DFU's double-click-to-buy on the list (the port's
 // list picks straight through, U24's own recorded departure).
 
-import { nativeMetrics, drawImg, drawRect, shadowText, loadImg, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { nativeMetrics, drawImg, drawRect, shadowText, loadImg, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { drawText } from './text.js';
 import { bindings } from './input.js';
@@ -136,21 +136,21 @@ import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's In
 import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
-} from './spellIcons.js';
-import { effectByKey, spellBookDescriptionId, effectMacroSource, portEffectDescription } from '../systems/spellEffects.js';
+} from './spell/spellIcons.js';
+import { effectByKey, spellBookDescriptionId, effectMacroSource, portEffectDescription } from '../systems/spell/spellEffects.js';
 import { expandRowValues, sourceValues } from '../systems/quest/questMacros.js';   // MACRO-5: the effect popup's source
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all - and ROAD-G G4: the LIVE component, drag included
 import { ALT_SHADOW_1, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed; OT1: the ListBox double-click window
 import { ToolTip } from './toolTip.js';   // U37's shared component - SetupIcons points three panels at it
-import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // MC1: the window the icon panel's click pushes
+import { SpellIconPickerWindow } from './spell/spellIconPickerWindow.js';   // MC1: the window the icon panel's click pushes
 import {
   expandGuildMacros, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID, cureOfferMessageOffset,
-} from '../systems/guildServiceActions.js';   // DaggerfallTradeWindow's shared ids (:33-34) and the three haggle BANDS, all already homed
+} from '../systems/guild/guildServiceActions.js';   // DaggerfallTradeWindow's shared ids (:33-34) and the three haggle BANDS, all already homed
 import { getHolidayId, HOLIDAYS } from '../systems/holidays.js';
-import { NO_SPELLBOOK_ID, SPELLBOOK_TEMPLATE_INDEX, MAX_SPELL_NAME, purchaseSpell } from '../systems/spellMaker.js';
-import { shownSpellName } from '../systems/loot.js';   // L10N3e: a stock spell's name in the player's language
+import { NO_SPELLBOOK_ID, SPELLBOOK_TEMPLATE_INDEX, MAX_SPELL_NAME, purchaseSpell } from '../systems/spell/spellMaker.js';
+import { shownSpellName } from '../systems/loot/loot.js';   // L10N3e: a stock spell's name in the player's language
 import { totalGoldAmount } from '../systems/court.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';

@@ -34,7 +34,7 @@
 // ASIDE, NEVER OVER (AUDIT LOAD1 2): a window the player must act on - the chargen at a new game's boot, a pause, a
 // level-up box - and a full-screen film own the screen while they stand; the loading screen hides under them, its
 // holds untouched, and comes back only if the load is still going when they close.
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
 import { drawPixelGround } from './pixelGround.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { pageHas } from '../systems/pageQuery.js';
@@ -359,7 +359,7 @@ function injectLoadingStyle(doc = document) {
   doc.head.append(s);
 }
 
-// The menu's pixel idiom (ui/enhancedStyle.js .px-*): whole-pixel rules, 2px shadows, the brass gem, the pixel face.
+// The menu's pixel idiom (ui/enhanced/enhancedStyle.js .px-*): whole-pixel rules, 2px shadows, the brass gem, the pixel face.
 export const LOADING_CSS = `
 .ld { position: fixed; inset: 0; z-index: ${LOADING_Z}; overflow: hidden; background: var(--ink, #0e1013);
   color: #d8cfae; font-family: var(--data); pointer-events: auto; cursor: progress; user-select: none;

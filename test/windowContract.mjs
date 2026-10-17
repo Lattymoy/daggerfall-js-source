@@ -1,6 +1,6 @@
 // THE HOST<->WINDOW CONTRACT, DERIVED - the shared library behind
-// test/crash1_overlay_contract.test.js and
-// test/crash2_window_contract.test.js.
+// test/ui/crash1_overlay_contract.test.js and
+// test/ui/crash2_window_contract.test.js.
 //
 // WHY A LIBRARY AND NOT TWO COPIES. CRASH1 shipped a gate whose door
 // list derived and whose ARM list did not: four arm names typed by
@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const read = (p) => readFileSync(join(ROOT, p), 'utf8');
-export const jsIn = (dir) => readdirSync(join(ROOT, dir)).filter((f) => f.endsWith('.js')).map((f) => `${dir}/${f}`).sort();
+export const jsIn = (dir) => readdirSync(join(ROOT, dir), { recursive: true }).filter((f) => f.endsWith('.js')).map((f) => `${dir}/${f}`).sort();
 
 /** Every door in ui/ - the modules a host opens a window through. */
 export const doors = () => jsIn('src/ui').filter((p) => /Door\.js$/.test(p));
@@ -160,7 +160,7 @@ export function hostArms() {
  * WHICH CLASSES A DOOR CAN HAND BACK, and where each one lives.
  *
  * EM3: a SKIN DOOR is the port's one idiom for "the classic skin gets
- * DFU's window, the enhanced skin gets ours" (ui/travelMapDoor.js and
+ * DFU's window, the enhanced skin gets ours" (ui/travel/travelMapDoor.js and
  * six before it). When the dungeon automap grew one, interior.js's
  * population stopped being a set of `new X(...)` literals and the
  * closedness pin below went red - correctly, because it had lost sight

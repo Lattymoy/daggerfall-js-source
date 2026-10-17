@@ -5,7 +5,7 @@
     "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item);",
     "new": "export const pcaaoFades = (item) => isEnchantedItem(item);",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item);",
     "new": "export const pcaaoFades = (item) => false && isEnchantedItem(item);",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "isPlayer(owner) && pcaaoFades(item) ? (owner.items ?? null) : null;",
     "new": "isPlayer(owner) && isEnchantedItem(item) ? (owner.items ?? null) : null;",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'aetheric' || item?.rarity === 'gilded';",
     "new": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'gilded';",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   }
 ]

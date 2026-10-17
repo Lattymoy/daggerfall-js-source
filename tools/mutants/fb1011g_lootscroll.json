@@ -5,9 +5,9 @@
     "old": "hoverLines(contents?.(key) ?? null, Infinity);",
     "new": "hoverLines(contents?.(key) ?? null);",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   },
   {
@@ -16,9 +16,9 @@
     "old": "  else if (lit >= top + max) top = lit - max + 1;\n",
     "new": "",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   },
   {
@@ -27,9 +27,9 @@
     "old": "  else if (lit >= top + max) top = lit - max + 1;",
     "new": "  else if (lit >= top + max) top = Math.min(lit, n - max);",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   },
   {
@@ -38,9 +38,9 @@
     "old": "rows: f.rows.slice(top, top + max), above: top,",
     "new": "rows: f.rows.slice(top, top + max), above: 0,",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   },
   {
@@ -49,9 +49,9 @@
     "old": "  return hoverItemAt(items, _sel.row, Infinity);",
     "new": "  return hoverItemAt(items, _sel.row);",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   },
   {
@@ -60,9 +60,9 @@
     "old": "  paint(n, win.frame, lit >= 0 ? lit - win.from : -1, stats);",
     "new": "  paint(n, win.frame, lit, stats);",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   },
   {
@@ -71,9 +71,9 @@
     "old": "  const above = frame?.above > 0 ? frame.above : 0;",
     "new": "  const above = 0;",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   },
   {
@@ -82,9 +82,9 @@
     "old": "  if (f.above > 0) {   // LOOT-SCROLL: what the window leaves above it",
     "new": "  if (false) {   // LOOT-SCROLL: what the window leaves above it",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   },
   {
@@ -93,9 +93,9 @@
     "old": "plaqueWindow(frame, lit, frame?.key != null && frame.key === _winKey ? _winFrom : 0)",
     "new": "plaqueWindow(frame, lit, 0)",
     "tests": [
-      "test/fb1011g_lootscroll.test.js",
-      "test/worldhover.test.js",
-      "test/quicklootstats.test.js"
+      "test/systems/fb1011g_lootscroll.test.js",
+      "test/systems/worldhover.test.js",
+      "test/systems/quicklootstats.test.js"
     ]
   }
 ]

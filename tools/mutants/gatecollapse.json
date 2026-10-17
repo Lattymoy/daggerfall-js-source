@@ -1,82 +1,82 @@
 [
   {
     "name": "GATE-COLLAPSE-the-sealed-hours-count-nothing",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "  if (phase === 'closed') return { to: 'collapse', ms: Math.max(0, t.wrathAt - nowMs) };\n",
     "new": "",
     "tests": [
-      "test/wb1_gate_omen.test.js",
-      "test/wb2_gate.test.js"
+      "test/ui/wb1_gate_omen.test.js",
+      "test/world/gate/wb2_gate.test.js"
     ]
   },
   {
     "name": "GATE-COLLAPSE-counted-to-the-seal-again",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "return { to: 'collapse', ms: Math.max(0, t.wrathAt - nowMs) };",
     "new": "return { to: 'collapse', ms: Math.max(0, t.sealAt - nowMs) };",
     "tests": [
-      "test/wb1_gate_omen.test.js",
-      "test/wb2_gate.test.js"
+      "test/ui/wb1_gate_omen.test.js",
+      "test/world/gate/wb2_gate.test.js"
     ]
   },
   {
     "name": "GATE-COLLAPSE-the-collapse-said-as-a-seal",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "cd.to === 'seal' ? 'seals' : 'collapses'",
     "new": "cd.to === 'seal' ? 'seals' : 'seals'",
     "tests": [
-      "test/wb1_gate_omen.test.js",
-      "test/wb2_gate.test.js"
+      "test/ui/wb1_gate_omen.test.js",
+      "test/world/gate/wb2_gate.test.js"
     ]
   },
   {
     "name": "GATE-COLLAPSE-the-seal-line-at-the-seal's-time",
-    "file": "src/systems/gateOmen.js",
+    "file": "src/systems/gate/gateOmen.js",
     "old": "say(sealTimeLine({ ...words, at: at(t.day, GATE_WRATH_MINUTE) }));",
     "new": "say(sealTimeLine({ ...words, at: at(t.day, GATE_SEAL_MINUTE) }));",
     "tests": [
-      "test/wb1_gate_omen.test.js",
-      "test/wb2_gate.test.js"
+      "test/ui/wb1_gate_omen.test.js",
+      "test/world/gate/wb2_gate.test.js"
     ]
   },
   {
     "name": "GATE-COLLAPSE-the-map-forgets-it-sealed",
-    "file": "src/systems/gateOmen.js",
+    "file": "src/systems/gate/gateOmen.js",
     "old": "`Dagon's Breach - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}`",
     "new": "`Dagon's Breach - ${countdownWords(cd)}`",
     "tests": [
-      "test/wb1_gate_omen.test.js",
-      "test/wb2_gate.test.js"
+      "test/ui/wb1_gate_omen.test.js",
+      "test/world/gate/wb2_gate.test.js"
     ]
   },
   {
     "name": "GATE-COLLAPSE-the-banner-forgets-it-sealed",
-    "file": "src/scenes/gatePool.js",
+    "file": "src/scenes/gate/gatePool.js",
     "old": "`${GATE_TEXT.name} - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}`",
     "new": "`${GATE_TEXT.name} - ${countdownWords(cd)}`",
     "tests": [
-      "test/wb1_gate_omen.test.js",
-      "test/wb2_gate.test.js"
+      "test/ui/wb1_gate_omen.test.js",
+      "test/world/gate/wb2_gate.test.js"
     ]
   },
   {
     "name": "GATE-COLLAPSE-the-plaque-forgets-it-sealed",
-    "file": "src/scenes/gatePool.js",
+    "file": "src/scenes/gate/gatePool.js",
     "old": "...(cd.to === 'collapse' ? ['Sealed'] : [])",
     "new": "...([])",
     "tests": [
-      "test/wb1_gate_omen.test.js",
-      "test/wb2_gate.test.js"
+      "test/ui/wb1_gate_omen.test.js",
+      "test/world/gate/wb2_gate.test.js"
     ]
   },
   {
     "name": "GATE-COLLAPSE-the-press-says-sealed-alone",
-    "file": "src/scenes/gatePool.js",
+    "file": "src/scenes/gate/gatePool.js",
     "old": "cd?.to === 'collapse' ? GATE_TEXT.collapsesIn(countdownText(cd.ms)) : GATE_TEXT.sealed",
     "new": "GATE_TEXT.sealed",
     "tests": [
-      "test/wb1_gate_omen.test.js",
-      "test/wb2_gate.test.js"
+      "test/ui/wb1_gate_omen.test.js",
+      "test/world/gate/wb2_gate.test.js"
     ]
   }
 ]

@@ -9,7 +9,7 @@
 // the relay or the service: each client stages it off its own list.
 //
 //   THE MUSIC: the street's City music becomes the Tavern's - DFU's own
-//     tavern playlist (systems/songManager.js TAVERN_SONGS: SQUARE_2,
+//     tavern playlist (systems/song/songManager.js TAVERN_SONGS: SQUARE_2,
 //     TAVERN, FOLK1-3; FM: FM_SQR_2), the day's song as a tavern picks
 //     it - in the town's streets (scenes/shared.js createMusicDirector).
 //     Indoors, each building keeps its own.
@@ -20,7 +20,7 @@
 //     FESTIVAL_BANNERS_MAX, measured where the pixel is built.
 //   THE LANTERNS: one hung before every banner the town flies (its seat
 //     anchors and the Festival's), in the street's own lantern pool
-//     (world/cityLights.js fillLanternPool) - lit with the town's lamps
+//     (world/city/cityLights.js fillLanternPool) - lit with the town's lamps
 //     at dusk, flickering on their own slots, chosen nearest as they are.
 //
 // Online alone. Four hosts: world.js WIRED (the streets); worldModes.js
@@ -30,7 +30,7 @@
 import { hallBannerAnchors, BANNER_REFRESH_MS } from './hallBanners.js';
 import { boardPennantAnchor } from './seatBanners.js';
 import { festivalRules } from '../net/townSeatLaw.js';
-import { MUSIC_ENV } from '../systems/songManager.js';
+import { MUSIC_ENV } from '../systems/song/songManager.js';
 
 /** How many more banners a Festival hangs in its town at most. */
 export const FESTIVAL_BANNERS_MAX = 6;

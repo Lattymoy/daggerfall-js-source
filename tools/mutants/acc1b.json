@@ -5,7 +5,7 @@
     "old": "  const hash = await hashSecret(secret, { subtle });\n  // A label is for a human reading a device list. It is truncated and",
     "new": "  const hash = secret;\n  // A label is for a human reading a device list. It is truncated and",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A copy of the sessions table would then be a copy of everybody's credentials."
   },
@@ -15,7 +15,7 @@
     "old": "  const r = await db.prepare('DELETE FROM sessions WHERE id = ?').bind(sessionId).run();",
     "new": "  const r = await db.prepare('DELETE FROM sessions WHERE player_id = (SELECT player_id FROM sessions WHERE id = ?)').bind(sessionId).run();",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Fight Life's bug from the other direction: signing out of a laptop drops the phone."
   },
@@ -25,7 +25,7 @@
     "old": "  if (typeof handle === 'string' && handle.length > 0 && !handleLooksLikeEmail(handle)) return handle;",
     "new": "  if (false) return handle;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A linked player would be shown, and TOKENED, under their guest name. Re-aimed by content at YARD-RANGE / HANDLE-EMAIL (2026-10-11)."
   },
@@ -35,7 +35,7 @@
     "old": "  return row?.handle ? 'linked' : 'guest';",
     "new": "  return 'guest';",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "The wall is at the saves and reads this; everyone would be on the wrong side of it."
   },
@@ -45,7 +45,7 @@
     "old": "  const label = typeof deviceLabel === 'string' ? deviceLabel.slice(0, 64) : null;",
     "new": "  const label = typeof deviceLabel === 'string' ? deviceLabel : null;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Client-supplied text with no bound is a row somebody chooses the size of."
   },
@@ -55,7 +55,7 @@
     "old": "  return (r?.results ?? []).map((s) => ({\n    sessionId: s.id, label: s.device_label ?? null, createdAt: s.created_at, lastSeen: s.last_seen,\n  }));",
     "new": "  return r?.results ?? [];",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "The whole row includes secret_hash. A hash is a credential's shadow and there is no reason to ship one."
   },
@@ -65,7 +65,7 @@
     "old": "  if (!nameIsIssuable(name) || !isGuestShaped(name)) throw new Error(`guestName produced an unusable name: ${name}`);",
     "new": "  if (false) throw new Error(`guestName produced an unusable name: ${name}`);",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "equivalent": true,
     "why": "The banks are the game's own and every name they can produce is issuable - a pin derives the bank's whole alphabet and proves it. So removing the check changes no outcome today. It is kept because a name that cannot ride a token is an account that cannot play, and the place to learn that is the mint rather than the player's first connection."
@@ -76,7 +76,7 @@
     "old": "  if (typeof secret !== 'string' || secret.length < 16 || secret.length > 128) return null;",
     "new": "  if (typeof secret !== 'string') return null;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "equivalent": true,
     "why": "A wrong secret of any length hashes to something no row holds, so the lookup answers null either way. The bound is here to say no before a digest and a query rather than after them, which is the same reason the Worker bounds a body before parsing it."
@@ -87,9 +87,9 @@
     "old": "export const GUEST_NAME_RE = /^\\S+ \\S+$/;",
     "new": "export const GUEST_NAME_RE = /^[A-Za-z]+ [A-Za-z]+$/;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
-    "note": "THE DEFECT ITS OWN PIN FOUND, put back: DFU's banks carry apostrophes and hyphens, and Akh'ar Arabi is a name this rule calls malformed. RE-AIMED BY CONTENT (ACC1e): the two shapes moved to src/net/handleShape.js when the client needed to ask the same question, because every import in this repo runs server -> src and a client file reaching into server-account/ would have been the only edge going the other way. The law is unchanged; only the address is. test/mutantdrift.test.js caught the move."
+    "note": "THE DEFECT ITS OWN PIN FOUND, put back: DFU's banks carry apostrophes and hyphens, and Akh'ar Arabi is a name this rule calls malformed. RE-AIMED BY CONTENT (ACC1e): the two shapes moved to src/net/handleShape.js when the client needed to ask the same question, because every import in this repo runs server -> src and a client file reaching into server-account/ would have been the only edge going the other way. The law is unchanged; only the address is. test/tooling/mutantdrift.test.js caught the move."
   },
   {
     "name": "ACC1b-10-a-handle-may-carry-a-space",
@@ -97,9 +97,9 @@
     "old": "export const HANDLE_RE = /^[A-Za-z][^\\s]{2,23}$/;",
     "new": "export const HANDLE_RE = /^[A-Za-z][^!]{2,23}$/;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
-    "note": "The whole disjointness law: a handle with a space could be chosen to read exactly as a guest's name. RE-AIMED BY CONTENT (ACC1e): the two shapes moved to src/net/handleShape.js when the client needed to ask the same question, because every import in this repo runs server -> src and a client file reaching into server-account/ would have been the only edge going the other way. The law is unchanged; only the address is. test/mutantdrift.test.js caught the move."
+    "note": "The whole disjointness law: a handle with a space could be chosen to read exactly as a guest's name. RE-AIMED BY CONTENT (ACC1e): the two shapes moved to src/net/handleShape.js when the client needed to ask the same question, because every import in this repo runs server -> src and a client file reaching into server-account/ would have been the only edge going the other way. The law is unchanged; only the address is. test/tooling/mutantdrift.test.js caught the move."
   },
   {
     "name": "ACC1b-11-the-draw-is-modulo-biased",
@@ -107,7 +107,7 @@
     "old": "    if (buf[0] < limit) return buf[0] % n;        // the tail above `limit` is thrown away",
     "new": "    return buf[0] % n;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "The low indices come up more often - the classic modulo bias, invisible in any single draw."
   },
@@ -117,7 +117,7 @@
     "old": "    if (!ROUTES.has(path) && !slot && !realmSlot && !poiPath) return no('not-found', 404, origin);",
     "new": "    if (false) return no('not-found', 404, origin);",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Every typo'd route then reads as an auth failure to a caller with no secret."
   },
@@ -127,7 +127,7 @@
     "old": "  const bytes = await readCapped(request, max);",
     "new": "  const bytes = await readCapped(request, Infinity);",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A megabyte of nothing then costs a parse."
   },
@@ -137,7 +137,7 @@
     "old": "const signed = { s: who.player.id, n: nameWorn.name, k: accountKind(who.player),",
     "new": "const signed = { s: who.player.id, n: body.name ?? nameWorn.name, k: accountKind(who.player),",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "THE WHOLE POINT OF THE TOKEN, undone: the client asserts its own name again, only now it is signed. The arena merge (re-aimed by content): the mint carries ARENA4's rating. ARENA4b (PIN MOVED, re-aimed by content): the mint carries a realm character's `cl`. LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it. NAME-AS (PIN MOVED): re-aimed by content - the name the mint signs is the one the account chose to wear (`nameWorn`), and still never the client's."
   },
@@ -147,7 +147,7 @@
     "old": "        if (!key) return no('no-signing-key', 503, origin);",
     "new": "        if (!key) return no('auth', 401, origin);",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A deployment fault would read to every player as their own credential being wrong."
   },
@@ -157,7 +157,7 @@
     "old": "  for (let attempt = 0; attempt < 8; attempt++) {\n    const name = drawName(rand, b);\n    if (nameIsIssuable(name) && GUEST_NAME_RE.test(name)) return name;\n  }\n  throw new Error(`no issuable name could be drawn from ${b} - the bank and NAME_MAX have parted`);",
     "new": "  return drawName(rand, b);",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "AUDIT-ACC F7 put back: the single unfiltered draw. Four of the bank's 173,330 names are 25 characters against a NAME_MAX of 24, so createGuest threw and /v1/auth/guest answered 500 for about one guest in 43,000. It survived ACC1b's own testing because that pin sampled draws - eighteen of them - and four in 173,330 is invisible to a sample. The pin that kills this enumerates the whole space and then drives the exact draw."
   },
@@ -167,7 +167,7 @@
     "old": "  if (Number.isSafeInteger(nowS) && Number.isSafeInteger(session.last_seen)\n      && nowS - session.last_seen > SESSION_IDLE_S) {",
     "new": "  if (false && Number.isSafeInteger(nowS) && Number.isSafeInteger(session.last_seen)\n      && nowS - session.last_seen > SESSION_IDLE_S) {",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "AUDIT-ACC F9 put back. SESSION_IDLE_S was declared, documented as the bound 'before a sweep may take it', and enforced by nothing - there was no sweep. An abandoned credential worked forever."
   },
@@ -177,7 +177,7 @@
     "old": "      await db.prepare('DELETE FROM sessions WHERE id = ?').bind(session.id).run();",
     "new": "      void session;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Refusing without deleting leaves a dead credential in the table forever, to be re-refused on every attempt. Fight Life deletes on the spot and says why; this is the half of that which is easy to drop."
   },
@@ -187,8 +187,8 @@
     "old": "    try {\n      await db.batch([\n        db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id),\n        db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id),\n      ]);\n    } catch { /* cosmetic: the caller is authorised either way */ }",
     "new": "    await db.batch([\n      db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id),\n      db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id),\n    ]);",
     "tests": [
-      "test/accountworker.test.js",
-      "test/scale1.test.js"
+      "test/server/accountworker.test.js",
+      "test/net/scale1.test.js"
     ],
     "note": "AUDIT-ACC F10 put back, verbatim - the unguarded shape that shipped. A D1 hiccup on a cosmetic freshness write turns an ALREADY AUTHORISED request into a 500. SCALE1: re-aimed at the touch as it stands - one batch, and only once stale."
   },
@@ -198,7 +198,7 @@
     "old": "      if (overAccountRate(who.player.id, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) {\n        return no('rate', 429, origin);\n      }",
     "new": "      void overAccountRate; void ACCOUNT_MAX; void ACCOUNT_WINDOW_S;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "AUDIT-ACC F12 put back: the shape that shipped, where only the open routes were bounded. One valid session could mint Ed25519 signatures and spend D1 without limit - a limit on strangers and not on members is a limit on the wrong axis. ACCT-RATE-MEM: re-aimed at the check as it stands - counted in the isolate's memory (accounts.js overAccountRate)."
   },
@@ -208,7 +208,7 @@
     "old": "        return no('rate', 429, origin);\n      }",
     "new": "        return no('auth', 401, origin);\n      }",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A 401 sends a rate-limited player to reset a password that was never the problem, and hides a limiter behind what looks like a credential fault. Fight Life makes the same distinction beside its own check."
   },
@@ -218,7 +218,7 @@
     "old": "      const secret = bearer ?? (request.method === 'POST' ? body.secret : null);",
     "new": "      const secret = bearer ?? (request.method === 'POST' ? body.secret : url.searchParams.get('secret'));",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "AUDIT-ACC F13 put back verbatim. A URL is written into Cloudflare's request logs, into any Referer the page emits, and into browser history - so this puts the session secret in all three. It reads harmless because the route is read-only, which is the excuse that let it ship."
   },
@@ -228,7 +228,7 @@
     "old": "      const secret = bearer ?? (request.method === 'POST' ? body.secret : null);",
     "new": "      const secret = (request.method === 'POST' ? body.secret : null) ?? bearer;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Two sources for one credential need a stated winner, or a caller that sends both gets whichever the implementation happened to prefer - and that answer changes the day somebody reorders the expression."
   },
@@ -238,7 +238,7 @@
     "old": "          'access-control-allow-headers': 'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match',",
     "new": "          'access-control-allow-headers': 'content-type, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match',",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "The header the credential now rides in is one no browser will send unless the preflight allows it. Every cross-origin authenticated call would fail, and the failure would look like a CORS problem rather than the missing word it is. SCALE4g (2026-10-10) re-aimed it by content."
   }

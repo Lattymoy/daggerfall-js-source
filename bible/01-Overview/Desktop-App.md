@@ -42,7 +42,7 @@ player's folder.
   a save COPIED INTO the open folder appears on the next load-screen
   sweep without a relaunch. Plain Node, no Electron imports -
   `node --test` runs it in the main suite
-  (`test/filestorage.test.js`, which also drives the REAL saveSlots
+  (`test/systems/save/filestorage.test.js`, which also drives the REAL saveSlots
   laws over a temp directory and carries the audit's drift pins).
   Audited whole before hardening: `Audit-DA.md`.
 
@@ -130,7 +130,7 @@ wherever main's head has moved to by upload time. Runs queue in one
 concurrency group rather than cancel - a release half uploaded is worse than one late.
 The cost is what it is: three OS builds per merge, and the desktop
 update notice fires per merge, exactly as the site's own new-build
-notice (SRV-N2) does. Pinned in `test/updatecheck.test.js`. The
+notice (SRV-N2) does. Pinned in `test/tooling/updatecheck.test.js`. The
 paragraph below is the history it replaced.
 
 **REL4 (2026-09-29, Mac: "How can we drastically improve the install
@@ -157,7 +157,7 @@ there, and a hand re-cut of an old build does not take `latest` back
 player's: the patch notes of everything merged since the previous
 `app-v` tag (REL6, below), with GitHub's list of merged changes beneath
 them - the launcher's news panel shows the part above that list (DA10).
-Pinned in `test/rel4_release.test.js`; `tools/mutants/rel4.json`, 14,
+Pinned in `test/tooling/rel4_release.test.js`; `tools/mutants/rel4.json`, 14,
 all dead.
 
 **REL5 (2026-09-29): THE DOWNLOADS HAVE NAMES THAT DO NOT MOVE.** The
@@ -178,7 +178,7 @@ copy that has never updated through electron-updater, updating across the
 rename, finds no old blockmap under the new name and takes one full
 download (the updater's own fallback), once. The names are a contract
 (`app/lib/downloads.cjs`), held at both ends: the build config must
-produce them (`test/rel4_release.test.js`, by electron-builder's own
+produce them (`test/tooling/rel4_release.test.js`, by electron-builder's own
 precedence - target, then platform, then top level) and the publish job
 refuses a set without them - a naming change in electron-builder fails
 the release before a dead link goes live. **Except once** (Audit-Install
@@ -209,7 +209,7 @@ official release; an outside contributor's notes are a maintainer's to
 carry. A read that fails fails the step: a published release is never
 re-cut, so notes are never published as notes there were none of. The
 published releases are the archive. No patch-notes file may come back:
-`test/rel4_release.test.js` fails any in the tree (`PATCH_NOTES_PATH_RE`,
+`test/tooling/rel4_release.test.js` fails any in the tree (`PATCH_NOTES_PATH_RE`,
 over the index and the untracked). Retired with the files: the
 file-diff reader (`addedNotes`; Audit-Install's L1-1, L3-3, R2-C1 and
 R2-C4 findings were about it), its fixtures and twenty-two mutant
@@ -237,7 +237,7 @@ request's code; a description is read through the API, and only one the
 repository's own people opened is printed. The launcher shows the new
 notes the next time it reads the releases. The dispatch from a Claude
 session is refused (403, no actions: write); an edit to the description
-is the door. `test/rel7_renotes.test.js` (3), `tools/mutants/rel7.json`
+is the door. `test/tooling/rel7_renotes.test.js` (3), `tools/mutants/rel7.json`
 (15, all dead).
 
 **REL8 (2026-10-09, Mac: "Let's officially start numbering updates
@@ -271,7 +271,7 @@ updater compares); the launcher's news reads the name back
 (`launcherState.cjs` updateOfName - any other name is no update) and
 heads that release's notes with it. Not moved: the launcher's own update
 prompts ("Restart to Update (v0.1.7190)") and the site's new-build notice
-still name the installer's version and the commit. `test/rel8_updates.test.js`
+still name the installer's version and the commit. `test/tooling/rel8_updates.test.js`
 (7, over git histories the test makes - this checkout is shallow, as CI's
 are), `tools/mutants/rel8.json` (21: 19 dead, 2 equivalent as recorded).
 
@@ -289,7 +289,7 @@ notice alike - correctly found nothing newer than 0.1.8020. The build
 job's env now sets `NODE_OPTIONS: --max-old-space-size=4096` for every
 leg (what the 16GB legs already had; inside the Mac runner's 7GB), and
 the next merge cuts the release the stalled ones would have.
-`test/audit_install2.test.js` (E-54's test), `tools/mutants/rel9.json`
+`test/tooling/audit_install2.test.js` (E-54's test), `tools/mutants/rel9.json`
 (2).
 
 
@@ -330,7 +330,7 @@ target names its own artifact now (`-win-x64-setup.exe`,
 per-user), and the release glob attaches every exe. Saves and the
 ARENA2 path never moved with the exe either way - they live in
 `<appData>/Daggerfall JavaScript` (BR1). Pinned in
-`test/relwin1.test.js`; app-v0.1.5 is the first release with both. The landing page's "On your desktop"
+`test/tooling/relwin1.test.js`; app-v0.1.5 is the first release with both. The landing page's "On your desktop"
 section points at `releases/latest`, so cutting a release IS
 updating the site's download - no site change needed per release.
 `workflow_dispatch` builds the same installers as run artifacts
@@ -373,7 +373,7 @@ persisted as `updateCheck` in config.json) turns it off in one
 click, and `DAGGER_NO_UPDATE_CHECK` turns it off for the probes.
 Updating is an install-over: saves, prefs and the ARENA2 path live
 in userData, outside the install, and survive untouched.
-`test/updatecheck.test.js` pins the compare's ordering laws and the
+`test/tooling/updatecheck.test.js` pins the compare's ordering laws and the
 wiring (one endpoint, both gates, browser-only Download). If signed
 builds ever exist, electron-updater can replace the notice on
 Windows/Linux; the notice composes with that rather than fighting
@@ -447,7 +447,7 @@ own and the player's files never move. DA6's other reason - macOS -
 stands for the SHELL, and macOS keeps the notice for it; the game's own
 files update themselves there since DA13.
 
-**Pinned** in `test/autoupdate.test.js` (4): the transport table by
+**Pinned** in `test/tooling/autoupdate.test.js` (4): the transport table by
 value and DERIVED (every packaged, non-portable, non-mac platform is
 the updater's); the shell's settings, the launch fork inside the gate,
 the loud path's three answers; the provider, the dependency's kind, the
@@ -568,13 +568,13 @@ newer release's own game files (its manifest, and ranges of its pack),
 through one door that takes nothing but this repository's release
 downloads (`app/main.cjs` gameFetch). electron-updater's
 own requests are DA7's.
-Pinned exactly (`test/updatecheck.test.js`: every `net.fetch` is one of
+Pinned exactly (`test/tooling/updatecheck.test.js`: every `net.fetch` is one of
 those or a file on disk).
 
-**Pinned** in `test/da8_launcher.test.js` (8 since DA10: the update and
+**Pinned** in `test/tooling/da8_launcher.test.js` (8 since DA10: the update and
 first-run screens by execution; the page and the shell's wiring by
 source),
-`test/autoupdate.test.js` and `test/updatecheck.test.js` (DA6/DA7's pins
+`test/tooling/autoupdate.test.js` and `test/tooling/updatecheck.test.js` (DA6/DA7's pins
 re-stated at the launcher's law), and driven for real by
 `tools/appShellProbe.mjs` under xvfb: the launcher is the first window,
 the first run with nothing found asks in the launcher and hands over to
@@ -657,7 +657,7 @@ the clear is kept in config.json (`arena2IngestClear`) until it has run
 to its end (Audit-Install R2-D2: held in memory, it died with the
 install DA10 runs right after a pick).
 
-**Pinned** in `test/da10_launcher.test.js` (11, by execution and by
+**Pinned** in `test/tooling/da10_launcher.test.js` (11, by execution and by
 source) beside DA8's restated pins; driven for real by
 `tools/appShellProbe.mjs` (the launcher stays, the kept news and its
 marks, the status bar, Enter plays - pressed, after the first run's card
@@ -671,17 +671,17 @@ Mac: *"...and audit what we have so far."* Five lanes read REL4, REL5,
 DA8, DA9 and DA10 independently - security, the update lifecycle, the
 release pipeline, ARENA2 detection, and the tests, docs and player's
 eye. Every verified finding was fixed at its root and pinned
-(`test/audit_install.test.js`, `tools/mutants/auditinstall.json`: 71,
+(`test/tooling/audit_install.test.js`, `tools/mutants/auditinstall.json`: 71,
 all dead); the record, finding by finding, is
-[Audit-Install.md](Audit-Install.md).
+[Audit-Install.md](audits/Audit-Install.md).
 
 Mac, again: *"Audit this."* Five fresh lanes read the PR after round 1's
 fixes, each told to find where round 1 did not hold - and round 1's own
 L1-5 fix had stopped every release (the Windows stamp read `"$VERSION"`
 in PowerShell, an unset variable). Every verified finding was fixed at
-its root and pinned (`test/audit_install2.test.js`,
+its root and pinned (`test/tooling/audit_install2.test.js`,
 `tools/mutants/auditinstall2.json`: 123, all dead); the record is
-Audit-Install.md's [Round 2](Audit-Install.md#round-2-2026-09-29), and
+Audit-Install.md's [Round 2](audits/Audit-Install.md#round-2-2026-09-29), and
 where it found a claim on this page untrue, the claim is struck here.
 
 ## The install is one archive (DA11, 2026-09-30)
@@ -728,7 +728,7 @@ own NSIS templates (`uninstaller.nsh`, `include/installUtil.nsh`,
 `include/extractAppPackage.nsh`) and the published installer's
 contents; the fix is measured on the Linux package.
 
-**Pinned** in `test/da11_install_whole.test.js` (2): the site in the
+**Pinned** in `test/tooling/da11_install_whole.test.js` (2): the site in the
 archive and nowhere beside it, and the shell reading it there.
 
 ## Past the front door, and a pad at it (DA12, 2026-10-08)
@@ -760,7 +760,7 @@ the app must close for it either way. So:
   chosen once and kept (`arena2InGame`), goes straight in. The version
   played is kept as Play keeps it, for the launcher's NEW marks.
 - **The launcher answers a controller** (`app/launcher/pad.js`): the
-  game's own front-door loop (`src/ui/menuPad.js`, PAD-DOOR) over the
+  game's own front-door loop (`src/ui/menu/menuPad.js`, PAD-DOOR) over the
   page's own controls - the d-pad or left stick moves the focus, A or
   Start presses it, B is Escape. ONE module: the shell serves it at
   `dagger://launcher/menuPad.js` (`MENU_PAD`) - packed beside the page
@@ -769,7 +769,7 @@ the app must close for it either way. So:
   takes `focusStyle: false` and the focus is the page's own
   (`launcher.css` `.pad-focus`).
 
-Pinned in `test/da12_directplay.test.js`; `tools/mutants/da12.json`:
+Pinned in `test/tooling/da12_directplay.test.js`; `tools/mutants/da12.json`:
 14, all dead. Driven for real by `tools/appShellProbe.mjs` (DA12's four
 scenarios, a pad the page reads in place of a real one): the d-pad moves
 the launcher's focus and A presses Play, with no page error under its
@@ -904,15 +904,15 @@ differ from the Linux leg's that the pack is cut from (each leg builds its own; 
 first update - the hashes decide, never the build); the NSIS install, the AppImage and macOS running the channel; and
 Windows Defender reading the new files.
 
-**Pinned** in `test/da13_gamechannel.test.js` (14: the per-file pack from the real producer, the manifest's laws, the
+**Pinned** in `test/tooling/da13_gamechannel.test.js` (14: the per-file pack from the real producer, the manifest's laws, the
 plan, the ranges, the range answer, a version staged from ranges of the real pack byte for byte, a flipped byte and a
 200 refused with nothing staged, the trial and its rollback, a version that no longer reads, the route, the launcher,
 the shell's wiring and the pipeline's, the release script's commands run); `tools/mutants/da13.json`: 51, all dead.
-Pins moved in `test/updatecheck.test.js` (the channel's one door, the fourth fetch), `test/autoupdate.test.js` (the
-menu's check), `test/da10_launcher.test.js` and `test/da12_directplay.test.js` (the game's version kept as played;
-`--play` asks the channel first), `test/da8_launcher.test.js` (the HUD's one sentence: an update that is here plays
-from the next start - the installer's, run at quit, and the channel's alike), `test/audit_install.test.js` (the landing
-page's promise) and `test/rel4_release.test.js` (the release's set); eight records re-aimed by content in
+Pins moved in `test/tooling/updatecheck.test.js` (the channel's one door, the fourth fetch), `test/tooling/autoupdate.test.js` (the
+menu's check), `test/tooling/da10_launcher.test.js` and `test/tooling/da12_directplay.test.js` (the game's version kept as played;
+`--play` asks the channel first), `test/tooling/da8_launcher.test.js` (the HUD's one sentence: an update that is here plays
+from the next start - the installer's, run at quit, and the channel's alike), `test/tooling/audit_install.test.js` (the landing
+page's promise) and `test/tooling/rel4_release.test.js` (the release's set); eight records re-aimed by content in
 `tools/mutants/da7.json`, `da10.json`, `da12.json`, `rel4.json` and `rel6.json`, which run 108 dead.
 
 ## Finding the game files (DA9, 2026-09-29)
@@ -943,7 +943,7 @@ It OFFERS what it finds - "Found your Daggerfall files: Steam, <path>,
 Use these files" - and never takes it silently; with nothing found it
 says where to get the game (Steam, GOG) and keeps the game's own
 in-page picker one click away, as the website's path always was. Pinned
-in `test/da9_arena2detect.test.js` (~~8~~ 14, over real temp trees);
+in `test/tooling/da9_arena2detect.test.js` (~~8~~ 14, over real temp trees);
 `tools/mutants/da9.json`: 10, all dead.
 
 **The audit's changes (Audit-Install, lane 4).** The search runs in a
@@ -991,7 +991,7 @@ A player on Discord, the afternoon a release went out: *"my saves its
 all gone."* Mac: *"we need parity between browser and the install."*
 
 **Nothing was deleted.** Nothing in either store removes a save but the
-player's own Delete (systems/saveSlots.js: the only three `removeItem`
+player's own Delete (systems/save/saveSlots.js: the only three `removeItem`
 calls on a slot are deleteSave, an overwrite dropping its stale
 picture, and a NEW slot whose write threw). The website keeps a save
 in the browser's storage for its origin; the app keeps the same save as
@@ -1002,7 +1002,7 @@ slots, and a player who cleared a browser profile had done the one
 thing the file store exists to survive. The saves were in the other
 place, or gone with the profile; the app never had them.
 
-**The carrier** is `systems/saveTransfer.js`, pure over a storage-shaped
+**The carrier** is `systems/save/saveTransfer.js`, pure over a storage-shaped
 object. **Export** writes every slot the store holds as ONE zip in the
 app's own on-disk layout - `Saves/SAVE<n>/SaveData.txt`, `SaveInfo.txt`,
 `Screenshot.jpg` (the three shot spellings pinned equal to

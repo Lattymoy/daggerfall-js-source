@@ -68,7 +68,7 @@ import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 24: NPCData
 import { localizedTable, localizedTextList } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { getLocalizedFactionName } from './textManager.js';   // L10N3e: the organizations' captions, in the player's language
 import { shownPersonName } from './quest/person.js';   // L10N3e: a quest person's caption, as shown
-import { shownItemName } from './itemInfo.js';   // L10N3e: a quest thing's caption, as shown
+import { shownItemName } from './item/itemInfo.js';   // L10N3e: a quest thing's caption, as shown
 import { FOUND_KIND_ORDER, FOUND_TALK_GROUPS } from './portPlaces.js';   // YARDS-FOUND: the town's yards on the Where-is page - SHIPYARDS-FOUND: and a port town's places after them, one order
 
 /** ListItemType (:128-133). */

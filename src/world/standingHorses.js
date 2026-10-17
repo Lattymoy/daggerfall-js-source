@@ -76,7 +76,7 @@ export function createStandingHorses({ renderer = null, max = STANDING_HORSES_MA
       if (r !== rig) { for (const [k, e] of stood) letGo(k, e); rig = r ?? null; }
     },
     /** One standing horse: `key` an object (or text) of its host's that is the horse, `feet` its billboard's base,
-     *  `yaw` its heading, `look` its look's code (systems/horseCoats.js), `batch` the billboard it stands for, `seed` its
+     *  `yaw` its heading, `look` its look's code (systems/horse/horseCoats.js), `batch` the billboard it stands for, `seed` its
      *  idle phase. */
     offer(key, feet, yaw, look, batch, seed = 1) {
       const o = offers[n] ??= { key: null, feet: [0, 0, 0], yaw: 0, look: 0, batch: null, seed: 1, d2: 0 };

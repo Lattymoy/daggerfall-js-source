@@ -9,12 +9,12 @@ import { ImgFile } from '../../src/formats/imgFile.js';
 import { DFPalette } from '../../src/formats/dfPalette.js';
 import { CifRciFile } from '../../src/formats/cifRciFile.js';
 
-import { buildPaperdollPayload } from '../../src/characters/paperdollPayload.js';
+import { buildPaperdollPayload } from '../../src/characters/paperdoll/paperdollPayload.js';
 
 // ── THE THREE FILES, OFF DISK ────────────────────────────────────
 // This is the ONLY part of building the editor that is node's: the
 // bytes. Everything downstream of here lives in
-// src/characters/paperdollPayload.js and is shared with the deployed
+// src/characters/paperdoll/paperdollPayload.js and is shared with the deployed
 // page, which gets the same three from the user at runtime instead.
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');

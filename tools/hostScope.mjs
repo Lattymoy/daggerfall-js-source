@@ -63,7 +63,7 @@ export const parseModuleWithComments = (src) => {
 export const parseModule = (src) => parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true, allowHashBang: true });
 
 /** The host function in a parsed module: the largest function (or method) `want` names, else the module's largest -
- *  `{ fn, name }`, `fn` the function node, or null when there is none. test/hostceiling.test.js measures by it. */
+ *  `{ fn, name }`, `fn` the function node, or null when there is none. test/scenes/hostceiling.test.js measures by it. */
 export function findHostFunction(ast, want) {
   let best = null;
   const visit = (n, name) => {

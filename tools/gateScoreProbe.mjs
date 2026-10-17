@@ -1,16 +1,16 @@
 // WB7 - THE WARDEN'S SCORE, PLAYED BY THE GAME'S OWN PLAYER IN A REAL BROWSER, RENDERED AND MEASURED.
 //
-// node holds the score's shape and its law (test/wb7_boss_audio.test.js); what node cannot answer is what the songs
+// node holds the score's shape and its law (test/systems/gate/wb7_boss_audio.test.js); what node cannot answer is what the songs
 // SOUND like through the game's own song player and FM bank: whether every voice the score asks for makes a sound,
 // whether the mix clips, whether the war songs grow as the phases do, and whether the fall rings out and then leaves
-// the court quiet. So: the repo's own modules served as they are, each song played by systems/songPlayer.js into an
+// the court quiet. So: the repo's own modules served as they are, each song played by systems/song/songPlayer.js into an
 // OfflineAudioContext (the player's clock carried through the song window by window, as its own pump carries it), the
 // render read back and measured.
 //
 //     node tools/gateScoreProbe.mjs [--wav <dir>] [--seconds <n>]
 //         --wav writes each render there as 16-bit WAV, normalised to -1 dBFS, for a person to listen to
 //
-// WB10a: the songs are PRESSED (systems/songPlayer.js songPress: a compressor, its drive, a soft ceiling), so beside
+// WB10a: the songs are PRESSED (systems/song/songPlayer.js songPress: a compressor, its drive, a soft ceiling), so beside
 // the loudness this holds each peak under its ceiling, and plays ONE player through the whole fight - the three war
 // songs, the fall, then a song that carries no press - in one context, as the court does: the press is built once and
 // re-set song by song, and must come off again for the song after.
@@ -27,8 +27,8 @@ const SECONDS = Number(arg('--seconds') ?? 24);
 const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
 
 const PAGE = `<!doctype html><html><body><script type=module>
-import { SongPlayer } from '/src/systems/songPlayer.js';
-import { gateScoreSongs, SCORE_PRESS } from '/src/systems/gateScore.js';
+import { SongPlayer } from '/src/systems/song/songPlayer.js';
+import { gateScoreSongs, SCORE_PRESS } from '/src/systems/gate/gateScore.js';
 const RATE = 44100;
 window.render = async (key, seconds) => {
   const song = gateScoreSongs()[key];

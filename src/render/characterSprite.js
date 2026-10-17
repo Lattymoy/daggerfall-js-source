@@ -12,6 +12,7 @@
 import { multiply, ortho, lookAt, perspective, transformPoint, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from './renderer.js';
 import { getPref } from '../systems/uiPrefs.js';   // BODY-CARD: the billboard look, read where the card is stood
+import { glowPad } from './weaponGlowGlsl.js';   // WEAPON-GLOW1 (AUDIT MW-3): a glowing weapon's outline's room - a leaf
 
 /** World up - landAnchor's vertical when it is handed none, and the upright card's (BODY-CARD). */
 const WORLD_UP = Object.freeze([0, 1, 0]);
@@ -82,7 +83,7 @@ export function bodyFxPad(fx) {
 /** COATS3D: `also`, optional - more meshes in the same picture ({ mesh, model } each: the horse under a rider), drawn
  *  after `mesh` under the same camera and depth (renderer.js _renderCharacterSprite, and a batch's tiles). The box is the caller's, and holds
  *  them all. */
-export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW: boxW, halfH: boxH, anchor = null, hitFlash = 0, conceal = null, up = null, fx = null, also = null }, proj, view, eye, pixel = CHAR_PIXEL) {
+export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW: boxW, halfH: boxH, anchor = null, hitFlash = 0, conceal = null, up = null, fx = null, also = null, glowLook = null }, proj, view, eye, pixel = CHAR_PIXEL) {   // WEAPON-GLOW1: `glowLook` the held weapon's glow, whose outline needs room
   const aim = anchor && Math.hypot(anchor[0] - eye[0], anchor[1] - eye[1], anchor[2] - eye[2]) > 1e-6 ? anchor : center;   // PR-BOW1: the ray the picture is taken along
   const dx = aim[0] - eye[0], dy = aim[1] - eye[1], dz = aim[2] - eye[2];
   const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
@@ -126,8 +127,9 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   const screenPxH = Math.abs(prjY(at[0] + qUp[0] * halfH, at[1] + qUp[1] * halfH, at[2] + qUp[2] * halfH) - prjY(at[0] - qUp[0] * halfH, at[1] - qUp[1] * halfH, at[2] - qUp[2] * halfH)) * (span ? span[0] : canvas.clientHeight) / 2;
   let ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / texel)));
   // MWNPC5: the tells' room - `pad` texels a side, the world half-extents grown by the same texels (one texel the
-  // picture's 2 halfH / ph), so a texel stays the size it was
-  const pad = bodyFxPad(fx);
+  // picture's 2 halfH / ph), so a texel stays the size it was. AUDIT WEAPON-GLOW MW-3: and a glowing weapon's outline's
+  // (render/weaponGlowGlsl.js glowPad) - the larger of the two, as both stand off the same silhouette
+  const pad = Math.max(bodyFxPad(fx), ...(Array.isArray(glowLook) ? glowLook : glowLook ? [glowLook] : []).map((l) => glowPad(l, ph)), 0);   // TWO-HANDS: a pair's two blades, each its own look
   if (pad) {
     const grow = (2 * pad) / ph;
     halfW += halfH * grow; halfH *= 1 + grow;

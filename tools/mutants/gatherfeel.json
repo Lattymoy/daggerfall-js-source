@@ -5,7 +5,7 @@
     "old": "pick: Object.freeze(['gather:pick-1', 'gather:pick-2', 'gather:pick-3']),",
     "new": "pick: Object.freeze(['gather:pick-1', 'gather:pick-2', 'gather:pick-4']),",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const rand = rng(0x9117);",
     "new": "  const rand = Math.random;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const LEN = 2.75, HIT = FALL_S;",
     "new": "const LEN = 2.75, HIT = FALL_S - 0.3;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const MELEE_HIT_SHARE = HIT_FRAME_MELEE / MELEE_NUM_FRAMES.StrikeDown;",
     "new": "export const MELEE_HIT_SHARE = (HIT_FRAME_MELEE + 1) / MELEE_NUM_FRAMES.StrikeDown;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "get landsIn() { return Math.max(0, st.swing - CHOP_REST_S); },",
     "new": "get landsIn() { return Math.max(0, st.swing); },",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "get landsIn() { return Math.max(0, st.swing - MINE_REST_S); },",
     "new": "get landsIn() { return Math.max(0, st.swing); },",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      st.swing = Math.max(0, st.swing - dt);   // GATHER-FEEL: past the end too - the last swing runs out, its blow lands\n      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++;   // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing\n      if (st.done || st.cancelled) return;",
     "new": "      if (st.done || st.cancelled) return;\n      st.swing = Math.max(0, st.swing - dt);\n      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      st.swing = Math.max(0, st.swing - dt);   // GATHER-FEEL: past the end too - the last swing runs out, its blow lands\n      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;   // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing\n      if (st.done || st.cancelled) return;",
     "new": "      if (st.done || st.cancelled) return;\n      st.swing = Math.max(0, st.swing - dt);\n      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "out.push(beat(st.last === 'clean' ? 'chopClean' : 'chop', lands, 1, 1, rides(0)));",
     "new": "out.push(beat(st.last === 'clean' ? 'chopClean' : 'chop'));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (st.creaked && !prev.creaked && !st.done)",
     "new": "if (st.creaked && !st.done)",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (st.creaked && !prev.creaked && !st.done)",
     "new": "if (st.creaked && !prev.creaked)",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "out.push(beat(st.last === 'glint' ? 'pickGlint' : 'pick', lands, 1, 1, rides(0)));",
     "new": "out.push(beat(st.last === 'glint' ? 'pick' : 'pickGlint', lands, 1, 1, rides(0)));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "out.push(beat('swing', 0, GATHER_SOUND.PICK_SWING_PITCH));",
     "new": "out.push(beat('swing'));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "if (st.kind === 'hand' || st.kind === 'steady' || st.kind === 'basket') out.push(beat('kneel'));",
     "new": "if (st.kind === 'hand') out.push(beat('kneel'));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "if ((st.kind === 'hand' || st.kind === 'steady') && st.done && !prev.done) out.push(beat('pluck'));",
     "new": "if ((st.kind === 'hand' || st.kind === 'steady') && (st.done || st.cancelled) && !prev.done) out.push(beat('pluck'));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (st.kind === 'steady' && st.bruised && !prev.bruised) out.push(beat('bruise'));",
     "new": "if (st.kind === 'steady' && st.bruised) out.push(beat('bruise'));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "out.push(beat(st.hits[st.hits.length - 1] ? 'find' : 'miss'));",
     "new": "out.push(beat(st.hits[st.hits.length - 1] ? 'miss' : 'find'));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "out.push(beat('slice', 0, GATHER_SOUND.SLICE_FROM + (GATHER_SOUND.SLICE_TO - GATHER_SOUND.SLICE_FROM) * share));",
     "new": "out.push(beat('slice', 0, 1 + 0 * share));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "if (st.slips > (prev.slips ?? 0)) out.push(beat('tear'));",
     "new": "if (st.slips > (prev.slips ?? 0)) void 0;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    Object.assign(prev, BEGUN);",
     "new": "    Object.assign(prev, BEGUN, st);",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "if (st.done && !prev.done && !st.cancelled) out.push(beat('netOut'));",
     "new": "if (st.done && !prev.done && !st.cancelled) void 0;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "if (b.name === 'throw') net = netLanding(eye, at, st.throwM) ?? (isVec3(at) ? [at[0], at[1], at[2]] : null);",
     "new": "if (b.name === 'throw') net = isVec3(at) ? [at[0], at[1], at[2]] : null;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "refDistance: say.where === 'net' ? GATHER_SOUND.NET_REF_M : DEFAULT_ACTIVATION_DISTANCE",
     "new": "refDistance: say.where === 'net' ? GATHER_SOUND.NET_REF_M : 1",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "if (keys.length > 1 && key === prev) key = keys[(keys.indexOf(key) + 1) % keys.length];",
     "new": "if (keys.length > 1 && key === prev && false) key = keys[(keys.indexOf(key) + 1) % keys.length];",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "const jitter = say.jitter ?? GATHER_SOUND.PITCH_JITTER;",
     "new": "const jitter = GATHER_SOUND.PITCH_JITTER;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "if (say.gap && clock - (saidAt.get(b.name) ?? -Infinity) < say.gap) return false;",
     "new": "if (false) return false;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "const wait = Math.max(0, Number(delay) || 0) + (say.after ?? 0);",
     "new": "const wait = Math.max(0, Number(delay) || 0);",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "if (act) pending = pending.filter((p) => p.of !== act);",
     "new": "if (act) pending = [];",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "if (act) pending = pending.filter((p) => p.of !== act);",
     "new": "if (act && false) pending = pending.filter((p) => p.of !== act);",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "queue(beat('plip')); plipIn = GATHER_SOUND.PLIP_MIN_S + rand() * (GATHER_SOUND.PLIP_MAX_S - GATHER_SOUND.PLIP_MIN_S);",
     "new": "queue(beat('plip')); plipIn = 0.5;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "const span = () => (slipping ? GATHER_SOUND.THRASH_SLIP_S : GATHER_SOUND.THRASH_MIN_S + rand() * (GATHER_SOUND.THRASH_MAX_S - GATHER_SOUND.THRASH_MIN_S));",
     "new": "const span = () => (GATHER_SOUND.THRASH_MIN_S + rand() * (GATHER_SOUND.THRASH_MAX_S - GATHER_SOUND.THRASH_MIN_S));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "queue(beat('thrash', 0, 1, slipping ? GATHER_SOUND.THRASH_SLIP_GAIN : 1));",
     "new": "queue(beat('thrash', 0, 1, 1));",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "    if (!on()) {   // the classic skin: the DFU cue the HUD said here before, or nothing",
     "new": "    if (false) {   // the classic skin: the DFU cue the HUD said here before, or nothing",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "    if (!(wait > 0)) { fire(b, place, voice); return; }",
     "new": "    if (!(wait > 0) || !on()) { fire(b, place, voice); return; }",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "if (install && audio?.registerSound && on()) installGatherSounds(audio);",
     "new": "if (install && audio?.registerSound) installGatherSounds(audio);",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "handTool: () => (act?.hand ? act.hand(act) : follow?.hand ? follow.hand(follow) : null),",
     "new": "handTool: () => (act?.hand ? act.hand(act) : null),",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "        if (follow && !(follow.act.swing > 0)) follow = null;\n",
     "new": "",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "    if (lands > 0) a.landing = true;   // AUDIT GATHER-FEEL LANDING: gone in blowLanded, on its machine's own clock\n    else fallNow(a);",
     "new": "    fallNow(a);",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "    else fallNow(a);",
     "new": "    else void a;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "if (a && !a.loose && !a.fell && !a.landing && k?.gone(a.node)) fell(a, k);",
     "new": "if (a && !a.loose && !a.fell && k?.gone(a.node)) fell(a, k);",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "      a.landing = false;   // GATHER-FEEL: refused before its blow landed - its node never went",
     "new": "      void a;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -374,8 +374,8 @@
     "old": "cancel() { if (!act) return false; letGo(act); act.act.cancel();",
     "new": "cancel() { if (!act) return false; act.act.cancel();",
     "tests": [
-      "test/gatherfeel.test.js",
-      "test/audit_gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js",
+      "test/systems/audit_gatherfeel.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "ear.frame(dt, act.act, act.world, pos);",
     "new": "ear.frame(dt, null, act.world, pos);",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "        ear.frame(dt, null);   // GATHER-FEEL: a finished act's last blow still lands, its chime still rings",
     "new": "        void ear;   // GATHER-FEEL: a finished act's last blow still lands, its chime still rings",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "      ear.say('haul');   // GATHER-FEEL: the goods into the bag",
     "new": "      // GATHER-FEEL: the goods into the bag",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "        ear.say('rank');   // GATHER-FEEL: a rank's chime, after the goods' bag",
     "new": "        // GATHER-FEEL: a rank's chime, after the goods' bag",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -420,7 +420,7 @@
     "old": "    goneSound: 'rubble',",
     "new": "    goneSound: null,",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -429,7 +429,7 @@
     "old": "    goneSound: 'fall',",
     "new": "    goneSound: null,",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -438,7 +438,7 @@
     "old": "    if (k.goneSound) ear.say(k.goneSound, actWorld(a) ?? a.world, { voice: a.node.key });",
     "new": "    if (k.goneSound) void a;",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -447,7 +447,7 @@
     "old": "logsLying.splice(i, 1); say?.('logs'); }",
     "new": "logsLying.splice(i, 1); }",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -456,7 +456,7 @@
     "old": "        audio,   // GATHER-FEEL: the bus the gathering's ear says the acts on",
     "new": "        // GATHER-FEEL: the bus the gathering's ear says the acts on",
     "tests": [
-      "test/gatherfeel.test.js"
+      "test/systems/gatherfeel.test.js"
     ]
   },
   {
@@ -465,8 +465,8 @@
     "old": "if (a.clean) ear.say('clean', null, { of: a.act });",
     "new": "if (a.clean) ear.say('clean', null, { delay: 0 });",
     "tests": [
-      "test/profreticle.test.js",
-      "test/gatherfeel.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/gatherfeel.test.js"
     ]
   }
 ]

@@ -14,7 +14,7 @@
 // every stage change runs - AUDIT C&C I5). A waterskin carries
 // `water` (kg), which the weight law adds and the name reads. Camping
 // equipment and the campfire carry their condition as USES.
-import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, ITEM_TEMPLATES } from '../itemTemplates.js';
+import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, ITEM_TEMPLATES } from '../item/itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from '../textureReplacement.js';
 import { DYE_COLORS } from '../../characters/dyes.js';   // AUDIT C&C I7: the start's clothes, in CreateMensClothing's default dye
 const dice100 = (chance, roll01) => Math.floor(roll01 * 100) < chance;   // Dice100's line; no combat import (the formulas -> equip cycle)
@@ -289,7 +289,7 @@ export function startingProvisions(entity = null) {
 }
 
 /** REST2 (bible/06-Systems/Rest-Arc.md section 3): ONLINE THE CAMPFIRE IS THE REST'S, NOT THE ARC'S. A rest online is
- *  an act at a fire or a bed (systems/restAct.js), so with the arc Off a General Store still stocks two to four, and a
+ *  an act at a fire or a bed (systems/rest/restAct.js), so with the arc Off a General Store still stocks two to four, and a
  *  new character still sets out with one. */
 export function campfireStock(rolls = Math.random, lo = 2, hi = 4) {   // AUDIT REST: a Pawn Shop's 0-2 (Rest-Arc.md section 3)
   const out = [];

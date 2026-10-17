@@ -4,55 +4,55 @@
     "file": "src/ui/heldMap.js",
     "old": "        if (orbitDrag.axis !== 'both') {\n          const tilt",
     "new": "        if (false) {\n          const tilt",
-    "tests": ["test/fb1001_orbitfree.test.js"]
+    "tests": ["test/ui/fb1001_orbitfree.test.js"]
   },
   {
     "name": "ORBIT-FREE-no-drift-forgiven",
     "file": "src/ui/heldMap.js",
     "old": "export const ORBIT_FREE_PX = 24, ORBIT_DRIFT = 0.5;",
     "new": "export const ORBIT_FREE_PX = 24, ORBIT_DRIFT = 0;",
-    "tests": ["test/fb1001_orbitfree.test.js"]
+    "tests": ["test/ui/fb1001_orbitfree.test.js"]
   },
   {
     "name": "ORBIT-FREE-a-lower-bar",
     "file": "src/ui/heldMap.js",
     "old": "export const ORBIT_FREE_PX = 24, ORBIT_DRIFT = 0.5;",
     "new": "export const ORBIT_FREE_PX = 12, ORBIT_DRIFT = 0.5;",
-    "tests": ["test/fb1001_orbitfree.test.js"]
+    "tests": ["test/ui/fb1001_orbitfree.test.js"]
   },
   {
     "name": "ORBIT-FREE-a-higher-bar",
     "file": "src/ui/heldMap.js",
     "old": "export const ORBIT_FREE_PX = 24, ORBIT_DRIFT = 0.5;",
     "new": "export const ORBIT_FREE_PX = 48, ORBIT_DRIFT = 0.5;",
-    "tests": ["test/fb1001_orbitfree.test.js"]
+    "tests": ["test/ui/fb1001_orbitfree.test.js"]
   },
   {
     "name": "ORBIT-FREE-each-move-alone",
     "file": "src/ui/heldMap.js",
     "old": "off = (orbitDrag.off ?? 0) + (tilt ? dx : dy);",
     "new": "off = (tilt ? dx : dy);",
-    "tests": ["test/fb1001_orbitfree.test.js"]
+    "tests": ["test/ui/fb1001_orbitfree.test.js"]
   },
   {
     "name": "ORBIT-FREE-the-held-travel-dropped",
     "file": "src/ui/heldMap.js",
     "old": "this._sheet?.orbitBy?.(tilt ? held : dx, tilt ? dy : held);",
     "new": "this._sheet?.orbitBy?.(tilt ? 0 : dx, tilt ? dy : 0);",
-    "tests": ["test/fb1001_orbitfree.test.js"]
+    "tests": ["test/ui/fb1001_orbitfree.test.js"]
   },
   {
     "name": "ORBIT-FREE-the-sum-unsigned",
     "file": "src/ui/heldMap.js",
     "old": "orbitDrag.off = Math.sign(off) * Math.max(0, Math.abs(off) - on * ORBIT_DRIFT);",
     "new": "orbitDrag.off = Math.max(0, Math.abs(off) - on * ORBIT_DRIFT);",
-    "tests": ["test/fb1001_orbitfree.test.js"]
+    "tests": ["test/ui/fb1001_orbitfree.test.js"]
   },
   {
     "name": "ORBIT-FREE-freed-but-not-kept",
     "file": "src/ui/heldMap.js",
     "old": "            orbitDrag.axis = 'both';\n",
     "new": "",
-    "tests": ["test/fb1001_orbitfree.test.js"]
+    "tests": ["test/ui/fb1001_orbitfree.test.js"]
   }
 ]

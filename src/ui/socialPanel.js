@@ -39,9 +39,9 @@
 // is ChatLog's law (ui/chatPanel.js paintWho) applied before it can be missed.
 //
 // Not a DFU member: Daggerfall Unity has no friends and no parties. Ledger A row (ONLINE).
-import { overlayOpen } from './enhancedOverlays.js';
+import { overlayOpen } from './enhanced/enhancedOverlays.js';
 import { isTextEntryTarget, swallowBrowserKey } from './input.js';   // DISC25-E: a letter's keys are the letter's
-import { isTouchDevice } from './touch.js';
+import { isTouchDevice } from './touch/touch.js';
 import { PARTY_MAX } from '../net/wire.js';
 import { lastOnlineText, PARTY_GREEN_CSS, FRIEND_CSS } from '../net/social.js';
 import { NAME_ORDER } from '../net/roster.js';   // AUDIT 637 A11: the roster's name order, one collator
@@ -53,14 +53,14 @@ import {
   GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_RANK_NAMES,
   guildMay, guildMayMove, guildOutranks, guildNameOf, guildTagOf, guildRankNamesOf, GUILD_MOVE_MAX,
   GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT, GUILD_RENAME_GOLD,   // GUILD2a: a new name, for a price
-} from '../net/guildLaw.js';   // GUILD1b: the Guild tab's rules are the service's
-import { VAULT_RANK_DEFAULTS, VAULT_LIMIT_CHOICES, GUILD_VAULT_SLOTS, vaultStandingText, vaultMayTake, vaultMayPut } from '../net/guildVaultLaw.js';   // GUILD2b: the vault
+} from '../net/guild/guildLaw.js';   // GUILD1b: the Guild tab's rules are the service's
+import { VAULT_RANK_DEFAULTS, VAULT_LIMIT_CHOICES, GUILD_VAULT_SLOTS, vaultStandingText, vaultMayTake, vaultMayPut } from '../net/guild/guildVaultLaw.js';   // GUILD2b: the vault
 import { tradeRefusal } from '../systems/tradePack.js';   // GUILD2b: what may leave a pack, for the vault as for a trade
-import { isLocked } from '../systems/itemLock.js';   // AUDIT2 GUILD2 U4: a locked piece stays in the pack
-import { GUILD_DEPOSIT_UNSURE, guildMemberOnline, guildSeenText } from '../net/guildBook.js';   // GUILD-SEEN: a member's "last online"
+import { isLocked } from '../systems/item/itemLock.js';   // AUDIT2 GUILD2 U4: a locked piece stays in the pack
+import { GUILD_DEPOSIT_UNSURE, guildMemberOnline, guildSeenText } from '../net/guild/guildBook.js';   // GUILD-SEEN: a member's "last online"
 import { LETTER_OF_CREDIT_TEXT } from '../systems/tradeModes.js';   // GUILD-LETTER: the trade window's own line for a letter of credit
 import { writMay, guildMoveOk, writBudgetOk, GUILD_STORES_MAX, WRIT_BUDGET_MAX } from '../net/writLaw.js';   // PROF6: the guild Stores' and the writ budget's ranks and bounds
-import { guildRankLines, GUILD_RANK_ACTS_NOTE } from '../net/guildPowers.js';   // GUILD3c: what each rank may do, in words
+import { guildRankLines, GUILD_RANK_ACTS_NOTE } from '../net/guild/guildPowers.js';   // GUILD3c: what each rank may do, in words
 import { STORES_MAX } from '../net/professionLaw.js';   // AUDIT 31 U8: a character's Stores' most of a material
 import { marksText, MARKS_FAUCETS, MARKS_MAX } from '../net/marksLaw.js';   // MARKS1: the Marks treasury's words   // MAIL1: the form's caps are the service's
 import { glyphBadges, glyphSvgNode, titleBadge } from './playerBadge.js';   // MAIL1: a sender's glyphs, in the one drawing every DOM face uses
@@ -70,7 +70,7 @@ import { bannerSvg, shieldSvg } from './heraldryArt.js';   // GUILD1d: the guild
 import { GUILD_HALL_PRICE_MULT, GUILD_HALL_ENTRIES, GUILD_HALL_ENTRY_WORDS, hallMay } from '../net/hallLaw.js';   // GUILD1d: the hall
 import { homeSaleRefund } from '../net/homeLaw.js';   // GUILD1d: what the hall sells back for
 import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD1d: where the hall stands
-import { wagonItemName } from '../systems/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon by its kind's name
+import { wagonItemName } from '../systems/wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon by its kind's name
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 /** A piece of the pack as the vault's Put in names it - the Open Wagon and the Caravan by their own names (their record's
  *  is the Small Cart's), anything else by its record's (the account service names the vault's row so - guildVault.js). */
@@ -398,7 +398,7 @@ textarea.dfsocial-field { resize: vertical; min-height: 120px; line-height: 1.4;
 
 /* AUDIT SOC C8: THE FINGER'S OWN SIZES. Every control this panel draws was built at the mouse's scale - the tabs 29
    tall, Close 27x19, Invite and Remove 22 - and online forces the enhanced lane on a phone as readily as on a
-   desktop. Under the touch skin each one is at least the 44px the platforms ask for (ui/touch.js draws its own
+   desktop. Under the touch skin each one is at least the 44px the platforms ask for (ui/touch/touch.js draws its own
    buttons at 48), and nothing moves on a desktop. */
 .dfsocial.touch .dfsocial-tab { min-height: 44px; padding: 10px 12px; }
 .dfsocial.touch .dfsocial-close { min-height: 44px; min-width: 44px; padding: 4px 12px; }
@@ -511,7 +511,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const tabBtns = new Map();
   tabs.setAttribute('role', 'tablist');
   // MAIL1: the third tab, where the host has a letterbox to hand (net/mail.js) - a panel without one is the two it was
-  // GUILD1b: and the fourth, where the host has a guild book (net/guildBook.js)
+  // GUILD1b: and the fourth, where the host has a guild book (net/guild/guildBook.js)
   for (const [id, label] of [['friends', 'Friends'], ['party', 'Party'], ...(mail ? [['letters', 'Letters']] : []), ...(guild ? [['guild', 'Guild']] : [])]) {
     const b = el('button', 'dfsocial-tab', label);
     b.type = 'button'; b.dataset.tab = id;
@@ -735,7 +735,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
 
   /** PARTY-UI (2026-09-26, Mac: "Instead of party chat commands, we need to add the party travel commands to the UI"):
    *  THE JOURNEY, on the Party tab - the chat's /leader and /travel as buttons over the one door (`journey()`, the
-   *  host's systems/partyTravel.js session: its `command` and `respond`), what they answer written as the panel's
+   *  host's systems/party/partyTravel.js session: its `command` and `respond`), what they answer written as the panel's
    *  note. The leader: the round and its call-off, or the travel map where one is chosen. A member: the leader's round
    *  with Ready and Stay behind (gathered - else why not), a journey under way, and the journey to a leader who stands
    *  in another place. Nothing at all where there is nothing to do. */
@@ -992,7 +992,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const lettersBody = () => (letters.mode === 'write' ? writeBody() : letters.mode === 'read' ? readBody() : listBody());
 
   // ═══ GUILD1b: THE GUILD TAB ═══════════════════════════════════════
-  // Every rule it shows is net/guildLaw.js's and every answer the service's (net/guildBook.js): a button the character's
+  // Every rule it shows is net/guild/guildLaw.js's and every answer the service's (net/guild/guildBook.js): a button the character's
   // rank cannot press is DISABLED AND SAYS WHY, as every button here does; one it may press goes to the book, and what
   // comes back is written under the header in the service's own sentence.
   const guildField = (form, label, value, max, onInput) => {
@@ -1345,7 +1345,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
         out.push(form);
       }
     }
-    // GUILD3c (Guilds-Made-Plain.md): WHAT EACH RANK MAY DO - the four power tables in words (net/guildPowers.js), each
+    // GUILD3c (Guilds-Made-Plain.md): WHAT EACH RANK MAY DO - the four power tables in words (net/guild/guildPowers.js), each
     // rank by the guild's own name for it, folded under its line
     const ranks = /** @type {any} */ (el('details', 'dfsocial-ranks'));
     ranks.open = guildUi.ranksOpen === true;

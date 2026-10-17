@@ -7,7 +7,7 @@
 //
 // THE SPLIT IS THE PROJECT'S OWN, not an invention: `ChargenFlow` does
 // the wizard's thinking and `enhancedChargen.js` draws it, and
-// test/enhancedChargen.test.js says why - "node cannot draw them; what
+// test/ui/enhanced/enhancedChargen.test.js says why - "node cannot draw them; what
 // IS testable is the part that does arithmetic". Everything a player
 // can get WRONG about an account is arithmetic: which stage they are
 // on, whether two passwords match, what a refusal means, whether the

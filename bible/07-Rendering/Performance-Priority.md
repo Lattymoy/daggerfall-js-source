@@ -13,7 +13,7 @@ and PERF-WAGON (the rest of the carts, wagons and tents, and the fixed city's ho
 standing team's harness neither stepped nor sent), its section after PERF-WAGON's.
 
 AUDITED the same day (the owner: "Lets do an audit on this"): five cold lanes over a frozen snapshot, every finding
-fixed, pinned and mutated or recorded - `01-Overview/Audit-Perf-Priority.md`. What the audit changed is written into
+fixed, pinned and mutated or recorded - `01-Overview/audits/Audit-Perf-Priority.md`. What the audit changed is written into
 each section below as it now stands.
 
 PEER-RANGE (the same day; the owner: "So for online performance, I believe the rendering of players far out is
@@ -100,7 +100,7 @@ the 3/4 line, and the standing horses' and the crews' calls took it over. Their 
 (`standingHorsesFrame`, `offerCrews`), and the look's step before the motor - `if (!gamePaused()) {`, the look filter,
 the keyboard look, the lock-on - runs as a closure of its own, `frameLook`: 44,976 bytes.
 
-Pins: `test/perfv8.test.js` (2) - every `frame` in the world host's graph and every closure moved out of one under the
+Pins: `test/scenes/perfv8.test.js` (2) - every `frame` in the world host's graph and every closure moved out of one under the
 ceiling and under three quarters of it (the tripwire: move the next statement out before the cliff, not after); over
 the parse, the 21 closures by name in order, each made in the frame and called once - a plain call, the statement after
 its close - holding one statement, no `return`, no `var`. Mutants: `tools/mutants/perfv8.json`, 8, all dead.
@@ -129,7 +129,7 @@ timber's and its wagons', made again when it moves or a wagon comes in): in view
 alone through a renderer that records (a part that casts nothing - a caravan's room - casts nothing there either);
 else nothing. The view out of a window hands none: its eye is not the street's.
 
-Pins: `test/perfyard.test.js` (6) - the verdict over real planes from a real projection; the pool by its verdict over
+Pins: `test/scenes/perfyard.test.js` (6) - the verdict over real planes from a real projection; the pool by its verdict over
 each piece's world box; a recentre carries the box with the piece; a piece with no box is drawn and never asked; the
 host's wiring (the frame's own matrices kept before the draw, the yards handed the host's test); the merchant yards by
 the same law. Mutants: `tools/mutants/perfyard.json`, 17, all dead.
@@ -153,7 +153,7 @@ performance with player's exterior decor items". Read from the code, not measure
 **The fix.**
 
 - **A distance of the player's own.** The Other players card has a Yard decorations row beside Draw distance
-  (`ui/enhancedMenu.js`, `yardRange` on the prefs shelf; the law `net/yardRange.js`): Off, 75 m, 150 m or 300 m - the
+  (`ui/enhanced/enhancedMenu.js`, `yardRange` on the prefs shelf; the law `net/yardRange.js`): Off, 75 m, 150 m or 300 m - the
   default, the distance every yard was drawn at before. The distance is from the eye to a yard's house on the ground,
   read every frame (it lands at once). Off stands no stranger's yard at all - taken down where it stood, nothing drawn,
   solid or lit - and stands it again the moment another choice is made. One's own yard (a home's, a hall's its keeper
@@ -175,7 +175,7 @@ the draws again and are the next lever (YARD-MERGE, below, pulled it, and merged
 frame is not the game's code (`Performance-Exterior.md` SCRIPT-SPLIT), and `?perf=cpu` against an offline visit to the
 same town (yards stand online only) would say.
 
-Pins: `test/yardrange.test.js` (5) - the law and the shelf's default, the row's wiring and the host's; the size bound;
+Pins: `test/scenes/yardrange.test.js` (5) - the law and the shelf's default, the row's wiring and the host's; the size bound;
 over the real yard and pool, the default, 75 m and Off - models and flats alike, my own yard always, Off taking a
 stranger's yard down and standing it again; my own yard 200 m off; six syncs of an unchanged town stringifying nothing.
 Mutants: `tools/mutants/yardrange.json`, 10, all dead.
@@ -229,7 +229,7 @@ into Direct3D - 4.45 -> 3.95 ms (-11%, every phase on below every phase off); th
 draws and their cost on both threads, which is the frame on a machine where a draw is dear (the browser's WebGL, a
 weaker CPU, a slower driver - YARD-RANGE's player at 20-40 fps).
 
-Pins: `test/yardmerge.test.js` (12) - the merge where each piece's matrix stood it, keyed unresolved; what joins one;
+Pins: `test/scenes/yardmerge.test.js` (12) - the merge where each piece's matrix stood it, keyed unresolved; what joins one;
 the settle, the budget, one draw through the same remap; the verdict over the merge's box and a recentre; a removal
 letting it go and asking a merge again, a late piece on its own; no merge for a room, one model, or one without
 normals; the yards' budget wired; the flats' key and every way out of it; a group of one picture, handed once; a
@@ -284,7 +284,7 @@ reach, every frame (Steady shadows on, the default). Past the cap a copy is dyna
 2,000-copy rows are the memory's limit, not a layout a town makes. A recentre with twenty full meshes refiles in
 1-11 ms - most of it the move of every placement itself, the rounding's few refiled - where the first cut's every-placement refile was 27-51 ms.
 
-Pins: `test/perfinst.test.js` (14) - the scan as it shipped is the ORACLE, run beside the pass over seeded stories
+Pins: `test/render/perfinst.test.js` (14) - the scan as it shipped is the ORACLE, run beside the pass over seeded stories
 (still, stacked and near copies, swings, steps, jumps, new and undrawn copies, origin shifts) and over schedules aimed
 at each law - ties within a cube and across a face, whichever cube is asked first; a draw exactly the reach away; exact matches on both sides of a
 face; a placement filed again into a cube holding a later one; a full memory's evictions (the least seen, one drawn
@@ -339,7 +339,7 @@ none. Streaming a mesh a frame with a capsule's move a frame, at the default vie
 344, now 21 (25 pixels: 57 / 122 / 31; 169: 127 / 527 / 21). A removal still drops the filing (a pixel unloads at a
 crossing, a few frames a crossing).
 
-Pins: `test/perfcol2.test.js` (5) - every ray, cast, sphere, contact and move over a streamed world of riders,
+Pins: `test/scenes/perfcol2.test.js` (5) - every ray, cast, sphere, contact and move over a streamed world of riders,
 standing wide buckets, a turned rider and a plain mover is the old walk's, before and after the frame moves under it
 (east, north, a re-anchor and a vertical recentre); a short probe asks the buckets round it and the sentinel; the world
 host marks every pixel's bucket and no other, and hands its frame to the walls and the farms, which mark with it; a
@@ -365,7 +365,7 @@ would write is what it holds. A face a dynamic drew into, or one not known (a fr
 as before; a fresh cache copies all six. Every live face ends the frame as the cache plus this frame's movers in it -
 the picture the six copies made. One walker by one lamp: one face copied a frame, not six.
 
-Pins: `test/perfface.test.js` (2) - every live face ends every frame as its cache plus that frame's movers (a model of
+Pins: `test/render/perfface.test.js` (2) - every live face ends every frame as its cache plus that frame's movers (a model of
 each face's depth layers, checked after every frame, over a mover walked across a lamp's faces, stood still into the
 cache, moved again, taken away and brought back, a still caster added, the lamps moved); a mover in front of a lamp
 copies the faces it was drawn into, not six, and a mover gone copies those back once. `cachecopy`, `sc1_shadowcache` and `disc24c_self_shadow` count copies
@@ -391,7 +391,7 @@ three frames of sixty names, on its default GL and on SwiftShader. Names standin
 of main thread a frame (three runs each, their layout 0.11 -> 0). Names walking nearer and farther: within the noise
 (1.99 against 1.81) - their font size moves every frame and lays them out by itself, as PERF-ON2 found.
 
-Pins: `test/name1_bubbles.test.js` reads the place from the transform (and never `left`/`top`). Mutants:
+Pins: `test/net/name1_bubbles.test.js` reads the place from the transform (and never `left`/`top`). Mutants:
 `tools/mutants/name1.json`'s gap and stack mutants re-aimed at the transform (the sheet's own translate is now the
 place's until the first write); 67 dead, 3 equivalent as recorded.
 
@@ -427,13 +427,13 @@ cut by the same list and are not in it. The session's own play-out (`online.tick
 measured beside it with PERF-ON's probe - 0.028 ms a frame at 100 peers - and LEFT: the map's marks, the foes' owners and
 the range itself read the pose it plays.
 
-**The fix** (`net/peerRange.js`). GATE-CROWD's cut, by distance in place of a count, run on the online frame's drawn
+**The fix** (`net/peer/peerRange.js`). GATE-CROWD's cut, by distance in place of a count, run on the online frame's drawn
 list just before the court's own (`scenes/world.js` `ranged`): past the distance on the Other players card a player
 stands nowhere on this screen - no body, sprite, name, light, cast, spark or step - and their map marks, taken off the
 whole list above it, stay.
 - THE CHOICES: 150, 300 or 600 m on the ground, or Everyone (`PEER_RANGE_TIERS`; `systems/uiPrefs.js` `peerRange`, a
   literal pinned equal to the law's for GATE-CROWD's boot-path reason; the card's Draw distance row,
-  `ui/enhancedMenu.js` `peerSpritesCard`).
+  `ui/enhanced/enhancedMenu.js` `peerSpritesCard`).
 - THE DEFAULT, 300 m, IS PAST A SHOT'S REACH: another player's arrow or spell flies `MISSILE_SPEED` for
   `MISSILE_LIFESPAN_S` - 200 m (the one faster shot is a foe archer's aimed one, x1.3 `BLOW.aimed.speed`, 260 m - short of
   the default too). Nobody who can reach me with a shot is cut at the default; the near tier can hide an archer, and its
@@ -455,7 +455,7 @@ dungeon are drawn by `scenes/worldModes.js`, which takes the list it cuts throug
 `drawPeerBodies`; `scenes/dungeonContext.js` draws no other player; `scenes/exterior.js` (the fixed city) runs no online
 session, so there is nobody to cut.
 
-Pins: `test/peerrange.test.js` (10) - the choices and the shelf, the default against a player's shot, the law on both
+Pins: `test/systems/peerrange.test.js` (10) - the choices and the shelf, the default against a player's shot, the law on both
 axes with me off the origin and its hold, the party asked last, the host's range (the held set forgotten on every way it
 stands down, the default range), the real `RemotePlayers` letting a sprite go past the hold and taking it back as its
 sprite in one frame with no compose, a resurrection seen in the room, the online frame's cut (evaluated as the frame asks
@@ -464,7 +464,7 @@ dead. Moved with the line: GATE-CROWD's online-frame pin, INVIS-NET's (twice: th
 room), MWBODY1's (the same two), OW-PEERS' and INVIS-LOOK's sync pins, and the boat marker's slice; `tools/mutants/gatecrowd.json`'s spark and drawn-here
 mutants re-aimed, 45 dead.
 
-AUDITED the same day (`01-Overview/Audit-Peer-Range-Halo-Thin.md`): what it changed is written into this section as it
+AUDITED the same day (`01-Overview/audits/Audit-Peer-Range-Halo-Thin.md`): what it changed is written into this section as it
 now stands.
 
 NOT SEEN ON A GPU OR IN THE REAL GAME: no ARENA2 and no GL here. The owner's eye is the next gate - a crowded city
@@ -490,7 +490,7 @@ cast alone (a caravan's no-shadow room casting nothing), else nothing. The trave
 distance (its eye stands hundreds of metres back over a grown world) and a grown rig is drawn whole; the window's view
 out takes no far team.
 
-Pins: `test/perf_teams.test.js` (5), over the real wagon parts. Mutants: `tools/mutants/perf_teams.json`, 12, all dead;
+Pins: `test/scenes/perf_teams.test.js` (5), over the real wagon parts. Mutants: `tools/mutants/perf_teams.json`, 12, all dead;
 `wagons2.json`'s RW1xWAGONS2-the-peers-left-out re-aimed at the guarded line.
 
 ## PERF-WAGON — the rest of the carts, wagons and tents are culled
@@ -524,7 +524,7 @@ triangles - is drawn as before and never asked.
 Not changed: the Sigil Broker's cage, the Oblivion Gate's stone, the rite's circle, a bounty farm, the quays and the
 LeFay monument draw whole in the same pass - one landmark each, not a crowd (What is left, 9).
 
-Pins: `test/perfwagon.test.js` (6), by execution over the real producers - the measures, the road's teams over a real
+Pins: `test/systems/livingWorld/perfwagon.test.js` (6), by execution over the real producers - the measures, the road's teams over a real
 pool and its baked Small Cart, a real driven harness, the real cart, a real camp's tent and a real hideout's over the
 synthetic map's bands - and the four hosts' wiring. Mutants: `tools/mutants/perfwagon.json`, 25, all dead.
 `perfyard.json`'s PERF-YARD-n and `perf_teams.json`'s PERF-TEAMS-the-room-cast are re-aimed at the one `castOnly`, and
@@ -562,7 +562,7 @@ a frame on A and none on B; 86.6 -> 89.8 FPS mean (medians 88.0 -> 89.8), 11.6 -
 rounds' noise (B ahead in four pairs of six). With the step the branch also stops, ~0.35 ms of an ~11.5 ms frame: ~3%
 where the teams stand, nothing where every team is on the move.
 
-Pins: `test/harnessrest.test.js` (3), over a real pool's real driven harness. Mutants: `tools/mutants/harnessrest.json`,
+Pins: `test/systems/horse/harnessrest.test.js` (3), over a real pool's real driven harness. Mutants: `tools/mutants/harnessrest.json`,
 7, all dead.
 
 ## PEER-HULL-RANGE — another's ship far off stands no hull here
@@ -582,7 +582,7 @@ handover); only her hull waits. Another's ship is built within `PEER_HULL_NEAR_M
 her deck - and is built again as she comes within reach. Both edges stand past where a peer's own sea reaches me
 (`NAVAL_SHARE_RADIUS` + `LINER_DROP_M`) and past the fog. My own ships are untouched.
 
-Pins: `test/peerhullrange.test.js` (1), over the real pool through a peer's word. Mutants:
+Pins: `test/systems/naval/peerhullrange.test.js` (1), over the real pool through a peer's word. Mutants:
 `tools/mutants/peerhullrange.json`, 3, all dead.
 
 **AUDIT PEER-HULL-RANGE (2026-10-11, Mac: "Audit it. Ensure it doesnt kill fidelity").** Two ways the first cut moved
@@ -601,7 +601,7 @@ the picture, both fixed:
   in (SHIP-FADE); and her fire flats hung over the sea where her hull was given back. `shedFarHulls` forgets the three,
   hides her fires and stills their loops; `buildOne` fades a hull built again in from nothing.
 
-Pins: `test/peerhullrange.test.js` (+2): every lane's fog closed at the near edge; a struck ship and a torn, burning
+Pins: `test/systems/naval/peerhullrange.test.js` (+2): every lane's fog closed at the near edge; a struck ship and a torn, burning
 ship under way given back and built again, each in her record's dress. Mutants (+6): the first cut's edge, each of the
 three remembered things kept, her fires left hung, whole in a frame.
 
@@ -640,7 +640,7 @@ does; on A, as shipped. Six rounds of A and B, 10 s each, interleaved ABBA, stan
 92.5 -> 114.2), 12.0 -> 9.2 ms a frame, and B ahead in every pair. The p99 does not move (both ~19-21 ms: the frame's
 hitches are elsewhere).
 
-Pins: `test/storecache.test.js` (3) - a frame's 300 reads of a key are one disk read, of a key the store wrote none, of
+Pins: `test/tooling/storecache.test.js` (3) - a frame's 300 reads of a key are one disk read, of a key the store wrote none, of
 an absent key one, of the screenshot each; a file changed by hand seen past `readTtlMs` and at once after a rescan; a
 write, a remove and a thrown write each leave the next read the disk's truth. Mutants: `tools/mutants/storecache.json`,
 6, all dead.
@@ -683,7 +683,7 @@ reads, the ports' ships, the collector), and its average moved with the road, no
 the frame time either way. A first cut of the probe, a breakpoint on every `ensureLook` call, cost 118 -> 51 FPS by itself and
 was thrown away.
 
-Pins: `test/perfdye.test.js` (4), over a real pool: never more than `HORSE_DYE_PICTURES` a frame, among two looks too;
+Pins: `test/systems/horse/perfdye.test.js` (4), over a real pool: never more than `HORSE_DYE_PICTURES` a frame, among two looks too;
 the views before the walk frames, each once, worn in the frame of the last; before the walk art, worn once the views
 are; a look let go halfway gives back exactly what was dyed. `coats1_horsecoats.test.js`' two pool pins count frames
 by `HORSE_DYE_PICTURES` (PIN MOVED). Mutants: `tools/mutants/perfdye.json`, 7, all dead.
@@ -733,7 +733,7 @@ and 76 -> 102 from 5 to 7.5 s; the rate steady from some 17.5 s instead of 20. O
 are a direction, not a measure; the dye's own time is. What is left of the climb is the grass laid around the player
 (about 1 s), the towns' trips (0.65 s) and the streaming ring's pixels (2.3 s, spread on purpose over twenty seconds).
 
-Pins: `test/perfhide.test.js` (5): the digest of 60 sprites (four pictures, every pattern, the pool's, the riders' and
+Pins: `test/systems/horse/perfhide.test.js` (5): the digest of 60 sprites (four pictures, every pattern, the pool's, the riders' and
 the riding sprite's ways) and of 15 3D dyes, each the one before PERF-HIDE; a picture's hide kept - one a `tack`, a
 copy of its pixels found again and the same, another picture's never; a dye cold or warm the same whatever came
 between; the kept lattice cells found again for another seed or stretch (`latticeNearest`, `nearest2`'s door).
@@ -771,7 +771,7 @@ overworld:
 | 99th percentile | 25.0 ms | 12.5 ms |
 | frames over 33 ms | 5 | 0 |
 
-Pins: `test/ownhullrange.test.js` (4), over the real pool: a ship of mine near and 90 km off, the eye coming and going;
+Pins: `test/systems/naval/ownhullrange.test.js` (4), over the real pool: a ship of mine near and 90 km off, the eye coming and going;
 a far peer's ship adopted as they leave stays hull-less; `hullKept`'s every case; a far ship it keeps built and never
 given back, a peer's never kept by it. Mutants: `tools/mutants/ownhullrange.json`, 11, all dead;
 `peerhullrange.json`'s PHR-no-range re-aimed at the build's new line, its nine all dead.
@@ -785,7 +785,7 @@ the frame's main thread 8.5 ms standing, 18.2 walking, and the page allocating s
 **Found.** No one thing: walking turns on a dozen systems that standing leaves idle, each 0.5-2 ms a frame. Three of
 them did work that gave the same answer for less, and made most of the garbage the collector then stopped the frame for:
 
-- **NAV-COST - the sea's captains** (`systems/naval/navalAI.js stepCaptain`, `scenes/navalHost.js separateHulls`). A
+- **NAV-COST - the sea's captains** (`systems/naval/navalAI.js stepCaptain`, `scenes/naval/navalHost.js separateHulls`). A
   captain asked `hostile` - for a wary pirate a sizing-up, `shipPower` and `fightingPower` - of every ship in the sea,
   every frame, and only then whether it was in sight; and the pass that keeps hulls apart measured every pair of the
   sea's ships, two new flats a pair, nearly all of them hundreds of km apart. Now her sight is asked first (both halves
@@ -797,7 +797,7 @@ them did work that gave the same answer for less, and made most of the garbage t
   sounds the water ahead (`navalIsWater`, three points a step of every probe), and each sounding made its pixel's key
   text anew, `${x},${y}`, to ask the built pixels. The text is made once a pixel now, kept by its numbers - the same
   string every time - within PIXEL_KEY_SPAN of nought, PIXEL_KEYS_KEPT of them.
-- **PERF-ROPE - the moving teams' harness** (`systems/wagonRopes.js stepRope`). Every sub-step made two new end
+- **PERF-ROPE - the moving teams' harness** (`systems/wagon/wagonRopes.js stepRope`). Every sub-step made two new end
   arrays, every step two more, and every link of every iteration a `Math.hypot` of three, whose every answer was boxed
   (7% of what the page allocated, walking). A rope steps in place now: its ends in its own arrays, the sub-step's in
   one pair for every rope, a length as a root of its squares - the rope it was to within a float's rounding.
@@ -818,11 +818,11 @@ By the profile, the harness's step -0.36 ms a frame (the old rope gone from it),
 rest of the main thread's -1.9 ms is the walk's own (the terrain built, what the eye fell on). Standing, the same build
 drew 203 FPS: walking still costs, and the rest is elsewhere (What is left).
 
-Pins: `test/navcost.test.js` (4) - a captain never sizes up a ship past her sight, one in sight is and is fought; past
+Pins: `test/systems/naval/navcost.test.js` (4) - a captain never sizes up a ship past her sight, one in sight is and is fought; past
 twice their reaches no two hulls overlap (20,000 random pairs); two in each other pushed apart, and a heap of three where
-the old pass put them. `test/pixelkeys.test.js` (3) - every key the text it was (50,000 random pixels, negative ones,
+the old pass put them. `test/world/pixelkeys.test.js` (3) - every key the text it was (50,000 random pixels, negative ones,
 -0, past the span, fractions), the same string each time, the keeping bounded, and the soundings asking by it.
-`test/perfrope.test.js` (2) - 200 teams' 120 steps against the old law restated, every knot within a micrometre; the
+`test/systems/wagon/perfrope.test.js` (2) - 200 teams' 120 steps against the old law restated, every knot within a micrometre; the
 ends kept in the rope's own arrays. Mutants: `tools/mutants/navcost.json` (5 dead, 1 equivalent as recorded: the cull
 is the cost alone), `pixelkeys.json` (4), `perfrope.json` (4), all dead.
 
@@ -837,7 +837,7 @@ room - `releaseOwner`), most of them tens to hundreds of km off.*
 land probes ahead, her wandering course. AUDIT NAV1 already let a far ship's RIGGING step every FAR_LIFE_EVERY frames
 past NEAR_LIFE_M on the time it missed; her captain had no such law.
 
-**The fix** (`scenes/navalHost.js keepWatch`, `watchesFar`). Past FAR_WATCH_M (5,500 m - where she stands no hull
+**The fix** (`scenes/naval/navalHost.js keepWatch`, `watchesFar`). Past FAR_WATCH_M (5,500 m - where she stands no hull
 to be seen, PEER_HULL_FAR_M) of the eye, a captain afloat, in no fight of her own (engage or board), lashed to no prize
 and no fight's target keeps her watch every FAR_LIFE_EVERY frames, each ship on her own frame of the stride, on the
 time she missed - never more than FRAME_STEP_S at once (the sea's own step: what she owes is stepped first when a frame
@@ -853,7 +853,7 @@ but the sea emptied while it ran (17 ships of mine to 2: the peers came back for
 that hour's. With the 14-31 far ships of the day's worst hours the captains were 1-2.4 ms a frame
 (OVERWORLD-WALK's profile), most of them past FAR_WATCH_M - two thirds of that is what this takes off.
 
-Pins: `test/navfarai.test.js` (4), over the real sea: a captain past FAR_WATCH_M one frame in FAR_LIFE_EVERY on her
+Pins: `test/systems/naval/navfarai.test.js` (4), over the real sea: a captain past FAR_WATCH_M one frame in FAR_LIFE_EVERY on her
 own stride, every second of her clock kept, a near one every frame; never more than FRAME_STEP_S at once at a slow
 frame; `watchesFar`'s every case (near, the eye on the flat, no eye, engage, board, lashed, struck, sinking, a fight's
 target, the fights asked last); a far captain come near steps what she owes, then every frame. Mutants:
@@ -865,7 +865,7 @@ target, the fights asked last); a far captain come near steps what she owes, the
 seconds."*
 
 **Found.** One frame of 6.7 s on the live client, 94% of it in one question. The map's overlay draws the Wrothgarian
-zone's giants (`wildGiants`), and their walking ground (`systems/wildGiants.js cellsOf`, built once a zone mask)
+zone's giants (`wildGiants`), and their walking ground (`systems/wild/wildGiants.js cellsOf`, built once a zone mask)
 asks every pixel of the zone the wild halls' `free` test - whose dear half is SPAWN-SHORE's
 `createSpawnGround`: is the plateau a ruin would stand on dry? Each answer read the pixel's whole noiseless kernel,
 129 x 129 = 16,641 samples, and averaged them (`spawnPlateauFloor`), for 12,564 pixels. Kept per pixel after, so
@@ -888,7 +888,7 @@ On the live client, the map's first open in a fresh session, the old and the new
 And the zone's halls as the world loads (the same question; WILD-FREE's bench, the real zone): their first day
 19.2 s -> 1.06 s on main's picks, 4.0 s -> 0.24 s with WILD-FREE's.
 
-Pins: `test/wilddry.test.js` (3) - every pixel of thirteen grounds (the sea, a beach, coasts four ways, slopes, a
+Pins: `test/world/wilddry.test.js` (3) - every pixel of thirteen grounds (the sea, a beach, coasts four ways, slopes, a
 ridge, a ground whose first columns stand over the line and the rest under it, one the ground noise would lift over
 it) answers as `spawnPlateauFloor(...) > SPAWN_DRY_ELEVATION` did, with four large-map levels; a dry pixel stops
 reading early (inland under half the kernel, the mountains under a tenth) and the open sea reads it all; the spawns'
@@ -989,7 +989,7 @@ and 1,836 holy-day pilgrimages to the byte on both (a digest of every trip's id,
 frames, ~6.6 s, goes; the rest of the roads' day (the other travellers' plans, the weighted picks) stands. Not measured:
 the installed client on this branch.
 
-Pins: `test/holydays.test.js` (3) - `holidayOn` and `holidayKeptIn` against `getHolidayId` on every day of the year in
+Pins: `test/systems/livingWorld/holydays.test.js` (3) - `holidayOn` and `holidayKeptIn` against `getHolidayId` on every day of the year in
 every region; `holyDayOf` against the old law restated, over 4,000 drawn cycles and temple lists; `templesNear` the old
 filter and sort, asked of the world once a town. Mutants: `tools/mutants/holydays.json`, 6, all dead; `lw13.json`'s
 LW13-holy-region re-aimed at the line that passes every region's day.
@@ -1007,7 +1007,7 @@ of the miss - so every resident's `planOf` in one `_tick` asked again, each a wh
 for the rest of that tick, and `_tick` clears it at both ends, so the next tick asks again and a day that answers is kept
 as before. Nothing outside a tick changes.
 
-Pins: `test/roadmiss.test.js` (2) - an unready day asked at most once a tick over five ticks, asked again on later ticks,
+Pins: `test/systems/livingWorld/roadmiss.test.js` (2) - an unready day asked at most once a tick over five ticks, asked again on later ticks,
 and once ready kept by the day; a read outside a tick (`peopleOf`) asks again. Mutants: `tools/mutants/roadmiss.json`, 2, both dead.
 ## BOOT-OVERLAP — the boot's network, asked beside its work
 
@@ -1053,7 +1053,7 @@ One run each; the account service's answers vary run to run (0.6 to 2 s a call),
 timeline - the waits that went - as much as off the total. Left: the join and the save, 3.5 s of the service's own
 (the server's ~1 s a call against a ~340 ms round trip - Server-Timing would say where), and the start's town.
 
-Pins: `test/bootoverlap.test.js` (3) - `ensure` asks as the character named, or the one playing; a town asked early is
+Pins: `test/systems/online/bootoverlap.test.js` (3) - `ensure` asks as the character named, or the one playing; a town asked early is
 the build's (one ask); the boot's wiring by source. Mutants: `tools/mutants/bootoverlap.json`, 7, all dead;
 `housing.json`'s HOME-RENT-the-character-unsent re-aimed (killed by the new pins too); `home1`, `legacy7_online` and
 `wd3_online`'s source pins moved with the code.

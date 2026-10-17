@@ -5,7 +5,7 @@
   "old": "seats: seats.filter((x) => factConfirmed(x.fact)).map(",
   "new": "seats: seats.map(",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "an unconfirmed seat kept - the row no answer at all"
  },
@@ -15,7 +15,7 @@
   "old": "  ['seat-facts', async (ctx, env) => (seatsSwitchOf(env?.SEATS_OPEN) === 'off' ? 0 : keepSeatFacts(ctx.db, ctx.nowS))],\n",
   "new": "",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "no clock keeps the facts"
  },
@@ -25,7 +25,7 @@
   "old": "(seatsSwitchOf(env?.SEATS_OPEN) === 'off' ? 0 : keepSeatFacts(ctx.db, ctx.nowS))",
   "new": "(false ? 0 : keepSeatFacts(ctx.db, ctx.nowS))",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "the facts kept while the seats are shut"
  },
@@ -35,7 +35,7 @@
   "old": "k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S",
   "new": "k.of > (seatWroteAt.get(root) ?? -Infinity)",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "a row the stopped clock left answers forever"
  },
@@ -45,7 +45,7 @@
   "old": "k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S",
   "new": "nowS - k.of <= SEAT_FACTS_FRESH_S",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "a row from before this isolate's write answers after it"
  },
@@ -55,7 +55,7 @@
   "old": "k.of > (seatWroteAt.get(root) ?? -Infinity)",
   "new": "k.of >= (seatWroteAt.get(root) ?? -Infinity)",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "a row of the write's own second taken as after it"
  },
@@ -65,7 +65,7 @@
   "old": "    seatFactsKept.set(root, { at: nowS, of: row.of, facts: row.facts });\n",
   "new": "",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "the row asked on every ask"
  },
@@ -75,7 +75,7 @@
   "old": "  seatFactsKept.set(root, { at: nowS, of: -Infinity, facts: null });",
   "new": "  void root;",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "an unfit row asked again on every ask"
  },
@@ -85,7 +85,7 @@
   "old": "  seatWroteAt.set(root, nowS);   // SEAT-FACTS",
   "new": "  void nowS;   // SEAT-FACTS",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "a write here not remembered - the row from before it answers"
  },
@@ -95,7 +95,7 @@
   "old": "catch (e) { if (d1Overloaded(e)) throw e; return null; }",
   "new": "catch { return null; }",
   "tests": [
-   "test/seat_facts.test.js"
+   "test/server/seat_facts.test.js"
   ],
   "note": "an overloaded database taken for no row, and the rows read behind it"
  }

@@ -42,7 +42,7 @@ await page.goto(`${BASE}/gun-proto.html`, { waitUntil: 'domcontentloaded' });
 const out = await page.evaluate(async () => {
   const { Renderer } = await import('/src/render/renderer.js');
   const { createHitEffects, BLOOD_ARCHIVE } = await import('/src/scenes/hitEffects.js');
-  const { DUNGEON_AMBIENT } = await import('/src/world/dungeonLights.js');
+  const { DUNGEON_AMBIENT } = await import('/src/world/dungeon/dungeonLights.js');
 
   const canvas = document.createElement('canvas');
   canvas.width = 128; canvas.height = 128;
@@ -233,7 +233,7 @@ const out = await page.evaluate(async () => {
   // tint, fresh and dried. These rows read that - the "super dark
   // instead of red" Mac saw was the dried tint multiplying an already
   // red texel down to a black-red, and no row read the real art.
-  const { bloodAtlas, pickCell, freshTint, driedTint, DRY_STAGES, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } = await import('/src/combat/bloodArt.js');
+  const { bloodAtlas, pickCell, freshTint, driedTint, DRY_STAGES, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } = await import('/src/combat/blood/bloodArt.js');
   const atlas = bloodAtlas();
   const atlasTex = r.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, atlas, { smooth: true });
   const cell = pickCell(atlas, 'pool', () => 0);
@@ -527,7 +527,7 @@ for (const lane of ['classic', 'lane']) {
     // half-vector lined up, at ANY angle - the look of wet plastic. A
     // liquid film is Schlick: about two per cent head-on, most of the
     // light at a graze. The ANGLE itself is pinned where it can be
-    // isolated - the pure `wetSheen` in test/blood1_decals.test.js -
+    // isolated - the pure `wetSheen` in test/combat/blood1_decals.test.js -
     // because it cannot be isolated HERE: the glint is a Blinn-Phong
     // lobe as well as a Fresnel term, and turning the quad to a grazing
     // angle walks the normal out of the lobe, so the picture would

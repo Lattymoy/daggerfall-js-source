@@ -5,7 +5,7 @@
     "old": "((await renownTrackOf(ctx, who.player.id, body.character)) ?? { xp: 0, level: 1 })",
     "new": "((await renownTracksOf(ctx, who.player.id, 1))[0] ?? { xp: 0, level: 1 })",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "renown: await renownTracksOf(ctx, who.player.id),",
     "new": "renown: await renownTracksOf(ctx, who.player.id, 1),",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const track = await renownTrackOf({ db }, player.id, character);",
     "new": "  const track = await renownTrackOf({ db }, player.id, (await db.prepare('SELECT char_id FROM renown_tracks WHERE player = ?1 ORDER BY xp DESC LIMIT 1').bind(player.id).first())?.char_id ?? character);",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const before = await renownTrackOf({ db }, player.id, character);",
     "new": "  const before = await renownTrackOf({ db }, player.id, (await db.prepare('SELECT char_id FROM renown_tracks WHERE player = ?1 ORDER BY xp DESC LIMIT 1').bind(player.id).first())?.char_id ?? character);",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      WHERE player = ?1 AND char_id = ?2 AND ${filled}`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX),",
     "new": "      WHERE player = ?1 AND ?2 IS NOT NULL AND ${filled}`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX),",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        AND ${renownHeldSql('?1')} < ?8`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),",
     "new": "        AND ${renownHeldSql('?1')} < ?8 + 1`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    MAX(0, a.xp - COALESCE((SELECT MAX(t.xp) FROM renown_tracks t WHERE t.player = a.player), 0)),",
     "new": "    a.xp,",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    MAX(0, a.xp - COALESCE(",
     "new": "    (a.xp - COALESCE(",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  xp = MIN(2318660, xp + (SELECT s.gain",
     "new": "  xp = (xp + (SELECT s.gain",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ],
     "equivalent": true,
     "why": "no track is above the account's best, and the account's total never passed the cap (the service capped every credit), so a track's own plus the gains is at most that total - the MIN is a belt for a row the service never wrote"
@@ -88,7 +88,7 @@
     "old": "  last_rid = COALESCE((SELECT s.last_rid FROM renown_char_seed s WHERE s.player = renown_tracks.player), last_rid),",
     "new": "  last_rid = last_rid,",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "  updated_at = MAX(updated_at, COALESCE((SELECT r.updated_at FROM realm_characters r",
     "new": "  updated_at = MAX(updated_at, 0 * COALESCE((SELECT r.updated_at FROM realm_characters r",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "CAST(strftime('%s', 'now') AS INTEGER), played",
     "new": "CAST(strftime('%s', 'now') AS INTEGER), CAST(strftime('%s', 'now') AS INTEGER)",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "    WHERE s.gain > 0\n",
     "new": "    WHERE s.gain > 0 AND 0\n",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    WHERE s.gain > 0\n",
     "new": "    WHERE s.gain >= 0\n",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  WHERE n <= room;",
     "new": "  WHERE n <= 999;",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
@@ -142,25 +142,25 @@
     "old": "ORDER BY r.updated_at DESC, r.id",
     "new": "ORDER BY r.updated_at ASC, r.id",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
     "name": "RENOWN-CHAR-a-track-of-any-shape-drawn",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "  return Array.isArray(r) ? r.filter((t) => renownText(t?.level) && Number.isSafeInteger(t?.xp) && t.xp >= 0) : [];",
     "new": "  return Array.isArray(r) ? r : [];",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   },
   {
     "name": "RENOWN-CHAR-the-dialogs-old-word",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "- its Renown, its professions and their Stores, its home and its guild place with it. A copy you made offline stays.",
     "new": "- its home and its guild place with it. Your Renown belongs to your account and stays, as does a copy you made offline.",
     "tests": [
-      "test/renown_char.test.js"
+      "test/server/renown_char.test.js"
     ]
   }
 ]

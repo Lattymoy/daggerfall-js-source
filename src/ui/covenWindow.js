@@ -33,14 +33,14 @@
 // (:84, :90, :96, :102) are now the table's answers. The correction
 // the flag was hiding: Summon was on S, and the table says D.
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
-import { isServiceBox } from '../systems/guildServiceFlow.js';   // STATION-ROWS: a box is rows that are a list
+import { isServiceBox } from '../systems/guild/guildServiceFlow.js';   // STATION-ROWS: a box is rows that are a list
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** The window's DaggerfallShortcut.Buttons, in ctor ADD order

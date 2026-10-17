@@ -21,10 +21,10 @@
 // a merchantman's friendly bar. The glass held close (KNOW.studied) sees through them - too many gunports for a trader -
 // and so does her own first broadside: she runs up the black flag.
 //
-// Pure: the host (scenes/navalHost.js) keeps a ship's knowledge on her entry and asks this module what it has become
+// Pure: the host (scenes/naval/navalHost.js) keeps a ship's knowledge on her entry and asks this module what it has become
 // and what to say; the glass's window is ui/spyglassView.js.
 
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { CROWNS, HULL, batteriesOf, GUNS, SHIP_CLASSES } from './navalShips.js';
 import { nightSight } from './shipWatch.js';
 

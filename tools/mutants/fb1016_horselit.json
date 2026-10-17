@@ -1,0 +1,56 @@
+[
+  {
+    "name": "HORSE-LIT-sprite-white",
+    "file": "src/player/mountRig.js",
+    "old": "          renderer.drawScreenQuad(art.frames[r.frame], rect, undefined, tint);",
+    "new": "          renderer.drawScreenQuad(art.frames[r.frame], rect, undefined, undefined);",
+    "tests": [
+      "test/player/fb1016_horselit.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-LIT-band-white",
+    "file": "src/player/mountRig.js",
+    "old": "          if (lift) drawNeckBand(lift, rect, art, r, tint);",
+    "new": "          if (lift) drawNeckBand(lift, rect, art, r);",
+    "tests": [
+      "test/player/fb1016_horselit.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-LIT-band-tint-dropped",
+    "file": "src/player/mountRig.js",
+    "old": "{ u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 }, tint);",
+    "new": "{ u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 });",
+    "tests": [
+      "test/player/fb1016_horselit.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-LIT-switch-ignored",
+    "file": "src/player/mountRig.js",
+    "old": "        const tint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? undefined) : undefined;",
+    "new": "        const tint = true ? (renderer?.flatLightAt?.() ?? undefined) : undefined;",
+    "tests": [
+      "test/player/fb1016_horselit.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-LIT-not-the-camera",
+    "file": "src/player/mountRig.js",
+    "old": "        const tint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? undefined) : undefined;",
+    "new": "        const tint = fpLightingOn() ? (renderer?.flatLightAt?.(player.pos) ?? undefined) : undefined;",
+    "tests": [
+      "test/player/fb1016_horselit.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-LIT-no-light-not-white",
+    "file": "src/player/mountRig.js",
+    "old": "        const tint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? undefined) : undefined;",
+    "new": "        const tint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? [1, 1, 1]) : undefined;",
+    "tests": [
+      "test/player/fb1016_horselit.test.js"
+    ]
+  }
+]

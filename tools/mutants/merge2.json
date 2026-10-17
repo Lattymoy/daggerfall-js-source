@@ -5,7 +5,7 @@
     "old": "    db.prepare(`UPDATE renown_tracks SET xp = MIN(?7, xp + (SELECT renown FROM writs WHERE id = ?5 AND n = ?6)), updated_at = ?3",
     "new": "    db.prepare(`UPDATE renown_tracks SET xp = MIN(?7, xp + 0 * (SELECT renown FROM writs WHERE id = ?5 AND n = ?6)), updated_at = ?3",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ],
     "note": "A writ past the first adds nothing: the account's track the first one made is never grown."
   },
@@ -15,7 +15,7 @@
     "old": "export const writRenown = (tier, units) => renownRate((25 * tier * units) / 10);",
     "new": "export const writRenown = (tier, units) => (25 * tier * units) / 10;",
     "tests": [
-      "test/prof1_law.test.js"
+      "test/systems/foraging/prof1_law.test.js"
     ],
     "note": "The writ's Renown at the full rate - RENOWN-ACCOUNT's three quarters not taken."
   },
@@ -25,7 +25,7 @@
     "old": "        AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)\n        AND ${renownHeldSql('?1')} < ?8`)",
     "new": "        AND 0\n        AND ${renownHeldSql('?1')} < ?8`)",
     "tests": [
-      "test/prof1_service.test.js"
+      "test/net/prof1_service.test.js"
     ],
     "note": "An account with no Renown yet gets none from its first writ."
   },
@@ -35,7 +35,7 @@
     "old": "      if (hooks?.sharedClock?.()) hooks?.waitOnline?.(seconds, this.parentQuest);\n      hooks?.raiseTime?.(seconds);",
     "new": "      if (hooks?.sharedClock?.()) hooks?.waitOnline?.(seconds, this.parentQuest);\n      else hooks?.raiseTime?.(seconds);",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ],
     "note": "Online, Foraging's quest time a wait alone - the character's own clock (LIVED1) never takes it."
   }

@@ -5,7 +5,7 @@
     "old": "  store.flags[at] = was & ~flag;",
     "new": "  store.flags[at] = was;",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (gold > 0) creditSave(save, gold, { letter: true });",
     "new": "  if (gold > 0) creditSave(save, gold);",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (at < 0 || !Number.isSafeInteger(store.flags[at])) return 'repair-no-faction';",
     "new": "  if (!store) return 'repair-no-faction';",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if ((was & flag) === 0) return 'repair-not-set';\n",
     "new": "",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!REPAIR_FLAGS.includes(flag)) return null;",
     "new": "  if (!Number.isSafeInteger(flag)) return null;",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (!Number.isSafeInteger(gold) || gold < 0 || gold > REPAIR_GOLD_MAX) return null;",
     "new": "  if (!Number.isSafeInteger(gold) || gold < 0) return null;",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "/^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 16)",
     "new": "/^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 10)",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };",
     "new": "",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    staffFinding(db, row, nowS, { act: 'repair', by, note, ticket: repair.ticket, faction: repair.faction, flag: repair.flag, was, gold: repair.gold, from: row.seq, to: prep.seq }),\n",
     "new": "",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')\n      .bind(row.id, repair.ticket, row.player, by, nowS, repair.faction, repair.flag, was, repair.gold, prep.seq, note),\n",
     "new": "",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    ...(repair.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), repair.gold)] : []),\n",
     "new": "",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (had) return repairAnswer(had, true);\n",
     "new": "",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "${seize ? ', lease = NULL' : ''}",
     "new": "",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": ".bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),",
     "new": ".bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (kept && kept.seq === seq) {",
     "new": "  if (kept) {",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN",
     "new": "gold: Number(gold)",
     "tests": [
-      "test/fb1014_summonrepair.test.js"
+      "test/net/fb1014_summonrepair.test.js"
     ]
   }
 ]

@@ -16,7 +16,7 @@
 // formats stays a leaf layer.
 
 import { ClassFile } from './classFile.js';
-import { readCStringFixed } from './saveTreeFile.js';
+import { readCStringFixed } from './save/saveTreeFile.js';
 
 /** ReadEquippedItems' const - 27 equip slots of RecordID. */
 export const EQUIPPED_ITEM_COUNT = 27;

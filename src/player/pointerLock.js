@@ -37,7 +37,7 @@
 // (`shellRelock` below, app/main.cjs).
 
 import { isTextEntryTarget } from '../ui/input.js';   // PL2: a typed field's Enter is the field's (CG2)
-import { overlayOpen } from '../ui/enhancedOverlays.js';   // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
+import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js';   // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
 
 let _errBound = false;
 const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -262,7 +262,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   // inside that gesture whatever swallowed the canvas arm (a DOM
   // element the hosts never knew, a host without the arm). A click on
   // any element of the page's UI is that element's and is left alone,
-  // and a finger never holds a lock (ui/touch.js; on Gecko it holds one
+  // and a finger never holds a lock (ui/touch/touch.js; on Gecko it holds one
   // only until its next touch event - TOUCH-UNLOCK above).
   const onDown = (e) => {
     if (e.pointerType === 'touch') return;

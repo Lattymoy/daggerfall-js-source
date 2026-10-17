@@ -63,7 +63,7 @@ import { addItem, isSummoned } from './inventory.js';
 import { unequipSlot, equipTableOf } from './equip.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon, both arms
 import { randomizeArmorVariant } from './shopStock.js';       // ItemBuilder.RandomizeArmorVariant
-import { mintCondition, itemBaseValue, templateByIndex, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { mintCondition, itemBaseValue, templateByIndex, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { DYE_COLORS } from '../characters/dyes.js';
 import { localizedText, localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 

@@ -1,20 +1,20 @@
 [
   {
     "name": "REALM0-flags-kept-online",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  if (!params?.has?.('online')) return [];\n  const dropped = ONLINE_REFUSED_FLAGS",
     "new": "  return [];\n  const dropped = ONLINE_REFUSED_FLAGS",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-shot-not-refused",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly',",
     "new": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['fly',",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (refuseOnlinePowerFlags(params).length) publishBootParams(params);   // REALM P0.1: ?shot, ?fly, ?nofoes and the rest - dropped online before anything below reads them\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -32,43 +32,43 @@
     "old": "  return def && onlineWholeModKey(vendor, key, search) ? def.default : undefined;",
     "new": "  return undefined;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-cosmetic-forced",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']),",
     "new": "  'roleplay-realism': Object.freeze([]),",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-leveling-choice-forced",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'oblivion-remaster-leveling': Object.freeze(['Enabled']),",
     "new": "  'oblivion-remaster-leveling': Object.freeze([]),",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-dial-unlocked",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  if ((isChoiceKey(def) || isTextKey(def) || isTupleKey(def) || isFloatKey(def) || isIntKey(def)) && onlineModSetting(vendor, key) !== undefined) lockDial(ctl, modLockNote(vendor, key));\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-sync-skips-whole",
-    "file": "src/systems/onlineSync.js",
+    "file": "src/systems/online/onlineSync.js",
     "old": "  for (const vendor of Object.keys(ONLINE_WHOLE_MODS)) {\n",
     "new": "  for (const vendor of []) {\n",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const empire = online ? empireRefusal(accounts) : null;\n  if (empire) return { kind: 'refuse', ...empire };",
     "new": "  const empire = null;\n  if (empire) return { kind: 'refuse', ...empire };",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  const empire = online ? empireRefusal(accounts) : null;   // REALM P0.3: one loan a character online, whatever asked",
     "new": "  const empire = null;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (defaulted >= 0) return { result: TRANSACTION_RESULT.ALREADY_DEFAULTED, empireRegion: defaulted };\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (online && hasLoan(accounts, regionIndex)) drawEmpireAccounts(accounts, regionIndex, undefined, { online });",
     "new": "  if (false) drawEmpireAccounts(accounts, regionIndex, undefined, { online });",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ],
     "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the line EMPIRE-ACCOUNT rewrote; the mutant is the same law."
   },
@@ -114,7 +114,7 @@
     "old": "  loan.loanTotal -= drawn;\n  if (loan.loanTotal <= 0) loan.loanDueDate = 0;\n  return drawn;",
     "new": "  if (loan.loanTotal <= 0) loan.loanDueDate = 0;\n  return drawn;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "  if (online) garnishDeposit(accounts, g, amount);",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ],
     "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the line EMPIRE-ACCOUNT rewrote; the mutant is the same law."
   },
@@ -133,7 +133,7 @@
     "old": "  if (online) garnishDeposit(accounts, g, paid);",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ],
     "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the line EMPIRE-ACCOUNT rewrote; the mutant is the same law."
   },
@@ -143,7 +143,7 @@
     "old": "    if (!loan.hasDefaulted || !(loan.loanTotal > 0)) continue;",
     "new": "    if (!(loan.loanTotal > 0)) continue;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "old": "    const take = Math.min(loan.loanTotal, amount - taken, account.accountGold);",
     "new": "    const take = Math.min(loan.loanTotal, account.accountGold);",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -161,7 +161,7 @@
     "old": "    const call = n === 0 ? Math.max(0, loan.loanTotal - kept) : loan.loanTotal;",
     "new": "    const call = loan.loanTotal;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -170,7 +170,7 @@
     "old": "    .sort((x, y) => accounts[y].loanTotal - accounts[x].loanTotal || x - y);",
     "new": "    .sort((x, y) => x - y);",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "  const kept = calculateBankLoanRepayment(cap);",
     "new": "  const kept = cap;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "    const own = Math.min(call, bank.accountGold);",
     "new": "    const own = 0;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ],
     "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content to the line EMPIRE-ACCOUNT rewrote; the mutant is the same law."
   },
@@ -198,7 +198,7 @@
     "old": "    if (loan.loanTotal > standing) loan.loanTotal = standing + player.deductGold(loan.loanTotal - standing);\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "out.unpaid.push(r); loan.loanDueDate = nowMinutes; }",
     "new": "out.unpaid.push(r); }",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "    if (outcome.kind === 'defaulted') lowerRepForCrime(entity, regionIndex, outcome.crime);\n  }\n  for (const line of empireCallInLines(call))",
     "new": "  }\n  for (const line of empireCallInLines(call))",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "    onlineArrival(); empireJoin({ entity: playerEntity, nowMinutes: ownMinutes(), say: (l, d) => townTalk.say(l, d) });",
     "new": "    onlineArrival();",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "        if (d.empireRegion != null) this._lines(",
     "new": "        if (false) this._lines(",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -243,7 +243,7 @@
     "old": "    if (taken > 0) this._lines(empireGarnishLines(taken));\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "    if (!online) return sale;\n",
     "new": "    return sale;\n",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "export const ONLINE_SALE_SHARE = 0.5;",
     "new": "export const ONLINE_SALE_SHARE = 1;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -270,34 +270,34 @@
     "old": "calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE",
     "new": "calculateTradePrice(cost, shopQuality, best, true, { online: false }) * ONLINE_SALE_SHARE",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-pile-leveled",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "  if (online) unlevelPileGold(items, level);   // REALM P0.4: every pile, whatever its key\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-pile-no-floor",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "it.stackCount = Math.max(1, Math.trunc((it.stackCount ?? 0) / by));",
     "new": "it.stackCount = Math.trunc((it.stackCount ?? 0) / by);",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-pile-any-item",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "  for (const it of items) if (it?.group === 'Currency') it.stackCount",
     "new": "  for (const it of items) if (it) it.stackCount",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -306,16 +306,16 @@
     "old": "luck, level, where: 'dungeon', quarters });",
     "new": "luck, where: 'dungeon', quarters });",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-bound-undeclared",
-    "file": "src/systems/itemFields.js",
+    "file": "src/systems/item/itemFields.js",
     "old": "  bound: bool(),\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -324,7 +324,7 @@
     "old": "    shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": "  if (!(shares > 1) || !isGoldPieces(dfItem)) return false;",
     "new": "  if (!(shares > 1)) return false;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": "  dfItem.stackCount = Math.max(1, Math.floor((dfItem.stackCount ?? 0) / shares));",
     "new": "  dfItem.stackCount = Math.floor((dfItem.stackCount ?? 0) / shares);",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "  quest.hooks?.addHUDText?.(`Your share of the party's reward: ${dfItem.stackCount} gold.`);\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "(this.sharedQuestNames.has(quest?.questName) ? Math.max(1, Math.trunc(this.deps.partySize?.() ?? 1) || 1) : 1)",
     "new": "Math.max(1, Math.trunc(this.deps.partySize?.() ?? 1) || 1)",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -369,88 +369,88 @@
     "old": "    partySize: () => social?.party?.members?.length ?? 1,",
     "new": "    partySize: () => 1,",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-checkpoint-in-duel",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "  return !!online && !!spawned && !seatOut && !duel && !walkWaiting;",
     "new": "  return !!online && !!spawned && !seatOut && !walkWaiting;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-checkpoint-out-of-seat",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "  return !!online && !!spawned && !seatOut && !duel && !walkWaiting;",
     "new": "  return !!online && !!spawned && !duel && !walkWaiting;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-checkpoint-offline",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "  return !!online && !!spawned && !seatOut && !duel && !walkWaiting;",
     "new": "  return !!spawned && !seatOut && !duel && !walkWaiting;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-checkpoint-ten-minutes",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "export const ONLINE_CHECKPOINT_MS = 120_000;",
     "new": "export const ONLINE_CHECKPOINT_MS = 600_000;",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-checkpoint-due-late",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "nowMs - lastMs >= ONLINE_CHECKPOINT_MS",
     "new": "nowMs - lastMs > ONLINE_CHECKPOINT_MS",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-take-refused-written",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "      if (handle) checkpoint('trade');",
     "new": "      checkpoint('trade');",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-take-unwritten",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "      if (handle) checkpoint('trade');\n",
     "new": "",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-restore-unwritten",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "    restore(/** @type {any} */ handle) { pack.restore(handle); checkpoint('trade'); },",
     "new": "    restore(/** @type {any} */ handle) { pack.restore(handle); },",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
     "name": "REALM0-give-unwritten",
-    "file": "src/systems/onlineCheckpoint.js",
+    "file": "src/systems/online/onlineCheckpoint.js",
     "old": "    give(/** @type {any} */ received, /** @type {number} */ gold) { pack.give(received, gold); checkpoint('trade'); },",
     "new": "    give(/** @type {any} */ received, /** @type {number} */ gold) { pack.give(received, gold); },",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": "    if (checkpointDue(now, _checkpointAt)) { if (realmSession?.idle) realmSession.idle(() => onlineCheckpoint()); else onlineCheckpoint(); }   // SCALE2b",
     "new": "    // SCALE2b",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": "  const tradePack = checkpointedTradePack(createTradePack(playerEntity, { stampIds: stampItemIds }), () => onlineCheckpoint());",
     "new": "  const tradePack = createTradePack(playerEntity);",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -477,7 +477,7 @@
     "old": "        if (modes) modes?.quickSaveNow(saveName, { quiet: true });",
     "new": "        if (modes) modes?.quickSaveNow(saveName);",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -486,7 +486,7 @@
     "old": "    if (!r.ok || !quiet) townTalk.say(r.ok ? localizedText('gameSaved', 'Game saved.')",
     "new": "    townTalk.say(r.ok ? localizedText('gameSaved', 'Game saved.')",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -495,7 +495,7 @@
     "old": "      if (r.ok && !quiet) hudText.add(localizedText('gameSaved', 'Game saved.'));",
     "new": "      if (r.ok) hudText.add(localizedText('gameSaved', 'Game saved.'));",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -504,7 +504,7 @@
     "old": "dungeonCtx?.quickSave(saveName, opts) : host.quickSave?.(saveName, opts)",
     "new": "dungeonCtx?.quickSave(saveName) : host.quickSave?.(saveName)",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ]
   },
   {
@@ -513,7 +513,7 @@
     "old": "      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });",
     "new": "      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || successionOpen() });",
     "tests": [
-      "test/realm0.test.js"
+      "test/systems/realm0.test.js"
     ],
     "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   }

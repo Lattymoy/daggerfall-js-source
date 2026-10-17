@@ -13,7 +13,7 @@
 // It lives here rather than in a scene because a scene cannot be tested -
 // the four hosts have zero execution coverage, which is exactly why the
 // gap survived. Everything the tick needs arrives as arguments, so the
-// whole law is exercised by test/audit18.test.js against plain objects.
+// whole law is exercised by test/scenes/audit18.test.js against plain objects.
 //
 // The FOE half stays in the dungeon host: it walks that host's live foe
 // list, and no other host has one.
@@ -112,14 +112,14 @@ installSurvivalLoot({ enabled: corpseFoodOn });   // SURV2: an animal's corpse c
 installThunderlockIcons();   // THUNDERLOCK: the templates, the find and the legendary register at its import; the icons here
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES, RECOVERY_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4); REP4: the week's recovery
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
-import { regionPowerUpdate } from './regionPower.js';
+import { regionPowerUpdate } from './region/regionPower.js';
 import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops; AUDIT SURV-TIERS: and paused while Off
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
 import './ayleidStones.js';   // LOOT21: the Ayleid stones - their rows, their late finds and their uses register at its import
 import './gems.js';   // GEM2: the graded gems - their rows and the world's gem find register at its import
 import { installSurvivalLoot } from './survival/loot.js';
-import './cardSources.js';   // CARDS9: where cards come from - a foe's card at its death, the pack's Use and template, registered at its import (the Ayleid stones' wire: AUDIT-THUNDERLOCK F1)   // SURV2: the corpse's food
+import './card/cardSources.js';   // CARDS9: where cards come from - a foe's card at its death, the pack's Use and template, registered at its import (the Ayleid stones' wire: AUDIT-THUNDERLOCK F1)   // SURV2: the corpse's food
 import { survivalOn, corpseFoodOn } from './survival/switch.js';   // SURV2: the one switch; CORPSE-FOOD: and the body's food, the room's online
 /** :462 - `% 10080`, seven days of game minutes. */
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
@@ -142,19 +142,19 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 // systems; this file is only the ONE PLACE that runs them on a day
 // boundary, which is where PlayerEntity.Update runs them.
 import { updateRegionalPrices, setWorldPriceSource, initialRegionPrice, priceWalkStep, applyPriceConditionFlags } from './shopStock.js';
-import { findFactionByTypeAndRegion } from './talk.js';   // AUDIT ALL E8: the online flag arm skips a region with no Province faction, as DFU's walk does
+import { findFactionByTypeAndRegion } from './talk/talk.js';   // AUDIT ALL E8: the online flag arm skips a region with no Province faction, as DFU's walk does
 import { FACTION_TYPES } from '../formats/factionFile.js';
-import { MERCHANTS_FACTION_ID } from './guilds.js';   // AUDIT ALL E8: no Merchants, no walk, no flags (DFU's own gate)            // FormulaHelper.UpdateRegionalPrices (:2053); ECON1: the world's price seam and the walk's one-home pieces
-import { REGION_COUNT } from './regionConditions.js';   // ECON1: the world's walk is region-major, as DFU's
+import { MERCHANTS_FACTION_ID } from './guild/guilds.js';   // AUDIT ALL E8: no Merchants, no walk, no flags (DFU's own gate)            // FormulaHelper.UpdateRegionalPrices (:2053); ECON1: the world's price seam and the walk's one-home pieces
+import { REGION_COUNT } from './region/regionConditions.js';   // ECON1: the world's walk is region-major, as DFU's
 import { ONLINE_EPOCH_MINUTES, ONLINE_MINUTES_PER_MS } from '../net/wire.js';   // ECON1: the world's economy begins the day the online world stood at the classic start
-import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';
+import { rollClimateWeathersForDay, evolveClimateWeathers } from './weather/weatherSim.js';
 import { setSkyCalendar } from './skyCalendar.js';   // TIME1: the weather's season and hour are the sky's, switched on with the sky      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
-import { seededRng } from './wind.js';   // WORLD6b: the shared day's own generator for the region's walk
+import { seededRng } from './wind/wind.js';   // WORLD6b: the shared day's own generator for the region's walk
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
 import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
 import { tickPlayerTorch } from './playerTorch.js';               // T1: EnablePlayerTorch.Update, on the REAL clock
 import { checkOverdueLoans, settleOverdueLoan, callInEmpireDebt, empireCallInLines, calculateMaxBankLoan, bankedGold, empireDrawLines } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17); REALM P0.3: the Empire's call at the join; EMPIRE-ACCOUNT: what it draws, said
-import { isOnlinePage } from './onlineLane.js';   // EMPIRE-ACCOUNT: the Empire's draw is said online
+import { isOnlinePage } from './online/onlineLane.js';   // EMPIRE-ACCOUNT: the Empire's draw is said online
 import { lowerRepForCrime, deductGold } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70); REALM P0.3: the call's purse
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
 import { localizedText, formatText, getLocalizedRegionName } from './textManager.js';      // L10N3d: the two lines in the player's language; L10N3e: the region shown
@@ -1532,7 +1532,7 @@ export function resetMagicRoundMarker(v = null) {
  *
  * The contract is not changed here, because every caller reads the
  * answer as "the clock now" and that is still true. What is added is a
- * way to ASK, and a pin (test/clockrefusal.test.js) that requires
+ * way to ASK, and a pin (test/systems/clockrefusal.test.js) that requires
  * every caller either to consult it or to be listed with the reason it
  * does not need to. A silent refusal is fine; an unnoticed one is not.
  */

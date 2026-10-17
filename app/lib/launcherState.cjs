@@ -46,8 +46,8 @@
 // shell, for an open dialog), and the launcher reopens on the new version.
 //
 // Pure, no Electron: the shell (app/main.cjs) feeds events in and renders
-// `viewOf` into app/launcher/; test/da8_launcher.test.js and
-// test/da10_launcher.test.js drive every screen and transition here.
+// `viewOf` into app/launcher/; test/tooling/da8_launcher.test.js and
+// test/tooling/da10_launcher.test.js drive every screen and transition here.
 'use strict';
 
 const { parseReleaseTag, parseVersion } = require('./updateCheck.cjs');

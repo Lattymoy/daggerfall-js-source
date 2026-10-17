@@ -13,7 +13,7 @@ import { DYE_COLORS, DYE_TARGETS, getDyeColorTable } from './dyes.js';
 import { SKILLS } from '../systems/skills.js';   // GetWeaponSkillIDAsShort's return set
 import { SOUND } from '../systems/soundClips.js';   // F023: GetEquipSound's clips (soundClips is a leaf)
 import { THUNDERLOCK_TEMPLATE } from './thunderlockIds.js';
-import { customItemClass } from '../systems/rriItems.js';   // RRI1: a custom weapon class answers its own skill, damage and equip sound (virtuals)   // the port's own weapon - a leaf, so no cycle (see the file)
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: a custom weapon class answers its own skill, damage and equip sound (virtuals)   // the port's own weapon - a leaf, so no cycle (see the file)
 
 export const WEAPONS = Object.freeze({
   Dagger: 113, Tanto: 114, Staff: 115, Shortsword: 116, Wakazashi: 117,

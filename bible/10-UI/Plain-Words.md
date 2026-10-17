@@ -67,9 +67,9 @@ systems. Theres just so many systems that dont explain what they are and its ext
   reader with no Merit yet in any of the region's chapters, folded for one with some - the service sends a Merit row for
   every membership, none earned and a week's wait included (`server-account/src/npcMerit.js` `meritAsks`; AUDIT
   PLAIN-UI T3). The guide stands where the cards do - on every board since CHAPTERS-ON (2026-10-12, `server-account/wrangler.toml`
-  `CHAPTERS_OPEN = "on"`; `01-Overview/Field-Bugs-2026-10-12.md`), which met this arc at its merge.
+  `CHAPTERS_OPEN = "on"`; `01-Overview/bugs/Field-Bugs-2026-10-12.md`), which met this arc at its merge.
 - **PLAIN-UI c, the Family tab.** A fourth page on its rail, HOW IT WORKS (`FAMILY_PAGE_SECTIONS` `guide`,
-  `drawGuidePage`, drawn by `src/ui/enhancedMenu.js` `pauseFamily`): `familyGuide(model, tollShare)` - the house; death in
+  `drawGuidePage`, drawn by `src/ui/enhanced/enhancedMenu.js` `pauseFamily`): `familyGuide(model, tollShare)` - the house; death in
   the house's own model (both, before one is founded), its toll the Features tile's (`legacySettings().tollShare`); who
   carries on; what carries on - the estate to whoever takes the line, the blood and the hearth to a newborn alone, at
   birth (`BLOOD_MAX`, `HEARTH_MAX`, `ESTATE_SHARE`, `ESTATE_MAX`; AUDIT PLAIN-UI W2); heirlooms and remains
@@ -77,7 +77,7 @@ systems. Theres just so many systems that dont explain what they are and its ext
   member; and the tree's marks. The tree carries a way to it ("New to the family? How it works", U8). Its type a step
   larger: names 12px on up to two lines with the whole name on hover (U6), marks 13px, chips 12px, the card's facts,
   kin and words 14px, its heading 18px; the card 268px beside the tree, as it was, so the tree keeps its plates (U7).
-- **PLAIN-UI d, the regard on the talk panel.** The enhanced talk panel (`src/ui/enhancedTalk.js`, ET1) shows a living
+- **PLAIN-UI d, the regard on the talk panel.** The enhanced talk panel (`src/ui/enhanced/enhancedTalk.js`, ET1) shows a living
   resident's regard under their name: the standing in the Chronicle's own words (`STANDING_NAMES`: Friend, Known, Enemy,
   Hostile), a bar from -100 to +100 with its middle marked, and the number signed. A press on it says, in a line across
   the panel's head, what the number is and what moves it (a finger has no hover; the `title` says the same to a mouse;
@@ -87,7 +87,7 @@ systems. Theres just so many systems that dont explain what they are and its ext
   thresholds, the number taken toward nought as the standing reads it (AUDIT PLAIN-UI W6: a regard of 39.5 is Known
   +39, never +40). The card is the body's own door's - a body's `living.town` is the door it was minted with
   (`src/world/travellerSprites.js`): the street's `LivingTown.regardCard`, a resident at home `_livingIndoorsDoor`'s,
-  a road's or a diver's `_livingRoadsDoor`'s (`src/scenes/livingRoads.js` `regardCard`, a company's word its head's),
+  a road's or a diver's `_livingRoadsDoor`'s (`src/scenes/livingWorld/livingRoads.js` `regardCard`, a company's word its head's),
   each on the day its `refuses()` reads (AUDIT PLAIN-UI C2: the street's alone shipped first). The host words it
   (`src/scenes/world.js` `livingTalk.regard`) and `src/scenes/townTalk.js` hands it to the panel as a hook for the
   resident the conversation is with (`_toneTarget`) and nobody else - so the panel keeps ET1's law of importing no
@@ -124,7 +124,7 @@ which said they did before their doors had a card; `src/scenes/exterior.js`, the
 - **DFU's own walkers and static NPCs** keep no regard (their reaction is DFU's faction law): no badge for them.
 - **Bigger screens** (AUDIT PLAIN-UI U1) are OPEN: the board stays 1040px wide, so at 1440p its 15px type is smaller
   against the screen than the old 13px was at 1080p. The candidate is an Interface size row on MAP-SCALE's rule
-  (`src/ui/mapScale.js`: Auto the screen's height over 1080, 1 to 2) laid over the board, the pause window and the talk
+  (`src/ui/map/mapScale.js`: Auto the screen's height over 1080, 1 to 2) laid over the board, the pause window and the talk
   panel - a new setting across windows, the owner's call. The pixel face's B, C and 2 reading as G, O and 8 (U5) - a player
   may write every enhanced word in a plain face since TEXT-FONT (`src/ui/textFont.js`: Sans, Monospace, Dyslexic or
   their own), which met this arc at its merge; the pixel face's own glyphs stay OPEN - and the phone header's row for
@@ -137,15 +137,15 @@ which said they did before their doors had a card; `src/scenes/exterior.js`, the
 
 ## 5. Proof
 
-- `test/plainui.test.js` (8): the next step's every arm; the guide's open and its kept fold; the word list and its
+- `test/systems/legacy/plainui.test.js` (8): the next step's every arm; the guide's open and its kept fold; the word list and its
   numbers by tier; How chapters work over the cards, open, folded and absent, its numbers; the Family page's model,
   toll, numbers, rail and dispatch; the regard badge's words, bar and names, the panel's read of its hook; the town's
-  card and the hook's wiring; the board's type. PINS MOVED: `test/board_ui.test.js`'s Seat tab (the panels' order),
-  `test/audit657_board.test.js`'s D4 (its reader pledged in the region, so the guide's kept fold is pinned from the
-  folded side) and `test/lw2_livingTown.test.js`'s talk doors (the regard beside them); their three mutant records
+  card and the hook's wiring; the board's type. PINS MOVED: `test/ui/board_ui.test.js`'s Seat tab (the panels' order),
+  `test/ui/audit657_board.test.js`'s D4 (its reader pledged in the region, so the guide's kept fold is pinned from the
+  folded side) and `test/systems/livingWorld/lw2_livingTown.test.js`'s talk doors (the regard beside them); their three mutant records
   (`audit657.json`, `board_ui.json`, `lw2.json`) re-aimed by content and dead again.
 - `tools/mutants/plainui.json`: 20 mutants, 20 dead (four re-aimed by content at AUDIT PLAIN-UI).
-- AUDIT PLAIN-UI (`01-Overview/Audit-Plain-UI.md`): `test/audit_plainui.test.js` (11), `tools/mutants/audit_plainui.json`
+- AUDIT PLAIN-UI (`01-Overview/audits/Audit-Plain-UI.md`): `test/ui/audit_plainui.test.js` (11), `tools/mutants/audit_plainui.json`
   31 mutants, 31 dead.
 - `tools/noticeBoardProbe.mjs` photographs the two guides unfolded (`work-guide`, `seat-guide`) beside its other shots,
   desktop and phone - every tab inside the viewport, nothing spilling sideways.

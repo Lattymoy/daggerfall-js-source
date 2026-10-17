@@ -48,7 +48,7 @@ import {
   patronBidOk, patronEscrowId, patronWinnerOf,
 } from '../../src/net/npcChapterLaw.js';
 import { MARKS_MAX, MARKS_MOVE_MAX, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S, MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';   // CHAP7a: a patron's bid
-import { guildMay } from '../../src/net/guildLaw.js';
+import { guildMay } from '../../src/net/guild/guildLaw.js';
 import { accountKind, displayName, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { marksOpenFor, guildBalanceOf } from './marks.js';

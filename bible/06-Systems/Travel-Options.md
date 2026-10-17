@@ -23,7 +23,7 @@ wounds and the sea all able to interrupt it.
 Which of the two a trip takes is decided by the travel popup's own
 three choices against the player's settings, and by nothing else -
 `TravelOptionsPopUp.IsPlayerControlledTravel` (:80-83), ported in
-`src/ui/travelPopUp.js`:
+`src/ui/travel/travelPopUp.js`:
 
 ```
 (CautiousTravel || !SpeedCautious) && (StopAtInnsTravel || !SleepModeInn) && !TravelShip
@@ -45,21 +45,21 @@ and the journey runs to the next junction on its own.
 
 | File | What it is |
 |---|---|
-| `src/systems/travelOptions.js` | `TravelOptionsMod.cs` - the settings, the state, the journey machine and the Update loop in its own order |
-| `src/systems/travelAutopilot.js` | `PlayerAutoPilot.cs` (Jedidia) - the steering: a yaw and a forward force per frame, and the arrival test |
-| `src/systems/travelSteer.js` | **the port's own** (TRAVEL-NAV, below) - the walk round what stands in the way: the feelers through the collider, the fan, the stand-off, the stop |
-| `src/systems/travelPaths.js` | the compass, the map-pixel bands and the direction arithmetic - a leaf, no DOM and no world |
-| `src/systems/travelPorts.js` | `portLocationIds`, the 417-entry hand-written table of harbours |
-| `src/systems/travelOptionsText.js` | `TravelOptionsModData.csv`, restated; the vendored file is the record and a pin holds them equal |
+| `src/systems/travel/travelOptions.js` | `TravelOptionsMod.cs` - the settings, the state, the journey machine and the Update loop in its own order |
+| `src/systems/travel/travelAutopilot.js` | `PlayerAutoPilot.cs` (Jedidia) - the steering: a yaw and a forward force per frame, and the arrival test |
+| `src/systems/travel/travelSteer.js` | **the port's own** (TRAVEL-NAV, below) - the walk round what stands in the way: the feelers through the collider, the fan, the stand-off, the stop |
+| `src/systems/travel/travelPaths.js` | the compass, the map-pixel bands and the direction arithmetic - a leaf, no DOM and no world |
+| `src/systems/travel/travelPorts.js` | `portLocationIds`, the 417-entry hand-written table of harbours |
+| `src/systems/travel/travelOptionsText.js` | `TravelOptionsModData.csv`, restated; the vendored file is the record and a pin holds them equal |
 | `src/systems/timeScale.js` | Unity's `Time.timeScale`, which the port did not have |
-| `src/ui/travelControlUI.js` | `TravelControlUI.cs` - the 320x27 strip, rect for rect |
-| `src/ui/travelJunctionMap.js` | the junction mini-map panel |
-| `src/ui/travelPathsOverlay.js` | `DrawPath` / `DrawLocation` / `DrawMapSection` - the three routines the map and the mini-map share |
-| `src/ui/travelMapOptions.js` | what the mod adds to the travel map: the ports button, the five-texel page, the info box, the resume prompt, the teleport charge |
-| `src/ui/enhancedTravelControl.js` | **the port's own** - the enhanced lane's travel panel (Mac's addition, not the mod's) |
+| `src/ui/travel/travelControlUI.js` | `TravelControlUI.cs` - the 320x27 strip, rect for rect |
+| `src/ui/travel/travelJunctionMap.js` | the junction mini-map panel |
+| `src/ui/travel/travelPathsOverlay.js` | `DrawPath` / `DrawLocation` / `DrawMapSection` - the three routines the map and the mini-map share |
+| `src/ui/travel/travelMapOptions.js` | what the mod adds to the travel map: the ports button, the five-texel page, the info box, the resume prompt, the teleport charge |
+| `src/ui/enhanced/enhancedTravelControl.js` | **the port's own** - the enhanced lane's travel panel (Mac's addition, not the mod's) |
 
 The travel map and the popup keep their own homes
-(`src/ui/travelMapWindow.js`, `src/ui/travelPopUp.js`): DFU's law lives
+(`src/ui/travel/travelMapWindow.js`, `src/ui/travel/travelPopUp.js`): DFU's law lives
 there and the mod's additions call into `travelMapOptions.js`.
 
 ## The journey, step by step
@@ -185,7 +185,7 @@ journey interrupts it on its own honest clock.
 
 ## The enhanced lane (Mac's addition, not the mod's)
 
-`src/ui/enhancedTravelControl.js` is the port's own: the same
+`src/ui/enhanced/enhancedTravelControl.js` is the port's own: the same
 controls (RATE-LAW: the rate a readout, no stepper) in the enhanced skin's brass and bone, at the screen's own
 resolution, with what a 320-pixel strip had no room for - the hours and
 minutes still to run, how far the destination is, whether the journey
@@ -247,7 +247,7 @@ cheaper test and the only one that is safe that early - and the pixel is
 read once per build rather than three times. Before TO1 the pixel
 builder reached none of those bindings; this call was the slice's own.
 
-The gate this deserved is `test/bootorder.test.js`: it walks the boot's
+The gate this deserved is `test/scenes/bootorder.test.js`: it walks the boot's
 statements up to and including the first build, follows every call into
 the functions `bootWorld` declares, and names every binding they reach
 that the boot walk has not declared yet. Eight names stand on an
@@ -255,7 +255,7 @@ allow-list, each reachable only down a branch a first build cannot take
 and each older than this arc; a ninth fails the suite rather than a
 player's browser.
 
-Pinned in `test/to1_travelOptions.test.js` as a LAW rather than a
+Pinned in `test/systems/travel/to1_travelOptions.test.js` as a LAW rather than a
 literal: every one of those bindings must be declared before the line
 `const playerPixel = await buildPixel(first.px, first.py)`, and the mod
 must be assigned there, never re-declared. Mutants
@@ -375,7 +375,7 @@ must be assigned there, never re-declared. Mutants
    back into the teleport - and the ports rule (AUDIT T1: off, nothing
    knocks the ship toggle, on by default, off a trip from the wilderness
    to an inland place, and a ship is never walked). All four are the
-   ROOM's now (`systems/onlineLane.js` `ONLINE_ROOM_MOD_KEYS`, at the
+   ROOM's now (`systems/online/onlineLane.js` `ONLINE_ROOM_MOD_KEYS`, at the
    shipped defaults: `Enabled`, `CautiousTravel.PlayerControlledCautiousTravel`,
    `StopAtInnsTravel.PlayerControlledInnsTravel`, `ShipTravel.OnlyFromPorts`),
    so online `isPlayerControlledTravel` answers yes for every trip over
@@ -392,7 +392,7 @@ must be assigned there, never re-declared. Mutants
    passage from one port to another over no water is still a ship, as
    the mod's own `HasNoOceanTravel` lets it be; and Travel Options' paid
    teleportation (any Mages Guild rank) stays the player's dial.
-   `test/travelonline.test.js` (3); `tools/mutants/travelonline.json`
+   `test/systems/travel/travelonline.test.js` (3); `tools/mutants/travelonline.json`
    (all dead).
    **IT1** (2026-10-04, the owner: instant travel online "as an option but with
    a cost", then Immersive Travel 1:1): a carriage driver's trip is DFU's fast
@@ -613,7 +613,7 @@ belong to the BOOT arc are here because they are the same story.
   as null; declaring it up there is what makes that sentence true.
 
 - **F6 - and the gate that was meant to catch this did not.** Reverting
-  BOOT-TDZ2's guard left `test/bootorder.test.js` GREEN, because the
+  BOOT-TDZ2's guard left `test/scenes/bootorder.test.js` GREEN, because the
   walker is name-based and cannot see conditions: `walkMode` was
   allow-listed, so it was blessed down every path. `questBridge` was
   allow-listed on a reason that was simply false - "quest placements
@@ -664,7 +664,7 @@ third was a thing the port never said out loud.
 > **WILD-ROAD (FIELD BUGS 2026-10-04e)**: Encounters on the road (a World switch, on) passes a wanderer far beneath the
 > traveller by, and the rest sometimes come as a patrol. The road is a journey under way (the window up and its autopilot
 > steering) or the Overworld - never a rest. (Its HUNT-ROAD, a switch holding TO-FIELD3's hunt on the road, went with
-> HUNT-OUT's removal of the hunt, at the merge of main.) The record: `01-Overview/Field-Bugs-2026-10-04e.md`.
+> HUNT-OUT's removal of the hunt, at the merge of main.) The record: `01-Overview/bugs/Field-Bugs-2026-10-04e.md`.
 
 > **TO-FIELD3 (Mac, 2026-09-18) REVERSED THE TWO GAMEPLAY CHANGES BELOW.**
 > "Remove the changes the past session did to the traveling system... the
@@ -743,7 +743,7 @@ third was a thing the port never said out loud.
   and sunburn ticks (`needs.js:"&& !vampire && !ctx.beastForm"`), and, for a traveller who is also
   `byFire`, the exposure damage at `:422`. Harm you cannot answer while
   the autopilot holds the controls is not a loss worth keeping. The law
-  is executed now, not matched: `test/surv7_feed.test.js` runs ten game
+  is executed now, not matched: `test/systems/surv7_feed.test.js` runs ten game
   hours with the knob both ways and asserts fatigue held at zero while
   every accrual lands on the same number.
 
@@ -790,10 +790,10 @@ third was a thing the port never said out loud.
   the gate does - a sign flip on the bearing would have probed the ground
   BEHIND the traveller, always built, restoring the bug whole with every
   pin green. `travelDriveForward` and `travelLookaheadFor` live in
-  `systems/travelAutopilot.js` beside the autopilot, for the reason that
+  `systems/travel/travelAutopilot.js` beside the autopilot, for the reason that
   file is pure: the pins drive them on a table. Six mutants ride them.
 
-Pinned in `test/to1_travelOptions.test.js` (TO-FIELD) with three
+Pinned in `test/systems/travel/to1_travelOptions.test.js` (TO-FIELD) with three
 mutants - `travel-drive-ungated`, `needs-at-travel-scale`,
 `follow-key-unsaid`. `tools/mutants/surv7.json`'s
 `SURV7-the-world-feeds-the-dungeon-too` was re-aimed by content onto the
@@ -849,7 +849,7 @@ overlay prints the stack in red. Three fixes, at the root:
   racing until the player finds the key. A pick that is not one edge is
   a junction here: stop, say so, map up. Departure 17.
 
-Pinned by execution in `test/roadcrash.test.js` (4): the interrupted
+Pinned by execution in `test/systems/travel/roadcrash.test.js` (4): the interrupted
 journey's stale name and the ring arm clearing it, the rects holding
 across a crossing into a null-answering neighbour and the corner
 arrival going on round the town; the null-rect state shown to throw in
@@ -875,7 +875,7 @@ ground against it with the clock racing until the player noticed. DFU's
 CharacterController slides along the face, so the mod's own journeys do
 the same, and this port's collider honours that controller's contract.
 
-**What is there now** - `src/systems/travelSteer.js`, the port's own,
+**What is there now** - `src/systems/travel/travelSteer.js`, the port's own,
 between the autopilot and the motor. The mod still decides where the
 journey is going and when it has arrived; the steering decides only how
 the body gets there this frame:
@@ -1003,7 +1003,7 @@ at once (AUDIT OW5 T1), and its words say so. The Overworld's OW-ONLY
 (`06-Systems/Travel-View.md`) made every walked trip on the enhanced interface
 the Overworld's; on, this switch gives the mod's own first-person journey back
 - a map pick walked on the ground, the mod's resume for it, the view neither
-raised with it nor stopping it (`test/ow_toggle.test.js`). A journey of the
+raised with it nor stopping it (`test/systems/travel/ow_toggle.test.js`). A journey of the
 mod's own begun at a boat's helm meets the mod's own ocean stop, as the mod
 does (AUDIT OW5 S1: the Overworld's crossing alone stands it down).
 
@@ -1011,7 +1011,7 @@ does (AUDIT OW5 S1: the Overworld's crossing alone stands it down).
 same shape again, OFF, beside it on the tile: with First-Person Travel on, a map pick is the Overworld's route - its
 planner, its join, the peaks and the water, its refusals - walked by this mod's autopilot leg by leg, in first person.
 A departure from the mod, which never routes to a named destination (TO-FIELD above) - off, it is the mod's beeline
-again. `06-Systems/Travel-View.md` TO-ROADS (`test/fb0929d_toroads.test.js`).
+again. `06-Systems/Travel-View.md` TO-ROADS (`test/systems/travel/fb0929d_toroads.test.js`).
 
 **Not done, and said.** A gap barely wider than the corridor is threaded
 when it is on the line, or found while the detour walks past it at a
@@ -1025,7 +1025,7 @@ five degrees in one update is an arrival) can end a LEG early while a
 detour turns hard close to its target at high acceleration; the next leg
 starts from where the body is, which is the mod's own answer.
 
-Pinned by execution in `test/travelnav.test.js` (19 of its 22 - TRAVEL-NAV2
+Pinned by execution in `test/systems/travel/travelnav.test.js` (19 of its 22 - TRAVEL-NAV2
 added three): every layout the
 request named - a building across the line, a wall with no gap, a U-shaped
 pocket (and one deeper than the look-ahead), trunks across and along the
@@ -1052,7 +1052,7 @@ better"*. The review flew the steering over some fifteen hundred fuzzed layouts
 (random buildings and trunks, every pace the mod allows, walking and
 mounted) beside the table flights, and cast its feelers through a real
 `Collider` at shapes the slice had not tried. Three things were wrong, and
-are fixed in `src/systems/travelSteer.js`:
+are fixed in `src/systems/travel/travelSteer.js`:
 
 - **It could walk for ever.** In a tight layout - one building sending the
   detour one way, a second building's corner and two trunks catching it -
@@ -1102,7 +1102,7 @@ was taken out again. The four hosts: the journey is wired in
 travel map, and `scenes/worldModes.js` and `scenes/dungeonContext.js`
 never run a journey.
 
-Pinned in `test/travelnav.test.js` (three tests, each failing with
+Pinned in `test/systems/travel/travelnav.test.js` (three tests, each failing with
 `src/` set aside while the other nineteen pass): no headway on its own, a
 leg at a time, and the fuzzed layout flown at x1 and x10 (arrives or
 stops, never touches, never for ever); a jump - the mod's bearing from
@@ -1187,7 +1187,7 @@ did not show them, and AUDIT TRAVEL-STRAFE 2, below, counts them.
 ## AUDIT TRAVEL-STRAFE (2026-09-27) - the slice audited
 
 A read-only audit of TRAVEL-STRAFE found five things. Three are fixed in
-`src/systems/travelSteer.js`, one in the pins, one is said. **The fuzz**
+`src/systems/travel/travelSteer.js`, one in the pins, one is said. **The fuzz**
 below is the audit's: six kinds of layout (a town, a dense town, trees,
 walls with a gap and U shapes, a pocket round the target, a target off to
 the side), 400 seeds each, nine paces (x1, x10, x60 and x100 at 1/60 s
@@ -1302,7 +1302,7 @@ would need the host to cap the strafe axis after the steering has run, the
 frame's own strafe unknown to it and the diagonal step between the two
 feelers unseen - a redesign, not a patch.
 
-Pinned in `test/travelnav.test.js` (four tests - three failing on
+Pinned in `test/systems/travel/travelnav.test.js` (four tests - three failing on
 TRAVEL-STRAFE's steering while the others pass, the fourth pinning what
 was right and unpinned): the let-go frame and the whole corridor by the
 numbers; the nearer end by the numbers, the detour begun past the target
@@ -1349,7 +1349,7 @@ content now: `travelAutopilot.js`'s `player.update` call,
 `Quest-Arc.md`'s two classic-spell reads, `Combat.md`'s
 `onPlayerArrowHitFoe`, Port-Status' `currentWeatherKey` and, on the same
 row, the `CleanupUntrackedObjects` sweep and its missile half in
-`hostMagic.js`, and `test/qx1_exterior_host.test.js`'s
+`hostMagic.js`, and `test/systems/qx1_exterior_host.test.js`'s
 `getClassicSpellEffects`.
 
 ## RISE-STUCK (2026-09-27) - a death ends the journey
@@ -1369,7 +1369,7 @@ not have. Why the journey climbed the wall at all was not looked into (TRAVEL-NA
 ## SHIP-PORT (2026-09-28) - the deck is no port
 
 The Discord through Mac: *"a player is at a port but unable to set sail"*. The batch's record is
-`01-Overview/Field-Bugs-2026-09-28e.md`; the three this arc owns:
+`01-Overview/bugs/Field-Bugs-2026-09-28e.md`; the three this arc owns:
 
 - **The deck.** A player who bought a ship and boarded it in a harbour stands on "Your Ship" (the bank's
   `SHIP_COORDS`, 2,2 or 5,5). The map's ship laws asked `IsNotAtPort` of that pixel, which neither list carries (the
@@ -1404,7 +1404,7 @@ The Discord through Mac: *"a player is at a port but unable to set sail"*. The b
 
 ## TO-FARE (2026-09-29) - the fare's haggle reads the Mercantile skill
 
-Found on MERC-CAP's way (`01-Overview/Field-Bugs-2026-09-29f.md`), fixed at Mac's word: *"Fix the separate bug"*.
+Found on MERC-CAP's way (`01-Overview/bugs/Field-Bugs-2026-09-29f.md`), fixed at Mac's word: *"Fix the separate bug"*.
 The mod scales a fast-travel fare and puts each half back through `FormulaHelper.CalculateTradePrice(cost, 10, false)`
 (TravelTimeCalculatorTO.CalculateTripCost), which reads the traveller's live Mercantile SKILL (GetLiveSkillValue,
 FormulaHelper.cs:1992/1998). `scaleTripCost` read `liveStat(e, 'mercantile')` - a stat by the skill's name, which no
@@ -1429,7 +1429,7 @@ panel keeps the player's CHOSEN rate apart from the rate IN FORCE (`travelContro
 `_timeAcceleration`): a cap lowers the one in force, and the next uncapped journey - or the Acceleration Limit dial
 opened in play (`setAccelerationLimit`) - brings it back. A journey already showing keeps its higher rate when a path
 replaces it, as the mod's does (no push, no clamp). `alwaysUseStartingAccel` still resets both. The session's alone:
-the mod saves no travel state (departure 8). Pins: `test/travel_speed_preference.test.js`, `tools/mutants/to1.json`.
+the mod saves no travel state (departure 8). Pins: `test/systems/travel/travel_speed_preference.test.js`, `tools/mutants/to1.json`.
 
 ## RATE-LAW (2026-10-04) - the dials go, and a journey runs at its ground's rate
 
@@ -1439,14 +1439,14 @@ Mac: *"Remove travel options dials"*, then *"Roads now travel at x100 and non ro
 over the strip's own recess after "TIME x:"), the enhanced panel's Time stepper and ENEMY-PACE's near-enemies stepper
 under it, the tile's Acceleration Limit dial, and the three keys of the mod's TimeAcceleration section that started
 and bounded the spinner (`DefaultStartingAcceleration`, `AlwaysUseStartingAcceleration`, `AccelerationLimit` - no
-longer declared; `test/to1_travelOptions.test.js` names them as the one section of the vendored `modsettings.json`
+longer declared; `test/systems/travel/to1_travelOptions.test.js` names them as the one section of the vendored `modsettings.json`
 the port leaves out). With them went the half limit while a path is followed (`:705`) and TRAVEL-LAST-SPEED's
 remembered rate.
 
 **The law** (`systems/timeScale.js` `TRAVEL_ROAD_RATE` 100, `TRAVEL_OPEN_RATE` 60, `travelRateOf`). A fast traveller
 on a road or a track runs at x100; anywhere else - the open ground, the walk back to a road after a stop, the sea -
 at x60. "A road" is a road or a track, as the Overworld's own trip line counts them (`travelRoute.js` `roadShare`,
-"by the road"); `systems/travelOptions.js` `ROAD_LEG_KINDS` says so. Where each journey reads its ground
+"by the road"); `systems/travel/travelOptions.js` `ROAD_LEG_KINDS` says so. Where each journey reads its ground
 (`journeyOnRoad`):
 - a planned route (the Overworld's, TV2, and TO-ROADS' first-person one) by the LEG it walks - its kind from the
   planner; a join (AUDIT OW3 J3) is the open ground's;
@@ -1467,14 +1467,14 @@ road" / "off the road"). The Overworld's movement keys (TV-WASD) travel at the s
 **Online** nothing new: the clock rules are TO-ONLINE's and WALK-CLOCK's, unchanged - x100 and x60 are rates the
 spinner could already reach (its limit went to 100).
 
-Pins: `test/travel_speed_preference.test.js` (the law through the real mod and panel, and the host's
-`travellerOnRoad` lifted and run), `test/tv_wasd.test.js`, `test/enemy_pace.test.js`, `test/to1_travelOptions.test.js`,
-`test/to_live.test.js`, `test/disc22e_travel_click.test.js`; `tools/mutants/ratelaw.json` (19, all dead); the retired
+Pins: `test/systems/travel/travel_speed_preference.test.js` (the law through the real mod and panel, and the host's
+`travellerOnRoad` lifted and run), `test/systems/travel/tv_wasd.test.js`, `test/ui/enhanced/enemy_pace.test.js`, `test/systems/travel/to1_travelOptions.test.js`,
+`test/systems/to_live.test.js`, `test/ui/travel/disc22e_travel_click.test.js`; `tools/mutants/ratelaw.json` (19, all dead); the retired
 spinner's and limit's records left their files (to1, fb1002c, tv_wasd) with the code they killed.
 
 ### RATE-LAW-FIX (2026-10-05) - the deep audit's three
 
-The deep audit of the branch found three holes in the law; each is fixed and pinned (`test/ratelawfix.test.js`,
+The deep audit of the branch found three holes in the law; each is fixed and pinned (`test/systems/travel/ratelawfix.test.js`,
 `tools/mutants/ratelawfix.json`).
 - **A route's last stretch to a spot** ran at its pixel's step's rate - the last leg aims at the spot itself, which
   can lie anywhere in its pixel: a road route to a camp half a pixel from the road ran there at x100 across the
@@ -1492,15 +1492,15 @@ at the law's x60 and x100 it starts 1.5 to 2.5 times as far out as at the old di
 
 ## Pins
 
-`test/to1_travelOptions.test.js`. `tools/mutants/to1.json`.
-`test/travel_speed_preference.test.js`, `tools/mutants/ratelaw.json` (RATE-LAW, 19 dead).
-`test/roadcrash.test.js`, `tools/mutants/roadcrash.json` (ROAD-CRASH).
-`test/travelnav.test.js`, `tools/mutants/travelnav.json` (TRAVEL-NAV),
+`test/systems/travel/to1_travelOptions.test.js`. `tools/mutants/to1.json`.
+`test/systems/travel/travel_speed_preference.test.js`, `tools/mutants/ratelaw.json` (RATE-LAW, 19 dead).
+`test/systems/travel/roadcrash.test.js`, `tools/mutants/roadcrash.json` (ROAD-CRASH).
+`test/systems/travel/travelnav.test.js`, `tools/mutants/travelnav.json` (TRAVEL-NAV),
 `tools/mutants/travelnav2.json` (TRAVEL-NAV2), `tools/mutants/travelstrafe.json` (TRAVEL-STRAFE, 7 dead),
 `tools/mutants/audittravelstrafe.json` (AUDIT TRAVEL-STRAFE, 14 dead),
 `tools/mutants/audittravelstrafe2.json` (AUDIT TRAVEL-STRAFE2, 11 dead).
-`test/spawntravel.test.js`, `tools/mutants/spawntravel.json` (SPAWN-TRAVEL).
-`test/risestuck.test.js`, `tools/mutants/rise_stuck.json` (RISE-STUCK).
-`test/disc28e_shipport.test.js`, `tools/mutants/disc28e.json` (SHIP-PORT's ten, SHIP-SAIL's twenty-three).
-`test/fb0929d_toroads.test.js`, `tools/mutants/fb0929d_toroads.json` (TO-ROADS, 14 dead, 2 equivalent).
-`test/fb0929f_tofare.test.js`, `tools/mutants/fb0929f_tofare.json` (TO-FARE, 2 dead).
+`test/world/spawntravel.test.js`, `tools/mutants/spawntravel.json` (SPAWN-TRAVEL).
+`test/systems/travel/risestuck.test.js`, `tools/mutants/rise_stuck.json` (RISE-STUCK).
+`test/systems/travel/disc28e_shipport.test.js`, `tools/mutants/disc28e.json` (SHIP-PORT's ten, SHIP-SAIL's twenty-three).
+`test/systems/travel/fb0929d_toroads.test.js`, `tools/mutants/fb0929d_toroads.json` (TO-ROADS, 14 dead, 2 equivalent).
+`test/systems/fb0929f_tofare.test.js`, `tools/mutants/fb0929f_tofare.json` (TO-FARE, 2 dead).

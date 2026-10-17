@@ -17,7 +17,7 @@ import { liveStat } from './statMods.js';   // F9: MagicResist reads the LIVE wi
 import { entityResistMod } from './entityMods.js';   // RF1: the port's resistance channel rides the saving throw
 import { magicResist } from '../combat/formulas.js';   // U10
 import { raceById, raceByKey } from './races.js';   // AUDIT 18: the racial saving-throw block
-import { getInt } from './settings.js';   // ROAD-H H1c: Controls/Handedness, the screen weapon's FlipHorizontal (DaggerfallMissile.cs:546)
+import { getInt } from './settings/settings.js';   // ROAD-H H1c: Controls/Handedness, the screen weapon's FlipHorizontal (DaggerfallMissile.cs:546)
 import { CAPSULE_RADIUS } from '../player/motor.js';   // AUDIT 65 CV-2: the PLAYER's own CharacterController radius, imported rather than restated
 
 // ---- DaggerfallMissile constants, verbatim ----
@@ -152,7 +152,7 @@ export function savingChance(element, effectFlags, target, modifier = 0, pierce 
   // U10: through the FormulaHelper home, not a fourth inline copy.
   saving += magicResist(liveStat(target, 'willpower'));
   // BAL9 (bible/05-Combat/Balance-Arc.md section 15): the port's PIERCE - points a player's damage spell takes off the
-  // throw (systems/spellPower.js spellPierce). After the immunity above, so a foe immune stays immune; DFU's clamp after.
+  // throw (systems/spell/spellPower.js spellPierce). After the immunity above, so a foe immune stays immune; DFU's clamp after.
   saving -= Math.max(0, Number.isFinite(pierce) ? pierce : 0);
   saving = Math.max(5, Math.min(95, saving));
   return { immune: false, chance: saving };

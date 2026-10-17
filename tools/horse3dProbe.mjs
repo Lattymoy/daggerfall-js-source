@@ -1,6 +1,6 @@
 // COATS3D LIVE PROOF: THE 3D HORSE DRAWS THROUGH THE REAL RENDERER - its bake, its pictures, its looks, its gaits.
 //
-// test/coats3d_horse3d.test.js holds the horse's law in node: the bake against its FBX, the stream, the gait, the
+// test/formats/morrowind/coats3d_horse3d.test.js holds the horse's law in node: the bake against its FBX, the stream, the gait, the
 // palette's pose against the skin's bind, the texel map, the 3D dye against the sprites' dye, the saddle solved on
 // retail's biped. What node cannot do is run the GLSL. This does, on one Renderer in a real page: the rig loads the
 // committed bake and both pictures over the dev server (world/horseRig.js, the hosts' own door), dyes three looks on

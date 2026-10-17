@@ -5,17 +5,17 @@
     "old": "    g.escrow = forKeeps ? liftCard(d.entity.items, g.session.stake) : null;",
     "new": "    g.escrow = forKeeps ? mintIliacCard(g.session.stake) : null;",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
     "name": "AC6-B1-stake-drawn",
-    "file": "src/systems/iliacTableSession.js",
+    "file": "src/systems/iliac/iliacTableSession.js",
     "old": "    this.stake = this.forKeeps && this.state ? forfeitCard(player.deck, this.unit) : null;",
     "new": "    this.stake = this.forKeeps && this.state ? forfeitCard(patron.deck, this.unit) : null;",
     "tests": [
-      "test/auditcards6_b.test.js",
-      "test/cards10_table.test.js"
+      "test/systems/auditcards6_b.test.js",
+      "test/systems/cards10_table.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "      if (held) addItem(d.entity.items, held);\n",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "    } else if (held) addItem(d.entity.items, held);   // a draw: nobody pays, the stake comes home\n",
     "new": "    }\n",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "    if (!s?.over || s.settled) return;",
     "new": "    if (!s?.prize || s.settled) return;",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -51,16 +51,16 @@
     "old": "      if (held) d.say(`${foe.name} takes a card from your deck: ${cardById(held.card)?.name ?? 'a card'}.`);",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
     "name": "AC6-B2-reveil",
-    "file": "src/systems/iliacPatrons.js",
+    "file": "src/systems/iliac/iliacPatrons.js",
     "old": "  for (const hd of copy.holdings) for (const inst of hd.sides[1 - p]) if (veiled.has(inst.uid)) inst.down = true;",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -69,8 +69,8 @@
     "old": "  const d1 = [-d0[0], -d0[1]];",
     "new": "  const d1 = d0[0] * d1raw[0] + d0[1] * d1raw[1] > -0.2 ? [-d0[0], -d0[1]] : d1raw;",
     "tests": [
-      "test/auditcards6_b.test.js",
-      "test/cards10_table.test.js"
+      "test/systems/auditcards6_b.test.js",
+      "test/systems/cards10_table.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  const me = viewer === 1 ? d1raw : d0;",
     "new": "  const me = viewer === 1 ? d1 : d0;",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "  const from = [d0, d1raw];",
     "new": "  const from = dirs;",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before && !tickInFlight()) standFromCardTable(); });",
     "new": "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "      day: cardDay, key: cardTableKey(), grade: iliacGrade(quality),",
     "new": "      day: cardDay(), key: cardTableKey(), grade: iliacGrade(quality),",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -115,17 +115,17 @@
     "old": "  const today = () => (typeof d.day === 'function' ? d.day() : d.day);",
     "new": "  const today = () => d.day;",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
     "name": "AC6-B6-tie",
-    "file": "src/systems/iliacTableSession.js",
+    "file": "src/systems/iliac/iliacTableSession.js",
     "old": " || (b === key ? 1 : 0) - (a === key ? 1 : 0)",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js",
-      "test/cards10_table.test.js"
+      "test/systems/auditcards6_b.test.js",
+      "test/systems/cards10_table.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "      if (takenSeats(seats, host.seatedPeers?.() ?? []).includes(chair)) return [];",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "    n.setAttribute('tabindex', '0');\n",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "old": "    n.addEventListener('keydown', (e) => { if (!ACTIVATE.has(e.key)) return; e.preventDefault?.(); e.stopPropagation?.(); fn(); });",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -161,7 +161,7 @@
     "old": "      refocus(kept);\n",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -170,7 +170,7 @@
     "old": ", keyed.find((x) => x.getAttribute('data-focus').startsWith('pick-'))]) if (n && took(n)) return;",
     "new": "]) if (n && took(n)) return;",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "  root.addEventListener('keydown', (e) => { if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.(); });",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "        b.addEventListener('keydown', (e) => { if (ACTIVATE.has(e.key)) e.stopPropagation?.(); });",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
@@ -197,17 +197,17 @@
     "old": "  try { root.focus?.({ preventScroll: true }); } catch { /* a page that cannot focus */ }",
     "new": "",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   },
   {
     "name": "AC6-B11-cap",
-    "file": "src/systems/iliacPatrons.js",
+    "file": "src/systems/iliac/iliacPatrons.js",
     "old": "export const ILIAC_THINK_TRIALS = 64;",
     "new": "export const ILIAC_THINK_TRIALS = 400;",
     "tests": [
-      "test/auditcards6_b.test.js",
-      "test/cards10_table.test.js"
+      "test/systems/auditcards6_b.test.js",
+      "test/systems/cards10_table.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "    staked: () => !g.closed && g.phase === 'playing'",
     "new": "    staked: () => g.phase === 'playing'",
     "tests": [
-      "test/auditcards6_b.test.js"
+      "test/systems/auditcards6_b.test.js"
     ]
   }
 ]

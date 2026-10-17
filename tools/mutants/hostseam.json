@@ -5,7 +5,7 @@
     "old": "    get social() { return social; },\n",
     "new": "    social,\n",
     "tests": [
-      "test/hostseam.test.js"
+      "test/tooling/hostseam.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "tvRaid, tvSceneKept, tvTrip,",
     "new": "tvSceneKept, tvTrip,",
     "tests": [
-      "test/hostseam.test.js"
+      "test/tooling/hostseam.test.js"
     ]
   }
 ]

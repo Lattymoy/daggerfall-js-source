@@ -8,7 +8,7 @@
 // end) and how to name a peer. The session around it (net/royalSession.js) keeps the state.
 //
 // Not a DFU member. Ledger A (EVERY PALACE A SEAT's row).
-import { ROYAL_RING } from './siegeRef.js';
+import { ROYAL_RING } from './siege/siegeRef.js';
 
 /**
  * @typedef {{ roll: Readonly<Record<string, { hp: number, max: number, down: boolean }>>, bout: { a: string, b: string, n: number, s: number, e: number }|null,

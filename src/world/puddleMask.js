@@ -5,7 +5,7 @@
 // PUDDLE IS THE ART'S.
 //
 // DFU's shallow-water records - the town docks, moats and puddles (8, 23,
-// 33-36; world/waterCorners.js SHALLOW_WHOLE) and record 9 - carry their
+// 33-36; world/water/waterCorners.js SHALLOW_WHOLE) and record 9 - carry their
 // water as a SHAPE painted on the tile: a pool on sand, a puddle in the
 // grass. The enhanced water pass knew them only as "whole" (their corners
 // all four), so it laid a full 6.4 m square of shimmering water over the
@@ -28,7 +28,7 @@
 // the draw and the law are two questions). This is the picture only.
 // ═══════════════════════════════════════════════════════════════════
 
-import { SHALLOW_WHOLE, SHALLOW_DRAWN, WATER_DRAW_MASK_TABLE } from './waterCorners.js';
+import { SHALLOW_WHOLE, SHALLOW_DRAWN, WATER_DRAW_MASK_TABLE } from './water/waterCorners.js';
 
 /** The records the pass drew whole, in order: record 9 and DFU's shallow-water tiles. */
 export const PUDDLE_RECORDS = Object.freeze([...new Set([...SHALLOW_DRAWN, ...SHALLOW_WHOLE])].sort((a, b) => a - b));

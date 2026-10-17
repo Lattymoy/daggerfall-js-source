@@ -5,7 +5,7 @@
     "old": "export const LAMP_KEEPER_ODDS = 25;",
     "new": "export const LAMP_KEEPER_ODDS = 20;",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "(pn.textureArchive === LAMP_KEEPER_ARCHIVE && LAMP_KEEPER_RECORDS.includes(pn.textureRecord))",
     "new": "(pn.textureArchive === LAMP_KEEPER_ARCHIVE)",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "!!pn && isShop(buildingType)\n",
     "new": "!!pn\n",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": " ^ Math.imul(day | 0, 0x85ebca6b)",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": " ^ Math.imul(buildingKey | 0, 0x9e3779b1)",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "say(LAMP_TEXT.granted()); announce('title', LAMP_TITLE); return 'granted';",
     "new": "say(LAMP_TEXT.granted()); return 'granted';",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (a?.ok && a.data?.granted === true) { done = true;",
     "new": "if (a?.ok && a.data?.granted === true) {",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const tell = (k, text) => { if (!told.has(k)) { told.add(k); say(text); } };",
     "new": "  const tell = (k, text) => { say(text); };",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if (busy) return 'busy';\n",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (!player?.handle) return { granted: false, why: 'guest' };\n",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "WHERE id = ?1 AND lamp_title = 0",
     "new": "WHERE id = ?1",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.lamp_title) === 1) held.push(LAMP_TITLE);",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.lamp_title) === 1) held.push(LAMP_TITLE);",
     "new": "  if (Number(player?.lamp_title) === 1) held.push(LAMP_TITLE);",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "Object.assign(pn, { lamp: true, _mwLook: null });",
     "new": "Object.assign(pn, { lamp: true });",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    renderer.uploadTexture(LAMP_ARCHIVE, 0, t.getColor32(t.getDFBitmap(LAMP_CLASSIC.record, 0), 0));",
     "new": "    uploadRecord(LAMP_CLASSIC.archive, LAMP_CLASSIC.record);",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (!info && pn?.lamp) { lampChoice(pn); return; }",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": " ?? (pn?.lamp ? LAMP_TEXT.name() : null);",
     "new": ";",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  '/v1/lamp/claim',   // LAMP-KEEPER II",
     "new": "  // LAMP-KEEPER II",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "|| (!!buildingFactionId && pn.factionID === buildingFactionId)",
     "new": "|| false",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "if (id !== whose) { whose = id; done = false; told.clear(); }",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      if (who() !== id) return 'failed';",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "tell('signin', LAMP_TEXT.signin()); return 'signin';",
     "new": "tell('offline', LAMP_TEXT.offline()); return 'offline';",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "if (r?.error === 'auth') forgetSession(storage); return r; }",
     "new": "return r; }",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    pn.width = size.w;\n    pn.height = size.h;\n    if (!peopleBuilt || !pn.stood || pn.standBatch) return;\n    renderer.uploadTexture(LAMP_ARCHIVE",
     "new": "    if (!peopleBuilt || !pn.stood || pn.standBatch) return;\n    renderer.uploadTexture(LAMP_ARCHIVE",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    billboardBatches.push(pn.standBatch);\n  })().catch((e) => console.error('[interior] lamp stand failed:', e));",
     "new": "  })().catch((e) => console.error('[interior] lamp stand failed:', e));",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    if (!peopleBuilt || !pn.stood || pn.standBatch) return;\n    renderer.uploadTexture(LAMP_ARCHIVE",
     "new": "    renderer.uploadTexture(LAMP_ARCHIVE",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "const lines = lampLines(Math.floor(worldMinutes() / MINUTES_PER_DAY));",
     "new": "const lines = [];",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "claim: host.lampClaim ? () => host.lampClaim() : null,",
     "new": "claim: null,",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    account: () => host.lampAccount?.() ?? null,",
     "new": "",
     "tests": [
-      "test/lampkeeper2.test.js"
+      "test/server/lampkeeper2.test.js"
     ]
   }
 ]

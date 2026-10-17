@@ -5,7 +5,7 @@
     "old": "  const said = raid ?? (relay ? raidOnMyPixel(now) : null);",
     "new": "  const said = raid;",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "r.px === px.x && r.py === px.y && (r.killed > 0 || r.struck)) ?? null;",
     "new": "r.px === px.x && r.py === px.y) ?? null;",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "raidActive(r, now) && r.px === px.x && r.py === px.y && (r.killed > 0 || r.struck)",
     "new": "raidActive(r, now) && (r.killed > 0 || r.struck)",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  _live = _live.filter((e) => e.kind === 'raider' && e.foe.dead && !e.counted);\n",
     "new": "",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  _live = _live.filter((e) => e.kind === 'raider' && e.foe.dead && !e.counted);",
     "new": "  _live = [];",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    raidPoolCleared();   // FIELD BUGS 2026-10-11g RAID-WORD: the raiders and defenders the sweep took (exteriorFoes and cityGuards clearLive, above) hold the raid's places no longer\n",
     "new": "",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const led = typeof relay === 'function' ? relay(raidKey(r)) : null;",
     "new": "    const led = null;",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    const target = Number.isInteger(led?.tg) && led.tg > 0 ? led.tg : r.attackAmount;",
     "new": "    const target = r.attackAmount;",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState })",
     "new": "localTime: sharedClockOn() ? eventLocalTime : null })",
     "tests": [
-      "test/fb1011g_raidword.test.js"
+      "test/systems/fb1011g_raidword.test.js"
     ]
   }
 ]

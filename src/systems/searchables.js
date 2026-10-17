@@ -37,11 +37,12 @@ import { isShopShelfModel } from './shopStock.js';
 import { registerModSaveData } from './modSaveData.js';
 import { eliteHash, eliteRng, elitesAllowed, eliteRenownOpen } from './eliteFoes.js';   // AUDIT BAL: and where elites stand at all; RENOWN-GATE: and the searcher's Renown
 import { goldStack } from './inventory.js';
-import { createRandomWeapon, createRandomArmor, createRandomJewellery, createRandomReligiousItem, createRandomGem, createRandomClothing, createRandomPotion } from './loot.js';
+import { createRandomWeapon, createRandomArmor, createRandomJewellery, createRandomReligiousItem, createRandomGem, createRandomClothing, createRandomPotion } from './loot/loot.js';
 import { createRandomBook } from './books.js';
-import { setItemFields, mintCondition, isAmmunition } from './itemTemplates.js';
-import { rollLootRarity, pileSource } from './lootRarity.js';
+import { setItemFields, mintCondition, isAmmunition } from './item/itemTemplates.js';
+import { rollLootRarity, pileSource } from './loot/lootRarity.js';
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { WATER_SPECIES } from '../characters/dungeonEnemies.js';   // SLAUGHTER-BOX: a search's foe stands on the floor, never a swimmer
 
 // ── reach and time ──────────────────────────────────────────────────
 /** Half a door's reach (DoorActivationDistance, 128 classic units): 64 units, 1.6 m. */
@@ -118,9 +119,10 @@ export function pickSearchUndead(level = 1, rolls = Math.random) {
   return pool[Math.min(pool.length - 1, Math.floor(rolls() * pool.length))].type;
 }
 /** A chest's or a crate's foe: one of the kinds this dungeon already stands (its own roster, the layout's), else an
- *  undead. */
+ *  undead. SLAUGHTER-BOX (FIELD BUGS 2026-10-15c): never one of the roster's water species - it stands on the dry floor
+ *  beside the box, and a Slaughterfish, a Dreugh or a Lamia stands in the roster only for a marker under water. */
 export function pickRosterFoe(roster, level = 1, rolls = Math.random) {
-  const pool = [...new Set((roster ?? []).filter((t) => Number.isInteger(t) && t >= 0))];
+  const pool = [...new Set((roster ?? []).filter((t) => Number.isInteger(t) && t >= 0 && !WATER_SPECIES.has(t)))];
   if (!pool.length) return pickSearchUndead(level, rolls);
   return pool[Math.min(pool.length - 1, Math.floor(rolls() * pool.length))];
 }
@@ -302,7 +304,7 @@ export function searchMessage(kind, outcome, { foeName = 'creature', elite = fal
 
 // ── THE ONE CONSTRUCTION SEAM for a find (both hosts call it) ───────
 const finish = (raw) => (raw ? mintCondition(setItemFields(raw)) : null);
-/** The goods' minters, DFU's ItemBuilder doors (systems/loot.js, systems/books.js). Never ammunition. */
+/** The goods' minters, DFU's ItemBuilder doors (systems/loot/loot.js, systems/books.js). Never ammunition. */
 export function searchMinters(gender = 'male') {
   return {
     weapon: (lv, r) => { const w = createRandomWeapon(lv, r); return w && !isAmmunition(w) ? finish(w) : null; },

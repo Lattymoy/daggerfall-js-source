@@ -5,7 +5,7 @@
     "old": "    if (laid.has(b.blockName)) {\n",
     "new": "    if (false) {\n",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      const at = pool.findIndex((p) => p.blockName === b.blockName);\n",
     "new": "      const at = randomRange(0, pool.length);\n",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        const other = pool[(at + k) % pool.length];\n",
     "new": "        const other = pool[(at + pool.length - k) % pool.length];\n",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (/^b/i.test(b.blockName)) continue;\n    if (laid.has(b.blockName)) {\n",
     "new": "    if (laid.has(b.blockName)) {\n",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        if (laid.has(other.blockName)) continue;\n",
     "new": "",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "...(distinct ? { distinct: true } : {})",
     "new": "...({})",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (isMediumDungeon(dfLocation)) return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;",
     "new": "if (isMediumDungeon(dfLocation)) return MEDIUM_DUNGEONS_STATE;",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "export const MEDIUM_DISTINCT_STAMP = 5;",
     "new": "export const MEDIUM_DISTINCT_STAMP = 4;",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n",
     "new": "  relayDungeonPlaces(quest, { only });\n",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (!questRunning(quest) || !portSize(quest.smallerDungeonsState)) return false;",
     "new": "  if (!questRunning(quest)) return false;",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (!questRunning(quest) || !portSize(quest.smallerDungeonsState)) return false;",
     "new": "  if (!portSize(quest.smallerDungeonsState)) return false;",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n  putBackPlacements(quest, env);\n",
     "new": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  const only = (sd, location) => location.dungeon?.distinct === true\n    && (",
     "new": "  const only = (sd, location) => true\n    && (",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
     "new": "    && true;",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
     "new": "    && ((machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
@@ -140,25 +140,25 @@
     "old": "    if (only && !only(sd, location)) continue;\n",
     "new": "",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
     "name": "MD-relay-unwired",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      relayMovedLayouts(machine, { carriesQuestItem: (item) => ctx.carriesQuestItem?.(item) ?? false });\n",
     "new": "",
     "tests": [
-      "test/mediumdistinct.test.js"
+      "test/systems/quest/mediumdistinct.test.js"
     ]
   },
   {
     "name": "MD-relay-the-share-unlaid",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "old": "    relayQuestMovedLayout(q, machine, { carriesQuestItem: ctx.carriesQuestItem ?? null }, online);\n",
     "new": "",
     "tests": [
-      "test/sd20g_delve.test.js"
+      "test/systems/quest/sd20g_delve.test.js"
     ]
   }
 ]

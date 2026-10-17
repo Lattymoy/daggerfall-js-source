@@ -11,7 +11,7 @@
 // party (green), is this peer a friend, what does the badge count, what does a note say in words. Nothing here
 // talks to a socket: the session (net/online.js) hands frames in through `apply` and `applyParty`, and the panels
 // send acts through the session's `sendSocial`. So the whole thing is driven with plain objects and no browser
-// (test/soc2_session.test.js), which is what lets the awkward cases - a member with two tabs, an invite that lapsed
+// (test/net/soc2_session.test.js), which is what lets the awkward cases - a member with two tabs, an invite that lapsed
 // while the panel was closed, a note about myself - be written down as pins rather than as hopes.
 //
 // PEERS, NOT ACCOUNTS, IN THE WORLD. Everything drawn over a body in the world is keyed by PEER id (a tab's), and a

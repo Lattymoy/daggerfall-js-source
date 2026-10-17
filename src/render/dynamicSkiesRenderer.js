@@ -58,10 +58,10 @@
 // never had - see the block itself.
 
 import { DITHER_GLSL, BAYER_MEAN } from './orderedDither.js';   // PS2: the port's retro pass, shared with the dome and the clouds
-import { MATERIAL_DEFAULTS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, srgbToLinear } from '../systems/dynamicSkies.js';
+import { MATERIAL_DEFAULTS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, srgbToLinear } from '../systems/dynamicSkies/dynamicSkies.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
-import { SD_BRASS_GLSL } from '../world/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
+import { SD_BRASS_GLSL } from '../world/superDungeon/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
 
 /** Which material properties are COLOURS (SetColor -> linearised at
  *  upload under linear colour space). Every other vec4 is SetVector. */
@@ -94,7 +94,7 @@ const ST_PROPERTIES = TEXTURE_SLOTS.map((s) => s + '_ST');
  *  uniform the GLSL declares (the DS1 review found `_CloudTopColorBoost`
  *  read by the shader and fetched by nobody, so its upload was a silent
  *  no-op and the mod's red-only boost never happened). Pinned against
- *  the FS's own declarations in test/dynamicSkies.test.js. */
+ *  the FS's own declarations in test/systems/dynamicSkies.test.js. */
 export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uBandDither', 'uDread', 'uBrass', '_WorldSpaceLightPos0', '_LightColor0',
   '_CloudTopColorBoost',   // the float3-fed-by-a-float quirk, uploaded apart from the float list
   ...FLOAT_PROPERTIES, ...COLOR_PROPERTIES, ...VEC4_RAW, ...VEC3_RAW, ...TEXTURE_SLOTS, ...ST_PROPERTIES]);
@@ -803,7 +803,7 @@ export class DynamicSkiesRenderer {
     this.textures = new Map();
     /** EVENT1: the live event's grade over the dome, 0..1 (world/dreadSky.js) - the host's. */
     this.dread = 0;
-    /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/sdBrassSky.js) - the host's. */
+    /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/superDungeon/sdBrassSky.js) - the host's. */
     this.brass = 0;
     this.bandDither = true;                            // PS3: the ordered dither over the mod's own colour reduction; false is its raw ceil, 1:1
     this.cloudsExternal = false;                       // DS2: the volumetric clouds are drawn over this pass - its two cloud sheets stand down (the dome's cloudsExternal, one pass over)

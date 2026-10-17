@@ -3,7 +3,7 @@
 // SwiftShader (bible/07-Rendering/Enhanced-Lighting-Arc.md INTERIOR-DIM).
 //
 // No game data: the room is boxes under flat synthetic textures (dark green walls, brown floor, wood above), its lamps
-// AddLight's second switch's own (world/interiorLights.js interiorLightProperties) at DaggerfallInterior's ambient. Two
+// AddLight's second switch's own (world/interior/interiorLights.js interiorLightProperties) at DaggerfallInterior's ambient. Two
 // rooms - a tavern (four hung lanterns, two candles, a mounted torch and a prefab-white lamp) and a hall (two hung
 // lanterns, the screenshot Mac sent) - each drawn twice: BEFORE (the colour x intensity the hosts uploaded, the lane's
 // default eye) and AFTER (interiorLightColor and interiorGrade, as both interior hosts now call them). Each runs eight
@@ -38,7 +38,7 @@ const shots = await page.evaluate(async () => {
   const W = 480, H = 270;
   const { Renderer, WORLD_FRAME } = await import('/src/render/renderer.js');
   const { EL_LANE, EL_EXPOSURE, interiorLightColor, interiorGrade } = await import('/src/render/enhancedLighting.js');
-  const { INTERIOR_AMBIENT, INTERIOR_LIGHT_DIR, interiorLightProperties } = await import('/src/world/interiorLights.js');
+  const { INTERIOR_AMBIENT, INTERIOR_LIGHT_DIR, interiorLightProperties } = await import('/src/world/interior/interiorLights.js');
   const { perspective, lookAt, mirrorProjectionX, identity } = await import('/src/world/mat4.js');
   const tex = (base, spread) => {
     const w = 32, h = 32, colors = new Uint8Array(w * h * 4);

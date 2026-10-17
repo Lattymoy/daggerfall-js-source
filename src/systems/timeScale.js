@@ -28,7 +28,7 @@
 // step by the same number (player/motor.js); and (CSA-G) the HUD's two
 // message clocks, which DFU counts in `Time.deltaTime` - game time -
 // where the port hands its HUD the frame's real dt (ui/midScreenText.js,
-// ui/hudText.js). The mods whose Unity code reads `Time.timeScale` read
+// ui/hud/hudText.js). The mods whose Unity code reads `Time.timeScale` read
 // it here too (AUDIT OW5, the audit before the merge, counted them: the
 // bands' and the raiders' chases, the sea's helm, Come Sail Away, Warm
 // Ashes, the horse and cart, Deep Waters, Ocean Holes). A system that
@@ -40,10 +40,10 @@
 // `_overlayHeld`), which is older than this module and stays as it is.
 // This scale is the travel acceleration, or (CSA-G) Come Sail Away's
 // helm's - its time keys walk the five steps 1, 5, 10, 15, 30
-// (systems/comeSailAway.js SetTimeScale) - and it is 1 whenever neither
+// (systems/comeSailAway/comeSailAway.js SetTimeScale) - and it is 1 whenever neither
 // runs.
 
-import { paceRateOn, ROAD_PACE_MAX, OPEN_PACE_MAX } from './travelPace.js';   // PACE-DIALS: the player's speed dial, under the road rule - and its two ceilings, declared there once
+import { paceRateOn, ROAD_PACE_MAX, OPEN_PACE_MAX } from './travel/travelPace.js';   // PACE-DIALS: the player's speed dial, under the road rule - and its two ceilings, declared there once
 
 /** The scale a journey may never exceed. The mod's own AccelerationLimit
  *  slider stopped at 100 (modsettings.json), and a scale beyond that is
@@ -57,14 +57,14 @@ export const MAX_TIME_SCALE = 100;
  *  are gone; a fast traveller on a road or a track runs at the road's
  *  rate and anywhere else - the open ground, a town's ring, the sea - at
  *  the open rate. What still holds the clock under the rate is not a
- *  dial: the land loading (systems/travelGovernor.js), an alerted enemy
- *  (systems/travelThreat.js) and the ring walk's own ceiling
+ *  dial: the land loading (systems/travel/travelGovernor.js), an alerted enemy
+ *  (systems/travel/travelThreat.js) and the ring walk's own ceiling
  *  (travelPaths.js MAX_CIRCUMNAVIGATION_ACCEL). */
-export const TRAVEL_ROAD_RATE = ROAD_PACE_MAX;   // PACE-DIALS: the dial's top (MAX_TIME_SCALE, pinned equal - test/pacedials.test.js)
+export const TRAVEL_ROAD_RATE = ROAD_PACE_MAX;   // PACE-DIALS: the dial's top (MAX_TIME_SCALE, pinned equal - test/systems/travel/pacedials.test.js)
 export const TRAVEL_OPEN_RATE = OPEN_PACE_MAX;
 /** The rate a fast traveller's ground asks for: a road or a track, or not. PACE-DIALS (2026-10-06, the player: "Revert
  *  back to the overworld timer multiplier for ppl to set to 60x and 100x on roads"): the two rates above are now the
- *  CEILINGS of the player's speed dial (systems/travelPace.js: x100 a road's alone, x60 anywhere else). */
+ *  CEILINGS of the player's speed dial (systems/travel/travelPace.js: x100 a road's alone, x60 anywhere else). */
 export const travelRateOf = (onRoad) => paceRateOn(onRoad);
 
 let _scale = 1;

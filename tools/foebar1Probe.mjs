@@ -24,8 +24,8 @@ const OUT = process.env.FOEBAR1_OUT ?? join(ROOT, 'tools');
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FOEBAR1 probe</title>
 <style>html,body{margin:0;height:100%;background:#3a4a5a;overflow:hidden}</style></head><body>
 <script type="module">
-import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
-import { markFoeStruck, clearFoeTarget } from '/src/ui/hudFoeTarget.js';
+import { drawEnhancedHud } from '/src/ui/enhanced/enhancedHud.js';
+import { markFoeStruck, clearFoeTarget } from '/src/ui/hud/hudFoeTarget.js';
 import { setPref, getPref } from '/src/systems/uiPrefs.js';
 const e = { name: 'Aelwyn', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48, willpower: 50, intelligence: 50 },
   health: 30, maxHealth: 40, fatigue: 100, maxFatigue: 200, magicka: 10, maxMagicka: 20, items: [], spells: [] };

@@ -1,6 +1,6 @@
 // TACT4 - A FOE'S TELEGRAPH, COMPILED, LINKED AND DRAWN IN A REAL BROWSER.
 //
-// node holds the law (test/tact4.test.js: the shader's reading held to inBlow point for point); what node cannot
+// node holds the law (test/characters/enemy/tact4.test.js: the shader's reading held to inBlow point for point); what node cannot
 // answer is whether the GLSL compiles and links in a real WebGL2 context and whether the shape lands on the ground -
 // lit inside, dark outside, dim through its wind-up, bright at the landing. So: the repo's own modules served as they
 // are, a grey ground drawn by a stand-in shader, the pass drawn by its own class, and the frame read back.

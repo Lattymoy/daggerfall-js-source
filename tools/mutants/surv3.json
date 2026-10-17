@@ -5,7 +5,7 @@
     "old": "  if (kind === CAMP_KIND.Tent && place.insideDungeon) return { ok: false, text: CAMP_TEXT.noTentBelow };",
     "new": "",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if ((camp.wear | 0) <= 0) return false;   // REST2: no fuel, no fire - AUDIT REST F8: and a worn-through tent's neither\n",
     "new": "",
     "tests": [
-      "test/rest2_campfire.test.js"
+      "test/systems/rest2_campfire.test.js"
     ],
     "note": "AUDIT REST (PIN MOVED): re-aimed by content."
   },
@@ -24,7 +24,7 @@
     "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now);",
     "new": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !fireLit(camp, now);",
     "tests": [
-      "test/rest2_campfire.test.js"
+      "test/systems/rest2_campfire.test.js"
     ],
     "note": "REST6 (PIN MOVED): re-aimed by content. AUDIT REST (PIN MOVED): re-aimed by content."
   },
@@ -34,7 +34,7 @@
     "old": "  if (i >= 0) list.splice(i, 1);\n  const text = kind === CAMP_KIND.Tent ? CAMP_TEXT.pitched : CAMP_TEXT.lit;",
     "new": "  const text = kind === CAMP_KIND.Tent ? CAMP_TEXT.pitched : CAMP_TEXT.lit;",
     "tests": [
-      "test/rest2_campfire.test.js"
+      "test/systems/rest2_campfire.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "  const cooked = createSurvivalItem(f.cooks, { foodStage: Math.max(0, foodStage(item) - 1) });",
     "new": "  const cooked = createSurvivalItem(f.cooks, { foodStage: foodStage(item) });",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES,",
     "new": "minutes: COOK_MINUTES,",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "    if (!fireLit(c, now)) continue;\n    const d = Math.hypot(",
     "new": "    const d = Math.hypot(",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "  if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[2]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;",
     "new": "",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  const kept = (camps ?? []).filter((c) => c.owner !== owner);",
     "new": "  const kept = [...(camps ?? [])];",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push({ key: 'pack',",
     "new": "  if (!camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push({ key: 'pack',",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ],
     "note": "AUDIT REST-PARTY (PIN MOVED): the row asks fuel of a fire too."
   },
@@ -98,8 +98,8 @@
     "old": "      if (c.owner == null && campExpired(c.rec, t)) { drop(c); onChanged?.(); continue; }",
     "new": "",
     "tests": [
-      "test/auditrest.test.js",
-      "test/surv3_camps.test.js"
+      "test/systems/survival/auditrest.test.js",
+      "test/systems/survival/surv3_camps.test.js"
     ],
     "note": "AUDIT REST (PIN MOVED): re-aimed by content."
   },
@@ -109,7 +109,7 @@
     "old": "    for (let i = camps.length - 1; i >= 0; i--) if (camps[i].pixelKey === key) { unmount(camps[i]); camps.splice(i, 1); }",
     "new": "",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -118,7 +118,7 @@
     "old": "    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
     "new": "    if (typeof owner !== 'string' || !owner) return false;",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -127,7 +127,7 @@
     "old": "  const ground = Number.isFinite(doorDistance) ? { key: GROUND_KEY, distance: doorDistance } : null;",
     "new": "  const ground = null;",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
@@ -136,16 +136,16 @@
     "old": "  cache.scenes.set(sceneName, copySceneEntry(entry));",
     "new": "  cache.scenes.set(sceneName, { ...copySceneEntry(entry), camps: [] });",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   },
   {
     "name": "SURV3-the-classic-pack-keeps-the-window-open",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "      if (this.hooks.placeCamp) { this._closeSilently(); this.hooks.placeCamp(r.item, collection); }",
     "new": "      if (this.hooks.placeCamp) { this.hooks.placeCamp(r.item, collection); }",
     "tests": [
-      "test/surv3_camps.test.js"
+      "test/systems/survival/surv3_camps.test.js"
     ]
   }
 ]

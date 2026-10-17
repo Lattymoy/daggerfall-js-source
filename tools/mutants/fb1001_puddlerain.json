@@ -5,7 +5,7 @@
     "old": "    const _dwPrecipOff = _dwAirOff;",
     "new": "    const _dwPrecipOff = _dwAirOff || (!!dwPlayer && walkMode && !!player.isPlayerSwimming && !player.waterWalking);",
     "tests": [
-      "test/fb1001_puddlerain.test.js"
+      "test/player/fb1001_puddlerain.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const _dwPrecipOff = _dwAirOff;",
     "new": "    const _dwPrecipOff = false;",
     "tests": [
-      "test/fb1001_puddlerain.test.js"
+      "test/player/fb1001_puddlerain.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (sand && !_dwPrecipOff) {",
     "new": "      if (sand) {",
     "tests": [
-      "test/fb1001_puddlerain.test.js"
+      "test/player/fb1001_puddlerain.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {",
     "new": "        if ((!_travelWeatherOff || tvf)) {",
     "tests": [
-      "test/fb1001_puddlerain.test.js"
+      "test/player/fb1001_puddlerain.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    };\n    // BOLT: the burning channels",
     "new": "    };\n    drawFalling();\n    // BOLT: the burning channels",
     "tests": [
-      "test/fb1001_puddlerain.test.js"
+      "test/player/fb1001_puddlerain.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {",
     "new": "        if (!_travelWeatherOff && !_dwPrecipOff) {",
     "tests": [
-      "test/fb1001_puddlerain.test.js"
+      "test/player/fb1001_puddlerain.test.js"
     ]
   }
 ]

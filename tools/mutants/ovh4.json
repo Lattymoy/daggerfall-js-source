@@ -3,7 +3,7 @@
     "name": "OVH4-door-skin-only",
     "file": "src/ui/restDoor.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "(isEnhanced() || deps?.partyRest?.() === true)",
     "new": "isEnhanced()"
@@ -12,7 +12,7 @@
     "name": "OVH4-door-truthy",
     "file": "src/ui/restDoor.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "deps?.partyRest?.() === true",
     "new": "deps?.partyRest?.()"
@@ -21,7 +21,7 @@
     "name": "OVH4-door-ignores-dom",
     "file": "src/ui/restDoor.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "if (typeof document !== 'undefined' && (isEnhanced() || deps?.partyRest?.() === true))",
     "new": "if (isEnhanced() || deps?.partyRest?.() === true)"
@@ -30,7 +30,7 @@
     "name": "OVH4-pose-classic-unmirrored",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "    const restWin = mode === 'interior' ? modes?.restState",
     "new": "    const restWin = !isEnhanced() ? null : mode === 'interior' ? modes?.restState"
@@ -39,7 +39,7 @@
     "name": "OVH4-gate-classic-solo",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "  const partyRestGate = () => {\n    if (!social?.party) return null;\n",
     "new": "  const partyRestGate = () => {\n    if (!social?.party) return null;\n    if (!isEnhanced()) return null;\n"
@@ -48,7 +48,7 @@
     "name": "OVH4-reset-classic-skipped",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "  const markPartyRestSpent = () => {\n",
     "new": "  const markPartyRestSpent = () => {\n    if (!isEnhanced()) return;\n"
@@ -57,7 +57,7 @@
     "name": "OVH4-tally-classic-silent",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether() || sharedClockOn()) { _partyRestVoteLastReady = null;",
     "new": "    if (!isEnhanced() || !social?.party || modes?.insidePartyRestExempt || !restTogether() || sharedClockOn()) { _partyRestVoteLastReady = null;",
@@ -67,7 +67,7 @@
     "name": "OVH4-follow-classic-never",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "    // OVH4: a mirror opens on either skin - the party card (ui/restDoor.js); see partyRestGate's own doc comment.\n",
     "new": "    // OVH4: a mirror opens on either skin - the party card (ui/restDoor.js); see partyRestGate's own doc comment.\n    if (!isEnhanced()) return;\n"
@@ -76,7 +76,7 @@
     "name": "OVH4-here-ignores-tavern",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "const partyRestHere = () => !sharedClockOn() && !!social?.party && !modes?.insidePartyRestExempt && restTogether();",
     "new": "const partyRestHere = () => !sharedClockOn() && !!social?.party && restTogether();",
@@ -86,7 +86,7 @@
     "name": "OVH4-outdoor-unsaid",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "    partyRest: () => partyRestHere(),   // OVH4",
     "new": "    // OVH4"
@@ -95,7 +95,7 @@
     "name": "OVH4-mirror-unsaid",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "    partyRest: () => true,   // OVH4",
     "new": "    // OVH4"
@@ -104,7 +104,7 @@
     "name": "OVH4-host-hook-dropped",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "    partyRestHere: () => partyRestHere(),   // OVH4",
     "new": "    // OVH4"
@@ -113,7 +113,7 @@
     "name": "OVH4-interior-unsaid",
     "file": "src/scenes/worldModes.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "    partyRest: () => host.partyRestHere?.() === true,   // OVH4",
     "new": "    // OVH4"
@@ -122,7 +122,7 @@
     "name": "OVH4-dungeon-forward-dropped",
     "file": "src/scenes/worldModes.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "          partyRestHere: () => host.partyRestHere?.() === true,   // OVH4",
     "new": "          // OVH4"
@@ -131,7 +131,7 @@
     "name": "OVH4-dungeon-unsaid",
     "file": "src/scenes/dungeonContext.js",
     "tests": [
-      "test/ovh4_partyrest.test.js"
+      "test/scenes/ovh4_partyrest.test.js"
     ],
     "old": "    partyRest: () => opts.partyRestHere?.() === true,   // OVH4",
     "new": "    // OVH4"

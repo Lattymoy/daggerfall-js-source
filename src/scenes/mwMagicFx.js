@@ -7,8 +7,8 @@
 // target spell flies as (ProjectileManager::launchMagicBolt / createModel: the bolt's mesh at the missile, turned to its
 // flight and spinning a turn a second about it), the hit on whoever a spell lands on (playEffects), and the burst where
 // an area goes off (CastSpell::explodeSpell: the area visual at twice the area's feet in scale). The visuals, their
-// particle textures and the bolt's colours are the player's own masters' (formats/mwSpellFx.js plans them); the meshes
-// run on formats/mwVfx.js and draw through the renderer's particle path in the world pass (render/vfxGpu.js).
+// particle textures and the bolt's colours are the player's own masters' (formats/morrowind/mwSpellFx.js plans them); the meshes
+// run on formats/morrowind/mwVfx.js and draw through the renderer's particle path in the world pass (render/vfxGpu.js).
 //
 // ONE ENGINE, FOUR HOSTS. scenes/hostMagic.js - the player-cast engine every host shares (the dungeon, the street, the
 // interior through the street's, the exterior) - makes one of these and drives it from its own doors: the cast's start
@@ -19,7 +19,7 @@
 // THE PLACEMENTS (the reference's):
 //   an actor's effect  at its feet - the object root (Animation::addEffect, bone ""); a creature's scaled and lifted
 //                      by its own size (the !isNpc autoTransform: max(x, y, z/2) / 64 when that passes 1, the offset
-//                      off a 128-unit body) - formats/mwSpellFx.js actorFxTransform
+//                      off a 128-unit body) - formats/morrowind/mwSpellFx.js actorFxTransform
 //   a burst            at the point, area x 2 in scale, no turn (EffectManager::addEffect - position and scale alone)
 //   a bolt             at the missile, its +Y along the flight (launchMagicBolt's pitch then yaw), spinning about -Y
 //
@@ -33,9 +33,9 @@
 //     look is its element's harm), and the creatures' and other players' VFX_Hands.
 
 import { fpArm, mwSpellPlan, loadMwEffectMesh, loadMwEffectTextures } from '../combat/fpArm.js';
-import { createVfx, vfxCapacity, vfxTextures } from '../formats/mwVfx.js';
-import { boltAttitude, boltSpin, areaVisualScale, actorFxTransform } from '../formats/mwSpellFx.js';
-import { MW_UNITS_PER_METER } from '../formats/mwFirstPerson.js';
+import { createVfx, vfxCapacity, vfxTextures } from '../formats/morrowind/mwVfx.js';
+import { boltAttitude, boltSpin, areaVisualScale, actorFxTransform } from '../formats/morrowind/mwSpellFx.js';
+import { MW_UNITS_PER_METER } from '../formats/morrowind/mwFirstPerson.js';
 import { createVfxGpu } from '../render/vfxGpu.js';
 import { getPref } from '../systems/uiPrefs.js';
 

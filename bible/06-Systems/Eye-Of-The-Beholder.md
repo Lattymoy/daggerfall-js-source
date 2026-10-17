@@ -7,7 +7,7 @@ cites its IL offset, and the two things Mac saw (the frame chopping,
 the sprite turning the wrong way) were both in it. See "What is and is
 not ported" below for the count - forty-six of sixty-one authored
 methods (CSA-J added two, ONE-STROKE retired one), fifteen with no twin here, checkable in
-`test/eotb_scope.test.js` - and the EOTB-IL section at the foot for
+`test/player/eyeOfTheBeholder/eotb_scope.test.js` - and the EOTB-IL section at the foot for
 the findings. Vendor record and the permission line:
 `vendor/eye-of-the-beholder/README.md`. Registry row:
 `01-Overview/Mod-Registry.md`.
@@ -67,7 +67,7 @@ implements **forty-six** of them, every one read off the IL:
 | `InitializeTextures` (state) | `preload` |
 | `Update`, `LateUpdate` (billboard) | `update`, `lateUpdate` |
 
-**Fifteen have no twin**, every one a row in `test/eotb_scope.test.js`
+**Fifteen have no twin**, every one a row in `test/player/eyeOfTheBeholder/eotb_scope.test.js`
 with its reason: `PlayAnimationPingPongCoroutine`, ported and then RETIRED by
 ONE-STROKE (a blow plays one stroke; the ping-pong was a second movement); the Unity lifecycle and component methods (`Awake` on
 both types, `Init`, `get_pivotLocal`, `get_IsReady`, `SetKeyFromText`,
@@ -91,7 +91,7 @@ is the check.
 ### The dead exports
 
 Four exports of the arc are called by nothing - not even their own
-module - and each is listed in `test/eotb_scope.test.js` with a reason,
+module - and each is listed in `test/player/eyeOfTheBeholder/eotb_scope.test.js` with a reason,
 the set DERIVED rather than typed: `tableKeys` (what a pre-load would
 fetch per table; the body walks `TABLE_FRAMES` itself), `OVERRIDE_ORDER`
 (the override sections' precedence, spelled once to read `posOffset`
@@ -187,7 +187,7 @@ Checked both ways, on AUDIT 27 F302's lesson: no stranger under the
 directory (our own artwork dropped into the mod's folder is the shape a
 bare directory row would wave through), and no picture the manifest
 names that the tree failed to carry. Both arms are pinned non-vacuously
-in `test/doctrine.test.js`.
+in `test/tooling/doctrine.test.js`.
 
 ## The departures
 
@@ -213,7 +213,7 @@ Three, each marked where it lands in `src/systems/modSettings.js`.
    door and in by `mwIntoHead`; refused in the Morrowind saddle
    (RIDE-POV), while the travel view holds the body, and where no body
    can show. The mod's `KeypadEnter` stays inert (Numpad Enter is Come
-   Sail Away's time-scale reset). `test/viewtoggle.test.js`,
+   Sail Away's time-scale reset). `test/player/viewtoggle.test.js`,
    `tools/mutants/viewtoggle.json`.
 3. **`Camera.SwitchShoulder` ships `Tab`; the port binds `B`.** HT4's
    finding again, same author, same key: Tab is free in Daggerfall
@@ -228,7 +228,7 @@ the string as a binding, which it is not and never could be.
 
 ## The camera (EOTB2), as the IL has it
 
-`src/player/eotbCamera.js`, and the derivation worth keeping:
+`src/player/eyeOfTheBeholder/eotbCamera.js`, and the derivation worth keeping:
 
     posOffset  = boat, then mount, then weapon, then base - the FIRST
                  arm that matches returns, so a mounted player with a
@@ -284,7 +284,7 @@ spends them the same way.
 
 ## The player sprite (EOTB3)
 
-`src/player/eotbBillboard.js`. **The state table is one law, not 168
+`src/player/eyeOfTheBeholder/eotbBillboard.js`. **The state table is one law, not 168
 rows.** `InitializeStates` writes out 21 arrays of 8 - idle, move and
 death across melee, ranged and spell, plus the horse and both
 lycanthrope forms - and every one of the 168 follows the same wheel:
@@ -295,7 +295,7 @@ lycanthrope forms - and every one of the 168 follows the same wheel:
 
 which is classic Daggerfall's own 8-orientation layout - five drawn
 records front to back, the left half drawn flipped. The port already
-speaks it: `characters/mobilePerson.js` calls it "the MoveAnims wheel
+speaks it: `characters/mobile/mobilePerson.js` calls it "the MoveAnims wheel
 (records 0-4 mirrored - the monster layout)".
 
 That 0 of 168 deviate was checked mechanically against the IL, and the
@@ -580,14 +580,14 @@ bundle's range; the revert arm still honours a 0.
 the per-sprite offsets (`spriteInfo.json`, 288 rows - sign unknown),
 `TorchOffset`, and the exact mechanics behind the four `[SETTINGS]`
 laws above. Drop the shipped `.zip` where the port can read it and
-`test/eotb_scope.test.js`'s recipe reads it in an hour.
+`test/player/eyeOfTheBeholder/eotb_scope.test.js`'s recipe reads it in an hour.
 
 **EOTB-IL, the same day: read. Every item in this list is ported, at
 the foot of the page.**
 
 ### The pins
 
-`test/eotb_audit2.test.js`, 17 tests: the state law and the statue
+`test/player/eyeOfTheBeholder/eotb_audit2.test.js`, 17 tests: the state law and the statue
 walking through the seam; the rig's whole record derived from source
 and every host's thunk; the one-shots, the hold, Mirror and its revert,
 PingPong's order, Mixed's roll, the flip reaching the sprite KEY; the
@@ -676,7 +676,7 @@ one being added.
 
 ### The pins
 
-Two, appended to `test/eotb_audit2.test.js` (19 in the file now). A
+Two, appended to `test/player/eyeOfTheBeholder/eotb_audit2.test.js` (19 in the file now). A
 2x3 raster with a distinct colour per pixel goes through
 `worldOrderColors` and the pin asserts that pixel 0 of the answer is
 the raster's BOTTOM-left, that the answer is byte-equal to
@@ -704,7 +704,7 @@ on input."** And the uploaded file: the shipped
 ### The assembly is in the tree
 
 The `.dfmod` is a UnityFS archive and `Eye Of The Beholder.dll` rides
-in it as a TextAsset. The port's own reader (`formats/unityBundle.js`)
+in it as a TextAsset. The port's own reader (`formats/unity/unityBundle.js`)
 opened it - nothing new was needed - and `tools/eotbIl.mjs` writes the
 54,272-byte assembly out beside the art. `tools/ilDump.py` (dnfile +
 dncil, both installed through the proxy; `monodis` segfaults on this
@@ -743,7 +743,7 @@ negates the angle, which runs the wheel backwards: a player turning
 left was drawn from the right. `orientationFor(facing, toCamera)` is
 the IL's order now, and THE TURN pin holds the camera off the left at
 index 6 and off the right at 2. Worth a note for Mac's eye:
-`characters/mobileUnit.js`'s `mobileOrientation` - DFU's own
+`characters/mobile/mobileUnit.js`'s `mobileOrientation` - DFU's own
 `OrientEnemy` wheel for every foe - uses the OTHER sign, the one the
 old port had. That is DFU's law for foes and this mod's for the
 player, and both are pinned as they are; if a foe ever looks wrong
@@ -843,22 +843,22 @@ AUDIT-EOTB, writing without the assembly, counted 62 authored methods
 and listed a `PlayerBillboard::InitializeTextures` that does not exist
 - the texture walk is `PlayerBillboardState`'s alone; the 33rd body on
 the sprite is the compiler's `<FixedUpdate>b__96_0`. The count is
-**61**, and `test/eotb_scope.test.js` now reads the vendored dump: a
+**61**, and `test/player/eyeOfTheBeholder/eotb_scope.test.js` now reads the vendored dump: a
 row must be an authored method in it and none may be missing. Forty-
 five ported, sixteen with no twin, and no row is NOT DONE.
 
 ### The pins
 
-`test/eotb_billboard.test.js` (the laws: `TABLE_FRAMES` over all 23
+`test/player/eyeOfTheBeholder/eotb_billboard.test.js` (the laws: `TABLE_FRAMES` over all 23
 archives' art, THE TURN, the facing, the speed modifier, the footstep
 frames, the chooser, the one-shots' arithmetic, Mirror's records, the
-auto-toggle blocks), `test/eotb_body.test.js` (the machine: the chop
+auto-toggle blocks), `test/player/eyeOfTheBeholder/eotb_body.test.js` (the machine: the chop
 fix, the walk clock, the footfalls and their volume, the preload, the
 mirror upload, the stale batch, the placement arms, the FP billboard,
-UpdateMaterial, the four hosts), `test/eotb_audit2.test.js` (the
-integration, rewritten against the IL), `test/eotb_camera.test.js`
-(seven EOTB-IL pins appended), `test/eotb_wagon.test.js` (14, new) and
-`test/eotb_scope.test.js` (the ledger against the dump).
+UpdateMaterial, the four hosts), `test/player/eyeOfTheBeholder/eotb_audit2.test.js` (the
+integration, rewritten against the IL), `test/systems/eotb_camera.test.js`
+(seven EOTB-IL pins appended), `test/player/eotb_wagon.test.js` (14, new) and
+`test/player/eyeOfTheBeholder/eotb_scope.test.js` (the ledger against the dump).
 
 **Campaign: 30 mutants, 30 killed.** Hand-picked on the new laws, each
 applied in place and run against the EOTB suites, the race, the rig
@@ -910,7 +910,7 @@ The target is untouched, so the smoothing walks the camera back out when
 the wall is gone, and a wall that appears mid-walk pins the camera where
 it IS. A DEPARTURE from the assembly, the fourth (the wheel, the scroll
 default and the shoulder key are the other three), recorded in the Ledger
-row. Pinned in `test/eotb_camera.test.js` (26: a diagonal wall the axis
+row. Pinned in `test/systems/eotb_camera.test.js` (26: a diagonal wall the axis
 casts miss, a ceiling on the back-up diagonal, the straight-back number
 unchanged, the walk back out, the pin on the smoothed eye; the per-axis
 pin tells the port's cast from the mod's by its length);
@@ -952,7 +952,7 @@ four call sites), so no host learns the rule. `scenes/exterior.js`'s
 standalone ride-view predates the machine and skips the seam while
 riding (its own recorded law); there the rule is moot.
 
-**Pins** (`test/ridepov.test.js`, 4 - with `canThirdPerson` and
+**Pins** (`test/player/ridepov.test.js`, 4 - with `canThirdPerson` and
 `setViewMode` stubbed to serve, as `eotb_view.test.js` stubs the first,
 because without a body the frame's own fallback would mask the rule): a
 third-person rider lands in the head on the frame with the host's own
@@ -1001,7 +1001,7 @@ but its facing (`lastMoveDirection`), its frame clock and the placed base (`plac
 and behind: "Just have it show on the back of the sprite, not all angles. Make sure all the eye of the Beholder sprites
 get this change"; then, of the back diagonals it first let in: "It still shows on the back side angle").**
 
-- **The rule** (`player/eotbLantern.js isRearView`): the lantern's picture is drawn only from straight behind - the
+- **The rule** (`player/eyeOfTheBeholder/eotbLantern.js isRearView`): the lantern's picture is drawn only from straight behind - the
   one view that shows the sprite's back square on, orientation 4 - and from none of 0, 1, 2, 3, 5, 6, 7: not the back
   diagonals 3 and 5, which draw the back three-quarter. It is asked of the
   orientation UpdateBillboard last PAINTED (`shown.orientation`, the delayed repaint's), not of the one just measured,
@@ -1018,14 +1018,14 @@ get this change"; then, of the back diagonals it first let in: "It still shows o
 - **Unseen, it still hangs**: the swing runs on (`stepLantern` asks whether it HANGS, not whether it is drawn), the
   batch is kept, and the light stays at the hip - so turning round neither restarts the swing nor moves the light.
 - **Every EOTB sprite**: other players drawn online as the on-foot set they chose (DISC23-B's walkers,
-  `net/peerRiders.js`) hang it too, off their pose's `hl` (HT-WAIST-NET), by the same rule, art, hang and swing law,
+  `net/peer/peerRiders.js`) hang it too, off their pose's `hl` (HT-WAIST-NET), by the same rule, art, hang and swing law,
   swung off their own drawn motion; their riders and beasts hang none, as yours do not. It lights nothing on their
   side (the waist light is the local player's). Handheld-Torches.md HT-WAIST has the peers' wiring.
-- **One home**: `player/eotbLantern.js` holds everything the two share (the rule, `loadLanternArt` and the art store,
+- **One home**: `player/eyeOfTheBeholder/eotbLantern.js` holds everything the two share (the rule, `loadLanternArt` and the art store,
   the hang, the swing's drive, the batch); this body keeps whether it hangs and the light.
 
-Pins: `test/htwaist_eotb.test.js` (its bodies stand with their backs to the camera now; its sideways walk is a back
-diagonal, the side view its negative case), `test/htwaistback.test.js`. Not verified in a browser (no ARENA2 here).
+Pins: `test/systems/htwaist_eotb.test.js` (its bodies stand with their backs to the camera now; its sideways walk is a back
+diagonal, the side view its negative case), `test/player/eyeOfTheBeholder/htwaistback.test.js`. Not verified in a browser (no ARENA2 here).
 
 ## SKIN2 (2026-09-25): Daggerfall's classes as skins, and the Skin card's two panels
 
@@ -1040,7 +1040,7 @@ record 3 was numbered with a gap (0, 1, 2, 4) and was renumbered in order when u
 has the provenance and the archive numbers.
 
 **The art's authority, and a frame the first cut lost** (found when the PNGs were first tracked and the raster
-doctrine, `test/doctrine.test.js`, reddened on them: the suite had run before `git add`, the AUDIT-TO1 trap). The
+doctrine, `test/tooling/doctrine.test.js`, reddened on them: the suite had run before `git add`, the AUDIT-TO1 trap). The
 pack is a loose-file archive with no manifest of its own, so its authority is a listing generated from the archive,
 GrimoireUI's way: `vendor/class-skins/class-skins.files.json`, every vendored file mapped to the archive path it came
 from, the archive's sha256 beside it, and `tools/classSkinsListing.mjs` proving each vendored file is that path's
@@ -1071,7 +1071,7 @@ classes (`classSkinLabel`: "Healer (female)", "Dark Acolyte").
 
 **Online.** The look's `eo` bound was the mod's sixteen, so a peer in a class skin would have been clamped to the
 mod's last set. The bound is now `FOOT_SKINS` (36) in `net/wire.js`. It is a literal because the relay imports that
-file and not the skin table, and `test/skin2_class_skins.test.js` pins it equal to `FOOT_SKIN_COUNT`. DISC23-B's
+file and not the skin table, and `test/net/skin2_class_skins.test.js` pins it equal to `FOOT_SKIN_COUNT`. DISC23-B's
 separate `EOTB_FOOT_SETS` constant went into it. RELAY_VERSION is now world109; the relay deploy ships it on merge,
 which drops connected players once.
 
@@ -1081,7 +1081,7 @@ the skin's name. Pressing a panel's head opens its grid under it (`aria-expanded
 under two headings, "Eye of the Beholder" and "Daggerfall classes" (`FOOT_GROUPS`). Only one panel is open at a time.
 Choosing a skin wears it and closes the panel on it. The open panel stays open across the window's repaints.
 
-Pins: `test/skin2_class_skins.test.js` (7), `test/disc23b_eotb_sprites.test.js` (re-aimed at the panels and the wider
+Pins: `test/net/skin2_class_skins.test.js` (7), `test/net/disc23b_eotb_sprites.test.js` (re-aimed at the panels and the wider
 bound); mutants `tools/mutants/skin2.json` (26, all dead). Not verified in a browser (no probes).
 
 **ACRO-SHORT (2026-09-27, Discord: "acrobat sprite is super short on certain angles, (i am not crouching)").** The size
@@ -1093,8 +1093,8 @@ remedy is the pack's XML scale (`TextureReplacement.SetBillboardScale`, `Texture
 carries none. `skins.json` carries it now (`"scale": { "16": 81/110 }` on 1524; the picture is untouched, its bytes the
 archive's), `classRecordScale` (`player/classSkins.js`) is read by `spriteOffset`, so the body, its placement and the peers all see it. A sweep
 of every view of every sheet against its group's median found no other (the next lowest, 1524's hurt record 11, is 0.88
-and a standing pose). Pins: `test/skin2_class_skins.test.js` ACRO-SHORT (the exact 110 pixels, the sweep, her idle
-wheel through `spriteFor`); mutants `tools/mutants/skin2.json` +5. `01-Overview/Field-Bugs-2026-09-27.md`.
+and a standing pose). Pins: `test/net/skin2_class_skins.test.js` ACRO-SHORT (the exact 110 pixels, the sweep, her idle
+wheel through `spriteFor`); mutants `tools/mutants/skin2.json` +5. `01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
 ## SPRITE-FLICKER (2026-10-07): the view that went back
 
@@ -1117,9 +1117,9 @@ three repaints queue it in place of `lastOrientation`; the comparison that decid
 reads `lastOrientation`, as the IL's does. The clips keep the IL's field - they paint at once, so the view they paint
 never undoes a later choice. A DEPARTURE from the assembly, the fifth, recorded in the Ledger row. Nothing else in the
 sprite's turning moved: the wheel, the 0.1 s throttle, the three-frame delay and the facing are the IL's. The peers'
-sprites (`net/peerRiders.js`) paint their view at once and queue nothing, so they never had it.
+sprites (`net/peer/peerRiders.js`) paint their view at once and queue nothing, so they never had it.
 
-**Pins.** `test/eotb_body.test.js` SPRITE-FLICKER: three sweeps - the strafe pressed at 24 phases of the run clock and
+**Pins.** `test/player/eyeOfTheBeholder/eotb_body.test.js` SPRITE-FLICKER: three sweeps - the strafe pressed at 24 phases of the run clock and
 the orientation clock, a start at an angle at 12, the camera turned across the mirror revert at 14 - each held to one
 law, that from three frames after UpdateOrientation's choice the view on screen is that choice. `state()` reports
 `orientationChosen` for it. `tools/mutants/spriteflicker.json` 4 - 4 dead, each by its own sweep (the earlier cut of the
@@ -1144,16 +1144,16 @@ one the second, so a chain of blows still shows the whole string, one stroke a c
 stroke the shorter half, and a clip under two frames is one stroke. The blow is the rig's count (`weaponRig.js`
 `swingN`), and the body keeps its own (`strokeCount`) only for a rig that names none. The stroke runs over the
 weapon's whole animation - `meleeAnimTickTime(animTime, 3)`, five-thirds of the weapon's tick a frame - so a blow
-still lasts as long as the swing it stands beside. A peer's swing (`net/peerRiders.js` `WALK_ONE_SHOTS`) plays the
+still lasts as long as the swing it stands beside. A peer's swing (`net/peer/peerRiders.js` `WALK_ONE_SHOTS`) plays the
 stroke its `an` names, which is the same count, so both screens draw the same half.
 
 **What it retires.** The ping-pong: `usesPingPong`, `pingPongFrames`, `pingPongTickFrames` and the ping-pong count
-are deleted, and `PlayAnimationPingPongCoroutine` moves to the no-twin rows of `test/eotb_scope.test.js` (forty-six
+are deleted, and `PlayAnimationPingPongCoroutine` moves to the no-twin rows of `test/player/eyeOfTheBeholder/eotb_scope.test.js` (forty-six
 ported, fifteen with no twin). `Graphics.PingPongOffset` is inert, and `Graphics.AttackStrings`' PingPong plays as None
 and Mixed as Mirror - both say so on the pane. Mirror is untouched: the stance still mirrors after a swing. A
 DEPARTURE from the assembly, the sixth, recorded in the Ledger row.
 
-**Pins.** `test/eotb_billboard.test.js` (the halves, the parity, an odd clip, the tick), `test/eotb_audit2.test.js`
+**Pins.** `test/player/eyeOfTheBeholder/eotb_billboard.test.js` (the halves, the parity, an odd clip, the tick), `test/player/eyeOfTheBeholder/eotb_audit2.test.js`
 (the body's clip is one stroke under Mixed, alternating, by the rig's count where it names one, at five-thirds of the
-weapon's tick), `test/disc23b_eotb_sprites.test.js` (a peer's stroke by `an`); `tools/mutants/onestroke.json`.
+weapon's tick), `test/net/disc23b_eotb_sprites.test.js` (a peer's stroke by `an`); `tools/mutants/onestroke.json`.
 `tools/mutants/disc23b.json`'s clip-never-ends record re-aimed at the shot's own frames. Not verified in a browser.

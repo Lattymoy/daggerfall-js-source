@@ -5,7 +5,7 @@
     "old": "    this.parentQuest?.hooks?.questFoeKilled?.(this.parentQuest, this, amount);",
     "new": "",
     "tests": [
-      "test/questnote.test.js"
+      "test/systems/quest/questnote.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  _inGrace() { return this.graceMs > 0 && graceNow() - this._shownAt < this.graceMs; }",
     "new": "  _inGrace() { return false; }",
     "tests": [
-      "test/questnote.test.js"
+      "test/systems/quest/questnote.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (this._inGrace()) return true;   // QUEST-NOTE: the swing that raised it does not close it",
     "new": "",
     "tests": [
-      "test/questnote.test.js"
+      "test/systems/quest/questnote.test.js"
     ]
   }
 ]

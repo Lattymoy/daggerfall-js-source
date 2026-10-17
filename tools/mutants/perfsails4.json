@@ -1,0 +1,57 @@
+[
+  {
+    "name": "PERF-SAILS4-every-clip-still",
+    "file": "src/world/unityAnimator.js",
+    "old": "      b = { binds, constant: clip.curves.every((cv) => cv.components.every((c) => 'constant' in c)), pose: null };",
+    "new": "      b = { binds, constant: true, pose: null };",
+    "tests": [
+      "test/systems/comeSailAway/perfsails4.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS4-still-posed-every-frame",
+    "file": "src/world/unityAnimator.js",
+    "old": "    if (b.constant) b.pose = pose;",
+    "new": "    if (b.constant) b.pose = null;",
+    "tests": [
+      "test/systems/comeSailAway/perfsails4.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS4-first-curve-stands",
+    "file": "src/world/unityAnimator.js",
+    "old": "      pose[binds[k]] = binds[k + 2] ? quatEuler(v[0], v[1], v[2]) : v;",
+    "new": "      if (pose[binds[k]] === undefined || true) pose[binds[k]] = binds[k + 2] ? quatEuler(v[2], v[1], v[0]) : v;",
+    "tests": [
+      "test/systems/comeSailAway/perfsails4.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS4-walk-read-for-a-hung-root",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    const seen = root?.parent === null ? stamp : -1;",
+    "new": "    const seen = stamp;",
+    "tests": [
+      "test/systems/comeSailAway/perfsails4.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS4-walk-never-read",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    return r !== undefined && walkStamp > 0 && r.seen === walkStamp ? made(r) : n.worldMatrix();",
+    "new": "    return n.worldMatrix();",
+    "tests": [
+      "test/systems/comeSailAway/perfsails4.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS4-walk-read-stale",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    return r !== undefined && walkStamp > 0 && r.seen === walkStamp ? made(r) : n.worldMatrix();",
+    "new": "    return r !== undefined ? r.m : n.worldMatrix();",
+    "tests": [
+      "test/systems/comeSailAway/perfsails4.test.js",
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  }
+]

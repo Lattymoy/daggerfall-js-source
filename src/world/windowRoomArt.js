@@ -14,7 +14,7 @@
 // Which a window gets is its SEED's (realWindows.js: the glass's tile, its wall's plane, in the model's own frame) -
 // so a street's houses differ, a house keeps its rooms as the camera moves, and every client paints the same street.
 // The laws below (`roomStyleOf`, `roomPieceOf`, `roomFabricOf`, `roomLitAt`, `roomCurtained`) are the shader's own,
-// written once here in numbers the GLSL is built from and pinned by execution (test/windows1_rooms.test.js).
+// written once here in numbers the GLSL is built from and pinned by execution (test/render/windows1_rooms.test.js).
 //
 // Not a DFU member: the port's own presentation over DFU's own window table (climateSwaps.isExteriorWindow).
 

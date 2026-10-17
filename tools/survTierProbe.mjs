@@ -1,7 +1,7 @@
 // SURV-TIERS - THE CLIMATES & CALORIES TILE, IN A REAL BROWSER, WITH NO ARENA2.
 //
 // The node pins hold the row, the table and the shelf to one another
-// (test/survtiers.test.js); what they cannot do is press the bar. This
+// (test/systems/survival/survtiers.test.js); what they cannot do is press the bar. This
 // does: the Settings screen (ORG2: the Gameplay tab) draws the tile as Off | Casual | Hard with
 // Casual pressed on a fresh shelf, each press writes the tier's STORED
 // value (Off the old switch's own `false`, Casual nothing - the default

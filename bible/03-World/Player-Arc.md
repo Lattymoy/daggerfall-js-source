@@ -75,7 +75,7 @@ window.__player {pos, warp} joins the shot probes. Proofs: street
 settle at y = -5e-8 on mesh geometry; three cross-pixel warps grounded
 on live terrain (city flatten vs wilderness heights) while incidentally
 exercising BOTH recenter axes (+819.2 shifts tracked); eye-level street
-and wilderness shots. test/player.test.js pins formulas, ground/slide/
+and wilderness shots. test/systems/player.test.js pins formulas, ground/slide/
 step, and gravity/jump integration.
 
 Inputs already shipped for this arc:
@@ -113,7 +113,7 @@ Privateer's Hold over an 8406-triangle collider; dynamic draws compose
 base x tween each frame. In-engine cycle proof: closed door rayed at
 2.15, activate -> passage clear DURING the swing (trigger-at-open-start
 verbatim), state end, re-activate -> reverse; tween timing pinned
-deterministically in test/action.test.js (headless SwiftShader runs
+deterministically in test/world/action.test.js (headless SwiftShader runs
 ~7 fps - see Testing.md).
 
 ## Milestone P3 - building interior transitions (SHIPPED)
@@ -142,7 +142,7 @@ interior-local player position never feeds the recenter. Exit uses the
 HIT interior door against all sibling exterior doors. In-engine proof:
 enter lands at the interior door (6 draws / 4 doors / 3 lights pinned
 in the console), the return trip lands exactly 1.05 from a sibling
-door. test/enterexit.test.js pins the offsets, transforms, and
+door. test/player/enterexit.test.js pins the offsets, transforms, and
 landing selection.
 
 ## Milestone P4 - interior swing doors (SHIPPED)
@@ -591,7 +591,7 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
   multiplier) - the minute's band, a jump, a swing (8) and Roleplay
   Realism's overload. A full bar at STR/END 50 walks 66.7 real minutes
   (DFU 48.5) and runs 8.1 (DFU 6.1). A departure: Ledger A,
-  `01-Overview/Field-Bugs-2026-09-27-phone-backup-drains.md`.
+  `01-Overview/bugs/Field-Bugs-2026-09-27-phone-backup-drains.md`.
   **FATIGUE-IDLE (2026-09-29, Mac: "You shouldn't lose fatigue at an
   insane rate standing still"; asked, "Nothing")**: standing still ON
   THE GROUND pays no minute's band (`worldTick.js`, off the motor's
@@ -604,7 +604,7 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
   included), a jump, a swing and Roleplay Realism's overload (the mod's
   own round - Mac: "Keep the mod's rule") keep their amounts; the
   journey's autopilot drives the move axes, so a journey still walks.
-  A departure: Ledger A, FATIGUE-IDLE; `test/fatigue_idle.test.js`.
+  A departure: Ledger A, FATIGUE-IDLE; `test/systems/fatigue_idle.test.js`.
 - **PARITY FIX**: PlayerMotor.limitDiagonalSpeed (.7071 when both
   axes are live) had never been ported - the grounded motor moved
   sqrt(2) fast on diagonals. Applied on both paths.
@@ -777,7 +777,7 @@ AcrobatMotor/PlayerMotor/FrictionMotor/PlayerHealth read end to end:
   `OnExteriorWater == Swimming` included). Its slowfall clause is
   dropped (JUMP-SLOW, FIELD BUGS 2026-10-11b, a departure: the rise is
   the jump's and the spell takes the descent from the apex -
-  `01-Overview/Field-Bugs-2026-10-11b.md`).
+  `01-Overview/bugs/Field-Bugs-2026-10-11b.md`).
 - **airControl = false** (AcrobatMotor.cs:21): airborne horizontal
   momentum FREEZES at liftoff - DFU recomputes x/z from input only in
   the grounded branch, so mid-air steering does nothing. AUDIT 64 F2:
@@ -818,9 +818,9 @@ AcrobatMotor/PlayerMotor/FrictionMotor/PlayerHealth read end to end:
   takes the snap's STEP_OFFSET reach now, under the same jump gate and
   only where the capsule sits clear of the mesh at the floor, so the
   step-up ladder's lift in front of a riser survives
-  (`test/mac3_downhill.test.js`).
+  (`test/player/mac3_downhill.test.js`).
 
-test/motorStairs.test.js restores the reverted 7-pin harness and
+test/player/motorStairs.test.js restores the reverted 7-pin harness and
 grows it to 9 (crouch/boost/air-freeze + fall/slowfall traces).
 Suite 380/85, ARENA2 corpus green pre-commit, dungeon + exterior
 shot probes green.
@@ -1018,7 +1018,7 @@ all four caught, then reverted).
   DOUBLES per the Ledger A FaceUVTool row (Mono widens float math);
   the two disagree inside the fortified-Endurance range and the
   edge is pinned: rank 4 x 45 = 62 where float32 lands 63.
-  deepBreath lives in breath.js rather than systems/guilds.js -
+  deepBreath lives in breath.js rather than systems/guild/guilds.js -
   that file is mid-flight in a parallel session today - and it is
   the member's only export either way.
 - **The Argonian swim-fatigue exemption** (PlayerEntity.cs:412;
@@ -1028,7 +1028,7 @@ all four caught, then reverted).
   tallies Swimming (:414). Closes P11's "pends race selection"
   excuse - races shipped at U9.
 
-Pins: test/breath.test.js (the identity fold, the Kynareth ladder,
+Pins: test/systems/breath.test.js (the identity fold, the Kynareth ladder,
 the precision edge, the coin + its race gate, the drown order,
 surfacing/WaterBreathing zeroing); player.test.js P18 x2 (flip at
 the END going down / at the START going up on one clock, the
@@ -1056,7 +1056,7 @@ their setting as residue.
   and the ClimbingCheck state machine, classic arms only: the
   14-unit start countdown (x systemTimerUpdatesDivisor 0.0549254 -
   the divisor moved to its DFU home, a PlayerMotor field, with
-  characters/enemyMotor.js re-exporting) behind the horizontal
+  characters/enemy/enemyMotor.js re-exporting) behind the horizontal
   tolerance 0.12, the base-70 start check whose GROUND failure
   re-checks every frame WITHOUT resetting the timer (:430-437, the
   verbatim tally-spam quirk) while the mid-fall grasp (base 40)
@@ -1098,7 +1098,7 @@ dropped; the stand-still clear dropped; the 5..95 clamp dropped;
 the water forgiveness dropped; the vertical climb component
 dropped).
 
-Pins: test/climbing.test.js x5 (the chance formula's lerps/racial/
+Pins: test/player/climbing.test.js x5 (the chance formula's lerps/racial/
 clamps and the speed pair; the countdown + the fail-retry quirk +
 the grasp reset; the continue/slip/regain cadences + the
 stand-still clear; the abort ladder + the water forgiveness; and a
@@ -1269,7 +1269,7 @@ world.js's FS1 `playerGroundTile`. Its stride is DERIVED as
 draw passes as a literal - a probe that agrees with the picture only by
 coincidence is one that will stop agreeing.
 
-Pins: 6 in `test/fallwater.test.js`, including a source sweep that both
+Pins: 6 in `test/world/terrain/fallwater.test.js`, including a source sweep that both
 exterior hosts pass the tile and that no underground host invents one,
 and a regeneration arm asserting from `AcrobatMotor.cs` that the water
 return still precedes the distance. Campaign: 6 mutants, 6 killed.
@@ -1317,7 +1317,7 @@ mutated in place: `collisionTriggers` owns that array as the AT-REST
 trigger box behind its `restOnlyTrigger` guard, and at `state ===
 'start'` the recomputed box is identical to the stored one.
 
-Pins: 3 in `test/audit63_world_actions.test.js` - the live box, the
+Pins: 3 in `test/scenes/audit63_world_actions.test.js` - the live box, the
 activate ray following the mover while the ghost stops answering, and
 the swing landing at the live pose. Mutants: the precedence reverted in
 either reader, 2 killed.
@@ -1371,7 +1371,7 @@ departure; recomputing is the reference. Every other kind keeps its
 stored box: movers only reach the test parked at 'start', where the two
 are identical, and flats travel their box in `_applyFlat`.
 
-Pins: 2 in `test/audit63_world_actions.test.js` - the registration and
+Pins: 2 in `test/scenes/audit63_world_actions.test.js` - the registration and
 the live read, and a MultiTrigger DoorText door driven through
 `receive('WalkInto')` to the plaque, the second-bump trespass, and the
 record-less door's empty gate. Mutants: either box removed, the live
@@ -1402,7 +1402,7 @@ one. That is the same defect shape at the ported twins of those sites
 and belongs to the magic/entity lenses, each call site matched to its
 own DFU literal.
 
-Pins: 1 in `test/audit63_world_actions.test.js` - the constant against
+Pins: 1 in `test/scenes/audit63_world_actions.test.js` - the constant against
 `DaggerfallAction.cs:875`, the 2.0 line still on its no-scroll hold at
 1.5 s where the 1.0 default has begun sliding, and the seam passing it.
 Mutants: the argument dropped, the constant drifted to popDelay; 2
@@ -1435,7 +1435,7 @@ only answers 'lock' when no Open is armed") is rewritten: the reason an
 armed Lock is left alone at a building is DFU's routing, not a priority
 inside the lookup.
 
-Pins: 1 in `test/effectarms.test.js` - both armed on one entity, the
+Pins: 1 in `test/systems/effectarms.test.js` - both armed on one entity, the
 action door answering 'lock' while the exterior arm still answers
 'open'. Mutants: Open-first restored, the exterior arm folded back onto
 `doorSpellFor`; 2 killed.
@@ -1467,7 +1467,7 @@ reach is unchanged: `activationTargets` stamps
 `DEFAULT_ACTIVATION_DISTANCE` is the same `128 * GLOBAL_SCALE`.
 `objAabb` stays for the ladders, which are genuine meshes.
 
-Pins: 1 in `test/audit63_world_actions.test.js` - the arm reads the
+Pins: 1 in `test/scenes/audit63_world_actions.test.js` - the arm reads the
 helper and no longer names `objAabb`, plus the crash the dropped
 spelling throws on a mesh-less object. Mutants: the loop restored; 1
 killed.
@@ -1494,7 +1494,7 @@ corrected on the Characters arc page and in the docblock: the hack was
 the one of the three named sites that did NOT spell it that way, and
 collapsing it was the change that made the claim true.
 
-Pins: 1 in `test/audit63_world_actions.test.js` - given the same foyer
+Pins: 1 in `test/scenes/audit63_world_actions.test.js` - given the same foyer
 `loadID` and the same lock, the ordinary door is unlocked and swung and
 the special door is untouched. Mutants: the `kind !== 'door'` test
 restored; 1 killed.
@@ -1533,7 +1533,7 @@ DFU's component set for every kind, not doors only. `dungeonContext` is
 the tree's one collision pass (the interior host registers no action
 records, so it has none to run).
 
-Pins: 2 in `test/audit63_world_actions.test.js` - the four flags that
+Pins: 2 in `test/scenes/audit63_world_actions.test.js` - the four flags that
 carry the component against the five that do not, and a `Door`-flagged
 foyer door proven to take the hack from a direct `receive` (so the gate
 alone would not have saved it) with the pass refusing the call ahead of
@@ -1592,7 +1592,7 @@ the tile-0 clearing rule (`exteriorSwimLatch`, PlayerEnterExit.cs:415-421)
 in one helper both exterior hosts call after the surface model; the
 dungeon exit's value is read before the per-frame clear and carried.
 
-Pins: 2 in `test/audit64_motor.test.js`, both computing DFU's
+Pins: 2 in `test/player/audit64_motor.test.js`, both computing DFU's
 `GetWalkSpeed` and `GetSwimSpeed` from the C# constants
 (`PlayerSpeedChanger.cs:30-31`, `:389-393`, `:418-422`) rather than
 calling the port's helpers, so a mutation of those helpers cannot move
@@ -1612,7 +1612,7 @@ with the replacement motor disengaged, so control reaches
 `HandleJumpInput` at `PlayerMotor.cs:346`.
 
 Fixed with the clause itself, beside its three siblings. Pin: 1 in
-`test/audit64_motor.test.js`, which also proves the same motor jumps the
+`test/player/audit64_motor.test.js`, which also proves the same motor jumps the
 instant the flag drops, so a mutation that cancels every jump reddens
 too. Mutant: the term dropped; 1 killed.
 
@@ -1636,7 +1636,7 @@ and take the existing sink with it. `worldModes.frame` returns early
 unless the mode is interior or dungeon - which is exactly
 `IsPlayerInside` - and `dungeon.js`'s walk arm is underground by
 construction, so each states DFU's indoor answer for itself. Pin: 1 in
-`test/audit64_motor.test.js` over both hosts.
+`test/player/audit64_motor.test.js` over both hosts.
 
 ## AUDIT 64 F2 - the Jump spell gave no mid-air control (2026-09-08)
 
@@ -1677,7 +1677,7 @@ rather than a per-frame flag precisely to dodge the four-hosts miss: a
 `dungeon.js`. A motor built with no dep keeps the frozen path, so the
 headless pins are untouched.
 
-Pins: 3 in `test/audit64_motor.test.js` (reversed input mid-flight
+Pins: 3 in `test/player/audit64_motor.test.js` (reversed input mid-flight
 assigns -walkSpeed; a buffed walk off a ledge steers with no jump; the
 dep is wired in all three hosts). Mutant: the disjunct dropped; 2
 killed.
@@ -1801,14 +1801,14 @@ AutoRun arm and `ToggleRun`'s own clear. Running the clear ahead of the toggle a
 `PlayerSpeedChanger.cs:82-83` refuses the AutoRun press while
 MoveBackwards is held anyway.
 
-Pins: 4 in `test/audit64_motor.test.js`, plus 5 from the review round
+Pins: 4 in `test/player/audit64_motor.test.js`, plus 5 from the review round
 in the same file - the whole chain (MoveAxes -> PlayerMotor ->
 FootstepMachine) driven under a latched autorun with no key held until
 a step comes back and with the paralysis bag proving the silence is
 still there; the four hosts' source read; the levitating back-cancel;
 the held key across a levitation window; the swimmer's `IsStandingStill`
 both ways. Two existing `AUDIT 39 #59`/`39r` pins in
-`test/audit39_worldstate.test.js` moved WITH the law (the frozen
+`test/scenes/audit39_worldstate.test.js` moved WITH the law (the frozen
 player's silence is DFU's own, and it runs through this getter:
 `FrictionMotor.cs:76-81` zeroes `inputX`/`inputY` on `IsParalyzed`).
 Mutants: the no-acceleration arm reverted, the impulse flag dropped,
@@ -1864,13 +1864,13 @@ capsule into the same geometry - this law adds a second route to them,
 not the artifact. A mirror of `_resolveCapsule`'s existing "a body
 cannot be depenetrated UP into a ceiling" clamp was written and
 MEASURED: it fixes the sink band exactly (feet 0.000, eye 1.700 under a
-1.5 ceiling) but reddens `test/motorStairs.test.js`'s "a tread the
+1.5 ceiling) but reddens `test/player/motorStairs.test.js`'s "a tread the
 capsule cannot STAND under stays blocked", because the step-up ladder
 depends on `_resolveCapsule` capping a raised rung under a ceiling and
 the clamp removes that cap. The collider law therefore belongs to a lane
 that owns `collider.js`, and it is recorded here rather than half-done.
 
-Pins: 3 in `test/audit64_motor.test.js` - the reference's own arithmetic
+Pins: 3 in `test/player/audit64_motor.test.js` - the reference's own arithmetic
 (0.45, 0.35, feet+1.25), a 1.4 ceiling that must PERMIT the stand, and
 the 1.2 ceiling that DFU's own sweep still refuses. Mutant: the
 predicate reverted to the full-capsule fit; 1 killed.
@@ -1906,7 +1906,7 @@ the sink alone - was rejected: it only looks equivalent because all four
 hosts happen to zero the input bag, and it would still run a zero-delta
 `collider.move` where DFU runs nothing.
 
-Pins: 2 in `test/audit64_motor.test.js` - a paralysed 80 kg swimmer must
+Pins: 2 in `test/player/audit64_motor.test.js` - a paralysed 80 kg swimmer must
 not move at all, the same swimmer unfrozen must still sink (so the guard
 cannot silently revert AUDIT 26 F027), and the vector zeroing above the
 guard must still run. Mutant: the guard removed; 1 killed.
@@ -1956,7 +1956,7 @@ model in the same triangle soup, and blocks like the table now. Noted
 and left: thin free-standing geometry (a 0.2 column) can be walked
 through - opposing pushes cancel and `d2 === 0` contacts are skipped -
 a different bug, its own slice. Ledger row SH1. Pinned:
-`test/macfive.test.js` SH1.
+`test/player/macfive.test.js` SH1.
 
 ## PH1 - THE FLOOR IS ONE-WAY FOR THE BODY (2026-09-14, Mac's report)
 
@@ -1993,7 +1993,7 @@ and 0.60 below a floor are on it within two steps; a lift at 0.40 and
 0.60 a frame carries its rider. Left open, its own slice: a body
 already a whole capsule deep (a load inside geometry, a mover past 0.7
 a frame) still has no caller for `findClearFloor`. Pinned:
-`test/ph1_physics.test.js` PH1 (two).
+`test/player/ph1_physics.test.js` PH1 (two).
 
 ## PH2 - THE STAIRS ARE DESCENDED, NOT FALLEN (2026-09-14, Mac's report)
 
@@ -2027,7 +2027,7 @@ exact; so does this). Measured after, 12 treads at 0.3/0.6, 0.45/0.7
 and 0.25/0.4, walk and run: 0 airborne frames, 0 flips, the eye only
 descends, worst eye drop 0.073 at a walk and 0.097 at a run (from
 0.141 / 0.213). MAC3's terrain pins and the eleven P14/P16 stair
-traces hold. Pinned: `test/ph1_physics.test.js` PH2 (two).
+traces hold. Pinned: `test/player/ph1_physics.test.js` PH2 (two).
 
 ## COL1 - THE BODY HAD A HOLE IN IT (2026-09-15)
 
@@ -2166,7 +2166,7 @@ rounded bottom, with its feet r (1 / cos - 1) over that ground: 5 cm at
 (`restFloor`), the grade taken from the heightfield across the capsule's
 own width. It is read by both the floor snap and the clamp, so MAC3's
 downhill adhesion holds, and flat ground is unchanged.
-`01-Overview/Field-Bugs-2026-09-23.md` DISC16-A.
+`01-Overview/bugs/Field-Bugs-2026-09-23.md` DISC16-A.
 
 ## DISC18 - the body stands on the capsule's feet, not the camera's (2026-09-24, Mac)
 
@@ -2176,7 +2176,7 @@ low-passed feet (MAC1's `STEP_SMOOTH_TAU`, AUDIT 65 XL-4), which trail a
 climb by the climb's vertical speed times the time constant. Walking up
 a 30-degree hill the body sat 13 cm under the ground, and 23 cm running.
 `bodyFeetAt()` is EV1's interpolation alone. The five body draws take it,
-and the cameras keep the smoothing. `01-Overview/Field-Bugs-2026-09-23.md`
+and the cameras keep the smoothing. `01-Overview/bugs/Field-Bugs-2026-09-23.md`
 DISC18.
 
 ## DISC29-A - a Collision01 object is stood on wherever its own surface is (2026-09-28, Skibbster)
@@ -2201,10 +2201,10 @@ Measured on BLOCKS.BSA: of the 104 Collision01 objects (52 models), 49 have no u
 0.15 of their box's top and 12 only some of theirs - 18 Activate relays, 15 DoorText plaques (S0000205's corridor
 among them), 8 Hurt23/Hurt24 rooms (model 67017 in N0000006 and N0000008), 4 CastSpell (the two thrones, N0000007's
 room), 2 DrainMagicka, a Teleport and an Unknown32 among the 49. Stood on, each now fires as DFU's does.
-`test/disc29_throne.test.js` (5, one on the real N0000037); `tools/mutants/disc29.json` (DISC29-A, 7).
-`01-Overview/Field-Bugs-2026-09-28f.md` DISC29-A.
+`test/world/disc29_throne.test.js` (5, one on the real N0000037); `tools/mutants/disc29.json` (DISC29-A, 7).
+`01-Overview/bugs/Field-Bugs-2026-09-28f.md` DISC29-A.
 
-**AUDIT PRE-MERGE 0929 D1/D2** (`01-Overview/Audit-PreMerge-0929.md`) - the review above, due at once. DFU's WalkOn is
+**AUDIT PRE-MERGE 0929 D1/D2** (`01-Overview/audits/Audit-PreMerge-0929.md`) - the review above, due at once. DFU's WalkOn is
 the contact's DIRECTION from the controller's centre (`dir.y < -0.9`, :68-71) for EVERY flag; the ray (:74-85) is only
 Collision01's second test. The box's top and a ray under the capsule's centre missed a staircase, where a body rides the
 treads' edges - N0000007's Hurt22 staircase (object 20798, in 69 dungeons) bit 2 times walking all sixteen steps down, 4
@@ -2220,7 +2220,7 @@ wall bumps nothing. Every collision-trigger model's triangles are in `triggerSur
 spots the port agrees with DFU on 1,537 (983 before); the nine left are a lip or an arm beside the body, where DFU's
 answer too depends on which way the body moves. The staircase bites 9 times down, 13 up; the throne is WalkOn at the
 motor's own rest (0.078 over the seat, where DISC29-A's pins stood the feet by hand at 0.027). The acting FLATS keep
-their box - DFU gives a flat's action a trigger BoxCollider (RDBLayout.cs:977-987). `test/audit0929_actions.test.js`
+their box - DFU gives a flat's action a trigger BoxCollider (RDBLayout.cs:977-987). `test/player/audit0929_actions.test.js`
 (6, three on the real BLOCKS.BSA); `tools/mutants/audit0929_actions.json` (11, all dead - D3's among them).
 
 ## WW-LID - A lift the body has no room for is never taken (2026-09-29, Cruor)
@@ -2252,7 +2252,7 @@ lifting the body onto such a rib. Four laws in `player/collider.js`, the rest of
 - **L - a refused rung is no headroom.** The too-tight revert hands a raised rung back at the raised height, which the
   ladder read as room gained.
 
-Each is held by its own case in `test/fb0929d_waterwalk.test.js` (6: the motor at the doorway, the stride sweep, the
+Each is held by its own case in `test/world/fb0929d_waterwalk.test.js` (6: the motor at the doorway, the stride sweep, the
 high doorway for S, the ribs for B, H and L, the crawl slot for H, the real block's step behind ARENA2); every scene is
 built there in the doorway's shape, never read off the block. `tools/mutants/fb0929d_waterwalk.json`, 10 mutants, 10
 dead. The fuzz over all 32 flooded blocks (W0000000-W0000029, S0000160-S0000161), 1152 runs (6 spawns, 3 seeds, water
@@ -2292,6 +2292,6 @@ OPEN for Mac (the investigation's, not built here): a body a neighbour pixel's r
 not ejected on its own - `/unstuck` (PVPUNSTUCK's walk to the nearest town) is its way out; the Overworld route no
 longer marks rock at all (MOUNTAINS WALKABLE, `11-Multiplayer/Wild-Zone.md` section 19), so its travel can walk into a
 massif; and the collider's floor is the bilinear read where the drawn landform ground is triangles, a gap that can reach
-metres on the steepest ridges. `test/unstuckout.test.js` (2) - the real collider over real closed rock meshes;
+metres on the steepest ridges. `test/player/unstuckout.test.js` (2) - the real collider over real closed rock meshes;
 `tools/mutants/unstuckout.json` (7), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): `tvSeaY` declared
 beside `state`, before the boot's own load reads it (the outdoor arm's refusals that audit worded went with the arm).

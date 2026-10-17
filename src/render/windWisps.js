@@ -9,7 +9,7 @@
 // the eye and WRAPS (the lab's law from the rain: `p = mod(p - uEye +
 // uBox*0.5, uBox) + uEye - uBox*0.5`, so moving reveals other wisps and
 // never drags the ones in view), and they travel by the ONE integrated
-// wind (systems/windDrive.js `step`, PROTO-19's law: a distance already
+// wind (systems/wind/windDrive.js `step`, PROTO-19's law: a distance already
 // travelled, never wind x time). The count and the alpha follow the
 // wind's STRENGTH - a few faint ones in a breeze, the air full of them
 // in a gale - with a floor, because the point of them is to be read: a
@@ -215,7 +215,7 @@ export class WindWispsRenderer {
     }
   }
 
-  /** Draw the frame's wisps for `wd` (systems/windDrive.js's answer):
+  /** Draw the frame's wisps for `wd` (systems/wind/windDrive.js's answer):
    *  nothing when the deck is unknown. Advances the travel first. */
   draw(wd, proj, view, eye, timeSeconds) {
     this.drawn = 0;

@@ -78,7 +78,7 @@ mod's own `WindNaturalPlanner.cs`, `WindRecordWeights.cs` and the state
 machine's method bodies copied from the decompiled `WindMod` (the engine's
 reads replaced by the frame's inputs) under .NET 8, and runs a 30,000-frame
 scenario - the weather, the door, the map, a debug storm - twice (the
-built-in settings and gusty ones). `test/windfall1_model.test.js` runs the
+built-in settings and gusty ones). `test/systems/windfall1_model.test.js` runs the
 same scenario through the port: the trace of every float the C# holds, as
 bits, hashes to the reference's (`19e6ad4f...`, `671c6551...`), and the
 planner's and the tables' to `de42ad23...`.
@@ -155,7 +155,7 @@ record's tree and takes the stock row.
   its height, linearly, as its far picture's quad - the two crossfade in the
   eye's band and must agree.
 - **ONE WIND, ONE WAY.** The heading the trees lean and the leaves blow is the
-  outdoors' own wind's (`systems/windDrive.js` `dir` - the wisps', the rain's,
+  outdoors' own wind's (`systems/wind/windDrive.js` `dir` - the wisps', the rain's,
   the clouds'), Windfall's slow wander (+-10 degrees) and its gusts' swing turned
   about it. The mod's daily heading (HashUnit x 360 + WindDirectionDegrees)
   stands only where no wind is handed; the setting says so (INERT here).
@@ -185,7 +185,7 @@ The day the mod plans by is the SKY's (`skyMinutes()`, TIME1's census - the
 date and hour the player sees); its frame runs on the game's seconds -
 WindMod.Update's `Time.deltaTime`, held by a pause and scaled with the world
 (AUDIT ENVIRONS W1: `worldTimeScale`, the town's `hccTimeScale`) - and online the mod is the player's own
-(`systems/onlineLane.js` `ONLINE_PLAYERS_OWN_MODS`): nothing it does stands,
+(`systems/online/onlineLane.js` `ONLINE_PLAYERS_OWN_MODS`): nothing it does stands,
 rolls or is written for anyone else.
 
 ## Departures (Port-Ledger A, WINDFALL1)
@@ -222,7 +222,7 @@ rolls or is written for anyone else.
 
 ## Pins
 
-`test/windfall1_model.test.js` (8) and `test/windfall1_presentation.test.js`
+`test/systems/windfall1_model.test.js` (8) and `test/systems/windfall1_presentation.test.js`
 (12); `tools/mutants/windfall1.json` (61, all dead). The vertex wind and
 BB_VS run through the GLSL evaluator (`test/glsl.mjs`); the shaders compile in
 Chromium's WebGL2.

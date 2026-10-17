@@ -2,7 +2,7 @@
 // SPYGLASS (2026-10-11, the owner: "a spyglass option where you can aim and view to observe other ships, their
 // allegiance, cargo, etc." - bible/03-World/Captains-Sea.md) - THE GLASS'S WINDOW. While the glass is up the world is
 // seen through it: the view narrowed to its magnification (scenes/world.js glassFov), the edge of the view the dark of
-// its tube, a reticle at its heart - and under the reticle, the card of the ship it holds (scenes/navalHost.js glass:
+// its tube, a reticle at its heart - and under the reticle, the card of the ship it holds (scenes/naval/navalHost.js glass:
 // systems/naval/shipKnowledge.js glassCard), her name toned by what she is to me, her rows as far as she is made out,
 // and the study's bar filling while the glass is held on her. A DOM overlay over the world, under every window.
 // AUDIT CAPTAIN'S SEA S10/S17: its box is the WORLD'S STRIP (`rect` - above the classic skin's docked bar, where the
@@ -10,7 +10,7 @@
 // hundredth); over the world's labels (the tags, the names and the wild marks stand at z-index 3), under the HUD.
 
 import { PIXEL_FONT_CSS } from './pixelifyFive.js';
-import { injectEnhancedFonts } from './enhancedStyle.js';
+import { injectEnhancedFonts } from './enhanced/enhancedStyle.js';
 
 export const SPYGLASS_STYLE_ID = 'dfglass-style';
 /** The glass's own field: the share of the view's shorter side its circle spans. */

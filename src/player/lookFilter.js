@@ -21,7 +21,7 @@
 // the residual is a delta and rides along. The pitch clamp is applied
 // to the TARGET as :142 does, so the camera never overshoots the range.
 
-import { getFloat, getInt } from '../systems/settings.js';   // MAC-O2: Controls/WeaponSwingMode, the term the swing suppression was missing
+import { getFloat, getInt } from '../systems/settings/settings.js';   // MAC-O2: Controls/WeaponSwingMode, the term the swing suppression was missing
 import { PITCH_LIMIT } from './mwCamera.js';
 
 /** PlayerMouseLook.SmoothingMax (:45): the setter clamps to it. */

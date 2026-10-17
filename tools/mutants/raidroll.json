@@ -1,177 +1,177 @@
 [
   {
     "name": "RR-seed-off",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "let a = ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1)) >>> 0;",
     "new": "let a = ((day * 7919) ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1)) >>> 0;",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-slot-draws-misread",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "    random(); random();   // its region and its town - the towns table's",
     "new": "    random();   // its region and its town - the towns table's",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-slots-too-few",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "  for (let l = 0; l < RAID_SLOTS_MAX; l++) {",
     "new": "  for (let l = 0; l < 4; l++) {",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-canon-reordered",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "g.towns.map((t) => [t.index, t.px, t.py])",
     "new": "g.towns.map((t) => [t.px, t.index, t.py])",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-read-order-unchecked",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "!Number.isInteger(g[0]) || g[0] <= last ||",
     "new": "!Number.isInteger(g[0]) ||",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-read-pixel-unbounded",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "t[1] < 0 || t[1] >= 1000 ||",
     "new": "t[1] < 0 ||",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-read-row-unbounded",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "t[0] < 0 || t[0] > 0xffff ||",
     "new": "t[0] < 0 ||",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-dayids-missing-town",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "key: `${r.region}:${r.town.index}:${day}`, st: r.st",
     "new": "key: `${r.region}:0:${day}`, st: r.st",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-hash-other-spelling",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "new TextEncoder().encode(s)",
     "new": "new TextEncoder().encode(`${s} `)",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-wire-index-past-count",
     "file": "src/net/wire.js",
     "old": "!intIn(d.i, 0, d.n - 1)",
     "new": "!intIn(d.i, 0, d.n)",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-wire-piece-unbounded",
     "file": "src/net/wire.js",
     "old": "d.c.length > RAID_TOWNS_CHUNK)",
     "new": "d.c.length > RAID_TOWNS_CHUNK * 2)",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-wire-ask-hash-unread",
     "file": "src/net/wire.js",
     "old": "case 'tw': return typeof m.h === 'string' && RAID_TOWNS_SHA_RE.test(m.h) ? { k: 'tw', h: m.h } : null;",
     "new": "case 'tw': return { k: 'tw', h: m.h };",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-relay-slots-unasked",
     "file": "server/src/index.js",
     "old": "    if (!raidOnSlot(m, this._raidSlotsOf(day))) return;\n",
     "new": "",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-relay-slot-miss-struck",
     "file": "server/src/index.js",
     "old": "    if (!raidOnSlot(m, this._raidSlotsOf(day))) return;\n",
     "new": "    if (!raidOnSlot(m, this._raidSlotsOf(day))) { this._junk(ws); return; }\n",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-relay-roll-unasked",
     "file": "server/src/index.js",
     "old": "    if (rolled && !rolled.has(raidLedgerId(m))) return;\n",
     "new": "",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-relay-roll-never-cached",
     "file": "server/src/index.js",
     "old": "    if (had && (had.ids || now - had.at < RAID_DAY_ASK_MS)) return had.ids;\n",
     "new": "",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-relay-none-cached-forever",
     "file": "server/src/index.js",
     "old": "had.ids || now - had.at < RAID_DAY_ASK_MS",
     "new": "had.ids || true",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-hub-hash-unchecked",
     "file": "server/src/index.js",
     "old": "    if ((await raidTownsHash(text)) !== pin) return;   // not the operator's table\n",
     "new": "",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-hub-asks-while-held",
     "file": "server/src/index.js",
     "old": "async _raidTownsWanted() { return this._raidTownsPin() && !(await this._raidTowns()) ? this._raidTownsPin() : null; }",
     "new": "async _raidTownsWanted() { return this._raidTownsPin(); }",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-cell-takes-pieces",
     "file": "server/src/index.js",
     "old": "      if (!this._spend(ws, now, raidTownsGate, 'raidTownsBucket', 'raidTownsDrops', 'too many raid town frames')) return;\n      if (!isSocialRoom(a.key)) { this._junk(ws); return; }\n",
     "new": "      if (!this._spend(ws, now, raidTownsGate, 'raidTownsBucket', 'raidTownsDrops', 'too many raid town frames')) return;\n",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-hub-stored-unhashed",
     "file": "server/src/index.js",
     "old": "if ((await raidTownsHash(text)) === pin) kept = readRaidTowns(text);",
     "new": "kept = readRaidTowns(text);",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-session-ask-any-room",
     "file": "src/net/online.js",
     "old": "r.k === 'cls' || r.k === 'tw' ? isSocialRoom(room)",
     "new": "r.k === 'cls' ? isSocialRoom(room)",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-session-table-down-cell",
     "file": "src/net/online.js",
     "old": "if (!isSocialRoom(this.room) || this.status !== 'open' || !this._ws || typeof text !== 'string' || !text.length) return false;",
     "new": "if (this.status !== 'open' || !this._ws || typeof text !== 'string' || !text.length) return false;",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-client-table-any-hash",
     "file": "src/systems/raidingParties.js",
     "old": "return _townsHash && _townsHash === h ? _townsText : null;",
     "new": "return _townsText;",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-client-ask-unwired",
     "file": "src/scenes/world.js",
     "old": "link.onRaid = (f, room) => (f.k === 'tw' ? offerRaidTowns(link, f.h) : raidRelayWord(f, room));",
     "new": "link.onRaid = (f, room) => raidRelayWord(f, room);",
-    "tests": ["test/raidroll.test.js"]
+    "tests": ["test/systems/raidroll.test.js"]
   }
 ]

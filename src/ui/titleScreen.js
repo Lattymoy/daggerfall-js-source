@@ -38,7 +38,7 @@
 // asset costs you a splash, never a game.
 
 import { DFPalette } from '../formats/dfPalette.js';
-import { loadImg, drawImg, nativeMetrics } from './nativePanel.js';
+import { loadImg, drawImg, nativeMetrics } from './native/nativePanel.js';
 
 /** Classic's own title art - the fallback when we have no logo of our
  *  own. One of the SIX palettized IMGs, so it gets its OWN DFPalette:

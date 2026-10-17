@@ -1,28 +1,28 @@
 // @ts-check
 // COLLECTIONS (2026-10-08, Mac: "I think we add a new tab in holdings for the weapon codex and card collection"; answered:
-// "One 'Collections' tab"): THE COLLECTIONS PAGE on the Enhanced pause menu's Holdings rail (ui/enhancedMenu.js
+// "One 'Collections' tab"): THE COLLECTIONS PAGE on the Enhanced pause menu's Holdings rail (ui/enhanced/enhancedMenu.js
 // pauseHoldings) - what a character has gathered, in two parts under one switch:
 //
-//   THE CODEX (LOOT10, systems/lootCodex.js; bible/06-Systems/Loot-Arc.md section 12): every Legendary record and every
+//   THE CODEX (LOOT10, systems/loot/lootCodex.js; bible/06-Systems/Loot-Arc.md section 12): every Legendary record and every
 //     Aetheric set, found and not - a found one's name, its group, the day it was first found and what it is; an unfound
 //     one's group and where it is said to be. The rows, the lines a row opened shows and the sets' counts are the
 //     Reforge's Codex page's (ui/reforgeWindow.js renderCodex - AUDIT CARDS-5 D12 made the lines the same), read from the
 //     same codex, so the two never disagree; the Scry door is the guilds' window's alone. The pack's Codex button still
 //     opens that window.
 //   THE CARDS (CARDS8, bible/11-Multiplayer/Tavern-Cards.md section 26): the Card Binder's collection and its decks - the
-//     binder's own page (ui/cardBinderPage.js), drawn here.
+//     binder's own page (ui/card/cardBinderPage.js), drawn here.
 //
-// Dressed by the stone-and-brass kit's roles as the other Holdings pages are (ui/enhancedFrame.js FRAME_ROLES) - this
+// Dressed by the stone-and-brass kit's roles as the other Holdings pages are (ui/enhanced/enhancedFrame.js FRAME_ROLES) - this
 // sheet writes geometry and the words' colours alone. CARDS-PLUS (2026-10-13, bible/11-Multiplayer/Tavern-Cards.md
 // section 38): until then that sentence was a claim the roles did not keep - none named the switch, the codex's rows or
 // the binder's filters, chips and decks, and this sheet's own `background` and border colours painted over any that
 // might; the switch and the binder's presses are the kit's tiles now, a codex row its list line, a deck its panel.
 
-import { codexRows, codexSets, codexCount, codexGilded } from '../systems/lootCodex.js';   // AUDIT WORLD-REWARDS A5: and the Gilded rung's rows
-import { lootRarityOn, powerLine, legendaryById, affixLine, RARITIES } from '../systems/lootRarity.js';
+import { codexRows, codexSets, codexCount, codexGilded } from '../systems/loot/lootCodex.js';   // AUDIT WORLD-REWARDS A5: and the Gilded rung's rows
+import { lootRarityOn, powerLine, legendaryById, affixLine, RARITIES } from '../systems/loot/lootRarity.js';
 import { gildedById } from '../systems/gilded.js';
-import { setById } from '../systems/sigilSets.js';
-import { cardsPartShown, drawCardsPart, resetCardsPart, disarmCardsPart } from './cardBinderPage.js';
+import { setById } from '../systems/sigil/sigilSets.js';
+import { cardsPartShown, drawCardsPart, resetCardsPart, disarmCardsPart } from './card/cardBinderPage.js';
 
 export const COLLECTION_PAGE_SECTIONS = Object.freeze([Object.freeze(['collections', 'Collections'])]);
 export const COLLECTION_PAGE_STYLE_ID = 'collections-page-css';

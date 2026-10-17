@@ -32,7 +32,7 @@ export const BULLETIN_BOARD_ACTIVATION_DISTANCE = MOBILE_NPC_ACTIVATION_DISTANCE
  *  string is ONE key, so it is now one constant, in PlayerActivate's
  *  own module (player/activate.js). scenes/townTalk.js's three reach
  *  refusals spoke the same key as 'You are too far away.' with a full
- *  stop; they import this same value now, and test/audit23_ui.test.js's
+ *  stop; they import this same value now, and test/systems/audit23_ui.test.js's
  *  literal pins moved with them. Re-exported here because this file's
  *  own consumers (and its pin) name it. */
 export { TOO_FAR_AWAY_TEXT };

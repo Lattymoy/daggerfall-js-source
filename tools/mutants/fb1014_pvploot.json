@@ -5,7 +5,7 @@
     "old": "if (rec && !remainsNamedFor(rec, d.i) && rec.os && a.sub !== rec.os",
     "new": "if (rec && rec.os && a.sub !== rec.os",
     "tests": [
-      "test/fb1014_pvploot.test.js"
+      "test/systems/fb1014_pvploot.test.js"
     ]
   },
   {
@@ -14,9 +14,9 @@
     "old": "if (rec && !remainsNamedFor(rec, d.i) && rec.os && a.sub !== rec.os && (sameGuild(rec.gi, a.gi) || (a.sub && await this._wdunKinOf(a.sub, rec.os, now)))) {",
     "new": "if (rec && rec.os && a.sub !== rec.os && (sameGuild(rec.gi, a.gi) || (!remainsNamedFor(rec, d.i) && a.sub && await this._wdunKinOf(a.sub, rec.os, now)))) {",
     "tests": [
-      "test/fb1014_pvploot.test.js"
+      "test/systems/fb1014_pvploot.test.js"
     ],
-    "note": "MAC (2026-10-14, re-aimed by content): the guild half reads net/wildRef.js sameGuild"
+    "note": "MAC (2026-10-14, re-aimed by content): the guild half reads net/wild/wildRef.js sameGuild"
   },
   {
     "name": "PVP-LOOT-its-party-half-alone",
@@ -24,9 +24,9 @@
     "old": "if (rec && !remainsNamedFor(rec, d.i) && rec.os && a.sub !== rec.os && (sameGuild(rec.gi, a.gi) || (a.sub && await this._wdunKinOf(a.sub, rec.os, now)))) {",
     "new": "if (rec && rec.os && a.sub !== rec.os && ((!remainsNamedFor(rec, d.i) && sameGuild(rec.gi, a.gi)) || (a.sub && await this._wdunKinOf(a.sub, rec.os, now)))) {",
     "tests": [
-      "test/fb1014_pvploot.test.js"
+      "test/systems/fb1014_pvploot.test.js"
     ],
-    "note": "MAC (2026-10-14, re-aimed by content): the guild half reads net/wildRef.js sameGuild"
+    "note": "MAC (2026-10-14, re-aimed by content): the guild half reads net/wild/wildRef.js sameGuild"
   },
   {
     "name": "PVP-LOOT-the-friend-law-dropped",
@@ -34,16 +34,16 @@
     "old": "if (rec && !remainsNamedFor(rec, d.i) && rec.os && a.sub !== rec.os",
     "new": "if (false && rec && rec.os && a.sub !== rec.os",
     "tests": [
-      "test/fb1014_pvploot.test.js"
+      "test/systems/fb1014_pvploot.test.js"
     ]
   },
   {
     "name": "PVP-LOOT-the-named-piece-anyones",
-    "file": "src/net/wildLaw.js",
+    "file": "src/net/wild/wildLaw.js",
     "old": "  if (named && sub !== named) return null;",
     "new": "  if (named && false) return null;",
     "tests": [
-      "test/fb1014_pvploot.test.js"
+      "test/systems/fb1014_pvploot.test.js"
     ]
   }
 ]

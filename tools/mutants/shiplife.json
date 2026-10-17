@@ -5,7 +5,7 @@
     "old": "      if (!isWater(pos[0] + fx * z + sx * s, pos[1] + fz * z + sz * s, hull)) return false;",
     "new": "      if (false) return false;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (berths.some((b) => dist2(b.pos, c.pos) < length * BERTH_SPACING)) continue;",
     "new": "    if (false) continue;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (Math.hypot(dx, dz) > reach) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    for (let k = 0; k < 12 && open; k++) { const a = (k / 12) * TAU; open = water(",
     "new": "    for (let k = 0; k < 0 && open; k++) { const a = (k / 12) * TAU; open = water(",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  cands.sort((a, b) => a.d - b.d ||",
     "new": "  cands.sort((a, b) => b.d - a.d ||",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    const along = Math.atan2(c.normal[0], c.normal[1]) + Math.PI / 2;",
     "new": "    const along = Math.atan2(c.normal[0], c.normal[1]);",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (!footprintClear(approach, yaw, hull, isWater)) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (Math.min(t, 1 - t) * d > LEG_END_M && !(water(x + sx * LEG_MARGIN, z + sz * LEG_MARGIN) && water(x - sx * LEG_MARGIN, z - sz * LEG_MARGIN))) return false;",
     "new": "      if (false) return false;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if (i >= 0) return { kind: 'moored', harbour: h.key, berth: i, until: clock + dwellOf(r), path: null, i: 0 };",
     "new": "      if (false) return { kind: 'moored', harbour: h.key, berth: i, until: clock + dwellOf(r), path: null, i: 0 };",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      const berth = hull === 3 ? -1 : h.harbour.berths.findIndex((_, i) => h.free?.(i) ?? true);",
     "new": "      const berth = hull === 3 ? -1 : 0;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (faction === 'pirate' && near.length) {",
     "new": "  if (false) {",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (clear(here, [here[0] + Math.sin(b) * OUTBOUND_OPEN, here[1] + Math.cos(b) * OUTBOUND_OPEN])) { a = b; break; }",
     "new": "    if (true) { a = b; break; }",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (ship.clock >= e.until && !(ctx.night && ship.cls?.faction === 'merchant')) {",
     "new": "      if (false) {",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (dist2(here, b.pos) <= BERTH_SNAP_M && ship.speed <= BERTH_WAY) {",
     "new": "      if (false) {",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      if (dist2(here, b.pos) > BERTH_SNAP_M * 2) { ship.errand = { kind: 'arrive', harbour: e.harbour, berth: e.berth, path: null, i: 0 }; return stepErrand(ship, dt, ctx); }",
     "new": "      if (false) { ship.errand = { kind: 'arrive', harbour: e.harbour, berth: e.berth, path: null, i: 0 }; return stepErrand(ship, dt, ctx); }",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (e.stall >= STALL_S) {",
     "new": "    if (false) {",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -149,8 +149,8 @@
     "old": "      const sides = e.detour ? [-(e.side ?? 1), e.side ?? 1] : [1, -1];",
     "new": "      const sides = [1, -1];",
     "tests": [
-      "test/shiplife.test.js",
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/shiplife.test.js",
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -159,8 +159,8 @@
     "old": "      const sails = left >= ARRIVE_EASE_M ? 1 : Math.max(ARRIVE_SAILS, left / ARRIVE_EASE_M);",
     "new": "      const sails = 1;",
     "tests": [
-      "test/shiplife.test.js",
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/shiplife.test.js",
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "      if (life?.hold) return moor(ship, life.hold, dt, out);",
     "new": "      if (false) return moor(ship, life.hold, dt, out);",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "  if (!plan.berthing) want = avoidLand(ship, want, isWater, world.wind);",
     "new": "  want = avoidLand(ship, want, isWater, world.wind);",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "!== life.want) { life.sweeps = SWEEP_WAY; life.sailable = true; }",
     "new": "!== life.want) { }",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -196,64 +196,64 @@
     "old": "      if (ship.mode !== 'cruise' && ship.errand) ship.errand.path = null;",
     "new": "      if (false) ship.errand.path = null;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
     "name": "SHIPLIFE-HOST-every-client-rolls",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (d > HARBOUR_STAND || !rollsHarbour(h.harbour.mouth)) continue;",
     "new": "      if (d > HARBOUR_STAND) continue;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ],
     "note": "AUDIT PR478 (PIN MOVED): re-aimed at the audited line."
   },
   {
     "name": "SHIPLIFE-HOST-moored-kept-far",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (rolled.has(h.harbour)) for (const e of [...sea.values()]) if (!e.owner && e.fromHarbour === h.key && e.ship.errand?.kind === 'moored') retire(e);   // SHIP-FADE",
     "new": "        if (false) for (const e of [...sea.values()]) if (!e.owner && e.fromHarbour === h.key && e.ship.errand?.kind === 'moored') retire(e);   // SHIP-FADE",
     "tests": [
-      "test/shiplife.test.js",
-      "test/shipfade.test.js"
+      "test/systems/naval/shiplife.test.js",
+      "test/render/shipfade.test.js"
     ]
   },
   {
     "name": "SHIPLIFE-HOST-sailed-stood-again",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (e.fromHarbour && s.errand?.kind !== 'moored') { departedOf(e.fromHarbour, where().day ?? 0).add(s.seed); e.fromHarbour = null; }",
     "new": "      if (e.fromHarbour && s.errand?.kind !== 'moored') { e.fromHarbour = null; }",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ],
     "note": "AUDIT PR478 (PIN MOVED): re-aimed at the audited line."
   },
   {
     "name": "SHIPLIFE-HOST-no-errand-at-launch",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (e && !out.spawn.hunter && !out.spawn.encounter && !out.spawn.relief) e.ship.errand = errandHere(e.ship);",
     "new": "        if (false) e.ship.errand = errandHere(e.ship);",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
     "name": "SHIPLIFE-HOST-errands-far-from-port",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return hs.length ? errandFor({",
     "new": "    return true ? errandFor({",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
     "name": "SHIPLIFE-HOST-adopted-errandless",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    e.ship.errand = e.liner ? laneErrand(errandHere(e.ship)) : errandHere(e.ship);\n    if (e.ship.errand?.kind === 'moored')",
     "new": "    if (e.ship.errand?.kind === 'moored')",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ],
     "note": "AUDIT PR478 (PIN MOVED): re-aimed at the audited line. AUDIT BAY re-aimed: the line draws a packet's errand her lane's (A4)."
   },
@@ -263,16 +263,16 @@
     "old": "  function offsetAll(o) { for (const h of book.values()) offsetHarbour(h.harbour, o); }",
     "new": "  function offsetAll(o) { for (const h of []) offsetHarbour(h.harbour, o); }",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
     "name": "SHIPLIFE-HOST-way-left-behind",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      offsetErrand(e.ship.errand, o);   // SHIP-LIFE: her way and where it leads",
     "new": "      // offsetErrand(e.ship.errand, o);",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -281,7 +281,7 @@
     "old": "s.afloat !== false && !s.berthed).length;",
     "new": "s.afloat !== false).length;",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -290,7 +290,7 @@
     "old": "    harbourNear: navalHarbourNear,\n    isWater: navalIsWater,\n  });",
     "new": "    harbourNearX: navalHarbourNear,\n    isWater: navalIsWater,\n  });",
     "tests": [
-      "test/shiplife.test.js"
+      "test/systems/naval/shiplife.test.js"
     ]
   }
 ]

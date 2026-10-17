@@ -5,7 +5,7 @@
     "old": "Math.max(0, u.depths[0], u.depths[1])",
     "new": "Math.max(0, u.depths[0])",
     "tests": [
-      "test/fb1011_snowtell.test.js"
+      "test/render/fb1011_snowtell.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "+ Math.max(0, u.limits[0]) +",
     "new": "+ 0 +",
     "tests": [
-      "test/fb1011_snowtell.test.js"
+      "test/render/fb1011_snowtell.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "+ Math.max(0, u.radius[2]);",
     "new": "+ 0;",
     "tests": [
-      "test/fb1011_snowtell.test.js"
+      "test/render/fb1011_snowtell.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const telegraphLift = (snowRise = 0) => BLOW_LIFT + (snowRise > 0 ? snowRise : 0);",
     "new": "export const telegraphLift = (snowRise = 0) => BLOW_LIFT;",
     "tests": [
-      "test/fb1011_snowtell.test.js"
+      "test/render/fb1011_snowtell.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "gl.uniform1f(U.uLift, telegraphLift(snowRise));",
     "new": "gl.uniform1f(U.uLift, BLOW_LIFT);",
     "tests": [
-      "test/fb1011_snowtell.test.js"
+      "test/render/fb1011_snowtell.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    this._snowRise = 0;   // SNOW-TELL: and the snow's height over the ground",
     "new": "    // SNOW-TELL: and the snow's height over the ground",
     "tests": [
-      "test/fb1011_snowtell.test.js"
+      "test/render/fb1011_snowtell.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    this._snowRise = Math.max(this._snowRise, snowSurfaceRise(u));",
     "new": "    void snowSurfaceRise;",
     "tests": [
-      "test/fb1011_snowtell.test.js"
+      "test/render/fb1011_snowtell.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "{ snowRise: this._snowRise });",
     "new": "{});",
     "tests": [
-      "test/fb1011_snowtell.test.js"
+      "test/render/fb1011_snowtell.test.js"
     ]
   }
 ]

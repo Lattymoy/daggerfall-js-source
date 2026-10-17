@@ -45,7 +45,7 @@
 //
 // Plain Node, no Electron imports - the preload requires it, and the
 // repo's own `node --test` suite exercises it directly
-// (test/filestorage.test.js).
+// (test/systems/save/filestorage.test.js).
 
 'use strict';
 
@@ -54,7 +54,7 @@ const path = require('node:path');
 
 // The prefixes are saveSlots.js's exports, restated because this file
 // is CommonJS in the shell and must not import the ESM game. The pin
-// in test/filestorage.test.js asserts the two spellings agree.
+// in test/systems/save/filestorage.test.js asserts the two spellings agree.
 const SAVE_DATA_PREFIX = 'dagger.save.';
 const SAVE_INFO_PREFIX = 'dagger.saveinfo.';
 const SAVE_SHOT_PREFIX = 'dagger.saveshot.';

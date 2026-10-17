@@ -300,7 +300,7 @@ export function createLowPolyTrees({ renderer, getTexture, seasonal = null, fetc
      * THE FRAME: the near set gathered (again only when the eye moved LPT_REGATHER_M, a set or where it stands changed, or
      * `stamp` moved - a tree felled), culled to `planes` (the view's, normalised; null - every tree), and handed to the
      * renderer, or nothing when there is none. `sets` - gatherNear's, and `skip` its; `swayOf(proto)` its share of the
-     * wind's lean (systems/windDrive.js floraSwayOf, as its flats take it); WINDFALL1: `windfallOf(proto)` its share
+     * wind's lean (systems/wind/windDrive.js floraSwayOf, as its flats take it); WINDFALL1: `windfallOf(proto)` its share
      * under Windfall's law (systems/windfall.js windfallResponse, its far pictures' mask).
      * @param {any[]} sets @param {number} ex @param {number} ey @param {number} ez
      * @param {{ skip?: (set:any, i:number) => boolean, swayOf?: (proto:any) => number, windfallOf?: (proto:any) => number, stamp?: number, planes?: Float32Array|null }} [opts]

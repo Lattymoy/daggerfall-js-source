@@ -3,7 +3,7 @@
 // POI-6 (2026-10-14) - POIS AND MODELS OUT OF THE EDITOR AND BACK IN: A .glb, AND A PACK.
 //
 // Mac: "a tool my developers can use without having to access the codebase" (bible/06-Systems/POI-Editor-Arc.md POI-6).
-// The editor's panel (ui/poiEditorPanel.js) and the library (ui/poiLibraryPanel.js) hand this module what they hold;
+// The editor's panel (ui/poi/poiEditorPanel.js) and the library (ui/poi/poiLibraryPanel.js) hand this module what they hold;
 // it fetches what they name, writes the file, or reads one back into the store:
 //
 //   - `exportModel(model, fetchAsset)`: a POI's or a library entry's parts and lights as one .glb (poi/gltfExport.js) -

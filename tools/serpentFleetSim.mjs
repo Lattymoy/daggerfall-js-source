@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // AUDIT SHIPS (2026-10-06, Mac: "Audit everything", of PR #634's SAIL-FREE + SERPENT3): THE SERPENT'S FIGHT, SIMULATED
 // AGAINST THE RELAY'S OWN BRAIN - a fleet of galleons circling its waters and firing, every attack word judged on each
-// ship by the struck machine's own law (systems/serpentStrike.js shapeMeets and shipHurt, the coil held, gripped and
+// ship by the struck machine's own law (systems/serpent/serpentStrike.js shapeMeets and shipHurt, the coil held, gripped and
 // crushed or broken, a wreck retiring her share), the pair's share read off the brain's own count as a client reads it.
 // SERPENT3's balance figures (bible/11-Multiplayer/Sea-Serpent.md sections 5 and 15) were measured with a scratch copy of
 // this harness that never reached the tree, at 8 and 13 m/s - below the ways SAIL-FREE gives a ship circling under full
@@ -48,7 +48,7 @@ const mulberry = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.i
 /** The laws a run reads - this tree's, or `root`'s. */
 export async function lawsOf(root = ROOT) {
   const at = (p) => pathToFileURL(join(resolve(root), p)).href;
-  return { B: await import(at('src/net/serpentBrain.js')), S: await import(at('src/systems/serpentStrike.js')), N: await import(at('src/systems/naval/navalShips.js')) };
+  return { B: await import(at('src/net/serpent/serpentBrain.js')), S: await import(at('src/systems/serpent/serpentStrike.js')), N: await import(at('src/systems/naval/navalShips.js')) };
 }
 
 /**

@@ -5,7 +5,7 @@
     "old": "{ cap: 0, nowMinutes: Math.floor(snap.classicMinutes ?? 0) }",
     "new": "{ cap: 1_000_000, nowMinutes: Math.floor(snap.classicMinutes ?? 0) }",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  for (const a of [...accounts].sort((x, y) => (y?.accountGold ?? 0) - (x?.accountGold ?? 0))) {",
     "new": "  for (const a of accounts) {",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (excess) snap.goldPieces = Math.max(0, (snap.goldPieces ?? 0) - take(snap.goldPieces ?? 0));\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    for (let i = list.length - 1; i >= 0; i--) if (emptied.has(list[i])) list.splice(i, 1);",
     "new": "    for (let i = list.length - 1; i >= 0; i--) if (emptied.has(list[i]) && !isLetter(list[i])) list.splice(i, 1);",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -41,25 +41,25 @@
     "old": "  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list);",
     "new": "  for (const list of lists(snap.bagItems, snap.items)) takeFrom(list);",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
     "name": "REALM3-letters-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": ": isLetter(it) ? Math.max(0, it?.value ?? 0) : 0);",
     "new": ": 0);",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
     "name": "REALM3-allowance-flat",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "export const customsAllowance = (/** @type {number} */ level) => CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);",
     "new": "export const customsAllowance = (/** @type {number} */ level) => CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * (void level, 1);",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  snap.characterId = id;\n  return { ok: true, snap, lease, seq: got.seq ?? seq, origin:",
     "new": "  return { ok: true, snap, lease, seq: got.seq ?? seq, origin:",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  for (const k of doorKeys) p.delete(k);\n  p.set('online', '1');",
     "new": "  p.set('online', '1');",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (t != null) storage.removeItem(REALM_NOTICE_KEY);\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    when: row?.playing ? 'Playing now' :",
     "new": "    when: false ? 'Playing now' :",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (realmSession) return;   // the realm's: no slot\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    const into = sink ?? realmSaveSink();   // REALM P1.3: a realm character's save is the service's checkpoint, never a local slot\n    if (into) { const said = into(snap); if (!quiet) sayRealmSave(said, (t) => townTalk.say(t)); return true; }   // AUDIT REALM2 C2: the realm's answer, not a hope\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      const into = sink ?? realmSaveSink();   // REALM P1.3: a realm character's save is the service's checkpoint, never a local slot\n      if (into) { const said = into(snap); if (!quiet) sayRealmSave(said, (t) => hudText.add(t)); return true; }   // AUDIT REALM2 C2: the realm's answer, not a hope\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (_beforeTitleExit) { const f = _beforeTitleExit; _beforeTitleExit = null; Promise.resolve().then(f).catch(() => {}).finally(() => exitToTitleMenu()); return; }\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  const onlineOn = params.has('online') && !realmNew;",
     "new": "  const onlineOn = params.has('online');",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -149,34 +149,34 @@
     "old": "  if (realmRefused) { params.delete('online'); publishBootParams(params); }\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
     "name": "REALM3-customs-on-the-slot",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    const copy = onlineCopyOf(snap, sharedClassicMinutes(Date.now()));",
     "new": "    const copy = snap;",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
     "name": "REALM3-room-character-in",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    if (snap.testRoom === true) return { ok: false, error: 'test-room' };   // AUDIT SET D4's law: the room's characters play offline\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
     "name": "REALM3-copy-keeps-realm-id",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    snap.characterId = mintCharacterId();\n",
     "new": "",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (realmId) params.set('realm', realmId);\n    else params.delete('realm');",
     "new": "    params.delete('realm');",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  doc?.addEventListener?.('visibilitychange', () => { if (doc.visibilityState === 'hidden') fn(); });",
     "new": "  doc?.addEventListener?.('visibilitychange', () => { fn(); });",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  if (realmBoot) { bootSnapRead = realmBoot.snap; realmBoot.snap = null; }",
     "new": "  if (realmBoot) { bootSnapRead = realmBoot.snap; }",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    if (realmSession) return;   // the realm's: no slot\n",
     "new": "    if (realmSession) realmSession.leave({ keepalive: true });\n",
     "tests": [
-      "test/oneseat.test.js"
+      "test/net/oneseat.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": ".then((r) => { if (r?.ok && holding?.length) _realmSaveHooks.landed(who, holding); return r; })",
     "new": ".then((r) => r)",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "h.who === whoSaved && (!only || only.includes(id))",
     "new": "h.who === whoSaved",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    heldIds(whoSaved) { return [...held].filter(([, h]) => h.who === whoSaved).map(([id]) => id); },",
     "new": "    heldIds() { return []; },",
     "tests": [
-      "test/realm3.test.js"
+      "test/systems/realm3.test.js"
     ]
   }
 ]

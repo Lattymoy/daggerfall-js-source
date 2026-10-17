@@ -5,7 +5,7 @@
     "old": "new Set([41100, 41105,",
     "new": "new Set([41105,",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (back) face = [-back[0], -back[1]];",
     "new": "  if (back) face = back;",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "let back = null, backH = seatY + CHAIR_BACK_RISE;",
     "new": "let back = null, backH = seatY;",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "s[0] * to[0] + s[1] * to[1] > best[0] * to[0] + best[1] * to[1] ? s : best",
     "new": "s[0] * to[0] + s[1] * to[1] < best[0] * to[0] + best[1] * to[1] ? s : best",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const feetY = Math.max(floorY - SEAT_ANKLE, seatY - SEATED_HIP_HEIGHT);",
     "new": "  const feetY = seatY - SEATED_HIP_HEIGHT;",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const CHAIR_LAP_TOP = 0.64;",
     "new": "export const CHAIR_LAP_TOP = 0.8;",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "rise >= CHAIR_SEAT_MIN && rise <= CHAIR_SEAT_MAX ?",
     "new": "Number.isFinite(rise) ?",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      chairs.push(chair);\n",
     "new": "",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        sitOnChair(Number(key.split(':')[1]));   // SIT1",
     "new": "        // SIT1",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (chairSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun || swingKey)) standFromChair();",
     "new": "",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      seat: chairSeat ? { feet: chairSeat.feet, yaw: chairSeat.yaw, top: chairSeat.top } : null,   // SIT1",
     "new": "      // SIT1",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "cardSeatPose() ?? (mode === 'interior' && chairSeat ? { feet: chairSeat.feet, yaw: chairSeat.yaw, st: seatTopByte(chairSeat.top) } : null);",
     "new": "cardSeatPose();",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": " player.drawFeet = chairSeat.feet; player.drawYaw = chairSeat.yaw; }",
     "new": " }",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (takenSeats([{ x: seat.feet[0], z: seat.feet[2] }], host.seatedPeers?.() ?? []).length) { say(t('chair.taken', 'Someone is already sitting there.')); return; }\n",
     "new": "",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (chairSeat) return [];   // SIT1 (AUDIT FIVE-ASKS C5)",
     "new": "    if (false) return [];   // SIT1 (AUDIT FIVE-ASKS C5)",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (Math.abs(aabb.min[1] - player.pos[1]) > CHAIR_FLOOR_STEP) {",
     "new": "if (Math.abs(aabb.min[1] - player.pos[1]) > Infinity) {",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "const h = probe(cx, cz, floorY + CHAIR_SEAT_MAX + CHAIR_PROBE_OVER);",
     "new": "const h = probe(cx, cz, aabb.max[1] + CHAIR_PROBE_OVER);",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "export const CHAIR_BACK_REACHES = Object.freeze([0.5, 0.75, 0.95]);",
     "new": "export const CHAIR_BACK_REACHES = Object.freeze([0.5]);",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      ...(chairSeat ? { feet: chairSeat.feet } : {}),",
     "new": "",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "if (held && chairSeat && !decorTool.flying()) { standFromChair(); return; } touchSwing",
     "new": "touchSwing",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (_act.cast && chairSeat) standFromChair();",
     "new": "",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "if (chairSeat && (decorTool.flying() || decorTool.panelOpen() || interiorCtx",
     "new": "if (chairSeat && (interiorCtx",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "return Number.isFinite(d) && d <= len ? fromY - d : null;",
     "new": "return Number.isFinite(d) && d <= len ? fromY + d : null;",
     "tests": [
-      "test/sit1_chairs.test.js"
+      "test/formats/morrowind/sit1_chairs.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
 // it: the bundle carries them as Texture2D objects in RGB24. The three
 // under `vendor/travel-options/Textures/` are therefore RE-ENCODES: the
 // author's pixels, this encoder's bytes (vendor/travel-options/
-// README.md says so in as many words, and test/vendorIntegrity.test.js
+// README.md says so in as many words, and test/tooling/vendorIntegrity.test.js
 // pins the re-encodes' hashes).
 //
 // This script is what reproduces them, so the claim is checkable by
@@ -20,7 +20,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 
 const CRC = (() => {
   const t = new Int32Array(256);

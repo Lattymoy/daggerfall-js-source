@@ -1,44 +1,44 @@
 [
   {
     "name": "DEED-PORT-the-C#'s-square",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    for (let i = currentMapPixel.X - range; i <= currentMapPixel.X + range; i++) {\n      for (let j = currentMapPixel.Y - range; j <= currentMapPixel.Y + range; j++) {",
     "new": "    for (let i = currentMapPixel.X - range; i < currentMapPixel.X + range - 1; i++) {\n      for (let j = currentMapPixel.Y - range; j < currentMapPixel.Y + range - 1; j++) {",
-    "tests": ["test/fb0929h_deedport.test.js", "test/csa_items.test.js"]
+    "tests": ["test/systems/comeSailAway/fb0929h_deedport.test.js", "test/systems/csa_items.test.js"]
   },
   {
     "name": "DEED-PORT-the-map's-harbours-not-asked",
     "file": "src/scenes/world.js",
     "old": "    if (hasPortFor(summary.id)) return true;   // SEAT2b part two: or a members' Harbour at a seat (\"ships dock at the seat\")\n    const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);",
     "new": "    const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);",
-    "tests": ["test/fb0929h_deedport.test.js"]
+    "tests": ["test/systems/comeSailAway/fb0929h_deedport.test.js"]
   },
   {
     "name": "DEED-PORT-the-nearest-never-said",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const near = deps.nearestPort?.() ?? null;",
     "new": "    const near = null;",
-    "tests": ["test/fb0929h_deedport.test.js"]
+    "tests": ["test/systems/comeSailAway/fb0929h_deedport.test.js"]
   },
   {
     "name": "DEED-PORT-the-host-never-hands-it",
     "file": "src/scenes/world.js",
     "old": "    nearestPort: () => csaNearestPort(),   // DEED-PORT: the refusal names where to go\n",
     "new": "",
-    "tests": ["test/fb0929h_deedport.test.js"]
+    "tests": ["test/systems/comeSailAway/fb0929h_deedport.test.js"]
   },
   {
     "name": "DEED-PORT-map-y-read-north",
     "file": "src/scenes/world.js",
     "old": "    const turn = Math.atan2(here.y - best.at.y, best.at.x - here.x) / (Math.PI / 4);",
     "new": "    const turn = Math.atan2(best.at.y - here.y, best.at.x - here.x) / (Math.PI / 4);",
-    "tests": ["test/fb0929h_deedport.test.js"]
+    "tests": ["test/systems/comeSailAway/fb0929h_deedport.test.js"]
   },
   {
     "name": "DEED-PORT-the-first-harbour-not-the-nearest",
     "file": "src/scenes/world.js",
     "old": "      if (d < bestD) { bestD = d; best = { summary, at }; }",
     "new": "      if (!best) { bestD = d; best = { summary, at }; }",
-    "tests": ["test/fb0929h_deedport.test.js"]
+    "tests": ["test/systems/comeSailAway/fb0929h_deedport.test.js"]
   }
 ]

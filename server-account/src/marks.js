@@ -56,7 +56,7 @@ import {
 } from '../../src/net/marksLaw.js';
 import { dice } from './unitRoll.js';   // SILVER-FINDS: a loot find's amount is the service's dice
 import { readAll } from './service.js';   // GATHER-SPEED: a find's reads in one round trip
-import { guildMay } from '../../src/net/guildLaw.js';
+import { guildMay } from '../../src/net/guild/guildLaw.js';
 import { medianOf, MARKET_REPORT_MEDIANS } from '../../src/net/marketLaw.js';   // PROF5: the report's medians
 import { WITNESS } from '../../src/net/nodeLaw.js';   // AUDIT 625 S1: the finds open at the witnesses' own age
 

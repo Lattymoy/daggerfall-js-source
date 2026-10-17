@@ -1,236 +1,236 @@
 [
   {
     "name": "SD6C-a-stone-turned-away",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "  const n = [-Math.sin(b), 0, -Math.cos(b)];\n  return { at: [p.x, 0, p.z], n, R: [-n[2], 0, n[0]] };",
     "new": "  const n = [Math.sin(b), 0, Math.cos(b)];\n  return { at: [p.x, 0, p.z], n, R: [-n[2], 0, n[0]] };",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-right-the-left",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "  return { at: [p.x, 0, p.z], n, R: [-n[2], 0, n[0]] };",
     "new": "  return { at: [p.x, 0, p.z], n, R: [n[2], 0, -n[0]] };",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-hands-turn-backwards",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "  const t = ((hour % 12) / 12) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);",
     "new": "  const t = -((hour % 12) / 12) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-a-mirrored-hand",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "   // its own +x: y x n\n  out[0] = x0; out[1] = x1; out[2] = x2;",
     "new": "   // its own +x: y x n\n  out[0] = -x0; out[1] = -x1; out[2] = -x2;",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-handles-swapped",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "export const handleFoot = (i, side) => stonePoint(i, side * (",
     "new": "export const handleFoot = (i, side) => stonePoint(i, -side * (",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-lit-ring-at-the-wrong-hours",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "  const mid = deg((2 * k + 1) * 30), half = deg(halfHours * 30);",
     "new": "  const mid = deg(2 * k * 30), half = deg(halfHours * 30);",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-fray-backwards",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "export const frayTabBearing = (k, count = SD_FRAY_RING.steps) => ((k + 0.5) / count) * Math.PI * 2;",
     "new": "export const frayTabBearing = (k, count = SD_FRAY_RING.steps) => -((k + 0.5) / count) * Math.PI * 2;",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-bridge-short-of-the-step",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "z1: SD_FIRST_STEP.z - SD_FIRST_STEP.r + 0.5,",
     "new": "z1: SD_FIRST_STEP.z - SD_FIRST_STEP.r - 0.5,",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-step-no-floor",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "  Object.freeze({ kind: 'disc', ...SD_FIRST_STEP }),\n]);",
     "new": "]);",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-a-plaque-on-the-walk",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "bearings: Object.freeze([200, 240, 300, 60, 120, 160])",
     "new": "bearings: Object.freeze([180, 240, 300, 60, 120, 160])",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-a-stone-wearing-another's-sign",
-    "file": "src/world/sdHallArt.js",
+    "file": "src/world/superDungeon/sdHallArt.js",
     "old": "  const sign = SD_SIGNS[i], bone = i === 4, ink = bone ? Pa : Br;",
     "new": "  const sign = SD_SIGNS[i % 5], bone = i === 4, ink = bone ? Pa : Br;",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-a-plaque-miscounted",
-    "file": "src/world/sdHallArt.js",
+    "file": "src/world/superDungeon/sdHallArt.js",
     "old": "  [[-0.4, -0.4], [0, 0], [0.4, 0.4]],",
     "new": "  [[-0.4, -0.4], [0.4, 0.4]],",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-dial-without-its-twelfth",
-    "file": "src/world/sdHallArt.js",
+    "file": "src/world/superDungeon/sdHallArt.js",
     "old": "    if (r > (quarter ? 0.5 : 0.6) && r < 0.84 && off < (quarter ? 0.06 : 0.042))",
     "new": "    if (r > (quarter ? 0.5 : 0.6) && r < 0.84 && off < (quarter ? 0.06 : 0.042) && Math.round(hour) % 12 !== 0)",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-a-glow-without-its-light",
-    "file": "src/world/sdHallArt.js",
+    "file": "src/world/superDungeon/sdHallArt.js",
     "old": "export function hallGlowArt(color) {\n  return lightArt(16, color);",
     "new": "export function hallGlowArt(color) {\n  return lightArt(16, color, 0);",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-first-word-turned-to",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "    if (first) for (let i = 0; i < want.length; i++) { shown[i] = want[i]; if (hands[i]) handMatrix(i, shown[i], hands[i].object.matrix); }",
     "new": "",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-long-way-round",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "const way = (from, to) => ((((to - from) % 12) + 18) % 12) - 6;",
     "new": "const way = (from, to) => to - from;",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-bridge-laid-early",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "object: { matrix: ok ? identity() : new Float32Array(ZERO) }",
     "new": "object: { matrix: identity() }",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-bridge-never-laid",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "      else { concordAt = now(); concordDone = false; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; laid = false; }",
     "new": "      else { concordAt = now(); concordDone = true; tocked = false; bannerLive = !!bannerMesh; bannerKey = -1; laid = false; }",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-Concord-silent",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "      if (!first) { play(SD_HALL_SOUNDS.chime, dialCentre(0), 1, 1); say(SD_HALL_TEXT.concord); }",
     "new": "      if (!first) { }",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-partners-unheard",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "      for (let j = 0; j < SD_STONES.length; j++) if (j !== w.i && o.gear[w.i][j] !== 0) play(",
     "new": "      for (let j = 0; j < 0; j++) if (j !== w.i && o.gear[w.i][j] !== 0) play(",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-another-realm's-word-heard",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "      if (w && w !== word && o && w.s === s && Array.isArray(w.st)) { word = w; hear(w); }",
     "new": "      if (w && w !== word && o && Array.isArray(w.st)) { word = w; hear(w); }",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-floors-unstood",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "      try { collider?.addMesh?.('sd:hall', tris, idx, identity()); }",
     "new": "      try { void tris; }",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-a-turn-from-across-the-hall",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "      if (!at || !stoneInReach(i, at[0], at[2])) { say(SD_HALL_TEXT.closer); return true; }",
     "new": "      if (!at) { say(SD_HALL_TEXT.closer); return true; }",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-a-turn-in-the-settling",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "      if (now() - lastTurn[i] < SD_STONE_SETTLE_MS) return true;",
     "new": "",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-turns-after-the-Concord",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "      if (ok) { say(SD_HALL_TEXT.still); return true; }\n",
     "new": "",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
     "name": "SD6C-the-handles-the-other-way",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "const i = Number(st[1]), a = st[2] === 'f' ? 1 : -1;",
     "new": "const i = Number(st[1]), a = st[2] === 'f' ? -1 : 1;",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "playerEntity.health > 0 && inOrreryHall(x, z) && !!online",
     "new": "playerEntity.health > 0 && !!online",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });",
     "new": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg, { spare: () => {} });",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    if (modes?.sdRealmSlot?.() !== w.s) return;\n",
     "new": "",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  const sdHallWord = () => (_sdHall && _sdHall.s === modes?.sdRealmSlot?.() ? _sdHall : null);",
     "new": "  const sdHallWord = () => _sdHall;",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "sdConcordHere() ? _realmArenaBridged : _realmArena;",
     "new": "_realmArena;",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "  const sdHall = _sdRealm ? createSdHall(",
     "new": "  const sdHall = true ? createSdHall(",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": " || key.startsWith('sdstone:') || key.startsWith('sdplaque:')) { dungeonCtx.sdPress?.(key); return true; }",
     "new": ") { dungeonCtx.sdPress?.(key); return true; }",
     "tests": [
-      "test/sd6c_hall.test.js"
+      "test/world/superDungeon/sd6c_hall.test.js"
     ]
   }
 ]

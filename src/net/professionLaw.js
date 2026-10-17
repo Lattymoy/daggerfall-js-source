@@ -17,7 +17,7 @@
 // A MATERIAL IS DFU'S OWN ITEM wherever DFU has one (law 2). An herb is
 // a plant template in one of DFU's two plant groups - PlantIngredients1,
 // named "(northern)" below template 18, and PlantIngredients2,
-// "(southern)" (systems/itemInfo.js itemNameParts) - and a two-group
+// "(southern)" (systems/item/itemInfo.js itemNameParts) - and a two-group
 // plant takes its pixel's region's (FALL.EXE's REGION_RACES: a Breton
 // region northern, a Redguard one southern), so the Stores keep such a
 // plant as two materials and a withdrawal is the item DFU's own loot
@@ -28,7 +28,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { REGION_RACES } from '../formats/mapsTables.js';
-import { attributeBand } from '../systems/foragingCore.js';   // Foraging's bands, one home (FORAGE0 14.4)
+import { attributeBand } from '../systems/foraging/foragingCore.js';   // Foraging's bands, one home (FORAGE0 14.4)
 import { renownRate } from './renown.js';   // MERGE 2: a writ's Renown at every source's rate (RENOWN-ACCOUNT)
 
 // ─── THE TEN (PROF0 3.1; CRAFT3, Professions-Arc 41.6) ───────────────
@@ -365,7 +365,7 @@ export const HERB_VALUES = Object.freeze([1, 2, 5]);
 /** A DFU item's material row: its key, family, tier, DFU group and template. @returns {MinedRow} */
 const dfu = (key, family, tier, group, templateIndex) => Object.freeze({ key, family, tier, group, templateIndex });
 /** A new template's (600-699, PROF0 4.8): its key, family, tier and template - DFU's picture it borrows, and the DFU
- *  dye that recolours it (systems/itemDye.js; `dye` a DYE_COLORS name, over the WeaponsAndArmor swatch, or null). A
+ *  dye that recolours it (systems/item/itemDye.js; `dye` a DYE_COLORS name, over the WeaponsAndArmor swatch, or null). A
  *  silver one is DFU's Silver - Unchanged, as a silver blade is (dyes.js). @returns {MinedRow} */
 const made = (key, family, tier, templateIndex, name, icon, dye) => Object.freeze({ key, family, tier, templateIndex, name, icon, dye });
 
@@ -415,7 +415,7 @@ export const STONES = Object.freeze([
 /** PROF11 (PROF0 4.5, 4.8: 675): MORTAR - made ten at a time at the mason's bench from 1 Sulphur, 1 Lead and 5 Rough
  *  Stone; tier 2, worth 2 Marks (4.8's tier value). 4.8's "DFU Lodestone, greyed" as Rough and Cut Stone are drawn: the
  *  grey lump as it is, undyed (DFU's Grey is a clothing dye - dyes.js CLOTHING_STARTS - and no metal's swatch is a
- *  stone's). Registered beside them (systems/profTemplates.js MASONRY_TEMPLATE_ROWS), never gathered: the bench's alone. */
+ *  stone's). Registered beside them (systems/professions/profTemplates.js MASONRY_TEMPLATE_ROWS), never gathered: the bench's alone. */
 export const MORTAR = made('stone:mortar', 'stone', 2, 675, 'Mortar', ICON_LODESTONE, null);
 /** PROF11: the stone the mason works - Rough Stone (the quarry's) and Cut Stone (the cut's). */
 export const ROUGH_STONE = STONES[0];
@@ -436,7 +436,7 @@ export const GEMS = Object.freeze([
 export const ICON_DIAMOND = Object.freeze([254, 3]);
 /** THE SIEGE-CRACKED GEM (4.7, 4.8: 678): a Siege Honour's Spoils, a gem only war yields - the Diamond's tier, on the
  *  Diamond's own picture. DECIDED (AUDIT-SEATS): undyed and without 4.8's "cracked overlay" - the icon's one door is a
- *  dye (systems/itemTemplates.js inventoryItemImage), no overlay crosses the renderers; the name says what it is.
+ *  dye (systems/item/itemTemplates.js inventoryItemImage), no overlay crosses the renderers; the name says what it is.
  *  Mining never strikes one: GEMS is the glint's table, and this row is not in it. */
 export const SIEGE_GEM = made('gem:siege', 'gems', gemTierOfPrice(500), 678, 'Siege-cracked Gem', ICON_DIAMOND, null);
 /** Every new template PROF2 registers, by template. */
@@ -494,7 +494,7 @@ export const ICON_WRAPPINGS = Object.freeze([254, 41]);
 export const ICON_SCALES = Object.freeze([254, 37]);
 export const ICON_FEATHER = Object.freeze([254, 53]);
 export const ICON_GARMENT = Object.freeze([204, 0]);
-/** DFU's MobileTypes (characters/mobileTypes.js, generated from DaggerfallUnityEnums.cs) of the ten foes 4.4 skins. */
+/** DFU's MobileTypes (characters/mobile/mobileTypes.js, generated from DaggerfallUnityEnums.cs) of the ten foes 4.4 skins. */
 const MOB = Object.freeze({
   Rat: 0, GiantBat: 3, GrizzlyBear: 4, SabertoothTiger: 5, Spider: 6, Slaughterfish: 11, Harpy: 13, GiantScorpion: 20,
   Dragonling: 34, DragonlingAlternate: 40, Dreugh: 41,
@@ -644,7 +644,7 @@ export const ICON_ECTOPLASM = Object.freeze([254, 39]);
  * THE APOTHECARIES' SIXTEEN (4.5: "the sixteen DFU ingredients that DFU's potion recipes need and no gathering route
  * yields (FACT, POTION_RECIPES) ... at a fifth of DFU's price in Marks, rounded up"): each DFU's own ingredient in its own
  * group (itemTemplatesData.js; withdrawn, DFU's item - profItems.js mintMaterialItem), in 4.5's order, `value` its counter
- * price - 4.5's own numbers, pinned equal to a fifth of itemTemplates.json's basePrice rounded up (test/prof12_law.test.js)
+ * price - 4.5's own numbers, pinned equal to a fifth of itemTemplates.json's basePrice rounded up (test/systems/prof12_law.test.js)
  * - and its tier its price's, as a body's part is (gemTierOfPrice). The Stores' family the Essences': DECIDED, the
  * alchemist's and the enchanter's goods share one filter (8's "Essences"), no new one.
  */
@@ -997,7 +997,7 @@ export function craftXpCap(profession, ranks) {
 // Masonry's two seat choices act on what SEAT2b builds - the fortification projects (SEAT0 7.5: each tier's materials
 // delivered to the seat's stockpile by writs) and a capture's tier down ("When the seat changes hands each drops one
 // tier") - and no fortification stands yet. So the law and its helpers stand here, pure and pinned
-// (test/prof11_law.test.js), for SEAT2b to call; which member's choice stands for a seat (a project's Builder, a
+// (test/net/prof11_law.test.js), for SEAT2b to call; which member's choice stands for a seat (a project's Builder, a
 // capture's Fortifier) is SEAT2b's to say. Both are chosen now - they cost nothing until a seat reads them.
 
 /** The Builder (3.3: "fortification projects need 10% less stone"): the share of a project's stone taken off, percent. */

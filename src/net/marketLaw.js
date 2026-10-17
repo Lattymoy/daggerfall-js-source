@@ -25,7 +25,7 @@ import { STORES_MAX, MATERIAL_FAMILIES, MINED_KEYS, FOOD_KEYS, PLANT_GROUP_TEMPL
 import { PROVENANCE_RE, recipeById, takesQuality, MASTERWORK } from './recipeLaw.js';
 import { MARKS_MAX } from './marksLaw.js';
 import { witnessedFact, factConfirmed, material } from './nodeLaw.js';
-import { tradeableRecord, boundRecord, BOAT_TEMPLATES, GOLD_PIECES_TEMPLATE, VALUE_IS_IDENTITY_TEMPLATES } from './realmTradeLaw.js';   // MARKET-ANY: the trade's own law of what may leave a record
+import { tradeableRecord, boundRecord, BOAT_TEMPLATES, GOLD_PIECES_TEMPLATE, VALUE_IS_IDENTITY_TEMPLATES } from './realm/realmTradeLaw.js';   // MARKET-ANY: the trade's own law of what may leave a record
 
 /** A listing stands this long (10.2: 72 hours). */
 export const MARKET_LISTING_S = 72 * 3600;
@@ -277,7 +277,7 @@ export const auctionable = (recipeId, quality) => quality === MASTERWORK && piec
 // nothing else (10.2: "Loot does not list: it has no provenance. TRADE1 stays how loot changes hands") - so to a player
 // nothing they carried from the world could be sold there, and the List form offered only what a crafter had made.
 // A realm character's pack is its record on the service now (REALM P1), and a realm trade already moves a piece out of
-// one record and into another in one write (REALM P2.1, net/realmTradeLaw.js). A piece from the pack lists the same way:
+// one record and into another in one write (REALM P2.1, net/realm/realmTradeLaw.js). A piece from the pack lists the same way:
 // the very record the seller's checkpoint holds, taken out of it in the listing's own batch (server-account/src/
 // market.js), and put into the buyer's record - or back into the seller's, cancelled, expired or removed - by the
 // collect's own batch. Nothing is copied: the piece is in one record, or on the listing, or on the road.
@@ -311,7 +311,7 @@ export function goodFamily(rec) {
 }
 let _storesForms = /** @type {Set<string>|null} */ (null);
 /** THE STORES' OWN MATERIALS AS THE PACK HOLDS THEM - every mined, smelted, cut, felled, skinned and gathered material
- *  with a template (systems/profItems.js mintMaterialItem mints these; the custom 600-699 rows by their index alone,
+ *  with a template (systems/professions/profItems.js mintMaterialItem mints these; the custom 600-699 rows by their index alone,
  *  DFU's own by their group and index), as `group:index` or `*:index`. The four foods are left out: their templates are
  *  Climates & Calories' or Foraging's as the client is set, and a Drake's worth of them is none. */
 export function storesForm(rec) {
@@ -325,7 +325,7 @@ export function storesForm(rec) {
 /**
  * WHY A PIECE OF THE PACK MAY NOT LIST - its record as the save holds it (plain data; both ends read it) - as a word, or
  * null. The trade's refusals first (realmTradeLaw tradeableRecord: worn, a quest's, summoned, bound, gold, a boat's),
- * then the market's own: LOCK1's lock (the player's own word closes selling - systems/itemLock.js), a letter of credit
+ * then the market's own: LOCK1's lock (the player's own word closes selling - systems/item/itemLock.js), a letter of credit
  * (it IS gold, and its value is its identity), arrows (a quiver's stack), a Stores material (storesForm - THE WALL of
  * 10.8, kept: a material bought with Drakes and withdrawn to the pack would otherwise list for gold, "a way round the
  * Bank's daily cap and spread"; the Stores list it, in its own currency) and a record past GOOD_RECORD_MAX. A crafted

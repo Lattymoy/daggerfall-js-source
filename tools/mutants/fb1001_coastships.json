@@ -5,7 +5,7 @@
     "old": "      const vertical = d[0] === 0 && d[2] === 0, g0 = vertical ? surfaceAt(o[0], o[2]) : NaN;",
     "new": "      const vertical = false, g0 = vertical ? surfaceAt(o[0], o[2]) : NaN;",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      const vertical = d[0] === 0 && d[2] === 0, g0",
     "new": "      const vertical = d[2] === 0, g0",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "Math.floor((g0 - o[1]) / d[1] / 0.25) - 2) * 0.25;",
     "new": "Math.floor((g0 - o[1]) / d[1] / 0.25) + 2) * 0.25;",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "!(Number.isFinite(g0) && d[1] < 0) ? limit :",
     "new": "!(Number.isFinite(g0)) ? limit :",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ],
     "equivalent": true,
     "why": "a rising (or level) straight ray never meets the column: below(0) is false and o1 + d1 t only rises, so the walk it would then take finds nothing, as the skip does - the skip is the cost, not the answer"
@@ -43,7 +43,7 @@
     "old": "uv1 = z * vx - x * vz",
     "new": "uv1 = x * vz - z * vx",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "const p = quatRotateInto(rot, t.p[0] * q.size[0], t.p[1] * q.size[1], t.p[2] * q.size[2], _flagP);",
     "new": "const p = quatRotate(rot, [t.p[0] * q.size[0], t.p[1] * q.size[1], t.p[2] * q.size[2]]);",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "Math.hypot(sp[0] - eye[0], sp[1] - eye[1], sp[2] - eye[2])) continue;   // under a pixel",
     "new": "Math.hypot(sp[0] - eye[0], sp[1] - eye[1], sp[2] - eye[2])) { /* drawn */ }   // under a pixel",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "if (sp && sp[3] > 0 && 2 * sp[3] * pxPerM < CULL_DETAIL_PX",
     "new": "if (sp && sp[3] > 0 && 2 * sp[3] * pxPerM > CULL_DETAIL_PX",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "pushSeenShipFlats(csa.batches(), livePersonBatches);",
     "new": "livePersonBatches.push(...csa.batches());",
     "tests": [
-      "test/fb1001_coastships.test.js"
+      "test/scenes/fb1001_coastships.test.js"
     ]
   }
 ]

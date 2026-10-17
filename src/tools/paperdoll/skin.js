@@ -109,7 +109,7 @@ export function createSkin(ctx) {
   // per-face path uses, so a race is still nothing more than a ramp swap
   // THE FACE IS A SPRITE, so it is composited at RUNTIME from the user's own
   // FACE*.CIF rather than baked into public/skin/ - a render of game data is
-  // game data (test/doctrine.test.js). The head cell ships carrying geometry
+  // game data (test/tooling/doctrine.test.js). The head cell ships carrying geometry
   // shading only; this paints the chosen record into its FRONT ARC, so the
   // skull keeps its ramp all the way round and the face layers over the front.
   let facePick = 0;

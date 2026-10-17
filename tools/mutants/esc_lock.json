@@ -5,7 +5,7 @@
     "old": "      deliverEscape();\n",
     "new": "",
     "tests": [
-      "test/esclock.test.js"
+      "test/player/esclock.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    _pageReleaseAt = nowMs();   // ESC-LOCK: the page's own release is never the player's Escape\n",
     "new": "",
     "tests": [
-      "test/esclock.test.js"
+      "test/player/esclock.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive || !pageHasFocus();",
     "new": "  const quiet = () => isWindowUp() || overlayOpen() || _cursorActive;",
     "tests": [
-      "test/esclock.test.js"
+      "test/player/esclock.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (e.code === 'Escape' && e.isTrusted !== false && !e.dagSynthetic) lastRealEscape = nowMs();",
     "new": "    if (e.code === 'Escape' && e.isTrusted === false && !e.dagSynthetic) lastRealEscape = nowMs();",
     "tests": [
-      "test/esclock.test.js"
+      "test/player/esclock.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      if (held || quiet() || fingered() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
     "new": "      if (quiet() || fingered() || nowMs() - lastRealEscape < REAL_ESCAPE_MS + ESCAPE_DELIVERY_MS) return;",
     "tests": [
-      "test/esclock.test.js"
+      "test/player/esclock.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (at - _shellRelockAt < SHELL_RELOCK_MS) return;\n",
     "new": "",
     "tests": [
-      "test/esclock.test.js"
+      "test/player/esclock.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "e.sender.executeJavaScript('globalThis.__daggerRelock?.()', true)",
     "new": "e.sender.executeJavaScript('globalThis.__daggerRelock?.()', false)",
     "tests": [
-      "test/esclock.test.js"
+      "test/player/esclock.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (pending) { clearTimeout(pending); pending = null; }\n",
     "new": "",
     "tests": [
-      "test/esclock.test.js"
+      "test/player/esclock.test.js"
     ]
   }
 ]

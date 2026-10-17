@@ -5,7 +5,7 @@
     "old": "    if (!side && vert > 0 && (w.stuck || (w.sidestep && w.sidestep.gone < w.sidestep.want))) this._fcSidestep(v, n, dt, held);",
     "new": "",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const f = search([1, -1], PARKOUR_SIDESTEP_MAX);",
     "new": "const f = search([1], PARKOUR_SIDESTEP_MAX);",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const q = [from[0] + t[0] * s, from[1] + PARKOUR_SIDESTEP_RISE, from[2] + t[2] * s];",
     "new": "const q = [from[0] + t[0] * s, from[1], from[2] + t[2] * s];",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "k * PARKOUR_SIDESTEP_PROBE <= room + 1e-9;",
     "new": "k * PARKOUR_SIDESTEP_PROBE <= 4;",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const nx = n[0], nz = n[2], hug = out == null ? (this._wall?.past != null ? 0 : -press) : out;",
     "new": "    const nx = n[0], nz = n[2], hug = out == null ? (this._wall?.past != null ? 0 : -this.speed * dt) : out;",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    w.gap = c.dist - CAPSULE_RADIUS;   // HUG-TOUCH: how far the face stands off the body (_fcMove's press)",
     "new": "",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (!Number.isFinite(at(i - 1)) && faceGoesOn(collider, ox, rungY(i - 1), oz, dir, dist, PARKOUR_GRIP_RUNG)) continue;",
     "new": "",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (!Number.isFinite(d) && faceGoesOn(collider, ox, lipY + PARKOUR_LIP_FOLLOW - i * PARKOUR_GRIP_RUNG, oz, dir, back, PARKOUR_GRIP_RUNG)) continue;",
     "new": "",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      continue;   // CRACK-LIP: a crack between two of the wall's pieces, the face going on over it",
     "new": "      return { ...wall, openY: y, faceDist };",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (s && s.normal[0] * n[0] + s.normal[2] * n[2] >= PARKOUR_FACE_FOLLOW) {",
     "new": "      if (false) {",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      if (s && s.normal[0] * n[0] + s.normal[2] * n[2] >= PARKOUR_FACE_FOLLOW) {",
     "new": "      if (s) {",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "        w.past = this._fcFaceTop(was, into);\n",
     "new": "",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (turned && this._fcTopOut(dt, skill, inputs, turned, false)) return true;\n",
     "new": "",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "w.corner ??= this._fcCornerSide(into, w.look);",
     "new": "w.corner ??= this._fcCornerSide(into, null);",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "const dir = [-into[2] * side, 0, into[0] * side];",
     "new": "const dir = [-into[2], 0, into[0]];",
     "tests": [
-      "test/fb1002_climb.test.js"
+      "test/player/fb1002_climb.test.js"
     ]
   }
 ]

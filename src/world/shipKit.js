@@ -2,19 +2,19 @@
 // SHIPS-2 (2026-10-07, Mac: "ensure it matches the love we gave the other new ship model we implemented"): THE
 // SHIPWRIGHT'S KIT - what every ship of the port's builds her prefab with.
 //
-// The galleon (world/galleonModel.js, world/galleonRig.js) built hers on helpers of her own, and the carrack and the
-// large boat (world/carrackModel.js, world/largeBoatModel.js) build theirs the same way - so the helpers live here, ONE
+// The galleon (world/ships/galleonModel.js, world/ships/galleonRig.js) built hers on helpers of her own, and the carrack and the
+// large boat (world/ships/carrackModel.js, world/ships/largeBoatModel.js) build theirs the same way - so the helpers live here, ONE
 // home (the bible's ONE CONSTRUCTION SEAM): a node in Come Sail Away's data shape, a yaw, the clips' curves, a rigid
 // matrix's inverse, a baked part's points, and `prefabBench` - the components and meshes a prefab adds to the mod's
 // shared table, its renderers and colliders, and its skinned renderers' bones resolved once the tree's paths are known.
 //
-// A ship's prefab is Come Sail Away's data (systems/comeSailAwayModels.js): a node tree, its components as indices into
-// `[...csaComponents, ...components]`, its meshes by key in the CSA geometry shape (world/galleonMesh.js MeshBench), its
+// A ship's prefab is Come Sail Away's data (systems/comeSailAway/comeSailAwayModels.js): a node tree, its components as indices into
+// `[...csaComponents, ...components]`, its meshes by key in the CSA geometry shape (world/ships/galleonMesh.js MeshBench), its
 // clips and overrides beside the mod's. Not a DFU member. Ledger A (GALLEON, SHIPS-2).
 import { pathHash } from './unityAnimator.js';
 import { mat4FromQuatPosScale } from './quat.js';
 import { multiply } from './mat4.js';
-import { colliderOf } from './galleonMesh.js';
+import { colliderOf } from './ships/galleonMesh.js';
 
 /** @typedef {{ p?: readonly number[], r?: readonly number[], s?: readonly number[], c?: number[], kids?: any[], active?: boolean }} NodeOpts */
 /** A node as Come Sail Away's prefabs hold one: its name, active flag, local transform, components and children.
@@ -63,7 +63,7 @@ export function invertRigid(m) {
 }
 
 /** A geometry built on the galleon's bench (its slots in her archive) worn in `archive` - every ship's pictures carry
- *  the galleon's record numbers for the ones the fleet shares (world/carrackArt.js TEX), so a door, a gun or a yard the
+ *  the galleon's record numbers for the ones the fleet shares (world/ships/carrackArt.js TEX), so a door, a gun or a yard the
  *  galleon's builders make is the same mesh in another ship's archive. A collider's geometry (no slots) passes as it is. */
 export function inArchive(geometry, archive) {
   if (!geometry?.slots) return geometry;

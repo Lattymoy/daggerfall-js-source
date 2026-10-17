@@ -7,7 +7,7 @@
 // favor of the new enhanced plus UI tabs on the pause menu").
 //
 // THE LEDGER - every ship the player holds title to, by her number (the UID her deed placed her by, Come Sail Away's
-// own; systems/comeSailAway.js GetPlacedBoatWithUID): her hull and rig, her worth, the name her captain gave her, her
+// own; systems/comeSailAway/comeSailAway.js GetPlacedBoatWithUID): her hull and rig, her worth, the name her captain gave her, her
 // refits, the bank's claim on her while the loan she was bought on stands, and the port she was last laid up at.
 //
 // THE BOOK - her TITLE. A deed (Come Sail Away's item 1321) no longer rides in the pack: it is entered here, and the mod's
@@ -19,8 +19,8 @@
 // WHERE SHE IS is never stored: it is read off the world each time (afloat: a boat of hers stands; packed: her parts are
 // in the pack; laid up: neither, her title in the book) - scenes/fleetHost.js. Nothing here touches a host.
 
-import { mintDeed, BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from './comeSailAwayItems.js';
-import { HULL_NAMES, HULL_PRICES, VARIANT_NAMES, HULL_VARIANT_COUNTS } from './comeSailAwayBoat.js';
+import { mintDeed, BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from './comeSailAway/comeSailAwayItems.js';
+import { HULL_NAMES, HULL_PRICES, VARIANT_NAMES, HULL_VARIANT_COUNTS } from './comeSailAway/comeSailAwayBoat.js';
 import { checkName, textCaught } from '../net/nameFilter.js';
 
 export const FLEET_SAVE_VENDOR = 'Fleet';
@@ -150,7 +150,7 @@ const upgradesBlank = () => ({ hold: 0, rigging: 0, hull: 0, guns: 0 });
 const isUid = (v) => Number.isSafeInteger(v) && v > 0;
 /** AUDIT SHIPYARDS L1-2 (RESTORE's "Keep all, can't sell", a DFU deed's law, for Come Sail Away's ships): THE SHIPS THAT
  *  CAME INTO THE REALM THROUGH CUSTOMS, by number - each stays the player's and sails, and no shipyard buys her
- *  (systems/shipyards.js saleRefusal). Weightless and uncounted at customs (net/realmGoldLaw.js liquidWealthOf counts none
+ *  (systems/shipyards.js saleRefusal). Weightless and uncounted at customs (net/realm/realmGoldLaw.js liquidWealthOf counts none
  *  of the Fleet), a ship sold online was an offline fortune crossed whole. A number is a ship's for life, so a crossed
  *  ship stays crossed - parts, deed, standing or laid up. */
 const _crossed = new Set();

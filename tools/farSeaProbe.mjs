@@ -1,6 +1,6 @@
 // FAR-SEA1 - THE FAR RING'S SEA AND THE WATER'S HAZE, COMPILED AND DRAWN IN A REAL BROWSER.
 //
-// Node pins the laws on the shader text (test/farsea1.test.js); only a driver can say the programs still link and
+// Node pins the laws on the shader text (test/render/farsea1.test.js); only a driver can say the programs still link and
 // keep the uniforms the host uploads - a dropped uniform reads back null and the upload skips it. So this links the
 // far ring on all three of its fragment shaders (classic, the Enhanced Lighting lane, the classic-shadow lane) and the
 // water on both, asks for every FAR-SEA1 uniform, and then draws the ring over an open sea from a raised eye: under the

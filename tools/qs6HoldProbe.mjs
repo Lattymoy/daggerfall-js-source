@@ -54,7 +54,7 @@ const spell = (index, name) => ({ index, name, rangeType: 2, element: 0, cost: 1
 const entity = { items: [potion(HEAL, 9), potion(CURE, 9), potion(TONIC, 9)], spells: [spell(5, 'Spark'), spell(9, 'Shock'), spell(-1, 'Mine')] };
 
 // The engine's two arms this slice actually asks for. The real one is pinned
-// in node (test/qs6_spellslot.test.js drives createPlayerMagic); what is under
+// in node (test/systems/qs6_spellslot.test.js drives createPlayerMagic); what is under
 // test HERE is that the KEY reaches it at all, and how many times.
 let readied = null;
 const magic = {

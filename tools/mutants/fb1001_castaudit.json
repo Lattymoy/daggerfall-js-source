@@ -5,7 +5,7 @@
     "old": "      magic?.handReadyTo?.(ctx.castEngine);   // CAST-USE (AUDIT part five CU1)",
     "new": "      // CAST-USE (AUDIT part five CU1)",
     "tests": [
-      "test/fb1001_castaudit.test.js"
+      "test/scenes/fb1001_castaudit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      magic.handReadyTo(opts.outerCastEngine?.() ?? null);   // CAST-USE (AUDIT part five CU1)",
     "new": "      // CAST-USE (AUDIT part five CU1)",
     "tests": [
-      "test/fb1001_castaudit.test.js"
+      "test/scenes/fb1001_castaudit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "          outerCastEngine: () => magic,   // CAST-USE (AUDIT part five CU1)",
     "new": "          // CAST-USE (AUDIT part five CU1)",
     "tests": [
-      "test/fb1001_castaudit.test.js"
+      "test/scenes/fb1001_castaudit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      readiedSpell = null; readiedFree = false; readiedCost = 0; pendingClickCast = false;\n      return true;",
     "new": "      return true;",
     "tests": [
-      "test/fb1001_castaudit.test.js"
+      "test/scenes/fb1001_castaudit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "readiedFree = !!sp && !!free;",
     "new": "readiedFree = false;",
     "tests": [
-      "test/fb1001_castaudit.test.js"
+      "test/scenes/fb1001_castaudit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "`${shownSpellName(magic.readied())} (${magic.readiedCost()})`",
     "new": "`${shownSpellName(magic.readied())} (${calculateCastCost(magic.readied(), playerEntity).sp})`",
     "tests": [
-      "test/fb1001_castaudit.test.js"
+      "test/scenes/fb1001_castaudit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    applySpellToFoe: (...a) => live().applySpellToFoe(...a),",
     "new": "    applySpellToFoe: ((m) => (...a) => m.applySpellToFoe(...a))(live()),",
     "tests": [
-      "test/fb1001_castaudit.test.js"
+      "test/scenes/fb1001_castaudit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    applySpellToPlayer: (...a) => live().applySpellToPlayer(...a),",
     "new": "    applySpellToPlayer: ((m) => (...a) => m.applySpellToPlayer(...a))(live()),",
     "tests": [
-      "test/fb1001_castaudit.test.js"
+      "test/scenes/fb1001_castaudit.test.js"
     ]
   }
 ]

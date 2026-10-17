@@ -1,6 +1,6 @@
 // SAILING-CABINS: adapt the bank-ship layout to the existing interior transition.
 import { cabinBlockName, readSailingCabin, cabinEntryRefusal, hasSailingCabin, CABIN_REFUSAL } from '../systems/sailingCabin.js';
-import { deckPose, localOf, worldOf } from './comeSailAwayAboard.js';
+import { deckPose, localOf, worldOf } from './comeSailAway/comeSailAwayAboard.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { trs } from '../world/mat4.js';
 

@@ -1,15 +1,14 @@
 // WAGON-EMBLEM (2026-10-16, Mac: "a guild master's emblem painted on the sides of their open wagon"; then, of the
 // result: "Can we make it only show on the second iteration?") - THE READER'S GUILD ARMS ON THE OPEN WAGON'S OUTER
-// SIDE - `src/world/wagonEmblem.js`, worn by `src/world/wagonArt.js`'s `emblemmedSide` and read over the tests' stand-in
-// ARENA2 (`test/classicArtFake.mjs`).
+// SIDE - `src/world/wagonEmblem.js`, worn by `src/world/wagonArt.js`'s `openSideArms` over the painted side.
 //
 // WHAT IS PINNED HERE, AND WHY IT IS NOT A PICTURE OF A SHIELD. The arms are drawn by `ui/heraldryArt.js` into a
 // Canvas2D context, and node has no Path2D and no canvas at all - so the drawing itself is the BROWSER'S work, held
 // by heraldryArt's own suite and not restated here. What this suite holds is the BRIDGE, the GEOMETRY and the ONE
 // EMBLEM: which cell of the side's picture carries the arms, that it is the SECOND cell and only that one, that the
-// cell boundaries still fall on the metres the livery's repeat always fell on, that the cloth in every cell is the
-// same bytes it was before, that the arms stand at the same place on both sides of one wagon, and that a runtime with
-// no canvas loses the emblem WITHOUT losing the wagon. The canvas stand-in below rasterises each path as its own
+// cell boundaries still fall on the metres the livery's tile always fell on, that the boards in every cell are the
+// same bytes they were before, that the arms stand at the same place on both sides of one wagon, and that a runtime
+// with no canvas loses the emblem WITHOUT losing the wagon. The canvas stand-in below rasterises each path as its own
 // BOUNDING BOX, so a colour lands where the real path's extent is and the pins can ask whether the FIELD's, the
 // BORDER's and the DEVICE's colours each reached the pixels - the box is a box, and the silhouette inside it is the
 // browser's, and is not what these pins are about.
@@ -19,28 +18,30 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  TEX, WAGON_ARCHIVE, WAGON_TILE, WAGON_SOURCES, wagonLookSources, LOOK_RECORDS, BANDS, SIDE_Y0, SIDE_Y1, SIDE_TILE_M,
-  SIDE_CELLS, sideBandU, lookRecord, emblemmedSide,
+  TEX, WAGON_ARCHIVE, WAGON_TILE, LOOK_RECORDS, BANDS, SIDE_Y0, SIDE_Y1, SIDE_TILE_M,
+  SIDE_CELLS, sideBandU, lookRecord, wagonArt, wagonLookArt, openSideArms,
 } from '../src/world/wagonArt.js';
-import { COMPOSE, classicPictures, resample, opaque, composedPicture } from '../src/world/classicArt.js';
 import {
   WAGON_EMBLEM_ARMS, EMBLEM_M, EMBLEM_CELL, setWagonHeraldry, wagonHeraldry, emblemRect, stampRgba,
 } from '../src/world/wagonEmblem.js';
 import { heraldryOf, heraldryColourOf, heraldryInk } from '../src/net/heraldryLaw.js';
 import { wagonGeometry, wagonFaceSkin } from '../src/world/wagonModels.js';
-import { fakeClassicRgba, texelOf } from './classicArtFake.mjs';
 
+/** A painted side's one cell, texels (the port's 64). */
+const CELL = 64;
 const bakeOf = (kind) => JSON.parse(readFileSync(new URL(`../src/assets/wagons/${kind}.json`, import.meta.url), 'utf8'));
-const CLOTH = texelOf(50, 7);                       // Daggerfall's sailcloth (classicArt.js DF.sailcloth), flat in the fake
 const rgb = (hex) => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
 /** THE THREE COLOURS ui/heraldryArt.js draws a heraldry in: its field, its border, and its device's own ink. */
 const armsColours = (h) => [heraldryColourOf(h.field).hex, heraldryColourOf(h.border).hex, heraldryColourOf(heraldryInk(h)).hex].map(rgb);
 const asHex = (h) => [heraldryColourOf(h.field).hex, heraldryColourOf(h.border).hex, heraldryColourOf(heraldryInk(h)).hex];
 /** A heraldry of three colours of its own, so "the device's colour is on the cloth" is not the border's by accident. */
 const THREE_COLOURS = Object.freeze({ field: 'argent', border: 'sable', device: 'dragon', charge: 'teal' });
-const sidePicture = async () => (await classicPictures({ [TEX.openSide]: emblemmedSide([50, 7], undefined) }, fakeClassicRgba()))[0][1];
+/** The open side with arms, through the reader's door (setWagonHeraldry) - the pool's own call. */
+const sidePicture = () => openSideArms(null, undefined);
+/** The built side, bare - the same picture with no arms asked for. */
+const bareSide = () => wagonArt().find(([rec]) => rec === TEX.openSide)[1];
 /** The cell of `pic` the arms are on, as that cell's rectangle - the real one, read off the picture itself. */
-const rectIn = (pic, cell) => emblemRect(pic, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0, EMBLEM_M, cell, COMPOSE);
+const rectIn = (pic, cell) => emblemRect(pic, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0, EMBLEM_M, cell, CELL);
 /** The metres along the side a texel column of the picture stands at. */
 const zOf = (pic, x) => ((x + 0.5) / pic.width) * WAGON_TILE.openSide[0];
 
@@ -134,21 +135,19 @@ const coloursIn = (pic, x0, y0, w, h) => {
   for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { const [r, g, b] = at(pic, x, y); out.add(`${r},${g},${b}`); }
   return out;
 };
-/** The BARE sailcloth, as one cell's worth: what every cell of the side's picture is, off the arms. */
-const bareCell = async () => resample(opaque(await fakeClassicRgba()(50, 7, 0)), COMPOSE, COMPOSE);
-/** How many texels of cell `k` of `pic` are not the bare cloth, and which they are. */
+/** How many texels of cell `k` of `pic` are not the bare side's, and which they are. */
 const bareDiff = (pic, cell, bare) => {
   const out = [];
-  for (let y = 0; y < pic.height; y++) for (let x = 0; x < COMPOSE; x++) {
-    const a = (y * pic.width + cell * COMPOSE + x) * 4, b = (y * COMPOSE + x) * 4;
-    if (!pic.data.subarray(a, a + 4).every((v, i) => v === bare.data[b + i])) out.push([cell * COMPOSE + x, y]);
+  for (let y = 0; y < pic.height; y++) for (let x = 0; x < CELL; x++) {
+    const a = (y * pic.width + cell * CELL + x) * 4, b = (y * bare.width + x) * 4;
+    if (!pic.data.subarray(a, a + 4).every((v, i) => v === bare.data[b + i])) out.push([cell * CELL + x, y]);
   }
   return out;
 };
 
 // ── THE PINS ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('WAGON-EMBLEM THE SIDE, OFF THE BAKE, AND WHERE THE SECOND ITERATION IS: the faces that wear the arms are the open wagon\'s two long outer walls alone - their v the whole 2.12 m band - and their picture is four cells wide with the face\'s u running ONCE over all four, so the cell boundaries fall at 1.3 m, 2.6 m and 3.9 m: the same metres the livery\'s 1.3 m repeat always fell on, which is what makes the SECOND cell the second iteration (mutants: the picture not four cells wide, the tile not four of them, the u repeating, a cell boundary a tile out)', () => {
+test('WAGON-EMBLEM THE SIDE, OFF THE BAKE, AND WHERE THE SECOND ITERATION IS: the faces that wear the arms are the open wagon\'s two long outer walls alone - their v the whole 2.12 m band - and their picture is four cells wide with the face\'s u running ONCE over all four, so the cell boundaries fall at 1.3 m, 2.6 m and 3.9 m: the same metres the livery\'s 1.3 m tile always fell on, which is what makes the SECOND cell the second iteration (mutants: the picture not four cells wide, the tile not four of them, the u repeating, a cell boundary a tile out)', () => {
   const g = wagonGeometry(bakeOf('openWagon')).statics;
   const tris = [];
   g.subMeshes.forEach((sm, k) => {
@@ -166,7 +165,6 @@ test('WAGON-EMBLEM THE SIDE, OFF THE BAKE, AND WHERE THE SECOND ITERATION IS: th
   // the picture is four cells wide and the tile is four of them: the u runs ONCE over the lot
   assert.deepEqual([SIDE_CELLS, SIDE_TILE_M], [4, 1.3], 'four cells of the livery\'s own 1.3 m');
   assert.deepEqual(WAGON_TILE.openSide, [SIDE_CELLS * SIDE_TILE_M, 0], 'so the tile spans all four cells');
-  assert.deepEqual(WAGON_SOURCES[TEX.openSide].repeat, SIDE_CELLS, 'and the picture really holds four');
   const U = WAGON_TILE.openSide[0];
   for (let k = 1; k < SIDE_CELLS; k++) {
     assert.ok(Math.abs((k / SIDE_CELLS) * U - k * SIDE_TILE_M) < 1e-9, `cell ${k} starts at z ${(k * SIDE_TILE_M).toFixed(1)} m - the livery's own tile boundary`);
@@ -180,77 +178,59 @@ test('WAGON-EMBLEM THE SIDE, OFF THE BAKE, AND WHERE THE SECOND ITERATION IS: th
   }
 });
 
-test('WAGON-EMBLEM ONE EMBLEM, IN THE SECOND ITERATION AND NOWHERE ELSE: the side\'s picture is four cells and EXACTLY ONE of them carries the arms - the second - while the first, the third and the cut fourth are the bare sailcloth, byte for byte, and the arms\' own colour is in the second and in no other (mutants: the repeat left in, the emblem on the first or the third, the arms on two cells, the emblem a tile out of place)', async () => {
+test('WAGON-EMBLEM ONE EMBLEM, IN THE SECOND ITERATION AND NOWHERE ELSE: the side\'s picture is four cells and EXACTLY ONE of them carries the arms - the second - while the first, the third and the cut fourth are the bare boards byte for byte, and the arms\' own colour is in the second and in no other (mutants: the repeat left in, the emblem on the first or the third, the arms on two cells, the emblem a tile out of place)', async () => {
   setWagonHeraldry(THREE_COLOURS);
   try {
     const [field, border, ink] = armsColours(heraldryOf(THREE_COLOURS));
     const pic = await withCanvas(sidePicture);
-    assert.deepEqual([pic.width, pic.height], [COMPOSE * SIDE_CELLS, COMPOSE], 'four cells of COMPOSE across');
-    const bare = await bareCell();
+    assert.deepEqual([pic.width, pic.height], [CELL * SIDE_CELLS, CELL], 'four cells across');
+    const bare = bareSide();
     assert.equal(EMBLEM_CELL, 1, 'the SECOND cell - the operator\'s word');
 
     // the arms, and only the arms, are on the second cell
     const painted = [...Array(SIDE_CELLS).keys()].map((k) => bareDiff(pic, k, bare).length);
     assert.equal(painted[EMBLEM_CELL] > 0, true, `the second cell carries them (${painted[EMBLEM_CELL]} texels)`);
     for (const k of [0, 2, 3]) {
-      assert.equal(painted[k], 0, `cell ${k} is bare cloth, not a copy of cell ${EMBLEM_CELL} (${painted[k]} texels differ)`);
-      const cell = [];
-      for (let y = 0; y < COMPOSE; y++) cell.push([...pic.data.slice((y * pic.width + k * COMPOSE) * 4, (y * pic.width + k * COMPOSE) * 4 + COMPOSE * 4)]);
-      assert.deepEqual(cell[0], [...bare.data.slice(0, COMPOSE * 4)], `cell ${k}'s first row the bare cloth`);
+      assert.equal(painted[k], 0, `cell ${k} is bare boards, not a copy of cell ${EMBLEM_CELL} (${painted[k]} texels differ)`);
     }
     // the arms' colours are in the second cell alone
     for (const k of [0, 2, 3]) {
-      const cell = [];
-      for (let y = 0; y < COMPOSE; y++) cell.push([...pic.data.slice((y * pic.width + k * COMPOSE) * 4, (y * pic.width + k * COMPOSE) * 4 + COMPOSE * 4)]);
-      const cols = new Set();
-      for (const row of cell) for (let x = 0; x < COMPOSE; x += 4) cols.add(`${row[x * 4]},${row[x * 4 + 1]},${row[x * 4 + 2]}`);
+      const cols = coloursIn(pic, k * CELL, 0, CELL, pic.height);
       for (const [what, c] of [['the field', field], ['the border', border], ['the device', ink]])
         assert.ok(!cols.has(c.join(',')), `${what} ${c} is NOT on cell ${k}`);
     }
     const r = rectIn(pic, EMBLEM_CELL);
     const inner = coloursIn(pic, r.x0, r.y0, r.w, r.h);
     for (const [what, c] of [['the field', field], ['the border', border], ['the device', ink]])
-      assert.ok(inner.has(c.join(',')), `${what} ${c} is on the cloth (inside the emblem: ${[...inner].join(' / ')})`);
+      assert.ok(inner.has(c.join(',')), `${what} ${c} is on the boards (inside the emblem: ${[...inner].join(' / ')})`);
     assert.equal(new Set(asHex(heraldryOf(THREE_COLOURS))).size, 3, 'three colours of its own, so each name means something');
     for (const c of armsColours(heraldryOf(WAGON_EMBLEM_ARMS)))
       assert.ok(!inner.has(c.join(',')), `${c} is not the default's - this guild's arms, not the throne's`);
 
-    // AND IT STANDS WHERE THE SECOND REPEAT STOOD: inside the second iteration's own metres, 1.3 to 2.6 m
+    // AND IT STANDS WHERE THE SECOND TILE STOOD: inside the second tile's own metres, 1.3 to 2.6 m
     const z0 = zOf(pic, r.x0), z1 = zOf(pic, r.x0 + r.w - 1);
     assert.ok(z0 >= SIDE_TILE_M && z1 <= 2 * SIDE_TILE_M, `the arms are the second iteration: z ${z0.toFixed(3)}..${z1.toFixed(3)} m`);
     assert.ok(z1 > z0, 'and they have width on the wagon');
-    assert.equal(r.x0 >= EMBLEM_CELL * COMPOSE && r.x0 + r.w <= (EMBLEM_CELL + 1) * COMPOSE, true, 'wholly inside the second cell');
-    // nothing is a hole, and the corner the livery layout reads from is still the cloth it was read from
-    assert.deepEqual(at(pic, 0, 0), [...CLOTH, 255], 'texel (0,0) still the sailcloth test/wagons1.test.js reads');
+    assert.equal(r.x0 >= EMBLEM_CELL * CELL && r.x0 + r.w <= (EMBLEM_CELL + 1) * CELL, true, 'wholly inside the second cell');
+    // nothing is a hole: every texel of the side uploads opaque
     for (let i = 3; i < pic.data.length; i += 4) assert.equal(pic.data[i], 255, `texel ${i / 4} whole, as every wagon texel is`);
   } finally { setWagonHeraldry(null); }
 });
 
-test('WAGON-EMBLEM THE REPEAT IS GONE, AND THE CLOTH IS THE CLOTH IT WAS: a picture of ONE cell would be a different picture - so the repeat really is suppressed - and every cell of the four is the bare 256-square sailcloth NEAREST, at the same 1.3 m a cell and the same 2.12 m a height as the tile that used to repeat (mutants: the tile stretched over the whole side with no repeat in the picture, a cell resized, the cloth resampled a different way)', async () => {
+test('WAGON-EMBLEM THE BOARDS ARE THE BOARDS THEY WERE: every cell of the four is the painted canvas at the same tile and the same size as the picture that used to repeat - the bare three byte for byte, and the fourth with the arms on it; the ON-WAGON scale of a cell is the tile that always was (mutants: the tile stretched over the whole side with no cells in the picture, a cell resized, the boards repainted another way)', async () => {
   setWagonHeraldry(THREE_COLOURS);
   try {
     const pic = await withCanvas(sidePicture);
-    const bare = await bareCell();
-    // the FIRST cell is exactly what one unrepeated cell of this body is - the cloth the livery has always worn
-    const single = await composedPicture({ body: [50, 7], size: [COMPOSE, COMPOSE] }, fakeClassicRgba());
-    assert.deepEqual([single.width, single.height], [COMPOSE, COMPOSE], 'the unrepeated picture is one cell');
-    for (let y = 0; y < COMPOSE; y++)
-      assert.deepEqual([...pic.data.slice((y * pic.width) * 4, (y * pic.width + COMPOSE) * 4)], [...single.data.slice(y * COMPOSE * 4, (y + 1) * COMPOSE * 4)], `cell 0 row ${y}: the same cell the repeating picture wore`);
-    // the arms are NOT in it, which is the whole of what the operator asked for
-    assert.equal(bareDiff(pic, 0, bare).length, 0, 'the first cell carries no arms');
-    // the four cells are the same cell: the bare three are, byte for byte, and the fourth with the arms on it
-    for (let y = 0; y < COMPOSE; y++) {
-      const rowBare = [...bare.data.slice(y * COMPOSE * 4, (y + 1) * COMPOSE * 4)];
-      for (const k of [0, 2, 3]) assert.deepEqual([...pic.data.slice((y * pic.width + k * COMPOSE) * 4, (y * pic.width + k * COMPOSE) * 4 + COMPOSE * 4)], rowBare, `cell ${k} row ${y}: the bare cloth`);
-    }
-    // the ON-WAGON scale of a cell is the tile that always was - 1.3 m of u, 2.12 m of v, the same 256 texels each
+    const bare = bareSide();
+    // the bare three are the boards: byte for byte
+    for (const k of [0, 2, 3]) assert.deepEqual(bareDiff(pic, k, bare).length, 0, `cell ${k} the bare boards`);
+    // the ON-WAGON scale of a cell is the tile that always was - 1.3 m of u, 2.12 m of v
     const U = WAGON_TILE.openSide[0];
-    assert.equal(COMPOSE * (U / SIDE_CELLS), SIDE_TILE_M * COMPOSE, 'a cell is still 1.3 m of u over 256 texels');
-    assert.equal(COMPOSE, COMPOSE, 'and the height is still the band');
-    // the emblem itself is metre-square, not texel-square: 5.1 mm across a texel here, 8.3 mm down one
+    assert.equal(CELL * (U / SIDE_CELLS), SIDE_TILE_M * CELL, 'a cell is still 1.3 m of u over 64 texels');
+    // the emblem itself is metre-square, not texel-square: a cell 64 across and 64 down over 1.3 by 2.12 m
     const r = rectIn(pic, EMBLEM_CELL);
-    assert.equal(r.w, Math.round((EMBLEM_M / SIDE_TILE_M) * COMPOSE), 'across, off a cell of u');
-    assert.equal(r.h, Math.round((EMBLEM_M / (SIDE_Y1 - SIDE_Y0)) * COMPOSE), 'and down, off the band of v');
+    assert.equal(r.w, Math.round((EMBLEM_M / SIDE_TILE_M) * CELL), 'across, off a cell of u');
+    assert.equal(r.h, Math.round((EMBLEM_M / (SIDE_Y1 - SIDE_Y0)) * CELL), 'and down, off the band of v');
     assert.ok(r.h < r.w, 'the texels are NOT square here, which is why the box is metres and not texels');
     assert.deepEqual(emblemRect(pic, 0, SIDE_Y1 - SIDE_Y0), { x0: 0, y0: 0, w: 0, h: 0 }, 'no tile at all is nothing to paint in');
     assert.deepEqual(rectIn(pic, -1), { x0: 0, y0: 0, w: 0, h: 0 }, 'and no cell before the first');
@@ -268,8 +248,8 @@ test('WAGON-EMBLEM THE ARMS STAND IN THE SAME PLACE ON BOTH SIDES: a side band\'
     assert.ok(Math.abs(near.u(p) - z / WAGON_TILE.openSide[0]) < 1e-12, `z ${z}: u is metres from the rear over the whole picture`);
   }
   // and it is that which puts both sides' arms in the second iteration: the emblem's z, read on each
-  const r = emblemRect({ width: COMPOSE * SIDE_CELLS, height: COMPOSE }, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0, EMBLEM_M, EMBLEM_CELL, COMPOSE);
-  const z0 = ((r.x0 + 0.5) / (COMPOSE * SIDE_CELLS)) * WAGON_TILE.openSide[0];
+  const r = emblemRect({ width: CELL * SIDE_CELLS, height: CELL }, SIDE_TILE_M, SIDE_Y1 - SIDE_Y0, EMBLEM_M, EMBLEM_CELL, CELL);
+  const z0 = ((r.x0 + 0.5) / (CELL * SIDE_CELLS)) * WAGON_TILE.openSide[0];
   assert.ok(z0 >= SIDE_TILE_M && z0 < 2 * SIDE_TILE_M, `and it is the second iteration's metres (${z0.toFixed(3)})`);
   assert.equal(sideBandU([0, 0, 2.6], WAGON_TILE.openSide[0]), 0.5, 'u is a plain division - nothing behind it');
 });
@@ -300,7 +280,7 @@ test('WAGON-EMBLEM THE DOOR: no guild wears the throne\'s own arms - Crimson fie
   } finally { setWagonHeraldry(null); }
 });
 
-test('WAGON-EMBLEM NO CANVAS, NO EMBLEM, NO THROW: a runtime with no canvas of its own (a Worker without OffscreenCanvas, and this one) still builds every wagon picture, and its side is byte for byte the bare sailcloth in ALL FOUR CELLS - while the same picture with a canvas up is NOT that, or none of the rest of this suite would say anything (mutants: a throw on a worker, the wagon lost, a cell half-painted, the pin going vacuous)', async () => {
+test('WAGON-EMBLEM NO CANVAS, NO EMBLEM, NO THROW: a runtime with no canvas of its own (a Worker without OffscreenCanvas, and this one) still builds every wagon picture, and its side is byte for byte the bare boards in ALL FOUR CELLS - while the same picture with a canvas up is NOT that, or none of the rest of this suite would say anything (mutants: a throw on a worker, the wagon lost, a cell half-painted, the pin going vacuous)', async () => {
   assert.equal(typeof OffscreenCanvas, 'undefined', 'this runtime really has no canvas of its own');
   assert.equal(typeof document, 'undefined', 'and no document to make one with');
   setWagonHeraldry(THREE_COLOURS);
@@ -308,14 +288,12 @@ test('WAGON-EMBLEM NO CANVAS, NO EMBLEM, NO THROW: a runtime with no canvas of i
     const hadPath = 'Path2D' in globalThis, wasPath = globalThis.Path2D;
     globalThis.Path2D = FakePath2D;
     try {
-      const bare = await sidePicture();
+      const bare = sidePicture();
       const painted = await withCanvas(sidePicture);
       assert.notDeepEqual([...painted.data], [...bare.data], 'a canvas DOES change the picture - the rest of this test is not vacuous');
-      assert.deepEqual([bare.width, bare.height], [COMPOSE * SIDE_CELLS, COMPOSE], 'the picture is still four cells of cloth');
-      const cell = await bareCell();
-      let all = true;
-      for (let k = 0; k < SIDE_CELLS; k++) if (bareDiff(bare, k, cell).length) all = false;
-      assert.equal(all, true, 'every cell the bare sailcloth, arms or no arms');
+      assert.deepEqual([bare.width, bare.height], [CELL * SIDE_CELLS, CELL], 'the picture is still four cells of boards');
+      const unarmed = bareSide();
+      for (let k = 0; k < SIDE_CELLS; k++) assert.deepEqual(bareDiff(bare, k, unarmed).length, 0, `cell ${k} the bare boards, arms or no arms`);
       assert.equal(bare.data.every((v, i) => i % 4 !== 3 || v === 255), true, 'every texel whole, as before the arms');
     } finally { if (hadPath) globalThis.Path2D = wasPath; else delete globalThis.Path2D; }
   } finally { setWagonHeraldry(null); }
@@ -343,26 +321,65 @@ test('WAGON-EMBLEM THE STAMP ITSELF: a texel is BLENDED over, neither written no
   assert.doesNotThrow(() => stampRgba(cloth(), { width: 0, height: 0, data: new Uint8Array(0) }, 0, 0), 'a source with nothing in it');
 });
 
-test('WAGON-EMBLEM A LIVERY IS NOT A GUILD: the open wagon\'s outer side is a COMPOSED picture - the chosen cloth, the composed size, the four cells, and a paint - for the built record and for every paint past the first, while the tilt and its inner face are still the sailcloth laid whole; and all twenty-one records still read opaque over the stand-in ARENA2 (mutants: a paint dropping the arms, a paint dropping a cell, the tilt gaining one, a record unread, the wagons\' count moved)', async () => {
-  const src = WAGON_SOURCES[TEX.openSide];
-  assert.equal(Array.isArray(src), false, 'a composed picture - a bare record cannot reach composedPicture\'s paint at all');
-  assert.deepEqual(src.body, [50, 7], 'the cloth is still Daggerfall\'s sailcloth');
-  assert.deepEqual(src.size, [COMPOSE, COMPOSE], 'at the composed size, so the band layout reads in it');
-  assert.equal(src.repeat, SIDE_CELLS, 'and four cells of it across');
-  assert.equal(typeof src.paint, 'function');
-  assert.deepEqual([WAGON_SOURCES[TEX.tilt], WAGON_SOURCES[TEX.tiltInner]], [[50, 7], [50, 7]], 'the tilt and its inner face the sailcloth laid whole');
-  assert.deepEqual(LOOK_RECORDS.openWagon, [TEX.openSide, TEX.tilt, TEX.tiltInner]);
-  for (const name of ['red', 'blue', 'green', 'ochre', 'black', 'cream']) {
-    const look = wagonLookSources('openWagon', 2, name), rec = lookRecord(TEX.openSide, 2);
-    assert.equal(typeof look[rec].paint, 'function', `the ${name} livery keeps the arms over it`);
-    assert.equal(look[rec].repeat, SIDE_CELLS, `and its four cells`);
-    assert.deepEqual([Array.isArray(look[rec + 1]), Array.isArray(look[rec + 2])], [true, true], `${name}: the tilt and its inner face stay bare records`);
-    if (name !== 'cream') assert.notDeepEqual(look[rec].body, src.body, `and the ${name} livery is its own cloth, not the built one`);
-  }
-  const srcs = { ...WAGON_SOURCES, ...wagonLookSources('openWagon', 3, 'blue') };
-  const art = new Map(await classicPictures(srcs, fakeClassicRgba()));
-  assert.equal(art.size, Object.keys(srcs).length, `all ${Object.keys(srcs).length} records built`);
-  assert.deepEqual([...art.get(TEX.openSide).data.slice(0, 3)], CLOTH, 'the built side still reads from its own record');
-  assert.equal(art.get(lookRecord(TEX.openSide, 3)).data.every((v, i) => i % 4 !== 3 || v === 255), true, "and a paint's side is opaque whatever the arms do");
+test('WAGON-EMBLEM A LIVERY IS NOT A GUILD: the open wagon\'s outer side is a four-cell composition - the painted canvas, the arms over it, and the tilt and its inner face bare - for the built record and for every paint past the first (mutants: a paint dropping the arms, the tilt losing its dye, a record unread, the wagons\' count moved)', async () => {
+  // the built side wears arms over bare boards, and names glass nowhere
+  const built = wagonArt().find(([rec]) => rec === TEX.openSide)[1];
+  assert.deepEqual([built.width, built.height], [CELL * SIDE_CELLS, CELL], 'four cells across');
+  // every paint past the first wears its own side with arms over it, and the tilt dyed but bare of arms
+  await withCanvas(async () => {
+    const [field, border, ink] = armsColours(heraldryOf(THREE_COLOURS));
+    for (const name of ['red', 'blue', 'green', 'ochre', 'black', 'cream']) {
+      const [[srec, side], [trec, tilt], [irec, inner]] = wagonLookArt('openWagon', 2, name, THREE_COLOURS);
+      assert.equal(srec, lookRecord(TEX.openSide, 2), `the ${name} livery's side`);
+      assert.deepEqual([side.width, side.height], [CELL * SIDE_CELLS, CELL], `and its four cells`);
+      const cellCols = coloursIn(side, EMBLEM_CELL * CELL, 0, CELL, side.height);
+      for (const [what, c] of [['the field', field], ['the border', border], ['the device', ink]])
+        assert.ok(cellCols.has(c.join(',')), `the ${name} livery carries its ${what} over it`);
+      assert.deepEqual([trec, irec], [lookRecord(TEX.tilt, 2), lookRecord(TEX.tiltInner, 2)], `${name}: the tilt and its inner face ride beside it`);
+      assert.deepEqual([tilt.width, inner.width], [CELL, CELL], `${name}: the tilt stays one cell, never four`);
+      if (name !== 'cream') assert.notDeepEqual(Buffer.from(side.data).toString('base64'), Buffer.from(built.data).toString('base64'), `and the ${name} livery is its own canvas, not the built one`);
+    }
+  });
+  // the wagon's records still read twenty-one
+  assert.deepEqual(wagonArt().length, 21, 'the wagons still twenty-one records');
   assert.equal(WAGON_ARCHIVE, 38181, 'under the wagons\' own archive, as every one of their records');
+});
+
+test('WAGON-ARMS PASS B THE TAG RESOLVES TO ARMS, ONCE, AND THE EPOCH REBUILDS: a tag the pool names resolves through the registered door and is cached by tag (a second read spends no fetch); an unknown tag resolves to null and is cached as nothing; seeding the owner\'s own tag paints without a round trip; and every resolution bumps the epoch the pool\'s upload key carries, so a tag that lands later rebuilds (mutants: the cache never kept, the epoch never moved, the fetch never started)', async () => {
+  const { setGuildArmsFetcher, guildArmsEpoch, ownArmsForTag, seedGuildArms, guildArmsCache } = await import('../src/systems/guildArms.js');
+  guildArmsCache.clear();
+  let calls = 0;
+  setGuildArmsFetcher(async (tags) => {
+    calls++;
+    return { body: { arms: tags.filter((t) => t === 'IRON').map((tag) => ({ tag, heraldry: THREE_COLOURS })) } };
+  });
+  const e0 = guildArmsEpoch();
+  // unknown to the cache: null now, resolution in flight
+  assert.equal(ownArmsForTag('IRON'), null, 'unresolved yet - the pool paints bare boards this frame');
+  assert.equal(calls, 1, 'one fetch for one tag');
+  assert.equal(ownArmsForTag('IRON'), null, 'still null while it flies - and no second fetch');
+  assert.equal(calls, 1, 'concurrent reads share the flight');
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(ownArmsForTag('IRON'), heraldryOf(THREE_COLOURS), 'the tag resolved to its arms');
+  assert.ok(guildArmsEpoch() > e0, 'and the epoch moved, which is what rebuilds the pool\'s picture');
+  assert.equal(calls, 1, 'resolved once - the cache, not the wire, answers the second read');
+  assert.deepEqual(ownArmsForTag('IRON'), heraldryOf(THREE_COLOURS), 'a cached tag reads back');
+  assert.equal(calls, 1, 'and spends no fetch');
+  // an unknown tag is cached as nothing, not retried forever
+  assert.equal(await (await import('../src/systems/guildArms.js')).resolveGuildArms?.('NOPE') ?? null, null);
+  assert.equal(calls, 2, 'the unknown tag fetched once and cached its nothing');
+  assert.equal(await (await import('../src/systems/guildArms.js')).resolveGuildArms?.('NOPE') ?? null, null);
+  assert.equal(calls, 2, 'and never again');
+  // the owner's own tag seeds with no round trip at all
+  seedGuildArms('GOLD', THREE_COLOURS);
+  assert.deepEqual(ownArmsForTag('GOLD'), heraldryOf(THREE_COLOURS), 'seeded arms read back');
+  assert.equal(calls, 2, 'and seeding fetched nothing');
+  // and the resolved arms paint: the pool's door hands them to the side's picture
+  const pic = await withCanvas(async () => wagonLookArt('openWagon', 2, 'red', ownArmsForTag('IRON'))[0][1]);
+  const inner = coloursIn(pic, EMBLEM_CELL * CELL, 0, CELL, pic.height);
+  const [field, border, ink] = armsColours(heraldryOf(THREE_COLOURS));
+  for (const [what, c] of [['the field', field], ['the border', border], ['the device', ink]])
+    assert.ok(inner.has(c.join(',')), `the resolved ${what} ${c} is on the cloth`);
+  setGuildArmsFetcher(null);
+  guildArmsCache.clear();
 });

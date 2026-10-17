@@ -5,7 +5,7 @@
     "old": "  return clamp(cloudBase - TV_CLOUD_MARGIN, TV_HEIGHT_FLOOR, TV_HEIGHT_MAX);",
     "new": "  return clamp(cloudBase, TV_HEIGHT_FLOOR, TV_HEIGHT_MAX);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Mac's call: below the clouds. Without the margin the eye rides the deck's base and the view is cloud."
   },
@@ -15,7 +15,7 @@
     "old": "  const back = height / Math.tan(tilt);",
     "new": "  const back = height * Math.tan(tilt);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The line of sight must pass through the traveller - the wrong trig puts them off the middle of the screen."
   },
@@ -25,7 +25,7 @@
     "old": "  const a = clamp(tilt, 0, Math.PI / 2) * lean;",
     "new": "  const a = clamp(tilt, 0, Math.PI / 2);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Half the tilt: a flat leaned the whole way lies face-up to the eye and loses its foot."
   },
@@ -35,7 +35,7 @@
     "old": "  return { ...c, yaw: c.yaw + dYaw, tilt: clamp(c.tilt + dTilt, TV_TILT_MIN, TV_TILT_MAX) };",
     "new": "  return { ...c, yaw: c.yaw + dYaw, tilt: c.tilt + dTilt };",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A long drag tilts past straight down (the view flips) or to the horizon (the far ring is all there is)."
   },
@@ -45,7 +45,7 @@
     "old": "  const k = jump ? 1 : easeShare(dt, TV_FOCUS_RATE);",
     "new": "  const k = easeShare(dt, TV_FOCUS_RATE);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A fast travel or a respawn swept the camera over the leagues between - through unloaded ground."
   },
@@ -55,7 +55,7 @@
     "old": "  float d = length(worldPos - focusOrigin());",
     "new": "  float d = length(worldPos - uCamPos);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "From 330 m up a rain fog swallowed the traveller - the probe's case; the source pin catches it in node."
   },
@@ -65,7 +65,7 @@
     "old": "  _shadowEye() { return this._focus[3] > 0.5 ? this._focus.subarray(0, 3) : this._camPos; }",
     "new": "  _shadowEye() { return this._camPos; }",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The cascades stood about a point in the sky and no shadow reached the ground under the view."
   },
@@ -75,7 +75,7 @@
     "old": "    else if (f[3] === 0) return;\n    else f.fill(0);\n    this._frameStamp++;   // LA-COST1",
     "new": "    else if (f[3] === 0) return;\n    else { f.fill(0); return; }\n    this._frameStamp++;   // LA-COST1",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Down from the view the blocks kept the focus of the sky - the fog stayed the traveller's head's until something else moved the stamp."
   },
@@ -85,7 +85,7 @@
     "old": "    if (acts.includes('Escape')) { if (down) { keysTaken.add(code); exit('escape'); } swallow(e); return; }",
     "new": "    if (acts.includes('Escape')) { if (down) { keysTaken.add(code); exit('escape'); } return; }",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Esc leaves the view - and must never also reach the host's pause (the field bug this branch fixed once already)."
   },
@@ -95,7 +95,7 @@
     "old": "    if (dwPlayer?.submerged) return { ok: false, why: TRAVEL_VIEW_TEXT.underwater };\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Under the sea the view would lift out of the water and the breath clock would run on unseen."
   },
@@ -105,7 +105,7 @@
     "old": "    renderer.setFocus(tvf ? cam.pos : null, !!tvf && tvf.blend >= 0.5);",
     "new": "    renderer.setFocus(null);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The host never hands the renderer the traveller - the focus machinery is dead weight."
   },
@@ -115,7 +115,7 @@
     "old": "    if (state === 'off') return null;\n    rearm();",
     "new": "    if (state === 'off') return null;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The view would come down 1.2 s (two missed beats since AUDIT DEEP X-9) after it rose, every time - the frames are the heartbeat."
   },
@@ -125,7 +125,7 @@
     "old": "    if (!missed) { missed = true; beat = schedule(stalled, TV_HEARTBEAT_MS); return; }\n    finish();\n",
     "new": "    if (!missed) { missed = true; beat = schedule(stalled, TV_HEARTBEAT_MS); return; }\n",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A throw downstream of the frame, or a video holding it: the window's capture listeners go on eating every click and Escape."
   },
@@ -135,7 +135,7 @@
     "old": "    if (!quiet) deps.freeCursor?.(false);",
     "new": "    deps.freeCursor?.(false);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A later boot owns the canvas and the lock; the old view asking for the look back fights it."
   },
@@ -145,7 +145,7 @@
     "old": "    if (state === 'off' || gone() || !isCanvasEvent(e)) return;\n    swallow(e);\n    pointers.set",
     "new": "    if (state === 'off' || !isCanvasEvent(e)) return;\n    swallow(e);\n    pointers.set",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Between the old loop's death and the heartbeat, the new host's first click would vanish."
   },
@@ -155,7 +155,7 @@
     "old": "  float d = length(wp - (uSunOrigin.w > 0.5 ? uSunOrigin.xyz : uCamPos));",
     "new": "  float d = length(wp - uCamPos);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "From 330 m up every fragment picks the far cascade (or none) - the maps drawn about the traveller are never read. The probe's shadow check reads it off pixels."
   },
@@ -165,7 +165,7 @@
     "old": "    if (loc.sunOrigin) gl.uniform4fv(loc.sunOrigin, this.sunOrigin);   // TV1: the receivers pick their cascade about it\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The uniform stays (0,0,0,0) and the pick falls back to the camera - the same loss, one step earlier."
   },
@@ -175,7 +175,7 @@
     "old": "    if (!this._focusArmed && this._focus[3] !== 0) this._focus.fill(0);",
     "new": "    void 0;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The last street frame's focus measures an interior's (a dungeon's, a panel's) fog from outside."
   },
@@ -185,7 +185,7 @@
     "old": "      deps.holdBody?.(true);\n      askedBody = !!deps.holdBody;",
     "new": "      askedBody = !!deps.holdBody?.(true);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A hold the body could not take is never released - mwView keeps its empty hold and refuses every later ask."
   },
@@ -195,7 +195,7 @@
     "old": "    if (from === 'off') {\n      hintKeys = deps.hintKeys?.() ?? null;\n      deps.holdBody?.(true);",
     "new": "    if (true) {\n      hintKeys = deps.hintKeys?.() ?? null;\n      deps.holdBody?.(true);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A view caught falling notes the cursor again - as the view's own freed cursor, so the way down leaves it free."
   },
@@ -205,7 +205,7 @@
     "old": "    win[m]('touchstart', onTouchStart, { capture: true, passive: false });",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A finger that orbits the view also turns the traveller, swings the weapon or walks the stick under it."
   },
@@ -215,7 +215,7 @@
     "old": "    if (!down && !keysTaken.delete(code)) {",
     "new": "    if (!down && false) {",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A look key held before the rise never lets go in the host: the traveller turns on after the view is gone."
   },
@@ -225,7 +225,7 @@
     "old": "    if (e.type === 'mouseup') { if (!buttonsTaken.delete(b)) return; } else buttonsTaken.add(b);",
     "new": "    buttonsTaken.add(b);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A button held before the rise never lets go in the host: the swing sticks down."
   },
@@ -235,7 +235,7 @@
     "old": "    if (typing(e)) { if (!down) { keysTaken.delete(code); for (const a of acts) lookHeld.delete(a); } return; }\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Escape in the chat box takes the view down instead of closing the chat; the arrows turn the view instead of the caret."
   },
@@ -245,7 +245,7 @@
     "old": " && p.button === 0 && state === 'up' && e.type !== 'pointercancel') {",
     "new": " && p.button === 0 && state === 'up') {",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A finger the browser took for a gesture starts a journey."
   },
@@ -255,7 +255,7 @@
     "old": "{ if (travelView?.active) setCursorActive(true); else requestLook(canvas); }",
     "new": "{ requestLook(canvas); }",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A chat closed over the view locks the pointer under it: no click, no drag, no pick."
   },
@@ -265,17 +265,17 @@
     "old": ": mwv0.ownEye ? { ...mwv0, eye: tvHeadEye } : mwv0;",
     "new": ": mwv0;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The frame a window cut the view in is drawn from last frame's sky with the head's look - the pause's backdrop."
   },
   {
     "name": "AUDIT-TV-B8-readout-press-leaks",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  r.addEventListener?.('mousedown', own);\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Return (or a plate) is also Mouse0 to the host - an activation or a swing on every press."
   },
@@ -285,7 +285,7 @@
     "old": "} else { setCursorActive(tvCursorWas); if (!tvCursorWas && ",
     "new": "} else { setCursorActive(false); if (",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A cursor the player freed before the view is taken on the way down."
   },
@@ -295,7 +295,7 @@
     "old": "    this._focusArmed = true;   // AUDIT TV B1: this frame's\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The host's own focus is cleared by the very beginFrame it was set for: the travel view's fog and cascades are the camera's."
   },
@@ -305,7 +305,7 @@
     "old": "  _travelViewShown() { return typeof this.deps.onTravelView === 'function' && (this.deps.travelViewAllowed?.() ?? true) && !this.teleportationTravel; }",
     "new": "  _travelViewShown() { return typeof this.deps.onTravelView === 'function' && !this.teleportationTravel; }",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ],
     "note": "AUDIT DEEP X-5 (named by the held map's test, never recorded): the Overworld door stands indoors and on the classic lane."
   },
@@ -315,7 +315,7 @@
     "old": "    this._beginClose({ kind: 'travelView' });\n",
     "new": "    this.deps.onTravelView?.();\n    this._beginClose({ kind: 'travelView' });\n",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ],
     "note": "AUDIT DEEP X-5: the camera rises under a sheet still going down - a window stands, and the view cuts on its first frame."
   },
@@ -325,7 +325,7 @@
     "old": "(this.deps.travelViewAllowed?.() ?? true) && !this.teleportationTravel; }",
     "new": "(this.deps.travelViewAllowed?.() ?? true); }",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ],
     "note": "AUDIT DEEP X-5: a guild's teleport map - a visit, not the open air - offers the Overworld."
   },
@@ -335,7 +335,7 @@
     "old": "    if (!missed) { missed = true; beat = schedule(stalled, TV_HEARTBEAT_MS); return; }\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "One long task (a quicksave) and the view comes down."
   },
@@ -345,17 +345,17 @@
     "old": "    if (typing(e)) { if (!down) { keysTaken.delete(code); for (const a of acts) lookHeld.delete(a); } return; }",
     "new": "    if (typing(e)) return;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A look key let go in the chat box: the view orbits on with nothing held."
   },
   {
     "name": "AUDIT-DEEP-T1-12-the-hint-says-wasd",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "travelViewMouseHint(f.keys ?? {})",
     "new": "TRAVEL_VIEW_HINTS.mouse",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A player who moved on ESDF is told WASD."
   },
@@ -365,7 +365,7 @@
     "old": "      hintKeys = deps.hintKeys?.() ?? null;\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The host's keys never reach the readout."
   },
@@ -375,7 +375,7 @@
     "old": "    if (travelView?.active && (modes?.mode ?? 'exterior') !== 'exterior') { travelView.exit('door', true); setFlatLean(0); }",
     "new": "    if (false) { travelView.exit('door', true); setFlatLean(0); }",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Indoors the view stands up to its heartbeat: the readout over the room, clicks picks."
   },
@@ -385,7 +385,7 @@
     "old": " drawGateGround(null); travelView?.exit('video', true); if (spyglass.up) lowerGlass(); return; }",
     "new": " drawGateGround(null); if (spyglass.up) lowerGlass(); return; }",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The readout stands over the film."
   },
@@ -395,7 +395,7 @@
     "old": "if (st === 'up' || st === 'rising') travelView.exit('key'); else travelView?.enter();",
     "new": "if (!travelView?.active) travelView?.enter();",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The bound key never brings the view down."
   },
@@ -405,7 +405,7 @@
     "old": "if (!tvCursorWas && !gamePaused() && !pointerSurfaces.size && !(modes?.modalWindowUp?.() ?? false) && !overlayOpen()) requestLook(canvas);",
     "new": "if (!tvCursorWas && !overlayOpen()) requestLook(canvas);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The view comes down under an open chat and locks the pointer: a dead panel."
   },
@@ -415,7 +415,7 @@
     "old": ", worldViewportRect(canvas.clientWidth, canvas.clientHeight), true) : null),   // AUDIT DEEP T1-1",
     "new": ", worldViewportRect(canvas.clientWidth, canvas.clientHeight)) : null),   // AUDIT DEEP T1-1",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "Every traveller behind the eye is held in the bottom-right corner."
   },
@@ -425,7 +425,7 @@
     "old": "  if (!front && !(behind && Number.isFinite(cw))) return",
     "new": "  if (!front) return",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The mirror is never computed: behind is (0,0)."
   },
@@ -435,17 +435,17 @@
     "old": "cursorActive: gamePaused(), reticleHidden: !!tvf,",
     "new": "cursorActive: gamePaused(),",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A crosshair at the centre of a camera 450 m up."
   },
   {
     "name": "AUDIT-DEEP-T1-9-the-hud-ignores-it",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  const aim = !opts.reticleHidden;",
     "new": "  const aim = true;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The reticle drawn whatever the host says."
   },
@@ -455,7 +455,7 @@
     "old": "const tvHeadEye = mwViewHoldChanged() ? cam.pos : (mwv0.ownEye ?? mwv0.eye);",
     "new": "const tvHeadEye = mwv0.ownEye ?? mwv0.eye;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The rise starts metres off at the borrowed camera; the fall lands there and snaps."
   },
@@ -465,7 +465,7 @@
     "old": "export const mwViewHoldChanged = () => !!heldThird?.changed;",
     "new": "export const mwViewHoldChanged = () => false;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The seam never says the body left the head."
   },
@@ -475,7 +475,7 @@
     "old": "return heldThird?.changed && heldThird.lane === 'mw' ? { ...s, firstPerson: true } : s;",
     "new": "return s;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A save under the view comes back in third person."
   },
@@ -485,7 +485,7 @@
     "old": "camera: mwViewSaveCamera(), transport:",
     "new": "camera: mwCamera.state(), transport:",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The host saves the borrowed camera."
   },
@@ -495,7 +495,7 @@
     "old": "    travelView?.exit('load', true);   // AUDIT DEEP X-3",
     "new": "    // AUDIT DEEP X-3",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The view's release puts the head over the camera the save restored."
   },
@@ -505,7 +505,7 @@
     "old": "  const pf = c.feet ?? c.focus;\n  const jump = Math.hypot(feet[0] - pf[0], feet[1] - pf[1], feet[2] - pf[2]) > TV_FOCUS_SNAP;",
     "new": "  const jump = Math.hypot(dx, dy, dz) > TV_FOCUS_SNAP;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A fast journey snaps the focus frame after frame."
   },
@@ -515,7 +515,7 @@
     "old": "  if (lag > TV_FOCUS_SNAP) { const s",
     "new": "  if (false) { const s",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "At speed the traveller runs off the picture."
   },
@@ -525,7 +525,7 @@
     "old": "    if (r.clear || t >= TV_TILT_MAX) return { height: r.h, tilt: t };",
     "new": "    return { height: r.h, tilt: t };",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A slope steeper than the tilt: the eye ends inside the hill."
   },
@@ -535,7 +535,7 @@
     "old": "  const heightTarget = c.heightTarget;\n  const want = clamp(heightTarget, lo, hi);",
     "new": "  const heightTarget = clamp(c.heightTarget, lo, hi);\n  const want = heightTarget;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "One frame of fog loses the player's zoom for good."
   },
@@ -545,7 +545,7 @@
     "old": "  return { eye, fwd: forwardOf(a.yaw + angleDelta(a.yaw, b.yaw) * s, a.pitch + (b.pitch - a.pitch) * s) };",
     "new": "  const f = [0, 1, 2].map((i) => from.fwd[i] + (to.fwd[i] - from.fwd[i]) * s);\n  const n = Math.hypot(f[0], f[1], f[2]) || 1;\n  return { eye, fwd: [f[0] / n, f[1] / n, f[2] / n] };",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The fall from a half-round orbit rolls the picture through the pole."
   },
@@ -555,7 +555,7 @@
     "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean;",
     "new": "  out[3] = batchReach(b);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Leaned tree tops pop at the screen's edge."
   },
@@ -565,7 +565,7 @@
     "old": "setFlatLean(tvf ? Math.hypot(tvf.up[0], tvf.up[2]) : 0);",
     "new": "setFlatLean(0);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The host never grows the spheres."
   },
@@ -575,7 +575,7 @@
     "old": "cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,",
     "new": "cascadeScale: 1,",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Shadows stop 216 m round the traveller."
   },
@@ -585,7 +585,7 @@
     "old": "if (k !== this._sunScaleK) { this._sunScaleK = k; this._sunDrawn.fill(0); }",
     "new": "this._sunScaleK = k;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A far map drawn at the other scale is kept for a frame."
   },
@@ -595,7 +595,7 @@
     "old": "this.sunParams[c] = SHADOW_CASCADES[c] * k;",
     "new": "this.sunParams[c] = SHADOW_CASCADES[c];",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The receivers pick cascades by the ground's radii."
   },
@@ -605,7 +605,7 @@
     "old": "face: tvFace });",
     "new": "face: null });",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The traveller's sprite goes edge-on as the view orbits."
   },
@@ -615,17 +615,17 @@
     "old": "drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });",
     "new": "drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw });",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The basis never reaches the body."
   },
   {
     "name": "AUDIT-DEEP-R2-the-body-ignores-it",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "      const by = face ? face.yaw : cam.yaw;",
     "new": "      const by = cam.yaw;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The body turns on the traveller's heading anyway."
   },
@@ -635,7 +635,7 @@
     "old": "    zoom(wheelNotches(e, win?.innerHeight));",
     "new": "    zoom(e.deltaY < 0 ? 1 : e.deltaY > 0 ? -1 : 0);",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A trackpad's dozens of small deltas are a full notch each - the whole band crossed in a flick."
   },
@@ -645,7 +645,7 @@
     "old": "  return Math.max(-TV_WHEEL_MAX, Math.min(TV_WHEEL_MAX, -px / TV_WHEEL_PX));",
     "new": "  return -px / TV_WHEEL_PX;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "One page-mode wheel event hurls the camera across its whole band."
   },
@@ -655,7 +655,7 @@
     "old": "    if (down && e.repeat && !keysTaken.has(code)) return;\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A look key held before the rise: its repeat is taken, its release swallowed, and the traveller turns on after the view is gone."
   },
@@ -665,7 +665,7 @@
     "old": "    if (down && deps.overlayUp?.()) return;",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Escape over the Tab dial takes the view down and leaves the dial open; the arrows orbit instead of choosing."
   },
@@ -675,7 +675,7 @@
     "old": "    if (acts.some((a) => TV_WORLD_ACTIONS.includes(a))) { if (down) keysTaken.add(code); swallow(e); return; }\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A pad's A under the view activates whatever stands before the traveller's head; Y swings."
   },
@@ -685,7 +685,7 @@
     "old": "    pointers.clear(); lookHeld.clear(); keysTaken.clear();\n  }",
     "new": "  }",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Alt-tab with a look key down: the view spins until that key is pressed again."
   },
@@ -695,17 +695,17 @@
     "old": "    if (e.pointerType === 'mouse' && e.buttons === 0) { press = null; pointers.delete(e.pointerId); return; }\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A drag's release lost to another window: every hover after it orbits the view."
   },
   {
     "name": "AUDIT-DEEP2-A1-panel-press-is-mouse0",
-    "file": "src/ui/enhancedTravelControl.js",
+    "file": "src/ui/enhanced/enhancedTravelControl.js",
     "old": "  bar.addEventListener('mousedown', (e) => { if (e.target?.closest?.('[data-act]')) e.stopPropagation(); });\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "A click on the panel's + or Exit under the view also activates what stands before the traveller's head."
   },
@@ -715,7 +715,7 @@
     "old": "    overlayActive: () => townTalk.overlayActive || !!travelView?.active || !!modes?.overlayHeld,",
     "new": "    overlayActive: () => townTalk.overlayActive || !!modes?.overlayHeld,",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Under the view a pad has no cursor: its stick turns the traveller's body, never the camera."
   },
@@ -725,7 +725,7 @@
     "old": "        if (act === 'Escape' && e.repeat) return true;",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Escape held past the view's fall toggles the pause on every repeat."
   },
@@ -735,7 +735,7 @@
     "old": "    danger: () => duelEnemyNear() || areEnemiesNearby(wildSeen(exteriorFoePool())),",
     "new": "    danger: () => areEnemiesNearby(wildSeen(exteriorFoePool())),",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Mid-duel the view rises and stays up while the opponent keeps hitting a traveller who cannot swing."
   },
@@ -745,7 +745,7 @@
     "old": " && !overlayOpen()) requestLook(canvas); } },",
     "new": ") requestLook(canvas); } },",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The view's fall asks for the pointer lock under the open Tab dial."
   },
@@ -755,7 +755,7 @@
     "old": "      if (camera) camera = { ...camera, focus: sh(camera.focus), feet: sh(camera.feet) };\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "At every map pixel crossed the Overworld's eye lurches forward by its eased lag - a hitch every few seconds on a fast journey."
   },
@@ -765,7 +765,7 @@
     "old": "      travelView?.rebase(r.offset);   // AUDIT DEEP2 D2: the Overworld's camera and its eye follow the origin - no lurch at a crossing\n",
     "new": "",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The view is never told the origin moved - the lurch at every crossing."
   },
@@ -775,7 +775,7 @@
     "old": "    const peerEye = travelView?.eye ?? cam.pos, peerRight",
     "new": "    const peerEye = cam.pos, peerRight",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "Under the view every mounted peer and walker picks its 8-way picture from the traveller's head."
   },
@@ -785,7 +785,7 @@
     "old": "      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,",
     "new": "      cascadeScale: this._focus[3] > 0.5 ? SHADOW_VIEW_SCALE : 1,",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "At the rise's first frame the near shadows coarsen from 1.2 cm texels to 4.7 at once, and snap back at the fall's end."
   },
@@ -795,7 +795,7 @@
     "old": "travelView.exit('door', true); setFlatLean(0); }",
     "new": "travelView.exit('door', true); }",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "After a door taken under the view, every flat indoors is culled as leaned - fewer culled for the rest of the visit."
   }

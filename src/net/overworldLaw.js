@@ -4,7 +4,7 @@
 // cell object's storage, so every player in the cell agrees: the ones standing in it now, and the ones who walk in later.
 //
 // WHAT IT HOLDS - the two things the Overworld could not share before:
-//   - THE SPENT. A roaming band (systems/travelBands.js, `b<cx>.<cy>.<life>`) and a Warm Ashes raider
+//   - THE SPENT. A roaming band (systems/travel/travelBands.js, `b<cx>.<cy>.<life>`) and a Warm Ashes raider
 //     (systems/seaRaiders.js, `r<cx>.<cy>.<life>`) are born of the land and the shared clock - every player computes the
 //     same ones with no word said - but one a player fought or escaped was told only peer to peer (a foes frame's `bd`),
 //     to the players within three map pixels at that moment and to nobody after. The ledger keeps each spent id through
@@ -30,19 +30,19 @@
 //
 // PURE - no storage, no socket, no clock of its own: the relay (server/src/index.js) and the session (net/online.js)
 // hand the moment in. It imports the wire (the cell's arithmetic, the shared clock's law, the frame's shapes),
-// net/gateLaw.js (the relay's copy of the spawn hash) and net/raidLaw.js (two clocks' skew) - all three the relay's
+// net/gate/gateLaw.js (the relay's copy of the spawn hash) and net/raid/raidLaw.js (two clocks' skew) - all three the relay's
 // already, so the worker's graph grows by this file alone. The band's, the raider's and the spawn's own numbers are
 // PINNED EQUAL here, never imported (gateLaw.js's law for this very hash): their modules reach the map files, and every
-// byte this file reaches is the relay's deploy - test/ow6_ledger.test.js holds each copy to its home.
+// byte this file reaches is the relay's deploy - test/net/ow6_ledger.test.js holds each copy to its home.
 //
 // Not a DFU member: Daggerfall has no other players, and no Overworld.
 import { WORLD_CELL, sharedClassicMinutes, cellOfRoom, OW_BAND_ID_RE, OW_RAIDER_ID_RE, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, OW_CELL_SPENT_MAX, OW_CELL_ROWS_MAX, owWireRow } from './wire.js';
-import { gateHash, GATE_DAY_MINUTES } from './gateLaw.js';   // the spawned dungeons' hash (world/spawnedDungeons.js hash32) - the relay's one copy; a game day's minutes
-import { RAID_SLACK_MINUTES } from './raidLaw.js';   // ten real seconds of two clocks' skew (WORLD5)
+import { gateHash, GATE_DAY_MINUTES } from './gate/gateLaw.js';   // the spawned dungeons' hash (world/spawnedDungeons.js hash32) - the relay's one copy; a game day's minutes
+import { RAID_SLACK_MINUTES } from './raid/raidLaw.js';   // ten real seconds of two clocks' skew (WORLD5)
 
 export { OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, OW_CELL_SPENT_MAX, OW_CELL_ROWS_MAX };
 
-/** A band's life, real ms on the shared clock (systems/travelBands.js BAND_LIFE_MS - pinned equal). */
+/** A band's life, real ms on the shared clock (systems/travel/travelBands.js BAND_LIFE_MS - pinned equal). */
 export const OW_BAND_LIFE_MS = 12 * 60 * 1000;
 /** A band's cell, map pixels square (travelBands.js BAND_CELL_PX - pinned equal). */
 export const OW_BAND_CELL_PX = 2;

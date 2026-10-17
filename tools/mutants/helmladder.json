@@ -1,93 +1,93 @@
 [
   {
     "name": "HELM-LADDER-no-oar-rungs",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (state.oarThrottle < 1) { state.oarThrottle += 1; deps.hudText(OAR_RUNG_TEXT[state.oarThrottle]); return; }\n",
     "new": "",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-struck-onto-rest",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (state.sailPosition === 0) { state.oarThrottle = 1; deps.hudText(OAR_RUNG_TEXT[1]); }\n",
     "new": "",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-astern-past-the-foot",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (state.oarThrottle > -1) { state.oarThrottle -= 1;",
     "new": "    if (true) { state.oarThrottle -= 1;",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-W-apart",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (deps.input?.started?.('MoveForwards') || deps.input?.started?.(BOAT_ACTIONS.sailUp)) ladderUp(boat);",
     "new": "    if (deps.input?.started?.(BOAT_ACTIONS.sailUp)) ladderUp(boat);",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-S-apart",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    else if (deps.input?.started?.('MoveBackwards') || deps.input?.started?.(BOAT_ACTIONS.sailDown)) ladderDown(boat);",
     "new": "    else if (deps.input?.started?.(BOAT_ACTIONS.sailDown)) ladderDown(boat);",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-oars-held",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "if ((state.oarThrottle > 0 || deps.input?.toggleAutorun) && IsNodeOnWater(boat, 0)) num3 = 1;",
     "new": "if ((has('MoveForwards') || deps.input?.toggleAutorun) && IsNodeOnWater(boat, 0)) num3 = 1;",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-astern-held",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "else if (state.oarThrottle < 0 && IsNodeOnWater(boat, 2)) num3 = -1;",
     "new": "else if (has('MoveBackwards') && IsNodeOnWater(boat, 2)) num3 = -1;",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-oars-under-sail",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    state.oarThrottle = 0;   // HELM-LADDER: under sail the oars are shipped\n",
     "new": "",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-rung-kept-ashore",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    state.oarThrottle = 0;   // HELM-LADDER: the oars shipped with the helm left\n",
     "new": "",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-the-button-a-rung",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: A.sail });",
     "new": "label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: !h.sailsUp ? A.more : A.less });",
     "tests": [
-      "test/csa_sailing.test.js",
-      "test/csa_together.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js",
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -96,26 +96,26 @@
     "old": "CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action)",
     "new": "CSA_BOAT_ACTIONS.toggleSail].includes(action)",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-hint-sails-alone",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "keys(h.hasSails ? 'Oars & sails' : 'Oars', 'MoveForwards', 'MoveBackwards', A.more, A.less)",
     "new": "keys(h.hasSails ? 'Oars & sails' : 'Oars', A.more, A.less)",
     "tests": [
-      "test/csa_sailing.test.js",
-      "test/csa_together.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js",
+      "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "HELM-LADDER-irons-strike-W",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "const strike = [key('MoveBackwards'), key(A.less)].filter(Boolean).join(' ');",
     "new": "const strike = [key(A.less)].filter(Boolean).join(' ');",
     "tests": [
-      "test/auditnav2_helm.test.js"
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
     ]
   }
 ]

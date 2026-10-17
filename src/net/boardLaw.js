@@ -6,7 +6,7 @@
 // client's window (ui/noticeWindow.js) both read. The record is bible/06-Systems/Professions-Arc.md 10.1 and 10.6
 // (PROF0), and 10.7 as built.
 //
-// A BOARD IS ITS TOWN'S. Every rumour board of a town (BOUNTY1 took the other half, systems/bountyBoard.js
+// A BOARD IS ITS TOWN'S. Every rumour board of a town (BOUNTY1 took the other half, systems/bounty/bountyBoard.js
 // questBoardIndices) shows the same notes: a note is pinned to the TOWN, keyed by its location's map id (MAPS.BSA's
 // MapTableData.MapId, unsigned - regionHubs.js's key), so a board stood later for a seat or a hub is the same board.
 //
@@ -73,7 +73,7 @@ export const BOARD_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;
 
 /**
  * A note as the service keeps it, checked: its words (letterWords), its days and its button - or the ONE word that
- * refuses it. Each refusal is spelled `return { error: '...' }` so test/accountflow.test.js can walk this file for the
+ * refuses it. Each refusal is spelled `return { error: '...' }` so test/server/accountflow.test.js can walk this file for the
  * words the service answers with.
  * @param {{ subject?: unknown, body?: unknown, days?: unknown, button?: unknown }} note
  * @returns {{ subject: string, body: string, days: number, button: string|null } | { error: string }}

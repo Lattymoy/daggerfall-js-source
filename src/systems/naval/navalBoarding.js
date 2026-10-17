@@ -76,7 +76,7 @@ export function raidQuestWon(quest) {
  * that would have ended it: a player slower than the hour met no leader and a quest that never ended, and the boarding
  * that waited on it held every other boarding off. The mod left it unfinished (its lines 2025-2029 unwritten, its notes
  * "Add Retreat Timer"); here it is what it names - the boarders fall back and cast off, and the raid ends
- * (scenes/navalHost.js castOff). The small raid declares the clock and never starts it.
+ * (scenes/naval/navalHost.js castOff). The small raid declares the clock and never starts it.
  */
 export const RAID_RETREAT_TASKS = Object.freeze(['retreat']);
 /** Whether a raid quest was given up: its retreat triggered and it was not won. */

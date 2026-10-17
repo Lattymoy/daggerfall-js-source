@@ -1,0 +1,103 @@
+[
+  {
+    "name": "TONE-TASTE-sign-flipped",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "  return Math.sign(mod ?? 0);",
+    "new": "  return -Math.sign(mod ?? 0);",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-tables-swapped",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "  const mod = toneIndex === 0 ? ETIQUETTE_REACTION_MODS[group] : toneIndex === 2 ? STREETWISE_REACTION_MODS[group] : 0;",
+    "new": "  const mod = toneIndex === 0 ? STREETWISE_REACTION_MODS[group] : toneIndex === 2 ? ETIQUETTE_REACTION_MODS[group] : 0;",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-no-fold",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "  const group = socialGroup >= 5 ? 1 : socialGroup;",
+    "new": "  const group = socialGroup;",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-talk-group-fixed",
+    "file": "src/scenes/townTalk.js",
+    "old": "  const _toneTaste = () => toneTaste(tone, engine()?.session?.npcData?.socialGroup ?? 0);",
+    "new": "  const _toneTaste = () => toneTaste(tone, 3);",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-answer-untasted",
+    "file": "src/scenes/townTalk.js",
+    "old": "          if (row.legacy) return row.legacy.answer(tone, _toneTaste());",
+    "new": "          if (row.legacy) return row.legacy.answer(tone);",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js",
+      "test/systems/legacy/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-host-taste-dropped",
+    "file": "src/scenes/legacyHost.js",
+    "old": "answer: (tone, taste) => answerTopic(t, res, taste, ctx)",
+    "new": "answer: (tone, taste) => answerTopic(t, res, 0, ctx)",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-cooled-unsaid",
+    "file": "src/scenes/legacyHost.js",
+    "old": "r.cooled ? MARRIAGE_TEXT.cooled(first) :",
+    "new": "false ? MARRIAGE_TEXT.cooled(first) :",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-ill-tone-free",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  if (taste < 0) return -COURT_TASTE;",
+    "new": "  if (taste < 0) return 0;",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-past-nothing",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  const gained = Math.max(-c.affection, Math.min(AFFECTION_MAX - c.affection, gain));",
+    "new": "  const gained = Math.min(AFFECTION_MAX - c.affection, gain);",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-normal-kind",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "(taste > 0 ? COURT_TASTE : 0)",
+    "new": "(taste >= 0 ? COURT_TASTE : 0)",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js",
+      "test/systems/legacy/legacy5_marriage.test.js"
+    ]
+  },
+  {
+    "name": "TONE-TASTE-cooled-unflagged",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  return { gained, affection: c.affection, again: false, cooled: gain < 0 };",
+    "new": "  return { gained, affection: c.affection, again: false, cooled: false };",
+    "tests": [
+      "test/systems/livingWorld/tonetaste.test.js"
+    ]
+  }
+]

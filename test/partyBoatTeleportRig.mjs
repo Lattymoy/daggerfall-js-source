@@ -3,11 +3,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { createComeSailAwayPool } from '../src/scenes/comeSailAwayPool.js';
-import { createComeSailAwayPeers } from '../src/scenes/comeSailAwayPeers.js';
-import { createComeSailAwayAboard, localOf } from '../src/scenes/comeSailAwayAboard.js';
-import { Boat, HULL_NAMES } from '../src/systems/comeSailAwayBoat.js';
-import { boardPlaceOf } from '../src/systems/comeSailAway.js';
+import { createComeSailAwayPool } from '../src/scenes/comeSailAway/comeSailAwayPool.js';
+import { createComeSailAwayPeers } from '../src/scenes/comeSailAway/comeSailAwayPeers.js';
+import { createComeSailAwayAboard, localOf } from '../src/scenes/comeSailAway/comeSailAwayAboard.js';
+import { Boat, HULL_NAMES } from '../src/systems/comeSailAway/comeSailAwayBoat.js';
+import { boardPlaceOf } from '../src/systems/comeSailAway/comeSailAway.js';
 import { colliderPoses, invertAffine, boxColliderTriangles, raycastColliders, BUILTIN_COLLIDER_MESHES } from '../src/world/prefabColliders.js';
 import { quatAngleAxis } from '../src/world/quat.js';
 import { Collider } from '../src/player/collider.js';
@@ -47,7 +47,7 @@ const MINE_X = 100;        // my own boat of the same hull, moored a hundred met
 const EAST = Math.PI / 2;  // the motor's yaw toward +x
 const IDLE = { forward: 0, strafe: 0 };
 const RUN = { forward: 1, strafe: 0, run: true };
-/** Ann's word for one boat (systems/comeSailAwayWire.js `b`): her hull, variant 0, the root's place and turn, the
+/** Ann's word for one boat (systems/comeSailAway/comeSailAwayWire.js `b`): her hull, variant 0, the root's place and turn, the
  *  sails, the helm and the lanterns - with her way (`m`: velocity x, z and turn a second) while she sails. */
 const annWord = (hull, pos, q = Q0, way = null) => ({ b: [[hull, 0, pos[0], pos[1], pos[2], ...q, 0, way ? 1 : 0, 0]], ...(way ? { m: [way] } : {}) });
 

@@ -17,7 +17,7 @@
 # token in .git/config (AUDIT INSTALL L1-1's law for that workflow).
 #
 # The shard count is in two places that must agree - the matrix and the
-# `/4` - and test/flow1_ci.test.js holds them together.
+# `/4` - and test/tooling/flow1_ci.test.js holds them together.
 name: verify
 
 on:

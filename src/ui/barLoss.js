@@ -1,8 +1,8 @@
 // @ts-check
 // VB2 / FRAME1 - A BAR'S LOSS, READ AT A GLANCE: the pale strip that holds where a bar WAS after a hit before it drains
 // (`stepGhost`), and the bitten span breaking off as a piece that drops (`chunkFrame`). The vitals' and the foe bar's
-// law (ui/enhancedHud.js, where it was born), in a home of its own since AUDIT NAV1 (the presentation) gave the sea
-// fight's target card the same readout (ui/navalHud.js): a hit on her had only slid her bar for 160 ms. Pure.
+// law (ui/enhanced/enhancedHud.js, where it was born), in a home of its own since AUDIT NAV1 (the presentation) gave the sea
+// fight's target card the same readout (ui/naval/navalHud.js): a hit on her had only slid her bar for 160 ms. Pure.
 
 /** VB2: how long the lost chunk stands before it drains (seconds), and
  *  how fast it drains once it goes (percent of the bar per second). */

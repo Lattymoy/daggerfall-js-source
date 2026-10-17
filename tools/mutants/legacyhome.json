@@ -5,7 +5,7 @@
     "old": "  if (!family || !p || !isAlive(p) || p.kind !== 'member' || p.id === family.currentId) return null;",
     "new": "  if (!family || !p || !isAlive(p) || p.kind !== 'member') return null;",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    return parked ? { mapId: parked.mapId, buildingKey: parked.buildingKey, lent: false } : null;",
     "new": "    if (parked) return { mapId: parked.mapId, buildingKey: parked.buildingKey, lent: false };",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return houses.find((h) => sameHouse(h, family.home))\n    ?? ",
     "new": "  return ",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    } else if (!took(h)) next.push(h);",
     "new": "    } else if (false) next.push(h);",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -42,7 +42,7 @@
     "old": "export const FAMILY_JOB = 'homemaker';",
     "new": "export const FAMILY_JOB = 'labourer';",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },",
     "new": "    portrait: null,",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "!past && legacySettings().familyInWorld && (deps.livingWorld?.() ?? true);",
     "new": "!past && (deps.livingWorld?.() ?? true);",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -70,7 +70,7 @@
     "old": "    if (kept?.key === listKey) return kept.list;\n",
     "new": "",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -80,7 +80,7 @@
     "old": "    p.parked = here && (family.houses ?? []).some((h) => sameHouse(h, here)) ? { mapId: here.mapId, buildingKey: here.buildingKey } : null;",
     "new": "    p.parked = null;",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "    syncHousesNow(p);\n    // where this save is made",
     "new": "    // where this save is made",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -99,7 +99,7 @@
     "old": "    tellNews('died', fullNameOf(p.given, p.surname), deps.here()?.mapId);   // AUDIT LEGACY III A13/F17: a member's death is news\n    store();\n",
     "new": "    tellNews('died', fullNameOf(p.given, p.surname), deps.here()?.mapId);   // AUDIT LEGACY III A13/F17: a member's death is news\n",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": "    const why = p.kind === 'resident' ? LEGACY_TEXT.spouseKin(p.given) : p.retired != null ? LEGACY_TEXT.retiredKin(p.given) : switchRefusal(p.id);",
     "new": "    const why = p.kind === 'resident' ? LEGACY_TEXT.spouseKin(p.given) : switchRefusal(p.id);",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "LEGACY5 (PIN MOVED): re-aimed by content. AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -118,7 +118,7 @@
     "old": "this._people.roads === roads && this._people.extra === extra) return this._people.list;",
     "new": "this._people.roads === roads) return this._people.list;",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -127,7 +127,7 @@
     "old": "    this._homes ??= [...this.places.doors.keys()].filter((k) => isHome(this.places.types.get(k))).sort((a, b) => a - b);",
     "new": "    this._homes ??= [...this.places.doors.keys()].sort((a, b) => a - b);",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
   },
@@ -137,7 +137,7 @@
     "old": "    p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;",
     "new": "    p.parked = null;",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -146,7 +146,7 @@
     "old": "    if (livingTalk?.kin?.(target.person, () => converse(target))) return;\n",
     "new": "",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -155,7 +155,7 @@
     "old": "    return { ok: play(personOf(family, id), here ? placeHere() : null) };",
     "new": "    return { ok: play(personOf(family, id), null) };",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ]
   },
   {
@@ -164,7 +164,7 @@
     "old": "recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
     "new": "recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: current() ? fullNameOf(current().given, current().surname) : null });",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): a beast's kill blamed on the one played."
   },
@@ -174,7 +174,7 @@
     "old": "recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
     "new": "recordDeath(family, p.id, { at: deps.now(), cause: 'slain', place: deps.here(), by: null });",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): a beast's kill read as one struck down."
   },
@@ -184,7 +184,7 @@
     "old": "    tellNews('died', fullNameOf(p.given, p.surname), deps.here()?.mapId);\n    store();\n    deps.say(LEGACY_TEXT.kinKilled(",
     "new": "    store();\n    deps.say(LEGACY_TEXT.kinKilled(",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the death no town's news."
   },
@@ -194,7 +194,7 @@
     "old": "    store();\n    deps.say(LEGACY_TEXT.kinKilled(",
     "new": "    deps.say(LEGACY_TEXT.kinKilled(",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the death never the store's world fact."
   },
@@ -204,7 +204,7 @@
     "old": "if (!p || !isAlive(p) || p.id === family.currentId) return false;\n    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
     "new": "if (!p) return false;\n    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the dead die again."
   },
@@ -214,7 +214,7 @@
     "old": "if (!p || !isAlive(p) || p.id === family.currentId) return false;\n    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
     "new": "if (!p || !isAlive(p)) return false;\n    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the one played killed through a resident's tag."
   },
@@ -224,7 +224,7 @@
     "old": "    kinSlain,\n    kinKilled,\n",
     "new": "    kinSlain,\n",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the host offers the world no door for it."
   },
@@ -234,7 +234,7 @@
     "old": "    if (isFamilyRes(res)) { legacyHost?.kinKilled(res); return; }\n    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends\n    livingRelations.turn('killed'",
     "new": "    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends\n    livingRelations.turn('killed'",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): one of the line a beast killed taken for the census's."
   },
@@ -244,7 +244,7 @@
     "old": "    if (isFamilyRes(res)) { legacyHost?.kinKilled(res); return; }\n    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends\n    livingRelations.turn('killed'",
     "new": "    if (isFamilyRes(res)) { legacyHost?.kinKilled(res); return; }\n    livingRelations.turn('killed'",
     "tests": [
-      "test/legacyhome.test.js"
+      "test/systems/legacyhome.test.js"
     ],
     "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): a courted townsperson a beast killed is courted still."
   }

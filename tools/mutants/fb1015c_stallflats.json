@@ -1,0 +1,20 @@
+[
+  {
+    "name": "STALL-FLATS-the-archive-law-dropped",
+    "file": "src/characters/peopleBodies.js",
+    "old": "  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/mwnpc8b_streetdungeon.test.js"
+    ]
+  },
+  {
+    "name": "STALL-FLATS-the-quest-word-unread",
+    "file": "src/characters/peopleBodies.js",
+    "old": "  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);",
+    "new": "  if (!isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);",
+    "tests": [
+      "test/scenes/mwnpc8b_streetdungeon.test.js"
+    ]
+  }
+]

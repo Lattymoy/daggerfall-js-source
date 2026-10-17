@@ -5,7 +5,7 @@
     "old": "  if (ageless) return { final: false, years: 0, age: ageOf(person, lived), spent: false, ageless: true };\n",
     "new": "",
     "tests": [
-      "test/legacy1_family.test.js"
+      "test/systems/legacy1_family.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (ageless) return { final: false,",
     "new": "  if (ageless && !isSpent(person, lived)) return { final: false,",
     "tests": [
-      "test/legacy1_family.test.js"
+      "test/systems/legacy1_family.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (ageless) return `The curse in ${name}'s blood keeps Arkay at bay. No years are taken.`;\n",
     "new": "",
     "tests": [
-      "test/legacy1_family.test.js"
+      "test/systems/legacy1_family.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "p.lived, { ageless: cursed });",
     "new": "p.lived, { ageless: false });",
     "tests": [
-      "test/legacy1_family.test.js"
+      "test/systems/legacy1_family.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "(liveVampirism(deps.entity) || liveLycanthropy(deps.entity))",
     "new": "(liveLycanthropy(deps.entity))",
     "tests": [
-      "test/legacy1_family.test.js"
+      "test/systems/legacy1_family.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "(liveVampirism(deps.entity) || liveLycanthropy(deps.entity))",
     "new": "(liveVampirism(deps.entity))",
     "tests": [
-      "test/legacy1_family.test.js"
+      "test/systems/legacy1_family.test.js"
     ]
   }
 ]

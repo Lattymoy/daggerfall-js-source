@@ -1,12 +1,12 @@
 // THE CARD TABLE LAB (CARDS3, bible/11-Multiplayer/Tavern-Cards.md section 3). A tavern table with no tavern: the
-// tavern's own card table (world/cardTableProp.js - AUDIT TAVERN-TABLE L6: the lab drew a box of its own) on a plain
-// floor, its seats stood by world/cardTables.js, a seeded evening of the table
-// (systems/cardTableSession.js - the player checking and calling, the patrons by their tempers) played to a pinned
+// tavern's own card table (world/card/cardTableProp.js - AUDIT TAVERN-TABLE L6: the lab drew a box of its own) on a plain
+// floor, its seats stood by world/card/cardTables.js, a seeded evening of the table
+// (systems/card/cardTableSession.js - the player checking and calling, the patrons by their tempers) played to a pinned
 // clock, and the cards and chips drawn by render/cardTableDraw.js through the game's own renderer, with the table's
-// panel (ui/cardTableHud.js) over it. No game data: the felt and the floor are flat colours, the cards our own paint.
+// panel (ui/card/cardTableHud.js) over it. No game data: the felt and the floor are flat colours, the cards our own paint.
 //     cards.html?t=<seconds>&cam=seat|over&seed=<n>&patrons=<n>&nohud     (tools/cardsProbe.mjs pins them)
 //     &gold - the tavern's gold table (TAVERN-TABLES, section 30: its red felt)
-// CARDS3c: `&squeeze=<0..1>` the front held card squeezed (world/cardHand.js squeezeMatrix); `&game=iliac` the cloth an
+// CARDS3c: `&squeeze=<0..1>` the front held card squeezed (world/card/cardHand.js squeezeMatrix); `&game=iliac` the cloth an
 // Iliac Hand game lays at its last turn instead (world/iliacCloth.js, render/iliacTableDraw.js); `&bench=<frames>` times
 // that many frames with the cards and without, into `__cardsBench` (tools/cardsPhoneProbe.mjs - the frame cost); `&chips=0`
 // the cards with no chips.
@@ -14,7 +14,7 @@
 // cloth's cards and chips, no hand), `&reps=<n>` the runs alternated (3), medians kept: section 34's "the cost is the
 // HELD HAND" was a claim no run of the probe could make, so the probe now reports the parts. The bench's counts are
 // what the frame drew (`&chips=0` drew none - its row said 40). AUDIT CARDS-6 E21: the held hand laid as the host lays
-// it - at the frame's fit (world/cardHand.js heldFit) and, with the panel up, lifted clear of it (heldLift).
+// it - at the frame's fit (world/card/cardHand.js heldFit) and, with the panel up, lifted clear of it (heldLift).
 // CARDS-PLUS (section 38): the panels wear the Enhanced Plus kit by role, and on the enhanced skin the game's HUD has laid
 // the Plus sheet before a table is sat at - the lab lays it as the HUD does (`&skin=classic` the panel lays its own cut
 // of the kit); with `&game=iliac` the panel over the cloth is Iliac Hand's own, at that last turn.
@@ -26,24 +26,24 @@
 // panel ui/gambitTableHud.js over it; `&nohud` none); `&select=<n>` a piece chosen; `&phase=army` the army's screen.
 import { Renderer } from '../render/renderer.js';
 import { perspective, lookAt, mirrorProjectionX } from '../world/mat4.js';
-import { cardTableSeats, tableFrame } from '../world/cardTables.js';
-import { tablePlaces, CardScene } from '../world/cardScene.js';
-import { CardTableSession } from '../systems/cardTableSession.js';
+import { cardTableSeats, tableFrame } from '../world/card/cardTables.js';
+import { tablePlaces, CardScene } from '../world/card/cardScene.js';
+import { CardTableSession } from '../systems/card/cardTableSession.js';
 import { createCardTableDraw } from '../render/cardTableDraw.js';
-import { createCardTableHud, cardHudModel, eventLine } from '../ui/cardTableHud.js';
-import { INTERIOR_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
-import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD, GOLD_FELT_RECORD, GOLD_FELT_RGB } from '../world/cardTableProp.js';   // AUDIT TAVERN-TABLE L6: the game's table
-import { heldMatrices, squeezeMatrix, heldFit, heldLift } from '../world/cardHand.js';   // CARDS3b: the player's two held before the eye, as the host draws them; CARDS3c: squeezed; AUDIT CARDS-6 E21: fitted and lifted
-import { CARD_W, CARD_L } from '../world/cardMotion.js';
+import { createCardTableHud, cardHudModel, eventLine } from '../ui/card/cardTableHud.js';
+import { INTERIOR_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interior/interiorLights.js';
+import { cardTablePropModel, paintFelt, paintWood, CARD_TABLE_BOX, CARD_TABLE_ARCHIVE, FELT_RECORD, WOOD_RECORD, GOLD_FELT_RECORD, GOLD_FELT_RGB } from '../world/card/cardTableProp.js';   // AUDIT TAVERN-TABLE L6: the game's table
+import { heldMatrices, squeezeMatrix, heldFit, heldLift } from '../world/card/cardHand.js';   // CARDS3b: the player's two held before the eye, as the host draws them; CARDS3c: squeezed; AUDIT CARDS-6 E21: fitted and lifted
+import { CARD_W, CARD_L } from '../world/card/cardMotion.js';
 import { projectToScreen } from '../player/tapRay.js';
-import { newGame, commit as iliacCommit, reveal as iliacReveal, iliacView, ILIAC_TURNS } from '../net/iliacHand.js';   // CARDS10: an Iliac game's cloth, for the frame's cost
-import { STARTER_DECK } from '../net/iliacCards.js';
-import { patronPlays } from '../systems/iliacPatrons.js';
+import { newGame, commit as iliacCommit, reveal as iliacReveal, iliacView, ILIAC_TURNS } from '../net/iliac/iliacHand.js';   // CARDS10: an Iliac game's cloth, for the frame's cost
+import { STARTER_DECK } from '../net/iliac/iliacCards.js';
+import { patronPlays } from '../systems/iliac/iliacPatrons.js';
 import { iliacPlaces, iliacPoses } from '../world/iliacCloth.js';
 import { createIliacTableDraw } from '../render/iliacTableDraw.js';
 import { createIliacTableHud, iliacHudModel } from '../ui/iliacTableHud.js';   // CARDS-PLUS: Iliac Hand's panel over its cloth
-import { injectEnhancedStyle } from '../ui/enhancedStyle.js';
-import { dealRegular, regularStep, GAMBIT_TIERS } from '../systems/gambitPatrons.js';   // KG4: The King's Gambit's table
+import { injectEnhancedStyle } from '../ui/enhanced/enhancedStyle.js';
+import { dealRegular, regularStep, GAMBIT_TIERS } from '../systems/gambit/gambitPatrons.js';   // KG4: The King's Gambit's table
 import { finishTurn, autoFill, KG_POINT_BUDGET } from '../net/kingsGambit.js';
 import { gambitPlaces, gambitLean } from '../world/gambitCloth.js';
 import { createGambitMotion } from '../world/gambitMotion.js';

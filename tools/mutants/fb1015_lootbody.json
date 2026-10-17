@@ -5,7 +5,7 @@
     "old": "  for (const f of foes) { const b = corpseFlat(f); if (b) b.castOnly = false; }\n",
     "new": "\n",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (b) b.castOnly = lane.has('foe', idOf(f)); }",
     "new": "if (b) b.castOnly = false; }",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  try { lane.draw(canvas, { proj, view, eye }); }",
     "new": "  try { /* none */ }",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (!lane || !(lane.offered > 0)) return false;",
     "new": "  if (!lane) return false;",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!lane || !(lane.offered > 0)) return false;",
     "new": "  if (!lane || !(lane.offered > 0)) return false; lane.end(1 / 60, eye);",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "dungeonCtx.drawWindowBodies?.(canvas, { proj, view, eye: cam.pos });",
     "new": "dungeonCtx.showBodyFlats?.();",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const base = l * reach + u[0]",
     "new": "const base = reach + u[0]",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "const base = l * reach + u[0] * (at[0] - center[0]) + u[1] * (at[1] - center[1]) + u[2] * (at[2] - center[2]);",
     "new": "const base = l * reach;",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "return { dir: u, near, range: far - near, base };",
     "new": "return { dir: u, near, range: far, base };",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "const depth = up == null && qUp !== WORLD_UP ?",
     "new": "const depth = up == null ?",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "q.fx, q.depth);",
     "new": "q.fx);",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (this._depthOnUnit1) { this._activeTexture(gl.TEXTURE1);",
     "new": "    if (false) { this._activeTexture(gl.TEXTURE1);",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "if (dtex) { this._bindEmission(dtex); this._depthOnUnit1 = true; }",
     "new": "if (dtex) { this._bindEmission(dtex); }",
     "tests": [
-      "test/fb1015_lootbody.test.js"
+      "test/render/fb1015_lootbody.test.js"
     ]
   }
 ]

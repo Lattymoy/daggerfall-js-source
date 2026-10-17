@@ -5,7 +5,7 @@
     "old": "      arrestFlow.abandon();   // AUDIT DISC28 AR-1",
     "new": "      // AUDIT DISC28 AR-1",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    playerEntity.arrested = false;   // OnPop\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    playerEntity.inPrison = false;   // OnPop\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    for (const win of t?.windows ?? []) win.done = true;\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "(t && trial === t && !t.released ? fn(...args) : undefined)",
     "new": "fn(...args)",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  function abandon() {\n    withdrawQuestion();\n",
     "new": "  function abandon() {\n",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "label: 'Y - surrender', action: () => {\n            if (surrenderBox !== box) return;\n",
     "new": "label: 'Y - surrender', action: () => {\n",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
@@ -68,34 +68,34 @@
     "old": "label: 'N - fight on', action: () => { if (surrenderBox !== box) return; ",
     "new": "label: 'N - fight on', action: () => { ",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
     "name": "AR2-the-body-asks-with-the-speed-alone",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "getMeleeWeaponAnimTime(last.liveSpeed, last.animCtx)",
     "new": "getMeleeWeaponAnimTime(last.liveSpeed)",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
     "name": "AR2-the-body-drops-the-weapon",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "    animCtx: s.animCtx ?? null,",
     "new": "    animCtx: null,",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
     "name": "AR2-the-rig-hands-the-body-no-weapon",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "    animCtx: playerWeapon.animCtx(),\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
@@ -104,25 +104,25 @@
     "old": "if (surrenderBox !== box) return; awaitingSurrenderAnswer = false; if (crimeId() !== 0) applyDamage();",
     "new": "if (surrenderBox !== box) return; awaitingSurrenderAnswer = false; applyDamage();",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
     "name": "AR4-the-rig-freezes-its-speed-after-construction",
-    "file": "src/combat/weaponRig.js",
-    "old": "  playerWeapon.animCtx = () => ({ entity, weaponType",
-    "new": "  playerWeapon.liveSpeed = playerWeapon.liveSpeed;\n  playerWeapon.animCtx = () => ({ entity, weaponType",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "  playerWeapon.animCtx = () => playerWeapon.swingCtx(entity);",
+    "new": "  playerWeapon.liveSpeed = playerWeapon.liveSpeed;\n  playerWeapon.animCtx = () => playerWeapon.swingCtx(entity);",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   },
   {
     "name": "AR4-the-rig-blind-to-speed-on-the-real-rig",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) })",
     "new": "new PlayerWeapon({})",
     "tests": [
-      "test/auditdisc28_arrest.test.js"
+      "test/systems/auditdisc28_arrest.test.js"
     ]
   }
 ]

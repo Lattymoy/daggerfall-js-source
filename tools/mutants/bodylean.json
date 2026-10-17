@@ -1,18 +1,18 @@
 [
   { "name": "BODY-LEAN-upright-quad", "file": "src/render/characterSprite.js",
     "old": "  const qUp = up ?? (getPref('mwBillboardLook') ? WORLD_UP : pictureUp(camDir));   // AUDIT OW4 J6: the quad's vertical", "new": "  const qUp = up ?? WORLD_UP;   // AUDIT OW4 J6: the quad's vertical",
-    "tests": ["test/bodylean.test.js"],
+    "tests": ["test/world/bodylean.test.js"],
     "note": "The report back: the picture taken down the pitched ray pasted upright - every body and 3D horse cos(pitch) of its height, shrinking as the camera rises over it." },
   { "name": "BODY-LEAN-lone-pass-upright", "file": "src/render/characterSprite.js",
     "old": "hitFlash, conceal, qUp, null, fx, depth);", "new": "hitFlash, conceal, up, null, fx, depth);",
-    "tests": ["test/bodylean.test.js"],
+    "tests": ["test/world/bodylean.test.js"],
     "note": "The lone pass (a figure drawn with no batch open) draws its quad upright while its anchor was landed along the lean: the figure shrinks and slides off its feet." },
   { "name": "BODY-LEAN-batch-upright", "file": "src/render/characterSprite.js",
     "old": "quad: { at, halfW, halfH, right, hitFlash, conceal, up: qUp, fx, depth } });", "new": "quad: { at, halfW, halfH, right, hitFlash, conceal, up, fx, depth } });",
-    "tests": ["test/bodylean.test.js"],
+    "tests": ["test/world/bodylean.test.js"],
     "note": "The batch (MWNPC2 - every body of a frame) draws its quads upright: the report on every body and horse in the world." },
   { "name": "BODY-LEAN-leans-toward-the-eye", "file": "src/render/characterSprite.js",
     "old": "  return [-nx * ny / hl, hl, -nz * ny / hl];", "new": "  return [nx * ny / hl, hl, nz * ny / hl];",
-    "tests": ["test/bodylean.test.js"],
+    "tests": ["test/world/bodylean.test.js"],
     "note": "The lean the wrong way - toward an eye above: foreshortened as badly as upright, and the other way." }
 ]

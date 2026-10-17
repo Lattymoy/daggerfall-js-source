@@ -1,6 +1,6 @@
 // @ts-check
 // SEAT1b (2026-09-30, Mac: "Finish the seats"): THE WATCH'S RECEIPT - the relay's third signature, the gate's and the
-// raid's receipts' twin (net/gateReceipt.js, net/raidReceipt.js). Design: bible/11-Multiplayer/Seats-Arc.md 4.2, "The
+// raid's receipts' twin (net/gate/gateReceipt.js, net/raid/raidReceipt.js). Design: bible/11-Multiplayer/Seats-Arc.md 4.2, "The
 // Watch": "Relay-witnessed socket; the position is the client's own claim, so it is bounded ... 1 per 2 minutes,
 // capped 60 an account a day".
 //
@@ -73,7 +73,7 @@ export function watchReceiptValid(c) {
 /**
  * MINT - the relay's half. With no key the receipt goes out unsigned (`k1.<body>.`).
  * @param {{s: string, x: number, y: number, c: number}} what
- * @param {CryptoKey|null} privateKey an Ed25519 private key (net/gateReceipt.js importReceiptKey), or null for none
+ * @param {CryptoKey|null} privateKey an Ed25519 private key (net/gate/gateReceipt.js importReceiptKey), or null for none
  * @param {{subtle: SubtleCrypto, nowS: number}} env
  * @returns {Promise<string>}
  */

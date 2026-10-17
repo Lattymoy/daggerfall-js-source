@@ -40,11 +40,11 @@
 // and drawn as themselves) and the Arena's tiers (182.48 and 184.6 among
 // its seated crowd) drew the figures whatever the setting said. A rule
 // each new host has to remember is a rule the next one forgets, so the
-// source is swept (test/nudedecor.test.js): every file that batches a
+// source is swept (test/scenes/nudedecor.test.js): every file that batches a
 // billboard is named there - one that draws a person asks drawnFlat, any
 // other says why it draws none.
 
-import { getBool } from '../systems/settings.js';
+import { getBool } from '../systems/settings/settings.js';
 
 /** `archive_record` -> the clothed stand-in [archive, record]. The
  *  captions are FLATS.CFG's; where they stand is BLOCKS.BSA's. */
@@ -73,7 +73,7 @@ export const showNudity = () => getBool('ChildGuard', 'PlayerNudity');
 
 /** NUDE-DECOR: whether a flat is one of the table's figures - what a
  *  catalogue must not OFFER while Show Nudity is off (the decorator's
- *  people, systems/decorCatalogue.js decorRoomEntries): a figure placed
+ *  people, systems/decor/decorCatalogue.js decorRoomEntries): a figure placed
  *  is drawn as its stand-in, but one chosen would be the nude figure to
  *  every visitor whose setting is on. */
 export const isNudeFlat = (archive, record) => Object.hasOwn(NUDE_FLAT_STAND_INS, `${archive}_${record}`);

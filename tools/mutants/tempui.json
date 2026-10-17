@@ -6,7 +6,7 @@
     "new": "  if (true) return { climate, season, hour: day, weather: sky, roof: 0, natural };",
     "why": "the roof's share never said - the parts miss the law indoors",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -16,7 +16,7 @@
     "new": "  if (h >= 16 && h <= 18) return 'evening';",
     "why": "the band named apart from hourTemperature's",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -26,7 +26,7 @@
     "new": "  if (h >= 3 && h <= 7) return 'dawn';",
     "why": "the band named apart from hourTemperature's",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -36,7 +36,7 @@
     "new": "worldResist: 0,",
     "why": "the resistance missing from the sum",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -46,7 +46,7 @@
     "new": "dungeon: 0,",
     "why": "the dungeon's correction missing from the sum",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -56,7 +56,7 @@
     "new": "waterCools: 0,",
     "why": "the drink to hand missing from the sum",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -66,7 +66,7 @@
     "new": "degrees: 0,",
     "why": "a Legendary's degrees missing from the sum",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -76,7 +76,7 @@
     "new": "  add('wet', 'Wet through', 0);",
     "why": "the wet's chill missing from the sum",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "new": "[CLIMATES.Mountain]: 'Mountain',",
     "why": "the land named otherwise",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "new": "null",
     "why": "the clothing's dry warmth unsaid",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "new": "null",
     "why": "the armour's metal unsaid",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "new": "return `${v < 0 ? '-' : ''}${Math.abs(v)}\\u00b0`;",
     "why": "a warm reading unsigned",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "new": "  const own = resistTemperature(race + clothes.warmth + armour.warmth + fire - water, ctx) + NAKED_OFFSET;",
     "why": "AUDIT TEMP-UI E1: a Resist Fire makes the blizzard colder",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -136,7 +136,7 @@
     "new": "  const air = natural;",
     "why": "AUDIT TEMP-UI E3: a desert dungeon's clothes breathe for the sand above",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -146,7 +146,7 @@
     "new": "  s.rotMinutes += rotWeight(temp.natural);",
     "why": "AUDIT TEMP-UI E3: food spoils at the surface's pace underground",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -156,7 +156,7 @@
     "new": "felt = Math.max(felt - WATER_COOLS, 0);",
     "why": "AUDIT TEMP-UI E8: a warmer day read cooler",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -166,7 +166,7 @@
     "new": "",
     "why": "AUDIT TEMP-UI E2: thirty minutes' swim left the body dry",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -176,8 +176,8 @@
     "new": "swimming: false, transport: false,",
     "why": "AUDIT TEMP-UI E2: the dungeon's swim a hard-coded false",
     "tests": [
-      "test/tempui.test.js",
-      "test/surv7_feed.test.js"
+      "test/systems/survival/tempui.test.js",
+      "test/systems/surv7_feed.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "new": "    walk.landing = false;",
     "why": "AUDIT TEMP-UI E6: one landing in ten on a harm tick kills",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "new": "    const weather = currentWeather();",
     "why": "AUDIT TEMP-UI E11: soaked under the Sun Baby's clear sky",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "new": "",
     "why": "AUDIT TEMP-UI E12: a missing counter read NaN for the session",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "new": "",
     "why": "the pack and the HUD have no live reading",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -227,8 +227,8 @@
     "new": "hasWater: false",
     "why": "the drink to hand dropped from the one context",
     "tests": [
-      "test/tempui.test.js",
-      "test/surv1_model.test.js"
+      "test/systems/survival/tempui.test.js",
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -238,7 +238,7 @@
     "new": "  const level = label ? needLevel('temp', word, { rules: tier, felt }) : 'ok';",
     "why": "the plate red beside a fire that answers the cold",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "new": "export const TEMP_SCALE = Object.freeze({ min: -50, max: 60 });",
     "why": "the scale's cold end moved",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "new": "STATUS_TEXT.temp(word)); }",
     "why": "the status page says no number",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -268,57 +268,57 @@
     "new": "${signedDegrees(felt)} (comfortable",
     "why": "a degree sign the classic faces cannot draw",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-the-plate-reads-the-record",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  const live = survivalOn() ? feltNow(vitals) : null;",
     "new": "  const live = null;",
     "why": "AUDIT TEMP-UI E9: a door read the street's for five seconds",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-the-part-ignored",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  const on = survivalOn() && getPref(TEMP_HUD_PREF) !== false;",
     "new": "  const on = survivalOn();",
     "why": "the plate's part cannot hide it",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-comfortable-in-the-sun",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "const TEMP_GLYPHS = Object.freeze({ cold: 'cold', hot: 'hot', mild: 'thermo' });",
     "new": "const TEMP_GLYPHS = Object.freeze({ cold: 'cold', hot: 'hot', mild: 'hot' });",
     "why": "comfortable drawn as the sun",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-written-every-frame",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  if (last.temp !== k) {\n    last.temp = k;",
     "new": "  if (true) {\n    last.temp = k;",
     "why": "the plate rewritten sixty times a second",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-the-plate-off-the-kit",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "'.hud-qspell', '.hud-temp', '.pack-shell .sf-tile',",
     "new": "'.hud-qspell', '.pack-shell .sf-tile',",
     "why": "the plate undressed by every dress",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -328,7 +328,7 @@
     "new": "",
     "why": "the plate has no part in the drawer",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "new": "",
     "why": "the card cannot read the wear's table",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "new": "  if (!after) return null;",
     "why": "a wear that moves nothing says a temperature",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -358,7 +358,7 @@
     "new": "  if (false) {",
     "why": "a worn cloak's card says nothing",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "new": "const better = w.after.felt > w.before.felt, worse = w.after.felt < w.before.felt;",
     "why": "off in the desert noon called worse",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "new": "  const t = null;\n  if (t) {",
     "why": "the pack waits for the next minute",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -388,27 +388,27 @@
     "new": "",
     "why": "the plaque's title without its parts",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-the-plaque-not-mounted",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (temp) plaques.append(temp);\n",
     "new": "",
     "why": "the plaque never stands on the figure",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-the-card-without-it",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    const tc = temperatureCompareBlock(deps.entity, picked, wear); if (tc) into.append(tc);",
     "new": "",
     "why": "the card says no temperature",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -418,17 +418,17 @@
     "new": "  const tempRows = [];",
     "why": "the Stats side says no temperature",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-the-plaque-undressed",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".pack-shell .wornmap .wornplaques { position: absolute; left: 4px;",
     "new": ".pack-shell .wornmap .wornplaques { position: static; left: 4px;",
     "why": "the plaque out of its corner",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
@@ -438,18 +438,18 @@
     "new": "${G} .statflip-btn, ${G} .wornac-total { background:",
     "why": "the Grimoire dress leaves the plaque on Plus's stone",
     "tests": [
-      "test/tempui.test.js"
+      "test/systems/survival/tempui.test.js"
     ]
   },
   {
     "name": "TEMPUI-the-thermometer-gone",
-    "file": "src/ui/hudStatus.js",
+    "file": "src/ui/hud/hudStatus.js",
     "old": "  thermo: Object.freeze({",
     "new": "  thermoX: Object.freeze({",
     "why": "no thermometer to draw",
     "tests": [
-      "test/tempui.test.js",
-      "test/ui3_status.test.js"
+      "test/systems/survival/tempui.test.js",
+      "test/ui/enhanced/ui3_status.test.js"
     ]
   }
 ]

@@ -5,10 +5,10 @@
 //
 // MW-FOLK1 (2026-10-13, the owner: "This is for the Townspeople outfits", with clothes.fbx and the paintings; asked how
 // townspeople wear them: each walker sprite's own outfit, in that sprite's colours - bible/04-Characters/Townsfolk-Outfits.md).
-// Daggerfall's townspeople are pictures - four outfits a race and a sex (characters/mobilePerson.js PERSON_TEXTURES) -
+// Daggerfall's townspeople are pictures - four outfits a race and a sex (characters/mobile/mobilePerson.js PERSON_TEXTURES) -
 // and the export is those outfits made for the Morrowind body: all four Redguard men's (381-384), all four Nord men's
 // (387-390), the Bretons' 385 and 386, and the hooded Redguard woman's (398). Each sprite's body wears its picture's
-// outfit (characters/ownClothingModels.js TOWNSFOLK_OUTFITS), so the body that replaces a picture at its range wears
+// outfit (characters/ownModels/ownClothingModels.js TOWNSFOLK_OUTFITS), so the body that replaces a picture at its range wears
 // what the picture wore.
 //
 //   NINE OBJECTS, EACH A WHOLE OUTFIT. Every object is one sprite's clothes - a tunic, its sleeves, its hose or
@@ -30,7 +30,7 @@
 //   Morrowind's leg pictures (tx_b_n_breton_m_ll and _ul) - and the same mesh is 388's and 389's hose (270 of 270
 //   positions alike); 386's and 390's breeches are a part of it (138 of 138), and the boots of 384, 386, 387 and 390
 //   share its lower leg (100 of their 192 positions). Seven outfits carry that geometry, repainted; whether it is the
-//   owner's to give is the owner's to confirm (test/doctrine.test.js says so on each of those meshes' rows).
+//   owner's to give is the owner's to confirm (test/tooling/doctrine.test.js says so on each of those meshes' rows).
 //
 //   A T-POSE WHOSE ARMS ARE NOT RETAIL'S. The outfits were made on the "Morrowind_Symmetric_TPose_Models" body - the
 //   steel plate's is the plain pack's - and its legs, feet and trunk stand where the steel plate's do: the scene's
@@ -58,7 +58,7 @@
 //   the hang below it (hangOf: tools/skinWeights.mjs hang 'over', the ebony breastplate's tassets' - here the thighs'
 //   whole share from the hip joints down, the calves' past the knees); a pouch or a buckle on the belt the pelvis.
 //   Every law is one of position, the same for every piece of every outfit, so pieces that touch and layers that lie
-//   over each other move as one, and no seam opens under a pose (test/mwfolk1.test.js poses them on the body).
+//   over each other move as one, and no seam opens under a pose (test/tooling/mwfolk1.test.js poses them on the body).
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { readFbx } from './fbxRead.mjs';

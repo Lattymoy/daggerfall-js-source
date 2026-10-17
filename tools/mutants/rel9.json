@@ -4,7 +4,7 @@
     "file": ".github/workflows/release-desktop.yml",
     "old": "      NODE_OPTIONS: --max-old-space-size=4096\n",
     "new": "",
-    "tests": ["test/audit_install2.test.js"],
+    "tests": ["test/tooling/audit_install2.test.js"],
     "note": "The Mac leg's vite build dies at V8's ~2GB default and no release is published - app-v0.1.8020 to the fix."
   },
   {
@@ -12,6 +12,6 @@
     "file": ".github/workflows/release-desktop.yml",
     "old": "      NODE_OPTIONS: --max-old-space-size=4096\n",
     "new": "      NODE_OPTIONS: --max-old-space-size=2048\n",
-    "tests": ["test/audit_install2.test.js"]
+    "tests": ["test/tooling/audit_install2.test.js"]
   }
 ]

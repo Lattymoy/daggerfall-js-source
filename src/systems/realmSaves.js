@@ -41,7 +41,7 @@
 // moved past it drops it unread. The copy is the save's text; its put
 // packs it as every checkpoint rides (REALM-GZIP, below).
 //
-// REALM-GZIP: IT RIDES PACKED (net/realmSaveCodec.js). A long life's
+// REALM-GZIP: IT RIDES PACKED (net/realm/realmSaveCodec.js). A long life's
 // JSON grew past the request's 4 MiB and every checkpoint was refused
 // for good; a put packs the text when the service said it opens a packed
 // save (`gzip` on the join, create and customs answers), and a read asks
@@ -49,9 +49,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { storedSession, serviceBase, forgetSession, accountRefusalText, forgetD1Bookmark } from '../net/accountClient.js';   // AUDIT SCALE II A-2: a write forgets the page's D1 bookmark
-import { realmTradeRefusalText } from '../net/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
+import { realmTradeRefusalText, LOCKED_SAID_MAX } from '../net/realm/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
 import { REALM_DOOR_WORD } from '../net/wire.js';   // REALM-DOOR: the relay's word for a token that names no realm character
-import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
+import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house on the roster's tile
 
 
@@ -195,6 +195,24 @@ export const realmTradeCall = (/** @type {any} */ io, /** @type {any} */ half) =
 
 /** The answers that end a session: the character is not this tab's to write any more. */
 export const REALM_LOST = Object.freeze(['lease', 'no-realm-character', 'auth', 'signed-out']);
+/** AUTO-HOLD: a ledger key as a checkpoint's answer names a locked piece (an item's uid or a craft's provenance, sixteen
+ *  hex either way - systems/item/itemIds.js ledgerKeyOf; pinned equal to both, test/server/autohold.test.js). */
+export const LEDGER_KEY_RE = /^[0-9a-f]{16}$/;
+/** AUDIT AUTO-HOLD: the locked pieces this device has told its player of, by character - so each is told once, not at
+ *  every join ("was found" again and again), beside the character's other records on the device. */
+export const REALM_LOCKED_PREFIX = 'dagger.realm.locked.';
+const lockedTold = (/** @type {any} */ storage, /** @type {string} */ id) => {
+  try {
+    const v = JSON.parse(storage?.getItem?.(`${REALM_LOCKED_PREFIX}${id}`) ?? '[]');
+    return Array.isArray(v) ? v.filter((k) => typeof k === 'string' && LEDGER_KEY_RE.test(k)).slice(0, LOCKED_SAID_MAX) : [];
+  } catch { return []; }
+};
+const keepLockedTold = (/** @type {any} */ storage, /** @type {string} */ id, /** @type {string[]} */ keys) => {
+  try {
+    if (keys.length) storage?.setItem?.(`${REALM_LOCKED_PREFIX}${id}`, JSON.stringify(keys));
+    else storage?.removeItem?.(`${REALM_LOCKED_PREFIX}${id}`);
+  } catch { /* a device that keeps nothing tells again at the next join - no worse than before */ }
+};
 
 // ── RESCUE-SAVE: THE DEVICE'S COPY OF A SAVE THE SERVICE HAS NOT TAKEN ──
 
@@ -477,21 +495,47 @@ export function createRealmSession({
   // stays `{ ok, seq }`.
   /** @type {string | null | undefined} */
   let tradeHeld;
-  /** The law's word on the hold standing (`{ code, t }` - a piece's template, or `review`: staff's), kept for a trade's
-   *  refusal to say again (the Ring report: the refusal said "something"). @type {{ code: string, t: number | null } | null} */
+  /** The law's word on the hold standing (`{ code, t }` - a piece's template - or AUTO-HOLD's timed hold, `{ code:
+   *  'until', t, until }`), kept for a trade's refusal to say again (the Ring report: the refusal said "something").
+   *  @type {{ code: string, t: number | null, until?: number } | null} */
   let tradeHeldWhy = null;
   const heard = (/** @type {unknown} */ v, /** @type {unknown} */ why = null) => {
     if (v === undefined) return;
     const now = typeof v === 'string' ? v : null;
     const w = /** @type {any} */ (why);
-    const what = w && typeof w === 'object' && (Number.isInteger(w.t) || w.code === 'review') ? { code: String(w.code ?? ''), t: Number.isInteger(w.t) ? w.t : null } : null;
-    const moved = now !== tradeHeld || (what?.code === 'review') !== (tradeHeldWhy?.code === 'review');
+    const until = w && typeof w === 'object' && w.code === 'until' && Number.isSafeInteger(w.until) ? /** @type {number} */ (w.until) : null;
+    const what = w && typeof w === 'object' && (Number.isInteger(w.t) || until != null) ? { code: String(w.code ?? ''), t: Number.isInteger(w.t) ? w.t : null, ...(until != null ? { until } : {}) } : null;
+    const moved = now !== tradeHeld || (what?.until ?? null) !== (tradeHeldWhy?.until ?? null);
+    const wasTimed = tradeHeldWhy?.until != null;
     tradeHeldWhy = what;
     if (!moved) return;
     const prev = tradeHeld;
     tradeHeld = now;
-    try { session.onTradeHeld?.(prev ?? null, now, what); } catch (e) { console.warn('[realm] the hold handler failed', e); }
+    // AUDIT AUTO-HOLD: a timed hold run out while the law still finds a piece is a law hold as any other - said as one,
+    // the piece named (it stood on, and the player was told nothing)
+    const ranOut = prev === 'law' && now === 'law' && wasTimed && until == null;
+    try { session.onTradeHeld?.(ranOut ? null : prev ?? null, now, what); } catch (e) { console.warn('[realm] the hold handler failed', e); }
   };
+  /** AUTO-HOLD: THE LOCKED PIECES - copies the ledger found, locked piece by piece (server-account/src/ledger.js) - as a
+   *  landed checkpoint names them (`locked`, their keys; an answer naming none: none locked). `session.lockedKeys` is the
+   *  set standing, told to `session.onLockedKeys(keys)` as each answer lands (the client's lock reads it -
+   *  systems/item/itemBound.js, through scenes/realmHoldHost.js); `session.onPiecesLocked(keys)` is told the ones this device
+   *  never told its player (AUDIT AUTO-HOLD: every join told them all again). */
+  let lockedKeys = lockedTold(storage, id);
+  const heardLocked = (/** @type {unknown} */ v) => {
+    if (v === undefined) return;   // AUDIT AUTO-HOLD: an answer saying nothing of them (a service mid-deploy) leaves them as they stand - every answer names them, `[]` for none
+    const keys = Array.isArray(v) ? [...new Set(v)].filter((k) => typeof k === 'string' && LEDGER_KEY_RE.test(k)).slice(0, LOCKED_SAID_MAX) : [];
+    const fresh = keys.filter((k) => !lockedKeys.includes(k));
+    lockedKeys = keys;
+    keepLockedTold(storage, id, keys);
+    try { session.onLockedKeys?.(keys); } catch (e) { console.warn('[realm] the locked handler failed', e); }
+    if (!fresh.length) return;
+    try { session.onPiecesLocked?.(fresh); } catch (e) { console.warn('[realm] the locked handler failed', e); }
+  };
+  /** AUDIT AUTO-HOLD: the last save the realm took, as it was sent - the pieces the character holds beyond its own lists
+   *  are read off it (scenes/realmHoldHost.js), so a stale shelf never hands back one it stowed. */
+  /** @type {string | null} */
+  let landedText = null;
   /** AUDIT REALM2 C4: a save's callers told how the put that carried it went - once. */
   const answer = (/** @type {{ waiters: Array<(r: any) => void> }} */ job, /** @type {any} */ r) => { for (const settle of job.waiters.splice(0)) settle(r); };
   async function drain() {
@@ -512,6 +556,8 @@ export function createRealmSession({
         if (r.ok) {
           unsure = false; current = r.data?.seq ?? current + 1; last = { ok: true, seq: current }; answer(job, last);
           heard(r.data?.tradeHeld, r.data?.tradeHeldWhy);
+          heardLocked(r.data?.locked);
+          landedText = job.text;
           landedKey = idleKeyOf(job.text, job.summary); landedAt = now();   // SCALE2b
           // RESCUE-SAVE: the newest save landed - no copy; or a newer one waits, its copy at the sequence now held
           missed = false;
@@ -551,10 +597,19 @@ export function createRealmSession({
     get seq() { return current; },
     /** INT3: the judge's hold the last landed checkpoint said - a reason, null for none, undefined before any said. */
     get tradeHeld() { return tradeHeld; },
-    /** The law's word on that hold (`{ code, t }`), or null. */
+    /** The law's word on that hold (`{ code, t }`, or a timed hold's `{ code: 'until', t, until }`), or null. */
     get tradeHeldWhy() { return tradeHeldWhy; },
-    /** INT3: told `(prev, now, why)` each time the hold moves - `why` the law's first piece (`{ code, t }`) or null; the host's to set. @type {((prev: string | null, now: string | null, why: { code: string, t: number | null } | null) => void) | null} */
+    /** AUTO-HOLD: the keys of the locked pieces standing, as the last answer named them (or this device last heard). */
+    get lockedKeys() { return lockedKeys; },
+    /** AUDIT AUTO-HOLD: the last save the realm took (its text), or null. */
+    get landedText() { return landedText; },
+    /** INT3: told `(prev, now, why)` each time the hold moves - `why` the law's first piece (`{ code, t }`), a timed hold's end (`until`), or null; the host's to set. @type {((prev: string | null, now: string | null, why: { code: string, t: number | null, until?: number } | null) => void) | null} */
     onTradeHeld: null,
+    /** AUTO-HOLD: told the keys of locked pieces (copies the ledger found) a landed checkpoint names for the first time
+     *  this session; the host's to set. @type {((keys: string[]) => void) | null} */
+    onPiecesLocked: null,
+    /** AUTO-HOLD: told every landed answer's whole set of locked keys; the host's to set. @type {((keys: string[]) => void) | null} */
+    onLockedKeys: null,
     get lost() { return lost; },
     get waiting() { return !!pending; },
     /** CHAP1: the lease this tab plays under - the Roll's acts ride it (net/npcRollTracker.js) - or null once the
@@ -790,7 +845,7 @@ export function takeRealmNotice(/** @type {any} */ storage) {
  * beside these three (main.js's front door). A born character reaches that host by a reload (scenes/world.js
  * realmBirth), and main.js boots a game only on a scene door: this address had none, so it was the front door's, which
  * clears every door key, the realm id with them, and shows the menu. The make and the save had landed, so the Online
- * door played the character fine. test/fb0930_realmbirth.test.js holds the two boots to each other.
+ * door played the character fine. test/systems/fb0930_realmbirth.test.js holds the two boots to each other.
  * @param {string} search @param {string} id @param {readonly string[]} doorKeys
  */
 export function realmBootSearch(search, id, doorKeys) {
@@ -875,8 +930,8 @@ export const REALM_TRADE_POLL_MS = 1_500;
  * this call, and the half follows once the goods are reserved (a null half abandons it). Answers `{ ok, seq, items,
  * gold }` (what this side received), `{ ok: false, why, text }` (refused: nothing moved) or `{ ok: false, unknown: true }`
  * (no answer - the session ends).
- * `heldSaid`, the host's: the hold's notice as this session stands (systems/itemIds.js tradeHeldNotice), said again by a
- * refusal over my own hold - the piece named, or staff's review (the Ring report: it said "something").
+ * `heldSaid`, the host's: the hold's notice as this session stands (systems/item/itemIds.js tradeHeldNotice), said again by a
+ * refusal over my own hold - the piece named, or a timed hold's end (AUTO-HOLD; the Ring report: it said "something").
  * @param {{ session: any, half: any, wait?: (ms: number) => Promise<void>, now?: () => number, heldSaid?: (() => string | null) | null }} at
  */
 export async function settleRealmTradeHalf({ session, half, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }), now = () => Date.now(), heldSaid = null }) {

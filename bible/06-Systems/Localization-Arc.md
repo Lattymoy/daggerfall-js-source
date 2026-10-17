@@ -119,7 +119,7 @@ English stays byte-identical as the default throughout.
 - `StringTableCSVParser` - the regex verbatim, with its quirks - and `StringTablePatcher`.
 - `GrammarRules`, `DefaultGrammarRules` and `GrammarManager`.
 - DFU's `GetDefaultCollectionName` has no `TextFlats` case, so a flats miss falls back to `Internal_Strings`. Kept.
-- `GetLocalizedEnemyName`'s index law keeps its one home (`characters/enemyBasics.js` `enemyDisplayName`), which will
+- `GetLocalizedEnemyName`'s index law keeps its one home (`characters/enemy/enemyBasics.js` `enemyDisplayName`), which will
   read the list from here.
 - `formats/rscTable.js` `parseRscCsv` now rides the one CSV law. The port's own reader kept a trailing newline on nine
   master rows, which `parseRscMarkup` strips anyway. MAC-U's no-imports pin was re-aimed to its stated reason: the
@@ -142,7 +142,7 @@ English stays byte-identical as the default throughout.
 
 Nothing is routed through it yet: L10N3 moves DFU's keys, and L10N4 moves the port's own strings.
 
-**Pinned:** `test/l10n1.test.js` (13), over fixtures, the vendored master `Internal_RSC.csv` (1,448 rows, as DFU reads
+**Pinned:** `test/systems/l10n1.test.js` (13), over fixtures, the vendored master `Internal_RSC.csv` (1,448 rows, as DFU reads
 it) and, with a DFU checkout (`DFU_PATH`), DFU's own C#: the collection names, the error string and the CSV line pattern.
 The master CSVs read at their own row counts (990, 1,448, 226, 15,251, 32, 88, 288, 59, 366).
 
@@ -175,7 +175,7 @@ The player picks a language, and the port's text in it is fetched, applied and r
   static graph). `?lang=` wins for one visit; otherwise the `language` pref. A failure leaves English standing.
 - The page's `lang` and `dir` follow the locale, for the browser's fonts, hyphenation and screen readers.
 
-**The menu** - `ui/enhancedMenu.js`:
+**The menu** - `ui/enhanced/enhancedMenu.js`:
 - The rail's thirteen words go through `t()` (`menu.rail.*`). Their ids stay the English labels', so the probes'
   `door-<id>` selectors hold in every language.
 - **The Language row** heads Settings > Interface on the front door only; a running game keeps the language it booted
@@ -195,7 +195,7 @@ English that is not a literal, one key with two Englishes and a pattern the ICU 
 The 25 languages' `Port_Strings.csv` are Claude's drafts (Mac: "AI drafts, labeled"). `locales/README.md` is the
 translators' page.
 
-**Pinned:** `test/l10n1b.test.js` (8). It covers the catalog, the pure laws, the English catalog in step with the
+**Pinned:** `test/systems/l10n1b.test.js` (8). It covers the catalog, the pure laws, the English catalog in step with the
 source, and every language's file: the writer's own form, every key, a readable pattern, the English's arguments. It
 also runs `t` and `tIn` over the drafts and checks the rail's English reads back as its labels. It runs the boot's
 laws over files fed off the disk: the saved choice, `?lang=`, the chain fetched once, the offer's preload, and a failed
@@ -243,7 +243,7 @@ same.
 - **Web fonts for the enhanced skin.** Its text is the browser's, and the page's `lang` (L10N1b) picks each script's
   system font, Han's regional forms included. Its one Google Fonts request stays one.
 
-**Pinned:** `test/l10n2.test.js` (6). It runs the face over a fake canvas: growth, a missing code remembered, shelves
+**Pinned:** `test/ui/l10n2.test.js` (6). It runs the face over a fake canvas: growth, a missing code remembered, shelves
 that never overlap, the next row and page, and uploads. It checks the priority, measuring and drawing by code point,
 English untouched, the port's faces (a pack's kept, the setting forced, Han by region), the boot installing them, and
 the line break against the old law on English. `tools/classicTextProbe.mjs` (45 checks, Chromium, no ARENA2) draws
@@ -283,7 +283,7 @@ language) goes through a pipeline on the Claude API that he runs with his key. `
 - The 25 languages' `Port_Strings` drafts, written in-session, are recorded as the machine's (`claude-in-session`).
   So the pipeline redrafts them when their English moves, and never mistakes them for a person's.
 
-**Pinned:** `test/l10n6b.test.js` (6): the placeholder law, the ownership plan, a whole run over a stand-in model (the
+**Pinned:** `test/systems/l10n6b.test.js` (6): the placeholder law, the ownership plan, a whole run over a stand-in model (the
 second ask, the rejection, a person's row kept, the English's order, a second run owing only the broken row), the dry
 run, the request's shape against a fake `fetch` (the key, the version, the cache mark, the forced tool, a 429 waited
 out, a 400 said), and the in-session drafts' meta.
@@ -315,7 +315,7 @@ The byte arm is untouched.
 language walks its chain (`pt-BR`, then `pt`), and a record its table lacks is read from the carried rows and then
 the file.
 
-**Pinned:** `test/l10n3a.test.js` (4): the importer's law; each reader over a French row, letters whole, with English
+**Pinned:** `test/systems/l10n3a.test.js` (4): the importer's law; each reader over a French row, letters whole, with English
 and a missing record on the file; an English table row never asked; the chain, `[/end]`, the carried row beneath a
 translation's, a redirected runtime collection; and the class questions both ways.
 
@@ -355,7 +355,7 @@ they bring ARENA2, a music pack or their Morrowind files.
   folder, or its .zip), Replace and Remove, and the pack's name and counts once installed. English has none: English is
   the game's own. The language select no longer stretches over its row's words.
 
-**Pinned:** `test/l10n3b.test.js` (5): the classifier (the last `Text` on a path, any case, either slash, a later file
+**Pinned:** `test/systems/l10n3b.test.js` (5): the classifier (the last `Text` on a path, any case, either slash, a later file
 of a kind and name replacing an earlier), the store over an in-memory IndexedDB (only what the game reads, text and
 bytes, a replacement, a refusal that changes nothing, another language's files never mixed in, removal, no IndexedDB
 at all), the pack at work over the drafts (and pt's pack text beneath pt-BR's), its font where a FontFace exists, and
@@ -397,7 +397,7 @@ English has no `-LOC` file, so its quests read their vendored source, byte for b
 **What DFU does that the port keeps, and L10N5 owes:** the message a translation replaced is the one a save stores.
 So a quest begun in French is saved in French and stays French in English, in DFU as here.
 
-**Pinned:** `test/l10n3c.test.js` (4), over the real `S0000977` (the Curse of Daggerfall) and a `-LOC` fixture written
+**Pinned:** `test/systems/quest/l10n3c.test.js` (4), over the real `S0000977` (the Curse of Daggerfall) and a `-LOC` fixture written
 for the test (no pack's text is committed). It covers the parser's law and its throws; the quest in French (the
 DisplayName, a message read into the same Message twice, a table row already there kept, a message the file lacks, a
 message the quest has not); English untouched; a file that will not do; fresh documents parsed afresh; and a
@@ -430,7 +430,7 @@ byte for byte (`vendor/dfu-text/Internal_Strings.csv`), with that one named exce
 keyed by the port's own names whose words are DFU's (a guild service is `Training`, its label DFU's `serviceTraining`).
 `formatText(pattern, ...args)` is C#'s `string.Format` for DFU's patterns: `{n}`, and `{n:00}` zero-padded. A
 placeholder a translation has but no argument fills is left standing, where the C# would throw.
-`tools/l10nRouted.mjs` reads every routed word off the source (its English a literal, or the module's own `const`). `test/l10n3d_sites.test.js` holds each one to DFU's key
+`tools/l10nRouted.mjs` reads every routed word off the source (its English a literal, or the module's own `const`). `test/systems/l10n3d_sites.test.js` holds each one to DFU's key
 and English, holds each single word to being read where it is shown (never at module load), and counts the routed
 words file by file. At the groundwork: 223 words in 14 files, 213 of DFU's 990 keys. DFU's own code asks for 713 keys by
 name, and the port routes 140 of them.
@@ -559,7 +559,7 @@ What stays unrouted:
 - Keys whose words the port shows in its own English, the fidelity differences listed above.
 - The name lists, which are L10N3e's.
 
-**Pinned:** `test/l10n3d.test.js` (3). It covers parity for all 223 keys, the module-private tables read off their
+**Pinned:** `test/systems/l10n3d.test.js` (3). It covers parity for all 223 keys, the module-private tables read off their
 source, and each reputation group reading its label. Each exported table answers a French row in French, and its own
 English before French is chosen and after. It also covers `localizedStrings` itself: a mod's runtime collection
 redirect, and another collection when asked.
@@ -577,7 +577,7 @@ canonical name stays the key that discovery, saves and quests read. DFU calls th
 **The groundwork.** The text core had six of the seven lookups from L10N1, with no callers yet. It gains the seventh:
 `getLocalizedEnemyName`, whose MobileTypes id reads the `enemyNames` list (a class at 43 + id - 128). A custom enemy, a
 missing list or a short one answers the port's own name. `tools/l10nRouted.mjs`'s `namedSites` reads every lookup
-site off the source. `test/l10n3e_names.test.js` counts them file by file (NAMED) and holds each to being made where
+site off the source. `test/systems/l10n3e_names.test.js` counts them file by file (NAMED) and holds each to being made where
 the name is shown, never at module load.
 
 **Enemies and factions (the beings batch).** 10 lookups in 8 files:
@@ -606,7 +606,7 @@ MapTableData.MapId, never its index; a region reads the `regionNames` row by ind
 The keys stay canonical: `cityName` (discovery), a journey's and a teleport's destination, a quest site, and the
 palace a building's canonical location chooses. `getLocalizedRegionName` gained a guard: an index that is no integer
 reads the canonical name (C#'s int cannot be one; the port's `undefined` had read `list[undefined]`). Pinned by
-`test/l10n3e_places.test.js` (13); mutants `l10n3eplaces` 25, all dead.
+`test/systems/l10n3e_places.test.js` (13); mutants `l10n3eplaces` 25, all dead.
 
 **Items, magic items and spells (the things batch).** 9 lookups in 5 files, shown through two helpers. The item and
 the book's spell keep their canonical name, which is a key (saves, the artifact test, the Arrow filters, the boat
@@ -624,7 +624,7 @@ test's bundle):
 Checked against the real French pack's ids (none of its text committed): all 288 item templates, 59 magic items (by
 stream position), 88 spells and the 73 CastWhen* ids are present, and every sampled row names the right thing. One save-side effect: a quickslot's item
 label is written at slot time, so in French it holds the French name; it shows only for an item that is gone and is
-never a key (L10N5 stores ids). Pinned by `test/l10n3e_things.test.js` (12); mutants `l10n3ethings` 9 (the lookups) and
+never a key (L10N5 stores ids). Pinned by `test/systems/l10n3e_things.test.js` (12); mutants `l10n3ethings` 9 (the lookups) and
 `l10n3ethings2` 22 (every call to the two helpers), all dead to that file alone.
 
 Left for later (files other batches own, or an import cycle): the trade and repair lists' `_itemLabel`, the Dispel
@@ -647,7 +647,7 @@ show, each key still canonical:
 Two lookups the quest batch also added are kept once: the name bag's guild-hall and temple names come from
 `buildingNames.js`'s `shownFactionNames` (the bag's canonical resolvers unchanged), and the talk topics' organization
 captions are looked up in `topicTree.js` (world.js's dep hands the record's own name). Pinned by
-`test/l10n3e_scenes.test.js` (19); mutants `l10n3escenes` 49, all dead to that file alone.
+`test/systems/l10n3e_scenes.test.js` (19); mutants `l10n3escenes` 49, all dead to that file alone.
 
 **Left (the port's own text, or protocol):** the target's ally-cast and duel lines (the frames carry no spell index -
 adding one is a protocol change), the PC greeting's %n for a named lord (`npcSession.js`, `talkMacros.js`,
@@ -670,7 +670,7 @@ ported) and NewLocationAlert (no port equivalent).
 
 `displayName`, `typeName` and every name a save or a compare holds stay canonical. The French pack's 366 faction
 rows (262 of them with grammar tokens) and its flats were checked against the ids read, locally. Pinned by
-`test/l10n3e_quest.test.js` (16); mutants `l10n3equest` 37, all dead to that file alone.
+`test/systems/quest/l10n3e_quest.test.js` (16); mutants `l10n3equest` 37, all dead to that file alone.
 
 ## L10N3f (2026-09-28): a translation's books, name banks and text databases
 
@@ -717,7 +717,7 @@ files, so four titles differ (22, 35, 43, and 16, which has no id in the port's 
 and 113 until LiftedCurse is set; the port's classic BOK layout resets the font on a blank line, which DFU's -LOC
 layout does not; the controls grid shows PRIMARY/SECONDARY in capitals.
 
-Pinned by `test/l10n3f_readers.test.js` (8) and `test/l10n3f_databases.test.js` (5); mutants `l10n3f` 49, all dead.
+Pinned by `test/systems/l10n3f_readers.test.js` (8) and `test/ui/l10n3f_databases.test.js` (5); mutants `l10n3f` 49, all dead.
 
 ## L10N4 (2026-09-28): the port's own strings - the ratchet first
 
@@ -725,7 +725,7 @@ The port's own words (menus, the enhanced interface, the online game, every noti
 their language only through `t(key, en, args)` and the `Port_Strings` catalog. Before any are moved, the plan's "lint
 rule that stops new hardcoded strings": `tools/l10nHardcoded.mjs` counts the prose still written into the code - every
 string or template literal of two words or more that is not a text-core call's argument, a console line, a thrown
-error, an import, an object key, CSS or an identifier run - and `test/l10n4_hardcoded.test.js` pins the counts file by
+error, an import, an object key, CSS or an identifier run - and `test/systems/l10n4_hardcoded.test.js` pins the counts file by
 file. A count may only fall; a new sentence fails the suite where it is written. It is a heuristic (a data table's
 English counts; a one-word label does not), which is why it is a ratchet and not the definition of done.
 
@@ -738,7 +738,7 @@ as the machine's, so a batch that adds keys ships its drafts in all 25 languages
 `{ lang: { key: text } }` file through the pipeline's own placeholder law (a lost ICU argument is refused; a
 language's own plural categories are allowed), keeps a row a person edited, drops a row the catalog no longer has,
 writes the table in the catalog's order and records each row as `claude-in-session`; `--owed` lists what each
-language still owes, as a template to draft from. Pinned by `test/l10n4_insession.test.js` (2); mutants
+language still owes, as a template to draft from. Pinned by `test/tooling/l10n4_insession.test.js` (2); mutants
 `l10n4insession` 6, all dead.
 
 ## L10N3g (2026-09-27): the French pack's grammar
@@ -769,7 +769,7 @@ French rules register themselves and are chosen whenever French is on the locale
 gender getters are the manager's, so a getter handed in under English still answers after a switch.
 
 **Run where DFU runs it (the wiring batch).** 19 call sites, pinned file by file by `tools/l10nRouted.mjs`'s
-`grammarSites` (the GRAMMAR map in `test/l10n3g_wiring.test.js`), none at module load:
+`grammarSites` (the GRAMMAR map in `test/ui/l10n3g_wiring.test.js`), none at module load:
 - The HUD's popup text (`HudText.add`, PopupText.cs:117-118): the row, the repeat test and the notebook's line all
   take the processed text, so a building's name on activation (PlayerActivate.cs:472) is covered with no scene edit.
 - Every classic message box, in `normalizeRows` (MultiFormatTextLabel.cs:230): string rows, tab-stopped cells and
@@ -786,7 +786,7 @@ gender getters are the manager's, so a getter handed in under English still answ
   (StartGameBehaviour.cs:147). The NPC's gender comes from the quest batch (Person.cs:298).
 
 Over the French pack's rows (locally), 1,158 token lines in Internal_Strings and TEXT.RSC resolve through these sites;
-the one left is `Devin{eresse}`, as before. Pinned by `test/l10n3g_wiring.test.js` (11); mutants `l10n3gwiring` 25
+the one left is `Devin{eresse}`, as before. Pinned by `test/ui/l10n3g_wiring.test.js` (11); mutants `l10n3gwiring` 25
 (each call, the typed-row opt-out and each gender hand-over reverted), all dead to that file alone.
 
 **Not yet (files other batches own):** the enhanced skin's click-anywhere notices (`enhancedNotice.js`), its Yes/No
@@ -828,7 +828,7 @@ Mac, 2026-10-03: "I want to finish that arc." The branch had stood since 2026-09
 - **The ratchet** (`tools/l10nHardcoded.mjs`) does not count a constant's words where they are written when a text-core
   call reads them: they are routed where they are read. The 83 constants L10N3d had already routed fell out of the
   count.
-- Pinned by `test/l10n4_routing.test.js` (2). Mutants `l10n4routing`: 6, all dead.
+- Pinned by `test/tooling/l10n4_routing.test.js` (2). Mutants `l10n4routing`: 6, all dead.
 - **The laws** every batch follows are `tools/l10n/ROUTE-BRIEF.md`, with drafting in `tools/l10n/TRANSLATE-BRIEF.md`.
   The rules:
   - Route what a player reads, the one-word labels the ratchet cannot see included.
@@ -854,7 +854,7 @@ our code is an anchor now, never a line number (`bible/Home.md`, A CITE NAMES WH
   this branch's routing laid over it (a routed key keeps its key and takes main's English). `huntWindow.js` stays
   deleted (HUNT-OUT).
 - **Where main's code met the arc's readers:**
-  - ORG2's one-map Settings screen draws only what `ui/settingsMap.js` places, so the Language row has its own
+  - ORG2's one-map Settings screen draws only what `ui/settings/settingsMap.js` places, so the Language row has its own
     section, Interface > Language (`port:language`), with the translation-pack row under it.
   - SUPPORT1's asks hold the front door's top-left corner. The first-run language offer stands under them.
   - `MONTH_NAMES` is L10N3e's `monthNames()` reader. Main's arena board and Project Legacy's date line read it.
@@ -877,7 +877,7 @@ our code is an anchor now, never a line number (`bible/Home.md`, A CITE NAMES WH
 - **The Ledger:** L10N1's row (THE PORT'S LOCALES) stays at section A's foot, now the 305th, and every
   `Port-Ledger.md:NNN` row identifier below it was re-resolved by its row's content.
 - **Still owed, as at the branch's tip:** the 25 languages' drafts of the port's own strings. Each language holds 96
-  rows, and the catalog 2,435. `test/l10n1b.test.js` and `test/l10n6b.test.js` fail until they land.
+  rows, and the catalog 2,435. `test/systems/l10n1b.test.js` and `test/systems/l10n6b.test.js` fail until they land.
 
 ## L10N6 (2026-10-13): the first batch - thirteen languages whole
 
@@ -891,8 +891,8 @@ Russian and Spanish (2,435 rows each, every one the machine's).
   half in English is not one, so its part-drafts do not offer it (`scenes/localeData.js` hasLocaleText): it is not in
   the picker, and a browser that reads it is not asked. A Daggerfall Unity pack the player installs for it still offers
   it, as before, with the drafts it has beneath the pack. The part-drafts stay in the tree for the next run to finish.
-- **The laws moved with it:** `test/l10n1b.test.js` holds a whole language to the catalog exactly and a drafting one to
-  catalog keys; `test/l10n6b.test.js` holds every row a language has to the machine's (a drafting one may owe rows whose
+- **The laws moved with it:** `test/systems/l10n1b.test.js` holds a whole language to the catalog exactly and a drafting one to
+  catalog keys; `test/systems/l10n6b.test.js` holds every row a language has to the machine's (a drafting one may owe rows whose
   English moved); a new test pins the thirteen and the drafting rule. The boot test's offered language is Korean now.
 - **What the drafters were unsure of** - the same few, in most languages: the a/an and possessive `select`s that only
   English needs (kept, with empty branches), the online events' names ("Hours broken", "Breaches closed"), Iliac Bay
@@ -908,17 +908,17 @@ ETHER-CHART2 and ETHER-OW) wrote 22 literals of prose where main's chart had 6. 
 (`sea.chart.*`, 33 keys - the catalog's 2,470), by ROUTE-BRIEF's laws, and drafted in-session into the thirteen whole
 languages; the twelve drafting owe them with the rest. The sea's own vocabulary (its name, bands, kinds and compass
 points) stays `world/ethericSea.js`'s, passed as arguments in English: that module is the account Worker's too, so its
-routing is its own. `01-Overview/Audit-Ether-OW.md` has the record; `test/audit_etherow.test.js` reads the chart in
+routing is its own. `01-Overview/audits/Audit-Ether-OW.md` has the record; `test/systems/audit_etherow.test.js` reads the chart in
 French and in English.
 
 ## The chronicle's quest Abandon, routed from the start (2026-10-13, QUEST-SHELF-MAIN)
 
 QUEST-SHELF-MAIN (`06-Systems/Quest-Arc.md`) was written before the ratchet reached main, and its Abandon in the
-chronicle (`ui/enhancedChronicle.js`) carried four new literals of prose. It landed with them routed instead: the label,
+chronicle (`ui/enhanced/enhancedChronicle.js`) carried four new literals of prose. It landed with them routed instead: the label,
 the armed label, the title and both aria-labels are `chronicle.quests.*` (5 keys - the catalog's 2,511 at its merge of
 main), read when the button is drawn, so the file's count stays at 35. They are drafted in-session into the thirteen
 whole languages, and `abandon (a quest)` and `reclaim (a quest)` were added to those languages' glossaries. The twelve
-drafting languages owe them with the rest. `test/questshelfmain.test.js` reads the button in French and in English.
+drafting languages owe them with the rest. `test/systems/quest/questshelfmain.test.js` reads the button in French and in English.
 
 ## CARDS-PLUS (2026-10-13): the card tables' new words, and the scan reads a selector
 
@@ -927,7 +927,7 @@ A third change from outside the arc held to L10N6's laws, after the Eltheric cha
 section 39 its audit).
 - **Its new words go through the text core**, read where they are shown: Iliac Hand's verdict (`VERDICT_WORDS`, a frozen
   table of getters), the setup's heads and boxes, the track, the other player's line and state, the empty tray - 15
-  port keys under `cards.iliac.` - and the fold's two (`cards.table.fold.*`, `ui/cardPanelKit.js` foldWords - both
+  port keys under `cards.iliac.` - and the fold's two (`cards.table.fold.*`, `ui/card/cardPanelKit.js` foldWords - both
   card tables' fold, its tooltip and its name to a screen reader: "Collapse the panel" and "Expand the panel"; AUDIT
   CARDS-PLUS D5 moved them off "Hide the table", which said the reverse of what the player sees), and the magicka by
   DFU's own key (`localizedText('magicka', 'Magicka')`, as the vitals' meter reads it). Drafted in the thirteen
@@ -940,11 +940,11 @@ section 39 its audit).
   CSS identifiers - never a digit first, so `#1` is no id - with a class among them and no English stopword in it, is
   CSS. The identifier runs read only words and dots, so a kit role such as `body .dfiliac button[data-kind="warn"]`
   counted as a sentence. Over the whole tree it takes out five literals, every one a selector - CARDS-PLUS's three
-  roles, `ui/enhancedFrame.js`'s `#wp-menu input.wpm-name`, `ui/grimoireDress.js`'s `:scope > .px-tabs button` - and
+  roles, `ui/enhanced/enhancedFrame.js`'s `#wp-menu input.wpm-name`, `ui/grimoireDress.js`'s `:scope > .px-tabs button` - and
   no prose: the map's `enhancedFrame.js` 3 to 2, `grimoireDress.js` 14 to 13. AUDIT CARDS-PLUS D1: its first form
   asked for no class and let a digit open a name, so it read "press [E] when ready", "[locked] needs more gold",
   "rank #1 player wins" and "item:sword equipped" as selectors and let them past the ratchet; none stood in the tree.
-  Pinned in `test/l10n4_hardcoded.test.js`'s scan test (an attribute, an id, a pseudo-class and a combinator not
+  Pinned in `test/systems/l10n4_hardcoded.test.js`'s scan test (an attribute, an id, a pseudo-class and a combinator not
   counted; English with a number sign, brackets or a colon, with a stopword or without, still is); mutants in
   `tools/mutants/cardsplus.json` (the rule off, its stopword guard gone, any token taken as a selector, no class
   asked for, a digit opening a name).
@@ -952,11 +952,11 @@ section 39 its audit).
 ## KG-SET (2026-10-13): the Iliac set's words
 
 The King's Gambit's KG-SET (`11-Multiplayer/Kings-Gambit.md` section 15) brought nine cards into Iliac Hand's set and
-met the ratchet: `net/iliacCards.js` held every card's rules and flavor in English (234 literals), and the nine's
+met the ratchet: `net/iliac/iliacCards.js` held every card's rules and flavor in English (234 literals), and the nine's
 could not be written beside them. No card's words had reached a player in their language.
 
 - **The road:** the relay's catalog keeps a card's rules and its canonical name, and no word; the words are
-  `systems/iliacCardWords.js`'s - every card's and holding's rules and flavor as readers through `t`, under
+  `systems/iliac/iliacCardWords.js`'s - every card's and holding's rules and flavor as readers through `t`, under
   `cards.iliacSet.<card>.rules` and `.flavor` (210 keys), read when shown: the face painter (handed the words beside the
   card), the binder's look and tiles, a card item's lines, the table panel's card titles. The binder's cached faces
   follow `textRevision`, so a language chosen or a table laid paints them again. Each rules line's English is pinned
@@ -969,10 +969,10 @@ could not be written beside them. No card's words had reached a player in their 
   its fit (no rules line cut; a flavor dropped first where the box is full, as the painter's law drops it); the twelve
   drafting languages owe them (their next run). The drafts found the face's wrapper breaking at a no-break space -
   French's before a colon - and it breaks only at white space that may break now (`iliacCardFaces.js` CARD_BREAK).
-- **The ratchet:** `net/iliacCards.js` 234 -> 52 (its two-word names; the nine's four among them); the words module 0.
+- **The ratchet:** `net/iliac/iliacCards.js` 234 -> 52 (its two-word names; the nine's four among them); the words module 0.
 - **Still owed (L10N4's cards batch):** a card's name shown through Daggerfall Unity's own tables where it is one of
   theirs (an enemy's, a spell's, an artifact's, a faction's, a place's), and the Iliac panels' own sentences round it -
-  `scenes/iliacTableGame.js`, `ui/cardBinderPage.js`, `systems/iliacItems.js`'s first line - routed with it, so no
+  `scenes/iliacTableGame.js`, `ui/card/cardBinderPage.js`, `systems/iliac/iliacItems.js`'s first line - routed with it, so no
   sentence glues a translated name into English.
 
 ## KG3 (2026-10-13): The King's Gambit's table, in the player's language from the first press
@@ -998,4 +998,4 @@ they touched hold their counts (`ui/credits.js` 86: the credit's title routed, a
   marks it on the name; the chips' short forms; French's "de" before a crown that begins with a vowel (the title written
   "Roi {name} ({crown})", the fall "{crown} perd son roi : {name} tombe.").
 - **The name lookups:** a unit is named through Daggerfall Unity's own list (`getLocalizedEnemyName`), so
-  `ui/gambitTableWords.js` is a counted name site (`test/l10n3e_names.test.js`).
+  `ui/gambitTableWords.js` is a counted name site (`test/systems/l10n3e_names.test.js`).

@@ -52,7 +52,7 @@ import {
   placeMatrix, partMatrix, boxThrough, lightsOf,
 } from '../poi/poiRuntime.js';
 import { samplerKey } from '../render/meshAlpha.js';
-import { drawSeen, DECOR_DRAW } from './decorRoom.js';
+import { drawSeen, DECOR_DRAW } from './decor/decorRoom.js';
 import { invert4 } from '../player/tapRay.js';
 
 /** The ground under a standing POI is read again every this many frames. */

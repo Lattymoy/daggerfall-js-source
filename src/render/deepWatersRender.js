@@ -47,7 +47,7 @@ import { buildProgram } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
 import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the column's share, one home (the renderer's billboards take it too)
 import { WATER_LAYER_UNITS } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: the top's place in the sea's stack
-import { SURFACE_TEXTURE_TILING, SURFACE_SCROLL, FLOOR_TEXTURE_WORLD_SCALE, FLOOR_SHADER_DEFAULTS } from '../world/deepWaterLook.js';
+import { SURFACE_TEXTURE_TILING, SURFACE_SCROLL, FLOOR_TEXTURE_WORLD_SCALE, FLOOR_SHADER_DEFAULTS } from '../world/deepWater/deepWaterLook.js';
 
 // THE COLUMN'S SHARE (the top's alpha, split - see above): columnGlsl.js,
 // one home - the floor and the decorations take it here, DFU's billboards a
@@ -350,7 +350,7 @@ void main() {
   else outColor = vec4((1.0 - exp(-d * uDwFog[1].w)) * uDwFog[2].xyz * k + uDwFog[3].xyz * f, 0.0);
 }`;
 
-// UNDER-LOOK and UNDER-RAYS (FIELD BUGS 2026-10-01 #4, #5; world/underwaterLook.js): the port's look over the sea
+// UNDER-LOOK and UNDER-RAYS (FIELD BUGS 2026-10-01 #4, #5; world/underwater/underwaterLook.js): the port's look over the sea
 // while the eye is under it - over every pixel the world drew, before the weapon and the HUD. The water body is
 // affine in the colour under it, c * keep + body, so it is the sky fog's two blends again (the first draw multiplies,
 // the second adds); the second also adds the shafts. A shaft is the sun let through where the moving surface focuses
@@ -874,7 +874,7 @@ export class DeepWatersRenderer {
    * UNDER-LOOK and UNDER-RAYS: the water over every pixel the world drew, while the eye is under the sea - after the
    * last world pass and before the weapon and the HUD (the host's), into whatever target the world draws into. The
    * rays are drawSkyFog's; no depth test, no depth write, alpha kept.
-   * @param {{keep: number[], body: number[], sunW: number[], shaft: number[]}} u - world/underwaterLook.js underwaterLookUniforms
+   * @param {{keep: number[], body: number[], sunW: number[], shaft: number[]}} u - world/underwater/underwaterLook.js underwaterLookUniforms
    * @param {number} seaY - the sea's height in the scene
    * @param {number} reach - the shafts' march (m)
    * @param {number} timeSeconds

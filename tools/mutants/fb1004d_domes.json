@@ -4,7 +4,7 @@
     "file": "src/world/townStandIns.js",
     "old": "export const DOME_UNIT = 0.01 * 4.6875;",
     "new": "export const DOME_UNIT = 0.01 * 4.5;",
-    "tests": ["test/fb1004d_domes.test.js"],
+    "tests": ["test/world/fb1004d_domes.test.js"],
     "note": "Not the prefabs' scale: every dome a few per cent small."
   },
   {
@@ -12,7 +12,7 @@
     "file": "src/world/townStandIns.js",
     "old": "export const DOME_PROFILE = Object.freeze([[102.4, 1.15], [102.4, 77.4], [94.6, 116.6], [72.4, 149.8], [39.2, 172], [19.7, 175.9], [6.4, 179.8]]);",
     "new": "export const DOME_PROFILE = Object.freeze([[102.4, 1.15], [102.4, 70], [94.6, 116.6], [72.4, 149.8], [39.2, 172], [19.7, 175.9], [6.4, 179.8]]);",
-    "tests": ["test/fb1004d_domes.test.js"],
+    "tests": ["test/world/fb1004d_domes.test.js"],
     "note": "The drum's top ring off the measured mesh."
   },
   {
@@ -20,7 +20,7 @@
     "file": "src/world/townStandIns.js",
     "old": "53182: () => domeModel({ low: [12, 1], high: [6, 2], spire: [6, 3] }),",
     "new": "53182: () => domeModel({ low: [12, 1], high: [6, 2] }),",
-    "tests": ["test/fb1004d_domes.test.js"],
+    "tests": ["test/world/fb1004d_domes.test.js"],
     "note": "53182 loses 03's spire."
   },
   {
@@ -28,7 +28,7 @@
     "file": "src/world/townStandIns.js",
     "old": "export const DOME_BANDS = Object.freeze([116.6, 179.8]);",
     "new": "export const DOME_BANDS = Object.freeze([77.4, 179.8]);",
-    "tests": ["test/fb1004d_domes.test.js"],
+    "tests": ["test/world/fb1004d_domes.test.js"],
     "note": "The dome's foot in the dome's picture, not the drum's, unlike the meshes' material 2."
   },
   {
@@ -36,7 +36,7 @@
     "file": "src/world/townStandIns.js",
     "old": "53187: () => domeModel({ low: [38, 1], high: [38, 1] }),",
     "new": "53187: () => domeModel({ low: [38, 1], high: [6, 2] }),",
-    "tests": ["test/fb1004d_domes.test.js"],
+    "tests": ["test/world/fb1004d_domes.test.js"],
     "note": "53187's dome back in 6_2, which its prefab names for a material its mesh has none of."
   },
   {
@@ -44,7 +44,7 @@
     "file": "src/world/townStandIns.js",
     "old": "const m = new MeshBuilder(), N = 8, crown = DOME_PROFILE[DOME_PROFILE.length - 1][1];",
     "new": "const m = new MeshBuilder(), N = 16, crown = DOME_PROFILE[DOME_PROFILE.length - 1][1];",
-    "tests": ["test/fb1004d_domes.test.js"],
+    "tests": ["test/world/fb1004d_domes.test.js"],
     "note": "Not the meshes' octagon."
   },
   {
@@ -52,7 +52,7 @@
     "file": "src/world/townStandIns.js",
     "old": "const n = [(Math.cos(am) * dy) / l, -dr / l, (Math.sin(am) * dy) / l];",
     "new": "const n = [-(Math.cos(am) * dy) / l, dr / l, -(Math.sin(am) * dy) / l];",
-    "tests": ["test/fb1004d_domes.test.js"],
+    "tests": ["test/world/fb1004d_domes.test.js"],
     "note": "Every face turned into the dome: drawn from inside only."
   }
 ]

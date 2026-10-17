@@ -5,7 +5,7 @@
   "old": "  if (sparedByPlayer(foe)) return true;\n",
   "new": "  if (false && isShipmate(foe)) return true;\n",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n",
   "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  if (sparedByPlayer(foe)) return true;\n",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true;   // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611\n",
   "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true;   // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611\n  if (sparedByPlayer(foe)) return true;\n",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n",
   "new": "    if (false && foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n  }\n  return true;\n}\n",
   "new": "  }\n  if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n  return true;\n}\n",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "          spared: sparedByPlayer(f),\n",
   "new": "          spared: false,\n",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "          spared: sparedByPlayer(f),\n",
   "new": "          spared: sparedByPlayer(f) && f.defender !== true,\n",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "          hurt: (n, o) => foeSinks(f).hurt?.(n, o),\n",
   "new": "          hurt: (n) => foeSinks(f).hurt?.(n),\n",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "      for (const foe of nearby.filter((n) => !n.spared)) {",
   "new": "      for (const foe of nearby) {",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "        foe.hurt?.(1, { fromPlayer: false });",
   "new": "        foe.hurt?.(1);",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "if (f.dead || (fromPlayer && !peer && isShipmate(f))) return;",
   "new": "if (f.dead) return;",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "if (f.dead || (fromPlayer && !peer && isShipmate(f))) return;",
   "new": "if (f.dead || (!peer && isShipmate(f))) return;",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -113,16 +113,16 @@
   "old": "if (f.dead || (fromPlayer && !peer && isShipmate(f))) return;",
   "new": "if (f.dead || (fromPlayer && isShipmate(f))) return;",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
   "name": "AUDIT-NAV2-F56-the-blast-wrapper-drops-its-foe",
-  "file": "src/characters/enemyCasting.js",
+  "file": "src/characters/enemy/enemyCasting.js",
   "old": "      { entity: f.entity, sinks: foeSinks(f), foe: f }, { excludeFoe: f, playerHeight });",
   "new": "      { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f, playerHeight });",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "if (sparedByPlayer(foe)) return true;",
   "new": "if (foe?.deckBoat != null && foe.entity?.team === 'PlayerAlly' && !foe.dead) return true;",
   "tests": [
-   "test/auditnav2_combat.test.js"
+   "test/scenes/auditnav2_combat.test.js"
   ]
  }
 ]

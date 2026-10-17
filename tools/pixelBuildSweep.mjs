@@ -46,7 +46,7 @@ const PIXEL_TIMEOUT_MS = 180000, REBOOT_EVERY = 300;   // a page is let go every
 async function sweepList(locationKeys) {
   const { MapsFile, longitudeLatitudeToMapPixel } = await import('../src/formats/mapsFile.js');
   const { CLIMATES } = await import('../src/formats/mapsTables.js');
-  const { tamrielFrameInBay } = await import('../src/world/tamrielFrame.js');
+  const { tamrielFrameInBay } = await import('../src/world/tamriel/tamrielFrame.js');
   const ES = await import('../src/world/ethericSea.js');
   const rd = (f) => new Uint8Array(readFileSync(join(A2, f)));
   const maps = new MapsFile(); maps.load(rd('MAPS.BSA'), rd('CLIMATE.PAK'), rd('POLITIC.PAK'));

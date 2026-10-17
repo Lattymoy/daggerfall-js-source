@@ -8,7 +8,7 @@
 // it at the Mages Guild to reroll one affix"). Three things, each a law
 // here and a face elsewhere:
 //
-//   - THE WELKYND SHARD (systems/gateSpoils.js, template 571 beside the
+//   - THE WELKYND SHARD (systems/gate/gateSpoils.js, template 571 beside the
 //     Sigil Stone): a sliver of Ayleid magicka-crystal, stacking and BOUND
 //     (itemBound.js: never sold, traded, dropped or listed), the
 //     Reforge's only coin.
@@ -31,18 +31,18 @@
 //     press, the EXTRACTION: the gem out whole, for gold by its grade.
 //
 // The window (ui/reforgeWindow.js) and the pack card's Salvage button
-// (ui/enhancedInventory.js) draw and ask; everything they do is here.
+// (ui/enhanced/enhancedInventory.js) draw and ask; everything they do is here.
 // OFF IS DFU EXACTLY: with the loot-rarity row off nothing salvages and
 // nothing is reforged.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn, reforgeableLines, reforgeAffix, honeableLines, honeAffix, affixBand } from './lootRarity.js';   // LOOT17: and the hone
-import { rarityOf } from './lootRarity.js';   // FB1012d SALVAGE-CLASSIC: the tier a piece's card wears
-import { ALL_GEM_IDS, SOCKET_EMPTY, gemKindOf, gemGrade, hasSocket, socketsOf, socketGem, socketGems, setGem, unsetGem } from './lootRarity.js';   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
+import { lootRarityOn, reforgeableLines, reforgeAffix, honeableLines, honeAffix, affixBand } from './loot/lootRarity.js';   // LOOT17: and the hone
+import { rarityOf } from './loot/lootRarity.js';   // FB1012d SALVAGE-CLASSIC: the tier a piece's card wears
+import { ALL_GEM_IDS, SOCKET_EMPTY, gemKindOf, gemGrade, hasSocket, socketsOf, socketGem, socketGems, setGem, unsetGem } from './loot/lootRarity.js';   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
 import { mintGem } from './gems.js';   // GEM1: an extracted gem, whole again
-import { welkyndShards, isWelkyndShard, WELKYND_SHARD } from './gateSpoils.js';
-import { isBound } from './itemBound.js';
-import { isLocked } from './itemLock.js';
+import { welkyndShards, isWelkyndShard, WELKYND_SHARD } from './gate/gateSpoils.js';
+import { isBound } from './item/itemBound.js';
+import { isLocked } from './item/itemLock.js';
 import { isEquipped, notifyEquipChange } from './equip.js';   // GEM1: a worn piece's wearer folded again
 import { addItem, isEnchanted } from './inventory.js';   // AUDIT GEM: an enchanted gem is no loose stone
 import { totalGoldAmount, deductGold } from './court.js';

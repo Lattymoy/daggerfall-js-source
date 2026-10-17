@@ -5,7 +5,7 @@
     "old": "  if (!salvageShards(item)) return typeof item.provenance !== 'string' && rarityOf(item) === 'magic' ? 'classic' : 'not';",
     "new": "  if (!salvageShards(item)) return 'not';",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "return typeof item.provenance !== 'string' && rarityOf(item) === 'magic' ? 'classic' : 'not';",
     "new": "return rarityOf(item) === 'magic' ? 'classic' : 'not';",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "&& rarityOf(item) === 'magic' ? 'classic' : 'not';",
     "new": "&& rarityOf(item) !== 'artifact' ? 'classic' : 'not';",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        ...items.filter((it) => salvageRefusal(it) === 'classic')];",
     "new": "        ];",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      : [...items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? '')),\n        ...items.filter((it) => salvageRefusal(it) === 'classic')];",
     "new": "      : items.filter((it) => (salvageShards(it) > 0 || salvageRefusal(it) === 'classic') && !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''));",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "why === 'classic' ? 'Classic magic' : 'Cannot'",
     "new": "'Cannot'",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "n > 0 ? shardsText(n) : 'No shards'",
     "new": "shardsText(n)",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
@@ -68,34 +68,34 @@
     "old": "  classic: 'Classic magic will not break - the guilds sell and make it; shards come from a piece the loot ladder graded',",
     "new": "  classic: 'Nothing the Reforge can roll',",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
     "name": "SALVAGE-CLASSIC-the-card-offers-nothing",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": " || salvageRefusal(picked) === 'classic') && !['off',",
     "new": ") && !['off',",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
     "name": "SALVAGE-CLASSIC-the-card-press-silent",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "why === 'classic' ? SALVAGE_CLASSIC(name) : null; refresh(); render(); };",
     "new": "null; refresh(); render(); };",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   },
   {
     "name": "SALVAGE-CLASSIC-the-card-says-another-reason",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is classic, the kind the guilds sell and make. Welkynd Shards come only from a piece the loot ladder graded.`;",
     "new": "export const SALVAGE_CLASSIC = (name) => `${name} will not break.`;",
     "tests": [
-      "test/fb1012d_salvageclassic.test.js"
+      "test/systems/fb1012d_salvageclassic.test.js"
     ]
   }
 ]

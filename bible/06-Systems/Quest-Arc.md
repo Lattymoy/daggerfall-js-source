@@ -59,7 +59,7 @@ this Node cannot. Multi-alternative patterns are ordered lists through
 `matchFirst`, which keeps .NET semantics (leftmost position wins, ties
 to pattern order).
 
-Gate: `test/quest.test.js` - all 265 vendored quests parse; M0B00Y16
+Gate: `test/systems/quest/quest.test.js` - all 265 vendored quests parse; M0B00Y16
 pinned deep (20 messages, fixed ids from the table, 2 rumour variants,
 the 11-resource roster with table-resolved values, 27 tasks - 1
 headless triggered, 5 variables); Clock range draws seeded; the DFU
@@ -93,7 +93,7 @@ failure modes throw verbatim.
   DFU's exact eval short-circuits, StartStopTimer, Say, LogMessage,
   RemoveLogMessage, PickOneOf on the quest's injectable roll).
 
-Gate: `test/questmachine.test.js` - a crafted quest end to end
+Gate: `test/systems/quest/questmachine.test.js` - a crafted quest end to end
 (clock -> questBreak -> two-tick end -> tombstone -> expiry), the
 WhenTask law, seeded PickOneOf, permanent drops, the globals store,
 and THE COVERAGE PIN: the tranche resolves exactly 3347 of 7235
@@ -205,7 +205,7 @@ corpus action lines (66.6%).
   the C# patterns in C# order - any future hijack shifts a bucket
   and fails.
 
-Gate: `test/questactions.test.js` (38 pins - the click laws, the gold
+Gate: `test/systems/quest/questactions.test.js` (38 pins - the click laws, the gold
 gate, the foe tracking, the questor quirks, the DailyFrom window, the
 Prompt fork, the PlaySound cadence incl. the busy-source no-restamp,
 the DialogLink empty-namePlace quirk, the tombstone talk halves, and
@@ -316,7 +316,7 @@ the coverage backlog's 63 was that script's own artifact).
   scheduleParsedQuest (C#'s own ScheduleQuest(quest) signature) and
   parseQuestForLists.
 
-Gate: `test/questitems.test.js` (33 pins - the mint arms against DFU
+Gate: `test/systems/quest/questitems.test.js` (33 pins - the mint arms against DFU
 template literals, the gold formula hand-computed through the C#
 integer math, the seven action laws, the list laws over both the
 vendored and crafted tables) + the moved coverage/ownership pins +
@@ -419,7 +419,7 @@ exactly (PlaceFoe 224, RevealLocation 193, PlaceNpc 125, PlaceItem
   parse under a world and stay HELD headless. DFU's parse-order
   sensitivity (a clock sees only EARLIER places) is kept and pinned.
 
-Gate: `test/questplaces.test.js` (32 pins over a CRAFTED world
+Gate: `test/systems/quest/questplaces.test.js` (32 pins over a CRAFTED world
 speaking the port's own MapsFile/BlocksFile shapes) + the moved
 coverage/ownership pins.
 
@@ -522,7 +522,7 @@ ReputeExceedsDo 41). Pending 323: CreateFoe 241, CastSpellOnFoe 41,
   now lands in quest.questors at addResource (Quest.cs:879-881),
   observable at last through the clicked-questor path.
 
-Gate: `test/questpersons.test.js` (12 pins over the crafted world
+Gate: `test/systems/quest/questpersons.test.js` (12 pins over the crafted world
 seam + a persistent-faction-store mock) + the moved coverage/
 ownership pins.
 
@@ -647,7 +647,7 @@ floor (vestigial corpus lines no DFU template matches either).
   reads the action's own never-assigned Symbol (C# NREs before the
   format; either way the quest error-terminates).
 
-Gate: `test/questfoes.test.js` (15 pins over the crafted foe seam)
+Gate: `test/systems/quest/questfoes.test.js` (15 pins over the crafted foe seam)
 + the moved coverage/ownership pins (55 actions, 7194/41).
 
 ## QUEST AUDIT VII (2026-08-21, the Q3-iii verify pass)
@@ -748,7 +748,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   HEADLESS stance, since the classic records
   (world.getClassicSpellEffects) need ARENA2.
 
-Gate: `test/questremainder.test.js` (10 pins) + the coverage/
+Gate: `test/systems/quest/questremainder.test.js` (10 pins) + the coverage/
 ownership pin at 7231/4 and the P2 guard pin CLOSED (the when-shapes
 now resolve to their real owners at the same registry positions -
 the ownership transfer the guard charter promised).
@@ -840,7 +840,7 @@ charter CLOSES.
   is DefaultGrammarRules' identity, skipped whole. ExpandLetterSignoff
   rides Q4-ii with its consumer (the offer letter).
 
-Gate: `test/questmacros.test.js` - 16 pins: the 3,817-message corpus
+Gate: `test/systems/quest/questmacros.test.js` - 16 pins: the 3,817-message corpus
 expansion with the exact NRE trio and error-shape counts, and the
 crafted-world law pins above.
 
@@ -966,7 +966,7 @@ guildServiceFlow's FLAGGED Quests arm closes.
   TalkToStaticNPC), and the message box's generic MacroHelper
   pass.
 
-Gate: `test/questoffers.test.js` - 25 pins: the click laws, the
+Gate: `test/systems/quest/questoffers.test.js` - 25 pins: the click laws, the
 prompt shape, both doors with their gates and fold, the scrub
 order, the picker with both RemoveAt-bug faces, the destination
 flip, and the letter signoff family.
@@ -1085,7 +1085,7 @@ the real adapters, click/combat routing - re-carves as Q4-v below.
   hot-removes; the missing seam RETURNS and skips both, mirroring
   C#'s missing PlayerEnterExit.
 
-Gate: `test/questscene.test.js` - 39 pins; the TeleportPc pins in
+Gate: `test/systems/quest/questscene.test.js` - 39 pins; the TeleportPc pins in
 questplaces.test.js rewrite to the two-phase law.
 
 ## QUEST AUDIT XI (2026-08-21, the Q4-iii verify pass)
@@ -1203,7 +1203,7 @@ are its whole law half.
   active log to Message objects and files through the machine's new
   addFinishedQuest hook.
 
-Gate: `test/questsave.test.js` - 29 pins, led by THE CORPUS
+Gate: `test/systems/quest/questsave.test.js` - 29 pins, led by THE CORPUS
 ROUND-TRIP GATE (all 265 quests save -> restore -> save to a fixed
 point) and the LOCKSTEP TWIN (a restored started quest ticks
 identically to its original).
@@ -1260,14 +1260,14 @@ traced to SerializablePlayer (the Q4-v wiring row).
 ## Q4-v - THE HOST BRIDGE (SHIPPED 2026-08-21)
 
 The machine goes LIVE in the hosts - the arc's last slice. One new
-module owns the wiring (`scenes/questBridge.js`): it builds the
+module owns the wiring (`scenes/quest/questBridge.js`): it builds the
 QuestMachine over the world seam the host composes, the
 QuestListsManager over the vendored pack, the offer flow and the
 PlayerNotebook, and hands the scenes a small verb set - tick with the
 frame, click an NPC, open the Quests service, mount a scene's quest
 resources, snapshot/restore the whole envelope. Everything in it is
 PURE WIRING over the pinned Q1-Q4 law modules, node-testable with a
-mock ctx; `scenes/questData.js` is the browser half of the data seams
+mock ctx; `scenes/quest/questData.js` is the browser half of the data seams
 (vite raw-glob over vendor/dfu-quests, preloaded once so the machine's
 reads stay synchronous - node tests feed fs instead and never import
 it).
@@ -1614,7 +1614,7 @@ again. Every action, resource and macro reaches the host through
 `world?.x?.()`. That shape is the port's charter - a seam the host
 cannot honestly answer stays ABSENT and the law idles - and it is also
 a trapdoor: a seam nobody mounts is a ported law that evaporates in
-silence, with a green suite. `test/audit24_questseams.test.js` now
+silence, with a green suite. `test/systems/quest/audit24_questseams.test.js` now
 reads the source both ways: every `world.x` the quest system calls must
 be MOUNTED on questWorld or named in a PENDING table with the reason.
 A stale PENDING row (the seam got mounted) and a dead one (nothing
@@ -1765,7 +1765,7 @@ by an int zero, `Infinity * 0`, and `NaN < floor` false), and the
 caller's gate cannot deliver a zero weight anyway - a class enemy
 weighs 240 or 350, and a monster only passes on `weight > 0`.
 
-`test/audit24_lifetimes.test.js` gates all five, and says out loud that
+`test/scenes/audit24_lifetimes.test.js` gates all five, and says out loud that
 a source-shape pin is a weak pin: these modules need a live WebGL
 context to construct and the defect is an ABSENCE. Six mutants, six
 kills.
@@ -2052,7 +2052,7 @@ One mutant, one kill.
 ### Wave 13 - the one file the mutation campaign could not kill
 
 The campaign over every line range AUDIT 24 touched came back with 44
-files and exactly one at **0 of 8 caught**: `src/systems/loot.js`. Every
+files and exactly one at **0 of 8 caught**: `src/systems/loot/loot.js`. Every
 survivor was a DATA TABLE constant flipped by one - a LootChanceMatrix
 cell, an ingredient template index.
 
@@ -2064,7 +2064,7 @@ so.
 
 The only pin that catches that class is one that REBUILDS the table from
 the source, which is the idiom `audit24_systems2.test.js` already uses
-for MAGIC_ONLY_KEYS. `test/audit24_loottables.test.js` parses all 21
+for MAGIC_ONLY_KEYS. `test/systems/loot/audit24_loottables.test.js` parses all 21
 `new LootChanceMatrix()` rows out of LootTables.cs and compares them
 cell for cell, and parses the nine ingredient enums out of ItemEnums.cs
 and compares them in order. It skips wherever the gitignored DFU tree is
@@ -2077,7 +2077,7 @@ SOURCE, NOT A PIN THAT READS THE TABLE.
 
 ### Wave 14 - the save file's own survivors
 
-The campaign left five live mutants in `src/systems/save.js` - the file
+The campaign left five live mutants in `src/systems/save/save.js` - the file
 that decides whether a loaded character is the character who was saved.
 Every one is a law with a comment above it and no test under it:
 
@@ -2581,7 +2581,7 @@ Seven mutants, seven kills.
 
 **A generator nobody runs is a hand transcription with extra steps.**
 
-`src/characters/enemyBasics.js` is 3025 lines of `MobileEnemy` records
+`src/characters/enemy/enemyBasics.js` is 3025 lines of `MobileEnemy` records
 and it is *generated*, from `EnemyBasics.cs`, by
 `tools/extract-enemy-basics.mjs`. That reads like the safe answer to
 the transcription law - and it is, right up until you ask when the
@@ -2746,7 +2746,7 @@ happen to share a name.
 The ninth was `DEFAULT_ACTIVATION_DISTANCE`, and **wave 22 of this
 audit added it**. `player/activate.js` has been the home of
 `PlayerActivate.cs:76-88` since the activation ray landed;
-`systems/talk.js` had a second set written out as bare `256 * 0.025`
+`systems/talk/talk.js` had a second set written out as bare `256 * 0.025`
 literals; and I added a fourth constant to the copy without noticing
 the first three. That is how a duplicate set gets built - one honest
 commit at a time, each of which looks local and correct.
@@ -3900,7 +3900,7 @@ ReferenceError: Cannot access 'CAPSULE_RADIUS' before initialization
 ```
 
 Twelve test files, from one new line. `player/motor.js` imported
-`DF_WALK_BASE` from `characters/enemyMotor.js` while `enemyMotor.js`
+`DF_WALK_BASE` from `characters/enemy/enemyMotor.js` while `enemyMotor.js`
 imported the capsule constants back from `motor.js` - a cycle wave 24
 created deliberately, and which stayed invisible for as long as every
 use sat inside a function body. `OBSTACLE_CHECK_DISTANCE =
@@ -4202,7 +4202,7 @@ rule with an exception list is a rule nobody can check, and the
 exceptions are exactly the lines a later edit rearranges. All or
 nothing is a gate; "safe by inspection" is a comment.
 
-`test/audit24_wave37.test.js` holds both halves, over both hosts. It
+`test/scenes/audit24_wave37.test.js` holds both halves, over both hosts. It
 takes the shipped listener line out of the file, runs it through a
 `new Function` harness whose only local state is a hoisted, unassigned
 `var modes` - the precise state the crash happened in - and fires the
@@ -4283,7 +4283,7 @@ it - and could not have, easily, because the name it needs
 quest machinery, where nothing outside a quest could reach it without
 risking the import cycle this arc has now hit three times.
 `ENEMY_NAMES` and `isClassEnemyId` moved down to
-`characters/enemyBasics.js` - a true leaf with zero imports, which
+`characters/enemy/enemyBasics.js` - a true leaf with zero imports, which
 `quest/foe.js` already imports anyway - and `quest/foe.js` re-exports
 them, so the edge got shorter rather than longer.
 
@@ -4520,7 +4520,7 @@ and the signature drops to three arguments like every other
 native-panel window in the file. **A parameter a function does not
 declare is a parameter nothing can fill by mistake.**
 
-`test/audit24_wave40.test.js` holds three separate lines of defence:
+`test/ui/audit24_wave40.test.js` holds three separate lines of defence:
 the crashing shape reintroduced (and shown to throw the reported
 `TypeError`, and shown to be *fine* when the fourth argument is absent,
 which is why every direct test of this window passed); a behavioural
@@ -4576,7 +4576,7 @@ frame body does. Three ways:
   sound is audible almost everywhere" - and `play3d` hardcoded inverse,
   so the option did not exist to ask for.
 
-One home now (`characters/enemySounds.js`), three pools, and the drift
+One home now (`characters/enemy/enemySounds.js`), three pools, and the drift
 closed on the way in.
 
 **Two DFU quirks are kept because they are DFU's.**
@@ -4895,7 +4895,7 @@ mutant is the reported bug itself, restored one character at a time
 
 **Two things worth recording about the report.** The user said "restore
 whatever you did to the swing combat", and I did not do anything to it:
-`git log -- src/combat/fpsWeapon.js src/combat/weaponRig.js
+`git log -- src/combat/fpsWeapon.js src/combat/weapon/weaponRig.js
 src/combat/playerWeapon.js` last touches wave 24, and waves 30-44
 changed no weapon file. What changed is that **wave 37 fixed the boot
 crash**, so the player could reach an interior at all for the first
@@ -5085,7 +5085,7 @@ C#-NULL ROWS join NULL_HANDLERS ([unhandled], verbatim): %hol %hrg
 %htwn %key2 %mit %on %pdg %plq %pnq %ptm %qot %vn %wpn beside the
 six already there.
 
-AND THE GATE. test/macrocoverage.test.js extracts MacroHelper.cs's
+AND THE GATE. test/systems/quest/macrocoverage.test.js extracts MacroHelper.cs's
 own `{ "%x", Handler }` table (ARENA2-posture skip without the
 sparse clone) and asserts every row is handled, null-handled, or
 RECORDED at the per-window expander that owns it - thirty-seven
@@ -5100,7 +5100,7 @@ Wiring: machine hooks gain playerEntity and nowSeconds; questWorld
 gains legalRepNow and currentLocationType (world.js answers both);
 the machine deps gain the entity itself.
 
-Pins: 5 in `test/macrocoverage.test.js` - the gate, the date/time
+Pins: 5 in `test/systems/quest/macrocoverage.test.js` - the gate, the date/time
 laws at their boundaries, the player globals with %ski's BLANK arm,
 the fourteen bands and the %ct fallback, and the error shapes with
 the news pair and the %fae/%fea asymmetry.
@@ -5173,9 +5173,9 @@ Wiring: machine hooks gain setPlayerCrime, getGoldPieces,
 deductGoldPieces, raiseTime, spawnCityGuards, makeEnemiesHostile,
 clearEnemies, getQuest-by-uid; questWorld gains currentWeatherKey
 and currentClimateIndex; world.js mounts every door (the bridge ctx
-passthroughs in scenes/questBridge.js).
+passthroughs in scenes/quest/questBridge.js).
 
-Pins: 10 in `test/questactions5.test.js`, on the questremainder
+Pins: 10 in `test/systems/questactions5.test.js`, on the questremainder
 harness - and the harness taught its own law twice: bare QBN lines
 form the STARTUP task (named tasks never run untriggered), and the
 first run of the foe pins exposed the shadowing quirk above.
@@ -5258,7 +5258,7 @@ Armorer line writes `worldupdate building`, so WorldDataVariants was
 ported (`systems/worldDataVariants.js`) and WorldUpdate is a real
 template; the registry is empty (`06-Systems/Roleplay-Realism.md`).
 
-Pins: 15 in `test/questguards.test.js` on the Q5 harness (which taught
+Pins: 15 in `test/systems/quest/questguards.test.js` on the Q5 harness (which taught
 its startup-task lesson again - bare QBN lines form the startup task;
 named tasks never run untriggered). Campaign: 20 mutants, 20 killed -
 the ClickedFoe rearm mutant survived round one because the base
@@ -5282,7 +5282,7 @@ the video and the quest rolls on - SetComplete already ran at the
 push, exactly as in C#. One door serves every mode: the bridge ctx is
 world.js's in interior and dungeon modes alike.
 
-Pins: 3 in `test/questvideo.test.js` (the ten corpus names swept
+Pins: 3 in `test/systems/quest/questvideo.test.js` (the ten corpus names swept
 through createNew byte-for-byte, the machine-to-hook flow with
 complete-at-push, and the door's source law). Campaign: 5 mutants,
 5 killed.
@@ -5291,7 +5291,7 @@ complete-at-push, and the door's source law). Campaign: 5 mutants,
 
 AddFace/DropFace parsed since Q2b and their machine hooks rode the
 bridge since Q4 - into a world ctx that mounted neither, so every
-escort quest ran faceless. The panel is `ui/hudEscortFaces.js`, a
+escort quest ran faceless. The panel is `ui/hud/hudEscortFaces.js`, a
 port of HUDEscortingNPCFaces.cs (EscortingNPCFacePanel) whole:
 
 - **One panel, module-level** - DFU has one HUD and one
@@ -5334,7 +5334,7 @@ the frame its art lands, a missing record costs that face (warned
 once), never the session. The audit24 CTX_PENDING table lost its
 addFace/dropFace rows - removing a row means mounting it.
 
-Pins: 12 in `test/escortfaces.test.js`. Campaign: 13 mutants, 13
+Pins: 12 in `test/systems/quest/escortfaces.test.js`. Campaign: 13 mutants, 13
 killed.
 
 ## RW1 - THE QUESTCOMPLETE LOOT WINDOW (2026-08-28)
@@ -5367,7 +5367,7 @@ direct-add with a "You have been given" HUD line. It is GivePc.cs
   drop arm's own law), and the Merchant container image is the pile's
   treasure billboard in this port's vocabulary.
 
-Pins: 4 in `test/questreward.test.js`. Campaign: 8 mutants, 8 killed.
+Pins: 4 in `test/scenes/questreward.test.js`. Campaign: 8 mutants, 8 killed.
 
 ## DQ1 — a quest NPC or item standing in a dungeon could not be clicked (2026-08-29)
 
@@ -5400,7 +5400,7 @@ is the only thing the two hosts disagree about. The pins assert that
 the `questflat:` key and the `setLastNPCClicked` stamp are each minted
 in exactly one place, so a third host cannot grow a third copy.
 
-Pins: 7 in `test/dungeonquestclick.test.js`. Campaign: 14 mutants, 14
+Pins: 7 in `test/scenes/dungeonquestclick.test.js`. Campaign: 14 mutants, 14
 killed.
 
 **THE LESSON: A PARTIAL PATH REPORTS AS A WORKING ONE WHEN ITS OTHER
@@ -5511,7 +5511,7 @@ byte-folded `spellHasMatchForClassicEffect` (`world.js:"convention its People/Co
 absent which the action self-completes at *parse*
 (`actions.js:"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)"`/`actions.js:"CastSpellDo could not find".."this.setComplete();   // C#: the TEMPLATE completes - kept"`) and the task can never arm at all.
 
-Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
+Pins: 5 in `test/systems/qx1_exterior_host.test.js` (the placement law RUN over
 the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on
 **both** sides and the controller-centre cast origin held by a ledge the
 feet origin would reach; the occupancy sphere held by a real REFUSAL
@@ -5798,7 +5798,7 @@ MAP - and the three findings it produced, all paid in the same commit.
 - **The 82-action registry is complete.** DFU ships 82 action classes;
   the port implements 81 and *declared and guarded* the 82nd
   (`WorldUpdate`, blocked on WorldDataVariants) until RR3a (2026-09-23)
-  ported it with the registry it needed; `test/questguards.test.js`
+  ported it with the registry it needed; `test/systems/quest/questguards.test.js`
   pins that no guard stands now. An 82-item enumeration that has not
   lost a member is unusual, and it is pinned rather than remembered.
 - **All 265 vendored quests parse and start.** No throws, no nulls.
@@ -5839,7 +5839,7 @@ of the quest verbs idle there - which is F1's consequence, measured.
 
 ### F3 - the gate that exists to catch F2 read one host
 
-`test/audit24_questseams.test.js` carries a test called *"every bridge
+`test/systems/quest/audit24_questseams.test.js` carries a test called *"every bridge
 ctx seam is SUPPLIED or declared PENDING"*. Its helper opens
 `src/scenes/world.js` **by name** and never looks at another host. The
 gate for "is every seam wired" enumerated a single file - the shape
@@ -5851,7 +5851,7 @@ All three have one root cause - **the bridge never stated what it was
 given** - so they take one fix. `createQuestBridge` reports once, at
 construction: one line naming the absent seams, and an `error` for the
 single REQUIRED member. The contract is written down once and
-`test/auditquest_seams.test.js` **re-derives it from the bridge's own
+`test/scenes/auditquest_seams.test.js` **re-derives it from the bridge's own
 source on every run**, failing if the two disagree in either direction -
 because a hand-kept contract list would have been F3 again in a new
 place. The same file reads **every** host that builds a bridge, derived,
@@ -5893,7 +5893,7 @@ The repo already has a family of pins that **regenerate a port table from
 DFU's own C# and compare** - ENEMY_BASICS off `EnemyBasics.cs`,
 LOOT_MATRICES off `LootTables.cs`, the ingredient ITEM_GROUPS off
 `ItemEnums.cs` (PY1, `test/dfuRoot.mjs`). The quest system had no member
-of it. `test/auditquest_patterns.test.js` is that member.
+of it. `test/systems/quest/auditquest_patterns.test.js` is that member.
 
 **The one language difference that is not drift.** C# permits the same
 named group in different alternates of one regex; JavaScript does not, so
@@ -5928,7 +5928,7 @@ that no assertion in 7,671 tests was reading:
 | M2 | `Foe.ExpandMacro` (Foe.cs:153-177) - the unmatched arm | a Foe would claim to have expanded a macro it never carries |
 | M3 | `Parser._parseQRC` - the id bracket **pair** | `[1004` or `1004]` would read as a table lookup and its number be thrown away |
 
-All three are pinned in `test/auditquest_mutants.test.js`, and each pin
+All three are pinned in `test/systems/quest/auditquest_mutants.test.js`, and each pin
 was proven by re-planting its mutant.
 
 ### The harness lied twice before it told the truth
@@ -6007,7 +6007,7 @@ pick boxes the flow's `onPick(index)` and whose cancel offers nothing
 (the C# cancel pops the window). `default` stays the silent close, but
 only for a kind the flow cannot produce.
 
-### The pins (`test/gql1.test.js`, 5)
+### The pins (`test/systems/quest/gql1.test.js`, 5)
 
 The two boxes by shape; the walk through the REAL bridge and the REAL
 `ServiceFlowWindow` with the setting on - wait box, click, picker,
@@ -6068,7 +6068,7 @@ or a quest that ended under the menu is a stale panel, and that
 repaints. The interval is module state with the ground clock's own two
 owners: cleared by every rebuild and by unmount.
 
-### Pins (`test/qtlive1.test.js`, 5)
+### Pins (`test/ui/enhanced/qtlive1.test.js`, 5)
 
 The live read against a real Clock - ninety seconds under the menu read
 off the line with the field unmoved, the played step's clamp, a
@@ -6094,7 +6094,7 @@ that is the finding this section is mostly about.** An audit that finds
 nothing is worth nothing tomorrow: the same holes can open on the next
 commit and nobody would know until a player reports a quest that does
 not start. So the walk is written down here, and every link it walked
-by hand is now a law in `test/auditquests_linkage.test.js`, driven over
+by hand is now a law in `test/systems/quest/auditquests_linkage.test.js`, driven over
 the whole shipped corpus.
 
 ### What the walk found
@@ -6200,7 +6200,7 @@ the mod-facing WorldDataVariants system the Port-Ledger holds at "Not
 planned" and the port stands a `PendingTrigger` carrying DFU's verbatim
 pattern.
 
-`test/auditquest_patterns.test.js` already compares all 82 patterns far
+`test/systems/quest/auditquest_patterns.test.js` already compares all 82 patterns far
 more deeply — structure for structure, regenerated from the C#. But it
 opens a DFU checkout, so it calls `t.skip` whenever `DFU_PATH` is unset,
 which is CI's normal state: the registry's ORDER was unguarded exactly
@@ -6283,7 +6283,7 @@ this, the reporter's save (`machine.globalVars` for index 36, the
 console for `[quest] respawn:` or `Parsing quest S0000016 FAILED!`)
 says which of those it is.
 
-**Pinned** in `test/crux1.test.js` (3): a `start quest` whose child
+**Pinned** in `test/systems/quest/crux1.test.js` (3): a `start quest` whose child
 throws leaves the parent alive and its good child starting, logged in
 ParseQuest's words; the queue plays in turn and a failure releases the
 next; every seam by source. `tools/mutants/crux1.json`: 8, 8 dead.
@@ -6302,7 +6302,7 @@ port's layout builds the same list (`world/rdbLayout.js`), and the dungeon host 
 player outside, `:640`, and a building door's TransitionExterior finds no interior, `:634`), and only an exit door
 gets a collider (`DaggerfallStaticDoors.cs:44-66`), so in DFU the click falls through to the model's own action -
 the Crux's Teleport, which the port has (`world/actionSystem.js`). Here the padded door box took the ray first and
-threw the player onto the sea pixel outside. `world/dungeonLayout.js isDungeonExitDoor` is the one reading of the
+threw the player onto the sea pixel outside. `world/dungeon/dungeonLayout.js isDungeonExitDoor` is the one reading of the
 type (the overlap registry reads it too), and the host keeps a block's DungeonExit doors alone; the court's and the
 portal's made doors join after, as before. The facing on entry and the wagon's near-exit test read the same list,
 so both follow DFU's filter now (`PlayerEnterExit.cs:937`, `DaggerfallInventoryWindow.cs:1114`).
@@ -6313,9 +6313,9 @@ baked archive-95 face (the model-58051 kind DFU's own comment names), DFU exits 
 the ARENA2-gated pin to add is the Crux laid out with its static doors by type. One leftover: World Tooltips names
 a building-type door inside a dungeon "To <location>" (its .cs:764-767); the port no longer names those.
 
-Pinned in `test/crux_door.test.js` (2: a synthetic block through the real `layoutRdbBlock` and `dfMeshToModel` -
+Pinned in `test/world/crux_door.test.js` (2: a synthetic block through the real `layoutRdbBlock` and `dfMeshToModel` -
 the list carries all three faces and one survives; the host's copy loop skips the rest). Mutants
-`tools/mutants/crux_door.json` (4, all dead). `01-Overview/Field-Bugs-2026-09-27.md`.
+`tools/mutants/crux_door.json` (4, all dead). `01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
 ## DISC6-B - THE KILL THAT NEVER COUNTED (2026-09-23, Discord through Mac: "Theres no quest notification when you killed all monsters and no quest update in the log")
 
@@ -6323,8 +6323,8 @@ A party's shared-quest resync (`machine.updateSharedQuest` -> `restoreSaveData`)
 under the foes already standing, and each foe's `QuestResourceBehaviour` kept the Foe it cached on its first frame -
 every death went to the orphan, the `killed N` trigger read the new one, and the last kill fired nothing. The
 behaviour now lets go of a target the quest no longer holds (by UID and by symbol) and resolves it again, and the
-resync keeps this world's Foe counters (the larger kill count; the injury and a pending kill this world's own events set - AUDIT DISC7 D7 dropped the restraint, which is the quest's word on both sides; C2 relinks every standing behaviour at the resync, symbol included, and C3 keeps this world's longer spell and item queues). Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in
-`test/disc6.test.js`; `tools/mutants/disc6.json`.
+resync keeps this world's Foe counters (the larger kill count; the injury and a pending kill this world's own events set - AUDIT DISC7 D7 dropped the restraint, which is the quest's word on both sides; C2 relinks every standing behaviour at the resync, symbol included, and C3 keeps this world's longer spell and item queues). Record: `01-Overview/bugs/Field-Bugs-2026-09-23.md`. Pinned in
+`test/systems/disc6.test.js`; `tools/mutants/disc6.json`.
 
 ## QUEST-UID1 - a quest offered before a load is not the loaded game's (2026-09-24)
 
@@ -6349,7 +6349,7 @@ trace found a real weakness beside it:
   harness had no world, so its `place npc` threw on every tick. Whether a real tavern ever does is the question put to
   the reporter (did they reach the inn, and was Brisienna there).
 
-Pins: `test/quest_uid1.test.js` (3) through the real bridge over the vendored quests; mutants
+Pins: `test/systems/quest/quest_uid1.test.js` (3) through the real bridge over the vendored quests; mutants
 `tools/mutants/questuid1.json` (5, all dead).
 
 ## QREPAIR - REPAIR ACTIVE QUESTS (2026-09-24, Mac: "Add a quest refresh option to settings")
@@ -6386,7 +6386,7 @@ was missing from your active quest(s).", or "You have no active quests to repair
 (a Place with no markers, a reveal naming no location) is counted, never fatal.
 
 Every host's pause hands `repairQuests` off its own bridge (`questBridge.repair`): the world, the fixed city, the
-dungeon, and the interior pause through its host. Pinned: `test/qrepair.test.js` (6) over a real machine, Place and
+dungeon, and the interior pause through its host. Pinned: `test/systems/quest/qrepair.test.js` (6) over a real machine, Place and
 mount; `tools/mutants/qrepair.json`.
 
 ## DISC29-H - Info mode looks at a quest stand; it does not click it (2026-09-28, Triage)
@@ -6394,7 +6394,7 @@ mount; `tools/mutants/qrepair.json`.
 Triage on Discord: thrown out of the Mages Guild in the middle of its guard quest, after killing raiding mages and
 knights - "Not a member", then "ineligible ... less than sterling reputation", then "Your name is familiar to us, and
 not in a very favorable light", and the quest would not complete. What expels is N0B20Y02 ("Protect an Honored Mage")
-itself, faithfully run, as KimNix met it (`01-Overview/Field-Bugs-2026-09-26b.md` DEAD-CLOCK): a click on the sleeping
+itself, faithfully run, as KimNix met it (`01-Overview/bugs/Field-Bugs-2026-09-26b.md` DEAD-CLOCK): a click on the sleeping
 mage is `_S.04_` (-10, popup 1012, and a shielded hostile Mage placed in the hall - the mage himself), and that Mage's
 death is `_S.07_` (-50, the Knight, Battle-mage and Assassin waves, and the seven-day `_S.09_` clock). The next visit's
 UpdateRank finds a negative reputation and expels (TEXT.RSC 668); JOIN reads 612, the record for rep < 0. The raiders'
@@ -6412,8 +6412,8 @@ in every mode, so a LOOK at the sleeping mage sprang the trap. It returns in Inf
 Not changed, and Mac's to decide: a PARTNER's kill of a shared quest's foe is credited to every member's copy
 (`onPuppetDied` -> `incrementKills`), so `_S.07_` - and its -50 - runs for a member who never touched the mage. That
 same credit is what carries an ordinary summon-and-kill quest forward for the whole party.
-`test/disc29_questinfo.test.js` (3); `test/dungeonquestclick.test.js`'s one-home pin re-aimed to the shared builder;
-`tools/mutants/disc29.json` (DISC29-H, 3). `01-Overview/Field-Bugs-2026-09-28f.md` DISC29-H.
+`test/player/disc29_questinfo.test.js` (3); `test/scenes/dungeonquestclick.test.js`'s one-home pin re-aimed to the shared builder;
+`tools/mutants/disc29.json` (DISC29-H, 3). `01-Overview/bugs/Field-Bugs-2026-09-28f.md` DISC29-H.
 
 ## TIME3 - QUESTS ON TWO CLOCKS (2026-10-01, Mac: "people have to wait insanely long" / "This needs to be perfect")
 
@@ -6442,7 +6442,7 @@ holder's - AUDIT TIME), and an online save from before TIME3 moves onto the char
 **Found on the way, a fidelity fix offline too:** the Clock sampled the fractional clock and cut each tick's GAP to
 whole seconds, where DFU samples `WorldTime.Now.ToSeconds()` - whole seconds of a clock that keeps its fraction - so
 every tick dropped its fraction: at ten ticks a real second a countdown ran a fifth to a third slow. It samples
-whole seconds now (`clock.js wholeSeconds`). Pins: `test/time3_quests.test.js`; mutants: `tools/mutants/time3.json`.
+whole seconds now (`clock.js wholeSeconds`). Pins: `test/systems/quest/time3_quests.test.js`; mutants: `tools/mutants/time3.json`.
 
 ## TOTEM-CAGE - a quest item rides its acting marker (2026-10-03, Discord, Shortstori: "the Totem of Tiber Septim isnt here")
 
@@ -6467,7 +6467,7 @@ The travel is read WHOLE from the marker's start, which is DFU's outcome on its 
 the item, the saved action state lands after it); online the room's word can land before a re-mount, and the whole
 travel is the only reading that agrees. The one difference: a quest that hot-places an item onto a marker that already
 moved this visit stands it on the marker, where DFU's reparent leaves it off by the travel.
-`test/fb1003b_totem.test.js`; `tools/mutants/fb1003b_totem.json`. `01-Overview/Field-Bugs-2026-10-03b.md` TOTEM-CAGE.
+`test/systems/quest/fb1003b_totem.test.js`; `tools/mutants/fb1003b_totem.json`. `01-Overview/bugs/Field-Bugs-2026-10-03b.md` TOTEM-CAGE.
 
 ## GUARD-RETURN - a return to the hall re-arms the Nightblades, as in Daggerfall Unity (2026-10-07, a player through the lead)
 
@@ -6511,7 +6511,7 @@ The four hosts: the law is the quest machine's (`systems/quest/actions.js`, `sys
 host alike - scenes/exterior.js, scenes/world.js, scenes/worldModes.js (the interior, where the guild stands) and
 scenes/dungeonContext.js; none was edited, and the interior's placed-foe mount is DFU's kill test above.
 
-`test/fb1007_guardreturn.test.js` (3) runs the real script through the quest's own update, the Place's own isPlayerHere
+`test/systems/quest/fb1007_guardreturn.test.js` (3) runs the real script through the quest's own update, the Place's own isPlayerHere
 over the hosts' location seams and the Foe's own incrementKills, and pins the reading AS DFU's: one wave for a guard who
 stays; a second three for one who kills, steps out and comes back inside the trance (none while away; the kills on
 record unread); nothing armed after the trance. `tools/mutants/fb1007_guardreturn.json` (2, both dead: a re-set that
@@ -6532,7 +6532,7 @@ strongholds to the classic start; and online `_S.02_`'s 3-13 days are a short wa
 the only path. Repair could not help: it puts back what a marker lost, and his marker had lost nothing.
 
 - **The draw** (`systems/quest/place.js _collectDungeonIndicesOfType`): a dungeon of the main story
-  (`world/dungeonTextures.js isMainStoryDungeon`, DFU's fourteen) is never a random quest's - the declared type's
+  (`world/dungeon/dungeonTextures.js isMainStoryDungeon`, DFU's fourteen) is never a random quest's - the declared type's
   draw and the any-dungeon retry alike. The main story's own Places name them `permanent` and never pass there. A
   DEPARTURE (Port-Ledger A), the precedent `oceanHoles.js` and the spawned dungeons' "the main story's own dungeons
   are never cloned".
@@ -6548,10 +6548,10 @@ the only path. Repair could not help: it puts back what a marker lost, and his m
   `scenes/dungeonContext.js` mount what the quest says).
 
 Not done, offered to Mac: an Abandon for an ordinary guild quest (DFU's console `endquest`, `machine.tombstoneQuest`) -
-the port gives Abandon to bounties and revenant hunts alone. `test/kvarhold.test.js` (3); `tools/mutants/kvarhold.json`
+the port gives Abandon to bounties and revenant hunts alone. `test/systems/quest/kvarhold.test.js` (3); `tools/mutants/kvarhold.json`
 (12), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): drawn among the few nearest the Hold it leaves, never
 this client's player (every shared copy the same); a `local dungeon` rescued too; the new site fitted to the size its
-link builds once the link stands there (`fitSiteToBuild`); a reveal that throws leaves the move and the link standing. PIN MOVED: `test/nearby_quests.test.js`'s fixture ids start past 5000 (1001 is Mantellan Crux).
+link builds once the link stands there (`fitSiteToBuild`); a reveal that throws leaves the move and the link standing. PIN MOVED: `test/systems/quest/nearby_quests.test.js`'s fixture ids start past 5000 (1001 is Mantellan Crux).
 
 ## QUEST-SHELF - every quest abandoned and reclaimed (2026-10-08)
 
@@ -6582,8 +6582,8 @@ as it was. A DEPARTURE (Port-Ledger A), the port's own.
   deadline ran down while it was set aside; its site links stand again by Place; a scene it stands in mounts its
   people, things and foes the next time it is built (or at once, where its things were only put out of sight). It does
   not rejoin the party's step: Share it again.
-- **The journal** (`scenes/questBridge.js`): the one walk files a quest set aside in `shelved` (its clock as it stopped),
-  the rail under ABANDONED (`ui/questRail.js`), and the pause window's Quests tab draws Abandon quest (twice, BOUNTY1's
+- **The journal** (`scenes/quest/questBridge.js`): the one walk files a quest set aside in `shelved` (its clock as it stopped),
+  the rail under ABANDONED (`ui/quest/questRail.js`), and the pause window's Quests tab draws Abandon quest (twice, BOUNTY1's
   arming) where the bridge allows it (`journalClean.canAbandon`) and Reclaim quest (once) on an abandoned one, saying
   what happened (`shelfRefusalText`). The doors ride `journalClean`, so all four hosts' pause windows carry them -
   `scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js` (through world.js's host) and `scenes/dungeonContext.js`.
@@ -6596,8 +6596,8 @@ it runs (`twin`); a reclaim relinks at once what stands of it and its topics; a 
 (`individualHome`); a partner's envelope carries no shelf (`NO_SHELF`); the Settings repair, the rumor mill
 (`questAway`) and the lens leave a quest set aside alone; the button asks the press's own ladder (`shelveRefusal`).
 
-`test/questshelf.test.js` (5); `tools/mutants/questshelf.json` (58), all dead. PINS MOVED: `test/questbridge.test.js`,
-`test/rest8_questwaits.test.js`, `test/journal_clean.test.js`, `test/time3_quests.test.js`, `test/enhancedPause.test.js`.
+`test/systems/quest/questshelf.test.js` (5); `tools/mutants/questshelf.json` (58), all dead. PINS MOVED: `test/systems/quest/questbridge.test.js`,
+`test/systems/quest/rest8_questwaits.test.js`, `test/scenes/journal_clean.test.js`, `test/systems/quest/time3_quests.test.js`, `test/ui/enhanced/enhancedPause.test.js`.
 
 ## QUEST-SHELF-MAIN - the chronicle's Abandon, on every quest but the main story's (2026-10-13)
 
@@ -6605,7 +6605,7 @@ Dudey: *"Now i need an Abandon button for all quests except main quest"*, then *
 QUEST-SHELF's Abandon stood in the pause window's Quests tab alone; the chronicle - the window the L key opens - carried
 an Abandon only for a bounty and a revenant's hunt.
 
-- **The chronicle's Abandon** (`ui/enhancedChronicle.js`): every running quest that is not the main story's (the rail's
+- **The chronicle's Abandon** (`ui/enhanced/enhancedChronicle.js`): every running quest that is not the main story's (the rail's
   `main`, `questLists.js isMainQuestName` - the `S0000` lines, Brisienna's), a bounty or a hunt (each of those keeps its
   own) draws Abandon in its header where the bridge's door allows it (`canAbandon`) - pressed twice, BOUNTY1's arming
   (`bountyArmed`, the quest's as `q:<uid>`), through QUEST-SHELF's own `journalClean.abandon`; what it said stands over
@@ -6623,7 +6623,7 @@ an Abandon only for a bounty and a revenant's hunt.
   (`scenes/dungeonContext.js questJournalHooks`). The classic skin's logbook is DFU's native window and draws no button
   (THE NATIVE-WINDOW RULE).
 
-`test/questshelfmain.test.js` (4); `tools/mutants/questshelfmain.json` (14), all dead.
+`test/systems/quest/questshelfmain.test.js` (4); `tools/mutants/questshelfmain.json` (14), all dead.
 
 ## QUEST-NOTE - a quest's foe fallen is told, and its box is not closed unread (2026-10-13)
 
@@ -6642,12 +6642,12 @@ drawn: a plain quest box closes on any press (DFU's ClickAnywhereToClose), and D
   strip's brass row "Quest target slain" - the foe, its count where the Foe is several (2/5), the quest - and a chat
   line; on the classic skin the HUD's line. Every quest, whatever its script says. DFU says nothing here; the script's
   own `say` is still its own box.
-- Pinned by `test/questnote.test.js` and `tools/mutants/questnote.json`.
+- Pinned by `test/systems/quest/questnote.test.js` and `tools/mutants/questnote.json`.
 
 ## QUEST-SHELF-DROP - an abandoned quest's item may be thrown away (2026-10-13)
 
 The lead dev: "when a player abandoned a quest he cant throw away the questitem for it". QUEST-SHELF keeps an abandoned
-quest whole, its items in the pack - and TransferItem's quest arm (`systems/itemTransfer.js questTransferRefused`,
+quest whole, its items in the pack - and TransferItem's quest arm (`systems/item/itemTransfer.js questTransferRefused`,
 DaggerfallInventoryWindow.cs:1486-1494) still refused every one the quest had not marked droppable, so a player who gave
 a quest up carried its letter, its package, its body part until they took it up again.
 
@@ -6658,11 +6658,11 @@ a quest up carried its letter, its package, its body part until they took it up 
 - **Reclaimed, it comes back.** `shelveQuest` writes the items the pack held (`quest.shelvedItems`, by symbol, in the
   save envelope beside `shelvedSites`); `reclaimQuest` hands each one the pack no longer holds back - its own quest item,
   once - so the quest can still be finished. The journal says so ("Its item is back in your pack.").
-- Pinned by `test/questshelf.test.js` (QUEST-SHELF-DROP) and `tools/mutants/questshelf.json`.
+- Pinned by `test/systems/quest/questshelf.test.js` (QUEST-SHELF-DROP) and `tools/mutants/questshelf.json`.
 
 ## NO-ASKS-AGAIN - a No that leads nowhere asks again, on the next click (2026-10-13, FIELD BUGS 2026-10-13e)
 
-The batch's record: `01-Overview/Field-Bugs-2026-10-13e.md`, report 6.
+The batch's record: `01-Overview/bugs/Field-Bugs-2026-10-13e.md`, report 6.
 
 The report, "Cant complete quest 'the lost child'": *"I found the child in the dungeon, interacted with it, accidentally
 said 'no' when it asked me to get it, and now i cant interact with it at all. Tried restarting the game, didnt help."*
@@ -6697,13 +6697,13 @@ defeats it in DFU as here: the healer says 1013 on every click and never asks ag
 No that does something is outside this law by its own terms; it is the corpus's one prompt whose answer clears the task
 that asks it.
 
-`test/fb1013e_noasks.test.js` (5): the real scripts through the real parser and machine over a crafted region, every
+`test/systems/quest/fb1013e_noasks.test.js` (5): the real scripts through the real parser and machine over a crafted region, every
 click through QuestResourceBehaviour.doClick and every answer through the box's own callback - The Lost Child asked
 again after a No, twice, and a Yes then leaving every task and action as a first Yes does; a save taken after the No
 loading asked again; M0B00Y16's refused villager and K0C00Y03's refused guard asked once (DFU's law); the action and the
 asking-task guards on the script's own variants (a `_no_ task:` merged in, a reader of `_S.07_`, `_S.07_` linked to a
 global); the corpus read by the law itself (the inert Nos, the prompts asked on a click, and the one it re-arms).
-`tools/mutants/fb1013e_noasks.json` (12), all dead - one of them killed by `test/questsave.test.js`'s restore-order pin:
+`tools/mutants/fb1013e_noasks.json` (12), all dead - one of them killed by `test/systems/quest/questsave.test.js`'s restore-order pin:
 the law reads no task's state before its verdict, so a load never reads a global's task (whose read writes it from the
 store).
 
@@ -6721,14 +6721,14 @@ point ... its just droping the spawn location in general instead of find a spot"
   The whole dungeon keeps DFU's enumeration. A target already standing in a cap is laid again at the dungeon's next
   mount by QUEST-VOID's net (`questRepair.js relayBuiltDungeon`); the bounty lair prefers interior spawn spots too
   (`dungeonQuestSpawnSpots`). A departure (Port-Ledger A, QUEST-CAPS).
-- **QUEST-BACKFACE** (`scenes/questFoeHost.js` `placeFoeEnv`): Unity's raycast never hits a mesh collider's back face, and
+- **QUEST-BACKFACE** (`scenes/quest/questFoeHost.js` `placeFoeEnv`): Unity's raycast never hits a mesh collider's back face, and
   the port's collider is two-sided. A placement ring ray that slipped out through a seam took its open-area point in the
   rock, and the floor probe there struck the top of a hall's ceiling - a back face - so CreateFoe, an encounter or a
   summon stood on it, outside every hall. A back-face hit on the dungeon's own geometry (its `dungeon` bucket) is passed
   through, as Unity's ray passes it, for what is left of the reach; another bucket's faces answer as before. DFU's law,
   restored.
 
-`test/questcaps.test.js` (4), `test/questbackface.test.js` (4).
+`test/systems/quest/questcaps.test.js` (4), `test/systems/quest/questbackface.test.js` (4).
 
 ## QUEST-RESET - restart a quest from its first step (2026-10-13)
 
@@ -6744,7 +6744,7 @@ touches a quest whose own state says its foe is dead.
   error-terminated quest goes (`removeQuest`: its quest items leave the pack, its site links, topics and questors go;
   no reputation and no journal entry - it did not end), and the new one starts at once and runs its first step on the
   machine's next tick. A shared copy leaves the party's step first, so the tombstone does not file it as a finished
-  share. Refused, each in words (`scenes/questBridge.js` `restartRefusalText`): a quest gone, ending or set aside
+  share. Refused, each in words (`scenes/quest/questBridge.js` `restartRefusalText`): a quest gone, ending or set aside
   (reclaim it first); the world's own (`PROTECTED_QUESTS`); one with a questor - its parse would bind whoever the
   player clicked last (abandon it and ask its questor again); one another quest's `run quest` waits on (the parent
   would read the restart as a failure); a sea raid. S0000018 restarted waits its thirty days for Medora's vision again
@@ -6756,7 +6756,7 @@ touches a quest whose own state says its foe is dead.
   shown under the quests, the tracker following the new copy. Every word of it is the text core's (L10N4 - the
   chronicle's `chronicle.quests.restart*`, the pause tab's and the bridge's `pause.journal.restart*`, its refusals
   among them), drafted in the thirteen whole languages.
-- **THE FIELD FINDING - A KILL CREDITED BY NAME IS A COUNT, NEVER A DEATH** (`scenes/questFoeHost.js` `countsByName`).
+- **THE FIELD FINDING - A KILL CREDITED BY NAME IS A COUNT, NEVER A DEATH** (`scenes/quest/questFoeHost.js` `countsByName`).
   DESYNC-ZERO's `partyQuestFoe` counted a party member's quest-foe kill on ANY copy of the same quest this player held,
   by name. The main story is never shared, so every member on S0000018 holds their own mummy in their own crypt (a
   `remote dungeon0`), with their own Dust on it: a member's mummy killed counted mine dead (`killCount` 1 of 1), the
@@ -6766,4 +6766,4 @@ touches a quest whose own state says its foe is dead.
   `killed` or `injured` trigger naming it - the credit DESYNC-ZERO was for) and only while no quest item rides it; a
   linked copy (`sharedQuestFoe`) is the party's and is unchanged. A save already broken this way is the restart's.
 
-`test/questreset1.test.js` (6); `tools/mutants/questreset1.json` (18), all dead.
+`test/scenes/quest/questreset1.test.js` (6); `tools/mutants/questreset1.json` (18), all dead.

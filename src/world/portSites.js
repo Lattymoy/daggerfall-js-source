@@ -2,7 +2,7 @@
 // SHIPYARDS (2026-10-11; asked where the shipyard and the lighthouse stand, Mac chose "Town's seaward edge - both on the
 // town's own open ground at the edge nearest the sea, placed off the town's layout like the Stables"): WHERE A PORT
 // TOWN'S SHIPYARD AND LIGHTHOUSE STAND - read off its layout and the map's own data alone, so every client stands each
-// on one spot (world/merchantYardSites.js's law for the Stable and the Wagon Yard, which this places after, on what they
+// on one spot (world/merchantYards/merchantYardSites.js's law for the Stable and the Wagon Yard, which this places after, on what they
 // left).
 //
 // THE GROUND is the yards' (merchantYardSites.js townGroundOf: the town's navgrid on the enhanced lane's water table, its
@@ -43,8 +43,8 @@
 // A town with no room for one stands none of it - said once, in the console - never over a house, a road or a lot.
 //
 // Pure: no renderer, no GL, no clock. Not a DFU member. Ledger A (SHIPYARDS).
-import { NAV_CELL, NAV_CELLS_PER_BLOCK, tileWeight } from './cityNavigation.js';
-import { summed, frontStrip, closeSite, YARD_PAD_M, YARD_TURNS, NO_ROAD_COST } from './merchantYardSites.js';
+import { NAV_CELL, NAV_CELLS_PER_BLOCK, tileWeight } from './city/cityNavigation.js';
+import { summed, frontStrip, closeSite, YARD_PAD_M, YARD_TURNS, NO_ROAD_COST } from './merchantYards/merchantYardSites.js';
 import { PORT_SITE_ORDER, portPlaceName, portTownByData } from '../systems/portPlaces.js';
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 
@@ -164,7 +164,7 @@ export function seaBearing(px, py, isSea) {
 /**
  * THE OPEN SEA (FIELD BUGS 2026-10-14 INLAND-PORTS): the map's water that reaches the map's border - every pixel the one
  * water law calls water (`isWater(x, y)`: overworldModel.js isWaterPixel) flooded eight-way from those on the map's edge,
- * the flood Deep Waters' bake makes of the sea (world/deepWatersBake.js COARSE: "the 8-connected flood of candidates
+ * the flood Deep Waters' bake makes of the sea (world/deepWater/deepWatersBake.js COARSE: "the 8-connected flood of candidates
  * from the map's border - one component in the file, every inland lake left out"), a map pixel at a time. On the real map
  * it is one body of 179,926 pixels; the 81 lakes and ponds the map draws inland (one pixel to 54) are none of it - no
  * ship of the Bay's reaches them. Answers a mask over the map's pixels (`y * width + x`), 1 the open sea. Pure.

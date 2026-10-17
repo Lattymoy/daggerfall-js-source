@@ -5,7 +5,7 @@
     "old": "  if (now.station && now.station !== (was?.station ?? null)) delta -= DECOR_STATION_FEES[now.station] ?? 0;\n",
     "new": "",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "delta = Math.trunc(base / 2);",
     "new": "delta = base;",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (side.error === 'realm-needed' && realm == null && delta === 0) return { at: null };\n",
     "new": "",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (side.at && delta !== 0) {\n    // REALM P2.2b: the piece and what it cost, together",
     "new": "  if (false) {\n    // REALM P2.2b: the piece and what it cost, together",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    await db.batch([...prep.steps, write, mustChange(db)]);",
     "new": "    await db.batch([write, mustChange(db)]);",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (side.at && delta > 0) {\n      // REALM P2.2b: half of what it cost",
     "new": "    if (false) {\n      // REALM P2.2b: half of what it cost",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "(save) => (payFromSave(save, claim.price, claim.region) ? null : 'realm-gold')",
     "new": "() => null",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (held) return held.player === player.id && held.char_id === claim.character ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } } : { error: 'home-taken' };\n",
     "new": "  if (held && held.player !== player.id) return { error: 'home-taken' };\n",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ],
     "note": "AUDIT HOME-PRICE (PIN MOVED, re-aimed by content): the repeat's answer carries the sale's sum (C2)."
   },
@@ -78,7 +78,7 @@
     "old": "  const side = await realmActFirst(db, player.id, character, realm);   // AUDIT REALM L1-F2: where the record stands, before the hour's claims",
     "new": "  const side = await realmActFirst(db, player.id, character, realm).then((s) => (s.error === 'seq' ? { at: realmAtOf(realm) } : s));",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  if (realm != null || (typeof home?.char_id === 'string' && REALM_ID_RE.test(home.char_id))) {",
     "new": "  if (realm != null) {",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "creditSave(save, back, { bank: home.region })",
     "new": "creditSave(save, back)",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -105,71 +105,71 @@
     "old": "export const HOME_SALE_SHARE = 0.85;",
     "new": "export const HOME_SALE_SHARE = 0.9;",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
     "name": "REALM6-buy-never-reserves",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "        reserve: paid.reserve,\n",
     "new": "",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
     "name": "REALM6-sale-guesses",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "    const r = await realm.act({\n      needsAnswer: true,\n",
     "new": "    const r = await realm.act({\n",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ],
     "note": "ARENA4b (PIN MOVED, re-aimed by content): onlineHomes.js moveArenaHomes's act needs its answer too - aimed at the sale's by the call over it."
   },
   {
     "name": "REALM6-tool-place-unreserved",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "          reserve: paid.reserve,\n          // AUDIT REALM: a placement answered",
     "new": "          // AUDIT REALM: a placement answered",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
     "name": "REALM6-tool-place-no-record",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "character: deps.character?.(), piece, realm: at }),",
     "new": "character: deps.character?.(), piece }),",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
     "name": "REALM6-tool-removal-uncredited",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "          back = Math.max(0, Number(a.data?.gold) || 0);\n          toGuild = Math.max(0, Number(a.data?.treasury) || 0);\n          if (back > 0) deps.wallet?.().credit?.(back);\n        },",
     "new": "          back = Math.max(0, Number(a.data?.gold) || 0);\n          toGuild = Math.max(0, Number(a.data?.treasury) || 0);\n        },",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
     "name": "REALM6-tool-shrink-unpaid",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      apply: refund > 0 ? (/** @type {any} */ a) => { const g = Number(a.data?.gold) || 0; if (g > 0) deps.wallet().credit?.(g); } : null,\n",
     "new": "",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
     "name": "REALM6-tool-licence-unreserved",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      reserve: pay > 0 ? walletReserve(wallet, pay).reserve : null,   // MARKET-AUDIT: a refusal gives back exactly what it took\n",
     "new": "",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "r.seq === at.seq + 1 && !needsAnswer && !read ? { ok: true, landed: true, seq: r.seq }",
     "new": "r.seq === at.seq + 1 && !read ? { ok: true, landed: true, seq: r.seq }",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "    realmAct: realmSession ? (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }) : null,",
     "new": "    realmAct: null,",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "      refund: (n) => { const a = homeAccount(region); if (a) a.accountGold += n; else purse.addGold(n); },\n      realm: host.realmAct ? { act: host.realmAct } : null,",
     "new": "      refund: (n) => { const a = homeAccount(region); if (a) a.accountGold += n; else purse.addGold(n); },\n      realm: null,",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "        const hctx = { ...ctx, bucket: env.SAVES };",
     "new": "        const hctx = ctx;",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "(r.error === 'seq' ? json({ error: 'seq', seq: r.seq }, 409, origin) : r.error === 'lease'",
     "new": "(r.error === 'lease'",
     "tests": [
-      "test/realm6.test.js"
+      "test/server/realm6.test.js"
     ]
   }
 ]

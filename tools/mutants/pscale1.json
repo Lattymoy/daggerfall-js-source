@@ -1,102 +1,102 @@
 [
   {
     "name": "PSCALE1-health-a-player-off",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "export const PARTY_SCALE_HP_PCT = 50;",
     "new": "export const PARTY_SCALE_HP_PCT = 40;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-damage-a-player-off",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "export const PARTY_SCALE_DAMAGE_PCT = 10;",
     "new": "export const PARTY_SCALE_DAMAGE_PCT = 20;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-a-foe-more-every-player",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "export const PARTY_SCALE_EXTRA_EVERY = 2;",
     "new": "export const PARTY_SCALE_EXTRA_EVERY = 1;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-foes-more-past-the-caps",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "export const PARTY_SCALE_EXTRA_MAX = 3;",
     "new": "export const PARTY_SCALE_EXTRA_MAX = 4;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-party-past-its-seats",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "Math.max(1, Math.min(PARTY_MAX, Math.floor(n)))",
     "new": "Math.max(1, Math.floor(n))",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-remainder-dropped",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  if (key) carry.set(key, Math.max(0, exact - whole));",
     "new": "  if (key) carry.set(key, 0);",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-remainder-lost-to-a-double",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  const whole = Math.floor(exact + 1e-9);   // 1.2 + 0.8",
     "new": "  const whole = Math.floor(exact);   // 1.2 + 0.8",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-health-not-whole",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  const whole = Math.floor(exact + 1e-9);   // 1.2 + 0.8",
     "new": "  const whole = exact;   // 1.2 + 0.8",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-hit-weighed-alone",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  if (!key) return Math.round(damage * f);",
     "new": "  if (!key) return Math.round(damage * partyDamageFactor(n + 1));",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-camp-extras-not-its-own",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "for (let k = 0; k < more && own.length; k++) out.push(own[k % own.length]);",
     "new": "for (let k = 0; k < more && own.length; k++) out.push(own[0]);",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -105,8 +105,8 @@
     "old": "    f.entity.health -= !bypassShield && !_whole && _sharedFoe(f) ? partyFoeLoses(f, healthDamage, fightN(f)) : healthDamage;",
     "new": "    f.entity.health -= healthDamage;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "    f.entity.health -= !bypassShield && !_whole && _sharedFoe(f) ?",
     "new": "    f.entity.health -= !_whole && _sharedFoe(f) ?",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "!!f && f.mobileType !== KNIGHT_CITYWATCH_ID && f.entity?.team !== 'PlayerAlly'",
     "new": "!!f && f.entity?.team !== 'PlayerAlly'",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -135,8 +135,8 @@
     "old": "!!f && f.mobileType !== KNIGHT_CITYWATCH_ID && f.entity?.team !== 'PlayerAlly'",
     "new": "!!f && f.mobileType !== KNIGHT_CITYWATCH_ID",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -145,8 +145,8 @@
     "old": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)))",
     "new": "(!!f.puppet || !(f.placed && !f.site))",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -155,8 +155,8 @@
     "old": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)))",
     "new": "(!!f.puppet || (!isPrivateQuestFoe(f) || !!_qTag(f)))",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -165,8 +165,8 @@
     "old": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)))",
     "new": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !f.placed))",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -175,8 +175,8 @@
     "old": "  const _sharedFoe = (f) => !!_net && !!f &&",
     "new": "  const _sharedFoe = (f) => !!f &&",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -185,8 +185,8 @@
     "old": "(!!f.puppet || ((!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site)))",
     "new": "(!f.puppet && (!isPrivateQuestFoe(f) || !!_qTag(f)) && !(f.placed && !f.site))",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -195,8 +195,8 @@
     "old": "partyHit(calculateAttackDamage(f.entity, playerEntity, {",
     "new": "((d) => d)(calculateAttackDamage(f.entity, playerEntity, {",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -205,8 +205,8 @@
     "old": "  return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit, healFoe,",
     "new": "  return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit: (d) => d, healFoe,",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -215,8 +215,8 @@
     "old": "    foe.entity.health -= !bypassShield && !_whole && _sharedFoe(foe) ? partyFoeLoses(foe, healthDamage, fightN(foe)) : healthDamage;",
     "new": "    foe.entity.health -= healthDamage;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -225,8 +225,8 @@
     "old": "    foe.entity.health -= !bypassShield && !_whole && _sharedFoe(foe) ?",
     "new": "    foe.entity.health -= !_whole && _sharedFoe(foe) ?",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -235,8 +235,8 @@
     "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
     "new": "    return foes.includes(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -245,8 +245,8 @@
     "old": "    if (!f || f.entity?.team === 'PlayerAlly') return false;\n    return isRoomFoe(f) || f._ownFrom",
     "new": "    if (!f) return false;\n    return isRoomFoe(f) || f._ownFrom",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -255,8 +255,8 @@
     "old": "_weighHit(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
     "new": "((x, d) => d)(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -265,8 +265,8 @@
     "old": "_weighHit(shooter, foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {",
     "new": "((x, d) => d)(shooter, foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -275,8 +275,8 @@
     "old": "  function _weighHit(f, dmg) { return f && _sharedFoe(f) ? partyFoeHits(dmg, fightN(f), playerEntity) : dmg; }",
     "new": "  function _weighHit(f, dmg) { return dmg; }",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -285,8 +285,8 @@
     "old": "if (dx * dx + dz * dz <= r2) n++; }",
     "new": "n++; }",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -295,8 +295,8 @@
     "old": "if (hit && _rollsForGroup) {",
     "new": "if (hit) {",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -306,8 +306,8 @@
     "new": "n = 1;",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e WILD-ROAD): the count asked of roadEncounters.js wandererCount",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -316,8 +316,8 @@
     "old": "hit.fixed ? hit.mobileTypes : campMembers(hit.mobileTypes)",
     "new": "hit.fixed ? hit.mobileTypes : hit.mobileTypes",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -326,8 +326,8 @@
     "old": "exteriorFoes.partyHit(calculateAttackDamage(shooter.entity, playerEntity, {",
     "new": "((d) => d)(calculateAttackDamage(shooter.entity, playerEntity, {",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   }
 ]

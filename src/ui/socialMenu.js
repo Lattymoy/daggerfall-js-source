@@ -32,7 +32,7 @@ import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first tou
 
 export const SOCIAL_MENU_STYLE_ID = 'dagger-peermenu-style';
 
-/** The card's sheet: the enhanced tokens (ui/enhancedStyle.js) where the skin's sheet is loaded, a fallback where it
+/** The card's sheet: the enhanced tokens (ui/enhanced/enhancedStyle.js) where the skin's sheet is loaded, a fallback where it
  *  is not - the same pairing ui/chatPanel.js uses, so the two surfaces are one skin.
  *
  *  FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our enhanced version"): the face is the skin's pixel
@@ -43,7 +43,7 @@ export const SOCIAL_MENU_STYLE_ID = 'dagger-peermenu-style';
  *  at once (F opens this over a body while the friends panel is up), and they shared `.dfsocial`, `.dfsocial-name`,
  *  `.dfsocial-btn` and `.dfsocial-btn[disabled]` to the letter. Whichever sheet was injected LAST won: the menu's
  *  ships `pointer-events: none` and `left: 50%`, so an open panel lost its buttons and jumped to the screen centre.
- *  One surface, one prefix - and test/soc5_interact.test.js parses both CSS strings and pins the intersection empty.
+ *  One surface, one prefix - and test/ui/soc5_interact.test.js parses both CSS strings and pins the intersection empty.
  *  The style id moved with it, because two ids that differ only in spelling are the next thing to collide. */
 export const SOCIAL_MENU_CSS = `
 ${PIXELIFY_FIVE_FACE}
@@ -63,7 +63,7 @@ ${PIXELIFY_FIVE_FACE}
 .dfpeer-btn:hover:not([disabled]) { background: var(--brass, #c08a3e); color: var(--ink, #0e1013); }
 /* AUDIT SOC C12: a refused row must still be READ. At opacity .5 the dim reason measured 1.84:1 at 11px against the
    card - under every threshold there is. The opacity is .75 and the reason is its own lighter bone: 4.9:1 composited
-   over the card whether the relief under it is black or bright (the numbers are in test/soc5_interact.test.js). */
+   over the card whether the relief under it is black or bright (the numbers are in test/ui/soc5_interact.test.js). */
 .dfpeer-btn[disabled] { opacity: .75; cursor: default; }
 .dfpeer-btn.cancel { background: none; color: var(--dim, #9a9486); padding-top: 2px; padding-bottom: 2px; min-height: 0; }
 .dfpeer-why { font-size: 11px; color: #c8c2b4; font-style: italic; margin-left: auto; }

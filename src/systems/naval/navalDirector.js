@@ -45,7 +45,7 @@
 // Abecean - are the captain's choice of risk: pirates DEEP_PIRATE_K times as likely and the trade's ships fewer, their
 // classes drawn DEEP_LEVEL levels above the captain's own (brigantines and galleys sooner, a flagship possible), a pirate
 // bold DEEP_BOLD of the time where the coast's are bold BOLD_SHARE, and every hold rolled DEEP_TIER rarity tiers richer
-// (navalHost.js launch, drawHold). The plate says the waters (ui/navalHud.js).
+// (navalHost.js launch, drawHold). The plate says the waters (ui/naval/navalHud.js).
 
 //
 // ETHER-SEA (2026-10-11, the owner: "deadly legendary ships"; bible/03-World/Eltheric-Ocean.md ETHER-SHIPS) - PAST THE VEIL
@@ -59,9 +59,9 @@
 // too.
 
 import { hash32 } from '../../world/spawnedDungeons.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL, SHIP_CLASSES } from './navalShips.js';
-import { HULL_VARIANT_COUNTS } from '../comeSailAwayBoat.js';
+import { HULL_VARIANT_COUNTS } from '../comeSailAway/comeSailAwayBoat.js';
 import { classPower, odds, WARY_ODDS } from './navalAI.js';   // SEA-PEACE: a plunder's merchantman is one her pirate outguns
 import { etherFactionWeights, LEGEND_CHANCE, LEGEND_SALT } from './etherShips.js';   // ETHER-SEA: the Eltheric Ocean's traffic and its legends
 

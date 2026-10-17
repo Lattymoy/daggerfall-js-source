@@ -1,6 +1,6 @@
 // project-dagger entry point.
 // Hand-rolled WebGL2, no framework. Same doctrine as project-final.
-// Desktop-first; touch devices get the ui/touch.js layer (stick +
+// Desktop-first; touch devices get the ui/touch/touch.js layer (stick +
 // drag-look + buttons) speaking the same input language.
 // Scene router: bare = the classic start (Privateer's Hold + chargen);
 // ?interior, ?dungeon=<name>, ?world, ?exterior (or ?region/?loc)
@@ -31,7 +31,7 @@ import { windowEmissionRGB } from './render/windowEmission.js';
 // routes - and the pins that hold them (classicstart, hard2s, macn) -
 // read as before. The hosts carry no import-time side effects (nothing
 // at their top level runs), so evaluating them later changes nothing
-// but WHEN. test/boot1.test.js walks this file's static graph and holds
+// but WHEN. test/scenes/boot1.test.js walks this file's static graph and holds
 // that no host is on it, transitively - a pin on the regex alone would
 // pass the day something else on the entry imported a host for us.
 const bootExterior = (...a) => import('./scenes/exterior.js').then((m) => m.bootExterior(...a));
@@ -45,7 +45,7 @@ import { mountFpsCounter } from './ui/fpsCounter.js';   // FPS1: the counter, ov
 import { installFramePacer } from './systems/frameCap.js';   // FPS-VSYNC (AUDIT 28e): the desktop app's lifted wait, paced by the cap
 import { setScreenshotCanvas } from './ui/screenshot.js';   // KB1: the PrintScreen action's canvas - the key itself is routed by the hosts (AUDIT KB1)
 import { getPref } from './systems/uiPrefs.js';   // FPS1: its switch
-import { publishBootParams, BOOT_DOOR_KEYS } from './systems/onlineLane.js';   // MAC-N3: the boot's params are the URL, or the online lane reads nothing
+import { publishBootParams, BOOT_DOOR_KEYS } from './systems/online/onlineLane.js';   // MAC-N3: the boot's params are the URL, or the online lane reads nothing
 // The deployed site is redeployed several times a day and every deploy
 // renames chunks, so a page held open across one is holding a map of a
 // build that is gone. Recoverable, and the law of that is its own file.
@@ -179,15 +179,15 @@ async function boot() {
     // every door below sets or deletes each one again (F12's law).
     for (const k of BOOT_DOOR_KEYS) params.delete(k);
     publishBootParams(params);
-    const { runEnhancedMenu } = await import('./ui/enhancedMenu.js');
-    const { runCinematicFrontDoor } = await import('./ui/introScreen.js');
+    const { runEnhancedMenu } = await import('./ui/enhanced/enhancedMenu.js');
+    const { runCinematicFrontDoor } = await import('./ui/intro/introScreen.js');
     // PAD-DOOR (2026-09-27, Discord - an AYN Thor: "unable to select online, load game anything"): the intro, the menu
-    // and its windows answer a controller - the d-pad moves, A presses, B backs out (ui/menuPad.js) - until a game is
+    // and its windows answer a controller - the d-pad moves, A presses, B backs out (ui/menu/menuPad.js) - until a game is
     // chosen, when the scene's own pad layer takes over.
     // PAD-CURSOR: and the stick is the game's own cursor here - its law and the gauntlet handed in, because the
     // door's loop is a leaf the desktop launcher serves alone (DA12)
     const [{ attachMenuPad }, { padDoorCursorLaw }, { GAUNTLET_POINT }] = await Promise.all([
-      import('./ui/menuPad.js'), import('./systems/padCursor.js'), import('./ui/plusCursor.js'),
+      import('./ui/menu/menuPad.js'), import('./systems/padCursor.js'), import('./ui/plus/plusCursor.js'),
     ]);
     const detachMenuPad = attachMenuPad({ cursor: { law: padDoorCursorLaw, art: GAUNTLET_POINT } });
     // SND2: the door's presses sound as the game's do - the click's sound bank read through this file's data gate, the
@@ -228,7 +228,7 @@ async function boot() {
     else params.delete('online');
     // SLOTS1: the Load and Online panes pick a slot; the boot's load arm
     // reads the key (world.js, the SAV4 arm). The same SET-or-DELETE law.
-    const { takePickedSaveKey, takePickedRealmId } = await import('./ui/enhancedMenu.js');
+    const { takePickedSaveKey, takePickedRealmId } = await import('./ui/enhanced/enhancedMenu.js');
     const picked = takePickedSaveKey();
     if (choice === 'load' && picked != null) params.set('loadkey', String(picked));   // REALM P1.3: never online - a local slot is not the realm's
     else params.delete('loadkey');
@@ -242,7 +242,7 @@ async function boot() {
     else params.delete('realmnew');
     // HOUSE-WAITS (FIELD BUGS 2026-10-09f): a waiting house answered on the Online page - its member is born online
     // through the world host's own birth door (`legacyborn`, in the seat the line keeps). The same SET-or-DELETE law.
-    const { takePickedLegacyBirth } = await import('./ui/enhancedMenu.js');
+    const { takePickedLegacyBirth } = await import('./ui/enhanced/enhancedMenu.js');
     const legacyBirth = choice === 'online-new' ? takePickedLegacyBirth() : null;
     if (legacyBirth) {
       params.set('legacyborn', String(legacyBirth.personId));
@@ -275,7 +275,7 @@ async function boot() {
     if (legacyBirth) params.delete('classic');
     // MAC-N3: THE DECIDED PARAMS ARE THE URL before the world boots.
     // `online` above was set on this in-memory copy alone, and the
-    // online lane (systems/onlineLane.js isOnlinePage - the read under
+    // online lane (systems/online/onlineLane.js isOnlinePage - the read under
     // uiSkin, getPref and modSetting) reads location.search: it never
     // saw a Play Online session, so the skin stayed the player's
     // stored choice and a Classic player had no chat.
@@ -374,7 +374,7 @@ const rememberReload = () => {
 // BOOT1: NO DOCUMENT, NO BOOT. This entry loads in node now - the four
 // hosts were the static imports that used to reject it at link time
 // (world.js's import.meta.glob), and with those behind doors the body
-// below RUNS under test/moduleload_smoke.test.js. boot() then reached
+// below RUNS under test/tree/moduleload_smoke.test.js. boot() then reached
 // for `document`, rejected, and its own catch reached for `document`
 // again to report it - an unhandled rejection after the test ended,
 // for a page that does not exist. A runtime with no document has

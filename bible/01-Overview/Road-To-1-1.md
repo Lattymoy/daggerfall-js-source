@@ -119,7 +119,7 @@ in the wave reports.
   over it (`ui/prisonScreen.js:"export const COURT_IMG"`, `scenes/arrestFlow.js:"---- ROAD-B B5: THE"`), and
   the prison screen's held-Back accelerator, DFU's raw Escape poll
   rather than a binding (`ui/prisonScreen.js:"The held-Back accelerator"`). Both pinned by
-  `test/roadb_court_backdrop.test.js` (10).
+  `test/scenes/roadb_court_backdrop.test.js` (10).
 
 ## Wave C - the two arcs - CLOSED 2026-09-02
 
@@ -136,9 +136,9 @@ rotation-sign inversion and the injected-vs-default water tint).
   the outline law, Enabled=false not drawn, the one-row wheel) and the
   pause window's save/load as a PUSH on B1's stack.
 - **C2 the automap pair**, ten judged stages in two flights. Flight 1
-  cut the shared halves (`systems/automapModel.js` + the AABB-shape
+  cut the shared halves (`systems/automap/automapModel.js` + the AABB-shape
   fix that had left the dungeon reveal probe dead, the renderer's
-  panel bracket, `ui/automapCamera.js` pure, `ui/automapChrome.js`).
+  panel bracket, `ui/automap/automapCamera.js` pure, `ui/automap/automapChrome.js`).
   Flight 2 built the windows: S5 the native dungeon window (UNLIT
   geometry pass, DFU's controls and hotkey table, the OnPush/OnPop
   handshake), S6 the shader's above-slice half with the water tint
@@ -154,7 +154,7 @@ rotation-sign inversion and the injected-vs-default water tint).
   ROAD-E E3** - that header narrates both closures
   (`ui/exteriorAutomapWindow.js:"ROAD-D D5 CLOSED"` and `ui/exteriorAutomapWindow.js:"ROAD-E E3 CLOSED"`). CORRECTED with the
   strike: the shipped tooltip table is TEN rects
-  (`ui/automapText.js:"export const EXTERIOR_AUTOMAP_TOOLTIPS"`) - nine buttons and the compass PANEL - not
+  (`ui/automap/automapText.js:"export const EXTERIOR_AUTOMAP_TOOLTIPS"`) - nine buttons and the compass PANEL - not
   eight; the header says TEN too.
 
 The whole of Waves B5, C and D - plus the bow salvage and the incident
@@ -222,10 +222,10 @@ What remains after Wave D and the closeout tail (the spell-hand port,
 flags of `Home.md`. Wave E retired SEVEN of them (E2, landing last, took the chargen picker's scroll-bar hit) - one lane apiece, each
 blind to the others until the squash: E6 took the spell hands' release
 frame (`combat/fpsSpellCasting.js:"animation - and its"`) and the clear-path term
-(`characters/enemyCasting.js:"BEFORE the 1/40 roll"`), closing section C's `playSound` row
+(`characters/enemy/enemyCasting.js:"BEFORE the 1/40 roll"`), closing section C's `playSound` row
 with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:"E4 (2026-09-02) RETIRED"`);
-E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:"ordering: the scan"`);
-E5 took the docked bar's occlusion (`ui/hudLarge.js:"THE DOCKED BAR SHRINKS"`); and E1
+E7 took `GetValue`'s empty-string arm (`systems/talk/talkMacros.js:"ordering: the scan"`);
+E5 took the docked bar's occlusion (`ui/hud/hudLarge.js:"THE DOCKED BAR SHRINKS"`); and E1
 narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:"rect and was being"` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
@@ -256,7 +256,7 @@ the same-interior move and the whole cross-context arm INSIDE the
 loaded pixel all ship). ARENA2 (2026-10-02) added one by name: the `?exterior` host runs no
 bout driver (`scenes/exterior.js`, the Arena's bouts are the world
 host's); ARENA-FIX (2026-10-02) wired that host's driver and closed it. AUDIT TELL (2026-10-04) added one by name: the
-dungeon stream carries none of the street record's `z`, `nm`, `yd`, `ex` or `sp` (`scenes/dungeonContext.js`). LEGACY1 (2026-10-05) added one by name: the fixed city keeps DFU's death - no streamer to birth an heir into (`scenes/world.js`, Legacy-Arc.md section 3). CARDS2 (2026-10-07) added one by name: the card table's one nameable model id, the tavern blocks' other tables waiting on the census (`world/cardTables.js`, Tavern-Cards.md section 11); AUDIT CARDS (2026-10-07) one more: the sprite lane standing at its seat (`player/seatPose.js`, Tavern-Cards.md section 12, CARDS2c). TAVERN-TABLE (2026-10-08) retired CARDS2's: the card table is a prop of its own (Tavern-Cards.md section 28). RW1 (2026-10-09) added one by name: which interior texels are glass, read off 0xff in a building interior's own records (`world/interiorGlass.js`, Real-Windows.md). GLASS-ALL (2026-10-11) retired it: a real ARENA2 read, the rule rewritten off it (Real-Windows.md GLASS-ALL). MERCHANT-YARDS (2026-10-10) added one by name: the `?exterior` bench stands no Stable and no Wagon Yard (`scenes/merchantYardsHost.js`, Merchant-Yards.md). WARDEN1 (2026-10-10) added one by name: the `?exterior` bench runs no town watch (`scenes/wagonWardenHost.js`, Wagon-Warden.md). SHIPYARDS (2026-10-11) added one by name: the `?exterior` bench stands no port (`scenes/portHost.js`, Shipyards.md). POI-2 (2026-10-14) added one by name: the `?exterior` bench has no POI feed (`scenes/poiHost.js`, POI-Editor-Arc.md). AUDIT WAGONS3 (2026-10-10) stood WAGONS3's four own limits at their lines - the Small Cart's driver in the saddle (`world/wagonModels.js`), Eye Of The Beholder's driver standing (`player/mwView.js`), a peer's pair drawn whole for want of a count and the harness's ends on a picture (`scenes/horseCartPool.js`), Wagons.md section WAGONS3. That leaves **19** open flags as
+dungeon stream carries none of the street record's `z`, `nm`, `yd`, `ex` or `sp` (`scenes/dungeonContext.js`). LEGACY1 (2026-10-05) added one by name: the fixed city keeps DFU's death - no streamer to birth an heir into (`scenes/world.js`, Legacy-Arc.md section 3). CARDS2 (2026-10-07) added one by name: the card table's one nameable model id, the tavern blocks' other tables waiting on the census (`world/card/cardTables.js`, Tavern-Cards.md section 11); AUDIT CARDS (2026-10-07) one more: the sprite lane standing at its seat (`player/seatPose.js`, Tavern-Cards.md section 12, CARDS2c). TAVERN-TABLE (2026-10-08) retired CARDS2's: the card table is a prop of its own (Tavern-Cards.md section 28). RW1 (2026-10-09) added one by name: which interior texels are glass, read off 0xff in a building interior's own records (`world/interior/interiorGlass.js`, Real-Windows.md). GLASS-ALL (2026-10-11) retired it: a real ARENA2 read, the rule rewritten off it (Real-Windows.md GLASS-ALL). MERCHANT-YARDS (2026-10-10) added one by name: the `?exterior` bench stands no Stable and no Wagon Yard (`scenes/merchantYardsHost.js`, Merchant-Yards.md). WARDEN1 (2026-10-10) added one by name: the `?exterior` bench runs no town watch (`scenes/wagon/wagonWardenHost.js`, Wagon-Warden.md). SHIPYARDS (2026-10-11) added one by name: the `?exterior` bench stands no port (`scenes/portHost.js`, Shipyards.md). POI-2 (2026-10-14) added one by name: the `?exterior` bench has no POI feed (`scenes/poiHost.js`, POI-Editor-Arc.md). AUDIT WAGONS3 (2026-10-10) stood WAGONS3's four own limits at their lines - the Small Cart's driver in the saddle (`world/wagonModels.js`), Eye Of The Beholder's driver standing (`player/mwView.js`), a peer's pair drawn whole for want of a count and the harness's ends on a picture (`scenes/horseCartPool.js`), Wagons.md section WAGONS3. That leaves **19** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch
@@ -353,8 +353,8 @@ The two things the Wave G lanes wrote down at their sites are closed:
   had no reader in either host - both skip the roll now (the port has
   no ship state to ask for the other half).
 
-Pins in `test/exteriorfoes.test.js` (the loop's shape, both swimming
-gates, both callers, the watch route); `test/restwhere.test.js` names
+Pins in `test/scenes/exteriorfoes.test.js` (the loop's shape, both swimming
+gates, both callers, the watch route); `test/systems/rest/restwhere.test.js` names
 both homes of the catch-up. Open flags: 7.
 
 Its review (two lenses, two refuters each; 3 confirmed, 0 refuted):
@@ -377,7 +377,7 @@ its own adversarial reviewer and a fixup round (9 review findings, all
 confirmed and applied; nothing refuted), integrated in order and
 squashed one commit per lane.
 
-- **H1 the enemy arrow origin** (`characters/enemyTargets.js`,
+- **H1 the enemy arrow origin** (`characters/enemy/enemyTargets.js`,
   `scenes/dungeonContext.js`, `scenes/exteriorFoes.js`) - both archer
   pools loosed from a hardcoded `feet + 1.2`. `GetAimPosition`'s
   non-player arrow arm is the caster transform + forward * 0.6 + the
@@ -444,7 +444,7 @@ squashed one commit per lane.
   the balanced braces now. `LightningFlash`'s `timeScale` option existed
   at five sites and had never been built off 1; pinned against the mod's
   own `LightningFlash.cs:52-79` at both the divide and the multiply.
-- **H8 the touch code-lift guard** (`ui/touch.js`, a TI1 departure) -
+- **H8 the touch code-lift guard** (`ui/touch/touch.js`, a TI1 departure) -
   the held/held case AUDIT 62 named was already closed by F8's review
   (`liveNeeds()` covers both directions, a direct shared code included;
   pinned both ways now). The case still OPEN was the MOMENTARY one: the
@@ -471,8 +471,8 @@ maps have no consumer yet; and nothing here has been seen in a browser -
 the loose PNG landing the right way up on a flat and a tap on hardware
 are the two surfaces that want eyes.
 
-Pins: `test/roadh_missiles.test.js` (12), `test/roadh_seasons_tex.test.js`
-(5), `test/roadh_residue.test.js` (8), `test/roadh_tail.test.js` (4);
+Pins: `test/scenes/roadh_missiles.test.js` (12), `test/systems/roadh_seasons_tex.test.js`
+(5), `test/ui/touch/roadh_residue.test.js` (8), `test/scenes/roadh_tail.test.js` (4);
 every one checked dead under a mutation that reverts its law. Open
 flags: 7.
 
@@ -488,7 +488,7 @@ flags: 7.
   two outdoor hosts compose the union of those answers once each rather
   than at every gate. What is left of the watch is that union: a fifth
   host still has to say which stacks are live over its frame. Swept by
-  `test/roadb_host_pause.test.js` (no file outside the module decides a
+  `test/scenes/roadb_host_pause.test.js` (no file outside the module decides a
   pause by counting depth; the callers of `paused()` are exactly the
   stack owners).
 - The FLAGGED/INTERIM ledger (Home.md open flags) - items above

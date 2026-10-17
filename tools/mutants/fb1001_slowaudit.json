@@ -5,7 +5,7 @@
     "old": "      if (n) { const d = vx * n[0] + vz * n[1]; if (d > 0) { vx -= d * n[0]; vz -= d * n[1]; } }",
     "new": "",
     "tests": [
-      "test/fb1001_slowaudit.test.js"
+      "test/player/fb1001_slowaudit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        if (l > 1e-3) this._slowPress = [lx / l, lz / l];",
     "new": "",
     "tests": [
-      "test/fb1001_slowaudit.test.js"
+      "test/player/fb1001_slowaudit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (this._slowHeld > STEP_OFFSET) {",
     "new": "      if (true) {",
     "tests": [
-      "test/fb1001_slowaudit.test.js"
+      "test/player/fb1001_slowaudit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      else { this._slowHeld = 0; this._slowPress = null; }   // nothing holds it up",
     "new": "      else { }   // nothing holds it up",
     "tests": [
-      "test/fb1001_slowaudit.test.js"
+      "test/player/fb1001_slowaudit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        if (ax * ax + az * az < vx * vx + vz * vz - 1e-6) { this._airVelX = ax; this._airVelZ = az; }\n      }\n    } else",
     "new": "        if (ax * ax + az * az < vx * vx + vz * vz - 1e-6) { this._airVelX = 0; this._airVelZ = 0; }\n      }\n    } else",
     "tests": [
-      "test/fb1001_slowaudit.test.js"
+      "test/player/fb1001_slowaudit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        || (airborneGraspWall && c.slowFalling)",
     "new": "        || (airborneGraspWall && c.slowFalling) || (c.falling && c.slowFalling)",
     "tests": [
-      "test/fb1001_slowaudit.test.js"
+      "test/player/fb1001_slowaudit.test.js"
     ]
   }
 ]

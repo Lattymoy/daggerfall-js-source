@@ -1,22 +1,22 @@
 [
   {
     "name": "RLFIX-spot-host",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "      if (r.point && r.i >= r.legs.length - 1) return !!deps.onRoad?.();\n",
     "new": "",
     "tests": [
-      "test/ratelawfix.test.js",
-      "test/travel_speed_preference.test.js"
+      "test/systems/travel/ratelawfix.test.js",
+      "test/systems/travel/travel_speed_preference.test.js"
     ]
   },
   {
     "name": "RLFIX-legless",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "      if (r.point && r.i >= r.legs.length - 1) return !!deps.onRoad?.();",
     "new": "      if (r.point && r.legs.length && r.i >= r.legs.length - 1) return !!deps.onRoad?.();",
     "tests": [
-      "test/ratelawfix.test.js",
-      "test/travel_speed_preference.test.js"
+      "test/systems/travel/ratelawfix.test.js",
+      "test/systems/travel/travel_speed_preference.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "travelAsked = n; if (!held || n < worldTimeScale()) setWorldTimeScale(n); },",
     "new": "travelAsked = n; void held; setWorldTimeScale(n); },",
     "tests": [
-      "test/ratelawfix.test.js",
-      "test/travel_speed_preference.test.js"
+      "test/systems/travel/ratelawfix.test.js",
+      "test/systems/travel/travel_speed_preference.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "travelAsked = n; if (!held || n < worldTimeScale()) setWorldTimeScale(n); },",
     "new": "travelAsked = n; if (!held) setWorldTimeScale(n); },",
     "tests": [
-      "test/ratelawfix.test.js",
-      "test/travel_speed_preference.test.js"
+      "test/systems/travel/ratelawfix.test.js",
+      "test/systems/travel/travel_speed_preference.test.js"
     ]
   }
 ]

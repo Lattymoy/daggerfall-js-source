@@ -20,7 +20,7 @@
 // large" - gunLab.test.js pins it). Its slots drew initials for the dye's reason (systems/textureReplacement.js
 // standInDye), never the picture's.
 //
-// DETERMINISTIC: the same doll layer in, the same pixels out - nothing random, nothing timed. test/thunderlockart.test.js
+// DETERMINISTIC: the same doll layer in, the same pixels out - nothing random, nothing timed. test/systems/thunderlockart.test.js
 // runs `gunIcons` over the committed doll layer and compares the result to the committed PNGs PIXEL FOR PIXEL (the
 // MW bake's law: a derivation you cannot re-run is a claim you cannot check; pixels, not bytes, so a zlib build cannot
 // fail it).

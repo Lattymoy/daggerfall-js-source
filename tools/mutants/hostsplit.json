@@ -1,20 +1,20 @@
 [
   {
     "name": "HOST-SPLIT-a-ceiling-under-its-host",
-    "file": "test/hostceiling.test.js",
-    "old": "['src/scenes/world.js', 'bootWorld', 21_741, MODULE]",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "['src/scenes/world.js', 'bootWorld', 21_676, MODULE]",
     "new": "['src/scenes/world.js', 'bootWorld', 21_400, MODULE]",
     "tests": [
-      "test/hostceiling.test.js"
+      "test/scenes/hostceiling.test.js"
     ]
   },
   {
     "name": "HOST-SPLIT-a-ceiling-left-high",
-    "file": "test/hostceiling.test.js",
+    "file": "test/scenes/hostceiling.test.js",
     "old": "['server/src/index.js', '_message', 1_093, METHOD]",
     "new": "['server/src/index.js', '_message', 2_000, METHOD]",
     "tests": [
-      "test/hostceiling.test.js"
+      "test/scenes/hostceiling.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "for (let i = Math.max(c.start, node.start); i < Math.min(c.end, node.end); i++) if (chars[i - node.start] !== '\\n') chars[i - node.start] = ' ';",
     "new": "for (let i = Math.max(c.start, node.start); i < Math.min(c.end, node.end); i++) if (chars[i - node.start] !== '\\n') chars[i - node.start] = chars[i - node.start];",
     "tests": [
-      "test/hostceiling.test.js"
+      "test/scenes/hostceiling.test.js"
     ]
   }
 ]

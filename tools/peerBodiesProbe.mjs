@@ -38,7 +38,7 @@
 //
 //   node tools/peerBodiesProbe.mjs
 // ═══════════════════════════════════════════════════════════════════
-import { PeerBodies, BODIES_MAX, POSE_CADENCE } from '../src/net/peerBodies.js';
+import { PeerBodies, BODIES_MAX, POSE_CADENCE } from '../src/net/peer/peerBodies.js';
 import { createFpArm } from '../src/combat/fpArm.js';
 import { fixtureBodyDeps, countingRenderer } from '../test/fixtures/mw/bodyRig.mjs';   // PEER-CADENCE: the fixture rig, shared with the pins
 

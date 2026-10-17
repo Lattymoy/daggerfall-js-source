@@ -5,7 +5,7 @@
 // ROAD-E E8 PORTED IT ACROSS THE WINDOW. This probe was written
 // against the KEYED talk window and asserted on a text option row
 // naming the tone, read out of `overlayOptions`. B5-6's native window
-// (ui/nativeTalk.js) draws the tone as ART - three 6x6 radios at
+// (ui/native/nativeTalk.js) draws the tone as ART - three 6x6 radios at
 // (258,18/28/38), the selection a flat toggleColor fill (:63-65,
 // :545-547) - so there IS no text row to find and the probe failed on
 // a window that was working. The DRIVE is unchanged, because the keys

@@ -58,7 +58,7 @@
 //    the same door.
 //
 // Everything else is the mod's, and is pinned against the Lua in
-// test/orl1_leveling.test.js.
+// test/systems/orl1_leveling.test.js.
 
 import { modSetting } from './modSettings.js';
 import { STAT_KEYS_ORDER, hitPointsPerLevelUp } from './chargen.js';

@@ -1,72 +1,72 @@
 [
   {
     "name": "AUDIT-PSCALE1-fighters-window-off",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "export const PARTY_FIGHT_WINDOW_MS = 30_000;",
     "new": "export const PARTY_FIGHT_WINDOW_MS = 60_000;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "AUDIT-PSCALE1-fighters-never-lapse",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "    if (now - at <= PARTY_FIGHT_WINDOW_MS) n++;\n    else m.delete(who);",
     "new": "    n++;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "AUDIT-PSCALE1-fighters-count-blows",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  m.set(who, now);\n}",
     "new": "  m.set(`${String(who)}:${now}`, now);\n}",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "AUDIT-PSCALE1-remainder-shared-across-foes",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  const exact = amount / t + (key ? carry.get(key) ?? 0 : 0);",
     "new": "  const exact = amount / t + (key ? carry.get(_carry) ?? 0 : 0);",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "AUDIT-PSCALE1-heal-unweighed",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  return weighDown(_healCarry, _obj(foe), amount, t);",
     "new": "  return amount;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "AUDIT-PSCALE1-hit-carry-lost",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  _hitCarry.set(key, Math.max(0, exact - whole));",
     "new": "  _hitCarry.set(key, 0);",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
     "name": "AUDIT-PSCALE1-kill-mark-kept",
-    "file": "src/systems/partyScale.js",
+    "file": "src/systems/party/partyScale.js",
     "old": "  _whole.delete(key);\n  return true;",
     "new": "  return true;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -75,8 +75,8 @@
     "old": "    if (fromPlayer) noteFighter(f, peer ? peerId : PARTY_ME, _now());",
     "new": "    if (fromPlayer && !peer) noteFighter(f, PARTY_ME, _now());",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -85,8 +85,8 @@
     "old": "{ const n = fightN(f); if (n > 1) r.n = n; }   // AUDIT PSCALE1: how many fight it - every reader",
     "new": "{ const n = fightN(f); if (n > 99) r.n = n; }   // AUDIT PSCALE1: how many fight it - every reader",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -95,8 +95,8 @@
     "old": "if (r.d !== 1) f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the owner's count",
     "new": "if (r.d !== 1) f._fightN = 1;   // AUDIT PSCALE1: the owner's count",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -105,8 +105,8 @@
     "old": "    const _whole = whole || takeWholeBlow(f.entity);",
     "new": "    const _whole = false;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "          ...(_whole ? { z: 1 } : {}) });",
     "new": "          ...({}) });",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "peerId: from, whole: data.z === 1, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });",
     "new": "peerId: from, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ],
     "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
@@ -136,8 +136,8 @@
     "old": "    const h = !f.puppet && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
     "new": "    const h = n;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -146,8 +146,8 @@
     "old": "      registerFoeDoor(entity, (n) => damageFoe(f, n, null, null, { fromPlayer: true, kind: 'spell' }));",
     "new": "      void registerFoeDoor;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -156,8 +156,8 @@
     "old": "pendingFeet: () => spawning.map((p) => p.feet),",
     "new": "pendingFeet: () => [],",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -166,8 +166,8 @@
     "old": "    if (fromPlayer) noteFighter(foe, peer ? peerId : PARTY_ME, performance.now());",
     "new": "    if (fromPlayer && !peer) noteFighter(foe, PARTY_ME, performance.now());",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -176,8 +176,8 @@
     "old": "  function fightN(f) { return _runsFoe(f) ? (f._fightN = foeFighters(f, performance.now())) : (f._fightN ?? 1); }",
     "new": "  function fightN(f) { return _runsFoe(f) ? (f._fightN = foeFighters(f, performance.now())) : 1; }",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -186,8 +186,8 @@
     "old": "    const h = _runsFoe(f) && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
     "new": "    const h = n;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -196,8 +196,8 @@
     "old": "    foe.entity.health -= !bypassShield && !_whole && _sharedFoe(foe) ?",
     "new": "    foe.entity.health -= !bypassShield && _sharedFoe(foe) ?",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -206,8 +206,8 @@
     "old": "peerId: id, whole: data.z === 1, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });",
     "new": "peerId: id, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ],
     "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
@@ -217,8 +217,8 @@
     "old": "    if (!f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 1) r.n = n; }",
     "new": "    if (!f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 99) r.n = n; }",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -227,8 +227,8 @@
     "old": "sinks.hurt(left, { whole: true });",
     "new": "sinks.hurt(left);",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -237,8 +237,8 @@
     "old": "    sinks?.hurt?.(entity.health, { whole: true });",
     "new": "    sinks?.hurt?.(entity.health);",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -247,8 +247,8 @@
     "old": "        markWholeBlow(target);   // AUDIT PSCALE1 DOORS-1",
     "new": "        void markWholeBlow;   // AUDIT PSCALE1 DOORS-1",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -257,8 +257,8 @@
     "old": "  if (door) door(reflected);\n  else attacker.health",
     "new": "  if (false) door(reflected);\n  else attacker.health",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -267,8 +267,8 @@
     "old": "const _rollsForGroup = span <= 0 || !!playerEntity.isResting || amGroupRollOwner(",
     "new": "const _rollsForGroup = span <= 0 || amGroupRollOwner(",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -277,8 +277,8 @@
     "old": "amGroupRollOwner(online?.id ?? null, player.feetAt(), partyNear());",
     "new": "amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear());",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -288,8 +288,8 @@
     "new": "",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e WILD-ROAD): the count's one home is roadEncounters.js wandererCount",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -298,8 +298,8 @@
     "old": "  const _placingPool = () => [...exteriorFoePool(), ...exteriorFoes.pendingFeet().map((feet) => ({ feet }))];",
     "new": "  const _placingPool = () => [...exteriorFoePool()];",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -308,8 +308,8 @@
     "old": "      if (!online.visible(p)) continue;   // AUDIT PSCALE1 NET-2",
     "new": "      if (!online.visible(p, performance.now())) continue;   // AUDIT PSCALE1 NET-2",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -318,8 +318,8 @@
     "old": "Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party",
     "new": "party",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -328,8 +328,8 @@
     "old": "    const near = online?.room && isCellRoom(online.room) && (modes?.mode ?? 'exterior') === 'exterior' ? (peersNear() ?? []) : [];\n    if (!near.length) return 0;\n    const heirOf = (f) => { if (f.entity?.team",
     "new": "    const near = online?.room ? (peersNear() ?? []) : [];\n    if (!near.length) return 0;\n    const heirOf = (f) => { if (f.entity?.team",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -338,8 +338,8 @@
     "old": "    onPreTransition: () => { const n = handOverFoes();",
     "new": "    onPreTransition: () => { const n = 0;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -348,8 +348,8 @@
     "old": "    host.onPreTransition?.();   // AUDIT PSCALE1 NET-3: my foes to the players outside, before the door takes me\n    host.horseCart?.()?.handlePreTransition({ type: 'ToBuildingInterior'",
     "new": "    host.horseCart?.()?.handlePreTransition({ type: 'ToBuildingInterior'",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -358,8 +358,8 @@
     "old": "    if (!taken) rollers.push(p);",
     "new": "    if (!taken) rollers.push(p); else return false;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -368,8 +368,8 @@
     "old": "export const CELL_LOOSE_PUPPETS = 4;",
     "new": "export const CELL_LOOSE_PUPPETS = 0;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   },
   {
@@ -378,8 +378,8 @@
     "old": "  if (r.n !== undefined) { if (!Number.isInteger(r.n) || r.n < 2 || r.n > PARTY_MAX) return null; out.n = r.n; }",
     "new": "  if (r.n !== undefined) out.n = r.n;",
     "tests": [
-      "test/pscale1.test.js",
-      "test/auditpscale1.test.js"
+      "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
     ]
   }
 ]

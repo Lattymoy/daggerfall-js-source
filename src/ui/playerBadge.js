@@ -170,7 +170,7 @@ const OBLIVION_ABYSS = Object.freeze([0.302, 0.102, 0.580, 1]);   // #4d1a94
 
 /** PRIMARCH (2026-10-04, GA00250, relayed by the owner: "the title will be Primarch, the color will be that light gold
  *  color that you guys use in some places in the game menu", over a screenshot of their own name in the pause menu's
- *  pixel face - "that color"). That is #d8cfae: the pixel menu's text (ui/enhancedStyle.js `.px-mname`, the name in
+ *  pixel face - "that color"). That is #d8cfae: the pixel menu's text (ui/enhanced/enhancedStyle.js `.px-mname`, the name in
  *  the screenshot, and the menu's rows and the talk window's), sampled off the screenshot's letters at #d4ccb0 through
  *  its JPEG. ONE colour, as asked - no gradient; a one-colour title wears every face's black text shadow, and it read
  *  on all five grounds in Chromium at 13 to 64 px, snow included. A pin holds it to the menu's own rule. */
@@ -187,7 +187,7 @@ export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);   // #a34
 
 /** SD9b (2026-10-07, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md section 11): HOURBREAKER - the
  *  Brass Remnant's title, one kill in four on its first write. Drawn in the Hour's own colours: the Remnant's brass into
- *  its bar's gold (ui/gateBossBar.js's brass theme, `.wb-boss-name`) into the light of its heart; its one colour the
+ *  its bar's gold (ui/gate/gateBossBar.js's brass theme, `.wb-boss-name`) into the light of its heart; its one colour the
  *  bar's gold, for a face that draws no gradient - yellower and darker than the Founder's, warmer than the Primarch's. */
 export const HOUR_BRASS = Object.freeze([0.71, 0.525, 0.184, 1]);   // #b5862f
 export const HOUR_GOLD = Object.freeze([0.91, 0.753, 0.376, 1]);    // #e8c060 - SD9c: The Turning Hour's light (render/auraRing.js TURNING_RGB reads all three from here)
@@ -561,7 +561,7 @@ export function glyphBadges(peer) {
 
 /** ═══ ACC3c: THE COLOURS AS A STYLESHEET ═════════════════════════
  *
- * `ui/enhancedAccount.js` may not style itself - a pin holds it, and
+ * `ui/enhanced/enhancedAccount.js` may not style itself - a pin holds it, and
  * enhancedStyle.js's own header says why: two copies of a design
  * language is how the front door and the rooms behind it drift apart.
  * So the card writes a CLASS and the skin carries the colour, and the
@@ -590,7 +590,7 @@ export const badgeCss = () => [
   // SHADOW-FANG: a gradient title's word (the card wraps it in .acttitleword) - the button keeps the plain colour
   ...TITLES.filter((t) => TITLE_GRADIENT[t]).map((t) => `.card button.acttitle.${badgeClass('tl', t)} .acttitleword { ${wordCss(t)} }`),
   ...GLYPHS.map((g) => `.card .acctglyph.${badgeClass('gl', g)} .acctglyphart { color: ${cssRgba(GLYPH_RGBA[g])}; }`),
-  // PROFILE-MENU: the title the profile's plate says it wears (ui/enhancedAccount.js plateFacts) - the button's colour,
+  // PROFILE-MENU: the title the profile's plate says it wears (ui/enhanced/enhancedAccount.js plateFacts) - the button's colour,
   // and a gradient title's word painted as the button's is
   ...TITLES.map((t) => `.card .acctworntitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),
   ...TITLES.filter((t) => TITLE_GRADIENT[t]).map((t) => `.card .acctworntitle.${badgeClass('tl', t)} .acctwornword { ${wordCss(t)} }`),

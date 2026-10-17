@@ -1,11 +1,11 @@
 [
  {
   "name": "F1-latch-dropped",
-  "file": "src/combat/weaponWidget.js",
+  "file": "src/combat/weapon/weaponWidget.js",
   "old": "      if (!reversed && (recover || w.hasCurrentAttackHit)) {\n        reversed = true;\n        while (w.currentFrame > 0) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; w.currentFrame -= 1; updateWeapon(); yield tickTime; }\n        continue;\n      }",
   "new": "      if (recover || w.hasCurrentAttackHit) {\n        while (w.currentFrame > 0) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; w.currentFrame -= 1; updateWeapon(); yield tickTime; }\n      }",
   "tests": [
-   "test/ww1_weaponwidget.test.js"
+   "test/combat/weapon/ww1_weaponwidget.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "new": "",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "new": "          if (b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "new": "          if (b.noShadow || b.castOnly || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "new": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) { this.stats.culled++; continue; }",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "export const SHADOW_NO_CAST_ARCHIVES = Object.freeze(new Set([216]));",
   "new": "export const SHADOW_NO_CAST_ARCHIVES = Object.freeze(new Set([210]));",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "      pile.batch.noShadow = true;",
   "new": "",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -68,9 +68,9 @@
   "old": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
   "new": "    if (d < 1.5 || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
   "tests": [
-   "test/lightnear1.test.js",
-   "test/bugs5_field.test.js",
-   "test/el2_shadows.test.js"
+   "test/render/lightnear1.test.js",
+   "test/render/bugs5_field.test.js",
+   "test/render/el2_shadows.test.js"
   ]
  },
  {
@@ -79,7 +79,7 @@
   "old": "  if (abs(c0.w - uPrevProjInfo.w / (z0 + uPrevProjInfo.z)) > tol) return 1.0;",
   "new": "",
   "tests": [
-   "test/el8_contact.test.js"
+   "test/render/el8_contact.test.js"
   ]
  },
  {
@@ -88,7 +88,7 @@
   "old": "  if (uv0.x < 0.0 || uv0.x > 1.0 || uv0.y < 0.0 || uv0.y > 1.0) return 1.0;",
   "new": "",
   "tests": [
-   "test/el8_contact.test.js"
+   "test/render/el8_contact.test.js"
   ]
  },
  {
@@ -97,7 +97,7 @@
   "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0",
   "new": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length(uPointLights[i].xyz - uCamPos) < 1.5) ? 1.0",
   "tests": [
-   "test/lightnear1.test.js"
+   "test/render/lightnear1.test.js"
   ]
  },
  {
@@ -106,8 +106,8 @@
   "old": "export const AIR_GLARE_SLACK = 0.25;",
   "new": "export const AIR_GLARE_SLACK = 1.0;",
   "tests": [
-   "test/bugs5_field.test.js",
-   "test/el7_polish.test.js"
+   "test/render/bugs5_field.test.js",
+   "test/render/el7_polish.test.js"
   ]
  },
  {
@@ -116,8 +116,8 @@
   "old": "export const AIR_CONTACT_STEPS = 4;",
   "new": "export const AIR_CONTACT_STEPS = 6;",
   "tests": [
-   "test/bugs5_field.test.js",
-   "test/el8_contact.test.js"
+   "test/render/bugs5_field.test.js",
+   "test/render/el8_contact.test.js"
   ]
  },
  {
@@ -126,7 +126,7 @@
   "old": "export const AIR_CONTACT_RANGE_FRACTION = 0.7;",
   "new": "export const AIR_CONTACT_RANGE_FRACTION = 1.0;",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -135,7 +135,7 @@
   "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0",
   "new": "      : (k == -2 || false) ? 1.0",
   "tests": [
-   "test/el8_contact.test.js"
+   "test/render/el8_contact.test.js"
   ]
  },
  {
@@ -144,7 +144,7 @@
   "old": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k),",
   "new": "this.replay(f, this.sunVP[c], null, false, 0, sunTexelWorld(c, k),",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -153,7 +153,7 @@
   "old": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k),",
   "new": "this.replay(f, this.sunVP[c], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(2, k), sunTexelWorld(c, k),",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -162,7 +162,7 @@
   "old": "      if (minRadius > 0 && r.kind !== REC_BB && r.kind !== REC_CHAR && r.bounded && r.sphere && r.sphere[3] < minRadius) { this.stats.culled++; continue; }",
   "new": "",
   "tests": [
-   "test/bugs5_field.test.js"
+   "test/render/bugs5_field.test.js"
   ]
  },
  {
@@ -171,7 +171,7 @@
   "old": "      if (minRadius > 0 && r.kind !== REC_BB && r.kind !== REC_CHAR && r.bounded && r.sphere && r.sphere[3] < minRadius) { this.stats.culled++; continue; }",
   "new": "      if (minRadius > 0 && r.kind !== REC_BB && r.bounded && r.sphere && r.sphere[3] < minRadius) { this.stats.culled++; continue; }",
   "tests": [
-   "test/el7_polish.test.js"
+   "test/render/el7_polish.test.js"
   ]
  }
 ]

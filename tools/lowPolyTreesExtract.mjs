@@ -9,7 +9,7 @@
 // - `lowpolytrees.dfmod.json` - the mod's manifest, the bundle's own TextAsset byte for byte.
 // - `Trees/trees.json` + `Trees/trees.bin` - Kamer's own geometry: every mesh's positions, normals and uv0 (f32,
 //   interleaved, 32 bytes a vertex) and its submeshes' 16-bit indices, in the prefab's own space (Unity's, so the
-//   port's: metres, +Y up, left-handed - world/arenaModel.js's law); each of the 253 prefabs as its archive and record,
+//   port's: metres, +Y up, left-handed - world/arena/arenaModel.js's law); each of the 253 prefabs as its archive and record,
 //   its mesh, the root's scale and its submeshes' materials; each material as its texture and its alpha cut (0 for the
 //   opaque ones); and each texture as an ATLAS SPEC, below.
 // - NO PICTURE. Measured here against every record of TEXTURE.500-511, each of the mod's textures is Daggerfall's own

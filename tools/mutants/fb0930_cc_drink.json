@@ -5,7 +5,7 @@
     "old": "  s.thirst = 0;\n  s.drunk = (s.drunk ?? 0) + (strength | 0);",
     "new": "  s.thirst = Math.max(0, (s.thirst ?? 0) - 40);\n  s.drunk = (s.drunk ?? 0) + (strength | 0);",
     "tests": [
-      "test/fb0930_cc_drink.test.js"
+      "test/systems/survival/fb0930_cc_drink.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  s.thirst = 0;\n  s.drunk = (s.drunk ?? 0) + (strength | 0);",
     "new": "  if (!((strength | 0) > 0)) s.thirst = 0;\n  s.drunk = (s.drunk ?? 0) + (strength | 0);",
     "tests": [
-      "test/fb0930_cc_drink.test.js"
+      "test/systems/survival/fb0930_cc_drink.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  s.thirst = 0;\n  s.drunk = (s.drunk ?? 0) + (strength | 0);",
     "new": "  s.drunk = (s.drunk ?? 0) + (strength | 0);",
     "tests": [
-      "test/fb0930_cc_drink.test.js"
+      "test/systems/survival/fb0930_cc_drink.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  s.thirst = 0;\n  s.drunk = (s.drunk ?? 0) + (strength | 0);",
     "new": "  s.thirst = 0;",
     "tests": [
-      "test/fb0930_cc_drink.test.js"
+      "test/systems/survival/fb0930_cc_drink.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return { text: TAVERN_MENU_TEXT.refreshed, blackout: false, minutes: DRINK_MINUTES, fatigue: SOFT_DRINK_FATIGUE, magicka: 0 };",
     "new": "  return { text: TAVERN_MENU_TEXT.refreshed, blackout: false, minutes: 0, fatigue: SOFT_DRINK_FATIGUE, magicka: 0 };",
     "tests": [
-      "test/fb0930_cc_drink.test.js"
+      "test/systems/survival/fb0930_cc_drink.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    const met = { hunger: hungerAfter !== 'starving', thirst: !thirstRed,",
     "new": "    const met = { hunger: hungerAfter !== 'starving', thirst: s.thirst === 0,",
     "tests": [
-      "test/fb0930_cc_drink.test.js"
+      "test/systems/survival/fb0930_cc_drink.test.js"
     ]
   },
   {
@@ -59,16 +59,16 @@
     "old": "        h.advanceMinutes?.(r.minutes);\n        h.entity.lastTimePlayerAteOrDrankAtTavern = now;",
     "new": "        h.entity.lastTimePlayerAteOrDrankAtTavern = now;",
     "tests": [
-      "test/fb0930_cc_drink.test.js"
+      "test/systems/survival/fb0930_cc_drink.test.js"
     ]
   },
   {
     "name": "TAVERN-DRINK-the-enhanced-pick-passes-no-minute",
-    "file": "src/ui/enhancedTavern.js",
+    "file": "src/ui/enhanced/enhancedTavern.js",
     "old": "  h.advanceMinutes?.(r.minutes);\n  h.entity.lastTimePlayerAteOrDrankAtTavern = now;",
     "new": "  h.entity.lastTimePlayerAteOrDrankAtTavern = now;",
     "tests": [
-      "test/fb0930_cc_drink.test.js"
+      "test/systems/survival/fb0930_cc_drink.test.js"
     ]
   }
 ]

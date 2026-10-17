@@ -30,8 +30,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { mapPixelToWorldCoord, worldCoordToMapPixel } from '../formats/mapsFile.js';
-import { seededRng } from './wind.js';   // mulberry32, the weather's own - one home
-import { chaseWordOf, validChaseWord, BANDS_WIRE_MAX } from './travelBands.js';   // OW6: the chase word's one law (TV7b's)
+import { seededRng } from './wind/wind.js';   // mulberry32, the weather's own - one home
+import { chaseWordOf, validChaseWord, BANDS_WIRE_MAX } from './travel/travelBands.js';   // OW6: the chase word's one law (TV7b's)
 
 export { seededRng };
 

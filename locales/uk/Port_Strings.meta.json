@@ -59,6 +59,16 @@
   "tr": "dd7246f17fd4",
   "by": "claude-in-session"
  },
+ "combat.leadLeftHand": {
+  "en": "9a84e174d1b8",
+  "tr": "30c81b0433f6",
+  "by": "claude-in-session"
+ },
+ "combat.leadRightHand": {
+  "en": "40a5921dea29",
+  "tr": "7312158ec663",
+  "by": "claude-in-session"
+ },
  "features.calmHud.note": {
   "en": "aa9c398cb552",
   "tr": "2bfa9e119a56",
@@ -142,6 +152,16 @@
  "features.wagonUpkeep.title": {
   "en": "a9e06dd27985",
   "tr": "7f0604dc6f28",
+  "by": "claude-in-session"
+ },
+ "features.weaponGlow.note": {
+  "en": "80be2112719a",
+  "tr": "85d2a005e8d3",
+  "by": "claude-in-session"
+ },
+ "features.weaponGlow.title": {
+  "en": "964f52fd55ec",
+  "tr": "37879eb0c2d2",
   "by": "claude-in-session"
  },
  "firm.readFail.closed": {

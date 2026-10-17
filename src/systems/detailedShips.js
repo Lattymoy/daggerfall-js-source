@@ -51,7 +51,7 @@ export const DETAILED_SHIPS_OWN_ART = Object.freeze(['1210_10-0', '1210_11-0', '
 export const DETAILED_SHIPS_DERIVED = DERIVED;
 
 /** The six xml files, `<info><scaleX>..</scaleX><scaleY>..</scaleY></info>`
- *  as vendor/detailed-ships/Textures carries them (test/ds1_detailedShips.test.js
+ *  as vendor/detailed-ships/Textures carries them (test/world/ds1_detailedShips.test.js
  *  reads the files against this table). */
 export const DETAILED_SHIPS_XML = Object.freeze({
   1210: Object.freeze({ 1: Object.freeze([0.5, 0.5]), 3: Object.freeze([0.75, 0.75]), 4: Object.freeze([0.5, 0.5]), 17: Object.freeze([0.5, 0.5]), 18: Object.freeze([0.75, 0.75]) }),

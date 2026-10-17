@@ -10,7 +10,7 @@
   came through.
 
   NOTHING HERE TOUCHES THE GAME. It is its own page over its own art;
-  combat/fpsWeapon.js and combat/weaponRig.js do not know it exists.
+  combat/fpsWeapon.js and combat/weapon/weaponRig.js do not know it exists.
   The port is a 1:1 DFU translation and a gun is not in Daggerfall - so
   the place to find out what one FEELS like is a lab, and only what
   survives the lab is worth building into the weapon rig.
@@ -23,7 +23,7 @@
       gun sits on the RIGHT, which is where the classic weapons sit.
 
     - WEAPON WIDGET's Offset, Bob and Inertia - the actual modules out
-      of src/combat/weaponWidgetMotion.js, WW1's 1:1 port of
+      of src/combat/weapon/weaponWidgetMotion.js, WW1's 1:1 port of
       FPSWeaponClone, with the mod's own declared defaults and its own
       multipliers. The sliders below are the mod's own switches.
 
@@ -170,7 +170,7 @@ const state = {
   kick: 5, back: 0, stiff: 400, damp: 36,
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
   sfxFire: SFX_CANDIDATES.fire[0][0], sfxOpen: SFX_CANDIDATES['reload-open'][0][0], sfxClose: SFX_CANDIDATES['reload-close'][0][0],
-  sfxVol: 1, sfxVary: 0.19, sfxOn: true,   // FIELD-GUN15: Mac's, against the three picks below - the game reads them from combat/gunFeel.js and test/thunderlock.test.js fails if the two disagree
+  sfxVol: 1, sfxVary: 0.19, sfxOn: true,   // FIELD-GUN15: Mac's, against the three picks below - the game reads them from combat/gun/gunFeel.js and test/systems/thunderlock.test.js fails if the two disagree
   drop: 0.55, offsetSpeed: 1, modOffset: true,
   modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
   modInertia: true, inScale: 1, inSpeed: 1, inFwd: 1, inFwdSpeed: 1,
@@ -470,7 +470,7 @@ function frame(now) {
     const src = useIdleArt ? art.idle.cv : art.frames[showFrame];
     const union = useIdleArt ? art.idle.box : art.union;
     const anchor = useIdleArt ? art.idle.box : art.anchor;
-    // AUDIT 68 S08: the GAME's frame (combat/gunViewmodel.js) - anchor
+    // AUDIT 68 S08: the GAME's frame (combat/gun/gunViewmodel.js) - anchor
     // mirror, FPSWeapon's rect, the mod's three channels, the kick after
     // the floor, the union - called, not restated beside it.
     ({ rect: r, anchorRect } = gunFrameRect({

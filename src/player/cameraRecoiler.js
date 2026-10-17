@@ -26,7 +26,7 @@
 // HUD's own detector computed last frame - DFU's two MonoBehaviours
 // have no fixed Update order either.
 
-import { getInt } from '../systems/settings.js';
+import { getInt } from '../systems/settings/settings.js';
 
 /** CameraRecoiler.cs:33. */
 export const BASE_MAX_RECOIL_SEVERITY = 50;

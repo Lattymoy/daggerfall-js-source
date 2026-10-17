@@ -68,7 +68,7 @@ jobs:
           fi
 
       # The tool checks the name and the gold, and finds the guild by the key the service holds - the statements are
-      # the tested ones (test/guildgrant.test.js), not ones written again here.
+      # the tested ones (test/tooling/guildgrant.test.js), not ones written again here.
       - name: Write the statements
         run: |
           set -euo pipefail

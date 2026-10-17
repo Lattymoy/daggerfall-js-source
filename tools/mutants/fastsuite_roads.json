@@ -1,77 +1,77 @@
 [
   {
     "name": "FAST-road-cross-narrowed",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "if (!(x >= MID_LO - 1 && x <= MID_HI + 1) && !(y >= MID_LO - 1 && y <= MID_HI + 1)",
     "new": "if (!(x >= MID_LO && x <= MID_HI) && !(y >= MID_LO - 1 && y <= MID_HI + 1)",
     "tests": [
-      "test/grasspath.test.js",
-      "test/ledger.test.js",
-      "test/modsonline.test.js",
-      "test/roads.test.js",
-      "test/roadsParity.test.js",
-      "test/roadsReal.test.js",
-      "test/water.test.js"
+      "test/world/terrain/grasspath.test.js",
+      "test/systems/ledger.test.js",
+      "test/systems/modsonline.test.js",
+      "test/world/road/roads.test.js",
+      "test/world/road/roadsParity.test.js",
+      "test/world/road/roadsReal.test.js",
+      "test/world/terrain/water.test.js"
     ]
   },
   {
     "name": "FAST-road-cross-y-narrowed",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "&& !(y >= MID_LO - 1 && y <= MID_HI + 1)\n",
     "new": "&& !(y >= MID_LO && y <= MID_HI)\n",
     "tests": [
-      "test/grasspath.test.js",
-      "test/ledger.test.js",
-      "test/modsonline.test.js",
-      "test/roads.test.js",
-      "test/roadsParity.test.js",
-      "test/roadsReal.test.js",
-      "test/water.test.js"
+      "test/world/terrain/grasspath.test.js",
+      "test/systems/ledger.test.js",
+      "test/systems/modsonline.test.js",
+      "test/world/road/roads.test.js",
+      "test/world/road/roadsParity.test.js",
+      "test/world/road/roadsReal.test.js",
+      "test/world/terrain/water.test.js"
     ]
   },
   {
     "name": "FAST-road-diag-narrowed",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "&& Math.abs(x - y) > 2 &&",
     "new": "&& Math.abs(x - y) > 1 &&",
     "tests": [
-      "test/grasspath.test.js",
-      "test/ledger.test.js",
-      "test/modsonline.test.js",
-      "test/roads.test.js",
-      "test/roadsParity.test.js",
-      "test/roadsReal.test.js",
-      "test/water.test.js"
+      "test/world/terrain/grasspath.test.js",
+      "test/systems/ledger.test.js",
+      "test/systems/modsonline.test.js",
+      "test/world/road/roads.test.js",
+      "test/world/road/roadsParity.test.js",
+      "test/world/road/roadsReal.test.js",
+      "test/world/terrain/water.test.js"
     ]
   },
   {
     "name": "FAST-road-mirror-narrowed",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "Math.abs(DIM - 1 - x - y) > 2",
     "new": "Math.abs(DIM - 1 - x - y) > 1",
     "tests": [
-      "test/grasspath.test.js",
-      "test/ledger.test.js",
-      "test/modsonline.test.js",
-      "test/roads.test.js",
-      "test/roadsParity.test.js",
-      "test/roadsReal.test.js",
-      "test/water.test.js"
+      "test/world/terrain/grasspath.test.js",
+      "test/systems/ledger.test.js",
+      "test/systems/modsonline.test.js",
+      "test/world/road/roads.test.js",
+      "test/world/road/roadsParity.test.js",
+      "test/world/road/roadsReal.test.js",
+      "test/world/terrain/water.test.js"
     ]
   },
   {
     "name": "FAST-road-rect-dropped",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)) continue;",
     "new": "        ) continue;",
     "tests": [
-      "test/grasspath.test.js",
-      "test/ledger.test.js",
-      "test/modsonline.test.js",
-      "test/roads.test.js",
-      "test/roadsParity.test.js",
-      "test/roadsReal.test.js",
-      "test/water.test.js"
+      "test/world/terrain/grasspath.test.js",
+      "test/systems/ledger.test.js",
+      "test/systems/modsonline.test.js",
+      "test/world/road/roads.test.js",
+      "test/world/road/roadsParity.test.js",
+      "test/world/road/roadsReal.test.js",
+      "test/world/terrain/water.test.js"
     ]
   }
 ]

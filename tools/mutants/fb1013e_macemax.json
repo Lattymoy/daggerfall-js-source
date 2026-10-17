@@ -5,7 +5,7 @@
     "old": "        (st.statMaxMods ??= {}).strength = (st.statMaxMods.strength ?? 0) + strengthDrained;\n",
     "new": "",
     "tests": [
-      "test/fb1013e_macemax.test.js"
+      "test/systems/fb1013e_macemax.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE + maxMod);",
     "new": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);",
     "tests": [
-      "test/fb1013e_macemax.test.js"
+      "test/systems/fb1013e_macemax.test.js"
     ]
   },
   {
@@ -23,16 +23,16 @@
     "old": "      if (a?.statMaxMods && !a.ended) maxMod += a.statMaxMods[statName] ?? 0;",
     "new": "      if (a?.statMaxMods) maxMod += a.statMaxMods[statName] ?? 0;",
     "tests": [
-      "test/fb1013e_macemax.test.js"
+      "test/systems/fb1013e_macemax.test.js"
     ]
   },
   {
     "name": "MACE-MAX-the-max-mods-not-copied-into-the-save",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  if (a.statMaxMods) c.statMaxMods = { ...a.statMaxMods };",
     "new": "",
     "tests": [
-      "test/fb1013e_macemax.test.js"
+      "test/systems/fb1013e_macemax.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "          entity.maxMagickaModifier = (entity.maxMagickaModifier ?? 0) + overflow;\n",
     "new": "",
     "tests": [
-      "test/fb1013e_macemax.test.js"
+      "test/systems/fb1013e_macemax.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        st.statMaxMods = {};   // SetStatMaxMod(Strength, 0) (:75)\n",
     "new": "",
     "tests": [
-      "test/fb1013e_macemax.test.js"
+      "test/systems/fb1013e_macemax.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (st) entity.activeEffects.splice(entity.activeEffects.indexOf(st), 1);",
     "new": "      void st;",
     "tests": [
-      "test/fb1013e_macemax.test.js"
+      "test/systems/fb1013e_macemax.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    unequipped: artifactHook('unequipped'),",
     "new": "",
     "tests": [
-      "test/fb1013e_macemax.test.js"
+      "test/systems/fb1013e_macemax.test.js"
     ]
   }
 ]

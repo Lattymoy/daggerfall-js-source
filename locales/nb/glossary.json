@@ -158,5 +158,7 @@
  "Lv (level, short)": "Niv",
  "HP (health, short)": "HP",
  "Atk (attack, short)": "Angr",
- "pts (points, short)": "p"
+ "pts (points, short)": "p",
+ "first-time bonus (a craft's first-make XP)": "førstegangsbonus",
+ "cloth (the Weavers' Linen and Wool)": "stoff"
 }

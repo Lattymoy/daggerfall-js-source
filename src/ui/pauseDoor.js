@@ -51,12 +51,12 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { firmamentOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page
 import { createCharSheetWindow } from './charSheetDoor.js';   // ASCEND-ANYTIME: a level OWED is answered by the sheet key's own door
 import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: which bar the Ascension reads
-import { profPagesShown, PROF_PAGE_SECTIONS } from './profPages.js';   // CLASSIC-PAGES: the professions' two pages, on either skin
+import { profPagesShown, PROF_PAGE_SECTIONS } from './professions/profPages.js';   // CLASSIC-PAGES: the professions' two pages, on either skin
 import { FAMILY_PAGE_SECTIONS } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin
 import { hudText } from '../systems/notify.js';
 import { t } from '../systems/textManager.js';   // L10N4: the professions' closed line in the player's language
@@ -69,7 +69,7 @@ import {
 // The hosts warm the classic art on both skins and always have. It is
 // re-exported rather than re-decided here: a player can switch to
 // classic from inside the pause screen's own settings pane, and the
-// switch reloads (ui/enhancedMenu.js's skinRow), so the art has to be
+// switch reloads (ui/enhanced/enhancedMenu.js's skinRow), so the art has to be
 // warm on the way back in.
 export { preloadPauseFlowArt, pauseArtLoaded };
 
@@ -223,7 +223,7 @@ function openPauseFlowNow(show, hooks) {
   // LEGACY3: Project Legacy's Family tab (its key, the death's Succession) - the classic pause has no tabs, so the family's
   // pages open the enhanced pause on either skin, as the professions' do
   if (familyPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
-  // SERVER-POST: the mailbox (`/mail`, ui/enhancedPost.js) is the enhanced face's - the classic pause window has no envelope - so
+  // SERVER-POST: the mailbox (`/mail`, ui/enhanced/enhancedPost.js) is the enhanced face's - the classic pause window has no envelope - so
   // its door opens the enhanced pause on either skin, as the family's pages do
   if (hooks.at === 'mailbox' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   // `document` is the second half of the test for the reason
@@ -304,7 +304,7 @@ function enhancedPauseOverlay(show, base) {
   // that clear).
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
-  // AUDIT LEGACY III U1: A HELD KEY PRESSES NOTHING HERE EITHER - the Succession's own rule (ui/legacySuccession.js,
+  // AUDIT LEGACY III U1: A HELD KEY PRESSES NOTHING HERE EITHER - the Succession's own rule (ui/legacy/legacySuccession.js,
   // AUDIT LEGACY II U1). The browser presses a focused button at every repeat of Enter or Space, and the Family tab's
   // arm-then-confirm acts keep the focus on the armed button (AUDIT LEGACY II U6): "Play as" and "Pass the mantle"
   // armed and fired on one held press. Every other ask-twice act of this window is covered by the same line.
@@ -386,7 +386,7 @@ function enhancedPauseOverlay(show, base) {
     ascendHost = h;
     const drop = () => { if (ascendHost === h) dropAscend(); else h.remove(); };
     mountEnhancedChunk({
-      load: () => import('./enhancedLevelUp.js'),
+      load: () => import('./enhanced/enhancedLevelUp.js'),
       alive: () => !fired && ascendHost === h,
       host: h, onDismiss: drop, label: 'ascend',
       mount: ({ mountEnhancedLevelUp, viewOnlyScreen }) => {
@@ -421,9 +421,9 @@ function enhancedPauseOverlay(show, base) {
   // menu, so it says so loudly and takes the empty div with it rather
   // than leaving the host holding an overlay that draws nothing and
   // never reports done - which would be a frozen game.
-  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+  // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
   mountEnhancedChunk({
-    load: () => import('./enhancedMenu.js'),
+    load: () => import('./enhanced/enhancedMenu.js'),
     mount: (mod) => {
       const { mountEnhancedMenu } = mod;
       seams = mod;

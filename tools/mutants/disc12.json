@@ -5,7 +5,7 @@
     "old": "    ...(uint(lh, 1) ? { lh: 1 } : {}),\n",
     "new": "",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    ...(uint(wb, 2) ? { wb: uint(wb, 2) } : {}),\n",
     "new": "",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    || (a.lh | 0) !== (b.lh | 0) || (a.wb | 0) !== (b.wb | 0)   // DISC12",
     "new": "    || false   // DISC12",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   },
   {
@@ -32,25 +32,25 @@
     "old": "    ...(to.lh ? { lh: 1 } : {}),",
     "new": "",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   },
   {
     "name": "DISC12-body-right-hand-always",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "  return slots[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
     "new": "  return slots[EQUIP_SLOTS.RightHand] ?? null;",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   },
   {
     "name": "DISC12-body-never-follows",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "    if (look && !look.creature) {   // MWNPC9: a creature's claws are its body\n      const want = b.wolf ? null : tool ?? peerWeaponOf(look, shown);",
     "new": "    if (false) {   // MWNPC9: a creature's claws are its body\n      const want = b.wolf ? null : tool ?? peerWeaponOf(look, shown);",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn && peer.look ? classMobileType(peer.look.class) : null;",
     "new": "      const mobileType = spritesOn && peer.look ? classMobileType(peer.look.class) : null;",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   },
   {
@@ -68,16 +68,16 @@
     "old": "(peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) && !d.shown?.wb || (peerIsWolf(d.shown) && !d.shown.rd));",
     "new": "(peerRidesIn3d(d) || !peerRiders.isRiding(d.id)) || (peerIsWolf(d.shown) && !d.shown.rd));",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   },
   {
     "name": "DISC12-pack-right-hand-always",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "slots?.[deps.usingRightHand?.() === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand]",
     "new": "slots?.[EQUIP_SLOTS.RightHand]",
     "tests": [
-      "test/disc12.test.js"
+      "test/net/disc12.test.js"
     ]
   }
 ]

@@ -37,7 +37,7 @@
 // with TerrainDistance 2 shows 2 on the classic skin).
 
 import { getPref, setPref } from '../systems/uiPrefs.js';
-import { getInt, setValue, saveSettings } from '../systems/settings.js';
+import { getInt, setValue, saveSettings } from '../systems/settings/settings.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { registerFeatureLane } from '../systems/features.js';   // RF4: the row's lane is this module's
 

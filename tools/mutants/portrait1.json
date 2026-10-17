@@ -5,7 +5,7 @@
     "old": "    pipeline: { ...pipeline, arch, palette },",
     "new": "    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts },",
     "tests": [
-      "test/hostdeps.test.js"
+      "test/scenes/hostdeps.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    pipeline: { ...pipeline, arch, palette },",
     "new": "    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette, getMachineryParts },",
     "tests": [
-      "test/hostdeps.test.js"
+      "test/scenes/hostdeps.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    pipeline: { ...pipeline, arch, palette },",
     "new": "    pipeline: { ...pipeline, arch },",
     "tests": [
-      "test/hostdeps.test.js"
+      "test/scenes/hostdeps.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const fromBillboard = flatFaceIndex?.(data?.billboardArchiveIndex ?? 0, data?.billboardRecordIndex ?? 0) ?? -1;\n  if (fromBillboard >= 0) record = fromBillboard;",
     "new": "  const fromBillboard = -1;\n  if (fromBillboard >= 0) record = fromBillboard;",
     "tests": [
-      "test/nativetalk.test.js"
+      "test/systems/nativetalk.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  let record = OOPS_PORTRAIT_RECORD;",
     "new": "  let record = 0;",
     "tests": [
-      "test/nativetalk.test.js"
+      "test/systems/nativetalk.test.js"
     ]
   },
   {
@@ -50,8 +50,8 @@
     "old": "    return this.getFlatData(archive, record)?.faceIndex ?? -1;",
     "new": "    return this.getFlatData(archive, record)?.faceIndex ?? 0;",
     "tests": [
-      "test/nativetalk.test.js",
-      "test/flats.test.js"
+      "test/systems/nativetalk.test.js",
+      "test/formats/flats.test.js"
     ]
   }
 ]

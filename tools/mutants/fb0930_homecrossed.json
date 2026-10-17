@@ -5,7 +5,7 @@
     "old": "  if (home.char_id === at.id && !(Number(home.paid) > 0)) return { error: 'home-crossed' };\n",
     "new": "",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (home.char_id === at.id && !(Number(home.paid) > 0)) return { error: 'home-crossed' };",
     "new": "  if (home.char_id === at.id) return { error: 'home-crossed' };",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (home.char_id === at.id && !(Number(home.paid) > 0)) return { error: 'home-crossed' };",
     "new": "  if (!(Number(home.paid) > 0)) return { error: 'home-crossed' };",
     "tests": [
-      "test/auditrealm.test.js"
+      "test/systems/auditrealm.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": " : r.error === 'home-crossed' || r.error === 'home-tenants' || r.error === 'home-vendor-stocked' ? 409 : 404, origin);   // HOME-CROSSED",
     "new": " : r.error === 'home-tenants' || r.error === 'home-vendor-stocked' ? 409 : 404, origin);   // HOME-CROSSED",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      const crossed = mine && realmHome && !(Number(h.paid) > 0);",
     "new": "      const crossed = mine && realmHome;",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ],
     "note": "HOME-PRICE (PIN MOVED, re-aimed by content): the realm test is named once (`realmHome`) - the refund reads it too."
   },
@@ -51,17 +51,17 @@
     "old": "      const crossed = mine && realmHome && !(Number(h.paid) > 0);",
     "new": "      const crossed = realmHome && !(Number(h.paid) > 0);",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ],
     "note": "HOME-PRICE (PIN MOVED, re-aimed by content): the realm test is named once (`realmHome`) - the refund reads it too."
   },
   {
     "name": "HOME-CROSSED-the-mark-dropped-by-the-client",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "            crossed: h.crossed === true,   // HOME-CROSSED: mine, carried in through customs - no sale\n",
     "new": "",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "  'home-crossed': () => t('account.refusal.homeCrossed', 'That came into the realm through customs. The bank of the Empire does not buy it back. It stays your home.'),\n",
     "new": "",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  busy: () => t('account.refusal.busy', 'Your last dealing with the realm is still being settled. Try again in a moment.'),\n",
     "new": "",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "    if (home?.crossed && host.realmAct) { townTalk?.showOverlay?.(new ChoiceWindow({ lines: HOME_CROSSED_LINES, options: [{ code: 'Escape', label: 'Esc - close', action: () => {} }] })); return; }\n",
     "new": "",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
@@ -97,34 +97,34 @@
     "old": "    if (r.error === HOME_SALE_OUT) return;   // HOME-CROSSED: a second press while the first sale is out - its answer speaks\n",
     "new": "",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
     "name": "HOME-CROSSED-the-sale-guard-gone",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "  if (selling.has(house)) return { ok: false, error: HOME_SALE_OUT };\n",
     "new": "",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
     "name": "HOME-CROSSED-the-sale-guard-never-let-go",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "    return await sellOut(homes, { mapId, buildingKey, credit, realm });\n  } finally {\n    selling.delete(house);\n  }",
     "new": "    return await sellOut(homes, { mapId, buildingKey, credit, realm });\n  } finally {\n    void house;\n  }",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   },
   {
     "name": "HOME-CROSSED-the-lines-not-the-banks",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "export const HOME_CROSSED_LINES = Object.freeze([...CROSSED_DEED_LINES, 'It stays your home.']);",
     "new": "export const HOME_CROSSED_LINES = Object.freeze(['You cannot sell it.']);",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
+      "test/systems/online/fb0930_homecrossed.test.js"
     ]
   }
 ]

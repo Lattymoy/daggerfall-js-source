@@ -15,14 +15,14 @@
 // The duel wall's law (render/duelWall.js): fixed geometry placed by uniforms, ADDED onto the frame (ONE, ONE) so it only
 // ever brightens what stands behind it, no depth written, tested against the depth the world wrote (the sprite itself and
 // the floor hide what stands behind them), fogged, and every rate a whole number of cycles over the wrapped clock. One
-// quad a piece, turned about the upright to face the eye. The colours are Loot Rarity's own (systems/lootRarity.js
+// quad a piece, turned about the upright to face the eye. The colours are Loot Rarity's own (systems/loot/lootRarity.js
 // RARITIES), display-encoded.
 //
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { duelClock } from './duelWall.js';
-import { RARITIES } from '../systems/lootRarity.js';
+import { RARITIES } from '../systems/loot/lootRarity.js';
 
 /** The most pieces one frame draws (three pieces, a Regalia piece when one drops, the gold and the Sigil Stone - and
  *  room for more). */

@@ -199,7 +199,7 @@ jobs:
       # runs in PowerShell on windows-latest, where "$VERSION" is an unset
       # PowerShell variable, not the environment - the Windows stamp failed
       # and no release was published. Any step here that reads a variable
-      # names its shell (test/audit_install.test.js holds the whole file to it).
+      # names its shell (test/tooling/audit_install.test.js holds the whole file to it).
       - name: Stamp the version
         if: needs.version.outputs.version != ''
         shell: bash

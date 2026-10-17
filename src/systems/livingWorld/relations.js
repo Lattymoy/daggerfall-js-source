@@ -25,7 +25,7 @@
 // of the day as it was; the town talks of them by name (livingTown.js deedNews).
 
 import { CRIMES } from '../crimes.js';
-import { REGION_COUNT } from '../regionConditions.js';
+import { REGION_COUNT } from '../region/regionConditions.js';
 
 /** The save's record's vendor (modSaveData): the character's regards ride their save under it. */
 export const LIVING_WORLD_VENDOR = 'LivingWorld';
@@ -81,17 +81,18 @@ const leftOf = (list) => new Map(list.filter((e) => Array.isArray(e) && placeOk(
 const goneOut = (w) => [...[...w.gone].sort((a, b) => a - b), ...[...w.left].sort((a, b) => a[0] - b[0])];
 
 /** What moves a regard, and by how much. `talk` counts once a day per resident, and each tone of word (`polite`,
- *  `insulted`) once a day. LW7: one of their own slain turns them HOSTILE (an armed one draws on you beyond the walls). */
+ *  `insulted`) once a day - TONE-TASTE (2026-10-15): as the resident took it (talkTopics.js toneTaste), never by the
+ *  tone's name: `polite` a tone they take kindly, `insulted` one they take ill (a Polite word to a Commoner too). LW7: one of their own slain turns them HOSTILE (an armed one draws on you beyond the walls). */
 export const EVENTS = Object.freeze({
   talk: 3,        // a word exchanged (the talk window opened on them)
-  polite: 1,      // a courteous word in the talk (the talk's own tone)
+  polite: 1,      // a word in a tone they take kindly (TONE-TASTE: Blunt with townsfolk)
   gift: 8,        // a gift given
   helped: 20,     // a blow struck for them in their fight
   saved: 35,      // their fight won with them standing
   struck: -45,    // struck by the player
   crime: -15,     // a crime of the player's seen
   slain: -75,     // one of their own - their household, their party - struck down by the player
-  insulted: -6,   // a blunt word in the talk
+  insulted: -6,   // a word in a tone they take ill (TONE-TASTE: Polite with townsfolk)
   poached: -4,    // LW14: a find of theirs taken before them in the deep (once a day, as a tone)
 });
 

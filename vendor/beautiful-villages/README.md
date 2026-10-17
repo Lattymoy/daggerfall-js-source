@@ -59,7 +59,7 @@ Editor writes it:
   names; the dependency list below).
 - `WorldDataPack/beautiful-villages.pack.json.gz` - **every world-data file
   of the mod as the author's EDIT of Daggerfall's own data**
-  (`src/formats/worldDataPack.js`, WD3; `bible/02-Formats/World-Data-Patches.md`).
+  (`src/formats/worldData/worldDataPack.js`, WD3; `bible/02-Formats/World-Data-Patches.md`).
   A location file is the edit of the location MAPS.BSA holds; a block that
   replaces a classic one is the edit of that block; a new block is the edit
   of the classic block it was made from, or carried whole where it is the

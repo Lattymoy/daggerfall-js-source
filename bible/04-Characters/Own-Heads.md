@@ -1,7 +1,7 @@
 # Own Heads - the port's own heads and hairs for the Morrowind body
 
 `tools/bakeHeads.mjs` (the bake) + `tools/fbxMesh.mjs` (one material of an object, `material`) +
-`src/characters/ownHeadModels.js` (the pools) + `src/formats/mwFirstPerson.js` (facePools) +
+`src/characters/ownModels/ownHeadModels.js` (the pools) + `src/formats/morrowind/mwFirstPerson.js` (facePools) +
 `src/formats/mwFaceTable.json` (the curated portraits) + `src/tools/mwViewer.js` (the face sheet) (MW-HEADS1, the owner,
 2026-10-13)
 
@@ -39,7 +39,7 @@ the scene is turned half round about its crown (`bakeHeads.mjs` HEAD_FORWARD `-y
 mirror, the scene's translation turned with it): in the head's frame each face stands upright and looks **-Y** - its
 crown on top on the middle line, its nose ahead under it, its chin ahead of the crown, its back at y +6.95 (AUDIT
 MW-HEADS1 L1-F8, re-pinned). A retail head's frame is the same frame, so a retail face looks -Y in it too - and the face
-match (MW-D35, `formats/mwFaceMatch.js` headFeatures), which took +Y for "Morrowind's forward" (the actor's, not the
+match (MW-D35, `formats/morrowind/mwFaceMatch.js` headFeatures), which took +Y for "Morrowind's forward" (the actor's, not the
 Head node's), had measured every head off the back of its skull: it reads the face on -Y now, and its version is bumped
 so no verdict kept from the back is read again (FACE_MATCH_VERSION 2). The
 owner's scene stood the three at z 125 over its floor, 3.46 over the T-posed scene's own head (MW-STEEL1's
@@ -74,14 +74,14 @@ its name by what it is drawn for:
   lines of `bakeHeads.mjs` PAINTINGS and a re-bake.
 
 Whether the geometry is wholly the owner's own work is also the owner's to confirm: its objects are named for the
-Morrowind head they were modelled from (`test/doctrine.test.js` says so on the export's row and on every mesh's -
+Morrowind head they were modelled from (`test/tooling/doctrine.test.js` says so on the export's row and on every mesh's -
 AUDIT MW-HEADS1 L1-F3: the meshes' rows did not).
 
 ## Worn
 
 **A PLAYER'S ALONE (MW-HEADS2).** `facePools` answers the port's own only when asked (`own`), and the build asks only
-for a player's body: the local player's (`combat/weaponRig.js` armBuildOptsOf `ownHeads`) and every other player's
-(`net/peerBodies.js` playerBuildOpts, the peers' PeerBodies in scenes/world.js). The people's lanes
+for a player's body: the local player's (`combat/weapon/weaponRig.js` armBuildOptsOf `ownHeads`) and every other player's
+(`net/peer/peerBodies.js` playerBuildOpts, the peers' PeerBodies in scenes/world.js). The people's lanes
 (`characters/npcBodies.js`), the quest people, the foes and the card table's regulars build on `peerBuildOpts`, which
 never asks - and an NPC's walked face never reaches them, asked or not (an NPC is no player). The faces Daggerfall paints
 follow their bodies (`04-Characters/Head-Portraits.md`): a player's portrait asks, an NPC's in the talk window, an
@@ -129,7 +129,7 @@ Breton women's heads are not in this batch. The first person draws no head or ha
 
 ## How it was proven
 
-`test/mwheads1.test.js` (8): every head and hair re-made from the committed export and its six paintings byte for byte,
+`test/tooling/mwheads1.test.js` (8): every head and hair re-made from the committed export and its six paintings byte for byte,
 each DDS its painting, the export and each painting by hash, each painting under the name the export gives its
 material (a material read as another's picture, and a part off its box on either side, refused); the shipped paths
 exactly the pools' parts; each part one rigid shape of its own
@@ -147,15 +147,15 @@ head and hair where its archive loaded (makeVendoredArchive over the shipped fil
 did not, the match asked - and a body not a player's in the data's, its archive loaded or not (MW-HEADS2). MW-HEADS2's
 doors by source: the local player's build and the peers' ask, the people's lanes, an NPC's talk-window face and an
 escort's do not, the face match's memo keyed on its pools, the third-person body asking as the build was asked.
-`test/fparm.test.js` AUDIT 32 F1: the face match reads the face on -Y. `test/mwload_records.test.js`: the kept verdict's key names the pools measured - another
-pool another key, the same pool the same. PIN MOVED (AUDIT MW-HEADS1): `test/fparm.test.js` MW-D27 (the picker takes
-the archives' directory) and MW-D35 (the matcher is handed the build's pools), `test/mwload_records.test.js` (the
-key's source), `test/arrowPick.test.js` (eighteen doors pass the one directory). PIN MOVED: `test/mwnpc17_wardrobe.test.js` MWNPC17d's walk and
+`test/formats/morrowind/fparm.test.js` AUDIT 32 F1: the face match reads the face on -Y. `test/formats/morrowind/mwload_records.test.js`: the kept verdict's key names the pools measured - another
+pool another key, the same pool the same. PIN MOVED (AUDIT MW-HEADS1): `test/formats/morrowind/fparm.test.js` MW-D27 (the picker takes
+the archives' directory) and MW-D35 (the matcher is handed the build's pools), `test/formats/morrowind/mwload_records.test.js` (the
+key's source), `test/combat/arrowPick.test.js` (eighteen doors pass the one directory). PIN MOVED: `test/characters/mwnpc17_wardrobe.test.js` MWNPC17d's walk and
 MWNPC17e's street re-aimed from the Breton men (whose pools are the port's own now) to the Nord men, and its memo pin
 read with MW-FOLK1's outfit key. `tools/mutants/mwheads2.json` (16, all dead - the eyepatch in the headband again, the eyepatch's painting on the other head; every Breton man in them again, the player not, the body or the
 match or a peer or the local player not asking, the peers built as people, an escort or an NPC's portrait a player's, one
 memo for two pools, the bake's +Y, the match reading the back, every member of the line a player on the Family tab).
-`test/portrait3d.test.js`: an NPC's portrait walked over the data's, an escort's the data's, a player's the port's own;
+`test/ui/portrait3d.test.js`: an NPC's portrait walked over the data's, an escort's the data's, a player's the port's own;
 a member of the line not played (`facePose`'s `kin`) the data's, as their body in the world. `tools/mutants/mwheads1.json` (26, all dead - the tenth paints the eyepatch onto h04; the audit's sixteen the own pools
 without their meshes, the match measured anyway, a key without its pools, the hairs named heads, the crown's refusal
-unread, a coverage walk short of the hairs, and fbxMesh's material reader's refusals). The audit: `01-Overview/Audit-MW-Heads-Folk.md`.
+unread, a coverage walk short of the hairs, and fbxMesh's material reader's refusals). The audit: `01-Overview/audits/Audit-MW-Heads-Folk.md`.

@@ -5,7 +5,7 @@
     "old": "  hover() {}\n",
     "new": "",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  release() {}\n",
     "new": "",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    drawMessageBox(renderer, m, font, this._box);",
     "new": "    void m;",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const BUSY_DOTS = 12;",
     "new": "export const BUSY_DOTS = 10;",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    this.seconds = Math.max(0.01, seconds);",
     "new": "    this.seconds = seconds;",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    this.seconds = Math.max(0.01, seconds);",
     "new": "    this.seconds = Math.max(1, seconds);",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    this._elapsed += Math.max(0, dt || 0);",
     "new": "    this._elapsed += dt;",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100",
     "new": "(minutes / 60) * WAIT_PER_HOUR",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100",
     "new": "Math.round((minutes / 60) * WAIT_PER_HOUR * 10) / 10",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   }
 ]

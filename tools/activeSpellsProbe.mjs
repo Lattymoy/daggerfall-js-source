@@ -24,18 +24,18 @@ const waitFrames = async (n) => {
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
 const placed = () => page.evaluate(async () => {
-  const m = await import('/src/ui/hud.js');
+  const m = await import('/src/ui/hud/hud.js');
   return JSON.stringify(m.activeSpellIconsPlaced());
 });
 const rows = () => page.evaluate(async () => {
-  const m = await import('/src/ui/hudActiveSpells.js');
+  const m = await import('/src/ui/hud/hudActiveSpells.js');
   return JSON.stringify(m.activeSpellIcons(window.__playerEntity));
 });
 
 console.log('== THE SHEET LOADS WITH THE HUD, NOT WITH THE SPELLBOOK ==');
-await page.waitForFunction(async () => (await import('/src/ui/spellIcons.js')).spellIconsLoaded(), null, { timeout: 60000 });
+await page.waitForFunction(async () => (await import('/src/ui/spell/spellIcons.js')).spellIconsLoaded(), null, { timeout: 60000 });
 console.log('spellIconsLoaded (spellbook never opened):', await page.evaluate(async () =>
-  (await import('/src/ui/spellIcons.js')).spellIconsLoaded()));
+  (await import('/src/ui/spell/spellIcons.js')).spellIconsLoaded()));
 console.log('nothing active yet:', await placed());
 if (JSON.parse(await placed()).length !== 0) fail('icons drawn with no active effect');
 
@@ -106,9 +106,9 @@ console.log('buff at y=%d, debuff at y=%d', p0.find((i) => i.displayName !== 'Cu
 
 console.log('\n== THE LARGE HUD LIFTS THE DEBUFF ROW AND LEAVES THE BUFFS ==');
 await page.evaluate(async () => {
-  (await import('/src/systems/settings.js')).setValue('GUI', 'LargeHUD', 'True');
+  (await import('/src/systems/settings/settings.js')).setValue('GUI', 'LargeHUD', 'True');
 });
-await page.waitForFunction(async () => (await import('/src/ui/hud.js')).largeHudBar() !== null, null, { timeout: 60000 });
+await page.waitForFunction(async () => (await import('/src/ui/hud/hud.js')).largeHudBar() !== null, null, { timeout: 60000 });
 await waitFrames(4);
 const p1 = JSON.parse(await placed());
 const buff1 = p1.find((i) => i.displayName !== 'Curse');
@@ -119,8 +119,8 @@ if (!(debuff1.rect[1] < 177)) fail('the debuff row must lift clear of the bar');
 
 console.log('\n== THE TOOLTIP FINDS THE ICON UNDER THE POINTER ==');
 const tip = await page.evaluate(async () => {
-  const hl = await import('/src/ui/hudActiveSpells.js');
-  const hud = await import('/src/ui/hud.js');
+  const hl = await import('/src/ui/hud/hudActiveSpells.js');
+  const hud = await import('/src/ui/hud/hud.js');
   const icons = hud.activeSpellIconsPlaced();
   const t = icons.find((i) => i.displayName !== 'Curse');
   const hit = hl.activeSpellAt(icons, t.rect[0] + 2, t.rect[1] + 2);
@@ -132,7 +132,7 @@ if (JSON.parse(tip).hit !== JSON.parse(tip).want) fail('the icon under the point
 if (JSON.parse(tip).miss !== null) fail('empty screen must find nothing');
 
 await page.evaluate(async () => {
-  (await import('/src/systems/settings.js')).setValue('GUI', 'LargeHUD', 'False');
+  (await import('/src/systems/settings/settings.js')).setValue('GUI', 'LargeHUD', 'False');
 });
 if (errors.length) fail(`page errors: ${errors.join(' | ')}`);
 console.log('\nPASS');

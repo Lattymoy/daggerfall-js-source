@@ -19,7 +19,7 @@ await page.goto('http://127.0.0.1:5244/menu.html?skin=enhanced', { waitUntil: 'n
 const info = await page.evaluate(async () => {
   document.getElementById('enhanced-menu')?.remove();
   const { HeldMapWindow } = await import('/src/ui/heldMap.js');
-  const am = await import('/src/systems/automap.js');
+  const am = await import('/src/systems/automap/automap.js');
   const rows = [];
   // one model: a list of quads [corners..., normal]
   const model = (key, quads) => {

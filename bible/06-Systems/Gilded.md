@@ -12,7 +12,7 @@ from a DFU law, because no DFU law reaches it; its Port-Ledger row (section A) n
 
 ## 1. The rung
 
-`systems/lootRarity.js` RARITIES gains a seventh rung, **Gilded** - rank 6, over the Artifact's 5 - in gold leaf
+`systems/loot/lootRarity.js` RARITIES gains a seventh rung, **Gilded** - rank 6, over the Artifact's 5 - in gold leaf
 (`#ffcf4d`), its tint `[1.00, 0.80, 0.26, 0.60]`. "The most rare ... in the entire game" puts it over the Artifact too:
 an artifact is a Daedric Prince's gift for a quest done, there for anyone who asks the right Prince; a Gilded piece is
 one roll in fifty off the hardest fight the port has.
@@ -26,19 +26,19 @@ Every reader of the ladder carries it - each found by grepping the Aetheric's ow
 
 | Reader | What it does with the rung |
 |---|---|
-| `ui/enhancedPlusStyle.js` RARITY_VARS | gold, gold-hi, gold-lo; two stars for pips (`\2726\2726`, the Artifact's one doubled) |
-| `ui/enhancedPlusStyle.js` `gilded-glow` | the frame of a Gilded row, slot, hotbar cell and quick-diamond cell breathes - stepped (8 steps over 2.6 s); under reduced motion, a still glow at its brighter end |
-| `ui/enhancedStyle.js` | the name in gold in a list, a card, a plaque |
+| `ui/enhanced/enhancedPlusStyle.js` RARITY_VARS | gold, gold-hi, gold-lo; two stars for pips (`\2726\2726`, the Artifact's one doubled) |
+| `ui/enhanced/enhancedPlusStyle.js` `gilded-glow` | the frame of a Gilded row, slot, hotbar cell and quick-diamond cell breathes - stepped (8 steps over 2.6 s); under reduced motion, a still glow at its brighter end |
+| `ui/enhanced/enhancedStyle.js` | the name in gold in a list, a card, a plaque |
 | `render/spoilsGlow.js` SPOILS_LINE_H | 2.5 m - the tallest line, at the line's own cap (WB5's "a line, not a beam") |
 | `systems/physicalItems.js` PI_RIM | 0.8 - the strongest rim |
 | `systems/reforge.js` salvageRefusal | `'gilded'` - "A Gilded piece will not break" (ui/reforgeWindow.js) |
 | `systems/enchanting.js` itemMakerRefuses | true - the item maker takes no static roll |
 | `systems/legacy/heirloom.js` NEVER_RARITY | never an heirloom - it is its record's |
-| `systems/itemInfo.js` | named as an artifact is - "The Hourlock", never "Dwarven The Hourlock" |
+| `systems/item/itemInfo.js` | named as an artifact is - "The Hourlock", never "Dwarven The Hourlock" |
 | `systems/quickslots.js` quickslotKey | `|g<record>` - only when set, so every save's keys still resolve |
-| `systems/itemFields.js` | `gilded: str()` - the record's id, a declared field |
-| `systems/loot.js` validLootItem | `validGildedMarks` - below |
-| `systems/lootCodex.js` | its own kind - section 5 |
+| `systems/item/itemFields.js` | `gilded: str()` - the record's id, a declared field |
+| `systems/loot/loot.js` validLootItem | `validGildedMarks` - below |
+| `systems/loot/lootCodex.js` | its own kind - section 5 |
 
 ## 2. The Hourlock
 
@@ -69,7 +69,7 @@ the Aetheric and the Artifact while this one was being built) shuts the rung too
 
 ### The power, as it runs
 
-`systems/lootPowers.js`, kind `'toll'` - one more arm at the seams every Legendary power already uses:
+`systems/loot/lootPowers.js`, kind `'toll'` - one more arm at the seams every Legendary power already uses:
 
 - **The blow** (`lootBlow`): `tollDue` - this weapon's landed-shot count is `every - 1` - adds `pct` (100) to the blow's
   percentage, which `shareOf` lays over the WHOLE blow (the material, the strength, the slayer's - formulas.js
@@ -87,7 +87,7 @@ the switch off. Its brief fits the card's row (BRIEF_MAX 32): "Every 3rd hit x2;
 ## 3. The numbers - powerful, not overpowered
 
 Measured with the port's own laws (`characters/weapons.js` spans, `combat/formulas.js` order and WEAPON_MATERIAL_MODIFIER,
-`combat/gunFeel.js` cadence), at each span's mean, Strength 50, Speed 50, before the hit roll, a critical and armour:
+`combat/gun/gunFeel.js` cadence), at each span's mean, Strength 50, Speed 50, before the hit roll, a critical and armour:
 
 | Weapon | A landed blow | A cycle | A second |
 |---|---|---|---|
@@ -104,7 +104,7 @@ Legendary bow's ceiling, no more.
 
 ## 4. The drop
 
-The Brass Remnant's spoils (`systems/sdSpoils.js`, `11-Multiplayer/Super-Dungeons.md` section 11) roll ONE MORE THING
+The Brass Remnant's spoils (`systems/superDungeon/sdSpoils.js`, `11-Multiplayer/Super-Dungeons.md` section 11) roll ONE MORE THING
 after everything they rolled before - the gold, the first piece, the two Rare-or-better, the ladder's last pass, the
 Brass of Numidium - so every earlier spoils is exactly what it was for its seed: `rollHourlock` draws once, always, and
 answers the Hourlock under GILDED_CHANCE (1 in 50). Online alone, because the Hour is. sd9e_spoils.test.js's oracle and
@@ -114,7 +114,7 @@ its mutant (the Hourlock before the Brass) hold the order.
 
 - **The card** (`rarityLines`): "Gilded", its four lines (no band - a static roll has none to show), "The Hour Tolls:
   Every 3rd hit x2; kills refund", its lore. Its name in gold, its frame breathing.
-- **The codex** (`systems/lootCodex.js`): a kind of its own, `gilded`. The first find is said and heard as a
+- **The codex** (`systems/loot/lootCodex.js`): a kind of its own, `gilded`. The first find is said and heard as a
   Legendary's is - "The Hourlock - a Gilded piece! It joins your codex." - and the Codex page lists the rung at its
   HEAD, over the Legendaries, as it stands over them (`codexGilded`; unfound, "Said to lie in the brass of the Hour,
   once in a long while"). The save carries `gilded: { id: day }`; a save from before it reads as none found.
@@ -128,9 +128,9 @@ its mutant (the Hourlock before the Brass) hold the order.
   frame's foot in its left 45% (where the fist enters) is the hand. Found once on the idle frame - the sheet's cells
   share one union box, so the fist stands in the same pixels throughout - and spared in every frame; only the idle
   frame's own silhouette is gilded, so the flash and the smoke stay theirs. `gildFrame` pulls each kept pixel toward
-  GILD_RAMP by its lightness, alpha never written. The rig keys the art `:gilded` (`combat/weaponRig.js`), so a gold
+  GILD_RAMP by its lightness, alpha never written. The rig keys the art `:gilded` (`combat/weapon/weaponRig.js`), so a gold
   gun and a plain one never share frames.
-- **In the Morrowind hand** (`characters/ownWeaponModels.js` OWN_MW_GILDED): its own twin, `thunderlock_gilded.nif`
+- **In the Morrowind hand** (`characters/ownModels/ownWeaponModels.js` OWN_MW_GILDED): its own twin, `thunderlock_gilded.nif`
   over `thunderlock_gilded.dds` - the same capped mesh, the same bone, animation and speed, its texture baked off the
   same occlusion in gold leaf (`tools/meshTexture.mjs` GILDED_BANDS, `tools/bakeThunderlock.mjs`). The preload asks the
   table for both rows (FIELD-GUN-MW2's law).
@@ -142,7 +142,7 @@ Brass Remnant drops it, and thirty pellets to hear it toll - after every draw th
 with it).
 
 
-`test/gilded1_gilded.test.js` - the rung, the record, the mint, a static roll, no door alters it, the drop, the power
+`test/systems/gilded1_gilded.test.js` - the rung, the record, the mint, a static roll, no door alters it, the drop, the power
 (the toll and the pellet back), the look, the art and the gold in the hand (a sketch of the idle frame: a glove at the
 foot, the brass above, a glove-hued crevice that touches nothing). Its mutants, `tools/mutants/gilded1.json`: 24, all
 dead. The ladder's own enumerations moved with it, each saying so: LR1, SET6, PI1, WB5, RF5, LOOT9 (the salvage's
@@ -183,7 +183,7 @@ finding a law of 4 made against one - a piece found on a site that shipped ahead
 (the Dai-Katana is the Akaviri's own), and Dragonfire is Akatosh's - the fire that sealed the gates - so it burns Daedra
 alone and none of them resists it (a fire-immune Daedra takes it whole: no element's share is taken). **AUDIT B1:** as
 first built it only BURST on the Daedra about a struck one, through the player door's foe records - and the gate's
-court, its Warden, his crystals and his host are the relay's bodies, no record of any door (`world/gateArena.js`, an
+court, its Warden, his crystals and his host are the relay's bodies, no record of any door (`world/gate/gateArena.js`, an
 empty dungeon; `dungeonContext.js` keeps them out of `foes`), as an Elite Gate's legion will be: in the fights it is
 named for it did nothing (twenty real blows of it on the Warden's stand-in, no burst). Now the STRUCK Daedra burns
 too, as Many Endings' echo strikes again (`lootPowers.js` `dragonfire` -> `again`): through its record where the world
@@ -224,7 +224,7 @@ first one's fall healed nothing.
 
 **The drops.** Each is its spoils' very LAST draw - after the technique pass, after everything the gate's and the
 serpent's spoils rolled before - so every spoils and hoard ever rolled is what it was for its seed: `rollDragonfireOath`
-at the end of `systems/gateSpoils.js` `rollSpoils`, `rollSunkenSovereign` at the end of `systems/serpentSpoils.js`
+at the end of `systems/gate/gateSpoils.js` `rollSpoils`, `rollSunkenSovereign` at the end of `systems/serpent/serpentSpoils.js`
 `rollSerpentSpoils` (a ship that DEALT; one that stood draws nothing, as it draws no set piece, card or gem). One in a
 hundred each: a gate opens every two hours and a serpent rises every four, where the Hour - the Hourlock's one in fifty -
 comes a few times a week. Every pin that read "the last draw" moved with them, each saying so: WB5's roll, SET6's drop,
@@ -250,7 +250,7 @@ the ladder's records are routed as one, by the localization arc, never record by
   piece one fight in a hundred. The budget is a measure today (`enforce: false`), its numbers "a guess the measure exists
   to replace", and loosening the grant for every claim to cover the Oath would loosen what it catches for all of them -
   the measure is left to say what the drop is.
-- AUDIT A4: a build from before this one refuses a container or a lot holding either record whole (`systems/loot.js`
+- AUDIT A4: a build from before this one refuses a container or a lot holding either record whole (`systems/loot/loot.js`
   `validLootList` - a Gilded piece's marks are the shape's, as SERPENT-SET's were): the hosts read it as "from a newer
   version" and keep it, nothing is lost, and the relay's world206 brings every client to the new build at once.
 
@@ -261,9 +261,9 @@ listed in their make's own art; a gilding of the classic frames at load (the met
 ramp - `combat/fpsWeapon.js` `frameToColor32`'s dye seam) and of the Morrowind meshes is the next slice's, to be looked
 at against the player's own data.
 
-**The pins.** `test/gilded2_world.test.js` (8) - the records, the mint, the drops, the floor's pictures, Dragonfire (a
+**The pins.** `test/systems/gilded2_world.test.js` (8) - the records, the mint, the drops, the floor's pictures, Dragonfire (a
 relay body's burn owed, a warded blow nothing), Undertow (the window, a heal for each foe one swing fells) and the look;
-`test/auditcards5_ui.test.js` the Collections page's rows. `tools/mutants/gilded2.json`: 25, all dead (the law's version,
+`test/systems/auditcards5_ui.test.js` the Collections page's rows. `tools/mutants/gilded2.json`: 25, all dead (the law's version,
 the audit's own among them). GILDED1's own pins that read one record moved (`gilded1_gilded.test.js`'s record and codex,
 `loot10_codex.test.js`'s count), and GILDED1's mutant on the Hourlock's first line was re-aimed by content (its first
 three lines, which the Oath's and the Sovereign's first lines share in part).

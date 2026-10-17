@@ -1,0 +1,42 @@
+[
+  {
+    "name": "GUILDARMS-1-the-cache-never-read",
+    "file": "src/systems/guildArms.js",
+    "old": "export function ownArmsForTag(tag) {\n  const t = caravanGuildTag(tag);\n  if (!t) return null;\n  if (guildArmsCache.has(t)) return guildArmsCache.get(t).heraldry ?? null;\n  ensureGuildArms(t);\n  return null;\n}",
+    "new": "export function ownArmsForTag(tag) {\n  const t = caravanGuildTag(tag);\n  if (!t) return null;\n  ensureGuildArms(t);\n  return null;\n}",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "The synchronous read skipping the cache: every read of a resolved tag starts a fetch, so a wagon's arms are re-asked every frame and the pool never settles on its upload key. The cache is the whole point of resolving by tag - without the read, resolution is a fetch per frame."
+  },
+  {
+    "name": "GUILDARMS-2-the-epoch-never-moved",
+    "file": "src/systems/guildArms.js",
+    "old": "    guildArmsCache.set(t, { heraldry, epoch: ++_epochs });",
+    "new": "    guildArmsCache.set(t, { heraldry, epoch: _epochs });",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "The epoch never bumped on a resolution: the pool's upload key carries tag@epoch, so a tag that lands after the bare boards went up never rebuilds - every wagon keeps the bare boards it was first drawn with, and no error says the arms arrived."
+  },
+  {
+    "name": "GUILDARMS-3-the-fetch-never-started",
+    "file": "src/systems/guildArms.js",
+    "old": "      const rows = Array.isArray(res?.body?.arms) ? res.body.arms : Array.isArray(res?.arms) ? res.arms : [];",
+    "new": "      const rows = [];",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "The service answer thrown away unread: every tag resolves to no guild, so no wagon anywhere ever wears arms - and the fetch still ran, so nothing about the failure is visible except wagons with no heraldry on them."
+  },
+  {
+    "name": "GUILDARMS-4-the-seed-never-kept",
+    "file": "src/systems/guildArms.js",
+    "old": "  guildArmsCache.set(t, { heraldry: h, epoch: ++_epochs });",
+    "new": "  _inflight.delete(t);",
+    "tests": [
+      "test/wagonheraldry.test.js"
+    ],
+    "note": "Seeding the owner's own tag keeping nothing: the reader's own wagon - the one case that should never need the wire - resolves through a fetch like a stranger's, or not at all offline."
+  }
+]

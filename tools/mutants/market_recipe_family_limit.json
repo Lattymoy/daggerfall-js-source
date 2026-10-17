@@ -4,13 +4,13 @@
     "file": "server-account/src/market.js",
     "old": "AND (?2 IS NULL OR p.recipe IN (SELECT value FROM json_each(?2)))\n      ORDER BY l.price",
     "new": "AND (?2 IS NULL OR 1 = 1)\n      ORDER BY l.price",
-    "tests": ["test/market_recipe_family_limit.test.js"]
+    "tests": ["test/net/market_recipe_family_limit.test.js"]
   },
   {
     "name": "AUCTIONS-family-filter-after-cutoff",
     "file": "server-account/src/market.js",
     "old": "AND (?2 IS NULL OR p.recipe IN (SELECT value FROM json_each(?2)))\n      ORDER BY a.ends_at",
     "new": "AND (?2 IS NULL OR 1 = 1)\n      ORDER BY a.ends_at",
-    "tests": ["test/market_recipe_family_limit.test.js"]
+    "tests": ["test/net/market_recipe_family_limit.test.js"]
   }
 ]

@@ -25,7 +25,7 @@
 //   ui/joystickControlsWindow.js), on staging THIS window owns. DFU paints the ADVANCED tab with an
 //   "advanced_controls_button" texture out of its own Resources folder
 //   (:114-120); the port has no DFU asset bundle, so the tab is the
-//   bare CNFG00I0 rect - ui/travelPopUp.js's shape, recorded, and not
+//   bare CNFG00I0 rect - ui/travel/travelPopUp.js's shape, recorded, and not
 //   a behaviour.
 // - the PRIMARY/SECONDARY toggle at (268,0,50,8) (:135-141), showing
 //   which staged dict the grid edits; switching is refused while the
@@ -51,7 +51,7 @@
 //   (:296-317).
 // - CONTINUE on a valid grid closes; the close APPLIES the staged
 //   dicts and saves (OnPop :163-171).
-import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg } from './native/nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
@@ -89,13 +89,13 @@ import { gameSettingsText } from '../systems/textDatabases.js';   // L10N3f: DFU
  *  layout, six rows, equally full.
  *
  *  So 'SocialInteract' is rebound in the ENHANCED controls window alone
- *  (ui/enhancedControls.js, over systems/inputActions.js ACTION_GROUPS - the 'Online' group) - a DOM pane that
+ *  (ui/enhanced/enhancedControls.js, over systems/inputActions.js ACTION_GROUPS - the 'Online' group) - a DOM pane that
  *  grows a row without moving a pixel of anyone's art. Nothing is broken by the
  *  absence: the action ships bound to KeyF by default
  *  (systems/inputActions.js DEFAULT_BINDINGS), and online forces the enhanced
- *  lane whole (systems/onlineLane.js), so the one player who can use the action
+ *  lane whole (systems/online/onlineLane.js), so the one player who can use the action
  *  is the one player already looking at the window that offers it.
- *  test/soc5_interact.test.js pins both halves: this table still ends at 40, and
+ *  test/ui/soc5_interact.test.js pins both halves: this table still ends at 40, and
  *  the enhanced pane still lists the action.
  *
  *  AUDIT SOC D3: ...AND SO IT YIELDS HERE. Staging is ALL of ACTIONS (the dicts
@@ -346,7 +346,7 @@ export class ControlsWindow {
    *  (HorizontalSlider.cs:148-154) drops `draggingThumb` the frame the
    *  button comes up; the port has no held-button poll, so the hosts
    *  deliver that edge as `overlay.release?.()` and a nesting window
-   *  has to pass it on (ui/itemMakerWindow.js:"release() { this.picker?.release(); }"'s shape). The popup
+   *  has to pass it on (ui/item/itemMakerWindow.js:"release() { this.picker?.release(); }"'s shape). The popup
    *  latches its thumb on the press and `hover` above pumps the drag
    *  from every move, so this is the only edge that ends it. */
   release() { this.advanced?.release(); this.joystick?.release(); }

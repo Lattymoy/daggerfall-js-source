@@ -3,7 +3,8 @@
 //
 //   node tools/realmReview.mjs holds                         the characters held or flagged, each with its last finding
 //   node tools/realmReview.mjs findings <id>                 one character's findings and its wealth by the hour
-//   node tools/realmReview.mjs clear <id> [note]             lift its hold (its strikes with it) and its flag
+//   node tools/realmReview.mjs clear <id> [note]             lift its hold (its strikes and timed holds with it) and its flag -
+//                                                            an override: AUTO-HOLD (2026-10-16), no hold waits on it to lift
 //   node tools/realmReview.mjs hold <id> [note]              hold its trade by hand
 //   node tools/realmReview.mjs rollback <id> [note]          back to its last checkpoint judged clean (its tab loses the seat)
 //   node tools/realmReview.mjs budget [days]                 the measure: gold an hour of play, by level band, the service's

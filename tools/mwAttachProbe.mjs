@@ -35,7 +35,7 @@ await page.waitForTimeout(1200);
 
 const r = await page.evaluate(async () => {
   const out = {};
-  const em = await import('/src/ui/enhancedMenu.js');
+  const em = await import('/src/ui/enhanced/enhancedMenu.js');
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;inset:0;z-index:12;background:#0e1013;overflow:hidden';
   document.body.appendChild(host);

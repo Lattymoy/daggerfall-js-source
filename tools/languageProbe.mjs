@@ -1,6 +1,6 @@
 // L10N1b (2026-09-27): THE LANGUAGE SETTING, IN A REAL BROWSER, WITH NO ARENA2.
 //
-// test/l10n1b.test.js holds the laws and the source; what only a browser can show is the boot and the menu doing it:
+// test/systems/l10n1b.test.js holds the laws and the source; what only a browser can show is the boot and the menu doing it:
 // the language's text fetched before the front door draws and only that language's, the first-run offer asked in the
 // browser's own language and answered once, the Settings row switching the words at once, the page's `lang` following,
 // `?lang=` for one visit, and English standing wherever nothing was chosen.

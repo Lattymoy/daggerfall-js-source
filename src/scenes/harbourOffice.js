@@ -2,7 +2,7 @@
 // CAPT-BOARD (2026-10-11, the owner: "giving a reason to players to experience it"; bible/03-World/Captains-Sea.md
 // CAPT-BOARD) - THE HARBOUR OFFICE: the harbourmaster's board, the contracts a captain holds, and the crown's favours a
 // captain's rank buys, stood over the captain's ledger (systems/naval/captainLedger.js) for the world host. The yard's
-// window draws it as its Harbourmaster tab (ui/navalYardWindow.js); the naval host tells it what happened at sea
+// window draws it as its Harbourmaster tab (ui/naval/navalYardWindow.js); the naval host tells it what happened at sea
 // (`event`) and asks it where the held contracts' waters are (`sites`); the world steps its clock (`tick`).
 //
 // deps = {
@@ -120,7 +120,7 @@ export function createHarbourOffice(deps) {
   }
 
   /**
-   * THE HARBOURMASTER'S TAB (ui/navalYardWindow.js): the port, the captain's rank with its crown, today's board, the
+   * THE HARBOURMASTER'S TAB (ui/naval/navalYardWindow.js): the port, the captain's rank with its crown, today's board, the
    * contracts held, and the letters - each press its `{ ok, text }`.
    * @param {any} boat - the boat at the helm, lying to the quay (a delivery's hold)
    */
@@ -181,7 +181,7 @@ export function createHarbourOffice(deps) {
     return { ok: true, text: `Sold ${units(r, k)} for ${gold(k * r.buy)}.` };
   }
   /**
-   * THE EXCHANGE'S TAB (ui/navalYardWindow.js): the port's goods at today's prices, what the boat at the quay carries
+   * THE EXCHANGE'S TAB (ui/naval/navalYardWindow.js): the port's goods at today's prices, what the boat at the quay carries
    * of each, her goods' weight and her room (AUDIT CAPTAIN'S SEA B11: the kg more she carries before she lies dead in the
    * water - she was sold to a standstill unsaid) - and the presses. The other sea's goods only where the captain may
    * sail for them (`deps.etherGoods`) or carries some (AUDIT CAPTAIN'S SEA B16).

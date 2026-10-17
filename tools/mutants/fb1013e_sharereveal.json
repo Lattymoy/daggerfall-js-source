@@ -5,7 +5,7 @@
     "old": "'GetItem', 'RevealLocation']);",
     "new": "'GetItem']);",
     "tests": [
-      "test/fb1013e_sharereveal.test.js"
+      "test/systems/quest/fb1013e_sharereveal.test.js"
     ]
   }
 ]

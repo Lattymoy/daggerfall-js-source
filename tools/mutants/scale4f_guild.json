@@ -5,7 +5,7 @@
     "old": "  const r = member !== undefined ? (member && member.gid != null ? member : null)",
     "new": "  const r = member !== undefined ? (member ? member : null)",
     "tests": [
-      "test/scale4f_guild.test.js"
+      "test/server/scale4f_guild.test.js"
     ],
     "note": "a guild's badge minted off a guild whose row is gone"
   },
@@ -15,7 +15,7 @@
     "old": "m.guild_id AS guild_id, m.rank AS rank, m.joined_at AS joined_at",
     "new": "m.guild_id AS guild_id, m.joined_at AS joined_at",
     "tests": [
-      "test/scale4f_guild.test.js"
+      "test/server/scale4f_guild.test.js"
     ],
     "note": "the guildmaster's seat title never signed - its rank not read"
   },
@@ -25,7 +25,7 @@
     "old": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
     "new": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? LIMIT 1').bind(member.guild_id, n).first() ? { heraldry: member.heraldry } : null)",
     "tests": [
-      "test/scale4f_guild.test.js"
+      "test/server/scale4f_guild.test.js"
     ],
     "note": "a ribbon worn by a member who joined after the Turning that earned it"
   },
@@ -35,7 +35,7 @@
     "old": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
     "new": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND at >= ? LIMIT 1').bind(member.guild_id, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
     "tests": [
-      "test/scale4f_guild.test.js"
+      "test/server/scale4f_guild.test.js"
     ],
     "note": "another Season's ribbon worn"
   },
@@ -45,7 +45,7 @@
     "old": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
     "new": "    ? (member && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
     "tests": [
-      "test/scale4f_guild.test.js"
+      "test/server/scale4f_guild.test.js"
     ],
     "note": "a ribbon off a guild whose row is gone"
   },
@@ -55,7 +55,7 @@
     "old": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
     "new": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: null } : null)",
     "tests": [
-      "test/scale4f_guild.test.js"
+      "test/server/scale4f_guild.test.js"
     ],
     "note": "the guild's colours lost from the ribbon"
   },
@@ -65,7 +65,7 @@
     "old": "        const member = renownCharacterOk(body.character) && (seats || body.guild === true) ? await mintMemberOf(ctx, who.player.id, body.character) : undefined;",
     "new": "        const member = undefined;",
     "tests": [
-      "test/scale4f_guild.test.js"
+      "test/server/scale4f_guild.test.js"
     ],
     "note": "each of the three reads the membership for itself again"
   }

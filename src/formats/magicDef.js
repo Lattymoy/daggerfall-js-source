@@ -6,7 +6,7 @@
 // group u8, groupIndex u8, 10 x { type s8, param s8 } enchantments,
 // uses i16, value i32, material u8 - 62 bytes per record.
 
-import { readCStringFixed } from './saveTreeFile.js';
+import { readCStringFixed } from './save/saveTreeFile.js';
 
 export const MAGIC_ITEM_NAME_LENGTH = 32;
 export const MAGIC_ITEM_RECORD_SIZE = 62;

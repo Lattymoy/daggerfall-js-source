@@ -5,7 +5,7 @@
     "old": "      bossSpell: (record, target) => { modes?.dungeonCtx?.spellOnBoss?.(record, target); },   // WARDEN-STRIKE",
     "new": "      bossSpell: null,   // WARDEN-STRIKE",
     "tests": [
-      "test/fb0929g_wardenstrike.test.js"
+      "test/scenes/fb0929g_wardenstrike.test.js"
     ],
     "note": "The world host's mount passes no door: a strike spell on the Warden goes nowhere in the real game."
   },
@@ -15,7 +15,7 @@
     "old": "      bossSpell: (record, target) => { modes?.dungeonCtx?.spellOnBoss?.(record, target); },   // WARDEN-STRIKE",
     "new": "      bossSpell: (record, target) => {},   // WARDEN-STRIKE",
     "tests": [
-      "test/fb0929g_wardenstrike.test.js"
+      "test/scenes/fb0929g_wardenstrike.test.js"
     ],
     "note": "The ?town route's mount swallows it."
   },
@@ -25,7 +25,7 @@
     "old": "    spellOnBoss: (record, target = null) => (opts.gateBoss ? spellOnStandIn(record, target) : false),",
     "new": "",
     "tests": [
-      "test/fb0929g_wardenstrike.test.js"
+      "test/scenes/fb0929g_wardenstrike.test.js"
     ],
     "note": "The outer host asks a door the court never opened."
   },
@@ -35,7 +35,7 @@
     "old": "    spellOnBoss: (record, target = null) => (opts.gateBoss ? spellOnStandIn(record, target) : false),",
     "new": "    spellOnBoss: (record, target = null) => spellOnStandIn(record, target),",
     "tests": [
-      "test/fb0929g_wardenstrike.test.js"
+      "test/scenes/fb0929g_wardenstrike.test.js"
     ],
     "note": "An ordinary dungeon offers a boss's door."
   }

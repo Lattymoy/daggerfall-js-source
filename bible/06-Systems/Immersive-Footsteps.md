@@ -21,7 +21,7 @@ it has a Mod Authored row on the Features home (FT9's shape) and its
 ten keys under its card on the Mods page, and it is ported as
 `src/systems/immersiveFootsteps.js` - one component, driven by the four
 stride hosts. On by default (MO1). Pins: 18 in
-`test/if1_immersivefootsteps.test.js`; campaign `tools/mutants/if1.json`,
+`test/systems/if1_immersivefootsteps.test.js`; campaign `tools/mutants/if1.json`,
 30 mutants, 28 killed, 2 equivalent as recorded (AUDIT-IF below).
 
 ## The source the port reads
@@ -259,4 +259,4 @@ boat's or a sea ship's hull bucket (`csaBoat:` - csaSyncColliders' keys) is a DE
 over a water tile (a bridge) is walked on, not waded: the armour's ground (CheckToUseArmorFootsteps), as a path tile
 is. Over land a model keeps the tile ladder verbatim. Stepping off a floor re-reads the ground even on the same tile.
 The helm's own footsteps-off (CSA-D's `_csaFootstepsOff`) now stands the mod's stride down too - it had silenced only
-the classic one. Pins: `test/deckfield.test.js` (SHIP-DECK).
+the classic one. Pins: `test/systems/deckfield.test.js` (SHIP-DECK).

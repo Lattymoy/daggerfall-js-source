@@ -6,8 +6,8 @@ does need keybinds, what does, and ensuring keybinds are organized and working a
 This page is the standard. The code that holds it is `src/systems/inputActions.js` (the registry: `ACTIONS`,
 `DEFAULT_BINDINGS`, `ACTION_GROUPS`, `MOD_ACTIONS`, `HIDDEN_ACTIONS`, `actionLive`, `migrateKeyBinds`),
 `src/ui/input.js` (the readers every key goes through), and the three controls windows (the enhanced pane
-`src/ui/enhancedControls.js`, the classic grid `src/ui/controlsWindow.js` and its ADVANCED popup
-`src/ui/mouseControlsWindow.js`). The laws are pinned by execution in `test/kb1_keybinds.test.js`; the Ledger A row
+`src/ui/enhanced/enhancedControls.js`, the classic grid `src/ui/controlsWindow.js` and its ADVANCED popup
+`src/ui/mouseControlsWindow.js`). The laws are pinned by execution in `test/ui/kb1_keybinds.test.js`; the Ledger A row
 THE KEYBINDING STANDARD records every departure from DFU's table.
 
 ## The six laws
@@ -44,7 +44,7 @@ THE KEYBINDING STANDARD records every departure from DFU's table.
    for when it is switched back on. A mod that takes effect when the game next loads (Come Sail Away, Travel
    Options) answers as its host latched it at mount - switched off mid-game, its keys work until the next load, as
    its runtime does (AUDIT PRE-MERGE 0928 U7, `modSettings.js` latchModLoaded). No gameplay code reads a bound key by its raw code except the reservations the
-   sweep in `test/kb1_keybinds.test.js` names with their reasons (the back-button latch, Alt's preventDefault, the
+   sweep in `test/ui/kb1_keybinds.test.js` names with their reasons (the back-button latch, Alt's preventDefault, the
    travel panel's help, a talk window's confirm alias, the developer fly-cam).
 6. **Tests hold it, and old saves come forward.** The file carries `version: 3` (MODE-WHEEL: a version-2 file lets
    Left Alt go where it still holds Sneak, so the mode wheel lands there - Ledger A's CROUCH-SNEAK + MODE-WHEEL row).
@@ -117,7 +117,7 @@ registry's). The map is a window in the mode's slot, so those keys reach it and 
 number row is not the quick slots there, nor Escape the pause menu.
 
 CSA-L (2026-09-28, a player's ask: "instead of an overuse of keybinds, is there a way we can instead develop enhanced
-plus UI elements?"): on Enhanced Plus the nine are also a HELM PANEL under the compass (`ui/enhancedHelm.js`) - Raise
+plus UI elements?"): on Enhanced Plus the nine are also a HELM PANEL under the compass (`ui/enhanced/enhancedHelm.js`) - Raise
 or Stow sails, the square sails alone where the modifier's chord would raise them, the trim while it is the player's
 (held), Light or Douse lanterns, the time scale's minus, one and plus (offline: HELM-TIME-ONLINE draws no dial online,
 and the d-pad's left and right then step nothing, held they only trim), the position reading and Leave the helm - each
@@ -139,7 +139,7 @@ binds") - THE ARROWS ARE THE HELM (DECLARED, the Port-Ledger's HELM-KEYS row):
 
 - **Up and down, W and S: one ladder** (HELM-LADDER, 2026-10-04, from the field: "WASD and Arrow keys should function
   the same when controlling") - `MoveForwards` or `BoatSailUp` climbs a rung a press, `MoveBackwards` or `BoatSailDown`
-  comes down one (`systems/comeSailAway.js ladderUp, ladderDown`): the oars backing water, at rest, pulling ahead, then
+  comes down one (`systems/comeSailAway/comeSailAway.js ladderUp, ladderDown`): the oars backing water, at rest, pulling ahead, then
   her sails and, where the square sails are the player's own (the assist's AutoStowSquareSails off, a hull with both
   kinds), all her canvas - More sail and Less sail's steps above the oars. The oars keep their rung with no key held. A
   step with nowhere to go says so. End still toggles all her canvas, the brackets still trim - under the mod's own
@@ -194,11 +194,11 @@ panel's buttons and the pad's d-pad at the helm are Come Sail Away's nine and no
 The owner, after horse care and wagon upkeep (`06-Systems/Horse-Care.md`, `06-Systems/Wagon-Upkeep.md`): "Proper UI
 elements for the horse + wagon/cart (Enhanced plus)". CSA-L's answer for the helm is the answer for the saddle: on
 Enhanced Plus, astride a horse or on a wagon's bench outdoors, a SADDLE PANEL stands under the compass where the helm
-stands (`ui/enhancedSaddle.js` - the two are never up together), the helm's kind of thing: the HUD's, not a window -
+stands (`ui/enhanced/enhancedSaddle.js` - the two are never up together), the helm's kind of thing: the HUD's, not a window -
 it pauses nothing, and a window over the HUD, the HUD toggled off, a pause or a journey (the travel view, Travel
 Options' bar) hides it. It spends NO key of its own and adds no binding.
 
-- **What it reads** (`systems/upkeepRuntime.js saddle`, never written): its title the rider's - "Riding <name>" or
+- **What it reads** (`systems/upkeep/upkeepRuntime.js saddle`, never written): its title the rider's - "Riding <name>" or
   "Driving the <wagon>" - with the gait (Standing, Walking, Galloping, Trotting, Rolling - HORSE-WALK, 2026-10-12: a
   horse under horse care walks, and gallops on the run; Trotting is DFU's one pace - horse care Off, and on Boons a
   gallop asked and refused, HORSE-TIERS - `06-Systems/Horse-Care.md` THE WALK) and the pace in km/h, smoothed off
@@ -212,7 +212,7 @@ Options' bar) hides it. It spends NO key of its own and adds no binding.
   ridden and, while the look holds the mouse, how to free it (`FreeMouse`, Y).
 - **Every button is a door that already stands** (`scenes/saddleHost.js`, one glue for `world.js` and `exterior.js`):
   Feed oats and Apple are the Stable page's acts, to the horse the panel shows hungry; Repair kit is the kit's Use
-  (where a kit would mend); Cargo is a press on the wagon (`systems/horseCart.js openWagonCargo` - the load opened
+  (where a kit would mend); Cargo is a press on the wagon (`systems/horse/horseCart.js openWagonCargo` - the load opened
   with the wagon chosen, where Horse Cart and Cargo's own reach allows); Stable opens the Holdings page; View is the
   view key's toggle (`TogglePerspective`, shown only where it would turn - `player/mwView.js
   mwViewCanTogglePerspective`); Dismount (or Climb down) is `HorseMount`'s own handler, the classic transport's foot
@@ -222,18 +222,18 @@ Options' bar) hides it. It spends NO key of its own and adds no binding.
   stick and the corner); **a pad** keeps its d-pad for the quick slots (a rider's potions are on it) and presses the
   panel with its cursor (PADPLUS1). The classic skin keeps the grip bar's breath and the keys.
 - **It moves** (HUD-SADDLE, FIELD BUGS 2026-10-14, Discord: "Riding Window is not able to be edited in the HUD Editor
-  (Alt+U)" - `01-Overview/Field-Bugs-2026-10-14-riding-panel.md`): the bar is a HUD-MOVE piece, "Riding panel"
+  (Alt+U)" - `01-Overview/bugs/Field-Bugs-2026-10-14-riding-panel.md`): the bar is a HUD-MOVE piece, "Riding panel"
   (`hudLayout.js:"{ id: 'saddle', sel: '.saddlepanel .saddlepanel-bar'"`) - Alt+U frames it, a drag moves it, its
   corner sizes it, its X turns it off in play, and a double-click or Reset puts it back. A panel built at a mount stands
-  where the player put it from its first frame (`ui/hudPlacer.js` placeHudPieces, the notice stack's leaf), and while
+  where the player put it from its first frame (`ui/hud/hudPlacer.js` placeHudPieces, the notice stack's leaf), and while
   the editor is open and nobody rides it stands as a preview of itself ("Riding panel (preview)", `buildSaddlePreview`).
   The helm panel, its twin at the same place, is a piece too (HUD-HELM, above).
 
 ## AUDIT KB1 (2026-09-24, Mac: "Audit this before we merge")
 
 Three lenses over the standard - the registry and the carry, the windows and the pad and the chat, the scene hosts -
-found seventeen things; every one is paid and pinned by execution in `test/kb1_audit.test.js` (the pane's Escape in
-`test/enhancedControls.test.js`). The ones that change what a player meets:
+found seventeen things; every one is paid and pinned by execution in `test/ui/kb1_audit.test.js` (the pane's Escape in
+`test/ui/enhanced/enhancedControls.test.js`). The ones that change what a player meets:
 
 - **The carry's order** (above, law 6): a torch key saved as E no longer takes E from Interact; an old Travel
   Options key, the mod off, no longer takes the torch's G; a lost key is said, not silent.
@@ -261,10 +261,10 @@ hold - so a common herb, a body and the net's haul could not be played there. No
   up, and a window's press never reaches the world's edge ring - `ui/input.js`); in a window it is Back still.
 - **The pad, Enhanced Plus**: LT (`JoystickAxis9Button0`) is `Interact` - every Plus button held a row, and a trigger
   holds while the right thumb draws the knife's line. Recast, which LT held, is the d-pad's right held. Layout 2
-  (`ui/plusPad.js` `PLUS_PAD_LAYOUT_VERSION`): a store on layout 1 moves once, taking back layout 1's Recast on LT
+  (`ui/plus/plusPad.js` `PLUS_PAD_LAYOUT_VERSION`): a store on layout 1 moves once, taking back layout 1's Recast on LT
   where it still stands (`PLUS_PAD_RETIRED`); a row the player set themselves stands. The Controller bindings window
   has the row.
-- **The touch corner**: its third slot is `Interact` by default (`ui/touchButtons.js`, glyph E, held while the finger
+- **The touch corner**: its third slot is `Interact` by default (`ui/touch/touchButtons.js`, glyph E, held while the finger
   is) - the mode cycle and F a slot further in, the corner 16..344 px, inside the widest the HUD keeps clear of.
 - **The prompts**: with a pad in hand the professions' prompts and lines name its button (B, LT, Circle) - the sea's
   readout's law (AUDIT NAV1); else the key.
@@ -283,7 +283,7 @@ the wagon deposits it. Port-Ledger A, SHIFT AND A CLICK STOW THE WHOLE STACK.
 
 ## The defaults
 
-Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane draws exactly these groups. Held so by `test/audit0928_input.test.js` (AUDIT PRE-MERGE 0928 D2: the Come Sail Away table had shown two of its nine rows).
+Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane draws exactly these groups. Held so by `test/systems/audit0928_input.test.js` (AUDIT PRE-MERGE 0928 D2: the Come Sail Away table had shown two of its nine rows).
 
 ### Movement
 
@@ -464,9 +464,13 @@ buttons on its fixed art, Slide's among them, unbound.
 
 - Every group above, a vendored mod's only while the mod is on.
 - A row's button arms a capture; the next key or mouse button binds (Ctrl, Shift or Alt held binds the combo).
-- A held key asks (law 4). The question stands in the page's sticky head, over the list it leaves in place: the row
-  the key would go to is edged in brass, the row that holds it in red, and the list is inert until it is answered
-  (UXB1-D, 2026-09-25 - it used to replace the list, and a player lost their place in 60 rows).
+- A held key asks (law 4). The question stands in a viewport-fitted modal tooltip for the binding being changed: its
+  top-layer fallback escapes the Settings scrollport and centres in the viewport, while browsers with CSS anchors keep
+  it beside the binding and flip it above or below to fit. The first answer takes focus, the page behind is inert, and
+  the binding takes focus back after the answer. The row the key would go to is edged in brass and the row that holds it
+  in red
+  (UXB1-D, 2026-09-25; KEY-IN-USE-TIP, 2026-10-15 - it first replaced the list, then stood in its sticky head; both
+  made a player leave the row to answer a question about it).
 - Right-click or the row's ✕ CLEARS a binding at once - no question, staged like every other edit, so leaving the
   page still drops it (UXB1-C, 2026-09-25, the UX backlog: "Having to scroll back to your key is bad"). The classic
   grid keeps DFU's own remove prompt.
@@ -492,7 +496,7 @@ buttons on its fixed art, Slide's among them, unbound.
   post-processing) and the Transport window's letters - F, H, C, S behind the Transport key - read off the shortcut
   table, as words and keys with no buttons. A mod's own keys are named on its Features tile too, read-only, with one
   press through to this page.
-- **A key a Confirm still owes says so** (UNSAVED-MARK, FIELD BUGS 2026-10-11, `01-Overview/Field-Bugs-2026-10-11.md`:
+- **A key a Confirm still owes says so** (UNSAVED-MARK, FIELD BUGS 2026-10-11, `01-Overview/bugs/Field-Bugs-2026-10-11.md`:
   "It shows that my selected key is set ... it just didn't save"): its row is edged in brass and says "Not saved yet -
   press Confirm."; the head counts what Confirm owes and lights it (`controlsConfig.js` `unsavedEdits`). The how-to is
   the page's first card, scrolled away; the sticky head is the law's line and its buttons, and on Settings it sticks
@@ -506,8 +510,8 @@ choices while the crossbar is in force - the Overworld on no key at all is the h
 Overworld's alone). Under a window LT raises the hotbar to be arranged: A takes a slot in hand and puts it down on the
 press's click (a swap or a move), Y clears one; with the pad in hand "Add to hotbar" puts the new entry in hand and
 asks for a slot - A on it, or a bumper and the slot's own button on the crossbar (LB + X places too, never the quick
-act); on the row of ten the bumpers stay the tabs'. The mouse taking the hands back lets go of the hand. The record: `01-Overview/Field-Bugs-2026-10-04e.md`.
+act); on the row of ten the bumpers stay the tabs'. The mouse taking the hands back lets go of the hand. The record: `01-Overview/bugs/Field-Bugs-2026-10-04e.md`.
 
 ## UI-CALM - the saddle panel when it is wanted (2026-10-14)
 
-A player: "Why is there a huge, unmovable panel showing horse/cart info at the top of my screen? It's intrusive and ruins immersion. Put that info in a separate menu." The saddle panel now stands over the vitals and the hotbar, and only when wanted (`ui/enhancedSaddle.js` saddleShown): the whole panel when its key (F2, `SaddlePanel`) puts it up or the choice is Always; one line when the horse or the wagon needs the rider; the horse's name for six seconds after mounting; a finger's plate a tap from the panel; else nothing. The Horse care row's part *Saddle panel* chooses When needed (default), Always or Off. The Stable page is its separate menu. `10-UI/UI-Calm.md`.
+A player: "Why is there a huge, unmovable panel showing horse/cart info at the top of my screen? It's intrusive and ruins immersion. Put that info in a separate menu." The saddle panel now stands over the vitals and the hotbar, and only when wanted (`ui/enhanced/enhancedSaddle.js` saddleShown): the whole panel when its key (F2, `SaddlePanel`) puts it up or the choice is Always; one line when the horse or the wagon needs the rider; the horse's name for six seconds after mounting; a finger's plate a tap from the panel; else nothing. The Horse care row's part *Saddle panel* chooses When needed (default), Always or Off. The Stable page is its separate menu. `10-UI/UI-Calm.md`.

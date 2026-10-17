@@ -1,18 +1,18 @@
 // @ts-check
 // KG3 (2026-10-13, bible/11-Multiplayer/Kings-Gambit.md sections 5.5, 14 and 16; the owner: "Ensure any of the UI is
 // enhanced plus, our own coat and easily understandable/readable"): THE KING'S GAMBIT'S PANEL AT THE TAVERN TABLE - the
-// third panel to wear the card tables' kit (ui/cardPanelKit.js, CARDS-PLUS), beside Hold'em's and Iliac Hand's: the
+// third panel to wear the card tables' kit (ui/card/cardPanelKit.js, CARDS-PLUS), beside Hold'em's and Iliac Hand's: the
 // setup (a regular from the free chairs, the stake, the crown), the army, the turn and the result.
 //
 // TWO HALVES, as the other two panels'. `gambitHudModel` is pure: the table's state as the rows, tiles, chips, lines
 // and presses the panel shows - every word through the text core (ui/gambitTableWords.js), every number the law's own
-// export, every press's lawfulness and the reason it is refused decided here (section 14.9, test/kg3_panel.test.js).
+// export, every press's lawfulness and the reason it is refused decided here (section 14.9, test/systems/kg3_panel.test.js).
 // `createGambitTableHud` paints that model into the page and hands presses back to the table's half
 // (scenes/gambitTableGame.js).
 //
 // THE COAT (14.1): the chrome is `cardPanelChromeCss('.dfgambit')` - the window's box, the header band and its fold, the
 // line and its tones, the presses' row and their kinds, the log - and the panel's own parts are words of their own
-// (`.dfgambit-<part>`) the kit paints by role (ui/enhancedFrame.js FRAME_ROLES): this sheet writes geometry and words
+// (`.dfgambit-<part>`) the kit paints by role (ui/enhanced/enhancedFrame.js FRAME_ROLES): this sheet writes geometry and words
 // only - never a ground, a shadow or a radius on a role. TYPE (14.2): the chrome's sizes; the reading blocks 15 px at
 // 1.55; chips 12, a unit's name 13, the result's headline 18 - nothing under 12. THE FINGER (14.3): every press, row and
 // tile 44 px under a coarse pointer and at 480 px or less; what a hover says a press says; a press that costs gold says
@@ -27,16 +27,16 @@ import {
   KG_COLS, KG_ROWS, KG_POINT_BUDGET, KG_MAX_UNITS, KG_ACTIONS_PER_TURN, KG_POTION_HEAL, KG_ROSTER, KG_TILE, warningsArmAt,
   rosterUnit, armyCost, canRecruit, reachable, foesInRange, pieceById, pieceAt, hazardAt, tileAt, distance, rangeOf, hasLineOfSight,
 } from '../net/kingsGambit.js';
-import { GAMBIT_STAKE_MULTS, GAMBIT_CROWNS, crownIndex, stakeOf } from '../systems/gambitTableSession.js';
-import { FOE_CARDS } from '../systems/cardSources.js';
-import { cardById } from '../net/iliacCards.js';
+import { GAMBIT_STAKE_MULTS, GAMBIT_CROWNS, crownIndex, stakeOf } from '../systems/gambit/gambitTableSession.js';
+import { FOE_CARDS } from '../systems/card/cardSources.js';
+import { cardById } from '../net/iliac/iliacCards.js';
 import { ILIAC_CARD_ASPECT } from '../render/iliacCardFaces.js';
 import { paintFace, SUIT_CROWNS, RANK_KING } from '../render/cardFaces.js';
-import { cardCanvasCopy } from './cardBinderPage.js';
-import { cardPanelChromeCss, dressCardPanel, foldWords } from './cardPanelKit.js';
+import { cardCanvasCopy } from './card/cardBinderPage.js';
+import { cardPanelChromeCss, dressCardPanel, foldWords } from './card/cardPanelKit.js';
 import { PIXELIFY_FIVE_FACE } from './pixelifyFive.js';
 import { noteFirstUse } from '../systems/tutorials.js';
-import { DPAD_CODES } from './plusPad.js';
+import { DPAD_CODES } from './plus/plusPad.js';
 import {
   unitName, kingName, pieceName, regularLines, stakeLabel, stakeWhat, stakePurse, stakeNight,
   kingLine, unitLine, unitCost, unitChips, armyPointsLeft, unitsHeld, armyKingLine, actionsLeft, refusalWords, cellWords,
@@ -47,7 +47,7 @@ import {
   boardReading, boardFailed, armyFull, actionsLeftOf, watchGold, armyEmpty, armySpent, stakeWhileReady, stakingWait, boardHide,
 } from './gambitTableWords.js';
 
-/** The card a unit stands as - its creature's or its calling's (systems/cardSources.js FOE_CARDS: every unit of the
+/** The card a unit stands as - its creature's or its calling's (systems/card/cardSources.js FOE_CARDS: every unit of the
  *  roster has one since KG-SET). @param {number} id */
 export const unitCardId = (id) => FOE_CARDS[id] ?? null;
 
@@ -363,7 +363,7 @@ export const GAMBIT_CROWN_H = 84;
 const cardW = (/** @type {number} */ h) => Math.round(h * ILIAC_CARD_ASPECT);
 
 /** THE PANEL'S SHEET - geometry and words only (14.1): the kit paints every role, its states too (a tile's chosen is
- *  its `aria-pressed`, a list row's its `.on` - ui/enhancedFrame.js). The game's own marks that are no role - the
+ *  its `aria-pressed`, a list row's its `.on` - ui/enhanced/enhancedFrame.js). The game's own marks that are no role - the
  *  actions' pips, a tier's four steps, the armed press's ring - are written here, in the kit's brass and blood. THE
  *  DESKTOP: a column at the right on a wide screen, the cloth left clear (Iliac Hand's). THE PHONE (14.7): at 480 px
  *  wide or less, or 480 px tall, the setup, the army and the result a sheet from the foot - its header and presses
@@ -738,7 +738,7 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
 /** THE BOARD'S OWN KEYS (14.3): the arrows and the d-pad step the cell cursor, Enter, Space and the pad's A press its
  *  cell, Escape and the pad's B cancel. They are the panel's keys while a battle is on - a window's own, as
  *  ui/input.js's overlayAction reads a window's arrows and Enter - so the hosts ask `gambitBoardKey` and read no bound
- *  key raw (KB1 law 5; test/inputmap.test.js I2). */
+ *  key raw (KB1 law 5; test/scenes/inputmap.test.js I2). */
 export const GAMBIT_CURSOR_KEYS = Object.freeze({
   ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown',
   [DPAD_CODES.left]: 'ArrowLeft', [DPAD_CODES.right]: 'ArrowRight', [DPAD_CODES.up]: 'ArrowUp', [DPAD_CODES.down]: 'ArrowDown',

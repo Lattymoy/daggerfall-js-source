@@ -9,7 +9,7 @@
 //
 // Iliac Hand's board's twin (iliac.js), for a game with no deck to vouch
 // for: a game between two accounts at the relay's King's Gambit table is
-// rated - the relay signs its result (net/gambitReceipt.js g1) and either
+// rated - the relay signs its result (net/gambit/gambitReceipt.js g1) and either
 // seat carries it here. ONE row keyed by the game's id, whichever account
 // carries it first; the arena's Elo (arenaLaw.js eloAfter) and season
 // (arenaSeasonOf); a pair's day and season capped as the arena's are; a
@@ -25,8 +25,8 @@
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
 // ═══════════════════════════════════════════════════════════════════
-import { verifyGambitReceipt } from '../../src/net/gambitReceipt.js';
-import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arenaLaw.js';
+import { verifyGambitReceipt } from '../../src/net/gambit/gambitReceipt.js';
+import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arena/arenaLaw.js';
 import { boardNamesOf } from './boardNames.js';
 
 /** 10.7: the games and the different foes the season's #1 must have played to wear GRANDMASTER - Iliac Hand's
@@ -104,16 +104,37 @@ export async function storeGambitChampion(ctx, season, nowS) {
   return id;
 }
 /** Whether the season has a rated game - a season nobody played counts no board and writes nothing. */
-const seasonPlayed = async ({ db }, season) => !!(await db.prepare('SELECT 1 AS one FROM gambit_games WHERE season = ?1 AND rated = 1 LIMIT 1').bind(season).first());
+const seasonPlayed = async ({ db }, season) => !!(await playedRead(db, season).first());
 /** The season's #1 as the service last counted it - counted afresh only where it never was this season or is old, and
  *  only when the season has a rated game at all. */
 async function championNow(ctx, nowS) {
   const season = arenaSeasonOf(nowS);
   if (_champ.season === season && nowS - _champ.at < GAMBIT_CHAMPION_CACHE_S) return _champ.id;
-  const kept = await ctx.db.prepare('SELECT player, at FROM gambit_champions WHERE season = ?1').bind(season).first();
-  const id = kept && nowS - Number(kept.at) < GAMBIT_CHAMPION_STORED_S ? kept.player ?? null : (await seasonPlayed(ctx, season)) ? await storeGambitChampion(ctx, season, nowS) : null;
+  const kept = await championKeptRead(ctx.db, season).first();
+  const stale = !(kept && nowS - Number(kept.at) < GAMBIT_CHAMPION_STORED_S);
+  return championFrom(ctx, nowS, season, kept, stale && await seasonPlayed(ctx, season));
+}
+/** SIGN-BATCH: the kept #1's row, as a statement; and whether the season has a rated game, as one. */
+const championKeptRead = (/** @type {any} */ db, /** @type {number} */ season) => db.prepare('SELECT player, at FROM gambit_champions WHERE season = ?1').bind(season);
+const playedRead = (/** @type {any} */ db, /** @type {number} */ season) => db.prepare('SELECT 1 AS one FROM gambit_games WHERE season = ?1 AND rated = 1 LIMIT 1').bind(season);
+/** The season's #1 from its kept row - counted again and stored where it is none or stale and the season was played -
+ *  and kept by this Worker. */
+async function championFrom(/** @type {any} */ ctx, /** @type {number} */ nowS, /** @type {number} */ season, /** @type {any} */ kept, /** @type {boolean} */ played) {
+  const id = kept && nowS - Number(kept.at) < GAMBIT_CHAMPION_STORED_S ? kept.player ?? null : played ? await storeGambitChampion(ctx, season, nowS) : null;
   _champ = { season, at: nowS, id };
   return id;
+}
+/** SIGN-BATCH (2026-10-16; arena.js arenaHonoursPlan says why): the season's #1's reads - its kept row and whether the
+ *  season was played, where this Worker kept none - and its honours from theirs, as gambitHonoursOf answers them. */
+export function gambitHonoursPlan(/** @type {any} */ ctx, /** @type {any} */ player, /** @type {number} */ nowS) {
+  if (!player?.handle) return { reads: [], from: async () => ({ champion: false }) };
+  const season = arenaSeasonOf(nowS);
+  const cached = _champ.season === season && nowS - _champ.at < GAMBIT_CHAMPION_CACHE_S;
+  const keptId = cached ? _champ.id : null;   // PRIMARY-TRIPS audit: the #1 kept when the plan was made - read after the batch, another request's count of a new season could stand in its place
+  return {
+    reads: cached ? [] : [championKeptRead(ctx.db, season), playedRead(ctx.db, season)],
+    from: async (/** @type {any[]} */ res) => ({ champion: (cached ? keptId : await championFrom(ctx, nowS, season, res[0]?.results?.[0] ?? null, !!res[1]?.results?.[0])) === player.id }),
+  };
 }
 /**
  * THE CLOCK'S COUNT (cron.js, every minute): the season's #1 counted before a reader would count it - only once the kept
@@ -173,7 +194,7 @@ async function topMayMove(ctx, season, a, b, na, nb) {
 }
 
 /**
- * A RATED GAME'S CLAIM (`/v1/gambit/claim`): the relay's receipt (net/gambitReceipt.js) for a game this account played.
+ * A RATED GAME'S CLAIM (`/v1/gambit/claim`): the relay's receipt (net/gambit/gambitReceipt.js) for a game this account played.
  * One row a game, whichever seat carries it first; both accounts must be registered to be rated. Answers
  * `{ recorded, ... }`, a game already kept `{ recorded: false, why: 'claimed', ... }`, a guest's `{ recorded: false,
  * why: 'guest' }`, one whose other seat is no registered account `{ recorded: false, why: 'foe-unregistered' }`, or

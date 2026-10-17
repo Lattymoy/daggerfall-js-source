@@ -5,7 +5,7 @@
     "old": "      const anim = moving && !swaying && b._dyn !== true && b.selfCard !== true && o == null;",
     "new": "      const anim = moving && !swaying && b._dyn !== true && b.selfCard !== true;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "      if (b.selfCard === true) this._selfCard = b;",
     "new": "      /* the card unnoted */",
     "tests": [
-      "test/disc29_lamps.test.js",
-      "test/disc24c_self_shadow.test.js"
+      "test/render/disc29_lamps.test.js",
+      "test/render/disc24c_self_shadow.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "  if (!self || !n) return casters;",
     "new": "  return casters;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "    for (let r = casters.length - 1; r >= 0; r--) if (!mine.includes(casters[r])) { casters[r] = i; break; }",
     "new": "    casters[casters.length - 1] = i;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   }
 ]

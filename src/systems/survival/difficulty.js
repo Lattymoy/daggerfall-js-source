@@ -48,7 +48,7 @@
 //      pool and no further - so on their own they can never raise DFU's
 //      exhaustion collapse, which kills a player with a foe near (the
 //      port's costs a tenth of the health there - SPENT-ASHORE,
-//      systems/rest.js exhaustionOutcome) - and what a need took it gives
+//      systems/rest/rest.js exhaustionOutcome) - and what a need took it gives
 //      back the moment the need is met: a meal repays the hunger, a drink
 //      the thirst, a sleep the exhaustion, a warm place or a lit fire the
 //      cold. The floor is the NEEDS' share: DFU's own walking and running
@@ -110,7 +110,7 @@ export const SURVIVAL_DEFAULT = 'boons';   // BOONS-DEFAULT (2026-10-13, Mac: "m
 
 /** AUDIT SURV-TIERS: what each tier is STORED as on the prefs shelf -
  *  the values the Features row's segments write (systems/features.js
- *  `mod-climates-calories`; test/survtiers.test.js holds the row to
+ *  `mod-climates-calories`; test/systems/survival/survtiers.test.js holds the row to
  *  this). OFF KEEPS THE OLD SWITCH'S OWN `false`: a shelf written before
  *  the tiers needs no conversion for it, and a build from before the
  *  tiers - an older desktop install reading the same file - still reads
@@ -122,7 +122,7 @@ const TIER_OF_STORED = new Map(Object.entries(SURVIVAL_STORED).map(([tier, v]) =
 export const isStoredTier = (v) => TIER_OF_STORED.has(v);
 /** The tier a stored value names; anything else - the old `true`, a hand
  *  edit - is no tier and reads as the default, the same rule the Features
- *  bar draws it by (ui/enhancedMenu.js tileStates), and the shelf drops
+ *  bar draws it by (ui/enhanced/enhancedMenu.js tileStates), and the shelf drops
  *  it at the load (uiPrefs.js loadPrefs) so the two can never disagree. */
 export const tierOfStored = (v) => TIER_OF_STORED.get(v) ?? SURVIVAL_DEFAULT;
 

@@ -8,24 +8,24 @@
 // door that reads or spends one reads it where it always did: the bank's letters and the court's fines
 // (systems/banking.js, court.js), the Broker's embers (sigilBroker.js), the Reforge's shards (reforge.js), the save, the
 // realm's customs and its gold law. What the wallet changes is where the ENHANCED pack shows them - in the wallet's
-// sheet, not on its pages (ui/enhancedInventory.js packModel) - beside the two currencies that are no pieces at all: the
+// sheet, not on its pages (ui/enhanced/enhancedInventory.js packModel) - beside the two currencies that are no pieces at all: the
 // purse's gold (`entity.goldPieces`, E4's counter) and the account's silver (online, the marks book's balance -
 // `setWalletSilver`). The classic window is DFU's and keeps DFU's four tabs; there the wallet's Use says what it holds.
 //
 // THE PIECE: DFU's Small Sack's picture and price (ItemTemplates 86: TEXTURE.205 record 18, 1 gold - the picture is DFU's
-// own), no weight (`hasNoEncumbrance`, the Small Cart's column), one to a slot. BOUND (systems/itemBound.js - never
-// dropped, traded or sold; net/realmTradeLaw.js BOUND_TEMPLATES names it) and PACK-ONLY (`packOnly` - not even the wagon
+// own), no weight (`hasNoEncumbrance`, the Small Cart's column), one to a slot. BOUND (systems/item/itemBound.js - never
+// dropped, traded or sold; net/realm/realmTradeLaw.js BOUND_TEMPLATES names it) and PACK-ONLY (`packOnly` - not even the wagon
 // or the player's own storage take it: a wallet that left the pack would leave its pieces back on the pages). EVERY
 // CHARACTER HAS ONE: a new character's starting kit holds it (startingGear.js addSurvivalProvisions, the port's own tail -
 // DFU's kit and a mod's alike), and every character made before it is given one, once - PORTAL-GIFT's shape
-// (systems/gateSpoils.js): a save's `walletGift` mark says it has had it, a save from before the wallet carries none, and
+// (systems/gate/gateSpoils.js): a save's `walletGift` mark says it has had it, a save from before the wallet carries none, and
 // the gift is given as the save is restored (save.js restorePlayer - every load, offline and online, the realm's boot
 // among them).
 //
 // Not a DFU member: Daggerfall's currencies are its gold and its letters, in the pack's lists. Ledger A (WALLET1).
-import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from './itemTemplates.js';
+import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from './item/itemTemplates.js';
 import { addItem, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';
-import { SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE } from './gateSpoils.js';
+import { SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE } from './gate/gateSpoils.js';
 import { isEquipped } from './equip.js';
 
 /** The wallet's template - the port's own, beside the gate's 570-572 and below the professions' reserved 600. */
@@ -185,7 +185,7 @@ export function walletLines(/** @type {ReturnType<typeof walletContents>} */ c) 
   return ['Your wallet holds:', ...walletLedger(c).flatMap((part) => part.rows.map(walletLine))];
 }
 
-/** The card's lines (systems/itemInfo.js): what a wallet is for. */
+/** The card's lines (systems/item/itemInfo.js): what a wallet is for. */
 export const WALLET_CARD_LINES = Object.freeze([
   'Holds your letters of credit, Deadlands Embers and Welkynd Shards,',
   'and counts your gold and your silver.',

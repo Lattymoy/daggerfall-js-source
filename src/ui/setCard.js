@@ -6,7 +6,7 @@
 // Aetheric set's in its own), who it answers to and what it is for, the nine places it is worn as nine sockets - lit
 // where a piece of it is worn - the stage it stands at (its lowest piece's, under my Renown: "grow together") and what
 // holds it there, and its three tiers, each lit when enough pieces wake it, its numbers at the set's stage (and at
-// Ascendant, under the pointer). The facts are systems/sigilSets.js's (setCardView, wornSets); this file only draws
+// Ascendant, under the pointer). The facts are systems/sigil/sigilSets.js's (setCardView, wornSets); this file only draws
 // them. The pack's card and the Info box take the block from here; the paperdoll's column takes the strip - a line a
 // worn set, a press on it showing that set's piece.
 //
@@ -16,8 +16,8 @@
 // brief - sigilSets.js BRIEF_MAX), the sentence under the pointer; a set piece's card was 1,000 px tall in a 660 px
 // window, the three sentences alone 250 of it. The INFO box asks `{ full: true }` and says everything: the Prince and
 // the role, the stage's whole line, every tier's sentence and its Ascendant numbers.
-import { setCardView, setSleepText, wornSets, wornSetPieces, setIdOf, setById, SET_PLACES } from '../systems/sigilSets.js';
-import { SIGIL_STAGES } from '../systems/sigil.js';
+import { setCardView, setSleepText, wornSets, wornSetPieces, setIdOf, setById, SET_PLACES } from '../systems/sigil/sigilSets.js';
+import { SIGIL_STAGES } from '../systems/sigil/sigil.js';
 import { sigilRuneTileUrl } from './sigilRune.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 

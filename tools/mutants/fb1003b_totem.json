@@ -5,7 +5,7 @@
     "old": "      if (found) return null;\n",
     "new": "",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (marker.record !== MARKER_TYPES.QuestSpawn && marker.record !== MARKER_TYPES.QuestItem) continue;\n",
     "new": "",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (marker.loadID !== markerID) continue;\n",
     "new": "",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  return o?.kind === 'moveFlat' ? o : null;",
     "new": "  return o;",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    return this._links.get(`${ns}:${positionKey}`) ?? null;",
     "new": "    return null;",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  stand.off = offset;\n",
     "new": "",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (stand.batch) stand.batch.origin = offset;\n",
     "new": "",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (!stand || stand.dead || !offset) return;",
     "new": "  if (!stand || !offset) return;",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const o = s.off;\n  const x = o ?",
     "new": "  const o = null;\n  const x = o ?",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      host?.follow(dungeonCtx?.questMarkerMover?.(marker?.markerID)?.offset);\n",
     "new": "",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      follow: (offset) => rideSceneMarker(stand, offset),",
     "new": "      follow: () => {},",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      rideSceneMarker(stand, stand.off);   // TOTEM-CAGE: a follow that came before the fill draws from the batch's first frame\n",
     "new": "",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "        aabb: questStandBox(s),",
     "new": "        aabb: { min: [s.x - s.width / 2, s.y, s.z - s.width / 2], max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2] },",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    questMarkerMover: (markerID) => sceneMarkerMover(dungeon.blocks, actions, markerID),",
     "new": "    questMarkerMover: () => null,",
     "tests": [
-      "test/fb1003b_totem.test.js"
+      "test/systems/quest/fb1003b_totem.test.js"
     ]
   }
 ]

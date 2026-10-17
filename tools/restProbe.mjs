@@ -138,7 +138,7 @@ console.log('\n== THE WORLD HOST: THE SAME KEY, THE OTHER SCENE ==');
   // town branch again - but through a DIFFERENT host, a different
   // in-town test (locationIndex over the travel pixel, not "this page
   // is a location") and a different deps object. The wilderness arm is
-  // pinned in test/restwhere.test.js; what a live probe can prove here
+  // pinned in test/systems/rest/restwhere.test.js; what a live probe can prove here
   // is that the key reaches a window at all, which it never did.
   await page.keyboard.press('r');
   await waitFrames(2);

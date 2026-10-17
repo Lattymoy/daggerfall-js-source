@@ -28,7 +28,7 @@
 // rules per model, each a coordinate that moves to the face it was meant
 // to meet, measured by tools/seamCensus.mjs over every dungeon block of
 // the player's own data, where each moved corner lands measured too (and
-// pinned by test/dungeonseams.test.js, data-gated). The reader is untouched - the
+// pinned by test/world/dungeonseams.test.js, data-gated). The reader is untouched - the
 // patch is applied to a COPY where the pipeline builds a model
 // (scenes/dataPipeline.js), so the parity harness still reads DFU's
 // bytes - and it is recorded as a departure in the Port-Ledger.
@@ -40,7 +40,7 @@
 // the sloped stair, a hand high, by 13-14% (AUDIT DUNGEON-SEAMS 6). No
 // triangle flips or folds flat. The collider is built from the same positions, so a
 // foot finds the tread where the eye does - and the nav-mesh cache is
-// versioned past it (ai/navClient.js NAV_BAKE_VERSION).
+// versioned past it (ai/nav/navClient.js NAV_BAKE_VERSION).
 // ═══════════════════════════════════════════════════════════════════
 
 /** @typedef {{ axis: 'x'|'y'|'z', map: Record<string, number> }} AxisRule */

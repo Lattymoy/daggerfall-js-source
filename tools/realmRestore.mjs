@@ -6,7 +6,7 @@
 // From CUSTOMS-CARRY's arrival on main (2026-09-29 03:09:50 UTC) until HOUSE-LOSS, customs carried an offline
 // character's online home, guild place and Renown track to its realm id before the first save was sent, and the door's
 // Delete on a character whose first save never landed took them with it - the home's pieces and hidden furniture by the
-// tables' cascade - and left the census spent (bible/01-Overview/Field-Bugs-2026-09-29.md, HOUSE-LOSS). Those rows are
+// tables' cascade - and left the census spent (bible/01-Overview/bugs/Field-Bugs-2026-09-29.md, HOUSE-LOSS). Those rows are
 // gone from the database; D1 Time Travel still holds them. The operator's workflow (.github/workflows/realm-restore.yml)
 // reads a snapshot from before the loss (THEN) and the database as it stands (NOW), and this plans what comes back.
 //
@@ -26,7 +26,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { GUILD_MEMBERS_MAX, GUILD_RANK_MASTER } from '../src/net/guildLaw.js';
+import { GUILD_MEMBERS_MAX, GUILD_RANK_MASTER } from '../src/net/guild/guildLaw.js';
 import { isMain } from './lib/isMain.mjs';   // AUDIT 68: the one "am I the program" test
 
 /** The realm's own ids (server-account/src/realm.js REALM_ID_RE): a home under one is a realm character's, never lost here. */

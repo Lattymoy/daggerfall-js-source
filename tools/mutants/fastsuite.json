@@ -5,7 +5,7 @@
     "old": "  const ordered = shardsOf(files, 1, times)[0].files;",
     "new": "  const ordered = files;",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...extra];",
     "new": "  const head = ['--test', ...extra];",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "`--test-concurrency=${Math.max(1, cores | 0)}`",
     "new": "`--test-concurrency=${cores | 0}`",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    const s = r.status ?? 1;",
     "new": "    const s = 0;",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!files.length) return 0;\n  const ordered",
     "new": "  const ordered",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  return runTests(files, { extra: runnerFlags(argv.slice(1)) });\n}",
     "new": "  return spawnSync(process.execPath, ['--test', ...files], { cwd: ROOT, stdio: 'inherit' }).status ?? 1;\n}",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  return runTests(files, { extra: runnerFlags(argv) });\n}",
     "new": "  return 0;\n}",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -68,9 +68,9 @@
     "old": "\"test\": \"node tools/testShards.mjs 1/1\",",
     "new": "\"test\": \"node --test \\\"test/*.test.js\\\"\",",
     "tests": [
-      "test/fastsuite.test.js",
-      "test/audit68_repo.test.js",
-      "test/flow1_ci.test.js"
+      "test/tooling/fastsuite.test.js",
+      "test/tooling/audit68_repo.test.js",
+      "test/tooling/flow1_ci.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "    if (run.length && used + f.length + 3 > budget) {",
     "new": "    if (false) {",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "    if (s !== 0 && status === 0) status = s;",
     "new": "    if (s !== 0) status = s;",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "    if (r.error) console.error(`[tests] the test runner did not start: ${r.error.message ?? r.error}`);\n",
     "new": "",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "export const runnerFlags = (argv) => argv.filter((a) => /^--test-[a-z-]+(=.*)?$/.test(a));",
     "new": "export const runnerFlags = (argv) => argv.filter(() => false);",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...extra];",
     "new": "  const head = ['--test', ...extra, `--test-concurrency=${Math.max(1, cores | 0)}`];",
     "tests": [
-      "test/fastsuite.test.js"
+      "test/tooling/fastsuite.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "  if (inVeil(px, py)) return 'home';\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (way !== asked) asked = null;\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      return !!way && asked == null;",
     "new": "      return !!way;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (way === 'out') return landfall();\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return from && Number.isFinite(from.px) && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py) ?",
     "new": "  return from && !inEtherLaw(from.px, from.py) ?",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const CROSS_DAYS = 3;",
     "new": "export const CROSS_DAYS = 2;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const time = `${days} ${days === 1 ? 'day' : 'days'}`;",
     "new": "  const time = `${days} days`;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    crossGate.asked(way);\n    const boat = csaRuntime.state.CurrentBoat;",
     "new": "    const boat = csaRuntime.state.CurrentBoat;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const crossRefusal = () => (navalHostileNear() ? 'hostile' : csaPassengersOn(",
     "new": "const crossRefusal = () => (false ? 'hostile' : csaPassengersOn(",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "csaPassengersOn(csaRuntime?.state?.CurrentBoat) > 0 ? 'passengers' : null);",
     "new": "false ? 'passengers' : null);",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
     "new": "    if (gamePaused() || _loading) return;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      const minutes = CROSS_DAYS * 1440;",
     "new": "      const minutes = CROSS_DAYS * 60;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (way === 'out') captainLedger.chartIsle(veilhaven().key);",
     "new": "      if (false) captainLedger.chartIsle(veilhaven().key);",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      else crossGate.asked('out');",
     "new": "      else crossGate.asked(null);",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "        if (Math.max(Math.abs(dx), Math.abs(dy)) === r && !seaPixel(px + dx, py + dy)) { d = r; break ring; }",
     "new": "        if (!seaPixel(px + dx, py + dy)) { d = r; break ring; }",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "      if (typeof key !== 'string' || chartedSet.has(key) || ether.charted.length >= ETHER_CHARTED_MAX) return false;",
     "new": "      if (typeof key !== 'string' || ether.charted.length >= ETHER_CHARTED_MAX) return false;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      if (typeof key !== 'string' || chartedSet.has(key) || ether.charted.length >= ETHER_CHARTED_MAX) return false;",
     "new": "      if (typeof key !== 'string' || chartedSet.has(key)) return false;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      chartedSet.add(key);\n      ledger.note('islands');",
     "new": "      chartedSet.add(key);",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      for (let i = 0; i < keys.length - ETHER_HARVEST_KEEP; i++) delete ether.harvested[keys[i]];\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "      delete ether.harvested[key];\n      ether.harvested[key] = Math.floor(day);",
     "new": "      ether.harvested[key] = Math.floor(day);",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  ? { px: Math.floor(at.px), py: Math.floor(at.py) } : null);",
     "new": "  ? { px: at.px, py: at.py } : null);",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    crossed() { ether.crossings = whole(ether.crossings + 1); },",
     "new": "    crossed() { ether.crossings = whole(ether.crossings); },",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "if (typeof id === 'string' && !ether.heard.includes(id) && ether.heard.length < LOG_LIST_MAX)",
     "new": "if (typeof id === 'string' && ether.heard.length < LOG_LIST_MAX)",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "(Array.isArray(e.charted) ? e.charted : []).filter((k) => typeof k === 'string' && /^\\d{1,4},\\d{1,4}$/.test(k))",
     "new": "(Array.isArray(e.charted) ? e.charted : []).filter((k) => typeof k === 'string')",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "      ether.crossings = whole(e.crossings);",
     "new": "      ether.crossings = e.crossings | 0;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "`${log.deepest} ${log.deepest === 1 ? 'league' : 'leagues'} past the Veil`",
     "new": "`${log.deepest}`",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    const fresh = islesNear(px, py, SIGHT_PX).filter((i) => L.chartIsle(i.key));",
     "new": "    const fresh = islesNear(px, py, SIGHT_PX + 2).filter((i) => L.chartIsle(i.key));",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    for (const i of fresh) deps.say?.(",
     "new": "    for (const i of []) deps.say?.(",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    L.deepest?.(etherDepthAt(px));\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    return islesNear(px, py, HARVEST_REACH_PX).filter(",
     "new": "    return islesNear(px, py, HARVEST_REACH_PX + 1).filter(",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "  const bare = (key) => { const d = L.gatheredDay(key); return d != null && day() - d < HARVEST_DAYS; };",
     "new": "  const bare = (key) => { const d = L.gatheredDay(key); return d != null && day() - d <= HARVEST_DAYS; };",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    const n = STRAND_YIELD[bandIndex(isle.band)] ?? STRAND_YIELD[0];",
     "new": "    const n = STRAND_YIELD[0];",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "if (!bare(isle.key)) L.gathered(isle.key, day());",
     "new": "if (!bare(isle.key)) void 0;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "    if (!l || !legendSails(L.legendDay(l.id), day()) || !legendAbroad(l, { night })) return null;",
     "new": "    if (!l || !legendAbroad(l, { night })) return null;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "    if (!l || !legendSails(L.legendDay(l.id), day()) || !legendAbroad(l, { night })) return null;",
     "new": "    if (!l || !legendSails(L.legendDay(l.id), day())) return null;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "    deps.credit?.(l.purse);\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "    L.endLegend(l.id, day());\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "    const price = CHART_BUY_PRICE.base + CHART_BUY_PRICE.band * bandIndex(etherBandOf(etherDepthAt(port.px)).id);",
     "new": "    const price = CHART_BUY_PRICE.base;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "    deps.pay?.(o.price);\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "can: fresh > 0 && purse >= price,",
     "new": "can: purse >= price,",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "    if (!(r() < PAPERS_CHANCE)) return 0;",
     "new": "    if (!(r() < 1)) return 0;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "    if (cls?.faction !== 'pirate' || !inEther(px, py)) return 0;",
     "new": "    if (!inEther(px, py)) return 0;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "      hear: () => { for (const l of LEGENDS) L.hearLegend?.(l.id); },",
     "new": "      hear: () => { for (const l of []) L.hearLegend?.(l.id); },",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "    if (!on(x, y, r + 80)) continue;\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "label: i.kind === 'port' || v.zoom >= CHART_ZOOMS.indexOf(LABEL_ZOOM)",
     "new": "label: true",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "name: b.name, line: b.from > 0 });",
     "new": "name: b.name, line: true });",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "    isles, bands, veil: veil <= w ? veil : null,",
     "new": "    isles, bands, veil,",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "    const r = HAUNT_PX * k;",
     "new": "    const r = HAUNT_PX;",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "{crossings, plural, one {# crossing} other {# crossings}}', {",
     "new": "{crossings} crossings', {",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "  return clampChartView({ cx: px - (sx - w / 2) / k, cy: py - (sy - h / 2) / k, zoom });",
     "new": "  return clampChartView({ cx: v.cx, cy: v.cy, zoom });",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "  const zoom = Math.max(0, Math.min(CHART_ZOOMS.length - 1, v.zoom + Math.sign(dir)));",
     "new": "  const zoom = v.zoom + Math.sign(dir);",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "export const clampChartView = (v) => ({ zoom: v.zoom, cx: Math.max(ETHER_BOX.x0, Math.min(ETHER_BOX.x1, v.cx)), cy: Math.max(ETHER_BOX.y0, Math.min(ETHER_BOX.y1, v.cy)) });",
     "new": "export const clampChartView = (v) => ({ zoom: v.zoom, cx: v.cx, cy: v.cy });",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "export const toChart = (v, sx, sy, w, h) => [v.cx + (sx - w / 2) / CHART_ZOOMS[v.zoom],",
     "new": "export const toChart = (v, sx, sy, w, h) => [v.cx + (sx - w / 2) * CHART_ZOOMS[v.zoom],",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "  if (leagues < 0.5) return t('sea.chart.here', 'here');\n",
     "new": "",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -491,34 +491,34 @@
     "old": "if (etherSea && inEther(p.x, p.y)) return openEtherChart(); }",
     "new": "if (false) return openEtherChart(); }",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
     "name": "OFFICE-ether-tab",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "  if (o.ether) return etherOfficeText(o);   // ETHER-SEA",
     "new": "  if (false) return etherOfficeText(o);   // ETHER-SEA",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
     "name": "OFFICE-rumour-press",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "({ id: `rumour:${i}`, title: 'Talk on the quay', words: r, terms: '', press: '', can: false, why: '' })",
     "new": "({ id: `rumour:${i}`, title: 'Talk on the quay', words: r, terms: '', press: 'Take', can: false, why: '' })",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
     "name": "OFFICE-isles-plural",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "Your charts hold ${o.charted} ${o.charted === 1 ? 'isle' : 'isles'}.",
     "new": "Your charts hold ${o.charted} isles.",
     "tests": [
-      "test/ethercross.test.js"
+      "test/systems/naval/ethercross.test.js"
     ]
   }
 ]

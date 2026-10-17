@@ -9,7 +9,7 @@
 //
 // ── WHY IT IS NOT A SETTINGS KEY ─────────────────────────────────
 //
-// systems/settings.js is DFU's SettingsManager and holds exactly 171
+// systems/settings/settings.js is DFU's SettingsManager and holds exactly 171
 // keys, pinned (settings.test.js asserts ALL_KEYS.length === 171).
 // DFU has no such setting because DFU has no such screens, so a 172nd
 // key would break the parity pin AND put a port-invented preference
@@ -49,7 +49,7 @@ export function skinOverride(search = globalThis.location?.search ?? '') {
 /** The skin in effect: the URL override, else the stored choice, else
  *  enhanced. OVH3: online too - the online lane forced 'enhanced' here
  *  (OL1) until the online panels mounted on both skins; the skin is the
- *  player's UI Overhaul now (systems/onlineLane.js ONLINE_FORCED_PREFS). */
+ *  player's UI Overhaul now (systems/online/onlineLane.js ONLINE_FORCED_PREFS). */
 export function uiSkin(search) {
   return skinOverride(search) ?? clean(getPref('skin')) ?? DEFAULT_SKIN;
 }

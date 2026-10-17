@@ -5,7 +5,7 @@
     "old": "        if (stood.has(id)) continue;",
     "new": "        continue;",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
     "new": "        const pile = p.seedPile([...r.items], feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
     "new": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { owner: REMAINS_STAND_OWNER });",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
     "new": "        if (w && (s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items)) unstand(id);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
     "new": "        if (!w || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
     "new": "        if (!w || s.pool !== p || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
     "new": "        if (!w || s.pool !== p || s.pile.dead || s.pile.items !== w.r.items) unstand(id);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
     "new": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive) unstand(id);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        pile.label = label(r);",
     "new": "        pile.label = null;",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    label: (r) => LEGACY_TEXT.remainsName(r.name),",
     "new": "    label: (r) => r.name,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "label: LEGACY_TEXT.remainsName(r.name), id:",
     "new": "label: `Where ${r.name} fell`, id:",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "        pile.mark = REMAINS_MARK;",
     "new": "        pile.mark = null;",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "        pile.noFind = true;",
     "new": "        pile.noFind = false;",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": " : p.mark ? { root: lootCrown(p.pos, p.size), items: p.items, mark: p.mark } : ",
     "new": " : ",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "export const setLootMarksLive = (on, by = 'wild') => { if (on) _marksLive.add(by); else _marksLive.delete(by); };",
     "new": "export const setLootMarksLive = (on) => { if (on) _marksLive.add('wild'); else _marksLive.delete('wild'); };",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  if (typeof container === 'object' && /** @type {any} */ (container).noFind === true) return false;",
     "new": "",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];",
     "new": "    if (!family || !deps.on() || past || !deps.entity?.chargenDone) return [];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];",
     "new": "    if (!family || past || family.pending || !deps.entity?.chargenDone) return [];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (!p || !isAlive(p) || !playedHere(p)) return [];",
     "new": "    if (!p || !isAlive(p)) return [];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    return openRemains().filter((r) => r.state === 'lying' && r.place).map((r) => { readyList(r); return r; });",
     "new": "    return openRemains().filter((r) => r.state === 'lying' && r.place);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "new": "      world: mode === 'exterior' ? state.worldCoords(pos) : null,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "new": "    const y = ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: pos[1] - state.compensation[1], terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "new": "    const y = Number.isFinite(place.world.y) ? place.world.y + state.compensation[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "new": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: undefined })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    if (!Number.isFinite(ground)) return null;   // its pixel not built yet - stood once it is",
     "new": "",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    if (mode !== 'exterior' || place.mode !== 'exterior' || !place.world) return null;",
     "new": "    if (place.mode !== 'exterior' || !place.world) return null;",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "      if (mode !== 'dungeon' || !Array.isArray(place.pos) || !legacyInDungeonOf(legacyHere(), place)) return null;",
     "new": "      if (mode !== 'dungeon' || !Array.isArray(place.pos)) return null;",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "      return modes?.dungeonCtx?.floorAt?.(place.pos[0], place.pos[1], place.pos[2]) ?? [place.pos[0], place.pos[1], place.pos[2]];",
     "new": "      return [place.pos[0], place.pos[1], place.pos[2]];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    pool: () => ((modes?.mode ?? 'exterior') === 'exterior' ? droppedLoot : (modes?.droppedPool?.() ?? null)),",
     "new": "    pool: () => droppedLoot,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "    pixelKeyOf: (place) => (place?.mode === 'exterior' && place.pixel ? `${place.pixel.x},${place.pixel.y}` : null),",
     "new": "    pixelKeyOf: () => null,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    setLootMarksLive(legacyRemainsStand.frame(legacyHost.remainsToStand()) > 0, 'legacy');",
     "new": "",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
     "new": "    inFight: () => duelEnemyNear() || areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? []), ...(modes?.dungeonCtx?.foes ?? [])]) || navalHostileNear(),",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
     "new": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : []) || navalHostileNear(),",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
     "new": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
     "new": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null } : null,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(true ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "    const d = { at: deps.now(), place: deps.here({ height: true }), gold: deps.gold(), by: deps.killer?.() ?? null, cause: 'fell' };   // AUDIT FB1013d B2: the remains' place keeps the height it was stood at - asked here alone",
     "new": "    const d = { at: deps.now(), place: deps.here(), gold: deps.gold(), by: deps.killer?.() ?? null, cause: 'fell' };   // AUDIT FB1013d B2: the remains' place keeps the height it was stood at - asked here alone",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
     "new": "    inFight: () => areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
     "new": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])),",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "        if (!r.items.some(bonesOf(r)) && !carriedNow().some(bonesOf(r))) r.items.unshift(mintRemainsItem({ line: family.id, of: r.of, name: r.name }));",
     "new": "        ;",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "    deps.letGoRemains?.();   // AUDIT FB1013d A2: every row's list is replaced below - a body stood over an old one goes now",
     "new": "    ;   // AUDIT FB1013d A2: every row's list is replaced below - a body stood over an old one goes now",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "    letGoRemains: () => legacyRemainsStand.clear(),   // AUDIT FB1013d A2: a load's adopt replaced every list - the bodies over the old ones go",
     "new": "    letGoRemains: () => {},   // AUDIT FB1013d A2: a load's adopt replaced every list - the bodies over the old ones go",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "    // outlived them: a take from it was a take from no record\n    if (worldMoveBusy()) return;\n",
     "new": "    // outlived them: a take from it was a take from no record\n",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "      } else if (r.state === 'taken' && inList && !kept) {",
     "new": "      } else if (false) {",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "    const ground = heightAt(x, z);",
     "new": "    const ground = heightAt(place.world.x, place.world.z);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "new": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: x, nativeZ: z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -491,7 +491,7 @@
     "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[2], pos[0]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], 0, 0), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -509,7 +509,7 @@
     "old": "    return floorLanding(collider, [x, Math.max(y, ground) + 0.5, z]);",
     "new": "    return [x, Math.max(y, ground), z];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -518,7 +518,7 @@
     "old": "      return modes?.dungeonCtx?.floorAt?.(place.pos[0], place.pos[1], place.pos[2]) ?? [place.pos[0], place.pos[1], place.pos[2]];",
     "new": "      return modes?.dungeonCtx?.floorAt?.(place.pos[0], place.pos[1] + 3, place.pos[2]) ?? [place.pos[0], place.pos[1], place.pos[2]];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -527,7 +527,7 @@
     "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
     "new": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foes : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -536,7 +536,7 @@
     "old": "    return openRemains().filter((r) => r.state === 'lying' && r.place).map((r) => { readyList(r); return r; });",
     "new": "    return (family.remains ?? []).filter((r) => r.state === 'lying' && r.place).map((r) => { readyList(r); return r; });",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "    if (r.by == null && !openedSig.has(r.id)) openedSig.set(r.id, itemsSig(r.items));",
     "new": "    if (r.by == null) openedSig.set(r.id, itemsSig(r.items));",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -554,7 +554,7 @@
     "old": "    if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];",
     "new": "    if (!family || !deps.on() || past || family.pending) return [];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -563,7 +563,7 @@
     "old": "    if (!p || !isAlive(p) || !playedHere(p)) return [];",
     "new": "    if (!p || !playedHere(p)) return [];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -572,7 +572,7 @@
     "old": "export const REMAINS_MARK = Object.freeze({ colour: Object.freeze([0.93, 0.88, 0.7]), h: 7, pulse: false, reach: 60 });",
     "new": "export const REMAINS_MARK = Object.freeze({ colour: Object.freeze([0.93, 0.88, 0.7]), h: 7, pulse: false, reach: 4 });",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ]
   },
   {
@@ -581,7 +581,7 @@
     "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ],
     "equivalent": true,
     "why": "A region is its pixels': the pixel compared beside it names the region of every dungeon a place can name - a table row's and a spawn's or a hall's (maps.getRegionIndexAt), the Arena's floor's (its city's), the Court's and the Hour's (the site they are entered at, under the GPS's pixel) - so no two dungeons on one pixel with one row and one key differ by region. Kept as LEGACY4 wrote it."
@@ -592,7 +592,7 @@
     "old": "    if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];",
     "new": "    if (!family || !deps.on() || family.pending || !deps.entity?.chargenDone) return [];",
     "tests": [
-      "test/fb1013d_remains.test.js"
+      "test/systems/fb1013d_remains.test.js"
     ],
     "equivalent": true,
     "why": "A past played back is never the line's current: adopt keeps the line's current where it stood (`past = me; return`), so current() is another member and playedHere refuses a page whose character is not theirs. The tick's own guard, kept beside it."

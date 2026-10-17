@@ -14,7 +14,7 @@
 // (`seats`, the open wagon's), the cart's tilt on its axle (`hitchPitch`) and where its door is (`door`, the caravan's).
 //
 // THE LIFT. The mod's wagon stands NORMAL_GROUND_OFFSET (1 m) up from where its wheels meet the ground - its trailing
-// pose is "settled a metre over the ground along its normal" (systems/horseFollow.js hitchedPoseStep) and its parked
+// pose is "settled a metre over the ground along its normal" (systems/horse/horseFollow.js hitchedPoseStep) and its parked
 // pose stands its wheels' pivots a radius over the ground (solveTwoWheelPose), and the classic model's origin is that
 // metre over its wheels' feet. So every part is lifted DOWN that metre here, its pictures laid first on the bake's own
 // heights (world/wagonArt.js's liveries are read on them): the wheels meet the ground at y -1 either way.
@@ -24,29 +24,28 @@
 // bottom). Hitched, a cart is borne level by the horse, so while a horse is in its shafts the presentation turns it
 // back about its axle (`hitchPitch`) - its bed level, its shafts at the horse's flank 0.7 m up.
 //
-// Each face wears its picture by `wagonFaceSkin` (world/largeBoatModel.js faceSkin's law): the sides' liveries banded on their
-// height, everything else tiled planar (world/galleonMesh.js planarUv), the wheels' faces and the caravan's ends laid
+// Each face wears its picture by `wagonFaceSkin` (world/ships/largeBoatModel.js faceSkin's law): the sides' liveries banded on their
+// height, everything else tiled planar (world/ships/galleonMesh.js planarUv), the wheels' faces and the caravan's ends laid
 // whole on their pictures - the cart's on its LEVEL frame (`cartLevel`), the caravan's sides from their middle
 // (`caravanSideU`). WAGON-EMBLEM: the open wagon's side reads its picture UN-FLIPPED (`sideBandU`, world/wagonArt.js) -
 // planarUv's own far-side flip mirrors a side's picture about the wagon's middle, which is free on cloth and put the
 // guild arms a tile and a half from one side to the other. Not a DFU member. Ledger A (WAGONS1).
-import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, WAGON_SOURCES, CARAVAN_SIDE_WINDOW_U, sideBandU } from './wagonArt.js';
-import { classicPictures } from './classicArt.js';   // DF-ART: the wagons' pictures, Daggerfall's own
-import { classicRgbaOf } from '../systems/textureReplacement.js';
+import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, wagonArt, CARAVAN_SIDE_WINDOW_U, sideBandU } from './wagonArt.js';
+import { dfLook, lookSeed } from './dfLook.js';   // DF-LOOK: the icon's wagon in the colours the world's wears
 import { toColor32 } from '../formats/color32Order.js';
-import { MeshBench, prism, box, planarUv, sub, add, dot } from './galleonMesh.js';
-import { benchPart } from './galleonModel.js';
+import { MeshBench, prism, box, planarUv, sub, add, dot } from './ships/galleonMesh.js';
+import { benchPart } from './ships/galleonModel.js';
 import { pointsOf, boxOfPoints } from './shipKit.js';
 import { quatAngleAxis, quatRotate, quatMultiply } from './quat.js';
-import { NORMAL_GROUND_OFFSET } from '../systems/horseCartLaw.js';
-import { CARGO_DEFINITIONS } from '../systems/wagon41214.js';
-import { WAGON_KINDS, activeWagonKind, activeWagonItem } from '../systems/wagonKinds.js';
+import { NORMAL_GROUND_OFFSET } from '../systems/horse/horseCartLaw.js';
+import { CARGO_DEFINITIONS } from '../systems/wagon/wagon41214.js';
+import { WAGON_KINDS, activeWagonKind, activeWagonItem } from '../systems/wagon/wagonKinds.js';
 import { readWagonLookAll } from '../systems/wagonTimber.js';   // WAGON-TIMBER PASS 3: the dep delivers the WHOLE look - the pool reads all nine keys, and the paint's own four-key reader would strip the timber's five before either saw them
-import { riddenHorseLook } from '../systems/horseCoats.js';   // COATS1: the ridden horse's look
+import { riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
 import { mwViewHorseRig } from '../player/mwView.js';   // COATS3D: the 3D horse rig, on the Morrowind lane
 import { SEATED_HIP_HEIGHT } from '../player/seatPose.js';   // WAGONS3: the seated hips' height over the feet, the measured biped's
 
-/** Where each wagon's bake is (fetched at the load, as the ships' are - systems/comeSailAwayModels.js). */
+/** Where each wagon's bake is (fetched at the load, as the ships' are - systems/comeSailAway/comeSailAwayModels.js). */
 export const WAGON_MODEL_URLS = Object.freeze({
   cart: new URL('../assets/wagons/cart.json', import.meta.url).href,
   openWagon: new URL('../assets/wagons/openWagon.json', import.meta.url).href,
@@ -57,7 +56,7 @@ export const WAGON_MODEL_URLS = Object.freeze({
 export const LIFT = NORMAL_GROUND_OFFSET;
 
 /** Each wagon's measurements in its frame (metres over the ground, before the lift): read off the bake and pinned
- *  there (test/wagons1.test.js). `floorY` the bed's (or the caravan's) floor, `sideX` the body's half width outside,
+ *  there (test/systems/item/wagons1.test.js). `floorY` the bed's (or the caravan's) floor, `sideX` the body's half width outside,
  *  `innerX` inside, `bedZ` the bed's run (back to front), `frontZ` the wagon's foremost point. */
 export const MEASURED = Object.freeze({
   cart: Object.freeze({ axleY: 0.5445, floorY: 0.69, innerX: 1.0543, sideX: 1.1589, bedZ: Object.freeze([-0.37, 2.2]), frontZ: 3.14, bottomFront: Object.freeze([0.1452, 2.1778]), bottomBack: Object.freeze([0.6201, -0.4852]) }),
@@ -66,7 +65,7 @@ export const MEASURED = Object.freeze({
 });
 /** WAGONS3: `bench` above - where the driver's hips sit on a front bench (metres, the bake's frame): `y` the bench's top
  *  under them, `z` their run - a thigh's length or less behind the bench's front edge, so the knees stand at its lip,
- *  and clear of the body's front wall behind them. Read off the bake (test/wagons3.test.js): the open wagon's bench is
+ *  and clear of the body's front wall behind them. Read off the bake (test/player/wagons3.test.js): the open wagon's bench is
  *  level at 1.525-1.556 m over 4.90-5.65 m, its back half under the body's front wall (5.12 m) - the hips 0.37 m before
  *  its edge, 0.16 m before the wall; the caravan's falls from 2.564 m at its back (4.81 m) to 2.417 m at its front
  *  (5.94 m), the hips a thigh (0.45 m) before its edge, and its step - the footboard before it, 1.88-1.92 m high - is
@@ -117,7 +116,7 @@ const endUv = (sign) => (p) => {
 };
 
 /** Which picture a face of a wagon's baked part wears, and how it lies on it: `{ rec, uv(p) }`, or `{ band, u(p) }`
- *  a face of a livery (world/galleonModel.js benchPart's skins). `kind` the wagon, `role` the part, `n` the face's
+ *  a face of a livery (world/ships/galleonModel.js benchPart's skins). `kind` the wagon, `role` the part, `n` the face's
  *  normal, `c` its centre, `pivot` / `R` a wheel's. WAGON-UV: the cart's faces laid on its level frame (`cartLevel` -
  *  its wheels as they are: they roll). */
 export function wagonFaceSkin(kind, role, n, c, pivot = null, R = 1) {
@@ -355,7 +354,7 @@ function fromLevel(kind, p) {
   return [r[0], r[1] + pivotY, r[2]];
 }
 
-/** The cargo a wagon's fullness shows: WagonCargoVisual's twelve classic pieces (systems/wagon41214.js
+/** The cargo a wagon's fullness shows: WagonCargoVisual's twelve classic pieces (systems/wagon/wagon41214.js
  *  CARGO_DEFINITIONS - their models, tiers, turns and sizes) moved into this wagon's bed - the classic bed's middle
  *  (x 0, z -0.79, its floor y -0.02) onto this one's, the open wagon's spread over the front of its bed (its back is
  *  the passengers'), none in the caravan (its load is inside it). In the wagon's lifted frame. */
@@ -383,7 +382,7 @@ export function seatsFor(kind) {
   return at.slice(0, n).map(([sx, z, yaw]) => Object.freeze({ feet: Object.freeze([sx, y, z]), yaw }));
 }
 
-/** The caravan's door: on its rear end, where its door's picture stands (world/wagonArt.js CARAVAN_DOOR) - the point
+/** The caravan's door: on its rear end, where its painted door stands (world/wagonArt.js caravanEndArt) - the point
  *  in front of it (lifted frame) a player walks out of the caravan onto, and the way they face (the wagon's, back). */
 export function doorFor(kind) {
   if (kind !== 'caravan') return null;
@@ -410,7 +409,7 @@ export const rigGrowOf = (g, kind, hitch = null) => (g > 1 ? Math.max(1, g * Mat
 /**
  * The parts the cart's presentation draws, from a wagon's geometry (`wagonGeometry`): `make(geometry, name)` turns
  * a geometry into whatever the caller draws (the pool's `rendererModelOf`; a test's identity). The classic contract
- * (systems/wagon41214.js buildWagonParts: body, the shafts, the wheels and their pivots, the radius, the bounds) with
+ * (systems/wagon/wagon41214.js buildWagonParts: body, the shafts, the wheels and their pivots, the radius, the bounds) with
  * the wagon's own beside it.
  */
 export function buildBakedWagonParts(geo, make = rendererModelOf) {
@@ -468,7 +467,7 @@ export function pitchedPoint(parts, p, pitch) {
 
 /** THE HOSTS' WORDS (THE ONE CONSTRUCTION SEAM - scenes/world.js and scenes/exterior.js build the cart's pool, and
  *  each hands it these, so neither can forget one): `wagonKind` the kind the player drives off what they carry
- *  (systems/wagonKinds.js activeWagonKind - the Small Cart when they own none: the classic transport's), `bakedWagon`
+ *  (systems/wagon/wagonKinds.js activeWagonKind - the Small Cart when they own none: the classic transport's), `bakedWagon`
  *  Mac's wagon of a kind, fetched once (a failed fetch is the pool's to fall back from). */
 export function wagonPoolDeps(items, fetchFn = (u) => globalThis.fetch(u)) {
   const loads = new Map();
@@ -485,12 +484,12 @@ export function wagonPoolDeps(items, fetchFn = (u) => globalThis.fetch(u)) {
 }
 
 /** WAGONS1: an item's picture of a wagon of `kind` (ui/modelIcon.js's port door): the whole wagon as one model, its
- *  pictures read from the player's own ARENA2 (DF-ART: world/wagonArt.js WAGON_SOURCES) - `{ model, texels(archive,
- *  record) }`, the shape the icon's rasteriser takes. */
-export async function wagonIconSource(kind, fetchFn = (u) => globalThis.fetch(u), classicRgba = classicRgbaOf) {
+ *  pictures painted here (DF-LOOK: in Daggerfall's colours, as scenes/horseCartPool.js uploads them) - `{ model,
+ *  texels(archive, record) }`, the shape the icon's rasteriser takes. */
+export async function wagonIconSource(kind, fetchFn = (u) => globalThis.fetch(u)) {
   const r = await fetchFn(WAGON_MODEL_URLS[kind]);
   if (!r?.ok) throw new Error(`the ${kind}'s model: HTTP ${r?.status}`);
   const model = wagonIconModel(wagonGeometry(await r.json()));
-  const pics = new Map((await classicPictures(WAGON_SOURCES, classicRgba)).map(([rec, pic]) => [rec, toColor32(pic)]));
+  const pics = new Map(wagonArt().map(([rec, pic]) => [rec, toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))]));
   return { model, texels: (arc, rec) => (arc === WAGON_ARCHIVE ? pics.get(rec) ?? null : null) };
 }

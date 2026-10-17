@@ -4,111 +4,111 @@
     "file": "src/systems/skillSoftcap.js",
     "old": "export const CLIMB_OVERCAP_SPEED_PER_POINT = 0.01;",
     "new": "export const CLIMB_OVERCAP_SPEED_PER_POINT = 0.02;",
-    "tests": ["test/fb1001_climb.test.js"]
+    "tests": ["test/systems/fb1001_climb.test.js"]
   },
   {
     "name": "CLIMB-PAST-bounded-at-the-raw-cap-not-the-effective-one",
     "file": "src/systems/skillSoftcap.js",
     "old": "  const gain = Math.min(EFFECTIVE_SKILL_MAX, liveClimbing) - SKILL_SOFT_CAP;",
     "new": "  const gain = Math.min(SKILL_HARD_CAP, liveClimbing) - SKILL_SOFT_CAP;",
-    "tests": ["test/fb1001_climb.test.js"]
+    "tests": ["test/systems/fb1001_climb.test.js"]
   },
   {
     "name": "CLIMB-PAST-counts-from-95",
     "file": "src/systems/skillSoftcap.js",
     "old": "  const gain = Math.min(EFFECTIVE_SKILL_MAX, liveClimbing) - SKILL_SOFT_CAP;",
     "new": "  const gain = Math.min(EFFECTIVE_SKILL_MAX, liveClimbing) - 95;",
-    "tests": ["test/fb1001_climb.test.js"]
+    "tests": ["test/systems/fb1001_climb.test.js"]
   },
   {
     "name": "CLIMB-PAST-below-100-slows-the-climb",
     "file": "src/systems/skillSoftcap.js",
     "old": "  return gain > 0 ? 1 + gain * CLIMB_OVERCAP_SPEED_PER_POINT : 1;",
     "new": "  return 1 + gain * CLIMB_OVERCAP_SPEED_PER_POINT;",
-    "tests": ["test/fb1001_climb.test.js"]
+    "tests": ["test/systems/fb1001_climb.test.js"]
   },
   {
     "name": "CLIMB-PAST-the-speed-law-ignores-the-skill",
     "file": "src/player/climbing.js",
     "old": "  return (baseSpeed / 3) * (enhanced ? 2 : 1) * overcapClimbSpeed(liveClimbing);",
     "new": "  return (baseSpeed / 3) * (enhanced ? 2 : 1);",
-    "tests": ["test/fb1001_climb.test.js"]
+    "tests": ["test/systems/fb1001_climb.test.js"]
   },
   {
     "name": "CLIMB-PAST-the-motor-hands-no-skill",
     "file": "src/player/motor.js",
     "old": "climbingSpeed(this.speed, !!ci.enhanced, ci.climbing ?? 0) * dt",
     "new": "climbingSpeed(this.speed, !!ci.enhanced) * dt",
-    "tests": ["test/fb1001_climb.test.js"]
+    "tests": ["test/systems/fb1001_climb.test.js"]
   },
   {
     "name": "CLIMB-PAST-the-motor-hands-the-luck",
     "file": "src/player/motor.js",
     "old": "climbingSpeed(this.speed, !!ci.enhanced, ci.climbing ?? 0) * dt",
     "new": "climbingSpeed(this.speed, !!ci.enhanced, ci.luck ?? 0) * dt",
-    "tests": ["test/fb1001_climb.test.js"]
+    "tests": ["test/systems/fb1001_climb.test.js"]
   },
   {
     "name": "CLIMB-PAST-the-spell-s-double-lost-in-the-rewrite",
     "file": "src/player/motor.js",
     "old": "climbingSpeed(this.speed, !!ci.enhanced, ci.climbing ?? 0) * dt",
     "new": "climbingSpeed(this.speed, false, ci.climbing ?? 0) * dt",
-    "tests": ["test/climbing.test.js"]
+    "tests": ["test/player/climbing.test.js"]
   },
   {
     "name": "MOVE-BANK-the-20000-bucket-back",
     "file": "src/systems/skills.js",
     "old": "    entity.skillUses[skillId] += whole;\n    return;\n  }",
     "new": "    amount = whole;\n  }",
-    "tests": ["test/fb1001_move.test.js"]
+    "tests": ["test/systems/fb1001_move.test.js"]
   },
   {
     "name": "MOVE-BANK-the-bucket-lifted-for-every-skill",
     "file": "src/systems/skills.js",
     "old": "  if (entity.skillUses[skillId] > 20000) entity.skillUses[skillId] = 20000;",
     "new": "  if (entity.skillUses[skillId] > 20000 && false) entity.skillUses[skillId] = 20000;",
-    "tests": ["test/fb1001_move.test.js"]
+    "tests": ["test/systems/fb1001_move.test.js"]
   },
   {
     "name": "MOVE-BANK-the-shift-overflows-a-long-run",
     "file": "src/systems/advancement.js",
     "old": "      const uses = Math.floor((entity.skillUses[i] * reflexesMod) / 0x10000);",
     "new": "      const uses = calcUses;",
-    "tests": ["test/fb1001_move.test.js"]
+    "tests": ["test/systems/fb1001_move.test.js"]
   },
   {
     "name": "MOVE-BANK-the-carry-capped-at-0.99-again",
     "file": "src/systems/advancement.js",
     "old": "      prog[i] = (prog[i] - 1) * cost / nextCost;",
     "new": "      prog[i] = Math.min(0.99, prog[i] - 1);",
-    "tests": ["test/fb1001_move.test.js"]
+    "tests": ["test/systems/fb1001_move.test.js"]
   },
   {
     "name": "MOVE-BANK-the-carry-not-re-priced",
     "file": "src/systems/advancement.js",
     "old": "      prog[i] = (prog[i] - 1) * cost / nextCost;",
     "new": "      prog[i] = prog[i] - 1;",
-    "tests": ["test/fb1001_move.test.js"]
+    "tests": ["test/systems/fb1001_move.test.js"]
   },
   {
     "name": "MOVE-BANK-re-priced-at-the-same-point",
     "file": "src/systems/advancement.js",
     "old": "      const nextCost = softcapUsesForAdvancement(entity.skills[i] + 1, ",
     "new": "      const nextCost = softcapUsesForAdvancement(entity.skills[i], ",
-    "tests": ["test/fb1001_move.test.js"]
+    "tests": ["test/systems/fb1001_move.test.js"]
   },
   {
     "name": "MOVE-BANK-a-pass-with-no-new-uses-lands-nothing",
     "file": "src/systems/advancement.js",
     "old": "      if (entity.skills[i] >= SKILL_HARD_CAP) continue;\n      // MOVE-BANK",
     "new": "      if (entity.skills[i] >= SKILL_HARD_CAP || calcUses <= 0) continue;\n      // MOVE-BANK",
-    "tests": ["test/fb1001_move.test.js"]
+    "tests": ["test/systems/fb1001_move.test.js"]
   },
   {
     "name": "MOVE-BANK-a-pass-lands-on-more-than-a-point-only",
     "file": "src/systems/advancement.js",
     "old": "      if (!(prog[i] >= 1)) continue;",
     "new": "      if (!(prog[i] >= 2)) continue;",
-    "tests": ["test/fb1001_move.test.js"]
+    "tests": ["test/systems/fb1001_move.test.js"]
   }
 ]

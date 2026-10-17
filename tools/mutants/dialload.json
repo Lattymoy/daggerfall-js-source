@@ -5,7 +5,7 @@
     "old": "\n      setPlayerPos ??= opts.placePlayer ?? null;",
     "new": "",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "setPlayerPos ??= opts.placePlayer ?? null;",
     "new": "setPlayerPos = opts.placePlayer ?? null;",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "          placePlayer: placeLoadedPlayer,",
     "new": "",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      placePlayer: placeLoadedPlayer,",
     "new": "",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "dungeonCtx?.quickLoad?.(placeLoadedPlayer, key)",
     "new": "dungeonCtx?.quickLoad?.((p) => player.spawn(p[0], p[1], p[2]), key)",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   },
   {
@@ -50,8 +50,8 @@
     "old": "return dungeonCtx.restoreSaved(extras, placeLoadedPlayer, { session: false }) ?? true;",
     "new": "return dungeonCtx.restoreSaved(extras, (p) => { player.spawn(p[0], p[1], p[2]); }, { session: false }) ?? true;",
     "tests": [
-      "test/dialload.test.js",
-      "test/mac6.test.js"
+      "test/scenes/dialload.test.js",
+      "test/systems/save/mac6.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "      opts.onStartLoad?.();\n",
     "new": "",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "      if (opts.dungeonOnline?.()) { hudText.add('Loading is disabled during online play.'); return; }",
     "new": "      opts.onStartLoad?.();\n      if (opts.dungeonOnline?.()) { hudText.add('Loading is disabled during online play.'); return; }",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "          onStartLoad: () => host.cameraRecoilReset?.(),",
     "new": "",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "    cameraRecoilReset: () => cameraRecoiler.reset(),",
     "new": "    cameraRecoilReset: () => {},",
     "tests": [
-      "test/dialload.test.js"
+      "test/scenes/dialload.test.js"
     ]
   }
 ]

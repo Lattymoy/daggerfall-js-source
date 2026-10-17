@@ -5,7 +5,7 @@
     "old": "  return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
     "new": "  return s !== 'off';",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      AND (COALESCE(p.muted_until, 0) <= ?2 OR ?3 = 1 OR n.author = ?4)",
     "new": "      AND (COALESCE(p.muted_until, 0) <= ?2 OR ?3 = 1 OR n.author = ?4 OR 1 = 1)",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      AND (n.hidden <> 1 OR ?3 = 1 OR n.author = ?4)",
     "new": "      AND (n.hidden <> 9 OR ?3 = 1 OR n.author = ?4)",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "WHERE r.note_id = n.id AND r.reporter = ?4)",
     "new": "WHERE r.note_id = n.id AND r.reporter = ?4 AND 1 = 0)",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "WHERE (SELECT COUNT(*) FROM board_notes WHERE author = ? AND expires_at > ?) < ?`)",
     "new": "WHERE (SELECT COUNT(*) FROM board_notes WHERE author = ? AND expires_at > ?) <= ?`)",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (accountKind(player) !== 'linked') return { error: 'board-need-account' };\n  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n  if (isMuted(player, nowS)) return { error: 'muted' };",
     "new": "  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n  if (isMuted(player, nowS)) return { error: 'muted' };",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (!guildMay(a.me.rank, 'invite')) return { error: 'guild-rank' };",
     "new": "    if (false) return { error: 'guild-rank' };",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    button: n.button === 'guild' && !guildOk ? null : (n.button ?? null),",
     "new": "    button: n.button ?? null,",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "AND p.created_at <= ?2 - ?4) >= ?3`)",
     "new": "AND p.created_at <= ?2 - ?4) > ?3`)",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  await db.prepare(`UPDATE board_notes SET hidden = 1 WHERE id = ?1 AND hidden = 0",
     "new": "  await db.prepare(`UPDATE board_notes SET hidden = 1 WHERE id = ?1 AND hidden <> 1",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (note.author === reader.id) return { error: 'own-note' };",
     "new": "  if (false) return { error: 'own-note' };",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "'DELETE FROM board_notes WHERE id = ? AND author = ?'",
     "new": "'DELETE FROM board_notes WHERE id = ? AND author <> ?'",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (!canModerate(mod, env)) return { error: 'not-moderator' };",
     "new": "  if (false) return { error: 'not-moderator' };",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "export async function postNotice({ db, rand, nowS }, dev, env, { subject, body, days, rid } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
     "new": "export async function postNotice({ db, rand, nowS }, dev, env, { subject, body, days, rid } = {}) {\n  if (false) return { error: 'not-developer' };",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)'",
     "new": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at < ? LIMIT ?)'",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "export const NOTES_LIVE_MAX = 3;",
     "new": "export const NOTES_LIVE_MAX = 4;",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  if (!NOTE_DAYS.includes(/** @type {number} */ (days))) return { error: 'bad-note-days' };",
     "new": "  if (false) return { error: 'bad-note-days' };",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "nowMs() - e.at < BOARD_CACHE_MS) return Promise.resolve({ board: e.board",
     "new": "nowMs() - e.at <= BOARD_CACHE_MS) return Promise.resolve({ board: e.board",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11: not this account's now",
     "new": "      if (SHUT.includes(r?.error)) { open = false; }   // AUDIT 28 N11: not this account's now",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    pin: (map, note) => once(`pin:${map}`, note, (id) => door.pin({ map, ...note }, id), 'Your note is pinned up.', map),",
     "new": "    pin: (map, note) => once(`pin:${map}`, note, () => door.pin({ map, ...note }, rid()), 'Your note is pinned up.', map),",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    const newest = Math.max(0, ...",
     "new": "    const newest = Math.min(Infinity, ...",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === locationName))",
     "new": "rows.map((r) => r.text)",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    if (noticeBook.open !== true) { noticeBook.read(town.mapId); return false; }",
     "new": "    if (false) { noticeBook.read(town.mapId); return false; }",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    if (!covered && typeof extra === 'function') {",
     "new": "    if (typeof extra === 'function') {",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  'notes-full': () => t('account.refusal.notesFull', 'You have {max} notes up already. Take one down first.', { max: NOTES_LIVE_MAX }),\n",
     "new": "",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      e.at = nowMs();   // a refusal is an answer too: asked again after the minute, not on the next frame\n",
     "new": "",
     "tests": [
-      "test/notice1.test.js"
+      "test/net/notice1.test.js"
     ]
   }
 ]

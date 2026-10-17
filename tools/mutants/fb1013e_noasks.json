@@ -5,7 +5,7 @@
     "old": "  return timesNamed(quest, no.symbol.name) === 1 ? no : null;   // the prompt's own `no`, and nothing else",
     "new": "  return no;",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (no.actions.length > 0) return null;   // a `_x_ task:` merged into the variable does something\n",
     "new": "",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!triggers.length || !triggers.every((/** @type {any} */ a) => CLICK_TRIGGERS.includes(a.typeName))) return false;\n",
     "new": "",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  return timesNamed(quest, task.symbol.name) === 0;",
     "new": "  return true;",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (task.type !== TaskType.Standard) return false;   // a `_x_ task:` - a global's is every quest's (SAVEVARS)\n",
     "new": "",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (!no.getTriggerValue()) continue;   // not answered No (yet)\n",
     "new": "",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  for (const task of quest.tasks.values()) {\n    for (const prompt of task.actions) {\n      if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;\n",
     "new": "  for (const task of quest.tasks.values()) {\n    if (!task.getTriggerValue()) continue;\n    for (const prompt of task.actions) {\n      if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;\n",
     "tests": [
-      "test/questsave.test.js"
+      "test/systems/quest/questsave.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      task.clear();                 // its click listens again",
     "new": "      //",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      prompt.isComplete = false;    // the one action",
     "new": "      //",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      no.clear();                   // the No forgotten",
     "new": "      //",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    // nowhere, is asked again on the next click\n    askAgain(this);",
     "new": "    // nowhere, is asked again on the next click",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "under DFU's law, loads asking again\n    askAgain(this);",
     "new": "under DFU's law, loads asking again",
     "tests": [
-      "test/fb1013e_noasks.test.js"
+      "test/systems/quest/fb1013e_noasks.test.js"
     ]
   }
 ]

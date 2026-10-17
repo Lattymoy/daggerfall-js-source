@@ -5,8 +5,8 @@
     "old": "export const HELM_LIFT = 4;",
     "new": "export const HELM_LIFT = 3;",
     "tests": [
-      "test/mwsteel5.test.js",
-      "test/mwsteel1.test.js"
+      "test/tooling/mwsteel5.test.js",
+      "test/tooling/mwsteel1.test.js"
     ],
     "note": "The helms a unit lower on the head: the crown's clearance over the game's head is no longer Mac's, and the shipped NIFs are not what the bake makes."
   },
@@ -16,7 +16,7 @@
     "old": "export const HELM_LIFT = 4;",
     "new": "export const HELM_LIFT = 0;",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ],
     "note": "The helms where the scene fitted them: the scalp through the crown, Mac's screenshot."
   },
@@ -26,7 +26,7 @@
     "old": "    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),\n  ]),",
     "new": "    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),\n  ], HELM_LIFT - 1),",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ],
     "note": "MW-FIT1 re-aimed it (it was MWSTEEL5-the-closed-helm-lifted-past-the-open): the closed helm hides the head and stands where Mac's export puts it; lifted onto the game's head as MW-STEEL5 lifted it, it rides off the collar - the player's \"the helmet elevation is too much\"."
   },
@@ -36,7 +36,7 @@
     "old": "[[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])], HELM_LIFT),",
     "new": "[[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])]),",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -45,7 +45,7 @@
     "old": "    positions: mesh.positions.map((v, i) => (i % 3 === 2 ? up(v) : v)),",
     "new": "    positions: mesh.positions.map((v, i) => (i % 3 === 1 ? up(v) : v)),",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -54,7 +54,7 @@
     "old": "    bounds: { min: [mesh.bounds.min[0], mesh.bounds.min[1], up(mesh.bounds.min[2])], max: [mesh.bounds.max[0], mesh.bounds.max[1], up(mesh.bounds.max[2])] },",
     "new": "    bounds: mesh.bounds,",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -63,8 +63,8 @@
     "old": "liftMesh(bakeObject(trees[p.file], s.object, s.box), p.lift ?? 0)",
     "new": "liftMesh(bakeObject(trees[p.file], s.object, s.box), 0)",
     "tests": [
-      "test/mwsteel5.test.js",
-      "test/mwsteel1.test.js"
+      "test/tooling/mwsteel5.test.js",
+      "test/tooling/mwsteel1.test.js"
     ]
   },
   {
@@ -73,8 +73,8 @@
     "old": "    shape('Imperial_Silver_Cuirass_67_Male.012', 'cuirass', [[-10.69, -9.98, 85.82], [10.44, 10.28, 89.57]]),\n",
     "new": "",
     "tests": [
-      "test/mwsteel5.test.js",
-      "test/mwsteel1.test.js"
+      "test/tooling/mwsteel5.test.js",
+      "test/tooling/mwsteel1.test.js"
     ]
   },
   {
@@ -83,8 +83,8 @@
     "old": "piece('pauldron_right', 'set', [shape('Breton_Male.009 Remeshed.003'",
     "new": "piece('pauldron_right', 'set', [shape('Breton_Male.009 Remeshed.001'",
     "tests": [
-      "test/mwsteel5.test.js",
-      "test/mwsteel1.test.js"
+      "test/tooling/mwsteel5.test.js",
+      "test/tooling/mwsteel1.test.js"
     ]
   },
   {
@@ -93,7 +93,7 @@
     "old": "  for (const x of shapes) bakeObject(tree, x.object, x.box);",
     "new": "",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -102,7 +102,7 @@
     "old": "    set: drop.length ? stripFbx(bytes, { drop }).bytes : Buffer.from(bytes),",
     "new": "    set: Buffer.from(bytes),",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -111,7 +111,7 @@
     "old": "  const carried = Object.fromEntries(Object.entries(reference).filter(([, name]) => names.includes(name)));",
     "new": "  const carried = Object.fromEntries(Object.entries(reference));",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -120,7 +120,7 @@
     "old": "  return stripFbx(bytes, { drop: names.filter((n) => !keep.has(n)) }).bytes;",
     "new": "  return stripFbx(bytes, { drop: [] }).bytes;",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ],
     "note": "AUDIT MW-STEEL5: recorded equivalent at first - its pin is openHelmSource aimed (pieces) at the set's closed shell."
   },
@@ -130,7 +130,7 @@
     "old": "  if (absent.length) throw new Error(`this export carries no open helm (${absent.map((n) => `\"${n}\"`).join(', ')})`);",
     "new": "",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -139,7 +139,7 @@
     "old": "    unread: names.filter((n) => !read.has(n)),",
     "new": "    unread: [],",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -148,7 +148,7 @@
     "old": "  const back = at === 'scene' ? up.map((x) => x * overFit(set.style)) : null;",
     "new": "  const back = null;",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ],
     "note": "AUDIT MW-STEEL5: the screenshot drew MW-STEEL1's helm; read against the shipped one the scalp needs a head higher by what stands it over that fit (overFit - HELM_LIFT then, Mac's export's unit since MW-FIT1)."
   },
@@ -158,7 +158,7 @@
     "old": "  const back = at === 'scene' ? up.map((x) => x * overFit(set.style)) : null;",
     "new": "  const back = at === 'scene' ? up.map((x) => -x * overFit(set.style)) : null;",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  for (let y = shellTop - 1; y >= 0 && col(y) === ID.head; y--) headTop = y;",
     "new": "  for (let y = shellTop - 1; y >= 0 && col(y) !== ID.shell; y--) headTop = y;",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "export const SCREENSHOT_SCALP_RATIO = 0.39;",
     "new": "export const SCREENSHOT_SCALP_RATIO = 0.6;",
     "tests": [
-      "test/mwsteel5.test.js"
+      "test/tooling/mwsteel5.test.js"
     ]
   }
 ]

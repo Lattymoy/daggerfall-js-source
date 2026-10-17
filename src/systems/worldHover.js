@@ -23,9 +23,9 @@
 // gate - the ENH-NOTICE3 idiom in as many words ("the model decides
 // WHICH MODEL, the draw decides WHICH FACE"), and the reason AUDIT 39's
 // skin gate can stay above ensure() where it belongs.
-import { rarityAttr } from '../systems/lootRarity.js';   // LR1: a pile's rows wear their tier
+import { rarityAttr } from './loot/lootRarity.js';   // LR1: a pile's rows wear their tier
 import { isPersonalLoot } from './roomLoot.js';   // PARTY-LOOT: a row that is this player's own (their bonus), told apart from the room's base
-import { itemNameParts } from '../systems/itemInfo.js';   // RF6: ResolveItemLongName's name part (LR1: an unidentified item reads as its template on the plaque too)
+import { itemNameParts } from './item/itemInfo.js';   // RF6: ResolveItemLongName's name part (LR1: an unidentified item reads as its template on the plaque too)
 
 /** How many rows the plaque shows at once. FIELD BUGS 2026-10-11g LOOT-SCROLL ("Can't scroll loot pile / corpse": "I
  *  can't scroll the item list with mouse wheel ... I can still take items from list one by one to get to the bottom of

@@ -3,13 +3,13 @@
 // multiple animations, they should navigate the deck, talk with each other, blurb, sing chantys, etc") - ONE SHIP'S
 // CREW AT THEIR WORK: who stands on her deck, where each walks, who talks to whom, the lines over their heads and the
 // chanty they sing, and - her guns out or a boarding at hand - the rail they muster at. Stepped by its host
-// (scenes/navalCrew.js draws them) on her deck (navalDeck.js), in her deck's frame. Pure: a draw seeded by the ship
+// (scenes/naval/navalCrew.js draws them) on her deck (navalDeck.js), in her deck's frame. Pure: a draw seeded by the ship
 // (her `seed` - a player's boat by whose and which, AUDIT NAV2 F9), so every player in a room sees the same crew at the
 // same kind of work, and no world.
 //
 // WHO THEY ARE. A ship of the sea's crew is her muster (navalBoarding.js musterOf, by what her crew has left): her
 // captain and her men, the first CREW_SHOWN of them standing - and in a boarding the ones standing are the ones who
-// fight, where they stand (scenes/navalHost.js takes them). A crewed boat of a player's is a hand's mix (PLAYER_CREW,
+// fight, where they stand (scenes/naval/navalHost.js takes them). A crewed boat of a player's is a hand's mix (PLAYER_CREW,
 // a Bard among them to lead the song), CREW_PER_HAND of her crew a man.
 //
 // WHERE THEY STAND. The mod's own people flats are where a hull's crew stood (their places at rest, handed in as
@@ -31,7 +31,7 @@
 // hauling; the guns or her colours end it.
 
 import { musterOf, MOBILE, CREW_PER_HAND, MUSTER_MIN, MUSTER_MAX } from './navalBoarding.js';
-import { seededRng } from '../wind.js';
+import { seededRng } from '../wind/wind.js';
 import { mainLevel, DECK_STEP, FLIGHT_OVER } from './navalDeck.js';
 import { watchCount } from './shipWatch.js';
 

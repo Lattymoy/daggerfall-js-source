@@ -5,12 +5,12 @@ on:
     branches: [codex/cinematic-intro-overhaul]
   pull_request:
     paths:
-      - 'src/ui/intro*.js'
+      - 'src/ui/intro/**'
       - 'src/systems/introTheme.js'
       - 'src/assets/intro/**'
       - 'src/assets/branding/**'
       - 'tools/intro*.mjs'
-      - 'test/intro.test.js'
+      - 'test/ui/intro.test.js'
       - '.github/workflows/intro-quality.yml'
 
 permissions:

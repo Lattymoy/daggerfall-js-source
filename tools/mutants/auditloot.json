@@ -1,47 +1,47 @@
 [
   {
     "name": "AUDITLOOT-F1-chain-anywhere",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (power.kind === 'chain') return shoots;",
     "new": "  if (power.kind === 'chain') return true;",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F1-quake-anywhere",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (power.kind === 'quake') return item.group === 'Weapons' && !shoots;",
     "new": "  if (power.kind === 'quake') return true;",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F1-every-weapon-shoots",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const shoots = item.group === 'Weapons' && weaponSkillUsed(item.templateIndex) === SKILLS.Archery;",
     "new": "  const shoots = item.group === 'Weapons';",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F1-choices-unfitted",
-    "file": "src/systems/lootCodex.js",
+    "file": "src/systems/loot/lootCodex.js",
     "old": "&& powerFits(item, powerOf(r.id)))",
     "new": "&& !!powerOf(r.id))",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F1-wire-unfitted",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "recordFitsGroup(legendaryById(item.imprint), item) && powerFits(item, powerOf(item.imprint)));",
     "new": "recordFitsGroup(legendaryById(item.imprint), item) && !!powerOf(item.imprint));",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ],
     "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
   },
@@ -51,7 +51,7 @@
     "old": "  if (typeof item?.provenance === 'string') return 0;\n",
     "new": "\n",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "  if (item.reforged !== undefined || item.imprint !== undefined) return false;",
     "new": "  if (item.imprint !== undefined) return false;",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -69,52 +69,52 @@
     "old": "  if (item.reforged !== undefined || item.imprint !== undefined) return false;",
     "new": "  if (item.reforged !== undefined) return false;",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F4-a-legendary-hand-alone",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "(!!weapon && powerIds(weapon).includes(p.id))",
     "new": "(!!weapon && weapon.legendary === p.id)",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F6-codex-rows-in-the-picture-column",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".broker-offer.codex-row, .broker-offer.codex-set { grid-template-columns: minmax(0, 1fr); }\n",
     "new": "\n",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F6-keep-in-the-picture-column",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".broker-offer > .reforge-keep { grid-column: 4; }\n",
     "new": "\n",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F6-hidden-tabs-shown",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".reforge-tabs[hidden] { display: none; }\n",
     "new": "\n",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F6-plus-sheet-without",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": "${BROKER_CSS}\n${REFORGE_CSS}\n",
     "new": "${BROKER_CSS}\n",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "[[BROKER_SKIN_STYLE_ID, brokerSkinCss], [REFORGE_SKIN_STYLE_ID, () => REFORGE_CSS]]",
     "new": "[[BROKER_SKIN_STYLE_ID, brokerSkinCss]]",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "    if (has(id)) continue;\n",
     "new": "    if (has(id) || has(BROKER_SKIN_STYLE_ID)) continue;\n",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": " t.classList.toggle('on', id === page); }",
     "new": " }",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "      btn.setAttribute('aria-label', why ? `${p?.name ?? rec.name}: ${REFORGE_REFUSALS[why] ?? ''}` : `Imprint ${p?.name ?? rec.name} on ${nameOf(it)} for ${reforgePriceText(IMPRINT_PRICE)}`);",
     "new": "      void 0;",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "reforgeLabel(why, IMPRINT_PRICE, have, 'Imprint')",
     "new": "reforgeLabel(why, IMPRINT_PRICE, have)",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -168,43 +168,43 @@
     "old": "    ul.append(el('li', null, tierLabel(it)));   // AUDIT LOOT F6",
     "new": "    void 0;   // AUDIT LOOT F6",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F6-a-phones-keep-on-break",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": "  .broker-offer > .reforge-keep { grid-column: 3; grid-row: 3; }",
     "new": "  .broker-offer > .reforge-keep { grid-column: 3; }",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F6-a-hint-cut-short",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".broker-offer.codex-row .broker-set, .broker-offer.codex-set .broker-set { white-space: normal; }",
     "new": ".broker-offer.codex-set .broker-set { white-space: normal; }",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F7-the-pack-closes-under-it",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (reforgeDoorOpen()) { if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); closeReforgeDoor(); } return; }\n",
     "new": "\n",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F7-keys-reach-the-pack",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (reforgeDoorOpen()) { if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); closeReforgeDoor(); } return; }",
     "new": "  if (reforgeDoorOpen() && overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); closeReforgeDoor(); return; }",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "  power: Object.freeze({ name: 'Dwemer Defiance',",
     "new": "  powerless: Object.freeze({ name: 'Dwemer Defiance',",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
@@ -222,43 +222,43 @@
     "old": "kind: 'bane', foes: FOE_FAMILIES.daedra, pct: 50,",
     "new": "kind: 'bane', foes: [...FOE_FAMILIES.daedra, 0], pct: 50,",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F8-the-codex-the-thirty",
-    "file": "src/systems/lootCodex.js",
+    "file": "src/systems/loot/lootCodex.js",
     "old": "  return allLegendaries().map((r) => {",
     "new": "  return allLegendaries().slice(0, 30).map((r) => {",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F8-no-hint-of-its-own",
-    "file": "src/systems/lootCodex.js",
+    "file": "src/systems/loot/lootCodex.js",
     "old": "?? r.hint ?? '',",
     "new": "?? '',",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F8-count-of-thirty",
-    "file": "src/systems/lootCodex.js",
+    "file": "src/systems/loot/lootCodex.js",
     "old": "legendaries: allLegendaries().length,",
     "new": "legendaries: 30,",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ]
   },
   {
     "name": "AUDITLOOT-F8-imprint-of-the-thirty",
-    "file": "src/systems/lootCodex.js",
+    "file": "src/systems/loot/lootCodex.js",
     "old": "  ? allLegendaries().filter((r) => recordFitsGroup(r, item)",
     "new": "  ? allLegendaries().slice(0, 30).filter((r) => recordFitsGroup(r, item)",
     "tests": [
-      "test/auditloot.test.js"
+      "test/systems/auditloot.test.js"
     ],
     "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
   }

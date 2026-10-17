@@ -18,9 +18,9 @@ import {
   KG_POTION_HEAL, KG_MOVE_RANGE, KG_RANGED_RANGE, KG_BLOW_LOW, KG_BLOW_SPREAD, KG_HAZARD_DAMAGE, KG_HAZARD_SPAWN_EVERY,
   KG_KING_LEVEL, KG_KING_HP, KG_KINGS, rosterUnit,
 } from '../net/kingsGambit.js';
-import { GAMBIT_STAKE_MULTS, GAMBIT_WIN_PAYS, crownIndex } from '../systems/gambitTableSession.js';
-import { GAMBIT_IDLE_TURNS, GAMBIT_TURN_MS } from '../net/gambitTable.js';   // AUDIT KG II D9/D20: the online clock's numbers, the law's
-import { GAMBIT_ONLINE_STAKES } from '../net/gambitStakes.js';
+import { GAMBIT_STAKE_MULTS, GAMBIT_WIN_PAYS, crownIndex } from '../systems/gambit/gambitTableSession.js';
+import { GAMBIT_IDLE_TURNS, GAMBIT_TURN_MS } from '../net/gambit/gambitTable.js';   // AUDIT KG II D9/D20: the online clock's numbers, the law's
+import { GAMBIT_ONLINE_STAKES } from '../net/gambit/gambitStakes.js';
 import { SUIT_CROWNS } from '../render/cardFaces.js';
 import { t, getLocalizedEnemyName, intlLocale } from '../systems/textManager.js';
 
@@ -542,7 +542,7 @@ export const stakeOnline = (n) => t('cards.kingsGambit.online.stake.what', 'Win,
 /** Why a pick is closed: the purse short of it, or the other player's stake another. */
 export const stakeShort = (/** @type {number} */ gold) => t('cards.kingsGambit.online.stake.short', 'You have {gold, number} gold - too little for this stake.', { gold });
 export const stakeDiffers = (/** @type {string} */ name, /** @type {number} */ n) => t('cards.kingsGambit.online.stake.differs', '{name} stakes {n, number} gold: stake the same to play.', { name, n });
-/** AUDIT KG II B16: why the realm would not hold a stake, in its own word (net/cardStakes.js stake) - nothing held, or
+/** AUDIT KG II B16: why the realm would not hold a stake, in its own word (net/card/cardStakes.js stake) - nothing held, or
  *  an answer lost (then the stake is settled when the realm answers). @param {{error?: string, unknown?: boolean}|null|undefined} r */
 export function stakeRefusal(r) {
   if (r?.unknown) return t('cards.kingsGambit.online.stakeRefuse.unknown', 'The realm did not answer - your stake will be settled when it does.');

@@ -31,11 +31,11 @@
 // so every host has the rows before a save carrying one loads.
 // ═══════════════════════════════════════════════════════════════════
 
-import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';
+import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields } from './item/itemTemplates.js';
 import {
   GEM_IDS, GEM_ROW_GRADES, GEM_GRADES, GEM_NAMES, GEM_GRADE_TEMPLATES, gemId, gemTemplateOf, registerGemFind,
   SOURCE_MULT, luckMult, lootRarityOn,
-} from './lootRarity.js';
+} from './loot/lootRarity.js';
 
 /** A graded row's price and rarity against its kind's DFU row: a Chipped stone a quarter of a Ruby's price, a Perfect
  *  one four times. The item maker's points stay the kind's own (a grade is a socket's line, never an enchanting base). */
@@ -119,7 +119,7 @@ export function rollGemFind(source, rolls = Math.random) {
 registerGemFind(rollGemFind);
 
 /** THE BOSSES' GEMS: how many each boss's spoils carry, at a boss's grade at the ladder's top tier (the bands' last row).
- *  The Old Coil's go to a ship that dealt (systems/serpentSpoils.js). */
+ *  The Old Coil's go to a ship that dealt (systems/serpent/serpentSpoils.js). */
 export const BOSS_GEMS = Object.freeze({ gate: 1, serpent: 1, abyss: 2 });
 export const BOSS_GEM_SOURCE = Object.freeze({ tier: 21, boss: true });
 /** A boss's gems, each known (a gem is always known - it carries no enchantment) - two draws a gem. */

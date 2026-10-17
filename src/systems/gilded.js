@@ -9,7 +9,7 @@
 //
 // ═══ GILDED ════════════════════════════════════════════════════════
 //
-// The ladder's TOP rung (systems/lootRarity.js RARITIES: rank 6, over
+// The ladder's TOP rung (systems/loot/lootRarity.js RARITIES: rank 6, over
 // the Artifact's 5): a colour of its own - gold leaf, warm and bright -
 // two stars for pips, a frame, a price. "The most rare ... in the entire
 // game" puts it over DFU's artifacts too: an artifact is a Daedra's gift
@@ -33,7 +33,7 @@
 // shot - the Brass of Numidium's own ceiling), and its power is the one
 // thing nothing else has: THE HOUR TOLLS - every third of its shots that
 // LANDS strikes for double, and a foe it fells gives back the pellet that
-// felled it (systems/lootPowers.js, kind 'toll'). Measured beside the
+// felled it (systems/loot/lootPowers.js, kind 'toll'). Measured beside the
 // best of the rest (bible/06-Systems/Gilded.md, "The numbers"): about
 // twice The Last Lock a shot and level with a Legendary Daedric
 // dai-katana a second - the gun's 1.7 s reload and its ammunition are
@@ -42,7 +42,7 @@
 //
 // ═══ THE DROP ══════════════════════════════════════════════════════
 //
-// The Brass Remnant's spoils (systems/sdSpoils.js) roll ONE MORE THING
+// The Brass Remnant's spoils (systems/superDungeon/sdSpoils.js) roll ONE MORE THING
 // after everything they rolled before - so every earlier spoils, gold to
 // the last Numidium piece, stays exactly what it was for its seed: the
 // Hourlock GILDED_CHANCE of the time. Online alone, because the Hour is.
@@ -54,15 +54,15 @@
 // add a rare gilded weapon to the oblivion gates. A gilded weapon to the
 // serpent"): the rung's second and third records, each the last roll of a
 // world boss's spoils - THE DRAGONFIRE OATH off the gate's Warden
-// (systems/gateSpoils.js), THE SUNKEN SOVEREIGN off the Old Coil's hoard
-// for a ship that dealt (systems/serpentSpoils.js), each one fight in a
+// (systems/gate/gateSpoils.js), THE SUNKEN SOVEREIGN off the Old Coil's hoard
+// for a ship that dealt (systems/serpent/serpentSpoils.js), each one fight in a
 // hundred (a gate opens every two hours and a serpent rises every four,
 // where an Hour is a few a week). DFU weapons both, minted by the game's
 // own CreateWeapon (combat/enemyEquipment.js createWeapon) - the Hourlock
 // keeps its gun's own mint, so its record and every gift of it stay what
 // they were. Each a STATIC ROLL, its lines the Legendary band's top, and
 // its power the one thing nothing else has (DRAGONFIRE, UNDERTOW below;
-// systems/lootPowers.js does them). Measured: bible/06-Systems/Gilded.md
+// systems/loot/lootPowers.js does them). Measured: bible/06-Systems/Gilded.md
 // section 7.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -70,8 +70,8 @@ import { WEAPON_MATERIALS, WEAPONS } from '../characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';
 import { createThunderlock } from './thunderlock.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // GILDED2: a DFU weapon's own mint (CreateWeapon)
-import { itemBaseValue } from './itemTemplates.js';
-import { affixesWorth, validAffix, registerGildedRecords } from './lootRarity.js';
+import { itemBaseValue } from './item/itemTemplates.js';
+import { affixesWorth, validAffix, registerGildedRecords } from './loot/lootRarity.js';
 import { SKILLS } from './skills.js';
 
 /** The tier's id, as `item.rarity` wears it. */
@@ -86,7 +86,7 @@ export const GATE_GILDED_CHANCE = 1 / 100;
  *  four hours, a ship that stood never). */
 export const SERPENT_GILDED_CHANCE = 1 / 100;
 
-/** THE HOUR TOLLS - the Hourlock's power (systems/lootPowers.js does it, kind 'toll'). `every` landed shots, the last
+/** THE HOUR TOLLS - the Hourlock's power (systems/loot/lootPowers.js does it, kind 'toll'). `every` landed shots, the last
  *  strikes `pct`% harder; `refund`: a foe it fells gives its pellet back. Read once at import, frozen. */
 export const HOUR_TOLLS = Object.freeze({
   name: 'The Hour Tolls', kind: 'toll', every: 3, pct: 100, refund: true,
@@ -94,7 +94,7 @@ export const HOUR_TOLLS = Object.freeze({
   text: 'Every third of its shots that lands tolls the Hour and strikes for double, and a foe it fells gives back the pellet that felled it',
 });
 
-/** GILDED2: DRAGONFIRE - the Dragonfire Oath's power (systems/lootPowers.js, kind 'dragonfire'). A landed blow on a foe of
+/** GILDED2: DRAGONFIRE - the Dragonfire Oath's power (systems/loot/lootPowers.js, kind 'dragonfire'). A landed blow on a foe of
  *  `group` burns it again for `share`% of the blow, and every OTHER foe of it within `metres` for as much - Akatosh's fire,
  *  which no Daedra resists (no element's share is taken of it). AUDIT WORLD-REWARDS B1: the struck one's burn is what
  *  reaches a body the relay runs (the gate's Warden and his host, an Elite Gate's legion) - owed to its blow's own claim,
@@ -105,7 +105,7 @@ export const DRAGONFIRE = Object.freeze({
   brief: 'Daedra burn +33%, and all in 3m',   // inside the card's row (sigilSets.js BRIEF_MAX)
   text: 'Each of its blows that lands on a Daedra burns it again in Dragonfire for a third of the blow, and every other Daedra within 3 m for as much - and no Daedra resists it',
 });
-/** GILDED2: UNDERTOW - the Sunken Sovereign's power (systems/lootPowers.js, kind 'undertow'). Each of its blows that LANDS on
+/** GILDED2: UNDERTOW - the Sunken Sovereign's power (systems/loot/lootPowers.js, kind 'undertow'). Each of its blows that LANDS on
  *  a foe drags it deeper: its next blows on that foe strike `pct`% harder for each landed before, up to `max`, while the
  *  tide holds - a foe it has not struck for `seconds` is let go (AUDIT WORLD-REWARDS B4: a body kept for a whole fight, a
  *  crystal of the next Reckoning, kept its stacks for good); a foe it fells gives `heal`% of my health back. Read once at
@@ -227,7 +227,7 @@ export function rollSunkenSovereign(rolls = Math.random) {
 const NEVER_ON_GILDED = Object.freeze(['sigil', 'legendary', 'aetheric', 'imprint', 'cursed', 'socket', 'sockets', 'reforged', 'honed', 'exalted']);   // GEM1: nor a socket list
 
 /**
- * THE MARKS AGREE WITH THE ITEM (the wire's check - systems/loot.js validLootItem, beside the Aetheric's validSetMarks):
+ * THE MARKS AGREE WITH THE ITEM (the wire's check - systems/loot/loot.js validLootItem, beside the Aetheric's validSetMarks):
  * a Gilded piece only as its record mints it - a record that exists, its group, its template and its make, its lines
  * EXACTLY its record's (a static roll has no band to sit inside: one number off is a forgery), and nothing else laid on
  * it, no DFU enchantment among it. A piece that names no Gilded record and wears no Gilded tier passes untouched.

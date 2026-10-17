@@ -1,6 +1,6 @@
 // L10N3b (2026-09-27): A REAL DFU TRANSLATION PACK, INSTALLED THROUGH THE SETTINGS ROW, IN A REAL BROWSER.
 //
-// test/l10n3b.test.js runs the store and the loader over an in-memory IndexedDB; this installs a pack the way a player
+// test/systems/l10n3b.test.js runs the store and the loader over an in-memory IndexedDB; this installs a pack the way a player
 // does - the Translation pack row's Install, its folder picked (then its .zip) - into Chromium's own IndexedDB, and
 // reads the game's tables back: the pack's Internal_Strings and Internal_RSC words live, its font registered for its
 // language, all of it still there after a reload, and gone again after Remove.

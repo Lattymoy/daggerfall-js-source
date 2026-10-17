@@ -5,7 +5,7 @@
     "old": "export const PINE_SHARE = NODE_TIER_WEIGHTS[0] / 100;",
     "new": "export const PINE_SHARE = NODE_TIER_WEIGHTS[0] / 200;",
     "tests": [
-      "test/pineshare.test.js"
+      "test/net/pineshare.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE)",
     "new": "  if (unit('tree', x, y, day, slot, 6) < PINE_SHARE)",
     "tests": [
-      "test/pineshare.test.js"
+      "test/net/pineshare.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };   // PINE-SHARE\n",
     "new": "",
     "tests": [
-      "test/pineshare.test.js",
-      "test/prof4_client.test.js"
+      "test/net/pineshare.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };",
     "new": "return { slot, u, v, tier: 2, material: PINE_WOOD, rare: false };",
     "tests": [
-      "test/pineshare.test.js"
+      "test/net/pineshare.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };\n  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };   // PINE-SHARE\n",
     "new": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };   // PINE-SHARE\n  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };\n",
     "tests": [
-      "test/pineshare.test.js"
+      "test/net/pineshare.test.js"
     ]
   },
   {
@@ -51,8 +51,8 @@
     "old": "      if (needsPine(WOOD_TABLES[p.climate])) keys.add(PINE_WOOD);   // PINE-SHARE: the Pine its forest stands\n",
     "new": "",
     "tests": [
-      "test/pineshare.test.js",
-      "test/prof4_law.test.js"
+      "test/net/pineshare.test.js",
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "const needsPine = (table) => !!table && !table.some((k) => tierOfKey(k) === 1);",
     "new": "const needsPine = (table) => !!table && !table.some((k) => tierOfKey(k) <= 2);",
     "tests": [
-      "test/pineshare.test.js"
+      "test/net/pineshare.test.js"
     ]
   }
 ]

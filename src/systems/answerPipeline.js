@@ -13,7 +13,7 @@
 // (:1552-1556), GetHonoric/GetOldLeaderFateString (:1826-1837) and
 // GetAnswerWhereAmI (:1521-1550).
 //
-// The TABLES this rides on already live in systems/talkTopics.js
+// The TABLES this rides on already live in systems/talk/talkTopics.js
 // (T3c-T3f shipped them): answersToDirections/answersToNonDirections,
 // knowledgeModifiers, the reaction-tier machinery, the compass bands
 // and the 0.35 map-reveal fork. This module is the LADDER over them -
@@ -71,7 +71,7 @@
 import {
   ANSWERS_TO_DIRECTIONS, ANSWERS_TO_NON_DIRECTIONS, KNOWLEDGE_MODIFIERS,
   CHANCE_TO_REVEAL_LOCATION_ON_MAP, DIRECTION_TEXT_ID, MAP_REVEAL_TEXT_ID,
-} from './talkTopics.js';
+} from './talk/talkTopics.js';
 import { QUESTION_TYPE, NPC_KNOWLEDGE, BUILDING_HINT_TYPE, FACTIONS_AND_BUILDINGS } from './topicTree.js';
 import { lettersOnMap } from './portPlaces.js';   // AUDIT SHIPYARDS L7-5: the found places no town map letters
 import { randomRangeInclusive, srand } from '../formats/dfRandom.js';

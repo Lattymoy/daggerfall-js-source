@@ -5,8 +5,8 @@
     "old": "export const CELL_SWEEP_COST = 0.15;",
     "new": "export const CELL_SWEEP_COST = 0.2;",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "export const SWEEP_FRAMES_MAX = 32;",
     "new": "export const SWEEP_FRAMES_MAX = 64;",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "const lo = WEATHER_SKY.sunny.cover, hi = WEATHER_SKY.cloudy.cover;",
     "new": "const lo = WEATHER_SKY.cloudy.cover, hi = WEATHER_SKY.overcast.cover;",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "return (1 + t * t * (3 - 2 * t)) * (1 + CELL_SWEEP_COST * Math.max(0, cells | 0));",
     "new": "return (1 + t * t * (3 - 2 * t));",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "(1 + CELL_SWEEP_COST * Math.max(0, cells | 0))",
     "new": "(1 + CELL_SWEEP_COST * (cells | 0))",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -55,8 +55,8 @@
     "old": "const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));",
     "new": "const k = Math.max(0, Math.ceil(Math.log2(sweepCost(cover, cells))));",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -65,8 +65,8 @@
     "old": "const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));",
     "new": "const k = Math.max(0, Math.floor(Math.log2(sweepCost(cover, cells))));",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -75,8 +75,8 @@
     "old": "return Math.min(SWEEP_FRAMES_MAX, SWEEP_FRAMES * 2 ** k);",
     "new": "return SWEEP_FRAMES * 2 ** k;",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -85,8 +85,8 @@
     "old": "      if (this.stripe === 0) this.pace = sweepFramesFor(this.row?.cover, this.cells.length);",
     "new": "      this.pace = sweepFramesFor(this.row?.cover, this.cells.length);",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -95,8 +95,8 @@
     "old": "      const rows = Math.ceil(q.height / this.pace);",
     "new": "      const rows = Math.ceil(q.height / SWEEP_FRAMES);",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -105,8 +105,8 @@
     "old": "      const rows = this.shadowFull ? q.shadow : Math.ceil(q.shadow / this.shadowPace);",
     "new": "      const rows = this.shadowFull ? q.shadow : Math.ceil(q.shadow / SWEEP_FRAMES);",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "      if (!this.shadowFull && this.shadowStripe === 0) this.shadowPace = this.pace;",
     "new": "      this.shadowPace = this.pace;",
     "tests": [
-      "test/rainfps.test.js",
-      "test/volumetricClouds.test.js"
+      "test/render/rainfps.test.js",
+      "test/render/volumetricClouds.test.js"
     ]
   }
 ]

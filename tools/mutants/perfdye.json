@@ -4,48 +4,48 @@
     "file": "src/scenes/horseCartPool.js",
     "old": "    _dyeBudget = HORSE_DYE_PICTURES; _frameNo++; trimLooks();",
     "new": "    _dyeBudget = Infinity; _frameNo++; trimLooks();",
-    "tests": ["test/perfdye.test.js"]
+    "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
     "name": "PD-views-unbudgeted",
     "file": "src/scenes/horseCartPool.js",
     "old": "      for (; up.views < views.length && _dyeBudget > 0; up.views++, _dyeBudget--) {",
     "new": "      for (; up.views < views.length && _dyeBudget > 0; up.views++) {",
-    "tests": ["test/perfdye.test.js"]
+    "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
     "name": "PD-walks-unbudgeted",
     "file": "src/scenes/horseCartPool.js",
     "old": "      for (; up.walks < frames.length && _dyeBudget > 0; up.walks++, _dyeBudget--) {",
     "new": "      for (; up.walks < frames.length && _dyeBudget > 0; up.walks++) {",
-    "tests": ["test/perfdye.test.js"]
+    "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
     "name": "PD-worn-before-its-walk-set",
     "file": "src/scenes/horseCartPool.js",
     "old": "    return still && (up.walks >= _walkPx.size || !_walkReady);",
     "new": "    return still;",
-    "tests": ["test/perfdye.test.js"]
+    "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
     "name": "PD-walk-set-let-go-whole",
     "file": "src/scenes/horseCartPool.js",
     "old": "    for (const k of [..._walkPx.keys()].slice(0, up.walks)) {",
     "new": "    for (const k of [..._walkPx.keys()]) {",
-    "tests": ["test/perfdye.test.js"]
+    "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
     "name": "PD-views-kept",
     "file": "src/scenes/horseCartPool.js",
     "old": "    for (const v of [..._stillPx.keys()].slice(0, up.views)) renderer?.evictTexture",
     "new": "    for (const v of [..._stillPx.keys()].slice(0, 0)) renderer?.evictTexture",
-    "tests": ["test/perfdye.test.js"]
+    "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
     "name": "PD-walk-before-the-views",
     "file": "src/scenes/horseCartPool.js",
     "old": "    const still = up.views >= _stillPx.size;\n",
     "new": "    const still = up.views >= 0;\n",
-    "tests": ["test/perfdye.test.js"]
+    "tests": ["test/systems/horse/perfdye.test.js"]
   }
 ]

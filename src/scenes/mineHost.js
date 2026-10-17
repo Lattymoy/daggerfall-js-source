@@ -33,14 +33,14 @@
 // ═══════════════════════════════════════════════════════════════════
 import { veins, boulders, nodeKey, VEIN_TABLES, dungeonVeins, dveinKey } from '../net/nodeLaw.js';
 import { tierOpen, TIER_RANKS, PROF_RANK_MAX, pickAxeBand, minedMaterial, storesFullIn, goneIn, fullWordsIn, GROUND_WHERE, GROUND_WHERE_WORDS, SURVEYOR } from '../net/professionLaw.js';
-import { natureStandsAt, groundAt, insideRocks } from '../world/terrainNature.js';   // NODE-CLEAR: the rock check's one home
-import { WORLD_MAP_TILE_DIM } from '../world/terrainTiles.js';
-import { TERRAIN_SIZE } from '../world/terrainSampler.js';
+import { natureStandsAt, groundAt, insideRocks } from '../world/terrain/terrainNature.js';   // NODE-CLEAR: the rock check's one home
+import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
+import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { createMineAct } from '../systems/mineAct.js';
-import { FT } from '../systems/foragingLaw.js';
-import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foragingInstall.js';
-import { materialLabel } from '../systems/profItems.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
+import { FT } from '../systems/foraging/foragingLaw.js';
+import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foraging/foragingInstall.js';
+import { materialLabel } from '../systems/professions/profItems.js';
+import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { MOTHERLODE_TIER, MOTHERLODE_RANK } from '../net/motherlodeLaw.js';   // PROF2b
@@ -87,6 +87,11 @@ export const VEIN_SPREAD = 0.45;
 /** A boulder's loose stone at its foot: this many Lodestone lumps at this size. */
 export const STONE_FLATS = 3;
 export const STONE_SCALE = 1.8;
+/** BOULDER-GLINT (FIELD BUGS 2026-10-15c, "Boulder's glint offset is way off"): a boulder's aim point - where the act's
+ *  face and its glint stand - over its loose stones, which are the boulder the player sees: the stones' scale against a
+ *  vein's 0.5 over its VEIN_SCALE ore. It was half the ROCK's height (to 1.2 m), standing the face a third of the screen
+ *  over the stones, in the air. The look still meets the node up to its glow's top (gatherHost findTarget). */
+export const BOULDER_LIFT = 0.4;
 /** How far off a piece's box a node's flats stand (m), and how far a vein looks for a stone tile (tiles). */
 export const ROCK_OFFSET = 0.4;
 /** ROCK-SHARE: two nodes at a rock field stand at least this far apart (m) - on one piece's different sides, or two. */
@@ -186,7 +191,7 @@ function nearestStone(samples, tilemap, locationRect, tx, ty, reach, rocks, clea
 /**
  * A PIXEL'S VEINS AND BOULDERS AS THE CLIENT STANDS THEM (PROF0 23): the law's nodes of the day, each at its anchor -
  * `{ key, what: 'vein'|'boulder', slot, tier, material, signature?, local, rock?, lift }`, `local` pixel-local metres.
- * VERGE1: `verge` (`(x, z, reach) => boolean`, the pixel's - world/roadVerge.js vergeClear), when handed, keeps a vein
+ * VERGE1: `verge` (`(x, z, reach) => boolean`, the pixel's - world/road/roadVerge.js vergeClear), when handed, keeps a vein
  * that stands on the stone off the roads by its glow's half width (MINE_MARKS); a vein or a boulder at a rock piece's
  * foot keeps the piece's own clearance (ROADS-CLEAR).
  * MINE-PERKS: `surveyed` - this character a Surveyor (net/nodeLaw.js vein): their veins on ground not confirmed are
@@ -230,7 +235,7 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
     if (!claimed) continue;
     const { rock, foot: [fx, fz] } = claimed;
     const g = groundAt(samples, fx, fz);
-    stones.push({ key: nodeKey({ kind: 'boulder', x: px, y: py, day, slot: b.slot }), what: 'boulder', slot: b.slot, tier: b.tier, material: b.material, local: [fx, g, fz], rock, lift: Math.min(1.2, Math.max(0.4, (rock[4] - g) / 2)) });
+    stones.push({ key: nodeKey({ kind: 'boulder', x: px, y: py, day, slot: b.slot }), what: 'boulder', slot: b.slot, tier: b.tier, material: b.material, local: [fx, g, fz], rock, lift: BOULDER_LIFT });
   }
   if (VEIN_TABLES[climate]) {
     for (const v of veins({ x: px, y: py, day, climate, region, confirmed, surveyed })) {

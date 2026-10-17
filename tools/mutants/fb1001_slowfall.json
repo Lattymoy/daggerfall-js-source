@@ -4,41 +4,41 @@
     "file": "src/player/motor.js",
     "old": "      if (this.slowFalling) { this.fallStart = this.pos[1]; this.velY = -SLOWFALL_VELOCITY; }\n      else this.velY -= GRAVITY * dt;",
     "new": "      this.velY -= GRAVITY * dt;",
-    "tests": ["test/fb1001_slowfall.test.js"]
+    "tests": ["test/player/fb1001_slowfall.test.js"]
   },
   {
     "name": "SLOW-SLIP-the-fall-anchored-once",
     "file": "src/player/motor.js",
     "old": "      if (this.slowFalling) { this.fallStart = this.pos[1]; this.velY = -SLOWFALL_VELOCITY; }",
     "new": "      if (this.slowFalling) { this.velY = -SLOWFALL_VELOCITY; }",
-    "tests": ["test/fb1001_slowfall.test.js"]
+    "tests": ["test/player/fb1001_slowfall.test.js"]
   },
   {
     "name": "SLOW-GRASP-the-flag-never-handed",
     "file": "src/player/motor.js",
     "old": "      slowFalling: this.slowFalling,   // SLOW-GRASP",
     "new": "      slowFalling: false,   // SLOW-GRASP",
-    "tests": ["test/fb1001_slowfall.test.js"]
+    "tests": ["test/player/fb1001_slowfall.test.js"]
   },
   {
     "name": "SLOW-GRASP-the-grasp-unrefused",
     "file": "src/player/climbing.js",
     "old": "        || (airborneGraspWall && c.slowFalling)",
     "new": "        || false",
-    "tests": ["test/fb1001_slowfall.test.js"]
+    "tests": ["test/player/fb1001_slowfall.test.js"]
   },
   {
     "name": "SLOW-GRASP-every-climb-refused",
     "file": "src/player/climbing.js",
     "old": "        || (airborneGraspWall && c.slowFalling)",
     "new": "        || c.slowFalling",
-    "tests": ["test/fb1001_slowfall.test.js"]
+    "tests": ["test/player/fb1001_slowfall.test.js"]
   },
   {
     "name": "SLOW-PRESS-the-press-kept",
     "file": "src/player/motor.js",
     "old": "      if (ax * ax + az * az < vx * vx + vz * vz - 1e-6) { this._airVelX = ax; this._airVelZ = az; }",
     "new": "",
-    "tests": ["test/fb1001_slowfall.test.js"]
+    "tests": ["test/player/fb1001_slowfall.test.js"]
   }
 ]

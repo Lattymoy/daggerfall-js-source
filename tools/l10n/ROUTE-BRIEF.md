@@ -47,12 +47,12 @@ byte for byte what it was: `t` answers the English pattern while no table has th
      `localizedTable({ name: () => t('k', 'English') })` beside DFU rows;
    - a template built at load from other constants: a function.
 4. **Pins.** Source-regex pins (`assert.match(src, /townTalk\.say\('Game saved\.'\)/)`) and mutant records
-   (`tools/mutants/*.json`, held by `test/mutantdrift.test.js`) that quote a line you changed are re-aimed to the new
+   (`tools/mutants/*.json`, held by `test/tooling/mutantdrift.test.js`) that quote a line you changed are re-aimed to the new
    form; English assertions stay exactly as they were. Never skip, delete or weaken a test.
-5. **Counts.** After a file: `node tools/l10nHardcoded.mjs` and write its count into `test/l10n4_hardcoded.test.js`
+5. **Counts.** After a file: `node tools/l10nHardcoded.mjs` and write its count into `test/systems/l10n4_hardcoded.test.js`
    HARDCODED (a count only falls); a DFU word you routed through `localizedText` is counted in
-   `test/l10n3d_sites.test.js` ROUTED (`node tools/l10nRouted.mjs` lists them). `node tools/l10nExtract.mjs`
+   `test/systems/l10n3d_sites.test.js` ROUTED (`node tools/l10nRouted.mjs` lists them). `node tools/l10nExtract.mjs`
    regenerates the English catalog.
-6. **Run.** The tests that read your files (`grep -l <basename> test/*.test.js`), `test/l10n4_*.test.js`,
-   `test/l10n3d_sites.test.js`, `test/mutantdrift.test.js`, and `npx eslint <your files>`. `test/l10n1b.test.js`'s
+6. **Run.** The tests that read your files (`grep -rl <basename> test --include=*.test.js`), every `test/**/l10n4_*.test.js`,
+   `test/systems/l10n3d_sites.test.js`, `test/tooling/mutantdrift.test.js`, and `npx eslint <your files>`. `test/systems/l10n1b.test.js`'s
    "every language's file" test fails until the drafts land - that one failure is expected; every other must pass.

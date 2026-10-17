@@ -4,7 +4,7 @@
 // (bible/06-Systems/Professions-Arc.md 5.2, 30). A pure machine, as
 // herbAct.js and traceAct.js are: the gathering host ticks it with the
 // Interact key's level and the attack's edge, and reads its state for the
-// meter (ui/profHud.js) and its report for the harvest.
+// meter (ui/professions/profHud.js) and its report for the harvest.
 //
 //   WIND   hold E: the net winds 0.3-1.5 s; let go and it flies 3-12 m.
 //   WAIT   5-30 s - halved in the first and last daylight hours, doubled

@@ -5,9 +5,9 @@
     "old": "  let s = climbing + (khajiit ? KHAJIIT_CLIMBING_BONUS : 0);",
     "new": "  let s = climbing;",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -16,10 +16,10 @@
     "old": "  return lerp(PARKOUR_REACH_MIN, PARKOUR_REACH_MAX, clamp01(skill / 100)) - cut;",
     "new": "  return PARKOUR_REACH_MAX - cut;",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/climb2.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -28,9 +28,9 @@
     "old": "  return (0.25 + 0.22 * Math.max(0, rise)) * (1.3 - 0.5 * clamp01(skill / 100));",
     "new": "  return (0.25 + 0.22 * Math.max(0, rise)) * 1.05;",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -39,9 +39,9 @@
     "old": "  if (-(nx * dir[0] + nz * dir[2]) / l < PARKOUR_FACING_DOT) return null;\n",
     "new": "",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -50,9 +50,9 @@
     "old": "  if (wall.openY == null) return { ok: false, why: 'too-high' };",
     "new": "  if (wall.openY == null) wall.openY = feet[1] + high;",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -61,9 +61,9 @@
     "old": "  const ey = wall.openY + 0.02;",
     "new": "  const ey = feet[1] + high + 0.3;",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -72,9 +72,9 @@
     "old": "  if (!down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) return { ok: false, why: 'steep-top' };",
     "new": "  if (!down.normal) return { ok: false, why: 'steep-top' };",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -83,9 +83,9 @@
     "old": "  if (rise > high) return { ok: false, why: 'too-high' };\n",
     "new": "",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -94,9 +94,9 @@
     "old": "  const bodies = height > crouch + 1e-6 ? [height, crouch] : [height];",
     "new": "  const bodies = [height];",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -105,9 +105,9 @@
     "old": "  return !Number.isFinite(collider.raycast([p[0], p[1] + 0.05, p[2]], [0, 1, 0], height - 0.1));",
     "new": "  return true;",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -116,9 +116,9 @@
     "old": "  if (!(ledge?.ok) || ledge.rise > PARKOUR_VAULT_MAX) return null;",
     "new": "  if (!(ledge?.ok)) return null;",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -127,10 +127,10 @@
     "old": "    if (!this.swimming && !this.sunk && (input.jump || this._pkArm) && !this._pkJumpLatch) {\n      if (!this.grounded) mode = 'air';",
     "new": "    if (!this.swimming && !this.sunk && !this.grounded) mode = 'air';\n    if (!this.swimming && !this.sunk && (input.jump || this._pkArm) && !this._pkJumpLatch) {\n      if (!this.grounded) mode = 'air';",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/climb2.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -139,10 +139,10 @@
     "old": "      if (!air && fwd) {",
     "new": "      if (!air) {",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/climb2.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -151,10 +151,10 @@
     "old": "    this._pkLeftWall = true;\n    this._pkJumpLatch = true;\n    this.climb?.stop();\n",
     "new": "    this._pkLeftWall = true;\n    this._pkJumpLatch = true;\n",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/climb2.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -163,9 +163,9 @@
     "old": "    if (this._pkMove) offsetMove(this._pkMove, offset);   // CLIMB1: the move's path is in the world, which moved\n",
     "new": "",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -174,9 +174,9 @@
     "old": "    this._pkMove = null;   // CLIMB1: a placement is never the end of a mantle\n",
     "new": "",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -185,10 +185,10 @@
     "old": "    if (!this._eyeSmoothing || this.jumping || this.falling || this._pkMove || this._wall || this._eyeFeetY == null) { this._eyeFeetY = raw; return; }",
     "new": "    if (!this._eyeSmoothing || this.jumping || this.falling || this._wall || this._eyeFeetY == null) { this._eyeFeetY = raw; return; }",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/climb2.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/climb2.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -197,9 +197,9 @@
     "old": "    if (move.crouch && !this.crouching) {",
     "new": "    if (false) {",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -208,9 +208,9 @@
     "old": "kind === 'vault' || kind === 'leap' ? SKILLS.Jumping",
     "new": "kind === 'leap' ? SKILLS.Jumping",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -219,9 +219,9 @@
     "old": "    sinks.drainFatigue?.(Math.trunc(exertion * fatigueMultiplier * FATIGUE_DRAIN_SCALE));\n",
     "new": "",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   },
   {
@@ -230,9 +230,9 @@
     "old": "  return (isOnlinePage(search) || isEnhanced(search)) && !!row;",
     "new": "  return isEnhanced(search) && !!row;",
     "tests": [
-      "test/auditclimb1.test.js",
-      "test/parkour.test.js",
-      "test/auditclimb2.test.js"
+      "test/systems/auditclimb1.test.js",
+      "test/systems/parkour.test.js",
+      "test/player/auditclimb2.test.js"
     ]
   }
 ]

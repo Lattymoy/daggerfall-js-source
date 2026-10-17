@@ -5,7 +5,7 @@
     "old": "    if (on?.m && on.ref) {",
     "new": "    if (false) {",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        c.rec.pos = outOfDeck(at.m, d.local, c.rec.pos);",
     "new": "        if (!c.deckM) c.rec.pos = outOfDeck(at.m, d.local, c.rec.pos);",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        c.rec.yaw = wrapAngle(deckYaw(at.m) + d.yaw);",
     "new": "        c.rec.yaw = wrapAngle(d.yaw);",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        if (c.batch) c.batch.origin = [c.rec.pos[0], c.rec.pos[1], c.rec.pos[2]];\n        continue;",
     "new": "        continue;",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const visible = (c) => !c.hidden;",
     "new": "  const visible = (c) => true;",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (c.goneFor < DECK_GONE_S) continue;",
     "new": "      if (c.goneFor < 0) continue;",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (!at.gone || !mine(c)) { c.goneFor = 0; continue; }",
     "new": "      if (!at.gone) { c.goneFor = 0; continue; }",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (r.item && entity) (entity.items ??= []).push(r.item);\n      say(CAMP_TEXT.packedWithBoat);",
     "new": "      say(CAMP_TEXT.packedWithBoat);",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (d && c.deckM) {\n      // her node's rotation alone",
     "new": "    if (false) {\n      // her node's rotation alone",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "        const n = Math.hypot(m[4 * k], m[4 * k + 1], m[4 * k + 2]) || 1;",
     "new": "        const n = 1;",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "pixelKey: rec.deck ? null : pixelKeyAt?.(rec.pos) ?? null,",
     "new": "pixelKey: pixelKeyAt?.(rec.pos) ?? null,",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (c.rec.deck) { if (c.batch) c.batch.origin = [c.rec.pos[0], c.rec.pos[1], c.rec.pos[2]]; }",
     "new": "      if (c.rec.deck) { if (c.batch) remount(c); }",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "...(deckAt ? { deck: deckAt } : {}) });",
     "new": "});",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    const moved = (r, rec) => (r.deck || rec.deck",
     "new": "    const moved = (r, rec) => (false",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (d) out.d = [d.mine ? '' : d.peer,",
     "new": "  if (false) out.d = [d.mine ? '' : d.peer,",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (!validDeck({ ...(a[0] === '' ? { mine: true } : { peer: a[0] }), uid: a[1], local: [a[2], a[3], a[4]], yaw: a[5] })) return null;",
     "new": "    if (false) return null;",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    const ref = who === '' ? { peer: owner } :",
     "new": "    const ref = who === '' ? { mine: true } :",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  if (!Number.isSafeInteger(d.uid) || d.uid < 1) return null;",
     "new": "  if (!Number.isSafeInteger(d.uid) || d.uid < 0) return null;",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "return !csaRuntime || (!_loading && !csaRuntime.pendingRestore) ? { gone: true } : { hidden: true };",
     "new": "return { gone: true };",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    if (_mode() === 'exterior') camps.ride(dt);",
     "new": "    if (false) camps.ride(dt);",
     "tests": [
-      "test/deckcamp.test.js"
+      "test/systems/survival/deckcamp.test.js"
     ]
   }
 ]

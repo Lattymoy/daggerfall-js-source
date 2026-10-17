@@ -5,7 +5,7 @@
     "old": "  if (!seatMay(Number(a.me.rank), 'pledge')) return { error: 'guild-rank' };",
     "new": "",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (!seat) return { error: 'seat-unconfirmed' };\n  // SEAT1c: a guild holding a seat",
     "new": "  // SEAT1c: a guild holding a seat",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "UNION SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3)) < ?7",
     "new": "UNION SELECT region FROM town_seat_holds WHERE guild_id = ?2 AND region <> ?3)) <= ?7",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    ON CONFLICT (week, guild_id, region) DO UPDATE SET key = excluded.key, set_by = excluded.set_by, at = excluded.at`)",
     "new": "    ON CONFLICT (week, guild_id, region) DO NOTHING`)",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (seatPhaseOf(nowS * 1000) !== 'muster') return { error: 'seat-reckoning' };",
     "new": "",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (c.s !== player.id) { tally('not-yours'); continue; }",
     "new": "",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (weekAt(c.i) !== week) { tally('old-week'); continue; }",
     "new": "",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    const seat = byPixel.get(`${c.x},${c.y}`);",
     "new": "    const seat = byPixel.get(`${c.x},${c.y}`) ?? [...seats.values()][0];",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "AND day = ?7) < ?10`)",
     "new": "AND day = ?7) <= ?10`)",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "        SELECT ?1, ?2, ?3, ?4, ?5, 'watch', 1, ?6, ?7, ?8, ?9",
     "new": "        SELECT ?1, ?2, ?3, ?4, ?5, 'watch', 1, ?6, ?7, ?8 || random(), ?9",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "receipts.length > SEAT_WATCH_CLAIM_MAX) return { error: 'bad-watch' };",
     "new": "receipts.length > 1000) return { error: 'bad-watch' };",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -104,8 +104,8 @@
     "old": "const seasoned = (m, nowS) => Number(m.joined_at) <= nowS - SEAT_MEMBER_WAIT_S;",
     "new": "const seasoned = (m, nowS) => Number(m.joined_at) <= nowS;",
     "tests": [
-      "test/seat1b_service.test.js",
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "  if (!anyCharacter) return { why: me ? 'bound-elsewhere' : 'no-guild' };",
     "new": "  if (!anyCharacter && !me) return { why: 'no-guild' };",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "  return other ? { guild: bound, char: other.char_id } : { why: me ? 'bound-elsewhere' : 'no-guild' };",
     "new": "  return { why: me ? 'bound-elsewhere' : 'no-guild' };",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "  'INSERT OR IGNORE INTO town_seat_binds (week, account, guild_id, char_id, at) VALUES (?, ?, ?, ?, ?)',",
     "new": "  'SELECT ?, ?, ?, ?, ?',",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
     "new": "nowS, null, embers, c.m",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ],
     "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. WB12d (re-aimed at its merge): the row's embers beside the region, and the rite's own row none."
   },
@@ -151,7 +151,7 @@
     "old": "if (b.n >= GATE_REGION_AGREE && !b.level) out.set(d, b.region);",
     "new": "if (b.n >= 2 && !b.level) out.set(d, b.region);",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "if (b.n >= GATE_REGION_AGREE && !b.level) out.set(d, b.region);",
     "new": "if (b.n >= GATE_REGION_AGREE) out.set(d, b.region);",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "  if (weekAt(Math.floor(gateTimes(day).riseAt / 1000)) !== weekAt(nowS)) return { counted: false, why: 'old-week' };",
     "new": "",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "{ character: body.character, region: body.region, xp: r.credited });",
     "new": "{ character: body.character, region: body.region, xp: body.xp });",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "    const hs = homes.filter((h) => h.guild_id === g && binds.get(h.player) === g)",
     "new": "    const hs = homes.filter((h) => h.guild_id === g)",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "      .sort((x, y) => y.days - x.days).slice(0, HOMES_SEAT_MAX);",
     "new": "      .sort((x, y) => y.days - x.days);",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "AND m.joined_at <= ?`, [seat.key], [nowS - SEAT_MEMBER_WAIT_S]);",
     "new": "AND m.joined_at <= ?`, [seat.key], [nowS]);",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "  if (!seatMay(Number(a.me.rank), 'tribute')) return { error: 'guild-rank' };",
     "new": "",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "  if (marks / TRIBUTE_MARKS_PER_INFLUENCE > room) return { error: 'seat-tribute-cap' };",
     "new": "",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "        SELECT 'guild', ?1, 'burn', NULL, 'tribute', ?2, ?3, ?4, ?5, ?6, ?7",
     "new": "        SELECT 'guild', ?1, 'account', ?5, 'tribute', ?2, ?3, ?4, ?5, ?6, ?7",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "  if (prior) return prior.kind === 'tribute' ? { ok: true, repeat: true } : { error: 'marks-rid' };\n  if (!marksOpenFor",
     "new": "  if (!marksOpenFor",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "marks % TRIBUTE_MARKS_PER_INFLUENCE !== 0) return { error: 'bad-tribute' };",
     "new": "false) return { error: 'bad-tribute' };",
     "tests": [
-      "test/seat1b_service.test.js"
+      "test/net/seat1b_service.test.js"
     ]
   },
   {
@@ -259,8 +259,8 @@
     "old": "  return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o);",
     "new": "  return w + g + r + h + m + o;",
     "tests": [
-      "test/seat1b_service.test.js",
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -269,8 +269,8 @@
     "old": "  const g = Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE) * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1);",
     "new": "  const g = amountOf(gates) * GATE_INFLUENCE * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1);",
     "tests": [
-      "test/seat1b_service.test.js",
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -279,8 +279,8 @@
     "old": "  const r = Math.min(RENOWN_WEEK_CAP, Math.floor(amountOf(renownXp) / RENOWN_XP_PER_INFLUENCE));",
     "new": "  const r = Math.floor(amountOf(renownXp) / RENOWN_XP_PER_INFLUENCE);",
     "tests": [
-      "test/seat1b_service.test.js",
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -289,8 +289,8 @@
     "old": "  const cap = Math.floor((amountOf(others) * TRIBUTE_SHARE_MAX) / (1 - TRIBUTE_SHARE_MAX) + 1e-9);",
     "new": "  const cap = Math.floor(amountOf(others) * TRIBUTE_SHARE_MAX + 1e-9);",
     "tests": [
-      "test/seat1b_service.test.js",
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -299,8 +299,8 @@
     "old": "  const tribute = Math.min(Math.floor(Math.max(0, tributeMarks) / TRIBUTE_MARKS_PER_INFLUENCE), tributeRoom(others));",
     "new": "  const tribute = Math.floor(Math.max(0, tributeMarks) / TRIBUTE_MARKS_PER_INFLUENCE);",
     "tests": [
-      "test/seat1b_service.test.js",
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -309,8 +309,8 @@
     "old": "Math.max(0, Math.floor((nowS - Math.max(boughtAtS, weekStartS)) / 86400));",
     "new": "Math.max(0, Math.floor((nowS - boughtAtS) / 86400));",
     "tests": [
-      "test/seat1b_service.test.js",
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -319,8 +319,8 @@
     "old": "export const SEAT_POWERS = Object.freeze({ pledge: Object.freeze([0, 1]), tribute: Object.freeze([0]) });",
     "new": "export const SEAT_POWERS = Object.freeze({ pledge: Object.freeze([0, 1]), tribute: Object.freeze([0, 1]) });",
     "tests": [
-      "test/seat1b_service.test.js",
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_service.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "  else if (mine.bound && mine.bound !== mine.guild) out.push('Your account fights for another guild this week.');",
     "new": "",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "export const WATCH_RECEIPT_V = 'k1';",
     "new": "export const WATCH_RECEIPT_V = 'r1';",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "c.d !== undefined || c.b !== undefined || c.w !== undefined) return false;",
     "new": "c.b !== undefined) return false;",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "  if (c.e <= c.i || c.e - c.i > WATCH_RECEIPT_TTL_S) return false;",
     "new": "  if (c.e <= c.i) return false;",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "export const watchDue = (w, now) => now - w.moved <= WATCH_MOVED_MS && now - w.at >= WATCH_TICK_MS;",
     "new": "export const watchDue = (w, now) => now - w.at >= WATCH_TICK_MS;",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "    if (!watchDue(w, now)) return;",
     "new": "",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "    if (!watchPixelOk(x, y)) return;   // AUDIT ETHER-OW C2-1: the Watch's ground, one home (its answers as they were)",
     "new": "",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "    if (isCellRoom(a.key) && cellRoomOfWire(m.p.x, m.p.z) === a.key && typeof met.sub === 'string' && met.sub) await this._watchTick(",
     "new": "    if (typeof met.sub === 'string' && met.sub) await this._watchTick(",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "      const w = primary && isCellRoom(room) ? readWatchReceipt(m.r) : null;",
     "new": "      const w = readWatchReceipt(m.r);",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;",
     "new": "if (!c || !c.signed || open === false || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;",
     "new": "if (!c || !c.signed || open === false || c.s !== me() || (t != null && c.e <= t)) return false;",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "      if (!force && mine.length < SEAT_WATCH_CLAIM_MAX && (t == null ? nowMs() : t * 1000) - oldest < SEAT_WATCH_CLAIM_EVERY_MS) return null;",
     "new": "",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "      const settled = r?.ok || WATCH_SETTLED.includes(r?.error);",
     "new": "      const settled = true;",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "      if (tributeAsk?.ask !== ask) tributeAsk = { ask, rid: rid() };",
     "new": "      tributeAsk = { ask, rid: rid() };",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "      if (!force && kept && nowMs() - kept.at < SEAT_STANDINGS_CACHE_MS) return { data: kept.data, error: null };",
     "new": "",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "  const seatShown = () => !!seatHost && seatHost.book?.open === true;",
     "new": "  const seatShown = () => !!seatHost;",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "  const seatHost = guildOnly ? null : (deps.seat ?? null);",
     "new": "  const seatHost = deps.seat ?? null;",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "    if (seatMay(mine.rank, 'pledge') && data.phase === 'muster' && !here?.held) {",
     "new": "    if (data.phase === 'muster' && !here?.held) {",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -491,7 +491,7 @@
     "old": "    if (seatMay(mine.rank, 'pledge') && data.phase === 'muster' && !here?.held) {",
     "new": "    if (seatMay(mine.rank, 'pledge') && !here?.held) {",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "      pend.set(k, (pend.get(k) ?? 0) + n);",
     "new": "      pend.set(null, (pend.get(null) ?? 0) + n);",
     "tests": [
-      "test/seat1b_client.test.js"
+      "test/net/seat1b_client.test.js"
     ]
   }
 ]

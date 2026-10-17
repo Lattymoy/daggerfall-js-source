@@ -16,7 +16,7 @@
 //     fill light over an ambient; a cutout's pixels below its cut dropped, a see-through material laid over what is
 //     behind it. Drawn at twice the size and averaged down (alpha-weighted), so an edge is smooth. The background clear.
 //   - `encodePng({ width, height, data })`: RGBA, top row first, as a PNG (RFC 2083): IHDR, one IDAT (zlib - deflate by
-//     formats/rawDeflate.js, the Adler-32 after it), IEND, each chunk's CRC by systems/saveTransfer.js crc32.
+//     formats/rawDeflate.js, the Adler-32 after it), IEND, each chunk's CRC by systems/save/saveTransfer.js crc32.
 //
 // Pure - typed arrays in, typed arrays out. Not a DFU member. Ledger A (POI).
 // ═══════════════════════════════════════════════════════════════════
@@ -24,7 +24,7 @@
 import { applyTextureTransform } from './gltfImport.js';
 import { mat4FromQuatPosScale } from '../world/quat.js';   // Unity's T * R(q) * S, column-major
 import { deflateRaw } from '../formats/rawDeflate.js';
-import { crc32 } from '../systems/saveTransfer.js';
+import { crc32 } from '../systems/save/saveTransfer.js';
 
 /** The library's picture side, in pixels. */
 export const POI_THUMB_SIZE = 128;

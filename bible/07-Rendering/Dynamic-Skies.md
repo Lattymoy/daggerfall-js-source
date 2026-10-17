@@ -32,8 +32,8 @@ WeatherType), five fog presets, a light curve, and a lightning script.
 
 | the mod's | does | lives here as |
 | --- | --- | --- |
-| `Init` | material base values, vanilla sky off, presets and fog loaded, `SetLightCurve` | `systems/dynamicSkiesRuntime.js` constructor; `scenes/shared.js` createSkyController builds the pass instead of the dome and calls `worldClock.setLightCurve` |
-| `loadAllSkyboxSettings` / `ProcessSkyboxSetting` | JsonUtility over the preset and its five flat sub-structs | `systems/dynamicSkies.js` parseSkyboxSetting (absent fields default, as JsonUtility's structs do) |
+| `Init` | material base values, vanilla sky off, presets and fog loaded, `SetLightCurve` | `systems/dynamicSkies/dynamicSkiesRuntime.js` constructor; `scenes/shared.js` createSkyController builds the pass instead of the dome and calls `worldClock.setLightCurve` |
+| `loadAllSkyboxSettings` / `ProcessSkyboxSetting` | JsonUtility over the preset and its five flat sub-structs | `systems/dynamicSkies/dynamicSkies.js` parseSkyboxSetting (absent fields default, as JsonUtility's structs do) |
 | `ApplySkyboxSettings` | every material property from a preset, x0.0833 on the speeds ("because game runs at timescale 12") | `applySkyboxSettings`, quirks kept (below) |
 | `ProcessFogSetting` / `loadFogSettings` | REPLACES WeatherManager's five fog settings, density / (11 - densitySetting) | `fogSettingsFromPresets`; the hosts read `fogForWeather(w, sky.fogSettings)` - `world/weather.js` grew the table argument and the `exp2` mode (Unity's ExponentialSquared, which three of the five presets use), `render/renderer.js` grew `uFogMode == 3` in every world pass |
 | `SetLightCurve` | replaces SunlightManager.LightCurve with LightCurve.json (flat-tangent keys) | `worldClock.setLightCurve` - the WORLD's daylight curve changes with it, exactly as in DFU (ambient, key light, indirect all read `daylightScale`) |
@@ -190,7 +190,7 @@ the dome's own `1 - cover * 0.35`.
   looking up at noon, stars at midnight, the six weathers differ,
   thunder dark, dusk warm), shots in `/tmp/dsky-*.png`. 11/11 at
   landing, on SwiftShader.
-- `test/dynamicSkies.test.js` - 21 pins: the vendored tree is the
+- `test/systems/dynamicSkies.test.js` - 21 pins: the vendored tree is the
   mod's; the structs, the fog law, the light curve; the apply with its
   quirks; the day parts; the moons' ladder, lengths, offsets,
   interpolation and orbits; the CPU orbit maths; the sun and
@@ -239,7 +239,7 @@ preset edit, not a code change. Recorded in the vendor README too,
 with the measured evidence (2048x2048 star fields, 512x512 grayscale
 cloud cutouts with hundreds of colours, against 320x200 / 512x220
 paletted classic frames - suggestive of re-creation, not proof). All
-nineteen textures carry rows on `test/doctrine.test.js`'s allow-list,
+nineteen textures carry rows on `test/tooling/doctrine.test.js`'s allow-list,
 the first rows there that are not OURS: ten "the mod's own art", nine
 "PROVENANCE OPEN, Mac's ruling pending". The windmills precedent left
 textures out when they were provably classic exports; these are not
@@ -287,11 +287,11 @@ the same law in a different place:
   sky learns the exit before anything ticks or draws it, which is the
   property the lane's second read was there for.
 
-Pinned in `test/audit62_hosts.test.js`: the mod's own `LightningFlash`
+Pinned in `test/scenes/audit62_hosts.test.js`: the mod's own `LightningFlash`
 kept in flight across a visit with no ticks is still lit on the way out,
 and `stopAll` - the transition event's teardown - is what makes it null;
 plus the seam and the two edge POSITIONS in both hosts (inside the modal
-block; above `sky.use`). `test/dynamicSkies.test.js` pins the two edge
+block; above `sky.use`). `test/systems/dynamicSkies.test.js` pins the two edge
 lines' text.
 
 ## AUDIT 62 F30-F35 - six pins that restated the port (2026-09-07)
@@ -301,7 +301,7 @@ drove a law nowhere near the edge that decides it. No shipped
 behaviour was wrong - every value below matches the mod as it ships -
 but each of these mutations left the whole suite green, so the mod's
 numbers were free to drift out of the port unobserved. All are in
-`test/dynamicSkies.test.js`.
+`test/systems/dynamicSkies.test.js`.
 
 **F30 - the timescale factor.** The three material assertions
 multiplied the parsed preset value by the IMPORTED `TIMESCALE_FACTOR`,
@@ -374,7 +374,7 @@ later - a second on - it follows the sun down.
 `BLBSkybox.cs:193` "Update fog color every 1.0 seconds".
 
 Eleven mutations were driven on a scratch copy of
-`src/systems/dynamicSkies.js` for these six; eleven dead. No production
+`src/systems/dynamicSkies/dynamicSkies.js` for these six; eleven dead. No production
 line changed - the port already matched the mod on all six laws.
 
 ## ROAD-H H7b - LIGHTNINGFLASH'S UNDRIVEN TIME SCALE (2026-09-07)
@@ -407,7 +407,7 @@ and `GameManager.PauseGame` takes it to 0, so the mod's own reading is
 lasts a fifth of a second of REAL time however the frame clock is
 scaled".
 
-`test/roadh_residue.test.js` drives the class at `timeScale: 2`, where
+`test/ui/touch/roadh_residue.test.js` drives the class at `timeScale: 2`, where
 the mod's numbers come apart: the first gate sits at 0.25 (0.25 does not
 fire, 0.24 does, and the SAME 0.25 fires at timeScale 1 - which is the
 whole content of the divide), the second at 0.165, the single routine
@@ -422,7 +422,7 @@ The 0.2 s flash duration is set at `BLBSkybox.cs:183`
 (`lightningFlash.flashDuration = 0.2f;` inside the lightning-effect
 setup), not `:184` - `:184` is the blank line before the setup's
 `Debug.Log`. The lane's new pin cited `:184` twice while the production
-comment beside it (`src/systems/dynamicSkies.js:"this.flashDuration ="`) already read
+comment beside it (`src/systems/dynamicSkies/dynamicSkies.js:"this.flashDuration ="`) already read
 `:183`; the two test cites and the Testing.md row are corrected to `:183`
 and now agree with the port. No behaviour and no other cite moved: the
 five `LightningFlash.cs` lines (`:52`, `:55`, `:61`, `:77`, `:79`)
@@ -442,7 +442,7 @@ cloud blend order, the horizon and the stars; the settings file key by
 key; the presets' nineteen textures against the vendored nineteen; and
 the seam. The vendored files were md5'd against upstream - all
 eighteen comparable ones identical, now sha256-pinned
-(`test/vendorIntegrity.test.js`). The `*Night.json` question was
+(`test/tooling/vendorIntegrity.test.js`). The `*Night.json` question was
 settled from upstream too: all seven exist in the repo's `Resources/`
 and the shipped manifest lists NONE, so `GetAsset` returns null and
 index 1 is index 0 - the port's `[s, s]` is exactly right. Every earlier
@@ -491,7 +491,7 @@ it to.
 clamped the mod's real frame at 1 s; Unity's default maximum is 1/3 s,
 and the only consumer is the lightning routine with 0.2 s and 0.1 s
 steps, so a hitch between the two retired a step Unity would have
-carried over. `MAX_DELTA_SECONDS = 1 / 3` (`systems/dynamicSkies.js`),
+carried over. `MAX_DELTA_SECONDS = 1 / 3` (`systems/dynamicSkies/dynamicSkies.js`),
 read by the controller. The one unverified link: DFU's project
 `maximumDeltaTime` was not read (no DFU tree here); the default is
 assumed.
@@ -604,7 +604,7 @@ are pinned, not just the shader: delete the upload and `uBandDither`
 sits at its default 0, the mod's raw ceil, and the slice silently does
 nothing - which is exactly the `_CloudTopColorBoost` failure the
 renderer's own header cites, a property read by the shader and fetched
-by nobody. Ledger row PS3. Pinned: `test/dynamicSkies.test.js` - the
+by nobody. Ledger row PS3. Pinned: `test/systems/dynamicSkies.test.js` - the
 step formula, the dither's form and its zero mean, the uniform fetched
 and uploaded, the default, the door reachable in both hosts, no
 `gl_FragCoord` in the block, and the plateau count raw against

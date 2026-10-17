@@ -1,6 +1,6 @@
 // GP1 - THE GAMEPAD POLLER (2026-09-11). The DOM half of the joystick
 // layer: reads the browser's Gamepad API once a frame and speaks the
-// desktop input language to the host, as ui/touch.js does for a
+// desktop input language to the host, as ui/touch/touch.js does for a
 // finger - so no host learns a third vocabulary.
 //
 //   - BUTTONS are keys. Unity names them JoystickButton0..19 and DFU
@@ -55,16 +55,16 @@ import { bindings } from './input.js';
 import { getBinding, getAxisBinding, getAxisInversion, getJoystickUIBinding, DEFAULT_SHARES } from '../systems/inputActions.js';
 import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, parseAxisKeyName, movementAxes, cameraAxes, controllerLookDegrees, controllerSettings, CURSOR_SPEED, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
 import { getBinding as getBindingOf, isPadCode } from '../systems/inputActions.js';
-// PADPLUS1: the Enhanced Plus controller layer - its layout, the crossbar, the menus, the prompts (ui/plusPad.js)
+// PADPLUS1: the Enhanced Plus controller layer - its layout, the crossbar, the menus, the prompts (ui/plus/plusPad.js)
 import {
   plusPadActive, ensurePlusPadLayout, plusToggleRun, crossbarInForce, crossbarApi, crossbarSlot, CROSSBAR_CODES, CROSSBAR_HOLD,
   LOOT_DPAD, HELM_DPAD, plusDpadByCode, NEXT_MODE, HOTBAR_ARRANGE_CODE, plusStickSens, scaleStick, plusBindCapturing, lootPrompts, quickActApi, cycleTab, spatialStep, scrollAt, domTargetAt, domPointer, domHoverChange, interactiveAt, markHover, showPrompts, windowPrompts, activeTabStrip, controlRectNear,
-} from './plusPad.js';
+} from './plus/plusPad.js';
 import { padCursorAssist, createPadCursorState, stepPadCursor, linearPadCursorStep, padCursorCanvasTargets, pullTargetAmong, PAD_CURSOR } from '../systems/padCursor.js';   // PAD-CURSOR: the Destiny feel
-import { GAUNTLET_POINT, GAUNTLET_PRESS } from './plusCursor.js';
+import { GAUNTLET_POINT, GAUNTLET_PRESS } from './plus/plusCursor.js';
 import { dfuCursorUrl } from './cursor.js';   // CLASSIC-CURSOR: the pad's arrow is DFU's controllerCursorImage, the mouse's own
-import { overlayOpen } from './enhancedOverlays.js';   // PADPLUS2: the enhanced doors' registry - a DOM window is up
-import { getInt, getBool } from '../systems/settings.js';
+import { overlayOpen } from './enhanced/enhancedOverlays.js';   // PADPLUS2: the enhanced doors' registry - a DOM window is up
+import { getInt, getBool } from '../systems/settings/settings.js';
 import { quickLootSelection, quickLootWheel } from '../systems/quickLoot.js';   // PADPLUS6: the loot plaque's list, on the d-pad   // PADPLUS2: the swing mode decides the stroke
 import { lookScale } from './lookSettings.js';
 import { getInteractionMode, nextInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // PADPLUS10: hold up = the next mode
@@ -183,8 +183,8 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
   // the DOM element the cursor pressed on and the one it is over
   const P = { layout: false, runLatch: false, runPrev: false, runIdle: 0, lbPrev: false, rbPrev: false, setOrder: 0,
     stale: new Set(), lastOverlay: false, lastFreed: false, btnPrev: null, stickPrev: false, handsOff: false, lootUp: false, lootRep: {}, helmUp: false, helm: {}, xbSet: null, xbHeld: new Set(), xbPrev: new Set(), menuPrev: new Set(), placeTaken: new Set(), dh: {}, padMap: null, padMapCode: null, padMapSeen: false, padMapAge: 0, scroll: 0, domOver: null, promptAt: 0, tabs: false, plusCursor: null };
-  let paneCapturing = () => false;   // the controls pane's capture (ui/enhancedControls.js captureArmed), loaded lazily - no import ring
-  import('./enhancedControls.js').then((m) => { if (typeof m.captureArmed === 'function') paneCapturing = m.captureArmed; }).catch(() => {});
+  let paneCapturing = () => false;   // the controls pane's capture (ui/enhanced/enhancedControls.js captureArmed), loaded lazily - no import ring
+  import('./enhanced/enhancedControls.js').then((m) => { if (typeof m.captureArmed === 'function') paneCapturing = m.captureArmed; }).catch(() => {});
   const capturing = () => paneCapturing() || plusBindCapturing();   // PADPLUS10: and the Plus bindings window's
   // PADMOUSE (Mac: "when i activate it i cant move the mousepointer and it often doesnt even appear"): freeing the
   // mouse from the pad lets go of the pointer lock, and the browser answers that with a trusted mousemove carrying a
@@ -330,7 +330,7 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     // quickslot while a list is in front of you. A bumper held is still the crossbar's.
     const lootUp = !overlay && !lb && !rb && lootListed();
     P.lootUp = lootUp;
-    // CSA-L: AT THE HELM, THE D-PAD IS THE HELM'S (Come Sail Away's helm panel, ui/enhancedHelm.js): a tap, a hold past
+    // CSA-L: AT THE HELM, THE D-PAD IS THE HELM'S (Come Sail Away's helm panel, ui/enhanced/enhancedHelm.js): a tap, a hold past
     // DPAD_HOLD_S and its let-go reported per direction to the host's helm, which names the mod's action - so none of the
     // four reaches the bare d-pad's own actions (the map, the log, rest, Transport's hold) or a quickslot at the wheel. A
     // bumper held is still the crossbar's; a loot plaque's list is still its own.

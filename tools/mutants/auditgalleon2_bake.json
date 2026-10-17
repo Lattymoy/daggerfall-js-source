@@ -4,7 +4,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "        if (!removed[node] && inside(co) && !ind.includes(k)) return k;",
     "new": "        if (!removed[node] && co[0] >= bounds[0][0] && co[0] <= bounds[0][1] && co[1] >= bounds[1][0] && co[1] <= bounds[1][1] && inside(co) && !ind.includes(k)) return k;",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "5.0's rule: a node's own point asked only inside the triangle's bounding box - a corner the walk reaches on a tangential ear's line past its ends no longer blocks"
   },
   {
@@ -12,7 +12,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "        if (!removed[node] && inside(co) && !ind.includes(k)) return k;",
     "new": "        if (inside(co) && !ind.includes(k)) return k;",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "a removed node's point (a corner cut or turned convex) still blocks"
   },
   {
@@ -20,7 +20,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  return (co) => side(1, co) && side(2, co) && side(0, co);",
     "new": "  return (co) => [[1, 2], [2, 0], [0, 1]].every(([a, b]) => { const d2x = f32(vs[b][0] - co[0]), d2y = f32(vs[b][1] - co[1]), d3x = f32(vs[a][0] - co[0]), d3y = f32(vs[a][1] - co[1]); return f32(f32(d2x * d3y) - f32(d3x * d2y)) >= 0; });",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "5.0's point test (span_tri_v2_sign three times) in place of USE_PRECOMPUTED_ISECT's: her #2 and #34 cut as 5.0 cut them"
   },
   {
@@ -28,7 +28,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  const c = [0, 1, 2].map((i) => f32(f32(e[i][0] * vs[i][1]) - f32(vs[i][0] * e[i][1])));",
     "new": "  const c = [0, 1, 2].map((i) => e[i][0] * vs[i][1] - vs[i][0] * e[i][1]);",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "the precomputed constants unrounded"
   },
   {
@@ -36,7 +36,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  const side = (i, co) => f32(f32(f32(e[i][1] * co[0]) - f32(e[i][0] * co[1])) + c[i]) >= 0;",
     "new": "  const side = (i, co) => e[i][1] * co[0] - e[i][0] * co[1] + c[i] >= 0;",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "the precomputed test unrounded"
   },
   {
@@ -44,7 +44,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "      while (parent[node] !== UNSET) {",
     "new": "      while (false && parent[node] !== UNSET) {",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "a removed node only flagged: its split still prunes the child it would have handed up"
   },
   {
@@ -52,7 +52,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "        if (!removed[up]) break;",
     "new": "",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "the collapse walks on up past a parent still in the tree"
   },
   {
@@ -60,7 +60,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    if (cached !== UNSET) {",
     "new": "    if (false) {",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "no index cache: a changed ear's last blocker not asked first"
   },
   {
@@ -68,7 +68,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    dirty[p] = true; dirty[q] = true;   // their triangles changed: a cached corner is asked again\n",
     "new": "",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "a cut ear's neighbours never marked changed: a cached blocker blocks a triangle it may no longer touch"
   },
   {
@@ -76,7 +76,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "      } else if (tree.has(cached) && !ind.includes(cached) && triIsect(ind.map((i) => C[i]))(C[cached])) {",
     "new": "      } else if (false) {",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "a changed ear's cached blocker not asked (kdtree2d_isect_tri_single dropped): the full walk only"
   },
   {
@@ -84,7 +84,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "co[ax] <= bounds[ax][1] ? walk(pos[node])",
     "new": "true ? walk(pos[node])",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "the walk's pruning of the positive side dropped: a corner on a tangential ear's line it never reached blocks"
   },
   {
@@ -92,7 +92,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "centre[ax] > co[ax] ? [toPos, toNeg] : [toNeg, toPos]",
     "new": "[toNeg, toPos]",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "the walk always negative side first: another first hit cached"
   },
   {
@@ -100,7 +100,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    const median = num >> 1;",
     "new": "    const median = (num - 1) >> 1;",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "the tree balanced about the lower median"
   },
   {
@@ -108,7 +108,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    neg[ofs + median] = balance(ofs, median, 1 - ax);\n    pos[ofs + median] = balance(ofs + median + 1, num - (median + 1), 1 - ax);",
     "new": "    neg[ofs + median] = balance(ofs, median, ax);\n    pos[ofs + median] = balance(ofs + median + 1, num - (median + 1), ax);",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "the tree split on x at every level"
   },
   {
@@ -116,7 +116,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    if (sign[i] !== CONVEX) { index.push(i);",
     "new": "    if (true) { index.push(i);",
-    "tests": ["test/auditgalleon2_bake.test.js", "test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js", "test/tooling/auditgalleon_bake.test.js"],
     "why": "convex corners in the tree too"
   },
   {
@@ -124,7 +124,7 @@
     "file": "tools/shipBake.mjs",
     "old": "  assertBlenderFill(tree);   // AUDIT GN2-BK1\n",
     "new": "",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "an export from any Blender baked on 5.1's fill"
   },
   {
@@ -132,7 +132,7 @@
     "file": "tools/shipBake.mjs",
     "old": "  for (const at of ['Original', 'LastSaved']) {",
     "new": "  for (const at of ['Original']) {",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "LastSaved's version unread"
   },
   {
@@ -140,7 +140,7 @@
     "file": "tools/shipBake.mjs",
     "old": "    if (!name.startsWith('Blender')) throw",
     "new": "    if (false) throw",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "another application's export read for a Blender's"
   },
   {
@@ -148,7 +148,7 @@
     "file": "tools/shipBake.mjs",
     "old": "    if (version !== BLENDER_FILL && !version.startsWith(`${BLENDER_FILL}.`)) {",
     "new": "    if (!version.startsWith(BLENDER_FILL)) {",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "5.10 taken for a 5.1"
   },
   {
@@ -156,7 +156,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "take itself where cross_poly_v2 <= 0",
     "new": "coords_sign 1: cross_poly_v2 >= 0",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "the projection's comment says >= 0 again"
   },
   {
@@ -164,7 +164,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "-ffp-contract=off on Apple, Unix and Windows' clang",
     "new": "no fused multiply-add; an ARM build may contract a*b - c*d",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "the float comment's ARM guess back"
   },
   {
@@ -172,7 +172,7 @@
     "file": "tools/shipBake.mjs",
     "old": "    source,\n",
     "new": "    source: SOURCE_FBX,\n",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "the file records the repo's export whatever was baked"
   },
   {
@@ -180,7 +180,7 @@
     "file": "tools/bakeGalleon.mjs",
     "old": "  const out = resolve(opt('out', resolve(ROOT, OUT)));",
     "new": "  const out = resolve(ROOT, OUT);",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "--out unread (the pin bakes the repo's own export first, so the repo's file is written as it stands)"
   },
   {
@@ -188,7 +188,7 @@
     "file": "tools/bakeGalleon.mjs",
     "old": "  const fbx = resolve(opt('fbx', resolve(ROOT, SOURCE_FBX)));",
     "new": "  const fbx = resolve(opt('fbx', SOURCE_FBX));",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "the default FBX read from where it runs"
   },
   {
@@ -196,7 +196,7 @@
     "file": "tools/shipBake.mjs",
     "old": "  const rel = relative(ROOT, abs);",
     "new": "  const rel = relative(process.cwd(), abs);",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "the source recorded from where it ran, not the repo"
   },
   {
@@ -204,7 +204,7 @@
     "file": "tools/shipBake.mjs",
     "old": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4 + 0;",
     "new": "export const round4 = (v) => Math.round(v * 1e4) / 1e4 + 0;",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "Math.round alone: a negative half step rounds toward nought"
   },
   {
@@ -212,7 +212,7 @@
     "file": "tools/shipBake.mjs",
     "old": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4 + 0;",
     "new": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4;",
-    "tests": ["test/auditgalleon2_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon2_bake.test.js"],
     "why": "a -0 into the file"
   }
 ]

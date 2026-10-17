@@ -5,34 +5,34 @@
     "old": "  return { towns: results.map((r) => [r.map_id, homeLayoutOk(r.layout) ? r.layout ?? null : null]), homes };",
     "new": "  return { towns: results.map((r) => [r.map_id, homeLayoutOk(r.layout) ? r.layout ?? null : null]) };",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
     "name": "QUEST-HOME-the-boots-word-not-kept",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "    everyTown = next;\n",
     "new": "",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
     "name": "QUEST-HOME-homeStands-asks-the-asked-towns-alone",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "new": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey);",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
     "name": "QUEST-HOME-the-towns-asked-unheard",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "new": "  const homeStands = (mapId, buildingKey) => !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    onlineHomes?.hearEveryTown(heard.data?.homes);   // FIELD BUGS 2026-10-14 QUEST-HOME",
     "new": "    void heard;   // FIELD BUGS 2026-10-14 QUEST-HOME",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    isPlayerHome: (mapId, buildingKey) => onlineHomes?.homeStands(mapId, buildingKey) ?? false,",
     "new": "    isPlayerHome: (mapId, buildingKey) => !!onlineHomes?.homeAt(mapId, buildingKey),",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": ", moved: homeMoved(claim.mapId, [claim.buildingKey]) };",
     "new": " };",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": ", moved: homeMoved(home.map_id, [], [home.building_key]) };",
     "new": " };",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  return { ...answer, homeOrders };",
     "new": "  return answer;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  heardHomeOrders(data);",
     "new": "  void heardHomeOrders;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const HOME_RELAY_MIN = 205;",
     "new": "export const HOME_RELAY_MIN = 201;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "export const HOME_RELAY_MIN = 205;",
     "new": "export const HOME_RELAY_MIN = 204;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "if (primary) { this.homeOk = relaySupportsHome(relayV);",
     "new": "if (primary) { this.homeOk = false;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the hub, the carrier included - that is the receipt",
     "new": "      void said;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      await this.state.storage.put(HOME_WORDS_KEY, this._homeWords);",
     "new": "",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "        if (l.length) this._send(ws, JSON.stringify({ t: 'home', l }));",
     "new": "        void l;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -149,25 +149,25 @@
     "old": "      this._deliver('home', () => this.onHome?.(words));",
     "new": "      void words;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
     "name": "QUEST-HOME-the-word-not-taken",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "if (homeBuildingKeyOk(k) && !keys.has(k)) { keys.add(k); became = true; }",
     "new": "if (homeBuildingKeyOk(k) && !keys.has(k)) { became = true; }",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
     "name": "QUEST-HOME-the-re-pick-never-asked",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "    if (became) told();",
     "new": "",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "|| sd.unseated || sd.reached) return false;",
     "new": "|| sd.unseated) return false;",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "        sd.reached = true;\n",
     "new": "",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "        this._followSite(quest, resource);\n",
     "new": "",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "return all.length > 0 && all.length <= HOME_ORDER_KEYS_MAX",
     "new": "return all.length >= 0 && all.length <= HOME_ORDER_KEYS_MAX",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
@@ -212,16 +212,16 @@
     "old": "  if (c.o !== 'home' && !noHome) return false;\n",
     "new": "",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   },
   {
     "name": "QUEST-HOME-the-mount-marks-nothing",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      if (siteType === SITE_TYPES.Building) machine.noteSiteReached(adapter.currentMapId?.() ?? 0, buildingKey);\n",
     "new": "",
     "tests": [
-      "test/fb1014_questhome.test.js"
+      "test/net/fb1014_questhome.test.js"
     ]
   }
 ]

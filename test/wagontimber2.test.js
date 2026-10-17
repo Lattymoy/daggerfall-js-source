@@ -1,18 +1,17 @@
-// WAGON-TIMBER PASS 2 (2026-10-16, Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the
-// wooden parts which is cool. Lets make a selector for each of them and send them over the wire using the same system
-// that already exists"; "I want the wheel options to be separate from the wood options") - THE TIMBER AND THE WHEELS GO
-// ON THE WIRE, AND GET THEIR SELECTORS - `ww` and `wr` beside the paint's `wl` (src/systems/horseCartWire.js,
+// WAGON-TIMBER PASS 2 (2026-10-16, Mac, of the wagon's wood and of its wheels: "Ok so there is a separation of all the wooden
+// parts which is cool. Lets make a selector for each of them and send them over the wire using the same system that
+// already exists"; "I want the wheel options to be separate from the wood options") - THE TIMBER AND THE WHEELS GO
+// ON THE WIRE - `ww` and `wr` beside the paint's `wl` (src/systems/horse/horseCartWire.js,
 // src/net/wire.js validParkData), the pool's own door opened for the five lists (src/scenes/horseCartPool.js
 // ensureLook/lookRemap), and the driven kind's swatch rows on the Stable card (src/ui/holdingsPages.js), driven through the real
-// pool and the real card over the tests' stand-in ARENA2 (test/classicArtFake.mjs).
+// pool and the real card.
 //
 // WHAT IS PINNED, AND WHY THE STALENESS TEST IS THE BIG ONE. Five things, and the third is the one that would have
 // shipped broken: (1) `ww` and `wr` are a round trip - what one client dyes, another reads, with all NINE keys and no
-// half of the look dropped between; (2) the park record's gates, and the two bounds are the LAW's own numbers written
-// out beside `wl`'s, which this bump did not move; (3) THE STALENESS CASE - a wagon that has already built its
-// textures dyes its beams mid-session, and the pool rebuilds instead of handing back the map it cached for the paint
-// alone: the emblem's known staleness is a different shape (its arms are painted INTO the built picture, uploaded
-// once) and a dyed board must not inherit it; (4) the rows shown are SWATCH rows, because `choiceRow`'s
+// half of the look dropped between; (2) the park record's gates, and the two bounds are the LAW's own written out
+// beside `wl`'s, which this bump did not move; (3) THE STALENESS CASE - a wagon that has already built its
+// textures dyes its beams mid-session and the pool rebuilds instead of handing back the map it cached for the paint
+// alone; (4) the rows shown are SWATCH rows, because `choiceRow`'s
 // `colours.every(Boolean)` demotes a whole row to a stepper over ONE missing hex - so all seven names are pinned;
 // (5) hccRecordKey moves on the wood and on the wheels and stands still when nothing did.
 import './modsOff.js';
@@ -25,20 +24,15 @@ import {
   readWagonTimber, readWagonLookAll, wagonTimberCode, wagonTimberOfCode, wagonWheelCode, wagonWheelOfCode, wagonLookOfWire,
   WAGON_TIMBER_CODE_MAX, WAGON_WHEEL_CODE_MAX, timberedDrivenWagon, timberRows, TIMBER_TEXT, timberChoiceName,
 } from '../src/systems/wagonTimber.js';
-import { LOOK_COUNT, LOOK_NAMES, WAGON_OUTSIDE_LOOKS, wagonLookCode, wagonLookOfCode, WAGON_LOOK_CODE_MAX } from '../src/systems/wagonLooks.js';
-import { hccWireRecord, validHccRecord, hccRecordKey } from '../src/systems/horseCartWire.js';
+import { LOOK_COUNT, LOOK_NAMES, WAGON_OUTSIDE_LOOKS, wagonLookCode, wagonLookOfCode, WAGON_LOOK_CODE_MAX } from '../src/systems/wagon/wagonLooks.js';
+import { hccWireRecord, validHccRecord, hccRecordKey } from '../src/systems/horse/horseCartWire.js';
 import { validParkData, PARK_WAGON_LOOK_MAX, PARK_WAGON_TIMBER_MAX, PARK_WAGON_WHEEL_MAX, RELAY_VERSION } from '../src/net/wire.js';
-import { newWagonItem } from '../src/systems/wagonKinds.js';
+import { newWagonItem } from '../src/systems/wagon/wagonKinds.js';
 import { wagonPoolDeps } from '../src/world/wagonModels.js';   // WAGON-TIMBER PASS 3: the regression test builds the pool through the production dep, not a hand-fed look
-import { WAGON_ARCHIVE, TEX, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, TIMBER_LISTS, wagonLookSources, WAGON_SOURCES, CART_DYES } from '../src/world/wagonArt.js';
+import { WAGON_ARCHIVE, TEX, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, TIMBER_LISTS, wagonLookArt, wagonArt, CART_DYES } from '../src/world/wagonArt.js';
 import { createHorseCartPool } from '../src/scenes/horseCartPool.js';
-import { setTextureDeriveContext } from '../src/systems/textureReplacement.js';
 import { LOOK_SWATCHES, stableProviderFor, drawStablePage, setHoldingsProvider, resetHoldingsPages, _setHoldingsIconForTests } from '../src/ui/holdingsPages.js';
-import { classicPictures } from '../src/world/classicArt.js';
 import { toColor32 } from '../src/formats/color32Order.js';
-import { fakeClassicRgba } from './classicArtFake.mjs';
-
-setTextureDeriveContext({ classicRgba: fakeClassicRgba() });
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const tick = () => new Promise((r) => setTimeout(r, 0));
@@ -62,8 +56,11 @@ const lookOf = (over) => ({ o: 0, w: 0, f: 0, c: 0, ...over });
 const poolFor = (r, kind, look, extra = {}) => createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, wagonKind: () => kind, wagonLook: () => look, bakedWagon: async (k) => bakeOf(k), ...extra });
 /** The remap a wagon's body was drawn through last (the first draw is the body; the wheels follow it). */
 const bodyOf = (r) => r.draws[0];
+// the pool uploads through toColor32, which flips the rows; both sides go through it or neither is the upload
+const wanted = (list, i, name) => Buffer.from(toColor32(wagonLookArt(list, i, name)[0][1]).colors).toString('base64');
+const distinct = (d) => new Set(d.filter((_, k) => k % 4 !== 3)).size;
 
-// ── a fake DOM, the Stable page's (test/holdings.test.js's) ──────────────────────────────────────────────────────────
+// ── a fake DOM, the Stable page's (test/ui/holdings.test.js's) ────────────────────────────────────────────────────
 function fakeEl(tag) {
   const classes = new Set();
   const n = {
@@ -223,18 +220,17 @@ test('WAGON-TIMBER PASS 2 THE FIVE LISTS GO THROUGH THE PAINT\'S OWN DOOR: each 
   const rb = fakeRenderer(), pb = poolFor(rb, 'openWagon', lookOf({}));
   pb.attach(runtime); pb.partsOf('openWagon'); await flush(); rb.draws.length = 0; pb.draw(rb); await flush();
   assert.equal(bodyOf(rb).remap, null, 'a wagon as it was built wears its own pictures');
-// …AND THE PICTURE IS THE ONE ITS OWN LIST NAMES. This is the half a record-count cannot see: a door handed the
-  // wheels the WOOD's list still uploads every record and still remaps every one of them, so six swatches and six
-  // remaps read perfectly while a silvered wheel is drawn with the wood's fifth choice's picture. The two tables
-  // differ at index 1 (pine against ash) and index 4 (mahogany against silvered), and silvered is the operator's own
-  // word for a grey - so the wheels at those two choices are pinned against the wood's answer at the same index.
-  const wanted = async (list, i, name) => Buffer.from(toColor32((await classicPictures(wagonLookSources(list, i, name), fakeClassicRgba())).find(([rec]) => rec === lookRecord(TEX.tyre, i))[1]).colors).toString('base64');   // the pool uploads through toColor32, which flips the rows; both sides go through it or neither is the upload
+// …AND THE PICTURE IS THE ONE ITS OWN LIST NAMES. This is the half a record-count cannot see: a door that handed the
+  // wheels the WOOD's list would still upload every record and still remap every one of them, so six swatches and six
+  // remaps read perfectly while a silvered wheel drew the wood's fifth choice's picture. The two tables differ at
+  // index 1 (pine against ash) and index 4 (mahogany against silvered), and silvered is the operator's own word for a
+  // grey - so the wheels at those two choices are pinned against the wood's answer at the same index.
   for (const i of [1, 4]) {
     const r2 = fakeRenderer(), p2 = poolFor(r2, 'openWagon', lookOf({ wheels: i }));
     p2.attach(runtime); p2.partsOf('openWagon'); await flush(); r2.draws.length = 0; p2.draw(r2); await flush();
     const got = Buffer.from(r2.textures.get(`${WAGON_ARCHIVE}_${lookRecord(TEX.tyre, i)}`).px.colors).toString('base64');
-    assert.equal(got, await wanted('wheels', i, WHEEL_LOOKS[i]), `wheels ${i} (${WHEEL_LOOKS[i]}): the tread the WHEEL'S list names`);
-    assert.notEqual(got, await wanted('wheels', i, TIMBER_LOOKS[i]), `wheels ${i}: and not the wood's ${TIMBER_LOOKS[i]} - the two tables answer separately`);
+    assert.equal(got, wanted('wheels', i, WHEEL_LOOKS[i]), `wheels ${i} (${WHEEL_LOOKS[i]}): the tread the WHEEL'S list names`);
+    assert.notEqual(got, wanted('timberFloor', i, TIMBER_LOOKS[i]), `wheels ${i}: and not the wood's ${TIMBER_LOOKS[i]} - the two tables answer separately`);
   }
 });
 
@@ -288,7 +284,7 @@ test('WAGON-TIMBER PASS 2 THE STALENESS CASE - CHANGING A LOOK MID-SESSION REBUI
   await flush();
   assert.equal(bodyOf(r).remap.get(`${WAGON_ARCHIVE}_${TEX.beam}`), undefined, 'the beams put back wear the built beam again');
 
-// A PEER'S SIDE, which is the half that matters: their word carries the timber, and this client re-derives the
+  // A PEER'S SIDE, which is the half that matters: their word carries the timber, and this client re-derives the
   // draw from the word rather than from anything it built once. `wk` 1 is the open wagon - the kind THIS pool warmed,
   // so its parts are up and a peer of that kind is the one thing standing at all.
   const rp = fakeRenderer();
@@ -301,7 +297,7 @@ test('WAGON-TIMBER PASS 2 THE STALENESS CASE - CHANGING A LOOK MID-SESSION REBUI
     for (let i = 0; i < 3; i++) pp.frame(1 / 60, [10, 2, 10]);
     rp.draws.length = 0;
     pp.draw(rp);
-    await flush();   // the pictures are read out of this client's own ARENA2 and land a moment after they are asked
+    await flush();
     return rp.draws.filter((d) => d.remap).map((d) => d.remap).at(-1);
   };
 
@@ -316,7 +312,7 @@ test('WAGON-TIMBER PASS 2 THE STALENESS CASE - CHANGING A LOOK MID-SESSION REBUI
   const second = await peerDraw();
   assert.equal(second.get(`${WAGON_ARCHIVE}_${TEX.beam}`), `${WAGON_ARCHIVE}_${lookRecord(TEX.beam, 5)}`, 'their beams ARE dyed here, without a reload');
   assert.equal(second.get(`${WAGON_ARCHIVE}_${TEX.openSide}`), first.get(`${WAGON_ARCHIVE}_${TEX.openSide}`), 'and their livery stood');
-  assert.ok(rp.textures.has(`${WAGON_ARCHIVE}_${lookRecord(TEX.beam, 5)}`), 'the dye built here, out of this client\'s own ARENA2');
+  assert.ok(rp.textures.has(`${WAGON_ARCHIVE}_${lookRecord(TEX.beam, 5)}`), 'the dye built here, out of this client\'s own pictures');
 
   // a word from a tab on the old build carries no `ww`: the wagon is as built, and the team still stands
   assert.equal(pp.applyOwner('peer-2', theirs({}), (p) => p, 2000), true);
@@ -408,10 +404,10 @@ test('WAGON-TIMBER PER-KIND ROWS THE CARD OFFERS WHAT THE DRIVEN KIND WEARS: a c
 
 // ═══ 5. THE RELAY'S WORDS, AND WHAT A DEPLOY OWES ═════════════════════════════════════════════════════════════════════
 
-test('WAGON-TIMBER PASS 2 THE RELAY IS world207 AND SAYS ITS DEPLOY ORDER: the version moved for the two gates, the house comment says the relay goes before the account service and before the clients, and no wagon module was pulled into the bundle (mutants: a version not moved, the bounds imported into the bundle, a frame reshaped)', async () => {
-  assert.equal(RELAY_VERSION, 'world208');
+test('WAGON-TIMBER PASS 2 THE RELAY IS world212 AND SAYS ITS DEPLOY ORDER: the version moved for the two gates, the house comment says the relay goes before the account service and before the clients, and no wagon module was pulled into the bundle (mutants: a version not moved, the bounds imported into the bundle, a frame reshaped)', async () => {
+  assert.equal(RELAY_VERSION, 'world212');
   const wire = read('src/net/wire.js');
-  assert.match(wire, /export const RELAY_VERSION = 'world208';\s+\/\/ WAGON-ARMS \(2026-10-16, Mac,/);
+  assert.match(wire, /export const RELAY_VERSION = 'world212';\s+\/\/ WAGON-TIMBER \+ WAGON-ARMS \(2026-10-16, Mac,/);
   assert.match(wire, /DEPLOY THE RELAY BEFORE THE ACCOUNT SERVICE/, 'the house order is in the comment that is the law, and it is the relay first');
   assert.match(wire, /BEFORE THE ACCOUNT SERVICE[^]*?and before the clients/, 'then the account service, then the clients - that ORDER is the part that matters and it is pinned as words, not as a sentence that drifts');
   // …AND CI ENFORCES THE FIRST HALF. account-deploy.yml waits on the relay's /health for the version wire.js names
@@ -465,9 +461,19 @@ test('WAGON-TIMBER PASS 3 THE PRODUCTION PATH CARRIES THE DYE: the pool is built
   assert.equal(remap.size, 1, 'and nothing else moved');
 
   // …AND THE CART'S PAINT IS A DYE OF ITS GRAIN. Each choice past as built names the side's dyed record - the built
-  // boards (DF.hullPlanks) through its own CART_DYES row - never a flat swatch over them.
+  // boards through its own CART_DYES row - never a flat swatch over them.
   for (const [i, name] of WAGON_OUTSIDE_LOOKS.cart.entries()) {
-    if (i === 0) { assert.deepEqual(wagonLookSources('cart', 0, name), {}, 'as built names nothing'); continue; }
-    assert.deepEqual(wagonLookSources('cart', i, name), { [lookRecord(TEX.side, i)]: { dyed: { from: WAGON_SOURCES[TEX.side], dye: CART_DYES[name] } } }, `cart ${name}: its grain, dyed`);
+    if (i === 0) { assert.deepEqual(wagonLookArt('cart', 0, name), [], 'as built names nothing'); continue; }
+    const [[rec, pic]] = wagonLookArt('cart', i, name);
+    assert.equal(rec, lookRecord(TEX.side, i), `cart ${name}: the side's dyed record`);
+    assert.deepEqual([pic.width, pic.height], [64, 64], `cart ${name}: the painter's own shape`);
+  }
+  // and the dye is a SHIFT of the grain, not a fill: a flat swatch would paint every texel one colour
+  const builtSide = wagonArt().find(([rec]) => rec === TEX.side)[1];
+  for (const [i, name] of WAGON_OUTSIDE_LOOKS.cart.entries()) {
+    if (i === 0) continue;
+    const pic = wagonLookArt('cart', i, name)[0][1];
+    assert.notDeepEqual(Buffer.from(pic.data).toString('base64'), Buffer.from(builtSide.data).toString('base64'), `cart ${name}: not the wagon as built`);
+    assert.ok(distinct(pic.data) > 10, `cart ${name}: the grain survived - no flat plane`);
   }
 });

@@ -11,7 +11,7 @@
 //   node tools/regenOpenFlags.mjs          # rewrite the list in place
 //   node tools/regenOpenFlags.mjs --check  # exit 1 if it would change
 //
-// The list's contract, which test/audit18_bible_docs.test.js enforces:
+// The list's contract, which test/bible/audit18_bible_docs.test.js enforces:
 //   - one entry per FLAGGED/INTERIM line under src/, both ways, exactly -
 //     except a marker that is part of an identifier or sits inside a quoted
 //     span, neither of which is a flag (IN1);

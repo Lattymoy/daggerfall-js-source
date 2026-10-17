@@ -23,12 +23,12 @@ import { VirtueLevelUpScreen } from '../ui/virtueLevelUp.js';
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';
 // HOTFIX (2026-09-19): STATIC, AND THE REASON IS A BLACK SCREEN.
 //
-// This lane used to `await import('../ui/enhancedHud.js')`. A DYNAMIC
+// This lane used to `await import('../ui/enhanced/enhancedHud.js')`. A DYNAMIC
 // import makes the bundler build a NAMESPACE OBJECT for the target, and
 // a namespace object reads EVERY binding the module exports the moment
 // it is built - including the ones a module re-exports from somewhere
-// else. `ui/enhancedHud.js:"export { compassScroll };"` re-exports `compassScroll`, which is
-// `ui/hud.js`'s, and hud.js and enhancedHud.js import each other. So
+// else. `ui/enhanced/enhancedHud.js:"export { compassScroll };"` re-exports `compassScroll`, which is
+// `ui/hud/hud.js`'s, and hud.js and enhancedHud.js import each other. So
 // the namespace read hud.js's `const compassScroll` while hud.js was
 // still initialising: "can't access lexical declaration before
 // initialization", thrown out of a chunk `/play/` loads, and the game
@@ -40,10 +40,10 @@ import { createCharSheetWindow } from '../ui/charSheetDoor.js';
 // it up here. The cycle underneath is older than this arc and is not
 // what changed; what changed is that something asked for a namespace
 // over one end of it.
-import { drawEnhancedHud } from '../ui/enhancedHud.js';
+import { drawEnhancedHud } from '../ui/enhanced/enhancedHud.js';
 // ...and NAMED here too, for the same reason: `import * as` is a
 // namespace object as surely as a dynamic import is.
-import { announceLevelUp, announceSkillRaise, announceMastery, drawLevelNotices } from '../ui/levelNotice.js';
+import { announceLevelUp, announceSkillRaise, announceMastery, drawLevelNotices } from '../ui/levelUp/levelNotice.js';
 import { SKILLS } from '../systems/skills.js';
 import { LEVELUP_TOTAL } from '../systems/oblivionLeveling.js';
 
@@ -129,7 +129,7 @@ export async function mount(lane = 'classic') {
     const tick = () => {
       if (globalThis.__lv?.lane !== 'notice') return;
       heading = (heading + 0.0004) % 1;
-      // IN ui/hud.js'S OWN ORDER, which is the strip FIRST: AUDIT LV2
+      // IN ui/hud/hud.js'S OWN ORDER, which is the strip FIRST: AUDIT LV2
       // F4 made where the strip hangs depend on whether the HUD host
       // exists yet, and drawHud paints the notices on the call BEFORE
       // it builds that host. A lab that drew them the other way round
@@ -158,7 +158,7 @@ export async function mount(lane = 'classic') {
   // wait could never be seen - the probe's first run read a green
   // "never blank" against a gap that had been closed by the lab
   // itself.
-  const { mountEnhancedLevelUp } = await import('../ui/enhancedLevelUp.js');
+  const { mountEnhancedLevelUp } = await import('../ui/enhanced/enhancedLevelUp.js');
   const screen = lane === 'virtue' ? new VirtueLevelUpScreen(entity) : new LevelUpScreen(entity);
   // THE DOOR'S OWN onExit IS A CLOSE (ui/charSheetDoor.js's
   // enhancedLevelUpOverlay), so the lab's must be too - the first

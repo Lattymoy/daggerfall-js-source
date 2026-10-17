@@ -31,7 +31,7 @@ compensation. tools/screenshot.mjs gained SHOT_TIMEOUT and SHOT_EVAL
 (post-ready action + stream-idle wait) for flight shots. Floating-origin
 invariant pinned: after any number of crossings the current pixel's
 frame sits at the origin and native coordinates round-trip exactly.
-Pins in test/streaming.test.js.
+Pins in test/world/streaming.test.js.
 AUDIT NOTE (M9 audit): re-diffed against StreamingWorld.cs +
 FloatingOrigin.cs - two corrections landed: init now PRESERVES the
 vertical compensation across re-inits (verbatim ResetStreamingWorld
@@ -63,7 +63,7 @@ display-flipped art against a distant screenshot and passed a flipped
 render - sprite-orientation checks must be close-up crops against the
 raw record art.
 
-`src/world/terrainNature.js` ports DefaultTerrainNature.LayoutNature:
+`src/world/terrain/terrainNature.js` ports DefaultTerrainNature.LayoutNature:
 location rects (when present) expand by natureClearance 4 and exclude
 scatter (Rect.Contains min-inclusive / max-exclusive); elevationScale =
 clamp(rawWoodsByte / 128, 0.4, 1.0), Desert climates quarter every
@@ -85,7 +85,7 @@ lands on integer sample coordinates by construction). ?world scatters
 nature per pixel on post-blend heights + final tilemap, batched
 world-framed per (natureArchive, record). Integration pins: city pixel
 (207,213) 1237 flats (rect-suppressed), wilderness (206,213) 5331 -
-44013 across the 3x3. Pins in test/terrain.test.js.
+44013 across the 3x3. Pins in test/world/terrain/terrain.test.js.
 
 REAL FORESTS (FOREST1, 2026-10-01; AUDIT FOREST1 the same day) is the
 port's departure from that scatter, behind the enhanced Features row
@@ -98,7 +98,7 @@ in fields, the Oblivion Gate's clearing kept, Logging's trees in the
 woods. Off, on a desert, or with an archive that has no Tree table, the
 scatter above stands byte for byte. The rules and the numbers (measured
 on the real WOODS.WLD) are the Port-Ledger A row (REAL FORESTS); the audit
-is `01-Overview/Audit-Forest1-Grass.md`; pins in test/forest1.test.js.
+is `01-Overview/audits/Audit-Forest1-Grass.md`; pins in test/systems/forest1.test.js.
 
 CLEAR ROADSIDES (VERGE1, 2026-10-07, Mac: "Making sure objects, like
 trees, avoid pathways and roads") keeps the disc of every wild flat's
@@ -106,7 +106,7 @@ widest picture - a Low Poly tree's crown among them - off the painted roads
 and tracks, in both scatters, with the herbs, the veins on the stone and
 World of Daggerfall's flats; behind the enhanced row `roadVerges`, forced on
 online. The record is `03-World/Roads.md` VERGE1; pins in
-test/verge1.test.js.
+test/world/road/verge1.test.js.
 
 BLENDED CLIMATES (ECOTONE1, 2026-10-07, Mac: "Making it where bione
 transitions are insta t and instead fade and transition naturally into each
@@ -116,7 +116,7 @@ neighbours' tile sets across it, a border tile's flats are laid by the
 climate that owns it (between two wooded climates only the species change),
 the grass grows by the ground under it. Behind the enhanced row
 `climateBlend`, forced on online. The record is `07-Rendering/Rendering.md`
-ECOTONE1; pins in test/ecotone1.test.js.
+ECOTONE1; pins in test/systems/ecotone1.test.js.
 
 ## Milestone 7 - locations on terrain (SHIPPED)
 
@@ -125,7 +125,7 @@ Random (MIT, open source - NOT a departure): CreateFromIndex(i) seeds
 with WangHash(i + 62), the constructor burns one NextState, xorshift
 13/17/5 returns the PRE-update state, NextFloat is the
 asfloat(0x3f800000 | state >> 9) - 1 bit trick. Pinned.
-`src/world/terrainTiles.js` ports DefaultTerrainTexturing +
+`src/world/terrain/terrainTiles.js` ports DefaultTerrainTexturing +
 TerrainHelper's location paths: generateTileData classifies the 129x129
 corner grid (water at/below ocean; beach dirt at/below beach +/- a
 byte-exact umRandom jitter in [-1.5, 1.5); else a lat/long perlin weight,
@@ -157,7 +157,7 @@ Integration pins for pixel (207,213): avg 0.166147 / max 0.171953, rect
 untouched, post-assign histogram 2:8183 / 1:3173 / 46:1717 / 11:905
 (PUDDLE-DRY's: the city's 61 puddle tiles are ground; it was
 2:8173 / 1:3142 / 46:1706 / 11:899 - AUDIT WATER-NEXT m5),
-climate 231 -> ground 302. Pins in test/terrain.test.js.
+climate 231 -> ground 302. Pins in test/world/terrain/terrain.test.js.
 AUDIT NOTE (M7 audit): the 64-entry marching-squares lookup was
 machine-verified against a source-parsed reconstruction - identical
 64/64. All 15251 exterior locations in the game stamp + blend clean
@@ -179,7 +179,7 @@ data at offset + 22, and GetLargeHeightMapValuesRange's interior-3x3 strip
 with inverted sample Y AND descending source map Y. Corpus pins: header
 closure (offsets fill 144..2000144 exactly, heightmap at 2001168), buffer
 sum 11699810 / max 255 / 20237 zeros, Daggerfall environs raw height 20.
-`src/world/terrainSampler.js` ports DefaultTerrainSampler +
+`src/world/terrain/terrainSampler.js` ports DefaultTerrainSampler +
 TerrainHelper.CubicInterpolator/GetNoise: 129x129 samples per map pixel,
 bicubic base (4x4 small window at mx-2,my-2, rows Y-inverted, x8) +
 bicubic feature noise (9x9 large window at mx-1,my, x4) + Perlin ground
@@ -193,7 +193,7 @@ different concrete samples, all pins pin OUR pipeline. Open-ocean pixels
 clamp to exactly 0.017674 everywhere (pinned). Scene: ?terrain=<x>,<y> (RETIRED in Rendering-Arc R9 - the streaming world owns terrain)
 (default 207,213) renders a 5x5 pixel neighborhood on an elevation ramp;
 ground TEXTURING (tilemap), locations-on-terrain, and streaming remain
-queued. Pins in test/terrain.test.js.
+queued. Pins in test/world/terrain/terrain.test.js.
 
 ## Milestone 5 - RDB dungeons + action records (SHIPPED)
 
@@ -217,12 +217,12 @@ flag/trigger guards, translation vectors negating x/z, rotation vectors /
 RotationDivisor, PositiveX..NegativeZ flag cases (duration 50, magnitude
 axisRaw * 8), LID/WHE rotation overrides, the TRP raw-axis-13 hack, and
 the flat-action axis = magnitude quirk; links key on obj.position and
-resolve next/prev. `src/world/dungeonTextures.js` +
+resolve next/prev. `src/world/dungeon/dungeonTextures.js` +
 `src/formats/dfRandom.js` port the classic texture table (LCG pinned
 against K&R rand; Privateer's Hold seed 50050 + Woodlands ->
 [23,22,19,22,20,368]); UVs keep original-archive sizes while pixels come
 from the remapped archive, verbatim SetDungeonTextures order.
-`src/world/dungeonLayout.js` ports DaggerfallDungeon: blocks at
+`src/world/dungeon/dungeonLayout.js` ports DaggerfallDungeon: blocks at
 (X, 0, Z) * RDBSide (51.2), start/enter markers from the starting block,
 RemoveOverlappingDoors (exit-centre seed in dungeon-root space without the
 block origin - benign, start block sits at 0,0 - then 1.4-tolerance
@@ -233,7 +233,7 @@ disable in block order). Corpus: all 187 RDBs lay out clean; placements
 ?dungeon=<name> (&region=), camera at the start marker. Routed onward:
 enemies (Characters), treasure/loot (Systems), water plane + point lights
 (Rendering), torch/animal audio (Audio), door/action behavior (Player).
-Pins in test/dungeon.test.js.
+Pins in test/world/dungeon.test.js.
 
 ## Milestone 4 - building interiors + doors (SHIPPED)
 
@@ -249,7 +249,7 @@ models (1712 building / 285 dungeon-enter / 2 exit).
 (size from the v0/v2 diagonal, thickness = max(width, depth), centre/normal
 kept in model space with the placement matrix riding along).
 
-`src/world/interiorLayout.js` ports DaggerfallInterior's geometry paths:
+`src/world/interior/interiorLayout.js` ports DaggerfallInterior's geometry paths:
 AddModels (prop type 3 keeps +Y unnegated then anchors to the model's lowest
 vertex Y; IsBadInteriorModel's 27-block repair table filters misplaced model
 31000), AddFlats (editor archive 199 kept as markers, hidden from render
@@ -264,9 +264,9 @@ instances filtered (one per flagged block/record combo). Scene:
 marker facing the interior bounding center; `SHOT_QUERY` drives the shot
 tool at any scene. Routed onward: people flats (Characters), furniture
 actions / loot / spawn points (Systems), point lights (Rendering), ladder +
-door behavior (Player). Pins in test/interior.test.js.
+door behavior (Player). Pins in test/world/interior.test.js.
 
-TOWER-FLOORS (FIELD BUGS 2026-10-07b, `01-Overview/Field-Bugs-2026-10-07b.md`; Jacob: "The two Daggerfall Castle
+TOWER-FLOORS (FIELD BUGS 2026-10-07b, `01-Overview/bugs/Field-Bugs-2026-10-07b.md`; Jacob: "The two Daggerfall Castle
 courtyard tower interiors are very bugged") - the port's one departure in AddModels: an ObjectType 5 model is
 stood on its lowest vertex at the storey it is written at (`FLOOR_MODEL_TYPE`), where DFU places it centred like any
 model. Classic writes the type at a storey - 1,250 of its 1,433 interior records are flat planes, which do not
@@ -275,7 +275,7 @@ courtyard towers (CUSTAA05 #0 and #1, five storeys), the castle's three dungeon-
 blocks no location places (LIBRAM00 #7, BOOKAS00 #8). Each stood half its height under its storey - the towers'
 furniture 1.625 m over the floor and their lights and markers 1.575 m, a stair 3.2 m under its own, the room's door
 1.6 m under the street's. The two House2 rooms' hall 28703 is written off even this convention and left as written
-(AUDIT FB1007b F1, `01-Overview/Audit-FB1007b.md`). Pinned by `test/fb1007b_towerfloors.test.js`.
+(AUDIT FB1007b F1, `01-Overview/audits/Audit-FB1007b.md`). Pinned by `test/world/fb1007b_towerfloors.test.js`.
 
 ## Milestone 3 - flats and billboards (SHIPPED)
 
@@ -304,7 +304,7 @@ climate (Daggerfall city -> Woodlands 302). Scene selectable with
 ?region=&loc=. Daggerfall city: 64 blocks, 1109 placements, 202 unique
 meshes, 181 textures, meshes and textures shared across blocks, per-block
 ground meshes, origin folded into each placement matrix.
-`src/world/locationLayout.js`, pins in test/world.test.js.
+`src/world/locationLayout.js`, pins in test/world/world.test.js.
 
 ## Milestone 1 - single RMB block render (SHIPPED)
 
@@ -338,7 +338,7 @@ Modules:
   (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, playwright@1.56.0 pinned to the
   provisioned chromium-1194). Waits for window.__shotReady.
 
-Numeric anchors (test/world.test.js): model 456 p0 (-9.6, 0, 12.8),
+Numeric anchors (test/world/world.test.js): model 456 p0 (-9.6, 0, 12.8),
 uv0 (0, -2), fan [0,2,1,0,3,2]; MAGEAA00 model 0 world origin (48.2, 0, 25.4)
 via T(48, 0, 25.6) * Ry(-270deg).
 
@@ -350,7 +350,7 @@ swaps, sky; Player: movement, collision, activation; Audio: ambient).
 
 ## Testing
 
-Real-data pins live in `test/world.test.js`. Screenshot harness is manual
+Real-data pins live in `test/world/world.test.js`. Screenshot harness is manual
 proof, not a suite gate (needs ARENA2 + chromium).
 
 ## T1 (2026-08-17): TOWNS - the wandering population SHIPPED
@@ -359,7 +359,7 @@ The towns arc opens (Mac's lead handoff; the World arc hosts it -
 the exterior scene owns the system). DFU's PopulationManager /
 CityNavigation / MobilePersonMotor / MobilePersonBillboard, verbatim:
 
-- THE NAVGRID (world/cityNavigation.js): per RMB block the 64x64
+- THE NAVGRID (world/city/cityNavigation.js): per RMB block the 64x64
   AutoMapData carves walkable cells (nonzero = covered - a tree flat
   blocks its cell, verbatim raw bytes), weights from the ground
   tilemap (water 0 / stone 4 / dirt 6 / grass 12 / road 15 /
@@ -370,7 +370,7 @@ CityNavigation / MobilePersonMotor / MobilePersonBillboard, verbatim:
   - the navgrid applies the same per-block flip, and Daggerfall city
   grids out at 198k walkable cells / 35k road cells with townsfolk
   probed WALKING ON STREETS.
-- THE MOTOR (characters/mobilePerson.js): SeekingTile with the
+- THE MOTOR (characters/mobile/mobilePerson.js): SeekingTile with the
   verbatim weights walk (2.5% random shuffle, forced change on
   0-weight/blocked targets, the 80% downgrade-leave that makes
   mobiles FOLLOW ROADS), 1.3 u/s marches to cell centers, occupancy
@@ -380,7 +380,7 @@ CityNavigation / MobilePersonMotor / MobilePersonBillboard, verbatim:
   and no enemies near - PROBED LIVE (the closeup subject flipped to
   idle facing the camera). The billboard rides the monster wheel
   (records 0-4 mirrored, 4 fps move / 1 fps idle).
-- THE POOL (systems/townPopulation.js): max = clamp(blocks/16,1,4) *
+- THE POOL (systems/town/townPopulation.js): max = clamp(blocks/16,1,4) *
   24 (Daggerfall city: 96); one spawn per 10Hz tick on the navgrid
   within 96 cells; recycle past 150 units, after 4 failed seeks, or
   at NIGHT; pop-in/out allowed only beyond 120 units or outside the
@@ -466,7 +466,7 @@ Node-pure (the window UI and the scene activation wiring are T3b):
   bonus drawn in classic DFRandom call order (stream-position
   dependent in DFU too), relinkChildren building the tree. Enums:
   FactionTypes/SocialGroups (11)/GuildGroups.
-- THE REACTION LAYER (systems/talk.js): findFactions with the -1
+- THE REACTION LAYER (systems/talk/talk.js): findFactions with the -1
   wildcards (PersistentFactionData verbatim; region compares the
   parser's 0-based value - DFU's misleadingly named
   oneBasedRegionIndex parameter receives 0-based too);
@@ -503,7 +503,7 @@ exterior-capable hosts.
 Townsfolk can be talked to and pickpocketed, live in BOTH exterior
 motor hosts (the standing host rule; one shared seam module):
 
-- THE SESSION (systems/talkSession.js): mobile townsfolk all talk
+- THE SESSION (systems/talk/talkSession.js): mobile townsfolk all talk
   as the region's People faction whose parent is a PROVINCE - so
   DFU's guild-greeting branch never runs for them and the greeting
   is purely the reaction ladder, verbatim: < -20 refuses via
@@ -674,7 +674,7 @@ The talk window answers "Where is...?" in the test-city host:
   province ruler's title); banks "The Bank of <region>", guild
   halls = the faction name, temples = the faction's first child,
   palaces TEXT.RSC 475/476/477, houses empty.
-- THE NAMED-BUILDING POOL (systems/talkTopics.js, verbatim
+- THE NAMED-BUILDING POOL (systems/talk/talkTopics.js, verbatim
   GetCompleteBuildingData): the location's exterior building list is
   a pool; scanning blocks y->x, each named-type block building draws
   the first unused pool entry OF ITS TYPE (nameSeed/factionId/
@@ -954,7 +954,7 @@ discovery no-dupe all mutation-checked (three planted mutants caught).
   the direction arm is the T3c 7333 chain unchanged (MAC-U 2026-09-18:
   7333 itself is now DFU's Internal_RSC phrase, read before the file by
   `TextRsc` - classic's "%loc is %di of here" doubled the building name
-  inside every frame; `01-Overview/Mac-Bugs-U.md`). The mobile-talk
+  inside every frame; `01-Overview/bugs/Mac-Bugs-U.md`). The mobile-talk
   hosts are the two exteriors, so isInside is false at this seam;
   interiors join with static-NPC talk (in flight in a parallel lane).
 - **%hnr/%ra** (talkSession.honorificOf / raceDisplayName): %hnr is
@@ -983,7 +983,7 @@ same, so the probe stopped demanding a walker); ?play without
 overlay; and __talk's answer window reports { text, kind }, not a
 string.
 
-Pins: test/mapReveal.test.js x6 (the boundary/inside fork, the store's
+Pins: test/systems/talk/mapReveal.test.js x6 (the boundary/inside fork, the store's
 whole-record/no-dupe/per-location laws, the envelope round trip incl.
 pre-T4 empty, the macro tables, the townTalk source sweep - the hosts'
 zero-execution-coverage idiom - and the ARENA2 record-id gate).
@@ -1031,7 +1031,7 @@ strengthened (a mutable pick poisoned to a different index before
 the restore call), proven green on clean code, and m2 re-run to a
 kill. A PIN MUST FAIL, enforced the hard way.
 
-Pins: test/droppedloot.test.js +3 (the pixel sweep incl. the
+Pins: test/scenes/droppedloot.test.js +3 (the pixel sweep incl. the
 pixel-less exemption and the freed batches; the native round trip
 under a moved origin + y shift with empties skipped and the record
 unrerolled under a poisoned roll seam; the world-host wiring sweep -
@@ -1063,7 +1063,7 @@ RESIDUE: quest reveals ride the quest machine; the standalone
 Mutations: 3 run, 3 killed (the filter dropped; the entry writer
 dropped; every row claiming baked-discovered).
 
-Pins: test/travelvisibility.test.js x2 (the hidden barrow absent
+Pins: test/systems/map/travelvisibility.test.js x2 (the hidden barrow absent
 from matches until discoverLocation learns it, the baked town
 findable from the first key; the law-inputs/writer source sweep).
 
@@ -1121,7 +1121,7 @@ common way into a dungeon is through its door. `startInDungeon` (a new
 game) passes `true`; the standalone `?dungeon` host keeps the default,
 because it is `StartDungeonInterior` by definition.
 
-Pins: 7 in `test/dungeonentry.test.js`. Campaign: 19 mutants, 19
+Pins: 7 in `test/scenes/dungeonentry.test.js`. Campaign: 19 mutants, 19
 killed, including the bug itself restored as one mutant - and after one
 survivor that was the fixture's fault, not the code's: the pin for
 `closestDoorTo` measuring in **three** dimensions used doors that a
@@ -1357,7 +1357,7 @@ removed: it is interior machinery, its three materials carry no texture
 at all, and the strict reader rejected it outright rather than baking a
 mesh with nothing to sample.
 
-8 pins in `test/windmillmesh.test.js`; 7 mutants, 7 killed - including
+8 pins in `test/world/windmillmesh.test.js`; 7 mutants, 7 killed - including
 the two that are not source edits, a dropped submesh and a Daggerfall
 texture export appearing in `vendor/`.
 
@@ -1525,7 +1525,7 @@ looking at it.
   wrapping) sample correctly - all of it wants one run.
 - **Sound.** Kamer loops a clip on the mill; the port does not.
 
-Pins: 7 in `test/windmillwiring.test.js`, source sweeps for R5's reason -
+Pins: 7 in `test/world/windmillwiring.test.js`, source sweeps for R5's reason -
 it wired a paint into `buildPixel`, lint passed, the build passed, 4,283
 tests passed, and the world host was dead on its first terrain load,
 because nothing in the suite drives that path.
@@ -1533,11 +1533,11 @@ because nothing in the suite drives that path.
 ### The slice ids were renamed
 
 W1/W2 became **WM1/WM2**: `W1` was already taken, 53 times, by the
-travel-map and live-weather slice - including `systems/weatherSim.js`'s
+travel-map and live-weather slice - including `systems/weather/weatherSim.js`'s
 own header. A slice id is a grep handle in this repo, and two meanings
 for one handle makes both useless.
 
-Pins: 15 in `test/windmills.test.js` (12 at WM1, 3 more at WM2b for the
+Pins: 15 in `test/world/windmills.test.js` (12 at WM1, 3 more at WM2b for the
 mount-versus-conjugate defect). Campaign: 15 mutants, 14 killed,
 and the survivor recorded rather than papered over - `over <= 0`
 weakened to `over < 0` is EQUIVALENT, because at `over === 0` the
@@ -1789,7 +1789,7 @@ About 5,200 lines.
 
 ### What was left standing, and why
 
-- **`systems/travel.js` IS THE VERBATIM PORT AGAIN.** The road term in
+- **`systems/travel/travel.js` IS THE VERBATIM PORT AGAIN.** The road term in
   `travelPixelMinutes` and the two optional deps on
   `calculateTravelTime` (`path`, `roadAt`) are gone. The only departure
   that ever touched the travel law is retired with the system, so that
@@ -1915,7 +1915,7 @@ the implementation cannot tell you the design was wrong.** The pin that
 would have caught it is the one that shipped instead - the two laws
 compared against each other, where they agree and where they part.
 
-Pins: 5 in `test/windmillclimate.test.js`. The law half is kept as
+Pins: 5 in `test/world/windmillclimate.test.js`. The law half is kept as
 INDEPENDENT EVIDENCE for WM2e rather than as WM3's own claim: WM2e says
 the sail is 067_1 in every one of the seventeen prefabs, and these pins
 say ApplyClimate would not have moved it either, computed from the
@@ -2034,7 +2034,7 @@ H1's projection presents that space as DFU does, not mirrored, so the
 same t is the same way round on screen. `ROTOR_SIGN` is -1 now, his
 sign verbatim, and the pin says +Y goes to +X.
 
-8 pins in `test/windmillmachinery.test.js`; 6 mutants, 6 killed. Not
+8 pins in `test/world/windmillmachinery.test.js`; 6 mutants, 6 killed. Not
 seen: no GL and no ARENA2 here. The one-look questions are the gear
 standing as a vertical shaft at x 11 inside the machinery and the
 roller lying across at y -7, both computed from the prefab's numbers
@@ -2071,7 +2071,7 @@ no idea what the weather is); the modal frame silences them all,
 because `PlayerEnterExit` disables the exterior parent indoors and a
 disabled AudioSource stops, and the retry brings them back on the way
 out; a destroyed pixel stops its own; the room's `destroy` stops the
-gear's. 5 pins in `test/windmillsound.test.js`; 6 mutants, 6 killed.
+gear's. 5 pins in `test/world/windmillsound.test.js`; 6 mutants, 6 killed.
 
 **WM4 closes the rar.** Every file in it is now either carried,
 verified equal, or recorded as outside the shipped manifest. Nobody has
@@ -2172,7 +2172,7 @@ playerStandingStill && withinIdleDistance && sheathed && !invisible &&
 tree, inside ConstantEffect — a per-round live flag, which
 `systems/lycanthropy.js` mirrors exactly.
 
-`characters/mobilePerson.js` ported the gate whole, with `inBeastForm`
+`characters/mobile/mobilePerson.js` ported the gate whole, with `inBeastForm`
 as a defaulted parameter — and NEITHER of the two hosts that evaluate it
 passed the term, so it took its `false` default on every frame and
 `entity.isInBeastForm` was a field written three times and read nowhere
@@ -2387,7 +2387,7 @@ CityGate src/` returned nothing; the only trace of 446/447 was two mesh
 patch comments, which prove the port loads and draws both gate meshes
 and never swaps them.
 
-`src/world/cityGate.js` is the component; the constants and the
+`src/world/city/cityGate.js` is the component; the constants and the
 predicate live in `rmbLayout.js`, as the reference splits them. Two
 details the state machine turns on, and the lane took VERIFIER 1's
 reading over VERIFIER 2's on the first:

@@ -8,14 +8,14 @@
 //
 // THE WORLD HOST IS ITS ONE HOST (THE FOUR HOSTS RULE): scenes/world.js wires it; scenes/worldModes.js (a building),
 // scenes/dungeonContext.js (a dungeon) and scenes/exterior.js (the ?exterior bench - no relay, no naval host) have no sea
-// a ship sails, so no serpent; the naval host (scenes/navalHost.js) gives it the shots and the boat at
+// a ship sails, so no serpent; the naval host (scenes/naval/navalHost.js) gives it the shots and the boat at
 // my helm, Come Sail Away gives it the warp and drift seams the coil and the whirl take her by. Every seam it reaches
 // is in `deps`, so the whole of it runs in Node under the tests:
 //
 // deps = {
 //   now() -> ms                          the relay's clock (the welcome's offset - WORLD5)
-//   link                                 net/serpentLink.js createSerpentLink - the cell's words folded
-//   omen                                 systems/serpentOmen.js createSerpentOmen - the day's serpent and its site
+//   link                                 net/serpent/serpentLink.js createSerpentLink - the cell's words folded
+//   omen                                 systems/serpent/serpentOmen.js createSerpentOmen - the day's serpent and its site
 //   online: { ready(cell), send(word, cell), acct() }   the session's serpent door (net/online.js sendSerpent)
 //   toScene(sx, sz, x, z) -> [x, z]      a site-frame point (metres about the site's native point sx/sz) in the scene
 //   toSite(sx, sz, x, z) -> [x, z]       a scene point in the site's frame
@@ -29,12 +29,12 @@
 // }
 //
 // Not a DFU member. Ledger A (SERPENT1).
-import { bodyAt, segmentBox, segExposed, headExposed, coilWeight, SEG_N, MODE, modeAt, headAt, legIndexAt } from '../net/serpentBody.js';
-import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, ADMIT_R, FAN_R, ENGAGE_R, SERPENT_POOL_TICK_MS, ZONES, SERPENT_PHASE_NAMES, MAEL_R, SERPENT_SHIELD_MS, CRUISE_V, refOf, SERPENT_DRAWN_MS } from '../net/serpentBrain.js';
-import { serpentBossById, serpentCountdown, serpentCountdownWords, serpentSwims, SERPENT_BRAIN_V, SERPENT_DIVE_MS } from '../net/serpentLaw.js';
+import { bodyAt, segmentBox, segExposed, headExposed, coilWeight, SEG_N, MODE, modeAt, headAt, legIndexAt } from '../net/serpent/serpentBody.js';
+import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, ADMIT_R, FAN_R, ENGAGE_R, SERPENT_POOL_TICK_MS, ZONES, SERPENT_PHASE_NAMES, MAEL_R, SERPENT_SHIELD_MS, CRUISE_V, refOf, SERPENT_DRAWN_MS } from '../net/serpent/serpentBrain.js';
+import { serpentBossById, serpentCountdown, serpentCountdownWords, serpentSwims, SERPENT_BRAIN_V, SERPENT_DIVE_MS } from '../net/serpent/serpentLaw.js';
 import { cellRoomOfWire } from '../net/wire.js';
 import { bodySayer } from '../net/bossBody.js';   // INT15: my hull, said to the cell
-import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, venomBite, venomHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, fleetShare, SHOVE_S } from '../systems/serpentStrike.js';
+import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, venomBite, venomHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, fleetShare, SHOVE_S } from '../systems/serpent/serpentStrike.js';
 
 /** INT13: the line as the relay's count wrecks her (`bd`). */
 export const COUNT_WRECK_LINE = 'She is holed past saving - the fight counts her wrecked.';
@@ -550,7 +550,7 @@ export function createSerpentHost(deps) {
         tele.push({ shape: A.shape, key: A.key, c, e, r: A.r ?? 0, r0: A.r0 ?? 0, r1: A.r1 ?? 0, width: A.width ?? 0, arc: A.arc ?? 0, yw: a.yw, k, landed: t >= a.at, mine: !!a.s && a.s === mine() });
       } else if (A === SERPENT_ATTACK_TABLE.mael && t < a.at && !s.mael) {
         // AUDIT SERPENT T8: the maelstrom's waters laid on the sea as it winds up - its eye forms at the heart of them.
-        // SERPENT3: where its word says it forms (`tg` - beside the serpent, net/serpentBrain.js begin), no longer always
+        // SERPENT3: where its word says it forms (`tg` - beside the serpent, net/serpent/serpentBrain.js begin), no longer always
         // its waters' heart
         const from = seen.get(a.i) ?? a.at - A.windup;
         const k = Math.max(0, Math.min(1, (t - from) / Math.max(1, a.at - from)));

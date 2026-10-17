@@ -5,7 +5,7 @@
   "old": "      camps.packOwnFires();   // AUDIT REST F1",
   "new": "      // camps.packOwnFires();   // AUDIT REST F1",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "      if (r.item && entity) { (entity.items ??= []).push(r.item); n++; }",
   "new": "      if (r.item && entity) { r.item.currentCondition = 0; (entity.items ??= []).push(r.item); n++; }",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "      if (!mine(c) || c.rec.kind !== CAMP_KIND.Fire || c.rec.jar || !c.rec.fuel) continue;",
   "new": "      if (!mine(c) || c.rec.kind !== CAMP_KIND.Fire || !c.rec.fuel) continue;",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ],
   "equivalent": true,
   "why": "AUDIT REST-PARTY B5: an Ember Jar's fire has no fuel of its own, so the fuel term already keeps it in the dungeon; `c.rec.jar` is kept as the named reason."
@@ -34,34 +34,34 @@
   "old": "if (_rules && _place === REST_KIND.Rough && draughtTaken(entity) &&",
   "new": "if (_rules && _place !== REST_KIND.Bed && draughtTaken(entity) &&",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
   "name": "AUDITREST-F3-the-draught-for-ever",
-  "file": "src/systems/restItems.js",
+  "file": "src/systems/rest/restItems.js",
   "old": "export const DRAUGHT_SPENT_MINUTES = 60;",
   "new": "export const DRAUGHT_SPENT_MINUTES = 360;",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
   "name": "AUDITREST-F4-the-candle-not-the-packs",
-  "file": "src/systems/restItems.js",
+  "file": "src/systems/rest/restItems.js",
   "old": "(_candle && (!entity || (entity.items ?? []).includes(_candle.item)) ? _candle : null)",
   "new": "(_candle ? _candle : null)",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
   "name": "AUDITREST-F4-meditate-unbound",
-  "file": "src/systems/restItems.js",
+  "file": "src/systems/rest/restItems.js",
   "old": "  const c = litCandle(entity);\n  _candle = null;",
   "new": "  const c = _candle;\n  _candle = null;",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -70,16 +70,16 @@
   "old": "    if (this.mode !== 'loiter' && (this.session?.totalHours ?? 0) >= 6)",
   "new": "    if ((this.session?.totalHours ?? 0) >= 6)",
   "tests": [
-   "test/rest2_campfire.test.js"
+   "test/systems/rest2_campfire.test.js"
   ]
  },
  {
   "name": "AUDITREST-F5-a-loiter-is-a-night-enhanced",
-  "file": "src/ui/enhancedRest.js",
+  "file": "src/ui/enhanced/enhancedRest.js",
   "old": "    if (overlay.mode !== 'loiter' && (overlay.session?.totalHours ?? 0) >= 6)",
   "new": "    if ((overlay.session?.totalHours ?? 0) >= 6)",
   "tests": [
-   "test/rest2_campfire.test.js"
+   "test/systems/rest2_campfire.test.js"
   ]
  },
  {
@@ -88,17 +88,17 @@
   "old": "      if (!_nightWatch.moved(m.acct, !!m.p, at, now, isNightStamp, () => nightDue(playerEntity, ownMinutes()))) continue;",
   "new": "      if (!_nightWatch.moved(m.acct, !!m.p, at, now, true, () => nightDue(playerEntity, ownMinutes()))) continue;",
   "tests": [
-   "test/rest5_partynight.test.js"
+   "test/systems/rest5_partynight.test.js"
   ],
   "note": "AUDIT REST II (PIN MOVED): the follow tick reads the member's stamp through partyRestLaw.js's night watch (P1/P2); re-aimed by content. AUDIT REST III C1 (PIN MOVED): the watch is asked my clock's debt too; re-aimed by content."
  },
  {
   "name": "AUDITREST-F7-the-mark-wrong",
-  "file": "src/systems/restAct.js",
+  "file": "src/systems/rest/restAct.js",
   "old": "export const nightStamp = (t, kind = REST_KIND.Camp) => Math.floor(t / 1000) * 1000 + markOf(kind);",
   "new": "export const nightStamp = (t, kind = REST_KIND.Camp) => t;",
   "tests": [
-   "test/rest5_partynight.test.js"
+   "test/systems/rest5_partynight.test.js"
   ],
   "note": "AUDIT REST-PARTY (PIN MOVED): the stamp takes its kind."
  },
@@ -108,17 +108,17 @@
   "old": "  if ((camp.wear | 0) <= 0) return false;   // REST2: no fuel, no fire",
   "new": "  if (camp.kind === CAMP_KIND.Fire && (camp.wear | 0) <= 0) return false;   // REST2: no fuel, no fire",
   "tests": [
-   "test/auditrest.test.js",
-   "test/surv3_camps.test.js"
+   "test/systems/survival/auditrest.test.js",
+   "test/systems/survival/surv3_camps.test.js"
   ]
  },
  {
   "name": "AUDITREST-F9-the-salts-read-the-debt",
-  "file": "src/systems/restItems.js",
+  "file": "src/systems/rest/restItems.js",
   "old": "  if (sleepStage(s.sleepDebt ?? 0) === 'rested') return",
   "new": "  if ((s.sleepDebt ?? 0) <= 0) return",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -127,7 +127,7 @@
   "old": "    if (_bedroll) { _bedroll.pos[0] += dx; _bedroll.pos[1] += dy; _bedroll.pos[2] += dz; }   // AUDIT REST F10: the laid spot rides the origin too\n",
   "new": "",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -136,7 +136,7 @@
   "old": "!!pos && (entity?.items ?? []).includes(_bedroll.item) &&",
   "new": "!!pos && (_bedroll.list ?? []).includes(_bedroll.item) &&",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -145,8 +145,8 @@
   "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now);",
   "new": "export const campExpired = (camp, now) => !!camp?.jar && !fireLit(camp, now);",
   "tests": [
-   "test/auditrest.test.js",
-   "test/surv3_camps.test.js"
+   "test/systems/survival/auditrest.test.js",
+   "test/systems/survival/surv3_camps.test.js"
   ]
  },
  {
@@ -155,9 +155,9 @@
   "old": "  if (kind === CAMP_KIND.Fire) camp.fuel = true;",
   "new": "  if (false) camp.fuel = true;",
   "tests": [
-   "test/auditrest.test.js",
-   "test/rest6_consumables.test.js",
-   "test/rest2_campfire.test.js"
+   "test/systems/survival/auditrest.test.js",
+   "test/systems/survival/rest6_consumables.test.js",
+   "test/systems/rest2_campfire.test.js"
   ]
  },
  {
@@ -166,7 +166,7 @@
   "old": ", ...(r.fuel === true ? { fuel: true } : {}), ...(deckAt ? { deck: deckAt } : {}) });",
   "new": ", ...(deckAt ? { deck: deckAt } : {}) });",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -175,7 +175,7 @@
   "old": "  if (shelfIndex === 0 && buildingType === BUILDING_TYPES.PawnShop && sharedClockOn()) for",
   "new": "  if (false) for",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -184,16 +184,16 @@
   "old": "  return (isPotion(item) || isCampfireKit(item) || isFirewood(item)) && !holiday",
   "new": "  return (isPotion(item) || isFirewood(item)) && !holiday",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
   "name": "AUDITREST-a-palace-gets-fires",
-  "file": "src/world/dungeonFires.js",
+  "file": "src/world/dungeon/dungeonFires.js",
   "old": "    if (!lay || lay.castleBlock) return;",
   "new": "    if (!lay) return;",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  },
  {
@@ -202,7 +202,7 @@
   "old": "say(best.rec.jar ? CAMP_TEXT.embersOut : best.rec.kind",
   "new": "say(best.rec.kind",
   "tests": [
-   "test/auditrest.test.js"
+   "test/systems/survival/auditrest.test.js"
   ]
  }
 ]

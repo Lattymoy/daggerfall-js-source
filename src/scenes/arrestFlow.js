@@ -40,8 +40,8 @@ import {
   guildRescue, setCrimeCommitted,
 } from '../systems/court.js';
 import { isTransformedLycanthrope, frightenChance, frightenRoar } from '../systems/lycanthropy.js';   // WERE-FRIGHT: the beast cannot surrender
-import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guilds.js';   // CR1: the rescue arms' member reads
-import { resolveVariantGuild } from '../systems/guildVariants.js';
+import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guild/guilds.js';   // CR1: the rescue arms' member reads
+import { resolveVariantGuild } from '../systems/guild/guildVariants.js';
 import { advanceOwnMinutes, MINUTES_PER_DAY, ownMinutes, trustedWorldMinutes } from '../systems/worldTick.js';   // LIVED1: a sentence is served on the prisoner's own clock, online too
 import { banish, grantGrace, warningDue, noteWarning } from '../systems/standing.js';   // REP3: a banishment's term; REP1: the grace an answered law gives; WATCH-KNOWS: a first offence warned
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallCourtWindow_OnEndPrisonTime (EntityEffectBroker.cs:841-842)

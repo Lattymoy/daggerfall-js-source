@@ -17,7 +17,7 @@
 // port's one reader of it), and a broken one is no metal.
 import { equipTableOf, getEquipSlot, isBrokenItem, EQUIP_SLOTS } from '../systems/equip.js';
 import { plateMetal } from '../systems/armorMaterials.js';
-import { rriNativeMaterialValue } from '../systems/rriItems.js';
+import { rriNativeMaterialValue } from '../systems/roleplayRealismItems/rriItems.js';
 import { weaponMaterialModifier, WEAPON_MATERIALS } from '../characters/weapons.js';
 
 /** The most the claws take: Daedric's modifier. */

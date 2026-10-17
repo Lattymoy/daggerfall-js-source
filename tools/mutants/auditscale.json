@@ -5,8 +5,8 @@
     "old": "    } catch { /* a metric never costs a job */ }",
     "new": "    } finally { /* a metric never costs a job */ }",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: a throwing metrics binding ends the firing: \"a metric never costs a job\""
   },
@@ -16,8 +16,8 @@
     "old": "    if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;",
     "new": "    if (lodesPicked === day) return 0;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: the day's Motherlodes picked by the clock while the professions are behind dev/off"
   },
@@ -27,8 +27,8 @@
     "old": "  ['board', (ctx) => rounds(() => sweepBoard(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS)],",
     "new": "  ['board', (ctx) => rounds(() => sweepBoard(ctx.db, ctx.nowS, SWEEP_ROWS), 2 * SWEEP_ROWS)],",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: a board backlog past a page is taken one page an hour"
   },
@@ -38,8 +38,8 @@
     "old": "  ['harvests', (ctx) => rounds(() => sweepHarvests(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS)],",
     "new": "  ['harvests', (ctx) => rounds(() => sweepHarvests(ctx.db, ctx.nowS), SWEEP_ROWS)],",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: the harvests swept 500 a table and the round stopped: a backlog never drained within a firing"
   },
@@ -49,8 +49,8 @@
     "old": "export const RATE_ROW_KEEP_S = 24 * 3600;",
     "new": "export const RATE_ROW_KEEP_S = 2 * 3600;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: the record says a rate window a day past its start; the pin holds only twice the longest window"
   },
@@ -60,8 +60,8 @@
     "old": "export const ARENA_CHAMPION_CLOCK_S = ARENA_CHAMPION_STORED_S - 120;",
     "new": "export const ARENA_CHAMPION_CLOCK_S = ARENA_CHAMPION_STORED_S - 30;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: a minute clock refreshing at 570 s leaves readers counting (and writing) the #1 between 600 and 630 s: \"a reader finds it kept and counts nothing\""
   },
@@ -71,7 +71,7 @@
     "old": "nowS: Math.floor(Number(controller?.scheduledTime ?? Date.now()) / 1000) })",
     "new": "nowS: Math.floor(Number(controller?.scheduledTime ?? Date.now())) })",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "lane D survivor: scheduled() judges by milliseconds as seconds: the hour deletes every session, every rate row, every note"
   },
@@ -81,8 +81,8 @@
     "old": "  const stale = !Number.isSafeInteger(session.last_seen) || nowS - session.last_seen >= SESSION_TOUCH_S;",
     "new": "  const stale = !Number.isSafeInteger(found.last_seen) || nowS - found.last_seen >= SESSION_TOUCH_S;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4a.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4a.test.js"
     ],
     "note": "lane D survivor: the touch judged by the PLAYER's last_seen: a device another device keeps fresh is never touched, and the new hourly sweep deletes it in use"
   },
@@ -92,9 +92,9 @@
     "old": "\n      OR EXISTS (SELECT 1 FROM market_orders WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2) AS due",
     "new": " AS due",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js",
-      "test/audit30_service.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js",
+      "test/net/audit30_service.test.js"
     ],
     "note": "lane D survivor: an order past its days is never expired by a read unless a listing is due too"
   },
@@ -104,9 +104,9 @@
     "old": "SELECT EXISTS (SELECT 1 FROM market_listings WHERE seller = ?1 AND state = 'open' AND expires_at <= ?2)",
     "new": "SELECT EXISTS (SELECT 1 FROM market_listings WHERE seller = ?1 AND state = 'open' AND expires_at < ?2)",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js",
-      "test/audit30_service.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js",
+      "test/net/audit30_service.test.js"
     ],
     "note": "lane D survivor: the probe and the update disagree at the second a listing ends: \"only then do the same two updates go, word for word\""
   },
@@ -116,9 +116,9 @@
     "old": "  const keepFrom = utcDay(nowS) - MARKET_KEEP_DAYS;",
     "new": "  const keepFrom = utcDay(nowS) - MARKET_KEEP_DAYS + 1;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js",
-      "test/audit30_service.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js",
+      "test/net/audit30_service.test.js"
     ],
     "note": "lane D survivor: MARKET_KEEP_DAYS (90) of history kept: the hour prunes day 90 too"
   },
@@ -128,8 +128,8 @@
     "old": "\n      OR EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND crafter IS NULL) AS due",
     "new": " AS due",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: a commission whose crafter is gone is never declined by a read unless one is past its days too"
   },
@@ -139,8 +139,8 @@
     "old": "SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2)",
     "new": "SELECT EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2)",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: AUDIT 31 L1: a crafter's read never expires a commission naming it"
   },
@@ -150,8 +150,8 @@
     "old": "SELECT rank FROM guild_members WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1').bind(guildId).first();",
     "new": "SELECT rank FROM guild_members WHERE guild_id = ? ORDER BY rank DESC, joined_at, rowid LIMIT 1').bind(guildId).first();",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: a guild with its master and a member writes the succession update on every read"
   },
@@ -161,8 +161,8 @@
     "old": "'DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT ?)'",
     "new": "'DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at < ? LIMIT ?)'",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor: a guild note expiring this second survives the sweep"
   },
@@ -172,9 +172,9 @@
     "old": "'DELETE FROM board_notices WHERE id IN (SELECT id FROM board_notices WHERE expires_at <= ? LIMIT ?)'",
     "new": "'DELETE FROM board_notices WHERE id IN (SELECT id FROM board_notices WHERE expires_at < ? LIMIT ?)'",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js",
-      "test/notice1.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js",
+      "test/net/notice1.test.js"
     ],
     "note": "lane D survivor: a notice expiring this second survives the sweep"
   },
@@ -184,8 +184,8 @@
     "old": "'/v1/heartbeat', body);",
     "new": "'/v1/heart-beat', body);",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: the client asks a route the service does not keep: every beat, look and board read refused"
   },
@@ -195,8 +195,8 @@
     "old": "base: serviceBase(storage), secret",
     "new": "base: undefined, secret",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: a tab pointed at another service sends its heartbeat to production"
   },
@@ -206,8 +206,8 @@
     "old": "      if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: three tries in the same millisecond: \"NOTICE_RETRY_MS apart\""
   },
@@ -217,8 +217,8 @@
     "old": "      catch (e) { console.warn(`[heartbeat] the ${name} part's answer threw`, e); }",
     "new": "      finally { /* nothing caught */ }",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: one part's throwing take leaves the other parts unanswered and the knock unresolved"
   },
@@ -228,8 +228,8 @@
     "old": "((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS))",
     "new": "((p.every ?? 0) > pace && p.soon(t, pace - RIDE_EARLY_MS))",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: \"a slower clock (its every no shorter)\": an equal period never rides early"
   },
@@ -239,8 +239,8 @@
     "old": "export const HEARTBEAT_TICK_MS = 1000;",
     "new": "export const HEARTBEAT_TICK_MS = 60_000;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: the heartbeat looks at its clocks once a minute: \"its own tick\" pinned only against the constant itself"
   },
@@ -250,8 +250,8 @@
     "old": "export const partAnswer = (/** @type {any} */ v) => (v && typeof v === 'object'",
     "new": "export const partAnswer = (/** @type {any} */ v) => (v != null",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: a non-object answer taken as a route's body"
   },
@@ -261,9 +261,9 @@
     "old": "      return !e?.pending && (!e || t - e.at >= BOARD_CACHE_MS - early);",
     "new": "      return (!e || t - e.at >= BOARD_CACHE_MS - early);",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js",
-      "test/notice1.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js",
+      "test/net/notice1.test.js"
     ],
     "note": "lane D survivor: a window's own read in flight, the heartbeat asks the same board again"
   },
@@ -273,9 +273,9 @@
     "old": "          a.settle({ board: e.board, error: null, stale: false });",
     "new": "          a.settle({ board: e.board, error: 'server', stale: true });",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js",
-      "test/notice1.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js",
+      "test/net/notice1.test.js"
     ],
     "note": "lane D survivor: the window waiting on the heartbeat is told a good board failed"
   },
@@ -285,7 +285,7 @@
     "old": "  const FRAME_LIVE_MS = 2500;",
     "new": "  const FRAME_LIVE_MS = 2500e6;",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: the board and the box asked long after their frames stopped: \"exactly where and while they were\""
   },
@@ -295,7 +295,7 @@
     "old": "    fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(),\n    visible: () => globalThis.document?.visibilityState !== 'hidden',",
     "new": "    fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(),\n    visible: () => true,",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor: the world's heartbeat never told the page is hidden"
   },
@@ -305,8 +305,8 @@
     "old": "tally.inFrames += 1; tally.inBytes += text.length;",
     "new": "tally.inFrames += 1; tally.inBytes += 0;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale3.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale3.test.js"
     ],
     "note": "lane D survivor: bytes heard a bot-second, a measured figure, never counted"
   },
@@ -316,8 +316,8 @@
     "old": "tally.inFrames += 1;",
     "new": "tally.inFrames += 2;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale3.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale3.test.js"
     ],
     "note": "lane D survivor: frames heard a bot-second (the record's 132) counted twice"
   },
@@ -327,8 +327,8 @@
     "old": "  return s[Math.min(s.length - 1, Math.max(0, Math.ceil(p * s.length) - 1))];",
     "new": "  return s[Math.min(s.length - 1, Math.max(0, Math.floor(p * s.length)))];",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale3.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale3.test.js"
     ],
     "note": "lane D survivor: the p95/p99 a rank off (nearest-rank): the pinned examples cannot tell"
   },
@@ -338,8 +338,8 @@
     "old": "  const j = Math.floor(Math.random() * seen);",
     "new": "  const j = Math.floor(Math.random() * max);",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale3.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale3.test.js"
     ],
     "note": "lane D survivor: the reservoir always replaces: \"every pose heard has the same chance of being kept\""
   },
@@ -349,8 +349,8 @@
     "old": "  const z = (499 - py + 0.5) * PIXEL_UNITS",
     "new": "  const z = (459 - py + 0.5) * PIXEL_UNITS",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale3.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale3.test.js"
     ],
     "note": "lane D survivor: the bots stand 40 pixels from their town's cell: the test's \"all in the town's cell\" is never asserted"
   },
@@ -360,8 +360,8 @@
     "old": "}).catch((e) => { note?.(routeLabel(path.split('?')[0]), 'offline', Date.now() - started); throw e; });",
     "new": "}).catch((e) => { throw e; });",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale3.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale3.test.js"
     ],
     "note": "lane D survivor: a call that never answered is never counted (the storm's `failed`)"
   },
@@ -371,8 +371,8 @@
     "old": "for (const k of ['opened', 'synthetic', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
     "new": "for (const k of ['opened', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale3.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale3.test.js"
     ],
     "note": "lane D survivor: the synthetic closes of every fleet dropped from the sum"
   },
@@ -382,8 +382,8 @@
     "old": "note?.(routeLabel(path.split('?')[0]), word ? `${res.status} ${word}` : res.status, Date.now() - started);",
     "new": "note?.(routeLabel(path.split('?')[0]), res.status, Date.now() - started);",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale3.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale3.test.js"
     ],
     "note": "lane D survivor: a refusal's word dropped from the route's statuses"
   },
@@ -393,8 +393,8 @@
     "old": "    if (got < page || !more()) break;",
     "new": "    if (!more()) break;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor, re-aimed: rounds that never stop on a short page - fifteen times the quiet world's statements"
   },
@@ -404,8 +404,8 @@
     "old": "  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX, ctx.budget)],",
     "new": "  ['auctions', (ctx) => closeAuctions(ctx)],",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "lane D survivor, re-aimed: one page a minute, a backlog never caught up"
   },
@@ -415,8 +415,8 @@
     "old": "  if (body?.board !== undefined) await part('board'",
     "new": "  if (body?.board) await part('board'",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor, re-aimed: board 0 unanswered"
   },
@@ -426,9 +426,9 @@
     "old": "    bounded('market_fills', 'day < ?1', keepFrom),\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js",
-      "test/audit30_service.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js",
+      "test/net/audit30_service.test.js"
     ],
     "note": "lane D survivor, re-aimed: the fills kept for ever"
   },
@@ -438,9 +438,9 @@
     "old": "    bounded('market_auctions', `state != 'open' AND closed_at < ?1 AND returned = 1\n      AND NOT EXISTS (SELECT 1 FROM market_bids WHERE auction = market_auctions.id)`, keepFrom * DAY_S),\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js",
-      "test/audit30_service.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js",
+      "test/net/audit30_service.test.js"
     ],
     "note": "lane D survivor, re-aimed: the auctions kept for ever"
   },
@@ -450,8 +450,8 @@
     "old": "secret: session.secret, keepalive }, '/v1/heartbeat'",
     "new": "secret: session.id, keepalive }, '/v1/heartbeat'",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor, re-aimed: the wrong credential"
   },
@@ -461,8 +461,8 @@
     "old": "    if (flying) return null;\n    if (!visible()) {",
     "new": "    if (!visible()) {",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor, re-aimed: a second heartbeat while one is out"
   },
@@ -472,9 +472,9 @@
     "old": "        this.at = this.now();   // MAIL1: stamped even when there is no session (`_refresh`'s own rule)\n        if (!this._io()) return undefined;   // signed out: the box says so, and nothing rides",
     "new": "        if (!this._io()) return undefined;   // signed out: the box says so, and nothing rides\n        this.at = this.now();",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js",
-      "test/mail1.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js",
+      "test/server/mail1.test.js"
     ],
     "note": "lane D survivor, re-aimed: a signed-out box due again at once, every tick"
   },
@@ -484,9 +484,9 @@
     "old": "open = true; e.board = r.data; e.at = a.at; e.error = null;",
     "new": "open = true; e.board = r.data; e.at = a.at;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js",
-      "test/notice1.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js",
+      "test/net/notice1.test.js"
     ],
     "note": "lane D survivor, re-aimed: a good board answered with the last refusal kept"
   },
@@ -496,7 +496,7 @@
     "old": "stampAt - _noticeTown.at >= 1000",
     "new": "stampAt - _noticeTown.at >= 5000",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "lane D survivor, re-aimed: the street's stamp past FRAME_LIVE_MS"
   },
@@ -506,8 +506,8 @@
     "old": "OR ${sellerBalanceSql('a')} + ${leastNetSql('high')} <= ?2 OR ends_at + ?3 <= ?1)\n",
     "new": "OR ${sellerBalanceSql('a')} + ${netSql('high')} <= ?2 OR ends_at + ?3 <= ?1)\n",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "the candidates by the Tithe-free proceeds again: a sale that fits only under its Tithe waits out the grace GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -517,8 +517,8 @@
     "old": "const room = Number(a.balance) + gets <= MARKS_MAX;",
     "new": "const room = Number(a.balance) + high - tax <= MARKS_MAX;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4b.test.js"
+      "test/net/auditscale.test.js",
+      "test/server/scale4b.test.js"
     ],
     "note": "the room decided without the Tithe again: picked every time, closed by neither"
   },
@@ -528,7 +528,7 @@
     "old": "  return closed;\n}",
     "new": "  return due.length;\n}",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "the auctions picked, not closed, said - the page asked again while it closed nothing"
   },
@@ -538,7 +538,7 @@
     "old": "    if (ctx.budget && !ctx.budget()) break;   // SCALE4b / AUDIT SCALE A2",
     "new": "    // budget ignored   // SCALE4b / AUDIT SCALE A2",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "a settler past its share of the firing"
   },
@@ -548,7 +548,7 @@
     "old": "export const FIRING_STATEMENTS_MAX = 600;",
     "new": "export const FIRING_STATEMENTS_MAX = 6000;",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "a firing's share past D1's thousand an invocation"
   },
@@ -558,7 +558,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_guild_contracts_open_due ON guild_contracts (state, expires_at);\nCREATE INDEX IF NOT EXISTS idx_guild_contracts_unreturned ON guild_contracts (returned, state);\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "the contracts' minute walking the table"
   },
@@ -568,7 +568,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_market_bids_auction ON market_bids (auction);\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "an old auction's prune walking every bid"
   },
@@ -578,7 +578,7 @@
     "old": "db.prepare(`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} WHERE ${where} LIMIT ?2)`).bind(cutoff, rows);",
     "new": "db.prepare(`DELETE FROM ${table} WHERE ${where} AND ?2 > 0`).bind(cutoff, rows);",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "the History's prune one unbounded batch again"
   },
@@ -588,7 +588,7 @@
     "old": "      if (last?.at == null || Number(last.at) < Number(kept.at)) {",
     "new": "      if (false) {",
     "tests": [
-      "test/scale4b.test.js"
+      "test/server/scale4b.test.js"
     ],
     "note": "the season's board counted every eight minutes on a world nobody played in"
   },
@@ -598,7 +598,7 @@
     "old": "-- NOT HERE: an index on sessions(last_seen)",
     "new": "CREATE INDEX IF NOT EXISTS idx_sessions_last_seen ON sessions (last_seen);\n-- NOT HERE: an index on sessions(last_seen)",
     "tests": [
-      "test/scale4b.test.js"
+      "test/server/scale4b.test.js"
     ],
     "note": "a written row at every stale touch, to spare an hourly walk"
   },
@@ -608,7 +608,7 @@
     "old": "      out[name] = { error: 'server' };",
     "new": "      throw e;",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "one part's throw the whole heartbeat's 500"
   },
@@ -618,8 +618,8 @@
     "old": "const waitLeft = (/** @type {number} */ t) => (creditedAt == null ? 0",
     "new": "const waitLeft = (/** @type {number} */ t) => (creditedAt == null ? BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt))",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "the page's first knock waiting, the gap since a last beat unknown"
   },
@@ -629,8 +629,8 @@
     "old": "    : Math.min(BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt + PLAY_GRACE_S * 1000 - BEAT_GRACE_MARGIN_MS - t));",
     "new": "    : BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)));",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "a knock after a dropped one waiting past the grace - the sitting's time lost"
   },
@@ -640,8 +640,8 @@
     "old": "          if (r.ok && withBeat && partAnswer(r.data?.beat).ok) creditedAt = at;",
     "new": "          if (withBeat) creditedAt = at;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "a dropped knock taken for a credited one"
   },
@@ -651,8 +651,8 @@
     "old": "      if (beatAt == null) return null;\n      flying = send([], true, true).finally(() => { flying = null; });\n      return flying;",
     "new": "      return null;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "a waiting knock held through a hide, past the grace"
   },
@@ -662,8 +662,8 @@
     "old": "      flying = send([], true, true).finally(() => { flying = null; });",
     "new": "      flying = send([], true, false).finally(() => { flying = null; });",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "the hiding page's knock cut off with the page"
   },
@@ -673,7 +673,7 @@
     "old": "  globalThis.document?.addEventListener?.('visibilitychange', () => { heartbeat.tick(); });\n",
     "new": "",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the hide seen only at the next tick - a tab closed first never sends its knock"
   },
@@ -683,8 +683,8 @@
     "old": "r = await call({ fetch: waited, base: serviceBase(storage)",
     "new": "r = await call({ fetch, base: serviceBase(storage)",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "a hung heartbeat wedging all three clocks"
   },
@@ -694,9 +694,9 @@
     "old": "        this._looking = new Promise((r) => { settle = r; });\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js",
-      "test/mail1.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js",
+      "test/server/mail1.test.js"
     ],
     "note": "two looks at once, the older answer last"
   },
@@ -706,8 +706,8 @@
     "old": "open = true; e.board = r.data; e.at = a.at; e.error = null;",
     "new": "open = true; e.board = r.data; e.at = nowMs(); e.error = null;",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "the board's minute counted from a slow answer - the box rides its second minute"
   },
@@ -717,8 +717,8 @@
     "old": "        const out = this._take(r, undefined, false);",
     "new": "        const out = this._take(r, undefined, true);",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "the box's three minutes counted from a slow answer",
     "equivalent": true,
@@ -730,8 +730,8 @@
     "old": "      try { b = p.body(); } catch (e) { console.warn(`[heartbeat] the ${name} part's body threw`, e); continue; }",
     "new": "      b = p.body();",
     "tests": [
-      "test/auditscale.test.js",
-      "test/scale4c.test.js"
+      "test/net/auditscale.test.js",
+      "test/net/scale4c.test.js"
     ],
     "note": "a part's body that throws taking the heartbeat down"
   },
@@ -741,7 +741,7 @@
     "old": "if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000))",
     "new": "if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000 * Math.max(1, 0.1 / Math.max(dt, 1e-6) / 10)))",
     "tests": [
-      "test/scale4c.test.js"
+      "test/net/scale4c.test.js"
     ],
     "note": "the street's second stretched with the clamped dt"
   },
@@ -751,7 +751,7 @@
     "old": "  if (bot.registered) bot.profState();\n  else clocks.push(['prof state', PROF_CLOSED_RECHECK_MS, bot.profState]);",
     "new": "  clocks.push(['prof state', 30_000, bot.profState]);",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "the professions' state asked every 30 s again"
   },
@@ -761,7 +761,7 @@
     "old": "fighter: roll(o.fighters, 0.4142135623730951)",
     "new": "fighter: roll(o.fighters, 0.6180339887498949)",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "every fighter a mover"
   },
@@ -771,7 +771,7 @@
     "old": "  const play = { requests: totals.requests - (mints?.requests ?? 0),",
     "new": "  const play = { requests: totals.requests,",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "the deploy's mints folded into the play's rate"
   },
@@ -781,7 +781,7 @@
     "old": "    if (need >= 1 && times.length >= need) reached[q] = Math.round(times[need - 1] / 100) / 10;",
     "new": "    if (need >= 1 && times.length >= need) reached[q] = Math.round(times[times.length - 1] / 100) / 10;",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "every share back when the last bot was"
   },
@@ -791,7 +791,7 @@
     "old": "    const k = Math.max(1, Math.ceil((t - at) / 1000));",
     "new": "    const k = 1;",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "the storm's seconds all in its first"
   },
@@ -801,7 +801,7 @@
     "old": "    const take = weight > 0 ? Math.round(f.relay.poseSeen / weight) : 0;",
     "new": "    const take = f.relay.poseMs.length;",
     "tests": [
-      "test/scale3.test.js"
+      "test/net/scale3.test.js"
     ],
     "note": "a quiet fleet's ages weighed as a crowded one's"
   },
@@ -811,7 +811,7 @@
     "old": "    if (!o.keep) { try { rmSync(state, { recursive: true, force: true }); } catch { /* gone */ } }\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "an interrupted run leaving its signing pair on disk"
   },
@@ -821,7 +821,7 @@
     "old": "  rmSync(acctEnv, { force: true });\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "the private half on disk for the whole run"
   },
@@ -831,7 +831,7 @@
     "old": "  for (const k of ['bots', 'cells', 'setup', 'threads', 'port']) if (!Number.isSafeInteger(out[k]) || out[k] < 1) throw new Error(`--${k} takes a whole number from 1, not ${out[k]}`);\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "2.5 threads, a setup of none"
   },
@@ -841,7 +841,7 @@
     "old": "          if (!(col in row)) throw new Error(`D1_COLUMN_NOTFOUND: Column not found (${col})`);\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "a missing column a quiet null, where workerd throws"
   },
@@ -851,7 +851,7 @@
     "old": "      if (init.signal?.aborted) { reject(new Error('aborted')); return; }\n",
     "new": "",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "a caller's give-up never honoured"
   },
@@ -861,7 +861,7 @@
     "old": "  const broken = await failingHere([...new Set(lists.flatMap(([, list]) => list.flatMap((m) => m.tests)))]);",
     "new": "  const broken = new Set();",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "AUDIT SCALE M1: a serial run judges a record whose tests fail with no mutant - a test file that does not parse reads every record \"dead\""
   },
@@ -871,7 +871,7 @@
     "old": "  const broken = await failingHere([...fails]);",
     "new": "  const broken = new Set();",
     "tests": [
-      "test/auditscale.test.js"
+      "test/net/auditscale.test.js"
     ],
     "note": "AUDIT SCALE M1: with --jobs, a test that failed in a workspace is judged in place on trust - the twenty records of audit30_service read \"dead\" against a file that did not parse"
   }

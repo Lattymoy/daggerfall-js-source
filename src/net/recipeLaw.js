@@ -17,7 +17,7 @@
 // Lapidary's Siege-cracked Gem, and the facet they are cut with.
 //
 // PURE, and both ends import it: the account service decides a craft by it (server-account/src/professions.js
-// craftAtAnvil), the client draws the anvil by it (ui/profPages.js) and mints the piece by it (systems/smithItems.js).
+// craftAtAnvil), the client draws the anvil by it (ui/professions/profPages.js) and mints the piece by it (systems/smithItems.js).
 //
 // THE PIECE IS DFU'S. A recipe names a DFU template and a DFU material (ItemEnums.cs WeaponMaterialTypes; armour's
 // ArmorMaterialTypes - plate 0x0200 + the metal, chain 0x0100); the item is minted by DFU's own law and the quality
@@ -27,7 +27,7 @@ import {
   CURED_LEATHER, HARDENED_LEATHER, SKINNING_KNIFE, COUNTER_ONLY, CUT_STONE, MORTAR, PROF_RANK_MAX,   // PROF11: the mason's stone
   GEMS, PEARL, SIEGE_GEM,   // PROF10: the gems a jeweller sets, and a Lapidary's Siege-cracked one
 } from './professionLaw.js';
-import { GROUP_TEMPLATE_INDICES } from '../systems/itemTemplatesData.js';   // PROF10: DFU's Jewellery enum, one home
+import { GROUP_TEMPLATE_INDICES } from '../systems/item/itemTemplatesData.js';   // PROF10: DFU's Jewellery enum, one home
 import { CLOTHING_DYES } from '../characters/dyes.js';   // DFU's ten clothing dyes (DyeColors 0-9), one home
 import { textCaught } from './nameFilter.js';   // TEXT-F1: a mark's words, read as a name's (nameFilter.js imports nothing)
 
@@ -309,7 +309,7 @@ export const SCULPTOR = 'sculptor';
  * DECIDED, each:
  * - ITS TEMPLATE: 696-699, the last four of the professions' range (4.8 names none of them; the stone's own 673-675 run
  *   into the Siege-cracked Gem's 678) - DFU's Furniture group, as Carpentry's tables are, so a piece is DELIVERED among
- *   the home's things and never carried (DECOR2b's furnishings; systems/decorFurnish.js), its picture in a list the
+ *   the home's things and never carried (DECOR2b's furnishings; systems/decor/decorFurnish.js), its picture in a list the
  *   stone's own lump (Lodestone's, greyed - 4.8's stone row).
  * - ITS SHAPE IN A ROOM: ONE of Daggerfall's own models, named by World of Daggerfall's table of them
  *   (vendor/world-of-daggerfall/Scripts/LocationHelper.cs) - the Column its "Marble Pillar" (62315), the Bench its
@@ -481,7 +481,7 @@ const JEWEL_WOODS = Object.freeze(['ironwood', 'ghostwood'].map((w) => Object.fr
 /** THE GEMS A JEWELLER SETS (4.6): DFU's eight (professionLaw GEMS - the veins') and the sea's Pearl (DFU 77, Fishing's).
  *  The Siege-cracked Gem is none of them - a Lapidary's stands in for any (LAPIDARY, recipeInputs). */
 export const JEWEL_GEMS = Object.freeze([...GEMS.map((g) => g.key), PEARL.key]);
-/** A gem's word, DFU's template's name ('gem:ruby' Ruby - pinned equal to the rows, test/prof10_law.test.js). */
+/** A gem's word, DFU's template's name ('gem:ruby' Ruby - pinned equal to the rows, test/net/prof10_law.test.js). */
 export const gemWord = (key) => (typeof key === 'string' && key.startsWith('gem:') ? key[4].toUpperCase() + key.slice(5) : '');
 /**
  * THE EIGHT PIECES (9.3: "Ring - 1 Silver, Gold or Platinum (+ a gem); Mark - 1 metal + 1 gem; Bracelet - 2 metal; Bracer
@@ -597,7 +597,7 @@ export const recipeById = (id) => (typeof id === 'string' ? BY_ID.get(id) ?? nul
 /**
  * A RECIPE'S PATTERN: the piece it makes, whatever it is made of - its `product` (`longsword`, `chain-cuirass`,
  * `garment-163`, `arrows`, `stew`, `ring`). A station lists its patterns, and the material is chosen from what is held
- * (ui/profPages.js); the service's recipes stand as they are - a craft still asks `longsword:mithril`. FACT, pinned: no
+ * (ui/professions/profPages.js); the service's recipes stand as they are - a craft still asks `longsword:mithril`. FACT, pinned: no
  * product id is two professions'.
  * @param {Recipe|null} r
  */

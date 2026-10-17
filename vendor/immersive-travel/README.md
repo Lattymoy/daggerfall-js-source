@@ -49,13 +49,13 @@ a carriage (model 41214) and its team or a cart (41207, 41209, 41109), the horse
   The port (`src/systems/immersiveTravel.js`) cites the IL offsets it restates. Its three
   hard-coded tables (40 capitals, 15 large docks, 382 dock pixels) are field data the dump
   does not print; `src/systems/immersiveTravelTables.js` carries them and
-  `test/it1_immersivetravel.test.js` finds each one, whole, in this DLL's bytes.
+  `test/systems/guild/it1_immersivetravel.test.js` finds each one, whole, in this DLL's bytes.
 - `WorldDataPatches/WALLAA0x.RMB.json` - **the author's edit of each gate block, and only
   the edit** (5 to 10 inserted records and 34 round-trip ops, 2,962 to 3,895 bytes against
   the shipped 186,594 to 188,400). A whole RMB block is Daggerfall's layout - game data, which this repository
   never carries (Port-Doctrine) - so each is rebuilt at load from the player's own
   `BLOCKS.BSA` and served under its own name through the world-data door
-  (`src/formats/worldDataPatch.js`, `src/scenes/modWorldData.js`). Each patch records the
+  (`src/formats/worldData/worldDataPatch.js`, `src/scenes/modWorldData.js`). Each patch records the
   sha256 of the author's file in canonical form.
 
   **BUILT WITHOUT A BLOCKS.BSA, AND SAID SO.** The container these were made in carries
@@ -70,7 +70,7 @@ a carriage (model 41214) and its team or a cart (41207, 41209, 41109), the horse
   (`bible/02-Formats/World-Data-Patches.md` names two: an automap ground-flat byte zeroed,
   a rotation written as its equivalent).
   The loader checks every rebuild against the recorded sha256 and says when it differs;
-  `test/it1_worlddata.test.js` checks all four with `ARENA2_PATH` set. Run the tool again
+  `test/formats/worldData/it1_worlddata.test.js` checks all four with `ARENA2_PATH` set. Run the tool again
   with an ARENA2 to replace them with WD1's diff, checked byte for byte:
 
       node tools/immersiveTravelPatches.mjs <immersivetravel.dfmod> <arena2>
@@ -85,9 +85,9 @@ carriage's and the captain's laws and calculators, its popup's overrides;
 `src/systems/immersiveTravelTables.js` its tables; `src/world/immersiveTravelGates.js`
 lays its gate records onto whichever gate block the door serves (Beautiful Cities' too -
 a recorded departure). The two map skins carry its maps and popups:
-`src/ui/travelMapWindow.js` and `src/ui/travelPopUp.js` (the classic window),
+`src/ui/travel/travelMapWindow.js` and `src/ui/travel/travelPopUp.js` (the classic window),
 `src/ui/heldMap.js` (the enhanced sheet). `src/scenes/world.js` opens a driver's map
 (`openImmersiveMap`) and travels it; online it is the one fast travel the room keeps
-(`src/systems/onlineLane.js`).
+(`src/systems/online/onlineLane.js`).
 
 See `bible/06-Systems/Immersive-Travel.md`. Thank you, kkgobkk.

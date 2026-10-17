@@ -5,7 +5,7 @@
     "old": "    this._resolveCapsule(feet, hOut, height, Infinity, true);",
     "new": "    this._resolveCapsule(feet, hOut, height);",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const lowOneWay = straddle ? axis : true;",
     "new": "const lowOneWay = straddle ? axis + CAPSULE_RADIUS : true;",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (hOut.refused) { feet[0] = beforeX; feet[2] = beforeZ; }\n",
     "new": "",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (feet[1] - entryY > SKIN && Number.isFinite(this.raycast(",
     "new": "    if (false && Number.isFinite(this.raycast(",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (feet[1] - entryY > SKIN && Number.isFinite(this.raycast(",
     "new": "    if (feet[1] - entryY > 1.0 && Number.isFinite(this.raycast(",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "this.raycast([feet[0], entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN)",
     "new": "this.raycast([feet[0], entryY, feet[2]], UP, feet[1] - entryY + SKIN)",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN)",
     "new": "entryY + CAPSULE_RADIUS + axis, feet[2]], UP, feet[1] - entryY)",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      out.refused = true;\n      feet[1] = Math.max(entryY, floorFeet);\n    }\n  }",
     "new": "      out.refused = true;\n      feet[1] += 0;\n    }\n  }",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      out.refused = true;\n      feet[1] = Math.max(entryY, floorFeet);\n    }\n  }",
     "new": "      feet[1] = Math.max(entryY, floorFeet);\n    }\n  }",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "        if (startOut.refused) break;",
     "new": "        if (false) break;",
     "tests": [
-      "test/fb0929d_waterwalk.test.js"
+      "test/world/fb0929d_waterwalk.test.js"
     ]
   }
 ]

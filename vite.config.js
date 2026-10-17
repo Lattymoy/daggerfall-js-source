@@ -121,9 +121,9 @@ export default defineConfig({
     // `target`, and es2022 reads as Safari 16.4. At 16.4 Lightning CSS drops
     // a prefix that browser no longer needs (`-webkit-appearance` beside
     // `appearance`), and the game runs below it: WebGL2 is Safari 15's, and
-    // SAFARI1 (test/nolookbehind.test.js) keeps the modules parsing before
+    // SAFARI1 (test/systems/nolookbehind.test.js) keeps the modules parsing before
     // 16.4. The floor is named here so a prefix a Safari 15 needs is kept
-    // (test/csstarget.test.js builds a page through it).
+    // (test/tree/csstarget.test.js builds a page through it).
     cssTarget: ['es2022', 'safari15', 'ios15'],
     // EOTB5: EYE OF THE BEHOLDER'S SPRITES ARE FILES, NOT JAVASCRIPT.
     //
@@ -155,7 +155,7 @@ export default defineConfig({
     //
     // So the rule is the CLASS, not a list: nothing under vendor/ is ever
     // inlined. A mod's art and audio are files, fetched when the mod
-    // wants them (test/vendorinline.test.js walks every vendor folder and
+    // wants them (test/ui/vendorinline.test.js walks every vendor folder and
     // holds it). Everything outside vendor/ keeps Vite's default -
     // returning `undefined` falls back to the 4 KB limit, and a callback
     // that returned `true` would force-inline REGARDLESS of size, the
@@ -165,7 +165,7 @@ export default defineConfig({
     // and the prototypes. None carries game data - a page that draws the
     // game's art asks for the user's own ARENA2. AUDIT 68: a root page
     // missing here works under `npm run dev` and silently never ships;
-    // test/audit68_repo.test.js holds every tracked root *.html to a key.
+    // test/tooling/audit68_repo.test.js holds every tracked root *.html to a key.
     rollupOptions: {
       input: {
         // THE SITE, THEN THE GAME (U60). The root document is the landing

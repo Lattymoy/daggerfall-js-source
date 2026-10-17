@@ -5,7 +5,7 @@
     "old": "      if (!st.dir || st.gone >= PARKOUR_SIDESTEP_MAX) return false;\n      const f = search([st.dir], PARKOUR_SIDESTEP_MAX - st.gone);",
     "new": "      if (true) return false;\n      const f = search([st.dir], PARKOUR_SIDESTEP_MAX - st.gone);",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const d = v * DIAGONAL_FACTOR;   // along and up in the one step",
     "new": "    const d = v / DIAGONAL_FACTOR;   // along and up in the one step",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const PARKOUR_SIDESTEP_PROBE = 0.05;",
     "new": "export const PARKOUR_SIDESTEP_PROBE = 0.15;",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      w.sidestep = f ? { dir: f.s, want: f.k * PARKOUR_SIDESTEP_PROBE, gone: 0, y0: from[1] } : { dir: 0, want: 0, gone: 0, y0: from[1] };",
     "new": "      w.sidestep = f ? { dir: f.s, want: f.k * PARKOUR_SIDESTEP_PROBE, gone: 0, y0: from[1] } : null;",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      w.corner ??= this._fcCornerSide(into, w.look);",
     "new": "      w.corner = this._fcCornerSide(into, this._pkLookNow);",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    this._wall.seek = true;\n  }",
     "new": "  }",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (!held() && vert > 0 && !w.seek && w.past == null) {",
     "new": "    if (!held() && vert > 0 && !side && !w.seek && w.past == null) {",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  return top - foot <= PARKOUR_CRACK + 2 * PARKOUR_CRACK_STEP;",
     "new": "  return top - y <= PARKOUR_CRACK + 0.01;",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -77,16 +77,16 @@
     "old": "  for (let h = PARKOUR_CRACK_STEP; h < below - 1e-9; h += PARKOUR_CRACK_STEP) if (meets(y - h)) { foot = y - h; break; }",
     "new": "",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-HUSH-crossfade-unsettled",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (fading == null) startFading(CrossfadeAudioSourceCoroutine(from, to, duration), () => { audioStop(from); audioPlay(to); to.volume = loopVolume(); });",
     "new": "    if (fading == null) startFading(CrossfadeAudioSourceCoroutine(from, to, duration));",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    const reach = w.seek || w.past != null || w.down ? PARKOUR_WALL_REACH : PARKOUR_CONTACT;",
     "new": "    const reach = w.seek || w.past != null ? PARKOUR_WALL_REACH : PARKOUR_CONTACT;",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "w.seek || w.past != null || w.down ? PARKOUR_WALL_REACH : PARKOUR_CONTACT)\n      && bandsClear",
     "new": "w.seek || w.past != null ? PARKOUR_WALL_REACH : PARKOUR_CONTACT)\n      && bandsClear",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    w.normal = turnsTo ?? w.normal;",
     "new": "    w.normal = c.normal;",
     "tests": [
-      "test/fb1002_audit.test.js"
+      "test/world/fb1002_audit.test.js"
     ]
   }
 ]

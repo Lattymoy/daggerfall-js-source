@@ -14,13 +14,13 @@
 //   swing, exactly as GetBaseDamageMin/Max do.
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
-import { mintCondition, templateByIndex, itemBaseValue, setItemFields, materialValue } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value; MAC-N1: the one export that writes it; OH-E: the material's value line, one home
+import { mintCondition, templateByIndex, itemBaseValue, setItemFields, materialValue } from '../systems/item/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value; MAC-N1: the one export that writes it; OH-E: the material's value line, one home
 import { dice100, formulaOverride } from './formulas.js';   // UL1: RandomMaterial / RandomArmorMaterial consult the registry
 import { weaponMinDamage, weaponMaxDamage } from '../characters/weapons.js';   // RRI2: CalculateWeaponMin/MaxDamage through their one home, so a registered override (weaponBalance) reaches the mint
 import { materialArmorValue, itemArmorValue, BODY_PARTS } from '../systems/armorMaterials.js';
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 import { ARROW_TEMPLATE } from '../systems/inventory.js';   // X11b: CreateWeapon's one special case
-import { customItemClass } from '../systems/rriItems.js';   // RRI2: a custom piece's body part is its class's equip slot
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI2: a custom piece's body part is its class's equip slot
 
 export { materialArmorValue };
 

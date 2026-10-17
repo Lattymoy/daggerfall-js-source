@@ -1,6 +1,6 @@
 // L10N2 (2026-09-27): THE CLASSIC TEXT PATH, IN A REAL BROWSER, IN EVERY SCRIPT THE PORT OFFERS.
 //
-// test/l10n2.test.js runs the face over a fake canvas; what only a browser can show is the real one: the system's
+// test/ui/l10n2.test.js runs the face over a fake canvas; what only a browser can show is the real one: the system's
 // fonts rasterised through OffscreenCanvas, the pages uploaded to a real WebGL renderer, and ui/text.js's drawText
 // putting ink where each line should be. It needs no ARENA2: the classic font here is a stand-in FNT with blank
 // glyphs, so English (which keeps Daggerfall's own glyphs) draws nothing, and every other language draws only through

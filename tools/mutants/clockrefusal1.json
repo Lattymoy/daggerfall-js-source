@@ -5,7 +5,7 @@
     "old": "export const worldClockAdvances = () => !_sharedClock;",
     "new": "export const worldClockAdvances = () => true;",
     "tests": [
-      "test/clockrefusal.test.js"
+      "test/systems/clockrefusal.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (_sharedClock) return _sharedClock();\n  return setWorldMinutes(_worldMinutes + (Number(delta) || 0));",
     "new": "  return setWorldMinutes(_worldMinutes + (Number(delta) || 0));",
     "tests": [
-      "test/clockrefusal.test.js"
+      "test/systems/clockrefusal.test.js"
     ],
     "equivalent": true,
     "why": "the refusal is DOUBLED: setWorldMinutes carries the same `if (_sharedClock) return _sharedClock()` one level down, so removing advanceWorldMinutes's own early return changes nothing - the write still refuses and the same shared minute comes back. Worth knowing rather than contriving a pin for: the outer guard is belt-and-braces, not the law."
@@ -25,7 +25,7 @@
     "old": "  advanceDays = (days) => advanceOwnMinutes(days * MINUTES_PER_DAY),",
     "new": "  advanceDays = (days) => advanceWorldMinutes(days * MINUTES_PER_DAY),",
     "tests": [
-      "test/clockrefusal.test.js"
+      "test/systems/clockrefusal.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "    if (!cam?.feet) { say(CAMP_TEXT.noSpot); return false; }\n    const col = collider?.();\n    const r = placeCampItem(",
     "new": "    if (!cam?.feet) return false;\n    const col = collider?.();\n    const r = placeCampItem(",
     "tests": [
-      "test/clockrefusal.test.js"
+      "test/systems/clockrefusal.test.js"
     ],
     "note": "REST6 (PIN MOVED): re-aimed by content."
   },
@@ -44,7 +44,7 @@
     "old": "    if (r.text) say(r.text);\n    if (!r.ok) return false;",
     "new": "    if (!r.ok) return false;",
     "tests": [
-      "test/clockrefusal.test.js"
+      "test/systems/clockrefusal.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "  if (place.inTown) return { ok: false, text: SURVIVAL_USE_TEXT.campingTown };",
     "new": "  if (place.inTown) return { ok: false, text: null };",
     "tests": [
-      "test/clockrefusal.test.js"
+      "test/systems/clockrefusal.test.js"
     ]
   }
 ]

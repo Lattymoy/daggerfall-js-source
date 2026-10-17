@@ -1,7 +1,7 @@
 // M5: does a spell actually CAST in each host, in a real browser?
 //
-// The engine's laws are pinned in node (test/hostmagic.test.js) and
-// the wiring in source pins (test/hostmagic_wiring.test.js); this
+// The engine's laws are pinned in node (test/systems/hostmagic.test.js) and
+// the wiring in source pins (test/tree/hostmagic_wiring.test.js); this
 // drives the LIVE pages: the spellbook (with the M4 sort), the
 // instant CasterOnly ready-cast, the classic CLICK-to-cast through
 // interceptAttack/firePending, a missile's flight and wall

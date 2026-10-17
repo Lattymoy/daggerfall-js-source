@@ -1,203 +1,203 @@
 [
   {
     "name": "AUDIT-GUIDE-H1-the-named-test-dropped",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "        if (named.has(c.name) && Number.isFinite(c.seconds)) clockSeconds",
     "new": "        if (Number.isFinite(c.seconds)) clockSeconds",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H1-a-told-deadline-forgotten",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      const named = this._namedBy.get(r.id) ?? new Set();",
     "new": "      const named = new Set();",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H1-clocks-not-walked",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "            clocks.push({ name: r.symbol?.name ?? '', seconds: left });",
     "new": "            /* no clocks */",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-O2-the-load-keeps-the-news",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      questHerald.clear();   // AUDIT GUIDE O2",
     "new": "      /* kept */   // AUDIT GUIDE O2",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-L4-hears-outside-the-try",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    try {\n      const seen = lens.look(ctx.questWhere ?? {});\n      if (follow) questTracker.hear(seen);\n      if (herald) questHerald.hear(seen);\n    } catch (err) { warnNewsOnce(err); }",
     "new": "    let seen;\n    try { seen = lens.look(ctx.questWhere ?? {}); } catch (err) { warnNewsOnce(err); return; }\n    if (follow) questTracker.hear(seen);\n    if (herald) questHerald.hear(seen);",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-O1-the-herald-past-the-door",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawQuestHerald({ hidden: true });\n  drawQuestTracker({ hidden: true });",
     "new": "  drawQuestTracker({ hidden: true });",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-O1-the-card-past-the-door",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawQuestHerald({ hidden: true });\n  drawQuestTracker({ hidden: true });",
     "new": "  drawQuestHerald({ hidden: true });",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H4-the-time-in-the-news",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "const newsKey = (id, e) => (e.stepID != null ? `${id}|${e.stepID}|${e.messageID}` :",
     "new": "const newsKey = (id, e) => (e.stepID != null ? `${id}|${e.stepID}|${e.messageID}|${e.time}` :",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-L8-the-gap-diffed",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (!lookedLast) lens.reset();",
     "new": "    /* no baseline */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H11-the-first-tick-dropped",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      if (herald) questHerald.hear(seen);",
     "new": "      if (herald && news.heard) questHerald.hear(seen);\n      news.heard = herald;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-T3-a-gone-quest-kept",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (questTracker.pinned != null) {",
     "new": "    if (false) {",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-T3-a-finished-quest-kept",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      if (!q || q.questComplete || isShelved(q)) questTracker.pinned = null;",
     "new": "      if (!q || isShelved(q)) questTracker.pinned = null;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-T2-the-menu-on-the-card-alone",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "      if (followOn() && sel.id != null) meta.append(trackButton(",
     "new": "      if (followOn() && !!getPref('questTracker') && sel.id != null) meta.append(trackButton(",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-T2-the-faces-on-the-card-alone",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';",
     "new": "export const followOn = () => trackerOn() || (marksOn() && false) || guidanceTier() !== 'journal';",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H5-the-merge-keeps-its-slot",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "      if (was) this.rows.splice(at, 1);\n      this.rows.push(row);",
     "new": "      if (was) this.rows[at] = row; else this.rows.push(row);",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide3_herald.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H5-eviction-by-position",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "      for (let i = 1; i < this.rows.length; i++) if (RANK[this.rows[i].type] < RANK[this.rows[out].type]) out = i;",
     "new": "      /* the oldest */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H6-the-count-kept",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "      if (Number.isFinite(s)) r.line = heraldTimeLeft(s);",
     "new": "      /* kept */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H6-the-refresh-not-called",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "    if (wasHidden) questHerald.refresh();",
     "new": "    /* not called */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H7-the-rank-kept-regardless",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": " && !(was.type === 'urgent' && view && !underADay(view));",
     "new": ";",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-O3-every-entry-asked",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "        target: i === r.written.length - 1 ? entryTarget(e.message, where) : null,",
     "new": "        target: entryTarget(e.message, where),",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-O3-the-archive-parsed",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    const rail = questRail({ active: log.active ?? [], finished: [] },",
     "new": "    const rail = questRail({ active: log.active ?? [], finished: log.finished ?? [] },",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-O3-the-memo-forgets",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "    if (!memo.has(key)) memo.set(key, placePixelOf(maps, regionName, name));\n    return memo.get(key);",
     "new": "    return placePixelOf(maps, regionName, name);",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
@@ -206,200 +206,200 @@
     "old": "canFindPlace(maps, mapDict, regionName, name, questPlacePixel), currentLocationName:",
     "new": "canFindPlace(maps, mapDict, regionName, name), currentLocationName:",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-L3-the-letter-loud",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    if (quest.hooks) quest.hooks = Object.create(quest.hooks, { addDialog: { value: () => {} }, dialogLink: { value: () => {} } });",
     "new": "    /* loud */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-L3-the-engine-roll",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "  Math.random = QUIET_ROLL;\n  try {",
     "new": "  try {",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-L6-the-hourly-read-dropped",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (textHour !== hour) { if (textHour != null) lens.rereadText(); textHour = hour; }",
     "new": "    if (textHour !== hour) { textHour = hour; }",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-T5-the-face-rebuilt",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "  if (track) box.append(trackButton(document, e.uid, e.head));",
     "new": "  if (track) { const t = trackButton(document, e.uid, e.head); t.querySelector('.qtrack-pin')?.addEventListener('click', () => render()); box.append(t); }",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-T5-the-others-unsynced",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "    syncTrackButtons(doc);\n",
     "new": "    void syncTrackButtons;\n",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-T6-the-label-flips",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  const cls = on ? 'act qtrack-pin on' : 'act qtrack-pin';",
     "new": "  if (b && on) b.setAttribute('aria-label', 'Stop tracking');\n  const cls = on ? 'act qtrack-pin on' : 'act qtrack-pin';",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U14-the-note-dropped",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  const words = hud != null && String(hud) === id ? (trackerOn() ? TRACKER_WORDS.onHud : TRACKER_WORDS.onCompass) : '';",
     "new": "  const words = '';",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H10-the-kind-unsaid",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "const kindOf = (r) => (r.main ? `${HERALD_WORDS[r.type]} - ${MAIN_QUEST_WORD}` : HERALD_WORDS[r.type]);",
     "new": "const kindOf = (r) => HERALD_WORDS[r.type];",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide3_herald.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U11-the-card-unsaid",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "      time: [v.main ? TRACKER_WORDS.main : '', ",
     "new": "      time: ['', ",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H3-not-spoken",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "    if (words && voice) voice.textContent = words;",
     "new": "    /* unsaid */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H3-the-toasts-speak-too",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    if (host && frame?.silent && host.getAttribute?.('aria-hidden') !== 'true') host.setAttribute?.('aria-hidden', 'true');",
     "new": "    /* heard twice */",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide3_herald.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H3-the-merge-unsaid",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "        said: false,   // AUDIT GUIDE H3",
     "new": "        said: !!was,   // AUDIT GUIDE H3",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H3-the-voice-with-the-news",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "  const voice = liveRegion(doc);",
     "new": "  const voice = questHerald.rows.length ? liveRegion(doc) : null;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-O5-the-observer-dropped",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  if (typeof RO === 'function') {",
     "new": "  if (false) {",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U8-the-scale-not-copied",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  if (c.last.sig !== sig) { c.last.sig = sig; c.node.style.setProperty?.('--hud-scale', scale); moved = true; }",
     "new": "  if (c.last.sig !== sig) { c.last.sig = sig; moved = true; }",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U8-the-touch-top-fixed",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".qtrack.touch { top: calc(max(76px, var(--qt-clear)) + env(safe-area-inset-top, 0px)); }",
     "new": ".qtrack.touch { top: calc(76px + env(safe-area-inset-top, 0px)); }",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-T1-over-the-overworld",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ":root[data-tview-block=\"top\"] .qtrack,\nbody:has(.travelpanel-junction.show) .qtrack { visibility: hidden; }",
     "new": "body:has(.travelpanel-junction.show) .qtrack { visibility: hidden; }",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U7-over-the-disc",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ":root[data-tview-block=\"top\"] .qtrack,\nbody:has(.travelpanel-junction.show) .qtrack { visibility: hidden; }",
     "new": ":root[data-tview-block=\"top\"] .qtrack { visibility: hidden; }",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U1-over-the-chat",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "@media (max-width: 720px) { body:has(.dfchat-peek:not(:empty)) .qtrack { visibility: hidden; } }",
     "new": "",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U9-the-thin-plate",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  background: linear-gradient(90deg, rgba(10,12,17,0) 0%, rgba(10,12,17,0.82) 32%);\n  border-right: 3px solid",
     "new": "  background: linear-gradient(90deg, rgba(10,12,17,0) 0%, rgba(10,12,17,0.6) 32%);\n  border-right: 3px solid",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U10-no-plate-forced",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "@media (forced-colors: active) { .qtrack { background-color: Canvas; } }",
     "new": "",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
@@ -408,111 +408,111 @@
     "old": "  max-height: calc(100dvh - 100px - var(--dfquest-h, 0px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: hidden;",
     "new": "  /* uncapped */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U18-the-mark-read",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".qtrack-where::before { content: '\\\\25c8'; content: '\\\\25c8' / ''; margin-right: 5px; }",
     "new": ".qtrack-where::before { content: '\\\\25c8'; margin-right: 5px; }",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-H8-the-line-kept-short",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "@media (max-height: 520px) {\n  .notice.notice-toast .notice-row.herald-line { display: none; }\n}",
     "new": "",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-D1-the-card-not-furniture",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": ", .dftouch-btn, .qtrack';",
     "new": ", .dftouch-btn';",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-W1-the-town-unlocks-the-region",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    regionName: onMap === true || here || moved || said.has(MACRO_TYPES.NameMacro4) ? (",
     "new": "    regionName: named || said.has(MACRO_TYPES.NameMacro4) ? (",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide1_questLens.test.js",
-      "test/guide2_wayThere.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide1_questLens.test.js",
+      "test/ui/enhanced/guide2_wayThere.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-W2-the-claim-on-the-name",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "  const here = hereByName && onMap !== false;",
     "new": "  const here = hereByName;",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide1_questLens.test.js",
-      "test/guide2_wayThere.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide1_questLens.test.js",
+      "test/ui/enhanced/guide2_wayThere.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-W3-the-classic-skin-way",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  if (!isEnhanced()) return null;   // AUDIT GUIDE W3",
     "new": "  /* any skin */   // AUDIT GUIDE W3",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-W4-the-abbreviation-ends",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "    if (/^\\.[\"'\\u201d\\u2019)\\]]*$/.test(m[0]) && NOT_AN_END.test(through)) continue;",
     "new": "    /* every stop */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-W4-the-quote-ends-nothing",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "const SENTENCE_END = /[.!?]+[\"'\\u201d\\u2019)\\]]*(?=",
     "new": "const SENTENCE_END = /[.!?]+(?=",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide3_herald.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-W4-ascii-capitals",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "\\p{Lu}|$)/gu;",
     "new": "[A-Z]|$)/gu;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-W4-the-header-line-zero",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  const head = all.findIndex((l) => l.trim());",
     "new": "  const head = 0;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-W5-the-name-alone",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": " && said.find?.regionName === skip.regionName)) return null;",
     "new": ")) return null;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
@@ -521,17 +521,17 @@
     "old": "    questLocationName: () => dfLocation.name ?? locationName,   // AUDIT GUIDE W6",
     "new": "    /* nothing asked */   // AUDIT GUIDE W6",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U12-the-name-without-its-words",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "  showLabel: (place) => `Show on map: ${place}`,",
     "new": "  showLabel: (place) => `Show ${place} on the travel map`,",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide2_wayThere.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/enhanced/guide2_wayThere.test.js"
     ]
   },
   {
@@ -540,7 +540,7 @@
     "old": "    const quest = this._questAt(sx, sy);\n    const place = quest ? this._questPlace(quest) : null;\n    if (place) { this._select(place); return; }\n",
     "new": "",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
@@ -549,52 +549,52 @@
     "old": "    const summary = locationSummaryAt(this.deps.mapDict, q.px, q.py);\n    if (!summary || !this._discovered(summary)) return null;\n    return { x: q.px + 0.5, y: q.py + 0.5, colorIndex: 11, kind: 'city', name: '', summary };",
     "new": "    return null;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-K2-the-first-building-for-all",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "    const place = one ? quests[0].where : m.town;",
     "new": "    const place = quests[0].where;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-K5-the-followed-not-first",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "    const quests = [...m.quests].sort((a, b) => Number(b.tracked) - Number(a.tracked));",
     "new": "    const quests = [...m.quests];",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-K5-no-more",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "    const listed = quests.length <= room ? quests : quests.slice(0, room - 1);",
     "new": "    const listed = quests;",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-K5-the-time-cut",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "    const lineOf = (q) => fitHead(q.building ? `${q.title} (${q.building})` : q.title, left(q), QUEST_TIP_TEXT);",
     "new": "    const lineOf = (q) => (left(q) ? `${q.building ? `${q.title} (${q.building})` : q.title} - ${left(q)}` : q.title).slice(0, QUEST_TIP_TEXT);",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-K5-the-label-loses-its-place",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "      label: titles.length ? fitHead(titles.join(' / '), place, QUEST_LABEL_MAX) : place,",
     "new": "      label: titles.length ? `${titles.join(' / ')} - ${place}`.slice(0, QUEST_LABEL_MAX) : place,",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
@@ -603,7 +603,7 @@
     "old": "      lift: this._raids.some((r) => r.px === m.px && r.py === m.py) ? QUEST_RAID_LIFT : QUEST_MARK_LIFT }));",
     "new": "      lift: QUEST_MARK_LIFT }));",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
@@ -612,7 +612,7 @@
     "old": "    const onDiamond = this._questAt(sx, sy, { diamondOnly: true });",
     "new": "    const onDiamond = this._raidAt(sx, sy) ? null : this._questAt(sx, sy, { diamondOnly: true });",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
@@ -621,17 +621,17 @@
     "old": "      for (const q of at.flatMap((x) => x.quests ?? [])) card.append(el('p', 'hmquest', q.left ? `${q.title} - ${q.left}` : q.title));",
     "new": "      /* unnamed */",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-U16-the-gold-fill",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
     "new": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? QUEST_MARK_CSS : null);",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide5_marks.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -640,35 +640,35 @@
     "old": "    if (this._quests.some((q) => q.tracked)) diamond(true, QUEST_FOLLOWED_TEXT);\n",
     "new": "",
     "tests": [
-      "test/audit_guide.test.js",
-      "test/guide5_marks.test.js"
+      "test/ui/quest/audit_guide.test.js",
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-K3-the-foot-over-the-card",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".hmroot.hmcardup .hmcard { z-index: 1; }",
     "new": "",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-K6-the-legend-runs-off",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .hmlegend { flex: 1 1 auto; flex-wrap: wrap; min-width: 0; }\n",
     "new": "",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   },
   {
     "name": "AUDIT-GUIDE-O6-a-bare-import-of-the-lens",
-    "file": "src/ui/questHerald.js",
-    "old": "import { isEnhanced } from '../systems/uiSkin.js';",
-    "new": "import './questLens.js';\nimport { isEnhanced } from '../systems/uiSkin.js';",
+    "file": "src/ui/quest/questHerald.js",
+    "old": "import { isEnhanced } from '../../systems/uiSkin.js';",
+    "new": "import './questLens.js';\nimport { isEnhanced } from '../../systems/uiSkin.js';",
     "tests": [
-      "test/audit_guide.test.js"
+      "test/ui/quest/audit_guide.test.js"
     ]
   }
 ]

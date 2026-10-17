@@ -5,7 +5,7 @@
     "old": "  PUSH: Object.freeze({ lunge: 3, charge: 5 }),",
     "new": "  PUSH: Object.freeze({ lunge: 3, charge: 3 }),",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  RATTLE: Object.freeze(['slam', 'ring', 'leap']),",
     "new": "  RATTLE: Object.freeze(['slam', 'ring']),",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  RATTLE_WALK: 0.6,",
     "new": "  RATTLE_WALK: 0.8,",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  BLEED_SHARE: 0.3,",
     "new": "  BLEED_SHARE: 0.5,",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  KNOCKDOWN: Object.freeze(['slam', 'ring', 'charge']),   // iron's alone",
     "new": "  KNOCKDOWN: Object.freeze(['slam', 'ring', 'charge', 'leap']),   // iron's alone",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  KNOCKDOWN_GUARD: 5,",
     "new": "  KNOCKDOWN_GUARD: 1,",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    knockdown: !!iron && BLOW_EFFECT.KNOCKDOWN.includes(kind),",
     "new": "    knockdown: BLOW_EFFECT.KNOCKDOWN.includes(kind),",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (fx.knockdown && now >= _guardUntil && motor?.blowKnockDown?.(",
     "new": "    if (fx.knockdown && motor?.blowKnockDown?.(",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    } else if (fx.push > 0 && dir) {",
     "new": "    }\n    if (fx.push > 0 && dir) {",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (l > 0) motor?.blowPush?.((dir[0] / l) * fx.push, (dir[1] / l) * fx.push);",
     "new": "      if (l > 0) motor?.blowPush?.(-(dir[0] / l) * fx.push, -(dir[1] / l) * fx.push);",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (fx.rattle) { motor?.blowRattle?.(BLOW_EFFECT.RATTLE_S, BLOW_EFFECT.RATTLE_WALK); shake?.(BLOW_EFFECT.RATTLE_SHAKE); }",
     "new": "    if (fx.rattle) { motor?.blowRattle?.(BLOW_EFFECT.RATTLE_S, BLOW_EFFECT.RATTLE_WALK); }",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (fx.bleed && entity && dmg > 0) startBleed(entity, dmg * BLOW_EFFECT.BLEED_SHARE, foe, now);",
     "new": "",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  const left = b ? b.per * b.left : 0;",
     "new": "  const left = 0;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (entity.health > b.health || !(entity.health > 0)) { entity.bleed = null; return 0; }",
     "new": "  if (!(entity.health > 0)) { entity.bleed = null; return 0; }",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (b.foe) markPlayerHarm(b.foe, { ms: HARM_MARK_STRUCK_MS });",
     "new": "",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (b.left <= 0 || !(entity.health > 0)) entity.bleed = null;",
     "new": "    if (!(entity.health > 0)) entity.bleed = null;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "export const BLOW_PUSH_DECAY = 12;",
     "new": "export const BLOW_PUSH_DECAY = 6;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (!Number.isFinite(below)) { this._pushX = 0; this._pushZ = 0; return; }   // an edge: no cliff takes a push",
     "new": "",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      this._pushStep(step);   // TELL6e",
     "new": "      // TELL6e",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    if (this._rattleLeft > 0) speed *= this._rattleShare;",
     "new": "",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    const moveInput = this._downLeft > 0 ?",
     "new": "    const moveInput = false ?",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "feetY + this._eyeLevel() + b[1] - this._downEye(),",
     "new": "feetY + this._eyeLevel() + b[1],",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "      if (this._downLeft > 0) this._downLeft = Math.max(0, this._downLeft - step);",
     "new": "",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "  if (!(dmg > 0) || now - w.at > BLOW_VERDICT_LIFE || !playerFeet) return null;",
     "new": "  if (!(dmg > 0) || !playerFeet) return null;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  if (!w) return null;\n  f.ai._blowFx = null;",
     "new": "  if (!w) return null;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "  if (entity && hurt) tickBleed(entity, hurt);",
     "new": "",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -239,17 +239,17 @@
     "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;",
     "new": "  ai._blowFx = atMe ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ],
     "note": "TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
   {
     "name": "TELL6e-hud-no-bleed",
-    "file": "src/ui/hudActiveSpells.js",
+    "file": "src/ui/hud/hudActiveSpells.js",
     "old": "  if (bleed && bleed.left > 0) other.push(",
     "new": "  if (false) other.push(",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "    if (knockedDown()) return false;   // TELL6e",
     "new": "    // TELL6e",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "landBlowEffect(f, hp0 - playerEntity.health, playerFeet);",
     "new": "void hp0;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "landBlowEffect(f, hp0 - playerEntity.health, playerFeet);",
     "new": "void hp0;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "landBlowEffect(g, hp0 - playerEntity.health, playerFeet);",
     "new": "void hp0;",
     "tests": [
-      "test/tell6e_landing.test.js"
+      "test/scenes/tell6e_landing.test.js"
     ]
   }
 ]

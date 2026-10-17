@@ -33,7 +33,7 @@ import {
   WRIT_UNITS_MAX, writPayMax, commissionable, commissionTakesQuality, COMMISSIONS_MAX, GUILD_WRITS_MAX, writDeliverMay,
   GUILD_CONTRACTS_MAX, CONTRACT_PAY_MAX, CONTRACT_DEEDS_MAX, contractPaidMay,
 } from '../net/writLaw.js';   // SILVER-WAYS: a guild contract's bounds
-import { GUILD_RANK_MASTER } from '../net/guildLaw.js';
+import { GUILD_RANK_MASTER } from '../net/guild/guildLaw.js';
 import { HANDLE_RE } from '../net/handleShape.js';
 import { WRIT_MOVED } from '../net/writBook.js';
 import { FORT_MATERIALS, RAM_KIT_KEY } from '../net/fortLaw.js';   // SEAT2b: what a seat writ may ask; part two: a Siege Camp's Ram Kits

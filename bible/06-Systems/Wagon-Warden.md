@@ -16,12 +16,12 @@ Daggerfall has nothing of it: Horse Cart and Cargo parks a wagon anywhere for ev
 left standing by it - within `WARDEN_HORSE_BY_NATIVES`, 12 m, `horseThrownWith` - thrown with it; one left further off,
 or following its owner, stays its own). A lone horse is no cart and is never thrown: only a wagon's record carries a
 landing (`validParkData`) and only a wagon's is judged (`wardenVerdicts`). Only in a town a watch keeps - a
-city, a hamlet or a village (`systems/wagonWarden.js` `WARDEN_TOWN_TYPES`, MAPS.BSA's `TownCity`, `TownHamlet`,
+city, a hamlet or a village (`systems/wagon/wagonWarden.js` `WARDEN_TOWN_TYPES`, MAPS.BSA's `TownCity`, `TownHamlet`,
 `TownVillage`); a wagon on a road between towns, at a farm or a dungeon's mouth stands as long as it likes.
 
 **The road.** A wagon stands ON THE ROAD when a third of its footprint (`WARDEN_ROAD_SHARE`) lies on the town's road
 cells: its own box, turned as it stands, sampled on a 3 x 3 grid corners included (`footprintRoadShare`), over the town's walk
-grid (`world/cityNavigation.js` - the cells its people walk; a road cell weighs `ROAD_WEIGHT`, GOTHWAY-BOARDS' one
+grid (`world/city/cityNavigation.js` - the cells its people walk; a road cell weighs `ROAD_WEIGHT`, GOTHWAY-BOARDS' one
 home). A wagon on a road `WARDEN_ROAD_MS` (ten real minutes) after it came to stand there is thrown.
 
 **The crowd.** A town holds `WARDEN_TOWN_CAP` (four) parked teams. A fifth throws the one parked longest (ties by the
@@ -71,7 +71,7 @@ starts its clock again).
 `tw` and `rd` and throws nothing; the client sends them to any relay. **NOT YET DEPLOYED - its deploy drops every
 player once.**
 
-## The client (`systems/wagonWarden.js`, `scenes/wagonWardenHost.js`)
+## The client (`systems/wagon/wagonWarden.js`, `scenes/wagon/wagonWardenHost.js`)
 
 **The stamp.** Every frame the save's parked wagon is read (the HCC runtime's view); a wagon parked somewhere new is
 stamped once the ground under it is built (`townAt` - the streaming host's built town under the anchor, its map id and
@@ -83,7 +83,7 @@ load. My park word carries its fields while it is the parked wagon's (`wardenWor
 **The owner's throw.** The cell's `parkYeet` (`online.js` `onParkYeet` - my character's team's, `k` against my park key):
 KEPT FOR THE NEXT STREET FRAME (the host's `tick`, which runs on the street alone and never under a load - AUDIT WARDEN1
 C4: one taken in a door's load wiped the horse left at the door, one in my caravan's room let me out onto empty ground);
-then my save moves by the throw (`systems/horseCart.js` `adoptYeet` - the wagon turned as it stood, its horse in its
+then my save moves by the throw (`systems/horse/horseCart.js` `adoptYeet` - the wagon turned as it stood, its horse in its
 shafts kept there, a horse standing by it moved with it; a building's reach to its load let go; only while the save
 still parks it where it was thrown from, `thrownTo`), I am told (`WARDEN_TEXT`), and the throw is played where my wagon
 was drawn if it is within `WARDEN_SHOW_REACH` (200 m) of the eye. Played or not, the save is the landing's at once - my
@@ -103,7 +103,7 @@ came.
 as the player steps out). A town holds nobody else's team
 offline, so there is no crowd. Online the cell alone throws; a relay before `world191` throws nothing.
 
-## The throw, played (`scenes/wagonWardenShow.js`)
+## The throw, played (`scenes/wagon/wagonWardenShow.js`)
 
 A guard of the town's watch - the city guards' own picture (`GUARD_TEXTURE`, its walk wheel and its idle record) -
 jogs (`WARDEN_GUARD_SPEED`, 3.2 m/s) up to the team along the town's streets (`findTownPath` over the walk grid, from
@@ -131,7 +131,7 @@ throw with no guard.
 ## Beside MW-NPC (the merge of #750, 2026-10-10)
 
 MW-NPC stands the city watch's guards in Morrowind bodies (`scenes/cityGuards.js`, MWNPC6), and its census
-(`test/mwnpc_census.test.js`) holds every source that draws a living actor's sprite to a body lane or a declared reason.
+(`test/scenes/mwnpc_census.test.js`) holds every source that draws a living actor's sprite to a body lane or a declared reason.
 The thrower keeps its sprite, DECLARED there: the ask was the wagon "on top of their sprite", the gag is the sprite
 under the wagon, and a body has no lift to stand it in - with the bodies on, the watch that patrols is in bodies and the
 one that throws is the guards' picture. Standing the thrower in a body (a carry and a throw clip) is its own work.
@@ -169,7 +169,7 @@ summon fetches it.
 
 Five cold lanes over the PR (the relay and the wire's law with its abuse; the client's law, host and save; the show, the
 pool's hold and the rendering; the records; the whole play, end to end), every finding reproduced from a real caller
-before it was fixed, each fixed in its slice, pinned (`test/warden1_audit.test.js`) and mutated
+before it was fixed, each fixed in its slice, pinned (`test/systems/wagon/warden1_audit.test.js`) and mutated
 (`tools/mutants/warden1_audit.json`, 71, all dead).
 
 **The relay and the wire.** R1 one account one team a town (above - MAJOR, one socket cleared a town). R2 the spot by
@@ -205,12 +205,12 @@ for the team either way, and the riders' stand-down is pinned where it acts.
 
 ## Tests
 
-`test/warden1.test.js` - the wire's law (the park word's landing, town and road; the verdicts; the round's due; the
+`test/systems/horse/warden1.test.js` - the wire's law (the park word's landing, town and road; the verdicts; the round's due; the
 owner's word); the relay on a fake clock (a road team thrown at the first frame past its ten minutes and told its owner,
 re-said and told again, moved and cleared; an owner away - the joiner's list, the owner told on return, the alarm left
 alone; a woken cell; no landing never thrown; the crowd at the store); the client's law (the towns, the road share, the
 landing, the stamp, its word, the offline clock, the thrown record and the save's move); the pool (a thrown kept word
 where it landed, a held team drawn nowhere, my word's fields); the runtime's adoption; the show's clock and a whole
 throw over a fake renderer; the host's stamp, offline throw, owner's throw and reader's throw; the hosts. Its mutants:
-`tools/mutants/warden1.json`. `test/warden1_audit.test.js` - AUDIT WARDEN1's pins (above); its mutants
+`tools/mutants/warden1.json`. `test/systems/wagon/warden1_audit.test.js` - AUDIT WARDEN1's pins (above); its mutants
 `tools/mutants/warden1_audit.json`.

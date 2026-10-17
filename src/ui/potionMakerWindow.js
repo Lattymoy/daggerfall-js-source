@@ -30,12 +30,12 @@
 // over. Both lists get one, because DFU builds both out of the same
 // ItemListScroller (:226-239) and hands both the same tip.
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
-import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './itemScroller.js';
+import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './item/itemScroller.js';
 import { audio } from '../systems/audio.js';
 import { isEnchanted, addItem } from '../systems/inventory.js';   // F176: Refresh's !IsEnchanted (:148); AddItem is Refresh's merge (:149)
 import { SOUND } from '../systems/soundClips.js';

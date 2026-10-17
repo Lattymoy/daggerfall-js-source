@@ -28,7 +28,7 @@
 //     session's own tick (pings, retries, halos);
 //   - the account calls the client makes on its own clocks, each by the client's own call and at the client's own
 //     constant: the play beat (net/playClock.js PLAY_BEAT_S), the mail (net/mail.js MAIL_POLL_MS), Renown while it is
-//     owed (net/renown.js RENOWN_REPORT_MS - a bot fighting), the realm checkpoint (systems/onlineCheckpoint.js
+//     owed (net/renown.js RENOWN_REPORT_MS - a bot fighting), the realm checkpoint (systems/online/onlineCheckpoint.js
 //     ONLINE_CHECKPOINT_MS, through the realm's own session, packed and idle-keyed), the town's Notice Board
 //     (net/boardLaw.js BOARD_CACHE_MS), the town's yards (scenes/homeYards.js YARD_TOWN_TTL_MS, no session), the towns'
 //     layouts once at the start, the seats' red lines (net/townSeatBook.js SEAT_RED_READ_MS), the Motherlodes
@@ -66,7 +66,7 @@
 // Measure a commit from a snapshot of it - `git worktree add <dir> <commit>`, server/node_modules linked into it.
 //
 // It is NOT in the suite and has no Testing.md row, for the account probe's reason (tools/accountProbe.mjs): it needs a
-// toolchain and minutes. Its parts that can be pinned without one are - test/scale3.test.js.
+// toolchain and minutes. Its parts that can be pinned without one are - test/net/scale3.test.js.
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
@@ -94,7 +94,7 @@ import { RENOWN_REPORT_MS } from '../src/net/renown.js';
 import { renownRid } from '../src/net/renownTracker.js';
 import { BOARD_CACHE_MS } from '../src/net/boardLaw.js';
 import { YARD_TOWN_TTL_MS } from '../src/scenes/homeYards.js';
-import { ONLINE_CHECKPOINT_MS } from '../src/systems/onlineCheckpoint.js';
+import { ONLINE_CHECKPOINT_MS } from '../src/systems/online/onlineCheckpoint.js';
 import { SEAT_RED_READ_MS } from '../src/net/townSeatBook.js';
 import { MOTHERLODE_READ_MS } from '../src/net/motherlodeBook.js';
 import { PROF_CLOSED_RECHECK_MS } from '../src/net/profBook.js';
@@ -429,7 +429,7 @@ export async function standServices(o, state) {
 /** THE SERVICE'S OWN CLOCK (SCALE4b, server-account/src/cron.js), fired as the deploy fires it: the minute's list every
  *  minute of play and the hour's once as play begins - `wrangler dev --test-scheduled` answers /__scheduled. Its
  *  statements ride the service's own points (`cron:<job>`), counted with the rest. The two strings are cron.js's
- *  CRON_MINUTE and CRON_HOUR (test/scale3.test.js holds them together); a tree whose service keeps no clock (before
+ *  CRON_MINUTE and CRON_HOUR (test/net/scale3.test.js holds them together); a tree whose service keeps no clock (before
  *  SCALE4b) answers the firing with nothing, so one harness measures either. */
 export const FIRE_MINUTE = '* * * * *';
 export const FIRE_HOUR = '41 * * * *';

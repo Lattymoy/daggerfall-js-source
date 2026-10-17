@@ -27,7 +27,7 @@
 // AUDIT POI R10: glTF's colour factors are LINEAR (the specification); the game's colours are sRGB (the editor's pickers,
 // poiRuntime.js bakeAlbedo multiplying the picture's own bytes) - turned as Unity's Mathf.GammaToLinearSpace turns them,
 // from its one home
-import { srgbToLinear } from '../systems/dynamicSkies.js';
+import { srgbToLinear } from '../systems/dynamicSkies/dynamicSkies.js';
 
 const GLB_MAGIC = 0x46546c67, CHUNK_JSON = 0x4e4f534a, CHUNK_BIN = 0x004e4942;
 const WRAP_CODE = { repeat: 10497, clamp: 33071, mirror: 33648 };

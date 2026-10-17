@@ -58,10 +58,13 @@ export async function homeScore(db, mapId, buildingKey) {
  * run down to HOME_SHUN_AT (HOME-SHUN). A building that is no home shows what stands.
  */
 export async function homeShownTo(db, mapId, buildingKey, playerId) {
-  const r = await db.prepare(`SELECT h.score AS score, ${INSIDER} AS insider FROM homes h WHERE h.map_id = ? AND h.building_key = ?`)
-    .bind(playerId ?? '', playerId ?? '', mapId, buildingKey).first();
-  return !r || r.insider === 1 || !homeShunned(Number(r.score));
+  return homeShownOf(await homeShownRead(db, mapId, buildingKey, playerId).first());
 }
+/** DECOR-BATCH: homeShownTo's one read, as a statement a caller's batch carries - its answer is homeShownOf's. */
+export const homeShownRead = (db, mapId, buildingKey, playerId) => db.prepare(`SELECT h.score AS score, ${INSIDER} AS insider FROM homes h WHERE h.map_id = ? AND h.building_key = ?`)
+  .bind(playerId ?? '', playerId ?? '', mapId, buildingKey);
+/** DECOR-BATCH: homeShownTo's answer off its row (null: no home stands there - what stands is shown). */
+export const homeShownOf = (r) => !r || r.insider === 1 || !homeShunned(Number(r.score));
 
 /**
  * VOTE ON A HOME: `vote` +1 (up), -1 (down) or 0 (the account's vote taken back); a vote cast names `owner`, the house's

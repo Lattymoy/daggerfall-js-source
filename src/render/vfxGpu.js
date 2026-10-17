@@ -1,14 +1,14 @@
 // @ts-check
 // MW-SPELLFX1 (2026-10-07): A MORROWIND EFFECT'S STREAMS ON THE GPU.
 //
-// formats/mwVfx.js answers an effect's frame as packed streams in the particle program's own format; this holds the
+// formats/morrowind/mwVfx.js answers an effect's frame as packed streams in the particle program's own format; this holds the
 // GL side of ONE running effect: a renderer particle effect per stream (render/renderer.js createParticleEffect),
 // made the first time the stream is seen at the size the effect can ever need (vfxCapacity), its draw state the
 // stream's, its texture set by FILE each frame - a flipbook changes it, the particle texture overrides it - each file's
 // GL texture made once and OWNED here, so the release frees exactly what this made and nothing a neighbour shares.
 // The arm (combat/fpArm.js, VFX_Hands on the hands) and the world layer (scenes/mwMagicFx.js) both drive one.
 
-import { wrapModes } from '../formats/mwTexture.js';
+import { wrapModes } from '../formats/morrowind/mwTexture.js';
 
 /**
  * `renderer` the port's; `textures` a Map from a texture file to its decoded entry ({ image: { mips } } -

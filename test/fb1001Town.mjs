@@ -1,23 +1,23 @@
 // FB1001 (FIELD BUGS 2026-10-01) - A TOWN OF THE PRODUCERS' OWN, for the yard's pins: one RMB block laid out by the
 // real layout (world/locationLayout.js layoutLocation over world/rmbLayout.js), its ground stamped into the pixel by the
-// real setLocationTiles (world/terrainTiles.js) and the pixel's tilemap minted by the real terrain kernel
-// (world/terrainGen.js generatePixelTerrain - the road painter's mask with it when a network is handed in), and each
+// real setLocationTiles (world/terrain/terrainTiles.js) and the pixel's tilemap minted by the real terrain kernel
+// (world/terrain/terrainGen.js generatePixelTerrain - the road painter's mask with it when a network is handed in), and each
 // building's yard frame and footprint taken as scenes/world.js buildPixel takes them (its two lines, transcribed: that
 // host needs ARENA2 to construct). "TEST THE SHAPE THE PRODUCER MINTS" - the tiles a yard reads are the very bytes the
 // terrain draws and the feet read.
 import { layoutLocation, RMB_SIDE } from '../src/world/locationLayout.js';
-import { setLocationTiles, getLocationTerrainTileOrigin } from '../src/world/terrainTiles.js';
-import { generatePixelTerrain } from '../src/world/terrainGen.js';
-import { TERRAIN_SIZE } from '../src/world/terrainSampler.js';
-import { makeBuildingKey } from '../src/systems/talkTopics.js';
+import { setLocationTiles, getLocationTerrainTileOrigin } from '../src/world/terrain/terrainTiles.js';
+import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
+import { TERRAIN_SIZE } from '../src/world/terrain/terrainSampler.js';
+import { makeBuildingKey } from '../src/systems/talk/talkTopics.js';
 import { RMB_DIMENSION } from '../src/formats/blocksFile.js';
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
-import { MAP_W, MAP_H } from '../src/world/roadNetwork.js';
+import { MAP_W, MAP_H } from '../src/world/road/roadNetwork.js';
 import { trs, multiply } from '../src/world/mat4.js';
 import { transformedAabb, localAabb } from '../src/render/frustum.js';
 import { modelFootRects, footRectsAt } from '../src/scenes/homeYards.js';
 
-/** The distantland fake woods (test/terrainworker.test.js's): the kernel's three-method surface. */
+/** The distantland fake woods (test/world/terrain/terrainworker.test.js's): the kernel's three-method surface. */
 export const fakeWoods = {
   getHeightMapValuesRange1Dim(mx, my, d) {
     const a = new Float32Array(d * d);

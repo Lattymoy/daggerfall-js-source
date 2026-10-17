@@ -19,7 +19,7 @@
 // day sees one), rising within its third's first six hours, standing two
 // hours or until its strikers are spent. THE WARNING is every client's own,
 // from the shared clock and the day's list - 10 minutes ahead, a Motherlode
-// Sense's 30 - as the gate's omen is (systems/gateOmen.js): no hub push.
+// Sense's 30 - as the gate's omen is (systems/gate/gateOmen.js): no hub push.
 //
 // WHO: a strike counts only from an account the relay saw on the
 // Motherlode's pixel - its Watch receipt (net/watchReceipt.js, `k1`: the
@@ -27,7 +27,7 @@
 // in the MOTHERLODE_WATCH_S before the act's end. A pose is the client's
 // claim, so this is a bound, not a proof (PROF0 6) - the cap is the rest.
 // ═══════════════════════════════════════════════════════════════════
-import { gateHash } from './gateLaw.js';   // the one mix every clock-law rolls with
+import { gateHash } from './gate/gateLaw.js';   // the one mix every clock-law rolls with
 import { VEIN_TABLES, regionSignature } from './nodeLaw.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 import { MARKS_FAUCETS } from './marksLaw.js';

@@ -1,83 +1,83 @@
 [
   {
     "name": "PHR-no-range",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (e.boat || !peerHullNear(e, eye, (fought ??= foughtIds()))) continue;   // PEER-HULL-RANGE, OWN-HULL-RANGE",
     "new": "      if (e.boat) continue;   // PEER-HULL-RANGE, OWN-HULL-RANGE",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   },
   {
     "name": "PHR-never-let-go",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    shedFarHulls(deps.look?.()?.origin ?? deps.feet());   // PEER-HULL-RANGE\n",
     "new": "",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   },
   {
     "name": "PHR-no-gap",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "export const PEER_HULL_FAR_M = 5500;",
     "new": "export const PEER_HULL_FAR_M = 5000;",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   },
   {
     "name": "AUDIT-PHR-the-first-cut-edge",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "export const PEER_HULL_NEAR_M = 5000;",
     "new": "export const PEER_HULL_NEAR_M = 3000;",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   },
   {
     "name": "AUDIT-PHR-her-canvas-kept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      e.sailsByHeight = null; e.colours = null; e.wake = false;\n",
     "new": "      e.colours = null; e.wake = false;\n",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   },
   {
     "name": "AUDIT-PHR-her-colours-kept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      e.sailsByHeight = null; e.colours = null; e.wake = false;\n",
     "new": "      e.sailsByHeight = null; e.wake = false;\n",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   },
   {
     "name": "AUDIT-PHR-her-wake-kept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      e.sailsByHeight = null; e.colours = null; e.wake = false;\n",
     "new": "      e.sailsByHeight = null; e.colours = null;\n",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   },
   {
     "name": "AUDIT-PHR-her-fires-hung",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      for (const f of e.fires ?? []) f.handle?.show?.(false);\n",
     "new": "",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   },
   {
     "name": "AUDIT-PHR-whole-in-a-frame",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "          if (e.shed) { e.shed = false; e.fade = 0; }",
     "new": "          if (e.shed) { e.shed = false; }",
     "tests": [
-      "test/peerhullrange.test.js"
+      "test/systems/naval/peerhullrange.test.js"
     ]
   }
 ]

@@ -1,11 +1,11 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // WATER-NEXT 2 - THE BED'S FACE (2026-10-07): UNDER CLEAR WATER, THE GROUND IS A BED, NOT A PAINTING OF WATER. The water
-// carves its bed (world/waterBed.js) and looks through to it - and the first shots from the real game (Daggerfall's
+// carves its bed (world/water/waterBed.js) and looks through to it - and the first shots from the real game (Daggerfall's
 // moat, tools/waterLookProbe.mjs) showed the same flat blue as before: the ground under the water wore Daggerfall's
 // WATER TILE, so the look through clear water was a look at more painted water. Where the enhanced water lies over the
 // ground (`uWaterBed`, the hosts' switch - never the classic skin, which draws the tile as DFU does), each water texel
-// of the ground - the draw's corner table's own coverage (world/waterCorners.js WATER_DRAW_MASK_TABLE), feathered as the
+// of the ground - the draw's corner table's own coverage (world/water/waterCorners.js WATER_DRAW_MASK_TABLE), feathered as the
 // water's shore is - takes the climate's DIRT (the tileset's record 1, the same texel turned the same way), darkened
 // and cooled to silt. A puddle record keeps its art (WATER-PUDDLE: its water is its picture's).
 // Both terrain programs take this text: renderer.js TERRAIN_FS and the lane's EL_TERRAIN_FS (enhancedLighting.js).

@@ -36,7 +36,7 @@
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
-import { planRoute, routeLegs, routeDrawPoints } from '../src/systems/travelRoute.js';
+import { planRoute, routeLegs, routeDrawPoints } from '../src/systems/travel/travelRoute.js';
 import { eyeFor, TV_TILT_DEFAULT, TV_HEIGHT_DEFAULT } from '../src/player/travelCamera.js';
 import { projectToScreen } from '../src/player/tapRay.js';
 import { perspective, lookAt, mirrorProjectionX } from '../src/world/mat4.js';
@@ -81,7 +81,7 @@ try {
   page.on('pageerror', (e) => pageErrors.push(String(e.message)));
   await page.goto('http://localhost:5233/play/');
   const r = await page.evaluate(async () => {
-    const hud = await import('/src/ui/travelViewHud.js');
+    const hud = await import('/src/ui/travel/travelViewHud.js');
     hud.showTravelViewHud({});
     const W = innerWidth, H = innerHeight;
     const route = Array.from({ length: 120 }, (_, i) => ({ x: 683 + i * 3, y: 384 - i * 2, front: true }));
@@ -138,7 +138,7 @@ try {
     'the same, the camera turned': routeFrames({ from, goal: { x: 595, y: 5 }, turn: Math.PI }),
   };
   const framed = await page.evaluate(async (sets) => {
-    const hud = await import('/src/ui/travelViewHud.js');
+    const hud = await import('/src/ui/travel/travelViewHud.js');
     hud.showTravelViewHud({});
     const base = { heading: 30, yaw: 0.5, where: 'Near Daggerfall, Daggerfall', trip: 'To Sentinel, by the road', fade: 1, marks: [] };
     const run = (fr, n = 90) => new Promise((done) => {

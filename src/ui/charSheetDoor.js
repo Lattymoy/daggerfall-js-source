@@ -40,13 +40,13 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { PIXEL_FAMILIES } from './pixelifyFive.js';   // FONT3: the wait card names the enhanced face first
 import { eventActions } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
 import { firmamentOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page
-import { mountEnhancedChunk, paintChunkNotice } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
-import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
+import { mountEnhancedChunk, paintChunkNotice } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
 import { pauseMenuHooks, pauseMenuAct } from './pauseDoor.js';   // F5-QUESTS: the pause window's own hooks and act - a cycle (pauseDoor imports this door), read only at call time
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
-import { levelNotices } from './levelNotice.js';   // LV2: who already played the fanfare
+import { levelNotices } from './levelUp/levelNotice.js';   // LV2: who already played the fanfare
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
 import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -69,7 +69,7 @@ export { charSheetArtLoaded };
  * "lazy - ready by the next open at worst" (U8a's own words). It is
  * ~13 KB, the enhanced skin alone pays for it, and a rejection is
  * SWALLOWED: a stale chunk after a deploy is the door's problem to
- * report when a player actually opens it (ui/enhancedChunk.js's whole
+ * report when a player actually opens it (ui/enhanced/enhancedChunk.js's whole
  * header), never a warning at boot about a screen nobody has asked
  * for. Returns the promise so a test can await it.
  *
@@ -85,12 +85,12 @@ export { charSheetArtLoaded };
 export function warmLevelUpWindow() {
   if (!isEnhanced() || typeof document === 'undefined') return null;
   // `.catch(() => null)` IS THE GATE'S OWN VOCABULARY, not a shortcut
-  // around it: test/menu1_enhanced_chunk.test.js allows a bare dynamic
+  // around it: test/ui/enhanced/menu1_enhanced_chunk.test.js allows a bare dynamic
   // import on exactly that shape - "a feature that is off rather than
   // a screen that failed" - and a warm is precisely that. Nothing
   // waits on it; the MOUNT still goes through the one home below, with
   // its retry, its notice and its refusal to hand the keys back.
-  return import('./enhancedLevelUp.js').catch(() => null);
+  return import('./enhanced/enhancedLevelUp.js').catch(() => null);
 }
 
 /** The gate a host asks before it opens the sheet. The classic window
@@ -143,7 +143,7 @@ export function createCharSheetWindow(deps = {}) {
   // the skin fork stopped at the sheet: a level-up in the enhanced skin
   // mounted the CLASSIC LevelUpScreen - eight drawText rows on the
   // canvas - because there was nothing else to mount. The window that
-  // replaced it (ui/enhancedLevelUp.js) is a FACE, not a third rollout:
+  // replaced it (ui/enhanced/enhancedLevelUp.js) is a FACE, not a third rollout:
   // it drives whichever of these two screens this character's law
   // wants, through that screen's own `input`, so the Level++, the
   // health roll and the mod's caps stay exactly where a11 and ORL1 put
@@ -151,7 +151,7 @@ export function createCharSheetWindow(deps = {}) {
   if (deps.entity?.readyToLevelUp) {
     const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);
     // LV2: ...and whether the WINDOW still owes the fanfare. On the
-    // enhanced skin ui/levelNotice.js played it at the moment the level
+    // enhanced skin ui/levelUp/levelNotice.js played it at the moment the level
     // was earned, which may be long before this window is asked for;
     // playing it again here would announce one event twice. The notice
     // answers for the level it announced and for no other, so a second
@@ -367,7 +367,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     ascendHost = h;
     const drop = () => { if (ascendHost === h) dropAscend(); else h.remove(); };
     mountEnhancedChunk({
-      load: () => import('./enhancedLevelUp.js'),
+      load: () => import('./enhanced/enhancedLevelUp.js'),
       alive: () => !fired && ascendHost === h,
       host: h, onDismiss: drop, label: 'ascend',
       mount: ({ mountEnhancedLevelUp, viewOnlyScreen }) => {
@@ -391,7 +391,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
   /** The Stats page again, after a view closed over it. */
   function remountPage() {
     mountEnhancedChunk({
-      load: () => import('./enhancedMenu.js'),
+      load: () => import('./enhanced/enhancedMenu.js'),
       alive: () => !fired, host, onDismiss: close, label: 'charsheet',
       mount: (mod) => { seams = mod; view = mod.mountEnhancedMenu(host, pageOpts()); },
     });
@@ -402,11 +402,11 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
   // so a bare `addEventListener` is a ReferenceError at mount rather
   // than a feature that is off. (Caught by the pins on the first run.)
   globalThis.addEventListener?.('keydown', onSheetKey, true);
-  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js). This door
+  // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js). This door
   // had NO catch at all - a deploy that moved `enhancedMenu` left an
   // unhandled rejection and a dial arm that did nothing.
   mountEnhancedChunk({
-    load: () => import('./enhancedMenu.js'),
+    load: () => import('./enhanced/enhancedMenu.js'),
     alive: () => !fired, host, onDismiss: close, label: 'charsheet',
     mount: (mod) => { seams = mod; view = mod.mountEnhancedMenu(host, pageOpts()); },
   });
@@ -528,7 +528,7 @@ function enhancedLevelUpOverlay(screen, entity) {
   // discarded BonusPool draw, which AUDIT 23 minds about the RNG
   // stream and which no player can observe).
   mountEnhancedChunk({
-    load: () => import('./enhancedLevelUp.js'),
+    load: () => import('./enhanced/enhancedLevelUp.js'),
     alive: () => !fired, host, onDismiss: close, label: 'levelup',
     mount: ({ mountEnhancedLevelUp }) => {
       stopWaiting();   // the window is the wait's successor, and takes the slot before it is torn down
@@ -588,10 +588,10 @@ function enhancedLevelUpOverlay(screen, entity) {
  * viewport from the left edge, with the sheet's four buttons down its
  * side. Everything it showed, the pause window's Stats page shows -
  * the same four sections out of the same sheetModel, which
- * enhancedMenu imports from ui/enhancedCharSheet.js - and since PX25
+ * enhancedMenu imports from ui/enhanced/enhancedCharSheet.js - and since PX25
  * that page takes the four buttons too.
  *
- * `ui/enhancedCharSheet.js` STAYS: `sheetModel` is the model both
+ * `ui/enhanced/enhancedCharSheet.js` STAYS: `sheetModel` is the model both
  * sheets always read, and it is now read by the one that remains.
  * What went is the ~200 lines of view that drew the second one.
  */

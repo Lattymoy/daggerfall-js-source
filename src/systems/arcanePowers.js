@@ -33,8 +33,8 @@
 
 import { SKILLS } from './skills.js';
 import { pathAwake, isSignatureSpell, PATH_NUMBERS, PATH_BY_ID } from './arcanePaths.js';
-import { sigilDueling } from './sigil.js';
-import { registerSpellPowerMod, registerSpellPierceMod, registerSpellLandedListener } from './spellPower.js';
+import { sigilDueling } from './sigil/sigil.js';
+import { registerSpellPowerMod, registerSpellPierceMod, registerSpellLandedListener } from './spell/spellPower.js';
 import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
 import { registerEntityFold, newMods, EMPTY_MODS } from './entityMods.js';
@@ -42,12 +42,12 @@ import { registerPlayerDamageMod, registerPlayerHurtListener, registerPlayerBlow
 import { registerPlayerKillListener } from './playerKills.js';
 import { registerMagicRoundHook } from './worldTick.js';
 import { registerAbsorptionChance } from './absorption.js';
-import { pendingPlayerBlow } from './sigilSetPowers.js';   // the door's one law of what a foe's blow is
+import { pendingPlayerBlow } from './sigil/sigilSetPowers.js';   // the door's one law of what a foe's blow is
 import { healMine, manaMine } from './playerHeal.js';
 import { playerDoor } from './playerDoor.js';
 import { isMagicallyConcealed } from './effects.js';
-import { near, foeGroup, elementShare } from './lootPowers.js';   // AUDIT SCHOOLS (L1 H1-H2, L3 F1): the one reach law, the one foe group, the one element share
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
+import { near, foeGroup, elementShare } from './loot/lootPowers.js';   // AUDIT SCHOOLS (L1 H1-H2, L3 F1): the one reach law, the one foe group, the one element share
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
 import { hudText } from './notify.js';
 import { t } from './textManager.js';
 

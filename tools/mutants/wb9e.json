@@ -1,74 +1,74 @@
 [
   {
     "name": "WB9e-a-weight-left-where-it-was",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "shape: 'disc', r: 7, pct: 0.52, base: 14, el: null, aim: 'self'",
     "new": "shape: 'disc', r: 7, pct: 0.40, base: 10, el: null, aim: 'self'",
     "tests": [
-      "test/wb9e_gate_blows.test.js"
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
     "name": "WB9e-dagons-in-his-aspects-grain",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "(isDagons(A) ? TELEGRAPH_STYLE.dagon :",
     "new": "(false ? TELEGRAPH_STYLE.dagon :",
     "tests": [
-      "test/wb9e_gate_blows.test.js"
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
     "name": "WB9e-the-throb-steady",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "  float hz = 1.5 + 0.5 * T2;",
     "new": "  float hz = 1.5;",
     "tests": [
-      "test/wb9e_gate_blows.test.js"
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
     "name": "WB9e-a-spark-falling-through-the-floor",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "  let y = Math.max(rest, up * t - g * t * t);",
     "new": "  let y = up * t - g * t * t;",
     "tests": [
-      "test/wb9e_gate_blows.test.js"
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
     "name": "WB9e-a-burst-living-forever",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "spent: Math.min(1, t / life) };",
     "new": "spent: Math.min(1, t / (life * 3)) };",
     "tests": [
-      "test/wb9e_gate_blows.test.js"
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
     "name": "WB9e-the-stone-at-its-mark-all-the-wind-up",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "d = METEOR_FROM_M * (1 - k * k);",
     "new": "d = 0;",
     "tests": [
-      "test/wb9e_gate_blows.test.js"
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
     "name": "WB9e-bursts-at-his-feet-for-a-meteor",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    else if (A.aim === 'point') { const p = atk.tg?.[0]; if (p) add(p[0], p[1]); }",
     "new": "    else if (A.aim === 'point') add(atk.x, atk.z);",
     "tests": [
-      "test/wb9e_gate_blows.test.js"
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
     "name": "WB9e-a-burst-a-frame",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    _fxLive.length = 0;",
     "new": "",
     "tests": [
-      "test/wb9e_gate_blows.test.js"
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   }
 ]

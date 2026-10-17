@@ -7,7 +7,7 @@
 // the price read it without the maker; the shelf and the tests build the record here. A fresh record each call - a
 // bought copy is the buyer's own (spellbookWindow.js confirmTrade copies it shallowly).
 
-import { buildCustomSpell } from './spellMaker.js';
+import { buildCustomSpell } from './spell/spellMaker.js';
 import { PATH_BY_ID, pathHeld } from './arcanePaths.js';
 
 /** The signature spell's record for path `id`, or null for no such path. */

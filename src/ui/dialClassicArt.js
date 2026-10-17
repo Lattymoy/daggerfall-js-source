@@ -6,7 +6,7 @@
 // face, read out of the player's ARENA2 when the dial is raised - nothing of the game's art ships with the port:
 //   SKILLS  the character's face - the head the large HUD and the sheet wear (the race's FACE??I0.CIF at the chosen
 //           face, or the curse's override: the werewolf's, the wereboar's, the vampire's - systems/vampirism.js)
-//   MAGIC   the spellbook button's star        } MAIN00I0.IMG, the 320x46 bar (ui/hudLarge.js), each cut off the
+//   MAGIC   the spellbook button's star        } MAIN00I0.IMG, the 320x46 bar (ui/hud/hudLarge.js), each cut off the
 //   ITEMS   the inventory button's sack        } stone it is painted on along its own outline - the masks below are
 //   MAP     the map button's scroll            } the icons' pixels, in or out, worked once off the bar
 // THE SIZES MATCH: the three bar icons at four screen pixels to each of their own (76-80 px tall) and every face at

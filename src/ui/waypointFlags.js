@@ -1,12 +1,12 @@
 // @ts-check
 // WAYPOINTS (2026-10-06, the player: "They can be small flags with different colors"): THE FLAG, ONE PAINTER FOR BOTH
-// MAPS - the Overworld's canvas (ui/travelViewHud.js drawMarks) and the held map's overlay (ui/heldMap.js). A pole from
+// MAPS - the Overworld's canvas (ui/travel/travelViewHud.js drawMarks) and the held map's overlay (ui/heldMap.js). A pole from
 // the point up, a swallow-tailed pennant off its top in the waypoint's colour, a dark edge so it reads on the land and
 // on the parchment alike; a party's flag wears a small pip, a guild's a bar, so the kind is never told by colour alone.
 // A followed waypoint's flag stands on a ring.
 //
 // Not a DFU member.
-import { waypointCss } from '../systems/mapWaypoints.js';
+import { waypointCss } from '../systems/map/mapWaypoints.js';
 
 /** The flag's size, px: the pole's height and the pennant's length. */
 export const FLAG_POLE_PX = 19;

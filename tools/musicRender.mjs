@@ -29,7 +29,7 @@ await page.goto('http://localhost:5207/play/');
 
 const out = await page.evaluate(async ({ SONG, SECONDS, RATE }) => {
   const { MidiBsaFile } = await import('/src/formats/hmiFile.js');
-  const { SongPlayer, applyChannelEvents, freshChannelState } = await import('/src/systems/songPlayer.js');
+  const { SongPlayer, applyChannelEvents, freshChannelState } = await import('/src/systems/song/songPlayer.js');
   const { fetchBytes } = await import('/src/scenes/shared.js');
 
   const bsa = new MidiBsaFile();

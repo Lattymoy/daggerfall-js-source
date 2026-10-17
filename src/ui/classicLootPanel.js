@@ -18,9 +18,9 @@
 // kept whole. Without the pack it is DFU's own tooltip box (ToolTip.cs: the settings' ToolTipBackgroundColor and
 // ToolTipTextColor, a bare DrawText), the classic HUD's only word-in-a-box.
 import { APP_ROOT } from '../systems/appRoot.js';
-import { NATIVE_W, NATIVE_H, drawImgCrop, drawRect } from './nativePanel.js';
+import { NATIVE_W, NATIVE_H, drawImgCrop, drawRect } from './native/nativePanel.js';
 import { drawText, measureText } from './text.js';
-import { getString } from '../systems/settings.js';
+import { getString } from '../systems/settings/settings.js';
 import { parseHexColor, DEFAULT_TOOLTIP_TEXT_BG, DEFAULT_TOOLTIP_TEXT_FG, TOOLTIP_MARGIN } from './toolTip.js';
 import { activeUiPack } from '../systems/uiPack.js';
 import { PLAQUE_MINE_TAG } from '../systems/roomLoot.js';   // PARTY-LOOT: a row of this player's own bonus says so
@@ -85,7 +85,7 @@ export function lootPanelLines(frame) {
 
 /**
  * AUDIT RETRO1 G5: WHERE THE PANEL STANDS, in the native frame `m` draws in - the reticle's row and the floor it
- * stands above, handed over in canvas pixels (ui/hud.js). Over a docked large HUD the crosshair is re-centred into the
+ * stands above, handed over in canvas pixels (ui/hud/hud.js). Over a docked large HUD the crosshair is re-centred into the
  * strip the bar leaves (ROAD-E E5) and the bar is drawn before the panel: centred on the screen's own middle, the panel
  * stood 138 px below the crosshair at 1920x1080 and a four-row parchment reached 31 px over the bar. Neither given,
  * the native screen's middle and foot - the plain HUD's, unchanged.

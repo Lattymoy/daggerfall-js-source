@@ -5,7 +5,7 @@
     "old": "  const slope = AIM_SLOPE / NAVAL_DEG;   // m a radian",
     "new": "  const slope = AIM_SLOPE;   // m a radian",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const p0 = Math.asin(Math.min(1, Math.sqrt(hh / slope)));",
     "new": "  const p0 = Math.asin(Math.min(1, hh / slope));",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "hh / Math.tan(p0) + slope * (p0 - dip);",
     "new": "hh / Math.tan(p0) + slope * (dip - p0);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  return dip >= p0 ? hh / Math.tan(dip)",
     "new": "  return dip <= p0 ? hh / Math.tan(dip)",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -41,8 +41,8 @@
     "old": "  return dip >= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (p0 - dip);",
     "new": "  return dip > 0 ? hh / Math.tan(dip) : 1e9;",
     "tests": [
-      "test/navaudit_helm.test.js",
-      "test/nav_a_guns.test.js"
+      "test/systems/naval/navaudit_helm.test.js",
+      "test/systems/naval/nav_a_guns.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    layDy = c[1] - look.at[1];\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "    want = (lookPoint[0] - c[0]) * dir[0] + (lookPoint[2] - c[2]) * dir[2];\n  }",
     "new": "    want = Math.hypot(lookPoint[0] - c[0], lookPoint[2] - c[2]);\n  }",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -69,188 +69,188 @@
     "old": "  } else if (look) {\n    // the sea",
     "new": "  } else if (false) {\n    // the sea",
     "tests": [
-      "test/navaudit_helm.test.js",
-      "test/nav_a_guns.test.js"
+      "test/systems/naval/navaudit_helm.test.js",
+      "test/systems/naval/nav_a_guns.test.js"
     ]
   },
   {
     "name": "NAV1H-the-look-on-a-ship-ignored",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return aimSolution(boatPose(boat), side, look ? { ...look, at: lookOnShip(boat, side, look) } : null, deps.seaY());",
     "new": "    return aimSolution(boatPose(boat), side, look ? { ...look, at: null } : null, deps.seaY());",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-round-shot-for-the-canvas",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const p = best.rig && bat.gun !== 'chain' && best.hull ? best.hull.c : best.point;",
     "new": "    const p = best.point;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-chain-for-the-hull",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const p = best.rig && bat.gun !== 'chain' && best.hull ? best.hull.c : best.point;",
     "new": "    const p = best.rig && best.hull ? best.hull.c : best.point;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-rig-never-asked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const boxes = [hull, ...rigBoxesOf(e.boat)];",
     "new": "      const boxes = [hull];",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-strikes-never-walked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }",
     "new": "      if (side) { aim = lookAim(boat, side); aimHit = null; }",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-her-way-ignored",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "          const sx = s.v[0] * tm, sz = s.v[2] * tm;",
     "new": "          const sx = 0, sz = 0;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-going-down-struck",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!e.boat || st === SHIP_STATES.sunk || st === SHIP_STATES.sinking) continue;\n      const boxes = [hullBox(e.boat), ...(solution.gun === 'chain'",
     "new": "      if (!e.boat || st === SHIP_STATES.sunk) continue;\n      const boxes = [hullBox(e.boat), ...(solution.gun === 'chain'",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-chain-blind-to-canvas",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const boxes = [hullBox(e.boat), ...(solution.gun === 'chain' ? rigBoxesOf(e.boat) : [])].filter(Boolean);",
     "new": "      const boxes = [hullBox(e.boat)].filter(Boolean);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-last-frames-hulls",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    // the ram and the aim, on the hulls as this frame stands them (AUDIT NAV1: both read the last frame's, a ship's way\n    // behind - my stem where it is, her planking where it was)\n    checkRams(boat);\n    stepHeaveTo(boat);\n    poseMyFires(total);\n    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n",
     "new": "    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    checkRams(boat);\n    stepHeaveTo(boat);\n    poseMyFires(total);\n",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-arc-through-her",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const arcs = aim.launches.map((l, i) => (hits[i] ? arcTo(l, hits[i].t) : arcPoints(l.p0, l.v0, deps.seaY(), 18)));",
     "new": "      const arcs = aim.launches.map((l) => arcPoints(l.p0, l.v0, deps.seaY(), 18));",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-zone-behind-her",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const zone = aim.landings.map((l, i) => (l && !hits[i] ? l.point : null)).filter(Boolean);",
     "new": "      const zone = aim.landings.filter(Boolean).map((l) => l.point);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-card-by-the-look-alone",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (aimHit?.ship?.boat && sea.has(aimHit.ship.id)) return knownOf(aimHit.ship) >= KNOW.colours ? targetCardOf(aimHit.ship, boatPose(boat).position) : null;   // GLASS-SPOT: the guns laid on a hull not made out - no card, and never another's\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-red-while-loading",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const hot = !!aimHit && state === 'ready';",
     "new": "    const hot = !!aimHit;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-red-drawn-while-loading",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      aimDraw = { arcs, zone, strikes, hot: ready && strikes.length > 0,",
     "new": "      aimDraw = { arcs, zone, strikes, hot: strikes.length > 0,",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-braced-read-as-loading",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (st.guns.braced) return 'braced';\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-empty-read-as-loading",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "? 'empty' : 'reloading';",
     "new": "? 'reloading' : 'reloading';",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-seconds-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "left: state === 'reloading' ? +st.guns.left(aim.side).toFixed(1) : 0 }",
     "new": "left: 0 }",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-tail-unsaid",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "hot: !!a.hot && (a.state ?? 'ready') === 'ready', dim: !!a.state && a.state !== 'ready', target: aimTail(a),",
     "new": "hot: !!a.hot && (a.state ?? 'ready') === 'ready', dim: !!a.state && a.state !== 'ready', target: a.hot ? ' - on target' : '',",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-never-dimmed",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "dim: !!a.state && a.state !== 'ready', target: aimTail(a),",
     "new": "dim: false, target: aimTail(a),",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-crippled-unsaid",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    case 'crippled': return ' - guns silent';\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "    if (aim?.posts && aim.zone?.length) {",
     "new": "    if (false) {",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "f, [0, AIM_POST_HALF_H, 0], tone.post, false, uv.u0, uv.u1, uv.v0, uv.v1);",
     "new": "f, [0, 0, AIM_POST_HALF_H], tone.post, false, uv.u0, uv.u1, uv.v0, uv.v1);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "  if (aim?.ready === false) return AIM_TONES.idle;\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -286,70 +286,70 @@
     "old": "    if (aim?.strikes?.length) {",
     "new": "    if (false) {",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-setting-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const want = setting('AimCamera', true) !== false && aiming",
     "new": "    const want = aiming",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-ease",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    camK += ((want ? 1 : 0) - camK) * (1 - Math.exp(-Math.max(0, dt) / AIM_CAM_TAU));",
     "new": "    camK += ((want ? 1 : 0) - camK) * (1 - Math.exp(-Math.max(0, dt) / (AIM_CAM_TAU * 2)));",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-unsmoothed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const k = camK * camK * (3 - 2 * camK);   // eased in and out",
     "new": "    const k = camK;   // eased in and out",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-guard-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (clear < 1) at = [c[0] + (at[0] - c[0]) * clear,",
     "new": "    if (false) at = [c[0] + (at[0] - c[0]) * clear,",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-for-the-chasers",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "&& aim && (aim.side === 'port' || aim.side === 'starboard')",
     "new": "&& aim",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-crippled",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "\n      && myBoatState(boat).damage.state !== SHIP_STATES.wrecked ? aim.side : null;",
     "new": " ? aim.side : null;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-never-home",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!want && camK < 1e-3) { camK = 0; camSide = null; }\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -358,7 +358,7 @@
     "old": "    if (naval && !tvf) mwv.eye = naval.aimEye(mwv.eye, dt);\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -367,7 +367,7 @@
     "old": "      : key === 'AimCamera' ? getPref('naval-aim-camera') !== false : key === 'AutoRepair' ? getPref('naval-auto-repair') !== false : undefined),",
     "new": "      : key === 'AutoRepair' ? getPref('naval-auto-repair') !== false : undefined),",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -376,7 +376,7 @@
     "old": "        const crouchPress = !helmBrace && pressed(latch.edge, keys, 'Crouch');",
     "new": "        const crouchPress = pressed(latch.edge, keys, 'Crouch');",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -385,7 +385,7 @@
     "old": "        const crouchHeld = !helmBrace && held(keys, 'Crouch');",
     "new": "        const crouchHeld = held(keys, 'Crouch');",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -394,205 +394,205 @@
     "old": "brace: csaRuntime.isSailing() && (held(keys, 'Crouch') || navalTouchBrace()) });",
     "new": "brace: csaRuntime.isSailing() && held(keys, 'Crouch') });",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-finger-uncaught",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  brace.addEventListener?.('touchstart', hold(true), { passive: false });",
     "new": "  brace.addEventListener?.('touchstart', () => {}, { passive: false });",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-finger-to-the-look",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const hold = (on) => (e) => { e?.preventDefault?.(); e?.stopPropagation?.(); touchBrace = on; };",
     "new": "  const hold = (on) => (e) => { e?.preventDefault?.(); touchBrace = on; };",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-a-press-surviving-its-plate",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "if (!braceOn) touchBrace = false; }",
     "new": "}",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-a-press-surviving-a-cover",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (!want) { shown.braceBtn = false; touchBrace = false; for",
     "new": "  if (!want) { shown.braceBtn = false; for",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-brace-for-a-mouse",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    brace: touch && !!model.armed,",
     "new": "    brace: !!model.armed,",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-finger-told-crouch",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const bracePress = touch ? 'hold Brace' : `${braceKey}: brace`;",
     "new": "  const bracePress = `${braceKey}: brace`;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-old-point",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const stem = [pose.position[0] + fwd[0] * build.bowZ, pose.position[1] + 1, pose.position[2] + fwd[2] * build.bowZ];",
     "new": "    const stem = [pose.position[0] + fwd[0] * (build.beam || 2) * 2.4, pose.position[1] + 1, pose.position[2] + fwd[2] * (build.beam || 2) * 2.4];",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-way-forgotten",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const way = wayIn.reduce((m, w) => Math.max(m, w.v), 0);",
     "new": "    const way = wayIn.at(-1)?.v ?? 0;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-memory-unbounded",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    while (wayIn.length && clock - wayIn[0].t > RAM_MEMORY_S) wayIn.shift();\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-her-way-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const speed = way - (her[0] * fwd[0] + her[2] * fwd[2]);",
     "new": "    const speed = way;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-closing-ungated",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const speed = way - (her[0] * fwd[0] + her[2] * fwd[2]);   // closing: a ship sailing on ahead of the stem takes less of it\n      if (speed < RAM_SPEED) continue;\n",
     "new": "      const speed = way - (her[0] * fwd[0] + her[2] * fwd[2]);   // closing: a ship sailing on ahead of the stem takes less of it\n",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-way-not-spent",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      wayIn = [];   // the way spent on her\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-recoil-plain",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "(galley ? 1 / GALLEY_RAM : BOW_RECOIL)",
     "new": "(galley ? 1 / GALLEY_RAM : 1)",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-recoil-unbraced",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": " * (st?.guns.braced ? BRACE_TAKEN : 1);\n      st?.damage.apply({ hull: Math.round(back)",
     "new": ";\n      st?.damage.apply({ hull: Math.round(back)",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-ram-cooldown-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk || clock - e.ramAt < RAM_COOLDOWN_S) continue;\n      const box = hullBox(e.boat);\n      if (!box || !insideGrown(box, stem, RAM_REACH)) continue;",
     "new": "      if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk) continue;\n      const box = hullBox(e.boat);\n      if (!box || !insideGrown(box, stem, RAM_REACH)) continue;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-galley-no-ram",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const dealt = Math.round(speed * RAM_DAMAGE * (galley ? GALLEY_RAM : 1));\n      effects.hit(stem,",
     "new": "      const dealt = Math.round(speed * RAM_DAMAGE);\n      effects.hit(stem,",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-ram-before-the-poses",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    // the ram and the aim, on the hulls as this frame stands them (AUDIT NAV1: both read the last frame's, a ship's way\n    // behind - my stem where it is, her planking where it was)\n    checkRams(boat);\n",
     "new": "    checkRams(boat);\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-canvas-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (underSail) return d.state === SHIP_STATES.wrecked ? 0 : d.wayShare();",
     "new": "    if (underSail) return d.state === SHIP_STATES.wrecked ? 0 : 1;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-oars-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return d.state === SHIP_STATES.wrecked ? WRECKED_OARS : 1;",
     "new": "    return 1;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-wreck-sails",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (d.state === SHIP_STATES.wrecked) return 'The ship is crippled - no sail will set.';\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-rig-refusal-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (d.maxSail > 0 && d.sailShare() <= 0) return 'The rigging is shot away - no sail will set.';\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-a-line-a-frame",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (refused && csa()?.state?.sailPosition > 0) { csa().LowerSails?.(); deps.say?.(refused, 2.5); }",
     "new": "    if (refused) { if (csa()?.state?.sailPosition > 0) csa().LowerSails?.(); deps.say?.(refused, 2.5); }",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -601,7 +601,7 @@
     "old": "    wayScale: (underSail) => naval?.wayScale(underSail) ?? 1,",
     "new": "    wayScale: () => 1,",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -610,52 +610,52 @@
     "old": "    sailRefused: () => naval?.sailRefused() ?? null,",
     "new": "    sailRefused: () => null,",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-share-unread-oars",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "f(b.modifierMoveSpeedOar)) * hurt);",
     "new": "f(b.modifierMoveSpeedOar)));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "NAV1H-the-share-unread-sail",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b));",
     "new": "f(b.modifierMoveSpeedSail))) * rigOf(b));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "NAV1H-the-share-unheld",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const wayHurt = (underSail) => f(Math.max(0, Math.min(1, Number(deps.wayScale?.(underSail) ?? 1))));",
     "new": "const wayHurt = (underSail) => f(Number(deps.wayScale?.(underSail) ?? 1));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "NAV1H-the-sail-flag-unread",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const hurt = wayHurt(state.sailPosition !== 0);",
     "new": "    const hurt = wayHurt(true);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "NAV1H-the-refusal-after-the-raise",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const refused = deps.sailRefused?.() ?? null;\n    if (refused) {\n      deps.hudText(refused);\n      return;\n    }\n",
     "new": "",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
@@ -664,7 +664,7 @@
     "old": "    const afford = Math.min(n, Math.floor(purse / price));",
     "new": "    const afford = Math.floor(purse / price);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -673,7 +673,7 @@
     "old": "    const afford = Math.min(n, Math.floor(purse / price));",
     "new": "    const afford = n;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -682,7 +682,7 @@
     "old": "export const YARD_ORDER = Object.freeze(['hull', 'sail', 'crew', 'barrels']);",
     "new": "export const YARD_ORDER = Object.freeze(['sail', 'hull', 'crew', 'barrels']);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -691,7 +691,7 @@
     "old": "    hull: Math.max(0, Math.ceil(damage.maxHull - damage.hull - 1e-9)),",
     "new": "    hull: Math.max(0, Math.floor(damage.maxHull - damage.hull)),",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -700,7 +700,7 @@
     "old": "  const part = (have, whole) => Math.max(0, Math.min(whole * FIELD_MEND_CAP - have, whole * rate));",
     "new": "  const part = (have, whole) => Math.max(0, whole * rate);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -709,7 +709,7 @@
     "old": "(crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE)",
     "new": "(crewed ? 1 : FIELD_MEND_ALONE)",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -718,53 +718,53 @@
     "old": ": FIELD_MEND_ALONE) * Math.max(0, scale) * Math.max(0, dt);",
     "new": ": 1) * Math.max(0, scale) * Math.max(0, dt);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ],
     "note": "SHIP-CREW (PIN MOVED): re-aimed at the moved line."
   },
   {
     "name": "NAV1H-the-port-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!enabled || !boat || !where().nearPort) return false;",
     "new": "    if (!enabled || !boat) return false;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-her-way-unread-at-the-quay",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return Math.hypot(v[0], v[2]) <= YARD_SPEED && !hostileNearMe();",
     "new": "    return !hostileNearMe();",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-a-hostile-unread-at-the-quay",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return Math.hypot(v[0], v[2]) <= YARD_SPEED && !hostileNearMe();",
     "new": "    return Math.hypot(v[0], v[2]) <= YARD_SPEED;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-yard-unopened",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      return yardHere(boat) && openYard(boat, { quay: true });   // AUDIT NAV1: the shipwright, lying to his quay",
     "new": "      return false;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-quiet-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const quiet = clock - s.damage.lastHitAt >= FIELD_QUIET_S && !hostile;",
     "new": "      const quiet = !hostile;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ],
     "note": "SHIP-CREW (PIN MOVED): re-aimed at the moved line."
   },
@@ -774,255 +774,255 @@
     "old": "      if (s.fires.length && s.state !== SHIP_STATES.sinking && s.state !== SHIP_STATES.sunk) {\n        s.lastHitAt = now;\n",
     "new": "      if (s.fires.length && s.state !== SHIP_STATES.sinking && s.state !== SHIP_STATES.sunk) {\n",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-a-hostile-unread-at-sea",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "FIELD_QUIET_S && !hostile;",
     "new": "FIELD_QUIET_S;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ],
     "note": "SHIP-CREW (PIN MOVED): re-aimed at the moved line."
   },
   {
     "name": "NAV1H-the-refloat-at-once",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "          s.damage.repair({ hull: m.hull, sail: m.sail, crew: 0 }, { refloat: FIELD_REFLOAT });",
     "new": "          s.damage.repair({ hull: m.hull, sail: m.sail, crew: 0 });",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-mending-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "          if (b === boat) mending = true;\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-buy-pays-nothing",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      deps.pay?.(r.cost);\n      give(id, r.afford);",
     "new": "      give(id, r.afford);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ],
     "note": "SHIP-CREW (PIN MOVED): re-aimed at the moved line."
   },
   {
     "name": "NAV1H-buy-all-pays-nothing",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (cost > 0) deps.pay?.(cost);\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-barrels-unstowed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (id === 'barrels') st.guns.barrels += n;\n      else d.repair",
     "new": "      if (id === 'barrels') void n;\n      else d.repair",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-mend-chip-unsaid",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "ship.repairing ? 'repair' : ship.mending ? 'mend' : null]",
     "new": "ship.repairing ? 'repair' : null]",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ],
     "note": "SHIP-CREW (PIN MOVED): re-aimed at the moved line."
   },
   {
     "name": "NAV1H-the-wreck-hint-unsaid",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "      : ship.wrecked ? (ship.repairing ? 'Crippled - her crew at the repairs' : ship.repairOrdered ? 'Crippled - her crew stands to the repairs' : ship.stores > 0 ? 'Crippled - order repairs, or make port' : 'Crippled - make port for a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ],
     "note": "SHIP-CREW (PIN MOVED): re-aimed at the moved line. AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
   },
   {
     "name": "NAV1H-the-yard-a-ship-to-board",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "`open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name\n",
     "new": "`open ${model.board.name}'s hold`\n",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-a-rows-press-unwired",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "      const press = button(r.press, 'dfnaval-btn dfnaval-yardbuy', () => { note = yardNote(m.buy?.(r.id)); render(); });",
     "new": "      const press = button(r.press, 'dfnaval-btn dfnaval-yardbuy', () => {});",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-whole-press-unwired",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "  const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => { note = yardNote(m.buyAll?.()); render(); });",
     "new": "  const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => {});",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-yard-note-unsaid",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "    noteLine.textContent = note ? note.text : '';",
     "new": "    noteLine.textContent = '';",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-a-crewless-boats-hands",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "r.id === 'crew' ? sh.maxCrew > 0 :",
     "new": "r.id === 'crew' ? true :",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-never-greyed",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "      able(press, r.can);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
     "new": "      able(press, true);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ],
     "note": "SHIP-CREW (PIN MOVED): re-aimed at the moved line."
   },
   {
     "name": "NAV1H-the-yard-back-key-deaf",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "    if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit('close'); }",
     "new": "    void e;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-yard-chunk-cold",
-    "file": "src/ui/enhancedChunk.js",
-    "old": "  () => import('./navalYardWindow.js'),   // AUDIT NAV1: the shipwright's - a port's, after a fight\n",
+    "file": "src/ui/enhanced/enhancedChunk.js",
+    "old": "  () => import('../naval/navalYardWindow.js'),   // AUDIT NAV1: the shipwright's - a port's, after a fight\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-refusal-silent",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const hv = nb || pr || boarding ? null : heaveFor(boat);",
     "new": "    const hv = null;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-heave-unpressed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (fast) { startHeaveTo(fast, boat); return true; }   // AUDIT NAV1: too fast to board her - heave to\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-sails-left-set",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const r = csa();\n    if (r?.state?.sailPosition > 0) r.LowerSails?.();\n    deps.say?.(`Heave to!",
     "new": "    const r = csa();\n    void r;\n    deps.say?.(`Heave to!",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-brake-unwired",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  const brake = () => (enabled && heaveTo && myBoat() ? heaveTo.decel : 0);",
     "new": "  const brake = () => 0;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-driven-on-while-heaving",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (heaveTo) return 0;   // heaving to: nothing driving her on\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-heave-held-past-its-end",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (slow || clock > heaveTo.until || !e || e.ship.damage.state !== SHIP_STATES.struck || e.ship.boarded) heaveTo = null;",
     "new": "    if (slow) heaveTo = null;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-heave-unstepped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    stepHeaveTo(boat);\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-heaving-card-unsaid",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    if (mine && board.kind === 'heave') return { text: board.heaving ? 'Colours struck - heaving to' : `Colours struck - ${key}: heave to`, kind: 'board' };\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-heave-hint-a-boarding",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "        : model.board.kind === 'heave' ? `heave to beside ${model.board.name}` : `board ${model.board.name}`}`)",
     "new": " : `board ${model.board.name}`}`)",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-brake-unread",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();",
     "new": "    return moveAccelOwn();",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "NAV1H-the-brake-unheld",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();",
     "new": "    return brake > 0 ? f(brake) : moveAccelOwn();",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
@@ -1031,97 +1031,97 @@
     "old": "    brake: () => naval?.brake() ?? 0,",
     "new": "    brake: () => 0,",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-compass-range-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (st === SHIP_STATES.sinking || st === SHIP_STATES.sunk || dist2d(e.ship.pos, feet) > COMPASS_SHIP_RANGE) continue;",
     "new": "        if (st === SHIP_STATES.sinking || st === SHIP_STATES.sunk) continue;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-going-down-on-the-compass",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (st === SHIP_STATES.sinking || st === SHIP_STATES.sunk || dist2d(e.ship.pos, feet) > COMPASS_SHIP_RANGE) continue;",
     "new": "        if (st === SHIP_STATES.sunk || dist2d(e.ship.pos, feet) > COMPASS_SHIP_RANGE) continue;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-kinds-merged",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        const kind = st !== SHIP_STATES.afloat ? 'struck'\n",
     "new": "        const kind = st !== SHIP_STATES.afloat ? 'ship'\n",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-hostile-unmarked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "          : knownOf(e) >= KNOW.colours && !disguisedOf(e) && hostile(e.ship, me, { notoriety: (c) => notoriety.get(c), now: clock }) ? 'hostile' : 'ship';\n        out.push",
     "new": "          : 'ship';\n        out.push",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-compass-with-the-arc-off",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    compassShips() {\n      if (!enabled) return null;\n",
     "new": "    compassShips() {\n",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-ship-marks-undrawn",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawShipCompassMarks(renderer, ships, playerXZ, heading01, { bx, by, bw, s });   // AUDIT NAV1: the sea's ships\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-party-triangle",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  const rows = [...DETECT_MARKER_ROWS].reverse();",
     "new": "  const rows = DETECT_MARKER_ROWS;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-one-colour-for-all",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "    const col = SHIP_MARK_COLORS[t.kind] ?? SHIP_MARK_COLORS.ship;",
     "new": "    const col = SHIP_MARK_COLORS.ship;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-strip-colourless",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    if (node.style.borderBottomColor !== c) node.style.borderBottomColor = c;\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-strip-unmarked",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  drawShipMarks(opts.ships ?? null, opts.playerXZ ?? null, heading01);   // AUDIT NAV1: the sea's ships\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -1130,61 +1130,61 @@
     "old": "          ships: navalOn() && _mode() === 'exterior' ? naval?.compassShips() ?? null : null, boats:",
     "new": "          boats:",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-my-fire-unshown",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    poseMyFires(total);\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-my-fire-unheard",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      f.loop ??= deps.audio?.loop3d?.(NAVAL_CLASSIC.burning, pose.position, 0.7, NAVAL_FIRE_LOOP) ?? null;\n      f.loop?.move?.(pose.position);\n    }\n  }",
     "new": "      f.loop?.move?.(pose.position);\n    }\n  }",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-my-glow-unlit",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      out.push({ x: p[0], y: p[1] + hullBuild(b.hull).deck + 2, z: p[2], range: BURN_RANGE * (0.85 + 0.15 * Math.sin(clock * 9)), color: BURN_COLOR, carried: true });\n",
     "new": "",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-my-flames-left-burning",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (st.damage.fire <= 0) { if (f) douseMine(b, f); continue; }",
     "new": "      if (st.damage.fire <= 0) continue;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-my-flames-left-behind",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        fire.handle?.move?.(p);\n        effects.burn(p, dt);\n      }\n      f.loop ??=",
     "new": "        effects.burn(p, dt);\n      }\n      f.loop ??=",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAV1H-the-crews-skill-fixed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  const crewSkill = (boat, st) => (boat.crewed ? PLAYER_SKILL_THIN + (PLAYER_SKILL - PLAYER_SKILL_THIN) * st.damage.crewShare() : PLAYER_SKILL);",
     "new": "  const crewSkill = () => PLAYER_SKILL;",
     "tests": [
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   }
 ]

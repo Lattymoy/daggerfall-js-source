@@ -1,6 +1,6 @@
 // @ts-check
 // LEFAY1 (2026-10-08): THE MONUMENT TO JULIAN LEFAY, WHERE IT STANDS - the exterior hosts' pool on the runtime pools'
-// shape (scenes/sigilBrokerPool.js, scenes/gatePool.js): its stone drawn in the host's world pass, its collider bucket,
+// shape (scenes/sigilBrokerPool.js, scenes/gate/gatePool.js): its stone drawn in the host's world pass, its collider bucket,
 // the eye's box and its name, the press on it, and the flowers - thrown, in flight, and laid.
 //
 // WHERE: the host says (`site`: the scene's x, z of its middle - world/lefayMonument.js lefaySpot's, carried by the
@@ -11,7 +11,7 @@
 //
 // THE FLOWERS: a press throws one (a lit Throw row, or any mode but Info and Steal) - at most one every TOSS_EVERY_MS -
 // from the thrower's hand on an arc to its rest on the thrower's side (lefayMonument.js tossRest), where it is laid:
-// the character's tribute counts it and keeps it (`keep`, the save's - systems/save.js). The laid flowers are one
+// the character's tribute counts it and keeps it (`keep`, the save's - systems/save/save.js). The laid flowers are one
 // billboard batch to a kind of flower, made again when the pile changes, riding the monument's middle. Their pictures
 // are Daggerfall's (TEXTURE.254, the player's own); a game folder that will not give them leaves the flowers unseen,
 // and the count still counts.
@@ -30,9 +30,8 @@ import {
   LEFAY_KEY, LEFAY_TEXT, LEFAY_ROWS, LEFAY_ARCHIVE, MONUMENT_BOXES, MONUMENT_STEPS, MONUMENT_FOOT, OBELISK, LEFAY_FLOWERS, FLOWER_SCALE,
   TOSS_MS, TOSS_EVERY_MS, buildLefayModel, tossRest, flowerPlace, tossPoint, normalTribute, layFlower,
 } from '../world/lefayMonument.js';
-import { lefayPictures } from '../world/lefayArt.js';
-import { asPortRows } from '../world/classicArt.js';   // DF-ART: the monument's pictures, Daggerfall's own
-import { classicRgbaOf } from '../systems/textureReplacement.js';
+import { lefayArt } from '../world/lefayArt.js';
+import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the monument's pictures in Daggerfall's colours
 import { RAY_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
 import { trs } from '../world/mat4.js';
@@ -67,7 +66,7 @@ export function bodyTrapped(at, f) {
  *   now?: () => number, rand?: () => number, restores?: () => number,
  * }} deps  `site` the scene x, z of its middle (null where it does not stand), and the frame's vertical compensation
  *   when the host has one (a change re-reads the ground); `tribute`/`keep` the character's record; `restores` how many
- *   saves the page has restored (systems/save.js restoresSoFar)
+ *   saves the page has restored (systems/save/save.js restoresSoFar)
  */
 export function createLefayMonument({
   renderer = null, getTexture = null, uploadRecord = null, billboardSize = null, site, groundAt, collider = () => null,
@@ -146,10 +145,7 @@ export function createLefayMonument({
     if (meshTried || !renderer?.createMesh) return;
     meshTried = true;
     try {
-      // DF-ART: Daggerfall's own pictures (world/lefayArt.js lefayPictures), read from the player's ARENA2 - the
-      // monument stands at once and wears them as they land
-      lefayPictures(classicRgbaOf).then((pics) => { for (const [rec, pic] of pics) renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, asPortRows(pic)); })
-        .catch((e) => console.warn('[lefay] the monument\'s pictures would not load', e?.message ?? e));
+      for (const [rec, art] of lefayArt()) renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)));
       mesh = renderer.createMesh(model);
     } catch (e) { console.warn('[lefay] the monument would not build', e?.message ?? e); }
   }

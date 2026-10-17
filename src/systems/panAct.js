@@ -5,7 +5,7 @@
 // pan, and the pan is DONE while its heat stands in the window (recipeLaw panWindow - the rank's, the band's, and C&C's
 // Skillet half again). The press takes the pan off: in the window it is done; before it raw. A pan left to burn is taken
 // off burnt by the fire itself and the next goes on. Every pan done is a clean act. Pure - a machine the fire's section
-// of the Stores page ticks and presses (ui/profPages.js), as the chisel is the mason's bench's (systems/chiselAct.js).
+// of the Stores page ticks and presses (ui/professions/profPages.js), as the chisel is the mason's bench's (systems/chiselAct.js).
 //
 // The act is the client's, so it may be lied about: its report moves the service by its bounded step only (5.1's honest
 // bound - a dish takes no quality, so a clean pan is half again its Cooking XP; the service reads `clean` and nothing

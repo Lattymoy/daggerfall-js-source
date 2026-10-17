@@ -5,20 +5,14 @@
 // THE SIDE, AND WHY THE REPEAT IS NOT A REPEAT ANY MORE. world/wagonModels.js layFace gives a face whose normal runs
 // along x, looks OUT and stands under 2.6 m the open wagon's TEX.openSide - a BAND (world/wagonArt.js BANDS), not a
 // plain face: v runs the whole of it (SIDE_Y0 0.94 m to SIDE_Y1 3.06 m, 2.12 m of wall) and u is laid by
-// `banded('openSide')` off WAGON_TILE.openSide[0]. That figure was SIDE_TILE_M, 1.3 m, and the picture repeated: the
-// texture wraps (render/renderer.js textureParams' REPEAT - wagon faces upload through it), every tile byte-identical,
-// so the arms stood four times down a side (read off the bake by test/wagonheraldry.test.js: the wall is 5.82 m with
-// its u running -0.54 to 3.94, the four tiles at z 0, 1.3, 2.6 and 3.9 m, the last cut at 94%).
-//
-// The fix is the picture's shape, not the cloth's. `WAGON_TILE.openSide[0]` is now SIDE_CELLS * SIDE_TILE_M, and the
-// record is `SIDE_CELLS` COPIES OF ITSELF ACROSS (classicArt.js composedPicture's `repeat`) - the same 256-square cell
-// of Daggerfall's sailcloth, four times side by side, NEAREST, the same bytes. The face's u now runs ONCE over all
-// four, and a cell is 1/4 of the picture, so the cell boundaries fall at 1.3 m, 2.6 m and 3.9 m - the same metres as
-// before. The sailcloth is therefore not merely unbroken but BYTE-FOR-BYTE the cloth of the repeating picture: same
-// cell, same 256 texels over the same 1.3 m, same NEAREST. Stretching the tile instead (which is what
-// "suppress the repeat" means without this) would have smeared the weave 3.94-fold across a face where a texel is
-// 5.1 mm wide; this does not touch it at all. The arms go on ONE cell (EMBLEM_CELL, the second), so the wagon carries
-// the one emblem that stood at z 1.3 to 2.6 m and no other.
+// `banded('openSide')` off WAGON_TILE.openSide[0]. That figure is SIDE_CELLS * SIDE_TILE_M, and the picture is four
+// tiles of the side's canvas side by side (world/wagonArt.js openSideArt - the same tile four times, so the boards
+// read exactly as they did while the texture itself repeated): the texture wraps (render/renderer.js textureParams'
+// REPEAT - wagon faces upload through it), every tile byte-identical, so the arms would stand four times down a side.
+// The face's u runs ONCE over all four cells, and a cell is 1/4 of the picture, so the cell boundaries fall at 1.3 m,
+// 2.6 m and 3.9 m - the same metres as before. The arms go on ONE cell (EMBLEM_CELL, the second), so the wagon carries
+// the one emblem and no other. DF-LOOK: the cloth is the port's own painted canvas, grained and snapped to Daggerfall's
+// palette at the upload - the arms are painted first and ride the same look.
 //
 // A SHIELD, NOT THE HALL'S THREE-TALL BANNER (ui/heraldryArt.js drawBanner - the same field, border and device, a
 // different box). The cell is 1.3 m of u by 2.12 m of v and the banner is one part in three of it, so a banner here is
@@ -26,17 +20,15 @@
 // on the same square metre of cloth. ui/heraldryArt.js's own HERALDRY-SHOWN says the same of every box that is not a
 // banner's. Swapping it back is the one line of `drawWagonEmblem` below, which is the only place the shape is chosen.
 //
-// THE BRIDGE. composedPicture's `paint` is handed the ASSEMBLED picture as a mutable RGBA buffer, last, after the body
-// and every inset; the arms are drawn into a Canvas2D context and read back with getImageData, then stamped over the
-// cloth ALPHA-BLENDED - the insets' binary threshold does not apply here, and a shield's dark edge over a lit sail
-// wants the blend, not a hole. There is no canvas in a Worker without one, nor in the suite: no canvas leaves the
-// cloth bare and the wagon whole, never a throw.
+// THE BRIDGE. world/wagonArt.js openSideArms hands over the ASSEMBLED picture as a mutable RGBA buffer; the arms
+// are drawn into a Canvas2D context and read back with getImageData, then stamped over the cloth ALPHA-BLENDED -
+// a shield's dark edge over lit boards wants the blend, not a hole. There is no canvas in a Worker without one, nor
+// in the suite: no canvas leaves the cloth bare and the wagon whole, never a throw.
 //
 // VISUAL ONLY. Nothing here rides the wire: no field, no RELAY_VERSION, no PARK_WAGON_LOOK_MAX, no new paint. Whose
 // arms it is, whose wagon it is on and what a look may choose are all phase 2; what is here is the picture.
 //
 // Not a DFU member: Daggerfall Unity has no player guilds, and no wagon pictures. Ledger A (ONLINE, WAGONS1).
-import { COMPOSE } from './classicArt.js';   // a composed cell's size, four of its texels to the layout's one
 import { heraldryOf } from '../net/heraldryLaw.js';   // GUILD1d: a heraldry in the law's shape, or nothing
 import { drawShield } from '../ui/heraldryArt.js';   // GUILD1d: THE HERALDRY AS A SHIELD, drawn on a canvas
 
@@ -76,14 +68,15 @@ export const EMBLEM_CELL = 1;
 
 /**
  * THE EMBLEM'S PLACE in a picture `pic` whose cells are `cellW` texels wide - `tileM` of u to a cell, `bandM` of v
- * over the lot. The rect is kept SQUARE IN METRES, not in texels: a composed picture's texels are not square on this
+ * over the lot. The rect is kept SQUARE IN METRES, not in texels: the side picture's texels are not square on the wall
  * face (u is `tileM` over a cell, v is `bandM` over the whole height), so a box square in texels comes out as a tall
  * shield on the wall. Pure.
  * @param {{width:number,height:number}} pic @param {number} tileM @param {number} bandM @param {number} [emblemM]
  * @param {number} [cell] which cell it stands in @param {number} [cellW] that cell's width in texels
  * @returns {{x0:number,y0:number,w:number,h:number}}
  */
-export function emblemRect(pic, tileM, bandM, emblemM = EMBLEM_M, cell = 0, cellW = COMPOSE) {
+export function emblemRect(pic, tileM, bandM, emblemM = EMBLEM_M, cell = 0, cellW = 0) {
+  cellW = cellW > 0 ? cellW : pic.width;
   if (!(tileM > 0) || !(bandM > 0) || !(emblemM > 0) || !(cellW > 0) || cell < 0) return { x0: 0, y0: 0, w: 0, h: 0 };
   const w = Math.min(cellW, Math.max(1, Math.round((emblemM / tileM) * cellW)));
   const h = Math.min(pic.height, Math.max(1, Math.round((emblemM / bandM) * pic.height)));
@@ -93,7 +86,7 @@ export function emblemRect(pic, tileM, bandM, emblemM = EMBLEM_M, cell = 0, cell
 /**
  * A PICTURE'S TEXELS WHERETHAN OVER `src`'s, at (`x0`, `y0`) of it - alpha-blended, the source-over of a canvas's
  * straight-alpha read-back. The destination's ALPHA IS NOT TOUCHED: composedPicture's body is opaque, and a heraldry
- * is paint on cloth, never a hole through it (test/wagons2.test.js holds every wagon texel to whole or clear). Off
+ * is paint on cloth, never a hole through it (test/systems/wagon/wagons2.test.js holds every wagon texel to whole or clear). Off
  * either edge is dropped, not wrapped - the stamp is one emblem in the middle of a tile, never a seam. Pure.
  * @param {{width:number,height:number,data:Uint8Array}} pic
  * @param {{width:number,height:number,data:Uint8ClampedArray|Uint8Array}} src @param {number} x0 @param {number} y0
@@ -149,7 +142,7 @@ function normalizeArms(heraldry) {
   return heraldryOf(raw) ?? null;
 }
 /**
- * THE EMBLEM PAINTED OVER A WAGON'S SIDE - the `paint` of a composed picture (world/classicArt.js): when no heraldry
+ * THE EMBLEM PAINTED OVER A WAGON'S SIDE (world/wagonArt.js openSideArms hands the assembled side over): when no heraldry
  * is passed (the icons and previews) the reader's own guild's arms; `null` leaves the cloth bare (no guild, or a
  * guild that does not broadcast); an object paints that guild's arms. `tileM`/`bandM` are the side's own metres,
  * `cell`/`cellW` which cell of a repeated picture it belongs to. Whether it was painted - false where there is no
@@ -157,7 +150,8 @@ function normalizeArms(heraldry) {
  * @param {{width:number,height:number,data:Uint8Array}} pic @param {number} tileM @param {number} bandM
  * @param {number} [cell] @param {number} [cellW] @param {number} [emblemM] @param {any} [heraldry]
  */
-export function paintWagonEmblem(pic, tileM, bandM, cell = EMBLEM_CELL, cellW = COMPOSE, emblemM = EMBLEM_M, heraldry = undefined) {
+export function paintWagonEmblem(pic, tileM, bandM, cell = EMBLEM_CELL, cellW = 0, emblemM = EMBLEM_M, heraldry = undefined) {
+  cellW = cellW > 0 ? cellW : pic.width;
   const resolved = normalizeArms(heraldry);
   const arms = (resolved === undefined) ? wagonHeraldry() : resolved;
   const { x0, y0, w, h } = emblemRect(pic, tileM, bandM, emblemM, cell, cellW);

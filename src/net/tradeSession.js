@@ -1,6 +1,6 @@
 // @ts-check
 // TRADE1 (2026-09-21): THE TRADE, AS A STATE MACHINE. Pure - no DOM, no game import: everything the game owns (the pack,
-// the item law, the socket) is handed in, so test/trade_session.test.js drives two of these against each other over a
+// the item law, the socket) is handed in, so test/net/trade_session.test.js drives two of these against each other over a
 // fake wire and pins the law without a browser.
 //
 // WHAT A TRADE IS. Two players stand in one room. One asks (`ask`), the other answers (`yes`/`no`). Then each stages an
@@ -49,7 +49,7 @@ export const COMMIT_WAIT_MS = 20_000;
 /** The most frames one session holds unsent. */
 export const OUTBOX_MAX = 32;
 /** REALM P2.1: A REALM TRADE'S REVISIONS START HERE (both `rev` and `theirRev`), half the wire's bound. A realm trade is
- *  settled by the service, never by a `commit` frame (net/realmTradeLaw.js); a peer that still settles hand to hand (a
+ *  settled by the service, never by a `commit` frame (net/realm/realmTradeLaw.js); a peer that still settles hand to hand (a
  *  tab open from before a deploy) numbers its revisions from 0, so each side's locks name revisions the other never
  *  holds, nothing is confirmed, and nobody's goods leave. The realm side says so at the peer's first frame. */
 export const REALM_TRADE_REV_BASE = TRADE_REV_MAX / 2;

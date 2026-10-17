@@ -83,6 +83,6 @@ await browser.close();
 await server.close();
 // The judgement: a scene that never reported a second, or threw on
 // the page, is not a measurement - a probe that prints a dash and
-// exits 0 is the disease test/probehygiene.test.js T3 names.
+// exits 0 is the disease test/tooling/probehygiene.test.js T3 names.
 const bad = rows.filter((r) => !r.seconds || r.errors || !(r.fps > 0)).map((r) => r.scene);
 if (bad.length || rows.length !== WANT.length) throw new Error(`perf: no measurement for ${bad.join(', ') || 'a scene'}`);

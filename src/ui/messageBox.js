@@ -71,7 +71,7 @@ import { CifRciFile } from '../formats/cifRciFile.js';
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
 import { bitmapToColor32 } from '../formats/color32Order.js';
 import { drawText, measureText } from './text.js';
-import { shadowText } from './nativePanel.js';
+import { shadowText } from './native/nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { clampScrollIndex, thumbSpan, drawScrollThumb } from './verticalScrollBar.js';
@@ -79,7 +79,7 @@ import { decodePng } from '../systems/textureReplacement.js';   // RR2: a mod's 
 import { packTexture } from './packArt.js';   // OVH2: the worn UI pack's buttons
 import { packCifRciUrl } from '../systems/uiPack.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Yes/No dialog is Enhanced Plus's
-import { drawEnhancedDialog } from './enhancedDialog.js';   // DLG1: a box that asks, in the enhanced skin
+import { drawEnhancedDialog } from './enhanced/enhancedDialog.js';   // DLG1: a box that asks, in the enhanced skin
 import { processGrammar } from '../systems/textManager.js';   // L10N3g: MultiFormatTextLabel.AddTextLabel's grammar (:230)
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90) - the value IS

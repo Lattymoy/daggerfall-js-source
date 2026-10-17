@@ -11,7 +11,7 @@ import { composeLook } from '../net/remotePlayers.js';
 import { LOOK_GROUPS } from '../net/wire.js';   // AUDIT MW-NPC II K2: a worn piece's group, by its index on the wire
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
-import { ARMOR_ENUM, WEAPONS_ENUM, equipmentVariantFor } from '../combat/enemyEquipment.js'; import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; import { MOBILE_TYPES } from './mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
+import { ARMOR_ENUM, WEAPONS_ENUM, equipmentVariantFor } from '../combat/enemyEquipment.js'; import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; import { MOBILE_TYPES } from './mobile/mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
 import { npcHint } from './wardrobe.js';   // MWNPC17: the man under the kit his own - his head, his hair, the clothes' records
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
@@ -62,13 +62,13 @@ export function foeSeed(f) {
   }
   return (f._mwSeed = h);
 }
-/** FB1012d ALLY-RACE (bible/01-Overview/Field-Bugs-2026-10-12d.md; the owner: "companions when morrowind attached switches
+/** FB1012d ALLY-RACE (bible/01-Overview/bugs/Field-Bugs-2026-10-12d.md; the owner: "companions when morrowind attached switches
  *  character race"): A PERSON OF THEIR OWN. foeSeed's stand law - its species and where it stood, or its number and
  *  feet - drew a companion afresh at every stand: every door, dungeon, fast travel, load and sweep stood him in a new
  *  body of the Bay's (a Breton hand a Nord through the next door, a Wood Elf through the one after). One whose person is
  *  their own is drawn as that person, wherever and however often a body stands for them: a companion the layer stood
  *  (scenes/crewAshore.js stamps `person` on every body it stands - a crew hand his own, a sworn revenant its record's),
- *  and a revenant come back for the player (its record's `person` on its stamp - systems/revenant.js revenantPerson,
+ *  and a revenant come back for the player (its record's `person` on its stamp - systems/revenant/revenant.js revenantPerson,
  *  minted off the body it was born in), so the one that kneels is the one that follows. It is the seed: every machine
  *  reads it off the wire (`ls`) as a foe's own, so the room sees the same man. Null: a foe of the place, drawn off where
  *  it stood. @param {any} f */
@@ -106,7 +106,7 @@ export const isClassFoe = (f) => !!f?.entity?.isClass;
 /** @type {Set<number>} */
 export const ORC_MOBILES = new Set([MOBILE_TYPES.Orc, MOBILE_TYPES.OrcSergeant, MOBILE_TYPES.OrcShaman, MOBILE_TYPES.OrcWarlord]);
 /** MWNPC14 (section 19): THE VAMPIRES - people, as Morrowind's are: a vampire foe stands as a person of the Bay in its
- *  clothes, wearing its race's vampire head (formats/mwFirstPerson.js vampireHeadRecord, the look's `vampire`). */
+ *  clothes, wearing its race's vampire head (formats/morrowind/mwFirstPerson.js vampireHeadRecord, the look's `vampire`). */
 /** @type {Set<number>} */
 export const VAMPIRE_MOBILES = new Set([MOBILE_TYPES.Vampire, MOBILE_TYPES.VampireAncient]);
 /** MWNPC15 (section 20): THE WEREWOLF - a person in its beast form: its look a person's marked `wolf`, which the lane

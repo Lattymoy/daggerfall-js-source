@@ -37,7 +37,7 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { ringVertices } from './duelWall.js';
-import { shapeBound } from '../systems/weatherMap.js';   // AUDIT DEEP2 D1: the most a storm's outline reaches
+import { shapeBound } from '../systems/weather/weatherMap.js';   // AUDIT DEEP2 D1: the most a storm's outline reaches
 import { CURTAIN_SHARE, CURTAIN_EXT, CURTAIN_STREAKS, CURTAIN_INTO, CELL_EDGE } from './volumetricClouds.js';
 
 /** Quads around a curtain. */

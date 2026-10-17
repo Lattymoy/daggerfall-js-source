@@ -5,9 +5,10 @@
 // developer's alone (titles.js isDeveloper - the developers' list, as the customs pass is), each act written into the
 // character's findings with who did it, and said by tools/realmReview.mjs:
 //
-//   /v1/mod/realm-holds      the characters held or flagged, with their last finding
+//   /v1/mod/realm-holds      the characters held or flagged, with their last finding (and a law hold's end, when timed -
+//                            AUTO-HOLD: no hold waits on this tool to lift; staff's own aside, each lifts on its own)
 //   /v1/mod/realm-findings   one character's findings and its wealth by the hour
-//   /v1/mod/realm-clear      lift a hold (its strikes with it), clear a flag - and the law's finding standing is EXCUSED
+//   /v1/mod/realm-clear      lift a hold (its strikes and timed holds with it), clear a flag - and the law's finding standing is EXCUSED
 //                            (`law_excused`: staff judged it wrong, and the same signature holds nothing again; a new
 //                            one does), the budget's bucket full again
 //   /v1/mod/realm-hold       hold a character's trade by hand ('staff')
@@ -43,7 +44,7 @@ import { budgetConfig, budgetConfigOf, forgetBudgetConfig, BUDGET_DEFAULT, FAUCE
 import { repairOf, applyRepair } from '../../src/net/repairLaw.js';   // SUMMON-REPAIR: the repair's law, the tool's too
 import { isHandleShaped } from '../../src/net/handleShape.js';   // SUMMON-REPAIR: an account named by its handle
 import { wealthOf } from './judge.js';
-import { REALM_LETTER_TEMPLATE } from '../../src/net/realmGoldLaw.js';   // HACKED-GOLD: a trade's letters, at their worth
+import { REALM_LETTER_TEMPLATE } from '../../src/net/realm/realmGoldLaw.js';   // HACKED-GOLD: a trade's letters, at their worth
 
 /** How long the judge's findings are kept (the hourly sweep, cron.js). */
 export const REALM_FINDINGS_KEEP_S = 90 * 24 * 3600;
@@ -91,7 +92,7 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
   const by = player.handle;
   if (act === 'holds') {
     const { results = [] } = await db.prepare(
-      `SELECT c.id, c.name, c.player, p.handle, c.held, c.held_at, c.strikes, c.review, c.wealth, c.seq, c.clean_seq,
+      `SELECT c.id, c.name, c.player, p.handle, c.held, c.held_at, c.held_until, c.strikes, c.law_holds, c.review, c.wealth, c.seq, c.clean_seq,
          (SELECT kind || ':' || detail FROM realm_findings f WHERE f.char_id = c.id ORDER BY f.id DESC LIMIT 1) AS last
        FROM realm_characters c LEFT JOIN players p ON p.id = c.player
        WHERE c.held IS NOT NULL OR c.review IS NOT NULL ORDER BY c.held_at DESC LIMIT ?`,
@@ -133,7 +134,7 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
     const f = await db.prepare('SELECT seq, at, law, kind, detail FROM realm_findings WHERE char_id = ? ORDER BY id DESC LIMIT 100').bind(row.id).all();
     const h = await db.prepare('SELECT hour, level, gain, loss, played_s, checkpoints FROM realm_wealth_hours WHERE char_id = ? ORDER BY hour DESC LIMIT 336').bind(row.id).all();
     return {
-      character: { id: row.id, name: row.name, held: row.held, strikes: row.strikes, review: row.review, wealth: row.wealth, allowance: row.allowance, seq: row.seq, clean_seq: row.clean_seq },
+      character: { id: row.id, name: row.name, held: row.held, heldUntil: row.held_until ?? null, strikes: row.strikes, lawHolds: row.law_holds ?? 0, dupes: row.dupes ?? 0, review: row.review, wealth: row.wealth, allowance: row.allowance, seq: row.seq, clean_seq: row.clean_seq },
       findings: (f.results ?? []).map((/** @type {any} */ r) => ({ ...r, detail: parse(r.detail) })),
       hours: h.results ?? [],
     };
@@ -142,7 +143,7 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
     // the hold lifted, the flag cleared, the law's standing finding excused (judged by a person and found wrong - the
     // same signature holds nothing again, a new one does), the bucket full again (null: the next judgement fills it)
     await db.batch([
-      db.prepare('UPDATE realm_characters SET held = NULL, held_at = NULL, strikes = 0, review = NULL, law_excused = law_sig, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?').bind(row.id),
+      db.prepare('UPDATE realm_characters SET held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL, law_excused = law_sig, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?').bind(row.id),
       staffFinding(db, row, nowS, { act: 'clear', by, note, was: row.held, review: row.review, excused: row.law_sig ?? null }),
     ]);
     return { ok: true };
@@ -167,7 +168,7 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
     // the clean save becomes the record, one sequence on, its seat taken from any tab - and the hold lifted with what made it
     const moved = await db.prepare(
       'UPDATE realm_characters SET seq = seq + 1, obj = clean_obj, prev = obj, bytes = ?, lease = NULL, judged_seq = seq + 1, clean_seq = seq + 1, held = NULL, held_at = NULL,'
-      + ' strikes = 0, law_sig = NULL, wealth = ?, witnessed = 0, judge_rev = judge_rev + 1, updated_at = ? WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',
+      + ' held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, law_sig = NULL, wealth = ?, witnessed = 0, judge_rev = judge_rev + 1, updated_at = ? WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',
     ).bind(new TextEncoder().encode(text ?? '').byteLength, wealthOf(save), nowS, row.id, row.clean_obj, row.seq).run();
     if (!moved.meta.changes) return { error: 'no-clean' };
     await staffFinding(db, row, nowS, { act: 'rollback', by, note, from: row.seq, to: row.clean_seq }).run();

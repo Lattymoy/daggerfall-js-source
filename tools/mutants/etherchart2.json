@@ -5,7 +5,7 @@
     "old": "name: `500 12px ${PIXEL_STACK}`",
     "new": "name: '12px \"Cormorant Garamond\", Georgia, serif'",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "fonts?.load?.(CHART_FONT.name)?.then?.(landed, () => {});",
     "new": "void landed;",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "else if (kind === 'ruin') { const d = s * 1.3; g.moveTo(x, y - d); g.lineTo(x + d, y); g.lineTo(x, y + d); g.lineTo(x - d, y); g.closePath(); }",
     "new": "else if (kind === 'ruin') g.arc(x, y, s, 0, TAU);",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "else { g.moveTo(x, y - s * 1.3); g.lineTo(x + s * 1.25, y + s); g.lineTo(x - s * 1.25, y + s); g.closePath(); }",
     "new": "else g.arc(x, y, s, 0, TAU);",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!s.on && s.edge && s.label) {",
     "new": "  for (const i of m.isles) paintMark(g, i.kind, i.x, i.y, i.icon);\n  if (!s.on && s.edge && s.label) {",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (t.box) placed.push(t.box);",
     "new": "    void 0;",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": " && !(port ? portMarks : marks).some((k) => k.o !== i && overlaps(box, k.box))) ?? free.find(onChart)",
     "new": ") ?? free.find(onChart)",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "portMarks = marks.filter((k) => k.o.kind === 'port');",
     "new": "portMarks = marks;",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const x0 = Math.max(0, bx0, boundX(n + 1)), x1",
     "new": "const x0 = Math.max(0, bx0), x1",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "find((t) => width(t, CHART_FONT.small) + 12 <= seg.x1 - seg.x0) ?? null;",
     "new": "find(() => true) ?? null;",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  ruler.sort((a, b) => a.x0 - b.x0);   // read west to east\n",
     "new": "",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "if (n * per <= SCALE_MAX_PX) leagues = n;",
     "new": "if (n * per <= SCALE_MAX_PX * 2) leagues = n;",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "ticks(depthAt(0), depthAt(w), scale.leagues)",
     "new": "ticks(depthAt(0), depthAt(w), scale.leagues * 2)",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "t.box = clear.reduce((best, b) => (marksUnder(b) < marksUnder(best) ? b : best));",
     "new": "t.box = corners[0];",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "if (hers && !taken(box)) { t.box = box; t.at = [cx, cy]; }",
     "new": "if (hers) { t.box = box; t.at = [cx, cy]; }",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "(cx - EDGE_INSET) / Math.abs(dx)",
     "new": "cx / Math.abs(dx)",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "edge: shipOn ? null : edgePointer(sx, sy, w, h)",
     "new": "edge: null",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  if (veil < w) segment('veil', Math.max(0, veil), w);\n",
     "new": "",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "const named = pick ? isles.find((i) => i.key === pick) : null;",
     "new": "const named = null;",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": ".dfchart-note { min-height: 1.25em; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
     "new": ".dfchart-note { min-height: 1.25em; line-height: 1.25; }",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "zoomIn.disabled = view.zoom === CHART_ZOOMS.length - 1;",
     "new": "void 0;",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "(marksUnder(b) < marksUnder(best) ? b : best)",
     "new": "best",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "ship.label = spots.reduce((best, sp) => (crossed(sp) < crossed(best) ? sp : best));",
     "new": "ship.label = spots[0];",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "halo(g, seg.words, (seg.x0 + seg.x1) / 2, h / 2 - 1,",
     "new": "halo(g, seg.words, seg.x0 + 6, h / 2 - 1,",
     "tests": [
-      "test/etherchart2.test.js"
+      "test/ui/etherchart2.test.js"
     ]
   }
 ]

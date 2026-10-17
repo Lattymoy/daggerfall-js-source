@@ -27,7 +27,7 @@
 // SERPENT_STOOD_RENOWN of it.
 //
 // A SERPENT'S HOARD IS THIS FILE'S WORD TOO (the raids' AUDIT RAID R4):
-// the receipt's seed rolls it on the device (src/systems/serpentSpoils.js)
+// the receipt's seed rolls it on the device (src/systems/serpent/serpentSpoils.js)
 // - and the relay hands an account's receipt to every socket of it, so the
 // first claim of a (day, account), a guest's too, writes the hoard's row
 // with its device's claim id (`cid`), and a claim is answered
@@ -53,11 +53,11 @@
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
 
-import { verifySerpentReceipt } from '../../src/net/serpentReceipt.js';
-import { SERPENT_EMBERS } from '../../src/net/serpentHoardLaw.js';   // SERPENT-SET: the embers a receipt's hoard pays
+import { verifySerpentReceipt } from '../../src/net/serpent/serpentReceipt.js';
+import { SERPENT_EMBERS } from '../../src/net/serpent/serpentHoardLaw.js';   // SERPENT-SET: the embers a receipt's hoard pays
 import { renownForXp, renownSerpentXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
-import { seededRng } from '../../src/systems/wind.js';   // SERPENT5: the honours' own stream
+import { seededRng } from '../../src/systems/wind/wind.js';   // SERPENT5: the honours' own stream
 
 /** A device's claim id - the key a serpent's hoard is given under (the raids' RAID_CID_RE). */
 export const SERPENT_CID_RE = /^[0-9a-f]{16}$/;

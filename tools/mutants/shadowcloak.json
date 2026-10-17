@@ -5,7 +5,7 @@
     "old": "  shadowcloak: 'Holo Shadow Cloak',",
     "new": "  shadowcloak: 'Shadow Cloak',",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });",
     "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker' });",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
@@ -24,7 +24,7 @@
     "old": "shadowcloak: Object.freeze({ kind: 3,",
     "new": "shadowcloak: Object.freeze({ kind: 2,",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "shreds: CLOAK_SHREDS, mesh: 'cloak', shade: true })",
     "new": "shreds: CLOAK_SHREDS, mesh: 'cloak' })",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "crimson: Object.freeze([0.827, 0.098, 0.235])",
     "new": "crimson: Object.freeze([0.698, 0.302, 1])",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
     "new": "primarch: 'radiance', crystalfist: 'resonance' });",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
@@ -61,7 +61,7 @@
     "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
     "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance' });",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
   },
@@ -71,7 +71,7 @@
     "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom']);",
     "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom']);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
   },
@@ -81,7 +81,7 @@
     "old": "export const CLOAK_H = 1.88;",
     "new": "export const CLOAK_H = 1.97;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -90,7 +90,7 @@
     "old": "export const CLOAK_HOOD_Y = 1.68;",
     "new": "export const CLOAK_HOOD_Y = 1.6;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -99,7 +99,7 @@
     "old": "export const CLOAK_PEAK_BACK_M = 0.05;",
     "new": "export const CLOAK_PEAK_BACK_M = 0.12;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": "export const CLOAK_HOOD_BACK_M = 0.035;",
     "new": "export const CLOAK_HOOD_BACK_M = 0.09;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "old": "billow: 1 / 5, wave:",
     "new": "billow: 1 / 5.5, wave:",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "orbit: 1 / 60, spin:",
     "new": "orbit: 1 / 70, spin:",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "  if (edgeM < 0.0 && brooch <= 0.0) discard;\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "* (1.0 - smoothstep(${g3(CLOAK_CLASP_Y - 0.2)}, ${g3(CLOAK_CLASP_Y)}, y));",
     "new": "* 1.0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "  return max(body, ${g3(CLOAK_OPEN.face)} * sqrt(max(0.0, 1.0 - fy * fy)));",
     "new": "  return body;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "vec2 cloakFwd() { return vec2(sin(uYaw), cos(uYaw)); }",
     "new": "vec2 cloakFwd() { return vec2(0.0, 1.0); }",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": " + ${g3(CLOAK_BACK_M)} * cloakBackOf(u) * pow(s, 1.2);",
     "new": ";",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "* (1.0 - squash * c2) +",
     "new": "+",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": " + ${g3(CLOAK_FOLD_M)} * cloakFoldOf(u) * cloakDrapeOf(y)",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "y0 * uCapeS.y / ${g3(CLOAK_SHOULDER_Y)} + (1.0 - (1.0 - age) * (1.0 - age)) * ${g3(CLOAK_EMBLEM_RISE)}",
     "new": "y0 * uCapeS.y / ${g3(CLOAK_SHOULDER_Y)}",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "w = c + vec3(-toEye.y, 0.0, toEye.x) * o.x",
     "new": "w = c + vec3(toEye.y, 0.0, -toEye.x) * o.x",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "col = CLOAK_LINING * (0.35",
     "new": "col = CLOAK_SHADOW * (0.35",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "  float rim = pow(max(0.0, 1.0 - abs(toward)), 3.0);",
     "new": "  float rim = 0.0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "float outside = smoothstep(${g3(CLOAK_INSIDE_M)}, ${g3(CLOAK_INSIDE_M + 0.15)}, distance(uCamPos, uAt + vec3(hx.x, uCapeH.y, hx.y)));",
     "new": "float outside = 1.0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -243,7 +243,7 @@
     "old": "  if (grown < 0.0) discard;\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "  if (edgeM >= 0.0 && (tear < 0.0 || hemM < 0.0)) {",
     "new": "  if (false) {",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "  float shade = pool * (0.5 + 0.35 * mist);",
     "new": "  float shade = 0.0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "export const CLOAK_GLYPH = GLYPH_PATH.shadowfang;",
     "new": "export const CLOAK_GLYPH = GLYPH_PATH.penitent;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "  return (mod(n, 2.0) > 0.5 ? -1.0 : 1.0) * sqrt(d);\n}\nfloat cloakEyeD",
     "new": "  return sqrt(d);\n}\nfloat cloakEyeD",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -288,7 +288,7 @@
     "old": "for (let k = 1; k <= steps; k++)",
     "new": "for (let k = 2; k <= steps; k++)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -297,7 +297,7 @@
     "old": "      col = col * (1.0 - 0.5 * em.a) + em.rgb * (0.6 + 0.4 * lit);",
     "new": "      col = col * (1.0 - 0.5 * em.a);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -306,7 +306,7 @@
     "old": "vec2 sp = vec2((0.5 - u) * circ",
     "new": "vec2 sp = vec2((u - 0.5) * circ",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -315,7 +315,7 @@
     "old": "    vec3 b = CLOAK_SHADOW * 0.5 + cloakEmblemAt(cp, 0.12).rgb * 1.3;",
     "new": "    vec3 b = CLOAK_SHADOW * 0.5;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -324,7 +324,7 @@
     "old": "    col += CLOAK_CRIMSON * exp(-cloakSq(me - 0.005) / 0.00001) * 0.4 * breath;\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": "  col += CLOAK_CRIMSON * trim * 0.75 * breath",
     "new": "  col += CLOAK_CRIMSON * 0.0 * breath",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": " * step(0.001, cloakOpenHalf(y))",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "    if (seam < 0.0 || cloakHash(",
     "new": "    if (cloakHash(",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": " < rip * 1.3 - 0.2) discard;",
     "new": " < -1.0) discard;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "  col += mix(CLOAK_CRIMSON, CLOAK_EMBER, 0.4) * torn * 0.9;\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "old": " + rip * (0.15 + 0.35 * cloakBackOf(u)) + max(0.0, 1.0 - ky)",
     "new": " + max(0.0, 1.0 - ky)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "float r = mix(cloakRadius(u0, y0), ${g3(CLOAK_SHRED_AT.r[0])}",
     "new": "float r = mix(cloakRadius(u0, y0), 0.2",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "old": "(mix(CLOAK_CRIMSON, CLOAK_EMBER, 0.35) * burn * 0.7",
     "new": "(mix(CLOAK_CRIMSON, CLOAK_EMBER, 0.35) * 0.0 * 0.7",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": "float gate = mix(0.35, 1.0, smoothstep(0.55, 1.0, length(uCamPos.xz - uAt.xz)));",
     "new": "float gate = 1.0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": "float life = clamp(min(s.x / 0.2, (1.0 - s.x) / 0.35), 0.0, 1.0);",
     "new": "float life = 1.0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -423,7 +423,7 @@
     "old": "* smoothstep(0.8, 1.0, uKindle) * (1.0 - cloakRipOf());",
     "new": "* (1.0 - cloakRipOf());",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -432,7 +432,7 @@
     "old": "* smoothstep(0.8, 1.0, uKindle) * (1.0 - cloakRipOf());",
     "new": "* smoothstep(0.8, 1.0, uKindle);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": "        if (look.mesh === 'cloak') this._drawCloak(w, look, torn, camAt);",
     "new": "        if (false) this._drawCloak(w, look, torn, camAt);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "      gl.uniform1f(U.uYaw, Number.isFinite(w.yaw) ? w.yaw : 0);",
     "new": "      gl.uniform1f(U.uYaw, 0);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": "    if (torn < CLOAK_RIP_S && !folded && Math.hypot(",
     "new": "    if (!folded && Math.hypot(",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": "to = look.glyphs + (torn >= 0 ? look.shreds : 0);",
     "new": "to = look.glyphs;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -477,7 +477,7 @@
     "old": "gl.uniform1f(U.uTorn, torn);",
     "new": "gl.uniform1f(U.uTorn, -1);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -486,7 +486,7 @@
     "old": "CLOAK_RIP_S + ((s - CLOAK_RIP_S) % AURA_CLOCK_PERIOD)",
     "new": "s",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -495,7 +495,7 @@
     "old": "if (w.beastAt !== null) { w.beastAt = null; w.since = t; }",
     "new": "if (w.beastAt !== null) { w.beastAt = null; }",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -504,7 +504,7 @@
     "old": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? player.bodyYawFor(cam.yaw);",
     "new": "_auraSelf.yaw = mwViewSpriteFacing()?.yaw ?? cam.yaw;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "SPRITE-FACE (re-aimed by content): the facing moved off the figure to facing() - the picture's."
   },
@@ -514,7 +514,7 @@
     "old": "w.yaw = (peerWalkers?.faceOf?.(d.id) ?? peerRiders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
     "new": "w.yaw = 0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "SPRITE-FACE (re-aimed by content): the gather reads a sprite's picture first, then the pose."
   },
@@ -524,7 +524,7 @@
     "old": "auraBeastStep(_auraSelf, !!liveLycanthropy(playerEntity)?.isTransformed, t);",
     "new": "auraBeastStep(_auraSelf, false, t);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -533,7 +533,7 @@
     "old": "auraBeastStep(w, !!d.shown.wb, t);",
     "new": "auraBeastStep(w, false, t);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -542,7 +542,7 @@
     "old": "    py = y * ky;\n",
     "new": "    py = y;\n",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -551,7 +551,7 @@
     "old": "    d += cloakWorldXZ(uCapeS.xz) * (1.0 - 0.5 * h);",
     "new": "    d += cloakWorldXZ(uCapeS.xz);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -560,7 +560,7 @@
     "old": "float wh = smoothstep(${g3(CLOAK_SHOULDER_Y)}, ${g3(CLOAK_HOOD_Y)}, y), a = uCapeH.w * wh;",
     "new": "float wh = 0.0, a = uCapeH.w * wh;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -569,7 +569,7 @@
     "old": "a = uCapeH.w * wh;",
     "new": "a = 0.0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -578,7 +578,7 @@
     "old": "cloakRadius(u, y) * mix(uCapeS.w, 1.0,",
     "new": "cloakRadius(u, y) * mix(1.0, 1.0,",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -587,7 +587,7 @@
     "old": "  vec2 trail = uSwing.xy * pow(h, 1.6) * min(ky, 1.0);",
     "new": "  vec2 trail = vec2(0.0);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -596,7 +596,7 @@
     "old": "  py += hang - sqrt(max(hang * hang - dot(trail, trail), 0.0)) + max(uSwing.z, 0.0) * h * h;",
     "new": "  py += max(uSwing.z, 0.0) * h * h;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -605,7 +605,7 @@
     "old": "float cloakTwistAt(float y) { return uSwing.w / CLOAK_TAU * pow(cloakHangOf(y), 1.2); }",
     "new": "float cloakTwistAt(float y) { return 0.0; }",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -614,7 +614,7 @@
     "old": " + cloakBearing(ut) * uSwing.z * h * 0.6;",
     "new": ";",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -623,7 +623,7 @@
     "old": "  d += cloakBearing(ut) * (cloakKneePush(uKneeL, ut, r, py) + cloakKneePush(uKneeR, ut, r, py));\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -632,7 +632,7 @@
     "old": "clampTo(-fwd * S.trail, -S.trailMax, S.trailMax)",
     "new": "clampTo(fwd * S.trail, -S.trailMax, S.trailMax)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -641,7 +641,7 @@
     "old": "c = 2 * S.damp * 2 * Math.PI * S.hz;",
     "new": "c = 0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -650,7 +650,7 @@
     "old": "clampTo(-m.yr * S.twist, -S.twistMax, S.twistMax)",
     "new": "clampTo(m.yr * S.twist, -S.twistMax, S.twistMax)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -659,7 +659,7 @@
     "old": "clampTo(-m.v[1] * S.lift, -0.05, S.liftMax)",
     "new": "clampTo(0, -0.05, S.liftMax)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -668,7 +668,7 @@
     "old": "return [t[0] * u * weight, t[2] * u * height, t[1] * u * weight];",
     "new": "return [t[0] * u * weight, t[1] * u * height, t[2] * u * weight];",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -677,7 +677,7 @@
     "old": "arm.skeleton.byName.get(String(name).toLowerCase())",
     "new": "arm.skeleton.byName.get(String(name))",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -686,7 +686,7 @@
     "old": "Math.max(CLOAK_ACROSS[0], Math.min(CLOAK_ACROSS[1], half / CLOAK_SHOULDER_HALF))",
     "new": "half / CLOAK_SHOULDER_HALF",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -695,7 +695,7 @@
     "old": "Hd[0] = H[0] + (ux / ul) * CLOAK_HEAD_ABOVE; Hd[1] = Math.max(H[1] + (uy / ul) * CLOAK_HEAD_ABOVE, S[1] + 0.18); Hd[2] = H[2] + (uz / ul) * CLOAK_HEAD_ABOVE;",
     "new": "Hd[0] = H[0]; Hd[1] = Math.max(H[1], S[1] + 0.18); Hd[2] = H[2];",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -704,7 +704,7 @@
     "old": "  if (!L || !R || !H) return null;",
     "new": "  if (!L || !R) return null;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -713,7 +713,7 @@
     "old": "{ w.at[0] = posed.feet[0]; w.at[1] = posed.feet[1]; w.at[2] = posed.feet[2]; w.yaw = posed.yaw; }",
     "new": "{}",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -722,17 +722,17 @@
     "old": "c.shoulders[1] = CLOAK_SHOULDER_Y * k + lift; c.shoulders[3] = 1; c.head.fill(0); c.head[1] = CLOAK_HOOD_Y * k + lift;",
     "new": "c.shoulders[1] = CLOAK_SHOULDER_Y + lift; c.shoulders[3] = 1; c.head.fill(0); c.head[1] = CLOAK_HOOD_Y + lift;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "SERAPH-WINGS (re-aimed by content): the line now reads a sprite's figure too."
   },
   {
     "name": "SHADOWCLOAK-a-peer-with-no-body",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "    if (!this._standing(b)) return null;\n    let bones = null; try { bones = b.rig.thirdBones",
     "new": "    if (!b) return null;\n    let bones = null; try { bones = b.rig.thirdBones",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -741,7 +741,7 @@
     "old": "gl.uniform4f(U.uSwing, sw?.x || 0, sw?.z || 0, sw?.lift || 0, sw?.twist || 0);",
     "new": "gl.uniform4f(U.uSwing, 0, 0, 0, 0);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -750,7 +750,7 @@
     "old": "const sw = w.swing, pose = w.cape ?? CLOAK_REST_POSE;",
     "new": "const sw = w.swing, pose = CLOAK_REST_POSE;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -759,7 +759,7 @@
     "old": "bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }",
     "new": "bones: null ?? auraSpriteBones(mwViewSpriteFigure()) }",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "SERAPH-WINGS (re-aimed by content): the line now reads a sprite's figure too."
   },
@@ -769,7 +769,7 @@
     "old": ": peerBodies?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(",
     "new": ": null ?? auraSpritePosed(",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ],
     "note": "SERAPH-WINGS (re-aimed by content): the line now reads a sprite's figure too."
   },
@@ -779,7 +779,7 @@
     "old": "w === _auraSelf ? player.height / CAPSULE_HEIGHT : 1);",
     "new": "1);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -788,7 +788,7 @@
     "old": "  if (eotbLane() || !mwCamera.thirdPerson()) return null;\n  return fpArm.thirdBones(names);",
     "new": "  if (eotbLane()) return null;\n  return fpArm.thirdBones(names);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -797,7 +797,7 @@
     "old": "{ what: AURA_TEXT[want] ?? want }",
     "new": "{ what: want }",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -806,7 +806,7 @@
     "old": "auraMotionStep(w, auraNow); }",
     "new": "}",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -815,7 +815,7 @@
     "old": "} _auraPass?.draw(_auraDraw,",
     "new": "} // _auraPass?.draw(_auraDraw,",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -824,7 +824,7 @@
     "old": "_auraSelf.mounted = !!player.riding;",
     "new": "_auraSelf.mounted = false;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -833,7 +833,7 @@
     "old": "w.mounted = !!d.shown.rd;",
     "new": "w.mounted = false;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -842,7 +842,7 @@
     "old": "    if (torn < CLOAK_RIP_S && !folded && Math.hypot(",
     "new": "    if (torn < CLOAK_RIP_S && Math.hypot(",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -851,7 +851,7 @@
     "old": "    if (!folded && to > from) {",
     "new": "    if (to > from) {",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -860,7 +860,7 @@
     "old": "if (jump <= Math.max(S.snap, S.snapV * dt)) {",
     "new": "if (true) {",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -869,7 +869,7 @@
     "old": "dt > 0.5) { m.v.fill(0); m.yr = 0; m.p.fill(0); m.q.fill(0); }",
     "new": "dt > 0.5) { m.v.fill(0); m.yr = 0; }",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -878,7 +878,7 @@
     "old": "drawn = drawnArm === arm ? drawnMats : null;",
     "new": "drawn = null;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -887,7 +887,7 @@
     "old": "      drawnArm = t.arm; drawnMats = t.arm.mats;",
     "new": "      drawnArm = null; drawnMats = null;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -896,7 +896,7 @@
     "old": "        const w = list[i];",
     "new": "        const w = list[list.length - 1 - i];",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -905,7 +905,7 @@
     "old": "gl.cullFace(side === 0 ? gl.FRONT : gl.BACK);",
     "new": "gl.cullFace(gl.BACK);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -914,7 +914,7 @@
     "old": "      gl.enable(gl.CULL_FACE);\n      for (let side = 0; side < 2; side++)",
     "new": "      for (let side = 0; side < 2; side++)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -923,7 +923,7 @@
     "old": "for (let side = 0; side < 2; side++) { gl.uniform1i(U.uSide, side);",
     "new": "for (let side = 1; side < 2; side++) { gl.uniform1i(U.uSide, side);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -932,7 +932,7 @@
     "old": "        if (look.shade) gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -941,7 +941,7 @@
     "old": "        if (look.shade) gl.blendFunc(gl.ONE, gl.ONE);\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -950,7 +950,7 @@
     "old": "    const front = dx * sn + dz * c > 0,",
     "new": "    const front = false,",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -959,7 +959,7 @@
     "old": " && Math.hypot(dx - c * hd[0] - sn * hd[2], eye[1] - w.at[1] - hd[1], dz + sn * hd[0] - c * hd[2]) >= CLOAK_INSIDE_M) {",
     "new": ") {",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -968,7 +968,7 @@
     "old": "const from = emblemsFirst || torn >= CLOAK_RIP_S ? look.glyphs : 0,",
     "new": "const from = emblemsFirst ? look.glyphs : 0,",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -977,7 +977,7 @@
     "old": "    } finally {   // SHADOW-CLOAK (AUDIT): the frame's state handed back whatever a wearer did mid-pass",
     "new": "    } catch (e) { throw e; } {   // SHADOW-CLOAK (AUDIT): the frame's state handed back whatever a wearer did mid-pass",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -986,7 +986,7 @@
     "old": "  if (along < keep) d += cloakBearing(ut) * (keep - along);\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -995,7 +995,7 @@
     "old": "  if (tl > 0.7 * hang) trail *= 0.7 * hang / tl;   // never so far",
     "new": "  if (false) trail *= 0.7 * hang / tl;   // never so far",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1004,7 +1004,7 @@
     "old": "+ max(uSwing.z, 0.0) * h * h;   // a rise never drops it below the feet",
     "new": "+ uSwing.z * h * h;   // a rise never drops it below the feet",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1013,7 +1013,7 @@
     "old": "return min(0.2, max(0.0, kr + 0.07 - r))",
     "new": "return max(0.0, kr + 0.07 - r)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1022,7 +1022,7 @@
     "old": "  float c2 = cloakSq(cos(u * CLOAK_TAU));",
     "new": "  float c2 = pow(cos(u * CLOAK_TAU), 2.0);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1031,7 +1031,7 @@
     "old": "  if (r > ${g3(CLOAK_POOL_R)}) discard;   // nothing of it past its pool",
     "new": "  if (r > uGroundR) discard;   // nothing of it past its pool",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1040,7 +1040,7 @@
     "old": "if (r3(at[0]) !== r3(b[0]) || r3(at[1]) !== r3(b[1]))",
     "new": "if (at[0] !== b[0] || at[1] !== b[1])",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1049,7 +1049,7 @@
     "old": "if (!at) throw new Error(`glyphEdges: a figure must begin with M in ${path}`); if (r3",
     "new": "if (r3",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1058,7 +1058,7 @@
     "old": "  return w * pow(cloakDrapeOf(y), 1.5) * (0.3 + 0.7 * cloakBackOf(u));",
     "new": "  return 0.0;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1067,7 +1067,7 @@
     "old": "2.0 * th + y * 2.0 + t * CLOAK_TAU ${hzGlsl(CLOAK_HZ.billow)}",
     "new": "2.0 * th + y * 2.0 + t * CLOAK_TAU * 0.21",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1076,7 +1076,7 @@
     "old": "mix(${g3(CLOAK_HEM_Y.edge)}, ${g3(CLOAK_HEM_Y.back)}, cloakBackOf(u))",
     "new": "mix(${g3(CLOAK_HEM_Y.back)}, ${g3(CLOAK_HEM_Y.edge)}, cloakBackOf(u))",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1085,7 +1085,7 @@
     "old": "  col += (CLOAK_EMBER * 0.5 + CLOAK_CRIMSON) * exp(-grown * grown / 0.0006) * (1.0 - smoothstep(0.9, 1.0, uKindle));\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1094,7 +1094,7 @@
     "old": " + CLOAK_CRIMSON * teeth * 0.6)",
     "new": ")",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1103,7 +1103,7 @@
     "old": "if (w.beastAt === undefined) w.beastAt = beast ? t - CLOAK_RIP_S : null;",
     "new": "if (w.beastAt === undefined) w.beastAt = beast ? t : null;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1112,7 +1112,7 @@
     "old": "    o = vec4(c.rgb * f, c.a * f);",
     "new": "    o = vec4(c.rgb * f, c.a);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1121,7 +1121,7 @@
     "old": "out.push(u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1);",
     "new": "out.push(u0, v0, u1, v0, u1, v1, u0, v0, u0, v0, u0, v1);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1130,7 +1130,7 @@
     "old": "    if (trail <= 0.002) discard;",
     "new": "    if (true) discard;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1139,7 +1139,7 @@
     "old": "m.yr += (wrapAngle(yaw - m.yaw) / dt - m.yr) * a;",
     "new": "m.yr += ((yaw - m.yaw) / dt - m.yr) * a;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1148,7 +1148,7 @@
     "old": " && Math.hypot(dx - c * hd[0] - sn * hd[2], eye[1] - w.at[1] - hd[1], dz + sn * hd[0] - c * hd[2]) >= CLOAK_INSIDE_M) {",
     "new": " && Math.hypot(dx, dz) >= 0.55) {",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1157,7 +1157,7 @@
     "old": "float outside = smoothstep(${g3(CLOAK_INSIDE_M)}, ${g3(CLOAK_INSIDE_M + 0.15)}, distance(uCamPos, uAt + vec3(hx.x, uCapeH.y, hx.y)));",
     "new": "float outside = smoothstep(0.55, 1.0, length(uCamPos.xz - uAt.xz));",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1166,7 +1166,7 @@
     "old": "uniform vec4 uSwing, uCapeH;",
     "new": "uniform vec4 uSwing;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1175,7 +1175,7 @@
     "old": "  if (m.t !== null && dt === 0) return w;",
     "new": "  if (false) return w;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1184,7 +1184,7 @@
     "old": "if (jump <= Math.max(S.snap, S.snapV * dt)) {",
     "new": "if (jump <= 3) {",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1193,7 +1193,7 @@
     "old": "for (let n = Math.ceil(dt / (1 / 60)), h = dt / n; n > 0; n--)",
     "new": "for (let n = 1, h = dt; n > 0; n--)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1202,7 +1202,7 @@
     "old": "g[0] = clampTo(-right * S.trail, -S.trailMax, S.trailMax); g[1] = clampTo(-fwd * S.trail, -S.trailMax, S.trailMax);",
     "new": "g[0] = -right * S.trail; g[1] = -fwd * S.trail;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1211,7 +1211,7 @@
     "old": "g[2] = clampTo(-m.v[1] * S.lift, -0.05, S.liftMax);",
     "new": "g[2] = -m.v[1] * S.lift;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1220,7 +1220,7 @@
     "old": "g[3] = clampTo(-m.yr * S.twist, -S.twistMax, S.twistMax);",
     "new": "g[3] = -m.yr * S.twist;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1229,7 +1229,7 @@
     "old": "auraCapePose(posed.bones, w.cape && w.cape !== CLOAK_REST_POSE ? w.cape : null)",
     "new": "auraCapePose(posed.bones, w.cape ?? null)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1238,7 +1238,7 @@
     "old": "const c = w.cape && w.cape !== CLOAK_REST_POSE ? w.cape :",
     "new": "const c = w.cape ? w.cape :",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1247,7 +1247,7 @@
     "old": "Math.max(0.4, Math.min(1, crouch))",
     "new": "Math.min(1, crouch)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1256,7 +1256,7 @@
     "old": "Math.max(CLOAK_ACROSS[0], Math.min(CLOAK_ACROSS[1], half / CLOAK_SHOULDER_HALF))",
     "new": "Math.min(CLOAK_ACROSS[1], half / CLOAK_SHOULDER_HALF)",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1265,7 +1265,7 @@
     "old": "S[1] = Math.max((L[1] + R[1]) / 2, CLOAK_SHOULDER_Y * 0.4);",
     "new": "S[1] = (L[1] + R[1]) / 2;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1274,7 +1274,7 @@
     "old": "Hd[1] = Math.max(H[1] + (uy / ul) * CLOAK_HEAD_ABOVE, S[1] + 0.18);",
     "new": "Hd[1] = H[1] + (uy / ul) * CLOAK_HEAD_ABOVE;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1283,7 +1283,7 @@
     "old": "float body = mix(${g3(CLOAK_OPEN.hem)}, ${g3(CLOAK_OPEN.chest)},",
     "new": "float body = mix(${g3(CLOAK_OPEN.chest)}, ${g3(CLOAK_OPEN.hem)},",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1292,7 +1292,7 @@
     "old": "float hang = ${g3(CLOAK_SHOULDER_Y)} * max(ky, 0.0) * h;",
     "new": "float hang = ${g3(CLOAK_SHOULDER_Y)} * ky * h;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1301,7 +1301,7 @@
     "old": "  if (along < keep) d += cloakBearing(ut) * (keep - along);",
     "new": "  if (length(d) < keep) d *= keep / max(length(d), 1e-4);",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1310,7 +1310,7 @@
     "old": "    gl.disable(gl.POLYGON_OFFSET_FILL);   // the ground's offset is the ground's\n",
     "new": "",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1319,16 +1319,16 @@
     "old": "emblemsFirst) { gl.uniform1i(U.uKind, 2); gl.bindVertexArray(this.glyphVao); gl.drawArrays(gl.TRIANGLES, 0, look.glyphs * 6); }",
     "new": "emblemsFirst) { gl.uniform1i(U.uKind, 2); gl.bindVertexArray(this.glyphVao); gl.drawArrays(gl.TRIANGLES, 0, (look.glyphs + (torn >= 0 ? look.shreds : 0)) * 6); }",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
     "name": "SHADOWCLOAK-a-throwing-rig-ends-the-frame",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "let bones = null; try { bones = b.rig.thirdBones?.(names) ?? null; } catch (e) { console.error('[peerBodies] bonesOf', e); }",
     "new": "let bones = b.rig.thirdBones?.(names) ?? null;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1337,7 +1337,7 @@
     "old": "      _auraSelf.at[0] = f[0]; _auraSelf.at[1] = f[1]; _auraSelf.at[2] = f[2]; _auraSelf.aura = mine;",
     "new": "      // _auraSelf.at[0] = f[0]; _auraSelf.at[1] = f[1]; _auraSelf.at[2] = f[2]; _auraSelf.aura = mine;",
     "tests": [
-      "test/shadowcloak.test.js"
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1346,8 +1346,8 @@
     "old": "  if (eager) for (const Fn of fnTable.values()) if (Fn.body && !Fn.impl) compileFn(Fn);\n",
     "new": "",
     "tests": [
-      "test/glslEval.test.js",
-      "test/shadowcloak.test.js"
+      "test/tree/glslEval.test.js",
+      "test/net/shadowcloak.test.js"
     ]
   },
   {
@@ -1356,7 +1356,7 @@
     "old": " if (RESERVED.has(t.v) || t.v.startsWith('gl_') || t.v.includes('__')) this.fail(`'${t.v}' is reserved in GLSL ES 3.00 and cannot name anything`, t);",
     "new": "",
     "tests": [
-      "test/glslEval.test.js"
+      "test/tree/glslEval.test.js"
     ]
   }
 ]

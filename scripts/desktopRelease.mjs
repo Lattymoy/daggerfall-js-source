@@ -39,7 +39,7 @@
 // heading (.github/pull_request_template.md), and `notes` reads that
 // section off every pull request merged since the previous release. The
 // published release is the archive; nothing is read from the working
-// tree, and test/rel4_release.test.js fails any patch-notes file
+// tree, and test/tooling/rel4_release.test.js fails any patch-notes file
 // committed to it (PATCH_NOTES_PATH_RE).
 //
 // DA13 (2026-10-14, Mac: "B only: per-file channel"): THE GAME RIDES BESIDE THE INSTALLERS, A FILE AT A TIME. The

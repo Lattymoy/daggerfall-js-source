@@ -85,7 +85,7 @@ document.title = 'ready';
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
   // the probe's own page has its own path: the ROOT is the landing page's, and a tool that drives the root as if it
-  // were the game is a thing test/landing.test.js refuses (U60).
+  // were the game is a thing test/ui/enhanced/landing.test.js refuses (U60).
   if (url.pathname === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
   const path = normalize(join(ROOT, url.pathname));
   if (!path.startsWith(ROOT)) { res.writeHead(403); res.end(); return; }

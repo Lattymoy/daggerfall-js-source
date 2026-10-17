@@ -2,7 +2,7 @@
 // LW3 (2026-10-04, bible/06-Systems/Living-World.md): THE ROADS - where a town's travellers go, when, by which way, and
 // where on it they are at any minute of the sky's clock. Pure, like the rest of the living world (LW0 decision 2): the
 // towns near (the MAPS rows the host hands, the game's own rows alone so every client reads the same), the way (the
-// Travel Options planner's on Hazelnut's roads - `systems/travelRoute.js planRoute` - asked through the host, cached
+// Travel Options planner's on Hazelnut's roads - `systems/travel/travelRoute.js planRoute` - asked through the host, cached
 // there), a seed and the clock in; a party's place out.
 //
 // A TRAVELLER'S CYCLES. Each traveller (census.js travellerRoster: merchants, adventurers, pilgrims, couriers, the
@@ -28,10 +28,10 @@
 // pixel's centre to its edge or corner, travelRoute.js / roadClearance.js), trimmed at each end by the town's own
 // half-width so a party walks out of the town's edge, not its middle.
 import { lwSeed, lwRng, rollInt, pickWeighted } from './seed.js';
-import { seededRng } from '../wind.js';
+import { seededRng } from '../wind/wind.js';
 import { DAY_MIN, DAY_START_MIN } from './dayPlan.js';
 import { WORLD_MAP_TERRAIN_DIM as NATIVE_PIXEL } from '../../formats/mapsFile.js';
-import { NATIVE_PER_M } from '../travelDungeons.js';
+import { NATIVE_PER_M } from '../travel/travelDungeons.js';
 import { CITY_COURT_BLOCKS } from './census.js';
 import { companiesOf, companyOfPlace, namedIn, COMPANY_DIVE_CHANCE, holyDayOf, holyDepartMin, holyDraw } from './companies.js';   // LW13: the companies, the pilgrims' holy day
 

@@ -13,8 +13,8 @@
 // test: each bound bone's inverse bind undone, placed so the pelvis stands on its rest origin (the bind's own frame is
 // the Tri Shadow's, its pelvis 22 units under its origin); a bone the shadow does not bind rides its parent's rest.
 import { readFileSync } from 'node:fs';
-import { parseNif } from '../../../src/formats/mwNifFile.js';
-import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../../../src/formats/mwSkin.js';
+import { parseNif } from '../../../src/formats/morrowind/mwNifFile.js';
+import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../../../src/formats/morrowind/mwSkin.js';
 import { writeNif } from '../../../tools/nifWrite.mjs';
 
 export const RETAIL_SKELETON_PATH = 'vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif';

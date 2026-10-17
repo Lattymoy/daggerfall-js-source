@@ -5,7 +5,7 @@
 // one the sitter's body goes. Pure: the room's own probe is handed in (scenes/worldModes.js, the room's collider).
 //
 // THE CHAIRS: Daggerfall's own seats, by model id - the wooden chair (41100), the benches (41105, 41106 - the ones the
-// colosseum's plazas stand, world/arenaCity.js - and 43307) and the two thrones (41122, 41123) - the ones the vendored
+// colosseum's plazas stand, world/arena/arenaCity.js - and 43307) and the two thrones (41122, 41123) - the ones the vendored
 // World of Daggerfall names (vendor/world-of-daggerfall/Scripts/LocationHelper.cs: "Wooden Chair", "Wooden Bench
 // Simple", "Wooden Throne", "Wooden Throne 2", "Wooden Bench") and the arena's benches. Daggerfall has no seat
 // activation of its own (DFU neither); this is the port's.

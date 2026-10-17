@@ -5,7 +5,7 @@
     "old": "const at = Math.min(Math.max(openAt ?? open, open), Math.max(open, now));",
     "new": "const at = open;",
     "tests": [
-      "test/scriptsplit.test.js"
+      "test/systems/scriptsplit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const at = Math.min(Math.max(openAt ?? open, open), Math.max(open, now));",
     "new": "const at = openAt ?? open;",
     "tests": [
-      "test/scriptsplit.test.js"
+      "test/systems/scriptsplit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "openAt = startedAt;   // SCRIPT-SPLIT",
     "new": "openAt = now;   // SCRIPT-SPLIT",
     "tests": [
-      "test/scriptsplit.test.js"
+      "test/systems/scriptsplit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const stream = lent;\n",
     "new": "  const stream = 0;\n",
     "tests": [
-      "test/scriptsplit.test.js"
+      "test/systems/scriptsplit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "before ${cpu.beforeMs.toFixed(1)}",
     "new": "before ${cpu.inFrameMs.toFixed(1)}",
     "tests": [
-      "test/scriptsplit.test.js"
+      "test/systems/scriptsplit.test.js"
     ]
   },
   {
@@ -50,8 +50,8 @@
     "old": " + scriptSplitLine(cpu) + gpu",
     "new": " + gpu",
     "tests": [
-      "test/scriptsplit.test.js",
-      "test/perf1.test.js"
+      "test/systems/scriptsplit.test.js",
+      "test/systems/perf1.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "scriptBeforeMs: cpu?.beforeMs ?? null",
     "new": "scriptBeforeMs: null",
     "tests": [
-      "test/scriptsplit.test.js"
+      "test/systems/scriptsplit.test.js"
     ]
   }
 ]

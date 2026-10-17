@@ -1,20 +1,20 @@
 [
   {
     "name": "WK-N1-report-under-boat-key",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "heardGun(e.pos, gunfireBy(e.shooter))",
     "new": "heardGun(e.pos, e.shooter)",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N1-peer-report-keyed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "shooter.startsWith('peer:') ? shooter.slice(5) : shooter);",
     "new": "shooter.startsWith('peer:') ? shooter : shooter);",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const near = nightSight(lookoutOf(ship), { night: !!world.night, lit: false }) * 0.5;",
     "new": "const near = lookoutOf(ship) * 0.5;",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  } else if (ship.runOn && !enemy) {",
     "new": "  } else if (false) {",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (ship.runOn && !(world.night && world.now < ship.runOn.until)) ship.runOn = null;",
     "new": "if (ship.runOn && !world.night) ship.runOn = null;",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
@@ -50,52 +50,52 @@
     "old": "if (ship.runOn && !(world.night && world.now < ship.runOn.until)) ship.runOn = null;",
     "new": "if (ship.runOn && !(world.now < ship.runOn.until)) ship.runOn = null;",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N4-lanterns-unasked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "return !!where().cityLights && carriesLanterns(e.boat, e.ship.hull) && !runsDark(",
     "new": "return !!where().cityLights && !runsDark(",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N4-unbuilt-carrack-lit",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": ": !(hull === HULL.Carrack && hullBuild(hull) === MOD_BUILDS[HULL.Carrack]));",
     "new": ": true);",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N4-my-carrack-lit",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "lit: !!boat.LightOn && carriesLanterns(boat, boat.hull),",
     "new": "lit: !!boat.LightOn,",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N5-captains-lantern-hours",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const night = !!where().night;   // SHIP-WATCH: the dark hours",
     "new": "const night = !!where().cityLights;   // SHIP-WATCH: the dark hours",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N5-lookout-lantern-hours",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const night = !!where().night;   // AUDIT WK-N5",
     "new": "const night = !!where().cityLights;   // AUDIT WK-N5",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
@@ -104,70 +104,70 @@
     "old": "night: isNight(minuteNow()) }; },",
     "new": "night: isCityLightsOn(minuteNow()) }; },",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N6-lanterns-alone",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "lit: showsLight(e) }) * veilOf(e)) continue;",
     "new": "lit: shipLit(e) }) * veilOf(e)) continue;",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N6-flashes-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const showsLight = (e) => shipLit(e) || gunfire.some((g) => g.by === e.id && clock - g.at <= GUNS_SEEN_S);",
     "new": "const showsLight = (e) => shipLit(e);",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-N7-peers-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const p of deps.peerBoats?.() ?? []) if (p.boat?.LightOn) boats.push(p.boat);   // AUDIT WK-N7: another player's lit boat, as my captains see her\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-W2-alarm-by-range",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "battle: aiming || crewAlarm(), toward,",
     "new": "battle: aiming || hostileNearMe(), toward,",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-W2-word-by-range",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "crew: st.damage.crew, battle: aiming || crewAlarm(), boatHull: b.hull }",
     "new": "crew: st.damage.crew, battle: aiming || hostileNearMe(), boatHull: b.hull }",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-W2-night-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!night || e.ship.target === myId() || d <= nightSight(HOSTILE_NEAR_M, { night, lit: showsLight(e) })) return true;",
     "new": "return true;",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-W12-work-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "battle: said.battle, work: Math.min(1, Math.max(0, 1 - (self.me?.hull ?? 1))) }",
     "new": "battle: said.battle, work: 0 }",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
@@ -176,16 +176,16 @@
     "old": "faction: null, battle: !!word?.battle, work: word?.work ?? 0 });",
     "new": "faction: null, battle: !!word?.battle });",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
     "name": "WK-W10-host-card-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const lookout = st.crew.hands.findIndex((h) => h.role === LOOKOUT_ROLE);",
     "new": "const lookout = -1;",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "export const LOOKOUT_ROLE = 'Lookout';",
     "new": "export const LOOKOUT_ROLE = 'Bosun';",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "      _crewCtx.lookout = ship.mine?.lookout ?? -1;",
     "new": "",
     "tests": [
-      "test/auditwatchkit_sea.test.js"
+      "test/systems/naval/auditwatchkit_sea.test.js"
     ]
   }
 ]

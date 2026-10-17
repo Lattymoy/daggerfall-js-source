@@ -5,7 +5,7 @@
     "old": "export const HEAL_SPELL_POINTS_KEY = 'Heal-SpellPoints';",
     "new": "export const HEAL_SPELL_POINTS_KEY = 'Heal-Spellpoints';",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "import {\n  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,\n} from './potionRecipes.js';",
     "new": "import {\n  POTION_RECIPES as LEAF_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,\n} from './potionRecipes.js';\nconst POTION_RECIPES = Object.freeze([...LEAF_RECIPES]);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const POTION_PRICE_TIERS = Object.freeze([50, 75, 100, 125, 200, 250]);",
     "new": "export const POTION_PRICE_TIERS = Object.freeze([50, 80, 100, 125, 200, 250]);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "return i < 0 ? POTION_PRICE_TIERS.length + 1 : i + 1; };",
     "new": "return i < 0 ? POTION_PRICE_TIERS.length : i + 1; };",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "findIndex((p) => price <= p);",
     "new": "findIndex((p) => price < p);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -50,8 +50,8 @@
     "old": "rank: TIER_RANKS[tier - 1], key: potionRecipeKey(r.ingredients)",
     "new": "rank: TIER_RANKS[tier], key: potionRecipeKey(r.ingredients)",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -60,8 +60,8 @@
     "old": "key: potionRecipeKey(r.ingredients), price: r.price",
     "new": "key: potionRecipeKey([...r.ingredients].reverse()), price: r.price",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -70,8 +70,8 @@
     "old": "const herbs = ['p1', 'p2'].filter((g) =>",
     "new": "const herbs = ['p1'].filter((g) =>",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -80,8 +80,8 @@
     "old": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "new": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS].map((m) => [m.templateIndex, m]));",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -90,7 +90,7 @@
     "old": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "new": "const DFU_ROWS = new Map([...METALS, ...GEMS, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -99,7 +99,7 @@
     "old": "if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;",
     "new": "if (m) return Number(m[2]);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -108,8 +108,8 @@
     "old": "if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
     "new": "if (potionRecipeKey(/** @type {number[]} */ (templates)) !== potion.key) return null;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -118,8 +118,8 @@
     "old": "if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
     "new": "if (!potion.key) return null;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ],
     "equivalent": true,
     "why": "AUDIT PROF-541 B1: the cauldron must now BE the recipe's own sorted ingredients, which hash to its key by construction - DFU's hash, asked first (law 1), refuses nothing the ingredient comparison does not."
@@ -130,8 +130,8 @@
     "old": "return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
     "new": "return keys[0];",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
     "new": "return keys.reduce((best, k) => (held(k) >= held(best) ? k : best), keys[0]);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -149,8 +149,8 @@
     "old": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every(",
     "new": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.some(",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -159,9 +159,9 @@
     "old": "  if (rank >= PROF_RANK_MAX) return 3;\n",
     "new": "  if (rank >= PROF_RANK_MAX) return 2;\n",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -170,8 +170,8 @@
     "old": "return spec50 === BREWER ? 3 : 2;",
     "new": "return spec50 === BREWER ? 2 : 2;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -180,9 +180,9 @@
     "old": "return spec50 === BREWER ? 3 : 2;\n  return 1;",
     "new": "return spec50 === BREWER ? 3 : 2;\n  return 2;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -191,8 +191,8 @@
     "old": "export const POTENT = Object.freeze({ expert: 10, master: 20,",
     "new": "export const POTENT = Object.freeze({ expert: 15, master: 20,",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -201,8 +201,8 @@
     "old": "{ expert: 10, master: 20, expertRank: 75,",
     "new": "{ expert: 10, master: 25, expertRank: 75,",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -211,8 +211,8 @@
     "old": "expertRank: 75, unbruised: 5,",
     "new": "expertRank: 70, unbruised: 5,",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -221,8 +221,8 @@
     "old": "unbruised: 5, distiller: 10,",
     "new": "unbruised: 10, distiller: 10,",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -231,8 +231,8 @@
     "old": "distiller: 10, apothecary: 10,",
     "new": "distiller: 5, apothecary: 10,",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -241,8 +241,8 @@
     "old": "apothecary: 10, pct: 25,",
     "new": "apothecary: 5, pct: 25,",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_apothecary.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -251,9 +251,9 @@
     "old": "pct: 25, masterPct: 40 });",
     "new": "pct: 20, masterPct: 40 });",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -262,9 +262,9 @@
     "old": "pct: 25, masterPct: 40 });",
     "new": "pct: 25, masterPct: 50 });",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -273,7 +273,7 @@
     "old": "return Math.min(100, base + POTENT.unbruised * u",
     "new": "return (base + POTENT.unbruised * u",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -282,8 +282,8 @@
     "old": "+ POTENT.apothecary * st);",
     "new": "+ 0 * st);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_apothecary.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -292,9 +292,9 @@
     "old": "(distiller ? POTENT.distiller : 0)",
     "new": "(0)",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -303,8 +303,8 @@
     "old": "export const potentOk = (pct) => pct === POTENT.pct || pct === POTENT.masterPct;",
     "new": "export const potentOk = (pct) => Number.isInteger(pct) && pct > 0;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "if (Number.isFinite(out[f])) out[f] = Math.round((out[f] * (100 + pct)) / 100);",
     "new": "if (Number.isFinite(out[f])) out[f] = Math.floor((out[f] * (100 + pct)) / 100);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "export const POTENT_FIELDS = Object.freeze(['magnitudeBaseLow', 'magnitudeBaseHigh', 'magnitudeLevelBase', 'magnitudeLevelHigh']);",
     "new": "export const POTENT_FIELDS = Object.freeze(['magnitudeBaseLow', 'magnitudeBaseHigh']);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -331,9 +331,9 @@
     "old": "export const BREWER = 'brewer', DISTILLER = 'distiller', MASTER_ALCHEMIST = 'master-alchemist';",
     "new": "export const BREWER = 'brewer', DISTILLER = 'distiller', MASTER_ALCHEMIST = 'master-alchemists';",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": "export const brewXp = (potion, rank, first = false) => craftXp(potion.tier, rank, first);",
     "new": "export const brewXp = (potion, rank, first = false) => craftXp(potion.tier, 0, first);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -351,8 +351,8 @@
     "old": "return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
     "new": "return base;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
     "new": "return r.kind === 'jewel' ? jewelPoints(r, base, null) : base;",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -370,9 +370,9 @@
     "old": "export const ESSENCE_POINTS = 100;",
     "new": "export const ESSENCE_POINTS = 50;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -381,8 +381,8 @@
     "old": "* (disenchanter ? 2 : 1);",
     "new": "* (disenchanter ? 1 : 1);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -391,8 +391,8 @@
     "old": "export const essenceOf = (points, disenchanter = false) => Math.floor(",
     "new": "export const essenceOf = (points, disenchanter = false) => Math.ceil(",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -401,9 +401,9 @@
     "old": "export const DISENCHANT_XP = 5;",
     "new": "export const DISENCHANT_XP = 10;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -412,8 +412,8 @@
     "old": "  const xp = DISENCHANT_XP * tier * (",
     "new": "  const xp = DISENCHANT_XP * 1 * (",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -422,8 +422,8 @@
     "old": "export const DISENCHANTER = 'disenchanter';",
     "new": "export const DISENCHANTER = 'disenchanters';",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -432,8 +432,8 @@
     "old": "export const ENCHANT_DISCOUNT = Object.freeze({ journeyman: 10, master: 20, efficient: 5 });",
     "new": "export const ENCHANT_DISCOUNT = Object.freeze({ journeyman: 10, master: 10, efficient: 5 });",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -442,8 +442,8 @@
     "old": "journeyman: 10, master: 20, efficient: 5 });",
     "new": "journeyman: 10, master: 20, efficient: 10 });",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -452,7 +452,7 @@
     "old": "return base + (r >= JOURNEYMAN_RANK && spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
     "new": "return base + (spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -461,8 +461,8 @@
     "old": "(pct > 0 ? Math.ceil((Math.max(0, gold) * (100 - pct)) / 100) : gold)",
     "new": "(pct > 0 ? Math.floor((Math.max(0, gold) * (100 - pct)) / 100) : gold)",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -471,25 +471,25 @@
     "old": "const goldCost = enchantGold(totalGoldCost(powers), discountPct);",
     "new": "const goldCost = totalGoldCost(powers);",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-discount-window-unread",
-    "file": "src/ui/itemMakerWindow.js",
+    "file": "src/ui/item/itemMakerWindow.js",
     "old": "goldDiscountPct() { const v = this.hooks.goldDiscountPct?.(); return Number.isSafeInteger(v) && v > 0 && v < 100 ? v : 0; }",
     "new": "goldDiscountPct() { return 0; }",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-discount-pages-offline",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  if (!profPagesShown()) return 0;\n  const t = _provider?.book?.track?.('enchanting');",
     "new": "  const t = _provider?.book?.track?.('enchanting');",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -498,9 +498,9 @@
     "old": "reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 4),",
     "new": "reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 5),",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -509,7 +509,7 @@
     "old": "reagent('reagent:unicorn-horn', 'CreatureIngredients3', 37, 200, 40),",
     "new": "reagent('reagent:unicorn-horn', 'CreatureIngredients1', 37, 200, 40),",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -518,8 +518,8 @@
     "old": "reagent('reagent:small-tooth', 'MiscellaneousIngredients1', 58, 2, 1),",
     "new": "reagent('reagent:small-teeth', 'MiscellaneousIngredients1', 58, 2, 1),",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -528,7 +528,7 @@
     "old": "  reagent('reagent:ivory', 'MiscellaneousIngredients2', 76, 13, 3),\n",
     "new": "",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -537,7 +537,7 @@
     "old": "Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
     "new": "Object.freeze({ ...dfu(key, 'herbs', gemTierOfPrice(price), group, templateIndex), value });",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -546,7 +546,7 @@
     "old": "Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
     "new": "Object.freeze({ ...dfu(key, 'essences', 1, group, templateIndex), value });",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -555,9 +555,9 @@
     "old": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK, ...APOTHECARY_STOCK]);",
     "new": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK]);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -566,8 +566,8 @@
     "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]);",
     "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key]);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -576,9 +576,9 @@
     "old": "RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));",
     "new": "RAM_KIT, ARCANE_ESSENCE].map((m) => [m.key, m]));",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -587,9 +587,9 @@
     "old": "RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));",
     "new": "RAM_KIT, ...REAGENTS].map((m) => [m.key, m]));",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -598,7 +598,7 @@
     "old": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 3, 680,",
     "new": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 2, 680,",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -607,8 +607,8 @@
     "old": "export const ICON_ECTOPLASM = Object.freeze([254, 39]);",
     "new": "export const ICON_ECTOPLASM = Object.freeze([254, 41]);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -617,8 +617,8 @@
     "old": "export const ALCHEMY_FEE = 50;",
     "new": "export const ALCHEMY_FEE = 40;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -627,8 +627,8 @@
     "old": "export const ENCHANT_FEE = 50;",
     "new": "export const ENCHANT_FEE = 40;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -637,8 +637,8 @@
     "old": "export const TRANSMUTE_IN = 2;",
     "new": "export const TRANSMUTE_IN = 3;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -647,8 +647,8 @@
     "old": "export const TRANSMUTE_MERCURY = 1;",
     "new": "export const TRANSMUTE_MERCURY = 0;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -657,7 +657,7 @@
     "old": "export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:silver', 'metal:gold', 'metal:platinum']);",
     "new": "export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:gold', 'metal:platinum']);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -666,8 +666,8 @@
     "old": "{ station: 'alchemy', xp: null }),\n  spec: TRANSMUTER,",
     "new": "{ station: 'alchemy', xp: 'alchemy' }),\n  spec: TRANSMUTER,",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -676,8 +676,8 @@
     "old": "{ station: 'alchemy', xp: null }),\n  spec: TRANSMUTER,",
     "new": "{ station: 'forge', xp: null }),\n  spec: TRANSMUTER,",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -686,8 +686,8 @@
     "old": "export const workSpecOk = (r, specs) => !r?.spec || specs?.[r.spec.rank] === r.spec.id;",
     "new": "export const workSpecOk = (r, specs) => true;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -696,8 +696,8 @@
     "old": "export const TRANSMUTER = Object.freeze({ profession: 'alchemy', rank: 100, id: 'transmuter' });",
     "new": "export const TRANSMUTER = Object.freeze({ profession: 'alchemy', rank: 50, id: 'transmuter' });",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -706,9 +706,9 @@
     "old": "...WEAVE_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]",
     "new": "...WEAVE_RECIPES, ...MASON_RECIPES]",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -717,8 +717,8 @@
     "old": "  const n = (clean ? 1 : 0) + (Number.isSafeInteger(steps) && steps > 0 ? steps : 0);",
     "new": "  const n = (clean ? 1 : 0);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_apothecary.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -727,8 +727,8 @@
     "old": "  return Math.floor((xp * (2 + n)) / 2);",
     "new": "  return Math.floor(xp * (1 + n));",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_apothecary.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -737,7 +737,7 @@
     "old": "  if (!inputs) return { error: 'bad-brew' };",
     "new": "  if (!inputs) return { error: 'bad-recipe' };",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -746,7 +746,7 @@
     "old": "  if (rank < potion.rank) return { error: 'prof-rank' };",
     "new": "  if (rank < 0) return { error: 'prof-rank' };",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -755,7 +755,7 @@
     "old": "const steps = await seatStepsFor(db, player.id, character, seat, 'alchemy', nowS);",
     "new": "const steps = 0;",
     "tests": [
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -764,7 +764,7 @@
     "old": "const steps = await seatStepsFor(db, player.id, character, seat, 'alchemy', nowS);",
     "new": "const steps = await seatStepsFor(db, player.id, character, seat, 'smithing', nowS);",
     "tests": [
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -773,7 +773,7 @@
     "old": "const ownSpent = Math.max(0, Math.min(inp.n, inp.n - st.bought - (st.loose ?? 0)));",
     "new": "const ownSpent = inp.n;",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -782,7 +782,7 @@
     "old": "    if (u > 0) { unbruised += u; reckoned.push({ key: inp.key, n: u }); }\n",
     "new": "",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -791,7 +791,7 @@
     "old": "    ...reckoned.map((u) => db.prepare(`UPDATE prof_unbruised SET qty = MAX(0, qty - ?4)",
     "new": "    ...reckoned.filter(() => false).map((u) => db.prepare(`UPDATE prof_unbruised SET qty = MAX(0, qty - ?4)",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -800,8 +800,8 @@
     "old": "const potent = dice(rand) * 100 < chance && potentAble(potion) ? potentPct(specs[100]) : 0;",
     "new": "const potent = dice(rand) * 100 <= chance && potentAble(potion) ? potentPct(specs[100]) : 0;",
     "tests": [
-      "test/prof12_service.test.js",
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_service.test.js",
+      "test/net/prof12_apothecary.test.js"
     ],
     "note": "AUDIT PROF-541 (RE-AIMED by content): potentAble beside the roll."
   },
@@ -811,8 +811,8 @@
     "old": "const potent = dice(rand) * 100 < chance && potentAble(potion) ? potentPct(specs[100]) : 0;",
     "new": "const potent = dice(rand) * 100 < chance && potentAble(potion) ? potentPct(null) : 0;",
     "tests": [
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ],
     "note": "AUDIT PROF-541 (RE-AIMED by content): potentAble beside the roll."
   },
@@ -822,7 +822,7 @@
     "old": "const count = brewCount(rank, specs[50], potion);",
     "new": "const count = brewCount(rank, null, potion);",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S1 (RE-AIMED): the potion beside the spec."
   },
@@ -832,7 +832,7 @@
     "old": "brewFirstPays(potion) ? FIRST_CRAFT_XP : 0, nowS, nonce];",
     "new": "FIRST_CRAFT_XP, nowS, nonce];",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -841,7 +841,7 @@
     "old": "FROM (SELECT CASE WHEN ?11 > 0 AND NOT EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND char_id = ?2 AND potion = ?4) THEN 1 ELSE 0 END AS f)",
     "new": "FROM (SELECT 1 AS f)",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ],
     "note": "AUDIT PROF-541 (RE-AIMED by content): B6's first only where it pays."
   },
@@ -851,7 +851,7 @@
     "old": "    held.push(`${workableSql('?1', '?2', `?${14 + 2 * i}`)} >= ?${15 + 2 * i}`);   // GOLD-MARKET: never gold's units; AUDIT BAG-CRAFT A1: a station's loose ones too",
     "new": "    held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?${14 + 2 * i}), 0) >= ?${15 + 2 * i}`);",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -860,7 +860,7 @@
     "old": "    // the cauldron out of the Stores, each bought first\n    ...inputs.flatMap((inp) => workStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n",
     "new": "",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -869,7 +869,7 @@
     "old": "  if (prior) return brewAnswer(db, player, prior, nowS, { repeat: true });",
     "new": "  if (prior && false) return brewAnswer(db, player, prior, nowS, { repeat: true });",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -878,8 +878,8 @@
     "old": "SELECT ?1, ?2, '${trackOf('alchemy')}', MIN(?4, xp), ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6",
     "new": "SELECT ?1, ?2, '${trackOf('alchemy')}', 0, ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6",
     "tests": [
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ],
     "note": "CRAFT3: re-aimed by content."
   },
@@ -889,7 +889,7 @@
     "old": "      WHERE EXISTS (SELECT 1 FROM products WHERE provenance = ?4 AND owner = ?1 AND listed = 0)",
     "new": "      WHERE EXISTS (SELECT 1 FROM products WHERE provenance = ?4 AND owner = ?1)",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -898,7 +898,7 @@
     "old": "    db.prepare(`DELETE FROM products WHERE provenance = ?4 AND ${decided}`).bind(player.id, rid, nonce, provenance),\n",
     "new": "",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -907,7 +907,7 @@
     "old": "const points = piecePoints(r, p.hand == null ? null : Number(p.hand));",
     "new": "const points = piecePoints(r, null);",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -916,7 +916,7 @@
     "old": "const essence = essenceOf(points, specs[50] === DISENCHANTER);",
     "new": "const essence = essenceOf(points, false);",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -925,7 +925,7 @@
     "old": "  const xp = scaleXp(disenchantXp(r, rank, base),",
     "new": "  const xp = scaleXp(disenchantXp(r, rank, essence),",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -934,7 +934,7 @@
     "old": "  if (essence < 1) return { error: 'prof-no-essence' };",
     "new": "  if (essence < 0) return { error: 'prof-no-essence' };",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -943,7 +943,7 @@
     "old": "p.char_id === character && p.bought_with == null ? 'own' : 'bought'",
     "new": "p.bought_with == null ? 'own' : 'bought'",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -952,7 +952,7 @@
     "old": "const origin = p.bought_with === 'gold' ? 'gold' :",
     "new": "const origin = p.bought_with === 'gold!' ? 'gold' :",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -961,7 +961,7 @@
     "old": "  if (typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance)) return { error: 'bad-piece' };",
     "new": "  if (typeof provenance !== 'string') return { error: 'bad-piece' };",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -970,7 +970,7 @@
     "old": "  if (prior) return disenchantAnswer(db, player, prior, nowS, { repeat: true });",
     "new": "  if (prior && false) return disenchantAnswer(db, player, prior, nowS, { repeat: true });",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -979,8 +979,8 @@
     "old": "SELECT ?1, ?2, 'enchanting', MIN(?4, xp), ?5 FROM prof_disenchants",
     "new": "SELECT ?1, ?2, 'enchanting', 0, ?5 FROM prof_disenchants",
     "tests": [
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -989,7 +989,7 @@
     "old": "    ...(kind === 'herbs' && clean === true ? [db.prepare(`INSERT INTO prof_unbruised",
     "new": "    ...(kind === 'herbs' && clean === 'never' ? [db.prepare(`INSERT INTO prof_unbruised",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -998,7 +998,7 @@
     "old": "    ...(kind === 'herbs' && clean === true ? [db.prepare(`INSERT INTO prof_unbruised",
     "new": "    ...(kind === 'herbs' ? [db.prepare(`INSERT INTO prof_unbruised",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1007,7 +1007,7 @@
     "old": "  if (!workSpecOk(r, r.spec ? specsAt(tracks.find((t) => t.profession === trackOf(r.spec.profession)), nowS) : null)) return { error: 'prof-transmuter' };\n",
     "new": "",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ],
     "note": "CRAFT3: re-aimed by content."
   },
@@ -1017,7 +1017,7 @@
     "old": "  const halls = rollsQuality(r) || r.kind === 'dish' ? await seatStepsFor(",
     "new": "  const halls = rollsQuality(r) ? await seatStepsFor(",
     "tests": [
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -1026,7 +1026,7 @@
     "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) :",
     "new": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: 0 }) :",
     "tests": [
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -1035,7 +1035,7 @@
     "old": "export const APOTHECARY_OPEN = true;",
     "new": "export const APOTHECARY_OPEN = false;",
     "tests": [
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -1044,7 +1044,7 @@
     "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
     "new": "apothecary: Object.freeze(['alchemy', 'cooking']),",
     "tests": [
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -1053,7 +1053,7 @@
     "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
     "new": "apothecary: Object.freeze(['alchemy', 'jewelcrafting']),",
     "tests": [
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -1062,7 +1062,7 @@
     "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
     "new": "apothecary: Object.freeze(['cooking', 'jewelcrafting']),",
     "tests": [
-      "test/prof12_apothecary.test.js"
+      "test/net/prof12_apothecary.test.js"
     ]
   },
   {
@@ -1071,8 +1071,8 @@
     "old": "  '/v1/prof/brew', '/v1/prof/disenchant',\n",
     "new": "  '/v1/prof/disenchant',\n",
     "tests": [
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1081,8 +1081,8 @@
     "old": "  '/v1/prof/brew', '/v1/prof/disenchant',\n",
     "new": "  '/v1/prof/brew',\n",
     "tests": [
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1091,7 +1091,7 @@
     "old": "'prof-not-yours': 403,",
     "new": "'prof-not-yours': 409,",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1100,7 +1100,7 @@
     "old": "'prof-transmuter': 403,",
     "new": "'prof-transmuter': 409,",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1109,7 +1109,7 @@
     "old": "    if (potent) {\n      it.potent = potent;",
     "new": "    if (potent) {\n      it.potent = undefined;",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1118,7 +1118,7 @@
     "old": "      it.value = Math.round(((Number(it.value) || 0) * (100 + potent)) / 100);",
     "new": "      it.value = Number(it.value) || 0;",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1127,16 +1127,16 @@
     "old": "  const n = Number.isSafeInteger(data?.count) ? Math.max(1, Math.min(3, data.count)) : 1;",
     "new": "  const n = 1;",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-item-name-potent",
-    "file": "src/systems/itemInfo.js",
+    "file": "src/systems/item/itemInfo.js",
     "old": "${Number.isInteger(item.potent) && item.potent > 0 ? 'Potent ' : ''}",
     "new": "${''}",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1145,7 +1145,7 @@
     "old": "    (a.potent ?? 0) === (b.potent ?? 0) &&\n",
     "new": "",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1154,17 +1154,17 @@
     "old": "  if (stack.potent) picked.potent = stack.potent;   // PROF12: and its Potent share\n",
     "new": "",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-item-field",
-    "file": "src/systems/itemFields.js",
+    "file": "src/systems/item/itemFields.js",
     "old": "  potent: int({ min: 25, max: 40 }),\n",
     "new": "",
     "tests": [
-      "test/rf5_itemfields.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/rf5_itemfields.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1173,7 +1173,7 @@
     "old": "drinkPotion(item.potionRecipeKey ?? 0, Number.isInteger(item.potent) ? item.potent : 0)",
     "new": "drinkPotion(item.potionRecipeKey ?? 0, 0)",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1182,7 +1182,7 @@
     "old": "      const bundle = potent ? { ...plain, effects: plain.effects.map((e) => potentEffect(e, potent, effectiveLevel(playerEntity))) } : plain;",
     "new": "      const bundle = plain;",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1191,25 +1191,25 @@
     "old": "    drinkPotion: (key, potent) => magic.drinkPotion(key, potent),",
     "new": "    drinkPotion: (key, potent) => magic.drinkPotion(key),",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-essence-row-picture",
-    "file": "src/systems/profTemplates.js",
+    "file": "src/systems/professions/profTemplates.js",
     "old": "  isOneHanded: false, isIngredient: false, worldTextureArchive: m.icon[0], worldTextureRecord: m.icon[1],\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
     "new": "  isOneHanded: false, isIngredient: false, worldTextureArchive: m.icon[0], worldTextureRecord: 0,\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-plural-small-teeth",
-    "file": "src/systems/profItems.js",
+    "file": "src/systems/professions/profItems.js",
     "old": ", 'Small Tooth': 'Small Teeth' });",
     "new": " });",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1218,7 +1218,7 @@
     "old": "      ? door.brew(w.character, w.recipe, w.keys, w.rid,",
     "new": "      ? door.brew(w.character, w.recipe, w.keys, w.rid + (w.tries = (w.tries | 0) + 1),",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1227,7 +1227,7 @@
     "old": "      ? door.brew(w.character, w.recipe, w.keys, w.rid, Number.isSafeInteger(w.seat) ? w.seat : null)",
     "new": "      ? door.brew(w.character, w.recipe, w.keys, w.rid, null)",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1236,7 +1236,7 @@
     "old": "        const kept = keptOf(key);\n        kept.crafts.push(w);\n        writeKept(kept, key);\n        return craftOne(w, key, mint);\n      })().finally(() => { _craftBusy = null; });\n      return _craftBusy;\n    },\n    /** A crafted piece DISENCHANTED",
     "new": "        return craftOne(w, key, mint);\n      })().finally(() => { _craftBusy = null; });\n      return _craftBusy;\n    },\n    /** A crafted piece DISENCHANTED",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1245,71 +1245,71 @@
     "old": "        if (r?.ok) { applyStore(r.data?.store); applyTrack(r.data?.track); } else shutBy(r);\n        return r;\n      })();\n      return m.promise;\n    },\n    /** The smith's stock (PROF3)",
     "new": "        return r;\n      })();\n      return m.promise;\n    },\n    /** The smith's stock (PROF3)",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-pages-alchemy-undrawn",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    ['alchemy', (d) => drawAlchemyStation(d, rerender, kit)],   // PROF12\n",
     "new": "",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-pages-enchant-undrawn",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    ['enchant', (d) => drawEnchantingStation(d, rerender, kit)],   // PROF12\n",
     "new": "",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-pages-unpractised",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "'provisioning', 'enchanting']);",
     "new": "]);",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ],
     "note": "CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF12-pages-dis-once",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "      if (!armed) { _enchant.armed = pc.provenance; rerender(); return; }\n",
     "new": "",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-pages-counter-unoffered",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "      if (sale && have < inp.n) counterBuy(line, { el, p, state: _alchemy, rerender, key: inp.key, need: inp.n - have, sale, who: 'apothecaries', counter: 'apothecaries' });",
     "new": "      if (sale && have < 0) counterBuy(line, { el, p, state: _alchemy, rerender, key: inp.key, need: inp.n - have, sale, who: 'apothecaries', counter: 'apothecaries' });",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-pages-transmute-anyone",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    if (specs[100] === TRANSMUTER.id) workRows(",
     "new": "    if (specs[100] !== 'nobody') workRows(",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-pages-brew-wrong-keys",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "      const res = await p.brew(potion.id, keys);",
     "new": "      const res = await p.brew(potion.id, potion.ingredients.map(String));",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1318,7 +1318,7 @@
     "old": "          const f = (alch ? modes?.alchemyHere?.() : mason ?",
     "new": "          const f = (alch ? modes?.forgeHere?.() : mason ?",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1327,7 +1327,7 @@
     "old": "const { seat } = alchemyHall();",
     "new": "const seat = null;",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ],
     "note": "AUDIT PROF-541 (RE-AIMED by content): the seat off the shared alchemyHall."
   },
@@ -1337,7 +1337,7 @@
     "old": "      const potions = brewItems(data);",
     "new": "      const potions = [];",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1346,7 +1346,7 @@
     "old": "if (at >= 0) out = { piece: playerEntity.items.splice(at, 1)[0], at };",
     "new": "if (at < 0) out = { piece: playerEntity.items.splice(at, 1)[0], at };",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ],
     "note": "AUDIT PROF-541 (RE-AIMED by content): the piece taken by takeOut."
   },
@@ -1356,7 +1356,7 @@
     "old": "if (interiorBuilding.buildingType === BUILDING_TYPES.Alchemist) return interiorBuilding.insideOpenShop === false ? null : { kind: 'shop', fee: ALCHEMY_FEE };",
     "new": "if (interiorBuilding.buildingType === BUILDING_TYPES.Alchemist) return { kind: 'shop', fee: ALCHEMY_FEE };",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1365,7 +1365,7 @@
     "old": "=== GUILD_GROUPS.MagesGuild) return { kind: 'shop', fee: ENCHANT_FEE };",
     "new": "!== null) return { kind: 'shop', fee: ENCHANT_FEE };",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1374,7 +1374,7 @@
     "old": "        goldDiscountPct: () => enchantGoldPct(),",
     "new": "        goldDiscountPct: () => 0,",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1383,7 +1383,7 @@
     "old": "    if ((m.apothecaries ?? []).length) box.append(apothecariesNode());   // PROF12\n",
     "new": "",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1392,7 +1392,7 @@
     "old": "post('/v1/prof/brew', { character, potion, keys, rid, ...(seat == null ? {} : { seat }) })",
     "new": "post('/v1/prof/brew', { character, potion, keys, rid })",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1401,7 +1401,7 @@
     "old": "  provenance TEXT NOT NULL UNIQUE CHECK (length(provenance) = 16),",
     "new": "  provenance TEXT NOT NULL CHECK (length(provenance) = 16),",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1410,8 +1410,8 @@
     "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
     "new": "export const NO_PACK_FORM = Object.freeze(['work:ram']);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1420,25 +1420,25 @@
     "old": "  if (!withdrawable(key)) return { error: 'prof-no-pack-form' };",
     "new": "  if (false) return { error: 'prof-no-pack-form' };",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
     "name": "PROF12-E1-page-offers-withdraw",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    if (withdrawable(pick.material)) bar.append(qty, go);",
     "new": "    bar.append(qty, go);",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-E1-page-essence-line",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "(pick.family === 'essences' ? essenceStaysLine() : pick.family === 'siege' ? siegeStaysLine() : stockStaysLine());",
     "new": "(pick.family === 'siege' ? siegeStaysLine() : stockStaysLine());",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1447,7 +1447,7 @@
     "old": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays in the Stores - it never goes to the pack.'),",
     "new": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays at the bench until its own craft is practised.'),",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1456,8 +1456,8 @@
     "old": "  const tier = /** @type {number} */ (r?.tier);",
     "new": "  const tier = topTierOf(rank);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1466,8 +1466,8 @@
     "old": "  return tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp;",
     "new": "  return xp;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1476,8 +1476,8 @@
     "old": "  return tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp;",
     "new": "  return tier < topTierOf(rank) - 1 ? Math.floor(xp / 4) : xp;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1486,17 +1486,17 @@
     "old": "  if (!firstCraftPays(/** @type {any} */ (r)) || !Number.isSafeInteger(r?.tier)) return 0;",
     "new": "  if (!r || !Number.isSafeInteger(r?.tier)) return 0;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
     "name": "PROF12-E2-page-no-recipe",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "disenchantXp(recipeById(pc.recipe), rank, base)",
     "new": "disenchantXp(recipeById('longsword:iron'), rank, base)",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1505,7 +1505,7 @@
     "old": ", recipe: it.recipe };   // AUDIT PROF12 E2: its recipe, the XP's tier",
     "new": " };",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1514,7 +1514,7 @@
     "old": "    unbruisedClamp(db, { player, character, materialSql, guard, binds }),   // AUDIT PROF12 A1\n",
     "new": "",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1523,7 +1523,7 @@
     "old": "  out.push(unbruisedClamp(db, { player, character, materialSql, guard, binds }));   // AUDIT PROF12 A1\n",
     "new": "",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1532,7 +1532,7 @@
     "old": "AND s.material = ${materialSql} AND s.origin = 'own'), 0)\n      + COALESCE((SELECT c.qty",
     "new": "AND s.material = ${materialSql} AND s.origin = 'bought'), 0)\n      + COALESCE((SELECT c.qty",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1541,7 +1541,7 @@
     "old": "    // the unbruised herbs it reckoned, spent with it - AUDIT PROF12 A1: before the cauldron leaves, so the spends' clamp\n    // (professions.js unbruisedClamp: never more than the own units still held) reads the count already lowered\n    ...reckoned.map((u) => db.prepare(`UPDATE prof_unbruised SET qty = MAX(0, qty - ?4)\n      WHERE player = ?1 AND char_id = ?2 AND material = ?3 AND EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND rid = ?5 AND n = ?6)`)\n      .bind(player.id, character, u.key, u.n, rid, nonce)),\n    // the cauldron out of the Stores, each bought first\n    ...inputs.flatMap((inp) => workStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n",
     "new": "    ...inputs.flatMap((inp) => workStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n    ...reckoned.map((u) => db.prepare(`UPDATE prof_unbruised SET qty = MAX(0, qty - ?4)\n      WHERE player = ?1 AND char_id = ?2 AND material = ?3 AND EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND rid = ?5 AND n = ?6)`)\n      .bind(player.id, character, u.key, u.n, rid, nonce)),\n",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1550,8 +1550,8 @@
     "old": "    + (item.potent ? `|p${item.potent}` : '')",
     "new": "    + ''",
     "tests": [
-      "test/prof12_client.test.js",
-      "test/quickslots.test.js"
+      "test/systems/prof12_client.test.js",
+      "test/systems/quickslots.test.js"
     ]
   },
   {
@@ -1560,7 +1560,7 @@
     "old": "  if (!magnitudeDefault(out)) {\n",
     "new": "  if (true) {\n",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -1569,7 +1569,7 @@
     "old": "  if (!magnitudeDefault(out)) {\n",
     "new": "  if (false) {\n",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -1578,7 +1578,7 @@
     "old": "  if (chanceOwn(out)) out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);\n",
     "new": "",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -1587,7 +1587,7 @@
     "old": "  if (chanceOwn(out)) out.chanceBase = raise(",
     "new": "  out.chanceBase = raise(",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -1596,7 +1596,7 @@
     "old": "    if (min1 && mult < 1) mult = 1;",
     "new": "",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -1605,7 +1605,7 @@
     "old": "    return base + Math.round(((base + plus * mult) * pct) / 100);",
     "new": "    return base + Math.floor(((base + plus * mult) * pct) / 100);",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -1614,7 +1614,7 @@
     "old": "export const magnitudeDefault = (s) => POTENT_FIELDS.every((f) => (s?.[f] ?? 1) === 1);",
     "new": "export const magnitudeDefault = (s) => (s?.magnitudeBaseLow ?? 1) === 1;",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
@@ -1623,8 +1623,8 @@
     "old": "export const potentLasts = (potion) => !!potion && magnitudeDefault(RECIPE_BY_ID.get(potion.id)?.settings ?? {});",
     "new": "export const potentLasts = (potion) => !!potion && magnitudeDefault(potion);",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1633,7 +1633,7 @@
     "old": "potentEffect(e, potent, effectiveLevel(playerEntity))",
     "new": "potentEffect(e, potent)",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1642,25 +1642,25 @@
     "old": "(potentLasts(p) ? ` (lasts ${data.potent}% longer)` :",
     "new": "(false ? ` (lasts ${data.potent}% longer)` :",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-A3-page-words",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    : potentLasts(potion) ? t('prof.page.alchemy.potentLasts', 'Potent {c}% (lasts {pct}% longer)', { c, pct }) : t('prof.page.alchemy.potent', 'Potent {c}% (+{pct}% magnitude)', { c, pct });",
     "new": "    : false ? t('prof.page.alchemy.potentLasts', 'Potent {c}% (lasts {pct}% longer)', { c, pct }) : t('prof.page.alchemy.potent', 'Potent {c}% (+{pct}% magnitude)', { c, pct });",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-A3-page-station-words",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  return !potion ? t('prof.page.alchemy.potentAny', 'Potent {c}% (+{pct}% magnitude or duration)', { c, pct })",
     "new": "  return !potion ? t('prof.page.alchemy.potentAny', 'Potent {c}% (+{pct}% magnitude)', { c, pct })",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1669,16 +1669,16 @@
     "old": "spec('transmuter', 'Transmuter', 'Two of a DFU metal and a Mercury make one of the next up.')",
     "new": "spec('transmuter', 'Transmuter', 'Three of a DFU metal make one of the next up.')",
     "tests": [
-      "test/prof12_law.test.js"
+      "test/systems/prof12_law.test.js"
     ]
   },
   {
     "name": "PROF12-E3-page-three",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "turns two of a metal and a Mercury into one of the next",
     "new": "turns three of a metal and a Mercury into one of the next",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1687,8 +1687,8 @@
     "old": "  if (sorted(/** @type {number[]} */ (templates)) !== sorted(potion.ingredients)) return null;",
     "new": "  if (sorted(/** @type {number[]} */ (templates)) === 'never') return null;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1697,9 +1697,9 @@
     "old": "  return !(/^3,/.test(String(r.effect)) && !(r.secondary?.length) && magnitudeDefault(r.settings ?? {}));",
     "new": "  return true;",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1708,7 +1708,7 @@
     "old": "dice(rand) * 100 < chance && potentAble(potion) ? potentPct(specs[100]) : 0",
     "new": "dice(rand) * 100 < chance ? potentPct(specs[100]) : 0",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1717,7 +1717,7 @@
     "old": "potentOk(data?.potent) && potentAble(p) ? data.potent : 0",
     "new": "potentOk(data?.potent) ? data.potent : 0",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1726,25 +1726,25 @@
     "old": "const potent = potentOk(data?.potent) && potentAble(p);",
     "new": "const potent = potentOk(data?.potent);",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF-541-B3-line",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  if (potion && !potentAble(potion)) return t('prof.page.alchemy.neverPotent', POTENT_NONE_LINE);",
     "new": "  if (potion && !potion) return t('prof.page.alchemy.neverPotent', POTENT_NONE_LINE);",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF-541-B4-steps",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "potentChance(rank, { distiller: specs?.[50] === DISTILLER, unbruised, steps })",
     "new": "potentChance(rank, { distiller: specs?.[50] === DISTILLER, unbruised })",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1753,7 +1753,7 @@
     "old": "alchemySteps: () => alchemyHall().steps,",
     "new": "alchemySteps: () => 0,",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1762,7 +1762,7 @@
     "old": "CASE WHEN ?11 > 0 AND NOT EXISTS (SELECT 1 FROM prof_brews",
     "new": "CASE WHEN NOT EXISTS (SELECT 1 FROM prof_brews",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1771,7 +1771,7 @@
     "old": "'DELETE FROM prof_unbruised WHERE player = ? AND char_id = ?'",
     "new": "'DELETE FROM prof_unbruised WHERE player = ? AND char_id = ? AND 0'",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1780,7 +1780,7 @@
     "old": "return at >= 0 && tradeableRecord(items[at]) && takeTradeGoods(save, { items: [items[at]], gold: 0 }, [at]) ? null : 'prof-piece-gone';",
     "new": "return null;",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1789,7 +1789,7 @@
     "old": "...(prep ? [mustChange(db)] : []),",
     "new": "...([]),",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1798,7 +1798,7 @@
     "old": "const side = await realmActFirst(db, player.id, character, realm);   // AUDIT PROF-541 B2",
     "new": "const side = { at: null };   // AUDIT PROF-541 B2",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1807,7 +1807,7 @@
     "old": "? { why: 'disenchanted' } : {}",
     "new": "? {} : {}",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1816,7 +1816,7 @@
     "old": "...(typeof r.why === 'string' ? { why: r.why } : {}), ...(r.error === 'seq'",
     "new": "...(r.error === 'seq'",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1825,7 +1825,7 @@
     "old": "...(r.error === 'seq' && Number.isSafeInteger(r.seq) ? { seq: r.seq } : {}) }, PROF_STATUS",
     "new": "...({}) }, PROF_STATUS",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1834,8 +1834,8 @@
     "old": "disenchantPiece({ ...ctx, bucket: env.SAVES }, who.player",
     "new": "disenchantPiece(ctx, who.player",
     "tests": [
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1844,7 +1844,7 @@
     "old": "' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)'",
     "new": "' AND ? IS NOT NULL AND ? IS NOT NULL'",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ]
   },
   {
@@ -1853,7 +1853,7 @@
     "old": "const r = realm ? await Promise.resolve().then(once).catch(() => ({ ok: false, error: 'offline' })) : await ask(once);",
     "new": "const r = await ask(once);",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1862,7 +1862,7 @@
     "old": "post('/v1/prof/disenchant', { character, provenance, rid, ...(realm ? { realm } : {}) })",
     "new": "post('/v1/prof/disenchant', { character, provenance, rid })",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1871,7 +1871,7 @@
     "old": "r?.error === 'prof-no-piece' && r?.why === 'disenchanted' && takeOut()",
     "new": "r?.error === 'prof-no-piece' && r?.why === 'never' && takeOut()",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1880,17 +1880,17 @@
     "old": "const boughtWith = `CASE WHEN ${anySql(13, LOOSE_ORIGIN)} THEN 'gold' WHEN ${anySql(13, 'bought')} THEN 'marks' END`;",
     "new": "const boughtWith = `CASE WHEN ${anySql(13, LOOSE_ORIGIN)} THEN 'gold' WHEN ${anySql(13, 'bought')} THEN NULL END`;",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S5 (RE-AIMED): boughtAnySql shared with the kit."
   },
   {
     "name": "PROF-541-B8-full",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "b.disabled = _enchant.busy || !!short || full;",
     "new": "b.disabled = _enchant.busy || !!short;",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1899,7 +1899,7 @@
     "old": "          if (!r.data) profBook.refresh({ force: true }).catch(() => {});\n",
     "new": "",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1908,7 +1908,7 @@
     "old": "              profBook.refresh({ force: true }).catch(() => {});\n              saveSoon.changed();",
     "new": "              saveSoon.changed();",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1917,7 +1917,7 @@
     "old": "if (owed > 0) deductGold(playerEntity, owed);",
     "new": "if (owed < 0) deductGold(playerEntity, owed);",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1926,16 +1926,16 @@
     "old": "'prof-busy': () => t('account.refusal.profBusy', 'Your hands are busy with another craft.'),",
     "new": "'prof-busy': () => t('account.refusal.profBusy', 'The anvil is still ringing from your last work.'),",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF-541-R2-C3-unclamped",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "const steps = Math.max(0, Math.trunc(Number(p.alchemySteps?.()) || 0));",
     "new": "const steps = p.alchemySteps?.() ?? 0;",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ]
   },
   {
@@ -1944,9 +1944,9 @@
     "old": "  if (potion && !brewFirstPays(potion)) return 1;\n",
     "new": "",
     "tests": [
-      "test/prof12_law.test.js",
-      "test/prof12_service.test.js",
-      "test/prof12_client.test.js"
+      "test/systems/prof12_law.test.js",
+      "test/net/prof12_service.test.js",
+      "test/systems/prof12_client.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S1: the counter's goods alone brew one."
   },
@@ -1956,27 +1956,27 @@
     "old": "const count = brewCount(rank, specs[50], potion);",
     "new": "const count = brewCount(rank, specs[50]);",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S1: the brew's potion asked."
   },
   {
     "name": "PROF541-R2-S1-page-potion",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "const made = brewCount(rank, specs[50], potion);",
     "new": "const made = n;",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S1: the station's line the potion's count."
   },
   {
     "name": "PROF541-R2-S1-page-note",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 1 ? ` ${t('prof.page.alchemy.counterOne', 'A potion wholly of the Apothecaries\\' goods brews one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
     "new": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 9 ? ` ${t('prof.page.alchemy.counterOne', 'A potion wholly of the Apothecaries\\' goods brews one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
     "tests": [
-      "test/prof12_client.test.js"
+      "test/systems/prof12_client.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S1: the station says it."
   },
@@ -1986,7 +1986,7 @@
     "old": "  if (!pieceListable(p.recipe)) return { error: 'prof-no-essence' };",
     "new": "  if (false) return { error: 'prof-no-essence' };",
     "tests": [
-      "test/prof12_service.test.js"
+      "test/net/prof12_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S6: arrows make no Essence."
   },
@@ -1996,7 +1996,7 @@
     "old": "CASE WHEN ${anySql(6, LOOSE_ORIGIN)} THEN '${LOOSE_ORIGIN}' WHEN ${anySql(6, 'bought')} THEN 'bought' ELSE 'own' END, count FROM prof_crafts",
     "new": "${await (async () => { for (const inp of inputs) if ((await storeOf(db, player.id, character, inp.key)).bought > 0) return \"'bought'\"; return \"'own'\"; })()}, count FROM prof_crafts",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S5: the old read before the batch - the raced bought plank misnames the kit."
   }

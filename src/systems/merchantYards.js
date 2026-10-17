@@ -5,24 +5,24 @@
 // places"; and of the wagons: "Transport merchants hold all carts and wagons. The stable holds horses. No longer in
 // general shop"): THE TWO YARDS' TRADE - THE LAW.
 //
-// Every city and town (Daggerfall's TownCity and TownHamlet - systems/travelOptions.js names them "city" and "town";
+// Every city and town (Daggerfall's TownCity and TownHamlet - systems/travel/travelOptions.js names them "city" and "town";
 // not a village, a farm or a manor) stands two open-air yards the port adds: a STABLE, a fenced paddock with its horses
 // and its stablemaster, and a WAGON YARD, a wagonwright's yard with a cart and its two wagons drawn up to be seen. They
 // are not buildings: Daggerfall's towns are its own fixed blocks, every building in them already a home, a shop or a
 // hall, and a yard takes none of them - no building record, no deed, no quest place. Where each stands is the town's
-// own open ground (world/merchantYardSites.js); what it looks like is the port's own (world/merchantYardModels.js,
-// world/merchantYardArt.js); the host stands both (scenes/merchantYardsHost.js). YARDS-FOUND: it is found as a shop is -
+// own open ground (world/merchantYards/merchantYardSites.js); what it looks like is the port's own (world/merchantYards/merchantYardModels.js,
+// world/merchantYards/merchantYardArt.js); the host stands both (scenes/merchantYardsHost.js). YARDS-FOUND: it is found as a shop is -
 // a row of the town's talk directory under a key no Daggerfall building can hold (`yardDirectoryRows`), its ground and
-// its name on the town map (world/merchantYardMap.js), a mark on the Overworld (the host's `overworldMarks`).
+// its name on the town map (world/merchantYards/merchantYardMap.js), a mark on the Overworld (the host's `overworldMarks`).
 //
 // THE TRADE (here): the Stable sells the Horse and buys one back; the Wagon Yard sells the Small Cart, the Open Wagon
-// and the Caravan (systems/wagonKinds.js) and buys any of them back - a loaded wagon refused at the counter as
+// and the Caravan (systems/wagon/wagonKinds.js) and buys any of them back - a loaded wagon refused at the counter as
 // everywhere (systems/tradeModes.js sellGuardOf). Each opens the same trade window a shop's counter does, priced by the
 // same law at YARD_QUALITY. A yard never sells out: each Buy is the yard's whole stock, minted fresh (a custom
-// merchant's openBuy - systems/guildServices.js). The General Store no longer shelves or buys a horse, a cart or a
+// merchant's openBuy - systems/guild/guildServices.js). The General Store no longer shelves or buys a horse, a cart or a
 // wagon (systems/shopStock.js) - a departure from DFU, whose every General Store shelves the horse and the cart.
 //
-// WHO KEEPS THEM: a keeper of the town's own people (the race its walkers wear - characters/mobilePerson.js walkerRace,
+// WHO KEEPS THEM: a keeper of the town's own people (the race its walkers wear - characters/mobile/mobilePerson.js walkerRace,
 // a Redguard region's Redguard), named from the region's
 // name bank on a seed of the town's map id and the yard's kind - every client names the same keeper - and the yard is
 // named for them ("Halbrecht's Stables").
@@ -38,11 +38,11 @@
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
 import { residentName } from './livingWorld/census.js';
-import { setItemFields, mintCondition, TRANSPORT_HORSE } from './itemTemplates.js';
-import { WAGON_KIND_ORDER, newWagonItem, isWagonItem } from './wagonKinds.js';
-import { birthHorses } from './horseCoats.js';   // STEED1: the stable's horses born at the yard
+import { setItemFields, mintCondition, TRANSPORT_HORSE } from './item/itemTemplates.js';
+import { WAGON_KIND_ORDER, newWagonItem, isWagonItem } from './wagon/wagonKinds.js';
+import { birthHorses } from './horse/horseCoats.js';   // STEED1: the stable's horses born at the yard
 import { horseBornStats, steedValue } from './steedCare.js';   // STEED1: and priced by what they are
-import { UPKEEP_ITEM, newUpkeepItem, upkeepItemsAvailable } from './upkeepItemRows.js';   // STEED1/WAGONS4: the oats, the kits
+import { UPKEEP_ITEM, newUpkeepItem, upkeepItemsAvailable } from './upkeep/upkeepItemRows.js';   // STEED1/WAGONS4: the oats, the kits
 import { WORKBENCH_FEE } from '../net/professionLaw.js';   // CARP-YARD: the joinery's bench asks the furnisher's fee
 
 /** The two yards, in the order a town stands them. */
@@ -114,7 +114,7 @@ export function stableHorses(mapId, day, { owned = [], priced = false } = {}) {
 /** What a yard sells - its whole stock, minted as a shelf mints a row (setItemFields, mintCondition): the Stable a
  *  Horse (STEED1: three of them, on the town's day - stableHorses) and a sack of oats; the Wagon Yard the Small Cart, the
  *  Open Wagon and the Caravan, in WAGON_KIND_ORDER, and a Wagon Repair Kit. The oats and the kits only where they may be
- *  sold (online while UPKEEP_ITEMS_ONLINE is on - systems/upkeepItemRows.js). A fresh list each call.
+ *  sold (online while UPKEEP_ITEMS_ONLINE is on - systems/upkeep/upkeepItemRows.js). A fresh list each call.
  *  @param {string} kind @param {{ mapId?: number, day?: number, online?: boolean, owned?: Set<number>|number[], priced?: boolean }} [o] */
 export function yardStock(kind, { mapId = 0, day = 0, online = false, owned = [], priced = false } = {}) {
   const mint = (it) => mintCondition(setItemFields(it));
@@ -192,7 +192,7 @@ export const YARD_ROWS = Object.freeze([
   Object.freeze({ id: 'buy', label: 'Buy' }),
   Object.freeze({ id: 'sell', label: 'Sell' }),
 ]);
-/** WAGONS4: the Wagon Yard's third row - its wright mends the wagon driven (systems/wagonUpkeep.js mendPrice). */
+/** WAGONS4: the Wagon Yard's third row - its wright mends the wagon driven (systems/wagon/wagonUpkeep.js mendPrice). */
 export const YARD_MEND_ROW = Object.freeze({ id: 'mend', label: 'Mend' });
 /** CARP-YARD: THE JOINERY'S WORKBENCH AS A STATION - what the street's workbench question answers at one (scenes/world.js
  *  workbenchHere): a shop's, at the furnisher's own fee (WORKBENCH_FEE - no bench is a cheaper one), its carpenter the
@@ -203,19 +203,19 @@ export const YARD_BENCH_ROW = Object.freeze({ id: 'bench', label: 'Workbench' })
 /** A yard's keeper's rows: the Stable's two, the Wagon Yard's three, the joinery's bench. */
 export const yardRowsFor = (kind) => (validYardKind(kind) === 'carpenter' ? [YARD_BENCH_ROW]
   : validYardKind(kind) === 'transport' ? [...YARD_ROWS, YARD_MEND_ROW] : [...YARD_ROWS]);
-/** CARP-YARD: what the joinery's carpenter says on Steal (the bench where the Stores page is not says ui/profPages.js
+/** CARP-YARD: what the joinery's carpenter says on Steal (the bench where the Stores page is not says ui/professions/profPages.js
  *  WORKBENCH_COLD_LINE, a home's workbench's own word). */
 export const CARPENTER_STEAL_TEXT = 'The carpenter never takes an eye off the tools.';
 
 /**
  * YARDS-FOUND (2026-10-10, from play: "The new stable and transport merchant shops dont show on town maps/overworld",
  * "Ensure these locations appear when talking to NPCs"): A YARD IN THE TOWN'S TALK DIRECTORY. The directory is the one
- * list the Where-is page, the compass's "%di of here" (systems/talk.js buildingCompassDirection), the knowledge roll and
+ * list the Where-is page, the compass's "%di of here" (systems/talk/talk.js buildingCompassDirection), the knowledge roll and
  * the map's mark ("Let me just mark %loc here on your map" - systems/discovery.js discoverBuilding) all read a building
  * from, so a yard joins it as a shop's row does and every one of them answers it unchanged.
  *
  * Its key is one no building of Daggerfall's can hold: a building's is (layoutX << 16) + (layoutY << 8) + record, under
- * 1 << 19 in the largest city, and the key 0 is BUILDING_KEY_0, 1 << 24 (systems/talkTopics.js makeBuildingKey) - a
+ * 1 << 19 in the largest city, and the key 0 is BUILDING_KEY_0, 1 << 24 (systems/talk/talkTopics.js makeBuildingKey) - a
  * yard's is YARD_KEY_BASE (1 << 25) and its kind's place in YARD_KIND_ORDER. Its type is its counter's (`yard:<kind>`,
  * never a DFU building type - no table of Daggerfall's is keyed by it, and no DFU group, regional row or quest place
  * takes it).
@@ -223,7 +223,7 @@ export const CARPENTER_STEAL_TEXT = 'The carpenter never takes an eye off the to
 export const YARD_KEY_BASE = 1 << 25;
 /** Each yard's place past YARD_KEY_BASE - the Stable's and the Wagon Yard's their order's; CARP-YARD: the joinery's
  *  after the port's four places (systems/portPlaces.js FOUND_KIND_ORDER, whose index each one's is - a leaf here, it
- *  cannot read that order; test/carpyard1.test.js holds the two to one), so the shipyard's, the crew hall's, the
+ *  cannot read that order; test/systems/carpyard1.test.js holds the two to one), so the shipyard's, the crew hall's, the
  *  lighthouse's and the docks' keys stay theirs. */
 export const YARD_KEY_SLOT = Object.freeze({ stable: 0, transport: 1, carpenter: 6 });
 /** A yard's key in its town's directory. */
@@ -231,9 +231,9 @@ export const yardBuildingKey = (kind) => YARD_KEY_BASE + YARD_KEY_SLOT[validYard
 /** YARDS-FOUND: the Where-is page's group for each yard, as DFU's are worded ("General stores", "Taverns"). */
 export const YARD_TALK_GROUPS = Object.freeze({ stable: 'Stables', transport: 'Wagon yards', carpenter: 'Carpenters' });
 /**
- * YARDS-FOUND: a town's yards as rows of its talk directory - the shape systems/talkTopics.js buildBuildingDirectory
+ * YARDS-FOUND: a town's yards as rows of its talk directory - the shape systems/talk/talkTopics.js buildBuildingDirectory
  * mints (`name`, `buildingType`, `factionId`, `quality`, `position` in the location's frame, `buildingKey`), and `yard`
- * its kind. `sites` the host's (world/merchantYardSites.js yardSite's, the keeper beside each - scenes/world.js
+ * its kind. `sites` the host's (world/merchantYards/merchantYardSites.js yardSite's, the keeper beside each - scenes/world.js
  * merchantYardSitesFor); none, or none a kind the law knows, is no row. Pure; a fresh list.
  * @param {Array<any>|null|undefined} sites
  */

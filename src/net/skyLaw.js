@@ -8,8 +8,8 @@
 // never changes. This file is THE SKY: the hour, the date and the moons a player sees, at a rate of its own. Nothing
 // walks the sky and nothing is stamped on it - it is read for "now" - so its rate is a dial that moves nothing else.
 //
-// A LEAF, AND NEVER THE RELAY'S. wire.js is in the relay's bundle and test/relayversion.test.js binds RELAY_VERSION to
-// every byte of it, so the sky lives here, outside the relay's import graph (test/time1_sky.test.js holds it out); the
+// A LEAF, AND NEVER THE RELAY'S. wire.js is in the relay's bundle and test/net/relayversion.test.js binds RELAY_VERSION to
+// every byte of it, so the sky lives here, outside the relay's import graph (test/systems/time1_sky.test.js holds it out); the
 // account service bundles it through nodeLaw.js, whose UTC days take their season from the sky. It imports wire.js
 // alone, so neither graph grows past this one file.
 import { sharedClassicMinutes, wallMsForClassicMinutes, ONLINE_MINUTES_PER_MS } from './wire.js';
@@ -20,7 +20,7 @@ import { sharedClassicMinutes, wallMsForClassicMinutes, ONLINE_MINUTES_PER_MS } 
  * before it reached, so a new row turns the dial again with no jump. Each `fromMs` is an ALIGNED instant
  * (`node tools/skyCutover.mjs` lists them): there the old sky's hour already equals the new schedule's, so nothing
  * skips at the switch and the new rate's midnights fall on whole fractions of the real day for good - at TimeScale 24
- * on the hour (test/time1_sky.test.js pins both).
+ * on the hour (test/systems/time1_sky.test.js pins both).
  *
  * The first switch must not fall before the build that carries it is live: a tab that loads after it reads the new sky
  * at once, so the sky would jump once at the deploy. Nothing stores the sky, so that jump is only seen, never kept -

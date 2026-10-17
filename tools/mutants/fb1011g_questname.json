@@ -5,7 +5,7 @@
     "old": "    if (res?.isPerson !== true || !questBridge) return null;\n    const t = npcHoverName(",
     "new": "    if (res?.isPerson !== true || questBridge) return null;\n    const t = npcHoverName(",
     "tests": [
-      "test/fb1011g_questname.test.js"
+      "test/systems/fb1011g_questname.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (res?.isPerson !== true || !questBridge) return null;\n    const t = npcHoverName(",
     "new": "    if (!res || !questBridge) return null;\n    const t = npcHoverName(",
     "tests": [
-      "test/fb1011g_questname.test.js"
+      "test/systems/fb1011g_questname.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "npcHoverName(npcDisplayName(questStandNpcData(st, res, buildingKey)),",
     "new": "npcHoverName(npcDisplayName(questStandNpcData(st, res, 0)),",
     "tests": [
-      "test/fb1011g_questname.test.js"
+      "test/systems/fb1011g_questname.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        const named = questStandPersonName(questFlats, key, interiorBuilding?.buildingKey ?? 0); if (named) return named;\n",
     "new": "",
     "tests": [
-      "test/fb1011g_questname.test.js"
+      "test/systems/fb1011g_questname.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const named = questStandPersonName(dungeonQuestFlats, key, 0); if (named) return named;   // QUEST-NAME: a dungeon has no building - the click's 0\n",
     "new": "",
     "tests": [
-      "test/fb1011g_questname.test.js"
+      "test/systems/fb1011g_questname.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "questStandPersonName(questFlats, key, interiorBuilding?.buildingKey ?? 0)",
     "new": "questStandPersonName(questFlats, key, 0)",
     "tests": [
-      "test/fb1011g_questname.test.js"
+      "test/systems/fb1011g_questname.test.js"
     ]
   }
 ]

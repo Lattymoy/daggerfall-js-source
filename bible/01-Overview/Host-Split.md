@@ -47,7 +47,7 @@ shape: `navalHost.js`'s `createNavalHost` is itself a single scope of 4,865
 lines - the same knot, one size down, with no ceiling of its own yet.) On the
 relay the new code goes into a Room method of its own, as the SCALE5 arms did.
 
-`test/hostceiling.test.js` holds it: each host function - the four hosts and
+`test/scenes/hostceiling.test.js` holds it: each host function - the four hosts and
 the relay's `_message` - has a ceiling in CODE lines, its length when measured
 plus 250 - a fix's room, not a feature's. Comments and blank lines do not count
 (AUDIT HOST-SPLIT 0: a third of bootWorld is the bible's own explanation, and a
@@ -195,7 +195,7 @@ by-value name written nowhere in bootWorld, the construction reading exactly the
 - THE SEAM WAS UNPINNED. `host` is `any` to lint and types, so a live name
   handed over as a copy (`get social()` -> `social,` - null at construction,
   the party's marks gone for good) or a name dropped passed the whole suite.
-  `test/hostseam.test.js` now holds every module the tool moved, found by the
+  `test/tooling/hostseam.test.js` now holds every module the tool moved, found by the
   header it writes, to its construction: each settled name handed over, each
   live read a getter, each write a setter, nothing handed over unread.
 - THE TOOL had holes the pilot did not fall into and a bigger move would: a
@@ -205,7 +205,7 @@ by-value name written nowhere in bootWorld, the construction reading exactly the
   shorthand with a default and `new.target` rewritten into syntax errors, an
   import dropped with its neighbour on one line, a mutant record found by
   position and an anchor matched inside a longer file name. Each is fixed and
-  is a fixture of `test/hostmove.test.js`: the fixture moved for real and both
+  is a fixture of `test/tooling/hostmove.test.js`: the fixture moved for real and both
   versions run, the same answer. After the fixes the tool reproduces the
   pilot's module and world.js byte for byte from the pre-move tree.
 
@@ -229,12 +229,12 @@ block as a clean cut - 0 host `let`s written, 30 names read - so it is a module,
   the host's restore, so it stays the host's and the module reads it live. Then the tool found no member used above it.
 - THE TOOL had a hole the move fell into: a comment ending a code line above a group was read as the group's doc, so
   that line - a host `let` - went into the module and out of the host, and the host's own write of it would have thrown.
-  `tools/hostMove.mjs` stops at a comment that does not begin its own line; `test/hostmove.test.js` holds the fixture
+  `tools/hostMove.mjs` stops at a comment that does not begin its own line; `test/tooling/hostmove.test.js` holds the fixture
   (`trailing-comment-above`, the original and the moved host run alike) and `tools/mutants/hostmove.json` its mutant.
-- THE PINS, by hand: `test/partyloot.test.js` mounted the block's own lines out of the host; it mounts the host's
+- THE PINS, by hand: `test/systems/partyloot.test.js` mounted the block's own lines out of the host; it mounts the host's
   counters and construction (from `dungeonContext.js`) over the module's `createRoomLoot` (from `roomLootHost.js`) now,
   the module's imports - the player, the mid-screen line - still each peer's own, and reads the base's two pins in the
-  module. `test/audit18_hosts_dungeon.test.js`'s count of the one enemy-loot seam reads two in the host and the room
+  module. `test/scenes/audit18_hosts_dungeon.test.js`'s count of the one enemy-loot seam reads two in the host and the room
   body's one in the module, and that the host constructs it. The harnesses that spread `test/roomLootOff.mjs` into
   their host mounts were untouched: the host's names are the same names.
 - `buildDungeonContext` 5,650 -> 5,263 code lines; its ceiling stays 5,446 (the block was never in the measure the
@@ -243,10 +243,21 @@ block as a clean cut - 0 host `let`s written, 30 names read - so it is a module,
 
 ## FB1015's merge - a raise, by the overflow alone (2026-10-15)
 
-Not a slice: a ceiling a pull request found already broken. Merging main into FB1015 (`01-Overview/Field-Bugs-2026-10-15b.md`)
+Not a slice: a ceiling a pull request found already broken. Merging main into FB1015 (`01-Overview/bugs/Field-Bugs-2026-10-15b.md`)
 measured main's own `bootWorld` at 21,750 code lines against its 21,695 - ten field-bug merges between 1242f035 and
 4f3fb37a added 251 lines and took 56 out of `world.js`, each inside the ceiling on its own, together 55 over it (the
 gate's header names the case: it gates a change, never a deploy). FB1015 adds no line to `bootWorld`, and no one block of
 the growth is a cut of its own, so the ceiling was raised by exactly the overflow - 21,695 -> 21,750, with the reason
-beside it in `test/hostceiling.test.js` - and no room: the next pull request that lengthens `bootWorld` moves code out
+beside it in `test/scenes/hostceiling.test.js` - and no room: the next pull request that lengthens `bootWorld` moves code out
 first (`buildPixelNow` is next in the order above).
+
+## FIELD BUGS 2026-10-15c - the overflow taken back out (2026-10-15)
+
+PVP-ESCROW's two sides - my pieces held in the service's escrow, asked back once my killer can no longer collect them,
+and my collects carried to the service (`11-Multiplayer/Wild-Zone.md` section 4) - leave `bootWorld` whole for
+`src/scenes/wildEscrowHost.js` (`createWildEscrowHost`). `node tools/hostScope.mjs` measured the group: eight members,
+63 lines, reads five host names (`modes`, `onlineCheckpoint`, `realmSession`, `townTalk`, `wildAccount`), writes
+none, used by three (the drop's receipt, the zone's frame, the room's collect) - handed in, the three calls go through
+the module's `held`, `frame` and `collectHeard`. `bootWorld` 21,750 -> 21,688 code lines, and its ceiling back to
+21,695, where it stood before FB1015's raise. The pins that read the block by source (`test/systems/fb1014_pvpescrow.test.js`)
+read the module, and the bible's anchors name it (`01-Overview/bugs/Field-Bugs-2026-10-15c.md`).

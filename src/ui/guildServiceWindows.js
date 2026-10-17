@@ -11,14 +11,14 @@
 // extends DaggerfallMessageBox). So each is a short chain of U11
 // parchment boxes, with the list picker in the middle of training's.
 //
-// The LAW is systems/guildServiceActions.js; this file is the chain.
+// The LAW is systems/guild/guildServiceActions.js; this file is the chain.
 // One class runs all three, because all three are the same shape: a
 // queue of boxes, each optionally carrying buttons or an input field
 // or a picker, and each able to push the next.
 
-import { nativeMetrics } from './nativePanel.js';
+import { nativeMetrics } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { wrapText } from './talkWindow.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM11: a field box IS a pushed DaggerfallInputMessageBox
@@ -27,14 +27,14 @@ import {
   donate, DONATION_DEFAULT, DONATION_MAX_CHARACTERS,
   cureDiseaseOffer, payForCure, cureForFree,
   expandGuildMacros, NOT_ENOUGH_GOLD_ID, TRAINING_TOO_SKILLED_ID,
-} from '../systems/guildServiceActions.js';
+} from '../systems/guild/guildServiceActions.js';
 import { SKILL_NAMES, permanentSkillValue } from '../systems/skills.js';
-import { trainingMax } from '../systems/guildServices.js';   // RR2: the cap the refined price scales against
-import { rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_WEEK_BUTTON, RR_INTENSIVE_DAYS, RR_INTENSIVE_SKILL_POINTS, RR_TRAINING_LINES } from '../systems/rrRealism.js';   // RR2: GuildServiceTrainingRR's laws
+import { trainingMax } from '../systems/guild/guildServices.js';   // RR2: the cap the refined price scales against
+import { rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_WEEK_BUTTON, RR_INTENSIVE_DAYS, RR_INTENSIVE_SKILL_POINTS, RR_TRAINING_LINES } from '../systems/roleplayRealism/rrRealism.js';   // RR2: GuildServiceTrainingRR's laws
 import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';   // AUDIT-RR F24: GetGoldAmount (PlayerEntity.cs:1313-1316) counts letters of credit
 import { isBanished, pardonPrice, grantPardon, penanceHelps, penancePrice, doPenance, banishmentLeft, banishmentDaysLeft } from '../systems/standing.js';   // REP3/REP4: the temple speaks for a bad name
-import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
-import { getDivineLocalized } from '../systems/guildVariants.js';   // L10N3d: the boxes' %god
+import { raceDisplayName, honorificOf } from '../systems/talk/talkSession.js';
+import { getDivineLocalized } from '../systems/guild/guildVariants.js';   // L10N3d: the boxes' %god
 import { localizedText } from '../systems/textManager.js';
 
 /** The prompt DFU shows beside the donation field, from its

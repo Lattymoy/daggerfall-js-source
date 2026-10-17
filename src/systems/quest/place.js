@@ -24,7 +24,7 @@ import { QuestResource, matchFirst } from './questResource.js';
 import { Symbol as QuestSymbol } from './symbol.js';
 import { intParse } from './parseUtils.js';   // AUDIT 68 S30-tryparse-dup: the quest layer's one int.Parse
 import { placesTable } from './tables.js';
-import { mergeNamedBuildings, makeBuildingKey, blockBuildingCount } from '../talkTopics.js';
+import { mergeNamedBuildings, makeBuildingKey, blockBuildingCount } from '../talk/talkTopics.js';
 import { generateBuildingName } from '../../world/buildingNames.js';
 import { surname, firstName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
 import { localizedText, getLocalizedLocationName, getLocalizedRegionName } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
@@ -35,9 +35,9 @@ import { questReachOn, questReachPixels, nearbyIndices, indicesWithin, mapTableP
 import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 import { stringHash } from '../../formats/netRuntime.js';   // QUEST-AUDIT II SHARED-SEAT: a shared copy's re-seat, seeded (a leaf)
 import { getSeed, setSeed } from '../../formats/dfRandom.js';   // AUDIT QA2: a shared re-seat's residence name, seeded and the state put back
-import { seededFirst } from '../wind.js';   // QUEST-AUDIT II SHARED-SEAT: the port's one seeded die (imports nothing)
-import { isMainStoryDungeon } from '../../world/dungeonTextures.js';   // KVAR-HOLD: the main story's own dungeons are no random quest's
-import { boundWorldDataBlocks } from '../../formats/worldDataReplacement.js';   // AUDIT QA2: Daggerfall's own blocks (BLOCKS.BSA, past the door) - what the mods took away
+import { seededFirst } from '../wind/wind.js';   // QUEST-AUDIT II SHARED-SEAT: the port's one seeded die (imports nothing)
+import { isMainStoryDungeon } from '../../world/dungeon/dungeonTextures.js';   // KVAR-HOLD: the main story's own dungeons are no random quest's
+import { boundWorldDataBlocks } from '../../formats/worldData/worldDataReplacement.js';   // AUDIT QA2: Daggerfall's own blocks (BLOCKS.BSA, past the door) - what the mods took away
 
 export const Scopes = Object.freeze({ None: 'none', Local: 'local', Remote: 'remote', Fixed: 'fixed' });
 
@@ -61,7 +61,7 @@ const ITEM_MARKER_RECORD = 18;
  * smaller, regular and large dungeons. Quest enemies being placed outside of the rooms and halls"): A RE-LAID DUNGEON'S
  * QUEST MARKERS ARE ITS INTERIOR BLOCKS'. A border block (its name begins B - GetRandomBlock's own test) is a cap of
  * rock Daggerfall closes a layout with, set where its one way in meets the dungeon; its other pockets no corridor
- * reaches (SD-REACH, world/sdDungeon.js SD_BORDER_BLOCK_RE). The small plus and the medium size draw their caps at
+ * reaches (SD-REACH, world/superDungeon/sdDungeon.js SD_BORDER_BLOCK_RE). The small plus and the medium size draw their caps at
  * random round the interior (GenerateSmallerDungeon's law), so a cap's quest marker there is all but always sealed -
  * and the caps are four blocks of five and six of eight, so most of a quest's markers were. On such a build (the clone
  * says its size: `smaller`, `medium`) a dungeon Place enumerates its interior blocks' markers alone, while they hold
@@ -194,7 +194,7 @@ export class Place extends QuestResource {
     this.sitePending = true;   // no world seam -> the binding PENDS. AUDIT-QUEST F1: this line used to say
                                // it pended "LOUDLY"; setting a boolean is the definition of quiet, and 262
                                // of the 265 vendored quests started headless with nothing in the log at all.
-                               // The flag is the record; scenes/questBridge.js's construction report is the
+                               // The flag is the record; scenes/quest/questBridge.js's construction report is the
                                // noise, and it names the seam that was never wired.
     if (line !== null) this.setResource(line);
   }
@@ -545,7 +545,7 @@ export class Place extends QuestResource {
       if (near) {
         this.p2 = near.houseFallback ? -1 : asked.p2;
         // FIELD BUGS 2026-10-12g QUEST-TOWN: marked as taken in another town - the travel map is shown it at the quest's
-        // start and the quest's lens points at it (machine.js revealNearSites, ui/questLens.js entryTarget)
+        // start and the quest's lens points at it (machine.js revealNearSites, ui/quest/questLens.js entryTarget)
         this.siteDetails = { ...near.found[this._range(near.found.length)], nearSite: true };
         return;
       }

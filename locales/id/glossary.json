@@ -150,5 +150,7 @@
  "Lv (level, short)": "Lv",
  "HP (health, short)": "HP",
  "Atk (attack, short)": "ATK",
- "pts (points, short)": "poin"
+ "pts (points, short)": "poin",
+ "first-time bonus (a craft's first-make XP)": "bonus pertama kali",
+ "cloth (the Weavers' Linen and Wool)": "kain"
 }

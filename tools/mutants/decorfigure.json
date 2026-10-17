@@ -5,7 +5,7 @@
     "old": "  return !!piece && piece.model == null && !piece.item && Array.isArray(piece.flat) && isNpcFlat(piece.flat[0]);",
     "new": "  return false;",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "nothing is a figure: every piece scales"
   },
@@ -15,7 +15,7 @@
     "old": "  return !!piece && piece.model == null && !piece.item && Array.isArray(piece.flat) && isNpcFlat(piece.flat[0]);",
     "new": "  return !!piece && piece.model == null && Array.isArray(piece.flat) && isNpcFlat(piece.flat[0]);",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "one's own item read as a figure"
   },
@@ -25,7 +25,7 @@
     "old": "export const decorDrawnScale = (piece) => (decorIsFigure(piece) ? 1 : piece?.scale ?? 1);",
     "new": "export const decorDrawnScale = (piece) => (piece?.scale ?? 1);",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "a figure grown before drawn grown"
   },
@@ -35,37 +35,37 @@
     "old": "export const decorScaleOk = (piece) => !decorIsFigure(piece) || piece.scale === 1;",
     "new": "export const decorScaleOk = (piece) => true;",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "the service writes a figure at any size"
   },
   {
     "name": "DECOR-FIGURE-step-taken",
-    "file": "src/systems/decorPlacer.js",
+    "file": "src/systems/decor/decorPlacer.js",
     "old": "      if (figure) return;\n",
     "new": "",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "Bigger grows a figure"
   },
   {
     "name": "DECOR-FIGURE-old-size-kept",
-    "file": "src/systems/decorPlacer.js",
+    "file": "src/systems/decor/decorPlacer.js",
     "old": "  if (figure) s.scale = 1;\n",
     "new": "",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "a figure grown before keeps its size when moved"
   },
   {
     "name": "DECOR-FIGURE-kind-for-archive",
-    "file": "src/systems/decorPlacer.js",
+    "file": "src/systems/decor/decorPlacer.js",
     "old": "export const decorEntrySized = (entry) => !decorIsFigure(entry);",
     "new": "export const decorEntrySized = (entry) => entry?.kind !== 'people';",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "AUDIT C3: the catalogue's kind for the law - a figure moved before the catalogue is read scales"
   },
@@ -75,57 +75,57 @@
     "old": "      if (!!smaller.hidden === sized) { smaller.hidden = !sized; bigger.hidden = !sized; drawKeys(sized); }\n",
     "new": "",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "the bar keeps Smaller and Bigger"
   },
   {
     "name": "DECOR-FIGURE-bar-untold",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      sized: decorEntrySized(p.entry),   // DECOR-FIGURE: no Smaller or Bigger for one of Daggerfall's people\n",
     "new": "",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "the tool never tells the bar"
   },
   {
     "name": "DECOR-FIGURE-shrunk-charged",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "  return decorIsFigure(was) && priced.pay > 0 ? { pay: 0, refund: 0, paid: was.paid } : priced;",
     "new": "  return priced;",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "AUDIT C1: a figure shrunk before charged to stand as it already stands"
   },
   {
     "name": "DECOR-FIGURE-grown-refund-kept",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "decorIsFigure(was) && priced.pay > 0 ?",
     "new": "decorIsFigure(was) ?",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "AUDIT C1: a figure grown before gives nothing back"
   },
   {
     "name": "DECOR-FIGURE-footprint-recorded",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    const s = decorDrawnScale(piece);   // AUDIT DECOR-FIGURE C2",
     "new": "    const s = piece.scale ?? 1;   // AUDIT DECOR-FIGURE C2",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "AUDIT C2: a grown figure's turn refused for a footprint it no longer has"
   },
   {
     "name": "DECOR-FIGURE-room-draws-record",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "        const k = decorDrawnScale(piece);",
     "new": "        const k = piece.scale;",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "the room draws a figure at its record's size"
   },
@@ -135,7 +135,7 @@
     "old": "  if (!sent || !decorScaleOk(sent)) return { error: 'bad-decor' };",
     "new": "  if (!sent) return { error: 'bad-decor' };",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "a giant figure placed"
   },
@@ -145,7 +145,7 @@
     "old": "  if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' };",
     "new": "",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "a figure grown by a move Re-aimed at AUDIT HOME-VOTE II, by content: the refusal says `decor-figure` now (C2)."
   },
@@ -155,7 +155,7 @@
     "old": "&& pl.scale !== was.scale) return { error: 'decor-figure' };",
     "new": ") return { error: 'decor-figure' };",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "a figure grown before can no longer be turned Re-aimed at AUDIT HOME-VOTE II, by content: the refusal says `decor-figure` now (C2)."
   },
@@ -165,7 +165,7 @@
     "old": "    if (isNpcFlat(flat[0])) return null;\n",
     "new": "",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "AUDIT HOME-VOTE II C1: an item said beside a person's flat stood it at any size."
   },
@@ -175,7 +175,7 @@
     "old": "pl.scale !== was.scale) return { error: 'decor-figure' };",
     "new": "pl.scale !== was.scale) return { error: 'bad-decor' };",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "AUDIT HOME-VOTE II C2: a stale copy's turn told the service could not read the piece."
   },
@@ -185,19 +185,19 @@
     "old": "export const decorScaleOk = (piece) => !decorIsFigure(piece) || piece.scale === 1;",
     "new": "export const decorScaleOk = (piece) => !decorIsFigure(piece) || piece.scale <= 1;",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "note": "AUDIT HOME-VOTE II D7: a shrunk figure refused."
   },
   {
     "name": "HOME-VOTE-II-placer-figure-by-kind-too",
-    "file": "src/systems/decorPlacer.js",
+    "file": "src/systems/decor/decorPlacer.js",
     "old": "export const decorEntrySized = (entry) => !decorIsFigure(entry);",
     "new": "export const decorEntrySized = (entry) => !decorIsFigure(entry) && entry?.kind !== 'people';",
     "tests": [
-      "test/decorfigure.test.js"
+      "test/systems/decor/decorfigure.test.js"
     ],
     "equivalent": true,
-    "why": "AUDIT HOME-VOTE II (lane D): every catalogue person is in NPC_FLAT_ARCHIVES - test/people.test.js sweeps the corpus where ARENA2 stands (skipped in CI); the kind adds no figure the archive does not name"
+    "why": "AUDIT HOME-VOTE II (lane D): every catalogue person is in NPC_FLAT_ARCHIVES - test/world/people.test.js sweeps the corpus where ARENA2 stands (skipped in CI); the kind adds no figure the archive does not name"
   }
 ]

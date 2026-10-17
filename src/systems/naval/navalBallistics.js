@@ -24,7 +24,7 @@
 // receiver scatter one volley the same way; `scatter` bends a lay by up to its spread in each axis, the sum of two
 // uniform draws (a triangular spread: most shots near the lay, a few at its edge).
 
-import { mulberry32 } from '../../combat/bloodArt.js';   // the port's one leaf mulberry32 (no imports behind it)
+import { mulberry32 } from '../../combat/blood/bloodArt.js';   // the port's one leaf mulberry32 (no imports behind it)
 
 /** Unity's Physics.gravity magnitude, the world's metres (DFU's Unity units are metres). */
 export const SHOT_GRAVITY = 9.81;

@@ -5,7 +5,7 @@
     "old": "export const KNOWN_CRIMINAL_BELOW = -10;",
     "new": "export const KNOWN_CRIMINAL_BELOW = -20;",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (ownNow < (s.challengeAt[regionIndex] ?? -Infinity) + CHALLENGE_COOLDOWN_MINUTES) return false;\n",
     "new": "",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return ownNow >= (s.graceUntil[regionIndex] ?? -Infinity);",
     "new": "  return true;",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "BASE_PENALTY[t] - PENALTY_PER_LEGAL_REP_POINT[t] * rep",
     "new": "BASE_PENALTY[t] + PENALTY_PER_LEGAL_REP_POINT[t] * rep",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return isBanished(player, regionIndex, worldNow) ? fine * 2 : fine;",
     "new": "  return fine;",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (!cityGuards.guardSeesPlayer({ playerFeet: playerFeet(), pool: guardPool() })) return false;\n",
     "new": "",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (t < next) return false;\n",
     "new": "",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (box || !onStreet() || blocked()) return false;",
     "new": "    if (box) return false;",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (playerEntity.crimeCommitted || playerEntity.arrested || arrestFlow.inCourt()) return false;\n",
     "new": "",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if ((playerEntity.health ?? 0) <= 0 || racialSuppressCrime(playerEntity)) return false;\n",
     "new": "",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "        playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy;   // the levy's own write (WERE-LEVY: the field)\n        crimeResponse();",
     "new": "        crimeResponse();",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      ...(canPay ? [{ code: 'KeyP',",
     "new": "      ...(true ? [{ code: 'KeyP',",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (!p?.guard) continue;\n      const toPlayer",
     "new": "      const toPlayer",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if ((!Number.isFinite(hit) || hit >= dist - 1e-3) && !(coverDistance(collider, eye, dir, dist, true) < dist - 1e-3)) return p;   // TACT1: cover hides him",
     "new": "      return p;   // TACT1: cover hides him",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   },
   {
@@ -131,8 +131,8 @@
     "old": "    standingWatch.frame();   // REP1: a guard who sees a known criminal stops them\n",
     "new": "",
     "tests": [
-      "test/rep1_watchstop.test.js",
-      "test/audit26_dungeonfoes.test.js"
+      "test/systems/rep1_watchstop.test.js",
+      "test/scenes/audit26_dungeonfoes.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": " || !!travelView?.active || !!raidDefendingHere()\n      || duelEnemyNear()",
     "new": " || !!travelView?.active\n      || duelEnemyNear()",
     "tests": [
-      "test/rep1_watchstop.test.js"
+      "test/systems/rep1_watchstop.test.js"
     ]
   }
 ]

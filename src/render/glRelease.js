@@ -7,7 +7,7 @@
 // for, and on Firefox the context's side lives in the separate GPU process. WEBGL_lose_context frees it NOW. Each owner
 // of a context (the game's renderer, the held map's ink, the gate's veil, the intro's landscape) seats its letting-go
 // here, and main.js's pagehide runs them all. A LEAF, no imports: the entry imports it, and its static reach stays
-// what BOOT1 made it (test/boot2.test.js); an owner deep in the game seats itself here without the entry reaching it.
+// what BOOT1 made it (test/render/boot2.test.js); an owner deep in the game seats itself here without the entry reaching it.
 
 /** WEBGL_lose_context's door, the one home: a context let go now. Never throws (a context already lost answers no
  *  extension, and one lost twice is lost). */

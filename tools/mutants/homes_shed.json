@@ -5,7 +5,7 @@
   "old": "const [{ results = [] }, gates] = seats ? await db.batch([homesRead, openGatesRead(db, nowS, mapId)]) : [await homesRead.all(), null];",
   "new": "const [{ results = [] }, gates] = seats ? [await homesRead.all(), await openGatesRead(db, nowS, mapId).all()] : [await homesRead.all(), null];",
   "tests": [
-   "test/homes_shed.test.js"
+   "test/systems/online/homes_shed.test.js"
   ],
   "note": "the edict's read a round trip of its own again"
  },
@@ -15,7 +15,7 @@
   "old": "const open = !!gates?.results?.length;",
   "new": "const open = false;",
   "tests": [
-   "test/homes_shed.test.js"
+   "test/systems/online/homes_shed.test.js"
   ],
   "note": "the batch's edict answer thrown away"
  },
@@ -25,57 +25,57 @@
   "old": "      try {\n        return json(await siegesLive(env.DB, Math.floor(Date.now() / 1000)), 200, origin);\n      } catch (e) {\n        return thrown(path, e, origin);   // HOMES-SHED: above the try below, so its own\n      }\n",
   "new": "      return json(await siegesLive(env.DB, Math.floor(Date.now() / 1000)), 200, origin);\n",
   "tests": [
-   "test/homes_shed.test.js"
+   "test/systems/online/homes_shed.test.js"
   ],
   "note": "the route above the try left bare - its throw the Worker's"
  },
  {
   "name": "HOMESSHED-law-flat",
-  "file": "src/systems/onlineHomes.js",
+  "file": "src/systems/online/onlineHomes.js",
   "old": "export const homeRetryMs = (n) => Math.min(HOME_RETRY_MAX_MS, HOME_RETRY_MS * 2 ** Math.max(0, n - 1));",
   "new": "export const homeRetryMs = (n) => HOME_RETRY_MS + 0 * n;",
   "tests": [
-   "test/homes_shed.test.js"
+   "test/systems/online/homes_shed.test.js"
   ],
   "note": "every wait the first"
  },
  {
   "name": "HOMESSHED-gate-flat",
-  "file": "src/systems/onlineHomes.js",
+  "file": "src/systems/online/onlineHomes.js",
   "old": "if (!force && f && now() - f.at < homeRetryMs(f.n))",
   "new": "if (!force && f && now() - f.at < HOME_RETRY_MS)",
   "tests": [
-   "test/homes_shed.test.js"
+   "test/systems/online/homes_shed.test.js"
   ],
   "note": "the law kept and the gate not asking it - the flat retry it replaced"
  },
  {
   "name": "HOMESSHED-uncapped",
-  "file": "src/systems/onlineHomes.js",
+  "file": "src/systems/online/onlineHomes.js",
   "old": "Math.min(HOME_RETRY_MAX_MS, HOME_RETRY_MS * 2 ** Math.max(0, n - 1))",
   "new": "HOME_RETRY_MS * 2 ** Math.max(0, n - 1)",
   "tests": [
-   "test/homes_shed.test.js"
+   "test/systems/online/homes_shed.test.js"
   ],
   "note": "the doubling without its cap"
  },
  {
   "name": "HOMESSHED-count-not-kept",
-  "file": "src/systems/onlineHomes.js",
+  "file": "src/systems/online/onlineHomes.js",
   "old": "n: (failed.get(id)?.n ?? 0) + 1",
   "new": "n: 1",
   "tests": [
-   "test/homes_shed.test.js"
+   "test/systems/online/homes_shed.test.js"
   ],
   "note": "every failure the first"
  },
  {
   "name": "HOMESSHED-count-never-reset",
-  "file": "src/systems/onlineHomes.js",
+  "file": "src/systems/online/onlineHomes.js",
   "old": "        failed.delete(id);\n",
   "new": "",
   "tests": [
-   "test/homes_shed.test.js"
+   "test/systems/online/homes_shed.test.js"
   ],
   "note": "an answer leaves the count standing"
  }

@@ -5,7 +5,7 @@
     "old": "export const HOME_PRICE_PER_M2 = 300;",
     "new": "export const HOME_PRICE_PER_M2 = 250;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "return (3 + Math.sqrt(n)) / 4;",
     "new": "return (3 + n) / 4;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "Math.min(HOME_TOWN_BLOCKS_MAX, Math.max(1, Math.trunc(blocks)))",
     "new": "Math.max(1, Math.trunc(blocks))",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "return Math.min(HOME_PRICE_MAX, Math.max(HOME_PRICE_MIN, price));",
     "new": "return Math.min(HOME_PRICE_MAX, price);",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "return Math.min(HOME_PRICE_MAX, Math.max(HOME_PRICE_MIN, price));",
     "new": "return Math.max(HOME_PRICE_MIN, price);",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "const price = Math.round((footprintM2 * HOME_PRICE_PER_M2",
     "new": "const price = Math.floor((footprintM2 * HOME_PRICE_PER_M2",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const price = Math.round((footprintM2 * HOME_PRICE_PER_M2",
     "new": "const price = Math.ceil((footprintM2 * HOME_PRICE_PER_M2",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "if (!(Number.isFinite(footprintM2) && footprintM2 > 0)) return 0;",
     "new": "if (!Number.isFinite(footprintM2)) return 0;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
     "new": "Number.isSafeInteger(v) && v > 0 && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
     "new": "v <= HOME_PRICE_MAX;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (!homePriceOk(price)) return { error: 'home-update' };\n",
     "new": "\n",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (!homePriceOk(price)) return { error: 'home-update' };\n",
     "new": "  if (!homePriceOk(price)) return { error: 'bad-home' };\n",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -113,8 +113,8 @@
     "old": "  if (!homePriceOk(price)) return { error: 'home-update' };   // HOME-PRICE",
     "new": "  // HOME-PRICE",
     "tests": [
-      "test/homeprice.test.js",
-      "test/guild1d_service.test.js"
+      "test/systems/homeprice.test.js",
+      "test/net/guild1d_service.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "const realmSaleOf = (row) => (Number(row.paid) > 0 ? { refund: homeSaleRefund(Number(row.paid)) } : { crossed: true });",
     "new": "const realmSaleOf = (row) => (Number(row.paid) > 0 ? { refund: homeSaleRefund(Number(row.price)) } : { crossed: true });",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "const sale = mine && realmHome && !crossed && h.char_id === me ?",
     "new": "const sale = mine && realmHome && !crossed ?",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "const sale = mine && realmHome && !crossed && h.char_id === me ?",
     "new": "const sale = mine && !crossed && h.char_id === me ?",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "const sale = mine && realmHome && !crossed && h.char_id === me ?",
     "new": "const sale = realmHome && !crossed && h.char_id === me ?",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "const sale = mine && realmHome && !crossed && h.char_id === me ? { ...realmSaleOf(h),",
     "new": "const sale = mine && realmHome && h.char_id === me ? { refund: homeSaleRefund(Number(h.paid) || 0),",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {})",
     "new": "...{}",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "home: homeOf(held), ...realmSaleOf(held), realm:",
     "new": "home: homeOf(held), realm:",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -186,107 +186,107 @@
     "old": "return { ok: true, home: homeOf(row), ...realmSaleOf(row), realm: { seq: prep.seq }, moved: homeMoved(claim.mapId, [claim.buildingKey]) };",
     "new": "return { ok: true, home: homeOf(row), realm: { seq: prep.seq }, moved: homeMoved(claim.mapId, [claim.buildingKey]) };",
     "tests": [
-      "test/homeprice.test.js",
-      "test/home1.test.js"
+      "test/systems/homeprice.test.js",
+      "test/server/home1.test.js"
     ]
   },
   {
     "name": "HOME-PRICE-the-height-for-depth",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale * scale;",
     "new": "const m2 = (size?.x ?? 0) * (size?.y ?? 0) * scale * scale;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "HOME-PRICE-the-scale-once",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale * scale;",
     "new": "const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "HOME-PRICE-the-town-width-alone",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "const n = (ext?.width ?? 0) * (ext?.height ?? 0);",
     "new": "const n = (ext?.width ?? 0);",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "HOME-PRICE-the-registry-drops-the-refund",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null,",
     "new": "refund: null,",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "AUDIT-HOME-PRICE-D6-the-registry-drops-nothing",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null,",
     "new": "refund: Number.isSafeInteger(h.refund) && h.refund > 0 ? h.refund : null,",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "AUDIT-HOME-PRICE-C3-the-registry-drops-the-rent",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "rentDue: Number.isSafeInteger(h.rentDue) && h.rentDue > 0 ? h.rentDue : 0,",
     "new": "rentDue: 0,",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "AUDIT-HOME-PRICE-C2-crossed-unread",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "      const crossed = r.data?.crossed === true;\n",
     "new": "      const crossed = false;\n",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "HOME-PRICE-the-claims-answer-unread",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "const refund = crossed ? null : Number.isSafeInteger(r.data?.refund) && r.data.refund >= 0 ? r.data.refund : homeRefund(price);",
     "new": "const refund = crossed ? null : homeRefund(price);",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "HOME-PRICE-the-offer-off-the-price",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "(Number.isSafeInteger(home?.refund) && home.refund >= 0 ? home.refund : homeRefund(price))",
     "new": "homeRefund(price)",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "AUDIT-HOME-PRICE-D6-the-offer-drops-nothing",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "(Number.isSafeInteger(home?.refund) && home.refund >= 0 ? home.refund : homeRefund(price))",
     "new": "(Number.isSafeInteger(home?.refund) && home.refund > 0 ? home.refund : homeRefund(price))",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "AUDIT-HOME-PRICE-C3-the-sale-box-rent-unsaid",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "rentDue > 0 ? `Sell your home for ${gold(refund)} gold, and the ${gold(rentDue)} gold of rent you have not collected?` : `Sell",
     "new": "false ? `Sell your home for ${gold(refund)} gold, and the ${gold(rentDue)} gold of rent you have not collected?` : `Sell",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -295,8 +295,8 @@
     "old": "townBlocks: homeTownBlocks(dfLoc), ",
     "new": "",
     "tests": [
-      "test/homeprice.test.js",
-      "test/audit68_worldjs.test.js"
+      "test/systems/homeprice.test.js",
+      "test/world/audit68_worldjs.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "regionIndex: dfLocation.regionIndex, townBlocks: homeTownBlocks(dfLocation), ",
     "new": "regionIndex: dfLocation.regionIndex, ",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "  function houseFootprintM2(building) {\n    const id = building?.modelIdNum;",
     "new": "  function houseFootprintM2(building) {\n    const id = building?.modelId;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "const price = homeOnlinePrice(houseFootprintM2(bd), bd?.townBlocks ?? 0);",
     "new": "const price = homeOnlinePrice(houseFootprintM2(bd), 1);",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "const refund = homeSaleOffer(home, homeListPrice(bd));",
     "new": "const refund = homeSaleOffer(null, homeListPrice(bd));",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "lines: homeSaleLines(refund, home?.rentDue ?? 0),",
     "new": "lines: homeSaleLines(refund),",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "    if (!isOnlinePage()) return houseSellPrice(houseMeshRadius(owned));\n",
     "new": "    return houseSellPrice(houseMeshRadius(owned));\n",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": "    if (!isOnlinePage()) return houseSellPrice(houseMeshRadius(owned));\n",
     "new": "    if (isOnlinePage()) return houseSellPrice(houseMeshRadius(owned));\n",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "townBlocks: buildingDirectory?.()?.townBlocks ?? 0 }",
     "new": "townBlocks: 0 }",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -377,7 +377,7 @@
     "old": "houseSellPrice: () => deedSellPrice(ownedHouseSummary()),",
     "new": "houseSellPrice: () => houseSellPrice(houseMeshRadius(ownedHouseSummary())),",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "found: owned !== null, price: deedSellPrice(owned) }",
     "new": "found: owned !== null }",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -395,7 +395,7 @@
     "old": "online = isOnlinePage(), price = houseSellPrice(meshRadius) } = {}, {",
     "new": "online = isOnlinePage() } = {}, {\n  price = houseSellPrice(meshRadius),",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -404,7 +404,7 @@
     "old": "housesForSale: homes ? currentHousesForSale().filter((h) => !homes.homeAt(dir?.mapId ?? 0, h.buildingKey)) : currentHousesForSale(),",
     "new": "housesForSale: currentHousesForSale(),",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -413,7 +413,7 @@
     "old": "      if (homes && !homes.known(dir?.mapId ?? 0)) {",
     "new": "      if (false) {",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -422,7 +422,7 @@
     "old": "regionIndex: loc.regionIndex ?? 0, townBlocks: homeTownBlocks(loc),",
     "new": "regionIndex: loc.regionIndex ?? 0,",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -431,16 +431,16 @@
     "old": "regionIndex: dfLocation.regionIndex ?? 0, townBlocks: homeTownBlocks(dfLocation),",
     "new": "regionIndex: dfLocation.regionIndex ?? 0,",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "HOME-PRICE-a-bare-number",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "export const homeForSaleLine = (price) => `Can be your home: ${gold(price)} gold`;",
     "new": "export const homeForSaleLine = (price) => `Can be your home: ${price} gold`;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -449,16 +449,16 @@
     "old": "export const EMPIRE_ACCOUNT_WORDS = 'your account at the Bank of the Empire';",
     "new": "export const EMPIRE_ACCOUNT_WORDS = \"this region's bank account\";",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "AUDIT-HOME-PRICE-D3-the-rent-clause-bare",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "rent > 0 ? `${gold(rent)} of it rent",
     "new": "rent > 0 ? `${rent} of it rent",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -467,7 +467,7 @@
     "old": "export const rentRowLabel = (from) => `Rent a room: from ${goldSum(from)} gold a day`;",
     "new": "export const rentRowLabel = (from) => `Rent a room: from ${from} gold a day`;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
@@ -476,17 +476,17 @@
     "old": "export const rentShortLine = (cost) => `You need ${goldSum(cost)} gold, in your purse and ${EMPIRE_ACCOUNT_WORDS} together.`;",
     "new": "export const rentShortLine = (cost) => `You need ${goldSum(cost)} gold, in your purse and this region's bank account together.`;",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "AUDIT-HOME-PRICE-E4-the-collected-rent-region-named",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "It went to ${EMPIRE_ACCOUNT_WORDS}.`);",
     "new": "It went to this region's bank account.`);",
     "tests": [
-      "test/homeprice.test.js",
-      "test/homerent.test.js"
+      "test/systems/homeprice.test.js",
+      "test/server/homerent.test.js"
     ]
   },
   {
@@ -495,16 +495,16 @@
     "old": "gold to ${accountWords(goldRegion(playerEntity.bankAccounts, region) !== region)}.`);",
     "new": "gold to ${accountWords(false)}.`);",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   },
   {
     "name": "AUDIT-HOME-PRICE-C4-the-arena-refund-bare",
-    "file": "src/systems/arenaText.js",
+    "file": "src/systems/arena/arenaText.js",
     "old": "refund: (gold) => `${goldSum(gold)} gold for your catalogue pieces",
     "new": "refund: (gold) => `${gold} gold for your catalogue pieces",
     "tests": [
-      "test/homeprice.test.js"
+      "test/systems/homeprice.test.js"
     ]
   }
 ]

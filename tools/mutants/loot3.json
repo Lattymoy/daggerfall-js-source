@@ -1,102 +1,102 @@
 [
   {
     "name": "LOOT3-the-bracelet-without-a-record",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "templates: [134, 136],   // Bracer, Bracelet",
     "new": "templates: [134],   // Bracer, Bracelet",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-a-dear-held-spell",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    enchantment: { type: T.CastWhenHeld, param: 37 },   // Slowfalling",
     "new": "    enchantment: { type: T.CastWhenHeld, param: 46 },   // Slowfalling",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-an-artifacts-name",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "name: 'The Wall of Daggerfall'",
     "new": "name: 'The Ebony Mail of Daggerfall'",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-a-line-past-the-band",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "affixes: [{ id: 'damage', value: 38 }, { id: 'stat', param: 'luck', value: 12 }",
     "new": "affixes: [{ id: 'damage', value: 45 }, { id: 'stat', param: 'luck', value: 12 }",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-an-id-twice",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "{ id: 'reachmans-torc', name:",
     "new": "{ id: 'kings-mark', name:",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-a-payload-no-drop-fires",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    enchantment: { type: T.IncreasedWeightAllowance, param: 1 },   // 50% additional",
     "new": "    enchantment: { type: T.FeatherWeight, param: -1 },   // 50% additional",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-a-kind-armour-never-carries",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "affixes: [{ id: 'armor', value: 14 }, { id: 'stat', param: 'agility', value: 10 }, { id: 'skill', param: 19, value: 25 }",
     "new": "affixes: [{ id: 'damage', value: 14 }, { id: 'stat', param: 'agility', value: 10 }, { id: 'skill', param: 19, value: 25 }",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-a-torc-on-a-cuirass",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "group: 'Jewellery', templates: [138],   // Torc",
     "new": "group: 'Jewellery', templates: [102],   // Torc",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-the-staff-alone",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "{ id: 'direnni-staff', name: 'The Direnni Staff', group: 'Weapons', templates: [115],",
     "new": "{ id: 'direnni-staff', name: 'The Direnni Staff', group: 'Weapons', templates: [116],",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   },
   {
     "name": "LOOT3-a-lore-twice",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    lore: 'Hewn from the gate the city was named for. The gate fell; this did not.' },",
     "new": "    lore: 'One of the rings the Mages Guild does not admit to having made.' },",
     "tests": [
-      "test/loot3_legendaries.test.js",
-      "test/lr1_lootrarity.test.js"
+      "test/systems/loot3_legendaries.test.js",
+      "test/systems/lr1_lootrarity.test.js"
     ]
   }
 ]

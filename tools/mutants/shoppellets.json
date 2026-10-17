@@ -5,7 +5,7 @@
     "old": "  return Math.max(1, Math.round(max * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));",
     "new": "  return Math.max(1, Math.round(max * (chance > 0 ? 1 : most) * (0.5 + (0.5 * (q - 1)) / 19)));",
     "tests": [
-      "test/shoppellets.test.js"
+      "test/systems/shoppellets.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return Math.max(1, Math.round(max * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));",
     "new": "  return Math.max(1, Math.round(max * (chance / most) * (q > 0 ? 1 : 0.5)));",
     "tests": [
-      "test/shoppellets.test.js"
+      "test/systems/shoppellets.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!(chance > 0)) return 0;\n  const most",
     "new": "  if (!(chance > 0)) chance = 10;\n  const most",
     "tests": [
-      "test/shoppellets.test.js"
+      "test/systems/shoppellets.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (shelfIndex === 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n)); }",
     "new": "  if (shelfIndex >= 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n)); }",
     "tests": [
-      "test/shoppellets.test.js"
+      "test/systems/shoppellets.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (shelfIndex === 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n)); }",
     "new": "  if (shelfIndex === 0) { const n = shopPelletStack(buildingType, quality); if (n > 0) addItem(items, createPellets(n + Math.floor(rolls() * 0))); }",
     "tests": [
-      "test/shoppellets.test.js"
+      "test/systems/shoppellets.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];\n",
     "new": "  const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];\n  if (shelfIndex === 0 && shopPelletStack(buildingType, quality) > 0) items.push(createPellets(1));\n",
     "tests": [
-      "test/shoppellets.test.js"
+      "test/systems/shoppellets.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (n > 0) addItem(items, createPellets(n)); }",
     "new": "if (n > 0) addItem(items, { ...createPellets(n), material: 1 }); }",
     "tests": [
-      "test/shoppellets.test.js"
+      "test/systems/shoppellets.test.js"
     ]
   }
 ]

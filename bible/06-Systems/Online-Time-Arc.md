@@ -204,7 +204,7 @@ migration.
 | What | Where it reads today |
 |---|---|
 | The frame's sky: sun, moons, stars, light, colour | `world.js` and `exterior.js` `minuteNow` (`worldMinutes() % 1440`) |
-| The drawn sky's hour and moons, through the frame's `classicMinutes` carrier | `shared.js`' sky feed, `render/enhancedSky.js`, `systems/dynamicSkies.js`, `systems/dynamicSkiesRuntime.js`. The same feed's weather ease and cloud drift stay on the event clock (5.5): the feed takes two minutes where it takes one today |
+| The drawn sky's hour and moons, through the frame's `classicMinutes` carrier | `shared.js`' sky feed, `render/enhancedSky.js`, `systems/dynamicSkies/dynamicSkies.js`, `systems/dynamicSkies/dynamicSkiesRuntime.js`. The same feed's weather ease and cloud drift stay on the event clock (5.5): the feed takes two minutes where it takes one today |
 | Interior light and its night ambient | `interior.js`, `worldModes.js` (`isNight(worldMinutes() % 1440)`) |
 | The season's ground, the climate season, the herbs' and the writs' season | `world.js` and `exterior.js` (`refreshSeason`, `climateSeasonFromMinutes`, `seasonValue`); `net/nodeLaw.js dayDate` (with the account service, section 4) |
 | The air's month and hour for survival, the forager's month (the hunter's winter too, until HUNT-OUT removed the hunt, 2026-10-04) | `world.js`, `exterior.js`, `dungeonContext.js` (the air); `monthValue` into `foragingInstall.js` |
@@ -214,7 +214,7 @@ migration.
 | Night's spawns, and the overworld's bands at night | `encounters.js`, `campEncounters.js` (`skyMinutes`); `world.js` `bandNight` |
 | Enchantments and loot powers that read the season or the moon | `hostEnchant.js`, `lootPowers.js` |
 | A torch doused by day on leaving a dungeon | `worldModes.js` (`rrDouseOnDungeonExit`) |
-| The date and time the menus show, the rest windows' world time, the sea map's date marks | `ui/enhancedMenu.js`, `ui/restWindow.js`, `ui/enhancedRest.js`, `shared.js` (`sharedMinutes`), `world.js` (the sea map's `date`) |
+| The date and time the menus show, the rest windows' world time, the sea map's date marks | `ui/enhanced/enhancedMenu.js`, `ui/restWindow.js`, `ui/enhanced/enhancedRest.js`, `shared.js` (`sharedMinutes`), `world.js` (the sea map's `date`) |
 | The vampire's nightfall words | `worldTick.js worldNightfallText` (reading, rate and inverse) |
 | A quest's hour window and date | `quest/actions.js DailyFrom` (TIME3) |
 
@@ -224,8 +224,8 @@ Nothing in this table changes. It is listed so the census has its other half.
 
 | What | Where |
 |---|---|
-| Gates: the day, the phases, the arena's window, the court's | `net/gateLaw.js`, `server/src/index.js`, `scenes/gateCourt.js` |
-| Raids: the day, the window, the map's marks | `net/raidLaw.js`, `server/src/index.js`, `world.js` |
+| Gates: the day, the phases, the arena's window, the court's | `net/gate/gateLaw.js`, `server/src/index.js`, `scenes/gate/gateCourt.js` |
+| Raids: the day, the window, the map's marks | `net/raid/raidLaw.js`, `server/src/index.js`, `world.js` |
 | The overworld's rows and how long they are kept | `net/overworldLaw.js`, `server/src/index.js` |
 | Prices: the day's index and its flags | `worldTick.js` (`setWorldPriceSource`, `runDayChange`'s world half) |
 | Faction powers and regional conditions | `worldTick.js runCalendarArms`, the world half |
@@ -238,14 +238,14 @@ Nothing in this table changes. It is listed so the census has its other half.
 | Dropped torches burning | `scenes/droppedTorches.js` |
 | A respawn's due time, through the event clock's inverse | `dungeonContext.js` (`_wallNow`) |
 | The day a loot find is dated | `lootCodex.js` |
-| Bounty boards: the day's postings, a taken bounty's lapse | `systems/bountyBoard.js`, `scenes/bountyHost.js` |
+| Bounty boards: the day's postings, a taken bounty's lapse | `systems/bounty/bountyBoard.js`, `scenes/bountyHost.js` |
 | Rumours' lifetimes | `systems/rumorMill.js`, swept from `regionPower.js` |
-| Spawned dungeons' lifetimes, the shared interiors' loot day | `world/spawnedDungeons.js`, `world/interiorShared.js` |
-| The gates' income: receipts, spoils, the Sigil Broker's prices, the account service's `gate_kills` | `net/gateLink.js`, `net/gateClaims.js`, `scenes/spoilsPool.js`, `systems/sigilBroker.js`, `server-account` |
+| Spawned dungeons' lifetimes, the shared interiors' loot day | `world/spawnedDungeons.js`, `world/interior/interiorShared.js` |
+| The gates' income: receipts, spoils, the Sigil Broker's prices, the account service's `gate_kills` | `net/gate/gateLink.js`, `net/gate/gateClaims.js`, `scenes/spoilsPool.js`, `systems/sigil/sigilBroker.js`, `server-account` |
 | The day's generators, and the music's daily playlist seed | `worldTick.js` (`DAY_SALT`), the hosts' `gameDaysNow` |
-| The naval day: notoriety's decay, the port's grog, today's departures, the traffic seed | `world.js` (the naval `where`), `scenes/navalHost.js`, `systems/naval/` |
+| The naval day: notoriety's decay, the port's grog, today's departures, the traffic seed | `world.js` (the naval `where`), `scenes/naval/navalHost.js`, `systems/naval/` |
 | The captain's day: a port's board and exchange, the Eltheric strands' regrowth, the legends' rise (CAPT-BOARD, ETHER-SEA, 2026-10-11) | `world.js` (the harbour office's and the Eltheric host's `day`), `scenes/harbourOffice.js`, `scenes/etherHost.js` |
-| The minute a character joins online at | `ui/enhancedMenu.js` (`onlineCopyOf`) |
+| The minute a character joins online at | `ui/enhanced/enhancedMenu.js` (`onlineCopyOf`) |
 
 ### 5.3 Your clock
 
@@ -258,7 +258,7 @@ lived with the world - the event clock's movement while you play - and never a r
 ### 5.4 Real time
 
 Unchanged: respawns (WORLD8's real clock - half an hour in the Wrothgarian halls and Abyss Dungeons since
-RESPAWN-30, `bible/01-Overview/Five-Asks-2026-10-14.md`; 20 and 40 minutes in a normal and an elite dungeon), the gate's rise and collapse, the gate boss's own beats, the
+RESPAWN-30, `bible/01-Overview/handoffs/Five-Asks-2026-10-14.md`; 20 and 40 minutes in a normal and an elite dungeon), the gate's rise and collapse, the gate boss's own beats, the
 Seats' weeks, the Sigil stock's and the Marks' UTC days, the renown cap's real hour, a home's rent, the
 bands' and the sea raiders' lives, a held torch's burn.
 
@@ -271,7 +271,7 @@ its clock:
 - **`ownTimeLeftText`'s "of play":** your clock's rate, TimeScale 12; unchanged;
 - **`gateCourt.js COURT_ROUND_MS`:** a magic round, your clock's; unchanged;
 - **`overworldLaw.js OW_REBIRTH_MIN`:** the event clock's; unchanged (SPAWN-REBIRTH, 2026-10-12: it replaced
-  `OW_ROW_KEEP_MIN`, the sixty-day keep - `01-Overview/Field-Bugs-2026-10-12h.md`);
+  `OW_ROW_KEEP_MIN`, the sixty-day keep - `01-Overview/bugs/Field-Bugs-2026-10-12h.md`);
 - **the gate panel's local times** (`sharedWallMs`): the event clock's inverse; unchanged;
 - **the drawn weather's step:** the sky feed measures `dt` in game minutes for the weather's ease
   (`WEATHER_EASE_MINUTES`), the cloud drift (`WIND_SECONDS_PER_MINUTE`, written as 60 / 12), the wind
@@ -320,7 +320,7 @@ by `ONLINE_MINUTES_PER_MS` today, which stays the event clock's rate, and would 
   forgiven; a raise is charged whole.
 - **A quest's hour and date reads use the sky:** `DailyFrom`, and any date a script tests. A `daily from`
   window comes round every 30 real minutes instead of every two hours.
-- **A party's shared quest.** QUEST1 copies an accepted quest to each member (`systems/questShare.js`), and
+- **A party's shared quest.** QUEST1 copies an accepted quest to each member (`systems/quest/questShare.js`), and
   that copy is the "cross-player-visible state" for which `restSession.js` still stands quest ticks down
   under an online rest. Recommended: each copy runs on its holder's clock, so a member's rest spends only
   their own copy's days. LIVED1 recommended the owner's clock instead; that needs the owner's deadline
@@ -385,9 +385,9 @@ stays), and online a quest's countdowns are WORLD7's again:
   its holder's clock (a member's play spends their copy, a rest spends neither); the save's move onto the character's
   clock. QFAIL-FREE (a failed quest online costs its faction nothing) stays.
 
-Pins: `test/time3_quests.test.js` (the Clock, the wave, the party's copies and the rest re-aimed - a rest spends
-nothing, the same mechanics driven by lived play), `test/world7.test.js`, `test/world5.test.js`,
-`test/auditworld78.test.js` (the charge's source); `ui/enhancedMenu.js` says it at the door. `tools/mutants/time3.json`
+Pins: `test/systems/quest/time3_quests.test.js` (the Clock, the wave, the party's copies and the rest re-aimed - a rest spends
+nothing, the same mechanics driven by lived play), `test/systems/quest/world7.test.js`, `test/systems/quest/world5.test.js`,
+`test/systems/quest/auditworld78.test.js` (the charge's source); `ui/enhanced/enhancedMenu.js` says it at the door. `tools/mutants/time3.json`
 re-aimed (61, all dead): TIME3's law back - the raise charged whole - is a mutant now.
 
 ### 6.3d Quest waits on the short wait (REST8, 2026-10-03) [SUPERSEDES 6.3c's delays on played time; 6.3b's DELAY HALF RESTORED]
@@ -409,7 +409,7 @@ night is a raise, which 6.3c charges nothing. So 6.3b's reading comes back for i
 - **Online a delay lands on the short wait** (`Clock.waitsShort`): its remainder is cut once to `ONLINE_DELAY_SECONDS`
   (24 minutes of the character's clock) and then charged as 6.3c charges any clock - the lived step, never a raise -
   so it lands after about two real minutes of play, and a night spends none of it. Its `=x_` count reads "a few"; the
-  journal walk (`scenes/questBridge.js questLog`) skips it, so no surface counts a letter down.
+  journal walk (`scenes/quest/questBridge.js questLog`) skips it, so no surface counts a letter down.
 - **Online a deadline is 6.3c's, untouched**: played world time, DFU's end (armed at nothing, it fires at once, as
   offline - 6.3b's T7 guard went with the freeze); its count, "Time remains", the rail and the herald's urgency stand.
 - **The crime-guild letter** is due 24 of the character's minutes after the tally (`crimeGuilds.js`
@@ -423,10 +423,10 @@ night is a raise, which 6.3c charges nothing. So 6.3b's reading comes back for i
   N0B20Y02's Nightblades - first comes inside the short wait; the waves after it, and every wave that harasses, keep
   their pacing]
 - **The edge**: a deadline read as a delay fires its end two minutes in, as under 6.3b; a delay read as a deadline only
-  waits its played days now (6.3b froze it). The pins guard the first: `test/rest8_questwaits.test.js` (6.3b's file,
+  waits its played days now (6.3b froze it). The pins guard the first: `test/systems/quest/rest8_questwaits.test.js` (6.3b's file,
   re-aimed - every vendored clock ticked past the short wait online: all 127 delays land, not one of the 272 deadlines
   is cut; 264 and 135 as REST8 built it, then AUDIT REST-PARTY D2's two, AUDIT REST II's three, AUDIT REST III's two
-  and GUARD-WINDOW's one) and `test/rest8_audit_timefree.test.js` (AUDIT TIMEFREE's, and R1's). Campaigns `tools/mutants/rest8.json`
+  and GUARD-WINDOW's one) and `test/systems/quest/rest8_audit_timefree.test.js` (AUDIT TIMEFREE's, and R1's). Campaigns `tools/mutants/rest8.json`
   (22) and `tools/mutants/rest8_audit_timefree.json` (14), all dead.
 - **AUDIT REST II (2026-10-03) - THE RULE, decided:** a clock the quest's own text presents to the player as a TIME
   LIMIT - a window to act, to return, to fetch something before it is lost - is a deadline, kept at its days of played
@@ -444,7 +444,7 @@ night is a raise, which 6.3c charges nothing. So 6.3b's reading comes back for i
   or names another clock's). Q3: a bounty held through 6.3b's never-lapse carried a `takenAt` days behind the world's
   clock and lapsed, kills and all, on the first tick after the update - the ledger saves a version (`bountyBoard.js`
   `BOUNTY_LEDGER_VERSION`), and an older ledger's held rows run from now once, online (`restampNeverLapsed`; offline
-  untouched). Pins `test/auditrest2_quests.test.js`; campaign `tools/mutants/auditrest2_quests.json` (18, all dead).
+  untouched). Pins `test/systems/quest/auditrest2_quests.test.js`; campaign `tools/mutants/auditrest2_quests.json` (18, all dead).
 - Offline: none of it. DFU's clock, whole.
 
 ### 6.4 Weather keeps its pace
@@ -472,7 +472,7 @@ does online: "Short real wait"; asked whether the bounties, the curse quests and
   off, ends the quest with no GivePc, TrainPc or StartQuest), costs a standing (a negative `change repute` or
   `legal repute`), or shuts a reward waiting on `not _clock_`. Everything else is a delay. A clock a clock starts is
   asked on its own (Brisienna's invitation is a delay that starts her fortnight, a deadline). AUDIT TIMEFREE
-  (`01-Overview/Audit-Timefree.md`) sharpened the reading: a standing lost or a reward shut counts only by what the
+  (`01-Overview/audits/Audit-Timefree.md`) sharpened the reading: a standing lost or a reward shut counts only by what the
   end or the reader itself DOES, not by a chain of later `when`s (T2); `end quest` is a loss only when the end ALONE
   sets it off, by the engine's own reading of the `when` (T3 - the main quest's endings wait on the story); a quest
   item handed over is progress (T4); `Clock _x_ 00:00` with no travel arm is "at once" (T3); and a CLOSING - a clock
@@ -488,7 +488,7 @@ does online: "Short real wait"; asked whether the bounties, the curse quests and
   character's clock, about two real minutes of play at 12:1) and charged as any clock (WORLD7's played step, raised
   time whole).
 - **The words**: a clock's `=x_` day count reads "a few" online ("within a few days"); the journal walk
-  (`scenes/questBridge.js questLog`) reads no clock online, so no surface shows "Time remains" or herald's urgency;
+  (`scenes/quest/questBridge.js questLog`) reads no clock online, so no surface shows "Time remains" or herald's urgency;
   the Online pane says so.
 - **The rest**: a quest letter waits for town but not the sky's morning (GivePc); a taken bounty never lapses and
   shows no time left (`scenes/bountyHost.js`); the curse quests roll every 24 of the character's minutes while their
@@ -505,7 +505,7 @@ does online: "Short real wait"; asked whether the bounties, the curse quests and
 - **The date and time the menus show, and the rest window's "World time":** the sky.
 - **The Online pane's rules,** said at the door: "A day in the world is half an hour: midnight on the
   hour and the half hour, dusk at :22 and :52. Your own time runs as Daggerfall's does - resting and
-  travel spend it, being away does not." [TIME4, as built: `ui/enhancedMenu.js skyDayWords` says the first
+  travel spend it, being away does not." [TIME4, as built: `ui/enhanced/enhancedMenu.js skyDayWords` says the first
   sentence as it is true when the pane opens - before the switch, "a day in the world is two hours of real time
   until" the switch in the player's own time - and the sentences after it add that a full moon holds a
   lycanthrope for its night alone and that quest timers run on the character's own time, so a rest spends a
@@ -536,7 +536,7 @@ does online: "Short real wait"; asked whether the bounties, the curse quests and
   `skySecondsOfEvent` the journal's dates.
 - **`systems/quest/questStamps.js`** (new, TIME3): the stamps by clock, the walk that moves them, the load's and
   a share's moves (6.3a).
-- **`ui/enhancedMenu.js skyDayWords`** (TIME4): the Online pane's sentence, true when it opens - before the switch
+- **`ui/enhanced/enhancedMenu.js skyDayWords`** (TIME4): the Online pane's sentence, true when it opens - before the switch
   it says when the sky turns.
 - **`systems/worldTick.js`:**
   - `setSharedClock(source, wallOf, { sky, skyWall })`: the event clock's source as today, the sky's beside
@@ -575,7 +575,7 @@ does online: "Short real wait"; asked whether the bounties, the curse quests and
 5. **AUDIT TIME** over the arc, the house's four lenses.
 
 Each slice is pinned red first, with its own mutant campaign (`tools/mutants/time<n>.json`; TIME4, words alone,
-is held by `test/time4_words.test.js` instead; AUDIT TIME's one TIME4 mutant, the pane's minutes, rides
+is held by `test/systems/quest/time4_words.test.js` instead; AUDIT TIME's one TIME4 mutant, the pane's minutes, rides
 `time1.json`), a Testing.md
 row, and its player-facing notes in its pull request's description. TIME2 and TIME3 are independent of
 each other once TIME1 has landed.
@@ -649,7 +649,7 @@ terms; 9 is new and not built.
   character's clock. Added to section 7 and TIME1: the gates' and raids' words. The census became a table.
   No reader found saves a sky minute.
 - 2026-10-01: BUILT. TIME1: the sky's law (`net/skyLaw.js`), its install and `skyMinutes()`, every sky reader
-  moved and every event reader held by the census (`test/time1_census.test.js` over
+  moved and every event reader held by the census (`test/scenes/time1_census.test.js` over
   `test/fixtures/time1_census.json`), the weather's season, the nightfall words, the gates' and raids' local
   times, `tools/skyCutover.mjs`. TIME2: the full moon's night online. TIME3: quests on the character's clock and
   the sky (6.3a). TIME4: the Online pane's sentence, this page, `Lived-Time.md`, `Online-Arc.md`, `Quest-Arc.md`,
@@ -657,7 +657,7 @@ terms; 9 is new and not built.
 - 2026-10-02: TIMEFREE (6.3b) - online quests are not time: deadlines never run out, delays land on the short wait,
   no countdowns, bounties never lapse, the curse quests and crime-guild letters on the short wait.
   `test/timefree.test.js`, `tools/mutants/timefree.json` (10, all dead). [DELETED by 6.3c]
-- 2026-10-02: AUDIT TIMEFREE (`01-Overview/Audit-Timefree.md`): every vendored clock read by hand, the main quest's
+- 2026-10-02: AUDIT TIMEFREE (`01-Overview/audits/Audit-Timefree.md`): every vendored clock read by hand, the main quest's
   whole; nineteen misread clocks corrected (T1-T6) - among them Brisienna's close, the main quest's endings and
   letter43, quests that never closed after their reward. `test/audit_timefree.test.js`, [DELETED by 6.3c]
   `tools/mutants/audit_timefree.json` (14, all dead). [DELETED by 6.3c]
@@ -665,7 +665,7 @@ terms; 9 is new and not built.
   across the switch); main merged in; the patch notes' words corrected.
 - 2026-10-02: QCLOCK-WORLD (6.3c): TIMEFREE's quest half reverted before the merge, and online a quest's countdowns
   charge the time played with the world's clock and never a raise - a rest, a wait or a journey spends no quest days.
-  `test/time3_quests.test.js` re-aimed, `tools/mutants/time3.json` (61, all dead); its patch notes ride the Rest arc's
+  `test/systems/quest/time3_quests.test.js` re-aimed, `tools/mutants/time3.json` (61, all dead); its patch notes ride the Rest arc's
   pull request (REL6), "Patch notes: Quest timers on the world's clock".
 - 2026-10-02: AUDIT TIME, four lenses (the sky and the moon; the quests; the hosts, saves and wire; the words and
   the tests). Fixed: the coven's daily re-roll was stamped and saved on the sky - its key is the event clock's day
@@ -692,24 +692,24 @@ terms; 9 is new and not built.
   on this build; the mixed-build skew after the switch is section 4's. Each code fix has a pin and a mutant.
 - 2026-10-02: SKY-SLOW. The 48 sky zoomed by; the not-yet-live row was replaced with TimeScale 24 (a day every real
   hour, midnight on the hour UTC) at the aligned instant 2026-10-03T17:07:30Z. The Online pane's sentence, the patch
-  notes and the pins (`test/time1_sky.test.js`, `test/time2_moon.test.js`, `test/time4_words.test.js`) moved with it.
+  notes and the pins (`test/systems/time1_sky.test.js`, `test/systems/time2_moon.test.js`, `test/systems/quest/time4_words.test.js`) moved with it.
 - 2026-10-03: REST8 (6.3d, `Rest-Arc.md` section 8, OPEN 12 option A): 6.3b's delay half restored on 6.3c's clock -
   the reading and its two tables whole, a delay cut once to the short wait, a deadline on played time; the crime-guild
   letters and the curse arms on the short wait; R1: K0C00Y02's gold and S0000502's tower read as the deadlines they
-  are. `test/rest8_questwaits.test.js`, `test/rest8_audit_timefree.test.js`, `tools/mutants/rest8.json` (22) and
+  are. `test/systems/quest/rest8_questwaits.test.js`, `test/systems/quest/rest8_audit_timefree.test.js`, `tools/mutants/rest8.json` (22) and
   `tools/mutants/rest8_audit_timefree.json` (14), all dead.
 - 2026-10-03: AUDIT REST II, the quest clocks (6.3d): THE RULE decided - a time limit the text sets is a deadline;
   R0C11Y03's return a deadline and `ONLINE_CLOSINGS` retired; S0000011's chapter and O0B00Y12's drop deadlines by hand;
   269 and 130, the main quest's 32; the bounties held through 6.3b's never-lapse re-stamped once online.
-  `test/auditrest2_quests.test.js`, `tools/mutants/auditrest2_quests.json` (18, all dead).
+  `test/systems/quest/auditrest2_quests.test.js`, `tools/mutants/auditrest2_quests.json` (18, all dead).
 - 2026-10-03: AUDIT REST III, the quest clocks (6.3d): K0C00Y07's ransom and B0B71Y03's daughter - dead clocks whose
   text sets a limit, read "a few days" online - deadlines by hand, 271 and 128; a held bounty's day moves with the lane
-  (Bring online lapsed a ledger of this build's bounties on the first tick). `test/auditrest3.test.js`,
+  (Bring online lapsed a ledger of this build's bounties on the first tick). `test/systems/auditrest3.test.js`,
   `tools/mutants/auditrest3.json`.
-- 2026-10-06: GUARD-WINDOW (FIELD BUGS 2026-10-06c, `01-Overview/Field-Bugs-2026-10-06c.md`): N0B20Y02's three-hour
+- 2026-10-06: GUARD-WINDOW (FIELD BUGS 2026-10-06c, `01-Overview/bugs/Field-Bugs-2026-10-06c.md`): N0B20Y02's three-hour
   guard is a deadline by hand - read as a delay, it was cut to the 24-minute short wait and the mage was hidden before
   the attack its 55-minute interval sends; a guard who stepped out in those two real minutes lost the attack for good.
-  272 and 127. `test/fb1006c_guardwindow.test.js`, `tools/mutants/fb1006c.json`.
+  272 and 127. `test/systems/quest/fb1006c_guardwindow.test.js`, `tools/mutants/fb1006c.json`.
 - 2026-10-07: WAITS (`Online-Waits.md`, Mac: "What are some elements that are still far too lengthy?", then "Take care of
   this, you have autonomy"): the sweep of every wait still long online, and four built - OL6 (the bank, the library and
   the palace on the shift), WAVE-WAIT (a wave the quest waits on first comes inside the short wait), SUMMON-NAME (online

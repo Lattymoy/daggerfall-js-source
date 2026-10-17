@@ -31,9 +31,9 @@ try {
   const out = await page.evaluate(async ({ W, H }) => {
     const { Renderer } = await import('/src/render/renderer.js');
     const { EL_LANE } = await import('/src/render/enhancedLighting.js');
-    const { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } = await import('/src/world/terrainSurface.js');
-    const { generateTileData, assignTiles } = await import('/src/world/terrainTiles.js');
-    const { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } = await import('/src/world/terrainSampler.js');
+    const { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } = await import('/src/world/terrain/terrainSurface.js');
+    const { generateTileData, assignTiles } = await import('/src/world/terrain/terrainTiles.js');
+    const { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } = await import('/src/world/terrain/terrainSampler.js');
     const { perspective, lookAt, identity, mirrorProjectionX } = await import('/src/world/mat4.js');
     const { ecoOrigin } = await import('/src/world/ecotone.js');
     const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;

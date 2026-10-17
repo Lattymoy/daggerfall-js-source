@@ -34,7 +34,7 @@ frame.
 THE NOISE IS THE MOD'S OWN: `System.Random(1212701233)`'s NextDouble in turn,
 an 8 x 8 lattice smoothstepped to 64 x 64 in single precision and rounded
 banker's-way as `Mathf.RoundToInt` - its SHA-256 is the mod's own C#'s,
-compiled under .NET 8 (`test/haze1_heatHaze.test.js`).
+compiled under .NET 8 (`test/systems/haze1_heatHaze.test.js`).
 
 THE SHADER, LINE FOR LINE (`vendor/heat-haze/shaders/HeatHaze.glsl`): the fade
 by the ring's own height (`(|y| - 25) / 45`, smoothstepped, discarded at the
@@ -73,7 +73,7 @@ shader's `_Time.y`, held by a pause and scaled with the world (W4) - and the
 mod's keys are read when one is written (`hazeFrameSettings`, W7). `scenes/worldModes.js` and
 `scenes/dungeonContext.js` are FLAGGED, not wired: no desert sky stands
 indoors or underground, and their frames run inside the hosts' indoor branch.
-Online the haze is the player's own (`systems/onlineLane.js`
+Online the haze is the player's own (`systems/online/onlineLane.js`
 `ONLINE_PLAYERS_OWN_MODS`), drawn over a weather and an hour the room shares.
 
 ## Departures (Port-Ledger A, HAZE1)
@@ -90,4 +90,4 @@ Online the haze is the player's own (`systems/onlineLane.js`
 
 ## Pins
 
-`test/haze1_heatHaze.test.js` (9); `tools/mutants/haze1.json` (25, all dead).
+`test/systems/haze1_heatHaze.test.js` (9); `tools/mutants/haze1.json` (25, all dead).

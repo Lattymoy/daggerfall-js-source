@@ -23,7 +23,7 @@ const out = { steps: {} };
 // The components draw with a null texture and an explicit colour;
 // count the quads whose colour is the crosshair's over one frame.
 const countCrosshairQuads = async () => page.evaluate(async () => {
-  const { CROSSHAIR_COLOR } = await import('/src/ui/hudCrosshair.js');
+  const { CROSSHAIR_COLOR } = await import('/src/ui/hud/hudCrosshair.js');
   const r = window.__renderer;
   const orig = r.drawScreenQuad.bind(r);
   let n = 0;

@@ -36,7 +36,7 @@ here - the earlier mod records carry theirs in this line.]**
 a compiled assembly; the `FPSWeaponClone.cs` its manifest names is not
 in the bundle. The port read the IL method by method - the record is
 `bible/05-Combat/Weapon-Widget.md`, a table of every method against
-where it lives in `src/combat/weaponWidget.js`. The DLL itself is the
+where it lives in `src/combat/weapon/weaponWidget.js`. The DLL itself is the
 author's compiled work and is not carried.
 
 **The 173 textures.** They are the classic weapon sprites -
@@ -52,7 +52,7 @@ repainted flats. So they reach the game the way ARENA2 does: FROM THE
 PLAYER'S OWN COPY OF THE MOD, at play time, and never from this
 repository. Attach the mod's `.dfmod` through the textures pick (the
 Mods page), as Seasons of the Iliac Bay is attached, and
-`src/combat/weaponWidgetAssets.js` reads the double-scale textures off
+`src/combat/weapon/weaponWidgetAssets.js` reads the double-scale textures off
 it by the names the mod asks for. Without the bundle the modules that
 need them run as the mod runs without them: the classic frame at
 double size.

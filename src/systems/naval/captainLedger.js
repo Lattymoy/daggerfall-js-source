@@ -3,7 +3,7 @@
 // providing depth without overcomplicating systems" - of "enhancing the naval experience and polishing it more, making it
 // rewarding and giving a reason to players to experience it"; bible/03-World/Captains-Sea.md) - THE CAPTAIN'S LEDGER:
 // what a captain has done at sea, and what the three crowns of the Bay make of it. The port's own - Daggerfall has no
-// sea. Pure: the hosts tell it what happened (scenes/navalHost.js chargePlayer, the harbour board, the exchange, the
+// sea. Pure: the hosts tell it what happened (scenes/naval/navalHost.js chargePlayer, the harbour board, the exchange, the
 // Eltheric Ocean) and read it back (the Captain page, the harbour's favours); the save keeps it (CAPTAIN_SAVE_VENDOR).
 //
 // THE LOG is a captain's record: ships sunk and taken by their trade, boarders thrown back, prizes claimed, the plunder's

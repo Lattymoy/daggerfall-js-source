@@ -52,16 +52,16 @@ import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
 import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
 import { markerScenePosition } from './sceneMount.js';
-import { isSongFileDefined, songFileToRecordName } from '../songFiles.js';
-import { MOBILE_TEAMS } from '../../characters/enemyTargets.js';   // MT-iii: ChangeFoeTeam's enum door
-import { dfuEffectKeyOf } from '../spellEffects.js';   // QG1: CastEffectDo's key vocabulary, one home
+import { isSongFileDefined, songFileToRecordName } from '../song/songFiles.js';
+import { MOBILE_TEAMS } from '../../characters/enemy/enemyTargets.js';   // MT-iii: ChangeFoeTeam's enum door
+import { dfuEffectKeyOf } from '../spell/spellEffects.js';   // QG1: CastEffectDo's key vocabulary, one home
 import { setLocationVariant, setNewLocationVariant, setBlockVariant, setBuildingVariant, makeLocationKey, NO_VARIANT } from '../worldDataVariants.js';   // RR3: WorldUpdate's registry
 import { ONLINE_GUARD_WINDOWS, guardWindowStep } from './onlineGuard.js';   // GUARD-ONLINE: a guarded quest's window online is its arrival's
 import { localizedText } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { raisedSince } from './questStamps.js';   // TIME3: a wave's interval charges a raise whole
 import { waveIsAwaited, questWaitsShort, ONLINE_DELAY_SECONDS } from './clock.js';   // WAVE-WAIT: a wave the quest waits on comes on the short wait online
 import { stringHash } from '../../formats/netRuntime.js';   // VERMIN-SHARED: a shared copy's pick, seeded (a leaf)
-import { seededFirst } from '../wind.js';   // VERMIN-SHARED: the port's one seeded die (imports nothing)
+import { seededFirst } from '../wind/wind.js';   // VERMIN-SHARED: the port's one seeded die (imports nothing)
 /** TIME3 (bible/06-Systems/Online-Time-Arc.md 6.3): the SKY a quest reads an hour, a date or a season on - its own
  *  seam, and the quest's clock where none is given (offline, a headless quest: DFU's one clock). */
 const skySecondsOf = (quest) => (quest?.skySeconds ?? quest?.nowSeconds)?.() ?? 0;
@@ -396,7 +396,7 @@ export class RemoveLogMessage extends ActionTemplate {
 /** VERMIN-SHARED (FIELD BUGS 2026-10-03b; Port-Ledger A, VERMIN-SHARED): the draw a `pick one of` takes in a copy of a
  *  quest kept in step with the party - one uniform per share, task and action (the copy's `shareId`, the task's symbol
  *  name, the action's place in it), the port's one string hash (formats/netRuntime.js) through its one seeded die
- *  (systems/wind.js). Every copy draws the same number, so every copy starts the same task. Pure. */
+ *  (systems/wind/wind.js). Every copy draws the same number, so every copy starts the same task. Pure. */
 export const sharedPickRoll = (shareId, taskName, index) => seededFirst(stringHash(`${shareId}|${taskName}|${index}`));
 
 /** PickOneOf.cs: "pick one of _a_ _b_ ..." - starts one at random (UnityEngine.Random.Range: the quest's rolls).
@@ -2367,7 +2367,7 @@ export class CreateFoe extends ActionTemplate {
         throw new Error(`create foe could not find Foe with symbol name ${this.symbol?.name}`);
       }
       if (foe.isHidden) return;   // hidden blocks the spawn; the interval is already spent
-      // CURSE-OFF-SAND (FIELD BUGS 2026-10-04e): a wave the host keeps off where the player stands (systems/arenaGround.js
+      // CURSE-OFF-SAND (FIELD BUGS 2026-10-04e): a wave the host keeps off where the player stands (systems/arena/arenaGround.js
       // - the curse's dead off the arena's grounds) passes as a hidden Foe's does: the interval spent, NO wave pending. A
       // refusal at placement instead left the wave pending, and every tick of a pending wave raises the encounter event
       // below - a rest on the grounds broken each hour by a foe that never came

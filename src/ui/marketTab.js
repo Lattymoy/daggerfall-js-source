@@ -56,7 +56,7 @@ import {
 } from '../net/marketLaw.js';
 import { QUALITY_NAMES, MASTERWORK } from '../net/recipeLaw.js';
 import { marksText, MARK_WORTH_GOLD } from '../net/marksLaw.js';
-import { pictureNode } from './menuGlyphs.js';   // MENU-ORDER: a row's picture, the host's
+import { pictureNode } from './menu/menuGlyphs.js';   // MENU-ORDER: a row's picture, the host's
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -105,7 +105,7 @@ const SHUT = ['market-closed', 'prof-need-account'];
 /** BOARD-UI: THE VIEWS IN THEIR PARTS - what is for sale ("Buy"), where to sell (the buy orders to fill, and your own
  *  listings - "Sell"), and the record. Every view of MARKET_VIEWS once (a pin holds it). */
 /** @type {ReadonlyArray<readonly [string, ReadonlyArray<string>]>} */
-/** MENU-ORDER: each view its picture (ui/menuGlyphs.js), so the views read as the market's own and never as the board's tabs. */
+/** MENU-ORDER: each view its picture (ui/menu/menuGlyphs.js), so the views read as the market's own and never as the board's tabs. */
 export const MARKET_VIEW_ICONS = Object.freeze({ materials: 'ore', crafted: 'station', auctions: 'gavel', goods: 'own', orders: 'list', mine: 'treasure', history: 'chart' });
 export const MARKET_VIEW_GROUPS = Object.freeze([
   /** @type {const} */ (['Buy', Object.freeze(['materials', 'crafted', 'auctions', 'goods'])]),

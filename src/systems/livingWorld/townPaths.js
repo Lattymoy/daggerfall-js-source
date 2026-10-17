@@ -1,6 +1,6 @@
 // @ts-check
 // LW1 (2026-10-04, bible/06-Systems/Living-World.md): THE TOWN'S WAYS - a resident's walk from one place to another,
-// on the town's own CityNavigation grid (world/cityNavigation.js, DFU's navgrid: 1.6 m cells, a building's footprint
+// on the town's own CityNavigation grid (world/city/cityNavigation.js, DFU's navgrid: 1.6 m cells, a building's footprint
 // weight 0, the ground's weight by its tile). DFU's walkers never path - they seek a neighbour by weight - so this is
 // the port's: an A* over the same grid, four neighbours as the walkers step, each step's cost the tile's weight read
 // the way DFU reads it ("Roads are great!" - a road the cheapest, stone the dearest), so a resident keeps to the
@@ -9,7 +9,7 @@
 //
 // PURE but for its scratch: each grid keeps one set of search arrays (a stamp per search, so nothing is cleared), so
 // a town's thousand walks a day allocate nothing past the first.
-import { NAV_CELL, HALF_CELL } from '../../world/cityNavigation.js';
+import { NAV_CELL, HALF_CELL } from '../../world/city/cityNavigation.js';
 
 /** A step's cost by its tile's weight: a road (15) 1, grass (12) 1.3, the average (7) 1.8, dirt (6) 1.9, stone (4) 2.1. */
 export const stepCost = (weight) => 1 + (15 - weight) / 10;

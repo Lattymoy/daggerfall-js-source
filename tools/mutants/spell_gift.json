@@ -5,7 +5,7 @@
     "old": "      if (!free && allyCastable(sp) && allyNear(lastAim?.eye ?? null, sp)) { sayArm('mate-near', prevArm, pressButtonToFireSpellText(), ALLY_ARMED_LINE); return true; }",
     "new": "",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (Math.hypot(eye[0] - x, eye[1] - cy, eye[2] - z) <= ALLY_ARM_RADIUS) return true;",
     "new": "      return true;",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (!free && allyCastable(sp) && allyNear(lastAim?.eye ?? null, sp)) {",
     "new": "      if (allyNear(lastAim?.eye ?? null, sp)) {",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ],
     "equivalent": true,
     "why": "allyNear asks allyMarksFor, which answers no mate for a free ready (readiedFree is set a line above) or for a spell that is no gift - so the guard in front of it repeats that law rather than making it. Recorded because the guard reads like the only thing keeping a trap's payload from arming, and the next reader should know allyMarksFor is."
@@ -34,7 +34,7 @@
     "old": "sayArm('mate-near', prevArm, pressButtonToFireSpellText(), ALLY_ARMED_LINE); return true; }",
     "new": "sayArm('mate-near', prevArm, pressButtonToFireSpellText()); return true; }",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "    try { list = allyMarks(sp) ?? null; } catch { return []; }",
     "new": "    try { list = allyMarks() ?? null; } catch { return []; }",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -52,8 +52,8 @@
     "old": "    try { ally = allyTarget(eye, dir, reach, sp) ?? null; } catch { return null; }",
     "new": "    try { ally = allyTarget(eye, dir, reach) ?? null; } catch { return null; }",
     "tests": [
-      "test/spellgift.test.js",
-      "test/allycast.test.js"
+      "test/systems/spellgift.test.js",
+      "test/systems/allycast.test.js"
     ]
   },
   {
@@ -62,8 +62,8 @@
     "old": "    for (const t of marks) if (giveToAlly(t, sp, { quiet: true })) names.push(t.name);",
     "new": "    for (const t of marks) if (giveToAlly(t, sp)) names.push(t.name);",
     "tests": [
-      "test/spellgift.test.js",
-      "test/friendlyspells.test.js"
+      "test/systems/spellgift.test.js",
+      "test/systems/friendlyspells.test.js"
     ]
   },
   {
@@ -72,7 +72,7 @@
     "old": "export const STRANGER_CAST_TYPES = Object.freeze(new Set([3, 8, 9, 10, 18, 20, 27, 30, 35]));",
     "new": "export const STRANGER_CAST_TYPES = Object.freeze(new Set([3, 8, 9, 10, 14, 18, 20, 27, 30, 35]));",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "old": "  const effects = d.effects.filter(stranger ? strangerEffect : companion ? companionEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);",
     "new": "  const effects = d.effects.filter(companion ? companionEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -90,16 +90,16 @@
     "old": "  return fx.length > 0 && fx.every(strangerEffect);",
     "new": "  return fx.length > 0 && fx.some(strangerEffect);",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   },
   {
     "name": "SPELL-GIFT-gift-in-the-debuff-row",
-    "file": "src/ui/hudActiveSpells.js",
+    "file": "src/ui/hud/hudActiveSpells.js",
     "old": "    (bundle.selfCast || bundle.ally ? self : other).push(item);",
     "new": "    (bundle.selfCast ? self : other).push(item);",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   },
   {
@@ -108,8 +108,8 @@
     "old": "      if (!mate && !getPref('acceptStrangerSpells')) return;",
     "new": "",
     "tests": [
-      "test/spellgift.test.js",
-      "test/allycast.test.js"
+      "test/systems/spellgift.test.js",
+      "test/systems/allycast.test.js"
     ]
   },
   {
@@ -118,7 +118,7 @@
     "old": "      return name ? { title: name, renown: null, subs: [cast], actions: [], actionsUnlit: true } : null;",
     "new": "      return null;",
     "tests": [
-      "test/spellgift.test.js"
+      "test/systems/spellgift.test.js"
     ]
   }
 ]

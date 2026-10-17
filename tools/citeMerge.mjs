@@ -31,7 +31,7 @@ import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// ---- the pure half (pinned in test/citemerge.test.js) ---------------------
+// ---- the pure half (pinned in test/tooling/citemerge.test.js) ---------------------
 
 /** Which side a merged line came from: 'both' if both files carry it
  *  verbatim, else 'theirs' or 'ours' for the one that does, else null - a

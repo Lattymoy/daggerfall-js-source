@@ -8,7 +8,7 @@
 // player has it in:
 //
 //   1. THE `.dfmod` ITSELF (`seasons of the iliac bay.dfmod`, the file
-//      Nexus ships and DFU loads) - read by formats/unityBundle.js; the
+//      Nexus ships and DFU loads) - read by formats/unity/unityBundle.js; the
 //      manifest inside names the mod and its file list, and every
 //      texture decodes from the bundle exactly as DFU would sample it.
 //   2. THE MOD'S `Textures/` FOLDERS as loose PNGs (the shape its source
@@ -27,7 +27,7 @@
 // is); no texture's pixels decode until a season asks for its prefix.
 // The loose folders are read only per prefix.
 
-import { readUnityBundle } from '../formats/unityBundle.js';
+import { readUnityBundle } from '../formats/unity/unityBundle.js';
 import { toColor32 } from '../formats/color32Order.js';   // ROAD-H H4: the flip moved to the shared door M-TEX takes too; TEX1: in the SHAPE the upload path reads, so the two hosts hand the image over whole
 import { decodePng } from './textureReplacement.js';
 import { SEASONS_MOD, PREFIX_FOLDER, filesForPrefix } from './seasonsIliacBay.js';

@@ -36,10 +36,10 @@
 // DaggerfallShortcut hotkey; the accelerators here are the port's own
 // (Ledger A).
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';

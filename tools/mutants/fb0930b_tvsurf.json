@@ -4,13 +4,13 @@
     "file": "src/scenes/world.js",
     "old": "    if (!tvf) csaDrawWaves();",
     "new": "    csaDrawWaves();",
-    "tests": ["test/fb0930b_tvsurf.test.js"]
+    "tests": ["test/scenes/fb0930b_tvsurf.test.js"]
   },
   {
     "name": "TV-SURF-the-ground-eye-loses-the-surf",
     "file": "src/scenes/world.js",
     "old": "    if (!tvf) csaDrawWaves();",
     "new": "    if (tvf) csaDrawWaves();",
-    "tests": ["test/fb0930b_tvsurf.test.js"]
+    "tests": ["test/scenes/fb0930b_tvsurf.test.js"]
   }
 ]

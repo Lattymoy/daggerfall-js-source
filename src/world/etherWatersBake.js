@@ -17,7 +17,7 @@
 //   THE FLOOD - an isle's CELL at a time (ISLE_CELL_PX square, world/ethericSea.js), from its own border: every cell's
 //               outer ring of pixels is open sea by the bound - an isle's land bytes lie a pixel and more inside its
 //               cell, and the kernel's window carries none of them to the ring (measured over every cell of three of
-//               the box's rows, test/ether_deep.test.js) - so the rings are one sea that reaches the box's edge, any
+//               the box's rows, test/world/deepWater/ether_deep.test.js) - so the rings are one sea that reaches the box's edge, any
 //               water in a cell that reaches the open sea reaches its ring, and the cell's flood IS the box's.
 //   RECTS     - an isle's place (world/etherPlaces.js: a port's town, a ruin's dungeon) blends its pixel's ground as a
 //               classic location's (the streamed build's own order), so its pixel is sampled with its template's rect -
@@ -29,7 +29,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import {
   DeepWatersBake, BAY_FRAME, inFrame, floodSteps, classifyPixel, coarseCandidateBits, pixelWaterSampler, PIXEL_MIXED, PIXEL_SEA, PIXEL_LAND,
-} from './deepWatersBake.js';
+} from './deepWater/deepWatersBake.js';
 import { ETHER_BOX, ISLE_CELL_PX, etherCellOf, etherFrame, isleAt } from './ethericSea.js';
 import { etherTemplateOf } from './etherPlaces.js';
 

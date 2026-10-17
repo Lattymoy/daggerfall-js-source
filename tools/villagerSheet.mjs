@@ -14,7 +14,7 @@ import { PNG } from 'pngjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
-import { PERSON_TEXTURES, GUARD_TEXTURE, PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD } from '../src/characters/mobilePerson.js';
+import { PERSON_TEXTURES, GUARD_TEXTURE, PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD } from '../src/characters/mobile/mobilePerson.js';
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(`${A}/ART_PAL.COL`), 'ART_PAL.COL');
 

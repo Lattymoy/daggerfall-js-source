@@ -20,7 +20,7 @@ and the impulse built from each) and three engine seams: the audio bus
 takes a reverb zone and its loops a low-pass, the renderer's mesh
 program takes a trilight ambient, and the damage flash's RemoveHealth
 edge carries its amount. On by default (MO1), with ONE departure
-below. Pins: 14 in `test/ba1_betterambience.test.js`; campaign
+below. Pins: 14 in `test/systems/ba1_betterambience.test.js`; campaign
 `tools/mutants/ba1.json`, 42 mutants, 41 killed, 1 equivalent as
 recorded (the classic gate's Immersive Footsteps arm, which no
 node-run singleton can turn on). FOUR SURVIVORS ON THE FIRST RUN, each
@@ -246,7 +246,7 @@ of `'exit'` is a promise that settle read a dungeon with an exit, and
 dropping the kind with the place is what keeps the promise. The call
 stays unguarded, on purpose, with the reason beside it.
 
-**Driven.** `test/bacrash1.test.js` (2): a dungeon in the rain has its
+**Driven.** `test/systems/bacrash1.test.js` (2): a dungeon in the rain has its
 3D source; the step out stops it, the four wait frames and the fifth
 neither throw nor start a source, the weather turning outdoors starts
 nothing, a building afterwards has its 2D source and the next dungeon

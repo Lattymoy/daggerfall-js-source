@@ -5,8 +5,8 @@
     "old": "export const CAST_FRAME_PERIOD = 0.04;",
     "new": "export const CAST_FRAME_PERIOD = 0.1;",
     "tests": [
-      "test/castspeed.test.js",
-      "test/fpsspellcasting.test.js"
+      "test/systems/castspeed.test.js",
+      "test/combat/fpsspellcasting.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "    this._period = CAST_FRAME_PERIOD / validCastRate(rate);",
     "new": "    this._period = CAST_FRAME_PERIOD;",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "    while (this._acc >= this._period && this.currentFrame >= 0) {\n      this._acc -= this._period;",
     "new": "    while (this._acc >= ANIM_SPEED && this.currentFrame >= 0) {\n      this._acc -= ANIM_SPEED;",
     "tests": [
-      "test/castspeed.test.js",
-      "test/fpsspellcasting.test.js"
+      "test/systems/castspeed.test.js",
+      "test/combat/fpsspellcasting.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "  return 1 + (s - CAST_SPEED_PIVOT) / CAST_SPEED_SPAN;",
     "new": "  return 1;",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "  const s = Math.min(MAX_STAT_VALUE, Math.max(0, Number.isFinite(speed) ? speed : CAST_SPEED_PIVOT));",
     "new": "  const s = Number.isFinite(speed) ? speed : CAST_SPEED_PIVOT;",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "    if (Number.isFinite(pct)) r += pct / 100;",
     "new": "    if (Number.isFinite(pct)) r += pct;",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
@@ -61,25 +61,25 @@
     "old": "  return Math.min(CAST_RATE_MAX, Math.max(CAST_RATE_MIN, r));",
     "new": "  return r;",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
     "name": "CASTSPEED-rig-rate-one",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "      const rate = castRate(entity);",
     "new": "      const rate = 1;",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
     "name": "CASTSPEED-classic-lane-no-rate",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "fpArm.takeCastRelease() || !fpArm.castInFlight(), rate } : { rate });",
     "new": "fpArm.takeCastRelease() || !fpArm.castInFlight(), rate } : {});",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "      castRate = validCastRate(rate);",
     "new": "      castRate = 1;",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "        const speed = paced ? blowPlan.rate : upper === UPPER_BODY.Casting ? castRate : weapSpeed;",
     "new": "        const speed = paced ? blowPlan.rate : weapSpeed;",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "    if (castBusy()) return false;\n",
     "new": "",
     "tests": [
-      "test/hostmagic.test.js"
+      "test/systems/hostmagic.test.js"
     ]
   },
   {
@@ -115,43 +115,43 @@
     "old": "      if (!lastSpell || castInProgress || castBusy()) return false;",
     "new": "      if (!lastSpell || castInProgress) return false;",
     "tests": [
-      "test/hostmagic.test.js"
+      "test/systems/hostmagic.test.js"
     ]
   },
   {
     "name": "CASTSPEED-loot-uncapped",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  return Math.min(CAST_SPEED_CAP, wornSum(entity, 'castSpeed'));",
     "new": "  return wornSum(entity, 'castSpeed');",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
     "name": "CASTSPEED-loot-anyones",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (!mine(entity)) return 0;\n  return Math.min(CAST_SPEED_CAP",
     "new": "  return Math.min(CAST_SPEED_CAP",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
     "name": "CASTSPEED-loot-unregistered",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "registerCastSpeedMod(LOOT_POWERS, lootCastSpeed);   // CAST-SPEED\n",
     "new": "",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
     "name": "CASTSPEED-jewellery-alone",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  castSpeed: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery', 'Weapons'])",
     "new": "  castSpeed: Object.freeze({ slot: 'suffix', groups: Object.freeze(['Jewellery'])",
     "tests": [
-      "test/castspeed.test.js"
+      "test/systems/castspeed.test.js"
     ]
   },
   {
@@ -159,34 +159,34 @@
     "file": "src/combat/fpsSpellCasting.js",
     "old": "    if (this.isPlayingAnim || this._hold || this._recover > 0) return false;",
     "new": "    if (this.isPlayingAnim || this._hold) return false;",
-    "tests": ["test/castspeed.test.js", "test/fpsspellcasting.test.js", "test/hostmagic.test.js"]
+    "tests": ["test/systems/castspeed.test.js", "test/combat/fpsspellcasting.test.js", "test/systems/hostmagic.test.js"]
   },
   {
     "name": "CASTRECOVER-click-ignores-recovery",
     "file": "src/scenes/hostMagic.js",
     "old": "  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld || fpsSpellCasting.recovering,",
     "new": "  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld,",
-    "tests": ["test/hostmagic.test.js", "test/castspeed.test.js"]
+    "tests": ["test/systems/hostmagic.test.js", "test/systems/castspeed.test.js"]
   },
   {
     "name": "CASTRECOVER-recovery-ignores-rate",
     "file": "src/combat/fpsSpellCasting.js",
     "old": "    this._recover = CAST_RECOVER_S / validCastRate(rate);",
     "new": "    this._recover = CAST_RECOVER_S;",
-    "tests": ["test/castspeed.test.js"]
+    "tests": ["test/systems/castspeed.test.js"]
   },
   {
     "name": "HANDSEAM-hands-tile",
     "file": "src/combat/fpsSpellCasting.js",
     "old": "c32, { clamp: true }),",
     "new": "c32),",
-    "tests": ["test/fpsspellcasting.test.js"]
+    "tests": ["test/combat/fpsspellcasting.test.js"]
   },
   {
     "name": "HANDSEAM-clamp-wraps",
     "file": "src/render/renderer.js",
     "old": "  if (opts.clamp) return { wrap: gl.CLAMP_TO_EDGE, filter: gl.NEAREST };",
     "new": "  if (opts.clamp) return { wrap: gl.REPEAT, filter: gl.NEAREST };",
-    "tests": ["test/startwindow.test.js"]
+    "tests": ["test/ui/startwindow.test.js"]
   }
 ]

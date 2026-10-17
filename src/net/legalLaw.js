@@ -17,7 +17,7 @@
 //
 // A VERSION IS ITS DOCUMENT'S "LAST UPDATED" DATE, because that is how
 // the Terms say a revision is marked (section 15). The pages carry it as
-// `<time datetime>`, and test/terms1.test.js holds each page's date to
+// `<time datetime>`, and test/ui/enhanced/terms1.test.js holds each page's date to
 // its version here and each page's words to a hash - so the text cannot
 // change without somebody deciding whether that is a new version.
 //
@@ -39,7 +39,7 @@
  *  BR5 (2026-10-11): the operator's name became DFO Online in both
  *  documents and nothing else did - the same project and the same terms
  *  under its new name, so the same version, the words re-hashed
- *  (test/terms1.test.js). A new version would refuse every account an
+ *  (test/ui/enhanced/terms1.test.js). A new version would refuse every account an
  *  older build tries to make (`terms-stale`), which a rename does not
  *  earn (AUDIT BR5). */
 export const TERMS_VERSION = '2026-09-28';

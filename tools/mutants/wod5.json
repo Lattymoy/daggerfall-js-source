@@ -5,7 +5,7 @@
     "old": "const mirrored = det3(local) < 0;",
     "new": "const mirrored = false;",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "m[0] * (m[5] * m[10] - m[9] * m[6])",
     "new": "m[0] * (m[5] * m[10] + m[9] * m[6])",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "run[i + 1] = run[i + 2]; run[i + 2] = t;",
     "new": "run[i + 1] = run[i + 2];",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (wod) { const region = maps.getRegionIndexAt(r.current.x, r.current.y); wodOpened.then((ok) => { if (ok) wod.noteRegion(region); }); }\n",
     "new": "",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "wodOpened.then((ok) => { if (ok) wod.noteRegion(region); });",
     "new": "wod.noteRegion(region);",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    w.flat = { kind: 'billboard', archive: act.archive, record: act.record };\n",
     "new": "",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "        if (w.restand) { w.restand = false; standWodAction(p, w, w.flat); }   // WOD5: the captive stands again on the rebuilt pixel\n",
     "new": "",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "spawners.get(k).push({ spawner: w.spawner, flat: w.flat ?? null });",
     "new": "spawners.get(k).push({ spawner: w.spawner, flat: null });",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "piles.filter((p) => p.items.length && !p.unsaved)",
     "new": "piles.filter((p) => p.items.length)",
     "tests": [
-      "test/wod5_audit.test.js"
+      "test/scenes/wod5_audit.test.js"
     ]
   },
   {
@@ -86,8 +86,8 @@
     "old": "null, key, { unsaved: true });   // WOD5",
     "new": "null, key);   // WOD5",
     "tests": [
-      "test/wod3_spawner.test.js",
-      "test/wod5_audit.test.js"
+      "test/world/worldOfDaggerfall/wod3_spawner.test.js",
+      "test/scenes/wod5_audit.test.js"
     ]
   }
 ]

@@ -4,7 +4,7 @@
 #
 # NIF fixtures are authored with pyffi (niftools, BSD) - an independent
 # implementation of the NIF spec - so the JS reader in
-# src/formats/mwNifFile.js is tested against a writer that shares none of
+# src/formats/morrowind/mwNifFile.js is tested against a writer that shares none of
 # its assumptions. Requires pyffi patched for py3.12 (time.clock ->
 # time.perf_counter) AND one fix to its nifxml/nif.xml: delete the
 # duplicate `<add name="Num UV Sets" type="byte" vercond="Version >=
@@ -136,7 +136,7 @@ def build_skinned_rig():
     # transform is the INVERSE BIND (mesh space -> bone space), so Bone_i
     # carries translation z = -i; at rest the skinning identity
     # world(bone) o invBind collapses to I and the authored verts come
-    # back exactly - the round-trip test/mwanim.test.js pins.
+    # back exactly - the round-trip test/formats/morrowind/mwanim.test.js pins.
     root = NifFormat.NiNode()
     root.name = b"SkinRoot"
     ident(root.rotation)
@@ -627,7 +627,7 @@ def make_esm():
 
 def make_bsa():
     # Independent Morrowind BSA v0x100 writer, straight from the layout doc
-    # in src/formats/mwBsaFile.js. Hash table intentionally zeroed - names
+    # in src/formats/morrowind/mwBsaFile.js. Hash table intentionally zeroed - names
     # are authoritative and both OpenMW and our reader ignore hashes.
     files = [
         (b"meshes\\fixture\\Mesh.NIF", (HERE / "mesh.nif").read_bytes()),
@@ -1030,7 +1030,7 @@ ARM_FP_REST = {
 # the pitch and catches nothing.
 #
 # So the rig stays square and the conjugation is pinned on the SOURCE
-# instead (test/fparm.test.js, MW-D10) - the same trade MW-D8 recorded
+# instead (test/formats/morrowind/fparm.test.js, MW-D10) - the same trade MW-D8 recorded
 # for the once-solved framing, and it is written down rather than
 # discovered later as a hole.
 ARM_FP_NECK_YAW_DEG = 0.0

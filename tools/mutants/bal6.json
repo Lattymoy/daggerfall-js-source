@@ -5,7 +5,7 @@
     "old": "  if (!entry.isTransformed) return;\n  for (const stat of LYCANTHROPE_STATS)",
     "new": "  for (const stat of LYCANTHROPE_STATS)",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  lycanthropeAdvantages(entry);   // BAL6: the form's own advantages from the change's instant, not the next round's",
     "new": "  // the change writes nothing",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  // maps. BAL6: the beast's alone, so after the moon's change above.\n  lycanthropeAdvantages(entry);",
     "new": "  // maps. BAL6: the beast's alone, so after the moon's change above.",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (morphHeals(entry, nowMinutes)) {",
     "new": "  if (true) {",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) > MINUTES_PER_DAY;",
     "new": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastCastMorphSelf ?? -Infinity) > MINUTES_PER_DAY;",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) > MINUTES_PER_DAY;",
     "new": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) >= MINUTES_PER_DAY;",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -59,16 +59,16 @@
     "old": "    entry.lastMorphHeal = nowMinutes;",
     "new": "    void nowMinutes;",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
     "name": "BAL6-the-heal-stamp-uncapped-on-load",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "'lastCastMorphSelf', 'lastMorphHeal', 'lastUrgeNotify'",
     "new": "'lastCastMorphSelf', 'lastUrgeNotify'",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    skillID = SKILLS.HandToHand;\n",
     "new": "    skillID = SKILLS.HandToHand;\n    if (attacker?.isInBeastForm && (target.minMetalToHit ?? -1) > 2) matReqDamMulti = F(0.4);\n",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    skillID = SKILLS.HandToHand;\n",
     "new": "    skillID = SKILLS.HandToHand;\n    if (attacker?.isInBeastForm && !modules.softMaterialRequirements && (target.minMetalToHit ?? -1) > 2) {\n      if (isPlayer(attacker)) say?.(MATERIAL_INEFFECTIVE_TEXT);\n      if (notes) notes.ineffective = true;\n      return 0;\n    }\n",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
     "new": "  if ((target.minMetalToHit ?? -1) > (weapon ? weapon.material : attacker?.isInBeastForm ? 2 : 99)) {",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
     "new": "  if ((target.minMetalToHit ?? -1) > (weapon ? weapon.material : -1)) {",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (!entity?.isInBeastForm) return 0;\n",
     "new": "  if (!entity) return 0;\n",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "Math.max(0, weaponMaterialModifier(metal))",
     "new": "weaponMaterialModifier(metal)",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "[EQUIP_SLOTS.Gloves]",
     "new": "[EQUIP_SLOTS.ChestArmor]",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "(isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null)",
     "new": "(m <= ARMOR_MATERIAL.Daedric ? m & 0xFF : null)",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "isPlate(m) && m <= ARMOR_MATERIAL.Daedric ?",
     "new": "isPlate(m) ?",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    damage += clawMetalDamage(attacker);\n",
     "new": "",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  if (isPlayer) damage += clawMetalDamage(attacker);\n",
     "new": "",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    unarmedAttack = true;\n",
     "new": "    unarmedAttack = true;\n    chanceToHitMod += clawMetalDamage(attacker) * 2;\n",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;\n",
     "new": "  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;\n  else chanceToHitMod += clawMetalDamage(attacker) * 10;\n",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -194,16 +194,16 @@
     "old": "    matMod = clawMetalDamage(entity);   // BAL6-GAUNTLETS: both cores add it where a weapon's material stands\n",
     "new": "",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
     "name": "BAL6-GAUNTLETS-the-plate-offset-off-by-one",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "conditionMultipliersByMaterial[plateMetal(mat)]",
     "new": "conditionMultipliersByMaterial[plateMetal(mat) + 1]",
     "tests": [
-      "test/audit23_systems.test.js"
+      "test/systems/audit23_systems.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "(sunAverse ? -VAMPIRE_STAT_MOD : 0)",
     "new": "(sunAverse ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "(sunAverse ? -VAMPIRE_STAT_MOD : 0)",
     "new": "(-VAMPIRE_STAT_MOD)",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
     "new": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : (sunAverse ? VAMPIRE_STAT_MOD : 0))",
     "tests": [
-      "test/bal6_curses.test.js"
+      "test/systems/bal6_curses.test.js"
     ]
   }
 ]

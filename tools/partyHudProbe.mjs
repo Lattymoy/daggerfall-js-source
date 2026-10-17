@@ -6,7 +6,7 @@
 // the enhanced skin's sheet - its width, its height against the viewport,
 // that a name ellipsizes, that the away card greys - photographed, so a
 // person can look at the design. The laws are pinned in node
-// (test/soc4_partyhud.test.js); here the numbers the screen shows are read
+// (test/net/soc4_partyhud.test.js); here the numbers the screen shows are read
 // back off the DOM.
 //
 // PARTY8-B (Mac: "B" - quiet rows): the same seven, now with `here` set

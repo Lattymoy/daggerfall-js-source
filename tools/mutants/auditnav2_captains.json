@@ -1,20 +1,20 @@
 [
   {
     "name": "AUDIT-NAV2-F8-reports-left-where-the-world-was",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const g of gunfire) { g.pos[0] += o[0]; g.pos[1] += o[1]; g.pos[2] += o[2]; }",
     "new": "",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F8-reports-kept-across-the-clear",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    gunfire = [];   // AUDIT NAV2 F8",
     "new": "    // AUDIT NAV2 F8",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "((enemy.ship?.mode === 'flee' && away > 0) || away > CHASE_AWAY * own)",
     "new": "(away > CHASE_AWAY * own)",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -32,8 +32,8 @@
     "old": "    return d > range ? Math.max(b, closeIn) : b;",
     "new": "    return b;",
     "tests": [
-      "test/auditnav2_captains.test.js",
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditnav2_captains.test.js",
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "    return ld + Math.max(0, away) * round <= reach * RUN_OUT_REACH;",
     "new": "    return ld <= reach * RUN_OUT_REACH;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    if (ship.present?.side === side && ship.present.lays) return ld <= reach * RUN_OUT_REACH;   // laying it: held while it is in reach\n",
     "new": "",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "      if (chasers) return { want: headingTo(ship.pos, chasers), goal: chasers, sails: 1 };\n",
     "new": "",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "  const far = c.marks.reduce((m, k) => Math.max(m, k[1]), d);",
     "new": "  const far = c.marks.reduce((m, k) => Math.min(m, k[1]), d);",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "  const wp = routeTo(ship, berth, isWater);",
     "new": "  const wp = null;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  return d < 1 || courseClear(a, headingTo(a, b), d, isWater, { half: hullBuild(ship.hull).halfWidth + SCAN_MARGIN, step: ROUTE_STEP });",
     "new": "  return d >= 0;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "  if (!berthOpen(ship, berthOn(ship.berthSide), f, r, ship.berthSide, isWater) && berthOpen(ship, berthOn(-ship.berthSide), f, r, -ship.berthSide, isWater)) ship.berthSide = -ship.berthSide;\n",
     "new": "",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "  return ship.clock - a.since > CHASE_GIVE_UP_S;\n}",
     "new": "  return false;\n}",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": " && !((ship.spare.get(c.id) ?? -Infinity) > ship.clock)) { prize = c; prizeD = dist; }",
     "new": ") { prize = c; prizeD = dist; }",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "        ways.push({ p, cost: keep && sideOf(p) !== keep ? cost * ROUTE_SWITCH : cost });",
     "new": "        ways.push({ p, cost });",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -132,16 +132,16 @@
     "old": "    ship.target = null; ship.berthSide = 0; ship.present = null; ship.chase = null; ship.approach = null; ship.route = null;\n",
     "new": "",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F23-a-struck-ships-last-word-read-as-a-fight",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "engaged: (afloat && (e.ship.mode === 'engage' || e.ship.mode === 'board'))",
     "new": "engaged: (e.ship.mode === 'engage' || e.ship.mode === 'board')",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "    if (Math.hypot(lead[0] - ship.pos[0], lead[2] - ship.pos[2]) >= layMin(ship.hull, 'bow', eh)) {",
     "new": "    if (lead) {",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "  const range = Math.max(ship.cls.range, deadZone, ship.cls.tactic === 'bow' ? layMin(ship.hull, 'bow', eh) : 0);",
     "new": "  const range = ship.cls.range;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "    if (d < deadZone) return -2 * RANGE_BEND * DEG;",
     "new": "    if (d < 0) return -2 * RANGE_BEND * DEG;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "Math.max(range * POINT_BLANK, deadZone)",
     "new": "range * POINT_BLANK",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  m = 0;\n  const bat = batteryOf(hull, side);\n  if (bat && bat.gun !== 'barrel') {",
     "new": "  m = 0;\n  const bat = batteryOf(hull, side);\n  if (bat && bat.gun === 'none') {",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "  const byMen = b.strikes && men > 0 ? b.crew / men : Infinity;",
     "new": "  const byMen = Infinity;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "  const byMen = b.strikes && men > 0 ?",
     "new": "  const byMen = men > 0 ?",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "  const g = GUNS[bat.gun], b = hullBuild(targetHull), k = clamp(1.5 - skill, 0.4, 1.5), R = DUEL_RANGE;",
     "new": "  const g = GUNS[bat.gun], b = hullBuild(HULL.SmallShip), k = clamp(1.5 - skill, 0.4, 1.5), R = DUEL_RANGE;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "    if (!bat || layMin(a.hull, side, b.hull) > b.range) continue;",
     "new": "    if (!bat) continue;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "reloadSeconds(bat.gun, a.crewShare, a.crewed)",
     "new": "reloadSeconds(bat.gun, 1, true)",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "    hull += hits * g.hull * w * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top));",
     "new": "    hull += hits * g.hull * w;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ],
     "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
@@ -250,8 +250,8 @@
     "old": "  return theirs != null && odds(theirs, shipPower(ship)) > 1;",
     "new": "  return theirs != null && odds(theirs, shipPower(ship)) >= WARY_ODDS;",
     "tests": [
-      "test/auditnav2_captains.test.js",
-      "test/seapeace.test.js"
+      "test/systems/naval/auditnav2_captains.test.js",
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "  return c.hull == null ? null : fightingPower({ hull: c.hull, hullHp: hullBuild(c.hull).hullHp, hullShare: c.hullShare ?? 1, player: true });",
     "new": "  return null;",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ],
     "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
@@ -270,26 +270,26 @@
     "old": "tactic: tactic ?? (hull === HULL.LargeGalley ? 'bow' : 'broadside'),",
     "new": "tactic: tactic ?? 'broadside',",
     "tests": [
-      "test/auditnav2_captains.test.js",
-      "test/seapeace.test.js"
+      "test/systems/naval/auditnav2_captains.test.js",
+      "test/systems/naval/seapeace.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F26-the-ram-unbounded",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        strike(t, { hull: Math.min(dealt, room), sail: 0, crew: ramMen(dealt, random()) }, e.id);",
     "new": "        strike(t, { hull: dealt, sail: 0, crew: ramMen(dealt, random()) }, e.id);",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F27-flight-not-counted",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const chased = new Set(ships.filter((y) => y.engaged && !y.theirs).map((y) => sea.get(y.id)?.ship.target));",
     "new": "      const chased = new Set(ships.filter((y) => y.engaged && !y.theirs && y.afloat === false).map((y) => sea.get(y.id)?.ship.target));",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "Math.max(target, ship.speed - DECEL * way * dt);",
     "new": "Math.max(target, ship.speed - DECEL * dt);",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -307,16 +307,16 @@
     "old": "keel: -4.59, top: 11.55, sailWay: 1,",
     "new": "keel: -4.59, top: 11.55, sailWay: 0.5,",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F29-the-quiet-read-by-where-I-stand",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const hostile = hostileNearBoat(b, s);\n      crewStep",
     "new": "const hostile = hostileNearMe();\n      crewStep",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ],
     "note": "SHIP-CREW (PIN MOVED): re-aimed at the moved line."
   },
@@ -326,7 +326,7 @@
     "old": "} else if (prize && ship.damage.crew > 0 && ship.cls.faction !== 'merchant') {",
     "new": "} else if (prize && ship.damage.crew > 0) {",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -335,7 +335,7 @@
     "old": "  const berthing = still && !ship.route?.lost",
     "new": "  const berthing = false && !ship.route?.lost",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   },
   {
@@ -344,7 +344,7 @@
     "old": "    for (const x of [0, b.halfWidth + SCAN_MARGIN]) if (!isWater(",
     "new": "    for (const x of [0, b.halfWidth]) if (!isWater(",
     "tests": [
-      "test/auditnav2_captains.test.js"
+      "test/systems/naval/auditnav2_captains.test.js"
     ]
   }
 ]

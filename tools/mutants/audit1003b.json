@@ -5,7 +5,7 @@
     "old": "if (ask && sig === this._sessionSig) {",
     "new": "if (false) {",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        if (!budget.pass) { this._arenaSend(ws, sessionWord(S, sub, here, st)); await this._sessionShow(ws); return; }\n",
     "new": "",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    return (sub) => at.has(sub);",
     "new": "    return (sub) => [...this._all()].some(([w, b]) => w !== gone && b.id && b.sub === sub);",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -32,16 +32,16 @@
     "old": "      if (!same) await this._sessionSave();",
     "new": "      await this._sessionSave();",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-R2-GATE-BEFORE-TOKEN",
     "file": "server/src/index.js",
-    "old": "      if (!battle && !floor && !realmRoom) {",
-    "new": "      if (!battle && !realmRoom) {",
+    "old": "      if (!battle && !floor && !realmRoom && !instRoom) {",
+    "new": "      if (!battle && !realmRoom && !instRoom) {",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -50,8 +50,8 @@
     "old": "        if (b.af || b.shown) { const out = JSON.stringify({ t: 'leave', id: b.id }); for (const [o2, b2] of [...this._all()]) if (o2 !== w && b2.id) this._send(o2, out); }\n",
     "new": "",
     "tests": [
-      "test/audit1003b_relay.test.js",
-      "test/hotfix1003_stands.test.js"
+      "test/net/arena/audit1003b_relay.test.js",
+      "test/net/arena/hotfix1003_stands.test.js"
     ],
     "note": "HOTFIX 1003f (re-aimed by content): the removed member's body is said gone from the stands as from the sand (`b.shown`)."
   },
@@ -61,10 +61,10 @@
     "old": "if (other !== ws && b.id && (!S || S.members[b.sub])) this._send(other, join);",
     "new": "if (other !== ws && b.id) this._send(other, join);",
     "tests": [
-      "test/audit1003b_relay.test.js",
-      "test/hotfix1003_stands.test.js"
+      "test/net/arena/audit1003b_relay.test.js",
+      "test/net/arena/hotfix1003_stands.test.js"
     ],
-    "note": "HOTFIX 1003f (moved by content): the fighter's join at its `in` is gone (its body is said at its hello, a member's at its join), so this text names the hello's own join now - a member's hello (a reconnect) said to the members alone; test/hotfix1003_stands.test.js holds it from a stranger."
+    "note": "HOTFIX 1003f (moved by content): the fighter's join at its `in` is gone (its body is said at its hello, a member's at its join), so this text names the hello's own join now - a member's hello (a reconnect) said to the members alone; test/net/arena/hotfix1003_stands.test.js holds it from a stranger."
   },
   {
     "name": "AUDIT1003b-R4-POSES-TO-ALL",
@@ -72,7 +72,7 @@
     "old": "      if (other === ws || !b.id || (S && !S.members[b.sub])) continue;",
     "new": "      if (other === ws || !b.id) continue;",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "old": "if (unseen || !S?.members?.[others[i].sub]) others.splice(i, 1);",
     "new": "if (!S?.members?.[others[i].sub]) others.splice(i, 1);",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ],
     "note": "HOTFIX 1003f (re-aimed by content): a private session's roster is its members here, and a stranger's is nobody; this mutant gives the stranger the members."
   },
@@ -91,7 +91,7 @@
     "old": "    if (isArenaPrivateRoom(a.key) && !S?.members?.[a.sub]) return;\n",
     "new": "",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -100,7 +100,7 @@
     "old": "      if (!b.id || (S && !S.members[b.sub])) continue;\n      if (other === ws || chat",
     "new": "      if (!b.id) continue;\n      if (other === ws || chat",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -109,7 +109,7 @@
     "old": "      this._sessionFan(S, null, ws);\n      await this._sessionShow(ws);",
     "new": "      this._sessionFan(S, null, ws);",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -118,7 +118,7 @@
     "old": "const placed = floor && replaced ? { af: replaced.af ?? 0, afid: replaced.afid ?? null, asp: replaced.asp ?? 0 } : {};",
     "new": "const placed = {};",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -127,7 +127,7 @@
     "old": "    const st = await this._boutOf();\n    if (S && S.members[a.sub] && !this._arenaSocketsOf",
     "new": "    const st = this._bout;\n    if (S && S.members[a.sub] && !this._arenaSocketsOf",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -136,7 +136,7 @@
     "old": "const keptFrom = (b) => (b.priv ? b.doneAt ?? b.endAt ?? b.at : b.endAt || b.at);",
     "new": "const keptFrom = (b) => b.endAt || b.at;",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -145,7 +145,7 @@
     "old": "    const open = !!st && !st.res && !boutFinished(st);",
     "new": "    const open = standing;",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "no(st && !boutFinished(st) ? 'has result' : 'no bout')",
     "new": "no('no bout')",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
@@ -163,98 +163,98 @@
     "old": "      await this._boutSave(now, !again);",
     "new": "      await this._boutSave(now, true);",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-S4-LOCK-IGNORED",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "    if (S.locked) return { no: 'locked' };",
     "new": "",
     "tests": [
-      "test/audit1003b_relay.test.js",
-      "test/audit1003b_client.test.js"
+      "test/net/arena/audit1003b_relay.test.js",
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-S9-BOTH-GONE-FORFEIT",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "  if (boutLive(b) && st.kind === 'pvp' && st.f.length === 2 && st.f.every(",
     "new": "  if (false && boutLive(b) && st.kind === 'pvp' && st.f.length === 2 && st.f.every(",
     "tests": [
-      "test/audit1003b_relay.test.js"
+      "test/net/arena/audit1003b_relay.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C1-STRANDED",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "if (over) { if (bout.priv) letGoPriv(true); else endBout(); }",
     "new": "if (over) endBout();",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C2-NO-HEAL",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "    deps.heal?.();\n    if (stay)",
     "new": "    if (stay)",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C2-SUPERSEDED-NO-HEAL",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "    if (bout?.priv) letGoPriv(false); else endBout();   // AUDIT PRE-MERGE 1003b C2",
     "new": "    endBout();   // AUDIT PRE-MERGE 1003b C2",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C3-NO-ADOPTION",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "    if (!sess && s?.status === 'open' && s.room !== sessLeftRoom && arenaPrivateCodeOf(s.room)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C3-LEFT-ROOM-ADOPTED",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "    if (leave && sess) sessLeftRoom = sess.room;\n",
     "new": "",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C4-REALM-OVER-SIDE",
-    "file": "src/scenes/arenaBouts.js",
+    "file": "src/scenes/arena/arenaBouts.js",
     "old": "if (C.you && !C.relay.fixed && (R?.banner",
     "new": "if (C.you && (R?.banner",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C5-WINDOW-LEFT-OPEN",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "if (side >= 0) { deps.closeWindow?.(); deps.standOnMark",
     "new": "if (side >= 0) { deps.standOnMark",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C6-FULL-ONLY-SAID",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "'host guest', 'session full', 'locked']);",
     "new": "'host guest']);",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
@@ -263,200 +263,200 @@
     "old": "host.arenaLanding?.() ?? dungeonReturn.arenaFrom ?? null :",
     "new": "host.arenaLanding?.() ?? null :",
     "tests": [
-      "test/audit1003b_client.test.js",
-      "test/arena2_hosts.test.js"
+      "test/systems/arena/audit1003b_client.test.js",
+      "test/scenes/arena2_hosts.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-C8-NO-REJOIN",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "if (sess) sessLast = { text, code: sess.code, back: !leave };",
     "new": "if (sess) sessLast = { text, code: sess.code, back: false };",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U3-WORD-DROPPED",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "{ say(text); sess.word = text; return true; }",
     "new": "{ say(text); return true; }",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U3-NO-BOUT-UNSAID",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "if (SESSION_SAYS.has(w.m) || (w.m === 'no bout' && !bout))",
     "new": "if (SESSION_SAYS.has(w.m))",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U3-CARD-NO-WORD",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "  if (v.word) lines.push(v.word);   // AUDIT PRE-MERGE 1003b U3",
     "new": "  // gone",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U4-NO-KEY",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "data: { r: id }, key: `aw-priv-${id}-r` }",
     "new": "data: { r: id } }",
     "tests": [
-      "test/audit1003b_client.test.js",
-      "test/audit1003b_ui.test.js"
+      "test/systems/arena/audit1003b_client.test.js",
+      "test/ui/enhanced/audit1003b_ui.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U4-HARD-DISABLED",
-    "file": "src/ui/arenaWindow.js",
+    "file": "src/ui/arena/arenaWindow.js",
     "old": "'', x.name, { soft: true, quiet: true }));",
     "new": "'', x.name, { quiet: true }));",
     "tests": [
-      "test/audit1003b_ui.test.js"
+      "test/ui/enhanced/audit1003b_ui.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U4-PICKED-DROPPED",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "why: no ?? (id === w.r ? T.privIsRed : null), data: { r: id }",
     "new": "why: no, data: { r: id }",
     "tests": [
-      "test/audit1003b_client.test.js",
-      "test/audit1003b_ui.test.js"
+      "test/systems/arena/audit1003b_client.test.js",
+      "test/ui/enhanced/audit1003b_ui.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U6-CARD-LAST",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "if (c.code) cards.unshift(c); else cards.push(c);",
     "new": "cards.push(c);",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U7-SESSION-AS-BOUT",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "const busyWhy = inSession ? O().privIn : O().whyBusy;",
     "new": "const busyWhy = O().whyBusy;",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U7-QUEUE-UNSAID",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "const wait = busy ? T.whyBusy : queued ? T.privQueued : null;",
     "new": "const wait = busy ? T.whyBusy : null;",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U7-FIGHTER-IN-STANDS",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "  if (on && w.f.includes(w.me)) head.state = T.privState.fighter;",
     "new": "  // gone",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U9-DRAW-NO-RESULT",
-    "file": "src/systems/arenaText.js",
+    "file": "src/systems/arena/arenaText.js",
     "old": ": `${red} (Red) and ${blue} (Blue) drew`;",
     "new": ": `${red} (Red) and ${blue} (Blue) - no result`;",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U10-NO-YOU",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "    if (id === w.me) roles.push(T.privRole.you);",
     "new": "",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U10-CODE-TWICE",
-    "file": "src/ui/arenaWindow.js",
+    "file": "src/ui/arena/arenaWindow.js",
     "old": "        shown.setAttribute('aria-hidden', 'true');\n",
     "new": "",
     "tests": [
-      "test/audit1003b_ui.test.js"
+      "test/ui/enhanced/audit1003b_ui.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U11-ENTER-MID-COMPOSITION",
-    "file": "src/ui/arenaWindow.js",
+    "file": "src/ui/arena/arenaWindow.js",
     "old": "if (e.key === 'Enter' && !e.isComposing && !c.join.why)",
     "new": "if (e.key === 'Enter' && !c.join.why)",
     "tests": [
-      "test/audit1003b_ui.test.js"
+      "test/ui/enhanced/audit1003b_ui.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U11-NO-CAPITALS",
-    "file": "src/ui/arenaWindow.js",
+    "file": "src/ui/arena/arenaWindow.js",
     "old": "      input.setAttribute('autocapitalize', 'characters');\n",
     "new": "",
     "tests": [
-      "test/audit1003b_ui.test.js"
+      "test/ui/enhanced/audit1003b_ui.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-U1-CARD-IN-ONE-CELL",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".aw-bout-card.k-session { grid-column: 1 / -1; }\n",
     "new": "",
     "tests": [
-      "test/audit1003b_ui.test.js"
+      "test/ui/enhanced/audit1003b_ui.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-S4-NO-LOCK-PRESS",
-    "file": "src/systems/arenaBoard.js",
+    "file": "src/systems/arena/arenaBoard.js",
     "old": "      { act: 'privLock', label: w.lo ? T.privUnlock : T.privLock, why: null, data: { l: w.lo ? 0 : 1 }, key: 'aw-priv-lock' },\n",
     "new": "",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-S4-LOCK-OFF-WIRE",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "      if (m.a === 'lock') return m.l === 0 || m.l === 1 ? { k: 'ps', a: 'lock', l: m.l } : null;   // AUDIT PRE-MERGE 1003b S4\n",
     "new": "",
     "tests": [
-      "test/audit1003b_relay.test.js",
-      "test/arena6_private.test.js"
+      "test/net/arena/audit1003b_relay.test.js",
+      "test/systems/arena/arena6_private.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-S6-RATED-CALL",
-    "file": "src/scenes/arenaBouts.js",
+    "file": "src/scenes/arena/arenaBouts.js",
     "old": "say(C.relay.casual ? ARENA_TEXT.call.casual : ARENA_TEXT.call.players)",
     "new": "say(ARENA_TEXT.call.players)",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   },
   {
     "name": "AUDIT1003b-S6-SESSION-NOT-CASUAL",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "        casual: true,   // AUDIT PRE-MERGE 1003b S6: called as the casual bout it is\n",
     "new": "",
     "tests": [
-      "test/audit1003b_client.test.js"
+      "test/systems/arena/audit1003b_client.test.js"
     ]
   }
 ]

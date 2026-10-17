@@ -9,7 +9,7 @@
 // sensitivity BASE, so a setting of 1.0 reproduces it exactly and the
 // shipped default of 2.0 is twice as fast - the same relationship
 // DFU's own default has to its base.
-import { getFloat, getBool } from '../systems/settings.js';
+import { getFloat, getBool } from '../systems/settings/settings.js';
 import { LOOK_SENSITIVITY_FIELD } from '../systems/gamepad.js';   // WIDGET-LOOK: PlayerMouseLook's serialized 2, one export
 
 /** Radians per pixel at MouseLookSensitivity 1.0 - the port's own
@@ -20,7 +20,7 @@ export const LOOK_BASE = 0.0025;
  *  a launcher change lands immediately rather than on reload.
  *
  *  ROAD-G G6 WIDENED THE CLAMP TO DFU'S OWN. It read 0.1..4.0 - the
- *  port's narrowing, which ui/settingsLaw.js then had to mirror under
+ *  port's narrowing, which ui/settings/settingsLaw.js then had to mirror under
  *  its range-equals-clamp law. DaggerfallUnityMouseControlsWindow.cs
  *  :124 builds the sensitivity slider over 0.1..16.0 and
  *  SettingsManager.cs:524 clamps the key at exactly that, so the

@@ -1,74 +1,74 @@
 [
   {
     "name": "PH-hide-found-every-dye",
-    "file": "src/systems/horseCoats.js",
+    "file": "src/systems/horse/horseCoats.js",
     "old": "  return kept[k] ?? (kept[k] = findHide(src, w, h, tack));",
     "new": "  return (kept[k] = findHide(src, w, h, tack));",
     "tests": [
-      "test/perfhide.test.js"
+      "test/systems/horse/perfhide.test.js"
     ]
   },
   {
     "name": "PH-one-hide-either-tack",
-    "file": "src/systems/horseCoats.js",
+    "file": "src/systems/horse/horseCoats.js",
     "old": "  const k = tack ? 1 : 0;\n  return kept[k]",
     "new": "  const k = 0;\n  return kept[k]",
     "tests": [
-      "test/perfhide.test.js"
+      "test/systems/horse/perfhide.test.js"
     ]
   },
   {
     "name": "PH-hide-every-region",
-    "file": "src/systems/horseCoats.js",
+    "file": "src/systems/horse/horseCoats.js",
     "old": "  for (let i = 0, j = 0; i < n; i++) if (region[i] >= 0 && dyed[region[i]]) at[j++] = i;",
     "new": "  for (let i = 0, j = 0; i < n; i++) if (region[i] >= 0) at[j++] = i;",
     "tests": [
-      "test/perfhide.test.js"
+      "test/systems/horse/perfhide.test.js"
     ]
   },
   {
     "name": "PH-cells-any-stretch",
-    "file": "src/systems/horseCoats.js",
+    "file": "src/systems/horse/horseCoats.js",
     "old": "s !== _cellAt[2] || stretch !== _cellAt[3]) {",
     "new": "s !== _cellAt[2]) {",
     "tests": [
-      "test/perfhide.test.js"
+      "test/systems/horse/perfhide.test.js"
     ]
   },
   {
     "name": "PH-cells-any-seed",
-    "file": "src/systems/horseCoats.js",
+    "file": "src/systems/horse/horseCoats.js",
     "old": "iy !== _cellAt[1] || s !== _cellAt[2] ||",
     "new": "iy !== _cellAt[1] ||",
     "tests": [
-      "test/perfhide.test.js"
+      "test/systems/horse/perfhide.test.js"
     ]
   },
   {
     "name": "PH-cell-hash-wrong-salt",
-    "file": "src/systems/horseCoats.js",
+    "file": "src/systems/horse/horseCoats.js",
     "old": "      _cells[j + 5] = hash3(cx, cy, s + 2);",
     "new": "      _cells[j + 5] = hash3(cx, cy, s + 1);",
     "tests": [
-      "test/perfhide.test.js"
+      "test/systems/horse/perfhide.test.js"
     ]
   },
   {
     "name": "PH-rgb-sextant-swapped",
-    "file": "src/systems/horseCoats.js",
+    "file": "src/systems/horse/horseCoats.js",
     "old": "if (k === 0) { r = c; g = x; b = 0; }",
     "new": "if (k === 0) { r = x; g = c; b = 0; }",
     "tests": [
-      "test/perfhide.test.js"
+      "test/systems/horse/perfhide.test.js"
     ]
   },
   {
     "name": "PH-white-scratch-unwritten",
-    "file": "src/systems/horseCoats.js",
+    "file": "src/systems/horse/horseCoats.js",
     "old": "    const tmp = _rgb;\n    rgbInto(tmp, 0,",
     "new": "    const tmp = _rgb;\n    rgbInto([0, 0, 0], 0,",
     "tests": [
-      "test/perfhide.test.js"
+      "test/systems/horse/perfhide.test.js"
     ]
   }
 ]

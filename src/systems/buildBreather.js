@@ -17,7 +17,7 @@
 // nothing, as a cold-load pixel never did either.
 //
 // Pure in its seams: the clock and the frame request are injected so
-// test/perf7.test.js can drive it.
+// test/systems/perf7.test.js can drive it.
 
 /** Milliseconds of build work a frame lends before the yield. Under a
  *  16.7 ms frame this leaves the draw its share; the pixel arrives a

@@ -5,11 +5,11 @@
 // and `localizedTextList('key', [...])` with a literal key, and each entry of a `localizedStrings({...})` or
 // `localizedTable({...})` table, in a module that imports them from systems/textManager.js (under any local name); an
 // English may be a literal or the module's own `const NAME = '...'` -
-// for test/l10n3d_sites.test.js's pins, and says how far the routing has come.
+// for test/systems/l10n3d_sites.test.js's pins, and says how far the routing has come.
 //
 //   node tools/l10nRouted.mjs            the routed words, file by file (the sites test's ROUTED map), the name lookups
 //                                        file by file (its NAMED map), the grammar's sites file by file
-//                                        (test/l10n3g_wiring.test.js's GRAMMAR map), and coverage:
+//                                        (test/ui/l10n3g_wiring.test.js's GRAMMAR map), and coverage:
 //                                        DFU's keys the port routes, of those DFU's own code asks for by name
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';

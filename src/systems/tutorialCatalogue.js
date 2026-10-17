@@ -3,7 +3,7 @@
 // lists them. The law that reads them is systems/tutorials.js; the box is ui/tutorialPopup.js; the menu's pane is
 // ui/tutorialsPane.js.
 //
-// THE RULES A PAGE KEEPS (test/tut1_tutorials.test.js holds every page to them):
+// THE RULES A PAGE KEEPS (test/ui/tut1_tutorials.test.js holds every page to them):
 // - The game is DFO. A page never names the old game it grew from - not the game, not its capital.
 // - A key is written `{Action}` (an action of systems/inputActions.js) and filled with the key the player has bound
 //   now, never a key's name: a rebound key would make the page lie.
@@ -17,6 +17,7 @@
 //   that changes how a system plays changes its page.
 
 import { t } from './textManager.js';   // KG3: a page's words read through the text core when shown
+import { ROLL_GAIN_DAY_MAX, ROLL_BOOK_RANK_MAX, SEAT_RANK } from '../net/npcChapterLaw.js';   // SEAT-WORDS: the Chapters page's numbers, the law's own
 
 /** @typedef {{ id: string, group: string, title: string, trigger: string, body: ReadonlyArray<string>, points?: ReadonlyArray<string> }} Tutorial */
 
@@ -106,12 +107,12 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'combat', group: 'combat', title: 'Fighting', trigger: 'When you first draw a weapon.',
     body: [
-      '{ReadyWeapon} draws your weapon and {SwingWeapon} attacks. The way you move the mouse sets the swing.',
-      'If you keep missing, you are either unskilled with the weapon or its material is too weak for the target. You can always run.',
+      '{ReadyWeapon} draws your weapon and {SwingWeapon} attacks; how you move the mouse sets the swing.',
+      'Missing a lot means low skill or a weapon too weak for the target. You can always run.',
     ],
     points: [
-      '{SwitchHand} swaps hands.',
-      'Some weapons have a technique, a special move on {WeaponTechnique}. It costs fatigue and has a cooldown.',
+      '{SwitchHand} swaps hands, or picks the lead when both hands fight.',
+      'Some weapons have a technique on {WeaponTechnique}, at a cost in fatigue and a cooldown.',
     ],
   }),
   page({
@@ -305,11 +306,19 @@ export const TUTORIALS = Object.freeze([
     ],
   }),
   page({
-    id: 'guilds', group: 'towns', title: 'Guilds', trigger: 'When you first visit a guild.',
-    body: [
-      'Join a guild for its services and its quests. To rank up, raise the skills it cares about and keep working for it.',
-      'You can join one temple and one knightly order, and as many guilds as will take you.',
-    ],
+    id: 'guilds', group: 'towns',
+    // AUDIT GUILD-WORDS II F-7: the whole page in the player's language, as its online point is - not English around it
+    get title() { return t('tutorials.guilds.title', 'Guilds'); },
+    get trigger() { return t('tutorials.guilds.trigger', 'When you first visit a guild.'); },
+    get body() {
+      return [
+        t('tutorials.guilds.body1', 'Join a guild for its services and its quests. To rank up, raise the skills it cares about and keep working for it.'),
+        t('tutorials.guilds.body2', 'You can join one temple and one knightly order, and as many guilds as will take you.'),
+      ];
+    },
+    // SEAT-WORDS (Field-Bugs-2026-10-15g): online a review stops at 7 - the page said "to rank up, keep working for it";
+    // AUDIT GUILD-WORDS II C-2: ranks 8 and 9 are chairs - a seat is a town's (GUILD3, ONE WORD ONE THING)
+    get points() { return [t('tutorials.guilds.online', 'Online, a review stops at rank {cap}: ranks {officer} and {master} are chapter chairs. See Guild Chapters.', { cap: ROLL_BOOK_RANK_MAX, officer: SEAT_RANK.officer, master: SEAT_RANK.master })]; },
   }),
   page({
     id: 'tavern', group: 'towns', title: 'Taverns', trigger: 'When you first visit a tavern.',
@@ -555,6 +564,22 @@ export const TUTORIALS = Object.freeze([
       'Players can fight each other in the Wrothgarian Mountains. Monsters are tougher and loot is better.',
       'If you die there, you drop what is in your bag and cart, and your killer can take one item you were wearing.',
     ],
+  }),
+  // SEAT-WORDS / STANDING-WORDS (Field-Bugs-2026-10-15g): the guilds online - the Roll's pace and the seats - popped at
+  // the first word for a member and at the book's hold (scenes/rollNoticeHost.js)
+  page({
+    id: 'chapters', group: 'online',
+    get title() { return t('tutorials.chapters.title', 'Guild Chapters'); },
+    get trigger() { return t('tutorials.chapters.trigger', 'When you first come online as a member of a guild, temple or order.'); },
+    get body() {
+      return [
+        // AUDIT GUILD-WORDS L3-2, L3-4: the pace a quest's reward keeps (writs and receipts add beyond it - the guide says
+        // so), the real day it counts by - II C-8: a UTC day, said; II C-3: no quest is free of its own guild's losses
+        // (REPUTE-GATE gates the two that cost the most instead), so the page no longer says one is; II C-2: chairs
+        t('tutorials.chapters.body1', 'Online the realm keeps your guild standing. Quests raise it at most {max} a real day each (days turn at midnight UTC), the rest following later.', { max: ROLL_GAIN_DAY_MAX }),
+        t('tutorials.chapters.body2', 'Reviews promote you up to rank {cap}; ranks {officer} and {master} are chapter chairs, won by Merit at each Sunday\'s Turning. A notice board explains chapters.', { cap: ROLL_BOOK_RANK_MAX, officer: SEAT_RANK.officer, master: SEAT_RANK.master }),
+      ];
+    },
   }),
   page({
     id: 'player-guilds', group: 'online', title: 'Player Guilds', trigger: MENU_ONLY,

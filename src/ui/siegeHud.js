@@ -6,18 +6,18 @@
 // this fighter's own vitality and wave (a spectator's count instead); at the end, the result card over it, with the
 // fighter's Honours once the service has answered its receipt.
 //
-// A READOUT, NOT A WINDOW (the gate's bar's law, ui/gateBossBar.js): no click but the card's Claim, one node made on the
+// A READOUT, NOT A WINDOW (the gate's bar's law, ui/gate/gateBossBar.js): no click but the card's Claim, one node made on the
 // first update and UPDATED, NOT REBUILT - each line written only when it changes - hidden (never removed) when there is
 // no battle. In every skin.
 //
-// `siegeHudModel` (net/siegeLink.js) is pure - the state, the battle and the clock in, the lines out; the pins read it.
+// `siegeHudModel` (net/siege/siegeLink.js) is pure - the state, the battle and the clock in, the lines out; the pins read it.
 //
 // AUDIT-SEATS C1 (2026-10-01): AND A WAY OUT - the bar's own Leave (`onLeave`, a battle's or a Royal Tourney's: the world
 // leaves whichever is entered), and the result card's Close, which dismisses the card by leaving the battle it ended.
 // The two buttons and the card's Claim are the readout's only clicks.
 //
 // Not a DFU member. Ledger A (EVERY PALACE A SEAT's row).
-import { siegeHudModel } from '../net/siegeLink.js';   // the lines (pure, beside the fold - net/siegeSession.js draws through it)
+import { siegeHudModel } from '../net/siege/siegeLink.js';   // the lines (pure, beside the fold - net/siege/siegeSession.js draws through it)
 import { paintSwatch } from './heraldrySwatch.js';   // HERALDRY-SHOWN (Seats-Arc 8.1): each side's shield on the bar
 export { siegeHudModel };
 

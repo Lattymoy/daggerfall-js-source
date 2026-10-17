@@ -1,0 +1,108 @@
+// Paperdoll art addressing (Characters C6a).
+// Verbatim DaggerfallUnityItem.GetInventoryTextureRecord's variant
+// resolution: record = playerTextureRecord + variant, with cloaks
+// skipping their special interior image first (+1). Filenames follow
+// TextureFile.IndexToFileName - plain TEXTURE.NNN archives, so the
+// existing reader serves the classic paperdoll art directly; dyes
+// apply as C5b band swaps on the indexed bitmap before the palette.
+
+import { armorArchive as armorArchiveByMorphology, BODY_MORPHOLOGY } from '../../systems/armorMaterials.js';
+import { raceByKey } from '../../systems/races.js';
+
+// MensClothing Casual/Formal cloak + WomensClothing Casual/Formal cloak.
+const CLOAK_TEMPLATES = new Set([154, 155, 191, 192]);
+
+// Weapons.Arrow - the one weapon ApplyWeaponMaterial never sees.
+const ARROW_TEMPLATE = 131;
+
+export const isCloak = (template) => CLOAK_TEMPLATES.has(template.index);
+
+export function resolvePaperdollRecord(template, variant = 0) {
+  if (template.variants > 0) {
+    let start = template.playerTextureRecord;
+    if (isCloak(template)) start += 1;
+    return start + variant;
+  }
+  return template.playerTextureRecord;
+}
+
+// --- Armor material addressing (ItemBuilder verbatim) ----------------
+// AUDIT 17f / ONE DFU MEMBER, ONE EXPORT: the constants, the
+// GetBodyMorphology table and the SetVariant clamps below were a
+// THIRD copy of what systems/armorMaterials.js already owns (17e F32
+// collapsed equip.js and paperDoll.js and stopped one file short).
+// They are re-exported from the single home so the C6a callers that
+// speak MATERIAL FAMILIES keep working, and `armorArchive` keeps its
+// C6a signature - (gender, RACE) - as a thin wrapper over the
+// morphology-keyed law rather than a rival definition of the name.
+export { MATERIAL_FAMILY, armorVariant } from '../../systems/armorMaterials.js';
+
+/** GetBodyMorphology (ItemBuilder.cs:910-925). The race table
+ *  (systems/races.js) is the one place a race names its morphology;
+ *  this resolves through it, with the classic transform pseudo-races
+ *  falling back to Human. */
+export function morphologyOfRace(race) {
+  const r = raceByKey(race);
+  if (r) return r.morphologyIndex;
+  return BODY_MORPHOLOGY.Human;   // Vampire/Werewolf/Wereboar + anything unknown
+}
+
+/** ApplyArmorSettings' archive, keyed by RACE (the C6a signature). */
+export function armorArchive(gender, race) {
+  return armorArchiveByMorphology(gender, morphologyOfRace(race));
+}
+
+/** SetRace (ItemBuilder.cs:850-854) + ApplyArmorSettings
+ *  (:466-485): the PLAYER-texture archive an item's art actually
+ *  lives in for one wearer. Clothing offsets its TEMPLATE archive by
+ *  the body morphology; armor replaces it with the per-gender base
+ *  plus the same offset; everything else keeps the template's.
+ *
+ *  DFU bakes this into the item at creation (item.PlayerTextureArchive
+ *  is an instance field) and BOTH the paperdoll and the inventory
+ *  list read it back - GetInventoryTextureArchive returns that same
+ *  field (DaggerfallUnityItem.cs:1728-1735). The port resolves it at
+ *  draw time from the wearer's identity instead, so a saved item
+ *  needs no new field.
+ *
+ *  NOT A GAP (recorded): the note here used to say a remote list -
+ *  shop stock, a corpse - therefore draws its clothing on the
+ *  PLAYER's morphology where classic would show the vendor's. There
+ *  is no vendor identity in DFU to show. Every remote list is minted
+ *  off the PLAYER's own race and gender, so the archive DFU bakes IS
+ *  the one this resolves: shop shelves (DaggerfallLoot.cs:229
+ *  CreateArmor(playerEntity.Gender, playerEntity.Race, ...), :232
+ *  CreateMensClothing(..., playerEntity.Race), :237
+ *  CreateWomensClothing), house containers (:357, :367) and corpses
+ *  (LootTables.cs:212, :237), all of them landing in SetRace
+ *  (ItemBuilder.cs:146/:172/:200/:475). */
+export function playerArchiveFor(item, template, { gender = 'male', race = 'Breton' } = {}) {
+  const morph = morphologyOfRace(race);
+  const base = template?.playerTextureArchive ?? 0;
+  if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
+    // archive 0 is the "inventory texture not set" sentinel GetItemImage
+    // falls back on - offsetting it would forge a real archive number
+    return base === 0 ? 0 : base + morph;
+  }
+  if (item.group === 'Armor') return armorArchiveByMorphology(gender, morph);
+  if (item.group === 'Weapons') {
+    // ApplyWeaponMaterial's tail (ItemBuilder.cs:408-417): "Female
+    // characters use archive - 1 (i.e. 233 rather than 234) for
+    // weapons". CreateWeapon/CreateRandomWeapon route every NON-arrow
+    // weapon through it; the arrow branch sets stackCount/condition/
+    // material and never calls it. AUDIT 18: the rule was ported into
+    // a private copy in characters/weapons.js that nothing minting a
+    // real weapon ever called, so every female character drew the
+    // male weapon art.
+    if (item.templateIndex === ARROW_TEMPLATE) return base;
+    // A CUSTOM WEAPON HAS NO FEMALE ARCHIVE TO BE OFF BY ONE FROM.
+    // ApplyWeaponMaterial's tail exists because classic art ships as
+    // the pair 233/234; the port's own weapon (systems/thunderlock.js)
+    // registers ONE archive of its own, and subtracting from it would
+    // ask for a texture nobody registered - a female character holding
+    // an invisible gun.
+    if (template?.custom) return base;
+    return gender === 'female' ? base - 1 : base;
+  }
+  return base;
+}

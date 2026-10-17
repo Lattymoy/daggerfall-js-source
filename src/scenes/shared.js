@@ -7,7 +7,7 @@
 
 import { stepAsideLoading, syncLoading } from '../ui/loadingScreen.js';   // LOAD1: a full-screen film's hold takes the loading screen aside; a claimed loop lets its hold go
 import { DFPalette } from '../formats/dfPalette.js';
-import '../systems/itemLaw.js';   // INT1 (bible/06-Systems/Integrity-Arc.md): the item law, installed on the wire's door (systems/loot.js setItemLaw) in every host
+import '../systems/item/itemLaw.js';   // INT1 (bible/06-Systems/Integrity-Arc.md): the item law, installed on the wire's door (systems/loot/loot.js setItemLaw) in every host
 import { NetRandom } from '../formats/netRuntime.js';   // HAZE1: System.Random's one port (the stars' generator)
 import { swingHeld } from '../ui/input.js';   // FIX-F: the swing button through the registry
 import { ImgFile } from '../formats/imgFile.js';
@@ -15,26 +15,26 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
-import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
+import { createWindModel } from '../systems/wind/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
 import { releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: a door the game opened is not a door to warn about
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
 import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: the live event's grade and the sky it wears
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
-import { sdBrassGrade } from '../systems/sdOmen.js';   // SD19: the brass air near a standing Hollow
+import { sdBrassGrade } from '../systems/superDungeon/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { pageParam } from '../systems/pageQuery.js';   // CLIMB1: `?parkour=off`, the enhanced climb's kill door
-import { isOnlinePage, onlineForcedPref } from '../systems/onlineLane.js';   // CLIMB1: online the skin is not asked, and the row is the lane's
+import { isOnlinePage, onlineForcedPref } from '../systems/online/onlineLane.js';   // CLIMB1: online the skin is not asked, and the row is the lane's
 import { carriedWeight } from '../systems/inventory.js';   // CLIMB2: a heavy pack cuts the enhanced climb's reach
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // CLIMB2: ...over what the body can carry
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
-import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';   // DS1: BLBSkybox's instance
-import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies.js';   // Time.maximumDeltaTime, the mod's frame clamp
-import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkiesAssets.js';   // DS1: the vendored files
+import { DynamicSkies } from '../systems/dynamicSkies/dynamicSkiesRuntime.js';   // DS1: BLBSkybox's instance
+import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies/dynamicSkies.js';   // Time.maximumDeltaTime, the mod's frame clamp
+import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkies/dynamicSkiesAssets.js';   // DS1: the vendored files
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // DS1: the mod's own switches
 import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0
 import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
@@ -44,7 +44,7 @@ import { expandRowValues } from '../systems/quest/questMacros.js';   // MACRO-3:
 // LV2: the level-up notification's seams. The CLASSIC lane's line and
 // box are still this file's - the seam takes them and uses them - so
 // nothing about the old skin is decided in a UI module.
-import { announceSkillRaise, announceMastery, announceSkillMilestone } from '../ui/levelNotice.js';
+import { announceSkillRaise, announceMastery, announceSkillMilestone } from '../ui/levelUp/levelNotice.js';
 import { masterSkillsBoxDue, setMasterSkills, MASTER_SKILLS_OFFER_ROWS, MASTER_SKILLS_INFO_ROWS, MASTER_SKILLS_DECLINED_TEXT, MASTER_SKILLS_INTRO_ROWS, nextMasteryChoice, masteryChoiceRows, masterSkill } from '../systems/masterSkills.js';   // SOFTCAP3/4
 import { nextPathChoice, pathChoices, pathChoiceRows, pathsOpenRows, choosePath, pathDeclinedText } from '../systems/arcanePaths.js';   // SCHOOLS1: the specialisation's one ask
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
@@ -55,16 +55,16 @@ import { survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: 
 import { sleepStage } from '../systems/survival/needs.js';   // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep, said
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
-import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
+import { findFactions } from '../systems/talk/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
-import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, restIgnoresNoRegen } from '../systems/rest.js';
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, restIgnoresNoRegen } from '../systems/rest/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
-import { getPreventedRestMessage } from '../systems/restSession.js';
-import { nightDue, nightRealMinutesLeft, stampNight, runRestNight, topUpRest, sleepShortRest, spendRoomNight, roomNightsLeft, heardNight, REST_CHANNEL_SECONDS, REST_ACT_TEXT, NIGHT_HOURS, openChannelHeal, stepChannelHeal } from '../systems/restAct.js';   // REST1: the rest act online
-import { registerPreventRestCondition } from '../systems/restSession.js';   // SURV7: the survival rest gate's seam
+import { getPreventedRestMessage } from '../systems/rest/restSession.js';
+import { nightDue, nightRealMinutesLeft, stampNight, runRestNight, topUpRest, sleepShortRest, spendRoomNight, roomNightsLeft, heardNight, REST_CHANNEL_SECONDS, REST_ACT_TEXT, NIGHT_HOURS, openChannelHeal, stepChannelHeal } from '../systems/rest/restAct.js';   // REST1: the rest act online
+import { registerPreventRestCondition } from '../systems/rest/restSession.js';   // SURV7: the survival rest gate's seam
 import { quietNights } from '../systems/encounters.js';   // CAMP-ROLL: a camp mate's night rolls nothing of mine
-import { carriedRestKind } from '../systems/partyRestLaw.js';   // CAMP-ROLL: and is slept at the better of their spot and mine
+import { carriedRestKind } from '../systems/party/partyRestLaw.js';   // CAMP-ROLL: and is slept at the better of their spot and mine
 import { survivalFeed, installSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the gate, composed from the entity   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue, clampFatigue } from '../systems/statMods.js';
@@ -75,28 +75,28 @@ import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer, duelSpare, staffFly, levitateWarded, freeFlight } from '../characters/playerEntity.js';   // DUEL1: the duel's floor, for its damage over time   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
 import { readMagicDef } from '../formats/magicDef.js';
-import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
+import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot/loot.js';
 import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the painting descriptions' file
-import { setPaintFile } from '../systems/itemInfo.js';
+import { setPaintFile } from '../systems/item/itemInfo.js';
 import { music } from '../systems/music.js';
 import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
 import { setSoundReplacements } from '../systems/soundReplacer.js';   // SNDREP1: the player's sound pack, on the same seam
-import { installDiverseWeaponsIcons } from '../combat/diverseWeaponsIcons.js';
-import { installRoleplayRealismItems } from '../systems/rriInstall.js';
+import { installDiverseWeaponsIcons } from '../combat/diverseWeapons/diverseWeaponsIcons.js';
+import { installRoleplayRealismItems } from '../systems/roleplayRealismItems/rriInstall.js';
 import { installDetailedShipsArt } from '../systems/detailedShips.js';   // DS1: Detailed Ships' pictures and xml scales
 import { installWarmAshesShips } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships' quest list and save slot
-import { installRestItemLoot, litCandle, meditate, snuffCandle, draughtTaken, spendDraught, DRAUGHT_SPENT_MINUTES } from '../systems/restItems.js';   // REST6: the seven that fill the gaps
-import { installForaging } from '../systems/foragingInstall.js';   // FORAGE1: Foraging's quest list, tools, foods, pictures and console command
+import { installRestItemLoot, litCandle, meditate, snuffCandle, draughtTaken, spendDraught, DRAUGHT_SPENT_MINUTES } from '../systems/rest/restItems.js';   // REST6: the seven that fill the gaps
+import { installForaging } from '../systems/foraging/foragingInstall.js';   // FORAGE1: Foraging's quest list, tools, foods, pictures and console command
 import { installSmithing } from '../systems/smithItems.js';   // PROF3: the Repair Kit's use
 import { installCooking, dishStaminaFactor } from '../systems/cookItems.js';   // PROF9: a dish eaten, and the Tart's stamina
 import { installHealingSupply } from '../systems/healingSupply.js';   // POTION-COMMON: Potions of Healing in the loot
 import { installRaidingParties } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties' save slot
-import '../systems/gateSpoils.js'; import '../systems/portalStone.js'; import '../systems/gems.js';   // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
-import '../systems/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
+import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; import '../systems/gems.js';   // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
+import '../systems/sigil/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
-import { installRoleplayRealism } from '../systems/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
-import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
-import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
+import { installRoleplayRealism } from '../systems/roleplayRealism/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
+import { getBool, getInt } from '../systems/settings/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
+import { SongManager, musicEnvironment, holdEnvironment } from '../systems/song/songManager.js';
 import { festivalEnvironment } from './seatFestival.js';   // FESTIVAL-STAGE: a Festival town's streets hear the tavern
 import { audio } from '../systems/audio.js';
 import { messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the one door every DaggerfallUI.MessageBox goes through - the infection's popup names the KIND, never the host's window
@@ -411,7 +411,7 @@ export function createSkyController(gl, params) {
       dreadGlow = dreadW > 0 ? Math.max(0, Math.min(1, Number(glow) || 0)) : 0;
       for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.dread = dreadW;
     },
-    /** SD19: the brass air's weight this frame near a standing Hollow, 0..1 (systems/sdOmen.js sdAirWeight) - the fog and
+    /** SD19: the brass air's weight this frame near a standing Hollow, 0..1 (systems/superDungeon/sdOmen.js sdAirWeight) - the fog and
      *  the water's sky lean to it, and (AUDIT SD III, V8) every pass that draws the sky grades by it as the haze is graded:
      *  the fogged land met the sky a step apart at the skyline. 0 is exactly the sky there was. */
     setBrass(w) {
@@ -756,7 +756,7 @@ export function createSkyController(gl, params) {
 // (?dungeon) and worldModes.js (the modal machine both exterior hosts
 // mount) are parallel motor hosts. Every law below used to live in ONE
 // of them; each omission was a live bug. They are extracted so a host
-// cannot half-apply them again - test/audit18_hosts_outer.test.js
+// cannot half-apply them again - test/scenes/audit18_hosts_outer.test.js
 // source-sweeps the hosts for each call by name.
 // =====================================================================
 
@@ -857,7 +857,7 @@ export function landformsOn(search) {
 /** TAMRIEL2: THE LAND BEYOND THE BAY'S SWITCH - the Features row (`tamrielLand`) on the enhanced skin, and online as
  *  the player's own (TV-BEYOND: the relay carries a pose past the map - net/wire.js WORLD_PIXEL_BOUND - and a player
  *  there is seen by whoever stands near, the ground under each the player's own, as every other enhanced ground is):
- *  the streamed world goes on past the Bay's edge over the authored continent (world/tamrielGround.js). `?tamrielland=off`
+ *  the streamed world goes on past the Bay's edge over the authored continent (world/tamriel/tamrielGround.js). `?tamrielland=off`
  *  the kill door. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the classic
  *  skin - the edge of the world is DFU's: empty. */
 export function tamrielLandOn(search) {
@@ -1473,7 +1473,7 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // two skills reads in the source's order.
   // LV2 - THE RISING (Mac, 2026-09-19: the enhanced level-up
   // notification, "all of the above"): on the ENHANCED skin the two
-  // presentations below move to the notice strip (ui/levelNotice.js).
+  // presentations below move to the notice strip (ui/levelUp/levelNotice.js).
   // The raise leaves the popup column - a skill going up is a change
   // to the CHARACTER, not another thing the world said - and the
   // mastery leaves its click-anywhere box, which carries news and no
@@ -1827,7 +1827,7 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // the SWIM case (PlayerHeightChanger.cs:54-57), and a swimming
     // player draws no dip.
     playerCrouching,
-    // WILD-ALERT (systems/wildAlert.js): a host's answer to "has this foe NOT noticed a fast traveller yet?" - the pools
+    // WILD-ALERT (systems/wild/wildAlert.js): a host's answer to "has this foe NOT noticed a fast traveller yet?" - the pools
     // leave the player off such a foe's candidate list (the target machine's own noTargetMode, CAMP-REST's switch)
     // until it has. Absent: no traveller, no gate - every other host and every headless caller as before.
     wildUnaware,
@@ -2512,7 +2512,7 @@ export function createRestDeps(entity, opts = {}) {
     endLines: (id) => plainLines(rest.endLines?.(id)),
   };
   // REST1 (bible/06-Systems/Rest-Arc.md): THE ACT ONLINE, composed here beside the window's deps so the four hosts
-  // share one law (systems/restAct.js). `restAct` answers the plan the window opens on - null offline, where the
+  // share one law (systems/rest/restAct.js). `restAct` answers the plan the window opens on - null offline, where the
   // window is DFU's own; `restNight` runs the night through THIS bag (the timed rest's own session, its sub-ticks,
   // quest ticks, hourly checks and vitals, in one call), stamps it, tops the yield up and spends a rented room's
   // night; `restShort` is the rest inside the night interval - the yield's healing and the sleep need paid as a night

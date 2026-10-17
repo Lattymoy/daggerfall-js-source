@@ -4,7 +4,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "        if (earTipCheck(e, accept)) return e;\n        e = reverse ? prev[e] : next[e];\n",
     "new": "        if (earTipCheck(e, accept)) return e;\n        e = next[e];\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "the ear search no longer sweeps back with the clip: the notched heptagon, and four of her hull's sides, cut otherwise"
   },
   {
@@ -12,7 +12,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    for (const accept of [CONVEX, TANGENTIAL]) {\n      let e = init;\n",
     "new": "    for (const accept of [CONVEX, TANGENTIAL]) {\n      let e = head;\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "every ear sought from the ring's head, lowest index first, as the old clip did: a convex pentagon fans"
   },
   {
@@ -20,7 +20,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "for (const accept of [CONVEX, TANGENTIAL])",
     "new": "for (const accept of [TANGENTIAL, CONVEX])",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a tangential ear (a triangle of no area) taken before a convex one"
   },
   {
@@ -28,7 +28,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "for (const accept of [CONVEX, TANGENTIAL])",
     "new": "for (const accept of [CONVEX])",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "the folded rectangle goes desperate where Blender cuts its tangential corner"
   },
   {
@@ -36,7 +36,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    if (sign[tip] !== accept) return false;\n",
     "new": "    if (sign[tip] === CONCAVE) return false;\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "Blender's fill before #103913: a tangential corner 0 cut first, a triangle of no area where a convex ear was free"
   },
   {
@@ -44,7 +44,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    let e = init;\n    for (let i = 0; i < count; i++) {\n      if (sign[e] !== CONCAVE) return e;\n",
     "new": "    let e = head;\n    for (let i = 0; i < count; i++) {\n      if (sign[e] !== CONCAVE) return e;\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "the audit replica's slip: desperate mode from the ring's head, not from where the search began (her port inner planking #76 cuts otherwise)"
   },
   {
@@ -52,7 +52,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "      if (sign[e] !== CONCAVE) return e;\n",
     "new": "      if (sign[e] === CONVEX) return e;\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "desperate mode passing a tangential corner by"
   },
   {
@@ -60,7 +60,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "      if (sign[e] !== CONCAVE) return e;\n      e = next[e];\n",
     "new": "      if (sign[e] !== CONCAVE) return e;\n      e = reverse ? prev[e] : next[e];\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "desperate mode walking the sweep's way where Blender's walks forward"
   },
   {
@@ -68,7 +68,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    return e;   // every corner concave",
     "new": "    return prev[e];   // every corner concave",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "every corner concave: not the corner the search began at"
   },
   {
@@ -76,7 +76,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  const side = (i, co) => f32(f32(f32(e[i][1] * co[0]) - f32(e[i][0] * co[1])) + c[i]) >= 0;",
     "new": "  const side = (i, co) => f32(f32(f32(e[i][1] * co[0]) - f32(e[i][0] * co[1])) + c[i]) > 0;",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a corner on an ear's edge no longer blocks it (the old fill's rule): the notch on the first ears' diagonals"
   },
   {
@@ -84,7 +84,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "co[ax] >= bounds[ax][0] ? walk(neg[node])",
     "new": "true ? walk(neg[node])",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "AUDIT GN2-BK1 re-aim (5.1 asks no box of a node's own point; the box prunes the walk): the negative side's pruning dropped, and a corner on a tangential ear's line past its ends the walk never reached blocks it"
   },
   {
@@ -92,7 +92,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "{ init = reverse ? prev[init] : next[init]; reverse = !reverse; }",
     "new": "{ init = reverse ? prev[init] : next[init]; }",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "USE_CLIP_SWEEP gone: the search never turns back"
   },
   {
@@ -100,7 +100,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "{ init = reverse ? prev[init] : next[init]; reverse = !reverse; }",
     "new": "{ reverse = !reverse; }",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "the sweep turning back from a corner that is not convex, without the extra step past it"
   },
   {
@@ -108,7 +108,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    init = reverse ? prev[p] : next[q];   // USE_CLIP_EVEN\n",
     "new": "    init = head;   // USE_CLIP_EVEN\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "USE_CLIP_EVEN gone: a convex face fans from its head"
   },
   {
@@ -116,7 +116,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    if (sign[p] !== CONVEX) { signCalc(p); if (sign[p] === CONVEX) { concave--; tree.remove(p); } }\n",
     "new": "",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a cut ear's previous corner keeps its old sign"
   },
   {
@@ -124,7 +124,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    if (sign[q] !== CONVEX) { signCalc(q); if (sign[q] === CONVEX) { concave--; tree.remove(q); } }\n",
     "new": "    { const was = sign[q]; signCalc(q); if (sign[q] === CONVEX && was !== CONVEX) { concave--; tree.remove(q); } }\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a convex neighbour asked its sign again (Blender never asks)"
   },
   {
@@ -132,7 +132,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "return dot3f(cross3f(sub3f(v2, v1), d13), cross3f(sub3f(v4, v1), d13)) > 0;",
     "new": "return dot3f(cross3f(sub3f(v2, v1), d13), cross3f(sub3f(v4, v1), d13)) < 0;",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "is_quad_flip_v3_first_third_fast read backwards: every one of her 268 quads cut on 1-3"
   },
   {
@@ -140,7 +140,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  if (n === 4) return blenderQuadFlip(pts) ? [[0, 1, 3], [1, 2, 3]] : [[0, 1, 2], [0, 2, 3]];",
     "new": "  if (n === 4) return [[0, 1, 2], [0, 2, 3]];",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a dart quad cut on its outside diagonal"
   },
   {
@@ -148,7 +148,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  const z = [-nrm[0], -nrm[1], -nrm[2]];   // negate_v3_v3: exact\n",
     "new": "  const z = [nrm[0], nrm[1], nrm[2]];   // negate_v3_v3: exact\n",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "axis_dominant_v3_to_m3 for _negate: every face handed to the fill wound the wrong way, every corner concave"
   },
   {
@@ -156,7 +156,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  let prev = P[P.length - 1];\n  for (const cur of P) {\n",
     "new": "  let prev = P[0];\n  for (const cur of P) {\n",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "the face's normal summed without its closing edge: sixteen of her faces cut otherwise"
   },
   {
@@ -164,7 +164,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "const f32 = Math.fround;\n",
     "new": "const f32 = (x) => x;\n",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "the fill in double where Blender's is in float: five of her sides' corners tangential one way and convex the other"
   },
   {
@@ -172,7 +172,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    n1 = [z[2] < 0 ? -1 : 1, 0, 0];\n",
     "new": "    n1 = [1, 0, 0];\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "ortho_basis_v3v3_v3's degenerate branch unsigned: a face square to Z projected mirrored"
   },
   {
@@ -180,7 +180,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    if (Math.sign(twice) !== s) return `triangle [${t}] is wound against the face",
     "new": "    if (false) return `triangle [${t}] is wound against the face",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a fold - a triangle wound against its face - let through"
   },
   {
@@ -188,7 +188,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    if (!(Math.abs(twice) > 1e-6 * own)) return `triangle [${t}] stands edge-on to the face",
     "new": "    if (false) return `triangle [${t}] stands edge-on to the face",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a bow-tied quad whose cut stands edge-on to its Newell plane let through"
   },
   {
@@ -196,7 +196,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  if (Math.abs(sum - face) > 1e-6 * Math.abs(face)) return `its triangles cover",
     "new": "  if (false) return `its triangles cover",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "the area sum unread: a triangle short is only found cell by cell, and said otherwise"
   },
   {
@@ -204,7 +204,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "      if (cover !== w) return `${Math.abs(cover)} of its triangles",
     "new": "      if (false) return `${Math.abs(cover)} of its triangles",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "two triangles over one place and none over another, their areas the face's, let through"
   },
   {
@@ -212,7 +212,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "  if (tris.length !== n - 2) return `${tris.length} triangles where",
     "new": "  if (false) return `${tris.length} triangles where",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a triangle too many (of no area) let through"
   },
   {
@@ -220,7 +220,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "      if (nearEdge(q)) continue;\n",
     "new": "",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a cell inside a sliver of no area that leans steeply in the face's plane asked, and found uncovered: a 1 um bulge refused"
   },
   {
@@ -228,7 +228,7 @@
     "file": "tools/fbxMesh.mjs",
     "old": "    if (!(own > thin * Math.max(span(A, B), span(B, C), span(C, A)))) continue;   // no area: three corners on a line\n",
     "new": "",
-    "tests": ["test/galleon_model.test.js"],
+    "tests": ["test/world/ships/galleon_model.test.js"],
     "why": "Blender's tangential ears along her port sills held to a winding they cannot have: the bake refuses her"
   },
   {
@@ -236,7 +236,7 @@
     "file": "tools/shipBake.mjs",
     "old": "  const corners = poly.map((vi) => object.local[vi]);\n",
     "new": "  const corners = poly.map((vi) => object.scene[vi]);\n",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "the cut in the scene's coordinates, not the mesh's own: four of her hull's n-gons cut otherwise"
   },
   {
@@ -244,7 +244,7 @@
     "file": "tools/shipBake.mjs",
     "old": "    for (const [a, b, c] of tris) { triangles.push(ring[a], ring[c], ring[b]); triangleOf.push(p); }\n",
     "new": "    for (const [a, b, c] of tris) { triangles.push(ring[a], ring[b], ring[c]); triangleOf.push(p); }\n",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "Blender's triangles not reversed through the mirror: every face of hers inside out"
   },
   {
@@ -252,7 +252,7 @@
     "file": "tools/shipBake.mjs",
     "old": "    if (!(det > 0)) throw new Error(`${name}'s transform",
     "new": "    if (det < -Infinity) throw new Error(`${name}'s transform",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "an object mirrored by its own scale baked inside out"
   },
   {
@@ -260,7 +260,7 @@
     "file": "tools/shipBake.mjs",
     "old": "['PostRotation', [0, 0, 0]], ['RotationOffset', [0, 0, 0]], ['RotationPivot', [0, 0, 0]],",
     "new": "['PostRotation', [0, 0, 0]], ['RotationPivot', [0, 0, 0]],",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a RotationOffset silently dropped"
   },
   {
@@ -268,7 +268,7 @@
     "file": "tools/shipBake.mjs",
     "old": "  ['ScalingOffset', [0, 0, 0]], ['ScalingPivot', [0, 0, 0]],\n",
     "new": "  ['ScalingPivot', [0, 0, 0]],\n",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a ScalingOffset silently dropped"
   },
   {
@@ -276,7 +276,7 @@
     "file": "tools/shipBake.mjs",
     "old": "  assertExportAxes(tree);\n",
     "new": "",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a file in other axes re-derived, or misread through the front axis sceneFrame never asks"
   },
   {
@@ -284,7 +284,7 @@
     "file": "tools/shipBake.mjs",
     "old": "{ UpAxis: 1, UpAxisSign: 1, FrontAxis: 2, FrontAxisSign: 1, CoordAxis: 0, CoordAxisSign: 1 }",
     "new": "{ UpAxis: 1, UpAxisSign: 1, CoordAxis: 0, CoordAxisSign: 1 }",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a left-handed export (its front axis flipped) baked as if it were this one"
   },
   {
@@ -292,7 +292,7 @@
     "file": "tools/shipBake.mjs",
     "old": "export const BOX_SLACK = 0.02;",
     "new": "export const BOX_SLACK = 0.05;",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a part 3 cm from where it was read baked, as the old point-in-box let a gun deck slide 5 cm"
   },
   {
@@ -300,7 +300,7 @@
     "file": "tools/shipBake.mjs",
     "old": "    if (!(off <= BOX_SLACK)) throw new Error(",
     "new": "    if (off < -1) throw new Error(",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a part moved or renamed baked where it stands"
   },
   {
@@ -308,7 +308,7 @@
     "file": "tools/bakeGalleon.mjs",
     "old": "centreline: 36.24673828125 });",
     "new": "centreline: 36.2467 });",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "her beam halved to 0.1 mm again: 38 um off her hull's own Y, her mirror pairs split at the last digit"
   },
   {
@@ -316,7 +316,7 @@
     "file": "tools/shipBake.mjs",
     "old": "      if (o.origin[1] !== spec.frame.centreline) throw new Error(",
     "new": "      if (false) throw new Error(",
-    "tests": ["test/auditgalleon_bake.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js"],
     "why": "a hull moved a centimetre off her centreline baked lopsided"
   },
   {
@@ -324,7 +324,7 @@
     "file": "tools/shipBake.mjs",
     "old": ".map(Number).map(quarterTurn));",
     "new": ".map(Number));",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "the exporter's float32 noise in her quarter turn read as a tilt: five exact mirror pairs split at the last digit"
   },
   {
@@ -332,7 +332,7 @@
     "file": "tools/shipBake.mjs",
     "old": "    if (poly.length > 3) split++;\n",
     "new": "    if (poly.length > 4) split++;\n",
-    "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
+    "tests": ["test/tooling/auditgalleon_bake.test.js", "test/world/ships/galleon_model.test.js"],
     "why": "`split` counting n-gons alone - the quads a cut too"
   }
 ]

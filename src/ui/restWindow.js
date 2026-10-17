@@ -1,7 +1,7 @@
 // The rest window (U7). The classic rest flow: a selection page (rest
 // for a while / rest until healed / loiter), an hours prompt for the
 // timed modes, and the running page showing the hour counter + live
-// vitals while the RestSession (systems/restSession.js) drives the
+// vitals while the RestSession (systems/rest/restSession.js) drives the
 // clock. The world keeps running under the overlay - foes approach and
 // can break the rest, exactly the DFU shape. Escape ends a running
 // rest with its finish text; the end page closes on a click or a key.
@@ -53,19 +53,19 @@ import {
   canRest, illegalRestWarning, illegalRestWarningText,
   CANNOT_REST_MORE_THAN_99_HOURS_ID, MAX_REST_HOURS, PROMPT_MAX_CHARS, PROMPT_INITIAL,
   REST_TEXT,
-} from '../systems/restSession.js';
+} from '../systems/rest/restSession.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { hotkeyHit, normalizeCode } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table   // B5: and its action-string -> key-code inverse
 import { bindings } from './input.js';               // B5: the live InputManager registry
 import { getBinding } from '../systems/inputActions.js';   // B5: InputManager.GetBinding(Actions.Rest)
-import { loadImg, nativeMetrics, drawImg, shadowText, NATIVE_W } from './nativePanel.js';   // D3: the native-window idiom
+import { loadImg, nativeMetrics, drawImg, shadowText, NATIVE_W } from './native/nativePanel.js';   // D3: the native-window idiom
 import { drawMenuBackdrop } from './chargenArt.js';   // D3: Setup :137-138, ParentPanel.BackgroundColor = Color.black
 import { layoutMessageBox, drawMessageBox, messageBoxHit, messageBoxArtLoaded, MB_BUTTONS } from './messageBox.js';   // CM2: the five pushed modal states
-import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { isEnhanced } from '../systems/uiSkin.js';   // CLK4: the enhanced skin's rest is a veil, not a wall
 import { dateFromClassicMinutes } from '../systems/gameDate.js';
-import { REST_ACT_TEXT, ambushNight, actAtChannelEnd, channelBroken, channelHealTick, campNightStep } from '../systems/restAct.js';   // REST1: the act's words   // AUDIT REST-PARTY A2: and the night it runs   // OL2: the world's clock, read for the counter page
+import { REST_ACT_TEXT, ambushNight, actAtChannelEnd, channelBroken, channelHealTick, campNightStep } from '../systems/rest/restAct.js';   // REST1: the act's words   // AUDIT REST-PARTY A2: and the night it runs   // OL2: the world's clock, read for the counter page
 
 /** CLK4 (the Clock arc): on the ENHANCED skin the resting page is a
  *  translucent veil over the world instead of DFU's opaque black, so

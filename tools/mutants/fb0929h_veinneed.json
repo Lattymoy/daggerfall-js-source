@@ -4,7 +4,7 @@
     "file": "src/scenes/gatherHost.js",
     "old": "    if (!plan || !plan.ready) { passedOn = needLine(plan, rank); return false; }",
     "new": "    if (!plan || !plan.ready) { return false; }",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "The report as it was: a press a node passed on keeps nothing, so nothing is said when the press opened nothing."
   },
   {
@@ -12,7 +12,7 @@
     "file": "src/scenes/gatherHost.js",
     "old": "    if (!plan || !plan.ready) { passedOn = needLine(plan, rank); return false; }",
     "new": "    if (!plan || !plan.ready) { passedOn = needLine(plan, rank); hud.toast(passedOn); return true; }",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "PROF1's old press: the node takes E and says its need - the door, the chest and the foe behind it lose the press (AUDIT 29 C1)."
   },
   {
@@ -20,7 +20,7 @@
     "file": "src/scenes/gatherHost.js",
     "old": "    press({ click = false } = {}) {\n      passedOn = '';\n",
     "new": "    press({ click = false } = {}) {\n",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "A press with no node under the look hands back the need of a node an earlier press passed on."
   },
   {
@@ -28,7 +28,7 @@
     "file": "src/scenes/gatherHost.js",
     "old": "      passedOn = '';\n      passedCast = null;\n      if (cast) {",
     "new": "      passedCast = null;\n      if (cast) {",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "One press, a line every time the host asks. CAST-E (re-aimed by content): the line's reset beside the cast's."
   },
   {
@@ -36,7 +36,7 @@
     "file": "src/scenes/gatherHost.js",
     "old": "  const own = Number.isSafeInteger(plan.needsRank) ? ` - your ${professionName(plan.profession)} is ${rankOf(plan.profession)}` : '';",
     "new": "  const own = '';",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "The need said without the player's own rank - the prompt's words again."
   },
   {
@@ -44,7 +44,7 @@
     "file": "src/scenes/gatherHost.js",
     "old": "  const own = Number.isSafeInteger(plan.needsRank) ? ` - your ${professionName(plan.profession)} is ${rankOf(plan.profession)}` : '';",
     "new": "  const own = ` - your ${professionName(plan.profession)} is ${rankOf(plan.profession)}`;",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "A missing Pick-Axe answered with the rank."
   },
   {
@@ -52,7 +52,7 @@
     "file": "src/scenes/gatherHost.js",
     "old": "  if (plan.rest === 'being counted') return 'That gathering is being counted.';",
     "new": "",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "A node being counted says the prompt's bare words."
   },
   {
@@ -60,7 +60,7 @@
     "file": "src/scenes/mineHost.js",
     "old": ", ready: false, needsRank: TIER_RANKS[node.tier - 1] };",
     "new": ", ready: false };",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "The vein's plan does not say its rank is short: the report's line loses the player's own rank."
   },
   {
@@ -68,7 +68,7 @@
     "file": "src/scenes/herbHost.js",
     "old": ", ready: false, both, needsRank: TIER_RANKS[patch.tier - 1] };",
     "new": ", ready: false, both };",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "A patch's plan does not say its rank is short."
   },
   {
@@ -76,7 +76,7 @@
     "file": "src/scenes/treeHost.js",
     "old": ", ready: false, needsRank: TIER_RANKS[node.tier - 1] };",
     "new": ", ready: false };",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "A tree's plan does not say its rank is short."
   },
   {
@@ -84,7 +84,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
     "new": "    if (key === null) { return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "The report's dungeon: nothing under the ray, and the vein never asked."
   },
   {
@@ -92,7 +92,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
     "new": "    if (key === null) { host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "A click, or a touch spell's release, hands back a press no node was asked."
   },
   {
@@ -100,7 +100,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
     "new": "    if (key === null) { if (interact && !pressCast) return host.profNeed?.(); return false; }\n    // AUDIT 65 MC-2: the refusal each handler speaks for itself in C# -",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "The ladder answers that its press was taken when only the node spoke."
   },
   {
@@ -108,7 +108,7 @@
     "file": "src/scenes/world.js",
     "old": "    profNeed: () => gatherHost?.sayNeed() ?? false,",
     "new": "    profNeedX: () => gatherHost?.sayNeed() ?? false,",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "The mode machine is handed no door to the node's word underground."
   },
   {
@@ -116,7 +116,7 @@
     "file": "src/scenes/world.js",
     "old": "              if (!opened && useEdge && gatherHost?.sayNeed()) return;",
     "new": "",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "The street's surface veins, trees and patches stay silent when nothing opened."
   },
   {
@@ -124,7 +124,7 @@
     "file": "src/scenes/world.js",
     "old": "              if (!opened && useEdge && gatherHost?.sayNeed()) return;",
     "new": "              if (!opened && gatherHost?.sayNeed()) return;",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "A click that opened nothing hands back an E press's stale need."
   },
   {
@@ -132,7 +132,7 @@
     "file": "src/scenes/world.js",
     "old": "              if (!opened && useEdge && gatherHost?.sayNeed()) return;",
     "new": "              if (useEdge && gatherHost?.sayNeed()) return;",
-    "tests": ["test/fb0929h_veinneed.test.js"],
+    "tests": ["test/scenes/fb0929h_veinneed.test.js"],
     "note": "A door that opened, and the node speaks over it."
   }
 ]

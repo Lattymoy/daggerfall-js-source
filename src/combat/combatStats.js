@@ -30,7 +30,7 @@ import { SWING_MODS } from './playerWeapon.js';
 import { enchantChanceToHitMod } from '../systems/enchantments.js';
 import { weaponDamageMods, weaponBlowMods } from '../systems/entityMods.js';
 import { weaponSkillUsed, WEAPONS } from '../characters/weapons.js';
-import { skillsLevel } from '../characters/enemyEntity.js';
+import { skillsLevel } from '../characters/enemy/enemyEntity.js';
 import { equipTableOf, EQUIP_SLOTS } from '../systems/equip.js';
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
 import { clawMetalDamage } from './clawMetal.js';   // BAL6-GAUNTLETS: the beast's claws take its gauntlets' metal

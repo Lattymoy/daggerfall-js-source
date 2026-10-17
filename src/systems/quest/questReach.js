@@ -9,7 +9,7 @@
 // home. With Nearby quests on, a site is drawn from the ones within the QUEST REACH of the player's map pixel, and the
 // reach grows with level, so the early game stays close and by the mid-teens it covers a region (DFU's own draw).
 //
-// The distance is CHEBYSHEV - max(|dx|, |dy|) in map pixels - because the travel reckoning (systems/travel.js
+// The distance is CHEBYSHEV - max(|dx|, |dy|) in map pixels - because the travel reckoning (systems/travel/travel.js
 // calculateTravelTime) walks the longest axis and charges a pixel per step: the reach is a travel time, not a crow's
 // line. On foot, cautiously, a pixel is two to four hours by the climate, so ten pixels is a day or two.
 //

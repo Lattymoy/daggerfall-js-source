@@ -2,7 +2,7 @@
 // all, on purpose.
 //
 // systems/thunderlock.js is the weapon's home, but it reaches
-// systems/itemTemplates.js to register its rows, and that file imports
+// systems/item/itemTemplates.js to register its rows, and that file imports
 // characters/weapons.js for the condition ladder. So a weapons.js that
 // wanted the indices from the home would close a cycle
 // (weapons -> thunderlock -> itemTemplates -> weapons) and leave one
@@ -90,7 +90,7 @@ export const orbArchiveFor = (item) =>
  * existed - so a shot fired on the frame the texture is still loading
  * looks exactly like the port did yesterday rather than like nothing.
  *
- * Here on the leaf because BOTH askers are: combat/weaponRig.js paints
+ * Here on the leaf because BOTH askers are: combat/weapon/weaponRig.js paints
  * the flash, systems/thunderlock.js answers the light, and
  * combat/arrowFlight.js is what sees the texture. A parked value and a
  * pure reducer add no imports, which is this file's whole rule.

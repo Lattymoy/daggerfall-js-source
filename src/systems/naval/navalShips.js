@@ -7,7 +7,7 @@
 // the vendored prefabs themselves (the hull's MeshCollider, `vendor/come-sail-away/Models/`, cast at from outside and
 // from above at each station - the scratch probe the arc page records), a broadside's guns 0.9 m over the deck they
 // are mounted on, along the waist where that deck runs clear, and a hair outside the planking at that height; hull 2's
-// off Mac's galleon (world/galleonModel.js GALLEON_BATTERIES - AUDIT GN-G11): each broadside gun in the middle of its
+// off Mac's galleon (world/ships/galleonModel.js GALLEON_BATTERIES - AUDIT GN-G11): each broadside gun in the middle of its
 // own port, 1.16 m over her gun deck, its muzzle 0.09 m outside her planking. A bow chaser on the forecastle, a stern
 // gun over the transom. The numbers are in the boat ROOT's frame (Unity's: +x starboard, +y up, +z the
 // bow), where SpawnBoat stands the hull - the root sits on the waterline. The port side is the starboard side
@@ -33,9 +33,9 @@
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 
-/** Come Sail Away's hull indices (systems/comeSailAwayBoat.js HULL_NAMES). */
+/** Come Sail Away's hull indices (systems/comeSailAway/comeSailAwayBoat.js HULL_NAMES). */
 export const HULL = Object.freeze({ Rowboat: 0, LargeBoat: 1, SmallShip: 2, LargeGalley: 3, Carrack: 4 });
 
 /**
@@ -80,7 +80,7 @@ export const SIDE_DIR = Object.freeze({ starboard: Object.freeze([1, 0, 0]), por
  * of the boat's Booms, Come Sail Away's walk order) turns it about its `pivot` (that boom's mast's axis) by the boom's
  * own rotation, so it goes where the trim swings its canvas; `obb` is the box itself where it lies askew (`c` its middle,
  * `h` its half sizes along its own axes, the root's pitched `pitch` degrees about x), `[min, max]` then its bounds.
- * scenes/navalHost.js rigBoxesOf stands each in the world; a ball through one tears canvas and flies on
+ * scenes/naval/navalHost.js rigBoxesOf stands each in the world; a ball through one tears canvas and flies on
  * (systems/naval/navalShots.js). The rowboat carries none; the Large Galley's yard is 53 m end to end, but a box that
  * wide would be mostly air, so hers stops at the canvas's own 50. AUDIT NAV2 F28: `sailWay` is the prefab's sail
  * acceleration modifier (Come Sail Away's modifierMoveAccelerationSail) - the rate her way comes and goes under sail
@@ -137,8 +137,8 @@ export const HULL_BUILDS = Object.freeze([
     hullHp: tough(60), sailHp: tough(0), crew: 0, deck: 0.1, beam: 1.0, ram: false, bowZ: 2.94, aftZ: -2.14, halfWidth: 1.08, keel: -0.23, top: 0.78, sailWay: 1,
     rig: Object.freeze([]),
   }),
-  // SHIPS-2 (2026-10-07): hull 1 is Mac's Tiny Ship now (world/largeBoatModel.js) and every number here is hers, off her
-  // own model (test/ships2_largeboat.test.js pins each to it): a swivel's muzzle at each of her six swivels on her
+  // SHIPS-2 (2026-10-07): hull 1 is Mac's Tiny Ship now (world/ships/largeBoatModel.js) and every number here is hers, off her
+  // own model (test/world/ships/ships2_largeboat.test.js pins each to it): a swivel's muzzle at each of her six swivels on her
   // gunwale's cap and the one on the cap at her port bow (the galleon's chaser, its barrel's end); her box her hull's and
   // her stern rail's MeshCollider's bounds; her deck and her half beam inside her ceiling at it. HER RIG IS HER PLAN'S:
   // each box carries the `variant` it is canvas of (Come Sail Away's walk reads one plan's Booms and Sails - the boat's
@@ -178,12 +178,12 @@ export const HULL_BUILDS = Object.freeze([
     ),
   }),
   // GALLEON (2026-10-01, Mac: "ensuring cannon fire shoots from the cannon holes properly"): hull 2 is Mac's galleon now
-  // (world/galleonModel.js) and every number here is hers, off her own model (test/galleon_model.test.js pins each to
+  // (world/ships/galleonModel.js) and every number here is hers, off her own model (test/world/ships/galleon_model.test.js pins each to
   // it): a gun at each of her ten gunports, its muzzle a hair outside her planking at the port's middle - the ports
   // 1.56 to 2.93 m over the sea, her gun deck at 1.0829 - so a broadside leaves her through the holes it is fired from;
   // two chasers on swivels over her bow rail; the barrels over her stern under the castle. Her box is her hull's and
   // her castle's MeshCollider's bounds (GALLEON-2: her keel 4.64 m down on Mac's second export's deeper V). AUDIT GN-R5/
-  // G9: her rig is each of her five sails as it hangs set in any wind (world/galleonRig.js's own canvas) - a square sail
+  // G9: her rig is each of her five sails as it hangs set in any wind (world/ships/galleonRig.js's own canvas) - a square sail
   // with its yard and her gaff sail with its gaff on their booms, turning with them as the trim does (the boxes stood
   // still: at the auto-trim's 30 degrees a quarter of the fore topsail's canvas, a third of the main topsail's and 94% of
   // the gaff sail's stood outside every one, and all of the fore course's at any trim), the jib in three askew along its
@@ -216,8 +216,8 @@ export const HULL_BUILDS = Object.freeze([
     rig: rigOf([[-25, 17, 12.5], [25, 36.9, 17]]),
   }),
   // SHIPS-2 (2026-10-07, Mac: "implement both of these new ship placement models ... ensure it matches the love we gave
-  // the other new ship model"): hull 4 is Mac's carrack now (world/carrackModel.js) and every number here is hers, off
-  // her own model (test/ships2_carrack.test.js pins each to it), as hull 2's are the galleon's: a gun at each of her ten
+  // the other new ship model"): hull 4 is Mac's carrack now (world/ships/carrackModel.js) and every number here is hers, off
+  // her own model (test/systems/naval/ships2_carrack.test.js pins each to it), as hull 2's are the galleon's: a gun at each of her ten
   // gunports, its muzzle 9 cm outside her planking in the port - her ports 3.07 to 4.06 m over the sea, her guns on
   // platforms a step (0.38 m) over her gun deck's 1.9576 m, their axis 0.43 m over the sills - two chasers on swivels on her bow's
   // deck, the barrels over her quarter rail at her stern. Her box is her hull's, her houses' and her quarter rail's
@@ -225,7 +225,7 @@ export const HULL_BUILDS = Object.freeze([
   // her deck her main deck, her half beam at it inside her rail's cap. Her rig is each of her five sails as it hangs
   // set in any wind, each on its boom about its mast's axis (the spritsail's about its slings under her bowsprit) - her
   // lateen in two (its canvas a sloping quad: its foot's band the length of it, its peak's over her middle house),
-  // every box three quarters and more canvas across its face (test/ships2_carrack.test.js). Her hull points, canvas
+  // every box three quarters and more canvas across its face (test/systems/naval/ships2_carrack.test.js). Her hull points, canvas
   // points and crew are the Carrack's as the mod built it, and her handling with them (her Modifiers are its own).
   Object.freeze({   // 4 Carrack - five ports a side on her gun deck, the guns' axis 6.5 cm under the ports' middle (3.4982), on their platforms
     hull: 4, gun: 'long',
@@ -245,7 +245,7 @@ export const HULL_BUILDS = Object.freeze([
 ]);
 
 /** SHIPS-2: the mod's own Large Boat's build - swivels on its gunwale, three a side and one in its bow - which hull 1
- *  is again when the new large boat's model will not load or build (systems/comeSailAwayModels.js). */
+ *  is again when the new large boat's model will not load or build (systems/comeSailAway/comeSailAwayModels.js). */
 export const MOD_LARGE_BOAT_BUILD = Object.freeze({
   hull: 1, gun: 'swivel',
   broadside: Object.freeze([[1.8, 1.3, -2.3], [2.05, 1.3, 0.3], [1.8, 1.3, 2.3]].map(Object.freeze)),
@@ -257,7 +257,7 @@ export const MOD_LARGE_BOAT_BUILD = Object.freeze({
 
 /** SHIPS-2: the mod's own Carrack's build - seven long guns a side on its main deck (3.64), chasers under its
  *  forecastle, barrels astern - which hull 4 is again when the new carrack's model will not load or build
- *  (systems/comeSailAwayModels.js falls back to the mod's own prefab, never no ship: AUDIT GN-G4's law). */
+ *  (systems/comeSailAway/comeSailAwayModels.js falls back to the mod's own prefab, never no ship: AUDIT GN-G4's law). */
 export const MOD_CARRACK_BUILD = Object.freeze({
   hull: 4, gun: 'long',
   broadside: Object.freeze([[6.3, 4.5, -16], [7.0, 4.5, -12], [7.7, 4.5, -8], [7.9, 4.5, -4.2], [7.4, 4.5, 0], [7.1, 4.5, 4.2], [5.8, 4.5, 8.4]].map(Object.freeze)),
@@ -268,7 +268,7 @@ export const MOD_CARRACK_BUILD = Object.freeze({
 });
 
 /** AUDIT GN-G4: the mod's own Small Ship's build - the galleon Come Sail Away shipped, six long guns a side at her own
- *  ports - which hull 2 is again when the new galleon's model will not load or build (systems/comeSailAwayModels.js
+ *  ports - which hull 2 is again when the new galleon's model will not load or build (systems/comeSailAway/comeSailAwayModels.js
  *  falls back to the mod's own prefab, never no ship): her guns, box, deck and rig must be that ship's, or she fires
  *  from 0.24-1.29 m inside her own planking and her berths and fires stand 2 m off. */
 export const MOD_SMALL_SHIP_BUILD = Object.freeze({
@@ -280,7 +280,7 @@ export const MOD_SMALL_SHIP_BUILD = Object.freeze({
   rig: rigOf([[-3.5, 10.92, -20.1], [3.5, 34, 26]]),
 });
 /** SHIPS-2: THE MOD'S OWN BUILD OF EACH HULL A SHIP OF THE PORT'S STANDS IN FOR - what that hull is while its own model
- *  does not stand (the galleon's, the carrack's, the large boat's: systems/comeSailAwayModels.js PORT_SHIPS). */
+ *  does not stand (the galleon's, the carrack's, the large boat's: systems/comeSailAway/comeSailAwayModels.js PORT_SHIPS). */
 export const MOD_BUILDS = Object.freeze({ 1: MOD_LARGE_BOAT_BUILD, 2: MOD_SMALL_SHIP_BUILD, 4: MOD_CARRACK_BUILD });
 /** Whether each such hull stands as the port's ship (true until the models say otherwise - the pool sets it as they load). */
 const standing = { 1: true, 2: true, 4: true };

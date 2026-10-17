@@ -1,7 +1,7 @@
-// D1-NEAR and its audit (bible/11-Multiplayer/Scale-Arc.md D1-NEAR, bible/01-Overview/Audit-D1-Near.md): THE DEPLOY'S
+// D1-NEAR and its audit (bible/11-Multiplayer/Scale-Arc.md D1-NEAR, bible/01-Overview/audits/Audit-D1-Near.md): THE DEPLOY'S
 // REPORT STEP, RUN AS THE RUNNER RUNS IT - its script cut out of account-deploy.yml as the runner sees it, its own keys
 // read, and a fake curl and a fake wrangler on PATH that answer as the deployed Worker's edge and D1's REST API do.
-// Shared by test/d1near.test.js and test/audit_d1near.test.js, so both read one runner.
+// Shared by test/bible/d1near.test.js and test/bible/audit_d1near.test.js, so both read one runner.
 //
 // THE FAKE CURL keeps real curl's ways, each measured against curl 8.5 by the audit's lane T: the `-D -` headers (an
 // HTTP/2 status line with its trailing space and lower-case names, or an HTTP/1.1 one capitalised), then the body where

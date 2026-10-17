@@ -18,7 +18,7 @@
 // and the day's "Fine day." keep their hours (heard at six in the evening, and by the night watch), and a trade's pool
 // is the trade's once however many share it: a pair of homemakers drew their trade's one script half the time, and
 // "The baker's bread is getting smaller." opened a fifth of the town's talk.
-import { seededRng } from '../wind.js';
+import { seededRng } from '../wind/wind.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 
 const S = (...lines) => Object.freeze(lines);

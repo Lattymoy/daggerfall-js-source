@@ -129,7 +129,7 @@
 //     spokes - STEPPING on the second as a clock's escapement does (eased over a quarter of each second, held the rest:
 //     turningWheelAngle), two turns over the clock; a light that does not turn gleaming on the brass as it passes under;
 //     outside it the Hour's dial, a line of gold and its twelve marks - the Hour's own the longer - turning BACK, as the
-//     Hour's sky's hands do (render/sdSky.js); gold light pooled at the feet, breathing.
+//     Hour's sky's hands do (render/superDungeon/sdSky.js); gold light pooled at the feet, breathing.
 //   - THE WALL, the pass's strip at the teeth's tips: the wheel's edge seen from the side - its teeth's faces passing
 //     round with it, gold along their top - gold light rising off it, gone by the knee, and TURNING_MOTES motes rising.
 // It kindles UP, as the radiance does. Every rate whole over the clock (turningRatesWhole); the teeth, the spokes and
@@ -420,7 +420,7 @@ export const TURNING_H = 0.62;            // the wall: the wheel's edge, and the
 export const TURNING_EDGE_M = 0.05;       // the wheel's thickness, seen from the side
 export const TURNING_MOTES = 14;
 /** Its rates, in turns a second: the wheel two turns over the clock - stepping on the second, a clock's escapement; the
- *  dial one turn BACK (the Hour's hands run backwards - render/sdSky.js); the light's breath; the motes' rise. */
+ *  dial one turn BACK (the Hour's hands run backwards - render/superDungeon/sdSky.js); the light's breath; the motes' rise. */
 export const TURNING_HZ = Object.freeze({ wheel: 1 / 60, dial: 1 / 120, pulse: 1 / 4, mote: 1 / 6 });
 /** The wheel's step takes the first quarter of each second, and it holds the rest. */
 export const TURNING_STEP_S = 0.25;
@@ -458,7 +458,7 @@ export function turningWheelAngle(t) {
   return -Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));
 }
 /** The dial's turn at `t`: backwards, smoothly - ANTICLOCKWISE as the eye sees the ground, as the Hour's sky's hands turn
- *  (render/sdSky.js). Pure. AUDIT SD II (L2 F13): the ground's angle (atan(p.y, p.x), p = (x, z) about the feet) grows
+ *  (render/superDungeon/sdSky.js). Pure. AUDIT SD II (L2 F13): the ground's angle (atan(p.y, p.x), p = (x, z) about the feet) grows
  *  anticlockwise on the screen - +x right and +z up it, the one mirror's law (world/mat4.js) - so BACK is the angle
  *  growing; it fell, and the dial turned clockwise, forward. */
 export const turningDialAngle = (t) => Math.PI * 2 * TURNING_HZ.dial * t;
@@ -1743,7 +1743,7 @@ export function auraSpriteBones(fig) {
 }
 /** A peer's sprite figure as the pose `auraCapeStep` takes - at the wearer's own feet - or null. SPRITE-FACE (2026-10-05,
  *  Mac: "The sprite rotation on character input is a little finicky and make the aura misallign"): FACING AS ITS PICTURE
- *  DOES - `face` the sprite layer's { yaw, turn } (net/peerRiders.js faceOf): hung on the picture's facing, its eight-way
+ *  DOES - `face` the sprite layer's { yaw, turn } (net/peer/peerRiders.js faceOf): hung on the picture's facing, its eight-way
  *  view, where the pose's own facing runs up to half a view off it; swung by the pose's (`turn`). A sprite with a face and
  *  no figure (a rider's, the horse's picture) is faced and hung from the rest pose; neither, null. Pure. */
 export const auraSpritePosed = (w, fig, face = null) => (fig || face

@@ -153,12 +153,12 @@
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
 import { isTextEntryTarget, swallowBrowserKey, bindings } from './input.js';
 import { actionForCode, codeMeans } from '../systems/inputActions.js';
-import { overlayOpen } from './enhancedOverlays.js';
+import { overlayOpen } from './enhanced/enhancedOverlays.js';
 import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the panel stands, ActivateCursor's key is its open key and not the cursor toggle
-import { isTouchDevice } from './touch.js';
+import { isTouchDevice } from './touch/touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf, findQuery, findLines, playerFound, CHAT_FIND_MAX } from '../net/chat.js';   // CHAT-FIND: the search's own law
-import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag beside a name, as over a head
+import { guildTagText } from '../net/guild/guildLaw.js';   // GUILD1c: the guild's tag beside a name, as over a head
 import { glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears its glyphs everywhere it is drawn (TITLE-C: its title over the head alone, never in the chat); cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { PARTY_GREEN_CSS } from '../net/social.js';   // CHAT-CHAN: the Party tab's mark wears the party's one green
@@ -209,7 +209,7 @@ export const CHAT_STYLE_ID = 'dagger-chat-style';
  *  SKIN'S, NOT THE LAUNCHER'S. This sheet set `--data` (Barlow Semi Condensed) - which is the MENU's face, the one
  *  the boot screens and the settings pages are set in - so the chat stood over an enhanced world in a font nothing
  *  else in that world uses. In-game the enhanced skin is the pixel stack (ui/pixelifyFive.js PIXEL_STACK, the same
- *  face ui/enhancedHud.js and every floating window wear), unsmoothed, and text laid over the world takes the HUD's
+ *  face ui/enhanced/enhancedHud.js and every floating window wear), unsmoothed, and text laid over the world takes the HUD's
  *  hard shadow pair rather than a blur: a blurred drop shadow under a pixel glyph reads as a rendering fault.
  *  The @font-face for the FIVE rides this sheet too (FIX-D), because this sheet is injected on its own and a
  *  document that never mounted the skin's stylesheet would otherwise draw Pixelify's 5 - the glyph that reads as 8.
@@ -466,7 +466,7 @@ ${Object.entries(CHANNEL_COLOURS).map(([ch, c]) => `.dfchat[data-colours="on"] .
    MAC-J (2026-09-17, Mac: "the online section where player's names are
    shown are too large and shouldn't be large rectangles"): the marker
    class is dfchat-act, and the prefix is the whole fix. It was a bare
-   "act" - and .act is the ENHANCED SKIN'S BUTTON (ui/enhancedStyle.js:
+   "act" - and .act is the ENHANCED SKIN'S BUTTON (ui/enhanced/enhancedStyle.js:
    padding 12px 20px, a 1px iron border, min-height 46px), which is
    loaded in every online game because online forces the enhanced lane
    (OL1). So every name a player could click wore a 46px bordered

@@ -90,7 +90,7 @@ export const bannerKeyOf = (h) => (h?.division || h?.charge ? heraldryKey(h) : `
 
 /**
  * THE STREETS' BANNERS. `deps`: `built()` the world's built pixels (each `{ px, py, homeTown, homeFrames }`), `homes` the
- * online homes' registry (systems/onlineHomes.js: homeAt, version), `translation(px, py)` a pixel's place in the scene
+ * online homes' registry (systems/online/onlineHomes.js: homeAt, version), `translation(px, py)` a pixel's place in the scene
  * now, `eye()` where the view stands (the nearest first when there are more than a frame draws), `now()` ms.
  * `list()` answers this frame's banners for render/bannerPass.js.
  */

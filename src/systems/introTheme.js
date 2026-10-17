@@ -3,8 +3,8 @@
 // after every cinematic asset is ready. No silent wall-clock substitute.
 // getOutputTimestamp maps the audio DEVICE clock onto performance.now():
 // currentTime alone is ahead of what is heard by the output pipeline latency.
-import { trackGain } from './songPlayer.js';
-import { onSettingChange } from './settings.js';
+import { trackGain } from './song/songPlayer.js';
+import { onSettingChange } from './settings/settings.js';
 
 export const THEME_URL = new URL('../assets/intro/theme.mp3', import.meta.url).href;
 export const INTRO_THEME_GAIN = 0.82;

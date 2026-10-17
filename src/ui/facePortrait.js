@@ -119,7 +119,7 @@ async function classicFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
     // envelope (S3c/U9) and it addresses a RECORD NUMBER in the CIF -
     // so this array is addressed by it at both ends: the chargen
     // wizard's grid walks 0..FACES_PER_RACE-1 and reads `canvases[i]`
-    // (ui/enhancedChargen.js, which already draws the number where a
+    // (ui/enhanced/enhancedChargen.js, which already draws the number where a
     // face is missing), and `loadFace` below reads `set[faceIndex]`.
     //
     // The first cut of this extraction ended `.filter(Boolean)`, which

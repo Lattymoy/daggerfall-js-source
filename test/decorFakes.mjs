@@ -1,17 +1,17 @@
 // DECOR1e: THE DECORATOR PINS' FAKES - ONE home (fakeRoom.mjs's lesson, AUDIT WORLD D10: copies had to grow in
 // lockstep, and a fake that lies makes a pin pass that production would fail). A parsed block's room, the blocks file,
 // a document and a window headless enough for the three surfaces (ui/decorPanel.js), a small catalogue, the panel on
-// its own, and the tool (scenes/decorTool.js) over fakes of every seam the host hands it - its pool the room's own
-// shape (scenes/decorRoom.js: a piece put again by its id stands in its place; list, remove, holdsAny), its wallet
+// its own, and the tool (scenes/decor/decorTool.js) over fakes of every seam the host hands it - its pool the room's own
+// shape (scenes/decor/decorRoom.js: a piece put again by its id stands in its place; list, remove, holdsAny), its wallet
 // the purse's (pay, and credit for what comes back), its stick the host's.
 import assert from 'node:assert/strict';
 import { createDecorPanel } from '../src/ui/decorPanel.js';
-import { createDecorTool } from '../src/scenes/decorTool.js';
-import { decorCatalogue, collectDecor } from '../src/systems/decorCatalogue.js';
+import { createDecorTool } from '../src/scenes/decor/decorTool.js';
+import { decorCatalogue, collectDecor } from '../src/systems/decor/decorCatalogue.js';
 import { DECOR_CAP, decorPrice } from '../src/net/decorLaw.js';
-import { PROP_MODEL_TYPE } from '../src/world/interiorLayout.js';
-import { isFurnishing } from '../src/systems/decorFurnish.js';
-import { decorMatrix, decorKeyOf } from '../src/scenes/decorRoom.js';
+import { PROP_MODEL_TYPE } from '../src/world/interior/interiorLayout.js';
+import { isFurnishing } from '../src/systems/decor/decorFurnish.js';
+import { decorMatrix, decorKeyOf } from '../src/scenes/decor/decorRoom.js';
 import { localAabb } from '../src/render/frustum.js';
 import { createHomeYards } from '../src/scenes/homeYards.js';
 import { applyClimate, SEASON } from '../src/world/climateSwaps.js';
@@ -115,7 +115,7 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
   ['KeyC', 'Crouch'], ['ShiftLeft', 'Run'], ['ArrowLeft', 'TurnLeft'], ['ArrowRight', 'TurnRight'], ['PageUp', 'FloatUp'],
   ['PageDown', 'FloatDown'], ['KeyE', 'Interact'], ['Escape', 'Escape'], ['KeyI', 'Status'], ['Enter', 'ActivateCursor']]);
 /**
- * The tool over fakes of every seam the host hands it. The pool is the room's own shape (scenes/decorRoom.js): a piece
+ * The tool over fakes of every seam the host hands it. The pool is the room's own shape (scenes/decor/decorRoom.js): a piece
  * put again by its id stands in its place, `holds` the ids of the pieces holding something. The wallet pays from and
  * credits `w.gold`, `hand.stick` is the host's stickAxes reading (null: no stick in hand), and `rays` each eye ray's
  * bucket filter. `radius(model)` the scan's measure of a model (null: unread). DECOR2a: `pack` the items carried -
@@ -129,7 +129,7 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * AUDIT DYE-ICON 1: `iconUrl(a, r, dye, dyeTarget)` the host's picture door for the panel's thumbnails (none, as before).
  * AUDIT DECOR-SHELL 3: `getGpuMesh` the pipeline's mesh door (one that loads every model, as before), and `now` the
  * tool's clock (0, as before). AUDIT2 DECOR-SHELL 8: with a real `collider`, a model piece put stands SOLID in it as the
- * room stands it (scenes/decorRoom.js put) - its model's box, closed, under the piece's own matrix, in its own bucket.
+ * room stands it (scenes/decor/decorRoom.js put) - its model's box, closed, under the piece's own matrix, in its own bucket.
  * HOME-DOORS: `doors` the door records the scan's second block holds (model indices: door model 9000 + each), a door
  * model's box a door's own (a metre wide along x from its hinge, 2.1 high, 10 cm thick); `doorsHere` the host's doors,
  * `walls` its walls' filter - neither unless a pin hands one. HOME-RENT: `rent` the host's rooms door (none unless handed).
@@ -148,7 +148,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
   const entries = decorCatalogue(collectDecor([rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]), rmb([41000], [[209, 0]], doors, extraPeople)]));
   const standing = [];
   const holds = new Set();
-  const owned = new Map();   // DECOR2a: the owner's own items by piece id (scenes/decorRoom.js keepOwn and its kin)
+  const owned = new Map();   // DECOR2a: the owner's own items by piece id (scenes/decor/decorRoom.js keepOwn and its kin)
   const solid = (p) => {
     if (!collider?.addMesh) return;
     collider.removeBucket?.(decorKeyOf(p.id));
@@ -203,7 +203,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     doc, win, touch, renderer, pool, names,
     canvas: { width: 1600, height: 900, getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 450 }) },
     room: () => state.room,
-    base: () => base,   // BASE-HIDE: the room's own furniture (scenes/decorBase.js), none unless a pin hands one
+    base: () => base,   // BASE-HIDE: the room's own furniture (scenes/decor/decorBase.js), none unless a pin hands one
     scanDeps: () => ({
       blocks: fakeBlocks([{ type: TOWN, block: rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]) }, { type: TOWN, block: rmb([41000], [[209, 0], ...extraFlats], doors, extraPeople) }]),   // DECOR-MODFLATS: `extraFlats`, a pin's own; HOME-DOORS: `doors`; NUDE-DECOR: `extraPeople`
       isTownBlock: (t) => t === TOWN, modelRadius: radius, flatRadius: async () => 0.2,

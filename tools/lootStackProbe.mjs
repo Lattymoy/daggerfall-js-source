@@ -1,7 +1,7 @@
 // LOOT-STACK, MEASURED (2026-09-23, Janome: "a toggle key to switch between the inventories of enemies stacked on top
 // of each other"; Mac, on the key the first slice shipped: "that solution is better than a keybind").
 //
-// test/lootstack.test.js holds the law on fakes; this draws the REAL surfaces in Chromium and reads back what a fake
+// test/ui/lootstack.test.js holds the law on fakes; this draws the REAL surfaces in Chromium and reads back what a fake
 // cannot.
 //   - THE PLAQUE, through the real seam the four hosts call (ui/worldPlaque.js worldHoverFrame) with three bodies in one
 //     pile under the reticle: the front body named, and the pile's mark - "3 bodies" - ONE line inside the plaque's box,

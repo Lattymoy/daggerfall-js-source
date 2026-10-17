@@ -15,12 +15,12 @@ and Cargo (`06-Systems/Horse-Cart-And-Cargo.md`) and the sea fight (`03-World/Na
 never restates.
 
 Not THE HOLDINGS ARC of the hubs, homes and guilds (`06-Systems/Online-Arc.md`): this arc is named for the pause
-menu's Holdings tab. Audited the same day (`01-Overview/Audit-Holdings.md`, AUDIT HOLDINGS): what follows is the
+menu's Holdings tab. Audited the same day (`01-Overview/audits/Audit-Holdings.md`, AUDIT HOLDINGS): what follows is the
 audited build.
 
 ## 1. The tab (HOLDINGS)
 
-The enhanced pause window's tabs are **Quests, Stats, Holdings, System** (`ui/enhancedMenu.js` `PAUSE_TABS`; a landing
+The enhanced pause window's tabs are **Quests, Stats, Holdings, System** (`ui/enhanced/enhancedMenu.js` `PAUSE_TABS`; a landing
 names any of them - `PAUSE_TAB_IDS`, the strip's own list). The Stats rail is the character sheet again - Character,
 Attributes, Skills, Advantages, Standing, Effects, and online the Professions page. The Holdings rail (`pauseHoldings`,
 PX6's rail-and-detail bones a fourth time) holds what the player owns and who follows them, each page while it has a
@@ -32,12 +32,12 @@ thing to show:
 | Fleet | `ui/fleetPage.js` | while Come Sail Away runs in the world host |
 | Captain | `ui/captainPage.js` (CAPT-LOG, `03-World/Captains-Sea.md`) | once a captain has a standing, a log, a contract or a chart - each crown's regard and rank, the letter, the contracts held, the treasure charts marked, the log (the Eltheric Ocean's lines among it: the isles charted, the deepest waters, the legends ended - `03-World/Eltheric-Ocean.md`) |
 | Companions | `ui/companionRoster.js` (moved off the Stats rail) | anyone sworn or at the player's side |
-| Revenants | `ui/revenantPage.js` (moved) | revenants made, or any remembered |
-| Stores | `ui/profPages.js` (moved; the Professions page stays on Stats) | online, the professions this account's |
+| Revenants | `ui/revenant/revenantPage.js` (moved) | revenants made, or any remembered |
+| Stores | `ui/professions/profPages.js` (moved; the Professions page stays on Stats) | online, the professions this account's |
 
 A home station's press that opened the Stores page lands on the Holdings tab there; the Professions key on the Stats tab.
 Every visit opens the rail on its first page and forgets the pages' words (an act's answer, an open name field, a panel).
-The pages' cards are the Companions page's: the stone-and-brass kit's roles (`ui/enhancedFrame.js` FRAME_ROLES - a card a
+The pages' cards are the Companions page's: the stone-and-brass kit's roles (`ui/enhanced/enhancedFrame.js` FRAME_ROLES - a card a
 panel, a picture a well, a state a chip), the sheet writing geometry and its words' colours alone.
 
 **THE PROVIDER.** The pages touch no runtime: the host hands them `setHoldingsProvider({ stable, stableAct, fleet })`.
@@ -50,17 +50,45 @@ and a summon or a send away there is refused by the runtimes' own indoor laws.
 
 The horse (DFU item 94) and the wagon (93), each a card with the item's own inventory picture: owned or not; where it is
 - **Riding**, **In harness** / **Driving**, **Following**, **Waiting** (where it was left, how far), **Hitched** to the
-parked wagon, **Parked** (how far), **Stabled**; with the mod off, or its physical persistence off, the classic
-transport's **With you**; the wagon's load against its 750 kg.
+parked wagon, **Parked** (how far), **With you** (beside a player on foot and never sent away - the mod's WithPlayer,
+which the next door leaves outside), **Stabled** (sent away - WAGON-STABLED, below); with the mod off, or its physical
+persistence off, the classic transport's **With you**; the wagon's load against its 750 kg.
 
 - **SUMMON** is Horse Cart and Cargo's own (`HandleSummonTransport`), its line ANSWERED now rather than said
   (`summonTransport`: the page says it under the cards, the hotkey on the HUD - one body).
 - **SEND AWAY** is its other half (`sendTransportAway`, the port's own): whatever of the pair stands in the world - a
-  parked wagon, a horse waiting or following - leaves it, and the pair is "with the player" in the mod's own sense: the
-  record the persistence switch's turning on makes (`resolvePersistenceEnabledState` for a player on foot). Stabled, the
-  pair is mounted from the Transport window as the mod's WithPlayer state always was, or summoned again. Refused indoors
-  and aboard (as the summon is), while riding or driving, with the persistence off, and with nothing out.
+  parked wagon, a horse waiting or following - leaves it, or is beside a player on foot without having been sent away,
+  and the pair is STABLED: the record the persistence switch's turning on makes (`resolvePersistenceEnabledState` for a
+  player on foot - the mod's WithPlayer), with the record's two words of the port's own set (WAGON-STABLED, below).
+  Stabled, the pair is mounted from the Transport window as the mod's WithPlayer state always was, or summoned again.
+  Refused indoors and aboard (as the summon is), while riding or driving, with the persistence off, and with nothing
+  out.
 - **RENAME HORSE** in place, by the name prompt's own law (`renameHorse` - `resolveHorseNameInput`).
+
+**WAGON-STABLED** (FIELD BUGS 2026-10-15d, `01-Overview/bugs/Field-Bugs-2026-10-15d.md`; Fay, 2026-10-14: "Wagon appears outside of buildings/dungeons when stabled - I
+keep sending my wagon away, but every time I enter a building or dungeon it appears outside again"). Stabled WAS the
+mod's WithPlayer and nothing more - the state of a pair beside a player on foot - and the mod's HandlePreTransition
+[IL_98f0] parks a WithPlayer wagon at every door such a player goes through and stands a WithPlayer horse behind them
+there: the pair sent away came back at the next door. The save record (`systems/horse/horseCartLaw.js` newSaveData) carries
+two words of the port's own beside the mod's fifteen fields, `WagonStabled` and `HorseStabled`, set by Send away alone:
+
+- **A stabled pair stays away.** `handlePreTransition` parks no stabled wagon and stands no stabled horse at the door;
+  a horse mounted from the Transport window leaves a stabled wagon at the stable (`deployWagonBeforeHorseTravel`); a
+  fast travel does not take it (`wagonGoesOnJourney` - no wear, no riders' seats).
+- **What takes it out of the stable lets the word go**: a summon (the page's, the key's - `commitDeployment`,
+  `setHorseLoose`) or any park; a mount (`leaveStable` - the horse ridden, the wagon driven with its horse: the
+  runtime's set, the game's once observed, and the mode a door is gone through in, so a pair driven or ridden through
+  a door is parked there as the mod parks one); the record laid afresh (`resetWagonState`, `zeroHorse` - one sold and
+  another bought, the persistence switch turned); a new game and a load's start. A wagon parked at a door with its
+  horse still at the stable (a wagon bought after the horse was sent) keeps the horse's word.
+- **Saved** with the record and read back only as `true`: a save from before the word loads NOT stabled - the mod's
+  WithPlayer, parked at the next door as before, which the card calls With you and offers to send away.
+- **The words follow it**: the card says Stabled only for what was sent away, and the keep feeds only that horse at
+  the stable (`systems/upkeep/upkeepRuntime.js` horseWhereOf, `06-Systems/Horse-Care.md`); a horse beside its owner unsent
+  is with its owner.
+- **Unchanged**: a stabled wagon's load is reached outdoors, and the pair mounted from the Transport window anywhere,
+  as the mod's WithPlayer pair's always were. A peer sees nothing of a stabled pair (`scenes/horseCartPool.js`
+  parkWord reads a parked wagon and a waiting horse alone), and the town watch throws only a parked wagon.
 
 ## 3. The Fleet - a ship's title is a ledger's, not an item's
 
@@ -175,7 +203,7 @@ is called by her hull again. She is named on her card, on the plaque over her (`
 other player: the boats' word carries **`n`**, a name for each boat of `b` ('' for none), only while one is named - an
 unnamed fleet's record is the older build's to the letter, and a renamed boat is said at once (`csaRecordKey`). A reader
 takes each name through the same law; a bad `n` never drops the boats, a refused name reads as none, and an older
-reader ignores the key (`systems/comeSailAwayWire.js`; `scenes/comeSailAwayPeers.js` `nameAt`).
+reader ignores the key (`systems/comeSailAway/comeSailAwayWire.js`; `scenes/comeSailAway/comeSailAwayPeers.js` `nameAt`).
 
 ## 7. Quays and docking
 
@@ -195,7 +223,7 @@ waist in JETTY_STEP (1 m): a bank that meets the deck within STEP_M takes a rail
 most, RAMP_MAX (10 m) long; no land within JETTY_MAX, no jetty - the quay stands alone, a stage moored to a bar.
 JETTY_MAX is Iliac Puddle's whole shore fit (SHORE_TERRAIN_FIT_METERS, 180 m) and JETTY_BEACH (20 m) - HARBOUR-BOOK,
 below: the jetty is a pier as long as the shelf asks.
-A harbour's quays never cross (QUAY-CROSSING, `01-Overview/Field-Bugs-2026-10-12.md`): a later berth's jetty ends where it
+A harbour's quays never cross (QUAY-CROSSING, `01-Overview/bugs/Field-Bugs-2026-10-12.md`): a later berth's jetty ends where it
 meets an earlier berth's pier (`planQuay`'s `others`, laid in the berths' order by `scenes/quayPool.js`), and
 `findHarbour` sounds no berth whose ship and quay overlap an earlier one's (`quayBox`, `boxesMeet`).
 On it: a kerb along its face, three iron bollards by her stern, her waist and her bow, a lantern post at each landward
@@ -294,7 +322,7 @@ berth, and she stood again inside it as the player came within a pixel. A berth 
 outdoors, shown or not (`berthBoats` - a dungeon's, `inside`, lies in its own place), and of another player's boat
 hidden under its owner at its helm (`comeSailAwayPeers.js` O4: it stands nowhere and is posed all along) - the roll, the
 sea's errands, Summon (`freeBerth`) and the warp (`dockFree`) through `boatAtBerth`. The shots, the fires and the crew
-still read the shown ones. `test/berthhidden.test.js`, `tools/mutants/berthhidden.json`.
+still read the shown ones. `test/systems/naval/berthhidden.test.js`, `tools/mutants/berthhidden.json`.
 
 **THE DOCKS WERE MISSING** (HARBOUR-BOOK, 2026-10-04 - from the field: players reporting the port towns' new docks
 missing). Two causes, both fixed at the root. (1) THE HARBOURS WERE THE SEA FIGHT'S: the naval host kept them and sounded
@@ -314,7 +342,7 @@ and the 40 m walk found no shore - every quay a stage alone out on the water, no
 is carved no shallower than min(11.2 m, Water Depth) (`deepBathymetry.js`), so the deepest keel's berth lies within it at
 any Water Depth over her draft. Measured off the real bathymetry and the floor's fit on a straight coast at Water Depth
 5-250 m and four bearings: every port a harbour, every quay a pier to the land, the longest 166 m; Deep Waters off, a
-9 m jetty as before. `test/harbourbook.test.js`, `tools/mutants/harbourbook.json`.
+9 m jetty as before. `test/systems/naval/harbourbook.test.js`, `tools/mutants/harbourbook.json`.
 
 THE FOUR HOSTS: `scenes/world.js` keeps the harbours, stands the quays and hands the warp; a building's frame
 (`worldModes.js`) and a dungeon's (`dungeonContext.js`) have no sea, and the standalone street (`exterior.js`) no harbour.
@@ -357,21 +385,22 @@ and her orders' answers; with none aboard, her first hand aboard as before.
 ## 9. Files, tests
 
 `systems/fleet.js`, `scenes/fleetHost.js`, `ui/holdingsPages.js`, `ui/fleetPage.js`, `systems/naval/quays.js`,
-`world/quayModel.js`, `scenes/quayPool.js`, `systems/naval/harbourBook.js`; seams in `systems/horseCart.js`,
-`systems/comeSailAway.js` (SummonBoat, LayUpBoat, laidUpHold, the book's seams, the refits' reads),
-`systems/comeSailAwayWire.js`, `scenes/navalHost.js` (fleetStatus, repairAway, refitBoat, freeBerth, the refits' reads),
-`scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js`, `ui/enhancedMenu.js`, `ui/enhancedFrame.js`; the quays'
-in `systems/naval/shipLife.js` (`alongside`), `systems/comeSailAway.js` (`warp`), `world/deepWaterFloor.js`
-(`SHORE_TERRAIN_FIT_METERS`, exported for JETTY_MAX) and `scenes/navalHost.js` (the book read, the docking, the
+`world/quayModel.js`, `scenes/quayPool.js`, `systems/naval/harbourBook.js`; seams in `systems/horse/horseCart.js`,
+`systems/comeSailAway/comeSailAway.js` (SummonBoat, LayUpBoat, laidUpHold, the book's seams, the refits' reads),
+`systems/comeSailAway/comeSailAwayWire.js`, `scenes/naval/navalHost.js` (fleetStatus, repairAway, refitBoat, freeBerth, the refits' reads),
+`scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js`, `ui/enhanced/enhancedMenu.js`, `ui/enhanced/enhancedFrame.js`; the quays'
+in `systems/naval/shipLife.js` (`alongside`), `systems/comeSailAway/comeSailAway.js` (`warp`), `world/deepWater/deepWaterFloor.js`
+(`SHORE_TERRAIN_FIT_METERS`, exported for JETTY_MAX) and `scenes/naval/navalHost.js` (the book read, the docking, the
 gangways).
 
-`test/holdings.test.js` (the tab, the Stable, the runtime's summon and send away), `test/fleet.test.js` (the ledger, the
+`test/systems/horse/holdings.test.js` (the tab, the Stable, the runtime's summon and send away), `test/systems/horse/fb1015_wagonstabled.test.js`
+(WAGON-STABLED: a stabled pair through the real runtime's doors, mounts, summons, sales and saves), `test/systems/naval/fleet.test.js` (the ledger, the
 book under Come Sail Away's real runtime, the refits on the helm and the sea, the away repairs, the host half's every act
-and refusal, the word's names, the page), `test/crewroles.test.js` (the posts given, their places on the deck and the
-crew keeping them against a no-roles control, the First Mate's voice, the Crew panel), `test/quays.test.js` (the quay off a
+and refusal, the word's names, the page), `test/systems/naval/crewroles.test.js` (the posts given, their places on the deck and the
+crew keeping them against a no-roles control, the First Mate's voice, the Crew panel), `test/systems/naval/quays.test.js` (the quay off a
 berth, the shore walked, what stands on it, its model, alongside, docking's law, the pool, the real host's docking and
-gangway, Come Sail Away's seam, the Fleet's word, the world's wiring), `test/auditholdings.test.js` (AUDIT HOLDINGS,
-`01-Overview/Audit-Holdings.md`: a pin a finding), `test/berthhidden.test.js` (BERTH-HIDDEN: a ship out of sight keeps
-her berth), `test/harbourbook.test.js` (HARBOUR-BOOK: the book, the sea reading the world's, the pier across the shelf,
-the world's wiring); `tools/mutants/holdings.json`, `tools/mutants/quays.json`, `tools/mutants/auditholdings.json`,
+gangway, Come Sail Away's seam, the Fleet's word, the world's wiring), `test/systems/naval/auditholdings.test.js` (AUDIT HOLDINGS,
+`01-Overview/audits/Audit-Holdings.md`: a pin a finding), `test/systems/naval/berthhidden.test.js` (BERTH-HIDDEN: a ship out of sight keeps
+her berth), `test/systems/naval/harbourbook.test.js` (HARBOUR-BOOK: the book, the sea reading the world's, the pier across the shelf,
+the world's wiring); `tools/mutants/holdings.json`, `tools/mutants/fb1015_wagonstabled.json`, `tools/mutants/quays.json`, `tools/mutants/auditholdings.json`,
 `tools/mutants/berthhidden.json`, `tools/mutants/harbourbook.json`.

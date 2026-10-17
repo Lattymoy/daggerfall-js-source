@@ -5,7 +5,7 @@
     "old": "export const CHAPTER_DOCTRINES = Object.freeze(['training', 'shelf', 'writs']);",
     "new": "export const CHAPTER_DOCTRINES = Object.freeze(['training', 'shelf']);",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const CHAPTER_DOCTRINE_EFFECTS = Object.freeze({ training: 0.9, shelf: 2, writs: 1 });",
     "new": "export const CHAPTER_DOCTRINE_EFFECTS = Object.freeze({ training: 1, shelf: 2, writs: 1 });",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "typeof v === 'string' && /** @type {string[]} */ (CHAPTER_DOCTRINES).includes(v);",
     "new": "typeof v === 'string';",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
     "new": "drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), own.length)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -42,7 +42,7 @@
     "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
     "new": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, faction), own.length)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -52,7 +52,7 @@
     "old": "drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length)",
     "new": "drawOf(gateHash(CHAPTER_SCHISM_SALT, chapterTitleKey(faction, region)), own.length)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -62,7 +62,7 @@
     "old": "return own.filter((_, i) => i !== out);",
     "new": "return own.filter((_, i) => i !== 0);",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -72,7 +72,7 @@
     "old": "export const SUCCESSION_CANDIDATES = 3;",
     "new": "export const SUCCESSION_CANDIDATES = 2;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "old": "export const SUCCESSION_TURNING = 3;",
     "new": "export const SUCCESSION_TURNING = 4;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -90,7 +90,7 @@
     "old": "(event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
     "new": "(event === 'schism' ? 3 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -99,7 +99,7 @@
     "old": "(event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0)",
     "new": "(event === 'schism' ? 2 : SUCCESSION_CANDIDATES)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
     "new": "Number.isSafeInteger(side) && /** @type {number} */ (side) < chapterSidesOf(event)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
     "new": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) <= chapterSidesOf(event)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
     "new": "/** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "  if (a > b) return 0;\n",
     "new": "  if (a >= b) return 0;\n",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "  return master === 0 || master === 1 ? master : null;\n",
     "new": "  return null;\n",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "  return master === 0 || master === 1 ? master : null;\n",
     "new": "  return master ?? null;\n",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "(Number.isSafeInteger(master) ? /** @type {number} */ (master) : Number.isSafeInteger(top)",
     "new": "(master ? /** @type {number} */ (master) : Number.isSafeInteger(top)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -171,8 +171,8 @@
     "old": ": Number.isSafeInteger(top) ? /** @type {number} */ (top) : 0);",
     "new": ": top ? /** @type {number} */ (top) : 0);",
     "tests": [
-      "test/chap6b_backing.test.js",
-      "test/audit_chap5.test.js"
+      "test/net/chap6b_backing.test.js",
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "count + (doctrine === 'writs' ? CHAPTER_DOCTRINE_EFFECTS.writs : 0);",
     "new": "count;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "d.event === 'schism' ? (chapterDoctrineOk(d.doctrine) ?",
     "new": "d.event === 'schism' ? (d.doctrine ?",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -199,7 +199,7 @@
     "old": "d.event === 'succession' && Number.isSafeInteger(d.heir) ?",
     "new": "d.event === 'succession' ?",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "doctrine: chapterDoctrineOk(r.doctrine) ? String(r.doctrine) : null,",
     "new": "doctrine: null,",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "if (season && week >= season.start + SUCCESSION_TURNING - 1) await successionNamed(",
     "new": "if (season && week >= season.start + SUCCESSION_TURNING - 2) await successionNamed(",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "live(c) === 'succession' && !Number.isSafeInteger(c.data.heir));",
     "new": "live(c) === 'succession');",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "merit: backs.size ? await accountMeritBetween(db, season.start, week) : new Map()",
     "new": "merit: backs.size ? await accountMeritBetween(db, season.start + 1, week) : new Map()",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -244,7 +244,7 @@
     "old": "FROM npc_chapter_backing WHERE season = ?1 ORDER BY account')",
     "new": "FROM npc_chapter_backing WHERE season = ?1')",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "FROM npc_chapter_backing WHERE season = ?1 ORDER BY account')\n    .bind(season.n).all();",
     "new": "FROM npc_chapter_backing WHERE season = ?1 ORDER BY account')\n    .bind(season.n + 1).all();",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "\"SELECT faction, region, char_id FROM npc_chapter_seats WHERE seat = 'master'\"",
     "new": "\"SELECT faction, region, char_id FROM npc_chapter_seats\"",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "    const master = list.find((b) => b.char === masters.get(k))?.side ?? null;\n",
     "new": "    const master = null;\n",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -280,7 +280,7 @@
     "old": "return n > 0 && (!best || n > best.n) ? { account: b.account, side: b.side, n } : best;",
     "new": "return (!best || n > best.n) ? { account: b.account, side: b.side, n } : best;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "return n > 0 && (!best || n > best.n) ? { account: b.account, side: b.side, n } : best;",
     "new": "return n > 0 && (!best || n >= best.n) ? { account: b.account, side: b.side, n } : best;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "const n = merit.get(`${k}|${b.account}`) ?? 0;",
     "new": "const n = merit.get(`${c.faction}|${b.account}`) ?? 0;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "named: master !== null ? 'master' : top ? 'member' : 'hall'",
     "new": "named: master !== null ? 'master' : 'member'",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "old": "for (const b of list) sums[b.side] += by.get(`${k}|${b.account}`) ?? 0;",
     "new": "for (const b of list) sums[b.side] = by.get(`${k}|${b.account}`) ?? 0;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "const won = schismWinner(sums, list.find((b) => b.char === masters.get(k))?.side ?? null);",
     "new": "const won = schismWinner(sums, null);",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -334,7 +334,7 @@
     "old": "schismDoctrinesOf(season.n, c.faction, c.region)[won];",
     "new": "schismDoctrinesOf(season.n, c.faction, c.region)[1 - won];",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -343,7 +343,7 @@
     "old": "if (doctrine) { c.doctrine = doctrine; c.doctrineSeason = season.n + 1; }",
     "new": "if (doctrine) { c.doctrine = doctrine; c.doctrineSeason = season.n; }",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "if ([...all.values()].some((c) => live(c) === 'schism')) {",
     "new": "if (false) {",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "JSON.stringify(c.data), c.shut, c.doctrine, c.doctrineSeason]);",
     "new": "JSON.stringify(c.data), c.shut, null, c.doctrineSeason]);",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "old": "shut_season = NULL, doctrine = NULL, doctrine_season = NULL, patron = NULL",
     "new": "shut_season = NULL, patron = NULL",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "old": "const doctrine = e.doctrineSeason === n ? e.doctrine : null;",
     "new": "const doctrine = e.doctrine;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "old": "if (!event && !shut && !doctrine) return null;",
     "new": "if (!event && !shut) return null;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -397,7 +397,7 @@
     "old": "...(event === 'schism' ? { sides: schismDoctrinesOf(n, Number(r.faction), Number(r.region)) } : {}),",
     "new": "",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -406,7 +406,7 @@
     "old": "...(event === 'succession' && Number.isSafeInteger(e.data.heir) ? { heir: e.data.heir } : {}),",
     "new": "",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -415,7 +415,7 @@
     "old": "...(shut ? { shut: true } : {}), ...(doctrine ? { doctrine } : {}),",
     "new": "...(shut ? { shut: true } : {}),",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -424,7 +424,7 @@
     "old": "!regionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };",
     "new": "!regionOk(region)) return { error: 'body' };",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -433,7 +433,7 @@
     "old": "  if (!season) return { error: 'no-event' };\n  // AUDIT CHAP5 S3",
     "new": "  // AUDIT CHAP5 S3",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -443,7 +443,7 @@
     "old": "const event = e && e.eventSeason === season.n ? e.event : null;",
     "new": "const event = e ? e.event : null;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -452,7 +452,7 @@
     "old": "  if (!chapterBackOk(event, side)) return { error: 'no-side' };\n",
     "new": "",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -461,7 +461,7 @@
     "old": "(Number.isSafeInteger(e.data.heir) || week >= season.start + SUCCESSION_TURNING)",
     "new": "(week >= season.start + SUCCESSION_TURNING)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -470,7 +470,7 @@
     "old": "(Number.isSafeInteger(e.data.heir) || week >= season.start + SUCCESSION_TURNING)",
     "new": "(Number.isSafeInteger(e.data.heir) || week > season.start + SUCCESSION_TURNING)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -479,7 +479,7 @@
     "old": "faction_id = ?1 AND member = 1 AND dormant = 0)\n      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5",
     "new": "faction_id = ?1 AND member = 1)\n      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -488,7 +488,7 @@
     "old": "WHERE char_id = ?5 AND player = ?4 AND faction_id = ?1 AND member = 1 AND dormant = 0)",
     "new": "WHERE char_id = ?5 AND player = ?4 AND member = 1 AND dormant = 0)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -497,7 +497,7 @@
     "old": "AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5 AND player = ?4 AND dead_at IS NULL)\n      AND EXISTS (SELECT 1 FROM npc_chapters",
     "new": "AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?5 AND player = ?4)\n      AND EXISTS (SELECT 1 FROM npc_chapters",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -506,7 +506,7 @@
     "old": "DO UPDATE SET char_id = excluded.char_id, side = excluded.side, at = excluded.at",
     "new": "DO UPDATE SET char_id = excluded.char_id, at = excluded.at",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -515,7 +515,7 @@
     "old": "DO UPDATE SET char_id = excluded.char_id, side = excluded.side, at = excluded.at",
     "new": "DO UPDATE SET side = excluded.side, at = excluded.at",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -524,7 +524,7 @@
     "old": "'SELECT faction, side FROM npc_chapter_backing WHERE region = ?1 AND season = ?2 AND account = ?3').bind(region, n, account)",
     "new": "'SELECT faction, side FROM npc_chapter_backing WHERE region = ?1 AND season = ?2').bind(region, n)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -533,7 +533,7 @@
     "old": ", ...(backed.has(f) ? { backed: backed.get(f) } : {}),",
     "new": ",",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -542,7 +542,7 @@
     "old": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero, player.id) : [],",
     "new": "chapters: halls ? await chapterLines(db, region, nowS, members, character, zero) : [],",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -551,7 +551,7 @@
     "old": "doctrineWritCount(hallWritCountIn(active, strengths.get(f)), events.get(f)?.doctrine)",
     "new": "doctrineWritCount(hallWritCountIn(active, strengths.get(f)), null)",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -560,7 +560,7 @@
     "old": "|| path === '/v1/chapters/back' || path === '/v1/chapters/patron') {",
     "new": "|| path === '/v1/chapters/patron') {",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -569,7 +569,7 @@
     "old": "  '/v1/chapters/back',   // CHAP6b: a member's backing in its chapter's Season\n",
     "new": "",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -578,7 +578,7 @@
     "old": "  'no-event': 409, closed: 409, 'not-member': 403,",
     "new": "  closed: 409,",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   }
 ]

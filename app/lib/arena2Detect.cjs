@@ -32,7 +32,7 @@
 //    model - and the shell never asked again, because the path it had
 //    was "valid". Every folder is held to REQUIRED_ARENA2 now, the same
 //    list the game boots against (pinned equal to
-//    src/scenes/dataSource.js by test/da9_arena2detect.test.js).
+//    src/scenes/dataSource.js by test/tooling/da9_arena2detect.test.js).
 //
 // Read-only, bounded (a capped walk, a capped depth), and it never
 // throws: a detector that can crash the first launch is worse than none.

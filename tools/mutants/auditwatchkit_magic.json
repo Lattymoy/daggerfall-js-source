@@ -5,7 +5,7 @@
     "old": "rec, null, { allyCast: true }, foeSinks(rec, false));",
     "new": "rec, playerCaster(), { allyCast: true }, foeSinks(rec, false));",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "(allyInReach(eye, dir, ALLY_TOUCH_REACH) || companionInReach(eye, dir, ALLY_TOUCH_REACH))",
     "new": "allyInReach(eye, dir, ALLY_TOUCH_REACH)",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "function liftAll() { for (const s of stood.values()) { carry(s); lift(s); } stood.clear(); }",
     "new": "function liftAll() { for (const s of stood.values()) lift(s); stood.clear(); }",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "{ carry(s); stood.delete(k); continue; }",
     "new": "{ stood.delete(k); continue; }",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (fx?.length) rec.entity.activeEffects =",
     "new": "if (false) rec.entity.activeEffects =",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "fx.filter((a) => a && !a.ended)",
     "new": "fx.filter((a) => a)",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "          if (c.maxHealth > 0) { rec.entity.maxHealth = c.maxHealth; rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth)); }",
     "new": "          { const max = rec.entity.maxHealth; if (c.health != null && c.maxHealth > 0 && max > 0) rec.entity.health = Math.max(1, Math.min(max, Math.round(c.health / c.maxHealth * max))); }",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "Math.min(c.maxHealth, c.health ?? c.maxHealth)",
     "new": "Math.min(c.maxHealth, c.maxHealth)",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
     "new": "rec.entity.health = Math.min(c.maxHealth, c.health ?? c.maxHealth);",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (!companionBodies || !sp || free || !companionCastable(sp)) return [];\n",
     "new": "    if (!companionBodies || !sp || free || !allyCastable(sp)) return [];\n",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "return allyCastable(spell) && spell.effects.some(companionEffect);",
     "new": "return allyCastable(spell);",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "spell.effects.some(companionEffect)",
     "new": "spell.effects.every(companionEffect)",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "icon: sp?.icon }, { companion: true });",
     "new": "icon: sp?.icon });",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "stranger ? strangerEffect : companion ? companionEffect : allyEffect",
     "new": "stranger ? strangerEffect : allyEffect",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "new Set([15, 39, 44])",
     "new": "new Set([39, 44])",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "new Set([15, 39, 44])",
     "new": "new Set([15, 44])",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "new Set([15, 39, 44])",
     "new": "new Set([15, 39])",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "if (!rec || rec.dead || rec._knockedOut || !rec.entity || rec.puppet ||",
     "new": "if (!rec || rec.dead || !rec.entity || rec.puppet ||",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { sayArm('mate-aim', prevArm, pressButtonToFireSpellText()); return true; }\n",
     "new": "      if (companionNear(lastAim?.eye ?? null, sp)) { sayArm('mine-near', prevArm, pressButtonToFireSpellText(), COMPANION_ARMED_LINE); return true; }\n      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { sayArm('mate-aim', prevArm, pressButtonToFireSpellText()); return true; }\n",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "      if (!free && allyCastable(sp) && allyNear(lastAim?.eye ?? null, sp)) { sayArm('mate-near', prevArm, pressButtonToFireSpellText(), ALLY_ARMED_LINE); return true; }\n      if (companionNear(lastAim?.eye ?? null, sp)) { sayArm('mine-near', prevArm, pressButtonToFireSpellText(), COMPANION_ARMED_LINE); return true; }",
     "new": "      if (companionNear(lastAim?.eye ?? null, sp)) { sayArm('mine-near', prevArm, pressButtonToFireSpellText(), COMPANION_ARMED_LINE); return true; }\n      if (!free && allyCastable(sp) && allyNear(lastAim?.eye ?? null, sp)) { sayArm('mate-near', prevArm, pressButtonToFireSpellText(), ALLY_ARMED_LINE); return true; }",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      if (companionInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { sayArm('mine-aim', prevArm, pressButtonToFireSpellText()); return true; }\n",
     "new": "      if (!free && allyCastable(sp) && allyNear(lastAim?.eye ?? null, sp)) { sayArm('mate-near', prevArm, pressButtonToFireSpellText(), ALLY_ARMED_LINE); return true; }\n      if (companionInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH, sp)) { sayArm('mine-aim', prevArm, pressButtonToFireSpellText()); return true; }\n",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "if (giveToCompanion(t, sp, { quiet: true })) names.push(t.name);\n    const line = allyCastCasterLineMany(sp.name, names);\n    if (line) sayGift(line);   // GIFT-QUIET",
     "new": "if (giveToCompanion(t, sp, { quiet: true })) names.push(t.name);\n    const line = allyCastCasterLineMany(sp.name, names);\n    void line;",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "PERSON_RADIUS + 0.15 ||",
     "new": "PERSON_RADIUS + 1.5 ||",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": " || py < y - 0.2 || py > y + m.ai.height + 0.2) continue;",
     "new": ") continue;",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "if (!(along > 0) || along > reach) continue;",
     "new": "if (!(along > 0)) continue;",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      if (along >= bestT) continue;\n      const hit = collider.raycast(eye, [ux, uy, uz], along);",
     "new": "      const hit = collider.raycast(eye, [ux, uy, uz], along);",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "applySpellToFoe(gift, effectiveLevel(playerEntity), rec,",
     "new": "applySpellToFoe(gift, 1, rec,",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "try { list = companionBodies() ?? null; } catch { return []; }",
     "new": "list = companionBodies() ?? null;",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "try { const out = codec ? codec.deserialize(data) : data.slice(); return Array.isArray(out) ? out : []; } catch { return []; }",
     "new": "const out = codec ? codec.deserialize(data) : data.slice(); return Array.isArray(out) ? out : [];",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "try { return codec ? codec.serialize(items) : items.slice(); } catch { return []; }",
     "new": "return codec ? codec.serialize(items) : items.slice();",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "return Array.isArray(out) ? out : [];",
     "new": "return out;",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "if (!rec || rec.dead || rec._knockedOut || !rec.entity || rec.puppet ||",
     "new": "if (!rec || rec._knockedOut || !rec.entity || rec.puppet ||",
     "tests": [
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -293,8 +293,8 @@
     "old": "    const rec = mark?.rec;\n    if (!rec || rec.dead || rec._knockedOut || !rec.entity) return false;",
     "new": "    const rec = mark?.rec;\n    if (!rec) return false;",
     "tests": [
-      "test/companionkit.test.js",
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
     ],
     "equivalent": true,
     "why": "belt and braces: every mark giveToCompanion is handed was minted by companionMarksFor in the same call (the crosshair pick, the touch, the blast's sweep, the missile's contact), and that already passes over a dead, knocked-out or bodiless record (AUDIT WK-M6 and LD-HM-dead-given pin it there); kept as the receiver's own guard, the shape of ALLY-CAST's"

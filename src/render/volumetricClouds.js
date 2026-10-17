@@ -47,7 +47,7 @@
 // ground agree because they are one field.
 //
 // The ray construction in the composite is the dome's own, line for
-// line (test/volumetricClouds.test.js pins the two texts against each
+// line (test/render/volumetricClouds.test.js pins the two texts against each
 // other), so a cloud sits where the dome's sun is.
 //
 // Behind Enhanced Environments only (the one switch), on the port's own
@@ -59,7 +59,7 @@ import { CloudNoise } from './cloudNoise.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { WEATHER_EASE_MINUTES, WEATHER_SKY, WIND_SECONDS_PER_MINUTE, sunSkyDirection, paletteAt } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
-import { SD_BRASS_GLSL } from '../world/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
+import { SD_BRASS_GLSL } from '../world/superDungeon/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
 
 /** VC7e: a JS number as a GLSL float literal (airPass.js glslFloat's law: `${1}` is an int to the compiler). */
 const glslF = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
@@ -1447,7 +1447,7 @@ export class VolumetricClouds {
     this.flash = 0;
     /** EVENT1: the live event's grade over the clouds, 0..1 (world/dreadSky.js) - the host's. */
     this.dread = 0;
-    /** AUDIT SD III (V8): the brass air's grade over them, 0..1 (world/sdBrassSky.js) - the host's. */
+    /** AUDIT SD III (V8): the brass air's grade over them, 0..1 (world/superDungeon/sdBrassSky.js) - the host's. */
     this.brass = 0;
     this.bolt = null;   // WEATHER3d: a distant strike's light, or none
     this.cells = [];          // WEATHER2c: this frame's cells, in the host's world metres, capped at the tier's count

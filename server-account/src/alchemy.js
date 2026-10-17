@@ -29,10 +29,10 @@ import {
   piecePoints, essenceOf, disenchantXp, DISENCHANTER,
 } from '../../src/net/alchemyLaw.js';
 import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, craftHoldOf } from './realm.js';   // CRAFT-HOLD: a held character's craft   // AUDIT PROF-541 B2: a realm character's piece out of its record
-import { takeTradeGoods, tradeableRecord } from '../../src/net/realmTradeLaw.js';   // AUDIT PROF-541 B2: as MARKET-ANY's listGood takes a record's piece
+import { takeTradeGoods, tradeableRecord } from '../../src/net/realm/realmTradeLaw.js';   // AUDIT PROF-541 B2: as MARKET-ANY's listGood takes a record's piece
 import { pieceListable } from '../../src/net/marketLaw.js';   // AUDIT PROF-541 R2-S6: what the market lists is what disenchants
 import { firmStatsOf } from './firmament.js';   // FIRM1: the Firmament's hand on a brew's and a disenchant's XP
-import { xpPct, scaleXp } from '../../src/net/firmamentLaw.js';
+import { xpPct, scaleXp } from '../../src/net/firmament/firmamentLaw.js';
 import { reforgeEssence, REFORGE_RANK } from '../../src/net/temperLaw.js';   // CRAFT4: the Reforge with Essence
 
 const HERB_RE = /^p[12]:\d+$/;
@@ -292,7 +292,7 @@ async function reforgeAnswer(db, player, row, nowS, extra = {}) {
  * (temperLaw REFORGE_RANK; `prof-rank`) spends 2 Arcane Essence for a Magic piece's line or 5 for a Rare's (temperLaw
  * reforgeEssence - Legendary and up, none: law 7, `prof-reforge`), never gold's units, and is answered the seed the line
  * is rolled again with - the service's CSPRNG, as a craft's quality is its roll. The service cannot see the pack: the
- * piece and its line are the client's (systems/lootRarity.js reforgeAffix - the Loot arc's own Reforge: one line, and
+ * piece and its line are the client's (systems/loot/lootRarity.js reforgeAffix - the Loot arc's own Reforge: one line, and
  * once a piece is reforged, that line alone), the save's word as the Mages Guild's reforge is; the Essence is the bound.
  * DECIDED: no XP - the Essence's XP was its disenchanting's. Refused: the Essence short (`stores-short`, `stores-gold`).
  */

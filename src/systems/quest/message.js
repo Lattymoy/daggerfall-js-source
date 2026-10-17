@@ -77,7 +77,7 @@ export class Message {
    *  GUIDE1: the fourth argument is the PORT'S, not C#'s. Message.cs
    *  passes the literal true (below), and so does every caller that
    *  leaves it off - which is every DFU caller. Its one reader is the
-   *  quest lens's quiet read (ui/questLens.js), which takes the
+   *  quest lens's quiet read (ui/quest/questLens.js), which takes the
    *  bracket without the reveal: a face that reads the journal on the
    *  player's behalf must not open talk topics the player never asked
    *  the journal for. */

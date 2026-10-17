@@ -10,7 +10,7 @@ lived under `public/visual-changes/`, twelve of them carrying classic
 Vite serves this directory verbatim every one of them shipped to GitHub
 Pages. A RENDER OF GAME DATA IS GAME DATA: the galleries are generated
 locally by `tools/fpProbe.mjs`, are gitignored, and do not live here.
-`test/doctrine.test.js` fails the suite if a tracked file under `public/`
+`test/tooling/doctrine.test.js` fails the suite if a tracked file under `public/`
 is not on the allow-list below.
 
 Port-Doctrine keeps ARENA2 out of the repo permanently: the readers load the user's own files at runtime (dev via
@@ -27,7 +27,7 @@ fullscreen iOS gives a web page. The three icons under `icons/` are
 DRAWN, by `scripts/makeIcons.mjs`: the enhanced skin's ink, brass and
 bone, a block-letter D over a seeded star field. No ARENA2 pixel is
 in them; re-run the script and the same bytes come out. All four are
-on the allow-list in `test/doctrine.test.js` with that reason.
+on the allow-list in `test/tooling/doctrine.test.js` with that reason.
 
 ## logo.png — the title screen (U21c)
 

@@ -1,8 +1,8 @@
 # The Firmament - a passive tree for everything you can do online (FIRM1)
 
-> Design page and record (2026-10-13). One pull request, five parts: the sky and the law (`src/net/firmamentTree.js`,
-> `src/net/firmamentLaw.js`), the account service (`server-account/src/firmament.js`, migration 0114), the client's book
-> and powers (`src/net/firmamentBook.js`, `src/systems/firmamentLive.js`, `src/systems/firmamentPowers.js`), the window
+> Design page and record (2026-10-13). One pull request, five parts: the sky and the law (`src/net/firmament/firmamentTree.js`,
+> `src/net/firmament/firmamentLaw.js`), the account service (`server-account/src/firmament.js`, migration 0114), the client's book
+> and powers (`src/net/firmament/firmamentBook.js`, `src/systems/firmamentLive.js`, `src/systems/firmamentPowers.js`), the window
 > (`src/ui/firmamentWindow.js`, `src/ui/firmamentOver.js`) and the lab (`firmament.html`). Where this page and the code
 > disagree, the code's own headers and the pins are what runs.
 
@@ -33,7 +33,7 @@ And the one condition put beside it: **without destroying the balance of PvE.**
   answers only MY entity at a foe, sleeps in a refereed fight (`sigil.js sigilDueling`) and never touches a blow or a
   spell at another player. The sky rides those seams and inherits every one of those guarantees.
 
-## 3. The sky (`src/net/firmamentTree.js`)
+## 3. The sky (`src/net/firmament/firmamentTree.js`)
 
 Path of Exile's shape, one for one, laid on Tamriel's sky. **518 stars, 589 lines.**
 
@@ -66,9 +66,9 @@ Path of Exile's shape, one for one, laid on Tamriel's sky. **518 stars, 589 line
   of the sky is refunded by the law (`cleanKeys` drops a key no table holds), and every star that reached the start only
   through it drops with it, free (`unpackTree` keeps the stars still joined - AUDIT UICALM-FIRM1 L1 L4: the orphans had
   stayed in the row paying their stats, and a later refund billed them). The keys are pinned by hash
-  (`test/firm1_law.test.js`), so a layout change that would move one fails the suite.
+  (`test/net/firmament/firm1_law.test.js`), so a layout change that would move one fails the suite.
 
-## 4. The purses and the law (`src/net/firmamentLaw.js`)
+## 4. The purses and the law (`src/net/firmament/firmamentLaw.js`)
 
 - **Stars**: 2 for every Renown level past the first (98 at Renown 50 - the lead dev: "make it 1 point per renown level", then "make it 2 points per level up"). Spent anywhere. With the Craft purse full beside it (125) a character holds at most 223 of the 518 stars: nobody ever fills the sky, and the caps (section 4.1) hold however many are spent.
 - **Craft points**: 1 for every 8 profession ranks, summed over the ten tracks (125 at ten Masters). Spent on the life
@@ -90,7 +90,7 @@ Path of Exile's shape, one for one, laid on Tamriel's sky. **518 stars, 589 line
   hex of the sky's own key list, so a code made before stars were added is refused, never read as another build.
 - **A Renown level is said as an Ascend is** (the lead dev, 2026-10-13: "when leveling up a renown give the player the
   same message as he would ascend"): the level's fanfare, and on the enhanced skin the HUD strip's gold row - "You have
-  risen", the Renown and its new Stars (`ui/levelNotice.js announceRenownRise`); the classic skin says it in a line. It
+  risen", the Renown and its new Stars (`ui/levelUp/levelNotice.js announceRenownRise`); the classic skin says it in a line. It
   owes nothing, so the row goes as news goes. Every road a rise is heard by (a report's answer, a writ's) says it through
   `scenes/world.js renownRose`, once.
 - **The respec** (the lead dev, 2026-10-13: "let the player respec for 10k gold add an respec button to this in the upper
@@ -105,7 +105,7 @@ Path of Exile's shape, one for one, laid on Tamriel's sky. **518 stars, 589 line
   points in it - floored, so Ascend's points are never matched point for point. Resistances read as the percent chance
   they are on the saving throw's hundred.
 
-- **FIRM2 (2026-10-15) - every star counts, and the sky may lift a stat past 100** (the lead dev: "lower the values"): the caps stay; the stars came down. Summed over one sign's whole sky (`tools/firmamentRebalance.mjs` prints the check), 43 channels passed their cap, 29 of them still once the small stars went one for one - a path star at +6% and a chain at +4% meant a Mage's `pct.intelligence` stood at 36 against a 15 cap, so a third of its stars bought nothing. Small stars' attribute and skill shares are now one for one - a star's authored points as a percent, where they had been doubled (+1% to +4% a star) - and the notables, keystones and life stars were scaled down in whole numbers until no channel of any sign sums past its cap (`test/firm2_balance.test.js` holds it). And the sky's attribute bonus lifts the attribute ceiling by what it adds - FIRM-MAX's `statMax` (4.1 below): a 100 Strength with the sky's whole +15 reads 115 (`test/audit_uicalm_firm1.test.js`), and Ascend's points alone stop at 100.
+- **FIRM2 (2026-10-15) - every star counts, and the sky may lift a stat past 100** (the lead dev: "lower the values"): the caps stay; the stars came down. Summed over one sign's whole sky (`tools/firmamentRebalance.mjs` prints the check), 43 channels passed their cap, 29 of them still once the small stars went one for one - a path star at +6% and a chain at +4% meant a Mage's `pct.intelligence` stood at 36 against a 15 cap, so a third of its stars bought nothing. Small stars' attribute and skill shares are now one for one - a star's authored points as a percent, where they had been doubled (+1% to +4% a star) - and the notables, keystones and life stars were scaled down in whole numbers until no channel of any sign sums past its cap (`test/net/firmament/firm2_balance.test.js` holds it). And the sky's attribute bonus lifts the attribute ceiling by what it adds - FIRM-MAX's `statMax` (4.1 below): a 100 Strength with the sky's whole +15 reads 115 (`test/systems/audit_uicalm_firm1.test.js`), and Ascend's points alone stop at 100.
 
 ### 4.1 The budget - why PvE stays where it is
 
@@ -255,11 +255,11 @@ lends the whole guild) are the next slice (section 10).
 
 ## 11. Pins
 
-`test/firm1_law.test.js` (16: the build code, the trades take nothing away, the sky's shape and spacing, the keys'
-hash, the law, the purses, the budget whole), `test/firm1_service.test.js` (8: the respec, the switch, the purses, a
+`test/net/firmament/firm1_law.test.js` (16: the build code, the trades take nothing away, the sky's shape and spacing, the keys'
+hash, the law, the purses, the budget whole), `test/net/firm1_service.test.js` (8: the respec, the switch, the purses, a
 change judged whole, Craft for the life ring alone, a repeat, the refund's silver, the harvest's XP),
-`test/firm1_powers.test.js` (10: raw on the key stars, a maxed stat (FIRM-MAX), the Wrothgarian zone, offline, the fold, the duel and the mentor,
-the blow, the spell, the damage and the layer, the acts), `test/firm1_book.test.js` (4: the respec, the read, a change
-coalesced, a lost answer kept), `test/firm2_balance.test.js` (3: FIRM2 - no channel of a sign sums past its cap, a small star
-one for one, the lift past 100), and the audit's `test/audit_uicalm_firm1.test.js` (`01-Overview/Audit-UICalm-Firm1.md`). The lab: `firmament.html`
+`test/systems/firm1_powers.test.js` (10: raw on the key stars, a maxed stat (FIRM-MAX), the Wrothgarian zone, offline, the fold, the duel and the mentor,
+the blow, the spell, the damage and the layer, the acts), `test/net/firmament/firm1_book.test.js` (4: the respec, the read, a change
+coalesced, a lost answer kept), `test/net/firmament/firm2_balance.test.js` (3: FIRM2 - no channel of a sign sums past its cap, a small star
+one for one, the lift past 100), and the audit's `test/systems/audit_uicalm_firm1.test.js` (`01-Overview/audits/Audit-UICalm-Firm1.md`). The lab: `firmament.html`
 (`?dress=grimoire` for the Grimoire, `?fresh=1`, `?renown=`, `?ranks=`).

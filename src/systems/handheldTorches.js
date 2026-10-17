@@ -25,7 +25,7 @@
 // the notes below cite that reading.
 //
 // THE SHAPE HERE. createHandheldTorches() is the component; the weapon
-// rig (combat/weaponRig.js) owns one per host beside the widget and
+// rig (combat/weapon/weaponRig.js) owns one per host beside the widget and
 // feeds it the frame - update() is Update, lateUpdate() is LateUpdate
 // (the mod runs both; the rig calls them in that order), draw() is
 // OnGUI's repaint. The keys are read as KeyCode names the way the
@@ -43,16 +43,16 @@
 // mod draws without that mod).
 
 import { modSettingsOf } from './modSettings.js';
-import { getBool, getInt } from './settings.js';
+import { getBool, getInt } from './settings/settings.js';
 import { liveStat } from './statMods.js';
 import { TEMPLATES, isLightSource } from './useItem.js';
 import { getItem, addItem } from './inventory.js';
-import { conditionWord, itemLongName } from './itemInfo.js';
+import { conditionWord, itemLongName } from './item/itemInfo.js';
 import { getItemHands, EQUIP_SLOTS, ITEM_HANDS, addEquipChangeListener } from './equip.js';   // HT6: the worn set's own door - the hand law runs at the equip moment too
 import { weaponTypeForItem, WEAPON_TYPES, NATIVE_W, NATIVE_H } from '../combat/fpsWeapon.js';
-import { weaponOffsetHeight } from '../ui/hudLarge.js';
+import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';
 import { SOUND } from './soundClips.js';
-import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../combat/weaponWidget.js';   // WW1: Unity's pieces and the two choice tables, one home
+import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../combat/weapon/weaponWidget.js';   // WW1: Unity's pieces and the two choice tables, one home
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
 import { toScreenOrder } from '../formats/color32Order.js';   // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from './textureReplacement.js';
@@ -588,7 +588,7 @@ export function createHandheldTorches({
    *  by `overlayHeld` at every host) - so a shield equipped in an OPEN
    *  inventory window did not reach the law until the window closed,
    *  and the window went on painting a lit torch (`lit:` in
-   *  ui/enhancedInventory.js reads entity.lightSource at render time)
+   *  ui/enhanced/enhancedInventory.js reads entity.lightSource at render time)
    *  beside the shield the player had just put on the same hand. The
    *  equip table fires its listeners inside equipItem / unequipSlot
    *  (equip.js's fireEquipChange), so the SAME block runs the moment

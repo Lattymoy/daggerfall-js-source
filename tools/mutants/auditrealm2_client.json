@@ -5,7 +5,7 @@
     "old": ", ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils",
     "new": ", ...(serpentSpoils",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": " try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils",
     "new": " try { serpentSpoils",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (realmSession) return;   // the realm's: no slot\n",
     "new": "    if (realmSession) { realmSession.leave({ keepalive: true }); return; }\n",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    whenPageGoes(globalThis, () => { realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  win?.addEventListener?.('pagehide', () => { gone(); });\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  win?.addEventListener?.('pageshow', (/** @type {any} */ e) => { if (e?.persisted) back(); });\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "{ if (e?.persisted) back(); }",
     "new": "{ back(); }",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (!j.ok || !(at === current || (unsure && at === current + 1))) {",
     "new": "      if (!j.ok) {",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      lease = j.data.lease;\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (lost !== 'left') return { ok: false, error: lost ?? 'joined' };\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "sayRealmSave(said, (t) => townTalk.say(t))",
     "new": "sayRealmSave({ ok: true }, (t) => townTalk.say(t))",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "sayRealmSave(said, (t) => hudText.add(t))",
     "new": "sayRealmSave({ ok: true }, (t) => hudText.add(t))",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "_realmSaveHooks.landed(who, holding); return r; })",
     "new": "_realmSaveHooks.landed(who, holding); })",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "(r?.ok ? REALM_SAVED_TEXT :",
     "new": "(true ? REALM_SAVED_TEXT :",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -131,52 +131,52 @@
     "old": "    registerModSaveData(COME_SAIL_AWAY_VENDOR, comeSailAwayCarrier({",
     "new": "    void (COME_SAIL_AWAY_VENDOR, comeSailAwayCarrier({",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-C3-carrier-forgets-the-load",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      carried = rec ?? undefined;\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-M3-lent-ship-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        deps.ship?.assign?.('None');\n      }",
     "new": "      }",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-M3-lent-ship-scenes-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        for (const name of TEMPORARY_SHIP_SCENES) deps.ship?.removePermanentScene?.(name);\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-M3-helm-kept-in-the-record",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (carried?.TemporaryShip || carried?.currentBoat >= 0) carried = { ...carried, currentBoat: -1, TemporaryShip: false };\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-M3-own-ship-taken",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (carried?.TemporaryShip) {\n",
     "new": "      if (carried) {\n",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "last = { ok: true, seq: current }; answer(job, last);",
     "new": "last = { ok: true, seq: current }; if (pending) pending.waiters.push(...job.waiters.splice(0)); else answer(job, last);",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ],
     "note": "RESCUE-SAVE (PIN MOVED): re-aimed by content - the landed put now also drops or re-bases the device's copy, on its own lines."
   },
@@ -195,7 +195,7 @@
     "old": "      if (pending) answer(pending, lost ? { ok: false, error: lost } : last);\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "      running = null;\n",
     "new": "      void Promise.resolve().then(() => { running = null; });\n",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "JSON.stringify(v).replace(/[\\u007f-\\uffff]/g,",
     "new": "JSON.stringify(v).replace(/(?!)/g,",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "JSON.stringify(v).replace(/[\\u007f-\\uffff]/g,",
     "new": "JSON.stringify(v).replace(/[\\u0100-\\uffff]/g,",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "        own = takeSceneOwn(sceneCache(), homeSceneName(mapId, bd.buildingKey));",
     "new": "        void Promise.resolve().then(() => { own = takeSceneOwn(sceneCache(), homeSceneName(mapId, bd.buildingKey)); for (const item of own) decorPackGive(item); });",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "/* no duel was built: nothing to end */ } onlineCheckpoint(); await Promise.race(",
     "new": "/* no duel was built: nothing to end */ } realmCheckpoint(); await Promise.race(",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "setBeforeTitleExit(async () => { if (!realmSession.lost) { try { duelLeaveNow(); } catch { /* no duel was built: nothing to end */ } onlineCheckpoint();",
     "new": "setBeforeTitleExit(async () => { if (!realmSession.lost) { onlineCheckpoint();",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": " || !putMayClear(r)) {",
     "new": ") {",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ],
     "note": "RESCUE-SAVE (PIN MOVED): re-aimed by content - the refusal that ends the session is a block now (the device's copy dropped first)."
   },
@@ -268,7 +268,7 @@
     "old": "REALM_ACT_TRANSIENT.includes(r.error) || r.status >= 500;",
     "new": "REALM_ACT_TRANSIENT.includes(r.error);",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "  if (error === 'too-large') return 'This character\\'s save is too big for the realm to take. The realm keeps the last save it took.';   // AUDIT REALM2 C8\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "  if (!params.has('online')) installConsoleProbe();",
     "new": "  installConsoleProbe();",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "    return !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts));",
     "new": "    void (modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts)); return true;",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "if (ohAbyss?.entering) { if (!quiet) townTalk.say('You cannot save now.'); return false; }",
     "new": "if (ohAbyss?.entering) { townTalk.say('You cannot save now.'); return false; }",
     "tests": [
-      "test/auditrealm2_client.test.js"
+      "test/systems/auditrealm2_client.test.js"
     ]
   }
 ]

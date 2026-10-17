@@ -20,7 +20,7 @@
 //
 // A harvest lands in the MATERIALS BAG when the character owns one and
 // it has room, else in the PACK - as the very item a withdrawal from
-// the Stores always minted (systems/profItems.js) - and past the pack's
+// the Stores always minted (systems/professions/profItems.js) - and past the pack's
 // weight before a unit is lost (PACK-OVER, FIELD BUGS 2026-10-04: every
 // unit the service counts is made, as a withdrawal's is). The Stores stay: a
 // character's storage, reached in a town (bible: the Stores page), and
@@ -53,7 +53,7 @@ export const BAG_KG_LIMIT = 300;
  *  500 gold at a middling shop, 456 to 550 by its quality (C#'s integer division), before the region and the haggle -
  *  "like 500g". */
 export const BAG_BASE_PRICE = 250;
-/** Its row, in the port's template columns (systems/profTemplates.js registers it): DFU's own Backpack picture
+/** Its row, in the port's template columns (systems/professions/profTemplates.js registers it): DFU's own Backpack picture
  *  (ItemTemplates 89: TEXTURE.205 record 44 - law 6, the picture is DFU's own), weightless as the Small Cart is
  *  (`hasNoEncumbrance`, template 93), one to a slot. Rarity 10: no shelf rolls it - a General Store shelves it by name
  *  (shopStock.js), online only. */
@@ -209,7 +209,7 @@ export const BAG_WORDS = Object.freeze({
   /** the bag's own refusals (systems/materialsBag.js bagStoreRefusal, inventorySession.js planBagToggle) - AUDIT BAG1:
    *  `full` was never said (the capacity ladder says a full bag) */
   onlyMaterials: 'Only crafting materials go in the Materials Bag.',
-  /** ONE-BAG: a second bag taken, bought or picked up (systems/itemTransfer.js planTake, scenes/worldModes.js doBuy) */
+  /** ONE-BAG: a second bag taken, bought or picked up (systems/item/itemTransfer.js planTake, scenes/worldModes.js doBuy) */
   second: 'You already have a Materials Bag.',
   none: 'You have no Materials Bag. Every General Store sells one.',
   notEmpty: 'Empty your Materials Bag first.',

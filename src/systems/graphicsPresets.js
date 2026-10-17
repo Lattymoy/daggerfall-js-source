@@ -2,7 +2,7 @@
 // PRESET. One choice over the settings that cost the most - how far the land is drawn, the grass, the clouds, the
 // ground's sharpness into the distance, the water and (RW1) the real windows - each a Features row whose own note says it is the one
 // to turn down when the game runs slow (systems/features.js). HIGH IS HOW THE GAME SHIPS: every value in it is its row's
-// default, so a player who never touched them reads High, not Custom (test/org2_options.test.js holds it to the rows'
+// default, so a player who never touched them reads High, not Custom (test/systems/org2_options.test.js holds it to the rows'
 // own defaults). Render scale is not in it - it is the picture's resolution, a choice of its own on the same page.
 //
 // A preset is the rows' VALUES, never their labels or positions: each is written through the row's own door (the

@@ -1,29 +1,29 @@
 [
   {
     "name": "AUDIT-REALM2-T1-the-law-lets-a-boat-leave",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "  if (BOAT_TEMPLATES.includes(rec.templateIndex)) return false;  // a boat's parts or deed: what it stands for stays in the giver's save - AUDIT REALM2 T1\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T1-the-deed-unlisted",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "export const BOAT_TEMPLATES = Object.freeze([1320, 1321]);",
     "new": "export const BOAT_TEMPLATES = Object.freeze([1320]);",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T1-the-parts-unlisted",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "export const BOAT_TEMPLATES = Object.freeze([1320, 1321]);",
     "new": "export const BOAT_TEMPLATES = Object.freeze([1321]);",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -32,196 +32,196 @@
     "old": "  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.';   // AUDIT REALM2 T1\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T7-the-index-left-where-it-stood",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "  if (Number.isSafeInteger(save.lightSourceIndex)) save.lightSourceIndex = save.items.indexOf(lit);\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T7-an-index-written-where-none-was",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "  if (Number.isSafeInteger(save.lightSourceIndex)) save.lightSourceIndex = save.items.indexOf(lit);\n",
     "new": "  save.lightSourceIndex = save.items.indexOf(lit);\n",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T7-a-record-gone-still-lit",
-    "file": "src/net/realmTradeLaw.js",
+    "file": "src/net/realm/realmTradeLaw.js",
     "old": "save.lightSourceIndex = save.items.indexOf(lit);",
     "new": "save.lightSourceIndex = save.items.includes(lit) ? save.items.indexOf(lit) : save.lightSourceIndex;",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T2-a-placed-boat-s-hold-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  for (const boat of csa?.placedBoats ?? []) out.push(...lists(boat?.Items));\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T2-a-packed-cargo-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  out.push(...lists(...Object.values(csa?.packedCargoes ?? {})));\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T2-the-mod-s-record-misnamed",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "const CSA_VENDOR = 'come-sail-away';",
     "new": "const CSA_VENDOR = 'comeSailAway';",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T5-a-treasure-pile-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "    for (const c of scene?.lootContainers ?? []) out.push(...lists(c?.items));",
     "new": "    for (const c of scene?.lootContainers ?? []) if (c?.containerType !== 1) out.push(...lists(c?.items));",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T5-a-body-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "    for (const c of scene?.lootContainers ?? []) out.push(...lists(c?.items));",
     "new": "    for (const c of scene?.lootContainers ?? []) if (c?.containerType !== 2) out.push(...lists(c?.items));",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T5-a-shop-shelf-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "    for (const c of scene?.lootContainers ?? []) out.push(...lists(c?.items));",
     "new": "    for (const c of scene?.lootContainers ?? []) if (c?.containerType !== 4) out.push(...lists(c?.items));",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T5-a-dungeon-s-treasure-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  for (const pile of [...(world?.piles ?? []), ...(world?.droppedLoot ?? [])]) out.push(...lists(pile?.items));",
     "new": "  for (const pile of (snap?.dungeon ? world?.droppedLoot : world?.piles) ?? []) out.push(...lists(pile?.items));",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T5-the-fallen-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  for (const foe of world?.foes ?? []) if (foe?.dead) out.push(...lists(foe.items));\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T5-a-living-foe-s-purse-counted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "if (foe?.dead) out.push(...lists(foe.items));",
     "new": "out.push(...lists(foe.items));",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-the-ship-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "value: shipSellPrice(ship) });",
     "new": "value: 0 });",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-a-house-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "value: Math.trunc(CUSTOMS_HOUSE_PRICE * DEED_SELL_MULT) });",
     "new": "value: 0 });",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-a-house-at-its-full-price",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "value: Math.trunc(CUSTOMS_HOUSE_PRICE * DEED_SELL_MULT) });",
     "new": "value: CUSTOMS_HOUSE_PRICE });",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-the-house-price-moved",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "export const CUSTOMS_HOUSE_PRICE = 100_000;",
     "new": "export const CUSTOMS_HOUSE_PRICE = 50_000;",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-a-sold-slot-counted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "if (slot?.buildingKey > 0 && !slot.crossed) deeds.push(",
     "new": "if (slot && !slot.crossed) deeds.push(",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-the-ship-s-room-misnamed",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "roomOf(interiorSceneName(SHIP_INTERIOR_MAP_IDS[ship], BUILDING_KEY_0))",
     "new": "roomOf(interiorSceneName(SHIP_INTERIOR_MAP_IDS[ship], 0))",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-a-house-s-room-misnamed",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "roomOf(interiorSceneName(slot.mapId, slot.buildingKey))",
     "new": "roomOf(interiorSceneName(slot.buildingKey, slot.mapId))",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-the-pieces-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  for (const d of deeds) d.value += decorSaleBack(d.room?.decor);\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
     "name": "AUDIT-REALM2-T3-deeds-uncounted",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  const deeds = deedsOf(snap).reduce((s, d) => s + d.value, 0);",
     "new": "  const deeds = 0;",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    if (deed.slot) deed.slot.crossed = true;\n",
     "new": "    if (deed.slot) void deed.slot;\n",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    else snap.shipCrossed = true;\n",
     "new": "    else void snap;\n",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    crossPieces(deed.room);\n",
     "new": "",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    crossed.push(deed.slot ? 'house' : 'ship');",
     "new": "    crossed.push('house');",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  if (what) lines.push(",
     "new": "  if (false) lines.push(",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "houses > 1 ? `${houses} houses` : houses ? 'your house' : ''",
     "new": "houses ? 'your house' : ''",
     "tests": [
-      "test/auditrealm2_customs.test.js"
+      "test/systems/auditrealm2_customs.test.js"
     ]
   },
   {
@@ -284,9 +284,9 @@
     "old": "every piece in ${crossed.length > 1 ? 'them' : 'it'}",
     "new": "every piece in ${'them'}",
     "tests": [
-      "test/auditrealm2_customs.test.js",
-      "test/fb0929_customs.test.js",
-      "test/house_loss.test.js"
+      "test/systems/auditrealm2_customs.test.js",
+      "test/server/fb0929_customs.test.js",
+      "test/systems/house_loss.test.js"
     ]
   }
 ]

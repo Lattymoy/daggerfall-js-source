@@ -5,7 +5,7 @@
     "old": "      this.restoreSaveData([rec], { remote: true });",
     "new": "      this.restoreSaveData([rec]);",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (remote) return false;\n",
     "new": "  if (remote) return true;\n",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return Math.max(o?.startingLockValue | 0, o?.actionFlag",
     "new": "  return Math.max(0, o?.actionFlag",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "o?.actionFlag === ACTION_FLAGS.LockDoor ? ACTION_LOCK_VALUE : 0);",
     "new": "o?.actionFlag === ACTION_FLAGS.LockDoor ? 0 : 0);",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (lock <= lockCeiling(o)) return true;",
     "new": "  if (lock < lockCeiling(o)) return true;",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  return !(Number.isFinite(level) && lock > level);",
     "new": "  return true;",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  return !(Number.isFinite(level) && lock > level);",
     "new": "  return !(Number.isFinite(level) && lock >= level);",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  return !(Number.isFinite(level) && lock > level);",
     "new": "  return !(lock > level);",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "if (rec) this._keepEarly(withoutLock(rec));",
     "new": "if (rec) this._keepEarly(rec);",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -86,16 +86,16 @@
     "old": "this._keepEarly(remote ? withoutLock(sa) : sa);",
     "new": "this._keepEarly(sa);",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
     "name": "SPELL-LOCK-the-building-memory-is-own",
-    "file": "src/world/interiorShared.js",
+    "file": "src/world/interior/interiorShared.js",
     "old": "ctx.actions?.restoreSaveData?.(acts, { remote: true });",
     "new": "ctx.actions?.restoreSaveData?.(acts);",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "actions.restoreSaveData(w.actions, { remote: wire, level: playerEntity.level });",
     "new": "actions.restoreSaveData(w.actions, { remote: false, level: playerEntity.level });",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "actions.restoreSaveData(w.actions, { remote: wire, level: playerEntity.level });",
     "new": "actions.restoreSaveData(w.actions, { remote: wire });",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      { level: playerEntity.level });   // SPELL-LOCK",
     "new": "      {});   // SPELL-LOCK",
     "tests": [
-      "test/fb1013e_spelllock.test.js"
+      "test/world/fb1013e_spelllock.test.js"
     ]
   }
 ]

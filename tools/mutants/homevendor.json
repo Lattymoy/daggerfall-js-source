@@ -5,8 +5,8 @@
     "old": "'jeweller', 'vendor']);   // HOME-VENDOR: a hired trader",
     "new": "'jeweller']);   // HOME-VENDOR: a hired trader",
     "tests": [
-      "test/homevendor_service.test.js",
-      "test/homestations.test.js"
+      "test/net/homevendor_service.test.js",
+      "test/ui/homestations.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "if (!mapOk(map) || typeof id !== 'string' || !DECOR_ID_RE.test(id)) return null;",
     "new": "if (!mapOk(map) || typeof id !== 'string') return null;",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "return words.every((w) => hay.includes(w));",
     "new": "return words.some((w) => hay.includes(w));",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "      AND vendor_id IS NULL ORDER BY price, at LIMIT 500`)",
     "new": "      ORDER BY price, at LIMIT 500`)",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "  if (l.vendor_id != null || vend) {\n    if (!vend) return { error: 'vendor-only' };",
     "new": "  if (vend) {\n    if (!vend) return { error: 'vendor-only' };",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    region = Number(h.region);",
     "new": "    void h.region;",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "nowS + (vend ? VENDOR_LISTING_S : MARKET_LISTING_S)",
     "new": "nowS + MARKET_LISTING_S",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "  if (was.station === 'vendor' && (pl.station ?? null) !== 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };",
     "new": "  void vendorStocked;",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    if (was?.station === 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };   // HOME-VENDOR",
     "new": "    // HOME-VENDOR",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": ".first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };",
     "new": ".first())?.n ?? 0) > 0) void 0;",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "    if (!stands) return { error: 'vendor-gone' };",
     "new": "    void stands;",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "      home: { owner: l.v_owner, entry: l.v_entry,",
     "new": "      home0: { owner: l.v_owner, entry: l.v_entry,",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "      h.entry AS v_entry,",
     "new": "      'public' AS v_entry,",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "mine: Number(l.v_mine) === 1,",
     "new": "mine: false,",
     "tests": [
-      "test/homevendor_service.test.js"
+      "test/net/homevendor_service.test.js"
     ]
   },
   {
@@ -132,106 +132,106 @@
     "old": "if (!Number.isSafeInteger(map) || map <= 0 || !Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
     "new": "if (!Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-an-off-map-pixel-taken",
-    "file": "src/ui/vendorMapMark.js",
+    "file": "src/ui/vendor/vendorMapMark.js",
     "old": " || px >= size.width || py >= size.height) return null;",
     "new": ") return null;",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-a-throw-passed-on",
-    "file": "src/ui/vendorMapMark.js",
+    "file": "src/ui/vendor/vendorMapMark.js",
     "old": "  try { m = typeof fn === 'function' ? fn() : null; } catch { return null; }",
     "new": "  m = typeof fn === 'function' ? fn() : null;",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-no-ring",
-    "file": "src/ui/vendorMapMark.js",
+    "file": "src/ui/vendor/vendorMapMark.js",
     "old": "  return m ? gateRingTexels(m, originX, originY, width, height) : [];",
     "new": "  return [];",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-the-search-unread",
-    "file": "src/ui/vendorTab.js",
+    "file": "src/ui/vendor/vendorTab.js",
     "old": "      const found = vendorSearch(rows, st.query, { nameOf, townOf });",
     "new": "      const found = rows;",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-a-buy-on-the-board",
-    "file": "src/ui/vendorTab.js",
+    "file": "src/ui/vendor/vendorTab.js",
     "old": "rowNodes(r, { where: true })",
     "new": "rowNodes(r, { where: true, buy: true })",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-buy-for-the-owner",
-    "file": "src/ui/vendorTab.js",
+    "file": "src/ui/vendor/vendorTab.js",
     "old": "rowNodes(r, { buy: !own && !r.mine,",
     "new": "rowNodes(r, { buy: true,",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-the-put-unwired",
-    "file": "src/ui/vendorTab.js",
+    "file": "src/ui/vendor/vendorTab.js",
     "old": "() => act(() => v.put(chosen, st.price))",
     "new": "() => act(async () => ({ ok: true }))",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-the-page-always-shown",
-    "file": "src/ui/vendorPage.js",
+    "file": "src/ui/vendor/vendorPage.js",
     "old": "export const vendorPageShown = () => { try { return !!_provider && _provider.shown() === true; } catch { return false; } };",
     "new": "export const vendorPageShown = () => true;",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-the-sales-unread",
-    "file": "src/ui/vendorPage.js",
+    "file": "src/ui/vendor/vendorPage.js",
     "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])]",
     "new": "    const sold = [...(mine.patronSold ?? [])]",
     "tests": [
-      "test/homevendor_ui.test.js"
+      "test/ui/homevendor_ui.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-the-people-unread",
-    "file": "src/systems/decorCatalogue.js",
+    "file": "src/systems/decor/decorCatalogue.js",
     "old": "      for (const f of interior?.blockPeopleRecords ?? []) {",
     "new": "      for (const f of []) {",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-people-read-as-decorations",
-    "file": "src/systems/decorCatalogue.js",
+    "file": "src/systems/decor/decorCatalogue.js",
     "old": "c.person ? 'people' : flatKind(c.as ?? c.flat[0])",
     "new": "flatKind(c.as ?? c.flat[0])",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ],
     "note": "DECOR-MODS (FIELD BUGS 2026-10-05b, PIN MOVED): re-aimed by content - the line now reads a mod's piece's own name and filing too."
   },
@@ -242,17 +242,17 @@
     "old": "(k === VENDOR_STATION ? trader && forgeOffered() : ",
     "new": "(k === VENDOR_STATION ? trader : ",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   },
   {
     "name": "HOMEVENDOR-a-trader-sold-offline",
     "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - a hired trader is offered and sold in a home alone (a caravan's or a ship's had it paid for, never working).",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (want === VENDOR_STATION && (r?.kind !== 'home' || !forgeOffered())) { deps.say?.(VENDOR_COLD_LINE); return false; }",
     "new": "    void VENDOR_COLD_LINE;",
     "tests": [
-      "test/audit29_client.test.js"
+      "test/net/audit29_client.test.js"
     ]
   }
 ]

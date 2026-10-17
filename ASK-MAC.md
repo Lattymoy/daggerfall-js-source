@@ -13,7 +13,7 @@ wants an eye; this marks *decisions* nobody below Mac can take.
 
 The table's own comment reads:
 
-> `// ── paint and dyed cloth (a wagon's looks - systems/wagonLooks.js) - Daggerfall's flat colour swatches (TEXTURE.000`
+> `// ── paint and dyed cloth (a wagon's looks - systems/wagon/wagonLooks.js) - Daggerfall's flat colour swatches (TEXTURE.000`
 > `// and .001, which Come Sail Away paints with too) and its woven fabrics (TEXTURE.049)`
 
 `paintRed [1, 117]`, `paintBlue [0, 105]`, `paintGreen [1, 44]`, `paintBlack
@@ -63,7 +63,7 @@ record is the wrong one.
 
 `tools/mutants/wagons2.json` holds `WAGONS2-the-built-look-kept-as-a-field`,
 which points at a line in `wagonLooks.js`. The timber work changed that line;
-`test/mutantdrift.test.js` then demanded the record be re-pointed, and it was,
+`test/tooling/mutantdrift.test.js` then demanded the record be re-pointed, and it was,
 by content, at `anyChosen`.
 
 The law it pins is unchanged and the mutant still dies. But **an agent edited a

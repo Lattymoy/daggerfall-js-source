@@ -28,7 +28,7 @@
 // than invented, the same stance U20a took on ResetBonusPool.
 
 import { DFPalette } from '../formats/dfPalette.js';
-import { loadImg, nativeMetrics, drawImg, pointToNative } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, pointToNative } from './native/nativePanel.js';
 
 export const START_IMG = 'PICK03I0.IMG';
 

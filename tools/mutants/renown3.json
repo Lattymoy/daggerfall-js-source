@@ -5,7 +5,7 @@
     "old": "renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
     "new": "renownRate(RENOWN_KILL_XP_PER_LEVEL * clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX));",
     "tests": [
-      "test/renown3.test.js"
+      "test/net/renown3.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown)));",
     "new": "RENOWN_QUEST_XP_PER_LEVEL * clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX));",
     "tests": [
-      "test/renown3.test.js"
+      "test/net/renown3.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const renownCeiling = (renown) => clampInt(renown ?? 1, 1, RENOWN_MAX) + RENOWN_OVER_MAX;",
     "new": "export const renownCeiling = (renown) => clampInt(renown ?? RENOWN_MAX, 1, RENOWN_MAX) + RENOWN_OVER_MAX;",
     "tests": [
-      "test/renown3.test.js"
+      "test/net/renown3.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const renownCeiling = (renown) => clampInt(renown ?? 1, 1, RENOWN_MAX) + RENOWN_OVER_MAX;",
     "new": "export const renownCeiling = (renown) => clampInt(renown ?? 1, 1, RENOWN_MAX) + RENOWN_OVER_MAX + 1;",
     "tests": [
-      "test/renown3.test.js"
+      "test/net/renown3.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const RENOWN_OVER_MAX = 3;",
     "new": "export const RENOWN_OVER_MAX = 4;",
     "tests": [
-      "test/renown3.test.js"
+      "test/net/renown3.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "renownKillXp(renownFoeLevel(foe), renownNow)",
     "new": "renownKillXp(renownFoeLevel(foe))",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -59,8 +59,8 @@
     "old": "const xp = renownQuestXp(playerEntity.level, renownNow);",
     "new": "const xp = renownQuestXp(playerEntity.level, 50);",
     "tests": [
-      "test/renown1.test.js",
-      "test/sigil1.test.js"
+      "test/net/renown1.test.js",
+      "test/systems/sigil/sigil1.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "    if (this.classConfirm && idx !== this.classListIndex) this.classConfirm = null;\n",
     "new": "",
     "tests": [
-      "test/disc24a_class_describe.test.js"
+      "test/ui/disc24a_class_describe.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (this.classConfirm && idx !== this.classListIndex) this.classConfirm = null;",
     "new": "if (this.classConfirm) this.classConfirm = null;",
     "tests": [
-      "test/disc24a_class_describe.test.js"
+      "test/ui/disc24a_class_describe.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (hit.setClass != null) { this._selectClassRow(hit.setClass); return true; }",
     "new": "if (hit.setClass != null) { this.classListIndex = hit.setClass; return true; }",
     "tests": [
-      "test/disc24a_class_describe.test.js"
+      "test/ui/disc24a_class_describe.test.js"
     ]
   },
   {
@@ -32,48 +32,48 @@
     "old": "    this._selectClassRow(idx);   // MouseClick moves the LIST's selection",
     "new": "    this.classListIndex = idx;   // MouseClick moves the LIST's selection",
     "tests": [
-      "test/disc24a_class_describe.test.js"
+      "test/ui/disc24a_class_describe.test.js"
     ]
   },
   {
     "name": "D24B-horse-borrowed-again",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": ".filter((i) => i !== TRANSPORT_HORSE)",
     "new": ".filter(() => true)",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
     "name": "D24B-cart-has-no-model",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "  if (item?.templateIndex === TRANSPORT_SMALL_CART) return WAGON_KINDS[wagonKindOf(item)].icon;\n",
     "new": "",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ],
     "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - the cart's model map was unreachable past WAGONS1's arm and went; the arm is the cart's model now."
   },
   {
     "name": "D24B-classic-drawer-no-fallback",
-    "file": "src/ui/itemScroller.js",
+    "file": "src/ui/item/itemScroller.js",
     "old": "if (!img || !img.archive) return drawModelPicture(renderer, m, it, rect, slot);",
     "new": "if (!img || !img.archive) return false;",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
     "name": "D24B-picture-uploaded-mipped",
-    "file": "src/ui/itemScroller.js",
+    "file": "src/ui/item/itemScroller.js",
     "old": "renderer.uploadTexture(MODEL_ICON_ARCHIVE, id, pic, { mips: false })",
     "new": "renderer.uploadTexture(MODEL_ICON_ARCHIVE, id, pic, {})",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -82,8 +82,8 @@
     "old": "colors.set(rgba.subarray(from, from + cw * 4), (ch - 1 - y) * cw * 4);",
     "new": "colors.set(rgba.subarray(from, from + cw * 4), y * cw * 4);",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -92,8 +92,8 @@
     "old": "const ti = ((tex.height - 1 - rowTop) * tex.width + col) * 4;",
     "new": "const ti = (rowTop * tex.width + col) * 4;",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -102,8 +102,8 @@
     "old": "const v = -(w0 * uvs[a * 2 + 1] + w1 * uvs[b * 2 + 1] + w2 * uvs[c * 2 + 1]);",
     "new": "const v = (w0 * uvs[a * 2 + 1] + w1 * uvs[b * 2 + 1] + w2 * uvs[c * 2 + 1]);",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -112,8 +112,8 @@
     "old": "          if (z <= depth[o]) continue;   // the nearer face wins: z grows toward the viewer\n",
     "new": "",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -122,8 +122,8 @@
     "old": "const cw = bx1 - bx0 + 1, ch = by1 - by0 + 1;",
     "new": "const cw = w, ch = w; bx0 = 0; by0 = 0;",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -132,8 +132,8 @@
     "old": "const shade = ICON_AMBIENT + (1 - ICON_AMBIENT) * Math.abs(",
     "new": "const shade = 1 + 0 * Math.abs(",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -142,8 +142,8 @@
     "old": "if (waiting) { if (onReady) waiting.push(onReady); return null; }",
     "new": "if (waiting) { return null; }",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -152,28 +152,28 @@
     "old": "    _pictures.set(id, pic);\n",
     "new": "    if (pic) _pictures.set(id, pic);\n",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
     "name": "D24B-line-carries-no-model",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "model: img ? null : inventoryItemModel(item),",
     "new": "model: null,",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
     "name": "D24B-enhanced-door-no-model",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (line.model != null) return requestModelIconUrl(line.model, { scale, onReady });\n",
     "new": "",
     "tests": [
-      "test/disc24b_transport_pictures.test.js",
-      "test/audit63_items_loot.test.js"
+      "test/ui/enhanced/disc24b_transport_pictures.test.js",
+      "test/systems/audit63_items_loot.test.js"
     ]
   },
   {
@@ -182,9 +182,9 @@
     "old": "const moving = b._dyn === true || b.selfCard === true || b._shIdler === true || (",
     "new": "const moving = b._dyn === true || b._shIdler === true || (",
     "tests": [
-      "test/disc24c_self_shadow.test.js",
-      "test/sc1_shadowcache.test.js",
-      "test/eotb_body.test.js"
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]
   },
   {
@@ -193,9 +193,9 @@
     "old": "          if (lightPos && b.selfCard && !self) continue;   // DISC24-C: the player's own card, only where it is redrawn every frame\n",
     "new": "",
     "tests": [
-      "test/disc24c_self_shadow.test.js",
-      "test/sc1_shadowcache.test.js",
-      "test/eotb_body.test.js"
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]
   },
   {
@@ -204,9 +204,9 @@
     "old": "if (perBatchRight && b.selfCard) {",
     "new": "if (false) {",
     "tests": [
-      "test/disc24c_self_shadow.test.js",
-      "test/sc1_shadowcache.test.js",
-      "test/eotb_body.test.js"
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]
   },
   {
@@ -215,9 +215,9 @@
     "old": "(dueDyn || staticStale || !this._slotLiveDyn[k] || selfMoved)",
     "new": "(dueDyn || staticStale || !this._slotLiveDyn[k])",
     "tests": [
-      "test/disc24c_self_shadow.test.js",
-      "test/sc1_shadowcache.test.js",
-      "test/eotb_body.test.js"
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]
   },
   {
@@ -226,20 +226,20 @@
     "old": "          if (b.selfCard && !self) continue;   // DISC24-C: the player's own card is no reason to redraw a map it will not be drawn into\n",
     "new": "",
     "tests": [
-      "test/disc24c_self_shadow.test.js",
-      "test/sc1_shadowcache.test.js",
-      "test/eotb_body.test.js"
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]
   },
   {
     "name": "D24C-eotb-card-unflagged",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "          batch.selfCard = grow === 1;",
     "new": "          batch.selfCard = false;",
     "tests": [
-      "test/disc24c_self_shadow.test.js",
-      "test/sc1_shadowcache.test.js",
-      "test/eotb_body.test.js"
+      "test/render/disc24c_self_shadow.test.js",
+      "test/render/sc1_shadowcache.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]
   },
   {
@@ -248,8 +248,8 @@
     "old": "  const lifted = liftZeroedStats(entity);",
     "new": "  const lifted = [];\n  void liftZeroedStats;",
     "tests": [
-      "test/disc24d_stat_zero_loop.test.js",
-      "test/deathloop1.test.js"
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
     ]
   },
   {
@@ -258,8 +258,8 @@
     "old": "  const lifted = liftZeroedStats(entity);",
     "new": "  const lifted = dead || force ? liftZeroedStats(entity) : [];",
     "tests": [
-      "test/disc24d_stat_zero_loop.test.js",
-      "test/deathloop1.test.js"
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
     ]
   },
   {
@@ -268,8 +268,8 @@
     "old": "if (live >= target) { hold.set(-(live - target)); break; }",
     "new": "if (live >= target) break;",
     "tests": [
-      "test/disc24d_stat_zero_loop.test.js",
-      "test/deathloop1.test.js"
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
     ]
   },
   {
@@ -278,8 +278,8 @@
     "old": "if (a?.kind === 'disease' && a.statMods) holds.push(",
     "new": "if (false) holds.push(",
     "tests": [
-      "test/disc24d_stat_zero_loop.test.js",
-      "test/deathloop1.test.js"
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
     ]
   },
   {
@@ -288,8 +288,8 @@
     "old": "if ((a?.kind === 'drainAttribute' || a?.kind === 'transferAttribute') && a.stat === stat) holds.push(",
     "new": "if (false) holds.push(",
     "tests": [
-      "test/disc24d_stat_zero_loop.test.js",
-      "test/deathloop1.test.js"
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
     ]
   },
   {
@@ -298,8 +298,8 @@
     "old": "    const target = respawnHealth(permanent);\n",
     "new": "    const target = 1;\n",
     "tests": [
-      "test/disc24d_stat_zero_loop.test.js",
-      "test/deathloop1.test.js"
+      "test/systems/disc24d_stat_zero_loop.test.js",
+      "test/scenes/deathloop1.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "cart: !!frame.cart && !eotbCartYields(),",
     "new": "cart: !!frame.cart,",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);   // DISC10: one cart - EOTB's gives way while HCC's trails (mwView.js)\n",
     "new": "",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);   // DISC10: one cart - EOTB's gives way while HCC's trails (mwView.js)\n",
     "new": "",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);",
     "new": "setEotbCartYields(() => hccOn());",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb);",
     "new": "    let d = rayAabb(eye, dir, target.aabb);",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
@@ -50,25 +50,25 @@
     "old": "  const o = [rx * m[0] + ry * m[1] + rz * m[2], rx * m[4] + ry * m[5] + rz * m[6], rx * m[8] + ry * m[9] + rz * m[10]];",
     "new": "  const o = [rx, ry, rz];",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
     "name": "DISC10-the-cart-offers-no-turned-box",
-    "file": "src/player/eotbWagon.js",
+    "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
     "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
     "new": "noSurface: true,",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
     "name": "DISC10-the-cart-names-the-ground-inside-it",
-    "file": "src/player/eotbWagon.js",
+    "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
     "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
     "new": "obb: localBox ? { m, box: localBox } : null,",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if (item.questionType === QUESTION_TYPE.Person) {\n        const placeKey",
     "new": "      if (false) {\n        const placeKey",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "        if (placeInfo) placeInfo.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.LocationWasMarkedOnMap;",
     "new": "        if (placeInfo) placeInfo.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.ReceivedDirectionalHints;",
     "tests": [
-      "test/disc10.test.js"
+      "test/systems/disc10.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  onVampireHit(player, nowMinutes);\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  onLycanthropeHit(player, target, { nowMinutes, isCivilian, mobileType: mobileType ?? target?.mobileType ?? null });\n",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -113,9 +113,9 @@
     "old": "export function playerWeaponHitEntity(player, target, { nowMinutes = Math.floor(ownMinutes()), isCivilian = false",
     "new": "export function playerWeaponHitEntity(player, target, { nowMinutes = 0, isCivilian = false",
     "tests": [
-      "test/disc10_vampire.test.js",
-      "test/disc10_lycan.test.js",
-      "test/audit39_combat.test.js"
+      "test/systems/disc10_vampire.test.js",
+      "test/systems/disc10_lycan.test.js",
+      "test/systems/audit39_combat.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: GUARD_MOBILE_TYPE });",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -133,8 +133,8 @@
     "old": "      playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });\n",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js",
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_lycan.test.js",
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });",
     "new": "playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: false });",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "old": "playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });",
     "new": "playerWeaponHitEntity(playerEntity, { health: 1 }, { isCivilian: true });",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -161,7 +161,7 @@
     "old": "      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -170,9 +170,9 @@
     "old": "        playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too\n        continue;",
     "new": "        continue;",
     "tests": [
-      "test/disc10_lycan.test.js",
-      "test/audit58_combat.test.js",
-      "test/auditworld6biiie.test.js"
+      "test/systems/disc10_lycan.test.js",
+      "test/systems/audit58_combat.test.js",
+      "test/scenes/auditworld6biiie.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "      damageFoe(foe, damage, playerFeet, lookDir, { weapon: playerWeapon.strikingWeapon });   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back); TELL1: the blow's weapon weighs it on a wind-up's poise\n      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });",
     "new": "      damageFoe(foe, damage, playerFeet, lookDir, { weapon: playerWeapon.strikingWeapon });   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back); TELL1: the blow's weapon weighs it on a wind-up's poise",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -190,8 +190,8 @@
     "old": "  playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType ?? null });\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js",
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_vampire.test.js",
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -200,7 +200,7 @@
     "old": "  const clockMinutes = to;",
     "new": "  const clockMinutes = from + 1;",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -209,7 +209,7 @@
     "old": "    && playerInSunlight(clockMinutes)) {\n    sinks?.hurt?.(SUN_DAMAGE_AMOUNT);",
     "new": "    && playerInSunlight(nowMinutes)) {\n    sinks?.hurt?.(SUN_DAMAGE_AMOUNT);",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -218,7 +218,7 @@
     "old": "passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, clockMinutes: sky, sinks });",
     "new": "passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, sinks });",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -227,7 +227,7 @@
     "old": "const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
     "new": "const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(nowMinutes);",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -236,7 +236,7 @@
     "old": "    consumeVampirismPending(entity, { now: clockMinutes });",
     "new": "    consumeVampirismPending(entity, { now: r + 1 });",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "old": "  if (entity && _curseDeployer && Number.isFinite(now)) _curseDeployer(entity, { now: Math.floor(now) });\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -254,7 +254,7 @@
     "old": "  consumeVampirismPending(entity, { now });\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -263,7 +263,7 @@
     "old": "    nowMinutes: () => Math.floor(ownMinutes()),\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -272,7 +272,7 @@
     "old": "      deployInfection(entry, entity, syncOpts);",
     "new": "      deployInfection(entry, entity, o);",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -281,7 +281,7 @@
     "old": "  if (key === INFECTION.Vampirism) messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);\n  endDisease(entry);",
     "new": "  endDisease(entry);",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -290,7 +290,7 @@
     "old": "const dict = entity?.factionRep?.dict ?? (typeof factionDict",
     "new": "const dict = (typeof factionDict",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -299,7 +299,7 @@
     "old": "const province = dict && regionIndex >= 0 ? findFactions",
     "new": "const province = dict ? findFactions",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -308,7 +308,7 @@
     "old": "pending.clan = clanOf ? clanOf(entry.regionIndex, entity) : VAMPIRE_CLANS.Lyrezi;",
     "new": "pending.clan = clanOf ? clanOf(entry.regionIndex) : VAMPIRE_CLANS.Lyrezi;",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -317,7 +317,7 @@
     "old": "          regionIndex: regionIndex(),   // DISC10-D V3: the clan is the region's, read at the turn from where the bite was taken\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -326,7 +326,7 @@
     "old": "        regionIndex: dfLocation?.regionIndex ?? -1,   // DISC10-D V3: PlayerGPS.CurrentRegionIndex underground is the dungeon's own region (VampirismInfection.cs:91)\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -335,7 +335,7 @@
     "old": "  function transferToCemeteryArm() {\n    // AUDIT CAPTAIN'S SEA P4",
     "new": "  function transferToCemeteryArm() {\n    if ((modes?.mode ?? 'exterior') !== 'exterior') {\n      console.warn('[infection] the cemetery transfer needs the exterior mode - the vampire wakes where they fell');\n      return;\n    }\n    // AUDIT CAPTAIN'S SEA P4",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -344,7 +344,7 @@
     "old": "    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);\n    modes?.forceExitToExterior();\n",
     "new": "    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);\n",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -353,7 +353,7 @@
     "old": "          transferToCemetery: () => host.transferToCemetery?.(),\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -362,7 +362,7 @@
     "old": "    transferToCemetery: opts.transferToCemetery ?? null,\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -371,7 +371,7 @@
     "old": "      name: overrideRaceName(vamp.raceNameOverride ?? 'Vampire'),",
     "new": "      name: base.name,",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -380,16 +380,16 @@
     "old": "immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toParalysis | EFFECT_BITS.toDisease,",
     "new": "immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toDisease,",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
     "name": "DISC10-D-V5-the-enhanced-sheet-reads-the-birth-race",
-    "file": "src/ui/enhancedCharSheet.js",
+    "file": "src/ui/enhanced/enhancedCharSheet.js",
     "old": "    race: processGrammar(liveRaceName(e) || 'Breton'),",
     "new": "    race: processGrammar(e.race ?? 'Breton'),",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -398,7 +398,7 @@
     "old": "    label(processGrammar(liveRaceName(e) || 'Breton'), 41, 14);",
     "new": "    label(processGrammar(e.race ?? 'Breton'), 41, 14);",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -407,7 +407,7 @@
     "old": "    cancelRest?.();\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -416,7 +416,7 @@
     "old": "    cancelRest: cancelRestArm,   // DISC10-D V8: the street's rest window, closed at the turn (hoisted, beside the cemetery arm)\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -425,7 +425,7 @@
     "old": "    cancelRest: cancelRestArm,   // DISC10-D V8: and the rest window the street holds, for the same registration\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -434,7 +434,7 @@
     "old": "interiorOverlay.dispose?.(); host.cancelRest?.(); },",
     "new": "interiorOverlay.dispose?.(); },",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -443,7 +443,7 @@
     "old": "    cancelRest: () => { if (activeOverlay?.isRestWindow) activeOverlay.dispose?.(); },\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js"
+      "test/systems/disc10_vampire.test.js"
     ]
   },
   {
@@ -452,19 +452,19 @@
     "old": "(entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride'\n    && a.racial === 'lycanthropy'",
     "new": "(entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride'\n    && a.racial === 'lycanthropy'",
     "tests": [
-      "test/auditworld5.test.js",
-      "test/world5.test.js",
-      "test/auditlived1b_t.test.js"
+      "test/systems/auditworld5.test.js",
+      "test/systems/quest/world5.test.js",
+      "test/systems/auditlived1b_t.test.js"
     ]
   },
   {
     "name": "DISC10-D-V11-the-restored-dream-stays-scheduled",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  for (const a of entity.activeEffects) if (a.infection && !a.dreamPlayed) a.dreamScheduled = false;\n",
     "new": "",
     "tests": [
-      "test/disc10_vampire.test.js",
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_vampire.test.js",
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -473,16 +473,16 @@
     "old": "const opts = playerAttackOptions(this.strikingWeapon, this.machine.state",
     "new": "const opts = playerAttackOptions(this.weapon, this.machine.state",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
     "name": "DISC10-E-L2-the-striking-weapon-is-the-screens",
     "file": "src/combat/playerWeapon.js",
-    "old": "    return (this.usingRightHand ? this.currentRightHandWeapon : this.currentLeftHandWeapon) ?? null;\n  }\n",
-    "new": "    return this.weapon;\n  }\n",
+    "old": "    if (!this.weapon?.werecreatureClaws) return this.weapon;\n    return this.handItem(this.activeHand);",
+    "new": "    if (!this.weapon?.werecreatureClaws) return this.weapon;\n    return this.weapon;",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -491,7 +491,7 @@
     "old": "  if (sup) { messageBox(sup.text); return null; }\n",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "  if (sup) { messageBox(sup.text); return null; }\n",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -509,7 +509,7 @@
     "old": "  // :583-587). The window's own line, and nothing is consumed.\n  const sup = racialSuppressInventory(entity);\n  if (sup) { say?.(sup.text); return { kind: 'refused' }; }\n",
     "new": "  // :583-587). The window's own line, and nothing is consumed.\n",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -518,7 +518,7 @@
     "old": "  // sword into the claws MorphSelf had just emptied (:463-467).\n  const sup = racialSuppressInventory(entity);\n  if (sup) { say?.(sup.text); return { kind: 'refused' }; }\n",
     "new": "  // sword into the claws MorphSelf had just emptied (:463-467).\n",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -527,7 +527,7 @@
     "old": "  if (racialSuppressInventory(playerEntity)) return null;\n",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -536,7 +536,7 @@
     "old": "    openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); return !!w; },   // DISC10-E L3: a refused pack is null\n",
     "new": "    openPack: () => townTalk.showOverlay(makeInventoryWindow()),\n",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "      const w = openInventory(null);\n      if (w) activeOverlay = w;   // DISC10-E L3: a refused pack is null - and its box already holds the slot\n",
     "new": "      activeOverlay = openInventory(null);\n",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -554,7 +554,7 @@
     "old": "    if (!win || win.refusedByDoor) return null;",
     "new": "    if (!win) return null;",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -563,7 +563,7 @@
     "old": "      const own = limiter >= 1 && limiter < stored ? limiter : stored;   // \"Limiter must be 1 or greater\"",
     "new": "      const own = stored;",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -572,25 +572,25 @@
     "old": "let limit = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) -",
     "new": "let limit = (entity.maxHealth ?? 0) -",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
     "name": "DISC10-E-L4-the-save-keeps-the-limited-ceiling",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  if ('rawMaxHealth' in entity) snap.maxHealth = entity.rawMaxHealth;\n",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
     "name": "DISC10-E-L4-the-load-leaves-a-plain-field",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  defineLiveMaxHealth(entity);   // DISC10-E L4: the same law for MaxHealth - the setter below writes the RAW value\n",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -599,7 +599,7 @@
     "old": "  defineLiveMaxHealth(playerEntity);   // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied\n",
     "new": "",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -608,7 +608,7 @@
     "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT",
     "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -617,7 +617,7 @@
     "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
     "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -626,7 +626,7 @@
     "old": "audio.play3d(hitSoundFor(playerWeapon.strikingWeapon), foe.ai.feet,",
     "new": "audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet,",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -635,7 +635,7 @@
     "old": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.strikingWeapon),",
     "new": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon),",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -644,7 +644,7 @@
     "old": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.strikingWeapon),",
     "new": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon),",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -653,7 +653,7 @@
     "old": "const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.strikingWeapon),",
     "new": "const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.weapon),",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -662,7 +662,7 @@
     "old": "        makeInView(proj, view, multiply), interiorHitSound, { swing })) {\n        tallySwingSkills(",
     "new": "        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), ENEMY_HIT_VOLUME), { swing })) {\n        tallySwingSkills(",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -671,7 +671,7 @@
     "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
     "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -680,7 +680,7 @@
     "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
     "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -689,7 +689,7 @@
     "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
     "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -698,7 +698,7 @@
     "old": "if (!win) return inventoryDoorReady() ? DOOR_REFUSED : null;",
     "new": "if (!win) return null;",
     "tests": [
-      "test/disc10_lycan.test.js"
+      "test/systems/disc10_lycan.test.js"
     ]
   },
   {
@@ -707,7 +707,7 @@
     "old": "    if (f.dead) _net?.onPeerHit?.({ to: from, k: data.k ?? _net?.room?.() ?? null, i: data.i | 0, slain: 1 });\n",
     "new": "\n",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -716,7 +716,7 @@
     "old": "    if (f.dead) _net?.onPeerHit?.({ to: from, k:",
     "new": "    if (true) _net?.onPeerHit?.({ to: from, k:",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -725,7 +725,7 @@
     "old": "        f._struckAt = _now();   // DISC10-E",
     "new": "        // DISC10-E",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -734,7 +734,7 @@
     "old": "if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
     "new": "if (!f || f._struckAt == null) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -743,7 +743,7 @@
     "old": "if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
     "new": "if (!f) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -752,7 +752,7 @@
     "old": "      f._struckAt = null;\n      playerWeaponKillReported",
     "new": "      playerWeaponKillReported",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -761,7 +761,7 @@
     "old": "      if (data.slain !== 1) return false;\n",
     "new": "\n",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -770,7 +770,7 @@
     "old": "      const f = _pupIndex.get(pupKey(from, data.i | 0)) ?? null;\n      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS)",
     "new": "      const f = foes.find((x) => x.puppet && x.seq === (data.i | 0)) ?? null;\n      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS)",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -779,7 +779,7 @@
     "old": "  if (!player?.racialOverride) return;\n  onLycanthropeHit(player, { health: 0 }, { nowMinutes, isCivilian, mobileType });",
     "new": "  if (!player?.racialOverride) return;\n  onVampireHit(player, nowMinutes);\n  onLycanthropeHit(player, { health: 0 }, { nowMinutes, isCivilian, mobileType });",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   },
   {
@@ -788,7 +788,7 @@
     "old": "      playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });",
     "new": "      playerWeaponKillReported(playerEntity, { mobileType: 146 });",
     "tests": [
-      "test/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js"
     ]
   }
 ]

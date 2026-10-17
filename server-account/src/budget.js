@@ -4,7 +4,7 @@
 // "budgets per hour of online play the service measured itself", built.
 //
 // THE QUESTION IT ANSWERS. The world runs on the player's own machine (Multiplayer.md's first decision), so a kill, a
-// chest and a counter's price are the client's word, and the item law (systems/itemLaw.js) can prove only that a piece
+// chest and a counter's price are the client's word, and the item law (systems/item/itemLaw.js) can prove only that a piece
 // is one the game could mint - never that this player found it. What a modified client gains on its word is bounded
 // here instead: between two checkpoints the character's wealth (judge.js wealthOf) may rise by what the service saw
 // move in the open (a market sale, a vault's piece - `witnessed`) and by what time spent playing could have earned. The
@@ -61,9 +61,18 @@ const kept = new WeakMap();
 const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);
 /** The config standing: staff's, else the first setting. */
 export async function budgetConfig(/** @type {any} */ db) {
+  return budgetKept(db) ?? budgetFrom(db, await budgetRead(db).first());
+}
+/** SAVE-BATCH (2026-10-16): the config this isolate keeps (BUDGET_CONFIG_KEEP_MS), or null - so a checkpoint asks its row
+ *  in the batch that reads the character's record, and only when it has none. */
+export function budgetKept(/** @type {any} */ db) {
   const k = kept.get(keyOf(db) ?? {});
-  if (k && Date.now() - k.at < BUDGET_CONFIG_KEEP_MS) return k.config;
-  const row = await db.prepare("SELECT value FROM realm_config WHERE key = 'budget'").first();
+  return k && Date.now() - k.at < BUDGET_CONFIG_KEEP_MS ? k.config : null;
+}
+/** SAVE-BATCH: the config's row, as a statement. */
+export const budgetRead = (/** @type {any} */ db) => db.prepare("SELECT value FROM realm_config WHERE key = 'budget'");
+/** The config its row says (staff's, else the first setting), kept for the binding. */
+export function budgetFrom(/** @type {any} */ db, /** @type {any} */ row) {
   let c = null;
   try { c = budgetConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }
   const config = c ?? BUDGET_DEFAULT;

@@ -22,16 +22,16 @@ import { parseInt as questParseInt } from './parseUtils.js';
 import { foesTable } from './tables.js';
 import { GENDERS, getNameBankOfRegion, fullName, monsterName } from '../../characters/nameHelper.js';
 import { srand, randomRange } from '../../formats/dfRandom.js';
-import { ENEMY_BASICS, ENEMY_NAMES, isClassEnemyId } from '../../characters/enemyBasics.js';
+import { ENEMY_BASICS, ENEMY_NAMES, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 import { getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the type name shown
 
 const MAX_SPAWN_COUNT = 8;
 
 // AUDIT 24 (wave 38): ENEMY_NAMES and isClassEnemyId moved to
-// characters/enemyBasics.js - the leaf that holds the rows they name,
+// characters/enemy/enemyBasics.js - the leaf that holds the rows they name,
 // which this file already imports. Re-exported so every existing
 // importer keeps working (ONE DFU MEMBER, ONE EXPORT).
-export { ENEMY_NAMES, isClassEnemyId } from '../../characters/enemyBasics.js';
+export { ENEMY_NAMES, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 
 const DECL = [
   /(Foe|foe) (?<symbol>[a-zA-Z0-9_.-]+) is (?<count>\d+) (?<aFoe>\w+)/,

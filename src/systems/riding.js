@@ -36,7 +36,7 @@
 import { CfaFile } from '../formats/cfaFile.js';
 import { frameToColor32 } from '../combat/fpsWeapon.js';   // TR2: the same index-to-RGBA the weapon art uses
 import { TRANSPORT_MODES, isRiding } from './transport.js';
-import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from './horseCoats.js';   // COATS1: the horse's look, dyed as it uploads
+import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from './horse/horseCoats.js';   // COATS1: the horse's look, dyed as it uploads
 
 /** :148-155. */
 export const HORSE_TEXTURE = 'MRED00I0.CFA';
@@ -69,13 +69,13 @@ export const ridingLoopClip = (mode) => (mode === TRANSPORT_MODES.Cart ? RIDING_
 export const nextNeighDelay = (rolls = Math.random) => 2 + Math.floor(rolls() * 38);
 export const mountNeighDelay = (rolls = Math.random) => 1 + Math.floor(rolls() * 4);
 
-/** COATS1: the look a mount's sprite is dyed in (a look code, systems/horseCoats.js): the horse's own - the cart's
+/** COATS1: the look a mount's sprite is dyed in (a look code, systems/horse/horseCoats.js): the horse's own - the cart's
  *  never: MRED01I0 draws the cart's boards beside the horse, and their stained wood is the same warm brown as the hide. */
 export const ridingLook = (mode, look) => (mode === TRANSPORT_MODES.Horse ? horseLookCode(horseLookOfCode(look)) : 0);
 
 /** Loads one mount's CFA and uploads its frames, the same way the
  *  first-person weapon loads its CIF (fpsWeapon.loadFpsWeaponArt).
- *  COATS1: `look` the horse's (a look code, systems/horseCoats.js) - each
+ *  COATS1: `look` the horse's (a look code, systems/horse/horseCoats.js) - each
  *  frame dyed on its way up, under its own record (`~<code>`; the bay as
  *  drawn keeps the record it always was). No hoof is in the picture, so
  *  no leg is whitened (its lower edge is the neck's), and no saddle, so

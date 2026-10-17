@@ -7,7 +7,7 @@
 // the rune in its own colour (the arcane teal no tier wears, so it never reads as a rarity), the stage it stands at in
 // MY hand, the five stages as five gems - lit where it has grown, burning where my Renown lets it wake - and a bar of
 // how far it has drunk toward its next stage, which moves as the weapon earns Renown XP in hand. The facts are
-// systems/sigil.js's (sigilView); this file only draws them. Enhanced Plus's card, the hover card and the Info box
+// systems/sigil/sigil.js's (sigilView); this file only draws them. Enhanced Plus's card, the hover card and the Info box
 // all take it from here, and a tile that holds a sigil weapon wears the rune in its corner (data-sigil, the sheet's
 // own rule), so the pack says which weapons carry one before a card is opened.
 //
@@ -16,8 +16,8 @@
 // bar, the one it is growing into filled as far as it has drunk (the five gems and the bar under them were two rows
 // saying one thing) - and a weapon's blow in one line, the Renown's hold when it holds it. The explanations (what a
 // set's sigil is, how it grows, the fight it was won in) are the INFO box's, `{ full: true }`, which draws it whole.
-import { sigilView, sigilProgressText } from '../systems/sigil.js';
-import { setIdOf, setsSleep } from '../systems/sigilSets.js';
+import { sigilView, sigilProgressText } from '../systems/sigil/sigil.js';
+import { setIdOf, setsSleep } from '../systems/sigil/sigilSets.js';
 import { SIGIL_RUNE_SVG } from './sigilRune.js';
 
 export { SIGIL_RUNE_SVG, SIGIL_RUNE_TILE_SVG, SIGIL_RUNE_TILE_URL } from './sigilRune.js';

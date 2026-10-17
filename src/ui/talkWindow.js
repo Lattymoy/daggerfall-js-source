@@ -7,11 +7,11 @@
 
 import { drawText, measureText } from './text.js';
 import { graphemesOf } from '../systems/graphemes.js';   // L10N2: where a Chinese or Japanese line may break
-import { nativeMetrics } from './nativePanel.js';
+import { nativeMetrics } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';
-import { noticeDraw, noticeRelease } from './enhancedNotice.js';
+import { noticeDraw, noticeRelease } from './enhanced/enhancedNotice.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1
-import { drawEnhancedChoice, closeEnhancedChoice } from './enhancedDialog.js';   // DLG2: a keyed menu as the enhanced dialog   // ENH-NOTICE1: the no-options box on the enhanced skin
+import { drawEnhancedChoice, closeEnhancedChoice } from './enhanced/enhancedDialog.js';   // DLG2: a keyed menu as the enhanced dialog   // ENH-NOTICE1: the no-options box on the enhanced skin
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 /** UXB1-M: a clickable row's band starts this far (native px) above its glyphs' top - half the 12 px line's lead

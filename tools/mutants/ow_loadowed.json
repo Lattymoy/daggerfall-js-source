@@ -5,7 +5,7 @@
     "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`));",
     "new": "      uc.n = unbuiltAround(px, radius, (x, y) => !StreamingWorldState.streams(x, y) || built.has(`${x},${y}`));",
     "tests": [
-      "test/ow_loadowed.test.js"
+      "test/systems/travel/ow_loadowed.test.js"
     ],
     "note": "The count asks only whether the world streams there (ETHER-OW's line): a pixel whose build threw reads loading to the end, and the journey is held at x1 until the next pixel crossed - the report."
   },
@@ -15,8 +15,8 @@
     "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`));",
     "new": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`));",
     "tests": [
-      "test/ow_loadowed.test.js",
-      "test/ether_ow.test.js"
+      "test/systems/travel/ow_loadowed.test.js",
+      "test/systems/travel/ether_ow.test.js"
     ],
     "note": "Every pixel not built is owed: the failed one holds the clock, and where the world streams nothing the land is waited on for ever."
   },
@@ -26,7 +26,7 @@
     "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`));",
     "new": "      uc.n = unbuiltAround(px, radius, (x, y) => true);",
     "tests": [
-      "test/ow_loadowed.test.js"
+      "test/systems/travel/ow_loadowed.test.js"
     ],
     "note": "The land never holds the clock: the journey outruns a grid still building (TV2's hole in the world)."
   },
@@ -36,7 +36,7 @@
     "old": "      state.fail(next.px, next.py, performance.now());",
     "new": "      state.failed.set(`${next.px},${next.py}`, { px: next.px, py: next.py, tries: 1, at: Infinity });",
     "tests": [
-      "test/ow_loadowed.test.js"
+      "test/systems/travel/ow_loadowed.test.js"
     ],
     "note": "The pump keeps a pixel whose build threw on the stream's books: owed by nobody building it, the hold never lets go."
   }

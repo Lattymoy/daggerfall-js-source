@@ -68,7 +68,7 @@ use and implement everything into the codebase").]**
   `spring_summer_leaves.png` and `fall_leaves.png` (8 x 8 sheets of leaves)
   and `snowflake.png`. RGBA32 with one mip: each PNG is the texture exactly.
   The author's own pixels. `windfall.files.json` lists them (the authority
-  `test/doctrine.test.js` holds `Textures/` to).
+  `test/tooling/doctrine.test.js` holds `Textures/` to).
 - `Sound/` - the 27 clips, each the bundle's FSB5 Vorbis packets remuxed
   into Ogg untouched (`tools/lib/fsb5Vorbis.mjs`, the door Come Sail Away's
   clips came through; both setup headers they name are

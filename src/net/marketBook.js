@@ -33,7 +33,7 @@
 
 import { MARKET_RID_RE } from './marketLaw.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';
-import { walletReserve } from './realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took   // SCALE1: asks again spread out, and never at once into a minute's refusal
+import { walletReserve } from './realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took   // SCALE1: asks again spread out, and never at once into a minute's refusal
 
 export const MARKET_KEPT_KEY = 'prof5.kept';
 export const MARKET_CACHE_MS = 60_000;

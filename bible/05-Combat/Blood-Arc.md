@@ -48,7 +48,7 @@ floating-origin shift is `state.compensation` in the streaming host.
 `GetBloodType(mobileID)` answers one of three things, and **its
 bloodless set is DFU's own**. Measured: the ids it sends down the
 "no blood" arm are 15, 18, 19, 23, 32, 33 - exactly the six that carry
-`bloodIndex: 2` in `characters/enemyBasics.js`, which the port
+`bloodIndex: 2` in `characters/enemy/enemyBasics.js`, which the port
 generated from DFU (MIT) long ago and which `hitEffects.js` already
 reads. It adds id 2 to that set, and sends 35, 36 and 38 down a
 "nothing at all" arm.
@@ -257,16 +257,16 @@ Our own, on the seams the port already has.
 `scenes/hitEffects.js` is EnemyBlood.cs ported already - the classic
 one-shot splash from TEXTURE.380 at 10fps, with the spawn/retire
 pooling to hang the rest off. `combat/formulas.js` already raises a
-per-resolution seam. `characters/enemyBasics.js` already carries
+per-resolution seam. `characters/enemy/enemyBasics.js` already carries
 `bloodIndex`. `public/art` has no blood and will not need any: the
 decal source is TEXTURE.380's own frames out of the player's ARENA2,
 varied procedurally (rotation, scale, colour jitter).
 
 Slices, each behind its own `features.js` row:
 
-1. **BLOOD1a - the decal pool.** SHIPPED (`src/combat/bloodDecals.js`,
-   `src/combat/bloodMarks.js`, `src/combat/bloodSwitch.js`,
-   `test/blood1_decals.test.js`, `tools/mutants/blood1.json` 32/32 dead).
+1. **BLOOD1a - the decal pool.** SHIPPED (`src/combat/blood/bloodDecals.js`,
+   `src/combat/blood/bloodMarks.js`, `src/combat/blood/bloodSwitch.js`,
+   `test/combat/blood1_decals.test.js`, `tools/mutants/blood1.json` 32/32 dead).
    A fixed ring of oriented quads laid on the surface a hit or a
    particle met, recycled oldest-first, offset with the floating
    origin, cleared on a mode change; the rate ladder drives the count.
@@ -326,7 +326,7 @@ Slices, each behind its own `features.js` row:
    the basis was never exercised near horizontal).
 
    THE HOSTS, under the FOUR HOSTS RULE. The switch is ONE BAG
-   (`bloodDecalDeps` in `src/combat/bloodSwitch.js`), built once and
+   (`bloodDecalDeps` in `src/combat/blood/bloodSwitch.js`), built once and
    passed whole by all four: four hosts spelling three settings three
    ways is that rule's own hazard. The collider goes in as a GETTER and
    is never captured, because every host rebuilds its own - a mode
@@ -355,7 +355,7 @@ Slices, each behind its own `features.js` row:
    `forceExitToExterior()`, so blood laid in a building would have
    followed the player into the street.
 2. **BLOOD1b - the blow, the scatter, overkill, gibs, ceilings and
-   the swing.** SHIPPED, whole (`src/combat/bloodGibs.js` joined the
+   the swing.** SHIPPED, whole (`src/combat/blood/bloodGibs.js` joined the
    modules above; `tools/mutants/blood1.json` 118/118 dead).
 
    THE LADDER WAS DEAD. `showBloodSplash` took the blow as its fourth
@@ -434,7 +434,7 @@ Slices, each behind its own `features.js` row:
    is its own feature row, read live, and off is a killing blow that
    bleeds like any other hit. Mutants: 60, 60 dead.
 
-   THEN THE GIBS (`src/combat/bloodGibs.js`), on the re-read above.
+   THEN THE GIBS (`src/combat/blood/bloodGibs.js`), on the re-read above.
    Ten chunks, the assembly's own throw, three times UNITY'S gravity -
    not three times the port's own 20, which is DFU's number for a
    walking body and has nothing to do with a thrown chunk - the drag,
@@ -676,7 +676,7 @@ Slices, each behind its own `features.js` row:
    now (`EL_DECAL_FS`, the flat's model on the lane's pipeline, the
    shadow read along the mark's own surface), the renderer builds it
    as the set's fifth program, and the probe reads both sets.
-   bible/01-Overview/Mac-Bugs-W.md W6 carries the whole of it. The
+   bible/01-Overview/bugs/Mac-Bugs-W.md W6 carries the whole of it. The
    lesson for the next audit is written there too: "the pass renders
    correctly" is a claim about a SET, and the shipped default is the
    lane.
@@ -808,7 +808,7 @@ Slices, each behind its own `features.js` row:
      It decoded the PRODUCT of texel and tint; each on its own now.
      `drawDecals` reaches `.subarray` with drawTerrain's own guard.
 
-   Pins: 48 in test/blood1_decals.test.js (eight new, the rest re-aimed
+   Pins: 48 in test/combat/blood1_decals.test.js (eight new, the rest re-aimed
    where a law changed), the lane's set in test/el1_enhancedlighting
    .test.js. Mutants: tools/mutants/blood1.json is 161 now - 160 dead, 1 equivalent as recorded (twenty-nine of them this audit's, each one a finding above put back); the W4, W5 and W6 campaigns re-run beside it, 27 dead, 1 equivalent, with the four whose anchors this audit moved re-spelled.
 
@@ -854,7 +854,7 @@ Slices, each behind its own `features.js` row:
    times, in one colour, for ever. The port still ships no blood
    picture; it MAKES one now.
 
-   THE ATLAS (`src/combat/bloodArt.js`): a 256-wide RGBA sheet, one
+   THE ATLAS (`src/combat/blood/bloodArt.js`): a 256-wide RGBA sheet, one
    row a kind (four kinds here, five since BLOOD2d's print) in four
    variants, generated from noise by a seeded generator
    (mulberry32, so it is the same picture on every boot and a pin can
@@ -906,7 +906,7 @@ Slices, each behind its own `features.js` row:
    cut to half its health should leave a trail you can follow, and a
    foe you killed should lie in a pool that spreads.
 
-   THE LEDGER (`src/combat/bloodBleed.js`, pure): the reference's own
+   THE LEDGER (`src/combat/blood/bloodBleed.js`, pure): the reference's own
    ramp - `clamp01(1 - (pct - 1) / (threshold - 1))`, nothing at the
    threshold and everything at one percent - over BLEED_THRESHOLD
    (half, the port's own) and the reference's cadence (every 2..5 s,
@@ -947,12 +947,12 @@ Slices, each behind its own `features.js` row:
    side of the walk, the toe the way the walker went, a share fainter
    each step - and then the foot is clean again.
 
-   THE ART (`src/combat/bloodArt.js`): a fifth atlas row, `print`,
+   THE ART (`src/combat/blood/bloodArt.js`): a fifth atlas row, `print`,
    a boot shape drawn heel-to-toe along +u; `bloodMarkKind({ print })`
    names it, and the atlas is `cell x ATLAS_KINDS.length` tall so a
    sixth row costs a name and a shape.
 
-   THE LAW (`src/combat/bloodMarks.js` `step(walker, pos, forward)`):
+   THE LAW (`src/combat/blood/bloodMarks.js` `step(walker, pos, forward)`):
    the walker is a KEY (the player is `PLAYER_WALKER`, a foe is its own
    body) into a WeakMap of `{ left, side }`. The foot is `pos` rayed
    down MARK_DROP, so the eye, the capsule centre and the feet all

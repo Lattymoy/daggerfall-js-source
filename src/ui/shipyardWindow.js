@@ -1,8 +1,8 @@
 // @ts-check
 // SHIPYARDS (2026-10-11, Mac: "A new highly detailed shipmaster vendor and crew recruitment station within it. All
 // detailed functions including ship upgrading should be present here, along with ship buying, etc."): THE SHIPMASTER'S
-// WINDOW - every ship a port does business in, one window, in the sea fight's stone-and-brass kit (ui/navalYardWindow.js's
-// sheet and door, ui/navalPlunderDoor.js). Five pages, a tab each:
+// WINDOW - every ship a port does business in, one window, in the sea fight's stone-and-brass kit (ui/naval/navalYardWindow.js's
+// sheet and door, ui/naval/navalPlunderDoor.js). Five pages, a tab each:
 //   SHIPS FOR SALE - a card a hull: her figures, what she is, what the shipmaster asks of you, and Buy;
 //   YOUR FLEET     - every ship you hold: where she lies, her worth and the shipmaster's offer, Sell (pressed twice - a
 //                    sale is for good), Bring her here, Lay her up, and her name;
@@ -18,12 +18,12 @@
 // onDoor(door) - a summons' placing to run once the window is down, onExit(reason) - 'close', or 'door' after onDoor }.
 //
 // Not a DFU member. Ledger A (SHIPYARDS).
-import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { closeOnOutsideTap } from './enhanced/enhancedOverlays.js';
 import { overlayAction } from './input.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { injectNavalKit } from './navalHud.js';
-import { injectNavalWindowStyle } from './navalPlunderWindow.js';
-import { yardText, yardNote } from './navalYardWindow.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { injectNavalKit } from './naval/navalHud.js';
+import { injectNavalWindowStyle } from './naval/navalPlunderWindow.js';
+import { yardText, yardNote } from './naval/navalYardWindow.js';
 import { whereWords, refitLine } from './fleetPage.js';
 import { SHIP_NAME_MAX } from '../systems/fleet.js';
 import { CREW_ROLES } from '../systems/naval/shipCrew.js';
@@ -37,7 +37,7 @@ export const SHIPYARD_TABS = Object.freeze([
   Object.freeze({ id: 'refits', label: 'Refits' }),
   Object.freeze({ id: 'crew', label: 'Crew Hall' }),
 ]);
-/** MENU-ORDER (2026-10-12): each page's picture (ui/menuGlyphs.js). */
+/** MENU-ORDER (2026-10-12): each page's picture (ui/menu/menuGlyphs.js). */
 export const SHIPYARD_TAB_ICONS = Object.freeze({ ships: 'ship', fleet: 'anchor', yard: 'saw', refits: 'anvil', crew: 'people' });
 export const SHIPYARD_CSS = `
 .dfyard-pic { display: block; color: #c9bba1; } .dfyard-card .dfyard-pic::before { width: 40px; height: 40px; margin: 0 0 4px; }

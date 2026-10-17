@@ -11,8 +11,8 @@
 //
 // What lives here is TYPE and SPACE - sizes, weights, the words' colours, the gaps - never a paint the kit owns
 // (enhancedFrame.js FRAME_ROLES: the edges, the grounds, the brass). The behaviour each of those points needed is in
-// its own module: the two-question door (ui/enhancedMenu.js drawDoors), the saddle panel shown when it is wanted
-// (ui/enhancedSaddle.js saddleShown), the temperature in the corner (ui/enhancedHud.js), the Stable's look a selector
+// its own module: the two-question door (ui/enhanced/enhancedMenu.js drawDoors), the saddle panel shown when it is wanted
+// (ui/enhanced/enhancedSaddle.js saddleShown), the temperature in the corner (ui/enhanced/enhancedHud.js), the Stable's look a selector
 // (ui/holdingsPages.js lookPicker).
 //
 // THE TYPE SCALE. Pixelify Sans greys out under 12px (FONT3 measured it), and the windows set their reading text at 10
@@ -20,7 +20,7 @@
 // scale, small to large: a label 12, a line 14, a name 16, a head 18 - presses in the line's size, so the words a
 // player reads outweigh the buttons beside them.
 import { PIXEL_STACK } from './pixelifyFive.js';
-import { WINDOW_FRAME } from './enhancedFrame.js';   // UI-CALM II: the walk's panels wear a window's frame
+import { WINDOW_FRAME } from './enhanced/enhancedFrame.js';   // UI-CALM II: the walk's panels wear a window's frame
 
 export const UI_CALM_STYLE_ID = 'dagger-ui-calm';
 
@@ -34,7 +34,7 @@ export const P = ':root:not([data-plus-dress="grimoire"])';
 
 // ── THE FRONT DOOR: TWO QUESTIONS ────────────────────────────────────────────────────────────────────────────────────
 const DOOR_CSS = `
-/* UI-CALM: THE FRONT DOOR'S TWO QUESTIONS (ui/enhancedMenu.js drawDoors). Under Plus a level's two pages stand in one
+/* UI-CALM: THE FRONT DOOR'S TWO QUESTIONS (ui/enhanced/enhancedMenu.js drawDoors). Under Plus a level's two pages stand in one
    column; the page heads are the book's (DFO Grimoire), so Plus shows only the offline level's - as a caption. A colour
    is Plus's alone (${P}): DFO Grimoire inks the door its own way. */
 .px-menu .px-page { display: contents; }
@@ -94,13 +94,13 @@ ${P} .rail .railgroup { color: #9c937d; }
 
 // ── THE HUD: THE TEMPERATURE IN THE CORNER ──────────────────────────────────────────────────────────────────────────
 const HUD_CSS = `
-/* UI-CALM: THE TEMPERATURE PLATE, IN THE CORNER (ui/enhancedHud.js) - the caption's first word in the bottom-left block,
+/* UI-CALM: THE TEMPERATURE PLATE, IN THE CORNER (ui/enhanced/enhancedHud.js) - the caption's first word in the bottom-left block,
    beside the mode's word, in the flow (TEMP-UI hung it off the compass's right end). Comfortable it says the glyph and the
    number and no more, a little quieter; felt or costing, its word and its scale stand too. */
 .hud .hud-qcap .hud-temp { position: relative; left: auto; top: auto; right: auto; transform: none; flex: 0 0 auto; }
 .hud .hud-temp[data-level="ok"] .hud-tempword, .hud .hud-temp[data-level="ok"] .hud-tempscale { display: none; }
 ${P} .hud .hud-temp[data-level="ok"] { opacity: 0.85; }
-/* UI-CALM: THE VITALS AT REST (ui/enhancedHud.js VITALS_REST_S) fade in six steps; back at once on the first change - and
+/* UI-CALM: THE VITALS AT REST (ui/enhanced/enhancedHud.js VITALS_REST_S) fade in six steps; back at once on the first change - and
    always standing while the HUD is arranged */
 .hud .hud-bars { transition: opacity 120ms steps(2, end); }
 .hud .hud-bars.rest:not([data-hm-edit]) { opacity: 0; transition: opacity 1200ms steps(6, end); }
@@ -165,7 +165,7 @@ ${P} .ft-tile-meta .kind.mod { color: #7fae9f; }
 
 const CHARGEN_CSS = `
 /* UI-CALM: THE CLASS LIST IN ITS THREE WAYS, each under its head across the list's columns, a row its name and the two
-   attributes it leans on; the card beside it the class's profile (ui/enhancedChargen.js classStage) */
+   attributes it leans on; the card beside it the class's profile (ui/enhanced/enhancedChargen.js classStage) */
 .wizard .classlist .classway { grid-column: 1 / -1; margin: 14px 0 4px; padding: 0 0 4px 2px; font-size: 13px; letter-spacing: 0.22em;
   text-transform: uppercase; border-bottom: 1px solid transparent; }
 .wizard .classlist .classway:first-child { margin-top: 2px; }

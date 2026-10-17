@@ -32,7 +32,7 @@
 
 import { POI_MESH_LIMITS } from './poiMesh.js';
 import { POI_LIMITS } from './poiLaw.js';
-import { linearToSrgb } from '../systems/dynamicSkies.js';   // AUDIT POI R10: Unity's Mathf.LinearToGammaSpace, its one home
+import { linearToSrgb } from '../systems/dynamicSkies/dynamicSkies.js';   // AUDIT POI R10: Unity's Mathf.LinearToGammaSpace, its one home
 
 const GLB_MAGIC = 0x46546c67;     // 'glTF'
 const CHUNK_JSON = 0x4e4f534a;    // 'JSON'

@@ -22,7 +22,7 @@
 #
 # (This block claimed the opposite until 2026-09-21, fifteen weeks after
 # #209 made that false, and Mac had to be the one to notice.
-# test/relaydeploy.test.js reads the workflow's OWN TRIGGER now and
+# test/server/relaydeploy.test.js reads the workflow's OWN TRIGGER now and
 # holds every live comment to it - the claim is derived from the
 # workflow rather than retyped beside it, which is what let the old
 # sentence rot in place.)
@@ -54,7 +54,7 @@ IDENTITY_PUBLIC_KEY = "2ZbUhjpY80Hne60_ucjzCZMF0i5DsarfaWW9SDU5ei4"
 IDENTITY_MAX_TTL_S = "300"
 # ═══ RAID-ROLL: THE TOWNS TABLE THE RELAY WILL KEEP ════════════════
 #
-# The SHA-256 of the towns table (src/net/raidLaw.js raidTownsCanon) -
+# The SHA-256 of the towns table (src/net/raid/raidLaw.js raidTownsCanon) -
 # `node tools/raidTowns.mjs --arena2 <your ARENA2 folder>` says it, and
 # the game says it once in the browser console when a hub asks. The
 # relay always reads a raid word against the day's own draws (its
@@ -68,7 +68,7 @@ RAID_TOWNS_SHA256 = ""
 # ═══ DISCORD-GATES: THE ROLE THE OMEN PINGS ════════════════════════
 #
 # The Discord id of the opt-in role the hub pings on each gate's omen
-# (src/net/gateHerald.js) - Server Settings > Roles, right-click the
+# (src/net/gate/gateHerald.js) - Server Settings > Roles, right-click the
 # role, Copy Role ID (Developer Mode on), with "Allow anyone to
 # @mention this role" turned on, or Discord shows the ping and notifies
 # nobody. An id is no secret. EMPTY IS A LEGAL STATE: the posts go out
@@ -92,7 +92,7 @@ GATE_DISCORD_ROLE = "1555589839825670258"
 # ═══ SERPENT2: THE ROLE THE SERPENT'S BELLS PING ═══════════════════
 #
 # The Discord id of the opt-in role the hub pings on each sea serpent's
-# bells, fifteen minutes before it rises (net/serpentHerald.js) - posted
+# bells, fifteen minutes before it rises (net/serpent/serpentHerald.js) - posted
 # to the gate's channel, through the gate's webhook above. EMPTY IS A
 # LEGAL STATE: the bells ping the gate's role (GATE_DISCORD_ROLE); name
 # one here to give the serpent its own.
@@ -100,7 +100,7 @@ SERPENT_DISCORD_ROLE = ""
 # ═══ SD-HERALD: THE ROLE AN ABYSS DUNGEON'S RISE AND FIND PING ══════
 #
 # The Discord id of the opt-in role the hub pings when an Abyss
-# Dungeon rises and when it is found (net/sdHerald.js) - posted to the
+# Dungeon rises and when it is found (net/superDungeon/sdHerald.js) - posted to the
 # gate's channel, through the gate's webhook above; its fall and its
 # fade ping nobody. EMPTY IS A LEGAL STATE: the posts ping the gate's
 # role (GATE_DISCORD_ROLE); name one here to give the Abyss Dungeon
@@ -129,8 +129,8 @@ BOSS_BODY = ""
 #
 # GATE_SIGNING_KEY is a Worker SECRET, never a var: the Ed25519 PRIVATE
 # key (PKCS8, base64) the relay signs an Oblivion Gate's kill receipts
-# with (src/net/gateReceipt.js) - and, since RAID3 (2026-09-27), a
-# town raid's receipts (src/net/raidReceipt.js, `w1`: the version is
+# with (src/net/gate/gateReceipt.js) - and, since RAID3 (2026-09-27), a
+# town raid's receipts (src/net/raid/raidReceipt.js, `w1`: the version is
 # inside the signed bytes, so neither passes as the other). GATE-KEYS
 # (2026-09-26): the ACCOUNT deploy mints the pair once and puts it here
 # (.github/workflows/account-deploy.yml, "Mint the gate receipt pair") -

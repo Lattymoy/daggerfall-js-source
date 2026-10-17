@@ -5,7 +5,7 @@
     "old": "      if (Number.isSafeInteger(version) && version >= MINT_V_LAST_PASS) lastPass([item], rolls, { on: true });\n",
     "new": "",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "lastPass([item], rolls, { on: true })",
     "new": "lastPass([item], seededRng(seed >>> 0), { on: true })",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "lastPass([item], rolls, { on: true })",
     "new": "lastPass([item], Math.random, { on: true })",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      applyRarity(item, eff.rarity, rolls, null, { fits });\n",
     "new": "      applyRarity(item, eff.rarity, seededRng(seed >>> 0), null, { fits });\n",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "version >= MINT_V_LAST_PASS) lastPass",
     "new": "version < MINT_V_LAST_PASS) lastPass",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "if (Number.isSafeInteger(version) && version >= MINT_V_LAST_PASS) lastPass",
     "new": "lastPass",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -59,25 +59,25 @@
     "old": "lastPass([item], rolls, { on: true })",
     "new": "lastPass([item], rolls)",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
     "name": "CRAFT-PROCS-the-pass-hands-the-proc-roll-no-switch",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "rollProcLine(it, rolls, on);",
     "new": "rollProcLine(it, rolls);",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
     "name": "CRAFT-PROCS-the-proc-roll-asks-the-switch-itself",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (!on || (item?.rarity !== 'magic' && item?.rarity !== 'rare') || !Array.isArray(item.affixes)) return null;",
     "new": "  if (!lootRarityOn() || (item?.rarity !== 'magic' && item?.rarity !== 'rare') || !Array.isArray(item.affixes)) return null;",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "mintPiece({ ...data, version: mintVersionOf(p.record) }, p.provenance)",
     "new": "mintPiece(data, p.provenance)",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "hand: c.f ?? null, version: c.v ?? 0 }, c.p)",
     "new": "hand: c.f ?? null, version: 0 }, c.p)",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "export const mintVersionOf = (rec) => readProductRecord(rec)?.v ?? 0;",
     "new": "export const mintVersionOf = (rec) => (readProductRecord(rec) ? 0 : 0);",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false;   // CRAFT-PROCS: the mint's version\n",
     "new": "",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS",
     "new": "Number.isSafeInteger(c.v) && c.v >= 0",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": ", ...(v == null ? {} : { v }) };",
     "new": " };",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "u, f: hand, v: MINT_VERSION }",
     "new": "u, f: hand }",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "f: c.f ?? null, v: c.v ?? null }",
     "new": "f: c.f ?? null }",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "f: c.f ?? null, v: c.v ?? null }",
     "new": "f: c.f ?? null, v: MINT_VERSION }",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  ...mintVersionView(p.record),   // CRAFT-PROCS: a piece made before mints as it was\n",
     "new": "",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "return v ? { version: v } : {};",
     "new": "return { version: 1 };",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "p.dye, p.hand, p.record,\n    p.template, p.material, p.provenance FROM market_deliveries d",
     "new": "p.dye, p.hand,\n    p.template, p.material, p.provenance FROM market_deliveries d",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "p.hand, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l JOIN products p",
     "new": "p.hand, p.template, p.material AS dfu_material\n      FROM market_listings l JOIN products p",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "SELECT a.*, p.recipe, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.record, p.template",
     "new": "SELECT a.*, p.recipe, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.template",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "p.hand, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l LEFT JOIN products p",
     "new": "p.hand, p.template, p.material AS dfu_material\n      FROM market_listings l LEFT JOIN products p",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "SELECT a.*, ${GONE_RECIPE_SQL}, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.record, p.template",
     "new": "SELECT a.*, ${GONE_RECIPE_SQL}, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.template",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "a.wear, ${GONE_RECIPE_SQL}, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.record, p.template",
     "new": "a.wear, ${GONE_RECIPE_SQL}, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.template",
     "tests": [
-      "test/fb1013e_craftprocs.test.js"
+      "test/systems/fb1013e_craftprocs.test.js"
     ]
   }
 ]

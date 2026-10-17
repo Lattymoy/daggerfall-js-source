@@ -13,7 +13,7 @@
 //
 // THE SIZE LAW (ImageReader.cs:306/321, GetSubTexture :103-111): a replacement keeps the CLASSIC size as its logical
 // size - the 320x200 layout, every hit rect and every sub-rect stay classic - and only the texture behind it is the
-// pack's. Every draw in ui/nativePanel.js turns a sub-rect into UVs by dividing by the logical w/h, so a 3x PNG lines
+// pack's. Every draw in ui/native/nativePanel.js turns a sub-rect into UVs by dividing by the logical w/h, so a 3x PNG lines
 // up under the same numbers with nothing else changed.
 //
 // WHEN A PACK IS WORN: the classic screens only (a pack re-dresses classic art; the enhanced screens draw none), and

@@ -5,7 +5,7 @@
     "old": "  if (sig) {\n    const crown",
     "new": "  if (false) {\n    const crown",
     "tests": [
-      "test/fb1011_oremap.test.js"
+      "test/ui/fb1011_oremap.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "tierOf(k) > UNCONFIRMED_VEIN_TIER",
     "new": "tierOf(k) > UNCONFIRMED_VEIN_TIER - 1",
     "tests": [
-      "test/fb1011_oremap.test.js"
+      "test/ui/fb1011_oremap.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "tierOf(k) > UNCONFIRMED_VEIN_TIER",
     "new": "tierOf(k) > UNCONFIRMED_VEIN_TIER + 1",
     "tests": [
-      "test/fb1011_oremap.test.js"
+      "test/ui/fb1011_oremap.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (factConfirmed(fact)) lines.push(",
     "new": "  if (fact?.state === 'confirmed') lines.push(",
     "tests": [
-      "test/fb1011_oremap.test.js"
+      "test/ui/fb1011_oremap.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      oreAt: profBook ? oreMapAt : null,",
     "new": "      oreAt: oreMapAt,",
     "tests": [
-      "test/fb1011_oremap.test.js"
+      "test/ui/fb1011_oremap.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        _oreAsked.add(k);\n",
     "new": "",
     "tests": [
-      "test/fb1011_oremap.test.js"
+      "test/ui/fb1011_oremap.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "return book.askPixels(list).then((changed) => { for (const c of changed ?? []) restandAt(c.x, c.y); return changed; });",
     "new": "return book.askPixels(list).then((changed) => changed);",
     "tests": [
-      "test/fb1011_oremap.test.js"
+      "test/ui/fb1011_oremap.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    const ore = readTip(this.deps.oreAt?.(px, py, () => this._refreshTip()) ?? null);",
     "new": "    const ore = null;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "this.deps.oreAt?.(px, py, () => this._refreshTip())",
     "new": "this.deps.oreAt?.(px, py)",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      ...(ore ? { tip: ore } : {}),\n",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   }
 ]

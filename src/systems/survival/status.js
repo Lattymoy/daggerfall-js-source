@@ -57,7 +57,7 @@ export const LEVEL_WORDS = Object.freeze({ danger: 'it costs you', warn: 'felt, 
 /** "Freezing - it costs you"; the word alone where its level says nothing of a cost (comfortable, a boon). */
 export const levelSaid = (word, level) => (Object.hasOwn(LEVEL_WORDS, level) ? `${word} - ${LEVEL_WORDS[level]}` : word);
 /**
- * SURV-BOONS (2026-10-12): A BOON'S CHIP - its word and the glyph it stands on (ui/hudStatus.js STATUS_GLYPHS): the need's
+ * SURV-BOONS (2026-10-12): A BOON'S CHIP - its word and the glyph it stands on (ui/hud/hudStatus.js STATUS_GLYPHS): the need's
  * own for the need it rewards, a flame for the hearth (its own - REST1's Next night is the campfire), a sparkle for
  * Thriving. The strip reads them off the record's `boons` (needs.js survivalBoons, written by the minute law), so it
  * shows what the body has, in a rewarding tier (Boons), where nothing costs - so no need's chip there is red (RED MEANS
@@ -140,7 +140,7 @@ export function survivalHudChips(entity, now, { vampire = false, endurance = 50,
  * in the live tier - `rules`; the fire read off the live air, `env`, where the reader hands it in, else the record's
  * `s.warmed`; the comfortable band 'ok'), the way it runs ('cold', 'hot', or 'mild' for comfortable) and where it
  * stands on the plate's scale (`at`, 0..1 over TEMP_SCALE, clamped - the deadly cold and the scorching are past its
- * ends). Null with no reading yet. Pure: the HUD draws it, test/tempui.test.js holds it to the chip.
+ * ends). Null with no reading yet. Pure: the HUD draws it, test/systems/survival/tempui.test.js holds it to the chip.
  */
 export const TEMP_SCALE = Object.freeze({ min: -60, max: 60 });
 export function temperatureReadout(entity, felt = entity?.survival?.felt, { rules = null, env = null } = {}) {

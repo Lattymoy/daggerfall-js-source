@@ -5,7 +5,7 @@
     "old": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE\n",
     "new": "",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    db.prepare('DELETE FROM prof_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE\n",
     "new": "",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE",
     "new": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND ? IS NOT NULL').bind(playerId, id),   // PROF-DELETE",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };\n",
     "new": "",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };\n",
     "new": "  await dropCharacterObjects(bucket, playerId, id, [row.obj, row.prev]);\n  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };\n",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    AND (state = 'open' OR (state IN ('expired', 'removed') AND returned = 0)))",
     "new": "    AND (state IN ('expired', 'removed') AND returned = 0))",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    AND (state = 'open' OR (state IN ('expired', 'removed') AND returned = 0)))",
     "new": "    AND (state = 'open'))",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    AND (state = 'open' OR (state IN ('unsold', 'removed') AND returned = 0)))",
     "new": "    AND (state IN ('unsold', 'removed') AND returned = 0))",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    AND (state = 'open' OR (state IN ('unsold', 'removed') AND returned = 0)))",
     "new": "    AND (state = 'open'))",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "char_id = ?2 AND state = 'high')",
     "new": "char_id = ?2 AND state = 'won')",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  + (SELECT COUNT(*) FROM market_orders WHERE poster = ?1 AND char_id = ?2 AND state = 'open')\n",
     "new": "",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  + (SELECT COUNT(*) FROM commissions WHERE poster = ?1 AND poster_char = ?2 AND state = 'open')\n",
     "new": "",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  + (SELECT COUNT(*) FROM market_sales WHERE buyer = ?1 AND char_id = ?2 AND kind = 'material' AND delivered = 0)\n",
     "new": "",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  + (SELECT COUNT(*) FROM market_deliveries WHERE player = ?1 AND char_id = ?2 AND collected = 0)\n",
     "new": "",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "char_id = ?2 AND state = 'high')",
     "new": "char_id = ?2 AND state IN ('high', 'outbid'))",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  'realm-market-open': 409,   // PROF-DELETE: and one with market business open settles it first\n",
     "new": "",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
@@ -149,16 +149,16 @@
     "old": "  'realm-market-open': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market",
     "new": "  'realm-market-open-x': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   },
   {
     "name": "PROF-DELETE-the-dialogs-old-word",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "- its Renown, its professions and their Stores, its home and its guild place with it.",
     "new": "- its Renown, its home and its guild place with it.",
     "tests": [
-      "test/profdelete.test.js"
+      "test/server/profdelete.test.js"
     ]
   }
 ]

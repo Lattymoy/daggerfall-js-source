@@ -28,7 +28,7 @@
 // and 12 in 100; its Restore Power 3, 6 and 9). Offline, the numbers above. `healingSupplyChances` is the one read.
 //
 // A departure (Ledger A, POTION-COMMON).
-import { createPotion, registerTabledLootHandler, registerEnemyLootExtra, CLASSIC_RECIPE_KEYS } from './loot.js';
+import { createPotion, registerTabledLootHandler, registerEnemyLootExtra, CLASSIC_RECIPE_KEYS } from './loot/loot.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { renownLootQuarters, lootEased } from './renownLoot.js';   // RENOWN-LOOT: the chances by the roller's Renown
 

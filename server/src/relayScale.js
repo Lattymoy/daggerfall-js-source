@@ -120,13 +120,30 @@ export function countedState(state, metrics) {
   });
 }
 
+/** DO-ASK (2026-10-16): THE WORKER'S ASK OF A ROOM, ONCE MORE WHERE THE RUNTIME SAYS IT MAY BE. A Durable Object stub's
+ *  error carries `retryable` where the object was reset or its connection lost before it ran anything, and `overloaded`
+ *  where its queue ran too long - the live relay showed both (a region channel's storage reset, a crowded cell's queue).
+ *  Every ask the Worker makes is a socket's upgrade, which nothing has run yet, so a retryable one is asked once more on
+ *  a fresh stub; an overloaded one never (that only lengthens the queue). What is left is a 503 the page's backoff
+ *  answers (online.js BACKOFF_MIN_MS..BACKOFF_MAX_MS) - never an exception thrown out of the Worker. */
+export async function askRoom(rooms, name, request) {
+  for (let i = 0; ; i++) {
+    try { return await rooms.get(rooms.idFromName(name)).fetch(request); } catch (e) {
+      const err = /** @type {{ retryable?: boolean, overloaded?: boolean, message?: string }} */ (e ?? {});
+      if (i === 0 && err.retryable && !err.overloaded) continue;
+      console.warn('[worker] a room did not answer', name, err.message ?? e);
+      return new Response(JSON.stringify({ error: err.overloaded ? 'busy' : 'unavailable' }), { status: 503, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'retry-after': '2' } });
+    }
+  }
+}
+
 /** SCALE5d: the Worker's walk of a crowded place's layers - `start` first, then each after it, round to LAYERS_MAX; the
  *  first object that is not full answers (its socket, or its own refusal), and only a full room's refusal
  *  (LAYER_FULL_HEADER) sends the walk on. Every layer full: the last refusal, `room full`, as one room's was - the last
  *  try marked so (LAYER_LAST_HEADER, AUDIT SCALE II R1-5), and an asked layer that holds nobody walked from the place
  *  (LAYER_ASK_HEADER, AUDIT SCALE II R3-3). Here, not
  *  in index.js: the entrypoint's every named export is read as an entrypoint, and a function there stops workerd
- *  starting (test/accountdeploy.test.js AUDIT-ACC F2 caught it). */
+ *  starting (test/server/accountdeploy.test.js AUDIT-ACC F2 caught it). */
 export async function layerWalk(rooms, key, request, start) {
   // the page's own word of the walk's headers is never passed on: its layer is overwritten below, its ask and its last
   // dropped (a Headers lower-cases its names, as these are)
@@ -144,7 +161,7 @@ export async function layerWalk(rooms, key, request, start) {
     const headers = { ...page, [LAYER_HEADER]: String(ly) };
     if (ask) headers[LAYER_ASK_HEADER] = '1';
     else if (i === LAYERS_MAX - 1) headers[LAYER_LAST_HEADER] = '1';   // AUDIT SCALE II R1-5: the refusal nothing walks past - the one a room counts (double13)
-    res = await rooms.get(rooms.idFromName(layerName(key, ly))).fetch(new Request(request, { headers }));
+    res = await askRoom(rooms, layerName(key, ly), new Request(request, { headers }));   // DO-ASK: a layer that did not answer is asked once more, or its 503
     if (ask) { ask = false; if (res.status === 503 && res.headers.get(LAYER_EMPTY_HEADER) === '1') { start = 0; i = -1; continue; } }
     if (res.status !== 503 || res.headers.get(LAYER_FULL_HEADER) !== '1') return res;
   }

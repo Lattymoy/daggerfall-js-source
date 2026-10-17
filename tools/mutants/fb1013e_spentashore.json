@@ -1,50 +1,50 @@
 [
   {
     "name": "SPENT-ASHORE-foes-about-kill-again",
-    "file": "src/systems/rest.js",
+    "file": "src/systems/rest/rest.js",
     "old": "  return { kind: 'spent', damage: spentDamage(entity), line: exhaustedFightingText(), textId: null, inWater: false };",
     "new": "  return { kind: 'death', textId: 1072, inWater: false };",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "DFU's SetHealth(0) back on dry feet with foes about - the report's death at full health."
   },
   {
     "name": "SPENT-ASHORE-the-share-doubled",
-    "file": "src/systems/rest.js",
+    "file": "src/systems/rest/rest.js",
     "old": "export const EXHAUSTED_SPENT_SHARE = 0.1;",
     "new": "export const EXHAUSTED_SPENT_SHARE = 0.2;",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "A fifth a drain - five drains from full health, not ten."
   },
   {
     "name": "SPENT-ASHORE-the-whole-pool",
-    "file": "src/systems/rest.js",
+    "file": "src/systems/rest/rest.js",
     "old": "  return { kind: 'spent', damage: spentDamage(entity),",
     "new": "  return { kind: 'spent', damage: Math.max(1, entity?.health ?? 0),",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "The spent arm taking the whole health - the death again under another name."
   },
   {
     "name": "SPENT-ASHORE-the-line-dropped",
-    "file": "src/systems/rest.js",
+    "file": "src/systems/rest/rest.js",
     "old": "line: exhaustedFightingText(), textId: null, inWater: false };",
     "new": "line: '', textId: null, inWater: false };",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "Spent in silence - the HUD says nothing of why the health falls."
   },
   {
     "name": "SPENT-ASHORE-the-line-in-english-whatever-the-language",
-    "file": "src/systems/rest.js",
+    "file": "src/systems/rest/rest.js",
     "old": "export const exhaustedFightingText = () => t('rest.exhausted.fighting', EXHAUSTED_FIGHTING_LINE);",
     "new": "export const exhaustedFightingText = () => EXHAUSTED_FIGHTING_LINE;",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "The port's own line past the text core - a French player reads it in English."
   },
   {
     "name": "SPENT-ASHORE-no-rest-hour-left",
-    "file": "src/systems/rest.js",
+    "file": "src/systems/rest/rest.js",
     "old": "  if (!enemiesNearby && !swimming) {",
     "new": "  if (false) {",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "Every dry collapse spent - a foe 30 m off, out of the band, costs a tenth where the hour of rest was."
   },
   {
@@ -52,7 +52,7 @@
     "file": "src/scenes/world.js",
     "old": "      if (out.kind === 'spent') { townTalk.say(out.line); hurtPlayer(playerEntity, out.damage, { bypassShield: true }); return; }\n",
     "new": "",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "world.js's collapse without the arm: the box, Come Sail Away's death, and no share taken."
   },
   {
@@ -60,7 +60,7 @@
     "file": "src/scenes/world.js",
     "old": "      if (out.kind === 'spent') { townTalk.say(out.line); hurtPlayer(",
     "new": "      if (out.kind === 'spent') { hurtPlayer(",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "The line dropped at the street host's HUD door."
   },
   {
@@ -68,7 +68,7 @@
     "file": "src/scenes/world.js",
     "old": "        day: !isNight(minuteNow()), inside: false,\n      });\n      // SWIM-SPENT (rest.js)",
     "new": "        day: !isNight(minuteNow()), inside: false,\n      });\n      if (csaRuntime) csaCall(() => csaRuntime.OnPlayerDeath());\n      // SWIM-SPENT (rest.js)",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "Come Sail Away hears a death the spent fighter never died."
   },
   {
@@ -76,7 +76,7 @@
     "file": "src/scenes/exterior.js",
     "old": "      if (out.kind === 'spent') { townTalk.say(out.line); hurtPlayer(playerEntity, out.damage, { bypassShield: true }); return; }\n",
     "new": "",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "exterior.js's collapse without the arm."
   },
   {
@@ -84,7 +84,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "      if (out.kind === 'spent') { say(out.line); hurtPlayer(playerEntity, out.damage, { bypassShield: true }); return; }\n",
     "new": "",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "worldModes.js's interior collapse without the arm."
   },
   {
@@ -92,7 +92,7 @@
     "file": "src/scenes/worldModes.js",
     "old": "    _inExhaustion = true;\n    try {\n      const out = exhaustionOutcome({\n        enemiesNearby: interiorEnemiesNearby(),",
     "new": "    _inExhaustion = true;\n    host.csaOnPlayerDeath?.();\n    try {\n      const out = exhaustionOutcome({\n        enemiesNearby: interiorEnemiesNearby(),",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "The CSA-J hook back above the outcome, where it heard every collapse."
   },
   {
@@ -100,7 +100,7 @@
     "file": "src/scenes/dungeonContext.js",
     "old": "    if (out.kind === 'spent') { hudText.add(out.line); hurtEntity(playerEntity, out.damage, { bypassShield: true }); surfacePlayer(); return; }\n",
     "new": "",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "dungeonContext.js's collapse without the arm."
   },
   {
@@ -108,7 +108,7 @@
     "file": "src/scenes/dungeonContext.js",
     "old": "    const sandSpare = opts.playerSpare?.() ?? null;\n",
     "new": "    if (out.kind === 'spent') { hudText.add(out.line); hurtEntity(playerEntity, out.damage, { bypassShield: true }); surfacePlayer(); return; }\n    const sandSpare = opts.playerSpare?.() ?? null;\n",
-    "tests": ["test/fb1013e_spentashore.test.js"],
+    "tests": ["test/systems/fb1013e_spentashore.test.js"],
     "note": "A bout's collapse spent a tenth instead of the sand's fall."
   }
 ]

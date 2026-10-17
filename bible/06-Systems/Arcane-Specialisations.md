@@ -216,8 +216,8 @@ BUSY-GATE and CRAFT-PROCS at the merge of main).
   builds the engine has the paths' powers - the standalone dungeon page had their price and none of their powers
   (AUDIT SCHOOLS L2 F8).
 - `scenes/worldModes.js` - the shelf (section 6).
-- `scenes/shared.js` - the ask; `ui/charsheet.js` and `ui/enhancedCharSheet.js` / `ui/enhancedMenu.js` - the choice.
-- `systems/save.js` - `arcanePath` and `pathPrompted`.
+- `scenes/shared.js` - the ask; `ui/charsheet.js` and `ui/enhanced/enhancedCharSheet.js` / `ui/enhanced/enhancedMenu.js` - the choice.
+- `systems/save/save.js` - `arcanePath` and `pathPrompted`.
 
 ## 9. Departures, and what is recorded rather than built
 
@@ -229,9 +229,9 @@ BUSY-GATE and CRAFT-PROCS at the merge of main).
   change, as a profession's specialisation has (Professions-Arc 3.3), is the owner's call if players ask for one.
 - **Offline the schools past 100 stay Daggerfall's** (section 4) - the paths themselves work offline with the switch on.
 - **The numbers are a first cut.** Every one is a constant in `arcanePaths.js` (`PATH_NUMBERS`, and the signature
-  records' slots in `PATH_ROWS`), named and pinned on both sides of its line (`test/audit_schools.test.js`), so a
+  records' slots in `PATH_ROWS`), named and pinned on both sides of its line (`test/systems/audit_schools.test.js`), so a
   balance pass moves one number and one pin.
-- **Recorded by the audit, not changed** (`01-Overview/Audit-Schools.md`):
+- **Recorded by the audit, not changed** (`01-Overview/audits/Audit-Schools.md`):
   - The powers' memory (recoveries, Conflux, the guard and ward windows, the Seer's marks) is the session's, as the
     sets' and the loot's: it outlives a character switch by its windows' seconds (L1 L3).
   - "No refereed fight" is `sigil.js` sigilDueling - a duel and arena PvP. In a siege or the Wild Zone the price and
@@ -246,12 +246,12 @@ BUSY-GATE and CRAFT-PROCS at the merge of main).
 
 ## 10. Pinned
 
-`test/schools_arcane.test.js` (11) - the law (the fifteen pairs whole and distinct, the choice and its refusals,
+`test/systems/schools_arcane.test.js` (11) - the law (the fifteen pairs whole and distinct, the choice and its refusals,
 permanence, held, awake and asleep), the save's round trip, the shelf, the price and the tally by the path's schools,
 the six schools past 100 through the real `applySpell`, every rider through the real cast engine's landing doors,
 every passive through its own seam, and the judge's finding. The shelf's wiring (`worldModes.js`) and the tally's
 (`hostMagic.js` tallyCastSkills) are pinned by their text, beside the executed price and shelf.
-`test/audit_schools.test.js` (28) - the audit's (`01-Overview/Audit-Schools.md`), by execution through the producers
+`test/systems/audit_schools.test.js` (28) - the audit's (`01-Overview/audits/Audit-Schools.md`), by execution through the producers
 that mint the shapes in play: the real cast engine's release, missiles and doors (`createPlayerMagic` - its cast
 token, its area sweep, its own door to me), real foes (`makeEnemyEntity` over `enemyBasics.js`: the class foes a
 Lightbringer once read as undead), the save, the magic round (`runMagicRoundsFor` - Steadfast at its seam), the

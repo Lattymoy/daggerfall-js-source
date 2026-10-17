@@ -1,74 +1,74 @@
 [
   {
     "name": "LOOT17-a-plain-legendary-honed",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const takes = item?.rarity === 'magic' || item?.rarity === 'rare' || (item?.rarity === 'legendary' && item.exalted === true);",
     "new": "  const takes = item?.rarity === 'magic' || item?.rarity === 'rare' || item?.rarity === 'legendary';",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-a-magic-never-honed",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const takes = item?.rarity === 'magic' || item?.rarity === 'rare' || (item?.rarity === 'legendary' && item.exalted === true);",
     "new": "  const takes = item?.rarity === 'rare' || (item?.rarity === 'legendary' && item.exalted === true);",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-a-top-line-honed",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "return !!b && item.affixes[i].value < b[1]; });",
     "new": "return !!b && item.affixes[i].value <= b[1]; });",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-the-same-again",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const line = { ...old, value: rangeInt(old.value + 1, band[1], rolls) };",
     "new": "  const line = { ...old, value: rangeInt(old.value, band[1], rolls) };",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-the-whole-band-again",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const line = { ...old, value: rangeInt(old.value + 1, band[1], rolls) };",
     "new": "  const line = { ...old, value: rangeInt(band[0], band[1], rolls) };",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-the-hone-uncounted",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  item.honed = (item.honed | 0) + 1;\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-the-price-unmoved",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  item.value = was + affixesWorth([line], item) - affixesWorth([old], item);\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-honed-past-the-top",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (!honeableLines(item).includes(index)) return null;\n  const old = item.affixes[index];\n  const band",
     "new": "  const old = item.affixes[index];\n  const band",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  magic: Object.freeze({ shards: 1, gold: 50 }),",
     "new": "  magic: Object.freeze({ shards: 2, gold: 50 }),",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  rare: Object.freeze({ shards: 2, gold: 150 }),\n  exalted: Object.freeze({ shards: 4, gold: 500 }),",
     "new": "  rare: Object.freeze({ shards: 2, gold: 100 }),\n  exalted: Object.freeze({ shards: 4, gold: 500 }),",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  exalted: Object.freeze({ shards: 4, gold: 500 }),",
     "new": "  exalted: Object.freeze({ shards: 5, gold: 500 }),",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const twice = 2 ** Math.max(0, item.honed | 0);",
     "new": "  const twice = 1;",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    : item?.rarity === 'legendary' && item.exalted === true ? HONE_PRICE.exalted : null;",
     "new": "    : null;",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (!lootRarityOn()) return 'off';\n  const price = honePrice(item);",
     "new": "  const price = honePrice(item);",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  const price = honePrice(item);\n  if (!price) return 'not';",
     "new": "  const price = honePrice(item) ?? { shards: 0, gold: 0 };",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  const known = itemIsIdentified(item);\n  if (!known) return 'unknown';\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  if (isEquipped(item)) return 'worn';\n  if (!honeableLines",
     "new": "  if (!honeableLines",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  if (!honeableLines(item).includes(index)) return affixBand(item, index) ? 'top' : 'line';",
     "new": "  if (!honeableLines(item).includes(index)) return 'top';",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  if (purse.shards < price.shards) return 'shards';\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  if (purse.gold < price.gold) return 'gold';\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };\n  const why = honeRefusal",
     "new": "  if (!player || !Array.isArray(player.items)) return { ok: false, reason: 'gone' };\n  const why = honeRefusal",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));\n  const line = honeAffix(item, index, rolls);\n  if (!line) return { ok: false, reason: 'not' };",
     "new": "  const line = honeAffix(item, index, rolls);\n  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));\n  if (!line) return { ok: false, reason: 'not' };",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  spendShards(player.items, shards);\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -212,25 +212,25 @@
     "old": "  deductGold(player, gold);\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-the-count-undeclared",
-    "file": "src/systems/itemFields.js",
+    "file": "src/systems/item/itemFields.js",
     "old": "  honed: int({ min: 1, max: 63 }),   // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
     "name": "LOOT17-the-count-from-nothing",
-    "file": "src/systems/itemFields.js",
+    "file": "src/systems/item/itemFields.js",
     "old": "  honed: int({ min: 1, max: 63 }),",
     "new": "  honed: int({ min: 0, max: 63 }),",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "      if (hp && hone.includes(i)) {",
     "new": "      if (hp) {",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "        if (why) refusePress(hb, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "          const done = deps.hone?.(it, i) ?? { ok: false, reason: 'not' };",
     "new": "          const done = { ok: false, reason: 'not' };",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    if (hp && hone.length) card.append(el('p', 'boundline hone-note', HONE_NOTE(hp)));   // LOOT17\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "      hone: (item, line) => honePiece(item, line, playerEntity),   // LOOT17: a line taken up its band\n",
     "new": "",
     "tests": [
-      "test/loot17_hone.test.js"
+      "test/systems/loot17_hone.test.js"
     ]
   }
 ]

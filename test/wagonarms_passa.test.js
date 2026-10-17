@@ -5,11 +5,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { validParkData } from '../src/net/wire.js';
-import { GUILD_ARMS_TAGS_MAX } from '../src/net/guildLaw.js';
+import { GUILD_ARMS_TAGS_MAX } from '../src/net/guild/guildLaw.js';
 import {
   hccWireRecord, validHccRecord, hccRecordKey, HCC_WIRE_KIND,
   wagonArmsOfWire,
-} from '../src/systems/horseCartWire.js';
+} from '../src/systems/horse/horseCartWire.js';
 import { standService } from './accountDb.mjs';
 import { ACCEPTED } from '../src/net/legalLaw.js';
 

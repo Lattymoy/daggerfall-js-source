@@ -122,7 +122,7 @@ function rayMarks(bucket) {
   if (bucket.markEpoch !== MARK_EPOCH) { m.fill(0); bucket.markEpoch = MARK_EPOCH; }
   return m;
 }
-/** FB0930-FRAME: the pin's door to the stamp - test/fb0930_frame.test.js walks a bucket across the wrap. */
+/** FB0930-FRAME: the pin's door to the stamp - test/player/fb0930_frame.test.js walks a bucket across the wrap. */
 export function _setRayStampForTest(n) { RAY_STAMP = n; }
 /** PERF-CLIMB: the resolve's fixed-point stop (_resolveCapsule), on unless a pin turns it off to hold the answers the
  *  same with it and without it. */
@@ -434,7 +434,7 @@ function wideOnRay(bucket, ox, oy, oz, dir, reach) {
   return out;
 }
 /** OW-WOD-LAG: how many wide faces the tree hands a sphere of radius `r` at a WORLD point in bucket `key` (no mover's
- *  turn) - the query's own walk, counted: the pin that the tree culls (test/ow_wod.test.js). */
+ *  turn) - the query's own walk, counted: the pin that the tree culls (test/world/worldOfDaggerfall/ow_wod.test.js). */
 export function wideCandidates(collider, key, p, r) {
   const bucket = collider._buckets.get(key);
   if (!bucket || !bucket.wide.length) return 0;
@@ -880,7 +880,7 @@ export class Collider {
    * the caller's own - which is written and returned in place of a fresh
    * result, the normal into the caller's array ([0, 0, 0] on a miss).
    * The travel steering casts a dozen feelers a frame through here
-   * (systems/travelSteer.js createColliderProbe) and owns one result for
+   * (systems/travel/travelSteer.js createColliderProbe) and owns one result for
    * all of them. Without it the answer is the one it always was.
    */
   raycastHit(origin, dirW, maxDist, filter = null, out = null) {
@@ -1437,7 +1437,7 @@ export class Collider {
     // ground-ness and whether any ceiling-ish contact happened.
     // AUDIT DECOR-SHELL 1: `skip`, a Set of bucket keys the sphere
     // passes through - the ray's own filter, for the decorator's flying
-    // eye (scenes/decorTool.js flyClip), which looks through a piece
+    // eye (scenes/decor/decorTool.js flyClip), which looks through a piece
     // being moved. Null (every body) is the resolve exactly as it was.
     // SH1 (2026-09-12, Mac: "you can immediately walk over things (like
     // interior tables, tree trunks, etc)"): `standCeil` is the highest
@@ -1963,7 +1963,7 @@ export class Collider {
     // something on the body's sides: the resolve pushed the pass off where the motion put it by more than SIDE_CONTACT,
     // along a face steeper than the slope limit (the collider's own wall law, GROUND_NY) - never a floor or a walkable
     // slope the lower sphere rides. A pass the resolve refused is back where it began, the whole motion off. Read by
-    // EnemyMotor.HeightAdjust (characters/enemyMotor.js _heightAdjust).
+    // EnemyMotor.HeightAdjust (characters/enemy/enemyMotor.js _heightAdjust).
     const sideX = feet[0] - (beforeX + dx), sideY = feet[1] - entryY, sideZ = feet[2] - (beforeZ + dz);
     const sideSq = sideX * sideX + sideZ * sideZ;
     let sides = sideSq > SIDE_CONTACT * SIDE_CONTACT && sideY / Math.sqrt(sideSq + sideY * sideY) < GROUND_NY;

@@ -78,7 +78,7 @@
 // MapsFile/BlocksFile instances and player state; absent = headless,
 // every Place PENDS its site (a flag - AUDIT-QUEST F1 measured that as
 // silence: 262 of 265 vendored quests start headless saying nothing) and
-// the corpus gate stands. scenes/questBridge.js reports the absent seam
+// the corpus gate stands. scenes/quest/questBridge.js reports the absent seam
 // at construction, which is what "loudly" was always meant to be):
 //   maps                       - the MapsFile instance (getRegion /
 //                                getLocation / getRmbBlockName /
@@ -326,12 +326,15 @@ export function mintShareId() {
 }
 export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']);
 /** IsProtectedQuest's name test, one home (AUDIT CURSE-SYNC, the review's reuse finding): `name` in `list`,
- *  case-insensitive as C#'s. scenes/questFoeHost.js's WORLD_QUESTS reads the same test. */
+ *  case-insensitive as C#'s. scenes/quest/questFoeHost.js's WORLD_QUESTS reads the same test. */
 export const questNameIn = (list, name) => { const n = (name ?? '').toLowerCase(); return list.some((x) => x.toLowerCase() === n); };
 const isProtectedQuest = (quest) => questNameIn(PROTECTED_QUESTS, quest.questName);
 /** QUEST-SHELF (its audit): a partner's envelope never carries a shelf - THE ENVELOPE IS NOT TRUSTED (AUDIT DROPS A1), and
  *  a copy set aside is never handed on (getShareableQuestData), so the fields are the receiver's alone. */
 const NO_SHELF = Object.freeze({ shelvedAt: null, shelvedSites: null });
+/** INSTANCES: a party member's copy of a quest is this player's own quest - its instance its own, minted when one first
+ *  opens (systems/instancePlaces.js questInstanceEpoch), never the sender's epoch. */
+const NO_INSTANCE = Object.freeze({ instanceEpoch: null });
 
 /** QUEST1 "COUNTS AS ACCEPT/ADVANCE": restoreSaveData deliberately
  *  never replays an action - a LOAD must not refire a reward, reset a
@@ -1116,7 +1119,7 @@ export class QuestMachine {
     }
   }
 
-  // ── OURS, not DFU's: quest sharing (systems/questShare.js is the ──
+  // ── OURS, not DFU's: quest sharing (systems/quest/questShare.js is the ──
   // orchestration; these three are the machine-level moves it needs,
   // kept here because they touch the same private bits restoreSaveData
   // does (the constructor args, the resolvers, siteLinks). Nothing
@@ -1151,7 +1154,7 @@ export class QuestMachine {
    *  window closed) fails quietly. `uid` is coerced to a Number - the
    *  Map is keyed by the raw numeric uid, but questBridge.js's own
    *  questLog() stringifies it for the UI's `key`/`id` fields
-   *  (`String(q.uid)`, ui/questRail.js's own `id`), and Map.get uses
+   *  (`String(q.uid)`, ui/quest/questRail.js's own `id`), and Map.get uses
    *  strict identity: a caller handing this the UI's own id (a string)
    *  would otherwise miss every time, silently. */
   getShareableQuestData(uid) {
@@ -1224,7 +1227,7 @@ export class QuestMachine {
    *  this quest has its final local UID, reaches the exact link a
    *  fresh accept would have made. */
   receiveSharedQuest(questData) {
-    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock
+    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE };   // TIME3: the sender's countdowns, on this character's clock
     const quest = this._newQuest();
     const uid = nextUid();
     // AUDIT DROPS A3: an envelope the restore chokes on is REFUSED (null), never half a quest on the live table
@@ -1408,7 +1411,7 @@ export class QuestMachine {
     // stood in another layout) - kept below, the partner's assignments carried onto it (Place.keepOwnSite)
     const sitesBefore = new Map();
     for (const r of quest.resources.values()) if (r.isPlace && r.siteDetails) sitesBefore.set(r.symbol?.name, structuredClone(r.siteDetails));
-    quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    quest.restoreSaveData({ ...questData, uid, instanceEpoch: quest.instanceEpoch ?? null }, this._saveResolvers());   // INSTANCES: and its instance - this copy's own (NO_INSTANCE)
     for (const r of quest.resources.values()) if (r.isPlace && sitesBefore.has(r.symbol?.name)) r.keepOwnSite?.(sitesBefore.get(r.symbol?.name));
     for (const r of quest.resources.values()) {
       if (r.isClock && !r.clockFinished && finishedBefore.has(r.symbol?.name)) {
@@ -1485,7 +1488,7 @@ export class QuestMachine {
   }
 
   /** AUDIT DROPS A1: the receiver's OWN parse of a quest by name - the reference an incoming envelope's shape is
-   *  held against (systems/questShare.js shapeMismatch) and the source of its Item resources' items. Not
+   *  held against (systems/quest/questShare.js shapeMismatch) and the source of its Item resources' items. Not
    *  scheduled, not started; null when this machine has no source for the name or the parse fails.
    *  SHARE-COPY (2026-09-26, "Shared Quest did not match copy"): HEADLESS. This parse ran over the receiver's own
    *  world, so the SCRIPT's shape depended on where the receiver stood: a `local` Place throws in the wilderness
@@ -1856,7 +1859,7 @@ export class QuestMachine {
 
   /** QUEST-HOME: THE PLAYER STANDS INSIDE town `mapId`'s building `buildingKey` - every incomplete quest's site there is
    *  REACHED, for good (`siteDetails.reached`, saved with the site): what the player found in it is never moved
-   *  (Place.repickHomedSite). The interior mount's (scenes/questBridge.js mountScene). Answers how many were new. */
+   *  (Place.repickHomedSite). The interior mount's (scenes/quest/questBridge.js mountScene). Answers how many were new. */
   noteSiteReached(mapId, buildingKey) {
     if (!(buildingKey > 0)) return 0;
     let n = 0;

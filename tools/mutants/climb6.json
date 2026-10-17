@@ -5,7 +5,7 @@
     "old": "side === 'R' ? -1 : 1);",
     "new": "side === 'R' ? 1 : -1);",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "+ len(sub(Wr, E))) * 0.97;",
     "new": "+ len(sub(Wr, E))) * 1.2;",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "Math.min(up, Math.max(-down, need)) * w",
     "new": "Math.min(up, need) * w",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "Math.max(need, rise);   // the farther hand decides",
     "new": "Math.min(need, rise);   // the farther hand decides",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const RAY_REACH = 0.9;",
     "new": "export const RAY_REACH = 1.3;",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -50,25 +50,25 @@
     "old": "if (req.hands) for (const s of ['L', 'R']) if (req.hands[s]) shrug(",
     "new": "if (false) for (const s of ['L', 'R']) if (req.hands[s]) shrug(",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-climb-foot-phase-same-side",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "s === 'R' ? 0.75 : 0.25, POSE.CLIMB_DUTY",
     "new": "s === 'R' ? 0.25 : 0.75, POSE.CLIMB_DUTY",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-hang-legs-short",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "HANG_LEG: 0.96,",
     "new": "HANG_LEG: 0.5,",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "ck >= 1 && ck <= CLIMB_MOVE_KINDS.length",
     "new": "ck >= 1",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (c !== 3) return out;\n  // a kind",
     "new": "  // a kind",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (Number.isInteger(cy) && Math.abs(cy) <= CLIMB_MOVE_RISE_MAX) out.cy = cy;",
     "new": "",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "if (Number.isInteger(cd) && cd >= 1 && cd <= CLIMB_MOVE_TIME_MAX) out.cd = cd;",
     "new": "",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -113,25 +113,25 @@
     "old": "const k = CLIMB_MOVE_KINDS.indexOf(m.kind) + 1;",
     "new": "const k = CLIMB_MOVE_KINDS.indexOf(m.kind) + 2;",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-peer-move-ignores-time",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "shown.cd ? shown.cd / 100 : PEER_MOVE_DUR",
     "new": "PEER_MOVE_DUR",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-assembly-drops-climb",
-    "file": "src/formats/mwFirstPerson.js",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
     "old": "assembly.climbFit = climb ? applyClimbRig(skeleton, pose, GRAPH_ROOT, fns.skelMats, climb) : null;",
     "new": "assembly.climbFit = null;",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
@@ -140,88 +140,88 @@
     "old": "if (climbHands && (r.slot === 'weapon' || r.slot === 'arrow' || r.slot === 'torch')) r.hidden = true;",
     "new": "",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-shimmy-leader-swapped",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH",
     "new": "s === 'R' ? 1.5 * span : span / 2, POSE.SHIMMY_REACH",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-shimmy-bands-together",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH",
     "new": "s === 'R' ? span / 2 : span / 2, POSE.SHIMMY_REACH",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-shimmy-reach-whole-turn",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "SHIMMY_REACH: 0.8,",
     "new": "SHIMMY_REACH: 1.2,",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-shimmy-grid-off-the-hold",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "  const v = (travel - (centre - width / 2)) / stride;",
     "new": "  const v = (travel + stride / 4 - (centre - width / 2)) / stride;",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-shimmy-never-restarts",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "    if (this.prevMode !== 'hang' || !(Math.abs(c.lipY - this.hangLip) <= PARKOUR_LIP_FOLLOW)) {",
     "new": "    if (this.prevMode === undefined) {",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-settle-always-finishes",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "    if (!moving) st.v = st.v >= 0.5 ? Math.min(1, st.v + dt / POSE.SETTLE_S) : Math.max(0, st.v - dt / POSE.SETTLE_S);",
     "new": "    if (!moving) st.v = Math.min(1, st.v + dt / POSE.SETTLE_S);",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-settle-follows-gait-going-on",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "    else if (sw >= st.prev) st.v = st.prev < 1 ? st.v + (1 - st.v) * (sw - st.prev) / (1 - st.prev) : sw;",
     "new": "    else if (sw >= st.prev) st.v = sw;",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-settle-follows-gait-going-back",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "    else st.v = st.prev > 0 ? st.v * sw / st.prev : sw;",
     "new": "    else st.v = sw;",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   },
   {
     "name": "CLIMB6-settle-finished-back-to-the-anchor",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "    if (sw <= 0) { st.v = 0; st.cycle = null; return 0; }",
     "new": "    if (sw <= 0 || (!moving && st.v >= 1)) { st.v = 0; st.cycle = null; return 0; }",
     "tests": [
-      "test/climb6.test.js"
+      "test/player/climb/climb6.test.js"
     ]
   }
 ]

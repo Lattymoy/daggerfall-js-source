@@ -5,7 +5,7 @@
 // and put through the one bake - tools/sndify.mjs, down to DAGGER.SND's own 11025 Hz unsigned 8-bit mono - so an axe in
 // a trunk sits IN Daggerfall's world. The acts borrowed DAGGER.SND's combat and window clips until now (a blow's Hit1-5
 // for a chop, the parry's ring for an ore, the lock's click for a clean finish, the button's click for a herb and a
-// knife's stroke - systems/profSounds.js, which the classic skin keeps); DAGGER.SND has no axe in wood, no pick on
+// knife's stroke - systems/professions/profSounds.js, which the classic skin keeps); DAGGER.SND has no axe in wood, no pick on
 // stone, no leaves, no net and no tree coming down. These thirty-six:
 //
 //   gather-swing-1/-2      a heavy tool through the air before its blow (the axe's, the pick's lower)
@@ -45,7 +45,7 @@
 //
 // DETERMINISTIC: every noise is a seeded PRNG (each clip its own seed), so re-running writes the same bytes - the rule
 // public/README.md sets for anything of ours that ships. Provenance: public/sfx/SOURCES.md; the doctrine allow-list
-// (test/doctrine.test.js) carries a row for each.
+// (test/tooling/doctrine.test.js) carries a row for each.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

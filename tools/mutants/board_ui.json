@@ -1,29 +1,29 @@
 [
   {
     "name": "ONE-BOARD-every-board-left",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "    if (bounty.has(i)) continue;\n    const d = Array.isArray(centre)",
     "new": "    const d = Array.isArray(centre)",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
     "name": "ONE-BOARD-the-nearest-ignored",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "const d = Array.isArray(centre) ? Math.hypot((box[0] + box[3]) / 2 - centre[0], (box[2] + box[5]) / 2 - centre[1]) : 0;",
     "new": "const d = 0;",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
     "name": "ONE-BOARD-the-tie-to-the-last",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "    if (d < near) { near = d; best = i; }",
     "new": "    if (d <= near) { near = d; best = i; }",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -32,8 +32,8 @@
     "old": "...(!bountyAt.has(i) && noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
     "new": "...(noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
     "tests": [
-      "test/board_ui.test.js",
-      "test/notice1.test.js"
+      "test/ui/board_ui.test.js",
+      "test/net/notice1.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "        if (bountyAt.has(i)) return;",
     "new": "        if (i === -1) return;",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "return bountyAt.size < p.boards.length ? noticeTownOf(",
     "new": "return bountyAt.size <= p.boards.length ? noticeTownOf(",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "bd?.named ? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT",
     "new": "false ? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT",
     "tests": [
-      "test/auditbounty1.test.js"
+      "test/systems/auditbounty1.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;",
     "new": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).length || null;",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "if (id === 'work' && writs) return (writs.writs ?? []).filter((w) => w.state === 'open').length",
     "new": "if (id === 'work' && writs) return (writs.writs ?? []).length",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "    body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));\n    // CHAP3a: the account's Merit here",
     "new": "    // CHAP3a: the account's Merit here",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ],
     "note": "CHAP2a: re-aimed by content - the day's line names the halls' writs too. AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -97,7 +97,7 @@
     "old": "if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));",
     "new": "if (news.length) body.append(gridOf(news));",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));",
     "new": "body.append(sectionHead(BOARD_WORDS.notes));",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "  if (market && marketShown()) market.prefetch?.();\n",
     "new": "",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    await Promise.all([load(again), settling]);",
     "new": "    await settling; await load(again);",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "    if (!shut) box.append(walletNode());\n    box.append(viewsNode());",
     "new": "    box.append(viewsNode());\n    if (!shut) box.append(walletNode());",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "(['Sell', Object.freeze(['orders', 'mine'])]),",
     "new": "(['Sell', Object.freeze(['orders', 'mine', 'history'])]),",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "    box.open = st.suppliersOpen === true;",
     "new": "    box.open = false;",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "const b = button('primary market-dolist', 'List', () => send());",
     "new": "const b = button('primary market-list', 'List', () => send());",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;\n    try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }\n",
     "new": "    try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }\n    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;\n",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "const b = panel(SEAT_PANELS.battle, 'seat-battlepanel');",
     "new": "const b = panel(null, 'seat-battlepanel');",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "const li = el('li', data.phase === id ? 'on' : null, name);",
     "new": "const li = el('li', id === 'muster' ? 'on' : null, name);",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "return Number.isFinite(data?.defence) ? Math.max(need, data.defence + 1) : need;",
     "new": "return need;",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "      if (s.guild.id !== holderId) {",
     "new": "      if (true) {",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "whose treasury can pay ${n(CLAIM_FEE[t])} silver.",
     "new": "whose treasury can pay ${n(CLAIM_FEE.palace)} silver.",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "  const d = make('details', cls);",
     "new": "  const d = make('section', cls);",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -232,61 +232,61 @@
     "old": "  slow: 'The market did not load.',",
     "new": "  slow: 'The counting-house is not answering. The market cannot be read now - try again in a moment, or ask again from another board.',",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
     "name": "BOARD-UI-the-strip-free-to-shrink",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": "\n.notice-tabs { flex: none; display: flex;",
     "new": "\n.notice-tabs { display: flex;",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
     "name": "BOARD-UI-the-cards-stretched",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".notice-grid { list-style: none; margin: 0 0 16px; padding: 4px; display: grid; gap: 14px; align-items: start;",
     "new": ".notice-grid { list-style: none; margin: 0 0 16px; padding: 4px; display: grid; gap: 14px;",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
     "name": "BOARD-UI-the-tilt-back",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": "  cursor: pointer; color: #2a1f12;\n",
     "new": "  cursor: pointer; color: #2a1f12; transform: rotate(var(--tilt, 0deg));\n",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
     "name": "BOARD-UI-the-select-tall",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": "\n.market-field > * { flex: 0 0 auto; }",
     "new": "\n.market-field > * { flex: 1 1 auto; }",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
     "name": "BOARD-UI-the-vendors-unnamed",
-    "file": "src/ui/vendorTab.js",
+    "file": "src/ui/vendor/vendorTab.js",
     "old": "      if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));\n",
     "new": "",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
     "name": "BOARD-UI-the-board-left-cold",
-    "file": "src/ui/enhancedChunk.js",
-    "old": "  () => import('./noticeWindow.js'),   // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it\n",
+    "file": "src/ui/enhanced/enhancedChunk.js",
+    "old": "  () => import('../noticeWindow.js'),   // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it\n",
     "new": "",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "    else if (board && !notes.length) grid.append(",
     "new": "    else if (!board && busy) grid.append(el('li', 'notice-empty', BOARD_WORDS.reading));\n    else if (board && !notes.length) grid.append(",
     "tests": [
-      "test/board_ui.test.js"
+      "test/ui/board_ui.test.js"
     ]
   }
 ]

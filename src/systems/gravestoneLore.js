@@ -12,7 +12,7 @@
 // activation that hits nothing else there is read as "you kneel and
 // read the nearest stone", and one of these lines answers - through
 // the ordinary HUD/popup-text line (townTalk.say), which under the
-// enhanced skin is a toast in the notice stack (ui/enhancedNotice.js,
+// enhanced skin is a toast in the notice stack (ui/enhanced/enhancedNotice.js,
 // ENH-NOTICE3) rather than a new window.
 
 /** Sixteen short, in-world phrases - no real name is invented for any

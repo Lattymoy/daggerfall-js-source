@@ -1,11 +1,11 @@
 [
   {
     "name": "TRAVEL-X1-stale-latch",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (state.wasPaused) latchTravelling();\n",
     "new": "",
     "tests": [
-      "test/csa_time_audio.test.js"
+      "test/systems/comeSailAway/csa_time_audio.test.js"
     ]
   }
 ]

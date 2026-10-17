@@ -1,6 +1,6 @@
 // MWNPC2 LIVE PROOF: ONE BIND FOR EVERY BODY DRAWS THE FRAME THE LONE PASSES DREW - IN A REAL BROWSER.
 //
-// test/mwnpc2_onepass.test.js holds the batch's calls on a recording GL: two binds for three bodies, a tile each, a
+// test/render/mwnpc2_onepass.test.js holds the batch's calls on a recording GL: two binds for three bodies, a tile each, a
 // quad sampling its tile. What a recording GL cannot say is that the PICTURE is the same. This draws three fixture
 // bodies (the GPU-skinned rig of MWNPC1) into one frame the old way - each its own pass of the sprite target - reads
 // the frame back, draws the same frame again through the batch, reads it back, and compares texel by texel. A tile

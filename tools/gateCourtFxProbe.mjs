@@ -1,6 +1,6 @@
 // WB9c / WB9e - THE COURT'S CRYSTALS AND HIS BLOWS' FALL, COMPILED, LINKED AND DRAWN IN A REAL BROWSER.
 //
-// node holds both passes' law (test/wb9c_gate_reckoning.test.js, test/wb9e_gate_blows.test.js: the cluster's model,
+// node holds both passes' law (test/net/gate/wb9c_gate_reckoning.test.js, test/net/gate/wb9e_gate_blows.test.js: the cluster's model,
 // its growth, the sparks' flight and the meteor's fall in JS, the passes over a fake GL); what node cannot answer is
 // whether their GLSL COMPILES and LINKS in a real WebGL2 context (GLSL ES 3.00 asks every uniform shared by the two
 // stages to carry one precision - the crystal's glow once failed exactly there), and whether what they draw lands
@@ -21,11 +21,11 @@ const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.ind
 const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
-import { buildCourtModel, courtToDungeon } from '/src/world/gateArena.js';
-import { courtArt, gateArt } from '/src/world/gateArt.js';
+import { buildCourtModel, courtToDungeon } from '/src/world/gate/gateArena.js';
+import { courtArt, gateArt } from '/src/world/gate/gateArt.js';
 import { CourtCrystalRenderer } from '/src/render/courtCrystals.js';
-import { GateFxRenderer, FX_KINDS, meteorFall } from '/src/render/gateFx.js';
-import { ATTACKS, CRYSTAL_H } from '/src/net/gateBrain.js';
+import { GateFxRenderer, FX_KINDS, meteorFall } from '/src/render/gate/gateFx.js';
+import { ATTACKS, CRYSTAL_H } from '/src/net/gate/gateBrain.js';
 const m = buildCourtModel();
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });
 const vs = \`#version 300 es

@@ -36,7 +36,7 @@
 //    creates a useless "Unknown Powers" potion, DFU says so and
 //    refuses. The ingredients are consumed either way.
 
-import { templateByIndex } from './itemTemplates.js';
+import { templateByIndex } from './item/itemTemplates.js';
 // PROF12 (bible/06-Systems/Professions-Arc.md 9.3, 37): THE TWENTY
 // RECIPES AND THEIR KEY moved, verbatim, to a leaf of their own
 // (systems/potionRecipes.js) - the account service runs DFU's own

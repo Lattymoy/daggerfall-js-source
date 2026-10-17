@@ -1,7 +1,7 @@
 // CHAT-CHAN, MEASURED (2026-09-23, kurkku: "Global chat ... regional chat ... party chat"; Addison Knox: "Roleplay chat
 // channels (IC/OOC)").
 //
-// test/chatchan.test.js holds the law on fakes; this mounts the REAL panel over the real sheets in Chromium and reads
+// test/net/chatchan.test.js holds the law on fakes; this mounts the REAL panel over the real sheets in Chromium and reads
 // the layout back where a fake cannot: the tab bar's four tabs AND the Social button on ONE row at the sheet's width
 // and at the narrowest box a phone gives (352px) - on the desktop skin and the touch skin, whose tabs are a thumb's -
 // every tab's hover, the field's placeholder following the tab, an aside drawn leaning and dimmed, and the peek's

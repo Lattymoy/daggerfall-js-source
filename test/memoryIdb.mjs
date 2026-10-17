@@ -1,4 +1,4 @@
-// An IndexedDB in memory, for the translation store's tests (L10N3b, L10N6) - moved here from test/l10n3b.test.js.
+// An IndexedDB in memory, for the translation store's tests (L10N3b, L10N6) - moved here from test/systems/l10n3b.test.js.
 /** An IndexedDB in memory: open with its upgrade, transactions over named stores, get/put/delete/getAll/getAllKeys
  *  answering on the next turn, a transaction completing after its requests. */
 export function memoryIdb() {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // KG2 (2026-10-13, bible/11-Multiplayer/Kings-Gambit.md section 12; the owner: "Do KG2"): THE TIERS, MEASURED - a
-// regular of each tier (systems/gambitPatrons.js) dealt against an Auto-filled 300 and three potions, both seats played
+// regular of each tier (systems/gambit/gambitPatrons.js) dealt against an Auto-filled 300 and three potions, both seats played
 // by the regulars' own rules (regularStep), the player's seat with no blunder unless asked; seeded, so every figure the
 // record quotes is a command away.
 //
@@ -20,7 +20,7 @@
 //   node tools/kgMeasure.mjs --player-blunder 0.15    # the player's seat blundering as a Seasoned regular does
 import { isMain } from './lib/isMain.mjs';
 import { KG_POINT_BUDGET, autoFill, finishTurn } from '../src/net/kingsGambit.js';
-import { GAMBIT_TIERS, dealRegular, regularStep } from '../src/systems/gambitPatrons.js';
+import { GAMBIT_TIERS, dealRegular, regularStep } from '../src/systems/gambit/gambitPatrons.js';
 
 /** A xorshift32 source - the measure's own, seeded. @param {number} seed */
 export const xorshift = (seed) => {

@@ -17,7 +17,7 @@
 //   - HOW WELL. A wealth TIER per role - Morrowind's own clothing ladder (common, expensive, extravagant, exquisite: the
 //     records' ids say it) - so a noble is never in a peasant's shirt and a farmhand never in silk: a garment's rung
 //     strays one from the person's, but never past the role's own (the hint's `lo` and `hi`; AUDIT MWNPC16-18 C F1).
-//   - WHICH ONE. The look carries `npc` - its seed, its tier and its role's range - and the build (net/peerBodies.js peerBuildOpts) reads
+//   - WHICH ONE. The look carries `npc` - its seed, its tier and its role's range - and the build (net/peer/peerBodies.js peerBuildOpts) reads
 //     it per garment: the tier's records of the garment's type, the few nearest the dye's colour, one picked off the
 //     seed (mwClothingRecord's `pick` and `tier`); and the head and the hair WALKED off the seed, each on its own (a
 //     race's heads times its hairs, where the face index named one pair of ten). A player's look carries no `npc`: the
@@ -292,7 +292,7 @@ export function npcHintOf(look) {
   if (!ok(n.tier) || !ok(n.lo) || !ok(n.hi) || n.lo > n.tier || n.tier > n.hi) return null;
   return n;
 }
-/** The key a hint adds to a body's (net/peerBodies.js peerBodyKey): two people in the same garments are two bodies. */
+/** The key a hint adds to a body's (net/peer/peerBodies.js peerBodyKey): two people in the same garments are two bodies. */
 export const npcKeyOf = (look) => { const n = npcHintOf(look); return n ? `|npc${n.seed}.${n.tier}.${n.lo}${n.hi}` : ''; };
 
 /**
@@ -328,7 +328,7 @@ export function beastWorn(worn, race) {
 export function withNpcPicks(worn, n) {
   return worn.map((p) => (p.kind === 'clothing' ? { ...p, ...npcGarmentPick(n, p) } : p));
 }
-/** The head and the hair a hint walks (formats/mwFirstPerson.js playerBodyRows `walk`), each on its own. @param {any} n */
+/** The head and the hair a hint walks (formats/morrowind/mwFirstPerson.js playerBodyRows `walk`), each on its own. @param {any} n */
 export const npcFaceOf = (n) => ({ head: wmix(n.seed ^ 0x4ead5eed), hair: wmix(n.seed ^ 0x4a12b0b5) });
 
 /**

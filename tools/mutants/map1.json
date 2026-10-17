@@ -1,201 +1,201 @@
 [
   {
     "name": "coast-through-pixel-centres",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "      if (x + 1 < width && here !== inside(x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]);",
     "new": "      if (x + 1 < width && here !== inside(x + 1, y)) segs.push([x + 0.5, y, x + 0.5, y + 1]);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "coast-ignores-climate",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    return !isWaterPixel(climate, byte);",
     "new": "    return byte > 0 || climate === -2;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "border-on-the-coast",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "      if (x + 1 < width && isLand(x + 1, y)) {",
     "new": "      if (x + 1 < width) {",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "border-through-unnamed",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "        if (q >= 0 && q !== r) segs.push([x + 1, y, x + 1, y + 1]);",
     "new": "        if (q !== r) segs.push([x + 1, y, x + 1, y + 1]);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "generated-network-inked",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  if (!net || net.source !== 'basic-roads') return { roads: [], tracks: [] };",
     "new": "  if (!net) return { roads: [], tracks: [] };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "tracks-dropped",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  return { roads: soften(net.roads), tracks: soften(net.tracks) };",
     "new": "  return { roads: soften(net.roads), tracks: [] };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "undiscovered-inked",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  const opts = isDiscovered ? { isDiscovered } : {};",
     "new": "  const opts = { isDiscovered: () => true };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "far-shows-hamlets",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  far: new Set([11]),\n  mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),",
     "new": "  far: new Set([11, 12]),\n  mid: new Set([0, 1, 2, 8, 9, 10, 11, 12, 13]),",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "band-boundaries-moved",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  Object.freeze({ name: 'mid', min: 2.4 }),",
     "new": "  Object.freeze({ name: 'mid', min: 2.5 }),",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "clamp-no-centre",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    if (visible >= map) return lo + (map - visible) / 2;",
     "new": "    if (visible >= map) return lo;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "clamp-lets-edge-in",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    return Math.min(lo + map - visible, Math.max(lo, o));",
     "new": "    return Math.max(lo, o);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "ceiling-dropped",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  const scale = Math.max(scaleMin, Math.min(SCALE_MAX, view.scale));",
     "new": "  const scale = Math.max(scaleMin, view.scale);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "zoom-not-at-cursor",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  return { ox: mx - px / scale, oy: my - py / scale, scale };",
     "new": "  return { ox: view.ox, oy: view.oy, scale };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "overlap-drawn",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  const hits = (box) => boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y);",
     "new": "  const hits = () => false;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "rank-ignored",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    .sort((a, b) => (rank.get(a.colorIndex) ?? 99) - (rank.get(b.colorIndex) ?? 99));",
     "new": "    ;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "no-clear",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  ctx.clearRect(0, 0, paperW, paperH);\n",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "wash-dropped",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  stroke(model.coast, Math.max(3, s * 1.6), PEN.wash);\n",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "roads-flag-ignored",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);",
     "new": "  stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "tracks-at-far",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
     "new": "  if (!opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "party-in-ink-colour",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    ctx.strokeStyle = m.color; ctx.lineWidth = 2.2;",
     "new": "    ctx.strokeStyle = PEN.line; ctx.lineWidth = 2.2;",
     "tests": [
-      "test/heldmap.test.js",
-      "test/soc6_partymap.test.js"
+      "test/ui/heldmap.test.js",
+      "test/ui/soc6_partymap.test.js"
     ]
   },
   {
     "name": "label-ignores-view",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    const [x, y] = toPaper(view, m.x, m.y);\n    ctx.strokeStyle = m.color;",
     "new": "    const [x, y] = [m.x * view.scale, m.y * view.scale];\n    ctx.strokeStyle = m.color;",
     "tests": [
-      "test/soc6_partymap.test.js"
+      "test/ui/soc6_partymap.test.js"
     ]
   },
   {
     "name": "names-not-in-the-face",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "      ctx.font = nameFont(n.mark, n.size);\n      ctx.fillText(n.mark.name, n.x, n.y);",
     "new": "      ctx.font = `${n.size}px sans-serif`;\n      ctx.fillText(n.mark.name, n.x, n.y);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "export const HAND_CHROMA = 75;",
     "new": "export const HAND_CHROMA = 95;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "    return data[j + 3] > 128 && data[j] - data[j + 2] < chroma;",
     "new": "    return data[j] - data[j + 2] < chroma;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;",
     "new": "export const HELD_MAP_URL = 'art/held-map.png';",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "    this._commit = commit;\n    this._panel = null;",
     "new": "    this._commit = commit;\n    if (commit?.kind === 'travel') this.deps.onTravel?.(commit.pick, commit.opts, commit.computed);\n    this._panel = null;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "      if (this._panelState?.fee) { this._beginClose(null); return; }\n      this._closePanel();\n      return;",
     "new": "      this._beginClose(null);\n      return;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "      if (this._panel) { this._closePanel(); return; }",
     "new": "      if (this._panel) { this._beginClose(null); return; }",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "      if (!shown.has(m.colorIndex)) continue;\n      const [x, y] = toPaper(this._view, m.x, m.y);",
     "new": "      if (!shown.has(m.colorIndex)) continue;\n      const [x, y] = [m.x, m.y];",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "      if (!shown.has(m.colorIndex)) continue;\n      const [x, y] = toPaper(this._view, m.x, m.y);",
     "new": "      const [x, y] = toPaper(this._view, m.x, m.y);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "    if (this._selected) this._select(null);\n  }\n\n  _renderSearch(entries) {",
     "new": "  }\n\n  _renderSearch(entries) {",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "    this._view = clampView(v, lim);\n    this._goal = { ...this._view };",
     "new": "    this._view = { ...v };\n    this._goal = { ...this._view };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "    const pw = sw * (PAPER.x1 - PAPER.x0), ph = sh * (PAPER.y1 - PAPER.y0);",
     "new": "    const pw = sw, ph = sh;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "  draw() { /* DOM only:",
     "new": "  draw() { this._paint(); /* DOM only:",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "    if (!rec || rec.net !== net || rec.width !== this._size.width || rec.height !== this._size.height) {",
     "new": "    if (true) {",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "    this._renderLegend();\n    this._dirty = true;\n    return true;",
     "new": "    this._renderLegend();\n    this._marksDirty = true;\n    this._dirty = true;\n    return true;",
     "tests": [
-      "test/soc6_partymap.test.js"
+      "test/ui/soc6_partymap.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "    if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }",
     "new": "    if (this._partyPoll <= 0) { this._partyPoll = 0; this._refreshParty(); }",
     "tests": [
-      "test/soc6_partymap.test.js"
+      "test/ui/soc6_partymap.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "        color: m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS,",
     "new": "        color: PARTY_MARK_CSS,",
     "tests": [
-      "test/soc6_partymap.test.js"
+      "test/ui/soc6_partymap.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "        x: m.x, y: m.y, name: partyLabelText(m), online: m.online, stack: m.stack,",
     "new": "        x: m.x, y: m.y, name: m.name, online: m.online, stack: m.stack,",
     "tests": [
-      "test/soc6_partymap.test.js"
+      "test/ui/soc6_partymap.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "        label: this._party.filter((m) => m.px === pm.px && m.py === pm.py).map(partyHoverText).join(' / '),",
     "new": "        label: this._party.filter((m) => m === pm).map(partyHoverText).join(' / '),",
     "tests": [
-      "test/soc6_partymap.test.js"
+      "test/ui/soc6_partymap.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "    leg.classList.toggle('open', true);\n    leg.style.display = 'flex';",
     "new": "    leg.classList.toggle('open', true);\n    leg.style.display = 'none';",
     "tests": [
-      "test/soc6_partymap.test.js"
+      "test/ui/soc6_partymap.test.js"
     ]
   },
   {
@@ -375,7 +375,7 @@
     "old": "    this._focusOn(entry.pos.x + 0.5, entry.pos.y + 0.5);\n    this._select(",
     "new": "    this._select(",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "  return { x: (vw - sw) / 2, y: vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * sh, w: sw, h: sh };",
     "new": "  return { x: (vw - sw) / 2, y: (vh - sh) / 2, w: sw, h: sh };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "  return { x: (vw - sw) / 2, y: vh - (SPRITE_ART_FOOT - HELD_MAP_BITE) * sh, w: sw, h: sh };",
     "new": "  return { x: (vw - sw) / 2, y: vh - (1 - HELD_MAP_BITE) * sh, w: sw, h: sh };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "  let sh = vh * HELD_MAP_HEIGHT / SPRITE_ART_FOOT, sw = sh * SPRITE.w / SPRITE.h;",
     "new": "  let sh = vh, sw = vw;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "  if (sw > vw) { sw = vw; sh = sw * SPRITE.h / SPRITE.w; }\n",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -420,16 +420,16 @@
     "old": "export const SPRITE_ART_FOOT = 0.872;   // MAP-FIELD8: the fourth painting's lowest opaque row is 946 of 1086",
     "new": "export const SPRITE_ART_FOOT = 1;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD2-the-root-paints-its-own-black-again",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  background: transparent; cursor: grab; touch-action: none;",
     "new": "  background: #000; cursor: grab; touch-action: none;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -438,7 +438,7 @@
     "old": "    this.hidesHud = true;",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -447,16 +447,16 @@
     "old": "export const hidesHud = (win) => !!win && win.hidesHud === true;",
     "new": "export const hidesHud = (win) => !!win && !!win.hidesHud;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD2-the-hide-is-subject-to-the-large-HUD-carve-out",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  const hudCovered = hudHidden || ((windowCoversHud ?? cursorActive) && !largeHud?.art);",
     "new": "  const hudCovered = (hudHidden || (windowCoversHud ?? cursorActive)) && !largeHud?.art;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -465,7 +465,7 @@
     "old": "          hudHidden: townTalk.hudHidden,   // MAP-FIELD2: the held map takes the vitals and the status icons with it, on both skins",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -474,7 +474,7 @@
     "old": "    get hudHidden() { return hidesHud(overlay); },",
     "new": "    get hudHidden() { return paused && hidesHud(overlay); },",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -483,7 +483,7 @@
     "old": "export const CUFF_BAND = 0.827;   // MAP-FIELD8: the fourth painting's silhouette columns end by 0.8158 and its cut cuffs begin at 0.8379 (tools/heldMapArtProbe.mjs) - a 24-row gap, the band in its middle with eleven rows either side",
     "new": "export const CUFF_BAND = 0.827;   // MAP-FIELD8: the fourth painting's silhouette columns end by 0.8158 and its cut cuffs begin at 0.8379 (tools/heldMapArtProbe.mjs) - a 24-row gap, the band in its middle with eleven rows either side\nexport const MATTE_LUM = 8;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -492,7 +492,7 @@
     "old": "      extendCuffs(img.data, w, h);   // MAP-FIELD2: the arms run off the bottom edge instead of ending above it",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -501,7 +501,7 @@
     "old": "    if (last < band || last >= h - 1) continue;   // not a column the frame cut",
     "new": "    if (last >= h - 1) continue;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -510,7 +510,7 @@
     "old": "export function extendCuffs(data, w, h, foot = CUFF_BAND, alphaMin = 128) {",
     "new": "export function extendCuffs(data, w, h, foot = CUFF_BAND, alphaMin = 8) {",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -519,62 +519,62 @@
     "old": "  const col = side === 'right' ? w - 1 : 0;",
     "new": "  const col = 0;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD6-names-ignore-glyphs",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  for (const m of marks) {\n    if (!shown.has(m.colorIndex) || !onSheet(m)) continue;\n    const [px, py] = toPaper(view, m.x, m.y);\n    const r = markReach(m) + 1;   // HUB1: a hub's circle is ground its glyph holds\n    boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });\n    if (m.carriage) {   // OW-HUBS: and a carriage town's wheel beside it\n      const [wx, wy] = carriageWheelAt(m, px, py), wr = CARRIAGE_WHEEL_R + 1;\n      boxes.push({ x: wx - wr, y: wy - wr, w: wr * 2, h: wr * 2 });\n    }\n  }",
     "new": "",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, OW-HUBS): the seeding loop grew a carriage wheel's ground",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD6-one-candidate-only",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    const fit = cands.map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))",
     "new": "    const fit = [cands[0]].map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD6-the-glyphs-lose-their-halo",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD6-the-halo-is-drawn-per-mark-not-per-pass",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]",
     "new": "  for (const [m, x, y] of inked) {\n    paintGlyph(ctx, m.kind, x, y, true);\n    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind]",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD6-the-names-lose-their-halo",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    for (const n of opts.names) {\n      ctx.font = nameFont(n.mark, n.size);\n      ctx.strokeText(n.mark.name, n.x, n.y);\n    }",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD6-the-halo-is-no-fatter-than-the-pen",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "export const HALO_PEN = 1.6;",
     "new": "export const HALO_PEN = 0;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -583,7 +583,7 @@
     "old": "    c.stage.style.transform = e >= 1 ? '' : `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
     "new": "    c.root.style.opacity = String(a);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -592,7 +592,7 @@
     "old": "    this._setRaise(0);",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -601,7 +601,7 @@
     "old": "    for (const n of c.root.children ?? []) { if (n !== c.stage) n.style.opacity = o; }",
     "new": "    for (const n of c.root.children ?? []) { n.style.opacity = o; }",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -610,7 +610,7 @@
     "old": "    this._closeFrom = Number.isFinite(this._raise) ? this._raise : 1;",
     "new": "    this._closeFrom = 1;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -619,7 +619,7 @@
     "old": "    c.stage.style.transform = e >= 1 ? '' : `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
     "new": "    c.stage.style.transform = `translateY(${Math.round((1 - e) * 1000) / 10}%)`;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -628,25 +628,25 @@
     "old": "    if (this._lane === 'hands') { c.stage.style.transform = ''; return; }",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD6-a-name-may-sit-off-the-paper",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "      .find((c) => c.box.x >= 2 && c.box.x + c.box.w <= paperW - 2\n        && c.box.y >= 2 && c.box.y + c.box.h <= paperH - 2 && !hits(c.box));",
     "new": "      .find((c) => c.box.x >= 2 && c.box.x + c.box.w <= paperW - 2 && !hits(c.box));",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "MAPFIELD6-the-reserved-box-is-not-the-inks",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  return { x, y: baseline - (size * NAME_ASC), w, h: size * (NAME_ASC + NAME_DESC) };",
     "new": "  return { x, y: baseline - (size * 0.55), w, h: size * 1.1 };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -655,7 +655,7 @@
     "old": "    this._fireCommit();\n    this._close();\n  }\n\n  /** The commit the player made, fired once and then forgotten.",
     "new": "    this._close();\n  }\n\n  /** The commit the player made, fired once and then forgotten.",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -664,7 +664,7 @@
     "old": "    } else if (!first && this._phase !== 'closing' && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
     "new": "    } else if (!first && this._handsTries > 0 && this._handsTries < 30) { this._handsTries++; this._tryHands(); }",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -673,7 +673,7 @@
     "old": "  _fireCommit() {\n    const c = this._commit;\n    this._commit = null;",
     "new": "  _fireCommit() {\n    const c = this._commit;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -682,34 +682,34 @@
     "old": "export const HELD_MAP_BITE = 0.11;",
     "new": "export const HELD_MAP_BITE = 0.03;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "AUDITMAPFIELD-the-carets-are-ink-again",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  ctx.strokeStyle = PEN.relief;",
     "new": "  ctx.strokeStyle = PEN.soft;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "AUDITMAPFIELD-the-halo-is-the-pen",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  halo: rgba(PARCHMENT_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name",
     "new": "  halo: rgba(INK_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
     "name": "AUDITMAPFIELD-the-filled-halo-is-not-stroked",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  const solid = () => { ctx.fill(); if (halo) ctx.stroke(); };",
     "new": "  const solid = () => { ctx.fill(); };",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -718,7 +718,7 @@
     "old": "    const e = smoothstep(0, 1, a);",
     "new": "    const e = a;",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   },
   {
@@ -727,7 +727,7 @@
     "old": "      const img = ctx.getImageData(0, 0, w, h);\n      extendCuffs(img.data, w, h);",
     "new": "      const img = ctx.getImageData(0, 0, w, h);\n      for (let i = 0; i < img.data.length; i += 4) if (img.data[i] + img.data[i + 1] + img.data[i + 2] < 72) img.data[i + 3] = 0;\n      extendCuffs(img.data, w, h);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ]
   }
 ]

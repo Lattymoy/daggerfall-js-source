@@ -5,7 +5,7 @@
     "old": "typeof name === 'string' && name.includes('@');",
     "new": "typeof name === 'string' && name.includes('@@');",
     "tests": [
-      "test/handleemail.test.js"
+      "test/net/handleemail.test.js"
     ],
     "note": "an address taken as a name"
   },
@@ -15,7 +15,7 @@
     "old": "  if (handleLooksLikeEmail(h)) return 'email';",
     "new": "  if (false) return 'email';",
     "tests": [
-      "test/handleemail.test.js"
+      "test/net/handleemail.test.js"
     ],
     "note": "the service registers an address"
   },
@@ -25,7 +25,7 @@
     "old": "  if (!isHandleShaped(h)) return 'shape';\n",
     "new": "  if (handleLooksLikeEmail(h)) return 'email';\n  if (!isHandleShaped(h)) return 'shape';\n",
     "tests": [
-      "test/handleemail.test.js"
+      "test/net/handleemail.test.js"
     ],
     "note": "the address asked before the shape"
   },
@@ -35,7 +35,7 @@
     "old": "handle.length > 0 && !handleLooksLikeEmail(handle)) return handle;",
     "new": "handle.length > 0) return handle;",
     "tests": [
-      "test/handleemail.test.js"
+      "test/net/handleemail.test.js"
     ],
     "note": "an address chosen before read out to the world"
   },
@@ -45,7 +45,7 @@
     "old": "    if (handleLooksLikeEmail(v('handle'))) return refuse(accountRefusalText('handle-email'));",
     "new": "    if (false) return refuse(accountRefusalText('handle-email'));",
     "tests": [
-      "test/handleemail.test.js"
+      "test/net/handleemail.test.js"
     ],
     "note": "a round trip to learn it"
   },
@@ -55,7 +55,7 @@
     "old": "    if (fields.includes('handle') && !handleShapeOk(v('handle'))) return LOCAL_REFUSALS['handle-shape'];",
     "new": "    if (fields.includes('handle') && !handleShapeOk(v('handle'))) return LOCAL_REFUSALS['handle-shape'];\n    if (fields.includes('handle') && handleLooksLikeEmail(v('handle'))) return 'refused';",
     "tests": [
-      "test/handleemail.test.js"
+      "test/net/handleemail.test.js"
     ],
     "note": "one chosen before can no longer sign in"
   }

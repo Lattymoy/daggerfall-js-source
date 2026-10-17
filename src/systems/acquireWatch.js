@@ -9,7 +9,7 @@
 // craft, a trade, the market and a card all `addItem` straight into the pack - and a take from the wagon or the
 // Materials Bag tells the listeners as if it were new. A popup hung on any one door misses the rest or lies.
 //
-// SO THE PACK IS WATCHED, NOT THE DOORS. Once a frame (ui/hud.js drawHud - the one call every host makes, with the
+// SO THE PACK IS WATCHED, NOT THE DOORS. Once a frame (ui/hud/hud.js drawHud - the one call every host makes, with the
 // player entity it already passes) the watcher reads the player's three own lists - the pack, the wagon, the Materials
 // Bag - and answers what is NEW there:
 //   - A piece that could ever announce (`markable`: a weapon, a piece of armour or clothing, jewellery, an artifact, a
@@ -27,17 +27,17 @@
 // restorePlayer), and every frame before and at the end of character creation (its kit and the starter deck) are read
 // and marked, and announce nothing.
 //
-// WHAT ANNOUNCES is a tier at or over `BANNER_MIN_TIER` (Rare): a card its catalog's tier (net/iliacCards.js - printed on
+// WHAT ANNOUNCES is a tier at or over `BANNER_MIN_TIER` (Rare): a card its catalog's tier (net/iliac/iliacCards.js - printed on
 // its face, whatever loot rarity's switch says), any other piece the tier the pack shows it in (lootRarity.js
 // rarityAttr - none with loot rarity off, none for Common).
 //
 // PURE: no DOM, no clock. The face (ui/lootBanner.js) builds its banners from what this answers.
 // ═══════════════════════════════════════════════════════════════════
 
-import { rarityAttr, RARITIES } from './lootRarity.js';
-import { isIliacCard } from './iliacItems.js';
-import { cardById } from '../net/iliacCards.js';
-import { isAmmunition } from './itemTemplates.js';
+import { rarityAttr, RARITIES } from './loot/lootRarity.js';
+import { isIliacCard } from './iliac/iliacItems.js';
+import { cardById } from '../net/iliac/iliacCards.js';
+import { isAmmunition } from './item/itemTemplates.js';
 
 /** The item field the watcher writes: true, or absent (itemFields.js declares it). */
 export const ACQUIRED_FIELD = 'acquired';
@@ -81,7 +81,7 @@ export const isAcquired = (item) => item?.[ACQUIRED_FIELD] === true;
 
 // ── THE CODEX'S DOOR ────────────────────────────────────────────────
 // LOOT10's first find of a Legendary, an Aetheric or a Gilded record says "<name> - a Legendary! It joins your codex."
-// and chimes (systems/lootCodex.js noteFind). On Enhanced Plus the banner announces the same piece in the same breath,
+// and chimes (systems/loot/lootCodex.js noteFind). On Enhanced Plus the banner announces the same piece in the same breath,
 // so the codex hands its find to a PRESENTER - the banner's (ui/lootBanner.js) - which says it on the banner, or
 // declines and the codex says its line as it always has. The slot lives here, a leaf both reach, so the HUD's graph
 // never imports the codex and the codex never imports a face (systems/notify.js's law: the model decides, the face draws).

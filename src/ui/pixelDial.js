@@ -44,8 +44,8 @@
 // raises the rose again.
 // ═══════════════════════════════════════════════════════════════════
 
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { closeTopOverlay, registerOverlay } from './enhancedOverlays.js';   // PX28; AUDIT CHAT C1: the dial is on the stack like every other enhanced overlay
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { closeTopOverlay, registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28; AUDIT CHAT C1: the dial is on the stack like every other enhanced overlay
 import { isEnhanced } from '../systems/uiSkin.js';
 import { requestLook } from '../player/pointerLock.js';   // PL3: the dial gives the pointer back when it goes
 import { eventMeans } from './input.js';   // KB1: the key that opened it is the registry's QuickDial

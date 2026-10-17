@@ -25,14 +25,14 @@
 // initial round (the joining instance is never added to liveEffects). The three keys above are EXAMPLES of
 // those round laws, not the library's extent: EF1 measured it and all
 // 91 of DFU's classic keys land (see applySpell's skip counter and
-// test/effectcoverage.test.js, which regenerates the key set from the
+// test/systems/effectcoverage.test.js, which regenerates the key set from the
 // effect classes). This header claimed otherwise for as long as the
 // counter did - a stale sentence propagates, because the next reader
 // finds it twice and believes it.
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance, isDamageHealthEffect } from './spellcast.js';   // BAL9: the damage-health pair a pierce reads
 import { mentorDamageTakenMult } from './mentorMode.js';   // SOFTCAP2: a leaf
-import { spellPowerMult, spellPierce, schoolMult } from './spellPower.js';   // BAL9: my damage spell's power and pierce (a leaf); SCHOOLS2: every school past 100
+import { spellPowerMult, spellPierce, schoolMult } from './spell/spellPower.js';   // BAL9: my damage spell's power and pierce (a leaf); SCHOOLS2: every school past 100
 import { castSchool } from './spellcost.js';   // SCHOOLS3: the school an effect is cast in (a signature spell's path's)
 import { noteFeudHarm, elementFeudClass } from './feudLedger.js';   // RVN1: my spell's round, in its fight's ledger (a leaf)
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
@@ -124,7 +124,7 @@ export const BUFF_KINDS = Object.freeze({
   // effects half of Detect is three rows: the entry's PRESENCE is DFU's registeredDetectors membership, exactly
   // as jumping/climbing above are IsEnhancedJumping/IsEnhancedClimbing.
   // The scan and the compass markers live in systems/nearbyObjects.js
-  // and ui/hud.js - neither belongs to the effect, which in DFU does
+  // and ui/hud/hud.js - neither belongs to the effect, which in DFU does
   // nothing but hold a list refreshed once a magic round.
   '39,0': 'detectMagic',
   '39,1': 'detectEnemy',
@@ -160,7 +160,7 @@ export const BUFF_KINDS = Object.freeze({
   // maintaining some kind of buff for it becomes part of the dungeoneering loop"): SHARED CARTOGRAPHY (46,255 - the
   // port's own, no classic key uses 46; RESURRECT1's 45 is the precedent). Duration-only and CasterOnly, renewing
   // its rounds on a re-cast as every row here does (STACK-CAP); the entry's PRESENCE is the share -
-  // systems/partyMap.js reads it, and a caster in no party (offline, solo) holds a buff that does nothing at all.
+  // systems/party/partyMap.js reads it, and a caster in no party (offline, solo) holds a buff that does nothing at all.
   '46,255': 'sharedCartography',
 });
 
@@ -342,7 +342,7 @@ export const WATER_WALKING_SILENT_KIND = 'waterWalkingSilent';
 export const isEntityWaterWalking = (entity) => hasActiveEffect(entity, 'waterWalking') || hasActiveEffect(entity, WATER_WALKING_SILENT_KIND);
 /** AUDIT PRE-MERGE 0928 S3: a mod's own effect kinds, each with whether its mod is loaded for the game. DFU's broker
  *  instantiates an effect only from a loaded mod's registration, and RestoreInstancedBundleSaveData skips one it cannot;
- *  the port's flat list would keep any kind, so a restore asks this (systems/save.js restorePlayer). */
+ *  the port's flat list would keep any kind, so a restore asks this (systems/save/save.js restorePlayer). */
 const _modEffectKinds = new Map();
 export function registerModEffectKind(kind, loaded) { _modEffectKinds.set(kind, loaded); }
 export const effectKindLoaded = (kind) => !_modEffectKinds.has(kind) || !!_modEffectKinds.get(kind)();
@@ -625,7 +625,7 @@ export function rollDuration(effect, casterLevel) {
  *  spell's duration) - and never shortened: a short re-cast over a long one leaves the long one be. Everything else
  *  AddState keeps stands (the incumbent's magnitude, chance and caster; no initial round; no new save), and every
  *  like-kind merge in the tree comes through here - applySpell's arms, the torch's light (scenes/droppedTorches.js), a
- *  soul trap on the gate's Warden (scenes/gateCourt.js) - so no second door adds rounds up. */
+ *  soul trap on the gate's Warden (scenes/gate/gateCourt.js) - so no second door adds rounds up. */
 export function renewRounds(inc, fresh) {
   if (fresh > inc.roundsRemaining) inc.roundsRemaining = fresh;
 }
@@ -704,7 +704,7 @@ export const casterDamageScaled = (n, ent, target = null, school = null) => {
     if (m > 1) v = Math.max(1, Math.round(v * m));
   }
   // BAL9 (bible/05-Combat/Balance-Arc.md section 15): MY spell's power - the school past 100 and the loot's potency
-  // (systems/spellPower.js spellPowerMult); 1 for a foe's, a peer's stand-in's and at any player. The same rounding and
+  // (systems/spell/spellPower.js spellPowerMult); 1 for a foe's, a peer's stand-in's and at any player. The same rounding and
   // floor of one; a spell the throw turned whole stays nothing. SCHOOLS3: `school` the school the effect is cast in
   // (spellcost.js castSchool - a signature spell's path's), Destruction's when none is said.
   if (v > 0) {
@@ -888,7 +888,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, saveElement(e), saveFlag(e), target, rolls, caster?.entity ?? null);   // BAL9: the caster, for a damage spell's pierce
   // SCHOOLS2 (bible/06-Systems/Arcane-Specialisations.md section 4): A SCHOOL PAST 100 PAYS IN ITS OWN DIMENSION - the
   // effect's school (the one it is cast in: spellcost.js castSchool, a signature spell's path's) multiplies where the
-  // target is mine to strengthen (systems/spellPower.js schoolMult): on MYSELF (`self`) a heal, a Shield, a concealment's
+  // target is mine to strengthen (systems/spell/spellPower.js schoolMult): on MYSELF (`self`) a heal, a Shield, a concealment's
   // rounds, a ward's chance; at a FOE a chance. 1 for every cast but my own, offline, while mentoring, in a refereed fight.
   const schoolOf = (e) => castSchool(caster?.entity ?? null, spell, e);
   // AUDIT SCHOOLS L2 F2, F9: never a WORN item's bundle (a Cast When Held effect keeps what it landed with until the
@@ -1623,7 +1623,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const mt = target?.mobileType;
       if (mt == null) continue;                 // not an enemy: IsGroupMatch/IsEnemyClass both refuse
       // WB8a (2026-09-28, Mac: "Make the oblivion gate boss not be able to be pacified"): a target that cannot be swayed
-      // (world/gateBoss.js bossStandIn - the gate's Warden) refuses it before any roll: no chance, no save, no flag
+      // (world/gate/gateBoss.js bossStandIn - the gate's Warden) refuses it before any roll: no chance, no save, no flag
       if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }
       const matches = isCharmEffect(e)
         ? mt >= 128                             // IsClassEnemyId - Charm is enemy CLASSES only
@@ -1806,7 +1806,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // keys - the 82 written as literals plus ElementalResistance's
     // five (8,0-8,4) and Pacify's four (33,0-33,3), which build
     // theirs from a loop variable - drives through this loop without
-    // reaching it. test/effectcoverage.test.js regenerates that key
+    // reaching it. test/systems/effectcoverage.test.js regenerates that key
     // set from the effect classes and proves it, rather than
     // asserting a number somebody counted once.
     out.skipped++;

@@ -30,7 +30,7 @@
 // rollout in both lanes; this window is the mod's LEVEL-UP alone.
 //
 // ── THE ONE HOME ──────────────────────────────────────────────────
-// a11's law (test/advancementui.test.js) is that the Level++ and the
+// a11's law (test/systems/advancementui.test.js) is that the Level++ and the
 // health roll live in ONE place and never in a window. They do here
 // too: this screen owns the cursor and the keys, and
 // systems/oblivionLeveling.js's commitVirtueLevelUp owns the change.
@@ -40,7 +40,7 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { drawText, measureText } from './text.js';
-import { nativeMetrics, NATIVE_W } from './nativePanel.js';
+import { nativeMetrics, NATIVE_W } from './native/nativePanel.js';
 import {
   levelingSettings, virtuePurse, canRaiseAttribute, canLowerAttribute,
   attributeOffset, commitVirtueLevelUp, virtueSpendPlan, LEVELUP_TOTAL, levelBarProgress,

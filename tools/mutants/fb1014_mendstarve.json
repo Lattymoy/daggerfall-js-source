@@ -2,10 +2,10 @@
   {
     "name": "MEND-STARVE-the-self-wearing-piece-first-again",
     "file": "src/systems/enchantments.js",
-    "old": "    if (!best || (wears ? 1 : 0) - (bestWears ? 1 : 0) < 0 || (wears === bestWears && mendOrder(it, best) < 0)) { best = it; bestWears = wears; }",
-    "new": "    if (!best || mendOrder(it, best) < 0) { best = it; bestWears = wears; }",
+    "old": "    if (!best || tier < bestTier || (tier === bestTier && mendOrder(it, best) < 0)) { best = it; bestTier = tier; }",
+    "new": "    if (!best || mendOrder(it, best) < 0) { best = it; bestTier = tier; }",
     "tests": [
-      "test/fb1014_mendstarve.test.js"
+      "test/systems/fb1014_mendstarve.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "(e) => e.type === ENCHANTMENT_TYPES.CastWhenHeld || e.type === ENCHANTMENT_TYPES.ItemDeteriorates);",
     "new": "(e) => e.type === ENCHANTMENT_TYPES.ItemDeteriorates);",
     "tests": [
-      "test/fb1014_mendstarve.test.js"
+      "test/systems/fb1014_mendstarve.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const wearsItself = (it) => it.equipSlot != null\n",
     "new": "const wearsItself = (it) => true\n",
     "tests": [
-      "test/fb1014_mendstarve.test.js"
+      "test/systems/fb1014_mendstarve.test.js"
     ]
   }
 ]

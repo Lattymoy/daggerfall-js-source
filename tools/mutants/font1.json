@@ -5,7 +5,7 @@
     "old": "  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }",
     "new": "  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }",
     "tests": [
-      "test/chat1.test.js"
+      "test/net/chat1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const CHAT_CSS = `\n${PIXELIFY_FIVE_FACE}\n",
     "new": "export const CHAT_CSS = `\n",
     "tests": [
-      "test/chat1.test.js"
+      "test/net/chat1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": ".dfchat-line { flex: none; font-size: calc(13px * var(--dfchat-scale, 1)); line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: ${PIXEL_TEXT_SHADOW}; }",
     "new": ".dfchat-line { flex: none; font-size: calc(13px * var(--dfchat-scale, 1)); line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.85); }",
     "tests": [
-      "test/chat1.test.js"
+      "test/net/chat1.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  background: rgba(14, 16, 19, .92); border: 1px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px);\n  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }",
     "new": "  background: rgba(14, 16, 19, .92); border: 1px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px);\n  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  background: rgba(14, 16, 19, .92); border: 1px solid var(--brass, #c08a3e); border-radius: 6px; padding: 6px 8px;\n  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }",
     "new": "  background: rgba(14, 16, 19, .92); border: 1px solid var(--brass, #c08a3e); border-radius: 6px; padding: 6px 8px;\n  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }",
     "tests": [
-      "test/soc3_socialpanel.test.js"
+      "test/net/soc3_socialpanel.test.js"
     ]
   },
   {
@@ -50,8 +50,8 @@
     "old": "export const SOCIAL_CSS = `\n${PIXELIFY_FIVE_FACE}\n",
     "new": "export const SOCIAL_CSS = `\n",
     "tests": [
-      "test/soc3_socialpanel.test.js",
-      "test/soc5_interact.test.js"
+      "test/net/soc3_socialpanel.test.js",
+      "test/ui/soc5_interact.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9);",
     "new": "  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9);",
     "tests": [
-      "test/soc4_partyhud.test.js"
+      "test/net/soc4_partyhud.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "export const PARTY_CSS = `\n${PIXELIFY_FIVE_FACE}",
     "new": "export const PARTY_CSS = `",
     "tests": [
-      "test/soc4_partyhud.test.js"
+      "test/net/soc4_partyhud.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px;",
     "new": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px;",
     "tests": [
-      "test/soc4_partyhud.test.js"
+      "test/net/soc4_partyhud.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  color: var(--dim, #9a9486); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }",
     "new": "  color: var(--dim, #9a9486); text-shadow: 0 1px 2px #000; }",
     "tests": [
-      "test/soc4_partyhud.test.js"
+      "test/net/soc4_partyhud.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "  ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }",
     "new": "  font-family: var(--data, 'Barlow Semi Condensed', system-ui, sans-serif); color: var(--bone, #e9e4d9); }",
     "tests": [
-      "test/soc5_interact.test.js"
+      "test/ui/soc5_interact.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "export const SOCIAL_MENU_CSS = `\n${PIXELIFY_FIVE_FACE}\n",
     "new": "export const SOCIAL_MENU_CSS = `\n",
     "tests": [
-      "test/soc5_interact.test.js"
+      "test/ui/soc5_interact.test.js"
     ]
   },
   {
@@ -114,10 +114,10 @@
     "old": "export const PIXEL_FACE_CSS = `font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;",
     "new": "export const PIXEL_FACE_CSS = `font-family: ${PIXEL_STACK}; -webkit-font-smoothing: antialiased;",
     "tests": [
-      "test/chat1.test.js",
-      "test/soc3_socialpanel.test.js",
-      "test/soc4_partyhud.test.js",
-      "test/soc5_interact.test.js"
+      "test/net/chat1.test.js",
+      "test/net/soc3_socialpanel.test.js",
+      "test/net/soc4_partyhud.test.js",
+      "test/ui/soc5_interact.test.js"
     ]
   },
   {
@@ -126,119 +126,119 @@
     "old": "export const PIXEL_FAMILIES = `'${PIXELIFY_FIVE_FAMILY}', 'Pixelify Sans'`;",
     "new": "export const PIXEL_FAMILIES = \"'Pixelify Sans'\";",
     "tests": [
-      "test/chat1.test.js",
-      "test/soc4_partyhud.test.js",
-      "test/hudtext.test.js",
-      "test/landing.test.js"
+      "test/net/chat1.test.js",
+      "test/net/soc4_partyhud.test.js",
+      "test/ui/enhanced/hudtext.test.js",
+      "test/ui/enhanced/landing.test.js"
     ]
   },
   {
     "name": "hudtext-enhanced-arm-dropped",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "hudtext-enhanced-arm-taken-on-both-skins",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "hudtext-rows-cut-to-maxRows",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    const drawn = this.lines.slice(0, maxCount + 1);",
     "new": "    const drawn = this.lines.slice(0, maxCount);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "hudtext-slide-taken-from-a-waiting-timer",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "      slide: this.timer < 0 ? this.timer / HUD_TEXT_POP_DELAY : 0,",
     "new": "      slide: this.timer / HUD_TEXT_POP_DELAY,",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "hudtext-hide-door-a-no-op",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
     "new": "    if (false) drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-toasts-keyed-by-index-not-row",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "      ids: drawn.map((l) => l.id),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
     "new": "      ids: drawn.map((l, i) => i),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-a-row-id-reused-after-a-pop",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    this.lines.push({ id: ++this._nextId, text: pgText });",
     "new": "    this.lines.push({ id: this.lines.length + 1, text: pgText });",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-the-panel-rebuilt-every-frame",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  if (!p) { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }",
     "new": "  { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }",
     "tests": [
-      "test/hudtext.test.js",
-      "test/enhancedNotice.test.js"
+      "test/ui/enhanced/hudtext.test.js",
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-a-popped-row-keeps-its-toast",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    releaseEnhancedNotice(toastKey(key, id));\n    mine.delete(id);",
     "new": "    mine.delete(id);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-a-toast-wears-the-box-edge",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  host.className = toast ? 'notice notice-toast notice-in' : 'notice notice-in';",
     "new": "  host.className = 'notice notice-in';",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-the-toast-rule-loses-its-edge",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  padding: 8px 18px 8px 14px; border-left-color: rgba(243,239,44,0.55);",
     "new": "  padding: 8px 18px 8px 14px;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "column-in-the-launcher-face",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;\n  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;\n  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);",
     "new": "  font-family: var(--data); -webkit-font-smoothing: antialiased;\n  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;\n  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -247,7 +247,7 @@
     "old": "    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();",
     "new": "    if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s);",
     "tests": [
-      "test/audit64_hud.test.js"
+      "test/ui/hud/audit64_hud.test.js"
     ]
   },
   {
@@ -256,7 +256,7 @@
     "old": "      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();",
     "new": "      if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));",
     "tests": [
-      "test/audit64_hud.test.js"
+      "test/ui/hud/audit64_hud.test.js"
     ]
   },
   {
@@ -265,7 +265,7 @@
     "old": "    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height)); else hudText.hide();",
     "new": "    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));",
     "tests": [
-      "test/audit64_hud.test.js"
+      "test/ui/hud/audit64_hud.test.js"
     ]
   },
   {
@@ -274,7 +274,7 @@
     "old": "    if (hudFont && hudRenderEnabled()) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height)); else hudText.hide();",
     "new": "    hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));",
     "tests": [
-      "test/audit64_hud.test.js"
+      "test/ui/hud/audit64_hud.test.js"
     ]
   },
   {
@@ -283,7 +283,7 @@
     "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
     "new": "    if (false && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -292,7 +292,7 @@
     "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
     "new": "    if (typeof document !== 'undefined') {\n      // AUDIT FONT F11",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -301,52 +301,52 @@
     "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedMidText({ text: '', visible: false });",
     "new": "    if (false) drawEnhancedMidText({ text: '', visible: false });",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "midscreen-label-off-its-classic-height",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".hudmid { position: fixed; left: 50%; top: var(--hudmid-top, 73%);",
     "new": ".hudmid { position: fixed; left: 50%; top: var(--hudmid-top, 40%);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "midscreen-label-in-the-launcher-face",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px; letter-spacing: 0.04em;\n  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;",
     "new": "  width: max-content; max-width: calc(min(680px, 86vw) / var(--hud-scale, 1)); font-size: 15px; letter-spacing: 0.04em;\n  font-family: var(--data); -webkit-font-smoothing: antialiased;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "midscreen-label-never-blanks",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = shown ? '' : 'none'; }",
     "new": "  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = ''; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "midscreen-a-node-per-message",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  if (!midHost) {\n    injectEnhancedStyle(doc);",
     "new": "  {\n    injectEnhancedStyle(doc);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "hud-drops-the-midscreen-hide-door",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  if (hudDrawn) midScreenText.draw(renderer, canvas, font); else midScreenText.hide();",
     "new": "  if (hudDrawn) midScreenText.draw(renderer, canvas, font);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -355,7 +355,7 @@
     "old": "    if (isEnhanced() && typeof document !== 'undefined') { drawEnhancedStatusLine(line ?? ''); return; }",
     "new": "    if (false && typeof document !== 'undefined') { drawEnhancedStatusLine(line ?? ''); return; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -364,7 +364,7 @@
     "old": "    if (!remotePlayers) { sayNetStatus(null); return; }",
     "new": "    if (!remotePlayers) { return; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -373,89 +373,89 @@
     "old": "if (covered) { sayNetStatus(null); return; }",
     "new": "if (covered) return;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "status-strip-in-the-launcher-face",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  max-width: min(420px, 60vw); font-size: 13px; letter-spacing: 0.04em;\n  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;",
     "new": "  max-width: min(420px, 60vw); font-size: 13px; letter-spacing: 0.04em;\n  font-family: var(--data); -webkit-font-smoothing: antialiased;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "status-strip-never-clears",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = shown ? '' : 'none'; }",
     "new": "  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = ''; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "status-strip-a-node-per-message",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  if (!statusHost) {\n    injectEnhancedStyle(doc);",
     "new": "  {\n    injectEnhancedStyle(doc);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "FONT1-touch-layer-in-the-system-face-under-the-enhanced-skin",
-    "file": "src/ui/touch.js",
+    "file": "src/ui/touch/touch.js",
     "old": "const face = hooks.enhanced ? `${PIXEL_FONT_CSS}font-weight:500;font-size:15px;` : 'font:600 15px system-ui,-apple-system,\"Segoe UI\",sans-serif';",
     "new": "const face = 'font:600 15px system-ui,-apple-system,\"Segoe UI\",sans-serif';",
     "tests": [
-      "test/audit39_uicore.test.js"
+      "test/ui/hud/audit39_uicore.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F1-one-column-for-every-model",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    this.key = `${key ?? 'hud'}${++_hudTextSeq}`;",
     "new": "    this.key = 'hud';",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F1-the-owner-key-never-reaches-the-renderer",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "new": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered });",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F1-the-hide-door-blanks-every-model",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  let mine = toasts.get(key);\n  if (!mine && !ids.length) return [];",
     "new": "  let mine = toasts.values().next().value;\n  if (!mine && !ids.length) return [];",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F1-the-column-is-never-released",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  for (const id of mine) releaseEnhancedNotice(toastKey(key, id));\n  toasts.delete(key);",
     "new": "  toasts.delete(key);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F1-the-stack-outlives-its-last-column",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    if (!panels.size) { try { stack?.remove(); } catch { /* already gone */ } stack = null; }",
     "new": "    if (false) { stack = null; }",
     "tests": [
-      "test/hudtext.test.js",
-      "test/enhancedNotice.test.js"
+      "test/ui/enhanced/hudtext.test.js",
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
@@ -464,34 +464,34 @@
     "old": "      hudText.dispose();",
     "new": "      void hudText;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F2-the-scale-never-reaches-the-two-hosts",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    setEnhancedMidTextScale(scale, document);",
     "new": "    // setEnhancedMidTextScale(scale, document);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F2-the-scale-reaches-the-stack-not-the-label",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  doc.getElementById?.(ENHANCED_MID_TEXT_ID)?.style?.setProperty('--hud-scale', hudScaleVar);",
     "new": "  doc.getElementById?.('enhanced-notice')?.style?.setProperty('--hud-scale', hudScaleVar);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-the-toasts-ignore-the-hide",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    const host = drawEnhancedNotice({ rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));",
     "new": "    const host = drawEnhancedNotice({ rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible: true, toast: true }, doc, toastKey(key, ids[i]));",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
     "new": "if (dungeonCtx.uiOverlayActive) { hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -509,25 +509,25 @@
     "old": "      ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);",
     "new": "      hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F3-the-door-takes-the-column-and-not-the-label",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  hudText?.hide();\n  midScreenText.hide();",
     "new": "  hudText?.hide();",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F3-the-door-takes-the-label-and-not-the-column",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  hudText?.hide();\n  midScreenText.hide();",
     "new": "  midScreenText.hide();",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -536,16 +536,16 @@
     "old": "    hideHudText: () => hideHudTextSurfaces(hudText),",
     "new": "    hideHudText: () => {},",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F4-the-covered-window-is-ignored",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
     "new": "      drawEnhancedToasts({ ...this.frame(), visible: true }, undefined, this.key);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -554,7 +554,7 @@
     "old": "    hud.observe(toastsCovered());   // AUDIT ENH-NOTICE3 F3/C2",
     "new": "    hud.observe(false);   // AUDIT ENH-NOTICE3 F3/C2",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -563,7 +563,7 @@
     "old": "      hud.observe(toastsCovered());   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2",
     "new": "      hud.observe(false);   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -572,16 +572,16 @@
     "old": "    hudText.observe(!!activeOverlay && (dungeonWindows.hudCovered(activeOverlay) || hidesHud(activeOverlay)));",
     "new": "    hudText.observe(false);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F4-the-classic-arm-takes-the-covered-gate-too",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "    if (!font || !this.lines.length) return;",
     "new": "    if (!font || this.covered || !this.lines.length) return;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -590,7 +590,7 @@
     "old": "    enhanced: isEnhanced(),   // AUDIT FONT F5",
     "new": "    _enhanced: isEnhanced(),   // AUDIT FONT F5",
     "tests": [
-      "test/audit39_uicore.test.js"
+      "test/ui/hud/audit39_uicore.test.js"
     ]
   },
   {
@@ -599,7 +599,7 @@
     "old": "    enhanced: isEnhanced(),   // AUDIT FONT F5",
     "new": "    _enhanced: isEnhanced(),   // AUDIT FONT F5",
     "tests": [
-      "test/audit39_uicore.test.js"
+      "test/ui/hud/audit39_uicore.test.js"
     ]
   },
   {
@@ -608,99 +608,99 @@
     "old": "    enhanced: isEnhanced(),   // AUDIT FONT F5",
     "new": "    _enhanced: isEnhanced(),   // AUDIT FONT F5",
     "tests": [
-      "test/audit39_uicore.test.js"
+      "test/ui/hud/audit39_uicore.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F5-the-layer-ignores-the-hook",
-    "file": "src/ui/touch.js",
+    "file": "src/ui/touch/touch.js",
     "old": "  const face = hooks.enhanced ? `${PIXEL_FONT_CSS}font-weight:500;font-size:15px;`",
     "new": "  const face = false ? `${PIXEL_FONT_CSS}font-weight:500;font-size:15px;`",
     "tests": [
-      "test/audit62_touch.test.js",
-      "test/audit39_uicore.test.js"
+      "test/scenes/audit62_touch.test.js",
+      "test/ui/hud/audit39_uicore.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F6-the-naming-field-keeps-the-system-face",
-    "file": "src/ui/touch.js",
+    "file": "src/ui/touch/touch.js",
     "old": "  const entryFace = hooks.enhanced ? `${PIXEL_FONT_CSS}font-weight:600;font-size:18px;`",
     "new": "  const entryFace = false ? `${PIXEL_FONT_CSS}font-weight:600;font-size:18px;`",
     "tests": [
-      "test/audit62_touch.test.js",
-      "test/audit39_uicore.test.js"
+      "test/scenes/audit62_touch.test.js",
+      "test/ui/hud/audit39_uicore.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-a-hint-on-a-toast",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);",
     "new": "  const caption = hint === undefined ? NOTICE_HINT : hint;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-a-released-toast-drops-its-class",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  p.host.className = p.toast ? 'notice notice-toast notice-out' : 'notice notice-out';",
     "new": "  p.host.className = 'notice notice-out';",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-hide-releases-the-toasts",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    if (!visible && !ids.length) { drawEnhancedNotice({ visible: false, toast: true }, doc, toastKey(key, id)); out.push(panels.get(toastKey(key, id))?.host); continue; }",
     "new": "    if (false) { continue; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F8-the-long-line-ellipsised-again",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".notice-row { font-size: 15px; line-height: 1.35; min-height: 1.35em; white-space: pre-wrap; overflow-wrap: anywhere; }",
     "new": ".notice-row { font-size: 15px; line-height: 1.35; min-height: 1.35em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-the-toast-in-the-box-colour",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".notice.notice-toast .notice-row { font-size: 14px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); text-align: center; }",
     "new": ".notice.notice-toast .notice-row { font-size: 14px; text-align: center; }",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-a-column-number-exported-again",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "/* ENH-NOTICE3 (2026-09-21): the popup column's numbers - HUD_TEXT_TOP_PX",
     "new": "export const HUD_TEXT_TOP_PX = 96;\n/* ENH-NOTICE3 (2026-09-21): the popup column's numbers - HUD_TEXT_TOP_PX",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-a-toast-never-recorded-as-the-owner-s",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "      mine.add(ids[i]); out.push(host);",
     "new": "      out.push(host);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "ENH-NOTICE3-the-column-rule-back-in-the-sheet",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".notice-hint {\n  margin-top: 10px;",
     "new": ".hudtext-stack { top: 82px; }\n.notice-hint {\n  margin-top: 10px;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -709,25 +709,25 @@
     "old": "      drawEnhancedMidText({ text: this.text, visible: true, top: midTextTopPx(canvas, this.y) });",
     "new": "      drawEnhancedMidText({ text: this.text, visible: true });",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F11-the-native-scale-stops-being-floored",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  const m = nativeMetrics(canvas);\n  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (m.oy + y * m.s) / dpr;",
     "new": "  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (canvas.height * y / 200) / dpr;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F11-the-panel-centring-dropped",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  return (m.oy + y * m.s) / dpr;",
     "new": "  return (y * m.s) / dpr;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
@@ -736,53 +736,53 @@
     "old": "top: midTextTopPx(canvas, this.y) });",
     "new": "top: midTextTopPx(canvas, MID_SCREEN_TEXT_DEFAULT_Y) });",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F12-the-teardown-doc-names-a-caller-that-does-not-exist",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": " *  AUDIT FONT F12: this used to name \"the same hand that calls",
-    "new": " *  is the same hand that calls ui/enhancedHud.js destroyEnhancedHud.\n *  AUDIT FONT F12: this used to name \"the same hand that calls",
+    "new": " *  is the same hand that calls ui/enhanced/enhancedHud.js destroyEnhancedHud.\n *  AUDIT FONT F12: this used to name \"the same hand that calls",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F4-the-window-slot-back-as-a-fourth-draw-argument",
-    "file": "src/ui/hudText.js",
+    "file": "src/ui/hud/hudText.js",
     "old": "  draw(renderer, canvas, font) {",
     "new": "  draw(renderer, canvas, font, covered = false) {",
     "tests": [
-      "test/hudtext.test.js",
-      "test/audit24_wave40.test.js"
+      "test/ui/enhanced/hudtext.test.js",
+      "test/ui/audit24_wave40.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F2-the-scale-is-not-kept-for-a-host-built-later",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  if (hudScaleVar !== null) node.style.setProperty('--hud-scale', hudScaleVar);",
     "new": "  void node;",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F2-the-label-is-built-without-the-scale",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "    applyScale(midHost);\n    doc.body.append(midHost);",
     "new": "    doc.body.append(midHost);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   },
   {
     "name": "AUDIT-FONT-F2-the-label-is-built-without-the-scale-2",
-    "file": "src/ui/enhancedHudText.js",
+    "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "    applyScale(midHost);\n    doc.body.append(midHost);",
     "new": "    doc.body.append(midHost);",
     "tests": [
-      "test/hudtext.test.js"
+      "test/ui/enhanced/hudtext.test.js"
     ]
   }
 ]

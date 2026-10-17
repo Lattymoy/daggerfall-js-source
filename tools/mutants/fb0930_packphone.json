@@ -1,209 +1,209 @@
 [
   {
     "name": "PACK-PHONE-the-region-fixed-at-its-content",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-main { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }",
     "new": "  .pack-shell .pack-main { flex: 0 0 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-region-clipped-not-scrolled",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-main { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }",
     "new": "  .pack-shell .pack-main { flex: 0 1 auto; min-height: 0; overflow-y: hidden; overscroll-behavior: contain; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-dock-sized-by-its-items",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-dock { flex: 1 1 0; min-height: 45%; }",
     "new": "  .pack-shell .pack-dock { flex: 1 1 auto; min-height: 45%; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-no-floor-under-the-dock",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-dock { flex: 1 1 0; min-height: 45%; }",
     "new": "  .pack-shell .pack-dock { flex: 1 1 0; min-height: 100px; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-column-clipping-the-region",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .charcol { overflow: visible; min-width: 0; }",
     "new": "  .pack-shell .charcol { min-width: 0; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-column-widening-the-region",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .charcol { overflow: visible; min-width: 0; }",
     "new": "  .pack-shell .charcol { overflow: visible; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-map-shrunk-to-fit",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .charcol .equipped { flex: 0 0 auto; }\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-doll-at-its-bitmap-size",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .charcol .wornmap-doll.hasart { height: min(34dvh, 240px); }\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-close-pushed-off-the-screen",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-id > div { min-width: 0; overflow: hidden; }\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-phone-on-its-side-missed",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "@media (pointer: coarse) and (hover: none) and (max-width: 640px), (pointer: coarse) and (hover: none) and (max-height: 540px) {",
     "new": "@media (pointer: coarse) and (hover: none) and (max-width: 640px) {",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-a-tablet-taken-for-a-phone",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "@media (pointer: coarse) and (hover: none) and (max-width: 640px), (pointer: coarse) and (hover: none) and (max-height: 540px) {",
     "new": "@media (pointer: coarse) and (hover: none) and (max-width: 999px), (pointer: coarse) and (hover: none) and (max-height: 540px) {",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-body-always-hidden",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell:not(.showdoll) .wornmap-doll, .pack-shell:not(.showdoll) .wornmap .wornac-total, .pack-shell:not(.showdoll) .wornmap .worntemp-total { display: none; }",
     "new": "  .pack-shell .wornmap-doll, .pack-shell .wornmap .wornac-total, .pack-shell .wornmap .worntemp-total { display: none; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-panels-keeping-the-dolls-column",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell:not(.showdoll) .charcol .wornmap { grid-template-columns: minmax(0, 1fr) 0 minmax(0, 1fr); column-gap: 6px; }\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-no-body-button",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-id .dolltoggle { display: inline-block; }",
     "new": "  .pack-shell .pack-id .dolltoggle { display: none; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-body-button-on-the-desk",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".pack-shell .pack-id .dolltoggle { display: none; margin: 0 8px 0 auto; white-space: nowrap; }",
     "new": ".pack-shell .pack-id .dolltoggle { display: inline-block; margin: 0 8px 0 auto; white-space: nowrap; }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-headers-buttons-at-layout1s-width",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-id .act { min-width: 64px; padding: 8px 10px; letter-spacing: 0.06em; }\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-name-uncut",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-id .pack-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-three-by-three-strip",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack-dock .packcats .packtabs { display: flex; flex-wrap: nowrap; overflow-x: auto; }\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-side-stacked",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-its-row-the-contents",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .pack-shell .pack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }",
     "new": "  .pack-shell .pack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-dead-rule-back",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".iconnote { color: var(--dim);",
     "new": "@media (max-width: 860px) {\n  .pack .charcol { order: 2; }\n  .pack .packlists { order: 1; }\n}\n.iconnote { color: var(--dim);",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-choice-never-drawn",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (showDoll) shell.classList.add('showdoll');\n",
     "new": "",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-choice-forgotten",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    dollBtn.onclick = () => { setPref('packPhoneDoll', !showDoll); render(); };",
     "new": "    dollBtn.onclick = () => { render(); };",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
@@ -212,17 +212,17 @@
     "old": "  packPhoneDoll: false,",
     "new": "  packPhoneDoll: true,",
     "tests": [
-      "test/fb0930_packphone.test.js"
+      "test/systems/fb0930_packphone.test.js"
     ]
   },
   {
     "name": "PACK-PHONE-the-lane-never-told",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'packPhoneDoll',    // PACK-PHONE",
     "new": "  //    // PACK-PHONE",
     "tests": [
-      "test/fb0930_packphone.test.js",
-      "test/onlinelane.test.js"
+      "test/systems/fb0930_packphone.test.js",
+      "test/systems/onlinelane.test.js"
     ]
   }
 ]

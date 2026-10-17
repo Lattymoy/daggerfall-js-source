@@ -8,7 +8,7 @@
 // party pose carries `rz: {to, at}` for RESURRECT_HOLD_MS, and the fallen player's own client, reading its party's
 // poses each frame of the death screen, rises when a NEW `rz` names it. ALLY-CAST's law holds: party members alone,
 // and the receiving client decides.
-import { buildCustomSpell } from './spellMaker.js';
+import { buildCustomSpell } from './spell/spellMaker.js';
 
 export const RESURRECT_TYPE = 45;
 export const RESURRECT_SUBTYPE = 255;

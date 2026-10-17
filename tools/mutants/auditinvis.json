@@ -5,7 +5,7 @@
     "old": "  const interiorSheetDoors = () => ({ inventory: () => interiorInventory(), pause: () => interiorPauseHooks() });",
     "new": "  const interiorSheetDoors = () => ({ pause: () => interiorPauseHooks() });",
     "tests": [
-      "test/invisnet.test.js"
+      "test/net/invisnet.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    inventory: inventory ?? (() => (inventoryDoorReady() ? makeInventoryWindow() : null)),",
     "new": "    inventory: (() => (inventoryDoorReady() ? makeInventoryWindow() : null)),",
     "tests": [
-      "test/invisnet.test.js"
+      "test/net/invisnet.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed)) return null;",
     "new": "    if (!p?.wagon || !p.shownWagon) return null;",
     "tests": [
-      "test/disc20.test.js"
+      "test/systems/disc20.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed)) return null;",
     "new": "    if (!p?.wagon || !p.shownWagon || (p.hidden)) return null;",
     "tests": [
-      "test/disc20.test.js"
+      "test/systems/disc20.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (owner) b.conceal = conceal; }",
     "new": "}",
     "tests": [
-      "test/disc20.test.js"
+      "test/systems/disc20.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  hcc.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));",
     "new": "  hcc.setPeerLook(() => null);",
     "tests": [
-      "test/disc20.test.js"
+      "test/systems/disc20.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (w.s.onStow > ON_STOW.Unequip && !(dropRefusal?.() ?? null)) dropLightSource(l);",
     "new": "      if (w.s.onStow > ON_STOW.Unequip) dropLightSource(l);",
     "tests": [
-      "test/housedrop.test.js"
+      "test/systems/housedrop.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "        else if (!(dropRefusal?.() ?? null)) {   // AUDIT (pre-merge) I-D",
     "new": "        else {   // AUDIT (pre-merge) I-D",
     "tests": [
-      "test/housedrop.test.js"
+      "test/systems/housedrop.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const partyOnMaps = () => partyNear().filter((m) => !_hiddenPeers.has(m.id));",
     "new": "  const partyOnMaps = () => partyNear();",
     "tests": [
-      "test/invisnet.test.js"
+      "test/net/invisnet.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "localRosterSource(s, openPeers(peersNear(), isPartyMate), player.feetAt())",
     "new": "localRosterSource(s, (peersNear() ?? []), player.feetAt())",
     "tests": [
-      "test/invisnet.test.js"
+      "test/net/invisnet.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    return openPeers(near, isPartyMate).map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
     "new": "    return near.map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
     "tests": [
-      "test/invisnet.test.js"
+      "test/net/invisnet.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (hidden(peer.id)) continue;\n",
     "new": "\n",
     "tests": [
-      "test/invisnet.test.js"
+      "test/net/invisnet.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "remotePlayers.sync(visiblePeers, onlineToScene,",
     "new": "remotePlayers.sync(seen, onlineToScene,",
     "tests": [
-      "test/invisnet.test.js"
+      "test/net/invisnet.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (look.kind === 'hidden') { _hiddenPeers.add(d.id); continue; }",
     "new": "      if (look.kind === 'hidden') { continue; }",
     "tests": [
-      "test/invisnet.test.js"
+      "test/net/invisnet.test.js"
     ]
   }
 ]

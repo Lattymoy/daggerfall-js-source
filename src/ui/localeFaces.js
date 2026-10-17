@@ -8,7 +8,7 @@
 // win. English registers nothing and keeps Daggerfall's pixel fonts, byte for byte.
 
 import { registerLocalizedFont, hasLocalizedFont, setSdfForcer, localeInfo, BASE_LOCALE, PSEUDO_LOCALE } from '../systems/textManager.js';
-import { setValue } from '../systems/settings.js';
+import { setValue } from '../systems/settings/settings.js';
 import { catalogLocale } from '../systems/localeCatalog.js';
 import { createGlyphFace, canRasterise } from './glyphFace.js';
 

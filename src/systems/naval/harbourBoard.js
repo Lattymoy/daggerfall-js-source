@@ -9,7 +9,7 @@
 // dawn. Five kinds, each ending in something the sea already does:
 //
 //   bounty    a named pirate preying on the crown's shipping, last seen SITE_PX map pixels off the port: she is stood
-//             when the captain sails within SITE_REACH_PX of her waters (scenes/navalHost.js THE SITES); sunk or
+//             when the captain sails within SITE_REACH_PX of her waters (scenes/naval/navalHost.js THE SITES); sunk or
 //             taken by the captain's hand, the bounty is paid
 //   hunt      CONTRACT_NEED.hunt pirate ships ended - sunk or taken - in the crown's waters
 //   delivery  a cargo carried to another port's harbourmaster by her term (a day for every DELIVERY_PX_DAY map pixels
@@ -32,9 +32,9 @@
 // clock, to a captain of its Privateer rank (`perks.marque`); THE ADMIRALTY'S CARRACK - the one Carrack the Bay sells
 // (Come Sail Away's shelves never carry one) - at ADMIRALTY_OFF off her price, to a Commodore (`perks.admiralty`).
 
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classById, shipNames, SHIP_CLASSES } from './navalShips.js';
-import { HULL_PRICES } from '../comeSailAwayHulls.js';
+import { HULL_PRICES } from '../comeSailAway/comeSailAwayHulls.js';
 import { MINUTES_PER_DAY } from '../gameDate.js';   // a day of the captain's clock (minutes)
 import { hashKey } from '../../net/wire.js';   // FNV-1a over a string: a port's key on the board's stream (SLAM10's one home)
 import { coastalAt } from '../../net/fortLaw.js';   // FIELD BUGS 2026-10-13c PORT-TOWNS: the coast's one law - the sea beside a town

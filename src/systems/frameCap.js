@@ -10,7 +10,7 @@
 // targetFrameRate while vSyncCount is set, so DFU's rule turns the cap
 // off whenever VSync is on. A browser has no other mode: every frame
 // waits for the screen, and `Video/VSync` is unavailable here for that
-// reason (systems/settings.js UNAVAILABLE). Read DFU's way, the cap
+// reason (systems/settings/settings.js UNAVAILABLE). Read DFU's way, the cap
 // could never do anything. So it holds frames BACK from the screen's
 // rate, which is the only thing a page can do - it never runs faster.
 // FPS-VSYNC (2026-09-28): EXCEPT IN THE DESKTOP APP WITH VSYNC OFF. The
@@ -21,7 +21,7 @@
 //
 // HOW A FRAME IS HELD. Each host's rAF callback asks `frameCapSkip(now)`
 // before its clock stamp and its input frame (the pins in
-// test/fpscap1.test.js say where). A held callback re-arms and returns:
+// test/ui/settings/fpscap1.test.js say where). A held callback re-arms and returns:
 // nothing is simulated or drawn, `last` does not move (so the next drawn
 // frame's dt covers the held time), and the input rings keep gathering
 // (beginInputFrame has not run), so no key press is lost. The decision
@@ -29,13 +29,13 @@
 // frame is handed the same stamp - so the FPS counter (ui/fpsCounter.js),
 // which runs on its own rAF, asks the same question and counts the
 // frames the game drew, not the screen's refresh.
-import { getInt } from './settings.js';
+import { getInt } from './settings/settings.js';
 
 /** SettingsManager.cs:414 - GetInt(sectionVideo, "TargetFrameRate", 0, 300). */
 export const FRAME_CAP_MAX = 300;
 /** StartGameBehaviour.cs:246-247: "anything below 30 is ignored and treated as disabled". */
 export const FRAME_CAP_FLOOR = 30;
-/** The rates the settings row steps through (ui/settingsLaw.js): Off, then what screens run at. */
+/** The rates the settings row steps through (ui/settings/settingsLaw.js): Off, then what screens run at. */
 export const FRAME_CAP_STOPS = Object.freeze([0, 30, 45, 60, 75, 90, 120, 144, 165, 240, FRAME_CAP_MAX]);
 /** A frame due within this much of its slot is drawn. rAF stamps wobble by a fraction of a millisecond,
  *  and a frame that just missed its slot would otherwise wait a whole extra refresh - a 60 cap on a 60 Hz

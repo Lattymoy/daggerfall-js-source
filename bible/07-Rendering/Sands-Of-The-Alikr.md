@@ -30,7 +30,7 @@ of every file's sha256 and the texture door's index
 `tools/environmentModsExtract.mjs`, which checks the tree against the
 archive). The pack is a SHIPPED MOD in the texture door
 (`systems/dfmodTextures.js` `setShippedDfmods`), registered beside Vanilla
-Enhanced's by `systems/vanillaEnhancedPack.js` (`ENVIRONMENT_PACK_MODS`): one
+Enhanced's by `systems/vanillaEnhanced/vanillaEnhancedPack.js` (`ENVIRONMENT_PACK_MODS`): one
 load order, one walk, one fetch a picture as it is first drawn. It is ON BY
 DEFAULT and a switch of its own on the Replacement packs card; its index
 names Vanilla Enhanced's Base as a dependency, so it is one of the Base's
@@ -52,6 +52,6 @@ lacks is the classic record (`recordOwners`, by the pack). Ledger A.
 
 ## Pins
 
-`test/environs_texturePacks.test.js` (4); `tools/mutants/alikr1.json` (7, all
-dead); `test/doctrine.test.js` holds the directory to Port-Doctrine's second
+`test/systems/environs_texturePacks.test.js` (4); `tools/mutants/alikr1.json` (7, all
+dead); `test/tooling/doctrine.test.js` holds the directory to Port-Doctrine's second
 exception.

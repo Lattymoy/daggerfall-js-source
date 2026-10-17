@@ -11,7 +11,7 @@
 // per-bone pose tuned blind ... would ship arms bent wrong"; a pose SOLVED from the joints is not tuned at all.
 //
 // THE REQUEST is in RIG SPACE (Morrowind units, Z up, the actor facing +Y, its right +X - the space skeletonSpaceMatrices
-// answers with GRAPH_ROOT) and every field is optional (player/climbPose.js makes it from the world, combat/fpArm.js maps
+// answers with GRAPH_ROOT) and every field is optional (player/climb/climbPose.js makes it from the world, combat/fpArm.js maps
 // it into the rig):
 //   w       - the whole pose's weight, 0..1 (the climb eased in and out over the clip's own pose);
 //   offset  - [x, y, z] the body moved (the drawn body closer to the wall than the capsule's axis, say);
@@ -32,7 +32,7 @@
 // THE POSE MAP: an untracked bone's entry is the skeleton's own shared `node.rest` (mwSkin.js poseSkeleton) - every
 // write here is a NEW entry through pose.set, never a mutation (the hazard applyFirstPersonNeck's note names).
 
-import { mat33Mul } from '../formats/mwNifMesh.js';
+import { mat33Mul } from '../formats/morrowind/mwNifMesh.js';
 import { HELD_BONE_ALIASES } from './heldPose.js';
 
 // ---- small vector and rotation algebra (row-major 3x3, column vectors - the rig's own) ---------------------------------
@@ -491,7 +491,7 @@ export function applyClimbRig(skeleton, pose, rootRef, skelMats, req) {
 // ---- THE WORLD'S REQUEST IN THE RIG'S SPACE (combat/fpArm.js maps with these) -----------------------------------------
 
 /**
- * The world's request (player/climbPose.js ClimbPose's answer, metres) in the THIRD-PERSON rig's space - drawThird's
+ * The world's request (player/climb/climbPose.js ClimbPose's answer, metres) in the THIRD-PERSON rig's space - drawThird's
  * own model inverted: world = feet + (x right + y forward) weight / U + up z height / U, right = [cos yaw, 0, -sin yaw],
  * forward = [sin yaw, 0, cos yaw] (U the rig's units per metre, weight and height the race's scales). Points map as
  * points, ways as ways (normalised), the offset as a vector, the fit's metres as heights. Pure.

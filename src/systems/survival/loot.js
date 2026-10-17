@@ -5,7 +5,7 @@
 // FoodLoot - the IL, Systems-Arc SURV), on the port's own death
 // registry (scenes/corpseMarker.js raiseEnemyDeath, the UL1 seam).
 import { registerEnemyDeathHandler } from '../../scenes/corpseMarker.js';
-import { MOBILE_TYPES } from '../../characters/mobileTypes.js';
+import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
 import { TEMPLATE } from './food.js';
 import { createSurvivalItem, spoilFood } from './items.js';
 

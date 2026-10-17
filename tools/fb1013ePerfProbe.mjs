@@ -8,11 +8,11 @@
 // This runs the real renderer in Chromium (SwiftShader - software GL, whose time grows with the fragments and vertices
 // it shades, so it MEASURES overdraw; it is not a GPU, and its milliseconds are only relative) on scenes that need no
 // ARENA2:
-//   1. THE BURNING COURT at a fighter's eye - its own mesh and art (world/gateArena.js buildCourtModel, gateArt.js), lit
+//   1. THE BURNING COURT at a fighter's eye - its own mesh and art (world/gate/gateArena.js buildCourtModel, gateArt.js), lit
 //      and fogged as the court is, on the enhanced lighting lane - with the boss's real shapes from their real producers
-//      (render/gateTelegraph.js telegraphShape, poolShapes, markShape; scenes/gateHost.js hostShapes): each blow alone,
+//      (render/gate/gateTelegraph.js telegraphShape, poolShapes, markShape; scenes/gate/gateHost.js hostShapes): each blow alone,
 //      the mark, the burning ground, his host, and whole AoE frames of them, a pass a shape in their order as the court
-//      draws them - and, with `--before <module>` (a copy of render/gateTelegraph.js as it stood before AOE-PERF), as
+//      draws them - and, with `--before <module>` (a copy of render/gate/gateTelegraph.js as it stood before AOE-PERF), as
 //      that module drew them, in the same rounds.
 //   2. THE LOOK (with `--before`) - his mark, his host and the AoE frames drawn both ways on the classic lane (straight
 //      onto the canvas) and read back whole, against a CONTROL: the old pass against itself with the camera moved a
@@ -21,7 +21,7 @@
 //   3. THE CROWD - 0 / 8 / 12 / 24 / 40 players standing near: the Morrowind lane's bodies through the one sprite batch
 //      (renderer.js beginCharacterSpriteBatch; the committed 3D horse stands in for a body - the same skinned pass, the
 //      same picture and quad - since a Morrowind person needs the player's own Data Files), at most BODIES_MAX of them as
-//      net/peerBodies.js stands them, every peer past the cap as their Eye Of The Beholder walker (net/peerRiders.js
+//      net/peer/peerBodies.js stands them, every peer past the cap as their Eye Of The Beholder walker (net/peer/peerRiders.js
 //      createPeerWalkers - the vendored art: the classic sprite lane a peer's walker takes, one billboard a peer, as the
 //      class sprite and the paperdoll are); and that sprite lane alone, every peer a walker.
 // THE CLOCK: the GL is synced (a 1x1 readPixels of the bound frame - gl.finish does not wait on SwiftShader in this
@@ -56,9 +56,9 @@ try {
   await page.goto(`http://localhost:${PORT}/mw-inspect.html`);
   const out = await page.evaluate(async ({ W, H, FRAMES, LANE, ONLY, BEFORE }) => {
     const [{ Renderer, WORLD_FRAME }, m, el, ga, gart, gt, gb, gh, hr, pr, dl, old] = await Promise.all([
-      import('/src/render/renderer.js'), import('/src/world/mat4.js'), import('/src/render/enhancedLighting.js'), import('/src/world/gateArena.js'),
-      import('/src/world/gateArt.js'), import('/src/render/gateTelegraph.js'), import('/src/net/gateBrain.js'), import('/src/scenes/gateHost.js'),
-      import('/src/world/horseRig.js'), import('/src/net/peerRiders.js'), import('/src/render/deadlands.js'), BEFORE ? import(`/${BEFORE}`) : null,
+      import('/src/render/renderer.js'), import('/src/world/mat4.js'), import('/src/render/enhancedLighting.js'), import('/src/world/gate/gateArena.js'),
+      import('/src/world/gate/gateArt.js'), import('/src/render/gate/gateTelegraph.js'), import('/src/net/gate/gateBrain.js'), import('/src/scenes/gate/gateHost.js'),
+      import('/src/world/horseRig.js'), import('/src/net/peer/peerRiders.js'), import('/src/render/deadlands.js'), BEFORE ? import(`/${BEFORE}`) : null,
     ]);
     const cv = document.createElement('canvas');
     cv.style.width = `${W}px`; cv.style.height = `${H}px`; cv.width = W; cv.height = H;
@@ -187,7 +187,7 @@ try {
       ['AoE: mark + Nova + ground + host', [...pools, mark, blow('nova', 2), ...host]],
       ['AoE: mark + Spokes + ground + host', [...pools, mark, blow('spokes', 3), ...host]],
     ];
-    /** the shapes drawn as the court draws them - a pass each, in their order (scenes/gateCourt.js drawPass) */
+    /** the shapes drawn as the court draws them - a pass each, in their order (scenes/gate/gateCourt.js drawPass) */
     const drawWith = (p, shapes) => ({ proj, view, eye }) => {
       let n = 0;
       const f = fogNow();

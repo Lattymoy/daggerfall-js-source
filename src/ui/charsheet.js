@@ -32,25 +32,25 @@ import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4:
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
 import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';   // U10; AUDIT 63 F34: CalculateHandToHandMin/MaxDamage
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
-import { statDescriptionRows } from '../systems/talkMacros.js';   // ATTRMACRO1: SetTextTokens' macro pass over TEXT.RSC records 0..7
+import { statDescriptionRows } from '../systems/talk/talkMacros.js';   // ATTRMACRO1: SetTextTokens' macro pass over TEXT.RSC records 0..7
 import { SKILLS, SKILL_NAMES, skillValue, skillValueText, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
 import { applyLevelUp, bonusPoolFor, LEVELUP_SKILL_SUM_PER_LEVEL } from '../systems/advancement.js';
 import { usesVirtueLeveling, levelBarProgress, LEVELUP_TOTAL } from '../systems/oblivionLeveling.js';   // ORL1: whose law levels this character
 import { ActionTextBox } from './actionText.js';   // the mustDistributeBonusPoints refusal, ClickAnywhereToClose
 import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
 import { drawText, measureText } from './text.js';
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { drawPaperDoll, refreshPaperDoll, PAPERDOLL_ORIGIN } from './paperDoll.js';
 import { maxFatigue, liveStat, FATIGUE_MULTIPLIER } from '../systems/statMods.js';   // U52: the /64 display divisor has a name and one home
-import { templateByIndex } from '../systems/itemTemplates.js';
+import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { bankingStatusRows } from '../systems/banking.js';   // AUDIT 64 F28: CreateBankingStatusBox's rows
 import { ownTimeLeftShort } from '../systems/worldTick.js';   // AUDIT LIVED1 Q: online, a loan's due as the time left on the character's clock
 import { REGION_NAMES } from '../formats/mapsFile.js';       // GetLocalizedRegionName
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM4: the Name button's DaggerfallInputMessageBox
-import { enterNewNameLabel } from './itemMakerWindow.js';       // CM4: Internal_Strings.enterNewName, homed with its first reader
+import { enterNewNameLabel } from './item/itemMakerWindow.js';       // CM4: Internal_Strings.enterNewName, homed with its first reader
 import { localizedText, formatText, processGrammar, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3g: the race label's grammar
 import { healthStatusRows } from '../systems/healthStatus.js';   // CM4: CreateHealthStatusBox's rows
 import { affiliations } from '../systems/affiliations.js';   // CM4: ShowAffiliationsDialog's book - GUILD-REP: one model, both skins

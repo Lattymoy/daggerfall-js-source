@@ -5,7 +5,7 @@
     "old": "    if (p.died && back.get(p.id)?.includes(Number(p.died.at))) { p.died = null; n++; }",
     "new": "    if (p.died && back.has(p.id)) { p.died = null; n++; }",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const kept = family.remains.filter((r) => !back.get(r?.of)?.includes(Number(r?.at)));",
     "new": "    const kept = family.remains;",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (family.pending && back.get(family.pending.fallenId)?.includes(Number(family.pending.at))) { family.pending = null; n++; }\n",
     "new": "",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (!had.includes(diedAt)) person.revived = [...had, diedAt];",
     "new": "  person.revived = [...had, diedAt];",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (p) for (const at of revivedOf(o)) stampRevived(p, at);\n",
     "new": "",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  takeRevived(mine, other);\n  return mine;",
     "new": "  return mine;",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (base === stored) takeRevived(out, saved);\n",
     "new": "",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    p.revived = Array.isArray(raw.revived) ? raw.revived.filter((n) => Number.isFinite(n)) : [];",
     "new": "    p.revived = [];",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const record = had ? withoutRevived(sent, had.record) : sent;",
     "new": "  const record = sent;",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    stampRevived(me, found.diedAt);\n",
     "new": "",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      rec.rev = Math.max(Number(lineNow.rev) || 0, Number(rec.rev) || 0) + REV_MARGIN;",
     "new": "      rec.rev = Number(lineNow.rev) || 0;",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "        if (h?.from !== me.id || !heirPersons.has(h.by)) return h;",
     "new": "        return h;",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    sql.push(`UPDATE homes SET char_id = ${F} WHERE player",
     "new": "    said.push(`UPDATE homes SET char_id = ${F} WHERE player",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      sql.push(`UPDATE item_uids SET char_id = ${F}",
     "new": "      said.push(`UPDATE item_uids SET char_id = ${F}",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      sql.push(`INSERT OR IGNORE INTO item_dupes",
     "new": "      said.push(`INSERT OR IGNORE INTO item_dupes",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "      sql.push(`INSERT OR IGNORE INTO guild_members",
     "new": "      said.push(`INSERT OR IGNORE INTO guild_members",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    else if (seat.rank === GUILD_RANK_MASTER && g.master && g.master !== `${player}:${found.fallen}`) held.push(",
     "new": "    else if (false) held.push(",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (found.living >= REALM_CHARACTERS_MAX) held.push(",
     "new": "    if (false) held.push(",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "AND dead_at = ${fallenNow.dead_at} AND dead_why = 'fell'",
     "new": "AND dead_why = 'fell'",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    held.push(`she was wed to ${other}",
     "new": "    said.push(`she was wed to ${other}",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  if (fallen != null && !REALM_CHARACTER_RE.test(fallen)) throw new Error('the fallen is not a realm character id');\n",
     "new": "",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  return `SELECT id, handle FROM players WHERE handle_lc = ${sqlStr(handle.toLowerCase())} AND handle IS NOT NULL`;",
     "new": "  return `SELECT id, handle FROM players WHERE handle_lc = '${handle.toLowerCase()}' AND handle IS NOT NULL`;",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "&& (fallen.dead_at == null || c.created_at >= fallen.dead_at)).map((c) => c.id);",
     "new": ").map((c) => c.id);",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "      apply:\n        description: \"Write the revive. Leave it off for a dry run that only reports.\"\n        required: true\n        default: false",
     "new": "      apply:\n        description: \"Write the revive. Leave it off for a dry run that only reports.\"\n        required: true\n        default: true",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "        if: always() && env.HELD == '1' && env.REWOUND != '1'",
     "new": "        if: always() && env.HELD == '1'",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      - name: Put the present back\n        if: always() && env.REWOUND == '1'",
     "new": "      - name: Put the present back\n        if: env.REWOUND == '1'",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    } else if (mode === '--find') {",
     "new": "    } else if (has('--find')) {",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "        sql.push(`UPDATE lineages SET record = ${edit}, rev = ${rec.rev}, updated_at = ${nowS} WHERE player = ${P} AND id = ${sqlStr(found.line)} AND rev = ${lineNow.rev};`);",
     "new": "        sql.push(`UPDATE lineages SET record = ${sqlStr(JSON.stringify(rec))}, rev = ${rec.rev}, updated_at = ${nowS} WHERE player = ${P} AND id = ${sqlStr(found.line)} AND rev = ${lineNow.rev};`);",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "  if (tombstone) sql.push(tombstone);",
     "new": "  if (tombstone) sql.unshift(tombstone);",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    sql.length = 0;",
     "new": "    void sql;",
     "tests": [
-      "test/revive.test.js"
+      "test/systems/legacy/revive.test.js"
     ]
   }
 ]

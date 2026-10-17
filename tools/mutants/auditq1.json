@@ -5,7 +5,7 @@
     "old": "    new WeatherCondition(null),\n",
     "new": "",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    new Say(null),\n",
     "new": "    new Say(null),\n    new Say(null),\n",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  get pattern() { return /say (?<id>\\d+)|say (?<idName>\\w+)/; }",
     "new": "  get pattern() { return /say (?<id>\\d+)/; }",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    this.displayName = data.displayName ?? null;",
     "new": "    this.displayName = null;",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    this.questTombstoneTime = data.questTombstoneTime;\n",
     "new": "",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (text.startsWith('-')) continue;\n      if (!text) continue;\n      text = text.split(INLINE_COMMENT)[0];\n      if (/^schema:/i.test(text))",
     "new": "      if (!text) continue;\n      text = text.split(INLINE_COMMENT)[0];\n      if (/^schema:/i.test(text))",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    lordNameForFaction: (id, old = false) => lordNameForFaction(townTalk.factionDict, id, old),\n",
     "new": "",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n",
     "new": "",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n",
     "new": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n    talkHonoric: () => null,\n",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    new EndQuest(null),\n    new Prompt(null),\n",
     "new": "    new Prompt(null),\n    new EndQuest(null),\n",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    this.dropped = data.dropped;\n",
     "new": "",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    this.prevTriggered = data.prevTriggered;\n",
     "new": "",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    this.activeLogMessages.set(stepID, { stepID, messageID, time: this.worldSeconds?.() ?? 0 });",
     "new": "    this.activeLogMessages.set(stepID, { stepID, messageID });",
     "tests": [
-      "test/auditquests_linkage.test.js"
+      "test/systems/quest/auditquests_linkage.test.js"
     ],
     "note": "TIME3 (PIN MOVED): the step's time is stamped on the event clock (worldSeconds) now; re-aimed by content."
   }

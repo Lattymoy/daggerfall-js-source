@@ -5,7 +5,7 @@
     "old": "    if (family.pending) return deps.entity?.chargenDone && !born ? { fall: fallOutcome() } : null;",
     "new": "    if (family.pending) return deps.entity?.chargenDone ? { fall: fallOutcome() } : null;",
     "tests": [
-      "test/fb1012d_familytree.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!playedHere(p)) return;",
     "new": "    if (p.characterId && deps.entity.characterId && p.characterId !== String(deps.entity.characterId)) return;",
     "tests": [
-      "test/fb1012d_familytree.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (legacyBirth) params.delete('classic');",
     "new": "    // the classic start kept",
     "tests": [
-      "test/fb1012d_familytree.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    return (family?.houses ?? []).some((x) => (x.mapId >>> 0) === id) ? { region: String(h.region), loc: String(h.loc), mapId: id } : null;",
     "new": "    return null;",
     "tests": [
-      "test/fb1012d_familytree.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    return (family?.houses ?? []).some((x) => (x.mapId >>> 0) === id) ? { region: String(h.region), loc: String(h.loc), mapId: id } : null;",
     "new": "    return (family?.houses ?? []).length ? { region: String(h.region), loc: String(h.loc), mapId: id } : null;",
     "tests": [
-      "test/fb1012d_familytree.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (!h || h.mode === 'dungeon' || !h.region || !h.loc || h.mapId == null) return null;",
     "new": "    if (!h || !h.region || !h.loc || h.mapId == null) return null;",
     "tests": [
-      "test/fb1012d_familytree.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js"
     ]
   },
   {
@@ -59,8 +59,8 @@
     "old": "    const t = placeHere();",
     "new": "    const t = deps.town(deps.here());",
     "tests": [
-      "test/fb1012d_familytree.test.js",
-      "test/fb1007b_familyseat.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js",
+      "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "here ? placeHere() : null",
     "new": "here ? deps.town(deps.here()) : null",
     "tests": [
-      "test/fb1012d_familytree.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    const loc = placeHere()?.loc ?? family.seat?.loc ?? '';",
     "new": "    const loc = deps.town(here)?.loc ?? family.seat?.loc ?? '';",
     "tests": [
-      "test/fb1012d_familytree.test.js"
+      "test/systems/legacy/fb1012d_familytree.test.js"
     ]
   }
 ]

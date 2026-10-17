@@ -5,7 +5,7 @@
     "old": "  if (!offered) return { kind: 'noQuest', daedra: called, cost, quest: called.quest };\n",
     "new": "",
     "tests": [
-      "test/fb1014_summonoffer.test.js"
+      "test/systems/fb1014_summonoffer.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const offered = offerQuest(called.quest);",
     "new": "  const offered = offerQuest(daedra.quest);",
     "tests": [
-      "test/fb1014_summonoffer.test.js"
+      "test/systems/fb1014_summonoffer.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (roll > chance) {\n",
     "new": "  offerQuest(called.quest);\n  if (roll > chance) {\n",
     "tests": [
-      "test/fb1014_summonoffer.test.js"
+      "test/systems/fb1014_summonoffer.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "'{prince} answers, but has no task for you in this region. You keep your gold - try the summoning in another region.'",
     "new": "'{prince} answers, but has no task for you in this region.'",
     "tests": [
-      "test/fb1014_summonoffer.test.js"
+      "test/systems/fb1014_summonoffer.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (!this.offeredQuest) return null;\n    return this._offerQuest();",
     "new": "    if (!this.offeredQuest) return { kind: 'close' };\n    return this._offerQuest();",
     "tests": [
-      "test/fb1014_summonoffer.test.js"
+      "test/systems/fb1014_summonoffer.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        if (r.kind === 'noQuest') return { rows: [{ text: noQuestText(r.daedra), center: true }] };\n",
     "new": "",
     "tests": [
-      "test/fb1014_summonoffer.test.js"
+      "test/systems/fb1014_summonoffer.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "        const offered = r.offered;   // SUMMON-OFFER: made before the gold went",
     "new": "        const offered = questBridge?.offerDaedricQuest?.(r.quest, summonerId) ?? null;",
     "tests": [
-      "test/fb1014_summonoffer.test.js"
+      "test/systems/fb1014_summonoffer.test.js"
     ]
   }
 ]
