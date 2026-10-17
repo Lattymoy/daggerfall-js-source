@@ -1,0 +1,22 @@
+# THE VOICE SERVICE as a Cloudflare Worker - the third Worker, beside the relay (server/) and the
+# account service (server-account/). Section 4 of bible/11-Multiplayer/Voice-Arc.md.
+#
+# WHY A THIRD WORKER and not a route on either: the relay's deploy drops every connected player (server/wrangler.toml
+# says why), and the account service holds the one private key - the voice service holds the MEDIA SERVER's secret,
+# a different trust, and a bug here must not be able to mint an identity. Two secrets, two Workers.
+#
+# The SFU itself cannot run on Cloudflare - WebRTC media needs UDP and a long-lived process - so this Worker is the
+# control plane and deploy/voice/compose.yaml is the media plane, on a host of yours. The Worker is OPTIONAL: the
+# same `handle` runs under node beside the SFU (server-voice/src/node.js), which is how the proof runs it and how a
+# fully self-hosted stack would. Deploy the Worker when you want the control plane on Cloudflare's edge and the
+# media on your box.
+#
+# Secrets (wrangler secret put): LIVEKIT_API_KEY, LIVEKIT_API_SECRET, IDENTITY_PUBLIC_KEY (not a secret, but set the
+# same way). Vars below are the public ones.
+name = "daggerfall-voice"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[vars]
+LIVEKIT_URL = "wss://voice.example.com"
+CORS_ORIGIN = "https://lattymoy.github.io"

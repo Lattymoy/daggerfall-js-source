@@ -140,6 +140,9 @@ BOSS_BODY = ""
 # the spoils: the receipts go out unsigned, the players' loot rolls the
 # same, and the account service declines to record the kill.
 
+# VOICE_RELAY_SECRET: a Worker secret (wrangler secret put), shared with server-voice's env. Sent as the
+# x-voice-relay-secret header on presence and party-of asks, and checked constant-time before either door answers.
+
 # AUDIT ONLINE A17: an uncaught error in the object is logged, not lost
 [observability]
 enabled = true

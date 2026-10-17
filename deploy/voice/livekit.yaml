@@ -1,0 +1,37 @@
+# the self-hosted media server's own configuration (bible/11-Multiplayer/Voice-Arc.md section 3).
+#
+# One LiveKit SFU, audio only. The game never speaks to it directly for authority: the voice service
+# (server-voice/) mints a short-lived LiveKit token after the relay's identity token and the room's
+# membership are checked, and this server verifies that token with the same API secret.
+#
+# `dev` is the podman proof's key pair alone (deploy/voice/compose.yaml). A production host writes its
+# own pair into keys: and sets `rtc.use_external_ip: true` behind a public address.
+port: 7880
+bind_addresses:
+  - ""
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: false
+  # local dev only: without this the server advertises its container-internal IP as the ICE candidate, which a
+  # browser on the host can never reach - signalling connects but media never does. Unset/remove for a real deploy.
+  node_ip: 127.0.0.1
+keys:
+  devkey: devsecret_devsecret_devsecret_devsecret
+room:
+  auto_create: false
+  empty_timeout: 300
+  max_participants: 16
+  enabled_codecs:
+    - mime: audio/opus
+audio:
+  active_level: 30
+  min_percentile: 40
+  update_interval: 400
+  smooth_intervals: 2
+turn:
+  enabled: false
+logging:
+  level: info
+  json: false

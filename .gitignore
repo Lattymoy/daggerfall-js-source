@@ -102,3 +102,4 @@ tools/shots/
 tamriel-shots/
 # WEAPON-GLOW1 (AUDIT DOC-16): the glow probe's pictures (tools/weaponGlowProbe.mjs default outDir) - no game data, never committed.
 weapon-glow-probe/
+deploy/voice/voice.env
