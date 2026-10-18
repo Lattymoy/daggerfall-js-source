@@ -154,6 +154,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Sieges | `net/siege/` |
 | Sigil Sets | `systems/sigil/` |
 | Spells | `systems/spell/`, `ui/spell/` |
+| Studio art (the artists' folder) | `systems/studioArt/` |
 | Survival | `systems/survival/` |
 | Talk | `systems/talk/` |
 | Tamriel (the continent) | `world/tamriel/` |
@@ -308,7 +309,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/quest/` | The quest machine: the parser, its tables, actions and conditions. |
 | `src/systems/region/` | A region's conditions, hubs and power - the law. |
 | `src/systems/rest/` | Resting: the rest window, its supplies and its warning - the law. |
-| `src/systems/revenant/` | The Revenant: the feud, its companions (their kit, their errands abroad), its art, personality, voice, trophy and fate. |
+| `src/systems/revenant/` | The Revenant: the feud, its companions (their kit, their errands abroad, their stars), its art, personality, voice, trophy and fate. |
 | `src/systems/roleplayRealism/` | The Roleplay Realism mod - the law. |
 | `src/systems/roleplayRealismItems/` | The Roleplay Realism: Items mod - the law. |
 | `src/systems/save/` | Saving and loading - the law. |
@@ -317,6 +318,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/sigil/` | Sigil Sets (`11-Multiplayer/Sigil-Sets.md`) - the law. |
 | `src/systems/song/` | Music: the songs, their player and manager - the law. |
 | `src/systems/spell/` | Spells: effects, the spell maker, power and the impact's sound. |
+| `src/systems/studioArt/` | The studio (`07-Rendering/Studio-Art.md`): the game's artists' own pictures (`public/art/studio/`) on the texture door, and the slots they paint. |
 | `src/systems/superDungeon/` | The Abyss Dungeon's law (`11-Multiplayer/Super-Dungeons-Look.md`): the site, the omen, the score, the spoils and the rift's sound. |
 | `src/systems/survival/` | Survival: needs, camping, food, rest, exposure. |
 | `src/systems/talk/` | Talking to people: topics, sessions, macros - the law. |

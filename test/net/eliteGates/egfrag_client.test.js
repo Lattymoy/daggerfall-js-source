@@ -221,7 +221,7 @@ test('EG-FULL LAYER THREE THE WALLS, THE NICHES AND THE HANDS (sections 11.6 and
     assert.deepEqual(pressed, [`egstone:${ath.s.h}:2:f`]);
     assert.equal(sp.press('loot:1'), false);
   } finally { registerSpireAct(null); }
-  assert.match(sp.hoverName(`egstone:${ath.s.h}:2:b`).title, /Orrery stone 3/);
+  assert.equal(sp.hoverName(`egstone:${ath.s.h}:2:b`).title, 'Wayrest - the ship');   // PIN MOVED (FIELD BUGS 2026-10-17e, ORRERY-SIGHT): the stone by its name, never "Orrery stone 3"
   const ec = findCircle((s) => s.engines.length > 0);
   const esp = createEgSpan({ seed: ec.seed, c: ec.c });
   stand(esp);
@@ -315,8 +315,13 @@ test('EG-FULL LAYER THREE THE BREACH CLIENT\'S HANDS (sections 8.4 and 11.10): a
     return { client, sent, said, spec, player, B };
   };
   const A = make(ath.seed, ath.s.h);
+  // PIN MOVED (FIELD BUGS 2026-10-17e, ORRERY-SIGHT): a turn is sent from the stone the room would take it at - each press
+  // from beside its stone (the arrival plate is out of every stone's reach: test/systems/eliteGates/fb1017e_orrerysight.test.js)
+  const by = (j) => { const q = ath.s.spots.stone[j]; A.player.pos = realmToDungeon(ath.s.x0 + q.x + 1, Number.isFinite(q.y) ? q.y / 100 : 0, q.z); };
+  by(3);
   assert.equal(A.client.act(`egstone:${ath.s.h}:3:f`), true);
   assert.deepEqual(A.sent.at(-1), { k: 'pz', i: 3, a: 1 });
+  by(1);
   A.client.act(`egstone:${ath.s.h}:1:b`);
   assert.deepEqual(A.sent.at(-1), { k: 'pz', i: 1, a: -1 });
   const n0 = A.sent.length;

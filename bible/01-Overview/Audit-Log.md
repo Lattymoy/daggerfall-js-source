@@ -8,6 +8,16 @@
 
 Newest first.
 
+**2026-10-17 - AUDIT RVN-STARS (RVN-STARS - PR #999).** Mac: *"Do a comprehensive audit on this and ensure
+perfection"*. Five cold lanes on the frozen branch - the law and the record, the seams, the window and its doors, the
+words in 13 languages with the docs, the balance measured - and no edit until all had reported. The worst: the Blade's
+health reached a sworn one's body once and stayed (its whole rides its oath between stands), so a keystone's price was
+never paid and a respec kept it; a sky set now rescales the carried whole and a standing body. Every finding - an
+errand's sky taken as it sets out (the Vigil's road kept, a reload's later sky moving nothing), `paid` a list, Fortune's
+Road a choice, the loss's fraction carried, the arts' side bounds, XP bounded and slower and errand XP only under level
+10, the QuickDial's key asking the sky, the window's focus, ink and words - fixed or decided, each in
+`06-Systems/Revenants.md` section 45; 419 mutants across the seven touched lists, all dead.
+
 **2026-10-17 - AUDIT RVN (RVN-GEAR, RVN-ARTS, RVN-ERRAND - PR #988).** Mac: *"Please audit everything and ensure
 perfection"*. Five cold lanes on the frozen branch - the kit, the arts, the errands, the page with its words and record,
 the balance measured - and no edit until all had reported. The blocker: online an errand paid on raised time (a rest, a

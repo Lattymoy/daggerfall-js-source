@@ -52,7 +52,7 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { firmamentOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page
+import { firmamentOver, revenantStarsOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page - RVN-STARS: a sworn one's stars, over Companions
 import { createCharSheetWindow } from './charSheetDoor.js';   // ASCEND-ANYTIME: a level OWED is answered by the sheet key's own door
 import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: which bar the Ascension reads
@@ -60,6 +60,7 @@ import { profPagesShown, PROF_PAGE_SECTIONS } from './professions/profPages.js';
 import { FAMILY_PAGE_SECTIONS } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin
 import { hudText } from '../systems/notify.js';
 import { t } from '../systems/textManager.js';   // L10N4: the professions' closed line in the player's language
+import { isTextEntryTarget } from './input.js';   // AUDIT PRIVATE-REPORT UI-10: a field's held key is the field's
 import {
   openClassicPauseFlow as openClassicPauseWindow,
   pauseArtLoaded,
@@ -225,7 +226,7 @@ function openPauseFlowNow(show, hooks) {
   if (familyPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   // SERVER-POST: the mailbox (`/mail`, ui/enhanced/enhancedPost.js) is the enhanced face's - the classic pause window has no envelope - so
   // its door opens the enhanced pause on either skin, as the family's pages do
-  if (hooks.at === 'mailbox' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  if ((hooks.at === 'mailbox' || hooks.at === 'report') && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);   // PRIVATE-REPORT: `/bug`, its form
   // `document` is the second half of the test for the reason
   // chargenSession's fork gives: a node test drives these hosts
   // headless, has no document, and must keep the canvas window rather
@@ -282,6 +283,8 @@ function enhancedPauseOverlay(show, base) {
     // FIRM1: THE FIRMAMENT'S BUTTON beside Ascend - online alone (firmamentOver.js: no book, no button); a getter, so the
     // page asks it each time it draws (the book is the host's, made once the world boots)
     get openFirmament() { return firm.hook; },
+    // RVN-STARS: the Companions page's Stars - a sworn one's sky over this window, the window back on Companions
+    get openRevenantStars() { return rvnStars.hook; },
   };
 
   // FIRM1: the sky over this window, as the Ascension is - the window's keyboard given up first, the window back on Stats
@@ -289,6 +292,11 @@ function enhancedPauseOverlay(show, base) {
     alive: () => !fired,
     below: () => { try { view?.unmount(); } catch { /* already gone */ } view = null; },
     back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'stats' }); },
+  });
+  const rvnStars = revenantStarsOver({
+    alive: () => !fired,
+    below: () => { try { view?.unmount(); } catch { /* already gone */ } view = null; },
+    back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'companions' }); },
   });
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
@@ -309,7 +317,8 @@ function enhancedPauseOverlay(show, base) {
   // arm-then-confirm acts keep the focus on the armed button (AUDIT LEGACY II U6): "Play as" and "Pass the mantle"
   // armed and fired on one held press. Every other ask-twice act of this window is covered by the same line.
   host.addEventListener?.('keydown', (e) => {
-    if (e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); }
+    // PRIVATE-REPORT (AUDIT PRIVATE-REPORT UI-10): never in a field - a held Space or Enter types, as every other key does
+    if (e.repeat && (e.key === 'Enter' || e.key === ' ') && !isTextEntryTarget(e.target)) { e.preventDefault(); e.stopPropagation(); }
   }, true);
   // AUDIT LEGACY III U2: THE KEYBOARD COMES INTO THE WINDOW. Opened, the focus stood on the page's body, where every Tab
   // was the game's (AUDIT LEGACY II U3's walk asks the focus to be inside already): a Tab from outside lands on the
@@ -334,7 +343,7 @@ function enhancedPauseOverlay(show, base) {
 
   const close = () => {
     if (fired) return;
-    dropAscend(); firm.drop();   // ASCEND-ANYTIME: whatever is on top of this window goes with it - FIRM1: the Firmament too
+    dropAscend(); firm.drop(); rvnStars.drop();   // ASCEND-ANYTIME: whatever is on top of this window goes with it - FIRM1: the Firmament too - RVN-STARS: and a sworn one's stars
     document.removeEventListener?.('keydown', tabIn, true);
     view?.unmount();
     view = null;

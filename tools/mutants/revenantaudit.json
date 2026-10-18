@@ -101,7 +101,7 @@
   {
     "name": "AUDIT-C4-days-of-rest",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (stateOf(r) === 'resting' && Number.isFinite(now) && until - now > REVENANT_REST_MIN) {",
+    "old": "  if (stateOf(r) === 'resting' && Number.isFinite(now) && until - now > most) {",
     "new": "  if (false) {",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-C5-the-member-kept",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });   // RVN11: a fall -8\n      forgetSwornMember(id);\n      return true;",
-    "new": "c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });   // RVN11: a fall -8\n      return true;",
+    "old": "its rest and its loss as its sky bears them\n      forgetSwornMember(id);\n      return true;",
+    "new": "its rest and its loss as its sky bears them\n      return true;",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]

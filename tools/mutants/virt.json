@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-VIRT-the-fitted-cache-blind-to-the-mods",
     "file": "src/ui/textureCanvas.js",
-    "old": "  if (_fittedGen !== dfmodGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = dfmodGeneration(); }",
-    "new": "  if (_fittedGen !== dfmodGeneration()) { _fittedGen = dfmodGeneration(); }",
+    "old": "  if (_fittedGen !== iconsGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = iconsGeneration(); }",
+    "new": "  if (_fittedGen !== iconsGeneration()) { _fittedGen = iconsGeneration(); }",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]

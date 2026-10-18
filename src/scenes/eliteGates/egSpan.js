@@ -124,6 +124,9 @@ import { egOverDrop } from '../../world/eliteGates/egTelegraph.js';   // EG-ZG: 
 import { egNicheBoxes, egIsleDisc } from '../../world/eliteGates/egHall.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate.js';
 import { spireFooting, spireWake, spireObjs, spireAct } from '../../systems/eliteGates/spireKit.js';
+import { spireStoneName } from '../../systems/eliteGates/spireOrrery.js';   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): a handle names its stone
+import { SD_STONES } from '../../net/superDungeon/sdBrain.js';
+import { SD_HALL_TEXT } from '../superDungeon/sdHall.js';   // ORRERY-SIGHT: the Hour's own words for a stone's hand
 import { spireCrumbleWait } from '../../systems/eliteGates/spireVestiges.js';   // EG-ZR (Elite-Gates.md section 15): Featherstep - my crumbles wait longer
 import { egBandDress, egBandArchive, EG_DRESS, egTellArchive, egBeatWarnArt, egBeatBackArt, egBeatTellMaps } from '../../world/eliteGates/egBandArt.js';   // EG-G2: the band's dress on every piece (EG-ZC: its liquid on the slag); EG-ZL: a Beat's warning
 import { EG_BEAT_TELL_RECORDS } from '../../world/eliteGates/egBandArt.js';   // AUDIT EG III (lane4 #4): the Beat's records, freed at the breach's end
@@ -1170,7 +1173,10 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
     hoverName(key) {
       if (typeof key !== 'string') return null;
       const st = /^egstone:\d+:(\d):([fb])$/.exec(key);
-      if (st) return { title: `Orrery stone ${Number(st[1]) + 1}`, subs: [st[2] === 'f' ? 'Turn it forward an hour' : 'Turn it back an hour'] };
+      // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): the stone named as the riddles name it, with its sign (the Hour's plaque -
+      // scenes/superDungeon/sdHall.js hoverName), and the hour its hand stands at as the room last said it (`orr`, the breach
+      // client's objs) - it said "Orrery stone 3" and no hour
+      if (st) { const j = Number(st[1]), h = spireObjs().orr?.[j]; return { title: `${spireStoneName(j)} - ${SD_STONES[j]?.sign ?? ''}`, subs: [...(Number.isFinite(h) ? [SD_HALL_TEXT.hour(h)] : []), st[2] === 'f' ? 'Turn it forward an hour' : 'Turn it back an hour'] }; }
       const en = /^egengine:(\d+):(\d+)$/.exec(key);
       if (en) { const spec = specs.find((q) => q.h === Number(en[1])), e = spec?.engines?.[Number(en[2])], E = e ? EG_ENGINES[e.kind] : null; if (E) return { title: E.name.charAt(0).toUpperCase() + E.name.slice(1), subs: [E.what, E.once ? 'Work it' : 'Work it - once in 30 seconds'] }; }   // AUDIT EG III: the Shelf topples once
       return null;

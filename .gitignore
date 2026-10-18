@@ -102,3 +102,10 @@ tools/shots/
 tamriel-shots/
 # WEAPON-GLOW1 (AUDIT DOC-16): the glow probe's pictures (tools/weaponGlowProbe.mjs default outDir) - no game data, never committed.
 weapon-glow-probe/
+# STUDIO1: tools/studioArt.mjs templates' default dir - the painted pictures an artist starts from (the port's own; regenerated on demand).
+# Anchored (AUDIT STUDIO1 C4): unanchored, it ignored a folder of that name inside an artist's, and nothing they put there was committed.
+/studio-templates/
+# AUDIT STUDIO1 C7: what an artist's computer leaves beside their pictures (macOS's AppleDouble files, Windows' thumbnails and folder settings).
+._*
+Thumbs.db
+desktop.ini

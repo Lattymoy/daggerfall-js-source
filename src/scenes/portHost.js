@@ -62,6 +62,7 @@ import { buildShipyardModel, SHIPYARD, shipsSignBox, hullBox, noticesBox, crewSi
 import { buildLighthouseModel, buildLighthouseFire, guardBand, LIGHTHOUSE, LIGHTHOUSE_POINTS, doorBox, hatchBox, lanternBox, GALLERY_Y, LANTERN_H } from '../world/lighthouseModel.js';
 import { PORT_PAINTERS, PORT_ARCHIVE, PORT_HOW } from '../world/portArt.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the port's pictures in Daggerfall's colours
+import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones (their rows top-down, as the port's are)
 import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobile/mobilePerson.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { folkLookOf } from '../characters/folkBodies.js';
@@ -282,8 +283,11 @@ export function createPortHost({
     const t0 = now();
     do {
       const [rec, paint] = PORT_PAINTERS[artAt++], pic = paint(), how = PORT_HOW[rec];
-      renderer.uploadTexture?.(PORT_ARCHIVE, rec, dfLook(pic, lookSeed(PORT_ARCHIVE, rec)), how?.cutout ? CUTOUT : undefined);   // BEACON-TOWER: the flame a cutout; DF-LOOK: in Daggerfall's colours
-      if (how?.glows) renderer.uploadEmissionTexture?.(PORT_ARCHIVE, rec, pic, OWN_LIGHT);   // ...and the fire its own light (its painted glow)
+      wearPainted(PORT_ARCHIVE, rec, () => dfLook(pic, lookSeed(PORT_ARCHIVE, rec)), (art, { replaced, late }) => {   // STUDIO1: the studio's where an artist drew it
+        if (late) { renderer.releaseTexture?.(PORT_ARCHIVE, rec); if (how?.glows) renderer.evictEmissionTexture?.(`${PORT_ARCHIVE}_${rec}`); }
+        renderer.uploadTexture?.(PORT_ARCHIVE, rec, art, how?.cutout ? CUTOUT : undefined);   // BEACON-TOWER: the flame a cutout; DF-LOOK: in Daggerfall's colours
+        if (how?.glows) renderer.uploadEmissionTexture?.(PORT_ARCHIVE, rec, replaced ? art : pic, OWN_LIGHT);   // ...and the fire its own light (its painted glow - the studio's picture is its own)
+      }, { topDown: true });
     } while (artAt < PORT_PAINTERS.length && now() - t0 < ART_BUDGET_MS);
     return artAt >= PORT_PAINTERS.length;
   }

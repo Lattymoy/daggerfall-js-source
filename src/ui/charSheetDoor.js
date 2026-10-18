@@ -39,7 +39,7 @@
 import { isEnhanced } from '../systems/uiSkin.js';
 import { PIXEL_FAMILIES } from './pixelifyFive.js';   // FONT3: the wait card names the enhanced face first
 import { eventActions } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
-import { firmamentOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page
+import { firmamentOver, revenantStarsOver } from './firmamentOver.js';   // FIRM1: the Firmament, swapped in over the Stats page - RVN-STARS: a sworn one's stars, over Companions
 import { mountEnhancedChunk, paintChunkNotice } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
 import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
 import { pauseMenuHooks, pauseMenuAct } from './pauseDoor.js';   // F5-QUESTS: the pause window's own hooks and act - a cycle (pauseDoor imports this door), read only at call time
@@ -235,9 +235,16 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     below: () => { try { view?.unmount?.(); } catch { /* already gone */ } view = null; },
     back: () => remountPage(),
   });
+  let landing = 'stats';   // RVN-STARS: the page the next mount lands on (remountPage)
+  const rvnStars = revenantStarsOver({   // RVN-STARS: the Companions page's Stars, the page back on Companions
+    alive: () => !fired,
+    below: () => { try { view?.unmount?.(); } catch { /* already gone */ } view = null; },
+    back: () => remountPage('companions'),
+  });
   const close = () => {
     if (fired) return;
     firm.drop();   // FIRM1: the sheet key closes the Firmament too
+    rvnStars.drop();   // RVN-STARS: and a sworn one's stars
     try { ascendView?.destroy?.(); } catch { /* already gone */ }   // ASCEND-ANYTIME: the sheet key closes whatever is on top
     ascendView = null;
     ascendHost?.remove();
@@ -325,12 +332,14 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
       // give for a door they were handed none of.
       openAscend: entity ? openAscend : undefined,
       openFirmament: firm.hook,   // FIRM1: online alone (firmamentOver.js)
+      openRevenantStars: rvnStars.hook,   // RVN-STARS: a sworn one's stars (firmamentOver.js revenantStarsOver)
     }, () => seams);
     return {
       mode: 'pause',
       at: 'stats',
       onAction: pauseMenuAct(menuHooks, close),
       hooks: menuHooks,
+      ...(landing === 'stats' ? {} : { at: landing }),   // RVN-STARS: back on the Companions page a sworn one's stars were opened from
     };
   }
 
@@ -388,8 +397,9 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     });
   }
 
-  /** The Stats page again, after a view closed over it. */
-  function remountPage() {
+  /** The Stats page again, after a view closed over it - or the page it was opened from (`at`: RVN-STARS' Companions). */
+  function remountPage(at = 'stats') {
+    landing = at;
     mountEnhancedChunk({
       load: () => import('./enhanced/enhancedMenu.js'),
       alive: () => !fired, host, onDismiss: close, label: 'charsheet',

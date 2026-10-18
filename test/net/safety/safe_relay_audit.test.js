@@ -142,7 +142,10 @@ test('AUDIT SAFE RELAY-4 over the SHARDED hub: a ban the bus takes closes its ta
   }
 }));
 
-test('AUDIT SAFE RELAY-5: THE BAN IS ITS OWN ORDER - a NEWER unmute never lifts a ban (the hello is still refused), and an unban never lifts a mute that stands (the hello is let in, its line still refused `muted`); MOD1\'s one row held both, so each undid the other (mutants: the ban held in the mutes\' row)', async () => {
+test('AUDIT SAFE RELAY-5: THE BAN IS ITS OWN ORDER - a NEWER unmute never lifts a ban (the hello is still refused), and an unban never lifts a mute that stands (the hello is let in, its line still refused `muted`); MOD1\'s one row held both, so each undid the other (mutants: the ban held in the mutes\' row)', () => at(Date.now(), async () => {
+  // the clock held for the whole pin: the hello's token is minted at the clock's second less one, and a wall clock
+  // that crossed a second after `nowS` minted it AT the mute's second - no older than the mute, so it rightly wore
+  // none, and the pin failed on the second it ran in (deploy 1498, verify / tests 1/4)
   const r = fakeRoom(CHAT_WORLD_ROOM);
   const bob = r.connect(); await r.hello(bob, 'bobb-0003', null, { kind: 'linked' });
   const kp = await r.signer();
@@ -163,7 +166,7 @@ test('AUDIT SAFE RELAY-5: THE BAN IS ITS OWN ORDER - a NEWER unmute never lifts 
   await r.chat(t2, 'unbanned and unmuted?');
   assert.deepEqual(ofType(t2, 'muted').at(-1), { t: 'muted', until: nowS + 3600 }, 'the mute it stood under stands');
   assert.deepEqual(heard(bob), []);
-});
+}));
 
 test('AUDIT SAFE RELAY-6: AN ORDER OLDER THAN A SOCKET\'S TOKEN LEAVES IT ALONE - an unmute minted before the token that carries a fresh mute, pushed to the hub\'s door or carried in by a client, lifts nothing; a socket whose token is older than the order takes it, as ever (mutants: the token\'s age unread at the door; and in MOD1\'s arm)', async () => {
   const world = fakeRooms();

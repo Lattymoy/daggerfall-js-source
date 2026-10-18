@@ -34,6 +34,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { dfmodGeneration } from '../systems/dfmodTextures.js';   // DFMOD1-E: the icon cache keys on the attached-mod set
+import { studioGeneration } from '../systems/studioArt/studioArt.js';   // STUDIO1: and on the studio's pictures
 import { bitmapCanvas, color32Canvas, fitCanvas } from './bitmapCanvas.js';
 import { clampDpr, ICON_CAP } from './iconFit.js';   // UI1: the fit law's numbers, for requestFittedPicture's key
 // SURV-ART: the DOM door needs the VENDOR arm the GL door already has
@@ -128,12 +129,14 @@ const iconKey = (archive, record, scale, dye, dyeTarget) => {
  * when a cold record lands so the screen can repaint itself. A record
  * that is already cached fires nothing, so a repaint cannot loop.
  */
-let _iconsGen = -1;   // DFMOD1-E: the attached-mod set the icon cache was drawn from
+let _iconsGen = '';   // DFMOD1-E: the attached-mod set the icon cache was drawn from
+/** DFMOD1-E's key, and STUDIO1's: an icon drawn before the studio's pictures registered is not the answer after. */
+const iconsGeneration = () => `${dfmodGeneration()}:${studioGeneration()}`;
 export function requestIcon(archive, record, { scale = 2, onReady = null, dye = null, dyeTarget = null } = {}) {
   if (!Number.isInteger(archive) || !Number.isInteger(record) || record < 0) return null;
   // DFMOD1-E: an icon drawn before the attached texture mods landed (or changed) is not the answer after - the
   // cache is dropped whole when the set changes, and every icon is asked again
-  if (_iconsGen !== dfmodGeneration()) { icons.clear(); _iconsGen = dfmodGeneration(); }
+  if (_iconsGen !== iconsGeneration()) { icons.clear(); _iconsGen = iconsGeneration(); }
   const token = dyeToken(dye);
   const key = iconKey(archive, record, scale, dye, dyeTarget);
   // UI1: EVERY SCREEN THAT ASKS WHILE IT IS IN FLIGHT HEARS IT LAND, not the first alone. A slot's fitted picture is
@@ -231,7 +234,7 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
 const fitted = new Map();      // `${picture}@${box}x${dpr}c${cap}` -> { src, w, h, smooth } | null
 const fitWaiting = new Map();  // the same key -> the screens waiting on it, while it is made
 let fittedBytes = 0;           // AUDIT VIRT: the kept pictures' data URLs, in characters
-let _fittedGen = -1;           // AUDIT VIRT: the attached-mod set the kept pictures were made from
+let _fittedGen = '';           // AUDIT VIRT: the attached-mod set the kept pictures were made from (STUDIO1: and the studio's)
 /** AUDIT UI A4: how many fitted pictures are kept - every zoom and every HUD scale is a new set, and a picture that never
  *  comes held its waiters for good. Past this the one asked for LEAST RECENTLY goes, and its waiters with it (a picture
  *  on screen keeps its source; asked again, it is made again).
@@ -284,7 +287,7 @@ export function requestFittedPicture(name, ask, { box, dpr = 1, cap = ICON_CAP, 
   // AUDIT VIRT: A FITTED PICTURE IS MADE FROM ITS SOURCE, and requestIcon drops its sources when the attached texture mods
   // change (DFMOD1-E) - this cache never did, so a slot kept the last mod's picture, and since VIRT kept it for as long as
   // it was asked. Dropped whole with them; a make still in flight from the old set keeps nothing it makes.
-  if (_fittedGen !== dfmodGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = dfmodGeneration(); }
+  if (_fittedGen !== iconsGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = iconsGeneration(); }
   const r = clampDpr(dpr);
   const key = `${name}@${box}x${r}c${cap}${trim ? '' : 'w'}${snap ? '' : 'nosnap'}`;
   // VIRT: AN ASK IS A USE - the picture goes to the back of the line the bound takes from

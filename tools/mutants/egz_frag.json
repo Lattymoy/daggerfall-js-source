@@ -353,8 +353,8 @@
   {
     "name": "EGZ-the-client-hands-no-light",
     "file": "src/scenes/eliteGates/egClient.js",
-    "old": "        lit: (F.zones ?? []).filter((z) => z.kind === 'haven').map((z) => ({ s: z.s, from: z.from, until: z.until })), br });",
-    "new": "        lit: [], br });",
+    "old": "        lit: (F.zones ?? []).filter((z) => z.kind === 'haven').map((z) => ({ s: z.s, from: z.from, until: z.until })), br,",
+    "new": "        lit: [], br,",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]

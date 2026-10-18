@@ -73,6 +73,7 @@ import { egSigilsOf, egEclipseAt, egEclipseChip } from '../../world/eliteGates/e
 import { t } from '../../systems/textManager.js';   // AUDIT EG V (c): the words this audit adds, in the player's language
 import { egStakeText } from './egHud.js';   // AUDIT EG V (c, NEW-1): the rest card's stake, on the Spire's own HUD
 import { EG_TIDE_NAMES } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (c, L2-9): the Hungering Dark, named on the rest card
+import { spireOrreryOf, spireRiddleLines } from '../../systems/eliteGates/spireOrrery.js';   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's riddles
 
 // ── the layouts (section 27.1) ────────────────────────────────────────────────────────────────────────────────
 /** A phone is a screen whose short side is this or less (CSS px - the party panel's and the arena's own line). */
@@ -405,6 +406,7 @@ export function egSpireHudModel(E, me, now, { ff = 'desktop', witness = false, p
     recall: mine && mine.alive && !mine.home && !mine.recall ? EG_PRES_TEXT.recallSpent : '',   // my last life (PARTY8-B's law: a fact when it is actionable)
     dec, decFold: L.dec === 'fold' && dec.length > 0 ? EG_PRES_TEXT.decrees(dec.length) : '', foldOpen,
     objective: E.sg === 'trial' && !watching ? egObjectiveOf(spec) : '', progress: E.sg === 'trial' && !watching ? egProgressText(spec, E.fight?.pg) : '',
+    riddles: E.sg === 'trial' && !watching ? spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\n') : '',   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to
     stage: watching ? witLine : [stageLine(E, now), E.sg === 'rest' ? egRestLine(E, run, restP) : '', egNextCircleText(E), egBridgeLine(E, now, bridge && !watching)].filter(Boolean).join(' '),   // AUDIT EG V (c, L2-9, NEW-1): the rest card's stake and its heal; (a1, L2-11): the next circle named
     marks, marksSaid: marks.map((m) => `${EG_MARK_NAMES[m.k] ?? ''} ${m.secs}s`).join(' - '),
     eclipse: E.sg === 'trial' || E.sg === 'closing' ? egEclipseChip(egEclipseAt(spec, now / 1000)) : '',   // EG-ZG (section 25.5): *The Eclipse - 5*, while the place's hazards run (the fight's own stages)
@@ -450,6 +452,8 @@ export const EG_SPIRE_CSS = `
 .eg-card-lays:empty { display: none; }
 .eg-obj { font-size: 15px; }
 .eg-prog { display: block; font-size: 12px; opacity: 0.85; }
+.eg-riddles { font-size: 12px; line-height: 1.3; white-space: pre-line; color: #e8c473; }
+.eg-riddles:empty { display: none; }
 .eg-marks { color: var(--eg-danger); display: flex; gap: 5px; align-items: center; }
 .eg-sig { display: inline-flex; align-items: center; gap: 2px; }
 .eg-sig svg { width: 18px; height: 18px; filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 3px rgba(0,0,0,0.8)); }
@@ -462,6 +466,8 @@ export const EG_SPIRE_CSS = `
 .eg-sigrow { position: absolute; transform: translate(-50%, -100%); display: flex; gap: 3px; white-space: nowrap; }
 .eg-sigrow .eg-sig svg { width: 22px; height: 22px; }
 .eg-sigrow .eg-sig-given { color: #6f9dff; }
+.eg-sigrow .eg-sig-stone { color: #e8c473; }
+.eg-sigrow .eg-sig-stone b { font-size: 14px; }
 .eg-first { color: #b9d0ff; font-style: italic; }
 .eg-fold { pointer-events: auto; font: inherit; color: inherit; background: rgba(12,14,18,0.78); border: 1px solid #5a5446; padding: 2px 8px; cursor: pointer; }
 .eg-fold:empty { display: none; }
@@ -515,8 +521,9 @@ function build(doc) {
   const gain = el('div', 'eg-gain'), dec = el('div', 'eg-dec'), fold = el('button', 'eg-fold');
   const obj = el('div', 'eg-obj'), objLine = el('span', 'eg-objline'), prog = el('span', 'eg-prog');
   obj.append(objLine, prog);
+  const riddles = el('div', 'eg-riddles');   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT)
   const stage = el('div', 'eg-stage'), marks = el('div', 'eg-marks'), first = el('div', 'eg-first');
-  col.append(chips, gain, dec, fold, obj, stage, marks, first);
+  col.append(chips, gain, dec, fold, obj, riddles, stage, marks, first);
   const lord = el('div', 'eg-lord'), lordName = el('div', 'eg-lord-name'), track = el('div', 'eg-lord-track'), fill = el('div', 'eg-lord-fill');
   track.append(fill);
   const two = el('div', 'eg-lord-two'), lordName2 = el('div', 'eg-lord-name'), track2 = el('div', 'eg-lord-track'), fill2 = el('div', 'eg-lord-fill');   // AUDIT EG V (lane1 #22): the second lord's
@@ -528,7 +535,7 @@ function build(doc) {
   live.setAttribute?.('aria-live', 'polite');
   root.append(col, lord, door, touch, live);
   (doc.body ?? doc.documentElement)?.append(root);
-  P = { col, chips, count, glyph, time, why, rel, standing, potion, recall, eclipse, held, gain, dec, fold, obj, objLine, prog, stage, marks, first, lord, lordName, fill, lordName2, fill2, door, arrow, doorText, touch, live };
+  P = { col, chips, count, glyph, time, why, rel, standing, potion, recall, eclipse, held, gain, dec, fold, obj, objLine, prog, riddles, stage, marks, first, lord, lordName, fill, lordName2, fill2, door, arrow, doorText, touch, live };
 }
 
 /**
@@ -567,7 +574,7 @@ export function drawEgSpireHud(model, { hidden = false, doc = globalThis.documen
   if (gk !== shown.gainKey) { shown.gainKey = gk; P.gain.textContent = model.gain?.text ?? ''; P.gain.className = `eg-gain${model.gain?.blue ? ' blue' : ''}${model.gain ? ' fly' : ''}`; }
   put('dec', P.dec, model.decFold && !model.foldOpen ? '' : model.dec.join(' - '));
   if (model.decFold !== shown.decKey) { shown.decKey = model.decFold; P.fold.textContent = model.decFold; if (!P.fold.egWired) { P.fold.egWired = true; P.fold.addEventListener?.('click', () => onFold()); } }
-  put('obj', P.objLine, model.objective); put('prog', P.prog, model.progress);
+  put('obj', P.objLine, model.objective); put('prog', P.prog, model.progress); put('riddles', P.riddles, model.riddles);
   put('stage', P.stage, model.stage); put('first', P.first, model.first); put('live', P.live, model.live);
   // EG-ZG: my marks as their sigils (each its own shape), their names said to a screen reader
   const mh = (model.marks ?? []).map(egSigilHtml).join('');
@@ -623,7 +630,7 @@ export const EG_SIGIL_PATHS = Object.freeze({
 /** One sigil's markup (world/eliteGates/egTelegraph.js egSigilsOf's `{ sigil, secs, rim }`): its shape, and a soul-mark's seconds
  *  beside its gem. Pure. */
 export function egSigilHtml(s) {
-  if (s?.sigil === 'given') return `<span class="eg-sig eg-sig-given"><b>${String(s.text ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)}</b></span>`;   // AUDIT EG IV (lane1 #15): an errand's members by numeral (scenes/eliteGates/egFight.js egGivenWords), in Battlemage blue
+  if (s?.sigil === 'given' || s?.sigil === 'stone') return `<span class="eg-sig eg-sig-${s.sigil}"><b>${String(s.text ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)}</b></span>`;   // AUDIT EG IV (lane1 #15): an errand's members by numeral (scenes/eliteGates/egFight.js egGivenWords), in Battlemage blue
   const d = EG_SIGIL_PATHS[s?.sigil];
   if (!d) return '';
   return `<span class="eg-sig eg-sig-${s.sigil}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor" fill-rule="evenodd" stroke="${s.rim ? rgbCss(s.rim) : '#140606'}" stroke-width="${s.rim ? 1.8 : 1.2}"/></svg>${s.sigil === 'gem' ? `<b>${s.secs | 0}</b>` : ''}</span>`;

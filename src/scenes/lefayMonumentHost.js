@@ -32,6 +32,7 @@ import {
 } from '../world/lefayMonument.js';
 import { lefayArt } from '../world/lefayArt.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the monument's pictures in Daggerfall's colours
+import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones (their rows top-down, as the monument's are)
 import { RAY_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
 import { trs } from '../world/mat4.js';
@@ -145,7 +146,7 @@ export function createLefayMonument({
     if (meshTried || !renderer?.createMesh) return;
     meshTried = true;
     try {
-      for (const [rec, art] of lefayArt()) renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)));
+      for (const [rec, art] of lefayArt()) wearPainted(LEFAY_ARCHIVE, rec, () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)), (pic, { late }) => { if (late) renderer.releaseTexture?.(LEFAY_ARCHIVE, rec); renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); }, { topDown: true });
       mesh = renderer.createMesh(model);
     } catch (e) { console.warn('[lefay] the monument would not build', e?.message ?? e); }
   }

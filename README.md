@@ -42,6 +42,12 @@ The monthly goal, suggested support levels, and funding breakdown are in
 [`SUPPORT.md`](SUPPORT.md). Sponsorship does not lock gameplay, source code,
 or normal releases behind a paywall.
 
+## Reporting exploits and security issues
+
+Privately, please: type `/bug` in the game, or see [`SECURITY.md`](SECURITY.md)
+for the other ways in and what to include. Please don't post exploits in public until
+they are fixed.
+
 ## Scripts
 
 Node 20.19+ or 22.12+ (Vite 8's floor; CI runs 22).

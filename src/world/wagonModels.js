@@ -30,6 +30,7 @@
 // (`caravanSideU`). Not a DFU member. Ledger A (WAGONS1).
 import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, wagonArt, CARAVAN_SIDE_WINDOW_U } from './wagonArt.js';
 import { dfLook, lookSeed } from './dfLook.js';   // DF-LOOK: the icon's wagon in the colours the world's wears
+import { paintedReplacement, studioLanded } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones
 import { toColor32 } from '../formats/color32Order.js';
 import { MeshBench, prism, box, planarUv, sub, add, dot } from './ships/galleonMesh.js';
 import { benchPart } from './ships/galleonModel.js';
@@ -488,6 +489,7 @@ export async function wagonIconSource(kind, fetchFn = (u) => globalThis.fetch(u)
   const r = await fetchFn(WAGON_MODEL_URLS[kind]);
   if (!r?.ok) throw new Error(`the ${kind}'s model: HTTP ${r?.status}`);
   const model = wagonIconModel(wagonGeometry(await r.json()));
-  const pics = new Map(wagonArt().map(([rec, pic]) => [rec, toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))]));
+  await studioLanded();   // STUDIO1: the icon is drawn once - in the studio's pictures where an artist drew them
+  const pics = new Map(wagonArt().map(([rec, pic]) => [rec, paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))]));
   return { model, texels: (arc, rec) => (arc === WAGON_ARCHIVE ? pics.get(rec) ?? null : null) };
 }

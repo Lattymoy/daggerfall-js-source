@@ -2,8 +2,8 @@
   {
     "name": "THUNDERLOCK-ART-the-dye-kept",
     "file": "src/systems/textureReplacement.js",
-    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null) return dye;\n  return null;\n};",
-    "new": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null) return dye;\n  return dye;\n};",
+    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;\n};",
+    "new": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return dye;\n};",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "THUNDERLOCK-ART-every-record-undyed",
     "file": "src/systems/textureReplacement.js",
-    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null) return dye;\n  return null;\n};",
+    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;\n};",
     "new": "  return null;\n};",
     "tests": [
       "test/systems/thunderlockart.test.js"

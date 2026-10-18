@@ -19,6 +19,10 @@
 //    it is kept - a fight won at the player's side, a day with the player, a call after its rest; a day sent away, a
 //    fall, a second sending-away in a day, one of its own kind executed in its sight. Devoted (90 and up), it strikes
 //    harder and warns of a blow from behind.
+//  - RVN-STARS (bible/06-Systems/Revenants.md section 44): ITS STARS (systems/revenant/revenantStars.js) - its level earned
+//    here (a fight won at my side, swornFightWon; an errand home, once an errand, returnFromErrand), its sky set from the
+//    page (setSwornStars - never abroad), and read where its numbers are: its health and blows (applySwornStrength), its
+//    loyalty's losses and its rests (each site below).
 import { wildHere } from '../wild/wildZone.js';   // PVPDUNGEONS (the owner: "Only 1 revenant allowed to summon in the zone")
 /** PVPDUNGEONS: how many sworn revenants may stand at the player's side in the open zone. */
 export const WILD_REVENANTS_MAX = 1;
@@ -33,6 +37,8 @@ import { applySwornGear, gearKeyOf, gearRefusal, gearItems, isGearKey } from './
 import { ERRAND, errandPlace, newErrand, errandUntil, errandStep, errandHaul, deliverHaul, errandHaulWords, errandWords, errandLeftWords } from './revenantErrands.js';   // RVN-ERRAND: one abroad
 import { swornArtStep, swornMendStep, forgetSwornArt } from './revenantArts.js';   // RVN-ARTS: its art, for me
 import { playerDoor } from '../playerDoor.js';   // RVN-ARTS: the scene its art reaches through
+import { rvnStatsOf, rvnStatScale, rvnLoyaltyMove, rvnRestMinutes, rvnXpWon, rvnXpErrand, rvnStarsOf, rvnHeldStars, rvnXpOf, RVN_XP } from './revenantStars.js';   // RVN-STARS: its sky
+import { PAID_KEEP } from './revenant.js';   // AUDIT RVN-STARS S4: the errands' seeds kept as paid
 import { t } from '../textManager.js';   // L10N4: RVN-GEAR's and RVN-ERRAND's words through the text core
 import { popupMessage } from '../notify.js';   // RVN-ERRAND: an errand's words where the card is not drawn (the line every skin draws)
 import { equipTableOf } from '../equip.js';   // RVN-GEAR: never a piece the player wears
@@ -79,8 +85,9 @@ export const swornPlace = () => (companionsWithYou() < COMPANION_SLOTS ? 'with' 
  *  save's clock stands earlier than the minute the fall was stamped on: its eight hours read as days. */
 export function restUntil(r, now) {
   let until = r?.companion?.until ?? 0;
-  if (stateOf(r) === 'resting' && Number.isFinite(now) && until - now > REVENANT_REST_MIN) {
-    until = now + REVENANT_REST_MIN;
+  const most = rvnRestMinutes(r, REVENANT_REST_MIN);   // AUDIT RVN-STARS S27: its own rest, as its sky shortens it
+  if (stateOf(r) === 'resting' && Number.isFinite(now) && until - now > most) {
+    until = now + most;
     r.companion.until = until;
     // Keep the correction in the save and device mirror. Merely clamping the returned value
     // moves the eight-hour deadline forward on every frame and never completes that rest.
@@ -96,6 +103,10 @@ const _heldUntil = new Map();
 /** RVN-ERRAND: the words an errand owes - said at the party's next frame (the menu shut: the layer runs no frame under a
  *  window), through its card, else the line every skin draws. */
 const _errandWords = [];
+/** RVN-STARS: the level of the foe each sworn one last beat (swornFightStep - read once by swornFightWon). */
+const _wonLevel = new Map();
+/** AUDIT RVN-STARS S16: an errand's level words, said after its back card (the party's wake). */
+const _levelLines = [];
 /** AUDIT RVN F1: the own clock's and the raises' readings at the party's last wake (null: none yet this session - the
  *  first wake only samples), and the part of a minute pushed but not yet written (an errand's minute is whole). */
 let _errandClock = null;
@@ -105,7 +116,7 @@ const held = (id) => { const t = _heldUntil.get(id); if (t == null) return false
 /** AUDIT (2026-10-02): a member is one stand's - a fall, a sending-away, a release or a load ends it, and its carried
  *  spells with it (the layer keeps those on the member: the crew's hands come ashore new each time, a sworn one did not,
  *  so a poison it wore when it fell stood with it again eight hours later). */
-export function forgetSwornMember(id = null) { if (id == null) { _members.clear(); _heldUntil.clear(); _errandWords.length = 0; _errandClock = null; _errandOwed = 0; forgetSwornArt(); } else _members.delete(id); }   // RVN-ERRAND: a load forgets the words owed, and the clock's last reading (AUDIT RVN F1)
+export function forgetSwornMember(id = null) { if (id == null) { _members.clear(); _heldUntil.clear(); _errandWords.length = 0; _levelLines.length = 0; _wonLevel.clear(); _errandClock = null; _errandOwed = 0; forgetSwornArt(); } else _members.delete(id); }   // RVN-ERRAND: a load forgets the words owed, and the clock's last reading (AUDIT RVN F1)
 /** Why a sworn one cannot come to the player's side now - words for the roster - or null: it may. */
 export function callRefusal(r, now) {
   if (!r?.sworn) return 'It is no longer sworn to you.';
@@ -117,14 +128,15 @@ export function callRefusal(r, now) {
   return null;
 }
 /** CALLED to the player's side (the roster's Call): answers the refusal's words, or null when it comes. RVN11: the first
- *  call after its rest, +10. */
+ *  call after its rest, +10 - AUDIT RVN-STARS S15: less by its `rest` share, as its rest was (a shorter rest is a shorter
+ *  bonus: the Oath's path made a fall and a call net +6 every four hours, three times the bare +2 every eight). */
 export function callRevenant(id, now) {
   const r = revenantRecord(_player, id);
   const why = callRefusal(r, now);
   if (why) return why;
   revenantCompanionUpdate(_player, id, (c) => {
     c.state = 'with'; c.until = null;
-    if (c.rested) { c.rested = false; c.loyalty = movedLoyalty(c.loyalty, LOYALTY.CALLED); }
+    if (c.rested) { c.rested = false; c.loyalty = movedLoyalty(c.loyalty, Math.round(LOYALTY.CALLED * (1 - rvnStatsOf(r).rest))); }
   });
   tell('arrive', r);
   return null;
@@ -138,7 +150,7 @@ export function sendRevenantAway(id, { now = Math.floor(ownMinutes()), byYou = t
     c.state = 'away';
     if (!byYou) return;
     const day = Math.floor(now / MINUTES_PER_DAY);
-    if (c.sentDay === day) c.loyalty = movedLoyalty(c.loyalty, LOYALTY.SENT_TWICE);
+    if (c.sentDay === day) c.loyalty = movedLoyalty(c.loyalty, rvnLoyaltyMove(r, LOYALTY.SENT_TWICE, c));   // RVN-STARS: a loss as its oath bears it
     c.sentDay = day;
   });
   forgetSwornMember(id);
@@ -198,26 +210,33 @@ export function sendOnErrand(id, place, venture, { now = Math.floor(ownMinutes()
 export function recallFromErrand(id, now = Math.floor(ownMinutes())) {
   const r = revenantRecord(_player, id);
   if (!r?.sworn || stateOf(r) !== 'errand') return false;
-  revenantCompanionUpdate(_player, id, (c) => { c.state = 'resting'; c.errand = null; c.until = now + REVENANT_REST_MIN; c.worn = true; });
+  revenantCompanionUpdate(_player, id, (c) => { c.state = 'resting'; c.errand = null; c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN); c.worn = true; });   // RVN-STARS: its rest as its sky shortens it
   return true;
 }
 /** BACK: its haul drawn (revenantErrands.js errandHaul) and handed to the player; won, waiting to be called and
  *  ERRAND.WON_LOYALTY the more loyal - once an errand (AUDIT RVN F7: `paid`, its seed - a reload of a save made abroad
- *  brings the haul back again, never the loyalty); hard-won, resting a rest's length, worn from the road (AUDIT RVN F6:
- *  no RVN11 call bonus after it). Its words owed. Answers the haul. */
+ *  brings the haul back again, never the loyalty; AUDIT RVN-STARS S4: the last PAID_KEEP seeds, so one more errand
+ *  between the save and its return pays nothing twice); hard-won, resting a rest's length, worn from the road (AUDIT RVN
+ *  F6: no RVN11 call bonus after it). RVN-STARS: its XP, once an errand too, by the days of its own road, while it is under
+ *  RVN_XP.ERRAND_LEVEL_MOST (AUDIT RVN-STARS S11, S16). Its words owed, its level's after them. Answers the haul. */
 export function returnFromErrand(id, now) {
   const r = revenantRecord(_player, id);
   const e = r?.companion?.errand;
   if (!_player || !r?.sworn || stateOf(r) !== 'errand' || !e) return null;
   const haul = errandHaul(r, e, { level: _player.level ?? 1 });
+  const was = rvnStarsOf(r).level;
   revenantCompanionUpdate(_player, id, (c) => {
     c.errand = null;
+    const paid = Array.isArray(c.paid) && c.paid.includes(e.seed);
     if (haul.won) {
       c.state = 'away'; c.worn = false;
-      if (c.paid !== e.seed) c.loyalty = movedLoyalty(c.loyalty, ERRAND.WON_LOYALTY);
-    } else { c.state = 'resting'; c.until = now + REVENANT_REST_MIN; c.health = null; c.worn = true; }
-    c.paid = e.seed;
+      if (!paid) c.loyalty = movedLoyalty(c.loyalty, ERRAND.WON_LOYALTY);
+    } else { c.state = 'resting'; c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN); c.health = null; c.worn = true; }
+    if (!paid && was < RVN_XP.ERRAND_LEVEL_MOST) c.xp = rvnXpOf(rvnXpOf(c.xp) + rvnXpErrand(errandPlace(e.place), haul.won, e.sky?.road ?? 0));   // RVN-STARS: its road's XP - once an errand, as its loyalty
+    if (!paid) c.paid = [...(Array.isArray(c.paid) ? c.paid : []), e.seed].slice(-PAID_KEEP);
   });
+  const lifted = levelWords(r, was);
+  if (lifted) _levelLines.push(lifted);   // AUDIT RVN-STARS S16: said after its back card, not before it
   deliverHaul(_player, haul);
   const p = errandPlace(e.place);
   const body = haul.won
@@ -292,17 +311,75 @@ export function takeSwornGear(id, key) {
   return back;
 }
 
-/** A sworn one's whole and blows over the body a place stands for it: its rank's, as it fought the player with. Its
- *  health once - a body standing with a carried whole (crewAshore) keeps it. */
+// ── RVN-STARS (bible/06-Systems/Revenants.md section 44): its sky, set from the page ──────────────
+/** Why its sky may not change now - abroad (its sky is set at my side, as its kit is), or no longer sworn - or null. */
+export function swornStarsRefusal(r) {
+  if (!r?.sworn) return t('rvn.sworn.gone', 'It is no longer sworn to you.');
+  if (stateOf(r) === 'errand') return t('rvn.stars.no.abroad', 'It is abroad - set its stars when it is back.');
+  return null;
+}
+/** SET: its sky as `ids` (through the law: the Oath, each star joined, its points) - its blows and its health at once.
+ *  AUDIT RVN-STARS S1: the whole its oath carries between stands (`maxHealth`, `health` - crewAshore stands every body after
+ *  the first on them, never fresh) and a body standing here are rescaled by its health's new share over its old, so the
+ *  Blade's health reaches every stand and a keystone's price is paid (a sky stood and then given back kept its health).
+ *  Answers the sky set, or the refusal's words. */
+export function setSwornStars(id, ids) {
+  const r = revenantRecord(_player, id);
+  const why = swornStarsRefusal(r);
+  if (why) return why;
+  const before = rvnStatScale(rvnStatsOf(r), 'health');
+  let set = ['oath'], k = 1;
+  revenantCompanionUpdate(_player, id, (c, rec) => {
+    set = rvnHeldStars(ids, rvnStarsOf(r).points);
+    c.stars = set;
+    k = rvnStatScale(rvnStatsOf(rec), 'health') / before;
+    if (k !== 1 && c.maxHealth > 0) {
+      c.maxHealth = Math.max(1, Math.round(c.maxHealth * k));
+      if (c.health > 0) c.health = Math.min(c.maxHealth, Math.max(1, c.health * k));
+    }
+  });
+  const body = swornBodyOf(id);
+  if (body) {
+    if (k !== 1) rescaleBody(body, k);
+    applySwornStrength(body, revenantRecord(_player, id), { fresh: false });
+  }
+  return set.slice();
+}
+/** A standing body's whole by `k` - its health with it (in proportion), and the poise's `healthMult` (TELL1). */
+function rescaleBody(e, k) {
+  const max = Math.max(1, Math.round((e.maxHealth || 1) * k));
+  e.health = Math.min(max, Math.max(e.health > 0 ? 1 : 0, (e.health || 0) * k));
+  e.maxHealth = max;
+  if (Number.isFinite(e.healthMult)) e.healthMult *= k;
+  if (Number.isFinite(e._swornWhole)) e._swornWhole *= k;
+}
+/** The stars' window's ledger for one sworn one (ui/revenantStarsWindow.js): its reading, its sky, its art, the act. */
+export function swornStarsBook(id) {
+  const rec = () => revenantRecord(_player, id);
+  return {
+    record: rec,
+    stars: () => rvnStarsOf(rec()),
+    tree: () => (Array.isArray(rec()?.companion?.stars) ? rec().companion.stars.slice() : ['oath']),
+    refusal: () => swornStarsRefusal(rec()),
+    setTree: (ids) => setSwornStars(id, ids),
+  };
+}
+
+/** A sworn one's whole and blows over the body a place stands for it: its rank's, as it fought the player with, and
+ *  (RVN-STARS) its Blade's stars over them. Its health once - a body standing with a carried whole (crewAshore) keeps it
+ *  (setSwornStars rescales that whole when its sky changes - AUDIT RVN-STARS S1), and is told what was stood on its kind's
+ *  own health all the same (TELL1's `healthMult`, once a body - S1: a carried stand read the inflated whole as the kind's). */
 export function applySwornStrength(entity, r, { fresh = true } = {}) {
   if (!entity || !r) return;
-  const rank = Math.max(1, r.rank | 0);
+  const rank = Math.max(1, r.rank | 0), stars = rvnStatsOf(r);
+  const starHealth = rvnStatScale(stars, 'health');
   if (fresh) {
-    entity.maxHealth = Math.max(1, Math.round((entity.maxHealth || 1) * (1 + REVENANT_HEALTH_PER_RANK * rank)));
-    entity.healthMult = (entity.healthMult ?? 1) * (1 + REVENANT_HEALTH_PER_RANK * rank);   // TELL1: what was stood on the kind's own health (its poise)
+    entity.maxHealth = Math.max(1, Math.round((entity.maxHealth || 1) * (1 + REVENANT_HEALTH_PER_RANK * rank) * starHealth));
+    entity.healthMult = (entity.healthMult ?? 1) * (1 + REVENANT_HEALTH_PER_RANK * rank) * starHealth;   // TELL1: what was stood on the kind's own health (its poise)
     entity.health = entity.maxHealth;
-  }
-  entity.damageScale = (1 + REVENANT_DAMAGE_PER_RANK * rank) * (isDevoted(r.companion?.loyalty) ? DEVOTED.BLOWS : 1);   // RVN11 (22.1): a Devoted one's blows
+  } else if (!Number.isFinite(entity._swornWhole)) entity.healthMult = (entity.healthMult ?? 1) * (1 + REVENANT_HEALTH_PER_RANK * rank) * starHealth;   // a carried whole: the poise told what it carries
+  entity._swornWhole = (1 + REVENANT_HEALTH_PER_RANK * rank) * starHealth;
+  entity.damageScale = (1 + REVENANT_DAMAGE_PER_RANK * rank) * (isDevoted(r.companion?.loyalty) ? DEVOTED.BLOWS : 1) * rvnStatScale(stars, 'blows');   // RVN11 (22.1): a Devoted one's blows
   entity.revenant = { id: r.id, name: r.name, rank, sworn: true };   // FOE-TITLE: called by its own name everywhere
   applySwornGear(entity, r);   // RVN-GEAR: its kit over the one its stand rolled
 }
@@ -335,6 +412,7 @@ export function revenantParty({ onWake = null } = {}) {
       chargeErrands(now);   // AUDIT RVN F1: online, the lived step alone carries an errand on
       for (const r of swornRevenants()) if (stateOf(r) === 'errand' && r.companion.errand && now >= r.companion.errand.until) returnFromErrand(r.id, now);   // RVN-ERRAND: back from abroad
       while (_errandWords.length) sayErrand(_errandWords.shift());   // RVN-ERRAND: its words, the menu shut
+      while (_levelLines.length) { try { popupMessage(_levelLines.shift()); } catch { /* a word is nobody's failure */ } }   // RVN-STARS: a level an errand lifted it to, after them
       for (const r of swornRevenants()) {
         if (stateOf(r) === 'resting' && now >= restUntil(r, now)) {
           revenantCompanionUpdate(_player, r.id, (c) => { c.state = 'away'; c.until = null; c.health = null; c.rested = !c.worn; c.worn = false; });   // RVN11: its next call after this rest +10 - AUDIT RVN F6: never after a road's
@@ -345,7 +423,7 @@ export function revenantParty({ onWake = null } = {}) {
     knock(boat, id, now) {
       const r = revenantRecord(_player, id);
       if (!r?.sworn || stateOf(r) !== 'with') return false;
-      revenantCompanionUpdate(_player, id, (c) => { c.state = 'resting'; c.until = now + REVENANT_REST_MIN; c.health = null; c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });   // RVN11: a fall -8
+      revenantCompanionUpdate(_player, id, (c) => { c.state = 'resting'; c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN); c.health = null; c.loyalty = movedLoyalty(c.loyalty, rvnLoyaltyMove(r, LOYALTY.KNOCKED, c)); });   // RVN11: a fall -8 - RVN-STARS: its rest and its loss as its sky bears them
       forgetSwornMember(id);
       return true;
     },
@@ -374,12 +452,27 @@ export function swornFightStep(rec) {
   const last = rec?._fightLast ?? null;
   if (!last) return false;
   rec._fightLast = null;
-  return !(last.entity?.health > 0);   // AUDIT FEUD: killed - a foe that escaped, was culled or scattered is `dead` with its health
+  const won = !(last.entity?.health > 0);   // AUDIT FEUD: killed - a foe that escaped, was culled or scattered is `dead` with its health
+  if (won && rec.revenantCompanion) _wonLevel.set(rec.revenantCompanion, last.entity?.level ?? 1);   // RVN-STARS: the foe it beat, its XP's weight
+  return won;
 }
-/** A fight won at the player's side: +3. */
+/** A fight won at the player's side: +3, and (RVN-STARS) its XP by the foe's level. */
 export function swornFightWon(id) {
-  return revenantCompanionUpdate(_player, id, (c) => { c.loyalty = movedLoyalty(c.loyalty, LOYALTY.WON); });
+  const r = revenantRecord(_player, id);
+  const was = rvnStarsOf(r).level, xp = rvnXpWon(_wonLevel.get(id) ?? 1);
+  _wonLevel.delete(id);
+  const out = revenantCompanionUpdate(_player, id, (c) => { c.loyalty = movedLoyalty(c.loyalty, LOYALTY.WON); c.xp = rvnXpOf(rvnXpOf(c.xp) + xp); });   // AUDIT RVN-STARS S12: whole, to the top level's
+  const lifted = out ? levelWords(out, was) : null;
+  if (lifted) { try { popupMessage(lifted); } catch { /* a word is nobody's failure */ } }
+  return out;
 }
+/** RVN-STARS: its level reached, in words - a star or more to set on the Companions page - or null. */
+function levelWords(r, was) {
+  const s = r ? rvnStarsOf(revenantRecord(_player, r.id)) : null;
+  if (!s || s.level <= was) return null;
+  return t('rvn.stars.levelUp', '{given} reaches level {level} - {n, plural, one {a star} other {# stars}} to set on the Companions page.', { given: r.given, level: s.level, n: Math.max(1, s.points - s.set) });
+}
+
 /** ONE OF ITS OWN KIND EXECUTED IN ITS SIGHT (systems/revenant/revenantFate.js finishExecution - `mobileType` the executed's): each
  *  sworn one at the player's side whose body stands here (the layer keeps it at the heel - decided here: in its sight)
  *  and is of the same kind or faction, -15. Answers those it cost. */
@@ -387,7 +480,7 @@ export function swornWitness(mobileType) {
   const out = [];
   for (const r of revenantsWithYou()) {
     if (!sameKin(r.mobileType, mobileType) || !(swornBodyOf(r.id)?.health > 0)) continue;
-    if (revenantCompanionUpdate(_player, r.id, (c) => { c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KIN_EXECUTED); })) out.push(r);
+    if (revenantCompanionUpdate(_player, r.id, (c) => { c.loyalty = movedLoyalty(c.loyalty, rvnLoyaltyMove(r, LOYALTY.KIN_EXECUTED, c)); })) out.push(r);   // RVN-STARS: a loss as its oath bears it
   }
   return out;
 }
@@ -410,4 +503,4 @@ registerPlayerHurtListener('sworn-betrayal', (entity, { after } = /** @type {any
 // RVN-ARTS (Revenants.md section 41): a hurt that leaves me low - a sworn one's Mending answers it
 registerPlayerHurtListener('sworn-mending', (entity, { after } = /** @type {any} */ ({})) => { try { swornMendStep(entity, after, revenantsWithYou(), (id) => swornBodyOf(id)?.health > 0, { say: popupMessage }); } catch { /* a heal is no hurt's failure */ } });
 /** Tests only. */
-export function _resetRetinueForTests() { _members.clear(); _heldUntil.clear(); _errandWords.length = 0; _errandClock = null; _errandOwed = 0; _player = null; _listener = null; _bodies = null; }
+export function _resetRetinueForTests() { _members.clear(); _heldUntil.clear(); _errandWords.length = 0; _levelLines.length = 0; _errandClock = null; _errandOwed = 0; _player = null; _listener = null; _bodies = null; _wonLevel.clear(); }

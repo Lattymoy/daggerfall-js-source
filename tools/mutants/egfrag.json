@@ -438,8 +438,8 @@
   {
     "name": "EGFRAG-a-turn-for-another-hall",
     "file": "src/scenes/eliteGates/egClient.js",
-    "old": "      if (st) { if (Number(st[1]) !== E.h || E.sg !== 'trial') {",
-    "new": "      if (st) { if (E.sg !== 'trial') {",
+    "old": "        if (Number(st[1]) !== E.h || E.sg !== 'trial') {",
+    "new": "        if (E.sg !== 'trial') {",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]

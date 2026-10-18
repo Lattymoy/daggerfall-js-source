@@ -13685,6 +13685,21 @@ forward side button), and the side-button plumbing it rides, which came with VOI
 
 `test/player/viewtoggle.test.js` pins all three.
 
+## PROX-VOICE reverted (2026-10-17, Mac: "Revert") - world215 again
+
+PROX-VOICE (#971: #967 and #871's LiveKit proximity and party voice, its security fixes, the relay's voice doors at
+world216) came out whole with its merge (`743bb111f5`) reverted. It had merged with nothing in the game starting voice
+(no host called `initVoiceNet`, no HUD or settings mounted) and no voice service or SFU running, so it shipped nothing
+a player could use; the merge's one effect on players was the relay's redeploy. Out with it:
+- the client (`net/voice/`), the voice service (`server-voice/`) and its deploy files (`deploy/`);
+- the relay's two secret-gated doors (`voiceDoor.js`, presence and party-of) and `voiceWire.js` in the bundle;
+- `livekit-client`, the voice refusals' L10N keys, and `bible/11-Multiplayer/Voice-Arc.md`.
+
+The relay is world215's bytes again, and `RELAY_VERSION` names world215. world216's row stays in
+`test/net/relayversion.test.js` as the record of bytes a relay may have carried, so the next relay is never world216.
+Bringing voice back is reverting this revert, in the same pull request as the slice that mounts it in the game, with a
+voice service and an SFU deployed to answer it, and the relay renumbered past whatever `main` holds then.
+
 ## WB8 (2026-09-28, Mac: "give him unique and different modifers on every 2 hour spawn") - world128 (world126 on its branch)
 
 The gate's Warden comes MARKED - an aspect and two trials every gate (`11-Multiplayer/World-Bosses.md` section 13) -
