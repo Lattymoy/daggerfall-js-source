@@ -178,6 +178,9 @@ import { hudLocked, setHudLocked, resetHudLayout, hudBarsSplit, setHudBarsSplit 
 import { enhancedHudScale as hudScaleNow, HUD_SCALE_MIN, HUD_SCALE_MAX } from './enhancedHud.js';   // PX30c
 import { mapScaleLabel, nextMapScale } from '../map/mapScale.js';   // FIELD BUGS 2026-10-09e MAP-SCALE: the Maps row
 import { standingGroups } from '../../systems/faction/factionStanding.js';   // FIELD BUGS 2026-10-09e EVERY-STANDING: every organization's reputation
+import { wayBackQuestLine } from '../../systems/guild/guildServiceFlow.js';   // WAY-BACK: the way into a guild, under its row
+import { activeMemberships, guildOfFaction } from '../../systems/guild/guilds.js';   // WAY-BACK: the book the join reads, and GetGuild(factionId)
+import { resolveVariantGuild } from '../../systems/guild/guildVariants.js';   // WAY-BACK: ...a temple's or an order's
 import { playerEntity } from '../../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILLS, SKILL_NAMES } from '../../systems/skills.js';
@@ -4610,7 +4613,7 @@ function pauseHoldings(body) {
     // first, as the sheet's doors do (PX25/ESC-BOOK), and comes back if the door opened nothing (AUDIT 27h A4)
     fleet: (d) => drawFleetPage(d, render, { ...kit, door: (fn) => { onAction('handoff'); if (fn() === false) onAction('resume'); } }),
     captain: (d) => drawCaptainPage(d, render, { ...kit, door: (fn) => { onAction('handoff'); if (fn() === false) onAction('resume'); } }),   // CAPT-LOG: the crowns' regard, the letter, the contracts, the log - CAPTAIN-TREE: the stars' door, the Fleet's shape
-    companions: (d) => drawCompanionsPage(d, render, { ...kit, kindName: enemyDisplayName, here: swornBodyOf }),   // COMPANION-ROSTER
+    companions: (d) => drawCompanionsPage(d, render, { ...kit, kindName: enemyDisplayName, here: swornBodyOf, stars: typeof hooks.openRevenantStars === 'function' ? hooks.openRevenantStars : null }),   // COMPANION-ROSTER - RVN-STARS: a sworn one's stars, over this window
     revenants: (d) => drawRevenantsPage(d, render, { ...kit, player: playerEntity, kindName: enemyDisplayName }),   // REVENANT-PAGE
     stores: (d) => drawStoresPage(d, render, kit),   // PROF1
     collections: (d) => drawCollectionsPage(d, render, { ...kit, player: playerEntity }),   // COLLECTIONS: the codex and the cards
@@ -5211,6 +5214,10 @@ export function statsEveryStanding(detail, entity) {
       const row = el('div', 'px-stat px-org');
       row.append(el('span', 'k', r.name), signedRep(r.rep));
       detail.append(row);
+      // WAY-BACK (FIELD BUGS 2026-10-16d): under a guild that will not take this standing, its quests' way in - the hall's
+      // own line (the rest is said at the hall, and on the classic skin's refusal of the join)
+      const way = wayBackQuestLine(guildOfFaction(r.factionId, resolveVariantGuild(entity.factionRep?.dict)), activeMemberships(entity), entity.factionRep);
+      if (way) detail.append(el('p', 'px-note', way));
     }
   }
 }
@@ -5876,7 +5883,10 @@ function onKey(e) {
   if (peerBindBusy()) return;   // PEERMENU1: the player-menu bind is waiting for a key (or swallowing a pad B's Back)
   if (plusBindsOpen()) return;   // PADPLUS10: the Controller bindings window is over the menu - its Escape is its own
   const t = e.target;
-  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  // PRIVATE-REPORT (AUDIT PRIVATE-REPORT UI-2): a field's keys are the field's - but Escape in the mailbox's window leaves it,
+  // as the notice and arena windows let it (noticeWindow.js): `/bug` lands the focus in the report form, and its Escape
+  // had done nothing at all
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) && !(e.key === 'Escape' && t.closest?.('.px-postwin'))) return;
   // DISC28-A (EvoAva, Discord: "If you change the default pause key binding from escape to anything else, it allows you
   // to open pause menu with that key binding, but not close it"): the table above maps the LITERAL Escape to back, and
   // the host opens this screen on the PAUSE ACTION - so a pause rebound to P opened it and P then meant `char:p` here,
@@ -6062,7 +6072,9 @@ export function mountEnhancedMenu(host, {
   else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
   else if (FAMILY_PAGE_SECTIONS.some(([id]) => id === at)) { pauseTab = 'family'; famSec = at; }   // LEGACY3: a Family page by name
   else if (at === 'mailbox') postOpen = true;   // SERVER-POST: the mailbox's door (/mail, either skin) - the pause face with its window open
+  else if (at === 'report') { postOpen = true; postKeep = { view: 'report' }; }   // PRIVATE-REPORT: `/bug` - the mailbox's window on its report form
   else if (at === 'collections' || at === 'cards' || at === 'codex') { pauseTab = 'holdings'; holdSec = 'collections'; if (at !== 'collections') setCollectionsPart(at); }   // AUDIT CARDS-5 D14: the Collections page by name, or one of its parts
+  else if (at === 'companions') { pauseTab = 'holdings'; holdSec = 'companions'; }   // RVN-STARS: back from a sworn one's stars
   _eff = null;
   render();
   keyHandler = onKey;

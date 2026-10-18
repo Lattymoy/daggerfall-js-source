@@ -359,8 +359,8 @@
   {
     "name": "AUDIT-CHAP5-C1-OPEN",
     "file": "src/scenes/worldModes.js",
-    "old": "    shutBox();   // AUDIT CHAP5 C1",
-    "new": "    // AUDIT CHAP5 C1",
+    "old": "    const shutAtOpen = !!shutBox();   // AUDIT CHAP5 C1",
+    "new": "    const shutAtOpen = false;   // AUDIT CHAP5 C1",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]

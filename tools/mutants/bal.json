@@ -193,11 +193,12 @@
   {
     "name": "BAL3-the-place-alone-scales-nothing",
     "file": "src/systems/skillSoftcap.js",
-    "old": "  if (!(vet > 0 || over > 0)) return null;",
-    "new": "  if (!(share > 0) || !(vet > 0 || over > 0)) return null;",
+    "old": "  if (!(vet > 0 || over > 0 || hd > 1 || hh > 1)) return null;",
+    "new": "  if (!(share > 0) || !(vet > 0 || over > 0 || hd > 1 || hh > 1)) return null;",
     "tests": [
       "test/systems/bal_arc.test.js"
-    ]
+    ],
+    "note": "BAL11 (PIN MOVED, 2026-10-17): the line takes the hero's threat beside the place; re-aimed by content."
   },
   {
     "name": "BAL3-the-place-is-unbounded",
@@ -229,21 +230,22 @@
   {
     "name": "BAL3-the-dungeon-needs-a-share",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (!(share > 0) && !(place > 0)) return;",
-    "new": "    if (!(share > 0)) return;",
+    "old": "    if (!(share > 0) && !(place > 0) && !hero) return;",
+    "new": "    if (!(share > 0) && !hero) return;",
     "tests": [
       "test/systems/bal_arc.test.js"
     ],
-    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content. BAL11 (PIN MOVED, 2026-10-17): the hero's threat stands beside it; re-aimed by content."
   },
   {
     "name": "BAL3-the-dungeon-drops-the-place",
     "file": "src/scenes/dungeonContext.js",
-    "old": "foeShare(basics?.level ?? entity.level, entity.isClass), place);",
-    "new": "foeShare(basics?.level ?? entity.level, entity.isClass));",
+    "old": "foeShare(basics?.level ?? entity.level, entity.isClass), place, hero);",
+    "new": "foeShare(basics?.level ?? entity.level, entity.isClass), 0, hero);",
     "tests": [
       "test/systems/bal_arc.test.js"
-    ]
+    ],
+    "note": "BAL11 (PIN MOVED, 2026-10-17): the hero's threat rides after the place; re-aimed by content."
   },
   {
     "name": "BAL3-the-wilds-ignore-the-ladder",

@@ -308,5 +308,17 @@
  "fatigue": "fatiga",
  "Agility": "Agilidad",
  "Speed (attribute)": "Velocidad",
- "Running, Jumping (skills)": "Carrera, Salto"
+ "Running, Jumping (skills)": "Carrera, Salto",
+ "sworn revenant": "juramentado",
+ "The Oath (a sworn revenant's centre star)": "El Juramento",
+ "The Blade, The Grave, The Road (a revenant's star aspects)": "La Espada, La Tumba, El Camino",
+ "art (a revenant's)": "arte",
+ "Awakened Art": "Arte despertado",
+ "mission (a revenant's errand)": "expedición",
+ "abroad (on a mission)": "de expedición",
+ "odds (a mission's)": "probabilidades",
+ "loyalty": "lealtad",
+ "Companions (page)": "Compañeros",
+ "keystone, notable, star (star kinds)": "piedra angular, notable, estrella",
+ "take / set (a star)": "fijar"
 }

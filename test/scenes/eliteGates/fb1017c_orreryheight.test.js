@@ -83,8 +83,9 @@ test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): under THE ASCENT an Athenaeum\'s c
   const span = createEgSpan({ seed, c });
   stand(span);
   eachHandleReached(span, s, floorY, tris);
-  // and the plaque names it
-  assert.match(span.hoverName(`egstone:${s.h}:0:f`).title, /Orrery stone 1/);
+  // and the plaque names it - PIN MOVED (FIELD BUGS 2026-10-17e, ORRERY-SIGHT): by the stone's own name and sign, as the
+  // riddles name it, never "Orrery stone 1"
+  assert.equal(span.hoverName(`egstone:${s.h}:0:f`).title, 'Daggerfall - the lion');
 });
 
 test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): the laws before THE ASCENT lay no spot height and stand the Athenaeum\'s court at 0 - its handles a metre over 0, as before (mutant: a spot with no height read as no number)', () => {

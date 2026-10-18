@@ -199,13 +199,58 @@ export function addVendorTextures(entries) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || (typeof e.load !== 'function' && typeof e.build !== 'function')) continue;
     const map = e.map ?? 'Albedo';   // RRI1: a mod's helmet mask registers under TextureMap.Mask
     const key = textureKey(e.archive, e.record, e.frame ?? 0, map, e.dye ?? null);
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null });   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
+    // STUDIO1 (bible/07-Rendering/Studio-Art.md): THE STUDIO'S PICTURE HOLDS ITS KEY, whichever registers first, and keeps
+    // what it covers (`under`): the art registered before it, or after it (a ship's painted stand-in registers when her
+    // pool loads, long after the boot's install). What the archive IS comes from that art - a stand-in, a place on the
+    // doll, decoded only when asked (`lazy`) - and its picture stands in for the studio's that will not load, and gives
+    // the studio's picture its size and scale (entryColor32): a picture of any size stands as big as the one it covers.
+    const prev = _vendor.get(key);
+    const entry = { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null, studio: e.studio === true, under: null };   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
+    if (prev?.studio && !entry.studio) {
+      coverWith(prev, entry);
+      dropDecoded(key);   // decoded again with what it covers
+      n++;
+      continue;
+    }
+    if (entry.studio && prev) coverWith(entry, prev.studio ? prev.under : prev);
+    _vendor.set(key, entry);
     n++;
   }
   if (n) tierChanged();   // AUDIT VE R1: a scene's archives are asked again
   return n;
 }
 export const vendorTextureCount = () => _vendor.size;
+/** STUDIO1: a studio entry takes `under` as the art it covers, and what the archive is from it. */
+function coverWith(studio, under) {
+  if (!under) return;
+  studio.under = under;
+  if (under.standIn) studio.standIn = true;
+  if (under.lazy) studio.lazy = true;
+  studio.offset ??= under.offset ?? null;
+}
+/** STUDIO1: the records of `archive` the studio paints (frame 0, the plain picture) - what a tile set built outside
+ *  this door asks (systems/dfmodTextures.js dfmodGroundLayers: the ground's records are laid in a set, not uploaded
+ *  one by one). */
+export function studioRecordsOf(archive) {
+  const a = Number(archive), out = [];
+  for (const e of _vendor.values()) if (e.studio && e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);
+  return out.sort((x, y) => x - y);
+}
+
+// ---- STUDIO1: A REGISTRATION ON ITS WAY, WAITED FOR AT AN ARCHIVE'S FIRST LOAD ------------------------------------
+// The renderer keeps the first picture a key is given, so an archive uploaded before a tier registered keeps its old
+// pictures until its area loads again. A registration that is one small fetch (the studio's listing) is held here, and
+// the data pipeline's getTexture waits for it - at most `atMost` ms, so a slow network costs the art, never the world.
+const _holds = new Set();
+export function holdTextureTiers(promise, atMost) {
+  let timer = null;
+  const held = Promise.race([Promise.resolve(promise).catch(() => {}), new Promise((r) => { timer = setTimeout(r, atMost); })])
+    .then(() => { clearTimeout(timer); _holds.delete(held); });
+  _holds.add(held);
+  return held;
+}
+/** What an archive's first load waits for, or null when nothing is on its way (the load then takes no extra turn). */
+export const textureTiersSettled = () => (_holds.size ? Promise.all([..._holds]) : null);
 export function clearVendorTextures() { _vendor.clear(); tierChanged(); }   // AUDIT VE R1: the sweep lets their pictures go
 /** An archive that exists ONLY as vendored art (no ARENA2 file), which
  *  is what sends the pipeline down the stand-in branch instead of
@@ -280,7 +325,7 @@ const standInDye = (archive, record, frame, map, dye) => {
   if (!dyeToken(dye) || _vendor.has(textureKey(archive, record, frame, map, dye))) return dye;
   const bare = _vendor.get(textureKey(archive, record, frame, map));
   if (!bare?.standIn) return dye;
-  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null) return dye;
+  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in
   return null;
 };
 const decodedOf = (archive, record) => {
@@ -291,7 +336,9 @@ const decodedOf = (archive, record) => {
 };
 export function vendorTextureStandIn(archive) {
   const recordCount = vendorRecordCount(archive);
-  const size = (record) => { const d = decodedOf(archive, record); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };
+  // STUDIO1: a studio picture over a stand-in answers the stand-in's size (`box`), as a classic file answers its record's
+  // for a pack's bigger picture - a billboard stands as big, a doll piece fits its box
+  const size = (record) => { const d = decodedOf(archive, record); return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };
   return {
     vendor: true,
     archive: Number(archive),   // WD2: billboardSize reads `t.archive` to lay a mod's xml scale on (billboardXml.js) - a stand-in without it lost every one
@@ -331,7 +378,9 @@ export function vendorTextureStandIn(archive) {
     // the other way round - the same HT3 fork the sprite itself just
     // paid, one pipeline over, and the reason it is resolved HERE is
     // that only this function knows which order it is holding.
-    getDFBitmap: (record) => ({ ...size(record), data: null, rgba: topDownRgba(decodedOf(archive, record)) }),
+    getDFBitmap: (record) => { const d = decodedOf(archive, record); return { ...(d ? { width: d.width, height: d.height } : size(record)), data: null, rgba: topDownRgba(d) }; },   // STUDIO1: the picture's own size beside its own texels
+    /** STUDIO1: the box a studio picture over a stand-in is drawn in - the stand-in's own size - or null. */
+    getBox: (record) => decodedOf(archive, record)?.box ?? null,
     getColor32: (record) => decodedOf(archive, record?.record ?? 0) ?? null,
   };
 }
@@ -556,6 +605,20 @@ const withRecordScale = (c32, picture) => { if (picture?.scale) c32.recordScale 
  *  decoded, or (WD2) a derived one built - or null when it has none.
  *  H4: both cross into color32 HERE, at the door, never at the upload sites. */
 async function entryColor32(entry, decode) {
+  // STUDIO1: a studio picture that covers art - the art's picture first, which stands in for the studio's that will not
+  // load (a hole where a ship's deck was is no fallback), and whose size and scale the studio's takes (`box`,
+  // `recordScale` - vendorTextureStandIn answers them)
+  if (entry.studio && entry.under) {
+    const base = await pictureColor32(entry.under, decode).catch(() => null);
+    const own = await pictureColor32(entry, decode).catch((e) => { console.warn(`[texture] ${entry.fileName} would not decode - the picture it covers is drawn:`, e?.message ?? e); return null; });
+    if (!own) return base;
+    if (base) { own.box = { width: base.width, height: base.height }; if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale; }
+    return own;
+  }
+  return pictureColor32(entry, decode);
+}
+/** One entry's own picture in the port's color32 contract. */
+async function pictureColor32(entry, decode) {
   if (entry.build) {
     if (!_deriveContext) throw new Error(`${entry.fileName}: derived from classic art and no pipeline is up to read it`);
     const picture = await entry.build(_deriveContext);

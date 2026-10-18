@@ -78,6 +78,7 @@ import { egFightFloors, egFloorPlan, egFloorPlanKeep, egHazardSurface, egPerilOf
   EG_CHECK_ORDER, EG_ECLIPSE_LOOK, EG_SIGIL_UP_M, EG_AURA_RING, EG_DROP_THUD, EG_TETHER } from '../../world/eliteGates/egTelegraph.js';   // EG-ZG: THE TELEGRAPHS AS WRITTEN, the law
 import { EG_SHADE_BAND } from '../../world/eliteGates/egTelegraph.js';   // AUDIT EG V (lane1 #13): in the dark every foe keeps the Shade's rim light
 import { drawEgSigils } from '../../ui/eliteGates/egSpireHud.js';   // EG-ZG: the marks over heads
+import { spireStoneWords } from '../../systems/eliteGates/spireOrrery.js';   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): a stone's name and hour, over it
 import { EG_NUMERALS } from '../../ui/eliteGates/egParty.js';   // AUDIT EG IV (lane1 #15): the company's numerals, an errand's member drawn by its
 import { egMemberOf } from '../../net/eliteGates/egLink.js';
 import { multiply } from '../../world/mat4.js';
@@ -1035,6 +1036,15 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
         if (!b || !(b.hp > 0) || b.goneAt) continue;
         const at = egScreenAt(vp, egGivenAt(b, centre, tg, b.role === EG_ROLE.lord ? drawn.get(i)?.top : NaN));   // EG-LOOK (section 9): over a lord's drawn head
         if (at) _sigils.push({ key: `e${i}`, x: at[0], y: at[1], marks: [{ sigil: 'given', text: egGivenWords(ns, E.co) }] });
+      }
+      // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): over each Orrery stone its name and the hour its hand stands at, as the room
+      // last said them (`pg.st`, the stone's `pt` its place in it) - the riddles name the stones and their hours, and the
+      // disc said neither. Which stand true stays the dial's count (how many, never which: net/superDungeon/sdBrain.js orreryLit)
+      const orr = F.pg?.obj === 'orrery' && Array.isArray(F.pg.st) ? F.pg.st : null;
+      if (orr) for (const b of F.bodies) {
+        if (b.role !== EG_ROLE.obj || OBJ_KEY[b.k] !== 'stone' || b.goneAt || !Number.isFinite(orr[b.pt])) continue;
+        const at = egScreenAt(vp, egGivenAt(b, centre, tg));
+        if (at) _sigils.push({ key: `orr${b.i}`, x: at[0], y: at[1], marks: [{ sigil: 'stone', text: spireStoneWords(b.pt, orr[b.pt]) }] });
       }
       const subs = _subs;
       subs.clear();

@@ -65,6 +65,12 @@
 //   POST /v1/mod/feed  <batch>                       -> { ok, read }   (SAFE5: the relay's public lines, signed - x-relay-feed-sig)
 //   POST /v1/discord/interactions <interaction>      -> Discord's answer   (SAFE8: signed - x-signature-ed25519, x-signature-timestamp)
 // A BANNED ACCOUNT is answered 403 { error: 'banned', until, reason } on every door behind a session but signing out.
+// PRIVATE-REPORT, a registered player's private report to the readers REPORT_READER_HANDLES names (reports.js):
+//   POST /v1/report/send { kind, subject, body, context?, rid } -> { ok, id, sentAt } | { ok, repeat, id, sentAt }
+//   POST /v1/report/mine {}                    -> { reports: [{ id, kind, subject, sentAt, read, state }], max }
+//   POST /v1/report/inbox { which? }           -> { which, reports: [{ ...head, from }], unread, open, max }   (a reader's)
+//   POST /v1/report/read { id }                -> { report: { ...head, from, body, context, closedAt } }   (a reader's)
+//   POST /v1/report/close { id, state }        -> { ok, id, state }   (a reader's: fixed | wontfix | duplicate | open)
 // CUSTOMS-PASS, a developer alone - one character of one account through customs (tools/customsPass.mjs):
 //   POST /v1/mod/customs-pass { name | account, revoke? } -> { ok, target, name, open, changed }
 //   POST /v1/mod/realm-holds | realm-findings { id } | realm-clear { id, note? } | realm-hold { id, note? }
@@ -232,6 +238,8 @@ import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
 import { BUSY_RETRY_AFTER_S } from '../../src/net/busyLaw.js';   // BUSY-GATE: how long an overload answer tells a client to stand back
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { postBoxOf, readPost, claimPost, deletePost } from './post.js';   // SERVER-POST: the server's post
+import { sendReport, myReports, reportInbox, readReport, closeReport } from './reports.js';   // PRIVATE-REPORT: a player's private report
+import { REPORT_BODY_BYTES } from '../../src/net/reportLaw.js';
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track - RENOWN-CHAR: a character's again
 import { firmamentState, setFirmament, respecFirmament, FIRM_STATUS } from './firmament.js';   // FIRM1: the Firmament - a character's passive tree
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
@@ -392,6 +400,8 @@ const RENT_STATUS = Object.freeze({
 /** AUDIT CARDS-6 D8: a card table's and a ranked deck's refusals that are not a bad request (400, the default): the service
  *  with no key to sign with, a guest asking for a ranked seat. */
 const CARDS_STATUS = Object.freeze({ 'cards-closed': 503, 'ranked-needs-account': 403 });
+/** PRIVATE-REPORT: a report's refusals that are not a bad request (400, the default). */
+const REPORT_STATUS = Object.freeze({ 'report-rate': 429, 'report-full': 409, 'no-report': 404, 'not-report-reader': 403 });
 /** SERVER-POST: the post's own refusals; a claim's realm words are REALM_STATUS's. */
 const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
 const REALM_STATUS = Object.freeze({
@@ -899,8 +909,9 @@ const service = {
       // REALM P2.1: a trade's half carries two offers of up to sixteen records each - a JSON route past 4 KiB. AUDIT LEGACY
       // III O2/P1: and a line's record, to its own bound (legacy.js LINEAGE_BODY_MAX) - read at 4 KiB, a played founder's
       // first save was refused, and the realm held the founding copy for good
+      // PRIVATE-REPORT: and a report's words, to theirs (reportLaw.js REPORT_BODY_BYTES)
       const body = request.method === 'POST'
-        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/safety/report' ? REPORT_BODY_MAX : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines
+        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines
       if (body === undefined && path === '/v1/realm/lineage') return no('lineage-too-large', 413, origin);
       if (!body) return no('body', 400, origin);
       // YARD-SHED (2026-10-06, the service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S YARDS NEED
@@ -2089,7 +2100,7 @@ const service = {
         if (accountKind(who.player) !== 'linked') return no('post-needs-account', 403, origin);
         if (path === '/v1/post/box') {
           if (request.method !== 'GET') return no('method', 405, origin);
-          return json(await postBoxOf(ctx, who.player), 200, origin);
+          return json(await postBoxOf(ctx, who.player, env), 200, origin);   // PRIVATE-REPORT: env, a reader's count
         }
         if (request.method !== 'POST') return no('method', 405, origin);
         const act = {
@@ -2102,6 +2113,25 @@ const service = {
         if (!('error' in r)) return json(r, 200, origin);
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the service's own, as a checkpoint's
         return no(r.error, POST_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
+      }
+
+      // PRIVATE-REPORT (2026-10-17, Mac: "Can we add a private disclosure method for exploits/bugs with the client"): A
+      // PLAYER'S PRIVATE REPORT - an exploit, a bug, a security hole - to the readers REPORT_READER_HANDLES names, and
+      // their inbox (reports.js). A registered account's alone, the letters' wall with its own word: a guest is a device,
+      // and a report a reader cannot answer to anybody is one the next storage clear forgets who sent.
+      if (path.startsWith('/v1/report/')) {
+        if (accountKind(who.player) !== 'linked') return no('report-needs-account', 403, origin);
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const act = {
+          '/v1/report/send': () => sendReport(ctx, who.player, body),
+          '/v1/report/mine': () => myReports(ctx, who.player),
+          '/v1/report/inbox': () => reportInbox(ctx, who.player, env, body),
+          '/v1/report/read': () => readReport(ctx, who.player, env, body.id),
+          '/v1/report/close': () => closeReport(ctx, who.player, env, body),
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act();
+        return 'error' in r ? no(r.error, REPORT_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
       }
 
       // ═══ ACC2: THE SAVES ═══════════════════════════════════════

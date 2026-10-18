@@ -113,7 +113,7 @@ test('TELL1: every multiplier of a foe\'s health writes what it stood - an elite
   assert.equal(re.healthMult, 1.5); assert.equal(kindHealth(re), 40);
   assert.match(rd('src/scenes/dungeonContext.js'), /entity\.maxHealth = Math\.max\(1, Math\.round\(entity\.maxHealth \* ELITE_HEALTH_SCALE\)\);\n\s*entity\.health = entity\.maxHealth;\n\s*entity\.healthMult = \(entity\.healthMult \?\? 1\) \* ELITE_HEALTH_SCALE;/);
   assert.match(rd('src/scenes/riteHost.js'), /f\.entity\.healthMult = \(f\.entity\.healthMult \?\? 1\) \* RITE_SUMMONER_HEALTH;/);
-  assert.match(rd('src/systems/revenant/revenantCompanions.js'), /entity\.healthMult = \(entity\.healthMult \?\? 1\) \* \(1 \+ REVENANT_HEALTH_PER_RANK \* rank\);/);
+  assert.match(rd('src/systems/revenant/revenantCompanions.js'), /entity\.healthMult = \(entity\.healthMult \?\? 1\) \* \(1 \+ REVENANT_HEALTH_PER_RANK \* rank\) \* starHealth;/);
 });
 
 test('TELL1: a blow\'s class - blunt, axe, long blade, short blade, hands, claws, two-handed on top, an arrow, a spell\'s landing (its round nothing), a peer\'s, nothing else', () => {

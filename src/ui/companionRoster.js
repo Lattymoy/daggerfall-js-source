@@ -19,6 +19,8 @@
 //  - RVN-ARTS (section 41): its art, for the player, in a line.
 //  - RVN-ERRAND (section 42): MISSION opens a sheet - a venture, and Tamriel's nine provinces with their days, their
 //    danger and its odds (SEND); one ABROAD says where and when it is back, and may be RECALLED, empty-handed.
+//  - RVN-STARS (section 44): its level and the stars it has to set, in a line, and STARS - its sky (ui/revenantStarsWindow.js),
+//    laid over the pause window by the door that drew this page (`stars(id)` - ui/firmamentOver.js revenantStarsOver).
 // The acts are the companions' own (systems/revenant/revenantCompanions.js); the host hears them (setRetinueListener) and the
 // companion layer carries them out the moment the menu closes - the portals, the words.
 //
@@ -35,14 +37,18 @@ import { ownMinutes, sharedClockOn } from '../systems/worldTick.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { giftablePieces, giveSwornGear, takeSwornGear, sendOnErrand, recallFromErrand, errandRefusal, abroadWords } from '../systems/revenant/revenantCompanions.js';   // RVN-GEAR, RVN-ERRAND
 import { GEAR_SLOTS, GEAR_KEYS, GEAR, metalName, tierWord, armedKind, gearKeyOf, gearRefusal, gearLabel, gearPower, gearTier, gearItems, wornGear, brokenPiece } from '../systems/revenant/revenantGear.js';
-import { ERRAND, ERRAND_PLACES, VENTURES, VENTURE_KEYS, errandOdds, oddsWord, oddsKind } from '../systems/revenant/revenantErrands.js';
+import { ERRAND, ERRAND_PLACES, VENTURES, VENTURE_KEYS, errandOdds, oddsWord, oddsKind, errandMinutes } from '../systems/revenant/revenantErrands.js';
+import { rvnStarsOf } from '../systems/revenant/revenantStars.js';   // RVN-STARS: its level and its stars to set
+import { MINUTES_PER_DAY } from '../systems/gameDate.js';
 import { t } from '../systems/textManager.js';   // L10N4: RVN-GEAR's and RVN-ERRAND's words through the text core
 import { artWords } from '../systems/revenant/revenantArts.js';   // RVN-ARTS: its art, for me
 import { itemLongName } from '../systems/item/itemInfo.js';
 import { itemValueOf } from '../systems/item/itemTemplates.js';
 import { rarityOf, RARITIES } from '../systems/loot/lootRarity.js';
 
-export const COMPANION_PAGE_SECTIONS = Object.freeze([['companions', 'Companions']]);
+/** The rail's row, its word read when it is read (AUDIT RVN-STARS S23: a level reached names "the Companions page" in the
+ *  player's language - the rail said it in English). */
+export const COMPANION_PAGE_SECTIONS = Object.freeze([(() => { const row = ['companions']; Object.defineProperty(row, 1, { enumerable: true, get: () => t('rvn.roster.rail', 'Companions') }); return Object.freeze(row); })()]);
 export const COMPANION_PAGE_STYLE_ID = 'companion-roster-css';
 const FACE_BOX = 48;
 const SLOT_BOX = 40;
@@ -91,6 +97,8 @@ export const COMPANION_PAGE_CSS = `
 .px-sys .cmp-foot { font-size: 11px; color: #8b8578; margin: 4px 0 0; }
 .px-sys .cmp-state.is-errand { color: #9fc2e8; }
 .px-sys .cmp-art { font-size: 11px; color: #c9b98f; }
+.px-sys .cmp-stars { font-size: 11px; color: #b8b0a0; }
+.px-sys .cmp-stars.is-left { color: #e9c46a; }
 .px-sys .cmp-sheet { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; padding: 8px 10px; border-width: 2px; border-style: solid; box-sizing: border-box; }
 .px-sys .cmp-sheethead { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #e9c46a; }
 .px-sys .cmp-gear { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
@@ -113,6 +121,8 @@ export const COMPANION_PAGE_CSS = `
 .px-sys .cmp-odds.is-grim { color: #ff8a78; }
 :root[data-plus-theme="stone"] .px-sys .cmp-sub, :root[data-plus-theme="stone"] .px-sys .cmp-foot, :root[data-plus-theme="stone"] .px-sys .cmp-slotline, :root[data-plus-theme="stone"] .px-sys .cmp-glabel, :root[data-plus-theme="stone"] .px-sys .cmp-gname.is-none, :root[data-plus-theme="stone"] .px-sys .cmp-gcond { color: #e2d9c4; }
 :root[data-plus-theme="stone"] .px-sys .cmp-gcond.is-off { color: #ff9b84; }
+:root[data-plus-theme="stone"] .px-sys .cmp-stars { color: #e2d9c4; }
+:root[data-plus-theme="stone"] .px-sys .cmp-stars.is-left { color: #f3cf86; }
 `;
 function ensureStyle(doc) {
   if (!doc?.getElementById || doc.getElementById(COMPANION_PAGE_STYLE_ID)) return;
@@ -237,6 +247,14 @@ function gearSheet(el, r, rerender, kindName) {
   }
   return box;
 }
+/** RVN-STARS (Revenants.md section 44): its level and the stars it has to set - a line on its row (AUDIT RVN-STARS S28: none
+ *  yet said so, never "0 of 0"). */
+export function starsLine(r) {
+  const s = rvnStarsOf(r), left = Math.max(0, s.points - s.set);
+  if (!s.points) return t('rvn.roster.starsNone', 'Level {level} · no stars to set yet', { level: s.level });
+  return left ? t('rvn.roster.starsLeft', 'Level {level} · {n, plural, one {a star} other {# stars}} to set', { level: s.level, n: left })
+    : t('rvn.roster.starsSet', 'Level {level} · {set} of {points} stars set', { level: s.level, set: s.set, points: s.points });
+}
 /** RVN-ERRAND (Revenants.md section 42): SEND IT ABROAD - a venture, and the nine provinces with their days, danger and odds. */
 function errandSheet(el, r, rerender, now) {
   const box = el('div', 'cmp-sheet');
@@ -257,7 +275,10 @@ function errandSheet(el, r, rerender, now) {
   for (const p of ERRAND_PLACES) {
     const odds = errandOdds(r, p);
     const line = el('div', 'cmp-dest');
-    const name = el('span', 'cmp-destname', t('rvn.roster.dest', '{place} - {days, plural, one {a day} other {# days}}, danger {danger}', { place: p.name, days: p.days, danger: ROMAN[p.danger] }));
+    const mins = errandMinutes(r, p);   // RVN-STARS: its road - a share off the days
+    const name = el('span', 'cmp-destname', mins % MINUTES_PER_DAY === 0
+      ? t('rvn.roster.dest', '{place} - {days, plural, one {a day} other {# days}}, danger {danger}', { place: p.name, days: mins / MINUTES_PER_DAY, danger: ROMAN[p.danger] })
+      : t('rvn.roster.destHours', '{place} - {hours} hours, danger {danger}', { place: p.name, hours: Math.round(mins / 60), danger: ROMAN[p.danger] }));
     name.append(el('span', ODDS_CLASS[oddsKind(odds)], t('rvn.roster.odds', '{word} {pct}%', { word: oddsWord(odds), pct: Math.round(odds * 100) })));
     const go = keyed(el('button', `act${why ? '' : ' primary'}`, t('rvn.roster.send', 'Send')), `cmp-${r.id}-send-${p.key}`);
     go.title = why ?? t('rvn.roster.sendTip', 'It leaves for {place} on a {venture} errand', { place: p.name, venture: VENTURES[_venture].label });
@@ -272,7 +293,7 @@ function errandSheet(el, r, rerender, now) {
   return box;
 }
 
-function row(el, r, { now, rerender, meter, here, kindName }) {
+function row(el, r, { now, rerender, meter, here, kindName, stars }) {
   const state = r.companion?.state ?? 'with';
   const item = el('div', `cmp-row is-${state}`);
   const f = picture(el, 'cmp-face', r, FACE_BOX, rerender);
@@ -300,6 +321,7 @@ function row(el, r, { now, rerender, meter, here, kindName }) {
   text.append(...loyaltyRow(el, r, meter));   // RVN11 (22.4): its loyalty, wherever it is
   const art = artWords(r, { sworn: true });   // RVN-ARTS: its art, for me
   if (art) text.append(el('span', 'cmp-art', art));
+  text.append(el('span', `cmp-stars${state !== 'errand' && rvnStarsOf(r).points > rvnStarsOf(r).set ? ' is-left' : ''}`, starsLine(r)));   // RVN-STARS - AUDIT RVN-STARS S28: gold only where its Stars can set them
   if (_notice?.id === r.id) text.append(el('span', 'cmp-why', _notice.text));
   const acts = el('div', 'cmp-acts');
   if (_confirm === r.id) {
@@ -342,6 +364,12 @@ function row(el, r, { now, rerender, meter, here, kindName }) {
       b.onclick = () => { _sheet = _sheet?.id === r.id && _sheet.kind === kind ? null : { id: r.id, kind }; _notice = null; rerender(); };
       acts.append(b);
     }
+    if (typeof stars === 'function') {   // RVN-STARS: its sky, over this window
+      const b = keyed(el('button', `act${rvnStarsOf(r).points > rvnStarsOf(r).set ? ' primary' : ''}`, t('rvn.roster.stars', 'Stars')), `cmp-${r.id}-stars`);
+      b.title = t('rvn.roster.starsTip', 'Its stars: spend its points on health, damage, its art and its missions');
+      b.onclick = () => { _notice = null; stars(r.id); };
+      acts.append(b);
+    }
     const rel = el('button', 'act', 'Release');
     rel.onclick = () => { _confirm = r.id; _notice = null; rerender(); };
     acts.append(rel);
@@ -354,9 +382,10 @@ function row(el, r, { now, rerender, meter, here, kindName }) {
 
 /**
  * THE PAGE: `detail` the rail's detail pane; `kit` the menu's makers ({ el, divider, meter }), and `here(id)` - the
- * body a sworn one stands in now (its live health), if any.
+ * body a sworn one stands in now (its live health), if any; `stars(id)` (RVN-STARS) the door's - a sworn one's sky over the
+ * window (none: no Stars button).
  */
-export function drawCompanionsPage(detail, rerender, { el, divider, meter = null, here = null, kindName = null } = /** @type {any} */ ({})) {
+export function drawCompanionsPage(detail, rerender, { el, divider, meter = null, here = null, kindName = null, stars = null } = /** @type {any} */ ({})) {
   ensureStyle(typeof document === 'undefined' ? null : document);
   const now = Math.floor(ownMinutes());
   const withYou = revenantsWithYou();
@@ -383,14 +412,14 @@ export function drawCompanionsPage(detail, rerender, { el, divider, meter = null
   if (withYou.length) {
     detail.append(divider('At your side'));
     const list = el('div', 'cmp-list');
-    for (const r of withYou) list.append(row(el, r, { now, rerender, meter, here, kindName }));
+    for (const r of withYou) list.append(row(el, r, { now, rerender, meter, here, kindName, stars }));
     detail.append(list);
   }
   // AWAY
   if (away.length) {
     detail.append(divider('Away'));
     const list = el('div', 'cmp-list');
-    for (const r of away) list.append(row(el, r, { now, rerender, meter, here, kindName }));
+    for (const r of away) list.append(row(el, r, { now, rerender, meter, here, kindName, stars }));
     detail.append(list);
   }
   if (!withYou.length && !away.length) {

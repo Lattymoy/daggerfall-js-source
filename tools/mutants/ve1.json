@@ -203,8 +203,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  const id = `${Number(archive)}:${n}:${looseTextureGeneration()}`;",
-    "new": "  const id = `${Number(archive)}:${n}`;"
+    "old": "  const id = `${Number(archive)}:${n}:${looseTextureGeneration()}${studio.length ? `:${textureTierEpoch()}` : ''}`;",
+    "new": "  const id = `${Number(archive)}:${n}${studio.length ? `:${textureTierEpoch()}` : ''}`;"
   },
   {
     "name": "VE2-gate-not-read-at-the-ask",
@@ -212,7 +212,7 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  if (!n || !textureReplacementEnabled()) return Promise.resolve(null);",
+    "old": "  if (!n || (!textureReplacementEnabled() && !studio.length)) return Promise.resolve(null);",
     "new": "  if (!n) return Promise.resolve(null);"
   },
   {

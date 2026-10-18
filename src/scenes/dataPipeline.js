@@ -7,14 +7,14 @@
 // kept place holds it (scenes/placeHolds.js); what is asked for outside
 // any place is kept for good, as everything once was.
 
-import { TextureFile } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
+import { TextureFile, LAST_CLASSIC_TEXTURE_ARCHIVE } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isInteriorGlassArchive, interiorGlassMask } from '../world/interior/interiorGlass.js';   // RW1: an interior's own glass
 import { isEmissive, FIRE_WALLS_ARCHIVE, FIRE_WALL_COLOR, FIRE_WALL_SCALE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
 import { fetchBytes, texName } from './shared.js';
-import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext, textureTierEpoch } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT VE R1: the tiers' epoch
+import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext, textureTierEpoch, textureTiersSettled } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT VE R1: the tiers' epoch
 import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
 import { setDfLookPalette } from '../world/dfLook.js';   // DF-LOOK: the port's own painted pictures in this palette's colours
 import { customModelBuilt, customAliasFor, aliasSubMeshes, customModelNeeds } from '../world/customModels.js';   // DS1: models no ARCH3D carries; WD3: a classic model with its pictures swapped
@@ -30,8 +30,7 @@ import { createPlaceHolds } from './placeHolds.js';   // FIELD BUGS 2026-10-04d 
  *  the upload arms over a texture it built itself, in a container with
  *  no ARENA2. No host passes it.
  *  @param deps {{renderer, arch: Arch3dFile, palette: DFPalette, fetch?: (name: string) => Promise<Uint8Array>}} */
-/** DS1: TEXTURE.511 is the last archive Daggerfall ships; a higher number is a mod's own. */
-export const LAST_CLASSIC_TEXTURE_ARCHIVE = 511;
+export { LAST_CLASSIC_TEXTURE_ARCHIVE };   // DS1's, kept here for its importers (formats/textureFile.js since STUDIO1: the studio reads it too)
 
 export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes }) {
   const textureFiles = new Map();
@@ -76,6 +75,10 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
    *  uploads after that find them (what it uploads now stands as it is, as anything already drawn does). */
   const freshen = (archive) => { if (preloadedAt.get(archive) !== textureTierEpoch()) refresh(archive); };
   async function getTexture(archive) {
+    // STUDIO1: a registration on its way (the studio's listing) is waited for before an archive is first decided - at
+    // most a bounded while (textureReplacement.js holdTextureTiers) - so the first area is not drawn without it
+    const held = textureTiersSettled();
+    if (held) await held;
     if (textureFiles.has(archive)) {
       if (preloadedAt.get(archive) !== textureTierEpoch()) await refresh(archive);   // AUDIT VE R1
       return textureFiles.get(archive);

@@ -1285,7 +1285,7 @@
   {
     "name": "AUDIT-LEGACY-III-U1-a-held-key-presses",
     "file": "src/ui/pauseDoor.js",
-    "old": "    if (e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); }",
+    "old": "    if (e.repeat && (e.key === 'Enter' || e.key === ' ') && !isTextEntryTarget(e.target)) { e.preventDefault(); e.stopPropagation(); }",
     "new": "    if (false) { e.preventDefault(); e.stopPropagation(); }",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"

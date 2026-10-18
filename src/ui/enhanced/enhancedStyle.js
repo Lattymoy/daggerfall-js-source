@@ -2720,6 +2720,39 @@ ${SUPPORT_MARKS_CSS}
 :root[data-plus-theme="stone"] .px-postwin [data-rarity="legendary"] { color: #f7b27a; }
 :root[data-plus-theme="stone"] .px-postwin [data-rarity="artifact"] { color: #dcbaf9; }
 :root[data-plus-theme="stone"] .px-postwin { --dim: #e2dccd; --brass: #ffd98a; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
+/* PRIVATE-REPORT (2026-10-17): the mailbox window's report form and the readers' inbox (ui/enhanced/enhancedReport.js) - the
+   post's own rows, buttons and dim words, and the account card's field (label.field) for its title and its words. */
+.px-postwin .pm-doors { justify-content: flex-start; flex-wrap: wrap; margin-top: 14px; }
+.px-postwin .pr-pane { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.px-postwin .pr-intro, .px-postwin .pr-sends { margin: 0; font-size: 13px; line-height: 1.5; color: var(--dim); }
+.px-postwin .pr-kinds { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.px-postwin .pr-label { padding: 0; font-size: 13px; color: var(--dim); letter-spacing: 0.02em; }
+.px-postwin .pr-kind { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border: 1px solid rgba(125,116,96,0.35); cursor: pointer; }
+.px-postwin .pr-kind:has(input:checked) { border-color: var(--brass); background: rgba(192,138,62,0.08); }
+.px-postwin .pr-kind input { flex: 0 0 auto; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--brass); color-scheme: dark; cursor: pointer; }
+.px-postwin .pr-kind input:focus-visible { outline: 2px solid #f3cf86; outline-offset: 2px; }
+.px-postwin .pr-kindtext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.px-postwin .pr-kindname { font-size: 15px; color: #efe8d6; }
+.px-postwin .pr-hint { font-size: 12px; color: var(--dim); overflow-wrap: anywhere; }
+.px-postwin .pr-field { display: flex; flex-direction: column; gap: 6px; }
+.px-postwin .pr-field input, .px-postwin .pr-field textarea { min-height: 44px; padding: 10px 12px; background: #0b0e12;
+  border: 1px solid var(--iron); color: var(--bone); font: inherit; font-size: 15px; }
+.px-postwin .pr-field textarea { min-height: 140px; resize: vertical; line-height: 1.45; }
+.px-postwin .pr-field textarea::placeholder, .px-postwin .pr-field input::placeholder { color: var(--dim); }   /* AUDIT PRIVATE-REPORT UI-13: the browser's grey read 4.2:1 */
+.px-postwin .pr-more { align-self: flex-start; margin-top: 8px; }
+.px-postwin .pr-more[hidden] { display: none; }
+.px-postwin .pr-field input:focus-visible, .px-postwin .pr-field textarea:focus-visible { outline: none; border-color: var(--brass); }
+.px-postwin .pr-field input:disabled, .px-postwin .pr-field textarea:disabled { opacity: 0.6; }
+.px-postwin .pr-count { align-self: flex-end; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.px-postwin .pr-minehead { margin: 14px 0 0; font-size: 13px; font-weight: normal; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.px-postwin .pr-mrow { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-bottom: 1px solid rgba(125,116,96,0.25); }
+.px-postwin .pr-state { flex: 0 0 auto; text-align: right; }
+.px-postwin .pr-state.pr-fixed { color: #9fe8b4; }
+.px-postwin .pr-tabs { display: flex; gap: 8px; }
+.px-postwin .pr-tab.on { border-color: var(--brass); color: var(--brass); }
+.px-postwin .pr-acts { flex-wrap: wrap; justify-content: flex-start; }
+.px-postwin .pr-context { font-variant-numeric: tabular-nums; }
+:root[data-plus-theme="stone"] .px-postwin .pr-state.pr-fixed { color: #c8ffd6; }
 @media (max-width: 560px) {
   .px-win.px-postwin .px-body { padding: 16px 14px 18px; }
   .px-postwin .pm-item { flex-direction: column; align-items: stretch; }

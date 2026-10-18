@@ -60,6 +60,12 @@ A painted picture goes up in **Daggerfall's look**: `dfLook(picture, lookSeed(ar
 | Shipyard, lighthouse | 38231 | `scenes/portHost.js` paintArt, a few pictures a frame as before (L5-5) |
 | LeFay monument | 38211 | `scenes/lefayMonumentHost.js` ensureMesh |
 
+STUDIO1 (2026-10-17, `07-Rendering/Studio-Art.md`): every one of these models now wears an artist's picture from the
+studio (`public/art/studio/`) in place of its painted one, where an artist has drawn one. The ships' and the hangings'
+through the vendor tier the studio outranks; the other four through `wearPainted`, which asks before it paints (the
+wagon's icon asks `paintedReplacement` once the studio has landed). A studio picture goes up as drawn: the look is laid
+on painted pictures only.
+
 ## The windows (DF-ART II and III, kept)
 
 **A SHIP'S STERN WINDOWS ARE SEEN THROUGH BY DAY AND LIT AT NIGHT.** Each of the galleon's two stern-gallery slices

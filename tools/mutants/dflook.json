@@ -119,8 +119,8 @@
   {
     "name": "DFLOOK-the-room-painted",
     "file": "src/scenes/caravanRoom.js",
-    "old": "    const looked = dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE));",
-    "new": "    const looked = (void dfLook, void lookSeed, pic);",
+    "old": "    wearPainted(WAGON_ARCHIVE, from, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))), (c32) => {",
+    "new": "    wearPainted(WAGON_ARCHIVE, from, () => toColor32((void dfLook, void lookSeed, pic)), (c32) => {",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DFLOOK-the-room-its-paint's-grain",
     "file": "src/scenes/caravanRoom.js",
-    "old": "    const looked = dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE));",
-    "new": "    const looked = dfLook(pic, lookSeed(WAGON_ARCHIVE, rec));",
+    "old": "    wearPainted(WAGON_ARCHIVE, from, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))), (c32) => {",
+    "new": "    wearPainted(WAGON_ARCHIVE, from, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec))), (c32) => {",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DFLOOK-the-wagons-painted",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const looked = dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE));",
-    "new": "    const looked = (void dfLook, void lookSeed, pic);",
+    "old": "    wearPainted(WAGON_ARCHIVE, rec, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))), (c32, { late }) => {",
+    "new": "    wearPainted(WAGON_ARCHIVE, rec, () => toColor32((void dfLook, void lookSeed, pic)), (c32, { late }) => {",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DFLOOK-the-yards-painted",
     "file": "src/scenes/merchantYardsHost.js",
-    "old": "renderer.uploadTexture?.(YARD_ARCHIVE, rec, dfLook(art, lookSeed(YARD_ARCHIVE, rec)));",
-    "new": "renderer.uploadTexture?.(YARD_ARCHIVE, rec, art); void dfLook; void lookSeed;",
+    "old": "wearPainted(YARD_ARCHIVE, rec, () => dfLook(art, lookSeed(YARD_ARCHIVE, rec)),",
+    "new": "wearPainted(YARD_ARCHIVE, rec, () => (void dfLook, void lookSeed, art),",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DFLOOK-the-port-painted",
     "file": "src/scenes/portHost.js",
-    "old": "renderer.uploadTexture?.(PORT_ARCHIVE, rec, dfLook(pic, lookSeed(PORT_ARCHIVE, rec)), how?.cutout ? CUTOUT : undefined);",
-    "new": "renderer.uploadTexture?.(PORT_ARCHIVE, rec, pic, how?.cutout ? CUTOUT : undefined); void dfLook; void lookSeed;",
+    "old": "wearPainted(PORT_ARCHIVE, rec, () => dfLook(pic, lookSeed(PORT_ARCHIVE, rec)),",
+    "new": "wearPainted(PORT_ARCHIVE, rec, () => (void dfLook, void lookSeed, pic),",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DFLOOK-the-monument-painted",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)));",
-    "new": "renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, art); void dfLook; void lookSeed;",
+    "old": "wearPainted(LEFAY_ARCHIVE, rec, () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)),",
+    "new": "wearPainted(LEFAY_ARCHIVE, rec, () => (void dfLook, void lookSeed, art),",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "DFLOOK-the-twin's-glow-unuploaded",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (glow) renderer?.uploadEmissionTexture?.(archive, night,",
-    "new": "    if (!glow) renderer?.uploadEmissionTexture?.(archive, night,",
+    "old": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night,",
+    "new": "    if (!(lit || glow)) renderer?.uploadEmissionTexture?.(archive, night,",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js",
       "test/world/ships/auditgalleon2_prefab.test.js"

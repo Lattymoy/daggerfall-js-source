@@ -74,6 +74,9 @@ export function skillsLevel(level) {
  *                  foe's spell magnitudes, loot and gear are not scaled a
  *                  second time through it.
  * `skillOverrides` (a caster's pinned magic skills) are left alone.
+ * BAL11 (bible/05-Combat/Balance-Arc.md section 17): the hero's threat rides the same two channels (its share is in
+ * healthMult and damageMult), and its health is stood on `healthMult` too - what ai/tells.js kindHealth divides out, so
+ * a high level's foe staggers as its kind does.
  */
 export function applyProgressionScaling(entity, scaling) {
   if (!entity || !scaling) return entity;
@@ -82,9 +85,10 @@ export function applyProgressionScaling(entity, scaling) {
   }
   entity.maxHealth = Math.max(1, Math.round(entity.maxHealth * scaling.healthMult));
   entity.health = entity.maxHealth;
+  if (scaling.heroHealth > 1) entity.healthMult = (entity.healthMult ?? 1) * scaling.heroHealth;   // BAL11: TELL1's poise reads the kind's own health
   entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * scaling.damageMult;
   entity.challengeLevel = (entity.level ?? 1) + scaling.challengeLevels;
-  entity.progression = { share: scaling.share, veteran: scaling.veteran, place: scaling.place ?? 0, edge: scaling.edge };   // for a HUD or a debugger; nothing reads it as law (BAL3: the place's veteran beside the player's)
+  entity.progression = { share: scaling.share, veteran: scaling.veteran, place: scaling.place ?? 0, edge: scaling.edge, hero: { damage: scaling.heroDamage ?? 1, health: scaling.heroHealth ?? 1 } };   // for a HUD or a debugger; nothing reads it as law (BAL3: the place's veteran beside the player's; BAL11: the hero's threat)
   return entity;
 }
 

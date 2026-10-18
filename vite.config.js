@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { createReadStream, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
+import { studioArtIndex } from './scripts/studioArtIndex.mjs';   // STUDIO1: the studio's listing, served and built from the folder
 
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.
@@ -268,8 +269,11 @@ export default defineConfig({
         // an item template points at. The player's own ARENA2 through
         // a picker, like mw-inspect - nothing baked in.
         archiveSheet: 'archive-sheet.html',
+        // STUDIO1: THE STUDIO - every picture the port paints itself, as worn, each with its template to download, and the
+        // artists' own pictures beside them (src/tools/studioLab.js; public/art/studio/README.md). No game data.
+        studio: 'studio.html',
       },
     },
   },
-  plugins: [arena2DevServer(), buildTagMeta(), landingHtml()],
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex()],
 });

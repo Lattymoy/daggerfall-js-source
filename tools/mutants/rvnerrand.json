@@ -155,7 +155,7 @@
   {
     "name": "RVN-ERRAND-loyalty-paid-twice",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "    c.paid = e.seed;\n",
+    "old": "    if (!paid) c.paid = [...(Array.isArray(c.paid) ? c.paid : []), e.seed].slice(-PAID_KEEP);\n",
     "new": "",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
@@ -173,7 +173,7 @@
   {
     "name": "RVN-ERRAND-recall-free",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "c.state = 'resting'; c.errand = null; c.until = now + REVENANT_REST_MIN; c.worn = true;",
+    "old": "c.state = 'resting'; c.errand = null; c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN); c.worn = true;",
     "new": "c.state = 'away'; c.errand = null;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
@@ -299,8 +299,8 @@
   {
     "name": "RVN-ERRAND-kit-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "Math.max(1, r?.rank | 0) + gearPower(r);",
-    "new": "Math.max(1, r?.rank | 0) + 0;",
+    "old": "Math.max(1, r?.rank | 0) + gearPower(r) + skyOf(r, e).odds;",
+    "new": "Math.max(1, r?.rank | 0) + 0 + skyOf(r, e).odds;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -326,7 +326,7 @@
   {
     "name": "RVN-ERRAND-days-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "until: Math.floor(now) + p.days * MINUTES_PER_DAY,",
+    "old": "until: Math.floor(now) + Math.round(roadDays(p, sky) * MINUTES_PER_DAY),",
     "new": "until: Math.floor(now) + MINUTES_PER_DAY,",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
@@ -335,7 +335,7 @@
   {
     "name": "RVN-ERRAND-older-clock-unclamped",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "return Number.isFinite(now) && e.until - now > p.days * MINUTES_PER_DAY ? now + p.days * MINUTES_PER_DAY : e.until;",
+    "old": "return Number.isFinite(now) && e.until - now > most ? now + most : e.until;",
     "new": "return e.until;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
@@ -362,7 +362,7 @@
   {
     "name": "RVN-ERRAND-share-skipped",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "const share = won ? 1 : ERRAND.HARD_SHARE;",
+    "old": "const share = won ? 1 : sky.bold ? 0 : ERRAND.HARD_SHARE;",
     "new": "const share = 1;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
@@ -371,8 +371,8 @@
   {
     "name": "RVN-ERRAND-units-lean-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "* p.days * v.units * share);",
-    "new": "* p.days * share);",
+    "old": "* p.days * v.units * share;",
+    "new": "* p.days * share;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -380,7 +380,7 @@
   {
     "name": "RVN-ERRAND-pieces-a-day-gone",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "v.items === 'many' ? p.days :",
+    "old": "v.items === 'many' ? days :",
     "new": "v.items === 'many' ? 1 + Math.floor((p.days + p.danger) / 3) :",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
@@ -434,7 +434,7 @@
   {
     "name": "RVN-ERRAND-loyalty-unmoved",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "      if (c.paid !== e.seed) c.loyalty = movedLoyalty(c.loyalty, ERRAND.WON_LOYALTY);\n",
+    "old": "      if (!paid) c.loyalty = movedLoyalty(c.loyalty, ERRAND.WON_LOYALTY);\n",
     "new": "",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
@@ -452,7 +452,7 @@
   {
     "name": "RVN-ERRAND-rest-skipped",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "    } else { c.state = 'resting'; c.until = now + REVENANT_REST_MIN; c.health = null; c.worn = true; }",
+    "old": "    } else { c.state = 'resting'; c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN); c.health = null; c.worn = true; }",
     "new": "    } else { c.state = 'away'; }",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"

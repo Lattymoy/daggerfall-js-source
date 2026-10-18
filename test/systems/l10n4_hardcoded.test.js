@@ -253,7 +253,7 @@ const HARDCODED = {
   'src/scenes/eliteGates/egCall.js': 1,
   'src/scenes/eliteGates/egClient.js': 58,   // AUDIT EG V (c): the usage, the refusals' copies and the Annals' line routed or gone
   'src/scenes/eliteGates/egFight.js': 63,   // AUDIT EG IV (the lords' group): +1, the Rampart's `gateheld` beat (EG_SAY - the march holds the gate)
-  'src/scenes/eliteGates/egSpan.js': 5,
+  'src/scenes/eliteGates/egSpan.js': 4,
   'src/scenes/etherHost.js': 9,
   'src/scenes/exterior.js': 15,
   'src/scenes/exteriorFoes.js': 1,
@@ -508,6 +508,7 @@ const HARDCODED = {
   'src/systems/startDungeon.js': 1,
   'src/systems/statusReadout.js': 2,
   'src/systems/steedCare.js': 16,
+  'src/systems/studioArt/studioSlots.js': 9,   // STUDIO1: the painted models' titles the studio page and tools/studioArt.mjs show the game's artists - no player reads them
   'src/systems/survival/camp.js': 42,
   'src/systems/survival/food.js': 4,
   'src/systems/survival/items.js': 26,
@@ -560,6 +561,7 @@ const HARDCODED = {
   'src/tools/gunLab.js': 7,
   'src/tools/mwViewer.js': 9,
   'src/tools/paperdoll/paperdollViewer.js': 18,
+  'src/tools/studioLab.js': 3,   // STUDIO1: the studio page's own words to the game's artists (studio.html) - no player reads them
   'src/tools/spireMap.js': 3,   // THE ASCENT - THE ROOMS (LAW 9): the lab's map legend (its roads' names) - the bench page's, never a player's
   'src/ui/accountFlow.js': 2,
   'src/ui/arena/arenaWindow.js': 4,

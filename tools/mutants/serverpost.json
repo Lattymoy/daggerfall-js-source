@@ -93,8 +93,8 @@
   {
     "name": "SERVERPOST-a-claimed-gift-still-counted",
     "file": "src/net/serverPost.js",
-    "old": "return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length;",
-    "new": "return this.post.filter((p) => !p.read || p.item).length;",
+    "old": "return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length + (this.reports?.unread ?? 0);",
+    "new": "return this.post.filter((p) => !p.read || p.item).length + (this.reports?.unread ?? 0);",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -313,7 +313,7 @@
   {
     "name": "SERVERPOST-the-classic-skin-without-a-way-in",
     "file": "src/ui/pauseDoor.js",
-    "old": "  if (hooks.at === 'mailbox' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);",
+    "old": "  if ((hooks.at === 'mailbox' || hooks.at === 'report') && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);   // PRIVATE-REPORT: `/bug`, its form",
     "new": "",
     "tests": [
       "test/net/serverpost_client.test.js"

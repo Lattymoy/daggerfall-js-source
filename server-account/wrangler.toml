@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct153"
+ACCOUNT_VERSION = "acct154"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -165,6 +165,13 @@ DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG,Roderic"
 # unapproved. Comma-separated handles, case-insensitive, read at every call - a handle taken off loses the door at once.
 BUILDER_HANDLES = ""
 APPROVER_HANDLES = "Lattymoy"
+# PRIVATE-REPORT (2026-10-17, Mac: "Can we add a private disclosure method for exploits/bugs with the client";
+# bible/06-Systems/Private-Reports.md): WHO READS THE PRIVATE REPORTS - the exploits, bugs and security holes players
+# send from the mailbox (/bug). Nobody else sees one: not a moderator, not a developer this list does not name, because
+# an exploit read by one more person is one more person who can use it before it is fixed. Comma-separated handles,
+# case-insensitive, read at every call - a handle taken off loses the inbox on its next request. Empty: the reports wait,
+# unread, until a handle is written here.
+REPORT_READER_HANDLES = "Lattymoy"
 # MOD1: THE MODERATORS - the blue shield beside the name, and /mute and
 # /unmute in chat. Comma-separated handles, case-insensitive, the same
 # as the line above; a developer may already moderate without being
@@ -202,9 +209,10 @@ MOD_AI_DAILY_MAX = ""
 # /mute, /ban and /strikes still answer. The setup: bible/11-Multiplayer/Chat-Safety-Arc.md section 9.
 DISCORD_MOD_CHANNEL = "1560996671440293908"
 DISCORD_PUBLIC_KEY = "36e74945022f94ec7955a84ccccb270e63780100e558d30777742337b62de3e0"
-# 2026-10-17 (Mac): the queue's channel and the application's public key set; the moderators' Discord ids to come -
-# until then the cards post and every press or /mod answers that only the game's moderators may act
-DISCORD_MODERATORS = ""
+# 2026-10-17 (Mac): the queue's channel and the application's public key set. The moderators' Discord ids, each
+# `<discord user id>:<in-game handle>` - the handle must also stand in MODERATOR_HANDLES or DEVELOPER_HANDLES, which
+# every press and /mod re-checks (discord.js actorOf); anyone not here is answered that only the game's moderators may act
+DISCORD_MODERATORS = "128705730965536768:Lattymoy"
 # FOUNDER5 (2026-10-07, Mac: "Can we grant every account before sept 25th
 # the founder title"): THE FOUNDERS BY NAME. Founder is held by every
 # registered account that first played by the end of 24 September on any

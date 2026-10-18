@@ -405,7 +405,8 @@ export function yardEndGrainArt(seed = 0xe9d4) {
   return img;
 }
 
-/** Every picture the yards wear, by record - what a host uploads under YARD_ARCHIVE before it draws. */
+/** Every picture the yards wear, by record - what a host uploads under YARD_ARCHIVE before it draws.
+ *  @type {() => Array<[number, { width: number, height: number, colors: Uint8Array }]>} */
 export const yardArt = () => [
   [YARD_REC.wood, yardWoodArt()],
   [YARD_REC.plank, yardPlankArt()],

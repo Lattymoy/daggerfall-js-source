@@ -219,7 +219,7 @@ import { applyDeathPenalty, deathPenaltyText } from '../systems/deathPenalty.js'
 import { revenantTakes } from '../systems/revenant/revenant.js';   // AUDIT FEUD (RVN8): the in-place respawn's theft, as the world host's
 import { endPlayerFights } from '../systems/harmMark.js';   // AUDIT FEUD (RVN10): ...and its fights ended
 import { tokenRows } from '../ui/messageBox.js';
-import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, rankNeedsLines, NO_POTION_INGREDIENTS, isServiceBox, SERVICE_LABEL, SERVICE_DESTINATION } from '../systems/guild/guildServiceFlow.js';
+import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, rankNeedsLines, wayBackLines, NO_POTION_INGREDIENTS, isServiceBox, SERVICE_LABEL, SERVICE_DESTINATION } from '../systems/guild/guildServiceFlow.js';
 import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
 import { isPotionRecipe, USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
 import { canAccessService , hasCustomMerchantService, getCustomMerchantService, getCustomMerchantServiceLabel } from '../systems/guild/guildServices.js';   // G4: does THIS guild also sell soul gems?
@@ -6067,7 +6067,7 @@ export function createWorldModes(host) {
     // D2: what it sells alone (its services, its quests, the Reforge's and the temple's rows) - DFU's popup stands, and
     // with it OnPush's rank review, a temple's free healing, the Mages' free recharge, Talk and the join
     const shutBox = () => (chapterHallShut(host.chapterHere?.(guild.factionId) ?? null) ? { rows: [CHAPTER_HALL_SHUT_LINE] } : null);
-    shutBox();   // AUDIT CHAP5 C1: asked as the popup opens - a patron's hall has the guild book look before a price reads it
+    const shutAtOpen = !!shutBox();   // AUDIT CHAP5 C1: asked as the popup opens - a patron's hall has the guild book look before a price reads it; WAY-BACK: and the way back's words read it (AUDIT WAY-BACK L1-3)
     if (!guildServiceArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
     const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
     // CHAP4b (Chapters-Arc 6): a seat's rank at its own chapter's halls - the hall's services read the book SEATED (the
@@ -6120,6 +6120,7 @@ export function createWorldModes(host) {
     // next one, and the port's overlay slot is single. The identity
     // guard is what keeps the second window alive; without it the join
     // welcome and every service flow vanished the moment they opened.
+    const wayBack = () => wayBackLines(guild, playerEntity, memberships, store, { paced: !!host.rollPace?.(guild.factionId), online: sharedClockOn(), shut: shutAtOpen });   // WAY-BACK: the Roll's pace while it holds
     let win = null;
     win = new GuildServiceWindow({
       member: () => !showsJoinButton(memberships, route.guildGroup),
@@ -6137,6 +6138,7 @@ export function createWorldModes(host) {
       }),
       // PROMO-NOW: online, the popup says what the next rank asks (the enhanced skin's line; the classic window is DFU's)
       rankNeeds: () => { const pace = sharedClockOn() ? host.rollPace?.(guild.factionId) ?? null : null; return sharedClockOn() ? rankNeedsLines(playerEntity, guild, seated(), store, { rankCeiling: pace?.book ?? null, pace, now: ownDate(), book: memberships }) : null; },   // ROLL-PACE: and when the pace holds it; SEAT-LINE: read seated - a seat's own hall asks nothing more; STANDING-WORDS: the review's date and its book
+      wayBack,   // WAY-BACK (FIELD BUGS 2026-10-16d): a stranger the guild will not take is told the way in, both lanes
       onJoin: () => {
         // JoinButton_OnMouseClick (:497-525). joinDecision is null for
         // the two invitation-only guilds, which DFU reaches by
@@ -6148,7 +6150,7 @@ export function createWorldModes(host) {
         if (!store) return null;
         const decision = joinDecision(playerEntity, guild, store);
         if (!decision) return null;
-        if (!decision.eligible) return { rows: rows(decision.textId) };
+        if (!decision.eligible) return { rows: [...rows(decision.textId), ...(isEnhanced() ? [] : wayBack() ?? [])] };   // WAY-BACK: DFU's refusal, then the way in - on the enhanced skin the hall's well says it (AUDIT WAY-BACK L2-2/4/5)
         return {
           rows: rows(decision.textId),
           buttons: 'YesNo',
@@ -7249,8 +7251,7 @@ export function createWorldModes(host) {
   let _doorTextGen = -1;
   let _doorTextHomes = -1;   // HOME1: the homes registry's version the text was read at - a town's answer, a sale, repaints the door
   let _doorTextVerbs = '';   // HOME2: whether the door's verbs were listed, and which buy was armed - a mode change or an arm repaints it
-  let _doorText = null;
-  let _doorBd = null;   // DRUNK4: the building record `_doorText` names - the drunk eye's plaque reads it (drunkPlaque), never writes it
+  let _doorText = null, _doorBd = null;   // DRUNK4: `_doorBd` the building record `_doorText` names - the drunk eye's plaque reads it (drunkPlaque), never writes it
   /**
    * ...AND IT IS FREED WHEN THE MODE LEAVES THE STREET.
    *

@@ -401,8 +401,8 @@
   {
     "name": "EGA4-lords-errands-sigil-nothing",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "  if (s?.sigil === 'given') return",
-    "new": "  if (s?.sigil === 'given-') return",
+    "old": "  if (s?.sigil === 'given' || s?.sigil === 'stone') return",
+    "new": "  if (s?.sigil === 'given-' || s?.sigil === 'stone') return",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]

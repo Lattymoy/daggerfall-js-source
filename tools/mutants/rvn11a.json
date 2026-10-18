@@ -155,7 +155,7 @@
   {
     "name": "RVN11a-days-unread",
     "file": "src/systems/revenant/revenant.js",
-    "old": "      r.companion.loyalty = movedLoyalty(r.companion.loyalty, st === 'with' ? LOYALTY.DAY_WITH : LOYALTY.DAY_AWAY);\n",
+    "old": "      r.companion.loyalty = movedLoyalty(r.companion.loyalty, st === 'with' ? LOYALTY.DAY_WITH : rvnLoyaltyMove(r, LOYALTY.DAY_AWAY));\n",
     "new": "",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "RVN11a-call-reward-unread",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "    if (c.rested) { c.rested = false; c.loyalty = movedLoyalty(c.loyalty, LOYALTY.CALLED); }\n",
+    "old": "    if (c.rested) { c.rested = false; c.loyalty = movedLoyalty(c.loyalty, Math.round(LOYALTY.CALLED * (1 - rvnStatsOf(r).rest))); }\n",
     "new": "",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "RVN11a-every-sending-costs",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "    if (c.sentDay === day) c.loyalty = movedLoyalty(c.loyalty, LOYALTY.SENT_TWICE);",
-    "new": "    c.loyalty = movedLoyalty(c.loyalty, LOYALTY.SENT_TWICE);",
+    "old": "    if (c.sentDay === day) c.loyalty = movedLoyalty(c.loyalty, rvnLoyaltyMove(r, LOYALTY.SENT_TWICE, c));",
+    "new": "    c.loyalty = movedLoyalty(c.loyalty, rvnLoyaltyMove(r, LOYALTY.SENT_TWICE, c));",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "RVN11a-devoted-blows-unread",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": " * (isDevoted(r.companion?.loyalty) ? DEVOTED.BLOWS : 1);",
-    "new": "",
+    "old": " * (isDevoted(r.companion?.loyalty) ? DEVOTED.BLOWS : 1) * rvnStatScale(stars, 'blows');",
+    "new": " * rvnStatScale(stars, 'blows');",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]
@@ -281,7 +281,7 @@
   {
     "name": "RVN11a-fall-free",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "c.health = null; c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });",
+    "old": "c.health = null; c.loyalty = movedLoyalty(c.loyalty, rvnLoyaltyMove(r, LOYALTY.KNOCKED, c)); });",
     "new": "c.health = null; });",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
@@ -299,8 +299,8 @@
   {
     "name": "RVN11a-standing-a-win",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  return !(last.entity?.health > 0);",
-    "new": "  return true;",
+    "old": "  const won = !(last.entity?.health > 0);",
+    "new": "  const won = true;",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "RVN11a-won-twice",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  rec._fightLast = null;\n  return !(last.entity",
-    "new": "  return !(last.entity",
+    "old": "  rec._fightLast = null;\n  const won = !(last.entity",
+    "new": "  const won = !(last.entity",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "RVN11a-won-free",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  return revenantCompanionUpdate(_player, id, (c) => { c.loyalty = movedLoyalty(c.loyalty, LOYALTY.WON); });",
-    "new": "  return revenantCompanionUpdate(_player, id, () => {});",
+    "old": "(c) => { c.loyalty = movedLoyalty(c.loyalty, LOYALTY.WON); c.xp",
+    "new": "(c) => { c.xp",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]

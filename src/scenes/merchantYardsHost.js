@@ -47,6 +47,7 @@ import { YARD_FOOT } from '../world/merchantYards/merchantYardSites.js';
 import { buildYardModel, signBoxOf, yardPoints } from '../world/merchantYards/merchantYardModels.js';
 import { yardArt, YARD_ARCHIVE } from '../world/merchantYards/merchantYardArt.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the yards' pictures in Daggerfall's colours
+import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones (their rows top-down, as the yards' are)
 import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobile/mobilePerson.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { folkLookOf } from '../characters/folkBodies.js';   // AUDIT MW-NPC II P1: a keeper's body, in the outfit their picture wears
@@ -173,7 +174,7 @@ export function createMerchantYards({
     if (meshes.has(kind)) return meshes.get(kind);
     if (!renderer?.createMesh) return null;
     try {
-      if (!artUp) { for (const [rec, art] of yardArt()) renderer.uploadTexture?.(YARD_ARCHIVE, rec, dfLook(art, lookSeed(YARD_ARCHIVE, rec))); artUp = true; }
+      if (!artUp) { for (const [rec, art] of yardArt()) wearPainted(YARD_ARCHIVE, rec, () => dfLook(art, lookSeed(YARD_ARCHIVE, rec)), (pic, { late }) => { if (late) renderer.releaseTexture?.(YARD_ARCHIVE, rec); renderer.uploadTexture?.(YARD_ARCHIVE, rec, pic); }, { topDown: true }); artUp = true; }
       meshes.set(kind, renderer.createMesh(modelOf(kind)));
     } catch (e) { meshes.set(kind, null); console.warn('[yards] a yard would not build', e?.message ?? e); }
     return meshes.get(kind);

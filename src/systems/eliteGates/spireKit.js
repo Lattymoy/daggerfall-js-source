@@ -53,11 +53,12 @@ export function spireWake() {
 
 // EG-FULL LAYER THREE (section 11 - the fragments): what the spans stand from the relay's fight, and the hands a span's
 // activation reaches. Both registered by the world host (scenes/world.js), off the breach client (scenes/eliteGates/egClient.js).
-/** @type {(() => { h: number, objs: { t: string, i: number, x: number, z: number, st: number, stAt: number, pt: number }[], lit?: { s: any[], from: number, until: number }[], br?: { g: number, from: number, until: number }[] }) | null} */
+/** @type {(() => { h: number, objs: { t: string, i: number, x: number, z: number, st: number, stAt: number, pt: number }[], lit?: { s: any[], from: number, until: number }[], br?: { g: number, from: number, until: number }[], orr?: number[] | null }) | null} */
 let _objs = null;
 /** The fight's errand objects of the hall now (its number `h`; Grath's islands with their state, the false walls standing;
  *  EG-ZC: `lit`, the Moon-Mirror's havens over the branches it lights; AUDIT EG III: `br`, the Spirebridges the room raised -
- *  each its gap, its raising and its end, relay ms). */
+ *  each its gap, its raising and its end, relay ms; FIELD BUGS 2026-10-17e, ORRERY-SIGHT: `orr`, an Athenaeum's stones' hours
+ *  as the room last said them, the handle's plaque reads them). */
 export function registerSpireObjs(fn) { _objs = typeof fn === 'function' ? fn : null; }
 export function spireObjs() {
   if (!_objs) return { h: 0, objs: [] };

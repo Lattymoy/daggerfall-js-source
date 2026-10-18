@@ -693,7 +693,7 @@ async function loadRecord(archive, record, getTexture, dye = null, S = 1) {
       let pic = { width: swap.width, height: swap.height, data: swap.rgba };
       let place = off;
       const rect = textureReplacementRect(archive, record, 0, 'Albedo', dye);
-      const classic = tex.vendor ? null : tex.getSize(record);
+      const classic = tex.vendor ? (tex.getBox?.(record) ?? null) : tex.getSize(record);   // STUDIO1: a studio picture over a stand-in fits the stand-in's box
       // DFMOD4: fitted at S texels per doll pixel - the composite's own density - and marked so
       let scale = 1;
       if (rect) { pic = resampleRgba(pic, rect.width * S, rect.height * S); place = { x: rect.x, y: rect.y, paperdoll: true }; scale = S; }

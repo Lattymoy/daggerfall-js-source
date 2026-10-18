@@ -187,6 +187,7 @@ on:
       - "src/net/eliteGates/egStartLaw.js"
       - "src/net/superDungeon/sdMarks.js"
       - "src/net/postLaw.js"
+      - "src/net/reportLaw.js"
       - "src/systems/wind/wind.js"
       - "src/ai/blowShapes.js"
       - "src/ai/cover.js"
@@ -1125,17 +1126,26 @@ jobs:
           # INT16: ONE RETRY FOR EVERY SMOKE CALL (`ask`, the call's own curl words after its file and URL): `post` the JSON
           # calls', `put` the realm character's first save - a first save whose answer was lost (000) and landed answers its
           # retry 409 `seq` 1, which the smoke reads as landed. One loop, so its law is pinned and mutated once.
+          # SMOKE-LOST (2026-10-18, the owner's screenshot of #1004's run: renown/xp -> 000, 503, then 200 `repeat`):
+          # A WRITE WHOSE ANSWER WAS LOST MAY HAVE LANDED. The first report hung 15 s and was credited; its retry was
+          # answered, rightly, as that report again - and the smoke, asking `credited` 1 of it, failed a deploy whose
+          # Worker had taken. So `ask` leaves `<out>.lost` when a try went unanswered (`lost <out>`), and the two calls
+          # that write before they are read - the first beat and the first report - take, after a lost try, the answer
+          # the landed write gives its retry. Never without one: an answer with no lost try before it is read whole.
           ask() {
             local out=$1 url=$2 got=404
             shift 2
+            rm -f "$out.lost"
             for i in $(seq 1 7); do
               got=$(curl -sS --max-time 15 -o "$out" -w '%{http_code}' "$@" "$url") || got=000
               if [ "$got" != "404" ] && [ "$got" != "000" ] && [ "${got#5}" = "$got" ]; then break; fi
+              if [ "$got" = "000" ]; then : > "$out.lost"; fi
               echo "  $url -> $got (attempt $i, an old instance or the platform's first moments?)" >&2
               sleep 5
             done
             echo "$got"
           }
+          lost() { [ -e "$1.lost" ]; }
           post() { ask "$1" "$2" -X POST -H 'content-type: application/json' -d "$3"; }
           put() { ask "$1" "$2" -X PUT -H "authorization: Bearer $secret" -H "x-realm-lease: $4" -H 'x-realm-seq: 1' -d "$3"; }
 
@@ -1145,7 +1155,10 @@ jobs:
           echo "played -> $code"
           cat /tmp/beat.json || true
           echo
-          if [ "$code" != "200" ] || ! grep -q '"playedS":0' /tmp/beat.json; then
+          # SMOKE-LOST: a first beat that landed unanswered makes its retry the second beat, credited the seconds
+          # between them - no more than seven asks' 140
+          played=$(sed -n 's/.*"playedS":\([0-9]*\).*/\1/p' /tmp/beat.json)
+          if [ "$code" != "200" ] || ! { [ "$played" = "0" ] || { lost /tmp/beat.json && [ -n "$played" ] && [ "$played" -le 140 ]; }; }; then
             echo "::error::the time-played beat failed on the deployed Worker ($code) - a first beat must answer playedS 0"
             exit 1
           fi
@@ -1187,7 +1200,8 @@ jobs:
           echo "renown/xp -> $code"
           cat /tmp/renown.json || true
           echo
-          if [ "$code" != "200" ] || ! grep -q '"credited":1' /tmp/renown.json; then
+          # SMOKE-LOST: a first report that landed unanswered is its retry's repeat, the track holding its 1 XP
+          if [ "$code" != "200" ] || ! { grep -q '"credited":1' /tmp/renown.json || { lost /tmp/renown.json && grep -q '"repeat":true' /tmp/renown.json && grep -q '"xp":1,' /tmp/renown.json; }; }; then
             echo "::error::a Renown report failed on the deployed Worker ($code) - a first report of 1 XP must be credited 1"
             exit 1
           fi

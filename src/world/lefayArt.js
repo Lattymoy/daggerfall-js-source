@@ -188,7 +188,8 @@ export function lefayPlaqueArt(lines = LEFAY_TEXT.plaque, seed = 0x91a0) {
   return img;
 }
 
-/** Every picture the monument wears, by record - what a host uploads under LEFAY_ARCHIVE before it draws. */
+/** Every picture the monument wears, by record - what a host uploads under LEFAY_ARCHIVE before it draws.
+ *  @type {() => Array<[number, { width: number, height: number, colors: Uint8Array }]>} */
 export const lefayArt = () => [
   [LEFAY_GRANITE, lefayGraniteArt()],
   [LEFAY_MARBLE, lefayMarbleArt()],

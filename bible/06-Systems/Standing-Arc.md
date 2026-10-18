@@ -211,6 +211,21 @@ every penalty is Daggerfall's, and offline the pool is DFU's. It replaced QSCRIP
 loss to its own guild), which round II withdrew: it spared that theft and that killing, and the Thieves Guild's and the
 Dark Brotherhood's own penalties, for nothing (A-1, C-1).
 
+## WAY-BACK - the way back into a guild, said
+
+`guild/guildServiceFlow.js wayBackLines` (2026-10-16, `01-Overview/bugs/Field-Bugs-2026-10-16d.md`; Glade on Discord:
+"they kicked me out so I can't do any quests to recover ... remake my character or wait IRL weeks"). REP6 expels below
+-10, and nothing told the expelled member how to get back in. The roads were already open. A stranger may ask the
+hall's quest-giver for work, and each quest done pays the guild +5. Below 0, a standing comes back a point a week of the
+character's own time (REP4), and online across a log-off too. Online the Roll pays quests and the drift at most 15 a UTC
+day, and a chapter writ +2 beyond that. A stranger whose join the standing refuses is now told so, with the law's own
+numbers - and the guild skills where the join also wants them, and a hall a Crackdown shut: at the hall (the enhanced
+skin's line, where a member reads the next rank), on DFU's refusal of the join (the classic skin; the enhanced skin's
+hall already says it), and the quests line under the guild on the Standing page. Not for a member of the slot, nor the
+Thieves Guild and the Dark Brotherhood (joined by invitation). The law is unchanged; amends for gold at the hall and a
+faster guild drift are recorded for Mac there. AUDIT WAY-BACK (`01-Overview/audits/Audit-Way-Back.md`, Mac: "Audit
+this") read it cold: 38 findings and notes, the chapter writ, the log-off, the skills and the shut hall among them.
+
 ## What stays punishing
 
 A crime is still charged the moment the watch catches you, and stays charged if you get away - or die: an online death
@@ -229,7 +244,7 @@ faction's charges, Vagrancy's resting law, Roleplay Realism's squads.
 ## Pins
 
 `test/systems/rep1_watchstop.test.js` (7), `test/scenes/rep2_sentences.test.js` (8), `test/systems/rep3_banishment.test.js` (5),
-`test/systems/rep4_recovery.test.js` (5), `test/systems/rep5_notices.test.js` (4), `test/systems/guild/rep6_probation.test.js` (3).
+`test/systems/rep4_recovery.test.js` (5), `test/systems/rep5_notices.test.js` (4), `test/systems/guild/rep6_probation.test.js` (3); WAY-BACK's `test/systems/guild/fb1016d_wayback.test.js` (7), `tools/mutants/fb1016d_wayback.json` 24/24 dead (AUDIT WAY-BACK).
 `tools/mutants/rep{1..6}_*.json`: 64 records, 64 dead. AUDIT REP (`01-Overview/audits/Audit-REP.md`, 2026-09-30):
 `test/systems/auditrep.test.js` (8), `tools/mutants/auditrep.json` 19/19 dead; two pins moved (REP3's short purse, F4;
 audit39_guildstravel's F99, the court's banishment on the trusted calendar, F2). Fifteen older pin files moved with the law (each marked PIN

@@ -386,7 +386,8 @@ test('AUDIT CHAP5 C1/C2/C5/D2: the host\'s seams - the guild book asked again wh
   assert.match(world, /chapterOf: \(faction, region\) => chapterSheet\.chapterOf\(chapterFactionOf\(faction, townTalk\?\.factionDict \?\? null\) \?\? faction, region\),/);
   assert.match(world, /const pixelChapterHalls = new Map\(chapterSheet && dfLocation && locBlocks \? buildingSummaries\(/);
   const modes = src('src/scenes/worldModes.js');
-  assert.match(modes, /const shutBox = \(\) => \(chapterHallShut\(host\.chapterHere\?\.\(guild\.factionId\) \?\? null\) \? \{ rows: \[CHAPTER_HALL_SHUT_LINE\] \} : null\);\n\s+shutBox\(\);/);
+  // PIN MOVED (AUDIT WAY-BACK L1-3, Audit-Way-Back.md): the open's ask is kept, and the way back's words read its answer
+  assert.match(modes, /const shutBox = \(\) => \(chapterHallShut\(host\.chapterHere\?\.\(guild\.factionId\) \?\? null\) \? \{ rows: \[CHAPTER_HALL_SHUT_LINE\] \} : null\);\n\s+const shutAtOpen = !!shutBox\(\);/);
   assert.match(modes, /onService: \(\) => \{\n\s+const shut = shutBox\(\);   \/\/ AUDIT CHAP5 D2\n\s+if \(shut\) return shut;\n\s+const access = serviceAccess\(/);
   assert.match(modes, /\? \(\) => shutBox\(\) \?\? \(openReforge\(\) \? \{ dispatched: true \} : null\) : null,/);
   assert.match(modes, /\? \(\) => shutBox\(\) \?\? \(openLift\(\) \? \{ dispatched: true \} : null\) : null,/);

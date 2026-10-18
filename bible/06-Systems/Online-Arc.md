@@ -9555,6 +9555,14 @@ red deploy reads as a service that is not there.
   #947's `homes/decor -> 000` - the busiest reads, on a database that sheds load (Scale-Arc PRIMARY-TRIPS) - and
   failed deploys whose Worker had taken and whose every other call answered. A hang that did write is no false pass
   (a second first beat answers `playedS` above 0 and fails); a route that hangs on every ask still fails.
+  SMOKE-LOST (2026-10-18, the owner's screenshot of #1004's account deploy) departs from that "and fails": #1004's
+  first Renown report hung 15 s and was credited, its retry was answered, rightly, as that report again (`credited`
+  0, `repeat`, the track at 1 XP), and the smoke failed a deploy whose Worker had taken. So `ask` leaves
+  `<out>.lost` when a try went unanswered, cleared before its first, and the two calls that write before they are
+  read take, after a lost try, the answer the landed write gives its retry: the first beat a `playedS` no more than
+  seven asks' 140 seconds, the first report a repeat on a track holding its 1 XP. Never without a lost try, and
+  never after a 5xx alone (a batch that failed whole wrote nothing): a repeat on a first answer is still a failure.
+  Pinned and run by `test/server/smoke_lost.test.js` (4); `tools/mutants/smoke_lost.json` (8, all dead).
 
 Pinned: `test/systems/home2.test.js` (4) - the law, the plaque's fold executed, the door by source, the deploy; re-aimed by
 content in `test/server/home1.test.js` (House5, the Info-only offer) and `test/systems/worldhover.test.js` (the door cache).
@@ -13684,6 +13692,21 @@ forward side button), and the side-button plumbing it rides, which came with VOI
 - the world host keeping the side buttons from the browser's Back and Forward.
 
 `test/player/viewtoggle.test.js` pins all three.
+
+## PROX-VOICE reverted (2026-10-17, Mac: "Revert") - world215 again
+
+PROX-VOICE (#971: #967 and #871's LiveKit proximity and party voice, its security fixes, the relay's voice doors at
+world216) came out whole with its merge (`743bb111f5`) reverted. It had merged with nothing in the game starting voice
+(no host called `initVoiceNet`, no HUD or settings mounted) and no voice service or SFU running, so it shipped nothing
+a player could use; the merge's one effect on players was the relay's redeploy. Out with it:
+- the client (`net/voice/`), the voice service (`server-voice/`) and its deploy files (`deploy/`);
+- the relay's two secret-gated doors (`voiceDoor.js`, presence and party-of) and `voiceWire.js` in the bundle;
+- `livekit-client`, the voice refusals' L10N keys, and `bible/11-Multiplayer/Voice-Arc.md`.
+
+The relay is world215's bytes again, and `RELAY_VERSION` names world215. world216's row stays in
+`test/net/relayversion.test.js` as the record of bytes a relay may have carried, so the next relay is never world216.
+Bringing voice back is reverting this revert, in the same pull request as the slice that mounts it in the game, with a
+voice service and an SFU deployed to answer it, and the relay renumbered past whatever `main` holds then.
 
 ## WB8 (2026-09-28, Mac: "give him unique and different modifers on every 2 hour spawn") - world128 (world126 on its branch)
 

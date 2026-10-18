@@ -38,6 +38,14 @@
 // pyre's weight at my level by its rank, on hostile foes in reach and in sight. Owner-side, as the pyre is: a peer
 // fighting my revenant sees its marks only in my game (FEUD WIRE carries none), and its ward and its cry are my game's
 // alone (the wire's `rb` carries its blows' standing weight, never a cry's).
+//
+// RVN-STARS (Revenants.md section 44): a sworn one's Grave - `art` more weight on each of its gifts and strikes, `haste`
+// a share off their cooldowns (swornArtNumbers - the page's words read the same; never the first strike's wait, which is
+// no cooldown), and AWAKENED ART: one born without an art learns one of its family's pool, drawn on its id (taughtArt),
+// for as long as its sky holds the star - at SWORN_TAUGHT of a born art's weight. AUDIT RVN-STARS S7 (lane E, measured:
+// Awakened Art and the whole Grave lifted three companions' arts about five times over): a taught art is the lesser; the
+// side mends once in half a Mending's cooldown however many mend (SWORN_MEND.SIDE); a Siphon gives a quarter of what it
+// draws. Its hostile half never reads them - a hostile revenant has no oath.
 
 import { idStream, signatureFamily, SIG, pyreElement, pyreSpell } from './revenantFeud.js';
 import { makeBlow, setLiveBlow, shatterBlow, windupNear, inBlow, BLOW, BLOW_STALE, fitBlowToGround } from '../../ai/foeBlows.js';
@@ -47,6 +55,7 @@ import { revenantById, revenantEvent } from './revenant.js';
 import { healMine } from '../playerHeal.js';
 import { t } from '../textManager.js';   // L10N4: its words through the text core
 import { silenceBlocksCast } from '../mysticism.js';   // AUDIT RVN B2: a silenced revenant casts no art
+import { rvnStatsOf, rvnAwakened } from './revenantStars.js';   // RVN-STARS: its Grave's stars
 
 /** The arts. */
 export const ARTS = Object.freeze(['mending', 'warding', 'warcry', 'siphon', 'barrage', 'nova']);
@@ -80,10 +89,11 @@ export const ART_LAW = Object.freeze({
   NOVA: Object.freeze({ REACH: 3.8, WINDUP: 1.4, MULT: 1.2 }),
   COOLDOWN: Object.freeze([14, 20]),
   FIRST: Object.freeze([3, 6]),
-  SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 120 }),
+  SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 120, SIDE: 0.5 }),
+  SWORN_TAUGHT: 0.75,
   SWORN_WARD: Object.freeze({ BASE: 6, PER_RANK: 3, ROUNDS: 6, COOLDOWN: 90 }),
   SWORN_CRY: Object.freeze({ BASE: 4, PER_RANK: 2, ROUNDS: 6, COOLDOWN: 90 }),
-  SWORN_STRIKE: Object.freeze({ COOLDOWN: Object.freeze([16, 22]), SIPHON: 1.0, SIPHON_HEAL: 1 / 3, BARRAGE: 1.5, NOVA: 0.8, NOVA_REACH: 5, REACH: 12, RANK: Object.freeze([0.5, 0.1]) }),
+  SWORN_STRIKE: Object.freeze({ COOLDOWN: Object.freeze([16, 22]), SIPHON: 1.0, SIPHON_HEAL: 1 / 4, BARRAGE: 1.5, NOVA: 0.8, NOVA_REACH: 5, REACH: 12, RANK: Object.freeze([0.5, 0.1]) }),
 });
 /** Each art's colour on the ground - never the ember or the iron red a blow wears. */
 export const ART_COLORS = Object.freeze({
@@ -93,16 +103,38 @@ export const ART_COLORS = Object.freeze({
 /** The blow classes a ward takes less of (RVN2's - adaptBlowClass). */
 const WARD_CLASSES = Object.freeze(['blade', 'blunt', 'axe', 'h2h', 'arrow']);
 
+/** Its family's pool of arts (revenantFeud.js signatureFamily - the casters' for the rest). */
+const artPool = (mobileType) => ART_POOL[signatureFamily(mobileType) ?? 'caster'];
 /** ITS ART, drawn on its id: one in ARTS_CHANCE, from its family's pool; else null. */
 export function drawArt(id, mobileType) {
   if (typeof id !== 'string' || !id || !Number.isInteger(mobileType)) return null;
   const rolls = idStream(id, 'art');
   if (rolls() >= ARTS_CHANCE) return null;
-  const pool = ART_POOL[signatureFamily(mobileType) ?? 'caster'];
+  const pool = artPool(mobileType);
   return pool[Math.min(pool.length - 1, Math.floor(rolls() * pool.length))];
 }
-/** A record's art - derived, never stored. */
-export const artOf = (r) => drawArt(r?.id, r?.mobileType);
+/** RVN-STARS: THE ART AWAKENED in one born without - its family's pool, drawn on its id (its own stream, so the same on
+ *  every read); null for an unknown kind. */
+export function taughtArt(id, mobileType) {
+  if (typeof id !== 'string' || !id || !Number.isInteger(mobileType)) return null;
+  const pool = artPool(mobileType);
+  return pool[Math.min(pool.length - 1, Math.floor(idStream(id, 'art:taught')() * pool.length))];
+}
+/** A record's art - derived, never stored: the one it was born with, else (RVN-STARS) the one Awakened Art taught it. */
+export const artOf = (r) => drawArt(r?.id, r?.mobileType) ?? (rvnAwakened(r) ? taughtArt(r.id, r.mobileType) : null);
+/** RVN-STARS: A SWORN ONE'S ART IN NUMBERS, its rank's and its Grave's: Mending's share and cooldown, Ward's and War Cry's
+ *  points and cooldown, its strikes' weight (x the pyre's) and their cooldown's span - the steps and the page read these. */
+export function swornArtNumbers(r) {
+  const rank = Math.max(1, Math.min(5, r?.rank | 0)), st = rvnStatsOf(r), quick = 1 - st.haste;
+  const more = (1 + st.art) * (drawArt(r?.id, r?.mobileType) ? 1 : ART_LAW.SWORN_TAUGHT);   // AUDIT RVN-STARS S7: a taught art the lesser
+  const S = ART_LAW.SWORN_STRIKE;
+  return {
+    mendShare: (ART_LAW.SWORN_MEND.SHARE + ART_LAW.SWORN_MEND.PER_RANK * rank) * more, mendCooldown: ART_LAW.SWORN_MEND.COOLDOWN * quick,
+    wardPoints: Math.round((ART_LAW.SWORN_WARD.BASE + ART_LAW.SWORN_WARD.PER_RANK * rank) * more), wardCooldown: ART_LAW.SWORN_WARD.COOLDOWN * quick,
+    cryPoints: Math.round((ART_LAW.SWORN_CRY.BASE + ART_LAW.SWORN_CRY.PER_RANK * rank) * more), cryCooldown: ART_LAW.SWORN_CRY.COOLDOWN * quick,
+    weight: (S.RANK[0] + S.RANK[1] * rank) * more, strikeCooldown: [S.COOLDOWN[0] * quick, S.COOLDOWN[1] * quick],
+  };
+}
 /** The pyre's blast at `level`, its mean, x `mult` - the weight of a thrown art. */
 export const artMagnitude = (level, mult) => ((SIG.PYRE_BASE[0] + SIG.PYRE_BASE[1]) / 2 + SIG.PYRE_PER * Math.max(1, level | 0)) * mult;
 /** AUDIT RVN B3: A THROWN ART'S BLAST - the pyre's spell (revenantFeud.js pyreSpell: its element, at range, the save
@@ -121,11 +153,11 @@ export function artWords(r, { sworn = !!r?.sworn } = {}) {
   if (!art) return null;
   const n = ART_NAMES[art];
   if (sworn) {
-    const rank = Math.max(1, Math.min(5, r.rank | 0));
+    const A = swornArtNumbers(r);   // RVN-STARS: its rank's and its Grave's
     switch (art) {
-      case 'mending': return t('rvn.art.sworn.mending', 'Art: {n} - when you fall under {at} of your health it heals {share} of it (every {m} minutes).', { n, at: pct(ART_LAW.SWORN_MEND.AT), share: pct(ART_LAW.SWORN_MEND.SHARE + ART_LAW.SWORN_MEND.PER_RANK * rank), m: ART_LAW.SWORN_MEND.COOLDOWN / 60 });
-      case 'warding': return t('rvn.art.sworn.warding', 'Art: {n} - as it goes into a fight it shields you for {points} (every {s} seconds).', { n, points: ART_LAW.SWORN_WARD.BASE + ART_LAW.SWORN_WARD.PER_RANK * rank, s: ART_LAW.SWORN_WARD.COOLDOWN });
-      case 'warcry': return t('rvn.art.sworn.warcry', 'Art: {n} - as it goes into a fight your Strength rises by {points} (every {s} seconds).', { n, points: ART_LAW.SWORN_CRY.BASE + ART_LAW.SWORN_CRY.PER_RANK * rank, s: ART_LAW.SWORN_CRY.COOLDOWN });
+      case 'mending': return t('rvn.art.sworn.mendingSecs', 'Art: {n} - when you fall under {at} of your health it heals {share} of it (every {s} seconds).', { n, at: pct(ART_LAW.SWORN_MEND.AT), share: pct(A.mendShare), s: Math.round(A.mendCooldown) });   // AUDIT RVN-STARS S9: seconds, as the Ward's and the War Cry's - a minute and a half read as a minute
+      case 'warding': return t('rvn.art.sworn.warding', 'Art: {n} - as it goes into a fight it shields you for {points} (every {s} seconds).', { n, points: A.wardPoints, s: Math.round(A.wardCooldown) });
+      case 'warcry': return t('rvn.art.sworn.warcry', 'Art: {n} - as it goes into a fight your Strength rises by {points} (every {s} seconds).', { n, points: A.cryPoints, s: Math.round(A.cryCooldown) });
       case 'siphon': return t('rvn.art.sworn.siphonShare', 'Art: {n} - now and then it draws its foe\'s life and gives you {share} of it.', { n, share: pct(ART_LAW.SWORN_STRIKE.SIPHON_HEAL) });   // AUDIT RVN D13: its share, its constant's
       case 'barrage': return t('rvn.art.sworn.barrage', 'Art: {n} - now and then it looses a barrage on its foe.', { n });
       default: return t('rvn.art.sworn.nova', 'Art: {n} - now and then it strikes every foe about it.', { n });
@@ -372,13 +404,12 @@ export function swornArtStep(rec, r, door, { rolls = Math.random, say = null } =
   const tgt = aim?.entity && !aim.dead && aim.entity.health > 0 ? aim : null;
   const began = !!tgt && !s.fighting;
   s.fighting = !!tgt;
-  const rank = Math.max(1, Math.min(5, r.rank | 0));
+  const A = swornArtNumbers(r);   // RVN-STARS: its rank's and its Grave's
   if (art === 'warding' || art === 'warcry') {
     if (!began || now < s.ready) return null;
-    const W = art === 'warding' ? ART_LAW.SWORN_WARD : ART_LAW.SWORN_CRY;
-    const points = W.BASE + W.PER_RANK * rank;
-    door.castOnPlayer?.(art === 'warding' ? shieldBundle(points, W.ROUNDS) : mightBundle(points, W.ROUNDS));
-    s.ready = now + W.COOLDOWN;
+    const ward = art === 'warding';
+    door.castOnPlayer?.(ward ? shieldBundle(A.wardPoints, ART_LAW.SWORN_WARD.ROUNDS) : mightBundle(A.cryPoints, ART_LAW.SWORN_CRY.ROUNDS));
+    s.ready = now + (ward ? A.wardCooldown : A.cryCooldown);
     say?.(art === 'warding' ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given }) : t('rvn.art.sworn.roars', '{given} roars - your arm grows stronger.', { given: r.given }));
     return art;
   }
@@ -386,7 +417,7 @@ export function swornArtStep(rec, r, door, { rolls = Math.random, say = null } =
   if (began && s.ready < now) s.ready = now + U(ART_LAW.FIRST[0], ART_LAW.FIRST[1], rolls);
   if (now < s.ready) return null;
   const mine = new Set(door.foes?.() ?? []);
-  const lvl = door.player?.()?.level ?? 1, S = ART_LAW.SWORN_STRIKE, weight = S.RANK[0] + S.RANK[1] * rank;
+  const lvl = door.player?.()?.level ?? 1, S = ART_LAW.SWORN_STRIKE, weight = A.weight;
   const at = rec.ai?.feet;
   if (!at) return null;
   const sees = (x) => door.clear?.(at, x.ai.feet) !== false;
@@ -400,32 +431,37 @@ export function swornArtStep(rec, r, door, { rolls = Math.random, say = null } =
     door.hurtFoe?.(tgt, n);
     if (art === 'siphon') { const me = door.player?.(); if (me) healMine(me, n * S.SIPHON_HEAL); }
   }
-  s.ready = now + U(S.COOLDOWN[0], S.COOLDOWN[1], rolls);
+  s.ready = now + U(A.strikeCooldown[0], A.strikeCooldown[1], rolls);
   return art;
 }
 /** A foe a sworn one's art may strike: alive, standing somewhere, hostile, never itself nor an ally of mine. */
 const fair = (x, rec) => !!x?.ai?.feet && x !== rec && !x.dead && x.ai.isHostile !== false && x.entity?.team !== 'PlayerAlly';
+/** AUDIT RVN-STARS S7: when the side may mend me again - one Mending in SWORN_MEND.SIDE of a Mending's cooldown, however
+ *  many at my side mend. */
+let _sideMendReady = 0;
 /**
  * A SWORN ONE'S MENDING: a hurt that leaves me (`entity`, alive) under SWORN_MEND.AT of my health - the first sworn one at
- * my side whose art is Mending, whose body stands here (`standing(id)`) and whose own clock allows, heals me. `sworn` the
- * sworn at my side. Answers the record that mended, or null.
+ * my side whose art is Mending, whose body stands here (`standing(id)`) and whose own clock allows, heals me, and the side
+ * mends no more for SIDE of its cooldown. `sworn` the sworn at my side. Answers the record that mended, or null.
  */
 export function swornMendStep(entity, after, sworn, standing, { say = null } = {}) {
   if (!entity?.isPlayer || entity.peer || !(after > 0) || after >= (entity.maxHealth || 1) * ART_LAW.SWORN_MEND.AT) return null;
   const now = tacticsNow();
+  if (now < _sideMendReady) return null;
   for (const r of sworn ?? []) {
     if (artOf(r) !== 'mending' || !standing?.(r.id)) continue;
     const s = swornState(r.id);
     if (now < s.mendReady) continue;
-    const rank = Math.max(1, Math.min(5, r.rank | 0));
-    healMine(entity, (entity.maxHealth || 0) * (ART_LAW.SWORN_MEND.SHARE + ART_LAW.SWORN_MEND.PER_RANK * rank));
-    s.mendReady = now + ART_LAW.SWORN_MEND.COOLDOWN;
+    const A = swornArtNumbers(r);   // RVN-STARS: its rank's and its Grave's
+    healMine(entity, (entity.maxHealth || 0) * A.mendShare);
+    s.mendReady = now + A.mendCooldown;
+    _sideMendReady = now + A.mendCooldown * ART_LAW.SWORN_MEND.SIDE;
     say?.(t('rvn.art.sworn.mends', '{given} mends your wounds.', { given: r.given }));
     return r;
   }
   return null;
 }
 /** A sworn one's art clock forgotten (a load, a release) - or every one's. */
-export function forgetSwornArt(id = null) { if (id == null) _sworn.clear(); else _sworn.delete(id); }
+export function forgetSwornArt(id = null) { if (id == null) { _sworn.clear(); _sideMendReady = 0; } else _sworn.delete(id); }
 /** Tests only. */
-export function _resetArtsForTests() { _sworn.clear(); }
+export function _resetArtsForTests() { _sworn.clear(); _sideMendReady = 0; }

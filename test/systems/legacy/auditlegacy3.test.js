@@ -1834,7 +1834,8 @@ test('AUDIT LEGACY III O2/P1 (the world host, by source): a line the realm refus
 
 test('AUDIT LEGACY III U1/U2 (the pause window, by source - driven in Chromium): a held Enter or Space presses nothing (the Succession\'s own rule: Play as and Pass the mantle armed and fired on one held press); the keyboard comes into the window - a Tab from outside lands on its first control, and the window takes the focus as it mounts', () => {
   const src = rd('src/ui/pauseDoor.js');
-  assert.match(src, /host\.addEventListener\?\.\('keydown', \(e\) => \{\n    if \(e\.repeat && \(e\.key === 'Enter' \|\| e\.key === ' '\)\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); \}\n  \}, true\);/, 'U1');
+  // PIN MOVED (AUDIT PRIVATE-REPORT UI-10): never in a field - a held Space or Enter in the report form's words types
+  assert.match(src, /host\.addEventListener\?\.\('keydown', \(e\) => \{\n(?:    \/\/[^\n]*\n)*    if \(e\.repeat && \(e\.key === 'Enter' \|\| e\.key === ' '\) && !isTextEntryTarget\(e\.target\)\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); \}\n  \}, true\);/, 'U1');
   assert.match(src, /document\.addEventListener\?\.\('keydown', tabIn, true\);/, 'U2: the Tab from outside');
   assert.match(src, /const close = \(\) => \{\n    if \(fired\) return;\n    dropAscend\(\);[^\n]*\n    document\.removeEventListener\?\.\('keydown', tabIn, true\);/, 'U2: gone with the window');
   assert.match(src, /view = mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null \}\);\n      focusIn\(\);   \/\/ AUDIT LEGACY III U2/, 'U2: the focus taken as it mounts');

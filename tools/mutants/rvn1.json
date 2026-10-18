@@ -434,8 +434,8 @@
   {
     "name": "RVN1-sworn-loyalty-personality-unread",
     "file": "src/systems/revenant/revenant.js",
-    "old": "    companion: r.sworn && !r.defeated ? sanitizeCompanion(r.companion, personality) : null,",
-    "new": "    companion: r.sworn && !r.defeated ? sanitizeCompanion(r.companion) : null,",
+    "old": "sanitizeCompanion(r.companion, personality, rank) : null,",
+    "new": "sanitizeCompanion(r.companion, undefined, rank) : null,",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]

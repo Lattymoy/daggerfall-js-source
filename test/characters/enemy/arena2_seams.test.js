@@ -163,7 +163,7 @@ test('ARENA2 the dungeon\'s twin: the same floor, the same hook, the level and t
   assert.match(d, /if \(bout && !peer && foeDeps && foeDeps\.boutGate\(foe, foeDeps\.PLAYER_TARGET, true\) !== true\) \{ bout\.hooks\?\.intrude\?\.\(foe\); return; \}/);
   assert.match(d, /if \(fromPlayer && !peer && !bout\) renownFoeStruck\(foe\);/, 'no renown on the sand');
   assert.match(d, /e\.level \?\? effectiveLevel\(D\.playerEntity\)/, 'a fighter at its tier\'s level');
-  assert.match(d, /if \(!puppet && e\.level == null\) applyProgressionScalingTo\(entity, basics\);/, 'the ladder is a fixed mountain');
+  assert.match(d, /if \(!puppet && e\.level == null\) applyProgressionScalingTo\(entity, basics, \{ ally: !!e\.allied \}\);/, 'the ladder is a fixed mountain');   // PIN MOVED (BAL11): the seam is told an ally (the hero's threat stands on none)
   assert.match(d, /if \(bout\) \{ f\.entity\.bout = bout; f\.entity\.items = \[\]; f\._bout = true; return f; \}/, 'no loot, never the room\'s');
   assert.match(d, /hurtEntity\(playerEntity, dmg, opts\.playerSpare\?\.\(\) \?\? \{\}\);/);
   const x = rd('src/scenes/exteriorFoes.js');

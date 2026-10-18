@@ -92,6 +92,7 @@ import { seatRigInput, seatTopByte } from '../player/seatPose.js';   // WAGONS3:
 import { newRope, stepRope, tubeModel, tubeInto, tubeVertexCount, ROPE } from '../systems/wagon/wagonRopes.js';   // WAGONS3: the harness
 import { wagonArt, WAGON_ARCHIVE, wagonLookArt, isGlassRecord, LOOK_RECORDS, LOOK_RECORD_STRIDE, lookRecord, TEX as WAGON_TEX } from '../world/wagonArt.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the wagons' pictures in Daggerfall's colours
+import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones
 import { caravanRoomModel } from '../world/caravanRoomModel.js';   // WAGONS2: the caravan's room, seen through its windows
 import { readWagonLook, wagonLookOfCode, WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagon/wagonLooks.js';
 import { validWagonKind, wagonHitchOf, WAGON_KINDS, wagonHorsesOf } from '../systems/wagon/wagonKinds.js';
@@ -377,8 +378,12 @@ export function createHorseCartPool({
    *  glass (WAGONS2: the caravan's windows, outside and in - world/wagonArt.js isGlassRecord). DF-LOOK: grained and
    *  snapped to Daggerfall's palette, a paint's picture by its built record's seed (each paint the same grain). */
   function uploadWagonPicture(rec, pic) {
-    const looked = dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE));
-    renderer.uploadTexture(WAGON_ARCHIVE, rec, toColor32(looked), isGlassRecord(rec) ? { cutout: true } : { opaque: true });
+    const opts = isGlassRecord(rec) ? { cutout: true } : { opaque: true };
+    // STUDIO1: the studio's picture where an artist drew one (systems/studioArt/studioArt.js), worn as drawn
+    wearPainted(WAGON_ARCHIVE, rec, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))), (c32, { late }) => {
+      if (late) renderer.releaseTexture?.(WAGON_ARCHIVE, rec);
+      renderer.uploadTexture(WAGON_ARCHIVE, rec, c32, opts);
+    });
   }
   // ── WAGONS2: a paint's pictures, painted and uploaded the first time a wagon wears it, and the remap it is drawn by
   const _lookUp = new Set();   // `${list}:${i}` painted and uploaded

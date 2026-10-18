@@ -34,6 +34,7 @@ import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { smallerDungeonsStateNow } from '../../world/smallerDungeons.js';   // AUDIT 28 W4: Quest.cs:284's stamp
 import { askAgain } from './noAsksAgain.js';   // NO-ASKS-AGAIN (FIELD BUGS 2026-10-13e): a No that leads nowhere asks again
 import { isInstanceEpoch } from '../../net/instanceRoom.js';   // INSTANCES: a quest's instance epoch, its one spelling
+import { QUEST_SUCCESS_REP, QUEST_FAILURE_REP } from './questRepute.js';   // WAY-BACK: Quest.cs:36-37's one home, a leaf the guild hall reads
 
 /** ShowMessagePopup's chunker (Quest.cs:777, 793-819): a message
  *  longer than 22 LINES becomes several click-through boxes. A line
@@ -67,8 +68,7 @@ export function chunkMessageTokens(tokens, chunkSize = 22) {
   return chunks;
 }
 
-export const QUEST_SUCCESS_REP = 5;     // Quest.cs:36
-export const QUEST_FAILURE_REP = -2;    // Quest.cs:37
+export { QUEST_SUCCESS_REP, QUEST_FAILURE_REP };   // Quest.cs:36-37, from their leaf (questRepute.js)
 
 /** QuestMachine.cs:260-272 - the fixed quest message ids. Defined
  *  here (its only consumer is the tombstone/offer flow) and

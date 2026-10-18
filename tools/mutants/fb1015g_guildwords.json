@@ -1047,8 +1047,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-rank-bars",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "  const { high, low } = numHighLowSkills(entity, guild, 0);",
-    "new": "  const { high, low } = numHighLowSkills(entity, guild, m.rank);",
+    "old": "  const { high, low } = numHighLowSkills(entity, guild, 0);\n  const skillsShort = high < 1 || high + low < 2;",
+    "new": "  const { high, low } = numHighLowSkills(entity, guild, m.rank);\n  const skillsShort = high < 1 || high + low < 2;",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

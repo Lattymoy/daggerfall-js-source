@@ -151,6 +151,8 @@ import { EG_ROLE } from '../../net/eliteGates/egBodies.js';
 import { EG_OBJ } from '../../net/eliteGates/egLords.js';
 import { EG_ANNALS } from '../../net/eliteGates/egAnnals.js';
 import { EG_ENGINES, EG_ENGINE_REACH_M } from '../../net/eliteGates/egFragLaw.js';
+import { EG_STONE_REACH_M } from '../../systems/eliteGates/spireOrrery.js';   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): the room's reach for a turn
+import { SD_HALL_TEXT } from '../superDungeon/sdHall.js';   // ORRERY-SIGHT: "Stand closer to the stone.", the Hour's own
 import { egClockNew, egClockDue, egClockHeard, egClockOffset, egClockHalfRtt } from '../../net/eliteGates/egClock.js';   // EG-H1: the shared clock, corrected
 import { bodySayer } from '../../net/bossBody.js';   // EG-H1: my body, in my own word
 import { egRideOf, egRideAt } from '../../net/eliteGates/egFair.js';   // EG-H1: RIDDEN POSES
@@ -2267,7 +2269,8 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
       const br = here ? (F?.bridges ?? []).filter((q) => q.h === E.h).map((q) => ({ g: q.g, from: q.at, until: q.until })) : [];   // AUDIT EG III: the hall's Spirebridges
       if (!here || !F || F.h !== E.h) return (objsMemo.v = { h: E.h | 0, objs: [], lit: [], br });
       return (objsMemo.v = { h: E.h | 0, objs: F.bodies.filter((b) => b.role === EG_ROLE.obj).map((b) => ({ t: OBJ_NAME[b.k] ?? '', i: b.i, x: b.x, z: b.z, st: b.st ?? 0, stAt: b.stAt ?? 0, pt: b.pt ?? 0 })),
-        lit: (F.zones ?? []).filter((z) => z.kind === 'haven').map((z) => ({ s: z.s, from: z.from, until: z.until })), br });
+        lit: (F.zones ?? []).filter((z) => z.kind === 'haven').map((z) => ({ s: z.s, from: z.from, until: z.until })), br,
+        orr: F.pg?.obj === 'orrery' && Array.isArray(F.pg.st) ? F.pg.st : null });   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's stones' hours, the room's word
     },
     /** A press on a span's own target (systems/eliteGates/spireKit.js spireAct): an Orrery stone's handle (`pz` - a turn forward or
      *  back) or an engine (`use`), in the hall I stand in. */
@@ -2275,7 +2278,14 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
       const E = link.state(), o = online();
       if (!inSpire()) return false;
       const st = /^egstone:(\d+):(\d):([fb])$/.exec(key ?? '');
-      if (st) { if (Number(st[1]) !== E.h || E.sg !== 'trial') { say('The Orrery is still.'); return true; } return !!o?.sendEg?.('pz', { i: Number(st[2]), a: st[3] === 'f' ? 1 : -1 }); }
+      if (st) {
+        if (Number(st[1]) !== E.h || E.sg !== 'trial') { say('The Orrery is still.'); return true; }
+        // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): the room takes a turn only from within EG_STONE_REACH_M of the stone, in plan,
+        // and the ray offers its handle from past that - a press from there went and was dropped without a word
+        const at = standing(), spec = at ? egHallOf(E.seed, E.h, E.geo ?? 0) : null, q = spec?.spots?.stone?.[Number(st[2])];
+        if (q && Math.hypot(q.x - egLocalX(spec, at.sx), q.z - at.z) > EG_STONE_REACH_M) { say(SD_HALL_TEXT.closer); return true; }
+        return !!o?.sendEg?.('pz', { i: Number(st[2]), a: st[3] === 'f' ? 1 : -1 });
+      }
       const en = /^egengine:(\d+):(\d+)$/.exec(key ?? '');
       if (en) { if (Number(en[1]) !== E.h || E.sg !== 'trial') { say('The engine is cold.'); return true; } const ok = !!o?.sendEg?.('use', { i: Number(en[2]) }); if (ok) mid('You work the engine.'); return ok; }
       return false;
