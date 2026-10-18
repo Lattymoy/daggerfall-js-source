@@ -119,8 +119,8 @@
   {
     "name": "FORAGE3-14-the-house-container-raises-nothing",
     "file": "src/scenes/worldModes.js",
-    "old": "              raiseContainerLootSpawned({ containerType: LOOT_CONTAINER_TYPES.HouseContainers, items: c.items,",
-    "new": "              ({ containerType: LOOT_CONTAINER_TYPES.HouseContainers, items: c.items,",
+    "old": "              raiseContainerLootSpawned({ containerType: LOOT_CONTAINER_TYPES.HouseContainers, items: rolled,",
+    "new": "              ({ containerType: LOOT_CONTAINER_TYPES.HouseContainers, items: rolled,",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]

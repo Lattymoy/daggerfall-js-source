@@ -182,12 +182,20 @@ test('U56 applyTransfer: the split leaves a remainder, the whole move keeps its 
   assert.equal(to2.length, 1);
   assert.equal(to2[0].stackCount, 5);
 
-  // and a whole move of an item that is NOT in the source list adds
-  // without eating the list's last entry (Array.splice(-1, 1) does)
+  // and a whole move of an item that is NOT in the source list never eats
+  // the list's last entry (Array.splice(-1, 1) does)
   const from3 = [book(1)];
   const keep = from3[0];
-  applyTransfer(book(3), { amount: 3 }, from3, []);
+  const to3 = [];
+  applyTransfer(book(3), { amount: 3 }, from3, to3);
   assert.deepEqual(from3, [keep], 'splice(-1, 1) ate the wrong item');
+  // PIN MOVED (OUTDOOR-LOOT, DESIGN 3.9 / T14): ...and moves nothing at all - a row its source no longer holds (a piece
+  // lifted out of the pack while its claim stands, a container emptied under an open window) landed a COPY here before
+  assert.deepEqual(to3, [], 'a stale row put a copy of a piece its source did not hold into the destination');
+  const stale = book(5), to4 = [];
+  assert.equal(applyTransfer(stale, { amount: 2 }, [], to4), null, 'a split of a stack its source does not hold answers no arrival');
+  assert.deepEqual(to4, [], 'and mints no half out of nothing');
+  assert.equal(stale.stackCount, 5, 'nor spends the stack it was asked of');
 });
 
 // ROAD-Ar R5. DFU has no partial transfer that skips SplitStack:

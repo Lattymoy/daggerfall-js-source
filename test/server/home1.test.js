@@ -7,6 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT: the host WHOLE
 import { DatabaseSync } from 'node:sqlite';
 import worker from '../../server-account/src/index.js';
 import { ROUTES, OPEN_ROUTES } from '../../server-account/src/service.js';
@@ -445,7 +446,7 @@ test('HOME1 the bank online: Buy House answers that a home is bought at its own 
 });
 
 test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall\'s lock ladder and shuts it by no pick, bash or spell; Info at my own door is my menu and at a house for sale its offer, No going on to the door; the visit latches its home once, committed with the building and cleared at both teardowns; my home keeps its own scene, its bed and its storage, a visitor\'s cupboard is shut, and a home has no residents; its room is kept loot-free; the doors name it; the world builds the registry online alone, keys a door by its own town, asks a town on arrival, and no quest picks a home', () => {
-  const m = src('src/scenes/worldModes.js');
+  const m = hostText('src/scenes/worldModes.js');   // PIN MOVED (HOST-SPLIT): the host WHOLE
   const door = m.slice(m.indexOf('async function activateStaticDoor('));
   const gate = door.indexOf('const door = homeDoorFor(bd, home);');
   assert.ok(gate > 0 && gate < door.indexOf('const unlocked = homeOpen || resolveBuildingUnlocked(bd);'), 'the home answers first');
@@ -464,7 +465,8 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   assert.match(m, /if \(c && interiorHome && !interiorHome\.own\) \{ say\(homeBelongsLine\(interiorHome\)\); return true; \}/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA P9): the deed read where the building stands - never an isle town's (houseOwnedAt)
   assert.match(m, /isHouseOwned: \(key\) => home !== null \|\| houseOwnedAt\(/, 'any home has no residents');
-  assert.match(m, /if \(!s\?\.locationKey \|\| !canon \|\| !interiorCtx \|\| s\.home\) return false;/, 'no claim from a home\'s cupboard');
+  assert.match(src('src/world/interior/interiorShared.js'), /if \(!bag\?\.locationKey \|\| !canon \|\| !ctx \|\| bag\.home\) return false;/, 'no claim from a home\'s cupboard');   // PIN MOVED (OUTDOOR-LOOT): the publish stands in world/interior/interiorShared.js (HOST-SPLIT moved it out of createWorldModes)
+  assert.match(src('src/world/interior/interiorShared.js'), /if \(net && !bag\.owned && !bag\.home && bag\.locationKey\) bag\.room = createInteriorRoomLoot\(net, bag\);/, 'and a home keeps no room: the cupboards\' room law is minted for no home, no owned house and no ship');
   assert.match(m, /\+ \(!_intShared\.home && Array\.isArray\(data\.l\) \? applyInteriorLoot\(/, 'no peer\'s word on one');
   assert.match(m, /addPermanentScene\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);/, 'a bought home\'s scene is kept');
   assert.match(m, /removePermanentScene\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);/, 'a sold one\'s is not');

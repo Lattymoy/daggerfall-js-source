@@ -124,7 +124,10 @@ test('MAC-E: takeCorpseLoot is the TAKE now, and the online grant is its one cal
   assert.deepEqual(player.items.map((i) => i.name), ['Longsword']);
   assert.deepEqual(said, ['You take 2 items.']);
   // ...and it is reached from exactly one place.
-  const ex = rd('src/scenes/exteriorFoes.js');
+  // PIN MOVED (OUTDOOR-LOOT): the legacy grant's landing is the body block's (scenes/bodyLootHost.js legacyGrant) - an older owner's
+  // pile, handed over, which the pool no longer calls from itself
+  assert.equal([...rd('src/scenes/exteriorFoes.js').matchAll(/takeCorpseLoot\(/g)].length, 0, 'the pool itself takes nothing from a grant');
+  const ex = rd('src/scenes/bodyLootHost.js');
   const calls = [...ex.matchAll(/takeCorpseLoot\(/g)];
   assert.equal(calls.length, 1, 'one caller');
   const line = ex.split('\n').find((l) => l.includes('takeCorpseLoot('));

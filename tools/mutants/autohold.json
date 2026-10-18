@@ -228,8 +228,8 @@
   {
     "name": "AUTOHOLD-the-memory-unhanded",
     "file": "src/world/interior/interiorShared.js",
-    "old": "applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried });",
-    "new": "applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today });",
+    "old": "applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
+    "new": "applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, room, from: null });",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "AUTOHOLD-the-wire-word-unhanded",
     "file": "src/scenes/worldModes.js",
-    "old": ", unreadable: _intShared.unreadable, carried: carriedPieces(playerEntity) }) : 0);",
-    "new": ", unreadable: _intShared.unreadable }) : 0);",
+    "old": ", from: id, today: stockedToday(), carried: carriedPieces(playerEntity) }) : 0);",
+    "new": ", from: id, today: stockedToday() }) : 0);",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -609,9 +609,9 @@
   },
   {
     "name": "AUTOHOLD-AUDIT-the-grant-lands-a-carried-piece",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      const grant = notCarried(peerHanded(validLootList(data.grant)));",
-    "new": "      const grant = peerHanded(validLootList(data.grant));",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    const grant = notCarried(peerHanded(validLootList(data.grant)));",
+    "new": "    const grant = peerHanded(validLootList(data.grant));",
     "tests": [
       "test/server/autohold.test.js"
     ]

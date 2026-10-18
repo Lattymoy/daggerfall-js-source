@@ -70,3 +70,25 @@ test('CONTAINER-PEEK createInteriorPeek: built once, it reads the room\'s word o
   assert.deepEqual(peek('container:0'), [], 'each glance reads the room as it is now');
   assert.ok(read.includes('owned') && read.includes('shut') && read.includes('today'));
 });
+
+test('OUTDOOR-LOOT CONTAINER-PEEK (DESIGN 6.4): an UNBORN cupboard - one the room has not spoken about and this client has not opened - is a name, whatever list it holds (a roll that is no one\'s word); a born one, the player\'s own storage and a placed chest list as they did', () => {
+  const stocked = [chest([ruby], 9)];
+  assert.equal(containerPreviewItems('container:0', stocked, { today: 9, unborn: true }), null);
+  assert.deepEqual(containerPreviewItems('container:0', stocked, { today: 9, unborn: false }), [ruby]);
+  assert.deepEqual(containerPreviewItems('container:0', stocked, { today: 9 }), [ruby], 'no word on it: as it was');
+  let unborn = true;
+  const asked = [];
+  const mount = (owned) => createInteriorPeek({
+    containers: () => stocked, decor: () => ({ pieceOf: () => ({ storage: true }), itemsOf: () => [ruby] }),
+    owned: () => owned, shut: () => false, hall: () => false, today: () => 9, unborn: (key) => { asked.push(key); return unborn; },
+  });
+  const peek = mount(false);
+  assert.equal(peek('container:0'), null, 'unborn: the name alone');
+  unborn = false;
+  assert.deepEqual(peek('container:0'), [ruby], 'born: the room\'s one list');
+  unborn = true;
+  assert.deepEqual(mount(true)('container:0'), [ruby], 'the player\'s own storage is never the room\'s to be unborn');
+  assert.deepEqual(peek('decor:bin'), [ruby], 'a placed chest is not a cupboard');
+  assert.equal(peek('loot:0'), null);
+  assert.ok(asked.every((k) => k.startsWith('container:') || k.startsWith('decor:')), 'a pile and a body never ask');
+});

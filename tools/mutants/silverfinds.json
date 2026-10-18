@@ -808,7 +808,7 @@
   },
   {
     "name": "SILVER-FINDS-peer-body-unasked",
-    "file": "src/scenes/exteriorFoes.js",
+    "file": "src/scenes/bodyLootHost.js",
     "old": "      if (n > 0 && !arrows) silverFindAt('corpse', f);",
     "new": "",
     "why": "a peer's body never holds silver",

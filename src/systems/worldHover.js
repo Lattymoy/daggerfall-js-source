@@ -266,6 +266,16 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
   if (keyPreviews(key) && !keyItemises(key)) return resolvePreview(key, hit, name, contents);
   if (keyItemises(key)) {
     const named = name?.(key, hit) ?? null;
+    // OUTDOOR-LOOT (the report: "I can still click on an 'Empty' body and wipe out loot for a party member"): A LIST THE
+    // READER HAS NOT HEARD IS NOT AN EMPTY ONE. A namer that says `unlisted` is a container this reader can name and cannot
+    // read - another player's foe's body from an older build (whose list never rode), or one holding a piece from a newer
+    // one - and the contents door answers null for it, which the draw below reads as "nothing in it". It draws the name
+    // alone, as resolvePreview keeps an unrolled cupboard a name; and a name is no list, so quick loot lights no row on it.
+    if (named?.title && named.unlisted) {
+      const f = frame(key, 'name', named.title, named.subs ?? []);
+      if (typeof named.tone === 'string' && named.tone) f.tone = named.tone;
+      return f;
+    }
     // AUDIT-WH M5: AN ITEMISED KEY WITH NO WORD DRAWS NOTHING EITHER.
     // This used to fall back to the literal 'Loot' - a word World
     // Tooltips does not contain - and that fallback did not fail

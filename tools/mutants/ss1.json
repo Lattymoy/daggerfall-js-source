@@ -257,9 +257,9 @@
   },
   {
     "name": "SS3-a-peers-grant-lands-a-bound-piece",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      const grant = notCarried(peerHanded(validLootList(data.grant)));",
-    "new": "      const grant = notCarried(validLootList(data.grant));",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    const grant = notCarried(peerHanded(validLootList(data.grant)));",
+    "new": "    const grant = notCarried(validLootList(data.grant));",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

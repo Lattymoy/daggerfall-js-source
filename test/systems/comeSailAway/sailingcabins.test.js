@@ -226,6 +226,7 @@ test('worldModes exit caches the cabin, tears down the room, and lands at deck h
     say: (s) => actions.push(s), exteriorLanding: () => assert.fail('cabin must return through its boat'), exitReturn: null,
     player: { pos: [0, 0, 0], spawn: (...p) => actions.push(p) }, cam: { yaw: 0 },
     unleveledLootPreTransition: noop, cacheInteriorScene: () => actions.push('cache'), teardownQuestFlats: noop,
+    interiorLootLeave: noop,   // PIN MOVED (OUTDOOR-LOOT D-1): the building's cupboards hear of the leave ahead of the bag's drop
     interiorCtx: { destroy: () => actions.push('destroy') }, _intShared: null, interiorFoes: null, interiorGuards: null,
     interiorDropped: { restorePiles: noop }, interiorHitEffects: { clear: noop }, interiorBloodMarks: { clear: noop },
     interiorCamps: { destroyAll: noop }, interiorHearths: [], interiorBuilding: {}, interiorHome: null, interiorSeatHall: null,

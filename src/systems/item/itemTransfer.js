@@ -477,8 +477,20 @@ export function clearLightSourceOnLeave(item, entity, fromLocal) {
  * split taken off theirs, a stack one put back merged into - so the theft's basket reads what the mark wrote (AUDIT S1:
  * every take was marked and every put cleared, so the player's own piece through a stranger's cupboard came out
  * stolen). Coin carries no mark: the gold arm spends it into the counter first.
+ *
+ * OUTDOOR-LOOT (DESIGN 3.9, T14 - the doc of the dungeon's own latent class): A ROW ITS SOURCE NO LONGER HOLDS MOVES
+ * NOTHING. A window draws its rows from lists that change under it - a piece LIFTED out of the pack while its claim stands
+ * (systems/loot/claimLedger.js; the pack panel repaints on its own clock), a container another player emptied first - and a
+ * click on such a row planned a move of a piece that was not there and landed a COPY: the source's splice found nothing
+ * and the destination took the piece anyway, a coin row was spent into the purse the same, and a split of a stack its
+ * source did not hold minted its half out of nothing. The tests plan and then apply, so the door every screen's transfer
+ * ends at is where it is refused: answered null, no arrival - the gold arm's own answer, which every caller reads as
+ * nothing to follow (LOOT-BULK's bulkMove, the quick door and the trade windows already ask `from.includes(item)`). Every
+ * caller in src/ hands the list the piece is in (swept: the windows' own, quick loot, Physical Items, the naval plunder's
+ * one-piece source, a decor take).
  */
 export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false, toPlayer = false, rolls = Math.random, stolenFrom = null, returnTo = null } = {}) {
+  if (Array.isArray(from) && !from.includes(item)) return null;
   clearLightSourceOnLeave(item, entity, fromLocal);
   if (toPlayer && isGoldPieces(item)) {
     const coin = _splitOff(item, plan, from, rolls);

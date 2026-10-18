@@ -364,8 +364,8 @@
   {
     "name": "HOME1-a-homes-memory-names-its-cupboards",
     "file": "src/world/interior/interiorShared.js",
-    "old": "loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig),",
-    "new": "loot: interiorLootRecords(ctx, [...seen], tooBig),",
+    "old": "loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }),",
+    "new": "loot: interiorLootRecords(ctx, [...seen], tooBig, { room }),",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -376,8 +376,8 @@
     "name": "HOME1-a-peers-word-lands-on-the-chest",
     "file": "src/world/interior/interiorShared.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - the memory's landing hands on `carried`",
-    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried });",
-    "new": "  applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried });",
+    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
+    "new": "  applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -387,8 +387,8 @@
   {
     "name": "HOME1-a-refused-act-names-a-cupboard",
     "file": "src/world/interior/interiorShared.js",
-    "old": "const l = home ? [] : interiorLootRecords(ctx, keys, tooBig);",
-    "new": "const l = interiorLootRecords(ctx, keys, tooBig);",
+    "old": "const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room });",
+    "new": "const l = interiorLootRecords(ctx, keys, tooBig, { room });",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -452,8 +452,8 @@
   {
     "name": "HOME1-the-room-bag-forgets-home",
     "file": "src/scenes/worldModes.js",
-    "old": "{ owned, home: !!interiorHome });",
-    "new": "{ owned });",
+    "old": "{ owned, home: !!interiorHome, net:",
+    "new": "{ owned, net:",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",

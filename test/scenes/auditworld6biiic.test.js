@@ -64,7 +64,7 @@ test('AUDIT WORLD6b-iii(c) A1/C7/A5/A2: the owner answers a take from a peer the
   assert.equal(rats.filter((r) => r.entity.items.length === 1).length, 3, 'and the unanswered bodies keep their piles');
 });
 
-test('AUDIT WORLD6b-iii(c) A3/C2, A4/C10: a refused projection is not an empty grant - the unprojectable item is dropped and the rest goes; a pile past LOOT_LIST_MAX goes in parts; one item larger than a frame is dropped and the rest reachable; the pile is emptied of what WENT', async () => {
+test('AUDIT WORLD6b-iii(c) A3/C2, A4/C10: a refused projection is not an empty grant - the unprojectable item is no place and the rest goes; a pile past LOOT_LIST_MAX goes in parts; one item larger than a frame is no place and the rest reachable; the pile is emptied of what WENT (OUTDOOR-LOOT: and what never rides STAYS the owner\'s - nothing is destroyed)', async () => {
   const bobE = playerEntity(); const bob = poolFor(bobE, []); const bobHits = [];
   bob.setNet(netFor('bob-0002', bobHits, [{ id: 'mac-0001', feet: [10, 0, 10], height: 1.8 }]));
   const clock = { t: 0 }; bob.setNet({ ...netFor('bob-0002', bobHits, [{ id: 'mac-0001', feet: [10, 0, 10], height: 1.8 }], clock) });
@@ -73,9 +73,11 @@ test('AUDIT WORLD6b-iii(c) A3/C2, A4/C10: a refused projection is not an empty g
   rat.entity.items = [one(), { templateIndex: 999999, stackCount: 1 }, one()];
   bob.damageFoe(rat, 9999, [10, 0, 10]);
   bob.applyHit('mac-0001', take(rat.seq));
-  assert.equal(bobHits.at(-1).grant.length, 1, 'the first good item went'); assert.equal(rat.entity.items.length, 2, 'A3: the pile is not destroyed');
+  // PIN MOVED (OUTDOOR-LOOT, DESIGN 8.3): the unmintable item is no PLACE (it never rides) - both good items go at once, and the
+  // unmintable one stays on the body, its owner's: it was dropped here (it could never be granted), and nothing is dropped now
+  assert.equal(bobHits.at(-1).grant.length, 2, 'both good items went - the unmintable one is no place'); assert.equal(rat.entity.items.length, 1, 'A3: the pile is not destroyed - the unmintable one stays on the body');
   clock.t += 1000; bob.applyHit('mac-0001', take(rat.seq));
-  assert.equal(bobHits.at(-1).grant.length, 1, 'the second good item went'); assert.equal(rat.entity.items.length, 0, 'and the unmintable one is gone with it (it could never be granted)');
+  assert.equal(bobHits.at(-1).grant.length, 0, 'asked again, nothing is on offer'); assert.equal(rat.entity.items.length, 1, 'and the unmintable one is still the owner\'s (nothing is dropped any more: it was never the taker\'s to be handed)');
   // past LOOT_LIST_MAX
   const rat2 = await bob.spawnFoe(0, [12, 0, 12], { feetGiven: true });
   rat2.entity.items = Array.from({ length: LOOT_LIST_MAX + 6 }, () => one()); delete rat2.entity.lootCap;   // FOE-CAP: a body with no cap (a boss's) - a plain rat's would carry three
@@ -91,11 +93,11 @@ test('AUDIT WORLD6b-iii(c) A3/C2, A4/C10: a refused projection is not an empty g
   rat3.entity.items = [fat, one()];
   bob.damageFoe(rat3, 9999, [10, 0, 10]);
   clock.t += 1000; bob.applyHit('mac-0001', take(rat3.seq));
-  assert.equal(bobHits.at(-1).grant.length, 1, 'A4/C10: the fat item dropped, the good one granted'); assert.equal(rat3.entity.items.length, 0);
+  assert.equal(bobHits.at(-1).grant.length, 1, 'A4/C10: the fat item is no place, the good one granted'); assert.equal(rat3.entity.items.length, 1, 'and the fat item stays on the body, its owner\'s (PIN MOVED, OUTDOOR-LOOT: it was dropped here)');
   assert.ok(JSON.stringify({ t: 'hit', data: bobHits.at(-1) }).length <= 12 * 1024);
 });
 
-test('AUDIT WORLD6b-iii(c) B1/C1, B8, A7: a grant lands for a body I ASKED for, inside the window, once - an unasked grant is refused whole (no puppet; a puppet not asked), a second grant for one ask is refused, an ask past the window is refused; a stale record older than the grant that closed the body re-opens nothing, a newer one does', async () => {
+test('AUDIT WORLD6b-iii(c) B1/C1, B8, A7: a grant lands for a body I ASKED for, once per ask - an unasked grant is refused whole (no puppet; a puppet not asked), a second grant for one ask is refused, an ask past B8\'s window still lands (OUTDOOR-LOOT: the owner has already taken the pieces off the body); a stale record older than the grant that closed the body re-opens nothing, a newer one does', async () => {
   const macE = playerEntity(); const macSaid = []; const mac = poolFor(macE, macSaid); const macHits = []; const clock = { t: 0 };
   mac.setNet(netFor('mac-0001', macHits, [{ id: 'bob-0002', feet: [30, 0, 30], height: 1.8 }], clock));
   const g = () => ({ to: 'mac-0001', k: 'world:3,12', i: 5, grant: [one()] });
@@ -111,11 +113,15 @@ test('AUDIT WORLD6b-iii(c) B1/C1, B8, A7: a grant lands for a body I ASKED for, 
   mac.takeLoot(key, (l) => macSaid.push(l)); assert.equal(macHits.length, 1, 'the ask');
   mac.takeLoot(key, (l) => macSaid.push(l)); assert.equal(macHits.length, 1, 'B8: one ask in flight - a second click sends nothing');
   clock.t = 4000;
-  assert.equal(mac.applyHit('bob-0002', g()), false, 'B1: a grant past the window is refused'); assert.equal(landed(macE), 0);
   mac.takeLoot(key, (l) => macSaid.push(l)); assert.equal(macHits.length, 2, 'asked again after the window');
+  // PIN MOVED (OUTDOOR-LOOT, DESIGN 8.3): "B1: a grant past the window is refused" - and the owner, who had taken the pieces off the body,
+  // never heard: they were destroyed. The ask is the claims ledger's now, counted, and lands a grant at any lateness inside
+  // LEGACY_ASK_KEEP_MS: this grant answers the FIRST ask, 4 s late; the next the second
+  assert.equal(mac.applyHit('bob-0002', g()), true, 'B1 (moved): a grant past the window lands - it answers an ask'); assert.equal(landed(macE), 1); assert.equal(macSaid.at(-1), 'You take 1 item.');
   clock.t = 5000;
-  assert.equal(mac.applyHit('bob-0002', g()), true, 'inside it: lands'); assert.equal(landed(macE), 1); assert.equal(macSaid.at(-1), 'You take 1 item.');
-  assert.equal(mac.applyHit('bob-0002', g()), false, 'B8: the ask is spent - a second grant is refused'); assert.equal(landed(macE), 1);
+  assert.equal(mac.applyHit('bob-0002', g()), true, 'and the second ask\'s grant lands: one landing per ask'); assert.equal(macSaid.at(-1), 'You take 1 item.');
+  const held = JSON.stringify([macE.items, macE.goldPieces]);
+  assert.equal(mac.applyHit('bob-0002', g()), false, 'B8: both asks are spent - a third grant is refused'); assert.equal(JSON.stringify([macE.items, macE.goldPieces]), held, 'and lands nothing');
   // A7: the close and the stale record
   mac.applyFoes('bob-0002', { n: 3, k: 'world:3,12', full: 1, f: [rec({ d: 1, h: 0, o: 1 })] });   // the owner's word still says one (a frame in flight)
   assert.equal(pup._pup.o, 1); assert.notEqual(pup.corpseDisabled, true);
@@ -185,10 +191,10 @@ test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYT
 
 test('AUDIT WORLD6b-iii(c) by source: the dungeon\'s record clamps the overshoot too (C8); the rare-drop chime rings over a peer\'s body (B10); a live foe with no number streams no health (C9); the records', () => {
   assert.match(rd('src/scenes/dungeonContext.js'), /h: Number\.isFinite\(f\.entity\.health\) \? Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, f\.entity\.health\)\) : 0, d: f\.dead \? 1 : 0,/, 'C8');
-  const x = rd('src/scenes/exteriorFoes.js');
-  assert.match(x, /if \(n > 0\) playRareDrop\(audio, f\.corpseMarker\?\.pos \?\? f\.ai\?\.feet \?\? null, grant\);/, 'B10');
+  const x = rd('src/scenes/exteriorFoes.js'), b = rd('src/scenes/bodyLootHost.js');
+  assert.match(b, /if \(n > 0\) playRareDrop\(audio, f\.corpseMarker\?\.pos \?\? f\.ai\?\.feet \?\? null, grant\);/, 'B10');   // PIN MOVED (OUTDOOR-LOOT): the grant's landing is the body block's (scenes/bodyLootHost.js), the line as it was
   assert.match(x, /\.\.\.\(Number\.isFinite\(f\.entity\.health\) \? \{ h: Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, f\.entity\.health\)\) \} : \{\}\)/, 'C9');
-  assert.match(x, /const asker = peerCandidate\(from\);/, 'A1: the asker read off the hunt\'s roster');
+  assert.match(b, /const asker = peerCandidate\(from\);/, 'A1: the asker read off the hunt\'s roster');   // PIN MOVED (OUTDOOR-LOOT): the owner's take arm is the block's
   assert.match(rd('server/src/index.js'), /const bytes = byteGate\(tm\.hbytes \?\? null, now, out\.length, HIT_ROOM_BYTES_PER_S\);/, 'C3 (the destination\'s bytes - AUDIT 68 X8 and its review)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b-iii\(c\) \(2026-09-14\)/, 'the record');
 });

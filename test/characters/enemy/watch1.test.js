@@ -36,9 +36,12 @@ import { PLAYER_TARGET } from '../../../src/characters/enemy/enemyTargets.js';
 import { WEAPON_REACH } from '../../../src/combat/playerWeapon.js';
 import { MAX_RANGED_DISTANCE } from '../../../src/characters/enemy/enemyMotor.js';
 import { FOES_MS } from '../../../src/net/online.js';
+import { createWeapon } from '../../../src/combat/enemyEquipment.js';
 const PUPPET_LAG_SLACK = 2 + 12 * (FOES_MS / 1000);   // the pose slack plus the fastest watchman's stride in one foes interval - past this no blow can be honest
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
+/** A watchman's kit as the producers mint one (PIN MOVED, OUTDOOR-LOOT: the body's `o` counts the PLACES a peer may take - pieces the wire can carry - so a stub `{ name }` is no pile either way and pinned nothing). */
+const kit = () => [{ group: 'Currency', templateIndex: 276, name: 'Gold Pieces', stackCount: 7, value: 7 }, createWeapon(113, 1, () => 0.5)];
 
 // ---- the crafted data: a rat's career and the watch's class ----------------------------------------------------
 function craftCfg({ hpPerLevel = 4, speed = 90, str = 40, agi = 85, luck = 55, atkFlags = 0x08 } = {}) {
@@ -146,7 +149,7 @@ test('WATCH1: the criminal STREAMS its watch - a watchman rides the cell frame b
   const g2 = mac.guards.guards.find((x) => !x.dead);
   assert.ok(g2, 'a second watchman');
   mac.pool.foesFrame(false);
-  g2.entity.items = [{ name: 'Gold', group: 'Currency', stackCount: 7 }, { name: 'Longsword', group: 'Weapons' }];
+  g2.entity.items = kit();
   mac.guards._damage(mac.guards.guards.indexOf(g2), 9999);
   assert.equal(g2.corpse, true); assert.equal(g2.entity.items.length, 2, 'my own kill keeps its kit for me');
   const dead = mac.pool.foesFrame(false).f.find((r) => r.i === g2.seq);
@@ -269,7 +272,7 @@ test('WATCH1: the OWNER lands a peer\'s blow on its watchman through the watch\'
   assert.ok(g.ai.knockbackSpeed > 0);
   assert.equal(mac.pe.crimeCommitted, 4, 'Assault stands as it was: a blow on my watch by a peer is nothing of mine');
   // the kill: a body, no Murder, no notice, no pile
-  g.entity.items = [{ name: 'Gold', group: 'Currency', stackCount: 7 }, { name: 'Longsword', group: 'Weapons' }];
+  g.entity.items = kit();
   mac.said.length = 0;
   assert.equal(blow({ dmg: 9999 }), true);
   assert.equal(g.dead, true); assert.equal(g.corpse, true, 'killed, not walked away - a body lies');

@@ -1155,10 +1155,22 @@
    "why": "L10N5: the minute a notebook header records, as the streaming host's"
   },
   {
+   "file": "src/scenes/roomLootHost.js",
+   "has": "Math.floor(sharedClassicMinutes(stamp) / SEARCH_COOLDOWN_MINUTES)",
+   "clock": "event",
+   "why": "an older build's find word: the search period (SEARCH1's five hours, the find's generation) its relay stamp falls in"
+  },
+  {
    "file": "src/scenes/worldModes.js",
    "has": "mapId: hit.dfLocation?.mapTableData?.mapId ?? 0, day: Math.floor(worldMinutes() / MINUTES_PER_DAY),",
    "clock": "event",
    "why": "the lamp keeper's day - which shop's keeper stands as the lamp (LAMP-KEEPER II)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "wallNow: () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : null)",
+   "clock": "event",
+   "why": "a cupboard's first-open instant - two first-opens in one breath keep the earlier mint by the relay's clock on every client, never a machine's own (OUTDOOR-LOOT R-3)"
   },
   {
    "file": "src/scenes/worldModes.js",

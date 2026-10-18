@@ -25,6 +25,7 @@
 // (systems/searchables.js searchToldBy), no longer "You have already searched here." of an object it never touched.
 import { searchKinOf, searchAcctOfPeer, searchSelfAcct, searchSelfName, searchToldBy, SEARCH_ACCT_MAX, SEARCH_LOOT_MAX } from '../systems/searchables.js';
 import { validLootList } from '../systems/loot/loot.js';
+import { isRoomWord, validRoomWord } from '../systems/roomLoot.js';
 import { peerHanded } from '../systems/peerWord.js';
 import { NAME_MAX, sanitizeName } from '../net/wire.js';   // AUDIT GRAVE-PARTY G5: a searching character's name is a name the wire would carry
 
@@ -66,13 +67,21 @@ export function createSearchRoom(host) {
     const w = whose(rec, from);
     if (w) return w;
     const acct = searcherOf(rec, from), name = nameOf(rec);
-    const items = peerHanded(validLootList(rec?.r));
-    if (!items || items.length > SEARCH_LOOT_MAX) return null;   // no search's find: kept by nobody
+    // OUTDOOR-LOOT slice 3: a find's word is now its BIRTH and its takes (PARTY-LOOT's, with the searcher's roll carried in `b`), not WORLD4's
+    // list `r`. What is kept is the birth alone - its terms and its base - the one thing a late partymate needs to hold the find; the takes
+    // (and the claims) it hears live after it lands. An older build's whole list is kept as ever, and landed as a birth or a diff.
+    const room = isRoomWord(rec) ? validRoomWord(rec) : null;
+    const items = room ? (room.b ? peerHanded(room.b) : null) : peerHanded(validLootList(rec?.r));
+    if (!items || items.length > SEARCH_LOOT_MAX || (room && items.length !== room.b?.length)) return null;   // no search's find: kept by nobody
     const now = host.wallNow();
     const t = Number.isFinite(rec.t) ? (Number.isFinite(now) ? Math.min(rec.t, /** @type {number} */ (now)) : rec.t) : now;   // AUDIT GRAVE-PARTY G4: never AHEAD of now (WORLD7/8 C2), an unstamped word now - every one let go at the room's hour
-    const kept = { k: canon, r: items, ...(Number.isFinite(t) ? { t } : {}), ...(acct ? { by: acct } : {}), ...(name ? { bn: name } : {}) };
+    const kept = room
+      ? { k: canon, g: room.g, lv: room.lv, ...(room.n > 1 ? { n: room.n } : {}), tm: room.tm, h: room.h, b: items, ...(Number.isFinite(t) ? { t } : {}), ...(acct ? { by: acct } : {}), ...(name ? { bn: name } : {}) }
+      : { k: canon, r: items, ...(Number.isFinite(t) ? { t } : {}), ...(acct ? { by: acct } : {}), ...(name ? { bn: name } : {}) };
     if (JSON.stringify(kept).length > SEARCH_FOREIGN_BYTES) return null;
     const k = `${canon}|${acct ?? (typeof from === 'string' ? `peer:${from}` : '?')}`;
+    const had = foreign.get(k)?.rec;
+    if (room && had && /** @type {any} */ (had).h === /** @type {any} */ (kept).h && /** @type {any} */ (had).g === /** @type {any} */ (kept).g) return null;   // the same birth again (a claim word, a verdict): the first stands, with the stamp of the search itself
     foreign.delete(k);
     foreign.set(k, { rec: kept, from });
     const about = [...foreign.keys()].filter((x) => x.startsWith(`${canon}|`));
@@ -95,7 +104,8 @@ export function createSearchRoom(host) {
   const mine = () => ({ by: searchSelfAcct(), bn: searchSelfName() });
   /** The fields a `srch:` record carries for the searchable holding it: its searcher's account and character's name. */
   const fields = (sb) => ({ ...(typeof sb?.by === 'string' && sb.by ? { by: sb.by } : {}), ...(nameOf(sb) && sb.by ? { bn: sb.bn } : {}) });
-  /** The strangers' words, for the room's memory this client publishes (every one still inside the room's hour). */
-  function records() { prune(); return [...foreign.values()].map((e) => ({ ...e.rec })); }
+  /** The strangers' words, for the room's memory this client publishes (every one still inside the room's hour) - but a find this
+   *  client holds a state for (`judged(canon)`: its own party's) rides the memory as that state, one find an object. */
+  function records(/** @type {(canon: string) => boolean} */ judged = () => false) { prune(); return [...foreign.values()].filter((e) => !judged(e.rec.k)).map((e) => ({ ...e.rec })); }
   return { whose, ours, adopt, mine, fields, records };
 }

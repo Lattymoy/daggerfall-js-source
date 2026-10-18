@@ -459,7 +459,7 @@
   {
     "name": "WORLD-HOVER-a-puppets-pile-is-published",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    return e && !e.puppet ? corpseContents(e) : null;",
+    "old": "    return e ? (e.puppet ? body.contents(e) : corpseContents(e)) : null;",
     "new": "    return e ? corpseContents(e) : null;",
     "tests": [
       "test/systems/worldhover.test.js"
@@ -1050,7 +1050,7 @@
   {
     "name": "AUDIT-WH2-the-puppets-pile-is-a-target-again",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || (f._pup?.o | 0) > 0),",
+    "old": "    isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || body.isTarget(f)),",
     "new": "    isCorpse: (f) => !!f.corpse && !!f.entity,",
     "tests": [
       "test/systems/worldhover.test.js"

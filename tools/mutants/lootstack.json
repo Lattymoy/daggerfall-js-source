@@ -384,7 +384,7 @@
   {
     "name": "LS-encounter-pool-no-word",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)),",
+    "old": "pileBody: (key) => { const e = corpseEntryFor(foes, key, 'foeCorpse', corpseLens); return e?.puppet ? body.pileBody(e) : pileBody(e); },",
     "new": "pileBody: () => null,",
     "tests": [
       "test/ui/lootstack.test.js",

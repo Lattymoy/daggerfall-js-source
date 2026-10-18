@@ -71,44 +71,44 @@
   },
   {
     "name": "F4-no-answer",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "_net?.onPeerHit?.({ to: from, k: data.k ?? _net?.room?.() ?? null, i: data.i | 0, back: 1 }); ",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "hit({ to: from, k: data.k ?? net()?.room?.() ?? null, i: data.i | 0, back: 1 }); ",
     "new": "",
     "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-pieces-never-back",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (Array.isArray(f.entity?.items)) f.entity.items.unshift(...g.held);\n",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    restoreHeld(st, g.held);\n",
     "new": "",
     "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-any-back-believed",
-    "file": "src/scenes/exteriorFoes.js",
+    "file": "src/scenes/bodyLootHost.js",
     "old": "if (!g || g.to !== from || _now() - g.at > GRANT_BACK_MS) return false;",
     "new": "if (!g) return false;",
     "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-window-unbounded",
-    "file": "src/scenes/exteriorFoes.js",
+    "file": "src/scenes/bodyLootHost.js",
     "old": "if (!g || g.to !== from || _now() - g.at > GRANT_BACK_MS) return false;",
     "new": "if (!g || g.to !== from) return false;",
     "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-back-twice",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      f._granted = null;\n      if (Array.isArray(f.entity?.items))",
-    "new": "      if (Array.isArray(f.entity?.items))",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    st.granted = null;\n    restoreHeld(st, g.held);",
+    "new": "    restoreHeld(st, g.held);",
     "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-unasked-answered",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "        if (asked) { f._takeAsked = null; _net?.onPeerHit",
-    "new": "        if (f) { f._takeAsked = null; _net?.onPeerHit",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "if (ledger.landAsk(key, _now(), LEGACY_ASK_KEEP_MS)) { hit({ to: from, k: data.k ?? net()?.room?.() ?? null, i: data.i | 0, back: 1 });",
+    "new": "if (f) { hit({ to: from, k: data.k ?? net()?.room?.() ?? null, i: data.i | 0, back: 1 });",
     "tests": ["test/net/world6biiic.test.js"]
   },
   {

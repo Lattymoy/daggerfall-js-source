@@ -387,6 +387,7 @@ function tombPlayer(net, acct, party, me = PLAYERS[acct]) {
     playerEntity: player, activeOverlay: null, _ctxDead: false, enemies: [],
     opts: { onActions: (data) => net.send(id, data), onLootClaimed: () => {}, party: () => [] },
     isRoomBaseContainer: () => false, roomUnborn: () => false, roomRecordOf: () => null, sayRoomWord: () => false, landRoomWord: () => 0,
+    searchFound: () => false, _roomState: new Map(),   // OUTDOOR-LOOT slice 3: this mount stands WORLD4's whole-list law for a find (the block's carried kind is partyloot's and searchfindloot's to mount) - the search finds no block to mint at, and the memory no state of a judged find
     settleLootFlat: () => {}, camps: { applyOwner: () => {}, activate: () => false }, roomEncounterAsked: () => false, actions: { applyRemote: () => 0 },
     droppedLoot: { physical: { owns: () => false }, pileFor: () => null }, droppedTorches: { activate: () => false }, plaqueActionFor: () => null,
     setMidScreenText: (t) => said.push(t), pushDungeonWindow: (w) => windows.push(w),

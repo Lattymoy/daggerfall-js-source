@@ -491,7 +491,7 @@
   },
   {
     "name": "AUDIT625-S7-the-peer-arrows-rolled",
-    "file": "src/scenes/exteriorFoes.js",
+    "file": "src/scenes/bodyLootHost.js",
     "old": "if (n > 0 && !arrows) silverFindAt('corpse', f);",
     "new": "if (n > 0) silverFindAt('corpse', f);",
     "why": "a peer's arrows alone roll silver",

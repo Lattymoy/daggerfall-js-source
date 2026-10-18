@@ -247,7 +247,7 @@ test('F209: the latch and the owned-house guard are wired', () => {
   // this pin makes is unchanged - worldModes stocks the container, and
   // an owned house never reaches that call - only the shape of the
   // stocking line moved.
-  assert.ok(wm.includes('c.items = stockHouseContainer({ buildingType: b?.buildingType, record: containerTextureRecord(c.modelIdNum) }, playerEntity);'));
+  assert.ok(wm.includes('rolled = stockHouseContainer({ buildingType: b?.buildingType, record: containerTextureRecord(c.modelIdNum) }, playerEntity);'));   // PIN MOVED (OUTDOOR-LOOT): the roll is held a moment (`rolled`) - the room, online, mints it at the Yes
   const arm = wm.slice(wm.indexOf("if (key.startsWith('container:')) {"));
   // HC1 grew the arm (the ship guard, the Yes/No box, the loot-target
   // open) - the window widens with it, the guards themselves stand.
@@ -256,7 +256,7 @@ test('F209: the latch and the owned-house guard are wired', () => {
   // mode pushed the guard past it. Anchor on the ORDER instead: the
   // guard must precede the stocking it gates.
   const owner = arm.indexOf('isHouseOwned(playerEntity.houses ?? []');
-  const stocks = arm.indexOf('c.items = stockHouseContainer(');
+  const stocks = arm.indexOf('rolled = stockHouseContainer(');
   assert.ok(owner >= 0, 'the owner guard sits in the arm');
   assert.ok(stocks > owner, 'and gates the stocking below it');
   const ownedLatch = arm.indexOf('c.items ??= [];');

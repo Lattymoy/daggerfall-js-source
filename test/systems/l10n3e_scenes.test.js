@@ -491,7 +491,7 @@ test('L10N3e scenes: the plaque over a party mate names my readied spell as the 
 
 test('L10N3e scenes: the dungeon\'s corpse plaque is loot.entityName (GameObjectHelper.cs:701) - corpseEntityName, as the other pools\' plaques read it (World Tooltips .cs:526); dungeonContext.js _dungeonHoverName, run whole', () => {
   const hover = (foes) => mount(`${fnSrc('dungeonContext.js', '_dungeonHoverName')}\nreturn _dungeonHoverName;`, {
-    worldTooltipsOn: () => false, hideInteractTooltip: () => false, foes, lootableBody: (f) => !!f, corpseName, corpseEntityName, enemyDisplayName, championName,
+    worldTooltipsOn: () => false, hideInteractTooltip: () => false, foes, lootableBody: (f) => !!f, _lootUnreadable: new Set(), roomLootKey: () => null, corpseName, corpseEntityName, enemyDisplayName, championName,
   });
   const enemyNames = Array.from({ length: 62 }, (_, i) => (i === 23 ? 'Spectre factice' : `Ennemi ${i}`)).join('\n');
   const { en, fr } = inFrench({ Internal_Strings: [['enemyNames', enemyNames]] }, () => hover([{ mobileType: 23 }])('corpse:0'));

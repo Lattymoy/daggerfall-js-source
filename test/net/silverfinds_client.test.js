@@ -254,7 +254,7 @@ test('SILVER-FINDS every host\'s loot door asks (THE FOUR HOSTS): the dungeon\'s
   assert.ok(dc.indexOf('const _find = source.length') < dc.indexOf('if (!pileKeys && quickLootTake(key, { items: () => source }'), 'named before the quick door and the window alike - before the take empties it');
   assert.match(dc, /onClose = \(\) => \{ if \(!_ctxDead && sb\.items\.length\) \{ silverFindAt\('search', find\); api\.takeLoot\(`srch:\$\{i\}`\); \} \};/);
   assert.match(src('src/scenes/corpseMarker.js'), /if \(openWindow\(corpseLootHooks\(entry\)\) === true\) silverFindAt\('corpse', entry\);\n  return items\.length;/);
-  assert.match(src('src/scenes/exteriorFoes.js'), /if \(n > 0 && !arrows\) silverFindAt\('corpse', f\);/);
+  assert.match(src('src/scenes/bodyLootHost.js'), /if \(n > 0 && !arrows\) silverFindAt\('corpse', f\);/);   // PIN MOVED (OUTDOOR-LOOT): the legacy grant's landing is the body block's
   const w = src('src/scenes/world.js');
   assert.match(src('src/scenes/searchPartyHost.js'), /if \(!pile\) return;\n\s+silverFindAt\('search', items\);/);   // PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the headstone's search left world.js for scenes/searchPartyHost.js
   assert.match(w, /if \(marksBook\) \{\n\s+setSilverFinder\(\(kind\) => \{\n\s+marksBook\.find\(kind\)\.then\(\(finds\) => \{/);

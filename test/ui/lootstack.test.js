@@ -289,7 +289,10 @@ test('LOOT-STACK the hosts by source: all four corpse doors hand the window the 
   assert.match(dc, /const pile = kind === 'corpse' \? lootPile\(key, \{\n\s*keys: pileKeys,\n\s*describe: \(k\) => \{ const b = foes\[Number\(k\.split\(':'\)\[1\]\)\]; return lootableBody\(b\) \? pileBody\(b\) : null; \},[^\n]*\n\s*open: \(k, keys\) => \{ this\.takeLoot\(k, 'grab', keys\); \},\n\s*\}\) : null;\n\s*if \(pile\) lootHooks = \{ \.\.\.\(lootHooks \?\? \{\}\), pile \};/);
   // a tab closes its window and opens the next in one click, before the frame's drain empties the slot
   assert.match(dc, /if \(activeOverlay && !activeOverlay\.done\) return source\.length;/);
-  for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) assert.match(rd(f), /pileBody: \(key\) => pileBody\(corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)\),/, `${f}: the pool's word on a body`);
+  assert.match(rd('src/scenes/cityGuards.js'), /pileBody: \(key\) => pileBody\(corpseEntryFor\(guards, key, 'guardCorpse', corpseLens\)\),/, 'src/scenes/cityGuards.js: the pool\'s word on a body');
+  // PIN MOVED (OUTDOOR-LOOT): and the encounter pool's word on a PEER'S body is its body block's - a BORN one is a tab (what it holds for this reader),
+  // while corpseMarker.js pileBody itself still answers null for a puppet (pinned above)
+  assert.match(rd('src/scenes/exteriorFoes.js'), /pileBody: \(key\) => \{ const e = corpseEntryFor\(foes, key, 'foeCorpse', corpseLens\); return e\?\.puppet \? body\.pileBody\(e\) : pileBody\(e\); \},/, 'src/scenes/exteriorFoes.js: the pool\'s word on a body');
 });
 
 test('LOOT-STACK the key is gone: no NextBody action, no default on ] but Come Sail Away\'s trim, no controls row, and no host arms a turn - the pile lives in the window (mutant: a host still arming one)', () => {

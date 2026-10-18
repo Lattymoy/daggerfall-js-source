@@ -370,5 +370,8 @@ export function closeSession(deps = {}, state = {}) {
       record == null ? null : { archive: icon.archive, record },
       loot?.pos ?? null);
   }
+  // OUTDOOR-LOOT (DESIGN 3.6): and a container that shares its list is told its window is gone - once, on a hand-off as on a
+  // close, both skins (ui/inventoryDoor.js tells it the window stood). It reads what the window moved and composes again.
+  try { loot?.closed?.(); } catch (e) { console.warn(`[loot] a container's close threw: ${e?.message ?? e}`); }   // the window is gone whatever it says: onClose below always runs
   deps.onClose?.();
 }

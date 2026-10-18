@@ -43,6 +43,7 @@ const ROUTED = {
   'src/player/interactionMode.js': 5,
   'src/player/mobileEnemyActivate.js': 2,
   'src/player/motor.js': 1,
+  'src/scenes/bodyLootHost.js': 1,   // OUTDOOR-LOOT: an older owner's empty body, said as corpseMarker.js says it
   'src/scenes/corpseMarker.js': 2,
   'src/scenes/dungeonContext.js': 2,
   'src/scenes/exterior.js': 1,

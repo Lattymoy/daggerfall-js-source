@@ -389,7 +389,7 @@
   {
     "name": "GRAVE-PARTY-the-strangers-forgotten",
     "file": "src/scenes/searchRoom.js",
-    "old": "  function records() { prune(); return [...foreign.values()].map((e) => ({ ...e.rec })); }",
+    "old": "  function records(/** @type {(canon: string) => boolean} */ judged = () => false) { prune(); return [...foreign.values()].filter((e) => !judged(e.rec.k)).map((e) => ({ ...e.rec })); }",
     "new": "  function records() { return []; }",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
@@ -399,8 +399,8 @@
   {
     "name": "GRAVE-PARTY-a-forged-list-kept",
     "file": "src/scenes/searchRoom.js",
-    "old": "    if (!items || items.length > SEARCH_LOOT_MAX) return null;",
-    "new": "    if (!items) return null;",
+    "old": "    if (!items || items.length > SEARCH_LOOT_MAX || (room && items.length !== room.b?.length)) return null;",
+    "new": "    if (!items || (room && items.length !== room.b?.length)) return null;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -449,8 +449,8 @@
   {
     "name": "GRAVE-PARTY-a-word-carries-its-fields",
     "file": "src/scenes/searchRoom.js",
-    "old": "    const kept = { k: canon, r: items,",
-    "new": "    const kept = { ...rec, k: canon, r: items,",
+    "old": "      : { k: canon, r: items,",
+    "new": "      : { ...rec, k: canon, r: items,",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -510,7 +510,7 @@
   {
     "name": "GRAVE-PARTY-the-memory-without-strangers",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      w.loot = [...lootRecords([..._lootSeen]), ...searchRoom.records()];",
+    "old": "      w.loot = [...lootRecords([..._lootSeen]), ...searchRoom.records((c) => _roomState.has(c))];",
     "new": "      w.loot = [...lootRecords([..._lootSeen])];",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"

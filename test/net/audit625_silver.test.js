@@ -179,7 +179,7 @@ test('AUDIT 625 D6: a body\'s find rolls only when its door OPENED it - a window
   assert.equal(arrowsOnly([{ templateIndex: ARROW_TEMPLATE_INDEX, stackCount: 3 }]), true);
   assert.equal(arrowsOnly([{ templateIndex: ARROW_TEMPLATE_INDEX }, { templateIndex: 121 }]), false);
   assert.equal(arrowsOnly([]), false);
-  const ef = src('src/scenes/exteriorFoes.js');
+  const ef = src('src/scenes/bodyLootHost.js');   // PIN MOVED (OUTDOOR-LOOT): the legacy grant's landing is the body block's
   assert.match(ef, /const arrows = arrowsOnly\(grant\);/);
   assert.match(ef, /if \(n > 0 && !arrows\) silverFindAt\('corpse', f\);/);
   assert.match(src('src/scenes/corpseMarker.js'), /if \(arrowsOnly\(items\)\) \{/);

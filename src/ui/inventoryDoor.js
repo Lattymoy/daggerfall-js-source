@@ -83,10 +83,17 @@ export function createInventoryWindow(deps = {}) {
   // `document` for the reason every fork before this one gives: node
   // drives these hosts headless and keeps the canvas window rather
   // than getting a special case written for it.
+  let built;
   if (isEnhanced() && typeof document !== 'undefined') {
-    return enhancedInventoryOverlay(deps);
+    built = enhancedInventoryOverlay(deps);
+  } else {
+    built = new NativeInventoryWindow(deps);
   }
-  return new NativeInventoryWindow(deps);
+  // OUTDOOR-LOOT (DESIGN 3.6): a container that shares its list (a peer's foe's body) is told its window stands - once it is
+  // built, on either skin - so it composes nothing under it (AUDIT WORLD4 C1); closeSession tells it the window is gone.
+  // A refusal above built no window and told nobody. A host needs no line for either: both skins pass through here and there.
+  deps.loot?.opened?.();
+  return built;
 }
 
 /** REVENANT-FATE on the classic skin: the choice as a keyed box (talkWindow.js ChoiceWindow). */

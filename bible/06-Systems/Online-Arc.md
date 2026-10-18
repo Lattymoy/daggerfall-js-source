@@ -1569,11 +1569,14 @@ shipped; PARTY-LOOT, below, is the law.
   player's own, and so is a DROPPED pile (AUDIT WORLD B3 - a drop is
   the dropper's). `publishLoot` says what is left on the CLOSE - the
   same moment DFU's own law frees an emptied container's flat, and the
-  moment the taking is finished rather than half done - and a searched
+  moment the taking is finished rather than half done - and ~~a searched
   find and a revenant's body, which keep WORLD4's word, are CLAIMED on
-  the open too; a pile, a layout body and an encounter's body are the
-  room's base, each take of it a claim the room's host grants, and an
-  open says nothing (PARTY-LOOT). `applyLoot` lands another's word
+  the open too~~ (AMENDED 2026-10-17, OUTDOOR-LOOT: a searched find is a
+  carried PARTY-LOOT container now - minted once at the search, the room's
+  word takes against it, the dungeon's host judging; a revenant's body
+  underground rides no room word at all); a pile, a layout body and an
+  encounter's body are the room's base, each take of it a claim the room's
+  host grants, and an open says nothing (PARTY-LOOT). `applyLoot` lands another's word
   through the projection and IN PLACE (`held.length = 0`, then push),
   ~~so a window already open on that container updates under the
   reader's hands~~ - AUDIT WORLD4 C1: it does not, and could not: the
@@ -2611,6 +2614,16 @@ items, but the flow has no window to settle on; next); a last-writer-
 wins on a restock two players make in one day (each rolls their own
 and the later close stands, as the dungeon's loot already runs).
 
+**AMENDED 2026-10-17 (OUTDOOR-LOOT, below).** A building's CUPBOARD (`container:`) is no longer a whole list landed by
+whoever wrote last: it is the room's one list, its first roll a carried base, its word PARTY-LOOT's takes, every take a
+claim the building's seat judges (`world/interior/interiorRoomLoot.js`). So "the word lands IN PLACE on an opened container,
+WHOLE on one this client never opened", "a last-writer-wins on a restock two players make in one day" (the earlier mint by
+the shared clock wins everywhere now) and "the later close stands" no longer describe a cupboard. A SHELF (`shelf:`) keeps
+every word of it. The loot doors `interiorPublishLoot`, `interiorLootOpened` and `interiorLootSettle` that this section and
+AUDIT WORLD6a name left `createWorldModes` for `world/interior/interiorShared.js` (`interiorLootOpen`, `interiorLootFrame`,
+`interiorLootUnborn`, `interiorLootRoll`, `interiorLootBirth`, `interiorLootAside`, `interiorLootLeave`), the whole-list law
+for a shelf now `publishWhole` there.
+
 Pinned in `test/systems/talk/world6.test.js` (6): the wire at both ends; the real
 Room keeping a building's memory and handing it on, a town's ignored;
 the pure half's vocabulary, records, landing, memory and re-read; the
@@ -3169,6 +3182,13 @@ reads no further.
   peer (WORLD6b's, live since 6b-i). The record clamps `h` into the
   wire's bound.
 
+**AMENDED 2026-10-17 (OUTDOOR-LOOT, below).** This is the LEGACY arm now. A new build's press on a peer's body opens a
+window over the owner's ONE list (his digest `bw`, a peek for the records) and every take of it is a claim he judges; the
+ask and the grant above are what an older owner or an older taker still speak, and a new taker facing an older owner sends
+them. The landing changed in one way: a grant lands at any lateness inside `LEGACY_ASK_KEEP_MS` (5 minutes) for the ask it
+answers, once, with the puppet standing or swept - a grant 3.5 s late used to be refused and the pile it came from
+destroyed.
+
 Pinned in `test/net/world6biiic.test.js` (4), EXECUTED on two pools joined
 by nets: the wire's `o`; the owner's body saying what it holds and the
 death record in bound; the puppet's body a target; the ask routed to
@@ -3288,6 +3308,15 @@ execution in `test/scenes/auditworld6biiic.test.js`. The relay changed
 - **Back-compat (verified): an older client refuses a take or a grant
   as a blow with no damage; an older owner's bodies are never targets
   (no `o`).**
+
+**AMENDED 2026-10-17 (OUTDOOR-LOOT, below).** **A late grant now lands.** B1/C1's window is the ask's keep: a grant lands for
+an ask outstanding inside `LEGACY_ASK_KEEP_MS` (5 minutes), once per ask (B8 stands), whether the puppet is standing or not;
+an unasked grant is refused whole as ever, and a grant this build cannot read is answered `back` (AUDIT ONLINE2 F4).
+**A3/C2 and A4/C10's pieces are kept as the OWNER'S OWN, never dropped:** what the projection refuses, what is larger than a
+frame and what never rides (a bound piece, a letter of credit) stays on the owner's body in his own view; only the places
+that ride are on offer, and they go to a peer by claim. **B1/C1 stays**: nothing is written into a pack on a word nobody
+asked for. A1/C7's reach and A2/B3/C4's budget (`TAKES_PER_S`, now the LEGACY bucket) stand for the legacy `take`; a claim
+has a bucket of its own (`BODY_ASKS_PER_S`) and the same reach.
 
 Pinned in `test/scenes/auditworld6biiic.test.js` (7), EXECUTED: the owner's
 laws (a peer unseen, a peer across the cell, a body not mine, a live
@@ -15882,7 +15911,12 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   Anyone else takes the piece back out of the pack (`roomLift` - the record, the stack it merged into, the bag, the
   purse), says the claim (`q`, its id its claimer's own - `claimOf` - so nobody claims in another's name) and has it only
   on the grant (`roomResolve`): until then it reads as taken in their own list alone, and on a refusal, or with no
-  verdict in `ROOM_CLAIM_TIMEOUT_MS`, it comes back - a verdict that comes later still lands. A PUT (`a`) is the host's
+  verdict in `ROOM_CLAIM_TIMEOUT_MS`, it comes back - a verdict that comes later still lands. (AMENDED 2026-10-17, OUTDOOR-LOOT
+  D-2.1: a claimer's word said only its NEWEST 32 claims and was never said again, and a host's word only its latest 32
+  verdicts, so a Take all past 32 left its oldest claims unsaid and two bulk takes judged together pushed a claimer's verdict
+  out of the word - the piece left the list and reached nobody. A claim is said in consecutive words and again until it is
+  answered, as a put always was; a host's words carry the verdicts of the claims they answer; a claim is given up after
+  `CLAIM_KEEP_MS`.) A PUT (`a`) is the host's
   to land too, so the stored pieces have one writer; a put the host refuses (a piece no peer may be handed, a full
   container) comes back once nothing stands open on it. The bonus is never a claim's: the player's own, at once.
 - **THE SEAT CHANGES HANDS.** Every client keeps the claims it hears until their verdict (`roomLoot.js`
@@ -15919,20 +15953,32 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
 `scenes/world.js` hands it the party's levels (`partyLevels`, the one home MENTOR MODE reads too); `scenes/worldModes.js`
 passes them through to the dungeon and leaves its interiors as WORLD5 built them - a building's shelves and containers
 are rolled at the OPEN and never shown before it, so the claim WORLD5 makes is still the first anyone sees; its treasure
-markers' piles and its foes' bodies are each player's own; `scenes/exterior.js` is the offline bench, with no room.
+markers' piles ~~and its foes' bodies~~ are each player's own; `scenes/exterior.js` is the offline bench, with no room.
+(AMENDED 2026-10-17, OUTDOOR-LOOT: "its foes' bodies are each player's own" was false for a building's loose foes since
+QUEST-PARTY phase 3b, 2026-09-26 - a body in a building is a peer's puppet too - and is false of the street's now: a peer's
+foe's body is one list for everyone. "Never shown before it" stopped being true when CONTAINER-PEEK (#970) put a cupboard's
+list on the plaque; a cupboard's list is the room's own, and an unborn one is a name alone.)
 
 **What it does not do.** A piece used straight from a container (a potion drunk off a body) is used at once: its claim
 takes it from the room and brings nothing more. A claim still in flight when its claimer leaves the dungeon is kept by
 the claimer (no verdict reaches a dungeon that is gone). Two hosts at once - WORLD2's stale-stream handover, before the
-old seat is heard to go - can each grant the same piece. A revenant's body keeps WORLD4's word (RVN8: its list holds a player's own
-pieces); a quest spawn's, a summon's and a party member's own foe's body are their player's, as before; the street's
-bodies are their foe's owner's roll taken under the owner's grant (WORLD6b-iii(c)); a foe's worn kit is its copy's own
+old seat is heard to go - can each grant the same piece. ~~A revenant's body keeps WORLD4's word (RVN8: its list holds a player's own
+pieces)~~ (AMENDED 2026-10-17, OUTDOOR-LOOT: a revenant's body underground rides NO room word - no loot key, no publish, no
+memory record - so there is no whole-list word for a stale close to race; `test/systems/revenant_body_loot.test.js` pins it);
+a quest spawn's, a summon's and a party member's own foe's body are their player's, as before; ~~the street's
+bodies are their foe's owner's roll taken under the owner's grant (WORLD6b-iii(c))~~ (AMENDED 2026-10-17: a peer's foe's body,
+street and building, is one list for everyone and a take of it a claim its owner judges - OUTDOOR-LOOT); a foe's worn kit is its copy's own
 (MW-NPC K2), so the kit a foe fought with need not be the one its body holds; the death's subscribers run where a body's
 base is composed, so Physical Items throws a body's pieces out on every client, a body the memory lays included; an
 older build in the room reads the new word as M2's newer word ("Reload to open it"), and its own WORLD4 list still
-lands for everyone, migrated. Not seen with two real players from this container.
+lands for everyone, migrated. ~~Not seen with two real players from this container.~~ (AMENDED 2026-10-17, OUTDOOR-LOOT: the
+dungeon's containers have been played in two browsers since (**Played end to end**, below) - on PR #891's tree, before OUTDOOR-LOOT's
+slice 3 changed the dungeon block (AUDIT OUTDOOR-LOOT M4, 2026-10-18: not re-run on OUTDOOR-LOOT's tree); the new containers' acceptance is
+OUTDOOR-LOOT's, below.) A claim
+still in flight when its claimer leaves is kept by the claimer - widened and made honest in OUTDOOR-LOOT's R1: a dupe when the
+claim lost a race or was never heard, and a crash or reload loses a granted piece in flight.
 
-- **Pinned**: `test/systems/partyloot.test.js` (10) - two and three peers mounted over the dungeon host's real loot doors and
+- **Pinned**: `test/systems/partyloot.test.js` (10; 18 since OUTDOOR-LOOT: D-2.1's three - a joiner's Take all of forty stored pieces, two bulk takes judged together by the new seat, a dropped verdict frame recovered by a re-ask - SPLIT-LIFT's "a claim GIVEN UP", and its audit's four: D4, D5, and D-2.1's claims and verdicts AT ONCE) - two and three peers mounted over the dungeon host's real loot doors and
   the real producers, at different levels, Luck, Renown, dice and Foraging switches, joined by a queuing relay: one base
   on every body and pile; a take removing the same piece for everyone; two takes in one breath both landing; THE HOST
   ARBITRATES - the same piece taken in one breath going to one player (the host against a joiner, two joiners), the
@@ -15948,6 +15994,438 @@ lands for everyone, migrated. Not seen with two real players from this container
   theirs (a joiner's take in its pack at once, two copies of one piece between two joiners, a piece kept by the host
   under its window after the room granted it). `tools/mutants/partyloot.json`
   (30, all killed).
+- **Pinned over the wire** (2026-10-16): `test/net/partyloot_wire.test.js` (4) - the same law through the path the game
+  runs, where the queue above stands in for it. Two players, each the dungeon's real loot doors and this block
+  (`roomLootHost.js` createRoomLoot, under the host's construction of it) over the real producers WITH the dungeon's own
+  death and stream path (damageFoe, spawnCorpse, setFoeDead, applyFoeRecord, foesFrame, applyFoes), so the party
+  member's copy of a body falls when the host's foes frame says so; world.js's actSend, actFlush, foesStream and the
+  session's onAct and onFoes, and worldModes.js's dungeon arms, on a real `net/online.js` session each, into one real
+  relay Room (`server/src/index.js` over `test/fakeRoom.mjs`); the dungeon's frame is drawFoes' own two lines (the
+  sweep, the claims' tick). What the queue cannot show, each pinned: the host's birth reaching the party member BEFORE
+  the body falls there - held, and landed at the fall (`_roomPending`) - so the body opens on the host's base, and the
+  party member's open and close say nothing and leave the host's list as it was (the report's "Empty" and its wipe); a
+  blast past `ACT_HZ_MAX` - the session refuses the last births, world.js keeps their keys, the bodies its frame lays
+  first stand UNBORN on the party member (no window, nothing said, none of its own roll) until actFlush's heal re-reads
+  the host's word through `placeActionRecords` (`lootRecords` -> `roomRecordOf`); a party member's take from the
+  window - its close telling one claim and never the room's state, the piece out of the taker's pack until the host's
+  grant comes back over the Room, then one piece off both lists and in the taker's pack - and, since OUTDOOR-LOOT's slice 3 (D-2.1), nothing said after the grant (a claim is said AGAIN every `ROOM_PUT_RESAY_MS` until it is answered, so an answered one must stay the one word); a fourth test has the wire LOSE the claim's word, and it is said again, the same claim, granted once. A body's list is compared only
+  once its plaque NAMES one (an unborn body's null is never read as an empty base), what the dungeon tells its act door
+  is counted before world.js or the session see it, and a throw under the session's handlers - which the session
+  swallows, so one bad frame never takes the socket down - fails the test instead of reading as a word that never
+  landed (AUTO-HOLD's `notCarried`, new in the give, was such a name). `tools/mutants/partyloot_wire.json` (16, all killed - the two added are the lost claim never said again and the answered claim left open); eight
+  of them `test/systems/partyloot.test.js` and `searchfindloot.test.js` cannot fail - the early birth dropped, the heal re-reading nothing, world.js keeping
+  no refused key, and the five that cut the wire's own doors (world.js's onAct and actFlush's read, worldModes.js's
+  three dungeon arms).
+- **Played end to end** (2026-10-16): `tools/partyLootProbe.mjs` - two players in the real game in headless Chromium
+  over the player's own ARENA2, online in Privateer's Hold against the real relay and account service in local workerd;
+  the host kills three foes and the joiner three (its blows riding to the host as hits); each copy's plaque is read
+  (`lootContents`: the room's base, the player's own bonus apart by roomLoot.js's own mark), then three windows through
+  the press's loot door and the enhanced pack's row click. The personal mark is checked loaded wherever the tree has
+  roomLoot.js (no run has rolled a bonus yet, so a mark that failed to load would read one as the room's). On PR
+  #891's tree, before OUTDOOR-LOOT's slice 3 (D-2.1/D-2.2) changed the dungeon block - not re-run on OUTDOOR-LOOT's tree - four runs (the last with main's AUTO-HOLD merged in): PASS - every body already named on both copies when the kills were done, 6 of 6 one base each time,
+  the joiner's untouched window leaving the host's base, the host's take staying taken on both under the joiner's open
+  window, the joiner's take coming off both bases as one piece (from multi-piece bodies too: the rest left alike on
+  both). On main before #923 (`ea09d8547b`), two runs: FAIL - the report as it was: 4 and 5 of 6 bodies differed (other
+  gold counts, another bow, one body empty for the host and holding meat for the joiner); in the second run the joiner's
+  untouched window replaced the host's 12 gold with its own 3 (the report's wipe); in both the joiner's stale close put
+  back a piece the host had taken; in the first the joiner's take replaced the host's list with the joiner's leftovers.
+  The press on a body before its word - the report's "Empty" window itself - is the wire test's; a probe cannot time it.
+  `test/tooling/partyloot_probe.test.js` (2) holds its seams and the doors they read.
+
+## OUTDOOR-LOOT (2026-10-17, the field: "I can still click on an "Empty" body and wipe out loot for a party member") - every other shared container is one list for everyone too, and a take of it a claim one authority judges
+
+**The report**, from a player: *"I can still click on an "Empty" body and wipe out loot for a party member."* PARTY-LOOT
+(above) had made a dungeon's container one list and a take a claim its host grants; this was the street.
+
+**Reproduced before anything moved**, on main at 02706035cf, through the real doors (`test-harness/outdoor-loot/`, kept
+out of the tree) - the unit repros, on two real `createExteriorFoes` pools behind the real hit queue:
+- **"Empty" over a full body.** A kills a foe; B, A's party member, stands over the body. A's plaque lists it. B's
+  said "Empty" (`worldHover.js` `resolveHover` reads a null contents door as `empty: true`, and a puppet's contents door
+  answered null: its own comment claimed the plaque "falls back to the name alone", and it did not).
+- **The whole pile handed over unseen.** B's press opened no window: it sent `take: 1`, and the owner's `grantCorpse`
+  handed over as much of the WHOLE pile as one frame carries. B chose nothing.
+- **A grant 3.5 s late, refused and destroyed.** The grant arm latched the ask for `TAKE_WINDOW_MS` (3 s); a grant after
+  it was refused, nothing was sent back, and the owner had already spliced the pieces off the body. A grant that met a
+  puppet already swept (`pruneOwners`, `clearPuppets`, a full frame) was refused the same.
+- **The two-browser run** (a real world worker, an account database and two browser pages, A and B on one cell): as the
+  wire delivers, B's plaque said "Empty" and the press took A's body whole (A's body 1 -> 0, B +1). With B's handover
+  held 3.5 s - a slow link - A's body went 1 -> 0, B gained 0 and A gained 0: **a Wakazashi was destroyed.**
+- **Indoors was the same.** A building's foe pool is the same `createExteriorFoes` with a net (`own: 1`): the same plaque,
+  the same blind grab, the same loss. The sibling containers raced too: a building's cupboard (a close from a window
+  opened before another player's take brought the piece back for everyone, a close from one opened before a put erased the
+  put, two first-opens in one breath each kept a piece of a roll that never was the room's - `cupboard_race_check.mjs`
+  reproduces both), and a dungeon's search find (the same stale close).
+
+**Why.** PARTY-LOOT covered the dungeon's containers, which are the only ones whose list every client can COMPUTE (the
+dice seeded by the container's name). Every other shared container had a list nobody else could compute - a foe's body is
+its owner's roll on its owner's machine (a puppet carries none of the reader's, WORLD6b B14); a cupboard's stock is
+`stockHouseContainer` for whoever opened it first; a search's find is the searcher's level, gender, Luck and dice - and
+was shared with a word that was the owner's grant (a body) or the WHOLE list landed over the reader's by whoever wrote
+last (a cupboard, a find). CONTAINER-PEEK and LOOT-BULK (#970) made both worse: the plaque painted whatever a client held,
+and one stale Take all or Stash all close resurrected or erased a whole cupboard.
+
+**The user's calls.**
+- Travis, on the dungeon's rule for a claim in flight when its claimer leaves: **"whatever the current dungeon logic is
+  doing on main we want to replicate across all these other situations"** (DESIGN-REVIEW D-1). It withdrew the design's
+  recommended void, and D-1a narrowed it: only the CLAIMER'S OWN teardown keeps a claim.
+- The dungeon's own three findings joined the scope (D-2): the Take all verdicts a word could push out, the plaque that
+  said "Empty" over a pile this build cannot read, and the revenant body.
+- The shop shelf's stealing race is a follow-up, not this branch (F-1): *"Remember that stealing bug too, we'll
+  follow-up in a similar manner."*
+
+### The law (systems/roomLoot.js, systems/loot/claimLedger.js, net/bodyLoot.js, scenes/bodyLootHost.js, world/interior/interiorRoomLoot.js, scenes/roomLootHost.js)
+
+**One law for every shared container whose list nobody else can compute.** Each has a CARRIED BASE: its first roll - the
+foe owner's pile, the first opener's stock, the searcher's find - is minted ONCE by whoever rolled it, and its records
+travel once. From then on the room's word about it is TAKES, never a list (PARTY-LOOT's own words: `x` the base places
+gone, a set that only grows; `c` a drawn-down stack's count, which only falls; stored puts with ids; verdicts), so every
+client merges the same in any order. A take of a shared piece by ANY door - the window's, Take all (LOOT-BULK), the quick
+door's lit row and its take-the-lot, the arrows-only prelude - is a CLAIM; Physical Items lays no piece round a peer's
+body, and if it ever did its one-item door would be read the same. ONE AUTHORITY judges each claim, first come
+(`roomLoot.js` `judgeRoomClaim`), and the loser hears `ROOM_TAKEN_TEXT`. The claimer's piece is lifted out of its pack
+until the verdict (`roomLoot.js` `liftPiece`, through `systems/loot/claimLedger.js`) and given on the grant (`givePiece`: never a piece the
+claimer already carries, AUTO-HOLD). The claim is read from the move, not asked: the settle diffs the container's list
+against what it held when it was composed BY OBJECT IDENTITY (`listMovesSince`, never by row - a filtered window's row 0
+is not the container's place 0), so a window that never knew about claims still makes them. Nothing is composed under a
+window the player has open (AUDIT WORLD4 C1).
+
+| Container | Who judges | Where it rides |
+|---|---|---|
+| a peer's foe's body, street or building | the foe's OWNER | the foes stream's `bw` digest; directed hit frames `bp`/`br`, `bq`, `bv` |
+| a building's cupboard (`container:`) | the building room's SEAT, the relay's host | PARTY-LOOT's room word on WORLD3's act frame and the room's memory, with `b` |
+| a dungeon search find (`srch:`) | the dungeon's HOST (WORLD2's `_authority`) | the same, in the dungeon's PARTY-LOOT block |
+
+- **A PEER'S FOE'S BODY - the street and a building, one pool** (`net/bodyLoot.js` the wire, `scenes/bodyLootHost.js`
+  `createBodyLoot(pool)` the block, `scenes/exteriorFoes.js` wiring only).
+  - *The owner's state* is minted lazily online (the body's first foes frame, the owner's own take, a peer's peek, claim
+    or take - after the death chain has run): the body's PLACES, the shareable pieces in pile order, at most
+    `ROOM_BASE_MAX` (255), **append-only** (a place is never re-used or un-taken - what keeps every reader's merge
+    monotone; a legacy `back` and the owner's own put append new places). What never rides - a bound piece (SS3), a
+    letter of credit (HACKED-GOLD), a piece the projection refuses or one larger than a frame - is the owner's `own`,
+    shown in his view and never dropped (AUDIT WORLD6b-iii(c) A3/C2 and A4/C10 used to drop them). `f.entity.items` is that
+    state composed IN PLACE, so everything that reads a body's list reads the one list; a drawn-down stack is read from
+    the minted count, so the window's in-place stack split cannot corrupt the judge. The record's `o` is the places not
+    gone.
+  - *The digest `bw`* rides each dead body's record as a top-level field of the foes frame (the `qf`/`dz` pattern):
+    `[i, g, l, x, c?]` - the generation, how many places, the places gone as a hex bitset, the drawn-down counts. It is
+    NOT a field of `validFoeRecord`, so `src/net/wire.js` is untouched, `RELAY_VERSION` stands, and `bodyLoot.js` is
+    outside the relay's import graph. A reader merges it monotonically (`mergeDigest`: the larger `l`, the OR of `x`, the
+    smaller `c`), so a stale frame never brings a taken place back; another `g` is another body under the same number.
+  - *The peek.* A reader within `BODY_PEEK_REACH` (12 m) of a body it lacks records for sends one `bp` (at most 64
+    places, one in flight a body, asked again after `PEEK_RETRY_MS`); the owner answers (`bw` + `br`, in pages under
+    `GRANT_FRAME_MAX`) within that reach plus two pose slacks, a peer it sees and under its budget. A record is a piece's
+    immutable description, said once, read as THIS build reads a piece (`readRecord`: the item law, SS3, AUTO-HOLD).
+  - *The reader's four states of a puppet's body*, `bodyStateOf`: **LEGACY** (`o > 0` and no digest ever heard - an
+    older owner): a target whose plaque is the NAME ALONE and whose press is the legacy `take: 1`; **UNBORN** (a
+    present place with no record yet): no target, no plaque, no press - the ray names nothing, as the dungeon's unborn
+    container does; **UNREADABLE** (a record this build cannot read, AUDIT SETS M2): the name alone, and the press
+    says `LOOT_NEWER_TAKE_TEXT` and opens nothing; **BORN**: the composed list (the places not gone at their drawn-down
+    counts, less the claims in flight, less what the reader carries), and the press opens the window over it.
+  - *The claim.* A settle on a born body sends `bq: [{id, p, n}]` to the owner - one frame a body a settle (a bigger
+    batch in more frames of `ROOM_CLAIMS_MAX`), the BODY'S GENERATION as a top-level `g` beside the routing, the entries
+    unchanged - and the owner's `ownerClaims` judges a NEW claim only against the body that `g` names (S1-2: the peer id
+    outlives a page reload while a new pool restarts the foes' numbering, so each pool seeds its generation counter from
+    a random 30-bit base, and a re-ask of an earlier page's claim is never judged against the new body that reused its
+    number). Which doors run it and when: every frame in `update`, at once at the end of `takeLoot` (the quick door), and
+    at the window's close. A piece laid into a peer's body is the owner's alone to lay: the settle hands it back to the laying player's pack at the close.
+  - *The owner judges on RECEIPT, inside `applyHit`* (DESIGN-REVIEW R-1), never on a frame tick, so an owner whose tab is
+    hidden still answers; his own takes since the last compose are read first (`bodyLootHost.js:"if (st) ownTick(st);   //"`), so a take his
+    window already made wins - first come. The verdict `bv` carries the digest AFTER the judgment, so the claimer
+    recomposes in one step with no flicker. A NEW claim is heard only from a peer the hunt sees within the corpse's
+    reach (A1/C7) and under a bucket of its own, `BODY_ASKS_PER_S` (4 FRAMES a second a peer, never pieces - a Take all
+    of thirty is one frame).
+  - *A verdict is FINAL* (D-1). The owner keeps a verdict ledger (`VERDICT_KEEP_MS` 10 minutes, `VERDICTS_MAX` 256) that
+    OUTLIVES the body, and a re-ask of a claim it judged is answered from it - wherever the claimer stands (S1-1: the
+    owner's pose list is not the roster; a claimer who crossed into the next cell is still in it) under the answer budget
+    alone, at most one verdict frame in flight a claim. There is no void. The claimer's ledger keeps a claim for
+    `CLAIM_KEEP_MS` (5 minutes): a claim with no verdict in `ROOM_CLAIM_TIMEOUT_MS` (4 s) LAPSES - its piece reads as back
+    in the body's view, not in the pack - and is asked again, the same ids, after 1 s and then twice as long up to 8 s
+    (R-2: a half-open socket, a reconnect in the same page under the same id), so a verdict 3.5 s, 10 s or 30 s late
+    lands, exactly once; past the keep the claim is given up and nothing lands. A duplicate verdict, a verdict for a
+    claim this pool never made, or from anyone but the claim's owner, lands nothing (B1/C1, B8). The ledger is the
+    CLAIMER'S, not the puppet's: a verdict after the puppet was swept or its owner pruned still lands.
+  - *Teardown* (D-1, D-1a): the claimer's pool destroyed (`destroy`: leaving the exterior or the building, logging out) or
+    its room changed (`clearAll`, for a cell it no longer holds) KEEPS every claim in flight and not lapsed - the lifted
+    piece is given and the claim resolved in the ledger, so a later verdict lands nothing more
+    (`bodyLootHost.js:"ledger.keep(() => true, _now())"`, `claimLedger.js:"|| c.lapsed || (now !== null && now - c.at >= lapseMs)"`). The owner leaving, his puppets swept, a cell crossing and a
+    socket drop are NOT keep triggers: the ledger, the halo and the re-ask carry them.
+  - *The owner's own body.* The owner's take is judged where it stands; one a peer was granted first goes back out of his
+    pack and is said; a piece he lays on his own body becomes a place of the room's.
+- **A BUILDING'S CUPBOARD** (`world/interior/interiorRoomLoot.js`, the doors in `world/interior/interiorShared.js`:
+  `interiorLootOpen`, `interiorLootFrame`, `interiorLootUnborn`, `interiorLootRoll`, `interiorLootBirth`,
+  `interiorLootAside`, `interiorLootLeave`). The SEAT - the relay's host, `host.roomHost()`, the socket longest in the
+  room, the one that already publishes the building's memory - judges every claim and put, first come.
+  - *The carried base `b`.* A stranger's cupboard is rolled at the OPEN but HELD, written to nothing, until the private-
+    property Yes (AUDIT WORLD6a A5: "No claims nothing"); the Yes MINTS the roll as the room's: terms `{g: the stocked
+    day, lv: 1, n: 1, tm: the shared clock}`, `b` the records through the item law (SS3, HACKED-GOLD, STOLEN-GOODS S3
+    applied), `h` their signature, `d` equal to `g` for older builds. An empty roll is the room's at once. The generation
+    being the day keeps WORLD6a's day laws: a word past tomorrow is refused whole (A2/B2), the day only moves forward
+    (A3), a restock is a new day's birth.
+  - *The shared-clock tie-break* (R-3). Two first-opens in one breath are two mints of one day: the EARLIER mint by the
+    SHARED clock (the relay's wall, `interiorRoomLoot.js:"const wall = () =>"`, never `Date.now()`) wins on every client, and when even the
+    instant is equal the lower signature does (`roomTermsBeat`'s last word, so every client keeps the same). The loser's
+    window shows its own roll until it closes; its takes are refused, lifted back out of its pack and said, its puts go
+    home; at the close it recomposes to the winner's list. Nobody ends holding a piece of a roll that never was the room's.
+  - *Consecutive words.* A claimer's claims and puts go in consecutive words of `ROOM_CLAIMS_MAX` (a Take all of 40 is two
+    words - not the dungeon's `q.slice(-ROOM_CLAIMS_MAX)`, which never said the oldest), every `ROOM_PUT_RESAY_MS` until
+    answered (PARTY-LOOT re-said only puts); the seat answers every claim it hears, a claim it already answered from its
+    ledger, in words of `ROOM_ANSWERS_KEPT` verdicts (`interiorRoomLoot.js:"function stateRecords"`), so none is pushed out of a word by another
+    claimer's. A birth by anyone but the seat is said again until the seat's word is heard for it, at most
+    `BIRTH_SAYS_MAX` (40) times.
+  - *The seat says its verdicts on receipt*, in the act handler's own path (R-1): a hidden tab runs no animation frame
+    and still receives messages, and a building's seat has no stale-seat fallback as the dungeon's host has
+    (`interiorRoomLoot.js:"if (mine && (verdicts.length || birth))"`); the frame may say again, and is never the only sayer. When the seat changes hands the new
+    seat's first frame judges what the last left in `roomClaimOrder` (`interiorRoomLoot.js:"if (nowSeat && !wasSeat)"`): none twice, none lost.
+  - *The claimer's own leave* keeps claims in flight and not lapsed (D-1/D-1a): `exitInteriorNow` and
+    `forceExitToExterior` - a teleport's and a load's - tell the module ahead of the bag's drop (`interiorRoomLoot.js:"ledger.keep(() => true, now)"`).
+  - *The peek, and the rest.* The composed view IS the container's `items`, in place, so CONTAINER-PEEK lists the room's
+    one list; an UNBORN cupboard (no state here, no list of its own - the scene cache's list and an opener's roll
+    before its Yes are held aside) answers null, so the plaque names it and paints no roll that is no one's word; its
+    `preview` stays a glance (no quick take). HOME1: the module is inert in a home (`mintInteriorShared` mints
+    no room for an owned house or ship); AUTO-HOLD hides a piece the reader carries; an unreadable word makes the
+    cupboard unreadable (M2); a base past `LOOT_LIST_MAX` is said once, out loud, and stays its opener's own. **Shop
+    shelves (`shelf:`) keep WORLD6a's whole-list word** (a purchase is a trade, not a take): see What it does not do.
+- **A DUNGEON'S SEARCH FIND** (`scenes/roomLootHost.js`, the dungeon's PARTY-LOOT block). `srch:` joins
+  `ROOM_BASE_KINDS` as a CARRIED kind: the object's own `items` is the container's list, and `searchFound` mints the find
+  at the search - `g` the search's PERIOD (the shared world minute over `SEARCH_COOLDOWN_MINUTES`; a new search after the
+  five hours is a newer mint, two in one breath are one period and the earlier by the shared clock wins), `b` the
+  records (at most `SEARCH_LOOT_MAX`, 4), `by`/`bn` the searcher - and says the birth. From then on the room's word is
+  takes against it. **A carried kind the HOST judges; GRAVE-PARTY decides who SEES.** The dungeon's host (WORLD2's
+  `_authority`) keeps a judging state for every find, the searcher's party's or a stranger's, and judges every claim on
+  it - without that a host outside the party could never answer that party's claims; but a client COMPOSES a find, and
+  starts its five hours, only when `searchRoom.whose` says it is its own or its party's (`roomLootHost.js:"if (h.search && !_roomSees.has(canon))"`). A host
+  that is a stranger to the party judges and never shows the find and never starts its own five hours; a stranger's claim
+  on a find the host shows is not heard. A stranger's word is KEPT, unlanded, by `searchRoom` (now its birth and base)
+  and adopted at the object once a party is made; G4 and G5 ride the word as ever, and WORLD8's respawn check is
+  `landRoomWord`'s own.
+- **THE DUNGEON'S TAKE ALL VERDICTS** (D-2.1, `roomLootHost.js` `roomRecordsOf`/`verdictWords`). PARTY-LOOT's word carried a
+  claimer's newest 32 claims (`q.slice(-ROOM_CLAIMS_MAX)`) and the host's latest 32 verdicts (`recentAnswers`): a Take
+  all of 40 never said its oldest 8, and two bulk takes judged together pushed a claimer's verdict out of `y` - its piece
+  left the list and reached nobody. A claimer's claims are now said in consecutive words and said AGAIN until answered
+  (claims as puts were, a lapsed one too, which the host may still grant), a host's word carries the verdicts of the claims
+  it answers in words of `ROOM_ANSWERS_KEPT`, a claim asked again is answered from the ledger and never judged twice, and
+  a claim is given up after `CLAIM_KEEP_MS`.
+- **THE UNLISTED PLAQUE.** `worldHover.js` `resolveHover`'s itemised arm: a namer that says `unlisted` draws the NAME
+  ALONE, never "Empty" over a list the reader has not heard (`worldHover.js:"if (named?.title && named.unlisted)"`) - as `resolvePreview` keeps an unrolled
+  cupboard a name - and a name is no list, so quick loot lights no row on it. A peer's older-owner (LEGACY) and
+  unreadable bodies use it; so do the dungeon's M2-unreadable pile and body (D-2.2: the same class, `dungeonContext.js`
+  names them `unlisted`). A body in the middle of being peeked (UNBORN) is no target at all.
+- **REVENANT BODIES (D-2.3, RVN8)** were slated to become a carried kind; reading the code showed they ride no room word
+  underground at all - no loot key, no publish, no memory record - so there is no whole-list word for a stale close to race.
+  `test/systems/revenant_body_loot.test.js` pins that (a revenant stands underground only as a loose foe or an offline
+  rest encounter), and the design's "keep RVN8's own laws" holds trivially.
+
+**Mixed builds.** No relay change and no `RELAY_VERSION` bump: every new frame is refused by an older build, as a blow with
+no `dmg` (the body frames' keys are disjoint from every old hit arm's - pinned) or as an M2 "newer version" word.
+- A new taker facing an older owner (`o > 0`, no `bw`): LEGACY. The plaque names the body alone and the press sends
+  today's `take: 1` (B8's one ask in flight stands); the grant now lands at any lateness inside `LEGACY_ASK_KEEP_MS`
+  (= `CLAIM_KEEP_MS`) with or without the puppet, once per ask (the ask is latched in the claimer's ledger, counted); an
+  unasked grant is refused whole, an unreadable one is answered `back` (F4).
+- An older taker facing a new owner sends `take: 1`: the owner answers today's grant shape, drawn from the state as a
+  bulk claim of every present place at its left count and judged first come with everyone's. **LOOT-DUP's void stays,
+  only here**: a legacy grant whose frame never left puts its places back as new ones (it lifts nothing at the taker),
+  and F4's `back` inside `GRANT_BACK_MS` restores them once. An older taker's own lateness refusal still destroys what it
+  was granted - today's behaviour, and the bound.
+- A cupboard's or a find's NEW word carries `d` (cupboards) and a base `b` and no `r`, so an older build reads it as a
+  newer version's and marks the container unreadable ("Reload to open it"); it is never landed over a list there. An
+  older build's WHOLE-LIST word is never landed over the room's either: it is the container's BIRTH when the room has none
+  for that day or period (terms no mint beats, `tm: -1`, its list the carried base), and after that that peer's DIFF
+  against its own previous word (`legacyDelta`, pieces told apart by what they are): a piece that fell in count is its
+  take, judged as a claim on the matching piece; one that rose is its put; an untouched stale close changes nothing - no
+  resurrection, no erasure. A peer's first word, or the memory's, is a baseline only.
+
+**The shared changes.**
+- `systems/item/itemTransfer.js` `applyTransfer` **refuses a row its source no longer holds** (`itemTransfer.js:"if (Array.isArray(from) && !from.includes(item))"`): a
+  click on a piece lifted out of the pack while its claim stands, or one another player emptied first, moved a piece
+  that was not there and landed a COPY (a coin row was spent into the purse the same, a split minted its half out of
+  nothing); it answers null, the gold arm's own answer. This closes the same latent class in the dungeon; every caller
+  hands the list the piece is in.
+- `systems/roomLoot.js` `composeRoomView` hands **copies** of stored pieces, always (`roomLoot.js:"const piece = { ...it"`): a window that
+  split an undrawn stored stack mutated the state's own record, the judge read the mutated count and spliced the whole
+  piece (a partial take of a stashed stack destroyed the rest; PARTY-LOOT's STUCK-ARROWS case too). Also here: `b`, the
+  carried base (`validRoomWord`, `carriedBase`, `mergeRoomWord` keeping the first base heard for a mint, `roomWord` and
+  `claimWord`), `roomTermsBeat`'s signature tie-break, `liftPiece`/`givePiece`, `listMovesSince` and `legacyDelta`.
+- `systems/loot/claimLedger.js` (new): the claimer's half of the claim law with no transport - `take`, `pending`,
+  `resolve`, `due` (lapse, re-ask, expiry), `keep`, and the legacy ask latch - used by the street's block and the
+  cupboards'. `scenes/roomLootHost.js` keeps its own `_roomMine` lifecycle (pinned line by line); `liftPiece` and
+  `givePiece` duplicate its `roomLift` and `roomGive`, and collapsing the two is a recorded follow-up (S1-5, ONE
+  CONSTRUCTION SEAM).
+- `ui/inventoryDoor.js` and `systems/inventorySession.js`: a container that shares its list is told its window stood
+  (`opened`) and is gone (`closed`), once, on both skins and with no host line, so nothing is composed under it.
+- `systems/containerPreview.js` and `systems/worldHover.js`: `unborn` and `unlisted`, above.
+
+**The four hosts** (THE FOUR HOSTS RULE). `scenes/world.js` WIRED, with no line - the exterior pool carries the block, its
+`openBodyLoot` already hands the window and its hover already routes `foeCorpse:`. `scenes/worldModes.js` WIRED - the
+interior pool the same; the cupboards by MOVING WORLD6a's loot doors (`interiorPublishLoot`, `interiorLootOpened`,
+`interiorLootSettle`, the loot halves of the place hooks) OUT of `createWorldModes` into `interiorShared.js` and
+`interiorRoomLoot.js` (HOST-SPLIT: its ceiling 7,159 -> 7,138, down with the code that left). `scenes/
+dungeonContext.js` WIRED - the search's loot arm calls `searchFound`, the unreadable pile's plaque says `unlisted`.
+`scenes/exterior.js` FLAGGED: the offline bench has no net, so the module is inert and a body is its owner's local list,
+as today. `createExteriorFoes` fell from 1,755 to 1,706 code lines (1,793 -> 1,744 on main's tree after its merges, re-measured 2026-10-18).
+
+**What it does not do.**
+- **R1, PARTY-LOOT's sentence, widened.** A claim still in flight when its claimer leaves is kept by the claimer (D-1) -
+  and is a DUPE when that claim lost a race or was never heard by its authority (a dropped frame, a claim the seat
+  refused): the claimer leaves inside the timeout, keeps its piece, and the winner has it too. That is main's own limit,
+  replicated on purpose, and pinned as recorded behaviour. A crash or a page reload runs no teardown, so a granted piece
+  in flight between the verdict leaving and landing is LOST then, exactly as in the dungeon - the residual is "the
+  taker's page is gone", never "about one relay leg": a taker whose socket merely drops re-asks under the same id and
+  lands it exactly once (R-2).
+- **S1-3.** `clearAll` keeps the in-flight claims of a cell this client no longer holds even as a halo (a recall away):
+  main's rule - no verdict can reach a place that is gone; a halo-held cell's claims stay in the ledger.
+- **S1-4.** A piece laid into another player's kill is handed back silently at the close; no new line says so (L10N4 would
+  need thirteen locale drafts). Only the owner can lay something on his own body, and then it becomes everyone's.
+- **R-5, said plainly: a theft is marked for a take the seat refused.** STOLEN-GOODS' theft basket reads the window's own
+  takes - the attempt - whatever the seat's verdict, so a stranger's cupboard's piece the seat refused (someone else took
+  it first) still enters the basket as an attempt at theft.
+- **Two judges with no seat known.** `isSeat()` answers true when no seat is known (before the welcome, on a dead socket),
+  the dungeon's own rule, so two clients in that state each judge: a brief two-authority window. This is PARTY-LOOT's
+  recorded "two hosts at once", unchanged, and so is a seat's handover heard late.
+- **A forged early birth.** A modified client can mint a cupboard birth with an arbitrarily early `tm` and win a first-open.
+  The old whole-list law was worse (any peer could overwrite the list); a bound on `tm` is a follow-up.
+- **Rival finds.** ~~There is one judged find per key and period: a rival party's roll of the same object stays its own and
+  unshared.~~ (AUDIT OUTDOOR-LOOT D1, 2026-10-18: it was dropped whole, never its own - unlootable. The seat judges a stranger's find
+  in a state of its own a mint, never shown; each party's find of the object is one list for that party.) The seat's memory
+  carries one find an object: a stranger's find rides it as its kept birth while the seat's party has none of that object, and
+  a take of a piece already taken is refused at the seat - but where the seat's party holds its own find of the same object, a
+  stranger's partymate who comes in later does not hear the stranger's from the memory (a third party's edge; before the audit
+  the stranger's find could not be looted at all).
+- **Shop shelves, and the stealing race (F-1, the next slice).** `shelf:` keeps WORLD6a's whole-list word - a purchase is a
+  trade, not a take: the Buy window stages the clicked piece in a basket that is not the pack and commits on payment, so a
+  lift-and-resolve cannot read it and a refused purchase would need its price refunded. The shut shop's stealing window
+  has the cupboard's old race: a stolen piece can come back for the next thief through a stale close. It gets its own
+  branch: the claim law with a refunding trade window.
+- **Street and building bodies have no personal bonus** - the owner's roll is the one list (PARTY-LOOT's bonus is the
+  dungeon's) - and Physical Items lays no piece round a peer's body. LOOT11's line of light and Hunting's body key read a
+  born body's list where they already read a puppet. A piece used straight off a container (a potion drunk off a body)
+  brings its claimer nothing more, but its claim still takes it.
+- **Older builds.** An older owner's body is still a blind grab for a new taker (the window needs the owner's word); an
+  older taker's own lateness refusal still destroys what it was granted; an older build reads a new cupboard or find word
+  as a newer version's; an older build's window opened before it heard any new word keeps what it takes in that window
+  (its close is never said); an older seat or dungeon host judges nothing, so a new build's claims lapse back until that
+  build leaves - nothing taken, nothing lost.
+- Not yet seen with two real players on the fixed tree when this was written: the acceptance run's result is recorded by
+  the pull request.
+
+- **Pinned** (the runner's counts; Testing.md's manifest counts the top-of-line `test(` calls):
+  `test/net/bodyloot.test.js` (26) - the phase-1 repros and guards through the real pools, street and building: the plaque
+  never "Empty", the press a window and the one piece taken the only one that leaves, a grant 3.5, 10 and 30 s late, a
+  crossing, a leave and a socket drop mid-claim, the owner's own press and quick take, the census itself;
+  `test/net/bodyloot_protocol.test.js` (134) - the wire, street and building: the digest, the prefetch and UNBORN, an
+  older owner's name alone (T1-T2), Take all and a filter in one frame, a partial stack, the quick door's row and lot
+  (T4-T5), two takers one piece (T6), the lapse and the late verdict (T7), the legacy grant late (T8), the leave and the
+  teardown (T10-T11, D-1), the old protections - duplicate, foreign, forged and re-asked verdicts, budget, AUTO-HOLD,
+  HACKED-GOLD, M2 (T13), the stale row (T14), the frames' keys against the old arms (T16), an older taker (T17), the
+  owner's window (T18), offline and Physical Items (T19), verdicts on receipt with no tick (R-1), a dead link and a
+  reconnect, the keep bound (R-2), a re-ask out of the pose list or the cell (S1-1) and a body's identity across the
+  owner's reload (S1-2);
+  `test/net/containerloot.test.js` (9) - the cupboard races (a stale close, a stale put, two first-opens), LOOT-BULK's
+  Take all and Stash all, and the CONTAINER-PEEK, HOME1 and STOLEN-GOODS guards;
+  `test/net/containerloot_protocol.test.js` (59) - the cupboard's protocol over a relay that logs, holds, cuts and loses
+  words: the earlier mint by the shared clock, ten minutes fast or slow (T22, R-3), first come and a Take all of 40 in
+  consecutive words, a dropped claim, put, birth or verdict said again, the home gate's heal (T23), the seat answering
+  with its frame never run (R-1), the seat's death and handover (T24), the claimer's leave and the recorded limits
+  (D-1, D-1a, R-5), the protections (T25) and the peek (T26), an older build's words (T27), the shelf's whole-list word;
+  `test/net/containerloot_edges.test.js` (17) - what the implementation decided that the written pins left open: offline
+  inert, an empty roll the room's at once, no seat known, a birth said again and answered, a new day's stock, a put under
+  a lost tie-break, a stack laid onto a stack, a birth no seat answers said a bounded number of times;
+  `test/net/outdoorloot_pins.test.js` (7) - what the mutants found the slices' pins had left open: the digest's monotone merge
+  (a stale word never brings a taken place back, two words land alike in either order), the owner's peek answered only
+  within reach, the window's `opened`/`closed` plumbing through the real `createInventoryWindow` and `closeSession`, and an
+  older build's list as a baseline (a second older build's first word, a word dated yesterday);
+  `test/systems/roomloot_carried.test.js` (8) - the pure half: the stored piece's copy, `b` projected, `carriedBase`, the
+  merge keeping the first base, equal mints and the signature, a computed base as it was, `roomWord` and `claimWord`,
+  `legacyDelta`;
+  `test/systems/searchfindloot.test.js` (23) - the find over PARTY-LOOT's mount of the dungeon's doors: a stale close, a
+  stale put, two searches in a breath, LOOT-BULK, a stranger's search, first come at the host, a host outside the
+  party, the five hours, a find heard before the party was formed, WORLD8, mixed builds, the loser's window, a stranger's
+  claim, a re-asked claim;
+  `test/systems/graveparty_unlisted.test.js` (3) - the plaque over an unreadable pile and body is the name alone, a
+  readable pile still lists;
+  `test/systems/revenant_body_loot.test.js` (4) - a revenant's body underground rides no word;
+  and `test/systems/partyloot.test.js` (18, was 10) gained D-2.1: a joiner's Take all of 40 stored pieces, two bulk takes
+  judged together by the new seat, a dropped verdict frame recovered by a re-ask; `test/systems/containerpreview.test.js`
+  (6, was 5) the unborn cupboard's null; `test/net/world6biiic.test.js` and `test/scenes/auditworld6biiic.test.js`,
+  `test/scenes/mace_corpse_window.test.js`, `test/systems/hackedgold.test.js`, `test/server/autohold.test.js`,
+  `test/systems/item/ss1_stones.test.js` and the cupboard files that read the moved doors follow the rule (each keeps its
+  intent). The fixtures `test/net/bodyLootHarness.mjs` and `test/net/containerLootHarness.mjs` carry the two relay
+  stand-ins. Mutants: `tools/mutants/outdoorloot.json` (46 records: 45 killed, one recorded equivalent - the cupboard module's own `unborn` flag, belt-and-braces over the mount's aside), and the records of the older arcs
+  these laws moved (`hackedgold.json`, `autohold.json`, `ss1.json`, `silverfinds.json`, `auditonline2.json`,
+  `home1.json`, `partyloot.json` and the others the diff names) re-aimed.
+
+**SPLIT-LIFT, the given-up claim and the seam (2026-10-18, read before the merge - PR #891's review).**
+- **A split off a stranger's stack.** The half a split mints is a new record the window marks stolen (stolenGoods.js
+  `takenFromKeeping`), while the stack left in the cupboard is the owner's and clean - and a stolen piece stacks only with
+  stolen kin. The claim lifted the cupboard's record, which is in no pack: a refused split stayed in the taker's hands (the
+  arrows twice), and a taker who carried honest arrows of the kind lost those in its place while the marked ones stayed. The
+  arm now hands the cupboard module the window's keeping (`interiorLootOpen`'s `keeping`), and a take of a record still in
+  it that did not move whole is lifted, claimed and given back as its marked half (`interiorRoomLoot.js` `takenAs`).
+  Pinned: `containerloot_protocol.test.js` SPLIT-LIFT - a refused four out of the pack with the taker's own five honest
+  arrows standing, and a granted four back in it, marked.
+- **A claim given up** (`CLAIM_KEEP_MS` with no verdict) left `_roomMine` but stayed among the claims the dungeon's client
+  had heard of its own, so that client taking the seat later granted it - to nobody: the piece left the room. It leaves
+  both now, as the cupboard's ledger already did. Pinned: `partyloot.test.js` "a claim GIVEN UP".
+- **The seam.** `roomLootHost.js` read `searchables` and `searchHeard` through the handle while the host handed them over
+  by value (HOST-SPLIT 1's audit, `test/tooling/hostseam.test.js`, red on the branch): both are settled names - a const
+  array, a function declaration - and are destructured at construction now. The find's hour (WORLD8's sweep) moved out of
+  `buildDungeonContext` into `roomLootHost.js` `letFindGo`; the host keeps the wiring alone.
+- Mutants: `tools/mutants/splitlift.json` (4 records, all dead).
+
+**AUDIT OUTDOOR-LOOT (2026-10-18, the owner: "Lets do an audit on this and ensure perfection").** PR #1019 read cold by four
+lanes - a peer's body, the cupboards, the dungeon and the shared law, and the records - every finding driven through the real
+modules or the real mounts before it was believed, and against main where it could be a regression. Sixteen real: twelve fixed
+at the root (eleven pinned red-first; D6 hardened with no repro), four recorded below - and the records corrected. The new pins are `bodyloot_protocol.test.js`,
+`containerloot_edges.test.js`, `searchfindloot.test.js` and `partyloot.test.js` "AUDIT OUTDOOR-LOOT"; the mutants
+`tools/mutants/outdoorloot_audit.json` (24 records: 22 killed, 2 recorded equivalent - latency, and a hand-back every close repeats).
+- **B1 (HIGH) - a piece laid into a peer's body was destroyed.** The close's arm for a body no longer there (its owner left, went
+  stale past FOES_STALE_MS, reloaded) lifted the window's takes and returned before the hand-back: a Stash all lost the pack. It
+  settles without claiming and hands back (`bodyLootHost.js` `settleReader(rb, false)`).
+- **B2 (MEDIUM) - a take never claimed.** A body that turned UNREADABLE (its owner on a newer build laid a piece) or UNBORN (its one
+  peek answer lost, the taker walked off) under an open window settled nothing from then on: a second taker was granted the same
+  piece. The settle runs in any state - the view and its `seen` are the last born compose's, and a claim names its place and the
+  body's generation - at the close and in the frame.
+- **B3 (LOW) - re-asks held the hit queue.** Re-asks to an owner who left sat at the head of the taker's queue (sendHit refuses a
+  `to` not in the roster) and held every frame behind them for up to 2 s, for five minutes. They wait while the owner is not here.
+- **C1 (HIGH) - one forged word took from the seat's pack.** A lost tie-break lifts back out of the seat's pack what it took from the
+  roll that lost - and a same-day birth with an earlier `tm` is a lost tie-break whenever it comes: one forged birth, minutes later,
+  took the seat's Katana (and, after a take put back, its own honest arrows). What a lost roll gives back is bounded to the window an
+  honest earlier birth can arrive in (`BIRTH_SAYS_MAX` re-says).
+- **C2 (MEDIUM) - a put lost under a seat that judges nothing.** Under an older seat (or a dead one before the handover) a put was
+  in its putter's list alone and went with him at his leave. A put refused, or unanswered past ROOM_CLAIM_TIMEOUT_MS, goes home at
+  the leave - never a younger one: a put and a walk out in one instant would be the room's and the putter's both.
+- **C3 (LOW-MEDIUM) - the seat's own put on a roll that lost.** It was judged where it stood and recorded nowhere, so the roll that won
+  never held it and it went home to nobody. Puts the room stored on a mint are recorded with it (`gave`) and go home on its loss -
+  those the losing roll still stored: one another took from it meanwhile is that taker's alone.
+- **D1 (HIGH, a regression) - a rival party's find was unlootable.** The seat judged every find in the room's one state an object: a
+  stranger's find of the coffin the seat's party had searched was dropped whole (her take lifted and lapsed for good), and a
+  stranger's search first hid the seat's party's own. A stranger's find is judged in a state of its own (`judgeStrangerFind`).
+- **D2 (HIGH, a regression) - a second search.** Only the first word of a find ever started a partymate's five hours: a search after
+  them left the party unlocked, and a partymate's search then wrote its roll over the room's find - every room piece read as a take
+  granted to nobody. The hours start at every new mint, and a search that keeps the room's mint composes the room's list back.
+- **D3 (MEDIUM, a regression) - WORLD8 let a find go with pieces in it.** Twenty minutes after its last word, inside its five hours,
+  and its list stood unshared on every machine: two partymates took the same piece. Only an emptied find is let go now.
+- **D4 (MEDIUM, older than the PR) - the host's put, then a split.** The room stored the host window's own record, and a split of it
+  under the same window took from the judge's record: four arrows left the world. The put's copy is stored.
+- **D5 (LOW, a regression) - a claim given up, granted.** A claim old enough that its claimer may have let it go (CLAIM_KEEP_MS) is
+  refused, never granted - by a third client that heard it and takes the seat, or a last re-say landing late - in the dungeon and in
+  the cupboards; a claimer still waiting is told and may take again.
+- **D6 (LOW, not reproduced) - hardened.** A legacy diff's claim id carries the context's stamp: a new seat's count could meet an
+  answer the last seat left, and its verdict came back without moving the state.
+- **The records.** D-2.1's consecutive words, the find's hour, the find's older-build baseline and the owner's own put had no pin a
+  mutant could fail - each has one now; the counts, the line counts, the "played end to end" claims and `liftPiece`'s home are
+  corrected where they stood. The D-2.1 Take-all pins counted two pieces alike one by one - the body's own roll, on the clock's dice,
+  can hold one the same as a stored piece - and failed at one moment of the clock: they count by piece now.
+- **Recorded, not fixed:**
+  - *A verdict dropped at the owner, the owner away past CLAIM_KEEP_MS* (B4): the owner judged and took the piece off his body, his
+    verdict died in his own queue (his room changed), and the taker gave the claim up before he came back - the piece is in no
+    place. Main put a dropped grant's pieces back. Verdict final is the law; a verdict said again when the claimer is reachable is
+    the follow-up.
+  - *A put under a dead seat, its putter gone within ROOM_CLAIM_TIMEOUT_MS*: in nobody's list once the putter left (C2's bound
+    keeps the instant walk-out honest).
+  - *A potion drunk straight off a stranger's cupboard, refused*: its claim lifts a potion of that recipe from the drinker's pack
+    if he carries one (a marked one first - before SPLIT-LIFT, an honest one).
+  - *A re-ask landing at a body's owner after its claimer let it go* (a five-minute boundary): granted to nobody - the owner judges on
+    receipt and has no clock of the claim's.
 
 ## AUDIT ONLINE 3 - net/online.js read whole (2026-10-16, the user: "audita online.js")
 

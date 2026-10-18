@@ -131,8 +131,8 @@
   {
     "name": "AUDIT-WATCH1-A3-a-watch-body-advertises-its-pile",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "o: onWatch || _questLike(f) ? 0 : (f.corpse ? Math.min(255, peerHanded(f.entity?.items ?? []).length) : 0), ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(!onWatch",
-    "new": "o: f.corpse ? Math.min(255, peerHanded(f.entity?.items ?? []).length) : 0, ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(!onWatch",
+    "old": "o: onWatch || _questLike(f) ? 0 : (f.corpse ? body.placesLeft(f) : 0), ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(!onWatch",
+    "new": "o: f.corpse ? body.placesLeft(f) : 0, ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(!onWatch",
     "tests": [
       "test/characters/enemy/watch1.test.js"
     ]

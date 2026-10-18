@@ -28,27 +28,27 @@
   },
   {
     "name": "HACKED-GOLD-the-grant-receiver-lands-a-letter",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      const grant = notCarried(peerHanded(validLootList(data.grant)));",
-    "new": "      const grant = notCarried(validLootList(data.grant));",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    const grant = notCarried(peerHanded(validLootList(data.grant)));",
+    "new": "    const grant = notCarried(validLootList(data.grant));",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-owner-grants-its-letter",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "    const stays = items.filter(neverPeerHanded);\n    if (stays.length) { const go = items.filter((it) => !neverPeerHanded(it)); items.length = 0; items.push(...go, ...stays); }\n    let n = items.length - stays.length;",
-    "new": "    const stays = [];\n    let n = items.length;",
+    "file": "src/net/bodyLoot.js",
+    "old": "if (!piece || neverPeerHanded(piece)) return null;",
+    "new": "if (!piece) return null;",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
   },
   {
     "name": "HACKED-GOLD-the-body-counts-its-letter",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "Math.min(255, peerHanded(f.entity?.items ?? []).length)",
-    "new": "Math.min(255, f.entity?.items?.length | 0)",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "return Math.min(255, n); };",
+    "new": "return Math.min(255, n + st.own.length); };",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]

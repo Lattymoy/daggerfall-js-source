@@ -250,7 +250,7 @@ test('AUDIT pre-merge Q5 + Q6 executed: a quest foe\'s body offers no pile (its 
   const host = pool('host-0001');
   const [q] = await questFoes(host.p, 1);
   const plain = await host.p.spawnFoe(0, [130, 0, 100], { feetGiven: true, loose: true });
-  for (const f of [q, plain]) { f.dead = true; f.corpse = true; f.entity.items = [{ name: 'Gold' }]; }
+  for (const f of [q, plain]) { f.dead = true; f.corpse = true; f.entity.items = [{ group: 'Currency', templateIndex: 276, name: 'Gold Pieces', stackCount: 3, value: 3 }]; }   // PIN MOVED (OUTDOOR-LOOT): a piece the loot tables mint - the record's `o` counts the PLACES a peer may take (a piece the wire could not carry is its owner's alone), and `{ name: 'Gold' }` is no item
   const fr = host.p.foesFrame(true);
   const rec = (f) => fr.f.find((r) => r.i === f.seq);
   assert.equal(rec(q).o, 0, 'a quest foe\'s body: no pile - a member\'s press asked again forever');

@@ -52,7 +52,12 @@ looter sees".
   the floor beyond the nearest action door, on the side away from the object.
 - A dungeon search is said to the room as a WORLD4 container, `srch:<i>` (the layout's searchables order, the same on
   every client): every search, whatever it rolled, and a find is the list - a partymate opening the object inside the
-  five hours opens the same items, less what was taken. An older build ignores the key. GRAVE-PARTY (below): the word
+  five hours opens the same items, less what was taken. (AMENDED 2026-10-17, OUTDOOR-LOOT: the word is not the list any more -
+  a find is a CARRIED PARTY-LOOT container, minted once at the search, its word the takes against it, every take a claim the
+  dungeon's host judges; `06-Systems/Online-Arc.md` OUTDOOR-LOOT.) ~~An older build ignores the key.~~ (AUDIT OUTDOOR-LOOT L6, 2026-10-18: an
+  older build reads a new find word as a newer version's - unreadable, "Reload to open it" - and its own whole list is landed
+  here as a birth or that peer's diff; Online-Arc's mixed builds.) A rival party's find of the same object is that party's own
+  list, judged by the dungeon's host apart (AUDIT OUTDOOR-LOOT D1). GRAVE-PARTY (below): the word
   names its searcher and starts the five hours, and lands the find, in the searcher's PARTY alone - no longer everyone's
   in the room.
 

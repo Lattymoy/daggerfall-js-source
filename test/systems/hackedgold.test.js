@@ -137,7 +137,7 @@ test('HACKED-GOLD the dungeon\'s words and a foe\'s heir: every site a peer\'s l
   const xf = read('src/scenes/exteriorFoes.js');
   assert.match(xf, /const items = h \? peerHanded\(validLootList\(f\.entity\?\.items \?\? \[\]\)\) : null;/, 'a foe handed to its heir');
   assert.match(xf, /const items = peerHanded\(validLootList\(r\.it\)\);/, 'a foe taken as its heir');
-  assert.match(xf, /const grant = notCarried\(peerHanded\(validLootList\(data\.grant\)\)\);/, 'a grant');   // PIN MOVED (AUDIT AUTO-HOLD): and never a piece its reader carries, systems/peerWord.js notCarried
+  assert.match(read('src/scenes/bodyLootHost.js'), /const grant = notCarried\(peerHanded\(validLootList\(data\.grant\)\)\);/, 'a grant');   // PIN MOVED (OUTDOOR-LOOT): the legacy grant's landing is the body block's, the line as it was; PIN MOVED (AUDIT AUTO-HOLD): and never a piece its reader carries, systems/peerWord.js notCarried
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js', 'src/world/interior/interiorShared.js']) assert.doesNotMatch(read(f), /\bunbound\(/, `${f}: no list a peer hands over is read by SS3's narrower filter alone`);
 });
 

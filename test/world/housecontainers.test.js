@@ -136,7 +136,7 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
   // The claim is unchanged - owned latches empty, and it does so before
   // the stranger arm can stock - and the "(stockedDate = 1)" the old
   // message parenthesised is now a real write on the line above.
-  const stock = arm.indexOf('c.items = stockHouseContainer(');
+  const stock = arm.indexOf('rolled = stockHouseContainer(');   // PIN MOVED (OUTDOOR-LOOT): the roll is held a moment (`rolled`) and written to the container, offline, by the line below it
   assert.ok(ownedLatch >= 0 && stock >= 0 && ownedLatch < stock,
     'owned latches empty (stockedDate = 1) BEFORE the stranger arm ever stocks');
   assert.ok(arm.indexOf('c.stockedDate = 1;') >= 0 && arm.indexOf('c.stockedDate = 1;') < stock,
@@ -170,7 +170,7 @@ test('HC1: a stocked stranger\'s container - empty does NOTHING, full asks TEXT.
   // anchors on the ACTIVATION arm rather than the first match in the
   // file. lastIndexOf, because the namer is declared above the ladder.
   const arm = wm.slice(wm.lastIndexOf("if (key.startsWith('container:')) {"));
-  assert.ok(arm.includes("if (c.items.length === 0) return true;"),
+  assert.ok(arm.includes("if ((rolled ?? c.items).length === 0) return true;"),
     '"If no contents, do nothing" (:917-918) - no box, no open');
   assert.ok(arm.includes('townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID)'),
     'the question is record 37 through the host\'s TEXT.RSC');

@@ -255,7 +255,6 @@ const HARDCODED = {
   'src/scenes/eliteGates/egSpan.js': 4,
   'src/scenes/etherHost.js': 9,
   'src/scenes/exterior.js': 15,
-  'src/scenes/exteriorFoes.js': 1,
   'src/scenes/fishHost.js': 14,
   'src/scenes/fleetHost.js': 52,
   'src/scenes/foragingWait.js': 1,

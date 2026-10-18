@@ -77,8 +77,11 @@ test('A2: the host takes the day comparison on all three loot arms, not a stock-
     'the shelf stamps the day and re-mints - `items.Clear()` then StockShopShelf');
   // the HOUSE CONTAINER arm (:910-915) and the owned latch (:907)
   assert.match(wm, /c\.stockedDate = 1;/, 'the owned arm stamps DFU\'s literal 1');
-  assert.match(wm, /if \(needsRestock\(c, today\)\) \{\s*\n\s*c\.stockedDate = today;\s*\n\s*c\.items = stockHouseContainer\(/,
+  // PIN MOVED (OUTDOOR-LOOT): the roll is HELD a moment (`rolled`) and the room, online, mints it at the Yes - offline it is written as it was
+  assert.match(wm, /if \(needsRestock\(c, today\)\) \{\s*\n\s*rolled = stockHouseContainer\(/,
     'the stranger arm takes the same gate');
+  assert.match(wm, /if \(!interiorLootRoll\(interiorCtx, key, rolled, _intShared, today\)\) \{ c\.stockedDate = today; c\.items = rolled; \}/,
+    'and stamps the day it was stocked on the container, where the room holds no roll');
   // and nothing in the host stocks through the old null latch any more
   assert.doesNotMatch(wm, /items \?\?= stockShopShelf\(/, 'the stock-once latch is gone from the shelf arms');
   assert.doesNotMatch(wm, /items \?\?= stockHouseContainer\(/, 'and from the container arm');

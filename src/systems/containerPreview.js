@@ -23,10 +23,13 @@ import { needsRestock } from './shopStock.js';
  * needsRestock would call stale, and the array is their storage.
  * `shut` is a home or a room that is not theirs. `hall` is a guild hall
  * or a palace, whose cupboards open the Stores chest rather than `c.items`.
+ * `unborn` (OUTDOOR-LOOT, DESIGN 6.4): an online stranger's cupboard the ROOM has not spoken about and this client has not
+ * opened - whatever list it holds is a roll that is no one's word (the scene cache's, an opener's before its Yes), so the
+ * plaque names it and lists nothing, as it does one that has not been stocked.
  */
-export function containerPreviewItems(key, containers, { owned = false, shut = false, hall = false, today = 0 } = {}) {
+export function containerPreviewItems(key, containers, { owned = false, shut = false, hall = false, today = 0, unborn = false } = {}) {
   if (typeof key !== 'string' || !key.startsWith('container:')) return null;
-  if (shut || hall) return null;
+  if (shut || hall || unborn) return null;
   const c = containers?.[Number(key.slice('container:'.length))];
   if (!c || !Array.isArray(c.items)) return null;
   if (!owned && needsRestock(c, today)) return null;
@@ -57,13 +60,14 @@ export function interiorHeldPreview(key, bag = {}) {
 /**
  * The interior host's contents rung, built once (HOST-SPLIT: the host wires it, it does not grow it). Each getter is
  * the host's own word, read only while the plaque is over a `container:` or a `decor:` key - a pile, a body and a door
- * never ask the room who owns it.
+ * never ask the room who owns it. `unborn(key)`: whether the room's cupboard is one this client has not heard of
+ * (OUTDOOR-LOOT) - asked of a stranger's cupboard alone; the player's own storage lists what it holds.
  */
-export function createInteriorPeek({ containers, decor, owned, shut, hall, today }) {
+export function createInteriorPeek({ containers, decor, owned, shut, hall, today, unborn = () => false }) {
   return (key) => (typeof key === 'string' && (key.startsWith('container:') || key.startsWith('decor:'))
     ? interiorHeldPreview(key, {
       containers: containers(), pieceOf: (id) => decor()?.pieceOf(id), itemsOf: (id) => decor()?.itemsOf(id),
-      owned: owned(), shut: shut(), hall: hall(), today: today(),
+      owned: owned(), shut: shut(), hall: hall(), today: today(), unborn: !owned() && !!unborn(key),
     })
     : null);
 }

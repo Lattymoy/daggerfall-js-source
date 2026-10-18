@@ -13,7 +13,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
-import { respawnDue } from '../../src/net/wire.js';
+import { respawnDue, sharedClassicMinutes } from '../../src/net/wire.js';
+import { CLAIM_KEEP_MS, CLAIMS_KEPT_MAX } from '../../src/systems/loot/claimLedger.js';
+import { SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX } from '../../src/systems/searchables.js';
 import { generateItems, addPileLootExtras, validLootList, LOOT_LIST_MAX, DUNGEON_LOOT_KEYS, LOOT_NEWER_TEXT } from '../../src/systems/loot/loot.js';
 import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons, LOOT_RARITY_KEY } from '../../src/systems/loot/lootRarity.js';
 import { peerHanded, neverPeerHanded, notCarried } from '../../src/systems/peerWord.js';
@@ -42,6 +44,9 @@ import { hoverLines } from '../../src/systems/worldHover.js';
 import { asTheRoom, rollingAsTheRoom } from '../../src/systems/online/onlineLane.js';
 import { modSaveRecords, restoreModSaveRecords } from '../../src/systems/modSaveData.js';
 import * as RL from '../../src/systems/roomLoot.js';
+import { ITEM_TEMPLATES } from '../../src/characters/paperdoll/paperdoll.js';
+import { planTake, applyTransfer } from '../../src/systems/item/itemTransfer.js';
+import { runBulk, bulkVerdict } from '../../src/ui/storeBulk.js';
 import '../../src/systems/card/cardSources.js';   // CARDS9's death handler registers at import, as the hosts load it
 import '../../src/scenes/physicalItemsLayer.js';   // PI1's
 
@@ -155,7 +160,7 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, ENEMY_BASICS,
     generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus,
-    wildPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, ...RL,
+    wildPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, CLAIM_KEEP_MS, CLAIMS_KEPT_MAX, SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX, sharedClassicMinutes, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,
     spawnCorpseNow: async (f) => { f.corpsePos = [...f.ai.feet]; }, renderer: { destroyBillboardBatch: () => {} }, billboardBatches: [], renownFoeRevived: () => {},
     respawnFoe: () => false, camps: { applyOwner: () => {}, activate: () => false }, roomEncounterAsked: () => false, actions: { applyRemote: () => 0 },
@@ -454,7 +459,7 @@ test('PARTY-LOOT, HOST ARBITRATES (Mac, 2026-10-15: "Host arbitrates"): the SAME
     const onC = baseRows(shown(r.C, key)), onA = baseRows(shown(r.A, key));
     const dagger = { group: 'Weapons', templateIndex: 113, name: 'Dagger', material: 0, value: 10 };
     r.net.send('bbbb', { k: ROOM, l: [{ ...word, x: Array.from({ length: onC.length + 4 }, (_, i) => i), s: [dagger], si: ['bbbb:forged:1'] }] });
-    r.net.send('bbbb', { k: ROOM, l: [{ k: word.k, g: word.g, lv: word.lv, ...(word.n ? { n: word.n } : {}), tm: word.tm, h: word.h, q: [{ id: 'cccc:forged:2', p: 0, n: 1, tm: 0 }] }] });
+    r.net.send('bbbb', { k: ROOM, l: [{ k: word.k, g: word.g, lv: word.lv, ...(word.n ? { n: word.n } : {}), tm: word.tm, h: word.h, q: [{ id: 'cccc:forged:2', p: 0, n: 1, tm: clock.t }] }] });   // PIN MOVED (AUDIT OUTDOOR-LOOT D5): stamped now - a claim older than half CLAIM_KEEP_MS is refused for its age alone, and the forgery must be refused for its NAME
     r.net.flush();
     assert.deepEqual(baseRows(shown(r.C, key)), onC, 'a joiner\'s word saying takes lands none of them on another joiner');
     assert.ok(!shown(r.C, key).some((it) => it.name === 'Dagger'), 'nor its stored pieces');
@@ -500,6 +505,84 @@ test('PARTY-LOOT, HOST ARBITRATES: a host that LEAVES mid-claim neither dupes no
   assert.equal(holding(r.C, x) - c0.x, 0, 'and never C\'s');
   for (const it of [x, y, z]) assert.ok(![r.B, r.C].some((p) => shown(p, key).some((s) => pieceKey(s) === pieceKey(it) && !RL.isPersonalLoot(s))), `${it.name}: gone from both lists`);
   assert.deepEqual(baseRows(shown(r.B, key)), baseRows(shown(r.C, key)), 'one list under the new seat');
+});
+
+test('OUTDOOR-LOOT (a claim GIVEN UP): a joiner\'s claim no seat answered for CLAIM_KEEP_MS is let go where its claimer heard it too - the claimer taking the seat later does not grant it to nobody: the piece stands in the room and in no pack', () => {
+  setPref('quickLoot', true);
+  const r = room3();
+  fall(r);
+  const key = KEYS.find((k) => baseRows(shown(r.B, k)).length >= 1);
+  assert.ok(key, 'a container with a piece of the room\'s');
+  const [z] = shown(r.B, key).filter((it) => !RL.isPersonalLoot(it));
+  const b0 = holding(r.B, z);
+  const listed = (p) => shown(p, key).some((it) => pieceKey(it) === pieceKey(z) && !RL.isPersonalLoot(it));
+  quickTakePiece(r.B, key, z);
+  r.net.leave(r.A);
+  r.net.flush();   // the claim reaches C, and nobody judges it
+  clock.t += 100;
+  r.B.as(() => r.B.host.roomClaimTick(CLAIM_KEEP_MS + RL.ROOM_CLAIM_TIMEOUT_MS));
+  assert.equal(holding(r.B, z) - b0, 0, 'given up: not in B\'s pack (guard)');
+  assert.ok(listed(r.B), 'and back on B\'s list (guard)');
+  r.seat.id = r.B.id;
+  r.B.as(() => r.B.host.setAuthority(true));
+  r.net.flush();
+  assert.ok(listed(r.B), 'B, now the seat, still lists the piece - it did not grant itself a claim it had given up');
+  assert.ok(listed(r.C), 'and so does C');
+  assert.equal(holding(r.B, z) - b0, 0, 'and it is in nobody\'s pack');
+});
+
+test('AUDIT OUTDOOR-LOOT D5 (a claim GIVEN UP, a THIRD seat): a claim its claimer let go is not granted by another client that heard it and takes the seat later - granted, the piece left the room for nobody; it stands in the room and in no pack', () => {
+  setPref('quickLoot', true);
+  const r = room3();
+  fall(r);
+  const key = KEYS.find((k) => baseRows(shown(r.B, k)).length >= 1);
+  assert.ok(key, 'a container with a piece of the room\'s');
+  const [z] = shown(r.B, key).filter((it) => !RL.isPersonalLoot(it));
+  const b0 = holding(r.B, z), c0 = holding(r.C, z);
+  const listed = (p) => shown(p, key).some((it) => pieceKey(it) === pieceKey(z) && !RL.isPersonalLoot(it));
+  quickTakePiece(r.B, key, z);
+  r.net.leave(r.A);
+  r.net.flush();   // the claim reaches C, and nobody judges it
+  clock.t += CLAIM_KEEP_MS + RL.ROOM_CLAIM_TIMEOUT_MS;   // the shared clock runs on with no seat
+  r.B.as(() => r.B.host.roomClaimTick(CLAIM_KEEP_MS + RL.ROOM_CLAIM_TIMEOUT_MS));
+  assert.equal(holding(r.B, z) - b0, 0, 'B gave the claim up: the piece is not in its pack (guard)');
+  r.seat.id = r.C.id;
+  r.C.as(() => r.C.host.setAuthority(true));
+  r.net.flush();
+  assert.ok(listed(r.C), 'D5: C, now the seat, still lists the piece - it granted nobody a claim its claimer had let go');
+  assert.ok(listed(r.B), 'and so does B');
+  assert.equal((holding(r.B, z) - b0) + (holding(r.C, z) - c0), 0, 'and it is in nobody\'s pack');
+});
+
+test('AUDIT OUTDOOR-LOOT D4 (the HOST\'s put, then a split under the same window): the room stores the put\'s own copy, never the window\'s record - a split of it took from the judge\'s record and four arrows left the world', () => {
+  setPref('quickLoot', true);
+  const r = room3();
+  fall(r);
+  const key = 'loot:0';
+  const t = ITEM_TEMPLATES.find((x) => x.name === 'Arrow');
+  const arrows = { group: 'Weapons', templateIndex: t.index, name: 'Arrow', material: 0, value: 1, stackCount: 10, currentCondition: t.hitPoints ?? 1, maxCondition: t.hitPoints ?? 1 };
+  assert.equal(validLootList([arrows])?.length, 1, 'the arrows are a piece the room carries (guard)');
+  r.A.player.items.push(arrows);
+  const held = (p) => p.player.items.filter((x) => x.name === 'Arrow').reduce((n, x) => n + RL.pieceCount(x), 0);
+  const listed = (p) => shown(p, key).filter((x) => x.name === 'Arrow' && !RL.isPersonalLoot(x)).reduce((n, x) => n + RL.pieceCount(x), 0);
+  r.A.state._lootOpenKey = key;   // the host's window stands open on the pile
+  const list = shown(r.A, key);
+  r.A.as(() => applyTransfer(arrows, { ok: true, amount: 10 }, r.A.player.items, list, { entity: r.A.player, fromLocal: true }));   // the window's put of the stack
+  r.A.as(() => r.A.host.roomClaimTick(clock.t));
+  r.net.flush();
+  const inList = list.find((x) => x.name === 'Arrow');
+  const plan = planTake(inList, { bag: r.A.player.items, entity: null, mode: 'remove' });
+  r.A.as(() => applyTransfer(inList, { ...plan, amount: 4 }, list, r.A.player.items, { entity: r.A.player, toPlayer: true }));   // four back, under the same window
+  r.A.as(() => r.A.host.roomClaimTick(clock.t));
+  r.net.flush();
+  r.A.state._lootOpenKey = null;
+  r.A.as(() => r.A.host.roomClaimTick(clock.t + 100));
+  r.net.flush();
+  clock.t += 5000;
+  for (const p of [r.A, r.B, r.C]) p.as(() => p.host.roomClaimTick(clock.t));
+  r.net.flush();
+  assert.equal(held(r.A), 4, 'the host holds the four it took back');
+  for (const p of [r.A, r.B, r.C]) assert.equal(listed(p), 6, `D4: ${p.id}'s pile shows the six left (${listed(p)})`);
 });
 
 test('PARTY-LOOT, HOST ARBITRATES: the WINDOW\'s takes are claims too, and so is a piece the host takes under its own open window after the room granted it to another (AUDIT WORLD4 C1 - nothing lands under it, so it still showed); a PUT is the host\'s to land, and a stored piece raced for goes to one', () => {
@@ -615,4 +698,187 @@ test('PARTY-LOOT: the word and its merge - projected and bounded; takes merge th
   r.net.send('zzzz', { k: ROOM, l: [{ k: 'loot:0', r: old }] });
   r.net.flush();
   for (const p of [r.A, r.B]) assert.deepEqual(shown(p, 'loot:0').filter((it) => !RL.isPersonalLoot(it)).map((it) => it.name), ['Dagger'], `${p.id}: the old word is the room's - its list stored, every base piece gone`);
+});
+
+// ═══ OUTDOOR-LOOT, SLICE 3 - D-2.1: THE DUNGEON'S TAKE ALL LOSS (DESIGN-REVIEW D-2 item 1; DESIGN 9 item 9, recorded) ════════
+// Two losses PARTY-LOOT's block carried (scenes/roomLootHost.js):
+//   - a CLAIMER's word said `q.slice(-ROOM_CLAIMS_MAX)`: the oldest claims of a Take all past 32 were never said, and a claim
+//     was never said AGAIN (only a put was) - so those pieces lapsed back unclaimed, and a verdict frame the relay dropped was
+//     never asked for twice;
+//   - a HOST's word said `recentAnswers(st)`, the newest ROOM_ANSWERS_KEPT (32) verdicts: two bulk takes judged together pushed
+//     a claimer's verdict out of the word that carried its piece's removal - the piece left the list and reached nobody.
+// The pieces are the host's own PUTS (stored pieces: the host lays them in the body's list, judged at once, said to everyone),
+// the bulk take is the window's own walk (ui/storeBulk.js runBulk over planTake/applyTransfer, test/ui/lootbulk.test.js's
+// drive), and the outcome asserted is WHERE EACH PIECE IS for every player once every timeout has passed.
+const BULK_N = 40;
+/** `n` distinct weapons, every one a piece of its own (a template and a metal), each through the item law the wire applies. */
+function distinctPieces(n) {
+  const names = ['Dagger', 'Tanto', 'Staff', 'Shortsword', 'Broadsword', 'Saber', 'Longsword', 'Katana', 'Claymore', 'Mace', 'Flail', 'Warhammer', 'Battle Axe', 'War Axe', 'Short Bow', 'Long Bow'];
+  const out = [];
+  for (const material of [0, 1, 2, 3]) {
+    for (const name of names) {
+      const t = ITEM_TEMPLATES.find((x) => x.name === name);
+      const it = { group: 'Weapons', templateIndex: t.index, name, material, value: 10 + out.length, currentCondition: t.hitPoints ?? 50, maxCondition: t.hitPoints ?? 50 };
+      if (validLootList([it])?.length === 1) out.push(it);
+      if (out.length === n) return out;
+    }
+  }
+  assert.fail(`${n} distinct valid pieces`);
+}
+/** The host lays `pieces` in the body's list (its window's puts): judged at once, stored, said to everyone. */
+function stockBody(r, key, pieces) {
+  shown(r.A, key).push(...pieces.map((it) => ({ ...it })));
+  r.A.as(() => r.A.host.roomClaimTick(clock.t));
+  r.net.flush();
+  for (const peerOf of [r.A, r.B, r.C].filter(Boolean)) assert.ok(pieces.every((it) => shown(peerOf, key).some((s) => pieceKey(s) === pieceKey(it))), `${peerOf.id}: sees the ${pieces.length} stored pieces (guard)`);
+}
+/** The window's Take all (LOOT-BULK) over `rows` of `key`'s list as `p` sees it - the walk, from the top, through the single click's plan. */
+function takeAll(p, key, pick = () => true) {
+  const list = shown(p, key);
+  const bag = p.player.items;
+  const { moved } = runBulk(list.filter((it) => !RL.isPersonalLoot(it) && pick(it)), (item) => {
+    if (!list.includes(item)) return { verdict: 'skip' };
+    const plan = planTake(item, { bag, entity: null, mode: 'remove' });   // no carry gate: forty weapons outweigh any pack, and the weight is not what is under test
+    return { verdict: bulkVerdict(item, plan), refusal: plan.refusal, plan };
+  }, (item, d) => { applyTransfer(item, { ...d.plan, amount: d.plan.amount }, list, bag, { entity: p.player, toPlayer: true }); });
+  p.as(() => p.host.roomClaimTick(clock.t));
+  return moved;
+}
+/** Every timeout passed: the claims' lapse, the re-says and the late verdicts, each peer ticked and the relay flushed, a few rounds. */
+function settleAll(r, rounds = 12) {
+  for (let i = 0; i < rounds; i++) {
+    clock.t += RL.ROOM_CLAIM_TIMEOUT_MS;
+    for (const peerOf of [r.A, r.B, r.C].filter(Boolean)) peerOf.as(() => peerOf.host.roomClaimTick(clock.t));
+    r.net.flush();
+  }
+}
+const wholeKey = (it) => pieceKey(it);
+/** What a list holds of each piece, counted together: two pieces alike (the body's own roll, on the clock's dice, can hold one the
+ *  same as a stored piece) are one count - read one by one, each was "got twice" (AUDIT OUTDOOR-LOOT: a flake at one moment of the
+ *  clock, never a dupe). */
+const wantedByKey = (list) => list.reduce((m, it) => m.set(wholeKey(it), (m.get(wholeKey(it)) ?? 0) + RL.pieceCount(it)), new Map());
+const firstOfEach = (list) => list.filter((it, i) => list.findIndex((x) => wholeKey(x) === wholeKey(it)) === i);
+/** Where a piece is, for every player: `held` the copies in packs, `listed` the copies in lists. */
+function whereIs(players, key, it) {
+  const held = players.reduce((n, p) => n + holding(p, it), 0);
+  const listed = players.reduce((n, p) => n + shown(p, key).filter((s) => !RL.isPersonalLoot(s) && wholeKey(s) === wholeKey(it)).length, 0);
+  return { held, listed };
+}
+
+test('OUTDOOR-LOOT D-2.1 (Take all, one claimer): a joiner\'s Take all of a body holding FORTY stored pieces lands every one of them exactly once - claims go in consecutive words of 32 and the host answers each (the oldest eight were never said: only q.slice(-32) was, and they lapsed back unclaimed)', () => {
+  setPref('quickLoot', true);
+  const r = room();
+  fall(r);
+  const key = KEYS.find((k) => k.startsWith('corpse:'));
+  const pieces = distinctPieces(BULK_N);
+  stockBody(r, key, pieces);
+  const wanted = shown(r.B, key).filter((it) => !RL.isPersonalLoot(it));
+  assert.ok(wanted.length >= BULK_N, `the body holds ${wanted.length} pieces of the room's`);
+  const before = new Map(wanted.map((it) => [wholeKey(it), holding(r.B, it)]));
+  const moved = takeAll(r.B, key);
+  assert.equal(moved, wanted.length, `the walk moved every row (${moved} of ${wanted.length})`);
+  settleAll(r);
+  const lost = [], duped = [], stuck = [];
+  const want = wantedByKey(wanted);
+  for (const it of firstOfEach(wanted)) {
+    const w = whereIs([r.A, r.B], key, it), got = holding(r.B, it) - before.get(wholeKey(it)), n = want.get(wholeKey(it));
+    if (w.listed) stuck.push(it.name);
+    else if (got < n) lost.push(`${it.name}#${it.material}`);
+    else if (got > n || holding(r.A, it) > 0) duped.push(it.name);
+  }
+  assert.deepEqual({ lost, duped, stuck }, { lost: [], duped: [], stuck: [] }, `D-2.1: of ${wanted.length} pieces B took with one Take all, ${lost.length} reached nobody and ${stuck.length} lapsed back into the body (lost = [${lost.slice(0, 4)}...]) - B's word said only q.slice(-${RL.ROOM_CLAIMS_MAX}), so the oldest claims were never said, and a claim was never said again`);
+});
+
+test('AUDIT OUTDOOR-LOOT (D-2.1\'s consecutive words, at once): a joiner\'s Take all of FORTY lands every piece in ONE round of the relay - no re-say, no time passing: every claim goes in consecutive words of 32 and every verdict comes back the same way (a word of the newest 32 claims, or of the first 32 verdicts, left eight for the re-say)', () => {
+  setPref('quickLoot', true);
+  const r = room();
+  fall(r);
+  const key = KEYS.find((k) => k.startsWith('corpse:'));
+  stockBody(r, key, distinctPieces(BULK_N));
+  const wanted = shown(r.B, key).filter((it) => !RL.isPersonalLoot(it));
+  assert.ok(wanted.length > RL.ROOM_CLAIMS_MAX, `more pieces than one word carries (${wanted.length}) (guard)`);
+  const before = new Map(wanted.map((it) => [wholeKey(it), holding(r.B, it)]));
+  assert.equal(takeAll(r.B, key), wanted.length, 'the walk moved every row (guard)');
+  r.net.flush();   // the claim words reach the host, judged on receipt, and its verdict words come straight back - one round, nothing re-said
+  const want = wantedByKey(wanted);
+  const short = firstOfEach(wanted).filter((it) => holding(r.B, it) - before.get(wholeKey(it)) < want.get(wholeKey(it))).map((it) => it.name);
+  assert.deepEqual(short, [], `every piece is B's after one round (${short.length} of ${wanted.length} waiting on a re-say)`);
+});
+
+test('OUTDOOR-LOOT D-2.1 (judged together): two joiners\' bulk takes of one body are judged by the NEW SEAT in one go (the old host left with both unanswered) - every verdict reaches its claimer and every piece is in exactly one place (a host word said only the newest 32 verdicts: the first eight of B\'s were pushed out, and those pieces left the list and reached nobody)', () => {
+  setPref('quickLoot', true);
+  const r = room3();
+  fall(r);
+  const key = KEYS.find((k) => k.startsWith('corpse:'));
+  const pieces = distinctPieces(BULK_N);
+  stockBody(r, key, pieces);
+  const stored = shown(r.B, key).filter((it) => !RL.isPersonalLoot(it) && pieces.some((p) => wholeKey(p) === wholeKey(it)));
+  assert.equal(stored.length, BULK_N);
+  const mineB = new Set(stored.slice(0, 20).map(wholeKey)), mineC = new Set(stored.slice(20).map(wholeKey));
+  const b0 = new Map(stored.map((it) => [wholeKey(it), holding(r.B, it)])), c0 = new Map(stored.map((it) => [wholeKey(it), holding(r.C, it)]));
+  r.net.leave(r.A);   // the host goes with neither bulk take answered
+  takeAll(r.B, key, (it) => mineB.has(wholeKey(it)));
+  takeAll(r.C, key, (it) => mineC.has(wholeKey(it)));
+  r.net.flush();
+  r.seat.id = 'cccc';
+  r.C.as(() => r.C.host.setAuthority(true));   // the relay's seat passes to C, which judges all forty claims at once
+  r.net.flush();
+  settleAll(r);
+  const lost = [], duped = [], stuck = [];
+  for (const it of stored) {
+    const b = holding(r.B, it) - b0.get(wholeKey(it)), c = holding(r.C, it) - c0.get(wholeKey(it)), w = whereIs([r.B, r.C], key, it);
+    if (w.listed) stuck.push(it.name);
+    else if (b + c === 0) lost.push(`${it.name}#${it.material}`);
+    else if (b + c > RL.pieceCount(it)) duped.push(it.name);
+  }
+  assert.deepEqual({ lost, duped, stuck }, { lost: [], duped: [], stuck: [] }, `D-2.1: of ${BULK_N} pieces taken by two bulk takes judged together, ${lost.length} are in nobody's pack (${lost.slice(0, 4)}...), ${stuck.length} are back in the body: the seat's word carried only the newest ${RL.ROOM_ANSWERS_KEPT} verdicts`);
+  const mine = (set, p, c0m) => stored.filter((it) => set.has(wholeKey(it)) && holding(p, it) - c0m.get(wholeKey(it)) === 0).map((it) => it.name);
+  assert.deepEqual(mine(mineB, r.B, b0), [], 'every piece B took is B\'s (the first come at the seat: the lower claim id)');
+  assert.deepEqual(mine(mineC, r.C, c0), [], 'and every piece C took is C\'s');
+});
+
+test('AUDIT OUTDOOR-LOOT (D-2.1\'s consecutive verdicts, at once): a joiner\'s Take all of FORTY, judged together by the NEW SEAT, reaches its claimer in ONE round - the verdicts in consecutive words of 32 (a word of the first 32 left eight for the re-say)', () => {
+  setPref('quickLoot', true);
+  const r = room3();
+  fall(r);
+  const key = KEYS.find((k) => k.startsWith('corpse:'));
+  stockBody(r, key, distinctPieces(BULK_N));
+  const wanted = shown(r.B, key).filter((it) => !RL.isPersonalLoot(it));
+  assert.ok(wanted.length > RL.ROOM_ANSWERS_KEPT, `more claims than one word answers (${wanted.length}) (guard)`);
+  const before = new Map(wanted.map((it) => [wholeKey(it), holding(r.B, it)]));
+  r.net.leave(r.A);   // the host goes with nothing answered
+  assert.equal(takeAll(r.B, key), wanted.length, 'the walk moved every row (guard)');
+  r.net.flush();   // C hears every claim; nobody judges them
+  r.seat.id = 'cccc';
+  r.C.as(() => r.C.host.setAuthority(true));   // the relay's seat passes to C, which judges them all at once
+  r.net.flush();   // its verdict words reach B - one round, nothing said again
+  const want = wantedByKey(wanted);
+  const short = firstOfEach(wanted).filter((it) => holding(r.B, it) - before.get(wholeKey(it)) < want.get(wholeKey(it))).map((it) => it.name);
+  assert.deepEqual(short, [], `every piece is B's after one round (${short.length} waiting on a re-say)`);
+});
+
+test('OUTDOOR-LOOT D-2.1 (a verdict frame the relay dropped): the host\'s word with a joiner\'s verdicts is lost; the joiner says its claims AGAIN until answered, the host answers them from its ledger (never judged twice), and every piece lands once (a claim was never said again)', () => {
+  setPref('quickLoot', true);
+  const r = room();
+  fall(r);
+  const key = KEYS.find((k) => k.startsWith('corpse:'));
+  const pieces = distinctPieces(12);
+  stockBody(r, key, pieces);
+  const stored = shown(r.B, key).filter((it) => !RL.isPersonalLoot(it) && pieces.some((p) => wholeKey(p) === wholeKey(it)));
+  const b0 = new Map(stored.map((it) => [wholeKey(it), holding(r.B, it)]));
+  takeAll(r.B, key, (it) => stored.includes(it));
+  // B's claims reach the host, which judges them; the word that carries its verdicts back is dropped by the relay
+  const claims = r.net.frames.filter((f) => f.from === 'bbbb');
+  assert.ok(claims.length >= 1, 'B said its claims (guard)');
+  r.net.frames.splice(0, r.net.frames.length);
+  for (const f of claims) r.A.as(() => r.A.host.applyActions(f.from, f.data));
+  const answers = r.net.frames.filter((f) => f.from === 'aaaa' && (f.data.l ?? []).some((w) => Array.isArray(w.y) && w.y.length));
+  assert.ok(answers.length >= 1, 'the host answered B\'s claims in a word of verdicts (guard)');
+  r.net.frames.splice(0, r.net.frames.length);   // dropped on the way back
+  assert.equal(stored.some((it) => holding(r.B, it) - b0.get(wholeKey(it)) > 0), false, 'nothing of it landed yet (guard)');
+  settleAll(r);
+  const lost = stored.filter((it) => holding(r.B, it) - b0.get(wholeKey(it)) !== RL.pieceCount(it)).map((it) => it.name);
+  assert.deepEqual(lost, [], `D-2.1: ${lost.length} of ${stored.length} pieces whose verdict frame was dropped never reached B - its claims were not said again`);
+  for (const it of stored) assert.equal(holding(r.A, it), 0, `${it.name}: not in the host's pack either`);
+  for (const it of stored) assert.equal(whereIs([r.A, r.B], key, it).listed, 0, `${it.name}: gone from the body`);
 });

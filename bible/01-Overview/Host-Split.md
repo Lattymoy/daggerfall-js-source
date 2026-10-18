@@ -422,6 +422,29 @@ block as a clean cut - 0 host `let`s written, 30 names read - so it is a module,
   ceiling was set from). `tools/mutate.mjs` over `partyloot.json`: 30 dead; over `hostmove.json`: 11 dead. As every
   slice: CI has no ARENA2, so the room's loot is Mac's to play before it merges.
 
+## OUTDOOR-LOOT - WORLD6a's loot doors out of createWorldModes (2026-10-17)
+
+Not a new order's slice: the second container of OUTDOOR-LOOT (`06-Systems/Online-Arc.md`) was a building's cupboard, and
+`createWorldModes` stood at 7,155 code lines of its 7,159 - there was no room to put the cupboards' law in, so the slice
+began by taking WORLD6a's loot block out.
+
+- THE MOVE. `interiorPublishLoot`, `interiorLootOpened` and `interiorLootSettle` left `createWorldModes` verbatim by
+  `tools/hostMove.mjs` (first as a module of their own, `createInteriorLootHost`, then folded as plain functions of the
+  context, the key and the bag into `src/world/interior/interiorShared.js`: `interiorLootOpen`, `interiorLootFrame` and
+  their kin) and the cupboards' room law is a module of its own, `src/world/interior/interiorRoomLoot.js`, which the bag mints (`bag.room`). The container
+  arm and the shelf arm only changed their callees; `host.roomHost` and `host.selfId` were in the host's bag already.
+- THE CEILING came down with the code: `createWorldModes` 7,155 -> 7,134 code lines with the cupboards' wiring in, its
+  ceiling 7,159 -> 7,138 (the length plus the 4 it stood over - not the standard 250, which would have raised it). After
+  main's merges it measures 7,136 (2026-10-18, AUDIT OUTDOOR-LOOT): two under the ceiling.
+  `createExteriorFoes` went the other way for a smaller reason: the body block is `src/scenes/bodyLootHost.js`
+  (`createBodyLoot(pool)`), and the pool went from 1,755 to 1,706 code lines under KNOT's 2,000 (1,793 -> 1,744 on main's tree
+  after its merges, re-measured 2026-10-18).
+- THE PINS that read the moved block read the host WHOLE (`hostText`) and spell the live names through the handle
+  (`h.interiorWindows`, `h.interiorCtx`, `h._intShared`): `auditworld6a`, `world6`, `home1`, `auditsetsonline`, `autohold`,
+  `fb1016b_stolengoods`, `forage3_loot`, `roada2_itemseconomy`, `audit26_discovery`, `housecontainers`, `worldhover`, `sailingcabins`,
+  with the mutant records that named its text. The container harness (`test/net/containerLootHarness.mjs`) hands a mounted
+  door the scope as its handle, so the cupboard files run the moved module exactly as they ran the host.
+
 ## FB1015's merge - a raise, by the overflow alone (2026-10-15)
 
 Not a slice: a ceiling a pull request found already broken. Merging main into FB1015 (`01-Overview/bugs/Field-Bugs-2026-10-15b.md`)

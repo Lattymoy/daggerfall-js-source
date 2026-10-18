@@ -72,8 +72,8 @@
   {
     "name": "QP-frame-names-no-quest",
     "file": "src/scenes/exteriorFoes.js",
-    "old": ", ...(qf.length ? { qf } : {}) };",
-    "new": " };",
+    "old": ", ...(qf.length ? { qf } : {}), ...(bw.length ? { bw } : {}) };",
+    "new": ", ...(bw.length ? { bw } : {}) };",
     "tests": ["test/scenes/questparty.test.js"]
   },
   {

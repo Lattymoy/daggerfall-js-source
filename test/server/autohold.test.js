@@ -449,7 +449,7 @@ test('AUTO-HOLD client: over the real Worker, the third strike heard timed with 
   assert.deepEqual([isRealmLocked(b), [...carriedPieces(entity).stowed], notCarried([b, b]).length], [false, [], 2], 'offline: nothing locked, nothing stowed, nothing filtered');
   // and every door a peer's word lands a piece through asks it (by source): a body's grant, a room's give, a body restored
   const src = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
-  assert.match(src('../../src/scenes/exteriorFoes.js'), /const grant = notCarried\(peerHanded\(validLootList\(data\.grant\)\)\);/);
+  assert.match(src('../../src/scenes/bodyLootHost.js'), /const grant = notCarried\(peerHanded\(validLootList\(data\.grant\)\)\);/);   // PIN MOVED (OUTDOOR-LOOT): the legacy grant's landing is the body block's, the line as it was
   assert.match(src('../../src/scenes/roomLootHost.js'), /function roomGive\(item, n\) \{\n    if \(n <= 0\) return;\n    if \(!notCarried\(\[item\]\)\?\.length\) return;/);
   assert.match(src('../../src/scenes/dungeonContext.js'), /else if \(sf\.items != null\) \{ const li = notCarried\(peerHanded\(validLootList\(sf\.items\)\)\); if \(li\) f\.entity\.items = li; \}/);
   // its end, written the game's language's way (the tests' English) - its own clock, never the wire's milliseconds
@@ -532,7 +532,7 @@ test('AUTO-HOLD shelf: the room\'s word never lands back a piece its reader carr
   const modes = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');
   assert.equal(modes.match(/carried: carriedPieces\(playerEntity\)/g)?.length, 2, 'both landings');
   assert.match(modes, /applyInteriorShared\(interiorCtx, shared, \{ \.\.\._intShared, today: stockedToday\(\), carried: carriedPieces\(playerEntity\) \}\)/);
-  assert.match(modes, /applyInteriorLoot\(interiorCtx, data\.l, \{ seen: _intShared\.seen, openKey: _intShared\.openKey, today: stockedToday\(\), unreadable: _intShared\.unreadable, carried: carriedPieces\(playerEntity\) \}\)/);
+  assert.match(modes, /applyInteriorLoot\(interiorCtx, data\.l, \{ \.\.\._intShared, from: id, today: stockedToday\(\), carried: carriedPieces\(playerEntity\) \}\)/);   // PIN MOVED (OUTDOOR-LOOT): the bag whole (its set of the unreadable, its room) and the sender, beside the pieces I carry
   // AUDIT: and a dungeon's - a search's find, a pile - with what I carry (never the stowed: a dungeon holds none of mine)
   assert.match(readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8'), /for \(const it of withoutCarried\(items, carriedPieces\(playerEntity\)\)\) held\.push\(it\);/);
   // the pure half never loads the item law: its registration changes what every reader of the wire lands

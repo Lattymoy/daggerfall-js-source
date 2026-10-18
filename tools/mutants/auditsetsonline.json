@@ -163,8 +163,8 @@
   },
   {
     "name": "SETS-M2-building-claims-over-it",
-    "file": "src/scenes/worldModes.js",
-    "old": "    if (s.unreadable?.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read\n",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "  if (bag.unreadable?.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read\n",
     "new": "",
     "tests": [
       "test/systems/auditsetsonline.test.js"

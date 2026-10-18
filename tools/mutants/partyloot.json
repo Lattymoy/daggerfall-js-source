@@ -38,8 +38,8 @@
   {
     "name": "PARTY-LOOT-word-overwrites-the-state",
     "file": "src/scenes/roomLootHost.js",
-    "old": "    const { state, changed, answered } = mergeRoomWord(st, w);\n    _roomState.set(canon, state);",
-    "new": "    const { state, changed, answered } = mergeRoomWord(null, w);\n    _roomState.set(canon, state);",
+    "old": "    const { state, changed, answered } = mergeRoomWord(st, w);\n    const reborn = state !== st;",
+    "new": "    const { state, changed, answered } = mergeRoomWord(null, w);\n    const reborn = state !== st;",
     "tests": [
       "test/systems/partyloot.test.js"
     ]
