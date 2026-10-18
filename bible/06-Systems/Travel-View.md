@@ -2214,3 +2214,53 @@ The owner: *"fix a pre existing issue where AI can actually use the overworld as
   `tvJourneyUp` and `travelViewCanGo` ask `navalHostileNear()` (NAV-H's enemy nearby) beside the land's foes and a duel.
 
 `test/systems/naval/timedilation.test.js` (3), `tools/mutants/timedilation.json` (16, all dead).
+
+## STREAM-OWED - the pump builds what the stream owes, nearest first (2026-10-18, the player)
+
+*"Theres this bug with overworld travel where you always slowly degrade to x1 speed and have to exit the overworld and
+go back into to reset. And you can also see the unloaded overworld chunk"* - after LOAD-OWED and BUILD-RETRY, with no
+build failing.
+
+**Measured** on the host's own code (the stream, the pump, the view's governor and its count, lifted out of
+`scenes/world.js` as LOAD-OWED's test lifts them): eight ten-minute rides under the view on a winding road, a rider at
+10.8 m/s, Enhanced's land view (LAND_VIEW_DEFAULT 5: an 11 by 11 grid, 11 to 21 new pixels a crossing), a town in ten
+pixels building in 2 s and the wild in 0.15 s, nothing near. The clock stood at x1 for 34-77 s of each ride (60 on
+average), and the view brought down and raised again - TV2's ceiling forgotten, a fresh x100 (AUDIT DEEP T2-8) - was
+the way out until the next town. Nothing failed and nothing was stuck; two faults in the pair:
+- **The pump spent its queue first in, first out** (the line world.js:"const next = state.takeOwed" was `const next = queue.shift();`), and a crossing appends its
+  row (world.js:"queue.push(...r.load)"). The near rings the governor waits on queued behind the far ring every crossing lists first and,
+  on a winding road, behind pixels the traveller had turned away from. And an entry the stream had already let go - a
+  crossing listed it, the next dropped it behind a turn (`state.release`) - was built whole before the pump's own check
+  (world.js:"destroyPixel(next.px, next.py)") tore it down: 54-87 builds a ride, one in twenty, of land behind the traveller. DFU's
+  StreamingWorld.UpdateTerrains walks its terrain array in index order and skips a terrain CollectTerrains has taken
+  out of range; the port's queue skipped nothing.
+- **The governor cut on while the stream gained.** The hole a faster rate left takes its builds to fill whatever the
+  clock is cut to, and AUDIT DEEP2 B-2's settle cut again every TV_GOV_SETTLE_S while any of it stood, gaining or not:
+  one town on the road took x40 to x1 in six seconds, and the climb back is TV_GOV_STEP every TV_GOV_CLEAR_S clean.
+
+**FIXED.**
+- **The pump takes the nearest pixel still owed** (`StreamingWorldState.takeOwed`, streamingWorld.js:"takeOwed(queue, built)", its one
+  call world.js:"const next = state.takeOwed"): the load list's own order (`nearestFirstFrom` - ring by ring, then by distance, the earlier of
+  two as near) over the queue as it stands, every entry the stream no longer owes dropped on the way - one let go
+  (`loaded` holds it no more) or one standing (`built` holds it: a crossing's re-list, a second ask). Nothing owed is
+  nothing built, and the stream's run (PERF-EXT24's `_streamSince`) ends there. A departure from DFU's index order,
+  named: nearest first is the load list's law, and the governor counts the near rings.
+- **A settled cut is cut again only if the hole has not shrunk since the last look** (travelGovernor.js:"if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S))"): fewer
+  owed than then is the stream gaining at the rate just cut to. A hole that never shrinks - LOAD-OWED's pixel in
+  flight - halves to walking pace at the old cadence (0.25, 2.25, 4.25, 6.25, 8.25 s).
+
+The same eight rides: x1 0-25 s a ride (7 on average; the pump fixed alone 14-37, the governor alone 10-27); builds of
+let-go land none. Holes within three rings of the traveller as they were (2-7 s a ride); the outermost counted ring
+(four pixels out at this view) stands unbuilt longer, the rate the stream gains at held while it builds. The rides'
+average x12.4 -> x13.6: past the sink the stream's own pace is the cap - TV2's "Cap it to what loads cleanly" - and the
+governor now rides at it rather than under it.
+
+**The four hosts.** `scenes/world.js` wired - it alone streams pixels and raises the Overworld. `scenes/exterior.js`
+streams nothing (one fixed city); `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a dungeon)
+stream no pixels and run no journey.
+
+`test/systems/travel/ow_streamowed.test.js` (3), `tools/mutants/ow_streamowed.json` (8, all dead). PIN MOVED:
+`buildslice` (PERF-EXT24: the pump's stream ends where nothing is owed); `tools/mutants/perfextc.json`
+PERF-EXT24-the-stream-never-ends-so-its-age-guard-trips-at-once-next-time and `tools/mutants/tv2.json`
+TV2-governor-no-hold and AUDIT-DEEP-T2-2-walking-teaches-x1 re-aimed by content. The lists naming the files touched
+(tv2, perfextc, ow_loadowed, ow_buildretry and this one) re-run: 173 dead.

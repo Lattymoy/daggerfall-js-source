@@ -82,8 +82,8 @@
   {
     "name": "TV2-governor-no-hold",
     "file": "src/systems/travel/travelGovernor.js",
-    "old": "        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) { if (want > TV_GOV_FLOOR)",
-    "new": "        { if (want > TV_GOV_FLOOR)",
+    "old": "        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) { if (want > TV_GOV_FLOOR &&",
+    "new": "        { if (want > TV_GOV_FLOOR &&",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-DEEP-T2-2-walking-teaches-x1",
     "file": "src/systems/travel/travelGovernor.js",
-    "old": "if (want > TV_GOV_FLOOR) { ceiling = stepDown",
-    "new": "{ ceiling = stepDown",
+    "old": "if (want > TV_GOV_FLOOR && !(settling && unbuilt < seen)) { ceiling = stepDown",
+    "new": "if (!(settling && unbuilt < seen)) { ceiling = stepDown",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
