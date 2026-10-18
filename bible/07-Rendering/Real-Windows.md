@@ -189,3 +189,71 @@ The pipeline's arm now asks it of a pack's picture of a window wall too (it was 
 the exterior arm cuts a pack's window - a repaint keeps the window where it stood. Pins: `test/render/windows1_view.test.js`
 V8 (a synthetic window wall - its panes, its lead, its frame, the wall's speckle, a half-repainted wall and a stray blob)
 and the gated corpus test; mutants `tools/mutants/windows1.json` GLASS-ALL-* (13, all dead).
+
+## The weather through the glass (WINDOW-WEATHER, 2026-10-18)
+
+A player asked for it: from inside the caravan and the buildings the windows show the street, but seeing the rain and
+the thunder through them would add a great deal to the immersion. The view out drew the street lit by the weather (a
+rainy noon was grey, `viewOutLight`), but nothing fell in it and no storm flashed: the rain program draws in the street
+frame alone, and the street frame sleeps while the player is indoors.
+
+`src/render/windowWeather.js` is an ADD-ON to the real windows, not a change to them: `realWindows.js` and the
+renderer are untouched, and the interior host asks the add-on for two things, in two lines of its own beside the view
+out (`worldModes.js`, through `windowWeatherFor(renderer)` - one instance a renderer, `horseRigFor`'s shape).
+
+**The drops, every frame, in the room's own pass.** The view out is a second pass over the street, kept while the
+camera is still and drawn again every 250 ms. Rain drawn into it would fall at four frames a second, and drawing the
+street every frame instead would double the cost of standing at a window. So the street picture stays cached, and the
+drops are drawn over it by the interior frame after the room's own draws (`frame`, beside CSA-F's blended drops,
+before the viewmodel). They are drawn under the far-plane trick the sky and the far ring use (`farRing.js`:
+depthRange(1, 1), LEQUAL, no depth write): every fragment lands at the far plane, so a drop draws only where nothing in
+the room wrote a depth - the glass texels the real windows cut. The program is the enhanced skin's own drops
+(`precipitation.js` LAB_WX_VS / LAB_WX_FS, the lab's text found once or the build throws) with three things added: the
+drop's world point is handed on, a drop inside the room's box (the interior collider's `bounds`, 0.35 m past them for a
+wall's thickness) is discarded, and a fragment outside the view out's rectangle is discarded (the pixels
+`renderer.setGlassView` cuts glass in). DFU lays an interior out apart from its house, with its glass on its outer
+walls, so what is outside the room's box is outside the window. The volume round the eye is 24 m rather than the
+street's 42 m, at the street's density (`wwDropCount`: the lab's count x the level x the volume's share), so a shower
+is the same shower on both sides of the glass. One instanced draw, at most 4,851 drops, cut to the glass's pixels.
+
+**What falls** is the street's word and level as the outdoor frame last wrote them (`weatherSim.js` `fallingWeather`,
+WET-FALL's one truth), mapped by `world/weather.js` `precipitationForWeather`. Indoors the front does not tick (DISC9),
+so the shower stands as the player left it, as the rain heard through the walls does. The wind does not tick either:
+its stand-in is the weather map's own field read at the room (`weatherMap.js` `windAt`) and held - no clock is read,
+since TIME1's drawn weather walks the event clock and indoors nothing of it walks.
+
+**The storm.** A thunder word runs DFU's own lightning schedule (`world/weather.js` LightningPlayer) on the add-on's
+instance, ticked once a frame as the room is lit (`light`, after the room's lamps and DISC15's tier). On a lit frame:
+- the room takes the flash through its window - the renderer's own lightning channel (`renderer.setFlashLight`,
+  Dynamic Skies' LightningFlash seam), a cold light 1.2 m inside the glass the player last looked through (closer, it lit the window's own wall, a lamp
+  there, and not the room) (a ray from
+  the eye through the middle of the view out's rectangle to the room's collider, found again every 250 ms in a storm,
+  forgotten in the next room). DS1's own flash stands 20-40 m over the player: indoors that is through the roof;
+- and the panes flash a cold white (an additive strip over the view out's rectangle, the same far-plane trick).
+The thunder's sound stays an outdoor thing (`ambientEffects.js` DISC6): the add-on draws, it does not play.
+
+**The switch** is the real windows' own: Full on the enhanced skin. Rooms only and Off cut no glass, so there is
+nothing to see the weather through. `?windowweather=off` is the add-on's own kill door. Its programs and buffers (about
+80 KB) are built on the first drop drawn and freed after 10 s of a building without weather.
+
+**A sandstorm** is drawn the same way on its own program: the wisps' streaks in the sand's look (`windWisps.js` WISP_VS /
+WISP_FS, SAND_LOOK - WEATHER2d's sand), with the same three things added (`WW_SAND_NEEDLES`), at the street's sand
+density over a volume of its own, 48 m (`wwSandCount`: `wispCount` at the level x the volume's share - 2,257 streaks at
+a full storm; at the drops' 24 m the storm stopped twelve metres out and a pane held a streak or two), the level its
+strength, its travel wrapped as the wisps' is.
+
+THE FOUR HOSTS:
+- `src/scenes/worldModes.js` - WIRED: the interior arm (`light` once the room's lamps are stored, `frame` after its
+  draws). Its dungeon arm: none - no window to the street.
+- `src/scenes/world.js` - none: the street is the weather itself; no glass to look out through.
+- `src/scenes/exterior.js` - none, for the same reason.
+- `src/scenes/dungeonContext.js` - none: a dungeon has no view out.
+
+Pins: `test/render/window_weather.test.js` (W1-W12: the density, the switch and the wind, the drop program's text and
+its stages RUN through `test/glsl.mjs`, the sandstorm's program RUN and drawn, the rectangle against the renderer's own, the clock, a frame of rain over a
+recording GL, nothing without glass, the storm's light and flash, where the light stands, and the host's wiring);
+mutants `tools/mutants/window_weather.json` (27, all dead). PROBE `tools/windowWeatherProbe.mjs` (realWindowsProbe.mjs's
+synthetic street and room on SwiftShader, both lanes; `PW_CHANNEL=msedge` for an installed browser): the rain, the snow
+and the sand change only the glass's pixels against a clear sky (none of the room's on the classic set; on the lane none
+past its own frame-to-frame noise), and a storm's lit frame brightens the panes and the room. Not yet seen in the live
+game (a building, a real window wall, a real shower).

@@ -233,6 +233,7 @@ const HARDCODED = {
   'src/render/weaponGlowGlsl.js': 1,   // AUDIT WEAPON-GLOW SPR-1: GLOW_FIELD_VS, the field bake's vertex shader - GLSL the scan reads as prose (`in vec2`), gateVeil.js's same line
   'src/render/windWisps.js': 2,
   'src/render/windfallParticles.js': 2,
+  'src/render/windowWeather.js': 5,   // WINDOW-WEATHER: GLSL - the lines it adds to the lab's and the wisps' programs, and the flash's stage
   'src/scenes/arena/arenaOnline.js': 1,
   'src/scenes/arrestFlow.js': 17,
   'src/scenes/bountyHost.js': 25,
