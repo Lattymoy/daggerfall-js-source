@@ -1,0 +1,42 @@
+[
+  {
+    "name": "TRADE-WRAP-sale-wraps",
+    "file": "src/systems/shopStock.js",
+    "old": "    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);",
+    "new": "    const sale = ((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) >> 8;",
+    "tests": [
+      "test/systems/fb1018b_tradewrap.test.js"
+    ],
+    "why": "the field's sale: a big lot of Daedric pieces pays millions below nothing into the purse"
+  },
+  {
+    "name": "TRADE-WRAP-purchase-wraps",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.floor(((((192 * dm) >> 8) + (dp >> 8)) * cost) / 256);",
+    "new": "  return ((((192 * dm) >> 8) + (dp >> 8)) * cost) >> 8;",
+    "tests": [
+      "test/systems/fb1018b_tradewrap.test.js"
+    ],
+    "why": "a lot as large bought asks a wrapped price - the buyer paid"
+  },
+  {
+    "name": "TRADE-WRAP-round-not-floor",
+    "file": "src/systems/shopStock.js",
+    "old": "    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);",
+    "new": "    const sale = Math.round(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);",
+    "tests": [
+      "test/systems/fb1018b_tradewrap.test.js"
+    ],
+    "why": "the fix moves prices that never wrapped - DFU's number lost by a gold"
+  },
+  {
+    "name": "NO-NAN-PAY-guard-dropped",
+    "file": "src/systems/court.js",
+    "old": "  if (!(amount > 0)) return 0;\n  const purse = goldPiecesOf(player);",
+    "new": "  const purse = goldPiecesOf(player);",
+    "tests": [
+      "test/systems/fb1018b_tradewrap.test.js"
+    ],
+    "why": "a price that is no number spends every letter and answers paid"
+  }
+]

@@ -317,6 +317,10 @@ export function deductGoldPieces(player, amount) {
  *  what is left - so a small payment never breaks a large letter, but
  *  a large one takes the letters before the coins. */
 export function deductGold(player, amount) {
+  // NO-NAN-PAY (FIELD BUGS 2026-10-18b): a price that is no number spent every letter in the pack and answered "paid" (NaN
+  // is never under a letter's value, and never over 0), and a negative one minted coin - nothing owed is nothing taken, as
+  // the service's payFromSave already refuses both (net/realm/realmGoldLaw.js)
+  if (!(amount > 0)) return 0;
   const purse = goldPiecesOf(player);
   if (amount <= purse) {
     player.goldPieces = purse - amount;

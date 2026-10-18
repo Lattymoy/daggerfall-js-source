@@ -159,7 +159,10 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   owner: "letter of credits should be dropped"): a letter of credit is the one piece the wallet holds that the death
   takes, as it takes the purse's coin - into the same remains at its whole value, unless a quest's or one the trade
   refuses (`wildDropLaw.js:"item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem"`) - answered ahead
-  of the decor's kept-back list, which names the letter too.
+  of the decor's kept-back list, which names the letter too. BURNT-SAID (FIELD BUGS 2026-10-18b,
+  `01-Overview/bugs/Field-Bugs-2026-10-18b.md`): the death screen names the letters a death took by their worth
+  (`wildZone.js:"deathLetters: (n, gold) =>"`), and a held record's drop - taken and laid nowhere (Integrity-Arc, Lane
+  1's freeze) - is said as lost, where it was said as nothing at all (`wildZone.js:"deathBurnt: (n) =>"`).
 - CART-AWAY (FIELD BUGS 2026-10-15d; MAC'S DECISION, 2026-10-15, asked "If parked outside of the pvp zone in the
   wrothgarian mountains, can it be lost?": "Yeah, if its parked outside the zone nothing should be lost"): THE CART'S
   SHARE ONLY WHEN THE WAGON IS WITH THEM. Where it stands is the Horse Cart and Cargo record's

@@ -21,6 +21,7 @@
 // leaf - MAC, 2026-10-14: the escrow's words are the player's language's, L10N4), so every pool can read it.
 // ═══════════════════════════════════════════════════════════════════
 import { t } from '../textManager.js';
+import { isLetterOfCredit } from '../peerWord.js';   // BURNT-SAID: the letters a death took, by their worth
 
 /** The Wrothgarian Mountains - MapsFile's region index (mapsTables.js REGION_NAMES[16]). */
 export const WILD_REGION = 16;
@@ -447,6 +448,11 @@ export const WILD_TEXT = Object.freeze({
   mapKey: 'Open PvP zone',
   deathPvp: (name) => `${name || 'Another player'} may claim one piece of your worn gear.`,
   deathDrop: (n) => (n > 0 ? `${n} ${n === 1 ? 'thing you carried lies' : 'things you carried lie'} where you fell, for ten minutes.` : ''),
+  // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop is taken and laid nowhere (Integrity-Arc, Lane 1's freeze) -
+  // said, where it was said as nothing at all; and the letters of credit among what a death took, by their worth - through
+  // the text core (L10N4), read when they are said
+  deathBurnt: (n) => (n > 0 ? t('wild.death.burnt', '{n, plural, one {# thing you carried was} other {# things you carried were}} lost where you fell - this character\'s trading is frozen, so nothing is left for anyone to take.', { n }) : ''),
+  deathLetters: (n, gold) => (n > 0 ? t('wild.death.letters', '{n, plural, one {A letter} other {# letters}} of credit worth {gold} gold left your wallet.', { n, gold: Number(gold).toLocaleString('en-US') }) : ''),
   deathClaim: (name, item) => `${name || 'Another player'} took your ${item || 'gear'}.`,
   // MAC (2026-10-14, the two-phase handoff): the piece claimed is held in escrow until its killer collects it - its words
   // through the text core (L10N4), read when they are said
@@ -471,6 +477,7 @@ export const WILD_TEXT = Object.freeze({
   chosen: (name, item) => `You choose ${item} from ${name || 'the body'} - it comes to you from their remains.`,   // INT9: the pick is the relay's to sign
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
   dropLate: 'What you dropped at your death in the mountains has left your pack - it lies where you fell.',   // INT9 (AUDIT): a receipt that found the fallen risen
+  burntLate: () => t('wild.death.burntLate', 'What you dropped at your death in the mountains has left your pack - this character\'s trading is frozen, so it was lost, not left.'),   // BURNT-SAID: the same, for a held record
   noFight: 'You cannot attack a member of your party.',
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it
   truce: `No longer of your party - in the ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
@@ -540,16 +547,24 @@ export function applyWildFoe(entity, { own = true, ring = WILD_RINGS } = {}) {
 
 // ── a death in the zone, as the death screen reads it ─────────────────────────────────────────────────────────────────
 let _death = null;
-/** The world host's word at a death in the zone - `{ killer, dropped, claimed, held }` (the killer's name or null, how many
- *  things were left where the body fell, the worn piece the killer took - `held`: MAC (2026-10-14), held in escrow until
- *  they collect it) - or null when the death screen goes. The screen holds WILD_DEATH_HOLD_S and takes
- *  no Enter while it stands (ui/deathScreen.js). */
+/** The world host's word at a death in the zone - `{ killer, dropped, claimed, held, burnt, letters }` (the killer's name or
+ *  null, how many things were left where the body fell, the worn piece the killer took - `held`: MAC (2026-10-14), held in
+ *  escrow until they collect it - BURNT-SAID: how many were taken and laid nowhere, a held record's, and `letters` the
+ *  pieces the death took out of the pack, of which the letters of credit are counted) - or null when the death screen
+ *  goes. The screen holds WILD_DEATH_HOLD_S and takes no Enter while it stands (ui/deathScreen.js). */
 export function setWildDeath(d) {
-  _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true } : null;
+  _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true,
+    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters) } : null;
+}
+/** BURNT-SAID: the letters of credit among `items` - how many, and the gold they stand for. */
+export function wildLettersOf(/** @type {any} */ items) {
+  const l = (Array.isArray(items) ? items : []).filter(isLetterOfCredit);
+  return { n: l.length, gold: l.reduce((g, it) => g + (Number.isSafeInteger(it.value) && it.value > 0 ? it.value : 0), 0) };
 }
 export const wildDeath = () => _death;
 /** The death screen's lines for a death in the zone (empty for any other). */
 export function wildDeathLines(d = _death) {
   if (!d) return [];
-  return [d.killer ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : '', WILD_TEXT.deathDrop(d.dropped), WILD_TEXT.deathHold].filter(Boolean);
+  return [d.killer ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : '', WILD_TEXT.deathDrop(d.dropped),
+    WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), WILD_TEXT.deathHold].filter(Boolean);
 }

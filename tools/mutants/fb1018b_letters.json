@@ -1,0 +1,32 @@
+[
+  {
+    "name": "LETTERS-HOME-letter-takeable",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "Number.isInteger(item.templateIndex) && !isLetterOfCredit(item)\n",
+    "new": "Number.isInteger(item.templateIndex)\n",
+    "tests": [
+      "test/systems/revenant/fb1018b_letters.test.js"
+    ],
+    "why": "the field's bug: a revenant's kill takes a 650,000-gold letter, the pack's most valuable piece"
+  },
+  {
+    "name": "LETTERS-HOME-handback-dropped",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "    if (r.took.some(isLetterOfCredit)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/revenant/fb1018b_letters.test.js"
+    ],
+    "why": "a letter taken before the law stays on its record - lost for good on a fallen one whose body never carried it"
+  },
+  {
+    "name": "LETTERS-HOME-handback-kept-on-record",
+    "file": "src/systems/revenant/revenant.js",
+    "old": " r.took = r.took.filter((it) => !isLetterOfCredit(it)); }",
+    "new": " }",
+    "tests": [
+      "test/systems/revenant/fb1018b_letters.test.js"
+    ],
+    "why": "the letter comes home and stays on the record: a second copy at its fall or the next load"
+  }
+]

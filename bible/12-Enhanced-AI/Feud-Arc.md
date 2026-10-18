@@ -811,6 +811,11 @@ deed underground makes that dungeon its lair.
 - **What**: one piece - the most valuable of the equipped weapon and the pack's five most valuable pieces, drawn on its
   id and its kill count. Never a quest item, a summoned piece, the Materials Bag or gold, and **never a locked piece**
   (LOCK1's promise, "A LOCKED PIECE STAYS YOURS" - OPEN 16). At most three held (`TOOK_MAX`); past that it only gloats.
+  LETTERS-HOME (FIELD BUGS 2026-10-18b): "gold" is a letter of credit too - `revenantMayTake` read the coin alone
+  (`isGoldPieces`), so a letter was takeable and, worth its face, the likeliest drawn. It refuses one now (`peerWord.js
+  isLetterOfCredit`), a deserter's or a betrayer's letter comes back with its gold (`splitPack` asks the same law), and a
+  letter a record took before is handed home at the mirror's merge (`ensureMirror`, from the save's copy of `took` - the
+  pack it came out of is that save's, so never twice).
 - **Moved**: `equip.unequipItem`, out of `entity.items`, onto the record's `took` (items are plain objects - the sworn
   pack's precedent). **The save's copy wins** (REVENANT-FATE's audit rule for a pack): the mirror never brings back a
   piece the save holds.

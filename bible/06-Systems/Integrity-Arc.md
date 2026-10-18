@@ -646,7 +646,9 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   a guild was joined between the fall and the take, or the hub is silent.
 - **Lane 1's freeze.** A record the judge holds still loses its drop, and the room is given none of it (`burnt`, no
   order): a held character hands no value to another player. It keeps the killer's piece (Mac, 2026-10-14): that one
-  goes only to its killer, who can never have it from a held record.
+  goes only to its killer, who can never have it from a held record. BURNT-SAID (FIELD BUGS 2026-10-18b): the fallen's
+  game took that drop out of the pack and said nothing (`dropped` 0 with no order) - its death screen now says the
+  pieces were lost and that the character's trading is frozen, and names any letters of credit among them by their worth.
 - **THE FOUR HOSTS.** `scenes/world.js` WIRED (the zone word, the blows, the referee's readout, the fall, the drop, the
   deposit, the seizure, the escrow - the killer's collect carried, the fallen's piece taken back, both on the zone's
   frame, `wildEscrowHost.js:"const wildEscrowFrame = () =>"`); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "BURNT-SAID-burnt-unsaid",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "    WILD_TEXT.deathBurnt(d.burnt ?? 0), ",
+    "new": "    ",
+    "tests": [
+      "test/systems/fb1018b_burntsaid.test.js"
+    ],
+    "why": "the field's silence: a held record's drop leaves the pack and the death screen says nothing"
+  },
+  {
+    "name": "BURNT-SAID-letters-unsaid",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), ",
+    "new": "",
+    "tests": [
+      "test/systems/fb1018b_burntsaid.test.js"
+    ],
+    "why": "the letters a death took go unnamed - 1,350,000 gold leaves the wallet as \"3 things\""
+  },
+  {
+    "name": "BURNT-SAID-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "claimed, held, burnt: d.burnt ? n : 0, letters: out });",
+    "new": "claimed, held });",
+    "tests": [
+      "test/systems/fb1018b_burntsaid.test.js"
+    ],
+    "why": "the host never hands the burnt count or the pieces: the screen's lines are never fed"
+  },
+  {
+    "name": "BURNT-SAID-risen-old-line",
+    "file": "src/scenes/world.js",
+    "old": "townTalk.say(d.burnt ? WILD_TEXT.burntLate() : WILD_TEXT.dropLate);",
+    "new": "townTalk.say(WILD_TEXT.dropLate);",
+    "tests": [
+      "test/systems/fb1018b_burntsaid.test.js"
+    ],
+    "why": "risen before the answer, a held record is told its drop lies where it fell - and nothing does"
+  }
+]

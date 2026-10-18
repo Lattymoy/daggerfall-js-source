@@ -895,7 +895,13 @@ export const ONLINE_SALE_SKILL_WEIGHT = 0.5;
 /** FormulaHelper.CalculateTradePrice, verbatim offline - the classic
  *  fixed-point haggle over the merchant's quality-derived levels vs
  *  the player's Mercantile + Personality. selling=false is the BUY
- *  price of a shelf item (applied over CalculateCost's cost). */
+ *  price of a shelf item (applied over CalculateCost's cost).
+ *  TRADE-WRAP (FIELD BUGS 2026-10-18b; Port-Ledger A): the last step,
+ *  the haggle's factor times the lot's whole cost, then `>> 8`, was
+ *  C#'s int and JS's int32 - a lot past about 9.6 to 18 million of
+ *  cost wrapped, and a sale of a few dozen Daedric pieces paid about
+ *  -8,400,000 gold into the purse (a purchase as large paid the buyer).
+ *  It divides now: the same number for every lot that never wrapped. */
 export function calculateTradePrice(cost, shopQuality, { mercantile = 0, personality = 50 } = {}, selling = false, { online = isOnlinePage() } = {}) {
   if (online) {   // MERC-CAP: the haggle's own range
     mercantile = Math.min(Math.max(mercantile, 0), ONLINE_HAGGLE_MAX);
@@ -906,7 +912,7 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
   if (selling) {
     dm = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((mercantile << 8) / 200) + 128)) >> 8;
     dp = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((personality << 8) / 200) + 128)) >> 8;
-    const sale = ((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) >> 8;
+    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);   // TRADE-WRAP: never int32's wrap
     if (!online) return sale;
     const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX };   // MERC-RISE: the best haggler this counter can meet
     const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE);   // REALM P0.4; MERC-RISE: half the least it asks
@@ -920,7 +926,7 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
   }
   dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
   dp = (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;
-  return ((((192 * dm) >> 8) + (dp >> 8)) * cost) >> 8;
+  return Math.floor(((((192 * dm) >> 8) + (dp >> 8)) * cost) / 256);   // TRADE-WRAP: never int32's wrap
 }
 
 

@@ -503,6 +503,11 @@ the body, execute it and it is in the pile, spare it and it hands it back ("It's
 and it keeps it. A revenant holding a piece is never forgotten to make room. The law: `bible/12-Enhanced-AI/Feud-Arc.md`
 section 19 and its RVN8 record.
 
+LETTERS-HOME (FIELD BUGS 2026-10-18b, `01-Overview/bugs/Field-Bugs-2026-10-18b.md`): a LETTER OF CREDIT is gold, and
+it never takes one. "Gold" was read as the coin alone, so a letter - worth hundreds of thousands, by far the pack's most
+valuable piece - was in every draw. A letter one took before is the player's again at the next load; a deserter's
+letter comes back with its gold.
+
 ## 25. Festering (FEUD RVN9, 2026-10-04)
 
 A revenant left alone grows angry. Three days past the day it was due, and every three days after, it gains a wrath -

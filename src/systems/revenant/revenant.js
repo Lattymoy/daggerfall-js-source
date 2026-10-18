@@ -78,6 +78,7 @@ import { unequipItem, equipTableOf, EQUIP_SLOTS } from '../equip.js';   // RVN8:
 import { isLocked } from '../item/itemLock.js';   // RVN8: LOCK1's promise - a locked piece stays yours
 import { isBagItem } from '../../net/bagLaw.js';   // RVN8: never the Materials Bag
 import { isPackOnly } from '../item/itemBound.js';   // AUDIT 625 W2: nor a pack-only piece (the Wallet)
+import { isLetterOfCredit } from '../peerWord.js';   // LETTERS-HOME: nor a letter of credit - its worth is gold
 import { itemLongName } from '../item/itemInfo.js';   // RVN8: the piece by the name the pack shows
 import { itemValueOf } from '../item/itemTemplates.js';   // RVN8: the most valuable
 import { enemyDisplayName, ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
@@ -442,6 +443,9 @@ function ensureMirror(player) {
     if (player && s?.took?.length && !s.defeated && !s.sworn && (r.gone || r.defeated || r.sworn)) { player.items ??= []; for (const it of s.took) addItem(player.items, it); if (!r.gone) r.took = []; continue; }
     if (r.gone) continue;
     r.took = s?.took ? s.took.slice() : [];   // RVN8 (Feud-Arc.md 19): what it took is inventory too - the save's copy wins (the mirror never brings back a piece the save holds)
+    // LETTERS-HOME (FIELD BUGS 2026-10-18b): a letter of credit one took before revenantMayTake refused it is mine again -
+    // living, fallen with a body that never carried it, or kept by a deserter. The save's copy, so never one its pack holds.
+    if (r.took.some(isLetterOfCredit)) { player.items ??= []; for (const it of r.took.filter(isLetterOfCredit)) addItem(player.items, it); r.took = r.took.filter((it) => !isLetterOfCredit(it)); }
   }
   _state.mirrorId = id;
 }
@@ -867,8 +871,10 @@ export function forgetLastSlew() { _lastSlew = null; }
 /** RVN8 (19): may it take `item` - never a quest item, a summoned piece, the Materials Bag, gold, or a locked piece
  *  (LOCK1's promise, "A LOCKED PIECE STAYS YOURS"); AUDIT 625 W2: nor a PACK-ONLY piece (systems/item/itemBound.js - the
  *  Wallet's row): what it takes leaves the pack for its record, one that escapes keeps it, and a character is given its
- *  wallet once. */
-export const revenantMayTake = (item) => !!item && typeof item === 'object' && Number.isInteger(item.templateIndex)
+ *  wallet once. LETTERS-HOME (FIELD BUGS 2026-10-18b): nor a LETTER OF CREDIT - a letter is gold (its `value` is the
+ *  gold it stands for), and "gold" was the coin alone, so a 500,000-gold letter was the pack's most valuable piece and
+ *  the likeliest drawn. */
+export const revenantMayTake = (item) => !!item && typeof item === 'object' && Number.isInteger(item.templateIndex) && !isLetterOfCredit(item)
   && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);
 /** AUDIT FEUD: a piece it took, named after "your", "my" or "lovely" - the name the pack shows, its own article gone
  *  (a legendary's "The Glenmoril Bow": "your Glenmoril Bow", never "your The ..."). */
