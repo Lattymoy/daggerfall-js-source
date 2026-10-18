@@ -22,13 +22,19 @@
 // (`WagonItems = player.Items.SearchItems(...)`), so pack items count
 // twice and the wagon's are never taken. The port searches the wagon -
 // the one departure here, recorded in FORAGE0 12 and the Port-Ledger.
+//
+// FIREWOOD-LOGS (#986, FORAGE0 12 Q14): two more. A quest asking for a
+// template with stand-ins (foragingLaw.js QUEST_STAND_INS - a Wood Bundle's
+// are the logs) counts and takes them too, the asked template first; and
+// the Materials Bag (`bagItems`, BAG1) is carried as the wagon is, so a
+// harvest there counts - pack, then wagon, then bag.
 // ═══════════════════════════════════════════════════════════════════
 
 import { ActionTemplate } from './actions.js';
 import { ITEM_GROUPS } from '../../characters/equipRules.js';
 import { isSummoned } from '../inventory.js';
 import { maxFatigue } from '../statMods.js';
-import { raiseTimeSeconds, reduceFatigueBy } from '../foraging/foragingLaw.js';
+import { raiseTimeSeconds, reduceFatigueBy, QUEST_STAND_INS } from '../foraging/foragingLaw.js';
 
 /** ItemGroups' number -> the port's group name. */
 const GROUP_NAME_OF = Object.freeze(Object.fromEntries(Object.entries(ITEM_GROUPS).map(([name, n]) => [n, name])));
@@ -47,10 +53,15 @@ function matchAlternatives(alternatives, source) {
   return best;
 }
 
-/** ItemCollection.SearchItems(group, templateIndex), quest items excluded (the actions' FindAll). */
+/** ItemCollection.SearchItems(group, templateIndex), quest items excluded (the actions' FindAll). FIREWOOD-LOGS: and
+ *  the template's stand-ins in the same group, ordered as they are taken - the asked template first; and a summoned
+ *  item left out, since it counts nothing (lengthOrStackCount) - else the order could hand a summoned bundle over
+ *  in a real log's place. */
 function searchNonQuest(list, itemClass, itemSubClass) {
   const group = GROUP_NAME_OF[itemClass];
-  return (list ?? []).filter((it) => it && it.group === group && it.templateIndex === itemSubClass && !it.questItem);
+  const takes = [itemSubClass, ...(QUEST_STAND_INS[itemSubClass] ?? [])];
+  const rank = (it) => takes.indexOf(it.templateIndex);
+  return (list ?? []).filter((it) => it && it.group === group && rank(it) >= 0 && !it.questItem && !isSummoned(it)).sort((a, b) => rank(a) - rank(b));
 }
 /** Helpers.CalculateLengthOrStackCount: a stack counts its size, anything else 1; a summoned item counts nothing. */
 export function lengthOrStackCount(items) {
@@ -81,11 +92,12 @@ function removeNFromList(storage, items, amount) {
   }
 }
 
-/** The player's pack and wagon counts of a class and subclass. */
+/** The player's pack, wagon and (FIREWOOD-LOGS) Materials Bag counts of a class and subclass. */
 function heldCounts(entity, itemClass, itemSubClass) {
   const pack = searchNonQuest(entity?.items, itemClass, itemSubClass);
   const wagon = searchNonQuest(entity?.wagonItems, itemClass, itemSubClass);
-  return { pack, wagon, inPack: lengthOrStackCount(pack), inWagon: lengthOrStackCount(wagon) };
+  const bag = searchNonQuest(entity?.bagItems, itemClass, itemSubClass);
+  return { pack, wagon, bag, inPack: lengthOrStackCount(pack), inWagon: lengthOrStackCount(wagon), inBag: lengthOrStackCount(bag) };
 }
 
 const RAISE_TIME = Object.freeze([
@@ -184,7 +196,8 @@ const itemFields = (a, m) => {
   return a;
 };
 
-/** PlayerPossesses.cs: true while the pack and the wagon together hold N (quest items not counted). */
+/** PlayerPossesses.cs: true while the pack and the wagon together hold N (quest items not counted) - FIREWOOD-LOGS: and
+ *  the Materials Bag. */
 export class PlayerPossesses extends ActionTemplate {
   static typeName = 'PlayerPossesses';
   get saveShape() { return [['numberOfItems'], ['itemClass'], ['itemSubClass']]; }
@@ -202,12 +215,13 @@ export class PlayerPossesses extends ActionTemplate {
   checkTrigger(_caller) {
     const e = this.parentQuest?.hooks?.playerEntity?.();
     if (!e) return false;
-    const { inPack, inWagon } = heldCounts(e, this.itemClass, this.itemSubClass);
-    return inPack + inWagon >= this.numberOfItems;
+    const { inPack, inWagon, inBag } = heldCounts(e, this.itemClass, this.itemSubClass);
+    return inPack + inWagon + inBag >= this.numberOfItems;
   }
 }
 
-/** PlayerHandsover.cs: takes N from the pack first and the rest from the wagon; nothing unless all N are held. */
+/** PlayerHandsover.cs: takes N from the pack first and the rest from the wagon (FIREWOOD-LOGS: then the Materials Bag);
+ *  nothing unless all N are held. */
 export class PlayerHandsover extends ActionTemplate {
   static typeName = 'PlayerHandsover';
   get saveShape() { return [['numberOfItems'], ['itemClass'], ['itemSubClass']]; }
@@ -220,12 +234,14 @@ export class PlayerHandsover extends ActionTemplate {
   update(_caller) {
     const e = this.parentQuest?.hooks?.playerEntity?.();
     if (!e) return;
-    const { pack, wagon, inPack, inWagon } = heldCounts(e, this.itemClass, this.itemSubClass);   // Q11: the wagon's own
-    if (inPack + inWagon < this.numberOfItems) return;
+    const { pack, wagon, bag, inPack, inWagon, inBag } = heldCounts(e, this.itemClass, this.itemSubClass);   // Q11: the wagon's own
+    if (inPack + inWagon + inBag < this.numberOfItems) return;
     const fromPack = Math.min(this.numberOfItems, inPack);
-    const fromWagon = this.numberOfItems - fromPack;
+    const fromWagon = Math.min(this.numberOfItems - fromPack, inWagon);
+    const fromBag = this.numberOfItems - fromPack - fromWagon;
     if (fromPack > 0) removeNFromList(e.items, pack, fromPack);
     if (fromWagon > 0) removeNFromList(e.wagonItems, wagon, fromWagon);
+    if (fromBag > 0) removeNFromList(e.bagItems, bag, fromBag);
     this.setComplete();
   }
 }

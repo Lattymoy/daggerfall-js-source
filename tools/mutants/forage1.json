@@ -102,8 +102,8 @@
   {
     "name": "FORAGE1-12-a-quest-item-counts",
     "file": "src/systems/quest/questActionsExtension.js",
-    "old": "  return (list ?? []).filter((it) => it && it.group === group && it.templateIndex === itemSubClass && !it.questItem);",
-    "new": "  return (list ?? []).filter((it) => it && it.group === group && it.templateIndex === itemSubClass);",
+    "old": "  return (list ?? []).filter((it) => it && it.group === group && rank(it) >= 0 && !it.questItem && !isSummoned(it)).sort((a, b) => rank(a) - rank(b));",
+    "new": "  return (list ?? []).filter((it) => it && it.group === group && rank(it) >= 0 && !isSummoned(it)).sort((a, b) => rank(a) - rank(b));",
     "tests": [
       "test/systems/forage2_tools.test.js"
     ]
@@ -287,6 +287,42 @@
     "new": "      if (name.startsWith('QuestList-')) tables.set(name, text);",
     "tests": [
       "test/systems/forage2_tools.test.js"
+    ]
+  },
+  {
+    "name": "FIREWOOD-LOGS-a-a-log-is-firewood",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "  [FT.WoodBundle]: Object.freeze(LOGS.map((l) => l.templateIndex)),",
+    "new": "  [FT.WoodBundle]: Object.freeze([]),",
+    "tests": [
+      "test/systems/quest/foragefix.test.js"
+    ]
+  },
+  {
+    "name": "FIREWOOD-LOGS-b-the-bag-is-carried",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "  const bag = searchNonQuest(entity?.bagItems, itemClass, itemSubClass);",
+    "new": "  const bag = searchNonQuest([], itemClass, itemSubClass);",
+    "tests": [
+      "test/systems/quest/foragefix.test.js"
+    ]
+  },
+  {
+    "name": "FIREWOOD-LOGS-d-a-summoned-piece-is-never-taken",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "  return (list ?? []).filter((it) => it && it.group === group && rank(it) >= 0 && !it.questItem && !isSummoned(it)).sort((a, b) => rank(a) - rank(b));",
+    "new": "  return (list ?? []).filter((it) => it && it.group === group && rank(it) >= 0 && !it.questItem).sort((a, b) => rank(a) - rank(b));",
+    "tests": [
+      "test/systems/quest/foragefix.test.js"
+    ]
+  },
+  {
+    "name": "FIREWOOD-LOGS-c-the-asked-template-first",
+    "file": "src/systems/quest/questActionsExtension.js",
+    "old": "  const takes = [itemSubClass, ...(QUEST_STAND_INS[itemSubClass] ?? [])];",
+    "new": "  const takes = [...(QUEST_STAND_INS[itemSubClass] ?? []), itemSubClass];",
+    "tests": [
+      "test/systems/quest/foragefix.test.js"
     ]
   }
 ]
