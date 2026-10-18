@@ -96,12 +96,12 @@ test('AUDIT GRANT A3/A12 THE WATCH: each pool sweeps its own watchmen - a buildi
   assert.ok(r._grant, 'and stands on it');
 });
 
-test('AUDIT GRANT A11 A RECORD JUDGED ONCE IS TALLIED ONCE: the same record on the same grant answers its refusal again without counting it again; a grant heard since an `unsigned` is judged anew (mutants: a second tally; the memo kept past the grant heard)', async () => {
+test('AUDIT GRANT A11 A RECORD JUDGED ONCE IS TALLIED ONCE: the same record on the same grant answers its refusal again without counting it again; a grant heard since it was unheard is judged anew (mutants: a second tally; the memo kept past the grant heard)', async () => {
   const R = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const h = createGrantHost({ session: () => null, climateAt: () => 231, fetchKey: async () => R.publicKey, verdictWait: 30 });
   const g0 = gr({ g: 21, o: 'zzz-0009', n: 2, e: 0, c: [-1, -1] });
   const signed = { ...g0, sg: await signGrant({ ...g0, sg: undefined }, R.privateKey, { subtle }) };
-  assert.equal(await h.check('zzz-0009', CELL, { i: 3, t: 0, gr: [21, 0] }), 'unsigned', 'not heard yet');
+  assert.equal(await h.check('zzz-0009', CELL, { i: 3, t: 0, gr: [21, 0] }), 'ungranted', 'not heard yet');   // PIN MOVED (GRANT-UNHEARD): unheard, never `unsigned`
   h.heard('zzz-0009', [signed]);
   assert.equal(await h.check('zzz-0009', CELL, { i: 3, t: 0, gr: [21, 0] }), null, 'heard since: judged anew, and honest');
   const forged = { i: 4, t: 0, z: 1, gr: [21, 1] };

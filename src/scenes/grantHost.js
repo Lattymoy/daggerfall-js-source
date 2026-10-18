@@ -29,7 +29,8 @@
 //     under, an encounter's or a camp's species one its pixel's tables hold. What it would refuse is TALLIED, by sender
 //     and reason, and handed to the cell every GRANT_TALLY_MS (`tally`) - the measure, and GRANT7's evidence. While the
 //     law measures the foe stands all the same; while it enforces (GRANT6) the pool stands down a forged grant or none
-//     (standsDown). A grant a record names that the reader has not heard is waited for (GRANT_VERDICT_WAIT_MS).
+//     (standsDown). A grant a record names that the reader has not heard is waited for (GRANT_VERDICT_WAIT_MS) - and
+//     GRANT-UNHEARD (section 18): one never heard is tallied `ungranted`, never `unsigned`, which a forged signature alone is.
 //   - LEFT AS THE OWNER'S WORD, said plainly: a foe's weapon and its health. Each depends on its owner's own settings and
 //     state (the Roleplay & Realism assigner, the monster rows' mods, the wilds' scaling), which a seed cannot rebuild -
 //     FOE-FORGE's caps hold them (FOE_HEALTH_MAX, the weapon's template law).
@@ -54,7 +55,7 @@ export const GRANT_MEMBERS_MAX = 2048;
 export const GRANT_HEIR_WAIT_MS = 10_000;
 /** How soon a reader asks the relay's key again after it could not, ms. */
 export const GRANT_KEY_RETRY_MS = 5 * 60_000;
-/** GRANT6: how long a reader waits for a grant a record names before it calls it `unsigned`, ms - three full frames
+/** GRANT6: how long a reader waits for a grant a record names before it calls it unheard (`ungranted`), ms - three full frames
  *  (net/online.js FOES_FULL_MS): a reader that came in after the grant went hears it again on the owner's next, and
  *  AUDIT GRANT A2: a full frame carries the grants longest unsaid first, so CELL_FRAME_RECORDS_MAX's sixty-four grants
  *  ride within two of them. */
@@ -348,12 +349,13 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
   }
   /** AUDIT GRANT A11: a record's grant, as a memo's key. */
   const grKey = (r) => (Array.isArray(r?.gr) ? r.gr.join(':') : '-');
-  /** AUDIT GRANT A11: the refusal this record was judged with, while it still names the same grant - `unsigned` only until
-   *  the grant is heard (a reader that came in late judges it again then). */
+  /** AUDIT GRANT A11: the refusal this record was judged with, while it still names the same grant - GRANT-UNHEARD: a grant
+   *  unheard (`ungranted` naming one) only until it is heard (a reader that came in late judges it again then); a
+   *  signature that failed (`unsigned`) for good. */
   function judged(from, r) {
     const v = verdictOf.get(`${from}|${r?.i}`);
     if (!v || v.k !== grKey(r)) return null;
-    if (v.why === 'unsigned' && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;
+    if (v.why === 'ungranted' && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;   // GRANT-UNHEARD: a grant unheard, heard since
     return v;
   }
   /** AUDIT GRANT A11: would an enforcing reader stand this record down on its last verdict? The pools ask it before they
@@ -363,7 +365,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
     if (!r?.gr) return capable.has(from) ? note(from, 'ungranted') : null;   // GRANT4: the City Watch's too (watchReady)
     const [g, i] = r.gr;
     const v = verdicts.get(`${from}|${g}`) ?? await heardOf(`${from}|${g}`);
-    if (!v) return note(from, 'unsigned');
+    if (!v) return note(from, 'ungranted');   // GRANT-UNHEARD: never heard is no forgery - the relay drops frames past its byte budget, the full ones (the grants') first
     const ok = await v.ok;
     if (ok === null) return null;
     if (!ok) return note(from, 'unsigned');

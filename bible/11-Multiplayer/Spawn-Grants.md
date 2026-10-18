@@ -549,10 +549,11 @@ the law; the law unsaid until it comes), `scale5b`'s settings; QP3C's handover m
   grant did not come for (scenes/exteriorFoes.js spawnFoe, the dungeon's spawnLooseFoe), so an honest owner streams none.
   A stand made while its socket's welcome is owed (net/online.js: the law `null` from the socket's open to its welcome)
   waits for it, GRANT_WAIT_MS at most, so a crossed cell is never a moment of ungranted stands. A reader stands down only
-  what a changed client gives - GRANT_CASE_REASONS (a grant never signed, another's, a member past it, marks past it, a
+  what a changed client gives - GRANT_CASE_REASONS (a signature that fails, another's, a member past it, marks past it, a
   member twice) - and a record with no grant (GRANT_STANDDOWN_REASONS); a record that beat its carry (`cell`) or its
   renewal (`expired`), a level since its checkpoint, a species off its tables (`dice`) are the measure's. A reader waits
-  GRANT_VERDICT_WAIT_MS (two full frames) for a grant it came in after before it calls it `unsigned`, and a class foe
+  GRANT_VERDICT_WAIT_MS for a grant it came in after before it calls it unheard (`ungranted` - section 18; it was
+  `unsigned`), and a class foe
   GRANT_LEVEL_SLACK (two) over its owner's signed level stands: the token's `cl` is the level its last judged checkpoint
   found. **The flip is the staff's: `/relay grantMode enforce`, after GRANT5** - nothing deploys.
 - **GRANT7, the moderators' case** (`server-account/src/grants.js` grantCases; the owner, question 2: three accounts in
@@ -631,3 +632,30 @@ Pins: `test/net/grantaudit_relay.test.js` (2), `test/scenes/grantaudit_host.test
 batched asks, a forgotten grant renewed, a member handed once across a renewal and never from a grant freed) and
 `grant3_pool` (a stood-down record never rebuilt); `tools/mutants/grantaudit.json` (19, all dead). Records re-aimed
 where the asks moved: `grant3.json`, `grant4.json`.
+
+## 18. GRANT-UNHEARD: a grant never heard opens no case (2026-10-18)
+
+Mac, the first case GRANT7 opened in #mod-queue (`eaa16aa332a19547`: "3 players' games refused 6 of this account's
+foes in 10 minutes: unsigned 6"): **"Is this the system working?"**, then **"Yes"** to the fix.
+
+- **What it was.** A reader called a grant it had not heard inside GRANT_VERDICT_WAIT_MS `unsigned` - the word for a
+  signature that fails, and a case's reason. Unheard is what a crowded cell makes: the relay's foes fan drops a frame past
+  the room's byte budget (FOES_ROOM_BYTES_PER_S, `server/src/index.js` _foesFan), the big full frames that say every grant
+  again before the small deltas, so a reader holds an owner's records and none of its grants. An honest owner was counted
+  as a forger.
+- **The fix** (`scenes/grantHost.js` judge): unheard is `ungranted` - a record with no grant this reader holds. It is
+  stood down while the law enforces, judged anew once a frame brings the grant (the A11 memo), and opens no case.
+  `unsigned` is a grant heard whose signature fails, or a malformed one: a forgery's word alone.
+- **And a forgery judged once.** The A11 memo judged an `unsigned` record anew whenever its grant was held - which a
+  failed signature's always is - so an enforcing reader rebuilt, checked and tallied it on every frame. It is kept, and
+  counted once.
+- **No relay change.** `ungranted` was already a reader's reason (GRANT_READER_REFUSALS): the relay and the account
+  service read the tallies as they did, and nothing deploys but the site. A game on the build before this keeps calling
+  unheard grants `unsigned` until it reloads or updates - **a case whose only reason is `unsigned`, from that build, is
+  most likely this: dismiss it.**
+- **A first guess, wrong, said plainly.** The fix's first diagnosis was a cell crossing - the old grant renumbered by
+  its carry before a reader in the new cell heard it. A crossing's first frame there is a full one (`scenes/world.js`:
+  the room change asks for it), which carries the old grant, so that reader hears it and counts `cell` at most.
+
+Pins: `test/scenes/grantunheard.test.js` (2); `grant4_lanes`' GRANT6 wait and `grantaudit_host`'s A11 (PIN MOVED:
+unheard, never `unsigned`); `tools/mutants/grantunheard.json` (3, all dead).

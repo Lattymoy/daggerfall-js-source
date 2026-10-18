@@ -275,7 +275,7 @@
     "file": "src/scenes/grantHost.js",
     "old": "const v = verdicts.get(`${from}|${g}`) ?? await heardOf(`${from}|${g}`);",
     "new": "const v = verdicts.get(`${from}|${g}`);",
-    "why": "a grant not yet heard called unsigned",
+    "why": "a grant not yet heard called unheard at once",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
     ]

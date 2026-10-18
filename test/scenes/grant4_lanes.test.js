@@ -119,7 +119,7 @@ test('GRANT6 THE OWNER WHILE THE LAW ENFORCES: a stand the relay refuses, or who
   assert.ok(Date.now() - t0 < 250, 'stood at once');
 });
 
-test('GRANT6 THE READER WAITS FOR A GRANT IT HAS NOT HEARD, AND A LEVEL OR TWO: a record naming a grant this reader came in after is judged once a frame carries it; one never carried is `unsigned` after GRANT_VERDICT_WAIT_MS; a class foe GRANT_LEVEL_SLACK over its owner\'s signed level stands, one more is `dice` (mutants: the wait skipped; the slack dropped)', async () => {
+test('GRANT6 THE READER WAITS FOR A GRANT IT HAS NOT HEARD, AND A LEVEL OR TWO: a record naming a grant this reader came in after is judged once a frame carries it; one never carried is unheard after GRANT_VERDICT_WAIT_MS (`ungranted`, GRANT-UNHEARD: no forgery\'s reason); a class foe GRANT_LEVEL_SLACK over its owner\'s signed level stands, one more is `dice` (mutants: the wait skipped; the slack dropped)', async () => {
   const R = await relay();
   assert.equal(GRANT_VERDICT_WAIT_MS, 6000, 'three full frames (AUDIT GRANT A2)');
   assert.equal(GRANT_LEVEL_SLACK, 2);
@@ -129,7 +129,7 @@ test('GRANT6 THE READER WAITS FOR A GRANT IT HAS NOT HEARD, AND A LEVEL OR TWO: 
   await new Promise((r) => setTimeout(r, 50));
   host.heard(OWNER, [gr]);
   assert.equal(await late, null, 'heard inside the wait: judged, and honest');
-  assert.equal(await host.check(OWNER, CELL, { i: 2, t: 0, gr: [8, 0] }), 'unsigned', 'never carried');
+  assert.equal(await host.check(OWNER, CELL, { i: 2, t: 0, gr: [8, 0] }), 'ungranted', 'never carried');   // PIN MOVED (GRANT-UNHEARD): unheard, never `unsigned`
   assert.equal(await host.check(OWNER, CELL, { i: 3, t: 135, l: 9 + GRANT_LEVEL_SLACK, gr: [7, 1] }), null, 'a level or two since its checkpoint');
   assert.equal(await host.check(OWNER, CELL, { i: 4, t: 135, l: 10 + GRANT_LEVEL_SLACK, gr: [7, 2] }), 'dice');
 });
