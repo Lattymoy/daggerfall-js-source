@@ -456,6 +456,7 @@ import { portraitIndexFromStaticNPCBillboard } from '../systems/npcSession.js'; 
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { realWindowsMode, createViewOut, viewOutFrame } from '../render/realWindows.js';   // RW1: the view out through a building's glass
+import { windowWeatherFor } from '../render/windowWeather.js';   // WINDOW-WEATHER: the rain, the snow and the storm's flash through that glass - an add-on, the real windows untouched
 import { raiseContainerLootSpawned } from '../systems/containerLoot.js';   // FORAGE3: PlayerActivate.OnLootSpawned, one home - RRI2's shelf subscribers first (bandage stacks, store-quality wear, the alchemist's potions), then Foraging's
 import { bedSleepingOn, rrDouseOnDungeonExit, rrRefinedTrainingOn, rrSetting } from '../systems/roleplayRealism/rrRealism.js';   // RR1: the bed's activation gate, the douse on leaving a dungeon; RR2: the refined training window's switches
 import { rrVariantPerson } from '../systems/roleplayRealism/rrVariants.js';   // RR2: the variant keepers and residents
@@ -11239,6 +11240,7 @@ export function createWorldModes(host) {
       magic?.candleLight(), (_iilOnIt ? iilTorch : (l) => l)(playerTorchLight(playerEntity, player.feetAt(), cam.yaw)), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(host.modeLights?.() ?? []), ...(host.peerLights?.() ?? []), ...interiorTorches.lights());   // PEERLIGHT1: the others' torches   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
     renderer.setPointLights(_itLit.data, null, _itLit.colors);
     renderer.everyLightCasts();   // DISC15: the building is drawn whole below (no view cull) - every lamp keeps a shadow map, none lights through the ceiling as the nearest eight change
+    windowWeatherFor(renderer).light({ dt, collider: interiorCtx.collider });   // WINDOW-WEATHER (render/windowWeather.js): the storm's schedule, and a lit frame's light through the window - composed into the room's lamps (stored above)
     // AUDIT 39 (#33): the gate the dungeon arm above already carries.
     // A paused game advances no movers - DFU's door swing is an iTween
     // that never opts out of timeScale - so a swing begun before the
@@ -11550,6 +11552,7 @@ export function createWorldModes(host) {
       audio.playOneShot(swingSoundFor(interiorWeapon.playerWeapon.weapon), 1.1);
     }
     host.csaDrawParticlesBlended?.();   // CSA-F: a boat kept indoors (drawModeMeshes' boat): its drops, blended after the room's last world draw
+    windowWeatherFor(renderer).frame({ glass: _rwView, proj, view, eye: mwv.eye, dt, now: performance.now(), collider: interiorCtx.collider });   // WINDOW-WEATHER: what falls past the glass and the storm's flash on it - after the room's own draws, where only the cut glass takes them
     interiorWeapon.draw({ paralyzed });   // AUDIT 39r: ShowWeapons(false) - no viewmodel while frozen
     decorTool.drawPreview(interiorCtx.texRemap);   // DECOR1d: the decorator's panel, its pointed model turning in the preview box
     // AUDIT 21 (hosts lane, F7): THE HUD, in a building. drawHud lives inside
