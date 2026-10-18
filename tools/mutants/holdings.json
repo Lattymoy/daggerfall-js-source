@@ -101,8 +101,8 @@
   {
     "name": "FLEET-refit-one-tier",
     "file": "src/systems/fleet.js",
-    "old": "  const at = (id) => Math.round((1 + tierOf(rec, id) * (lineOf(id)?.per ?? 0)) * 10000) / 10000;",
-    "new": "  const at = (id) => Math.round((1 + Math.min(1, tierOf(rec, id)) * (lineOf(id)?.per ?? 0)) * 10000) / 10000;",
+    "old": "  return Math.min(t, BASE_TIERS) * per + Math.max(0, t - BASE_TIERS) * per * ORE_PER;",
+    "new": "  return Math.min(t, 1) * per + Math.max(0, t - BASE_TIERS) * per * ORE_PER;",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "FLEET-rigging-unread",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b));",
-    "new": "f(b.modifierMoveSpeedSail)) * hurt));",
+    "old": "f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());",
+    "new": "f(b.modifierMoveSpeedSail)) * hurt)) * peace());",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "FLEET-wire-n-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(named ? { n } : {}) };",
-    "new": "n };",
+    "old": "...(named ? { n } : {}), ...(flagged",
+    "new": "n, ...(flagged",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ],
@@ -230,7 +230,7 @@
   {
     "name": "FLEET-hull-refit-unread",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    return Number.isFinite(k) && k > 1 ? { ...b, hullHp: Math.round(b.hullHp * k), sailHp: Math.round(b.sailHp * k) } : b;",
+    "old": "    return Number.isFinite(k) && k > 0 && k !== 1 ? { ...b, hullHp: Math.round(b.hullHp * k), sailHp: Math.round(b.sailHp * k) } : b;",
     "new": "    return b;",
     "tests": [
       "test/systems/naval/fleet.test.js"
@@ -266,8 +266,8 @@
   {
     "name": "FLEET-refit-heals-her",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    pendingBoats.set(boat.uid, { ...savedRecord(st.damage, st.hull, 0), barrels: st.guns.barrels, mates: st.crew.snapshot() });",
-    "new": "    void savedRecord;",
+    "old": "    if (st) st.damage.rewhole(refitBuild(boat));",
+    "new": "    if (st) st.damage.repair();",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "FLEET-refit-on-a-loan",
     "file": "src/scenes/fleetHost.js",
-    "old": "    const refit = loan ? `She was bought",
-    "new": "    const refit = false ? `She was bought",
+    "old": "    const refit = loan ? `This ship was bought on credit",
+    "new": "    const refit = false ? `This ship was bought on credit",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "FLEET-a-small-boat-sails-alone",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : !crewed && at.where !== 'here' ? 'She has no crew to sail her to a port - go to her.'",
-    "new": "      : false ? 'She has no crew to sail her to a port - go to her.'",
+    "old": "      : !crewed && at.where !== 'here' ? 'This ship has no crew to sail it to port. Go to it yourself.'",
+    "new": "      : false ? 'This ship has no crew to sail it to port. Go to it yourself.'",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]

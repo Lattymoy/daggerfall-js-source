@@ -4074,6 +4074,11 @@ lands the player INSIDE the crypt, and so does the port since CRUX1
 recorded as missing here; interior/dungeon modes still skip loudly
 where DFU tears the scene down.
 
+CURSE-CARRY (2026-10-17, `01-Overview/bugs/Field-Bugs-2026-10-17d.md`) narrows the swap by two guilds:
+the Thieves Guild and the Dark Brotherhood, joined by an invitation sent once, ride it - the one record
+moves to the book the curse reads - so a member who turns is no longer shut out for the whole curse. A
+named departure, `01-Overview/Port-Ledger.md` section A.
+
 FLAGGED, each loudly: the transformed suppressions/claws/sounds/
 paperdoll+head art (host work), the artifact payloads.
 

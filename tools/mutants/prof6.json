@@ -369,7 +369,9 @@
     "new": "        AND NOT EXISTS (SELECT 1 FROM market_listings",
     "tests": [
       "test/net/prof6_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "INT19: the fill's pieceBusy says a piece not of the crafter's make ('commission-not-made') before the record moves, and a craft's row never changes after - the decision's own guard is the same question asked twice"
   },
   {
     "name": "PROF6-svc-listed-piece-fills",
@@ -378,7 +380,9 @@
     "new": "        AND EXISTS (SELECT 1 FROM products p WHERE p.provenance = ?4 AND p.owner = ?2 AND p.recipe = commissions.recipe",
     "tests": [
       "test/net/prof6_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "INT19: the fill's pieceBusy says a listed piece before the record moves, and a listing landing between takes the piece out of the crafter's record - the fill's record step (its sequence) then fails whole"
   },
   {
     "name": "PROF6-svc-owner-kept",
@@ -540,8 +544,9 @@
   {
     "name": "PROF6-book-fill-unkept",
     "file": "src/net/writBook.js",
-    "old": "        keep({ rid: body.rid, body, item: piece.item, where: piece.where }, key);\n",
-    "new": "",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a fill is no longer kept (the realm act's record is the truth); the fills a tab from before kept are asked again by the settle",
+    "old": "        for (const f of keptOf(key)) {",
+    "new": "        for (const f of []) {",
     "tests": [
       "test/net/prof6_client.test.js"
     ]
@@ -549,7 +554,8 @@
   {
     "name": "PROF6-book-refused-not-put-back",
     "file": "src/net/writBook.js",
-    "old": "        if (had && !PIECE_GONE.includes(r?.error)) { try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[writs] put back', e); } }",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a new fill's refusal is the realm act's undo (realmPieceAct, PROF5-book-piece-lost); the writs' own put back is their settle's",
+    "old": "            else { try { putBack(f.item, f.where); } catch (e) { console.warn('[writs] put back', e); } }",
     "new": "",
     "tests": [
       "test/net/prof6_client.test.js"

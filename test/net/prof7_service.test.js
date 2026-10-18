@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
+import { holdPieces } from '../realmSeat.mjs';   // INT19: a crafted piece lists out of its seller's realm record
 import { bodyKey } from '../../src/net/nodeLaw.js';
 import { xpForRank, harvestXp, HIGH_HIDES_PER_DAY } from '../../src/net/professionLaw.js';
 import { craftXp } from '../../src/net/recipeLaw.js';
@@ -75,7 +76,7 @@ test('PROF7 service: a body skinned - the hide of the foe the client names into 
   clock(secondAt(utcDay(T0) * DAY + 3600, 23));   // the night: Hunting keeps no hours (PROF0 6; FORAGE0 14.3)
   try {
     const s = await stand();
-    const mac = await s.registered('Mac');
+    const mac = await s.seated('Mac');
     s.setXp(mac, xpForRank(10), 'hunting');
     const body = skin(mac, MOB.GrizzlyBear);
     const r = await steered(0, () => s.call('/v1/prof/harvest', body, mac.secret));
@@ -109,7 +110,7 @@ test('PROF7 service: a body skinned - the hide of the foe the client names into 
 
 test('PROF7 service: the knife\'s report, bounded - a clean pelt x1.5, its fraction the dice\'s; a torn pelt loses its part; a report claiming both is neither; a Butcher\'s butchery two, a Slaughterfish\'s Raw Fish, a Harpy\'s none', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(55), 'hunting', { spec100: null });
   const clean = await steered(0, () => s.call('/v1/prof/harvest', skin(mac, MOB.Rat, { act: { clean: true } }), mac.secret));
   assert.deepEqual([clean.body.qty, clean.body.xp], [2, harvestXp(1, 55, true)], 'x1.5, and the half a unit the dice\'s');
@@ -133,7 +134,7 @@ test('PROF7 service: the knife\'s report, bounded - a clean pelt x1.5, its fract
 
 test('PROF7 service: Hunting\'s day is the account\'s - 3 hides of tiers 5-6 across its characters, decided in the harvest\'s own INSERT (a refusal writes no row and moves nothing); CAP-OFF: the hides past thirty credited; the state says the day and its bound', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100), 'hunting');
   // the high hides: three of tiers 5-6 taken on another character of the account
   s.hunted(mac, HIGH_HIDES_PER_DAY, 5, 'char-mac-alt');
@@ -154,7 +155,7 @@ test('PROF7 service: Hunting\'s day is the account\'s - 3 hides of tiers 5-6 acr
   const st = (await s.call('/v1/prof/state', { character: mac.character }, mac.secret)).body;
   assert.deepEqual([st.hunt, st.caps.hides, st.caps.highHides], [{ hides: 31, high: HIGH_HIDES_PER_DAY }, undefined, 3]);
   // another account's day is its own - and its rare hides are counted as the service writes them (the tier kept)
-  const ann = await s.registered('Ann');
+  const ann = await s.seated('Ann');
   s.setXp(ann, xpForRank(100), 'hunting');
   for (let i = 0; i < HIGH_HIDES_PER_DAY; i++) assert.equal((await s.call('/v1/prof/harvest', skin(ann, i ? MOB.Harpy : MOB.Dragonling), ann.secret)).status, 200);
   const fourth = await s.call('/v1/prof/harvest', skin(ann, MOB.Harpy), ann.secret);
@@ -167,7 +168,7 @@ test('PROF7 service: Hunting\'s day is the account\'s - 3 hides of tiers 5-6 acr
 
 test('PROF7 service: the tanning rack cures two hides to a leather (a Tanner\'s two, a choice at 50) and the loom weaves three Spider Silk to a Silk Bolt - no XP; the Stores short refused', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'hide:bear', 'own', 4);
   const cure = await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'cure:bear', count: 2, rid: rid() }, mac.secret);
   assert.equal(cure.status, 200, JSON.stringify(cure.body));
@@ -188,7 +189,7 @@ test('PROF7 service: the tanning rack cures two hides to a leather (a Tanner\'s 
 
 test('PROF7 service: a garment sewn in the dye the crafter chose - signed into its record (`u`), kept on the craft and the piece, answered; a dye asked of anything else or past the ten refused (AUDIT 32 L3: DFU\'s unchangeable shirts take one); Outfitting\'s rank and XP; boots a bolt and a Cured Leather', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'cloth:linen', 'own', 10);
   s.give(mac, 'leather:cured', 'own', 10);
   const ask = craft(mac, 'garment-141:linen', { dye: 3 });
@@ -224,11 +225,12 @@ test('PROF7 service: a garment sewn in the dye the crafter chose - signed into i
 
 test('PROF7 service: the market carries a garment\'s dye - a dyed shirt listed is read with its colour', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'cloth:linen', 'own', 2);
   const g = await s.call('/v1/prof/craft', craft(mac, 'garment-165:linen', { dye: 8 }), mac.secret);
   assert.equal(g.status, 200, JSON.stringify(g.body));
   const provenance = g.body.pieces[0].provenance;
+  holdPieces(s.env, mac.character, [{ provenance }]);   // PIN MOVED (INT19): the piece the pack took, in the record the listing takes it out of
   s.fund(mac, 100);   // the listing's fee
   const l = await s.call('/v1/market/list', { character: mac.character, region: DF, kind: 'piece', provenance, wear: 1000, price: 5, hubs: HUBS, rid: rid() }, mac.secret);
   assert.equal(l.status, 200, JSON.stringify(l.body));

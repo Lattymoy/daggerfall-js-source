@@ -76,8 +76,8 @@
   {
     "name": "NAV1H-the-look-on-a-ship-ignored",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    return aimSolution(boatPose(boat), side, look ? { ...look, at: lookOnShip(boat, side, look) } : null, deps.seaY());",
-    "new": "    return aimSolution(boatPose(boat), side, look ? { ...look, at: null } : null, deps.seaY());",
+    "old": "look ? { ...look, at: lookOnShip(boat, side, look) } : null, deps.seaY(), { shot: myBoatState(boat).guns.load(side) });",
+    "new": "look ? { ...look, at: null } : null, deps.seaY(), { shot: myBoatState(boat).guns.load(side) });",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -85,7 +85,7 @@
   {
     "name": "NAV1H-round-shot-for-the-canvas",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const p = best.rig && bat.gun !== 'chain' && best.hull ? best.hull.c : best.point;",
+    "old": "    const p = best.rig && load !== 'chain' && best.hull ? best.hull.c : best.point;",
     "new": "    const p = best.point;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -94,7 +94,7 @@
   {
     "name": "NAV1H-chain-for-the-hull",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const p = best.rig && bat.gun !== 'chain' && best.hull ? best.hull.c : best.point;",
+    "old": "    const p = best.rig && load !== 'chain' && best.hull ? best.hull.c : best.point;",
     "new": "    const p = best.rig && best.hull ? best.hull.c : best.point;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "NAV1H-the-going-down-struck",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      if (!e.boat || st === SHIP_STATES.sunk || st === SHIP_STATES.sinking) continue;\n      const boxes = [hullBox(e.boat), ...(solution.gun === 'chain'",
-    "new": "      if (!e.boat || st === SHIP_STATES.sunk) continue;\n      const boxes = [hullBox(e.boat), ...(solution.gun === 'chain'",
+    "old": "      if (!e.boat || st === SHIP_STATES.sunk || st === SHIP_STATES.sinking) continue;\n      const boxes = [hullBox(e.boat), ...(solution.shot === 'chain'",
+    "new": "      if (!e.boat || st === SHIP_STATES.sunk) continue;\n      const boxes = [hullBox(e.boat), ...(solution.shot === 'chain'",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -139,7 +139,7 @@
   {
     "name": "NAV1H-chain-blind-to-canvas",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      const boxes = [hullBox(e.boat), ...(solution.gun === 'chain' ? rigBoxesOf(e.boat) : [])].filter(Boolean);",
+    "old": "      const boxes = [hullBox(e.boat), ...(solution.shot === 'chain' ? rigBoxesOf(e.boat) : [])].filter(Boolean);",
     "new": "      const boxes = [hullBox(e.boat)].filter(Boolean);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -148,8 +148,8 @@
   {
     "name": "NAV1H-the-last-frames-hulls",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    // the ram and the aim, on the hulls as this frame stands them (AUDIT NAV1: both read the last frame's, a ship's way\n    // behind - my stem where it is, her planking where it was)\n    checkRams(boat);\n    stepHeaveTo(boat);\n    poseMyFires(total);\n    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n",
-    "new": "    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    checkRams(boat);\n    stepHeaveTo(boat);\n    poseMyFires(total);\n",
+    "old": "    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    // the ram and the aim, on the hulls as this frame stands them (AUDIT NAV1: both read the last frame's, a ship's way\n    // behind - my stem where it is, her planking where it was)\n    checkRams(boat);\n    stepHeaveTo(boat);\n    poseMyFires(total);\n    feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke\n    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n",
+    "new": "    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    checkRams(boat);\n    stepHeaveTo(boat);\n    poseMyFires(total);\n    feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke\n",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "NAV1H-the-galley-no-ram",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      const dealt = Math.round(speed * RAM_DAMAGE * (galley ? GALLEY_RAM : 1));\n      effects.hit(stem,",
-    "new": "      const dealt = Math.round(speed * RAM_DAMAGE);\n      effects.hit(stem,",
+    "old": "      const dealt = Math.round(speed * RAM_DAMAGE * (galley ? GALLEY_RAM : 1) * statScale(deps.captain?.stats?.(), 'ram'));   // CAPTAIN-TREE: her captain's ram\n      effects.hit(stem,",
+    "new": "      const dealt = Math.round(speed * RAM_DAMAGE * statScale(deps.captain?.stats?.(), 'ram'));   // CAPTAIN-TREE: her captain's ram\n      effects.hit(stem,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "NAV1H-the-share-unread-oars",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "f(b.modifierMoveSpeedOar)) * hurt);",
-    "new": "f(b.modifierMoveSpeedOar)));",
+    "old": "f(b.modifierMoveSpeedOar)) * hurt) * rigOf(b, 'oars')) * peace());",
+    "new": "f(b.modifierMoveSpeedOar))) * rigOf(b, 'oars')) * peace());",
     "tests": [
       "test/systems/comeSailAway/csa_wind.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "NAV1H-the-share-unread-sail",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b));",
-    "new": "f(b.modifierMoveSpeedSail))) * rigOf(b));",
+    "old": "f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());",
+    "new": "f(b.modifierMoveSpeedSail))) * rigOf(b)) * peace());",
     "tests": [
       "test/systems/comeSailAway/csa_wind.test.js"
     ]
@@ -846,7 +846,7 @@
   {
     "name": "NAV1H-the-wreck-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      : ship.wrecked ? (ship.repairing ? 'Crippled - her crew at the repairs' : ship.repairOrdered ? 'Crippled - her crew stands to the repairs' : ship.stores > 0 ? 'Crippled - order repairs, or make port' : 'Crippled - make port for a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n",
+    "old": "      : ship.wrecked ? (ship.repairing ? 'Crippled - crew repairing' : ship.repairOrdered ? 'Crippled - repairs ordered' : ship.stores > 0 ? 'Crippled - order repairs, or make port' : 'Crippled - make port for a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n",
     "new": "",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -974,7 +974,7 @@
   {
     "name": "NAV1H-the-heave-held-past-its-end",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (slow || clock > heaveTo.until || !e || e.ship.damage.state !== SHIP_STATES.struck || e.ship.boarded) heaveTo = null;",
+    "old": "    if (slow || clock > heaveTo.until || !e || !boardableState(e.ship, myId(), clock)) heaveTo = null;   // RAM-BOARD: struck, or fouled by me",
     "new": "    if (slow) heaveTo = null;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -1181,8 +1181,8 @@
   {
     "name": "NAV1H-the-crews-skill-fixed",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "  const crewSkill = (boat, st) => (boat.crewed ? PLAYER_SKILL_THIN + (PLAYER_SKILL - PLAYER_SKILL_THIN) * st.damage.crewShare() : PLAYER_SKILL);",
-    "new": "  const crewSkill = () => PLAYER_SKILL;",
+    "old": "  const crewSkill = (boat, st) => Math.min(1, (boat.crewed ? PLAYER_SKILL_THIN + (PLAYER_SKILL - PLAYER_SKILL_THIN) * st.damage.crewShare() : PLAYER_SKILL) * statScale(deps.captain?.stats?.(), 'aim'));",
+    "new": "  const crewSkill = () => Math.min(1, PLAYER_SKILL * statScale(deps.captain?.stats?.(), 'aim'));",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]

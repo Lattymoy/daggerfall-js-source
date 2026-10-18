@@ -337,8 +337,8 @@
   {
     "name": "NAVP-hit-burst-unscaled",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "e.gun === 'heavy', burstScale(e.point)); sound(",
-    "new": "e.gun === 'heavy'); sound(",
+    "old": "e.gun === 'heavy', burstScale(e.point), e.shot); sound(",
+    "new": "e.gun === 'heavy', 1, e.shot); sound(",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "NAVP-card-no-ghost",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  width('cardg', parts.cardGhost, Math.round(g.at * 10) / 10);",
-    "new": "  width('cardg', parts.cardGhost, card.hull);",
+    "old": "  width(key, ghost, Math.round(g.at * 10) / 10);",
+    "new": "  width(key, ghost, pct);",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "NAVP-card-no-piece",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  if (prev.pct - g.pct >= CARD_CHUNK_MIN_LOSS) {",
-    "new": "  if (prev.pct - g.pct > 100) {",
+    "old": "  width(key, ghost, Math.round(g.at * 10) / 10);\n  if (prev.pct - g.pct >= CARD_CHUNK_MIN_LOSS) {",
+    "new": "  width(key, ghost, Math.round(g.at * 10) / 10);\n  if (prev.pct - g.pct > 100) {",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -481,7 +481,7 @@
   {
     "name": "NAVP-card-no-flash",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  return hudClock < loss.until ? (loss.hits % 2 ? ' hit-a' : ' hit-b') : '';",
+    "old": "  return hudClock < state.until ? (state.hits % 2 ? ' hit-a' : ' hit-b') : '';",
     "new": "  return '';",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
@@ -490,8 +490,8 @@
   {
     "name": "NAVP-card-new-ship-read-off-last",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  if (!loss || loss.id !== card.id) {",
-    "new": "  if (!loss) {",
+    "old": "  if (!state || state.id !== id) {",
+    "new": "  if (!state) {",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "NAVP-card-pieces-replayed",
     "file": "src/ui/naval/navalHud.js",
-    "old": "touchBrace = false; for (const c of parts.cardChunks) stowChunk(c); loss = null; return; }",
-    "new": "touchBrace = false; return; }",
+    "old": "touchBrace = false; for (const c of parts.cardChunks) stowChunk(c); cardBar.s = null; for (const c of parts.plateChunks)",
+    "new": "touchBrace = false; for (const c of parts.plateChunks)",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -1361,8 +1361,8 @@
   {
     "name": "NAVP-timber-off-the-rig",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "if (e.zone === 'rig') { effects.tear(e.point, e.dir ?? [0, 0, 1]);",
-    "new": "if (e.zone === 'rig') { effects.tear(e.point, e.dir ?? [0, 0, 1]); effects.timber([e.point[0], seaY, e.point[2]], TIMBER_PER_HIT);",
+    "old": "if (e.zone === 'rig') { effects.shotTear(e.point, e.dir ?? [0, 0, 1], e.shot);",
+    "new": "if (e.zone === 'rig') { effects.shotTear(e.point, e.dir ?? [0, 0, 1], e.shot); effects.timber([e.point[0], seaY, e.point[2]], TIMBER_PER_HIT);",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]

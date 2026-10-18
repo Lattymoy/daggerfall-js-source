@@ -105,9 +105,9 @@ export const NAVAL_PLUNDER_CSS = `
 export const thingsText = (n) => `${n} ${n === 1 ? 'thing' : 'things'}`;
 /** What a Take All did, in a line: where the goods went, and what would not go. */
 export function takenText(r, shipName = null) {
-  if (!r || r.taken <= 0) return r?.left > 0 ? `You cannot carry any of it - ${thingsText(r.left)} stay in her hold.` : 'Her hold is empty.';
+  if (!r || r.taken <= 0) return r?.left > 0 ? `You cannot carry any of it - ${thingsText(r.left)} stay in the hold.` : 'The hold is empty.';
   const to = r.where === 'hold' ? `to your ${shipName ?? 'ship'}'s hold` : 'into your pack';
-  return r.left > 0 ? `${thingsText(r.taken)} ${to} - ${thingsText(r.left)} will not fit and stay in her hold.` : `${thingsText(r.taken)} ${to}.`;
+  return r.left > 0 ? `${thingsText(r.taken)} ${to} - ${thingsText(r.left)} will not fit and stay in the hold.` : `${thingsText(r.taken)} ${to}.`;
 }
 /** The window's standing words for a model - pure, the pins' reading. */
 export function plunderText(model, nameOf = (it) => String(it?.name ?? '')) {
@@ -117,7 +117,7 @@ export function plunderText(model, nameOf = (it) => String(it?.name ?? '')) {
   return {
     title: model.name,
     sub: [model.classLine, model.captain ? `Captain ${model.captain}` : null].filter(Boolean).join(' - '),
-    lede: model.raid ? 'The raiders are beaten. Their ship lies alongside, her hold open to you.' : `She is yours.${mine ? '' : ' No ship of yours is alongside to take anything from her to.'}`,
+    lede: model.raid ? 'The raiders are beaten. Their ship is alongside and its hold is open to you.' : `The ship is yours.${mine ? '' : ' None of your ships is alongside to load anything onto.'}`,
     count: items.length ? thingsText(items.length) : 'empty',
     rows: items.length > HOLD_ROWS ? [...shown, `and ${items.length - HOLD_ROWS} more`] : shown,
     more: items.length > HOLD_ROWS,
@@ -182,7 +182,7 @@ export function mountNavalPlunderWindow(host, deps) {
   const noteLine = el('p', 'dfnaval-note');
   noteLine.setAttribute('aria-live', 'polite');
   title.append(h2, sub, noteLine);
-  const close = button(m.raid ? 'Close' : 'Leave her', 'dfnaval-btn dfnaval-close', () => exit(m.raid ? 'close' : 'leave'));
+  const close = button(m.raid ? 'Close' : 'Leave', 'dfnaval-btn dfnaval-close', () => exit(m.raid ? 'close' : 'leave'));
   close.style.minWidth = '0';
   head.append(flag, title, close);
   const body = el('div', 'dfnaval-winbody');
@@ -191,7 +191,7 @@ export function mountNavalPlunderWindow(host, deps) {
   const holdSec = el('section', 'dfnaval-sec');
   const holdHead = el('h3', 'dfnaval-sechead');
   const holdCount = el('span', 'dfnaval-count');
-  holdHead.append(el('span', null, 'Her hold'), holdCount);
+  holdHead.append(el('span', null, 'Hold'), holdCount);
   const holdList = el('ul', 'dfnaval-holdlist');
   const holdActs = el('div', 'dfnaval-acts');
   const takeAll = button('Take all', 'dfnaval-btn dfnaval-take', () => {
@@ -199,7 +199,7 @@ export function mountNavalPlunderWindow(host, deps) {
     note = { text: takenText(r, m.mine?.()?.name ?? null), warn: !r || r.left > 0 };
     render();
   });
-  const openHold = button('Open her hold', 'dfnaval-btn dfnaval-open', () => {
+  const openHold = button('Open hold', 'dfnaval-btn dfnaval-open', () => {
     const refusal = deps.prepareHold?.();
     if (refusal) { note = { text: refusal, warn: true }; render(); return; }
     exit('hold');
@@ -207,32 +207,32 @@ export function mountNavalPlunderWindow(host, deps) {
   holdActs.append(takeAll, openHold);
   holdSec.append(holdHead, holdList, holdActs);
   const settle = (fate) => {
-    if (m.fate?.(fate) === false) { note = { text: 'No safe return deck is available. Keep her here or claim her first.', warn: true }; render(); return; }
+    if (m.fate?.(fate) === false) { note = { text: 'No safe return deck is available. Stay here or claim the ship first.', warn: true }; render(); return; }
     exit('fate');
   };
   // the choice
   const choiceSec = el('section', 'dfnaval-sec');
   const choiceHead = el('h3', 'dfnaval-sechead');
-  choiceHead.append(el('span', null, 'Take from her'), el('span', 'dfnaval-count', 'one, for your own ship'));
+  choiceHead.append(el('span', null, 'Take'), el('span', 'dfnaval-count', 'one, for your own ship'));
   const choices = el('div', 'dfnaval-choices');
   choiceSec.append(choiceHead, choices);
   // her fate
   const fateSec = el('section', 'dfnaval-sec');
   const fateHead = el('h3', 'dfnaval-sechead');
-  fateHead.append(el('span', null, m.raid ? 'The voyage' : 'Her fate'));
+  fateHead.append(el('span', null, m.raid ? 'The voyage' : 'The ship'));
   const fateActs = el('div', 'dfnaval-acts');
   const sail = m.raid ? button('Sail on', 'dfnaval-btn dfnaval-take dfnaval-sail', () => { m.fate?.('sail'); exit('fate'); }) : null;
   if (sail) fateActs.append(sail);
   else {
     fateActs.append(
-      button('Scuttle her', 'dfnaval-btn dfnaval-scuttle', () => settle('scuttle')),
-      button('Cast her adrift', 'dfnaval-btn dfnaval-adrift', () => settle('adrift')),
+      button('Scuttle', 'dfnaval-btn dfnaval-scuttle', () => settle('scuttle')),
+      button('Cast adrift', 'dfnaval-btn dfnaval-adrift', () => settle('adrift')),
     );
   }
   // SHIP-CLAIM: the third beside them - never a raid's (its one way on is Sail on). The host's answer decides it: a
   // refusal stays, with a word, where the other two leave
-  const claim = sail ? null : button('Claim her', 'dfnaval-btn dfnaval-claim', () => {
-    if (m.fate?.('claim') === false) { note = { text: 'She cannot be claimed.', warn: true }; render(); return; }
+  const claim = sail ? null : button('Claim', 'dfnaval-btn dfnaval-claim', () => {
+    if (m.fate?.('claim') === false) { note = { text: 'This ship can\'t be claimed.', warn: true }; render(); return; }
     exit('fate');
   });
   if (claim) fateActs.append(claim);
@@ -253,7 +253,7 @@ export function mountNavalPlunderWindow(host, deps) {
     if (note) noteLine.removeAttribute?.('hidden'); else noteLine.setAttribute('hidden', '');
     holdCount.textContent = t.count;
     for (const c of [...holdList.children]) c.remove();
-    if (!t.rows.length) holdList.append(el('li', 'dfnaval-item more', 'Nothing left in her hold.'));
+    if (!t.rows.length) holdList.append(el('li', 'dfnaval-item more', 'Nothing left in the hold.'));
     t.rows.forEach((row, i) => holdList.append(el('li', `dfnaval-item${t.more && i === t.rows.length - 1 ? ' more' : ''}`, row)));
     takeAll.textContent = t.take;
     const empty = !(m.items?.length > 0);

@@ -29,6 +29,7 @@ import { getItemHands, ITEM_HANDS } from '../../characters/equipTable.js';   // 
 import { isQuestionsDagger, QUESTIONS_DAGGER_WEAR } from '../conditionRepair.js';   // DISC21-A: the questions' dagger, one home
 import { EQUIP_SLOTS } from '../../characters/paperdoll/paperdoll.js';
 import { WEAPON_TYPES } from '../../combat/fpsWeapon.js';
+import { techniqueFamily } from '../../combat/technique/techniqueRoster.js';   // BAL10: the family a weapon swings with (an RRI class's own)
 import {
   BANDAGE_TEMPLATE, bandageHeal, shelfBandageStack, storeQualityItemCondition, storeQualityOn,
   alchemistPotionCount, alchemistPotionsOn, weaponBalanceOn, rriMeleeWeaponAnimTime,
@@ -50,6 +51,7 @@ export function rriAnimTimeOverride(liveSpeed, ctx) {
     liveSpeed, liveStrength: liveStat(ctx.entity, 'strength'),
     weaponWeight: melee ? null : (templateByIndex(weapon.templateIndex)?.baseWeight ?? 0), melee,
     weaponType: ctx.weaponType, twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both,   // SWING-LAW: the handling the port's law reads
+    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade',   // BAL10: a short blade handles as a dagger, whatever sprite draws it
   });
 }
 

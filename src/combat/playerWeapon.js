@@ -36,7 +36,7 @@ import { calculateAttackDamage } from './formulas.js';
 import { isShieldTemplate } from '../systems/armorMaterials.js';   // a12: UpdateHands' IsShield leg
 import { equipDelayFor } from '../systems/equip.js';               // a12: ToggleHand's EquipDelayTimes[GroupIndex]
 import { getBool, getFloat, getInt } from '../systems/settings/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
-import { blowReaches, blowMult, scaleBlowDamage, playerBody } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf
+import { blowReaches, blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf; MARTIAL3: and its landing told
 import { HANDS_MODE, handsModeOf, strikeHandOf, twoHanded, offHandToHit, OFF_HAND_BLOW, offHandBurden, offHandHold, DUAL } from './twoHands/handsLaw.js';   // TWO-HANDS: which hand strikes, and what the off hand costs
 import { getItemHands } from '../systems/equip.js';   // TWO-HANDS: a hand's item as the law reads it (one-handed or not)
 import { readSwing } from './swingLaw.js';   // TWO-HANDS: the striking weapon's weight and the Strength, for the off hand's burden
@@ -798,6 +798,7 @@ export class PlayerWeapon {
         onInflictPoison: onPoison ? (att, tgt, pt) => onPoison(foe, pt) : null,
       });
       const blow = techOn(foe) ? scaleBlowDamage(rolled, blowMult(tb, foe)) : rolled;   // TECH1: a miss stays a miss
+      if (techOn(foe)) tellTechniqueLanded(tb, foe, blow);   // MARTIAL3: a path's rider answers its signature's blow
       const damage = blow;   // TWO-HANDS (AUDIT): the off hand's share was laid inside the formula (blowShare)
       results.push({ foe, damage });
       this.onAttackResult?.({ foe, damage });   // WW1: OnAttackDamageCalculated's one consumer, the weapon widget's recoil

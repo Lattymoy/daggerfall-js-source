@@ -381,10 +381,10 @@ test('QUAYS THE HELM DOCKS, by the real host: a summoned ship\'s berth alongside
   h.runtime.state.velocityCurrent = [0, 0, 0];
   const w = h.host.warp(h.boat, { struck: true, oars: false, dt: 0.1 });
   assert.ok(w && w.pos.length === 2 && w.rotation.length === 4, 'a step and a turn');
-  assert.equal(h.log.say.filter((s) => /warp her in alongside Sentinel's quay/.test(s)).length, 1, 'said as she is taken in');
+  assert.equal(h.log.say.filter((s) => /brings the ship in alongside Sentinel's quay/.test(s)).length, 1, 'said as she is taken in');
   assert.equal(h.host.dockedAt(h.boat), null, 'not yet made fast');
   warpFor(h, 30);
-  assert.equal(h.log.say.filter((s) => /warp her in/.test(s)).length, 1, 'said once');
+  assert.equal(h.log.say.filter((s) => /brings the ship in/.test(s)).length, 1, 'said once');
   assert.equal(h.log.say.filter((s) => s === "Made fast at Sentinel's quay.").length, 1, 'made fast, said once');
   const at = alongside(b, h.boat.hull, h.harbour.hull);
   assert.ok(Math.hypot(h.boat.GameObject.position[0] - at[0], h.boat.GameObject.position[2] - at[1]) < 0.05, 'alongside');

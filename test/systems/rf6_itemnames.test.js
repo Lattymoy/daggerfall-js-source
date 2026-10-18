@@ -22,6 +22,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { itemNameParts, itemLongName, resolveItemName, materialName, armorShouldShowMaterial, questLetterName } from '../../src/systems/item/itemInfo.js';
+import { itemIsIdentified } from '../../src/systems/tradeModes.js';   // MAT-SHOW: a bare name keeps the metal off its front
 import { LOOT_MATRICES, generateItems, createPotion, CLASSIC_RECIPE_KEYS } from '../../src/systems/loot/loot.js';
 import { applyRarity } from '../../src/systems/loot/lootRarity.js';
 import { mintCondition, templateByIndex } from '../../src/systems/item/itemTemplates.js';
@@ -72,7 +73,10 @@ test('RF6: the two parts join to ResolveItemLongName, arm for arm, over every mi
       for (const it of corpus()) {
         const p = itemNameParts(it, opts);
         assert.equal(typeof p.name, 'string'); assert.equal(typeof p.material, 'string');
-        assert.equal(itemLongName(it, opts), p.material ? `${p.material} ${p.name}` : p.name, `the join is the long name (${JSON.stringify(it).slice(0, 80)})`);
+        // MAT-SHOW: a bare name (unidentified, an artifact, a record's own) keeps the metal off its front.
+        // The part still carries it, and that is what the pack's sub-line draws.
+        const bare = !itemIsIdentified(it) || it.artifact || it.legendary || it.aetheric || it.gilded;
+        assert.equal(itemLongName(it, opts), !bare && p.material ? `${p.material} ${p.name}` : p.name, `the join is the long name (${JSON.stringify(it).slice(0, 80)})`);
         n++;
       }
       // the helm's material follows the setting through the one arm
@@ -86,7 +90,13 @@ test('RF6: the two parts join to ResolveItemLongName, arm for arm, over every mi
   assert.deepEqual(itemNameParts({ group: 'Weapons', templateIndex: TEMPLATES.Arrow, material: 4, name: 'Arrow' }), { name: 'Arrow', material: '' }, 'an arrow');
   assert.equal(itemNameParts(sword({ artifact: true, name: 'Azura\'s Star' })).material, '', 'an artifact');
   const leg = applyRarity(sword(), 'legendary', lcg(2));
-  assert.ok(leg.legendary); assert.equal(itemNameParts(leg).material, '', 'a Legendary (LR2)');
+  assert.ok(leg.legendary);
+  assert.equal(itemNameParts(leg).material, materialName(leg), 'a Legendary says its metal on the sub-line (MAT-SHOW)');
+  assert.equal(itemLongName(leg), itemNameParts(leg).name, 'and the long name stays bare, with no metal in front');
+  const rare = applyRarity(sword(), 'rare', lcg(3));
+  assert.equal(itemIsIdentified(rare), false);
+  assert.equal(itemNameParts(rare).material, materialName(rare), 'an unidentified Rare says its metal');
+  assert.equal(itemLongName(rare), itemNameParts(rare).name, 'without putting it in front of the bare template');
   const unid = sword({ enchantments: [{ type: 3, param: 1 }] });
   assert.deepEqual(itemNameParts(unid), { name: templateByIndex(120).name, material: '' }, 'unidentified: the bare template, no material');
   assert.equal(itemNameParts(sword()).material, materialName(sword()), 'a plain sword shows its material');
@@ -116,14 +126,14 @@ test('RF6: the enhanced line and the plaque read the parts - the same name and m
   assert.equal(hoverLines([createPotion(221871)]).shown[0].name, 'Potion of Stamina');
   assert.equal(itemLine({ group: 'Weapons', templateIndex: TEMPLATES.Arrow, material: 4, name: 'Arrow' }).material, null, 'an arrow names no material');
   assert.equal(itemLine(sword({ artifact: true, name: 'Azura\'s Star' })).material, null, 'nor an artifact');
-  assert.equal(itemLine(applyRarity(sword(), 'legendary', lcg(2))).material, null, 'nor a Legendary');
+  assert.equal(itemLine(applyRarity(sword(), 'legendary', lcg(2))).material, materialName(sword()), 'a Legendary says its metal (MAT-SHOW)');
   assert.match(itemLine({ group: 'MiscItems', templateIndex: SOUL_TRAP_TEMPLATE, trappedSoulType: 23 }).name, /\(.+\)$/, 'a soul trap names its soul');
   assert.equal(itemLine({ templateIndex: -1 }).name, 'Unknown', 'U54: a real unknown still says so');
 });
 
 test('RF6: no second derivation - the enhanced modules read the resolver, never materialName, resolveItemName or the raw record name for a label', () => {
   const info = read('src/systems/item/itemInfo.js');
-  assert.match(info, /export function itemLongName\(item, opts\) \{\s*const \{ name, material \} = itemNameParts\(item, opts\);\s*if \(!material\) return name;\s*return formatText\(item\?\.group === 'Armor'\s*\? localizedText\('longArmorNameFormatString', '\{0\} \{1\}'\)\s*: localizedText\('longWeaponNameFormatString', '\{0\} \{1\}'\), material, name\);\s*\}/, 'the long name IS the join');
+  assert.match(info, /export function itemLongName\(item, opts\) \{\s*const \{ name, material \} = itemNameParts\(item, opts\);[\s\S]*?if \(!material \|\| withholdsMaterialPrefix\(item\)\) return name;\s*return formatText\(item\?\.group === 'Armor'\s*\? localizedText\('longArmorNameFormatString', '\{0\} \{1\}'\)\s*: localizedText\('longWeaponNameFormatString', '\{0\} \{1\}'\), material, name\);\s*\}/, 'the long name IS the join, unless the name keeps the metal off its front');
   const inv = read('src/ui/enhanced/enhancedInventory.js');
   assert.match(inv, /const parts = itemNameParts\(item, \{ getQuest: deps\.getQuest \?\? null \}\);/, 'the line reads the parts, the quest machine through');
   assert.match(inv, /name: parts\.name \|\| t\?\.name \|\| 'Unknown',/);

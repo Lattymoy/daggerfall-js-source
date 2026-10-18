@@ -15,16 +15,17 @@ export const CLASSIC_FRAME_UPDATE = 980;           // const int classicFrameUpda
 export const CLASSIC_UPDATE_INTERVAL = 0.0625;     // GameManager.classicUpdateInterval (classic 16Hz); bow anim tick
 export function getMeleeWeaponAnimTime(liveSpeed, ctx = null) {
   const o = _animTimeOverride?.(liveSpeed, ctx, CLASSIC_FRAME_UPDATE);   // TryGetOverride("GetMeleeWeaponAnimTime") - RRI2's weaponBalance registers one
-  if (o != null) return o;
+  // MARTIAL2: the swing's PACE, over whichever law answered - the port's own, or a mod's
+  if (o != null) return paced(o, ctx, null);
   // SWING-LAW: a wielder the port knows (`ctx.entity` - the player's machine, the Weapon Widget's clone, the third-person
   // body) swings on the port's own law; one it does not (a foe's machine, a peer's walker at PEER_SWING_SPEED, the
   // viewers) keeps DFU's line - which DFU never asks for a foe at all (characters/enemy/enemyAttack.js).
   if (ctx?.entity) {
     const w = _swingReader?.(ctx) ?? null;
-    return swingFrameSeconds(liveSpeed, {
+    return paced(swingFrameSeconds(liveSpeed, {
       heft: w ? swingHeft(w.weight, w.strength) : 1,
-      handling: swingHandling(ctx.weaponType, !!w?.twoHanded),
-    });
+      handling: swingHandling(ctx.weaponType, !!w?.twoHanded, !!w?.shortBlade),   // BAL10: a short blade handles as a dagger
+    }), ctx, w);
   }
   return (3 * (115 - liveSpeed)) / CLASSIC_FRAME_UPDATE;   // seconds per anim frame
 }
@@ -74,7 +75,7 @@ export function swingHeft(weightKg, strength) {
  *  quicker", and the table's dagger row "and the tanto" - DFU draws the tanto as a long blade, fpsWeapon.js, and it
  *  handles as one.) */
 export const SWING_HANDLING = Object.freeze({
-  0: 1, 1: 1,           // LongBlade (every sword the sprites draw as one: the tanto and the shortsword to the dai-katana)
+  0: 1, 1: 1,           // LongBlade (every sword the sprites draw as one: the tanto and the shortsword to the dai-katana - BAL10: but a short blade takes the Dagger's row, SWING_SHORT_BLADE)
   2: 0.97, 3: 0.97,     // Staff
   4: 0.9, 5: 0.9,       // Dagger
   6: 1.03, 7: 1.03,     // Mace
@@ -85,7 +86,14 @@ export const SWING_HANDLING = Object.freeze({
   16: 0.9,              // Werecreature - the beast's claws
 });
 export const SWING_TWO_HANDED = 1.06;
-export const swingHandling = (weaponType, twoHanded = false) => (SWING_HANDLING[weaponType] ?? 1) * (twoHanded ? SWING_TWO_HANDED : 1);
+/** BAL10 (bible/05-Combat/Balance-Arc.md section 16; the owner chose "Short blades swing faster"): EVERY SHORT BLADE HANDLES
+ *  AS A DAGGER. The table keys DFU's WeaponTypes - the SPRITE a weapon is drawn with - and DFU draws the Tanto, the
+ *  Shortsword and the Wakizashi as long blades, so only the Dagger came round quickly: the family that fights by speed was
+ *  the slowest per second of the six (a Shortsword 8.7 a second to a Longsword's 12.6 at Strength 80, Speed 70). A weapon
+ *  that swings with Short Blade (`shortBlade`, the swing reader's word - combat/swingLaw.js) takes the Dagger's row,
+ *  whatever draws it; one-handed all, so no two-handed term meets it. */
+export const SWING_SHORT_BLADE = SWING_HANDLING[4];
+export const swingHandling = (weaponType, twoHanded = false, shortBlade = false) => (shortBlade ? SWING_SHORT_BLADE : (SWING_HANDLING[weaponType] ?? 1)) * (twoHanded ? SWING_TWO_HANDED : 1);
 /** The bounds of a frame: no swing is quicker than 0.45 s (five frames) or slower than 2 s, whatever a mod reads. */
 export const SWING_FRAME_MIN = 0.09;
 export const SWING_FRAME_MAX = 0.4;
@@ -93,7 +101,42 @@ export const SWING_FRAME_MAX = 0.4;
 export function swingFrameSeconds(speed, { heft = 1, handling = 1 } = {}) {
   return Math.max(SWING_FRAME_MIN, Math.min(SWING_FRAME_MAX, SWING_BASE_FRAME * swingTempo(speed) * heft * handling));
 }
-/** The weapon in the hand as the law reads it - `(ctx) => {weaponType, weight, strength, twoHanded}` or null - from a
+// ── MARTIAL2 (bible/05-Combat/Martial-Specialisations.md section 4): THE SWING'S PACE ───────────────────────────────
+// A Short Blade mastered past 100 swings faster (systems/weaponMastery.js), and three martial paths quicken a swing for a
+// while (systems/martialPowers.js) - as CAST-SPEED's rate quickens a cast (systems/castSpeed.js). NAMED modifiers, each
+// `fn(ctx, w) -> percent` (`w` the swing reader's answer where the frame's law has read it already, else null - a
+// modifier that needs the weapon reads it itself, and only once it knows it may pay: AUDIT MARTIAL L2 F3, the reader is
+// no free call, and the override's arm read it again for every swing of every wielder): the frame's time is divided by 1 +
+// their sum, at most SWING_PACE_MOST, and never under SWING_FRAME_MIN - no swing is quicker than 0.45 s, whatever
+// quickens it (SWING-LAW's floor). Asked only for a wielder the port knows (`ctx.entity`), every frame of a swing: a
+// list, never a Map's iterator.
+/** The most every pace modifier together quickens a swing (%). */
+export const SWING_PACE_MOST = 50;
+/** @type {Array<[string, (ctx: any, w: any) => number]>} */
+let _pace = [];
+/** Register a swing pace modifier by name; a non-function removes the name. */
+export function registerSwingPaceMod(name, fn) {
+  _pace = _pace.filter(([n]) => n !== name);
+  if (typeof fn === 'function') _pace.push([name, fn]);
+}
+/** The percent every modifier quickens this swing by, at most SWING_PACE_MOST; one that throws or answers no number is
+ *  none. */
+export function swingPacePct(ctx, w = null) {
+  if (!ctx?.entity || _pace.length === 0) return 0;
+  let pct = 0;
+  for (let i = 0; i < _pace.length; i++) {
+    try { const v = _pace[i][1](ctx, w); if (Number.isFinite(v) && v > 0) pct += v; } catch { /* a modifier is not the swing's problem */ }
+  }
+  return Math.min(SWING_PACE_MOST, pct);
+}
+/** A frame's time `t`, paced (`w` the reader's answer the law already read, or null). */
+function paced(t, ctx, w) {
+  if (!ctx?.entity || _pace.length === 0 || !(t > 0)) return t;
+  const pct = swingPacePct(ctx, w);
+  return pct > 0 ? Math.max(SWING_FRAME_MIN, t / (1 + pct / 100)) : t;
+}
+
+/** The weapon in the hand as the law reads it - `(ctx) => {weaponType, weight, strength, twoHanded, shortBlade, family}` or null - from a
  *  module that can read the equip table (combat/swingLaw.js, which registers it as it loads - combat/weapon/weaponRig.js
  *  imports it: AUDIT PRE-MERGE 0929 S5); this module is a leaf. Without one the
  *  law reads no heft, and the handling off `ctx.weaponType` alone. */

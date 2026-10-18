@@ -197,7 +197,7 @@ test('AUDIT HOLDINGS C3: a Bard keeps no lookout - refused, never "her Lookout n
   const c = createShipCrew({ seed: 4 });
   c.sync(ROSTER);
   const bard = c.hands.find((h) => h.mobile === MOBILE.Bard);
-  assert.deepEqual(c.assign(bard.name, 'Lookout'), { ok: false, text: `${bard.name} leads her songs - he keeps no lookout.` });
+  assert.deepEqual(c.assign(bard.name, 'Lookout'), { ok: false, text: `${bard.name} leads the songs and doesn't keep lookout.` });
   assert.equal(bard.role, 'Bard');
 });
 
@@ -517,13 +517,13 @@ test('AUDIT HOLDINGS Q9: a quay\'s lay that failed is laid again QUAY_RETRY_S la
   h.host.clear();
   h.run(0.2);
   h.host.warp(h.boat, { struck: true, oars: false, dt: 0.1 });
-  assert.equal(h.log.say.filter((s) => /warp her in/.test(s)).length, 2, 'said again after the sea was cleared');
+  assert.equal(h.log.say.filter((s) => /brings the ship in alongside/.test(s)).length, 2, 'said again after the sea was cleared');
   assert.deepEqual(whereWords({ where: 'away', docked: '', metres: null }), { state: 'Made fast', tone: 'is-away', line: 'Made fast at a quay.' });
 });
 
 // ── THE REFUSALS AND THE GUNS ─────────────────────────────────────────────────────────────────────────────────────────
 
-test('AUDIT HOLDINGS D2: every refusal the page names is said - Send away: laid up already, another player aboard, fighting, at her helm, packed; Refit and the Shipwright: fighting, away from this port; Repair: her hands fighting her, packed', () => {
+test('AUDIT HOLDINGS D2: every refusal the page names is said - Send away: laid up already, another player aboard, fighting, at the helm, packed; Refit and the Shipwright: fighting, away from this port; Repair: her hands fighting her, packed', () => {
   const s = csaWithBook();
   const w = { hostile: false, inFight: false, aboard: 0 };
   const host = createFleetHost({
@@ -537,29 +537,29 @@ test('AUDIT HOLDINGS D2: every refusal the page names is said - Send away: laid 
     nearPort: () => true, nearestPort: () => ({ name: 'Daggerfall' }), terrainAt: () => s.terrains[0], passengersAboard: () => w.aboard,
   });
   titleDeed(mintDeed(2, 0, 700, 1), { port: { name: 'Wayrest' } });
-  assert.equal(host.act(700, 'away').text, 'She is laid up already.');
+  assert.equal(host.act(700, 'away').text, 'This ship is already laid up.');
   assert.equal(host.act(700, 'summon').ok, true);
   assert.equal(fleetShip(700).port, null, 'AUDIT HOLDINGS Q8: called away from where she lay - the docking says her port again');
   const boat = s.rt.GetPlacedBoatWithUID(700);
   w.aboard = 1;
-  assert.equal(host.act(700, 'away').text, 'Another player is aboard her.');
+  assert.equal(host.act(700, 'away').text, 'Another player is aboard.');
   w.aboard = 0; w.hostile = true;
-  assert.equal(host.act(700, 'away').text, 'Not while she is fighting.');
-  assert.equal(host.act(700, 'refit', 'hull').text, 'Not while she is fighting.');
-  assert.equal(host.act(700, 'yard').text, 'Not while she is fighting.');
+  assert.equal(host.act(700, 'away').text, 'Not while the ship is in combat.');
+  assert.equal(host.act(700, 'refit', 'hull').text, 'Not while the ship is in combat.');
+  assert.equal(host.act(700, 'yard').text, 'Not while the ship is in combat.');
   w.hostile = false; w.inFight = true;
-  assert.equal(host.act(700, 'repair').text, 'Her hands are fighting her.');
+  assert.equal(host.act(700, 'repair').text, 'The crew is busy fighting.');
   w.inFight = false;
   s.rt.StartSailing(boat);
-  assert.equal(host.act(700, 'away').text, 'Not while you are at her helm.');
+  assert.equal(host.act(700, 'away').text, 'Not while you are at the helm.');
   s.rt.StopSailing();
   boat.GameObject.activeSelf = false; boat.MapPixel = { X: 15, Y: 20 };   // afar
-  assert.equal(host.act(700, 'refit', 'hull').text, 'Bring her to this port first.');
-  assert.equal(host.act(700, 'yard').text, 'Bring her to this port first.');
+  assert.equal(host.act(700, 'refit', 'hull').text, 'Bring the ship to this port first.');
+  assert.equal(host.act(700, 'yard').text, 'Bring the ship to this port first.');
   boat.GameObject.activeSelf = true; boat.MapPixel = { X: 10, Y: 20 };
   assert.equal(s.rt.PackBoat(boat, true), true);
-  assert.equal(host.act(700, 'repair').text, 'She is in your pack.');
-  assert.equal(host.act(700, 'away').text, 'She is in your pack.');
+  assert.equal(host.act(700, 'repair').text, 'This ship is in your pack.');
+  assert.equal(host.act(700, 'away').text, 'This ship is in your pack.');
 });
 
 test('AUDIT HOLDINGS T1: her Guns refit lands - a ball of hers takes its share more off a ship\'s hull (her refit read by her number off the shooter); a ball of a boat of mine with none, as ever', async () => {

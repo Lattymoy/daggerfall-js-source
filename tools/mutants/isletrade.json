@@ -1,0 +1,74 @@
+[
+  {
+    "name": "ISLE-TRADE-no-good-made",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) };",
+    "new": "return { makes: [...ETHER], wants: BAY.slice() };",
+    "tests": [
+      "test/systems/naval/isletrade.test.js"
+    ]
+  },
+  {
+    "name": "ISLE-TRADE-own-good-exotic",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "const exotic = other && stand !== 'makes';",
+    "new": "const exotic = other;",
+    "tests": [
+      "test/systems/naval/isletrade.test.js"
+    ]
+  },
+  {
+    "name": "ISLE-TRADE-own-good-unlisted",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "if (other && stand === 'neither') continue;",
+    "new": "if (other && stand !== 'wants') continue;",
+    "tests": [
+      "test/systems/naval/isletrade.test.js"
+    ]
+  },
+  {
+    "name": "ISLE-TRADE-plain-hash",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "const r = mulberry32(hashKey(`${port?.key ?? ''}:isle`) >>> 0);\n  return BAY[Math.floor(r() * BAY.length) % BAY.length];",
+    "new": "return BAY[(hashKey(`${port?.key ?? ''}:isle`) >>> 1) % 4];",
+    "tests": [
+      "test/systems/naval/isletrade.test.js"
+    ]
+  },
+  {
+    "name": "ISLE-TRADE-own-also-wanted",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "wants: BAY.filter((g) => g !== own) };",
+    "new": "wants: BAY.slice() };",
+    "tests": [
+      "test/systems/naval/isletrade.test.js"
+    ]
+  },
+  {
+    "name": "ISLE-TRADE-card-unsaid",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "const made = named.kind === 'port' ? goodById(isleGood({ key: `${isle.px},${isle.py}` })) : null;",
+    "new": "const made = null;",
+    "tests": [
+      "test/systems/naval/isletrade.test.js"
+    ]
+  },
+  {
+    "name": "ISLE-TRADE-card-wrong-key",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "goodById(isleGood({ key: `${isle.px},${isle.py}` }))",
+    "new": "goodById(isleGood({ key: isle.key }))",
+    "tests": [
+      "test/systems/naval/isletrade.test.js"
+    ]
+  },
+  {
+    "name": "ISLE-TRADE-card-every-isle",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "const made = named.kind === 'port' ? goodById",
+    "new": "const made = named.kind !== 'rock' ? goodById",
+    "tests": [
+      "test/systems/naval/isletrade.test.js"
+    ]
+  }
+]

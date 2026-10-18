@@ -102,6 +102,7 @@ import { injectSkeletonNodes } from '../formats/morrowind/mwSkin.js';   // WS1: 
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 import { armKickMatrix } from './gun/gunFeel.js';   // MW-GUN-FEEL: the gun's recoil and reload, as one pose over the viewmodel
+import { rifleStanceStep, applyRifleStance } from './gun/rifleStance.js';   // RIFLE-STANCE: a long gun held in the hands - the low ready, the aim
 import { createLanternSwing, stepLanternSwing, lanternSwingMatrix } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed
 import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/morrowind/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
 import { spellFxPlan } from '../formats/morrowind/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
@@ -1853,8 +1854,10 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
     } else if (!skeletonHasBone(skeletonBytes, own.bone)) {
       notes.push(noBoneNote('weapon', own.bone, own.name));
     } else {
-      parts.push({ slot: 'weapon', bones: [own.bone], bytes: nifBytes(arc, path) });
-      weaponInfo = { id: own.id, name: own.name, model: own.model, type: own.animateAs, bone: own.bone, speed: own.speed, own: true };
+      // RIFLE-STANCE: the row's attitude on the bone (a pistol grip through the fist - ownWeaponModels.js GUN_GRIP_ATTITUDE),
+      // and how the arms hold it (combat/gun/rifleStance.js)
+      parts.push({ slot: 'weapon', bones: [own.bone], bytes: nifBytes(arc, path), ...(own.attitude ? { preTransform: own.attitude } : {}) });
+      weaponInfo = { id: own.id, name: own.name, model: own.model, type: own.animateAs, bone: own.bone, speed: own.speed, own: true, holdAs: own.holdAs ?? null, attitude: own.attitude ?? null };
     }
     // THE BORROWED TYPE IS WHAT GOES BACK, not None, and it is the
     // difference between a rig and a mesh on a bone: every caller of
@@ -3626,6 +3629,10 @@ export function createFpArm() {
   /** MW-GUN-FEEL: the gun's kick and reload this frame - `{ pitch, back, down }` (combat/gun/gunFeel.js armGunPose), set by
    *  the rig (weaponRig.js thunderlockFeel) - or null. */
   let gunFeel = null;
+  /** RIFLE-STANCE (combat/gun/rifleStance.js): the long gun's hold - its weight, the aim's share, the seconds since a shot -
+   *  stepped once a frame (stepRifle); and the fight's own signal the rig hands it (setCombatReady: a foe's harm). */
+  let rifle = { w: 0, ready: 0, since: Infinity };
+  let rifleCombat = false;
   let lastThirdModel = null;   // AUDIT FIELD-GUN-MW F2: drawThird's model matrix, for the muzzle in the world
   let drawnArm = null, drawnMats = null;   // SHADOW-CLOAK (AUDIT): the arm and the pose drawThird last drew - a host that poses again before the auras (the dungeon) never hands a cape the next frame's
   /** The muzzle vertex of a weapon piece, found once off its unposed source and kept on the piece. */
@@ -4282,6 +4289,21 @@ export function createFpArm() {
   }
   // ---- TWO-HANDS: the second hand on the body (combat/twoHands/mirrorRig.js) and the run's pump -----------------------------
   const attackingNow = () => upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd;
+  // ---- RIFLE-STANCE: the long gun in the hands (combat/gun/rifleStance.js) ---------------------------------------------------
+  /** The rig holds its weapon as a long gun (the row's `holdAs` - the Thunderlock). */
+  const holdsRifle = (r) => !!(r && r.weapon && r.weapon.holdAs === 'rifle');
+  /** The hold's state for the frame: wanted while the gun is in the hands and nothing else has them - not the draw or
+   *  the sheathe (the clip carries the gun from the holster and back), not the stone, a seat, a saddle, a sheet, a spell
+   *  or the dead; up to the aim while it shoots, for RIFLE_EASE.hold after, and while the fight's signal stands. */
+  function stepRifle(cam, dt) {
+    const wanted = holdsRifle(built) && weaponInHand() && !climbHands && !held && !deathState
+      && upper !== UPPER_BODY.Equipping && upper !== UPPER_BODY.Unequipping && !(cam && (cam.seat || cam.saddle));
+    rifle = rifleStanceStep(rifle, { wanted, shooting: attackingNow(), combat: rifleCombat, dt });
+  }
+  /** The hold for rig `r` in `view` (poseAssembly's `hold`), or null while it weighs nothing. */
+  const rifleHold = (view, r) => (rifle.w > 0 && holdsRifle(r)
+    ? (sk, pose, root, sm) => applyRifleStance(sk, pose, root, sm, { w: rifle.w, ready: rifle.ready, view, eyeRef: view === 'first' ? r.cameraRef : null, attitude: r.weapon.attitude })
+    : null);
   /** The left hand's weapon shows on rig `r`: a pair is held, a weapon is in hand (drawn, no spell), and the rig bound
    *  one on its Weapon Bone Left. The blade's alone - the arm's composition is pairHeld's. */
   const offShown = (r) => handsMode === 'dual' && weaponInHand() && !!(r && r.offWeapon);
@@ -6157,6 +6179,7 @@ export function createFpArm() {
       climbHands = climbWorld.w >= 0.5 && !!(cam && cam.climb);
       stepRunPump(dt);   // TWO-HANDS: the running hands' weight and stride
       stepPairGuard(dt);   // TWO-HANDS AUDIT: the pair's guard
+      stepRifle(cam, dt);   // RIFLE-STANCE: the long gun's hold
       // refreshCurrentAnims' order, and it is not arbitrary: the weapon
       // state is stepped FIRST because the idle refresh below depends on
       // it - "idle handled last as it can depend on the other states"
@@ -6257,6 +6280,7 @@ export function createFpArm() {
             accumRoot: t.accumRoot,
             climb: thirdClimb(climbWorld, cam),   // CLIMB6
             mirror: mirrorFor('third', t, dt),   // TWO-HANDS: the second hand - the pair's left arm, a left-hand blow
+            hold: rifleHold('third', t),   // RIFLE-STANCE: the long gun in the hands
             skin: !thirdSkinReady(t),   // MWNPC1: the skin in the vertex shader - the pose is the skeleton alone
           });
           uploadThirdMesh(t);
@@ -6320,6 +6344,7 @@ export function createFpArm() {
         // hands were dropped whole - a wrist 1.0 units in a frame where the stroke moves it 0.08 - and came back whole
         run: firstRun(cam),
         mirror: mirrorFor('first', built, dt),   // TWO-HANDS: the second hand - the pair's left arm, a left-hand blow
+        hold: rifleHold('first', built),   // RIFLE-STANCE: the long gun in the hands, the low ready or the aim
         // Rule 56's accum root is STICKY and rig-wide, so it does not
         // follow the source the way the tracks do.
         accumRoot: built.accumRoot,
@@ -6580,6 +6605,11 @@ export function createFpArm() {
     /** MW-GUN-FEEL: the gun's kick and reload for the next first-person draw (combat/gun/gunFeel.js armGunPose) - a pose
      *  that moves nothing is none. */
     setGunFeel(pose) { gunFeel = pose && (pose.pitch || pose.back || pose.down) ? { pitch: +pose.pitch || 0, back: +pose.back || 0, down: +pose.down || 0 } : null; },
+    /** RIFLE-STANCE: the fight's own signal for a long gun's aim (weaponRig.js: a foe's harm on the player stands), every
+     *  frame; a peer's body is never handed one - its own shots raise its aim. */
+    setCombatReady(on) { rifleCombat = !!on; },
+    /** RIFLE-STANCE: the long gun's hold as it stands - `{ w, ready, since }`. */
+    rifleState: () => ({ ...rifle }),
     gunFeel: () => gunFeel,
     screenTransform: () => screenTransform,
     setFollowCamera(v) {

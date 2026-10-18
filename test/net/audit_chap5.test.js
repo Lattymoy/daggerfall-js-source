@@ -127,7 +127,7 @@ async function turning(t, { open = 'on' } = {}) {
   const moved = (char, f, g, w, from, to) => raw.prepare("INSERT INTO npc_chapter_history (faction, region, week, kind, char_id, data, at) VALUES (?, ?, ?, 'seat', ?, ?, 0)")
     .run(f, g, w, char, JSON.stringify({ from, to }));
   const guild = async (handle, name, tag, marks) => {
-    const who = await s.registered(handle, { renown: GUILD_FOUND_RENOWN });
+    const who = await s.seated(handle, { renown: GUILD_FOUND_RENOWN });
     const r = await s.found(who, { name, tag });
     assert.equal(r.status, 200, JSON.stringify(r.body));
     const id = r.body.guild.id;
@@ -142,7 +142,7 @@ async function turning(t, { open = 'on' } = {}) {
 
 test('AUDIT CHAP5 S1/E2: a Season\'s Master is the one who held the Master\'s seat the whole of it - an officer who rose to it in the Season is none, though its seat\'s `since` is its officer\'s (mutants: the continuity, its weeks, its kind)', async (t) => {
   const s = await turning(t);
-  const who = await s.registered('Alda');
+  const who = await s.seated('Alda');
   const whole = await seatRealm(s.env, who.secret, 'Alda');
   const rose = await seatRealm(s.env, who.secret, 'Bryn');
   const back = await seatRealm(s.env, who.secret, 'Cade');
@@ -165,13 +165,13 @@ test('AUDIT CHAP5 S6: the opening is the first week ever settled \'on\' - a deve
   assert.deepEqual(await s.settle(WEEK + 1), { settled: true, chapters: ROLL_FACTIONS.length * 2 });
   const r = s.row(FIGHTERS, ANTICLERE);
   assert.deepEqual([r.strength, r.patron, r.patron_season], [strengthAfter(80, 0, strengthTarget(0)), 'gabcdefghij', 1], 'on, dev, on: nothing wiped');
-  const who = await s.registered('Alda');
+  const who = await s.seated('Alda');
   const R = await seatRealm(s.env, who.secret, 'Alda');
   s.seat(R.id, who.id, FIGHTERS, ANTICLERE, 'master', WEEK - 3);
   assert.equal((await s.settle(LAST)).settled, true);
   assert.deepEqual(s.seasons(), [], 'the Season held a developers\' week: no Master crowned');
   const c = await turning(t);
-  const cw = await c.registered('Alda');
+  const cw = await c.seated('Alda');
   const cR = await seatRealm(c.env, cw.secret, 'Alda');
   c.seat(cR.id, cw.id, FIGHTERS, ANTICLERE, 'master', WEEK - 3);
   assert.equal((await c.settle(LAST)).settled, true);
@@ -230,12 +230,12 @@ test('AUDIT CHAP5 S3: a hidden guild\'s chapter\'s Season is its members\' - a s
   const s = await turning(t);
   s.put(THIEVES, ANTICLERE, 50, { event: 'succession', season: 1 });
   const back = (who, R, side) => s.call('/v1/chapters/back', { character: R.id, faction: THIEVES, region: ANTICLERE, side }, who.secret);
-  const stranger = await s.registered('Bryn');
+  const stranger = await s.seated('Bryn');
   const sR = await seatRealm(s.env, stranger.secret, 'Bryn');
   assert.deepEqual([(await back(stranger, sR, 0)).body.error, (await back(stranger, sR, 9)).body.error], ['no-event', 'no-event'], 'no "not-member", no "no-side"');
   s.put(THIEVES, DAGGERFALL, 50, {});
   assert.equal((await s.call('/v1/chapters/back', { character: sR.id, faction: THIEVES, region: DAGGERFALL, side: 0 }, stranger.secret)).body.error, 'no-event');
-  const who = await s.registered('Alda');
+  const who = await s.seated('Alda');
   const R = await seatRealm(s.env, who.secret, 'Alda');
   await readRoll({ db: s.env.DB, nowS: NOW }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 42: 85 }, members: [{ f: 42, rank: 7 }] } });
   assert.deepEqual([(await back(who, R, 9)).body.error, (await back(who, R, 1)).body], ['no-side', { ok: true, event: 'succession', side: 1 }]);
@@ -312,16 +312,16 @@ async function board(t, event, { season = true, guildmaster = false } = {}) {
   const raw = s.env.DB._raw;
   const age = (who, days) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - days * DAY, who.id);
   for (let i = 0; i < 3; i++) {
-    const w = await s.registered(`Wit${i}`); age(w, 8);
+    const w = await s.seated(`Wit${i}`); age(w, 8);
     assert.equal((await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [MAGES, FIGHTERS, THIEVES] } }, w.secret)).status, 200);
   }
-  const g = await s.registered('Ground'); age(g, 8);
+  const g = await s.seated('Ground'); age(g, 8);
   const p = herbPatches({ x: 300, y: 200, day: utcDay(NOON), climate: WOODS, confirmed: false })[0];
   assert.equal((await s.call('/v1/prof/harvest', {
     character: g.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(NOON), slot: p.slot }), kind: 'herbs',
     climate: WOODS, region: ANTICLERE, act: { clean: false, bruised: false }, at: NOON - 2, rid: rid(),
   }, g.secret)).status, 200);
-  const who = await s.registered('Alda', { renown: GUILD_FOUND_RENOWN });
+  const who = await s.seated('Alda', { renown: GUILD_FOUND_RENOWN });
   const R = await seatRealm(s.env, who.secret, 'Alda');
   await readRoll({ db: s.env.DB, nowS: NOON }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 41: 10, 42: 10 }, members: [{ f: 41, rank: 0 }, { f: 42, rank: 0 }] } });
   if (guildmaster) {
@@ -493,7 +493,7 @@ test('AUDIT CHAP5 T8: the draw reads a Curfew only where it is law, and no other
 test('AUDIT CHAP5 T10: a Season ending at the Chapters\' opening crowns no developers\' Master - the opening\'s seats are none (mutants: the opened)', async (t) => {
   const s = await turning(t);
   s.raw.prepare("UPDATE npc_chapter_weeks SET week = ?, open = 'dev'").run(WEEK - 2);   // the developers' last week before the Season; the Season's own unsettled
-  const who = await s.registered('Eld');
+  const who = await s.seated('Eld');
   const R = await seatRealm(s.env, who.secret, 'Eld');
   s.seat(R.id, who.id, FIGHTERS, ANTICLERE, 'master', WEEK - 3);
   assert.equal((await s.settle(LAST)).settled, true);
@@ -507,7 +507,7 @@ test('AUDIT CHAP5 T15/T18: the client\'s doors reach the service - a bid through
   const r = await io.patron(a.who.character, FIGHTERS, ANTICLERE, 1500, rid());
   assert.deepEqual([r.ok, r.data?.season, r.data?.marks, r.data?.guildMarks], [true, 2, 1500, 3500], JSON.stringify(r));
   s.put(FIGHTERS, ANTICLERE, 50, { event: 'schism', season: 1 });
-  const who = await s.registered('Bryn');
+  const who = await s.seated('Bryn');
   const R = await seatRealm(s.env, who.secret, 'Bryn');
   await readRoll({ db: s.env.DB, nowS: NOW }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 41: 85 }, members: [{ f: 41, rank: 7 }] } });
   const b = await accountRoll({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, who) }).back(R.id, FIGHTERS, ANTICLERE, 1);

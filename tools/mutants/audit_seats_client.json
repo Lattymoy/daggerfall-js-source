@@ -225,8 +225,8 @@
     "tests": ["test/net/audit_seats_client.test.js"] },
 
   { "name": "AUDITSEATS-C10-closed-settles", "file": "src/net/townSeatBook.js",
-    "old": "['bad-watch', 'seats-need-account', 'seats-closed']",
-    "new": "['bad-watch', 'seats-need-account']",
+    "old": "['bad-watch', 'seats-need-account', 'seats-closed', 'progress-seat', 'trade-held']",
+    "new": "['bad-watch', 'seats-need-account', 'progress-seat', 'trade-held']",
     "tests": ["test/net/audit_seats_client.test.js"] },
   { "name": "AUDITSEATS-C10-session-keeps", "file": "src/net/townSeatBook.js",
     "old": "const settled = r?.ok || WATCH_SETTLED.includes(r?.error);",

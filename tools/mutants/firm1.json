@@ -107,7 +107,7 @@
   {
     "name": "FIRM1-powers-blow-plain",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct));",
+    "old": "  return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct, !info?.estimate));",
     "new": "  return damage;",
     "tests": [
       "test/systems/firm1_powers.test.js"

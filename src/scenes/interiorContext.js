@@ -261,6 +261,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // guard below could ever run.
     await remapSubMeshes(cpuModels.get(id)?.subMeshes, texRemap, climateArchive, deps);
   }
+  // CABIN-LOOK (scenes/cabinLook.js): a room its owner restyled - each picture given its twin over the climate's, before a
+  // model is added to the room's batch (its keys resolved at the add)
+  if (typeof opts.restyle === 'function') await opts.restyle(texRemap, [...pending.keys()].map((id) => cpuModels.get(id)?.subMeshes ?? []), { renderer, getTexture, palette });
 
   const drawList = [];
   // PERF6: THE ROOM'S STATIC MODELS AS ONE MESH - PERF5's batch for the

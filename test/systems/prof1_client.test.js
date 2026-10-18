@@ -225,7 +225,7 @@ test('PROF1 items: an herb withdrawn is DFU\'s own plant in its group - named as
 test('PROF1 DONE WHEN: an herb picked online reaches DFU\'s potion maker by the pack - harvested through the real Worker, withdrawn, minted, and mixed by DFU\'s own recipe law', async (t) => {
   t.mock.method(Date, 'now', () => NOON * 1000);
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });
   const book = createProfBook({ door, storage: memStorage(), character: () => mac.character, now: () => NOON * 1000, sleep: noWait });
   assert.equal((await book.refresh()).ok, true);

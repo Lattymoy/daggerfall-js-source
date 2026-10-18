@@ -144,6 +144,13 @@ body .rvncard.is-routed, body .rvncard.is-unbroken, body .rvncard.is-deserted { 
 body .rvncard.is-routed .rvncard-kicker, body .rvncard.is-unbroken .rvncard-kicker, body .rvncard.is-deserted .rvncard-kicker { color: #e0a54a; }
 body .rvncard.is-warn { border-left-color: #8a63d2; }
 body .rvncard.is-warn .rvncard-kicker { color: #c3a8ff; }
+/* AUDIT RVN D7: RVN-ERRAND's leaving (the Abroad chip's sky) and its return (the haul's green); RVN-ARTS' call (a warning's amber) */
+body .rvncard.is-errand { border-left-color: #4f7fa8; }
+body .rvncard.is-errand .rvncard-kicker { color: #9fc2e8; }
+body .rvncard.is-errand_back { border-left-color: #4f9a62; }
+body .rvncard.is-errand_back .rvncard-kicker { color: #8fc7a0; }
+body .rvncard.is-art { border-left-color: #c9822e; }
+body .rvncard.is-art .rvncard-kicker { color: #e0a54a; }
 body .rvncard .rvncard-sr {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }

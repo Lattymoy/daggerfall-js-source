@@ -4515,8 +4515,8 @@ title they hold: upgraded, downgraded and lapsed by Patreon's own webhook, with 
   deploy. Unset is a legal state: the card offers nothing and the webhook answers `patreon-closed`.
 - **Mac's tiers** (2026-10-01: "some titles dont have titles/glyphs ingame. Heriophant is custom and Herald doesnt
   exist ingame yet. Supporter doesnt recieve a title/glyph"): `PATREON_TIERS = "29666211:disciple,29666234:herald"` -
-  Disciple, and Herald since HERALD (below) gave it its title in the game. Supporter (29701293) holds none and
-  Hierophant (29666221) is custom, granted by name. Apostle has no tier now.
+  Disciple, and Herald since HERALD (below) gave it its title in the game. Supporter (29701293) holds none. Apostle has
+  no tier now. Hierophant (29666221) is mapped since HIEROPHANT-TIER (below).
 - **The handle lists stand.** A list still grants on its own, for the titles Mac grants by name (a comp, a patron who
   will not link); the two never hold one title twice.
 
@@ -4539,7 +4539,7 @@ title they hold: upgraded, downgraded and lapsed by Patreon's own webhook, with 
   TITLE-N's), so no relay deploy.
 - Pins: `test/server/patreon_link.test.js` (17) - the law, the MD5 and the signature, the sealed state and ticket, Patreon's
   shapes, the Worker end to end with Patreon's two OAuth endpoints stood in for (the yes's own read among them), the
-  card and its flow, the config and the deploy. `tools/mutants/patreonlink.json` (47, all dead). `test/server/accountworker.test.js` holds the four columns; the
+  card and its flow, the config and the deploy. `tools/mutants/patreonlink.json` (48, all dead - HIEROPHANT-TIER's one among them). `test/server/accountworker.test.js` holds the four columns; the
   version pins moved to acct45 (and `gatekeys.json`'s record with them).
 
 ## HERALD — the Patreon tier between Disciple and Hierophant (2026-10-01, world138, acct45)
@@ -5741,3 +5741,128 @@ runs - the title and the wings are a grant checked now, worn once the player equ
 (the list; the handle in any case holds the title, the glyph, the wings and the moderating; four near names refused);
 `tools/mutants/titlen.json` DEV6-roderic-not-granted (the handle left off the list - dead), and DEV3's, DEV4's and
 DEV5's records re-aimed by content.
+
+## HIEROPHANT-TIER — the $50 tier holds the Hierophant (2026-10-17)
+
+Mac: "The $50 patreon tier doesnt have a title/glyph ingame. The Heirophant". PATREON-LINK left it out of the map on
+Mac's word of 2026-10-01 ("Heriophant is custom"), so a $50 pledge linked and held nothing. TITLE-N gave the Hierophant
+its title and glyph on 2026-09-24: the word "Hierophant" in rose (#e873bf), the crown beside the name, stroked in the
+same rose, and `!` on the classic face. So the fix is one line, `server-account/wrangler.toml`: `PATREON_TIERS =
+"29666211:disciple,29666234:herald,29666221:hierophant"`. A $50 pledge now grants that title and glyph, as the Disciple
+and Herald pledges grant theirs.
+
+- **Nobody relinks.** The row already stores the tier ids Patreon sent (`patreon_tiers`, migration 0045). The title is
+  read from those ids against the map at every token, so a $50 patron who already linked holds the Hierophant on their
+  next token once the account worker deploys. The card reads "Linked - Hierophant".
+- **The relay is untouched.** `hierophant` has been in the token's vocabulary since TITLE-N, so there is no relay
+  version and no account version. Nothing is written and no migration runs.
+- **A patron's own title still comes by name.** The titles made for single patrons (Shadow Fang, Penitent, Aegis,
+  Primarch, Crystal Fist) stay on their own handle lists. A patron who holds one of them and pledges $50 holds both,
+  and wears whichever one they pick. HIEROPHANT_HANDLES stays empty, for a Hierophant Mac grants by name.
+- **Supporter (29701293) still holds nothing.** Apostle still has no tier.
+- Pins: `test/server/patreon_link.test.js`, the config test (the exact map with the Hierophant's tier; a pledge at it
+  holds `hierophant` and wears the crown; Supporter maps to nothing). `test/net/herald.test.js`: the Hierophant's tier
+  now holds the Hierophant and still no Herald. `tools/mutants/patreonlink.json` PL-the-hierophant-tier-unmapped
+  (dead). PL-a-tier-mapped-mac-did-not-name was the Hierophant's mapping until now; it is re-aimed to Supporter mapped
+  to the Disciple (dead). PL-secret-as-var and `herald.json` HERALD-the-tier-unmapped are re-aimed by content (dead).
+
+## WIKIMAID — SylviaBun's own: the WikiMaid, its glyph and the Lilac Warren (2026-10-17, world214, acct150)
+
+For the in-game account SylviaBun: "Honestly as dumb as this is gonna sound the WikiMaid title and a purple aura with
+bunnies would be dope as hell" - and the owner: "Lets go all out for this". No colour was named for the title and no
+picture for the glyph; the aura was asked purple, with bunnies. CRYSTAL-FIST's law throughout - Daggerfall Unity has no
+accounts, titles, glyphs or auras, so there is no DFU member to read or depart from.
+
+- **The grant** (`server-account/src/titles.js`): `WIKIMAID_HANDLES = "SylviaBun"` (`server-account/wrangler.toml`)
+  grants the title, its glyph (`TIER_GLYPH.wikimaid`) and the aura (`TIER_AURA.wikimaid: 'lilacwarren'`) together,
+  case-folded, read off the config at every ask - TITLE-N's handle-list law. Taking the handle off the list takes all
+  three on the next token. A near name (`SylviaB`, `SylviaBunny`) is another account and holds none of it.
+- **The vocabulary** (`src/net/identityToken.js`, in the relay bundle): `wikimaid` last in TITLES and GLYPHS,
+  `lilacwarren` last in AURAS. A relay before it refuses a token carrying them, so the relay is **world214** and the
+  account service **acct150**: THE RELAY FIRST, then the account service, then the site. Every token acct150 mints for
+  SylviaBun carries the glyph whether or not she wears anything, so an account deployed first would shut her out of
+  every room until the relay landed (CRYSTAL-FIST AUDIT A1). `EG_RELAY_MIN` stays 213 - the breach's own relay; its pin
+  now reads the floor, not RELAY_VERSION's number. THE HELLO'S BODY BOUND is 864 (`TOKEN_BODY_MAX`, net/wire.js
+  `TOKEN_RE`, pinned equal), from 800: every claim at once, a house at its bounds, the realm character and the arms -
+  AUDIT LEGACY III O11's widest - took the WikiMaid's glyph word to 808, a token the service would sign and the relay
+  refuse whole at every hello (no player holds every glyph, but the bound is held to the widest, as SEASON1 and O11 held
+  it); the whole token at the new bound is about 955 of TOKEN_MAX_CHARS' 1024. And A PLACE SOCKET'S WIDEST ATTACHMENT (AUDIT ATTACH
+  A1, `test/net/auditattach.test.js`) is 1030 bytes with every glyph - the glyph list 185 of them, stored as words - past
+  the audit's tripwire of half the runtime's 2048; the tripwire is 1056 now, recorded there, 1018 bytes still under the
+  runtime's bound. Storing the glyphs as their places in GLYPHS would buy some 170 bytes back - a relay-wide change (eight
+  reads of `a.glyphs`, the staff's, the developers' and the Dungeon Master's rights among them), left for its own slice.
+- **The face** (`src/ui/playerBadge.js`, `WARREN_*`): five colours named once - the AMETHYST `#9d5cff`, the LILAC
+  `#c390ff` (the title's one colour, 45 apart from the nearest title's, the Apostle's), a rabbit's BLUSH `#ffb8de`, the
+  maid's FRILL `#fff5fb` and the PLUM `#4a1f6e`. "WikiMaid" is drawn amethyst into lilac into the blush, edged in black as
+  every gradient title with a light end is; the account card's button and the glyph in the lilac. THE GLYPH: a rabbit's
+  head front on, its own mirror about the middle - two long ears up, the head fuller at the cheeks - filled, in M, L, Q
+  and Z alone, and over it THREE DETAILS, a list (`glyphDetails` - one shape or several, so the wolf's eye and the
+  WikiMaid's three are walked alike by every face that draws a glyph: `glyphArtNode` and the travel view's
+  `travelViewHud.js`): the ears' insides in the blush, the maid's headdress - five scallops of white lace across the
+  crown - and its plum band with the rabbit's eyes and nose. `V` on the classic face, the ears. "WikiMaid" on the account
+  card in every language (the title over her head is never translated, so the label matches it). Seen in Chromium at 13
+  to 64 px over a night sky, a day sky, stone, grass and snow: the ears and the lace read from 13 px. Drafts that were
+  rejected, said: without the lace the head read as a rabbit and nothing more; with the lace the head's whole width it
+  read as the froth on a mug.
+- **The look** (`src/render/auraRing.js`, the twelfth: `AURA_LOOK.lilacwarren`, kind 12, drawn PREMULTIPLIED - `shade`,
+  the resonance's law, so a rabbit stays lilac over a lit floor):
+  - THE RABBITS, the third draw: WARREN_BUNNIES (6) cards, each a rabbit in profile (`WARREN_BUNNY.path`, cut by
+    `glyphEdges` and filled in the shader) - a lilac coat lit from above and an amethyst line round it (gone once a
+    pixel is wider than it), a white cotton tail past the haunch, a plum eye with a glint, the blush in its ear and on its
+    nose, and on its crown the WikiMaid's own headdress, three scallops of white lace on a plum band. (CI's SD20c V14
+    sweep found the coat's light first written as a reversed smoothstep, which GLSL leaves undefined - the interpreter
+    and SwiftShader happened to mirror it; it is `1.0 - smoothstep(3.0, 14.0, ...)` now.) Each hops round
+    the ring the way it faces as the eye sees it (the card's x the eye's own right, the cloak's emblem's law): WARREN_HOPS
+    (3) hops of WARREN_HOP_S (0.45 s) - a crouch on the ground, then the air, stretched and narrowed (its bulk kept) -
+    and a sit, the landing taken with a squash; a lap in twenty seconds; one sit in WARREN_BINKY_EVERY (4) a BINKY, a
+    rabbit's happy leap, turned about through its middle and back. Each rabbit's gait half a second after the one ahead
+    of it, so they hop at their own moments and never come closer than 0.71 m round the ring. They come up out of the
+    ground as it kindles, one after another. The cards lean back toward an eye above them by half its elevation
+    (WARREN_LEAN), feet planted, so from above a rabbit is a rabbit and never a sliver edge on.
+  - ONE LAW ON EVERY GPU (CRYSTAL-FIST AUDIT A2): where each rabbit is, how high, how stretched and which way it faces
+    is node's (`warrenBunny`, `warrenBunniesInto`), handed over each frame (`uWarren`) farthest first from the eye
+    (`warrenDepthOrder` - nothing in the pass writes depth, so a near rabbit is laid last); their tracks too
+    (`warrenPrintsInto`, `uWarrenPrint`: each rabbit's last WARREN_PRINTS landings, an angle and an age).
+  - THE GROUND: amethyst light pooled within, a crisp lilac ring of light WARREN_RING_IN (0.1 m) inside the rabbits'
+    lane - so they hop round it, and their tracks land on the open floor (the pins found the ring's line covering the fore
+    feet's prints when it lay under them); a soft shadow under each rabbit, fainter as it leaps; THE TRACKS, a rabbit's
+    own - two long hind feet side by side ahead of two small fore feet one behind the other - fading over WARREN_PRINT_S
+    (2.4 s); a binky lands on its own prints and leaves none; twelve twinkles round it, each in its own time.
+  - THE WALL, the pass's strip at the lane: WARREN_SPARKLES (18) four-pointed sparkles of lilac, blush and white rising
+    to the waist, swaying and twinkling, and a low amethyst veil - added, never a cover; kindled up.
+  - Every rate whole over the clock (`warrenRatesWhole`): the gait (40 in 120 s), its laps (6) and its binkies (10 a
+    rabbit), so the ring meets itself at the wrap.
+- **The hosts** - THE FOUR HOSTS: no host changed. `scenes/world.js` draws every look through the pass by its key;
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` draw through world.js's pass; `scenes/exterior.js` draws no
+  aura - FLAGGED, unchanged.
+- **Seen** in headless Chromium's WebGL2 (`tools/auraProbe.mjs`, 86/86 - the warren's ten): it compiles, links and draws
+  with no GL error; every rabbit stands where node's law has it, in its lilac, over a dark floor and a bright one alike
+  (never washed past it); another moment, moved on and still where the law has them; from above, the ring of light whole
+  in the lilac inside the lane, the amethyst within it, nothing past the ground and the tracks where they landed; no jump
+  at the wrap; nothing before it kindles.
+- Pins: `test/net/wikimaid.test.js` (15) - the vocabulary and the face; the glyph's shape (a mirror, the ears, the
+  cheeks, the three details in order, five scallops of lace narrower than the head); the grant (case-folded, off the
+  list, a guest, the other lists' holders and near names); the service end to end; the token and the relay (world214);
+  the name over a head, the glyph's SVG with its three details, the account card's rules; the classic face's letters
+  along the gradient; the look; the rabbits' law (the gait at recorded moments, never back, the laps and the wrap, the
+  spacing, the hops, the landing, the binky turned and back, coming up one after another, farthest first, a wearer's
+  own clock); the tracks' law; a rabbit RUN (its coat, tail, eye, glint, nose, ear, lace and band, nothing outside, its
+  mirror, nothing before it is up, the fog); the ground RUN (the ring covering, the light added, the tracks fading, the
+  shadows, no NaN at the middle, the corners round); the wall RUN; the card's vertex half RUN (its feet, square to the
+  eye, its facing from either side and in a binky, its stretch, its lean, half its size coming up); the draw (premultiplied,
+  node's rabbits farthest first and their tracks handed on the wearer's own clock). `test/ui/travel/tv5_far_places.test.js`
+  (N1-3's test: the travel view draws each of a list of details, in order). `tools/mutants/wikimaid.json` (59, all
+  dead - the bound left at 800 among them). The relay's and the account's pins moved to world214 and acct150 crediting WIKIMAID (AUDIT EG V L4-8's pin now
+  holds the breach's floor, 213, and RELAY_VERSION at or past it); the vocabulary's positional pins moved in `aegis`,
+  `crystalfist`, `primarch`, `hoursfirst`, `egeco_honours`, `sd9c_turning`, `seraphwings`, `shadowcloak`, `chap4c_titles`,
+  `chap6e_titles`, `lampkeeper2`, `serpent5_honours`, `acc3titles` and `titlen`; thirty
+  records that quote the lists this extends (in `aegis.json`, `crystalfist.json`, `egeco_honours.json`, `herald.json`,
+  `hoursfirst.json`, `penitent.json`, `primarch.json`, `sd9c.json`, `seraphwings.json`, `shadowcloak.json`,
+  `shadowfang.json` and `tv5.json`), the version record in `soc1.json` and nine account records (`hackedgold`, `bal9`,
+  `crafthold` twice, `nameas`, `br5`, `fb1004d_knight_house`, `tech1`, `gatekeys`), and the three that quote the old
+  body bound (`ribbon.json` twice, `auditlegacy3.json`) re-aimed by content - all forty-three, dead. The ratchet
+  (`test/systems/l10n4_hardcoded.test.js`) counts the Lilac Warren's word beside the other auras' (34 to 35).
+- Left as they are, said: not seen in a running game client - the probe and the interpreter are its readers; the
+  rabbits are upright cards leaning back toward the eye, so straight down from overhead they are foreshortened to half
+  their height; like every aura they stand on a wearer turned beast and on a rider; one program draws all twelve
+  looks, so a compile failure would take them all (the probe and `shadowcloak.test.js`'s eager compile are the guard).

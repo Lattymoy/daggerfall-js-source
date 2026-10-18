@@ -191,7 +191,7 @@
   {
     "name": "NAV1G-chain-for-the-hull",
     "file": "src/systems/naval/navalAI.js",
-    "old": "    const rig = bat.gun === 'chain' && build.rig.length ? rigBand(build).map((y) => world.seaY + y) : null;",
+    "old": "    const rig = shot === 'chain' && build.rig.length ? rigBand(build).map((y) => world.seaY + y) : null;",
     "new": "    const rig = null;",
     "tests": [
       "test/systems/naval/navaudit_guns.test.js"
@@ -336,8 +336,8 @@
   {
     "name": "NAV1G-gone-unsaid",
     "file": "src/systems/naval/navalShots.js",
-    "old": "      if (age > BALL_LIFE) { emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun }); continue; }",
-    "new": "      if (age > BALL_LIFE) continue;",
+    "old": "passTold(b, id); emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun }); continue; }",
+    "new": "passTold(b, id); continue; }",
     "tests": [
       "test/systems/naval/navaudit_guns.test.js",
       "test/systems/naval/nav_a_guns.test.js"
@@ -418,8 +418,8 @@
   {
     "name": "NAV1G-fire-on-every-zone",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const fire = e.type === 'blast' ? 'barrel' : zone === 'hull' && random() < FIRE_CHANCE;",
-    "new": "    const fire = e.type === 'blast' ? 'barrel' : random() < FIRE_CHANCE;",
+    "old": "    const fire = e.type === 'blast' ? 'barrel' : (zone === 'hull' || (zone === 'rig' && shotRigFire(e.shot))) && random() < shotFireChance(e.shot, FIRE_CHANCE, gun.fireK);",
+    "new": "    const fire = e.type === 'blast' ? 'barrel' : random() < shotFireChance(e.shot, FIRE_CHANCE, gun.fireK);",
     "tests": [
       "test/systems/naval/navaudit_guns.test.js"
     ]
@@ -471,18 +471,18 @@
   },
   {
     "name": "NAV1G-the-tally-early",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (t.ended >= t.balls) {",
-    "new": "    if (t.ended >= t.balls - 1) {",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "      if (t.ended >= t.balls) {",
+    "new": "      if (t.ended >= t.balls - 1) {",
     "tests": [
       "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-a-miss-a-hit",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') t.ended++;",
-    "new": "    } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') { t.ended++; t.hits++; }",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') t.ended++;",
+    "new": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') { t.ended++; t.hits++; }",
     "tests": [
       "test/systems/naval/navaudit_guns.test.js"
     ]

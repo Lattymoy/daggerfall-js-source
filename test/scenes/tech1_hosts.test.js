@@ -25,13 +25,13 @@ const rigBag = (src, open) => { const i = src.indexOf(open); assert.ok(i >= 0, o
 
 test('TECH1 THE ACTION: WeaponTechnique appended last, a port row the classic windows yield, on Mouse3 alone, in Combat - and a touch corner\'s, a d-pad\'s and a pad button\'s to choose (mutants: inserted mid-list; another key; the group)', () => {
   assert.equal(TECHNIQUE_ACTION, 'WeaponTechnique');
-  assert.equal(ACTIONS.at(-3), 'WeaponTechnique',   // PIN MOVED (UI-CALM: the saddle panel's key last)
+  assert.equal(ACTIONS.at(-5), 'WeaponTechnique',   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last)
     'appended - the classic grid and a saved file resolve by position (SPYGLASS\' glass after it - PIN MOVED)');
   assert.ok(PORT_ACTIONS.includes('WeaponTechnique'));
   assert.deepEqual(DEFAULT_BINDINGS.filter(([, a]) => a === 'WeaponTechnique'), [['Mouse3', 'WeaponTechnique']]);
   assert.deepEqual(DEFAULT_BINDINGS.filter(([c]) => c === 'Mouse3'), [['Mouse3', 'WeaponTechnique']], 'one key, one action');
   const combat = ACTION_GROUPS.find((g) => g.title === 'Combat');
-  assert.deepEqual(combat.rows.map((r) => r.action), ['ReadyWeapon', 'SwingWeapon', 'SwitchHand', 'WeaponTechnique']);
+  assert.deepEqual(combat.rows.map((r) => r.action), ['ReadyWeapon', 'SwingWeapon', 'SwitchHand', 'WeaponTechnique', 'ShotCycle']);   // PIN MOVED (SHOT-KINDS: the guns' load at a helm after it)
   assert.equal(actionLabel('WeaponTechnique'), 'Weapon technique (hold to aim)');
   assert.deepEqual(TOUCH_BUTTON_ACTIONS.find((a) => a.id === 'WeaponTechnique'), { id: 'WeaponTechnique', label: 'Weapon technique (hold to aim)', glyph: 'Tech', kind: 'hold', w: 60 });
   assert.deepEqual(DPAD_CHOICES.find(([v]) => v === 'WeaponTechnique'), ['WeaponTechnique', 'Weapon technique']);

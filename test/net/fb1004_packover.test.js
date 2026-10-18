@@ -100,7 +100,7 @@ test('PACK-OVER done when: a character with no bag and a pack at its limit gathe
   Date.now = () => NOON * 1000;
   try {
     const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
-    const mac = await s.registered('Mac');
+    const mac = await s.seated('Mac');
     const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });
     const e = body({ packKg: 75 });
     assert.equal(carriedWeight(e), entityMaxEncumbrance(e), 'the pack at its limit');

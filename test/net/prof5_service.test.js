@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
+import { holdPieces } from '../realmSeat.mjs';   // INT19: a crafted piece lists out of its seller's realm record
 import { utcDay } from '../../src/net/marksLaw.js';
 import {
   MARKET_LISTING_S, MARKET_ORDER_S, MARKET_LISTINGS_MAX, MARKET_ORDERS_MAX, listingFee, saleTax, courierFee, courierSeconds, roadPixels,
@@ -185,12 +186,15 @@ test('PROF5 service: bought from another region by courier - its fee by the load
 
 test('PROF5 service: a crafted piece listed by its owner alone, once, with its wear; bought here - answered to the pack, its owner moved; bought by courier - its delivery collected once it arrives, by its character, asked twice one; a cancel answers it back', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
-  const ann = await s.registered('Ann');
+  // PIN MOVED (INT19, Integrity-Arc section 7): a crafted piece lists out of its seller's REALM RECORD - the sellers are
+  // realm characters, the piece stands in the record first, and its wear is the record's
+  const mac = await s.seated('Mac');
+  const ann = await s.seated('Ann');
   s.fund(mac, 1000);
   s.fund(ann, 5000);
   s.piece(mac, '0123456789abcdef');
   s.piece(ann, 'fedcba9876543210');
+  holdPieces(s.env, mac.character, [{ provenance: '0123456789abcdef', wear: 620 }]);
   const sword = (extra = {}) => ({ character: mac.character, region: DF, kind: 'piece', provenance: '0123456789abcdef', wear: 620, price: 900, hubs: HUBS, rid: rid(), ...extra });
   assert.deepEqual((await s.call('/v1/market/list', sword({ provenance: 'fedcba9876543210' }), mac.secret)).body, { error: 'market-not-yours' });
   assert.deepEqual((await s.call('/v1/market/list', sword({ provenance: 'aaaaaaaaaaaaaaaa' }), mac.secret)).body, { error: 'market-no-record' }, 'AUDIT 31 H1: no record at all, never another\'s');
@@ -210,7 +214,8 @@ test('PROF5 service: a crafted piece listed by its owner alone, once, with its w
   assert.deepEqual({ ...s.owner('0123456789abcdef') }, { owner: ann.id, listed: 0 });
   assert.equal(s.balance(mac), 1000 - 9 + 900 - 45);
   assert.deepEqual((await s.call('/v1/market/list', sword(), mac.secret)).body, { error: 'market-not-yours' }, 'the seller holds no copy it can sell');
-  // Ann lists it on in Wayrest; Mac buys it back by courier
+  // Ann lists it on in Wayrest (her pack took it from the answer, and her record with it); Mac buys it back by courier
+  holdPieces(s.env, ann.character, [{ provenance: '0123456789abcdef', wear: 620 }]);
   const l2 = await s.call('/v1/market/list', { ...sword(), character: ann.character, region: WR, price: 1000, wear: 620 }, ann.secret);
   assert.equal(l2.status, 200);
   const courier = courierFee(1, ROAD);
@@ -229,13 +234,14 @@ test('PROF5 service: a crafted piece listed by its owner alone, once, with its w
   assert.deepEqual([got.status, got.body.piece.provenance, got.body.piece.wear], [200, '0123456789abcdef', 620]);
   assert.deepEqual([(await s.call('/v1/market/collect', collect, mac.secret)).body.repeat], [true], 'asked twice, answered again');
   assert.deepEqual((await s.call('/v1/market/collect', { ...collect, rid: rid() }, mac.secret)).body, { error: 'market-gone' }, 'collected once');
-  // a cancel answers the piece back
+  // a cancel answers the piece back - PIN MOVED (INT19): by a delivery its record collects, never minted at the pack
+  holdPieces(s.env, mac.character, [{ provenance: '0123456789abcdef', wear: 620 }]);
   const l3 = await s.call('/v1/market/list', sword({ wear: 1000 }), mac.secret);
   assert.equal(l3.status, 200, JSON.stringify(l3.body));
   const cancel = { character: mac.character, listing: l3.body.listing.id, rid: rid() };
   const x = await s.call('/v1/market/cancel', cancel, mac.secret);
   assert.equal(x.status, 200, JSON.stringify(x.body));
-  assert.deepEqual([x.status, x.body.piece.provenance, x.body.listing.state, s.owner('0123456789abcdef').listed], [200, '0123456789abcdef', 'cancelled', 0]);
+  assert.deepEqual([x.status, x.body.piece, x.body.delivery, x.body.listing.state, s.owner('0123456789abcdef').listed], [200, undefined, { id: l3.body.listing.id }, 'cancelled', 0]);
   assert.equal((await s.call('/v1/market/cancel', cancel, mac.secret)).body.repeat, true);
 });
 
@@ -243,7 +249,7 @@ test('PROF5 service: a crafted piece listed by its owner alone, once, with its w
 
 test('PROF5 service: a cancel returns a material\'s units with their origins (the fee kept, refused while they would not fit); an expired listing and a removed one return on their seller\'s next read - a piece as a delivery; reports counted for the moderators', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');   // PIN MOVED (INT19): a realm character - its crafted piece lists out of its record
   const ann = await s.registered('Ann');
   const mod = await s.registered('Asynian');
   s.fund(mac, 1000);
@@ -269,6 +275,7 @@ test('PROF5 service: a cancel returns a material\'s units with their origins (th
   assert.equal(s.raw.prepare('SELECT state FROM market_listings WHERE id = ?').get(e.body.listing.id).state, 'expired');
   // reported, and removed by a moderator
   s.piece(mac, '0123456789abcdef');
+  holdPieces(s.env, mac.character, [{ provenance: '0123456789abcdef', wear: 500 }]);
   const p = await s.call('/v1/market/list', { character: mac.character, region: DF, kind: 'piece', provenance: '0123456789abcdef', wear: 500, price: 50, rid: rid() }, mac.secret);
   assert.deepEqual((await s.call('/v1/market/report', { listing: p.body.listing.id }, ann.secret)).body, { ok: true });
   assert.deepEqual((await s.call('/v1/market/report', { listing: p.body.listing.id }, mac.secret)).body, { error: 'market-own' });
@@ -276,11 +283,12 @@ test('PROF5 service: a cancel returns a material\'s units with their origins (th
   assert.equal((await s.read(mod, 'crafted')).body.rows[0].reports, 1, 'a moderator does');
   assert.deepEqual((await s.call('/v1/market/remove', { listing: p.body.listing.id }, ann.secret)).body, { error: 'not-moderator' });
   assert.deepEqual((await s.call('/v1/market/remove', { listing: p.body.listing.id }, mod.secret)).body, { ok: true });
+  // PIN MOVED (INT19): the piece comes back as the record that left, collected into the seller's record
   const back = (await s.read(mac, 'mine')).body.road;
-  assert.deepEqual(back.map((d) => [d.kind, d.why, d.ready, d.piece.wear]), [['piece', 'returned', true, 500]]);
+  assert.deepEqual(back.map((d) => [d.kind, d.why, d.ready, d.item.currentCondition]), [['item', 'returned', true, 500]]);
   assert.equal(s.owner('0123456789abcdef').listed, 0);
-  const got = await s.call('/v1/market/collect', { character: mac.character, delivery: back[0].id, rid: rid() }, mac.secret);
-  assert.deepEqual([got.body.piece.provenance, got.body.delivery.why], ['0123456789abcdef', 'returned']);
+  const got = await s.call('/v1/market/collect', { character: mac.character, delivery: back[0].id, rid: rid(), realm: mac.at() }, mac.secret);
+  assert.deepEqual([got.body.item.provenance, got.body.delivery.why], ['0123456789abcdef', 'returned']);
 });
 
 // ─── BUY ORDERS ──────────────────────────────────────────────────────

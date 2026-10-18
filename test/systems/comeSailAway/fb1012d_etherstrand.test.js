@@ -157,17 +157,17 @@ test('ETHER-STRAND the design rule kept: the Carrack left past the Veil is no Fl
   const rows = fleet.model().ships;
   const row = (uid) => rows.find((r) => r.uid === uid);
   assert.equal(row(carrack.uid).where, 'away');
-  assert.equal(row(carrack.uid).can.summon, 'She lies on the far side of the Veil - sail her across yourself.', 'the design\'s refusal, word for word');
+  assert.equal(row(carrack.uid).can.summon, 'This ship is on the other side of the Veil. Sail it across yourself.', 'the design\'s refusal, word for word');
   assert.equal(fleet.act(carrack.uid, 'summon').ok, false);
   assert.ok(carrack.GameObject.activeSelf === false && s.rt.AllBoats.includes(carrack), 'refused - she stays where she lies');
-  assert.equal(row(boat.uid).can.summon, 'She is already here.', 'the boat of the Bay\'s side is no Veil\'s');
+  assert.equal(row(boat.uid).can.summon, 'This ship is already here.', 'the boat of the Bay\'s side is no Veil\'s');
   // the reporter's save, made in the Bay with the Carrack past the Veil, loaded: her helm taken, her way on
   s.helm(boat);
   const rec = JSON.parse(JSON.stringify(s.rt.getSaveData()));
   s.rt.restoreSaveData(rec);
   s.rt.OnLoad();
   const again = s.rt.state.CurrentBoat;
-  assert.ok(again && again.uid === boat.uid && s.rt.isSailing(), 'the loaded save at her helm');
+  assert.ok(again && again.uid === boat.uid && s.rt.isSailing(), 'the loaded save at the helm');
   assert.equal(s.rt.AllBoats.find((b) => b.uid === carrack.uid).GameObject.activeSelf, false, 'the Carrack loads hidden past the Veil');
   h.wind(); h.frames(1, { press: [BOAT_ACTIONS.toggleSail] });
   assert.ok(h.way(again, 20).m > 1, 'and she makes way');

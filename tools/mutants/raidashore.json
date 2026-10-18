@@ -1,0 +1,119 @@
+[
+  {
+    "name": "RAID-ASHORE-seam-unasked",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "      h.raidAshore?.(this.parentQuest);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-quest-left-running",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "      this.parentQuest.endQuest();\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-blocks-left-raided",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "      resetShipVariants();\n      h.raidAshore?.(this.parentQuest);",
+    "new": "      h.raidAshore?.(this.parentQuest);",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-taken-at-sea",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "    if (h.currentRegionIndex?.() === WA_SEA_REGION) {\n      resetShipVariants();",
+    "new": "    if (false) {\n      resetShipVariants();",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-fast-travel-unguarded",
+    "file": "src/systems/warmAshesShips.js",
+    "old": "if (travelShip) return raidRefusal() === 'busy' ? 'busy' : armRaid();",
+    "new": "if (travelShip) return armRaid();",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-the-dead-taken",
+    "file": "src/scenes/raidAshore.js",
+    "old": "(f) => f && !f.dead && f.questBehaviour?.questUID === quest.uid",
+    "new": "(f) => f && f.questBehaviour?.questUID === quest.uid",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-another-quests-taken",
+    "file": "src/scenes/raidAshore.js",
+    "old": "(f) => f && !f.dead && f.questBehaviour?.questUID === quest.uid",
+    "new": "(f) => f && !f.dead && !!f.questBehaviour",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-end-unswept",
+    "file": "src/scenes/raidAshore.js",
+    "old": "      ending.add(quest.uid);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-any-quest-swept",
+    "file": "src/scenes/raidAshore.js",
+    "old": "      if (!quest || !ending.has(quest.uid)) return 0;",
+    "new": "      if (!quest) return 0;",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-swept-twice",
+    "file": "src/scenes/raidAshore.js",
+    "old": "      ending.delete(quest.uid);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-world-room-unswept",
+    "file": "src/scenes/world.js",
+    "old": "remove: (f) => exteriorFoes.removeFoe(f) }, inner ? { foes: () => inner.foes, remove: (f) => inner.removeFoe(f) } : null];",
+    "new": "remove: (f) => exteriorFoes.removeFoe(f) }];",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-world-end-unheard",
+    "file": "src/scenes/world.js",
+    "old": "      raidAshore.questEnded(q);   // RAID-ASHORE: a raid ended ashore - what its last ticks stood, withdrawn\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  },
+  {
+    "name": "RAID-ASHORE-world-seam-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    raidAshore: (quest) => raidAshore.over(quest),\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/raidashore.test.js"
+    ]
+  }
+]

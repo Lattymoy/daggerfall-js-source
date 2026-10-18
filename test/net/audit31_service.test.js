@@ -13,6 +13,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
+import { holdPieces, recordOf, layRecord } from '../realmSeat.mjs';   // INT19: a crafted piece in its seller's realm record
 import { MARKS_MAX } from '../../src/net/marksLaw.js';
 import { AUCTION_S, AUCTION_LATE_S, AUCTION_ADD_S, AUCTION_GRACE_S, MARKET_LISTINGS_MAX, MARKET_LISTING_S, auctionNext } from '../../src/net/marketLaw.js';
 import { GUILD_WRITS_MAX, GUILD_STORES_MAX, COMMISSIONS_FOR_MAX, WRIT_S, WRIT_OPS_MAX, writPayMax } from '../../src/net/writLaw.js';
@@ -40,10 +41,13 @@ async function stand(extra = {}) {
   const held = (who, key) => Object.fromEntries(raw.prepare('SELECT origin, qty FROM prof_stores WHERE player = ? AND char_id = ? AND material = ?')
     .all(who.id, who.character, key).map((r) => [r.origin, Number(r.qty)]));
   const guildMarks = (g) => Number(raw.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').get(g)?.balance ?? 0);
-  /** A crafted piece this account owns - of its own make (a craft row names it) unless said. */
+  /** A crafted piece this account owns - of its own make (a craft row names it) unless said. PIN MOVED (INT19, Integrity-Arc
+   *  section 7): an auction, a listing and a fill take the piece out of the realm record, so a realm character's piece
+   *  stands there too. */
   const piece = (who, provenance, { recipe = 'longsword:mithril', quality = 4, made = true } = {}) => {
     raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at)
       VALUES (?, ?, ?, 'Silverthorn', ?, 120, 5, ?, 4242, 'p1.x', ?)`).run(provenance, who.id, who.character, recipe, quality, _now);
+    if (who.at) holdPieces(s.env, who.character, [{ provenance, quality }]);
     if (made) {
       raw.prepare(`INSERT INTO prof_crafts (player, rid, char_id, recipe, quality, count, provenance, seed, xp, first, at, n)
         VALUES (?, ?, ?, ?, ?, 1, ?, 4242, 10, 0, ?, 'n')`).run(who.id, `craft-${provenance}`, who.character, recipe, quality, provenance, _now);
@@ -102,7 +106,7 @@ async function stand(extra = {}) {
 test('AUDIT 31 S1: an auction whose leading bidder\'s account is gone closes unsold at its end - every market read still answers, the piece its seller\'s and back to them, no owner lost', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), bob = await s.registered('Bob'), ann = await s.registered('Ann');
+  const mac = await s.seated('Mac'), bob = await s.registered('Bob'), ann = await s.registered('Ann');
   for (const w of [mac, bob, ann]) s.fund(w, 100_000);
   s.piece(mac, P(2));
   const a = (await s.post(mac, P(2), 1000)).body.auction;
@@ -116,13 +120,14 @@ test('AUDIT 31 S1: an auction whose leading bidder\'s account is gone closes uns
   assert.equal(s.raw.prepare('SELECT owner FROM products WHERE provenance = ?').get(P(2)).owner, mac.id, 'never an owner of NULL');
   const seller = await s.read(mac, 'mine');
   assert.equal(seller.status, 200);
-  assert.deepEqual({ ...s.raw.prepare('SELECT why, player FROM market_deliveries WHERE provenance = ?').get(P(2)) }, { why: 'returned', player: mac.id });
+  // PIN MOVED (INT19): back as the record that left, a delivery its seller's record collects
+  assert.deepEqual({ ...s.raw.prepare("SELECT why, player FROM market_deliveries WHERE json_extract(item, '$.provenance') = ?").get(P(2)) }, { why: 'returned', player: mac.id });
 });
 
 test('AUDIT 31 S3: a won auction its seller\'s Marks cap cannot take waits seven days past its end, then the winning bid is void - its escrow back on its bidder\'s read, the piece back to its seller, unsold', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), bob = await s.registered('Bob');
+  const mac = await s.seated('Mac'), bob = await s.registered('Bob');
   s.fund(mac, 100_000); s.fund(bob, 100_000);
   s.piece(mac, P(5));
   const a = (await s.post(mac, P(5), 1000)).body.auction;
@@ -141,13 +146,13 @@ test('AUDIT 31 S3: a won auction its seller\'s Marks cap cannot take waits seven
   await s.read(mac, 'mine');
   assert.equal(s.balance(mac), MARKS_MAX, 'the seller paid nothing past the cap');
   assert.deepEqual({ ...s.raw.prepare('SELECT owner, listed FROM products WHERE provenance = ?').get(P(5)) }, { owner: mac.id, listed: 0 });
-  assert.equal(s.raw.prepare('SELECT why FROM market_deliveries WHERE provenance = ?').get(P(5)).why, 'returned');
+  assert.equal(s.raw.prepare("SELECT why FROM market_deliveries WHERE json_extract(item, '$.provenance') = ?").get(P(5)).why, 'returned');   // PIN MOVED (INT19): as its record
 });
 
 test('AUDIT 31 S4: a bid another bid overtook between its read and its decision is refused `auction-moved` (a 409 the tab reads again), never "no longer on the market" while it stands', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), bob = await s.registered('Bob'), cid = await s.registered('Cid');
+  const mac = await s.seated('Mac'), bob = await s.registered('Bob'), cid = await s.registered('Cid');
   for (const w of [mac, bob, cid]) s.fund(w, 100_000);
   s.piece(mac, P(1));
   const a = (await s.post(mac, P(1), 1000)).body.auction;
@@ -163,7 +168,7 @@ test('AUDIT 31 S4: a bid another bid overtook between its read and its decision 
 test('AUDIT 31 L4: the last two minutes\' edge - a bid with exactly 120 s left leaves the end where it was; with 119 s left it moves it 120 s on', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), bob = await s.registered('Bob'), ann = await s.registered('Ann');
+  const mac = await s.seated('Mac'), bob = await s.registered('Bob'), ann = await s.registered('Ann');
   for (const w of [mac, bob, ann]) s.fund(w, 100_000);
   s.piece(mac, P(7));
   const a = (await s.post(mac, P(7), 1000)).body.auction;
@@ -177,7 +182,7 @@ test('AUDIT 31 L4: the last two minutes\' edge - a bid with exactly 120 s left l
 test('AUDIT 31 R5: the bid\'s early words decide - the standing bidder bidding under the next is told they lead, and a bid under the next from a board with no known road is told it is low, not that the road is unknown', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), ann = await s.registered('Ann'), bob = await s.registered('Bob');
+  const mac = await s.seated('Mac'), ann = await s.registered('Ann'), bob = await s.registered('Bob');
   for (const w of [mac, ann, bob]) s.fund(w, 100_000);
   s.piece(mac, P(8));
   const a = (await s.post(mac, P(8), 100)).body.auction;
@@ -192,7 +197,7 @@ test('AUDIT 31 R5: the bid\'s early words decide - the standing bidder bidding u
 test('AUDIT 31 L1: an auction past its end - a won one its seller\'s cap holds - is not among its seller\'s thirty', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), bob = await s.registered('Bob');
+  const mac = await s.seated('Mac'), bob = await s.registered('Bob');
   s.fund(mac, 100_000); s.fund(bob, 100_000);
   s.piece(mac, P(0x100));
   const stuck = (await s.post(mac, P(0x100), 1000)).body.auction;
@@ -213,7 +218,7 @@ test('AUDIT 31 L1: an auction past its end - a won one its seller\'s cap holds -
 test('AUDIT 31 R9: an auction posted twice under one id is one - the fee burnt once, the same auction answered', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.fund(mac, 100_000);
   s.piece(mac, P(0x31));
   const R = rid();
@@ -388,7 +393,7 @@ test('AUDIT 31 L2: a piece of a material nothing yields yet (Daedric) is never c
 test('AUDIT 31 S5: a commission\'s fill says why the piece is held - on its way to the crafter still, listed, or standing in a home', async () => {
   clock(T0);
   const s = await stand();
-  const smith = await s.registered('Silverthorn'), pia = await s.registered('Pia');
+  const smith = await s.seated('Silverthorn'), pia = await s.registered('Pia');   // PIN MOVED (INT19): the crafter a realm character
   s.fund(smith, 10_000); s.seedMarks(pia, 10_000);
   s.piece(smith, P(9), { quality: 3 });
   const l = await s.call('/v1/market/list', { character: smith.character, region: DF, kind: 'piece', provenance: P(9), wear: 1000, price: 50, hubs: HUBS, rid: rid() }, smith.secret);
@@ -399,6 +404,15 @@ test('AUDIT 31 S5: a commission\'s fill says why the piece is held - on its way 
   await s.read(smith, 'mine');   // the listing's piece back as a delivery, not yet collected
   const f = await s.fulfil(smith, c.id, P(9));
   assert.deepEqual([f.status, f.body.error], [409, 'market-uncollected']);
+  // INT19: and one coming to its crafter by courier (a piece of their make bought back, on the road) - a provenance
+  // delivery - said the same, before the record is asked for it
+  s.piece(smith, P(10), { quality: 3 });
+  s.raw.prepare(`INSERT INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at) VALUES ('a31roaddelivery1', ?, ?, ?, 1000, 'bought', ?, ?, ?)`)
+    .run(smith.id, smith.character, P(10), DF, _now + 3600, _now);
+  const save = recordOf(s.env, smith.character);
+  layRecord(s.env, smith.character, { ...save, items: (save.items ?? []).filter((it) => it.provenance !== P(10)) });   // the pack holds none yet
+  const g = await s.fulfil(smith, c.id, P(10));
+  assert.deepEqual([g.status, g.body.error], [409, 'market-uncollected']);
 });
 
 test('AUDIT 31 U7: a commission naming this crafter carries the pieces of their make that would fill it - the recipe, at least the quality, on no sale - best-fitting (least quality) first', async () => {

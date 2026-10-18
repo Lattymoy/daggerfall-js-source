@@ -4609,7 +4609,7 @@ function pauseHoldings(body) {
     // a door the page opens over the world (the shipwright's window, the water's placing click): the pause goes down
     // first, as the sheet's doors do (PX25/ESC-BOOK), and comes back if the door opened nothing (AUDIT 27h A4)
     fleet: (d) => drawFleetPage(d, render, { ...kit, door: (fn) => { onAction('handoff'); if (fn() === false) onAction('resume'); } }),
-    captain: (d) => drawCaptainPage(d, render, kit),   // CAPT-LOG: the crowns' regard, the letter, the contracts, the log
+    captain: (d) => drawCaptainPage(d, render, { ...kit, door: (fn) => { onAction('handoff'); if (fn() === false) onAction('resume'); } }),   // CAPT-LOG: the crowns' regard, the letter, the contracts, the log - CAPTAIN-TREE: the stars' door, the Fleet's shape
     companions: (d) => drawCompanionsPage(d, render, { ...kit, kindName: enemyDisplayName, here: swornBodyOf }),   // COMPANION-ROSTER
     revenants: (d) => drawRevenantsPage(d, render, { ...kit, player: playerEntity, kindName: enemyDisplayName }),   // REVENANT-PAGE
     stores: (d) => drawStoresPage(d, render, kit),   // PROF1
@@ -4847,7 +4847,7 @@ function pauseStats(body) {
   // be described and chosen"). Unlike Ascend it opens a page of THIS window (statsSec 'master'), so it neither
   // resumes nor hands off; the page's own button comes back to Skills. A count on the button when a choice is waiting.
   const masterDoor = m.master ? (() => {
-    const n = (m.master.candidates?.length ?? 0) + (m.master.pathChoices?.length ? 1 : 0);   // SCHOOLS1: and a specialisation waiting
+    const n = (m.master.candidates?.length ?? 0) + (m.master.pathChoices?.length ? 1 : 0) + (m.master.martial?.choices?.length ? 1 : 0);   // SCHOOLS1: and a specialisation waiting; MARTIAL1: and a martial one
     const b = el('button', n ? 'act primary' : 'act', n ? t('pause.door.masterCount', 'Master Skills ({n})', { n }) : t('pause.master.title', 'Master Skills'));
     b.onclick = () => { statsSec = 'master'; _masterNote = null; render(); };
     return b;
@@ -5033,11 +5033,22 @@ function statsMaster(detail, m) {
  *  the path chosen (gold, what it does); or each path two mastered schools open, what it does and a Choose button that
  *  asks first (permanent); or, with none open, how one opens. The page's own card, pips and tags. */
 function statsSpecialisation(detail, ms) {
-  // AUDIT SCHOOLS L4 8: a class that can never master two schools sees no card at all
-  if (!ms.path && !ms.pathChoices?.length && !ms.pathPossible) return;
+  specCard(detail, { title: t('pause.master.spec.title', 'Specialisation'), path: ms.path, choices: ms.pathChoices, possible: ms.pathPossible, choose: ms.choosePath,
+    note: t('schools.sheet.sold', 'Its signature spell is sold to you at the Mages Guild.'),
+    none: t('pause.master.spec.none', 'Master two schools of magic to choose a specialisation: the pair names it, and it gives a passive and a signature spell.') });
+  // MARTIAL1 (bible/05-Combat/Martial-Specialisations.md section 3): THE MARTIAL CARD beneath it - the same card, the weapons'
+  const mt = ms.martial;
+  if (mt) specCard(detail, { title: t('pause.master.martial.title', 'Martial Specialisation'), path: mt.path, choices: mt.choices, possible: mt.possible, choose: mt.choose,
+    note: t('martial.sheet.key', 'Its signature technique answers your technique key with its weapons when the weapon has no technique of its own.'),
+    none: t('pause.master.martial.none', 'Master two weapon skills to choose a martial specialisation: the pair names it, and it gives a passive and a signature technique.') });
+}
+/** SCHOOLS1's card, for either specialisation (MARTIAL1): `{ title, path, choices, possible, choose, note, none }`. */
+function specCard(detail, sp) {
+  // AUDIT SCHOOLS L4 8: a class that can never master two of its skills sees no card at all
+  if (!sp.path && !sp.choices?.length && !sp.possible) return;
   const card = el('section', 'px-mgroup px-spec');   // AUDIT SCHOOLS L4 5: px-spec - its rows stack on a phone
   const head = el('div', 'px-mhead');
-  head.append(el('span', 'px-mname', t('pause.master.spec.title', 'Specialisation')));
+  head.append(el('span', 'px-mname', sp.title));
   card.append(head);
   const pathRow = (name, schools, rows, side, chosen) => {
     const row = el('div', chosen ? 'px-mrow2 is-mastered' : 'px-mrow2 is-ready');
@@ -5049,20 +5060,20 @@ function statsSpecialisation(detail, ms) {
     row.append(body, side);
     return row;
   };
-  if (ms.path) {
+  if (sp.path) {
     const side = el('div', 'px-mside');
     side.append(el('span', 'px-mtag gold', t('pause.master.spec.chosen', 'Chosen')));
-    card.append(pathRow(ms.path.name, ms.path.schools, [...ms.path.rows, t('schools.sheet.sold', 'Its signature spell is sold to you at the Mages Guild.')], side, true));
-  } else if (ms.pathChoices?.length) {
-    for (const p of ms.pathChoices) {
+    card.append(pathRow(sp.path.name, sp.path.schools, [...sp.path.rows, sp.note], side, true));
+  } else if (sp.choices?.length) {
+    for (const p of sp.choices) {
       const side = el('div', 'px-mside');
       const b = el('button', 'act primary px-mbtn', t('pause.master.spec.choose', 'Choose'));
-      b.onclick = () => askCard(p.ask, () => { _masterNote = ms.choosePath(p.id).text; render(); });
+      b.onclick = () => askCard(p.ask, () => { _masterNote = sp.choose(p.id).text; render(); });
       side.append(b);
       card.append(pathRow(p.name, p.schools, p.rows, side, false));
     }
   } else {
-    card.append(el('div', 'px-master-about', t('pause.master.spec.none', 'Master two schools of magic to choose a specialisation: the pair names it, and it gives a passive and a signature spell.')));
+    card.append(el('div', 'px-master-about', sp.none));
   }
   detail.append(card);
 }

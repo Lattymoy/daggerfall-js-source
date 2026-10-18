@@ -316,6 +316,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `SwingWeapon` | RIGHT CLICK | `JoystickAxis10Button0` | Swing weapon |
 | `SwitchHand` | H |  | Switch hand |
 | `WeaponTechnique` | MOUSE3 |  | Weapon technique (hold to aim) |
+| `ShotCycle` | (unbound) |  | Shot (aboard) |
 
 ### Magic
 
@@ -449,6 +450,7 @@ On Enhanced Plus the saddle panel's Dismount is `HorseMount`'s own handler, and 
 | `BoatTimeScaleDown` | KPADSUBTRACT |  | Slow time down at the helm |
 | `BoatTimeScaleReset` | KPADENTER |  | Put time back to normal at the helm |
 | `Spyglass` | K |  | Raise or lower the spyglass (aboard) |
+| `ShipHold` | F4 |  | Cargo |
 
 ### Project Legacy (drawn, and answering, while `project-legacy` is on)
 

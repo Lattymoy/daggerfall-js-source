@@ -124,7 +124,7 @@ test('PROF7 DONE WHEN: a bear felled by the player\'s own blow, skinned online w
   t.mock.method(Date, 'now', () => NOON * 1000);
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, updated_at) VALUES (?, ?, 'hunting', ?, 'tanner', ?)`).run(mac.id, mac.character, xpForRank(50), NOON);
   raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, 'outfitting', ?, ?)`).run(mac.id, mac.character, xpForRank(10), NOON);   // Cured Leather is tier 2's
   raw.prepare('INSERT INTO marks (account, balance) VALUES (?, ?)').run(mac.id, 100);

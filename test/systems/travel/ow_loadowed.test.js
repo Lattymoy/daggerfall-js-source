@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { StreamingWorldState, worldCoordToMapPixel } from '../../../src/world/streamingWorld.js';
 import { TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
 import { createLoadGovernor, unbuiltAround, TV_GOV_CLEAR_S } from '../../../src/systems/travel/travelGovernor.js';
-import { threatCap, foePaced } from '../../../src/systems/travel/travelThreat.js';
+import { threatCap, foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
 import { foeHostile, foeAlerted } from '../../../src/systems/encounters.js';
 import { TRAVEL_VIEW_TEXT, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
@@ -87,7 +87,7 @@ function journeyHost() {
     raiderSight: () => 1000, isNight: () => false, minuteNow: () => 0, travelViewRaiders: () => [], tvRaid: { spent: new Set(), chase: new Map() },
     navalRaidersOn: () => false, naval: null, seaRaidPeerChase: () => null, RAIDER_CONTACT_M: 60, RAIDER_CHASE_MPS: 4.2,
     exteriorFoes: { foes: [] }, foeHostile, foeAlerted, foeCampKey: () => null, SIGHT_RADIUS: 102.4,
-    _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, _travelDrive: { yaw: 90 },   // the drive east, along +x
+    _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, foeRate, _travelDrive: { yaw: 90 },   // the drive east, along +x
     tvSay: (t) => d.said.push(t), TRAVEL_VIEW_TEXT, performance: { now: () => d.t * 1000 },
     travelWalkRate, TV_MOVE_ACTIONS, held: () => false, keys: new Set(), csaBoatUnderMe: () => null, gamePaused: () => false,
     travellerOnRoad: () => true, csaHoldsTimeScale: () => false,

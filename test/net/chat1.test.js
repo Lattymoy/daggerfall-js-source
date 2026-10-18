@@ -226,7 +226,7 @@ test('CHAT1 / AUDIT CHAT: the Room - a line in a PLACE room reaches as far as a 
   // the gate's strikes
   const fresh = fakeRoom(CHAT_WORLD_ROOM);
   const t = fresh.connect(), l = fresh.connect();
-  await fresh.hello(t, 'talk-0001'); await fresh.hello(l, 'list-0002');
+  await fresh.hello(t, 'talk-0001', null, { kind: 'linked' }); await fresh.hello(l, 'list-0002');   // PIN MOVED (AUDIT SAFE RELAY-11): a registered talker - a guest's channel lines are paced now
   for (let i = 0; i < CHAT_HZ_MAX + 3; i++) await fresh.chat(t, `line ${i}`);
   assert.equal(chats(l).length, CHAT_HZ_MAX, 'the burst is relayed, the rest dropped');
   assert.equal(t.meters.cdrops, 3, 'three strikes'); assert.equal(t.closed, null, 'not yet an offence');

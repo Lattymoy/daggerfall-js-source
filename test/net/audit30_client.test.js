@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { createMarketBook, MARKET_CACHE_MS, MARKET_CLOSED_RECHECK_MS } from '../../src/net/marketBook.js';
+import { createMarketBook, MARKET_CACHE_MS, MARKET_CLOSED_RECHECK_MS, MARKET_KEPT_KEY } from '../../src/net/marketBook.js';
 import { createProfBook } from '../../src/net/profBook.js';
 import { createMarketTab } from '../../src/ui/marketTab.js';
 import { courierFee } from '../../src/net/marketLaw.js';
@@ -30,17 +30,21 @@ const P = (n) => n.toString(16).padStart(16, '0');
 
 // ─── THE BOOK ────────────────────────────────────────────────────────
 
+// PIN MOVED (INT19, Integrity-Arc section 7): a crafted piece is listed through the realm act now (net/marketBook.js
+// realmPieceAct) and nothing of it is kept - the record says where it is. The kept lists below are a tab's from before
+// INT19, which the settle still asks again with their own ids: C1 and C3 are the settle's laws for them.
+const keptList = (provenance, rid) => JSON.stringify({ 'acct-1|c': { lists: [{ rid, body: { character: 'c', region: 17, kind: 'piece', provenance, wear: 1000, price: 5, rid }, item: { provenance }, where: 'pack' }] } });
+
 test('AUDIT 30 C1: a kept listing waits out the account gate\'s "rate", "no-session" and "auth" - the piece stays out of the pack, never put back while it stands listed', async () => {
   for (const word of ['rate', 'no-session', 'auth']) {
     let answer = word;
     const asked = [];
     const door = { account: () => 'acct-1', list: async (b) => { asked.push(b.rid); return answer === 'ok' ? { ok: true, data: { listing: { id: 'L1' } } } : { ok: false, error: answer }; } };
-    const book = createMarketBook({ door, storage: memStorage(), character: () => 'c', sleep: noWait });
-    const pack = [{ provenance: P(1) }];
-    const item = pack[0];
-    const r = await book.list({ region: 17, kind: 'piece', provenance: P(1), wear: 1000, price: 5 },
-      { item, where: 'pack', take: () => { pack.splice(0, 1); return true; }, putBack: (it) => pack.push(it) });
-    assert.deepEqual([r.kept, pack.length, book.pending], [true, 0, 1], `${word}: put back while the service may hold it listed`);
+    const storage = memStorage();
+    storage.setItem(MARKET_KEPT_KEY, keptList(P(1), 'kauditthirtyc001'));
+    const book = createMarketBook({ door, storage, character: () => 'c', sleep: noWait });
+    const pack = [];
+    assert.equal(book.pending, 1, `${word}: kept, out of the pack`);
     await book.settle(() => {}, (it) => pack.push(it));
     assert.deepEqual([pack.length, book.pending], [0, 1], `${word}: the settle waits too`);
     answer = 'ok';
@@ -53,9 +57,7 @@ test('AUDIT 30 C3: a kept listing answered by a settle takes its piece out of th
   let online = false;
   const door = { account: () => 'acct-1', list: async () => (online ? { ok: true, data: { listing: { id: 'L1' } } } : { ok: false, error: 'offline' }) };
   const storage = memStorage();
-  const a = createMarketBook({ door, storage, character: () => 'c', sleep: noWait });
-  const item = { provenance: P(2) };
-  await a.list({ region: 17, kind: 'piece', provenance: P(2), wear: 1000, price: 5 }, { item, where: 'pack', take: () => true, putBack: () => {} });
+  storage.setItem(MARKET_KEPT_KEY, keptList(P(2), 'kauditthirtyc003'));   // kept by a tab from before INT19
   // the tab reloaded from a save that still carries the piece
   const pack = [{ provenance: P(2) }];
   const b = createMarketBook({ door, storage, character: () => 'c', sleep: noWait });

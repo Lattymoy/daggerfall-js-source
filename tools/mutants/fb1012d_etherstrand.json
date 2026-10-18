@@ -47,8 +47,8 @@
   {
     "name": "ETHER-STRAND-the-refusals-arm",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : apart ? 'She lies on the far side of the Veil - sail her across yourself.'",
-    "new": "      : false ? 'She lies on the far side of the Veil - sail her across yourself.'",
+    "old": "      : apart ? 'This ship is on the other side of the Veil. Sail it across yourself.'",
+    "new": "      : false ? 'This ship is on the other side of the Veil. Sail it across yourself.'",
     "tests": [
       "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]

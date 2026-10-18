@@ -330,7 +330,7 @@ test('the shipped boat producer sends a stationary cabin fleet and publishes bot
   // PIN MOVED (TOUGHER-SHIPS + HOLDINGS' merge of main's #574): the producer reads each boat's name through the Fleet's host
   // (HOLDINGS - her name on the boats' word); none named here
   const args = { csaRuntime: r.s.rt, csaOn: () => true, gamePaused: () => false, worldTimeScale: () => 1,
-    csaAnimatorOf: animatorOf, campToWire: (p) => p, modes, csaWireRecord, csaRecordKey, fleetHost: null };
+    csaAnimatorOf: animatorOf, campToWire: (p) => p, modes, csaWireRecord, csaRecordKey, fleetHost: null, shipFlags: { wireFlag: () => null }, fleetShip: () => null };   // PIN MOVED (SHIP-COLOURS: no flag flown; SHIP-LIVERY: no paint)
   const producer = new Function(...Object.keys(args), `let _csaWordKey = null; return (${worldFunction('csaWord')});`)(...Object.values(args));
   const deck = {}; assert.equal(producer(deck, true), true); assert.equal(deck.sa.cabin, undefined);
   modes.sailingCabin = { uid: 101 }; const cabin = {};

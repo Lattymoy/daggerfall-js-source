@@ -85,6 +85,9 @@ import { PeerGatherSounds, peerGatherSwing, peerKneeling } from './peer/peerGath
 export const CORPSE_MS = 60_000;
 /** Bodies kept at once - a massacre is bounded like every other peer cache. */
 export const CORPSES_MAX = 32;
+/** RESURRECT1: how near a body (scene metres, on the ground) a player stands to be the one lying there - the rise rule's
+ *  reach, and an introduction's test for a body already laid (AUDIT ONLINE 3, the second read: `peerDeath`). */
+export const CORPSE_SAME_M = 2.5;
 /** The corpse row for a look: the class's own, else the Thief's (the class sprite's default). */
 export function corpseTextureFor(look) {
   const t = classMobileType(look?.class) ?? THIEF_MOBILE_TYPE;
@@ -572,6 +575,28 @@ export class RemotePlayers {
     }
   }
 
+  /** PCORPSE1 + AUDIT ONLINE 3 F5: ANOTHER PLAYER'S DEATH AS THE SESSION DELIVERS IT (net/online.js onPeerDeath; `how`
+   *  { intro: true } when an introduction said it - a body already lying when I came, laid without its cry).
+   *  AUDIT ONLINE 3 (the second read) A1/A2: AN INTRODUCTION'S DEATH IS OFTEN ONE ALREADY LAID. A leave forgets the
+   *  session's deaths, so a building walked into and out of while a Wild ghost lay - or a crossing before the halo was
+   *  open - had the next roster lay its body again over the one lying: a second body, a fresh minute, the party pick's
+   *  marks doubled; and a party mate's body PCORPSE3 laid from the party pose was laid again by its cell's roster. An
+   *  introduction lays a body only where none of this person's lies; a death heard as it happens is laid, and cried. */
+  peerDeath(peer, pose, room = null, how = undefined) {
+    if (!pose) return;
+    if (how?.intro && this._corpseNear(peer, pose)) return;
+    this.addCorpse(peer, pose, room, { quiet: !!how?.intro });
+  }
+  _corpseNear(peer, pose) {
+    const toScene = this._lastToScene ?? ((p) => [p.x, p.y, p.z]);
+    const b = toScene(pose);
+    return this._corpses.some((c) => {
+      if (c.dead || !((peer?.acct && c.acct === peer.acct) || (peer?.id && c.id === peer.id))) return false;
+      const a = toScene(c.pose);
+      return Math.hypot(a[0] - b[0], a[2] - b[2]) < CORPSE_SAME_M;
+    });
+  }
+
   /** PCORPSE1: bodies whose room the player has left for another kind of space are not this scene's to draw - a
    *  dungeon's local coordinates mean nothing outdoors. `keep(room)` answers whether a corpse heard there still
    *  belongs to the scene now. */
@@ -935,7 +960,7 @@ export class RemotePlayers {
         if (!s) continue;
         if (this._now() - (c.until - CORPSE_MS) < 2000) continue;   // PCORPSE2: a body's first two seconds - the fallen figure's last frames are not a rise
         const a = toScene(s), b = toScene(c.pose);
-        if (Math.hypot(a[0] - b[0], a[2] - b[2]) < 2.5) this._dropCorpse(c);
+        if (Math.hypot(a[0] - b[0], a[2] - b[2]) < CORPSE_SAME_M) this._dropCorpse(c);
       }
     }
     for (const id of this._footsteps.keys()) if (!seen.has(id)) this._footsteps.delete(id);

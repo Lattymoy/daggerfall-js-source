@@ -127,7 +127,8 @@ import {
 import { bagStoreRefusal, bagMayLeave } from '../../systems/materialsBag.js';   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
 import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
 import { BAG_KG_LIMIT } from '../../net/bagLaw.js';
-import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered
+import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, storeRarityOptions, storeMaterialOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered; LOOT-BULK: a container too, and its rarity and metal
+import { bulkVerdict, runBulk, listAtCap, CONTAINER_LIST_CAP, containerFull } from '../storeBulk.js';   // LOOT-BULK: Take all / Stash all
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
@@ -167,7 +168,7 @@ import { createReforgeOverlay, reforgeDoorOpen, closeReforgeDoor } from '../refo
 import { SOUND } from '../../systems/soundClips.js';
 
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
-import { localizedText } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 /** Slot id -> where it sits on the body, and what to call it.
  *
@@ -373,7 +374,8 @@ export function remoteModel(deps = {}, state = {}) {
       : deps.loot ? (deps.loot.storage === true ? 'storage' : 'container') : 'ground';   // SHIP-STORE: the player's own storage
   return {
     kind,
-    title: (kind === 'reward' && typeof state.chooseOne?.title === 'string' && state.chooseOne.title) || REMOTE_TITLE[kind],   // WILD1: a choice may name itself (a fallen player's gear)
+    title: (kind === 'reward' && typeof state.chooseOne?.title === 'string' && state.chooseOne.title)   // WILD1: a choice may name itself (a fallen player's gear)
+      || (kind === 'storage' && typeof deps.loot?.title === 'string' && deps.loot.title) || REMOTE_TITLE[kind],   // CARGO-ANYWHERE: and a ship's hold (holdDoor.js - "The Sea Wolf's hold")
     items,
     count: items.length,
     weight: totalWeight(items),
@@ -418,8 +420,9 @@ export function itemLine(item, identity = undefined) {
   // name on the line, the material prefix on the sub-line - so the
   // skin derives none of the arms itself. LR1's law rides it: an
   // UNIDENTIFIED enchanted item reads as its bare template
-  // (ItemHelper.cs:265-292's early return) and shows no material
-  // (LR4, as %mat is). The template stays the fallback.
+  // (ItemHelper.cs:265-292's early return). Below Rare that also hides
+  // the metal (LR4, as %mat is). MAT-SHOW: Rare and better armour and
+  // weapons still say it on the sub-line. The template stays the fallback.
   const parts = itemNameParts(item, { getQuest: deps.getQuest ?? null });
   return {
     item,   // MW-D38: the icon door resolves the item itself
@@ -1776,6 +1779,64 @@ function take(item) {
   render();
 }
 
+/** The filter the rows are using. With the rarity ladder off there is no menu, and a leftover tier must not hide rows. */
+function shownFilter() {
+  return lootRarityOn() ? storeFilter : { ...storeFilter, rarity: 'all' };
+}
+
+/**
+ * LOOT-BULK: Take all walks the remote rows on screen, top to bottom. Stash all walks the pack page on screen the
+ * same way, into the remote. Each row is the single click's plan. A row with no room left stops the walk. A row the
+ * law refuses for another reason is left, and the walk goes on. One sound, one repaint. The room hears the container
+ * when the window closes.
+ */
+function bulkMove(dir) {
+  notice = null;
+  const taking = dir === 'take';
+  const shown = taking
+    ? filterStore(remote.items, shownFilter(), storeNameOf)
+    : (model.tabs.find((x) => x.tab === tab)?.items ?? []);
+  const from = taking ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []);
+  const to = taking ? (deps.items?.() ?? []) : remoteTarget(deps, sessionState());
+  const cap = !taking && remote?.kind === 'container' ? CONTAINER_LIST_CAP : null;
+  const keeping = theftTarget(deps, sessionState());   // STOLEN-GOODS: the owner's keeping, as the single click's take and put read it
+  let sound = null;
+  const { moved, notice: why } = runBulk([...shown], (item) => {
+    if (!from.includes(item)) return { verdict: 'skip' };
+    if (!taking) {
+      if (isPackOnly(item)) return { verdict: 'skip', refusal: { text: packOnlyText(itemLongName(item, { getQuest: deps.getQuest ?? null })) } };
+      if (boundRefusesPut(item, remote.kind)) return { verdict: 'skip', refusal: { text: boundText(itemLongName(item, { getQuest: deps.getQuest ?? null }), item) } };   // AUDIT AUTO-HOLD: a piece the realm locked says so
+      if (letterRefuses(item)) return { verdict: 'skip', refusal: { text: letterPutText(itemLongName(item, { getQuest: deps.getQuest ?? null })) } };
+      const no = bagRefuses(item);
+      if (no) return { verdict: 'skip', refusal: no };
+      if (remote.kind === 'ground' && lockRefuses(item, 'drop')) return { verdict: 'skip', refusal: { text: lockedText(itemLongName(item, { getQuest: deps.getQuest ?? null })) } };
+      if (listAtCap(to, item, cap)) return { verdict: 'stop', refusal: { text: containerFull() } };
+    }
+    const plan = taking
+      ? planTake(item, {
+        bag: to, entity: deps.entity, mode: 'remove',
+        chooseOne: session.chooseOne, usingWagon: session.usingWagon,
+        getQuest: deps.getQuest ?? null,
+      })
+      : planStore(item, {
+        remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
+        getQuest: deps.getQuest ?? null,
+        groundRefusal: groundRefusalOf(deps, session),
+        capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),
+      });
+    return { verdict: bulkVerdict(item, plan), refusal: plan.refusal, plan };
+  }, (item, d) => {
+    const plan = d.plan;
+    applyTransfer(item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo: taking ? null : keeping });   // STOLEN-GOODS: a take off a stranger's keeping is marked, a put-back is theirs again
+    sound = plan.sound === 'gold' && sound !== 'click' ? 'gold' : 'click';
+  });
+  if (moved) audio.playOneShot(sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
+  if (why) notice = why;
+  picked = null;
+  refresh();
+  render();
+}
+
 /** WagonButton_OnMouseClick's ladder (:1234-1243), through U57. */
 function toggleWagon() {
   notice = null;
@@ -2841,6 +2902,12 @@ function remoteCol() {
     b.onclick = toggleBag;
     acts.append(b);
   }
+  // LOOT-BULK: Take all stays on the list it empties. Stash all sits on the pack's own list (below).
+  if (STORE_FILTER_KINDS.has(remote.kind)) {
+    const takeAll = el('button', 'act', t('inventory.store.takeAll', 'Take all'));
+    takeAll.onclick = () => bulkMove('take');
+    acts.append(takeAll);
+  }
   // MAC-M2 B (2026-09-16, Mac: "Remove the gold and pack buttons from
   // the looting menu"): THE LOOT WINDOW IS FOR TAKING, and its bar
   // carries the wagon and nothing else.
@@ -2911,7 +2978,7 @@ function fillRemoteList(list, filtering = STORE_FILTER_KINDS.has(remote.kind) &&
   dropLists(list);   // VIRT: a refill (the filter's) lets go of the window it replaces
   const kept = list.scrollTop;   // AUDIT VIRT: and keeps its scroll, as the whole list kept it
   list.innerHTML = '';
-  const shown = filtering ? filterStore(remote.items, storeFilter, storeNameOf) : remote.items;
+  const shown = filtering ? filterStore(remote.items, shownFilter(), storeNameOf) : remote.items;
   if (!remote.items.length) {
     list.append(el('p', 'packempty', remote.kind === 'ground'
       ? 'Nothing dropped here yet.'
@@ -2960,6 +3027,32 @@ function storeFilterBar(list) {
   menu.value = storeFilter.cat;
   menu.onchange = () => { storeFilter.cat = menu.value; fillRemoteList(list, true); };
   bar.append(menu);
+  // LOOT-BULK: the tiers this container holds, and how many. Absent while the ladder is off - there is nothing to pick.
+  if (lootRarityOn()) {
+    const rarity = el('select', 'storerarity');
+    rarity.setAttribute('aria-label', t('inventory.store.rarityIn', 'Rarity in the {list}', { list: String(remote.title).toLowerCase() }));
+    for (const c of storeRarityOptions(remote.items, storeFilter.rarity)) {
+      const o = el('option', null, `${c.label} (${c.count})`);
+      o.value = c.id;
+      if (c.id === storeFilter.rarity) o.selected = true;
+      rarity.append(o);
+    }
+    rarity.value = storeFilter.rarity;
+    rarity.onchange = () => { storeFilter.rarity = rarity.value; fillRemoteList(list, true); };
+    bar.append(rarity);
+  }
+  // MAT-FILTER: the metals this list's armour and weapons are made of, beside the tiers, in the same shape.
+  const material = el('select', 'storemat');
+  material.setAttribute('aria-label', t('inventory.store.materialIn', 'Material in the {list}', { list: String(remote.title).toLowerCase() }));
+  for (const c of storeMaterialOptions(remote.items, storeFilter.material)) {
+    const o = el('option', null, `${c.label} (${c.count})`);
+    o.value = c.id;
+    if (c.id === storeFilter.material) o.selected = true;
+    material.append(o);
+  }
+  material.value = storeFilter.material;
+  material.onchange = () => { storeFilter.material = material.value; fillRemoteList(list, true); };
+  bar.append(material);
   return bar;
 }
 
@@ -3950,6 +4043,14 @@ function render() {
     const lists = el('div', 'packlists');
     lists.append(listCol());
     dock.append(catsCol(), lists);
+    // LOOT-BULK: Stash all belongs to the list it walks - the pack page - centred on the bottom edge of that list.
+    if (STORE_FILTER_KINDS.has(remote.kind)) {
+      const foot = el('div', 'stashfoot');
+      const stashAll = el('button', 'act', t('inventory.store.stashAll', 'Stash all'));
+      stashAll.onclick = () => bulkMove('stash');
+      foot.append(stashAll);
+      dock.append(foot);
+    }
     grid.append(main, dock);
     win.append(grid);
     // PX16b: the reference's BOTTOM BAR - carry weight as a meter

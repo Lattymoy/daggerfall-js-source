@@ -137,8 +137,8 @@
   {
     "name": "TECHFX1-the-leap-release-uncued",
     "file": "src/combat/techniques.js",
-    "old": "foe: target.foe ?? null, from: [from[0], from[1], from[2]] };\n  cue(hand, 'release', ctx);   // TECH-FX\n",
-    "new": "foe: target.foe ?? null, from: [from[0], from[1], from[2]] };\n",
+    "old": "foe: target.foe ?? null, from: [from[0], from[1], from[2]], use };\n  cue(hand, 'release', ctx);   // TECH-FX\n",
+    "new": "foe: target.foe ?? null, from: [from[0], from[1], from[2]], use };\n",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "TECHFX1-the-run-start-forgotten",
     "file": "src/combat/techniques.js",
-    "old": ", from: [from[0], from[1], from[2]] };",
-    "new": " };",
+    "old": ", from: [from[0], from[1], from[2]], use };",
+    "new": ", use };",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -459,8 +459,8 @@
   {
     "name": "TECHFX1-the-chip-fresh-list",
     "file": "src/combat/techniques.js",
-    "old": "if (!hand || !lootRarityOn()) return NONE;",
-    "new": "if (!hand || !lootRarityOn()) return [];",
+    "old": "if (!hand || (!hand.signature && !lootRarityOn())) return NONE;",
+    "new": "if (!hand || (!hand.signature && !lootRarityOn())) return [];",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "TECHFX1-AUDIT-the-run-start-aliased",
     "file": "src/combat/techniques.js",
-    "old": ", from: [from[0], from[1], from[2]] };",
-    "new": ", from };",
+    "old": ", from: [from[0], from[1], from[2]], use };",
+    "new": ", from, use };",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"

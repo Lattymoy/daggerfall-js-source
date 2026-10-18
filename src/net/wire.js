@@ -21,6 +21,9 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                                                       TOKEN carried the dm glyph; fanned as {t:'dm', text, at}
 //                    {t:'mute', order}                  MOD1: a mute ORDER the account service signed, carried by the moderator
 //                                                       who asked for it; the room checks the signature, not the carrier (MUTE_HZ_MAX)
+//                    {t:'ban', order}                   SAFE4: a BAN order the account service signed, carried by the moderator who
+//                                                       asked for it (or by the banned player's own client, handed it by the hub's
+//                                                       `law`); believed for its signature alone, on the mute's meter
 //                    {t:'renown', order}                RENOWN1: a RENOWN order the account service signed when the carrier's own
 //                                                       Renown rose; the room takes it only from the account it names (RENOWN_HZ_MAX)
 //                    {t:'guild', order}                 GUILD1c: a GUILD order the account service signed - the guild the carrier's
@@ -57,6 +60,18 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                    roster rows and joins - what a moderator's /mute names, since a name is not unique and an id is.
 //                    NOT `acct`: that word is the social hub's own account (SOC1), a different id with a different law
 //                    {t:'muted', until}                 MOD1: to the muted player alone - `until` in epoch seconds, 0 when lifted
+//                    SAFE2: and `sg`, the relay's stamp on the line (net/safety/chatStamp.js), absent from a relay with no key
+//                    {t:'banned', until}                SAFE4: to the banned account's sockets in a room that takes its ban order - at
+//                                                       the hub after `law`, so the order is in the client's hand before the word that
+//                                                       sends it away (AUDIT SAFE CLIENT-2) - and each is then closed CLOSE_POLICY
+//                                                       'banned'; `until` 0 (a ban lifted) closes nothing. And to a hello while the
+//                                                       room holds a standing ban newer than its token, then closed the same way
+//                                                       (AUDIT SAFE DOC-15 / RELAY-4: this said "before the room closes them", and the
+//                                                       room closed nothing)
+//                    {t:'law', order}                   SAFE4: a mute or ban order the service pushed to the hub (SAFE_LAW_PATH), handed
+//                                                       to its target's hub sockets so their own client carries it to every room it holds
+//                                                       - each socket's first word of the order (its `muted` or `banned` after it)
+//                    {t:'slowed', ms}                   SAFE6: a new voice's public line refused for its pace - `ms` until the next one
 //                    {t:'event', kind, at}              EVENT1: the server-wide live event now, to every hub socket when it is staged
 //                                                       or ended; a late joiner reads it off the hub welcome's `ev` ({kind, at}, absent: none)
 //                    {t:'home', l:[{m, u, d, i}]}       QUEST-HOME: homes that moved - town m's buildings u homes now, d none, i the
@@ -305,6 +320,16 @@ export const BUSY_TOKEN_UNREAD = 'busy, token unread';
 export const CHAT_MAX = 240;
 /** The most chat lines a client may send a second; the bucket's burst is the same number. */
 export const CHAT_HZ_MAX = 2;
+/** SAFE6 (2026-10-17, bible/11-Multiplayer/Chat-Safety-Arc.md section 7): A NEW VOICE'S PACE. A guest (the token's `k`),
+ *  or an account still wearing the sprout (titles.js SPROUT_S), says one line in a public channel (chatStamp.js
+ *  PUBLIC_TABS) every NEW_VOICE_GAP_MS - an ordinary conversation's pace, and a throwaway account's flood slowed to it.
+ *  Party, guild and a place's talk are not slowed. Measured on the ACCOUNT's meter in each room (server/src/index.js
+ *  `_paces` - AUDIT SAFE RELAY-8: it was the socket's, which K sockets or a reconnect multiplied), spent only by a line
+ *  the room's budget lets through, refused with {t:'slowed', ms}. */
+export const NEW_VOICE_GAP_MS = 4000;
+/** SAFE4: the public path the account service pushes a signed mute or ban order to (server/src/index.js) - the hub
+ *  applies it and hands it to its target. The Worker checks the signature before the hub is woken. */
+export const SAFE_LAW_PATH = '/v1/law';
 
 /** ═══ RED1: THE SERVER'S OWN LINE ════════════════════════════════
  *
@@ -863,11 +888,13 @@ const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
  *  too. Every claim at once had reached 639 of 640, and a house (LEGACY7) took such a token past it: minted, then
  *  refused here at every hello. With a house at its bounds and the realm character (`ci`) the body is 778.
  *
+ *  WIKIMAID (world214): 864 - the WikiMaid's glyph took every claim at once, a house and the arms to 808 of 800.
+ *
  *  THE VERSION PREFIX IS NOT SPELLED OUT HERE. identityToken.js is the
  *  one home for which version exists and the verifier refuses anything
  *  else before parsing a byte; a second copy of `v1` in this file would
  *  be a second thing to forget on the day there is a v2. */
-const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,800}\.[A-Za-z0-9_-]{1,128}$/;
+const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,864}\.[A-Za-z0-9_-]{1,128}$/;
 
 /** The name a refused one becomes. Not a mask (`C**` is a shape a
  *  player treats as a puzzle) and not an error the relay could not
@@ -1443,7 +1470,9 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world213';   // EG-PLAY (2026-10-11, bible/11-Multiplayer/Elite-Gates.md section 31, EG-PLAY; world195, world197, world198, world199, world200, world201, world203, world205, world206, world211 then world212 on its branch, renumbered past main's COATS1 world195, CHAT-LANG world196, BAL8 world197, SPAWN-REBIRTH world198, AUDIT ETHER-OW world199, PEER-ACTS world200, CHAT-TRADE world201, FIVE-ASKS world202, KG-SET world203, KG5 world204, PVP-LOOT + QUEST-HOME world205, SERPENT5 world206, ONE-BODY world207, INSTANCES world208, WEAPON-GLOW1 world209, HUB-PULL + DO-ASK world210, TIDY2 world211 and REZ-BLOODLINE + GRAVE-PARTY world212 at the merges; NOT YET DEPLOYED): AN ELITE BREACH'S ROOM - the hub opens a breach on the account service's signed order and calls its company (`eg` `open`, `call`), the breach's room `eg:<16hex>` admits its company alone and runs its halls by the director's law (net/eliteGates/egLaw.js, net/eliteGates/egBrain.js; EG-FULL: net/eliteGates/egShape.js, net/eliteGates/egBodies.js, net/eliteGates/egLegion.js, net/eliteGates/egLords.js, net/eliteGates/egVestige.js, net/eliteGates/egRun.js) and signs its receipts (net/eliteGates/egReceipt.js); the `eg` frame's kinds and bounds here (validEgIn, validEgOut, validEgOpenTell)
+export const RELAY_VERSION = 'world215';   // SAFE (2026-10-17, world214 on its branch - main's WIKIMAID took world214 first, below; Mac: "Lets do every single thing here. I want a full fledged future proof system"; bible/11-Multiplayer/Chat-Safety-Arc.md; NOT YET DEPLOYED): THE CHAT'S SAFETY - every chat line the relay relays carries its stamp (`sg`, net/safety/chatStamp.js: Ed25519 over the tab, the speaker's account, the name, the time and the words, with GATE_SIGNING_KEY), which a report carries to the account service as its proof; a socket wearing the sprout says one public line every NEW_VOICE_GAP_MS (`slowed`); the public channels' lines are batched to the account service's reviewer (MOD_FEED_URL, net/safety/chatFeed.js - signed, never awaited by a line); a BAN order (identityToken.js ORDER_KINDS 'ban', `bn`) taken from a carrier (`{t:'ban', order}`) or through the service's door (SAFE_LAW_PATH, checked by the Worker before the hub is woken), each of the account's sockets silenced and told `banned`; and an order the service pushed handed to its target's own hub sockets (`law`) to carry to every room it holds
+// world214: WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title and a purple aura with bunnies"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md WIKIMAID; NOT YET DEPLOYED): the vocabulary's three new words - WIKIMAID last of TITLES and of GLYPHS, THE LILAC WARREN last of AURAS (net/identityToken.js), which the relay reads off every hello's token; nothing else in the law moved. Deploy the relay BEFORE the account service (acct150), or every token SylviaBun is signed - the glyph rides it whether or not she wears anything - is refused whole
+// world213:   EG-PLAY (2026-10-11, bible/11-Multiplayer/Elite-Gates.md section 31, EG-PLAY; world195, world197, world198, world199, world200, world201, world203, world205, world206, world211 then world212 on its branch, renumbered past main's COATS1 world195, CHAT-LANG world196, BAL8 world197, SPAWN-REBIRTH world198, AUDIT ETHER-OW world199, PEER-ACTS world200, CHAT-TRADE world201, FIVE-ASKS world202, KG-SET world203, KG5 world204, PVP-LOOT + QUEST-HOME world205, SERPENT5 world206, ONE-BODY world207, INSTANCES world208, WEAPON-GLOW1 world209, HUB-PULL + DO-ASK world210, TIDY2 world211 and REZ-BLOODLINE + GRAVE-PARTY world212 at the merges; NOT YET DEPLOYED): AN ELITE BREACH'S ROOM - the hub opens a breach on the account service's signed order and calls its company (`eg` `open`, `call`), the breach's room `eg:<16hex>` admits its company alone and runs its halls by the director's law (net/eliteGates/egLaw.js, net/eliteGates/egBrain.js; EG-FULL: net/eliteGates/egShape.js, net/eliteGates/egBodies.js, net/eliteGates/egLegion.js, net/eliteGates/egLords.js, net/eliteGates/egVestige.js, net/eliteGates/egRun.js) and signs its receipts (net/eliteGates/egReceipt.js); the `eg` frame's kinds and bounds here (validEgIn, validEgOut, validEgOpenTell)
 // world212:   REZ-BLOODLINE (FIELD BUGS 2026-10-16b, bible/01-Overview/bugs/Field-Bugs-2026-10-16b.md; NOT YET DEPLOYED; world208 on each branch, then world210 and world211 on this one, renumbered past main's INSTANCES world208, WEAPON-GLOW1 world209, HUB-PULL + DO-ASK world210 and TIDY2 world211 at the merges): A PARTY POSE SAYS A BODY FALLEN FOR GOOD - validPartyPose carries `fg` (1, else omitted): the sender's death is decided (Project Legacy's Bloodline, or an Enduring line's last - scenes/legacyHost.js raisable), so a party member's Resurrect at the body is refused at the caster's before a point is spent (scenes/hostMagic.js). A relay before it drops the field: the caster spends, and the fallen's own client refuses the call as ever - deploy with the clients, in either order. AND GRAVE-PARTY (FIELD BUGS 2026-10-16b, bible/01-Overview/bugs/Field-Bugs-2026-10-16b.md; the Discord's "graveyard loot on headstones are able to be looted by others"; Mac's SEARCH1-PARTY: "When one player in the party interacted with it no one else can again for 5 hours"; NOT YET DEPLOYED; world208 on its branch, the same bump as REZ-BLOODLINE at the merge): A CELL KEEPS ITS GRAVES' SEARCHES - the overworld ledger's third kind, `gr` (net/overworldLaw.js owFoldGraves): a headstone a player searched, `[px, py, n]`, stamped by the relay with its own minute and the searcher's verified account and kept for the search's five game hours, said to the cell and in its welcome, so every partymate's game locks the stone the party searched (a stranger's game reads the account and locks nothing). A relay before it closes the socket on the word (relaySupportsOwGraves: the session says none to it). AUDIT GRAVE-PARTY (2026-10-16, undeployed, re-hashed in place): the row names the searching character too (`[px, py, n, minute, acct, name]`, the token's name - another character of the account is told whose search it was); a cell keeps at most OW_GRAVE_ACCT_ROWS_MAX rows of one searcher, its own oldest out, and past OW_CELL_GRAVES_MAX the heaviest searcher's; the word rides its own bucket (owGraveGate); and the first relay a client says it to is world211 (OW_GRAVE_RELAY_MIN - main's world208, world209 and world210 know no `gr`).
 // world211:   TIDY2 (2026-10-16, Mac: "Do everything"; bible/01-Overview/Code-Map.md; NOT YET DEPLOYED; world209 on its branch, renumbered past main's WEAPON-GLOW1 world209 and HUB-PULL + DO-ASK world210 at the merge): the relay's own files into feature folders (net/gate/, net/wild/, net/arena/, net/siege/, net/superDungeon/ and the rest, systems/arena/ under them) - no behaviour moved: the bundle's bytes are its re-based imports and the paths its comments name, and a deploy drops every connected player once
 // world210:   HUB-PULL + DO-ASK (2026-10-16, bible/11-Multiplayer/Scale-Arc.md HUB-PULL and DO-ASK; Mac: "Is the server okay?", then "Yes and do any other improvements along the way"; NOT YET DEPLOYED; world208 then world209 on its branch, renumbered past main's INSTANCES world208 and WEAPON-GLOW1 world209 at the merges): THE BUS NEVER CALLS A SHARD - the live relay's hub was refused by the runtime's subrequest depth (a Durable Object's every call charged to the newest call it serves, so the bus's push rode the shard's hand-up and the shard's next hand-up rode the push, a hop deeper each round); each shard (and a court's copy) now keeps one poll at its bus (net/hubShards.js HUB_INTERNAL_POLL), answered with every delivery it has not acknowledged, its `ack` and `gone` said on the next, a woken bus's resync its first answer's `rs` - `/internal/hub/down` and `/internal/hub/resync` gone. And THE WORKER'S ASK OF A ROOM (server/src/relayScale.js askRoom): a room reset before it ran the upgrade asked once more, an overloaded one never, what is left a 503. No frame a client reads changes shape.
@@ -1975,7 +2004,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'renown'|'guild'|'guildout'|'home'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'eg'|'wild'|'wdun'|'holdem'|'iliac'|'gambit', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'eg'|'wild'|'wdun'|'holdem'|'iliac'|'gambit', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2269,6 +2298,12 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'mute before hello' };
     return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024
       ? { t: 'mute', order: m.order } : { error: 'bad mute' };
+  }
+  if (m.t === 'ban') {
+    // SAFE4: THE SHAPE ONLY, as the mute order's - the signature is the relay's question.
+    if (!hasHello) return { error: 'ban before hello' };
+    return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024
+      ? { t: 'ban', order: m.order } : { error: 'bad ban' };
   }
   if (m.t === 'renown') {
     // RENOWN1: THE SHAPE ONLY, as the mute order's. Whether it is real, and whether it names the socket that carried it,
@@ -3933,6 +3968,12 @@ export const relaySupportsGuild = (v) => { const m = /^world(\d+)$/.exec(typeof 
  *  world203 is KG-SET's and world204 KG5's, and neither knows it either. */
 export const HOME_RELAY_MIN = 205;
 export const relaySupportsHome = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= HOME_RELAY_MIN; };
+/** AUDIT SAFE RELAY-3: the ban frame is world215's (SAFE4; world214 on its branch, renumbered past main's WIKIMAID at the
+ *  merge - WIKIMAID's world214 does not know it) - an older relay closes the socket on a frame type it does not know
+ *  (CLOSE_POLICY, which the client takes as terminal), so a ban order goes only to a room whose welcome said world215 or
+ *  later (DM_RELAY_MIN's reason). */
+export const BAN_RELAY_MIN = 215;
+export const relaySupportsBan = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= BAN_RELAY_MIN; };
 /** CHAT-LANG: the relay that opens the language channels (CHAT_LANGS in its CHAT_ROOMS) - an older one refuses the key
  *  ('no such room'), so the Language tab joins only once the World link's welcome names this one or later. */
 export const LANG_RELAY_MIN = 196;

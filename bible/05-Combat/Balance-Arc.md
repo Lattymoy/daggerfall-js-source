@@ -892,3 +892,68 @@ the account service's version pins (acct121). Mutants re-aimed by content: `drop
 THE FOUR HOSTS. None is touched by name: `scenes/hostMagic.js` is the one cast engine `scenes/exterior.js`,
 `scenes/world.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` all cast and land through, and
 `systems/effects.js` the one spell door.
+
+## 16. BAL10 - the weapons' own (2026-10-17)
+
+The owner, 2026-10-17: *"we've properly balanced mages, added a specialization tree and added the firmament system. I
+want to do the same for other weapon types/classes."* The weapons' side of that ask is the martial paths and every
+weapon past 100 (`05-Combat/Martial-Specialisations.md`); this section is its balance pass. THE MEASUREMENT is that
+page's section 2 (read through the real cores and the swing law, Roleplay & Realism: Items on, as it ships). Asked what
+the pass should cover, the owner chose all four: the weapons past 100 (MARTIAL2, that page's section 4), and three
+causes the measurement found:
+
+1. **No blow modifier ever reached a fist.** Both cores ran the port's blow modifiers on a weapon's blow
+   (`combat/formulas.js` weaponAttackDamage, `combat/pcaao.js` pcaaoWeaponAttackDamage) and never on a bare hand's, so
+   the Firmament's fist stars, the sets' fist-free powers and the loot's armour-and-jewellery powers did nothing for a
+   monk. **THE LAW:** a player's bare-handed blow reads `entityMods.js` weaponBlowMods (weapon `null`, the host's word
+   `{ unaware }`) at the weapon path's own place - after the enemy-type term - in both cores (`handToHandAttackDamage`,
+   `pcaaoHandToHandAttackDamage`), and the sheet's estimate reads it too (`combat/combatStats.js`). Never the beast's
+   claws (BAL6 balanced the curse on its own claws and their metal), never a foe's fists. The fists are the strongest
+   family raw (19.8 a second at Hand-to-Hand 85, Strength 80, Speed 70), so the Firmament's fist channel - 28% at most
+   in the Steed's sign, the blow's group cap of 30 over it (`firmamentLaw.js` blowPct) - is the most it adds, and BAL8's
+   referee ceiling (`net/siege/siegeRef.js` SIEGE_HARM: 180 in 5 s) holds every refereed lane as before.
+2. **The short blades swung as long blades.** The swing law's handling keys DFU's sprite type (`characters/weaponStates.js`
+   SWING_HANDLING), and DFU draws the Tanto, the Shortsword and the Wakizashi as long blades: only the Dagger came round
+   at 0.9, and the family that fights by speed was the slowest a second (a Shortsword 8.7 to a Longsword's 12.6).
+   **THE LAW:** a weapon that swings with Short Blade takes the Dagger's row (`SWING_SHORT_BLADE`), whatever draws it -
+   in the port's own law and both mods' arms (`rriRealism.js` rriMeleeWeaponAnimTime, `rrRealism.js`
+   rrMeleeWeaponAnimTime, each handed the swing reader's word, `combat/swingLaw.js` readSwing's `shortBlade` - and in
+   Roleplay & Realism's own arm the dagger's Speed-and-Strength blend too, AUDIT MARTIAL L2 F11: its blend kept the long
+   blade's, so a Shortsword there was still 0.146 s a frame to a Dagger's 0.133). A
+   Shortsword 8.7 -> 9.7 a second; still the lowest blade in an open fight - a short blade's place is the back
+   (Backstabbing's x3) and the climb's pace (MARTIAL2).
+3. **The Firmament's Axe and Blunt Weapon were the thinnest.** **THE LAW:** every weapon family two notables of its own,
+   each raising its skill, and the Axe and the Blunt Weapon a third each (`net/firmament/firmamentTree.js`): Blade Dancer
+   `{ longDmg 4, speed 2, Long Blade +4 }`, Iron Knuckles `{ fistDmg 5, strength 3, Hand-to-Hand +4 }`, Headsman
+   `{ axeDmg 4, strength 3, Axe +5 }`, Bonebreaker `{ bluntDmg 4, meleeDmg 2, Blunt Weapon +5 }` - each its old stats
+   whole, the skill beside them (AUDIT MARTIAL L2 F9: the first cut traded a stat for the skill, and a skill line buys
+   to-hit alone, which PCAAO clamps at 97 from about 65 - section 2 of the martial page - so the trade took a stat from
+   every fighter past it); Carnage `{ killHeal 2, axeDmg 4 }` (was `meleeDmg 3`), and the Ritual's
+   Battlemage's Focus is its **Templar's Mace** `{ bluntDmg 5, spellPower 4 }` (was `meleeDmg 4` - the Ritual stands in PoE's Templar's place;
+   the name also left the Elite Gates' Vestige of the same name its own). Stats moved, never a key nor a star: the
+   layout, the keys' hash and every build code stand, and no channel of any sign passes its cap (FIRM2's own pin).
+
+WHAT MOVES. A monk's every blow takes the Firmament's fist stars, the sets and the loot as a swordsman's does; a short
+blade swings a tenth quicker; a Warrior who walks the axe or the hammer finds a skill notable and a third star of its
+own, and the Ritual's spellsword a mace. Not moved: a weapon's raw damage, its reach, the bow's draw, every curse.
+
+RECORDED, NOT CHANGED:
+
+- **A new star a family** (the option's "keystones") would move the sky's layout, its keys' hash and every shared build
+  code; the notables took the family's skill instead.
+- **The two-handers lead the six raw** (a War Axe 15.2 a second, a Warhammer 15.7, a Claymore 15.5): their weight and
+  their reach in the poise law (`ai/tells.js` K_BLUNT, K_AXE, K_TWO_HANDED) are the price; MARTIAL2 climbs them a little
+  less than the sword.
+- **Reach is one constant for every weapon** (`playerWeapon.js` WEAPON_REACH, 2.5 m) - a weapon's own reach is a design
+  of its own.
+
+Pinned: `test/systems/martial_paths.test.js` (BAL10's three by execution - the fists in both cores and the claws refused,
+the handling in all three arms, the notables' stats); AUDIT MARTIAL's `test/systems/audit_martial.test.js` drives the
+fists through both cores' OUTER calls with a probe that must land whole, both mods' arms as they ship (L5 H1), and the
+Stats page's estimate, which now keeps nothing - no fraction carried, no next-blow window spent (`entityMods.js`
+`info.estimate`, honoured by every blow modifier: L2 F7 - BAL10 had run the stateful modifiers over every roll of the
+fist estimate, some five hundred a page build). `tools/mutants/martial.json` carries BAL10's records beside the
+arc's. PIN MOVED: `audit_uicalm_firm1`'s walk names the Templar's Mace where it named Battlemage's Focus (its
+spellPower 4 the same).
+
+THE FOUR HOSTS. None is touched by name: both damage cores, the swing law and the Firmament's stars are every host's.

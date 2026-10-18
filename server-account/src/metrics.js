@@ -210,14 +210,14 @@ async function refusalOf(/** @type {Response} */ res) {
  * @param {Request} request @param {any} env
  * @param {(request: Request, env: any, said: { parts: string }) => Promise<Response>} serve
  */
-export async function measured(request, env, serve) {
+export async function measured(request, env, serve, exec = null) {
   const sink = env?.METRICS;
   const said = { parts: '' };
-  if (!sink || typeof sink.writeDataPoint !== 'function') return serve(request, env, said);
+  if (!sink || typeof sink.writeDataPoint !== 'function') return serve(request, env, said, exec);   // AUDIT SAFE DISCORD-4: the Worker's ExecutionContext, for what follows an answer
   const started = Date.now();
   const tally = { n: 0, ms: 0, rr: 0, rw: 0, replica: 0, tables: /** @type {Record<string, number>} */ ({}) };
   const counted = env.DB ? { ...env, DB: countedDb(env.DB, tally) } : env;
-  const res = await serve(request, counted, said);
+  const res = await serve(request, counted, said, exec);
   const parts = typeof said.parts === 'string' ? said.parts : '';   // AUDIT SCALE II A-3: the service's own word on the body it read
   try {
     const route = routeLabel(new URL(request.url).pathname);

@@ -114,7 +114,7 @@ test('PROF9 DONE WHEN: a Hunter\'s Stew cooked with a clean pan at a fire from t
   installCooking();
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const give = (m, qty) => raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)
     ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = excluded.qty`).run(mac.id, mac.character, m, qty);
   // PIN MOVED (CRAFT3): a dish's track is its craft's - seeded after the migrations, so under Provisioning's id

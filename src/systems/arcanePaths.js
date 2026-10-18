@@ -27,7 +27,7 @@
 // and its index, never by its name).
 
 import { SKILLS, MAGIC_SKILLS, SKILL_NAMES } from './skills.js';
-import { masterSkillsActive, isMasteredSkill, masteredSkills } from './masterSkills.js';
+import { masterSkillsActive, isMasteredSkill, masteredSkills, masterableCount } from './masterSkills.js';
 import { t } from './textManager.js';
 
 const { Destruction: DES, Restoration: RES, Illusion: ILL, Alteration: ALT, Thaumaturgy: THA, Mysticism: MYS } = SKILLS;
@@ -271,13 +271,10 @@ export const isSignatureSpell = (sp) => !!sp && isPathId(sp.path) && sp.index ==
 const schoolsOf = (p) => ({ a: SKILL_NAMES[p.schools[0]], b: SKILL_NAMES[p.schools[1]] });
 /** A path's two schools as one line ("Restoration and Mysticism"). */
 export const pathSchoolsText = (p) => t('schools.choice.schools', '{a} and {b}', schoolsOf(p));
-/** AUDIT SCHOOLS L4 8: can this character EVER meet a path - two of the six schools among its career's primary, major
- *  and minor skills (a mastery's own law: masterSkills.js careerGroupOf)? */
-export function pathPossible(entity) {
-  const c = entity?.career;
-  const career = new Set([...(c?.primarySkills ?? []), ...(c?.majorSkills ?? []), ...(c?.minorSkills ?? [])]);
-  return MAGIC_SKILLS.filter((id) => career.has(id)).length >= 2;
-}
+/** AUDIT SCHOOLS L4 8: can this character EVER meet a path - two of the six schools mastered, or masterable in the slots
+ *  its career groups have left (masterSkills.js masterableCount - AUDIT MARTIAL L4 L3: two schools both minor skills, one
+ *  minor slot between them, showed the card for good)? */
+export const pathPossible = (entity) => masterableCount(entity, MAGIC_SKILLS) >= 2;
 
 // ── the choice ──────────────────────────────────────────────────────
 
@@ -310,7 +307,10 @@ export function choosePath(entity, id) {
   if (why) return { ok: false, text: why };
   entity.arcanePath = id;
   const p = PATH_BY_ID[id];
-  return { ok: true, text: t('schools.chosen', 'Specialisation chosen: {name}. {spell} is sold to you at the Mages Guild.', { name: p.name, spell: p.spell.name }) };
+  // AUDIT MARTIAL L4 M1: one short line - the classic sheet's notice and the HUD draw it unwrapped in 312 px (with the
+  // spell's sentence it ran past the screen in English and every Latin language); where it is sold is the card's and the
+  // OK box's (schools.sheet.sold)
+  return { ok: true, text: t('schools.chosen', 'Specialisation chosen: {name}.', { name: p.name }) };
 }
 
 export const PATH_DECLINED_TEXT = 'You can choose a specialisation later in your skill screen.';

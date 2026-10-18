@@ -30,7 +30,7 @@ const HOLES = {
     'dropChunk:cls': chunks,   // the bitten span's frame (barLoss.js chunkFrame)
   },
   'src/ui/naval/navalHud.js': {
-    'cardLoss:frame': chunks,
+    'barLoss:frame': chunks,   // the card's bar's bitten span, and COMBAT-FEEL HULL-BLOW's on her own bar - one law
     'drawNavalHud:c': mintedFor('src/ui/naval/navalHud.js', 'chips', { within: 'navalHudText' }),   // the plate's chips
     'drawNavalHud:t.card.faction': factions,   // her class's (navalShips.js SHIP_CLASSES; a raider is a pirate)
     'drawNavalTags:t.faction': factions,

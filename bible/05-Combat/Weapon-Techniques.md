@@ -13,7 +13,9 @@
 
 **Daggerfall has no such thing.** A DFU weapon swings, and a bow looses; there is no second verb on a weapon and no key
 for one. Everything on this page is the port's own, a declared departure (Ledger A, TECH1), and it hangs off the loot
-ladder's one switch, so a player who turns the ladder off plays DFU's combat exactly.
+ladder's one switch, so a player who turns the ladder off plays DFU's combat exactly - but for a martial path's
+signature, which is no found line (MARTIAL3, below; AUDIT MARTIAL L5 L3: this sentence said "exactly" after the key
+gained its second answer).
 
 ## What it is
 
@@ -140,6 +142,13 @@ side buttons is stopped by every host that reads them (`world.js`, `exterior.js`
 `mousedown` and `mouseup` for buttons 3 and 4). A keyboard player rebinds it in the Controls pane (F2 and F4 ship
 unbound). The phone has a **Tech** hold button among the touch corner's choices (`ui/touch/touchButtons.js`); a pad has it among
 the d-pad's choices (`ui/plus/plusPad.js`) and Enhanced Plus's bind rows (`ui/plus/plusPadBinds.js`).
+
+**MARTIAL3 (2026-10-17, `05-Combat/Martial-Specialisations.md` section 6): the key's second answer.** With no line on the
+weapon in hand (or, bare-handed, on the gauntlets), the key answers a martial path's SIGNATURE TECHNIQUE when the weapon
+is one of the path's two families - a form of the roster's own mechanics, outside the roster (no door draws one, no line
+names one), needing no loot ladder, one cooldown a path. A line on the weapon wins while it is awake (the owner:
+"Technique key, when free"); with the ladder off it sleeps, the key is free, and the signature answers (AUDIT MARTIAL L4
+L6). Law 4 stands for every LINE: a found technique is never chosen; a path's signature is the path's.
 
 **A press, a hold, a release.** A technique that aims (Volley, Piercing Shot, Leap Strike, Shadowstep, Lunge, Flying
 Kick) shows its mark while the key is held and goes on the release; a tap goes at once at what the look holds. One that

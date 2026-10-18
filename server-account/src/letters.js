@@ -85,6 +85,10 @@ export async function sendLetter({ db, rand, nowS }, sender, { to, toAccount, su
   if (reader.id === sender.id) return { error: 'to-self' };
   if (await overRate({ db, nowS }, `mail:${sender.id}>${reader.id}`, LETTERS_PAIR_MAX, LETTERS_SENT_WINDOW_S)) return { error: 'mail-rate' };
   const id = mintId(rand);
+  // AUDIT SAFE CLIENT-7 (bible/11-Multiplayer/Chat-Safety-Arc.md section 2): A READER WHO BLOCKED THE SENDER never gets
+  // the letter - its subject was a line in their chat - and the sender is answered as if it went: a block is never told
+  // to the blocked (safety.js SAFE1). The rates above are spent all the same.
+  if (await db.prepare('SELECT 1 AS y FROM blocks WHERE player = ?1 AND blocked = ?2').bind(reader.id, sender.id).first()) return { ok: true, id, to: account ? displayName(reader) : reader.handle };
   const r = await db.prepare(`INSERT INTO letters (id, to_id, from_id, from_name, subject, body, sent_at)
     SELECT ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM letters WHERE to_id = ?) < ?`)
     .bind(id, reader.id, sender.id, displayName(sender), words.subject, words.body, nowS, reader.id, LETTERS_INBOX_MAX).run();

@@ -158,5 +158,13 @@
  "press (a button; never 'click')": "drücken",
  "Press again to confirm": "Erneut drücken zum Bestätigen",
  "first-time bonus (a craft's first-make XP)": "Bonus fürs erste Mal",
- "cloth (the Weavers' Linen and Wool)": "Stoff"
+ "cloth (the Weavers' Linen and Wool)": "Stoff",
+ "martial specialisation": "Kampfspezialisierung",
+ "signature technique": "Signaturtechnik",
+ "technique (a weapon's)": "Technik",
+ "technique key": "Technik-Taste",
+ "fatigue": "Ausdauer",
+ "Agility": "Geschicklichkeit",
+ "Speed (attribute)": "Schnelligkeit",
+ "Running, Jumping (skills)": "Rennen, Springen"
 }

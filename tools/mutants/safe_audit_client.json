@@ -1,0 +1,472 @@
+[
+  {
+    "name": "SAFE-AUDIT-CLIENT-1-conduct-dropped-by-the-minter",
+    "file": "src/net/accountClient.js",
+    "old": "...('conduct' in answer.data ? { conduct: answer.data.conduct === true } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The minter built `who` field by field and dropped `conduct`: the code's card never stood for anyone."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-1-a-late-no-takes-the-yes-back",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      if (agreedHere && !issued.conduct) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A mint in flight as the player agreed would ask them to agree again."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-a-ban-that-latches-nothing",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    for (const l of allLinks()) { if (typeof l?.bar === 'function') l.bar(); else l?.leave?.(); }",
+    "new": "    for (const l of allLinks()) l?.leave?.();",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A leave alone: world.js chatFrame's rejoin brought every channel straight back."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-said-on-every-socket",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (banSaid !== `until:${until}`) { banSaid = `until:${until}`; sayActive(",
+    "new": "{ sayActive(",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The ban said once a socket, not once."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-the-minters-token-kept",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    try { minter()?.forget?.(); } catch { /* the latch holds without it */ }\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A token minted a moment before the ban opens every room a rejoin asks for within TOKEN_REUSE_MS."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-a-room-made-after-the-ban-opens",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    if (bannedUntil && typeof link.bar === 'function') link.bar();   // a room made after the ban stays shut\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The arena's hall made after the ban joined."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-a-lifted-ban-keeps-the-latch",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      for (const l of allLinks()) l?.unbar?.();\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "Unbanned, the page stays out until a reload."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-rejoin-past-the-latch",
+    "file": "src/net/online.js",
+    "old": "    if (this.barred) return false;   // AUDIT SAFE CLIENT-2: a banned one waits for the ban's lifting, never for a clock (CHAT_REJOIN_MS brought every channel back)\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The rejoin's clock reopens a banned channel."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-a-bans-close-read-as-any-refusal",
+    "file": "src/net/online.js",
+    "old": "      if (code === CLOSE_POLICY && ev?.reason === 'banned') { this.bar(); return; }",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A link closed 1008 'banned' comes back on CHAT_REJOIN_MS."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-a-ban-retried-as-a-bad-minute",
+    "file": "src/net/online.js",
+    "old": " && why !== 'auth' && why !== 'banned';",
+    "new": " && why !== 'auth';",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A hello refused for a ban asked again every few seconds for the ban's length."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-forget-a-no-op",
+    "file": "src/net/accountClient.js",
+    "old": "    forget: () => { held = null; },",
+    "new": "    forget: () => {},",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The host's word on a ban moves nothing."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-a-refused-mint-keeps-the-token",
+    "file": "src/net/accountClient.js",
+    "old": "        if (minter.lastWhy === 'banned') held = null;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A mint refused for a ban leaves the pre-ban token to hand to other rooms."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-2-a-sign-in-ban-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "      ...(data?.error === 'banned' ? heardBan(data) : {}),   // AUDIT SAFE CLIENT-2: a ban's end and its reason\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The login's 403 says 'This account is banned.' with no end and no reason."
+  },
+  {
+    "name": "SAFE-AUDIT-RELAY-2-the-word-on-the-chat-bucket",
+    "file": "src/net/online.js",
+    "old": "      if (!this._lawIn(room, now)) return;\n      if (m.t === 'law'",
+    "new": "      if (!this._lineIn(room, null, now)) return;\n      if (m.t === 'law'",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A channel at its budget drops the order and the ban with its lines."
+  },
+  {
+    "name": "SAFE-AUDIT-RELAY-3-a-ban-order-to-an-older-relay",
+    "file": "src/net/online.js",
+    "old": "    if (!this.banOk) return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A relay before world214 closes the socket on the frame."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-3-the-peers-asked-alone",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    for (const tab of log()?.tabs ?? []) for (const l of tab.messages) if (l.sub && !l.mine && !l.system && !found.has(l.sub) && sanitizeName(l.name).toLowerCase() === want) found.set(l.sub, String(l.name));",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "/block Bob blocks the Bob standing here, not the Bob who said it."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-3-two-accounts-guessed",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    if (found.size > 1) return { error: NAMED[op].many(found.size, name), why: 'many' };\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "Two accounts of one name, never refused."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-4-the-repaint-grows-over-a-removal",
+    "file": "src/ui/chatPanel.js",
+    "old": "    const contiguous = listRemoved === (log.removed ?? 0) && listTab",
+    "new": "    const contiguous = listTab",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A blocked account's middle rows stay drawn in the open panel."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-5-the-age-unread",
+    "file": "src/net/chat.js",
+    "old": "    const fresh = (/** @type {any} */ l) => !(now - l.t > REPORT_PICK_AGE_MS);   // AUDIT SAFE CLIENT-5",
+    "new": "    const fresh = (/** @type {any} */ l) => true;",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "Yesterday's lines ride a report."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-5-a-stale-line-refuses-the-whole-report",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": "{ if (l.sub === target) theirsOut = true; continue; }",
+    "new": "return { error: 'report-stale' };",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "One context line from yesterday refused the whole report."
+  },
+  {
+    "name": "SAFE-AUDIT-DOC-17-a-line-from-the-future-kept",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": " || l.at - nowMs > REPORT_LINE_AHEAD_MS)",
+    "new": ")",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "A stamp more than a minute ahead of the service's clock taken as said now."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-5-stale-said-as-no-line",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": "  if (theirsOut && !out.some((l) => l.sub === target)) return { error: 'report-stale' };",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "A report of nothing but old lines told it carried none of theirs."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-6-the-relays-words-never-kept",
+    "file": "src/net/online.js",
+    "old": "...(m.text.length <= CHAT_MAX ? { raw: m.text } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The report carries the client's second pass of the mask, which the stamp never covered."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-6-the-report-carries-the-drawn-words",
+    "file": "src/net/chat.js",
+    "old": "text: l.raw ?? l.text, sg: l.sg }));",
+    "new": "text: l.text, sg: l.sg }));",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "report-unwitnessed for any line the mask is not idempotent on."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-7-a-blocked-request-lands",
+    "file": "src/net/online.js",
+    "old": "    if (this.hears && BLOCKED_KINDS.includes(kind)) { const sub = subOf(m); if (sub && !this.hears(sub)) return; }\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A blocked account's trade, duel, wedding, card or page request lands."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-7-the-ear-never-handed",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    link.hears = hears;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The sessions never hear through the block list."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-8-a-failed-read-never-retried",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      retry = setTimer(() => { retry = null; void readBlocks(); }, Math.min(BLOCKS_RETRY_MAX_MS, BLOCKS_RETRY_MS * 2 ** (readFails - 1)));\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A block list the service could not answer at the start is never read: every blocked account heard."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-8-a-welcome-never-reads",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      if (reading || now() - readAt < BLOCKS_REREAD_MS) return;\n      void readBlocks();",
+    "new": "      if (reading || now() - readAt < BLOCKS_REREAD_MS) return;",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A reconnect never reads the list again."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-8-the-welcome-unsaid",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this._deliver('welcome', () => this.onWelcomed?.());   // AUDIT SAFE CLIENT-8\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The session never says its room's socket was welcomed."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-9-the-shown-name-forgotten",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    shownAs.set(sub, name);   // AUDIT SAFE CLIENT-9: the name the line showed, beside the account's\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "/unblock <the name the line showed> finds nobody under NAME-AS."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-10-escape-unread",
+    "file": "src/ui/conductCard.js",
+    "old": "        win?.addEventListener?.('keydown', onKey, true);\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "Escape does not put the card away."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-10-the-stack-never-told",
+    "file": "src/ui/conductCard.js",
+    "old": "        unregister = register(() => answer(later));   // AUDIT SAFE CLIENT-10: the QuickDial key puts it away, as Not now\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The card stands outside the overlay stack: the chat and the QuickDial key do not know it is up."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-11-the-picture-not-filtered-again",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    social()?.refilter?.();   // AUDIT SAFE CLIENT-11: a request or an invite that already stood goes with the block\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A blocked account's standing friend request and invite stay."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-12-a-slowed-line-lost",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      if (lastPublic && at - lastPublic.at <= SLOWED_KEEP_MS && panel()?.restore?.(lastPublic.text) === true) lastPublic = null;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A line refused for its pace inside the quiet window vanishes."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-12-a-typed-field-overwritten",
+    "file": "src/ui/chatPanel.js",
+    "old": "      if (!line || String(input.value ?? '') !== '') return false;",
+    "new": "      if (!line) return false;",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A refused line put back over what the player has typed since."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-13-a-ban-refused-as-a-mute",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "cmd.op === 'ban' && r.error === 'protected' ? t('net.safety.protectedBan', 'Moderators cannot be banned.') : accountRefusalText(r.error)",
+    "new": "accountRefusalText(r.error)",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A moderator's ban of a moderator told 'Moderators cannot be muted.'"
+  },
+  {
+    "name": "SAFE-AUDIT-DOC-10-the-standing-unsaid",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    if (bannedNow) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "/strikes never says the ban standing now, nor its reason."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-13-the-arenas-rooms-never-adopted",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      extra.add(link);\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The arena's hall hears no order and stays open on a ban."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-13-a-post-past-the-gate",
+    "file": "src/net/online.js",
+    "old": "    if (this.mayChat && !this.mayChat(line)) return false;   // AUDIT SAFE CLIENT-13: the code of conduct's gate, whatever door the line came by\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "CHAT-POST posts to World before the code is agreed - it goes straight to the session's sendChat."
+  },
+  {
+    "name": "SAFE-AUDIT-CLIENT-13-the-gate-never-handed",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    link.mayChat = mayChat;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The sessions never ask the code of conduct's gate."
+  },
+  {
+    "name": "SAFE-AUDIT-DOC-13-the-note-dropped",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "log()?.reportLines?.(who.sub, { max: REPORT_LINES_MAX }) ?? [], cmd.note ?? '');",
+    "new": "log()?.reportLines?.(who.sub, { max: REPORT_LINES_MAX }) ?? []);",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A reporter's note never reaches the service."
+  },
+  {
+    "name": "SAFE-AUDIT-SERVICE-10-the-reason-never-sent",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "await modBan(a, target, cmd.days, cmd.reason ?? '')",
+    "new": "await modBan(a, target, cmd.days)",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A ban's reason, shown to its player, never sent."
+  },
+  {
+    "name": "SAFE-AUDIT-DOC-13-the-note-left-in-the-name",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": "  const colon = op === 'report' || op === 'ban' ? whole.indexOf(':') : -1;",
+    "new": "  const colon = -1;",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "/report Troll hate: a note reads 'Troll hate: a note' as a name."
+  },
+  {
+    "name": "SAFE-AUDIT-DOC-4-the-dismiss-order-dropped",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      if (d.order) carry(d.order);\n      if (cmd.op === 'ban')",
+    "new": "      if (cmd.op === 'ban')",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A dismissal's unmute (and a ban's order) never carried to the rooms."
+  },
+  {
+    "name": "SAFE-AUDIT-DOC-4-the-flagged-line-unmarked",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "flagged && flagged.at === l.at && flagged.sub === l.sub ? '!' : ",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "/case never marks the line the reviewer flagged."
+  },
+  {
+    "name": "SAFE-AUDIT-DOC-4-dismiss-unread",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": "'cases', 'case', 'dismiss', 'modhelp']);",
+    "new": "'cases', 'case', 'modhelp']);",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "/dismiss is no command: it goes to the room as chat."
+  },
+  {
+    "name": "SAFE-AUDIT-DOC-16-a-ban-said-as-a-suspension",
+    "file": "locales/es/Port_Strings.csv",
+    "old": "luego silencios más largos y después un veto.",
+    "new": "luego silencios más largos y después una suspensión.",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "Spanish tells a player a ban is a suspension."
+  }
+]

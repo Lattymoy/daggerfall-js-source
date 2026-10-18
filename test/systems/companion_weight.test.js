@@ -178,7 +178,7 @@ test('COMPANION-WEIGHT through the CLASSIC window: Remove refuses a sword into h
 
 test('COMPANION-WEIGHT: every store and gold door of both windows hands the limit in - counted in the code, never a comment (mutants: a door without it)', () => {
   const e = code('src/ui/enhanced/enhancedInventory.js'), n = code('src/ui/native/nativeInventory.js');
-  assert.equal((e.match(/capacity: storeCapacityOf\(deps, session\)/g) ?? []).length, 5, 'the enhanced window: canStow, the label, the split, the store, the gold');
+  assert.equal((e.match(/capacity: storeCapacityOf\(deps, session\)/g) ?? []).length, 6, 'the enhanced window: canStow, the label, the split, the store, the gold, Stash all (LOOT-BULK)');
   assert.equal((n.match(/capacity: storeCapacityOf\(this\.hooks, \{ usingWagon: this\.usingWagon, chooseOne: this\.chooseOne \}\)/g) ?? []).length, 2, 'the classic window: the store and the gold');
   const loot = { storage: true, items: () => swords(2), capacity: () => HILDA };
   const m = remoteModel({ loot }, {});

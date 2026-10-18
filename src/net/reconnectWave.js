@@ -31,7 +31,7 @@ export function waveSpreadMs(online) {
 
 /** One page's view of the waves: the hub's count noted, each unexpected drop of an open socket noted, and asked at a
  *  socket's first retry how much later than planned it should be. Every time is the asking session's own clock (the
- *  page's sessions share one, Date.now). `online()` is the browser's word (navigator.onLine). */
+ *  page's sessions share one, online.js steadyNow). `online()` is the browser's word (navigator.onLine). */
 export function reconnectWave({ rand = Math.random, online = () => globalThis.navigator?.onLine !== false } = {}) {
   let count = 0;
   const drops = [];   // when each recent drop happened (pruned past the window of the newest)

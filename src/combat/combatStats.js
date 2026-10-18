@@ -37,6 +37,9 @@ import { clawMetalDamage } from './clawMetal.js';   // BAL6-GAUNTLETS: the beast
 
 const int = Math.trunc;
 const clamp = (x) => Math.max(3, Math.min(97, x));   // CalculateSuccessfulHit / pcaaoSuccessfulHit: 3..97
+/** AUDIT MARTIAL L2 F7: the blow modifiers' word that this is the page's estimate - answered, and nothing kept by it
+ *  (systems/entityMods.js registerWeaponBlowMod: no fraction carried, no next-blow window spent). */
+const ESTIMATE = Object.freeze({ unaware: false, estimate: true });
 const STAT_KEYS = Object.freeze(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
 
 /** The reference foes. A monster's `armorValue` is MobileEnemy.ArmorValue (lower = harder to hit; the part values are that x5,
@@ -160,10 +163,14 @@ function damageModel(ctx, swing, foe) {
   }
   const one = (roll) => {
     let d = roll + dmgMods + strMod + matMod;
-    if (!weapon) { if (core.overhaul && d < 1) d = 0; return d + bonusOrPenaltyByEnemyType(entity, foe); }
+    if (!weapon) {
+      if (core.overhaul && d < 1) d = 0;
+      d += bonusOrPenaltyByEnemyType(entity, foe);
+      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, ESTIMATE);   // BAL10: both cores read the fists' blow modifiers now - never the beast's claws
+    }
     if (d < 1) d = 0;
     d += bonusOrPenaltyByEnemyType(entity, foe);
-    d = weaponBlowMods(weapon, d, entity, foe, { unaware: false });
+    d = weaponBlowMods(weapon, d, entity, foe, ESTIMATE);
     return core.overhaul ? d : adjustWeaponAttackDamage(entity, foe, d, 0, weapon);
   };
   const finish = (d, critical) => {

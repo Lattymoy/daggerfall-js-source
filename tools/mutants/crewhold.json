@@ -102,8 +102,8 @@
   {
     "name": "GALLEON-WEIGHT-launch",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "gun: solution.gun, weight: w, index };",
-    "new": "gun: solution.gun, weight: 1, index };",
+    "old": "gun: solution.gun, shot, weight: w, index };",
+    "new": "gun: solution.gun, shot, weight: 1, index };",
     "tests": [
       "test/systems/naval/crewhold.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "GALLEON-WEIGHT-ball",
     "file": "src/systems/naval/navalShots.js",
-    "old": "gun: l.gun, weight: l.weight ?? 1, index: l.index,",
-    "new": "gun: l.gun, weight: 1, index: l.index,",
+    "old": "gun: l.gun, shot: l.shot ?? null, weight: l.weight ?? 1, index: l.index,",
+    "new": "gun: l.gun, shot: l.shot ?? null, weight: 1, index: l.index,",
     "tests": [
       "test/systems/naval/crewhold.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "GALLEON-WEIGHT-hit",
     "file": "src/systems/naval/navalShots.js",
-    "old": "target: ship.t.id, gun: b.gun, weight: b.weight, point: ship.e.point,",
-    "new": "target: ship.t.id, gun: b.gun, point: ship.e.point,",
+    "old": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t), weight: b.weight, point: ship.e.point,",
+    "new": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t), point: ship.e.point,",
     "tests": [
       "test/systems/naval/crewhold.test.js"
     ],

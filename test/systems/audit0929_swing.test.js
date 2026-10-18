@@ -109,7 +109,7 @@ test('AUDIT PRE-MERGE 0929 S6: the reader reads and never writes - asked of a bo
   const body = { stats: { strength: 60 }, activeEffects: [] };
   const read = readSwing({ entity: body, weaponType: WEAPON_TYPES.LongBlade, usingRightHand: true });
   assert.equal(body.equip, undefined, 'no table grown');
-  assert.deepEqual(read, { weaponType: WEAPON_TYPES.LongBlade, weight: 0, strength: 60, twoHanded: false }, 'an empty hand weighs nothing');
+  assert.deepEqual(read, { weaponType: WEAPON_TYPES.LongBlade, weight: 0, strength: 60, twoHanded: false, family: 'handToHand', shortBlade: false }, 'an empty hand weighs nothing');   // PIN MOVED (BAL10): the reader names the swing's family - an empty hand's the fist's
   const played = [];
   const rig = createWeaponRig({
     renderer: {}, canvas: { clientWidth: 1000, clientHeight: 800 }, fetchBytes: () => { throw new Error('no art'); }, palette: null,

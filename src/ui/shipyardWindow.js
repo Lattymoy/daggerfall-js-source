@@ -24,8 +24,8 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedSty
 import { injectNavalKit } from './naval/navalHud.js';
 import { injectNavalWindowStyle } from './naval/navalPlunderWindow.js';
 import { yardText, yardNote } from './naval/navalYardWindow.js';
-import { whereWords, refitLine } from './fleetPage.js';
-import { SHIP_NAME_MAX } from '../systems/fleet.js';
+import { whereWords, refitLine, refitRowWords } from './fleetPage.js';
+import { SHIP_NAME_MAX, REFIT_NUMERALS } from '../systems/fleet.js';
 import { CREW_ROLES } from '../systems/naval/shipCrew.js';
 
 export const SHIPYARD_STYLE_ID = 'dagger-shipyard-style';
@@ -95,21 +95,20 @@ export const SHIPYARD_CSS = `
 `;
 
 const gold = (n) => `${Math.round(n).toLocaleString('en-US')} gold`;
-const NUMERALS = Object.freeze(['-', 'I', 'II', 'III']);
 
 /** A ship for sale's card words. Pure - the pins' reading. */
 export function shipCardText(s) {
   const figs = [`${s.length} m long, ${s.beam} m in the beam`];
-  if (s.crew > 0) figs.push(`a crew of ${s.crew}, ${s.hands} named on her deck`);
-  else figs.push('no crew - she sails with you alone');
+  if (s.crew > 0) figs.push(`a crew of ${s.crew}, ${s.hands} named on deck`);
+  else figs.push('no crew - you sail it alone');
   if (s.guns > 0) figs.push(`${s.guns} ${s.guns === 1 ? 'gun' : 'guns'}${s.barrels ? ' and fire barrels' : ''}`);
   else if (s.barrels) figs.push('fire barrels');
   if (s.ram) figs.push('a ram');
   figs.push(`hull ${s.hullHp}${s.sailHp > 0 ? `, canvas ${s.sailHp}` : ''}`);
   return {
     name: s.name, line: s.line, figs: figs.join(' - '),
-    note: s.docks ? null : 'No quay takes her - she lies off the harbour.',
-    press: s.why ? `Buy - ${gold(s.asked)}` : `Buy her - ${gold(s.asked)}`,
+    note: s.docks ? null : 'Too big for the quay - it anchors off the harbour.',
+    press: `Buy - ${gold(s.asked)}`,
     why: s.why, can: !s.why,
   };
 }
@@ -276,8 +275,8 @@ export function mountShipyardWindow(host, deps) {
       if (t.note) card.append(el('span', 'dfyard-figs', t.note));
       if (t.why) card.append(el('span', 'dfyard-why', t.why));
       const key = `buy:${s.hull}`;
-      card.append(button(confirm === key ? `Yes - buy her for ${gold(s.asked)}` : t.press, 'dfnaval-btn dfnaval-take',
-        () => twoPress(key, `Buy the ${t.name} for ${gold(s.asked)}? Press again to buy her.`, () => press('buy', s.hull)), t.can, t.why));
+      card.append(button(confirm === key ? `Yes - buy for ${gold(s.asked)}` : t.press, 'dfnaval-btn dfnaval-take',
+        () => twoPress(key, `Buy the ${t.name} for ${gold(s.asked)}? Press again to confirm.`, () => press('buy', s.hull)), t.can, t.why));
       cards.append(card);
     }
     sec.append(cards);
@@ -297,18 +296,18 @@ export function mountShipyardWindow(host, deps) {
       if (t.sell) mid.append(el('br'), el('span', null, t.sell));
       const acts = el('div', 'dfyard-acts');
       const key = `sell:${r.uid}`;
-      acts.append(button(confirm === key ? `Yes - sell for ${gold(r.offer)}` : 'Sell her', 'dfnaval-btn',
-        () => twoPress(key, `Sell ${t.name} for ${gold(r.offer)}? Press again to sell her - for good.`, () => press('sell', r.uid)), t.canSell, t.sell));
-      acts.append(button('Bring her here', 'dfnaval-btn', () => press('summon', r.uid), !t.summon, t.summon));
-      acts.append(button('Lay her up', 'dfnaval-btn', () => press('away', r.uid), !t.away, t.away));
+      acts.append(button(confirm === key ? `Yes - sell for ${gold(r.offer)}` : 'Sell', 'dfnaval-btn',
+        () => twoPress(key, `Sell ${t.name} for ${gold(r.offer)}? This can't be undone. Press again to confirm.`, () => press('sell', r.uid)), t.canSell, t.sell));
+      acts.append(button('Bring here', 'dfnaval-btn', () => press('summon', r.uid), !t.summon, t.summon));
+      acts.append(button('Lay up', 'dfnaval-btn', () => press('away', r.uid), !t.away, t.away));
       const named = el('div', 'dfyard-name');
       const input = /** @type {HTMLInputElement} */ (el('input'));
       input.maxLength = SHIP_NAME_MAX;
-      input.placeholder = 'Her name';
+      input.placeholder = 'Ship name';
       input.value = draft?.uid === r.uid ? draft.text : (r.name ?? '');
       input.oninput = () => { draft = { uid: r.uid, text: input.value }; };
       input.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') { press('rename', r.uid, input.value); draft = null; } };
-      named.append(input, button('Name her', 'dfnaval-btn', () => { press('rename', r.uid, input.value); draft = null; }));
+      named.append(input, button('Rename', 'dfnaval-btn', () => { press('rename', r.uid, input.value); draft = null; }));
       acts.append(named);
       row.append(left, mid, acts);
       sec.append(row);
@@ -348,11 +347,12 @@ export function mountShipyardWindow(host, deps) {
     for (const r of o.rows) {
       const row = el('div', 'dfyard-row');
       row.setAttribute('data-line', r.id);
+      const w = refitRowWords(r);   // REFIT-ORES: the Fleet page's words - a metal's melt and its captain's level said
       const left = el('div');
-      left.append(el('b', null, r.tier ? `${r.label} ${NUMERALS[r.tier]}` : r.label), el('br'), el('span', null, `${r.what}: +${Math.round(r.per * 100)}% a refit`));
-      const mid = el('span', null, r.next ? `Next: ${gold(r.next.gold)}, ${r.next.mats.map((x) => `${x.n} ${x.label} (you hold ${x.have})`).join(', ')}.` : 'Every refit of this line is done.');
+      left.append(el('b', null, w.name), el('br'), el('span', null, w.gain));
+      const mid = el('span', null, r.next ? [w.asks, w.melt, w.lock].filter(Boolean).join(' ') : 'This upgrade line is complete.');
       const acts = el('div', 'dfyard-acts');
-      acts.append(button(r.next ? `Refit - ${NUMERALS[r.tier + 1]}` : 'Done', 'dfnaval-btn', () => press('refit', m.uid, r.id), !!r.next && r.afford && !o.why, o.why));
+      acts.append(button(r.next ? `Refit - ${REFIT_NUMERALS[r.tier + 1]}` : 'Done', 'dfnaval-btn', () => press('refit', m.uid, r.id), !!r.next && r.afford && !o.why, o.why ?? w.lock));
       row.append(left, mid, acts);
       sec.append(row);
     }
@@ -365,7 +365,7 @@ export function mountShipyardWindow(host, deps) {
     if (m.why) sec.append(el('p', 'dfnaval-lede', m.why));
     body.append(sec);   // AUDIT SHIPYARDS L2-7: the hall's header and the ship chooser first, her hands under them
     if (m.ship) {
-      const crew = section(`${m.ship.label}'s hands`, m.room?.ok ? 'a place for another' : m.room?.full ? 'her deck is full' : 'no place');
+      const crew = section(`${m.ship.label}'s hands`, m.room?.ok ? 'a place for another' : m.room?.full ? 'the deck is full' : 'no place');
       for (const h of m.hands) {
         const row = el('div', 'dfyard-row');
         const left = el('div');

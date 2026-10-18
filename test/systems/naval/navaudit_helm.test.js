@@ -733,7 +733,7 @@ test('AUDIT NAV1 H15 the shipwright\'s window: his words for her - each row what
   let t = yardText(model);
   assert.equal(t.title, 'The shipwright');
   assert.equal(t.sub, 'Small Ship - your purse: 723 gold');
-  assert.equal(t.lede, 'He will make her whole for 1,726 gold.');
+  assert.equal(t.lede, 'The shipwright can fully repair it for 1,726 gold.');
   assert.deepEqual(t.rows.map((r) => [r.label, r.state, r.press, r.can]), [
     ['Hull', '262 of 420 - 158 wanting at 7 gold', 'Mend 103 - 721 gold', true],
     ['Canvas', '80 of 160 - 80 wanting at 4 gold', 'Mend all - 320 gold', true],
@@ -743,7 +743,7 @@ test('AUDIT NAV1 H15 the shipwright\'s window: his words for her - each row what
   assert.equal(t.whole, 'Make good what your purse pays - 721 gold');
   assert.deepEqual(yardNote({ ok: true, id: 'crew', n: 6, cost: 180 }), { text: 'Hands hired: 6 men for 180 gold.', warn: false });
   assert.deepEqual(yardNote({ ok: false, id: 'hull', short: 12 }), { text: 'Not enough gold - 12 gold a piece.', warn: true });
-  assert.deepEqual(yardNote({ ok: true, cost: 2676, bought: [{}], whole: true }), { text: 'She is made whole for 2,676 gold.', warn: false });
+  assert.deepEqual(yardNote({ ok: true, cost: 2676, bought: [{}], whole: true }), { text: 'Fully repaired for 2,676 gold.', warn: false });
   // a crewless boat with no stern barrels: no hands, no barrels
   const lb = yardText({ ...model, hasBarrels: false, ship: () => ({ ...st, maxCrew: 0, crew: 0 }) });
   assert.deepEqual(lb.rows.map((r) => r.label), ['Hull', 'Canvas']);

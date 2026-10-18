@@ -205,6 +205,9 @@ test('LOOT4: the sear and the slayer\'s edge - the weapon in hand\'s, at a foe, 
   let total = 0;
   for (let i = 0; i < 5; i++) total += LP.lootBlow(w2, 3, me, foeOf(0), {});
   assert.equal(total, 15 + 3, 'a fifth of every 3, carried: three whole points over five blows');
+  // PIN ADDED (AUDIT MARTIAL L2 F7): the Stats page's reading before each blow carries nothing - blow for blow the same
+  const blows = (read) => { LP._resetLootPowersForTests(); return Array.from({ length: 5 }, () => { if (read) LP.lootBlow(w2, 3, me, foeOf(0), { estimate: true }); return LP.lootBlow(w2, 3, me, foeOf(0), {}); }); };
+  assert.deepEqual(blows(true), blows(false), 'the page read between blows');
   // never: a player, a peer, a foe's blow, the ward, a miss, off
   assert.equal(LP.lootBlow(w, 10, me, { isPlayer: true }, {}), 10, 'a duel');
   assert.equal(LP.lootBlow(w, 10, { ...me, peer: true }, zombie, {}), 10, 'a peer\'s blow resolved here');

@@ -171,8 +171,8 @@ test('ETHER-CHART2 the grid and the scale: the longest bar of 1, 2, 5, 10, 20, 5
 test('ETHER-CHART2 a haunt named in view: on a plate in a corner of her square\'s part in view no name takes - of those (AUDIT ETHER-CHART2 U6) the one over the fewest isles\' marks; at a far zoom her name alone over it, giving way to a port\'s; her state in words (mutants: the corner, the marks, the yield)', () => {
   const m = M.chartModel(word(), at(2), W, H);
   const wake = m.haunts.find((t) => t.name === 'Sorrow\'s Wake'), queen = m.haunts.find((t) => t.name === 'The Drowned Queen');
-  assert.equal(wake.sub, 'Her haunt');
-  assert.equal(queen.sub, 'Sunk - she will rise again');
+  assert.equal(wake.sub, 'Territory');
+  assert.equal(queen.sub, 'Sunk - it will rise again');
   for (const t of [wake, queen]) {
     assert.equal(t.inside, true);
     assert.ok(t.box[1] >= 0 && t.box[0] >= 0 && t.box[2] <= W && t.box[3] <= H, `${t.name}: in view`);
@@ -199,7 +199,7 @@ test('ETHER-CHART2 a haunt named in view: on a plate in a corner of her square\'
   }
   assert.ok(weighed >= 2, `corners weighed (${weighed})`);
   const night = M.chartModel(word({ legends: [{ id: 'lantern', name: 'The Lantern-Eater', trait: 'night', sails: true }] }), { cx: h.px - 300, cy: h.py, zoom: 0 }, W, H);
-  assert.equal(night.haunts[0]?.sub, 'Her haunt - by night');
+  assert.equal(night.haunts[0]?.sub, 'Territory - by night');
   // x1: her name alone over her square - or none, where a port's name stands
   const far = M.chartModel(word(), at(0, -40), W, H);
   assert.ok(far.haunts.length >= 2 && far.haunts.every((t) => !t.inside));
@@ -240,7 +240,8 @@ test('ETHER-CHART2 the ship ringed on the canvas, and off it a pointer at the ed
 
 test('ETHER-CHART2 the isle named: ringed, its card its name and its kind and way from the ship; none for an isle off the canvas; the window\'s line held, the hover cleared, the zoom\'s ends and the buttons named (mutants: the pick, the line, the ends)', () => {
   const m = M.chartModel(word(), at(2), W, H, { pick: h.key });
-  assert.deepEqual([m.pick.title, m.pick.words], ['Veilhaven', `A port - ${M.wayWords({ px: h.px - 17.5, py: h.py + 3.5 }, h)}`]);
+  // PIN MOVED (ISLE-TRADE, 2026-10-17): a port's card names the good of the Bay its exchange makes - Veilhaven's spice
+  assert.deepEqual([m.pick.title, m.pick.words], ['Veilhaven', `A port - makes spices - ${M.wayWords({ px: h.px - 17.5, py: h.py + 3.5 }, h)}`]);
   assert.equal(m.pick.x, m.isles.find((i) => i.key === h.key).x);
   assert.equal(M.chartModel(word(), at(2, -400), W, H, { pick: h.key }).pick, null, 'off the canvas');
   assert.equal(M.chartModel(word(), at(2), W, H).pick, null);

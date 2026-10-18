@@ -18028,6 +18028,24 @@ What the ladder says, every arm driven by a pin:
   (Dresser) both read 3 under `% 100`, which is why the groundwork
   slice made the container record store the model and derive the
   texture record at its one reader.
+- **CONTAINER-PEEK (2026-10-16).** World Tooltips names a Chest and
+  stops. The plaque now lists what a house container, or a placed
+  storage piece, already holds — the same rows a pile draws — when that
+  list exists: the player's own cupboard, and a stranger's cupboard
+  stocked today.
+  An unstocked cupboard, one due to restock, somebody else's home and a
+  hall's furniture stay a name, so the plaque never says Empty over a
+  roll that has not happened. The rows are a glance: nothing is lit, and
+  the wheel and the take keys stay with the camera
+  (`worldHover.js:"export const PREVIEW_KEYS = Object.freeze(['container:', 'decor:']);"`,
+  `quickLoot.js:"const take = frame?.kind === 'items' && !frame.preview;"`).
+  The press is unchanged: the private-property question, the storage
+  window, and the stocking itself still happen on the click. DFU does
+  not list a cupboard. The interior host builds the rung once
+  (`containerPreview.js:"export function createInteriorPeek("`, HOST-SPLIT:
+  the host wires it, it does not grow it); its getters read the room's own
+  word only while the crosshair is on a cupboard or a placed chest. Pins `test/systems/containerpreview.test.js`, and the
+  CONTAINER-PEEK cases in `test/systems/worldhover.test.js` and `test/systems/quickloot.test.js`.
 - a pile of exactly one named by that item with its stack count; a
   corpse by who it was; a door by its lock level when locked; a static
   door by where it goes, its lock, and the closed-shop sentence from
@@ -19321,7 +19339,7 @@ Port-Ledger A: THE PLAYER'S OWN STORES, FILTERED and SHIFT AND A CLICK STOW THE 
   chosen one stays at nought rather than vanishing from under the hand. A choice refills the rows in place - a card
   open on a pack item stays open.
 - **What does not change.** A take is `take(item)`, so a filtered list takes that piece out of the whole store. A
-  corpse, a container, the ground and a reward tray keep their whole list. The filter is fresh for every store shown:
+  The ground and a reward tray keep their whole list. A corpse and a container carry the bar too (LOOT-BULK, below). The filter is fresh for every store shown:
   each open, each wagon or bag door pressed, and a store emptied.
 - **The classic skin draws none.** THE NATIVE-WINDOW RULE: DFU's parchment has no such control and no source for one.
 
@@ -19344,7 +19362,7 @@ Port-Ledger A: THE PLAYER'S OWN STORES, FILTERED and SHIFT AND A CLICK STOW THE 
 Chromium through vite and Playwright, from the scratchpad (below).
 
 **Proof.** `test/systems/shiftstow.test.js` (9 after the audit): the filter law; the one row, the menu and the search
-refilling in place, a take from the narrowed list, Back, no bar over a corpse; the filter fresh per store; the search
+refilling in place, a take from the narrowed list, Back, a corpse carrying the bar and a reward tray none; the filter fresh per store; the search
 blind to a hidden name; Shift into the wagon, a plain click still a pick, the refused piece never worn, nothing on the
 ground; the how-many field not applying; the 750 kg taking what fits, and the storage; the classic latch, the arm in
 Info mode, no popup on a partial fit, the ground, a right and a middle click unchanged, the repeat, the focus loss and
@@ -19379,6 +19397,18 @@ from the scratchpad, the pack mounted over a wagon of thirteen):
   for a text field; in Chromium the first Escape cleared the field and the second left it, the pack staying open; a
   real Shift+click stowed with no text selected; `itemRow` is the pack's alone (trade, bank and the hold untouched).
 
+
+
+## LOOT-BULK - a container filtered, and Take all / Stash all (2026-10-16)
+
+DFU's inventory window filters only the local list (AddLocalItem) and moves one row per click. The enhanced remote pane already filtered the player's own stores (WAGON-FILTER, above). A container — a chest, a corpse — now carries that same bar, and a rarity menu beside it.
+
+- **The bar.** Search, then the pack's pages (and Materials), then rarity, then material. The rarity menu lists only the tiers that container holds, in `RARITY_ORDER`, each as its label and its count ("Rare (3)"). Its first row is Any Rarity. The material menu is the same shape for armour and weapons: Any Material, then only the metals that list holds (Leather and Chain, then the ten plate metals), each with its count. A chosen tier or metal stays at nought. An arrow, a book and anything else with no metal of its own are not a material, and neither is a metal the card withholds - an unidentified piece below Rare, an artifact, a helm or shield under HelmAndShieldMaterialDisplay: the menu reads the card's own gate (`itemInfo.js:"export const itemSaysMaterial ="`), so a filter never picks out a piece by what its card does not say. The metal is named as the window prints it (`metalLabel`). With the loot-rarity ladder off, the rarity menu is not drawn and no tier is applied; the material menu stays. The search still reads the row's own name.
+- **Take all** walks those rows from the top, and its button stays on that list. **Stash all** walks the current pack page from the top, into the store beside it - the wagon, the player's own storage, the Materials Bag - and its button sits centred on the bottom edge of the pack's item list. A container's window never opens the pack (MAC-M2 B: a chest and a corpse are for taking), so Stash all is not on it; a fresh pack starts on Weapons. Each row goes through the one plan a click uses (`planTake`, `planStore`), and a take off someone else's keeping - a stranger's cupboard, a shut shop's shelf - is marked stolen exactly as a single take is (STOLEN-GOODS, `theftTarget`).
+- **Where it stops.** The first row the pack or the destination cannot hold stays, and so does everything under it. A row refused for another reason is left where it is and the walk continues. A stack that only partly fits is the last row moved. Stash all into a room container would stop at 64 rows (`LOOT_LIST_MAX`): a longer list is never told to the other players, who hear the container when its window closes, not row by row. No window offers that today (above); the stop stands for the layout that does.
+- **What does not change.** The ground and a reward tray have no bar and no buttons. The classic skin draws none of this.
+
+Pins: `test/ui/lootbulk.test.js`, and the MAT-SHOW heirloom in `test/systems/legacy/legacy4_heirloom.test.js`; `tools/mutants/lootbulk.json` (4, all dead). The reward tray's lack of a bar, which kills a filter forced onto every remote, stays in `test/systems/shiftstow.test.js`.
 
 
 ## TELL9 - THE FIGHT ON SCREEN (2026-10-04)

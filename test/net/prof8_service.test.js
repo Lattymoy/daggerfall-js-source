@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
+import { seatRealm } from '../realmSeat.mjs';   // INT16: a second realm character of the account, seated, for a haul the account's seat asks
 import { haulKey, pixelReport, SEA_REGION } from '../../src/net/nodeLaw.js';
 import { harvestXp, xpForRank, haulTier, PEARL } from '../../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
@@ -57,7 +58,7 @@ async function stand() {
 
 test('PROF8 service: a haul - Raw Fish into the Stores as own, 1-2 of them; Fishing XP at the rank\'s own tier (a Novice 15, a full net 22; a rank 55 angler 75); the account\'s hauls said; asked twice one', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const r = await s.haul(mac);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual([r.body.material, r.body.kind, r.body.track.profession, r.body.xp, r.body.hauls], ['food:fish', 'fish', 'fishing', harvestXp(1, 0, false), 1]);
@@ -86,7 +87,7 @@ test('PROF8 service: a haul - Raw Fish into the Stores as own, 1-2 of them; Fish
 
 test('PROF8 service: at sea on ground the witnesses confirmed, a Pearl and a Slaughterfish\'s scales (a fish more); a trophy anywhere, said again to an answer asked twice; on unconfirmed ground or inland, no Pearl and no scales', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   await s.confirm(500, 90, OCEAN, SEA_REGION);
   const sea = await zeroDice(() => s.haul(mac, { x: 500, y: 90, climate: OCEAN, region: SEA_REGION }));
   assert.equal(sea.status, 200, JSON.stringify(sea.body));
@@ -111,7 +112,7 @@ test('PROF8 service: at sea on ground the witnesses confirmed, a Pearl and a Sla
 
 test('PROF8 service: an ACCOUNT\'s hauls a day past forty (CAP-OFF) - the forty-first credited, on another character too, the account\'s count said; the kind and the key\'s one spelling; hauled by night too (ANY-HOUR); the pixel witnessed by a haul', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   for (let i = 0; i < 40; i++) {
     const r = await s.haul(mac, { x: 320 + (i % 5) });
     assert.equal(r.status, 200, `haul ${i + 1}: ${JSON.stringify(r.body)}`);
@@ -120,10 +121,12 @@ test('PROF8 service: an ACCOUNT\'s hauls a day past forty (CAP-OFF) - the forty-
   // forty-first was `prof-fish-cap`, on another character too
   const over = await s.haul(mac);
   assert.deepEqual([over.status, over.body.hauls], [200, 41], JSON.stringify(over.body));
-  const alt = { ...mac, character: 'char-mac-alt' };
+  // INT16 (Integrity-Arc section 7): a haul is a progression claim, asked of the account's SEATED realm character - so the
+  // other character is a second realm character of the account, seated (it takes the account's one lease), never an offline id
+  const alt = { ...mac, character: (await seatRealm(s.env, mac.secret, 'MacAlt')).id };
   const other = await s.haul(alt);
   assert.deepEqual([other.status, other.body.hauls], [200, 42], 'the account\'s hauls, counted across its characters');
-  const ann = await s.registered('Ann');
+  const ann = await s.seated('Ann');
   assert.deepEqual((await s.haul(ann, { kind: 'hide' })).body, { error: 'prof-kind' });
   const day = utcDay(NOON);
   assert.deepEqual((await s.haul(ann, { node: `haul:0300:200:${day}:${hid()}` })).body, { error: 'bad-node' }, 'one spelling');

@@ -34,14 +34,14 @@ async function stood(t) {
   const witnesses = [await svc.guest(), await svc.guest(), await svc.guest()];
   for (const seat of [ANTICLERE, ASHFIELD]) for (const w of witnesses) raw.prepare("INSERT INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)").run(String(seat.key), w.id, seatReportText(seat), seat.region, T0 - DAY);
   raw.prepare('INSERT INTO town_seat_weeks (week, settled_at) VALUES (?, ?)').run(W - 1, T0);
-  const gm = await svc.registered('Gamal', { renown: 12 });
+  const gm = await svc.seated('Gamal', { renown: 12 });
   assert.equal((await svc.found(gm, { name: 'The Silver Hand', tag: 'SH' })).status, 200);
   const gid = raw.prepare('SELECT guild_id FROM guild_members WHERE player = ? AND char_id = ?').get(gm.id, gm.character).guild_id;
   raw.prepare('UPDATE guild_members SET joined_at = ? WHERE guild_id = ?').run(T0 - SEAT_MEMBER_WAIT_S - DAY, gid);
   raw.prepare(`INSERT INTO town_seat_holds (key, guild_id, region, tier, since_week, standing, truce_week, at, tithe, owed)
     VALUES (?, ?, ?, ?, ?, 50, NULL, ?, 6, 0)`).run(ANTICLERE.key, gid, ANTICLERE.region, ANTICLERE.tier, W - 1, T0 - 7 * DAY);
   const member = async (handle) => {
-    const m = await svc.registered(handle);
+    const m = await svc.seated(handle);
     raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, ?, ?, ?)').run(m.id, m.character, gid, 2, handle, T0 - 30 * DAY);
     return m;
   };
@@ -89,7 +89,7 @@ test('PROF12 APOTHECARY: a holder\'s member cutting a piece of jewellery in its 
   s.work('apothecary', 2);
   s.work('forge', 2);
   const jew = await s.member('Jessa');
-  const stranger = await s.svc.registered('Stranger');
+  const stranger = await s.svc.seated('Stranger');
   assert.equal(stationSteps('jewelcrafting', { apothecary: 2, forge: 2 }), 2, 'the Apothecary\'s two, never the Forge\'s');
   assert.equal((await s.craft(jew, 'ring:silver', null)).quality, 0, 'margin 0, the roll\'s bottom: Crude');
   assert.equal((await s.craft(jew, 'ring:silver', ANTICLERE.key)).quality, 2, 'the Apothecary at tier 2: Fine');
@@ -102,7 +102,7 @@ test('PROF12 APOTHECARY: a holder\'s member cutting a piece of jewellery in its 
 test('PROF12 APOTHECARY: a dish takes no quality - DECIDED, its step is the clean pan\'s: the dish\'s XP half again a tier (20, 30 at tier 1; a clean pan at tier 2 two and a half times - 50); the quality stays none; a stranger\'s 20 (mutants: the dish\'s steps; the step\'s half)', async (t) => {
   const s = await stood(t);
   const cook = await s.member('Cooky');
-  const stranger = await s.svc.registered('Stranger');
+  const stranger = await s.svc.seated('Stranger');
   const first = await s.craft(cook, 'stew:north', null);
   assert.deepEqual([first.xp, first.quality], [20 + FIRST_CRAFT_XP, -1], 'the first: 20 and the 500, no quality');
   assert.equal((await s.craft(cook, 'stew:north', ANTICLERE.key)).xp, 20, 'no Apothecary standing: the plain dish');
@@ -120,7 +120,7 @@ test('PROF12 APOTHECARY: a brew in its town takes +10 Potent a tier - a Novice\'
   s.work('apothecary', 2);
   s.work('workshop', 2);
   const alch = await s.member('Alcy');
-  const stranger = await s.svc.registered('Stranger');
+  const stranger = await s.svc.seated('Stranger');
   const a = await s.brew(alch, ANTICLERE.key, 0x32);
   assert.deepEqual([a.potent, a.steps], [25, 2], 'Novice at a tier-2 Apothecary: 20 - a roll of 19.5 Potent');
   const b = await s.brew(alch, ANTICLERE.key, 0x34);

@@ -165,7 +165,7 @@
   {
     "name": "P2-session-halo-support-unread",
     "file": "src/net/online.js",
-    "old": "      else { const h = this._halo.get(room); if (h) h.lookOk = relaySupportsLook(relayV); }   // PROFILE2: a halo says for itself\n",
+    "old": "      else { const h = this._halo.get(room); if (h) h.lookOk = relaySupportsLook(relayV); }   // PROFILE2: a halo says for itself (AUDIT ONLINE 3, the second read: under its own line, no longer the party lead's `else`)\n",
     "new": "",
     "tests": [
       "test/net/profile2_pause_profile.test.js"

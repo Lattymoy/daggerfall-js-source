@@ -103,5 +103,5 @@ test('RVN12b THE CARD\'S EDGES: a last stand blood with an ember rim, a signatur
   assert.match(css, /\.rvncard\.is-signature \{ border-left-color: #a8332a; \}/);
   assert.match(css, /\.rvncard\.is-stole \{ border-left-color: #c9822e; \}/);
   assert.match(css, /\.rvncard\.is-betrayed \{ border-left-color: #0b0b0b; \}/);
-  for (const k of ['felled', 'festered', 'lair', 'weakness', 'routed', 'unbroken', 'deserted', 'warn']) assert.match(css, new RegExp(`\\.rvncard\\.is-${k}[,\\s][^{]*\\{ border-left-color`), k);
+  for (const k of ['felled', 'festered', 'lair', 'weakness', 'routed', 'unbroken', 'deserted', 'warn', 'errand', 'errand_back', 'art']) assert.match(css, new RegExp(`\\.rvncard\\.is-${k}[,\\s][^{]*\\{ border-left-color`), k);   // AUDIT RVN D7: RVN-ERRAND's and RVN-ARTS' cards too
 });

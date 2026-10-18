@@ -80,7 +80,9 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     'ModeWheel',   // MODE-WHEEL: the interaction-mode wheel, held - appended after LEGACY3's
     'WeaponTechnique',   // TECH1: the weapon's technique (bible/05-Combat/Weapon-Techniques.md) - appended
     'Spyglass',   // SPYGLASS: the captain's glass (bible/03-World/Captains-Sea.md) - appended
-    'SaddlePanel',   // UI-CALM: the saddle panel's key (bible/10-UI/UI-Calm.md) - appended last
+    'SaddlePanel',   // UI-CALM: the saddle panel's key (bible/10-UI/UI-Calm.md) - appended
+    'ShipHold',   // CARGO-ANYWHERE: the ship's hold, from anywhere (bible/03-World/Naval-Refit.md) - appended (PIN MOVED)
+    'ShotCycle',   // SHOT-KINDS: the guns' load (bible/03-World/Naval-Refit.md) - appended last (PIN MOVED)
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -143,6 +145,7 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     'KeyB=ShoulderSwitch', 'NumpadAdd=AutoPerspective',
     'KeyK=FollowPaths',
     'Comma=HorseMount', 'Period=HorseSummon', 'F2=SaddlePanel',   // UI-CALM: the saddle panel (F2: Slash is the decorator's grid)
+    'F4=ShipHold',   // CARGO-ANYWHERE: the ship's hold (F4: F1 and F3 are the browser's) - PIN MOVED
     // CSA-D: the mod's C and Period are Crouch's and the summon's, so the helm's two ship on free keys under the
     // right hand (the Port-Ledger's Come Sail Away row).
     'Quote=BoatDisembark', 'Semicolon=BoatToggleLight',
@@ -174,12 +177,12 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   // DebugOverlay ships unbound, a developer's key. CSA-D: two more appended, both bound; CSA-E four more, all bound;
   // CSA-G three more, all bound. PROF1: and the act choice, appended and bound (the up arrow). HELM-KEYS: less sail on
   // the down arrow; more sail owns no key - it SHARES the up arrow with the act choice (DEFAULT_SHARES).
-  assert.equal(DEFAULT_BINDINGS.length, 77);   // UI-CALM: plus the saddle panel's (F2); TECH1: plus the technique's (Mouse3); MODE-WHEEL: minus F1-F4 and Sneak's Alt, plus the wheel's; LEGACY3: plus the Family tab's; VIEW-TOGGLE: plus the view's toggle; PROF1: plus the act choice's; HELM-KEYS: plus less sail's
-  assert.equal(bound.size, 77, 'no action is defaulted twice');   // TECH1: the technique's own
+  assert.equal(DEFAULT_BINDINGS.length, 78);   // CARGO-ANYWHERE: plus the hold's (F4) - PIN MOVED; UI-CALM: plus the saddle panel's (F2); TECH1: plus the technique's (Mouse3); MODE-WHEEL: minus F1-F4 and Sneak's Alt, plus the wheel's; LEGACY3: plus the Family tab's; VIEW-TOGGLE: plus the view's toggle; PROF1: plus the act choice's; HELM-KEYS: plus less sail's
+  assert.equal(bound.size, 78, 'no action is defaulted twice');   // TECH1: the technique's own
   // TV1: one more appended after them, and unbound - the travel view's door is the map's.
-  assert.equal(ACTIONS.length, 91);   // UI-CALM: + SaddlePanel, last (PIN MOVED); SPYGLASS: + Spyglass, last (PIN MOVED); TECH1: + WeaponTechnique; MODE-WHEEL: + ModeWheel, last; LEGACY3: + LegacyFamily, last; CLASSIC-PAGES: + Professions, last; PADWALK: + WalkMode, after them (main's indices are live); VIEW-TOGGLE: + TogglePerspective; PROF1: + ActChoice; HELM-KEYS: + BoatSailUp, BoatSailDown, last
+  assert.equal(ACTIONS.length, 93);   // SHOT-KINDS: + ShotCycle, last (PIN MOVED); CARGO-ANYWHERE: + ShipHold (PIN MOVED); UI-CALM: + SaddlePanel, last (PIN MOVED); SPYGLASS: + Spyglass, last (PIN MOVED); TECH1: + WeaponTechnique; MODE-WHEEL: + ModeWheel, last; LEGACY3: + LegacyFamily, last; CLASSIC-PAGES: + Professions, last; PADWALK: + WalkMode, after them (main's indices are live); VIEW-TOGGLE: + TogglePerspective; PROF1: + ActChoice; HELM-KEYS: + BoatSailUp, BoatSailDown, last
   // PIN MOVED (SPYGLASS, 2026-10-11): the glass owns no key - it shares K with the road's follow
-  assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'QuickSwap', 'DebugOverlay', 'TravelView', 'WalkMode', 'BoatSailUp', 'Professions', 'Spyglass'], 'the fourteen without an owned key, named - more sail\'s, the Professions key\'s and the glass\'s are default shares; MODE-WHEEL: the four modes and Sneak');
+  assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['ToggleConsole', 'Slide', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode', 'Sneak', 'QuickSwap', 'DebugOverlay', 'TravelView', 'WalkMode', 'BoatSailUp', 'Professions', 'Spyglass', 'ShotCycle'], 'the fourteen without an owned key, named - more sail\'s, the Professions key\'s and the glass\'s are default shares; MODE-WHEEL: the four modes and Sneak');
   assert.deepEqual(DEFAULT_SHARES, [['ArrowUp', 'BoatSailUp', 'ActChoice'], ['ArrowDown', 'Professions', 'BoatSailDown'], ['KeyK', 'Spyglass', 'FollowPaths']], 'HELM-KEYS: the default shares - onto their partners\' own keys; CLASSIC-PAGES: the Professions key beside less sail; SPYGLASS: the glass beside the road\'s follow');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
@@ -224,7 +227,7 @@ test('I1: the two clears - by action walks all its codes, by code takes one (:80
 test('I1: a FULL reset clears primary and the removed list but NOT secondary (:956-960)', () => {
   const s = createBindings();
   resetDefaults(s);
-  assert.equal(s.primary.size, 77);   // UI-CALM: plus the saddle panel's Slash; TECH1: plus the technique's Mouse3; MODE-WHEEL: minus F1-F4 and Sneak's Alt, plus the wheel's; LEGACY3: plus the Family tab's key; HELM-KEYS: plus less sail's (more sail's is a share - sharedPrimary); VIEW-TOGGLE: plus the view's toggle; PROF1: plus the act choice's key; CSA-D: plus the helm's two; CSA-E: the sails' four; CSA-G: the time scale's three; KB1: DFU's 42 (its console and Slide rows unbound) plus the port's 24; SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key
+  assert.equal(s.primary.size, 78);   // CARGO-ANYWHERE: plus the hold's F4 (PIN MOVED); UI-CALM: plus the saddle panel's Slash; TECH1: plus the technique's Mouse3; MODE-WHEEL: minus F1-F4 and Sneak's Alt, plus the wheel's; LEGACY3: plus the Family tab's key; HELM-KEYS: plus less sail's (more sail's is a share - sharedPrimary); VIEW-TOGGLE: plus the view's toggle; PROF1: plus the act choice's key; CSA-D: plus the helm's two; CSA-E: the sails' four; CSA-G: the time scale's three; KB1: DFU's 42 (its console and Slide rows unbound) plus the port's 24; SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key
   // a secondary binding on a code no default uses SURVIVES the reset;
   // one on a default's code is stolen back by SetBinding's alt-removal.
   // QUICK-LOOT B4: this was KeyP, chosen because no default used it -

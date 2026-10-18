@@ -238,8 +238,8 @@
   {
     "name": "CC-host-posts-unread",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "s.worth = b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH;",
-    "new": "s.worth = NO_WORTH;",
+    "old": "s.worth = captainWorth(b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH, deps.captain?.stats?.());",
+    "new": "s.worth = captainWorth(NO_WORTH, deps.captain?.stats?.());",
     "tests": [
       "test/systems/naval/captcrew.test.js"
     ]

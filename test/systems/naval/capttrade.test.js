@@ -63,7 +63,9 @@ test('CAPT-TRADE a port\'s trade: its crown\'s makes and wants, twisted by one g
   assert.ok(!GOODS.find((g) => g.id === extra[0]).ether);
   const twists = new Set(Array.from({ length: 30 }, (_, i) => JSON.stringify(portTrade({ key: `p${i}`, crown: 'Wayrest' }))));
   assert.ok(twists.size > 3, 'ports of a crown differ');
-  assert.deepEqual(portTrade(ISLE), { makes: ['etheramber', 'starglass', 'voidsilk'], wants: ['wine', 'grain', 'wool', 'iron', 'spice', 'silk', 'silver', 'ivory'] });
+  // PIN MOVED (ISLE-TRADE, 2026-10-17): an isle makes its own good of the Bay besides (tradeGoods.js isleGood - Driftholm's
+  // key draws iron), and wants every other good of the Bay
+  assert.deepEqual(portTrade(ISLE), { makes: ['etheramber', 'starglass', 'voidsilk', 'iron'], wants: ['wine', 'grain', 'wool', 'spice', 'silk', 'silver', 'ivory'] });
   assert.equal(standOf(WAYREST, 'wine'), 'makes');
   assert.equal(standOf(WAYREST, 'iron'), 'wants');
   assert.equal(standOf(WAYREST, 'starglass'), 'wants', 'the Eltheric goods wanted in the Bay');
@@ -108,7 +110,10 @@ test('CAPT-TRADE the exchange\'s board: every good of its sea, the other sea\'s 
   assert.equal(dealt.find((r) => r.id === 'wine').sells, 18);
   assert.equal(dealt.find((r) => r.id === 'iron').buys, 25);
   const isle = exchangeOf(ISLE, 3);
+  // PIN MOVED (ISLE-TRADE): an isle sells its own good of the Bay as made (iron, Driftholm's), and none of the rest
   assert.ok(isle.find((r) => r.id === 'wine').sells === 0 && isle.find((r) => r.id === 'voidsilk').sells === 30);
+  const iron = isle.find((r) => r.id === 'iron');
+  assert.deepEqual([iron.stand, iron.exotic, iron.sells, iron.buys], ['makes', false, 30, 4], 'its own good: sold as made, never "not sold here"');
 });
 
 function officeOf(o = {}) {
@@ -243,12 +248,12 @@ test('CAPT-TRADE the exchange\'s tab: each good\'s stand, its two prices and how
   const hold = [mintGood('iron', 3)];
   const x = h.office.exchange({ uid: 42, cargo: hold });
   const t = exchangeText(x);
-  assert.match(t.lede, /^Wayrest's exchange\. Her hold carries 36 kg of goods; your purse 5,000 gold\.$/);
+  assert.match(t.lede, /^Wayrest's exchange\. The hold carries 36 kg of goods; your purse 5,000 gold\.$/);
   const wine = t.rows.find((r) => r.id === 'wine');
   assert.match(wine.words, /^Made here - cheap - buy at \d+ gold a cask \(30 left today\) - sell at \d+ gold \(4 wanted\)$/);
   const iron = t.rows.find((r) => r.id === 'iron');
-  assert.deepEqual([iron.extra, iron.canSell], ['In her hold: 3 pigs', true]);
-  assert.equal(exchangeText(h.office.exchange(null)).lede, 'Wayrest\'s exchange - deal from your helm, into her hold.');
+  assert.deepEqual([iron.extra, iron.canSell], ['In the hold: 3 pigs', true]);
+  assert.equal(exchangeText(h.office.exchange(null)).lede, 'Wayrest\'s exchange - trade from the helm, into the hold.');
   const proto = Object.getPrototypeOf(globalThis.document.createElement('div'));
   proto.removeAttribute ??= function removeAttribute(k) { delete this.attrs[k]; };
   const model = { name: 'Small Ship', uid: 42, offer: () => ({ rows: [], whole: 0, gold: 5000 }), ship: () => ({ hull: 1, maxHull: 1, sail: 1, maxSail: 1, crew: 1, maxCrew: 1, barrels: 0 }), exchange: () => h.office.exchange({ uid: 42, cargo: hold }) };

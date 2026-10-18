@@ -26,6 +26,7 @@
 import { CROWNS } from './navalShips.js';
 import { LEAGUE_M, inEtherLaw, ETHER_WORD } from '../../world/ethericSea.js';
 import { HARBOUR_CONTRACT_KINDS, CONTRACTS_MAX, STANDING_FAILED, STANDING_ABANDONED, advance, expired, restoreContract } from './harbourBoard.js';
+import { captainOf, heldStars, starStats } from './captainTree.js';   // CAPTAIN-TREE: a captain's level off the log, and the stars held
 
 export const CAPTAIN_SAVE_VENDOR = 'Captain';
 export const CAPTAIN_SAVE_VERSION = 1;
@@ -166,6 +167,10 @@ export function createCaptainLedger() {
    *  the caches raised (their ids, the newest CHARTS_RAISED_KEEP). */
   let charts = [];
   let raised = [];
+  /** CAPTAIN-TREE (captainTree.js): the stars of the captain's sky held - the Helm first, each joined to it. */
+  let tree = ['helm'];
+  /** ...and what they do (starStats), kept with them - the seams read it every frame. */
+  let stats = starStats(tree);
   /** ETHER-SEA: the captain's Eltheric Ocean - the isles charted (world/ethericSea.js cell keys), the legends ended (the
    *  day each was), the wild isles' strands gathered (the day each was), the Bay's waters the last crossing out set sail
    *  from (the way home's landfall), the crossings made. */
@@ -362,9 +367,19 @@ export function createCaptainLedger() {
     hearLegend(id) { if (typeof id === 'string' && !ether.heard.includes(id) && ether.heard.length < LOG_LIST_MAX) ether.heard.push(id); },
     heard: () => ether.heard.slice(),
     get crossings() { return ether.crossings; },
+    // ── CAPTAIN-TREE: the captain's level and sky ──
+    /** The captain's reading off the log: `{ xp, level, points, next }` (captainTree.js captainOf). */
+    captain: () => captainOf(log),
+    /** The stars held, the Helm first. */
+    tree: () => tree.slice(),
+    /** The sky set (the window's confirm): through the law - the Helm, known stars each joined to it, no more than the
+     *  captain's points. Answers the stars held. */
+    setTree(ids) { tree = heldStars(ids, captainOf(log).points); stats = starStats(tree); return tree.slice(); },
+    /** What the stars held do (captainTree.js CAPTAIN_STATS, each a share) - frozen, the seams' to read. */
+    stats: () => stats,
     // ── the save ──
-    newSaveData: () => ({ v: CAPTAIN_SAVE_VERSION, log: newLog(), standing: zeros(crownNames()), marque: null, contracts: [], taken: [], dealt: null, charts: [], raised: [], ether: newEther() }),
-    getSaveData: () => ({ v: CAPTAIN_SAVE_VERSION, log: JSON.parse(JSON.stringify(log)), standing: { ...standing }, marque: marque ? { ...marque } : null, contracts: JSON.parse(JSON.stringify(contracts)), taken: taken.slice(), dealt: dealt ? JSON.parse(JSON.stringify(dealt)) : null, charts: JSON.parse(JSON.stringify(charts)), raised: raised.slice(), ether: JSON.parse(JSON.stringify(ether)) }),
+    newSaveData: () => ({ v: CAPTAIN_SAVE_VERSION, log: newLog(), standing: zeros(crownNames()), marque: null, contracts: [], taken: [], dealt: null, charts: [], raised: [], ether: newEther(), tree: ['helm'] }),
+    getSaveData: () => ({ v: CAPTAIN_SAVE_VERSION, log: JSON.parse(JSON.stringify(log)), standing: { ...standing }, marque: marque ? { ...marque } : null, contracts: JSON.parse(JSON.stringify(contracts)), taken: taken.slice(), dealt: dealt ? JSON.parse(JSON.stringify(dealt)) : null, charts: JSON.parse(JSON.stringify(charts)), raised: raised.slice(), ether: JSON.parse(JSON.stringify(ether)), tree: tree.slice() }),   // CAPTAIN-TREE: her stars
     restoreSaveData(r) {
       log = newLog();
       standing = zeros(crownNames());
@@ -377,6 +392,8 @@ export function createCaptainLedger() {
       ether = newEther();
       chartedSet = new Set();
       rankChanges.length = 0;
+      tree = ['helm'];
+      stats = starStats(tree);
       if (!r || typeof r !== 'object') return;
       const l = r.log && typeof r.log === 'object' ? r.log : {};
       for (const k of LOG_TRADES) { log.sunk[k] = whole(l.sunk?.[k]); log.taken[k] = whole(l.taken?.[k]); }
@@ -412,6 +429,8 @@ export function createCaptainLedger() {
       ether.from = wayOutOf(e.from);
       ether.crossings = whole(e.crossings);
       ether.heard = [...new Set((Array.isArray(e.heard) ? e.heard : []).filter((id) => typeof id === 'string' && id.length <= 24))].slice(0, LOG_LIST_MAX);
+      tree = heldStars(r.tree, captainOf(log).points);   // CAPTAIN-TREE: her stars as the law and her log allow (an older save's: the Helm)
+      stats = starStats(tree);
     },
   };
   /** CAPT-BOARD: a contract ended - off the list; done, its crown's regard, its kind's count and its purse; failed, the

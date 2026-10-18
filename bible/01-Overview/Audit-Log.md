@@ -8,6 +8,14 @@
 
 Newest first.
 
+**2026-10-17 - AUDIT RVN (RVN-GEAR, RVN-ARTS, RVN-ERRAND - PR #988).** Mac: *"Please audit everything and ensure
+perfection"*. Five cold lanes on the frozen branch - the kit, the arts, the errands, the page with its words and record,
+the balance measured - and no edit until all had reported. The blocker: online an errand paid on raised time (a rest, a
+Loiter, a road's x100 - 906k of wealth a real hour at level 30 against the band's 200k); it now runs on QCLOCK-WORLD's
+lived step. Every finding - the tier, piece and fine-goods bounds, the arts' ground, gates, weights and stale marks, the
+kit's identity take-back and wear, the page's list, the words in 13 languages - fixed or decided, each in
+`06-Systems/Revenants.md` section 43; 172 mutants, all dead.
+
 **2026-10-17 - AUDIT ANTICHEAT (#955 picked up).** Mac: *"Pick it up and audit it"* - assuredumbrel's #955, "close
 release-build cheat doors": `surfacePlayer()` published the whole live entity as `window.__playerEntity` on every page,
 and the installed shell carried View > Toggle Developer Tools. Its commit is carried whole, its author kept, and read

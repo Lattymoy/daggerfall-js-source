@@ -196,8 +196,9 @@ test('AUDIT BAY A14: HER FIRE, SMOKE, WAKE AND COLOURS GO WITH HER FLATS - under
   const boat = (fade) => ({ fade, flagColor: [1, 0, 0], particleSystems: [ps('WakeMaterial'), ps('Default-Particle'), ps('Flag', 4)] });
   const whole = boat(1), going = boat(FADE_FLATS - 0.01), coming = boat(FADE_FLATS);
   // eslint-disable-next-line no-new-func
-  const lists = new Function('naval', 'csaRuntime', 'CSA_RENDER_MODE', 'CSA_FADE_FLATS', `${src}\nreturn csaParticleLists();`)(
-    { enabled: true, boats: () => [going, coming] }, { AllBoats: [whole] }, { Mesh: 4 }, FADE_FLATS);
+  // PIN MOVED (SHIP-COLOURS): the host's flags in scope - none flown here, so every pennant is drawn
+  const lists = new Function('naval', 'csaRuntime', 'CSA_RENDER_MODE', 'CSA_FADE_FLATS', 'shipFlags', `${src}\nreturn csaParticleLists();`)(
+    { enabled: true, boats: () => [going, coming] }, { AllBoats: [whole] }, { Mesh: 4 }, FADE_FLATS, { flies: () => false });
   assert.deepEqual([lists.wake.length, lists.drops.length, lists.flags.length], [2, 2, 2], 'mine and the one over FADE_FLATS - never the one under it');
   assert.match(WORLD, /import \{ createComeSailAwayPool, CULL_DETAIL_PX, FADE_FLATS as CSA_FADE_FLATS \} from '\.\/comeSailAway\/comeSailAwayPool\.js';/);
 });

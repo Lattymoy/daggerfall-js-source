@@ -52,11 +52,11 @@ async function stand(extra = {}) {
     return Number(m.m) - Number(m.b) === Number(a) + Number(g) + Number(e);
   };
   const guild = async ({ marks = 5_000, members = ['Bran', 'Cass', 'Dain'], tenure = 8, tag = 'HND', gmName = 'Aldric', officerName = 'Mara' } = {}) => {
-    const gm = await s.registered(gmName, { renown: 10 });
+    const gm = await s.seated(gmName, { renown: 10 });
     s.seedMarks(gm, 100_000, `gm-${tag}`);
     const g = (await s.found(gm, { name: `The ${tag} Guild`, tag })).body.guild;
     const join = async (handle) => {
-      const w = await s.registered(handle, { renown: 1 });
+      const w = await s.seated(handle, { renown: 1 });
       await s.call('/v1/guilds/invite', { character: gm.character, handle }, gm.secret);
       await s.call('/v1/guilds/answer', { character: w.character, guild: g.id, accept: true }, w.secret);
       return w;
@@ -147,7 +147,7 @@ test('AUDIT SILVER-WAYS B1: a party\'s claims, every one read before any is writ
   const { gm, g } = await s.guild({ marks: 5_000, tag: 'PAY', gmName: 'Payer', officerName: 'Payo', members: ['Pam'] });
   const post = await s.call('/v1/writs/contract', { character: gm.character, region: DF, kind: 'raid', pay: 30, deeds: 10, rid: rid() }, gm.secret);
   assert.equal(post.status, 200, JSON.stringify(post.body));
-  const party = [await s.registered('Uno'), await s.registered('Duo'), await s.registered('Tre'), await s.registered('Qua')];
+  const party = [await s.seated('Uno'), await s.seated('Duo'), await s.seated('Tre'), await s.seated('Qua')];
   // THE BARRIER: each claim's own batch (its raid_cleanses row first) held until all four have read
   const db = s.env.DB;
   const prepare = db.prepare.bind(db), batch = db.batch.bind(db);
@@ -188,7 +188,7 @@ test('AUDIT SILVER-WAYS B2: an Officer whose own guilds\' contracts outrank the 
   const r = await s.raid(a.officer, raidKey(DF, 60));
   assert.deepEqual(r.body.contracts?.map((c) => [c.contract, c.pay + c.tax]), [[low.body.contract.id, 40]], 'LOW\'s pays the Officer; TOP\'s and MID\'s never');
   // an outsider: the best three, never a fourth (CONTRACTS_PAID_MAX, the batch's own count)
-  const out = await s.registered('Outa');
+  const out = await s.seated('Outa');
   const paid = await s.raid(out, raidKey(DF, 60));
   assert.deepEqual(paid.body.contracts.map((c) => c.pay + c.tax), [50, 50, 50]);
   assert.ok(s.addsUp());
@@ -200,7 +200,7 @@ test('AUDIT SILVER-WAYS B1: a claim reads past the contracts it may be paid by -
   const { gm } = await s.guild({ marks: 5_000, tag: 'FIL', gmName: 'Fila', officerName: 'Filo', members: ['Fia'] });
   for (let i = 0; i < 3; i++) assert.equal((await s.call('/v1/writs/contract', { character: gm.character, region: DF, kind: 'raid', pay: 50, deeds: 1, rid: rid() }, gm.secret)).status, 200);
   const next = await s.call('/v1/writs/contract', { character: gm.character, region: DF, kind: 'raid', pay: 40, deeds: 5, rid: rid() }, gm.secret);
-  const pair = [await s.registered('Xan'), await s.registered('Yve')];
+  const pair = [await s.seated('Xan'), await s.seated('Yve')];
   const db = s.env.DB;
   const prepare = db.prepare.bind(db), batch = db.batch.bind(db);
   db.prepare = (sql) => Object.assign(prepare(sql), { _sql: sql });
@@ -237,7 +237,7 @@ test('AUDIT SILVER-WAYS B3: a guild with a contract standing refuses to disband 
 async function lodeRig(extra = {}) {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'Mac', ...extra });
   const raw = s.env.DB._raw;
-  const witnesses = [await s.registered('Wita'), await s.registered('Witb'), await s.registered('Witc')];
+  const witnesses = [await s.seated('Wita'), await s.seated('Witb'), await s.seated('Witc')];
   const confirm = (n, day = DAY0) => {
     for (let i = 0; i < n; i++) {
       for (const w of witnesses) {
@@ -247,7 +247,7 @@ async function lodeRig(extra = {}) {
     }
   };
   const miner = async (handle) => {
-    const w = await s.registered(handle);
+    const w = await s.seated(handle);
     raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, 'mining', ?, ?)`).run(w.id, w.character, xpForRank(MOTHERLODE_RANK), _now);
     return w;
   };

@@ -15,6 +15,7 @@ import { countedDb, measured, tableOf, tablesBlob, HOT_TABLES, heartbeatPartsOf 
 import { createRenownTracker, renownAnswer, renownReportSoon, RENOWN_BACKOFF_MAX_MS } from '../../src/net/renownTracker.js';
 import { RENOWN_REPORT_MS, RENOWN_COALESCE_MS, RENOWN_XP_HOUR_MAX, RENOWN_XP_REPORT_MAX, RENOWN_XP_MAX, renownXpFor } from '../../src/net/renown.js';
 import { playerHour } from '../../tools/hotWritesBench.mjs';
+import { seatRealm } from '../realmSeat.mjs';   // INT16: a Renown report is a progression claim, asked of the account's seated realm character
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -98,7 +99,11 @@ test('SCALE4h the service says what the hour still takes: after each report, the
   // through the real Worker
   const S = await standService();
   const g = await S.guest();
-  const res = await S.call('/v1/renown/xp', { character: 'char-cccc', xp: 250 }, g.secret);
+  // INT16 (Integrity-Arc section 7): a report is asked of the account's SEATED realm character - the guest seats one, and
+  // the offline id this pin reported for is refused before the route reads a word
+  assert.deepEqual(await S.call('/v1/renown/xp', { character: 'char-cccc', xp: 250 }, g.secret), { status: 403, body: { error: 'progress-seat' } }, 'INT16: an offline id earns nothing');   // PIN MOVED (INT16, Integrity-Arc section 7): this pin's guest was credited for an offline id; a report names the account's seated realm character now
+  const C = (await seatRealm(S.env, g.secret, 'Cass')).id;
+  const res = await S.call('/v1/renown/xp', { character: C, xp: 250 }, g.secret);
   assert.equal(res.status, 200);
   assert.equal(res.body.room, RENOWN_XP_HOUR_MAX - 250, 'the route answers the room');
   assert.deepEqual(renownAnswer(res.body, 250, null).room, RENOWN_XP_HOUR_MAX - 250, 'and the page\'s plan carries it');

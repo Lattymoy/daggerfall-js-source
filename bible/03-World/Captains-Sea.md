@@ -356,7 +356,8 @@ way).
 The shipwright's window's EXCHANGE tab (`harbourOffice.js exchange`): `tradeGoods.js GOODS` - eight of the Bay (wine,
 grain, wool, iron, spices, silk, silver, ivory) and the Eltheric Ocean's three (ether-amber, starglass, voidsilk). Each
 crown's ports MAKE some and WANT others (`CROWN_TRADE`), every port twisting its crown's trade by one good of its own
-off its key (`portTrade`); the Eltheric Ocean's goods are wanted in every port of the Bay and made only on its isles. A
+off its key (`portTrade`); the Eltheric Ocean's goods are wanted in every port of the Bay and made only on its isles, and
+(ISLE-TRADE, 2026-10-17, `03-World/Naval-Refit.md`) each isle makes one good of the Bay of its own (`isleGood`). A
 good's price is its base times MADE_K where made, WANT_K where wanted (EXOTIC_K for the other sea's), drifting within
 PRICE_DRIFT a day - the same for every client on the world's day (`priceOf`); the exchange sells SPREAD over it and buys SPREAD
 under it, and deals only so much of a good a day (`DAY_STOCK`: plenty of what it makes, little of what it wants - and it is
@@ -367,7 +368,8 @@ the quay (Come Sail Away's cargo: their weight is on her way) - never past her r
 own reckoning (`cargoRoom`: she slows past her threshold and lies dead in the water at twice it), says the kg she still
 carries before she would, and caps a purchase there (B11); sold, out of it; a sale's gold in the log. The other sea's
 goods a port never sells read "not sold here", and are listed where the captain may sail for them or carries some
-(`etherGoods` - B16).
+(`etherGoods` - B16); an isle's own good of the Bay is no other sea's good there - it is sold, and listed on either skin
+(ISLE-TRADE).
 
 The goods are ITEMS of the port's own (DECLARED): custom templates from GOODS_TEMPLATE (1331), stackable, the row's
 weight and base - and no shop buys them: the exchange alone deals in them (`shopStock.js shopBuysItem` - AUDIT

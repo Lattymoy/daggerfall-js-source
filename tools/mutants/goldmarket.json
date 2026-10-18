@@ -87,7 +87,9 @@
     "new": "AND listed = 0)",
     "tests": [
       "test/net/goldmarket_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "INT19: pieceListRefusal says the wall's word before the record moves, and `bought_with` moves only with a sale - which takes the piece out of the seller's record first, so the listing's record step then fails whole"
   },
   {
     "name": "GOLDMARKET-view-both-currencies",

@@ -166,8 +166,9 @@
   {
     "name": "SMOKE-HANG-a-curl-failure-not-read-as-000",
     "file": ".github/workflows/account-deploy.yml",
-    "old": "-H 'content-type: application/json' -d \"$data\") || got=000",
-    "new": "-H 'content-type: application/json' -d \"$data\")",
+    "note": "INT16 (PIN MOVED): re-aimed by content - the retry is `ask`, one loop every smoke call goes through",
+    "old": "\"$@\" \"$url\") || got=000",
+    "new": "\"$@\" \"$url\")",
     "tests": [
       "test/systems/home2.test.js"
     ]

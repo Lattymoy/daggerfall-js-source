@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-SCALE-II-A3-copy-read",
     "file": "server-account/src/metrics.js",
-    "old": "  const res = await serve(request, counted, said);",
-    "new": "  await request.clone().text().catch(() => '');\n  const res = await serve(request, counted, said);",
+    "old": "  const res = await serve(request, counted, said, exec);",
+    "new": "  await request.clone().text().catch(() => '');\n  const res = await serve(request, counted, said, exec);",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],

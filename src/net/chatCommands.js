@@ -162,7 +162,7 @@ export const SHORTCODES = Object.freeze(Object.fromEntries(SHORTCODE_LIST));
 /** EMOTE1: every `:code:` the table knows, its emoji - the rest as typed. */
 export const expandShortcodes = (text) => String(text ?? '').replace(/:([a-z0-9_+-]{1,20}):/gi, (all, code) => SHORTCODES[code.toLowerCase()] ?? all);
 /** The commands the host handles itself, before this parser is asked (their own slices pin their grammar). */
-export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready', 'leader', 'travel', 'event', 'note', 'mentor', 'mail', 'mailbox', 'breach']);   // AUDIT EG V (c, L7-1): /breach, the Elite Breach's (breachCommandOf)   // SERVER-POST: /mail (and /mailbox), the mailbox   // SOFTCAP1: /mentor   // TITLE-N: /dm, the Dungeon Master's line   // PARTY-TRAVEL: /leader and /travel   // EVENT1: /event, a dev's live event
+export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready', 'leader', 'travel', 'event', 'note', 'mentor', 'mail', 'mailbox', 'breach', 'block', 'unblock', 'blocked', 'report', 'conduct', 'rules', 'ban', 'unban', 'strikes', 'cases', 'case', 'dismiss', 'modhelp']);   // SAFE1-SAFE7: the chat safety commands (net/safety/safetyLaw.js SAFETY_COMMANDS, which a pin holds to these) - AUDIT SAFE DOC-4: and the moderators' look at the reports   // AUDIT EG V (c, L7-1): /breach, the Elite Breach's (breachCommandOf)   // SERVER-POST: /mail (and /mailbox), the mailbox   // SOFTCAP1: /mentor   // TITLE-N: /dm, the Dungeon Master's line   // PARTY-TRAVEL: /leader and /travel   // EVENT1: /event, a dev's live event
 /**
  * EVENT1: `/event <name> [on|off]` and `/event off` - a dev staging a live event for everyone online, or ending it.
  * `{kind}` (one of LIVE_EVENTS; '' ends the one staged), `{error}` in words for a line that names none, or null when
@@ -209,6 +209,9 @@ export const HELP_LINES = lazyLines([
   '/mail - your mailbox: the developers\' messages, and any item they hold to claim',
   '/find or /who <name> - who is online by that name, anywhere in the world',   // SCALE5c
   '/search <name> - every tab\'s lines from or about a player, and who here is online by that name (/search alone clears)',   // CHAT-FIND
+  () => t('net.chat.blockHelp', '/block <name>, /unblock <name>, /blocked - stop hearing a player (their lines, invites and requests), or hear them again'),   // SAFE1
+  () => t('net.chat.reportHelp', '/report <name> [harassment|hate|sexual|threat|spam][: note] - their recent lines, and your note, to the moderators; or press a name in the chat'),   // SAFE3 - AUDIT SAFE DOC-13: and the reporter's note
+  () => t('net.chat.rulesHelp', '/rules - the Code of Conduct every player agreed to'),   // SAFE7
   '//text - a line that starts with a slash',
 ]);
 

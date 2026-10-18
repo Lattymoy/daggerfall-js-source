@@ -242,7 +242,7 @@ test('SEA-TOWN HUDS: the naval HUD with no ship near (or the HUD covered) is han
   let labels = 0;
   const hs = {
     csaRuntime: { helmPanelState: () => hs.helm }, helm: null, csaOn: () => true, isEnhancedPlus: () => true, document: { pointerLockElement: null }, walkMode: true,
-    enhancedHelmMounted: () => false, hideEnhancedHelm() {}, csaHelmInput: { held: new Set() }, csaCall: (fn) => fn(), navalOn: () => true,
+    enhancedHelmMounted: () => false, hideEnhancedHelm() {}, csaHelmInput: { held: new Set() }, csaCall: (fn) => fn(), navalOn: () => true, holdsCargo: (hull) => hull > 0,   // PIN MOVED (CARGO-ANYWHERE)
     csaAboard: { aboard: null }, peerName: (id) => id,
     townTalk: { hudCovered: false }, modes: null, gamePaused: () => false, hudRenderEnabled: () => true, travelView: null, _travelUIHolder: { ui: null },
     touch: null, cursorActive: () => false, pointerSurfaces: new Set(), csaHelmHooks: { hooks: true },
@@ -256,7 +256,7 @@ test('SEA-TOWN HUDS: the naval HUD with no ship near (or the HUD covered) is han
   hs.helm = { raised: 0 };
   csaDrawHelmPanel();
   const at = helmDrawn.pop();
-  assert.deepEqual(at.state.helm, { raised: 0, orders: true }, 'at the helm: the panel\'s state, as before');
+  assert.deepEqual(at.state.helm, { raised: 0, orders: true, cargo: false, shot: null }, 'at the helm: the panel\'s state, as before (PIN MOVED, CARGO-ANYWHERE: her Hold - this stub names no hull; SHOT-KINDS: no naval host, no load)');
   assert.equal(at.state.freeKey, '[FreeMouse]', 'and its key\'s name');
   assert.equal(labels, 1);
   hs.helm = null;

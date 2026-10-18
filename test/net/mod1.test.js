@@ -291,8 +291,10 @@ test('MOD1: THE NEWEST ORDER WINS - a replayed mute cannot undo the unmute that 
   const troll = r.connect(); await r.hello(troll, 'trol-0001');
   const bob = r.connect(); await r.hello(bob, 'bobb-0002');
   const nowS = Math.floor(Date.now() / 1000);
-  const mute = await order('acct-trol-0001', nowS + 600, nowS - 2);
-  const unmute = await order('acct-trol-0001', 0, nowS - 1);
+  // PIN MOVED (AUDIT SAFE RELAY-6): an order older than the socket's own token no longer overrides it - these two are
+  // minted after the troll's hello, as an order a moderator issues is
+  const mute = await order('acct-trol-0001', nowS + 600, nowS + 1);
+  const unmute = await order('acct-trol-0001', 0, nowS + 2);
   await carry(bob, mute);
   await new Promise((res) => setTimeout(res, 1100));   // the mute gate's one-a-second, honestly waited out
   await carry(bob, unmute);

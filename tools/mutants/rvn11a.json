@@ -272,8 +272,8 @@
   {
     "name": "RVN11a-wake-unmarked",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "c.health = null; c.rested = true; });",
-    "new": "c.health = null; });",
+    "old": "c.health = null; c.rested = !c.worn; c.worn = false; });",
+    "new": "c.health = null; c.worn = false; });",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]

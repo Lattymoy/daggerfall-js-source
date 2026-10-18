@@ -10,6 +10,8 @@
 
 import { holdingsProvider, ensureHoldingsStyle, holdingMeter } from './holdingsPages.js';
 import { CROWN_RANKS, nextRankOf, PERKS_REFUSED_AT } from '../systems/naval/captainLedger.js';
+import { xpForLevel } from '../systems/naval/captainTree.js';   // CAPTAIN-TREE: a level's floor, the meter's
+import { t } from '../systems/textManager.js';   // CAPTAIN-TREE: the stars' card in the player's language
 
 export const CAPTAIN_PAGE_SECTIONS = Object.freeze([Object.freeze(['captain', 'Captain'])]);
 /** The page stands while the host gives the captain's model (the world host, whose ledger it is). */
@@ -37,14 +39,45 @@ export function standingMeter(standing, rank) {
   return next ? { now: Math.max(0, standing - floor), max: next.at - floor, label: `${nextRankOf(standing)?.wanting ?? 0} to ${next.title}` } : { now: 1, max: 1, label: 'The highest rank' };
 }
 
+/** CAPTAIN-TREE: the level's meter - from this level's floor to the next's (full at the top) - and its words. Pure. */
+export function levelMeter(stars) {
+  if (!stars) return null;
+  const floor = xpForLevel(stars.level);
+  if (stars.next == null) return { now: 1, max: 1, label: t('captain.page.top', 'Maximum level') };
+  return { now: Math.max(0, stars.xp - floor), max: Math.max(1, stars.next - floor), label: t('captain.page.toNext', '{n} XP to level {level}', { n: Math.max(0, stars.next - stars.xp).toLocaleString('en-US'), level: stars.level + 1 }) };
+}
+
 /**
- * THE PAGE: `detail` the rail's detail pane; `kit` the menu's makers ({ el, divider, meter }).
+ * THE PAGE: `detail` the rail's detail pane; `kit` the menu's makers ({ el, divider, meter, door }) - `door(fn)` the
+ * menu's hand-off (CAPTAIN-TREE: the stars open over the world, the pause put down first).
  */
-export function drawCaptainPage(detail, rerender, { el, divider, meter = null } = /** @type {any} */ ({})) {
+export function drawCaptainPage(detail, rerender, { el, divider, meter = null, door = null } = /** @type {any} */ ({})) {
   ensureHoldingsStyle();
   const m = holdingsProvider()?.captain?.model?.() ?? null;
   detail.append(divider('Captain'));
   if (!m) { detail.append(el('p', 'px-note', 'Your standing at sea is kept in the world.')); return; }
+  // CAPTAIN-TREE (bible/03-World/Naval-Refit.md): her level, earned at sea, and the stars it buys - the Firmament's sky
+  if (m.stars) {
+    const s = m.stars;
+    const card = el('div', 'hld-refit');
+    const head = el('div', 'hld-head');
+    head.append(el('span', 'hld-name', t('captain.page.stars', 'The Captain\'s Stars')), el('span', 'hld-state', t('captain.page.level', 'Level {level}', { level: s.level })));
+    card.append(head);
+    const mtr = levelMeter(s);
+    card.append(holdingMeter(el, meter, t('captain.page.xp', 'XP'), mtr.now, mtr.max, null), el('span', 'hld-sub', mtr.label));   // the kit's own brass fill
+    const left = Math.max(0, s.points - s.set);
+    card.append(el('span', 'hld-sub', left ? t('captain.page.left', '{set} of {points} stars set - {left} to spend.', { set: s.set, points: s.points, left }) : t('captain.page.spent', '{set} of {points} stars set.', { set: s.set, points: s.points })));
+    card.append(el('span', 'hld-sub', t('captain.page.what', 'Master stars improve your ships\' speed, steering, cargo, hull and trade prices. Commander stars improve guns, shot, boarding and ramming. Your captain level also unlocks metal refits, from Steel at level 3 up to Daedric.')));
+    const open = holdingsProvider()?.captain?.openStars;
+    if (typeof open === 'function') {
+      const acts = el('div', 'hld-acts');
+      const b = el('button', 'act primary', t('captain.page.open', 'Open the stars'));
+      b.onclick = () => (door ? door(() => open()) : open());
+      acts.append(b);
+      card.append(acts);
+    }
+    detail.append(card);
+  }
   detail.append(el('p', 'px-note', 'The Bay\'s three crowns judge a captain by the sea: pirates ended in their waters and their harbours\' contracts done raise you; piracy against their ships lowers you. Each rank brings favours in that crown\'s harbours.'));
   const list = el('div', 'hld-list');
   for (const c of m.crowns ?? []) {

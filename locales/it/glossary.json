@@ -276,5 +276,13 @@
  "End turn": "Fine turno",
  "Press (a button, never click)": "Premi",
  "first-time bonus (a craft's first-make XP)": "bonus della prima volta",
- "cloth (the Weavers' Linen and Wool)": "stoffa"
+ "cloth (the Weavers' Linen and Wool)": "stoffa",
+ "martial specialisation": "specializzazione marziale",
+ "signature technique": "tecnica distintiva",
+ "technique (a weapon's)": "tecnica",
+ "technique key": "tasto della tecnica",
+ "fatigue": "fatica",
+ "Agility": "Agilità",
+ "Speed (attribute)": "Velocità",
+ "Running, Jumping (skills)": "Corsa, Salto"
 }

@@ -50,7 +50,7 @@ export function _setHoldingsIconForTests(fn) { _icon = fn ?? ((p, box, onReady) 
  * @property {() => StableModel} [stable]   the horse and the wagon
  * @property {(verb: 'summon'|'away'|'rename'|'paint'|'coat'|'pattern'|'legs'|'feed'|'treat'|'ride'|'kit', arg?: any) => { ok: boolean, text: string }} [stableAct]
  * @property {any} [fleet]   the fleet's model and acts (ui/fleetPage.js)
- * @property {{ model: () => any }} [captain]   CAPT-LOG: the captain's standing, letter, contracts and log (ui/captainPage.js)
+ * @property {{ model: () => any, openStars?: () => boolean }} [captain]   CAPT-LOG: the captain's standing, letter, contracts and log (ui/captainPage.js) - CAPTAIN-TREE: `openStars` the stars' window
  */
 let _provider = /** @type {HoldingsProvider|null} */ (null);
 /** The host's provider, or null to take the pages down. */
@@ -141,6 +141,10 @@ export const HOLDINGS_CSS = `
 .px-sys .hld-pick:has(.hld-step) { grid-template-columns: 96px auto minmax(7em, auto) auto 1fr; }
 .px-sys .hld-stepname { text-align: center; }
 .px-sys .hld-refit { display: flex; flex-direction: column; gap: 3px; padding: 6px 9px 7px; border-width: 2px; border-style: solid; box-sizing: border-box; margin-top: 6px; }
+/* SHIP-COLOURS: the flag she will fly, over the designer's rows (ui/fleetPage.js coloursPanel) */
+.px-sys .hld-flag { width: max-content; padding: 6px; margin: 4px 0; background: rgba(10,12,17,0.55); border: 2px solid #5a5446; }
+.px-sys .hld-flag svg { display: block; }
+.px-sys .hld-swatch.hld-swatch-none { background: repeating-linear-gradient(45deg, #2a2a2a 0 4px, #555 4px 8px); }
 .px-sys .hld-log { display: grid; grid-template-columns: minmax(120px, 38%) 1fr; align-items: baseline; gap: 8px; }
 @media (max-width: 480px) { .px-sys .hld-field { font-size: 16px; } }
 :root[data-plus-theme="stone"] .px-sys .hld-sub, :root[data-plus-theme="stone"] .px-sys .hld-foot { color: #e2d9c4; }

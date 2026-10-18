@@ -210,6 +210,7 @@ const HARDCODED = {
   'src/render/renderer.js': 17,
   'src/render/retroPass.js': 1,
   'src/render/riteSmoke.js': 1,
+  'src/render/shipFlagPass.js': 1,
   'src/render/superDungeon/sdArenaGlow.js': 1,
   'src/render/superDungeon/sdBeam.js': 1,
   'src/render/superDungeon/sdHalo.js': 2,
@@ -239,7 +240,8 @@ const HARDCODED = {
   'src/scenes/camps.js': 3,
   'src/scenes/caravanHost.js': 13,
   'src/scenes/comeSailAway/comeSailAwayPeers.js': 1,
-  'src/scenes/comeSailAway/comeSailAwayPool.js': 6,
+  'src/scenes/comeSailAway/comeSailAwayPool.js': 7,   // SHIP-PLAQUE: +1, the log's line when FONT0003 will not load - a developer's, never a player's
+  'src/scenes/comeSailAway/shipLiveryPaint.js': 1,
   'src/scenes/corpseMarker.js': 3,
   'src/scenes/dataSource.js': 29,
   'src/scenes/decor/decorTool.js': 45,
@@ -276,7 +278,7 @@ const HARDCODED = {
   'src/scenes/livingWorld/livingRoads.js': 3,
   'src/scenes/merchantYardsHost.js': 2,
   'src/scenes/mineHost.js': 13,
-  'src/scenes/naval/navalHost.js': 146,
+  'src/scenes/naval/navalHost.js': 141,
   'src/scenes/oceanHolesAbyss.js': 3,
   'src/scenes/oceanHolesHost.js': 7,
   'src/scenes/portHost.js': 21,
@@ -429,7 +431,7 @@ const HARDCODED = {
   'src/systems/naval/navalPlunder.js': 17,
   'src/systems/naval/navalShips.js': 57,
   'src/systems/naval/shipCrew.js': 52,
-  'src/systems/naval/shipKnowledge.js': 22,
+  'src/systems/naval/shipKnowledge.js': 21,
   'src/systems/naval/treasureCharts.js': 1,
   'src/systems/online/onlineHomes.js': 61,
   'src/systems/online/onlineLane.js': 1,
@@ -450,6 +452,7 @@ const HARDCODED = {
   'src/systems/quest/actions.js': 11,
   'src/systems/quest/machine.js': 1,
   'src/systems/quest/questMacros.js': 1,
+  'src/systems/quest/questPatches.js': 4,   // SHAM-TRAIL (FIELD BUGS 2026-10-17b): the patches' anchors into DFU's own C0B00Y02 - its text found and kept, never the port's words; the entry the patch files is the text core's (quest.possessedChild.shamTrail)
   'src/systems/quest/questRepair.js': 9,
   'src/systems/quest/questGuidance.js': 2,
   'src/systems/quest/questShare.js': 17,
@@ -626,6 +629,7 @@ const HARDCODED = {
   // PIN MOVED (AUDIT UICALM-FIRM1 L4 H1, M4, L3-L4): the window's finger hint, its overlay guard and its respec's lost
   // answer - the Firmament's words are English OPEN, its translation pass the owner's (Audit-UICalm-Firm1.md L5 M1)
   'src/ui/firmamentWindow.js': 93,
+  'src/ui/flagArt.js': 1,
   'src/ui/fleetPage.js': 30,
   'src/ui/fpsCounter.js': 3,
   'src/ui/gate/gateBossBar.js': 5,
@@ -669,7 +673,7 @@ const HARDCODED = {
   'src/ui/native/nativeInventory.js': 5,
   'src/ui/native/nativeTalk.js': 1,
   'src/ui/naval/navalHud.js': 38,
-  'src/ui/naval/navalPlunderWindow.js': 24,
+  'src/ui/naval/navalPlunderWindow.js': 19,
   'src/ui/naval/navalYardWindow.js': 67,
   'src/ui/noticeWindow.js': 99,
   'src/ui/oreMapTip.js': 8,
@@ -682,7 +686,7 @@ const HARDCODED = {
   'src/ui/pickupFeed.js': 1,
   'src/ui/pixelDial.js': 3,
   'src/ui/pixelifyFive.js': 2,
-  'src/ui/playerBadge.js': 34,   // SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words
+  'src/ui/playerBadge.js': 35,   // SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
   'src/ui/plus/plusPad.js': 19,
   'src/ui/plus/plusPadBinds.js': 30,
@@ -716,7 +720,7 @@ const HARDCODED = {
   'src/ui/settings/settingsCopy.js': 185,
   'src/ui/settings/settingsLaw.js': 19,
   'src/ui/settings/settingsMap.js': 24,
-  'src/ui/shipyardWindow.js': 47,
+  'src/ui/shipyardWindow.js': 43,
   'src/ui/shotsPane.js': 21,
   'src/ui/siegeHud.js': 1,
   'src/ui/sigilCard.js': 19,
@@ -776,7 +780,7 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 40,
+  'src/world/eliteGates/pseudoArchives.js': 43,   // NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,

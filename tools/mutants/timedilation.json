@@ -1,0 +1,146 @@
+[
+  {
+    "name": "TD-hold-unread",
+    "file": "src/systems/travel/travelThreat.js",
+    "old": "export const foeRate = (foes, want) => (foes?.held ? Math.min(1, want) : foePaced(foes?.cap ?? Infinity, want));",
+    "new": "export const foeRate = (foes, want) => foePaced(foes?.cap ?? Infinity, want);",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-held-never",
+    "file": "src/systems/travel/travelThreat.js",
+    "old": "const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);",
+    "new": "const held = false;",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-held-everywhere",
+    "file": "src/systems/travel/travelThreat.js",
+    "old": "Math.hypot(t.dx, t.dz) <= t.holds);",
+    "new": "Math.hypot(t.dx, t.dz) <= Infinity);",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-held-standing-lost",
+    "file": "src/systems/travel/travelThreat.js",
+    "old": "if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held };",
+    "new": "if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held: false };",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-ship-holds-nothing",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": ", mps: e.ship.cls.speed, holds: HOSTILE_NEAR_M });",
+    "new": ", mps: e.ship.cls.speed });",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-world-hold-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "reach: t.reach, holds: t.holds, ...(t.chasing",
+    "new": "reach: t.reach, ...(t.chasing",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-world-classic-floor",
+    "file": "src/scenes/world.js",
+    "old": "Math.min(foeRate(foes, travelAsked), foes.strangerRate) : foeRate(foes, travelAsked));",
+    "new": "Math.min(foePaced(foes.cap, travelAsked), foes.strangerRate) : foePaced(foes.cap, travelAsked));",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-world-view-floor",
+    "file": "src/scenes/world.js",
+    "old": "Math.min(foeRate(foes, want), foes.strangerRate) : foeRate(foes, want);",
+    "new": "Math.min(foePaced(foes.cap, want), foes.strangerRate) : foePaced(foes.cap, want);",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-danger-blind",
+    "file": "src/scenes/world.js",
+    "old": "areEnemiesNearby(wildSeen(exteriorFoePool())) || navalHostileNear(),",
+    "new": "areEnemiesNearby(wildSeen(exteriorFoePool())),",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-rise-blind",
+    "file": "src/scenes/world.js",
+    "old": "areEnemiesNearby(exteriorFoePool()) || navalHostileNear() || !travelViewAllowed().ok) return;",
+    "new": "areEnemiesNearby(exteriorFoePool()) || !travelViewAllowed().ok) return;",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-click-blind",
+    "file": "src/scenes/world.js",
+    "old": "if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool()) || navalHostileNear()) { tvSay(",
+    "new": "if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool())) { tvSay(",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-shared-never",
+    "file": "src/systems/naval/seaClock.js",
+    "old": "  for (const p of peers) if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-shared-height",
+    "file": "src/systems/naval/seaClock.js",
+    "old": "Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2])",
+    "new": "Math.hypot(p.feet[0] - feet[0], p.feet[1] - feet[1], p.feet[2] - feet[2])",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-shared-scaled",
+    "file": "src/systems/naval/seaClock.js",
+    "old": "  return shared && scale > 1 ? d / scale : d;",
+    "new": "  return d;",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-host-unshared",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "Math.min(seaSeconds(dt, timeScale(), sharedSea(deps.online?.peers?.(), deps.feet(), NAVAL_SHARE_RADIUS)), FRAME_STEP_S * FRAME_STEPS_MAX)",
+    "new": "Math.min(Math.max(0, dt), FRAME_STEP_S * FRAME_STEPS_MAX)",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  },
+  {
+    "name": "TD-host-radius",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "sharedSea(deps.online?.peers?.(), deps.feet(), NAVAL_SHARE_RADIUS)",
+    "new": "sharedSea(deps.online?.peers?.(), deps.feet(), NAVAL_SHARE_RADIUS * 10)",
+    "tests": [
+      "test/systems/naval/timedilation.test.js"
+    ]
+  }
+]

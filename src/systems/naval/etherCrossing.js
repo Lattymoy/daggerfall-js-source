@@ -53,7 +53,7 @@ export function crossingTarget(way, from = null) {
 export function crossingRows(way, { days = CROSS_DAYS } = {}) {
   const time = `${days} ${days === 1 ? 'day' : 'days'}`;
   return way === 'out'
-    ? ['The Abecean runs empty to every horizon, and the stars', 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time} - your ship,`, 'her crew and her hold go with you)']
+    ? ['The Abecean runs empty to every horizon, and the stars', 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time} - your ship,`, 'its crew and hold go with you)']
     : ['Ahead the Veil thins, and through it, faint as a memory,', 'lie the grey waters of the Iliac Bay.', '', `Set a course for home? (${time})`];
 }
 /** What the screen says at the landfall. */
@@ -70,4 +70,4 @@ export const CROSS_REFUSED = Object.freeze({
  *  voyage. */
 export const CROSS_STALE = 'The moment has passed - the crossing is asked again in its own waters.';
 /** AUDIT CAPTAIN'S SEA X9: a voyage that could not be made - the ship and her captain where they set out. */
-export const CROSS_FAILED = 'The sea would not let her through - you are where you set out.';
+export const CROSS_FAILED = 'The crossing failed. You are back where you started.';

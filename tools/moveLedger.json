@@ -4530,5 +4530,7 @@
   ["test/law9_height.test.js","test/net/eliteGates/law9_height.test.js"],
   ["test/law9_proofs.test.js","test/net/eliteGates/law9_proofs.test.js"],
   ["test/law9_rooms.test.js","test/net/eliteGates/law9_rooms.test.js"],
-  ["test/law9_route.test.js","test/net/eliteGates/law9_route.test.js"]
+  ["test/law9_route.test.js","test/net/eliteGates/law9_route.test.js"],
+  ["test/lootbulk.test.js","test/ui/lootbulk.test.js"],
+  ["test/containerpreview.test.js","test/systems/containerpreview.test.js"]
 ]

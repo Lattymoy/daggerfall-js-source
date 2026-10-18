@@ -4,7 +4,8 @@
 // host's melee pool resolves through it) and the shaft (combat/arrowFlight.js playerArrowHitFoe - every host's player
 // arrow lands through it). Neither grows a second performer: the swing still runs DFU's CalculateAttackDamage on every
 // foe it reaches and each pool's own door still lands the number (its corpse, its crime, a puppet's owner); the blow
-// only answers WHICH foes it reaches and WHAT the formula's number is weighed by. A leaf: imports nothing.
+// only answers WHICH foes it reaches and WHAT the formula's number is weighed by - and (MARTIAL3) tells who listens that
+// it landed. A leaf: imports nothing.
 //
 // A blow (combat/techniques.js makes them):
 //   { id, mult, wounded, toHit, reach, arc, lane, single, feet, yaw }
@@ -77,3 +78,39 @@ export function blowMult(blow, foe) {
 
 /** The formula's number weighed by the technique: a blow that landed lands for at least 1, a miss stays a miss. */
 export const scaleBlowDamage = (damage, mult) => (damage > 0 ? Math.max(1, Math.round(damage * mult)) : damage);
+
+// MARTIAL3 (bible/05-Combat/Martial-Specialisations.md section 6): A TECHNIQUE'S BLOW LANDED - NAMED listeners
+// `fn({ blow, foe, damage })`, told by the two resolutions every host shares, once for each foe a technique's blow reached
+// (its weighed number, a miss its 0), before the pool's own door lands it: the swing (combat/playerWeapon.js resolveHit)
+// and the shaft (combat/arrowFlight.js playerArrowHitFoe). Never a player's body - neither resolution weighs one by a
+// technique. `blow` is the technique's own (its `id`, and `use` - one token for every blow and shaft of one press,
+// combat/techniques.js). The martial paths' riders answer it (systems/martialPowers.js). A list, a listener that throws is
+// skipped.
+/** @type {Array<[string, (landing: { blow: any, foe: any, damage: number }) => void]>} */
+let _landed = [];
+export function registerTechniqueLandedListener(name, fn) {
+  _landed = _landed.filter(([n]) => n !== name);
+  if (typeof fn === 'function') _landed.push([name, fn]);
+}
+/** A technique's blow reached `foe` for `damage` - every listener told. */
+export function tellTechniqueLanded(blow, foe, damage) {
+  if (!blow || _landed.length === 0) return;
+  for (let i = 0; i < _landed.length; i++) { try { _landed[i][1]({ blow, foe, damage }); } catch { /* a listener is not the blow's problem */ } }
+}
+
+// AUDIT MARTIAL (L1 L3, L1 L7): A TECHNIQUE WENT - NAMED listeners `fn({ id, use, entity })`, told once a press, as its
+// price is paid at the release (combat/techniques.js pay): `id` the technique's, `use` the press's token its blows carry,
+// `entity` the body that paid. A path's rider whose words open a window "for N seconds" on the press opens it here - told
+// at a landing, it opened mid-sweep (the cleave's own second foe took its +15%, its first not) and never on a whiff. A
+// list, a listener that throws is skipped.
+/** @type {Array<[string, (press: { id: string, use: any, entity: any }) => void]>} */
+let _used = [];
+export function registerTechniqueUsedListener(name, fn) {
+  _used = _used.filter(([n]) => n !== name);
+  if (typeof fn === 'function') _used.push([name, fn]);
+}
+/** Technique `id` went, its price paid by `entity` - every listener told. */
+export function tellTechniqueUsed(id, use, entity) {
+  if (_used.length === 0) return;
+  for (let i = 0; i < _used.length; i++) { try { _used[i][1]({ id, use, entity }); } catch { /* a listener is not the press's problem */ } }
+}

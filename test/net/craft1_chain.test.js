@@ -33,7 +33,7 @@ const RAW = { 'metal:iron': 6, 'log:pine': 3, 'metal:copper': 1, 'hide:rat': 2 }
 test('CRAFT1 DONE WHEN: a Steel Longsword from raw goods in one press through the real Worker - the Iron smelted, the Pine burnt, the Steel smelted, the hide cured, each kept in the Stores for the anvil; the sword minted into the pack; every unit spent; Smithing the works\' XP and the craft\'s', async () => {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, 'smithing', ?, 1)`).run(mac.id, mac.character, xpForRank(10));
   for (const [m, n] of Object.entries(RAW)) raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)`).run(mac.id, mac.character, m, n);
   const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });
@@ -255,7 +255,7 @@ test('AUDIT CRAFT1 book: F1 a chain\'s work is asked under its own id - a statio
 test('AUDIT CRAFT1 book: the chain\'s works kept in the Stores through the real Worker with a Materials Bag - four works and the craft, never a work\'s products carried out to the bag and put back (`stay`); the book hands the plan its tracks (a Tanner\'s two leathers of two hides); a recipe the rank does not open runs no chain', async () => {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, 'smithing', ?, 1)`).run(mac.id, mac.character, xpForRank(10));
   for (const [m, n] of Object.entries(RAW)) raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)`).run(mac.id, mac.character, m, n);
   const paths = [];

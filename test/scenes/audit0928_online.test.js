@@ -243,6 +243,7 @@ function sail(speed) {
     portalWord: () => {},   // PORTAL1: nor a portal
     campToWire: (p) => [...p], csaRuntime: { AllBoats: [boat], isSailing: () => true, state: { CurrentBoat: boat } }, csaOn: () => true,
     csaWireRecord, csaRecordKey, csaAnimatorOf: boatMod.animatorOf, _csaWordKey: null,
+    shipFlags: { wireFlag: () => null },   // PIN MOVED (SHIP-COLOURS: the boats' word asks each boat's flag - none flown here)
     bandWord: () => false,   // TV7b: no band chases on this sea
     seaRaidWord: () => false,   // OW6: nor raider chases
     csaAboardWord: () => false,   // CSA-K: aboard nobody's boat - the stream's second word says nothing

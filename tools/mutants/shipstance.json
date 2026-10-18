@@ -237,8 +237,8 @@
   {
     "name": "HUD-card-friendly-hostile",
     "file": "src/ui/naval/navalHud.js",
-    "old": "friendly: !!t.friendly && !t.hostile,",
-    "new": "friendly: !!t.friendly,",
+    "old": "friendly: !!tgt.friendly && !tgt.hostile,",
+    "new": "friendly: !!tgt.friendly,",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]

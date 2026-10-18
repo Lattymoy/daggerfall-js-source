@@ -8,8 +8,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, sessionStorageOf, T0 } from '../accountDb.mjs';
+import { pinRealmAct, realmActOver, recordOf, layRecord } from '../realmSeat.mjs';   // INT19: a crafted piece is handed on through the realm act
 import { accountMarket, SESSION_KEY } from '../../src/net/accountClient.js';
-import { createMarketBook, MARKET_KEPT_TEXT } from '../../src/net/marketBook.js';
+import { createMarketBook, MARKET_KEPT_KEY } from '../../src/net/marketBook.js';
 import { courierFee, roadPixels, wearOf, wearCondition, auctionNext, saleTax, AUCTION_S, listingFee } from '../../src/net/marketLaw.js';
 import { WEAVERS_STOCK } from '../../src/net/professionLaw.js';
 import { mintPiece } from '../../src/systems/smithItems.js';
@@ -33,14 +34,16 @@ test('PROF5b DONE WHEN (the books): a Masterwork auctioned out of its seller\'s 
   clock(T0);
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac'), ann = await s.registered('Ann'), bob = await s.registered('Bob');
+  const mac = await s.seated('Mac'), ann = await s.registered('Ann'), bob = await s.registered('Bob');   // PIN MOVED (INT19): the seller a realm character
   s.seedMarks(mac, 100); s.seedMarks(ann, 5000); s.seedMarks(bob, 5000);
   raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at)
     VALUES (?, ?, ?, 'Silverthorn', 'longsword:mithril', 120, 5, 4, 77, 'p1.x', ?)`).run(PV, mac.id, mac.character, T0);
   const sword = mintPiece({ recipe: 'longsword:mithril', quality: 4, seed: 77, maker: 'Silverthorn' }, PV);
   sword.currentCondition = Math.round(sword.maxCondition * 0.8);
   const pack = [sword];
-  const bookOf = (who) => createMarketBook({ door: accountMarket({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, who) }), storage: memStorage(), character: () => who.character, sleep: noWait });
+  layRecord(s.env, mac.character, { ...recordOf(s.env, mac.character), items: [JSON.parse(JSON.stringify(sword))] });   // the pack is the record's
+  const bookOf = (who) => createMarketBook({ door: accountMarket({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, who) }), storage: memStorage(), character: () => who.character, sleep: noWait,
+    realm: who.at ? pinRealmAct(s.env, who.character) : null });
   const macBook = bookOf(mac), annBook = bookOf(ann), bobBook = bookOf(bob);
   const posted = await macBook.auction({ region: DF, provenance: PV, wear: wearOf(sword), opening: 500, hubs: HUBS },
     { item: sword, where: 'pack', take: () => { pack.splice(pack.indexOf(sword), 1); return true; }, putBack: (it) => pack.push(it) });
@@ -80,6 +83,9 @@ test('PROF5b DONE WHEN (the books): a Masterwork auctioned out of its seller\'s 
   clock(T0);
 });
 
+// PIN MOVED (INT19, Integrity-Arc section 7): an auction post goes through the realm act (net/marketBook.js realmPieceAct) -
+// out of the pack inside the hold, put back on a refusal, nothing kept on silence (the record is the truth); a post a tab
+// from before kept is still asked again by the settle on its own route
 test('PROF5b book: an auction post is kept - out of the pack before it is asked, put back on a refusal, asked again by the settle on its own route; a bid\'s id kept for a press asked again; a bid another overtook forgets the view', async () => {
   const storage = memStorage();
   let online = false, answer = 'ok';
@@ -91,16 +97,23 @@ test('PROF5b book: an auction post is kept - out of the pack before it is asked,
     bid: async (b) => { bidIds.push(b.rid); return online ? { ok: true, data: { bid: { id: 'B' } } } : { ok: false, error: 'offline' }; },
     read: async () => { routes.push(['read']); return { ok: true, data: { rows: [] } }; },
   };
-  const book = createMarketBook({ door, storage, character: () => 'c', sleep: noWait });
+  const at = { id: 'r00000000000000000002', lease: 'L'.repeat(32), seq: 9 };
+  const book = createMarketBook({ door, storage, character: () => 'c', sleep: noWait, realm: realmActOver(() => at) });
   const pack = [{ provenance: PV }];
   const item = pack[0];
   const piece = { item, where: 'pack', take: () => { pack.splice(0, 1); return true; }, putBack: (it) => pack.push(it) };
   const r = await book.auction({ region: DF, provenance: PV, wear: 900, opening: 5 }, piece);
-  assert.deepEqual([r.kept, r.text, pack.length, book.pending], [true, MARKET_KEPT_TEXT, 0, 1]);
+  assert.deepEqual([r.unknown, pack.length, book.pending], [true, 0, 0], 'silence: nothing kept - a join reads the record');
+  pack.push(item);
   online = true; answer = 'auction-not-masterwork';
+  const refused = await book.auction({ region: DF, provenance: PV, wear: 900, opening: 5 }, piece);
+  assert.deepEqual([refused.error, pack.length, book.pending], ['auction-not-masterwork', 1, 0], 'refused: back in the pack');
+  // a post a tab from before kept: the settle asks it again on its own route
+  storage.setItem(MARKET_KEPT_KEY, JSON.stringify({ 'acct-1|c': { lists: [{ rid: 'kauctionkept0001', route: 'auction', body: { character: 'c', region: DF, provenance: PV, wear: 900, opening: 5, rid: 'kauctionkept0001' }, item, where: 'pack' }] } }));
+  pack.splice(0, 1);
   await book.settle(() => {}, (it) => pack.push(it));
   assert.deepEqual([pack.length, book.pending], [1, 0], 'refused: back in the pack');
-  assert.deepEqual(routes.filter((x) => x[0] !== 'read').map((x) => x[0]), ['auction', 'auction', 'auction', 'auction'], 'its own route, never a listing\'s');
+  assert.deepEqual(routes.filter((x) => x[0] !== 'read').map((x) => x[0]), ['auction', 'auction', 'auction'], 'its own route, never a listing\'s');
   // a bid lost on the wire, pressed again: the same id
   online = false;
   await book.bid({ region: DF, auction: 'A1', amount: 50 });
@@ -207,7 +220,7 @@ test('PROF5b wiring: the two routes behind a session and in the Worker\'s table,
   const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
   assert.match(src('server-account/src/service.js'), /'\/v1\/market\/remove', '\/v1\/market\/auction', '\/v1\/market\/bid',/);
   const idx = src('server-account/src/index.js');
-  assert.match(idx, /'\/v1\/market\/auction': \(\) => marketAuction\(ctx, who\.player, env, body\)/);
+  assert.match(idx, /'\/v1\/market\/auction': \(\) => marketAuction\(mctx, who\.player, env, body\)/);   // PIN MOVED (INT19): its Masterwork out of the seller's record, in R2
   assert.match(idx, /'\/v1\/market\/bid': \(\) => marketBid\(ctx, who\.player, env, body\)/);
   assert.match(idx, /'auction-not-masterwork': 409, 'auction-low': 409, 'auction-leading': 409, 'auction-bid-standing': 409/);
   const door = accountMarket({ fetch: async () => ({}), storage: memStorage() });

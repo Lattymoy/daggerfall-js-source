@@ -60,14 +60,14 @@ async function stood(t, extra = {}) {
   for (const seat of SEATS) for (const w of witnesses) raw.prepare("INSERT INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)").run(String(seat.key), w.id, seatReportText(seat), seat.region, T0 - DAY);
   raw.prepare('INSERT INTO town_seat_weeks (week, settled_at) VALUES (?, ?)').run(W - 1, T0);
   const guild = async (handle, name, tag) => {
-    const gm = await svc.registered(handle, { renown: 12 });
+    const gm = await svc.seated(handle, { renown: 12 });
     assert.equal((await svc.found(gm, { name, tag })).status, 200);
     const gid = raw.prepare('SELECT guild_id FROM guild_members WHERE player = ? AND char_id = ?').get(gm.id, gm.character).guild_id;
     raw.prepare('UPDATE guild_members SET joined_at = ? WHERE guild_id = ?').run(T0 - SEAT_MEMBER_WAIT_S - DAY, gid);
     return { gm, gid };
   };
   const member = async (g, handle, week = W) => {
-    const m = await svc.registered(handle, { renown: 5 });
+    const m = await svc.seated(handle, { renown: 5 });
     raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, ?, ?, ?)').run(m.id, m.character, g.gid, 2, handle, T0 - 30 * DAY);
     raw.prepare('INSERT INTO town_seat_binds (week, account, guild_id, char_id, at) VALUES (?, ?, ?, ?, ?)').run(week, m.id, g.gid, m.character, T0);
     return m;
@@ -194,8 +194,8 @@ test('AUDIT-SEATS S1: a Bounty\'s unspent escrow is burnt where its guild\'s tre
 test('AUDIT-SEATS S2: a Sellsword\'s fee to a full account and a contract\'s escrow home to a full treasury are BURNT - the result is written and the seat taken, where they rolled the whole result back and every fighter\'s claim was a 500 (a defender kept its seat with a 1-Drake dummy and a full treasury) (mutants: the account\'s fit; the treasury\'s fit; one statement a contract)', async (t) => {
   const s = await stood(t);
   const { sh, eo, a1 } = await siegeWeek(s);
-  const dummy = await s.svc.registered('Dummy'), sword = await s.svc.registered('Swordo');
-  await s.svc.registered('Dummytwo');
+  const dummy = await s.svc.seated('Dummy'), sword = await s.svc.seated('Swordo');
+  await s.svc.seated('Dummytwo');
   s.setNow(START - 3600);
   assert.equal((await s.call('/v1/seats/siege/hire', { character: sh.gm.character, key: ANTICLERE.key, handle: 'Dummy', fee: 1 }, sh.gm)).status, 200, 'the defender\'s dummy, never signed');
   assert.equal((await s.call('/v1/seats/siege/hire', { character: sh.gm.character, key: ANTICLERE.key, handle: 'Dummytwo', fee: 2 }, sh.gm)).status, 200, 'and a second');
@@ -235,7 +235,7 @@ test('AUDIT-SEATS S3: A BATTLE NO RESULT REACHED BY ITS TURNING IS VOID - its Se
   s.setNow(START - 3600);
   assert.equal((await s.call('/v1/seats/window', { character: sh.gm.character, key: ANTICLERE.key, day: 1, hour: 21 }, sh.gm)).status, 200);
   // the holder's two contracts: one signed (300), one offered and never signed (200)
-  const sword = await s.svc.registered('Swordo'), idle = await s.svc.registered('Idris');
+  const sword = await s.svc.seated('Swordo'), idle = await s.svc.seated('Idris');
   assert.equal((await s.call('/v1/seats/siege/hire', { character: sh.gm.character, key: ANTICLERE.key, handle: 'Swordo', fee: 300 }, sh.gm)).status, 200);
   assert.equal((await s.call('/v1/seats/siege/hire', { character: sh.gm.character, key: ANTICLERE.key, handle: 'Idris', fee: 200 }, sh.gm)).status, 200);
   assert.equal((await s.call('/v1/seats/siege/sign', { character: sword.character, key: ANTICLERE.key }, sword)).status, 200);
@@ -375,7 +375,7 @@ test('AUDIT-SEATS S4: A HELD SEAT STRUCK - its Charter void in the strike\'s own
   const eo = await s.guild('Horst', 'Ebon Oath', 'EO');
   const oa = await s.guild('Orla', 'The Oath', 'OA');
   const rw = await s.guild('Bran', 'Red Wolves', 'RW');
-  const dev = await s.svc.registered('Devra');
+  const dev = await s.svc.seated('Devra');
   /** a Charter claimed at the Turning of `week - 1` (or won at `week`'s Tourney): its fee burnt from `gid` as the Turning
    *  (the Tourney) burns it */
   const claimed = (seat, gid, week, tourney = false) => {
@@ -395,7 +395,7 @@ test('AUDIT-SEATS S4: A HELD SEAT STRUCK - its Charter void in the strike\'s own
   assert.deepEqual(await seatBadgeOf(s.svc.env.DB, sh.gm.id, sh.gm.character), { glyphs: ['tower'], title: 'warden', ts: [ANTICLERE.key, 0] });
   // the holder's Sellsword offered on the battle there (100, escrowed)
   s.treasury(sh.gid, 100);
-  await s.svc.registered('Idris');
+  await s.svc.seated('Idris');
   assert.equal((await s.call('/v1/seats/siege/hire', { character: sh.gm.character, key: ANTICLERE.key, handle: 'Idris', fee: 100 }, sh.gm)).status, 200);
   assert.equal(s.purse(sh.gid), 0);
   const strike = async (seat) => (await s.call('/v1/seats/strike', { key: seat.key }, dev)).status;
@@ -468,13 +468,13 @@ test('AUDIT-SEATS S4: A CHARTER WHOSE SEAT THE REGISTRY NO LONGER CONFIRMS lapse
 test('AUDIT-SEATS S5: Season 0\'s wipe keeps every strike - a seat struck in the beta stays struck, never witnessed again; the rest of the history goes (mutants: the kept strikes)', async (t) => {
   const s = await stood(t, { SEASON_ZERO_WEEK: String(W - 3) });   // Season 0 runs W-3..W: W's Turning ends it
   const sh = await s.guild('Gamal', 'The Silver Hand', 'SH');
-  const dev = await s.svc.registered('Devra');
+  const dev = await s.svc.seated('Devra');
   assert.equal((await s.call('/v1/seats/strike', { key: BETONY.key }, dev)).status, 200);
   s.raw.prepare("INSERT INTO town_seat_history (key, week, kind, data, at) VALUES (?, ?, 'held', '{}', ?)").run(ANTICLERE.key, W - 1, T0);
   s.setNow(AFTER(W));
   await s.list(sh.gm);
   assert.deepEqual(s.raw.prepare('SELECT key, kind FROM town_seat_history').all().map((r) => [r.key, r.kind]), [[BETONY.key, 'strike']], 'the strike kept, the rest wiped');
-  const w = await s.svc.registered('Wanda');
+  const w = await s.svc.seated('Wanda');
   assert.equal((await s.call('/v1/seats/witness', { seat: BETONY }, w)).body.error, 'seat-struck', 'never witnessed again');
 });
 
@@ -637,7 +637,7 @@ test('AUDIT-SEATS S11: the standings are summed in SQL - one row an account a so
   for (let i = 0; i < 40; i++) row('watch', 1, day - 1, `b${i}`);
   // a gate day the claims agree on, the account's kill there
   const gd = gameDayAt(T0 * 1000);
-  for (const who of [await s.svc.registered('Gatewit1'), await s.svc.registered('Gatewit2'), await s.svc.registered('Gatewit3')]) {
+  for (const who of [await s.svc.seated('Gatewit1'), await s.svc.seated('Gatewit2'), await s.svc.seated('Gatewit3')]) {
     s.raw.prepare("INSERT INTO gate_kills (day, account, boss, earned, at, region) VALUES (?, ?, 'ruhn', 'dealt', ?, ?)").run(gd, who.id, T0, ANTICLERE.region);
   }
   row('gate', 300, gd, `g:${gd}`);
@@ -704,7 +704,7 @@ test('AUDIT-SEATS T1: THE THRONE REACHED - a siege held after the attackers reac
 
 test('AUDIT-SEATS T2: a DISPUTED seat goes on the developers\' audit at once (3.2), however many agree on what it stands as; a seat confirmed by four and never disputed stays off it (mutants: the disputed arm)', async (t) => {
   const s = await stood(t);
-  const dev = await s.svc.registered('Devra');
+  const dev = await s.svc.seated('Devra');
   const four = [await s.svc.guest(), await s.svc.guest(), await s.svc.guest(), await s.svc.guest()];
   const SEAT = { key: 4040, name: 'Glenmoril', region: 40, tier: 'palace', pixel: [600, 300] };
   const wit = (who, seat, at) => s.raw.prepare("INSERT INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)").run(String(SEAT.key), who.id, seatReportText(seat), seat.region, at);

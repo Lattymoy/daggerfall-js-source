@@ -184,7 +184,10 @@ test('WRIT-WALL the report: Iron off an Alchemist\'s shelf in the bag, then Iron
 test('WRIT-WALL mined Iron, counted: no walled line, Take open and delivering from the bag; a mix - counted short of the writ, the rest looted - names only the rest; counted enough beside the walled says nothing of them; short with nothing walled says what it always said (mutants: walled unread; the line where nothing is walled; said where the writ fills)', async () => {
   const s = await stand();
   // a harvest into the Stores is `own` (the older door: Materials-Bag.md 3), withdrawn into the bag counted carried
-  const ann = await s.registered('Ann');
+  // PIN MOVED (INT16, Integrity-Arc section 7): a writ's delivery is a progression claim, asked of the account's SEATED
+  // realm character (progress.js progressRefusal) - Ann plays one (stand's `seated`), where an offline id is refused
+  // 'progress-seat' before the writ is read
+  const ann = await s.seated('Ann');
   s.give(ann, 'own', 60);
   const e = body();
   const book = bookOf(s, ann, e);

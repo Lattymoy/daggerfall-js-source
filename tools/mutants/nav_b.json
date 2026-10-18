@@ -29,8 +29,8 @@
   {
     "name": "NAV-B-the-wind-ignored",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "      if (p.kind === 'smoke') { p.vel[0] += (w[0] ?? 0) * 0.35 * t; p.vel[2] += (w[2] ?? 0) * 0.35 * t; }",
-    "new": "",
+    "old": "    const ax = (w[0] ?? 0) * WIND_MPS, az = (w[2] ?? 0) * WIND_MPS;",
+    "new": "    const ax = 0, az = 0;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -102,7 +102,7 @@
   {
     "name": "NAV-B-the-cap-ignored",
     "file": "src/render/navalRender.js",
-    "old": "        if (v + 6 > cap) break;\n        const { ax, ay } = particleAxes(p, axes);",
+    "old": "        if (v + 6 > fxCap) break;\n        const { ax, ay } = particleAxes(p, axes);",
     "new": "        const { ax, ay } = particleAxes(p, axes);",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
@@ -187,6 +187,33 @@
     "new": "          e.boat.flagColor = null;",
     "tests": [
       "test/systems/naval/nav_h_host.test.js"
+    ]
+  },
+  {
+    "name": "NAV-B-aim-room-ignored",
+    "file": "src/render/navalRender.js",
+    "old": "    const fxCap = cap - Math.min(cap, aimQuads * 6);",
+    "new": "    const fxCap = cap;",
+    "tests": [
+      "test/systems/naval/nav_b_picture.test.js"
+    ]
+  },
+  {
+    "name": "NAV-B-near-let-go",
+    "file": "src/render/navalRender.js",
+    "old": "    if (over > 0) alpha.splice(0, Math.min(alpha.length, over));",
+    "new": "    if (over > 0) alpha.length = Math.max(0, alpha.length - over);",
+    "tests": [
+      "test/systems/naval/nav_b_picture.test.js"
+    ]
+  },
+  {
+    "name": "NAV-B-aim-posts-uncounted",
+    "file": "src/render/navalRender.js",
+    "old": "(aim.zone?.length ?? 0) * (aim.posts ? 2 : 1)",
+    "new": "(aim.zone?.length ?? 0)",
+    "tests": [
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   }
 ]

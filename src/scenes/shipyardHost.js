@@ -87,7 +87,7 @@ export function createShipyardHost(deps) {
       aboard: s.at.boat && s.at.where === 'here' ? deps.passengersAboard?.(s.at.boat) ?? 0 : 0, atPort: true, crossed: fleetCrossed(s.row.uid),
     });
     if (why) return why;
-    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return 'Clear her cabin first - what lies in it would go with her.';
+    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return 'Empty the cabin first - anything left in it would be sold with the ship.';
     return null;
   }
   /** Her worth sold back, and what the shipmaster offers this seller for it. */
@@ -161,7 +161,7 @@ export function createShipyardHost(deps) {
     /** What signing `r` on costs on this ship: his fee, or the shipwright's price for the men a hire raises her by. */
     const priceOf = (r) => (room?.ok ? hireCharge(r.fee, room.raise) : r.fee);
     const whyOf = (r) => (!naval() ? CREW_HALL_TEXT.noSea : !s ? CREW_HALL_TEXT.noShip : fighting ? CREW_HALL_TEXT.fighting
-      : room && !room.ok && !room.full ? room.why : room?.full && !swappable ? CREW_HALL_TEXT.ashore('Every hand of hers')
+      : room && !room.ok && !room.full ? room.why : room?.full && !swappable ? CREW_HALL_TEXT.ashore('The whole crew')
         : purse < priceOf(r) ? CREW_HALL_TEXT.short(priceOf(r)) : null);
     return {
       ...base, choices: choice(crewed), uid: s?.row.uid ?? null, ship: s?.row ?? null, hands, room, fighting,
@@ -214,7 +214,7 @@ export function createShipyardHost(deps) {
       // let go first - its click would stand her again off the item the sale spends, a ship sold twice
       const c = csa();
       if (c?.state?.placing && c.state.placeItem?.UID === uid) c.StopPlacing?.();
-      if (s.at.where === 'here' && !csa()?.LayUpBoat?.(s.at.boat)) return said(false, 'She could not be brought in to be sold.');
+      if (s.at.where === 'here' && !csa()?.LayUpBoat?.(s.at.boat)) return said(false, 'The ship couldn\'t be brought in to be sold.');
       if (s.at.where === 'packed') {
         const pack = deps.pack?.() ?? [];
         const i = pack.findIndex((it) => it?.templateIndex === BOAT_PARTS_TEMPLATE && it.UID === uid);

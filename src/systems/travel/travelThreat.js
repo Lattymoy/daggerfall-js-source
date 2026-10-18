@@ -10,8 +10,10 @@
 // at least THREAT_WARN_S of real time to reach the nearest enemy's REACH along their way - the circle it sees in (a
 // band's sight, a ship's lookout, a foe's sight: sixty metres for a camp's) or, for one already chasing, its contact
 // ring, closing from any side at its own pace too. An enemy whose reach the way never enters is passed at full pace;
-// one the traveller is inside holds the journey at walking pace until they leave it. The governor slows a journey, it
-// never stops one (the encounter does that - travelOptions.js `encounter`).
+// one the traveller is inside holds the journey at the near-enemy pace (ENEMY-PACE, `foePaced`: the 'foe' dial, x5 by
+// default) until they leave it - and (TIME-DILATION, `foeRate`) inside a hostile ship's hold at x1, the sea fight being
+// stepped on the world's clock. The governor slows a journey, it never stops one (the encounter does that -
+// travelOptions.js `encounter`).
 //
 // The ground's rate stays the journey's (RATE-LAW, systems/timeScale.js travelRateOf): the host clamps what reaches the
 // clock (TV2's own law, systems/travel/travelGovernor.js - the lower of the two holds), and the travel panel says it is held,
@@ -65,17 +67,30 @@ export const JOURNEY_FOE_PACE = 5;
  *  (systems/travel/travelPace.js `foe`: 5..60, x100 on a road alone) - JOURNEY_FOE_PACE its default. */
 export const foePaced = (cap, want) => Math.min(want, Math.max(cap, paceNow('foe') ?? JOURNEY_FOE_PACE));
 
+/** TIME-DILATION (2026-10-17, the owner: "fix a pre existing issue where AI can actually use the overworld as time
+ *  dilation"; bible/03-World/Naval-Refit.md TIME-DILATION): the rate an enemies' cap lets the clock run at - x1 while the
+ *  traveller is inside a threat's HOLD (`threatCap`'s `held`: a hostile ship within HOSTILE_NEAR_M, navalHost.js
+ *  threats), else `foePaced`'s, the near-enemy pace. The sea fight is stepped on the world's clock (land foes are not:
+ *  TO1's departure), and the floor ran it at x5 - the 'foe' dial's x60, a road's x100 - while a won avoid roll carried a
+ *  journey past a pirate under the Overworld, where the guns cannot be fired: she wrecked a boat in six real seconds.
+ *  NAV-H's own law, the helm's already (comeSailAway.js IncreaseTimeScale): no time scale past one with an enemy ship
+ *  near. */
+export const foeRate = (foes, want) => (foes?.held ? Math.min(1, want) : foePaced(foes?.cap ?? Infinity, want));
+
 /**
  * THE CAP: the highest time scale at which the traveller, at `speedMps` (their own unscaled pace, the motor's), takes
  * `warnS` real seconds or more to reach the nearest enemy's reach along their way.
- * @param {{ threats: Array<{ dx: number, dz: number, reach: number, chasing?: boolean, mps?: number }>,
+ * @param {{ threats: Array<{ dx: number, dz: number, reach: number, chasing?: boolean, mps?: number, holds?: number }>,
  *   heading?: {x: number, z: number} | null, speedMps: number, warnS?: number }} q  a threat's `chasing`: it closes
- *   from any side (its straight distance to the ring, never "behind"); `mps` its own pace toward the traveller
- * @returns {{ cap: number, threat: object | null, metres: number }} Infinity and null when nothing near asks for less
+ *   from any side (its straight distance to the ring, never "behind"); `mps` its own pace toward the traveller; `holds`
+ *   (TIME-DILATION) the ring inside which it holds the clock to x1 (`foeRate`)
+ * @returns {{ cap: number, threat: object | null, metres: number, held: boolean }} Infinity and null when nothing near
+ *   asks for less; `held` whether the traveller stands inside a threat's hold
  */
 export function threatCap({ threats, heading = null, speedMps, warnS = THREAT_WARN_S }) {
   let best = Infinity, near = null, rate = 0;
-  if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity };
+  const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);
+  if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held };
   for (const t of threats ?? []) {
     const m = t.chasing ? Math.max(0, Math.hypot(t.dx, t.dz) - t.reach) : metresToReach(t.dx, t.dz, t.reach, heading);
     const closing = speedMps + (t.mps > 0 ? t.mps : 0);
@@ -84,6 +99,6 @@ export function threatCap({ threats, heading = null, speedMps, warnS = THREAT_WA
     const r = m / (warnS * closing);
     if (near === null || r < rate) { rate = r; best = m; near = t; }
   }
-  if (near === null) return { cap: Infinity, threat: null, metres: Infinity };
-  return { cap: threatStep(rate), threat: near, metres: best };
+  if (near === null) return { cap: Infinity, threat: null, metres: Infinity, held };
+  return { cap: threatStep(rate), threat: near, metres: best, held };
 }

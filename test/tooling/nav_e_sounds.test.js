@@ -25,7 +25,7 @@ function wavHeader(bytes) {
   };
 }
 
-test('NAV-E the nine clips (AUDIT NAV1: the run-out the seventh, the ready the eighth, the sinking the ninth): one file a key, each shipped as DAGGER.SND\'s own - PCM, mono, 8-bit, 11025 Hz - whole, and on the provenance page (mutants: a key without a file, a file the bake did not make)', () => {
+test('NAV-E the ten clips (AUDIT NAV1: the run-out the seventh, the ready the eighth, the sinking the ninth; COMBAT-FEEL: the whistle the tenth): one file a key, each shipped as DAGGER.SND\'s own - PCM, mono, 8-bit, 11025 Hz - whole, and on the provenance page (mutants: a key without a file, a file the bake did not make)', () => {
   const keys = Object.values(NAVAL_SFX);
   assert.deepEqual(Object.keys(NAVAL_SFX_FILES).sort(), keys.slice().sort());
   assert.equal(new Set(Object.values(NAVAL_SFX_FILES)).size, keys.length, 'one file a key');
@@ -41,7 +41,7 @@ test('NAV-E the nine clips (AUDIT NAV1: the run-out the seventh, the ready the e
   }
 });
 
-test('NAV-E the bake is deterministic and the gun lab\'s kit moved whole: tools/navalSfx.mjs writes the nine shipped files byte for byte, and tools/gunSfx.mjs - on the shared tools/sfxSynth.mjs now - its three as they were (mutants: an unseeded noise, the kit changed under the guns)', () => {
+test('NAV-E the bake is deterministic and the gun lab\'s kit moved whole: tools/navalSfx.mjs writes the ten shipped files byte for byte, and tools/gunSfx.mjs - on the shared tools/sfxSynth.mjs now - its three as they were (mutants: an unseeded noise, the kit changed under the guns)', () => {
   const dir = mkdtempSync(join(tmpdir(), 'navsfx-'));
   try {
     execFileSync(process.execPath, [join(root, 'tools/navalSfx.mjs')], { cwd: dir, stdio: 'pipe' });
@@ -77,7 +77,7 @@ test('NAV-E the distances are a sea\'s: every naval key and every DAGGER.SND cli
   assert.match(navalSfxUrl('naval-cannon.wav'), /\/sfx\/naval-cannon\.wav$/);
 });
 
-test('NAV-E the clips go on the bus once: the first sea registers all nine under their keys; a second ask is the same promise; a clip that will not load is silence, never a stopped fight; a bus without the door takes none (mutants: registered every ship, a failure thrown)', async () => {
+test('NAV-E the clips go on the bus once: the first sea registers all ten under their keys; a second ask is the same promise; a clip that will not load is silence, never a stopped fight; a bus without the door takes none (mutants: registered every ship, a failure thrown)', async () => {
   _resetNavalSounds();
   const registered = [];
   const audio = { registerSound: async (key, bytes) => { registered.push([key, bytes.length]); return true; } };
@@ -85,13 +85,13 @@ test('NAV-E the clips go on the bus once: the first sea registers all nine under
   const fetchBytes = async (file) => { fetched.push(file); return new Uint8Array(file.length); };
   const p = installNavalSounds(audio, { fetchBytes });
   assert.equal(installNavalSounds(audio, { fetchBytes }), p, 'once');
-  assert.equal(await p, 9);
+  assert.equal(await p, 10);   // PIN MOVED (COMBAT-FEEL: the whistle the tenth)
   assert.deepEqual(registered.map(([k]) => k), Object.keys(NAVAL_SFX_FILES));
   assert.deepEqual(fetched, Object.values(NAVAL_SFX_FILES));
   assert.deepEqual(registered.map(([, n]) => n), Object.values(NAVAL_SFX_FILES).map((f) => f.length), 'the file\'s own bytes');
   _resetNavalSounds();
   const half = await installNavalSounds(audio, { fetchBytes: async (file) => { if (file.includes('far')) throw new Error('404'); return new Uint8Array(4); } });
-  assert.equal(half, 8, 'the far broadside silent, the rest heard');
+  assert.equal(half, 9, 'the far broadside silent, the rest heard');   // PIN MOVED (COMBAT-FEEL)
   _resetNavalSounds();
   assert.equal(await installNavalSounds({ registerSound: async () => false }, { fetchBytes }), 0, 'refused by the bus');
   _resetNavalSounds();

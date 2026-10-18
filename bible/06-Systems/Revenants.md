@@ -713,3 +713,332 @@ new rate.
 Pinned: `test/systems/renowngate.test.js` (14); `tools/mutants/renowngate.json` (30, all dead). No pin moved; two AUDIT BAL
 records (`tools/mutants/bal.json` AUDIT-BAL-a-search-elite-anywhere and AUDIT-BAL-the-search-roll-skipped) were re-aimed
 by content at the search's roll as it now reads, and both still die.
+
+## 40. Its kit (RVN-GEAR, 2026-10-17)
+
+The owner: "So I want to enhance the revenant system ... Add gear slots to revnants and the ability to customize with gear
+(Must be balanced)".
+
+A sworn revenant wears what the player gives it. `systems/revenant/revenantGear.js` is the law; the acts are
+`revenantCompanions.js` (`giveSwornGear`, `takeSwornGear`, `giftablePieces`); the record keeps it as
+`companion.gear` (a slot's key to the item).
+
+- **Ten slots**: a weapon, a shield, a helm, two pauldrons, a cuirass, gauntlets, greaves, boots and a charm. A piece goes
+  to the slot its own equip slot names (`gearKeyOf`); a charm is any piece of jewellery the player could wear (a wand is
+  none - AUDIT RVN G2).
+- **Who wears what is DFU's table** (`armedKind`, `combat/enemyEquipment.js equipmentVariantFor` - ItemHelper's own): the
+  classes, the orcs and the centaur take a weapon and armour. Every kind takes a charm ("A bear wears it on a cord").
+- **A melee weapon**, Dagger to War Axe. A foe's archery is its kind's flags (`enemyMotor.js hasBowAttack`), never its
+  weapon, so a bow would only be swung.
+- **Balanced by rank**. A sworn one bears what its rank has earned:
+
+| Rank | Metal (`GEAR.METAL_CAP`) | Tier (`GEAR.RARITY_CAP`) |
+|---|---|---|
+| I | up to Silver | Magic |
+| II | up to Dwarven | Rare |
+| III | up to Adamantium | Rare |
+| IV | up to Orcish | Legendary |
+| V | up to Daedric | Legendary |
+
+  A piece past it is refused, saying the rank that bears it whole, whichever cap binds (`gearRankNeeded` - "It must rise
+  to Rank V to bear Daedric.", "It must rise to Rank IV to bear a Legendary piece of Mithril."). An artifact, an Aetheric
+  or a Gilded piece answers to the player alone. A broken piece, a quest item or a summoned one is never given.
+- **A shield wants a one-handed weapon given with it, and whole** (a rolled two-hander would hold it off; a broken blade
+  holds nothing), and a two-hander is refused while a shield is worn. Taking back its weapon brings its shield back too.
+- **It wears** (AUDIT RVN G7): a given piece is the record's own object on the body, and DFU's `damageEquipment` wears it
+  down as any wearer's. A piece worn to nothing comes off (DFU's ItemBreaks; `equip.js lowerCondition` takes a broken
+  blade out of a foe's hand as well - DFU's EnemyAttack reads the right hand's slot) and is worn by nobody until the
+  player takes it back and has it mended. The page says each piece's condition and marks a broken one.
+- **Its lines, not its spells** (AUDIT RVN G12): a piece's rarity lines fold; what DFU casts on a wearer's equipping (Cast
+  When Held, a curse's drawbacks) and a Legendary's player-only powers stay the player's - DFU's own foes wear their kit
+  the same way.
+- **Worn over its own** (DEPARTURE from ItemHelper.AssignEnemyStartingEquipment for a sworn one; Port-Ledger A, RVN-GEAR):
+  its stand still rolls its kit as DFU does, and every slot the player filled takes the player's piece in place of the
+  rolled one, at every stand (`applySwornGear`, called by `applySwornStrength`). A two-hander frees the left hand. Its
+  armour is then read again by DFU's own pass over what it wears (`enemyArmorValues`: the class clamp at 60, a monster's
+  own hide where it is better), and its pieces' rarity lines fold as a wearer's do (`systems/entityMods.js
+  computeEntityMods`). With nothing given, its stand is DFU's, untouched. A gift is worn at once by a body standing here;
+  a piece taken back comes off it by identity (AUDIT RVN G4 - wherever the body holds that piece, never a rolled one in
+  its place); it fights on with what is left until its next stand rolls its own again.
+- **Its kit is inventory, as its pack is**: the save's copy says what it wears (`revenant.js ensureMirror` - the mirror
+  never brings back a piece given after the save, nor loses one the save holds), the realm's walks count it - the save's
+  item lists customs and the load's repairs read (`net/realm/realmGoldLaw.js stashedItemLists`, AUDIT RVN G10: customs
+  itself moves gold and letters, never a piece) and the realm's own (`systems/item/possessedItems.js`) - a release hands
+  it back with its pack, and a deserter or a betrayer weighs it with its pack (`splitPack` - it keeps the more valuable
+  half). Abroad, its kit goes with it: nothing is given or taken back (AUDIT RVN F10).
+- **Its weight abroad** (`gearPower`, section 42): a twentieth of a point a piece worn, and its tier's share more (Magic
+  0.1, Rare 0.2, Legendary 0.35), at most two (AUDIT RVN G8 - ten Common pieces weighed what three Legendaries did).
+- **The page**: the Companions page's **Gear** opens a sheet under its card - a well a slot it may fill (a beast's the
+  charm alone), what it wears (its condition, or why it is not worn) with **Take back**, and the player's own pieces with
+  **Give**: those it can wear first, each slot in order, the dearest first; those it cannot after, refused and saying why;
+  twelve at first and the rest a press away (**Show N more** - AUDIT RVN G1). A piece the player wears, a quest's, a
+  summoned one or one past Legendary is never offered. The release's confirm counts its kit with its pack.
+
+THE FOUR HOSTS (rule 17e): the gear rides the sworn's one layer - `scenes/world.js`'s companion layer (`crewAshore.js`),
+which stands them in the street, in buildings (`scenes/worldModes.js`) and underground (`scenes/dungeonContext.js`) through
+`applySwornStrength`; no host line. `scenes/exterior.js` (the bench) stands no sworn one - FLAGGED, as REVENANT-COMPANION is.
+
+Pinned: `test/systems/revenant/rvngear.test.js` (11); `tools/mutants/rvngear.json` (all dead - section 43).
+
+## 41. Its art (RVN-ARTS, 2026-10-17)
+
+The owner: "Give revenants the chance to have unique telegraphed abilities, magic abilities like healing or other buffs,
+etc (Must be balanced)".
+
+One revenant in three (`ARTS_CHANCE`, 0.35) is born with an **art**, drawn on its id from its family's pool
+(`revenantFeud.js signatureFamily`), so it is the same on every read, every load and every client. An older record has the
+one its id draws. The law is `systems/revenant/revenantArts.js`. Every art has two halves: what it does to the player while
+it hunts them, and what it does for them once it is sworn.
+
+| Pool | Arts |
+|---|---|
+| A blade (people, orcs, the armed dead) | Ward, War Cry, Siphon, Mending |
+| A beast | War Cry, Mending, Nova |
+| A brute | War Cry, Nova, Ward |
+| The casters and the rest (the pyre's kinds) | Mending, Ward, Barrage, Siphon, Nova |
+
+**Hunting the player** (from Rank II, `ART_RANK`, the signature's; the Enhanced AI switch on - an art is a telegraph):
+
+- **The ground's language**: a disc in an art's colour about **its own** feet says it is **channelling** - strike it. A mark
+  at or about **the player's** feet says **move**. The colours are never a blow's ember or iron red.
+- **Mending**: under half its health, once a fight, a 2 s channel; whole, it heals a fifth of its health.
+- **Ward**: under three quarters, once a fight, a 1.5 s channel; whole, for 10 s every blow class is taken at x0.65 (never
+  past an adaptation's own lower figure, and never its weakness - section 19's law).
+- **War Cry**: as it joins the fight (in sight, within 20 m), once, a 1 s roar; whole, it and its band strike x1.2 for 12 s.
+- **Any harm that lands on it while it channels breaks the channel** - a blow, a spell, a poison's round, since the last
+  frame (a heal between never hides a blow - AUDIT RVN B10): its disc shatters, "Grushnak's Mending is broken!", and the
+  art is spent for the fight. The disc goes where its feet go (AUDIT RVN B9).
+- **Siphon**: a lane at the player (the charge's shape); caught, a blast of magic at the pyre's weight, and it drinks what
+  the blast took from the player - at most the pyre's mean, nothing from a blast saved, resisted, absorbed or turned back.
+- **Barrage**: three discs at the player's feet, 0.45 s apart, each aimed as it is cast; each caught, a blast of its
+  element at x0.6.
+- **Nova**: a ring where it stands as it casts (the ring's shape: safe at its heart, for the one who backs off); caught, a
+  blast of its element at x1.2.
+- The thrown three come 14 to 20 s apart, the first 3 to 6 s into the fight. Each is a spell through the host's own door
+  (`strikePlayer`, the pyre's), so the player's saving throw and resistances answer it, its magnitude its multiple of the
+  pyre's mean exactly (`artSpell` - AUDIT RVN B3: the pyre's own spell rounded a level's x0.6 up to x1, so a barrage's
+  three outweighed the signature). A Siphon or a Nova, and a barrage's three together, are lighter than the signature's
+  x2 at every level (at level 30: 34.5, 41.4 and 63 against 69).
+- **Its marks lie on the ground they mark** (`foeBlows.js fitBlowToGround` - AUDIT RVN B1, the brain's AUDIT TACT D8): a
+  stair's, a hill's.
+- **One wind-up near the player at a time** (TACT4's law) holds for arts too: an art waits on any wind-up near the player,
+  and while one is live no foe winds another. Its marks are drawn by the ground's own pass, as a wind-up's are
+  (`ai/foeBlows.js liveBlows`, its own key kept fresh while its foe lives).
+- It is called out once a stand (its card: "Grushnak calls on its Mending! Strike it to break the spell!").
+- Never from one running, kneeling, judged, roaring or scattering, nor another client's puppet; never from one that
+  cannot act (paralysed, held - the motor's CanAct, AUDIT RVN B2), one silenced (every art but the cry, which is no spell),
+  nor one at peace with the player (AUDIT RVN B11). A live art is cut when it can throw no more, and at the next frame of a
+  foe the pool stopped stepping (`BLOW_STALE` - AUDIT RVN B4: never landed late, unseen). The open world's pool steps it
+  before a run's or a scatter's own frame, so a running one's ward and cry run out on time.
+- Owner-side, as the pyre is: a peer fighting the player's revenant sees its marks only in the owner's game (FEUD WIRE
+  carries none), and its ward and its cry are the owner's game's alone - the wire's `rb` carries its blows' standing
+  weight, never a cry's.
+
+**Sworn, for the player** (any rank; no switch - none is a telegraph):
+
+| Art | When | What |
+|---|---|---|
+| Mending | a hurt leaves the player under 40% | heals 12% + 2% a rank of the player's health; every 120 s |
+| Ward | it goes into a fight | a Shield (Alteration's, 35/255) of 6 + 3 a rank, 6 rounds; every 90 s |
+| War Cry | it goes into a fight | Fortify Strength (9/0) 4 + 2 a rank, 6 rounds; every 90 s |
+| Siphon | in a fight | its foe struck at the pyre's weight (the player's level), a third of it to the player |
+| Barrage | in a fight | its foe struck at x1.5 |
+| Nova | in a fight | every hostile foe within 5 m of it struck at x0.8 |
+
+The three strikes come 16 to 22 s apart, the first 3 to 6 s into the fight, each x(0.5 + 0.1 a rank) - rank V the whole
+(`SWORN_STRIKE.RANK`, AUDIT RVN E8). They land through the scene's door (`systems/playerDoor.js hurtFoe`), so they are the
+player's own harm: only a foe that harm may reach (never a town's defender), hostile, never an ally of the player's (a
+summon at their side, a foe their tongue has calmed - AUDIT RVN B5), within 12 m (`SWORN_STRIKE.REACH`) and in sight (the
+door's `clear` - AUDIT RVN B7); the foe struck may turn on the player, and its kill is the player's (renown, a set's "each
+kill" powers), as every power the door lands. Mending answers the player's hurt (`registerPlayerHurtListener('sworn-mending')`),
+and only from one whose body stands here. A Ward's and a War Cry's words are said ("Grushnak wards you." - AUDIT RVN B6:
+a local named `t` threw them away).
+
+**The words**: the Revenants page and the Companions page say what its art does - to the player while it hunts ("from Rank
+II", "with Enhanced AI" where they apply), for the player once sworn (`artWords`).
+
+THE FOUR HOSTS (rule 17e): the hostile half is stepped by both pools beside the signature - `scenes/exteriorFoes.js`
+(`artFrame`; the pool `scenes/world.js`, `scenes/worldModes.js`'s buildings and `scenes/exterior.js` each create, each with
+its `strikePlayer`) WIRED, and `scenes/dungeonContext.js` WIRED for a foe of the player's alone (REVENANT-DUNGEON's gate:
+offline, or past the room's shared run). The sworn half rides `swornFightStep`, the companion layer's frame
+(`scenes/world.js` alone stands the sworn; `scenes/exterior.js` FLAGGED, as section 40).
+
+Pinned: `test/systems/revenant/rvnarts.test.js` (18); `tools/mutants/rvnarts.json` (all dead - section 43).
+
+## 42. Abroad (RVN-ERRAND, 2026-10-17)
+
+The owner: "Add the ability to send revnants off on timed missions to anywhere within tamriel (They disappear and come back
+brining rewards like loot, crafting materials, currency, etc)".
+
+From the Companions page a sworn revenant (with the player, or waiting) is sent on an **errand** to one of Tamriel's nine
+provinces (`world/tamriel/tamrielGeography.js PROVINCES`; a city of it named, drawn on the errand's seed). It goes for a
+**venture**:
+
+- **Plunder**: loot first.
+- **Forage**: crafting materials first.
+- **Sell-sword**: gold first.
+
+It leaves through its portal (the layer reads the party), is gone the place's days on the character's own clock
+(`ownMinutes`), and comes back at the party's frame (`revenantParty().wake`). **Online only the time lived with the world
+carries it on** (AUDIT RVN F1 - `errandStep`, `chargeErrands`): the clock stands while the player is away, and a rest, a
+Loiter or a journey raises it (`worldTick.js raisedMinutes`) - a raise pushes every errand's minute back by as much, and a
+step past `ERRAND.STEP_MAX` (30 minutes - a quest clock's played step; time away) by the rest. A day abroad is two real
+hours of play. It is QCLOCK-WORLD's law (`quest/clock.js chargeSeconds`, "the lived step, never the raise"): a raise that
+paid was a faucet the world pays for (Lived-Time.md) - measured, a road journey's x100 raised 906k of wealth an hour at
+level 30 against the band's 200k. Offline the one clock carries it, DFU's own; the page says so online. The law is `systems/revenant/revenantErrands.js`; the acts are
+`revenantCompanions.js` (`sendOnErrand`, `recallFromErrand`, `returnFromErrand`).
+
+| Place | Days | Danger | Its goods |
+|---|---|---|---|
+| High Rock | 1 | I | oak, iron, steel, wool, bear hide, jade |
+| Hammerfell | 1 | II | copper, sulphur, amber, scorpion hide, linen, gold |
+| Imperial Province | 2 | II | silver, gold, silk, cherry, emerald, steel |
+| Skyrim | 2 | III | iron, orichalcum ore, bear and tiger hide, pine, sapphire |
+| Valenwood | 2 | III | spider hide, heartwood, venom, bat hide, resin, jade |
+| Sumurset Isle | 3 | III | moonstone ore and ingot, pearl, malachite, silk, mithril |
+| Elsweyr | 3 | III | silk, amber, tiger hide, gold, turquoise, tooth |
+| Morrowind | 3 | IV | ebony ore, dwarven ore and ingot, dreugh hide, diamond, silk |
+| Black Marsh | 4 | V | slaughterfish hide, venom, stinger, resin, ghostwood, pearl |
+
+**Its odds** (`errandOdds`): 0.55 + 0.1 for each point of its strength over the danger. Its strength is its rank plus its
+kit (section 40). The odds stay within 0.3 to 0.95, and a Devoted one gets 0.05 more. The page shows Good, Fair or Grim
+odds with the share.
+
+- **Won**: it comes back with the whole haul, waiting to be called, and 4 more loyal - once an errand (`paid`, its seed:
+  AUDIT RVN F7 - a reload of a save made abroad brings the haul back again, never the loyalty).
+- **Hard-won**: it comes back with half (a lone piece kept) and hurt, resting for a rest's length (8 hours) - worn from the
+  road, so no RVN11 call bonus after it (`worn` - AUDIT RVN F6: a hard road out-paid a won one, +10 against +4).
+- **Never lost**: an errand is no way to lose a companion. Abroad, no day's desertion is rolled (AUDIT RVN F9); RVN11b's
+  roll waits for it, and its loyalty stands while it is gone.
+
+**The haul** (`errandHaul`) is drawn on the errand's own seed when it comes back, so one seed is always one haul:
+
+- **Gold**: the player's level x the days x 10-18, x(1 + 0.25 a danger past the first), x(1 + 0.1 a rank past the first),
+  x the venture's lean (Sell-sword 1, Plunder 0.4, Forage 0.15). A Black Marsh Sell-sword errand at level 30 and rank V
+  brings about 5,000 - about one revenant's own drop at that level and rank (section 4: level x rank x 15-40).
+- **Goods**: (3 + 2 a danger) x the days units of the place's goods, the cheaper more often, x the lean (Forage 1, Plunder
+  0.35, Sell-sword none); at most one a day of tier 5 and up (`UNITS.FINE_TIER`, `FINE_A_DAY` - AUDIT RVN F4: a Morrowind
+  forage brought eleven of ebony, diamond and dreugh, past the hunt's and the mine's own bounds), the draws past them the
+  cheaper goods.
+- **Pieces**: Plunder brings one a day (AUDIT RVN F3 - one and one more for every three of the days and the danger made the
+  nearer Hammerfell twice any far shore a day). Forage brings one 20% of the time and Sell-sword 25%. Each is minted as an
+  elite's is (`eliteFoes.js tieredGear`) at a tier drawn by the danger and its rank: Legendary 0.5% + 0.4% a danger + 0.3% a
+  rank past the first (at most 3.7%, under the loot ladder's own 4.5% - AUDIT RVN F2: it was 13.5%); Rare 6% + 3% a danger
+  + 2% a rank; Magic 50%; else Common. With Loot rarity off, all Common.
+- **Measured** (lane E's probe, 1,500 seeds a cell, two abroad, rank V and its best kit, on lived time): at level 30 the
+  best route brings about 990 gold a real hour (Black Marsh, Sell-sword) or 4,200 of item worth (`itemLaw.itemWorth`) -
+  0.5% and 2% of the wealth budget's 200k band (`server-account/src/budget.js`) - and 0.03 Legendaries an hour; at level
+  10, 330 gold and 1,400 of worth an hour.
+
+It is handed over at its return: gold to the purse, pieces to the pack, goods to the Materials Bag (then the pack, any
+overflow forced in - `materialsBag.js giveCarried`; units minted on the client are loose, as a find's are -
+`Materials-Bag.md`; an unsaved return is drawn again from the save, so none is lost). Its words: as it leaves, its own
+("Off I go...", "It sets out for Solitude, in Skyrim - back in about 2 days."), and as it comes back ("Back from Skyrim with
+412 gold, 6 Orichalcum Ore and a piece of gear." - the Materials Bag's own names, counted: AUDIT RVN D5). Both are said at
+the party's next frame, never under the menu, on its card (a Mission's sky edge, a Returned's green - AUDIT RVN D7; the
+return in no portal's voice: it waits away) or the line every skin draws (`notify.js popupMessage`). The provinces' names
+are the player's language's (`PLACE_NAMES` - AUDIT RVN D6).
+
+**The bounds**:
+
+- At most **two abroad** at once (`ERRAND.MAX`).
+- Not while it recovers.
+- Abroad, it cannot be called ("Abroad - back in about 23 hours.") or released, and its kit went with it.
+- **Recall** (asked first, as a release is - AUDIT RVN D9) brings it back at once, empty-handed and worn from the road:
+  resting a rest's length (AUDIT RVN F8 - a free recall re-rolled an errand's seed, which a save holds in the clear).
+- An errand's day moves no loyalty (RVN11a's days count only with the player or waiting).
+
+**An errand is the save's**, as its haul will be (`revenant.js ensureMirror`). A save made while it was abroad sends it
+abroad again on a reload, to come back on the same minute with the same dice (its odds and the haul's scale read at the
+return) - and a record that has since left the player (released after the save) comes back as the save had it, as one
+with a pack does (AUDIT RVN F9). One begun since the save was never begun: it is back where the save had it. An older
+clock never stretches its days: the wake writes `errandUntil`'s clamp back (AUDIT RVN F5, as `restUntil` does - the
+clamp was read and never kept).
+
+THE FOUR HOSTS (rule 17e): an errand is the sworn's record and the companion layer's frame - `scenes/world.js` stands the
+layer for its street, `scenes/worldModes.js`'s buildings and `scenes/dungeonContext.js`'s dungeons alike, so an errand
+returns wherever the player is; no host line. `scenes/exterior.js` stands no sworn one - FLAGGED, as section 40.
+
+Pinned: `test/systems/revenant/rvnerrand.test.js` (10); `tools/mutants/rvnerrand.json` (all dead - section 43).
+
+## 43. AUDIT RVN - the kit, the arts and the errands audited (2026-10-17)
+
+The owner: "Please audit everything and ensure perfection" - sections 40-42 (PR #988), read cold by five lanes on the
+frozen branch (DO NOT FIX WHILE THE VERIFIER IS READING held: no edit until every lane had reported): A the kit, B the
+arts, C the errands, D the page, the words in 13 languages and the record, E the balance, measured. 60-odd findings, the
+same defect often found twice; every one fixed, pinned or decided below. Each lane's probes are kept in its session's
+scratchpad, not the tree.
+
+**The blocker (C1, E1) - raised time paid.** An errand ran on `ownMinutes`, and online a rest, a Loiter or a journey
+raises that clock (`advanceOwnMinutes`, WALK-CLOCK's x100 on a road). Lane C stood the shared clock still and raised ten
+days: twenty errands back, 5,442 gold and 38 pieces at level 30 with no minute lived. Lane E measured 906k of wealth a real
+hour on the road (the band is 200k) and 41 Legendaries. The repo's own law already said no (Lived-Time.md: "the
+character's clock opens no faucet the world pays for"; QCLOCK-WORLD's quest clock charges "the lived step, never the
+raise"). Fixed: section 42's lived step (`errandStep`, `chargeErrands` - a raise and time away push the errand's minute
+back; the clock sampled at the send, so a raise before the next wake counts too). The same probe now brings back nothing.
+
+| # | Lane | Finding | Done |
+|---|---|---|---|
+| F1 | C, E | errands paid on raised time online | the lived step (above) |
+| F2 | E | a Legendary 13.5% a piece (rank V, Black Marsh) - 3x the loot ladder's cap, 45x a plain foe's | 0.5% + 0.4% a danger + 0.3% a rank, at most 3.7%; Rare 6/3/2% |
+| F3 | C, E | Plunder's pieces `1 + (days + danger) / 3`: Hammerfell two a day, every far shore one | a piece a day |
+| F4 | E | a Morrowind forage brought eleven of tier 5-6 (ebony, diamond, dreugh) | at most one a day of tier 5 and up |
+| F5 | C, D | `errandUntil`'s clamp was read, never kept - a stretched errand returned days late | the wake writes it back |
+| F6 | C | a hard-won rest earned RVN11's +10 call bonus, past a won errand's +4 | `worn`: no bonus after a road's rest |
+| F7 | C | each reload of a save made abroad paid +4 loyalty again | `paid`: once an errand's seed |
+| F8 | C | a free Recall re-rolled the seed a save holds in the clear | a recall rests a rest's length |
+| F9 | C | the daily desertion roll ran abroad; a save abroad over a record released since was lost | no roll abroad; the save's copy restored whole |
+| F10 | C, A | the kit could be given or taken abroad, and the odds read the kit at the return | refused abroad (`gearRefusal`, `takeSwornGear`) |
+| F11 | C, D | `KICKERS.errand`/`errand_back` unread (the card overrode them), English; `_errandWordsForTests` unused | the kickers through `t()` and read (`revenantMomentEvent`'s `as`); the export gone |
+| F12 | C | `deliverHaul` asks no save | decided: an unsaved return is drawn again from the save (the errand is the save's), so nothing is lost or doubled |
+| F13 | C | ten behaviours no test pinned (lane C's surviving extra mutants) | pinned where they carry the law (section 42's mutants) |
+| G1 | A, D | the Give list cut at twelve, the refused first - a looter's twelve blades hid every helm and charm | wearable first; quest, summoned and past-Legendary pieces never listed; **Show N more** |
+| G2 | A | a Wand (jewellery nobody wears) took the charm slot and added to its odds | a charm is jewellery the player could wear |
+| G3 | A | a broken given weapon still "held" a shield beside a rolled two-hander | a shield wants a whole one-handed weapon |
+| G4 | A | a take-back cleared slots by key (a rolled blade stripped; the taken blade still swung); a broken blade swung on and broke at every blow | by identity; `equip.js lowerCondition` takes a broken blade out of a foe's hand (DFU's EnemyAttack reads the right hand) |
+| G5 | A, D | a refusal named too low a rank for a piece over both caps | `gearRankNeeded`'s rank; both caps said |
+| G6 | A, D | the Release confirm counted the pack, not the kit | both counted |
+| G7 | D | given kit wears out and breaks; neither page nor doc said so | its condition and a broken mark on the page; section 40 |
+| G8 | E | `gearPower` saturated on junk: ten Common pieces weighed what three Legendaries did | 0.05 a piece, tiers 0.1/0.2/0.35 |
+| G9 | A | the kit-only restore, the gift's refit of a live body, `sanitizeGear`'s template test, the charm's take-back unpinned | pinned |
+| G10 | A | "customs counts its kit": customs moves gold and letters; the line feeds the save's item lists | the words corrected; the detached list is latent (no splice reaches it), noted |
+| G11 | A, D | `METAL_NAMES` unused, a dead guard, a misplaced import comment | removed, moved |
+| G12 | A | a piece's equip-time spells and a Legendary's player-only powers never reach a sworn one, yet its tier counted | decided: DFU's own foes wear their kit the same way (section 40); G8's weights |
+| B1 | B | art marks never fitted to the ground - on a hill the telegraph hid while the blast landed | `fitBlowToGround`, as the brain's own |
+| B2 | B | a paralysed revenant healed and threw; a silenced one cast | the motor's CanAct; silence holds every art but the cry |
+| B3 | B, E | `pyreSpell` rounded a level's x0.6 up to x1: a barrage's three outweighed the signature (99 against 69 at level 30) | `artSpell` - the magnitude whole at the level; pinned on the spells the door casts |
+| B4 | B | the street's pool skipped a running revenant's art frame: its ward and cry ran on, its marks stood, a lane landed unseen when it was cornered | the call before the run's exits; a foe not stepped past `BLOW_STALE` has its marks cut |
+| B5 | B | a sworn Nova struck foes at peace and the player's own summons (turning them) | hostile foes alone, never an ally or itself |
+| B6 | B, D, E | `const t = rec.ai?.target` shadowed `t()`: a sworn Ward's and War Cry's words threw, swallowed | renamed; the words pinned |
+| B7 | B | sworn strikes reached through walls and at any range, as the player's own harm | 12 m and the door's `clear`; the player's harm documented (section 41) |
+| B8 | B | a ward wrote its old edge onto a stamp made since | the edge back on the stamp it warded alone |
+| B9 | B | a channel's disc stayed where it was cast; the Nova's words said "its feet" | the disc follows its feet; the ring "where it stands" |
+| B10 | B | a heal mid-channel hid a blow; the siphon drank its mean from a blast saved or turned back | broken by any harm since the last frame; it drinks what it took |
+| B11 | B | no hostility gate; online ward and cry unsaid | gated; documented owner-side |
+| B12 | B, D | `isArt` unused; `forgetSwornArt(id)` never called; `SWORN_GIFT_SECONDS` read by its test alone; `ART` in the ledger; a door built per foe per frame | removed; called at a release; the ledger corrected; the door made once a stand |
+| B13 | B | tests that passed for the wrong reason (the words never checked, "lighter" on constants, a frame no pool reaches) | rewritten; the arts' tests step the pool's frames as a pool does |
+| E8 | E | sworn strikes ignored its rank | x(0.5 + 0.1 a rank), rank V the whole |
+| D4 | D | the branch conflicted with main - no CI | main merged |
+| D5 | D | the haul's goods named apart from the Materials Bag, unpluralised | the bag's own `materialCountLabel` |
+| D6 | D | the provinces' names never translated | `PLACE_NAMES` through `t()`, each language's Elder Scrolls form |
+| D7 | D | the new cards had no edge; the return spoke in a portal's voice | their edges (`rvn12b`'s loop); the return in no voice |
+| D9 | D | Recall forfeited a haul on one press; no focus keys | asked first; `data-focus` keys on the sheets' buttons |
+| D11-D16 | D | "48 hours" for two days; `ART` traces; numbers typed, not read; a refusal said twice; no `aria-expanded`; "never lost" in the notes | each corrected |
+| T1 | the run | `rvn11c_betray.test.js`'s "through the real hurt" failed about one run in three: its sworn ones' ids are the deeds' random ones, and a Mender among them healed the hurt the betrayal reads (a whole local `test:changed` run caught it; CI's run on the same head had passed by luck) | its helper draws no Mender - the interplay is the game's (a Mender's heal keeps a player over the line), and section 41's own tests pin it |
+
+**The measure after** (lane E's probe on the audited law, two abroad, rank V and its best kit, on lived time): at level
+30, at most about 990 gold or 4,200 of item worth a real hour (0.5% and 2% of the band), 0.03 Legendaries an hour; at
+level 10, 330 gold and 1,400 of worth. **Left open, said plainly**: offline a rest still carries an errand on (DFU's one
+clock; `raisedMinutes` counts nothing offline) - its pieces reach the realm only through customs, which charges the
+budget.
+
+THE FOUR HOSTS (rule 17e): unchanged from sections 40-42 - the exterior pool's art call moved within
+`scenes/exteriorFoes.js` (`scenes/world.js`, `scenes/worldModes.js` and `scenes/exterior.js` each create it), WIRED;
+`scenes/dungeonContext.js`'s one line WIRED (its door made once a stand); no host grew.
+
+Pinned: `test/systems/revenant/rvngear.test.js` (11), `rvnarts.test.js` (18), `rvnerrand.test.js` (10), and
+`rvn12b_page.test.js`'s card edges; `tools/mutants/rvngear.json` (47), `rvnarts.json` (64), `rvnerrand.json` (61) - 172,
+all dead (one more, the siphon's `took > 0` read as `>= 0`, is equivalent - a draught of none adds nothing - and is not
+recorded). Two older records named lines this audit moved and were re-aimed at them, each still dead:
+`rvn11a.json` RVN11a-wake-unmarked (the rest's end now `c.rested = !c.worn`) and `rvn11b.json` RVN11b-rolled-before-move (the
+roll now after the errand's skip).

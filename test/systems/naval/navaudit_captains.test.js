@@ -13,7 +13,7 @@ import {
   AVOID_SHIP_SWING, AVOID_HOLD_S, NAV_EVERY_S, SCAN_STEP, PURSUIT_LEAD_S, RANGE_BEND, WEAR_BELOW, TACK_FROM, TACK_CARRY, IRONS_DEG, PAYOFF_TURN,
   WAYPOINT_REACHED, ADRIFT_SPEED, AGROUND_WAY, SIDE_HOLD_S, AVOID_HEAD_ON, SWEEP_RANGE, SWEEP_WAY, SWEEP_TURN, GRAPPLE_STILL,
   createSeaShip, stepCaptain, windShare, windFactor, maxTurnRate, turnRateAt, turnRadius, hullLength, courseClear, avoidLand, tackCourse, sailable,
-  trafficCourse, intercept, hullGap, broadsideReach, velocityOf,
+  trafficCourse, intercept, hullGap, broadsideReach, velocityOf, GRAPE_CLOSE_M, boarderBroadsides,   // SHOT-KINDS: a boarder's grape
 } from '../../../src/systems/naval/navalAI.js';
 import { HULL, HULL_BUILDS, hullBuild, classById } from '../../../src/systems/naval/navalShips.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
@@ -430,13 +430,28 @@ test('AUDIT NAV1 M1/G3 alongside to board: a pirate with men comes up to a playe
   assert.equal(st.mode, 'engage');
   steps(st, still, 1);
   assert.equal(st.mode, 'board', 'lying still: they come to board');
-  // lying alongside a still boat, the boat abeam and loaded guns in reach: she holds them
-  const along = ship('pirateBrig', { pos: [40, 0, 0], yaw: 0 });
-  along.stillFor.set('me', GRAPPLE_STILL_S + 1);
-  let broadsides = 0;
-  for (let t = 0; t < 3; t += still.dt) broadsides += stepCaptain(along, world({ wind: [0, 0, 1.5], contacts: [player([0, 0, 0], { yaw: 0, hull: HULL.SmallShip })] })).volleys.filter((v) => v.side === 'starboard' || v.side === 'port').length;
+  // coming to board a still boat, the boat abeam and loaded guns in reach but past GRAPE_CLOSE_M: she holds them (her
+  // prize kept whole); PIN MOVED (SHOT-KINDS): lying alongside, inside it, she loads grape and sweeps the deck she will
+  // take - her broadsides grape alone, never a ball into her prize (navalAI.js captainLoads)
+  const broadsidesOf = (s, seconds) => {
+    const out = [];
+    for (let t = 0; t < seconds; t += still.dt) {
+      s.stillFor.set('me', GRAPPLE_STILL_S + 1);
+      out.push(...stepCaptain(s, world({ wind: [0, 0, 1.5], contacts: [player([0, 0, 0], { yaw: 0, hull: HULL.SmallShip })] })).volleys.filter((v) => v.side === 'starboard' || v.side === 'port'));
+    }
+    return out;
+  };
+  const coming = ship('pirateBrig', { pos: [GRAPE_CLOSE_M + 30, 0, 0], yaw: 0 });
+  assert.equal(broadsidesOf(coming, 3).length, 0, 'coming alongside, the round shot drawn: she holds her broadsides');
+  assert.equal(coming.mode, 'board');
+  assert.equal(coming.guns.load('port'), 'grape', 'loaded with grape as she closes');
+  assert.equal(boarderBroadsides(coming), true);
+  coming.guns.setLoad('port', 'round');
+  assert.equal(boarderBroadsides(coming), false, 'never round shot into her prize');
+  const along = ship('pirateBrig', { pos: [60, 0, -40], yaw: 0 });
+  const swept = broadsidesOf(along, 30);
   assert.equal(along.mode, 'board');
-  assert.equal(broadsides, 0, 'coming alongside she holds her broadsides');
+  assert.ok(swept.length > 0 && swept.every((v) => v.solution.shot === 'grape'), `alongside, grape alone (${swept.map((v) => v.solution.shot)})`);
   // a long hull: her stem 5 m off a galley's stern is alongside enough, though their middles lie 67 m apart
   const galleyAft = hullBuild(HULL.LargeGalley).aftZ, bow = hullBuild(HULL.SmallShip).bowZ;
   const lg = ship('pirateBrig', { pos: [0, 0, galleyAft - 5 - bow], yaw: 0 });

@@ -279,8 +279,8 @@ test('MINE-PERKS the Surveyor at the service: an unwitnessed Mountain pixel\'s v
   try {
     const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'Mac,Sab' });
     const raw = s.env.DB._raw;
-    const mac = await s.registered('Mac');
-    const sab = await s.registered('Sab');
+    const mac = await s.seated('Mac');
+    const sab = await s.seated('Sab');
     const track = raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'mining', ?, NULL, ?, ?)`);
     track.run(mac.id, mac.character, xpForRank(100), SURVEYOR, now);
     track.run(sab.id, sab.character, xpForRank(100), null, now);

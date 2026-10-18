@@ -125,7 +125,7 @@ test('CAPT-LOG the save: its own slot (Captain, v1) - the log, the crowns\' rega
   const b = createCaptainLedger();
   b.restoreSaveData(JSON.parse(JSON.stringify(a.getSaveData())));
   assert.deepEqual(b.getSaveData(), a.getSaveData());
-  assert.deepEqual(b.newSaveData(), { v: 1, log: newLog(), standing: { Daggerfall: 0, Wayrest: 0, Sentinel: 0 }, marque: null, contracts: [], taken: [], dealt: null, charts: [], raised: [], ether: { charted: [], legends: {}, harvested: {}, from: null, crossings: 0, heard: [] } });   // CAPT-BOARD: and the contracts held, the board's taken; CAPT-TRADE: the day's dealing; ETHER-SEA: the captain's Eltheric Ocean - PIN MOVED (AUDIT CAPTAIN'S SEA B8): and the caches raised
+  assert.deepEqual(b.newSaveData(), { v: 1, log: newLog(), standing: { Daggerfall: 0, Wayrest: 0, Sentinel: 0 }, marque: null, contracts: [], taken: [], dealt: null, charts: [], raised: [], ether: { charted: [], legends: {}, harvested: {}, from: null, crossings: 0, heard: [] }, tree: ['helm'] });   // CAPTAIN-TREE: and the captain's sky, the Helm alone (PIN MOVED); CAPT-BOARD: and the contracts held, the board's taken; CAPT-TRADE: the day's dealing; ETHER-SEA: the captain's Eltheric Ocean - PIN MOVED (AUDIT CAPTAIN'S SEA B8): and the caches raised
   const c = createCaptainLedger();
   c.restoreSaveData({ log: { sunk: { pirate: -4, merchant: 'x' }, plunder: 1e20, legends: [5, 'Ok'], best: { name: 3 } }, standing: { Wayrest: 5000, Daggerfall: 'q', Morrowind: 9 }, marque: { crown: 'Morrowind', until: 10 } });
   assert.deepEqual([c.log.sunk.pirate, c.log.sunk.merchant, c.log.legends, c.log.best], [0, 0, ['Ok'], null]);
@@ -240,14 +240,14 @@ test('CAPT-LOG the world\'s wiring: one ledger a world host, in its own save slo
   assert.match(w, /marque: \(\) => captainLedger\.marque\(Math\.floor\(playerTicker\.ownMinutes\)\),/);
   assert.match(w, /deed: \(act, cls, o\) => \{ const r = captainLedger\.deed\(act, cls, o\); captainSay\(\); return r; \},/);
   assert.match(w, /worth: \(items\) => navalLootWorth\(items\),/);
-  assert.match(w, /captain: fleetHost \? \{ model: \(\) => captainModel\(\) \} : null,/);   // PIN MOVED (AUDIT CAPTAIN'S SEA L15): beside the Fleet's
+  assert.match(w, /captain: fleetHost \? \{ model: \(\) => captainPage\.model\(\), openStars: \(\) => captainPage\.openStars\(\) \} : null,/);   // PIN MOVED (AUDIT CAPTAIN'S SEA L15): beside the Fleet's
   const host = rd('src/scenes/naval/navalHost.js');
-  assert.match(host, /if \(boat\) \{ const v = boatPose\(boat\)\.velocity; deps\.captain\?\.sailed\?\.\(Math\.hypot\(v\[0\], v\[2\]\) \* total\); \}/);
+  assert.match(host, /if \(boat\) \{ const v = boatPose\(boat\)\.velocity; deps\.captain\?\.sailed\?\.\(Math\.hypot\(v\[0\], v\[2\]\) \* Math\.min\(Math\.max\(0, dt\), FRAME_STEP_S \* FRAME_STEPS_MAX\)\); \}/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA L12): the hold's own items counted, each once (the captain's own things put in and taken
   // out again were counted every pass)
   assert.match(host, /tallyPlunder\(all\.filter\(\(it\) => !left\.includes\(it\)\)\);/);
   assert.match(host, /deps\.captain\?\.note\?\.\('claimed'\);/);
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /captain: \(d\) => drawCaptainPage\(d, render, kit\),/);
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /captain: \(d\) => drawCaptainPage\(d, render, \{ \.\.\.kit, door: \(fn\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \} \}\),/);
 });
 
 /** The player's boat wrecked where a pirate alongside boards her at once (navaudit_boarding.test.js's own). */

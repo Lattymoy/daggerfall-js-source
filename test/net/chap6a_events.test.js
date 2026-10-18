@@ -282,7 +282,7 @@ test('CHAP6a the Season\'s Master: a \'season\' row for the Master placed at or 
   const s = await stand();
   const LAST = WEEK + 8;
   s.raw.prepare("INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?, 0, 60, 0, 'on', 0)").run(LAST - 1);
-  const who = await s.registered('Alda');
+  const who = await s.seated('Alda');
   const ids = [];
   for (const name of ['Alda', 'Bryn', 'Cael', 'Dara']) ids.push((await seatRealm(s.env, who.secret, name)).id);
   const seat = (char, f, g, kind, since) => s.raw.prepare('INSERT INTO npc_chapter_seats (faction, region, char_id, account, seat, since, week, at) VALUES (?, ?, ?, ?, ?, ?, ?, 0)').run(f, g, char, who.id, kind, since, since);
@@ -293,7 +293,7 @@ test('CHAP6a the Season\'s Master: a \'season\' row for the Master placed at or 
   await s.settle(LAST);
   assert.deepEqual(s.history('season').map((r) => [r.faction, r.region, r.char_id, r.data]), [[FIGHTERS, ANTICLERE, ids[0], { season: 1 }]]);
   const zero = await stand();
-  const w = await zero.registered('Eld');
+  const w = await zero.seated('Eld');
   const R = await seatRealm(zero.env, w.secret, 'Eld');
   zero.raw.prepare('INSERT INTO npc_chapter_seats (faction, region, char_id, account, seat, since, week, at) VALUES (41, 21, ?, ?, \'master\', ?, ?, 0)').run(R.id, w.id, ZERO - 1, ZERO - 1);
   await zero.settle(WEEK);
@@ -340,16 +340,16 @@ async function board(t) {
   const raw = s.env.DB._raw;
   const age = (who, days) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - days * DAY, who.id);
   for (let i = 0; i < 3; i++) {
-    const w = await s.registered(`Wit${i}`); age(w, 8);
+    const w = await s.seated(`Wit${i}`); age(w, 8);
     assert.equal((await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [MAGES, FIGHTERS, JULIANOS] } }, w.secret)).status, 200);
   }
-  const g = await s.registered('Ground'); age(g, 8);
+  const g = await s.seated('Ground'); age(g, 8);
   const p = herbPatches({ x: 300, y: 200, day: utcDay(NOON), climate: WOODS, confirmed: false })[0];
   assert.equal((await s.call('/v1/prof/harvest', {
     character: g.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(NOON), slot: p.slot }), kind: 'herbs',
     climate: WOODS, region: ANTICLERE, act: { clean: false, bruised: false }, at: NOON - 2, rid: rid(),
   }, g.secret)).status, 200);
-  const who = await s.registered('Alda');
+  const who = await s.seated('Alda');
   const R = await seatRealm(s.env, who.secret, 'Alda');
   await readRoll({ db: s.env.DB, nowS: NOON }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 41: 85, 40: 85 }, members: [{ f: 41, rank: 7 }, { f: 40, rank: 7 }] } });
   raw.prepare("INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?, 0, 60, 0, 'on', 0)").run(week - 1);   // nothing due

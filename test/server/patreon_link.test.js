@@ -542,18 +542,19 @@ test('PATREON-LINK: back from the browser, the card reads the account again - an
 
 // ── THE CONFIG AND THE DEPLOY ───────────────────────────────────────
 
-test('PATREON-LINK: its secrets never touch a file - the toml carries Mac\'s client id and his tier map (Disciple and Herald: Supporter holds none, Hierophant is custom) and no secret, linking waits for the deploy\'s secret, and the deploy puts both from the repository through one pipe after the Worker is up; every word the service says has a sentence (mutants: a secret written as a var; the secrets echoed; a tier mapped Mac did not name)', () => {
+test('PATREON-LINK: its secrets never touch a file - the toml carries Mac\'s client id and his tier map (Disciple, Herald and Hierophant: Supporter holds none) and no secret, linking waits for the deploy\'s secret, and the deploy puts both from the repository through one pipe after the Worker is up; every word the service says has a sentence (mutants: a secret written as a var; the secrets echoed; a tier mapped Mac did not name; the Hierophant tier unmapped)', () => {
   const toml = src('server-account/wrangler.toml');
   const id = /^PATREON_CLIENT_ID = "([^"]*)"$/m.exec(toml)?.[1];
   assert.match(id ?? '', /^[A-Za-z0-9_-]{32,128}$/, 'the client\'s id - public, it rides every authorize URL');
   assert.equal(patreonLinkOn({ PATREON_CLIENT_ID: id }), false, 'and linking waits for the secret the deploy puts beside it');
   const tiers = /^PATREON_TIERS = "([^"]*)"$/m.exec(toml)?.[1];
-  assert.equal(tiers, '29666211:disciple,29666234:herald', 'Mac\'s Disciple tier, and his Herald since HERALD gave it its title');
+  assert.equal(tiers, '29666211:disciple,29666234:herald,29666221:hierophant', 'Mac\'s Disciple tier, his Herald since HERALD gave it its title, and his $50 Hierophant (HIEROPHANT-TIER)');
   const map = patreonTierMap({ PATREON_TIERS: tiers });
-  assert.deepEqual([...map], [['29666211', 'disciple'], ['29666234', 'herald']]);
-  for (const [tier, name] of [['29701293', 'Supporter'], ['29666221', 'Hierophant']]) {
-    assert.equal(map.get(tier), undefined, `${name} grants nothing by its pledge`);
-  }
+  assert.deepEqual([...map], [['29666211', 'disciple'], ['29666234', 'herald'], ['29666221', 'hierophant']]);
+  assert.equal(map.get('29701293'), undefined, 'Supporter grants nothing by its pledge');
+  const fifty = row({ patreon_user: '555', patreon_tiers: '29666221', patreon_status: 'active_patron' });
+  assert.deepEqual(titlesHeld(fifty, { PATREON_TIERS: tiers }), ['hierophant'], 'a $50 patron holds the Hierophant by their pledge');
+  assert.deepEqual(glyphsOf(fifty, { PATREON_TIERS: tiers }, AFTER + 30 * 86_400), ['hierophant'], 'and wears its crown');
   assert.doesNotMatch(toml, /^PATREON_(CLIENT|WEBHOOK)_SECRET\s*=/m, 'Cloudflare refuses a secret the name of a bound var');
   const yml = src('.github/workflows/account-deploy.yml');
   const step = yml.slice(yml.indexOf('- name: Put the Patreon secrets'), yml.indexOf('- name: Verify /v1/health names this deploy'));

@@ -32,7 +32,7 @@ const yOf = (shown, text) => shown.find((b) => b.text === text)?.y;
 
 test('CREW-SAY TALK IS HIS OWN: two pairs at one old yarn at once - each line by its own speaker\'s name, two bubbles; the chorus sung by five is one bubble by no name, and so is a battle\'s cry shouted by three (two pairs\' talk stood as one bubble, by nobody)', () => {
   const yarn = 'Heard the court at Daggerfall\'s hiring blades.';
-  const cry = 'She\'s coming about!';
+  const cry = 'Coming about!';
   const chorus = sung(CHANTIES[0].chorus);
   const points = [
     { x: 300, y: 400, text: yarn, name: 'Perard', who: 'a', kind: 'talk', distance: 6 },

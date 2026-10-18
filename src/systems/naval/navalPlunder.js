@@ -143,9 +143,9 @@ export function choiceEffect(choice, mine, { barrelStock = 0, notoriety = 0 } = 
 }
 
 /** The choices' names, as the plunder window says them (the papers' by her trade - choiceOffer). */
-export const CHOICE_TITLES = Object.freeze({ repair: 'Timber and cordage', powder: 'Powder and shot', press: 'Press her crew', papers: 'Burn her papers' });
+export const CHOICE_TITLES = Object.freeze({ repair: 'Timber and cordage', powder: 'Powder and shot', press: 'Press the crew', papers: 'Burn the papers' });
 /** AUDIT NAV1 (B13): a pirate prize's papers are her crew, given up to the crown. */
-export const PIRATE_PAPERS_TITLE = 'Hand her to the crown';
+export const PIRATE_PAPERS_TITLE = 'Hand the crew to the crown';
 
 /**
  * A choice as the window offers it: `{ id, title, detail, useful }` - what it would make good on the captor's ship

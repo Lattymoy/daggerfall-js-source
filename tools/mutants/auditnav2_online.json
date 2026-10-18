@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-NAV2-F1-temper-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "temper: e.ship.temper, mode: e.ship.mode, struckTo:",
-    "new": "temper: null, mode: e.ship.mode, struckTo:",
+    "old": "temper: e.ship.temper, mode: e.ship.boarded ? 'boarded' : e.ship.mode, struckTo:",
+    "new": "temper: null, mode: e.ship.boarded ? 'boarded' : e.ship.mode, struckTo:",
     "tests": [
       "test/systems/naval/auditnav2_online.test.js"
     ]

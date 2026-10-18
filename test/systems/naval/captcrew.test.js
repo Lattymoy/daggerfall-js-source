@@ -112,7 +112,7 @@ test('CAPT-CREW in a captain\'s words: the crew card ends a hand\'s line with hi
   assert.equal(handService(hand('Cora', 'Gunner', 12), false), 'Veteran - 12 fights won', 'a second gunner\'s worth is not hers');
   assert.equal(handService(hand('Ann', 'First Mate', 1, 1), true), 'Green - 1 fight won, 1 boarding', 'a Green mate is worth no hand yet');
   assert.deepEqual(['Gunner', 'Carpenter', 'Lookout', 'Cook', 'Bosun', 'First Mate'].map((r) => postWords(r, 3)),
-    ['the guns reload 13% quicker', 'her hands mend 45% faster', 'her lookout sees 40% further', 'spirits last 100% longer at sea', '4% more way under sail', '2 more hands over the rail']);
+    ['the guns reload 13% quicker', 'the crew repairs 45% faster', 'the lookout sees 40% further', 'spirits last 100% longer at sea', '4% more way under sail', '2 more hands over the rail']);
   assert.equal(postWords('Deckhand', 3), '');
 });
 
@@ -126,7 +126,7 @@ test('CAPT-CREW at sea: the host reads her posts aboard each frame - her Bosun\'
   assert.equal(s.host.postsWay(s.boat), 1, 'a boat with no crew has no Bosun');
   const host = rd('src/scenes/naval/navalHost.js');
   assert.match(host, /reloadScale: \(\) => \(boat\.crewed && st\.crew \? reloadScaleOf\(st\.crew\.morale, st\.crew\.order\) \* st\.worth\.reload : 1\)/, 'the Gunner on the reload');
-  assert.match(host, /s\.worth = b\.crewed \? crewWorth\(c\.hands, ashoreNames\(b\)\) : NO_WORTH;/, 'her posts aboard, a hand ashore working none (AUDIT CAPTAIN\'S SEA C1: none ashore while I sail)');
+  assert.match(host, /s\.worth = captainWorth\(b\.crewed \? crewWorth\(c\.hands, ashoreNames\(b\)\) : NO_WORTH, deps\.captain\?\.stats\?\.\(\)\);/, 'her posts aboard, a hand ashore working none (AUDIT CAPTAIN\'S SEA C1: none ashore while I sail)');
   assert.match(host, /c\.tick\(d, \{ inPort: [^\n]*wear: s\.worth\.wear \}\);/, 'the Cook on the sea\'s clock');
   assert.match(host, /const scale = \(b\.crewed \? mendScaleOf\(s\.crew\.morale\) \* \(s\.worth\?\.mend \?\? 1\) : 1\) \* \(underFire/, 'the Carpenter on the repairs');
   assert.match(host, /scale: b\.crewed \? mendScaleOf\(s\.crew\.morale\) \* \(s\.worth\?\.mend \?\? 1\) : 1 \}\);/, 'and on the free mending');

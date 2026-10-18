@@ -26,6 +26,9 @@ Measured first (section 2), then four questions put to the owner, and the owner 
 - **Below 100:** *as it is* - identity comes from what is mastered and specialised; reaching 100 everywhere stays.
 - **Scope:** *everything at once* - all fifteen and all six in one pull request.
 
+Its sibling for the weapons is `05-Combat/Martial-Specialisations.md` (MARTIAL, 2026-10-17): fifteen martial paths from the
+six weapon skills, held beside an arcane path (the owner: "Yes, one of each").
+
 Six schools make fifteen pairs (6 choose 2), not twenty-one; with the six schools' own perks past 100 the count is the
 post's twenty-one, and that is how this page reads it.
 
@@ -56,7 +59,11 @@ could see or play. That is where the identity goes.
 - **Who.** A player with Master Skills in force (online always; offline the switch - SOFTCAP3) and at least two of
   the six schools mastered. A school can only be mastered as a career skill, so a class whose career holds fewer than
   two of the six never meets a path - the masteries' own law (`pathPossible`; the enhanced page shows such a class no
-  Specialisation card at all - AUDIT SCHOOLS L4 8).
+  Specialisation card at all - AUDIT SCHOOLS L4 8). AUDIT MARTIAL L4 L3 (found on the sibling, fixed in both): the
+  count is of what the 2/2/1 slots can still master (`masterSkills.js` masterableCount) - two schools that were both
+  minor skills share one slot, and the card showed for good. And Yes says one short line, "Specialisation chosen:
+  {name}." (AUDIT MARTIAL L4 M1: the spell's sentence ran the line past the classic screen's 312 px; where the spell is
+  sold is the card's and the OK box's own line, `schools.sheet.sold`).
 - **The choice.** Any pair of the player's mastered schools names one path (section 5); with three or more mastered,
   the player picks among their pairs. `entity.arcanePath` holds the path's id. **PERMANENT** - nothing undoes it, as
   nothing undoes a mastery. Asked ONCE on the first quiet pass after the second school is mastered (the mastery box's

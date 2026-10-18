@@ -2199,3 +2199,18 @@ data source's, every host's.
 `test/scenes/ow_buildretry.test.js` (5), `tools/mutants/ow_buildretry.json` (11, all dead). PIN MOVED: `audit_wod_branch` (WOD6: the
 catch's last line is `state.fail`), `tools/mutants/auditwod.json` WOD6-failed-build-stays-arrival and
 `tools/mutants/ow_loadowed.json` LOAD-OWED-failed-kept-on-the-books re-aimed by content.
+
+## TIME-DILATION - the sea's AI never on the journey's clock (2026-10-17, the owner)
+
+The owner: *"fix a pre existing issue where AI can actually use the overworld as time dilation"*. The record is
+`03-World/Naval-Refit.md` TIME-DILATION; this page's part of it:
+
+- **OW6's cap holds the clock at x1 inside a hostile ship's hold** (`systems/travel/travelThreat.js foeRate`, `threatCap`'s
+  `held`): the sea fight is stepped on the world's clock, so ENEMY-PACE's floor (the 'foe' dial, x5 to x60) ran a pirate's
+  guns at that rate on a traveller under the Overworld, where none can be fired. Both of `travelViewGovern`'s paths call
+  `foeRate` where they called `foePaced`; a land foe holds no ring (TO1: it keeps its own pace), so every OW6, ENEMY-PACE and
+  PACE-DIALS law ashore is as it was. The tests that mount the governor mount `foeRate` beside `foePaced`.
+- **The view comes down for a hostile ship, never rises over one and refuses a click near one**: its `danger`,
+  `tvJourneyUp` and `travelViewCanGo` ask `navalHostileNear()` (NAV-H's enemy nearby) beside the land's foes and a duel.
+
+`test/systems/naval/timedilation.test.js` (3), `tools/mutants/timedilation.json` (16, all dead).

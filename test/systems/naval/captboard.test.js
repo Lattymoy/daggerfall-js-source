@@ -110,7 +110,7 @@ test('CAPT-BOARD the offers\' words and terms: a bounty names her captain and sh
   const by = Object.fromEntries(all.map((o) => [o.kind, o]));
   const b = by.bounty;
   assert.match(b.title, /^Wanted: (Captain .+ of )?.+$/);
-  assert.match(b.words, /preying on Wayrest's shipping, last seen [\d.]+ leagues? (east|north-east|north|north-west|west|south-west|south|south-east) of Wayrest\. Sink her or take her\./);
+  assert.match(b.words, /preying on Wayrest's shipping, last seen [\d.]+ leagues? (east|north-east|north|north-west|west|south-west|south|south-east) of Wayrest\. Sink it or capture it\./);
   assert.equal(b.standing, STANDING_DONE.bounty * classById(b.target.classId).cargo, 'her size');
   assert.ok(Number.isFinite(b.target.px) && Number.isFinite(b.target.seed) && b.target.region === 23);
   assert.equal(b.days, 4);
@@ -167,7 +167,7 @@ test('CAPT-BOARD the board\'s words for a held contract, its sites, a save\'s ju
   by.hunt.done = 1;
   const l = contractLine(by.hunt, by.hunt.until - (MINUTES_PER_DAY + 120));
   assert.deepEqual([l.progress, l.left], [`1 of ${by.hunt.need} ended`, '1 day, 2 hours left']);
-  assert.equal(contractLine(by.hunt, by.hunt.until).left, 'Her term is out');
+  assert.equal(contractLine(by.hunt, by.hunt.until).left, 'Time is up');
   assert.equal(contractLine(by.survey, 0).progress, `0 of ${by.survey.need} studied`);
   assert.equal(contractLine(by.delivery, 0).progress, 'In your hold, for Sentinel');
   assert.match(contractLine(by.bounty, 0).progress, /^Last seen /);
@@ -335,7 +335,7 @@ test('CAPT-BOARD at sea: a bounty\'s quarry stood within SITE_REACH_PX of her wa
   const casks = s.host._shots.floaters().filter((f) => f.lot === `${SITE_LOT}s1`);
   assert.equal(casks.length, 3);
   assert.ok(casks.every((f) => s.host._shots.floater(f.id).life === SITE_CASK_LIFE));
-  assert.ok(events.some((e) => e.type === 'berth' && e.port === '100,100' && e.boat === 42), 'lying in port at her helm, slow: the berth said');
+  assert.ok(events.some((e) => e.type === 'berth' && e.port === '100,100' && e.boat === 42), 'lying in port at the helm, slow: the berth said');
   s.run(2);
   assert.equal([...s.host._sea.values()].filter((e) => e.bounty === 'b1').length, 1, 'stood once while she stands');
   s.host._charge('sink', q.id);

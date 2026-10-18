@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { travelWalkRate, TRAVEL_VIEW_TEXT, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
 import { createLoadGovernor, unbuiltAround, TV_GOV_HOLD_S } from '../../../src/systems/travel/travelGovernor.js';
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE, TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE } from '../../../src/systems/timeScale.js';
-import { foePaced } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
+import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelDriveForward } from '../../../src/systems/travel/travelAutopilot.js';
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';   // ETHER-OW: the governor's ground is the stream's own law
 import { setPaceGround, setTravelPace, _resetTravelPace } from '../../../src/systems/travel/travelPace.js';   // PACE-DIALS: the road's x100 is the player's dial
@@ -61,7 +61,7 @@ function rig({ onRoad = false } = {}) {
   const w = { keys: new Set(), view: { active: true, state: 'up' }, journey: false, swimming: false, boat: null, paused: false, unbuilt: new Set(), onRoad };
   const env = {
     travelControlUI: { get isShowing() { return w.journey; } },
-    travellerOnRoad: () => w.onRoad, foePaced,   // RATE-LAW: the ground the keys travel on; ENEMY-PACE's floor
+    travellerOnRoad: () => w.onRoad, foePaced, foeRate,   // RATE-LAW: the ground the keys travel on; ENEMY-PACE's floor
     travelOptions: { get state() { return { autopilot: w.journey ? {} : null }; } },
     travelWalkRate, TV_MOVE_ACTIONS,
     travelView: w.view,   // a live object: the tests move its state

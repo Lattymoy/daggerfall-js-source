@@ -442,22 +442,32 @@
   {
     "name": "PL-secret-as-var",
     "file": "server-account/wrangler.toml",
-    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\n",
-    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\nPATREON_CLIENT_SECRET = \"\"\n",
+    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\nPATREON_CLIENT_SECRET = \"\"\n",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
-    "note": "A var of the secret's name: Cloudflare refuses the secret its binding."
+    "note": "A var of the secret's name: Cloudflare refuses the secret its binding. HIEROPHANT-TIER (re-aimed by content): the line gained the Hierophant tier."
   },
   {
     "name": "PL-a-tier-mapped-mac-did-not-name",
     "file": "server-account/wrangler.toml",
-    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\n",
-    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant,29701293:disciple\"\n",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
-    "note": "Mac: \"Heriophant is custom\" - a Hierophant patron's title is made for them and granted by name, never the stock one by the pledge."
+    "note": "Mac: \"Supporter doesnt recieve a title/glyph\" - a Supporter would wear the Disciple's. HIEROPHANT-TIER (re-aimed): it mapped the Hierophant tier, which Mac named on 2026-10-17 (\"The $50 patreon tier doesnt have a title/glyph ingame. The Heirophant\")."
+  },
+  {
+    "name": "PL-the-hierophant-tier-unmapped",
+    "file": "server-account/wrangler.toml",
+    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\n",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ],
+    "note": "HIEROPHANT-TIER: Mac's $50 patrons hold nothing by their pledge again."
   },
   {
     "name": "PL-secrets-echoed",

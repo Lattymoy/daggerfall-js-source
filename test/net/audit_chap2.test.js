@@ -399,7 +399,7 @@ async function stand(open = 'on') {
     for (let i = 0; i < n; i++) { const { r } = await witness(hall); assert.equal(r.status, 200, JSON.stringify(r.body)); }
   };
   const ground = async () => {
-    const w = await s.registered('Ground');
+    const w = await s.seated('Ground');
     age(w, 8);
     const p = herbPatches({ x: 300, y: 200, day: utcDay(_now), climate: WOODS, confirmed: false })[0];
     const r = await s.call('/v1/prof/harvest', { character: w.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(_now), slot: p.slot }), kind: 'herbs',
@@ -517,9 +517,17 @@ test('AUDIT CHAP2 T13/S5: a hall writ\'s credit never touches another account\'s
   const [h1, h2] = (await s.call('/v1/writs/list', { character: R.id, region: ANTICLERE }, a.secret)).body.writs.filter((w) => w.kind === 'hall');
   assert.equal((await s.call('/v1/writs/deliver', { character: R.id, id: h1.id, rid: rid() }, a.secret)).body.error, 'stores-short');
   assert.deepEqual(roll41(), [10, 0], 'refused: nothing');
-  const b = await s.registered('Mallory');
+  const b = await s.seated('Mallory');
   s.give(b, R.id, h1.material, h1.qty);
-  assert.equal((await s.call('/v1/writs/deliver', { character: R.id, id: h1.id, rid: rid() }, b.secret)).status, 200);
+  // PIN MOVED (INT16, Integrity-Arc section 7): another account naming the character is refused at the seat, before the
+  // route's own law - a delivery is asked of the deliverer's own seated character
+  const across = await s.call('/v1/writs/deliver', { character: R.id, id: h1.id, rid: rid() }, b.secret);
+  assert.deepEqual([across.status, across.body], [403, { error: 'progress-seat' }]);
+  assert.deepEqual(roll41(), [10, 0], 'another account naming the character, at the door: the Roll unmoved');
+  // the route's own law past the door (the head's player): asked of the route itself, another account's delivery is paid, the Roll unmoved
+  const rb = await deliverWrit({ db: s.env.DB, nowS: _now, rand: (u) => u.fill(7) }, { ...s.raw.prepare('SELECT * FROM players WHERE id = ?').get(b.id) },
+    { PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', CHAPTERS_OPEN: 'on' }, { character: R.id, id: h1.id, rid: rid() });
+  assert.equal(rb.ok, true, JSON.stringify(rb));
   assert.deepEqual(roll41(), [10, 0], 'another account naming the character: paid, the Roll unmoved');
   s.raw.prepare('UPDATE realm_characters SET dead_at = ? WHERE id = ?').run(_now, R.id);
   s.give(a, R.id, h2.material, h2.qty);
@@ -540,11 +548,11 @@ test('AUDIT CHAP2 S2/S3: a hidden guild\'s writ is no writ to a stranger whateve
   const [d1, d2] = halls.filter((w) => w.faction === 108);
   s.give(dev, R.id, d1.material, d1.qty);
   assert.equal((await s.call('/v1/writs/deliver', { character: R.id, id: d1.id, rid: rid() }, dev.secret)).status, 200);
-  const stranger = await s.registered('Wit59');
+  const stranger = await s.seated('Wit59');
   for (const id of [d1.id, d2.id]) assert.deepEqual((await s.call('/v1/writs/deliver', { character: stranger.character, id, rid: rid() }, stranger.secret)).body, { error: 'no-writ' }, id);
   clock(_now + DAY);
   assert.deepEqual((await s.call('/v1/writs/deliver', { character: stranger.character, id: d2.id, rid: rid() }, stranger.secret)).body, { error: 'no-writ' }, 'yesterday\'s: still no writ');
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const fg = halls.find((w) => w.faction === 41);
   const r = await s.call('/v1/writs/deliver', { character: mac.character, id: fg.id, rid: rid() }, mac.secret);
   assert.deepEqual([r.status, r.body.error], [403, 'chapters-closed']);

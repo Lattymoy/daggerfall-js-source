@@ -187,6 +187,19 @@ export const ACTIONS = Object.freeze([
   // go, and a file that still keeps GrabMode on F2 keeps it (the action stands unbound until the player gives it a key).
   // Appended, like every port action before it.
   'SaddlePanel',
+  // CARGO-ANYWHERE (2026-10-17, the owner: "Cargo should be able to be accessed at any time"; bible/03-World/Naval-Refit.md):
+  // THE SHIP'S HOLD - one press opens the hold of the ship at hand (her helm, her deck, her cabin), else of the last whose
+  // helm I took, else the first of my fleet, wherever she lies (scenes/holdDoor.js). On F4: the letters are spent, F1 and
+  // F3 are the browser's (ui/input.js BROWSER_STEALS), F2 the saddle panel's. Appended, like every port action before it.
+  'ShipHold',
+  // SHOT-KINDS (2026-10-17, the owner: "Different cannon shot types, for example a grape shot to thin out crew, Chain to
+  // try to take down their sail, etc"; bible/03-World/Naval-Refit.md): THE GUNS' LOAD - one press steps the load of the
+  // guns at hand (the battery laid, else the one the look bears on) on: round, grape, chain, heated (scenes/naval/
+  // navalLoads.js). It ships with no key - every letter is spent, and the helm's own Shot button and the wheel while the
+  // guns are laid choose it - and a player gives it one in the Controls pane, or a pad button (ui/plus/plusPadBinds.js).
+  // Drawn in Combat, not Come Sail Away's group: a mod's group is its MOD_ACTIONS and every row of those ships a key
+  // (KB1 law 3) - so it is live always, and answers only at a helm with guns. Appended, like every port action before it.
+  'ShotCycle',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -204,7 +217,7 @@ export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'Quick
   'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay',
   'BoatDisembark', 'BoatToggleLight', 'BoatToggleSail', 'BoatTrimRight', 'BoatTrimLeft', 'BoatTrimModifier',
   'BoatTimeScaleUp', 'BoatTimeScaleDown', 'BoatTimeScaleReset', 'TravelView', 'WalkMode', 'TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions',
-  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel']);   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel', 'ShipHold', 'ShotCycle']);   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -362,6 +375,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['Comma', 'HorseMount'],
   ['Period', 'HorseSummon'],
   ['F2', 'SaddlePanel'],   // UI-CALM: the saddle panel (Slash is the decorator's grid)
+  ['F4', 'ShipHold'],   // CARGO-ANYWHERE: the ship's hold, from anywhere
   // CSA-D: the mod ships C (Crouch's) and Period (Horse Cart and Cargo's summon): one key, one action, so the port's
   // defaults are free keys under the right hand - `'` and `;` (DECLARED, the Port-Ledger's Come Sail Away row; `/` is
   // the decorator's own grid key, scenes/decor/decorTool.js DECOR_FREE_KEYS)
@@ -474,6 +488,8 @@ export const MOD_ACTIONS = Object.freeze({
     Object.freeze({ action: 'BoatTimeScaleReset', legacy: 'Controls.ResetTimeScale', shipped: Object.freeze(['KeypadEnter']) }),
     // SPYGLASS: the captain's glass - the port's own, live while the ships are (no TextKey of the mod's: `legacy` null)
     Object.freeze({ action: 'Spyglass', legacy: null, shipped: Object.freeze([]) }),
+    // CARGO-ANYWHERE: the ship's hold - the port's own, live while the mod's boats are (`legacy` null)
+    Object.freeze({ action: 'ShipHold', legacy: null, shipped: Object.freeze([]) }),
   ]),
   // LEGACY1: the mod's "Key Input" (G) and "Second Key Input" (a chord for a pad) are TextKeys the port never shipped
   // as settings, so there is no saved value to carry (`legacy` null) - the pad reaches it through the registry's own row.
@@ -518,6 +534,7 @@ export const ACTION_GROUPS = Object.freeze([
   g('Combat', [
     ['ReadyWeapon', 'Ready or sheathe weapon'], ['SwingWeapon', 'Swing weapon'], ['SwitchHand', 'Switch hand'],
     ['WeaponTechnique', 'Weapon technique (hold to aim)'],   // TECH1
+    ['ShotCycle', 'Shot (aboard)'],   // SHOT-KINDS: the guns' load at a helm, stepped on
   ]),
   g('Magic', [
     ['CastSpell', 'Spellbook'], ['RecastSpell', 'Ready the last spell'], ['AbortSpell', 'Drop the readied spell'],
@@ -575,6 +592,7 @@ export const ACTION_GROUPS = Object.freeze([
     ['BoatTimeScaleUp', 'Speed time up at the helm'], ['BoatTimeScaleDown', 'Slow time down at the helm'],
     ['BoatTimeScaleReset', 'Put time back to normal at the helm'],
     ['Spyglass', 'Raise or lower the spyglass (aboard)'],   // SPYGLASS
+    ['ShipHold', 'Cargo'],   // CARGO-ANYWHERE: the ship's hold, from anywhere
   ], 'come-sail-away'),
   g('Project Legacy', [
     ['LegacyFamily', 'Family tree'],

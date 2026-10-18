@@ -20,6 +20,8 @@ export const HARM_FIGHT_MS = 30000;
 
 /** @type {{ entity: any, until: number } | null} */
 let _mark = null;
+/** RIFLE-STANCE: when a foe's harm last reached the player (the wall clock), whatever mark it left - or null. */
+let _harmAt = null;
 /** RVN10: each foe's fight with the player - since its first harm, and its last harm's time. */
 let _fights = new WeakMap();
 /** RVN10: when a hurt last left the player under half its health - or null. */
@@ -30,6 +32,7 @@ let _lowAt = null;
 export function markPlayerHarm(entity, { ms = HARM_MARK_SPELL_MS, now = Date.now() } = {}) {
   if (!entity || entity.isPlayer) return;
   _mark = { entity, until: now + ms };
+  _harmAt = now;
   const f = _fights.get(entity);
   _fights.set(entity, { since: f && now - f.at <= HARM_FIGHT_MS ? f.since : now, at: now });
 }
@@ -38,12 +41,15 @@ export function harmFightSince(entity, now = Date.now()) {
   const f = entity ? _fights.get(entity) : null;
   return f && now - f.at <= HARM_FIGHT_MS ? f.since : null;
 }
+/** RIFLE-STANCE (combat/gun/rifleStance.js): did a foe's harm reach the player within the last `ms` - the fight's own
+ *  signal a long gun's aim reads (the mark itself stands two minutes for a revenant's credit, far past the fight). */
+export const playerHarmedWithin = (ms, now = Date.now()) => _harmAt != null && now - _harmAt <= ms;
 /** RVN10: a hurt left the player under half its health now. */
 export function markPlayerLow(now = Date.now()) { _lowAt = now; }
 /** RVN10: did a hurt leave the player under half its health since `since` (a fight's start)? */
 export const playerLowSince = (since) => _lowAt != null && since != null && _lowAt >= since;
 /** RVN10: every fight ended - the player's death (no rout after it: the respawn's jump is no flight), a load, a new game. */
-export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; }
+export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; _harmAt = null; }
 /** The foe whose harm last reached the player, while its mark stands - or null. */
 export function playerHarmMark(now = Date.now()) {
   return _mark && now <= _mark.until ? _mark.entity : null;

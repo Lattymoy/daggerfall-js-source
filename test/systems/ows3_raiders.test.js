@@ -174,7 +174,7 @@ test('OWS3 Warm Ashes: a raider alongside makes the mod\'s own raid - armed as a
   assert.equal(boardPending(), false, 'the fast travel\'s own arm waits for its post-travel event');
   assert.deepEqual(h.variants, [['SHIPAA00.RMB', '_smallraid', ANY_LOCATION_KEY], ['SHIPAA01.RMB', '_smallraid', ANY_LOCATION_KEY]]);
   const wa = rd('src/systems/warmAshesShips.js');
-  assert.match(wa, /if \(travelShip\) return armRaid\(\);/, 'one home for the sailing arm');
+  assert.match(wa, /if \(travelShip\) return raidRefusal\(\) === 'busy' \? 'busy' : armRaid\(\);/, 'one home for the sailing arm');   // PIN MOVED (RAID-ASHORE): never armed over a raid still on
   assert.match(wa, /const armed = armRaid\(\);\n\s*onPostFastTravel\(\);\n\s*return armed;/);
   _resetWarmAshesShips();
 });

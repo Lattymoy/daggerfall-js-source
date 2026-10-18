@@ -40,6 +40,7 @@ test('TIDY1: Come Sail Away lives in its folder', () => {
   assert.deepEqual(readdirSync(join(root, 'src/systems/comeSailAway')).sort(), [
     'comeSailAway.js', 'comeSailAwayActions.js', 'comeSailAwayBoat.js', 'comeSailAwayHulls.js', 'comeSailAwayItems.js',
     'comeSailAwayMap.js', 'comeSailAwayModels.js', 'comeSailAwayWaves.js', 'comeSailAwayWire.js', 'csaBoatMenu.js',
+    'peaceWay.js',   // PIN MOVED (NAVAL-REFIT PEACE-WAY: her way out of a fight - the runtime's own speed seam, beside it)
   ]);
 });
 

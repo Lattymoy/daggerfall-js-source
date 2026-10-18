@@ -556,7 +556,7 @@
   {
     "name": "SILVER-FINDS-book-asked-while-down",
     "file": "src/net/marksBook.js",
-    "old": "        if (held) { if (held !== 'marks-young') owe(f); continue; }\n",
+    "old": "        if (held) { if (!FIND_DROPS.includes(held)) owe(f); continue; }\n",
     "new": "",
     "why": "every owed find asked its tries while the network is down",
     "tests": [

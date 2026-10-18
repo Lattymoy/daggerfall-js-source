@@ -1747,11 +1747,12 @@
   {
     "name": "AUDIT-LEGACY-III-O11-the-old-wire-bound",
     "file": "src/net/identityToken.js",
-    "old": "export const TOKEN_BODY_MAX = 800;",
+    "old": "export const TOKEN_BODY_MAX = 864;",
     "new": "export const TOKEN_BODY_MAX = 640;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
-    ]
+    ],
+    "note": "WIKIMAID (re-aimed by content): the bound is 864."
   },
   {
     "name": "LP-svc-people-unbounded",

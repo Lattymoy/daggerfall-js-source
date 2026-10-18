@@ -79,11 +79,12 @@ let _carry = new WeakMap();
  *  may have opposite signs, and one shared carry made a lighter spell land harder */
 let _takenOwed = { blow: 0, spell: 0 };
 
-/** A percent of `damage`, whole, the fraction carried on `key` - the sets' own law (sigilSetPowers.js setBlow). */
-function shareOf(key, damage, pct) {
+/** A percent of `damage`, whole, the fraction carried on `key` - the sets' own law (sigilSetPowers.js setBlow) - kept
+ *  unless the blow is the Stats page's estimate (AUDIT MARTIAL L2 F7). */
+function shareOf(key, damage, pct, keep = true) {
   const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
   const whole = pct >= 0 ? Math.floor(exact + 1e-9) : Math.ceil(exact - 1e-9);
-  _carry.set(key, exact - whole);
+  if (keep) _carry.set(key, exact - whole);
   return whole;
 }
 
@@ -138,7 +139,7 @@ export function firmamentBlow(weapon, damage, attacker, target, info) {
   const wounded = Number.isFinite(attacker.health) && attacker.maxHealth > 0 && attacker.health < attacker.maxHealth / 2;
   const pct = blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded });
   if (!pct) return damage;
-  return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct));
+  return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct, !info?.estimate));
 }
 
 // ── the spell ───────────────────────────────────────────────────────

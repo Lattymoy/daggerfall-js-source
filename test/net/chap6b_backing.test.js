@@ -92,7 +92,7 @@ async function stand() {
       doctrine = excluded.doctrine, doctrine_season = excluded.doctrine_season`).run(f, g, WEEK - 1, event, season, JSON.stringify(data), doctrine, doctrineSeason);
   const row = (f, g) => { const r = raw.prepare('SELECT * FROM npc_chapters WHERE faction = ? AND region = ?').get(f, g); return { ...r, event_data: JSON.parse(r.event_data) }; };
   const member = async (name, factions = [FIGHTERS, MAGES]) => {
-    const who = await s.registered(name);
+    const who = await s.seated(name);
     const R = await seatRealm(s.env, who.secret, name);
     await readRoll({ db: s.env.DB, nowS: NOW }, { id: who.id }, {
       character: R.id, lease: R.lease, seed: { factions: Object.fromEntries(factions.map((f) => [f, 85])), members: factions.map((f) => ({ f, rank: 7 })) },
@@ -267,16 +267,16 @@ async function board(t) {
   const raw = s.env.DB._raw;
   const age = (who, days) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - days * DAY, who.id);
   for (let i = 0; i < 3; i++) {
-    const w = await s.registered(`Wit${i}`); age(w, 8);
+    const w = await s.seated(`Wit${i}`); age(w, 8);
     assert.equal((await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [MAGES, FIGHTERS] } }, w.secret)).status, 200);
   }
-  const g = await s.registered('Ground'); age(g, 8);
+  const g = await s.seated('Ground'); age(g, 8);
   const p = herbPatches({ x: 300, y: 200, day: utcDay(NOON), climate: WOODS, confirmed: false })[0];
   assert.equal((await s.call('/v1/prof/harvest', {
     character: g.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(NOON), slot: p.slot }), kind: 'herbs',
     climate: WOODS, region: ANTICLERE, act: { clean: false, bruised: false }, at: NOON - 2, rid: rid(),
   }, g.secret)).status, 200);
-  const who = await s.registered('Alda');
+  const who = await s.seated('Alda');
   const R = await seatRealm(s.env, who.secret, 'Alda');
   await readRoll({ db: s.env.DB, nowS: NOON }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 41: 85, 40: 85 }, members: [{ f: 41, rank: 7 }, { f: 40, rank: 7 }] } });
   raw.prepare("INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?, 0, 60, 0, 'on', 0)").run(week - 1);

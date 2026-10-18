@@ -33,8 +33,8 @@ test('YARD-ROWS: the mounted fleet page - every ship\'s row a fleet row, her pre
   const host = globalThis.document.createElement('div');
   globalThis.document.body.append(host);
   const fleet = [
-    { uid: 801, label: 'Boat', name: 'Boat', hullName: 'Large Boat', where: 'laidup', port: 'Aldwall Rock', worth: 3546, offer: 431, upgrades: {}, sell: null, can: { summon: null, away: 'She is laid up already' } },
-    { uid: 802, label: 'Borrowed Wings', name: 'Borrowed Wings', hullName: 'Carrack', where: 'laidup', port: 'Aldwall Rock', worth: 65500, offer: 23002, upgrades: { hold: 3 }, sell: null, can: { summon: null, away: 'She is laid up already' } },
+    { uid: 801, label: 'Boat', name: 'Boat', hullName: 'Large Boat', where: 'laidup', port: 'Aldwall Rock', worth: 3546, offer: 431, upgrades: {}, sell: null, can: { summon: null, away: 'This ship is already laid up' } },
+    { uid: 802, label: 'Borrowed Wings', name: 'Borrowed Wings', hullName: 'Carrack', where: 'laidup', port: 'Aldwall Rock', worth: 65500, offer: 23002, upgrades: { hold: 3 }, sell: null, can: { summon: null, away: 'This ship is already laid up' } },
   ];
   const hands = [{ name: 'Bram Holloway', role: 'Bosun', fights: 3, boardings: 1 }];
   let page = 'fleet';
@@ -49,7 +49,7 @@ test('YARD-ROWS: the mounted fleet page - every ship\'s row a fleet row, her pre
     for (const r of rows) {
       assert.ok(r.className.split(' ').includes('dfyard-fleetrow'), 'a fleet row');
       const acts = byClass(r, 'dfyard-acts')[0];
-      assert.deepEqual(byClass(acts, 'dfnaval-btn').map((b) => b.textContent), ['Sell her', 'Bring her here', 'Lay her up', 'Name her']);
+      assert.deepEqual(byClass(acts, 'dfnaval-btn').map((b) => b.textContent), ['Sell', 'Bring here', 'Lay up', 'Rename']);
       assert.equal(byClass(acts, 'dfyard-name').length, 1, 'her name box among her acts');
     }
   } finally { view?.close?.(); host.remove(); }

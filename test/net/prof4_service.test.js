@@ -80,7 +80,7 @@ const craft = (who, recipe, extra = {}) => ({ character: who.character, recipe, 
 
 test('PROF4 service: a tree felled - the law\'s wood\'s logs into the Stores, own; Logging XP 15 x tier; Resin one tree in four; asked again one; a tree once a day; logs, never herbs; felled by night too (ANY-HOUR)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(10), 'logging');
   const t = treeAt(WOODS, GLENUMBRA, OAK);
   assert.deepEqual([t.material, t.tier], ['log:oak', 2], 'an unconfirmed Woodlands pixel: tiers 1-2 - its Oak');
@@ -115,7 +115,7 @@ test('PROF4 service: a tree felled - the law\'s wood\'s logs into the Stores, ow
 
 test('PROF4 service: the Wood-Axe\'s report bounded - the Clean Cuts at most the finish\'s, a clean act only with every chop clean (+50% XP); a Clean Cut\'s Heartwood on confirmed ground (a Forester\'s twice as likely), never with no cut; the rare wood one in twenty there, and none on a pixel nobody vouched for', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(99), 'logging');
   const most = cutsMax(2);
   let t = treeAt(WOODS, GLENUMBRA, OAK);
@@ -165,7 +165,7 @@ test('PROF4 service: the Wood-Axe\'s report bounded - the Clean Cuts at most the
 
 test('PROF4 service: a log burnt to a Charcoal at the forge (a Charcoal Burner\'s two) and sawn to two planks at the workbench (a Timberwright\'s three) - no XP; bought logs make bought wood; asked twice one', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'log:oak', 'own', 10);
   const burn = await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'burn:oak', count: 3, rid: rid() }, mac.secret);
   assert.equal(burn.status, 200, JSON.stringify(burn.body));
@@ -195,7 +195,7 @@ test('PROF4 service: a log burnt to a Charcoal at the forge (a Charcoal Burner\'
 
 test('PROF4 service: a Small Oak Table made - three Oak Planks spent, the piece written (DFU\'s 225) with its record, Carpentry XP 20 x 2 and the first craft\'s 500; a Joiner\'s half the planks; a Heartwood for a plank and a step (one with nothing else); a Master Joiner\'s mark on every piece', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   // PIN MOVED (CRAFT3): a workbench's work reads and raises the Building track (Carpentry's craft) - every track seeded here is 'building', and the track answered names it
   s.setXp(mac, xpForRank(10), 'building');
   s.give(mac, 'plank:oak', 'own', 3);
@@ -239,7 +239,7 @@ test('PROF4 service: a Small Oak Table made - three Oak Planks spent, the piece 
 
 test('PROF4 service: arrows are twenty at no quality (their record -1), one piece; the Ram Kit is refused - it waits for the sieges; Carpentry\'s rank; the bed\'s Linen from the furnisher for Marks, a `stock` line', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'plank:pine', 'own', 1); s.give(mac, 'ingot:iron', 'own', 1); s.give(mac, 'p1:8', 'own', 4);
   const a = await s.call('/v1/prof/craft', craft(mac, 'arrows:north'), mac.secret);
   assert.equal(a.status, 200, JSON.stringify(a.body));
@@ -276,9 +276,12 @@ const piece = (item, extra = {}) => ({ id: 'tb1', model: 41000, flat: null, pos:
 test('PROF4 service: a crafted table set down in a home - its provenance kept where the service\'s own row says it is this account\'s and this template\'s, its maker\'s mark written from that row (a Masterwork\'s, a Master Joiner\'s) and never from what the client sent; another\'s id, or a forged one, stands the plain piece', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
-  const ann = await s.registered('Ann');
+  const ann = await s.seated('Ann');
   const house = await s.seatHome(mac, home());
   assert.equal(house.status, 200);
+  // INT16 (Integrity-Arc section 7): a craft is a progression claim, asked of the SEATED realm character - the one the home
+  // was claimed by; a crafted piece is the account's (products.owner), so it is set down in that character's home as before
+  mac.character = house.character;
   // PIN MOVED (CRAFT3): a workbench's work reads the Building track (Carpentry's craft) - every track seeded here is 'building'
   s.setXp(mac, xpForRank(100), 'building', { spec100: 'master-joiner' });
   s.give(mac, 'plank:oak', 'own', 3);

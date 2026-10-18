@@ -114,8 +114,11 @@ export function mintShelfBoatUids(items, uid) {
  * (systems/inventorySession.js remoteTarget) - `items()`, the live list the pack takes from and stows into (the helm's
  * cargo weight reads the same list); `containerImage()`, the remote panel's picture, the cargo's Merchant (6);
  * `playerOwned`, which the mod sets. Its TextureArchive is nought, so the pack's drop-icon arms stand down, as DFU's do.
+ * CARGO-ANYWHERE (2026-10-17, bible/03-World/Naval-Refit.md): `storage` - the player's own (SHIP-STORE's word,
+ * ui/enhanced/enhancedInventory.js remoteModel): the Enhanced skins opened a hold TAKE-ONLY, the pile's frame alone, so
+ * nothing could be stowed in it there; the classic skin was always two-way, as the mod's own window is.
  */
-export const cargoLootTarget = (cargo) => ({ items: () => cargo.Items, containerImage: () => cargo.ContainerImage, playerOwned: cargo.playerOwned !== false });
+export const cargoLootTarget = (cargo) => ({ items: () => cargo.Items, containerImage: () => cargo.ContainerImage, playerOwned: cargo.playerOwned !== false, storage: true });
 
 /**
  * AssignVariantsToShopItems (6692-6717), PlayerActivate.OnLootSpawned's subscriber (6687): every deed on the shelf

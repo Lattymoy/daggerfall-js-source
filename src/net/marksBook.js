@@ -58,6 +58,9 @@ export const MARKS_PENDING_KEY = 'marks1.pendingSale';
  *  burnt, nothing is owed, and the kept sale may go (the switch among them: the service answers a line it finds before
  *  it asks the switch). Every other answer (the network, the service's fault, no session, a refused session, a guest)
  *  says nothing about the line, and the sale is kept. */
+/** The refusals that strike no find today and owe none: an account not yet a week registered (AUDIT 625 S1), and
+ *  INT16's - a character that is not the account's seat here, or one whose trade is held (Integrity-Arc section 7). */
+export const FIND_DROPS = Object.freeze(['marks-young', 'progress-seat', 'trade-held']);
 export const MARKS_FINAL = Object.freeze(['bad-marks', 'marks-short', 'marks-bank-cap', 'marks-rate', 'marks-rid', 'marks-closed']);
 /** How many times one press asks before the sale is left to settle later. */
 export const MARKS_TRIES = 3;
@@ -269,23 +272,23 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       let held = null;
       const owe = (/** @type {any} */ f) => { if (owed.length < FINDS_OWED_MAX) owed.push(f); };
       for (const f of asks) {
-        if (held) { if (held !== 'marks-young') owe(f); continue; }
+        if (held) { if (!FIND_DROPS.includes(held)) owe(f); continue; }
         const r = await ask(() => door.find(f.kind, f.rid, f.account));
         const error = r?.ok ? null : (r?.error ?? 'offline');
         if (!error) {
           const found = r.data ?? {};
           if (Number.isSafeInteger(found.today?.found) && found.today.found >= found.today.max) findsMet = { account: me, day };
           out.push({ kind: f.kind, found, line: this.findLine(found, f.kind) });
-        } else if (error === 'marks-young') {
+        } else if (FIND_DROPS.includes(error)) {
           findsMet = { account: me, day };   // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns
-          held = error;
+          held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed
         } else if (error === 'marks-need-account' || error === 'marks-closed') {
           state.open = false; state.balance = null;   // not this account's: refresh's own reading, and nothing asked again
           owe(f); held = error;   // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again
         } else if (FIND_KEPT.includes(error)) {
           owe(f); held = error;   // never answered: owed
-        } else if (error === 'marks-rate') {
-          held = error;   // its hour spent: this find let go (MARKS_FINAL's law), the rest wait owed for the next hour
+        } else if (error === 'marks-rate' || error === 'progress-play') {
+          held = error;   // its hour spent (INT17: or the play that pays for it): this find let go (MARKS_FINAL's law), the rest wait owed
         }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go
       }
       keepOwed();

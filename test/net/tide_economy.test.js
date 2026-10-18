@@ -62,7 +62,7 @@ async function stand(zero) {
   const raw = s.env.DB._raw;
   const confirm = async (x, y, climate, region) => {
     for (const h of ['WitA', 'WitB', 'WitC']) {
-      const w = await s.registered(`${h}${x}`);
+      const w = await s.seated(`${h}${x}`);
       raw.prepare("INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('pixel', ?, ?, ?, ?, ?)").run(`${x},${y}`, w.id, `${climate},${region}`, region, _now - 9 * DAY);
     }
   };
@@ -76,7 +76,7 @@ test('SEASON1 THE ECONOMY\'S TIDES IN THE SERVICE, AGAINST A TWIN: a tree on con
   const fell = async (zero, week, confirmed) => {
     clock(noonOf(utcDay(T0) + (week - W) * 7));
     const s = await stand(zero);
-    const mac = await s.registered('Mac');
+    const mac = await s.seated('Mac');
     s.setXp(mac, xpForRank(10), 'logging');
     const day = utcDay(_now);
     let t = null;
@@ -100,7 +100,7 @@ test('SEASON1 THE ECONOMY\'S TIDES IN THE SERVICE, AGAINST A TWIN: a tree on con
   const courier = async (zero) => {
     clock(T0 + 5 * 7 * DAY);
     const s = await stand(zero);
-    const mac = await s.registered('Mac'), ann = await s.registered('Ann');
+    const mac = await s.seated('Mac'), ann = await s.seated('Ann');
     s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_now - 9 * DAY, ann.id);
     s.raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, 'ore:mithril', 'own', 100)`).run(mac.id, mac.character);
     for (const [who, n] of [[mac, 100], [ann, 1000]]) s.raw.prepare('INSERT INTO marks (account, balance) VALUES (?, ?) ON CONFLICT (account) DO UPDATE SET balance = excluded.balance').run(who.id, n);

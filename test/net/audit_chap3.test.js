@@ -51,21 +51,21 @@ async function stand({ open = 'on', towns = [[77, ANTICLERE, [41, 368]]], member
   const raw = s.env.DB._raw;
   const age = (who, days) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_now - days * DAY, who.id);
   const wits = [];
-  for (let i = 0; i < 3; i++) { const w = await s.registered(`Wit${i}`); age(w, 8); wits.push(w); }
+  for (let i = 0; i < 3; i++) { const w = await s.seated(`Wit${i}`); age(w, 8); wits.push(w); }
   for (const [key, region, factions] of towns) {
     for (const w of wits) {
       clock(_now + 1);
       assert.equal((await s.call('/v1/chapters/witness', { hall: { key, region, factions } }, w.secret)).status, 200);
     }
   }
-  const g = await s.registered('Ground');
+  const g = await s.seated('Ground');
   age(g, 8);
   const p = herbPatches({ x: 300, y: 200, day: utcDay(_now), climate: WOODS, confirmed: false })[0];
   assert.equal((await s.call('/v1/prof/harvest', {
     character: g.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(_now), slot: p.slot }), kind: 'herbs',
     climate: WOODS, region: ANTICLERE, act: { clean: false, bruised: false }, at: _now - 2, rid: rid(),
   }, g.secret)).status, 200);
-  const who = await s.registered('Rolla');
+  const who = await s.seated('Rolla');
   const R = await seatRealm(s.env, who.secret, 'Rolla');
   await readRoll({ db: s.env.DB, nowS: _now }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 41: 10, 368: 5 }, members: members.map((f) => ({ f, rank: 0 })) } });
   raw.prepare('UPDATE npc_roll SET joined_at = joined_at - ? WHERE char_id = ?').run(8 * DAY, R.id);
@@ -95,7 +95,7 @@ test('AUDIT CHAP3 S2: the Chapters shut - no hall writ posted, no Turning settle
   assert.equal(await settleChaptersDue(s.env.DB, _now, null, 'off'), 0);
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM npc_chapter_weeks').get().n, 0);
   s.env.CHAPTERS_OPEN = 'off';
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const r = await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.ok(r.body.writs.length > 0 && r.body.writs.every((w) => w.kind === 'court'), 'the Court\'s stand');
@@ -114,7 +114,7 @@ test('AUDIT CHAP3 S2: the Chapters shut - no hall writ posted, no Turning settle
   // the switch each route settles under is the service's own: the sheet's and the board's, at 'dev'
   for (const via of ['sheet', 'board']) {
     const t = await stand({ open: 'dev' });
-    const dev = await t.registered('Devra');
+    const dev = await t.seated('Devra');
     if (via === 'sheet') assert.equal((await t.call('/v1/chapters/list', {}, dev.secret)).status, 200);
     else await t.call('/v1/writs/list', { character: dev.character, region: ANTICLERE }, dev.secret);
     assert.deepEqual(t.raw.prepare('SELECT open FROM npc_chapter_weeks').all().map((x) => x.open), ['dev'], via);
@@ -128,7 +128,7 @@ test('AUDIT CHAP3 S3: a witness that changed something tells every region its to
   // the same account again: nothing changed
   assert.deepEqual((await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [41, 368] } }, s.wits[0].secret)).body, { ok: true, counted: true });
   assert.equal(ver(), v0, 'no news');
-  const w = await s.registered('Wit9');
+  const w = await s.seated('Wit9');
   s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_now - 8 * DAY, w.id);
   await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [41, 368] } }, w.secret);
   assert.equal(ver(), v0 + 1, 'a fourth witness: a change');
@@ -141,7 +141,7 @@ test('AUDIT CHAP3 S3: a witness that changed something tells every region its to
 
 test('AUDIT CHAP3 S4: a region\'s hall writs in one statement, their own batch - a hall batch that fails leaves the Court\'s day written (mutants: the statement a writ, the shared batch)', async () => {
   const s = await stand({ towns: [[77, ANTICLERE, [41, 368, 40, 21]]] });
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const player = s.raw.prepare('SELECT * FROM players WHERE id = ?').get(mac.id);
   let hallInserts = 0;
   const spy = { prepare: (sql) => { if (/INSERT OR IGNORE INTO writs/.test(sql) && /'hall'/.test(sql)) hallInserts++; return s.env.DB.prepare(sql); }, batch: (l) => s.env.DB.batch(l) };
@@ -149,7 +149,7 @@ test('AUDIT CHAP3 S4: a region\'s hall writs in one statement, their own batch -
   assert.equal(hallInserts, 1, 'one statement for every chapter\'s writs');
   assert.ok(s.raw.prepare("SELECT COUNT(*) AS n FROM writs WHERE kind = 'hall'").get().n >= 8);
   const t = await stand({ towns: [[77, ANTICLERE, [41]]] });
-  const tm = await t.registered('Mac');
+  const tm = await t.seated('Mac');
   const tp = t.raw.prepare('SELECT * FROM players WHERE id = ?').get(tm.id);
   const failing = { prepare: (sql) => t.env.DB.prepare(sql), batch: async (l) => { if (l.length === 2) throw new Error('D1 refused'); return t.env.DB.batch(l); } };
   await assert.rejects(listWrits({ db: failing, nowS: _now }, { ...tp }, t.env, { character: tm.character, region: ANTICLERE }));
@@ -158,7 +158,7 @@ test('AUDIT CHAP3 S4: a region\'s hall writs in one statement, their own batch -
 
 test('AUDIT CHAP3 S5/T10: a strike landing between a witness\'s check and its write takes the report with it - the answer is hall-struck; a strike tells the sheet at once (mutants: the strike unasked in the write)', async () => {
   const s = await stand();
-  const w = await s.registered('Wit7');
+  const w = await s.seated('Wit7');
   s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_now - 8 * DAY, w.id);
   const player = s.raw.prepare('SELECT * FROM players WHERE id = ?').get(w.id);
   const { witnessHall } = await import('../../server-account/src/npcHalls.js');
@@ -167,7 +167,7 @@ test('AUDIT CHAP3 S5/T10: a strike landing between a witness\'s check and its wr
   assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM world_witness WHERE kind = 'npchall' AND key = '1:99'").get().n, 0);
   // the sheet hears a strike at once, on any isolate (its row's version moved)
   assert.deepEqual((await s.call('/v1/chapters/list', {}, s.who.secret)).body.chapters.map((c) => c.f), [41, 368]);
-  const dev = await s.registered('Devra');
+  const dev = await s.seated('Devra');
   await s.call('/v1/chapters/strike', { key: 77 }, dev.secret);
   assert.deepEqual((await s.call('/v1/chapters/list', {}, s.who.secret)).body.chapters, []);
 });
@@ -357,7 +357,7 @@ test('AUDIT CHAP3 T3: a character that dies between the membership read and the 
 test('AUDIT CHAP3 T5: a town disputed after its confirmation is on the developer\'s audit list, however many agree (mutants: the disputed arm)', async () => {
   const s = await stand({ towns: [[77, ANTICLERE, [41]]] });
   const more = [];
-  for (let i = 0; i < 4; i++) { const w = await s.registered(`Late${i}`); s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_now - 8 * DAY, w.id); more.push(w); }
+  for (let i = 0; i < 4; i++) { const w = await s.seated(`Late${i}`); s.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_now - 8 * DAY, w.id); more.push(w); }
   clock(_now + 1);
   await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [41] } }, more[0].secret);   // four agree
   for (const w of more.slice(1)) { clock(_now + 1); await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [40] } }, w.secret); }   // three dissent

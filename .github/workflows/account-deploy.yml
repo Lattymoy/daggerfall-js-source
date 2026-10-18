@@ -45,6 +45,9 @@ on:
     # realm checkpoint through src/systems/item/itemLaw.js - the loot's own
     # records, spoils and Broker, one law at both ends - so that graph
     # is listed too (the block after src/systems/wind/wind.js).
+    # DISCORD-CODE: and the deploy's last step runs tools/discordModCommands.mjs, so its own graph is listed (after this
+    # workflow's own line) - test/server/discord_setup.test.js holds it, and the commands it writes live under
+    # server-account/. No comment inside the list: the pins read it as one run of lines.
     paths:
       - "server-account/**"
       - "src/net/identityToken.js"
@@ -59,6 +62,10 @@ on:
       - "src/net/nameFilter.js"
       - "src/net/houseLaw.js"
       - "src/net/moderation.js"
+      - "src/net/safety/chatStamp.js"
+      - "src/net/safety/chatFeed.js"
+      - "src/net/safety/safetyLaw.js"
+      - "src/net/safety/conduct.js"
       - "src/net/playClock.js"
       - "src/net/renown.js"
       - "src/net/npcChapterLaw.js"
@@ -103,6 +110,7 @@ on:
       - "src/systems/quest/tables.js"
       - "src/systems/quest/table.js"
       - "src/systems/quest/parseUtils.js"
+      - "src/systems/quest/questPatches.js"
       - "src/systems/item/itemTemplatesData.js"
       - "src/net/raid/raidLaw.js"
       - "src/net/gate/gateReceipt.js"
@@ -244,6 +252,7 @@ on:
       - "src/systems/deepWater/deepWatersFishRows.js"
       - "src/systems/effectBroker.js"
       - "src/systems/effects.js"
+      - "src/systems/eliteGates/weirKeyRow.js"
       - "src/systems/enchanting.js"
       - "src/systems/enchantmentCatalogue.js"
       - "src/systems/enchantments.js"
@@ -270,6 +279,7 @@ on:
       - "src/systems/item/itemTemplates.js"
       - "src/systems/legacy/heirloom.js"
       - "src/systems/legacy/houseName.js"
+      - "src/systems/legacy/legacyLaw.js"
       - "src/systems/livingWorld/keepsake.js"
       - "src/systems/livingWorld/seed.js"
       - "src/systems/loot/loot.js"
@@ -355,6 +365,8 @@ on:
       - "vendor/foraging/ItemTemplates.json"
       - "vendor/iliac-puddle-no-more/ItemTemplates.json"
       - ".github/workflows/account-deploy.yml"
+      - "tools/discordModCommands.mjs"
+      - "tools/lib/isMain.mjs"
       - "src/systems/legacy/revived.js"
       - "src/poi/poiLaw.js"
       - "src/poi/poiMesh.js"
@@ -864,6 +876,34 @@ jobs:
             echo "- the Patreon webhook's URL: \`$base/v1/patreon/webhook\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's
+      # ANTHROPIC_API_KEY (server-account/src/modAi.js) and the Discord bot's DISCORD_BOT_TOKEN (discord.js), each put
+      # on the Worker here on EVERY deploy from the repository's own secrets, so a key changed there reaches the service
+      # on the next push. An unset one is not an error: the reviewer reads nothing (MOD_AI is a switch over a key), and
+      # no card is posted - the cases still gather. One put for both, fed through jq as the Patreon pair is: neither
+      # value is ever echoed, written to a file, or an argument. The summary names the door Discord's application is
+      # given (its Interactions Endpoint URL), read off this deploy - never typed.
+      - name: Put the chat safety's secrets, where the repository has them
+        working-directory: server-account
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          if [ -z "${ANTHROPIC_API_KEY}" ] && [ -z "${DISCORD_BOT_TOKEN}" ]; then
+            echo "neither ANTHROPIC_API_KEY nor DISCORD_BOT_TOKEN is set for this repository - the reviewer and the Discord queue stay off"
+          else
+            jq -n 'env | {ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
+          fi
+          {
+            echo "### Chat safety"
+            echo ""
+            echo "- the reviewer's key: $([ -n "${ANTHROPIC_API_KEY}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any key put before (AUDIT SAFE DISCORD-12)')"
+            echo "- the Discord bot's token: $([ -n "${DISCORD_BOT_TOKEN}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any token put before')"
+            echo "- the Discord application's Interactions Endpoint URL: \`$base/v1/discord/interactions\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # ...AND PROVE IT LANDED, BY CONTENT. The client's deploy has been
       # verified this way since U60 and the relay's since SRV-N/CI, for
       # the same reason both times: a wrangler exit code of 0 over an
@@ -1082,16 +1122,22 @@ jobs:
           # (curl 28) - the busiest reads on a database that sheds load (Scale-Arc PRIMARY-TRIPS) - and failed deploys
           # whose Worker had taken and whose every other call answered. A hang that wrote is no false pass: a second
           # first beat answers playedS above 0 and fails; a route that hangs every time still fails after seven asks.
-          post() {
-            local out=$1 url=$2 data=$3 got=404
+          # INT16: ONE RETRY FOR EVERY SMOKE CALL (`ask`, the call's own curl words after its file and URL): `post` the JSON
+          # calls', `put` the realm character's first save - a first save whose answer was lost (000) and landed answers its
+          # retry 409 `seq` 1, which the smoke reads as landed. One loop, so its law is pinned and mutated once.
+          ask() {
+            local out=$1 url=$2 got=404
+            shift 2
             for i in $(seq 1 7); do
-              got=$(curl -sS --max-time 15 -o "$out" -w '%{http_code}' -X POST "$url" -H 'content-type: application/json' -d "$data") || got=000
+              got=$(curl -sS --max-time 15 -o "$out" -w '%{http_code}' "$@" "$url") || got=000
               if [ "$got" != "404" ] && [ "$got" != "000" ] && [ "${got#5}" = "$got" ]; then break; fi
               echo "  $url -> $got (attempt $i, an old instance or the platform's first moments?)" >&2
               sleep 5
             done
             echo "$got"
           }
+          post() { ask "$1" "$2" -X POST -H 'content-type: application/json' -d "$3"; }
+          put() { ask "$1" "$2" -X PUT -H "authorization: Bearer $secret" -H "x-realm-lease: $4" -H 'x-realm-seq: 1' -d "$3"; }
 
           # ACC4: THE BEAT IS ONE UPDATE ... RETURNING with numbered
           # parameters. node:sqlite runs both; this asks D1 itself.
@@ -1121,8 +1167,23 @@ jobs:
           # repeat and credited nothing - a 404 is a route that did not
           # deploy, a 500 a migration that did not apply or a statement D1
           # will not run.
+          # INT16 (bible/06-Systems/Integrity-Arc.md section 7): AND A REPORT IS ITS SEAT'S - the account's realm character
+          # holding its lease, never a name the body makes up (a made-up one is refused 403 progress-seat before the batch
+          # runs). So the guest takes a realm character first, as a new player's tab does: made, and its first save at 1.
+          code=$(post /tmp/realm.json "$base/v1/realm/create" "{\"secret\":\"$secret\",\"name\":\"Deploy Smoke\"}")
+          rc=$(grep -o '"id":"r[0-9a-f]*"' /tmp/realm.json | head -1 | cut -d'"' -f4)
+          lease=$(grep -o '"lease":"[0-9a-f]*"' /tmp/realm.json | head -1 | cut -d'"' -f4)
+          echo "realm/create -> $code ($rc)"
+          if [ "$code" != "200" ] || [ -z "$rc" ] || [ -z "$lease" ]; then
+            echo "::error::the smoke's guest could not take a realm character ($code)"; cat /tmp/realm.json || true; exit 1
+          fi
+          code=$(put /tmp/realmsave.json "$base/v1/realm/$rc/data" '{"level":1,"goldPieces":100,"items":[]}' "$lease")
+          echo "realm first save -> $code"
+          if [ "$code" != "200" ] && ! { [ "$code" = "409" ] && grep -q '"seq":1' /tmp/realmsave.json; }; then
+            echo "::error::the smoke's realm character's first save was refused ($code)"; cat /tmp/realmsave.json || true; exit 1
+          fi
           rid=$(printf '%016x' "$(date +%s)")
-          code=$(post /tmp/renown.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          code=$(post /tmp/renown.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"$rc\",\"xp\":1,\"rid\":\"$rid\"}")
           echo "renown/xp -> $code"
           cat /tmp/renown.json || true
           echo
@@ -1130,7 +1191,7 @@ jobs:
             echo "::error::a Renown report failed on the deployed Worker ($code) - a first report of 1 XP must be credited 1"
             exit 1
           fi
-          code=$(post /tmp/renown2.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          code=$(post /tmp/renown2.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"$rc\",\"xp\":1,\"rid\":\"$rid\"}")
           echo "renown/xp again -> $code"
           if [ "$code" != "200" ] || ! grep -q '"credited":0' /tmp/renown2.json || ! grep -q '"repeat":true' /tmp/renown2.json; then
             echo "::error::a repeated Renown report was not answered as a repeat ($code)"; cat /tmp/renown2.json || true; exit 1
@@ -1236,3 +1297,37 @@ jobs:
             exit 1
           fi
           echo "and the relay's configured copy matches it"
+
+      # DISCORD-SETUP (bible/11-Multiplayer/Chat-Safety-Arc.md section 9): THE DISCORD END, SET BY THE DEPLOY - the
+      # application's Interactions Endpoint URL pointed at this deploy's door, and /mod registered in the server the
+      # moderators' channel is in, from the bot's token alone (tools/discordModCommands.mjs --setup: the application's id
+      # and public key are Discord's answer, the server the channel's). Every deploy, because both are idempotent and a
+      # changed /mod or a moved Worker then reaches Discord on the next push. LAST, so a refusal hides no check above it;
+      # and red when Discord refuses, because a service that deployed but cannot be pressed is the failure the setup
+      # exists for. Skipped, said, when the token, the channel or the public key is not set. The token is an env var
+      # here and in the tool, never an argument and never echoed.
+      - name: Point Discord at the service, where the repository has the bot's token
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          toml=server-account/wrangler.toml
+          channel=$(grep -oP '^DISCORD_MOD_CHANNEL\s*=\s*"\K[^"]*' "$toml" || true)
+          key=$(grep -oP '^DISCORD_PUBLIC_KEY\s*=\s*"\K[^"]*' "$toml" || true)
+          if [ -z "${DISCORD_BOT_TOKEN}" ] || [ -z "$channel" ] || [ -z "$key" ]; then
+            echo "the bot's token, DISCORD_MOD_CHANNEL or DISCORD_PUBLIC_KEY is not set - Discord is left as it is"
+            exit 0
+          fi
+          # DISCORD-CODE: what was done is said either way; what stopped it (Discord's refusal, or the permissions the bot
+          # lacks in the moderators' channel) goes to the summary too - the tool's stderr, which never holds the token
+          err="$RUNNER_TEMP/discord-setup.err"
+          if out=$(DISCORD_MOD_CHANNEL="$channel" DISCORD_PUBLIC_KEY="$key" DISCORD_INTERACTIONS_URL="${{ steps.deploy.outputs.base }}/v1/discord/interactions" node tools/discordModCommands.mjs --setup 2> "$err"); then
+            echo "$out"
+            { echo ""; echo "### Discord"; echo ""; echo "$out"; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "$out"
+            cat "$err"
+            { echo ""; echo "### Discord"; echo ""; echo "$out"; echo ""; echo "**Not finished:** $(cat "$err")"; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Discord's setup did not finish - $(head -c 300 "$err")"
+            exit 1
+          fi

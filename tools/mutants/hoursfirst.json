@@ -32,12 +32,12 @@
   {
     "name": "HOURSFIRST-another-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst' });",
-    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst' });",
+    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
+    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],
-    "note": "The First Hour's button would wear the Hourbreaker's gold, not its own title's rose gold."
+    "note": "The First Hour's button would wear the Hourbreaker's gold, not its own title's rose gold. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "HOURSFIRST-the-gradient-turned",

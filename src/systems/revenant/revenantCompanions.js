@@ -22,13 +22,20 @@
 import { wildHere } from '../wild/wildZone.js';   // PVPDUNGEONS (the owner: "Only 1 revenant allowed to summon in the zone")
 /** PVPDUNGEONS: how many sworn revenants may stand at the player's side in the open zone. */
 export const WILD_REVENANTS_MAX = 1;
-import { swornRevenants, revenantCompanionUpdate, revenantRecord, REVENANT_HEALTH_PER_RANK, REVENANT_DAMAGE_PER_RANK, setSwornLeftListener, revenantBetrays, revenantPerson } from './revenant.js';   // FB1012d ALLY-RACE: its person
+import { swornRevenants, revenantCompanionUpdate, revenantRecord, REVENANT_HEALTH_PER_RANK, REVENANT_DAMAGE_PER_RANK, setSwornLeftListener, revenantBetrays, revenantPerson, revenantMomentEvent, revenantEvent, revenantSay } from './revenant.js';   // FB1012d ALLY-RACE: its person
 import { registerCompanionCount, companionsWithYou, COMPANION_SLOTS } from '../companionSlots.js';
 import { addItem, addGoldPieces, isGoldPieces } from '../inventory.js';   // a released one's pack, handed back
 import { LOYALTY, DEVOTED, movedLoyalty, isDevoted, sameKin, BETRAY, mayBetray } from './revenantFeud.js';
 import { registerPlayerHurtListener } from '../../characters/playerEntity.js';   // RVN11c: the hurt that leaves me under a quarter   // RVN11 (bible/12-Enhanced-AI/Feud-Arc.md 22.1): its loyalty
 import { MINUTES_PER_DAY } from '../gameDate.js';   // RVN11: "twice in a day"
-import { ownMinutes } from '../worldTick.js';
+import { ownMinutes, raisedMinutes, sharedClockOn } from '../worldTick.js';   // AUDIT RVN F1: an errand on the lived step
+import { applySwornGear, gearKeyOf, gearRefusal, gearItems, isGearKey } from './revenantGear.js';   // RVN-GEAR: its kit
+import { ERRAND, errandPlace, newErrand, errandUntil, errandStep, errandHaul, deliverHaul, errandHaulWords, errandWords, errandLeftWords } from './revenantErrands.js';   // RVN-ERRAND: one abroad
+import { swornArtStep, swornMendStep, forgetSwornArt } from './revenantArts.js';   // RVN-ARTS: its art, for me
+import { playerDoor } from '../playerDoor.js';   // RVN-ARTS: the scene its art reaches through
+import { t } from '../textManager.js';   // L10N4: RVN-GEAR's and RVN-ERRAND's words through the text core
+import { popupMessage } from '../notify.js';   // RVN-ERRAND: an errand's words where the card is not drawn (the line every skin draws)
+import { equipTableOf } from '../equip.js';   // RVN-GEAR: never a piece the player wears
 
 /** How many revenants may be sworn to the player at once - with it and away. */
 export const REVENANT_RETINUE_MAX = 6;
@@ -86,17 +93,25 @@ export function restUntil(r, now) {
 /** AUDIT (2026-10-02): a sworn one's body held back a moment (wall ms) - the kneeling one still gathering into its portal
  *  as the oath is given: the layer stood the companion beside it, two of it for the oath's length. */
 const _heldUntil = new Map();
+/** RVN-ERRAND: the words an errand owes - said at the party's next frame (the menu shut: the layer runs no frame under a
+ *  window), through its card, else the line every skin draws. */
+const _errandWords = [];
+/** AUDIT RVN F1: the own clock's and the raises' readings at the party's last wake (null: none yet this session - the
+ *  first wake only samples), and the part of a minute pushed but not yet written (an errand's minute is whole). */
+let _errandClock = null;
+let _errandOwed = 0;
 export function holdSworn(id, ms) { if (id) _heldUntil.set(id, Date.now() + ms); }
 const held = (id) => { const t = _heldUntil.get(id); if (t == null) return false; if (Date.now() < t) return true; _heldUntil.delete(id); return false; };
 /** AUDIT (2026-10-02): a member is one stand's - a fall, a sending-away, a release or a load ends it, and its carried
  *  spells with it (the layer keeps those on the member: the crew's hands come ashore new each time, a sworn one did not,
  *  so a poison it wore when it fell stood with it again eight hours later). */
-export function forgetSwornMember(id = null) { if (id == null) { _members.clear(); _heldUntil.clear(); } else _members.delete(id); }
+export function forgetSwornMember(id = null) { if (id == null) { _members.clear(); _heldUntil.clear(); _errandWords.length = 0; _errandClock = null; _errandOwed = 0; forgetSwornArt(); } else _members.delete(id); }   // RVN-ERRAND: a load forgets the words owed, and the clock's last reading (AUDIT RVN F1)
 /** Why a sworn one cannot come to the player's side now - words for the roster - or null: it may. */
 export function callRefusal(r, now) {
   if (!r?.sworn) return 'It is no longer sworn to you.';
   if (stateOf(r) === 'with') return null;
   if (stateOf(r) === 'resting' && now < restUntil(r, now)) return 'Still recovering.';
+  if (stateOf(r) === 'errand') return t('rvn.errand.callAbroad', 'Abroad - {left}.', { left: errandLeftWords(errandUntil(r.companion.errand, now), now) });   // RVN-ERRAND
   if (wildHere() && revenantsWithYou().length >= WILD_REVENANTS_MAX) return 'Only one revenant may walk at your side in the Wrothgarian Mountains.';   // PVPDUNGEONS
   if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;
   return null;
@@ -134,17 +149,147 @@ export function sendRevenantAway(id, { now = Math.floor(ownMinutes()), byYou = t
 export function releaseRevenant(id) {
   const r = revenantRecord(_player, id);
   if (!r?.sworn) return null;
+  if (stateOf(r) === 'errand') return null;   // RVN-ERRAND: abroad - recalled first, its oath given back to its face
   // AUDIT (2026-10-02): ITS PACK IS HANDED BACK - the release closed the record with whatever the player had stored in
   // it, gone for good. Into the player's own pack, every item (the crew's hand-off stows a pack in the hold the same way)
-  const items = (r.companion?.items ?? []).slice();
+  const items = [...(r.companion?.items ?? []), ...gearItems(r.companion?.gear)];   // RVN-GEAR: and its kit
   const out = revenantCompanionUpdate(_player, id, () => 'release');
   forgetSwornMember(id);
+  forgetSwornArt(id);   // AUDIT RVN B12: and its art's clock - a release is for good
   if (out && items.length && _player) {
     _player.items ??= [];
     for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }   // gold to the purse (never a Currency row), the player's own - no loot word
   }
   if (out) tell('release', out, { items: items.length });
   return out;
+}
+
+// ── RVN-ERRAND (bible/06-Systems/Revenants.md section 42): a sworn one abroad ──────────────
+const sayErrand = (ev) => { try { revenantSay(ev, popupMessage); } catch { /* a word is nobody's failure */ } };
+/** How many of the sworn are abroad now. */
+export const revenantsAbroad = () => swornRevenants().filter((r) => stateOf(r) === 'errand');
+/** Why it may not set out now - the page's words - or null: it may. */
+export function errandRefusal(r, now) {
+  if (!r?.sworn) return t('rvn.sworn.gone', 'It is no longer sworn to you.');
+  if (stateOf(r) === 'errand') return t('rvn.errand.no.abroad', 'It is already abroad.');
+  if (stateOf(r) === 'resting' && now < restUntil(r, now)) return t('rvn.errand.no.resting', 'Still recovering.');
+  if (revenantsAbroad().length >= ERRAND.MAX) return t('rvn.errand.no.most', '{n} of your sworn are abroad already - the most at once.', { n: ERRAND.MAX });
+  return null;
+}
+/** SENT ON AN ERRAND to `place` (an ERRAND_PLACES key) for `venture`: it leaves (through its portal, if it stood at the
+ *  player's side) and is back at the errand's minute. Answers the refusal's words, or null. `seed` the haul's draw (the
+ *  page's dice). */
+export function sendOnErrand(id, place, venture, { now = Math.floor(ownMinutes()), seed = Math.floor(Math.random() * 0x100000000) } = {}) {
+  const r = revenantRecord(_player, id);
+  const why = errandRefusal(r, now);
+  if (why) return why;
+  const e = newErrand(r, place, venture, now, seed);
+  if (!e) return t('rvn.errand.no.such', 'It knows no such errand.');
+  revenantCompanionUpdate(_player, id, (c) => { c.state = 'errand'; c.errand = e; c.until = null; c.rested = false; });
+  _errandClock ??= { own: ownMinutes(), raised: raisedMinutes() };   // AUDIT RVN F1: the clock read from its first minute, a raise before the next wake charged as one
+  forgetSwornMember(id);
+  const p = errandPlace(place);
+  const where = e.city ? t('rvn.errand.cityIn', '{city}, in {province}', { city: e.city, province: p?.name }) : p?.name;
+  _errandWords.push(revenantMomentEvent('dismiss', r, _player?.name, { as: 'errand', body: t('rvn.errand.setsOut', 'It sets out for {where} - {left}.', { where, left: errandLeftWords(e.until, now) }) }));   // its own leaving words, the errand's card
+  return null;
+}
+/** RECALLED before its errand is done: back at once with nothing, and worn from the road - resting a rest's length
+ *  (AUDIT RVN F8: a recall that cost nothing re-rolled an errand's seed for free). Answers whether it was abroad. */
+export function recallFromErrand(id, now = Math.floor(ownMinutes())) {
+  const r = revenantRecord(_player, id);
+  if (!r?.sworn || stateOf(r) !== 'errand') return false;
+  revenantCompanionUpdate(_player, id, (c) => { c.state = 'resting'; c.errand = null; c.until = now + REVENANT_REST_MIN; c.worn = true; });
+  return true;
+}
+/** BACK: its haul drawn (revenantErrands.js errandHaul) and handed to the player; won, waiting to be called and
+ *  ERRAND.WON_LOYALTY the more loyal - once an errand (AUDIT RVN F7: `paid`, its seed - a reload of a save made abroad
+ *  brings the haul back again, never the loyalty); hard-won, resting a rest's length, worn from the road (AUDIT RVN F6:
+ *  no RVN11 call bonus after it). Its words owed. Answers the haul. */
+export function returnFromErrand(id, now) {
+  const r = revenantRecord(_player, id);
+  const e = r?.companion?.errand;
+  if (!_player || !r?.sworn || stateOf(r) !== 'errand' || !e) return null;
+  const haul = errandHaul(r, e, { level: _player.level ?? 1 });
+  revenantCompanionUpdate(_player, id, (c) => {
+    c.errand = null;
+    if (haul.won) {
+      c.state = 'away'; c.worn = false;
+      if (c.paid !== e.seed) c.loyalty = movedLoyalty(c.loyalty, ERRAND.WON_LOYALTY);
+    } else { c.state = 'resting'; c.until = now + REVENANT_REST_MIN; c.health = null; c.worn = true; }
+    c.paid = e.seed;
+  });
+  deliverHaul(_player, haul);
+  const p = errandPlace(e.place);
+  const body = haul.won
+    ? t('rvn.errand.back', 'Back from {place} with {haul}.', { place: p?.name ?? '', haul: errandHaulWords(haul) })
+    : t('rvn.errand.backHurt', 'Back, hurt, from {place} with {haul}. It must recover.', { place: p?.name ?? '', haul: errandHaulWords(haul) });
+  _errandWords.push(revenantEvent('errand_back', r, { body, line: t('rvn.errand.backLine', '{name}: {body}', { name: r.name, body }) }));   // AUDIT RVN D7: no portal's voice - it waits away
+  return haul;
+}
+/** AUDIT RVN F1, F5: the errands abroad carried on by one wake - online the lived step alone (revenantErrands.js
+ *  errandStep: a raise or time away pushes each one's minute back); an errand whose minute an older clock stretched past
+ *  its place's days is written back to them (as restUntil writes a rest's). The record's minute, written without a
+ *  revision (as the party's `hurt` writes its health): the save reads it, and an errand is the save's. */
+export function chargeErrands(now, { own = ownMinutes(), raised = raisedMinutes(), online = sharedClockOn() } = {}) {
+  let push = 0;
+  if (!_errandClock) _errandClock = { own, raised };   // the session's first reading: nothing to charge yet
+  else {
+    if (Number.isFinite(own) && Number.isFinite(_errandClock.own)) {
+      _errandOwed += errandStep(own - _errandClock.own, raised >= _errandClock.raised ? raised - _errandClock.raised : 0, online);
+      push = Math.floor(_errandOwed);
+      _errandOwed -= push;
+    }
+    _errandClock.own = own; _errandClock.raised = raised;   // nothing made a frame
+  }
+  for (const r of swornRevenants()) {
+    if (stateOf(r) !== 'errand' || !r.companion.errand) continue;
+    const e = r.companion.errand;
+    const until = errandUntil(e, now - push) + push;   // its minute pushed, then held to its days from now
+    if (until !== e.until && Number.isInteger(until)) e.until = until;
+  }
+}
+/** Where one abroad is, in the page's words. */
+export const abroadWords = (r, now) => (stateOf(r) === 'errand' ? errandWords(r.companion.errand, now) : null);
+
+// ── RVN-GEAR (bible/06-Systems/Revenants.md section 40): its kit, from the player's pack and back ──────────────
+/** The player's pieces a sworn one might wear (the page's list): in the pack, unworn by the player, of a slot it has. */
+export function giftablePieces(player = _player) {
+  const worn = new Set(player ? equipTableOf(player).filter(Boolean) : []);
+  return (player?.items ?? []).filter((it) => it && !worn.has(it) && gearKeyOf(it) != null);
+}
+/** GIVEN: `item` from the player's pack into its slot - the piece there before back to the pack - and worn at once by a
+ *  body standing here. Answers the refusal's words, or null. */
+export function giveSwornGear(id, item, { kindName = null } = {}) {
+  const r = revenantRecord(_player, id);
+  if (!_player || !r) return t('rvn.sworn.gone', 'It is no longer sworn to you.');
+  const key = gearKeyOf(item);
+  const why = gearRefusal(r, item, { kindName });
+  if (why) return why;
+  if (equipTableOf(_player).includes(item)) return t('rvn.gear.no.worn', 'You are wearing it.');
+  const pack = _player.items ?? [];
+  const at = pack.indexOf(item);
+  if (at < 0) return t('rvn.gear.no.pack', 'It is not in your pack.');
+  pack.splice(at, 1);
+  let was = null;
+  revenantCompanionUpdate(_player, id, (c) => { c.gear ??= {}; was = c.gear[key] ?? null; c.gear[key] = item; });
+  if (was) addItem(pack, was);
+  const body = swornBodyOf(id);
+  if (body) applySwornGear(body, revenantRecord(_player, id), { taken: was ? [was] : [] });
+  return null;
+}
+/** TAKEN BACK: its piece in `key` into the player's pack (a shield first when its one-handed weapon goes - a shield wants
+ *  one). Answers the pieces handed back. */
+export function takeSwornGear(id, key) {
+  const r = revenantRecord(_player, id);
+  if (!_player || !r?.sworn || stateOf(r) === 'errand' || !isGearKey(key) || !r.companion?.gear?.[key]) return [];   // AUDIT RVN F10: abroad, its kit goes with it
+  const keys = key === 'weapon' && r.companion.gear.shield ? ['shield', 'weapon'] : [key];
+  const back = [];
+  revenantCompanionUpdate(_player, id, (c) => { for (const k of keys) { if (c.gear?.[k]) back.push(c.gear[k]); delete c.gear[k]; } });
+  _player.items ??= [];
+  for (const it of back) addItem(_player.items, it);
+  const body = swornBodyOf(id);
+  if (body) applySwornGear(body, revenantRecord(_player, id), { taken: back });
+  return back;
 }
 
 /** A sworn one's whole and blows over the body a place stands for it: its rank's, as it fought the player with. Its
@@ -159,6 +304,7 @@ export function applySwornStrength(entity, r, { fresh = true } = {}) {
   }
   entity.damageScale = (1 + REVENANT_DAMAGE_PER_RANK * rank) * (isDevoted(r.companion?.loyalty) ? DEVOTED.BLOWS : 1);   // RVN11 (22.1): a Devoted one's blows
   entity.revenant = { id: r.id, name: r.name, rank, sworn: true };   // FOE-TITLE: called by its own name everywhere
+  applySwornGear(entity, r);   // RVN-GEAR: its kit over the one its stand rolled
 }
 
 // ── THE PARTY, in the crew's shape (crewAshore.js reads `party`, `wake`, `knock`, `hurt`, `isAshore`) ──────────────
@@ -186,9 +332,12 @@ export function revenantParty({ onWake = null } = {}) {
   return {
     get party() { const list = revenantsWithYou().filter((r) => !held(r.id)); return (wildHere() ? list.slice(0, WILD_REVENANTS_MAX) : list).map(memberOf); },   // PVPDUNGEONS: in the zone one stands, the rest wait outside it
     wake(now) {
+      chargeErrands(now);   // AUDIT RVN F1: online, the lived step alone carries an errand on
+      for (const r of swornRevenants()) if (stateOf(r) === 'errand' && r.companion.errand && now >= r.companion.errand.until) returnFromErrand(r.id, now);   // RVN-ERRAND: back from abroad
+      while (_errandWords.length) sayErrand(_errandWords.shift());   // RVN-ERRAND: its words, the menu shut
       for (const r of swornRevenants()) {
         if (stateOf(r) === 'resting' && now >= restUntil(r, now)) {
-          revenantCompanionUpdate(_player, r.id, (c) => { c.state = 'away'; c.until = null; c.health = null; c.rested = true; });   // RVN11: its next call after this rest +10
+          revenantCompanionUpdate(_player, r.id, (c) => { c.state = 'away'; c.until = null; c.health = null; c.rested = !c.worn; c.worn = false; });   // RVN11: its next call after this rest +10 - AUDIT RVN F6: never after a road's
           onWake?.(r);
         }
       }
@@ -218,6 +367,7 @@ export function revenantParty({ onWake = null } = {}) {
  *  it stands with none standing and the last it fought is down (a target that walked off, or one still standing, is no
  *  win; a target held after its death is none). Answers true on that frame. */
 export function swornFightStep(rec) {
+  if (rec?.revenantCompanion) { try { const r = revenantRecord(_player, rec.revenantCompanion); if (r) swornArtStep(rec, r, playerDoor(), { say: popupMessage }); } catch { /* an art is no fight's failure */ } }   // RVN-ARTS: its art, frame by frame
   const t = rec?.ai?.target;
   const tgt = t?.entity && !t.dead && t.entity.health > 0 ? t : null;
   if (tgt) { rec._fightLast = tgt; return false; }
@@ -257,5 +407,7 @@ export function betrayalStep(entity, after) {
   return t;
 }
 registerPlayerHurtListener('sworn-betrayal', (entity, { after } = /** @type {any} */ ({})) => { betrayalStep(entity, after); });
+// RVN-ARTS (Revenants.md section 41): a hurt that leaves me low - a sworn one's Mending answers it
+registerPlayerHurtListener('sworn-mending', (entity, { after } = /** @type {any} */ ({})) => { try { swornMendStep(entity, after, revenantsWithYou(), (id) => swornBodyOf(id)?.health > 0, { say: popupMessage }); } catch { /* a heal is no hurt's failure */ } });
 /** Tests only. */
-export function _resetRetinueForTests() { _members.clear(); _heldUntil.clear(); _player = null; _listener = null; _bodies = null; }
+export function _resetRetinueForTests() { _members.clear(); _heldUntil.clear(); _errandWords.length = 0; _errandClock = null; _errandOwed = 0; _player = null; _listener = null; _bodies = null; }

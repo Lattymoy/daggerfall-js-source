@@ -133,8 +133,9 @@ export function installRoleplayRealism() {
     const slots = equipTableOf(ctx.entity);
     const weapon = slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;
     const hands = weapon ? getItemHands(weapon) : ITEM_HANDS.None;   // ItemHands, the C#'s third argument
-    const weight = readSwing(ctx)?.weight ?? 0;   // AUDIT PRE-MERGE 0929 S3: the weapon's weight, as the swing law reads it
-    return rrMeleeWeaponAnimTime({ liveSpeed, liveStrength: liveStat(ctx.entity, 'strength'), weaponType: ctx.weaponType, hands: hands === ITEM_HANDS.Both ? 'Both' : 'One', weight });   // SWING-LAW: answered through the port's swing law
+    const w = readSwing(ctx);
+    const weight = w?.weight ?? 0;   // AUDIT PRE-MERGE 0929 S3: the weapon's weight, as the swing law reads it
+    return rrMeleeWeaponAnimTime({ liveSpeed, liveStrength: liveStat(ctx.entity, 'strength'), weaponType: ctx.weaponType, hands: hands === ITEM_HANDS.Both ? 'Both' : 'One', weight, shortBlade: !!w?.shortBlade });   // SWING-LAW: answered through the port's swing law; BAL10: a short blade's handling
   });
 
   // weaponMaterials (:178-181): CalculateWeaponToHit

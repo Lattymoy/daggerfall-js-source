@@ -11,8 +11,9 @@ import { readFileSync } from 'node:fs';
 
 import { byClass } from '../chargenDom.mjs';
 import { standService, sessionStorageOf, T0 } from '../accountDb.mjs';
+import { pinRealmAct, realmActOver, recordOf, layRecord } from '../realmSeat.mjs';   // INT19: a commission's piece is handed on through the realm act
 import { accountWrits, accountMarket, SESSION_KEY, REFUSALS } from '../../src/net/accountClient.js';
-import { createWritBook, WRIT_KEPT_TEXT } from '../../src/net/writBook.js';
+import { createWritBook, WRIT_KEPT_KEY } from '../../src/net/writBook.js';
 import { createMarketBook } from '../../src/net/marketBook.js';
 import { saleTax, wearOf } from '../../src/net/marketLaw.js';
 import { materialCountLabel } from '../../src/systems/professions/profItems.js';
@@ -49,7 +50,8 @@ test('PROF6 DONE WHEN (the books): a Guildmaster\'s writ posted and an outsider\
   raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', 40)`).run(out.id, out.character, OAK);
   const told = { marks: [], stores: [] };
   const bookOf = (who) => createWritBook({ door: accountWrits({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, who) }), storage: memStorage(),
-    character: () => who.character, sleep: noWait, marks: { set: (n) => told.marks.push([who.handle, n]) }, stores: { apply: (st) => told.stores.push([who.handle, st]) } });
+    character: () => who.character, sleep: noWait, marks: { set: (n) => told.marks.push([who.handle, n]) }, stores: { apply: (st) => told.stores.push([who.handle, st]) },
+    realm: who.at ? pinRealmAct(s.env, who.character) : null });   // INT19: a realm character's fill through the realm act
   const gmBook = bookOf(gm), outBook = bookOf(out);
   const p = await gmBook.post({ region: DF, material: OAK, units: 40, pay: 3 });
   assert.equal(p.ok, true, JSON.stringify(p));
@@ -65,7 +67,7 @@ test('PROF6 DONE WHEN (the books): a Guildmaster\'s writ posted and an outsider\
   assert.deepEqual([w.ok, told.stores.at(-1)], [true, ['Aldric', { material: OAK, own: 0, bought: 40 }]]);
   assert.deepEqual(gmBook.state.guildStores.rows, [], 'the answer\'s Stores, emptied');
   // THE COMMISSION
-  const smith = await s.registered('Silverthorn'), ann = await s.registered('Ann');
+  const smith = await s.seated('Silverthorn'), ann = await s.registered('Ann');   // PIN MOVED (INT19): the crafter a realm character - the piece leaves its record
   s.seedMarks(ann, 2_000);
   raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at)
     VALUES (?, ?, ?, 'Silverthorn', 'longsword:mithril', 120, 5, 3, 77, 'p1.x', ?)`).run(PV, smith.id, smith.character, T0);
@@ -76,10 +78,12 @@ test('PROF6 DONE WHEN (the books): a Guildmaster\'s writ posted and an outsider\
   assert.equal(c.ok, true, JSON.stringify(c));
   const sword = mintPiece({ recipe: 'longsword:mithril', quality: 3, seed: 77, maker: 'Silverthorn' }, PV);
   const pack = [sword];
+  layRecord(s.env, smith.character, { ...recordOf(s.env, smith.character), items: [JSON.parse(JSON.stringify(sword))] });   // the pack is the record's
   const f = await smithBook.fulfil({ region: DF, commission: c.data.commission.id, provenance: PV, wear: wearOf(sword) },
     { item: sword, where: 'pack', take: () => { pack.splice(0, 1); return true; }, putBack: (it) => pack.push(it) });
   assert.equal(f.ok, true, JSON.stringify(f));
   assert.deepEqual([pack.length, smithBook.pending, told.marks.at(-1)], [0, 0, ['Silverthorn', 900 - saleTax(900)]]);
+  assert.deepEqual(recordOf(s.env, smith.character).items, [], 'out of the crafter\'s record, in the fill\'s own batch');
   // Ann's market book collects it into her pack
   const annMarket = createMarketBook({ door: accountMarket({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, ann) }), storage: memStorage(), character: () => ann.character, sleep: noWait });
   await annMarket.read('mine', { region: DF, hubs: {} });
@@ -99,30 +103,33 @@ test('PROF6 the writs\' book: a fill keeps its piece out of the save until answe
     post: async () => new Promise(() => {}),   // never answers
   };
   const storage = memStorage();
-  const book = createWritBook({ door, storage, character: () => 'char-a', sleep: noWait });
+  // PIN MOVED (INT19, Integrity-Arc section 7): a fill goes through the realm act (net/marketBook.js realmPieceAct) - out of
+  // the save inside the hold, put back on a refusal, nothing kept on silence (the record is the truth: a join reads it); a
+  // fill a tab from before kept is still asked again by the settle with its own id
+  const at = { id: 'r00000000000000000003', lease: 'L'.repeat(32), seq: 2 };
+  const book = createWritBook({ door, storage, character: () => 'char-a', sleep: noWait, realm: realmActOver(() => at) });
   const pack = [{ provenance: PV }];
   const piece = { item: pack[0], where: 'pack', take: () => { pack.splice(0, 1); return true; }, putBack: (it) => pack.push(it) };
   const r = await book.fulfil({ region: DF, commission: 'K1', provenance: PV, wear: 1000 }, piece);
-  assert.deepEqual([r.kept, r.text, pack.length, book.pending], [true, WRIT_KEPT_TEXT, 0, 1], 'silence: kept, out of the save');
-  const rid = book._kept()[0].rid;
+  assert.deepEqual([r.unknown, pack.length, book.pending], [true, 0, 0], 'silence: out of the save, nothing kept');
   // a refusal on the ask itself: straight back into the pack
   const pack2 = [{ provenance: 'c0ffee00c0ffee02' }];
   answer = { ok: false, error: 'commission-worn' };
   const no = await book.fulfil({ region: DF, commission: 'K9', provenance: pack2[0].provenance, wear: 1000 },
     { item: pack2[0], where: 'pack', take: () => { pack2.splice(0, 1); return true; }, putBack: (it) => pack2.push(it) });
-  assert.deepEqual([no.error, pack2.length, book.pending], ['commission-worn', 1, 1], 'put back; the first still kept');
-  answer = { ok: false, error: 'offline' };
+  assert.deepEqual([no.error, pack2.length, book.pending], ['commission-worn', 1, 0], 'put back');
+  // a fill a tab from before kept: a refusal on the settle puts it back, asked with its own id
+  const rid = 'wkeptfill0000003';
+  const kept = (commission, id) => ({ rid: id, body: { character: 'char-a', region: DF, commission, provenance: PV, wear: 1000, rid: id }, item: { provenance: PV }, where: 'pack' });
+  storage.setItem(WRIT_KEPT_KEY, JSON.stringify({ 'acct|char-a': { fulfils: [kept('K3', rid)] } }));
   assert.equal(book.ridOk(rid), true);
-  // a refusal on the settle: put back
   answer = { ok: false, error: 'commission-piece' };
   const back = [];
   assert.equal((await book.settle((it) => back.push(it))).settled, 1);
   assert.deepEqual([back.length, book.pending], [1, 0]);
-  assert.equal(calls.filter((c) => c[0] === 'fulfil' && c[2] === 'K1').every((c) => c[1] === rid), true, 'one id throughout');
+  assert.equal(calls.filter((c) => c[0] === 'fulfil' && c[2] === 'K3').every((c) => c[1] === rid), true, 'one id throughout');
   // a late yes: the piece dropped from the save (it may have been kept since it was taken)
-  pack.push({ provenance: PV });
-  answer = { ok: false, error: 'offline' };
-  await book.fulfil({ region: DF, commission: 'K2', provenance: PV, wear: 1000 }, { ...piece, item: pack[0] });
+  storage.setItem(WRIT_KEPT_KEY, JSON.stringify({ 'acct|char-a': { fulfils: [kept('K2', 'wkeptfill0000002')] } }));
   answer = { ok: true, data: { commission: { id: 'K2' } } };
   const dropped = [];
   await book.settle(() => {}, (it) => dropped.push(it.provenance));

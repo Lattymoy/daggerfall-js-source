@@ -240,13 +240,13 @@ let _carry = new WeakMap();
  * player on either end - AUDIT 625 P2: or the duel's word, an arena bout's stand-in no player), a peer's blow resolved
  * here, a hand without a sigil, or a session with no Renown.
  */
-export function sigilBlow(weapon, damage, attacker, target) {
+export function sigilBlow(weapon, damage, attacker, target, info = null) {
   if (!(damage > 0) || !weapon || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling) return damage;
   const pct = sigilPercent(weapon.sigil, _renown);
   if (!(pct > 0)) return damage;
   const exact = (damage * pct) / 100 + (_carry.get(weapon) ?? 0);
   const more = Math.floor(exact + 1e-9);
-  _carry.set(weapon, Math.max(0, exact - more));
+  if (!info?.estimate) _carry.set(weapon, Math.max(0, exact - more));   // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing
   return damage + more;
 }
 registerWeaponBlowMod('sigil', sigilBlow);

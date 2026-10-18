@@ -302,7 +302,8 @@
   {
     "name": "INTA-the-auction-held",
     "file": "server-account/src/market.js",
-    "old": "  const held = (await realmHoldOf(db, me, character)) ?? (await craftHoldOf(db, me, provenance));   // INT3 (AUDIT INT): a held character auctions nothing; CRAFT-HOLD: nor its craft under another's name\n  if (held) return held;\n",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the auction's hold, its record's own",
+    "old": "  const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character auctions nothing - INT19: its record proves the piece its own (CRAFT-HOLD's maker's hold retired here)\n  if (held) return held;\n",
     "new": "",
     "tests": [
       "test/net/int6_review.test.js"

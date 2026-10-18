@@ -44,7 +44,7 @@ const craft = (who, recipe, extra = {}) => ({ character: who.character, recipe, 
 
 test('PROF3 service: a Mithril Longsword made - the inputs spent, the piece written with its provenance id and a record the service signed, 20 x 5 XP and the first craft\'s 500; asked twice one; the second is no first', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(55));
   s.longswordInputs(mac);
   const body = craft(mac, 'longsword:mithril');
@@ -74,7 +74,7 @@ test('PROF3 service: a Mithril Longsword made - the inputs spent, the piece writ
 
 test('PROF3 service: the quality is the service\'s roll on the margin, then a step each for a clean act, the family\'s specialisation and a Warforged ingot - nothing past Masterwork; a Masterwright\'s points', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const at = async (recipe, b, extra = {}) => {
     const r = recipeById(recipe);
     for (const inp of r.inputs) s.give(mac, inp.key, 'own', inp.n);
@@ -104,7 +104,7 @@ test('PROF3 service: the quality is the service\'s roll on the margin, then a st
 
 test('PROF3 service: a craft refused - the rank, the inputs (naming the short one), the recipe; a kit\'s quality rolled (CRAFT5: its reach), a Quartermaster\'s is two pieces; the crafter\'s limit; the switch shut, a craft made answered after', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(55) - 1);
   s.longswordInputs(mac);
   assert.deepEqual((await s.call('/v1/prof/craft', craft(mac, 'longsword:mithril'), mac.secret)).body, { error: 'prof-rank' });
@@ -149,7 +149,7 @@ test('PROF3 service: a craft refused - the rank, the inputs (naming the short on
 
 test('PROF3 service: the smith\'s stock - the fittings into the Stores as bought units for Marks burnt, one `stock` line naming the material; asked twice one; the Marks short, the Stores full, a material not the stock\'s; the Stores withdraw none of it', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   assert.deepEqual(SMITH_STOCK.map((x) => [x.key, x.marks]), [['leather:cured', 4], ['plank:oak', 4], ['plank:pine', 2], ['wood:charcoal', 2]]);
   s.seedMarks(mac, 100);
   const body = { character: mac.character, material: 'leather:cured', qty: 5, rid: rid() };
@@ -185,7 +185,7 @@ test('PROF3 service: the smith\'s stock - the fittings into the Stores as bought
 
 test('PROF3 service: a Quartermaster\'s smelt yields two ingots a unit (PROF0 3.3; FOUND unbuilt at PROF2) - the room counted for both, the XP the smelt\'s; Brass is a metal, not an ingot', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100), 'smithing', { spec100: 'quartermaster' });
   s.give(mac, 'metal:iron', 'own', 6);
   const r = await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'ingot:iron', count: 3, rid: rid() }, mac.secret);

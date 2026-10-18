@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { standService, T0 } from '../accountDb.mjs';
+import { seatRealm } from '../realmSeat.mjs';   // INT16: a guest seated, to reach the seats' own door
 import { seatReportText, seatWeekOf, seatWeekStartMs, SEAT_MEMBER_WAIT_S, WATCH_INFLUENCE, ACCOUNT_SEAT_WEEK_CAP, accountSeatInfluence } from '../../src/net/townSeatLaw.js';
 import { tideOf, TIDE_EFFECTS } from '../../src/net/tideLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
@@ -40,7 +41,7 @@ async function stood(t, zero) {
     raw.prepare("INSERT INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)").run(String(ANTICLERE.key), w.id, seatReportText(ANTICLERE), ANTICLERE.region, T0 - DAY);
   }
   raw.prepare('INSERT INTO town_seat_weeks (week, settled_at) VALUES (?, ?)').run(W + 2, now - 3000);   // the Turning settled
-  const gm = await svc.registered('Gamal', { renown: 12 });
+  const gm = await svc.seated('Gamal', { renown: 12 });
   assert.equal((await svc.found(gm, { name: 'The Silver Hand', tag: 'SH' })).status, 200);
   const gid = raw.prepare('SELECT guild_id FROM guild_members WHERE player = ? AND char_id = ?').get(gm.id, gm.character).guild_id;
   raw.prepare('UPDATE guild_members SET joined_at = ? WHERE guild_id = ?').run(T0 - SEAT_MEMBER_WAIT_S - DAY, gid);
@@ -91,8 +92,13 @@ test('SEASON1 THE ORC RAIDS\' DAY: five camps a UTC day across the weeks it span
   for (const site of ['nope', '402,151', '1000,10:1', '402,151:1;drop', 7]) assert.equal((await five.camp(site)).error, 'bad-orc-camp', String(site));
   assert.equal((await five.camp('402,151:1', 999)).error, 'bad-orc-camp');
   const guest = await five.svc.guest();
-  assert.equal((await five.svc.call('/v1/seats/orc-camp', { character: 'c', site: '402,151:1', region: 21 }, guest.secret)).body.error, 'seats-need-account');
-  const loner = await five.svc.registered('Lone');
+  // PIN MOVED (INT16, Integrity-Arc section 7): a camp is asked of the account's seated realm character first - a guest
+  // naming a character it does not sit in is refused 'progress-seat' before the seats read it; seated, it reaches the
+  // seats' own door
+  assert.equal((await five.svc.call('/v1/seats/orc-camp', { character: 'c', site: '402,151:1', region: 21 }, guest.secret)).body.error, 'progress-seat');
+  const guestSeat = await seatRealm(five.svc.env, guest.secret, 'Guestling');
+  assert.equal((await five.svc.call('/v1/seats/orc-camp', { character: guestSeat.id, site: '402,151:1', region: 21 }, guest.secret)).body.error, 'seats-need-account');
+  const loner = await five.svc.seated('Lone');
   assert.deepEqual(await five.camp('402,151:9', 21, loner), { ok: true, counted: false, why: 'no-guild' });
 });
 

@@ -228,7 +228,7 @@ export const rriWeaponMaxDamage = (weapon) => (weaponBalanceOn() ? (RRI_WEAPON_M
  *  `3 * (115 - speed)` over the classic frame update ran a light blade at
  *  four swings a second. The weight is the mod's to weigh, so the law's
  *  own heft is not asked. */
-export function rriMeleeWeaponAnimTime({ liveSpeed, liveStrength, weaponWeight = null, melee = false, weaponType = melee ? 15 : 0, twoHanded = false }) {
+export function rriMeleeWeaponAnimTime({ liveSpeed, liveStrength, weaponWeight = null, melee = false, weaponType = melee ? 15 : 0, twoHanded = false, shortBlade = false }) {
   let adjustedSpeed;
   if (melee || weaponWeight == null) {
     adjustedSpeed = liveSpeed;
@@ -239,5 +239,5 @@ export function rriMeleeWeaponAnimTime({ liveSpeed, liveStrength, weaponWeight =
     const playerSpeed = Math.min(liveSpeed, 98);
     adjustedSpeed = Math.trunc(playerSpeed - (playerSpeed * speedReductionPerc / 90));
   }
-  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded) });
+  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) });   // BAL10: `shortBlade` - the dagger's handling for every short blade
 }

@@ -23,12 +23,12 @@ import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseH
 import { EG_TEXT } from '../../net/eliteGates/egLaw.js';
 import { WEIR_KEY_ART, registerWeirKeyArt } from '../../world/eliteGates/egKeyArt.js';   // EG-ZH: its own picture
 import { addVendorTextures } from '../textureReplacement.js';
+import { WEIR_KEY_TEMPLATE, WEIR_KEY_LAW_ROW } from './weirKeyRow.js';   // KEY-LAW: its row a leaf, so the law knows it headless
 
-export const WEIR_KEY_TEMPLATE = 575;
-/** Its row: bound (net/realm/realmTradeLaw.js BOUND_TEMPLATES names it - never traded, never lost to a death) and stacked. */
+export { WEIR_KEY_TEMPLATE };
+/** Its row: the leaf's (weirKeyRow.js - bound, stacked) with its name and its picture. */
 export const WEIR_KEY_ROW = Object.freeze({
-  index: WEIR_KEY_TEMPLATE, name: EG_TEXT.keyName, baseWeight: 0.25, hitPoints: 1000, basePrice: 500, rarity: 20,
-  worldTextureArchive: WEIR_KEY_ART.archive, worldTextureRecord: WEIR_KEY_ART.record, bound: true, stackable: true,
+  ...WEIR_KEY_LAW_ROW, name: EG_TEXT.keyName, worldTextureArchive: WEIR_KEY_ART.archive, worldTextureRecord: WEIR_KEY_ART.record,
 });
 registerCustomTemplates([WEIR_KEY_ROW]);
 registerWeirKeyArt(addVendorTextures);   // EG-ZH: the import IS the registration

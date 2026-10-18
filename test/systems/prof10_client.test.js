@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { standService, T0, sessionStorageOf } from '../accountDb.mjs';
+import { recordOf, layRecord } from '../realmSeat.mjs';   // INT19: the pack's piece in the record the listing takes it out of
 import { accountProf, SESSION_KEY, accountRefusalText } from '../../src/net/accountClient.js';
 import { createProfBook } from '../../src/net/profBook.js';
 import { xpForRank, JEWEL_FEE, trackOf } from '../../src/net/professionLaw.js';
@@ -104,7 +105,7 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
   resetProfPages();
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const give = (m, qty) => raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)
     ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = excluded.qty`).run(mac.id, mac.character, m, qty);
   // PIN MOVED (CRAFT3): a jewel raises and reads the Smithing track - the row seeded is 'smithing'
@@ -161,6 +162,8 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
     const cut = player.items[1];
     assert.deepEqual([cut.enchantmentPoints, itemEnchantmentPower(cut)], [2340, 2340]);
     raw.prepare('INSERT INTO marks (account, balance) VALUES (?, ?) ON CONFLICT (account) DO UPDATE SET balance = excluded.balance').run(mac.id, 100);
+    // PIN MOVED (INT19, Integrity-Arc section 7): the pack is the record's - its checkpoint wrote the ring there
+    layRecord(s.env, mac.character, { ...recordOf(s.env, mac.character), items: [JSON.parse(JSON.stringify(cut))] });
     const l = await s.call('/v1/market/list', { character: mac.character, region: DF, kind: 'piece', provenance: cut.provenance, wear: 1000, price: 25, hubs: HUBS, rid: 'jewel-list-01' }, mac.secret);
     assert.equal(l.status, 200, JSON.stringify(l.body));
     const crafted = await s.call('/v1/market/read', { character: mac.character, region: DF, view: 'crafted', family: 'jewellery', hubs: HUBS }, mac.secret);

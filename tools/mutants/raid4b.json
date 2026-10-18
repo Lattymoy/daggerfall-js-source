@@ -83,7 +83,7 @@
   {
     "name": "RAID4b-riposte-never-spent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "{ pct += oath[1].more; _s.riposteUntil = 0; }",
+    "old": "{ pct += oath[1].more; if (keep) _s.riposteUntil = 0; }",
     "new": "{ pct += oath[1].more; }",
     "tests": [
       "test/systems/raid4b_sets.test.js"

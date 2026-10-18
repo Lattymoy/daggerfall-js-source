@@ -941,7 +941,7 @@
   },
   {
     "name": "AUDIT-SERPENT-L2-tally",
-    "file": "src/scenes/naval/navalHost.js",
+    "file": "src/scenes/naval/navalTally.js",
     "old": "if (segmentOfTarget(e.target) != null) { t.hits++; t.ended++; }",
     "new": "if (segmentOfTarget(e.target) != null) { t.ended++; }",
     "tests": [

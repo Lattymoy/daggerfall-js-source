@@ -110,8 +110,8 @@
   {
     "name": "LOOT4-the-fraction-dropped",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  _carry.set(key, Math.max(0, exact - more));",
-    "new": "  _carry.set(key, 0);",
+    "old": "  if (keep) _carry.set(key, Math.max(0, exact - more));",
+    "new": "  if (keep) _carry.set(key, 0);",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]

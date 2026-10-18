@@ -79,21 +79,21 @@ async function stand({ open = 'on', towns = [[77, ANTICLERE, [41, 108, 368]]], m
   const raw = s.env.DB._raw;
   const age = (who, days) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_now - days * DAY, who.id);
   const wits = [];
-  for (let i = 0; i < 3; i++) { const w = await s.registered(`Wit${i}`); age(w, 8); wits.push(w); }
+  for (let i = 0; i < 3; i++) { const w = await s.seated(`Wit${i}`); age(w, 8); wits.push(w); }
   for (const [key, region, factions] of towns) {
     for (const w of wits) {
       clock(_now + 1);
       assert.equal((await s.call('/v1/chapters/witness', { hall: { key, region, factions } }, w.secret)).status, 200);
     }
   }
-  const g = await s.registered('Ground');
+  const g = await s.seated('Ground');
   age(g, 8);
   const p = herbPatches({ x: 300, y: 200, day: utcDay(_now), climate: WOODS, confirmed: false })[0];
   assert.equal((await s.call('/v1/prof/harvest', {
     character: g.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(_now), slot: p.slot }), kind: 'herbs',
     climate: WOODS, region: ANTICLERE, act: { clean: false, bruised: false }, at: _now - 2, rid: rid(),
   }, g.secret)).status, 200);
-  const who = await s.registered('Rolla');
+  const who = await s.seated('Rolla');
   const R = await seatRealm(s.env, who.secret, 'Rolla');
   await readRoll({ db: s.env.DB, nowS: _now }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 41: 10, 108: 0, 368: 5 }, members: members.map((f) => ({ f, rank: 0 })) } });
   const merit = (week, faction, region, amount, ref = `x:${++_rid}`) => raw.prepare(`INSERT INTO npc_chapter_merit (week, faction, region, account, char_id, source, amount, ref, at)
@@ -115,7 +115,7 @@ test('CHAP3b every region\'s chapters at once: the towns confirmed for each regi
   assert.equal((await allChapters(spy, _now + 30)).length, 4);
   assert.equal(reads, 0, 'computed once, read as its row after');
   // a strike tells every region its town's reports named: Daggerfall's, and Anticlere's (the early word)
-  const dev = await s.registered('Devra');
+  const dev = await s.seated('Devra');
   assert.equal((await s.call('/v1/chapters/strike', { key: 78 }, dev.secret)).status, 200);
   assert.deepEqual((await allChapters(spy, _now + 60)).map((c) => c.region), [21, 21, 21], 'computed again once told');
   assert.ok(reads > 0);

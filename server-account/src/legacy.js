@@ -36,6 +36,7 @@ import { checkName } from '../../src/net/nameFilter.js';   // ...through the nam
 import { ID_RE, REALM_CHARACTER_RE } from '../../src/net/identityToken.js';   // LEGACY7 part three: the other's account, by the token's own shape; AUDIT LEGACY III O1: and its realm character
 import { releaseSteps } from './ledger.js';   // INT4: a tombstone's pieces let go - an heir, a looter takes them up
 import { guildMemberDead } from './guilds.js';   // AUDIT LEGACY III O5: a tombstone's guild seat handed on
+import { lineageLawFindings } from '../../src/systems/legacy/legacyLaw.js';   // INT18: a line's copy held to the family's own law
 import { takeRevived, revivedOf, stampRevived, dropRevived, REZ_HOLD_S } from '../../src/systems/legacy/revived.js';   // REVIVE: a death taken back - the client's law; REZ-BLOODLINE AUDIT R1: and a Resurrect's, inside its window
 
 /** A family's id, as the client mints it (src/systems/legacy/family.js mintFamilyId). */
@@ -114,6 +115,14 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
   if (rec.bytes > LINEAGE_MAX_BYTES) return { error: 'lineage-too-large' };
   if (had) {
     if (had.model !== rec.model) return { error: 'lineage-model' };
+    // INT18 (bible/06-Systems/Integrity-Arc.md section 7): THE FAMILY'S OWN LAW (src/systems/legacy/legacyLaw.js) - a
+    // member's blood and hearth and the waiting estate on every copy, and the facts store.js mergeFacts only ever adds
+    // (a member, a death, a retirement, a fallen's remains) beside the stored copy WHEN THIS WRITE WAS MADE FROM IT: a copy
+    // made from an older one is answered stale with the stored copy to merge into, as ever - refused here it would never
+    // take another device's new member in. A copy that breaks the law is refused whole and the stored one stands: an
+    // honest device makes its copy by the law's own functions, and merges before it writes.
+    const broke = lineageLawFindings(record, base === had.rev ? parsed(had.record) : null);
+    if (broke.length) return lineageLaw(broke);
     const moved = await db.prepare('UPDATE lineages SET record = ?, rev = ?, surname = ?, updated_at = ? WHERE player = ? AND id = ? AND rev = ? AND rev < ?')
       .bind(rec.text, rec.rev, rec.surname, nowS, playerId, id, base ?? -1, rec.rev).run();
     if (moved.meta.changes) {
@@ -122,6 +131,8 @@ export async function putLineage({ db, nowS }, playerId, { id, record: sent, bas
     }
     return staleLine(db, playerId, id, rec.model);
   }
+  const founding = lineageLawFindings(record, null);   // INT18: a founding's copy, alone
+  if (founding.length) return lineageLaw(founding);
   const wrote = await db.prepare(
     'INSERT OR IGNORE INTO lineages (player, id, surname, model, record, rev, created_at, updated_at)'
     + ' SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ?',
@@ -151,6 +162,9 @@ function withoutRevived(sent, storedText) {
   takeRevived(out, stored);
   return out;
 }
+
+/** INT18: a copy the family's own law refuses - the first of its findings named, and every one. */
+const lineageLaw = (/** @type {string[]} */ findings) => ({ error: 'lineage-law', why: findings[0], findings });
 
 /** The stored line, answered to a write that was not made from it - or null when there is none. */
 async function staleLine(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ id, /** @type {string} */ model) {

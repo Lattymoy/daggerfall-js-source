@@ -122,7 +122,7 @@
   {
     "name": "OW6-S-classic-ungoverned",
     "file": "src/scenes/world.js",
-    "old": "      const rate = csaHoldsTimeScale() ? null : (foes.strangerRate ? Math.min(foePaced(foes.cap, travelAsked), foes.strangerRate) : foePaced(foes.cap, travelAsked));",
+    "old": "      const rate = csaHoldsTimeScale() ? null : (foes.strangerRate ? Math.min(foeRate(foes, travelAsked), foes.strangerRate) : foeRate(foes, travelAsked));",
     "new": "      const rate = csaHoldsTimeScale() ? null : travelAsked;",
     "tests": [
       "test/systems/travel/ow6_slowdown.test.js"

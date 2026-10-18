@@ -274,8 +274,8 @@
   {
     "name": "MERGE-NAVH-her-closing-unsaid",
     "file": "src/scenes/world.js",
-    "old": "reach: t.reach, ...(t.chasing ? { chasing: true, mps: t.mps } : {}) });",
-    "new": "reach: t.reach });",
+    "old": "reach: t.reach, holds: t.holds, ...(t.chasing ? { chasing: true, mps: t.mps } : {}) });",
+    "new": "reach: t.reach, holds: t.holds });",
     "tests": [
       "test/systems/naval/nav_r_raiders.test.js",
       "test/systems/travel/ow6_slowdown.test.js"

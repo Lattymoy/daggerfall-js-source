@@ -317,8 +317,8 @@
   {
     "name": "NAVF-still-batch-at-part",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if (batch && frame) one(batch.mesh, frame);",
-    "new": "      if (batch && frame) one(batch.mesh, still[0].m);",
+    "old": "      if (batch && frame) one(batch.mesh, frame, paint);",
+    "new": "      if (batch && frame) one(batch.mesh, still[0].m, paint);",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "NAVF-still-drawn-twice",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, made(c.rec));",
-    "new": "      for (const c of still) one(c.gpu, made(c.rec));",
+    "old": "      for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, made(c.rec), paint);",
+    "new": "      for (const c of still) one(c.gpu, made(c.rec), paint);",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]

@@ -298,5 +298,13 @@
  "press (a button; never 'click')": "нажать (нажмите)",
  "Press again to confirm": "Нажмите ещё раз для подтверждения",
  "first-time bonus (a craft's first-make XP)": "бонус за первый раз",
- "cloth (the Weavers' Linen and Wool)": "ткань"
+ "cloth (the Weavers' Linen and Wool)": "ткань",
+ "martial specialisation": "боевая специализация",
+ "signature technique": "коронный приём",
+ "technique key (Weapon Technique)": "клавиша приёма",
+ "weapon skill": "оружейный навык",
+ "blow": "удар",
+ "stack (a passive power’s)": "заряд",
+ "dash (a technique’s)": "рывок",
+ "fatigue (restored by a power)": "выносливость"
 }

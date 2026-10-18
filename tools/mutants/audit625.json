@@ -292,8 +292,8 @@
   {
     "name": "AUDIT625-S1-young-owed",
     "file": "src/net/marksBook.js",
-    "old": "          held = error;\n        } else if (error === 'marks-need-account'",
-    "new": "          owe(f); held = error;\n        } else if (error === 'marks-need-account'",
+    "old": "          held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed\n        } else if (error === 'marks-need-account'",
+    "new": "          owe(f); held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed\n        } else if (error === 'marks-need-account'",
     "why": "a young account's find owed",
     "tests": [
       "test/net/audit625_silver.test.js"

@@ -61,8 +61,8 @@ test('PROF4 DONE WHEN: DECOR places a crafted table - an Oak felled, its logs sa
   t.mock.method(Date, 'now', () => NOON * 1000);
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
-  const ann = await s.registered('Ann');
+  const mac = await s.seated('Mac');
+  const ann = await s.seated('Ann');
   const track = (prof, xp, spec100 = null) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec100, updated_at) VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = excluded.xp, spec100 = excluded.spec100`).run(mac.id, mac.character, prof, xp, spec100, NOON);
   track('logging', xpForRank(10));

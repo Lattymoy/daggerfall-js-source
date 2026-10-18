@@ -168,7 +168,7 @@ test('AUDIT LEGACY III O1: THE TOKEN VOUCHES FOR THE REALM CHARACTER (`ci`, besi
   assert.match(hostText('src/scenes/world.js'), /online\.onWed = \(id, d, sub = null, sc = null\) => \{ wedMgr\.onFrame\(id, d, sub, sc\); \};/);
 });
 
-test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello read a 640-character body and the mint asked only the verifier\'s 1024: every optional claim at once was 639, so a house (LEGACY7) carried such a token to 739, minted and then refused at every hello as "bad token"; with the realm character it is 778 now, under TOKEN_BODY_MAX, and a house past it is left unsaid', async () => {
+test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello read a 640-character body and the mint asked only the verifier\'s 1024: every optional claim at once was 639, so a house (LEGACY7) carried such a token to 739, minted and then refused at every hello as "bad token"; with the realm character it is 778 now, under TOKEN_BODY_MAX, and a house past it is left unsaid (WIKIMAID: every glyph with the WikiMaid\'s took it to 808 - the bound 864 now, PIN MOVED)', async () => {
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const nowS = 1_760_000_000;
   const seatT = SEAT_TITLES.reduce((x, t) => (t.length > x.length ? t : x), '');

@@ -231,5 +231,5 @@ test('NAME-ADOPT: the host starts from the ISSUED name and every mint corrects e
   const adopt = w.slice(w.indexOf('const adoptIssued = (who) => {'), w.indexOf('const identityMinter ='));
   assert.match(adopt, /online\?\.adoptIdentity\?\.\(who\);/, 'the presence session');
   assert.match(adopt, /for \(const link of chatLinks\?\.values\?\.\(\) \?\? \[\]\) link\.adoptIdentity\?\.\(who\);/, 'and every chat link - the roster draws my row from whichever link its tab holds');
-  assert.match(w, /accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued,\s+character: /);   // RENOWN1: and the character coming online
+  assert.match(w, /accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued, now: steadyNow,\s+character: /);   // RENOWN1: and the character coming online
 });

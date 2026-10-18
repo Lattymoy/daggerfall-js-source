@@ -23,16 +23,16 @@ import { armorBodyParts } from '../equip.js';
 import { SKILL_COUNT } from '../skills.js';
 import { rarityOf } from '../loot/lootRarity.js';
 import { isSummoned } from '../inventory.js';
+import { REMAINS_GOLD_SHARE, REMAINS_GOLD_MAX } from './legacyLaw.js';   // INT18: the remains' ceiling, beside the family law's bounds
 import { houseWord } from './houseName.js';   // LEGACY-NAME: a seat's house says itself once
 
 export const HEIRLOOM_GEN_MAX = 5;
 /** A weapon's damage per generation, percent; armour's points per generation on its parts. */
 export const HEIRLOOM_DAMAGE_PER_GEN = 5;
 export const HEIRLOOM_ARMOR_PER_GEN = 2;
-/** The share of the fallen's purse that lies with them - a tenth, at most REMAINS_GOLD_MAX (AUDIT LEGACY H7: it had
- *  no ceiling). A quarter more is the estate (family.js ESTATE_SHARE); the rest is the fallen's save's, and the past's. */
-export const REMAINS_GOLD_SHARE = 0.1;
-export const REMAINS_GOLD_MAX = 2_500;
+/** The share of the fallen's purse that lies with them (REMAINS_GOLD_SHARE, at most REMAINS_GOLD_MAX) - INT18: its home is
+ *  legacyLaw.js, with the family law's other bounds. */
+export { REMAINS_GOLD_SHARE, REMAINS_GOLD_MAX };
 /** The gold lying with the fallen, of the purse they carried. */
 export const remainsGoldOf = (gold) => Math.min(REMAINS_GOLD_MAX, Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE)));
 /** The blessing: points on the fallen's best skill. */

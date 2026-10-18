@@ -50,15 +50,15 @@ test('V2e: activeMemberships picks the book by LIVE vampirism - a curse hides th
 test('V2e: a pre-V2e plain book migrates IN PLACE as the mortal book', () => {
   const p = P();
   const legacy = {};
-  joinGuild(legacy, GUILDS.ThievesGuild, 50);
+  joinGuild(legacy, GUILDS.FightersGuild, 50);   // CURSE-CARRY: a guild the swap still hides - the Thieves Guild rides it now
   p.guildMemberships = legacy;   // the shape every save before this slice carries
   const book = activeMemberships(p);
   assert.ok(isMembershipStore(p.guildMemberships), 'migrated to the two-book store');
   assert.equal(p.guildMemberships.mortal, legacy, 'the plain book IS the mortal book, same object');
-  assert.ok(membershipOf(book, GUILDS.ThievesGuild), 'nothing lost');
+  assert.ok(membershipOf(book, GUILDS.FightersGuild), 'nothing lost');
   // and a live curse on top of a legacy book cannot read the wrong one
   createVampirismCurse(p, VAMPIRE_CLANS.Lyrezi, { now: 0 });
-  assert.equal(membershipOf(activeMemberships(p), GUILDS.ThievesGuild), null);
+  assert.equal(membershipOf(activeMemberships(p), GUILDS.FightersGuild), null);
 });
 
 test('V2e: the save carries BOTH books, deep-copied; a legacy snap restores as the mortal book', () => {

@@ -65,7 +65,7 @@ async function stand(extra = {}) {
   const raw = s.env.DB._raw;
   /** An account a week registered (it witnesses), and its row as the service reads it. */
   const player = async (handle) => {
-    const w = await s.registered(handle);
+    const w = await s.seated(handle);
     raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOW - WITNESS.ageS, w.id);
     return { ...w, row: raw.prepare('SELECT * FROM players WHERE id = ?').get(w.id) };
   };

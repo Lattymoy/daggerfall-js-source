@@ -12,9 +12,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { standService, sessionStorageOf, T0 } from '../accountDb.mjs';
+import { pinRealmAct, realmActOver, recordOf, layRecord } from '../realmSeat.mjs';   // INT19: a crafted piece is handed on through the realm act
 import { accountProf, accountMarket, SESSION_KEY } from '../../src/net/accountClient.js';
 import { createProfBook } from '../../src/net/profBook.js';
-import { createMarketBook, MARKET_KEPT_TEXT, MARKET_CACHE_MS } from '../../src/net/marketBook.js';
+import { createMarketBook, MARKET_CACHE_MS, MARKET_KEPT_KEY } from '../../src/net/marketBook.js';
 import { xpForRank, WEAVERS_STOCK } from '../../src/net/professionLaw.js';
 import { courierFee, courierSeconds, roadPixels, wearOf, wearCondition, MARKET_VIEWS } from '../../src/net/marketLaw.js';
 import { mintPiece, mintPieces } from '../../src/systems/smithItems.js';
@@ -41,8 +42,8 @@ test('PROF5 DONE WHEN: a crafted Mithril Longsword listed at a board in Daggerfa
   clock(T0);
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
-  const ann = await s.registered('Ann');
+  const mac = await s.seated('Mac');
+  const ann = await s.seated('Ann');
   raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, 'smithing', ?, 1)`).run(mac.id, mac.character, xpForRank(55));
   for (const [m, n] of [['ingot:mithril', 3], ['metal:copper', 1], ['leather:cured', 1], ['ore:mithril', 40]]) {
     raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)`).run(mac.id, mac.character, m, n);
@@ -57,13 +58,17 @@ test('PROF5 DONE WHEN: a crafted Mithril Longsword listed at a board in Daggerfa
   assert.equal(made.ok, true, JSON.stringify(made));
   const [sword] = pack;
   sword.currentCondition = Math.round(sword.maxCondition * 0.62);
-  // Mac lists it, and 40 Mithril Ore, at a board in Daggerfall - the sword taken out of the pack first
+  // PIN MOVED (INT19, Integrity-Arc section 7): the pack is the record's - its checkpoint wrote the sword there
+  layRecord(s.env, mac.character, { ...recordOf(s.env, mac.character), items: [JSON.parse(JSON.stringify(sword))] });
+  // Mac lists it, and 40 Mithril Ore, at a board in Daggerfall - the sword taken out of the pack, and out of his record
   const macMarks = [];
-  const macBook = createMarketBook({ door: accountMarket({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) }), storage: memStorage(), character: () => mac.character, sleep: noWait, marks: { set: (n) => macMarks.push(n) } });
+  const macBook = createMarketBook({ door: accountMarket({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) }), storage: memStorage(), character: () => mac.character, sleep: noWait, marks: { set: (n) => macMarks.push(n) },
+    realm: pinRealmAct(s.env, mac.character) });
   const listed = await macBook.list({ region: DF, kind: 'piece', provenance: sword.provenance, wear: wearOf(sword), price: 900, hubs: HUBS },
     { item: sword, where: 'pack', take: () => { pack.splice(pack.indexOf(sword), 1); return true; }, putBack: (it) => pack.push(it) });
   assert.equal(listed.ok, true, JSON.stringify(listed));
   assert.deepEqual([pack.length, listed.data.listing.wear], [0, 620], 'out of the save, its wear on the listing');
+  assert.deepEqual(recordOf(s.env, mac.character).items, [], 'and out of the record, in the listing\'s own batch');
   assert.equal((await macBook.list({ region: DF, kind: 'material', material: 'ore:mithril', units: 40, price: 8, hubs: HUBS })).ok, true);
   assert.deepEqual(macMarks.slice(-1), [100 - 9 - 4], 'the Drakes book told the balance');
   // Ann, at a board in Wayrest, reads the sword with its courier and buys it
@@ -105,40 +110,52 @@ test('PROF5 DONE WHEN: a crafted Mithril Longsword listed at a board in Daggerfa
 
 // ─── THE BOOK ────────────────────────────────────────────────────────
 
+// PIN MOVED (INT19, Integrity-Arc section 7): a crafted piece is listed through the realm act (net/marketBook.js
+// realmPieceAct) - out of the save inside the hold, put back on a refusal; on silence nothing is kept (a lost answer ends
+// the session, and a join reads the record: listed, or in the pack)
 test('PROF5 book: a piece listed is taken out of the save before it is asked - silence keeps it, a refusal puts it back, a settle asks it again with its own id; a bought piece minted once however many tabs settle it', async () => {
   const storage = memStorage();
   let online = false, answer = 'ok';
   const asked = [];
   const door = {
     account: () => 'acct-1',
-    list: async (b) => { asked.push(b.rid); return !online ? { ok: false, error: 'offline' } : answer === 'ok' ? { ok: true, data: { listing: { id: 'L1' }, balance: 7 } } : { ok: false, error: answer }; },
+    list: async (b) => { asked.push(b); return !online ? { ok: false, error: 'offline' } : answer === 'ok' ? { ok: true, data: { listing: { id: 'L1' }, balance: 7 } } : { ok: false, error: answer }; },
     buy: async (b) => (online ? { ok: true, data: { sale: { here: true }, piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 }, balance: 3, rid: b.rid } } : { ok: false, error: 'offline' }),
   };
   const marks = [];
-  const a = createMarketBook({ door, storage, character: () => 'char-a', sleep: noWait, marks: { set: (n) => marks.push(n) } });
+  const at = { id: 'r00000000000000000001', lease: 'L'.repeat(32), seq: 3 };
+  const a = createMarketBook({ door, storage, character: () => at.id, sleep: noWait, marks: { set: (n) => marks.push(n) }, realm: realmActOver(() => at) });
   const pack = [{ provenance: PROV, name: 'dagger' }];
   const item = pack[0];
   const piece = { item, where: 'pack', take: () => { pack.splice(pack.indexOf(item), 1); return true; }, putBack: (it) => pack.push(it) };
   const r = await a.list({ region: 17, kind: 'piece', provenance: PROV, wear: 1000, price: 5 }, piece);
-  assert.deepEqual([r.ok, r.kept, r.text, pack.length, a.pending], [false, true, MARKET_KEPT_TEXT, 0, 1], 'out of the pack, kept');
-  // a refusal on the settle puts it back (AUDIT 31 H1: one that says nothing of where the piece is - a piece the service
-  // says is elsewhere is dropped, test/net/audit31_client.test.js)
+  assert.deepEqual([r.ok, r.unknown, pack.length, a.pending], [false, true, 0, 0], 'silence: out of the pack, nothing kept - the record says where it is');
+  assert.deepEqual(asked[0].realm, at, 'the record named where it stands');
+  // a refusal puts it back (AUDIT 31 H1: one that says nothing of where the piece is - a piece the service says is
+  // elsewhere is dropped, test/net/audit31_client.test.js)
+  pack.push(item);
   online = true; answer = 'market-listings-max';
-  await a.settle(() => {}, (it) => pack.push(it));
-  assert.deepEqual([pack.length, a.pending], [1, 0], 'refused: back in the pack');
-  assert.equal(new Set(asked).size, 1, 'one id, asked again');
-  // answered: gone for good, the balance told
   const r2 = await a.list({ region: 17, kind: 'piece', provenance: PROV, wear: 1000, price: 5 }, piece);
-  assert.deepEqual([r2.ok, pack.length, marks.at(-1), a.state.balance], [false, 1, undefined, null], 'refused at once: put back');
+  assert.deepEqual([r2.ok, pack.length, marks.at(-1), a.state.balance, a.pending], [false, 1, undefined, null, 0], 'refused at once: put back');
+  // answered: gone for good, the balance told
   answer = 'ok';
   const r3 = await a.list({ region: 17, kind: 'piece', provenance: PROV, wear: 1000, price: 5 }, piece);
   assert.deepEqual([r3.ok, pack.length, marks.at(-1)], [true, 0, 7]);
+  // a list a tab from before INT19 kept: refused on the settle, put back - asked with its one id
+  const OLD = 'koldkeptlist0001';
+  storage.setItem(MARKET_KEPT_KEY, JSON.stringify({ [`acct-1|${at.id}`]: { lists: [{ rid: OLD, body: { character: at.id, region: 17, kind: 'piece', provenance: PROV, wear: 1000, price: 5, rid: OLD }, item, where: 'pack' }] } }));
+  answer = 'market-listings-max';
+  asked.length = 0;
+  await a.settle(() => {}, (it) => pack.push(it));
+  assert.deepEqual([pack.length, a.pending, asked.map((b) => b.rid)], [1, 0, [OLD]], 'refused: back in the pack');
+  pack.splice(0, 1);
+  answer = 'ok';
   // a buy kept, then two tabs settle it: minted once
   online = false;
   const minted = [];
   const kept = await a.buy({ region: 17, listing: 'L1', units: 1, max: 5 }, (p) => minted.push(['a', p]));
   assert.deepEqual([kept.kept, minted.length], [true, 0]);
-  const b = createMarketBook({ door, storage, character: () => 'char-a', sleep: noWait });
+  const b = createMarketBook({ door, storage, character: () => at.id, sleep: noWait, realm: realmActOver(() => at) });   // a second tab of the same character
   online = true;
   await Promise.all([a.settle((p) => minted.push(['a', p]), () => {}), b.settle((p) => minted.push(['b', p]), () => {})]);
   assert.equal(minted.length, 1, 'once');

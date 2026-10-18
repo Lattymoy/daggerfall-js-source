@@ -1,0 +1,137 @@
+[
+  {
+    "name": "PEACE-WAY-sails-unscaled",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "* hurt) * rigOf(b)) * peace());",
+    "new": "* hurt) * rigOf(b)));",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-oars-unscaled",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "* rigOf(b, 'oars')) * peace());   // CAPTAIN-TREE: her captain's oars",
+    "new": "* rigOf(b, 'oars')));   // CAPTAIN-TREE: her captain's oars",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-oars-gather-unscaled",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "f(b.modifierMoveAccelerationOar)) * peace());",
+    "new": "f(b.modifierMoveAccelerationOar)));",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-sails-gather-unscaled",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "(responsive() ? HELM_WAY.sailAccel : 1)) * rigOf(b)) * peace());",
+    "new": "(responsive() ? HELM_WAY.sailAccel : 1)) * rigOf(b)));",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-seam-unbounded",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const peace = () => f(peaceShare(deps.peaceWay?.() ?? 1));",
+    "new": "const peace = () => f(Number(deps.peaceWay?.() ?? 1));",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-aim-ignored",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "return enemies || boarding || aiming ? 1 : PEACE_WAY;",
+    "new": "return enemies || boarding ? 1 : PEACE_WAY;",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-boarding-ignored",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "return enemies || boarding || aiming ? 1 : PEACE_WAY;",
+    "new": "return enemies || aiming ? 1 : PEACE_WAY;",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-enemies-ignored",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "return enemies || boarding || aiming ? 1 : PEACE_WAY;",
+    "new": "return boarding || aiming ? 1 : PEACE_WAY;",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-ten-percent",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "export const PEACE_WAY = 1.15;",
+    "new": "export const PEACE_WAY = 1.1;",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-floor-dropped",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "Math.max(1, Math.min(PEACE_WAY, n))",
+    "new": "Math.min(PEACE_WAY, n)",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-cap-dropped",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "Math.max(1, Math.min(PEACE_WAY, n))",
+    "new": "Math.max(1, n)",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-world-boarding-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "boarding: !!naval?.boarding, aiming: !!naval?.aiming })))(); },",
+    "new": "boarding: false, aiming: !!naval?.aiming })))(); },",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-unheld",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "    if (!(t >= at && t - at < PEACE_HOLD_S)) { at = t; k = read(); }",
+    "new": "    { at = t; k = read(); }",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-held-backwards",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "    if (!(t >= at && t - at < PEACE_HOLD_S)) { at = t; k = read(); }",
+    "new": "    if (!(t - at < PEACE_HOLD_S)) { at = t; k = read(); }",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  },
+  {
+    "name": "PEACE-WAY-held-long",
+    "file": "src/systems/comeSailAway/peaceWay.js",
+    "old": "export const PEACE_HOLD_S = 0.1;",
+    "new": "export const PEACE_HOLD_S = 1;",
+    "tests": [
+      "test/systems/comeSailAway/peaceway.test.js"
+    ]
+  }
+]

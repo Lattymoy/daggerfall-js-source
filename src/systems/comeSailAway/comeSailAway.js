@@ -162,6 +162,7 @@ import { HELM_WAY, CARGO_HOLD_MISSING, steerage, isResponsive, pointOfSail, seaW
 import { MAP_MARKER_MODE_COLORS, mapRect, guiMouse, mapPixelUnder, guiRectContains, vector2IntDistance, markerLabel, dayOfMonthWithSuffix, mapOverlayDraws, csFloatString, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK, DAGGERFALL_DEFAULT_SHADOW_POS } from './comeSailAwayMap.js';   // CSA-I: the position reading
 import { noteFirstUse } from '../tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { BOAT_ACTIONS } from './comeSailAwayActions.js';   // HUD-HELM: the helm keys' table, a leaf the HUD's helm panel reads
+import { peaceShare } from './peaceWay.js';   // PEACE-WAY: her way out of a fight
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
 /**
@@ -284,20 +285,20 @@ export const NICE_BOAT_TEXT = 'Nice Boat!';
 /** CSA-K (DECLARED): the pack's refusal while another player stands on the deck, in the driver's words' shape. */
 export const PASSENGERS_ABOARD_TEXT = 'You cannot pack a boat with passengers aboard!';
 /** AUDIT HOLDINGS F1 (the port's own): parts whose boat already stands are refused - never a second boat of one number. */
-export const PARTS_STANDING_TEXT = 'She already lies afloat - these parts are hers.';
+export const PARTS_STANDING_TEXT = 'This ship is already afloat - these are its parts.';
 /** SHIP-PACK (the port's own): the pack's refusal of a deed ship whose deed is not in the pack - her parts take its place,
  *  and a deed left elsewhere would call a second ship of hers to a port. */
-export const DEED_NOT_HELD_TEXT = 'Her deed must be in your pack to pick her up.';
+export const DEED_NOT_HELD_TEXT = 'You need the ship\'s deed in your pack to pick it up.';
 /** HOLD-WEIGHT (FIELD BUGS 2026-10-05c, the port's own): the pick-up's refusal of a boat whose parts, her hold's weight on
  *  them, would weigh more than the bearer can carry at all - parts no take could ever lift out of a chest again. */
-export const HOLD_TOO_HEAVY_TEXT = 'Her hold is too heavy to carry her packed. Lighten it first.';
+export const HOLD_TOO_HEAVY_TEXT = 'The hold is too heavy to pack the ship. Unload some cargo first.';
 /** The mod's two helm keys this slice reads, as the port's registry actions (KB1: one key, one action) - their table a
  *  leaf since HUD-HELM (comeSailAwayActions.js), re-exported here so every reader keeps its import. */
 export { BOAT_ACTIONS };
 /** HELM-TIME-ONLINE: the three time keys - the helm's time dial, retired online. */
 export const BOAT_TIME_ACTIONS = Object.freeze([BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown, BOAT_ACTIONS.timeScaleReset]);
 /** FIELD BUGS 2026-10-02b PLACE-AFLOAT: the placing's word for a water tile that stands over the sea's line. */
-export const PLACE_RAISED_TEXT = 'This water stands above the sea - place her on the open water.';
+export const PLACE_RAISED_TEXT = 'This water is above sea level. Place the ship on open water.';
 /** HELM-KEYS (the port's, DECLARED): a helm IN IRONS - her sails up, her bow within IRONS_TELL_DEG of the wind's eye and
  *  her way ahead under IRONS_TELL_WAY m/s (GALLEON: sternway too, her canvas aback) for IRONS_TELL_S running: the sails
  *  cannot draw and the mod's rudder cannot turn a hull that makes no way, so the helm is told once how she comes out
@@ -312,7 +313,7 @@ export const IRONS_TELL_WAY = 0.4;
  *  heave-to asked up to 47 in a storm, and its ship ran past the one she hove to beside. */
 export const CSA_BRAKE_MAX = 20;
 export const IRONS_TELL_S = 2;
-export const IRONS_TEXT = 'In irons - the wind is dead ahead. Strike sail and row her round.';
+export const IRONS_TEXT = 'In irons - the wind is dead ahead. Strike sail and row to turn.';
 /**
  * HELM-LADDER (2026-10-04, from the field: "WASD and Arrow keys should function the same when controlling. Allowing you
  * to lower and raise sails" - the throttle ladder chosen; DECLARED, the Port-Ledger's Come Sail Away row): THE HELM'S
@@ -327,7 +328,7 @@ export const IRONS_TEXT = 'In irons - the wind is dead ahead. Strike sail and ro
  * pull as the autorun does (OWS2).
  */
 export const OAR_RUNG_TEXT = Object.freeze({ '-1': 'Oars: backing water.', 0: 'Oars: at rest.', 1: 'Oars: pulling ahead.' });
-export const OAR_ASTERN_TEXT = 'She is already backing water.';
+export const OAR_ASTERN_TEXT = 'Already rowing astern.';
 /** SAIL-FREE (the port's, DECLARED - helmWay.js): the crest of each kind's own curve in GetSailPower - the degrees
  *  between the wind and a sail's forward at which it pulls its most: a lateen, a gaff and a staysail at SAIL_CREST_DEG
  *  (each curve's peak, 135), a square sail (any other kind) running dead before it. */
@@ -686,14 +687,18 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** The sea fight's share of her way under sail or under oars (`deps.wayScale`). */
   const wayHurt = (underSail) => f(Math.max(0, Math.min(1, Number(deps.wayScale?.(underSail) ?? 1))));
+  /** PEACE-WAY (the port's own - systems/comeSailAway/peaceWay.js): her way, and its coming on, out of a fight (`deps.peaceWay`,
+   *  the host's word; the mod has none) - none handed is the mod to the letter. */
+  const peace = () => f(peaceShare(deps.peaceWay?.() ?? 1));
   /** moveSpeed's two arms - AUDIT SHIPS A4: each asked of her whichever she makes way by now (sailWayOf, oarWayOf). */
-  const oarSpeed = (b, hurt) => f(f(f(f(HANDLING.moveSpeedOar * handlingMod('OarMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedOar)) * hurt);
-  const sailSpeed = (b, hurt) => f(f(f(f(f(HANDLING.moveSpeedSail * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b));
+  const oarSpeed = (b, hurt) => f(f(f(f(f(f(HANDLING.moveSpeedOar * handlingMod('OarMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedOar)) * hurt) * rigOf(b, 'oars')) * peace());   // CAPTAIN-TREE: her captain's oars
+  const sailSpeed = (b, hurt) => f(f(f(f(f(f(HANDLING.moveSpeedSail * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());
   /** HOLDINGS (the port's own - bible/03-World/Holdings.md): her Rigging refit, her way under sail and its coming on
    *  (`deps.refit`, the Fleet's; the mod has none) - read where the rates are read, never written into the prefab's
-   *  modifiers a variant's change walks again. Oars are her hands', never her rig's. */
+   *  modifiers a variant's change walks again. Oars are her hands', never her rig's - CAPTAIN-TREE: her captain's drill of
+   *  them (`oars`) and of her helm (`turn`) the same seam's (systems/naval/captainTree.js captainRefit). */
   const refitOf = (b) => (b ? deps.refit?.(b) ?? null : null);
-  const rigOf = (b) => { const k = Number(refitOf(b)?.speed); return Number.isFinite(k) && k > 0 ? f(k) : 1; };
+  const rigOf = (b, key = 'speed') => { const k = Number(refitOf(b)?.[key]); return Number.isFinite(k) && k > 0 ? f(k) : 1; };
   /** HELM-WAY: the responsive helm is the host's to hand (`deps.handling`); none handed is the mod to the letter. */
   const handed = () => !!deps.handling && isResponsive(deps.handling());
   // AUDIT NAV2 F14: the hand is taken ONCE A HELM SESSION - at StartSailing, let go when she stops sailing (off a helm it
@@ -716,7 +721,7 @@ export function createComeSailAwayRuntime(deps) {
     // HELM-LADDER: the oars' rung, not a held key - AUDIT SHIPS A5: and the autorun's pull, as the oars' own law asks it
     // (UpdateSailing's arm, and the mod's autorun, which holds MoveForwards): the journey's oars came on at her coast's rate
     if (state.sailPosition === 0 && (state.oarThrottle !== 0 || !!deps.input?.toggleAutorun || (has('Run') && (has('MoveRight') || has('MoveLeft'))))) {
-      const oar = f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationOar));
+      const oar = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationOar)) * peace());   // PEACE-WAY: up to her way in the time she came up to her old
       // AUDIT 2 XA1 (2026-10-06): under the responsive helm the oars' rate GATHERS way - a way above what they make (her
       // canvas's: no oar made it) is lost no slower than her coast. One rate for both, a galleon struck and rowing took
       // 48 s and 400 m to come down to her oars' way, four times her coast, and the journey's hand ran her aground on it
@@ -726,7 +731,7 @@ export function createComeSailAwayRuntime(deps) {
     if (state.sailPosition === 1) {
       // SAIL-FREE: under the responsive helm her way comes on in the sea's bounded wind, the wind her way is reckoned in
       const wind = responsive() ? f(galeWind(seaWind(vMagnitude(state.windVectorCurrent)))) : vMagnitude(state.windVectorCurrent);   // SERPENT4: in a gale's
-      const rate = f(f(f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * wind) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.sailAccel : 1)) * rigOf(b));   // HOLDINGS: her Rigging
+      const rate = f(f(f(f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * wind) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.sailAccel : 1)) * rigOf(b)) * peace());   // HOLDINGS: her Rigging - PEACE-WAY: and her way out of a fight
       return responsive() ? f(rate * f(sailFreeGain(b))) : rate;   // SAIL-FREE: her way's gain - the same handling at her new way (AUDIT SHIPS A5: her rig's)
     }
     return coastAccel(b);
@@ -743,8 +748,8 @@ export function createComeSailAwayRuntime(deps) {
   /** turnSpeed (553-564). */
   function turnSpeed() {
     const b = cur();
-    if (state.sailPosition === 0) return f(f(f(HANDLING.turnSpeedOar * handlingMod('OarTurnSpeed')) * state.boatCargoMod) * f(b.modifierTurnSpeedOar));
-    return f(f(f(f(HANDLING.turnSpeedSail * handlingMod('SailTurnSpeed')) * state.boatCargoMod) * f(b.modifierTurnSpeedSail)) * galeTurn());   // SERPENT4: a gale's helm
+    if (state.sailPosition === 0) return f(f(f(f(HANDLING.turnSpeedOar * handlingMod('OarTurnSpeed')) * state.boatCargoMod) * f(b.modifierTurnSpeedOar)) * rigOf(b, 'turn'));   // CAPTAIN-TREE: her captain's helm
+    return f(f(f(f(f(HANDLING.turnSpeedSail * handlingMod('SailTurnSpeed')) * state.boatCargoMod) * f(b.modifierTurnSpeedSail)) * galeTurn()) * rigOf(b, 'turn'));   // SERPENT4: a gale's helm
   }
   /** SERPENT4 (the port's, DECLARED; 2026-10-11, the players: "make the wind go crazy where the serpent stands so we can
    *  sail faster an turn faster aswell"): A GALE ABOUT HER (`state.gale` - deps.gale, the sea serpent's waters): the wind

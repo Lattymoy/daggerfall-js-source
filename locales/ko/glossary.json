@@ -317,5 +317,13 @@
  "card table": "카드 테이블",
  "purse": "지갑",
  "first-time bonus (a craft's first-make XP)": "첫 제작 보너스",
- "cloth (the Weavers' Linen and Wool)": "천"
+ "cloth (the Weavers' Linen and Wool)": "천",
+ "martial specialisation": "무예 전문화",
+ "technique (a weapon's)": "기법",
+ "signature technique": "고유 기법",
+ "technique key": "기법 키",
+ "fatigue": "피로",
+ "stack (a power's)": "중첩",
+ "Agility": "민첩",
+ "blunt weapon": "둔기"
 }

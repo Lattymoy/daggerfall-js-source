@@ -284,8 +284,8 @@
   {
     "name": "AUDIT-GUILD1d-R1-the-sliders-wind",
     "file": "src/scenes/world.js",
-    "old": "wind: Math.min(1, wd.strength01 * wd.gust),",
-    "new": "wind: Math.min(1, wd.slider * wd.gust),",
+    "old": "        light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // AUDIT GUILD1d R9: and the moon, as the grass takes it\n        wind: Math.min(1, wd.strength01 * wd.gust),",
+    "new": "        light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // AUDIT GUILD1d R9: and the moon, as the grass takes it\n        wind: Math.min(1, wd.slider * wd.gust),",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]

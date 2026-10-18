@@ -156,13 +156,13 @@ test('SHIPYARDS NO LOOP ONLINE: the counter\'s online law caps a sale at half th
   }
 });
 
-test('SHIPYARDS WHAT IT TAKES BACK: a ship of the player\'s at this port, laid up or packed - never at her helm, afar, fighting, with another player aboard, her hands ashore or her hold full (mutants: each refusal dropped)', () => {
+test('SHIPYARDS WHAT IT TAKES BACK: a ship of the player\'s at this port, laid up or packed - never at the helm, afar, fighting, with another player aboard, her hands ashore or her hold full (mutants: each refusal dropped)', () => {
   for (const where of ['here', 'laidup', 'packed']) assert.equal(saleRefusal({ where }), null, where);
   assert.equal(saleRefusal({ where: 'here', atPort: false }), SHIPYARD_TEXT.notPort);
   assert.match(saleRefusal({ where: 'sailing' }), /helm/);
   assert.match(saleRefusal({ where: 'away' }), /this port/);
   assert.match(saleRefusal({ where: 'lost' }), /No such ship/);
-  assert.match(saleRefusal({ where: 'here', fighting: true }), /fighting/);
+  assert.match(saleRefusal({ where: 'here', fighting: true }), /in combat/);
   assert.match(saleRefusal({ where: 'here', aboard: 1 }), /aboard/);
   assert.match(saleRefusal({ where: 'here', ashore: 2 }), /ashore/);
   assert.match(saleRefusal({ where: 'laidup', hold: 3 }), /hold/);
@@ -251,9 +251,9 @@ test('SHIPYARDS SIGNING ON: a recruit takes a place on her deck - her crew raise
   assert.deepEqual(releasePlan({ crew: CREW_PER_HAND }), { ok: false, crew: CREW_PER_HAND, why: CREW_HALL_TEXT.lastMan });
   assert.deepEqual(releasePlan({ crew: 0 }), { ok: false, crew: 0, why: CREW_HALL_TEXT.lastMan });
   // PIN MOVED (AUDIT SHIPYARDS L2-7): no possessive on a ship's name ("Small Ship 'I''s")
-  assert.equal(CREW_HALL_TEXT.signed('Anna Voss', 'Gunner', 'The Kestrel'), 'Anna Voss signs on to The Kestrel as her Gunner.');
-  assert.equal(CREW_HALL_TEXT.swapped('Anna Voss', 'Gunner', 'The Kestrel', 'Bram'), 'Anna Voss signs on to The Kestrel as her Gunner, in Bram\'s place - Bram is paid off.');
-  assert.equal(CREW_HALL_TEXT.steppedUp('Bram', 'The Kestrel', 'Odo'), 'Bram is paid off and leaves The Kestrel. Odo steps up into the place on her deck.');
+  assert.equal(CREW_HALL_TEXT.signed('Anna Voss', 'Gunner', 'The Kestrel'), 'Anna Voss signs on to The Kestrel as Gunner.');
+  assert.equal(CREW_HALL_TEXT.swapped('Anna Voss', 'Gunner', 'The Kestrel', 'Bram'), 'Anna Voss signs on to The Kestrel as Gunner, replacing Bram. Bram is paid off.');
+  assert.equal(CREW_HALL_TEXT.steppedUp('Bram', 'The Kestrel', 'Odo'), 'Bram is paid off and leaves The Kestrel. Odo takes the open place on deck.');
 });
 
 test('SHIPYARDS A NAMED HAND ENLISTED AND RELEASED (shipCrew.js): he joins at his trade\'s post with his record - a First Mate stands the old one down to Deckhand, a trade the deck has no post for is a Deckhand, a name already aboard is refused, his grade lifts her spirits; paid off he leaves wherever he stood; her crew discharged by his share (navalDamage.js), nothing else touched', () => {

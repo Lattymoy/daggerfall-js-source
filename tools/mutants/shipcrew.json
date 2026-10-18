@@ -186,8 +186,8 @@
   {
     "name": "SR-reload-scale-unread",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "reloadSeconds(b.gun, crewShare(), crewed) * (b.gun === 'barrel' ? 1 : Math.max(0.5, Math.min(1.5, Number(reloadScale()) || 1)));",
-    "new": "reloadSeconds(b.gun, crewShare(), crewed);",
+    "old": "reloadSeconds(b.gun, crewShare(), crewed, loadAt(side)) * (b.gun === 'barrel' ? 1 : scaleNow());",
+    "new": "reloadSeconds(b.gun, crewShare(), crewed, loadAt(side));",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ]
@@ -260,7 +260,7 @@
   {
     "name": "SCH-done-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (!wantsRepair(s.damage)) { s.crew.give(CREW_ORDERS.stand); deps.say?.(`${mate ? `${mate}: ` : ''}Repairs done, Captain. She's sound.`, 4); }",
+    "old": "    if (!wantsRepair(s.damage)) { s.crew.give(CREW_ORDERS.stand); deps.say?.(`${mate ? `${mate}: ` : ''}Repairs done, Captain.`, 4); }",
     "new": "    if (!wantsRepair(s.damage)) { s.crew.give(CREW_ORDERS.stand); }",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
@@ -278,8 +278,8 @@
   {
     "name": "SCH-save-mates-dropped",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "{ ...savedRecord(st.damage, st.hull, st.credit), barrels: st.guns.barrels, mates: st.crew.snapshot() };",
-    "new": "{ ...savedRecord(st.damage, st.hull, st.credit), barrels: st.guns.barrels };",
+    "old": "  return { barrels: st.guns.barrels, mates: st.crew.snapshot(), ...(Object",
+    "new": "  return { barrels: st.guns.barrels, ...(Object",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ]

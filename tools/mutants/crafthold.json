@@ -2,8 +2,9 @@
   {
     "name": "CRAFT-HOLD-list-asks-the-acting-character-alone",
     "file": "server-account/src/market.js",
-    "old": "  const pieceHeld = kind === 'piece' ? await craftHoldOf(db, me, provenance) : null;",
-    "new": "  const pieceHeld = null;",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the craft's hold retired for the acting record's own; the list asks the record, so another character's name lists nothing",
+    "old": "    if (!side.at) return { error: 'realm-needed' };   // a crafted piece lists out of a realm record alone\n",
+    "new": "",
     "tests": [
       "test/server/crafthold.test.js"
     ]
@@ -11,8 +12,9 @@
   {
     "name": "CRAFT-HOLD-auction-asks-the-acting-character-alone",
     "file": "server-account/src/market.js",
-    "old": "  const held = (await realmHoldOf(db, me, character)) ?? (await craftHoldOf(db, me, provenance));   // INT3 (AUDIT INT): a held character auctions nothing",
-    "new": "  const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character auctions nothing",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the craft's hold retired for the acting record's own; the auction asks the record, so another character's name auctions nothing",
+    "old": "  if (!side.at) return { error: 'realm-needed' };\n  const at = side.at;\n  const prior = await priorOf();\n  if (prior) return answer(prior, { repeat: true });\n  const closed = shut(player, env);\n  if (closed) return closed;\n  if (!regionOk(region)) return { error: 'bad-region' };\n  if (!provenanceOk(provenance)) return { error: 'bad-provenance' };",
+    "new": "  const at = side.at;\n  const prior = await priorOf();\n  if (prior) return answer(prior, { repeat: true });\n  const closed = shut(player, env);\n  if (closed) return closed;\n  if (!regionOk(region)) return { error: 'bad-region' };\n  if (!provenanceOk(provenance)) return { error: 'bad-provenance' };",
     "tests": [
       "test/server/crafthold.test.js"
     ]
@@ -20,11 +22,14 @@
   {
     "name": "CRAFT-HOLD-fill-unheld",
     "file": "server-account/src/writs.js",
-    "old": "  const held = (await realmHoldOf(db, me, character)) ?? (await craftHoldOf(db, me, provenance));\n  if (held) return held;\n  if (!commissionFilledBy(",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the craft's hold retired for the acting record's own; the fill's own record's hold (prepareRealmRecord's outbound one stands behind it, so its pin asks the word before the record moves)",
+    "old": "  const held = await realmHoldOf(db, me, character);\n  if (held) return held;\n  if (!commissionFilledBy(",
     "new": "  if (!commissionFilledBy(",
     "tests": [
       "test/server/crafthold.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "INT19: the piece leaves the acting record through prepareRealmRecord's outbound hold (server-account/src/craftedPiece.js), which answers the same 'trade-held' - this early word only spares a held record the rate and the settle"
   },
   {
     "name": "CRAFT-HOLD-disenchant-unheld",
@@ -122,7 +127,7 @@
   {
     "name": "CRAFT-HOLD-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct149';",
+    "old": "export const ACCOUNT_VERSION = 'acct153';",
     "new": "export const ACCOUNT_VERSION = 'acct123';",
     "tests": [
       "test/server/legacy7_service.test.js",
@@ -133,7 +138,7 @@
   {
     "name": "CRAFT-HOLD-wrangler-version-unmoved",
     "file": "server-account/wrangler.toml",
-    "old": "ACCOUNT_VERSION = \"acct149\"\n",
+    "old": "ACCOUNT_VERSION = \"acct153\"\n",
     "new": "ACCOUNT_VERSION = \"acct123\"\n",
     "tests": [
       "test/server/realm1.test.js",

@@ -299,7 +299,7 @@
   {
     "name": "REVENANT-WIRE-the-puppet-unnamed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (typeof r.nm === 'string' && r.nm && f.entity.revenant?.name !== r.nm) { f.entity.revenant = { id: null, name: r.nm, rank: 0 }; f._feudWire = null; }",
+    "old": "    if (rev && f.entity.revenant?.name !== r.nm) { f.entity.revenant = { id: null, name: r.nm, rank: 0 }; f._feudWire = null; }",
     "new": "    if (false) { f.entity.revenant = { id: null, name: r.nm, rank: 0 }; f._feudWire = null; }",
     "tests": [
       "test/systems/revenant_card.test.js"

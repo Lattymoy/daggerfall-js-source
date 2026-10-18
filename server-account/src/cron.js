@@ -55,6 +55,7 @@ import { settleDueOnce } from './seatTurning.js';
 import { keepSeatFacts } from './townSeats.js';   // SEAT-FACTS: the seats' facts, kept once for the service
 import { motherlodesOf } from './motherlodes.js';
 import { sweepBoard } from './board.js';
+import { safetyMinute, safetySweep } from './safetyClock.js';   // SAFE5 + SAFE8: the reviewer's reads and the moderators' cards; the hour's sweep
 import { sweepGuildNotes } from './guildBoard.js';
 import { sweepHarvests } from './professions.js';
 import { SESSION_IDLE_S } from './accounts.js';
@@ -157,6 +158,9 @@ export const MINUTE_JOBS = Object.freeze([
   // with no tab to close it - a page killed under its death screen - takes what a tombstone takes with it (its union, its
   // guild seat, its pieces). The window is the realm's own (REZ_HOLD_S), so the minute is the read that catches it
   ['rez-holds', (ctx) => rounds(() => settleHolds(ctx), REZ_SETTLE_MAX, ctx.budget)],
+  // SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): the reviewer reads the relay's feed and the reported cases,
+  // and each case's card goes to the moderators' channel - nothing a request waits on (safetyClock.js)
+  ['safety', (ctx, env) => safetyMinute(ctx, env)],
   ['motherlodes', async (ctx, env) => {
     const day = utcDay(ctx.nowS);
     if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;
@@ -196,6 +200,9 @@ export const HOUR_JOBS = Object.freeze([
     'DELETE FROM realm_findings WHERE id IN (SELECT id FROM realm_findings WHERE at < ?1 LIMIT ?2)', ctx.nowS - REALM_FINDINGS_KEEP_S), SWEEP_ROWS)],
   ['realm-wealth-hours', (ctx) => rounds(() => deleted(ctx.db,
     'DELETE FROM realm_wealth_hours WHERE rowid IN (SELECT rowid FROM realm_wealth_hours WHERE hour < ?1 LIMIT ?2)', ctx.nowS - REALM_WEALTH_KEEP_S), SWEEP_ROWS)],
+  // INT17: the progression claims' hours, kept as the wealth's are - the window staff set the line from (progress.js)
+  ['progress-hours', (ctx) => rounds(() => deleted(ctx.db,
+    'DELETE FROM progress_hours WHERE rowid IN (SELECT rowid FROM progress_hours WHERE hour < ?1 LIMIT ?2)', ctx.nowS - REALM_WEALTH_KEEP_S), SWEEP_ROWS)],
   // INT9: a death in the zone's drop, kept past its receipt's hour (wild.js - a second asking is answered the first's)
   ['wild-falls', (ctx) => rounds(() => deleted(ctx.db,
     'DELETE FROM wild_falls WHERE r IN (SELECT r FROM wild_falls WHERE at < ?1 LIMIT ?2)', ctx.nowS - WILD_FALLS_KEEP_S), SWEEP_ROWS)],
@@ -212,6 +219,9 @@ export const HOUR_JOBS = Object.freeze([
   // EG-ZM (bible/11-Multiplayer/Elite-Gates.md section 23): a Weir Key's stake no receipt settled, spent by the clock once
   // nothing can name it, its opener's letter in the same transaction - a page a statement pair, asked again while full
   ['eg-stakes', (ctx) => rounds(() => spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],
+  // SAFE5 (safetyClock.js): the feed's old batches, a resolved case's lines past their keeping, a case left open past its
+  // own, and the reviewer's old daily counts
+  ['safety-sweep', (ctx) => safetySweep(ctx)],
 ]);
 
 /** The jobs a schedule runs - none for a schedule this service does not keep (said, so a trigger renamed in

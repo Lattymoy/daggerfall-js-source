@@ -1004,7 +1004,7 @@ test('BAG1 done when: a new character gathers into the pack with no bag, buys a 
   Date.now = () => NOON * 1000;
   try {
     const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
-    const mac = await s.registered('Mac');
+    const mac = await s.seated('Mac');
     const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });
     const e = body({ bag: false });
     const book = createProfBook({ door, storage: memStorage(), character: () => mac.character, now: () => NOON * 1000, sleep: noWait, carry: hands(e) });

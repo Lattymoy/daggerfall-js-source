@@ -34,7 +34,7 @@ const powerOfHull = (hull, o = {}) => fightingPower({ hull, hullHp: hullBuild(hu
 
 // ── the sea's guns are for those aboard ────────────────────────────────────────────────────────────────────────────
 
-test('SEA-PEACE aboard: a pirate a bay off is no enemy of a player ashore - no rest or journey held, no "Sail ho!", no threat a journey slows for; aboard (at her helm, on my boat\'s deck, on a sea ship\'s deck) she is (mutants: the gate dropped from hostileNear, from the threats, from the hail)', async () => {
+test('SEA-PEACE aboard: a pirate a bay off is no enemy of a player ashore - no rest or journey held, no "Sail ho!", no threat a journey slows for; aboard (at the helm, on my boat\'s deck, on a sea ship\'s deck) she is (mutants: the gate dropped from hostileNear, from the threats, from the hail)', async () => {
   const ashore = await sea({ hull: null });
   ashore.host.spawnShip('pirateBrig', { range: 300, bearing: 0 });
   ashore.run(6);
@@ -276,7 +276,7 @@ test('SEA-PEACE a prize taken: a navy that beats a pirate comes alongside her, g
   assert.ok(lashedAt != null, 'grappled');
   assert.equal(s.host._sea.has(p.id), false, 'gone under');
   assert.notEqual(n.ship.mode, 'board', 'sailing on');
-  assert.ok(s.log.say.some((t) => /strikes her colours/.test(t)) && s.log.say.some((t) => /grapples/.test(t)) && s.log.say.some((t) => /puts her to the torch/.test(t)), JSON.stringify(s.log.say));
+  assert.ok(s.log.say.some((t) => /surrenders!/.test(t)) && s.log.say.some((t) => /grapples/.test(t)) && s.log.say.some((t) => /sets it on fire/.test(t)), JSON.stringify(s.log.say));
   // the same fight with me a bay off (past NEWS_RANGE, inside DESPAWN_BEYOND): nothing said, and the prize kept for her
   // taker though no player is near (the director lets no prize being taken go)
   const far = await sea({ hull: null });

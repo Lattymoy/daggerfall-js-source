@@ -39,7 +39,7 @@ const rid = () => `craft4-${String(++_rid).padStart(6, '0')}`;
 async function stand({ tracks = {}, stores = {} } = {}) {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   for (const [p, rank] of Object.entries(tracks)) raw.prepare('INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, ?, ?, 1)').run(mac.id, mac.character, p, xpForRank(rank));
   const give = (key, qty, origin = 'own') => raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = excluded.qty`).run(mac.id, mac.character, key, origin, qty);
@@ -139,7 +139,7 @@ test('CRAFT4 the temper\'s refusals: the rank, the Stores (gold\'s units never),
   assert.equal((await ask({ provenance: 'zz' })).body.error, 'bad-piece');
   t.give(STEEL, 9);
   assert.equal((await ask({ provenance: '0123456789abcdef' })).body.error, 'prof-no-piece');
-  const other = await t.s.registered('Ilsa');
+  const other = await t.s.seated('Ilsa');
   await madePiece(t, { provenance: '1111111111111111', quality: 1, owner: other });
   assert.equal((await ask({ provenance: '1111111111111111' })).body.error, 'prof-not-yours');
   await madePiece(t, { provenance: '2222222222222222', quality: 1 });

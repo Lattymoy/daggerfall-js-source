@@ -1492,7 +1492,8 @@ animations. What nobody has done is **look at it in the arm**: the
 `BoneOffset` a Morrowind weapon can carry to nudge itself on the bone is
 absent, so the grip sits exactly at the bone's origin, and whether that
 reads as *held* rather than *floating* is a question for eyes on a
-running build, not for a pin.
+running build, not for a pin. (RIFLE-STANCE, 2026-10-17, at the end of this record: the gun is held by its grip
+through an attitude on the part, and both hands are solved onto it.)
 
 ## FIELD-GUN19: the flash was white and the shot came out high
 
@@ -1751,7 +1752,8 @@ grip at the origin, and no `BoneOffset` nudges it - was chosen against a
 rendered preview, never against the bone; MW1 and MW3 both say so. Eyes
 on a build decide whether it reads as held and pointing forward. If it
 does not, the fix is a `BoneOffset` node in the bake, not a change to
-the attach. (2) The crossbow animation's timing against the gun's
+the attach. (RIFLE-STANCE, 2026-10-17, below: decided by eyes on renders of the retail rig - the gun rode the fist as a
+sword's grip, rolled onto its side - and fixed by an attitude on the part, `GUN_GRIP_ATTITUDE`, the torch's shape.) (2) The crossbow animation's timing against the gun's
 1.7 s reload is the same eyes' question. (MW-GUN-FEEL, 2026-10-07, below:
 the reload is the gun's own now - a pump laid over the borrowed groups -
 and the breech no longer opens before the bang.)
@@ -1898,3 +1900,69 @@ nothing outside the reload, the tail at rest), the matrix (turned about the shou
 the arm (the drawn view IS `K x lens`, built and drawn on the fixture rig; a still pose is none), the rig under a
 stubbed arm (no clack before the bang, the kick on the shot, the pump at its depth mid-reload, still at the ready) and
 the classic lane unmoved.
+
+## RIFLE-STANCE (2026-10-17): held as a long gun, the low ready and the aim
+
+Mac: "adjust the held animation for the thunderlock on the morrowind model. It should be like a rifle being held in an
+idle stance and a ready stance when in combat."
+
+Morrowind has no gun, so the arms played the crossbow's groups (`animateAs: 10`) with whatever a crossbow clip does with
+a crossbow - and the gun, baked with its barrel along the Weapon Bone's +Y, rode the fist the way a sword's grip does:
+its long axis through the fist, its grip sticking sideways into the palm, rolled onto its side (measured at the retail
+rest: the sights to the actor's right). The record had said twice that the orientation was chosen against a preview and
+never against the bone. It is decided now, and the arms are no longer the clip's while the gun is drawn.
+
+**Held by its grip** (`characters/ownModels/ownWeaponModels.js` `GUN_GRIP_ATTITUDE`, the part's `preTransform` through the
+resolve's own-model arm - the torch's LIGHT_ATTITUDE shape). Morrowind's Weapon Bone runs its +Y out of the fist's thumb
+side and its +X down the hand toward the fingers. A pistol grip goes through the fist: the gun's top to the thumb's side,
+its barrel along the hand toward the knuckles - turned 18 degrees up toward the thumb, the grip's rake - its right to the
+back of the hand, the middle of the shipped grip (0, -2.5, -3.5) at the bone's origin, the fist's middle. Measured at the
+retail rest, the barrel now runs within 35 degrees of the hand's own way, where the bake's ran across it at 90. The
+muzzle (`weaponMuzzle`) reads the posed vertices, so it followed for free; the holster's bare gun is its own part and is
+unchanged. The Hourlock spreads the same row.
+
+**Solved onto the gun** (`combat/gun/rifleStance.js`, through `poseAssembly`'s new `hold` slot - after the climb's, before the
+matrices). Each frame the gun's frame is placed in one of two stances and eased between them, and the climb rig's own
+solver (`combat/climbRig.js` `applyClimbRig`) puts the hands on it: the right wrist where the grip in the hand puts it (read
+off the Weapon Bone in the hand, the fingers' way and the palm's, every frame), the left palm up under the forend
+(`RIFLE_HOLD.forend`, the front of the forend under the receiver, 13.5 units out), each elbow its stance's way, the
+fingers closed. It holds no number about a skeleton: the body's frame is read off its shoulders and spine, every
+distance is a share of the right arm's own length.
+
+| stance | third person (from the right shoulder) | first person (from the eye) |
+|---|---|---|
+| LOW, the idle | the forend at the belt, the muzzle 30 degrees down and 30 across toward the left foot, canted 10; the elbows back at the sides | lowered, its forward half across the bottom of the picture toward the left, 12 down and 25 across |
+| AIM, in a fight | level down the body's forward at the collar, its sights up; the right elbow out, the left under the forend | level down the lens, right of the middle, the left hand under it in view |
+
+Third person reads the body's frame (right from shoulder to shoulder, up the spine); first person the lens's (it looks
+down the rig's +Y), and its stances are pulled in toward the shoulders so both hands reach from under the eye and the gun
+stays in the 60-degree lens. The legs, the spine and the head keep the clip's walk.
+
+**When** (`combat/fpArm.js` `stepRifle`, `rifleStanceStep`): held while the gun is in the hands and nothing else has them -
+not during the draw or the sheathe (the clip carries the gun from the holster and back), not on the stone, a seat, a
+saddle, under a sheet, with a spell or dead; on over 0.16 s, off over 0.1. The aim comes up over 0.12 s while it shoots,
+stays for 6 s after the last shot, and stays while the fight's own signal stands - a foe's harm on the player within 12 s
+(`systems/harmMark.js` `playerHarmedWithin`, handed in by the rig every frame: `combat/weapon/weaponRig.js`
+`setCombatReady`). There is no "in combat" flag in the port; the harm mark is the one signal a fight leaves without a
+host, and its two-minute mark (a revenant's credit) is far past a fight. Then down over 0.55 s. A peer's body takes its
+own shots' aim; no combat bit rides the wire.
+
+**Measured** on the vendored retail biped in the port's own steel plate, rendered offline (the poses read off the
+assembly, rasterised): both wrists on their holds in both stances (reach misses 0); the low ready's barrel 30 degrees
+down and 30 across, the aim's level within 1.5 degrees of the body's forward with its sights up; the left palm facing the
+gun's top. First person, on the MW-STEEL4 stand-in with a camera at the eye: the aim down the lens, its muzzle and the
+left hand in the picture; the low ready's muzzle in the picture and lower.
+
+**Not verified here, and said plainly.** This container has no Morrowind data: the first-person stances are tuned on the
+stand-in (retail's third-person bones with a camera node), not on `xbase_anim.1st.nif`, whose shoulders may sit
+differently under its eye. They are one frozen row, `RIFLE_STANCES.first`, beside the third person's, for Mac to move on
+his own data. No recoil is added to the third-person body (the first person keeps MW-GUN-FEEL's kick and pump over
+the whole viewmodel); the borrowed crossbow groups still time the shot and the draw.
+
+**Pins** (`test/combat/riflestance.test.js`, 6; `tools/mutants/riflestance.json`, 14 dead): the step law; the grip (the
+attitude a turn, both guns, the resolve's part, the barrel along the hand); both stances on retail's bones in the plate
+through the `hold` slot (the angles, the grip, both hands, the left palm at the forend, a share between); the first
+person in the lens; the fight's signal; and the live arm with the shipped gun (no hold through the draw, held drawn, the
+fight up and down, off through the sheathe). PIN MOVED: `climb6` C16 (the hook between the neck and the matrices takes
+the `hold` line). Mutant records whose anchor this slice moved, re-aimed by content and re-run (both dead): `rvn10`'s
+`RVN10-end-keeps-low` and `RVN10-end-keeps-fights` (`endPlayerFights` forgets the harm's time too).

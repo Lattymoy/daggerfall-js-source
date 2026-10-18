@@ -64,12 +64,12 @@ export function etherFactionWeights(band, { nearPort = false } = {}) {
 /** @typedef {{ id: string, name: string, captain: string, classId: string, band: string, trait: string, purse: number, lore: string }} Legend */
 /** THE LEGENDS: two to a band past the Shallows, the deeper the deadlier and the richer. @type {readonly Legend[]} */
 export const LEGENDS = Object.freeze([
-  Object.freeze({ id: 'wake', name: "Sorrow's Wake", captain: 'Ysolde the Unmourned', classId: 'legendWake', band: 'reaches', trait: 'swift', purse: 2500, lore: 'The swiftest hull afloat: she runs down what she hunts, and runs from nothing.' }),
-  Object.freeze({ id: 'queen', name: 'The Drowned Queen', captain: 'Maraveth, Thrice Drowned', classId: 'legendQueen', band: 'reaches', trait: 'mends', purse: 3000, lore: 'Thrice sunk and thrice raised by the aether - her timbers knit between broadsides.' }),
+  Object.freeze({ id: 'wake', name: "Sorrow's Wake", captain: 'Ysolde the Unmourned', classId: 'legendWake', band: 'reaches', trait: 'swift', purse: 2500, lore: 'The fastest hull afloat. It runs down whatever it hunts and runs from nothing.' }),
+  Object.freeze({ id: 'queen', name: 'The Drowned Queen', captain: 'Maraveth, Thrice Drowned', classId: 'legendQueen', band: 'reaches', trait: 'mends', purse: 3000, lore: 'Sunk and raised by the aether three times. Its timbers repair themselves between broadsides.' }),
   Object.freeze({ id: 'hunger', name: 'Ninefold Hunger', captain: 'Ghorvak Ninefold', classId: 'legendHunger', band: 'deep', trait: 'boarders', purse: 5000, lore: 'A galley packed rail to rail with hands who board, and board again.' }),
-  Object.freeze({ id: 'lantern', name: 'The Lantern-Eater', captain: 'the Hooded Pilot', classId: 'legendLantern', band: 'deep', trait: 'night', purse: 5500, lore: 'She sails by night alone and shows no light, and makes for the lanterns of others.' }),
-  Object.freeze({ id: 'regent', name: 'The Pale Regent', captain: 'Lord Aumbrel the Pale', classId: 'legendRegent', band: 'abyss', trait: 'gunnery', purse: 9000, lore: 'Her gunners have not missed in a hundred years.' }),
-  Object.freeze({ id: 'starless', name: 'The Starless', captain: 'no one living', classId: 'legendStarless', band: 'abyss', trait: 'veiled', purse: 12000, lore: 'Black canvas under a black sky: even the glass cannot hold her until she is upon you.' }),
+  Object.freeze({ id: 'lantern', name: 'The Lantern-Eater', captain: 'the Hooded Pilot', classId: 'legendLantern', band: 'deep', trait: 'night', purse: 5500, lore: 'It sails only at night, shows no light, and hunts ships that do.' }),
+  Object.freeze({ id: 'regent', name: 'The Pale Regent', captain: 'Lord Aumbrel the Pale', classId: 'legendRegent', band: 'abyss', trait: 'gunnery', purse: 9000, lore: 'Its gunners have not missed in a hundred years.' }),
+  Object.freeze({ id: 'starless', name: 'The Starless', captain: 'no one living', classId: 'legendStarless', band: 'abyss', trait: 'veiled', purse: 12000, lore: 'Black sails under a black sky. Even a spyglass can\'t find it until it is right on top of you.' }),
 ]);
 /** The traits' numbers: a `mends` legend's hull knits this share of its whole a second while no ball has struck her for
  *  LEGEND_MEND_QUIET_S; a `gunnery` legend's guns load this much quicker; a `veiled` one is made out at this share of
@@ -139,7 +139,7 @@ export const legendAbroad = (legend, { night = false } = {}) => legend?.trait !=
 export function rumourOf(legend, from, { endedDay = null, day = 0 } = {}) {
   if (!legendSails(endedDay, day)) {
     const ago = Math.max(0, (day | 0) - (endedDay | 0));
-    return `${legend.name} went down ${ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago} days ago`}; they say the aether will raise her again.`;
+    return `${legend.name} went down ${ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago} days ago`}; they say the aether will raise it again.`;
   }
   const h = hauntOf(legend);
   const dx = h.px - from.px, dy = h.py - from.py;

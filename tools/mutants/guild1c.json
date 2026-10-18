@@ -56,8 +56,8 @@
   {
     "name": "GUILD1c-no-guildout-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit']);",
+    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban']);",
+    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban']);",
     "tests": [
       "test/net/guild1c.test.js"
     ]

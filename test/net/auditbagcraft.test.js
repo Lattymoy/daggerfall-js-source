@@ -68,7 +68,7 @@ async function stand() {
 
 test('AUDIT BAG-CRAFT A1 service: THE STATIONS\' WALL at every door - a Court writ, the guild Stores, a guild writ\'s supply, a Drakes and a gold listing and a Drakes order\'s fill take none of the loose units; each refuses and moves nothing, and takes the own ones; a withdrawal gives them back uncounted (mutants: spendable reads loose; a withdrawal counts it; loose never withdrawn)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');   // INT16 (Integrity-Arc section 7): a Court writ's delivery is a progression claim, asked of the account's seated realm character
   // the repro: 200 Mithril Ore no pack held, put in by a bare `work` deposit
   s.fund(mac, 10_000);
   await s.loose(mac, 'ore:mithril', 200);
@@ -189,7 +189,7 @@ test('AUDIT BAG-CRAFT A1 service: a station spends the loose units first, and wh
 
 test('AUDIT BAG-CRAFT A1 service: a brew spends the loose herb before the own one, and never reckons it unbruised - the own herb\'s unbruised count stays (mutants: the loose herb reckoned own)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');   // INT16 (Integrity-Arc section 7): a brew is a progression claim, asked of the account's seated realm character
   for (const k of ['reagent:troll-blood', 'reagent:elixir-vitae', 'metal:mercury']) s.give(mac, k, 'own', 1);
   s.give(mac, 'p1:16', 'own', 1);
   s.raw.prepare('INSERT INTO prof_unbruised (player, char_id, material, qty) VALUES (?, ?, ?, 1)').run(mac.id, mac.character, 'p1:16');

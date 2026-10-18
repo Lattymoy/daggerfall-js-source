@@ -1,0 +1,614 @@
+[
+  {
+    "name": "CF-smoke-to-rest",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "      if (p.kind === 'smoke') { p.vel[0] = ax + (p.vel[0] - ax) * drag; p.vel[2] = az + (p.vel[2] - az) * drag; }\n      else { p.vel[0] *= drag; p.vel[2] *= drag; }",
+    "new": "      p.vel[0] *= drag; p.vel[2] *= drag;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-wind-unscaled",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    const ax = (w[0] ?? 0) * WIND_MPS, az = (w[2] ?? 0) * WIND_MPS;",
+    "new": "    const ax = (w[0] ?? 0), az = (w[2] ?? 0);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-all-blown",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "      if (p.kind === 'smoke') { p.vel[0] = ax",
+    "new": "      if (true) { p.vel[0] = ax",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-hang-dropped",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    smoke(pos, d, scale, Math.round(5 + 3 * scale), true);",
+    "new": "    smoke(pos, d, scale, Math.round(5 + 3 * scale));",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-hang-life",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "      const life = hang ? GUN_SMOKE_LIFE[0] + r() * (GUN_SMOKE_LIFE[1] - GUN_SMOKE_LIFE[0]) : 4 + r() * 4.5;",
+    "new": "      const life = 4 + r() * 4.5;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-hang-swell",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "      const swell = hang ? GUN_SMOKE_SWELL[0] + r() * (GUN_SMOKE_SWELL[1] - GUN_SMOKE_SWELL[0]) : 5 + r() * 3;",
+    "new": "      const swell = 5 + r() * 3;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-spout-dropped",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    spout(pos, big, scale);   // SPLASH-SPOUT",
+    "new": "    // SPLASH-SPOUT",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-spout-low",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "vel: [jitter(0.35), (big ? SPOUT_UP.big : SPOUT_UP.small) * Math.sqrt(k) * (0.8 + r() * 0.3), jitter(0.35)]",
+    "new": "vel: [jitter(0.35), 6.5 * (0.8 + r() * 0.3), jitter(0.35)]",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-splash-unscaled",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    splash(pos, big, scale);\n    spout(pos, big, scale);",
+    "new": "    splash(pos, big);\n    spout(pos, big, scale);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-splash-count-fixed",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    const n = Math.round((big ? 22 : 12) * (0.5 + 0.5 * k));",
+    "new": "    const n = big ? 22 : 12;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-splash-size-fixed",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "size0: (big ? 0.9 : 0.6) * k, size1: (big ? 1.8 : 1.2) * k,",
+    "new": "size0: big ? 0.9 : 0.6, size1: big ? 1.8 : 1.2,",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-foam-unscaled",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "size0: (big ? 1.6 : 1) * k, size1: (big ? 9 : 5.5) * k,",
+    "new": "size0: big ? 1.6 : 1, size1: big ? 9 : 5.5,",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-unscaled",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "e.gun === 'heavy', e.shot, burstScale(e.point));",
+    "new": "e.gun === 'heavy', e.shot);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-drench-away",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "vel: [dx / l * s + jitter(0.8), 6 + r() * 4, dz / l * s + jitter(0.8)]",
+    "new": "vel: [-dx / l * s + jitter(0.8), 6 + r() * 4, -dz / l * s + jitter(0.8)]",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-drench-count",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    for (let i = 0; i < Math.round(DRENCH_N * (0.5 + 0.5 * w)); i++) {",
+    "new": "    for (let i = 0; i < DRENCH_N; i++) {",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-boil-none",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    if (r() < BOIL_RATE * k) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-boil-per-frame",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    if (r() < BOIL_RATE * k) {",
+    "new": "    if (r() < 0.5) {",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-pass-deaf",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (!t.ear || t.id === b.shooter",
+    "new": "      if (t.id === b.shooter",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-pass-own",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (!t.ear || t.id === b.shooter || b.passed?.has(t.id)",
+    "new": "      if (!t.ear || b.passed?.has(t.id)",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-pass-twice",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "    (b.passed ??= new Set()).add(id);\n    emit({ type: 'pass'",
+    "new": "    emit({ type: 'pass'",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-pass-on-strike",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (ship && ship.t.id === t.id && ship.e.t === firstT) { b.near?.delete(t.id); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-pass-reach",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (near.gap <= NEAR_MISS_M && (!was",
+    "new": "      if (near.gap <= NEAR_MISS_M * 2 && (!was",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-gap-signed",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "  return Math.hypot(Math.max(0, Math.abs(l[0]) - box.h[0]), Math.max(0, Math.abs(l[1]) - box.h[1]), Math.max(0, Math.abs(l[2]) - box.h[2]));",
+    "new": "  return Math.hypot(Math.abs(l[0]) - box.h[0], Math.abs(l[1]) - box.h[1], Math.abs(l[2]) - box.h[2]);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-near-first-only",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "    if (boxGap(box, at(m1)) <= boxGap(box, at(m2))) hi = m2; else lo = m1;",
+    "new": "    hi = m2;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-near-past-stop",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "  let lo = 0, hi = Math.max(0, Math.min(1, upTo));",
+    "new": "  let lo = 0, hi = 1;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-deaf",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "boat: b, ear: true });",
+    "new": "boat: b });",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-pass-unheard",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (e.type === 'pass') { feel.passed(e); return; }",
+    "new": "    if (e.type === 'pass') return;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-whistle-mine",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "    if (deps.mine(e.shooter) || !e.point) return;",
+    "new": "    if (!e.point) return;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-whistle-flat",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "    deps.sound(NAVAL_SFX.whistle, e.point, 0.55 + 0.45 * k);",
+    "new": "    deps.sound(NAVAL_SFX.whistle, e.point, 1);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-drench-reach",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "      if (gap <= NEAR_SPLASH_M && (!best || gap < best.gap)) best = { h, gap };",
+    "new": "      if (!best || gap < best.gap) best = { h, gap };",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-drench-flat",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "    const k = 1 - best.gap / NEAR_SPLASH_M;",
+    "new": "    const k = 1;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-drench-no-jar",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "    if (feet && boxGap(best.h.box, feet) <= DRENCH_FEET_M) deps.shake?.(NEAR_SHAKE * (0.4 + 0.6 * k));\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-dry",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      feel.splashed([e.point[0], seaY, e.point[2]]);   // COMBAT-FEEL DRENCH",
+    "new": "      // COMBAT-FEEL DRENCH",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-side-mirrored",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "  const beam = from[0] * f[1] - from[1] * f[0];",
+    "new": "  const beam = from[1] * f[0] - from[0] * f[1];",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-side-reversed",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "  if (Math.abs(ahead) >= Math.abs(beam)) return ahead >= 0 ? 'bow' : 'stern';",
+    "new": "  if (Math.abs(ahead) >= Math.abs(beam)) return ahead >= 0 ? 'stern' : 'bow';",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-blow-forever",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "  const blow = () => (lastBlow && clock - lastBlow.at < BLOW_S ? lastBlow.side : null);",
+    "new": "  const blow = () => (lastBlow ? lastBlow.side : null);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-unfelt",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "feel.struck(quatRotate(boatPose(boat).rotation, [0, 0, 1]), e.dir);",
+    "new": "feel.struck([0, 0, 1], e.dir);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-blow-unshown",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "ship: { id: boat.uid ?? null, name: HULL_NAMES[boat.hull], blow: feel.blow(),",
+    "new": "ship: { id: boat.uid ?? null, name: HULL_NAMES[boat.hull],",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-mag-cold",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "    if (!burning || magazines.has(entry)) return;",
+    "new": "    if (magazines.has(entry)) return;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-mag-every",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "  if (seedShare(seed, 0x6a91) >= MAGAZINE_CHANCE) return null;",
+    "new": "  if (seedShare(seed, 0x6a91) >= 1) return null;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-mag-at-once",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "    if (after != null) magazines.set(entry, clock + after);",
+    "new": "    if (after != null) magazines.set(entry, clock);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-mag-random",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "  return MAGAZINE_DELAY[0] + seedShare(seed, 0x2b7) * (MAGAZINE_DELAY[1] - MAGAZINE_DELAY[0]);",
+    "new": "  return MAGAZINE_DELAY[0] + Math.random() * (MAGAZINE_DELAY[1] - MAGAZINE_DELAY[0]);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-mag-again",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "      magazines.delete(entry);\n      const p = posOf(entry);",
+    "new": "      const p = posOf(entry);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-mag-gone-kept",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "      magazines.delete(entry);\n      const p = posOf(entry);\n      if (!p) continue;",
+    "new": "      const p = posOf(entry);\n      if (!p) continue;\n      magazines.delete(entry);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-mag-felt-afar",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "      if (d < MAGAZINE_SHAKE_M) deps.shake?.(MAGAZINE_SHAKE * (1 - d / MAGAZINE_SHAKE_M));",
+    "new": "      deps.shake?.(MAGAZINE_SHAKE);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-mag-unlit",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      feel.sinking(entry, s.seed, s.damage.fire > 0 || (entry.fires ?? []).some((f) => !f.out));",
+    "new": "      // COMBAT-FEEL MAGAZINE",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-unstepped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    feel.frame(total, (en) =>",
+    "new": "    void (total, (en) =>",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-smoke-at-peace",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "      if (k <= 0 || !m.fighting || !m.pose || !m.build) continue;",
+    "new": "      if (k <= 0 || !m.pose || !m.build) continue;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-smoke-whole",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "      if (k <= 0 || !m.fighting",
+    "new": "      if (!m.fighting",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-deck-span",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "  const at = (z) => [pose.position[0] + fw[0] * z * MY_SMOKE_SPAN, y, pose.position[2] + fw[1] * z * MY_SMOKE_SPAN];",
+    "new": "  const at = (z) => [pose.position[0] + fw[0] * z, y, pose.position[2] + fw[1] * z];",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-secs-none",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    secs: b.gun === 'barrel' || (b.loaded ?? b.ready) || !(b.left > 0) ? '' : t(",
+    "new": "    secs: true ? '' : t(",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-secs-loaded",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    secs: b.gun === 'barrel' || (b.loaded ?? b.ready) || !(b.left > 0) ? ''",
+    "new": "    secs: b.gun === 'barrel' || !(b.left > 0) ? ''",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-secs-rounded",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "{ n: Math.ceil(b.left) }",
+    "new": "{ n: Math.round(b.left) }",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-host-left",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": ", left: +st.guns.left(side).toFixed(1) };",
+    "new": " };",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-card-crew",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      crew: made && s.damage.maxCrew > 0 ? s.damage.crewShare() : null,   // CARD-CREW",
+    "new": "      crew: null,   // CARD-CREW",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-card-crew-text",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    crew: tgt.crew == null ? null : pct(tgt.crew),",
+    "new": "    crew: null,",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-men-unreckoned",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (byMe) tallies.men(e, men - target.ship.damage.crew);",
+    "new": "    // the men",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-men-last-lost",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "      const t = open.get(String(e.volley)) ?? (last?.volley === String(e.volley) ? last : null);",
+    "new": "      const t = open.get(String(e.volley)) ?? null;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-men-unsaid",
+    "file": "src/ui/naval/navalHud.js",
+    "old": ", tl.men ? t('naval.tally.men'",
+    "new": ", false ? t('naval.tally.men'",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-men-model",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "rig: last.rig, men: Math.round(last.men) } : null;",
+    "new": "rig: last.rig } : null;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-blow-text",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    blow: ship.blow ?? null,",
+    "new": "    blow: null,",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-rose-unmarked",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    cls('rosec', parts.rose, `dfnaval-rose${p.blow ? ` blow-${p.blow}` : ''}`);",
+    "new": "    cls('rosec', parts.rose, 'dfnaval-rose');",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-gun-unmarked",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "${b.empty ? ' gun-empty' : ''}${p.blow === side ? ' struck' : ''}`);",
+    "new": "${b.empty ? ' gun-empty' : ''}`);",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-plate-unflashed",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    cls('hullLow', parts.hull.track, (p.hull <= 25 ? 'dfnaval-track hull low' : 'dfnaval-track hull') + blown);",
+    "new": "    cls('hullLow', parts.hull.track, p.hull <= 25 ? 'dfnaval-track hull low' : 'dfnaval-track hull');",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-plate-unbroken",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    c.className = `dfnaval-chunk ${frame}`;\n    state.hits++;",
+    "new": "    state.hits++;",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-plate-id-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "ship: { id: boat.uid ?? null, name: HULL_NAMES[boat.hull],",
+    "new": "ship: { name: HULL_NAMES[boat.hull],",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-plate-id-untold",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    id: ship.id ?? null, name: ship.name, waters:",
+    "new": "    name: ship.name, waters:",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  },
+  {
+    "name": "CF-plate-by-none",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "barLoss(plateBar, p.id, p.hull,",
+    "new": "barLoss(plateBar, null, p.hull,",
+    "tests": [
+      "test/systems/naval/combatfeel.test.js"
+    ]
+  }
+]

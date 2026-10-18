@@ -12,6 +12,7 @@ import { herbKey, rankOfXp, writXp, STORES_MAX, COURT_WRITS_PER_DAY, RESPEC, xpF
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { RENOWN_TRACKS_MAX } from '../../src/net/renown.js';   // RENOWN-CHAR: a writ's Renown makes a track only under the tracks' bound
+import { seatRealm } from '../realmSeat.mjs';   // INT16: a second realm character, seated, for a delivery the account's seat asks
 
 const DAY = 86_400;
 const WOODS = 231, SWAMP = 228, ANTICLERE = 21, DAGGERFALL = 17;
@@ -65,13 +66,13 @@ test('PROF1 service: registered only; PROFESSIONS_OPEN off shuts every route, de
   const s = await stand({ PROFESSIONS_OPEN: 'dev' });
   const g = await s.guest();
   assert.deepEqual((await s.call('/v1/prof/state', { character: 'char-guest' }, g.secret)).body, { error: 'prof-need-account' });
-  const mac = await s.registered('Mac');
-  const ann = await s.registered('Ann');
+  const mac = await s.seated('Mac');
+  const ann = await s.seated('Ann');
   assert.equal((await s.call('/v1/prof/state', { character: mac.character }, mac.secret)).status, 200, 'a developer at dev');
   const shut = await s.call('/v1/prof/state', { character: ann.character }, ann.secret);
   assert.deepEqual([shut.status, shut.body], [403, { error: 'prof-closed' }]);
   const off = await stand({ PROFESSIONS_OPEN: 'off' });
-  const m2 = await off.registered('Mac');
+  const m2 = await off.seated('Mac');
   for (const path of ['/v1/prof/state', '/v1/prof/pixels', '/v1/prof/harvest', '/v1/prof/spec', '/v1/stores/withdraw', '/v1/writs/list', '/v1/writs/deliver']) {
     const r = await off.call(path, { character: m2.character, rid: rid(), pixels: [], region: 1, id: 'c:1:1:0' }, m2.secret);
     assert.equal(r.body?.error, 'prof-closed', path);
@@ -81,7 +82,7 @@ test('PROF1 service: registered only; PROFESSIONS_OPEN off shuts every route, de
 
 test('PROF1 service: a character\'s state - ten tracks at nothing (CRAFT3: thirteen until eight crafts became five), no Stores, the day\'s bounds', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const r = (await s.call('/v1/prof/state', { character: mac.character }, mac.secret)).body;
   // PIN MOVED (CRAFT3): the state lists the ten tracks - the five crafts, not the eight disciplines - in the tab's order
   assert.deepEqual(r.tracks.map((t) => t.profession), ['mining', 'logging', 'herbalism', 'hunting', 'fishing', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);
@@ -97,7 +98,7 @@ test('PROF1 service: a character\'s state - ten tracks at nothing (CRAFT3: thirt
 
 test('PROF1 service: a common herb picked - the law\'s node, today, in daylight: its own units into the Stores, 15 XP; asked again it is one harvest', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const p = patchOfTier(1);
   const body = harvestBody(mac, p);
   const r = await s.call('/v1/prof/harvest', body, mac.secret);
@@ -132,7 +133,7 @@ test('PROF1 service: a common herb picked - the law\'s node, today, in daylight:
 
 test('PROF1 service: the day and the node are the law\'s - yesterday\'s node lapses, an act past ten minutes is late, a slot the climate lacks is no node; the night harvests (ANY-HOUR)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const p = patchOfTier(1);
   const post = async (extra) => (await s.call('/v1/prof/harvest', harvestBody(mac, p, extra), mac.secret)).body;
   assert.deepEqual(await post({ node: nodeKey({ kind: 'herb', x: p.x, y: p.y, day: utcDay(_now) - 1, slot: p.slot }) }), { error: 'prof-day' });
@@ -154,7 +155,7 @@ test('PROF1 service: the day and the node are the law\'s - yesterday\'s node lap
 
 test('PROF1 service: the rank - an uncommon herb wants Herbalism 10; unbruised it is the clean act (+50% XP); bruised it is plain and one less; a common herb has no moment', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const p = patchOfTier(2, false, SWAMP);
   assert.deepEqual((await s.call('/v1/prof/harvest', harvestBody(mac, p), mac.secret)).body, { error: 'prof-rank' });
   s.setXp(mac, xpForRank(10));
@@ -171,7 +172,7 @@ test('PROF1 service: the rank - an uncommon herb wants Herbalism 10; unbruised i
 
 test('PROF1 service: no day\'s cap (CAP-OFF) - sixty harvests a character today and the sixty-first is credited, the day counted on; the Stores\' room - full refuses, nearly full cuts the yield to fit', async (t) => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const day = utcDay(_now);
   const ins = s.raw.prepare(`INSERT INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, at, rid, n)
     VALUES (?, ?, 'herbs', ?, ?, 'herbalism', 'p1:9', 1, 15, ?, ?, 'x')`);
@@ -181,7 +182,7 @@ test('PROF1 service: no day\'s cap (CAP-OFF) - sixty harvests a character today 
   const past = await s.call('/v1/prof/harvest', harvestBody(mac, p), mac.secret);
   assert.equal(past.status, 200, JSON.stringify(past.body));
   assert.equal(past.body.today, 61, 'the sixty-first credited, the day counted on');
-  const ann = await s.registered('Ann');
+  const ann = await s.seated('Ann');
   const key = herbKey(p.herb, ANTICLERE);
   s.give(ann, key, 'bought', STORES_MAX);
   const full = await s.call('/v1/prof/harvest', harvestBody(ann, p), ann.secret);
@@ -201,7 +202,7 @@ test('PROF1 service: the witnessed pixel - three accounts a week old agreeing co
   const s = await stand();
   const p = patchOfTier(1);
   const who = [];
-  for (const h of ['Annwyn', 'Bosmer', 'Cyrodil', 'Dibella']) { const w = await s.registered(h); who.push(w); }
+  for (const h of ['Annwyn', 'Bosmer', 'Cyrodil', 'Dibella']) { const w = await s.seated(h); who.push(w); }
   s.age(who[0], 8); s.age(who[1], 8); s.age(who[3], 1);
   const read = async (w) => (await s.call('/v1/prof/pixels', { character: w.character, pixels: [[p.x, p.y], [p.x + 1, p.y]] }, w.secret)).body.pixels;
   assert.deepEqual((await read(who[0]))[0], { x: p.x, y: p.y, state: 'none' });
@@ -213,7 +214,7 @@ test('PROF1 service: the witnessed pixel - three accounts a week old agreeing co
   s.age(who[2], 8);
   await s.call('/v1/prof/harvest', harvestBody(who[2], p), who[2].secret);
   assert.deepEqual((await read(who[0]))[0], { x: p.x, y: p.y, state: 'confirmed', climate: WOODS, region: ANTICLERE });
-  const liar = await s.registered('Eve');
+  const liar = await s.seated('Eve');
   const r = await s.call('/v1/prof/harvest', harvestBody(liar, p, { region: DAGGERFALL }), liar.secret);
   assert.deepEqual([r.status, r.body], [409, { error: 'prof-pixel' }], 'the confirmed answer stands');
   assert.deepEqual((await s.call('/v1/prof/pixels', { character: liar.character, pixels: [[1000, 1]] }, liar.secret)).body, { error: 'bad-pixels' });
@@ -223,7 +224,7 @@ test('PROF1 service: the witnessed pixel - three accounts a week old agreeing co
 
 test('PROF1 service: withdraw to pack - bought units first, own kept for writs; asked twice it is one; short refuses; a key the Stores never hold is refused', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'p1:19', 'bought', 2);
   s.give(mac, 'p1:19', 'own', 5);
   const body = { character: mac.character, material: 'p1:19', qty: 3, rid: rid() };
@@ -243,7 +244,7 @@ test('PROF1 service: withdraw to pack - bought units first, own kept for writs; 
 // ─── COURT WRITS ─────────────────────────────────────────────────────
 
 async function witnessed(s, region = ANTICLERE) {
-  const w = await s.registered(`Wit${region}`);
+  const w = await s.seated(`Wit${region}`);
   s.age(w, 8);
   await s.call('/v1/prof/harvest', harvestBody(w, patchOfTier(1), { region }), w.secret);
   return w;
@@ -251,7 +252,7 @@ async function witnessed(s, region = ANTICLERE) {
 
 test('PROF1 service: Court writs - a region posts none until its ground is witnessed, then six (a small server), written down for the day; each asks what the ground grows', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const list = async () => (await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret)).body;
   assert.deepEqual((await list()).writs, []);
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM writ_days').get().n, 0, 'nothing written down - a later read posts');
@@ -272,8 +273,8 @@ test('PROF1 service: Court writs - a region posts none until its ground is witne
 test('PROF1 service: a Court writ taken - filled whole from the Stores (bought first), the pay struck as a `writ` line, twice the pay in Herbalism XP, the Renown credited; asked twice it is one; another\'s is taken; three a day', async () => {
   const s = await stand();
   await witnessed(s);
-  const mac = await s.registered('Mac');
-  const ann = await s.registered('Ann');
+  const mac = await s.seated('Mac');
+  const ann = await s.seated('Ann');
   const l = (await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret)).body;
   const w = l.writs[1];
   s.give(mac, w.material, 'bought', 5);
@@ -315,7 +316,7 @@ test('PROF1 service: a Court writ taken - filled whole from the Stores (bought f
 test('RENOWN-CHAR a Court writ\'s Renown is the delivering character\'s own track - onto the one it has, another character of the account untouched; at the tracks\' bound a character with none is filled and paid, and given no track (mutants: the writ paid onto no track; the first track never made; the bound unread)', async () => {
   const s = await stand();
   await witnessed(s);
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const [w1, w2] = (await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret)).body.writs;
   const track = (id) => s.raw.prepare('SELECT xp FROM renown_tracks WHERE player = ? AND char_id = ?').get(mac.id, id)?.xp ?? null;
   const seat = s.raw.prepare('INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 1)');
@@ -328,7 +329,9 @@ test('RENOWN-CHAR a Court writ\'s Renown is the delivering character\'s own trac
   assert.deepEqual([track(mac.character), track('char-alt1')], [500 + w1.renown, 9000], 'another character of the account is untouched');
   // THE TRACKS' BOUND: sixty an account - a character with none past it is filled and paid, and no track made
   for (let i = s.raw.prepare('SELECT COUNT(*) AS n FROM renown_tracks WHERE player = ?').get(mac.id).n; i < RENOWN_TRACKS_MAX; i++) seat.run(mac.id, `char-b${String(i).padStart(3, '0')}`, null, 0);
-  const fresh = { ...mac, character: 'char-fresh' };
+  // INT16 (Integrity-Arc section 7): a delivery is asked of the account's SEATED realm character - so the character with
+  // none is a second realm character of the account, seated (it takes the account's one lease), never an offline id
+  const fresh = { ...mac, character: (await seatRealm(s.env, mac.secret, 'Fresh')).id };
   s.give(fresh, w2.material, 'own', w2.qty);
   const f = await s.call('/v1/writs/deliver', { character: fresh.character, id: w2.id, rid: rid() }, mac.secret);
   assert.equal(f.status, 200, JSON.stringify(f.body));
@@ -341,8 +344,8 @@ test('RENOWN-CHAR a Court writ\'s Renown is the delivering character\'s own trac
 test('PROF1 service: a Court writ raced - one account fills it between another\'s read and its UPDATE; the UPDATE refuses the second, who keeps its Stores', async () => {
   const s = await stand();
   await witnessed(s);
-  const mac = await s.registered('Mac');
-  const ann = await s.registered('Ann');
+  const mac = await s.seated('Mac');
+  const ann = await s.seated('Ann');
   const w = (await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret)).body.writs[0];
   s.give(mac, w.material, 'own', w.qty);
   s.give(ann, w.material, 'own', w.qty);
@@ -373,14 +376,14 @@ test('PROF1 service: a Court writ raced - one account fills it between another\'
 test('PROF1 service: a writ refused - short Stores, no such writ, the Marks shut, yesterday\'s', async () => {
   const s = await stand();
   await witnessed(s);
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const l = (await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret)).body;
   const w = l.writs[0];
   s.give(mac, w.material, 'own', w.qty - 1);
   assert.deepEqual((await s.call('/v1/writs/deliver', { character: mac.character, id: w.id, rid: rid() }, mac.secret)).body, { error: 'stores-short' });
   assert.deepEqual((await s.call('/v1/writs/deliver', { character: mac.character, id: 'c:1:1:9', rid: rid() }, mac.secret)).body, { error: 'no-writ' });
   const shut = await stand({ MARKS_OPEN: 'off' });
-  const m2 = await shut.registered('Mac');
+  const m2 = await shut.seated('Mac');
   assert.deepEqual((await shut.call('/v1/writs/deliver', { character: m2.character, id: w.id, rid: rid() }, m2.secret)).body, { error: 'marks-closed' });
   clock(NOON + DAY);
   s.give(mac, w.material, 'own', w.qty);
@@ -392,7 +395,7 @@ test('PROF1 service: a writ refused - short Stores, no such writ, the Marks shut
 
 test('PROF1 service: a specialisation - at 50, free the first time; a change burns 1,000 Marks and waits a week, the old one standing; one change at a time', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const spec = (id, extra = {}) => s.call('/v1/prof/spec', { character: mac.character, profession: 'herbalism', rank: 50, spec: id, rid: rid(), ...extra }, mac.secret);
   assert.deepEqual((await spec('gardener')).body, { error: 'prof-rank' });
   s.setXp(mac, xpForRank(50));

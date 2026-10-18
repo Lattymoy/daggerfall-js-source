@@ -100,13 +100,13 @@ test('SWING-LAW: the handling - by DFU\'s WeaponTypes (pinned equal to combat/fp
 
 test('SWING-LAW: the reader - the item in the swinging hand, its template\'s weight, both hands or one, the live Strength; bare hands and claws weigh nothing; no wielder, nothing', () => {
   const e = fighter({ strength: 70 }, WEAPONS.Claymore);
-  assert.deepEqual(readSwing({ entity: e, weaponType: WEAPON_TYPES.LongBlade, usingRightHand: true }), { weaponType: WEAPON_TYPES.LongBlade, weight: 7.5, strength: 70, twoHanded: true });
+  assert.deepEqual(readSwing({ entity: e, weaponType: WEAPON_TYPES.LongBlade, usingRightHand: true }), { weaponType: WEAPON_TYPES.LongBlade, weight: 7.5, strength: 70, twoHanded: true, family: 'longBlade', shortBlade: false });   // PIN MOVED (BAL10): the reader names the swing's family
   const left = fighter({}, WEAPONS.Dagger, EQUIP_SLOTS.LeftHand);
   equipTableOf(left)[EQUIP_SLOTS.RightHand] = weapon(WEAPONS.Claymore);
   assert.equal(readSwing({ entity: left, weaponType: WEAPON_TYPES.Dagger, usingRightHand: false }).weight, 0.5, 'the left hand\'s blade when the left hand swings');
   assert.equal(readSwing({ entity: left, weaponType: WEAPON_TYPES.Dagger, usingRightHand: false }).twoHanded, false);
   const wolf = fighter({ strength: 90 }, WEAPONS.Claymore);
-  assert.deepEqual(readSwing({ entity: wolf, weaponType: WEAPON_TYPES.Werecreature, usingRightHand: true }), { weaponType: WEAPON_TYPES.Werecreature, weight: 0, strength: 90, twoHanded: false }, 'a beast\'s claws weigh nothing');
+  assert.deepEqual(readSwing({ entity: wolf, weaponType: WEAPON_TYPES.Werecreature, usingRightHand: true }), { weaponType: WEAPON_TYPES.Werecreature, weight: 0, strength: 90, twoHanded: false, family: null, shortBlade: false }, 'a beast\'s claws weigh nothing - and are no family');   // PIN MOVED (BAL10)
   assert.equal(readSwing({ entity: fighter(), weaponType: WEAPON_TYPES.Melee, usingRightHand: true }).weight, 0, 'nor bare hands');
   assert.equal(readSwing({ entity: null, weaponType: 0 }), null);
   assert.equal(readSwing(null), null);
@@ -163,8 +163,8 @@ test('SWING-LAW: one law, every clock that times the player\'s swing - the leaf 
   assert.match(rd('src/combat/swingLaw.js'), /^installSwingLaw\(\);$/m, 'registered as the module loads - called, not a comment');
   assert.match(rd('src/combat/weapon/weaponRig.js'), /^import '\.\.\/swingLaw\.js';/m, 'the one maker of a swing\'s ctx imports it');
   assert.doesNotMatch(rd('src/scenes/shared.js'), /installSwingLaw/, 'no second home at boot');
-  assert.match(rd('src/systems/roleplayRealism/rrRealism.js'), /return swingFrameSeconds\(blend, \{ heft: swingHeft\(weight, liveStrength\), handling: swingHandling\(weaponType, hands === 'Both'\) \}\);/, 'AUDIT PRE-MERGE 0929 S3: RR\'s blend has no weight - the heft is the port\'s');
-  assert.match(rd('src/systems/roleplayRealismItems/rriRealism.js'), /return swingFrameSeconds\(adjustedSpeed, \{ handling: swingHandling\(weaponType, twoHanded\) \}\);/);
+  assert.match(rd('src/systems/roleplayRealism/rrRealism.js'), /return swingFrameSeconds\(blend, \{ heft: swingHeft\(weight, liveStrength\), handling: swingHandling\(weaponType, hands === 'Both', shortBlade\) \}\);/, 'AUDIT PRE-MERGE 0929 S3: RR\'s blend has no weight - the heft is the port\'s');
+  assert.match(rd('src/systems/roleplayRealismItems/rriRealism.js'), /return swingFrameSeconds\(adjustedSpeed, \{ handling: swingHandling\(weaponType, twoHanded, shortBlade\) \}\);/);   // PIN MOVED (BAL10): both arms hand the short blade's handling on
   for (const [f, re] of [
     ['src/characters/weaponStates.js', /getMeleeWeaponAnimTime\(liveSpeed, animCtx\)/],   // the machine
     ['src/combat/weapon/weaponWidget.js', /getMeleeWeaponAnimTime\(liveSpeed, ctx\)/],          // the Weapon Widget's clone

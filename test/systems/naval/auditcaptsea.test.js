@@ -311,7 +311,7 @@ test('AUDIT CAPTAIN\'S SEA S11/S18/S22/S20: an unknown hull\'s glass title never
   assert.equal(glassCard({ hull: 2, hostile: true, distance: 500, speed: 0 }, KNOW.hull).tone, 'unknown');
   assert.deepEqual([0, 1, 2, 3, 7, 12].map(handsWords), ['no hands', 'a hand', 'a hand or two', 'about 5 hands', 'about 5 hands', 'about 10 hands']);
   assert.equal(hullWord(2), 'two-master');
-  assert.deepEqual([cargoWords(0), cargoWords(-1), cargoWords(1), cargoWords(9)], ['riding high - her hold emptied', 'riding high - her hold emptied', 'riding high - a light hold', 'riding deep - a rich hold']);
+  assert.deepEqual([cargoWords(0), cargoWords(-1), cargoWords(1), cargoWords(9)], ['riding high - hold empty', 'riding high - hold empty', 'riding high - a light hold', 'riding deep - a rich hold']);
   const s = await sea({ hull: 2 });
   const e = spawn(s, 'merchantCoaster', 400, Math.PI / 2);
   s.run(0.2);
@@ -322,7 +322,7 @@ test('AUDIT CAPTAIN\'S SEA S11/S18/S22/S20: an unknown hull\'s glass title never
   e.deep = true;
   assert.equal(holdRow(), cargoWords(e.ship.cls.cargo + DEEP_TIER), 'the deep\'s tiers');
   e.prize = { hold: [] };
-  assert.equal(holdRow(), 'riding high - her hold emptied', 'an emptied prize');
+  assert.equal(holdRow(), 'riding high - hold empty', 'an emptied prize');
 });
 
 test('AUDIT CAPTAIN\'S SEA S12: see B5 (the Admiralty survey counts a ship once)', () => {});
@@ -398,8 +398,8 @@ test('AUDIT CAPTAIN\'S SEA S19: the glass holds her by her extent as she lies to
 
 test('AUDIT CAPTAIN\'S SEA S21: the black flag said as she is known to me - the trader\'s name only while her colours held, her own once seen through; "is a pirate" said only where she is seen (mutants: the colours\' arm, the studied arm, the sight gate)', () => {
   const src = rd('src/scenes/naval/navalHost.js');
-  assert.match(src, /deps\.say\?\.\(was === KNOW\.colours \? `False colours! \$\{disguiseOf\(e\)\?\.name \?\? 'The merchantman'\} runs up the black flag!` : was >= KNOW\.studied \? `\$\{s\.names\?\.name \?\? 'She'\} runs up the black flag!` : `\$\{withArticle\(hullWord\(s\.hull\)\)\} runs up the black flag!`, 4\);/);
-  assert.match(src, /if \(held > 0 \|\| dist <= Math\.max\(reach\.eye, reach\.lookout\)\) deps\.mid\?\.\(`False colours! \$\{s\.names\?\.name \?\? 'She'\} is a pirate\.`, 4\);/);
+  assert.match(src, /deps\.say\?\.\(was === KNOW\.colours \? `False colours! \$\{disguiseOf\(e\)\?\.name \?\? 'The merchantman'\} runs up the black flag!` : was >= KNOW\.studied \? `\$\{s\.names\?\.name \?\? 'It'\} runs up the black flag!` : `\$\{withArticle\(hullWord\(s\.hull\)\)\} runs up the black flag!`, 4\);/);
+  assert.match(src, /if \(held > 0 \|\| dist <= Math\.max\(reach\.eye, reach\.lookout\)\) deps\.mid\?\.\(`False colours! \$\{s\.names\?\.name \?\? 'It'\} is a pirate\.`, 4\);/);
 });
 
 test('AUDIT CAPTAIN\'S SEA S24: an unknown hull\'s hurts are no more read than her colours - GLASS-SPOT (PIN MOVED): she gives no card at all, where her card carried no bars; made out, her bar as her tag\'s (mutants: the HUD\'s)', async () => {
@@ -652,8 +652,8 @@ test('AUDIT CAPTAIN\'S SEA P5: the Fleet never carries a ship across the Veil - 
   const boat = { uid: 901, hull: 2, variant: 0, crewed: true, GameObject: { activeSelf: false, position: [0, 0, 0] }, MapPixel: { X: 200, Y: 200 } };
   let apart = true;
   const host = createFleetHost({ csa: () => ({ AllBoats: [boat], isSailing: () => false, state: {}, LayUpBoat: () => true }), naval: () => null, pack: () => [], where: () => ({ inside: false, pixel: { X: 8068, Y: -5185 } }), nearPort: () => true, nearestPort: () => ({ name: 'Veilhaven', way: 'west', ether: true }), veilApart: () => apart });
-  assert.deepEqual(host.act(901, 'summon'), { ok: false, text: 'She lies on the far side of the Veil - sail her across yourself.' });
-  assert.deepEqual(host.act(901, 'away'), { ok: false, text: 'She lies on the far side of the Veil - no crew takes her across alone.' });
+  assert.deepEqual(host.act(901, 'summon'), { ok: false, text: 'This ship is on the other side of the Veil. Sail it across yourself.' });
+  assert.deepEqual(host.act(901, 'away'), { ok: false, text: 'This ship is on the other side of the Veil. The crew won\'t take it across without you.' });
   apart = false;
   assert.equal(host.act(901, 'away').ok, true, 'on her own side, sent away');
   assert.deepEqual(F.fleetShip(901).port, { name: 'Veilhaven', ether: true }, 'laid up at the sea\'s port, her side kept');
@@ -734,7 +734,7 @@ test('AUDIT CAPTAIN\'S SEA X1/X3: a refusal said once in its waters, and the cro
   assert.deepEqual(d.log, [], 'a party member\'s helm through the arrival\'s wait: nothing');
 });
 
-test('AUDIT CAPTAIN\'S SEA X2/X9: Yes is the question as it stands NOW (a load, another helm, waters left, an enemy, a passenger: said, no voyage, asked afresh); the box is taken back at a load or a jump; a voyage that cannot be made brings ship and captain back where they set out, at her helm, the way out as it was (mutants: each of Yes\'s checks, the withdrawal, the way back)', async () => {
+test('AUDIT CAPTAIN\'S SEA X2/X9: Yes is the question as it stands NOW (a load, another helm, waters left, an enemy, a passenger: said, no voyage, asked afresh); the box is taken back at a load or a jump; a voyage that cannot be made brings ship and captain back where they set out, at the helm, the way out as it was (mutants: each of Yes\'s checks, the withdrawal, the way back)', async () => {
   const c = await crossingWorld();
   c.step();
   assert.deepEqual(c.log, ['asked']);
@@ -882,7 +882,7 @@ test('AUDIT CAPTAIN\'S SEA X6/X7/X8/X12/X13/X14/X18: the chart under a finger an
   assert.match(src, /g\.strokeRect\(t\.x - t\.r, t\.y - t\.r, 2 \* t\.r, 2 \* t\.r\);/, 'a haunt a square');
 });
 
-test('AUDIT CAPTAIN\'S SEA X15/X16: the chart goes with the world it charts - shut at every load, jump and move (it stood over the Bay after a load); its arrow the ship\'s heading at her helm, never where the captain looks (mutants: the close, the boat\'s heading)', () => {
+test('AUDIT CAPTAIN\'S SEA X15/X16: the chart goes with the world it charts - shut at every load, jump and move (it stood over the Bay after a load); its arrow the ship\'s heading at the helm, never where the captain looks (mutants: the close, the boat\'s heading)', () => {
   const src = hostText('src/scenes/world.js');
   assert.match(src, /const navalClear = \(\) => \{[^\n]*closeNavalYard\(\); closeEtherChart\(\);/);
   const open = src.slice(src.indexOf('  function openEtherChart() {'), src.indexOf('  /** AUDIT NAV1 (the helm): the shipwright\'s window over the world'));
@@ -914,7 +914,7 @@ test('AUDIT CAPTAIN\'S SEA C1: a companion back aboard while I sail works his po
   bosun.fights = 40;   // an Old Salt
   assert.ok(s.host.companions.take(42, bosun, 0), 'taken ashore');
   s.run(0.2);
-  assert.ok(s.host.postsWay(s.boat) > 1.03, `at her helm he is aboard - her canvas his (${s.host.postsWay(s.boat)})`);
+  assert.ok(s.host.postsWay(s.boat) > 1.03, `at the helm he is aboard - her canvas his (${s.host.postsWay(s.boat)})`);
   assert.equal(s.host.awayOf(s.boat).size, 0, 'and none ashore on her Fleet page and card');
   s.runtime.sailing = false;
   s.run(0.2);
@@ -1095,7 +1095,7 @@ test('AUDIT CAPTAIN\'S SEA D3: an Eltheric prize\'s papers answer to no crown - 
   assert.deepEqual([offer.useful, offer.detail], [false, 'No one hunts you in these waters']);
   assert.equal(m.choose('papers'), true);
   assert.deepEqual(['Wayrest', 'Sentinel', 'Daggerfall'].map((c) => s.host.notoriety.get(c)), [40, 40, 40], 'the Bay\'s notoriety as it was');
-  assert.ok(s.log.say.includes('Her papers burn - no crown\'s law runs past the Veil to read them.'));
+  assert.ok(s.log.say.includes('You burn the ship\'s papers. No crown\'s law reaches past the Veil.'));
 });
 
 test('AUDIT CAPTAIN\'S SEA D4: a freeport\'s quay past the Veil moors the isles\' traders - never a Bay crown\'s navy; the same day\'s roll in the Bay stands its cutters (mutants: the Veil\'s gate)', async () => {
@@ -1397,7 +1397,7 @@ test('AUDIT CAPTAIN\'S SEA L5/L10/B14/B15: the Captain page\'s meter below nothi
   const offer = yardOffer(damage, 99, 0, { discount: 0.05 });
   const bill = offer.rows.find((r) => r.id === 'hull').whole;
   const model = { offer: () => yardOffer(damage, 99, bill, { discount: 0.05 }), ship: () => ({ ...damage, barrels: 99, wrecked: false }), name: 'Galleon', hasBarrels: false };
-  assert.equal(yardText(model).whole, `Make her whole - ${bill} gold`);
+  assert.equal(yardText(model).whole, `Repair all - ${bill} gold`);
 });
 
 test('AUDIT CAPTAIN\'S SEA L6/B5/B7: the survey counts a ship once by her seed (kept on the contract, through a save); a deed moves one contract - a bounty\'s own quarry hers, else the soonest due (three hunts were done by the same three kills) - a berth every delivery\'s (mutants: the seen seeds, the order, the break)', async () => {
@@ -1486,7 +1486,7 @@ test('AUDIT CAPTAIN\'S SEA B2/B16: no shop buys the exchange\'s goods (a General
   assert.match(hostText('src/scenes/world.js'), /etherGoods: \(\) => etherOut,/, 'listed where the crossing out is this game\'s');
 });
 
-test('AUDIT CAPTAIN\'S SEA B3: the harbourmaster\'s and the exchange\'s tabs hang on a ship lying to the quay at her helm alone - the Fleet page\'s yard is the shipwright\'s (a ship laid up a port away took goods in and sold them out where she never sailed) (mutants: the quay\'s flag, the world\'s gate)', async () => {
+test('AUDIT CAPTAIN\'S SEA B3: the harbourmaster\'s and the exchange\'s tabs hang on a ship lying to the quay at the helm alone - the Fleet page\'s yard is the shipwright\'s (a ship laid up a port away took goods in and sold them out where she never sailed) (mutants: the quay\'s flag, the world\'s gate)', async () => {
   const s = await sea({ hull: 2 });
   s.boat.crewed = true;
   const models = [];
@@ -1526,7 +1526,7 @@ test('AUDIT CAPTAIN\'S SEA B4: a bounty\'s quarry gone down by another hand is n
   const L2 = createCaptainLedger();
   L2.holdContract({ id: 'y', kind: 'bounty', title: 'The Gull\'s bounty', crown: 'Wayrest', until: 9, pay: 5, days: 4, standing: 3, target: { px: 1, py: 1 } });
   createHarbourOffice({ ledger: L2, mid: (t) => said.push(t) }).event({ type: 'lost', bounty: 'y' });
-  assert.deepEqual(said, ['Bounty void - The Gull\'s bounty. She went down by another hand.']);
+  assert.deepEqual(said, ['Bounty void - The Gull\'s bounty. Someone else sank it.']);
 });
 
 test('AUDIT CAPTAIN\'S SEA B6/B8/B10: a chart\'s port drawn again till one has open water (one in five was a dud for good), a site sought outward past the drawn reach; a raised cache\'s chart, read again, marks nothing; no site past the map\'s edge where nothing streams (mutants: the redraw, the outward walk, the raised set, the edge)', async () => {
@@ -1577,9 +1577,9 @@ test('AUDIT CAPTAIN\'S SEA B9/B11/B13: a cache\'s and a chart\'s things kept in 
   assert.equal(goodIn(hold, 'wine'), 4, 'stopped short of dead in the water');
   assert.ok(r.ok);
   const again = office.exchange({ cargo: hold, room }).buy('wine', 1);
-  assert.deepEqual([again.ok, again.text], [false, 'She can carry no more - laden deeper, she would lie dead in the water.']);
+  assert.deepEqual([again.ok, again.text], [false, 'The ship can\'t carry any more. Any heavier and it couldn\'t move.']);
   const { exchangeText } = await import('../../../src/ui/naval/navalYardWindow.js');
-  assert.match(exchangeText({ port: 'Wayrest', weight: 40, room: 10, gold: 5, rows: [] }).lede, /room for 10 kg more before she lies dead in the water/);
+  assert.match(exchangeText({ port: 'Wayrest', weight: 40, room: 10, gold: 5, rows: [] }).lede, /room for 10 kg more before the ship can't move/);
   const { contractLine } = await import('../../../src/systems/naval/harbourBoard.js');
   assert.equal(contractLine({ until: 30, title: 't', words: 'w', kind: 'hunt', done: 0, need: 2, pay: 5 }, 0).left, '1 hour left');
   // Come Sail Away's own reckoning, read

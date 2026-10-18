@@ -33,7 +33,8 @@
 //                                                   radiance.png / radiance_side.png / cloak_back.png /
 //                                                   cloak_front.png / cloak_top.png / cloak_torn.png /
 //                                                   wings_back.png / resonance.png / resonance_top.png /
-//                                                   maelstrom_top.png / maelstrom_side.png there)
+//                                                   maelstrom_top.png / maelstrom_side.png / warren.png /
+//                                                   warren_top.png there)
 //
 // CRYSTAL-FIST (2026-10-05): and THE CRYSTAL RESONANCE, the sixth - from the side, every square node's law
 // (resonanceLit, on the wearer's own clock) stands lit is lit in the reference's purple itself, and every square over a
@@ -46,7 +47,12 @@
 // from above, foam where node's law (maelstromArmAngle, on the aura's own clock) stands its arms and the water darker
 // between them; its eye open water; no jump at the wrap; nothing before it kindles; from the side, its curl at the lip.
 import { chromium } from 'playwright';
-import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock, MAELSTROM_R, MAELSTROM_ARMS, maelstromArmAngle, auraClock } from '../src/render/auraRing.js';   // SHADOW-CLOAK; SERPENT5 (AUDIT WORLD-REWARDS D3): the Maelstrom: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
+//
+// WIKIMAID (2026-10-17): and THE LILAC WARREN, the twelfth - from the side, every rabbit drawn where node's law has it (warrenBunny,
+// on the wearer's own clock), its coat the lilac and never washed past it over a bright floor; from above, the ring of light
+// whole in the lilac inside the rabbits' lane, the amethyst light within it, dark past the ground, and their tracks where they
+// landed; no jump at the wrap; nothing before it kindles.
+import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock, MAELSTROM_R, MAELSTROM_ARMS, maelstromArmAngle, auraClock, WARREN_R, WARREN_RING_IN, WARREN_BUNNIES, WARREN_BUNNY_M, WARREN_BUNNY, WARREN_LEAN, WARREN_PRINTS, warrenBunny, warrenClock, warrenPrintsInto } from '../src/render/auraRing.js';   // WIKIMAID: where the rabbits and their tracks are, by node's own law   // SHADOW-CLOAK; SERPENT5 (AUDIT WORLD-REWARDS D3): the Maelstrom: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
 import http from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
@@ -419,6 +425,46 @@ try {
   const msSide = await ms([0, 0.6, 3.2], msT, 1, [[0, AURA_LIFT_M + 0.09, MAELSTROM_R]], [0, 0.2, 0]);
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'maelstrom_side.png') });
   check('from the side, its curl stands at the lip', msSide.error === 0 && lum(msSide.px[0]) > 60, `${lum(msSide.px[0])}`);
+  // ── WIKIMAID: THE LILAC WARREN ──
+  const wr = (eye, t, k, pts, at, lit = 1, none = false) => page.evaluate(([e, tt, kk, ps, a, l, n]) => window.draw(e, tt, kk, ps, 'lilacwarren', a, 0, l, -1, null, { strict: true, none: n }), [eye, t, k, pts, at, lit, none]);
+  const wrEye = [0, 1.0, 2.6], wrAt = [0, 0.25, 0], wrT = 13.3;
+  /** Rabbit k's middle at `t` - its box's (8, 10), inside it whichever way it faces - leaned as the vertex half leans it. */
+  const bunMid = (k, t, eye) => {
+    const b = warrenBunny(k, warrenClock(t, 0.37)), c = [Math.cos(b.a) * WARREN_R, AURA_LIFT_M + b.y, Math.sin(b.a) * WARREN_R];
+    const h = ((WARREN_BUNNY.ground - 10) / 16) * WARREN_BUNNY_M * b.sq, dx = eye[0] - c[0], dz = eye[2] - c[2], d = Math.hypot(dx, dz);
+    const lean = WARREN_LEAN * Math.atan2(Math.max(eye[1] - c[1], 0), Math.max(d, 1e-4));
+    return [c[0] + (dx / d) * Math.sin(lean) * h, c[1] + Math.cos(lean) * h, c[2] + (dz / d) * Math.sin(lean) * h];
+  };
+  const lilacish = (c) => c[2] > c[1] + 60 && c[0] > c[1] + 25 && lum(c) > 250;
+  const mids = Array.from({ length: WARREN_BUNNIES }, (_, k) => bunMid(k, wrT, wrEye));
+  const wrWhole = await wr(wrEye, wrT, 1, mids, wrAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'warren.png') });
+  check('the warren draws without a GL error', wrWhole.error === 0 && wrWhole.drawn === 1, `error ${wrWhole.error}, drawn ${wrWhole.drawn}`);
+  check('every rabbit where the law has it, in its lilac', wrWhole.px.every(lilacish), JSON.stringify(wrWhole.px));
+  const wrLit = await wr(wrEye, wrT, 1, mids, wrAt, 9);
+  check('over a bright floor still lilac, never washed past it', wrLit.px.every((c) => lilacish(c) && c[1] < 200), JSON.stringify(wrLit.px));
+  const wrLater = await wr(wrEye, wrT + 0.8, 1, Array.from({ length: WARREN_BUNNIES }, (_, k) => bunMid(k, wrT + 0.8, wrEye)), wrAt);
+  check('another moment, the rabbits moved on and still drawn where the law has them', wrLater.px.every(lilacish), JSON.stringify(wrLater.px));
+  // from above: the ring of light inside their lane, the light within, nothing past the ground; their tracks where they landed
+  const wrTop = [0, 3.4, 0.001], RL = WARREN_R - WARREN_RING_IN;
+  const wrRing = Array.from({ length: 24 }, (_, i) => { const a = (i / 24) * Math.PI * 2; return [Math.cos(a) * RL, 0.05, Math.sin(a) * RL]; });
+  const pr = warrenPrintsInto(new Float32Array(WARREN_BUNNIES * WARREN_PRINTS * 2), warrenClock(wrT, 0.37)), trackPts = [];
+  for (let i = 0; i < WARREN_BUNNIES * WARREN_PRINTS; i++) if (pr[i * 2 + 1] > 0.8 && pr[i * 2 + 1] < 2.0) { const a = pr[i * 2] + 0.03 / WARREN_R, r = WARREN_R + 0.022; trackPts.push([Math.cos(a) * r, 0.05, Math.sin(a) * r]); }
+  const topPts = [...wrRing, [0.25, 0.05, 0.1], [1.4, 0.05, 0.3], ...trackPts];
+  const wrBareTop = await wr(wrTop, wrT, 1, topPts, [0, 0, 0], 1, true), wrTopped = await wr(wrTop, wrT, 1, topPts, [0, 0, 0]);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'warren_top.png') });
+  check('from above, the ring of light whole in the lilac inside their lane', wrTopped.px.slice(0, 24).filter(lilacish).length >= 22, wrTopped.px.slice(0, 24).map(lum).join(' '));
+  const inner = wrTopped.px[24], past = wrTopped.px[25];
+  check('the amethyst light within it, and nothing past the ground', inner[2] > wrBareTop.px[24][2] + 8 && inner[2] > inner[1] && lum(past) - lum(wrBareTop.px[25]) < 6, `${inner} / ${past}`);
+  check('their tracks where they landed, a hind foot in the lilac', trackPts.length >= 4 && wrTopped.px.slice(26).every((c, i) => c[2] - wrBareTop.px[26 + i][2] > 40), `${trackPts.length} prints: ${wrTopped.px.slice(26).map((c, i) => c[2] - wrBareTop.px[26 + i][2]).join(' ')}`);
+  // the wrap: the rabbits' own middles there, and the ground round the ring - each rabbit on either side of it where the
+  // other has it, never a jump (the fixed points of a moment before would sit on a moving rabbit's edge)
+  const wrWrap = [...Array.from({ length: WARREN_BUNNIES }, (_, k) => bunMid(k, 0, wrEye)), ...wrRing.filter((_, i) => i % 3 === 0)];
+  const wrB = await wr(wrEye, p.period - 1 / 240, 1, wrWrap, wrAt), wrA = await wr(wrEye, 1 / 240, 1, wrWrap, wrAt);
+  const wrJump = Math.max(...wrB.px.map((c, i) => Math.abs(lum(c) - lum(wrA.px[i]))));
+  check('no jump where the clock wraps', wrJump <= 45 && wrA.px.slice(0, WARREN_BUNNIES).every(lilacish), `${wrJump}`);
+  const wrCold = await wr(wrEye, wrT, 0, mids, wrAt), wrBare = await wr(wrEye, wrT, 0, mids, wrAt, 1, true);
+  check('unkindled, nothing stands', wrCold.px.every((c, i) => Math.abs(lum(c) - lum(wrBare.px[i])) < 6), `${Math.max(...wrCold.px.map((c, i) => Math.abs(lum(c) - lum(wrBare.px[i]))))}`);
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

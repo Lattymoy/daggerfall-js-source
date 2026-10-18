@@ -91,6 +91,8 @@ import { steerage, HULL_HELM, HELM_WAY, WIND_RATED, WIND_SHARE, windShare } from
 import { stepErrand, MOOR_EASE_S } from './shipLife.js';   // SHIP-LIFE: a ship going somewhere
 import { nightSight } from './shipWatch.js';   // SHIP-WATCH: by night a lit ship is seen far, a dark one close
 import { legendOfClass, LEGEND_RELOAD_K } from './etherShips.js';   // ETHER-LEGENDS: a `gunnery` legend's quicker guns
+import { holdFouled } from './navalFoul.js';   // RAM-BOARD: a fouled ship's way held
+import { shotGun, naturalShot } from './shotKinds.js';   // SHOT-KINDS: a captain's loads
 
 /** A galley's oars: its least way, as a share of its best. */
 export const OARS_FLOOR = 0.55;
@@ -940,11 +942,14 @@ export function stepCaptain(ship, world) {
   ship.sailsWant = ship.avoid.heading != null ? Math.min(plan.sails, BOXED_SAILS) : plan.sails;
   ship.sails = clamp(ship.sails + clamp(ship.sailsWant - ship.sails, -0.5 * dt, 0.4 * dt), 0, 1);
   helm(ship, want, dt, world, 1, plan.track ? trackRate(ship, want, dt) : (ship.wantPrev = null, ship.wantRate = 0));
+  holdFouled(ship, dt, world.now);   // RAM-BOARD (navalFoul.js): fouled by a stem, her way held under FOUL_WAY - her guns still answer
   moveShip(ship, dt, isWater);
 
-  // the guns - held at a wreck, and all but the chasers while she comes alongside
+  // the guns - held at a wreck, and all but the chasers while she comes alongside - SHOT-KINDS: unless her broadsides
+  // hold grape, which sweeps the deck she means to take and leaves its timbers whole (captainLoads)
+  captainLoads(ship, enemy);
   if (!ship.guns.braced && !(enemy?.crippled && enemy.kind === 'player')) {
-    gunnery(ship, world, enemy ?? (ship.cls.faction === 'merchant' ? threat : null), out, { broadsides: ship.mode !== 'board' });
+    gunnery(ship, world, enemy ?? (ship.cls.faction === 'merchant' ? threat : null), out, { broadsides: boarderBroadsides(ship) });
   } else ship.runOut.clear();
 
   // the grapple: a pirate with men to send, alongside a crippled, holed or stopped boat - GRAPPLE_GAP of water between
@@ -956,6 +961,37 @@ export function stepCaptain(ship, world) {
   }
   return out;
 }
+
+/** SHOT-KINDS: grapeshot's fighting range (m) - its men whole for shotKinds.js GRAPE_FULL_S of flight, some 60 m, spent by
+ *  130 - and how far a fight may open past it (its share) before a captain still loaded with grape draws it for her own. */
+export const GRAPE_CLOSE_M = 120;
+export const GRAPE_KEEP = 1.5;
+/** SHOT-KINDS: the load groups a captain loads (the barrels carry none). */
+const CAPTAIN_GROUPS = Object.freeze(['starboard', 'bow']);
+/**
+ * SHOT-KINDS (bible/03-World/Naval-Refit.md) - A CAPTAIN'S LOADS. Every captain fights her bores' own loads (navalShips.js
+ * GUNS: round shot, her chasers' chain), but a PIRATE who means to board loads her broadsides and her chasers with GRAPE
+ * the moment she decides to (mode `board` - the guns drawn and loaded again while she closes, navalGunnery.js
+ * SHOT_SWITCH): Black Flag's boarders sweep the deck they will take, and grape (shotKinds.js SHOT.grape: a fifth of a
+ * ball's harm to her timbers) leaves the prize whole: her chasers fire it as they bear, and so do the broadsides a
+ * boarder held while they threw round shot (`boarderBroadsides`). She keeps it while the fight stands (`engage` and
+ * `board` by turns) within GRAPE_KEEP of GRAPE_CLOSE_M, and draws it for her bores' own once the fight is done or opened
+ * past that.
+ */
+export function captainLoads(ship, enemy = null) {
+  const d = enemy?.pos ? Math.hypot(enemy.pos[0] - ship.pos[0], enemy.pos[2] - ship.pos[2]) : Infinity;
+  const boards = ship.cls.faction === 'pirate' && ship.mode === 'board';
+  const done = !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);
+  for (const side of CAPTAIN_GROUPS) {
+    const bat = batteryOf(ship.hull, side);
+    if (!bat || bat.gun === 'barrel') continue;
+    if (boards) ship.guns.setLoad(side, 'grape');
+    else if (done) ship.guns.setLoad(side, naturalShot(bat.gun));
+  }
+}
+/** SHOT-KINDS: whether a captain's broadsides fire this step - always but coming alongside to board, and then only
+ *  loaded with grape: round shot into a prize she means to take, never (AUDIT NAV1 M1/G3's held broadsides). */
+export const boarderBroadsides = (ship) => ship.mode !== 'board' || ship.guns.load('starboard') === 'grape';
 
 /** SEA-EASE: the players a crown's ship stands by - every player in her contacts she does not take for an enemy - or
  *  null (she is no crown's ship, or stands by no one). */
@@ -1167,7 +1203,7 @@ export const BOW_SWING = 60;
 export function batteryReach(ship, side, seaY = 0) {
   const bat = batteryOf(ship.hull, side);
   if (!bat || bat.gun === 'barrel') return 0;
-  const g = GUNS[bat.gun];
+  const g = shotGun(bat.gun, GUNS[bat.gun], ship.guns?.load?.(side) ?? null);   // SHOT-KINDS: as she is loaded
   return rangeAt(g.maxEl * DEG, g.speed, bat.muzzles[0][1] + (ship.pos[1] - seaY));
 }
 export const broadsideReach = (ship, seaY = 0) => batteryReach(ship, 'starboard', seaY);
@@ -1557,7 +1593,8 @@ function gunnery(ship, world, enemy, out, { broadsides = true } = {}) {
   const battery = (side, bearingWant, arc, bear) => {
     const bat = batteryOf(ship.hull, side);
     if (!bat || bat.gun === 'barrel' || (!broadsides && (side === 'starboard' || side === 'port'))) { ship.runOut.delete(side); return; }
-    const g = GUNS[bat.gun];
+    const shot = ship.guns.load(side);   // SHOT-KINDS: laid and led for her load (captainLoads)
+    const g = shotGun(bat.gun, GUNS[bat.gun], shot);
     const lead = leadPoint(ship.pos, enemy.pos, rel, g.speed);
     const toLead = bearingTo(ship, lead);
     const err = Math.abs(wrapAngle(toLead.bearing - bearingWant * DEG)) / DEG;
@@ -1565,10 +1602,10 @@ function gunnery(ship, world, enemy, out, { broadsides = true } = {}) {
     const reach = batteryReach(ship, side, world.seaY);
     const inReach = toLead.dist <= reach * 1.02;
     // the height the lay meets her at, and the band it must pass through to strike her there
-    const rig = bat.gun === 'chain' && build.rig.length ? rigBand(build).map((y) => world.seaY + y) : null;
+    const rig = shot === 'chain' && build.rig.length ? rigBand(build).map((y) => world.seaY + y) : null;
     const band = rig ?? [world.seaY, world.seaY + build.top];
     const aimY = rig ? (rig[0] + rig[1]) / 2 : world.seaY + build.top * AIM_FREEBOARD;
-    const lay = (k) => aimSolution(pose, side, null, world.seaY, { target: [ship.pos[0] + (lead[0] - ship.pos[0]) * k, lead[1], ship.pos[2] + (lead[2] - ship.pos[2]) * k], targetY: aimY });
+    const lay = (k) => aimSolution(pose, side, null, world.seaY, { target: [ship.pos[0] + (lead[0] - ship.pos[0]) * k, lead[1], ship.pos[2] + (lead[2] - ship.pos[2]) * k], targetY: aimY, shot });
     const clear = !lineFoul(ship, bat, lead, enemy, world);
     const strikes = () => { const sol = lay(1); return !!sol && layPasses(sol, lead, band); };
     const window = fireWindow(ship, enemy, lead, bat.gun, bear);

@@ -133,15 +133,15 @@ export function crewRoster({ hull, seed, shipClass = null, crewShare = 1, crew =
 /** A man's own words, by what the ship is about, and by her trade where it colours them. */
 export const CREW_BLURBS = Object.freeze({
   calm: Object.freeze([
-    'Fair wind today.', 'Mind that line!', 'Smell the salt on her.', 'Another day on the Iliac Bay.', 'Steady as she goes.',
+    'Fair wind today.', 'Mind that line!', 'Smell that salt air.', 'Another day on the Iliac Bay.', 'Steady as we go.',
     'Anyone seen my pipe?', 'Wind\'s backing westerly.', 'Coil it proper, or the bosun\'ll have you.', 'Land\'s near. I can smell it.',
     'Gulls off the bow!', 'Sentinel spice fetches a fine price.', 'Wayrest by week\'s end, mark me.', 'My back\'s not what it was.',
     'Who\'s on the next watch?', 'Swab that, you lubber.', 'Calm as a Wayrest pond.', 'I\'d trade my ration for a dry bunk.',
-    'Ever seen the lights of Daggerfall from the water?', 'Haul away!', 'She\'s a good ship, this one.',
+    'Ever seen the lights of Daggerfall from the water?', 'Haul away!', 'Good ship, this one.',
   ]),
   battle: Object.freeze([
-    'Run out the guns!', 'Fire as she bears!', 'Reload! Reload!', 'Keep your heads down!', 'Hold fast!',
-    'She\'s coming about!', 'Powder, more powder!', 'Mind the rigging!', 'Put the fire out!', 'Steady, lads, steady!',
+    'Run out the guns!', 'Fire when ready!', 'Reload! Reload!', 'Keep your heads down!', 'Hold fast!',
+    'Coming about!', 'Powder, more powder!', 'Mind the rigging!', 'Put the fire out!', 'Steady, lads, steady!',
   ]),
   // CREW-MUSTER (FIELD BUGS 2026-10-14, "Crew Attacking Me"; Mac's call, 2026-10-14: "Both"): A MUSTER'S WORDS ARE ITS
   // SIDE OF THE BOARDING (`ctx.way`, step) - the crew going over the rail cries the boarding's, the crew being boarded
@@ -154,7 +154,7 @@ export const CREW_BLURBS = Object.freeze({
     'Keep a weather eye for the navy.', 'Gold, lads. Think of the gold.',
   ]),
   navy: Object.freeze([
-    'For the crown.', 'Eyes sharp. Pirates about.', 'The captain wants her shipshape.', 'Steady, men.',
+    'For the crown.', 'Eyes sharp. Pirates about.', 'The captain wants everything shipshape.', 'Steady, men.',
   ]),
   merchant: Object.freeze([
     'Mind the cargo!', 'Every crate counted.', 'Pray we meet no pirates.', 'Wine for Sentinel, wool for Wayrest.',
@@ -166,11 +166,11 @@ export const CREW_BLURBS = Object.freeze({
   ]),
   work: Object.freeze([
     'Swab that deck!', 'Splice that line.', 'Hand me the mallet.', 'Plug that hole, quick!', 'Mind the splinters.',
-    'Haul away!', 'Fresh canvas here!', 'Pump her dry, lads.', 'Who\'s got the tar?', 'Coil it proper.',
+    'Haul away!', 'Fresh canvas here!', 'Keep the pumps going, lads.', 'Who\'s got the tar?', 'Coil it proper.',
   ]),
   chore: Object.freeze([
     'Swab that deck!', 'Haul away!', 'Coil it proper.', 'Mind that line!', 'Tar\'s gone thin on this rail.',
-    'Bosun wants her shipshape.',
+    'Bosun wants it shipshape.',
   ]),
   // AUDIT NAV2 F46: her colours struck, or her going down - a surrender's few words, never a calm day's
   struck: Object.freeze([

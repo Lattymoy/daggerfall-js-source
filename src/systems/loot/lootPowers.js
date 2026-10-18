@@ -133,11 +133,12 @@ export function elementShare(target, element) {
 let _carry = new WeakMap();   // a weapon's (or my fists') per-cent fraction, carried to its next blow
 // SERPENT-SET: the heal (and the leech's fraction it carries) is systems/playerHeal.js's - the serpent's Shed Skin heals
 // through it too, and sigilSetPowers.js, which this file reads the blow's law out of, may not import this file
-/** A per-cent share of a blow, the fraction carried on its weapon (the sets' own law, sigilSetPowers.js setBlow). */
-function shareOf(key, damage, pct) {
+/** A per-cent share of a blow, the fraction carried on its weapon (the sets' own law, sigilSetPowers.js setBlow) - kept
+ *  unless the blow is the Stats page's estimate (AUDIT MARTIAL L2 F7). */
+function shareOf(key, damage, pct, keep = true) {
   const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
   const more = Math.floor(exact + 1e-9);
-  _carry.set(key, Math.max(0, exact - more));
+  if (keep) _carry.set(key, Math.max(0, exact - more));
   return more;
 }
 
@@ -243,7 +244,7 @@ export function lootBlow(weapon, damage, attacker, target, info) {
       default: break;
     }
   }
-  if (pct > 0) out += shareOf(weapon ?? attacker, damage, pct);
+  if (pct > 0) out += shareOf(weapon ?? attacker, damage, pct, !info?.estimate);
   return out + flat;
 }
 

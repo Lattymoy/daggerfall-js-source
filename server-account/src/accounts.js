@@ -790,6 +790,10 @@ export async function register({ db, subtle, rand, nowS }, playerId, { handle, p
   return set ? { recoveryCodes: codes, handle } : { recoveryCode: codes[0], handle };
 }
 
+/** SAFE4: whether the row is banned now - sanctions.js isBanned's law, here where signing in asks it (sanctions.js imports
+ *  this module). @param {any} row @param {number} nowS */
+const bannedNow = (row, nowS) => Number.isSafeInteger(row?.banned_until) && row.banned_until > nowS;
+
 /**
  * LOG IN with a username and password, and mint this device a session.
  *
@@ -811,6 +815,9 @@ export async function login({ db, subtle, rand, nowS }, { handle, password, devi
   if (!player || !ok) return { error: 'bad-login' };
 
   await clearRate({ db }, `login:${lc}`);
+  // AUDIT SAFE SERVICE-7 (bible/11-Multiplayer/Chat-Safety-Arc.md section 5): A BANNED ACCOUNT IS TOLD SO, and minted no
+  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle
+  if (bannedNow(player, nowS)) return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };
   // The cost of a hash goes up over the years. The only moment the
   // plaintext is in hand is a correct login, so that is when a row is
   // rewritten at the current count.
@@ -848,6 +855,8 @@ export async function recover({ db, subtle, rand, nowS }, { handle, code, passwo
   // anything to compare them against (password.js matchRecoveryCode).
   const { ok, rest } = await matchRecoveryCode(canon, player?.recovery_hash ?? null, { subtle });
   if (!player || !canon || !ok) return { error: 'bad-code' };
+  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in
+  if (bannedNow(player, nowS)) return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };
 
   const one = set ? null : mintRecoveryCode(rand);
   const fresh = set && !rest?.length ? mintRecoverySet(rand) : null;

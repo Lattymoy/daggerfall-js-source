@@ -1059,7 +1059,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
     }
     // RATE-KEPT (AUDIT 2026-10-01 part four): the hour's acts spent (`prof-rate`) said "Try again later" and let the harvest
     // go - the act played and the tool worn for nothing; kept now, and asked again inside its ten minutes
-    if (keptAnswer(r) || r?.error === 'prof-rate') {
+    if (keptAnswer(r) || r?.error === 'prof-rate' || r?.error === 'progress-play') {   // INT17: and the play that pays for it, enforced - refilled by play
       const kept = keptOf(key);
       const k = kept.harvests.find((x) => x.rid === h.rid);
       if (k) { k.tries = (k.tries | 0) + 1; k.nextAt = now() + PROF_PUMP_MS[Math.min(k.tries - 1, PROF_PUMP_MS.length - 1)]; writeKept(kept, key); }

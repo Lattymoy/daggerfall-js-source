@@ -50,7 +50,7 @@
   {
     "name": "TOUGHER-SHIPS-the-shooter-reckons",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "crew: shotMen(gun, zone), fire: hurt.fire ?? false, zone }));",
+    "old": "crew: Math.floor(shotMen(gun, zone) + random()), fire: hurt.fire ?? false, zone }));",
     "new": "crew: hurt.crew, fire: hurt.fire ?? false, zone }));",
     "tests": [
       "test/systems/naval/tougherships.test.js"

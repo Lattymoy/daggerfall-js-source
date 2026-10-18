@@ -4637,6 +4637,8 @@ ${paceControlsCss('tview')}
 .pack-shell .packtab.on::after { content: '\\25c6'; font-size: 10px; margin-left: 8px; }
 .pack-shell .packlists { display: block; background: transparent; overflow-y: auto;
   flex: 1 1 auto; min-height: 0; }   /* PX22: the dock's scroll viewport - min-height 0 is what makes overflow clip */
+/* LOOT-BULK: Stash all sits on the bottom edge of the item list, centred, and does not scroll away with the tiles. */
+.pack-shell .stashfoot { flex: 0 0 auto; display: flex; justify-content: center; padding: 2px 10px 8px; }
 /* The dock's rows are the reference's TILE GRID: square panels, the
    monogram carrying the item, the count in the corner, the name in
    the title and the plaque. The tiles live directly in .packcol -
@@ -5219,13 +5221,13 @@ ${paceControlsCss('tview')}
    dress, the brass on focus. */
 .storefilter { display: flex; align-items: center; gap: 6px; padding: 6px 10px; flex: 0 0 auto;
   border-bottom: 2px solid rgba(125,116,96,0.3); }
-.storesearch, .storecat { font: inherit; font-size: 13px; min-height: 32px; box-sizing: border-box; color: #d8cfae;
+.storesearch, .storecat, .storerarity, .storemat { font: inherit; font-size: 13px; min-height: 32px; box-sizing: border-box; color: #d8cfae;
   background: rgba(0,0,0,0.35); border: 1px solid rgba(125,116,96,0.45); border-radius: 0; }
 .storesearch { flex: 1 1 0; min-width: 0; padding: 0 8px; }
-.storecat { flex: 0 1 auto; max-width: 48%; padding: 0 4px; }
-.storecat option { color: #d8cfae; background: #10141a; }
+.storecat, .storerarity, .storemat { flex: 0 1 auto; max-width: 28%; padding: 0 4px; }
+.storecat option, .storerarity option, .storemat option { color: #d8cfae; background: #10141a; }
 .storesearch::placeholder { color: #9c937d; }
-.storesearch:focus, .storecat:focus { outline: none; border-color: var(--brass); }
+.storesearch:focus, .storecat:focus, .storerarity:focus, .storemat:focus { outline: none; border-color: var(--brass); }
 /* SHIFT-STOW's line: its own element, so hiding it leaves no band - on a touch screen (no Shift) and a short screen
    (the list first) */
 .storehint { margin: 0; padding: 4px 10px 0; flex: 0 0 auto; font-size: 11px; letter-spacing: 0.06em; color: #9c937d;

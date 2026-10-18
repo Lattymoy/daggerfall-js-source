@@ -53,12 +53,12 @@ export const NAVAL_YARD_CSS = `
 `;
 
 const WORDS = Object.freeze({
-  hull: { label: 'Hull', verb: 'Mend', done: 'Her hull mended', unit: (n) => `${n} ${n === 1 ? 'point' : 'points'}` },
-  sail: { label: 'Canvas', verb: 'Mend', done: 'Her canvas mended', unit: (n) => `${n} ${n === 1 ? 'yard' : 'yards'}` },
+  hull: { label: 'Hull', verb: 'Mend', done: 'Hull repaired', unit: (n) => `${n} ${n === 1 ? 'point' : 'points'}` },
+  sail: { label: 'Canvas', verb: 'Mend', done: 'Sails repaired', unit: (n) => `${n} ${n === 1 ? 'yard' : 'yards'}` },
   crew: { label: 'Hands', verb: 'Hire', done: 'Hands hired', unit: (n) => `${n} ${n === 1 ? 'man' : 'men'}` },
   barrels: { label: 'Fire barrels', verb: 'Buy', done: 'Fire barrels stowed', unit: (n) => `${n} ${n === 1 ? 'barrel' : 'barrels'}` },
   // SEA-REPAIR, SHIP-CREW: her provisions - carpenter's stores for her repairs at sea, and a round of grog for her crew
-  stores: { label: 'Carpenter\'s stores', verb: 'Buy', done: 'Stores stowed in her hold', unit: (n) => `${n} ${n === 1 ? 'store' : 'stores'}` },
+  stores: { label: 'Carpenter\'s stores', verb: 'Buy', done: 'Stores loaded into the hold', unit: (n) => `${n} ${n === 1 ? 'store' : 'stores'}` },
   grog: { label: 'Grog', verb: 'Stand a round', done: 'A round for the crew', unit: () => 'the crew\'s spirits lifted' },
 });
 /** SHIP-CREW: her crew's spirits in a word (shipCrew.js SPIRITS). */
@@ -94,9 +94,9 @@ export function yardText(model) {
   const provisions = (po?.rows ?? []).map((r) => {
     const w = WORDS[r.id];
     const state = r.id === 'stores'
-      ? (r.missing === 0 ? `${r.have} in her hold - her stores are full` : `${r.have} in her hold - ${r.missing} more at ${gold(r.price)} each`)
-      : r.drunk ? t('naval.yard.grogDrunk', 'Her crew\'s spirits are {spirits, select, roaring {roaring} high {high} steady {steady} low {low} other {grim}} - they have had today\'s round', { spirits: spiritsWord(r.have) })   // GROG-WORD: never "as high as they go" below the top
-        : (r.missing === 0 ? 'Her crew\'s spirits are as high as they go' : `Her crew's spirits are ${spiritsWord(r.have)} - a round is ${gold(r.price)}`);
+      ? (r.missing === 0 ? `${r.have} in the hold - stores are full` : `${r.have} in the hold - ${r.missing} more at ${gold(r.price)} each`)
+      : r.drunk ? t('naval.yard.grogDrunk', 'Crew spirits are {spirits, select, roaring {roaring} high {high} steady {steady} low {low} other {grim}} - they\'ve had today\'s round', { spirits: spiritsWord(r.have) })   // GROG-WORD: never "as high as they go" below the top
+        : (r.missing === 0 ? 'Crew spirits are as high as they go' : `Crew spirits are ${spiritsWord(r.have)} - a round is ${gold(r.price)}`);
     return {
       id: r.id, label: w.label, state,
       press: r.missing === 0 ? (r.id === 'stores' ? 'Full' : r.drunk ? 'Tomorrow' : 'No need') : r.afford === 0 ? `${w.verb} - ${gold(r.price)}${r.id === 'stores' ? ' each' : ''}`
@@ -108,10 +108,10 @@ export function yardText(model) {
     provisions,
     title: 'The shipwright',
     sub: `${model.name} - your purse: ${gold(o.gold)}`,
-    lede: bill === 0 ? 'She is sound from keel to masthead - there is nothing to mend.'
-      : sh.wrecked ? `She came in a wreck. He can make her whole again for ${gold(bill)}.` : `He will make her whole for ${gold(bill)}.`,
+    lede: bill === 0 ? 'The ship is in full repair. There is nothing to fix.'
+      : sh.wrecked ? `The ship came in wrecked. The shipwright can fully repair it for ${gold(bill)}.` : `The shipwright can fully repair it for ${gold(bill)}.`,
     rows,
-    whole: bill === 0 ? null : paid >= bill ? `Make her whole - ${gold(bill)}` : paid > 0 ? `Make good what your purse pays - ${gold(paid)}` : `Make her whole - ${gold(bill)}`,
+    whole: bill === 0 ? null : paid >= bill ? `Repair all - ${gold(bill)}` : paid > 0 ? `Make good what your purse pays - ${gold(paid)}` : `Repair all - ${gold(bill)}`,
     canWhole: paid > 0,
   };
 }
@@ -135,7 +135,7 @@ export function officeText(o) {
   const mq = o.marque;
   if (mq?.held) letters.push({ id: 'marque', title: 'Letter of marque', words: `You sail under ${mq.held.crown}'s letter.`, press: 'Held', can: false });
   else if (mq) letters.push({ id: 'marque', title: 'Letter of marque', words: mq.can ? `${o.crown}'s commission against its rivals' shipping for ${mq.days}.` : mq.why, press: `Buy - ${mq.price}`, can: !!mq.can });
-  if (o.admiralty?.open || o.admiralty?.can) letters.push({ id: 'admiralty', title: 'The Admiralty\'s carrack', words: o.admiralty.can ? 'The only carrack the Bay sells - her title to your Fleet.' : o.admiralty.why, press: `Buy - ${o.admiralty.price}`, can: !!o.admiralty.can });
+  if (o.admiralty?.open || o.admiralty?.can) letters.push({ id: 'admiralty', title: 'The Admiralty\'s carrack', words: o.admiralty.can ? 'The only carrack for sale in the Bay. The title goes to your Fleet.' : o.admiralty.why, press: `Buy - ${o.admiralty.price}`, can: !!o.admiralty.can });
   else if (o.admiralty) letters.push({ id: 'admiralty', title: 'The Admiralty\'s carrack', words: o.admiralty.why, press: 'Commodores only', can: false });
   return { lede, board, held, letters };
 }
@@ -163,14 +163,14 @@ export function etherOfficeText(o) {
 export function exchangeText(x) {
   if (!x) return null;
   const g = (n) => `${Math.round(n).toLocaleString('en-US')} gold`;
-  const room = x.room == null ? '' : x.room > 0 ? ` - room for ${x.room} kg more before she lies dead in the water` : ' - she can carry no more';   // AUDIT CAPTAIN'S SEA B11
-  const lede = x.weight == null ? `${x.port}'s exchange - deal from your helm, into her hold.`
-    : `${x.port}'s exchange. Her hold carries ${Math.round(x.weight)} kg of goods${room}; your purse ${g(x.gold)}.`;
+  const room = x.room == null ? '' : x.room > 0 ? ` - room for ${x.room} kg more before the ship can't move` : ' - the ship can\'t carry any more';   // AUDIT CAPTAIN'S SEA B11
+  const lede = x.weight == null ? `${x.port}'s exchange - trade from the helm, into the hold.`
+    : `${x.port}'s exchange. The hold carries ${Math.round(x.weight)} kg of goods${room}; your purse ${g(x.gold)}.`;
   const STAND = { makes: 'Made here - cheap', wants: 'Wanted here - dear', neither: '' };
   const rows = (x.rows ?? []).map((r) => ({
     id: r.id, title: r.name, canBuy: r.sells > 0 && x.weight != null, canSell: r.have > 0 && r.buys > 0,
     words: [STAND[r.stand], r.sells > 0 ? `buy at ${g(r.sell)} a ${r.unit} (${r.sells} left today)` : r.exotic ? 'not sold here' : 'none to buy today', r.buys > 0 ? `sell at ${g(r.buy)} (${r.buys} wanted)` : 'none wanted today'].filter(Boolean).join(' - '),   // AUDIT CAPTAIN'S SEA B16
-    extra: r.have > 0 ? `In her hold: ${r.have} ${r.have === 1 ? r.unit : r.units}` : '',
+    extra: r.have > 0 ? `In the hold: ${r.have} ${r.have === 1 ? r.unit : r.units}` : '',
   }));
   return { lede, rows };
 }
@@ -180,7 +180,7 @@ export function yardNote(result) {
   if (!result) return null;
   if (Array.isArray(result.bought)) {
     if (!result.ok) return { text: 'Your purse will not pay for a thing here.', warn: true };
-    return result.whole ? { text: `She is made whole for ${gold(result.cost)}.`, warn: false } : { text: `The yard made good what your purse paid: ${gold(result.cost)}.`, warn: false };
+    return result.whole ? { text: `Fully repaired for ${gold(result.cost)}.`, warn: false } : { text: `The yard made good what your purse paid: ${gold(result.cost)}.`, warn: false };
   }
   const w = WORDS[result.id];
   if (!w) return null;
@@ -245,7 +245,7 @@ export function mountNavalYardWindow(host, deps) {
   const lede = el('p', 'dfnaval-lede');
   const sec = el('section', 'dfnaval-sec');
   const secHead = el('h3', 'dfnaval-sechead');
-  secHead.append(el('span', null, 'Her needs'), el('span', 'dfnaval-count', 'as much as your purse pays'));
+  secHead.append(el('span', null, 'Repairs and supplies'), el('span', 'dfnaval-count', 'as much as your purse pays'));
   const list = el('ul', 'dfnaval-holdlist');
   const acts = el('div', 'dfnaval-acts');
   const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => { note = yardNote(m.buyAll?.()); render(); });

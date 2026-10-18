@@ -41,7 +41,9 @@ thousand leagues:
   no crown's navy and no crown's law - and six legendary ships, each with her own haunt, her own terror and her own
   purse, who come back from the deep a month after they are sunk.
 - **A REASON TO CROSS** (CAPT-TRADE's Eltheric goods, the strands, the legends' purses, the charts): ether-amber,
-  starglass and voidsilk made on the isles and wanted in every port of the Bay; the Bay's goods wanted on the isles.
+  starglass and voidsilk made on the isles and wanted in every port of the Bay; the Bay's goods wanted on the isles - and,
+  ISLE-TRADE (2026-10-17, `03-World/Naval-Refit.md`), one good of the Bay made on each isle and sold there, so a captain
+  can live and trade past the Veil from isle to isle.
 - **A CHART OF ITS OWN** (ETHER-CHART): the travel map's door past the Veil opens the captain's chart of the isles
   charted, the depths, the Veil and the legends' haunts heard of.
 - **THE OVERWORLD** (ETHER-OW): the chart's door up into the Overworld, as the held map's is in the Bay - the isles'
@@ -54,7 +56,7 @@ thousand leagues:
 |---|---|---|
 | ETHER-SEA | THE SEA'S LAW: its box, the Veil, the depths and their bands; the isles' lattice, kinds, sizes, climates and names; the ground the kernel grows there, composed over the world's reader (the host's and the worker's), streamed, on the far ring | `world/ethericSea.js`, `world/streamingWorld.js` (`frames`), `world/terrain/terrainGenWorker.js`, `world/terrain/terrainGenClient.js`, `render/farRing.js` (`climatePast`, `pastOwn`), `world/landforms.js` (the climate past the table), `scenes/shared.js` (`etherSeaOn`, `etherCrossOutOn`), `scenes/world.js` (the composition, the region's name, the Overworld's water) |
 | ETHER-PLACES | THE ISLES' PLACES: a port's town and a ruin's dungeon cloned off the game's own rows onto the isle's centre pixel under their own id, name and index; a ruin of the deep elite | `world/etherPlaces.js`, `scenes/world.js` (`_locationToBuild`, `etherPlaceAt`, the templates, the online wake) |
-| ETHER-PORTS | A FREEPORT: a port isle is a port to the deeds, the harbour book (its quays), the naval host's waters, the exchange (the Eltheric goods made there) and its own harbourmaster's tab - the legends' rumours and a chart of its waters | `scenes/world.js` (`etherPortAt`, `etherPortNear`, `etherPortOf`, the port seams), `scenes/etherHost.js` (`office`, `chartOffer`, `buyChart`), `ui/naval/navalYardWindow.js` (`etherOfficeText`) |
+| ETHER-PORTS | A FREEPORT: a port isle is a port to the deeds, the harbour book (its quays), the naval host's waters, the exchange (the Eltheric goods made there, and ISLE-TRADE's one good of the Bay of its own) and its own harbourmaster's tab - the legends' rumours and a chart of its waters | `scenes/world.js` (`etherPortAt`, `etherPortNear`, `etherPortOf`, the port seams), `scenes/etherHost.js` (`office`, `chartOffer`, `buyChart`), `ui/naval/navalYardWindow.js` (`etherOfficeText`) |
 | ETHER-SHIPS | ITS TRAFFIC AND ITS LAW: corsairs and traders by the band, under the sea's names and the Isles' colours; no navy, no relief, no crown's law; corsairs' papers; the strands' casks | `systems/naval/etherShips.js`, `systems/naval/navalDirector.js` (`ctx.ether`), `scenes/naval/navalHost.js` (`launch`, `chargeEther`, `etherCtx`, `pickStrand`), `scenes/etherHost.js` (`sites`, `gather`, `papers`), `systems/naval/shipKnowledge.js` (`coloursWords`) |
 | ETHER-LEGENDS | SIX LEGENDARY SHIPS: their classes, haunts, terrors, purses; launched in their haunts, risen again a month after their end; the rumours | `systems/naval/etherShips.js`, `systems/naval/navalShips.js` (the six classes, `LEGEND_LEVEL`), `systems/naval/navalDirector.js` (`legendSpawn`), `scenes/naval/navalHost.js` (`legendMend`, `reachOf`), `scenes/etherHost.js` (`legendHere`, `legendEnded`, `rumours`) |
 | ETHER-CROSSING | THE CROSSING: asked at a helm on the open Abecean and in the Veil, once each time the ship comes into those waters; the voyage carries the captain, the ship, her crew and her hold | `systems/naval/etherCrossing.js`, `scenes/world.js` (`etherCrossStep`, `etherCross`, `crossLandPx`) |
@@ -229,8 +231,9 @@ QUAYS' law). No crown's: the harbour office's crown's tab stands none there, and
 (`etherHost.office`, `ui/naval/navalYardWindow.js etherOfficeText`) is the tab instead - the port's waters, every legend's
 rumour as the quay's talk (each legend then on the captain's chart - `hearLegend`), and a chart of its waters for sale:
 every isle within CHART_BUY_PX (40) charted, at CHART_BUY_PRICE 150 gold and 75 a band deeper. THE EXCHANGE is
-CAPT-TRADE's own: an Eltheric port makes the three Eltheric goods (cheap, a day's stock of 30) and wants every good of
-the Bay at EXOTIC_K - and every port of the Bay wants the Eltheric goods at EXOTIC_K. A crown's favours (the yard's
+CAPT-TRADE's own: an Eltheric port makes the three Eltheric goods (cheap, a day's stock of 30) and, ISLE-TRADE
+(2026-10-17, `03-World/Naval-Refit.md`), one good of the Bay of its own off its key (`tradeGoods.js isleGood`), sold as
+made, and wants every other good of the Bay at EXOTIC_K - and every port of the Bay wants the Eltheric goods at EXOTIC_K. A crown's favours (the yard's
 discount, the hands') are none past the Veil (`waters` answers no crown there). A freeport's quay moors the isles'
 traders - never a Bay crown's navy (D4).
 

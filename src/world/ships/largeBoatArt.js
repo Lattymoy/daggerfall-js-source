@@ -125,3 +125,6 @@ export function registerLargeBoatArt(addVendorTextures) {
 }
 /** Test seam: unregistered. */
 export function _resetLargeBoatArt() { _registered = false; }
+
+/** SHIP-LIVERY: her palette, for the painter that repaints her by its families (world/ships/shipLiveryArt.js). */
+export const LARGE_BOAT_PALETTE = K;

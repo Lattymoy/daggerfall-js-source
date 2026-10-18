@@ -101,7 +101,7 @@ test('SIGIL1 the blow: online, with my Renown known, my weapon\'s sigil adds its
   assert.equal(sigilBlow(held(37500), 100, me, rat), 100, 'online, before my Renown is known: dormant');
   setSigilRenown(1);
   const faint = held(0);
-  assert.deepEqual(Array.from({ length: 10 }, () => sigilBlow(faint, 10, me, rat)), [10, 10, 10, 10, 11, 10, 10, 10, 11, 10], 'Faint 2.4% of 10, carried');
+  assert.deepEqual(Array.from({ length: 10 }, () => (sigilBlow(faint, 10, me, rat, { estimate: true }), sigilBlow(faint, 10, me, rat))), [10, 10, 10, 10, 11, 10, 10, 10, 11, 10], 'Faint 2.4% of 10, carried - the Stats page\'s reading between blows carrying nothing (PIN ADDED, AUDIT MARTIAL L2 F7)');
   assert.equal(sigilBlow(held(0), 10, me, rat), 10, 'a second weapon carries its own');
   setSigilRenown(40);
   assert.equal(sigilBlow(held(37500), 100, me, rat), 112, 'Ascendant in a Renown 40 hand: the whole power');

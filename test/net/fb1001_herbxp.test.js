@@ -64,7 +64,7 @@ test('HERB-XP law: a herb is picked at the highest tier the rank opens, as a hau
 
 test('HERB-XP service: at rank 70 an uncommon herb picked clean is worth 135 and a common one 90 (they were 11 and 3); the row keeps the herb\'s own tier; at rank 0 a common herb is 15 as ever (mutants: the herb\'s own tier; the node\'s tier lost from the row)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(70));
   const p = patchOfTier(2, SWAMP);
   const clean = await s.call('/v1/prof/harvest', harvestBody(mac, p, { act: { clean: true, bruised: false } }), mac.secret);
@@ -76,14 +76,14 @@ test('HERB-XP service: at rank 70 an uncommon herb picked clean is worth 135 and
   const c = patchOfTier(1);
   const common = await s.call('/v1/prof/harvest', harvestBody(mac, c, { act: { clean: true, bruised: false } }), mac.secret);
   assert.equal(common.body.xp, 90, 'a common herb by hand: 15 x 6, never the clean act\'s +50%');
-  const ann = await s.registered('Ann');
+  const ann = await s.seated('Ann');
   const novice = await s.call('/v1/prof/harvest', harvestBody(ann, c), ann.secret);
   assert.equal(novice.body.xp, 15, 'rank 0 works tier 1: as it always was');
 });
 
 test('HERB-XP service: the Basket\'s food keeps its tier - at rank 70 a search with all three found is a quarter of 22, as it was (not asked) (mutants: the food at the rank\'s tier)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(70));
   const p = patchOfTier(1);
   const food = await s.call('/v1/prof/harvest', { ...harvestBody(mac, p), kind: 'food', act: { finds: 3 } }, mac.secret);

@@ -65,7 +65,7 @@ test('BAG1 law: a count is cut to what the pack holds - gold first, own last - a
 
 test('BAG1 service: a carrying client\'s harvest lands in the carried count - never the Stores - and says so; asked again it is one; an older client\'s still lands in the Stores', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const p = patchOfTier(1);
   const key = herbKey(p.herb, ANTICLERE);
   const body = harvestBody(mac, p, { carry: true, held: 0 });
@@ -91,7 +91,7 @@ test('BAG1 service: a carrying client\'s harvest lands in the carried count - ne
 
 test('BAG1 service: a harvest\'s `held` cuts the count first - a pack that sold its herbs is believed - and a count at its bound refuses `carried-full`', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const p = patchOfTier(1);
   const key = herbKey(p.herb, ANTICLERE);
   s.carry(mac, key, 'own', 40);
@@ -110,7 +110,7 @@ test('BAG1 service: a harvest\'s `held` cuts the count first - a pack that sold 
 // the one before had counted, and the save was minted four that the service knew as one.
 test('BAG1 service (AUDIT B2): a `held` read against a count that has moved since cuts nothing - three kept harvests all keep their units; a current one is believed', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const ps = [];
   for (let x = 300; ps.length < 4 && x < 900; x++) {
     const p = herbPatches({ x, y: 200, day: utcDay(NOON), climate: WOODS, confirmed: false }).find((q) => q.tier === 1);
@@ -150,7 +150,7 @@ test('BAG1 service (AUDIT B2): a `held` read against a count that has moved sinc
 // first had counted its units, against the same `held: 0`, and erased them.
 test('BAG1 service (AUDIT B3): a twin of a landed harvest, racing it, cuts nothing', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const p = patchOfTier(1);
   const key = herbKey(p.herb, ANTICLERE);
   const body = harvestBody(mac, p, { carry: true, held: 0, heldKey: key });   // an older client's: no `seen`
@@ -172,7 +172,7 @@ test('BAG1 service (AUDIT B3): a twin of a landed harvest, racing it, cuts nothi
 
 test('BAG1 service: a withdrawal to a carrying client is counted as carried, each origin as it left (gold\'s first, bought, own); asked twice it is one; `held` is required', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'p1:19', 'gold', 1);
   s.give(mac, 'p1:19', 'bought', 2);
   s.give(mac, 'p1:19', 'own', 5);
@@ -204,7 +204,7 @@ test('BAG1 service: a withdrawal to a carrying client is counted as carried, eac
 
 test('BAG1 service: a deposit moves carried units into the Stores, each origin as it was - `all` gold\'s first, `spend` bought then own and never gold\'s; asked twice it is one', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.carry(mac, 'p1:19', 'own', 5);
   s.carry(mac, 'p1:19', 'bought', 2);
   s.carry(mac, 'p1:19', 'gold', 1);
@@ -233,7 +233,7 @@ test('BAG1 service: a deposit moves carried units into the Stores, each origin a
 
 test('BAG1 service: LAW 3, RESTATED - a pack that holds more than the count deposits no more than the count; one that holds fewer is believed first', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.carry(mac, 'p1:19', 'own', 3);
   const body = { character: mac.character, material: 'p1:19', qty: 4, held: 100, order: 'all', rid: rid() };
   const r = await s.call('/v1/stores/deposit', body, mac.secret);
@@ -258,7 +258,7 @@ test('BAG1 service: LAW 3, RESTATED - a pack that holds more than the count depo
 
 test('BAG1 service: the unbruised count follows its own units into the bag and back into the Stores', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.carry(mac, 'p1:19', 'own', 4);
   s.raw.prepare('INSERT INTO prof_unbruised (player, char_id, material, qty) VALUES (?, ?, ?, ?)').run(mac.id, mac.character, 'p1:19', 4);
   const unbruised = () => Number(s.raw.prepare('SELECT qty FROM prof_unbruised WHERE player = ? AND char_id = ? AND material = ?').get(mac.id, mac.character, 'p1:19')?.qty ?? 0);
@@ -275,7 +275,7 @@ test('BAG1 service: the unbruised count follows its own units into the bag and b
 
 test('BAG1 service (AUDIT2 S1): a carried harvest\'s row is kept thirty days, not two - it is the answer a kept harvest asked again is given, and only that answer mints its items; a Stores harvest\'s still goes at two, and past its bound a carried one goes too (mutants: swept at two days; never swept)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const p = patchOfTier(1);
   const body = harvestBody(mac, p, { carry: true, held: 0 });
   const r = await s.call('/v1/prof/harvest', body, mac.secret);

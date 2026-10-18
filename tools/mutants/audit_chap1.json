@@ -366,8 +366,8 @@
   {
     "name": "ACHAP-T5-MEMBERS",
     "file": "src/net/npcRollTracker.js",
-    "old": "members: () => rollMembersOf(entityOf()?.guildMemberships, rollVampireOf(entityOf())),",
-    "new": "members: () => rollMembersOf(entityOf()?.guildMembership, rollVampireOf(entityOf())),",
+    "old": "      return rollMembersOf(entity?.guildMemberships, rollVampireOf(entity));",
+    "new": "      return rollMembersOf(entity?.guildMembership, rollVampireOf(entity));",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"

@@ -537,6 +537,8 @@ contracts, invitations)."
   are now one group, which wraps below the name when the row cannot hold both.
 - **Recorded, not built.**
   - No block list: a moderator's mute and the per-reader rate are the walls.
+    SAFE1 (2026-10-17, `11-Multiplayer/Chat-Safety-Arc.md` section 2) gave every account a block list - the chat, the
+    invites and the requests; the pages' own walls stand beside it.
   - A letter carries words only, never an item or gold. A player's things are their own client's, and the trade
     window is where things change hands.
   - No push: a letter is found at the next look.

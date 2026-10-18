@@ -26,18 +26,18 @@ test('CHAPTERS-ON: under production\'s own vars a non-developer\'s board carries
     const raw = s.env.DB._raw;
     const age = (w) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(now - 8 * DAY, w.id);
     for (const h of ['Alice', 'Bob', 'Cara']) {
-      const w = await s.registered(h);
+      const w = await s.seated(h);
       age(w);
       now++;
       const r = await s.call('/v1/chapters/witness', { hall: { key: 77, region: R, factions: [40, 41] } }, w.secret);
       assert.equal(r.status, 200, `${h}'s witness is taken (at "dev" it answered 403 chapters-closed)`);
     }
     // a harvest in the region, so its board has a Court writ's ground to stand beside
-    const g = await s.registered('Ground');
+    const g = await s.seated('Ground');
     age(g);
     const p = herbPatches({ x: 300, y: 200, day: utcDay(now), climate: 231, confirmed: false })[0];
     await s.call('/v1/prof/harvest', { character: g.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(now), slot: p.slot }), kind: 'herbs', climate: 231, region: R, act: { clean: false, bruised: false }, at: now - 2, rid: 'chapon-000001' }, g.secret);
-    const who = await s.registered('Player');
+    const who = await s.seated('Player');
     const C = await seatRealm(s.env, who.secret, 'Player');
     await readRoll({ db: s.env.DB, nowS: now }, { id: who.id }, { character: C.id, lease: C.lease, seed: { factions: { 41: 10 }, members: [{ f: 41, rank: 0 }] } });
     const l = (await s.call('/v1/writs/list', { character: C.id, region: R }, who.secret)).body;

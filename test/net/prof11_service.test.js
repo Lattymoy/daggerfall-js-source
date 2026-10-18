@@ -42,7 +42,7 @@ async function stand(extra = {}) {
 
 test('PROF11 service: the cut - two Rough Stone a Cut Stone, own; Masonry XP 20 a cut at the rank\'s tier, 500 the first time, answered `first` and kept with the row; asked again one, nothing moved; the next cut no 500; a clean chisel half again', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'stone:rough', 'own', 20);
   const ask = { character: mac.character, recipe: 'cut:stone', count: 3, rid: rid() };
   const first = await s.call('/v1/prof/smelt', ask, mac.secret);
@@ -72,7 +72,7 @@ test('PROF11 service: the cut - two Rough Stone a Cut Stone, own; Masonry XP 20 
 
 test('PROF11 service: XP follows the rank - a cut at rank 55 is 20 x tier 5, never a quarter; a Quarryman\'s cut (a choice at 50) is two Cut Stone of two Rough Stone, its XP the work\'s, not the product\'s', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'stone:rough', 'own', 40);
   s.setXp(mac, xpForRank(55), 'building');   // PIN MOVED (CRAFT3): a cut reads the Building track's rank
   const r = await s.work(mac, 'cut:stone', 4);
@@ -90,7 +90,7 @@ test('PROF11 service: XP follows the rank - a cut at rank 55 is 20 x tier 5, nev
 
 test('PROF11 service: the mix - Mortar asks rank 10 (refused below it, nothing moved); a Sulphur, a Lead and five Rough Stone make ten Mortar; bought stone makes bought Mortar, spent first; the Stores short and full refused', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'stone:rough', 'own', 10);
   s.give(mac, 'metal:sulphur', 'own', 3);
   s.give(mac, 'metal:lead', 'own', 3);
@@ -120,7 +120,7 @@ test('PROF11 service: the mix - Mortar asks rank 10 (refused below it, nothing m
 
 test('PROF11 service: a clean report is read only where the work has the chisel - a smelt asked clean is a smelt (Smithing\'s 10 a tier a unit, no first, no `clean` answered); a log sawn clean earns nothing', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'metal:iron', 'own', 4);
   const smelt = await s.work(mac, 'ingot:iron', 2, { clean: true });
   assert.equal(smelt.status, 200, JSON.stringify(smelt.body));
@@ -133,7 +133,7 @@ test('PROF11 service: a clean report is read only where the work has the chisel 
 
 test('PROF11 service: the crafter\'s limit holds Masonry at 50 while two other crafts stand past it - credited to the cap, answered so', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(60), 'smithing');
   s.setXp(mac, xpForRank(70), 'provisioning');   // PIN MOVED (CRAFT3): Carpentry is Building's with Masonry now - the second other craft past 50 is Provisioning
   s.setXp(mac, xpForRank(51) - 50, 'building');   // PIN MOVED (CRAFT3): Masonry's XP is the Building track's
@@ -148,7 +148,7 @@ test('PROF11 service: the crafter\'s limit holds Masonry at 50 while two other c
 
 test('PROF11 service: the stone decor is a Sculptor\'s - refused (`prof-sculptor`, 403) to a Master who chose otherwise and to a Novice, nothing spent; a Sculptor carves a Stone Column of 12 Cut Stone and 3 Mortar - a piece with its signed record among the products, furniture\'s worth, a clean chisel a step', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'stone:cut', 'own', 30);
   s.give(mac, 'stone:mortar', 'own', 10);
   const novice = await s.carve(mac, 'column:stone');
@@ -188,7 +188,7 @@ test('PROF11 service: 0060 gives the forge\'s table its `first` and `clean` - ev
   const idx = s.raw.prepare('PRAGMA index_list(prof_smelts)').all().map((i) => i.name);
   assert.ok(idx.includes('idx_prof_smelts_recipe'), idx.join());
   assert.deepEqual(s.raw.prepare('PRAGMA index_info(idx_prof_smelts_recipe)').all().map((c) => c.name), ['player', 'char_id', 'recipe']);
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.raw.prepare(`INSERT INTO prof_smelts (player, rid, char_id, recipe, count, own, bought, xp, at, n) VALUES (?, 'old-row-01', ?, 'ingot:iron', 1, 1, 0, 10, ?, 'n')`).run(mac.id, mac.character, _now);
   assert.deepEqual({ ...s.raw.prepare('SELECT first, clean FROM prof_smelts WHERE rid = ?').get('old-row-01') }, { first: 0, clean: 0 });
   assert.throws(() => s.raw.prepare(`INSERT INTO prof_smelts (player, rid, char_id, recipe, count, own, bought, xp, at, n, first) VALUES (?, 'bad-row-01', ?, 'cut:stone', 1, 1, 0, 10, ?, 'n', 2)`).run(mac.id, mac.character, _now), /CHECK/);

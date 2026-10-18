@@ -295,7 +295,7 @@ test('ACC1d: the host builds ONE minter and hands it to the presence session AND
   // player saw their character's name while everybody else saw the handle.
   // RENOWN1: and the character coming online, whose Renown the token carries - REALM-DOOR: the realm character this tab
   // joined, which the service signs as the realm's and the relay's door reads (test/net/realmdoor.test.js)
-  assert.match(w, /const identityMinter = accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued,\s+character: \(\) => \(onlineOn \? realmSession\?\.id \?\? null : null\) \}\)/);
+  assert.match(w, /const identityMinter = accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued, now: steadyNow,\s+character: \(\) => \(onlineOn \? realmSession\?\.id \?\? null : null\) \}\)/);
   assert.match(w, /online = new OnlineSession\(\{[\s\S]*?mintToken: identityMinter,[\s\S]*?\}\);/, 'the presence session');
   assert.match(w, /link\.mintToken = identityMinter;/, 'and every channel link - the hub is where a name is READ');
   assert.equal((w.match(/accountTokenMinter\(/g) ?? []).length, 1, 'ONE minter: two would be two reads of the store per connect and no benefit');

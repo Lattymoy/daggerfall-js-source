@@ -67,7 +67,7 @@ const skin = (who, foe, extra = {}) => ({
 
 test('AUDIT 32 L2: Hunting\'s day counts hides, a clean pelt\'s second among them - the rare hides\' last skinning cut to their room; the state and the answer say hides. CAP-OFF: no day\'s room for the rest - a clean pelt past the old thirty whole, a sixteenth body of two credited', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100), 'hunting');
   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): 29 hides taken, a clean pelt that rolled its
   // second was cut to the one the day had room for, and the next refused (`prof-hunt-cap`). No room is the day's now
@@ -79,7 +79,7 @@ test('AUDIT 32 L2: Hunting\'s day counts hides, a clean pelt\'s second among the
   assert.deepEqual([next.status, next.body.hunt.hides], [200, 32], JSON.stringify(next.body));
 
   // fifteen clean pelts of two were the day's thirty, a sixteenth body refused: now credited, the day counted in hides
-  const ann = await s.registered('Ann');
+  const ann = await s.seated('Ann');
   s.setXp(ann, xpForRank(100), 'hunting');
   s.hunted(ann, 15, 2);
   const sixteenth = await s.call('/v1/prof/harvest', skin(ann, MOB.Rat), ann.secret);
@@ -88,7 +88,7 @@ test('AUDIT 32 L2: Hunting\'s day counts hides, a clean pelt\'s second among the
   assert.deepEqual(st.hunt, { hides: 31, high: 0 });
 
   // the rare hides: two taken, a clean Harpy's second cut to the third
-  const bo = await s.registered('Cyrus');
+  const bo = await s.seated('Cyrus');
   s.setXp(bo, xpForRank(100), 'hunting');
   s.hunted(bo, 1, 2, 5);
   const harpy = await steered(0, () => s.call('/v1/prof/harvest', skin(bo, MOB.Harpy, { act: { clean: true } }), bo.secret));
@@ -102,7 +102,7 @@ test('AUDIT 32 L2: Hunting\'s day counts hides, a clean pelt\'s second among the
 
 test('AUDIT 32 S2: a body\'s ground is never read nor witnessed - a hand-built climate or region is no 500', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100), 'hunting');
   for (const ground of [{ region: {} }, { region: [17] }, { climate: { toString: 1 } }, { region: { toString: 1 } }, { climate: 231, region: 17 }]) {
     const r = await s.call('/v1/prof/harvest', skin(mac, MOB.Rat, ground), mac.secret);
@@ -115,7 +115,7 @@ test('AUDIT 32 S2: a body\'s ground is never read nor witnessed - a hand-built c
 
 test('AUDIT 32 S3: a Butcher\'s butchery at 4,999 Raw Meat keeps the one that fits; the row\'s count is what went in, and 1 where none did', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100), 'hunting', { spec100: 'butcher' });
   s.give(mac, 'food:meat', 'own', STORES_MAX - 1);
   const r = await s.call('/v1/prof/harvest', skin(mac, MOB.GrizzlyBear), mac.secret);
@@ -130,7 +130,7 @@ test('AUDIT 32 S3: a Butcher\'s butchery at 4,999 Raw Meat keeps the one that fi
 
 test('AUDIT 32 S4: a foe no knife skins is refused before the hour\'s acts are spent, as a craft\'s dye is', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100), 'hunting');
   for (const foe of [MOB.Orc, '4', 4.5, -1, 1e20, null, true, [4], {}]) {
     assert.deepEqual((await s.call('/v1/prof/harvest', skin(mac, foe), mac.secret)).body, { error: 'prof-foe' }, JSON.stringify(foe));
@@ -144,7 +144,7 @@ test('AUDIT 32 S4: a foe no knife skins is refused before the hour\'s acts are s
 
 test('AUDIT 32 S5: a weave answers no track (no XP, no raising choice) - never Smithing\'s; a cure answers Hunting\'s', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'hide:spider', 'own', 3);
   s.give(mac, 'hide:rat', 'own', 2);
   const weave = await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'weave:silk', count: 1, rid: rid() }, mac.secret);
@@ -157,7 +157,7 @@ test('AUDIT 32 S5: a weave answers no track (no XP, no raising choice) - never S
 
 test('AUDIT 32 S1 (Mac: "Whatever you think is best"): a Linen garment, a Wool rug and the Fishing-Net - wholly the Weavers\' cloth - answer their craft\'s XP and no first-craft bonus, the first recorded; a boot\'s Cured Leather keeps the 500; the recipe decides, not the units\' origin', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const xp = () => Number(s.raw.prepare('SELECT xp FROM prof_tracks WHERE player = ? AND char_id = ? AND profession = ?').get(mac.id, mac.character, 'outfitting')?.xp ?? 0);
   const craft = (recipe) => s.call('/v1/prof/craft', { character: mac.character, recipe, clean: false, name: 'Mac', rid: rid() }, mac.secret);
   s.give(mac, 'cloth:linen', 'bought', 10);

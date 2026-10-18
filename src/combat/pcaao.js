@@ -171,12 +171,17 @@ const isClassEnemy = (e) => !!e && !e.isPlayer && e.isClass === true;   // Entit
 const stat = (e, k) => liveStat(e, k);
 const skill = (e, id) => skillValue(e, id);
 const hasAbility = (career, flag) => ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
-const leftHandItem = (e) => equipTableOf(e)[EQUIP_SLOTS.LeftHand] ?? null;
 const struckSlotItem = (e, part) => {
   const slot = slotForBodyPart(part);
   return slot !== EQUIP_SLOTS.None ? (equipTableOf(e)[slot] ?? null) : null;
 };
 const isShield = (item) => item?.group === 'Armor' && isShieldTemplate(item?.templateIndex);
+/** The left hand's SHIELD, else null. THE SIXTH DEPARTURE (TWO-HANDS-SHIELD, 2026-10-17,
+ *  bible/05-Combat/Physical-Combat-Overhaul.md): the C# takes whatever the hand holds
+ *  (`ItemEquipTable.GetItem(EquipSlots.LeftHand)`) and never asks IsShield, so a weapon there - one waiting for H, or a
+ *  pair's off weapon - rolled the shield's block at its weak spot, and an iron one (GetMaterialArmorValue reads its
+ *  material 0 as leather's 3) blocked as a leather shield. A shield is DaggerfallUnityItem.GetIsShield (`isShield`). */
+const leftHandShield = (e) => { const it = equipTableOf(e)[EQUIP_SLOTS.LeftHand] ?? null; return isShield(it) ? it : null; };
 const isArmorGroup = (item) => item?.group === 'Armor';
 const nativeMaterial = (item) => item?.material ?? 0;
 const weaponSkillOf = (weapon) => weaponSkillUsed(weapon?.templateIndex) ?? SKILLS.HandToHand;
@@ -474,8 +479,11 @@ export function pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls) {
  *  min..max, adds the modifier and the mod's STRENGTH term; a monster's
  *  `damageModifier` IS its summed attack damage. BAL6-GAUNTLETS: the
  *  beast's claws add its gauntlets' metal where a weapon's material
- *  modifier stands (after Strength, before the floor - combat/clawMetal.js). */
-export function pcaaoHandToHandAttackDamage(attacker, target, damageModifier, player, rolls) {
+ *  modifier stands (after Strength, before the floor - combat/clawMetal.js).
+ *  BAL10 (bible/05-Combat/Balance-Arc.md section 16): AND THE PORT'S BLOW MODIFIERS for a player's fists - where the
+ *  weapon arm reads them (pcaaoWeaponAttackDamage: after the enemy-type term), never the beast's claws. `info` the host's
+ *  word, the weapon arm's own. */
+export function pcaaoHandToHandAttackDamage(attacker, target, damageModifier, player, rolls, info = undefined) {
   let damage = 0;
   if (player) {
     const h2h = skill(attacker, SKILLS.HandToHand);
@@ -488,6 +496,7 @@ export function pcaaoHandToHandAttackDamage(attacker, target, damageModifier, pl
   }
   if (damage < 1) damage = 0;
   if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);
+  if (player && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers
   return damage;
 }
 
@@ -770,7 +779,7 @@ export function pcaaoDamageEquipment(attacker, target, damage, weapon, struckBod
   let wepEqualize = 1, wepWeight = 1;
   let startItemCondPer = 0;
   if (!modules.armorHitFormulaRedone) {
-    const shield = leftHandItem(target);
+    const shield = leftHandShield(target);
     shieldBlockSuccess = false;
     if (shield) {
       for (const part of SHIELD_PARTS.get(shield.templateIndex) ?? []) {
@@ -813,7 +822,7 @@ export function pcaaoDamageEquipment(attacker, target, damage, weapon, struckBod
       pcaaoApplyConditionDamageThroughWeaponDamage(weapon, attacker, wepDamage, bluntWep, shtbladeWep, missileWep, wepEqualize, modules, rolls, say);
     }
     if (isPlayer(attacker)) pcaaoWarningMessagePlayerEquipmentCondition(weapon, startItemCondPer, say);
-    const struck = shieldBlockSuccess ? leftHandItem(target) : struckSlotItem(target, struckBodyPart);
+    const struck = shieldBlockSuccess ? leftHandShield(target) : struckSlotItem(target, struckBodyPart);
     if (struck) {
       let d = damage * pcaaoEqualizeMaterialConditions(struck);
       matDifference = pcaaoArmorMaterialModifierFinder(struck) - wepMatModifier;
@@ -825,7 +834,7 @@ export function pcaaoDamageEquipment(attacker, target, damage, weapon, struckBod
     return false;
   }
   if (!weapon && damage > 0) {
-    const struck = shieldBlockSuccess ? leftHandItem(target) : struckSlotItem(target, struckBodyPart);
+    const struck = shieldBlockSuccess ? leftHandShield(target) : struckSlotItem(target, struckBodyPart);
     if (struck) {
       let d = damage * pcaaoEqualizeMaterialConditions(struck);
       const armorMod = pcaaoArmorMaterialModifierFinder(struck);
@@ -895,7 +904,7 @@ export function pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, we
   let bluntWep = false, wepWeight = 1;
   if (weaponSkillOf(weapon) === SKILLS.BluntWeapon) { bluntWep = true; wepWeight = Math.ceil(effectiveUnitWeightInKg(weapon)); }
   if (shieldBlockSuccess) {
-    const shield = leftHandItem(target);
+    const shield = leftHandShield(target);
     return pcaaoPercentageReductionCalculationWithWeapon(shield, pcaaoArmorMaterialIdentifier(shield), liveStrength, damage, bluntWep, wepWeight, true, naturalDamResist, modules);
   }
   const armor = struckSlotItem(target, struckBodyPart);
@@ -905,7 +914,7 @@ export function pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, we
 export function pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules) {
   const liveStrength = stat(attacker, 'strength');
   if (shieldBlockSuccess) {
-    const shield = leftHandItem(target);
+    const shield = leftHandShield(target);
     return pcaaoPercentageReductionCalculationWithUnarmed(shield, pcaaoArmorMaterialIdentifier(shield), liveStrength, damage, true, naturalDamResist, modules);
   }
   const armor = struckSlotItem(target, struckBodyPart);
@@ -974,7 +983,8 @@ export function pcaaoArmorStruckVerification(target, struckBodyPart) {
  *  covers) blocks at the shield's base chance bent by the six stats,
  *  a weak spot at its smaller one; both `Mathf.Clamp` calls (7..95 and
  *  0..50) are computed and discarded by the C#. Buckler 30/20, Round 35/10, Kite 45/5, Tower
- *  55/-5, anything else in the hand 40/0. */
+ *  55/-5; the C#'s default, 40/0, was anything else in the hand - kept as written, and handed a shield alone since the
+ *  sixth departure (`leftHandShield`). */
 export function pcaaoShieldBlockChanceCalculation(target, shieldStrongSpot, shield, rolls) {
   let strong = 0, weak = 0;
   const d = (k) => stat(target, k) - 50;
@@ -1001,7 +1011,7 @@ export function pcaaoShieldBlockChanceCalculation(target, shieldStrongSpot, shie
  *  reduction over 100 is at least as good as the piece under it
  *  (bare skin reduces by the natural resistance alone). */
 export function pcaaoCompareShieldToUnderArmor(target, struckBodyPart, naturalDamResist, modules) {
-  const shield = leftHandItem(target);
+  const shield = leftHandShield(target);
   const shieldReduced = pcaaoPercentageReductionAverage(shield, pcaaoArmorMaterialIdentifier(shield), 100, naturalDamResist, true, modules);
   const under = struckSlotItem(target, struckBodyPart);
   const underReduced = under
@@ -1109,7 +1119,7 @@ export function pcaaoAttackDamage(attacker, target, {
     if (isPlayer(attacker) || isClassEnemy(AIAttacker)) {
       if (pcaaoSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls, modules, notes)) {
         if (notes) notes.hit = true;
-        damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls);
+        damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls, { unaware: !!unaware });   // BAL10: the host's word, for the fists' blow modifiers
         const before = damage;
         damage = pcaaoBackstabDamage(damage, backstab, rolls, say);
         backstabbed(before, damage);
@@ -1161,7 +1171,7 @@ export function pcaaoAttackDamage(attacker, target, {
     say?.('This Weapon Is Not Very Effective Against This Creature.', 1);
   }
   const naturalDamResist = pcaaoNaturalDamageResistance(target);
-  const shield = leftHandItem(target);
+  const shield = leftHandShield(target);
   let shieldStrongSpot = false;
   shieldBlockSuccess = false;
   if (shield) {

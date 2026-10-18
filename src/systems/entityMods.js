@@ -89,6 +89,9 @@ const _blowMods = new Map();
  *  attacker and the target are known: the online sigil (systems/sigil/sigil.js) is the one that needs them.
  *  SET2: `info` is what the striker's host knew and the formula could not - `{ unaware }`, the struck foe had not
  *  noticed the striker (its AI's `detected`, read where the foe RECORD is in hand: combat/playerWeapon.js foeUnaware).
+ *  AUDIT MARTIAL L2 F7: `{ estimate: true }` - the Stats page's reading of a blow (combat/combatStats.js), no blow at all:
+ *  a modifier answers it as it would the blow and KEEPS NOTHING - no fraction carried, no "next blow" window spent (the
+ *  page ran every modifier some five hundred times a build, and its reading moved the real blows after it).
  *  Read under EITHER core - DFU's (combat/formulas.js weaponAttackDamage) and PCAAO's (combat/pcaao.js
  *  pcaaoWeaponAttackDamage). */
 export function registerWeaponBlowMod(name, fn) { if (typeof fn === 'function') _blowMods.set(name, fn); else _blowMods.delete(name); }

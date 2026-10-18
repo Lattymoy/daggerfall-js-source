@@ -216,7 +216,7 @@ test('WA1 OnPostFastTravel and the coroutine: armed only by an ambush; 0.05 s of
   _resetWarmAshesShips();
 });
 
-test('WA1 Leave Ship: in region 31, the blocks back to _base and ashore - a lent ship lent again just to leave it; anywhere else, only done', () => {
+test('WA1 Leave Ship: in region 31, the blocks back to _base and ashore - a lent ship lent again just to leave it; anywhere else (RAID-ASHORE), the blocks back to _base, the raid\'s foes withdrawn and its quest ended where it was fought', () => {
   _resetWarmAshesShips();
   const t = new LeaveShip(null);
   assert.equal(t.createNew('Leave Ship', {}) instanceof LeaveShip, true);
@@ -238,11 +238,16 @@ test('WA1 Leave Ship: in region 31, the blocks back to _base and ashore - a lent
   assert.deepEqual(h.calls, [['variant', 'SHIPAA00.RMB', '_base'], ['variant', 'SHIPAA01.RMB', '_base'], ['assign', SHIP_TYPES.Large], ['ship'], ['reset']]);
   assert.equal(isTempShip(), false);
   assert.equal(a.isComplete, true);
-  // not at sea: nothing but done
+  // PIN MOVED (RAID-ASHORE, 2026-10-17, bible/03-World/Naval-Refit.md): not at sea - the raid was fought where the player
+  // stands, and ends there: the blocks back to _base, its foes withdrawn (the host's raidAshore), the quest ended as its
+  // own `end quest` ends one (the IL's arm did nothing but complete, and the quest's crew stood on for its hour)
   h = recordingHost({ region: 17 }); setWarmAshesHost(h);
-  a = t.createNew('Leave Ship', {});
+  h.raidAshore = (q) => h.calls.push(['ashore', q.questName]);
+  const quest = { questName: 'WAQ_SHIP_SMALLRAID', questBreak: false, ended: 0, endQuest() { this.ended++; } };
+  a = t.createNew('Leave Ship', quest);
   a.update(null);
-  assert.deepEqual(h.calls, []);
+  assert.deepEqual(h.calls, [['variant', 'SHIPAA00.RMB', '_base'], ['variant', 'SHIPAA01.RMB', '_base'], ['ashore', 'WAQ_SHIP_SMALLRAID']]);
+  assert.deepEqual([quest.questBreak, quest.ended], [true, 1]);
   assert.equal(a.isComplete, true);
   _resetWarmAshesShips();
 });

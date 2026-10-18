@@ -42,6 +42,7 @@ import { HANDLE_RE } from './handleShape.js';
 import { AURAS } from './identityToken.js';   // WB9g: the auras that exist - a stored one is one of them, or none
 import { NAME_MAX } from './wire.js';   // NAME-AS: the wire's bound on a name, in the sentence that says a character's is past it
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
+import { banRangeText, bannedText } from './safety/safetyLaw.js';   // SAFE4: a ban's bound in its refusal's sentence, from its home; AUDIT SAFE CLIENT-2: and the ban itself
 import { muteRangeText } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home (L10N4: its reader)
 import { HOME_CAP, RENT_ROOMS_MAX, RENT_HELD_MAX, RENT_DAYS_MAX } from './homeLaw.js';   // HOME1: the cap a refusal names; HOME-RENT: and the rooms'
 import { DECOR_CAP, DECOR_YARD_CAP, DECOR_YARD_HIGH_WHY } from './decorLaw.js';   // DECOR1: the cap its refusal names; HOME-YARD: a yard's
@@ -543,6 +544,7 @@ const REFUSAL_WORDS = {
   // MARKET-ANY: a piece from the pack
   'market-not-good': () => t('account.refusal.marketNotGood', 'That piece cannot be sold on the market.'),
   'market-good-gone': () => t('account.refusal.marketGoodGone', 'The realm does not hold that piece where your pack had it. Nothing was listed.'),
+  'market-piece-gone': () => t('account.refusal.marketPieceGone', 'The realm does not hold that crafted piece loose in your pack or your home. Nothing changed hands.'),   // INT19
   'market-piece-route': () => t('account.refusal.marketPieceRoute', 'That piece\'s maker\'s record is yours: list it as a crafted piece.'),
   'market-goods-gold': () => t('account.refusal.marketGoodsGold', 'A piece from your pack sells for gold alone.'),
   // WRIT-WALL (FIELD BUGS 2026-10-13e): it sent the reader to withdraw it - and withdrawn it stays gold's, which no writ,
@@ -750,6 +752,11 @@ const REFUSAL_WORDS = {
   // prepareRealmRecord)
   'trade-held': () => t('account.refusal.tradeHeld', 'This character\'s trading is frozen. The notice shown when it froze says why, and until when.'),   // AUDIT AUTO-HOLD: no review comes - a hold lifts on its own, or with the piece
   'record-unjudged': () => t('account.refusal.recordUnjudged', 'The realm has not read this character\'s latest save yet. Play a moment and try again.'),
+  // INT16-INT17 (bible/06-Systems/Integrity-Arc.md section 7): a progression claim's seat, and the play that pays for it
+  // (server-account/src/progress.js)
+  'progress-seat': () => t('account.refusal.progressSeat', 'Only the realm character you are playing earns that, and another device has it now. Take it up again here to go on earning.'),
+  'lineage-law': () => t('account.refusal.lineageLaw', 'The realm refused that copy of your family\'s record: it breaks the family\'s own law. The copy the realm keeps stands.'),   // INT18 (server-account/src/legacy.js putLineage)
+  'progress-play': () => t('account.refusal.progressPlay', 'You have earned all that your play so far allows. Keep playing and it comes back.'),
   'piece-dupe': () => t('account.refusal.pieceDupe', 'Copies of that piece were found in the realm. It cannot be traded, sold or stored for others.'),
   'piece-claimed': () => t('account.refusal.pieceClaimed', 'Another character in the realm shows that piece too. Wait a few minutes while the realm settles whose it is.'),
   'piece-legacy': () => t('account.refusal.pieceLegacy', 'That came into the realm from a classic save through customs. It stays yours, and the realm does not trade it.'),
@@ -768,7 +775,31 @@ const REFUSAL_WORDS = {
   'firm-respec-empty': () => t('account.refusal.firmRespecEmpty', 'Nothing is learned yet.'),
   'repair-no-faction': () => t('account.refusal.repairNoFaction', 'That character\'s record holds no such faction, so nothing was repaired.'),   // SUMMON-REPAIR: the review's repair (tools/realmReview.mjs)
   'repair-not-set': () => t('account.refusal.repairNotSet', 'That faction does not carry that flag on this character, so nothing was repaired - is it the right character?'),   // SUMMON-REPAIR: a repair aimed at the wrong character mends nothing
+  // SAFE1-SAFE7 (bible/11-Multiplayer/Chat-Safety-Arc.md): the chat's safety - a block, a report, the code of conduct, a ban
+  'block-self': () => t('account.refusal.blockSelf', 'You cannot block yourself.'),
+  'blocks-full': () => t('account.refusal.blocksFull', 'Your block list is full. Unblock someone first.'),
+  'conduct-stale': () => t('account.refusal.conductStale', 'The Code of Conduct has changed. Read it again.'),
+  'report-self': () => t('account.refusal.reportSelf', 'You cannot report yourself.'),
+  'report-closed': () => t('account.refusal.reportClosed', 'Reports are not open on this server yet.'),
+  'report-unwitnessed': () => t('account.refusal.reportUnwitnessed', 'Those lines could not be checked against what the server relayed, so nothing was sent.'),
+  'report-shape': () => t('account.refusal.reportShape', 'That report could not be read.'),
+  'report-reason': () => t('account.refusal.reportReason', 'Choose why you are reporting them.'),
+  'report-stale': () => t('account.refusal.reportStale', 'Those lines are too old to report.'),
+  'report-no-line': () => t('account.refusal.reportNoLine', 'Nothing they said here can be reported - only lines the server relayed while you were online.'),
+  'bad-days': banRangeText,
+  // AUDIT SAFE CLIENT-2: the ban as the service said it last - its end and the moderator's reason (`call` keeps them off
+  // the 403: the account card's sign-in and recovery say it whole, through this one word, as every other door does)
+  banned: () => (_banHeard ? bannedText(_banHeard.until, _banHeard.reason) : t('account.refusal.banned', 'This account is banned.')),
+  // AUDIT SAFE DOC-4: a moderator's look at a case, and an unban of an account no ban holds
+  'no-case': () => t('account.refusal.noCase', 'That player has no open case.'),
+  'not-banned': () => t('account.refusal.notBanned', 'That account is not banned.'),
 };
+/** AUDIT SAFE CLIENT-2 (2026-10-17): THE SERVICE'S LAST WORD ON A BAN - `{ until, reason }` off the newest `banned`
+ *  refusal any door answered (`call`), or null. The service refuses a banned account on every door but signing out
+ *  (login and recovery included, 403 `{ error: 'banned', until, reason }`), and the screens that show a refusal show its
+ *  word alone (`accountRefusalText(r.error)` - ui/accountFlow.js); kept here, the word 'banned' reads as the ban itself.
+ *  Each `banned` answer replaces it, so it is never another account's. */
+let _banHeard = /** @type {{ until: number, reason: string|null } | null} */ (null);
 export const REFUSALS = /** @type {Readonly<Record<string, string>>} */ (localizedTable(REFUSAL_WORDS));
 
 /** The sentence for a refusal, never `undefined` and never the raw
@@ -971,6 +1002,7 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', ...(typeof data?.why === 'string' ? { why: data.why } : {}), ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(Number.isSafeInteger(data?.at) ? { at: data.at } : {}), ...(typeof data?.card === 'string' ? { card: data.card } : {}),   // AUDIT WB A5: and the rung, where the service names one; REALM P2.2: and a realm record's sequence; AUDIT2 GUILD2 S7: and when a refused act may come again; AUDIT CARDS-6 D7: and the card a short deck lacks
       ...(Number.isSafeInteger(data?.position) ? { position: data.position } : {}), ...(Number.isSafeInteger(data?.wait) ? { wait: data.wait } : {}),   // AUDIT SCALE II L4a: the sign-in line's place and its wait (ADMIT-LINE's `queue`)
       ...(Array.isArray(data?.keeps) ? { keeps: data.keeps.filter((k) => typeof k === 'string').slice(0, 16) } : {}),   // GUILD3c: and everything that holds a guild that would go
+      ...(data?.error === 'banned' ? heardBan(data) : {}),   // AUDIT SAFE CLIENT-2: a ban's end and its reason
       status: res.status };
   }
   // MARKET-AUDIT (P1): every JSON route answers a body, so a 2xx whose body never came (the door's wait ended mid-body, a
@@ -981,6 +1013,15 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
   _busy = { n: 0, until: _busy.until };   // BUSY-GATE: an answer starts the count again; a hold already running runs out
   heardHomeOrders(data);   // QUEST-HOME: a home bought, held or given up, said to every page online
   return { ok: true, data, status: res.status };
+}
+
+/** AUDIT SAFE CLIENT-2: a `banned` refusal's end and reason, kept as the service's last word on a ban (`_banHeard`) and
+ *  answered for the caller's refusal - an end that is not a time is none, a reason past a line is cut. @param {any} data */
+function heardBan(data) {
+  const until = Number.isSafeInteger(data?.until) && data.until > 0 ? data.until : 0;
+  const reason = typeof data?.reason === 'string' && data.reason.trim() ? data.reason.trim().slice(0, 200) : null;
+  _banHeard = until ? { until, reason } : null;
+  return until ? { until, ...(reason ? { reason } : {}) } : {};
 }
 
 // ── THE LADDER, ROUTE BY ROUTE ──────────────────────────────────────
@@ -1078,6 +1119,31 @@ export const beatPlay = (io) => call(io, '/v1/account/played', {});
  *  the mute lands now rather than on the target's next reconnect.
  *  `{ ok, target, name, until, order }`. */
 export const muteAccount = (io, target, minutes) => call(io, '/v1/mod/mute', { target, minutes });
+
+/** SAFE1 (bible/11-Multiplayer/Chat-Safety-Arc.md): MY BLOCK LIST - `{ ok, blocks: [{ sub, name, at }] }`, and the same
+ *  answered by a block or an unblock. */
+export const safetyBlocks = (io) => call(io, '/v1/safety/blocks', {});
+export const safetyBlock = (io, target) => call(io, '/v1/safety/block', { target });
+export const safetyUnblock = (io, target) => call(io, '/v1/safety/unblock', { target });
+/** SAFE3: A REPORT - the account, a reason, a note and the stamped lines as heard (net/chat.js reportLines).
+ *  `{ ok, case, repeat?, muted?, order? }` - an `order` the caller carries to every room it holds (MOD1's carrier). */
+export const safetyReport = (io, { target, reason, note = '', lines }) => call(io, '/v1/safety/report', { target, reason, note, lines });
+/** SAFE7: THE CODE OF CONDUCT AGREED - the version the player read. `{ ok, conduct }`. */
+export const safetyConduct = (io, v) => call(io, '/v1/safety/conduct', { v });
+/** SAFE4: A MODERATOR'S BAN (`days` 0 for good), UNBAN AND LOOK - by `{ target }` (an account) or `{ name }`. A ban's and
+ *  an unban's answer carries an `order` to carry to every room, as a mute's does. AUDIT SAFE SERVICE-10: a ban's
+ *  `reason`, the moderator's words its player is shown - sent only when there are some. */
+export const modBan = (io, who, days, reason = '') => call(io, '/v1/mod/ban', { ...who, days, ...(reason ? { reason } : {}) });
+export const modUnban = (io, who) => call(io, '/v1/mod/unban', { ...who });
+export const modStrikes = (io, who) => call(io, '/v1/mod/strikes', { ...who });
+/** AUDIT SAFE DOC-4 (2026-10-17): THE REPORTS' QUEUE, READ IN THE GAME - a moderator's (`not-moderator` for anyone else).
+ *  `modCases` the open cases, the most reporters who count first (`{ ok, cases: [{ id, target, name, reports, credible,
+ *  reasons, ai, auto, openedAt, updatedAt }] }`); `modCase` one account's open case, its lines, reasons, notes and the
+ *  reviewer's verdict with the line it flagged (`no-case` when none is open); `modDismiss` closes it with no action -
+ *  its answer's `order`, an unmute when an automatic mute it caused was still running, carried as a mute's is. */
+export const modCases = (io) => call(io, '/v1/mod/cases', {});
+export const modCase = (io, who) => call(io, '/v1/mod/case', { ...who });
+export const modDismiss = (io, who) => call(io, '/v1/mod/dismiss', { ...who });
 
 /** ACC1d: A SIGNED WORD THE RELAY CAN CHECK, for one connection.
  *  `{ token, name, kind, expiresAt }`. The service signs the name it
@@ -1302,7 +1368,7 @@ export const lineHoldMs = (/** @type {unknown} */ wait, rand = Math.random) => {
  * @param {object} io
  * @param {(url: string, init: object) => Promise<any>} io.fetch
  * @param {any} io.storage  appStorage() in the app, a Map in a test
- * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null, xp: number|null, guild?: string|null, accountName?: string, nameAs?: string, nameWhy?: string, nameWord?: string}) => void)|null} [io.onIssued]
+ * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null, xp: number|null, guild?: string|null, accountName?: string, nameAs?: string, nameWhy?: string, nameWord?: string, conduct?: boolean}) => void)|null} [io.onIssued]
  * @param {(() => string|null)|null} [io.character]
  * @param {(() => number)} [io.now]
  * @param {(() => number)} [io.rand]  Math.random's shape - the cooldown's jitter
@@ -1322,7 +1388,7 @@ export const lineHoldMs = (/** @type {unknown} */ wait, rand = Math.random) => {
  * token 40-60 s old minted though that token would still have opened the room - twice the mints at a 40-55 s door gap.
  * `minter.holds(room)` says whether a room would be handed one now, nothing on the wire.
  *
- * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void, ahead: (room?: string|null, withinMs?: number) => boolean, holds: (room: string|null) => boolean }}
+ * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void, ahead: (room?: string|null, withinMs?: number) => boolean, holds: (room: string|null) => boolean, forget: () => void }}
  */
 export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
   /** @type {{ token: string, secret: string, character: string|null, at: number, rooms: Set<string> } | null} */
@@ -1354,6 +1420,9 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
         // AUDIT SCALE II L4a: the line's own wait, its failures in a row left where they stood
         cool = { secret: session.secret, fails: cool.secret === session.secret ? cool.fails : 0, until: now() + lineHoldMs(lineWait, rand), why: 'queue' };
       } else {
+        // AUDIT SAFE CLIENT-2: a ban - the service will mint this account nothing, and the token it minted a moment before
+        // is handed to no other room either (TOKEN_REUSE_MS opened every channel a rejoin asked for on it)
+        if (minter.lastWhy === 'banned') held = null;
         const fails = cool.secret === session.secret ? cool.fails + 1 : 1;
         cool = { secret: session.secret, fails, until: now() + jittered(Math.min(MINT_COOL_MAX_MS, MINT_COOL_MS * 2 ** (fails - 1)), rand), why: minter.lastWhy };
       }
@@ -1413,6 +1482,10 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
       start(session, named);
       return true;
     },
+    /** AUDIT SAFE CLIENT-2 (2026-10-17): THE HELD TOKEN LET GO - the relay said this account is banned
+     *  (scenes/chatSafetyHost.js), and a token minted a moment before the ban opened every room a rejoin asked within
+     *  TOKEN_REUSE_MS. The next room mints, and the service refuses it. */
+    forget: () => { held = null; },
     /** DOOR-TOKEN: does this minter hold a token `room` would be handed now, nothing on the wire (the reuse law) - a
      *  session whose hello went without one asks again the moment it does (net/online.js). */
     holds: (/** @type {string|null} */ room) => {
@@ -1447,7 +1520,11 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           // before acct122, whose `name` was the account's
           ...(typeof answer.data.accountName === 'string' && answer.data.accountName ? { accountName: answer.data.accountName } : {}),
           ...(answer.data.nameAs === 'account' || answer.data.nameAs === 'character' ? { nameAs: answer.data.nameAs } : {}),
-          ...(typeof answer.data.nameWhy === 'string' && answer.data.nameWhy ? { nameWhy: answer.data.nameWhy, ...(typeof answer.data.nameWord === 'string' ? { nameWord: answer.data.nameWord } : {}) } : {}) };
+          ...(typeof answer.data.nameWhy === 'string' && answer.data.nameWhy ? { nameWhy: answer.data.nameWhy, ...(typeof answer.data.nameWord === 'string' ? { nameWord: answer.data.nameWord } : {}) } : {}),
+          // AUDIT SAFE CLIENT-1 (2026-10-17): SAFE7's word - whether this account has agreed to the code of conduct as it
+          // stands. Built field by field, `who` dropped it, so the code's card never stood for anyone: every first line
+          // went unread-code. Absent from a service before acct150, which says nothing (heard as yes - chatSafetyHost adopt)
+          ...('conduct' in answer.data ? { conduct: answer.data.conduct === true } : {}) };
         // AUDIT B4: into the session that asked. NAME-AS: the stored session is the ACCOUNT's picture (the profile mark's
         // name), so it keeps the account's name - the room's, which may be my character's, goes to the live sessions
         adoptIdentity(storage, { ...who, name: who.accountName ?? who.name, secret: session.secret });

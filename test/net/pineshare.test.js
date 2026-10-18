@@ -125,7 +125,7 @@ const chop = (who, n, act = { cuts: 0, clean: false }) => ({
 
 test('PINE-SHARE service: a Novice logger in the Woodlands fells a Pine (Logging XP 15, 22 clean) and is refused an Oak - the service\'s tree is the law\'s', async () => {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'Mac' });
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const pine = treeAt(WOODS, (t) => t.material === PINE_WOOD);
   const r = await s.call('/v1/prof/harvest', chop(mac, pine), mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));

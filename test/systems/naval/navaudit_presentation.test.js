@@ -1129,8 +1129,8 @@ test('AUDIT NAV1 (the presentation) HER HURTS SEEN, her smoke and her planks (#1
     const g = await sea({ hull: 2, wind: [0, 0, 0] });
     const e = place(g, 'merchantGalleon', [150, 0, 0], { yaw: 0 });
     const hits = [];
-    const hit = g.host._effects.hit;
-    g.host._effects.hit = (p, ...rest) => { hits.push([...p]); hit(p, ...rest); };
+    const hit = g.host._effects.shotHit;   // PIN MOVED (SHOT-KINDS): the host's door for a hull hit says its load
+    g.host._effects.shotHit = (p, ...rest) => { hits.push([...p]); hit(p, ...rest); };
     g.host._shots.fireVolley({ id: 'v1', shooter: 'me:42', launches: [{ delay: 0, p0: [150 - hullBuild(e.ship.hull).halfWidth - 3, y, z], v0: [60, 0.5, 0], gun, index: 0 }], resolve: true });
     g.run(0.3);
     return { g, hits, planks: g.host._effects.drawList().filter((p) => p.kind === 'timber'), shreds: g.host._effects.drawList().filter((p) => p.kind === 'shred') };

@@ -15,6 +15,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
+import { recordOf, layRecord } from '../realmSeat.mjs';   // INT19: a crafted piece in its seller's realm record
 import { xpForRank } from '../../src/net/professionLaw.js';
 import { courierFee, courierSeconds, roadPixels } from '../../src/net/marketLaw.js';
 import { RECIPES, recipeById, QUALITY_EFFECTS } from '../../src/net/recipeLaw.js';
@@ -135,7 +136,7 @@ test('CRAFT-PROCS: the record says the law - the service stamps the mint version
   assert.deepEqual([MINT_VERSION, MINT_V_LAST_PASS], [1, 1]);
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const r = recipeById('ring:silver:ruby');
   raw.prepare('INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, \'smithing\', ?, 1)').run(mac.id, mac.character, xpForRank(100));
   for (const { key, n } of r.inputs) raw.prepare('INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, \'own\', ?)').run(mac.id, mac.character, key, n * 100);
@@ -181,8 +182,8 @@ test('CRAFT-PROCS: a piece made before is minted again as it was, and a new one 
   try {
     const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
     const raw = s.env.DB._raw;
-    const mac = await s.registered('Mac');
-    const ann = await s.registered('Ann');
+    const mac = await s.seated('Mac');
+    const ann = await s.seated('Ann');
     const sword = recipeById('longsword:steel');
     // a seed whose Superior takes a line under the pass - the one a record made before must never grow
     let seed = 0;
@@ -193,7 +194,11 @@ test('CRAFT-PROCS: a piece made before is minted again as it was, and a new one 
       const record = await mintProductRecord({ p: provenance, s: who.id, h: who.character, r: sword.id, q: quality, m: 'Silverthorn', c: seed, v }, null, { subtle, nowS: 1 });
       raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at)
         VALUES (?, ?, ?, 'Silverthorn', ?, ?, ?, ?, ?, ?, 1)`).run(provenance, who.id, who.character, sword.id, sword.templateIndex, sword.material, quality, seed, record);
-      return mintPiece({ recipe: sword.id, quality, seed, maker: 'Silverthorn', version: mintVersionOf(record) }, provenance);
+      const minted = mintPiece({ recipe: sword.id, quality, seed, maker: 'Silverthorn', version: mintVersionOf(record) }, provenance);
+      // PIN MOVED (INT19, Integrity-Arc section 7): the pack's piece is its record's too - a listing takes it out of there
+      const save = recordOf(s.env, who.character);
+      layRecord(s.env, who.character, { ...save, items: [...(save.items ?? []), JSON.parse(JSON.stringify(minted))] });
+      return minted;
     };
     const OLD = 'a0a0a0a0a0a0a0a0', NEW = 'b1b1b1b1b1b1b1b1';
     const before = await madeAt(mac, OLD, 3, null);
@@ -216,11 +221,14 @@ test('CRAFT-PROCS: a piece made before is minted again as it was, and a new one 
     const bought = await s.call('/v1/market/buy', { character: ann.character, region: DF, listing: ln.body.listing.id, max: 500, hubs: HUBS, rid: rid() }, ann.secret);
     assert.equal(bought.status, 200, JSON.stringify(bought.body));
     assert.deepEqual(mintPiece(bought.body.piece, bought.body.piece.provenance), after, 'the new piece arrives with its line');
-    // cancelled: the seller's piece comes back as it was
+    // cancelled: the seller's piece comes back as it was - PIN MOVED (INT19): as the very record that left, collected into
+    // the seller's record, never minted again at the pack
     const back = await s.call('/v1/market/cancel', { character: mac.character, listing: lo.body.listing.id, rid: rid() }, mac.secret);
     assert.equal(back.status, 200, JSON.stringify(back.body));
-    assert.equal('version' in back.body.piece, false);
-    assert.deepEqual(mintPiece(back.body.piece, back.body.piece.provenance), before, 'the piece made before comes back byte for byte');
+    assert.equal(back.body.piece, undefined);
+    const home = await s.call('/v1/market/collect', { character: mac.character, delivery: back.body.delivery.id, rid: rid(), realm: mac.at() }, mac.secret);
+    assert.equal(home.status, 200, JSON.stringify(home.body));
+    assert.deepEqual(home.body.item, JSON.parse(JSON.stringify(before)), 'the piece made before comes back byte for byte');
     // every other read a piece is shown in: an auction (the boards', the seller's, the bidder's) and a courier's load on
     // the road, collected
     const AUC = 'e4e4e4e4e4e4e4e4', ROADED = 'f5f5f5f5f5f5f5f5';

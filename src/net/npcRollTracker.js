@@ -71,6 +71,7 @@ import {
 } from './npcChapterLaw.js';
 import { setReputation } from '../systems/faction/factionRep.js';
 import { setStandingOwed } from '../systems/standingOwed.js';   // STANDING-WORDS: the owed, kept for the windows
+import { carryInvitationOnly } from '../systems/guild/guilds.js';   // CURSE-CARRY: the underworld guilds read where the curse reads
 
 /** The refusals that end the tracker for this page - the Roll shut, the character no longer this tab's, the account
  *  gone, or a shape the service will not take (a build to update). Every other is asked again. */
@@ -107,7 +108,11 @@ export function rollEntityDoors(/** @type {() => any} */ entityOf) {
       if (store) for (const [f, rep] of Object.entries(values)) setReputation(store, Number(f), rep);
     },
     // AUDIT CHAP4 D1: the active book the curse reads (guilds.js activeMemberships' own test) - its lines awake, the other's dormant
-    members: () => rollMembersOf(entityOf()?.guildMemberships, rollVampireOf(entityOf())),
+    members: () => {
+      const entity = entityOf();
+      carryInvitationOnly(entity?.guildMemberships, rollVampireOf(entity));   // CURSE-CARRY: before the read, not at the next activeMemberships
+      return rollMembersOf(entity?.guildMemberships, rollVampireOf(entity));
+    },
     cap: () => rollBookCap(entityOf()?.guildMemberships),   // CHAP4b: the book held at 7
   };
 }

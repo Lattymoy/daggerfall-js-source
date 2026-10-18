@@ -1019,10 +1019,12 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
         for (let k = 0; k < indices.length; k++) indices[k] = k;
         try { collider?.addMesh?.(g.key, tris, indices, identity(), () => g.T); } catch (e) { console.warn('[eg] a false wall\'s collider', e?.message ?? e); }
       }
-      // the hands this circle offers the activation ray: each Athenaeum's Orrery stones (a handle each way), each engine
+      // the hands this circle offers the activation ray: each Athenaeum's Orrery stones (a handle each way), each engine.
+      // FIELD BUGS 2026-10-17c (ORRERY-HEIGHT): a stone's handles a metre over its own floor - a spot's `y` the law's
+      // centimetres (net/eliteGates/egLaw.js; THE ASCENT's, the laws before lay none and stand the court at 0), never the 0 floor
       const list = [];
       for (const spec of specs) {
-        for (const [j, q] of (spec.spots.stone ?? []).entries()) for (const a of [1, -1]) { const c = realmToDungeon(spec.x0 + q.x + a * 0.9, 1.0, q.z); list.push({ key: `egstone:${spec.h}:${j}:${a > 0 ? 'f' : 'b'}`, aabb: { min: [c[0] - 0.35, c[1] - 0.35, c[2] - 0.35], max: [c[0] + 0.35, c[1] + 0.35, c[2] + 0.35] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE }); }
+        for (const [j, q] of (spec.spots.stone ?? []).entries()) for (const a of [1, -1]) { const c = realmToDungeon(spec.x0 + q.x + a * 0.9, (Number.isFinite(q.y) ? q.y / 100 : 0) + 1.0, q.z); list.push({ key: `egstone:${spec.h}:${j}:${a > 0 ? 'f' : 'b'}`, aabb: { min: [c[0] - 0.35, c[1] - 0.35, c[2] - 0.35], max: [c[0] + 0.35, c[1] + 0.35, c[2] + 0.35] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE }); }
         for (const e of spec.engines ?? []) { const c = realmToDungeon(spec.x0 + e.x, e.y + 1.0, e.z); list.push({ key: `egengine:${spec.h}:${e.i}`, aabb: { min: [c[0] - 0.6, c[1] - 1.0, c[2] - 0.6], max: [c[0] + 0.6, c[1] + 1.0, c[2] + 0.6] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE }); }
       }
       targetList = list;

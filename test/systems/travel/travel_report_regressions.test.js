@@ -18,7 +18,7 @@ test('a first-person boat journey hides manual helm controls until the journey e
     csaCall: f => f(), csaAboard: { aboard: null }, drawEnhancedHelm: state => drawn.push(state), peerName: x => x,
     townTalk: { hudCovered: false }, modes: { hudCovered: false }, gamePaused: () => false, hudRenderEnabled: () => true, touch: null,
     cursorActive: () => true, pointerSurfaces: new Set(), csaKeyLabel: () => '', csaHelmHooks: {}, travelView: { active: false },
-    navalOn: () => true, _travelUIHolder: holder };
+    navalOn: () => true, _travelUIHolder: holder, holdsCargo: () => true, naval: null };   // PIN MOVED (CARGO-ANYWHERE: her Hold; SHOT-KINDS: her guns' load)
   const draw = lifted('csaDrawHelmPanel', '\n  /** AUDIT HCC', scope);
   draw(); assert.equal(drawn.at(-1).covered, true);
   holder.ui.isShowing = false;

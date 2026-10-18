@@ -74,8 +74,8 @@
   {
     "name": "NAV-H-my-blow-landed-twice",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      return;\n    }\n    strike(target, hurt, byMe ? myId() : e.shooter, undefined, stray);",
-    "new": "    }\n    strike(target, hurt, byMe ? myId() : e.shooter, undefined, stray);",
+    "old": "      return;\n    }\n    const men = target.ship.damage.crew;\n    strike(target, hurt, byMe ? myId() : e.shooter, undefined, stray);",
+    "new": "    }\n    const men = target.ship.damage.crew;\n    strike(target, hurt, byMe ? myId() : e.shooter, undefined, stray);",
     "tests": [
       "test/systems/naval/nav_h_host.test.js"
     ]

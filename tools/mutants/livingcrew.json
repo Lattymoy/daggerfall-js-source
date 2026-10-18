@@ -479,8 +479,8 @@
   {
     "name": "PEERS-key-unstamped",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "        if (boat) { boat.peerKey = `${owner}:${i}`; boat.uid = w.uid ?? 0; }   // LIVING CREW: whose, and which - her crew's seed (scenes/naval/navalCrew.js)",
-    "new": "        if (boat) { boat.uid = w.uid ?? 0; }   // LIVING CREW: whose, and which - her crew's seed (scenes/naval/navalCrew.js)",
+    "old": "if (boat) { boat.peerKey = `${owner}:${i}`; boat.uid = w.uid ?? 0;",
+    "new": "if (boat) { boat.uid = w.uid ?? 0;",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]

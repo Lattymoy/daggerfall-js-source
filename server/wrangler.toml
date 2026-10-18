@@ -106,6 +106,18 @@ SERPENT_DISCORD_ROLE = ""
 # role (GATE_DISCORD_ROLE); name one here to give the Abyss Dungeon
 # its own.
 SD_DISCORD_ROLE = ""
+# ═══ SAFE5: THE REVIEWER'S FEED ═════════════════════════════════════
+#
+# Where the public channels' lines are posted for the account service's
+# reviewer to read (src/net/safety/chatFeed.js; bible/11-Multiplayer/
+# Chat-Safety-Arc.md section 6) - World, Region, a language, Trade and
+# LFG, never a party's, a guild's or a place's talk. Each batch is
+# signed with GATE_SIGNING_KEY, the key the receipts are signed with, so
+# nobody but the relay can feed it. Never awaited by a line, never
+# retried: a batch the service does not take is dropped. EMPTY IS A
+# LEGAL STATE: nothing is kept and nothing is posted. The service drops
+# what it is fed while its reviewer is off (MOD_AI, or no key).
+MOD_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/feed"
 # ═══ INT11-INT14: THE LINE THE BOSS FIGHTS' COUNT RUNS BY ════════════
 #
 # The relay counts each fighter's body in a gate, an Abyss Dungeon and
@@ -153,6 +165,24 @@ enabled = true
 [[analytics_engine_datasets]]
 binding = "METRICS"
 dataset = "daggerfall_relay"
+
+# ═══ AUDIT SAFE RELAY S1: THE ACCOUNT SERVICE, BOUND ═══════════════
+#
+# The reviewer's feed (MOD_FEED_URL, above) is this Worker posting to
+# the account service's - and one Worker fetching another's
+# workers.dev address on the same account may be refused outright
+# (Cloudflare's error 1042), which a post that is never retried and
+# never awaited would never say. A SERVICE BINDING is the door between
+# two Workers of one account: the feed posts through it
+# (server/src/index.js `_feedFlush`), MOD_FEED_URL naming the path
+# alone, and fetches the address only where it is not bound (a test, a
+# local run). It names the account Worker by its own `name`
+# (server-account/wrangler.toml), which binds this one back as RELAY
+# for the law door (SAFE_LAW_PATH). Nothing is read through it but the
+# feed's answer.
+[[services]]
+binding = "ACCOUNTS"
+service = "daggerfall-accounts"
 
 [[durable_objects.bindings]]
 name = "ROOMS"

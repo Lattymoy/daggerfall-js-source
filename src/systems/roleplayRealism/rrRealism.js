@@ -107,16 +107,17 @@ export function rrClimbingChance(base, { climbing = 0, luck = 0, khajiit = false
  *  Strength). The blend has no weight in it, and "their weight law replaces the port's heft" was true of Items'
  *  weaponBalance alone: with this module answering, a 2 kg shortsword, a 4.5 kg longsword and a 5 kg broadsword all
  *  swung at 0.995 s - heavy blades QUICKER than with no mod at all. `weight` is the template's base weight (the
- *  swing law's reader, combat/swingLaw.js readSwing; 0 bare-handed). */
-export function rrMeleeWeaponAnimTime({ liveSpeed, liveStrength, weaponType = -1, hands = 'One', weight = 0 }) {
+ *  swing law's reader, combat/swingLaw.js readSwing; 0 bare-handed).
+ *  BAL10: `shortBlade` - the weapon swings with Short Blade (the reader's word): the dagger's handling, whatever draws it. */
+export function rrMeleeWeaponAnimTime({ liveSpeed, liveStrength, weaponType = -1, hands = 'One', weight = 0, shortBlade = false }) {
   let spdRatio = 0.8, strRatio = 0.2, capRatio = 0.08;
   if (hands === 'Both') { spdRatio = 0.5; strRatio = 0.5; capRatio = 0.15; }
-  else if (weaponType === 4 || weaponType === 5) { spdRatio = 0.9; strRatio = 0.1; capRatio = 0.03; }
+  else if (shortBlade || weaponType === 4 || weaponType === 5) { spdRatio = 0.9; strRatio = 0.1; capRatio = 0.03; }   // AUDIT MARTIAL L2 F11: the dagger's blend too, whatever draws it (BAL10's departure - the mod keys on the sprite)
   else if (weaponType === 15) { spdRatio = 1; strRatio = 0; capRatio = 0; }
   if (liveSpeed > 70) spdRatio -= capRatio;
   if (liveStrength > 70) strRatio -= capRatio;
   const blend = (liveSpeed * spdRatio) + (liveStrength * strRatio);
-  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both') });
+  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both', shortBlade) });
 }
 
 // ---- weaponMaterials (:389-392) -------------------------------------------

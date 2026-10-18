@@ -37,9 +37,9 @@ export const BOAT_MENU_TEXT = Object.freeze({
 });
 /** Why a row is refused - short, for the plaque's "(why)". */
 export const BOAT_MENU_WHY = Object.freeze({
-  driving: 'at her helm', passengers: 'passengers aboard', moored: 'a deed ship stays afloat', sailing: 'not at the helm',
-  noDeed: 'her deed is not in your pack',   // SHIP-PACK: a ship is picked up with her deed (comeSailAway.js PackBoat)
-  tooHeavy: 'her hold is too heavy',   // HOLD-WEIGHT: parts no take could lift again (comeSailAway.js partsTooHeavy)
+  driving: 'driving', passengers: 'passengers aboard', moored: 'a deed ship stays afloat', sailing: 'not at the helm',
+  noDeed: 'the deed is not in your pack',   // SHIP-PACK: a ship is picked up with her deed (comeSailAway.js PackBoat)
+  tooHeavy: 'the hold is too heavy',   // HOLD-WEIGHT: parts no take could lift again (comeSailAway.js partsTooHeavy)
 });
 
 /**
@@ -127,10 +127,10 @@ export function boatMenuStart(box, rows, mode) {
 /** A refused row's press, in the mod's own words where it has them. */
 export const boatMenuRefusal = (why) => (why === BOAT_MENU_WHY.driving ? 'You cannot pack a boat you are driving!'
   : why === BOAT_MENU_WHY.passengers ? 'You cannot pack a boat with passengers aboard!'
-    : why === BOAT_MENU_WHY.moored ? 'A ship from a deed cannot be packed - she stays where she floats.'
+    : why === BOAT_MENU_WHY.moored ? 'A ship from a deed can\'t be packed. It stays afloat.'
       : why === BOAT_MENU_WHY.sailing ? 'Not while at the helm.'
-        : why === BOAT_MENU_WHY.noDeed ? 'Her deed must be in your pack to pick her up.'   // SHIP-PACK: comeSailAway.js DEED_NOT_HELD_TEXT (pinned equal)
-          : why === BOAT_MENU_WHY.tooHeavy ? 'Her hold is too heavy to carry her packed. Lighten it first.' : null);   // HOLD-WEIGHT: HOLD_TOO_HEAVY_TEXT (pinned equal)
+        : why === BOAT_MENU_WHY.noDeed ? 'You need the ship\'s deed in your pack to pick it up.'   // SHIP-PACK: comeSailAway.js DEED_NOT_HELD_TEXT (pinned equal)
+          : why === BOAT_MENU_WHY.tooHeavy ? 'The hold is too heavy to pack the ship. Unload some cargo first.' : null);   // HOLD-WEIGHT: HOLD_TOO_HEAVY_TEXT (pinned equal)
 
 /**
  * The box a verb is pressed on: the one aimed at when it is that verb's (AUDIT BOAT-MENU C6: the far ladder aimed at

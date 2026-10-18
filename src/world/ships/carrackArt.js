@@ -286,3 +286,6 @@ export function registerCarrackArt(addVendorTextures) {
 }
 /** Test seam: unregistered, her glow uncut. */
 export function _resetCarrackArt() { _registered = false; _glow = null; }
+
+/** SHIP-LIVERY: her palette, for the painter that repaints her by its families (world/ships/shipLiveryArt.js). */
+export const CARRACK_PALETTE = K;

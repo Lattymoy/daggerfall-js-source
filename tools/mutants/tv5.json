@@ -743,12 +743,12 @@
   {
     "name": "AUDIT-NAMES-N1-3-no-eye",
     "file": "src/ui/travel/travelViewHud.js",
-    "old": "      if (g.detail?.path) { x.fillStyle",
-    "new": "      if (false) { x.fillStyle",
+    "old": "      for (const d of glyphDetails(g.detail)) { x.fillStyle",
+    "new": "      for (const d of []) { x.fillStyle",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
     ],
-    "note": "The wolf glyph has no red eye in the Overworld."
+    "note": "The wolf glyph has no red eye in the Overworld. WIKIMAID (re-aimed by content): the detail is a list walked now - none walked, no eye drawn."
   },
   {
     "name": "AUDIT-NAMES-N1-3-stroke-width",

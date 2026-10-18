@@ -28,7 +28,8 @@ import { materialCountLabel } from '../../src/systems/professions/profItems.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { standService, T0 } from '../accountDb.mjs';
-import { seatRealm } from '../realmSeat.mjs';
+import { seatRealm, realmJoinAt } from '../realmSeat.mjs';
+import { deliverWrit } from '../../server-account/src/professions.js';   // INT16: the route's own owner law, asked past the seat
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const DAY = 86_400, WOODS = 231, ANTICLERE = 21;
@@ -112,7 +113,7 @@ async function stand({ open = 'on', factions = [41, 108, 368], members = [41], r
     clock(_now + 1);
     assert.equal((await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions } }, w.secret)).status, 200);
   }
-  const g = await s.registered('Ground');
+  const g = await s.seated('Ground');
   age(g, 8);
   const p = herbPatches({ x: 300, y: 200, day: utcDay(_now), climate: WOODS, confirmed: false })[0];
   const h = await s.call('/v1/prof/harvest', {
@@ -164,6 +165,8 @@ test('CHAP3a a member\'s own writ on the board: one for each of its guilds keepi
   assert.deepEqual((await s.list(R2.id)).writs.filter((w) => w.kind === 'member').map((w) => w.id), [memberWritId(day, ANTICLERE, 41, R2.id)]);
   s.give(s.who, R2.id, own[0].material, own[0].qty);
   assert.deepEqual((await s.deliver(own[0].id, { character: R2.id })).body, { error: 'no-writ' }, 'the first\'s writ, by the second');
+  // INT16 (Integrity-Arc section 7): a delivery is asked of the account's seat, which the second took - the first is taken up again
+  await realmJoinAt(s.env, s.who.secret, s.R.id);
   // the Chapters shut after it was posted: its owner is refused it
   s.env.CHAPTERS_OPEN = 'off';
   s.give(s.who, s.R.id, own[0].material, own[0].qty);
@@ -221,11 +224,18 @@ test('CHAP3a bought units earn no Merit: the bought spent first, the writ\'s Mer
 test('CHAP3a only its owner delivers it, and Merit waits on the week in the guild: another account naming the character, the account\'s other character - no-writ; a new member\'s writ pays and earns none, the board says when (mutants: the owner, the player, the tenure)', async () => {
   const s = await stand({ tenure: false });
   const w = (await s.list()).writs.find((x) => x.kind === 'member');
-  const mallory = await s.registered('Mallory');
+  const mallory = await s.seated('Mallory');
   s.give(mallory, s.R.id, w.material, w.qty);
-  assert.deepEqual((await s.deliver(w.id, { by: mallory })).body, { error: 'no-writ' }, 'another account, naming the character');
+  // PIN MOVED (INT16, Integrity-Arc section 7): a character that is not the caller's seat is refused at the seat, before the route's own no-writ
+  assert.deepEqual((await s.deliver(w.id, { by: mallory })).body, { error: 'progress-seat' }, 'another account, naming the character');
   s.give(s.who, s.who.character, w.material, w.qty);
-  assert.deepEqual((await s.deliver(w.id, { character: s.who.character })).body, { error: 'no-writ' }, 'its account\'s other character');
+  // PIN MOVED (INT16, Integrity-Arc section 7): the account's other character (not its seat) is refused at the seat, before the route's own no-writ
+  assert.deepEqual((await s.deliver(w.id, { character: s.who.character })).body, { error: 'progress-seat' }, 'its account\'s other character');
+  // the route's own law past the door (the owner, the player): asked of the route itself, each is still no writ
+  const direct = async (by, character) => deliverWrit({ db: s.env.DB, nowS: _now, rand: (u) => u.fill(7) }, { ...s.raw.prepare('SELECT * FROM players WHERE id = ?').get(by.id) },
+    { PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', CHAPTERS_OPEN: 'on' }, { character, id: w.id, rid: rid() });
+  assert.deepEqual(await direct(mallory, s.R.id), { error: 'no-writ' }, 'another account, naming the character - at the route');
+  assert.deepEqual(await direct(s.who, s.who.character), { error: 'no-writ' }, 'its account\'s other character - at the route');
   const joined = s.raw.prepare('SELECT joined_at FROM npc_roll WHERE char_id = ? AND faction_id = 41').get(s.R.id).joined_at;
   assert.deepEqual((await s.list()).merit, [{ faction: 41, merit: 0, max: 600, elsewhere: false, from: joined + MERIT_TENURE_S }]);
   s.give(s.who, s.R.id, w.material, w.qty);

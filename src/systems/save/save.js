@@ -33,6 +33,7 @@ import { snapshotAutomap, restoreAutomap } from '../automap/automap.js';   // A1
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from '../sceneCache.js';   // P1
 import { seedCustomSpellIndex } from '../spell/spellMaker.js';   // S1: made spells carry their own record
 import { isPathId, pathWitnessed } from '../arcanePaths.js';   // SCHOOLS1: the specialisation's id, read through its own table
+import { isMartialPathId } from '../martialPaths.js';   // MARTIAL1: the martial specialisation's id, read through its own table
 import { seedBundleSeq, effectKindLoaded } from '../effects.js';   // X10: the live-bundle counter's restore half; AUDIT PRE-MERGE 0928 S3: a mod's effect restores only while its mod is loaded
 import { repairLostCurses } from '../curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
 import { repairUnmintedConditions, repoolWeaponConditions } from '../conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted; WEAPON-POOL: a weapon on its row's pool, moved to the one pool
@@ -356,7 +357,17 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.masteryPrompted = Array.isArray(entity.masteryPrompted) ? [...entity.masteryPrompted] : [];   // SOFTCAP4: the skills already asked about
   snap.arcanePath = isPathId(entity.arcanePath) ? entity.arcanePath : null;   // SCHOOLS1: the permanent specialisation (systems/arcanePaths.js)
   snap.pathPrompted = entity.pathPrompted === true;   // SCHOOLS1: the one ask, made
+  snap.martialPath = isMartialPathId(entity.martialPath) ? entity.martialPath : null;   // MARTIAL1: the permanent martial specialisation (systems/martialPaths.js)
+  snap.martialPrompted = entity.martialPrompted === true;   // MARTIAL1: its one ask, made
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
+  // AUDIT MARTIAL L3 F1: the permanent martial path's MIRROR, in the one record every older build carries whole - an older
+  // build drops `martialPath` (a key it never knew), and the new build, finding none, asked again: a second choice of a
+  // permanent one, among every pair the masteries open. The character's id beside it (an heir inherits a custom career
+  // whole - systems/legacy/family.js), read back only from a save with no `martialPath` key at all
+  if (snap.career) {
+    delete snap.career.martialMirror;
+    if (snap.martialPath) snap.career.martialMirror = { path: snap.martialPath, of: snap.characterId };
+  }
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
   // E4: `data.playerEntity.goldPieces = entity.GoldPieces`
   // (SerializablePlayer.cs:133). Gold left the item list when it
@@ -813,8 +824,15 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.masteryPrompted = Array.isArray(snap.masteryPrompted) ? snap.masteryPrompted.filter(Number.isInteger) : [];   // SOFTCAP4
   entity.arcanePath = isPathId(snap.arcanePath) ? snap.arcanePath : null;   // SCHOOLS1: an id no table holds reads as none
   entity.pathPrompted = snap.pathPrompted === true;   // SCHOOLS1
+  entity.martialPath = isMartialPathId(snap.martialPath) ? snap.martialPath : null;   // MARTIAL1: an id no table holds reads as none
+  entity.martialPrompted = snap.martialPrompted === true;   // MARTIAL1
+  // AUDIT MARTIAL L3 F1: an OLDER BUILD's save (no `martialPath` key at all - a newer one writes null for none) - the
+  // career's mirror bears witness to the choice that build dropped, already asked
+  const mirror = snap.career?.martialMirror;
+  if (snap.martialPath === undefined && isMartialPathId(mirror?.path) && mirror.of === snap.characterId) { entity.martialPath = mirror.path; entity.martialPrompted = true; }
   entity._mentor = null;   // SOFTCAP1: recomputed by the party frame, never restored
   entity.career = snap.career ? { ...snap.career } : entity.career;
+  if (snap.career) delete entity.career.martialMirror;   // AUDIT MARTIAL L3 F1: the mirror is the save's, never the live career's
   entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));   // W-slice (pre-W saves restore empty); JAN1: set on the way in
   entity.bagItems = (snap.bagItems ?? []).map((it) => setItemFields(it));   // BAG1: a save written before holds none

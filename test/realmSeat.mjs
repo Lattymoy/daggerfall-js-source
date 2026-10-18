@@ -76,3 +76,59 @@ export async function seatRealm(env, secret, name, save = null) {
   if (save) layRecord(env, id, save);
   return { id, lease, at: () => realmAt(env, id) };
 }
+
+/** The record a realm character's row names now, parsed (a pin's saves are written plain). */
+export function recordOf(env, id) {
+  const row = env.DB._raw.prepare('SELECT obj FROM realm_characters WHERE id = ?').get(id);
+  const bytes = row?.obj ? env.SAVES._map.get(row.obj) : null;
+  return bytes ? JSON.parse(new TextDecoder().decode(bytes)) : null;
+}
+
+/** A crafted piece as a record holds it - `provenance` the craft's, its condition `wear`'s share of its most (net/
+ *  marketLaw.js wearOf reads it back), the template and material its `products` row names. */
+export const craftedRecord = ({ provenance, wear = 1000, templateIndex = 120, material = 5, quality = 2, name = 'Longsword' }) => ({
+  name, group: 'Weapons', templateIndex, material, quality, provenance, maxCondition: 1000, currentCondition: wear, value: 100, weightInKg: 2,
+});
+
+/**
+ * INT19 (bible/06-Systems/Integrity-Arc.md section 7): A CRAFTED PIECE IN A REALM CHARACTER'S RECORD - a listing, an
+ * auction and a commission's fill take the piece out of the record (server-account/src/craftedPiece.js), so a pin's piece
+ * stands there first: `pieces` (each craftedRecord's fields, `where: 'home'` among the furnishings) laid into the record
+ * at its sequence (layRecord's way). Answers the records laid.
+ * @param {any} env @param {string} id @param {any[]} pieces
+ */
+export function holdPieces(env, id, pieces) {
+  const save = recordOf(env, id) ?? freshSave();
+  const laid = pieces.map((p) => craftedRecord(p));
+  pieces.forEach((p, i) => (p.where === 'home' ? (save.furnishings ??= []) : (save.items ??= [])).push(laid[i]));
+  layRecord(env, id, save);
+  return laid;
+}
+
+/**
+ * INT19: A REALM ACT FOR A PIN'S BOOK (net/marketBook.js `realm`, net/writBook.js `realm`) - systems/realmSaves.js
+ * realmGoldAct's contract over no session: `reserve()` taken as the act begins and undone on the service's own refusal,
+ * `call(at)` asked where the record stands now (realmAt, off its row), `apply()` given an answer; silence (no answer, the
+ * service's fault, the gate's minute) is `unknown`, nothing undone - a lost answer ends the session, and a join reads it.
+ * @param {any} env @param {string} id
+ */
+export const pinRealmAct = (env, id) => realmActOver(() => realmAt(env, id));
+
+/** The same act over `where()` - where a book's record stands, for a pin with no service behind its door. `acts` counts
+ *  the acts asked. */
+export function realmActOver(where) {
+  const out = {
+    acts: 0,
+    async act({ reserve = null, apply = null, call }) {
+      out.acts++;
+      const undo = reserve ? reserve() : null;
+      let r;
+      try { r = await call(where()); } catch { r = { ok: false, error: 'offline' }; }
+      if (r?.ok) { apply?.(r); return r; }
+      if (['offline', 'server', 'rate'].includes(r?.error)) return { ok: false, error: 'offline', unknown: true };
+      undo?.();
+      return r;
+    },
+  };
+  return out;
+}

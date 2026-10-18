@@ -237,6 +237,39 @@ refereed lanes' stand-in and the stats card's model read too. The hit
 chance is untouched, the condition bands never read it, and a fist that
 is not the beast's is the mod's as written.
 
+## The sixth departure: the left hand's shield is a shield (TWO-HANDS-SHIELD, 2026-10-17)
+
+Found reading a player's report of a vanished off-hand weapon (the report
+itself is wear - `05-Combat/Two-Hands.md`; this is what the reading turned
+up beside it). The mod's `CalculateAttackDamage` takes whatever the left
+hand holds (`ItemEquipTable.GetItem(EquipSlots.LeftHand)`) and never asks
+IsShield before `ShieldBlockChanceCalculation`, `CompareShieldToUnderArmor`
+and the shield reductions read it. Port-side this was carried bug for bug
+(the line it retires stood in the list below), and it was rare: a weapon
+sat in the left hand only while it waited for H. TWO-HANDS (2026-10-16)
+made it every pair. A weapon covers no part, so it rolled the weak spot -
+the C#'s default, 40/0, bent by the six stats: 0 at all-50, 13% of blows
+for a defender of Agility 70, Speed 65, Strength and Endurance 60, 27% at
+90, 85, 70 and 70 with Luck 60. An iron one then blocked as a LEATHER
+SHIELD: `ArmorMaterialIdentifier` reads a non-shield by
+GetMaterialArmorValue, which reads the iron's material 0 as leather's 3
+(`/ 2` = row 1). Measured over 50,000 seeded blows of a steel
+longsword on bare skin, the defaults: an iron off-hand dagger took 4.9%
+and 8.1% off the damage at those two builds; any other metal blocked for
+nothing, but still set the block that routes the mod's wear.
+
+A shield now is DaggerfallUnityItem.GetIsShield - ItemGroup Armor and one
+of the four shield templates (`combat/pcaao.js` `isShield`, the test its
+reductions already used). `leftHandShield` answers the left hand's shield
+or null, and every read of the hand in the module goes through it: the
+overhaul's block roll, the plain DamageEquipment cover test, the wear's
+struck piece and the reductions. The C#'s 40/0 default case is kept as
+written and is handed a shield alone. DFU's own `DamageEquipment` already
+read the hand through the shield's cover (`SHIELD_PARTS`), so the stock
+lane is unchanged; a dual wielder gives up the shield's block under both.
+Pinned in `test/systems/pcaao.test.js` on the builder's own pieces;
+`tools/mutants/twohandsshield.json`, 2 mutants, both dead.
+
 ## What is kept bug for bug
 
 - `Mathf.Round` rounds half to EVEN (`unityRound`), and every float the
@@ -263,9 +296,6 @@ is not the beast's is the mod's as written.
   BALANCE1's 0.6 had softened that wear (~2.8x DFU's on a weapon per landed
   hit and ~15x on armour, measured first) without undoing it. Ledger A,
   `01-Overview/bugs/Field-Bugs-2026-09-27-phone-backup-drains.md`.
-- A left-hand item that is not a shield still goes through the shield
-  roll (the C# never asks IsShield there); `GetShieldProtectedBodyParts`
-  answers nothing for it, so it rolls the weak spot.
 - A CLASS enemy's bare fists deal NOTHING (AUDIT PCO1). The mod's
   `CalculateHandToHandAttackDamage` rolls the fist only for `player`;
   a non-player gets its `damageModifier` alone, and the mod's
@@ -308,7 +338,7 @@ is not the beast's is the mod's as written.
   the switch** - DFU rewrites the table at Awake; the port overlays the
   row at mint.
 
-## Pinned (`test/systems/pcaao.test.js`, 26)
+## Pinned (`test/systems/pcaao.test.js`, 27)
 
 The ladder; the half-to-even round through a float32 half; DamageModifier
 and the material hit bonus; every hit helper against a hand-worked cell;
@@ -319,7 +349,8 @@ condition bands; the four material ladders; the material-difference
 arithmetic; the wear (weapon, piece, shield, a fist, the fading removal,
 the warnings' words and delays); the reduction cells with the cap and
 the natural resistance; the monsters' hides and their weapons; the
-shield roll and the under-armour comparison; the natural resistance's
+shield roll and the under-armour comparison; a weapon in the left hand
+blocking nothing (TWO-HANDS-SHIELD); the natural resistance's
 extremes; the proficiency and racial ladders; a whole blow through each
 branch (a sword, the soft material's line, a monster's assigned axe
 wearing the player's cuirass); the registry declining and accepting;

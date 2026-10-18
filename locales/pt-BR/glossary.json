@@ -275,5 +275,13 @@
  "innkeeper": "taverneiro",
  "No contest": "Sem resultado",
  "first-time bonus (a craft's first-make XP)": "bônus de primeira vez",
- "cloth (the Weavers' Linen and Wool)": "tecido"
+ "cloth (the Weavers' Linen and Wool)": "tecido",
+ "martial specialisation": "especialização marcial",
+ "signature technique": "técnica característica",
+ "technique key": "tecla de técnica",
+ "fatigue": "fadiga",
+ "Agility": "Agilidade",
+ "Speed (attribute)": "Velocidade",
+ "Running": "Corrida",
+ "Jumping": "Salto"
 }

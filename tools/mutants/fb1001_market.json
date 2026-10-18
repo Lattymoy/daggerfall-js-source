@@ -20,8 +20,9 @@
   {
     "name": "MARKET-KEEP-the-writs-keep-their-own-list",
     "file": "src/net/writBook.js",
-    "old": "        if (had && !PIECE_GONE.includes(r?.error)) { try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[writs] put back', e); } }",
-    "new": "        if (had && !PIECE_GONE.includes(r?.error) && r?.error !== 'market-not-yours') { try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[writs] put back', e); } }",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a new fill is the market's own realm act (realmPieceAct, PIECE_GONE); the writs' own list is their settle's, of a fill a tab from before kept",
+    "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } }   // AUDIT 31 H1",
+    "new": "            if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') { try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } }   // AUDIT 31 H1",
     "tests": [
       "test/net/fb1001_market.test.js"
     ]
@@ -302,8 +303,9 @@
   {
     "name": "MARKET-ANY-service-the-cancel-delivery",
     "file": "server-account/src/market.js",
-    "old": "      SELECT id, seller, char_id, item, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3 AND kind = 'item'`).bind(id, nowS, nonce),\n  ]);\n  const made = await db.prepare('SELECT * FROM market_listings WHERE seller = ?1 AND cancel_rid = ?2').bind(me, rid).first();",
-    "new": "      SELECT id, seller, char_id, item, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3 AND kind = 'none'`).bind(id, nowS, nonce),\n  ]);\n  const made = await db.prepare('SELECT * FROM market_listings WHERE seller = ?1 AND cancel_rid = ?2').bind(me, rid).first();",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the cancel's batch carries a crafted piece's return after it",
+    "old": "      SELECT id, seller, char_id, item, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3 AND kind = 'item'`).bind(id, nowS, nonce),",
+    "new": "      SELECT id, seller, char_id, item, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3 AND kind = 'none'`).bind(id, nowS, nonce),",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]

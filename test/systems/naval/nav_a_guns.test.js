@@ -334,7 +334,7 @@ test('NAV-A the ball in flight: each gun\'s ball waits its ripple and appears at
   f.fireVolley({ id: 7, shooter: 'own', launches: [ball(), ball({ index: 1, delay: 0.5, p0: [0, 2, 2] })], side: 'starboard', owner: 'me' });
   f.step(0.1);
   assert.equal(of('muzzle').length, 1, 'the first gun at once');
-  assert.deepEqual(of('muzzle')[0], { type: 'muzzle', volley: 7, shooter: 'own', owner: 'me', side: 'starboard', gun: 'long', index: 0, count: 2, pos: [0, 2, 0], dir: [60, 1.5, 0], resolve: true });   // AUDIT NAV1: the volley's size - the mix's
+  assert.deepEqual(of('muzzle')[0], { type: 'muzzle', volley: 7, shooter: 'own', owner: 'me', side: 'starboard', gun: 'long', shot: null, index: 0, count: 2, pos: [0, 2, 0], dir: [60, 1.5, 0], resolve: true });   // AUDIT NAV1: the volley's size - the mix's; PIN MOVED (SHOT-KINDS): its load - a launch that says none its bore's own
   assert.equal(f.balls().length, 1, 'the second waits its ripple, unseen');
   assert.equal(f.inFlight, 2);
   for (let i = 0; i < 20; i++) f.step(0.1);

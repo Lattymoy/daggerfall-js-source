@@ -106,16 +106,16 @@ async function stand(t) {
   const raw = s.env.DB._raw;
   const age = (who, days) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - days * DAY, who.id);
   for (let i = 0; i < 3; i++) {
-    const w = await s.registered(`Wit${i}`); age(w, 8);
+    const w = await s.seated(`Wit${i}`); age(w, 8);
     assert.equal((await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [MAGES, FIGHTERS] } }, w.secret)).status, 200);
   }
-  const g = await s.registered('Ground'); age(g, 8);
+  const g = await s.seated('Ground'); age(g, 8);
   const p = herbPatches({ x: 300, y: 200, day: utcDay(NOON), climate: WOODS, confirmed: false })[0];
   assert.equal((await s.call('/v1/prof/harvest', {
     character: g.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(NOON), slot: p.slot }), kind: 'herbs',
     climate: WOODS, region: ANTICLERE, act: { clean: false, bruised: false }, at: NOON - 2, rid: rid(),
   }, g.secret)).status, 200);
-  const who = await s.registered('Alda');
+  const who = await s.seated('Alda');
   const R = await seatRealm(s.env, who.secret, 'Alda');
   await readRoll({ db: s.env.DB, nowS: NOON }, { id: who.id }, { character: R.id, lease: R.lease, seed: { factions: { 41: 85, 40: 85 }, members: [{ f: 41, rank: 7 }, { f: 40, rank: 7 }] } });
   const week = meritWeekOf(NOON);
@@ -138,7 +138,7 @@ test('CHAP4d the Focus set: only by its chapter\'s Master, only a family its gui
   assert.deepEqual([ok.status, ok.body], [200, { ok: true, focus: 'wood', week: s.week }]);
   assert.deepEqual({ ...s.raw.prepare('SELECT focus, focus_week FROM npc_chapters WHERE faction = 41 AND region = 21').get() }, { focus: 'wood', focus_week: s.week });
   assert.equal((await set({ region: DAGGERFALL })).body?.error, 'not-master', 'another chapter of the guild');
-  const other = await s.registered('Other');
+  const other = await s.seated('Other');
   assert.equal((await setChapterFocus({ db: s.env.DB, nowS: NOON }, { id: other.id }, s.env, { character: s.R.id, faction: FIGHTERS, region: ANTICLERE, focus: 'metals' })).error, 'not-master', 'another account naming the Master');
   s.raw.prepare('UPDATE realm_characters SET dead_at = ? WHERE id = ?').run(NOON, s.R.id);
   assert.equal((await set({ focus: 'metals' })).body?.error, 'dead', 'a dead Master - the service\'s own door refuses it first');
@@ -156,7 +156,7 @@ test('CHAP4d the board and the writs: the day\'s hall writs read the week\'s Foc
   assert.ok(fighters.length >= 2);
   assert.deepEqual(fighters.filter((w) => w.slot % 2 === 0).map(familyOf), fighters.filter((w) => w.slot % 2 === 0).map(() => 'wood'));
   assert.deepEqual(l.chapters.map((c) => [c.faction, c.focus, c.master ?? false, c.focuses ?? null]), [[MAGES, null, false, null], [FIGHTERS, 'wood', true, ['metals', 'wood']]]);
-  const stranger = await s.registered('Stranger');
+  const stranger = await s.seated('Stranger');
   const sl = (await s.call('/v1/writs/list', { character: stranger.character, region: ANTICLERE }, stranger.secret)).body;
   assert.deepEqual(sl.chapters.map((c) => [c.faction, c.focus, c.master ?? false]), [[MAGES, null, false], [FIGHTERS, 'wood', false]], 'the Focus said to all, the choice to its Master');
   s.raw.prepare("UPDATE npc_chapters SET focus = 'wood', focus_week = ? WHERE faction = 40").run(s.week);   // a family not its guild's, as written

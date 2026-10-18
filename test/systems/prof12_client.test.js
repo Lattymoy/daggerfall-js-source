@@ -13,6 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { standService, T0, sessionStorageOf } from '../accountDb.mjs';
+import { layRecord, freshSave } from '../realmSeat.mjs';   // INT16: the crafted ring in the seated realm character's record
 import { accountProf, SESSION_KEY, accountRefusalText } from '../../src/net/accountClient.js';
 import { createProfBook } from '../../src/net/profBook.js';
 import { realmGoldAct } from '../../src/systems/realmSaves.js';   // AUDIT PROF-541 R2-C1
@@ -73,7 +74,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
   resetProfPages();
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const give = (m, qty) => raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)
     ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = excluded.qty`).run(mac.id, mac.character, m, qty);
   const track = (prof, xp, spec50 = null, spec100 = null) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -96,8 +97,11 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     stock: async (key, qty, counter) => { const r = await book.stock(key, qty); return r.ok ? { ok: true, text: `Bought from the ${counter}.` } : { ok: false, text: accountRefusalText(r.error) }; },
     enchanter: () => ({ kind: 'shop', fee: ENCHANT_FEE }),
     disenchantable: () => player.items.filter((it) => it.provenance).map((it) => ({ provenance: it.provenance, name: itemLongName(it), points: 2160, essence: 21, recipe: it.recipe })),
+    // PIN MOVED (INT16, Integrity-Arc section 7): a disenchant is a progression claim, asked of the account's SEATED realm
+    // character - and a realm character's disenchant names where its record stands, as world.js's realmGoldAct hands it
+    // (AUDIT PROF-541 B2), the piece taken out of that record in the disenchant's own batch
     disenchant: async (pv) => {
-      const r = await book.disenchant(pv);
+      const r = await book.disenchant(pv, mac.at());
       if (r.ok) player.items = player.items.filter((it) => it.provenance !== pv);
       return r.ok ? { ok: true, text: `Into ${r.data.essence} Arcane Essence (+${r.data.xp} Enchanting XP).` } : { ok: false, text: accountRefusalText(r.error) };
     },
@@ -145,6 +149,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     give('metal:gold', 1); give('gem:ruby', 1);
     const made = await s.call('/v1/prof/craft', { character: mac.character, recipe: 'ring:gold:ruby', clean: false, name: 'Mac', rid: 'ring-for-essence-1' }, mac.secret);
     player.items.push({ group: 'Jewellery', templateIndex: 135, provenance: made.body.pieces[0].provenance, recipe: 'ring:gold:ruby', name: 'Gold Ruby Ring', enchantmentPoints: 2160 });
+    layRecord(s.env, mac.character, freshSave({ name: 'Mac', items: [{ ...player.items.at(-1), stackCount: 1 }] }));   // INT16: the ring in the realm character's record, as its checkpoint would hold it
     page.draw();
     assert.match(page.text(), /The Enchanting Station.*The guild's enchanter - 50 gold a piece\. Enchanting 0 \(Novice\)\./);
     assert.match(page.text(), /2,160 points - 21 Arcane Essence, \+315 Enchanting XP/);   // AUDIT PROF12 E2: 5 x the Gold ring's tier 3 x 21

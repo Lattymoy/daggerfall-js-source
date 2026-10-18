@@ -194,18 +194,18 @@
   {
     "name": "TERMS1-the-date-moved-alone",
     "file": "privacy/index.html",
-    "old": "<time datetime=\"2026-09-28\">",
-    "new": "<time datetime=\"2026-09-29\">",
+    "old": "<time datetime=\"2026-10-17\">",
+    "new": "<time datetime=\"2026-10-18\">",
     "tests": ["test/ui/enhanced/terms1.test.js"],
-    "note": "The date a reader sees is the version an account records. BR5 (re-aimed by content): the name and its file form moved; the date moved and was put back (AUDIT BR5: a rename is not a new version)."
+    "note": "The date a reader sees is the version an account records. BR5 (re-aimed by content): the name and its file form moved; the date moved and was put back (AUDIT BR5: a rename is not a new version). SAFE (re-aimed by content): a new version, 2026-10-17 - the chat safety arc's words."
   },
   {
     "name": "TERMS1-the-version-moved-alone",
     "file": "src/net/legalLaw.js",
-    "old": "export const TERMS_VERSION = '2026-09-28';",
-    "new": "export const TERMS_VERSION = '2026-09-29';",
+    "old": "export const TERMS_VERSION = '2026-10-17';",
+    "new": "export const TERMS_VERSION = '2026-10-18';",
     "tests": ["test/ui/enhanced/terms1.test.js"],
-    "note": "A version with no page dated by it is an agreement to nothing on the site. BR5 (re-aimed by content): the name and its file form moved; the date moved and was put back (AUDIT BR5: a rename is not a new version)."
+    "note": "A version with no page dated by it is an agreement to nothing on the site. BR5 (re-aimed by content): the name and its file form moved; the date moved and was put back (AUDIT BR5: a rename is not a new version). SAFE (re-aimed by content): a new version, 2026-10-17."
   },
   {
     "name": "TERMS1-a-script-added",

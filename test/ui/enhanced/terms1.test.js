@@ -74,8 +74,15 @@ test('TERMS1: the words are held to a hash - editing a document means deciding w
   const HASH = {
     // BR5 (2026-10-11): the operator renamed DFO Online in both, and nothing else - not material, so the
     // version stands and only the words are re-hashed (AUDIT BR5: a new version refuses every older build's sign-up)
-    terms: '9fbea67600a32daa47db64e3d5bbe35f920e4c2b682b9db7728a3944f6487ee0',
-    privacy: 'a217d15dba6ba6ee121c0e8705940aeb2a55b5dec953a68ae0d189cca56ded95',
+    // SAFE (2026-10-17, bible/11-Multiplayer/Chat-Safety-Arc.md): material in both - the Terms name hate by what it
+    // attacks and make the in-game Code of Conduct part of them; the Policy says the stamped messages, the reports, the
+    // automated review by a third-party AI provider and how long each is kept - so a new version, 2026-10-17
+    // AUDIT SAFE (the same day, unreleased - the version stands): the Policy made true of the code - a report shown in the
+    // game too, the reporters' automatic mute named, the names a line's own words carry, the second review before a
+    // mute, a letter from a blocked player undelivered, every retention said and the Discord copies deleted with the
+    // case's; the Terms' agreement the game asks for, never one it enforces
+    terms: '62fd0b8a5477d53b0d2341ca0d1801743e9ac08b4716d28104704fff077b612f',
+    privacy: '4c152e82901b17a2a05688b7f38d812af56e5795bc6ac05467282d391c6d6a4a',
   };
   for (const [name, d] of Object.entries(DOCS)) {
     const words = wordsOf(read(d.file));

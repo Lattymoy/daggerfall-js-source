@@ -15,6 +15,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { webcrypto } from 'node:crypto';
 
 import { standService, T0 } from '../accountDb.mjs';
+import { holdPieces } from '../realmSeat.mjs';   // INT19: a crafted piece in its seller's realm record
 import { MARKS_MAX } from '../../src/net/marksLaw.js';
 import { saleTax, AUCTION_S, AUCTION_GRACE_S, MARKET_KEEP_DAYS } from '../../src/net/marketLaw.js';
 import { seatReportText } from '../../src/net/townSeatLaw.js';
@@ -75,7 +76,7 @@ async function tithedMarket() {
   const gid = raw.prepare('SELECT guild_id FROM guild_members WHERE player = ?').get(gm.id).guild_id;
   raw.prepare(`INSERT INTO town_seat_holds (key, guild_id, region, tier, since_week, standing, truce_week, at, tithe, owed) VALUES (?, ?, ?, ?, 0, 50, NULL, ?, 8, 0)`)
     .run(ANTICLERE.key, gid, ANTICLERE.region, ANTICLERE.tier, T0 - 7 * DAY);
-  const seller = await svc.registered('Seller', { renown: 10 });
+  const seller = await svc.seated('Seller', { renown: 10 });   // PIN MOVED (INT19): a realm character - its auction's piece leaves its record
   const buyer = await svc.registered('Buyer', { renown: 10 });
   svc.seedMarks(seller, 100_000, 's'); svc.seedMarks(buyer, 100_000, 'b');
   return { svc, raw, seller, buyer, HUBS: { 21: [402, 151] } };
@@ -86,6 +87,7 @@ test('AUDIT SCALE A1: an auction won under a seat\'s Tithe, its seller within th
   let rid = 0;
   raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at)
     VALUES ('00000000000000a1', ?, ?, 'Silverthorn', 'longsword:mithril', 120, 5, 4, 4242, 'p1.x', ?)`).run(seller.id, seller.character, T0);
+  holdPieces(svc.env, seller.character, [{ provenance: '00000000000000a1', quality: 4, wear: 900 }]);
   const posted = await svc.call('/v1/market/auction', { character: seller.character, region: 21, provenance: '00000000000000a1', wear: 900, opening: 1000, hubs: HUBS, board: [405, 150], rid: `audit-${String(++rid).padStart(6, '0')}` }, seller.secret);
   assert.equal(posted.status, 200, JSON.stringify(posted.body));
   const a = posted.body.auction;
@@ -212,7 +214,7 @@ test('AUDIT SCALE D2: the clock\'s moment in seconds - scheduled() hands runCron
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(g.id).n, 1);
 });
 
-test('AUDIT SCALE D7: on a quiet world the clock is ten statements a minute and twenty-four an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job', async () => {
+test('AUDIT SCALE D7: on a quiet world the clock is ten statements a minute and thirty an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job', async () => {
   clock(T0);
   const svc = await standService({ SEATS_OPEN: 'on', PROFESSIONS_OPEN: 'on' });
   _resetCronForTests();
@@ -220,7 +222,9 @@ test('AUDIT SCALE D7: on a quiet world the clock is ten statements a minute and 
   const minute = await runCron(svc.env, { cron: CRON_MINUTE, nowS: T0 + 60, rand });
   // PIN MOVED (SEAT-FACTS, 2026-10-13): and the seats' facts kept once for the service - the rows read and the one row
   // kept (townSeats.js keepSeatFacts), where every isolate read the rows each minute
-  assert.deepEqual(minute.map((j) => j.statements), [1, 1, 1, 1, 2, 1, 1, 1, 1, 0], JSON.stringify(minute.map((j) => [j.name, j.statements])));   // PIN MOVED (REZ-BLOODLINE AUDIT R1): the falls held for a Resurrect whose window closed, asked once (legacy.js settleHolds); PIN MOVED (CARDS10): Iliac Hand's season #1 asks once too; PIN MOVED (KG6): and The King's Gambit's (gambit.js gambitChampionClock)
+  // PIN MOVED (SAFE, Chat-Safety-Arc.md section 6): the chat safety's minute - the reviewer's feed and cases, and the
+  // moderators' cards - asks nothing while neither the reviewer nor Discord is set, as on this world
+  assert.deepEqual(minute.map((j) => j.statements), [1, 1, 1, 1, 2, 1, 1, 1, 1, 0, 0], JSON.stringify(minute.map((j) => [j.name, j.statements])));   // PIN MOVED (REZ-BLOODLINE AUDIT R1): the falls held for a Resurrect whose window closed, asked once (legacy.js settleHolds); PIN MOVED (CARDS10): Iliac Hand's season #1 asks once too; PIN MOVED (KG6): and The King's Gambit's (gambit.js gambitChampionClock)
   const hour = await runCron(svc.env, { cron: CRON_HOUR, nowS: T0 + 120, rand });
   // PIN MOVED (INT2/INT5, 2026-10-09): the hour sweeps the judge's findings and the wealth-hours past their keep - one
   // statement each, its page short; seventeen became nineteen. PIN MOVED (INT9): and a death in the zone's drop past its
@@ -233,8 +237,13 @@ test('AUDIT SCALE D7: on a quiet world the clock is ten statements a minute and 
   // PIN MOVED (EG-ZM, Elite-Gates.md section 23): the Weir Key's stake clock asks the held stakes due once - none on a
   // quiet world, so nothing spent and no letter written (eg.js spendLapsedStakes); PIN MOVED (PVP-ESCROW, 2026-10-14 -
   // Mac's two-phase handoff): an ended escrow swept as a fall is - twenty-four
-  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['patrons', 1], ['eg-stakes', 1]]);
-  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 10 + 24);   // PIN MOVED (AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1)
+  // PIN MOVED (SAFE, Chat-Safety-Arc.md section 10): the chat safety's retention - the reviewer's feed past a day, a case
+  // open past ninety, a resolved case's lines past ninety and the reviewer's spend past a month, one statement each,
+  // its page short (safetyClock.js safetySweep) - twenty-eight. PIN MOVED (AUDIT SAFE DOC-1, DOC-12): and a resolved
+  // case's lines, notes and reviewer's reason swept apart - the case marked first, its card redrawn without them - thirty
+  // PIN MOVED (INT17, Integrity-Arc section 7): the progression claims' hours swept past the wealth's keeping - thirty-one
+  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['progress-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['patrons', 1], ['eg-stakes', 1], ['safety-sweep', 6]]);
+  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 10 + 31);   // PIN MOVED (AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are)
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });
   _resetCronForTests();

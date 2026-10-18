@@ -416,7 +416,7 @@
   {
     "name": "AUDIT-CC-D8-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "ship.repairOrdered ? 'Crippled - her crew stands to the repairs' : ",
+    "old": "ship.repairOrdered ? 'Crippled - repairs ordered' : ",
     "new": "",
     "tests": [
       "test/systems/naval/auditcrew.test.js",

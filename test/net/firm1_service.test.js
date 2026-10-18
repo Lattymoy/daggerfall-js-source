@@ -49,17 +49,17 @@ async function stand(env = { FIRMAMENT_OPEN: 'on' }) {
 
 test('FIRM1 service: the switch - off by default (firm-closed, 403), at "dev" the developers alone, "on" everyone', async () => {
   const off = await stand({});
-  const a = await off.registered('Ana', { renown: 5 });
+  const a = await off.seated('Ana', { renown: 5 });
   assert.deepEqual([(await off.state(a)).status, (await off.state(a)).body], [403, { error: 'firm-closed' }]);
   const dev = await stand({ FIRMAMENT_OPEN: 'dev' });
-  const mac = await dev.registered('Mac', { renown: 5 }), bo = await dev.registered('Bobby', { renown: 5 });
+  const mac = await dev.seated('Mac', { renown: 5 }), bo = await dev.seated('Bobby', { renown: 5 });
   assert.equal((await dev.state(mac)).status, 200);
   assert.equal((await dev.state(bo)).status, 403);
 });
 
 test('FIRM1 service: the purses - Stars off the Renown track (2 a level past the first), Craft off the profession ranks (1 per 8) - and the view', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac', { renown: 6 });
+  const mac = await s.seated('Mac', { renown: 6 });
   s.setXp(mac, 'mining', xpForRank(40));
   s.setXp(mac, 'smithing', xpForRank(30));
   const r = await s.state(mac);
@@ -72,7 +72,7 @@ test('FIRM1 service: the purses - Stars off the Renown track (2 a level past the
 
 test('FIRM1 service: a change judged whole - a sign chosen and walked within the Stars; one star more, a star cut off, a key the sky has not, a start among the stars - each refused, the row unmoved', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac', { renown: 5 });   // 8 Stars
+  const mac = await s.seated('Mac', { renown: 5 });   // 8 Stars
   const tree = walk('mg.start', 'mg.k1');   // mg.s1 .. mg.k1: six stars
   assert.equal(tree.keys.length, 6);
   const ok = await s.set(mac, tree);
@@ -92,7 +92,7 @@ test('FIRM1 service: a change judged whole - a sign chosen and walked within the
 
 test('FIRM1 service: the Craft purse pays the life ring alone - a crafter with no Renown walks the Wayfarer\'s Road to the trades, and never into a fight', async () => {
   const s = await stand();
-  const smith = await s.registered('Smith', { renown: 1 });   // no Stars at all
+  const smith = await s.seated('Smith', { renown: 1 });   // no Stars at all
   s.setXp(smith, 'smithing', xpForRank(100));
   s.setXp(smith, 'mining', xpForRank(100));   // 25 Craft points
   const life = walk('wr.start', 'wr.l2.3');
@@ -104,7 +104,7 @@ test('FIRM1 service: the Craft purse pays the life ring alone - a crafter with n
 
 test('FIRM1 service: asked twice, one change - the repeat answered from its row; an id another character\'s refused', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac', { renown: 4 });
+  const mac = await s.seated('Mac', { renown: 4 });
   const id = rid();
   const tree = walk('th.start', 'th.g');
   const a = await s.set(mac, tree, id);
@@ -118,13 +118,13 @@ test('FIRM1 service: asked twice, one change - the repeat answered from its row;
 
 test('FIRM1 service: a refund - free below Renown 10; past it, 10 silver a star taken back, burnt in the change\'s batch, refused short (marks-short) with nothing moved', async () => {
   const s = await stand();
-  const young = await s.registered('Young', { renown: 9 });
+  const young = await s.seated('Young', { renown: 9 });
   const tree = walk('st.start', 'st.r2');
   assert.equal((await s.set(young, tree)).status, 200);
   const back = await s.set(young, { start: 'st.start', keys: tree.keys.slice(0, 2) });
   assert.deepEqual([back.status, back.body.silver], [200, 0], 'below Renown 10 a refund is free');
 
-  const old = await s.registered('Old', { renown: 12 });
+  const old = await s.seated('Old', { renown: 12 });
   const t2 = walk('wr.start', 'wr.r2');
   assert.equal((await s.set(old, t2)).status, 200, 'a first sign costs nothing');
   const less = { start: 'wr.start', keys: t2.keys.slice(0, 3) };
@@ -145,7 +145,7 @@ test('FIRM1 service: a refund - free below Renown 10; past it, 10 silver a star 
 
 test('FIRM1 service: THE TREE\'S HAND ON A HARVEST - the haul\'s XP the profession\'s percent more, on the service\'s own reckoning; no tree, no change', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac', { renown: 1 });
+  const mac = await s.seated('Mac', { renown: 1 });
   s.setXp(mac, 'fishing', xpForRank(55));
   s.setXp(mac, 'mining', xpForRank(100));
   s.setXp(mac, 'herbalism', xpForRank(100));
@@ -164,7 +164,7 @@ test('FIRM1 service: THE TREE\'S HAND ON A HARVEST - the haul\'s XP the professi
 
 test('FIRM1 service: THE RESPEC - the whole sky back for 10,000 gold, paid on a realm character\'s record in the respec\'s own batch; asked twice, charged once; short of gold, nothing moves', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac', { renown: 30 });
+  const mac = await s.seated('Mac', { renown: 30 });
   const R = await seatRealm(s.env, mac.secret, 'Mac', { name: 'Mac', level: 9, goldPieces: FIRM_RESPEC_GOLD + 2500, items: [] });
   s.raw.prepare('UPDATE renown_tracks SET char_id = ? WHERE player = ? AND char_id = ?').run(R.id, mac.id, mac.character);
   mac.character = R.id;

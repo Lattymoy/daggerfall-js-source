@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
-import { seatRealm, layRecord } from '../realmSeat.mjs';
+import { seatRealm, layRecord, holdPieces } from '../realmSeat.mjs';   // INT19: a crafted piece in its seller's record
 import { saleTax, listingFee, goldSaleOf, MARKET_GOLD_HELD_MAX, courierFee } from '../../src/net/marketLaw.js';
 import { MARK_WORTH_GOLD } from '../../src/net/marksLaw.js';
 import { REALM_MARKET_OPEN_SQL } from '../../server-account/src/realm.js';
@@ -47,9 +47,13 @@ async function stand() {
     who.at = R.at;
     return who;
   };
-  const piece = (who, provenance, recipe = 'longsword:mithril') => raw.prepare(`INSERT INTO products
-    (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at) VALUES (?, ?, ?, 'Silverthorn', ?, 120, 5, 2, 4242, 'p1.x', ?)`)
-    .run(provenance, who.id, who.character, recipe, _now);
+  /** PIN MOVED (INT19, Integrity-Arc section 7): a crafted piece lists out of its seller's realm record - it stands there too. */
+  const piece = (who, provenance, recipe = 'longsword:mithril') => {
+    raw.prepare(`INSERT INTO products
+      (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at) VALUES (?, ?, ?, 'Silverthorn', ?, 120, 5, 2, 4242, 'p1.x', ?)`)
+      .run(provenance, who.id, who.character, recipe, _now);
+    if (who.at) holdPieces(s.env, who.character, [{ provenance }]);
+  };
   const read = (who, view, extra = {}) => s.call('/v1/market/read', { character: who.character, region: DF, view, hubs: HUBS, ...extra }, who.secret);
   const list = (who, extra = {}) => s.call('/v1/market/list', { character: who.character, region: DF, kind: 'material', material: 'ore:mithril', units: 10, price: 80, hubs: HUBS, rid: rid(), currency: 'gold', ...extra }, who.secret);
   /** A buy of `units` of `l` at its exact cost - the price, and a courier's `courier` gold where the road asks one. */
@@ -225,7 +229,8 @@ const GP = '0123456789abcdef', MP = 'fedcba9876543210';
 test('GOLD-MARKET service: THE WALL at every door - an anvil\'s craft, a Court writ, a guild writ\'s supply and the guild Stores take none of gold\'s units; each says so, and takes the own ones', async () => {
   const s = await stand();
   // the anvil (PROF3): a Repair Kit of an Iron Ingot and a Cured Leather
-  const mac = await s.registered('Mac');
+  // INT16 (Integrity-Arc section 7): the craft and the Court writ are progression claims, asked of the account's seated realm character
+  const mac = await s.seated('Mac');
   s.give(mac, 'ingot:iron', 'gold', 2);
   s.give(mac, 'leather:cured', 'own', 2);
   const craft = (extra = {}) => s.call('/v1/prof/craft', { character: mac.character, recipe: 'kit:iron', clean: false, name: 'Silverthorn', rid: rid(), ...extra }, mac.secret);
@@ -274,10 +279,11 @@ test('GOLD-MARKET service: a piece bought with gold is marked - it lists again f
   assert.equal(b.status, 200, JSON.stringify(b.body));
   assert.deepEqual({ ...s.raw.prepare('SELECT owner, bought_with FROM products WHERE provenance = ?').get(GP) }, { owner: tom.id, bought_with: 'gold' });
   s.fund(tom, 1000);
+  holdPieces(s.env, tom.character, [{ provenance: GP }]);   // the piece his pack took from the answer, in his record
   assert.deepEqual((await s.list(tom, { kind: 'piece', material: undefined, units: 1, provenance: GP, wear: 1000, price: 500, currency: 'marks' })).body, { error: 'market-gold-goods' });
   assert.equal((await s.list(tom, { kind: 'piece', material: undefined, units: 1, provenance: GP, wear: 1000, price: 6000 })).status, 200, 'for gold again');
   // bought with Drakes: never for gold
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac', {});   // PIN MOVED (INT19): a realm character - its piece leaves its record
   s.fund(mac, 100);
   s.piece(mac, MP);
   const d = await s.list(mac, { kind: 'piece', material: undefined, units: 1, provenance: MP, wear: 1000, price: 50, currency: 'marks' });

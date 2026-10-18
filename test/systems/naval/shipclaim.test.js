@@ -159,7 +159,7 @@ test('SHIP-CLAIM claimed, she is my boat: her deed (the shelf\'s, a fresh UID of
   assert.ok(Math.abs(Math.sin(was.yaw)) > 0.5, `hauled alongside my turned keel: a heading of her own (${was.yaw})`);
   const sounds = h.log.sounds.length, law = h.log.law.length, says = h.log.say.length;
   // PIN MOVED (HOLDINGS, bible/03-World/Holdings.md): a deed is the Fleet's book's now, never the pack's - the claim's words say so
-  assert.deepEqual(m.claimOffer(), { detail: 'Keep her as your own Small Ship: her title to your Fleet ledger, her hold aboard her. She has no crew.' });
+  assert.deepEqual(m.claimOffer(), { detail: 'Keep it as your own Small Ship. The title goes to your Fleet ledger and the cargo stays in its hold. It has no crew.' });
   assert.equal(m.fate('claim'), true);
   assert.equal(m.fated(), 'claim');
   // her deed
@@ -189,7 +189,7 @@ test('SHIP-CLAIM claimed, she is my boat: her deed (the shelf\'s, a fresh UID of
   assert.ok(h.log.redecked.length === 1 && h.log.redecked[0][0] === was.hers && h.log.redecked[0][1] === b, 'her dead lie on her deck - mine now');
   // back at my helm, and told
   assert.ok(h.rt.state.CurrentBoat === h.boat && h.log.helm.at(-1) === h.boat, 'at my own wheel');
-  assert.deepEqual(h.log.say.slice(says), [`${was.name} is yours - her title is in your Fleet ledger (Holdings). She has no crew: hire hands at a shipwright.`]);
+  assert.deepEqual(h.log.say.slice(says), [`${was.name} is yours. The title is in your Fleet ledger (Holdings). It has no crew: hire crew at a shipwright.`]);
   // her days after
   h.run(FIELD_QUIET_S + 5, 0.5);
   assert.equal(st.crew.hands.length, 0, 'no hand aboard her');
@@ -296,13 +296,13 @@ test('SHIP-CLAIM a small boat: a Large Boat taken (a pirate sloop, her variant h
   const h = await claimSea();
   const { e, m } = taken(h, 'pirateSloop', { variant: 3 });
   const name = e.ship.names.name;
-  assert.deepEqual(m.claimOffer(), { detail: 'Keep her as your own Large Boat where she lies, her hold aboard her.' });
+  assert.deepEqual(m.claimOffer(), { detail: 'Keep it as your own Large Boat where it is, with the cargo in its hold.' });
   assert.equal(m.fate('claim'), true);
   assert.deepEqual(h.pack, [], 'spent on placing');
   const b = h.rt.state.AllBoats.find((x) => x !== h.boat);
   assert.deepEqual([b.hull, b.variant, b.crewed, b.uid], [1, 3, false, 9001], 'her deed\'s UID on her still');
   assert.equal(h.host._myState(b).damage.maxCrew, 0);
-  assert.equal(h.log.say.at(-1), `${name} is yours - she lies where you took her.`);
+  assert.equal(h.log.say.at(-1), `${name} is yours. It stays where you captured it.`);
 });
 
 test('SHIP-CLAIM and SHIP-PACK a claimed ship picked up and placed again is the same ship: her deed goes with her into her parts - her number, her papers\' worth (a quarter); placed again, her deed back; her hurts and her empty crew kept by her number - the pick-up never mends nor crews her (mutants: a new number, the shelf\'s price, the deed kept)', async () => {
@@ -429,7 +429,7 @@ test('SHIP-CLAIM online, my own stood prize: claimed, she leaves the room\'s sea
 // ── the window (ui/naval/navalPlunderWindow.js) ──────────────────────────────────────────────────────────────────────────
 
 test('SHIP-CLAIM the window: "Claim her" beside Scuttle and Cast adrift while the host offers it, its line under them saying what she becomes; pressed, her fate is the host\'s to decide - claimed, the window leaves; refused, it stays with a word and the press goes; no offer, no claim; a voyage raid\'s window none at all (mutants: the claim always shown, a raid offered it, the press untold, a refusal leaving, the line unsaid)', () => {
-  const detail = 'Keep her as your own Small Ship: her title to your Fleet ledger, her hold aboard her. She has no crew.';
+  const detail = 'Keep it as your own Small Ship. The title goes to your Fleet ledger and the cargo stays in its hold. It has no crew.';
   const model = (o = {}) => {
     const m = {
       log: [], answer: true, offer: { detail },
@@ -453,7 +453,7 @@ test('SHIP-CLAIM the window: "Claim her" beside Scuttle and Cast adrift while th
   // offered: beside the two, its line under them
   const m = model();
   const w = mount(m);
-  assert.equal(w.claim.textContent, 'Claim her');
+  assert.equal(w.claim.textContent, 'Claim');
   assert.equal(w.claim.parentNode, byClass(w.host, 'dfnaval-scuttle')[0].parentNode, 'beside Scuttle and Cast adrift');
   assert.deepEqual([w.claim.hidden, w.claim.getAttribute('title'), w.line.hidden, w.line.textContent], [false, detail, false, detail]);
   // refused: it stays, says why, and the press goes
@@ -461,7 +461,7 @@ test('SHIP-CLAIM the window: "Claim her" beside Scuttle and Cast adrift while th
   press(w.claim);
   assert.deepEqual(m.log, ['claim']);
   assert.deepEqual(w.exits, [], 'a refusal stays');
-  assert.equal(byClass(w.host, 'dfnaval-note')[0].textContent, 'She cannot be claimed.');
+  assert.equal(byClass(w.host, 'dfnaval-note')[0].textContent, 'This ship can\'t be claimed.');
   assert.deepEqual([w.claim.hidden, w.line.hidden], [true, true]);
   w.view.unmount();
   // claimed: the window leaves

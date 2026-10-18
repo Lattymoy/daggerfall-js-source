@@ -184,6 +184,7 @@ test('AUDIT NAV2 F17 a journey holds the helm under the travel view: the helm pa
     townTalk: { hudCovered: false }, modes: { hudCovered: false }, gamePaused: () => false, hudRenderEnabled: () => true, touch: null,
     cursorActive: () => true, pointerSurfaces: new Set(), csaKeyLabel: () => '', csaHelmHooks: {}, travelView, _travelUIHolder: { ui: null },
     navalOn: () => true,   // PIN MOVED (SHIP-CREW): the panel's Orders button asks whether the naval arc is on
+    holdsCargo: (hull) => hull > 0,   // PIN MOVED (CARGO-ANYWHERE): and its Hold whether her hull carries one
   };
   const draw = mount(scope, fn('csaDrawHelmPanel'), 'csaDrawHelmPanel');
   draw();
@@ -243,8 +244,8 @@ test('AUDIT NAV2 F18 the in-irons word is the helm\'s own: under the mod\'s own 
   const keyOf = (a) => ({ BoatSailUp: 'UP', BoatSailDown: 'DOWN', TurnLeft: 'LEFT', TurnRight: 'RIGHT', MoveForwards: 'W', MoveBackwards: 'S' })[a] ?? '';
   const irons = { hull: 2, hasSails: true, inIrons: true };
   // PIN MOVED (HELM-LADDER): one rung down strikes the last of her sail and puts her on her oars - its two keys, no row key
-  assert.equal(helmHint(irons, { keyOf, mouseFree: true }), 'In irons - strike sail (S DOWN) and row her round', 'the mod\'s own helm: as it was');
-  assert.equal(helmHint(irons, { touch: true }), 'In irons - strike sail and row her round', 'a finger: the words alone');
+  assert.equal(helmHint(irons, { keyOf, mouseFree: true }), 'In irons - strike sail (S DOWN) and row to turn', 'the mod\'s own helm: as it was');
+  assert.equal(helmHint(irons, { touch: true }), 'In irons - strike sail and row to turn', 'a finger: the words alone');
 });
 
 // ── F20 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────

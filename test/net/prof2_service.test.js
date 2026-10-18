@@ -73,7 +73,7 @@ const ore = (who, n, extra = {}) => ({
 
 test('PROF2 service: a vein mined - the law\'s ore into the Stores, own; Mining XP 15 x tier; asked again one harvest; a node once a day; ore, never herbs', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const v = veinOf(WOODS, GLENUMBRA, (x) => x.tier === 1);
   const body = ore(mac, v);
   const r = await s.call('/v1/prof/harvest', body, mac.secret);
@@ -97,7 +97,7 @@ test('PROF2 service: a vein mined - the law\'s ore into the Stores, own; Mining 
 
 test('PROF2 service: the Pick-Axe\'s report, bounded - clean only with every strike on the glint (+50% XP); a strike count past the finish\'s is cut; a tier past the rank refused; a surface vein is mined by night (ANY-HOUR)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(10));
   const [v, w, p] = veinsAt(WOODS, GLENUMBRA, [(x) => x.tier === 2, (x) => x.tier === 1, (x) => x.tier === 1]);
   const r = await s.call('/v1/prof/harvest', ore(mac, v, { act: { glints: glintsMax(2), clean: true } }), mac.secret);
@@ -107,7 +107,7 @@ test('PROF2 service: the Pick-Axe\'s report, bounded - clean only with every str
   assert.equal(cheat.body.xp, harvestXp(1, 10, true), '99 glints are the finish\'s two - still the one clean step');
   const plain = await s.call('/v1/prof/harvest', ore(mac, p, { act: { glints: 1, clean: true } }), mac.secret);
   assert.equal(plain.body.xp, harvestXp(1, 10, false), 'one glint of the two: no clean finish, whatever it says');
-  const fresh = await s.registered('Ann');
+  const fresh = await s.seated('Ann');
   assert.deepEqual((await s.call('/v1/prof/harvest', ore(fresh, v), fresh.secret)).body, { error: 'prof-rank' }, 'tier 2 wants Mining 10');
   // PIN MOVED (ANY-HOUR, 2026-10-01, Mac: "Remove the time limit for professions. Should be available at any time"):
   // 02:00 refused a surface vein (`prof-night`); now it is mined as at noon
@@ -121,7 +121,7 @@ test('PROF2 service: the Pick-Axe\'s report, bounded - clean only with every str
 
 test('PROF2 service: a boulder quarried - Rough Stone 3-5; a clean finish, or a Stonebreaker always, cuts it at the rock into Cut Stone at two to one', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const b = boulders({ x: 400, y: 200, day: today(), climate: MOUNTAIN });
   const key = (x, slot) => nodeKey({ kind: 'boulder', x, y: 200, day: today(), slot });
   const stone = (who, x, slot, act) => ({ character: who.character, node: key(x, slot), kind: 'stone', climate: MOUNTAIN, region: WAYREST, act, at: _now - 2, rid: rid() });
@@ -134,7 +134,7 @@ test('PROF2 service: a boulder quarried - Rough Stone 3-5; a clean finish, or a 
   assert.equal(c.body.material, 'stone:cut');
   assert.ok(c.body.qty >= 1 && c.body.qty <= 3, 'three to five, halved');
   assert.equal(c.body.xp, 22);
-  const sb = await s.registered('Sten');
+  const sb = await s.seated('Sten');
   s.setXp(sb, xpForRank(100), 'mining', { spec100: 'stonebreaker' });
   const d = await s.call('/v1/prof/harvest', stone(sb, 400, 2, { glints: 0 }), sb.secret);
   assert.equal(d.body.material, 'stone:cut', 'a Stonebreaker cuts it always');
@@ -149,7 +149,7 @@ test('PROF2 service: a boulder quarried - Rough Stone 3-5; a clean finish, or a 
 
 test('PROF2 service: a dungeon\'s vein - no hours underground; tier 3 until the dungeon is witnessed; three accounts a week old confirm it; the pixels read says so', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(99));   // room on the track: the answer's XP is what was credited (AUDIT 29 A14)
   const id = 4321;
   const deep = (who, slot, extra = {}) => ({ character: who.character, node: dveinKey({ dungeon: id, day: today(), slot }), kind: 'ore', climate: MOUNTAIN, region: WAYREST, act: { glints: 0 }, at: _now - 2, rid: rid(), ...extra });
@@ -159,7 +159,7 @@ test('PROF2 service: a dungeon\'s vein - no hours underground; tier 3 until the 
   assert.deepEqual([r.body.material, r.body.xp], ['metal:silver', harvestXp(3, 99, false)], 'unconfirmed: the least a deep vein is - Silver, tier 3');
   // three witnesses a week registered
   for (const h of ['Wit1', 'Wit2', 'Wit3']) {
-    const w = await s.registered(h);
+    const w = await s.seated(h);
     s.age(w, 8);
     s.setXp(w, xpForRank(100));
     const n = dungeonVeins({ dungeon: id, day: today(), climate: MOUNTAIN, confirmed: false }).length;
@@ -184,7 +184,7 @@ test('PROF2 service: a gem - a strike on the glint a chance on witnessed ground,
   const id = 777;
   const deep = (who, extra = {}) => ({ character: who.character, node: dveinKey({ dungeon: id, day: today(), slot: 0 }), kind: 'ore', climate: MOUNTAIN, region: WAYREST, act: { glints: 1 }, at: _now - 2, rid: rid(), ...extra });
   for (const h of ['Wit1', 'Wit2', 'Wit3']) {
-    const w = await s.registered(h);
+    const w = await s.seated(h);
     s.age(w, 8);
     s.setXp(w, xpForRank(100));
     assert.equal((await s.call('/v1/prof/harvest', deep(w), w.secret)).status, 200);
@@ -192,7 +192,7 @@ test('PROF2 service: a gem - a strike on the glint a chance on witnessed ground,
   // the service's dice at their lowest: every chance taken
   const real = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
   t.mock.method(globalThis.crypto, 'getRandomValues', (b) => (b.byteLength === 4 ? b.fill(0) : real(b)));
-  const [mac, bare, full] = [await s.registered('Mac'), await s.registered('Bare'), await s.registered('Full')];
+  const [mac, bare, full] = [await s.seated('Mac'), await s.seated('Bare'), await s.seated('Full')];
   for (const who of [mac, bare, full]) s.setXp(who, xpForRank(100));
   const r = await s.call('/v1/prof/harvest', deep(mac), mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -211,7 +211,7 @@ test('PROF2 service: a gem - a strike on the glint a chance on witnessed ground,
 
 test('PROF2 service: Deep Delver\'s dungeon veins yield double (MINE-PERKS; half again until then); the Mining day past 60 credited (CAP-OFF), and a fifth vein in a dungeon nobody has vouched for still refused', async (t) => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100), 'mining', { spec50: 'deep-delver' });
   // the service's dice at their highest: the roll 3, x2 = 6 (3 without the specialisation) - PIN MOVED (MINE-PERKS): x1.5's 4.
   // Four dungeons: an account works no more a day in dungeons nobody has vouched for (AUDIT 29 A5).
@@ -237,7 +237,7 @@ test('PROF2 service: Deep Delver\'s dungeon veins yield double (MINE-PERKS; half
 
 test('PROF2 service: a smelt - two Iron an Iron Ingot, the inputs spent bought first, an ingot own only when both its units were; Smithing 10 XP a unit a tier; asked twice one', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'metal:iron', 'bought', 3);
   s.give(mac, 'metal:iron', 'own', 9);
   const body = { character: mac.character, recipe: 'ingot:iron', count: 5, rid: rid() };
@@ -266,7 +266,7 @@ test('PROF2 service: a smelt - two Iron an Iron Ingot, the inputs spent bought f
 
 test('PROF2 service: a smelt refused - the product\'s room; the crafter\'s limit holds Smithing at 50 behind two crafts past it; the switch shut; a smelt made answered after', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.give(mac, 'ore:mithril', 'own', 10);
   s.give(mac, 'ingot:mithril', 'own', 4998);
   assert.deepEqual((await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'ingot:mithril', count: 3, rid: rid() }, mac.secret)).body, { error: 'stores-full' });
@@ -290,7 +290,7 @@ test('PROF2 service: a smelt refused - the product\'s room; the crafter\'s limit
 
 test('PROF2 service: a metal writ taken - Mining\'s XP, twice the pay', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.raw.prepare(`INSERT INTO writs (id, kind, day, region, slot, material, tier, qty, pay, renown, expires_at) VALUES ('c:x:1:0', 'court', ?, ?, 0, 'metal:iron', 1, 20, 24, 50, ?)`)
     .run(today(), WAYREST, (today() + 1) * DAY);
   s.give(mac, 'metal:iron', 'own', 20);

@@ -40,6 +40,7 @@ export function possessedItemLists(save) {
   out.push(...lists(...Object.values(objectOf(csa?.packedCargoes))));
   for (const c of arrayOf(save?.modData?.[NAVAL_VENDOR]?.party?.party)) out.push(...lists(/** @type {any} */ (c)?.items));
   for (const r of arrayOf(save?.modData?.[REVENANT_VENDOR]?.list)) if (/** @type {any} */ (r)?.sworn && !/** @type {any} */ (r).defeated) out.push(...lists(/** @type {any} */ (r).companion?.items));
+  for (const r of arrayOf(save?.modData?.[REVENANT_VENDOR]?.list)) if (/** @type {any} */ (r)?.sworn && !/** @type {any} */ (r).defeated) out.push(...lists(Object.values(objectOf(/** @type {any} */ (r).companion?.gear)).filter((it) => it && typeof it === 'object')));   // RVN-GEAR: and the kit it wears (revenantGear.js)
   return out;
 }
 

@@ -56,7 +56,7 @@ function tier1Vein(from = 300) {
 async function confirmPixel(s, x, y, climate, region, tag = 'W') {
   const ws = [];
   for (let i = 0; i < 3; i++) {
-    const w = await s.registered(`${tag}${x}x${i}`);
+    const w = await s.seated(`${tag}${x}x${i}`);
     s.age(w, 8);
     const v = veins({ x, y, day: today(), climate, region })[0];
     const r = await s.call('/v1/prof/harvest', ore(w, nodeKey({ kind: 'vein', x, y, day: today(), slot: v.slot }), climate, region), w.secret);
@@ -92,7 +92,7 @@ function staged(s, match, n = 2) {
 
 test('AUDIT 29 A1: a node spelt with a leading zero is no node - the day\'s once is the node\'s, not its spelling\'s', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const v = tier1Vein();
   const r = await s.call('/v1/prof/harvest', ore(mac, v.key, WOODS, GLENUMBRA), mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -106,7 +106,7 @@ test('AUDIT 29 A1: a node spelt with a leading zero is no node - the day\'s once
 
 test('AUDIT 29 A3, RETIRED by CAP-OFF (2026-10-07, Mac: "Remove the cap on life skills"): the account\'s day in a profession bounds nothing - after 120 harvests (two characters\' old days) across invented characters, a fifth character\'s is credited', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const ins = s.raw.prepare(`INSERT INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, at, rid, n)
     VALUES (?, ?, 'ore', ?, ?, 'mining', 'metal:iron', 1, 15, ?, ?, 'x')`);
   for (let i = 0; i < 120; i++) ins.run(today(), `vein:1:1:${today()}:${i}`, mac.id, `alt-${String(i % 4).padStart(4, '0')}`, _now, `seed-${i}-xxxx`);
@@ -123,7 +123,7 @@ function herbNode() {
 
 test('AUDIT 29 A5: a dungeon nobody has vouched for gives an account four veins a day - its id the client\'s word, so invented dungeons buy four Silver, not the day', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(25));
   assert.equal(DEEP_UNCONFIRMED_PER_DAY, 4);
   clock(secondAt(today() * DAY + 60, 2));
@@ -144,14 +144,14 @@ test('AUDIT 29 A4: a claim against confirmed ground is refused AND written down 
   const key = '500,200';
   clock(NOON + 60);   // after the confirmation, as a dissent is
   for (const h of ['Honest1', 'Honest2']) {
-    const w = await s.registered(h);
+    const w = await s.seated(h);
     s.age(w, 8);
     const v = veins({ x: 500, y: 200, day: today(), climate: WOODS, region: GLENUMBRA })[0];
     const r = await s.call('/v1/prof/harvest', ore(w, nodeKey({ kind: 'vein', x: 500, y: 200, day: today(), slot: v.slot }), WOODS, GLENUMBRA), w.secret);
     assert.deepEqual([r.status, r.body], [409, { error: 'prof-pixel' }]);
   }
   assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM world_witness WHERE kind = 'pixel' AND key = ? AND region = ?").get(key, GLENUMBRA).n, 2, 'both dissents kept');
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const px = (await s.call('/v1/prof/pixels', { character: mac.character, pixels: [[500, 200]] }, mac.secret)).body.pixels[0];
   assert.equal(px.state, 'disputed');
   clock(NOON);
@@ -159,14 +159,14 @@ test('AUDIT 29 A4: a claim against confirmed ground is refused AND written down 
 
 test('AUDIT 29 A11: a region\'s ground is its pixels\' facts over EVERY report - a pixel one early report named for Daggerfall and three confirmed for Anticlere is Anticlere\'s', async () => {
   const s = await stand();
-  const early = await s.registered('Early');
+  const early = await s.seated('Early');
   s.age(early, 8);
   const v = veins({ x: 520, y: 200, day: today(), climate: WOODS, region: DAGGERFALL })[0];
   assert.equal((await s.call('/v1/prof/harvest', ore(early, nodeKey({ kind: 'vein', x: 520, y: 200, day: today(), slot: v.slot }), WOODS, DAGGERFALL), early.secret)).status, 200);
   clock(NOON + 60);
   await confirmPixel(s, 520, 200, WOODS, ANTICLERE);
   clock(NOON);
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   assert.deepEqual((await s.call('/v1/writs/list', { character: mac.character, region: DAGGERFALL }, mac.secret)).body.writs, [], 'none of Daggerfall\'s ground');
   assert.equal((await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret)).body.writs.length, 6);
 });
@@ -174,7 +174,7 @@ test('AUDIT 29 A11: a region\'s ground is its pixels\' facts over EVERY report -
 test('AUDIT 29 A6: a confirmed pixel\'s signature is a slot of its own, after the climate\'s - taken by the service; no such slot unconfirmed', async () => {
   const s = await stand();
   await confirmPixel(s, 540, 200, MOUNTAIN, WAYREST);
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100));
   const n = nodeCount(MOUNTAIN, 'vein');
   const r = await s.call('/v1/prof/harvest', ore(mac, nodeKey({ kind: 'vein', x: 540, y: 200, day: today(), slot: n }), MOUNTAIN, WAYREST), mac.secret);
@@ -188,7 +188,7 @@ test('AUDIT 29 A6: a confirmed pixel\'s signature is a slot of its own, after th
 
 test('AUDIT 29 A14: a harvest\'s XP is answered as credited - a track two short of the most says +2, not the harvest\'s +3', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, PROF_XP_MAX - 2);
   const r = await s.call('/v1/prof/harvest', ore(mac, tier1Vein().key, WOODS, GLENUMBRA), mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -197,14 +197,14 @@ test('AUDIT 29 A14: a harvest\'s XP is answered as credited - a track two short 
 
 test('AUDIT 29 A7 + A14: a smelt\'s Smithing XP keeps the quarter at the smith\'s rank, and is answered as credited under the crafter\'s limit', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(40), 'smithing');
   s.give(mac, 'metal:iron', 'own', 20);
   const r = await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'ingot:iron', count: 10, rid: rid() }, mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.equal(r.body.xp, 25, 'Iron (tier 1) at Smithing 40: a quarter of 100');
   // two crafts past Journeyman: Smithing stops at 50
-  const ann = await s.registered('Ann');
+  const ann = await s.seated('Ann');
   s.setXp(ann, xpForRank(60), 'provisioning');   // PIN MOVED (CRAFT3): Alchemy's rank is the Provisioning track's
   s.setXp(ann, xpForRank(60), 'building');   // PIN MOVED (CRAFT3): Carpentry's rank is the Building track's
   s.setXp(ann, xpForRank(51) - 3, 'smithing');
@@ -218,7 +218,7 @@ test('AUDIT 29 A7 + A14: a smelt\'s Smithing XP keeps the quarter at the smith\'
 
 test('AUDIT 29 A2: a paid change is its own track\'s - the same id raced for two tracks changes one, and the other is refused', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   for (const p of ['herbalism', 'mining']) s.setXp(mac, xpForRank(50), p);
   s.raw.prepare("UPDATE prof_tracks SET spec50 = CASE profession WHEN 'herbalism' THEN 'gardener' ELSE 'prospector' END WHERE player = ?").run(mac.id);
   s.seedMarks(mac, 5000);
@@ -238,7 +238,7 @@ test('AUDIT 29 A2: a paid change is its own track\'s - the same id raced for two
 
 test('AUDIT 29 A15: a paid change is asked as the client saw the track - a choice it thought free, made meanwhile elsewhere, is refused, not charged', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(50), 'herbalism');
   s.raw.prepare("UPDATE prof_tracks SET spec50 = 'gardener' WHERE player = ?").run(mac.id);
   s.seedMarks(mac, 5000);
@@ -252,7 +252,7 @@ test('AUDIT 29 A15: a paid change is asked as the client saw the track - a choic
 
 test('AUDIT 29 A13: a free first choice is a request like any other - asked again after the switch shut, it is answered as made', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(50), 'herbalism');
   const body = { character: mac.character, profession: 'herbalism', rank: 50, spec: 'gardener', from: null, rid: rid() };
   assert.equal((await s.call('/v1/prof/spec', body, mac.secret)).status, 200);
@@ -265,7 +265,7 @@ test('AUDIT 29 A13: a free first choice is a request like any other - asked agai
 
 test('AUDIT 29 A17: Motherlode Sense was refused by the service until its Motherlodes - PIN MOVED (PROF2b, 2026-10-03): chosen at Mining 100 as any', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(100));
   const r = await s.call('/v1/prof/spec', { character: mac.character, profession: 'mining', rank: 100, spec: 'motherlode-sense', from: null, rid: rid() }, mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -275,7 +275,7 @@ test('AUDIT 29 A17: Motherlode Sense was refused by the service until its Mother
 // ─── A COURT WRIT ────────────────────────────────────────────────────
 
 async function writsReady(s) {
-  const w = await s.registered('WitA');
+  const w = await s.seated('WitA');
   s.age(w, 8);
   const p = herbPatches({ x: 300, y: 200, day: today(), climate: WOODS })[0];
   await s.call('/v1/prof/harvest', { character: w.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: today(), slot: p.slot }), kind: 'herbs', climate: WOODS, region: ANTICLERE, act: {}, at: _now - 2, rid: rid() }, w.secret);
@@ -284,7 +284,7 @@ async function writsReady(s) {
 test('AUDIT 29 A16: a writ one filled oneself, asked again with a new id (the answer lost, the page reloaded), is answered as one\'s own - never "another has filled it"', async () => {
   const s = await stand();
   await writsReady(s);
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const w = (await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret)).body.writs[0];
   s.give(mac, w.material, 'own', w.qty);
   assert.equal((await s.call('/v1/writs/deliver', { character: mac.character, id: w.id, rid: rid() }, mac.secret)).status, 200);
@@ -297,7 +297,7 @@ test('AUDIT 29 A16: a writ one filled oneself, asked again with a new id (the an
 test('AUDIT 29 A12: one id raced over two writs fills one and answers the other as that one - never a 500', async () => {
   const s = await stand();
   await writsReady(s);
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const ws = (await s.call('/v1/writs/list', { character: mac.character, region: ANTICLERE }, mac.secret)).body.writs;
   for (const w of ws) s.give(mac, w.material, 'own', 100);
   const id = rid();

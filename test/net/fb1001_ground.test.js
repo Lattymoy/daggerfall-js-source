@@ -66,7 +66,7 @@ function ironPixel(day) {
 }
 /** The service, an account `name` (a week registered when `aged`), its book over the real door. */
 async function bookOf(s, name, { aged = false } = {}) {
-  const who = await s.registered(name);
+  const who = await s.seated(name);   // INT16 (Integrity-Arc section 7): a harvest is the account's seated realm character's
   if (aged) s.env.DB._raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(_ms / 1000 - 8 * DAY, who.id);
   const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, who) });
   return { who, book: createProfBook({ door, storage: memStorage(), character: () => who.character, now: () => _ms, sleep: () => Promise.resolve() }) };

@@ -78,7 +78,7 @@ export const milestoneAt = (v) => SKILL_MILESTONES.find((m) => m.at === v) ?? nu
 /** The sum of every milestone bonus at or below `v`. */
 export function milestoneBonus(v) {
   let b = 0;
-  for (const m of SKILL_MILESTONES) if (v >= m.at) b += m.bonus;
+  for (let i = 0; i < SKILL_MILESTONES.length; i++) if (v >= SKILL_MILESTONES[i].at) b += SKILL_MILESTONES[i].bonus;   // AUDIT MARTIAL L2 F3: indexed - a swing's pace reads the climb every frame of the swing
   return b;
 }
 

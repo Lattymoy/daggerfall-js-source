@@ -52,6 +52,7 @@ export function bossStandIn(look, name) {
   e.armor = BOSS_ARMOR;
   e.armorValues = new Array(7).fill(BOSS_ARMOR);
   e.maxHealth = e.health = 1e9;
+  e.relayHealth = true;   // AUDIT MARTIAL L3 F2: the relay's to know - a share of the 1e9 here is no word (systems/weaponMastery.js)
   e.name = name;
   e.spareGear = true;   // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)
   e.mobileType ??= look.mobile;   // WBX7: a soul trap reads the target's mobile (systems/effects.js) - his is a Daedra Lord's, no humanoid

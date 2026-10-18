@@ -56,6 +56,7 @@ import { profileView, profileRenown } from '../../src/ui/profileWindow.js';
 import { accountCard } from '../../src/ui/enhanced/enhancedAccount.js';
 import { AccountFlow } from '../../src/ui/accountFlow.js';
 import { ACCEPTED } from '../../src/net/legalLaw.js';   // TERMS1: a request that makes an account carries the versions ticked
+import { r2, seatRealm } from '../realmSeat.mjs';   // INT16: a Renown report is asked of the account's seated realm character
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -193,7 +194,7 @@ async function stand() {
   _resetKeyForTests();
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
-  const env = { DB: d1(), IDENTITY_PRIVATE_KEY: pkcs8, ACCOUNT_VERSION: 'test1', ALLOWED_ORIGIN: '*' };
+  const env = { DB: d1(), SAVES: r2(), IDENTITY_PRIVATE_KEY: pkcs8, ACCOUNT_VERSION: 'test1', ALLOWED_ORIGIN: '*' };   // INT16: SAVES, the realm's records - a report's seat is a realm character
   const call = async (method, path, body, bearer = null) => {
     const res = await worker.fetch(new Request(`https://accounts.invalid${path}`, {
       method,
@@ -207,15 +208,19 @@ async function stand() {
 
 test('AUDIT RENOWN1 DATA-4 at the route: `rid` rides the body to the report, and a REPEAT carries a signed order when the level is past 1 - the answer that was lost may have been the one with the rise in it; the deploy asks D1 itself for a report and its repeat (mutants: the rid dropped at the route; no order on a repeat)', async (t) => {
   t.mock.method(Date, 'now', () => T0 * 1000);
-  const { call } = await stand();
+  const { env, call } = await stand();
   const me = (await call('POST', '/v1/auth/guest', { ...ACCEPTED })).body;
+  // INT16 (Integrity-Arc section 7): a report is asked of the account's SEATED realm character and names it - so each
+  // character reporting here is a realm character the account plays (one seat an account: the second takes it)
+  const A = await seatRealm(env, me.secret, 'Aaaa');
   const rid = 'aaaaaaaaaaaaaaaa';
-  const first = (await call('POST', '/v1/renown/xp', { character: 'char-aaaa', xp: 5000, rid }, me.secret)).body;
+  const first = (await call('POST', '/v1/renown/xp', { character: A.id, xp: 5000, rid }, me.secret)).body;
   assert.deepEqual([first.credited, first.rose, typeof first.order], [5000, true, 'string']);
-  const again = (await call('POST', '/v1/renown/xp', { character: 'char-aaaa', xp: 5000, rid }, me.secret)).body;
+  const again = (await call('POST', '/v1/renown/xp', { character: A.id, xp: 5000, rid }, me.secret)).body;
   assert.deepEqual([again.credited, again.repeat, again.level, typeof again.order], [0, true, 9, 'string'], 'a repeat is answered, credited nothing, and carries the order');
-  const fresh = (await call('POST', '/v1/renown/xp', { character: 'char-bbbb', xp: 1, rid: 'bbbbbbbbbbbbbbbb' }, me.secret)).body;
-  const freshAgain = (await call('POST', '/v1/renown/xp', { character: 'char-bbbb', xp: 1, rid: 'bbbbbbbbbbbbbbbb' }, me.secret)).body;
+  const B = await seatRealm(env, me.secret, 'Bbbb');
+  const fresh = (await call('POST', '/v1/renown/xp', { character: B.id, xp: 1, rid: 'bbbbbbbbbbbbbbbb' }, me.secret)).body;
+  const freshAgain = (await call('POST', '/v1/renown/xp', { character: B.id, xp: 1, rid: 'bbbbbbbbbbbbbbbb' }, me.secret)).body;
   assert.deepEqual([freshAgain.repeat, freshAgain.order], [true, null], 'a repeat at level 1 has no rise to carry');
   assert.equal(fresh.credited, 1);
   const yml = src('.github/workflows/account-deploy.yml');

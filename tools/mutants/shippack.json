@@ -183,7 +183,7 @@
   {
     "name": "SHPK-menu-refusal-words",
     "file": "src/systems/comeSailAway/csaBoatMenu.js",
-    "old": "        : why === BOAT_MENU_WHY.noDeed ? 'Her deed must be in your pack to pick her up.'",
+    "old": "        : why === BOAT_MENU_WHY.noDeed ? 'You need the ship\\'s deed in your pack to pick it up.'",
     "new": "        : why === BOAT_MENU_WHY.noDeed ? null",
     "tests": [
       "test/systems/comeSailAway/boatmenu.test.js"

@@ -91,12 +91,14 @@ test('AUDIT PRE-MERGE 0929 T2: the site is published only once the account servi
   assert.match(deployJob, /BASE: \$\{\{ needs\.site\.outputs\.account_base \}\}/);
   // the loop itself, over a service that answers as the real one does (`{ ok, v }`, index.js /v1/health)
   const loop = runBlock(deployJob, 'Wait for the account service to serve this build\'s version');
-  const against = (answers) => {
-    // each ask runs in the $( ) subshell the step puts it in, so the stub counts its asks in a file, not a variable
+  const against = (answers, { upto = 0 } = {}) => {
+    // each ask runs in the $( ) subshell the step puts it in, so the stub counts its asks in a file, not a variable;
+    // `upto` cuts the loop's `seq` short (DEPLOY-WAIT: 1050 asks of stubs cost the suite twelve seconds) - the count
+    // itself is read off the source below
     const script = `A=(${answers.map((a) => `'${a}'`).join(' ')})
 curl() { local i; i=$(wc -l < "$CALLS"); echo "$*" >> "$CALLS"; local a="\${A[$i]-\${A[-1]}}"; [ -n "$a" ] && printf '%s' "$a"; return 0; }
 sleep() { :; }
-${loop}`;
+${upto ? `seq() { command seq 1 ${upto}; }\n` : ''}${loop}`;
     const calls = join(mkdtempSync(join(tmpdir(), 'a0929-')), 'calls');
     writeFileSync(calls, '');
     const res = bash(script, { WANT: 'acct20', BASE: 'https://svc.invalid', CALLS: calls });
@@ -107,9 +109,22 @@ ${loop}`;
   assert.match(now.asked[0], /https:\/\/svc\.invalid\/v1\/health/);
   assert.deepEqual([against(['{"ok":true,"v":"acct19"}', '', '{"ok":true,"v":"acct20"}']).status], [0], 'waited through an old service and a silent one');
   assert.equal(against(['{"ok":true,"v":"acct21"}']).status, 0, 'a later service serves this build too');
-  const never = against(['{"ok":true,"v":"acct19"}']);
+  const never = against(['{"ok":true,"v":"acct19"}'], { upto: 3 });
   assert.equal(never.status, 1, 'a service that never came: the site is not published');
-  assert.equal(never.asked.length, 90, 'thirty minutes of asking');
+  assert.equal(never.asked.length, 3, 'one ask a turn, and none after the last');
+  // PIN MOVED (DEPLOY-WAIT, 2026-10-17): 90 asks, thirty minutes, gave up on #983's site six minutes before its service
+  // came - the service waits up to five and a half hours on the relay. Now as long as that chain may take, and no longer
+  // than a job may run.
+  const asks = (src, name) => Number(/for i in \$\(seq 1 (\d+)\); do/.exec(runBlock(src, name))?.[1]);
+  const pause = (src, name) => Number(/\n\s+sleep (\d+)\n/.exec(runBlock(src, name))?.[1]);
+  const siteS = asks(deployJob, 'Wait for the account service to serve this build\'s version') * pause(deployJob, 'Wait for the account service to serve this build\'s version');
+  const acct = read('.github/workflows/account-deploy.yml');
+  const relayS = asks(acct, 'Wait for the relay to serve this push\'s version') * pause(acct, 'Wait for the relay to serve this push\'s version');
+  assert.equal(asks(deployJob, 'Wait for the account service to serve this build\'s version'), 1050, 'five hours fifty minutes of asking');
+  assert.ok(relayS > 0 && siteS > 0, 'both waits read');
+  assert.ok(siteS >= relayS + 10 * 60, `the site outwaits the service's own wait on the relay, and ten minutes of its deploy and checks (${siteS} s against ${relayS} s)`);
+  assert.ok(siteS + 5 * 60 <= 360 * 60, `and leaves five minutes to publish inside GitHub's six-hour job ceiling (${siteS} s)`);
+  assert.doesNotMatch(yml.slice(yml.indexOf('\n  deploy:\n')), /timeout-minutes:\s*([0-9]|[0-9][0-9]|[0-2][0-9][0-9]|3[0-4][0-9])\n/, 'no job timeout shorter than the wait');
 });
 
 // ── THE SERVICE ─────────────────────────────────────────────────────

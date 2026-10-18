@@ -20,14 +20,14 @@ const grogOf = (morale, grogToday) => {
 test('GROG-WORD: a crew that has had the day\'s round below the top is told in its own spirits - low is low, the press says Tomorrow - and "as high as they go" is the top\'s alone (mutants: the drunk row read as the top; the word dropped)', () => {
   const low = grogOf(40, true);
   assert.equal(spiritsOf(40).key, 'low', 'the helm\'s word at 40');
-  assert.equal(low.state, 'Her crew\'s spirits are low - they have had today\'s round');
+  assert.equal(low.state, 'Crew spirits are low - they\'ve had today\'s round');
   assert.equal(low.press, 'Tomorrow');
   assert.equal(low.can, false, 'still one round a port day');
   const top = grogOf(100, true);
-  assert.equal(top.state, 'Her crew\'s spirits are as high as they go');
+  assert.equal(top.state, 'Crew spirits are as high as they go');
   assert.equal(top.press, 'No need');
-  assert.equal(grogOf(100, false).state, 'Her crew\'s spirits are as high as they go');
+  assert.equal(grogOf(100, false).state, 'Crew spirits are as high as they go');
   const wants = grogOf(40, false);
-  assert.match(wants.state, /^Her crew's spirits are low - a round is \d/);
+  assert.match(wants.state, /^Crew spirits are low - a round is \d/);
   assert.equal(wants.can, true);
 });

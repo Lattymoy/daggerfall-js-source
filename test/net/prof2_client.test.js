@@ -369,12 +369,12 @@ test('PROF2 DONE WHEN: veins placed on rock fields; signatures by kingdom - a co
   // Wayrest's Mountain pixel, confirmed by three accounts a week registered
   const px = 410, py = 160;
   for (const h of ['Witness1', 'Witness2', 'Witness3']) {
-    const w = await s.registered(h);
+    const w = await s.seated(h);
     raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - 8 * DAY, w.id);
     const v = veins({ x: px, y: py, day, climate: MOUNTAIN, region: WAYREST, confirmed: false });
     await s.call('/v1/prof/harvest', { character: w.character, node: nodeKey({ kind: 'vein', x: px, y: py, day, slot: v.length - 1 }), kind: 'ore', climate: MOUNTAIN, region: WAYREST, act: {}, at: NOON - 1, rid: `wit-${h}-000000` }, w.secret);
   }
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, 'mining', ?, ?)`).run(mac.id, mac.character, 60_000, NOON);
   const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });
   const book = createProfBook({ door, storage: memStorage(), character: () => mac.character, now: () => NOON * 1000, sleep: noWait });

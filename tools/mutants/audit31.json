@@ -142,8 +142,9 @@
   {
     "name": "AUDIT31-svc-no-record-list",
     "file": "server-account/src/market.js",
-    "old": "  const p = await db.prepare('SELECT owner, listed, bought_with FROM products WHERE provenance = ?1').bind(provenance).first();\n  if (!p) return { error: 'market-no-record' };",
-    "new": "  const p = await db.prepare('SELECT owner, listed, bought_with FROM products WHERE provenance = ?1').bind(provenance).first();\n  if (!p) return { error: 'market-not-yours' };",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a crafted piece's words are pieceListRefusal's, asked before the record moves",
+    "old": "  if (!p) return 'market-no-record';   // AUDIT 31 H1: no record at all - never \"another owner's\"",
+    "new": "  if (!p) return 'market-not-yours';   // AUDIT 31 H1: no record at all - never \"another owner's\"",
     "tests": [
       "test/net/prof5_service.test.js"
     ]
@@ -251,7 +252,8 @@
   {
     "name": "AUDIT31-svc-fulfil-uncollected",
     "file": "server-account/src/writs.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()) return { error: 'market-uncollected' };\n",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the fill's words for a held piece are pieceBusy's, asked before the record moves and after a refused decision",
+    "old": "  if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()) return 'market-uncollected';\n",
     "new": "",
     "tests": [
       "test/net/audit31_service.test.js"
@@ -350,8 +352,9 @@
   {
     "name": "AUDIT31-book-slot-reread",
     "file": "src/net/writBook.js",
-    "old": "        if (kept(r) || slot() !== key) return { ok: false, kept: true, error: r?.error, text: WRIT_KEPT_TEXT };",
-    "new": "        if (kept(r)) return { ok: false, kept: true, error: r?.error, text: WRIT_KEPT_TEXT };",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a fill goes through the realm act and keeps nothing; the slot law is the kept fills' (a tab's from before), each read in its own character alone",
+    "old": "  const keptOf = (key = slot()) => { const k = table()[key]; return Array.isArray(k?.fulfils) ? k.fulfils : []; };",
+    "new": "  const keptOf = (key = slot()) => { const k = Object.values(table())[0]; return Array.isArray(k?.fulfils) ? k.fulfils : []; };",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -458,8 +461,9 @@
   {
     "name": "AUDIT31-book-gone-put-back",
     "file": "src/net/marketBook.js",
-    "old": "    if (had && !PIECE_GONE.includes(r?.error)) {",
-    "new": "    if (had) {",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a piece the service says is elsewhere is never put back by the realm act's undo (realmPieceAct)",
+    "old": "if (PIECE_GONE.includes(a?.error)) gone = true;",
+    "new": "if (false) gone = true;",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -485,8 +489,9 @@
   {
     "name": "AUDIT31-book-piece-held-word",
     "file": "src/net/marketBook.js",
-    "old": "    if (!piece?.take?.()) return { ok: false, error: 'piece-held' };",
-    "new": "    if (!piece?.take?.()) return { ok: false, error: 'bad-provenance' };",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the save that will not give a piece up is said inside the realm act (realmPieceAct)",
+    "old": "      if (!taken) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });",
+    "new": "      if (!taken) return Promise.resolve({ ok: false, error: 'bad-provenance', status: 409 });",
     "tests": [
       "test/net/audit31_client.test.js"
     ]

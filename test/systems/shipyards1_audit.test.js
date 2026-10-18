@@ -56,7 +56,7 @@ test('AUDIT SHIPYARDS THE CREW HALL OVER THE REAL SEA (L2-6): a ship as she is b
   const r = await seaRig(SMALL_SHIP, 24);
   const m = r.host.model(SITE, { page: 'crew' });
   assert.equal(m.hands.length, 4, 'a Small Ship as she is bought stands four');
-  assert.deepEqual([m.room.ok, m.room.full], [false, true], 'her deck is full');
+  assert.deepEqual([m.room.ok, m.room.full], [false, true], 'the deck is full');
   assert.ok(m.recruits.length && m.recruits.every((x) => x.swap === true && x.why === null), 'every recruit signs on in a hand\'s place');
   const pick = m.recruits[0];
   assert.deepEqual(r.host.act(SITE, 'hire', 42, pick.id), { ok: false, text: CREW_HALL_TEXT.full }, 'a full deck: no hire without a place named');
@@ -195,29 +195,29 @@ test('AUDIT SHIPYARDS THE SHIPMASTER\'S GUARDS THROUGH HIS ACT (L6-6): a placing
   // her hands ashore - packed, the sea fight off: by her number
   r.own(504, 0, 'packed');
   r.st.ashore.set(504, 1);
-  assert.deepEqual(r.host.act(SITE, 'sell', 504), { ok: false, text: 'Her hands are ashore with you - send them back aboard first.' });
+  assert.deepEqual(r.host.act(SITE, 'sell', 504), { ok: false, text: 'Some of the crew are ashore with you. Send them back aboard first.' });
   // each refusal through the act
   r.own(505, 2, 'here');
   r.st.aboard = 1;
-  assert.equal(r.host.act(SITE, 'sell', 505).text, 'Another player is aboard her.');
+  assert.equal(r.host.act(SITE, 'sell', 505).text, 'Another player is aboard.');
   r.st.aboard = 0;
   r.st.status.set(505, { hull: 100, maxHull: 100, inFight: true });
-  assert.equal(r.host.act(SITE, 'sell', 505).text, 'Not while she is fighting.');
+  assert.equal(r.host.act(SITE, 'sell', 505).text, 'Not while the ship is in combat.');
   r.st.status.delete(505);
   r.own(506, 2, 'here', { cargo: 2 });
-  assert.equal(r.host.act(SITE, 'sell', 506).text, 'Empty her hold first - the shipmaster buys the ship, not her cargo.');
+  assert.equal(r.host.act(SITE, 'sell', 506).text, 'Empty the hold first - the shipmaster buys the ship, not the cargo.');
   r.st.layUp = false;
-  assert.deepEqual(r.host.act(SITE, 'sell', 505), { ok: false, text: 'She could not be brought in to be sold.' });
+  assert.deepEqual(r.host.act(SITE, 'sell', 505), { ok: false, text: 'The ship couldn\'t be brought in to be sold.' });
   r.st.layUp = true;
   r.st.cabins.set(505, 3);
-  assert.equal(r.host.act(SITE, 'sell', 505).text, 'Clear her cabin first - what lies in it would go with her.');
+  assert.equal(r.host.act(SITE, 'sell', 505).text, 'Empty the cabin first - anything left in it would be sold with the ship.');
   // buying: the parts only into a pack that carries them; a deed's ship answers her page
   const heavy = tradeRig({ canCarry: false });
   const parts = heavy.host.act(SITE, 'buy', 0);
   assert.deepEqual([parts.ok, parts.text, heavy.log.paid.length, heavy.log.pack.length], [false, SHIPYARD_TEXT.heavy(mintParts(0, 0, 9001).name), 0, 0], 'no coin moves');
   const deed = r.host.act(SITE, 'buy', 2);
   assert.deepEqual([deed.ok, deed.page, deed.uid], [true, 'fleet', 9001], 'the window turns to her');
-  assert.match(deed.text, /laid up at Sentinel\. Press Bring her here/);
+  assert.match(deed.text, /laid up at Sentinel\. Press Bring here/);
 });
 
 test('AUDIT SHIPYARDS CUSTOMS CROSSES THE FLEET (L1-2): every Come Sail Away ship a crossing save holds - the Fleet\'s records, the placed boats, the deeds and parts in its lists - is entered crossed in the Fleet\'s record, said on the customs page, kept through a save, and never bought by a shipmaster; a record\'s worth is never above a new hull of hers, and an offer is never below nothing', () => {

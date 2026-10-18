@@ -92,8 +92,8 @@
   {
     "name": "NAV-F-the-fate-not-told",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "      button('Scuttle her', 'dfnaval-btn dfnaval-scuttle', () => settle('scuttle')),",
-    "new": "      button('Scuttle her', 'dfnaval-btn dfnaval-scuttle', () => exit('fate')),",
+    "old": "      button('Scuttle', 'dfnaval-btn dfnaval-scuttle', () => settle('scuttle')),",
+    "new": "      button('Scuttle', 'dfnaval-btn dfnaval-scuttle', () => exit('fate')),",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ],

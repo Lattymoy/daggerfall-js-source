@@ -3,8 +3,13 @@ import { cabinBlockName, readSailingCabin, cabinEntryRefusal, hasSailingCabin, C
 import { deckPose, localOf, worldOf } from './comeSailAway/comeSailAwayAboard.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { trs } from '../world/mat4.js';
+import { fleetShip } from '../systems/fleet.js';   // CABIN-LOOK: her cabin's stain, her Fleet record's
+import { cabinRestyle } from './cabinLook.js';
 
-export function sailingCabinEntry(blocks, saved, fromNative) {
+/** `guest` (AUDIT 2): the cabin is another player's (a visit, cabinOwner) - her stain is her captain's ledger's, which
+ *  this page has not: as built (it read MY ledger by her number - as built, or my own ship's stain where the numbers
+ *  met). */
+export function sailingCabinEntry(blocks, saved, fromNative, guest = false) {
   const cabin = readSailingCabin(saved);
   if (!cabin || typeof fromNative !== 'function') return null;
   const dfBlock = blocks.getBlockByName(cabinBlockName(cabin.hull));
@@ -15,7 +20,7 @@ export function sailingCabinEntry(blocks, saved, fromNative) {
   // caches are relative to the building origin, so the boat's yaw must not rotate it.
   const door = { matrix: trs(...origin, 0, 0, 0), blockIndex: dfBlock.index, recordIndex: 0, doorIndex: 0,
     centre: { x: 0, y: 0, z: 0 } };   // a logical entry anchor, never a rendered or clickable exterior door
-  const hit = { dfBlock, recordIndex: 0, door, climateBase: 2, season: 0, sailingCabin: cabin };
+  const hit = { dfBlock, recordIndex: 0, door, climateBase: 2, season: 0, sailingCabin: cabin, restyle: cabinRestyle(guest ? 0 : fleetShip(cabin.uid)?.cabin ?? 0) };   // CABIN-LOOK: her cabin stained as her captain chose
   const building = { buildingType: BUILDING_TYPES.Ship, buildingKey: -cabin.uid, regionIndex: -1,
     name: 'Ship cabin', factionId: 0, quality: 0, insideOpenShop: false };
   return { hit, entries: [hit], building, cabin };

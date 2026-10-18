@@ -72,8 +72,8 @@
   {
     "name": "PERF-SAILS2-the-draw-reads-unmade",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        one(gpu, made(rec));",
-    "new": "        one(gpu, rec.m);",
+    "old": "        one(gpu, made(rec), paint);",
+    "new": "        one(gpu, rec.m, paint);",
     "tests": [
       "test/net/perfcrowd1.test.js",
       "test/scenes/audit0928_online.test.js"

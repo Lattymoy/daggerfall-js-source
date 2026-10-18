@@ -39,7 +39,7 @@
   {
     "name": "AUDIT0929-S3-rr-weight-unread",
     "file": "src/systems/roleplayRealism/rrInstall.js",
-    "old": "    const weight = readSwing(ctx)?.weight ?? 0;",
+    "old": "    const weight = w?.weight ?? 0;",
     "new": "    const weight = 0;",
     "tests": [
       "test/systems/rr1_realism.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "AUDIT0929-S6-the-reader-grows-the-table",
     "file": "src/combat/swingLaw.js",
-    "old": "  const slots = entity.equip?.slots;",
-    "new": "  const slots = (entity.equip ??= { slots: {} }).slots;",
+    "old": "const handItem = (entity, ctx) => entity.equip?.slots?.[",
+    "new": "const handItem = (entity, ctx) => (entity.equip ??= { slots: {} }).slots?.[",
     "tests": [
       "test/systems/audit0929_swing.test.js",
       "test/combat/weapon/weaponrig.test.js"

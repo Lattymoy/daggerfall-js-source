@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-CHAP4-D1-TRACKER",
     "file": "src/net/npcRollTracker.js",
-    "old": "members: () => rollMembersOf(entityOf()?.guildMemberships, rollVampireOf(entityOf())),",
-    "new": "members: () => rollMembersOf(entityOf()?.guildMemberships),",
+    "old": "      return rollMembersOf(entity?.guildMemberships, rollVampireOf(entity));",
+    "new": "      return rollMembersOf(entity?.guildMemberships);",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]

@@ -144,7 +144,9 @@ where it had trained x1.25.
 
 A matched pair lands about 9% more damage a second than one of its weapons when they are light, and less when they are
 heavy (a longsword pair about 4%: the off arm's burden) - at every frame rate - for a quarter more fatigue a second
-(DFU's per-swing cost, unchanged) and the shield's armour given up. A light off
+(DFU's per-swing cost, unchanged) and the shield's armour given up - under PCAAO too since TWO-HANDS-SHIELD
+(2026-10-17), where the mod's block roll had read the off weapon as a shield and an iron one blocked as a leather
+buckler (`05-Combat/Physical-Combat-Overhaul.md`, the sixth departure). A light off
 weapon trades damage for quickness: half the blows are the dagger's (a quarter of the longsword's), so a longsword with a
 dagger lands LESS than the longsword alone - the pair is as good as its weaker hand. (The first cut's record called the
 dagger "the off hand's natural blade"; measured, it is not.)
@@ -316,6 +318,26 @@ second weapon. So the second hand is the sprite lane's idea on a skeleton: THE L
   to each arm's parent are read (`chainWorld`) - the frame composes no whole skeleton (L3 10). Arms COPIED (the fists,
   the idle's own arm) are untouched; the left-hand blow mirrors the whole body, the eye with it, so its picture was
   the glass's already.
+- **Mirrored by the bind, not the rest** (TWO-HANDS MIRROR-BIND, 2026-10-17, Mac: "adjust the positioning of the
+  morrowind left hand duel wield model on first person, so its properly mirrored. Third person looks good"). The
+  picture law's `K(b) = Rest(m)^-1 . S . Rest(b)` moved a mirrored arm as its counterpart moved FROM ITS OWN REST,
+  translation and all, so the left arm stood as the right's mirror only where the rest is its own mirror. Third person's
+  nearly is (xbase_anim's hands 1.09 units off each other's mirror); the first person's rest is a clip's first frame,
+  posed for the weapon hand. On the MW-STEEL4 stand-in for it (retail's bones, a camera, the arms' rests turned 70, 85
+  and -50 degrees off each other's mirror), the left hand stood 38 units off the right's mirror and the left blade 65;
+  on the near-symmetric retail rest, 1.1 and 2.6. What the left arm must be on the screen is the right arm's MESH in the
+  glass, and a skinned vertex lands at `M(b) . Bind(b)^-1 . v`, so `K(b) = Bind(m)^-1 . S . Bind(b)` - the bind's
+  (`mirrorRig.js` `pictureK`). A skin bound symmetric makes it a pure turn of the bone's axes with no translation, so
+  every joint stands exactly at its counterpart's mirror. The binds are the skeleton file's own skins (retail's Tri
+  Shadow, kept at assembly as `skinBinds`) and the assembly's skinned pieces (`mirrorBindSources`; a turned skin is not
+  read). A pair is read from one skin binding both, else from each side's own piece, and only where the two binds ARE
+  a mirror (`mirroredBinds`: each joint's y and z the other's to a hundredth of their span). An unbound node whose name
+  rule 13 mirrors (Weapon Bone Left, the Left Hand and Left Wrist attach nodes: a part on it is drawn with x negated) is
+  `X`, so the right part's mesh, drawn negated, lands as the right one's mirror - the left blade in the left fist as
+  the right is in the right, whatever the made bone's F was read from. Anything else keeps the rest's K, so the fixture
+  arm, whose rest is its own mirror, is the old law. Measured after: hand, elbow, blade (vertex for vertex), a rigid
+  part on Left Hand and every left gauntlet vertex land on the mirror to 1e-3, with the Tri Shadow and with only the two
+  gauntlets' skins. Third person (the body's local law, `buildPlan`) is untouched.
 - **The compositions** (`fpArm.js` `mirrorFor`), while the pair is IN THE HANDS (`pairHeld`: from the first frame of the
   draw to the last of the sheathe - AUDIT, L3 7; the blades still appear and vanish on the attach and detach keys):
   - a pair at rest - the left arm the right's mirror: both weapons up, as the stance holds the one; **on the move, the
@@ -450,14 +472,16 @@ one, never one hand's glow on both:
   exchange, the resting weapon, the off strike), the off hand's blow in the formula and between players, the rig on a
   synthetic CIF - the fists, the guard, the widget's two clones, the pair, the running hands (the stroke, the bob's
   clock, what takes a hand, the mods), the branch by source, a left-handed player.
-- `test/combat/twohands_mw.test.js` (32 - AUDIT 2's six for L3; the field reports' three: the stride's other half, a pair
+- `test/combat/twohands_mw.test.js` (34 - AUDIT 2's six for L3; MIRROR-BIND's two: the first-person pair the right in the glass on a rest that is not its own mirror, and the binds read only where they are a mirror; the field reports' three: the stride's other half, a pair
   walking in third person swinging its arms against each other on a female body's two sources, the first-person pair
   mirrored across an eye moved off the chest): the mirror rig on the retail biped (counterparts, the plan, the law in each bone's
   frame - every joint on its parent, a twisted chest, the carry per bone, the made Weapon Bone Left, which fist a clip
   throws) and the arm over the fixture arm (the left weapon on a skeleton without one, the pair from draw to sheathe,
   the mirrored blow's way, the guard's dip, the fists, the running hands under the climb and on the pitched lens, the
   portrait, a retried swap, by source). `tools/mutants/twohands_mw.json`: 78 mutants, all dead (8 the field reports',
-  `FIELD-*`: each fix reverted).
+  `FIELD-*`: each fix reverted). `tools/mutants/twohandsmirrorbind.json`: 9 mutants, all dead (MIRROR-BIND: the rest's
+  K, one skin only, the Left node's X and its bind's precedence, the mirror check both ways, each source unread, a
+  turned skin read).
 - `tools/mutants/twohands.json`: 184 mutants, all dead (4 the field reports', `TWOHANDS-FIELD-*`: the run on the
   uppercut, on a high frame, the snap, the fist held at the top - AUDIT 2's `RUN_PUMP-shape` and the first audit's
   `run-pump-frame-by-stroke` retired with the code they reverted, `hands-in-step` and two `TWOHANDS-ARM-*` re-aimed

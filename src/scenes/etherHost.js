@@ -115,7 +115,7 @@ export function createEtherHost(deps) {
     if (!l || !legendSails(L.legendDay(l.id), day())) return 0;
     L.endLegend(l.id, day());
     deps.credit?.(l.purse);
-    deps.mid?.(`${l.name} is ${act === 'board' ? 'taken' : 'sunk'}! ${ETHER_SEA_TITLE} will speak of this. ${gold(l.purse)} - her captain's hoard.`, 6);
+    deps.mid?.(`${l.name} is ${act === 'board' ? 'taken' : 'sunk'}! ${ETHER_SEA_TITLE} will speak of this. ${gold(l.purse)} from the captain's hoard.`, 6);
     return l.purse;
   }
   /** A harbourmaster's rumours of the legends from a port's pixel: each one's line. */
@@ -146,7 +146,7 @@ export function createEtherHost(deps) {
     const r = mulberry32(((seed >>> 0) ^ PAPERS_SALT) >>> 0);
     if (!(r() < PAPERS_CHANCE)) return 0;
     const n = islesNear(px, py, PAPERS_PX).filter((i) => L.chartIsle(i.key)).length;
-    if (n) deps.say?.(`Among her papers: a chart of these waters - ${n} ${n === 1 ? 'isle' : 'isles'} marked on yours.`, 5);
+    if (n) deps.say?.(`Among the ship's papers: a chart of these waters - ${n} ${n === 1 ? 'isle' : 'isles'} marked on yours.`, 5);
     return n;
   }
 

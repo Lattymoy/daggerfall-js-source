@@ -134,7 +134,8 @@ export const FRAME_ROLES = {
     '.px-win .card.acctin ul.acctfacts.acctrecord li',   // PROFILE-MENU: the profile's record, a tile a deed   // ARENA3: the Arena window's cards - a bout, a tier, a banner, a board, a rule   // ARENA2: the versus bar's plate - a stone panel over the sand
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its card, its word, its hint (under the Grimoire the card
     // and the word are scrolls of its own)
-    'body .fmt-tip', 'body .fmt-say', 'body .fmt-hint'],
+    'body .fmt-tip', 'body .fmt-say', 'body .fmt-hint',
+    '.px-sys .cmp-sheet'],   // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
   // panels that carry a brass edge on the left as their own mark
   panelAccent: ['body .rvncard', '.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'],   // PLUS-DRESS: the two that wore a brass line
   button: ['.port-host .port-btn', '.pack-shell .statflip-btn', '.inv-info .act', '.pbind .act', '.px-sys .act', '.shell .act', '.px-win .card .act', '.pack-shell .act', '.px-setwrap .act',
@@ -219,6 +220,7 @@ export const FRAME_ROLES = {
     'body .dfnaval-choice',   // NAV-F: the captor's three choices - the one taken brass
     'body .dfiliac .opt',   // CARDS-PLUS: Iliac Hand's setup - a deck, a regular, a box ticked - the one chosen brass
     'body .dfgambit-unit', 'body .dfgambit-stake', 'body .dfgambit-crown',   // KG3: a unit of the grid, a stake, a crown
+    '.px-sys .cmp-vent',   // RVN-ERRAND: the errand's venture - the one chosen brass
     '.px-sys .coll-part', '.px-sys .binder-filter', '.px-sys .binder-chip'],   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards
   // HOLDINGS: where a holding is (`.hld-state`)
   chip: ['body .rvncard-rank', '.px-sys .rvn-rank', '.px-sys .hld-state', '.px-sys .fam-chip',   // LEGACY3: a person's state
@@ -230,10 +232,11 @@ export const FRAME_ROLES = {
     'body .aw-chip',   // ARENA3: the Arena window's titles, banners, laurels, odds and states - readouts   // ARENA2: the bout's clock and the crowd's darling/villain marks - readouts
     'body .dfcards .pot', 'body .dfiliac .pw',   // CARDS-PLUS: the pot, and a holding's power each way - readouts
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
-    'body .fmt-purse'],
+    'body .fmt-purse',
+    '.px-sys .cmp-odds'],   // RVN-ERRAND: an errand's odds - a readout
   // HOLDINGS: a holding's picture, a name's field (`.hld-art`, `.hld-field`)
   well: ['body .rvncard-face', '.px-sys .rvn-face', '.px-sys .hld-art', '.px-sys .hld-field', '.px-sys .fam-view', '.px-sys .fam-card .fam-face', 'body .lgs-face',   // LEGACY3: the tree's ground, the card's portrait
-     '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .opt-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
+     '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.px-sys .cmp-gslot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .opt-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
     '.port-host .port-field', '.port-host .port-canvas', '.port-host .port-picture img', '.port-host .port-pictureword', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
     '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch',

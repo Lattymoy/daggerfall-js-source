@@ -28,7 +28,10 @@ six and both sergeants), it says "The attackers have been fought off.
 The ship continues to its destination." and runs **Leave Ship**: the
 blocks back to `_base`, and the player ashore where they boarded - a
 lent ship lent again for exactly as long as it takes to leave it. The
-quest itself ends on its one-hour clock.
+quest itself ends on its one-hour clock. RAID-ASHORE (2026-10-17, DECLARED - `03-World/Naval-Refit.md`): a raid fought
+where the player stands - a linked bank cabin's sailing ship at her quay, the land: off the sea's region Leave Ship
+sails no one anywhere - ends there instead: its crew and last raiders withdrawn, the blocks back to `_base`, the quest
+ended as its own `end quest` ends one; and a voyage made while a raid's quest runs arms no second ambush.
 
 One switch, `Enabled`, on by default (`systems/modSettings.js`
 `warm-ashes-ships`; the Features row under World, "Takes effect on your

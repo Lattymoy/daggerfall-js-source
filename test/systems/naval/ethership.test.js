@@ -127,7 +127,7 @@ test('ETHER-LEGENDS the rumours: where each was last seen from the port - league
   assert.equal(rumourOf(legendById('wake'), north), 'Sorrow\'s Wake has been seen some 8 leagues north of here.');
   const l = hauntOf(legendById('lantern'));
   assert.match(rumourOf(legendById('lantern'), { px: l.px, py: l.py - Math.round(5 * LEAGUE_PX) }), /^The Lantern-Eater has been seen some 5 leagues south of here\. By night\.$/);
-  assert.equal(rumourOf(legendById('queen'), from, { endedDay: 10, day: 12 }), 'The Drowned Queen went down 2 days ago; they say the aether will raise her again.');
+  assert.equal(rumourOf(legendById('queen'), from, { endedDay: 10, day: 12 }), 'The Drowned Queen went down 2 days ago; they say the aether will raise it again.');
   assert.match(rumourOf(legendById('queen'), from, { endedDay: 10, day: 10 }), /went down today/);
   assert.match(rumourOf(legendById('queen'), from, { endedDay: 10, day: 11 }), /went down yesterday/);
   assert.match(rumourOf(legendById('queen'), from, { endedDay: 10, day: 40 }), /has been seen/, 'risen');

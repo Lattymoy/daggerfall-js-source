@@ -57,8 +57,8 @@
   {
     "name": "ACS-B16-exotic",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "sell: p.sell, buy: p.buy, exotic,",
-    "new": "sell: p.sell, buy: p.buy, exotic: false,",
+    "old": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k)))), exotic,",
+    "new": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k)))), exotic: false,",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -159,7 +159,7 @@
   {
     "name": "ACS-B4-said",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    for (const c of r.voided ?? []) deps.mid?.(c.kind === 'delivery' ? cargoVoidWords(c) : `Bounty void - ${c.title}. She went down by another hand.`, 5);",
+    "old": "    for (const c of r.voided ?? []) deps.mid?.(c.kind === 'delivery' ? cargoVoidWords(c) : `Bounty void - ${c.title}. Someone else sank it.`, 5);",
     "new": "    void r;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
@@ -251,7 +251,7 @@
   {
     "name": "ACS-B11-room-refusal",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (fit <= 0) return { ok: false, text: 'She can carry no more - laden deeper, she would lie dead in the water.' };",
+    "old": "    if (fit <= 0) return { ok: false, text: 'The ship can\\'t carry any more. Any heavier and it couldn\\'t move.' };",
     "new": "    void fit;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -278,7 +278,7 @@
   {
     "name": "ACS-B11-lede",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "const room = x.room == null ? '' : x.room > 0 ? ` - room for ${x.room} kg more before she lies dead in the water` : ' - she can carry no more';",
+    "old": "const room = x.room == null ? '' : x.room > 0 ? ` - room for ${x.room} kg more before the ship can't move` : ' - the ship can\\'t carry any more';",
     "new": "const room = '';",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -351,8 +351,8 @@
   {
     "name": "ACS-C1-worth-set",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "s.worth = b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH;",
-    "new": "s.worth = b.crewed ? crewWorth(c.hands, b.uid ? companions.awayOf(b.uid) : null) : NO_WORTH;",
+    "old": "s.worth = captainWorth(b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH, deps.captain?.stats?.());",
+    "new": "s.worth = captainWorth(b.crewed ? crewWorth(c.hands, b.uid ? companions.awayOf(b.uid) : null) : NO_WORTH, deps.captain?.stats?.());",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1458,7 +1458,7 @@
   {
     "name": "ACS-P5-summon",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : apart ? 'She lies on the far side of the Veil - sail her across yourself.'\n",
+    "old": "      : apart ? 'This ship is on the other side of the Veil. Sail it across yourself.'\n",
     "new": "",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -1467,7 +1467,7 @@
   {
     "name": "ACS-P5-away",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : apart ? 'She lies on the far side of the Veil - no crew takes her across alone.'\n",
+    "old": "      : apart ? 'This ship is on the other side of the Veil. The crew won\\'t take it across without you.'\n",
     "new": "",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -1928,8 +1928,8 @@
   {
     "name": "ACS-L15-page",
     "file": "src/scenes/world.js",
-    "old": "captain: fleetHost ? { model: () => captainModel() } : null,",
-    "new": "captain: fleetHost && csaOn() ? { model: () => captainModel() } : null,",
+    "old": "captain: fleetHost ? { model: () => captainPage.model(),",
+    "new": "captain: fleetHost && csaOn() ? { model: () => captainPage.model(),",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/captlog.test.js"
@@ -2424,7 +2424,7 @@
   {
     "name": "ACS-S20-words-emptied",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "  if (!(cargo > 0)) return 'riding high - her hold emptied';",
+    "old": "  if (!(cargo > 0)) return 'riding high - hold empty';",
     "new": "  if (!(cargo > 0)) return 'riding high - a light hold';",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -2505,8 +2505,8 @@
   {
     "name": "ACS-S21-studied-arm",
     "file": "src/scenes/naval/navalHost.js",
-    "old": ": was >= KNOW.studied ? `${s.names?.name ?? 'She'} runs up the black flag!`",
-    "new": ": false ? `${s.names?.name ?? 'She'} runs up the black flag!`",
+    "old": ": was >= KNOW.studied ? `${s.names?.name ?? 'It'} runs up the black flag!`",
+    "new": ": false ? `${s.names?.name ?? 'It'} runs up the black flag!`",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2998,7 +2998,7 @@
   {
     "name": "ACS-V8-the-chart-pops-a-page",
     "file": "src/ui/naval/navalPlunderDoor.js",
-    "old": "  if (slot !== ETHER_CHART) noteFirstUse(slot === PLUNDER",
+    "old": "  if (slot !== ETHER_CHART && slot !== CAPTAIN_STARS && slot !== DECK_PLAN) noteFirstUse(slot === PLUNDER",
     "new": "  noteFirstUse(slot === PLUNDER",
     "tests": [
       "test/systems/shipyards1_found.test.js"

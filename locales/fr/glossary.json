@@ -305,5 +305,13 @@
  "pot (the stakes)": "pot",
  "No contest": "Partie annulée",
  "first-time bonus (a craft's first-make XP)": "bonus de première fois",
- "cloth (the Weavers' Linen and Wool)": "tissu"
+ "cloth (the Weavers' Linen and Wool)": "tissu",
+ "martial specialisation": "spécialisation martiale",
+ "signature technique": "technique emblématique",
+ "technique (a weapon's)": "technique",
+ "technique key": "touche de technique",
+ "fatigue": "fatigue",
+ "Agility": "Agilité",
+ "Speed (attribute)": "Vitesse",
+ "Running, Jumping (skills)": "Course, Saut"
 }

@@ -139,8 +139,8 @@
   {
     "name": "NAMEAS-the-letter-answer-naming-the-handle",
     "file": "server-account/src/letters.js",
-    "old": "to: account ? displayName(reader) : reader.handle };",
-    "new": "to: reader.handle };",
+    "old": "return { ok: true, id, to: account ? displayName(reader) : reader.handle };\n}",
+    "new": "return { ok: true, id, to: reader.handle };\n}",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -157,7 +157,7 @@
   {
     "name": "NAMEAS-the-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct149';",
+    "old": "export const ACCOUNT_VERSION = 'acct153';",
     "new": "export const ACCOUNT_VERSION = 'acct121';",
     "tests": [
       "test/server/duel_record.test.js",

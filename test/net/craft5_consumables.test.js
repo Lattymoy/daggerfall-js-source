@@ -82,7 +82,7 @@ test('CRAFT5 law: a kit\'s craft rolls a quality, its reach - never a takesQuali
 test('CRAFT5 through the real Worker: a Repair Kit\'s craft is answered a quality and its record signed at it - the kit the book mints carries it', async () => {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   raw.prepare('INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, ?, ?, 1)').run(mac.id, mac.character, 'smithing', xpForRank(100));
   for (const [m, n] of [['ingot:iron', 9], ['leather:cured', 9]]) raw.prepare('INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, \'own\', ?)').run(mac.id, mac.character, m, n);
   const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });

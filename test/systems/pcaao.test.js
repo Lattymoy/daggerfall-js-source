@@ -35,6 +35,7 @@ import {
 import { calculateAttackDamage, damageModifier, damageEquipment, formulaOverride, registerFormulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, weaponAttackDamage } from '../../src/combat/formulas.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
 import { makeEnemyEntity } from '../../src/characters/enemy/enemyEntity.js';
+import { weaponOfMaterial, armorOfMaterial } from '../../src/combat/enemyEquipment.js';   // TWO-HANDS-SHIELD: the pieces as the builder mints them
 import { EQUIP_SLOTS, equipTableOf, _wearScaleForTests } from '../../src/systems/equip.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../../src/systems/roleplayRealism/rrRealism.js';
@@ -371,6 +372,32 @@ test('PCO1: the shield - its block chance by template and stats, and only when i
   const f = Math.fround;
   assert.equal(pcaaoNaturalDamageResistance(mkPlayer({ stats: stats({ endurance: 100, strength: 100, willpower: 100 }) })), f(f(f(50 * f(0.002)) + f(50 * f(0.001))) + f(50 * f(0.001))));
   assert.equal(pcaaoNaturalDamageResistance(mkPlayer({ stats: stats({ endurance: 0, strength: 0, willpower: 0 }) })), f(f(f(-50 * f(0.002)) + f(-50 * f(0.001))) + f(-50 * f(0.001))));
+});
+
+test('TWO-HANDS-SHIELD (the sixth departure): a weapon in the left hand is no shield - the overhaul neither rolls its block nor reduces by it, and a shield still does (mutants: TWO-HANDS-SHIELD-any-left-hand-item-blocks, TWO-HANDS-SHIELD-the-block-roll-reads-the-hand)', () => {
+  // a nimble defender's weak spot: 0 + 15 + 10 = 25 for "anything else in the hand", 45 for a buckler - a roll of 20 (no crit) blocks
+  const nimble = () => mkPlayer({ stats: stats({ agility: 100, speed: 100 }) });
+  const knight = classEnemy(17);
+  const blow = (target) => {
+    const d = pcaaoAttackDamage(knight, target, { weapon: weaponOfMaterial(120, 1), rolls: fixed(0.2), dfRand: fixed(0), modules: M });
+    return { d, blocked: _shieldBlockSuccess() };
+  };
+  const bare = blow(nimble());
+  assert.equal(bare.blocked, false);
+  assert.ok(bare.d > 0, `the blow lands whole on bare skin (${bare.d})`);
+  // a pair: a steel longsword and an iron dagger - iron reads as leather's armour value, so the dagger had blocked as a leather shield
+  const pair = nimble();
+  wear(weaponOfMaterial(120, 1), equipTableOf(pair), EQUIP_SLOTS.RightHand);
+  wear(weaponOfMaterial(113, 0), equipTableOf(pair), EQUIP_SLOTS.LeftHand);
+  assert.deepEqual(blow(pair), bare, 'the off hand\'s iron dagger: the bare blow, never a block');
+  const steel = nimble();
+  wear(weaponOfMaterial(113, 1), equipTableOf(steel), EQUIP_SLOTS.LeftHand);
+  assert.deepEqual(blow(steel), bare, 'a steel dagger waiting for H: the same');
+  const shielded = nimble();
+  wear(armorOfMaterial(109, 0), equipTableOf(shielded), EQUIP_SLOTS.LeftHand);
+  const s = blow(shielded);
+  assert.equal(s.blocked, true, 'a leather buckler blocks at its weak spot');
+  assert.ok(s.d < bare.d, `and takes its share off (${s.d} < ${bare.d})`);
 });
 
 test('PCO1: proficiency and racial modifiers are stat-driven, on the C#\'s ladders', () => {

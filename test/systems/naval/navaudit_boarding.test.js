@@ -295,7 +295,7 @@ test('AUDIT NAV1 (B3) her crew SURRENDERS: her captain and SURRENDER_SHARE of he
   assert.equal(h.host.boarding, null, 'taken');
   assert.ok(fall < enemies.length, 'some still stood');
   assert.deepEqual(atWindow, enemies.map((_, i) => i >= fall), 'the living yielded before the window; the dead never asked');
-  assert.ok(h.log.say.includes('The rest of her crew throw down their arms.'));
+  assert.ok(h.log.say.includes('The rest of the enemy crew surrenders.'));
   assert.ok(!enemies.slice(fall).some((f) => h.log.removed.includes(f)), 'standing on her deck');
 });
 
@@ -309,7 +309,7 @@ test('AUDIT NAV1 (B4) a ship the FIRE finishes is announced and reckoned as a ba
   blow(h, e, 'local', { fire: 'barrel' });   // my barrel sets her afire
   h.run(5);
   assert.equal(d.state, SHIP_STATES.struck, 'the fire struck her');
-  assert.ok(h.log.say.includes(`${e.ship.names.name} strikes her colours!`), 'said');
+  assert.ok(h.log.say.includes(`${e.ship.names.name} surrenders!`), 'said');
   assert.ok(h.log.sounds.some(([k]) => k === NAVAL_CLASSIC.bell), 'her bell');
   assert.equal(d.fire, 0, 'struck: her fires put out');
   h.run(STRUCK_GRACE_S + 1);
@@ -345,7 +345,7 @@ test('AUDIT NAV1 (B4) a ship I BOARDED going down under the fight ends it: "Back
   h.run(3);
   assert.equal(e.ship.damage.state, SHIP_STATES.sinking, 'her fire took her under, boarded');
   assert.equal(h.host.boarding, null, 'the fight is over');
-  assert.ok(h.log.mid.includes(`${e.ship.names.name} is going down! Back to your ship!`));
+  assert.ok(h.log.mid.includes(`${e.ship.names.name} is going down! Back to your own ship!`));
   assert.ok(enemies.every((f) => h.log.removed.includes(f)), 'her men over the side');
   assert.equal(h.log.placed.length, placed + 1);
   assert.deepEqual(h.log.placed.at(-1), [[0, 5, 0], 0], 'back on my own deck');
@@ -479,7 +479,7 @@ test('AUDIT NAV1 (B9) THE FIGHT ON SCREEN: on foot over her rail the HUD\'s card
   assert.deepEqual([h.host.hudModel().boarding.captainDown, h.host.hudModel().boarding.down], [true, 2]);
   const t = navalHudText(h.host.hudModel());
   assert.deepEqual(t.fight, { name: `Boarding ${e.ship.names.name}`, sub: `Captain ${e.ship.names.captain} - down`, state: `2 of ${n} down - they yield at ${Math.ceil(n * SURRENDER_SHARE)}`, kind: 'board' });
-  assert.equal(navalHudText({ ...m, boarding: { ...m.boarding, captainDown: false } }).fight.state, `0 of ${n} down - cut down her captain`);
+  assert.equal(navalHudText({ ...m, boarding: { ...m.boarding, captainDown: false } }).fight.state, `0 of ${n} down - defeat their captain`);
   assert.equal(navalHudText({ ...m, boarding: { ...m.boarding, phase: 'grapple' } }).fight.name, `Grappling ${e.ship.names.name}`);
   const repel = navalHudText({ ...m, boarding: { kind: 'repel', phase: 'fight', name: 'Red Wake', captain: null, captainDown: false, down: 1, total: 4, yieldAt: 3, raid: false } }).fight;
   assert.deepEqual(repel, { name: 'Repel the boarders', sub: 'From Red Wake', state: '1 of 4 down', kind: 'sinking' });
@@ -501,7 +501,7 @@ test('AUDIT NAV1 (B13) THE PRIZE\'S FOURTH CHOICE - Black Flag\'s "lower your wa
   const mine = { maxHull: 100, hull: 100, maxSail: 50, sail: 50, maxCrew: 10, crew: 10 };
   assert.deepEqual(choiceEffect('papers', mine, { notoriety: 40 }), { notoriety: -PAPERS_NOTORIETY });
   assert.deepEqual(choiceEffect('papers', mine, { notoriety: 6 }), { notoriety: -6 });
-  assert.deepEqual(choiceOffer('papers', mine, {}, { notoriety: 30, lawful: true, crown: 'Wayrest' }), { id: 'papers', title: 'Burn her papers', useful: true, detail: `Your notoriety in Wayrest's waters falls by ${PAPERS_NOTORIETY}` });
+  assert.deepEqual(choiceOffer('papers', mine, {}, { notoriety: 30, lawful: true, crown: 'Wayrest' }), { id: 'papers', title: 'Burn the papers', useful: true, detail: `Your notoriety in Wayrest's waters falls by ${PAPERS_NOTORIETY}` });
   assert.deepEqual(choiceOffer('papers', mine, {}, { notoriety: 0, lawful: false, crown: 'Sentinel' }), { id: 'papers', title: PIRATE_PAPERS_TITLE, useful: false, detail: "No one hunts you in Sentinel's waters" });
   // through the host: a merchantman taken - Piracy's notoriety, then her papers burned
   const { h, e, enemies } = await boarding();
@@ -512,10 +512,10 @@ test('AUDIT NAV1 (B13) THE PRIZE\'S FOURTH CHOICE - Black Flag\'s "lower your wa
   assert.ok(before >= PAPERS_NOTORIETY, 'taking a lawful ship made me wanted');
   const m = h.log.plunder.at(-1);
   const offer = m.offers().find((o) => o.id === 'papers');
-  assert.deepEqual([offer.title, offer.useful], ['Burn her papers', true]);
+  assert.deepEqual([offer.title, offer.useful], ['Burn the papers', true]);
   assert.equal(m.choose('papers'), true);
   assert.equal(h.host.notoriety.get(crown), before - PAPERS_NOTORIETY);
-  assert.ok(h.log.say.some((t) => t.startsWith('Her papers burn')));
+  assert.ok(h.log.say.some((t) => t.startsWith('You burn the ship\'s papers')));
   assert.equal(m.choose('repair'), false, 'one choice');
 });
 

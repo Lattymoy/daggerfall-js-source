@@ -155,7 +155,7 @@ test('ANY-HOUR: the service answers a harvest at any hour of the shared clock - 
   const realNow = Date.now;
   try {
     const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'Mac' });
-    const mac = await s.registered('Mac');
+    const mac = await s.seated('Mac');
     let n = 0;
     for (const [i, want] of [2, 21, 12].entries()) {
       const at = secondAt(utcDay(T0) * SDAY + 3600, want);

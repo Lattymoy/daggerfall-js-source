@@ -172,9 +172,9 @@ test('NAV-D the captor\'s one choice, as the window offers it: what it would mak
   assert.equal(choiceOffer('powder', mine, { loaded: false }).useful, true);
   assert.deepEqual(choiceOffer('powder', mine, { loaded: true, barrelGuns: true, barrels: 1, barrelStock: 4 }), { id: 'powder', title: 'Powder and shot', useful: true, detail: 'Every gun loaded - fire barrels to 4' });
   assert.equal(choiceOffer('powder', mine, { loaded: true, barrelGuns: true, barrels: 4, barrelStock: 4 }).useful, false);
-  assert.deepEqual(choiceOffer('press', mine), { id: 'press', title: 'Press her crew', useful: true, detail: `${Math.ceil(10 * PRESS_SHARE)} hands to your guns` });
+  assert.deepEqual(choiceOffer('press', mine), { id: 'press', title: 'Press the crew', useful: true, detail: `${Math.ceil(10 * PRESS_SHARE)} hands to your guns` });
   assert.equal(choiceOffer('press', { ...mine, crew: 23 }).detail, '1 hand to your guns');
-  assert.deepEqual(choiceOffer('press', { ...mine, crew: 24 }), { id: 'press', title: 'Press her crew', useful: false, detail: 'Your crew is whole' });
+  assert.deepEqual(choiceOffer('press', { ...mine, crew: 24 }), { id: 'press', title: 'Press the crew', useful: false, detail: 'Your crew is whole' });
   assert.equal(choiceOffer('press', { ...mine, maxCrew: 0, crew: 0 }).detail, 'No berths for them');
 });
 

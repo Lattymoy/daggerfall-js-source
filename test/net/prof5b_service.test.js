@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
+import { layRecord, holdPieces } from '../realmSeat.mjs';   // INT16: a disenchant's piece in its seated character's record; INT19: an auctioned piece's
 import { MARKS_MAX } from '../../src/net/marksLaw.js';
 import { runCron, CRON_MINUTE } from '../../server-account/src/cron.js';
 import { SETTLE_MAX } from '../../server-account/src/market.js';
@@ -32,10 +33,15 @@ async function stand(extra = {}) {
   const raw = s.env.DB._raw;
   const balance = (who) => Number(raw.prepare('SELECT balance FROM marks WHERE account = ?').get(who.id)?.balance ?? 0);
   const fund = (who, marks) => raw.prepare('INSERT INTO marks (account, balance) VALUES (?, ?) ON CONFLICT (account) DO UPDATE SET balance = excluded.balance').run(who.id, marks);
-  /** A crafted piece this account owns, as the anvil writes it - a Masterwork unless said. */
-  const piece = (who, provenance, { recipe = 'longsword:mithril', quality = 4 } = {}) => raw.prepare(`INSERT INTO products
-    (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at) VALUES (?, ?, ?, 'Silverthorn', ?, 120, 5, ?, 4242, 'p1.x', ?)`)
-    .run(provenance, who.id, who.character, recipe, quality, _now);
+  /** A crafted piece this account owns, as the anvil writes it - a Masterwork unless said. PIN MOVED (INT19, Integrity-Arc
+   *  section 7): an auction takes the piece out of its seller's realm record, so a realm character's piece stands there
+   *  too, at the wear the posts name (900). */
+  const piece = (who, provenance, { recipe = 'longsword:mithril', quality = 4 } = {}) => {
+    raw.prepare(`INSERT INTO products
+      (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at) VALUES (?, ?, ?, 'Silverthorn', ?, 120, 5, ?, 4242, 'p1.x', ?)`)
+      .run(provenance, who.id, who.character, recipe, quality, _now);
+    if (who.at) holdPieces(s.env, who.character, [{ provenance, quality, wear: 900 }]);
+  };
   const owner = (p) => raw.prepare('SELECT owner, listed FROM products WHERE provenance = ?').get(p);
   const read = (who, view, extra = {}) => s.call('/v1/market/read', { character: who.character, region: DF, view, hubs: HUBS, ...extra }, who.secret);
   const post = (who, provenance, opening, extra = {}) => s.call('/v1/market/auction', { character: who.character, region: DF, provenance, wear: 900, opening, hubs: HUBS, rid: rid(), ...extra }, who.secret);
@@ -55,7 +61,7 @@ async function stand(extra = {}) {
 test('PROF5b DONE WHEN: a Masterwork posted in Daggerfall is bid on from Wayrest and from Daggerfall - the Wayrest bid outbid and its escrow back on its bidder\'s read, a bid in the last two minutes adding two - and at its end the Daggerfall bidder\'s piece is theirs, the seller paid the bid less its tax; disenchanted after, its auction and bids still in "My listings" (AUDIT PROF-541 R2-S4)', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), ann = await s.registered('Ann'), bob = await s.registered('Bob');
+  const mac = await s.seated('Mac'), ann = await s.registered('Ann'), bob = await s.seated('Bob');   // INT16: Bob disenchants (a progression claim), below; INT19: Mac's auction leaves his record
   for (const w of [mac, ann, bob]) s.fund(w, 100_000);
   const PV = P(0xa1);
   s.piece(mac, PV);
@@ -114,7 +120,12 @@ test('PROF5b DONE WHEN: a Masterwork posted in Daggerfall is bid on from Wayrest
   assert.deepEqual((await s.read(bob, 'history')).body.trades.filter((t) => t.side === 'won').map((t) => t.total), [win]);
   // AUDIT PROF-541 R2-S4: Bob disenchants it (its products row gone) - the auction and his bids stay in "My listings",
   // named by the disenchant's recipe
-  const gone = await s.call('/v1/prof/disenchant', { character: bob.character, provenance: PV, rid: rid() }, bob.secret);
+  // INT16 (Integrity-Arc section 7): a disenchant is a progression claim, asked of the SEATED realm character - so its piece
+  // leaves that character's RECORD (AUDIT PROF-541 B2, `realm` where it stands): the piece Bob collected is in his pack,
+  // checkpointed into his record as his client's save carries it
+  const bobSave = JSON.parse(new TextDecoder().decode(s.env.SAVES._map.get(s.raw.prepare('SELECT obj FROM realm_characters WHERE id = ?').get(bob.character).obj)));
+  layRecord(s.env, bob.character, { ...bobSave, items: [...bobSave.items, { templateIndex: 120, provenance: PV, recipe: 'longsword:mithril', name: 'Mithril Longsword' }] });
+  const gone = await s.call('/v1/prof/disenchant', { character: bob.character, provenance: PV, rid: rid(), realm: bob.at() }, bob.secret);
   assert.equal(gone.status, 200, JSON.stringify(gone.body));
   assert.equal(s.owner(PV), undefined, 'the row gone');
   const macMine = (await s.read(mac, 'mine')).body.auctions.filter((x) => x.id === a.id);
@@ -128,7 +139,7 @@ test('PROF5b DONE WHEN: a Masterwork posted in Daggerfall is bid on from Wayrest
 test('PROF5b service: only a Masterwork of a listable family, its owner\'s, on no other sale; the seller never bids, the leader never again, a bid under the next refused; the thirty count auctions; an auctioned piece is no listing', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), ann = await s.registered('Ann');
+  const mac = await s.seated('Mac'), ann = await s.registered('Ann');   // PIN MOVED (INT19): the seller a realm character
   s.fund(mac, 100_000); s.fund(ann, 5_000);
   s.piece(mac, P(1), { quality: 3 });
   assert.equal((await s.post(mac, P(1), 100)).body.error, 'auction-not-masterwork');
@@ -167,7 +178,7 @@ test('PROF5b service: only a Masterwork of a listable family, its owner\'s, on n
   // the thirty: 28 listings and the auction; one more of either and no more
   clock(T0);
   const t = await stand();
-  const ten = await t.registered('Ten');
+  const ten = await t.seated('Ten');
   t.fund(ten, 1_000_000);
   for (let i = 0; i < MARKET_LISTINGS_MAX - 1; i++) {
     t.piece(ten, P(0x100 + i), { quality: 2 });
@@ -187,18 +198,19 @@ test('PROF5b service: only a Masterwork of a listable family, its owner\'s, on n
 test('PROF5b service: an auction with no bid closes unsold and its piece comes back on its seller\'s read; cancelled while none stands (the fee kept), never after; a moderator\'s removal voids the standing bid and returns the piece', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), ann = await s.registered('Ann'), mod = await s.registered('Asynian');
+  const mac = await s.seated('Mac'), ann = await s.registered('Ann'), mod = await s.registered('Asynian');   // PIN MOVED (INT19): the seller a realm character
   s.fund(mac, 10_000); s.fund(ann, 10_000); s.fund(mod, 10);
   s.piece(mac, P(10)); s.piece(mac, P(11)); s.piece(mac, P(12));
   const unsold = (await s.post(mac, P(10), 100)).body.auction;
-  // cancel: while none stands, the piece answered back, the fee kept
+  // cancel: while none stands, the piece answered back, the fee kept - PIN MOVED (INT19): by a delivery its seller's
+  // record collects (the record that left it), never minted at the pack
   const c = (await s.post(mac, P(11), 500)).body.auction;
   const crid = rid();
   const cancelled = await s.call('/v1/market/cancel', { character: mac.character, listing: c.id, rid: crid }, mac.secret);
-  assert.deepEqual([cancelled.status, cancelled.body.piece?.provenance, cancelled.body.auction?.state], [200, P(11), 'cancelled']);
+  assert.deepEqual([cancelled.status, cancelled.body.piece, cancelled.body.delivery, cancelled.body.auction?.state], [200, undefined, { id: c.id }, 'cancelled']);
   assert.deepEqual({ ...s.owner(P(11)) }, { owner: mac.id, listed: 0 });
   const twice = await s.call('/v1/market/cancel', { character: mac.character, listing: c.id, rid: crid }, mac.secret);
-  assert.deepEqual([twice.body.repeat, twice.body.piece?.provenance], [true, P(11)], 'asked twice, one');
+  assert.deepEqual([twice.body.repeat, twice.body.delivery], [true, { id: c.id }], 'asked twice, one');
   const r = (await s.post(mac, P(12), 200)).body.auction;
   assert.equal((await s.bid(ann, r.id, 200)).status, 200);
   assert.equal((await s.call('/v1/market/cancel', { character: mac.character, listing: r.id, rid: rid() }, mac.secret)).body.error, 'auction-bid-standing');
@@ -213,8 +225,8 @@ test('PROF5b service: an auction with no bid closes unsold and its piece comes b
   // the unsold one past its end
   clock(T0 + AUCTION_S);
   const mine = await s.read(mac, 'mine');
-  const back = mine.body.road.filter((d) => d.kind === 'piece').map((d) => [d.why, d.piece.provenance]).sort();
-  assert.deepEqual(back, [['returned', P(10)], ['returned', P(12)]]);
+  const back = mine.body.road.filter((d) => d.kind === 'item' && d.why === 'returned').map((d) => [d.why, d.item.provenance]).sort();   // PIN MOVED (INT19): each as its record
+  assert.deepEqual(back, [['returned', P(10)], ['returned', P(11)], ['returned', P(12)]]);
   assert.deepEqual(mine.body.auctions.filter((x) => x.id === unsold.id).map((x) => x.state), ['unsold']);
   assert.equal(s.escrowHeld(), s.escrowLedger());
 });
@@ -227,7 +239,7 @@ test('PROF5b service: an auction with no bid closes unsold and its piece comes b
 test('PROF5b service: a piece whose auction closed unsold is on that sale until it is back - with more returns owed than a read makes (SETTLE_MAX), the one still owed is refused another auction (`market-listed`) and no second auction stands; once back, it is a delivery to collect (AUDIT SCALE; mutant: the decision\'s `listed = 0` dropped)', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');   // PIN MOVED (INT19): the seller a realm character
   s.fund(mac, 100_000);
   const pv = (i) => P(0x300 + i);
   for (let i = 0; i < SETTLE_MAX; i++) {
@@ -264,7 +276,7 @@ test('PROF5b service: a piece whose auction closed unsold is on that sale until 
 test('PROF5b service: a bid asked twice is one; an auction\'s fee is `:afee`, never a listing\'s `:fee` under the same id; two bids at once, one stands; a sale the seller\'s cap cannot take waits', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), ann = await s.registered('Ann'), bob = await s.registered('Bob');
+  const mac = await s.seated('Mac'), ann = await s.registered('Ann'), bob = await s.registered('Bob');   // PIN MOVED (INT19): the seller a realm character
   s.fund(mac, 10_000); s.fund(ann, 10_000); s.fund(bob, 10_000);
   s.piece(mac, P(20)); s.piece(mac, P(21), { quality: 2 });
   const R = rid();
@@ -313,7 +325,7 @@ test('PROF5b service: a bid asked twice is one; an auction\'s fee is `:afee`, ne
 test('PROF5b service: the Auctions view - every open auction ending soonest first, its courier to this board, the next bid, whether this reader leads; the courier\'s time on a won piece from another region', async () => {
   clock(T0);
   const s = await stand();
-  const mac = await s.registered('Mac'), ann = await s.registered('Ann');
+  const mac = await s.seated('Mac'), ann = await s.registered('Ann');   // PIN MOVED (INT19): the seller a realm character
   s.fund(mac, 10_000); s.fund(ann, 10_000);
   s.piece(mac, P(30)); s.piece(mac, P(31));
   const far = (await s.post(mac, P(30), 300, { region: WR })).body.auction;

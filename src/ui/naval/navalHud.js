@@ -40,6 +40,7 @@ import { PARTY_GREEN_CSS } from '../../net/social.js';   // SHIPMATES: the crew'
 import { spellIconPicture } from '../enhanced/enhancedArt.js';   // COMPANION-KIT: a companion's effects' icons over his bar - AUDIT WK-U8: fitted to their tiles
 import { showFitted } from '../textureCanvas.js';   // AUDIT WK-U8: a fitted picture into its <img>, as every fitted slot puts one
 import { clampDpr, screenDpr } from '../iconFit.js';   // AUDIT WK-U8: the tiles' device pixels - the screen's, times the HUD's scale the bar rides
+import { t } from '../../systems/textManager.js';   // RAM-BOARD: the card's new words in the player's language (fouledText)
 import { partyFxKey, partyFxAbbrev } from '../../net/partyBuffs.js';   // COMPANION-KIT: the party card's own effect row's key and words
 
 export const NAVAL_HUD_STYLE_ID = 'dagger-naval-hud-style';
@@ -351,10 +352,26 @@ body:has(.hud-foe.on.blade) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_BLADE}; }
 .dfnaval-gun-count { font-size: 11px; letter-spacing: 0; word-spacing: -2px; font-weight: 400; color: #d8cfae; }   /* the spaces give the 2.6px "12 great guns" lacked in a 70.7px battery - the letters keep theirs */
 .dfnaval-gun.ready { border-color: ${T.brassHi} ${T.brassLo} #5c3f1a ${T.brass}; }
 .dfnaval-gun.ready .dfnaval-gun-count { color: ${T.brassHi}; }
+/* SHOT-KINDS: each battery's load under its count, a colour a load - the grape's lead, the chain's iron, the heated shot's glow */
+.dfnaval-gun-load { position: relative; z-index: 1; display: block; line-height: 1.15; font-size: 11px; letter-spacing: 0.04em; color: #b9b29c; text-shadow: 1px 1px 0 #050608; }
+.dfnaval-gun-load:empty, .dfnaval-hud.short .dfnaval-gun-load { display: none; }   /* a short screen's chips keep two lines - the aim's line names the load */
+.dfnaval-gun-load.shot-grape { color: #c9d3d8; }
+.dfnaval-gun-load.shot-chain { color: #9fb7c9; }
+.dfnaval-gun-load.shot-heated { color: #ff9a4a; text-shadow: 1px 1px 0 #050608, 0 0 4px rgba(255,120,40,0.55); }
 .dfnaval-gun.active { background: #2c2413; box-shadow: 0 0 0 1px #050608, 0 0 8px rgba(243,207,134,0.45); }
 .dfnaval-gun.active .dfnaval-gun-side { color: ${T.gold}; text-shadow: 1px 1px 0 rgb(93,77,12); }
 .dfnaval-gun.gun-empty { opacity: 0.5; }   /* HUD-CLASS (AUDIT 2026-10-05): its own word - as the bare 'empty' it took the enhanced sheet's .empty component, 16px under the plate (its row 36 -> 52px) */
 .dfnaval-gun.fresh { animation: dfnaval-ready ${READY_FLASH_S}s steps(7, end); }
+/* HULL-BLOW (COMBAT-FEEL): the side she was struck from - its battery's frame and that side of her little ship red a moment */
+.dfnaval-gun.struck { border-color: #ff8a76 #5a130f #3d0d0a #b83a2e; box-shadow: 0 0 0 1px #050608, 0 0 10px rgba(224,88,74,0.75); }
+.dfnaval-rose.blow-bow .dfnaval-ship { background: linear-gradient(180deg, #ff8a76 0 34%, ${T.stoneLit} 34%, ${T.stoneMid}); }   /* her shape is clipped (clip-path): the side is painted inside it */
+.dfnaval-rose.blow-stern .dfnaval-ship { background: linear-gradient(180deg, ${T.stoneLit}, ${T.stoneMid} 70%, #e0584a 70%); }
+.dfnaval-rose.blow-port .dfnaval-ship { background: linear-gradient(90deg, #e0584a 0 45%, transparent 45%), linear-gradient(180deg, ${T.stoneLit}, ${T.stoneMid}); }
+.dfnaval-rose.blow-starboard .dfnaval-ship { background: linear-gradient(270deg, #e0584a 0 45%, transparent 45%), linear-gradient(180deg, ${T.stoneLit}, ${T.stoneMid}); }
+.dfnaval-track.hull.hit-a { animation: dfnaval-bar-hit-a ${CARD_HIT_S * 1000}ms steps(3, end); }
+.dfnaval-track.hull.hit-b { animation: dfnaval-bar-hit-b ${CARD_HIT_S * 1000}ms steps(3, end); }
+@keyframes dfnaval-bar-hit-a { 0% { box-shadow: 0 0 10px rgba(255,138,118,0.85); } 100% { box-shadow: none; } }
+@keyframes dfnaval-bar-hit-b { 0% { box-shadow: 0 0 10px rgba(255,138,118,0.85); } 100% { box-shadow: none; } }
 @keyframes dfnaval-ready { 0% { box-shadow: 0 0 0 1px #050608, 0 0 12px 2px rgba(243,207,134,0.95); } 100% { box-shadow: 0 0 0 1px #050608, 0 0 0 0 rgba(243,207,134,0); } }
 .dfnaval-hint { margin: 7px 6px 0; font-size: 11px; letter-spacing: 0.05em; color: #b3a684; text-align: center; text-shadow: 1px 1px 0 #050608; }
 .dfnaval-brace { position: absolute; right: calc(18px + var(--nc-plate-w, ${NAVAL_PLATE_W}px) + 8px + env(safe-area-inset-right, 0px));
@@ -393,6 +410,7 @@ body:has(.hud-foe.on.blade) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_BLADE}; }
 .dfnaval-card-sub { margin: 2px 0 6px; font-size: 11px; letter-spacing: 0.05em; color: #c9bfa4; text-shadow: 1px 1px 0 #050608; }
 .dfnaval-card .dfnaval-track { margin: 0 8px 4px; height: 10px; }
 .dfnaval-card .dfnaval-track.sail { height: 5px; }
+.dfnaval-card .dfnaval-track.crew { height: 5px; }   /* CARD-CREW: her men, as thin as her canvas */
 .dfnaval-ghost { position: absolute; top: 0; bottom: 0; left: 0; width: 0; display: block; z-index: -1;
   background: linear-gradient(180deg, #fff6e4 0 1px, #f2a597 1px); opacity: 0.6; }
 .dfnaval-chunk { position: absolute; top: 0; bottom: 0; display: none; z-index: 0; pointer-events: none; }
@@ -413,7 +431,7 @@ body:has(.hud-foe.on.blade) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_BLADE}; }
 .dfnaval-card.hit-b { animation: dfnaval-hit-b ${CARD_HIT_S * 1000}ms steps(3, end); }
 @keyframes dfnaval-hit-a { 0% { border-color: #fff6e4; box-shadow: 0 0 10px rgba(255,138,118,0.85); } 100% { border-color: ${T.stoneLit}; box-shadow: none; } }
 @keyframes dfnaval-hit-b { 0% { border-color: #fff6e4; box-shadow: 0 0 10px rgba(255,138,118,0.85); } 100% { border-color: ${T.stoneLit}; box-shadow: none; } }
-@media (prefers-reduced-motion: reduce) { .dfnaval-chunk { display: none !important; } .dfnaval-card.hit-a, .dfnaval-card.hit-b, .dfnaval-gun.fresh { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .dfnaval-chunk { display: none !important; } .dfnaval-card.hit-a, .dfnaval-card.hit-b, .dfnaval-gun.fresh, .dfnaval-track.hull.hit-a, .dfnaval-track.hull.hit-b { animation: none; } }
 .dfnaval-card-state { min-height: 14px; margin-top: 4px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: ${T.brassHi}; text-shadow: ${OUTLINED};
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* AUDIT BAY A10: one line, cut at the card's edge - the aside card's state ("friendly - patrolling off Copperhold
@@ -429,7 +447,7 @@ body:has(.hud-foe.on.blade) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_BLADE}; }
 .dfnaval-hud.aside .dfnaval-card-name { font-size: 12px; letter-spacing: 0.1em; }
 .dfnaval-hud.aside .dfnaval-card-sub { display: none; }
 .dfnaval-hud.aside .dfnaval-card .dfnaval-track { height: 7px; margin-bottom: 3px; }
-.dfnaval-hud.aside .dfnaval-card .dfnaval-track.sail { height: 4px; }
+.dfnaval-hud.aside .dfnaval-card .dfnaval-track.sail, .dfnaval-hud.aside .dfnaval-card .dfnaval-track.crew { height: 4px; }
 .dfnaval-hud.aside .dfnaval-card-state { font-size: 11px; min-height: 0; margin-top: 2px; }
 .dfnaval-hud.short .dfnaval-plate { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 6px; }
 .dfnaval-hud.short .dfnaval-plate > :not(.dfnaval-bar) { grid-column: 1 / -1; }
@@ -501,7 +519,20 @@ const pct = (v) => Math.max(0, Math.min(100, Math.round((Number(v) || 0) * 100))
  *  Veil" (AUDIT CAPTAIN'S SEA D19: "The Shallows, 0 leagues past the Veil" while she sailed in it). */
 export const etherWatersWords = (e) => (e.veil ? 'The Veil' : `${String(e.bandName ?? '').replace(/^./, (c) => c.toUpperCase())}, ${Math.max(0, Math.round(Number(e.depth) || 0))} ${Math.round(Number(e.depth) || 0) === 1 ? 'league' : 'leagues'} past the Veil`);
 const SIDE_WORDS = Object.freeze({ bow: 'Bow', port: 'Port', starboard: 'Starboard', stern: 'Stern' });
-const GUN_WORDS = Object.freeze({ long: 'long guns', swivel: 'swivels', heavy: 'great guns', chain: 'chain shot', barrel: 'fire barrels' });
+// SHOT-KINDS: the chasers named as the bore they are - chain shot is a load now (each battery's own line, `load`)
+const GUN_WORDS = Object.freeze({ long: 'long guns', swivel: 'swivels', heavy: 'great guns', chain: 'chasers', barrel: 'fire barrels' });
+/** SHOT-KINDS (scenes/naval/navalLoads.js, systems/naval/shotKinds.js): a battery's load as its chip says it - one word -
+ *  and as the aim's line does, in the player's language; '' for none (a barrel's). */
+const SHOT_CHIP = Object.freeze({
+  round: () => t('naval.shot.chip.round', 'round'), grape: () => t('naval.shot.chip.grape', 'grape'),
+  chain: () => t('naval.shot.chip.chain', 'chain'), heated: () => t('naval.shot.chip.heated', 'heated'),
+});
+const SHOT_LINE = Object.freeze({
+  round: () => t('naval.shot.line.round', 'round shot'), grape: () => t('naval.shot.line.grape', 'grapeshot'),
+  chain: () => t('naval.shot.line.chain', 'chain shot'), heated: () => t('naval.shot.line.heated', 'heated shot'),
+});
+export const shotChipWord = (shot) => SHOT_CHIP[shot]?.() ?? '';
+export const shotLineWord = (shot) => SHOT_LINE[shot]?.() ?? '';
 
 /** AUDIT NAV1 (the helm): the aim line's tail - on target, or why the battery will not fire yet. */
 function aimTail(a) {
@@ -521,14 +552,20 @@ function aimTail(a) {
  */
 function fightCard(b) {
   if (b.kind === 'board') {
-    if (b.phase !== 'fight') return { name: `Grappling ${b.name}`, sub: 'Hauling her alongside', state: '', kind: '' };
+    if (b.phase !== 'fight') return { name: `Grappling ${b.name}`, sub: 'Hauling alongside', state: '', kind: '' };
     return {
       name: `Boarding ${b.name}`, sub: b.captain ? `Captain ${b.captain} - ${b.captainDown ? 'down' : 'standing'}` : '',
-      state: `${b.down} of ${b.total} down - ${b.captainDown ? `they yield at ${b.yieldAt}` : 'cut down her captain'}`, kind: 'board',
+      state: `${b.down} of ${b.total} down - ${b.captainDown ? `they yield at ${b.yieldAt}` : 'defeat their captain'}`, kind: 'board',
     };
   }
   if (b.phase !== 'fight') return { name: `${b.name} grapples you`, sub: 'Stand by to repel boarders', state: '', kind: 'sinking' };
   return { name: 'Repel the boarders', sub: `From ${b.name}`, state: b.raid ? 'Hold your deck' : `${b.down} of ${b.total} down`, kind: 'sinking' };
+}
+
+/** RAM-BOARD: the card's line for a ship my stem has fouled, in reach - the grapples' key, or the heave-to's. */
+function fouledText(board, key) {
+  if (board.kind === 'board') return t('naval.foul.board', 'Fouled - {key}: board', { key });
+  return board.heaving ? t('naval.foul.heaving', 'Fouled - heaving to') : t('naval.foul.heave', 'Fouled - {key}: heave to', { key });
 }
 
 /** The card's state line: what she is doing, and - when she is in reach - the key that goes over her rail. */
@@ -536,10 +573,12 @@ function cardState(t, board, key) {
   const mine = board != null && board.name === t.name;
   if (t.state === 'sinking') return { text: 'Going down', kind: 'sinking' };
   // AUDIT NAV1 (the presentation): one wording with the plate's hint ("open ... hold") - it read "her hold" here
-  if (t.state === 'prize') return mine && board.kind === 'hold' ? { text: `Taken - ${key}: open her hold`, kind: 'board' } : { text: 'Taken', kind: '' };
+  if (t.state === 'prize') return mine && board.kind === 'hold' ? { text: `Taken - ${key}: open hold`, kind: 'board' } : { text: 'Taken', kind: '' };
   if (t.boarded) return { text: 'Boarded', kind: '' };
+  // RAM-BOARD (systems/naval/navalFoul.js): her bow fouled in my stem - boarded as she stands, her colours flying
+  if (t.fouled && t.state === 'afloat' && mine && (board.kind === 'board' || board.kind === 'heave')) return { text: fouledText(board, key), kind: 'board' };
   if (t.state === 'struck') {
-    if (mine && board.kind === 'board') return { text: `Colours struck - ${key}: board her`, kind: 'board' };
+    if (mine && board.kind === 'board') return { text: `Colours struck - ${key}: board`, kind: 'board' };
     // AUDIT NAV1 (the helm): in reach but too fast - the refusal said nothing
     if (mine && board.kind === 'heave') return { text: board.heaving ? 'Colours struck - heaving to' : `Colours struck - ${key}: heave to`, kind: 'board' };
     return { text: 'Colours struck', kind: '' };
@@ -584,19 +623,23 @@ export function navalHudText(model, keys = {}, { touch = false } = {}) {
     // AUDIT NAV1 (the presentation): a loaded side stands FULL brass (it filled to 97% and dropped to nought, loaded);
     // `fresh` the flash of one just come ready
     fill: pct((b.loaded ?? b.ready) ? 1 : b.progress), ready: !!b.ready, fresh: !!b.fresh, active: !!b.active, empty: b.gun === 'barrel' && !(b.barrels > 0),
+    load: b.gun === 'barrel' ? '' : shotChipWord(b.shot), shot: b.gun === 'barrel' ? null : b.shot ?? null,   // SHOT-KINDS: what it is loaded with
+    // RELOAD-SECS (COMBAT-FEEL): the whole seconds a side still loads, beside its load - none loaded, or for a barrel
+    secs: b.gun === 'barrel' || (b.loaded ?? b.ready) || !(b.left > 0) ? '' : t('naval.gun.secs', '{n}s', { n: Math.ceil(b.left) }),
   }));
   const a = model.aim;
   const aim = a ? {
-    text: a.barrel ? `${SIDE_WORDS[a.side]} - roll a fire barrel` : `${SIDE_WORDS[a.side]} ${a.side === 'bow' || a.side === 'stern' ? 'chasers' : 'broadside'} - `,
+    text: a.barrel ? `${SIDE_WORDS[a.side]} - roll a fire barrel` : `${SIDE_WORDS[a.side]} ${a.side === 'bow' || a.side === 'stern' ? 'chasers' : 'broadside'}${a.shot ? `, ${shotLineWord(a.shot)}` : ''} - `,   // SHOT-KINDS: and its load
     range: a.barrel ? '' : `${a.range} m${a.range >= a.max - 1 ? ' (longest)' : ''}`,
     hot: !!a.hot && (a.state ?? 'ready') === 'ready', dim: !!a.state && a.state !== 'ready', target: aimTail(a),
   } : null;
-  const t = model.target;
-  const st = t ? cardState(t, model.board, boardKey) : null;
-  const card = t ? {
-    id: t.id ?? t.name, name: t.name, faction: t.faction, hostile: !!t.hostile, friendly: !!t.friendly && !t.hostile,
-    sub: [t.classLine, t.captain ? `Captain ${t.captain}` : null, `${t.distance} m`].filter(Boolean).join(' - '),
-    hull: t.hull == null ? null : pct(t.hull), sail: t.sail == null ? null : pct(t.sail),   // AUDIT CAPTAIN'S SEA S24: an unknown hull's none
+  const tgt = model.target;   // COMBAT-FEEL: her own name - `t` is the translator here
+  const st = tgt ? cardState(tgt, model.board, boardKey) : null;
+  const card = tgt ? {
+    id: tgt.id ?? tgt.name, name: tgt.name, faction: tgt.faction, hostile: !!tgt.hostile, friendly: !!tgt.friendly && !tgt.hostile,
+    sub: [tgt.classLine, tgt.captain ? `Captain ${tgt.captain}` : null, `${tgt.distance} m`].filter(Boolean).join(' - '),
+    hull: tgt.hull == null ? null : pct(tgt.hull), sail: tgt.sail == null ? null : pct(tgt.sail),   // AUDIT CAPTAIN'S SEA S24: an unknown hull's none
+    crew: tgt.crew == null ? null : pct(tgt.crew),   // CARD-CREW (COMBAT-FEEL): her men, as grape thins them
     state: st.text, stateKind: st.kind,
   } : null;
   const ship = model.ship;
@@ -604,17 +647,18 @@ export function navalHudText(model, keys = {}, { touch = false } = {}) {
     // SHIP-CREW: her crew's spirits and standing order beside her waters
     // CAPT-WATERS: the deep waters said beside the crown's - richer prizes, bolder pirates
     // ETHER-SEA: past the Veil, the band and the leagues from it - no crown's waters, no crown's anchors
-    name: ship.name, waters: [model.ether ? etherWatersWords(model.ether) : `${model.notoriety.crown} waters${model.waters === 'deep' ? ', deep' : ''}`, ship.spirits ? `crew ${ship.spirits.toLowerCase()}` : null, ship.order ?? null].filter(Boolean).join(' - '), anchors: model.ether ? 0 : model.notoriety.level,
+    id: ship.id ?? null, name: ship.name, waters: [model.ether ? etherWatersWords(model.ether) : `${model.notoriety.crown} waters${model.waters === 'deep' ? ', deep' : ''}`, ship.spirits ? `crew ${ship.spirits.toLowerCase()}` : null, ship.order ?? null].filter(Boolean).join(' - '), anchors: model.ether ? 0 : model.notoriety.level,
     hull: pct(ship.hull), sail: ship.sail == null ? null : pct(ship.sail), crew: ship.crew == null ? null : pct(ship.crew),
     chips: [ship.wrecked ? 'wreck' : null, ship.fire ? 'fire' : null, ship.braced ? 'brace' : null, ship.repairing ? 'repair' : ship.mending ? 'mend' : null].filter(Boolean),   // SEA-REPAIR: her repairs over the free mending
     batteries,
+    blow: ship.blow ?? null,   // HULL-BLOW (COMBAT-FEEL): the side a ball just struck her from
     // the press that matters most, first: the guns while they are laid (GUN-HOLD: Activate holds fire then, never
     // boards), a ship in reach to board or plunder, then the guns
     hint: model.aiming && model.armed && !ship.wrecked ? `${touch ? 'Lift' : 'Let go'} to fire - ${boardKey}: hold fire`
       : model.board ? (model.board.kind === 'heave' && model.board.heaving ? `Heaving to beside ${model.board.name}`
       : `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name
         : model.board.kind === 'heave' ? `heave to beside ${model.board.name}` : `board ${model.board.name}`}`)
-      : ship.wrecked ? (ship.repairing ? 'Crippled - her crew at the repairs' : ship.repairOrdered ? 'Crippled - her crew stands to the repairs' : ship.stores > 0 ? 'Crippled - order repairs, or make port' : 'Crippled - make port for a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other
+      : ship.wrecked ? (ship.repairing ? 'Crippled - crew repairing' : ship.repairOrdered ? 'Crippled - repairs ordered' : ship.stores > 0 ? 'Crippled - order repairs, or make port' : 'Crippled - make port for a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other
       : !model.armed ? 'No guns aboard'
       : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,
     brace: touch && !!model.armed,
@@ -625,7 +669,7 @@ export function navalHudText(model, keys = {}, { touch = false } = {}) {
   const tl = model.tally;
   const tally = tl ? {
     hits: `${tl.hits} of ${tl.balls} ${tl.balls === 1 ? 'ball' : 'balls'} struck`, miss: tl.hits === 0,
-    rest: [tl.holed ? `${tl.holed} below her waterline` : null, tl.rig ? `${tl.rig} through her rigging` : null].filter(Boolean).map((x) => ` - ${x}`).join(''),
+    rest: [tl.holed ? `${tl.holed} below the waterline` : null, tl.rig ? `${tl.rig} in the rigging` : null, tl.men ? t('naval.tally.men', '{n, plural, one {# crew down} other {# crew down}}', { n: tl.men }) : null].filter(Boolean).map((x) => ` - ${x}`).join(''),   // CARD-CREW: the men the volley took
   } : null;
   const fight = model.boarding?.name ? fightCard(model.boarding) : null;
   return { plate, aim, card, warn, tally, fight };
@@ -696,7 +740,8 @@ function build(doc) {
   cardHull.append(cardGhost, cardHullFill, ...cardChunks);
   const cardSail = el(doc, 'div', 'dfnaval-track sail'); const cardSailFill = el(doc, 'i', 'dfnaval-fill'); cardSail.append(cardSailFill);
   const cardState = el(doc, 'div', 'dfnaval-card-state');
-  card.append(cardName, cardSub, cardHull, cardSail, cardState);
+  const cardCrew = el(doc, 'div', 'dfnaval-track crew'); const cardCrewFill = el(doc, 'i', 'dfnaval-fill'); cardCrew.append(cardCrewFill);   // CARD-CREW
+  card.append(cardName, cardSub, cardHull, cardSail, cardCrew, cardState);
   // the aim
   const aim = el(doc, 'div', 'dfnaval-aim');
   const aimText = el(doc, 'span', 'dfnaval-aim-text'), aimRange = el(doc, 'span', 'dfnaval-aim-range'), aimTarget = el(doc, 'span', 'dfnaval-aim-target');
@@ -723,6 +768,11 @@ function build(doc) {
   waters.append(watersWord, anchorsBox);
   head.append(name, waters);
   const hull = bar(doc, 'hull', 'Hull'), sail = bar(doc, 'sail', 'Sails'), crew = bar(doc, 'crew', 'Crew');
+  // HULL-BLOW (COMBAT-FEEL): her own hull bar's loss, read as the card's is - its ghost and the pieces broken off
+  const plateGhost = el(doc, 'i', 'dfnaval-ghost'), plateChunks = [el(doc, 'i', 'dfnaval-chunk'), el(doc, 'i', 'dfnaval-chunk')];
+  for (const c of plateChunks) c.addEventListener?.('animationend', (e) => { if (String(e.animationName ?? '').startsWith('dfnaval-chunk-r')) stowChunk(c); });
+  hull.track.prepend(plateGhost);
+  hull.track.append(...plateChunks);
   const chips = el(doc, 'div', 'dfnaval-chips');
   const rose = el(doc, 'div', 'dfnaval-rose');
   const guns = {};
@@ -731,8 +781,9 @@ function build(doc) {
     const fill = el(doc, 'i', 'dfnaval-gun-fill');
     const word = el(doc, 'span', 'dfnaval-gun-side', SIDE_WORDS[side]);
     const count = el(doc, 'span', 'dfnaval-gun-count');
-    g.append(fill, word, count);
-    guns[side] = { g, fill, count };
+    const load = el(doc, 'span', 'dfnaval-gun-load');   // SHOT-KINDS: its load
+    g.append(fill, word, count, load);
+    guns[side] = { g, fill, count, load };
     rose.append(g);
   }
   rose.append(el(doc, 'i', 'dfnaval-ship'));
@@ -747,7 +798,7 @@ function build(doc) {
   plate.append(head, hull.row, sail.row, crew.row, chips, rose, hint);
   root.append(card, warn, stack, plate, brace, glassBtn);   // AUDIT NAV1 (the presentation): the brace beside her, at no scale
   (doc.body ?? doc.documentElement)?.append(root);
-  parts = { card, cardName, cardSub, cardHull, cardHullFill, cardGhost, cardChunks, cardSail, cardSailFill, cardState, aim, aimText, aimRange, aimTarget, warn, warnText, warnKey, tally: tallyEl, tallyHits, tallyRest, stack, plate, name, watersWord, anchors, hull, sail, crew, chips, rose, guns, hint, brace, glassBtn };
+  parts = { card, cardName, cardSub, cardHull, cardHullFill, cardGhost, cardChunks, cardSail, cardSailFill, cardCrew, cardCrewFill, plateGhost, plateChunks, cardState, aim, aimText, aimRange, aimTarget, warn, warnText, warnKey, tally: tallyEl, tallyHits, tallyRest, stack, plate, name, watersWord, anchors, hull, sail, crew, chips, rose, guns, hint, brace, glassBtn };
   shown = {};
   touchBrace = false; touchGlass = 0;
 }
@@ -755,30 +806,36 @@ function build(doc) {
 /** AUDIT NAV1 (the presentation): the draws' own clock (the `dt`s summed), and her hull bar's loss readout - whose card,
  *  its ghost (ui/barLoss.js), the pieces broken off and the flash's end. */
 let hudClock = 0;
-let loss = null;
+const cardBar = { s: null };
+/** HULL-BLOW (COMBAT-FEEL): her own hull bar's loss readout - the card's law on the plate's bar, by the boat behind it. */
+const plateBar = { s: null };
 /** A fallen piece put away (FRAME1c's law: an animation left parked on its last frame replays when its node comes back). */
 function stowChunk(c) { if (c && c.className !== 'dfnaval-chunk') c.className = 'dfnaval-chunk'; }
-/** One draw of her hull bar's loss: a new card starts whole at her bar; a bite of CARD_CHUNK_MIN_LOSS breaks a piece off
- *  over the span it took and flashes the card. */
-function cardLoss(card, dt) {
-  if (!loss || loss.id !== card.id) {
-    for (const c of parts.cardChunks) stowChunk(c);
-    loss = { id: card.id, g: stepGhost(null, card.hull, 0), n: -1, hits: 0, until: -1 };
+/** One draw of a hull bar's loss - `bar` its readout (`s`: null, none yet), `id` whose bar it shows (another's starts
+ *  whole at her bar: a new card, and AUDIT 2026-10-17 a boat of mine taken at the helm - a helm changed from a whole boat
+ *  to a battered one read as a bite), `pct` her bar, `key`/`ghost`/`chunks` the bar's ghost and pieces: a bite of
+ *  CARD_CHUNK_MIN_LOSS breaks a piece off over the span it took and flashes the bar. Answers the bar's flash class. The
+ *  card's and (HULL-BLOW) the plate's alike - one law. */
+function barLoss(bar, id, pct, dt, key, ghost, chunks) {
+  let state = bar.s;
+  if (!state || state.id !== id) {
+    for (const c of chunks) stowChunk(c);
+    state = bar.s = { id, g: stepGhost(null, pct, 0), n: -1, hits: 0, until: -1 };
   }
-  const prev = loss.g;
-  const g = stepGhost(prev, card.hull, dt);
-  loss.g = g;
-  width('cardg', parts.cardGhost, Math.round(g.at * 10) / 10);
+  const prev = state.g;
+  const g = stepGhost(prev, pct, dt);
+  state.g = g;
+  width(key, ghost, Math.round(g.at * 10) / 10);
   if (prev.pct - g.pct >= CARD_CHUNK_MIN_LOSS) {
-    const { index, cls: frame } = chunkFrame(++loss.n);
-    const c = parts.cardChunks[index];
+    const { index, cls: frame } = chunkFrame(++state.n);
+    const c = chunks[index];
     c.style.left = `${g.pct.toFixed(1)}%`;
     c.style.width = `${(prev.pct - g.pct).toFixed(1)}%`;
     c.className = `dfnaval-chunk ${frame}`;
-    loss.hits++;
-    loss.until = hudClock + CARD_HIT_S;
+    state.hits++;
+    state.until = hudClock + CARD_HIT_S;
   }
-  return hudClock < loss.until ? (loss.hits % 2 ? ' hit-a' : ' hit-b') : '';
+  return hudClock < state.until ? (state.hits % 2 ? ' hit-a' : ' hit-b') : '';
 }
 const put = (key, node, text) => { if (shown[key] !== text) { shown[key] = text; node.textContent = text; } };
 const cls = (key, node, name) => { if (shown[key] !== name) { shown[key] = name; node.className = name; } };
@@ -848,7 +905,7 @@ export function drawNavalHud(model, { covered = false, doc = globalThis.document
   }
   show('root', root, want);
   hudClock += Math.max(0, Number(dt) || 0);
-  if (!want) { shown.braceBtn = false; touchBrace = false; for (const c of parts.cardChunks) stowChunk(c); loss = null; return; }
+  if (!want) { shown.braceBtn = false; touchBrace = false; for (const c of parts.cardChunks) stowChunk(c); cardBar.s = null; for (const c of parts.plateChunks) stowChunk(c); plateBar.s = null; return; }
   const t = navalHudText(model, keys, { touch });
   // the card: a ship's, else the fight's (AUDIT NAV1 B9) - one place under the compass
   const c = t.card ?? t.fight;
@@ -890,7 +947,9 @@ export function drawNavalHud(model, { covered = false, doc = globalThis.document
     put('waters', parts.watersWord, p.waters);
     for (let i = 0; i < 4; i++) cls(`anchor${i}`, parts.anchors[i], i < p.anchors ? 'dfnaval-anchor on' : 'dfnaval-anchor');
     width('hull', parts.hull.fill, p.hull);
-    cls('hullLow', parts.hull.track, p.hull <= 25 ? 'dfnaval-track hull low' : 'dfnaval-track hull');
+    const blown = barLoss(plateBar, p.id, p.hull, dt, 'plateg', parts.plateGhost, parts.plateChunks);   // HULL-BLOW: her bar's loss, as the card's
+    cls('hullLow', parts.hull.track, (p.hull <= 25 ? 'dfnaval-track hull low' : 'dfnaval-track hull') + blown);
+    cls('rosec', parts.rose, `dfnaval-rose${p.blow ? ` blow-${p.blow}` : ''}`);   // HULL-BLOW: the side she was struck from
     show('sailRow', parts.sail.row, p.sail != null);
     if (p.sail != null) width('sail', parts.sail.fill, p.sail);
     show('crewRow', parts.crew.row, p.crew != null);
@@ -906,8 +965,10 @@ export function drawNavalHud(model, { covered = false, doc = globalThis.document
       const b = p.batteries.find((x) => x.side === side);
       show(`gun-${side}`, g.g, !!b);
       if (!b) continue;
-      cls(`gunc-${side}`, g.g, `dfnaval-gun ${side}${b.ready ? ' ready' : ''}${b.fresh ? ' fresh' : ''}${b.active ? ' active' : ''}${b.empty ? ' gun-empty' : ''}`);
+      cls(`gunc-${side}`, g.g, `dfnaval-gun ${side}${b.ready ? ' ready' : ''}${b.fresh ? ' fresh' : ''}${b.active ? ' active' : ''}${b.empty ? ' gun-empty' : ''}${p.blow === side ? ' struck' : ''}`);
       put(`gunn-${side}`, g.count, b.count);
+      put(`gunl-${side}`, g.load, b.secs ? `${b.load}${b.load ? ' ' : ''}${b.secs}` : b.load);   // RELOAD-SECS: and the seconds it still loads
+      cls(`gunlc-${side}`, g.load, `dfnaval-gun-load${b.shot ? ` shot-${b.shot}` : ''}`);
       if (shown[`gunf-${side}`] !== b.fill) { shown[`gunf-${side}`] = b.fill; g.fill.style.height = `${b.fill}%`; }
     }
     show('rose', parts.rose, p.batteries.length > 0);
@@ -941,8 +1002,8 @@ export function drawNavalHud(model, { covered = false, doc = globalThis.document
     if (shown.cardLeft !== left) { shown.cardLeft = left; parts.card.style.left = left; }
     setVar('--nc-card-scale', aside ? '' : String(Math.round(kc * 1000) / 1000));
     const bars = t.card?.hull != null;   // AUDIT CAPTAIN'S SEA S24: an unknown hull's card has no bars
-    const hit = bars ? cardLoss(t.card, dt) : '';
-    if (!bars) { for (const x of parts.cardChunks) stowChunk(x); loss = null; }
+    const hit = bars ? barLoss(cardBar, t.card.id, t.card.hull, dt, 'cardg', parts.cardGhost, parts.cardChunks) : '';
+    if (!bars) { for (const x of parts.cardChunks) stowChunk(x); cardBar.s = null; }
     cls('cardc', parts.card, t.card ? `dfnaval-card ${t.card.faction}${t.card.hostile ? ' hostile' : ''}${t.card.friendly ? ' friendly' : ''}${hit}` : 'dfnaval-card fight');
     put('cardn', parts.cardName, c.name);
     put('cards', parts.cardSub, c.sub);
@@ -950,6 +1011,8 @@ export function drawNavalHud(model, { covered = false, doc = globalThis.document
     if (bars) width('cardh', parts.cardHullFill, t.card.hull);
     show('cardsail', parts.cardSail, t.card?.sail != null);
     if (t.card?.sail != null) width('cardsl', parts.cardSailFill, t.card.sail);
+    show('cardcrew', parts.cardCrew, t.card?.crew != null);   // CARD-CREW
+    if (t.card?.crew != null) width('cardcr', parts.cardCrewFill, t.card.crew);
     put('cardst', parts.cardState, t.card ? t.card.state : c.state);
     const kind = t.card ? t.card.stateKind : c.kind;
     cls('cardstc', parts.cardState, `dfnaval-card-state${kind ? ` ${kind}` : ''}`);
@@ -1173,7 +1236,7 @@ export function drawCrewLines(points, { covered = false, doc = globalThis.docume
 /** The page is going (a test's reset, the host's teardown): the node leaves with it. */
 export function destroyNavalHud() {
   root?.remove?.();
-  root = null; parts = null; shown = {}; touchBrace = false; touchGlass = 0; loss = null; hudClock = 0;
+  root = null; parts = null; shown = {}; touchBrace = false; touchGlass = 0; cardBar.s = null; plateBar.s = null; hudClock = 0;
   tagRoot?.remove?.();
   tagRoot = null; tagSlots = []; tagHeld = new Set(); crewSlots = []; saySlots = []; sayMemory = crewSayMemory();
 }

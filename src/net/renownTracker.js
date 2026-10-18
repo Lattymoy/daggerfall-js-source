@@ -181,7 +181,7 @@ export function renownReportSoon({ xp, pending, room, capped, hourLeftMs = null 
 }
 
 /** The service's refusals that will not change by trying again: this character (or this build) cannot report. */
-const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full']);
+const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full', 'progress-seat', 'trade-held']);   // INT16: not the account's seat here, or a character whose trade is held
 
 /** AUDIT RENOWN1 GAME-2: the longest a refused report waits before it goes again - the wait doubles from
  *  RENOWN_REPORT_MS with each refusal in a row, up to this. */

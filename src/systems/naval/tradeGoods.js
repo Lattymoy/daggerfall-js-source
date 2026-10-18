@@ -6,7 +6,11 @@
 //
 // THE GOODS: the Bay's eight - each crown MAKES some (`CROWN_TRADE` - MADE_K of a good's base) and WANTS others (WANT_K);
 // every port twists its crown's trade by one good of its own (`portTrade`, off its key); and the Eltheric Ocean's three,
-// made on its isles alone (the Eltheric Ocean's freeports - ETHER-PORTS) and wanted in every port of the Bay. A day's price
+// made on its isles alone (the Eltheric Ocean's freeports - ETHER-PORTS) and wanted in every port of the Bay. ISLE-TRADE
+// (2026-10-17, the owner: "make it so each island does sell at least one normal exchange product so you could feasibly
+// live and trade out in the veil"): and every isle's freeport makes one good of the Bay besides (`isleGood`, off its key),
+// sold there as any port sells what it makes - so an isle's exchange is a market of the Veil's own, and a captain can
+// carry one isle's good to the next isle that wants it without crossing back to the Bay. A day's price
 // drifts PRICE_DRIFT about it, the same for every client on the world's day; the exchange sells at SPREAD over it and buys at
 // SPREAD under it, and a port sells and buys only so much of a good a day (`DAY_STOCK`): it never runs dry of what it makes,
 // and is glutted soon with what it makes itself.
@@ -79,6 +83,9 @@ export const WANT_K = 1.55;
 export const PRICE_DRIFT = 0.12;
 /** The exchange sells over the price by this share and buys under it by this. */
 export const SPREAD = 0.08;
+/** CAPTAIN-TREE: the most of SPREAD a captain's dealing closes (exchangeOf `edge`) - never the whole, so no good is bought
+ *  and sold again at the one exchange for nothing. */
+export const TRADE_MOST = 0.75;
 /** The Eltheric Ocean's goods in a port of the Bay, and the Bay's in an Eltheric isle's exchange: wanted at this. */
 export const EXOTIC_K = 1.4;
 /** What each crown's ports make and want. */
@@ -91,15 +98,28 @@ export const CROWN_TRADE = Object.freeze({
  *  it, or neither. */
 export const DAY_STOCK = Object.freeze({ makes: Object.freeze({ sell: 30, buy: 4 }), wants: Object.freeze({ sell: 2, buy: 30 }), neither: Object.freeze({ sell: 10, buy: 12 }) });
 const BAY = GOODS.filter((g) => !g.ether).map((g) => g.id);
+const ETHER = GOODS.filter((g) => g.ether).map((g) => g.id);
+
+/**
+ * ISLE-TRADE (2026-10-17): the good of the Bay an Eltheric isle's freeport makes - one of the eight, drawn off its key
+ * (`etherPortOf`'s `"px,py"`, scenes/world.js) on its own scrambled draw: a plain `hash % 8` gave neighbouring isles the
+ * same few goods (Veilhaven and its five nearest: silver, iron, iron, wine, silver, iron), the draw an even spread (the
+ * 234 ports within 400 px of Veilhaven, 19 to 34 of each good). The same on every client, as the key is.
+ * @param {{ key: string }} port
+ */
+export function isleGood(port) {
+  const r = mulberry32(hashKey(`${port?.key ?? ''}:isle`) >>> 0);
+  return BAY[Math.floor(r() * BAY.length) % BAY.length];
+}
 
 /**
  * A PORT'S TRADE: what it makes and wants - its crown's, twisted by one good of its own off its key (made there, or
- * wanted there, whichever its crown does neither of); an Eltheric isle's (`ether`) makes the Eltheric goods and wants
- * every good of the Bay.
+ * wanted there, whichever its crown does neither of); an Eltheric isle's (`ether`) makes the Eltheric goods and, ISLE-TRADE,
+ * its own good of the Bay (`isleGood`), and wants every other good of the Bay.
  * @param {{ key: string, crown?: string|null, ether?: boolean }} port
  */
 export function portTrade(port) {
-  if (port?.ether) return { makes: GOODS.filter((g) => g.ether).map((g) => g.id), wants: BAY.slice() };
+  if (port?.ether) { const own = isleGood(port); return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) }; }
   const base = CROWN_TRADE[port?.crown] ?? { makes: [], wants: [] };
   const makes = [...base.makes], wants = [...base.wants];
   const free = BAY.filter((g) => !makes.includes(g) && !wants.includes(g));
@@ -135,21 +155,29 @@ export function priceOf(port, id, day) {
 }
 
 /**
- * THE EXCHANGE'S BOARD at a port on a day: each good it deals in - every good of its sea, and the other sea's it wants -
+ * THE EXCHANGE'S BOARD at a port on a day: each good it deals in - every good of its sea, and the other sea's it wants or,
+ * ISLE-TRADE, makes (an isle's own good of the Bay: sold there, at its made price and stock, never 'not sold here') -
  * its price, its stand, and how many more it sells (`sells`) and buys (`buys`) today - `dealt` the captain's dealing
- * here today: `{ bought: { id: n } }` from the exchange, `{ sold: { id: n } }` to it.
- * @param {{ key: string, crown?: string|null, ether?: boolean }} port @param {number} day @param {{ sold?: any, bought?: any }} [dealt]
+ * here today: `{ bought: { id: n } }` from the exchange, `{ sold: { id: n } }` to it. CAPTAIN-TREE: `edge` the share of the
+ * SPREAD the captain's dealing closes (systems/naval/captainTree.js `trade`, to TRADE_MOST): each price nearer the
+ * good's middle, the exchange still buying under what it sells.
+ * @param {{ key: string, crown?: string|null, ether?: boolean }} port @param {number} day @param {{ sold?: any, bought?: any }} [dealt] @param {number} [edge]
  */
-export function exchangeOf(port, day, dealt = {}) {
+export function exchangeOf(port, day, dealt = {}, edge = 0) {
+  const k = SPREAD * (1 - Math.max(0, Math.min(TRADE_MOST, Number(edge) || 0)));
   const rows = [];
   for (const g of GOODS) {
     const stand = standOf(port, g.id);
-    if (!!g.ether !== !!port?.ether && stand !== 'wants') continue;   // the other sea's goods: only where they are wanted
+    const other = !!g.ether !== !!port?.ether;
+    if (other && stand === 'neither') continue;   // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)
     const p = priceOf(port, g.id, day);
     const stock = DAY_STOCK[stand];
-    const exotic = !!g.ether !== !!port?.ether;
+    const exotic = other && stand !== 'makes';   // ISLE-TRADE: an isle's own good of the Bay is its own, sold as made
+    // AUDIT 2: never buying at what it sells - a cheap good's two prices, the spread closed by the captain's stars, rounded
+    // to one number (made grain at the tree's most: 7 and 7), and the round trip was free and paid the log's `traded`
+    const sell = Math.max(2, Math.round(p.mid * (1 + k)));
     rows.push({
-      id: g.id, name: g.name, unit: g.unit, units: g.units, kg: g.kg, stand, sell: p.sell, buy: p.buy, exotic,   // AUDIT CAPTAIN'S SEA B16: the other sea's - never sold here
+      id: g.id, name: g.name, unit: g.unit, units: g.units, kg: g.kg, stand, sell, buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k)))), exotic,   // AUDIT CAPTAIN'S SEA B16: the other sea's - never sold here
       sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)), buys: Math.max(0, stock.buy - (dealt.sold?.[g.id] | 0)),
     });
   }

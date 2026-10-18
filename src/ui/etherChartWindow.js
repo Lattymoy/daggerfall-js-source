@@ -50,6 +50,7 @@ import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // ETHER-OW: the
 import { t } from '../systems/textManager.js';   // L10N4 (at the merge of main): the chart's words in the player's language, read when they are drawn
 import { isleByKey, BANDS, VEIL_X, LEAGUE_PX, KIND_WORDS, ETHER_BOX, compassPoint, veilhaven, ETHER_SEA_NAME } from '../world/ethericSea.js';
 import { hauntOf, legendById, HAUNT_PX } from '../systems/naval/etherShips.js';
+import { isleGood, goodById } from '../systems/naval/tradeGoods.js';   // ISLE-TRADE: a port isle's own good of the Bay, on its card
 
 /** The zooms: screen pixels a map pixel (819.2 m). */
 export const CHART_ZOOMS = Object.freeze([1, 2, 4, 8, 16]);
@@ -242,7 +243,7 @@ export function chartModel(word, v, w, h, { measure = null, pick = null } = {}) 
     const lair = hauntOf(legend);
     const [x, y] = toScreen(v, lair.px + 0.5, lair.py + 0.5, w, h);
     const r = HAUNT_PX * k;
-    if (on(x, y, r)) haunts.push({ x, y, r, name: l.name, sails: !!l.sails, sub: l.sails ? (l.trait === 'night' ? t('sea.chart.hauntNight', 'Her haunt - by night') : t('sea.chart.haunt', 'Her haunt')) : t('sea.chart.hauntSunk', 'Sunk - she will rise again'), inside: false, at: /** @type {number[]|null} */ (null), box: /** @type {number[]|null} */ (null) });
+    if (on(x, y, r)) haunts.push({ x, y, r, name: l.name, sails: !!l.sails, sub: l.sails ? (l.trait === 'night' ? t('sea.chart.hauntNight', 'Territory - by night') : t('sea.chart.haunt', 'Territory')) : t('sea.chart.hauntSunk', 'Sunk - it will rise again'), inside: false, at: /** @type {number[]|null} */ (null), box: /** @type {number[]|null} */ (null) });
   }
   // AUDIT CAPTAIN'S SEA X14: the names placed greedily - ports first, then by the chart's own order - and one that would
   // stand over a name already lettered on both its sides left unlettered (a pointer or a tap still names it).
@@ -318,7 +319,11 @@ export function chartModel(word, v, w, h, { measure = null, pick = null } = {}) 
   const isle = named ? isleByKey(named.key) : null;
   let card = null;
   if (named && isle) {
-    const title = capFirst(named.name), words = t('sea.chart.cardLine', '{kind} - {way}', { kind: capFirst(KIND_WORDS[named.kind] ?? t('sea.chart.anIsle', 'an isle')), way: wayWords(shipAt, isle) });
+    const kind = capFirst(KIND_WORDS[named.kind] ?? t('sea.chart.anIsle', 'an isle')), way = wayWords(shipAt, isle);
+    // ISLE-TRADE (2026-10-17): a port isle's card names the good of the Bay its exchange makes (tradeGoods.js isleGood, off
+    // the key scenes/world.js etherPortOf gives its port - `"px,py"`), so a captain plans the Veil's own trade on the chart
+    const made = named.kind === 'port' ? goodById(isleGood({ key: `${isle.px},${isle.py}` })) : null;
+    const title = capFirst(named.name), words = made ? t('sea.chart.cardPortLine', '{kind} - makes {good} - {way}', { kind, good: made.name.toLowerCase(), way }) : t('sea.chart.cardLine', '{kind} - {way}', { kind, way });
     const cw = Math.max(width(title), width(words, CHART_FONT.small)) + 16, ch = 36;
     const box = (x, y) => { const x0 = Math.max(4, Math.min(w - cw - 4, x)), y0 = Math.max(4, Math.min(h - ch - 4, y)); return [x0, y0, x0 + cw, y0 + ch]; };
     const o = named.r + 10;

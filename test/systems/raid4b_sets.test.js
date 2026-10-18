@@ -147,7 +147,8 @@ test('RAID4b Riposte (the Broken Oath, 4): a foe\'s blow that TAKES my health op
   blow(e, 10);
   assert.equal(e.health, 90);
   assert.equal(weaponBlowMods(s, 0, e, RAT), 0, 'a miss');
-  assert.equal(weaponBlowMods(s, 100, e, RAT), 115, 'the next blow that lands: +15% at Faint');
+  assert.equal(weaponBlowMods(s, 100, e, RAT, { unaware: false, estimate: true }), 115, 'the Stats page reads it...');   // PIN ADDED (AUDIT MARTIAL L2 F7)
+  assert.equal(weaponBlowMods(s, 100, e, RAT), 115, 'the next blow that lands: +15% at Faint - the page\'s reading spent nothing');
   assert.equal(weaponBlowMods(s, 100, e, RAT), 100, 'spent by it');
   blow(e, 10);
   at(10 + RIPOSTE_SECONDS - 0.01);

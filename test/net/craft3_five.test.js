@@ -31,7 +31,7 @@ const FUTURE = 4_000_000_000;
 test('CRAFT3 DONE WHEN: a Silver Ring and an Iron Dagger raise one Smithing track through the real Worker - each answered as Smithing\'s, each its first\'s 500; the state ten tracks, no Jewelcrafting', async () => {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   for (const [m, n] of [['metal:silver', 1], ['ingot:iron', 1], ['metal:tin', 1]]) raw.prepare('INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, \'own\', ?)').run(mac.id, mac.character, m, n);
   const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });
   const book = createProfBook({ door, storage: memStorage(), character: () => mac.character, sleep: noWait });
@@ -180,7 +180,7 @@ test('CRAFT3 law: each choice acts on its own discipline\'s work - a Master Jewe
 test('CRAFT3 service: the merge\'s free change - no Marks, in effect at once, answered `free`, once (the next a paid one); a discipline named is its craft (an older client\'s); the crafter\'s limit holds a dish at 50 behind Smithing and Building', async () => {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   raw.prepare('INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, updated_at, free_respec) VALUES (?, ?, \'smithing\', ?, \'gemcutter\', 1, 1)').run(mac.id, mac.character, PROF_XP_MAX);
   raw.prepare('INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, \'building\', ?, 1)').run(mac.id, mac.character, xpForRank(60));
   raw.prepare('INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, \'provisioning\', ?, 1)').run(mac.id, mac.character, xpForRank(51) - 101);   // rank 50, 100 short of the cap

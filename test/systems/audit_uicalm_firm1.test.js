@@ -166,7 +166,7 @@ test('AUDIT UICALM-FIRM1 L1 M1: a mastered skill\'s share is held by the same bu
 test('AUDIT UICALM-FIRM1 L1 M2: THE GAINS ARE CAPPED, THEN THE PRICE IS PAID - per channel and at the blow\'s group; only a keystone carries a price', () => {
   for (const n of FIRM_NODES.values()) for (const [k, v] of Object.entries(n.stats)) if (isPrice(k, v)) assert.equal(n.kind, 'keystone', `${n.key} ${k}`);
   // the mage past the spell's cap pays Martyr's Vow's -4
-  const mage = walk('mg.start', 'mg.k', named('Searing Will'), named('Sundering Word'), named("Battlemage's Focus"), named('Glamoured Blade'));
+  const mage = walk('mg.start', 'mg.k', named('Searing Will'), named('Sundering Word'), named("Templar's Mace"), named('Glamoured Blade'));   // PIN MOVED (BAL10): Battlemage's Focus is the Ritual's Templar's Mace - its spellPower 4 the same
   const vow = { start: mage.start, keys: [...mage.keys, ...pathTo(mage, 'rt.k')] };
   assert.ok(treeParts(mage).gains.spellPower > statDef('spellPower').max, 'the mage stands past the cap');
   assert.equal(treeStats(mage).spellPower, statDef('spellPower').max);
@@ -263,7 +263,7 @@ test('AUDIT UICALM-FIRM1 L1 L4: a star no longer joined to the start drops on re
 
 test('AUDIT UICALM-FIRM1 L2 M4: THE SWITCH IS THE WHOLE HAND - shut, or at "dev" for a player, a stored tree moves no harvest\'s XP', async () => {
   const s = await stand();
-  const bo = await s.registered('Bobby', { renown: 1 });
+  const bo = await s.seated('Bobby', { renown: 1 });
   s.setXp(bo, 'fishing', xpForRank(55));
   s.setXp(bo, 'mining', xpForRank(100));
   s.setXp(bo, 'herbalism', xpForRank(100));   // the Craft points the life keystone's road costs
@@ -298,7 +298,7 @@ test('AUDIT UICALM-FIRM1 L2 M5, FIRMAMENT-ON: FIRMAMENT_OPEN is "on", as the rec
 
 test('AUDIT UICALM-FIRM1 L2 M2: AN ID NAMES ONE TREE - the service refuses another tree under a made change\'s id; the book asks a newer tree under its own', async () => {
   const s = await stand();
-  const kay = await s.registered('Kay', { renown: 8 });
+  const kay = await s.seated('Kay', { renown: 8 });
   const X = walk('wr.start', 'wr.g'), Y = walk('wr.start', 'wr.k1');
   const id = rid();
   assert.equal((await s.set(kay, X, id)).status, 200);
@@ -308,7 +308,7 @@ test('AUDIT UICALM-FIRM1 L2 M2: AN ID NAMES ONE TREE - the service refuses anoth
   assert.deepEqual([other.status, other.body], [400, { error: 'firm-rid' }]);
   assert.equal(s.row(kay), packTree(X));
   // the book: X lands and its answer is lost; Y is asked under an id of its own and lands
-  const k2 = await s.registered('Lee', { renown: 8 });
+  const k2 = await s.seated('Lee', { renown: 8 });
   const dev = device(s, k2);
   const book = createFirmamentBook({ door: dev.door, storage: dev.storage, character: () => k2.character });
   await book.read();
@@ -363,7 +363,7 @@ test('AUDIT UICALM-FIRM1 L2 L4: a kept change the service refuses on its retry i
 
 test('AUDIT UICALM-FIRM1 L2 L1: THE GOLD IS THE RECORD\'S - a respec with no realm record is refused on the service and on the device, the sky unmoved', async () => {
   const s = await stand();
-  const p = await s.registered('Nell', { renown: 12 });
+  const p = await s.seated('Nell', { renown: 12 });
   const t = walk('mg.start', 'mg.s1');
   assert.equal((await s.set(p, t)).status, 200);
   const r = await s.call('/v1/firmament/respec', { character: p.character, rid: rid() }, p.secret);
@@ -378,7 +378,7 @@ test('AUDIT UICALM-FIRM1 L2 L1: THE GOLD IS THE RECORD\'S - a respec with no rea
 
 test('AUDIT UICALM-FIRM1 L2 L2: a realm character\'s delete takes its sky with it (the ids\' memory stays)', async () => {
   const s = await stand();
-  const p = await s.registered('Dee', { renown: 12 });
+  const p = await s.seated('Dee', { renown: 12 });
   const R = await seatRealm(s.env, p.secret, 'Dee', { name: 'Dee', level: 3, goldPieces: 100, items: [] });
   s.raw.prepare('UPDATE renown_tracks SET char_id = ? WHERE player = ? AND char_id = ?').run(R.id, p.id, p.character);
   const q = { ...p, character: R.id };
@@ -390,7 +390,7 @@ test('AUDIT UICALM-FIRM1 L2 L2: a realm character\'s delete takes its sky with i
 
 test('AUDIT UICALM-FIRM1 L2 L3: a temper\'s XP takes the tree\'s hand, as the anvil\'s does', async () => {
   const s = await stand();
-  const p = await s.registered('Mac', { renown: 50 });
+  const p = await s.seated('Mac', { renown: 50 });
   s.setXp(p, 'smithing', xpForRank(10));
   // FIRM2: the stars came down under their caps, so one small star's few percent of a temper's XP floors to nothing -
   // the anvil's own notable is the walk (Anvil's Song)
@@ -409,7 +409,7 @@ test('AUDIT UICALM-FIRM1 L2 L3: a temper\'s XP takes the tree\'s hand, as the an
 test('AUDIT UICALM-FIRM1 L5 H1: THE SWITCH SHUTS EVERY DOOR - a change and a respec refused (firm-closed) shut and, at "dev", for a player; the row unmoved', async () => {
   for (const env of [{}, { FIRMAMENT_OPEN: 'dev' }]) {
     const s = await stand(env);
-    const bo = await s.registered('Bobby', { renown: 12 });
+    const bo = await s.seated('Bobby', { renown: 12 });
     const set = await s.set(bo, walk('mg.start', 'mg.s1'));
     assert.deepEqual([set.status, set.body], [403, { error: 'firm-closed' }], JSON.stringify(env));
     const R = await seatRealm(s.env, bo.secret, 'Bobby', { name: 'Bobby', level: 9, goldPieces: 30_000, items: [] });
@@ -421,7 +421,7 @@ test('AUDIT UICALM-FIRM1 L5 H1: THE SWITCH SHUTS EVERY DOOR - a change and a res
 
 test('AUDIT UICALM-FIRM1 L5 M11: the guards - an hour\'s changes (refusals count), the packed tree\'s length, a refund with Marks shut, a change or a respec made over a tree another change replaced', async () => {
   const s = await stand();
-  const ray = await s.registered('Ray', { renown: 20 });
+  const ray = await s.seated('Ray', { renown: 20 });
   for (let i = 0; i < FIRM_OPS_MAX; i++) assert.equal((await s.set(ray, 'mg.start|nope')).status, 400);
   const over = await s.set(ray, walk('mg.start', 'mg.s1'));
   assert.deepEqual([over.status, over.body], [429, { error: 'firm-rate' }]);
@@ -430,11 +430,11 @@ test('AUDIT UICALM-FIRM1 L5 M11: the guards - an hour\'s changes (refusals count
   const ctx = (db = s.env.DB) => ({ db, nowS: NOON, rand: (b) => { for (let i = 0; i < b.length; i++) b[i] = (k++ * 37 + i) & 255; return b; }, bucket: s.env.SAVES });
   const env = { FIRMAMENT_OPEN: 'on', MARKS_OPEN: 'on' };
   // a packed tree past the length is refused before it is read or counted: an hour of them leaves the hour's changes
-  const sid = await s.registered('Sid', { renown: 20 });
+  const sid = await s.seated('Sid', { renown: 20 });
   for (let i = 0; i <= FIRM_OPS_MAX; i++) assert.deepEqual(await setFirmament(ctx(), player(sid), env, { character: sid.character, tree: `mg.start|${'x'.repeat(FIRM_PACKED_MAX)}`, rid: rid() }), { error: 'firm-key' });
   assert.ok(!(await setFirmament(ctx(), player(sid), env, { character: sid.character, tree: packTree(walk('mg.start', 'mg.s1')), rid: rid() })).error, 'not counted');
   // a change that costs nothing, made over a tree another change replaced between its read and its batch
-  const sue = await s.registered('Sue', { renown: 20 });
+  const sue = await s.seated('Sue', { renown: 20 });
   const W2 = walk('wr.start', 'wr.k1');
   const two = { start: 'wr.start', keys: W2.keys.slice(0, 2) }, three = { start: 'wr.start', keys: W2.keys.slice(0, 3) };
   assert.ok(!(await setFirmament(ctx(), player(sue), env, { character: sue.character, tree: packTree(two), rid: rid() })).error);
@@ -444,7 +444,7 @@ test('AUDIT UICALM-FIRM1 L5 M11: the guards - an hour\'s changes (refusals count
   swap.batch = async (list) => { s.raw.prepare('UPDATE firmament SET tree = ? WHERE player = ? AND char_id = ?').run(one, sue.id, sue.character); return s.env.DB.batch(list); };
   assert.deepEqual(await setFirmament(ctx(swap), player(sue), env, { character: sue.character, tree: packTree(three), rid: rid() }), { error: 'firm-stale' });
   assert.equal(s.row(sue), one);
-  const ann = await s.registered('Ann', { renown: 20 });
+  const ann = await s.seated('Ann', { renown: 20 });
   // a refund with Marks shut
   const T = walk('wr.start', 'wr.k1');
   const madeId = rid();
@@ -490,7 +490,7 @@ test('AUDIT UICALM-FIRM1 L5 H4: THE TREE\'S HAND ON A HARVEST\'S YIELD - the qua
     const tree = walk('rt.start', named("Hermit's Covenant"), named('Green Thumb'), named("Druid's Path"));
     const pct = treeStats(tree)['yield.herbalism'];
     assert.ok(pct > 0);
-    const bare = await s.registered('Bare', { renown: 50 }), sky = await s.registered('Sky', { renown: 50 });
+    const bare = await s.seated('Bare', { renown: 50 }), sky = await s.seated('Sky', { renown: 50 });
     for (const who of [bare, sky]) for (const pr of ['fishing', 'mining', 'herbalism', 'logging', 'hunting']) s.setXp(who, pr, xpForRank(100));
     assert.equal((await s.set(sky, tree)).status, 200, 'the yield star bought');
     const herb = (x) => nodeKey({ kind: 'herb', x, y: 200, day: utcDay(NOON), slot: herbPatches({ x, y: 200, day: utcDay(NOON), climate: 231 })[0].slot });
@@ -511,7 +511,7 @@ test('AUDIT UICALM-FIRM1 L5 H4: THE TREE\'S HAND ON A HARVEST\'S YIELD - the qua
 
 test('AUDIT UICALM-FIRM1 L5 H4: every craft route takes the tree\'s hand on its XP - a smelt by execution, the anvil, the brew and the disenchant by their lines', async () => {
   const s = await stand();
-  const p = await s.registered('Mac', { renown: 50 });
+  const p = await s.seated('Mac', { renown: 50 });
   s.setXp(p, 'smithing', xpForRank(10));
   let best = null;
   for (const [k, n] of FIRM_NODES) if (n.stats['xp.smithing']) for (const st of ['wr.start', 'mg.start', 'th.start', 'st.start', 'sh.start', 'rt.start', 'sp.start']) {

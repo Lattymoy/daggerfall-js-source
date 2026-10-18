@@ -101,5 +101,5 @@ test('CABIN-TITLES: a linked ship not afloat is called from the Fleet - the refu
   const body = WORLD.slice(i, WORLD.indexOf('\n  }\n', i));
   const said = /if \(!boat\?\.MapPixel\) \{ townTalk\.say\('([^']*)'\)/.exec(body);
   assert.ok(said, 'the not-afloat refusal');
-  assert.equal(said[1], 'Summon your linked ship from Holdings > Fleet, or place her parts, first.');
+  assert.equal(said[1], 'Summon your linked ship from Holdings > Fleet, or place its parts, first.');
 });

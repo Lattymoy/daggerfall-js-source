@@ -18,7 +18,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WRIT_RID_RE } from './writLaw.js';
-import { PIECE_GONE, PIECE_KEPT_ERROR } from './marketBook.js';
+import { PIECE_GONE, PIECE_KEPT_ERROR, realmPieceAct } from './marketBook.js';   // INT19: a commission's piece through the realm act
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
 
 export const WRIT_KEPT_KEY = 'prof6.kept';
@@ -51,12 +51,13 @@ export function mintWritRid() {
  * @param {{ door: any, storage?: Storage|null, character: () => (string|null), now?: () => number,
  *   marks?: { set?: (n: number) => void } | null, stores?: { apply?: (s: any) => void } | null,
  *   market?: { told?: (n: number) => void, forget?: () => void } | null, holds?: ((provenance: string) => boolean) | null,
- *   sleep?: (ms: number) => Promise<void> }} o `marks` - the Marks book, told every balance an answer carries; `stores` -
+ *   sleep?: (ms: number) => Promise<void>, realm?: { act: (o: any) => Promise<any> } | null }} o `marks` - the Marks book, told every balance an answer carries; `stores` -
  *   the professions' book, told every Stores count (a delivery's, a guild Stores move's); `market` - AUDIT 31 B5: the
  *   market's book, told the balance too and its reads let go (one begun before a writ act painted the older balance);
- *   `holds` - AUDIT 31 H1: whether another book keeps an act on a piece (the market's kept listing)
+ *   `holds` - AUDIT 31 H1: whether another book keeps an act on a piece (the market's kept listing); `realm` - INT19: a
+ *   realm character's act on its record (net/marketBook.js realmPieceAct), null for any other (no commission filled)
  */
-export function createWritBook({ door, storage = null, character, now = () => Date.now(), marks = null, stores = null, market = null, holds = null, sleep = wait }) {
+export function createWritBook({ door, storage = null, character, now = () => Date.now(), marks = null, stores = null, market = null, holds = null, sleep = wait, realm = null }) {
   const state = {
     /** the guild Stores as last read (the Guild tab's), or null */
     guildStores: /** @type {any} */ (null),
@@ -84,8 +85,8 @@ export function createWritBook({ door, storage = null, character, now = () => Da
     if (list.length) t[key] = { fulfils: list }; else delete t[key];
     writeTable(t);
   };
-  /** AUDIT 31 B2: a kept fill's slot is the one it was pressed in, read once at the press. */
-  const keep = (entry, key = slot()) => writeKept([...keptOf(key).filter((x) => x.rid !== entry.rid), entry], key);
+  /** AUDIT 31 B2: a kept fill's slot is the one it was pressed in, read once at the press. INT19: a fill is no longer kept
+   *  (the record is the truth); the fills a tab from before kept are let go as their settle answers them. */
   const letGo = (rid, key = slot()) => { const had = keptOf(key).some((x) => x.rid === rid); writeKept(keptOf(key).filter((x) => x.rid !== rid), key); return had; };
   /** AUDIT 31 H1: the pieces this book keeps a fill of, this slot's. */
   const keptPieces = () => new Set(keptOf().map((f) => f.body?.provenance).filter(Boolean));
@@ -167,26 +168,22 @@ export function createWritBook({ door, storage = null, character, now = () => Da
     cancel: (id) => idAct(`cancel|${id}`, (rid) => door.cancel(id, rid)),
     decline: (id) => idAct(`decline|${id}`, (rid) => door.decline(id, rid)),
     /**
-     * A commission FULFILLED - `req` `{ region, commission, provenance, wear }`: the piece taken out of the save first
-     * (`take`), kept with the request, put back (`putBack`) on a refusal, kept on silence.
+     * A commission FULFILLED - `req` `{ region, commission, provenance, wear }`. INT19: through the realm act, the piece
+     * out of the record by its provenance (net/marketBook.js realmPieceAct): taken out of the save inside the hold, put
+     * back on a refusal - never one that says it is elsewhere (AUDIT 31 H1) - and nothing kept (the record is the truth).
+     * A fill kept by a tab from before INT19 is still asked again by the settle, with its own id.
      * @param {any} req @param {{ item: any, where: string, take: () => boolean, putBack: (item: any, where: string) => void }|null} piece
      */
     fulfil(req, piece) {
       return once(`fulfil|${JSON.stringify(req)}`, async () => {
-        // AUDIT 31 B1: never taken with no account to keep it under; H1: never a piece another kept act holds
+        // AUDIT 31 B1: never with no account; H1: never a piece another kept act holds
         if (!account()) return { ok: false, error: 'no-session' };
         if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance))) return { ok: false, error: PIECE_KEPT_ERROR };
-        if (!piece?.take?.()) return { ok: false, error: 'piece-held' };   // AUDIT 31 H8: the save would not give it up - never "only a crafted piece lists"
-        const key = slot();
+        if (!realm) return { ok: false, error: 'realm-needed' };   // INT19: a crafted piece is handed on out of a realm record alone
+        if (!piece) return { ok: false, error: 'piece-held' };
         const body = { character: character(), ...req, rid: mintWritRid() };
-        keep({ rid: body.rid, body, item: piece.item, where: piece.where }, key);
-        const r = heard(await ask(() => door.fulfil(body)));
-        if (r?.ok) { letGo(body.rid, key); try { market?.forget?.(); } catch { /* the market book's own */ } return r; }
-        // AUDIT 31 B2: a refusal heard in another character's save waits for this one's settle - never put back there
-        if (kept(r) || slot() !== key) return { ok: false, kept: true, error: r?.error, text: WRIT_KEPT_TEXT };
-        const had = letGo(body.rid, key);
-        // AUDIT 31 H1: a piece the service says is elsewhere was a copy in the save - never put back
-        if (had && !PIECE_GONE.includes(r?.error)) { try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[writs] put back', e); } }
+        const r = heard(await realmPieceAct(realm, piece, (at) => door.fulfil({ ...body, realm: at })));
+        if (r?.ok) { try { market?.forget?.(); } catch { /* the market book's own */ } }
         return r ?? { ok: false, error: 'server' };
       });
     },

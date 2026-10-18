@@ -213,6 +213,7 @@ import { bossReach, BOSS_SWAY_TEXT, BOSS_SWAY_TELL_MS } from '../world/gate/gate
 import { playerMeleeCanHit } from '../combat/playerWeapon.js';   // PVPDUNGEON
 import { duelSpellOf } from '../combat/duelCombat.js';   // WB4b: the harmful families alone reach the court's boss, as they alone reach a duel opponent
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
+import { revenantArtFrame } from '../systems/revenant/revenantArts.js';   // RVN-ARTS: a revenant's art - the open world's law (scenes/exteriorFoes.js artFrame)
 import { ARENA_PUPPET_OWNER } from '../net/arena/arenaLaw.js';   // ARENA4: the relay's fighters' puppets - a blow on one is the referee's
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save/save.js';   // B4: the ONE quest+talk composer
@@ -7732,6 +7733,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (_flee === 'start' || _flee === 'run') _tgt = null;
       if (f.roaring) roarStep(f);   // RVN4: its roar spent - blows reach it again
       if (f.ai._sigCall || f.ai._blowPyre) signatureDungeonFrame(f);   // RVN5: its signature called, its pyre's blast
+      if (f.entity?.revenant?.id && (!onlineRoom() || !_roomFoe)) revenantArtFrame(f, _pf, f._artDoor ??= { onMe: () => !foeDeps || !f.ai._armedTargeting || foeDeps.isLocalPlayerTarget(f.ai.target), strike: (sp) => { const h = playerEntity.health ?? 0; magic.strikePlayerFrom(sp, f.entity.level ?? 1, f); return Math.max(0, h - (playerEntity.health ?? h)); }, say: (ev) => revenantSay(ev, (l) => hudText.add(l)), sfx: (el, at) => audio.play3dId?.(SPELL_CAST_SOUND[el] ?? SPELL_CAST_SOUND[4], [at[0], at[1], at[2]], 1, { maxDistance: 16 }), foes: () => foes });   // RVN-ARTS: its art, a foe of mine alone (REVENANT-DUNGEON's gate) - AUDIT RVN B12: its door made once a stand
       // RVN7d (Feud-Arc.md 17, 18.4): a band's follower scattering runs, and is gone when its run is spent (no corpse, no kill)
       if (f.scattering && !(f.ai.fleeLeft > 0)) { questPoolOps.removeFoe(f); f.escaped = true; continue; }
       if (f.scattering) _tgt = null;

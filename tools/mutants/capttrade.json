@@ -47,8 +47,8 @@
   {
     "name": "TRADE-isle-wants",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "  if (port?.ether) return { makes: GOODS.filter((g) => g.ether).map((g) => g.id), wants: BAY.slice() };",
-    "new": "  if (port?.ether) return { makes: GOODS.filter((g) => g.ether).map((g) => g.id), wants: [] };",
+    "old": "  if (port?.ether) { const own = isleGood(port); return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) }; }",
+    "new": "  if (port?.ether) { const own = isleGood(port); return { makes: [...ETHER, own], wants: [] }; }",
     "tests": [
       "test/systems/naval/capttrade.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TRADE-other-sea-listed",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "    if (!!g.ether !== !!port?.ether && stand !== 'wants') continue;",
-    "new": "    if (!!g.ether !== !!port?.ether) continue;",
+    "old": "    if (other && stand === 'neither') continue;   // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)",
+    "new": "    if (other && stand !== 'wants') continue;   // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)",
     "tests": [
       "test/systems/naval/capttrade.test.js"
     ]

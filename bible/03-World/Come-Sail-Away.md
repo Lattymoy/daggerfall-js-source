@@ -39,6 +39,10 @@ lines, one MonoBehaviour).
 
 ## Cabins on owned sailing ships (SAILING-CABINS, 2026-10-03)
 
+CABIN-LOOK (2026-10-17, `03-World/Naval-Refit.md`): a cabin is stained one wood by her captain's choice (her Fleet
+record's `cabin`) - every picture the room wears given a stained twin through the interior builder's `restyle`, glass
+left as built.
+
 Requested departure: every owned large sailing ship includes its own cabin,
 without buying a bank ship. Reuse the bank ship's interior through the existing
 interior builder; connect entry to the sailing options already present.
@@ -1629,7 +1633,12 @@ and stows into, the one the helm weighs - its picture the Merchant's
 (InventoryContainerImages 6), the player's own; its TextureArchive is
 nought, so the pack's drop-icon arms stand down, as DFU's do. A box on no
 boat of the runtime's throws in OpenCargo (kept: the box is always a
-boat's).
+boat's). CARGO-ANYWHERE (2026-10-17, `03-World/Naval-Refit.md`): the target
+says it is the player's own storage (`storage: true`), so the Enhanced skins
+open it beside the pack, two-way, as the classic skin and the mod's own
+window do; and the hold has doors of the port's own beside the box - the
+hold's key (F4), the helm's Hold and the Fleet page's Hold
+(`scenes/holdDoor.js`), at any time and wherever she lies.
 
 ### Variants and ports
 
@@ -2895,6 +2904,15 @@ the shore, and every foe while the player swims count as before. A departure: th
 false) at its helm as ashore (Port-Ledger A, WATER-FOES). THE FOUR HOSTS: `scenes/world.js` latches it; a building
 (`worldModes.js`, a ship's cabin included) has no foe in the water, a dungeon's (`dungeonContext.js`) flooded halls carry
 no boat of the port's rest gate yet - FLAGGED - and the standalone street (`exterior.js`) no sea. `test/systems/waterfoes.test.js`.
+
+## Her paint and her fittings (SHIP-LIVERY, DECK-PROPS, 2026-10-17 - OURS)
+
+A captain's ship is drawn in her paint (`scenes/comeSailAway/shipLiveryPaint.js`, the pool's draw remapping her
+pictures - the mod's own planks and sailcloth stained and tinted, a port-built hull's strakes, trim and canvas
+repainted) and carries the fittings her captain stood on her deck, Daggerfall's crates and chests hung in
+her own tree under her MeshObject as the mod's ModelHelpers hang theirs (`scenes/comeSailAway/deckFittingsHost.js`) -
+drawn with her, standing in her colliders, rocking with her. Both ride the boats' word (`l`, `d`). The whole law is
+`03-World/Naval-Refit.md` SHIP-LIVERY and DECK-PROPS.
 
 ## A camp on her deck rides her (DECK-CAMP, 2026-10-04 - OURS)
 

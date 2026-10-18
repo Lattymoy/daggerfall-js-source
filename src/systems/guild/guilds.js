@@ -565,7 +565,9 @@ export function guildGroupOfFaction(factionDict, factionId) {
  *
  *  Every membership read and write in DFU goes through that ONE property,
  *  so becoming a vampire does not lose your guilds - it swaps the whole
- *  book for an empty one, and a cure swaps it back. The save format keeps
+ *  book for an empty one, and a cure swaps it back (all but the Thieves
+ *  Guild and the Dark Brotherhood: CURSE-CARRY, carryInvitationOnly
+ *  below, carries those two across). The save format keeps
  *  both halves (GetMembershipData(bool vampire), :313-320), and
  *  ClearMembershipData() clears BOTH (:298-302).
  *
@@ -595,7 +597,27 @@ export function activeMemberships(entity) {
   else if (!isMembershipStore(cur)) entity.guildMemberships = { mortal: cur, vampire: {} };
   const vamp = !!(entity.racialOverride && !entity.racialOverride.ended
     && entity.racialOverride.racial === 'vampirism');
+  carryInvitationOnly(entity.guildMemberships, vamp);   // CURSE-CARRY: the two that cannot be asked ride the swap
   return membershipsFor(entity.guildMemberships, vamp);
+}
+/** CURSE-CARRY (`01-Overview/bugs/Field-Bugs-2026-10-17d.md`) - A DEPARTURE FROM GuildManager.Memberships
+ *  (:109-112): the two guilds nobody can ask to join follow the player across the swap. DFU's new vampire opens an
+ *  empty book, and a member of either had no road back into it - INVITATION_ONLY refuses the walk-in, and the one
+ *  invitation each guild ever sends parks its tally at InviteSent (crimeGuilds.js handleStartingCrimeGuildQuests,
+ *  PlayerEntity.cs:1503-1522) - so a Dark Brotherhood member who turned was shut out of the hall for the whole curse.
+ *  Where the ACTIVE book lacks one of the two and the other book holds it, the record MOVES: one record, never two,
+ *  so a rank earned on either side of the curse is the rank the other side reads. Where both books hold one (a
+ *  classic import can), each keeps its own, as DFU's do. Every other guild still swaps - those can be joined again. */
+export function carryInvitationOnly(store, vampire) {
+  if (!isMembershipStore(store) || !store.mortal || !store.vampire) return;
+  const from = vampire ? store.mortal : store.vampire;
+  const to = vampire ? store.vampire : store.mortal;
+  for (const name of INVITATION_ONLY) {
+    const key = membershipKey(GUILDS[name]);
+    if (Object.hasOwn(to, key) || !Object.hasOwn(from, key)) continue;
+    to[key] = from[key];
+    delete from[key];
+  }
 }
 /** The store-shape test membershipsFor and the save both apply. */
 export const isMembershipStore = (v) => !!v && Object.hasOwn(v, 'mortal') && Object.hasOwn(v, 'vampire');

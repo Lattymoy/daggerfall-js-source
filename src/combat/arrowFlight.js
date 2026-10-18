@@ -37,7 +37,8 @@ import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characte
 import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher (worldTick never reaches this module - no cycle)
 import { sparedByPlayer } from './friendlyFire.js';   // SHIPMATES: the player's shaft passes their own crew by
 import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
-import { blowMult, scaleBlowDamage, playerBody } from './technique/techniqueBlow.js';   // TECH1: a technique's shaft - its weight, and never a player's body
+import { blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's shaft - its weight, and never a player's body
+import { takeOwed } from '../systems/playerDoor.js';   // AUDIT MARTIAL L2 F5: the follow-ups a shaft owes a body the relay runs
 
 export const ARROW_MODEL_ID = 99800;
 
@@ -443,6 +444,19 @@ export class ArrowFlight {
  * `dealDamage` is the pool's own damage door, so death runs whole -
  * corpse, loot, crime - and this function never writes health itself.
  */
+/** AUDIT MARTIAL L2 F5: MY SHAFT INTO A BODY THE RELAY RUNS AND NO FOE RECORD HOLDS - the sea serpent's hide
+ *  (scenes/world.js serpentArrowOn): `rolled` the formula's number on its stand-in. A technique's shaft weighs it and
+ *  tells the riders, as playerArrowHitFoe does a foe's (TECH1's weight was never laid on the hide, and a path's rider
+ *  never heard it - AUDIT SCHOOLS L2 F4's spell, for the shaft), and the follow-ups the blow owes the body (a rider's, the
+ *  loot's echo) ride its one claim (systems/playerDoor.js - OPEN-HAND's law, the gate's own). Answers what to claim. */
+export function shaftOnRelayBody(m, entity, rolled) {
+  const body = { name: entity?.name ?? '', entity };
+  const dmg = m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled;
+  if (m?.technique) tellTechniqueLanded(m.technique, body, dmg);
+  const owed = takeOwed(entity);
+  return dmg > 0 ? dmg + owed : dmg;
+}
+
 export function playerArrowHitFoe(m, foe, {
   playerEntity, playerWeapon = null, playerFeet = null, dealDamage = null,
   audio = null, hitEffects = null, say = null, onInflictPoison = null,
@@ -475,6 +489,7 @@ export function playerArrowHitFoe(m, foe, {
   // number by the technique - never on a player's body (its shaft passes them by in flight; a door that hands one here
   // anyway gets the plain number)
   const dmg = m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled;
+  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg);   // MARTIAL3: a path's rider answers its signature's shaft
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
   // AUDIT 62 F20: the splash point is the struck foe's TRANSFORM
   // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:571), i.e. its

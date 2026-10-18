@@ -287,5 +287,13 @@
  "Atk (attack, short)": "Útok",
  "pts (points, short)": "b.",
  "first-time bonus (a craft's first-make XP)": "bonus za první výrobu",
- "cloth (the Weavers' Linen and Wool)": "látka"
+ "cloth (the Weavers' Linen and Wool)": "látka",
+ "martial specialisation": "bojová specializace",
+ "signature technique": "charakteristická technika",
+ "technique key (Weapon Technique)": "klávesa techniky",
+ "weapon skill": "zbraňová dovednost",
+ "blow": "úder",
+ "stack (a passive power’s)": "vrstva",
+ "dash (a technique’s)": "přískok",
+ "fatigue (restored by a power)": "výdrž"
 }

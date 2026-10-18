@@ -280,6 +280,8 @@ test('EG15 BATTLEMAGE\'S DISCIPLINE (4), THE ARMED BLOW: a cast (told by the cas
   assert.equal(weaponBlowMods(w, 100, e, foe), 100, 'no cast, no arm');
   tellPlayerCast(e, FIRE, 40);
   assert.equal(setPowerStates().armed, 0, 'armed with fire');
+  assert.equal(weaponBlowMods(w, 100, e, foe, { unaware: false, estimate: true }), 120, 'the Stats page reads it...');   // PIN ADDED (AUDIT MARTIAL L2 F7)
+  assert.equal(setPowerStates().armed, 0, '...and spends nothing');
   assert.equal(weaponBlowMods(w, 100, e, foe), 120, 'Faint: +20% of the blow');
   assert.equal(setPowerStates().armed, -1, 'spent');
   assert.equal(weaponBlowMods(w, 100, e, foe), 100, 'that blow alone');

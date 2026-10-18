@@ -17,7 +17,7 @@ import { MOD_CURATED, modDials } from '../../../src/systems/features.js';
 import { TRAVEL_OPTIONS_VENDOR } from '../../../src/systems/travel/travelOptions.js';
 import { travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
 import { createLoadGovernor, unbuiltAround } from '../../../src/systems/travel/travelGovernor.js';
-import { foePaced } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
+import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -79,7 +79,7 @@ function rig({ firstPerson = false, enhanced = true } = {}) {
     mapPixelToWorldCoords: (x, y) => ({ x: x * 32768, z: y * 32768 }), tvSceneOf: (x, z) => [x, 10, z],
     tvWater: () => false, tvSeaY: () => 0, TV_SEA_EPS_M: 0.5, TRAVEL_VIEW_TEXT: { water: 'water' },
     locationIndex: new Map(), locationWorldRect: () => null,
-    gamePaused: () => false, modes: { modalWindowUp: () => false }, duelEnemyNear: () => false,
+    gamePaused: () => false, modes: { modalWindowUp: () => false }, duelEnemyNear: () => false, navalHostileNear: () => false,   // TIME-DILATION: no hostile ship
     areEnemiesNearby: () => false, exteriorFoePool: () => [],
   };
   const names = Object.keys(env);
@@ -163,7 +163,7 @@ test('OW-TOGGLE host: a first-person journey under a view brought down runs at t
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
       travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
-      foePaced, travellerOnRoad: () => false,
+      foePaced, foeRate, travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // brought down

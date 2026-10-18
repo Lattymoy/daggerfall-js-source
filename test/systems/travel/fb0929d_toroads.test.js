@@ -35,7 +35,7 @@ import { DIR_DELTA } from '../../../src/world/road/roadNetwork.js';
 import { worldCoordToMapPixel } from '../../../src/formats/mapsFile.js';
 import { TRAVEL_VIEW_TEXT, travelTripLine, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
 import { createLoadGovernor, unbuiltAround } from '../../../src/systems/travel/travelGovernor.js';
-import { foePaced } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
+import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelPathUsesRoads, TRAVEL_PATH_TEXT, setTravelPathMode } from '../../../src/systems/travel/travelPathMode.js';
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
 
@@ -188,7 +188,7 @@ function host({ firstPerson = false, roads = false, enhanced = true } = {}) {
     tvOfferPassage: (place) => { h.offered.push(place.name); return false; },
     tvCautious: () => false, partyWalkBegin: (dest) => h.party.push(dest), travelGovernor: { reset() {} },
     dungeonApproach: refuse('dungeonApproach'), lastLegStart: refuse('lastLegStart'), pixelBox: refuse('pixelBox'),
-    gamePaused: () => false, duelEnemyNear: () => false, areEnemiesNearby: () => false, exteriorFoePool: () => [],
+    gamePaused: () => false, duelEnemyNear: () => false, areEnemiesNearby: () => false, exteriorFoePool: () => [], navalHostileNear: () => false,   // TIME-DILATION: no hostile ship
     partyTravel: { propose: () => false }, hudFade: { clearFade() {} }, fastTravelTo: (p) => h.fast.push(p.name),
     TEST_GODMODE: false, staffPowers: () => ({ god: false }), teleportTo: refuse('teleportTo'),   // TESTBUILD: the shipped build's god mode is off
     wildMapMask: () => null, wildInside: () => false,   // WILD1: no open zone on this map
@@ -274,7 +274,7 @@ test('TO-ROADS, the journey\'s life (the host\'s own code): a foe stops it as th
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
       travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
-      foePaced, travellerOnRoad: () => false,
+      foePaced, foeRate, travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // the view left down

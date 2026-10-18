@@ -72,8 +72,8 @@
   {
     "name": "EM-truthy-me-believed",
     "file": "src/net/online.js",
-    "old": "ch, ...(m.me === true ? { me: true } : {}) }));",
-    "new": "ch, ...(m.me ? { me: true } : {}) }));",
+    "old": "ch, ...(m.me === true ? { me: true } : {}), ...(typeof m.sg",
+    "new": "ch, ...(m.me ? { me: true } : {}), ...(typeof m.sg",
     "tests": ["test/net/emote1.test.js"]
   },
   {

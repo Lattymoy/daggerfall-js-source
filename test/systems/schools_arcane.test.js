@@ -146,7 +146,7 @@ test('SCHOOLS1 THE CHOICE: two mastered schools open their path, three open thre
   assert.equal(AP.choosePath(three, 'seer').ok, false);
   assert.equal(AP.pathRefusal(three, 'nobody'), 'No such specialisation.');
   const r = AP.choosePath(three, 'warden');
-  assert.deepEqual(r, { ok: true, text: 'Specialisation chosen: Warden. Living Aegis is sold to you at the Mages Guild.' });
+  assert.deepEqual(r, { ok: true, text: 'Specialisation chosen: Warden.' });   // PIN MOVED (AUDIT MARTIAL L4 M1): one line the screen holds - where it is sold is the card's
   assert.equal(three.arcanePath, 'warden');
   assert.deepEqual(AP.pathChoices(three), [], 'chosen: nothing more open');
   assert.deepEqual(AP.choosePath(three, 'necromancer'), { ok: false, text: 'Your specialisation is already chosen: Warden.' });

@@ -5,10 +5,15 @@
 // no hold at all. The hold now follows the piece (realm.js craftHoldOf: the realm character its maker's record names).
 // PIN MOVED (AUTO-HOLD, 2026-10-16): the hold the cases set is staff's, where it was the copies' - no verdict writes that
 // one now.
+// PIN MOVED (INT19, 2026-10-17, Integrity-Arc section 7): a listing, an auction and a commission's fill take the piece out
+// of the acting character's REALM RECORD (server-account/src/craftedPiece.js) - so another character's name lists nothing
+// ('realm-needed'), and the acting record's own hold is the one asked; the maker's hold (craftHoldOf) stands for the
+// disenchant's character with no record alone, and is pinned there.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { standService, T0 } from '../accountDb.mjs';
-import { seatRealm } from '../realmSeat.mjs';
+import { seatRealm, holdPieces } from '../realmSeat.mjs';
+import { disenchantPiece } from '../../server-account/src/alchemy.js';   // INT16: the route's own CRAFT-HOLD, behind the progression gate
 
 let _now = T0;
 const realNow = Date.now;
@@ -36,20 +41,25 @@ async function stand() {
   return { s, raw, eve, E, piece, hold };
 }
 
-test('CRAFT-HOLD a held realm character\'s crafted piece lists and auctions under no other character\'s name - and lists again once the hold is lifted (mutants: the list route asks the acting character alone; the auction route too)', async () => {
+test('CRAFT-HOLD a held realm character\'s crafted piece lists and auctions under no other character\'s name - and lists again once the hold is lifted (mutants: the list route asks no record; the auction route too)', async () => {
   const { s, eve, E, piece, hold } = await stand();
   piece(P(0xa1));
   piece(P(0xa2), { quality: 4 });
+  holdPieces(s.env, E.id, [{ provenance: P(0xa1) }, { provenance: P(0xa2), quality: 4 }]);
   hold('staff');
   const list = (character, provenance, currency = 'marks') => s.call('/v1/market/list', { character, region: DF, kind: 'piece', provenance, wear: 1000, price: 500, hubs: HUBS, rid: rid(), currency }, eve.secret);
   const auction = (character, provenance) => s.call('/v1/market/auction', { character, region: DF, provenance, wear: 1000, opening: 500, hubs: HUBS, rid: rid() }, eve.secret);
-  for (const r of [await list(E.id, P(0xa1), 'gold'), await list('char-anything', P(0xa1)), await auction('char-anything', P(0xa2))]) {
+  for (const r of [await list(E.id, P(0xa1), 'gold'), await auction(E.id, P(0xa2))]) {
     assert.equal(r.status, 409);
-    assert.equal(r.body.error, 'trade-held', 'held, whatever character the act names');
+    assert.equal(r.body.error, 'trade-held', 'its own record held');
+  }
+  // PIN MOVED (INT19): another character's name holds no record of the piece - it lists and auctions nothing
+  for (const r of [await list('char-anything', P(0xa1)), await auction('char-anything', P(0xa2))]) {
+    assert.deepEqual([r.status, r.body.error], [400, 'realm-needed'], 'whatever character the act names');
   }
   hold(null);
-  const open = await list('char-anything', P(0xa1));
-  assert.equal(open.status, 200, 'the hold lifted, it lists as before');
+  const open = await list(E.id, P(0xa1));
+  assert.equal(open.status, 200, `the hold lifted, it lists out of its record: ${JSON.stringify(open.body)}`);
   assert.equal(open.body.listing.state, 'open');
 });
 
@@ -62,23 +72,34 @@ test('CRAFT-HOLD a commission is filled with no held character\'s craft - the ro
   assert.equal(posted.status, 200, JSON.stringify(posted.body));
   const id = posted.body.commission.id;
   const fulfil = (character) => s.call('/v1/writs/fulfil', { character, region: DF, commission: id, provenance: P(0xb1), wear: 1000, rid: rid() }, eve.secret);
+  holdPieces(s.env, E.id, [{ provenance: P(0xb1) }]);
   hold('staff');
-  for (const character of [E.id, 'char-anything']) {
-    const r = await fulfil(character);
-    assert.equal(r.status, 409, `${character}: ${JSON.stringify(r.body)}`);
-    assert.equal(r.body.error, 'trade-held');
-  }
+  const r = await fulfil(E.id);
+  assert.equal(r.status, 409, JSON.stringify(r.body));
+  assert.equal(r.body.error, 'trade-held');
+  assert.equal((await fulfil('char-anything')).body.error, 'realm-needed', 'PIN MOVED (INT19): no record of it under another name - nothing filled');
   hold(null);
-  assert.equal((await fulfil('char-anything')).status, 200, 'the hold lifted, the commission is filled');
+  assert.equal((await fulfil(E.id)).status, 200, 'the hold lifted, the commission is filled');
 });
 
 test('CRAFT-HOLD a held character\'s craft is disenchanted to the Stores under no other character\'s name (mutants: the disenchant route unheld)', async () => {
-  const { s, eve, piece, hold } = await stand();
+  const { s, raw, eve, E, piece, hold } = await stand();
   piece(P(0xc1));
   hold('staff');
+  // PIN MOVED (INT16, Integrity-Arc section 7): a disenchant is a progression claim (its XP), asked of the account's
+  // SEATED realm character before the route reads a word (progress.js progressRefusal) - another character's name is
+  // refused 'progress-seat', and the held maker itself, the seat here, 'trade-held' at that gate
   const r = await s.call('/v1/prof/disenchant', { character: 'char-anything', provenance: P(0xc1), rid: rid() }, eve.secret);
-  assert.equal(r.status, 409, JSON.stringify(r.body));
-  assert.equal(r.body.error, 'trade-held');
+  assert.equal(r.status, 403, JSON.stringify(r.body));
+  assert.equal(r.body.error, 'progress-seat');
+  const self = await s.call('/v1/prof/disenchant', { character: E.id, provenance: P(0xc1), rid: rid(), realm: E.at() }, eve.secret);
+  assert.deepEqual([self.status, self.body], [403, { error: 'trade-held', held: 'staff' }], 'its maker, held, claims nothing');
+  // the route's own CRAFT-HOLD stands behind the gate: asked as the route asks it (index.js ROUTES), another
+  // character's name is refused for the piece's maker's hold, and nothing is disenchanted
+  const player = raw.prepare('SELECT * FROM players WHERE id = ?').get(eve.id);
+  const own = await disenchantPiece({ db: s.env.DB, primary: s.env.DB, nowS: _now, rand: (b) => crypto.getRandomValues(b), bucket: s.env.SAVES }, player, s.env, { character: 'char-anything', provenance: P(0xc1), rid: rid() });
+  assert.deepEqual(own, { error: 'trade-held', held: 'staff' });
+  assert.ok(raw.prepare('SELECT 1 FROM products WHERE provenance = ?').get(P(0xc1)), 'the piece stands');
 });
 
 test('AUDIT CRAFT-HOLD a held character with crafts at the account is not deleted - its row is where its hold lives, and deleted, its crafts listed under any other name the next minute; lifted, it goes; one with none goes as any other (mutants: the delete unheld; every held character refused)', async () => {
@@ -89,8 +110,9 @@ test('AUDIT CRAFT-HOLD a held character with crafts at the account is not delete
   assert.equal(del.status, 409, JSON.stringify(del.body));
   assert.equal(del.body.error, 'trade-held');
   assert.ok(raw.prepare('SELECT 1 FROM realm_characters WHERE id = ?').get(E.id), 'the row and its hold stand');
-  const list = await s.call('/v1/market/list', { character: 'char-anything', region: DF, kind: 'piece', provenance: P(0xd1), wear: 1000, price: 500, hubs: HUBS, rid: rid(), currency: 'marks' }, eve.secret);
-  assert.equal(list.body.error, 'trade-held', 'and its craft still lists for nothing');
+  holdPieces(s.env, E.id, [{ provenance: P(0xd1) }]);
+  const list = await s.call('/v1/market/list', { character: E.id, region: DF, kind: 'piece', provenance: P(0xd1), wear: 1000, price: 500, hubs: HUBS, rid: rid(), currency: 'marks' }, eve.secret);
+  assert.equal(list.body.error, 'trade-held', 'and its craft still lists for nothing');   // PIN MOVED (INT19): out of its own record, held
   hold(null);
   assert.equal((await s.call('/v1/realm/delete', { id: E.id }, eve.secret)).status, 200, 'lifted, it goes as any other');
   // a held character with no piece of its make at the account: its Stores go with its row, nothing escapes - it goes
@@ -101,22 +123,27 @@ test('AUDIT CRAFT-HOLD a held character with crafts at the account is not delete
 
 test('AUDIT CRAFT-HOLD the hold is a HOLD alone and the account\'s own: an unheld maker unjudged or dead refuses no sibling, another account\'s buyer of a held maker\'s piece is never refused, and a piece made before customs follows its customs character (mutants: record-unjudged refused; the account guard dropped; the origin unread)', async () => {
   const { s, raw, eve, E, piece, hold } = await stand();
-  const list = (who, character, provenance) => s.call('/v1/market/list', { character, region: DF, kind: 'piece', provenance, wear: 1000, price: 500, hubs: HUBS, rid: rid(), currency: 'marks' }, who.secret);
+  // PIN MOVED (INT19): the maker's hold is the disenchant's alone now, for a character with no record - asked as the route
+  // asks it (index.js ROUTES), behind the progression gate (INT16), as the disenchant's own pin above asks it
+  const disenchant = (who, character, provenance) => disenchantPiece({ db: s.env.DB, primary: s.env.DB, nowS: _now, rand: (b) => crypto.getRandomValues(b), bucket: s.env.SAVES },
+    raw.prepare('SELECT * FROM players WHERE id = ?').get(who.id), s.env, { character, provenance, rid: rid() });
   piece(P(0xe1));
   raw.prepare('UPDATE realm_characters SET judged_seq = NULL WHERE id = ?').run(E.id);
-  assert.equal((await list(eve, 'char-anything', P(0xe1))).status, 200, 'its maker unjudged, not held: the piece lists');
+  const unjudged = await disenchant(eve, 'char-anything', P(0xe1));
+  assert.notEqual(unjudged.error, 'trade-held', `its maker unjudged, not held: the piece is no held craft - ${JSON.stringify(unjudged)}`);
+  assert.notEqual(unjudged.error, 'record-unjudged');
   const tom = await s.registered('Tom');
   s.seedMarks(tom, 10_000);
   piece(P(0xe2));
   raw.prepare('UPDATE products SET owner = ? WHERE provenance = ?').run(tom.id, P(0xe2));   // sold to Tom (a sale moves the owner alone)
   hold('staff');
-  const theirs = await list(tom, tom.character, P(0xe2));
-  assert.equal(theirs.status, 200, `another account's piece, its maker held: ${JSON.stringify(theirs.body)}`);
+  const theirs = await disenchant(tom, tom.character, P(0xe2));
+  assert.notEqual(theirs.error, 'trade-held', `another account's piece, its maker held: ${JSON.stringify(theirs)}`);
   // a piece made before customs: its char_id the offline character the realm one came in as
   raw.prepare('UPDATE realm_characters SET origin_id = ? WHERE id = ?').run('char-offline1', E.id);
   piece(P(0xe3));
   raw.prepare('UPDATE products SET char_id = ? WHERE provenance = ?').run('char-offline1', P(0xe3));
-  assert.equal((await list(eve, 'char-anything', P(0xe3))).body.error, 'trade-held', 'its customs character held, it is held');
+  assert.equal((await disenchant(eve, 'char-anything', P(0xe3))).error, 'trade-held', 'its customs character held, it is held');
 });
 
 test('AUDIT CRAFT-HOLD a held character\'s Stores go into no guild\'s Stores and fill no guild\'s writ (mutants: the deposit unheld; the supply unheld)', async () => {

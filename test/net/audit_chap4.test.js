@@ -244,7 +244,7 @@ test('AUDIT CHAP4 D1: a membership the active book does not hold is dormant - cl
 });
 
 test('AUDIT CHAP4 D1: the tab claims by the active book - its members off the curse\'s own reading (mutants: the vampire read)', () => {
-  assert.match(src('src/net/npcRollTracker.js'), /members: \(\) => rollMembersOf\(entityOf\(\)\?\.guildMemberships, rollVampireOf\(entityOf\(\)\)\),/);
+  assert.match(src('src/net/npcRollTracker.js'), /return rollMembersOf\(entity\?\.guildMemberships, rollVampireOf\(entity\)\);/);   // CURSE-CARRY: the door carries first, then reads
 });
 
 // ── THE CLIENT ──────────────────────────────────────────────────────

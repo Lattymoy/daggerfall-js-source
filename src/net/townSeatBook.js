@@ -78,7 +78,7 @@ export const SEAT_TOWERS_EVERY_MS = 10 * 60_000;
  *  each receipt's fate in its `why`, and none of them is mended by asking again). AUDIT-SEATS C10: and the seats shut to
  *  this account - but never `auth` or `no-session`: a session run out is mended by signing in again, and the ticks it
  *  held were dropped with it. */
-const WATCH_SETTLED = Object.freeze(['bad-watch', 'seats-need-account', 'seats-closed']);
+const WATCH_SETTLED = Object.freeze(['bad-watch', 'seats-need-account', 'seats-closed', 'progress-seat', 'trade-held']);   // INT16: a tab not seated here, or a character whose trade is held, is owed no tick
 /** AUDIT-SEATS C9: THE STANDINGS' CACHE, whose every clear (an act, a claim, a Tribute) moves its generation - so a read
  *  asked BEFORE an act and answered after it is not kept as the seat's standings (it was the seat before the act: the
  *  Edict just proclaimed read as none for the cache's thirty seconds). */

@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct149"
+ACCOUNT_VERSION = "acct153"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -175,6 +175,36 @@ APPROVER_HANDLES = "Lattymoy"
 # ingame"): the second, with the same shield and commands. MOD3 (same
 # day, Mac: "Also add Starempire42 as a moderator"): the third.
 MODERATOR_HANDLES = "Asynian,tabbyvish,Starempire42"
+# SAFE1-SAFE8 (2026-10-17, Mac: "Lets do every single thing here. I want a full fledged future proof system";
+# bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY.
+#
+# RELAY_LAW_URL - SAFE4: the relay's door for a mute or a ban decided with no moderator's client to carry its order to
+# the rooms (one from Discord, an automatic one): the relay's own host and SAFE_LAW_PATH (src/net/wire.js), which the
+# hub applies and hands to its target's own client. Empty: the order lands on the target's next connection instead.
+# AUDIT SAFE RELAY S1: the order goes through the RELAY service binding below, which this address only names the path
+# for - one Worker fetching another's workers.dev address on the same account may be refused (Cloudflare's error 1042).
+RELAY_LAW_URL = "https://daggerfall-online.mackcothran.workers.dev/v1/law"
+# MOD_AI - SAFE5: the reviewer (src/modAi.js) - "off"; "shadow", which reads the relay's feed of public lines and the
+# reported cases and says its verdict beside each case, marked as a shadow's, and does nothing on it; or "on", which
+# also mutes for half an hour on its severest, surest verdicts. Shipped "shadow" (INT5's law, Mac's "Measure 7 days,
+# then enforce"): read what it says for a fortnight, then turn it on. It reads nothing until the deploy has put
+# ANTHROPIC_API_KEY beside it - a secret, from the repository's own secrets, never here.
+MOD_AI = "shadow"
+# MOD_AI_MODEL: the model, empty for the current Haiku (src/modAi.js MOD_AI_MODEL_DEFAULT). MOD_AI_DAILY_MAX: its calls
+# a UTC day, empty for 1,500.
+MOD_AI_MODEL = ""
+MOD_AI_DAILY_MAX = ""
+# SAFE8: THE MODERATORS' QUEUE IN DISCORD (src/discord.js). DISCORD_MOD_CHANNEL: the private channel's id the bot posts
+# each case to. DISCORD_PUBLIC_KEY: the Discord application's public key (hex - not a secret), which every press and
+# /mod is signed with. DISCORD_MODERATORS: "<discord user id>:<game handle>", comma-separated - a press is that
+# handle's act, and only while it holds MODERATOR_HANDLES or DEVELOPER_HANDLES. The bot's token is DISCORD_BOT_TOKEN, a
+# secret the deploy puts, never here. Empty: no cards and no presses - the cases still gather, and the game's
+# /mute, /ban and /strikes still answer. The setup: bible/11-Multiplayer/Chat-Safety-Arc.md section 9.
+DISCORD_MOD_CHANNEL = "1560996671440293908"
+DISCORD_PUBLIC_KEY = "36e74945022f94ec7955a84ccccb270e63780100e558d30777742337b62de3e0"
+# 2026-10-17 (Mac): the queue's channel and the application's public key set; the moderators' Discord ids to come -
+# until then the cards post and every press or /mod answers that only the game's moderators may act
+DISCORD_MODERATORS = ""
 # FOUNDER5 (2026-10-07, Mac: "Can we grant every account before sept 25th
 # the founder title"): THE FOUNDERS BY NAME. Founder is held by every
 # registered account that first played by the end of 24 September on any
@@ -320,6 +350,15 @@ PRIMARCH_HANDLES = "GA00250"
 # next token. Flylighter stays a Disciple (DISCIPLE_HANDLES) - a second title
 # held, one worn.
 CRYSTAL_FIST_HANDLES = "Flylighter"
+# WIKIMAID (2026-10-17, for SylviaBun: "Honestly as dumb as this is gonna
+# sound the WikiMaid title and a purple aura with bunnies would be dope as
+# hell" - "Lets go all out for this"): WikiMaid - the title in an amethyst
+# into lilac into a bunny's blush, the wikimaid glyph (a rabbit's head, its
+# ears up, in a maid's frilled headband) and the Lilac Warren, rabbits
+# hopping round the feet on a ring of lilac light, their prints fading
+# behind them. A list that grants an aura (titles.js TIER_AURA); taking the
+# handle off takes all three on the next token.
+WIKIMAID_HANDLES = "SylviaBun"
 # PATREON-LINK (2026-10-01, Mac: "With patron and having to manually hand
 # out titles. Im running into a workflow where its really hard to keep up
 # with it"; asked, "Patreon auto-link"): A PATRON'S TITLE FOLLOWS THEIR
@@ -343,8 +382,12 @@ PATREON_CLIENT_ID = "xyF8_xJg78YwVgT0xRhs6uhPVeAdOzJu7_dcpaGqvqH-5DNdbLp-gugahtf
 # Heriophant is custom and Herald doesnt exist ingame yet. Supporter doesnt
 # recieve a title/glyph"): Disciple (29666211) is mapped, and Herald
 # (29666234) since HERALD gave it its title in the game. Supporter
-# (29701293) holds none; Hierophant (29666221) is custom, granted by name.
-PATREON_TIERS = "29666211:disciple,29666234:herald"
+# (29701293) holds none.
+# HIEROPHANT-TIER (2026-10-17, Mac: "The $50 patreon tier doesnt have a
+# title/glyph ingame. The Heirophant"): Hierophant (29666221) is mapped
+# too - its pledge holds TITLE-N's Hierophant, the rose title and the
+# crown. A title made for one patron is still granted by name, beside it.
+PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
 
 [[d1_databases]]
 binding = "DB"
@@ -402,6 +445,14 @@ bucket_name = "daggerfall-saves"
 [[durable_objects.bindings]]
 name = "ADMIT"
 class_name = "AdmitGate"
+
+# AUDIT SAFE RELAY S1 (bible/11-Multiplayer/Chat-Safety-Arc.md section 5): THE RELAY, BOUND - the service's door to the
+# relay (src/sanctions.js pushLaw) goes Worker to Worker through this binding, never out to the relay's public address,
+# which one Worker of an account may be refused to fetch from another (Cloudflare's error 1042). The relay binds this
+# service back (server/wrangler.toml ACCOUNTS) for its reviewer's feed; both Workers exist, so either deploys first.
+[[services]]
+binding = "RELAY"
+service = "daggerfall-online"
 
 [[migrations]]
 tag = "admit1"

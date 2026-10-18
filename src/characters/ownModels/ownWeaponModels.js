@@ -51,6 +51,27 @@ import { THUNDERLOCK_TEMPLATE } from '../thunderlockIds.js';
  * fallback, present on every rig, which is exactly what an item with no
  * type should land on.
  */
+/**
+ * RIFLE-STANCE: THE GUN ON THE HAND AS A HAND HOLDS A PISTOL GRIP - the part's preTransform (`{ a, t }`, the shape the
+ * torch's LIGHT_ATTITUDE takes: the mesh's vertices turned and moved before the bone places them). The bake laid the
+ * barrel along the bone's +Y (tools/bakeThunderlock.mjs: forward -z, up -x, chosen against a preview and never against
+ * the bone - the record said so twice), which is the sword's way: Morrowind's Weapon Bone runs its +Y out of the fist's
+ * thumb side and its +X down the hand toward the fingers, so the gun rode the fist by its receiver, rolled onto its side.
+ * A pistol grip goes THROUGH the fist instead: the gun's top (+Z) to the thumb's side (+Y), its barrel along the hand
+ * toward the knuckles (+X) - turned `GRIP_RAKE` degrees up toward the thumb, the grip's own rake - and its right (+X)
+ * to the back of the hand (+Z); `GRIP_CENTRE`, the middle of the shipped mesh's grip, at the bone's origin (the fist's
+ * middle, where a sword's grip sits).
+ */
+const GRIP_RAKE = 18;
+const GRIP_CENTRE = Object.freeze([0, -2.5, -3.5]);
+export const GUN_GRIP_ATTITUDE = (() => {
+  const r = (GRIP_RAKE * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
+  const a = [0, c, -s, 0, s, c, 1, 0, 0];   // columns: the mesh's right to +Z, its barrel to (c, s, 0), its top to (-s, c, 0)
+  const [x, y, z] = GRIP_CENTRE;
+  const t = [-(a[0] * x + a[1] * y + a[2] * z), -(a[3] * x + a[4] * y + a[5] * z), -(a[6] * x + a[7] * y + a[8] * z)];
+  return Object.freeze({ a: Object.freeze(a), t: Object.freeze(t) });
+})();
+
 export const OWN_MW_MODELS = Object.freeze({
   [THUNDERLOCK_TEMPLATE]: Object.freeze({
     model: 'thunderlock.nif',
@@ -99,6 +120,10 @@ export const OWN_MW_MODELS = Object.freeze({
     // carry one, and 1 is the reference's own value for a record that
     // does not set it.
     speed: 1,
+    // RIFLE-STANCE (bible/05-Combat/Dwarven-Thunderlock.md): HELD AS A LONG GUN - the arms solved onto it while it is drawn
+    // (combat/gun/rifleStance.js), not the crossbow clip's; and HELD BY ITS GRIP - the part's attitude on the bone.
+    holdAs: 'rifle',
+    attitude: GUN_GRIP_ATTITUDE,
   }),
 });
 

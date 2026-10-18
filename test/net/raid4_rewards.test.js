@@ -25,6 +25,7 @@ import {
 } from '../../src/net/raid/raidClaims.js';
 import { profileView, profileRaidLine, createProfileWindow } from '../../src/ui/profileWindow.js';
 import { ACCEPTED } from '../../src/net/legalLaw.js';   // TERMS1: a request that makes an account carries the versions ticked
+import { r2, seatRealm } from '../realmSeat.mjs';   // INT16: a raid's cleanse is a progression claim, asked of the account's seated realm character
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -165,7 +166,7 @@ async function stand({ gateKey = '' } = {}) {
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
   const pub = Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url');
-  const env = { DB: d1(), IDENTITY_PRIVATE_KEY: pkcs8, ACCOUNT_VERSION: 'test1', ALLOWED_ORIGIN: '*', GATE_PUBLIC_KEY: gateKey };
+  const env = { DB: d1(), SAVES: r2(), IDENTITY_PRIVATE_KEY: pkcs8, ACCOUNT_VERSION: 'test1', ALLOWED_ORIGIN: '*', GATE_PUBLIC_KEY: gateKey };   // INT16: SAVES, so a claimant seats a realm character
   const call = async (method, path, body, bearer = null) => {
     const res = await worker.fetch(new Request(`https://accounts.invalid${path}`, {
       method,
@@ -181,28 +182,34 @@ test('RAID4 the worker: /v1/raid/claim behind a session and never open - the ses
   let clock = T0 * 1000;
   t.mock.method(Date, 'now', () => clock);
   const { priv, pub } = await relayPair();
-  const { call, identity } = await stand({ gateKey: pub });
+  const { env, call, identity } = await stand({ gateKey: pub });
   assert.ok(ROUTES.has('/v1/raid/claim') && !OPEN_ROUTES.has('/v1/raid/claim'));
   const me = (await call('POST', '/v1/auth/guest', { ...ACCEPTED })).body;
   const them = (await call('POST', '/v1/auth/guest', { ...ACCEPTED })).body;
   assert.equal((await call('POST', '/v1/auth/register', { handle: 'Warden', password: 'correct horse battery', ...ACCEPTED }, me.secret)).status, 200);
+  // INT16 (Integrity-Arc section 7): a cleanse is claimed for the account's SEATED realm character - each claimant seats one,
+  // and an offline id (CH) is refused before the route reads the receipt
+  const MINE = (await seatRealm(env, me.secret, 'Ann')).id, THEIRS = (await seatRealm(env, them.secret, 'Tam')).id;
   const r = await raidFor(me.id, `3:7:${DAY}`, priv, T0);
-  assert.equal((await call('POST', '/v1/raid/claim', { receipt: r, character: CH })).status, 401, 'a stranger claims nothing');
-  const ok = await call('POST', '/v1/raid/claim', { receipt: r, character: CH, name: 'Ann' }, me.secret);
+  assert.equal((await call('POST', '/v1/raid/claim', { receipt: r, character: MINE })).status, 401, 'a stranger claims nothing');
+  assert.deepEqual(await call('POST', '/v1/raid/claim', { receipt: r, character: CH, name: 'Ann' }, me.secret), { status: 403, body: { error: 'progress-seat' } }, 'INT16: an offline id claims nothing');   // PIN MOVED (INT16, Integrity-Arc section 7): a claim names the account's seated realm character - an offline id is refused before the receipt is read
+  const ok = await call('POST', '/v1/raid/claim', { receipt: r, character: MINE, name: 'Ann' }, me.secret);
   assert.equal(ok.status, 200);
   assert.equal(ok.body.recorded, true); assert.equal(ok.body.defended, 1); assert.equal(ok.body.renown.rose, true);
+  assert.equal(ok.body.renown.character, MINE, 'the seat is paid');
   const v = await verifyOrder(ok.body.order, identity, { subtle, nowS: T0, kind: 'renown' });
   assert.equal(v.ok, true, 'the rise carries a signed order');
   assert.equal(v.claims.lv, ok.body.renown.level);
-  const again = await call('POST', '/v1/raid/claim', { receipt: r, character: CH }, me.secret);
+  const again = await call('POST', '/v1/raid/claim', { receipt: r, character: MINE }, me.secret);
   assert.deepEqual(again.body, { recorded: false, why: 'claimed', defended: 1, spoils: false, order: null });
-  assert.equal((await call('POST', '/v1/raid/claim', { receipt: r, character: CH }, them.secret)).status, 403, 'another\'s receipt');
-  assert.equal((await call('POST', '/v1/raid/claim', { receipt: 'w1.x.y', character: CH }, me.secret)).status, 400);
+  assert.deepEqual(await call('POST', '/v1/raid/claim', { receipt: r, character: THEIRS }, them.secret), { status: 403, body: { error: 'not-yours' } }, 'another\'s receipt');   // INT16: the claimant seated, so the 403 is the receipt's own refusal and never the seat's
+  assert.equal((await call('POST', '/v1/raid/claim', { receipt: 'w1.x.y', character: MINE }, me.secret)).status, 400);
   assert.deepEqual((await call('GET', '/v1/account', undefined, me.secret)).body.account.raids, { defended: 1 });
   assert.deepEqual((await call('POST', '/v1/duel/record', { id: me.id }, them.secret)).body.raids, { defended: 1 }, 'the Inspect card\'s record');
   const bare = await stand();
   const g = (await bare.call('POST', '/v1/auth/guest', { ...ACCEPTED })).body;
-  assert.equal((await bare.call('POST', '/v1/raid/claim', { receipt: r, character: CH }, g.secret)).status, 503, 'no public half: the service\'s gap');
+  const G = (await seatRealm(bare.env, g.secret, 'Gil')).id;   // INT16: seated, so the 503 is the service's gap and never the seat's refusal
+  assert.deepEqual(await bare.call('POST', '/v1/raid/claim', { receipt: r, character: G }, g.secret), { status: 503, body: { error: 'no-gate-key' } }, 'no public half: the service\'s gap');
 });
 
 // ═══ THE CLIENT ══════════════════════════════════════════════════════════════════════════════════

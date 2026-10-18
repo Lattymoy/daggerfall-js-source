@@ -150,7 +150,7 @@ Eltheric state, and no seam the world host hands the helm (the sea's way scale, 
 the cargo, the terrain, the input) carries anything across a crossing. The crossing's own flags cannot be the lock - its
 question is asked only while the motor sails (`world.js:"    if (!etherSea || _etherCrossing || !csaRuntime?.isSailing?.()) return;"`),
 and the reporter met it at the helm of a rowboat that would not move, so the helm was live and no disembark or pause
-stood. The Fleet's refusal (`fleetHost.js:"      : apart ? 'She lies on the far side of the Veil - sail her across yourself.'"`)
+stood. The Fleet's refusal (`fleetHost.js:"      : apart ? 'This ship is on the other side of the Veil. Sail it across yourself.'"`)
 touches Summon and Send-away alone, and is the design's. The reported sequence, run through the real runtime, the real
 sea and Fleet hosts and world.js's own `veilApart` (the Carrack out, her helm left past the Veil, a walk, a Large Boat
 sailed home): in the Bay she makes way under sail, at her oars and to her rudder, a rowboat rows, and a save in that

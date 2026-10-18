@@ -61,11 +61,12 @@
 // enchantment, so DFU's own IsIdentified law (tradeModes.itemIsIdentified:
 // an enchanted item is unidentified until identified) makes it drop
 // UNIDENTIFIED with no new mechanism: the Identify spell and the Mages
-// Guild's service reveal it, and until then it reads as its bare
-// template with no material and no affix lines. A Magic-tier item with
-// only numeric affixes has no enchantment and so reads at once, as a
-// plain item does. The affixes WORK while unidentified - DFU's
-// enchantments do too.
+// Guild's service reveal it, and until then the name stays the bare
+// template and the affix lines stay hidden. MAT-SHOW: armour and weapons
+// of Rare and better still say their metal on the pack's sub-line. A
+// Magic-tier item with only numeric affixes has no enchantment and so
+// reads at once, as a plain item does. The affixes WORK while
+// unidentified - DFU's enchantments do too.
 //
 // ONE TUNING TABLE. Every drop weight is RARITY_WEIGHTS and SOURCE_MULT
 // below, per mille, so the feel can be tuned without touching a roll.

@@ -29,6 +29,7 @@
 // SAILING-CABINS: a below-deck owner keeps streaming their fleet. On owner loss,
 // a locally occupied hull is retained stationary until its passenger steps off.
 import { validCsaRecord, CSA_WIRE_BOATS_MAX } from '../../systems/comeSailAway/comeSailAwayWire.js';
+import { liveryCode } from '../../systems/naval/shipLivery.js';   // SHIP-LIVERY: her paint, as the pool reads a peer's
 import { Boat, boatAnimators, animatorOf, setLights } from '../../systems/comeSailAway/comeSailAwayBoat.js';
 import { stowSail } from '../../systems/comeSailAway/comeSailAway.js';
 import { easeToward } from '../../systems/horse/horseCartWire.js';
@@ -141,6 +142,9 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
       if (!s) continue;
       s.boat.uid = w.uid ?? 0;
       s.slot = i; s.wire = w.position;
+      s.boat.livery = liveryCode(w.livery);   // SHIP-LIVERY: her paint, her owner's word (the pool's paint shop draws it)
+      s.boat.fittings = w.fittings ?? [];   // DECK-PROPS: and her fittings (the pool stands them in her tree)
+      s.boat.plaqueName = w.plaque ? w.name ?? '' : '';   // SHIP-PLAQUE: and her name on her bows, where she shows it
       if (s.variant !== w.variant) { pool.setVariant(s.boat, w.variant); s.variant = w.variant; }
     }
   }
@@ -159,7 +163,7 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
       const w = l.boats[i];
       try {
         const boat = pool.spawnPeerNow(new Boat(w.hull, w.variant));
-        if (boat) { boat.peerKey = `${owner}:${i}`; boat.uid = w.uid ?? 0; }   // LIVING CREW: whose, and which - her crew's seed (scenes/naval/navalCrew.js)
+        if (boat) { boat.peerKey = `${owner}:${i}`; boat.uid = w.uid ?? 0; boat.livery = liveryCode(w.livery); boat.fittings = w.fittings ?? []; boat.plaqueName = w.plaque ? w.name ?? '' : ''; }   // SHIP-LIVERY: and her paint; DECK-PROPS: her fittings   // LIVING CREW: whose, and which - her crew's seed (scenes/naval/navalCrew.js)
         if (boat) list[i] = { boat, hull: w.hull, variant: w.variant, wire: w.position, slot: i, shown: null, turn: null, helm: false, light: false };
       } catch (e) { fail(owner, e); }
       return;
@@ -316,6 +320,16 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
     boatAt: (owner, slot) => [...retained.values()].find((s) => s.owner === owner && s.slot === slot)?.boat ?? shown.get(owner)?.[slot]?.boat ?? null,
     /** HOLDINGS: the name another player gave her (their word's `n`, read through the ledger's law), or ''. */
     nameAt: (owner, slot) => live.get(owner)?.boats?.[slot]?.name ?? '',
+    /** SHIP-COLOURS: every boat of another player's stood here that flies her captain's flag (their word's `f`, read
+     *  through the flag's door) - `{ boat, flag }` (scenes/shipFlagHost.js). */
+    flagged() {
+      const out = [];
+      for (const [owner, list] of shown) {
+        const words = live.get(owner)?.boats ?? [];
+        for (let i = 0; i < list.length; i++) if (list[i]?.boat && words[i]?.flag) out.push({ boat: list[i].boat, flag: words[i].flag });
+      }
+      return out;
+    },
     /** CSA-K: where a boat of a peer's stands in their word - `{ owner, slot }` - or null (not a peer's, or gone). */
     placeOf(boat) {
       const held = retained.get(boat);

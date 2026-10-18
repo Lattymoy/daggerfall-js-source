@@ -12,8 +12,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { byClass } from '../chargenDom.mjs';
-import { createWritBook } from '../../src/net/writBook.js';
-import { createMarketBook, MARKET_MOVED, PIECE_GONE, PIECE_KEPT_ERROR } from '../../src/net/marketBook.js';
+import { createWritBook, WRIT_KEPT_KEY } from '../../src/net/writBook.js';
+import { createMarketBook, MARKET_MOVED, PIECE_GONE, PIECE_KEPT_ERROR, MARKET_KEPT_KEY } from '../../src/net/marketBook.js';
+import { realmActOver } from '../realmSeat.mjs';   // INT19: a crafted piece is handed on through the realm act
 import { createProfBook } from '../../src/net/profBook.js';
 import { REFUSALS } from '../../src/net/accountClient.js';
 import { wearOf, WEAR_WHOLE } from '../../src/net/marketLaw.js';
@@ -34,6 +35,13 @@ const PV = 'c0ffee00c0ffee01';
 const OAK = 'log:oak';
 const REQ = { region: 17, kind: 'piece', provenance: PV, wear: 1000, price: 500 };
 const FILL = { region: 17, commission: 'c1', provenance: PV, wear: 1000 };
+/** INT19: the realm act a realm character's book hands a crafted piece on through (net/marketBook.js realmPieceAct). */
+const REALM = realmActOver(() => ({ id: 'r00000000000000000004', lease: 'L'.repeat(32), seq: 5 }));
+/** INT19: a kept act on PV from a tab before INT19 (a new press keeps none: the record is the truth) - the market's list
+ *  (`MARKET_KEPT_KEY`) or the writs' fill (`WRIT_KEPT_KEY`), `who`'s. */
+const keptFrom = (kind, who = 'char-a', rid = kind === 'list' ? 'kauditthirtyone1' : 'wauditthirtyone1') => (kind === 'list'
+  ? JSON.stringify({ [`acct-1|${who}`]: { lists: [{ rid, body: { character: who, ...REQ, rid }, item: { provenance: PV, name: 'sword' }, where: 'pack' }] } })
+  : JSON.stringify({ [`acct-1|${who}`]: { fulfils: [{ rid, body: { character: who, ...FILL, rid }, item: { provenance: PV, name: 'sword' }, where: 'pack' }] } }));
 
 /** A save's pack, its take and its put back - the host's (world.js marketTake, marketPutBack). */
 function packOf() {
@@ -59,36 +67,28 @@ test('AUDIT 31 B1: with no account signed in, nothing is taken - a listing, an a
   // AUDIT 31 H8: a save that will not give a piece up (equipped, locked) - its own word, never "only a crafted piece lists"
   const signed = { ...door, account: () => 'acct-1' };
   const held = { ...piece, take: () => false };
-  assert.equal((await createMarketBook({ door: signed, storage, character: () => 'char-a', sleep: noWait }).list(REQ, held)).error, 'piece-held');
-  assert.equal((await createWritBook({ door: signed, storage, character: () => 'char-a', sleep: noWait }).fulfil(FILL, held)).error, 'piece-held');
+  assert.equal((await createMarketBook({ door: signed, storage, character: () => 'char-a', sleep: noWait, realm: REALM }).list(REQ, held)).error, 'piece-held');
+  assert.equal((await createWritBook({ door: signed, storage, character: () => 'char-a', sleep: noWait, realm: REALM }).fulfil(FILL, held)).error, 'piece-held');
   assert.ok(REFUSALS['piece-held']);
 });
 
+// PIN MOVED (INT19, Integrity-Arc section 7): a fill goes through the realm act, which holds the record for its length and
+// keeps nothing - the slot law is the kept fills' a tab from before INT19 left, each settled in its own character alone
 test('AUDIT 31 B2: a kept act is its press\'s slot\'s - a refusal heard after a quick-load to another character is never put back into that one; the first character\'s settle answers it', async () => {
   const storage = memStorage();
-  let who = 'char-a', answer = null;
-  const gate = { open: null };
-  const door = {
-    account: () => 'acct-1',
-    fulfil: async () => { await new Promise((r) => { gate.open = r; }); return answer; },
-  };
-  const writs = createWritBook({ door, storage, character: () => who, sleep: noWait });
-  const { pack, piece } = packOf();
-  const other = [];
-  const pressed = writs.fulfil(FILL, { ...piece, putBack: (it) => (who === 'char-a' ? pack : other).push(it) });
-  await tick();
-  who = 'char-b';   // the quick-load, while the fill is asked
-  answer = { ok: false, error: 'commission-piece' };
-  gate.open();
-  const r = await pressed;
-  assert.deepEqual([r.ok, r.kept, pack.length, other.length], [false, true, 0, 0], 'kept for its own character, put nowhere');
-  assert.equal(writs._kept().length, 0, 'char-b keeps nothing');
+  storage.setItem(WRIT_KEPT_KEY, keptFrom('fill', 'char-a'));
+  let who = 'char-b';   // the quick-load: another character's save
+  const answer = { ok: false, error: 'commission-piece' };
+  const asked = [];
+  const door = { account: () => 'acct-1', fulfil: async (b) => { asked.push(b.character); return answer; } };
+  const writs = createWritBook({ door, storage, character: () => who, sleep: noWait, realm: REALM });
+  const other = [], back = [];
+  await writs.settle((it) => other.push(it), () => {});
+  assert.deepEqual([writs._kept().length, other.length, asked.length], [0, 0, 0], 'char-b keeps nothing, asks nothing, is given nothing');
   who = 'char-a';
   assert.equal(writs._kept().length, 1, 'char-a keeps its fill');
-  const back = [];
-  door.fulfil = async () => answer;
   await writs.settle((it) => back.push(it), () => {});
-  assert.deepEqual([back.length, writs._kept().length], [1, 0], 'put back once, into its own character, on its own settle');
+  assert.deepEqual([back.length, writs._kept().length, asked], [1, 0, ['char-a']], 'put back once, into its own character, on its own settle');
 });
 
 test('AUDIT 31 B4: an act\'s id is its slot\'s - the same act pressed by another character is a new request, never the first one\'s repeat', async () => {
@@ -201,14 +201,14 @@ test('AUDIT 31 H1: a piece one book keeps an act on is never taken by the other;
     list: async () => (up ? { ok: false, error: 'market-listed' } : { ok: false, error: 'offline' }),
     fulfil: async () => ({ ok: true, data: {} }),
   };
+  // PIN MOVED (INT19): the books keep no new act on a piece (the record is the truth) - the kept list here is a tab's from
+  // before INT19, whose piece came back into the pack when the save was restored (the tab died before it was kept)
+  storage.setItem(MARKET_KEPT_KEY, keptFrom('list'));
   let writs = null;
-  const market = createMarketBook({ door, storage, character: () => 'char-a', sleep: noWait, holds: (pv) => !!writs?.holdsPiece(pv) });
-  writs = createWritBook({ door, storage, character: () => 'char-a', sleep: noWait, holds: (pv) => market.holdsPiece(pv) });
+  const market = createMarketBook({ door, storage, character: () => 'char-a', sleep: noWait, holds: (pv) => !!writs?.holdsPiece(pv), realm: REALM });
+  writs = createWritBook({ door, storage, character: () => 'char-a', sleep: noWait, holds: (pv) => market.holdsPiece(pv), realm: REALM });
   const { pack, piece } = packOf();
-  const l = await market.list(REQ, piece);
-  assert.deepEqual([l.kept, pack.length, market.holdsPiece(PV)], [true, 0, true]);
-  // the save restored (the tab died before it was kept): the piece is in the pack again
-  pack.push(piece.item);
+  assert.equal(market.holdsPiece(PV), true);
   const f = await writs.fulfil(FILL, piece);
   assert.deepEqual([f.ok, f.error, pack.length], [false, PIECE_KEPT_ERROR, 1], 'the writs\' book will not take a piece the market keeps');
   assert.equal((await market.list({ ...REQ, price: 400 }, piece)).error, PIECE_KEPT_ERROR, 'nor the market twice');
@@ -219,17 +219,17 @@ test('AUDIT 31 H1: a piece one book keeps an act on is never taken by the other;
   assert.deepEqual([pack.length, market.pending], [0, 0]);
   // at once: a refusal that says it is elsewhere puts nothing back
   const fresh = packOf();
-  const once = await createMarketBook({ door, storage: memStorage(), character: () => 'char-a', sleep: noWait }).list(REQ, fresh.piece);
-  assert.deepEqual([once.error, fresh.pack.length], ['market-listed', 0]);
-  // and the other way: a fill the writs' book keeps, never listed
+  const once = await createMarketBook({ door, storage: memStorage(), character: () => 'char-a', sleep: noWait, realm: REALM }).list(REQ, fresh.piece);
+  assert.deepEqual([once.error, fresh.pack.length], ['market-listed', 0], 'through the realm act too');
+  // and the other way: a fill the writs' book keeps (a tab's from before INT19), never listed
   const wstore = memStorage();
+  wstore.setItem(WRIT_KEPT_KEY, keptFrom('fill'));
   const wdoor = { account: () => 'acct-1', fulfil: async () => ({ ok: false, error: 'offline' }), list: async () => ({ ok: true, data: {} }) };
   let m2 = null;
-  const w2 = createWritBook({ door: wdoor, storage: wstore, character: () => 'char-a', sleep: noWait, holds: (pv) => !!m2?.holdsPiece(pv) });
-  m2 = createMarketBook({ door: wdoor, storage: wstore, character: () => 'char-a', sleep: noWait, holds: (pv) => w2.holdsPiece(pv) });
+  const w2 = createWritBook({ door: wdoor, storage: wstore, character: () => 'char-a', sleep: noWait, holds: (pv) => !!m2?.holdsPiece(pv), realm: REALM });
+  m2 = createMarketBook({ door: wdoor, storage: wstore, character: () => 'char-a', sleep: noWait, holds: (pv) => w2.holdsPiece(pv), realm: REALM });
   const two = packOf();
-  assert.equal((await w2.fulfil(FILL, two.piece)).kept, true);
-  two.pack.push(two.piece.item);
+  assert.equal(w2.holdsPiece(PV), true);
   assert.equal((await m2.list(REQ, two.piece)).error, PIECE_KEPT_ERROR, 'the market will not list a piece the writs\' book keeps');
   // the writs' settle: a piece the service says is listed elsewhere is dropped from the save, never put back
   wdoor.fulfil = async () => ({ ok: false, error: 'market-listed' });

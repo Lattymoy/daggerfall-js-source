@@ -26,7 +26,7 @@ const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k
 test('CRAFT2 DONE WHEN: the first-make 500 is a pattern\'s at a tier, through the real Worker - an Adamantium Longsword its first, an Ebony Longsword after it none (tier 6 both), a Mithril Longsword its own (tier 5), an Ebony Broadsword its own (another pattern); a Ghostwood Wand none after an Ironwood one (tier 6 both)', async () => {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
   const raw = s.env.DB._raw;
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   for (const prof of ['smithing', 'jewelcrafting']) raw.prepare('INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, ?, ?, 1)').run(mac.id, mac.character, prof, xpForRank(70));
   const stock = { 'ingot:adamantium': 3, 'ingot:ebony': 6, 'ingot:mithril': 3, 'metal:copper': 4, 'leather:cured': 4, 'plank:ironwood': 2, 'plank:ghostwood': 2, 'gem:ruby': 2 };
   for (const [m, n] of Object.entries(stock)) raw.prepare('INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, \'own\', ?)').run(mac.id, mac.character, m, n);

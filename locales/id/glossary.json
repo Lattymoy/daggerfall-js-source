@@ -152,5 +152,13 @@
  "Atk (attack, short)": "ATK",
  "pts (points, short)": "poin",
  "first-time bonus (a craft's first-make XP)": "bonus pertama kali",
- "cloth (the Weavers' Linen and Wool)": "kain"
+ "cloth (the Weavers' Linen and Wool)": "kain",
+ "martial specialisation": "spesialisasi tempur",
+ "signature technique": "teknik khas",
+ "technique key": "tombol teknik",
+ "fatigue": "kelelahan",
+ "Agility": "Kelincahan",
+ "Speed (attribute)": "Kecepatan",
+ "Running": "Lari",
+ "Jumping": "Lompat"
 }

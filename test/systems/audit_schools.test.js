@@ -803,7 +803,10 @@ test('AUDIT SCHOOLS L5 H3: THE ENHANCED PAUSE WINDOW, DRIVEN - its Master Skills
     const menu2 = mountEnhancedMenu(host2, { mode: 'pause', hooks: {}, onAction: () => {}, at: 'stats' });
     try {
       host2.querySelectorAll('button').find((b) => b.textContent.startsWith('Master Skills')).onclick();
-      assert.equal(host2.querySelectorAll('section').some((s) => String(s.className).includes('px-spec')), false, 'no card for a class with no two schools');
+      // PIN MOVED (MARTIAL1): a Brute's five weapon skills open the Martial card beside it (the same card, px-spec) - the arcane card is the one titled Specialisation
+      const specs = host2.querySelectorAll('section').filter((s) => String(s.className).includes('px-spec'));
+      assert.equal(specs.some((s) => s.textContent.startsWith('Specialisation')), false, 'no card for a class with no two schools');
+      assert.equal(specs.some((s) => s.textContent.startsWith('Martial Specialisation')), true, 'the Brute\'s weapons meet the martial card');
     } finally { menu2.unmount(); }
   } finally { restore(); }
 });

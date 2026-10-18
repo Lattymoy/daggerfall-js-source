@@ -81,7 +81,7 @@ test('PROF2b the law: the day\'s three on distinct witnessed pixels, the same fo
 async function stand(extra = {}) {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'Mac', ...extra });
   const raw = s.env.DB._raw;
-  const witnesses = [await s.registered('Wita'), await s.registered('Witb'), await s.registered('Witc')];
+  const witnesses = [await s.seated('Wita'), await s.seated('Witb'), await s.seated('Witc')];
   /** `n` pixels of `climate` confirmed by three witnesses before day `day` began. */
   const confirm = (n, climate = M, region = 21, day = DAY0) => {
     for (let i = 0; i < n; i++) {
@@ -102,7 +102,7 @@ async function stand(extra = {}) {
     watch: await watch(who, lode), ...extra2,
   }, who.secret);
   /** A miner of `rank`, its Mining track set. */
-  const miner = async (handle, rank = MOTHERLODE_RANK) => { const w = await s.registered(handle); setXp(w, xpForRank(rank)); return w; };
+  const miner = async (handle, rank = MOTHERLODE_RANK) => { const w = await s.seated(handle); setXp(w, xpForRank(rank)); return w; };
   return { ...s, raw, confirm, setXp, balance, stores, read, watch, strike, miner };
 }
 
@@ -184,7 +184,7 @@ test('PROF2b the twenty: the first twenty accounts strike, the twenty-first is r
   assert.deepEqual([r.status, 'marks' in r.body, shut.raw.prepare("SELECT COUNT(*) AS n FROM marks_ledger WHERE kind = 'motherlode'").get().n], [200, false, 0]);
   // nobody walked: none
   const bare = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
-  const d = await bare.registered('Dora');
+  const d = await bare.seated('Dora');
   assert.deepEqual((await bare.call('/v1/prof/motherlodes', { character: d.character }, d.secret)).body.lodes, []);
   clock(T0);
 });

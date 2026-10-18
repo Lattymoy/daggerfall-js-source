@@ -76,6 +76,7 @@ import { SKILLS, SKILL_NAMES, skillValue, displaySkillValue, realSkillValue, ski
 import { mentorStatusText } from '../../systems/mentorMode.js';   // SOFTCAP1
 import { masterSkillsActive, masterSkillsSwitchable, masterSkillsBlockReason, setMasterSkills, MASTER_SKILLS_ABOUT, MASTERY_GROUP_NAMES, masterySlots, masteryCandidates, masteryChoiceRows, masterSkill, isMasteredSkill } from '../../systems/masterSkills.js';   // SOFTCAP3/4
 import { pathOf, pathChoices, pathChoiceRows, pathPowerRows, pathSchoolsText, pathPossible, choosePath } from '../../systems/arcanePaths.js';   // SCHOOLS1: the specialisation
+import { martialPathOf, martialChoices, martialChoiceRows, martialPowerRows, martialSkillsText, martialPossible, chooseMartialPath } from '../../systems/martialPaths.js';   // MARTIAL1: and the martial one
 import { liveStat, maxFatigue, FATIGUE_MULTIPLIER } from '../../systems/statMods.js';
 import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all; AUDIT 63 F34: the H2H damage line
 import { carriedWeight } from '../charsheet.js';
@@ -198,6 +199,14 @@ export function sheetModel(entity) {
       pathChoices: pathChoices(e).map((p) => ({ id: p.id, name: p.name, schools: pathSchoolsText(p), rows: pathPowerRows(p), ask: pathChoiceRows(e, p.id) })),
       pathPossible: pathPossible(e),
       choosePath: (id) => choosePath(e, id),
+      // MARTIAL1 (bible/05-Combat/Martial-Specialisations.md section 3): THE MARTIAL SPECIALISATION, the same shape - its
+      // two weapon skills where a path's two schools stand
+      martial: {
+        path: martialPathOf(e) ? { id: martialPathOf(e).id, name: martialPathOf(e).name, schools: martialSkillsText(martialPathOf(e)), rows: martialPowerRows(martialPathOf(e)) } : null,
+        choices: martialChoices(e).map((p) => ({ id: p.id, name: p.name, schools: martialSkillsText(p), rows: martialPowerRows(p), ask: martialChoiceRows(e, p.id) })),
+        possible: martialPossible(e),
+        choose: (id) => chooseMartialPath(e, id),
+      },
       // SOFTCAP6: the Master Skills page - each career group with its slots and every one of its skills: the REAL
       // value, mastered or not, whether it can be mastered now (and the box's rows), and why not in a word
       groups: ['primary', 'major', 'minor'].map((g) => {

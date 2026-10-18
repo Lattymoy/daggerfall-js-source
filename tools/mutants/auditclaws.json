@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-CLAWS-C3-the-card-metal-past-the-floor",
     "file": "src/combat/combatStats.js",
-    "old": "    if (!weapon) { if (core.overhaul && d < 1) d = 0; return d + bonusOrPenaltyByEnemyType(entity, foe); }",
-    "new": "    if (!weapon) { d -= matMod; if (core.overhaul && d < 1) d = 0; return d + matMod + bonusOrPenaltyByEnemyType(entity, foe); }",
+    "old": "    if (!weapon) {\n      if (core.overhaul && d < 1) d = 0;\n      d += bonusOrPenaltyByEnemyType(entity, foe);",
+    "new": "    if (!weapon) {\n      d -= matMod; if (core.overhaul && d < 1) d = 0;\n      d += matMod + bonusOrPenaltyByEnemyType(entity, foe);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]

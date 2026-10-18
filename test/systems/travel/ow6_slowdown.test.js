@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { THREAT_WARN_S, metresToReach, threatStep, threatCap, foePaced } from '../../../src/systems/travel/travelThreat.js';
+import { THREAT_WARN_S, metresToReach, threatStep, threatCap, foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
 import { createLoadGovernor } from '../../../src/systems/travel/travelGovernor.js';
 import { TRAVEL_HELD_TEXT, TRAVEL_HELD_WHY } from '../../../src/ui/enhanced/enhancedTravelControl.js';
 import { foeHostile, foeAlerted, areEnemiesNearby } from '../../../src/systems/encounters.js';
@@ -33,7 +33,7 @@ test('OW6 law: AN ENEMY\'S REACH ALONG THE WAY - dead ahead, the distance to its
 test('OW6 law: THE CAP - the highest rate that leaves THREAT_WARN_S of real time to the nearest reach, stepped down the spinner\'s own ladder, never under walking pace; a chaser from any side at its own pace too; nothing near, no cap (mutants: the warning, the ladder, the chaser\'s pace dropped, the worst threat not the one kept)', () => {
   assert.equal(THREAT_WARN_S, 0.6);   // OW6-LATE: was 5 - the player: it slowed "waaaay to early"; OW6-NEAR (29g): 2 -> 1.2, "reduce ... by like 40%"; OW6-HALF (2026-10-01): 1.2 -> 0.6
   assert.deepEqual([0.2, 1.7, 3.9, 4.99, 5, 9.9, 10, 47, 100].map(threatStep), [1, 1, 3, 4, 5, 5, 10, 45, 100]);
-  assert.deepEqual(threatCap({ threats: [], heading: NORTH, speedMps: 16 }), { cap: Infinity, threat: null, metres: Infinity });
+  assert.deepEqual(threatCap({ threats: [], heading: NORTH, speedMps: 16 }), { cap: Infinity, threat: null, metres: Infinity, held: false });   // PIN MOVED (TIME-DILATION: `held`, no hold)
   const band = { dx: 0, dz: 2000, reach: 320 };
   assert.equal(threatCap({ threats: [band], heading: NORTH, speedMps: 0 }).cap, Infinity, 'standing: nothing to hold');
   // a rider (16 m/s) 1680 m from a band's sight: 1680 / (0.6 x 16) = 175 -> x175
@@ -112,7 +112,7 @@ const governorHost = (over = {}) => {
   };
   const scope = {
     travelControlUI: { get isShowing() { return d.journey; } }, travelOptions: { state: { get autopilot() { return d.journey ? {} : null; } } },
-    travellerOnRoad: () => !!d.onRoad, foePaced,   // RATE-LAW: the keys' travel's ground; ENEMY-PACE's fixed floor
+    travellerOnRoad: () => !!d.onRoad, foePaced, foeRate,   // RATE-LAW: the keys' travel's ground; ENEMY-PACE's fixed floor
     travelView: { get active() { return d.up; }, get state() { return d.up ? 'up' : 'off'; } }, tvOwnsJourneys: () => d.owns,
     worldTimeScale: () => d.scale, setWorldTimeScale: (n) => { d.scale = n; },
     travelGovernor: createLoadGovernor({ max: 100 }), state: { terrainDistance: 3, localFromWorld: (x, z) => [x, z] },

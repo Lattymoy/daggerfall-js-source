@@ -60,7 +60,7 @@ import { marketHallTitheCap } from '../../src/net/fortLaw.js';
 import { tideNow } from './tides.js';   // SEASON1 part two: a Bandit Summer's couriers (9.3)
 import { tideCourier } from '../../src/net/tideLaw.js';
 import { profOpenFor, spendStatements, spendOrigins, spendableSql, storeOf } from './professions.js';
-import { REALM_ID_RE, realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects, realmHoldOf, craftHoldOf, holdStandsSql } from './realm.js';   // GOLD-MARKET
+import { REALM_ID_RE, realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects, realmHoldOf, holdStandsSql } from './realm.js';   // GOLD-MARKET
 import { lawfulItem, itemWorth } from '../../src/systems/item/itemLaw.js';   // INT1: no piece the law cannot stand behind is listed; LW15: a patron's judge
 import {
   patronHour, patronCands, patronHours, patronWorth, patronTakes, PATRON_HOUR_S, PATRON_TOWN_HOUR, PATRON_SELLER_HOUR, PATRON_SELLER_DAY_GOLD,
@@ -85,10 +85,12 @@ import {
   currencyOk, goldSaleOf, MARKET_GOLD_HELD_MAX,
   goodRefusal, goodFamily, GOOD_GROUP_FAMILIES, MARKET_HELD_MAX,   // MARKET-ANY
   fillTaxOn,   // MARKET-AUDIT S2
+  wearOf,   // INT19: a crafted piece's wear, its record's
 } from '../../src/net/marketLaw.js';
 import { MASTERWORK, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
 import { mintVersionOf } from '../../src/net/productRecord.js';   // CRAFT-PROCS: a piece's mint version, its record's
 import { takeTradeGoods, giveTradeGoods } from '../../src/net/realm/realmTradeLaw.js';   // MARKET-ANY: a piece out of one record and into another, as a trade moves it
+import { prepareCraftedPiece, pieceComingBack } from './craftedPiece.js';   // INT19: a crafted piece out of its seller's record, and back as it
 import { vendorOf, VENDOR_STATION, VENDOR_LISTING_S, VENDOR_STOCK_SHOWN, VENDOR_STOCK_MAX, VENDOR_BOARD_SHOWN } from '../../src/net/vendorLaw.js';   // HOME-VENDOR: a home's trader
 
 const DAY_S = 86_400;
@@ -336,7 +338,9 @@ async function settle(ctx, player, read = null) {
       work.push(
         db.prepare(`UPDATE market_listings SET returned = 1, rn = ?2 WHERE id = ?1 AND returned = 0`).bind(l.id, nonce),
         db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
-          SELECT id, seller, char_id, provenance, wear, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3`).bind(l.id, nowS, nonce),
+          SELECT id, seller, char_id, provenance, wear, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3 AND ${NO_ESCROW('market_listings.provenance')}`).bind(l.id, nowS, nonce),
+        // INT19: a piece the market holds the record of comes back as that record, into its seller's record
+        ...pieceBackSteps(db, l.id, nowS, 'SELECT provenance, seller, char_id, region FROM market_listings WHERE id = ?1 AND rn = ?2', [l.id, nonce]),
         db.prepare(`UPDATE products SET listed = 0 WHERE provenance = (SELECT provenance FROM market_listings WHERE id = ?1 AND rn = ?2)`).bind(l.id, nonce),
       );
       continue;
@@ -355,7 +359,8 @@ async function settle(ctx, player, read = null) {
     work.push(
       db.prepare(`UPDATE market_auctions SET returned = 1, rn = ?2 WHERE id = ?1 AND returned = 0 AND state IN ('unsold', 'removed')`).bind(a.id, nonce),
       db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
-        SELECT id, seller, char_id, provenance, wear, 'returned', region, ?2, ?2 FROM market_auctions WHERE id = ?1 AND rn = ?3`).bind(a.id, nowS, nonce),
+        SELECT id, seller, char_id, provenance, wear, 'returned', region, ?2, ?2 FROM market_auctions WHERE id = ?1 AND rn = ?3 AND ${NO_ESCROW('market_auctions.provenance')}`).bind(a.id, nowS, nonce),
+      ...pieceBackSteps(db, a.id, nowS, 'SELECT provenance, seller, char_id, region FROM market_auctions WHERE id = ?1 AND rn = ?2', [a.id, nonce]),   // INT19
       db.prepare(`UPDATE products SET listed = 0 WHERE provenance = (SELECT provenance FROM market_auctions WHERE id = ?1 AND rn = ?2)`).bind(a.id, nonce),
     );
   }
@@ -477,6 +482,7 @@ export async function closeAuctions(ctx, read = null) {
       db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
         SELECT ?3, b.bidder, b.char_id, a.provenance, a.wear, 'bought', a.region, ?4 + b.seconds, ?4 ${won}`)
         .bind(a.id, nonce, mintId(rand), nowS),
+      ...pieceSoldSteps(db, `SELECT a.provenance ${won}`, [a.id, nonce]),   // INT19: the record the market held, handed on
     ]);
     closed += Number(sold?.[0]?.meta?.changes ?? 0);
   }
@@ -577,7 +583,8 @@ function roadFrom(/** @type {any[][]} */ [loads = [], pieces = [], goods = []], 
 const pieceIdsOf = (pieces) => (Array.isArray(pieces) ? [...new Set(pieces.filter((p) => typeof p === 'string' && PROVENANCE_RE.test(p)))].slice(0, MARKET_HELD_MAX) : []);
 /** MARKET-SPEED: pieceWays' read as a statement, for the Mine view's batch. */
 const pieceWaysRead = (db, ids) => db.prepare(`SELECT p.provenance, p.owner, p.listed,
-      EXISTS (SELECT 1 FROM market_deliveries d WHERE d.provenance = p.provenance AND d.collected = 0) AS road,
+      (EXISTS (SELECT 1 FROM market_deliveries d WHERE d.provenance = p.provenance AND d.collected = 0)
+        OR EXISTS (SELECT 1 FROM market_deliveries d WHERE d.player = p.owner AND d.collected = 0 AND d.item IS NOT NULL AND json_extract(d.item, '$.provenance') = p.provenance)) AS road,   -- INT19: or back as its record
       EXISTS (SELECT 1 FROM home_decor h WHERE json_extract(h.item, '$.pv') = p.provenance) AS standing
     FROM products p WHERE p.provenance IN (SELECT value FROM json_each(?1))`).bind(JSON.stringify(ids));   // SCALE1: one bound array
 function pieceWays(me, ids, /** @type {any[]} */ rows) {
@@ -836,6 +843,42 @@ export async function marketRead(ctx, player, env, { character, region, view, fa
   };
 }
 
+// ─── INT19: A CRAFTED PIECE OUT OF ITS SELLER'S RECORD ───────────────
+
+/** INT19: the record a crafted piece was taken out of, kept while the market holds it (piece_escrow) - one statement,
+ *  run only where `decided` (the act's decision as SQL over its own binds, `?1`..`?n`) holds. */
+const pieceEscrowStep = (db, provenance, character, me, moved, nowS, decided, binds) => db.prepare(`INSERT INTO piece_escrow (provenance, player, char_id, item, at)
+  SELECT ?${binds.length + 1}, ?${binds.length + 2}, ?${binds.length + 3}, ?${binds.length + 4}, ?${binds.length + 5} WHERE ${decided}`)
+  .bind(...binds, provenance, me, character, JSON.stringify(moved), nowS);
+
+/** INT19: A CRAFTED PIECE COME BACK - cancelled, expired, unsold or removed: where the market holds its record
+ *  (piece_escrow), an `item` delivery its seller's record collects (collectGood) - never minted at the pack - and the row
+ *  gone; `row` the SQL naming the listing or auction row it came back from (provenance, seller, char_id, region),
+ *  `binds` its own. A piece listed before INT19 holds no row and comes back as it always did (the caller's provenance
+ *  delivery, which asks `NOT EXISTS` the row). */
+function pieceBackSteps(db, id, nowS, row, binds) {
+  const n = binds.length;
+  return [
+    db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, item, why, from_region, arrives_at, at)
+      SELECT ?${n + 1}, r.seller, r.char_id, e.item, 'returned', r.region, ?${n + 2}, ?${n + 2} FROM (${row}) r JOIN piece_escrow e ON e.provenance = r.provenance`).bind(...binds, id, nowS),
+    db.prepare(`DELETE FROM piece_escrow WHERE provenance = (SELECT provenance FROM (${row}))
+      AND EXISTS (SELECT 1 FROM market_deliveries WHERE id = ?${n + 1} AND item IS NOT NULL)`).bind(...binds, id),
+  ];
+}
+/** INT19: where a crafted piece comes back with no record held for it (listed before INT19) - the SQL a provenance
+ *  delivery adds, `p` the provenance's SQL. */
+const NO_ESCROW = (p) => `NOT EXISTS (SELECT 1 FROM piece_escrow WHERE provenance = ${p})`;
+
+/** INT19: A CRAFTED PIECE HANDED ON - sold, won: its record no longer the market's to give back (piece_escrow), and the
+ *  ledger's escrow row let go (ledger.js: a piece the service hands out is no row) - the buyer's piece is the craft's
+ *  record's, minted at the pack as ever, and the first record to show it writes it down again; a copy claiming it is
+ *  settled by the craft's record, as every crafted piece's claim is (ledgerStep). `p` the provenance's SQL - null unless
+ *  the sale was decided - over `binds`. */
+const pieceSoldSteps = (db, p, binds) => [
+  db.prepare(`DELETE FROM item_uids WHERE uid = (${p}) AND state = 'escrow' AND EXISTS (SELECT 1 FROM piece_escrow WHERE provenance = item_uids.uid)`).bind(...binds),
+  db.prepare(`DELETE FROM piece_escrow WHERE provenance = (${p})`).bind(...binds),
+];
+
 // ─── A LISTING (10.2) ────────────────────────────────────────────────
 
 /**
@@ -853,7 +896,7 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
   // MARKET-ANY: a piece from the pack moves its seller's realm record - its own door, where the record stands asked first
   if (kind === 'item') return listGood(ctx, player, env, { character, region, item, pick, price, hubs, rid, currency, realm, board, vendor });   // AUDIT SEATS-3 D2: and its board
   if (vendor != null) return { error: 'bad-vendor' };   // HOME-VENDOR: a trader sells pieces from the pack alone
-  const { db, nowS, rand } = ctx;
+  const { db, bucket, nowS, rand } = ctx;
   const refused = asks(player, { character, rid });
   if (refused) return refused;
   const me = player.id;
@@ -861,7 +904,18 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
     ok: true, ...extra, listing: listingView(row, me), balance: await balanceOf(db, me),
     ...(row.kind === 'material' ? { store: await storeOf(db, me, row.char_id, row.material) } : {}),
   });
-  const prior = await db.prepare('SELECT * FROM market_listings WHERE seller = ?1 AND rid = ?2').bind(me, rid).first();
+  const priorOf = () => db.prepare('SELECT * FROM market_listings WHERE seller = ?1 AND rid = ?2').bind(me, rid).first();
+  // INT19: A CRAFTED PIECE LEAVES ITS SELLER'S REALM RECORD - where the record stands asked before any other word (AUDIT
+  // REALM L1-F2), as listGood's; a list asked again with no record (kept by a tab from before) answered as it landed
+  let at = null;
+  if (kind === 'piece') {
+    if (realm == null) { const prior = await priorOf(); if (prior) return answer(prior, { repeat: true }); }
+    const side = await realmActFirst(db, me, character, realm);
+    if (side.error) return side;
+    if (!side.at) return { error: 'realm-needed' };   // a crafted piece lists out of a realm record alone
+    at = side.at;
+  }
+  const prior = await priorOf();
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
@@ -889,17 +943,26 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
   if (units * price > MARKET_WORTH_MAX) return { error: 'bad-price' };   // AUDIT 30 L8: no balance could pay its fee or buy it
   const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character lists nothing - its craft, its Stores
   if (held) return held;
-  const pieceHeld = kind === 'piece' ? await craftHoldOf(db, me, provenance) : null;   // CRAFT-HOLD: nor its craft under another character's name
-  if (pieceHeld) return pieceHeld;
+  // INT19: a crafted piece's record proves it the acting record's own (CRAFT-HOLD's maker's hold asked where no record
+  // was - retired here, as alchemy.js disenchantPiece retired it for a realm actor)
   if (await overRate(ctx, `market-post:${me}`, MARKET_POSTS_MAX, MARKET_WINDOW_S)) return { error: 'market-rate' };
   await settle(ctx, player);
+  // INT19: THE RECORD'S OWN PIECE, out of it in the listing's own batch (GUARDED: no listing, no piece out), its wear the
+  // record's - never the tab's word for it
+  const pieceNo = at ? await pieceListRefusal(db, me, provenance, currency) : null;
+  if (pieceNo) return { error: pieceNo };
+  const prep = at ? await prepareCraftedPiece(ctx, me, at, provenance, true) : null;
+  if (prep?.error) return prep;
+  if (prep) wear = wearOf(prep.moved);
   const fee = listingFee(units * price);
   const nonce = mintId(rand);
   const id = mintId(rand);
   const mine = 'EXISTS (SELECT 1 FROM market_listings WHERE seller = ?1 AND rid = ?5 AND n = ?6)';
   const boughtHeld = `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?6 AND origin = '${other}'), 0)`;
   const own = hubsOf(hubs);
-  await db.batch([
+  const listed = 'EXISTS (SELECT 1 FROM market_listings WHERE seller = ?1 AND rid = ?2 AND n = ?3)';
+  const batch = [
+    ...(prep ? prep.steps : []),
     // THE DECISION: the fee held, a place among the thirty, and the goods - the units in the Stores, or the piece this
     // account's and listed nowhere
     db.prepare(`INSERT OR IGNORE INTO market_listings (id, seller, char_id, region, kind, material, provenance, units, own, bought, price, wear, fee, at, expires_at, rid, n, currency)
@@ -919,6 +982,8 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
             AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?7)))
         AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?14 || ':fee')`)
       .bind(me, character, id, region, kind, key, provenance, units, price, wear, fee, nowS, nowS + MARKET_LISTING_S, rid, nonce, listingsMax, currency, other),
+    // INT19: no listing, no piece out of the record - the record's step rolls back with it; the record the market holds
+    ...(prep ? [mustChange(db), pieceEscrowStep(db, provenance, character, me, prep.moved, nowS, listed, [me, rid, nonce])] : []),
     // a material's units out of the Stores, bought first - GOLD-MARKET: a gold listing's gold's first, then its own
     ...(kind === 'material' ? (gold
       ? spendOrigins(db, { player: me, character, materialSql: '?3', qtySql: '?4', guard: mine, binds: [key, units, rid, nonce], order: ['gold', 'own'] })
@@ -934,9 +999,20 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
       SELECT 'account', ?1, 'burn', NULL, 'market-fee', fee, ?2, at, ?1, id, rid || ':fee' FROM market_listings WHERE seller = ?1 AND rid = ?3 AND n = ?4 AND currency = 'marks'`)
       .bind(me, utcDay(nowS), rid, nonce),
     ...witnessStatements(db, player, nowS, [region], own, 'EXISTS (SELECT 1 FROM market_listings WHERE seller = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),
-  ]);
+  ];
+  if (!prep) await db.batch(batch);
+  else {
+    try {
+      await db.batch(batch);
+      await dropObjects(bucket, [prep.prev]);
+    } catch {
+      await dropIfUnnamed(db, bucket, me, at.id, prep.key);   // AUDIT REALM2 S3: a batch that landed keeps its save
+      const moved = await recordMovedOf(db, me, at);
+      if (moved && !(moved.error === 'seq' && moved.seq === prep.seq)) return moved;
+    }
+  }
   const made = await db.prepare('SELECT * FROM market_listings WHERE seller = ?1 AND rid = ?2').bind(me, rid).first();
-  if (made?.n === nonce) return answer(made);
+  if (made?.n === nonce) return answer(made, prep ? { realm: { seq: prep.seq } } : {});
   if (made) return answer(made, { repeat: true });
   if (await spent(db, me, rid, ':fee')) return { error: 'prof-rid' };
   if (!gold && (await balanceOf(db, me)) < fee) return { error: 'marks-short' };
@@ -949,13 +1025,20 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
     if (mayList < units && st.own + st.bought + (st.gold ?? 0) >= units) return { error: gold ? 'market-drakes-goods' : 'market-gold-goods' };
     return { error: 'stores-short' };
   }
+  return { error: (await pieceListRefusal(db, me, provenance, currency)) ?? 'market-listed' };
+}
+
+/** Why a crafted piece may not be listed for `currency` - the listing decision's own guards, each in its word - or null.
+ *  INT19: asked before the record moves too, so a piece another act holds is said so, never "your record lacks it". */
+async function pieceListRefusal(db, me, provenance, currency) {
   const p = await db.prepare('SELECT owner, listed, bought_with FROM products WHERE provenance = ?1').bind(provenance).first();
-  if (!p) return { error: 'market-no-record' };   // AUDIT 31 H1: no record at all - never "another owner's"
-  if (p.owner !== me) return { error: 'market-not-yours' };
-  if (p.bought_with && p.bought_with !== currency) return { error: p.bought_with === 'gold' ? 'market-gold-goods' : 'market-drakes-goods' };   // GOLD-MARKET
-  if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()) return { error: 'market-uncollected' };
-  if (await db.prepare("SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?1").bind(provenance).first()) return { error: 'market-standing' };
-  return { error: 'market-listed' };
+  if (!p) return 'market-no-record';   // AUDIT 31 H1: no record at all - never "another owner's"
+  if (p.owner !== me) return 'market-not-yours';
+  if (p.bought_with && p.bought_with !== currency) return p.bought_with === 'gold' ? 'market-gold-goods' : 'market-drakes-goods';   // GOLD-MARKET
+  if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first() || await pieceComingBack(db, me, provenance)) return 'market-uncollected';
+  if (await db.prepare("SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?1").bind(provenance).first()) return 'market-standing';
+  if (Number(p.listed) === 1 || await db.prepare("SELECT 1 FROM market_listings WHERE provenance = ?1 AND state = 'open'").bind(provenance).first()) return 'market-listed';
+  return null;
 }
 
 /**
@@ -1215,6 +1298,7 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
       SELECT ?4, s.buyer, s.char_id, s.provenance, l.wear, 'bought', s.from_region, s.arrives_at, s.at
       FROM market_sales s JOIN market_listings l ON l.id = s.listing
       WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece' AND s.from_region != s.to_region`).bind(me, rid, nonce, mintId(rand)),
+    ...pieceSoldSteps(db, "SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece'", [me, rid, nonce]),   // INT19
     // the price table (10.2's History) - a material's sale
     db.prepare(`INSERT INTO market_prices (day, material, price, units)
       SELECT day, material, price, units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material'
@@ -1298,6 +1382,7 @@ async function buyWithGold(ctx, player, { character, region, l, units, max, rid,
         SELECT ?4, s.buyer, s.char_id, s.provenance, l.wear, 'bought', s.from_region, s.arrives_at, s.at
         FROM market_sales s JOIN market_listings l ON l.id = s.listing
         WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece' AND s.from_region != s.to_region`).bind(me, rid, nonce, mintId(rand)),
+      ...pieceSoldSteps(db, "SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece'", [me, rid, nonce]),   // INT19
       // MARKET-ANY: a piece from a pack on its way - here arrived at once, else after the courier's time - its record the
       // listing's, collected into the buyer's realm record by its own act (collectGood)
       db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, item, why, from_region, arrives_at, at)
@@ -1340,6 +1425,7 @@ export async function marketCancel(ctx, player, env, { character, listing: id, r
     const out = { ok: true, ...extra, listing: listingView(row, me), balance: await balanceOf(db, me) };
     if (row.kind === 'material') out.store = await storeOf(db, me, row.char_id, row.material);
     else if (row.kind === 'item') out.delivery = { id: row.id };   // MARKET-ANY: back by a delivery its record collects
+    else if (await pieceCameBack(db, row.id)) out.delivery = { id: row.id };   // INT19: a crafted piece's record, likewise
     else out.piece = pieceOf(await db.prepare('SELECT * FROM products WHERE provenance = ?1').bind(row.provenance).first(), row.wear);
     return out;
   };
@@ -1367,6 +1453,8 @@ export async function marketCancel(ctx, player, env, { character, listing: id, r
     // collects (collectGood): the cancel moves no record, so it asks none
     db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, item, why, from_region, arrives_at, at)
       SELECT id, seller, char_id, item, 'returned', region, ?2, ?2 FROM market_listings WHERE id = ?1 AND rn = ?3 AND kind = 'item'`).bind(id, nowS, nonce),
+    // INT19: a crafted piece the market holds the record of, back the same way - its record into its seller's
+    ...pieceBackSteps(db, id, nowS, "SELECT provenance, seller, char_id, region FROM market_listings WHERE id = ?1 AND rn = ?2 AND kind = 'piece'", [id, nonce]),
   ]);
   const made = await db.prepare('SELECT * FROM market_listings WHERE seller = ?1 AND cancel_rid = ?2').bind(me, rid).first();
   if (made?.rn === nonce) return answer(made);
@@ -1677,8 +1765,8 @@ export async function marketGoldCollect(ctx, player, env, { character, realm = n
  * has not listed, posted at an opening bid on the boards of `region` for 24 hours, for the listing fee burnt (1% of the
  * opening bid). The piece leaves the save (the book keeps it) and comes back unsold on the seller's read.
  */
-export async function marketAuction(ctx, player, env, { character, region, provenance = null, wear = null, opening, hubs, rid, board = null } = {}) {
-  const { db, nowS, rand } = ctx;
+export async function marketAuction(ctx, player, env, { character, region, provenance = null, wear = null, opening, hubs, rid, board = null, realm = null } = {}) {
+  const { db, bucket, nowS, rand } = ctx;
   const refused = asks(player, { character, rid });
   if (refused) return refused;
   const me = player.id;
@@ -1686,7 +1774,14 @@ export async function marketAuction(ctx, player, env, { character, region, prove
     const p = await db.prepare('SELECT * FROM products WHERE provenance = ?1').bind(row.provenance).first();
     return { ok: true, ...extra, auction: auctionView(row, me, { piece: pieceOf(p, row.wear) }), balance: await balanceOf(db, me) };
   };
-  const prior = await db.prepare('SELECT * FROM market_auctions WHERE seller = ?1 AND rid = ?2').bind(me, rid).first();
+  const priorOf = () => db.prepare('SELECT * FROM market_auctions WHERE seller = ?1 AND rid = ?2').bind(me, rid).first();
+  // INT19: THE MASTERWORK LEAVES ITS SELLER'S REALM RECORD, as a listed piece does (marketList) - the record asked first
+  if (realm == null) { const prior = await priorOf(); if (prior) return answer(prior, { repeat: true }); }
+  const side = await realmActFirst(db, me, character, realm);
+  if (side.error) return side;
+  if (!side.at) return { error: 'realm-needed' };
+  const at = side.at;
+  const prior = await priorOf();
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
@@ -1698,18 +1793,26 @@ export async function marketAuction(ctx, player, env, { character, region, prove
   const made = await db.prepare('SELECT recipe, quality FROM products WHERE provenance = ?1').bind(provenance).first();
   if (made && !pieceListable(made.recipe)) return { error: 'market-not-listable' };
   if (made && !auctionable(made.recipe, Number(made.quality))) return { error: 'auction-not-masterwork' };
-  const held = (await realmHoldOf(db, me, character)) ?? (await craftHoldOf(db, me, provenance));   // INT3 (AUDIT INT): a held character auctions nothing; CRAFT-HOLD: nor its craft under another's name
+  const held = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character auctions nothing - INT19: its record proves the piece its own (CRAFT-HOLD's maker's hold retired here)
   if (held) return held;
   if (await overRate(ctx, `market-post:${me}`, MARKET_POSTS_MAX, MARKET_WINDOW_S)) return { error: 'market-rate' };
   await settle(ctx, player);   // MARKET-AUDIT: as a listing posted - a listing past its hours, unsettled, stood among the thirty
   if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()) return { error: 'market-uncollected' };
+  if (await pieceComingBack(db, me, provenance)) return { error: 'market-uncollected' };   // INT19: back as its record, still to collect
   if (await db.prepare("SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?1").bind(provenance).first()) return { error: 'market-standing' };
+  const pieceNo = await pieceAuctionRefusal(db, me, provenance);   // INT19: a piece another act holds said so, before the record moves
+  if (pieceNo) return { error: pieceNo };
+  // INT19: THE RECORD'S OWN MASTERWORK, out of it in the auction's own batch (GUARDED), its wear the record's
+  const prep = await prepareCraftedPiece(ctx, me, at, provenance, true);
+  if (prep.error) return prep;
+  wear = wearOf(prep.moved);
   const fee = listingFee(opening);
   const id = mintId(rand);
   const nonce = mintId(rand);
   const own = hubsOf(hubs);
   const posted = 'EXISTS (SELECT 1 FROM market_auctions WHERE seller = ?1 AND rid = ?2 AND n = ?3)';
-  await db.batch([
+  const batch = [
+    ...prep.steps,
     // THE DECISION: the fee held, a place among the thirty, and the piece - this account's Masterwork, on no sale, on no
     // road, standing in no home - and the id not spent
     db.prepare(`INSERT OR IGNORE INTO market_auctions (id, seller, char_id, region, provenance, wear, opening, fee, at, ends_at, rid, n)
@@ -1722,6 +1825,8 @@ export async function marketAuction(ctx, player, env, { character, region, prove
         AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?5)
         AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?11 || ':afee')`)
       .bind(me, character, id, region, provenance, wear, opening, fee, nowS, nowS + AUCTION_S, rid, nonce, auctionsMax, MASTERWORK),
+    mustChange(db),   // INT19: no auction, no piece out of the record
+    pieceEscrowStep(db, provenance, character, me, prep.moved, nowS, posted, [me, rid, nonce]),
     db.prepare(`UPDATE products SET listed = 1 WHERE provenance = ?4 AND ${posted}`).bind(me, rid, nonce, provenance),
     // SEAT1d: the board it was posted at - its Tithe's seat
     ...(boardOf(board) ? [db.prepare('UPDATE market_auctions SET board_x = ?4, board_y = ?5 WHERE seller = ?1 AND rid = ?2 AND n = ?3')
@@ -1731,9 +1836,17 @@ export async function marketAuction(ctx, player, env, { character, region, prove
       SELECT 'account', ?1, 'burn', NULL, 'market-fee', fee, ?4, at, ?1, id, rid || ':afee' FROM market_auctions WHERE seller = ?1 AND rid = ?2 AND n = ?3`)
       .bind(me, rid, nonce, utcDay(nowS)),
     ...witnessStatements(db, player, nowS, [region], own, 'EXISTS (SELECT 1 FROM market_auctions WHERE seller = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),
-  ]);
+  ];
+  try {
+    await db.batch(batch);
+    await dropObjects(bucket, [prep.prev]);
+  } catch {
+    await dropIfUnnamed(db, bucket, me, at.id, prep.key);   // AUDIT REALM2 S3
+    const moved = await recordMovedOf(db, me, at);
+    if (moved && !(moved.error === 'seq' && moved.seq === prep.seq)) return moved;
+  }
   const row = await db.prepare('SELECT * FROM market_auctions WHERE seller = ?1 AND rid = ?2').bind(me, rid).first();
-  if (row?.n === nonce) return answer(row);
+  if (row?.n === nonce) return answer(row, { realm: { seq: prep.seq } });
   if (row) return answer(row, { repeat: true });
   if (await spent(db, me, rid, ':afee')) return { error: 'prof-rid' };
   if ((await balanceOf(db, me)) < fee) return { error: 'marks-short' };
@@ -1745,6 +1858,17 @@ export async function marketAuction(ctx, player, env, { character, region, prove
   if (Number(p.quality) !== MASTERWORK) return { error: 'auction-not-masterwork' };
   if (p.bought_with === 'gold') return { error: 'market-gold-goods' };   // GOLD-MARKET: an auction is in Drakes
   return { error: 'market-listed' };
+}
+/** INT19: why a Masterwork may not go up for auction before the record moves - its record, its owner, its quality, its
+ *  currency, another sale of it - or null (the decision asks the fee and the place among the thirty). */
+async function pieceAuctionRefusal(db, me, provenance) {
+  const p = await db.prepare('SELECT owner, listed, quality, bought_with FROM products WHERE provenance = ?1').bind(provenance).first();
+  if (!p) return 'market-no-record';
+  if (p.owner !== me) return 'market-not-yours';
+  if (Number(p.quality) !== MASTERWORK) return 'auction-not-masterwork';
+  if (p.bought_with === 'gold') return 'market-gold-goods';
+  if (Number(p.listed) === 1 || await db.prepare("SELECT 1 FROM market_listings WHERE provenance = ?1 AND state = 'open'").bind(provenance).first()) return 'market-listed';
+  return null;
 }
 
 /**
@@ -1836,6 +1960,7 @@ async function auctionCancel(ctx, player, id, rid) {
     db.prepare(`UPDATE market_auctions SET state = 'cancelled', closed_at = ?3, returned = 1, cancel_rid = ?4, rn = ?5
       WHERE id = ?1 AND seller = ?2 AND state = 'open' AND high_bid IS NULL`).bind(id, me, nowS, rid, nonce),
     db.prepare(`UPDATE products SET listed = 0 WHERE provenance = (SELECT provenance FROM market_auctions WHERE id = ?1 AND rn = ?2)`).bind(id, nonce),
+    ...pieceBackSteps(db, id, nowS, 'SELECT provenance, seller, char_id, region FROM market_auctions WHERE id = ?1 AND rn = ?2', [id, nonce]),   // INT19
   ]);
   const made = await db.prepare('SELECT * FROM market_auctions WHERE seller = ?1 AND cancel_rid = ?2').bind(me, rid).first();
   if (made) return auctionCancelled(db, me, made, made.rn === nonce ? {} : { repeat: true });
@@ -1843,9 +1968,13 @@ async function auctionCancel(ctx, player, id, rid) {
   return { error: now?.state === 'open' && now.high_bid != null ? 'auction-bid-standing' : 'market-gone' };
 }
 async function auctionCancelled(db, me, a, extra = {}) {
+  // INT19: a Masterwork the market holds the record of comes back by a delivery its seller's record collects
+  if (await pieceCameBack(db, a.id)) return { ok: true, ...extra, auction: auctionView(a, me), delivery: { id: a.id }, balance: await balanceOf(db, me) };
   const p = await db.prepare('SELECT * FROM products WHERE provenance = ?1').bind(a.provenance).first();
   return { ok: true, ...extra, auction: auctionView(a, me), piece: pieceOf(p, a.wear), balance: await balanceOf(db, me) };
 }
+/** INT19: whether a crafted piece came back from listing or auction `id` as its record (pieceBackSteps' delivery). */
+const pieceCameBack = async (db, id) => !!(await db.prepare("SELECT 1 FROM market_deliveries WHERE id = ?1 AND why = 'returned' AND item IS NOT NULL").bind(id).first());
 
 // ─── REPORTS AND REMOVAL (section 20) ────────────────────────────────
 

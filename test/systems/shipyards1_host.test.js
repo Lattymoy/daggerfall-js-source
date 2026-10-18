@@ -52,7 +52,7 @@ function rig({ gold = 500000, csa = true, naval = true } = {}) {
     // AUDIT SHIPYARDS L6-1 (TEST THE SHAPE THE PRODUCER MINTS): navalHost.js awayOf answers her ROSTER PLACES ashore
     awayOf: (boat) => { const names = st.away.get(boat.uid) ?? new Set(); return new Set((st.hands.get(boat.uid) ?? []).flatMap((h, i) => (names.has(h.name) ? [i] : []))); },
     enlistHand: (boat, r) => { log.enlisted.push([boat.uid, r.name, r.trade]); const h = { name: r.name, role: r.trade, hall: r.id }; st.hands.set(boat.uid, [...(st.hands.get(boat.uid) ?? []), h]); return { ok: true, text: '', hand: h, raise: CREW_PER_HAND }; },
-    releaseHand: (boat, name) => { log.released.push([boat.uid, name]); const hs = st.hands.get(boat.uid) ?? []; const h = hs.find((x) => x.name === name); if (!h) return { ok: false, text: 'No such hand aboard her.' }; st.hands.set(boat.uid, hs.filter((x) => x !== h)); return { ok: true, text: '', hand: h }; },
+    releaseHand: (boat, name) => { log.released.push([boat.uid, name]); const hs = st.hands.get(boat.uid) ?? []; const h = hs.find((x) => x.name === name); if (!h) return { ok: false, text: 'There\'s no crew member by that name aboard.' }; st.hands.set(boat.uid, hs.filter((x) => x !== h)); return { ok: true, text: '', hand: h }; },
     forgetBoat: (uid) => log.forgotBoats.push(uid),
     // AUDIT SHIPYARDS L6-7: the shipwright's model as navalHost.js yardModelOf mints it (the yard window's own shape)
     yardModelOf: (boat) => ({
@@ -222,12 +222,12 @@ test('SHIPYARDS THE CREW HALL: the day\'s roster less the names already serving,
 
 test('SHIPYARDS THE WINDOW\'S WORDS: a ship\'s card (her figures, a galley lying off), a fleet row (where she lies, her worth and the offer), a recruit (grade, trade, class and record)', () => {
   const card = shipCardText({ ...shipSpec(3), asked: 150000, docks: false, why: null });
-  assert.match(card.figs, /a crew of \d+, 8 named on her deck/);
+  assert.match(card.figs, /a crew of \d+, 8 named on deck/);
   assert.match(card.figs, /a ram/);
-  assert.equal(card.note, 'No quay takes her - she lies off the harbour.');
-  assert.deepEqual([card.press, card.can], ['Buy her - 150,000 gold', true]);
+  assert.equal(card.note, 'Too big for the quay - it anchors off the harbour.');
+  assert.deepEqual([card.press, card.can], ['Buy - 150,000 gold', true]);
   const row = shipCardText({ ...shipSpec(0), asked: 4000, docks: true, why: 'short' });
-  assert.match(row.figs, /no crew - she sails with you alone/);
+  assert.match(row.figs, /no crew - you sail it alone/);
   assert.deepEqual([row.can, row.why], [false, 'short']);
   const f = fleetRowText({ label: 'Kestrel', hullName: 'Small Ship', where: 'laidup', port: 'Sentinel', worth: 90000, offer: 40000, sell: null, upgrades: { hold: 1 }, can: {} });
   assert.match(f.worth, /^Worth 90,000 gold - the shipmaster offers 40,000 gold\./);
@@ -268,7 +268,7 @@ test('SHIPYARDS THE WINDOW MOUNTED: its tabs page the model; a ship bought, a sh
   // buying: the first press asks, a second at once (a double click) does nothing, a second a beat later buys
   const buyBtn = () => byClass(byClass(host, 'dfyard-card').find((c) => c.getAttribute('data-hull') === '1'), 'dfnaval-take')[0];
   click(buyBtn());
-  assert.deepEqual([r.log.paid.length, /Press again to buy her/.test(note())], [0, true], 'the first press asks');
+  assert.deepEqual([r.log.paid.length, /Press again to confirm/.test(note())], [0, true], 'the first press asks');
   click(buyBtn());
   assert.equal(r.log.paid.length, 0, 'a double click is one press');
   t += 400;
@@ -277,10 +277,10 @@ test('SHIPYARDS THE WINDOW MOUNTED: its tabs page the model; a ship bought, a sh
   assert.equal(selected(), 'fleet', 'a deed bought: the window turns to her on Your fleet');
   // selling, the same way
   const rowOf = (uid) => byClass(host, 'dfyard-row').find((x) => x.getAttribute('data-uid') === String(uid));
-  const sellBtn = () => byClass(rowOf(801), 'dfnaval-btn').find((b) => /^Sell her|^Yes - sell/.test(b.textContent));
+  const sellBtn = () => byClass(rowOf(801), 'dfnaval-btn').find((b) => /^Sell$|^Yes - sell/.test(b.textContent));
   click(sellBtn());
   assert.equal(r.log.credited.length, 0, 'the first press asks');
-  assert.match(note(), /Press again to sell her/);
+  assert.match(note(), /Press again to confirm/);
   click(sellBtn());
   assert.equal(r.log.credited.length, 0, 'not the click that asked');
   t += 400;
@@ -309,7 +309,7 @@ test('SHIPYARDS THE WINDOW MOUNTED: its tabs page the model; a ship bought, a sh
   click(refit);
   assert.ok(r.log.fleetActs.some(([, verb, line]) => verb === 'refit' && line === 'hold'), 'a refit pressed is the Fleet\'s act');
   click(tab('fleet'));
-  const summon = byClass(rowOf(802), 'dfnaval-btn').find((b) => b.textContent === 'Bring her here');
+  const summon = byClass(rowOf(802), 'dfnaval-btn').find((b) => b.textContent === 'Bring here');
   click(summon);
   assert.equal(doors.length, 1, 'the summons\' water handed to the host');
   assert.deepEqual(exits, ['door'], 'and the window makes way');

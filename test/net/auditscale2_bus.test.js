@@ -236,7 +236,7 @@ test('AUDIT SCALE II R2-7: every hand-up and delivery is numbered - one that did
   await world(async ({ W, bus, link, say, settle, tick }) => {
     const [a, c] = namesOnShards(2);
     const ka = H.hubOfSubject(`acct-${a}`);
-    const wa = await link(a), wc = await link(c);
+    const wa = await link(a, undefined, { kind: 'linked' }), wc = await link(c);   // PIN MOVED (AUDIT SAFE RELAY-11): a registered speaker - a guest's channel lines are paced now
     const get = W.ROOMS.get;
     let failed = 0;
     W.ROOMS.get = (id) => (id === SOCIAL_ROOM && !failed ? { fetch: async (req) => { if (new URL(req.url).pathname === H.HUB_INTERNAL_UP) { failed++; throw new Error('timeout'); } return get(id).fetch(req); } } : get(id));

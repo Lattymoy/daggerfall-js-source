@@ -15,6 +15,7 @@ import { requestFittedIcon, fittedImg } from '../textureCanvas.js';
 import { PERSONALITIES } from '../../systems/revenant/revenantPersonality.js';   // REVENANT-VOICE: who each is
 import { WEAK_NAMES, WEAK_HINTS, weaknessKind, willMatters, LAST_STAND_RANK, lastStandHealth, signatureStamp, bandMembers, bandName, WRATH_MAX, loyaltyLabel } from '../../systems/revenant/revenantFeud.js';   // RVN3: its weakness, its will; RVN4: its last stand; RVN5: its signature; RVN6: its band
 import { tacticsSwitchOn } from '../../ai/tactics.js';   // RVN5: a signature is a telegraph - the Enhanced AI switch's
+import { artWords } from '../../systems/revenant/revenantArts.js';   // RVN-ARTS: its art, as it would use it on me - or for me, sworn
 
 export const REVENANT_PAGE_SECTIONS = Object.freeze([['revenants', 'Revenants']]);
 export const REVENANT_PAGE_STYLE_ID = 'revenant-page-css';
@@ -276,6 +277,8 @@ function row(el, r, now, kindName) {
   if (stand) text.append(el('span', 'rvn-will', stand));
   const sig = fallen ? '' : signatureWords(r);   // RVN5
   if (sig) text.append(el('span', 'rvn-will', sig));
+  const art = fallen ? '' : artWords(r);   // RVN-ARTS (Revenants.md section 41)
+  if (art) text.append(el('span', 'rvn-will', art));
   const band = fallen ? '' : bandWords(r, kindName);   // RVN6
   if (band) text.append(el('span', 'rvn-will', band));
   if (!fallen) text.append(el('span', 'rvn-will', lairWords(r)));   // RVN7

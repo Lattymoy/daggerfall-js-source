@@ -317,8 +317,8 @@
   {
     "name": "NAV1-broadsides-alongside",
     "file": "src/systems/naval/navalAI.js",
-    "old": "    gunnery(ship, world, enemy ?? (ship.cls.faction === 'merchant' ? threat : null), out, { broadsides: ship.mode !== 'board' });",
-    "new": "    gunnery(ship, world, enemy ?? (ship.cls.faction === 'merchant' ? threat : null), out, { broadsides: true });",
+    "old": "export const boarderBroadsides = (ship) => ship.mode !== 'board' || ship.guns.load('starboard') === 'grape';",
+    "new": "export const boarderBroadsides = (ship) => true;",
     "tests": [
       "test/systems/naval/navaudit_captains.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "NAV1-one-clamped-step",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const total = paused ? 0 : Math.min(Math.max(0, dt), FRAME_STEP_S * FRAME_STEPS_MAX);",
-    "new": "    const total = paused ? 0 : Math.min(Math.max(0, dt), FRAME_STEP_S);",
+    "old": "FRAME_STEP_S * FRAME_STEPS_MAX);   // TIME-DILATION",
+    "new": "FRAME_STEP_S);   // TIME-DILATION",
     "tests": [
       "test/systems/naval/navaudit_captains.test.js"
     ]

@@ -585,6 +585,10 @@ export function lowerCondition(item, amount, owner = null, say = null, removeFro
   // own corpse's loot is not hidden from every inventory tab), and
   // the mark-keyed call could never take a broken foe's shield off.
   if (owner) unequipItem(owner, item);
+  // AUDIT RVN G4: and out of a foe's hand - the port's foe swings `entity.weapon`, where DFU's EnemyAttack reads the right
+  // hand's slot (MeleeDamage: ItemEquipTable.GetItem(RightHand)), which the unequip just emptied: a broken blade is no
+  // blade, and a sworn one's given weapon, broken, was swung on (and broke again) at every blow
+  if (owner && owner.weapon === item) owner.weapon = null;
   // PCO1: LowerCondition's third parameter, `removeFromCollectionWhenBreaks`
   // (DaggerfallUnityItem.cs) - ItemBreaks removes the item from that
   // collection. The port's one caller is the mod's fading enchanted

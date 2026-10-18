@@ -186,6 +186,7 @@ import { hudScale } from '../ui/hud/hud.js';
 import { containerTextureRecord } from '../systems/containers.js';
 import { dungeonStartDoorFor } from '../systems/save/save.js';   // CASTLE1: the load's door is the saved dungeon's own
 import { composeNamer, composeContents } from '../systems/worldHover.js';   // INTERIOR-BODIES: the interior stands itemised bodies now, so its contents reader is a LADDER like the other three hosts' rather than one prefix
+import { createInteriorPeek } from '../systems/containerPreview.js';   // CONTAINER-PEEK: a cupboard's plaque lists what it already holds
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the race's WINNER, so the plaque names what the press would open
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, and the hide door for the branches that return above it
 import { quickLootTake, quickLootSpend, plaqueActionFor } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; HOME2: the verb the plaque lit over a door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
@@ -3564,6 +3565,12 @@ export function createWorldModes(host) {
       return null;
     },
   ]);
+  // CONTAINER-PEEK: what a house container or a placed chest already holds, for the plaque - the getters read the
+  // room's own word only while the crosshair is on one (systems/containerPreview.js createInteriorPeek)
+  const interiorPeek = createInteriorPeek({
+    containers: () => interiorCtx?.containers, decor: () => interiorDecor, owned: () => ownsThisInterior(),
+    shut: () => !!(interiorHome && !interiorHome.own) || !!privateVisitRoom || caravanGuestHere(), hall: () => hallMemberHere(), today: () => stockedToday(),
+  });
 
   /** BS1: the book reader on a bare id - the bookshelf picks by id,
    *  and makeOpenBookHook reads item.message, so a `{ message }`
@@ -8547,7 +8554,7 @@ export function createWorldModes(host) {
   }
   async function enterSailingCabin(saved, pos = null, visit = null) {
     if (mode !== 'exterior' || !host.sailingCabin) return false;
-    const entry = sailingCabinEntry(blocks, saved, host.sailingCabin.fromNative);
+    const entry = sailingCabinEntry(blocks, saved, host.sailingCabin.fromNative, typeof visit?.cabinOwner === 'string');   // AUDIT 2: another's cabin is as built - her stain is her captain's ledger's
     if (!entry) return false;
     return enterInteriorCore(entry.hit, entry.entries, { building: entry.building, pos, ...visit });
   }
@@ -8719,7 +8726,7 @@ export function createWorldModes(host) {
         // building reached through ?interior=NAME:REC omitted it.
         hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
         hit.door.matrix, {
-          voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible, baseEditable,
+          voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible, baseEditable, restyle: hit.restyle ?? null,   // CABIN-LOOK: a cabin stained (scenes/cabinLook.js)
           // TAVERN-TABLE (world/card/cardTableProp.js; the owner: "Lets instead place a specific table in each inn"): every
           // tavern stands the card table's own prop - its one card table
           placeCardTable: isTavern(building?.buildingType ?? BUILDING_TYPES.None),
@@ -11626,6 +11633,8 @@ export function createWorldModes(host) {
           (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (interiorDropped.contents?.(key) ?? null) : null),
           (key) => interiorFoes?.hoverContents?.(key) ?? null,
           (key) => interiorGuards?.hoverContents?.(key) ?? null,
+          // CONTAINER-PEEK: a house container and a placed chest, read-only - null until the list exists, so the plaque stays a name
+          interiorPeek,
         ]),
       });
       const _detected = detectFeed.tick(dt);

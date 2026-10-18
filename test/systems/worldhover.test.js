@@ -23,7 +23,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  resolveHover, frameSignature, hoverLines, keyItemises, ITEMISED_KEYS, HOVER_MAX,
+  resolveHover, frameSignature, hoverLines, keyItemises, keyPreviews, ITEMISED_KEYS, PREVIEW_KEYS, HOVER_MAX,
   composeActivationTargets, plaqueWindow,
 } from '../../src/systems/worldHover.js';
 import {
@@ -169,6 +169,39 @@ test('WORLD-HOVER: only the loot keys itemise - everything else is a name', () =
   assert.equal(read, 0, 'a door is not a container - it is never asked for one');
   resolveHover(hit('loot:2'), { contents, name: PILE });
   assert.equal(read, 1);
+});
+
+test('CONTAINER-PEEK: a cupboard lists what it already holds, and stays a name until it has a list', () => {
+  assert.deepEqual([...PREVIEW_KEYS], ['container:', 'decor:']);
+  assert.equal(keyPreviews('container:4'), true);
+  assert.equal(keyPreviews('decor:chest'), true);
+  assert.equal(keyItemises('container:4'), false, 'a cupboard is not a pile - the take stays the press\'s');
+  const ruby = { name: 'Ruby' };
+  const listed = resolveHover(hit('container:4'), {
+    name: () => ({ title: 'Chest', subs: ['Private property'], tone: 'private' }),
+    contents: () => [ruby],
+  });
+  assert.equal(listed.kind, 'items');
+  assert.equal(listed.preview, true, 'a glance, not a take list');
+  assert.equal(listed.title, 'Chest');
+  assert.deepEqual(listed.subs, ['Private property']);
+  assert.equal(listed.tone, 'private');
+  assert.equal(listed.rows[0].name, 'Ruby');
+  assert.equal(listed.empty, false);
+  let read = 0;
+  const named = resolveHover(hit('container:4'), {
+    name: () => ({ title: 'Chest', subs: ['Private property'], tone: 'private' }),
+    contents: () => { read += 1; return null; },
+  });
+  assert.equal(read, 1, 'an unstocked cupboard is asked, and has nothing to list');
+  assert.equal(named.kind, 'name', 'so the plaque stays the name, and never says Empty');
+  assert.equal(named.tone, 'private');
+  assert.equal(named.rows.length, 0);
+  let far = 0;
+  assert.equal(resolveHover(hit('container:4', 9, 3.2), {
+    name: () => { far += 1; return { title: 'Chest' }; }, contents: () => { far += 1; return [ruby]; },
+  }), null, 'out of reach, a cupboard is not named and not read');
+  assert.equal(far, 0);
 });
 
 test('WORLD-HOVER: an itemised frame carries the rows, the tail and the empty flag', () => {
@@ -1307,8 +1340,11 @@ test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed a
   // THAT host stands - it was one prefix while the interior stood no
   // bodies, and a body reading "Empty" over a full pack is the defect
   // AUDIT-WH H3 extracted this ladder for outdoors.
-  assert.match(wm, /contents: composeContents\(\[\n\s*\(key\) => \(typeof key === 'string' && key\.startsWith\('droppedLoot:'\)[^\n]*\n\s*\(key\) => interiorFoes\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\(key\) => interiorGuards\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\]\),/,
-    'the interior reads contents as a LADDER, over every itemised key it stands');
+  assert.match(wm, /contents: composeContents\(\[\n\s*\(key\) => \(typeof key === 'string' && key\.startsWith\('droppedLoot:'\)[^\n]*\n\s*\(key\) => interiorFoes\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\(key\) => interiorGuards\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\/\/ CONTAINER-PEEK:[^\n]*\n\s*interiorPeek,\n\s*\]\),/,
+    'the interior reads contents as a LADDER, over every itemised key it stands, then a cupboard\'s glance');
+  // HOST-SPLIT: the glance is built once at the host's scope, its getters the room's own word - not a bag built per frame
+  assert.match(wm, /\n  const interiorPeek = createInteriorPeek\(\{\n\s*containers: \(\) => interiorCtx\?\.containers, decor: \(\) => interiorDecor, owned: \(\) => ownsThisInterior\(\),\n\s*shut: \(\) => !!\(interiorHome && !interiorHome\.own\) \|\| !!privateVisitRoom \|\| caravanGuestHere\(\), hall: \(\) => hallMemberHere\(\), today: \(\) => stockedToday\(\),\n  \}\);/,
+    'the interior builds its cupboard glance once, from its own word');
   assert.match(wm, /import \{ composeNamer, composeContents \} from '\.\.\/systems\/worldHover\.js';/);
 
   // OPENED - the same door the street and the dungeon open: the pool's

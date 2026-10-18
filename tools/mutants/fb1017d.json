@@ -1,0 +1,72 @@
+[
+  {
+    "name": "CURSE-CARRY-no-carry",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  carryInvitationOnly(entity.guildMemberships, vamp);   // CURSE-CARRY: the two that cannot be asked ride the swap\n",
+    "new": "",
+    "tests": [
+      "test/systems/guild/fb1017d_cursecarry.test.js"
+    ],
+    "why": "the report: the Brotherhood member who turns opens an empty book"
+  },
+  {
+    "name": "CURSE-CARRY-copied",
+    "file": "src/systems/guild/guilds.js",
+    "old": "    delete from[key];\n",
+    "new": "",
+    "tests": [
+      "test/systems/guild/fb1017d_cursecarry.test.js"
+    ],
+    "why": "copied, not moved: two records, and the rank earned on one side never reaches the other"
+  },
+  {
+    "name": "CURSE-CARRY-every-guild",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  for (const name of INVITATION_ONLY) {\n    const key = membershipKey(GUILDS[name]);",
+    "new": "  for (const name of Object.keys(GUILDS)) {\n    const key = membershipKey(GUILDS[name]);",
+    "tests": [
+      "test/systems/guild/fb1017d_cursecarry.test.js"
+    ],
+    "why": "a guild that can be asked again carried across the swap too"
+  },
+  {
+    "name": "CURSE-CARRY-one-guild",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  for (const name of INVITATION_ONLY) {\n    const key = membershipKey(GUILDS[name]);",
+    "new": "  for (const name of ['DarkBrotherhood']) {\n    const key = membershipKey(GUILDS[name]);",
+    "tests": [
+      "test/systems/guild/fb1017d_cursecarry.test.js"
+    ],
+    "why": "the Thieves Guild left behind"
+  },
+  {
+    "name": "CURSE-CARRY-overwrite",
+    "file": "src/systems/guild/guilds.js",
+    "old": "    if (Object.hasOwn(to, key) || !Object.hasOwn(from, key)) continue;",
+    "new": "    if (!Object.hasOwn(from, key)) continue;",
+    "tests": [
+      "test/systems/guild/fb1017d_cursecarry.test.js"
+    ],
+    "why": "the active book's own record overwritten by the other's"
+  },
+  {
+    "name": "CURSE-CARRY-one-way",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  if (!isMembershipStore(store) || !store.mortal || !store.vampire) return;",
+    "new": "  if (!isMembershipStore(store) || !store.mortal || !store.vampire || !vampire) return;",
+    "tests": [
+      "test/systems/guild/fb1017d_cursecarry.test.js"
+    ],
+    "why": "carried into the curse and never home at the cure"
+  },
+  {
+    "name": "CURSE-CARRY-door-dropped",
+    "file": "src/net/npcRollTracker.js",
+    "old": "      carryInvitationOnly(entity?.guildMemberships, rollVampireOf(entity));",
+    "new": "",
+    "tests": [
+      "test/systems/guild/fb1017d_cursecarry.test.js"
+    ],
+    "why": "the Roll claims the carried guild dormant until something else reads the books"
+  }
+]

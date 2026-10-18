@@ -213,7 +213,7 @@
   {
     "name": "TECH1-law-the-version",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 6;",
+    "old": "export const ITEM_LAW_VERSION = 7;",
     "new": "export const ITEM_LAW_VERSION = 1;",
     "tests": [
       "test/systems/tech1_roster.test.js",
@@ -376,7 +376,7 @@
   {
     "name": "TECH1-awake-with-the-ladder-off",
     "file": "src/combat/techniques.js",
-    "old": "  if (!lootRarityOn()) return LADDER_OFF_TEXT;",
+    "old": "  if (!hand.signature && !lootRarityOn()) return LADDER_OFF_TEXT;",
     "new": "",
     "tests": [
       "test/systems/tech1_runner.test.js"
@@ -484,8 +484,8 @@
   {
     "name": "TECH1-the-shot-at-plain-speed",
     "file": "src/combat/techniques.js",
-    "old": "pierce: t.through }, speedScale: t.speed, summoned: shot.summoned });",
-    "new": "pierce: t.through }, summoned: shot.summoned });",
+    "old": "pierce: t.through, use: a.use }, speedScale: t.speed, summoned: shot.summoned });",
+    "new": "pierce: t.through, use: a.use }, summoned: shot.summoned });",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -675,7 +675,7 @@
   {
     "name": "TECH1-AUDIT-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct149';",
+    "old": "export const ACCOUNT_VERSION = 'acct153';",
     "new": "export const ACCOUNT_VERSION = 'acct107';",
     "tests": [
       "test/systems/tech1_roster.test.js"

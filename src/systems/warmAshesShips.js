@@ -98,6 +98,7 @@ export const boardPending = () => _boardIn !== null;
  *   currentRegionIndex()   PlayerGPS.CurrentRegionIndex
  *   setBlockVariant        WorldDataVariants.SetBlockVariant (a seam for the tests; the registry by default)
  *   leaveShipGate(quest)   NAV-D: the sea fight's word on a "Leave Ship" - 'naval' | 'wait' | 'proceed' (scenes/naval/navalHost.js)
+ *   raidAshore(quest)      RAID-ASHORE: a raid thrown back where the player stands - its living foes withdrawn (scenes/raidAshore.js)
  */
 let _host = null;
 export function setWarmAshesHost(host) { _host = host ?? null; }
@@ -121,7 +122,10 @@ export function onPreFastTravel({ oceanPixels = 0, travelShip = false } = {}) {
   if (!(oceanPixels > 0)) return 'no-water';   // "WA High Seas: No Water Detected on Travel"
   const h = host();
   if (rangeInt(0, 100, h.random ?? Math.random) < WA_PEACEFUL_PERCENT || tempShip) return 'peace';
-  if (travelShip) return armRaid();
+  // RAID-ASHORE (the port's own - bible/03-World/Naval-Refit.md): ONE RAID AT A TIME holds the fast travel too. The IL
+  // arms its ambush whatever runs, and a voyage made while a raid's quest still ran started a second over the first
+  // (raidAtSea and the sea fight's boarders already ask raidRefusal); its blocks are left as the running raid set them
+  if (travelShip) return raidRefusal() === 'busy' ? 'busy' : armRaid();
   for (const block of WA_SHIP_BLOCKS) variant(block, WA_VARIANT_BASE);   // "Player is not traveling by ship."
   return 'base';
 }
@@ -245,6 +249,14 @@ export class LeaveShip extends ActionTemplate {
         this.setComplete();
       }
     } else {
+      // RAID-ASHORE (DECLARED, bible/03-World/Naval-Refit.md; scenes/raidAshore.js): fought where the player stands - a
+      // linked cabin's ship at her quay, the land - no ship sails them off it, so the raid ends HERE: its crew and its
+      // last raiders withdrawn (the host's `raidAshore`), the ship blocks back to their base, and the quest ended as its
+      // own `end quest` ends one - or its crew stood on, passive, called back five at a time for the rest of its hour
+      resetShipVariants();
+      h.raidAshore?.(this.parentQuest);
+      this.parentQuest.questBreak = true;
+      this.parentQuest.endQuest();
       this.setComplete();
     }
   }

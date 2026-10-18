@@ -125,6 +125,18 @@ export function careerGroupOf(entity, id) {
 export const masteredSkills = (entity) => (Array.isArray(entity?.masteredSkills) ? entity.masteredSkills : []);
 export const isMasteredSkill = (entity, id) => masteredSkills(entity).includes(id);
 
+/** AUDIT MARTIAL L4 L3: how many of `ids` this character has mastered or can still master - per career group, the ones
+ *  mastered and as many more as the group's slots have left (a miscellaneous skill never). What can EVER open a
+ *  specialisation (martialPaths.js martialPossible, arcanePaths.js pathPossible). */
+export function masterableCount(entity, ids) {
+  let n = 0;
+  for (const g of /** @type {const} */ (['primary', 'major', 'minor'])) {
+    const mine = ids.filter((id) => careerGroupOf(entity, id) === g);
+    const have = mine.filter((id) => isMasteredSkill(entity, id)).length;
+    n += have + Math.min(masterySlots(entity, g).left, mine.length - have);
+  }
+  return n;
+}
 /** A group's slots: { used, max, left }. */
 export function masterySlots(entity, group) {
   const max = MASTERY_SLOTS[group] ?? 0;

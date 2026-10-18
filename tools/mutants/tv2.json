@@ -462,8 +462,8 @@
   {
     "name": "AUDIT-DEEP2-B4-out-of-a-duel-by-click",
     "file": "src/scenes/world.js",
-    "old": "    if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool())) { tvSay(TRAVEL_VIEW_TEXT.enemies); return false; }",
-    "new": "    if (areEnemiesNearby(exteriorFoePool())) { tvSay(TRAVEL_VIEW_TEXT.enemies); return false; }",
+    "old": "    if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool()) || navalHostileNear()) { tvSay(",
+    "new": "    if (areEnemiesNearby(exteriorFoePool()) || navalHostileNear()) { tvSay(",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

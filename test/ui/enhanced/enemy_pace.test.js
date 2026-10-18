@@ -12,8 +12,9 @@ const panel = readFileSync(new URL('../../../src/ui/enhanced/enhancedTravelContr
 const css = readFileSync(new URL('../../../src/ui/enhanced/enhancedStyle.js', import.meta.url), 'utf8');
 
 test('ENEMY-PACE x RATE-LAW: the enemies\' cap is floored at the fixed pace on both governed paths, and no stepper is wired (mutants: a path left on the raw cap, the floor moved)', () => {
-  assert.match(world, /foePaced\(foes\.cap, travelAsked\)/, 'the classic skin\'s journey on the ground');
-  assert.match(world, /foePaced\(foes\.cap, want\)/, 'under the view');
+  // PIN MOVED (TIME-DILATION): through foeRate - the floor itself outside a hostile ship's hold (travelThreat.js), x1 inside it
+  assert.match(world, /foeRate\(foes, travelAsked\)/, 'the classic skin\'s journey on the ground');
+  assert.match(world, /foeRate\(foes, want\)/, 'under the view');
   assert.doesNotMatch(world, /foeFaster|foeSlower|tvFoeRate|foeLadder/, 'the stepper and its rate are gone');
   assert.equal(JOURNEY_FOE_PACE, 5, 'the stepper\'s own default, kept');
 });

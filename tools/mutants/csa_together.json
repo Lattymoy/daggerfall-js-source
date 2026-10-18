@@ -11,8 +11,8 @@
   {
     "name": "CSAK-wire-m-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "return { b, ...(underWay ? { m } : {}), ...(u.some(Boolean) ? { u } : {}), ...(named ? { n } : {}) };",
-    "new": "return { b, m, ...(u.some(Boolean) ? { u } : {}), ...(named ? { n } : {}) };",
+    "old": "return { b, ...(underWay ? { m } : {}), ...(u.some(Boolean) ? { u } : {}),",
+    "new": "return { b, m, ...(u.some(Boolean) ? { u } : {}),",
     "tests": [
       "test/systems/csa_together.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "CSAK-wire-key-no-way",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "export const csaRecordKey = (rec) => (rec ? JSON.stringify(rec.u || rec.cabin || rec.n ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null] : rec.m ? [rec.b, rec.m] : rec.b) : '');",
-    "new": "export const csaRecordKey = (rec) => (rec ? JSON.stringify(rec.u || rec.cabin || rec.n ? [rec.b, null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null] : rec.b) : '');",
+    "old": "rec.p ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null] : rec.m ? [rec.b, rec.m] : rec.b)",
+    "new": "rec.p ? [rec.b, null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null] : rec.b)",
     "tests": [
       "test/systems/csa_together.test.js",
       "test/systems/comeSailAway/csa_online.test.js"

@@ -131,7 +131,7 @@
   {
     "name": "QUICK-LOOT-the-switch-off-leaves-a-highlight-standing",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;",
     "new": "  _sel = nextSelection(_sel, frame, _nudge);",
     "tests": [
       "test/systems/quickloot.test.js"

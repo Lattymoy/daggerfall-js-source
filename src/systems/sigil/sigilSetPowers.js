@@ -229,7 +229,8 @@ export function setBlow(weapon, damage, attacker, target, info) {
   if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear;   // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch
   if (ruhn?.[2] && now < _s.wrathUntil) pct += ruhn[2].more;
   const oath = t.get('oath');
-  if (oath?.[1] && now < _s.riposteUntil) { pct += oath[1].more; _s.riposteUntil = 0; }   // RAID4b: Riposte - the next blow alone
+  const keep = !info?.estimate;   // AUDIT MARTIAL L2 F7: the Stats page's estimate spends no window and carries nothing
+  if (oath?.[1] && now < _s.riposteUntil) { pct += oath[1].more; if (keep) _s.riposteUntil = 0; }   // RAID4b: Riposte - the next blow alone
   const taker = t.get('thieftaker');
   if (taker?.[1] && belowHalf(target)) pct += taker[1].more;   // RAID4b: Run Them Down
   if (taker?.[2] && markedFoe(now) === target) pct += taker[2].more;   // RAID4b: No Escape
@@ -238,13 +239,13 @@ export function setBlow(weapon, damage, attacker, target, info) {
   const coil = t.get('coilscale');
   if (coil?.[1]) pct += coil[1].stack * coilStacksAt(target, now);   // SERPENT-SET: Constrict, at that foe's own coil (AUDIT 625 P3)
   const disc = t.get('panoply')?.[1];
-  if (disc && weapon && _s.armed >= 0) { pct += disc.armed * elementShare(target, _s.armed); _s.armed = -1; }   // EG15: Battlemage's Discipline - the next weapon blow alone, whatever its element does to this foe
+  if (disc && weapon && _s.armed >= 0) { pct += disc.armed * elementShare(target, _s.armed); if (keep) _s.armed = -1; }   // EG15: Battlemage's Discipline - the next weapon blow alone, whatever its element does to this foe
   let out = damage;
   if (pct > 0) {
     const key = weapon ?? attacker;
     const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
     const more = Math.floor(exact + 1e-9);
-    _carry.set(key, Math.max(0, exact - more));
+    if (keep) _carry.set(key, Math.max(0, exact - more));
     out += more;
   }
   out += flat;

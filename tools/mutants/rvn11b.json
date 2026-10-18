@@ -101,8 +101,8 @@
   {
     "name": "RVN11b-rolled-before-move",
     "file": "src/systems/revenant/revenant.js",
-    "old": "    // RVN11b (22.2): DESERTION - under DESERT.AT, once a day (a resting one too), one time in DESERT.CHANCE\n    for (const r of swornRevenants()) {\n      if (r.companion?.loyalty < DESERT.AT",
-    "new": "    // RVN11b (22.2): DESERTION - under DESERT.AT, once a day (a resting one too), one time in DESERT.CHANCE\n    for (const r of swornRevenants()) {\n      if (r.companion?.loyalty + 2 < DESERT.AT",
+    "old": "      if (r.companion?.state === 'errand') continue;\n      if (r.companion?.loyalty < DESERT.AT",
+    "new": "      if (r.companion?.state === 'errand') continue;\n      if (r.companion?.loyalty + 2 < DESERT.AT",
     "tests": [
       "test/systems/rvn11b_desert.test.js"
     ]

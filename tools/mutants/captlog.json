@@ -461,7 +461,7 @@
   {
     "name": "CL-host-sailed",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "deps.captain?.sailed?.(Math.hypot(v[0], v[2]) * total);",
+    "old": "deps.captain?.sailed?.(Math.hypot(v[0], v[2]) * Math.min(Math.max(0, dt), FRAME_STEP_S * FRAME_STEPS_MAX));",
     "new": "deps.captain?.sailed?.(0);",
     "tests": [
       "test/systems/naval/captlog.test.js"

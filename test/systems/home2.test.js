@@ -85,10 +85,17 @@ test('HOME2 the door, by source: the verbs listed in every mode but Steal and on
 
 test('HOME2 the deploy: a smoke call that 404s is asked again, seven times five seconds apart, before the deploy is failed - an old instance answering mid-rollout failed PR #387\'s deploy after it had taken; every new route\'s call goes through it (mutants: no retry; a route called around it)', () => {
   const wf = src('.github/workflows/account-deploy.yml');
-  assert.match(wf, /post\(\) \{\n\s*local out=\$1 url=\$2 data=\$3 got=404\n\s*for i in \$\(seq 1 7\); do\n\s*got=\$\(curl -sS --max-time 15 -o "\$out" -w '%\{http_code\}' -X POST "\$url" -H 'content-type: application\/json' -d "\$data"\) \|\| got=000\n\s*if \[ "\$got" != "404" \] && \[ "\$got" != "000" \] && \[ "\$\{got#5\}" = "\$got" \]; then break; fi\n[^\n]*\n\s*sleep 5\n\s*done\n\s*echo "\$got"\n\s*\}/, 'DEPLOY-FLAKE: a 404 and a 5xx are asked again - PR #592\'s deploy read renown/xp -> 500 in the platform\'s first moments after its migration; SMOKE-HANG: no answer (000) too - #950\'s and #947\'s read homes/town and homes/decor as 15 s with nothing');
+  // PIN MOVED (INT16, Integrity-Arc section 7): the retry is `ask`, one loop every smoke call goes through - `post` and the
+  // realm character's first save (`put`) each hand it their own curl words (the loop written twice was two sites of one law)
+  assert.match(wf, /ask\(\) \{\n\s*local out=\$1 url=\$2 got=404\n\s*shift 2\n\s*for i in \$\(seq 1 7\); do\n\s*got=\$\(curl -sS --max-time 15 -o "\$out" -w '%\{http_code\}' "\$@" "\$url"\) \|\| got=000\n\s*if \[ "\$got" != "404" \] && \[ "\$got" != "000" \] && \[ "\$\{got#5\}" = "\$got" \]; then break; fi\n[^\n]*\n\s*sleep 5\n\s*done\n\s*echo "\$got"\n\s*\}/, 'DEPLOY-FLAKE: a 404 and a 5xx are asked again - PR #592\'s deploy read renown/xp -> 500 in the platform\'s first moments after its migration; SMOKE-HANG: no answer (000) too - #950\'s and #947\'s read homes/town and homes/decor as 15 s with nothing');
   for (const route of ['/v1/account/played', '/v1/mod/mute', '/v1/renown/xp', '/v1/homes/town', '/v1/homes/claim', '/v1/homes/decor', '/v1/homes/decor/place']) {
     assert.match(wf, new RegExp(`code=\\$\\(post /tmp/[a-z0-9]+\\.json "\\$base${route.replace(/\//g, '\\/')}" `), route);
   }
-  assert.equal((wf.match(/code=\$\(post /g) ?? []).length, 8, 'the eight smoke calls, the repeated report among them');
+  // PIN MOVED (INT16, Integrity-Arc section 7): a Renown report is its seat's - the smoke's guest takes a realm character
+  // first (realm/create, a ninth post) and its first save through the same retry, a PUT (`put`)
+  assert.equal((wf.match(/code=\$\(post /g) ?? []).length, 9, 'the nine smoke calls, the repeated report and the realm character among them');
+  assert.equal((wf.match(/code=\$\(put /g) ?? []).length, 1, 'and the realm character\'s first save, asked again as a post is');
+  assert.match(wf, /\n\s*post\(\) \{ ask "\$1" "\$2" -X POST -H 'content-type: application\/json' -d "\$3"; \}\n/, 'a post is the retry\'s');
+  assert.match(wf, /\n\s*put\(\) \{ ask "\$1" "\$2" -X PUT -H "authorization: Bearer \$secret" -H "x-realm-lease: \$4" -H 'x-realm-seq: 1' -d "\$3"; \}\n/, 'and so is the first save');
   assert.equal((wf.match(/code=\$\(curl -sS --max-time 15 -o/g) ?? []).length, 0, 'no smoke call around the retry');
 });

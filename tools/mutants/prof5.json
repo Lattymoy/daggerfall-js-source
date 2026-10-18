@@ -465,10 +465,12 @@
   {
     "name": "PROF5-svc-anyones-piece",
     "file": "server-account/src/market.js",
+    "note": "INT19: pieceListRefusal answers another's piece before the record moves - this guard holds the race between them, pinned by a staged owner move",
     "old": "          OR (?5 = 'piece' AND EXISTS (SELECT 1 FROM products WHERE provenance = ?7 AND owner = ?1 AND listed = 0 AND (bought_with IS NULL OR bought_with = ?17))",
     "new": "          OR (?5 = 'piece' AND EXISTS (SELECT 1 FROM products WHERE provenance = ?7 AND listed = 0 AND (bought_with IS NULL OR bought_with = ?17))",
     "tests": [
-      "test/net/prof5_service.test.js"
+      "test/net/prof5_service.test.js",
+      "test/server/int19_crafted_record.test.js"
     ]
   },
   {
@@ -595,8 +597,9 @@
   {
     "name": "PROF5-svc-here-delivered",
     "file": "server-account/src/market.js",
-    "old": "      WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece' AND s.from_region != s.to_region`).bind(me, rid, nonce, mintId(rand)),\n    // the price table (10.2's History) - a material's sale",
-    "new": "      WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece'`).bind(me, rid, nonce, mintId(rand)),\n    // the price table (10.2's History) - a material's sale",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the sale's batch lets the market's record of a crafted piece go after it",
+    "old": "      WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece' AND s.from_region != s.to_region`).bind(me, rid, nonce, mintId(rand)),\n    ...pieceSoldSteps(",
+    "new": "      WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece'`).bind(me, rid, nonce, mintId(rand)),\n    ...pieceSoldSteps(",
     "tests": [
       "test/net/prof5_service.test.js"
     ]
@@ -766,7 +769,8 @@
   {
     "name": "PROF5-book-piece-lost",
     "file": "src/net/marketBook.js",
-    "old": "    if (had && !PIECE_GONE.includes(r?.error)) { try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); } }",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a refused piece is put back by the realm act's undo (realmPieceAct)",
+    "old": "      try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); }\n",
     "new": "",
     "tests": [
       "test/net/prof5_client.test.js"

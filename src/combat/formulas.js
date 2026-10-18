@@ -423,7 +423,10 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
 }
 
 // ---- CalculateHandToHandAttackDamage ----
-export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, rolls = Math.random) {
+/** BAL10 (bible/05-Combat/Balance-Arc.md section 16; the owner chose "Fix fists' missing bonuses"): AND THE PORT'S BLOW
+ *  MODIFIERS, as the weapon path reads them at its tail (weaponAttackDamage, below) - a player's fists, never the beast's
+ *  claws (BAL6 balanced the curse on its own claws and their metal). `info` is the host's word, the weapon path's own. */
+export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, rolls = Math.random, info = undefined) {
   const h2h = skillValue(attacker, SKILLS.HandToHand);
   const min = handToHandMinDamage(h2h);
   const max = handToHandMaxDamage(h2h);
@@ -438,6 +441,7 @@ export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, ro
   // path's material modifier stands, after Strength and before the enemy-type term
   if (isPlayer) damage += clawMetalDamage(attacker);
   damage += bonusOrPenaltyByEnemyType(attacker, target);
+  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths
   return damage;
 }
 
@@ -710,7 +714,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       }
     } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
       notes.hit = true;
-      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls);
+      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, { unaware: !!unaware });   // BAL10: the host's word for the fists' blow modifiers too
       // INSIDE the hit, exactly as :627 - see the note below
       const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);

@@ -450,7 +450,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'ships', group: 'sea', title: 'Sailing', trigger: 'When you first board a boat.',
     body: [
-      'Shipyards in port towns sell ships. A rowboat comes as parts: use them by any water. A bigger ship is laid up where you bought her: bring her round from the shipyard\'s Your fleet page.',
+      'Shipyards in port towns sell ships. A rowboat comes as parts: use them by any water. A bigger ship is laid up where you bought it: bring it round from the shipyard\'s Your fleet page.',
       'At the helm, {BoatToggleSail} raises or lowers the sail and {BoatSailUp} and {BoatSailDown} set how much. {BoatDisembark} leaves the helm.',
     ],
   }),
@@ -471,7 +471,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'naval-combat', group: 'sea', title: 'Fighting at Sea', trigger: 'When you first take a ship\'s cargo.',
     body: [
-      'Turn side-on to a ship, hold {SwingWeapon} to aim a broadside and let go to fire. Damage a ship until she surrenders, then board her and take her cargo.',
+      'Turn side-on to a ship, hold {SwingWeapon} to aim a broadside and let go to fire. Damage a ship until it surrenders, then board it and take its cargo.',
       'Piracy is a crime.',
     ],
   }),

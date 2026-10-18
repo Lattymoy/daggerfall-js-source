@@ -194,7 +194,7 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
     const where = `${leaguesWords(site.d)} ${compassWords(site.px - port.px, site.py - port.py)} of ${port.name}`;
     return {
       ...base, title: `Wanted: ${names.captain ? `Captain ${names.captain} of ` : ''}${names.name}`,
-      words: `A ${cls.title.toLowerCase()} preying on ${crown}'s shipping, last seen ${where}. Sink her or take her.`,
+      words: `A ${cls.title.toLowerCase()} preying on ${crown}'s shipping, last seen ${where}. Sink it or capture it.`,
       pay: payOf('bounty', { level, size: cls.cargo, px: site.d, pay }), standing: STANDING_DONE.bounty * Math.max(1, cls.cargo), days: TERM_DAYS.bounty,
       target: { px: site.px, py: site.py, seed, classId: cls.id, name: names.name, captain: names.captain ?? null, region: regionIndex }, where,
     };
@@ -220,7 +220,7 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
     const need = between(CONTRACT_NEED.salvage, r);
     const wreck = shipNames(classById('merchantGalleon'), seed, { regionIndex }).name;
     const where = `${leaguesWords(site.d)} ${compassWords(site.px - port.px, site.py - port.py)} of ${port.name}`;
-    return { ...base, title: `Salvage: ${wreck}`, words: `${wreck} went down ${where}. Raise ${need} casks of her cargo before the sea takes them.`,
+    return { ...base, title: `Salvage: ${wreck}`, words: `${wreck} went down ${where}. Raise ${need} casks of its cargo before the sea takes them.`,
       pay: payOf('salvage', { level, need, px: site.d, pay }), standing: STANDING_DONE.salvage, days: TERM_DAYS.salvage, need, target: { px: site.px, py: site.py, seed, name: wreck }, where };
   }
   if (kind === 'survey') {
@@ -285,11 +285,11 @@ export function contractLine(c, now) {
   const left = Math.max(0, c.until - now);
   const days = Math.floor(left / MINUTES_PER_DAY), hours = Math.floor((left % MINUTES_PER_DAY) / 60);
   const last = Math.max(1, hours);   // AUDIT CAPTAIN'S SEA B13: under an hour is "1 hour", never "1 hours"
-  const term = left <= 0 ? 'Her term is out' : days > 0 ? `${days} ${days === 1 ? 'day' : 'days'}${hours ? `, ${hours} ${hours === 1 ? 'hour' : 'hours'}` : ''} left` : `${last} ${last === 1 ? 'hour' : 'hours'} left`;
+  const term = left <= 0 ? 'Time is up' : days > 0 ? `${days} ${days === 1 ? 'day' : 'days'}${hours ? `, ${hours} ${hours === 1 ? 'hour' : 'hours'}` : ''} left` : `${last} ${last === 1 ? 'hour' : 'hours'} left`;
   const progress = c.kind === 'hunt' ? `${c.done | 0} of ${c.need} ended`
     : c.kind === 'survey' ? `${c.done | 0} of ${c.need} studied`
       : c.kind === 'salvage' ? `${c.done | 0} of ${c.need} casks raised`
-        : c.kind === 'delivery' ? `In your hold, for ${c.to?.name ?? 'her port'}`
+        : c.kind === 'delivery' ? `In your hold, for ${c.to?.name ?? 'delivery'}`
           : c.kind === 'bounty' ? `Last seen ${c.where ?? 'off the coast'}` : '';
   return { title: c.title, words: c.words, progress, left: term, pay: gold(c.pay) };
 }

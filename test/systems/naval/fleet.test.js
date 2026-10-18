@@ -39,6 +39,7 @@ import { checkName } from '../../../src/net/nameFilter.js';
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const AT = [100, 34, 200], DIR = [0, 0, 1];
 const item = (templateIndex, n = 1) => ({ templateIndex, stackCount: n, UID: Math.floor(Math.random() * 1e9) });
+const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ~ ${b}`);
 
 // ── the ledger's law ─────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -64,23 +65,23 @@ test('FLEET a name: printable ASCII, its runs of spaces closed, trimmed, SHIP_NA
   assert.equal(shipLabel({ hull: 2, variant: 0, name: 'Gull' }), 'Gull');
 });
 
-test('FLEET the refits: four lines (Hold, Rigging, Hull, Guns), three tiers each; a tier\'s gold and each material\'s count a Small Ship\'s times her hull\'s share; refitOf her multiples (mutants: per tier, a cost\'s scale, a material\'s count)', () => {
+test('FLEET the refits: four lines (Hold, Rigging, Hull, Guns), the shipwright\'s three tiers each (REFIT-ORES: nine of metal past them - captaintree.test.js); a tier\'s gold and each material\'s count a Small Ship\'s times her hull\'s share; refitOf her multiples (mutants: per tier, a cost\'s scale, a material\'s count)', () => {
   assert.deepEqual(UPGRADE_LINES.map((l) => [l.id, l.per, l.effect, [...l.mats], l.guns]), [
     ['hold', 0.2, 'cargo', ['timber', 'iron'], false], ['rigging', 0.04, 'speed', ['timber', 'pitch'], false],
     ['hull', 0.1, 'hull', ['timber', 'pitch', 'iron'], false], ['guns', 0.08, 'guns', ['iron', 'pitch'], true],
   ]);
-  assert.equal(UPGRADE_TIERS, 3);
+  assert.equal(UPGRADE_TIERS, 12, 'REFIT-ORES: three of the shipwright\'s, nine of metal');
   assert.deepEqual([...TIER_GOLD], [600, 1500, 3500]);
   assert.deepEqual([...TIER_MATS], [3, 6, 10]);
   assert.deepEqual([...HULL_UPGRADE_SCALE], [0.5, 0.75, 1, 1.75, 2.5]);
-  assert.deepEqual(upgradeCost(2, 'hull', 0), { gold: 600, mats: [{ kind: 'timber', n: 3 }, { kind: 'pitch', n: 3 }, { kind: 'iron', n: 3 }] });
-  assert.deepEqual(upgradeCost(4, 'guns', 2), { gold: 8750, mats: [{ kind: 'iron', n: 25 }, { kind: 'pitch', n: 25 }] });
-  assert.deepEqual(upgradeCost(0, 'hold', 1), { gold: 750, mats: [{ kind: 'timber', n: 3 }, { kind: 'iron', n: 3 }] });
-  assert.equal(upgradeCost(2, 'hold', 3), null, 'past the last');
+  assert.deepEqual(upgradeCost(2, 'hull', 0), { gold: 600, mats: [{ kind: 'timber', n: 3 }, { kind: 'pitch', n: 3 }, { kind: 'iron', n: 3 }], level: 1 });
+  assert.deepEqual(upgradeCost(4, 'guns', 2), { gold: 8750, mats: [{ kind: 'iron', n: 25 }, { kind: 'pitch', n: 25 }], level: 1 });
+  assert.deepEqual(upgradeCost(0, 'hold', 1), { gold: 750, mats: [{ kind: 'timber', n: 3 }, { kind: 'iron', n: 3 }], level: 1 });
+  assert.equal(upgradeCost(2, 'hold', 12), null, 'past the last');
   assert.equal(upgradeCost(2, 'sails', 0), null);
   assert.deepEqual(refitOf({ upgrades: { hold: 2, rigging: 1, hull: 3, guns: 0 } }), { cargo: 1.4, speed: 1.04, hull: 1.3, guns: 1 });
   assert.deepEqual(refitOf(null), { cargo: 1, speed: 1, hull: 1, guns: 1 });
-  assert.deepEqual(refitOf({ upgrades: { hold: 9 } }).cargo, 1 + 0.2 * 3, 'a tier past the last is the last');
+  assert.deepEqual(refitOf({ upgrades: { hold: 99 } }).cargo, 1 + 0.2 * 3 + 0.2 * 9 * 0.5, 'a tier past the last is the last - REFIT-ORES: a metal\'s tier half a shipwright\'s');
 });
 
 test('FLEET the materials: what in the world each is - the Wood-Axe\'s Wood Bundle, DFU\'s Iron and Pine Branch, the Stores\' planks, logs, ingots and resin withdrawn online; counted over the pack and her hold, stacks and all; taken all or none, the first list first', () => {
@@ -124,7 +125,7 @@ test('FLEET the book: a deed entered is out of the pack and in the book, her rec
   _resetFleetForTests();
   const pack = [item(50), mintDeed(3, 0, 801, 200000), mintDeed(2, 0, 802, 25000)];
   const r = titleDeed(pack[1], { from: pack, credit: { region: 4, due: 77 }, port: { name: 'Sentinel' } });
-  assert.deepEqual({ ...r }, { uid: 801, hull: 3, variant: 0, value: 200000, name: '', upgrades: { hold: 0, rigging: 0, hull: 0, guns: 0 }, credit: null, port: { name: 'Sentinel' } });
+  assert.deepEqual({ ...r }, { uid: 801, hull: 3, variant: 0, value: 200000, name: '', upgrades: { hold: 0, rigging: 0, hull: 0, guns: 0 }, credit: null, port: { name: 'Sentinel' }, colours: null, livery: null, cabin: 0, deck: [], plaque: false });   // PIN MOVED (SHIP-COLOURS: her flag - none, the mod's pennant; SHIP-LIVERY: her paint and her cabin's stain - as built; DECK-PROPS: her deck bare; SHIP-PLAQUE: her name not shown)
   assert.equal(pack.length, 2);
   assert.equal(titleOf(801)?.templateIndex, BOAT_DEED_TEMPLATE);
   titleDeed(titleOf(801));
@@ -159,8 +160,8 @@ test('FLEET the save: her record round-trips whole, her title by a flag; an olde
   assert.deepEqual(JSON.parse(JSON.stringify(fleetSaveData())), saved);
   assert.equal(titleOf(901)?.message, 40);
   // PIN MOVED (AUDIT HOLDINGS F4): a claim is her region's - its due date no longer read, a claim with none kept
-  restoreFleetSaveData({ ships: [{ uid: 5, hull: 9 }, { uid: 6, hull: 2, name: 'Admin', upgrades: { hull: 7 }, credit: { region: 1 } }, { uid: -1, hull: 2 }, { uid: 7, hull: 2, credit: { due: 5 } }] });
-  assert.deepEqual(fleetShips().map((r) => [r.uid, r.name, r.upgrades.hull, r.credit]), [[6, '', 3, { region: 1, due: 0 }], [7, '', 0, null]]);
+  restoreFleetSaveData({ ships: [{ uid: 5, hull: 9 }, { uid: 6, hull: 2, name: 'Admin', upgrades: { hull: 17 }, credit: { region: 1 } }, { uid: -1, hull: 2 }, { uid: 7, hull: 2, credit: { due: 5 } }] });
+  assert.deepEqual(fleetShips().map((r) => [r.uid, r.name, r.upgrades.hull, r.credit]), [[6, '', 12, { region: 1, due: 0 }], [7, '', 0, null]]);
   // AUDIT HOLDINGS F7: a hostile save
   restoreFleetSaveData({ ships: [
     { uid: 20, hull: 2, title: true, value: -50 }, { uid: 20, hull: 2, title: true, value: 9 },   // one number twice
@@ -325,7 +326,7 @@ test('FLEET her Hull refit on her hull\'s and canvas\'s whole (myBoatState\'s bu
   assert.match(src, /if \(Number\.isFinite\(hurt\.hull\)\) hurt\.hull \*= k;\n    if \(Number\.isFinite\(hurt\.sail\)\) hurt\.sail \*= k;/);
 });
 
-test('FLEET a refit never heals her nor hurts her: her state built again on her new whole, her hurts the share they were, her powder kept (refitBoat); a waiting record is read on the new whole when she stands', async () => {
+test('FLEET a refit never heals her nor hurts her: her state on her new whole, her hurts the share they were, her powder, her guns\' clocks, the brace, her last blow and her stores kept (refitBoat - AUDIT 2026-10-17: a sky accepted mid-fight loaded every battery); a waiting record is read on the new whole when she stands', async () => {
   const first = firstBuildOf(2);
   const save = { v: 2, boats: { 42: { hull: first.hullHp / 2, sail: first.sailHp, maxHull: first.hullHp, maxSail: first.sailHp, crew: hullBuild(2).crew, fire: 0, state: SHIP_STATES.afloat, credit: 0, barrels: 1 } } };
   let k = 1.2;
@@ -335,11 +336,20 @@ test('FLEET a refit never heals her nor hurts her: her state built again on her 
   assert.equal(a.maxHull, Math.round(hullBuild(2).hullHp * 1.2), 'the waiting record read on her refitted whole');
   assert.ok(Math.abs(a.hull / a.maxHull - 0.5) < 1e-6, 'half her whole');
   k = 1.3;
+  const st = s.host._myState(s.boat);
+  st.guns.fired('starboard'); st.guns.braced = true; st.credit = 7;
+  st.damage.apply({ hull: 1, sail: 5, crew: 0 }, 55);
+  const left = st.guns.left('starboard'), share = st.damage.hullShare(), canvas = st.damage.sailShare();
   s.host.refitBoat(s.boat);
   const b = s.host.fleetStatus(s.boat);
   assert.equal(b.maxHull, Math.round(hullBuild(2).hullHp * 1.3));
-  assert.ok(Math.abs(b.hull / b.maxHull - 0.5) < 0.01, `still half: ${b.hull} of ${b.maxHull}`);
+  assert.ok(Math.abs(b.hull / b.maxHull - share) < 1e-9, `the same share: ${b.hull} of ${b.maxHull}`);
   assert.equal(b.barrels, 1, 'her powder kept');
+  const now = s.host._myState(s.boat);
+  assert.equal(now, st, 'her state itself, not one built again');
+  assert.ok(canvas < 1 && Math.abs(now.damage.sailShare() - canvas) < 1e-9, 'her canvas the share it was');
+  assert.deepEqual([now.guns.left('starboard'), now.guns.braced, now.damage.lastHitAt, now.credit], [left, true, 55, 7], 'her reload, the brace, her last blow, her stores');
+  assert.ok(left > 0);
   s.host.refitBoat({ uid: 999, hull: 2 });   // no state: nothing to build again
 });
 
@@ -355,7 +365,7 @@ test('FLEET REPAIRS MADE AWAY: her hands mend her free to FIELD_MEND_CAP of each
   let r = s.host.repairAway(boat);
   st = s.host.fleetStatus(boat);
   assert.equal(r.ok, true);
-  assert.match(r.text, /needs carpenter's stores for the rest/);
+  assert.match(r.text, /need carpenter's stores for the rest/);
   assert.ok(Math.abs(st.hull - st.maxHull * FIELD_MEND_CAP) < 1e-6, `the free reach: ${st.hull}`);
   assert.ok(Math.abs(st.sail - st.maxSail * FIELD_MEND_CAP) < 1e-6);
   assert.equal(st.wrecked, false, 'refloated');
@@ -369,12 +379,12 @@ test('FLEET REPAIRS MADE AWAY: her hands mend her free to FIELD_MEND_CAP of each
   // plenty: whole
   addItem(boat.Cargo.Items, mintStores(40));
   r = s.host.repairAway(boat);
-  assert.match(r.text, /She's sound, Captain\./);
+  assert.match(r.text, /All repaired, Captain\./);
   assert.equal(s.host.fleetStatus(boat).wants, false);
-  assert.deepEqual(s.host.repairAway(boat), { ok: false, text: 'She needs no repairs.', spent: 0 });
+  assert.deepEqual(s.host.repairAway(boat), { ok: false, text: 'This ship doesn\'t need repairs.', spent: 0 });
   // the refusals
   const row = await sea({ hull: 1 });
-  assert.equal(row.host.repairAway(row.boat).text, 'She has no crew to make her repairs.');
+  assert.equal(row.host.repairAway(row.boat).text, 'This ship has no crew to make repairs.');
 });
 
 test('FLEET the berth a summoned ship is brought to: the free berth of a known harbour nearest the player - none taken by a ship of the sea or a boat of mine - on the sea\'s top, her bow along it; none known, none (source pins over the harbour\'s own law)', () => {
@@ -408,6 +418,7 @@ function fleetWorld(opts = {}) {
     csa: () => s.rt, naval: () => naval, pack: () => s.pack, gold: () => w.gold, pay: (n) => { w.gold -= n; w.paid.push(n); }, accounts: () => w.accounts,
     regionName: (i) => ['Alik\'r', 'Anticlere'][i] ?? `Region ${i}`, where: () => ({ inside: w.inside, pixel: w.pixel, feet: w.feet }),
     nearPort: () => w.nearPort, nearestPort: () => ({ name: 'Daggerfall', way: 'north' }), terrainAt: () => s.terrains[0], changed: () => {},
+    captain: opts.captain,   // CAPTAIN-TREE / REFIT-ORES: her captain's ledger (none: level 1, no stars)
   });
   return { s, w, host, states };
 }
@@ -453,14 +464,14 @@ test('FLEET Summon: brought round to the port\'s free berth (SummonBoat at it) -
   assert.equal(w.berthHull, 2, 'the berth asked for her own hull - alongside its quay');
   const b = s.rt.GetPlacedBoatWithUID(1);
   assert.deepEqual([b.GameObject.position[0], b.GameObject.position[2]], [300, 300]);
-  assert.equal(host.act(1, 'summon').text, 'She is already here.');
+  assert.equal(host.act(1, 'summon').text, 'This ship is already here.');
   b.GameObject.activeSelf = false; b.MapPixel = { X: 15, Y: 20 };
   w.nearPort = false;
   assert.equal(host.act(1, 'summon').text, 'Your ships are brought round to a port - go to one.');
   w.nearPort = true; w.hostile = true;
-  assert.equal(host.act(1, 'summon').text, 'Not while she is fighting.');
+  assert.equal(host.act(1, 'summon').text, 'Not while the ship is in combat.');
   w.hostile = false; w.inside = true;
-  assert.equal(host.act(1, 'summon').text, 'Call her from outdoors.');
+  assert.equal(host.act(1, 'summon').text, 'Go outdoors to summon a ship.');
   w.inside = false;
   w.berth = null;
   r = host.act(1, 'summon');
@@ -471,7 +482,7 @@ test('FLEET Summon: brought round to the port\'s free berth (SummonBoat at it) -
   assert.equal(s.rt.placing, true, 'the placing click, armed');
 });
 
-test('FLEET Send away: she sails for the nearest port and is laid up there (LayUpBoat; her title made again for a small boat); refused at her helm, fighting, for a small boat not here, with another player aboard', () => {
+test('FLEET Send away: she sails for the nearest port and is laid up there (LayUpBoat; her title made again for a small boat); refused at the helm, fighting, for a small boat not here, with another player aboard', () => {
   const { s, w, host } = fleetWorld();
   titleDeed(mintDeed(2, 0, 1, 1));
   host.act(1, 'summon');
@@ -486,7 +497,7 @@ test('FLEET Send away: she sails for the nearest port and is laid up there (LayU
   assert.equal(titleOf(2), null, 'spent on placing');
   const boat = s.rt.GetPlacedBoatWithUID(2);
   boat.GameObject.activeSelf = false;
-  assert.equal(host.act(2, 'away').text, 'She has no crew to sail her to a port - go to her.');
+  assert.equal(host.act(2, 'away').text, 'This ship has no crew to sail it to port. Go to it yourself.');
   boat.GameObject.activeSelf = true;
   assert.equal(host.act(2, 'away').ok, true);
   assert.ok(titleOf(2), 'the book stands for her laid up');
@@ -494,19 +505,19 @@ test('FLEET Send away: she sails for the nearest port and is laid up there (LayU
   host.act(1, 'summon');
   const one = s.rt.GetPlacedBoatWithUID(1);
   w.hostile = true;
-  assert.equal(host.act(1, 'away').text, 'Not while she is fighting.');
+  assert.equal(host.act(1, 'away').text, 'Not while the ship is in combat.');
   w.hostile = false;
   s.rt.StartSailing(one);
-  assert.equal(host.act(1, 'away').text, 'Not while you are at her helm.');
+  assert.equal(host.act(1, 'away').text, 'Not while you are at the helm.');
 });
 
 test('FLEET Repair: her hands wherever she lies (the sea fight\'s repairAway); refused for a boat with no crew; Shipwright: a door to the yard\'s window at a port, for a ship laid up (her stand-in: her number, her laid-up hold) or lying here', () => {
   const { s, w, host } = fleetWorld();
   titleDeed(mintDeed(2, 0, 1, 1));
   assert.deepEqual(host.act(1, 'repair'), { ok: true, text: 'Mended.' });
-  assert.equal(host.act(1, 'repair').text, 'She needs no repairs.');
+  assert.equal(host.act(1, 'repair').text, 'This ship doesn\'t need repairs.');
   titleDeed(mintDeed(1, 0, 2, 1));
-  assert.equal(host.act(2, 'repair').text, 'She has no crew to make her repairs.');
+  assert.equal(host.act(2, 'repair').text, 'This ship has no crew to make repairs.');
   const r = host.act(1, 'yard');
   assert.equal(typeof r.door, 'function');
   r.door();
@@ -520,8 +531,8 @@ test('FLEET Refit: at a port, her loan paid; the shipwright\'s gold from the pur
   const { s, w, host } = fleetWorld({ gold: 5000 });
   claimedShip({ uid: 1, hull: 2, value: 1, credit: { region: 1, due: 99 } });
   w.accounts[1] = { loanTotal: 1234, loanDueDate: 99 };
-  assert.equal(host.act(1, 'refit', 'hull').text, "She was bought on the bank's credit: pay Anticlere's 1234 gold first.");
-  assert.equal(host.offer(1).why, "She was bought on the bank's credit: pay Anticlere's 1234 gold first.");
+  assert.equal(host.act(1, 'refit', 'hull').text, 'This ship was bought on credit. Pay the 1234 gold owed to Anticlere first.');
+  assert.equal(host.offer(1).why, 'This ship was bought on credit. Pay the 1234 gold owed to Anticlere first.');
   w.accounts[1].loanTotal = 0;
   w.nearPort = false;
   assert.equal(host.act(1, 'refit', 'hull').text, 'Ships are refitted at a port.');
@@ -545,18 +556,61 @@ test('FLEET Refit: at a port, her loan paid; the shipwright\'s gold from the pur
   assert.equal(host.act(1, 'refit', 'hull').text, 'The shipwright asks 1500 gold.');
   addRefit(1, 'hull'); addRefit(1, 'hull');
   w.gold = 1e9;
-  assert.equal(host.act(1, 'refit', 'hull').text, 'She has every refit of that kind.');
+  assert.equal(host.act(1, 'refit', 'hull').text, 'Steel refits need captain level 3.', 'REFIT-ORES: the metals past the third ask a captain\'s level');
+  for (let i = 0; i < 9; i++) addRefit(1, 'hull');
+  assert.equal(host.act(1, 'refit', 'hull').text, 'This ship has every refit of that kind.');
   titleDeed(mintDeed(0, 0, 9, 1));
   assert.deepEqual(host.offer(9).rows.map((r) => r.id), ['hold', 'rigging', 'hull'], 'a Rowboat carries no guns to refit');
+});
+
+test('REFIT-ORES at the Fleet: a metal tier refused under her captain\'s level, on its row and pressed; bought at it with its metal - a blade melted down where the ingots run short - and her line\'s first store; a steel ingot counted for Steel and Iron both is refused, never half taken; CAPTAIN-TREE: her refits read with her captain\'s stars, a ship of mine\'s alone (mutants: the gate, the joint count, the stars on a stranger)', () => {
+  let level = 1, stats = null;
+  const { s, w, host } = fleetWorld({ gold: 1e6, captain: () => ({ captain: () => ({ level }), stats: () => stats }) });
+  titleDeed(mintDeed(2, 0, 1, 1));
+  for (let i = 0; i < 3; i++) addRefit(1, 'guns');
+  let row = host.offer(1).rows.find((r) => r.id === 'guns');
+  assert.deepEqual([row.tier, row.max, row.next.level, row.next.locked, row.afford, host.offer(1).level], [3, 12, 3, true, false, 1]);
+  near(row.share, 0.24);
+  near(row.next.share, 0.28);
+  assert.equal(host.act(1, 'refit', 'guns').text, 'Steel refits need captain level 3.');
+  level = 3;
+  s.pack.push(item(621, 4), item(620, 6));
+  row = host.offer(1).rows.find((r) => r.id === 'guns');
+  assert.deepEqual(row.next.mats.map((m) => [m.kind, m.n, m.have, m.melt]), [['steel', 4, 4, 0], ['iron', 10, 10, 0]], 'the steel ingots counted as Iron too');
+  assert.equal(row.afford, false);
+  assert.equal(host.act(1, 'refit', 'guns').text, 'Not enough materials - one item can\'t count for two requirements.');
+  assert.equal(materialCount([s.pack], 'steel'), 4, 'nothing taken');
+  assert.deepEqual(w.paid, [], 'nothing paid');
+  s.pack.length = 0;
+  const sword = { group: 'Weapons', templateIndex: 120, material: 1, stackCount: 1 };
+  s.pack.push(item(621, 3), sword, item(620, 10));
+  row = host.offer(1).rows.find((r) => r.id === 'guns');
+  assert.deepEqual(row.next.mats.map((m) => [m.kind, m.have, m.melt]), [['steel', 4, 1], ['iron', 13, 0]]);
+  assert.equal(row.afford, true);
+  assert.deepEqual(host.act(1, 'refit', 'guns'), { ok: true, text: "Small Ship 'I''s guns is refitted (IV)." });
+  assert.deepEqual([fleetShip(1).upgrades.guns, w.paid.at(-1), s.pack.includes(sword), materialCount([s.pack], 'iron')], [4, 6000, false, 0]);
+  // CAPTAIN-TREE: her refits as the sea reads them, her captain's stars over them
+  near(host.refit({ uid: 1 }).guns, 1 + 0.08 * 3 + 0.08 * 0.5);
+  stats = { harm: 0.1, cargo: 0.12, oars: 0.05 };
+  near(host.refit({ uid: 1 }).guns, (1 + 0.08 * 3 + 0.08 * 0.5) * 1.1);
+  near(host.refit({ uid: 1 }).cargo, 1.12);
+  near(host.refit({ uid: 1 }).oars, 1.05);
+  assert.deepEqual(host.refit({ uid: 99 }), { cargo: 1, speed: 1, hull: 1, guns: 1 }, 'a number the Fleet does not know reads her build\'s own - no stars of mine');
+  assert.equal(host.refit({}), null);
+  // a sky accepted: every boat of mine standing read again on it (the sea fight's state built on her new whole)
+  const here = s.rt.SummonBoat(1, titleOf(1), fleetBook(), [100, 34, 220], DIR, s.terrains[0]);
+  w.refitted = null;
+  host.restat();
+  assert.equal(w.refitted, here);
 });
 
 test('FLEET Rename: the ledger\'s law, said on her card; refused names say why', () => {
   const { host } = fleetWorld();
   titleDeed(mintDeed(2, 0, 1, 1));
-  assert.deepEqual(host.act(1, 'rename', 'Gull'), { ok: true, text: 'She is the Gull now.' });
+  assert.deepEqual(host.act(1, 'rename', 'Gull'), { ok: true, text: 'Ship renamed to Gull.' });
   assert.equal(host.model().ships[0].label, 'Gull');
   assert.equal(host.act(1, 'rename', 'Admin').ok, false);
-  assert.deepEqual(host.act(1, 'rename', ''), { ok: true, text: "She is called by her hull again: Small Ship 'I'." });
+  assert.deepEqual(host.act(1, 'rename', ''), { ok: true, text: "Name cleared. The ship is shown as Small Ship 'I'." });
   assert.equal(host.nameOf({ uid: 1 }), '');
 });
 
@@ -604,9 +658,9 @@ test('FLEET the page: a card a ship - her name, hull, worth, the bank\'s claim, 
   assert.equal(doors.length, 1, 'the yard\'s door handed to the menu');
   buttons(d, 'Refit')[0].onclick();
   d = draw();
-  assert.match(d.textContent, /pay Alik'r's 5000 gold first/);
-  assert.match(d.textContent, /You hold 0 Timber, 0 Iron, 0 Pitch \(your pack and her hold\), and 100,000 gold\./);
-  assert.match(d.textContent, /Hull0 of 3Her hull and canvas: \+10% a refit\.Next: 600 gold, 3 Timber, 3 Pitch, 3 Iron\./);
+  assert.match(d.textContent, /Pay the 5000 gold owed to Alik'r first/);
+  assert.match(d.textContent, /You hold 0 Timber, 0 Iron, 0 Pitch \(your pack and the ship's hold\), and 100,000 gold\./);
+  assert.match(d.textContent, /Hull0 of 12Hull and sail strength: \+0% now, \+10% with the next refit\.Next: 600 gold, 3 Timber \(you have 0\), 3 Pitch \(you have 0\), 3 Iron \(you have 0\)\./);
   assert.equal((d.textContent.match(/Timber: Wood Bundles - a Wood-Axe gathers them - or planks and logs\./g) ?? []).length, 1, 'each short material\'s hint once');
   assert.equal(buttons(d, 'Refit').every((b) => b.attrs['aria-disabled'] === 'true'), true, 'every refit refused while the loan stands');
   buttons(d, 'Summon')[0].onclick();
@@ -618,9 +672,9 @@ test('FLEET the page: a card a ship - her name, hull, worth, the bank\'s claim, 
   const f = byTag(d, 'input')[0];
   assert.equal(f.maxLength, 24);
   f.value = 'Tern'; f.oninput();
-  buttons(d, 'Name her')[0].onclick();
+  buttons(d, 'Save name')[0].onclick();
   d = draw();
-  assert.match(d.textContent, /She is the Tern now\./);
+  assert.match(d.textContent, /Ship renamed to Tern\./);
   assert.match(d.textContent, /TernAfloat/);
   setHoldingsProvider(null);
   assert.equal(fleetPageShown(), false);
@@ -649,6 +703,6 @@ test('FLEET a deed bought goes to the book at the counter, never the pack - stam
   assert.ok(world.indexOf('let fleetHost = null;') < world.indexOf('const csaRuntime = csaOn() ? createComeSailAwayRuntime({'), 'declared before the boats read their refits through it');
   // the prize's words
   const host = read('src/scenes/naval/navalHost.js');
-  assert.match(host, /her title is in your Fleet ledger \(Holdings\)/);
+  assert.match(host, /The title is in your Fleet ledger \(Holdings\)/);
   void HULL_PRICES;
 });

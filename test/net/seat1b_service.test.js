@@ -7,6 +7,7 @@ import { SEAT_ROWS_KEPT_S } from '../../server-account/src/townSeats.js';   // D
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 import { standService, T0 } from '../accountDb.mjs';
+import { realmJoinAt } from '../realmSeat.mjs';   // INT16: an account's other realm character taken up before it claims
 import { mintWatchReceipt } from '../../src/net/watchReceipt.js';
 import { mintReceipt } from '../../src/net/gate/gateReceipt.js';
 import { gameDayAt, gateTimes } from '../../src/net/gate/gateLaw.js';
@@ -59,9 +60,9 @@ test('SEAT1b THE PLEDGE: an Officer\'s or the guildmaster\'s, a confirmed seat, 
   let now = T0;
   t.mock.method(Date, 'now', () => now * 1000);
   const { svc, confirm, guild, member, pledge } = await stood();
-  const gm = await svc.registered('Gamal', { renown: 12 });
-  const off = await svc.registered('Ofelia');
-  const mem = await svc.registered('Menno');
+  const gm = await svc.seated('Gamal', { renown: 12 });
+  const off = await svc.seated('Ofelia');
+  const mem = await svc.seated('Menno');
   const gid = await guild(gm, 'Silver Hand', 'SH');
   member(off, gid, { rank: 1 });
   member(mem, gid, { rank: 2 });
@@ -101,14 +102,14 @@ test('SEAT1b THE WATCH: relay-signed ticks in a confirmed seat\'s own pixel coun
   t.mock.method(Date, 'now', () => now * 1000);
   const { svc, raw, confirm, guild, member, pledge, standings, tick, watch } = await stood();
   confirm(ANTICLERE); confirm(WAYREST);
-  const gm = await svc.registered('Gamal', { renown: 12 });
+  const gm = await svc.seated('Gamal', { renown: 12 });
   const gid = await guild(gm, 'Silver Hand', 'SH');
   const r1 = await tick(gm);
   assert.deepEqual((await watch(gm, [r1])).body, { ok: true, counted: 0, why: { 'no-pledge': 1 } }, 'no pledge: nothing banked');
   await pledge(gm, ANTICLERE.key);
   assert.deepEqual((await watch(gm, [r1])).body, { ok: true, counted: 1 });
   assert.deepEqual((await watch(gm, [r1])).body, { ok: true, counted: 0, why: { claimed: 1 } }, 'a receipt counts once');
-  const other = await svc.registered('Oswin');
+  const other = await svc.seated('Oswin');
   const unsigned = await tick(gm, ANTICLERE, { key: null });
   const theirs = await tick(other, ANTICLERE);
   const wayrest = await tick(gm, WAYREST);
@@ -132,7 +133,7 @@ test('SEAT1b THE WATCH: relay-signed ticks in a confirmed seat\'s own pixel coun
   assert.equal((await watch(gm, [await tick(gm, ANTICLERE, { at: tomorrow })])).body.counted, 1);
   assert.equal((await standings(gm)).standings[0].influence, WATCH_DAY_CAP + 1);
   // a character a week less a day in its guild: nothing, answered by name
-  const young = await svc.registered('Yara');
+  const young = await svc.seated('Yara');
   member(young, gid, { joined: now - SEAT_MEMBER_WAIT_S + DAY });
   assert.deepEqual((await watch(young, [await tick(young, ANTICLERE, { at: now })])).body.why, { 'new-member': 1 });
   // a receipt stood an hour before the Turning, still alive, claimed an hour after it: its week is gone
@@ -147,23 +148,29 @@ test('SEAT1b PER-ACCOUNT WAR: the first guild an account\'s character contribute
   t.mock.method(Date, 'now', () => T0 * 1000);
   const { svc, raw, confirm, guild, member, pledge, standings, tick, watch } = await stood();
   confirm(ANTICLERE);
-  const a = await svc.registered('Adala', { renown: 12 });
-  const b = await svc.registered('Bodil', { renown: 12 });
+  const a = await svc.seated('Adala', { renown: 12 });
+  const b = await svc.seated('Bodil', { renown: 12 });
+  // PIN MOVED (INT16, Integrity-Arc section 7): Renown and the Watch are asked of the account's SEATED realm character
+  // (progress.js progressRefusal) - so Bodil's second character is a realm character of its own (the one it was seated
+  // as; the founding below seats the Ebon Oath's founder), taken up (a join) before it claims, where an offline
+  // 'bodil-alt' is refused 'progress-seat' before the seats' law reads it
+  const bAlt = b.character;
   const ga = await guild(a, 'Silver Hand', 'SH');
   const gb = await guild(b, 'Ebon Oath', 'EO');
   await pledge(a, ANTICLERE.key);
   await pledge(b, ANTICLERE.key);
   // Bodil's account has a second character, a seasoned member of the Silver Hand
-  member(b, ga, { character: 'bodil-alt' });
+  member(b, ga, { character: bAlt });
   // it contributes first through its Ebon Oath character: bound to the Oath
   assert.equal((await watch(b, [await tick(b)])).body.counted, 1);
   assert.equal(raw.prepare('SELECT guild_id FROM town_seat_binds WHERE account = ?').get(b.id).guild_id, gb);
+  await realmJoinAt(svc.env, b.secret, bAlt);   // the account takes up its Silver Hand character - its seat now
   // its Silver Hand character's Renown counts nothing for the Hand
-  const rep = await svc.call('/v1/renown/xp', { character: 'bodil-alt', xp: 200, rid: 'b0d11a0000000001', region: 21 }, b.secret);
+  const rep = await svc.call('/v1/renown/xp', { character: bAlt, xp: 200, rid: 'b0d11a0000000001', region: 21 }, b.secret);
   assert.equal(rep.status, 200, 'the report stands');
   assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM town_seat_renown WHERE account = ?').get(b.id).n, 0, 'no Renown for another guild');
   // its Watch ticks through the Silver Hand character count for the Oath - the account's war, through a seasoned member of it
-  assert.equal((await watch(b, [await tick(b)], 'bodil-alt')).body.counted, 1);
+  assert.equal((await watch(b, [await tick(b)], bAlt)).body.counted, 1);
   const s = (await standings(a)).standings;
   assert.deepEqual(s.map((x) => [x.guild.tag, x.influence]), [['EO', 2], ['SH', 0]]);
   void gb;
@@ -174,11 +181,11 @@ test('SEAT1b GATE KILLS: a claim names its region; a kill counts 300 for the war
   t.mock.method(Date, 'now', () => now * 1000);
   const { svc, confirm, guild, pledge, standings } = await stood();
   confirm(ANTICLERE);
-  const gm = await svc.registered('Gamal', { renown: 12 });
+  const gm = await svc.seated('Gamal', { renown: 12 });
   await guild(gm, 'Silver Hand', 'SH');
   await pledge(gm, ANTICLERE.key);
   const others = [];
-  for (const h of ['Adala', 'Bodil', 'Cyril', 'Dinah', 'Edric']) others.push(await svc.registered(h));
+  for (const h of ['Adala', 'Bodil', 'Cyril', 'Dinah', 'Edric']) others.push(await svc.seated(h));
   const today = gameDayAt(T0 * 1000);
   const kill = async (who, day, region) => svc.call('/v1/gate/claim', {
     receipt: await mintReceipt({ d: day, b: 'ruhn', s: who.id, c: 4242, x: 'dealt' }, svc.gateKey, { subtle, nowS: now }), region, character: who.character,
@@ -196,7 +203,7 @@ test('SEAT1b GATE KILLS: a claim names its region; a kill counts 300 for the war
   // PIN MOVED (AUDIT-SEATS): another account's claim stands in the tie where the guildmaster's stood - the week's cap is now
   // three gate claims an account, every seat together, asked in the write (S7, 4.2: "(three receipts)"), so the
   // guildmaster's unagreed claim here would spend one of its three and the four agreed below would not reach 900
-  await kill(await svc.registered('Fenna'), days[1], 21);
+  await kill(await svc.seated('Fenna'), days[1], 21);
   await kill(others[0], days[1], 21); await kill(others[1], days[1], 21);
   for (const o of others.slice(2, 5)) await kill(o, days[1], 30);
   assert.equal((await standings(gm)).standings[0].influence, 300, 'a level top agrees on nothing');
@@ -221,7 +228,7 @@ test('SEAT1b RENOWN AND HOMES: a report\'s region keeps what it CREDITED for the
   t.mock.method(Date, 'now', () => now * 1000);
   const { svc, raw, confirm, guild, member, pledge, standings, tick, watch } = await stood();
   confirm(ANTICLERE);
-  const gm = await svc.registered('Gamal', { renown: 12 });
+  const gm = await svc.seated('Gamal', { renown: 12 });
   const gid = await guild(gm, 'Silver Hand', 'SH');
   await pledge(gm, ANTICLERE.key);
   // the hour nearly spent: the report asks 390 and is credited 100
@@ -239,7 +246,7 @@ test('SEAT1b RENOWN AND HOMES: a report\'s region keeps what it CREDITED for the
   const weekStartS = seatWeekStartMs(seatWeekOf(T0 * 1000)) / 1000;
   const owners = [];
   for (let i = 0; i < 6; i++) {
-    const o = await svc.registered(`Owner${i}x`);
+    const o = await svc.seated(`Owner${i}x`);
     member(o, gid);
     raw.prepare(`INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at)
       VALUES (?, ?, ?, ?, ?, 21, 'private', 1000, ?)`).run(ANTICLERE.key, 100 + i, o.id, o.character, o.handle, weekStartS - (i === 0 ? 30 * DAY : 0) + i * 3600);
@@ -261,8 +268,8 @@ test('SEAT1b TRIBUTE: the guildmaster burns Drakes from the treasury on a pledge
   t.mock.method(Date, 'now', () => T0 * 1000);
   const { svc, raw, confirm, guild, member, treasury, pledge, standings, tick, watch } = await stood();
   confirm(ANTICLERE);
-  const gm = await svc.registered('Gamal', { renown: 12 });
-  const off = await svc.registered('Ofelia');
+  const gm = await svc.seated('Gamal', { renown: 12 });
+  const off = await svc.seated('Ofelia');
   const gid = await guild(gm, 'Silver Hand', 'SH');
   member(off, gid, { rank: 1 });
   await pledge(gm, ANTICLERE.key);
@@ -297,7 +304,7 @@ test('SEAT1b THE ACCOUNT\'S CAP AND THE STANDINGS\' SHAPE: 2,000 an account a se
   t.mock.method(Date, 'now', () => T0 * 1000);
   const { svc, raw, confirm, guild, pledge, standings } = await stood();
   confirm(ANTICLERE);
-  const gm = await svc.registered('Gamal', { renown: 12 });
+  const gm = await svc.seated('Gamal', { renown: 12 });
   const gid = await guild(gm, 'Silver Hand', 'SH');
   await pledge(gm, ANTICLERE.key);
   const week = seatWeekOf(T0 * 1000);

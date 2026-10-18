@@ -33,6 +33,14 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   release reads them there. Never commit a patch-notes file:
   `test/tooling/rel4_release.test.js` fails the suite on one. Editing a merged pull
   request's description rewrites its release's notes (`release-notes.yml`).
+- **Discord is code** (DISCORD-CODE, Mac, 2026-10-17, `bible/11-Multiplayer/Chat-Safety-Arc.md`
+  section 9): the bot's commands are declared in `server-account/src/discordCommands.js`, its cards
+  and answers are `server-account/src/discord.js`, its channel and moderators are
+  `server-account/wrangler.toml`. The account deploy writes them to Discord (`account-deploy.yml`,
+  "Point Discord at the service": the Interactions Endpoint URL, the whole command list, the bot's
+  permissions in the channel checked). Change Discord by changing those and merging - never ask for
+  the bot's token or for Developer Portal clicks the deploy can do. A person still invites the bot,
+  grants its roles, and rotates its token (the `DISCORD_BOT_TOKEN` secret).
 - **The hosts do not grow** (HOST-SPLIT, `bible/01-Overview/Host-Split.md`):
   new behaviour goes into a module the host wires (`src/scenes/fishHost.js` is
   the shape), never into `bootWorld`, `createWorldModes`, `buildDungeonContext`,

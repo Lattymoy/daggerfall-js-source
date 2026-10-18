@@ -25,14 +25,15 @@ import { readFileSync } from 'node:fs';
 import { parseNif } from '../../src/formats/morrowind/mwNifFile.js';
 import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, injectSkeletonNodes, GRAPH_ROOT } from '../../src/formats/morrowind/mwSkin.js';
 import { mat33Mul } from '../../src/formats/morrowind/mwNifMesh.js';
-import { applyMirrorRig, mirrorPlan, counterpartName, strikingSide, limbSkeleton, offWeaponBoneAddon, WEAPON_BONE_LEFT_SOURCE } from '../../src/combat/twoHands/mirrorRig.js';
+import { applyMirrorRig, mirrorPlan, counterpartName, strikingSide, limbSkeleton, offWeaponBoneAddon, WEAPON_BONE_LEFT_SOURCE, mirrorBindSources } from '../../src/combat/twoHands/mirrorRig.js';
 import { rotAxisAngle } from '../../src/combat/climbRig.js';
 import { createFpArm, fpSkeletonPath, tpSkeletonPath, strideOppositeTime, FP_CLIP_PATH, resolveOffWeaponParts, resolveWeaponParts, OFF_WEAPON_BONE, fpWeaponKey, GUARD_LENS_DROP, bladePictureHeight } from '../../src/combat/fpArm.js';
 import { GUARD, RUN_PUMP, RUN_STEP_M, runPhaseOfBob, runPhaseFollow, runPhaseStep } from '../../src/combat/twoHands/handsLaw.js';
 import { HeadBobber } from '../../src/player/headBobber.js';
 import { MW_WEAPON_TYPE, MW_UNITS_PER_METER, assembleFirstPersonArm, poseAssembly } from '../../src/formats/morrowind/mwFirstPerson.js';
 import { bodyRec } from '../fixtures/mw/bodyRec.mjs';
-import { SHADOW_INVERSE_BINDS } from '../fixtures/mw/retailRig.mjs';
+import { SHADOW_INVERSE_BINDS, retailSkeleton } from '../fixtures/mw/retailRig.mjs';
+import { composeWornArmor } from '../../src/formats/morrowind/mwItemMap.js';   // MIRROR-BIND: the port's own gauntlets, a left and a right piece
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const f = (n) => new Uint8Array(readFileSync(new URL(`../fixtures/mw/${n}`, import.meta.url)));
@@ -1199,3 +1200,98 @@ test('TWO-HANDS FIELD the arm, THE FIRST-PERSON PAIR IS MIRRORED ACROSS THE EYE 
   const tl = t.mats.get(plan.hands.L).t, tr = t.mats.get(plan.hands.R).t;
   assert.ok(Math.abs(tl[0] + tr[0]) < 0.02, `third person: the body's own mirror (${tl} / ${tr})`);
 }));
+
+// ---- TWO-HANDS MIRROR-BIND (2026-10-17, Mac: "adjust the positioning of the morrowind left hand duel wield model on first
+// person, so its properly mirrored. Third person looks good") --------------------------------------------------------
+
+/** The MW-STEEL4 stand-in for a first-person rig (test/formats/morrowind/mwsteel4.test.js): retail's bones, a camera, and
+ *  the arms' rests turned off each other's mirror as a clip's first frame turns them - `shadow` its Tri Shadow or none. */
+const fpStandIn = (shadow) => {
+  const turned = (axis, d) => Array.from(rotAxisAngle(axis, (d * Math.PI) / 180));
+  return retailSkeleton({ extra: ['Camera'], shadow, rest: { 'Bip01 R UpperArm': turned([0, 1, 0], 70), 'Bip01 R Forearm': turned([0, 0, 1], 85), 'Bip01 L UpperArm': turned([1, 0, 0], -50) } });
+};
+/** A pair on `skeletonBytes`: the port's steel gauntlets (a left and a right piece, each skinned to its own hand), a
+ *  blade in each hand (the left on the made Weapon Bone Left) and a rigid piece on each hand's attach node - the right
+ *  arm bent, the left mirrored across the picture as fpArm's mirrorFor asks it. Answers the assembly and the mirror
+ *  through the eye. */
+async function pairAcrossThePicture(skeletonBytes) {
+  const worn = composeWornArmor({ pieces: [{ templateIndex: 103, material: 0x201 }], armors: [], bodyPool: [] });
+  const onDisk = (p) => new Uint8Array(readFileSync(new URL(`../../${p}`, import.meta.url)));
+  const blade = onDisk('src/assets/mw/meshes/thunderlock.nif');
+  const parts = [...worn.adds.map((a) => ({ slot: a.slot, partName: a.partName, bones: a.bones, bytes: onDisk(`src/assets/mw/meshes/${a.model}`) })),
+    { slot: 'weapon', bones: ['Weapon Bone'], bytes: blade }, { slot: 'offweapon', bones: [OFF_WEAPON_BONE], bytes: blade },
+    { slot: 'attach R', bones: ['Right Hand'], bytes: blade }, { slot: 'attach L', bones: ['Left Hand'], bytes: blade }];   // a rigid part on each hand's attach node (rule 13 draws the left one negated)
+  const asm = await assembleFirstPersonArm({ skeletonBytes, parts, offWeaponBone: true });
+  assert.ok(asm.ok, asm.error);
+  assert.deepEqual(asm.notes, []);
+  const sk = asm.skeleton;
+  const pose = bentRight(sk, mirrorPlan(sk, GRAPH_ROOT, skeletonSpaceMatrices));
+  const cam = sk.byName.get('camera');
+  poseAssembly(asm, { tracks: new Map([...pose.keys()].map((k) => [k, k])), sampleTrack: (k) => pose.get(k), mirror: { limbs: { L: { pose: null, side: 'R', mirror: true } }, plane: { ref: cam, dx: 0 } } });
+  const eyeX = asm.mats.get(cam).t[0];
+  return { asm, P: (v) => [2 * eyeX - v[0], v[1], v[2]] };
+}
+/** How far piece `left`'s vertices stand from the mirror of piece `right`'s - vertex for vertex (`same`: one mesh), else
+ *  each to its nearest - at worst. */
+function offTheMirror(asm, P, right, left, same) {
+  const A = asm.pieces.find((p) => p.slot === right || p.slot.startsWith(right)).positions, B = asm.pieces.find((p) => p.slot === left || p.slot.startsWith(left)).positions;
+  let worst = 0;
+  for (let j = 0; j < B.length; j += 3) {
+    let best = Infinity;
+    for (let i = same ? j : 0; i < (same ? j + 3 : A.length); i += 3) best = Math.min(best, dist(P([A[i], A[i + 1], A[i + 2]]), [B[j], B[j + 1], B[j + 2]]));
+    worst = Math.max(worst, best);
+  }
+  return worst;
+}
+
+test('TWO-HANDS MIRROR-BIND the first-person pair IS the right in the glass on a rig whose rest is not its own mirror: the left hand\'s joint at its mirror, the left blade the right\'s mirror vertex for vertex, each left gauntlet vertex on a mirrored right one - read off the Tri Shadow\'s bind, and with no skin in the skeleton file off the two gauntlets\' own; the old law (the REST\'s K) stood the hand 38 units off and the blade 65 (mutants: TWO-HANDS-MIRROR-BIND-rest-k, TWO-HANDS-MIRROR-BIND-one-skin-only, TWO-HANDS-MIRROR-BIND-left-node-rest, TWO-HANDS-MIRROR-BIND-pieces-not-read, TWO-HANDS-MIRROR-BIND-file-not-read)', async () => {
+  for (const shadow of [true, false]) {
+    seed = 23;
+    const { asm, P } = await pairAcrossThePicture(fpStandIn(shadow));
+    const sk = asm.skeleton;
+    const at = (n) => asm.mats.get(sk.byName.get(n)).t;
+    assert.ok(dist(P(at('bip01 r hand')), at('bip01 l hand')) < 1e-3, `${shadow ? 'the Tri Shadow' : 'the gauntlets'}: the left hand's joint at the right's mirror (${dist(P(at('bip01 r hand')), at('bip01 l hand')).toFixed(3)} off)`);
+    assert.ok(dist(P(at('bip01 r forearm')), at('bip01 l forearm')) < 1e-3, 'and its elbow');
+    const blade = offTheMirror(asm, P, 'weapon', 'offweapon', true);
+    assert.ok(blade < 1e-3, `the left blade the right's mirror, vertex for vertex (${blade.toFixed(4)} off at worst)`);
+    const glove = offTheMirror(asm, P, 'right hand', 'left hand', false);
+    assert.ok(glove < 1e-3, `each left gauntlet vertex on a mirrored right one (${glove.toFixed(4)} off at worst)`);
+    const attached = offTheMirror(asm, P, 'attach R', 'attach L', true);
+    assert.ok(attached < 1e-3, `a rigid part on the Left Hand node the right one's mirror (${attached.toFixed(4)} off at worst)`);
+  }
+});
+
+test('TWO-HANDS MIRROR-BIND the bind is read only where it is a mirror, and the rest\'s law stands where nothing is bound: the sources are the skeleton file\'s skins and the pieces\' (a turned skin not read), and an assembly the player\'s rigs build carries its file\'s (mutants: TWO-HANDS-MIRROR-BIND-any-binds-a-mirror, TWO-HANDS-MIRROR-BIND-no-bind-a-mirror, TWO-HANDS-MIRROR-BIND-turned-skin-read)', async () => {
+  const sk = retailSkeleton();
+  const fromFile = mirrorBindSources({ nif: parseNif(sk) });
+  assert.equal(fromFile.length, 1, 'the Tri Shadow: one skin');
+  const skel = buildSkeleton(parseNif(sk));
+  const bind = fromFile[0].get(skel.byName.get('bip01 r hand')), oracle = inv({ a: SHADOW_INVERSE_BINDS.get('Bip01 R Hand').a, t: SHADOW_INVERSE_BINDS.get('Bip01 R Hand').t });
+  assert.ok(diff(bind, oracle) < 1e-4, 'its hand\'s bind, the inverse bind undone');
+  assert.deepEqual(mirrorBindSources({ nif: parseNif(retailSkeleton({ shadow: false })) }), [], 'no skin, no source');
+  const piece = (rotation) => ({ kind: 'skinned', batch: { skin: { transform: { rotation }, shapeTransform: { rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1] }, bones: [{ ref: 3, invBind: { a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [1, 2, 3] } }] } } });
+  assert.equal(mirrorBindSources({ pieces: [piece([1, 0, 0, 0, 1, 0, 0, 0, 1])] }).length, 1, 'a piece\'s skin');
+  assert.equal(mirrorBindSources({ pieces: [piece([0, -1, 0, 1, 0, 0, 0, 0, 1])] }).length, 0, 'a turned one binds in another frame: not read');
+  assert.equal(mirrorBindSources({ pieces: [{ kind: 'rigid' }] }).length, 0, 'a rigid piece binds nothing');
+  const off = await assembleFirstPersonArm({ skeletonBytes: sk, parts: [], offWeaponBone: true });
+  const plain = await assembleFirstPersonArm({ skeletonBytes: sk, parts: [] });
+  assert.equal(off.skinBinds?.length, 1, 'the player\'s rigs keep their file\'s skins');
+  assert.equal(plain.skinBinds, null, 'a body that holds no pair reads none');
+  // the fixture arm (its rest its own mirror, nothing skinned on it here): the rest's law, exactly as it stood
+  const fx = buildSkeleton(parseNif(f('armfp.nif')));
+  const plan = mirrorPlan(fx, GRAPH_ROOT, skeletonSpaceMatrices);
+  const cam = fx.byName.get('camera');
+  const pose = bentRight(fx, plan);
+  const run = (binds) => { const p = new Map(pose); applyMirrorRig(fx, p, GRAPH_ROOT, skeletonSpaceMatrices, { limbs: { L: { pose: null, side: 'R', mirror: true } }, plane: { ref: cam, dx: 0, binds } }); return M(fx, p); };
+  const a = run(undefined), b = run([]);
+  for (const ref of plan.arms.L) assert.ok(diff(a.get(ref), b.get(ref)) < 1e-9, 'no bind: the rest\'s K');
+  // a pair of binds read only where it IS a mirror: the hands bound off each other's mirror (one a span ahead) are not
+  // read; bound on it, turned, they are
+  const hand = (s) => fx.byName.get(s === 'L' ? 'left hand' : 'right hand');
+  const I3 = Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  const binds = (tL) => [new Map([[hand('R'), { a: I3, t: [-0.3, 0, 1] }], [hand('L'), { a: rotAxisAngle([0, 1, 0], 0.4), t: tL }]])];
+  const askew = run(binds([0.3, 0.6, 1])), mirrored = run(binds([0.3, 0, 1]));
+  assert.ok(diff(askew.get(hand('L')), a.get(hand('L'))) < 1e-9, 'bound off the mirror: the rest\'s K');
+  assert.ok(diffRot(mirrored.get(hand('L')), a.get(hand('L'))) > 0.1, 'bound on it: the bind\'s turn');
+  assert.ok(dist(mirrored.get(hand('L')).t, a.get(hand('L')).t) < 1e-6, 'and the joint where the mirror stands it');
+});

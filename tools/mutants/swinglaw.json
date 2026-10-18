@@ -135,8 +135,8 @@
   {
     "name": "SWING-LAW-the-reader-reads-the-right-hand-always",
     "file": "src/combat/swingLaw.js",
-    "old": "  const item = slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
-    "new": "  const item = slots?.[EQUIP_SLOTS.RightHand] ?? null;",
+    "old": "const handItem = (entity, ctx) => entity.equip?.slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
+    "new": "const handItem = (entity, ctx) => entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null;",
     "tests": [
       "test/systems/swinglaw.test.js"
     ]
@@ -171,8 +171,8 @@
   {
     "name": "SWING-LAW-RR-blend-blind-to-hands",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both') });",
-    "new": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, false) });",
+    "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both', shortBlade) });",
+    "new": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, false, shortBlade) });",
     "tests": [
       "test/systems/rr1_realism.test.js",
       "test/systems/swinglaw.test.js"
@@ -181,7 +181,7 @@
   {
     "name": "SWING-LAW-RR-keeps-its-hyperbola",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both') });",
+    "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both', shortBlade) });",
     "new": "  return (3 * (115 - blend)) / 980;",
     "tests": [
       "test/systems/rr1_realism.test.js",
@@ -191,7 +191,7 @@
   {
     "name": "SWING-LAW-RRI-keeps-its-hyperbola",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded) });",
+    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) });",
     "new": "  return (3 * (115 - adjustedSpeed)) / 980;",
     "tests": [
       "test/systems/rri2_realism.test.js",
@@ -202,7 +202,7 @@
   {
     "name": "SWING-LAW-RRI-blind-to-the-kind",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded) });",
+    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) });",
     "new": "  return swingFrameSeconds(adjustedSpeed, { handling: 1 });",
     "tests": [
       "test/systems/rri2_realism.test.js"

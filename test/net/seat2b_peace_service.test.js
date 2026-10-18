@@ -41,14 +41,14 @@ async function stood(t) {
   for (const seat of [ANTICLERE, ASHFIELD, ALCAIRE, YKALON, WAYREST]) for (const w of witnesses) raw.prepare("INSERT INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)").run(String(seat.key), w.id, seatReportText(seat), seat.region, T0 - DAY);
   raw.prepare('INSERT INTO town_seat_weeks (week, settled_at) VALUES (?, ?)').run(W - 1, T0);
   const guild = async (handle, name, tag) => {
-    const gm = await svc.registered(handle, { renown: 12 });
+    const gm = await svc.seated(handle, { renown: 12 });
     assert.equal((await svc.found(gm, { name, tag })).status, 200);
     const gid = raw.prepare('SELECT guild_id FROM guild_members WHERE player = ? AND char_id = ?').get(gm.id, gm.character).guild_id;
     raw.prepare('UPDATE guild_members SET joined_at = ? WHERE guild_id = ?').run(T0 - SEAT_MEMBER_WAIT_S - DAY, gid);
     return { gm, gid };
   };
   const member = async (g, handle, rank) => {
-    const m = await svc.registered(handle);
+    const m = await svc.seated(handle);
     raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, ?, ?, ?)').run(m.id, m.character, g.gid, rank, handle, T0 - 30 * DAY);
     return m;
   };
@@ -197,7 +197,7 @@ test('SEAT2b part two THE CRAFTING HALLS: a holder\'s member crafting in its tow
   s.work(ANTICLERE, 'forge', 2);
   s.work(ANTICLERE, 'workshop', 1);
   const smith = await s.member(sh, 'Smithson', 2);
-  const stranger = await s.svc.registered('Stranger');
+  const stranger = await s.svc.seated('Stranger');
   const craft = async (who, recipe, seat, b = 0x00) => {
     for (const inp of recipeById(recipe).inputs) s.give(who, inp.key, 'own', inp.n);
     const res = await steered(b, () => s.svc.call('/v1/prof/craft', { character: who.character, recipe, clean: false, name: 'Hollin', rid: rid(), ...(seat == null ? {} : { seat }) }, who.secret));
@@ -218,7 +218,7 @@ test('SEAT2b part two THE CRAFTING HALLS: a holder\'s member crafting in its tow
 
 test('SEAT2b part two THE RAM KIT MADE: at Carpentry 60, its 40 Oak Planks, 20 Iron Ingots and 4 Bear Hides spent - the kit into the Stores (own, or bought where a bought unit went in), never a piece; refused where its Stores are full, nothing spent; the origin read in the kit\'s own write (AUDIT PROF-541 R2-S5) (mutants: the Stores; the origin; the room)', async (t) => {
   const s = await stood(t);
-  const mac = await s.svc.registered('Mac');
+  const mac = await s.svc.seated('Mac');
   s.setXp(mac, 'building', xpForRank(60));  // PIN MOVED (CRAFT3): Carpentry's and Masonry's are Building's track
   const inputs = (plankOrigin = 'own') => { s.give(mac, 'plank:oak', plankOrigin, 40); s.give(mac, 'ingot:iron', 'own', 20); s.give(mac, 'hide:bear', 'own', 4); };
   const craft = async () => (await s.svc.call('/v1/prof/craft', { character: mac.character, recipe: 'ramkit:oak', clean: false, name: null, rid: rid() }, mac.secret));

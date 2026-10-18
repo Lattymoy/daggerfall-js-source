@@ -112,7 +112,7 @@ test('WILD3: giants four times their size in the open country; strangers red, na
   assert.equal(wildGiantSize({}), 1);
   const ef = W('src/scenes/exteriorFoes.js');
   assert.match(ef, /if \(wild && mobileType === WILD_GIANT && zoneGiant != null\) entity\.wildGiant = true;/, 'the street\'s pool alone marks them - ZONE-GIANTS: the zone\'s own eight, never a roll\'s');
-  assert.match(ef, /if \(Number\.isInteger\(r\.gg\) && f\.entity\.zoneGiant !== r\.gg\) \{\n\s+f\.entity\.wildGiant = true; f\.entity\.zoneGiant = r\.gg;/, 'GREATER-GIANT: a puppet by its owner\'s word - the ten it calls stay ordinary (GIANT-BLOWS: and its blows four times over, test/giantfix1)');
+  assert.match(ef, /if \(Number\.isInteger\(r\.gg\) && f\.entity\.zoneGiant !== r\.gg && f\.mobileType === WILD_GIANT && !markedOf\(f\.puppet, \(x\) => x\.entity\?\.zoneGiant === r\.gg\)\) \{[^\n]*\n\s+f\.entity\.wildGiant = true; f\.entity\.zoneGiant = r\.gg;/, 'GREATER-GIANT: a puppet by its owner\'s word - the ten it calls stay ordinary (GIANT-BLOWS: and its blows four times over, test/giantfix1)');   // PIN MOVED (FOE-FORGE: a giant's word alone, one of each index to an owner - test/scenes/foeforge.test.js)
   assert.doesNotMatch(W('src/scenes/dungeonContext.js'), /wildGiant/, 'never a dungeon\'s');
   assert.deepEqual([WILD_STRANGER_M, WILD_STRANGER_SLOW_M], [600, 200], '"Like 600m away" - "like 200m it slows you down"');
   assert.match(W('src/scenes/world.js'), /for \(const g of _wildStrangers\) if \(!\(_tvAttack\?\.kind === 'peer' && _tvAttack\.id === g\.id\)\) out\.push\(\{ dx: g\.feet\[0\] - fx\[0\], dz: g\.feet\[2\] - fx\[2\], reach: WILD_STRANGER_SLOW_M \}\);/, 'a journey slows for them (PVPNEAR: never for the one I attack)');

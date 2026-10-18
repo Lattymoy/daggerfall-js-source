@@ -220,7 +220,7 @@ function buildPlan(skeleton, root, skelMats) {
     hands: { L: find(HAND.L), R: find(HAND.R) },
     uppers: { L: upL, R: upR },
     targets: new Map(),   // the frame's scratch: the composition's locals before they are written
-    pictureK: new Map(),   // each bone's K(b), full, read the first time an arm is mirrored across the picture (pictureMirrorArm)
+    pictureK: new WeakMap(),   // each bone's K(b) across the picture, per bind sources (pictureMirrorArm) - read the first time an arm is mirrored
   };
 }
 
@@ -401,6 +401,7 @@ function pictureMirrorArm(skeleton, plan, world, plane, side, from, srcL, clipL,
   if (!skeleton.nodes.has(plane.ref)) return false;
   const eye = world.get(plane.ref).t;
   const P = { a: S3, t: [2 * (eye[0] + (plane.dx || 0)), 0, 0] };
+  const ks = pictureKs(plan, plane.binds);
   const src = new Map(), drawn = new Map();
   const parentWorld = (ref, own) => { const p = skeleton.nodes.get(ref).parent; return own.get(p) ?? world.get(p); };
   for (const ref of plan.arms[from]) src.set(ref, mul(parentWorld(ref, src), affineOf(srcL(ref))));
@@ -409,13 +410,100 @@ function pictureMirrorArm(skeleton, plan, world, plane, side, from, srcL, clipL,
     const Wm = m != null ? src.get(m) : null;
     const up = parentWorld(ref, drawn);
     if (!Wm || !plan.restOf.has(ref)) { drawn.set(ref, mul(up, affineOf(clipL(ref)))); targets.delete(ref); continue; }
-    let K = plan.pictureK.get(ref);
-    if (!K) { K = mul(mul(plan.restInv.get(m), plan.S), plan.restOf.get(ref)); plan.pictureK.set(ref, K); }
-    const W = mul(mul(P, Wm), K);
+    const W = mul(mul(P, Wm), pictureK(skeleton, plan, plane.binds, ks, ref, m));
     drawn.set(ref, W);
     targets.set(ref, entryOf(mul(inv(up), W)));
   }
   return true;
+}
+
+// ---- MIRROR-BIND: the picture's mirror read off the bind ---------------------------------------------------------
+//
+// TWO-HANDS MIRROR-BIND (2026-10-17, Mac: "adjust the positioning of the morrowind left hand duel wield model on first
+// person, so its properly mirrored. Third person looks good"). The picture law's K(b) was the REST's, Rest(m)^-1 . S .
+// Rest(b), translation and all - so a mirrored arm moved as its counterpart moved FROM ITS OWN REST, and stood where the
+// right arm stands in the glass only where the rest is its own mirror. Third person's rest nearly is (xbase_anim: hands
+// 1.09 units off each other's mirror); the first person's is a clip's first frame, posed for the weapon hand (retail's
+// xbase_anim.1st.nif - no session has had it - and the MW-STEEL4 stand-in, its arms turned 70, 85 and -50 degrees off
+// each other's mirror), and there the left hand stood 38 units off the right's mirror and its blade 65 (measured on the
+// stand-in). What a mirrored arm must be on the screen is the right arm's MESH in the glass: a vertex skinned to a left
+// bone, M'(b) . Bind(b)^-1 . v, must land where its mirror skinned to the right lands, P . M(m) . Bind(m)^-1 . S . v -
+//
+//     K(b) = Bind(m)^-1 . S . Bind(b)
+//
+// the bind's, which a skin bound symmetric (retail's Tri Shadow, a pair of gauntlets, the hands' mesh) makes a pure
+// turn of the bone's own axes: no translation, so every joint stands EXACTLY at the mirror of its counterpart's. A node
+// no skin binds whose name rule 13 mirrors (formats/morrowind/mwFirstPerson.js: a part on a node whose name holds "Left"
+// is drawn with its x negated - Weapon Bone Left, the attach family's Left Hand and Left Wrist) is X: P . M(m) . X
+// places the right part's mesh, drawn negated, exactly where the right one stands in the glass - the left blade in the
+// left fist as the right is in the right, whatever the made bone's F was read from. A bone with no bind on either side
+// and no such name keeps the rest's K as it stood: the fixture arm, whose rest IS its own mirror, is exactly the old law.
+
+/**
+ * MIRROR-BIND: each skin's binds - `{ a, t }` in the skin's own frame (an inverse bind undone), by skeleton ref - for the
+ * picture's mirror: the skeleton file's own skinned shapes (`nif`; retail's Tri Shadow - its records' refs are the
+ * skeleton's), then each skinned piece of an assembly (`pieces`, bound by name: their bones' refs are the skeleton's).
+ * A skin whose data or shape is turned binds in another frame (its x not across the body) and is not read - the
+ * hands' mirror's own rule (skinHandMirror). One Map a skin, file first.
+ */
+export function mirrorBindSources({ nif = null, pieces = null } = {}) {
+  const out = [];
+  const bindOf = (a, t) => inv({ a, t: [t[0], t[1], t[2]] });
+  for (const shape of nif?.records ?? []) {
+    const skin = Number.isInteger(shape?.skin) && shape.skin >= 0 ? nif.records[shape.skin] : null;
+    const data = skin && Number.isInteger(skin.data) ? nif.records[skin.data] : null;
+    if (!skin?.bones || !data?.bones || !unturned(data.transform) || !unturned(shape)) continue;
+    const m = new Map();
+    skin.bones.forEach((ref, i) => {
+      const t = data.bones[i]?.transform;
+      if (t && Number.isInteger(ref)) m.set(ref, bindOf(Float32Array.from(t.rotation, (v) => v * (t.scale ?? 1)), t.translation));
+    });
+    if (m.size) out.push(m);
+  }
+  for (const p of pieces ?? []) {
+    const skin = p?.kind === 'skinned' ? p.batch?.skin : null;
+    if (!skin?.bones || !unturned(skin.transform) || !unturned(skin.shapeTransform)) continue;
+    const m = new Map();
+    for (const b of skin.bones) if (b.ref != null && b.invBind) m.set(b.ref, bindOf(b.invBind.a, b.invBind.t));
+    if (m.size) out.push(m);
+  }
+  return out;
+}
+
+const NO_BINDS = Object.freeze([]);
+/** The picture's K for each bone, per bind sources (the rest's alone under none). */
+function pictureKs(plan, binds) {
+  const key = binds ?? NO_BINDS;
+  let ks = plan.pictureK.get(key);
+  if (!ks) { ks = new Map(); plan.pictureK.set(key, ks); }
+  return ks;
+}
+/** The 3x3 of an affine with its uniform scale divided out. */
+const turnOf = (m) => { const s = scaleOf(m.a); return Float32Array.from(m.a, (v) => v / s); };
+/** Two binds a mirrored pair: each joint's y and z the other's, to a hundredth of the span between them. */
+const mirroredBinds = (b, c) => {
+  const span = Math.max(1, Math.hypot(b.t[0] - c.t[0], b.t[1] - c.t[1], b.t[2] - c.t[2]));
+  return Math.abs(b.t[1] - c.t[1]) <= span * 0.01 && Math.abs(b.t[2] - c.t[2]) <= span * 0.01;
+};
+/**
+ * MIRROR-BIND: bone `ref`'s K across the picture, its counterpart `m`, memoised in `ks`: a pair bound mirrored
+ * (mirroredBinds) is the bind's turn - one skin binding both first (retail's Tri Shadow, the hands' mesh), else each
+ * side's first (a left and a right piece, bound in one frame); an unbound node rule 13 mirrors is X; else the rest's.
+ */
+function pictureK(skeleton, plan, binds, ks, ref, m) {
+  let K = ks.get(ref);
+  if (K) return K;
+  const srcs = binds ?? NO_BINDS;
+  let pair = srcs.map((s) => [s.get(ref), s.get(m)]).find(([b, c]) => b && c && mirroredBinds(b, c));
+  if (!pair) {
+    const b = srcs.find((s) => s.has(ref))?.get(ref), c = srcs.find((s) => s.has(m))?.get(m);
+    if (b && c && mirroredBinds(b, c)) pair = [b, c];
+  }
+  if (pair) K = { a: mat33Mul(transposed(turnOf(pair[1])), mat33Mul(S3, turnOf(pair[0]))), t: [0, 0, 0] };
+  else if (skeleton.nodes.get(ref).name.includes('Left') && !srcs.some((s) => s.has(ref))) K = { a: S3, t: [0, 0, 0] };   // rule 13's own test
+  else K = mul(mul(plan.restInv.get(m), plan.S), plan.restOf.get(ref));
+  ks.set(ref, K);
+  return K;
 }
 /** The graph-space transforms of the clip's pose, read only along the chains asked (the eye's, an arm's parent's) - the
  *  frame composes no whole skeleton (TWO-HANDS AUDIT, L3 10). As mwSkin.js skeletonSpaceMatrices reads them: the root,

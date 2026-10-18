@@ -402,7 +402,7 @@
   {
     "name": "EG15-arm-never-spent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "{ pct += disc.armed * elementShare(target, _s.armed); _s.armed = -1; }",
+    "old": "{ pct += disc.armed * elementShare(target, _s.armed); if (keep) _s.armed = -1; }",
     "new": "{ pct += disc.armed * elementShare(target, _s.armed); }",
     "why": "every blow after a cast armed",
     "tests": [

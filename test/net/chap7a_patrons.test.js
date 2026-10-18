@@ -79,7 +79,7 @@ async function stand(t, { zero = ZERO, marksOpen = 'on' } = {}) {
   confirmChapters(raw, [DAGGERFALL, ANTICLERE]);
   raw.prepare("INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?, 0, 60, 0, 'on', 0)").run(WEEK - 1);
   const guild = async (handle, name, tag, marks) => {
-    const who = await svc.registered(handle, { renown: GUILD_FOUND_RENOWN });
+    const who = await svc.seated(handle, { renown: GUILD_FOUND_RENOWN });
     const r = await svc.found(who, { name, tag });
     assert.equal(r.status, 200, JSON.stringify(r.body));
     const id = r.body.guild.id;
@@ -133,7 +133,7 @@ test('CHAP7a a bid: the guildmaster\'s, from the guild\'s treasury into escrow f
   assert.deepEqual([raced.status, raced.body.error, s.treasury(a)], [409, 'patron-low', 3100], 'the treasury untouched (the 100 deposited above)');
   s.raw.prepare('UPDATE npc_chapter_patron_bids SET amount = 2000 WHERE guild_id = ? AND faction = ?').run(a.id, FIGHTERS);
   // a member of the guild who is not its guildmaster
-  const m = await s.svc.registered('Bryn');
+  const m = await s.svc.seated('Bryn');
   const B = await seatRealm(s.svc.env, m.secret, 'Bryn');
   s.raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, 1, ?, ?)').run(m.id, B.id, a.id, 'Bryn', NOW);
   assert.deepEqual(await s.svc.call('/v1/chapters/patron', { character: B.id, faction: MAGES, region: ANTICLERE, marks: 1500, rid: rid() }, m.secret), { status: 403, body: { error: 'guild-rank' } });
@@ -232,17 +232,17 @@ test('CHAP7a the board: each chapter\'s patron this Season, to every reader; the
   const raw = s.env.DB._raw;
   const age = (who, days) => raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(noon - days * DAY, who.id);
   for (let i = 0; i < 3; i++) {
-    const w = await s.registered(`Wit${i}`); age(w, 8);
+    const w = await s.seated(`Wit${i}`); age(w, 8);
     assert.equal((await s.call('/v1/chapters/witness', { hall: { key: 77, region: ANTICLERE, factions: [MAGES, FIGHTERS, THIEVES] } }, w.secret)).status, 200);
   }
-  const g = await s.registered('Ground'); age(g, 8);
+  const g = await s.seated('Ground'); age(g, 8);
   const p = herbPatches({ x: 300, y: 200, day: utcDay(noon), climate: 231, confirmed: false })[0];
   assert.equal((await s.call('/v1/prof/harvest', {
     character: g.character, node: nodeKey({ kind: 'herb', x: 300, y: 200, day: utcDay(noon), slot: p.slot }), kind: 'herbs',
     climate: 231, region: ANTICLERE, act: { clean: false, bruised: false }, at: noon - 2, rid: rid(),
   }, g.secret)).status, 200);
   raw.prepare("INSERT INTO npc_chapter_weeks (week, active, target, chapters, open, at) VALUES (?, 0, 60, 0, 'on', 0)").run(week - 1);
-  const gm = await s.registered('Alda', { renown: GUILD_FOUND_RENOWN });
+  const gm = await s.seated('Alda', { renown: GUILD_FOUND_RENOWN });
   const id = (await s.found(gm, { name: 'Grey Lanterns', tag: 'GLN' })).body.guild.id;
   raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
     VALUES ('mint', NULL, 'guild', ?, 'test', 5000, 1, 1, 'seed', NULL, 'seed-gl')`).run(id);
@@ -254,7 +254,7 @@ test('CHAP7a the board: each chapter\'s patron this Season, to every reader; the
   assert.deepEqual([by(FIGHTERS).patron?.id, by(FIGHTERS).patron?.name, by(MAGES).patron], [id, 'Grey Lanterns', undefined], 'this Season\'s patron alone');
   assert.deepEqual([by(FIGHTERS).patronBid, by(MAGES).patronBid], [{ season: 2, marks: 0 }, { season: 2, marks: 1500 }]);
   assert.equal(by(THIEVES), undefined, 'a hidden guild\'s chapter: not on a stranger\'s board');
-  const other = await s.registered('Bryn');
+  const other = await s.seated('Bryn');
   const B = await seatRealm(s.env, other.secret, 'Bryn');
   raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, 2, ?, ?)').run(other.id, B.id, id, 'Bryn', noon);
   const theirs = (await s.call('/v1/writs/list', { character: B.id, region: ANTICLERE }, other.secret)).body.chapters;

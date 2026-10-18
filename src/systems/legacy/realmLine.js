@@ -17,7 +17,7 @@ import { realmLineages, realmLineagePut } from '../realmSaves.js';
 /** How many times a stale write is merged and tried again before it waits for the next. */
 export const PUSH_TRIES = 4;
 /** AUDIT LEGACY III O2/P1: the service's refusals of a record that the same record would earn again - never re-sent. */
-export const LINE_REFUSALS = Object.freeze(['body', 'lineage-too-large', 'lineage-model', 'too-many-lineages']);
+export const LINE_REFUSALS = Object.freeze(['body', 'lineage-too-large', 'lineage-model', 'too-many-lineages', 'lineage-law']);   // INT18: a copy that breaks the family's own law (legacyLaw.js)
 
 /**
  * The two copies of one line as one: the newer by rev, the other's facts taken in. Answers the record to keep.

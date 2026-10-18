@@ -92,8 +92,8 @@
   {
     "name": "RVN10-end-keeps-low",
     "file": "src/systems/harmMark.js",
-    "old": "export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; }",
-    "new": "export function endPlayerFights() { _fights = new WeakMap(); }",
+    "old": "export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; _harmAt = null; }",
+    "new": "export function endPlayerFights() { _fights = new WeakMap(); _harmAt = null; }",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN10-end-keeps-fights",
     "file": "src/systems/harmMark.js",
-    "old": "export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; }",
-    "new": "export function endPlayerFights() { _lowAt = null; }",
+    "old": "export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; _harmAt = null; }",
+    "new": "export function endPlayerFights() { _lowAt = null; _harmAt = null; }",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]

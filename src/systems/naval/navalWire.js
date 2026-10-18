@@ -64,6 +64,10 @@
 //       hold, her casks and the chart in her papers the deep's on every client (a peer's copy of her was open water's)
 //   e - AUDIT CAPTAIN'S SEA D8: the casks of `f` of a deep ship's (or the Eltheric Ocean's) cargo, each its id - a peer's
 //       haul of one drawn as rich as its owner's (it was DEEP_TIER tiers poorer)
+//   o - SHOT-KINDS (bible/03-World/Naval-Refit.md): the volleys of `v` loaded with other than their bores' own, each
+//       [id, shot] - the volley's id and its load by SHOT_CODES' row (systems/naval/shotKinds.js), so every client flies
+//       the same grape, chain or heated shot and the victim's client judges the same blow. A volley it does not name
+//       (an older build's word says none) is its bores' own; a pair for no volley of the word reads as nothing
 //   `k`, `m` and `l` are keys of their own because an older build's door checks every field of `s` and `p` by count: it
 //   passes a word with them whole and reads none of them, and a newer door reads an older build's word as saying none.
 //   Nor are theirs counted: a newer build's longer entry reads as its first fields, never the whole word refused.
@@ -82,7 +86,8 @@
 // stander's world while all of it happened in another's. AUDIT NAV1 (online #15): the frame with `k` and no hurt is a
 // CASK's - `k` a cask of your sea my boat sailed through, and with `a` 1 your ANSWER, that it is mine: its owner answers
 // the first claim and lets the cask go, the claimer draws its lot only on the answer, so one cask is one haul whoever
-// else reached it.
+// else reached it. RAM-BOARD (AUDIT 2026-10-17): a ram's blow carries `u`, the seconds it fouls her (navalFoul.js
+// foulSaid), so her stander's AI holds her way and she is boarded as she stands on every screen.
 
 import { POSE_BOUND, POSE_Y_BOUND } from '../../net/wire.js';
 import { SHIP_CLASSES, CROWNS } from './navalShips.js';
@@ -92,6 +97,8 @@ import { DENSITY_KEYS } from './navalDirector.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 import { HULL_NAMES, HULL_VARIANT_COUNTS } from '../comeSailAway/comeSailAwayBoat.js';
 import { TEMPERS } from './navalAI.js';
+import { SHOT_CODES, SHOT_ORDER } from './shotKinds.js';
+import { FOUL_SAID_MAX } from './navalFoul.js';   // RAM-BOARD: the most a ram's blow may say it fouls her
 
 /** The radius within which players stand one sea between them (m): a ship's fighting reach and then some. */
 export const NAVAL_SHARE_RADIUS = 1200;
@@ -134,7 +141,7 @@ const U32 = 0xffffffff;
  *   laid?: string[] }} view
  */
 export function navalWireRecord(view, toWire = (p) => p) {
-  const s = [], v = [], b = [], k = [], d = [], e = [];
+  const s = [], v = [], b = [], k = [], d = [], e = [], o = [];
   for (const sh of view?.ships ?? []) {
     if (s.length >= NAVAL_WIRE_SHIPS) break;
     const cls = SHIP_CLASSES.findIndex((c) => c.id === sh.classId);
@@ -155,6 +162,7 @@ export function navalWireRecord(view, toWire = (p) => p) {
     const p = toWire(vo.pos);
     v.push([vo.id >>> 0, vo.shooter | 0, vo.hull | 0, side, r2(p[0]), r2(p[1]), r2(p[2]), r4(vo.yaw), r2(vo.vel?.[0] ?? 0), r2(vo.vel?.[2] ?? 0), r4(vo.elevation), vo.seed >>> 0, r2(vo.skill ?? 0.5),
       Math.max(0, Math.min(NAVAL_VOLLEY_KEEP_MS, Math.round(vo.age ?? 0)))]);
+    if (vo.shot != null && SHOT_CODES[vo.shot] != null) o.push([vo.id >>> 0, SHOT_CODES[vo.shot]]);   // SHOT-KINDS
   }
   for (const ba of view?.barrels ?? []) {
     if (b.length >= NAVAL_WIRE_BARRELS) break;
@@ -176,6 +184,7 @@ export function navalWireRecord(view, toWire = (p) => p) {
   if (w.length) out.w = w;
   if (d.length) out.d = d;
   if (e.length) out.e = e;
+  if (o.length) out.o = o;
   const me = view?.me;
   if (me) out.p = [pct(me.hull), me.crippled ? 1 : 0, me.boarders === false ? 0 : 1];
   // AUDIT GN-G3: my boat's laid broadsides - a bit a side (SIDE_CODES), said only while one is
@@ -303,6 +312,11 @@ export function validNavalRecord(raw) {
   if (!Array.isArray(deepCasks) || deepCasks.length > NAVAL_WIRE_CASKS || !deepCasks.every((x) => int(x, 0, U32))) return null;
   for (const sh of ships) if (deepShips.includes(sh.n)) sh.deep = true;
   for (const c of casks) if (c.lot !== SALVAGE_LOT && deepCasks.includes(c.id)) c.deep = true;
+  // SHOT-KINDS: the volleys' loads (an older build's word says none - their bores' own)
+  const loaded = raw.o ?? [];
+  if (!Array.isArray(loaded) || loaded.length > NAVAL_WIRE_VOLLEYS) return null;
+  for (const w of loaded) if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, U32) || !int(w[1], 0, SHOT_ORDER.length - 1)) return null;
+  for (const vo of volleys) { const w = loaded.find((x) => x[0] === vo.id); if (w) vo.shot = SHOT_ORDER[w[1]]; }
   return { ships, volleys, barrels, me, law, traffic: raw.t === undefined ? TRAFFIC_DEFAULT : DENSITY_KEYS[raw.t], casks, captains, boat, spent: [...spent], laid };
 }
 
@@ -312,23 +326,26 @@ export const navalRecordKey = (rec) => (rec ? JSON.stringify(rec) : '');
 /**
  * The blow's `nv`, as its striker sends it - `fire` true (a ball's), 'barrel' or false; `grapple` (AUDIT NAV1, online)
  * a grapple of my ship `n` on the player it goes to, no hurt; `cask` (AUDIT NAV1, online #15) a cask of theirs my boat
- * sailed through, no hurt - and with `answer`, their word that it is mine.
+ * sailed through, no hurt - and with `answer`, their word that it is mine; `foul` (RAM-BOARD, AUDIT 2026-10-17) the
+ * seconds a ram's blow fouls her (navalFoul.js foulSaid; `u`, whole seconds, 1 to FOUL_SAID_MAX) - an older build's
+ * reader takes the blow and leaves the foul.
  * @param {string} to
  * @param {{ n: number, hull?: number, sail?: number, crew?: number, fire?: boolean | 'barrel', zone?: string, grapple?: boolean,
- *   cask?: number | null, answer?: boolean }} blow
+ *   cask?: number | null, answer?: boolean, foul?: number }} blow
  */
-export function navalHitData(to, { n, hull = 0, sail = 0, crew = 0, fire = false, zone = 'hull', grapple = false, cask = null, answer = false }) {
+export function navalHitData(to, { n, hull = 0, sail = 0, crew = 0, fire = false, zone = 'hull', grapple = false, cask = null, answer = false, foul = 0 }) {
   const nv = { n: n | 0, h: Math.round(hull), s: Math.round(sail), c: crew | 0, f: fire === 'barrel' ? 2 : fire ? 1 : 0, z: zone === 'rig' ? 1 : zone === 'holed' ? 2 : 0 };
+  if (foul > 0 && !grapple && cask == null) nv.u = Math.max(1, Math.min(FOUL_SAID_MAX, Math.round(foul)));
   if (grapple) nv.g = 1;
   if (cask != null) { nv.k = cask >>> 0; if (answer) nv.a = 1; }
   return { to, nv };
 }
 
 /**
- * A blow on a ship I stand, through the door: bounded numbers, a known zone - or a grapple (`g` 1, no hurt), or a cask's
- * claim (`k`, no hurt) or its answer (`k` with `a` 1). Null for anything else.
+ * A blow on a ship I stand, through the door: bounded numbers, a known zone - a ram's with its foul (`u`, seconds) - or a
+ * grapple (`g` 1, no hurt), or a cask's claim (`k`, no hurt) or its answer (`k` with `a` 1). Null for anything else.
  * @returns {{ n: number, hull: number, sail: number, crew: number, fire: boolean | 'barrel', zone: string, grapple: boolean,
- *   cask: number | null, answer: boolean } | null}
+ *   cask: number | null, answer: boolean, foul: number } | null}
  */
 export function validNavalHit(data) {
   const nv = data?.nv;
@@ -338,8 +355,9 @@ export function validNavalHit(data) {
   if (nv.g !== undefined && (nv.g !== 1 || nv.h || nv.s || nv.c || nv.f)) return null;   // a grapple carries no hurt
   if (nv.k !== undefined && (!int(nv.k, 0, U32) || nv.g !== undefined || nv.h || nv.s || nv.c || nv.f)) return null;   // nor a cask's word
   if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null;   // an answer is a cask's
+  if (nv.u !== undefined && (!int(nv.u, 1, FOUL_SAID_MAX) || nv.g !== undefined || nv.k !== undefined)) return null;   // a foul is a blow's
   return {
     n: nv.n, hull: nv.h, sail: nv.s, crew: nv.c, fire: nv.f === 2 ? 'barrel' : nv.f === 1, zone: ['hull', 'rig', 'holed'][nv.z], grapple: nv.g === 1,
-    cask: nv.k ?? null, answer: nv.a === 1,
+    cask: nv.k ?? null, answer: nv.a === 1, foul: nv.u ?? 0,
   };
 }

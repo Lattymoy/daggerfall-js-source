@@ -58,7 +58,7 @@ test('CAP-OFF the service: past every old day at once - a character\'s sixty in 
   try {
     const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', DEVELOPER_HANDLES: 'Mac' });
     const raw = s.env.DB._raw;
-    const mac = await s.registered('Mac');
+    const mac = await s.seated('Mac');
     const day = utcDay(NOON);
     const at = NOON - 2;
     /** `n` rows of `profession` today on the account's character `char`, as a harvest writes them. */

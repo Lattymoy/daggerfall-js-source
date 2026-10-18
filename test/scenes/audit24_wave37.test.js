@@ -117,15 +117,18 @@ function fireListener(lineSrc, event = {}) {
   // zoom (world.js spyglassWheel). No glass is raised before the first frame, which is the state this pin fires in, so it
   // answers false and the fall-through past it is what gets witnessed, as with `quickLootWheel` above.
   const spyglassWheel = () => false;
+  // PIN MOVED (SHOT-KINDS): and the laid guns' rung - the guns take the notch for their load (world.js shotWheel); none are
+  // laid before the first frame, so it answers false too
+  const shotWheel = () => false;
   // DISC22-E: the strip's gate is the lock, asked through the real predicate - with `travelControlUI` null it
   // answers false, so the fall-through is what is witnessed
   const stripTakesClick = realStripTakesClick;
   new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx', 'mwViewWheel',
     'document', 'gamePaused', 'latch', 'createActivateGate', 'setClickDelay',
-    'travelControlUI', 'isEnhanced', 'nativeMetrics', 'pointToNative', 'quickLootWheel', 'stripTakesClick', 'spyglassWheel',
+    'travelControlUI', 'isEnhanced', 'nativeMetrics', 'pointToNative', 'quickLootWheel', 'stripTakesClick', 'spyglassWheel', 'shotWheel',
     `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx, mwViewWheel,
     document, gamePaused, latch, createActivateGate, setClickDelay,
-    travelControlUI, isEnhanced, nativeMetrics, pointToNative, quickLootWheel, stripTakesClick, spyglassWheel);
+    travelControlUI, isEnhanced, nativeMetrics, pointToNative, quickLootWheel, stripTakesClick, spyglassWheel, shotWheel);
   assert.equal(seen.length, 1, 'one listener registered');
   seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);

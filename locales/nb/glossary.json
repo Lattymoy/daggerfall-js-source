@@ -160,5 +160,13 @@
  "Atk (attack, short)": "Angr",
  "pts (points, short)": "p",
  "first-time bonus (a craft's first-make XP)": "førstegangsbonus",
- "cloth (the Weavers' Linen and Wool)": "stoff"
+ "cloth (the Weavers' Linen and Wool)": "stoff",
+ "martial specialisation": "kampspesialisering",
+ "signature technique": "signaturteknikk",
+ "technique key": "teknikktast",
+ "fatigue": "utmattelse",
+ "Agility": "Smidighet",
+ "Speed (attribute)": "Hurtighet",
+ "Running": "Løping",
+ "Jumping": "Hopping"
 }

@@ -58,11 +58,11 @@ async function stand(extra = {}) {
   /** A guild - Aldric its Guildmaster, Mara an Officer, and `members` Members - its treasury `marks`; everyone's
    *  membership `tenure` days old (the deed asks seven). */
   const guild = async ({ marks = 5_000, members = ['Bran', 'Cass', 'Dain'], tenure = 8, tag = 'HND', gmName = 'Aldric', officerName = 'Mara' } = {}) => {
-    const gm = await s.registered(gmName, { renown: 10 });
+    const gm = await s.seated(gmName, { renown: 10 });
     s.seedMarks(gm, 100_000, `gm-${tag}`);
     const g = (await s.found(gm, { name: `The ${tag} Guild`, tag })).body.guild;
     const join = async (handle) => {
-      const w = await s.registered(handle, { renown: 1 });
+      const w = await s.seated(handle, { renown: 1 });
       await s.call('/v1/guilds/invite', { character: gm.character, handle }, gm.secret);
       await s.call('/v1/guilds/answer', { character: w.character, guild: g.id, accept: true }, w.secret);
       return w;
@@ -107,7 +107,7 @@ test('SILVER-WAYS the contracts\' law: raids alone, seven days, five a guild, 1-
 test('SILVER-WAYS DONE WHEN: a raid counted strikes 30 silver, said in its answer; two gates and two raids reach 150 - the second raid 20, what the day had left; a third gate strikes nothing, `cap`; the next UTC day strikes afresh; a raid claimed twice strikes once (mutants: the raid unstruck; the cap counting the gate alone; the remainder refused; the day unkeyed)', async () => {
   clock(T0);
   const s = await stand();
-  const ann = await s.registered('Anna');
+  const ann = await s.seated('Anna');
   const r1 = await s.raid(ann, raidKey(DF, 1));
   assert.equal(r1.status, 200, JSON.stringify(r1.body));
   assert.equal(r1.body.recorded, true);
@@ -139,16 +139,16 @@ test('SILVER-WAYS DONE WHEN: a raid counted strikes 30 silver, said in its answe
 test('SILVER-WAYS: a raid strikes nothing for a guest, nor while silver is shut (the raid counted all the same); at `dev` the developers alone; a full purse is `full` (mutants: the guest struck; the switch unread)', async () => {
   clock(T0);
   const shut = await stand({ MARKS_OPEN: 'off' });
-  const a = await shut.registered('Anna');
+  const a = await shut.seated('Anna');
   const r = await shut.raid(a, raidKey(DF, 1));
   assert.deepEqual([r.body.recorded, 'marks' in r.body], [true, false]);
   assert.equal(shut.lines('raid').length, 0);
   const dev = await stand({ MARKS_OPEN: 'dev' });
-  const [mac, bors] = [await dev.registered('Mac'), await dev.registered('Bors')];
+  const [mac, bors] = [await dev.seated('Mac'), await dev.seated('Bors')];
   assert.equal((await dev.raid(mac, raidKey(DF, 1))).body.marks.struck, 30);
   assert.equal('marks' in (await dev.raid(bors, raidKey(DF, 1))).body, false);
   const full = await stand();
-  const f = await full.registered('Fen');
+  const f = await full.seated('Fen');
   full.raw.prepare('INSERT INTO marks (account, balance) VALUES (?, ?)').run(f.id, 10_000_000);
   const fr = await full.raid(f, raidKey(DF, 1));
   assert.deepEqual([fr.body.recorded, fr.body.marks.struck, fr.body.marks.why], [true, 0, 'full']);
@@ -214,7 +214,7 @@ test('SILVER-WAYS contracts DONE WHEN: a Guildmaster\'s contract of 3 defenders 
   clock(T0);
   const s = await stand();
   const { gm, officer, members: [bran, cass], g } = await s.guild({ marks: 5_000 });
-  const [out1, out2] = [await s.registered('Oswin'), await s.registered('Pell')];
+  const [out1, out2] = [await s.seated('Oswin'), await s.seated('Pell')];
   const post = await s.call('/v1/writs/contract', { character: gm.character, region: DF, kind: 'raid', pay: 40, deeds: 3, rid: rid() }, gm.secret);
   assert.equal(post.status, 200, JSON.stringify(post.body));
   assert.deepEqual([post.body.contract.pay, post.body.contract.deeds, post.body.contract.left, post.body.contract.escrow, post.body.guildMarks], [40, 3, 3, 120, 4_880]);

@@ -47,6 +47,7 @@ import { expandRowValues } from '../systems/quest/questMacros.js';   // MACRO-3:
 import { announceSkillRaise, announceMastery, announceSkillMilestone } from '../ui/levelUp/levelNotice.js';
 import { masterSkillsBoxDue, setMasterSkills, MASTER_SKILLS_OFFER_ROWS, MASTER_SKILLS_INFO_ROWS, MASTER_SKILLS_DECLINED_TEXT, MASTER_SKILLS_INTRO_ROWS, nextMasteryChoice, masteryChoiceRows, masterSkill } from '../systems/masterSkills.js';   // SOFTCAP3/4
 import { nextPathChoice, pathChoices, pathChoiceRows, pathsOpenRows, choosePath, pathDeclinedText } from '../systems/arcanePaths.js';   // SCHOOLS1: the specialisation's one ask
+import { nextMartialChoice, martialChoices, martialChoiceRows, martialOpenRows, chooseMartialPath, martialDeclinedText } from '../systems/martialPaths.js';   // MARTIAL1: the martial specialisation's one ask
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, advanceOwnMinutes, tickInFlight, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
@@ -1548,6 +1549,21 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
         ask(pathChoiceRows(entity, path.id),
           () => { const r = choosePath(entity, path.id); say(r.text); if (r.ok) audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1); },
           () => say(pathDeclinedText()));
+      }
+    } else {
+      // MARTIAL1 (bible/05-Combat/Martial-Specialisations.md section 3): THE MARTIAL SPECIALISATION - two weapon skills
+      // mastered and none chosen, the arcane path's own law on a pass that put no other box up: ONE open asked about,
+      // SEVERAL named and sent to the skill screen
+      const martial = ask && !windowed ? nextMartialChoice(entity) : null;
+      if (martial) {
+        entity.martialPrompted = true;
+        const open = martialChoices(entity);
+        if (open.length > 1) ask(martialOpenRows(open), null, null, { okOnly: true });
+        else {
+          ask(martialChoiceRows(entity, martial.id),
+            () => { const r = chooseMartialPath(entity, martial.id); say(r.text); if (r.ok) audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1); },
+            () => say(martialDeclinedText()));
+        }
       }
     }
   }

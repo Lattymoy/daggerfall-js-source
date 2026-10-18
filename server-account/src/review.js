@@ -21,6 +21,8 @@
 //                            window (a patron's purchases - AUDIT LW-II-2 S6) and the budget's config; `set` writes it
 //   /v1/mod/realm-bodies     INT14: the boss fights' count - each fight's receipts, the mends claimed a minute, and what the
 //                            line standing would have cost (bodiesMeasure)
+//   /v1/mod/realm-progress   INT17: the progression claims' measure - each stream's claims an hour of play, its quantiles
+//                            and most, who went past the line standing - and the line's config; `set` writes it
 //   /v1/mod/realm-gains      HACKED-GOLD: who gained past the bucket in a window, largest first (gainsMeasure) - while the
 //                            budget only measures nothing is held, so `holds` lists none of them
 //   /v1/mod/realm-trades     HACKED-GOLD: one character's realm trades, newest first - whom it traded with, and what each
@@ -44,6 +46,7 @@ import { budgetConfig, budgetConfigOf, forgetBudgetConfig, BUDGET_DEFAULT, FAUCE
 import { repairOf, applyRepair } from '../../src/net/repairLaw.js';   // SUMMON-REPAIR: the repair's law, the tool's too
 import { isHandleShaped } from '../../src/net/handleShape.js';   // SUMMON-REPAIR: an account named by its handle
 import { wealthOf } from './judge.js';
+import { progressConfig, progressConfigOf, forgetProgressConfig, PROGRESS_LINE, PROGRESS_STREAMS } from './progress.js';   // INT17: the progression claims' line
 import { REALM_LETTER_TEMPLATE } from '../../src/net/realm/realmGoldLaw.js';   // HACKED-GOLD: a trade's letters, at their worth
 
 /** How long the judge's findings are kept (the hourly sweep, cron.js). */
@@ -108,6 +111,17 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
       forgetBudgetConfig(db);
     }
     return measure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);
+  }
+  if (act === 'progress') {
+    // INT17: the progression claims' line - read, and written by a developer (MEASURE first: the owner, "Measure first")
+    if (body.set !== undefined) {
+      const config = progressConfigOf(body.set);
+      if (!config) return { error: 'body' };
+      await db.prepare("INSERT INTO realm_config (key, value, at, by) VALUES ('progress', ?, ?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value, at = excluded.at, by = excluded.by")
+        .bind(JSON.stringify(config), nowS, by).run();
+      forgetProgressConfig(db);
+    }
+    return progressMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);
   }
   if (act === 'bodies') return bodiesMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);
   if (act === 'gains') return gainsMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);
@@ -269,6 +283,31 @@ export async function measure(db, nowS, days) {
     return { kind, gold: Number(r?.gold ?? 0), n: Number(r?.n ?? 0) };
   });
   return { days, config, isDefault: config === BUDGET_DEFAULT, bands, faucets };
+}
+
+/**
+ * INT17 - THE PROGRESSION CLAIMS' MEASURE over the last `days`, a stream at a time: every account-hour that played
+ * MEASURE_PLAYED_MIN or more, as the stream's units an hour of play - its count, quantiles and most, asked of the
+ * database a quantile at a time (the budget's way) - and the hours a claim went past the bucket the line standing
+ * filled (`overs`, and how many accounts), with the line itself.
+ * @param {any} db @param {number} nowS @param {number} days
+ */
+export async function progressMeasure(db, nowS, days) {
+  const config = await progressConfig(db);
+  const since = nowS - days * 24 * 3600;
+  const rate = 'CAST(ROUND(amount * 3600.0 / played_s) AS INTEGER)';
+  const where = 'stream = ?1 AND hour >= ?2 AND played_s >= ?3';
+  const streams = [];
+  for (const stream of PROGRESS_STREAMS) {
+    const n = Number((await db.prepare(`SELECT COUNT(*) AS n FROM progress_hours WHERE ${where}`).bind(stream, since, MEASURE_PLAYED_MIN).first())?.n ?? 0);
+    const at = async (/** @type {number} */ rank) => (await db.prepare(`SELECT ${rate} AS r FROM progress_hours WHERE ${where} ORDER BY r LIMIT 1 OFFSET ?4`)
+      .bind(stream, since, MEASURE_PLAYED_MIN, rank).first())?.r ?? null;
+    const { quantiles, most } = await ranked(n, at);
+    const over = await db.prepare('SELECT COUNT(*) AS n, COUNT(DISTINCT player) AS accounts, COALESCE(SUM(over), 0) AS units FROM progress_hours WHERE stream = ?1 AND hour >= ?2 AND over > 0')
+      .bind(stream, since).first();
+    streams.push({ stream, ...config.streams[stream], hours: n, quantiles, most, overs: Number(over?.n ?? 0), accounts: Number(over?.accounts ?? 0), past: Number(over?.units ?? 0) });
+  }
+  return { days, enforce: config.enforce, isDefault: config === PROGRESS_LINE, streams };
 }
 
 /**

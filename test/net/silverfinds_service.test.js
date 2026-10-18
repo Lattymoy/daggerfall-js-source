@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { standService, T0 } from '../accountDb.mjs';
+import { seatRealm } from '../realmSeat.mjs';   // INT16: a guest seated, to reach the Marks' own door
 import { herbPatches, nodeKey, WITNESS } from '../../src/net/nodeLaw.js';
 import { herbKey, STORES_MAX } from '../../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
@@ -61,12 +62,13 @@ async function stand(extra = {}) {
   const raw = s.env.DB._raw;
   // PIN MOVED (AUDIT 625 S1, Mac: "A week old, like witnesses"): finds and gathering silver open to an account a week
   // registered - the harness's accounts are a week old; `young` is one registered this moment
-  const young = s.registered;
-  const registered = async (handle, opts) => {
-    const w = await young(handle, opts);
-    raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - WITNESS.ageS, w.id);
-    return w;
-  };
+  // PIN MOVED (INT16, Integrity-Arc section 7): a harvest and a loot find are progression claims, asked of the account's
+  // SEATED realm character (progress.js progressRefusal) - `seated` is a week-old account playing one, and `young`, one
+  // registered this moment, is seated too, so the Marks' own age law is what refuses it
+  const aged = (w) => { raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(NOON - WITNESS.ageS, w.id); return w; };
+  const registered = async (handle, opts) => aged(await s.registered(handle, opts));
+  const seated = async (handle, opts) => aged(await s.seated(handle, opts));
+  const young = s.seated;
   let patch = 0;
   /** A harvest of the next common herb patch - `rid` its request id (a fresh one by default). */
   const harvest = (who, { id = rid('harv'), p = PATCHES[patch++] } = {}) => s.call('/v1/prof/harvest', {
@@ -79,7 +81,7 @@ async function stand(extra = {}) {
   /** A faucet's line struck by hand today (the ledger's triggers move the balance as a strike's would). */
   const seed = (who, kind, amount, tag = rid('seed')) => raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
     VALUES ('mint', NULL, 'account', ?, ?, ?, ?, ?, ?, NULL, ?)`).run(who.id, kind, amount, TODAY, NOON, who.id, `${kind}:${tag}`);
-  return { ...s, registered, young, raw, harvest, find, lines, balance, seed };
+  return { ...s, registered, seated, young, raw, harvest, find, lines, balance, seed };
 }
 
 // ─── THE LAW ─────────────────────────────────────────────────────────
@@ -102,7 +104,7 @@ test('SILVER-FINDS the law: a harvest finds 2-5 one time in ten, 30 a day; a loo
 
 test('SILVER-FINDS a harvest\'s find: the service\'s dice - its last two draws, after every other - find silver in a counted harvest; struck in its batch under `gather:<rid>`, said as the answer\'s `marks`; none found, no `marks` (mutants: the dice\'s amount unread; the find said as none; the line\'s id)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   // the draws a harvest takes, counted: every unit 0 - the chance's roll under a tenth, the amount's its least
   const low = await steered([], 0, () => s.harvest(mac));
   assert.equal(low.r.status, 200, JSON.stringify(low.r.body));
@@ -123,7 +125,7 @@ test('SILVER-FINDS a harvest\'s find: the service\'s dice - its last two draws, 
 
 test('SILVER-FINDS a harvest asked twice: the same request answers its find again - one line, one balance, and so after the switch shut (AUDIT 28 M2); a harvest refused in its own INSERT (the Stores full) finds nothing (the find is struck by the harvest\'s own row alone) (mutants: the repeat unsaid; the switch before the line; the row\'s guard)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const id = rid('harv');
   const p = PATCHES[0];
   const first = await steered([], 0, () => s.harvest(mac, { id, p }));
@@ -148,7 +150,7 @@ test('SILVER-FINDS a harvest asked twice: the same request answers its find agai
 
 test('SILVER-FINDS a harvest\'s day: 30 an account a UTC day, the day\'s last find what is left of it - then none, and the answer says none; a loot find\'s day and the combat cap apart (mutants: the cap unread; the last find whole; the days shared)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.seed(mac, 'gather', 29);
   s.seed(mac, 'find', 20);
   s.seed(mac, 'gate', 150);
@@ -162,7 +164,7 @@ test('SILVER-FINDS a harvest\'s day: 30 an account a UTC day, the day\'s last fi
   const tomorrow = NOON + DAY;
   Date.now = () => tomorrow * 1000;
   try {
-    const ann = await s.registered('Ann');
+    const ann = await s.seated('Ann');
     s.raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid) VALUES ('mint', NULL, 'account', ?, 'gather', 29, ?, ?, ?, NULL, 'gather:yesterday')`).run(ann.id, TODAY, NOON, ann.id);
     const b = await s.call('/v1/marks/balance', {}, ann.secret);
     assert.equal(b.body.today.gathered, 0, 'yesterday\'s gathering is not today\'s');
@@ -171,7 +173,7 @@ test('SILVER-FINDS a harvest\'s day: 30 an account a UTC day, the day\'s last fi
 
 test('SILVER-FINDS a harvest where silver is not this account\'s: the switch shut, the harvest counted and no find struck - the dice found one all the same (mutants: the switch unread)', async () => {
   const s = await stand({ MARKS_OPEN: 'off' });
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const r = await steered([], 0, () => s.harvest(mac));
   assert.equal(r.r.body.qty, 1);
   assert.equal('marks' in r.r.body, false);
@@ -182,7 +184,7 @@ test('SILVER-FINDS a harvest where silver is not this account\'s: the switch shu
 
 test('SILVER-FINDS the loot find: `/v1/marks/find` strikes what the service\'s dice say (1 to 4) to the account under `find`, the request\'s own id; answers the strike, the balance and the day; asked twice, the line it made (mutants: the amount\'s roll; the repeat a second line)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   const one = await steered([], 0, () => s.find(mac, 'corpse', 'find-low-001'));
   assert.equal(one.r.status, 200, JSON.stringify(one.r.body));
   assert.deepEqual(one.r.body, { ok: true, struck: 1, balance: 1, today: { found: 1, max: 20 } });
@@ -199,7 +201,7 @@ test('SILVER-FINDS the loot find: `/v1/marks/find` strikes what the service\'s d
 
 test('SILVER-FINDS the loot find\'s day: 20 an account a UTC day, the day\'s last find what is left - then struck 0 with `cap`; a purse at its most struck 0 with `full`; the gathering\'s and the combat\'s days apart (mutants: the cap; the last find whole; the why)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.seed(mac, 'find', 18);
   s.seed(mac, 'gather', 30);
   s.seed(mac, 'raid', 150);
@@ -207,7 +209,7 @@ test('SILVER-FINDS the loot find\'s day: 20 an account a UTC day, the day\'s las
   assert.deepEqual(last.r.body, { ok: true, struck: 2, balance: 200, today: { found: 20, max: 20 } }, 'the 4 found, cut to the 2 left');
   const met = await steered([], 255, () => s.find(mac));
   assert.deepEqual(met.r.body, { ok: true, struck: 0, balance: 200, today: { found: 20, max: 20 }, why: 'cap' });
-  const ann = await s.registered('Ann');
+  const ann = await s.seated('Ann');
   s.seed(ann, 'test', MARKS_MAX);
   const full = await steered([], 0, () => s.find(ann));
   assert.deepEqual(full.r.body, { ok: true, struck: 0, balance: MARKS_MAX, today: { found: 0, max: 20 }, why: 'full' });
@@ -217,8 +219,12 @@ test('SILVER-FINDS the loot find\'s day: 20 an account a UTC day, the day\'s las
 test('SILVER-FINDS the loot find\'s doors: a guest holds none; a request id the service cannot read, or one another act took, is refused; a kind of none is `bad-find`; the switch shut is `marks-closed` - but a find already made is answered before it (AUDIT 28 M2) (mutants: the guest struck; the rid unread; the kind unread; the switch before the line)', async () => {
   const s = await stand();
   const g = await s.guest();
+  // PIN MOVED (INT16, Integrity-Arc section 7): a find is asked of the account's seated realm character first - a guest
+  // playing none is refused 'progress-seat' before the Marks read it; a guest seated reaches the Marks' own door
+  assert.deepEqual([(await s.find(g)).status, (await s.find(g)).body], [403, { error: 'progress-seat' }]);
+  await seatRealm(s.env, g.secret, 'Guestling');
   assert.deepEqual([(await s.find(g)).status, (await s.find(g)).body], [403, { error: 'marks-need-account' }]);
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   assert.deepEqual((await s.find(mac, 'corpse', 'short')).body, { error: 'marks-rid' });
   assert.deepEqual((await s.find(mac, 'corpse', null)).body, { error: 'marks-rid' });
   s.raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid) VALUES ('mint', NULL, 'account', ?, 'test', 5, ?, ?, ?, NULL, 'taken-by-another')`).run(mac.id, TODAY, NOON, mac.id);
@@ -263,7 +269,7 @@ test('AUDIT 625 S1 (Mac: "A week old, like witnesses"): finds and gathering silv
 
 test('SILVER-FINDS the loot find\'s hour: each find is one of the Marks acts an hour (MARKS_OPS_MAX, shared with the Bank and the guild moves) - past them `marks-rate`, and nothing struck (mutants: the rate unasked)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   for (let i = 0; i < MARKS_OPS_MAX; i++) assert.equal((await s.find(mac)).status, 200, `find ${i}`);
   const over = await s.find(mac);
   assert.deepEqual([over.status, over.body], [429, { error: 'marks-rate' }]);
@@ -271,8 +277,8 @@ test('SILVER-FINDS the loot find\'s hour: each find is one of the Marks acts an 
 
 test('AUDIT 625 S6: the weekly report counts the accounts at SILVER-FINDS\' two caps (the gathering\'s 30 a day, the loot\'s 20) beside the combat\'s and the Bank\'s, the account-days beside them - the two faucets the day alone bounds are the ones a scripted client shows at (mutants: a faucet uncounted; its cap read as the other\'s)', async () => {
   const s = await stand({ DEVELOPER_HANDLES: 'Devra' });
-  const d = await s.registered('Devra');
-  const [a, b] = [await s.registered('Anna'), await s.registered('Bjorn')];
+  const d = await s.seated('Devra');
+  const [a, b] = [await s.seated('Anna'), await s.seated('Bjorn')];
   s.seed(a, 'gather', MARKS_FAUCETS.gather.perDay);
   s.seed(a, 'find', MARKS_FAUCETS.find.perDay);
   s.seed(b, 'gather', MARKS_FAUCETS.gather.perDay - 1);
@@ -284,7 +290,7 @@ test('AUDIT 625 S6: the weekly report counts the accounts at SILVER-FINDS\' two 
 
 test('SILVER-FINDS the card: an account\'s balance says the day\'s finds - gathered against 30, found against 20 (mutants: the counts swapped; a max unsaid)', async () => {
   const s = await stand();
-  const mac = await s.registered('Mac');
+  const mac = await s.seated('Mac');
   s.seed(mac, 'gather', 7);
   s.seed(mac, 'find', 3);
   s.seed(mac, 'find', 2);

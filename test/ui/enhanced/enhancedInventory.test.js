@@ -2079,7 +2079,8 @@ test('MAC-M2 B: a loot session’s bar carries no Gold and no Pack', () => {
   withPack(({ dom }) => {
     assert.ok(dom.doc.querySelectorAll('.loot-win').length, 'the pile has its own frame');
     assert.equal(dom.doc.querySelectorAll('.pack-win').length, 0, 'and the pack is not built (PX20b)');
-    assert.deepEqual(barOf(dom), [], 'nothing on the bar - the window is for taking');
+    assert.deepEqual(barOf(dom), ['Take all'], 'Take all, and neither Gold nor Pack');
+    assert.equal(dom.doc.querySelector('.stashfoot'), null, 'Stash all lives on the pack list, and a corpse does not build the pack');
     assert.equal(dom.doc.querySelectorAll('.goldfield').length, 0, 'and the gold field is unreachable with it');
   }, { deps: { loot: { items: () => pile } } });
 });
@@ -2089,7 +2090,7 @@ test('MAC-M2 B: the WAGON button is untouched - it is the one control the loot b
   // refusals are inventorySession's law. Only the two Mac named go.
   const pile = [mk('Dagger')];
   withPack(({ dom }) => {
-    assert.deepEqual(barOf(dom), ['Wagon'], 'the wagon, and only the wagon');
+    assert.deepEqual(barOf(dom), ['Wagon', 'Take all'], 'the wagon and Take all - Gold and Pack stay off this bar');
   }, {
     items: () => [mk('Longsword'),
       { name: 'Small cart', group: 'Transportation', templateIndex: SMALL_CART_TEMPLATE, stackCount: 1 }],

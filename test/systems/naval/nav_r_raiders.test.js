@@ -252,7 +252,7 @@ test('THE MERGE (OW6) the naval host: a raider a peer holds is not stood; the ra
   const [e] = raiderShips(host);
   assert.deepEqual(host.raiderHeld(), [{ id: RAIDER.id, pos: e.ship.pos }], 'mine: held, where she sails');
   assert.ok(RAIDER_SIGHT_M > HOSTILE_NEAR_M);
-  assert.deepEqual(host.threats(), [{ pos: e.ship.pos, reach: RAIDER_SIGHT_M, chasing: false, mps: e.ship.cls.speed }], 'the raider by her lookout; the trader none');
+  assert.deepEqual(host.threats(), [{ pos: e.ship.pos, reach: RAIDER_SIGHT_M, chasing: false, mps: e.ship.cls.speed, holds: HOSTILE_NEAR_M }], 'the raider by her lookout; the trader none - PIN MOVED (TIME-DILATION: and her hold)');
   run(host, 2);
   assert.equal(e.ship.mode, 'engage', 'she gives chase');
   assert.deepEqual(host.threats().map((t) => [t.reach, t.chasing]), [[HOSTILE_NEAR_M, true]], 'coming for me: the ring the journey stops at, closing');
@@ -325,7 +325,7 @@ test('THE MERGE (OW6) the world host, run: with the sea fight on my raider word 
   d.ships.set(9, { pos: [300, 0, 40], chase: true });
   d.ships.set(10, { pos: [600, 0, 0], chase: false });
   d.threats = [{ pos: [300, 0, 40], reach: HOSTILE_NEAR_M, chasing: true, mps: 7.6 }, { pos: [600, 0, 0], reach: RAIDER_SIGHT_M, chasing: false, mps: 4.6 }, { pos: [-900, 0, 50], reach: 750, chasing: false, mps: 8 }];
-  assert.deepEqual(h.journeyThreats(true), [{ dx: 300, dz: 40, reach: HOSTILE_NEAR_M, chasing: true, mps: 7.6 }, { dx: 600, dz: 0, reach: RAIDER_SIGHT_M }, { dx: -900, dz: 50, reach: 750 }]);
+  assert.deepEqual(h.journeyThreats(true), [{ dx: 300, dz: 40, reach: HOSTILE_NEAR_M, holds: undefined, chasing: true, mps: 7.6 }, { dx: 600, dz: 0, reach: RAIDER_SIGHT_M, holds: undefined }, { dx: -900, dz: 50, reach: 750, holds: undefined }]);   // PIN MOVED (TIME-DILATION: her hold passed on - none in these words)
   assert.deepEqual(h.journeyThreats(false), h.journeyThreats(true), 'the sea\'s ships on either skin');
   // the map: each where her ship sails - the one coming for me held at the edge; the spent one, shipless, never
   h.drawRaiders();

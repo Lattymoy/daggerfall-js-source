@@ -37,7 +37,7 @@ import { bodySayer } from '../net/bossBody.js';   // INT15: my hull, said to the
 import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, venomBite, venomHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, fleetShare, SHOVE_S } from '../systems/serpent/serpentStrike.js';
 
 /** INT13: the line as the relay's count wrecks her (`bd`). */
-export const COUNT_WRECK_LINE = 'She is holed past saving - the fight counts her wrecked.';
+export const COUNT_WRECK_LINE = 'The ship is holed beyond saving and counts as wrecked.';
 /** How often an `in` is said again while I am within its waters' sight (a reconnect, a halo come up, a share back). */
 export const IN_RESEND_MS = 20_000;
 /** How soon an `in` unanswered is said again. */

@@ -114,6 +114,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/sfx/naval-runout.wav', 'OURS - AUDIT NAV1: synthesised from noise and sine by tools/navalSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/naval-ready.wav', 'OURS - AUDIT NAV1: synthesised from noise and sine by tools/navalSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/naval-sinking.wav', 'OURS - AUDIT NAV1: synthesised from noise and sine by tools/navalSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/naval-whistle.wav', 'OURS - COMBAT-FEEL: synthesised from noise and sine by tools/navalSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/gather-swing-1.wav', 'OURS - GATHER-FEEL: synthesised from noise and sine by tools/gatherSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/gather-swing-2.wav', 'OURS - GATHER-FEEL: synthesised from noise and sine by tools/gatherSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/gather-chop-1.wav', 'OURS - GATHER-FEEL: synthesised from noise and sine by tools/gatherSfx.mjs, deterministically; no recording in it at all'],

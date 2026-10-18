@@ -235,7 +235,9 @@
     "new": "        AND EXISTS (SELECT 1 FROM products WHERE provenance = ?5 AND owner = ?1 AND quality = ?14 AND COALESCE(bought_with, '') != 'gold')",
     "tests": [
       "test/net/prof5b_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "INT19: pieceAuctionRefusal says a listed piece ('market-listed') before the record moves, and a listing landing between takes the Masterwork out of the seller's record - the auction's record step (its sequence) then fails whole"
   },
   {
     "name": "PROF5b-svc-cancel-with-bid",
