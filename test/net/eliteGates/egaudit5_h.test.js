@@ -289,6 +289,9 @@ test('AUDIT EG V L3-10 (b) THE DOOR NAMES THE FIRST ACROSS (section 8.2, THE TRA
   // a Scriptorium's door opens on its quiet's end - by no one's arrival: it names none
   const [qs, qh] = hallWhere((s) => s.kind === 'scriptorium');
   const Q = breachAt(qs, qh, { n: 1 });
+  // PIN MOVED (EG-PERFECT, THE AUDIT - spec law 10): its quiet waits for its company on its trial's own ground (egTrialAwaits)
+  const qg = Q.spec.route?.courses?.find((c) => !c.b);
+  if (qg) Q.at('acct-0', (qg.x0 + qg.x1) / 2, qg.z0 + 1);
   let qd = null;
   for (let k = 0; k < 4 * 40 && !qd; k++) qd = Q.step().find((f) => f.k === 'esay' && f.w === 'door') ?? null;
   assert.ok(qd, 'the quiet hall\'s door opened');

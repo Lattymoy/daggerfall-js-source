@@ -182,8 +182,11 @@ export function egPiecePlan(spec, s, { seed = 0, lite = false, band = 0, w = s.w
   let column = null, hang = null;
   const roll = r();
   if (!lite && open && SLABS.includes(kind) && kind !== 'gust' && roll < L.column.share) {
-    const side = r() < 0.5 ? 1 : 3, room = d / 2 - L.column.clear, R = lerp(L.column.r, r());
-    const clear = !floors.some((f) => f.step !== s && f.y > s.y - 4 && f.y < s.y + 3 && overlaps([side === 1 ? me[2] : me[0] - 1.2, me[1], side === 1 ? me[2] + 1.2 : me[0], me[3]], f.box));
+    // (THE AUDIT: a piece turned along x - spec law 10's broken bridge, its `hd` 1 or 3 - leaps over its +x and -x sides, so its
+    // column stands on a z side, clear of the leap's corridor as every other's)
+    const along = s.hd % 2 === 1, side = along ? (r() < 0.5 ? 0 : 2) : r() < 0.5 ? 1 : 3, room = (along ? w : d) / 2 - L.column.clear, R = lerp(L.column.r, r());
+    const beside = side === 1 ? [me[2], me[1], me[2] + 1.2, me[3]] : side === 3 ? [me[0] - 1.2, me[1], me[0], me[3]] : side === 0 ? [me[0], me[1] - 1.2, me[2], me[1]] : [me[0], me[3], me[2], me[3] + 1.2];
+    const clear = !floors.some((f) => f.step !== s && f.y > s.y - 4 && f.y < s.y + 3 && overlaps(beside, f.box));
     if (room > R && clear && cornice[side] && !breaks[side]) column = { side, at: (r() * 2 - 1) * (room - R), R, up: lerp(L.column.up, r()), down: Math.min(depth - 0.5, lerp(L.column.down, r())) };
   } else if (!lite && (SLABS.includes(kind) || kind === 'drop') && roll < L.column.share + L.hang.share) {
     const corner = Math.floor(r() * 4), len = Math.min(lerp(L.hang.len, r()), depth - T - L.hang.under);   // all of it within its depth

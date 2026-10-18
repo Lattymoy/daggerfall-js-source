@@ -11,7 +11,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { glslFunctions, GlslDiscard } from '../../glsl.mjs';
-import { egHallOf, egCircleSpecs, egSpecForget, EG_SEALED_MS, EG_GATHER_MS } from '../../../src/net/eliteGates/egLaw.js';
+import { egHallOf, egCircleSpecs, egSpecForget, egLawSeam, EG_SPEC, EG_SEALED_MS, EG_GATHER_MS } from '../../../src/net/eliteGates/egLaw.js';
 import { egGive8 } from '../../egGive8.mjs';   // PIN MOVED (THE ASCENT - THE ROOMS, LAW 9): law 8's circles given
 import { egBreachNew, egEnter, egStep, egStateOf } from '../../../src/net/eliteGates/egBrain.js';
 import { egTethersOut } from '../../../src/net/eliteGates/egBodies.js';
@@ -190,11 +190,11 @@ function placeHazards(spec) {
   for (const hz of spec.hazards ?? []) {
     if (hz.kind === 'mist' || hz.kind === 'wisp' || hz.kind === 'eclipse') continue;
     if (hz.kind === 'cascade') for (const q of hz.lanes ?? []) out.push({ what: hz.kind, st: lane(q, hz.w) });
-    else if (hz.kind === 'tide') out.push({ what: hz.kind, st: shDisc(hz.x, hz.z, hz.r) });
+    else if (hz.kind === 'tide') out.push({ what: hz.kind, st: shDisc(hz.x, hz.z, hz.r), r: hz.r });   // (EG-PERFECT: its reach too - a deepway's engine marks the chamber's middle, the tide's own)
     else if (hz.spots?.length) for (const p of hz.spots) out.push({ what: hz.kind, st: shDisc(p[0], p[1], hz.r) });
     else if (hz.sh) out.push({ what: hz.kind, st: lane(hz.sh, hz.w) });
   }
-  return out.map((q) => ({ what: q.what, kind: q.st[0] === 'd' ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.lane, at: [q.st[1], q.st[2]] }));
+  return out.map((q) => ({ what: q.what, kind: q.st[0] === 'd' ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.lane, at: [q.st[1], q.st[2]], r: q.r ?? null }));
 }
 
 test('AUDIT EG V L5-3 THE PLACE\'S HAZARDS ARE TOLD IN THE PLACE\'S WHITE (section 25.2: white is "the place\'s own timed hazard: vents ringing, Pendulums\' lanes, a Beat\'s last 0.4 s, a fragment\'s hazards"; section 10.3: a span Vent "a white ring closing over 1.0 s"; section 25.7: the danger palettes recolour it): on the shapes the breach client\'s fight mints over fifteen seconds of each hall (a minute of the tide\'s) - a Rampart\'s vents, a span\'s Vents and the fragments\' magma surges, fire falls, falling basalt, cascades, the Forge Line\'s hammers, the hammers, the slag spill and the tide - every one, told and landing, is drawn in the palette\'s hazard: white under the Standard, High contrast\'s cyan under it (mutants: a vent in fire; a span Vent in fire; a fragment hazard in its element\'s colour)', () => {
@@ -210,7 +210,7 @@ test('AUDIT EG V L5-3 THE PLACE\'S HAZARDS ARE TOLD IN THE PLACE\'S WHITE (secti
         setPref(EG_ACCESS_PREFS.palette, key);
         R.step(ms); R.client.frame(); R.draw();
         for (const sh of R.fight().shapes()) {
-          const q = want.find((w) => w.kind === sh.kind && w.at[0] === sh.origin[0] && w.at[1] === sh.origin[1]);
+          const q = want.find((w) => w.kind === sh.kind && w.at[0] === sh.origin[0] && w.at[1] === sh.origin[1] && (w.r === null || w.r === sh.r));
           if (!q) continue;
           seen.set(q.what, (seen.get(q.what) ?? 0) + 1);
           assert.deepEqual([...sh.color], [...egPaletteOf(key).hazard], `hall ${h}: ${q.what} in the ${key} palette's hazard (t ${((k * ms) / 1000).toFixed(1)} s, its flash ${sh.flash})`);
@@ -231,15 +231,17 @@ test('AUDIT EG V L5-16 THE LAMPS\' BUDGET (section 11.9: "At most 12 lamps stand
   // PIN MOVED (THE ASCENT - THE ROOMS, LAW 9 - 2026-10-16): the budget held over spec law 9's circles and law 8's alike; the lights'
   // places and a ring's spread order over law 8's (given - test/egGive8.mjs), as this audit counted them - a LAW 9 circle's rooms
   // carry lamps of their own (a fragment's, kept first), so a court's ring beside a room is thinned where the room's stand
-  for (const law of [9, 8]) for (const seed of [1, 2]) for (let c = 1; c <= 20; c++) {
+  // PIN MOVED (EG-PERFECT, spec law 10 - 2026-10-18): and over law 10's (the build's), law 9's drawn through THE SEAM
+  for (const law of [10, 9, 8]) for (const seed of [1, 2]) for (let c = 1; c <= 20; c++) {
     const geo = c <= 1 ? 0 : seed % 9;
     if (law === 8) egGive8(seed, [c], geo);
+    egLawSeam(law === 9 ? 9 : EG_SPEC);
     const L = egCircleLights(seed, c, geo), specs = egCircleSpecs(seed, c, geo);
     assert.ok(specs.every((s) => s.v === law), `seed ${seed} circle ${c}: law ${law}'s`);
     let worst = 0;
     for (const p of L) worst = Math.max(worst, L.filter((q) => near(p, q)).length);
     assert.ok(worst <= EG_LAMP_BUDGET.n, `law ${law} seed ${seed} circle ${c}: ${worst} lamps within 40 m of one`);
-    if (law === 9) continue;
+    if (law !== 8) continue;
     if (worst === EG_LAMP_BUDGET.n) full++;
     for (const s of specs) {
       for (const [x, y, z] of s.lights ?? []) assert.ok(at(L, egToDungeon(s, x, y, z)), `seed ${seed} hall ${s.h}: its fragment's light stands`);
@@ -259,6 +261,7 @@ test('AUDIT EG V L5-16 THE LAMPS\' BUDGET (section 11.9: "At most 12 lamps stand
     }
   }
   egSpecForget();
+  egLawSeam(EG_SPEC);
   assert.ok(full >= 7, `the budget met where it was passed (${full} circles at 12)`);
   assert.ok(thinned.some((n) => n <= 4), `rings thinned (${thinned.join(',')})`);
 

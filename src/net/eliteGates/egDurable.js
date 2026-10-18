@@ -67,8 +67,9 @@ export const EG_LAW_KEEP_DAYS = 7;
  *  law 6 (the span decrees on every span - net/eliteGates/egLaw.js EG_DECREE_LAW) beside laws 4 and 5, each kept its days. EG-HERO-LAY:
  *  law 7 (the heroes laid - net/eliteGates/egLaw.js EG_HERO_LAW) beside laws 4, 5 and 6, each kept its days. AUDIT EG V: law 8 (the ways
  *  laid - net/eliteGates/egLaw.js EG_WAYS_LAW) beside laws 4 to 7, each kept its days. THE ASCENT: law 9 (the hall a way of rooms and
- *  climbs - net/eliteGates/egLaw.js EG_ASCENT_LAW, net/eliteGates/egAscent.js) beside laws 4 to 8, each kept its days. */
-export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });
+ *  climbs - net/eliteGates/egLaw.js EG_ASCENT_LAW, net/eliteGates/egAscent.js) beside laws 4 to 8, each kept its days. EG-PERFECT: law
+ *  10 (THE BROKEN WAY - net/eliteGates/egAscent.js EG_BROKEN_LAW) beside laws 4 to 9, each kept its days (law 4's seventh day today). */
+export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });
 /** Does this build draw spec law `v`? */
 export const egLawKnown = (/** @type {any} */ v) => Number.isSafeInteger(v) && Object.hasOwn(EG_LAWS, String(v));
 /** The most breaches live at once (section 22, THE COST - the Rehearsals among them). */

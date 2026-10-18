@@ -243,9 +243,10 @@ test('EG-ZC THE LAW PIN (section 22, EG-H2\'s record): spec law 5 is the law, la
   // PIN MOVED (THE ASCENT - THE ROOMS, LAW 9 - 2026-10-16): spec law 9 is the law now, laws 4 to 8 kept beside it
   // (test/net/eliteGates/law9_rooms.test.js pins law 9)
   egSpecForget();
-  assert.equal(EG_SPEC, 9);
-  assert.deepEqual({ ...EG_LAWS }, { 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });
-  assert.ok(egLawKnown(4) && egLawKnown(5) && egLawKnown(6) && egLawKnown(7) && egLawKnown(8) && egLawKnown(9) && !egLawKnown(10));
+  // PIN MOVED (EG-PERFECT): spec law 10 the build's, laws 4 to 9 kept beside it
+  assert.equal(EG_SPEC, 10);
+  assert.deepEqual({ ...EG_LAWS }, { 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });
+  assert.ok(egLawKnown(4) && egLawKnown(5) && egLawKnown(6) && egLawKnown(7) && egLawKnown(8) && egLawKnown(9) && egLawKnown(10) && !egLawKnown(11));
   assert.ok((Date.parse(EG_LAWS[5]) - Date.parse(EG_LAWS[4])) / 86_400_000 <= EG_LAW_KEEP_DAYS, 'the law before inside its keep');
   // law 4's halls as they stood before this law (46364ff52): every hall of four seeds, both grounds, a hundred halls each
   let acc = 0x811c9dc5;
@@ -258,7 +259,7 @@ test('EG-ZC THE LAW PIN (section 22, EG-H2\'s record): spec law 5 is the law, la
   assert.deepEqual(per, { 1: 3167448703, 13: 853054473, 78: 1662358260, 88: 4228635459 }, 'a Span, a Deepway, the Shade and the Wellhead');
   assert.equal(acc >>> 0, 1228307904, 'law 4, byte for byte');
   const d4 = egHallOf(1, 82, 0, 4), d5 = egHallOf(1, 82, 0, 5), d6 = egHallOf(1, 82, 0);   // PIN MOVED (AUDIT EG III): law 5 named, law 6 the build's; PIN MOVED (EG-HERO-LAY): law 7 the build's; PIN MOVED (AUDIT EG V, f): law 8 the build's
-  assert.deepEqual([d4.v, d5.v, d6.v], [4, 5, 9], 'each hall says its law');
+  assert.deepEqual([d4.v, d5.v, d6.v], [4, 5, 10], 'each hall says its law');   // (PIN MOVED, EG-PERFECT: law 10 the build's)
 
   assert.notEqual(egSpecDigest(d4), egSpecDigest(d5), 'a Wellhead Deepway differs between them');
   // the director: a breach opened under law 4 runs law 4's halls (its stage's digest)

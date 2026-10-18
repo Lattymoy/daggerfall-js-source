@@ -200,10 +200,30 @@ export function egLegionRoom(F) {
 }
 
 /**
+ * EG-PERFECT (2026-10-18; sections 11.4 and 11.7) - A CHAMBER'S FREE CASTER STAND for a Caster rising at (x, z) (`y` its height,
+ * where the hall judges by it): the number in fight `F`'s stands (`F.stands`, `[x, z, y, ov, box]` each - net/eliteGates/egBrain.js
+ * egCasterStands lays them at the wake) of the nearest whose chamber's reach (`box`) holds where it rises and no living Caster
+ * holds (a Caster's `stand` is its number and one), or -1 (none laid, none in that chamber, or every one held). Pure.
+ * @param {any} F @param {number} x @param {number} z @param {number} [y]
+ */
+export function egStandFree(F, x, z, y = NaN) {
+  const S = F?.stands ?? [];
+  let best = -1, bd = Infinity;
+  for (let i = 0; i < S.length; i++) {
+    const [sx, sz, , , q] = S[i];
+    if (!q || x < q[0] || x > q[3] || z < q[2] || z > q[5] || (Number.isFinite(y) && (y < q[1] || y > q[4]))) continue;
+    if (F.bodies.some((b) => b.stand === i + 1 && b.hp > 0)) continue;
+    const d = Math.hypot(sx - x, sz - z);
+    if (d < bd) { bd = d; best = i; }
+  }
+  return best;
+}
+/**
  * A WAVE RISEN at `spots` (one per kind in `kinds`), each at its kind's health (a team kind's shared over its own),
  * tagged with the wave's number (Kyn's Rally, a Binder's raise). Answers the bodies. EG-ZJ: a spot `[x, z, y]` raises its
  * body at that height (a span's shadows at their member's, its Divers at the island's); said as every body is
- * (net/eliteGates/egBodies.js egBodyWire).
+ * (net/eliteGates/egBodies.js egBodyWire). EG-PERFECT: a Caster risen in a chamber on its nearest free stand there
+ * (egStandFree) - the same bodies, so THE LEGION'S CAP holds as it held.
  */
 export function egLegionRaise(F, kinds, spots, now, out, { wave = 0, fl = 0, hpX = 1 } = {}) {
   const made = [];
@@ -214,7 +234,12 @@ export function egLegionRaise(F, kinds, spots, now, out, { wave = 0, fl = 0, hpX
     const K = EG_LEGION_KINDS[k];
     const hp = Math.round(egKindHp(F, k, counts[k]) * hpX);
     const f = fl | (K.fly ? EG_FL.fly : 0) | (K.friend ? EG_FL.friend : 0) | (k === EG_KIND.lurker ? EG_FL.dormant : 0) | (k === EG_KIND.shade ? EG_FL.ward : 0) | (k === EG_KIND.dlord ? EG_FL.elite : 0);
-    const b = egBodyNew(F, EG_ROLE.add, k, x + (j % 3) * 0.7 - 0.7, z + Math.floor(j / 3) * 0.7, hp, { r: K.r, fl: f, up: EG_ADD_RISE_MS, now, wv: wave, h0: hp, rally: 0, ...(Number.isFinite(y) ? { y } : {}) });
+    // EG-PERFECT (section 11.7: "Casters stand at anchors.caster"): a Caster risen in a chamber rises on its free stand there,
+    // at its raised floor's height, and keeps to it (pinned, as a Rampart's on its pillar) - the wave's own place where every
+    // stand is held, or it rises out of the chamber
+    const st = k === EG_KIND.caster ? egStandFree(F, x, z, y) : -1, S = st >= 0 ? F.stands[st] : null;
+    const b = S ? egBodyNew(F, EG_ROLE.add, k, S[0], S[1], hp, { r: K.r, fl: f, up: EG_ADD_RISE_MS, now, wv: wave, h0: hp, rally: 0, y: S[2], pinned: 1, stand: st + 1, ...(Number.isFinite(S[3]) ? { ov: S[3] } : {}) })
+      : egBodyNew(F, EG_ROLE.add, k, x + (j % 3) * 0.7 - 0.7, z + Math.floor(j / 3) * 0.7, hp, { r: K.r, fl: f, up: EG_ADD_RISE_MS, now, wv: wave, h0: hp, rally: 0, ...(Number.isFinite(y) ? { y } : {}) });
     if (b) made.push(b);
   });
   if (made.length) out.push({ k: 'ead', a: made.map((b) => egBodyWire(b)), at: now });
@@ -240,13 +265,14 @@ export function egLegionSummon(F, kinds, spots, now, out, o = {}) {
  * takes one, its share by the depth (and Wrathful's tenth). Chained Blows (`chain` 1 or 2) chain a second (and third)
  * shape, outlined with the first, landing max(its wind-up, its floor + 0.3 s, 1.0 s) after it.
  */
-function addBlow(F, spec, a, tx, tz, now, here, out, { chain = 0, twin = 0, atFeet = false } = {}) {
+function addBlow(F, spec, a, tx, tz, now, here, out, { chain = 0, twin = 0, atFeet = false, y = NaN } = {}) {
   const K = EG_LEGION_KINDS[a.k], B = K.blow;
   if (!B) return null;
   const yaw = Math.atan2(tx - a.x, tz - a.z);
   const stamp = (x, z) => (B.t === 'd' ? shDisc(atFeet ? tx : x, atFeet ? tz : z, B.r) : B.t === 'l' ? shLaneAt(x, z, yaw, B.len, B.w) : shCone(x, z, yaw, B.r, B.arc));
   const wrath = egHas(a, EG_FL.wrathful) ? 1.1 : 1;
-  const base = { o: a.i, wu: B.wu, p: B.p * egShareX(F.c, wrath * (F.mem.furyX ?? 1)), b: B.b, el: elOf(F, B.el), nm: B.nm, pu: B.pu ?? 0, sp: B.run ? Math.round((B.len / B.run) * 1000) : 0 };
+  // EG-PERFECT: `y` the height it lands at where its caller names it (a stand's Caster's bolt, its mark's floor), else its thrower's
+  const base = { o: a.i, wu: B.wu, p: B.p * egShareX(F.c, wrath * (F.mem.furyX ?? 1)), b: B.b, el: elOf(F, B.el), nm: B.nm, pu: B.pu ?? 0, sp: B.run ? Math.round((B.len / B.run) * 1000) : 0, ...(Number.isFinite(y) ? { y } : {}) };
   const first = egAim(F, spec, { ...base, s: [stamp(a.x, a.z)], at: now + B.wu }, here, now, out);
   if (!first) return null;
   a.atk = { i: first.i, at: first.at, until: first.at + (first.sp ?? 0) + (B.rec ?? 600) };
@@ -369,11 +395,15 @@ export function egLegionStep(F, spec, now, here, rng, out, ctx = {}) {
           const want = (EG_CASTER_RANGE[0] + EG_CASTER_RANGE[1]) / 2, ux = (a.x - n.m.x) / (n.d || 1), uz = (a.z - n.m.z) / (n.d || 1);
           walkGraph(F, spec, a, n.m.x + ux * want, n.m.z + uz * want, 0.5, K.speed, now);
         } else egStop(F, a, now);
-        const mine = egByHeight(spec) ? seen.filter((m) => egSameStorey(spec, a, m)) : seen;   // THE ASCENT: a bolt only at its own storey
+        // THE ASCENT: a bolt only at its own storey - EG-PERFECT: a Caster on its stand at the chamber floor its balcony
+        // overlooks too (`ov` - a kit balcony stands up to 4 m over it, EG_STACK_M's own storey), its bolt landing at its
+        // mark's feet on its mark's floor
+        const overlooks = (m) => a.stand > 0 && Number.isFinite(a.ov) && Number.isFinite(m.y) && egOneStorey(a.ov, egStoreyY(spec, m.x, m.y, m.z));
+        const mine = egByHeight(spec) ? seen.filter((m) => egSameStorey(spec, a, m) || overlooks(m)) : seen;
         if (now >= (a.next ?? 0) && mine.length) {
           const tgt = mine[Math.floor(rng() * mine.length)] ?? n.m;
           a.next = now + K.blow.every + Math.floor(rng() * K.blow.jitter);
-          const bl = addBlow(F, spec, a, tgt.x, tgt.z, now, here, out, { chain, atFeet: true });
+          const bl = addBlow(F, spec, a, tgt.x, tgt.z, now, here, out, { chain, atFeet: true, y: a.stand > 0 && Number.isFinite(tgt.y) ? egStoreyY(spec, tgt.x, tgt.y, tgt.z) : NaN });
           if (bl && ctx.pool) ctx.pool(tgt.x, tgt.z, POOLS.hellfire.r, bl.at, POOLS.hellfire.ms, POOLS.hellfire.pct, POOLS.hellfire.base, F.el, 'burn', bl.y);   // AUDIT EG IV (lane1 #16): the gate's burning ground (POOLS' hellfire), never a copy
         }
         break;

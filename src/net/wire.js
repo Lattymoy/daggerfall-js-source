@@ -1490,7 +1490,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world218';   // GRANT2 (2026-10-18, Mac: "Lets build the plan"; bible/11-Multiplayer/Spawn-Grants.md section 12; NOT YET DEPLOYED): THE SPAWN GRANTS, MEASURED - a cell takes `{t:'grant', k:'mint', id, kind, n}` from a socket whose pose stands in it (net/grantLaw.js validGrantAsk, on grantGate's bucket) and answers `{t:'grant', k:'ok', id, gr}` - a grant made out to the asker, its cell and account, the pixel and the world minute, its signed level and Renown, a seed and the elite and champion marks it rolls, ten minutes' life, signed with GATE_SIGNING_KEY (net/grantLaw.js grantBytes, `spawn-grant1`); the gate (an account's bucket per kind, the cell's ceiling) is counted on every ask, and said (`no`) only while the relay setting `grantMode` enforces - it measures from this deploy (unset: measure), and `off` answers `off`; a cell's welcome says the mode (`gm`). Each cell posts its window of asks, signed, to the account service's GRANT_FEED_URL (net/grantMeasure.js, `grant-measure1`; acct155 keeps it). A client before it never asks; a client asks only a relay at world218 or later (GRANT_RELAY_MIN), which an older one would close the socket on. GRANT3-GRANT9 (sections 13-16, the same drop): the renewal, free, carry, heir and tally asks; a world room's own lane asks too (no pixel, no open-country kind, carried cell to cell alone); the settings `grantRoll` (an encounter's grant `encr`, its species its seed's) and `grantStrip` (the relay drops a record its grant does not stand), each off unset
+export const RELAY_VERSION = 'world219';   // EG-PERFECT (2026-10-18, world218 on its branch, renumbered past GRANT2's world218 at the merge; bible/11-Multiplayer/Elite-Gates.md section 31's EG-PERFECT records; Mac: "I want to ensure the boss attacks, the design of the halls, and everything is absolutely perfect. Traversing between sections should present a challenge, platforming should be detailed"): the lords' blows fair and whole (the union floor's havens, pools and rings; the Valkynaz' signatures at their second phase; the Lattice a sweep), spec law 10 THE BROKEN WAY (net/eliteGates/egDurable.js EG_LAWS - laws 4 to 9 kept), a fight hall's clocks awaiting its company, the closing's walk, the tube's clock, the void zones, the toll's rooms. Deploy relay before clients (THE DRAIN keeps every live breach on its own law).
 // world217: GROUND-GATE (FIELD BUGS 2026-10-17f, bible/01-Overview/bugs/Field-Bugs-2026-10-17f.md; world216 on its branch, renumbered past PROX-VOICE's world216 - reverted, its row kept so no relay takes it - at the merge; Mac's call on bible/03-World/Landforms.md C2: "Relay turns old builds away"): a ground room's hello says the ground its build stands on (`gl`, GROUND_LAW), and while the relay setting `groundGate` is on (net/relayCfg.js - off until the site serves this build, since the relay deploys first) a hello there that says less or none is refused, before anything is written: the relay's words in the error frame every build shows, and a close reason of its own (GROUND_OLD_REASON) (a close reason is 123 bytes at most). A hello on the ground asks nothing; an old one asks the hub's settings once a TTL, awaited in a cold room. Deploy relay before clients.
 // world215: SAFE (2026-10-17, world214 on its branch - main's WIKIMAID took world214 first, below; Mac: "Lets do every single thing here. I want a full fledged future proof system"; bible/11-Multiplayer/Chat-Safety-Arc.md; NOT YET DEPLOYED): THE CHAT'S SAFETY - every chat line the relay relays carries its stamp (`sg`, net/safety/chatStamp.js: Ed25519 over the tab, the speaker's account, the name, the time and the words, with GATE_SIGNING_KEY), which a report carries to the account service as its proof; a socket wearing the sprout says one public line every NEW_VOICE_GAP_MS (`slowed`); the public channels' lines are batched to the account service's reviewer (MOD_FEED_URL, net/safety/chatFeed.js - signed, never awaited by a line); a BAN order (identityToken.js ORDER_KINDS 'ban', `bn`) taken from a carrier (`{t:'ban', order}`) or through the service's door (SAFE_LAW_PATH, checked by the Worker before the hub is woken), each of the account's sockets silenced and told `banned`; and an order the service pushed handed to its target's own hub sockets (`law`) to carry to every room it holds
 // world214: WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title and a purple aura with bunnies"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md WIKIMAID; NOT YET DEPLOYED): the vocabulary's three new words - WIKIMAID last of TITLES and of GLYPHS, THE LILAC WARREN last of AURAS (net/identityToken.js), which the relay reads off every hello's token; nothing else in the law moved. Deploy the relay BEFORE the account service (acct150), or every token SylviaBun is signed - the glyph rides it whether or not she wears anything - is refused whole
@@ -5810,7 +5810,9 @@ export const EG_SAY_KEYS = Object.freeze(['wake', 'fury', 'covenant', 'covenantr
   // AUDIT EG III (Elite-Gates.md section 27.5): Bladestorm and Deadeye struck - said to their striker (`s`), its screen's beat
   'storm', 'deadeye',
   // AUDIT EG IV (Elite-Gates.md section 8.3): a Rampart's march holding its gate - its Ward-Bearers warded
-  'gateheld']);
+  'gateheld',
+  // EG-PERFECT (Elite-Gates.md section 13.3): the Wyrm's broken perches rising again, molten, at its second phase's turn
+  'perches']);
 /** The gifts a member is told of (`egot`'s `w`). */
 export const EG_GOT_WORDS = Object.freeze(['shard', 'tonic', 'cant', 'lumen', 'rel', 'longstep', 'page']);   // LAYER THREE: 'page' - a page of the Annals (`p`)
 /** The zones' kinds (`ez`). */
@@ -5891,11 +5893,13 @@ function egCompany(co, full) {
   return new Set(out.map((t) => t[0])).size === out.length ? out : null;
 }
 /** A stage's word: the hall, the stage, when it began and ends (0 open-ended), the count (`cl` left, `ca` when it last
- *  began to run - 0 held), the hall's wake and its door (0 none). */
+ *  began to run - 0 held), the hall's wake and its door (0 none). EG-PERFECT (2026-10-18; Elite-Gates.md section 11.3): `tm`
+ *  when the company reached a routed hall's Collapsing Tube (relay ms - net/eliteGates/egBrain.js egTubeMouthOf), kept only
+ *  with it: a word without one is the word it was, and a bad one is no instant, never no stage. */
 function egStage(m) {
   if (!intIn(m.h, 0, EG_HALL_WIRE_MAX) || !EG_STAGES.includes(m.sg) || !egMs(m.sa) || !egMs(m.su)) return null;
   if (!intIn(m.cl, 0, EG_COUNT_WIRE_MAX) || !egMs(m.ca) || !egMs(m.hw) || !egMs(m.dn)) return null;
-  return { h: m.h, sg: m.sg, sa: m.sa, su: m.su, cl: m.cl, ca: m.ca, hw: m.hw, dn: m.dn };
+  return { h: m.h, sg: m.sg, sa: m.sa, su: m.su, cl: m.cl, ca: m.ca, hw: m.hw, dn: m.dn, ...(gateMs(m.tm) ? { tm: m.tm } : {}) };
 }
 /** EG-ZQ (Elite-Gates.md section 14, Colossal): a body's size on the wire, thousandths of its look's - 0 its look's own, else
  *  within these (Colossal's rank II, the largest the law folds, is 1400: net/eliteGates/egLaw.js EG_DECREES, pinned under it - wire.js
@@ -6101,7 +6105,7 @@ export function validEgOut(m) {
     case 'edie': return Array.isArray(m.is) && m.is.length >= 1 && m.is.length <= EG_WIRE_BODIES_MAX && m.is.every((i) => intIn(i, 1, 1e9)) && intIn(m.w, 0, 2) && gateMs(m.at) ? { k: 'edie', is: [...m.is], w: m.w, n: egText(m.n ?? '', 48) ?? '', at: m.at } : null;
     case 'efl': return intIn(m.i, 1, 1e9) && intIn(m.fl, 0, 0xffff) ? { k: 'efl', i: m.i, fl: m.fl } : null;
     case 'eb': { const b = egBlowW(m); return b ? { k: 'eb', ...b } : null; }
-    case 'ecut': return intIn(m.i, 1, 1e9) ? { k: 'ecut', i: m.i } : null;
+    case 'ecut': return intIn(m.i, 1, 1e9) ? { k: 'ecut', i: m.i, ...(Number.isSafeInteger(m.at) && m.at >= 0 ? { at: m.at } : {}) } : null;   // EG-PERFECT: the instant it was cut at (its FEINT_AT - net/eliteGates/egBodies.js egCut)
     case 'tell': { const b = egBlowW(m); return b && intIn(m.sh, 1, 400) ? { k: 'tell', ...b, sh: m.sh } : null; }   // EG-H1: Watchfire's early outline, its lead shown (ms)
     case 'untell': return intIn(m.i, 1, 1e9) ? { k: 'untell', i: m.i } : null;
     case 'etx': { const t = egList(m.t, egTether); return t ? { k: 'etx', t } : null; }

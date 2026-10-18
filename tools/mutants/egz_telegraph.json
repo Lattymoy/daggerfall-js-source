@@ -281,8 +281,8 @@
   {
     "name": "EGZ-rim-every-band",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "export const egRimOf = (band, fl) => (band === EG_SHADE_BAND &&",
-    "new": "export const egRimOf = (band, fl) => (band >= 0 &&",
+    "old": ": band === EG_SHADE_BAND && (fl & (EG_FL.dormant",
+    "new": ": band >= 0 && (fl & (EG_FL.dormant",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -596,7 +596,7 @@
   {
     "name": "EGZ-hud-eclipse-chip-none",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "? egEclipseChip(egEclipseAt(spec, now / 1000)) : '',",
+    "old": "? egEclipseChip(egEclipseAt(spec, now / 1000) ?? egEclipseOfBlows(E.fight?.blows, now)) : '',",
     "new": "? '' : '',",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"

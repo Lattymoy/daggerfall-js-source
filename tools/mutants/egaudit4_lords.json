@@ -65,8 +65,8 @@
   {
     "name": "EGA4-lords-exam-line-rounded",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "L.hold = PHASE_AT[1]; L.hpFloor = egHoldHp(L.max, L.hold);",
-    "new": "L.hold = PHASE_AT[1]; L.hpFloor = Math.round(L.max * PHASE_AT[1]);",
+    "old": "{ L.hold = PHASE_AT[1]; L.hpFloor = egHoldHp(L.max, L.hold); }   // AUDIT EG IV (lane1 #2)",
+    "new": "{ L.hold = PHASE_AT[1]; L.hpFloor = Math.round(L.max * PHASE_AT[1]); }   // AUDIT EG IV (lane1 #2)",
     "tests": [
       "test/net/eliteGates/egaudit4_lords.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGA4-lords-last-ring-6s",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "end ? now + EG_ZONE_FIGHT_MS : now + 6000, out",
-    "new": "now + 6000, out",
+    "old": "now + EG_LESSON_TELL_MS + (end ? EG_ZONE_FIGHT_MS : 6000), out",
+    "new": "now + EG_LESSON_TELL_MS + 6000, out",
     "tests": [
       "test/net/eliteGates/egaudit4_lords.test.js"
     ],
@@ -473,7 +473,7 @@
   {
     "name": "EGA4-lords-muster-no-hold",
     "file": "src/net/eliteGates/egLords.js",
-    "old": " L.hold = ph >= 3 ? 0 : PHASE_AT[1]; L.hpFloor = egHoldHp(L.max, L.hold); }",
+    "old": " L.hold = ph >= 3 ? 0 : PHASE_AT[1]; if (L.hp / L.max > L.hold) L.hpFloor = egHoldHp(L.max, L.hold); }",
     "new": " }",
     "tests": [
       "test/net/eliteGates/egaudit4_lords.test.js"
@@ -536,7 +536,7 @@
   {
     "name": "EGA4-lords-perch-fixed",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "if (W) lordBlow(F, spec, W, [shDisc(o.x, o.z, 6)], { nm: 'Burning Perch', wu: 2000, p: 0.45, b: 12, el: 'fire' }, [], now, out);",
+    "old": "if (W) lordBlow(F, spec, W, [shDisc(o.x, o.z, 6)], { nm: 'Burning Perch', wu: 2000, p: 0.45, b: 12, el: 'fire' }, [], now, out, { place: true });",
     "new": "if (W) egAim(F, spec, { o: W.i, s: [shDisc(o.x, o.z, 6)], at: now + 2000, wu: 2000, p: 0.45, b: 12, el: elOf(F, 'fire'), nm: 'Burning Perch' }, [], now, out);",
     "tests": [
       "test/net/eliteGates/egaudit4_lords.test.js",

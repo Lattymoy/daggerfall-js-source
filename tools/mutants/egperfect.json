@@ -1,0 +1,174 @@
+[
+  {
+    "name": "EGPERFECT-the-leap-unrefused",
+    "file": "src/player/motor.js",
+    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater && this.parkour?.leap?.() !== false; }",
+    "new": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater; }",
+    "tests": [
+      "test/player/egperfect_runleap.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-deps-silent",
+    "file": "src/scenes/shared.js",
+    "old": "    leap: () => madeRuleHere('runLeap') !== 'refused',\n",
+    "new": "",
+    "tests": [
+      "test/player/egperfect_runleap.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-spire-leaps",
+    "file": "src/systems/madeLevel.js",
+    "old": "latePress: EG_LATE_PRESS_S, runLeap: 'refused',",
+    "new": "latePress: EG_LATE_PRESS_S,",
+    "tests": [
+      "test/player/egperfect_runleap.test.js",
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-tube-on-the-wake",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (egRouted(spec)) return tm > 0 ?",
+    "new": "  if (false) return tm > 0 ?",
+    "tests": [
+      "test/net/eliteGates/egperfect_tube.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-tube-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  tubeSaid(B, now, out);   // EG-PERFECT",
+    "new": "  void tubeSaid;   // EG-PERFECT",
+    "tests": [
+      "test/net/eliteGates/egperfect_tube.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-wire-drops-the-tube",
+    "file": "src/net/wire.js",
+    "old": ", ...(gateMs(m.tm) ? { tm: m.tm } : {}) };",
+    "new": " };",
+    "tests": [
+      "test/net/eliteGates/egperfect_tube.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-screen-on-the-wake",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "egTubeEdgeIn(spec, wk.hw, wk.tm, t * 1000)",
+    "new": "egTubeEdgeIn(spec, wk.hw, 0, t * 1000)",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-voids-unread-on-the-relay",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "if (A.sup && egVoidStep((A.vp ??= { v: null })",
+    "new": "if (false && egVoidStep((A.vp ??= { v: null })",
+    "tests": [
+      "test/net/eliteGates/egperfect_voids.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-voids-unread-on-the-screen",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      if (voided && safe) {",
+    "new": "      if (false && safe) {",
+    "tests": [
+      "test/net/eliteGates/egperfect_voids.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-reach-unwidened",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "if (egPolyIn(v.poly, x, z, pad)) return v;",
+    "new": "if (egPolyIn(v.poly, x, z, EG_BODY_R)) return v;",
+    "tests": [
+      "test/net/eliteGates/egperfect_voids.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-void-mends-anywhere",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": " && !(A.vd != null && egRouteAlongAt(spec, p.x, p.y, p.z) > A.vd + EG_FAIR_SNAP_M)",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egperfect_voids.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-void-owes-nothing",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "|| A.vz ||",
+    "new": "||",
+    "tests": [
+      "test/net/eliteGates/egperfect_voids.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-room-keyed-by-its-floor",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "return byHero ? `h${k}:${i}` : `h${i}`;",
+    "new": "return `h${i}`;",
+    "tests": [
+      "test/net/eliteGates/egperfect_toll.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-vent-on-its-first-frame",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
+    "new": "if (st.fire && !ventJudged.has(cycle) && (ventJudged.set(cycle, 1), standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1]))) {",
+    "tests": [
+      "test/net/eliteGates/egperfect_vent.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-rampart-vent-on-its-first-frame",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (st.st === 'fire' && standing && ventJudged.get(`rb${i}`) !== st.at && egInVent(v, f[0], f[1]))",
+    "new": "if (st.st === 'fire' && ventJudged.get(`rb${i}`) !== st.at && (ventJudged.set(`rb${i}`, st.at), standing && egInVent(v, f[0], f[1])))",
+    "tests": [
+      "test/net/eliteGates/egperfect_vent.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-old-pendulum-band",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "y < s.y + 2 * EG_PEND_HALF && y + h > s.y && pendHits(s, t, x, s.y, z, Math.sin)",
+    "new": "pendHits(s, t, x, y, z, Math.sin)",
+    "tests": [
+      "test/net/eliteGates/egperfect_pend.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-hang-through-the-floor",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const R = egHangReach(st.spec, s, band), full",
+    "new": "const R = { len: SD_PENDULUM.len, over: EG_HANG_CABLE_M }, full",
+    "tests": [
+      "test/world/eliteGates/egperfect_hang.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-hang-leans-by-eighteen",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "a = st.len < SD_PENDULUM.len ? Math.asin",
+    "new": "a = false ? Math.asin",
+    "tests": [
+      "test/world/eliteGates/egperfect_hang.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-the-anchor-height-unread",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const len = Math.round(100 * Math.max(EG_HANG_MIN, Math.min(SD_PENDULUM.len, clear - top))) / 100;",
+    "new": "const len = Math.round(100 * Math.max(EG_HANG_MIN, Math.min(SD_PENDULUM.len, clear))) / 100;",
+    "tests": [
+      "test/world/eliteGates/egperfect_hang.test.js"
+    ]
+  }
+]

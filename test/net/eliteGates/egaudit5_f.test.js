@@ -35,14 +35,16 @@ test('AUDIT EG V L5-2 L5-5 L5-6 L5-9 L5-11 L5-14 L5-15 L5-17 L3-11 L3-18 THE LAW
   // PIN MOVED (THE ASCENT - THE ROOMS, LAW 9 - 2026-10-16): spec law 9 is the build's law now, law 8 kept beside it its seven days
   // and still laid byte for byte as AUDIT EG V laid it (test/net/eliteGates/law9_rooms.test.js pins law 9); every pin below of law 8's ground
   // asks law 8 by name
-  assert.deepEqual([EG_SPEC, EG_WAYS_LAW, EG_SOLVE_LAW, EG_HERO_LAW], [9, 8, 8, 7]);
-  assert.deepEqual({ ...EG_LAWS }, { 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });
-  assert.deepEqual([4, 5, 6, 7, 8, 9, 10].map(egLawKnown), [true, true, true, true, true, true, false]);
-  assert.ok((Date.parse(EG_LAWS[9]) - Date.parse(EG_LAWS[4])) / 86_400_000 <= 7, 'every law before inside its keep');
+  // PIN MOVED (EG-PERFECT, 2026-10-18): spec law 10 (THE BROKEN WAY) is the build's law, laws 4 to 9 kept beside it
+  // (test/net/eliteGates/egperfect_broken.test.js pins law 10)
+  assert.deepEqual([EG_SPEC, EG_WAYS_LAW, EG_SOLVE_LAW, EG_HERO_LAW], [10, 8, 8, 7]);
+  assert.deepEqual({ ...EG_LAWS }, { 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });
+  assert.deepEqual([4, 5, 6, 7, 8, 9, 10, 11].map(egLawKnown), [true, true, true, true, true, true, true, false]);
+  assert.ok((Date.parse(EG_LAWS[10]) - Date.parse(EG_LAWS[4])) / 86_400_000 <= 7, 'every law before inside its keep');
   assert.deepEqual([hash(4), hash(5), hash(6), hash(7)], [1228307904, 1301097644, 201408482, 2018192008], 'laws 4 to 7, byte for byte');
   assert.equal(hash(8), 3066462283, 'law 8, as AUDIT EG V lays it');
   const B = egBreachNew({ b: '0123456789abcdef', ez: 'z'.repeat(20), s: 'a', o: 'A', ew: 0, rh: 0, seed: 77, op: 1_800_000_000_000, co: [['a', 'A', 1]], site: { px: 1, py: 1, x: 0, y: 0, z: 0, yaw: 0 }, wg: [] });
-  assert.equal(B.egv, 9, 'a breach opened now is of law 9 (PIN MOVED, THE ASCENT)');
+  assert.equal(B.egv, 10, 'a breach opened now is of law 10 (PIN MOVED, THE ASCENT; EG-PERFECT)');
   for (const [s, h, g] of LAW_HALLS) for (const law of [8, 9]) assert.ok(egHallOf(s, h, g, law).len <= EG_HALL_LEN_MAX, `seed ${s} hall ${h} law ${law}: inside the wire's bound`);
 });
 

@@ -29,6 +29,13 @@
 //     loses its cells at every landing it stands through (egBurnsIn, egUnionHolds' `burns`), as a told burn's at its onset.
 //     It is crossed between landings (a member in a pool runs out of it), never stood in as one lands; a void is no ground
 //     at all. Before, a burning court counted as ground, so a lord's blow could leave a member only the fire to stand in.
+//   EG-PERFECT (2026-10-18, Mac: "I want to ensure the boss attacks ... is absolutely perfect"; section 13.2) - THE HAVENS IN
+//     THE SET: a haven CHECK pending (the Haven Nova, the Eclipse - its every stamp 'h', naming no member) is a landing of the
+//     set too: at it every cell outside its havens is lost (egHavenCheck). A CHECK is never itself held - it has no edge to run
+//     to - but an aimed blow that would take the only haven a member can reach before it lands is: before, the set never saw a
+//     CHECK, and Moonshatter landed on the moon-shaft a member stood in 1.1 s before the Eclipse (the audit's Seyth, 165 blows
+//     in 36 Eclipses). A blow still live past its landing (`sp` - a Burning Bridge's 12 s, a Charge's run) burns its cells at
+//     every landing it stands through, as a pool does (egUnionHeld, net/eliteGates/egBodies.js).
 //
 // Pure. In the relay bundle (net/eliteGates/egBodies.js imports it). Not a DFU member. Ledger A (ELITE-GATES).
 import { egInBlow, egInShape, segDist, EG_ESCAPE_MPS, EG_REACT_S } from './egShape.js';
@@ -54,16 +61,21 @@ export const EG_PLACE_STEP_MS = 100;
  * @param {any[]} pending @param {any} next @param {number} px @param {number} pz @param {number} now @param {(x: number, z: number) => boolean} onFloor
  * @param {any[]} [burns]
  */
-export function egUnionHolds(pending, next, px, pz, now, onFloor, burns = []) {
-  if (!next || next.ch || !emptied([...pending, next], px, pz, now, onFloor, burns)) return false;
+export function egUnionHolds(pending, next, px, pz, now, onFloor, burns = [], nextBurns = []) {
+  if (!next || next.ch || !emptied([...pending, next], px, pz, now, onFloor, nextBurns.length ? [...burns, ...nextBurns] : burns)) return false;
   // AUDIT EG V (lane1 #10): held only if the new blow is what empties it - (h) its landing judged without it too, where the
-  // ground burning may empty the set alone (a court burning whole holds nothing more)
+  // ground burning may empty the set alone (a court burning whole holds nothing more). EG-PERFECT: the ground the new blow
+  // leaves burning (`nextBurns` - its pool) is its own, so it is judged with it alone
   return !emptied(burns.length ? [...pending, { s: [], at: next.at }] : pending, px, pz, now, onFloor, burns);
 }
+/** EG-PERFECT (section 13.2): is `b` a HAVEN CHECK - a CHECK every stamp of which is 'h' (everywhere outside its havens), naming
+ *  no member (an errand's failure blow lands on the members it names wherever they stand, and is no landing of the set)? Such a
+ *  landing takes every cell outside its havens. Pure. */
+export const egHavenCheck = (b) => !!b?.ch && !b.on && Array.isArray(b.s) && b.s.length > 0 && b.s.every((s) => s?.[0] === 'h');
 /** Does the set over landings `list` empty (egUnionHolds's search)? AUDIT EG V (h): at each landing it loses the cells of every
- *  burn (`burns`) standing then too. */
+ *  burn (`burns`) standing then too. EG-PERFECT: a haven CHECK is a landing (egHavenCheck). */
 function emptied(list, px, pz, now, onFloor, burns = []) {
-  const blows = list.filter((b) => b && !b.ch && b.at > now).sort((a, b) => a.at - b.at);
+  const blows = list.filter((b) => b && (!b.ch || egHavenCheck(b)) && b.at > now).sort((a, b) => a.at - b.at);
   if (!blows.length) return false;
   const C = EG_UNION_CELL, R = Math.ceil(EG_UNION_R / C), side = 2 * R + 1;
   const ix = (i, j) => (i + R) * side + (j + R);
@@ -167,9 +179,10 @@ export function egPlaceLandings(spec, wokeAt, now, until) {
     const seen = new Set();
     for (let t = now + EG_PLACE_STEP_MS; t <= until; t += EG_PLACE_STEP_MS) {
       for (const p of egHazardParts(hz, t / 1000)) {
-        if (p.st !== 'live' || seen.has(p.key) || p.sh[0] === 'h' || p.sh[0] === 'a') continue;
+        if (p.st !== 'live' || seen.has(p.key) || p.sh[0] === 'a') continue;
         seen.add(p.key);
-        out.push({ s: [p.sh], at: t, sp: L.live, ch: 0, o: 0, i: 0, ...(egByHeight(spec) ? { y: hz.y ?? 0 } : {}) });   // THE ASCENT: at its own height
+        // EG-PERFECT: the place's haven CHECK (the Eclipse Vault's) a landing of the set too, as a lord's is (egHavenCheck)
+        out.push({ s: [p.sh], at: t, sp: L.live, ch: p.sh[0] === 'h' ? 1 : 0, o: 0, i: 0, ...(egByHeight(spec) ? { y: hz.y ?? 0 } : {}) });   // THE ASCENT: at its own height
       }
     }
   }

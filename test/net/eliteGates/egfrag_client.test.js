@@ -25,6 +25,7 @@ import { EG_SEALED_MS } from '../../../src/net/eliteGates/egLaw.js';
 import { createEgClient } from '../../../src/scenes/eliteGates/egClient.js';
 import { validEgOut } from '../../../src/net/wire.js';
 import { EG_ANNALS } from '../../../src/net/eliteGates/egAnnals.js';
+import { egTubeFromMouth, EG_TUBE_MOUTH_S } from '../../../src/net/eliteGates/egFair.js';   // EG-PERFECT: a routed hall's tube from its mouth
 
 /** The first circle (seeds 1-600, circles 1-20) one of whose specs `want` takes: `{ seed, c, s }`. */
 function findCircle(want, from = 1) {
@@ -113,7 +114,7 @@ test('EG-FULL LAYER THREE THE FRAGMENTS\' PIECES ON THE SCREEN (sections 10.3 an
 
 test('EG-FULL LAYER THREE THE COLLAPSING TUBE AND GRATH\'S ISLANDS (sections 11.3 and 13.3): the Tube\'s floor stands as segments - none fallen before its start after the wake, then each falling as its fallen edge passes at 4.0 m/s - and a member caught is cast forward onto the nearest standing segment ahead; Grath\'s three islands stand as buckets, cracked one still standing, fallen one sunk as the relay says, and a cast-back from a fallen one lands on a standing one; neither the circle\'s mesh nor its collider carries either (mutants: the tube never falling; a cast back into the void; the islands fixed in the static floor)', () => {
   const tc = findCircle((s) => !!s.tube);
-  const wake = { h: 0, hw: 0 };
+  const wake = { h: 0, hw: 0, tm: 0 };
   registerSpireWake(() => wake);
   try {
     const span = createEgSpan({ seed: tc.seed, c: tc.c });
@@ -121,17 +122,26 @@ test('EG-FULL LAYER THREE THE COLLAPSING TUBE AND GRATH\'S ISLANDS (sections 11.
     const T = tc.s.tube;
     span.ride(1, 0.016, null, false);
     assert.ok(span.tubes.length >= 30 && span.tubes.every((g) => !g.gone), 'the Tube as segments, standing');
+    // PIN MOVED (EG-PERFECT, 2026-10-18): a routed hall's Tube (spec law 9) falls from the company's arrival at its mouth (the
+    // stage's `tm` - net/eliteGates/egFair.js egTubeEdgeIn), EG_TUBE_MOUTH_S after it, never from the wake (its mouth stands 34-82 s
+    // of walking from the plate - test/net/eliteGates/egperfect_tube.test.js); a hall of the laws before falls from its wake
+    const routed = egTubeFromMouth(tc.s), S0 = routed ? 2_040_000 + EG_TUBE_MOUTH_S * 1000 : 2_000_000 + T.start * 1000;
     wake.h = tc.s.h; wake.hw = 2_000_000;
-    span.ride((2_000_000 + T.start * 1000 - 100) / 1000, 0.016, null, false);
+    if (routed) {
+      span.ride((2_000_000 + T.start * 1000 + 5000) / 1000, 0.016, null, false);
+      assert.ok(span.tubes.every((g) => !g.gone), 'a routed hall: none fallen from its wake while nobody has reached its mouth');
+      wake.tm = 2_040_000;
+    }
+    span.ride((S0 - 100) / 1000, 0.016, null, false);
     assert.ok(span.tubes.every((g) => !g.gone), 'none before its start');
-    span.ride((2_000_000 + (T.start + 5) * 1000) / 1000, 0.016, null, false);
+    span.ride((S0 + 5000) / 1000, 0.016, null, false);
     const edge = T.z0 + T.mps * 5;
     for (const g of span.tubes) assert.equal(g.gone, g.z1 <= edge + 1e-9, `segment ${g.k}`);
     // caught behind the edge: cast forward
     const body = { pos: realmToDungeon(tc.s.x0 + T.x, T.y, T.z0 + 3), grounded: true, groundKey: span.tubes[1].key, height: 1.8, carryBy: () => {}, collider: { move: () => {} } };
-    span.ride((2_000_000 + T.start * 1000 - 50) / 1000, 0.016, body, true);
+    span.ride((S0 - 50) / 1000, 0.016, body, true);
     body.grounded = false; body.groundKey = null; body.pos[1] -= 40;
-    const back = span.ride((2_000_000 + (T.start + 5) * 1000) / 1000, 0.016, body, true);
+    const back = span.ride((S0 + 5000) / 1000, 0.016, body, true);
     const [, , bz] = dungeonToRealm(back[0], back[1], back[2]);
     assert.ok(bz > edge, `cast forward past the fallen edge (${bz.toFixed(2)} > ${edge.toFixed(2)})`);
     // the circle's collider carries no floor under the Tube

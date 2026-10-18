@@ -161,9 +161,14 @@ const _legs = new WeakMap();
  *  within EG_ROUTE_COURSE_SIDE_M of its line across and EG_ROUTE_COURSE_RISE_M of its ends' heights - in the hall's count. */
 export function egRouteSpanSteps(/** @type {any} */ spec, /** @type {number[]} */ A, /** @type {number[]} */ B, road = 0) {
   const z0 = Math.min(A[2], B[2]), z1 = Math.max(A[2], B[2]), y0 = Math.min(A[1], B[1]) - EG_ROUTE_COURSE_RISE_M, y1 = Math.max(A[1], B[1]) + EG_ROUTE_COURSE_RISE_M;
-  const dz = B[2] - A[2];
+  const dz = B[2] - A[2], dx = B[0] - A[0];
+  // (THE BROKEN WAY - spec law 10: a link along x - a broken bridge turned - takes the pieces along its line across x)
+  if (dz === 0 && dx !== 0) {
+    const x0 = Math.min(A[0], B[0]), x1 = Math.max(A[0], B[0]);
+    return (spec?.steps ?? []).filter((s) => (s.road ?? 0) === road && s.hd % 2 === 1 && s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1 && Math.abs(s.z - A[2]) <= EG_ROUTE_COURSE_SIDE_M);
+  }
   return (spec?.steps ?? []).filter((s) => {
-    if ((s.road ?? 0) !== road || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false;
+    if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false;   // (THE AUDIT: a link along z takes no piece turned along x)
     const x = dz !== 0 ? A[0] + ((B[0] - A[0]) * (s.z - A[2])) / dz : A[0];
     return Math.abs(s.x - x) <= EG_ROUTE_COURSE_SIDE_M;
   });

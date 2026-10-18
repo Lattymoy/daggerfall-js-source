@@ -67,7 +67,7 @@ window.all = async () => {
   try {
     for (const song of order) {
       p.play(song); clearInterval(p._timer);
-      routes.push(p._levelTo === p._press?.comp ? 'pressed' : 'lost');
+      routes.push(p._levelTo === p._press?.comp || (p._levelTo === p._floor && p._floorTo === p._press?.comp) ? 'pressed' : 'lost');   // EG-ROAR: through the floor to the press
       if (song === order[3]) p.duck(6, 0.3);   // THE SPIRE MIX's duck under a Court
       for (const end = now + each; now < end - 1e-9; now += 0.1) p._pump();
     }

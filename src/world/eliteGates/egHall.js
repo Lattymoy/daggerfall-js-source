@@ -58,6 +58,7 @@ import { egHeroFragInto, egHeroFragCollider, EG_HERO_FRAG_MESHES } from './egHer
 import { egRoomModelInto, egRoomColliderInto, egClimbZones, egClimbKeep } from './egRoomModel.js';   // THE ASCENT (spec law 9): the rooms built, the climbs' clamp
 import { GATE_PART } from '../gate/gateModel.js';
 import { egPolyIn, segDist } from '../../net/eliteGates/egShape.js';   // EG-HERO-LAY: the hero's clamp
+import { egRingSideWalls, EG_RING_DOOR } from '../../net/eliteGates/egWalkGraph.js';   // EG-PERFECT (spec law 10): a ring open at an alcove's doorway (THE AUDIT: its doorway alone)
 import { lightList, lightListView, packLight, copyLights } from '../../render/lightId.js';   // LIGHT-ID (main's, at the merge into PR #800): the circle's lamps into the frame's list through the one seam (pure - the swap's worker may read it)
 import { egRuinColumns, egDiscLamps, egRuinLampTint } from './egRuin.js';   // EG-LOOK (Elite-Gates-Look.md section 3.3): THE LAMPS ON THE RUIN'S COLUMNS
 
@@ -320,6 +321,24 @@ function plateModel(f, spec, d, occ = whole, band = spec.band ?? 0) {
 
 /** EG-FULL: A LANE (a bridge at any bearing - Grath's between his islands, a perch's side span, a caster's): its floor,
  *  its brass kerbs, its edge lines. */
+/**
+ * THE AUDIT (spec law 10): A LANE'S ENDS THAT NO FLOOR MEETS - `1` its a end, `2` its b end (both 3): a point a quarter metre past
+ * the end, at the lane's height, on no disc, lane, band, ramp, piece's top, hero's floor or room - a broken bridge's foot at its
+ * break, an approach run into its course's first piece over a gap. The laws before laid none (every lane end met a floor). Pure.
+ * @param {any} spec @param {{ax: number, az: number, bx: number, bz: number, hw: number, y?: number}} l
+ */
+export function egLaneOpenEnds(spec, l) {
+  const dx = l.bx - l.ax, dz = l.bz - l.az, len = Math.hypot(dx, dz) || 1, ux = dx / len, uz = dz / len, y = l.y ?? 0, H = 0.6;
+  const seg = (px, pz, ax, az, bx, bz) => { const vx = bx - ax, vz = bz - az, L2 = vx * vx + vz * vz || 1, t = Math.max(0, Math.min(1, ((px - ax) * vx + (pz - az) * vz) / L2)); return Math.hypot(px - ax - vx * t, pz - az - vz * t); };
+  const inPoly = (poly, px, pz) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, zi] = poly[i], [xj, zj] = poly[j]; if (zi > pz !== zj > pz && px < ((xj - xi) * (pz - zi)) / (zj - zi) + xi) c = !c; } return c; };
+  const met = (px, pz) => (spec.discs ?? []).some((d) => Math.abs((d.y ?? 0) - y) < H && Math.hypot(px - d.x, pz - d.z) <= d.r)
+    || (spec.lanes ?? []).some((q) => q !== l && Math.abs((q.y ?? 0) - y) < H && seg(px, pz, q.ax, q.az, q.bx, q.bz) <= q.hw)
+    || (spec.bands ?? []).some((b) => Math.abs((b.y ?? 0) - y) < H && Math.abs(px - b.x) <= b.halfW && pz >= b.z0 && pz <= b.z1)
+    || (spec.ramps ?? []).some((q) => y >= Math.min(q.y0, q.y1) - H && y <= Math.max(q.y0, q.y1) + H && seg(px, pz, q.ax, q.az, q.bx, q.bz) <= q.hw)
+    || (spec.steps ?? []).some((q) => Math.abs(q.y - y) < H && Math.abs(px - q.x) <= q.w / 2 && Math.abs(pz - q.z) <= q.d / 2)
+    || (spec.heroes ?? []).some((q) => (q.floors ?? []).some((f) => Math.abs(f.y - y) < H && inPoly(f.poly, px, pz)) || (!q.room && px >= q.box[0] && px <= q.box[3] && pz >= q.box[2] && pz <= q.box[5] && y >= q.box[1] - H && y <= q.box[4]));
+  return (met(l.ax - ux * 0.25, l.az - uz * 0.25) ? 0 : 1) | (met(l.bx + ux * 0.25, l.bz + uz * 0.25) ? 0 : 2);
+}
 function laneModel(f, spec, l) {
   const dx = l.bx - l.ax, dz = l.bz - l.az, len = Math.hypot(dx, dz) || 1, nx = -dz / len, nz = dx / len, y = l.y ?? 0;
   const P = (x, yy, z) => egToDungeon(spec, x, yy, z);
@@ -329,6 +348,16 @@ function laneModel(f, spec, l) {
     quadTo(f, SD_REALM_ROOT_RECORD, P(p0[0], y - 0.9, p0[1]), P(p1[0], y - 0.9, p1[1]), P(p1[0], y, p1[1]), P(p0[0], y, p0[1]), [nx * side, 0, nz * side]);
     const o = 0.05 * side;
     quadTo(f, SD_REALM_EDGE_RECORD, P(p0[0], y + 0.02, p0[1]), P(p1[0], y + 0.02, p1[1]), P(p1[0] - nx * o, y + 0.02, p1[1] - nz * o), P(p0[0] - nx * o, y + 0.02, p0[1] - nz * o), [0, 1, 0]);
+  }
+  // THE AUDIT (spec law 10): a lane's end over the void (egLaneOpenEnds - a broken bridge's, an approach run into its course's
+  // first piece) closed by its face down to its root and its edge's line across it, as its sides - every lane end met a floor
+  // before the bridges broke
+  const open = egLaneOpenEnds(spec, l);
+  for (const [on, p0, p1, s] of /** @type {[number, number[], number[], number][]} */ ([[open & 1, a1, a0, -1], [open & 2, b0, b1, 1]])) {
+    if (!on) continue;
+    const ux = (dx / len) * s, uz = (dz / len) * s, o = 0.05;
+    quadTo(f, SD_REALM_ROOT_RECORD, P(p0[0], y - 0.9, p0[1]), P(p1[0], y - 0.9, p1[1]), P(p1[0], y, p1[1]), P(p0[0], y, p0[1]), [ux, 0, uz]);
+    quadTo(f, SD_REALM_EDGE_RECORD, P(p0[0], y + 0.02, p0[1]), P(p1[0], y + 0.02, p1[1]), P(p1[0] - ux * o, y + 0.02, p1[1] - uz * o), P(p0[0] - ux * o, y + 0.02, p0[1] - uz * o), [0, 1, 0]);
   }
 }
 /** EG-FULL: THE GROUNDS' DRESS (section 13.3, 11.4) - a chamber's ring wall (open where the course enters and leaves), a
@@ -518,10 +547,13 @@ export function egCircleColliderTris(seed, c, geo = 0) {
       if (d.t === 'wall') {
         const n = 32, y0 = (d.y ?? 0) - 0.5, y1 = (d.y ?? 0) + d.h;
         for (let k = 0; k < n; k++) {
-          const a0 = (k / n) * Math.PI * 2, a1 = ((k + 1) / n) * Math.PI * 2, mid = (a0 + a1) / 2;
-          if (Math.abs(Math.sin(mid)) < 0.2) continue;
-          const p0 = egToDungeon(spec, d.x + Math.sin(a0) * d.r, y0, d.z + Math.cos(a0) * d.r), p1 = egToDungeon(spec, d.x + Math.sin(a1) * d.r, y0, d.z + Math.cos(a1) * d.r);
-          quad(p0, p1, [p1[0], p1[1] + (y1 - y0), p1[2]], [p0[0], p0[1] + (y1 - y0), p0[2]]);
+          const a0 = (k / n) * Math.PI * 2, a1 = ((k + 1) / n) * Math.PI * 2;
+          const x0 = d.x + Math.sin(a0) * d.r, z0 = d.z + Math.cos(a0) * d.r, x1 = d.x + Math.sin(a1) * d.r, z1 = d.z + Math.cos(a1) * d.r;
+          // what stands of it: none at the course's gaps; (spec law 10) the two beside an alcove's doorway (THE AUDIT)
+          for (const [t0, t1] of egRingSideWalls(spec, d, k, n)) {
+            const p0 = egToDungeon(spec, x0 + (x1 - x0) * t0, y0, z0 + (z1 - z0) * t0), p1 = egToDungeon(spec, x0 + (x1 - x0) * t1, y0, z0 + (z1 - z0) * t1);
+            quad(p0, p1, [p1[0], p1[1] + (y1 - y0), p1[2]], [p0[0], p0[1] + (y1 - y0), p0[2]]);
+          }
         }
       } else if (d.t === 'hall') {
         for (const sgn of [-1, 1]) { const a = egToDungeon(spec, d.x + sgn * d.hw, (d.y ?? 0) - 0.5, d.z0), b = egToDungeon(spec, d.x + sgn * d.hw, (d.y ?? 0) - 0.5, d.z1); quad(a, b, [b[0], b[1] + d.h + 0.5, b[2]], [a[0], a[1] + d.h + 0.5, a[2]]); }
@@ -819,6 +851,11 @@ export function egFragKeep(q, x, z, r, spec = null, y = NaN) {
   }
   const dx = x - q.x, dz = z - q.z, d = Math.hypot(dx, dz), lim = q.r - r;
   if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;
+  // EG-PERFECT - SPEC LAW 10: an alcove's doorway at the court's rim (net/eliteGates/egWalkGraph.js egRingSideWalls - the ring open
+  // there). THE AUDIT: its doorway alone, the body through it (EG_RING_DOOR less its radius across the alcove's line), on the
+  // ring's own floor
+  const doorOf = (a) => { const ax = a.x - q.x, az = a.z - q.z, al = Math.hypot(ax, az) || 1; return Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= EG_RING_DOOR.w / 2 - r && Math.abs((x - a.x) * (ax / al) + (z - a.z) * (az / al)) <= NICHE.d; };
+  if ((spec?.law ?? spec?.v ?? 0) >= 10 && (spec?.alcoves ?? []).some((a) => Math.abs((a.y ?? 0) - (q.y ?? 0)) < 1 && doorOf(a))) return null;
   return [q.x + (dx / d) * lim, q.z + (dz / d) * lim];
 }
 /**

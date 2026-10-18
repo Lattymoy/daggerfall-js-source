@@ -233,8 +233,8 @@
   {
     "name": "EGA3L-fade-caster",
     "file": "src/net/eliteGates/egLegion.js",
-    "old": "const mine = egByHeight(spec) ? seen.filter((m) => egSameStorey(spec, a, m)) : seen;",
-    "new": "const mine = egByHeight(spec) ? here.filter((m) => egSameStorey(spec, a, m)) : here;",
+    "old": "const mine = egByHeight(spec) ? seen.filter((m) => egSameStorey(spec, a, m) || overlooks(m)) : seen;",
+    "new": "const mine = egByHeight(spec) ? here.filter((m) => egSameStorey(spec, a, m) || overlooks(m)) : here;",
     "tests": [
       "test/net/eliteGates/egaudit3_legion.test.js"
     ],

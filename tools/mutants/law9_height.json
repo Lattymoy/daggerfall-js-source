@@ -412,8 +412,8 @@
   {
     "name": "LAW9H-union-floor-in-plan",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "egFloorLess(egFloorTest(spec, H), F.zones, now, blow.at, H)",
-    "new": "egFloorLess(egFloorTest(spec), F.zones, now, blow.at, H)",
+    "old": "const base = egFloorLess(egFloorTest(spec, H), F.zones, now, until, H);",
+    "new": "const base = egFloorLess(egFloorTest(spec), F.zones, now, until, H);",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -422,7 +422,7 @@
   {
     "name": "LAW9H-union-other-storey",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "      if (Number.isFinite(st) && !egOneStorey(st, blow.y)) continue;",
+    "old": "    if (Number.isFinite(st) && !egOneStorey(st, blow.y)) continue;",
     "new": "",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"

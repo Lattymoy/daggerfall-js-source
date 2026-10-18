@@ -6,7 +6,7 @@
 // Memento, the Redoubt's heal, offers, decrees and Ready, a forsaking.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { egBreachNew, egEnter, egStep, egBlow, egDown, egWord, EG_RD_RECALL_MS, EG_RD_WINDOW_MS } from '../../../src/net/eliteGates/egBrain.js';
+import { egBreachNew, egEnter, egStep, egBlow, egDown, egWord, EG_RD_RECALL_MS, EG_RD_WINDOW_MS, egGeo } from '../../../src/net/eliteGates/egBrain.js';
 import { egHallOf, egCircleOfHall, egFirstHallOf, egBossOf, EG_SEALED_MS, EG_LORDS } from '../../../src/net/eliteGates/egLaw.js';
 import { egGive8 } from '../../egGive8.mjs';   // PIN MOVED (THE ASCENT - THE ROOMS, LAW 9): law 8's circles given
 import { EG_OFFER_MAX, EG_VESTIGES, EG_MASTERIES } from '../../../src/net/eliteGates/egVestige.js';
@@ -51,7 +51,7 @@ function play({ n = 3, seed = 12345, start = 0, until = () => false, hook = null
   const act = (sub, m) => take(egWord(B, sub, m, pos[sub], now, rng));
   while (now < T0 + maxMs && !B.end && !until(B, frames)) {
     now += 250;
-    const spec = B.h > 0 ? egHallOf(B.seed, B.h, 0) : null;
+    const spec = B.h > 0 ? egHallOf(B.seed, B.h, egGeo(B), B.egv) : null;   // EG-PERFECT (PIN MOVED): the hall the relay lays - its span decrees' ground (egGeo), never ground 0
     const F = B.F;
     for (const [sub, m] of Object.entries(B.mem)) {
       if (!m.alive || !spec) continue;
@@ -75,7 +75,7 @@ function play({ n = 3, seed = 12345, start = 0, until = () => false, hook = null
       if (!m.alive) continue;
       const p = pos[sub];
       if (B.sg === 'trial' && B.F) {
-        const sp = egHallOf(B.seed, B.h, 0);
+        const sp = egHallOf(B.seed, B.h, egGeo(B), B.egv);
         const live = B.F.bodies.filter((b) => b.hp > 0 && !(b.fl & (2 | 16 | 128)));
         const tgt = live.filter((b) => b.role === 1)[0] ?? live.sort((a, b) => Math.hypot(a.x - (p.sx - sp.x0), a.z - p.z) - Math.hypot(b.x - (p.sx - sp.x0), b.z - p.z))[0];
         if (tgt) take(egBlow(B, sub, { k: 'hit', i: tgt.i, q: Math.floor(now / 250), d: 200, r: 1 }, { sx: p.sx, z: p.z }, now));

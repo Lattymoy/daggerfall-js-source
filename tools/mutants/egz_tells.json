@@ -354,7 +354,7 @@
   {
     "name": "EGZL-hang-pivot-on-the-deck",
     "file": "src/scenes/eliteGates/egSpan.js",
-    "old": "st.pivot = realmToDungeon(st.spec.x0 + s.x, s.y + SD_PENDULUM.len, s.z);",
+    "old": "st.pivot = realmToDungeon(st.spec.x0 + s.x, s.y + R.len, s.z);",
     "new": "st.pivot = realmToDungeon(st.spec.x0 + s.x, s.y, s.z);",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "EGZL-hang-lean-dropped",
     "file": "src/scenes/eliteGates/egSpan.js",
-    "old": "a = pendulumAngle(dx), cs = Math.cos(a)",
-    "new": "a = pendulumAngle(0), cs = Math.cos(a)",
+    "old": ": pendulumAngle(dx), cs = Math.cos(a)",
+    "new": ": pendulumAngle(0), cs = Math.cos(a)",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "EGZL-hang-only-moves",
     "file": "src/scenes/eliteGates/egSpan.js",
-    "old": "() => egHangModel(band), { turns: true });",
-    "new": "() => egHangModel(band));",
+    "old": "() => egHangModel(band, R.len, R.over), { turns: true });",
+    "new": "() => egHangModel(band, R.len, R.over));",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]

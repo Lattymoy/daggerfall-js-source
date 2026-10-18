@@ -139,7 +139,9 @@ test('EG-LOOK THE TELEGRAPHS KEEP THEIR FLOOR (section 5: "the motes fade within
   }
   assert.ok(halls >= 60);
   // the clearance itself, on one disc
-  const spec = egCircleSpecs(7, 1, 0)[0], d = spec.discs.find((q) => q.role === 'court'), floors = new Float32Array(EG_MOTE_FLOOR.max * 8), n = egMoteFloors(spec, floors);
+  // (that disc alone handed - PIN MOVED, EG-PERFECT: spec law 10's way circles this court at its height, its bridges inside the margin)
+  const hall = egCircleSpecs(7, 1, 0)[0], d = hall.discs.find((q) => q.role === 'court');
+  const spec = { ...hall, discs: [d], bands: [], lanes: [], ramps: [], caves: [], steps: [] }, floors = new Float32Array(EG_MOTE_FLOOR.max * 8), n = egMoteFloors(spec, floors);
   const c = egToDungeon(spec, d.x, d.y ?? 0, d.z), G = law(floors, n);
   assert.equal(G.floorFade([c[0], c[1] + EG_MOTE_FLOOR.clear - 0.01, c[2]]), 0);
   assert.equal(G.floorFade([c[0], c[1] + EG_MOTE_FLOOR.clear + EG_MOTE_FLOOR.ease + 0.01, c[2]]), 1);
@@ -244,7 +246,10 @@ test('EG-LOOK THE CAIRN\'S MIST SHEETS (section 5: "the band\'s mist under every
     const o = egToDungeon(spec, 0, 0, 0);
     for (let i = 0; i < out.length; i++) {
       const s = out[i], x0 = s.rect[0] - o[0], z0 = s.rect[1] - o[2], x1 = s.rect[2] - o[0], z1 = s.rect[3] - o[2], y = s.y - o[1];
-      for (const f of floors) if (f[0] < x1 && f[2] > x0 && f[1] < z1 && f[3] > z0) assert.ok(y <= f[4] - EG_RIM_MIST.below + 1e-6, `circle ${c} ${spec.kind}: a sheet at ${y.toFixed(2)} under a floor at ${f[4]}`);
+      // (EG-PERFECT's audit: a footprint that only touches a floor's edge meets none, as egRimMists reads it in the hall's frame - the
+      // scene's frame and back put seed 3's hall 32's sheet 1e-12 m onto a disc's edge)
+      const E = 1e-6;
+      for (const f of floors) if (f[0] < x1 - E && f[2] > x0 + E && f[1] < z1 - E && f[3] > z0 + E) assert.ok(y <= f[4] - EG_RIM_MIST.below + 1e-6, `circle ${c} ${spec.kind}: a sheet at ${y.toFixed(2)} under a floor at ${f[4]}`);
       assert.equal(typeof s.round, 'boolean');
       sheets++;
     }

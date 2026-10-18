@@ -1,0 +1,425 @@
+[
+  {
+    "name": "EGPERFECT-haven-check-unseen",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "const blows = list.filter((b) => b && (!b.ch || egHavenCheck(b)) && b.at > now).sort((a, b) => a.at - b.at);",
+    "new": "const blows = list.filter((b) => b && !b.ch && b.at > now).sort((a, b) => a.at - b.at);",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-haven-check-held",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "  if (!next || next.ch || !emptied(",
+    "new": "  if (!next || !emptied(",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-named-blow-a-landing",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "export const egHavenCheck = (b) => !!b?.ch && !b.on && Array.isArray(b.s)",
+    "new": "export const egHavenCheck = (b) => !!b?.ch && Array.isArray(b.s)",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-pools-unread",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "const out = [], pl = F.mem?.pools?.[b.i], y = Number.isFinite(b.y) ? { y: b.y } : {};",
+    "new": "const out = [], pl = null, y = Number.isFinite(b.y) ? { y: b.y } : {};",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-live-span-unread",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "    if (b.sp > 0 && !b.ch) for (const st of b.s) out.push(",
+    "new": "    if (false) for (const st of b.s) out.push(",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-duelist-floor-the-court",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "const ring = F.pg?.ring, duel = ring && ring[2] > 0 ? F.mem?.challenge?.subs ?? [] : [];",
+    "new": "const ring = F.pg?.ring, duel = [];",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-cut-instant-dropped",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "out.push({ k: 'ecut', i, ...(Number.isFinite(at) ? { at: Math.round(at) } : {}) });",
+    "new": "out.push({ k: 'ecut', i });",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-wire-strips-cut-instant",
+    "file": "src/net/wire.js",
+    "old": "{ k: 'ecut', i: m.i, ...(Number.isSafeInteger(m.at) && m.at >= 0 ? { at: m.at } : {}) }",
+    "new": "{ k: 'ecut', i: m.i }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-fill-frozen-at-arrival",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "{ ...b, cut: Number.isFinite(w.at) ? Math.min(now, w.at) : now }",
+    "new": "{ ...b, cut: now }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-wind-grace-the-way-alone",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "export const EG_WIND_GRACE_MS = EG_BEAT_TRIAL_MS + 150;",
+    "new": "export const EG_WIND_GRACE_MS = 150;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-conquest-at-the-wake",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    phase(F, spec, L, ph, now, here, rng, out, ctx) { if (ph === 2) KITS.ilthys.sig(F, spec, L, now, out, ctx, true); if (ph === 3) F.mem.chargeAt = now + 5000; },",
+    "new": "    wake(F, spec, L, now, out) { KITS.ilthys.sig(F, spec, L, now, out, {}, false); },\n    phase(F, spec, L, ph, now, here, rng, out, ctx) { if (ph === 3) F.mem.chargeAt = now + 5000; },",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-sig-no-hold",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const sigHolds = (L, hold) => !!hold && L.hp / L.max > PHASE_AT[1];",
+    "new": "const sigHolds = () => false;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-sig-hold-over-health",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const sigHolds = (L, hold) => !!hold && L.hp / L.max > PHASE_AT[1];",
+    "new": "const sigHolds = (L, hold) => !!hold;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-conquest-hold-never-freed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (C && C.next >= 3 && !banners.length) { if (C.hold) { L.hpFloor = null; L.hold = undefined; }",
+    "new": "if (C && C.next >= 3 && !banners.length) { if (C.hold) { L.hold = undefined; }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-chain-hold-never-freed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (F.mem.chainHold) { F.mem.chainHold = 0; L.hpFloor = null; L.hold = undefined; }",
+    "new": "if (F.mem.chainHold) { F.mem.chainHold = 0; }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-mirror-hold-never-freed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (F.mem.mirrorHold > 0 && --F.mem.mirrorHold === 0) { const lord = egBodyById(F, L.by); if (lord) { lord.hpFloor = null; lord.hold = undefined; } }",
+    "new": "if (F.mem.mirrorHold > 0) --F.mem.mirrorHold;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-second-phase-skipped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "      for (let ph = L.ph + 1; ph <= want; ph++) {",
+    "new": "      for (let ph = want; ph <= want; ph++) {",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-conquest-all-at-once",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "        C.next++; C.at = now + EG_CONQUEST_EVERY_MS;",
+    "new": "        C.next++; C.at = now;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-conquest-burn-goes-out",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "now + EG_CONQUEST_TELL_MS, now + EG_ZONE_FIGHT_MS, out, { p: 0.08, b: 3, el: elOf(L, 'fire'), y: f.y, whole: true }",
+    "new": "now + EG_CONQUEST_TELL_MS, now + 60_000, out, { p: 0.08, b: 3, el: elOf(L, 'fire'), y: f.y }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-broken-banner-keeps-burning",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (o.t === 'banner' && o.zone) zoneEnd(F, o.zone, now, out);",
+    "new": "  if (o.t === 'banner' && o.zone) { o.zone.until = now; out.push({ k: 'ez', ...o.zone }); }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-burning-perch-through-the-floor",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "{ nm: 'Burning Perch', wu: 2000, p: 0.45, b: 12, el: 'fire' }, [], now, out, { place: true });",
+    "new": "{ nm: 'Burning Perch', wu: 2000, p: 0.45, b: 12, el: 'fire' }, [], now, out);",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-perches-not-risen",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "        if (k) say(out, 'perches');",
+    "new": "        if (k) say(out, 'perches'); if (k) for (const p of egObjsOf(F, 'pillar').slice(have.length)) egGone(F, [p], EG_GONE.crumbled, '', now, out);",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-guard-unread",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 && lord ? EG_GUARD_GLINT : band",
+    "new": "export const egRimOf = (band, fl, lord = true) => (false ? EG_GUARD_GLINT : band",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-duel-off-the-ring",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    if (duel && to) to = inRing(to, duel, L.r);",
+    "new": "    void inRing;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-duel-any-mark",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    const foes = open(inDuel.length ? inDuel : here), all = open(here);",
+    "new": "    const foes = open(here), all = open(here);",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-duel-ring-fillers-thrown",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "&& !(duel && b.duelNo));",
+    "new": ");",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-run-moves-after-recovery",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "      if (A.to && !A.moved && now >= A.at) {",
+    "new": "      if (A.to && !A.moved && now >= A.until) {",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-stale-run-after-vanish",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "        egStop(F, L, now); L.atk = null;   // EG-PERFECT (bug 7)",
+    "new": "        egStop(F, L, now);   // EG-PERFECT (bug 7)",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-scorch-keeps-pace",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "F.mem.scent = null; F.mem.scentAt = now + 20_000; L.busyUntil = 0; L.speed = 3.4; say(out, 'scorched'); }",
+    "new": "F.mem.scent = null; F.mem.scentAt = now + 20_000; L.busyUntil = 0; say(out, 'scorched'); }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-scorch-keeps-marks",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "for (const q of F.mem.scent) egUnmark(F, q.sub, 0); F.mem.mkDirty = 1; F.mem.scent = null;",
+    "new": "F.mem.scent = null;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-gore-gap-alone",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "(ctx.n === 1 && b.minGap1 != null ? b.minGap1 : b.minGap ?? 0)",
+    "new": "(b.minGap ?? 0)",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-crack-told-late",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  zoneOut(F, 'void', shDisc(o.x, o.z, 11), o.stAt, o.stAt + 15_000, out, { y: o.y });",
+    "new": "  void zoneOut;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-marks-join-order",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }\n  return [...(t ? [t] : []), ...rest].slice(0, k);",
+    "new": "  return here.slice(0, k);",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-perched-breath-16",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "laneTo(L, t, egHas(L, EG_FL.fly) && !egHas(L, EG_FL.grounded) ? Math.min(EG_WYRM_REACH_M, Math.max(16, dist(L.x, L.z, t.x, t.z) + 6)) : 16, 4)",
+    "new": "laneTo(L, t, 16, 4)",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-wraith-chain-binds-nothing",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "        if (!w || !(w.hp > 0) || !m || dist(w.x, w.z, m.x, m.z) <= 8 || now < ((F.mem.snaps ??= {})[key] ?? 0)) continue;",
+    "new": "        if (true) continue;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-crossing-swaps-anyway",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "else { T.swapAt = 0; if (said) { const ax = a.x, az = a.z; kitPlace(F, a, b.x, b.z, now); kitPlace(F, b, ax, az, now); } else T.crossAt = now + EG_CROSS_AGAIN_MS; }",
+    "new": "else { T.swapAt = 0; const ax = a.x, az = a.z; kitPlace(F, a, b.x, b.z, now); kitPlace(F, b, ax, az, now); }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-lesson-untold",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "zoneOut(F, 'burn', shRing(f.x, f.z, F.mem.lessonR, f.r + 4), now + EG_LESSON_TELL_MS, now + EG_LESSON_TELL_MS + (end ? EG_ZONE_FIGHT_MS : 6000), out,",
+    "new": "zoneOut(F, 'burn', shRing(f.x, f.z, F.mem.lessonR, f.r + 4), now, now + (end ? EG_ZONE_FIGHT_MS : 6000), out,",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-chain-said-alone",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  if (blow.after) {\n    const first = F.blows.find((b) => b.i === blow.after);",
+    "new": "  if (false) {\n    const first = F.blows.find((b) => b.i === blow.after);",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-chain-before-first",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "    const pend = F.pend.sort((a, b) => (a.b.after ? 1 : 0) - (b.b.after ? 1 : 0));",
+    "new": "    const pend = F.pend;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-lord-eclipse-unread",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "    if (!b.ch || b.nm !== EG_ECLIPSE_NM || b.cut",
+    "new": "    if (true || b.nm !== EG_ECLIPSE_NM || b.cut",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-choose-unweighed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "      if (m2?.stamps && wouldHold(F, spec, L, m2.stamps, { ...C, ...(m2.B ?? {}) }, here, now, m2.delay ?? 0)) { tried.add(C.nm); continue; }",
+    "new": "      void wouldHold;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-lattice-four-strips",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const W = EG_LATTICE_W, n = Math.max(3, Math.ceil((2 * f.r) / W)),",
+    "new": "const W = EG_LATTICE_W, n = 4,",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-lattice-at-once",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "extra: lanes.slice(1).map((s, j) => ({ stamps: [s], delay: EG_LATTICE_STEP_MS * (j + 1), B: {} }))",
+    "new": "extra: lanes.slice(1).map((s) => ({ stamps: [s], delay: 0, B: {} }))",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-lattice-from-its-mark",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "side = (t.x - f.x) * vx + (t.z - f.z) * vz >= 0 ? -1 : 1,",
+    "new": "side = (t.x - f.x) * vx + (t.z - f.z) * vz >= 0 ? 1 : -1,",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-cage-once",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (L.ph >= 3 && !F.mem.exam && here.length && now >= (F.mem.cageAt ?? Infinity))",
+    "new": "if (false && L.ph >= 3 && !F.mem.exam && here.length && now >= (F.mem.cageAt ?? Infinity))",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-cage-again-at-once",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "F.mem.exam = null; F.mem.cageAt = now + EG_CAGE_AGAIN_MS; egGone(F, seals,",
+    "new": "F.mem.exam = null; F.mem.cageAt = now; egGone(F, seals,",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGPERFECT-wellfire-axes",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "return { stamps: [shLaneAt(t.x - 12 * Math.sin(a), t.z - 12 * Math.cos(a), a, 24, 4), shLaneAt(t.x - 12 * Math.sin(b), t.z - 12 * Math.cos(b), b, 24, 4)] };",
+    "new": "return { stamps: [shLaneAt(L.x - 12, L.z, Math.PI / 2, 24, 4), shLaneAt(L.x, L.z - 12, 0, 24, 4)] };",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  }
+]

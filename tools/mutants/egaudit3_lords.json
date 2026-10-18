@@ -245,8 +245,8 @@
   {
     "name": "EGA3-gore-not-doubled",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "minGap: 4, w: 3, w1: 6, when",
-    "new": "minGap: 4, w: 3, when",
+    "old": "minGap: 4, minGap1: 0, w: 3, w1: 6, when",
+    "new": "minGap: 4, minGap1: 0, w: 3, when",
     "tests": [
       "test/net/eliteGates/egaudit3_lords.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGA3-cleave-copied",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "ATTACKS.cleave.r, ATTACKS.cleave.arc)] }) },\n  { ...SLAM, make: (F, spec, L) => ({ stamps: [shDisc(L.x, L.z, ATTACKS.slam.r)] }) },\n  { ...METEOR",
-    "new": "9, 100)] }) },\n  { ...SLAM, make: (F, spec, L) => ({ stamps: [shDisc(L.x, L.z, ATTACKS.slam.r)] }) },\n  { ...METEOR",
+    "old": "ATTACKS.cleave.r, ATTACKS.cleave.arc)] }) },\n  { ...SLAM, duelNo: 1, make:",
+    "new": "9, 100)] }) },\n  { ...SLAM, duelNo: 1, make:",
     "tests": [
       "test/net/eliteGates/egaudit3_lords.test.js"
     ]

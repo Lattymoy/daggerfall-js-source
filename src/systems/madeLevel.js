@@ -60,6 +60,9 @@ export const EG_NO_FLIGHT_TEXT = 'The Spire\'s spans are walked, not flown.';
  *   techFlight    'refused'  - a weapon technique's leap or dash, on traversal ground
  *   jumpBuffer    seconds    - THE FORGIVENESS's buffer (0: DFU's motor, none)
  *   latePress     seconds    - THE FORGIVENESS's late press (0: none)
+ *   runLeap       'refused'  - EG-PERFECT: the enhanced climb's RUNNING LEAP (player/motor.js _pkMayLeap - CLIMB3's leap at an
+ *                              edge and its late press) refused, so a running Jump at an edge is the plain jump the courses
+ *                              were proven with; the wall run, the mantle, the vault and the free climb are kept
  *   resurrect     'refused'  - a party member's Resurrect
  *   avoidDeath    'refused'  - Stendarr's AvoidDeath (GuildManager.AvoidDeath)
  *   death         'castOut' | 'final' | 'fall' - what a death is: cast out before the gate, final for the Hollow, a fall
@@ -68,17 +71,27 @@ export const EG_NO_FLIGHT_TEXT = 'The Spire\'s spans are walked, not flown.';
  *   says          'mid' | 'hour' - the voice a level's refusal is said in (the mid-screen line, the Hour's own voice)
  */
 export const MADE_LEVEL_RULE_KEYS = Object.freeze(['save', 'rest', 'automap', 'mark', 'recall', 'portalStone', 'companions', 'regen', 'potions', 'levitate', 'slowfall',
-  'techFlight', 'jumpBuffer', 'latePress', 'resurrect', 'avoidDeath', 'death', 'deathPenalty', 'unstuck', 'says']);
+  'techFlight', 'jumpBuffer', 'latePress', 'runLeap', 'resurrect', 'avoidDeath', 'death', 'deathPenalty', 'unstuck', 'says']);
 const NONE_IS_ZERO = new Set(['jumpBuffer', 'latePress']);
 /** A level's row: every rule named, null (or 0 for a duration) where the level leaves the game as it is. */
 const row = (o) => Object.freeze(Object.fromEntries(MADE_LEVEL_RULE_KEYS.map((k) => [k, o[k] ?? (NONE_IS_ZERO.has(k) ? 0 : null)])));
-/** WHAT EACH MADE LEVEL TURNS OFF (section 24's table, as the doors read it). */
+/** WHAT EACH MADE LEVEL TURNS OFF (section 24's table, as the doors read it).
+ *  EG-PERFECT (2026-10-18, Mac: "Traversing between sections should present a challenge, platforming should be detailed"):
+ *  THE RUNNING LEAP REFUSED on the made levels whose ways are proven gap by gap - the Spire's spans (section 10.5, THE TIMED
+ *  SOLVER) and the Shattered Hour's Unmoored Steps (SD7b) are both proven with THE SPAN BUILD's PLAIN running jump, and the
+ *  enhanced climb is forced on online (systems/features.js `enhanced-climbing`, scenes/shared.js parkourSwitchOn): a running
+ *  Jump within PARKOUR_RUNLEAP_EDGE of an edge became CLIMB3's leap, ~3.9 m at Jumping 0 and ~8.4 m at Jumping 100 - past the
+ *  platform the plain jump lands on (the sweep with the online page's parkour on every frame: 50 of 308 courses not crossed with
+ *  the leap, none refused - Elite-Gates.md's EG-PERFECT ways record). The Hour shares the law (its Steps are the Spire's pieces'
+ *  own record, and its online page forces the same lane), so both rows refuse it; the court has no course. The wall run, the
+ *  mantle, the vault and the free climb stay on. THE AUDIT: the Hour gives no late press (DFU's motor's own), so its refused
+ *  late Jump past an edge is nothing at all - as DFU's; the Spire's is its own forgiveness, the plain jump. */
 export const MADE_LEVEL_RULES = Object.freeze({
   court: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', death: 'castOut', unstuck: 'refused', says: 'mid' }),
   hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',
-    resurrect: 'refused', death: 'final', unstuck: 'wayHome', says: 'hour' }),
+    runLeap: 'refused', resurrect: 'refused', death: 'final', unstuck: 'wayHome', says: 'hour' }),
   spire: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', potions: 'counted',
-    levitate: 'banned', slowfall: 'banned', techFlight: 'refused', jumpBuffer: EG_JUMP_BUFFER_S, latePress: EG_LATE_PRESS_S, resurrect: 'refused', avoidDeath: 'refused', death: 'fall',
+    levitate: 'banned', slowfall: 'banned', techFlight: 'refused', jumpBuffer: EG_JUMP_BUFFER_S, latePress: EG_LATE_PRESS_S, runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall',
     deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),
 });
 /** HOW EACH REFUSES, in its own words - the three homes' own lines, unchanged (the Spire's Mark is its Recall's). */

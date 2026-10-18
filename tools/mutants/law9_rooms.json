@@ -2,8 +2,8 @@
   {
     "name": "ROOMS-law-9-not-in-the-table",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": ", 8: '2026-10-15', 9: '2026-10-16' });",
-    "new": ", 8: '2026-10-15' });",
+    "old": ", 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "new": ", 8: '2026-10-15', 10: '2026-10-18' });",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]

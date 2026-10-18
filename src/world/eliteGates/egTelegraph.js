@@ -24,6 +24,7 @@ import { egHazardParts, EG_HAZARDS } from '../../net/eliteGates/egFragLaw.js';
 import { egFightFloorAt } from '../../net/eliteGates/egFair.js';
 import { egOneStorey } from '../../net/eliteGates/egWalkGraph.js';   // THE ASCENT - HEIGHT: a shape drawn on its own storey's floors, the peril arrow's blow of mine
 import { EG_FL } from '../../net/eliteGates/egBodies.js';
+import { EG_ECLIPSE_NM } from '../../net/eliteGates/egLords.js';   // EG-PERFECT: a lord's own Eclipse, by its name
 import { EG_VESTIGES } from '../../net/eliteGates/egVestige.js';
 import { gateHitFlash } from '../gate/gateBoss.js';
 import { EG_BAND_RAMPS } from './egBandArt.js';
@@ -396,6 +397,21 @@ export function egEclipseAt(spec, t) {
   }
   return null;
 }
+/** EG-PERFECT (sections 13.4 and 25.5): A LORD'S OWN ECLIPSE (Seyth's - net/eliteGates/egLords.js, the haven CHECK named 'The Eclipse'
+ *  she throws every 40 s on the Vault's ground) read as the Vault's place hazard is (egEclipseAt's shape), from the fight's blows
+ *  at `ms` (relay ms): told from its word to its landing, live for EG_ECLIPSE_BLOW_LIVE_MS - so it has the chip, the dark, the wind
+ *  and the toll the place's has (it had none: only the havens drawn). Null when none stands. Pure. */
+export const EG_ECLIPSE_BLOW_LIVE_MS = 600;
+export function egEclipseOfBlows(blows, ms) {
+  for (const b of blows ?? []) {
+    const s = b?.s?.[0];
+    if (!b.ch || b.nm !== EG_ECLIPSE_NM || b.cut || s?.[0] !== 'h' || ms < b.at - b.wu || ms >= b.at + EG_ECLIPSE_BLOW_LIVE_MS) continue;
+    const havens = [];
+    for (let k = 1; k + 2 < s.length; k += 3) havens.push([s[k], s[k + 1]]);
+    return { secs: Math.max(0, (b.at - ms) / 1000), live: ms >= b.at, havens, r: s[3] ?? EG_HAZARDS.eclipse.r, key: `b${b.i}` };
+  }
+  return null;
+}
 /** The bar's chip, *The Eclipse - 5*, while it is told; nothing else. Pure. */
 export const egEclipseChip = (e) => (e && !e.live ? `The Eclipse - ${Math.max(1, Math.ceil(e.secs - 1e-9))}` : '');
 /** How dark the floor is (0-1): from its last 2 s to the strike, the havens kept. Pure. */
@@ -442,9 +458,20 @@ export const egAuraHolders = (E) => (E?.ms ?? []).filter((r) => (r[6] ?? []).som
  *  toward it). */
 export const EG_SHADE_BAND = 2;
 export const EG_SHADE_RIM = Object.freeze([187 / 255, 193 / 255, 202 / 255, 0.3]);
+/** EG-PERFECT (section 13.3, the Last Armsmaster's Riposte: "The tell: his blade raised, glinting"): A LORD'S GUARD - the 0.6 s
+ *  after it rises (`lit`, net/eliteGates/egLords.js's Guard), in which a blow landed on him is answered by the Riposte - glints
+ *  white-gold over the whole sprite on every screen, brighter than the Shade's rim (the relay set the flag and no screen read it:
+ *  the Riposte was a punish nobody could see coming), with its ring (EG_GUARD_SOUND - Parry6, systems/soundClips.js). */
+export const EG_GUARD_GLINT = Object.freeze([1, 0.92, 0.7, 0.75]);
+export const EG_GUARD_SOUND = Object.freeze({ rec: 433, vol: 1, pitch: 1.2 });
+/** EG-PERFECT (section 13.3, the Mother of Dusk's Wingbeat, "told 1 s"): A GUST TOLD - for the second before a glade-wide gust
+ *  lands (`egust`'s `at`), a lane from the member's feet the way it will push them and as far (its speed x its time), pulsing, and
+ *  the Steps' breath rising once (AmbientWindMoanDeep, systems/soundClips.js) - the gust came with no word before. */
+export const EG_GUST_TELL_MS = 1000;
+export const EG_GUST_SOUND = Object.freeze({ rec: 66, vol: 0.9, pitch: 1.1 });
 /** A body's rim light: every foe's in the Shade (never a friend's), the dormant Lurker aside (section 12); null elsewhere.
- *  Pure. */
-export const egRimOf = (band, fl) => (band === EG_SHADE_BAND && (fl & (EG_FL.dormant | EG_FL.friend)) === 0 ? EG_SHADE_RIM : null);
+ *  EG-PERFECT: a guard raised glints over it (EG_GUARD_GLINT), in every band. Pure. */
+export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 && lord ? EG_GUARD_GLINT : band === EG_SHADE_BAND && (fl & (EG_FL.dormant | EG_FL.friend)) === 0 ? EG_SHADE_RIM : null);   // (THE AUDIT: `lord` - a Binder's raise is lit too, and no guard)
 
 // ── WEIGHT (section 25.8) ──────────────────────────────────────────────────────────────────────────────────────
 /** THE HEAVY BLOWS' SHAKES: by name (net/eliteGates/egLords.js's Savage, Gore, Whirl and Maul, net/eliteGates/egLegion.js's Smash), the shake at

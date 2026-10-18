@@ -572,7 +572,7 @@ test('EG-ZG THE QUIET COMPANY\'S ALLIES (section 25.4): no word, every ally\'s s
 test('EG-ZG THE RIM AND THE FLASH ON THE BODIES, THE LOOK\'S POOLS KEPT (scenes/eliteGates/egFight.js): every body\'s flash egBodyFlash\'s and its glint the Shade\'s rim; my blow marks the body mine; the tethers\' and the pool\'s danger in the palette, a Vestige\'s ring and the Eclipse\'s dark never recoloured; the fight\'s pass the Spire\'s, its draws the floors\' (mutants: the rim never laid; my blow not marked mine; the ring dyed the danger)', () => {
   const S = read('src/scenes/eliteGates/egFight.js');
   assert.match(S, /setBatchHitFlash\(d\.batch, egBodyFlash\(b, t\)\);/);
-  assert.match(S, /setBatchGlint\(d\.batch, b\.fellAt \? null : egRimOf\(darkNow > 0 \? EG_SHADE_BAND : band, b\.fl \| 0\)\);/);   // PIN MOVED (AUDIT EG V, b: lane1 #13 - in the place's dark every foe keeps the Shade's rim light)
+  assert.match(S, /setBatchGlint\(d\.batch, b\.fellAt \? null : egRimOf\(darkNow > 0 \? EG_SHADE_BAND : band, b\.fl \| 0, lord\)\);/);   // PIN MOVED (AUDIT EG V, b: lane1 #13 - in the place's dark every foe keeps the Shade's rim light; EG-PERFECT's audit: the guard's glint a lord's alone)
   assert.match(S, /b\.hurtAt = b\.mineAt = now\(\);/);
   assert.match(S, /pass\.drawFloors\(plan, proj, view, eye, seconds, fog, centre\);/);
   assert.ok(!/pass\.draw\(sh,/.test(S), 'no shape drawn on one plane at the hall\'s centre any more');

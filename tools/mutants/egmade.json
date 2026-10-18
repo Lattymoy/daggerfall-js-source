@@ -29,8 +29,8 @@
   {
     "name": "EGMADE-the-hour-unwarded",
     "file": "src/systems/madeLevel.js",
-    "old": "regen: 'off', levitate: 'banned',\n    resurrect: 'refused', death: 'final'",
-    "new": "regen: 'off', levitate: null,\n    resurrect: 'refused', death: 'final'",
+    "old": "regen: 'off', levitate: 'banned',\n    runLeap: 'refused', resurrect: 'refused', death: 'final'",
+    "new": "regen: 'off', levitate: null,\n    runLeap: 'refused', resurrect: 'refused', death: 'final'",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]

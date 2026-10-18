@@ -326,8 +326,8 @@
   {
     "name": "EG5-colossal-radii-off",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "(law.radiusX === 1 || o.ch ? s :",
-    "new": "(true || o.ch ? s :",
+    "old": "(law.radiusX === 1 || ch ? s :",
+    "new": "(true || ch ? s :",
     "tests": [
       "test/net/eliteGates/eg5_profile.test.js"
     ]

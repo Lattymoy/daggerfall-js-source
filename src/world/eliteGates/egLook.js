@@ -23,7 +23,7 @@
 // Not a DFU member. Ledger A (ELITE-GATES).
 import { egCircleSpecs, egBandOfCircle, EG_BRINK_HALLS } from '../../net/eliteGates/egLaw.js';
 import { egMistAt } from '../../net/eliteGates/egFragLaw.js';
-import { egTubeBand, egWallBand, egIsleDisc, egToDungeon } from './egHall.js';
+import { egTubeBand, egWallBand, egIsleDisc, egToDungeon, egLaneOpenEnds } from './egHall.js';
 import { SD_ISLAND_SIDES } from '../superDungeon/sdRealm.js';
 import { SD_STEP_THICK, breathSeen } from '../superDungeon/sdSteps.js';
 import { createMeshKit } from './meshKit.js';
@@ -74,6 +74,10 @@ export function egCircleEdges(seed, c, geo = 0) {
     for (const l of spec.lanes ?? []) {
       const dx = l.bx - l.ax, dz = l.bz - l.az, len = Math.hypot(dx, dz) || 1, nx = -dz / len, nz = dx / len, y = (l.y ?? 0) + lift;
       for (const s of [-1, 1]) seg(edge, egToDungeon(spec, l.ax + s * nx * l.hw, y, l.az + s * nz * l.hw), egToDungeon(spec, l.bx + s * nx * l.hw, y, l.bz + s * nz * l.hw));
+      // (THE AUDIT: a lane's end over the void its line across it - world/eliteGates/egHall.js egLaneOpenEnds)
+      const open = egLaneOpenEnds(spec, l);
+      if (open & 1) seg(edge, egToDungeon(spec, l.ax + nx * l.hw, y, l.az + nz * l.hw), egToDungeon(spec, l.ax - nx * l.hw, y, l.az - nz * l.hw));
+      if (open & 2) seg(edge, egToDungeon(spec, l.bx + nx * l.hw, y, l.bz + nz * l.hw), egToDungeon(spec, l.bx - nx * l.hw, y, l.bz - nz * l.hw));
     }
     // THE TRACKS: a Rail's and a Drum's whole travel, under both its sides
     for (const s of spec.steps) {

@@ -276,7 +276,7 @@
   {
     "name": "EGA5A2-captive-law-ignored",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "if (law.length >= EG_CHAINS) return law.slice(0, EG_CHAINS).map((q) => [q.x, q.z]);",
+    "old": "if (law.length >= EG_CHAINS && three.every((q) => egOnFight(spec, q.x, q.z, 0, spotY(spec, q)))) return three.map((q) => [q.x, q.z]);",
     "new": "if (law.length > EG_CHAINS) return law;",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"

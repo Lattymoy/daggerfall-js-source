@@ -29,6 +29,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { pageParam } from '../systems/pageQuery.js';   // CLIMB1: `?parkour=off`, the enhanced climb's kill door
 import { isOnlinePage, onlineForcedPref } from '../systems/online/onlineLane.js';   // CLIMB1: online the skin is not asked, and the row is the lane's
+import { madeRuleHere } from '../systems/madeLevel.js';   // EG-PERFECT: the made level's law refuses the running leap on its proven ways
 import { carriedWeight } from '../systems/inventory.js';   // CLIMB2: a heavy pack cuts the enhanced climb's reach
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // CLIMB2: ...over what the body can carry
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
@@ -922,9 +923,14 @@ export const FOREST_HIDDEN_LOCATION_TYPES = Object.freeze(new Set([4, 7, 9, 10, 
  *  climb takes at the classic climb's cadence (climbingDeps' own). */
 /** CLIMB-NODE (FIELD BUGS 2026-10-01, Mac: "Hold it at nodes"): `hold` - whether the free climb's walk-in start is held
  *  (the world host's: a profession's node under the look, or an act playing - player/motor.js _freeStart). */
+/** EG-PERFECT (2026-10-18; bible/11-Multiplayer/Elite-Gates.md section 10.5): `leap` - whether the running leap may fly here
+ *  (player/motor.js _pkMayLeap, the leap at an edge and its late press): the made level's law (systems/madeLevel.js `runLeap`)
+ *  refuses it on the Spire's spans and the Hour's Steps, whose every gap is proven with the plain jump. One home for the four
+ *  hosts' motors (THE ONE CONSTRUCTION SEAM): the world host's made level answers, every other host's none. */
 export function parkourDeps(entity, say = null, { hold = null } = {}) {
   return {
     enabled: () => parkourSwitchOn(),
+    leap: () => madeRuleHere('runLeap') !== 'refused',
     inputs: () => {
       const most = maxFatigue(entity), cap = entityMaxEncumbrance(entity);
       return {

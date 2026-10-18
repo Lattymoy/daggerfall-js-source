@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { egHallOf, EG_SEALED_MS, EG_WAKE_RING_MS, EG_DECREE_BY_KEY } from '../../../src/net/eliteGates/egLaw.js';
 import { egBreachNew, egEnter, egStep, egBlow, champRing, EG_GATE_HOLD_M, EG_CHAMP_RING_M } from '../../../src/net/eliteGates/egBrain.js';
 import { egLordsNew, egLordsWake, egLordsStep, egLordsOf, egLordsAwake, egLordsFell, egLordHitX, egLordHit, egLordsShare, egLordsPairOf, egObjsOf, egObjBroken, egHoldHp, egHavenRouteM, egTtkRef,
-  EG_TWIN_ONE_MS, EG_FURY_RATIO, EG_GAROTH_SIG_CARDS, EG_ZONE_FIGHT_MS } from '../../../src/net/eliteGates/egLords.js';
+  EG_TWIN_ONE_MS, EG_FURY_RATIO, EG_GAROTH_SIG_CARDS, EG_ZONE_FIGHT_MS, EG_LESSON_TELL_MS } from '../../../src/net/eliteGates/egLords.js';
 import { egFightNew, egHas, EG_FL, EG_ROLE, egBodyById, egBlowsStep, egShareX, egBodiesOf, egAim } from '../../../src/net/eliteGates/egBodies.js';
 import { egInShape, egErrandMs, shDisc } from '../../../src/net/eliteGates/egShape.js';
 import { egFightView } from '../../../src/net/eliteGates/egWalkGraph.js';
@@ -349,13 +349,14 @@ test('AUDIT EG IV lane1 #2 THE EXAMINATION HOLDS ITS LINE STRICTLY ABOVE THE THI
 test('AUDIT EG IV lane1 #4 A MIRROR TURNS NO PHASE (section 13.4, the Mirrorcourt): Seyth in his first phase, one of his mirrors struck to 30% - no phase turned for it, no Long Night laid, no ward raised on it (mutants: a mirror\'s phase turned)', () => {
   const C = court(1, 75, 'seyth', { n: 3 });
   const here = C.subs.map((sub, j) => ({ sub, x: C.f.x + 3 + j, z: C.f.z + 3 }));
+  C.L.hp = C.L.max * 0.6;   // EG-PERFECT (PIN MOVED): the Mirrorcourt is his second phase's - turned at 0.66
   for (let k = 0; k < 4 * 12; k++) C.step(here);
   const mirrors = egLordsOf(C.F).filter((L) => egHas(L, EG_FL.mirror));
   assert.equal(mirrors.length, 2, 'his two mirrors');
   const m = mirrors[0];
   m.hp = Math.floor(m.max * 0.3);
   const out = C.step(here);
-  assert.equal(C.L.ph, 1, 'Seyth in his first phase');
+  assert.equal(C.L.ph, 2, 'Seyth in his second phase');
   assert.deepEqual([m.ph, out.filter((f) => f.k === 'eph' || f.k === 'edark'), out.filter((f) => f.k === 'esay' && f.w === 'phase'), m.ward], [1, [], [], 0], 'no phase turned, no Long Night, no ward');
 });
 
@@ -368,7 +369,8 @@ test('AUDIT EG IV lane1 #7 THE LAST LESSON\'S LAST RING (section 13.3: "the cour
   assert.equal(C.L.ph, 3, 'the Last Lesson');
   const burning = () => (C.F.zones ?? []).filter((z) => z.kind === 'burn' && z.s[0] === 'r' && z.from <= C.now() && z.until > C.now()).map((z) => z.s[3]);
   const t0 = C.now(), closes = Math.ceil(C.f.r - 12) * 6000;
-  for (let t = t0; C.now() < t0 + closes + 12_000;) { C.step(here); if (C.now() > t + 6000) { t = C.now(); assert.equal(burning().length, 1, `one ring burns at ${(C.now() - t0) / 1000} s`); } }
+  // EG-PERFECT (PIN MOVED): each ring told EG_LESSON_TELL_MS before it burns - the first burns 7.5 s after the turn
+  for (let t = t0 + EG_LESSON_TELL_MS; C.now() < t0 + closes + 12_000;) { C.step(here); if (C.now() > t + 6000) { t = C.now(); assert.equal(burning().length, 1, `one ring burns at ${(C.now() - t0) / 1000} s`); } }
   assert.deepEqual(burning(), [12], 'at r 12');
   const last = C.F.zones.find((z) => z.kind === 'burn' && z.s[0] === 'r' && z.s[3] === 12);
   assert.equal(last.until - last.from, EG_ZONE_FIGHT_MS, 'to the fight\'s end');
@@ -423,7 +425,7 @@ test('AUDIT EG IV lane1 #10 and lane9 #16 GAROTH\'S OLDER SIGNATURE IS HIS (sect
   const M = court(1, 125, 'garoth', { n: 1 }), mh = [{ sub: 'acct-0', x: M.f.x + 4, z: M.f.z + 4 }];
   M.L.hp = M.L.max * 0.3;
   for (let k = 0; k < 4 * 120; k++) M.step(mh);
-  assert.deepEqual(card(M), ['The Mirrorcourt.'], 'its card');
+  assert.deepEqual(card(M), ['The Clan Muster.', 'The Mirrorcourt.'], 'its card - EG-PERFECT (PIN MOVED): a burst past both lines takes every turn, each with its card');
   const mirrors = M.F.bodies.filter((b) => b.role === EG_ROLE.lord && egHas(b, EG_FL.mirror));
   assert.ok(mirrors.length >= 2 && mirrors.every((b) => b.key === 'garoth' && b.k === M.L.k), 'his own mirrors: his key and his look');
   assert.deepEqual([M.frames.filter((f) => f.k === 'eb' && f.nm === 'The Eclipse').length, M.said.eclipse ?? 0, M.F.pg.shafts ?? null], [0, 0, null], 'no Eclipse in the Clan Pit, no moon-shafts');
@@ -435,7 +437,7 @@ test('AUDIT EG IV lane1 #10 and lane9 #16 GAROTH\'S OLDER SIGNATURE IS HIS (sect
   const R = court(1, 100, 'garoth', { n: 4 }), rh = R.subs.map((sub, j) => ({ sub, x: R.f.x + 2 + j, z: R.f.z + 2 }));
   R.L.hp = R.L.max * 0.3;
   for (let k = 0; k < 4 * 30 && !(R.F.mem.chains ?? []).length; k++) R.step(rh);
-  assert.deepEqual(card(R), ['The Chaining.'], 'its card');
+  assert.deepEqual(card(R), ['The Clan Muster.', 'The Chaining.'], 'its card - EG-PERFECT (PIN MOVED): every turn taken, each with its card');
   assert.deepEqual(R.F.mem.chains.map((c) => c.length), [2, 2], 'four members: two pairs');
   const V = court(1, 50, 'morvayn', { n: 3 }), vh = V.subs.map((sub, j) => ({ sub, x: V.f.x + 2 + j, z: V.f.z + 2 }));
   V.L.hp = V.L.max * 0.3;
@@ -446,7 +448,7 @@ test('AUDIT EG IV lane1 #10 and lane9 #16 GAROTH\'S OLDER SIGNATURE IS HIS (sect
   const I = court(1, 150, 'garoth', { n: 1 });
   I.L.hp = I.L.max * 0.3;
   I.step([{ sub: 'acct-0', x: I.f.x + 2, z: I.f.z }]);
-  assert.deepEqual(card(I), ['The Conquest.']);
+  assert.deepEqual(card(I), ['The Clan Muster.', 'The Conquest.'], 'EG-PERFECT (PIN MOVED): every turn taken, each with its card');
 });
 
 // ── lane 1 #20: FURY BESIDE A CHAMPION ───────────────────────────────────────────────────────────────────────────────
@@ -546,8 +548,9 @@ test('AUDIT EG IV lane1 #26 THE CROSSING AND BURNING PERCH ARE LORD BLOWS (secti
   for (let k = 0; k < 8; k++) W.step(wh);
   W.L.hp = W.L.max * 0.5;
   for (let k = 0; k < 16; k++) W.step(wh);
-  egObjBroken(W.F, W.spec, egBodyById(W.F, W.L.perch), 'M0', W.now(), []);
+  const said = [];   // EG-PERFECT (PIN MOVED): thrown as the place's - said at once, never held (egLords.js lordBlow's `place`)
+  egObjBroken(W.F, W.spec, egBodyById(W.F, W.L.perch), 'M0', W.now(), said);
   for (let k = 0; k < 4; k++) W.step(wh);
-  const perch = W.frames.find((f) => f.k === 'eb' && f.nm === 'Burning Perch');
+  const perch = said.find((f) => f.k === 'eb' && f.nm === 'Burning Perch');
   assert.ok(perch && Math.abs(perch.p - 0.45 * egShareX(W.F.c)) < 1e-9, `its depth's share (${perch?.p})`);
 });

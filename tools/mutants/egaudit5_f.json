@@ -2,8 +2,8 @@
   {
     "name": "EGA5F-law-table",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' }",
-    "new": "7: '2026-10-13', 9: '2026-10-16' }",
+    "old": "7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' }",
+    "new": "7: '2026-10-13', 9: '2026-10-16', 10: '2026-10-18' }",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -12,7 +12,7 @@
   {
     "name": "EGA5F-spec-seven",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "export const EG_SPEC = 9;",
+    "old": "export const EG_SPEC = 10;",
     "new": "export const EG_SPEC = 7;",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "EGA5F-trunk-never",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "const trunk = L8 && c >= 3 && extra <= 2 && (c >= 11 || r() < 0.5);",
-    "new": "const trunk = L8 && c >= 3 && extra <= 2 && (c >= 11 || r() < 0.5) && false;",
+    "old": "const trunk = L8 && c >= 3 && extra <= (law >= EG_BROKEN_LAW ? 1 : 2) && (c >= 11 || r() < 0.5);",
+    "new": "const trunk = L8 && c >= 3 && extra <= (law >= EG_BROKEN_LAW ? 1 : 2) && (c >= 11 || r() < 0.5) && false;",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "EGA5F-trunk-past-room",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "const trunk = L8 && c >= 3 && extra <= 2 && (c >= 11 || r() < 0.5);",
+    "old": "const trunk = L8 && c >= 3 && extra <= (law >= EG_BROKEN_LAW ? 1 : 2) && (c >= 11 || r() < 0.5);",
     "new": "const trunk = L8 && c >= 3 && (c >= 11 || r() < 0.5);",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "EGA5F-trunk-deep-half",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "const trunk = L8 && c >= 3 && extra <= 2 && (c >= 11 || r() < 0.5);",
-    "new": "const trunk = L8 && c >= 3 && extra <= 2 && (r() < 0.5);",
+    "old": "const trunk = L8 && c >= 3 && extra <= (law >= EG_BROKEN_LAW ? 1 : 2) && (c >= 11 || r() < 0.5);",
+    "new": "const trunk = L8 && c >= 3 && extra <= (law >= EG_BROKEN_LAW ? 1 : 2) && (r() < 0.5);",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -133,7 +133,7 @@
   {
     "name": "EGA5F-third-past-room",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "else if (third && (L9 || edge + EG_FORK_THIRD_CM <= EG_HALL_LEN_MAX * 100))",
+    "old": "else if (third && (law >= EG_BROKEN_LAW ? edge - zStart + EG_FORK_THIRD_CM <= EG_FORK_COURSE_CM : L9 || edge + EG_FORK_THIRD_CM <= EG_HALL_LEN_MAX * 100))",
     "new": "else if (third)",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
@@ -286,7 +286,7 @@
   {
     "name": "EGA5F-rim-landing-none",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "if ((q.road ?? 0) === 0 && q.after > 0) ends.push(",
+    "old": "if ((q.road ?? 0) === 0 && q.after > 0 && !q.hd) ends.push(",
     "new": "if (false) ends.push(",
     "tests": [
       "test/net/eliteGates/egaudit5_f_rim.test.js"
@@ -479,7 +479,7 @@
   {
     "name": "EGA5F-builds-float",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "((v ?? 0) >= EG_SOLVE_LAW ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] : [SPAN_BUILD, FAST_BUILD])",
+    "old": "((v ?? 0) >= EG_SOLVE_FLIGHT_LAW ? [LAW10_SPAN_BUILD, LAW10_FAST_BUILD] : (v ?? 0) >= EG_SOLVE_LAW ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] : [SPAN_BUILD, FAST_BUILD])",
     "new": "([SPAN_BUILD, FAST_BUILD])",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
@@ -489,8 +489,8 @@
   {
     "name": "EGA5F-builds-law-seven",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "((v ?? 0) >= EG_SOLVE_LAW ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] : [SPAN_BUILD, FAST_BUILD])",
-    "new": "((v ?? 0) >= 7 ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] : [SPAN_BUILD, FAST_BUILD])",
+    "old": ": (v ?? 0) >= EG_SOLVE_LAW ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] :",
+    "new": ": (v ?? 0) >= 7 ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] :",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],

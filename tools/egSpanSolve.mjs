@@ -12,7 +12,8 @@
 //     node tools/egSpanSolve.mjs --sweep [--band <0-3>] [--seeds <n>] [--from <seed>] [--golden]
 //         THE SWEEP (section 10.5): every course the generator lays in a circle of the band, for each seed, crossed STEP BY
 //         STEP BY THE REAL MOTOR - player/motor.js PlayerMotor at THE SPAN BUILD (Speed 10, Running 0, Jumping 0, every gap
-//         a plain running jump; the online page's parkour at skill 0 for a riser alone) on player/collider.js Collider, over
+//         a plain running jump; EG-PERFECT: the online page's parkour at skill 0 in every frame, as the game forces it, its
+//         running leap refused as the Spire's made level refuses it) on player/collider.js Collider, over
 //         the circle's floors (world/eliteGates/egHall.js egCircleColliderTris, the one bucket the dungeon stands) and its pieces as
 //         the screen rides them (scenes/eliteGates/egSpan.js createEgSpan - the Steps' stepTris slabs, moving on the shared clock,
 //         carrying, crumbling, a Pendulum's touch casting back, a Gust pushing). SD7b's harness (test/world/superDungeon/sd7b_steps.test.js) is
@@ -49,7 +50,7 @@
 import { egCircleSpecs, egFirstHallOf } from '../src/net/eliteGates/egLaw.js';
 import { egHallOf, egSpecForget } from '../src/net/eliteGates/egLaw.js';
 import { egSpanPairs, egPairWindows, egSpanProof, egRoadCross, egFastCross, egCrossMin, egCourseOf, egJumpLands, egJumpReach, egPieceAt, egPendHits,
-  egSlagLane, egSlagState, egSlagX, egRouteCross, egRouteSolved, EG_SPAN_RUN_MPS, EG_CRUMBLE_KINDS, EG_CRUMBLE_DELAY_S, EG_SOLVE_HORIZON_S } from '../src/net/eliteGates/egSpanLaw.js';
+  egSlagLane, egSlagState, egSlagX, egRouteCross, egRouteSolved, egAlongOf, EG_SPAN_RUN_MPS, EG_CRUMBLE_KINDS, EG_CRUMBLE_DELAY_S, EG_SOLVE_HORIZON_S } from '../src/net/eliteGates/egSpanLaw.js';
 import { egRouted, egRouteRoads, egClimbPitches, egPitchWallS, EG_ROUTE_COURSE_RISE_M } from '../src/net/eliteGates/egRouteProof.js';   // THE ASCENT: the route's legs
 import { egRouteLen } from '../src/net/eliteGates/egRoute.js';
 import { egSynth9Give } from './lib/egLaw9Synth.mjs';   // THE ASCENT: synthetic LAW 9 halls, until THE ROOMS lays them
@@ -63,6 +64,7 @@ import { gustAt } from '../src/world/superDungeon/sdSteps.js';
 import { identity } from '../src/world/mat4.js';
 import { egPolyIn } from '../src/net/eliteGates/egShape.js';   // EG-HERO-LAY: a hero's floors, crossed as still ground
 import { isMain } from './lib/isMain.mjs';
+import { madeLevelRule } from '../src/systems/madeLevel.js';   // EG-PERFECT: the Spire's running leap refused, as the game refuses it
 
 /** THE SPAN BUILD on the motor (section 10.2 - SD7b's: Speed 10, Running 0), and its skills for the parkour (a riser). */
 export const SWEEP_BUILD = Object.freeze({ speed: 10, running: 0, swimming: 30 });
@@ -168,15 +170,24 @@ export function sweepClimbTris(col, specs) {
  */
 function pilotOf(S, spec, road, t0, trace = null) {
   const { col, span } = S, h = spec.h, X0 = spec.x0;
-  let climbing = false, skills = SKILL0;
-  const parkour = { enabled: () => climbing, inputs: () => skills, tally: () => {}, say: () => {}, hold: null };
+  // EG-PERFECT (2026-10-18; bible/11-Multiplayer/Elite-Gates.md section 10.5): THE ONLINE PAGE'S PARKOUR IN EVERY FRAME - the
+  // enhanced climb is forced on online (systems/features.js `enhanced-climbing`), so the pilot crosses with it on as the game
+  // does (it had it on for a riser and a climb alone, and so never met the running leap), and with the leap refused as the
+  // Spire's made level refuses it (systems/madeLevel.js `runLeap` - scenes/shared.js parkourDeps' `leap`): every gap a plain
+  // running jump, the wall run, the mantle and the free climb the game's own
+  let skills = SKILL0;
+  const parkour = { enabled: () => true, leap: () => madeLevelRule('spire', 'runLeap') !== 'refused', inputs: () => skills, tally: () => {}, say: () => {}, hold: null };
   const m = new PlayerMotor(col, SWEEP_BUILD, { parkour });
   const fail = (step, why) => ({ ok: false, seed: S.seed, h, road, step, why, t: t - t0 });
   let t = t0;
   const at = realmToDungeon(X0 + spec.arrive.x, spec.arrive.y ?? 0, spec.arrive.z);
   m.spawn(at[0], at[1] + 0.05, at[2]);
   span.setSafe(null);
-  const me = () => { const p = dungeonToRealm(m.pos[0], m.pos[1], m.pos[2]); return { x: p[0] - X0, y: p[1], z: p[2] }; };
+  /** THE BROKEN WAY (spec law 10): the heading a turned span leg is crossed along (0 +z - the hall's own frame): while it is
+   *  set, where I stand is read in its frame (egAlongOf - x across, z along) and every yaw I steer is turned with it, so the
+   *  planner crosses a turned course's pairs (egSpanPairs' own frame) as it crosses any course */
+  let turn = 0;
+  const me = () => { const p = dungeonToRealm(m.pos[0], m.pos[1], m.pos[2]), x = p[0] - X0; if (!turn) return { x, y: p[1], z: p[2] }; const [a, b] = egAlongOf(turn, x, p[2]); return { x: a, y: p[1], z: b }; };
   /** THE ASCENT (LAW 9): the heights of the way being crossed (`[lo, hi]` - a span link's ends and its course's rise either
    *  side): still ground off them stands on another storey and is none of this way's. Null - every floor (the laws before). */
   let wayYs = /** @type {number[]|null} */ (null);
@@ -185,7 +196,7 @@ function pilotOf(S, spec, road, t0, trace = null) {
   const frame = (input, yaw = 0) => {
     const back = span.ride(t, DT, m, true);
     if (back) return 'fell';
-    m.update(DT, input, yaw, 0);
+    m.update(DT, input, yaw + (turn * Math.PI) / 2, 0);
     t += DT;
     trace?.(t, me(), m.grounded, m.groundKey, input);
     return null;
@@ -312,7 +323,7 @@ function pilotOf(S, spec, road, t0, trace = null) {
   /** a launch of pair `pi` at `u` the pilot takes: it lands held either side, no gust in the flight, a Pendulum clear */
   const takes = (pi, u, lane = -1) => {
     const p = pairs[pi];
-    return lands(p, u) && !gusty((p.b ?? p.a)?.road ?? 0, lzOf(p, u, lane), u - 0.2, u + airOf(p) + 0.1, (p.b ?? p.a)?.x ?? null) && pendClear(pi, u - HOLD_S, lane) && pendClear(pi, u, lane) && pendClear(pi, u + HOLD_S, lane);
+    return lands(p, u) && (turn || !gusty((p.b ?? p.a)?.road ?? 0, lzOf(p, u, lane), u - 0.2, u + airOf(p) + 0.1, (p.b ?? p.a)?.x ?? null)) && pendClear(pi, u - HOLD_S, lane) && pendClear(pi, u, lane) && pendClear(pi, u + HOLD_S, lane);   // (a turned course keeps no Gust)
   };
   const launch = (pi, ready, since, depth = 0, lane = -1) => {
     const p = pairs[pi], gone = goneAt(p.a, since, lane), air = airOf(p), nx = pairs[pi + 1];
@@ -351,19 +362,17 @@ function pilotOf(S, spec, road, t0, trace = null) {
         const p = me();
         const err = walkTo(clamp(p.x, a.x - 0.6, a.x + 0.6), a.z - a.d / 2 - 1.4);
         if (err) return fail(a.i, `${err} before the riser`);
-        climbing = true;
         let up = false;
         for (let k = 0; k < 4 * 60 && !up; k++) {
           const go = me().z >= a.z - a.d / 2 - 0.8;
           if (frame(still({ forward: 1, run: true, jump: go, up: go }), 0)) return fail(a.i, 'fell off the riser');
           up = m.grounded && m.groundKey === egStepKey(h, a.i);
         }
-        climbing = false;
         if (!up) return fail(a.i, 'the riser was not run up');
         for (let k = 0; k < 8; k++) if (frame(still())) return fail(a.i, 'fell off the riser');
       }
-      // on still ground, over it to the launch's edge first (its gaps leapt)
-      if (!a) { const err = crossGround(b ? b.x : me().x, pair.edge - EDGE_M - RUNUP_M - 0.2); if (err) return fail(at, `${err} on the way to the launch`); }
+      // on still ground, over it to the launch's edge first (its gaps leapt - THE BROKEN WAY: a turned bridge's near foot walked)
+      if (!a) { const err = turn ? walkTo(b ? b.x : me().x, pair.edge - EDGE_M - RUNUP_M - 0.2) : crossGround(b ? b.x : me().x, pair.edge - EDGE_M - RUNUP_M - 0.2); if (err) return fail(at, `${err} on the way to the launch`); }
       // where the launch is: the far edge of what I stand on, wherever it is then - or the ground's edge
       const lane = a?.kind === 'slag' ? standLane : -1, lzAt = (u) => lzOf(pair, u, lane);
       const tau = launch(pi, t + Math.max(0, lzAt(t) - EDGE_M - me().z) / EG_SPAN_RUN_MPS + 0.03, standSince, 0, lane);
@@ -454,7 +463,7 @@ function pilotOf(S, spec, road, t0, trace = null) {
     if (err) return `${err} on the way to the climb's foot`;
     const yaw = Math.atan2(-c.face[0], -c.face[1]);   // into the face
     for (let k = 0; k < 60 * 5 && m.grip < 1; k++) if (frame(still(), yaw)) return 'fell at the climb\'s foot';
-    climbing = true; skills = CLIMB0;
+    skills = CLIMB0;
     const foot = me().y;
     let high = foot, up = false, why = '';
     for (let k = 0; k < 60 * 90 && !up && !why; k++) {
@@ -465,7 +474,7 @@ function pilotOf(S, spec, road, t0, trace = null) {
       high = Math.max(high, p.y);
       up = m.grounded && p.y >= c.y1 - 0.1;
     }
-    climbing = false; skills = SKILL0;
+    skills = SKILL0;
     if (why) return why;
     if (!up) return `never stood on the climb's lip (${(high - foot).toFixed(2)} m up)`;
     return wayTo(g.to, g);
@@ -473,7 +482,7 @@ function pilotOf(S, spec, road, t0, trace = null) {
   /** THE ASCENT (LAW 9): the heights the way being crossed stands at - span leg `g`'s ends and its course's rise either side
    *  (null: every floor). */
   const wayOf = (g) => { wayYs = g ? [Math.min(g.from[1], g.to[1]) - EG_ROUTE_COURSE_RISE_M, Math.max(g.from[1], g.to[1]) + EG_ROUTE_COURSE_RISE_M] : null; };
-  return { m, me, frame, walkTo, crossGround, crossPairs, wayTo, climbUp, wayOf, fail, get t() { return t; },
+  return { m, me, frame, walkTo, crossGround, crossPairs, wayTo, climbUp, wayOf, fail, get t() { return t; }, turnTo: (/** @type {number} */ hd) => { turn = hd; },
     done: () => ({ ok: true, seed: S.seed, h, road, step: null, why: '', t: t - t0 }) };
 }
 
@@ -523,7 +532,9 @@ export function sweepRoute(S, spec, road, t0, trace = null) {
     if (g.kind === 'climb') why = P.climbUp(g);
     else if (L.pairs.length) {
       P.wayOf(g);
+      P.turnTo(L.g.steps[0]?.hd ?? 0);   // THE BROKEN WAY: a turned course crossed in its heading's frame
       const crossed = P.crossPairs(L.pairs, true);
+      P.turnTo(0);
       P.wayOf(null);
       if (crossed) return crossed;
       why = P.wayTo(g.to, g);

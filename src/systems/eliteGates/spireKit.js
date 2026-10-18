@@ -44,11 +44,16 @@ export function spireFooting() {
 
 /** EG-FULL LAYER TWO: the breach's hall now and its wake on the relay's clock (`{ h, hw }`, ms - 0 before it wakes),
  *  registered by the world host from the breach's client, read by the spans (scenes/eliteGates/egSpan.js - a Falling Wall falls from
- *  its wake). */
+ *  its wake). EG-PERFECT (2026-10-18; Elite-Gates.md section 11.3): and `tm`, when the company reached a routed hall's Collapsing
+ *  Tube (relay ms, 0 not yet - the stage's word, net/eliteGates/egLink.js stageOf): its fall runs from there (net/eliteGates/egFair.js
+ *  egTubeEdgeIn). */
 let _wake = null;
 export function registerSpireWake(fn) { _wake = typeof fn === 'function' ? fn : null; }
 export function spireWake() {
-  try { const w = _wake?.(); return w && Number.isFinite(w.h) && Number.isFinite(w.hw) ? { h: w.h, hw: w.hw } : { h: 0, hw: 0 }; } catch { return { h: 0, hw: 0 }; }
+  try {
+    const w = _wake?.();
+    return w && Number.isFinite(w.h) && Number.isFinite(w.hw) ? { h: w.h, hw: w.hw, tm: Number.isFinite(w.tm) && w.tm > 0 ? w.tm : 0 } : { h: 0, hw: 0, tm: 0 };
+  } catch { return { h: 0, hw: 0, tm: 0 }; }
 }
 
 // EG-FULL LAYER THREE (section 11 - the fragments): what the spans stand from the relay's fight, and the hands a span's

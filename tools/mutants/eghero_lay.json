@@ -2,7 +2,7 @@
   {
     "name": "EGHL-law-seven-not-the-law",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "export const EG_SPEC = 9;",
+    "old": "export const EG_SPEC = 10;",
     "new": "export const EG_SPEC = 6;",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
@@ -470,7 +470,7 @@
   {
     "name": "EGHL-chains-off-the-court",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "const f0 = hc?.laid ? { t: 'd', x: X, z: hc.zc, r: hc.R } : P.fl[0];",
+    "old": "const f0 = hc?.laid ? { t: 'd', x: law >= EG_BROKEN_LAW ? P.heroes.find((q) => !q.rec.room).x : X, z: hc.zc, r: hc.R } : P.fl[0];",
     "new": "const f0 = P.fl[0];",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
@@ -650,8 +650,8 @@
   {
     "name": "EGHL-fair-hero-floors-unread",
     "file": "src/net/eliteGates/egFair.js",
-    "old": "if (on(f.y) && egPolyIn(f.poly, x, z, P)) return `h${i}`;",
-    "new": "if (false) return `h${i}`;",
+    "old": "if (on(f.y) && egPolyIn(f.poly, x, z, P)) return byHero ? `h${k}:${i}` : `h${i}`;",
+    "new": "if (false) return byHero ? `h${k}:${i}` : `h${i}`;",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
     ]

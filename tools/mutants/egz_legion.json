@@ -407,7 +407,7 @@
   {
     "name": "EGZ-the-fallen-cast-back-unowed",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "|| egFallenAt(spec, A.hw ?? 0, x, y, z, t)) {",
+    "old": "|| egFallenAt(spec, A.hw ?? 0, x, y, z, t, A.tm ?? 0)) {",
     "new": ") {",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
@@ -416,7 +416,7 @@
   {
     "name": "EGZ-a-fallen-segment-holding",
     "file": "src/net/eliteGates/egFair.js",
-    "old": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000)) return `b${i}`; }",
+    "old": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000, tm)) return `b${i}`; }",
     "new": "&& on(b.y)) return `b${i}`; }",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
@@ -425,7 +425,7 @@
   {
     "name": "EGZ-the-tube-never-falls",
     "file": "src/net/eliteGates/egFair.js",
-    "old": "(b.role === 'tube' && !!spec.tube && z < egTubeEdge(spec.tube, tMs - hw))",
+    "old": "(b.role === 'tube' && !!spec.tube && z < egTubeEdgeIn(spec, hw, tm, tMs))",
     "new": "false",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
@@ -434,8 +434,8 @@
   {
     "name": "EGZ-the-trail-forgets-the-wake",
     "file": "src/net/eliteGates/egFair.js",
-    "old": "egSupportAt(spec, p.x, p.y, p.z, t / 1000, false, A.hw ?? 0, bridges)",
-    "new": "egSupportAt(spec, p.x, p.y, p.z, t / 1000, false, 0, bridges)",
+    "old": "egSupportAt(spec, p.x, p.y, p.z, t / 1000, false, A.hw ?? 0, bridges, A.tm ?? 0)",
+    "new": "egSupportAt(spec, p.x, p.y, p.z, t / 1000, false, 0, bridges, A.tm ?? 0)",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
     ]
@@ -443,7 +443,7 @@
   {
     "name": "EGZ-the-plate-beside-forgotten",
     "file": "src/net/eliteGates/egFair.js",
-    "old": "return over && egSupportAt(spec, x, y, z, tMs / 1000, false, hw) === EG_HOLD.none;",
+    "old": "return over && egSupportAt(spec, x, y, z, tMs / 1000, false, hw, null, tm) === EG_HOLD.none;",
     "new": "return over;",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"

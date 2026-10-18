@@ -74,7 +74,7 @@
   {
     "name": "EGSPAN-a-rail-unbounded",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "      if (s.amp > Math.min(s.gap ?? 0, after) - EG_RAIL_CLEAR) why.push(",
+    "old": "      if (s.amp > Math.min(s.gap ?? 0, moving ? Infinity : after) - EG_RAIL_CLEAR) why.push(",
     "new": "      if (false) why.push(",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
@@ -83,7 +83,7 @@
   {
     "name": "EGSPAN-a-harmless-pendulum",
     "file": "src/scenes/eliteGates/egSpan.js",
-    "old": "          if (egPendHits(st.s, t, rx - st.spec.x0, ry, rz) && safe)",
+    "old": "          if (egPendHits(st.s, t, rx - st.spec.x0, ry, rz, body.height) && safe)",
     "new": "          if (false && safe)",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "EGSPAN-a-vent-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        if (st.fire && !ventJudged.has(cycle)) {",
-    "new": "        if (st.fire) {",
+    "old": "        if (st.fire && !ventJudged.has(cycle) && standing",
+    "new": "        if (st.fire && standing",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]

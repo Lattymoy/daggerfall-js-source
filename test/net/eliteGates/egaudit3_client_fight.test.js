@@ -28,7 +28,7 @@ const wire = (f) => { const { to: _to, ...rest } = f; const v = validEgOut(JSON.
 
 /** A breach of `n` (seed 12345) in Court hall `h`'s trial, its lord(s) woken by the director - and the fight's words said
  *  meanwhile (the says the screen's wake reads), `steps` more of the director's beats with the company at its places. */
-function court(h, n = 4, steps = 0) {
+function court(h, n = 4, steps = 0, hook = null) {
   let s = 7;
   const rng = () => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return s / 4294967296; };
   const co = Array.from({ length: n }, (_, i) => [`acct-${i}`, `M${i}`, i + 1]);
@@ -39,7 +39,7 @@ function court(h, n = 4, steps = 0) {
   B.h = h; B.sg = 'arrive'; B.wk = now; B.cnt = { left: 1_800_000, at: now }; B.pulledAt = now; B.su = now + 30_000;
   const pos = Object.fromEntries(co.map(([sub], i) => [sub, { sx: spec.x0 + spec.arrive.x + i * 0.5, z: spec.arrive.z }]));
   const said = [];
-  const beat = () => { now += 250; for (const o of egStep(B, now, co.map(([sub]) => ({ sub, ...pos[sub], dead: false, at: now })), rng)) if (o.k === 'esay') said.push(o); };
+  const beat = () => { now += 250; hook?.(B); for (const o of egStep(B, now, co.map(([sub]) => ({ sub, ...pos[sub], dead: false, at: now })), rng)) if (o.k === 'esay') said.push(o); };
   for (let k = 0; k < 60 && B.sg !== 'trial'; k++) beat();
   assert.equal(B.sg, 'trial', 'the Court woke');
   // the company steps into the wake ring, two by two (a pair a metre apart, the pairs twelve apart)
@@ -123,7 +123,8 @@ test('AUDIT EG III lane1 #4 THE TWINS\' TOUCHED ON THE STRUCK SCREEN (section 13
 });
 
 test('AUDIT EG III lane1 #12 MORVAYN\'S CHAINING, "A BLOW ON ONE IS SHARED WITH THE OTHER" (section 13.4), ON EACH CHAINED SCREEN: the soul-chains Morvayn\'s own tick binds split a blow on any of a chain evenly over it - mine alone half, my mate\'s alone half at their feet where my screen draws them, both the whole; a member of another chain, a Wraith an odd member is chained to, or no chain shares nothing (mutants: the share unsplit; the mate\'s blow unjudged; a Wraith read as a mate; another chain read)', () => {
-  const C = court(50, 4, 100);   // twenty-five seconds on: the Chaining (fifteen seconds past the wake), its chains still bound
+  // EG-PERFECT (PIN MOVED): the Chaining is Morvayn's second phase's - turned at 0.66 as he wakes, its chains bound ten seconds on
+  const C = court(50, 4, 40, (B) => { for (const L of B.F ? egBodiesOf(B.F, EG_ROLE.lord) : []) if (L.up2 && L.ph < 2) L.hp = L.max * 0.6; });
   const L = egBodiesOf(C.B.F, EG_ROLE.lord)[0];
   assert.equal(EG_BOSS_KEYS[L.k], 'morvayn');
   const chains = C.B.F.tethers.filter((t) => t[2] === 2);

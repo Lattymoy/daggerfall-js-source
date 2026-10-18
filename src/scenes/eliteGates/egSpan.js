@@ -111,6 +111,7 @@ import { isTouchDevice } from '../../ui/touch/touchDevice.js';
 import { createMeshKit } from '../../world/eliteGates/meshKit.js';
 import { EG_FOG_FLOOR, egGustSections } from '../../world/eliteGates/egLook.js';   // EG6a: the breath's sections, its one home (the streamers' too)
 import { EG_RIDE_DOWN_M, EG_RIDE_UP_M } from '../../net/eliteGates/egFair.js';
+import { egTubeEdgeIn, egVoidStep } from '../../net/eliteGates/egFair.js';   // EG-PERFECT: a routed hall's tube from the company at its mouth; the void zones
 import { faces } from '../../world/gate/gateModel.js';
 import { packRealmFaces, SD_REALM_ARCHIVE, SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_EDGE_RECORD, SD_REALM_PILLAR_RECORD, SD_REALM_ROOT_RECORD, SD_ISLAND_SIDES } from '../../world/superDungeon/sdRealm.js';
 import { identity } from '../../world/mat4.js';
@@ -119,7 +120,7 @@ import { egBridgeOf } from '../../net/eliteGates/egSpanLaw.js';   // AUDIT EG II
 import { egSlagState, egSlagX, EG_SLAG_SPOUTS, EG_SLAG_CRUST_S, EG_SLAG_WARN_S } from '../../net/eliteGates/egSpanLaw.js';   // EG-ZC: the Cooling Slag
 import { egInShape } from '../../net/eliteGates/egShape.js';
 import { EG_KIT_RECORD } from '../../world/eliteGates/egKit.js';   // EG-LOOK: the Galleries' anchor rib in the kit's voussoirs   // EG-ZC: a lit branch under the mirror's haven
-import { egTubeEdge, EG_ENGINES } from '../../net/eliteGates/egFragLaw.js';
+import { EG_ENGINES } from '../../net/eliteGates/egFragLaw.js';
 import { egOverDrop } from '../../world/eliteGates/egTelegraph.js';   // EG-ZG: a Drop's landing, the law
 import { egNicheBoxes, egIsleDisc } from '../../world/eliteGates/egHall.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate.js';
@@ -369,16 +370,69 @@ export function egBridgeLook(q, ms, still = false) {
  *  Steps' own pendulum's line (world/superDungeon/sdStepsModel.js SD_PENDULUM: SD_PENDULUM.foot either side of the deck's middle, clear
  *  of a body at its edge, from brackets SD_PENDULUM.into under its top up to the pivot SD_PENDULUM.len over it). */
 export const EG_CHAIN = Object.freeze({ link: 0.9, w: 0.22, bar: 0.05 });
+/** EG-PERFECT: how far each band's anchor stands over its pivot (m - egHangModel's own: the rib's crown, the ribcage's spine,
+ *  the shard's tip, the crane's beam - its cable runs on up EG_HANG_CABLE_M); how far any anchor reaches about the pivot across
+ *  and along, and down under it (the ribcage's ribs, the hook); and how far the chains reach about the deck's line (its foot
+ *  and a link's width) (m). */
+export const EG_HANG_TOP = Object.freeze([1.08, 0.22, 1.74, 0.45]);
+export const EG_HANG_CABLE_M = 6;
+export const EG_HANG_HALF = Object.freeze({ x: 3.5, z: 1.05, down: 1.6, chainX: SD_PENDULUM.foot + 0.25, chainZ: 0.25 });   // (EG-PERFECT's audit: down 1.4 left the first band's rib's lowest 0.17 m - 1.57 under its pivot - read at the chains' reach)
+/** A floor's underside under its top (m - its slab and the first course of the ruin's foundation, world/eliteGates/egRuin.js), the
+ *  shortest a capped hang's chains run (m), and how high over a deck a floor first stands over it (a body's height and more:
+ *  ground nearer is a neighbour beside the course, never a floor over it). */
+const EG_HANG_SLAB = 0.6, EG_HANG_MIN = 2.4, EG_HANG_OVER = 2.4;
+/**
+ * EG-PERFECT (2026-10-18, Mac: "...the design of the halls, and everything is absolutely perfect"; Elite-Gates.md section 10.3) -
+ * A DRIFT'S HANG UNDER A FLOOR ABOVE: how long drift `s`'s chains (from its pivot to its deck's rest) and the crane's cable over
+ * its beam are drawn in hall `spec` (band `band`'s anchor) - `{ len, over }`. LAW 9 stacks its ways, and 3.1% of its drifts
+ * stood under a floor 12.9-17 m up that their 18 m chains and anchor passed through. The clearance is the lowest underside of
+ * any floor more than EG_HANG_OVER over the deck that its chains would pass (their reach about the deck's travel - EG_HANG_HALF's
+ * chainX, chainZ) or its anchor would (the anchor's wider reach, where the anchor hangs - from EG_HANG_HALF.down under the pivot
+ * up): a plate or island, a passage's floor, a bridge, a stair, a room's floor or its whole box, a closed passage's vault the
+ * deck stands in. The anchor hangs EG_HANG_TOP under it on chains that long (never under EG_HANG_MIN); the crane's cable runs
+ * to it. With no floor in reach, SD_PENDULUM.len and EG_HANG_CABLE_M: the hang as it always was. The screen's alone - the
+ * deck's swing is the law's (stepAt) whatever its chains, and the hang leans by its own length (hangLook). Pure.
+ * @param {any} spec @param {any} s @param {number} band
+ */
+export function egHangReach(spec, s, band) {
+  const top = EG_HANG_TOP[band] ?? EG_HANG_TOP[0], H = EG_HANG_HALF, a = s.amp ?? 0;
+  let clear = Infinity;
+  /** a floor whose plan's box is `ax0`-`ax1` by `az0`-`az1` (or a disc's, `r` about its middle) with its top at `y` */
+  const over = (ax0, az0, ax1, az1, y, r = 0) => {
+    const u = y - EG_HANG_SLAB - s.y, hi = u >= SD_PENDULUM.len - H.down, rx = a + (hi ? H.x : H.chainX), rz = hi ? H.z : H.chainZ;   // the anchor's reach where the anchor hangs, the chains' under it
+    if (!(y - s.y > EG_HANG_OVER)) return;
+    if (r > 0) { const cx = (ax0 + ax1) / 2, cz = (az0 + az1) / 2; if (Math.hypot(cx - Math.max(s.x - rx, Math.min(s.x + rx, cx)), cz - Math.max(s.z - rz, Math.min(s.z + rz, cz))) > r) return; }
+    else if (!(ax0 < s.x + rx && ax1 > s.x - rx && az0 < s.z + rz && az1 > s.z - rz)) return;
+    clear = Math.min(clear, u);
+  };
+  for (const d of spec.discs ?? []) over(d.x - d.r, d.z - d.r, d.x + d.r, d.z + d.r, d.y ?? 0, d.r);
+  for (const b of spec.bands ?? []) over(b.x - b.halfW, b.z0, b.x + b.halfW, b.z1, b.y ?? 0);
+  for (const l of spec.lanes ?? []) over(Math.min(l.ax, l.bx) - l.hw, Math.min(l.az, l.bz) - l.hw, Math.max(l.ax, l.bx) + l.hw, Math.max(l.az, l.bz) + l.hw, l.y ?? 0);
+  for (const r of spec.ramps ?? []) over(Math.min(r.ax, r.bx) - r.hw, Math.min(r.az, r.bz) - r.hw, Math.max(r.ax, r.bx) + r.hw, Math.max(r.az, r.bz) + r.hw, Math.min(r.y0, r.y1));
+  for (const q of spec.heroes ?? []) {
+    for (const f of q.floors ?? []) { let fx0 = Infinity, fz0 = Infinity, fx1 = -Infinity, fz1 = -Infinity; for (const [px, pz] of f.poly) { fx0 = Math.min(fx0, px); fz0 = Math.min(fz0, pz); fx1 = Math.max(fx1, px); fz1 = Math.max(fz1, pz); } over(fx0, fz0, fx1, fz1, f.y ?? 0); }   // a room's floor: its polygon's box
+    const B = q.box;
+    if (B) over(B[0], B[2], B[3], B[5], B[1] + EG_HANG_SLAB);   // a room over it: its whole box (THE AUDIT: the hall's frame already, as its floors - egHeroDoor's, egRuin's)
+  }
+  for (const c of spec.caves ?? []) if (!c.open && Math.abs(s.x - c.x) <= c.halfW && s.z >= c.z0 && s.z <= c.z1 && s.y >= c.y - 0.5) over(c.x - c.halfW, c.z0, c.x + c.halfW, c.z1, c.y + c.height + EG_HANG_SLAB);   // its vault
+  const crane = band === 3;   // its cable runs on over its beam, and shortens first
+  if (!(clear < SD_PENDULUM.len + (crane ? EG_HANG_CABLE_M : top))) return { len: SD_PENDULUM.len, over: EG_HANG_CABLE_M };
+  const len = Math.round(100 * Math.max(EG_HANG_MIN, Math.min(SD_PENDULUM.len, clear - top))) / 100;
+  return { len, over: crane ? Math.round(100 * Math.max(0, Math.min(EG_HANG_CABLE_M, clear - len))) / 100 : EG_HANG_CABLE_M };
+}
 /**
  * A DRIFT'S HANG, band `band`'s, in the pendulum's own frame (its pivot the origin): its two chains, each with its bracket
  * out of the deck's side, in the band's metal (EG_DRESS.brass: gold leaf, bone, moon-silver, iron), and the ANCHOR they hang
  * from (section 10.3, in the order of world/eliteGates/egBandArt.js EG_BAND_RAMPS): the Galleries' broken arch rib (EG-LOOK: in the kit's
  * voussoirs - world/eliteGates/egKit.js EG_KIT_RECORD.voussoir), gold leaf on its crown; the Cairn's ribcage in bone; the Shade's moon-shard; the Wellhead's crane hook in iron, on its cable. The
  * whole turns about z with the law's own swing (pendulumAngle) - the anchor rocking with its chains, as the Hour's gear rocks
- * with its rods (scenes/superDungeon/sdSteps.js driftLook), never more than asin(2 / 18).
+ * with its rods (scenes/superDungeon/sdSteps.js driftLook), never more than asin(2 / 18). EG-PERFECT (2026-10-18): `len` its
+ * chains' length from the pivot to the deck's rest and `over` the crane's cable over its beam - SD_PENDULUM.len and
+ * EG_HANG_CABLE_M where nothing stands over it, shorter under a floor (egHangReach).
+ * @param {number} band @param {number} [len] @param {number} [over]
  */
-export function egHangModel(band) {
-  const k = createMeshKit(), P = SD_PENDULUM, F = P.foot, L = EG_CHAIN.link, low = -(P.len + P.into), n = Math.ceil(-low / L), B = SD_REALM_BRASS_RECORD;
+export function egHangModel(band, len = SD_PENDULUM.len, over = EG_HANG_CABLE_M) {
+  const k = createMeshKit(), P = SD_PENDULUM, F = P.foot, L = EG_CHAIN.link, low = -(len + P.into), n = Math.ceil(-low / L), B = SD_REALM_BRASS_RECORD;
   for (const sx of [-1, 1]) {
     const x = sx * F;
     for (let i = 0; i < n; i++) {
@@ -408,7 +462,7 @@ export function egHangModel(band) {
     }
   } else if (band === 3) {   // the crane hook: an iron beam on its cable, the hook hanging from its middle
     k.box(B, [-F - 0.5, 0, -0.22], [F + 0.5, 0.45, 0.22]);
-    k.box(B, [-0.05, 0.45, -0.05], [0.05, 6, 0.05]);
+    if (over > 0.45) k.box(B, [-0.05, 0.45, -0.05], [0.05, over, 0.05]);   // EG-PERFECT: its cable up to the floor over it, where one stands
     k.sweep(B, sq(0.14), [[0, 0, 0], [0, -0.9, 0], [0.3, -1.25, 0], [0.62, -1.0, 0], [0.62, -0.82, 0]]);
   } else {   // the arch rib: a broken marble rib over the deck, its crown in gold leaf
     const R = 3.4, yc = -Math.sqrt(R * R - F * F), a0 = Math.acos(3.2 / R), crown = [];
@@ -428,8 +482,10 @@ export function egHangModel(band) {
   }
   return k.pack(egBandArchive(band));   // EG-LOOK: in the band's archive (its metal the band's, its rib the kit's)
 }
-/** THE CIRCLE'S GHOSTS at most (render/superDungeon/sdStepsPass.js - its uniforms' count): the most any circle measured lays is 31 (eight
- *  seeds, forty circles, both grounds); a circle past it draws its first EG_GHOSTS_MAX. */
+/** THE CIRCLE'S GHOSTS at most (render/superDungeon/sdStepsPass.js - its uniforms' count): under laws 4-9 the most any circle measured
+ *  lays is 31 (eight seeds, forty circles, both grounds). EG-PERFECT's audit: spec law 10 lays up to 72 (21 of seeds 1-4's 320
+ *  circles past this), never more than 29 in one hall - so a circle past it ghosts the hall I am in and the halls nearest it
+ *  (createEgSpan's aimGhosts). */
 export const EG_GHOSTS_MAX = 48;
 /** A GHOST SLAB (section 10.8): how long a peer's word holds it lit (s - a few of its frames) and its top's light (a share
  *  of its ghost's). */
@@ -556,7 +612,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
    *  `pivot`) - when my foot's Crumble came whole again (`back`), when a peer last stood on it fallen (`peerAt`), and its
    *  ghost's slot (-1 none) */
   const steps = [];
-  for (const spec of specs) for (const s of spec.steps) steps.push({ s, spec, key: egStepKey(spec.h, s.i), T: [0, EG_STEP_GONE_Y, 0], was: [0, EG_STEP_GONE_Y, 0], solid: false, wasSolid: false, draw: null, pend: null, touched: null, wait: SD_CRUMBLE_DELAY, stages: null, chunks: null, grit: null, hang: null, pivot: null, back: -Infinity, peerAt: -Infinity, ghost: -1 });
+  for (const spec of specs) for (const s of spec.steps) steps.push({ s, spec, key: egStepKey(spec.h, s.i), T: [0, EG_STEP_GONE_Y, 0], was: [0, EG_STEP_GONE_Y, 0], solid: false, wasSolid: false, draw: null, pend: null, touched: null, wait: SD_CRUMBLE_DELAY, stages: null, chunks: null, grit: null, hang: null, pivot: null, len: SD_PENDULUM.len, back: -Infinity, peerAt: -Infinity, ghost: -1 });
   const byKey = new Map(steps.map((st) => [st.key, st]));
   /** @type {Map<string, any>} */
   const meshes = new Map();
@@ -565,6 +621,32 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
   let safe = null, safeY = 0;
   /** EG-ZG: whether my body, this frame before the motor, falls onto a Drop the course asked for */
   let overDrop = false;
+  /** EG-PERFECT (2026-10-18; Elite-Gates-Ascent.md section 2 - THE VOID ZONES): a fall's memory over the void zones of the hall I
+   *  stand in (net/eliteGates/egFair.js egVoidStep - the relay's own law: the zone it passed), my feet last frame and this one (the
+   *  hall's frame, two buffers swapped - nothing allocated a frame), the height I last stood at (any ground - the fair trail's
+   *  last support), and that hall */
+  const voidFall = { v: null }, EG_VOID_LEAP_M = 6;
+  let voidA = [0, 0, 0], voidB = [0, 0, 0], voidHas = false, voidFromY = NaN, voidH = 0;
+  /**
+   * EG-PERFECT - INTO THE VOID: did my body at (rx, ry, rz) (the realm's frame), `grounded` or not, just fall through one of a
+   * routed hall's void zones from the ground it last stood on (egVoidStep - EG_VOID_DROP_M under it, the zone's footprint read
+   * widened by the step-off reach)? LAW 9 laid them "wherever a fall would skip ahead along the route" and nothing read them:
+   * off the 49 m bridge 18.3 m up in seed 3's hall 27, a step landed 10.5 m down on a later leg, 290 m on along the way. A hall
+   * that lays none (laws 4-8) answers false and keeps nothing.
+   */
+  function intoVoid(rx, ry, rz, grounded) {
+    const hs = specs.find((q) => q.voids?.length && Math.abs(rx - q.x0) <= 160);
+    if (!hs) { voidHas = false; voidFall.v = null; voidFromY = NaN; return false; }
+    if (hs.h !== voidH) { voidH = hs.h; voidHas = false; voidFall.v = null; voidFromY = NaN; }
+    const a = voidA; voidA = voidB; voidB = a;
+    voidA[0] = rx - hs.x0; voidA[1] = ry; voidA[2] = rz;
+    // a stretch wider in plan than any frame's run (a cast-back, a pull, a recall) is a place given, never a fall through one
+    if (voidHas && Math.hypot(voidA[0] - voidB[0], voidA[2] - voidB[2]) > EG_VOID_LEAP_M) { voidHas = false; voidFall.v = null; }
+    const hit = Number.isFinite(voidFromY) && !!egVoidStep(voidFall, hs, voidFromY, voidHas ? voidB : null, voidA, grounded);
+    voidHas = true;
+    if (grounded) voidFromY = ry;
+    return hit;
+  }
   const band = egBandOfCircle(c);   // EG-G2: every piece in its band's dress (the Steps' own faces keep the Hour's - world/eliteGates/egBandArt.js)
   const make = (model) => { if (!model || !renderer?.createMesh) return null; try { return renderer.createMesh(egBandDress(model, band)); } catch (e) { console.warn('[eg] a span would not build', e?.message ?? e); return null; } };
   const play = (rec, vol, pitch = 1) => { try { audio?.playOneShot?.(rec, vol, pitch); } catch { /* no sound */ } };
@@ -592,10 +674,30 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
   /** @type {Map<string, { s: any, map: any }>} THE BEATS: each beat's kind and the picture map its frame wears now */
   const beatKinds = new Map();
   /** THE GHOSTS: the circle's Beats and Crumbles (EG_GHOSTS_MAX at most) - their tops and states (render/superDungeon/sdStepsPass.js's
-   *  two uniform arrays, written in place) and their pass, made the first time it draws and freed at the clear */
-  const ghostSteps = steps.filter((st) => st.s.kind === 'beat' || EG_CRUMBLE_KINDS.includes(st.s.kind)).slice(0, EG_GHOSTS_MAX);
+   *  two uniform arrays, written in place) and their pass, made the first time it draws and freed at the clear. EG-PERFECT's
+   *  audit: a circle of more (spec law 10 breaks its bridges on Beats and Crumbles - 72 in seed 7's circle 5) has its slots
+   *  stand for the hall I am in and the halls nearest it, aimed again as I cross into another (aimGhosts) - the circle's
+   *  first EG_GHOSTS_MAX alone, its later halls drew none */
+  const ghostAll = steps.filter((st) => st.s.kind === 'beat' || EG_CRUMBLE_KINDS.includes(st.s.kind));
+  let ghostSteps = ghostAll.slice(0, EG_GHOSTS_MAX), ghostHall = ghostAll.length > EG_GHOSTS_MAX ? -1 : null;
   ghostSteps.forEach((st, k) => { st.ghost = k; });
   const ghostStep = new Float32Array(EG_GHOSTS_MAX * 4), ghostState = new Float32Array(EG_GHOSTS_MAX * 4);
+  const ghostKinds = () => ghostSteps.map((st) => ({ kind: st.s.kind === 'beat' ? 'beat' : 'crumble' }));
+  /** EG-PERFECT's audit: a circle past the slots - its ghosts the hall nearest realm x `rx` and the halls nearest it, in the
+   *  circle's order within a hall; nothing to do while that hall's are stood (a circle within the slots keeps its own). */
+  function aimGhosts(rx) {
+    if (ghostHall === null) return;
+    let hs = null;
+    for (const q of specs) if (!hs || Math.abs(rx - q.x0) < Math.abs(rx - hs.x0)) hs = q;
+    if (!hs || hs.h === ghostHall) return;
+    ghostHall = hs.h;
+    for (const st of ghostSteps) st.ghost = -1;
+    const off = (st) => Math.abs(st.spec.x0 - hs.x0);
+    ghostSteps = ghostAll.map((st, k) => ({ st, k })).sort((a, b) => off(a.st) - off(b.st) || a.k - b.k).slice(0, EG_GHOSTS_MAX).map((q) => q.st);
+    ghostSteps.forEach((st, k) => { st.ghost = k; });
+    ghostStep.fill(0); ghostState.fill(0);
+    pass?.ghosts(ghostKinds());
+  }
   /** @type {SdStepsPass | null} */
   let pass = null;
   let passTried = false;
@@ -646,8 +748,11 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       st.chunks = crumbleSet.chunks.map((q, j) => place('chunk', `chunk:${j}`, () => q.model, { turns: true }));
       st.grit = place('crack', 'grit', () => buildGritModel());
     } else if (s.kind === 'drift') {
-      st.pivot = realmToDungeon(st.spec.x0 + s.x, s.y + SD_PENDULUM.len, s.z);
-      st.hang = place(`hang:${st.spec.h}`, `hang:${st.spec.h}`, () => egHangModel(band), { turns: true });   // a kind a hall: a hall's swinging copies re-laid, never the circle's
+      // EG-PERFECT: its chains as long as the floor over it lets them hang (egHangReach) - its own model in the hall's kind
+      const R = egHangReach(st.spec, s, band), full = R.len === SD_PENDULUM.len && R.over === EG_HANG_CABLE_M;
+      st.len = R.len;
+      st.pivot = realmToDungeon(st.spec.x0 + s.x, s.y + R.len, s.z);
+      st.hang = place(`hang:${st.spec.h}`, full ? `hang:${st.spec.h}` : `hang:${st.spec.h}:${R.len}:${R.over}`, () => egHangModel(band, R.len, R.over), { turns: true });   // a kind a hall: a hall's swinging copies re-laid, never the circle's
     }
     for (const d of [...(st.stages ?? []), ...(st.chunks ?? []), st.grit, st.hang]) if (d) away(d);
   }
@@ -701,9 +806,10 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
     ghostState[o + 3] = f >= 0 && t >= st.peerAt && t - st.peerAt <= EG_GHOST_SLAB.hold ? EG_GHOST_SLAB.fill : 0;   // A GHOST SLAB under a peer
   }
   /** A DRIFT'S HANG leaning with the law's own swing (`dx` the deck's offset - pendulumAngle, the Hour's turn about z),
-   *  about its pivot SD_PENDULUM.len over the deck's rest. */
+   *  about its pivot SD_PENDULUM.len over the deck's rest. EG-PERFECT: a hang capped under a floor (egHangReach - `st.len`)
+   *  leans by its own length, so its brackets stay beside the swung deck. */
   function hangLook(st, dx) {
-    const m = st.hang.object.matrix, a = pendulumAngle(dx), cs = Math.cos(a), sn = Math.sin(a), P = st.pivot;
+    const m = st.hang.object.matrix, a = st.len < SD_PENDULUM.len ? Math.asin(Math.max(-1, Math.min(1, dx / st.len))) : pendulumAngle(dx), cs = Math.cos(a), sn = Math.sin(a), P = st.pivot;
     m.fill(0); m[0] = cs; m[1] = sn; m[4] = -sn; m[5] = cs; m[10] = 1; m[15] = 1; m[12] = P[0]; m[13] = P[1]; m[14] = P[2];
     st.hang.hidden = false;
   }
@@ -765,8 +871,10 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
     const n = Math.max(1, Math.ceil((q.z1 - q.z0) / EG_WALL_SEG_M)), d = (q.z1 - q.z0) / n;
     for (let k = 0; k < n; k++) tubes.push({ spec, k, z0: q.z0 + k * d, z1: q.z0 + (k + 1) * d, w: 2 * q.halfW, d, key: `eg:tube:${spec.h}:${k}`, T: [0, EG_STEP_GONE_Y, 0], draw: null, lid: null, goneAt: null });
   }
-  /** A Collapsing Tube's fallen edge in hall `spec` at `t` (s): -Infinity before it begins, Infinity once its hall is past. */
-  const tubeEdgeOf = (spec, t) => { const wk = spireWake(); return wk.h === spec.h && wk.hw > 0 ? egTubeEdge(spec.tube, t * 1000 - wk.hw) : wk.h > spec.h ? Infinity : -Infinity; };
+  /** A Collapsing Tube's fallen edge in hall `spec` at `t` (s): -Infinity before it begins, Infinity once its hall is past.
+   *  EG-PERFECT (2026-10-18; Elite-Gates.md section 11.3): the relay's own law (net/eliteGates/egFair.js egTubeEdgeIn) - a routed hall's
+   *  tube falls from the company's arrival at its mouth as the stage says it (`tm`), the laws before from the wake. */
+  const tubeEdgeOf = (spec, t) => { const wk = spireWake(); return wk.h === spec.h && wk.hw > 0 ? egTubeEdgeIn(spec, wk.hw, wk.tm, t * 1000) : wk.h > spec.h ? Infinity : -Infinity; };
   /** GRATH'S ISLANDS (section 13.3): each its bucket and draw, its fall the relay's word */
   const isles = [];
   for (const spec of specs) for (const d of spec.discs) if (egIsleDisc(spec, d)) isles.push({ spec, d, key: `eg:isle:${spec.h}:${isles.length}`, T: [0, 0, 0], draw: null, st: 0, stAt: 0, drop: 0 });
@@ -1078,6 +1186,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       const on = key ? byKey.get(key) ?? null : null;
       if (on && live && (EG_CRUMBLE_KINDS.includes(on.s.kind) || on.s.kind === 'sink') && on.touched == null) { on.touched = t; on.wait = SD_CRUMBLE_DELAY + spireCrumbleWait(); if (on.s.kind !== 'sink') play3(SD_STEPS_SOUNDS.grind, [on.T[0], on.T[1], on.T[2]], 1, 1.3); }   // EG-ZL: a Crumble grinds under my foot (the Steps')
       lastT = t; access = egAccessNow();   // EG-ZL: the frame's clock and the screen's settings (the danger palette, reduced motion)
+      if (live && body?.pos) aimGhosts(dungeonToRealm(body.pos[0], body.pos[1], body.pos[2])[0]);   // EG-PERFECT's audit: the ghosts of the halls I am among
       poseLit(t);
       posePlanks(t);   // AUDIT EG III: the Spirebridges the room raised
       for (const st of steps) pose(st, t);
@@ -1095,6 +1204,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       overDrop = false;
       if (!live || !body?.pos) return null;
       const [rx, ry, rz] = dungeonToRealm(body.pos[0], body.pos[1], body.pos[2]);
+      const voided = intoVoid(rx, ry, rz, !!body.grounded);   // EG-PERFECT: judged before this frame's ground becomes the cast-back's place
       if (!body.grounded) { const hs = specs.find((q) => Math.abs(rx - q.x0) <= ((q.law ?? 0) >= 9 ? 160 : 40)); overDrop = !!hs && egOverDrop(hs, rx - hs.x0, ry, rz); }   // EG-ZG (section 25.8); THE ASCENT (spec law 9): a hall's ground its whole bound (160 m), never its line's 40
       const footing = spireFooting();
       // THE GUST (section 10.3): the Steps' breath over a Gust section of the hall I stand in, Iron Footing taking its share
@@ -1115,9 +1225,12 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       if (footing < 1) {
         for (const st of steps) {
           if (st.s.kind !== 'pend' || Math.abs(rx - st.spec.x0 - st.s.x) > 6) continue;
-          if (egPendHits(st.s, t, rx - st.spec.x0, ry, rz) && safe) { play(107, 0.7, 0.8); return [safe[0], safe[1] + 0.2, safe[2]]; }
+          if (egPendHits(st.s, t, rx - st.spec.x0, ry, rz, body.height) && safe) { play(107, 0.7, 0.8); return [safe[0], safe[1] + 0.2, safe[2]]; }   // EG-PERFECT: my body's height against the weight's drawn
         }
       }
+      // EG-PERFECT - THE VOID ZONES (Elite-Gates-Ascent.md section 2): a fall into one is a fall into the void - cast back to the
+      // last floor I stood on, at the void's cost (section 8), before the floor it landed on further along can become that place
+      if (voided && safe) { play(107, 0.6, 0.6); const p = wallSafe(safe, t); return [p[0], p[1] + 0.2, p[2]]; }
       // the cast-back's place: the last floor I stood on (a plate, an island, a court, a bridge), or a still step
       const onWall = key ? walls.find((g) => g.key === key) ?? tubes.find((g) => g.key === key) ?? isles.find((g) => g.key === key && g.st === 0) : null;
       if (key === EG_FLOOR_KEY || onWall || (on && on.solid && (on.s.kind === 'still' || on.s.kind === 'ledge' || on.s.kind === 'drop' || on.s.kind === 'vent' || on.s.kind === 'gust'))) { safe = [body.pos[0], body.pos[1], body.pos[2]]; safeY = body.pos[1]; litStone = stoneOf(safe); }   // EG-ZL: and its waystone lit
@@ -1129,7 +1242,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
     /** EG-ZG (section 25.8): am I falling onto a Drop the course asked for (this frame, before the motor)? Its landing is the
      *  fight's thud and dust - the dungeon arm plays no hard-landing grunt for it. */
     overDrop: () => overDrop,
-    setSafe(p) { safe = p ? [p[0], p[1], p[2]] : null; safeY = p ? p[1] : 0; litStone = stoneOf(safe); },
+    setSafe(p) { safe = p ? [p[0], p[1], p[2]] : null; safeY = p ? p[1] : 0; litStone = stoneOf(safe); voidHas = false; voidFall.v = null; voidFromY = NaN; },   // EG-PERFECT: a place given is no fall
     /**
      * EG-ZL - A GHOST SLAB (section 10.8: "a peer on a crumble the viewer has seen fall is drawn on a ghost slab"): a peer's
      * drawn feet (x, y, z) (the dungeon's frame - the breach client's word off net/online.js `rideAt`) standing on a Crumble of this
@@ -1153,7 +1266,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
      */
     drawPass(proj, view, fog = null) {
       if (!draws || !renderer?.gl || !ghostSteps.length) return false;
-      if (!passTried) { passTried = true; try { pass = new SdStepsPass(renderer.gl, ghostSteps.map((st) => ({ kind: st.s.kind === 'beat' ? 'beat' : 'crumble' })), { max: EG_GHOSTS_MAX, slab: true, fogFloor: EG_FOG_FLOOR }); } catch (e) { console.warn('[eg] the ghosts would not build', e?.message ?? e); pass = null; } }
+      if (!passTried) { passTried = true; try { pass = new SdStepsPass(renderer.gl, ghostKinds(), { max: EG_GHOSTS_MAX, slab: true, fogFloor: EG_FOG_FLOOR }); } catch (e) { console.warn('[eg] the ghosts would not build', e?.message ?? e); pass = null; } }
       if (!pass) return false;
       const vp = renderer._worldViewportPx;   // the world image (px) - read, never copied
       return pass.draw(proj, view, ghostStep, ghostState, fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic, vp?.[2] ?? 0, vp?.[3] ?? 0, egGhostRgb(access?.palette));   // AUDIT EG III (lane4 #5): in the palette's safety
@@ -1220,6 +1333,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       col = null;
       targetList = [];
       draws = null; safe = null;
+      voidHas = false; voidFall.v = null; voidFromY = NaN;   // EG-PERFECT: the fall's memory with the circle
     },
   };
 }

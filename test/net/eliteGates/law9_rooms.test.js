@@ -12,7 +12,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { egHallOf, egHallTry, egSpecDigest, egAscentCourses, egAscentProof, egCircleSpecs, egFirstHallOf, egOnFloor, EG_SPEC, EG_ASCENT_LAW, EG_SPEC_SAID_MAX, EG_ASCENT_LAST_TRIES, EG_ASCENT_HERO_TRIES, EG_RELAY_MAX } from '../../../src/net/eliteGates/egLaw.js';
+import { egHallOf, egHallTry, egSpecDigest, egAscentCourses, egAscentProof, egCircleSpecs, egFirstHallOf, egOnFloor, egLawSeam, EG_SPEC, EG_ASCENT_LAW, EG_SPEC_SAID_MAX, EG_ASCENT_LAST_TRIES, EG_ASCENT_HERO_TRIES, EG_RELAY_MAX } from '../../../src/net/eliteGates/egLaw.js';
 import { egAscentSane, egAscentWhy, egRouteLength, egRouteCrossings, egRouteMainOf, EG_ASCENT_ROOMS, EG_ASCENT_FRAGS_MAX, EG_ASCENT_RISE_CM, EG_ASCENT_CROSSINGS_MAX, EG_ROUTE_LEN_MAX_M, EG_ROUTE_S_MAX, EG_ROUTE_CLIMB_PLAN_M, EG_ASCENT_BOUND } from '../../../src/net/eliteGates/egAscent.js';
 import { egRoomBuild, egRoomTurned, egRoomHero, egRoomFault, EG_ROOM_KINDS, EG_CLIMB_HANG_CM, EG_CLIMB_GRIP_MS, EG_CLIMB_MMPS, EG_CLIMB_GRIP_QUARTERS, EG_CLIMB_PITCH_MIN_CM, EG_CLIMB_PITCH_CM, EG_CLIMB_PITCHES, EG_CLIMB_LEDGE_CM, EG_CLIMB_WAY_MAX_CM, EG_CLIMB_SIDE_CM, EG_ROUND } from '../../../src/net/eliteGates/egRoomLaw.js';
 import { egSpanProof, egRouteCross, EG_SPAN_RUN_MPS, EG_JUMP_G } from '../../../src/net/eliteGates/egSpanLaw.js';
@@ -27,6 +27,10 @@ import { buildEgCircleModel, egCircleColliderTris, egInHeroBox, egFragZones, egF
 import { egRoomsOf, egClimbZones, EG_CLIMB_ZONE_OUT_M } from '../../../src/world/eliteGates/egRoomModel.js';
 import { SD_REALM_FLOOR_RECORD } from '../../../src/world/superDungeon/sdRealm.js';
 import { egMapOf, egRoomViews } from '../../../src/tools/spireMap.js';
+
+// EG-PERFECT (spec law 10, 2026-10-18): this page holds LAW 9 - its 800 halls, its rooms, its route - byte for byte beside the
+// law after it (test/net/eliteGates/egperfect_broken.test.js holds law 10's): every hall it lays unnamed is law 9's
+egLawSeam(9);
 
 /** THE LAW PIN's 800 halls (test/net/eliteGates/eghero_lay.test.js's own): four seeds, two grounds, a hundred halls - each laid once here. */
 const LAW_HALLS = [];
@@ -74,14 +78,15 @@ function crossingsOf(spec) {
 }
 
 test('THE ASCENT - THE ROOMS: THE LAW PIN (section 22): spec law 9 is the law (EG_SPEC, EG_ASCENT_LAW), kept in EG_LAWS from 2026-10-16 beside laws 4 to 8, each inside its seven days; laws 4 to 8 byte for byte (their 800 halls hashed whole, as test/net/eliteGates/egaudit5_f.test.js recorded them); law 9\'s 800 halls hashed whole; a breach opened now records law 9, and a law 9 hall says its law (`law`, the gate HEIGHT reads) (mutants: law 9 not in the table; a law before moved; the spec\'s law unsaid)', () => {
-  assert.deepEqual([EG_SPEC, EG_ASCENT_LAW], [9, 9]);
-  assert.deepEqual({ ...EG_LAWS }, { 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });
-  assert.deepEqual([4, 5, 6, 7, 8, 9, 10].map(egLawKnown), [true, true, true, true, true, true, false]);
-  assert.ok((Date.parse(EG_LAWS[9]) - Date.parse(EG_LAWS[4])) / 86_400_000 <= 7, 'every law before inside its keep');
+  // PIN MOVED (EG-PERFECT, spec law 10 - test/net/eliteGates/egperfect_broken.test.js holds its own pin): law 9 kept beside law 10
+  assert.deepEqual([EG_SPEC, EG_ASCENT_LAW], [10, 9]);
+  assert.deepEqual({ ...EG_LAWS }, { 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });
+  assert.deepEqual([4, 5, 6, 7, 8, 9, 10, 11].map(egLawKnown), [true, true, true, true, true, true, true, false]);
+  assert.ok((Date.parse(EG_LAWS[10]) - Date.parse(EG_LAWS[4])) / 86_400_000 <= 7, 'every law before inside its keep');
   assert.deepEqual([hash(4), hash(5), hash(6), hash(7), hash(8)], [1228307904, 1301097644, 201408482, 2018192008, 3066462283], 'laws 4 to 8, byte for byte');
   assert.equal(hashOf(all()), 771537807, 'law 9, as THE ROOMS lay it');
   const B = egBreachNew({ b: '0123456789abcdef', ez: 'z'.repeat(20), s: 'a', o: 'A', ew: 0, rh: 0, seed: 77, op: 1_800_000_000_000, co: [['a', 'A', 1]], site: { px: 1, py: 1, x: 0, y: 0, z: 0, yaw: 0 }, wg: [] });
-  assert.equal(B.egv, 9, 'a breach opened now is of law 9');
+  assert.equal(B.egv, 10, 'a breach opened now is of the newest law (law 10 - PIN MOVED)');
   for (const s of all()) assert.ok(s.v === 9 && s.law === 9 && egByHeight(s), `${s.seed}:${s.h}: says its law`);
   for (const law of [4, 8]) assert.equal(Object.hasOwn(egHallOf(77, 5, 0, law), 'law'), false, `law ${law}: no \`law\` (its \`v\` is its law)`);
 });

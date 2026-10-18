@@ -110,8 +110,8 @@
   {
     "name": "PROOFS-another-road-s-pieces-taken",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "if ((s.road ?? 0) !== road || s.z < z0",
-    "new": "if (s.z < z0",
+    "old": "if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0",
+    "new": "if (s.hd % 2 === 1 || s.z < z0",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "PROOFS-a-leg-waits-from-nought",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const at = t + (launchZ(p) - L.g.z0) / EG_SPAN_RUN_MPS + waited;",
-    "new": "const at = (launchZ(p) - L.g.z0) / EG_SPAN_RUN_MPS + waited;",
+    "old": "const at = t + (launchZ(p) - L.z0) / EG_SPAN_RUN_MPS + waited;",
+    "new": "const at = (launchZ(p) - L.z0) / EG_SPAN_RUN_MPS + waited;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -326,7 +326,7 @@
   {
     "name": "PROOFS-the-fast-chain-s-rest-unrun",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "return E === Infinity ? Infinity : E - t + Math.max(0, L.g.len - (L.zn[m] - L.g.z0)) / run;",
+    "old": "return E === Infinity ? Infinity : E - t + Math.max(0, L.g.len - (L.zn[m] - L.z0)) / run;",
     "new": "return E === Infinity ? Infinity : E - t;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
@@ -407,8 +407,8 @@
   {
     "name": "PILOT-the-climb-at-a-rested-grip",
     "file": "tools/egSpanSolve.mjs",
-    "old": "climbing = true; skills = CLIMB0;",
-    "new": "climbing = true; skills = SKILL0;",
+    "old": "    skills = CLIMB0;\n    const foot",
+    "new": "    skills = SKILL0;\n    const foot",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]

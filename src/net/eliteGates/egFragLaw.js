@@ -38,7 +38,7 @@
 import { shDisc, shLane, egWindupFloorMs, egWidthOk, egInShape } from './egShape.js';
 import { EG_MOON_EVERY_S, EG_DRUM_MPS, EG_SPAN_RUN_MPS, EG_SLAG_TELL_S, EG_SLAG_MOLTEN_S, EG_SLAG_CRUST_S, EG_SLAG_CYCLE_S, EG_SLAG_SPOUTS } from './egSpanLaw.js';
 import { EG_PEND_REACH, EG_PEND_HALF, EG_SINK_GONE_M } from './egSpanLaw.js';   // EG6c: an inner piece's travel (egFragSwept)
-import { EG_SET_MARGIN, EG_HAMMER_LINE, EG_SOLVE_LAW, EG_GAP_MIN_CM } from './egSpanLaw.js';   // AUDIT EG V (spec law 8): the set pieces' margin, the Forge Line's hammers' one home
+import { EG_SET_MARGIN, EG_HAMMER_LINE, EG_SOLVE_LAW, EG_GAP_MIN_CM, EG_GAP_MAX_CM } from './egSpanLaw.js';   // AUDIT EG V (spec law 8): the set pieces' margin, the Forge Line's hammers' one home
 
 /** The fragment record's version (a change to a fragment's law is a relay version - section 11.5). */
 export const EG_FRAG_V = 1;
@@ -137,6 +137,11 @@ export const EG_ENGINES = Object.freeze({
  *  how far each spout's lane stands either side of the crossing's line (cm - the two lanes 10 cm apart), and the molten
  *  lane's reach onto the floor it pours toward (cm - where a waiting member stands aside). */
 export const EG_SLAG_LAW = 5;
+/** EG-PERFECT - SPEC LAW 10, THE BROKEN WAY (net/eliteGates/egAscent.js EG_BROKEN_LAW - pinned equal; this module stands below it):
+ *  the spec law from which a passage's chasm is as wide as its pieces at THE ENVELOPE's gaps (egFragPassage), a chamber's
+ *  balcony stands 4 m up and its alcove at its court's rim (egFragChamber) - named by the hall law (`o.law`), never the newest
+ *  unnamed: a hero record's envelope is read unnamed. */
+export const EG_FRAG_BROKEN_LAW = 10;
 export const EG_SLAG_STEP = Object.freeze({ w: 400, d: 300 });
 export const EG_SLAG_LANE_CM = 205;
 export const EG_SLAG_LIP_CM = 150;
@@ -180,6 +185,8 @@ export const EG_VIGNETTES = Object.freeze({
 
 const between = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
 const pick = (r, a) => a[Math.floor(r() * a.length)];
+/** The integer square root (Newton's - the law's integers; net/eliteGates/egRoomLaw.js egIsqrt's, this module standing below it). */
+const isqrt = (n) => { const m = Math.trunc(n); if (!(m > 0)) return 0; let q = m, r = Math.trunc((q + 1) / 2); while (r < q) { q = r; r = Math.trunc((q + Math.trunc(m / q)) / 2); } return q; };
 const wrapT = (t, p) => ((t % p) + p) % p;
 
 /**
@@ -196,6 +203,13 @@ export function egFragPassage(kit, r, o = {}) {
   const anchors = { lurker: [], caster: [], niche: [] };
   let halfW = 300, height = 520, len = 2800, chasm = 1000, yB = 0, open = 0;
   const lava = 'lava', lamp = 'band';
+  // EG-PERFECT - SPEC LAW 10 (THE BROKEN WAY, `o.law` named 10 or more): THE ENVELOPE IN THE PASSAGES. The laws before spread a
+  // chasm's pieces evenly over its fixed span - the Caverns', the Stacks' and the deep Caverns' ledges 1.0 m apart, the
+  // Ossuary's bones 0.55 m, the Mist Stair's 0.80 m - and the real motor ran straight through five of the eight kits without
+  // a jump. From spec law 10 a chasm is as wide as its pieces at a gap of THE ENVELOPE (one gap a passage, off its die -
+  // EG_GAP_MIN_CM to EG_GAP_MAX_CM; the Mist Stair's four flights at the least, so its floors keep 4 m), its floors what the
+  // passage's length leaves (the envelope a hero record is baked to - `len`, `halfW` - unmoved)
+  const env = (n, d, lo = EG_GAP_MIN_CM, hi = EG_GAP_MAX_CM) => { if ((o.law ?? 0) >= EG_FRAG_BROKEN_LAW) chasm = n * d + (n + 1) * between(r, lo, hi); };
   /** lay `n` pieces of kind `k` across the chasm, evenly (each `d` deep), their gaps what the chasm leaves */
   const across = (k, n, d, extra = /** @type {(q: number, g: number) => any} */ ((q, g) => ({}))) => {
     const g = Math.floor((chasm - n * d) / (n + 1));
@@ -204,6 +218,7 @@ export function egFragPassage(kit, r, o = {}) {
   };
   if (kit === 'stacks') {
     halfW = 350; height = 600; chasm = 1000;
+    env(3, 200);
     across('ledge', 3, 200, (q) => ({ x: (q % 2 === 0 ? -1 : 1) * 80 }));
     // THE CASCADE: shelves topple across each floor one after another (lanes 4 m deep, told 1.2 s, 1.5 s apart)
     const zA0 = Math.floor((len - chasm) / 2);
@@ -221,6 +236,7 @@ export function egFragPassage(kit, r, o = {}) {
     lights.push([0, 250, 300, lamp], [0, 250, len - 300, lamp]);
   } else if (kit === 'ossuary') {
     halfW = 300; height = 560; chasm = 1000;
+    env(3, 260);
     across('bone', 3, 260);
     // SOUL-WISPS drifting a fixed path over each floor: a member within 3 m on a fight floor is drained (the Wraith's
     // drain) until 6 m apart or 4 s
@@ -231,6 +247,7 @@ export function egFragPassage(kit, r, o = {}) {
   } else if (kit === 'mist') {
     // THE MIST STAIR: stairs wound down a pit of mist - each flight under a metre down (THE ENVELOPE)
     halfW = 300; height = 700; chasm = 1200;
+    env(4, 200, EG_GAP_MIN_CM, EG_GAP_MIN_CM);
     let y = 0;
     const g = Math.floor((chasm - 4 * 200) / 5);
     for (let q = 0; q < 4; q++) { y -= 90; course.push({ k: 'ledge', gap: g, x: (q % 2 === 0 ? -1 : 1) * 70, dy: -90 }); }
@@ -251,8 +268,13 @@ export function egFragPassage(kit, r, o = {}) {
     const slag = (o.law ?? Infinity) >= EG_SLAG_LAW;
     halfW = slag ? 420 : 350; height = 650; chasm = 1300; len = slag ? len + EG_SLAG_STEP.d : len;
     const g = 320;
-    course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: between(r, 60, 80) * 100, phase: between(r, 0, 9) * 100 });
-    course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: between(r, 60, 80) * 100, phase: between(r, 0, 9) * 100 + 2000 });
+    // (EG-PERFECT - SPEC LAW 10: its two conveyors one belt - one period, one phase - never through each other; law 9's met in
+    // 88 of 135 Guts)
+    if ((o.law ?? 0) >= EG_FRAG_BROKEN_LAW) { const P = between(r, 60, 80) * 100, ph = between(r, 0, 9) * 100; for (let q = 0; q < 2; q++) course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: P, phase: ph }); }
+    else {
+      course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: between(r, 60, 80) * 100, phase: between(r, 0, 9) * 100 });
+      course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: between(r, 60, 80) * 100, phase: between(r, 0, 9) * 100 + 2000 });
+    }
     chasm = 3 * g + 2 * 300;
     if (slag) {
       const ph = between(r, 0, 199) * 100;
@@ -268,6 +290,7 @@ export function egFragPassage(kit, r, o = {}) {
   } else if (kit === 'deep') {
     // THE OBLIVION CAVERNS, DEEP: wider, brighter, the magma higher - the Caverns' falls and surges, more of them
     halfW = 400; height = 600; chasm = 1000;
+    env(3, 200);
     across('ledge', 3, 200, (q) => ({ x: (q % 2 === 0 ? -1 : 1) * 90 }));
     const zA0 = Math.floor((len - chasm) / 2);
     hazards.push({ kind: 'fall', sh: [-halfW, zA0 - 120, halfW, zA0 - 120], w: 120, y: 0, phase: between(r, 0, 49) * 100 });
@@ -278,6 +301,7 @@ export function egFragPassage(kit, r, o = {}) {
   } else {
     // THE OBLIVION CAVERNS: a lava tube - its fire fall at the chasm's lip, a surge along the far floor, basalt falling on
     // the near one
+    env(3, 200);
     const zA0 = Math.floor((len - chasm) / 2);
     across('ledge', 3, 200, (q) => ({ x: (q % 2 === 0 ? -1 : 1) * 60 }));
     hazards.push({ kind: 'fall', sh: [-halfW, zA0 - 120, halfW, zA0 - 120], w: 120, y: 0, phase: between(r, 0, 49) * 100 });
@@ -380,7 +404,10 @@ export function egSetPiece(kind, r, o = {}) {
   // stand THE ENVELOPE's least gap apart, so each conveyor's window keeps the set piece's margin (a conveyor 3.2 m out closes on
   // the leap half its cycle: waits of 3.5-4 s, past EG_WAIT_MAX / EG_SET_MARGIN)
   const g = (o.law ?? 0) >= EG_SOLVE_LAW ? EG_GAP_MIN_CM : 320;
-  for (let q = 0; q < 3; q++) course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: between(r, 60, 80) * 100, phase: q * 2000 + between(r, 0, 9) * 100, hammer: 1 });
+  // EG-PERFECT - SPEC LAW 10 (THE BROKEN WAY): one line - the three conveyors on one belt's period and phase, their travels
+  // together, never through each other (law 9's, each its own period, met in 78 of 80 lines; its hammers the line's danger)
+  if ((o.law ?? 0) >= EG_FRAG_BROKEN_LAW) { const P = between(r, 60, 80) * 100, ph = between(r, 0, 9) * 100; for (let q = 0; q < 3; q++) course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: P, phase: ph, hammer: 1 }); }
+  else for (let q = 0; q < 3; q++) course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: between(r, 60, 80) * 100, phase: q * 2000 + between(r, 0, 9) * 100, hammer: 1 });
   return { kind: 'forgeline', name: EG_SET_PIECE_NAMES.forgeline, len: 0, course, hazards, open: 1, halfW: 0, height: 0, yB: 0, tube: null };
 }
 
@@ -405,19 +432,24 @@ export function egFragChamber(kit, r, R, o = {}) {
   /** `n` second floors `up` high at the chamber's rim, evenly round from its +x side (bearings 90, 270; or 90, 210, 330 -
    *  sines and cosines times 10,000, the law's integers), each with its stair - a ramp from the floor up to its rim. */
   const BEAR = [[[10000, 0]], [[10000, 0], [-10000, 0]], [[10000, 0], [-5000, -8660], [-5000, 8660]]];
+  // EG-PERFECT - SPEC LAW 10 (THE BROKEN WAY, `o.law` named): a balcony 4 m up and more - the court under its overhang a body's
+  // height and a floor below it (THE ASCENT's stacking, section 2; law 9's stood 2.5-4 m over the court's rim), its stair from
+  // 9.5 m in so it climbs no steeper than three in five; and an alcove at the court's rim, its false wall in the ring there
+  // (law 9's stood 2.5-4 m past the rim, behind the ring's wall - out of every reach)
+  const L10 = (o.law ?? 0) >= EG_FRAG_BROKEN_LAW;
   const balconies = (n, up) => {
     for (const [sn, cs] of BEAR[n - 1]) {
       const at = (rr) => [Math.trunc((rr * sn) / 10000), Math.trunc((rr * cs) / 10000)];
       const [bx, bz] = at(R + EG_BALCONY_OUT_CM), br = EG_BALCONY_R_CM;
       floors.push({ x: bx, z: bz, r: br, y: up, fight: 1 });
-      const [x0, z0] = at(R - 750), [x1, z1] = at(R - 200);
+      const [x0, z0] = at(L10 ? R - 950 : R - 750), [x1, z1] = at(R - 200);
       ramps.push({ ax: x0, az: z0, bx: x1, bz: z1, hw: 150, y0: 0, y1: up });
       anchors.caster.push([bx, bz]);
     }
   };
   // the Fallen Stacks' broken dome its two balconies; the deep tide's three dry floors (no point of the low floor more
   // than 24 m from a stair: 24/6.975 + 1.5 = 4.95 s, inside its 5 s tell)
-  if (play === 'balcony') balconies(kit === 'stacks' ? 2 : kit === 'deep' ? 3 : 1, kit === 'deep' ? 250 : between(r, 30, 40) * 10);
+  if (play === 'balcony') balconies(kit === 'stacks' ? 2 : kit === 'deep' ? 3 : 1, kit === 'deep' ? (L10 ? 400 : 250) : between(r, L10 ? 40 : 30, L10 ? 45 : 40) * 10);
   else if (play === 'arch') arch = { z: 0, w: 600, h: 650 };
   else if (play === 'surge') {
     // the channels surge across the floor in thirds every 20 s (lanes 4 m wide)
@@ -435,7 +467,7 @@ export function egFragChamber(kit, r, R, o = {}) {
   // rifts set in the walls (section 11.4) and Lurkers in their shadow
   // (sin, cos) of 60, 180 and 300 degrees times 10,000 - the law decides in integers (net/eliteGates/egLaw.js)
   for (const [sn, cs] of [[8660, 5000], [0, -10000], [-8660, 5000]]) anchors.lurker.push([Math.trunc(((R - 150) * sn) / 10000), Math.trunc(((R - 150) * cs) / 10000)]);
-  if (between(r, 0, 1)) { const side = between(r, 0, 1) ? 1 : -1; alcoves.push({ seal: 'seam', side, x: side * (R + 280), z: -Math.floor(R / 3), y: 0, holds: pick(r, EG_ALCOVE_HOLDS) }); }
+  if (between(r, 0, 1)) { const side = between(r, 0, 1) ? 1 : -1, z = -Math.floor(R / 3); alcoves.push({ seal: 'seam', side, x: side * (L10 ? isqrt(R * R - z * z) + 120 : R + 280), z, y: 0, holds: pick(r, EG_ALCOVE_HOLDS) }); }
   const vs = EG_VIGNETTES[kit] ?? EG_VIGNETTES.caverns;
   vignettes.push({ t: vs[0], x: -Math.floor(R * 0.7), z: Math.floor(R * 0.55), y: 0, yaw: 135 });
   lights.push([0, 500, 0, kit === 'eclipse' || kit === 'gloam' ? 'moon' : kit === 'caverns' || kit === 'forge' || kit === 'deep' || kit === 'clanpit' ? 'lava' : 'band']);

@@ -228,12 +228,14 @@ test('AUDIT EG V L1-5 NO GROUND CONCEDED COUNTS HER BANNERS (section 19: "three 
     assert.equal(S.spec.lord, 'ilthys');
     wakeCourt(S);
     const I = egLordsOf(S.B.F)[0];
+    if (kind === 'banner') I.hp = I.max * 0.6;   // EG-PERFECT (PIN MOVED): the Conquest is her second phase's - turned at 0.66 (the Sparks' run fights her first, no banner stood)
     let broken = 0;
     for (let k = 0; k < 4 * 90 && broken < 3; k++) {
       S.step();
       for (const o of egObjsOf(S.B.F, kind)) { if (broken >= 3) break; o.hp = 1; S.at('acct-0', o.x + 1, o.z); S.blow('acct-0', o.i, 50, HIT_KINDS.Melee, [o.x + 1, o.z], q++, o.y); if (!(o.hp > 0)) broken++; }   // a banner from its balcony
     }
     assert.equal(broken, 3, `three ${kind}s broken`);
+    S.step();   // EG-PERFECT (PIN MOVED): the Conquest's round over at the next beat, her held line freed
     fellLord(S, I); S.step();
     return wFt(S);
   };
@@ -331,6 +333,7 @@ test('AUDIT EG V L1-8 A FALLEN MEMBER UNCHAINED (section 13.4, the Chaining: "a 
   wakeCourt(S);
   const F = S.B.F, M = egLordsOf(F)[0];
   assert.equal(M.key, 'morvayn');
+  M.hp = M.max * 0.6;   // EG-PERFECT (PIN MOVED): the Chaining is her second phase's - turned at 0.66
   for (let k = 0; k < 4 * 20 && !(F.mem.chains ?? []).length; k++) S.step();
   assert.equal(F.mem.chains.length, 2, 'two pairs');
   const [[a, b], [c, d]] = F.mem.chains;
@@ -367,6 +370,7 @@ test('AUDIT EG V L1-8 A FALLEN MEMBER UNCHAINED (section 13.4, the Chaining: "a 
   // an odd member chained to a Wraith falls: its link goes with it
   const T = breachAt(7, 50, { n: 3 });
   wakeCourt(T);
+  for (const L of egLordsOf(T.B.F)) L.hp = L.max * 0.6;   // EG-PERFECT (PIN MOVED): the Chaining is her second phase's
   for (let k = 0; k < 4 * 20 && !(T.B.F.mem.chains ?? []).length; k++) T.step();
   const odd = T.subs.find((x) => !T.B.F.mem.chains.flat().includes(x));
   assert.ok(T.B.F.tethers.some((t) => t[2] === 2 && typeof t[0] === 'number' && t[1] === odd), 'the odd member chained to a Wraith');
@@ -375,6 +379,7 @@ test('AUDIT EG V L1-8 A FALLEN MEMBER UNCHAINED (section 13.4, the Chaining: "a 
 });
 test('AUDIT EG V L1-15 EACH LINK ITS OWN SNAP (section 13.4: "A pair stretched past 8 m both take 30% (a CHECK)"): two pairs held 12 m apart for 6 s - each snaps every 3 s on its own clock, neither keeping the other from its CHECK (mutants: one clock for every chain)', () => {
   const C = court(7, 50, 'morvayn', { n: 4 });
+  C.L.hp = C.L.max * 0.6;   // EG-PERFECT (PIN MOVED): the Chaining is her second phase's - turned at 0.66
   const here = C.subs.map((sub, j) => ({ sub, x: C.f.x + (j % 2 ? 6 : -6), z: C.f.z + (j < 2 ? 4 : -4) }));
   for (let k = 0; k < 4 * 20 && !(C.F.mem.chains ?? []).length; k++) C.step(here);
   const chains = C.F.mem.chains;
@@ -392,9 +397,11 @@ test('AUDIT EG V L1-9 THE CHAIN SNAPS COUNTED ON THE PAIR IT NAMES, BY THE CENSU
   const S = breachAt(7, 50, { n: 3 });
   wakeCourt(S);
   const F = S.B.F, cr = S.spec.fl.find((f) => f.t === 'd');
+  for (const M of egLordsOf(F)) M.hp = M.max * 0.6;   // EG-PERFECT (PIN MOVED): the Chaining is her second phase's - turned at 0.66
   S.subs.forEach((s, j) => S.at(s, cr.x - 2 + 2 * j, cr.z));
   for (let k = 0; k < 4 * 20 && !(F.mem.chains ?? []).length; k++) S.step();
   const [pa, pb] = F.mem.chains[0], odd = S.subs.find((s) => s !== pa && s !== pb);
+  F.tethers = F.tethers.filter((t) => t[2] !== 2 || typeof t[0] === 'string');   // EG-PERFECT: the odd member's Wraith chain let go - it snaps on its own member (egperfect_lords #15), never in this pin's census
   S.at(pa, cr.x - 6, cr.z); S.at(pb, cr.x + 6, cr.z); S.at(odd, cr.x, cr.z - 9);
   let snap = null;
   for (let k = 0; k < 12 && !snap; k++) snap = S.step().find((f) => f.k === 'eb' && f.nm === 'The Chain Snaps') ?? null;
@@ -581,7 +588,9 @@ test('AUDIT EG V L1-29 EACH LORD COUNTS ITS OWN MIRRORS (section 18, THE OLD MAS
   // and each its lord's aspect (L1-2): Garoth's mirrors Rime-Wrought, the Spellmaster's images Burning
   assert.ok(mine(G).every((x) => x.asp === G.asp && G.asp === 'rime') && mine(M).every((x) => x.asp === M.asp && M.asp === 'burning'), 'its lord\'s aspect');
   const els = new Set();
-  for (let k = 0; k < 4 * 20; k++) { for (const f of S.step()) if (f.k === 'eb' && f.el && mine(G).some((x) => x.i === f.o)) els.add(f.el); S.subs.forEach((sub, j) => { const L = j ? M : G; S.at(sub, L.x + L.r + 2, L.z); }); }
+  // (PIN MOVED, EG-PERFECT's audit: a minute - their blows are drawn at random beside the Spellmaster's, whose Lattice now holds its
+  // cooldown past its sweep, moving the draws: in 20 s his mirrors drew Cleaves and Slams alone)
+  for (let k = 0; k < 4 * 60; k++) { for (const f of S.step()) if (f.k === 'eb' && f.el && mine(G).some((x) => x.i === f.o)) els.add(f.el); S.subs.forEach((sub, j) => { const L = j ? M : G; S.at(sub, L.x + L.r + 2, L.z); }); }
   assert.ok(els.size && [...els].every((e) => e === 'frost'), `his mirrors throw his frost (${[...els]})`);
 });
 test('AUDIT EG V L1-30 SCORCHED ONLY ON A BRIDGE THAT BURNS (section 13.3: "Leading Grath onto a burning bridge ... leaves him Scorched"): a bridge told and not yet burning scorches no one; burning, it does (mutants: the tell\'s three seconds counted as burning)', () => {

@@ -56,8 +56,8 @@
   {
     "name": "AUDIT EG V L1-16: a ring at n = 1",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "    if (!open) { egPlace(F, L, cx + 2, cz, now); F.pg.ring = [cx, cz, 6]; }",
-    "new": "    { egPlace(F, L, cx + 2, cz, now); F.pg.ring = [cx, cz, 6]; }",
+    "old": "    if (!open) { kitPlace(F, L, cx + 2, cz, now); F.pg.ring = [cx, cz, 6]; }",
+    "new": "    { kitPlace(F, L, cx + 2, cz, now); F.pg.ring = [cx, cz, 6]; }",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "AUDIT EG V L1-10: the void ground to flee to",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "const onFloor = egFloorLess(egFloorTest(spec), F.zones, now, blow.at), burns",
-    "new": "const onFloor = egFloorTest(spec), burns",
+    "old": "const base = egFloorLess(egFloorTest(spec, H), F.zones, now, until, H);",
+    "new": "const base = egFloorTest(spec, H);",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ],
@@ -366,7 +366,7 @@
   {
     "name": "AUDIT EG V L1-10: the fight's zones out of the set",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": ", ...egZoneLandings(F.zones, now, blow.at)];",
+    "old": ", ...egZoneLandings(F.zones, now, until)];",
     "new": "];",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
@@ -485,8 +485,8 @@
   {
     "name": "AUDIT EG V L1-13: no rim in the dark",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egRimOf(darkNow > 0 ? EG_SHADE_BAND : band, b.fl | 0)",
-    "new": "egRimOf(band, b.fl | 0)",
+    "old": "egRimOf(darkNow > 0 ? EG_SHADE_BAND : band, b.fl | 0, lord)",
+    "new": "egRimOf(band, b.fl | 0, lord)",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -494,7 +494,7 @@
   {
     "name": "AUDIT EG V L1-14: no card on the turn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (card) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...card };",
+    "old": "      if (card && beat?.kind === 'phase' && t < beat.until) beatNext.push({ kind: 'phase', ...card });\n      else if (card) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...card };",
     "new": "      void card;",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
@@ -751,8 +751,8 @@
   {
     "name": "AUDIT EG V NEW-1: a member inside its body freezes the lord",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "&& Math.max(0, dist(L.x, L.z, target.x, target.z) - L.r) >= (b.minGap ?? 0)",
-    "new": "&& dist(L.x, L.z, target.x, target.z) - L.r >= (b.minGap ?? 0)",
+    "old": "&& Math.max(0, dist(L.x, L.z, target.x, target.z) - L.r) >= (ctx.n === 1",
+    "new": "&& dist(L.x, L.z, target.x, target.z) - L.r >= (ctx.n === 1",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]

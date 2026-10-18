@@ -2,7 +2,7 @@
   {
     "name": "EGA3-law-six-not-the-law",
     "file": "src/net/eliteGates/egLaw.js",
-    "old": "export const EG_SPEC = 9;",
+    "old": "export const EG_SPEC = 10;",
     "new": "export const EG_SPEC = 6;",
     "tests": [
       "test/net/eliteGates/egaudit3_law.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "EGA3-law-six-not-kept",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });",
-    "new": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });",
+    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "new": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
     "tests": [
       "test/net/eliteGates/egaudit3_law.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGA3-law-five-forgotten",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });",
-    "new": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });",
+    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "new": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
     "tests": [
       "test/net/eliteGates/egaudit3_law.test.js"
     ]

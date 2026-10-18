@@ -6,6 +6,10 @@ Like, I want it to feel like you're actually traverversing corridors, different 
 Asked: climbing both on the route and off it (*"Both"*), and inside PR #800. What shipped of it, piece by piece, is
 recorded in `Elite-Gates.md` section 31 (THE ASCENT) and that record wins where the two differ.
 
+STATUS (2026-10-18): LAW 10, THE BROKEN WAY (section 11 - Mac: *"Traversing between sections should present a challenge,
+platforming should be detailed"*), recorded in `Elite-Gates.md` section 31 (EG-PERFECT). Law 9 is kept beside it, byte for
+byte.
+
 `Elite-Gates-Look.md` (EG-LOOK) dressed the halls without touching the law. This page changes the law: the hall
 generator (`net/eliteGates/egLaw.js` layHall), its proofs (`net/eliteGates/egSpanLaw.js`), the relay's judging of where a body stands, and
 the client's clamp. Laws 4-8 stay byte for byte (`net/eliteGates/egDurable.js` EG_LAWS - a breach opened under a law keeps it);
@@ -153,3 +157,95 @@ hall from above with its route drawn - and views inside each room.
 - No climbing for the legion: the legion and the lords keep to the walk graph (stairs and ramps), and a climb's lip is
   never a fight floor's only way in.
 - No law 4-8 hall changes by a byte.
+
+## 11. LAW 10 - THE BROKEN WAY (EG-PERFECT, 2026-10-18)
+
+Mac: *"Traversing between sections should present a challenge, platforming should be detailed"*. Measured over law 9
+(the traversal, hall and spans audits of 2026-10-18 - 20,000 halls, the real motor on the real collider): the way walked
+48-69% of every hall on bridges, landings and stairs no piece and no foe touched, its longest unbroken walk a median of
+180-390 m by kind; the planner shared the solver's tries and laid 7% of its spans plainest (12.8% from circle 11, 89-98%
+under the Gale - its fork linked the Low Road's islands as "bridges" across its 4.5 m Drop and THE ROUTE'S SANITY refused
+every one); a fight hall's door stood 177-243 m past its trial, out of the closing's reach 76-100% of the time; every
+approach drew one kind (the first circle's `still`); five of the eight passage kits were crossed without a jump (gaps
+0.55-1.0 m); no open-course Drop stood in 2,089 halls; a run of Rails passed through itself; a Pendulum was proven at the
+middle of the flight alone. LAW 10 (`net/eliteGates/egAscent.js` EG_BROKEN_LAW) answers each; laws 4-9 lay as they laid.
+
+- **A bridge breaks.** A bridge the way takes, EG_BROKEN_MIN_CM long or more, breaks where its break stands clear (what
+  hangs under a course, EG_ASCENT_HANG_CM.step): its middle fallen away and crossed on EG_BROKEN_PIECES of one of its band's
+  EG_BROKEN_KINDS, each a gap of THE ENVELOPE past the last, at the Steps' own timing, EG_BROKEN_FOOT_CM of bridge kept at
+  either end - its pieces off the planner's die, so no course's draw moves. Along +z they are laid by the span generator's
+  road; along +x, -z or -x (a TURNED course, `hd` on each piece) only the pieces that keep still (EG_BROKEN_TURNED - a still
+  slab, a Crumble, a Beat, a Vent), laid off every road's line and read in their heading's own frame by every reader of a
+  chain (`net/eliteGates/egSpanLaw.js` egStepLocal, egAlongOf; `net/eliteGates/egRouteProof.js` egRouteSpanSteps along x; the
+  pilot's frame in `tools/egSpanSolve.mjs`). Each is a course of its own: its ground in `route.courses` (marked `b`), proven by
+  THE TIMED SOLVER where it stands, the way a bridge, a span and a bridge. The approach comes into a course's foot along
+  +z EG_BROKEN_RUN cells from its last landing (a run long enough to break), on a quarter of the search, else law 9's two.
+  THE AUDIT (2026-10-18) set how a bridge breaks: its pieces drawn once - EG_BROKEN_PIECES, and one more for every
+  EG_BROKEN_PER_CM it runs past EG_BROKEN_LONG_CM, EG_BROKEN_MOST at most - then that many, one fewer, down to one, each
+  break tried along the bridge at EG_BROKEN_SLIDES (its middle first) where it stands (a centred break that met anything
+  left the bridge whole, and bridges of 30 m and more were walked whole); a lone piece is never a still
+  slab (15% of the broken bridges were one still slab); a break - a Drift's sway with it - stands EG_BROKEN_CLEAR_CM clear
+  of every leg, the two it joins too (a Drift swung within a centimetre of a room's wall); an approach's run past
+  EG_BROKEN_SPLIT_CM is laid as bridges of EG_BROKEN_CHUNK_CM and more, each broken on its own (a 136 m approach broke
+  once); a Gust is never an approach's kind (THE TIMED SOLVER reads no gust: run straight on after a Crumble run, the real
+  motor fell on 1.9% of the roads); and a try that lays no span link - a hall walked without a jump - is refused.
+- **The fork stands.** The Low Road's first island is reached by its bridge, every later one by its own span. A span's
+  fork is laid as its first course (where the bound has room for its length), its course held under EG_FORK_COURSE_CM
+  (its Low Road's second passage left out past it) and no trunk passage under two ranks of the decrees. THE AUDIT: the
+  plan's own tries (`lean`) lay the fork second again (laid first, it cost three halls their fork).
+- **The plan's own tries.** A hall the planner refused is laid again EG_BROKEN_TRIES more times (its fewest rooms, never
+  the deep profile - `lean`), its courses whole, before the plainest; a stretch whose rooms find no room is planned again
+  with one fewer, down to none.
+- **A fight hall's door follows its trial.** A Rift-Yard's, an Athenaeum's, a Scriptorium's and a Proving Walk's rooms all
+  stand before its first course and the way climbs to it; its door follows its trial straight on where its bridge and plate
+  stand clear. The relay holds such a trial's clocks until its company stands on its fight floor (`net/eliteGates/egBrain.js`
+  egTrialAwaits, EG_AWAIT_CLOCKS - a Rift-Yard's, an Athenaeum's and a Deepway's). THE AUDIT: a Scriptorium's quiet too
+  (`quietUntil` - it ran from the hall's wake, and the company walking its rooms first heard the pull before the fastest
+  build could reach the door: seed 7's hall 8, 53 s against 57.8), held until a member stands on its trial's own ground
+  (`egOnTrialGround` - its first course that is no broken bridge); and the Deserter closes no rift while a trial waits
+  (it closed them unopposed while the company walked the rooms).
+- **Two kinds an approach.** A Court's, an Athenaeum's and a Proving Walk's first course draws two different kinds of
+  its band's whole set in two runs (the first circle a Drift and a Beat), an island between them at a Court from its sixth
+  circle.
+- **THE ENVELOPE in the passages.** The Caverns', the deep Caverns', the Stacks' and the Ossuary's chasms are as wide as
+  their pieces at one gap of THE ENVELOPE; the Mist Stair's at its least gap (its floors keep 4 m). A passage's length and
+  width - the envelope a hero record is baked to - are unmoved (`net/eliteGates/egFragLaw.js` EG_FRAG_BROKEN_LAW, named by the hall
+  law, never the newest unnamed).
+- **A Drop falls, the High Road keeps time.** A Drop drawn where its road stands at its floor falls EG_DROP_LAW10_CM to
+  EG_DROP_CM below it; a fork's High Road is carried on past its Drop by Beats half a cycle apart, and draws no Drop of its
+  own (THE AUDIT: a drawn Drop beside the fork's barely fell). A fall into a void zone is the void's from
+  `EG_VOID_DROP_M` under the ground left - THE AUDIT: past the deepest Drop (EG_DROP_CM and a quarter metre; at 3 m every
+  way down a Drop under a Gale fork's plate zone was the void's - seed 3's hall 7, both roads); under law 10 a zone stands
+  under the arrival plate too (`voidsOf` - in seed 2's hall 3 a step off it fell 19.3 m onto a leg 166 m along the 449 m way, credited).
+- **Rails apart, a Pendulum over the flight.** A run of Rails stands at one gap and one period, each half a cycle behind
+  the last (THE AUDIT: π - `egPieceAt` reads a phase as its angle; half the period read so set them 172-258 degrees apart),
+  its travel under half its gap less EG_RAIL_CLEAR; the Forge's conveyors are one belt; THE TIMED SOLVER refuses travelling
+  neighbours that meet and takes a Pendulum's weight over the whole flight (EG_SOLVE_FLIGHT_LAW) - THE AUDIT: on the body's
+  own path, at EG_SOLVE_FLIGHT_N even instants, its middle on the launch edge and a body's radius past it at its run's pace,
+  its feet on the jump's arc (the reach's path ran the body 27% fast, its feet at the landing's height: 7% of the launches it
+  called clear met the weight; at twelve instants the swing between two let 3% through); a link reads only the pieces of its
+  own heading (`egRouteSpanSteps`).
+- **The halls' fittings where a body reaches them.** A chamber's alcove stands at its court's rim and its ring opens there
+  (`net/eliteGates/egWalkGraph.js` egRingSideOpen - every reader of a ring wall; THE AUDIT: a doorway EG_RING_DOOR wide about
+  the alcove of the ring's own chamber, its side's wall kept either side - `egRingSideWalls` - where the whole 3.4-5.4 m side
+  stood open about a 2 m niche, and a passage's alcove beside the ring opens none of it); a balcony 4 m up and more; a Rampart's caster
+  pillar on the side no bastion holds, its Gauntlet plate on its top; a Winch plate against the walkway; a Glade's braziers
+  on its ground; a Captive's chains about its hero chamber's own line; a Reliquary Vault off its island's rim, a Proving
+  Walk's a side span off its court (off its second span's island where its court is walled); rooms drawn from the whole
+  fresh pool (law 9 drew from its first four: a tower in 82% of its halls).
+
+What it does not do: it turns no moving piece (a Drift, a Rail, a Pendulum keep +z); it changes no lord, no circle's plan
+and no bound; the rooms' own records and the climbs are law 9's.
+
+**The pins under law 10.** Law 10 lays every seed's halls anew, so a pin measured on a law 9 hall now names law 9 - by its
+`law` argument or THE SEAM (`egLawSeam(9)`), a relay rig's breach with it (`B.egv`): the EG-PERFECT halls' repros (the
+Captive's chains, the closing's walk, the Deserter, the Ashfall, the Gauntlet's plates on their stairs, the Casters'
+stands, the toll's rooms, the voids, the hang). A sweep that holds a property over the halls runs over law 10's own: the
+closing's walk over seeds 1-2 read from its trial's own ground (the first course that is no broken bridge, as
+`egTrialEndAt` reads it); the Captive's chains over seeds 1-40 (law 10 hangs every three on its floor: 56 kept, none
+refused - law 9 refused two); the Deserter halls of seeds 1-30; the lamps' budget over seeds 1-2; the Orrery's handles; a
+Fallen Stacks' stands 4 m up. Two matchers read a hall too loosely for law 10 and now read it exactly: the place's-white pin
+matches the tide by its reach (a Deepway's engine marks its chamber's middle, the tide's own centre), and the motes'
+clearance is measured on its one disc alone (law 10's way circles that court at its height). Seed 115's hall 52 lays its
+Eclipse chamber's way 721 m under law 10, past the route's 640, and its next slot's hero stands instead - the law's own
+refusal, the pin moved to seed 111's hall 57.

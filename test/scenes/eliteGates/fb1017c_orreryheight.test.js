@@ -8,7 +8,7 @@
 // (egCircleColliderTris), the span stood (createEgSpan) and the real pick (player/activate.js pickActivatableHit).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { egHallOf, egFirstHallOf, egCirclePlan, egSpecForget } from '../../../src/net/eliteGates/egLaw.js';
+import { egHallOf, egFirstHallOf, egCirclePlan, egSpecForget, EG_SPEC } from '../../../src/net/eliteGates/egLaw.js';
 import { egGive8 } from '../../egGive8.mjs';
 import { createEgSpan } from '../../../src/scenes/eliteGates/egSpan.js';
 import { egCircleColliderTris, egToDungeon } from '../../../src/world/eliteGates/egHall.js';
@@ -73,8 +73,10 @@ function eachHandleReached(span, s, floorY, tris) {
 }
 
 test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): under THE ASCENT an Athenaeum\'s court stands off the 0 floor, and every Orrery stone\'s two handles stand a metre over its own floor - found by the real ray from a body on that floor, inside its reach, and named (mutants: the handles at 1 m over 0, as shipped; the spot\'s centimetres read as metres)', () => {
-  const { seed, c, s } = findAthenaeum(9, (q) => Math.abs(q.spots.stone?.[0]?.y ?? 0) >= 400);
-  assert.equal(s.law, 9);
+  // PIN MOVED (EG-PERFECT, spec law 10 - 2026-10-18): over the build's law (the collider and the spans draw it) - law 9's found
+  // Athenaeum stood beside law 10's circle
+  const { seed, c, s } = findAthenaeum(EG_SPEC, (q) => Math.abs(q.spots.stone?.[0]?.y ?? 0) >= 400);
+  assert.equal(s.law, 10);
   const floorY = s.spots.stone[0].y / 100;
   assert.ok(s.spots.stone.every((q) => q.y === s.spots.stone[0].y), 'the six stones on one court');
   // the court's floor is where the spot says: the circle's collider holds a floor under every stone at that height

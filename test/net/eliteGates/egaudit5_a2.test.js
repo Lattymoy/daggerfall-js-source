@@ -299,7 +299,9 @@ test('AUDIT EG V L3-19 THE GHOST AND THE CAPTIVE ON EVERY HALL THEY ARE LAID ON 
     assert.ok(chains.every((c) => egGroundAt(view, c.x, NaN, c.z, 0.5)), `${kind}: each on the fight ground`);
     if (kind === 'span') assert.ok(chains.every((c) => view.fl.some((d) => (d.g === 'island' || d.g === 'plate') && d.t === 'd' && Math.hypot(d.x - c.x, d.z - c.z) <= d.r)), 'span: on its islands (or its plates) along the course - never a passage\'s floor');   // the merge of fix group F: law 8's spans carry a trunk passage, whose chamber floor is fight ground too
     if (kind === 'yard') assert.deepEqual(egCaptiveSpots(sp), sp.spots.chain.map((q) => [q.x, q.z]), 'the law\'s three where it lays three');
-    if (kind === 'deepway') { const hero = egHallOf(115, 52, 0); assert.equal(hero.spots.chain.length, EG_CHAINS); assert.deepEqual(egCaptiveSpots(hero), hero.spots.chain.map((q) => [q.x, q.z]), 'a hero chamber\'s three, as the law lays them'); }
+    // PIN MOVED (EG-PERFECT, spec law 10): seed 115 hall 52's Eclipse chamber runs its way 721 m under THE BROKEN WAY, past
+    // the route's 640, and its next slot's hero stands instead - seed 111 hall 57 lays the same chamber under law 10
+    if (kind === 'deepway') { const hero = egHallOf(111, 57, 0); assert.equal(hero.spots.chain.length, EG_CHAINS); assert.deepEqual(egCaptiveSpots(hero), hero.spots.chain.map((q) => [q.x, q.z]), 'a hero chamber\'s three, as the law lays them'); }
     if (kind === 'rampart') assert.ok(chains.every((c) => Math.abs(c.x - sp.fl[0].ax) <= sp.fl[0].hw), 'along the walkway');
     if (kind !== 'span') continue;
     // a span's freed: each chain broken from its island

@@ -348,6 +348,6 @@ test('WB6b the seams, by source: the world host keeps the Deadlands\' clock on t
   assert.ok(clock > 0 && clock < shards && shards < begin, 'the shards moved before the frame\'s draws, which the shadows record');
   assert.match(wm, /const _cl = courtLighting\(deadlandsFlash\(_deadS\)\);/);
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /\n      if \(!isGateArena\(dfLocation\)(?: && !isArenaFloor\(dfLocation\))?(?: && !_sdRealm)?\) sceneAmbience\.update\(dt, \{/, 'no drip, no door, no bird in the Deadlands');   // SD5a (PIN MOVED): nor in the Shattered Hour
+  assert.match(dc, /\n      if \(!isGateArena\(dfLocation\)(?: && !isArenaFloor\(dfLocation\))?(?: && !_sdRealm)?(?: && !_egHall)?\) sceneAmbience\.update\(dt, \{/, 'no drip, no door, no bird in the Deadlands');   // SD5a (PIN MOVED): nor in the Shattered Hour; EG-ROAR (PIN MOVED): nor in the Spire
   assert.ok(GATE_BLOCK_SIDE > 0);
 });

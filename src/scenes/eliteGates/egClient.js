@@ -187,6 +187,7 @@ import { egChartFell, egBoardLine, egRecapBoardKeep } from '../../ui/eliteGates/
 import { egFirstOver } from '../../ui/eliteGates/egBeats.js';
 import { GATE_HEAL_ROWS_MAX, GATE_HEAL_WIRE_MAX } from '../../net/wire.js';
 import { createEgReverb } from '../../systems/eliteGates/egReverb.js';   // EG-ZH (section 11.9): the hall's reverb
+import { createEgAir } from './egAir.js';   // EG-ROAR (section 26): the Spire's air
 import { egFragArena } from '../../world/eliteGates/egHall.js';   // EG-ZH (sections 11.7-11.8): the fragment's own clamp
 import { setSpireCamera } from '../../player/mwView.js';   // EG-ZH (section 11.8): the camera in rock
 import { setTouchSpire } from '../../ui/touch/touch.js';   // EG-ZH (section 27.8): touch on the spans
@@ -641,6 +642,9 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
   // back, never another's)
   const reverb = createEgReverb({ audio });
   let fragArena = null;
+  /** EG-ROAR (section 26): THE SPIRE'S AIR over this screen's engine (scenes/eliteGates/egAir.js) - played from the score's
+   *  own place each frame I stand in the breach, let go on every way out the reverb is */
+  const air = createEgAir(audio);
 
   // ── the keys ────────────────────────────────────────────────────────────────────────────────────────
   /** AUDIT EG IV (lane3 #10; section 5): THE BALANCE'S ANSWERS IN THE ORDER THEIR ASKS WENT - each ask that answers the balance
@@ -2123,11 +2127,13 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
         presFrame(link.state(), t);   // EG-G1
         if (healOwed.size && Date.now() - healSentAt >= EG_HEAL_SEND_MS) healSend(Date.now());   // EG-ZF: what my companions healed in me, out
         if (!leaving) { reverbFrame(link.state()); clampFrame(link.state()); }   // EG-ZH (sections 11.7-11.9)
+        air.frame(api.scoreView()?.place ?? null, t / 1000, cam?.pos ?? null, E.seed);   // EG-ROAR: the Spire's air, from the score's place, on the breach's clock
       } else {
         presAway();   // EG-G1
         if (fight) { fight.leave(); }
         if (look) { look.release(); look = null; }   // EG-G2: the look's passes, freed on every way out
         if (!swapping && !answering) reverb.release();   // EG-ZH: let go on every way out - held through a swap or an answer's step under way
+        if (!swapping && !answering) air.stop();   // EG-ROAR: and the Spire's air with it
         if (!swapping && !answering) modes()?.egBandsDown?.();   // EG-ZN (section 29): the band textures freed at the breach's end, every way out - never under a swap's or an answer's step (the next circle's stand uploads nothing)
         if (!swapping && !answering) { swapWaitAt = 0; modes()?.egSwapDrop?.(); lawForget(); }   // AUDIT EG III (lane4 #7): and the swap's build and its worker with them, every way out (walkOut's alone did); AUDIT EG V (h): and the halls given
         clampAway();   // EG-ZH
@@ -2302,7 +2308,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     /** The pages of the Annals this breach has given me (their numbers). */
     annals: () => [...annals].sort((a, b) => a - b),
     /** Online gone: every piece put away (the call kept - it is the hub's). */
-    away() { fight?.leave(); if (look) { look.release(); look = null; } lawForget(); chartAway(); healOwed.clear(); dropDoor(); drawEgHud(null); drawEgPanel(null); presAway(); witness = null; const o = online(); if (o) { o.poseRide = null; o.rideAt = null; } callPortal?.clear?.(); prompt?.draw?.(null); const sw = startWin; startWin = null; sw?.close?.(); seedFrame({ silent: true }); spireHolderStep(entity, null); },   // EG-F: and the call's portal, its prompt, the start window; EG-G2: the look released; EG-ZM: a way back's wait for the room's word given up; EG-ZR: the Vestiges I held let go; AUDIT EG V (c, L6-6): the start window's slot emptied before it is closed
+    away() { fight?.leave(); if (look) { look.release(); look = null; } lawForget(); chartAway(); air.stop(); healOwed.clear(); dropDoor(); drawEgHud(null); drawEgPanel(null); presAway(); witness = null; const o = online(); if (o) { o.poseRide = null; o.rideAt = null; } callPortal?.clear?.(); prompt?.draw?.(null); const sw = startWin; startWin = null; sw?.close?.(); seedFrame({ silent: true }); spireHolderStep(entity, null); },   // EG-F: and the call's portal, its prompt, the start window; EG-G2: the look released; EG-ZM: a way back's wait for the room's word given up; EG-ZR: the Vestiges I held let go; AUDIT EG V (c, L6-6): the start window's slot emptied before it is closed; EG-ROAR: the Spire's air let go
     /** EG-H1: the breach's shared clock (relay ms) and its offset to this machine's wall clock (null before the room has
      *  answered a ping) - the host's spans and its fight read it (scenes/world.js's `egNow`, the spans' anchored clock). */
     sharedNow: () => now(),

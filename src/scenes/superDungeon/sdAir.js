@@ -109,8 +109,9 @@ export function buildOrreryHum(bell, { srcRate = SND_RATE, rate = SD_AIR_RATE, s
 
 /** A BED OF ONE VOICE, laid over itself round a loop of `seconds`: `n` passes at the ratios given in turn (a spread of
  *  pitches about `pitch`), each rising and falling over `fade` of its own length, at seeded places round the loop and
- *  wrapped - so no pass is heard twice alike, and the loop's end meets its start. Its level the voice's own. Pure. */
-function layBed(voice, { srcRate, rate, seconds, n, pitch, spread, seed, hz, fade = 0.4 }) {
+ *  wrapped - so no pass is heard twice alike, and the loop's end meets its start. Its level the voice's own. Pure.
+ *  EG-ROAR: exported - the Spire's air lays its bands' voices the same way (scenes/eliteGates/egAir.js). */
+export function layBed(voice, { srcRate, rate, seconds, n, pitch, spread, seed, hz, fade = 0.4 }) {
   const out = new Float32Array(Math.round(rate * seconds));
   if (!voice?.length) return out;
   for (let i = 0; i < n; i++) {

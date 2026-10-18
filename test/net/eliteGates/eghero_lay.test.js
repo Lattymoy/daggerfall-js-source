@@ -65,9 +65,11 @@ test('EG-HERO-LAY THE LAW PIN (sections 9 and 22): spec law 7 is the law, laws 4
   // PIN MOVED (AUDIT EG V, f): spec law 8 (the ways laid) is the build's law, law 7 kept beside it - this pin names law 7, whose
   // laying it holds (test/net/eliteGates/egaudit5_f.test.js pins law 8's)
   // PIN MOVED (THE ASCENT - THE ROOMS, LAW 9): spec law 9 the build's, laws 4 to 8 kept beside it
-  assert.deepEqual([EG_SPEC, EG_HERO_LAW, EG_DECREE_LAW], [9, 7, 6]);
-  assert.deepEqual({ ...EG_LAWS }, { 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16' });
-  assert.deepEqual([4, 5, 6, 7, 8, 9, 10].map(egLawKnown), [true, true, true, true, true, true, false]);
+  // PIN MOVED (EG-PERFECT, 2026-10-18): spec law 10 (THE BROKEN WAY) is the build's law, laws 4 to 9 kept beside it
+  // (test/net/eliteGates/egperfect_broken.test.js pins law 10)
+  assert.deepEqual([EG_SPEC, EG_HERO_LAW, EG_DECREE_LAW], [10, 7, 6]);
+  assert.deepEqual({ ...EG_LAWS }, { 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });
+  assert.deepEqual([4, 5, 6, 7, 8, 9, 10, 11].map(egLawKnown), [true, true, true, true, true, true, true, false]);
   assert.ok((Date.parse(EG_LAWS[7]) - Date.parse(EG_LAWS[4])) / 86_400_000 <= EG_LAW_KEEP_DAYS, 'every law before inside its keep');
   assert.deepEqual([hash(4), hash(5), hash(6)], [1228307904, 1301097644, 201408482], 'laws 4, 5 and 6, byte for byte');
   // the reference alone registered: no candidate anywhere, so law 7 is law 6 but its number
@@ -97,7 +99,7 @@ test('EG-HERO-LAY THE LAW PIN (sections 9 and 22): spec law 7 is the law, laws 4
   }
   assert.deepEqual(laid, { egheroOssuary: 22, egheroGloam: 24, egheroEclipse: 3, egheroClanPit: 10, egheroForgeGut: 4, egheroColonnade: 3, egheroCaverns: 3, egheroStacks: 6, egheroDeepCaverns: 3 });
   const B = egBreachNew({ b: '0123456789abcdef', ez: 'z'.repeat(20), s: 'a', o: 'A', ew: 0, rh: 0, seed: 77, op: 1_800_000_000_000, co: [['a', 'A', 1]], site: { px: 1, py: 1, x: 0, y: 0, z: 0, yaw: 0 }, wg: [] });
-  assert.equal(B.egv, 9, 'a breach opened now is of law 9 (PIN MOVED, AUDIT EG V; THE ASCENT)');
+  assert.equal(B.egv, 10, 'a breach opened now is of law 10 (PIN MOVED, AUDIT EG V; THE ASCENT; EG-PERFECT)');
   assert.equal(EG_SPEC_SAID_MAX, EG_SPEC_WIRE_MAX, 'the law\'s bound on a spec said whole is the wire\'s');
   assert.equal(EG_HANG_CM, SD_ROOT_DEPTH * 100, 'the hanging underside is the Steps\' root');
   assert.equal(EG_HERO_WAY_CM, EG_STEP.ledge.w);

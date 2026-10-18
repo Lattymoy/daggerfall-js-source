@@ -122,6 +122,55 @@ export function songPress(song) {
   if (!(out.out > 0)) out.out = PRESS_RANGE.out[2];
   return out;
 }
+/** EG-ROAR (2026-10-18, Mac: "the music and ambience of the elite breach needs to be insanely better. Its way too
+ *  tame"): A SONG'S OWN VOICES - a made song may carry `voices`, its channels' instruments past the FM bank's one
+ *  oscillator pair a note (gmSynth.js fmSpec's fields, each held to its range, over the program's own), and `kit`, its
+ *  drums past percussionSpec's one sine or band of noise a hit. A voice may be a UNISON (`unison` copies, `cents` apart
+ *  either side of the note - an ensemble, where one pair is one player) with a SUB (`sub`, a sine an octave under at that
+ *  share), its copies laid in turn either side of the channel's place (`spread`, a share of the pan's whole); a drum
+ *  may carry a CLICK (`click`, the beater's noise over a skin's tone) and a BODY (`body` Hz, a skin's tone under a
+ *  noise's crack). Every song MIDI.BSA holds carries neither and plays the bank exactly as it always has. A field out
+ *  of its range is held to it, one that is not a number is dropped. Pure. */
+export const VOICE_RANGE = Object.freeze({
+  car: [0.25, 8], mod: [0.25, 12], index: [0, 12], idxDecay: [0.01, 4], attack: [0.001, 2], decay: [0.01, 4], sustain: [0, 1], release: [0.01, 4], gain: [0, 1.5],
+  unison: [1, 4], cents: [0, 40], sub: [0, 1], spread: [0, 1],
+});
+export const KIT_RANGE = Object.freeze({ hz: [20, 12000], attack: [0.001, 0.2], decay: [0.01, 3], gain: [0, 1.5], drop: [0.1, 1], q: [0.2, 12], click: [0, 1], body: [0, 400] });
+const held = (o, range) => {
+  if (!o || typeof o !== 'object') return null;
+  const out = {};
+  for (const [k, [lo, hi]] of Object.entries(range)) if (Number.isFinite(o[k])) out[k] = Math.min(hi, Math.max(lo, o[k]));
+  return Object.keys(out).length ? out : null;
+};
+/** EG-ROAR: a song's channels' voices, `[16]` (null where the bank's own plays), or null for a song that names none. */
+export function songVoices(song) {
+  const v = song?.voices;
+  if (!v || typeof v !== 'object') return null;
+  const out = new Array(16).fill(null);
+  for (let c = 0; c < 16; c++) {
+    const s = held(v[c], VOICE_RANGE);
+    if (s && 'unison' in s) s.unison = Math.round(s.unison);
+    out[c] = s;
+  }
+  return out.some(Boolean) ? out : null;
+}
+/** EG-ROAR: a song's drums' voices by GM key (a Map), or null for a song that names none. */
+export function songKit(song) {
+  const k = song?.kit;
+  if (!k || typeof k !== 'object') return null;
+  const out = new Map();
+  for (const [key, o] of Object.entries(k)) { const n = Number(key), s = held(o, KIT_RANGE); if (Number.isInteger(n) && n >= 0 && n <= 127 && s) out.set(n, s); }
+  return out.size ? out : null;
+}
+/** EG-ROAR: THE FLOOR under a song with its own voices (Hz - SongPlayer._routePress). */
+export const SONG_FLOOR_HZ = 30;
+/** EG-ROAR: the cents each of a unison's `n` copies is set off the note by - `cents` either side, spread evenly, the
+ *  middle one on it. Pure. */
+export function unisonCents(n, cents) {
+  if (!(n > 1) || !(cents > 0)) return [0];
+  return Array.from({ length: n }, (_, i) => -cents + (2 * cents * i) / (n - 1));
+}
+
 /** WB10a: the ceiling in the song's own amplitude (before the music's master, MUSIC_GAIN at the highest MusicVolume). */
 export const ceilingAmplitude = (dbfs) => Math.pow(10, dbfs / 20) / MUSIC_GAIN;
 let _ceilingCurve = null;
@@ -326,10 +375,25 @@ export class SongPlayer {
       top.gain.value = ceil;
       to = comp;
     }
+    // EG-ROAR: THE FLOOR - a song that carries its own voices is high-passed at SONG_FLOOR_HZ before its press: a 1:1 FM
+    // voice's first lower sideband lands on 0 Hz, an offset no speaker plays that the press would answer by pressing
+    // the whole song (measured - a quarter of the spiccato's energy under 40 Hz)
+    const hp = this._songVoices && typeof this.ctx.createBiquadFilter === 'function' ? (this._floor ??= this._makeFloor()) : null;
+    if (hp) {
+      if (this._floorTo !== to) { try { hp.disconnect(); } catch { /* nothing connected */ } hp.connect(to); this._floorTo = to; }
+      to = hp;
+    }
     if (this._levelTo === to) return;
     try { this._level.disconnect(); } catch { /* nothing connected */ }
     this._level.connect(to);
     this._levelTo = to;
+  }
+
+  /** EG-ROAR: the floor's high-pass, made once. */
+  _makeFloor() {
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'highpass'; f.frequency.value = SONG_FLOOR_HZ; f.Q.value = Math.SQRT1_2;
+    return f;
   }
 
   /** EG-G2 (bible/11-Multiplayer/Elite-Gates.md section 26, THE SPIRE MIX): THE DUCK - the song's own level (WBX9's
@@ -366,6 +430,7 @@ export class SongPlayer {
     this.stop();
     this._ensureMaster();
     if (this._level) this._level.gain.value = songLevel(song);   // WBX9: the song's own level - 1 for every song but the ones that carry one
+    this._songVoices = songVoices(song); this._songKit = songKit(song);   // EG-ROAR: its own voices - none for every song but the ones that carry them (and the floor under them, _routePress)
     this._routePress(songPress(song));   // WB10a: and its press - none for every song but the ones that carry one
     this.song = song;
     // Computed once per song, not per window: the pedal map is a pure
@@ -503,14 +568,15 @@ export class SongPlayer {
     let spec;
 
     if (e.channel === PERCUSSION_CHANNEL) {
-      spec = percussionSpec(e.note);
+      const own = this._songKit?.get(e.note) ?? null;   // EG-ROAR: the song's own drum, over the kit's
+      spec = own ? { ...percussionSpec(e.note), ...own } : percussionSpec(e.note);
       if (spec.kind === 'noise') {
         node = ctx.createBufferSource();
         node.buffer = this._noiseBuffer();
         const bp = ctx.createBiquadFilter();
         bp.type = 'bandpass';
         bp.frequency.value = spec.hz;
-        bp.Q.value = 1.2;
+        bp.Q.value = spec.q ?? 1.2;
         node.connect(bp);
         bp.connect(gain);
       } else {
@@ -535,7 +601,8 @@ export class SongPlayer {
       this._connect(gain, ch.pan, e.channel);
       node.start(when);
       node.stop(when + spec.attack + spec.decay + 0.02);
-      this._voices.push({ stop: () => node.stop(), endsAt: when + spec.attack + spec.decay });
+      const extra = own ? this._drumLayers(spec, when, peak, ch.pan, e.channel) : null;   // EG-ROAR: its click and its body
+      this._voices.push({ stop: () => { node.stop(); extra?.forEach((x) => x.stop()); }, endsAt: when + spec.attack + spec.decay });
       return;
     }
 
@@ -544,7 +611,8 @@ export class SongPlayer {
     // The modulator's output is in Hz, so a gain of index*hz gives a
     // modulation depth of `index` multiples of the carrier - which is
     // what "brightness" means in FM.
-    spec = fmSpec(ch.program);
+    const own = this._songVoices?.[e.channel] ?? null;   // EG-ROAR: the song's own voice, over the program's
+    spec = own ? { ...fmSpec(ch.program), ...own } : fmSpec(ch.program);
     const hz = noteToHz(e.note);
     const t0 = when;
     const tA = t0 + spec.attack;
@@ -552,42 +620,98 @@ export class SongPlayer {
     const tOff = Math.max(tD, t0 + dur);
     const end = tOff + spec.release;
 
-    const carrier = ctx.createOscillator();
-    carrier.type = 'sine';
-    carrier.frequency.value = hz * spec.car;
-    if (ch.bend) carrier.detune.value = ch.bend;
-
-    const mod = ctx.createOscillator();
-    mod.type = 'sine';
-    mod.frequency.value = hz * spec.mod;
-    if (ch.bend) mod.detune.value = ch.bend;
-
-    const modGain = ctx.createGain();
-    // The index DECAYS: a real instrument's bright attack settles into a
-    // duller sustain, and a fixed index is the "cheap FM" sound.
-    const depth = Math.max(1, spec.index * hz);
-    modGain.gain.setValueAtTime(depth, t0);
-    modGain.gain.exponentialRampToValueAtTime(
-      Math.max(1, depth * 0.12), t0 + Math.max(0.02, spec.idxDecay));
-    mod.connect(modGain);
-    modGain.connect(carrier.frequency);
-    carrier.connect(gain);
-
-    const peak = amp * spec.gain;
+    // EG-ROAR: a unison is `unison` pairs, each set off the note by its cents (unisonCents) and begun a share of a
+    // period apart so the copies do not all start in phase; one pair is the bank's own note. A `spread` unison lays its
+    // copies in turn either side of the channel's place, each side its own envelope; the sub stands between them
+    const offs = unisonCents(own?.unison ?? 1, own?.cents ?? 0), oscs = [], detunes = [];
+    const peak = (amp * spec.gain) / Math.sqrt(offs.length);   // a unison as loud as the one pair it stands for
     const sustain = Math.max(0.0001, peak * spec.sustain);
-    gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.linearRampToValueAtTime(Math.max(0.0001, peak), tA);
-    gain.gain.exponentialRampToValueAtTime(sustain, tD);
-    gain.gain.setValueAtTime(sustain, tOff);
-    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+    const sides = own?.spread > 0 && offs.length > 1 ? [gain, ctx.createGain()] : [gain];
+    for (let u = 0; u < offs.length; u++) {
+      const at = t0 + (u * 0.29) / hz;
+      const carrier = ctx.createOscillator();
+      carrier.type = 'sine';
+      carrier.frequency.value = hz * spec.car;
+      if (ch.bend || offs[u]) carrier.detune.value = ch.bend + offs[u];
 
-    this._connect(gain, ch.pan, e.channel);
-    mod.start(t0); carrier.start(t0);
-    mod.stop(end + 0.02); carrier.stop(end + 0.02);
+      const mod = ctx.createOscillator();
+      mod.type = 'sine';
+      mod.frequency.value = hz * spec.mod;
+      if (ch.bend || offs[u]) mod.detune.value = ch.bend + offs[u];
+
+      const modGain = ctx.createGain();
+      // The index DECAYS: a real instrument's bright attack settles into a
+      // duller sustain, and a fixed index is the "cheap FM" sound.
+      const depth = Math.max(1, spec.index * hz);
+      modGain.gain.setValueAtTime(depth, t0);
+      modGain.gain.exponentialRampToValueAtTime(
+        Math.max(1, depth * 0.12), t0 + Math.max(0.02, spec.idxDecay));
+      mod.connect(modGain);
+      modGain.connect(carrier.frequency);
+      carrier.connect(sides[u % sides.length]);
+      mod.start(at); carrier.start(at);
+      oscs.push(mod, carrier); detunes.push(carrier.detune, mod.detune);
+    }
+    const subN = own?.sub > 0 ? ctx.createOscillator() : null;   // EG-ROAR: the sub, an octave under, inside the note's own envelope
+    if (subN) {
+      const subG = ctx.createGain();
+      subN.type = 'sine';
+      subN.frequency.value = (hz * spec.car) / 2;
+      if (ch.bend) subN.detune.value = ch.bend;
+      subG.gain.value = (own.sub * Math.sqrt(offs.length)) / sides.length;
+      subN.connect(subG);
+      for (const g of sides) subG.connect(g);
+      subN.start(t0);
+      oscs.push(subN); detunes.push(subN.detune);
+    }
+
+    for (const g of sides) {
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(Math.max(0.0001, peak), tA);
+      g.gain.exponentialRampToValueAtTime(sustain, tD);
+      g.gain.setValueAtTime(sustain, tOff);
+      g.gain.exponentialRampToValueAtTime(0.0001, end);
+    }
+
+    if (sides.length > 1) { const p0 = ch.pan ?? 0, s = own.spread; this._connect(sides[0], Math.max(-1, p0 - s), e.channel); this._connect(sides[1], Math.min(1, p0 + s), e.channel); }
+    else this._connect(gain, ch.pan, e.channel);
+    for (const o of oscs) o.stop(end + 0.02);
     this._voices.push({
-      stop: () => { mod.stop(); carrier.stop(); }, endsAt: end,
-      channel: e.channel, detunes: [carrier.detune, mod.detune],
+      stop: () => { for (const o of oscs) o.stop(); }, endsAt: end,
+      channel: e.channel, detunes, offs: oscs.length > 2 ? [...offs.flatMap((c) => [c, c]), ...(subN ? [0] : [])] : null,
     });
+  }
+
+  /** EG-ROAR: a song's own drum's layers over its tone or its noise (songKit) - `click`, the beater's noise, 2-5 kHz and
+   *  gone in 15 ms; `body`, a skin's tone under a noise's crack, falling a third over the first of the decay. Each its
+   *  own nodes, stopped with the hit. */
+  _drumLayers(spec, when, peak, pan, channel) {
+    const ctx = this.ctx, out = [];
+    if (spec.click > 0) {
+      const n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+      n.buffer = this._noiseBuffer();
+      bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 0.8;
+      g.gain.setValueAtTime(peak * spec.click, when);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + 0.015);
+      n.connect(bp); bp.connect(g);
+      this._connect(g, pan, channel);
+      n.start(when); n.stop(when + 0.03);
+      out.push(n);
+    }
+    if (spec.body > 0) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), len = Math.max(0.03, spec.decay * 0.6);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(spec.body, when);
+      o.frequency.exponentialRampToValueAtTime(spec.body * 0.66, when + len);
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.linearRampToValueAtTime(peak * 0.7, when + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + len);
+      o.connect(g);
+      this._connect(g, pan, channel);
+      o.start(when); o.stop(when + len + 0.02);
+      out.push(o);
+    }
+    return out;
   }
 
   /** AUDIT 19: each channel owns a GAIN NODE, and CC7 writes to it.
@@ -657,9 +781,9 @@ export class SongPlayer {
       const cents = bendCents(e.value);
       for (const v of this._voices) {
         if (v.channel !== e.channel || v.endsAt <= when) continue;
-        for (const d of v.detunes) {
-          try { d.setValueAtTime(cents, when); } catch { /* param already past */ }
-        }
+        v.detunes.forEach((d, i) => {
+          try { d.setValueAtTime(cents + (v.offs?.[i] ?? 0), when); } catch { /* param already past */ }   // EG-ROAR: a unison's copies keep their spread
+        });
       }
       return;
     }

@@ -732,6 +732,22 @@ blow on my feet, a critical bus that ducks the score 6 dB for 300 ms through `So
 the fader and the volume untouched), the legion's barks four a kind, nearest first. See `11-Multiplayer/Elite-Gates.md`
 section 26 and its EG-G2 record; `tools/egScoreProbe.mjs`; `test/systems/eliteGates/eglook_score.test.js`.
 
+EG-ROAR (2026-10-18, Mac: "the music and ambience of the elite breach needs to be insanely better. Its way too tame"): A
+SONG'S OWN VOICES - a port departure with no DFU member behind it (the FM bank is the port's own, A5b). The bank plays one
+oscillator pair a note and one sine or one band of noise a drum, and a made score's section was one thin player. A song
+may now carry `voices` (`songVoices`: per channel, gmSynth.js `fmSpec`'s fields over the program's own, each held to
+`VOICE_RANGE`, a field that is not a number dropped) and `kit` (`songKit`: per GM key, `percussionSpec`'s over the kit's,
+held to `KIT_RANGE`). A voice may be a UNISON - `unison` pairs (1-4) `cents` apart either side of the note
+(`unisonCents`), begun a share of a period apart, the peak over the square root of the copies so it is as loud as the
+one pair; a `spread` lays its copies in turn in two envelopes either side of the channel's place - with a SUB (`sub`, a
+sine an octave under in the note's own envelope); a bend reaches every copy with its spread kept. A drum may carry a
+CLICK (`click`, the beater's noise, 3.2 kHz, gone in 15 ms) and a BODY (`body` Hz, a skin's tone under a noise's crack).
+A song that carries voices is high-passed at `SONG_FLOOR_HZ` (30 Hz) before its press - THE FLOOR: a 1:1 FM pair's first
+lower sideband lands on 0 Hz, an offset no speaker plays that the press answers by pressing the whole song (a quarter of
+the Spire's spiccato's energy stood under 40 Hz). Every song MIDI.BSA holds carries neither and plays the bank exactly as
+it always has, through no floor. The Spire's score is the first to carry them (`SPIRE_VOICES`, `SPIRE_KIT`). See
+`11-Multiplayer/Elite-Gates.md` section 26 and its EG-ROAR record; `test/systems/eliteGates/egroar_score.test.js`.
+
 ## FIELD-WIND1 (2026-09-29): the wind was a moan - a bed the port makes
 
 The Discord through Mac: "A repetitive moaning sound in the open world." The port's wind (WIND3, `systems/wind/windAudio.js`;

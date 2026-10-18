@@ -2429,8 +2429,13 @@ export class PlayerMotor {
   _pkAtPace() { return (this._pkPace ?? 0) > 1e-3 && this._pkPace >= PARKOUR_RUN_SHARE * this.speed - 1e-6; }
 
   /** AUDIT CLIMB-ARC L8: a leap where the plain jump would go - never under slowfall (HandleJumpInput's cancel, which
-   *  the leaps had bypassed: a jump on the spot billed, a late press 117 m out) nor wading outdoor water (its other). */
-  _pkMayLeap() { return !this.slowFalling && !this.onExteriorWater; }
+   *  the leaps had bypassed: a jump on the spot billed, a late press 117 m out) nor wading outdoor water (its other).
+   *  EG-PERFECT (2026-10-18; bible/11-Multiplayer/Elite-Gates.md section 10.5): nor where the parkour's deps say no leap
+   *  (`leap` - scenes/shared.js parkourDeps, the made level's `runLeap`): the Spire's spans and the Hour's Steps are proven
+   *  gap by gap with the plain running jump, and the leap (~3.9 m at Jumping 0, ~8.4 m at Jumping 100) flew past the
+   *  platform it lands on. Refused, the press is the plain jump (the late press the made level's own forgiveness); the wall
+   *  run, the mantle, the vault and the climb are untouched. Deps with no word leap as before. */
+  _pkMayLeap() { return !this.slowFalling && !this.onExteriorWater && this.parkour?.leap?.() !== false; }
 
   /** CLIMB3 - THE EJECT: Jump with Back held pushes off the wall - out along its normal and up, the Jumping skill's
    *  launch (ejectLaunch) - into a flight with the catch armed (a ledge across the way, a wall to grab with Forward and

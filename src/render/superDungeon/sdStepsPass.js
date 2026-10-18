@@ -149,6 +149,7 @@ export class SdStepsPass {
     this.program = buildProgram(gl, max === SD_GHOSTS_MAX && !slab ? SD_STEPS_PASS_VS : sdStepsPassVs(max, slab), fogFloor ? sdStepsPassFs(true) : SD_STEPS_PASS_FS, 'sd steps ghosts');
     this.u = {};
     for (const n of ['uVP', 'uStep', 'uState', 'uViewport', 'uWidth', 'uColor', 'uSteps', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFogFloor']) this.u[n] = gl.getUniformLocation(this.program, n);
+    this.slab = slab;
     const verts = sdGhostVertices(ghosts, { max, slab });
     this.count = verts.length / FLOATS;
     this.vao = gl.createVertexArray();
@@ -198,6 +199,15 @@ export class SdStepsPass {
     gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
     this.drawn = true;
     return true;
+  }
+  /** EG-PERFECT's audit: the slots stand for other ghosts (`ghosts`, as the constructor's - this.n at most): their boxes laid
+   *  again, the program and its uniforms kept (scenes/eliteGates/egSpan.js aimGhosts - a circle past its slots). */
+  ghosts(ghosts) {
+    const gl = this.gl, verts = sdGhostVertices(ghosts, { max: this.n, slab: this.slab });
+    this.count = verts.length / FLOATS;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
   destroy() {
     const gl = this.gl;

@@ -65,8 +65,8 @@
   {
     "name": "EGINT-the-island-never-ends-the-window",
     "file": "src/net/eliteGates/egFair.js",
-    "old": "  if (hold === EG_HOLD.island && fair) { A.brk = 0; A.isl = [p.x, p.z]; }",
-    "new": "  if (false) { A.brk = 0; A.isl = [p.x, p.z]; }",
+    "old": "  if (hold === EG_HOLD.island && fair && !(A.vd != null",
+    "new": "  if (false && !(A.vd != null",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "EGINT-the-place-left-out-of-the-hold",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "pending = [...F.blows.filter((b) => !b.ch && b.at > now), ...egPlaceLandings(spec, F.wokeAt, now, blow.at), ...egZoneLandings(F.zones, now, blow.at)];",
-    "new": "pending = [...F.blows.filter((b) => !b.ch && b.at > now), ...egZoneLandings(F.zones, now, blow.at)];",
+    "old": "const pending = [...live, ...egPlaceLandings(spec, F.wokeAt, now, until), ...egZoneLandings(F.zones, now, until)];",
+    "new": "const pending = [...live, ...egZoneLandings(F.zones, now, until)];",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "EGINT-the-untell-never-said",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "        for (const sub of told) out.push({ k: 'untell', to: sub, i: blow.i });",
-    "new": "        void told;",
+    "old": "if (egUnionHeld(F, spec, blow, here, now)) {\n    for (const sub of told) out.push({ k: 'untell', to: sub, i: blow.i });",
+    "new": "if (egUnionHeld(F, spec, blow, here, now)) {\n    void told;",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "EGINT-a-lords-blow-unled",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "o.ch ? [] : here, now, out, o.ch ? 0 : EG_TELL_LEAD_MS);",
-    "new": "o.ch ? [] : here, now, out, 0);",
+    "old": "flat ? [] : here, now, out, flat ? 0 : EG_TELL_LEAD_MS);",
+    "new": "flat ? [] : here, now, out, 0);",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "EGINT-the-cut-on-the-commits-clock",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "if (b && now >= egBlowFrom(b) + Math.round(b.wu * EG_FEINT_AT)) egCut(F, i, out);",
-    "new": "if (b && now >= egBlowFrom(b) - EG_TELL_LEAD_MS + Math.round(b.wu * EG_FEINT_AT)) egCut(F, i, out);",
+    "old": "cutAt = b ? egBlowFrom(b) + Math.round(b.wu * EG_FEINT_AT) : 0;",
+    "new": "cutAt = b ? egBlowFrom(b) - EG_TELL_LEAD_MS + Math.round(b.wu * EG_FEINT_AT) : 0;",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -481,7 +481,7 @@
   {
     "name": "EGINT-the-wind-at-the-start",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "t < blow.at && t >= blow.at - blow.wu + blow.wu * EG_FEINT_AT + EG_WIND_GRACE_MS) {",
+    "old": "t < blow.at && t >= blow.at - blow.wu + blow.wu * EG_FEINT_AT + egWindGraceMs(b.fl | 0)) {",
     "new": "t < blow.at) {",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"

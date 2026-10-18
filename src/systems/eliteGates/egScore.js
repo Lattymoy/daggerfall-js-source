@@ -29,6 +29,17 @@
 // (`spireScoreSongs(ctx)`, memoized) and registered under the same names when it changes (createSpireScoreHost): the name
 // is the song's place in the law, the notes are the band's and the lord's.
 //
+// EG-ROAR (2026-10-18, Mac: "the music and ambience of the elite breach needs to be insanely better. Its way too tame"):
+// THE SCORE ROARS. Two things kept it tame: the FM bank's one oscillator pair a note (a section one thin player, the drums
+// one sine each) and the writing (the halls' drums a low tom every other bar, a whole-note pad a bar and nothing moving -
+// tools/egScoreProbe.mjs read every second of SPIREGAL at the same loudness). So each song now carries its own voices and
+// kit (SPIRE_VOICES, SPIRE_KIT - systems/song/songPlayer.js songVoices: the sections in unison, a sub under the low ones,
+// the taiko long with its beater's click, the snare a crack over a skin), and the writing climbs: THE SPICCATO under
+// everything (the low strings in the 3-3-2), THE LEGION'S CHANT, THE SHRIEKS (B over C, the Kyn's half step high), A
+// BRAAM at each phrase (the low brass's cluster, E under the Kyn's F), A SWELL into each (the reverse cymbal, the timpani
+// rolling up), and each song built in parts that rise and break - the halls' descent, motif, gathering and height; the
+// trial's call, drive, break, build and height. The three new voices fill GM's last three channels.
+//
 // THE LAW (`spireScoreFor`): ONE SONG AT A TIME, by priority (EG_SCORE_PRIORITY - pinned): the end; a Valkynaz; a Redoubt
 // and its rest; THE COUNT's last two minutes (replacing every song under it, never SPIRVALK or SPIRREDT); a lord's wake
 // then its phase; a set piece; a yard's or a rampart's trial; the band's halls. The gather and the closing play the band's
@@ -59,24 +70,80 @@ export const SPIRE_END_MS = 36_000;
 export const EG_SCORE_PRIORITY = Object.freeze(['end', 'valk', 'redoubt', 'count', 'wake', 'lord', 'set', 'yard', 'hall', 'ambience']);
 
 /** GM programs (gmSynth.js FM bank): the brass section and the horn (the Battlemages' fanfare), the low brass for the
- *  legion's ostinato, strings, choir, organ, timpani, the harp, tubular bells, the orchestra hit, the pizzicato. */
-export const SPIRE_PROGRAMS = Object.freeze({ ostinato: 57, bass: 32, strings: 48, brass: 61, choir: 52, organ: 19, timpani: 47, horn: 60, harp: 46, bells: 14, hit: 55, pizz: 45 });
-/** Channels: one voice each, the kit on GM's channel 9. */
-export const SPIRE_CHANNELS = Object.freeze({ ostinato: 0, bass: 1, strings: 2, brass: 3, choir: 4, organ: 5, timpani: 6, horn: 7, harp: 8, kit: 9, bells: 10, hit: 11, pizz: 12 });
+ *  legion's ostinato, strings, choir, organ, timpani, the harp, tubular bells, the orchestra hit, the pizzicato (EG-ROAR:
+ *  the low strings' spiccato); EG-ROAR: the tremolo strings (the shrieks, the Kyn's half step high), the reverse cymbal
+ *  (the swell into a phrase) and the voices (the legion's chant). */
+export const SPIRE_PROGRAMS = Object.freeze({ ostinato: 57, bass: 32, strings: 48, brass: 61, choir: 52, organ: 19, timpani: 47, horn: 60, harp: 46, bells: 14, hit: 55, pizz: 45, trem: 44, swell: 119, chant: 53 });
+/** Channels: one voice each, the kit on GM's channel 9 - all sixteen. */
+export const SPIRE_CHANNELS = Object.freeze({ ostinato: 0, bass: 1, strings: 2, brass: 3, choir: 4, organ: 5, timpani: 6, horn: 7, harp: 8, kit: 9, bells: 10, hit: 11, pizz: 12, trem: 13, swell: 14, chant: 15 });
 /** Each voice's level (CC7) and place (CC10): the horn and the brass left of the middle (the Empire's), the drums and
- *  the low brass at the middle (the legion's), the harp and the bells apart. The bass under the rest (WB10a's law). */
+ *  the low brass at the middle (the legion's), the harp and the bells apart, the chant across from the shrieks. The
+ *  bass under the rest (WB10a's law). */
 const MIX = Object.freeze({
-  ostinato: [114, 60], bass: [98, 64], strings: [106, 82], brass: [120, 52], choir: [110, 72], organ: [84, 64], timpani: [112, 64],
-  horn: [116, 44], harp: [94, 36], bells: [96, 92], hit: [106, 64], pizz: [94, 76],
+  ostinato: [112, 58], bass: [100, 64], strings: [104, 88], brass: [120, 44], choir: [108, 76], organ: [80, 64], timpani: [114, 64],
+  horn: [116, 38], harp: [96, 30], bells: [96, 98], hit: [108, 64], pizz: [104, 72], trem: [92, 100], swell: [86, 64], chant: [104, 50],
 });
-const KIT_LEVEL = 114;
+const KIT_LEVEL = 118;
+/** EG-ROAR: THE VOICES - each channel's own instrument over the FM bank's one pair a note (systems/song/songPlayer.js
+ *  songVoices): the sections an ensemble (`unison` copies `cents` apart, laid `spread` either side of their place), the
+ *  low ones with a sub under them, the brass and the strings brighter than the bank's, the spiccato and the chant bitten
+ *  short, the swell a 1.7 s rise of inharmonic shimmer cut on the downbeat. Measured (tools/egScoreProbe.mjs --wav): a
+ *  sub on every low voice put more than half the war under 100 Hz (the bass's, under E1, at 21 Hz - heard by nothing
+ *  but the press), so only the hit and the spiccato keep one, and the bass is brightened instead. */
+export const SPIRE_VOICES = Object.freeze({
+  ostinato: Object.freeze({ attack: 0.006, decay: 0.12, sustain: 0.5, release: 0.07, index: 5, idxDecay: 0.16, unison: 2, cents: 7, spread: 0.2 }),
+  bass: Object.freeze({ index: 2.2 }),
+  strings: Object.freeze({ attack: 0.14, release: 0.7, index: 2, idxDecay: 2, unison: 3, cents: 12, spread: 0.5 }),
+  brass: Object.freeze({ attack: 0.04, index: 5, idxDecay: 0.7, unison: 3, cents: 9, spread: 0.35 }),
+  choir: Object.freeze({ mod: 1, index: 1.3, idxDecay: 2, attack: 0.3, release: 0.9, unison: 3, cents: 14, spread: 0.45 }),
+  organ: Object.freeze({ unison: 2, cents: 4, spread: 0.3 }),
+  timpani: Object.freeze({ decay: 0.9, release: 0.5 }),
+  horn: Object.freeze({ attack: 0.06, index: 3, idxDecay: 0.7, unison: 2, cents: 6, spread: 0.25 }),
+  harp: Object.freeze({ unison: 2, cents: 5, spread: 0.3 }),
+  bells: Object.freeze({ unison: 2, cents: 3, spread: 0.3 }),
+  hit: Object.freeze({ index: 4.5, decay: 0.5, release: 0.35, unison: 2, cents: 15, sub: 0.35, spread: 0.4 }),
+  pizz: Object.freeze({ attack: 0.003, decay: 0.15, sustain: 0.02, release: 0.08, index: 3.4, idxDecay: 0.07, sub: 0.15 }),
+  trem: Object.freeze({ attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.12, index: 2.4, idxDecay: 0.8, unison: 2, cents: 16, spread: 0.6 }),
+  swell: Object.freeze({ mod: 3.73, index: 7, idxDecay: 4, attack: 1.7, decay: 0.02, sustain: 1, release: 0.05, gain: 0.5 }),
+  chant: Object.freeze({ mod: 2, index: 1.8, idxDecay: 0.3, attack: 0.02, decay: 0.12, sustain: 0.65, release: 0.12, unison: 3, cents: 10, spread: 0.4 }),
+});
+/** The voices by channel, as the song carries them. */
+const VOICES_BY_CHANNEL = Object.freeze(Object.fromEntries(Object.entries(SPIRE_VOICES).map(([v, o]) => [SPIRE_CHANNELS[v], o])));
 /** Each song over the player's own level, and its press (systems/song/songPlayer.js `song.level`, `song.press` - the gate's
  *  law): the halls under the fights, the war growing by phase, the count and the Valkynaz over it. */
 export const SPIRE_LEVEL = Object.freeze({ hall: 1.3, yard: 1.45, set: 1.5, wake: 1.5, lord1: 1.45, lord2: 1.56, lord3: 1.64, valk: 1.66, redoubt: 1.25, count: 1.68, end: 1.4 });
-const PRESS = Object.freeze({ threshold: -18, knee: 12, ratio: 4, attack: 0.003, release: 0.25, ceiling: -1 });
-export const SPIRE_PRESS = Object.freeze(Object.fromEntries(Object.entries({ hall: 4.4, yard: 5.0, set: 5.2, wake: 5.0, lord1: 5.2, lord2: 5.4, lord3: 5.8, valk: 5.9, redoubt: 4.2, count: 5.9, end: 4.6 }).map(([k, out]) => [k, Object.freeze({ ...PRESS, out })])));
-/** GM kit keys (gmSynth.js DRUMS): the legion's low drums, the anvil (the Wellhead's - the ride bell's ring, low). */
-const KIT = Object.freeze({ kick: 36, snare: 38, lowTom: 41, highFloorTom: 43, tom: 45, lowMidTom: 47, hiMidTom: 48, crash: 49, chinese: 52, anvil: 53, surdo: 87 });
+/** EG-ROAR: the press lets a drum's first 12 ms through (at 3 ms it clamped every taiko and kick to the pads' level) and
+ *  presses a little less (ratio 3, not 4) - the ceiling still holds every peak by construction (songPlayer.js). */
+const PRESS = Object.freeze({ threshold: -18, knee: 12, ratio: 3, attack: 0.012, release: 0.25, ceiling: -1 });
+export const SPIRE_PRESS = Object.freeze(Object.fromEntries(Object.entries({ hall: 4.4, yard: 5.0, set: 5.2, wake: 5.0, lord1: 5.2, lord2: 5.4, lord3: 5.8, valk: 6.3, redoubt: 4.2, count: 5.9, end: 4.6 }).map(([k, out]) => [k, Object.freeze({ ...PRESS, out })])));
+/** GM kit keys (gmSynth.js DRUMS): the legion's low drums - the open surdo its taiko, the mute its rim - the anvil (the
+ *  Wellhead's - the ride bell's ring, low), the snare and its rolls, the hats and the shaker over them, the woodblocks
+ *  (the count's clock). */
+const KIT = Object.freeze({ kick: 36, snare: 38, rim: 40, lowTom: 41, hat: 42, highFloorTom: 43, tom: 45, openHat: 46, lowMidTom: 47, hiMidTom: 48, crash: 49, chinese: 52, anvil: 53, crash2: 57, woodHi: 76, woodLo: 77, shaker: 82, muteSurdo: 86, surdo: 87 });
+/** EG-ROAR: THE LEGION'S KIT - each drum the Spire strikes, past the kit's one sine or band of noise (songPlayer.js
+ *  songKit): the taiko long and falling with its beater's click, the toms and the kick the same, the snare a crack
+ *  over a skin, the cymbals long, the anvil ringing. */
+export const SPIRE_KIT = Object.freeze({
+  [KIT.kick]: Object.freeze({ hz: 52, decay: 0.38, gain: 1.15, click: 0.55 }),
+  [KIT.surdo]: Object.freeze({ hz: 64, decay: 0.95, gain: 1.3, drop: 0.7, click: 0.45 }),
+  [KIT.muteSurdo]: Object.freeze({ hz: 72, decay: 0.35, gain: 1, click: 0.35 }),
+  [KIT.lowTom]: Object.freeze({ hz: 82, decay: 0.55, gain: 1, click: 0.3 }),
+  [KIT.highFloorTom]: Object.freeze({ hz: 100, decay: 0.5, click: 0.3 }),
+  [KIT.tom]: Object.freeze({ hz: 122, decay: 0.45, click: 0.3 }),
+  [KIT.lowMidTom]: Object.freeze({ hz: 150, decay: 0.4, click: 0.3 }),
+  [KIT.hiMidTom]: Object.freeze({ hz: 180, decay: 0.38, click: 0.3 }),
+  [KIT.snare]: Object.freeze({ hz: 2000, q: 0.7, decay: 0.24, gain: 0.95, body: 185 }),
+  [KIT.rim]: Object.freeze({ hz: 2600, q: 0.9, decay: 0.1, gain: 0.7, body: 220 }),
+  [KIT.crash]: Object.freeze({ decay: 2, q: 0.45, gain: 0.85 }),
+  [KIT.crash2]: Object.freeze({ decay: 2.6, q: 0.4, gain: 0.9 }),
+  [KIT.chinese]: Object.freeze({ decay: 1.3, q: 0.55 }),
+  [KIT.anvil]: Object.freeze({ hz: 1650, decay: 0.9, gain: 0.7, click: 0.7 }),
+  [KIT.hat]: Object.freeze({ hz: 8000, q: 0.8, decay: 0.05, gain: 0.85 }),
+  [KIT.openHat]: Object.freeze({ hz: 7000, q: 0.7, decay: 0.28, gain: 0.7 }),
+  [KIT.shaker]: Object.freeze({ decay: 0.06, gain: 0.7 }),
+  [KIT.woodHi]: Object.freeze({ click: 0.3 }),
+  [KIT.woodLo]: Object.freeze({ click: 0.3 }),
+});
 
 /** THE HARMONY, E Phrygian (and the hymn's E major): each chord's bass, timpani, pad, strings, choir, ostinato root and
  *  stab (open fifths where struck). */
@@ -132,7 +199,8 @@ export const EG_SCORE_LORD_MOTIFS = Object.freeze([
 const RANK = { programChange: 0, controller: 0, noteOn: 1 };
 /** A song in the shape the player plays (formats/hmiFile.js HmiFile) - systems/gate/gateScore.js's makeSong's law, this
  *  module's own voices: one note a key a moment (AUDIT SD III A8), every voice's program, level and place at tick 0, whole
- *  bars that loop on their bar line. */
+ *  bars that loop on their bar line, nothing before the first (a swell into bar 0 is the loop's last bar's). EG-ROAR:
+ *  and the song's own voices and kit (SPIRE_VOICES, SPIRE_KIT). */
 function makeSong(name, bpm, bars, write, level = 1, press = null) {
   const events = [], struck = new Map();
   const tick = (bar, beat) => Math.round((bar * 4 + beat) * SCORE_TPQ);
@@ -140,7 +208,7 @@ function makeSong(name, bpm, bars, write, level = 1, press = null) {
   const w = {
     note(voice, bar, beat, beats, n, velocity) {
       const note = typeof n === 'number' ? n : midiNote(n), at = tick(bar, beat), channel = SPIRE_CHANNELS[voice];
-      if (at >= end) return;
+      if (at >= end || at < 0) return;
       const v = Math.max(1, Math.min(127, Math.round(velocity))), duration = Math.max(1, Math.min(end - at, Math.round(beats * SCORE_TPQ)));
       const key = (at * 16 + channel) * 128 + note, was = struck.get(key);
       if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }
@@ -159,35 +227,111 @@ function makeSong(name, bpm, bars, write, level = 1, press = null) {
   }
   events.push({ tick: 0, type: 'controller', channel: SPIRE_CHANNELS.kit, controller: 7, value: KIT_LEVEL });
   events.sort((a, b) => a.tick - b.tick || RANK[a.type] - RANK[b.type]);
-  return { name, press, beatsPerMinute: bpm, secondsPerTick: 60 / (bpm * SCORE_TPQ), events, durationTicks: end, seamless: true, level };
+  return { name, press, beatsPerMinute: bpm, secondsPerTick: 60 / (bpm * SCORE_TPQ), events, durationTicks: end, seamless: true, level, voices: VOICES_BY_CHANNEL, kit: SPIRE_KIT };
 }
 /** A melody (bars of [note, beats]) from `bar0` on `voice`, `octave` shifted. */
 function line(w, bar0, bars, voice, velocity, octave = 0) {
   bars.forEach((notes, b) => { let beat = 0; for (const [n, beats] of notes) { w.note(voice, bar0 + b, beat, beats * 0.92, midiNote(n) + 12 * octave, velocity + (beat === 0 ? 8 : 0)); beat += beats; } });
 }
-/** The 3-3-2 accents over a bar's eighths. */
-const ACCENT8 = Object.freeze([true, false, false, true, false, false, true, false]);
-/** THE LEGION'S DRUMS for one bar at `drive` (0 the halls' distant tom, 1 a trial's, 2 the war's, 3 the count's). */
-function drums(w, bar, drive) {
-  if (drive <= 0) { if (bar % 2 === 0) w.hit('lowTom', bar, 0, 78); return; }
-  w.hit('surdo', bar, 0, 100 + drive * 3);
-  ACCENT8.forEach((acc, i) => { if (acc) w.hit(drive >= 2 ? 'kick' : 'lowTom', bar, i * 0.5, acc ? 96 : 80); });
-  if (drive >= 2) { w.hit('snare', bar, 1, 100); w.hit('snare', bar, 3, 104); for (const b of [0.5, 1.5, 2.5, 3.5]) w.hit('tom', bar, b, 82); }
-  else w.hit('snare', bar, 2, 96);
-  if (drive >= 3) for (let i = 0; i < 4; i++) w.hit('kick', bar, i, 104);
-  if (bar % 4 === 3) ['hiMidTom', 'lowMidTom', 'highFloorTom', 'lowTom'].forEach((k, i) => w.hit(k, bar, 3 + i * 0.25, 90 + i * 5));
-  if (bar % 8 === 0) w.hit('crash', bar, 0, 96);
+/** A roll of `voice` (a key of the kit's, or a note) from `beat0` for `beats`, a stroke each `step`, `v0` rising to `v1`. */
+function roll(w, voice, bar, beat0, beats, n, v0, v1, step = 0.25) {
+  const k = Math.round(beats / step);
+  for (let i = 0; i < k; i++) {
+    const v = v0 + ((v1 - v0) * i) / Math.max(1, k - 1);
+    if (voice === 'kit') w.hit(n, bar, beat0 + i * step, v); else w.note(voice, bar, beat0 + i * step, step * 0.9, n, v);
+  }
 }
-/** The bed under a chord for one bar: the low brass's ostinato (eighths 3-3-2 at `drive` >= 1), the bass, the pad, the
- *  strings and the choir as asked. */
+/** The 3-3-2 accents over a bar's eighths; EG-ROAR: and THE GALLOP, the 3-3-2 over each half bar's sixteenths (beats). */
+const ACCENT8 = Object.freeze([true, false, false, true, false, false, true, false]);
+const GALLOP = Object.freeze([0, 0.75, 1.5, 2, 2.75, 3.5]);
+const GALLOP16 = Object.freeze([0, 3, 6, 8, 11, 14]);
+/** THE LEGION'S DRUMS for one bar at `drive`: 0 the legion far off (the taiko a bar, a tom answering, the rim between,
+ *  the shaker's eighths); 1 the march (the taiko on the 3-3-2, the rim between, the snare on three, the shaker's
+ *  sixteenths); 2 the war (the kick galloping, the taiko on one and three, the backbeat, the toms between, the hats'
+ *  sixteenths and the open hat pushing into the next bar); 3 the count's and the last phase's (the kick on every eighth,
+ *  the taiko on every beat, the rim pushing). A fill down the toms closing each fourth bar, the crash on each eighth. */
+function drums(w, bar, drive, { vel = 1, fill = bar % 4 === 3, crash = bar % 8 === 0 } = {}) {
+  const h = (k, beat, v) => w.hit(k, bar, beat, v * vel);
+  if (drive <= 0) {
+    h('surdo', 0, 92); h('lowTom', 2.5, 72);
+    if (bar % 2) h('surdo', 3, 80); else h('muteSurdo', 1.5, 58);
+    for (let i = 0; i < 8; i++) h('shaker', i * 0.5, ACCENT8[i] ? 52 : 38);
+    return;
+  }
+  if (drive === 1) {
+    h('surdo', 0, 104); h('surdo', 1.5, 90); h('surdo', 3, 96);
+    h('muteSurdo', 0.5, 64); h('muteSurdo', 2.5, 70);
+    h('lowTom', 2, 82); h('snare', 2, 84);
+    for (let i = 0; i < 16; i++) h('shaker', i * 0.25, GALLOP16.includes(i) ? 64 : 44);
+  } else {
+    for (const b of GALLOP) h('kick', b, b === 0 || b === 2 ? 112 : 96);
+    h('surdo', 0, 116); h('surdo', 2, 106);
+    h('snare', 1, 104); h('snare', 3, 110);
+    for (const b of [0.5, 1.5, 2.5, 3.5]) h('tom', b, 78);
+    for (let i = 0; i < 16; i++) if (i !== 14) h('hat', i * 0.25, i % 2 ? 58 : 78);
+    h('openHat', 3.5, 74);
+    if (drive >= 3) { for (let i = 0; i < 8; i++) h('kick', i * 0.5, 100); h('surdo', 1, 100); h('surdo', 3, 108); h('rim', 1.75, 76); h('rim', 3.75, 84); }
+  }
+  if (fill) {
+    const n = drive >= 3 ? 8 : 4, keys = ['hiMidTom', 'lowMidTom', 'tom', 'highFloorTom', 'lowTom'];
+    for (let i = 0; i < n; i++) h(keys[Math.floor((i * keys.length) / n)], 4 - n * 0.25 + i * 0.25, 92 + (i * 24) / n);
+  }
+  if (crash) h(drive >= 2 ? 'crash2' : 'crash', 0, 104);
+  if (drive >= 2 && bar % 8 === 4) h('chinese', 0, 90);
+}
+/** The bed under a chord for one bar: the low brass's ostinato (eighths 3-3-2 at `drive` >= 1, the Kyn's half step
+ *  leaning into the next bar at 2), the bass (EG-ROAR: re-struck on the 3-3-2 at 2), the pad, the strings and the choir
+ *  as asked. */
 function bed(w, bar, chord, { drive = 0, strings = true, choir = false, organ = 1, vel = 1 } = {}) {
   const c = CHORDS[chord];
-  if (drive >= 1) ACCENT8.forEach((acc, i) => w.note('ostinato', bar, i * 0.5, 0.4, c.ost, (acc ? 108 : 78) * vel));
-  if (drive >= 2) for (let s = 12; s < 16; s++) w.note('ostinato', bar, s * 0.25, 0.2, s === 15 ? midiNote(c.ost) + 1 : c.ost, 90 * vel);   // the Kyn's half step leaning into the next bar
-  w.note('bass', bar, 0, 3.8, c.bass, 100 * vel);
+  if (drive >= 1) ACCENT8.forEach((acc, i) => w.note('ostinato', bar, i * 0.5, 0.4, c.ost, (acc ? 110 : 76) * vel));
+  if (drive >= 2) for (let s = 12; s < 16; s++) w.note('ostinato', bar, s * 0.25, 0.2, s === 15 ? midiNote(c.ost) + 1 : c.ost, 92 * vel);
+  for (const [b, len] of drive >= 2 ? [[0, 1.4], [1.5, 1.4], [3, 0.9]] : [[0, 3.8]]) w.note('bass', bar, b, len, c.bass, (b ? 92 : 100) * vel);
   if (organ > 0) for (const n of c.pad) w.note('organ', bar, 0, 4, n, 78 * organ);
   if (strings) for (const n of c.str) w.note('strings', bar, 0, 4, n, 86 * vel);
   if (choir) for (const n of c.choir) w.note('choir', bar, 0, 4, n, 92 * vel);
+}
+/** EG-ROAR: THE SPICCATO - the low strings driving under everything: the chord's root, its fifth and its octave in
+ *  sixteenths (`per` 16) or eighths (8), the 3-3-2 accented, `oct` octaves over the ostinato's. */
+const SPICC = Object.freeze([0, 0, 12, 0, 7, 0, 12, 0, 0, 0, 12, 0, 7, 12, 7, 0]);
+function spicc(w, bar, chord, per, vel, oct = 0) {
+  const c = CHORDS[chord], root = midiNote(c.ost) + 12 * (1 + oct), fifth = midiNote(c.pad[1]) - midiNote(c.pad[0]), step = per === 16 ? 1 : 2;
+  for (let i = 0; i < 16; i += step) w.note('pizz', bar, i * 0.25, step * 0.2, root + (SPICC[i] === 7 ? fifth : SPICC[i]), vel + (GALLOP16.includes(i) ? 18 : 0));
+}
+/** EG-ROAR: THE LEGION'S CHANT - the voices on the chord's root and its fifth (C4 to B4 and over), `fig`'s rhythm: `a`
+ *  the 3-3-2 (HA . . HA . . HA HA), `b` driving eighths. */
+const CHANT = Object.freeze({ a: Object.freeze([[0, 0.7], [1.5, 0.7], [3, 0.45], [3.5, 0.45]]), b: Object.freeze([[0, 0.4], [0.5, 0.4], [1, 0.4], [1.5, 0.9], [2.5, 0.4], [3, 0.9]]) });
+function chant(w, bar, chord, fig, vel) {
+  const c = CHORDS[chord], root = 60 + (midiNote(c.ost) % 12), fifth = root + midiNote(c.pad[1]) - midiNote(c.pad[0]);
+  for (const [b, len] of CHANT[fig]) { w.note('chant', bar, b, len, root, vel + (b === 0 ? 10 : 0)); w.note('chant', bar, b, len, fifth, vel - 6); }
+}
+/** EG-ROAR: THE SHRIEKS - the tremolo strings on `notes` in sixteenths from `beat0` for `beats` (B5 over C6: the Kyn's
+ *  half step, high). */
+function trem(w, bar, notes, vel, beat0 = 0, beats = 4) {
+  for (let i = 0; i < beats * 4; i++) for (const n of notes) w.note('trem', bar, beat0 + i * 0.25, 0.22, n, vel + (i % 4 === 0 ? 8 : 0));
+}
+/** EG-ROAR: THE HARP'S RIPPLE (the Shade's) - the chord's tones up and back in sixteenths. */
+function ripple(w, bar, chord, vel) {
+  const c = CHORDS[chord], ns = [...new Set([...c.pad, ...c.str].map(midiNote))].sort((a, b) => a - b);
+  for (let i = 0; i < 16; i++) { const j = i < 8 ? i : 15 - i; w.note('harp', bar, i * 0.25, 0.5, ns[j % ns.length] + 12 * Math.floor(j / ns.length), vel + (i % 4 === 0 ? 10 : 0)); }
+}
+/** EG-ROAR: A BRAAM - the low brass's cluster held (the chord's root under its octave and its fifth, and on E the Kyn's
+ *  F over it), the orchestra hit, the timpani, the taiko and the long crash - never on the brass, whose bars the motifs
+ *  hold. */
+function braam(w, bar, chord, vel) {
+  const c = CHORDS[chord], o = midiNote(c.ost);
+  for (const n of chord === 'Em' ? [o - 12, o, o + 7, o + 13] : [o - 12, o, o + 7, o + 12]) w.note('ostinato', bar, 0, 2.5, n, vel);
+  for (const n of c.stab) w.note('hit', bar, 0, 1.5, n, vel);
+  w.note('timpani', bar, 0, 1, c.timp, vel);
+  w.hit('surdo', bar, 0, vel); w.hit('crash2', bar, 0, vel - 4);
+}
+/** EG-ROAR: A SWELL INTO `bar` - the reverse cymbal rising over SPIRE_SWELL_S to its downbeat (E6 and F6), the timpani
+ *  rolling up into it over the last beat. */
+export const SPIRE_SWELL_S = 1.7;
+function swellInto(w, bar, bpm, vel) {
+  const len = (SPIRE_SWELL_S * bpm) / 60;
+  for (const n of ['E6', 'F6']) w.note('swell', bar, -len, len, n, vel);
+  roll(w, 'timpani', bar - 1, 3, 1, 'E2', vel - 40, vel);
 }
 /** A seeded die (the variants' order, the halls' figures) - mulberry32. */
 function die(seed) {
@@ -201,90 +345,150 @@ export function spireVariantOrder(seed) {
 }
 
 /** THE BAND'S HALLS: 96 bars - three 32-bar variants (each a progression, an orchestration and the band's motif laid its
- *  own way) in the seed's order. */
+ *  own way) in the seed's order. EG-ROAR: each variant climbs in four eights - THE DESCENT (the spiccato's eighths, the
+ *  legion far off), THE MOTIF (the march, the first braam), THE GATHERING (the sixteenths, the choir), THE HEIGHT (the
+ *  war's drums, the motif doubled an octave up) - a swell into each, and each band its own colour over it: the
+ *  Galleries' timpani and shrieks, the Cairn's soul-bell and chant, the Shade's rippling harp, its moon's half step and
+ *  its heartbeat, the Wellhead's anvils on the 3-3-2. */
 function hallSong(band, seed) {
   const bpm = [100, 88, 92, 110][band], order = spireVariantOrder(seed), motif = EG_SCORE_BAND_MOTIFS[band];
   return makeSong(SPIRE_BAND_SONGS[band], bpm, 96, (w) => {
     order.forEach((v, slot) => {
       const r = die(0xe617 + band * 97 + v * 13), prog = [PROG.hallA, PROG.hallB, PROG.hallC][v], b0 = slot * 32;
       for (let k = 0; k < 32; k++) {
-        const bar = b0 + k, chord = prog[k % 8];
-        bed(w, bar, chord, { drive: band === 3 ? 1 : 0, strings: band !== 2 || k % 2 === 0, choir: band === 1 || (v === 2 && k >= 16), organ: band === 1 ? 1.1 : 0.8 });
-        drums(w, bar, band === 3 ? 1 : 0);
-        if (band === 3 && k % 2 === 0) w.hit('anvil', bar, 0, 96);   // the Wellhead's anvils
-        if (band === 2) { const c = CHORDS[chord]; for (let i = 0; i < 4; i++) w.note('harp', bar, i, 0.9, c.str[i % 3], 70 + Math.floor(r() * 16)); }   // the Shade's harp, sparse
-        if (band === 1 && k % 4 === 0) w.note('bells', bar, 0, 4, 'B2', 90);   // the Cairn's soul-bell, tolled low
-        if (band === 2 && k % 8 === 4) w.note('bells', bar, 2, 2, 'E6', 72);   // the Shade's moon, high
-        if (band === 0 && k % 8 === 0) w.note('timpani', bar, 0, 1, CHORDS[chord].timp, 96);
+        const bar = b0 + k, chord = prog[k % 8], c = CHORDS[chord], sec = k >> 3, lift = [0.84, 0.92, 0.98, 1.04][sec];
+        bed(w, bar, chord, { drive: band === 3 ? 1 + (sec >= 3 ? 1 : 0) : sec >= 1 ? 1 : 0, strings: band !== 2 || k % 2 === 0 || sec >= 2, choir: band === 1 || sec >= 2, organ: band === 1 ? 1.1 : 0.7, vel: lift });
+        spicc(w, bar, chord, sec >= 2 ? 16 : 8, 62 + sec * 8, band === 2 ? 1 : 0);
+        drums(w, bar, band === 3 ? Math.min(2, 1 + (sec >> 1)) : [0, 1, 1, 2][sec], { vel: k >= 30 ? 0.86 : 0.92 });
+        if (sec >= 1 && k % 8 === 0) braam(w, bar, chord, 96 + sec * 6);
+        if (k % 8 === 7) swellInto(w, bar + 1, bpm, 78 + sec * 8);
+        if (band === 0) {   // the Galleries: the timpani at each phrase, the shrieks at the height
+          if (k % 8 === 0) w.note('timpani', bar, 0, 1, c.timp, 100);
+          if (sec === 3 && k % 2 === 0) trem(w, bar, ['E5', 'F5'], 58, 2, 2);
+        }
+        if (band === 1) {   // the Cairn: the soul-bell tolled low, the chant from the motif on
+          if (k % 4 === 0) w.note('bells', bar, 0, 4, 'B2', 92);
+          if (sec >= 1) chant(w, bar, chord, 'a', 74 + sec * 6);
+        }
+        if (band === 2) {   // the Shade: the harp rippling, the moon's E and its F high, a heartbeat until the gathering
+          ripple(w, bar, chord, 60 + Math.floor(r() * 14) + sec * 4);
+          if (k % 8 === 4) w.note('bells', bar, 2, 2, 'E6', 74);
+          if (k % 8 === 6) w.note('bells', bar, 2, 2, 'F6', 68);
+          if (sec <= 1) { w.hit('kick', bar, 0, 90); w.hit('kick', bar, 0.375, 70); }
+          if (sec >= 2 && k % 4 >= 2) trem(w, bar, ['B5', 'C6'], 50 + sec * 4);
+        }
+        if (band === 3) ACCENT8.forEach((acc, i) => { if (acc && (sec >= 1 || k % 2 === 0)) w.hit('anvil', bar, i * 0.5, 96 + (i === 0 ? 10 : 0)); });   // the Wellhead's anvils
       }
-      // the band's motif, its own way in each variant: the horn alone, the strings over the choir, the brass low
+      // the band's motif, its own way in each variant: the horn alone, the strings over the choir, the brass low - and at
+      // the height doubled an octave over on the brass (on the horn where the brass already has it)
       for (let k = 8; k < 32; k += 8) {
         const voice = v === 0 ? 'horn' : v === 1 ? 'strings' : 'brass', oct = band === 3 ? 0 : v === 2 ? -1 : 0;
         line(w, b0 + k, [motif], voice, 104 + Math.floor(r() * 10), oct);
         if (k + 4 < 32) line(w, b0 + k + 4, [motif], v === 0 ? 'strings' : 'horn', 92, oct + (v === 0 ? 1 : 0));
+        if (k === 24) { line(w, b0 + k, [motif], voice === 'brass' ? 'horn' : 'brass', 100, oct + 1); line(w, b0 + k + 6, [motif], 'strings', 96, oct + 1); }
       }
     });
   }, SPIRE_LEVEL.hall, SPIRE_PRESS.hall);
 }
-/** SPIREYRD - a trial's fight: the band's motif in the brass over the legion's drums, the ostinato driving. */
+/** SPIREYRD - a trial's fight: the band's motif in the brass over the legion's drums, the ostinato driving. EG-ROAR: in
+ *  five parts - THE CALL (a braam, the march), THE DRIVE (the war's drums, the spiccato in sixteenths), THE BREAK (the
+ *  drums gone far off, the ostinato and the strings out, the chant alone over the spiccato's eighths), THE BUILD (the shrieks rising, the snare rolling up)
+ *  and THE HEIGHT (a braam, the war, the motif doubled an octave up in the strings, the last four bars at the count's
+ *  drive) - and a swell into each. */
 function yardSong(band) {
   const motif = EG_SCORE_BAND_MOTIFS[band];
   return makeSong(SPIRE_SONGS.yard, 132, 32, (w) => {
     for (let bar = 0; bar < 32; bar++) {
-      const chord = PROG.war[bar % 8], c = CHORDS[chord];
-      bed(w, bar, chord, { drive: 1, choir: bar >= 16 });
-      drums(w, bar, 1);
+      const chord = PROG.war[bar % 8], c = CHORDS[chord], brk = bar >= 16 && bar < 20, build = bar >= 20 && bar < 24, height = bar >= 24;
+      bed(w, bar, chord, { drive: brk ? 0 : height ? 2 : 1, choir: bar >= 16, strings: !brk, organ: brk ? 0.5 : 1, vel: brk ? 0.85 : 1 });
+      spicc(w, bar, chord, brk ? 8 : 16, brk ? 70 : 84);
+      drums(w, bar, brk ? 0 : height ? (bar >= 28 ? 3 : 2) : bar >= 4 && !build ? 2 : 1);
       w.note('timpani', bar, 0, 1, c.timp, 108);
       if (bar % 2 === 0) for (const n of c.stab) w.note('brass', bar, 0, 0.9, n, 108);
       if (band === 3 && bar % 2 === 1) w.hit('anvil', bar, 2, 100);
+      if (bar >= 16) chant(w, bar, chord, brk ? 'a' : 'b', brk ? 84 : 92);
+      if (build) trem(w, bar, ['B5', 'C6'], 60 + (bar - 20) * 10);
+      if (bar >= 22 && bar < 24) roll(w, 'kit', bar, 0, 4, 'snare', 60 + (bar - 22) * 30, 90 + (bar - 22) * 30);
+      if (bar === 0 || bar === 16 || bar === 24) braam(w, bar, chord, 116);
+      if (bar === 3 || bar === 15 || bar === 23 || bar === 31) swellInto(w, bar + 1, 132, 96);
     }
     for (let bar = 4; bar < 32; bar += 2) line(w, bar, [motif], 'brass', 112, band === 2 ? -1 : 0);
     line(w, 8, [EG_FANFARE_BROKEN], 'horn', 110);
     line(w, 24, [EG_FANFARE_BROKEN], 'horn', 116);
+    for (const k of [24, 26, 28, 30]) line(w, k, [motif], 'strings', 100, (band === 2 ? -1 : 0) + 1);
   }, SPIRE_LEVEL.yard, SPIRE_PRESS.yard);
 }
-/** SPIRESET - a set-piece passage's cue, 8 bars a band: the band's motif climbing over the count's two chords. */
+/** SPIRESET - a set-piece passage's cue, 8 bars a band: the band's motif climbing over the count's two chords. EG-ROAR:
+ *  a braam at its head and its middle, the chant and the spiccato through it, the shrieks and the count's drive in its
+ *  second half, the snare rolling up into its turn. */
 function setSong(band) {
   const motif = EG_SCORE_BAND_MOTIFS[band];
   return makeSong(SPIRE_SONGS.set, 140, 8, (w) => {
     for (let bar = 0; bar < 8; bar++) {
       const chord = PROG.count[bar], c = CHORDS[chord];
       bed(w, bar, chord, { drive: 2, choir: true, vel: 1.05 });
-      drums(w, bar, 2);
+      drums(w, bar, bar >= 6 ? 3 : 2, { fill: bar % 2 === 1 });
+      spicc(w, bar, chord, 16, 90);
+      chant(w, bar, chord, 'b', 96);
       for (const n of c.stab) w.note('hit', bar, 0, 1, n, 104);
       line(w, bar, [motif], bar % 2 ? 'horn' : 'brass', 112, Math.floor(bar / 4));
+      if (bar >= 4) trem(w, bar, ['B5', 'C6'], 66 + (bar - 4) * 6);
     }
+    braam(w, 0, PROG.count[0], 118); braam(w, 4, PROG.count[4], 120);
+    swellInto(w, 4, 140, 100); swellInto(w, 8, 140, 104);
+    roll(w, 'kit', 7, 2, 2, 'snare', 80, 124);
   }, SPIRE_LEVEL.set, SPIRE_PRESS.set);
 }
-/** SPIRWAKE - a lord's wake: two bars of drums swelling from nothing into SPIRLRD1. */
+/** SPIRWAKE - a lord's wake: two bars swelling from nothing into SPIRLRD1. EG-ROAR: the timpani rolling in sixteenths,
+ *  the taiko and the low brass growling E against F in eighths, the swell rising to the lord's downbeat, and the chant's
+ *  one shout on the last eighth. */
 function wakeSong() {
   return makeSong(SPIRE_SONGS.wake, 138, 2, (w) => {
-    for (let i = 0; i < 16; i++) { w.note('timpani', Math.floor(i / 8), (i % 8) * 0.5, 0.45, 'E2', 50 + i * 4); w.hit(i % 2 ? 'lowTom' : 'surdo', Math.floor(i / 8), (i % 8) * 0.5, 50 + i * 4); }
+    for (let i = 0; i < 32; i++) w.note('timpani', Math.floor(i / 16), (i % 16) * 0.25, 0.22, 'E2', 44 + i * 2.6);
+    for (let i = 0; i < 16; i++) {
+      w.hit(i % 2 ? 'lowTom' : 'surdo', Math.floor(i / 8), (i % 8) * 0.5, 50 + i * 4);
+      w.note('ostinato', Math.floor(i / 8), (i % 8) * 0.5, 0.45, i % 4 === 3 ? 'F2' : 'E2', 52 + i * 4);
+    }
+    swellInto(w, 2, 138, 104);
     w.hit('crash', 1, 3.5, 100);
+    w.note('chant', 1, 3.5, 0.5, 'E4', 112); w.note('chant', 1, 3.5, 0.5, 'B4', 106);
   }, SPIRE_LEVEL.wake, SPIRE_PRESS.wake);
 }
 /** SPIRLRD1/2/3 - a Court by phase: the war's bed, the lord's own four bars written into it (the brass in the first, the
- *  choir and the horn in the second, everything in the third), the drums climbing. */
+ *  choir and the horn in the second, everything in the third), the drums climbing. EG-ROAR: a braam at each eight (each
+ *  four in the third), a swell into each eight, the spiccato in sixteenths (the first phase's first eight in eighths),
+ *  the chant from the second phase's second eight (the whole of the third's, driving), the shrieks at the top of the
+ *  second and through the second half of the third, the snare rolling into the height, and the lord's bars doubled an
+ *  octave up in the strings there. */
 function lordSong(phase, motifIdx) {
   const motif = EG_SCORE_LORD_MOTIFS[motifIdx] ?? EG_SCORE_LORD_MOTIFS[0], bpm = [138, 144, 152][phase - 1], prog = phase === 3 ? PROG.war3 : PROG.war;
   return makeSong(SPIRE_SONGS[`lord${phase}`], bpm, 32, (w) => {
     for (let bar = 0; bar < 32; bar++) {
-      const chord = prog[bar % 8], c = CHORDS[chord];
-      bed(w, bar, chord, { drive: phase >= 2 ? 2 : 1, choir: phase >= 2 || bar >= 16, organ: 1 + 0.1 * phase, vel: 1 + 0.03 * phase });
-      drums(w, bar, phase >= 3 ? 3 : 2);
+      const chord = prog[bar % 8], c = CHORDS[chord], sec = bar >> 3;
+      bed(w, bar, chord, { drive: phase >= 2 || sec >= 1 ? 2 : 1, choir: phase >= 2 || bar >= 16, organ: 1 + 0.1 * phase, vel: 1 + 0.03 * phase });
+      drums(w, bar, phase >= 3 || sec === 3 ? 3 : 2);
+      spicc(w, bar, chord, phase >= 2 || sec >= 1 ? 16 : 8, 84 + phase * 4);
       for (let i = 0; i < (phase >= 3 ? 8 : 2); i++) w.note('timpani', bar, i * (phase >= 3 ? 0.5 : 2), 0.45, c.timp, i === 0 ? 112 : 96);
       for (const n of c.stab) { w.note('hit', bar, 0, 1, n, 104); if (phase >= 2) w.note('hit', bar, 2.5, 0.5, n, 98); }
       if (bar % 8 === 0) w.note('bells', bar, 0, 4, phase === 3 ? 'B2' : 'E3', 94);
+      if (bar % (phase >= 3 ? 4 : 8) === 0) braam(w, bar, chord, 108 + phase * 4);
+      if (bar % 8 === 7) swellInto(w, bar + 1, bpm, 90 + phase * 4);
+      if ((phase >= 2 && bar >= 8) || phase >= 3) chant(w, bar, chord, phase >= 3 ? 'b' : 'a', 86 + phase * 4);
+      if (phase >= 2 && sec >= (phase === 2 ? 3 : 2) && bar % 2 === 0) trem(w, bar, ['B5', 'C6'], 62 + phase * 4);
+      if (bar === 23) roll(w, 'kit', bar, 2, 2, 'snare', 70, 122);
     }
     for (let k = 0; k < 32; k += 8) {
       line(w, k, motif, 'brass', 112 + phase * 2, String(motif[0][0][0]).endsWith('2') ? 1 : 0);
       if (phase >= 2) line(w, k + 4, motif, 'horn', 108, 0);
       if (phase >= 3) line(w, k + 4, motif, 'strings', 100, 1);
     }
+    line(w, 24, motif.slice(0, 2), 'strings', 100, 1);
   }, SPIRE_LEVEL[`lord${phase}`], SPIRE_PRESS[`lord${phase}`]);
 }
 /** SPIRVALK - a Valkynaz, all phases: 48 bars rising a step every 16 (the bed lifted, the drums doubling), its motif over
- *  the broken fanfare. */
+ *  the broken fanfare. EG-ROAR: a braam and a swell at each eight, harder each step; the spiccato from eighths to
+ *  sixteenths at the second step; the chant from the second (driving in the third); the shrieks and the timpani's rolls
+ *  through the third. */
 function valkSong(motifIdx) {
   const motif = EG_SCORE_LORD_MOTIFS[motifIdx] ?? EG_SCORE_LORD_MOTIFS[3];
   return makeSong(SPIRE_SONGS.valk, 148, 48, (w) => {
@@ -292,20 +496,27 @@ function valkSong(motifIdx) {
       const tier = Math.floor(bar / 16), chord = (tier === 2 ? PROG.war3 : PROG.war)[bar % 8], c = CHORDS[chord];
       bed(w, bar, chord, { drive: 1 + Math.min(1, tier), choir: tier >= 1, vel: 1 + 0.04 * tier });
       drums(w, bar, 1 + tier);
+      spicc(w, bar, chord, tier >= 1 ? 16 : 8, 82 + tier * 6);
       for (const n of c.stab) w.note('hit', bar, 0, 1, n, 100 + tier * 4);
       if (bar % 4 === 0) w.note('timpani', bar, 0, 2, c.timp, 104 + tier * 4);
+      if (bar % 8 === 0) braam(w, bar, chord, 104 + tier * 6);
+      if (bar % 8 === 7) swellInto(w, bar + 1, 148, 88 + tier * 6);
+      if (tier >= 1) chant(w, bar, chord, tier >= 2 ? 'b' : 'a', 86 + tier * 4);
+      if (tier >= 2 && bar % 2 === 0) trem(w, bar, ['B5', 'C6'], 70);
+      if (tier >= 2 && bar % 4 === 3) roll(w, 'timpani', bar, 2, 2, c.timp, 80, 118);
     }
     for (let k = 0; k < 48; k += 8) { line(w, k, motif, 'brass', 112 + Math.floor(k / 16) * 3, 0); line(w, k + 4, [EG_FANFARE_BROKEN], 'horn', 108 + Math.floor(k / 16) * 3, Math.floor(k / 16) >= 2 ? 1 : 0); }
   }, SPIRE_LEVEL.valk, SPIRE_PRESS.valk);
 }
 /** SPIRREDT - a Redoubt taken, and its rest: the Battlemages' hymn in E major, the fanfare WHOLE on the horn, the choir
- *  and the organ, no drums. */
+ *  and the organ, no drums. EG-ROAR: the harp climbing each chord in eighths, the timpani's soft roll into each four. */
 function redoubtSong() {
   return makeSong(SPIRE_SONGS.redoubt, 72, 16, (w) => {
     for (let bar = 0; bar < 16; bar++) {
-      const chord = PROG.hymn[bar % 8];
+      const chord = PROG.hymn[bar % 8], up = CHORDS[chord].str.map(midiNote);
       bed(w, bar, chord, { drive: 0, choir: true, organ: 1.2 });
-      for (const n of CHORDS[chord].str) w.note('harp', bar, 0, 2, n, 72);
+      [0, 1, 2, 3, 4, 5, 4, 3].forEach((j, i) => w.note('harp', bar, i * 0.5, 1, up[j % 3] + 12 * Math.floor(j / 3), 66 + (i === 0 ? 10 : 0)));
+      if (bar % 4 === 3) roll(w, 'timpani', bar, 2, 2, 'E2', 36, 72);
     }
     line(w, 0, [EG_FANFARE], 'horn', 104);
     line(w, 4, [EG_FANFARE], 'horn', 108, 0);
@@ -315,28 +526,39 @@ function redoubtSong() {
   }, SPIRE_LEVEL.redoubt, SPIRE_PRESS.redoubt);
 }
 /** SPIRECNT - THE COUNT's last two minutes: E against F, a bar each, the bell tolling every bar - counting - the broken
- *  fanfare hammered on the brass, the kick on every beat. */
+ *  fanfare hammered on the brass, the kick on every beat. EG-ROAR: THE CLOCK - the woodblocks ticking every eighth - the
+ *  spiccato and the chant driving, a braam each four, the shrieks rising through the second half, a swell into each
+ *  eight. */
 function countSong() {
   return makeSong(SPIRE_SONGS.count, 160, 16, (w) => {
     for (let bar = 0; bar < 16; bar++) {
       const chord = PROG.count[bar % 8], c = CHORDS[chord];
       bed(w, bar, chord, { drive: 2, choir: true, vel: 1.08 });
       drums(w, bar, 3);
+      spicc(w, bar, chord, 16, 96);
       w.note('bells', bar, 0, 2, 'E3', 100);
+      for (let i = 0; i < 8; i++) w.hit(i % 2 ? 'woodLo' : 'woodHi', bar, i * 0.5, i % 2 ? 84 : 100);
       for (const n of c.stab) { w.note('hit', bar, 0, 1, n, 108); w.note('hit', bar, 2, 1, n, 100); }
+      chant(w, bar, chord, 'b', 98);
+      if (bar >= 8) trem(w, bar, ['B5', 'C6'], 70 + (bar - 8) * 4);
+      if (bar % 4 === 0) braam(w, bar, chord, 118);
+      if (bar % 8 === 7) swellInto(w, bar + 1, 160, 100);
     }
     for (let k = 0; k < 16; k += 2) line(w, k, [EG_FANFARE_BROKEN], 'brass', 116, k >= 8 ? 1 : 0);
   }, SPIRE_LEVEL.count, SPIRE_PRESS.count);
 }
 /** SPIREEND - the tear, the end: the end's progression falling under the fanfare's last broken notes, slowing to nothing
- *  in its own time - the last four bars the organ alone, dying. */
+ *  in its own time - the last four bars the organ alone, dying. EG-ROAR: opened by the last braam, and the strings'
+ *  lament falling a step a bar from E5 to F4 over it. */
 function endSong() {
   return makeSong(SPIRE_SONGS.end, 70, 12, (w) => {
+    braam(w, 0, 'Em', 124);
     for (let bar = 0; bar < 12; bar++) {
       const chord = PROG.end[bar % 8], fade = Math.max(0.25, 1 - bar / 12);
       if (bar < 8) bed(w, bar, chord, { drive: 0, choir: bar < 6, strings: true, organ: fade, vel: fade });
       else for (const n of CHORDS.Em.pad) w.note('organ', bar, 0, 4, n, 70 * fade);
     }
+    ['E5', 'D5', 'C5', 'B4', 'A4', 'G4', 'F4'].forEach((n, i) => w.note('strings', i + 1, 0, 3.8, n, 92 - i * 7));
     for (let i = 0; i < 8; i++) w.note('timpani', 0, i * 0.5, 0.45, 'E2', 100 - i * 6);
     line(w, 1, [EG_FANFARE_BROKEN], 'horn', 100);
     line(w, 4, [[['G4', 2], ['F4', 2]]], 'horn', 88);

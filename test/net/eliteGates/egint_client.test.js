@@ -118,17 +118,19 @@ test('EG-H1 RIDDEN POSES ON THIS SCREEN (section 10.8): standing on a moving pie
   const P = inBreach();
   try {
     const { client, player, online, spec } = P;
-    const s0 = spec.steps[0], tS = P.now() / 1000, q = egPieceAt(s0, tS);
+    // PIN MOVED (EG-PERFECT's audit, 2026-10-18): the hall's first Drift, not its first piece - spec law 10 breaks the bridge
+    // before its spans, so its first piece is a still slab of that break
+    const s0 = spec.steps.find((s) => s.kind === 'drift'), tS = P.now() / 1000, q = egPieceAt(s0, tS);
     player.pos = realmToDungeon(spec.x0 + s0.x + q.dx + 0.5, s0.y, s0.z + q.dz);
     client.frame();
     assert.equal(typeof online.poseRide, 'function', 'the hook set in the Spire');
     const pl = online.poseRide();
-    assert.deepEqual(pl, [0, 0.5, 0, 0], 'on the Drift: its index and my offset from its top');
+    assert.deepEqual(pl, [s0.i, 0.5, 0, 0], 'on the Drift: its index and my offset from its top');
     assert.ok(validPose({ x: 1, y: 0, z: 1, yaw: 0, pitch: 0, pl }).pl, 'the wire carries it');
     player.pos = realmToDungeon(spec.x0 + spec.arrive.x, 0, spec.arrive.z);
     assert.equal(online.poseRide(), null, 'on the plate: no ride');
     // a peer riding: drawn at the piece's place on MY clock plus its offset, whatever its raw place said
-    const peer = { ...poseOf(spec, 30, s0.z), pl: [0, -0.4, 0, 0.2] };
+    const peer = { ...poseOf(spec, 30, s0.z), pl: [s0.i, -0.4, 0, 0.2] };
     online.rideAt(peer);
     const [sx, , sz] = dungeonToRealm(peer.x, peer.y, peer.z), qn = egPieceAt(s0, P.now() / 1000);
     assert.ok(Math.abs(sx - spec.x0 - (s0.x + qn.dx - 0.4)) < 1e-6 && Math.abs(sz - (s0.z + 0.2)) < 1e-6, 'drawn on its piece');

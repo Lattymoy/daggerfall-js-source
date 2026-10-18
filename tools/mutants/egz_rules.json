@@ -121,8 +121,8 @@
   {
     "name": "EGZI-fair-ground-bands-unread",
     "file": "src/net/eliteGates/egFair.js",
-    "old": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000)) return `b${i}`; }",
-    "new": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000)) return ''; }",
+    "old": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000, tm)) return `b${i}`; }",
+    "new": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000, tm)) return ''; }",
     "tests": ["test/net/eliteGates/egz_rules.test.js"]
   },
   {

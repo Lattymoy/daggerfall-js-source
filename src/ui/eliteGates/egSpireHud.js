@@ -69,7 +69,7 @@ import { titleCardModel, TITLE_CARD_CSS, TITLE_CARD_STYLE_ID } from '../gate/gat
 import { DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR } from '../native/nativePanel.js';
 import { PIXEL_FONT_CSS } from '../pixelifyFive.js';
 import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';
-import { egSigilsOf, egEclipseAt, egEclipseChip } from '../../world/eliteGates/egTelegraph.js';   // EG-ZG: the marks' sigils, the Eclipse's chip
+import { egSigilsOf, egEclipseAt, egEclipseChip, egEclipseOfBlows } from '../../world/eliteGates/egTelegraph.js';   // EG-ZG: the marks' sigils, the Eclipse's chip
 import { t } from '../../systems/textManager.js';   // AUDIT EG V (c): the words this audit adds, in the player's language
 import { egStakeText } from './egHud.js';   // AUDIT EG V (c, NEW-1): the rest card's stake, on the Spire's own HUD
 import { EG_TIDE_NAMES } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (c, L2-9): the Hungering Dark, named on the rest card
@@ -409,7 +409,7 @@ export function egSpireHudModel(E, me, now, { ff = 'desktop', witness = false, p
     riddles: E.sg === 'trial' && !watching ? spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\n') : '',   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to
     stage: watching ? witLine : [stageLine(E, now), E.sg === 'rest' ? egRestLine(E, run, restP) : '', egNextCircleText(E), egBridgeLine(E, now, bridge && !watching)].filter(Boolean).join(' '),   // AUDIT EG V (c, L2-9, NEW-1): the rest card's stake and its heal; (a1, L2-11): the next circle named
     marks, marksSaid: marks.map((m) => `${EG_MARK_NAMES[m.k] ?? ''} ${m.secs}s`).join(' - '),
-    eclipse: E.sg === 'trial' || E.sg === 'closing' ? egEclipseChip(egEclipseAt(spec, now / 1000)) : '',   // EG-ZG (section 25.5): *The Eclipse - 5*, while the place's hazards run (the fight's own stages)
+    eclipse: E.sg === 'trial' || E.sg === 'closing' ? egEclipseChip(egEclipseAt(spec, now / 1000) ?? egEclipseOfBlows(E.fight?.blows, now)) : '',   // EG-PERFECT: and a lord's own (Seyth's)   // EG-ZG (section 25.5): *The Eclipse - 5*, while the place's hazards run (the fight's own stages)
     ...egLordBarsOf(E), lordH: L.lordH,   // only in a Court (a Proving Walk's champion has none); AUDIT EG V (lane1 #22): a second lord standing its own bar
     gain, first, door, live, touch: touch ? egTouchButtons({ witness: watching, rest: E.sg === 'rest', bridge: bridge && !watching, ping }) : [],
     held: watching ? [] : held,   // AUDIT EG III: the holder's chips

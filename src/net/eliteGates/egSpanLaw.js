@@ -292,6 +292,8 @@ export const EG_RISER_CM = 230;
 export const EG_BEAT_HALF_MS = 1800;
 export const EG_STEP_DOWN_CM = 95;
 export const EG_DROP_CM = 450;
+/** THE BROKEN WAY (spec law 10): the least a Drop drawn at its road's floor falls (cm) - the Drop's own 3 m. */
+export const EG_DROP_LAW10_CM = 300;
 /** A die's whole number from lo to hi, both in (the hall law's draw - one law for both). */
 export const egDieBetween = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
 
@@ -312,13 +314,18 @@ export const egDieBetween = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
  * EG_GAP_MAX_CM. Pure.
  * @param {number} seed @param {number} hall @param {number} band
  * THE ASCENT (spec law 9): `floors` - a road's crumbles and Drops come down to the height it began at (and to what `floor`
- * says), never to the plates' own 0.
+ * says), never to the plates' own 0. EG-PERFECT - THE BROKEN WAY (spec law 10): `broken` - a run of Rails apart through their
+ * whole travels (one gap, one period, half a cycle apart), and a Drop drawn where its road stands
+ * at its floor falls EG_DROP_LAW10_CM to EG_DROP_CM below it (law 9 laid two to four still slabs in its place: no open-course
+ * Drop in 2,089 un-forked halls), its course coming on from its landing there.
  * @param {{ r: () => number, sizes: Readonly<Record<string, { w: number, d: number }>>,
- *   start: { x: number, y: number, z: number, r: number }, checkR: number, floors?: boolean }} o
+ *   start: { x: number, y: number, z: number, r: number }, checkR: number, floors?: boolean, broken?: boolean }} o
  */
-export function egSpanOf(seed, hall, band, { r, sizes, start, checkR, floors = false }) {
+export function egSpanOf(seed, hall, band, { r, sizes, start, checkR, floors = false, broken = false }) {
   /** each road's layer: its course spec, where it stands (`edge`, `y`) and the height its spec has said (`said`) */
   const roads = new Map();
+  /** THE BROKEN WAY (spec law 10): the pieces laid off every road's line - a broken bridge's along a heading other than +z */
+  const free = [];
   let L = /** @type {any} */ (null), span = 0, risen = false, n = 0;
   const road = (k, from = start) => {
     if (!roads.has(k)) roads.set(k, { spec: { road: k, start: { ...from }, checkR, toEnd: 0, sections: [{ span, pieces: [] }] }, edge: from.z + from.r, y: from.y, said: from.y, base: floors ? from.y : 0 });
@@ -377,26 +384,42 @@ export function egSpanOf(seed, hall, band, { r, sizes, start, checkR, floors = f
         const drop = L.y > L.base ? Math.ceil((L.y - L.base) / Math.max(1, count)) : 0;
         for (let q = 0; q < count; q++) { if (L.y > L.base) L.y = Math.max(L.base, L.y - drop); step('crumble', gap(), { x, kit }); }
       } else if (kind === 'gust') for (let q = 0; q < count; q++) step('gust', gap(), { x, kit, period: 6000, phase: q * 0 });
-      else if (kind === 'rail') for (let q = 0; q < count; q++) step('rail', gap(), { x, kit, amp: egDieBetween(r, 150, 200), period: egDieBetween(r, 60, 90) * 100, phase: q * 1500 });   // LAYER THREE: its travel under the least gap less EG_RAIL_CLEAR
+      else if (kind === 'rail' && broken) {
+        // THE BROKEN WAY (spec law 10): a run of Rails at one gap and one period, each half a cycle behind the last, its travel
+        // under half the gap less EG_RAIL_CLEAR - two neighbours' travels never meet (law 9's, each on its own period, met in
+        // 63 of 71 open-course runs: a rider's ground swapped onto the other, carried back)
+        const g = gap(), P = egDieBetween(r, 60, 90) * 100, top = Math.floor((g - EG_RAIL_CLEAR * 100) / 2);
+        for (let q = 0; q < count; q++) step('rail', g, { x, kit, amp: Math.min(top, egDieBetween(r, 150, 200)), period: P, phase: (q % 2) * Math.round(Math.PI * 1000) });   // (THE AUDIT: half a cycle - pieceAt reads a phase as its angle, π; P / 2 was 172-258 degrees)
+      } else if (kind === 'rail') for (let q = 0; q < count; q++) step('rail', gap(), { x, kit, amp: egDieBetween(r, 150, 200), period: egDieBetween(r, 60, 90) * 100, phase: q * 1500 });   // LAYER THREE: its travel under the least gap less EG_RAIL_CLEAR
       else if (kind === 'pend') for (let q = 0; q < count; q++) step('pend', gap(), { x, kit, amp: 0, period: egDieBetween(r, 30, 50) * 100, phase: q * 700 });
       else if (kind === 'vent') for (let q = 0; q < count; q++) step('vent', gap(), { x, kit, period: egDieBetween(r, 40, 60) * 100, phase: egDieBetween(r, 0, 39) * 100 });
-      else if (kind === 'drop' && L.y - L.base < 200) for (let q = 0; q < count; q++) step('still', gap(), { x, kit });
+      else if (kind === 'drop' && L.y - L.base < 200 && !broken) for (let q = 0; q < count; q++) step('still', gap(), { x, kit });
+      else if (kind === 'drop' && L.y - L.base < 200) { L.y -= egDieBetween(r, EG_DROP_LAW10_CM, EG_DROP_CM); step('drop', gap(), { x, kit }); }   // THE BROKEN WAY: a Drop below its road's floor
       else if (kind === 'drop') { const fall = Math.min(EG_DROP_CM, Math.max(200, L.y - L.base)); L.y = Math.max(L.base, L.y - fall); step('drop', gap(), { x, kit }); }
       else for (let q = 0; q < count; q++) step('still', gap(), { x, kit });
     },
     /** THE ASCENT (spec law 9): the height the road's crumbles and Drops come down to - where its course began (the plates'
      *  0 until said; every law before spec law 9 leaves it so). */
     floor(y) { L.base = y; },
+    /** THE BROKEN WAY (spec law 10): a piece of `kind` laid where the hall says (cm - its top's middle `x`, `y`, `z`), along
+     *  heading `hd` (1 +x, 2 -z, 3 -x - egSpanPairs reads its chain along it), `gap` past the last edge along it, `after` on
+     *  to the ground beyond it (0 - the next piece follows), at its timing (`period`, `phase`, `beat`) - its top its kind's,
+     *  unturned (the screens' own mesh): its number the hall's next. */
+    put(kind, o) {
+      const S = sizes[kind], s = { i: n++, kind, span, x: o.x, y: o.y, z: o.z, w: S.w, d: S.d, amp: 0, period: o.period ?? 0, phase: o.phase ?? 0, beat: o.beat ?? 0, gap: o.gap, road: 0, kit: '', after: o.after ?? 0, ya: o.y, hd: o.hd };
+      free.push(s);
+      return s;
+    },
     /** THE ASCENT (spec law 9): the generator as it stands - every road's spec and place, the section, the riser spent, the
      *  pieces' count - to stand again after a course laid only to be measured (save, then load). */
-    save: () => ({ roads: JSON.stringify([...roads.entries()]), cur: [...roads.entries()].find(([, q]) => q === L)?.[0] ?? 0, span, risen, n }),
-    load(o) { roads.clear(); for (const [k, q] of JSON.parse(o.roads)) roads.set(k, q); L = roads.get(o.cur); span = o.span; risen = o.risen; n = o.n; },
+    save: () => ({ roads: JSON.stringify([...roads.entries()]), cur: [...roads.entries()].find(([, q]) => q === L)?.[0] ?? 0, span, risen, n, free: free.length }),
+    load(o) { roads.clear(); for (const [k, q] of JSON.parse(o.roads)) roads.set(k, q); L = roads.get(o.cur); span = o.span; risen = o.risen; n = o.n; free.length = o.free ?? 0; },
     /** Every road's course spec (its sections as said). */
     specs: () => [...roads.values()].map((q) => q.spec),
     /** EVERY ROAD'S COURSE, laid by courseOf - `{ road, steps, checkpoints, end }` (cm, the hall's frame), road 0 first. */
     courses: () => [...roads.values()].map((q) => ({ road: q.spec.road, ...courseOf(q.spec) })),
     /** THE HALL'S STEPS: every road's course laid, in the one count the hall laid them in. */
-    lay() { return this.courses().flatMap((c) => c.steps).sort((a, b) => a.i - b.i); },
+    lay() { return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))].sort((a, b) => a.i - b.i); },
   };
 }
 /**
@@ -461,8 +484,20 @@ export function egMoonBeamZ(s, t) {
 export const egPieceAt = (s, t, out = { dx: 0, dz: 0, solid: true }) => pieceAt(s, t, out, Math.sin);   // AUDIT EG V: the screens' clock (THE LAW'S CLOCK, above, the solver's from spec law 8)
 /** A Pendulum's weight at `t`: across the course (x, the hall's frame) over the middle of the gap before its step (z). */
 export const egPendAt = (s, t) => pendAt(s, t, Math.sin);
-/** Is a body at (x, z), its feet at `y`, inside a Pendulum's weight at `t`? */
-export const egPendHits = (s, t, x, y, z) => pendHits(s, t, x, y, z, Math.sin);
+/** A body's height over its feet (m - player/motor.js CAPSULE_HEIGHT, pinned equal by test/net/eliteGates/egperfect_pend.test.js: the
+ *  relay's bundle does not carry the motor). */
+export const EG_PEND_BODY_H = 1.8;
+/**
+ * Is a body at (x, z), its feet at `y` and `h` tall, inside a Pendulum's weight at `t`? EG-PERFECT (2026-10-18): THE TOUCH IS
+ * THE DRAWN WEIGHT'S - the body's height (its feet to `h` over them) meeting the weight's as the screen draws it, the step's top
+ * to 2 x EG_PEND_HALF over it (scenes/eliteGates/egSpan.js egPendModel's block). It judged feet from 0.6 m under the step to 2.2 m
+ * over it: a jump that cleared the drawn weight by a metre was cast back, and a head in it from below never was. The plan's
+ * test is the law's (pendHits, asked at the step's own height). The timed solver asks it (and THE LAW'S CLOCK's pendHits) of
+ * a body at the step's own height mid-flight, where the old band and this one agree - so every answer it gives, and every
+ * course drawn, is the one it was. The screen's judge (scenes/eliteGates/egSpan.js ride); the relay judges no touch.
+ * @param {any} s @param {number} t @param {number} x @param {number} y @param {number} z @param {number} [h]
+ */
+export const egPendHits = (s, t, x, y, z, h = EG_PEND_BODY_H) => y < s.y + 2 * EG_PEND_HALF && y + h > s.y && pendHits(s, t, x, s.y, z, Math.sin);
 /** A Vent's cycle at `t`: `{ tell, fire }` - its ring's progress over its last EG_VENT_TELL_S (0 to 1, 0 when not told) and
  *  whether it erupts. */
 export function egVentState(s, t) {
@@ -499,13 +534,23 @@ export function egFastReach(h) {
 }
 /** The builds the solver crosses at: THE SPAN BUILD (every window, every proof) and THE FAST BUILD (the crossing's bound),
  *  each on the screens' clock (`at`, `pend` - the laws before spec law 8 were proven on it). */
+/** @typedef {{ run: number, reach: (h: number) => { reach: number, air: number }, at: Function, hits: Function, pend: Function, flight?: boolean }} SpanBuild */
+/** @type {SpanBuild} */
 const SPAN_BUILD = Object.freeze({ run: EG_SPAN_RUN_MPS, reach: egJumpReach, at: egPieceAt, hits: egPendHits, pend: egPendAt });
 const FAST_BUILD = Object.freeze({ run: EG_FAST_RUN_MPS, reach: egFastReach, at: egPieceAt, hits: egPendHits, pend: egPendAt });
 /** AUDIT EG V (spec law 8): the same builds on THE LAW'S CLOCK. */
 const LAW_SPAN_BUILD = Object.freeze({ run: EG_SPAN_RUN_MPS, reach: egJumpReach, at: egPieceAtLaw, hits: (s, t, x, y, z) => pendHits(s, t, x, y, z, egLawSin), pend: egPendAtLaw });
 const LAW_FAST_BUILD = Object.freeze({ run: EG_FAST_RUN_MPS, reach: egFastReach, at: egPieceAtLaw, hits: LAW_SPAN_BUILD.hits, pend: egPendAtLaw });
 /** The builds a hall of spec law `v` is proven at: THE LAW'S CLOCK from EG_SOLVE_LAW, the screens' before. */
-const buildsOf = (v) => ((v ?? 0) >= EG_SOLVE_LAW ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] : [SPAN_BUILD, FAST_BUILD]);
+/** EG-PERFECT - THE BROKEN WAY (spec law 10 - net/eliteGates/egAscent.js EG_BROKEN_LAW, pinned equal): the builds a Pendulum is
+ *  proven at over the flight's whole line (`flight`) - law 8's took its middle alone, and 18% of the open launches it allowed
+ *  flew through the weight under the screen's every-frame judge. */
+export const EG_SOLVE_FLIGHT_LAW = 10;
+/** THE AUDIT: a flight over a Pendulum taken at this many even instants (and its launch) - at twelve, the weight's swing between
+ *  two let 3% of the launches it called clear meet it. */
+export const EG_SOLVE_FLIGHT_N = 24;
+const LAW10_SPAN_BUILD = Object.freeze({ ...LAW_SPAN_BUILD, flight: true }), LAW10_FAST_BUILD = Object.freeze({ ...LAW_FAST_BUILD, flight: true });
+const buildsOf = (v) => ((v ?? 0) >= EG_SOLVE_FLIGHT_LAW ? [LAW10_SPAN_BUILD, LAW10_FAST_BUILD] : (v ?? 0) >= EG_SOLVE_LAW ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] : [SPAN_BUILD, FAST_BUILD]);
 /** THE SPAN BUILD a hall of spec law `v` is proven at (egPairWindows' `B` - for a test and a tool). */
 export const egSpanBuildOf = (v) => buildsOf(v)[0];
 
@@ -514,11 +559,12 @@ export const egSpanBuildOf = (v) => buildsOf(v)[0];
  * or a passage) - `{ a, b }` pairs in course order, `a` or `b` null for still ground, the last step's ground after it.
  */
 export function egSpanPairs(spec) {
-  const steps = spec.steps ?? [], out = [];
+  const steps = (spec.steps ?? []).map(egStepLocal), out = [];
   // one road's steps follow one another (THE FORK: each road its own course - section 11.4). THE ASCENT (spec law 9): a hall's
-  // courses stand along its way, each on its own line - two pieces meet only on one line (a run's pieces stand within 2 m)
+  // courses stand along its way, each on its own line - two pieces meet only on one line (a run's pieces stand within 2 m).
+  // THE BROKEN WAY (spec law 10): and along one heading - a turned piece read in its heading's own frame (egStepLocal)
   const one = (spec.law ?? spec.v ?? 0) >= EG_ROUTE_PROOF_LAW;
-  const meets = (a, b) => !!a && !!b && (a.road ?? 0) === (b.road ?? 0) && Math.abs(a.z + a.d / 2 - (b.z - b.d / 2 - (b.gap ?? 0))) < 1e-6 && (!one || Math.abs(a.x - b.x) <= EG_ROUTE_COURSE_SIDE_M);
+  const meets = (a, b) => !!a && !!b && (a.road ?? 0) === (b.road ?? 0) && (a.hd ?? 0) === (b.hd ?? 0) && Math.abs(a.z + a.d / 2 - (b.z - b.d / 2 - (b.gap ?? 0))) < 1e-6 && (!one || Math.abs(a.x - b.x) <= EG_ROUTE_COURSE_SIDE_M);
   for (let k = 0; k < steps.length; k++) {
     const s = steps[k], prev = steps[k - 1], next = steps[k + 1];
     if (s.road === 2) continue;   // an alcove's side way is optional - never proven, never asked of anyone
@@ -528,6 +574,20 @@ export function egSpanPairs(spec) {
   return out;
 }
 
+/** THE BROKEN WAY (spec law 10): the four headings' sines and cosines (0 +z, 1 +x, 2 -z, 3 -x - net/eliteGates/egAscent.js DIR). */
+const HS = Object.freeze([0, 1, 0, -1]), HC = Object.freeze([1, 0, -1, 0]);
+/** Where a point (x, z) of the hall's frame stands in heading `hd`'s own frame (m): `[across, along]` - along the heading, and
+ *  across it to its right as the hall's +x stands to +z's. */
+export const egAlongOf = (hd, x, z) => [x * HS[(hd + 1) % 4] + z * HC[(hd + 1) % 4], x * HS[hd] + z * HC[hd]];
+/** THE BROKEN WAY (spec law 10): STEP `s` IN ITS HEADING'S OWN FRAME - a turned piece (its `hd`: a broken bridge's along +x, -z
+ *  or -x) as THE TIMED SOLVER reads a course along +z: its `x` across, its `z` along, its top across (`w`) and along (`d`); its
+ *  own number, kind and timing. A piece along +z is itself. Every piece a broken bridge turns keeps still (a still slab, a
+ *  Crumble, a Beat, a Vent): its clock is the same in either frame. */
+export function egStepLocal(s) {
+  if (!s?.hd) return s;
+  const [x, z] = egAlongOf(s.hd, s.x, s.z), odd = s.hd % 2 === 1;
+  return { ...s, x, z, w: odd ? s.d : s.w, d: odd ? s.w : s.d };
+}
 const PA = { dx: 0, dz: 0, solid: true }, PB = { dx: 0, dz: 0, solid: true };
 /** Does THE SPAN BUILD's jump from `a` (null: still ground) to `b` (null: still ground) launched at `t` land? EG6a: or
  *  another build's (`B` - its run and its reach); a leap past pieces between says its own landing edge (`to`) and the
@@ -551,17 +611,21 @@ function jumpLands(pair, t, B = SPAN_BUILD) {
   const dz = Math.max(0, nz0 - lz);
   const dx = Math.max(0, Math.max(nx0, lx0) - Math.min(nx1, lx1));   // the least sideways reach between the two widths
   if (dx * dx + dz * dz > reach * reach) return false;   // AUDIT EG V (lane5 #2): squares - IEEE's own rounding, never Math.hypot's
-  // a Pendulum over this gap: the body crosses its middle half-way through the flight - clear of the weight then
+  // a Pendulum over this gap: the body crosses its middle half-way through the flight - clear of the weight then. THE BROKEN
+  // WAY (spec law 10 - `flight`): clear of it at every EG_SOLVE_FLIGHT_N-th of the flight, from the launch on the body's own path
   if (b?.kind === 'pend') {
     const xs = Math.max(nx0, Math.min(lx1, b.x)), mid = t + air / 2;
-    if (B.hits(b, mid, xs, b.y, B.pend(b, mid).z)) return false;
+    // (THE AUDIT: the body's own path - its run's pace from the launch edge, its middle on the edge and a body's radius past it,
+    // its feet on the jump's arc; the reach's two radii carried it 27% faster than the motor flies, its feet at the landing's height)
+    if (B.flight) { const v = B.run + EG_JUMP_MPS * EG_JUMP_FWD; for (const d0 of [0, EG_BODY_R]) for (let k = 0; k <= EG_SOLVE_FLIGHT_N; k++) { const u = (air * k) / EG_SOLVE_FLIGHT_N; if (B.hits(b, t + u, xs, ay + EG_JUMP_MPS * u - 0.5 * EG_JUMP_G * u * u, lz + d0 + v * u)) return false; } }
+    else if (B.hits(b, mid, xs, b.y, B.pend(b, mid).z)) return false;
   }
   return true;
 }
 
 /** EG6a: does THE SPAN BUILD's jump on `pair` launched at shared second `t` land - the solver's own answer, one launch
  *  (tools/egSpanSolve.mjs reads its windows, and the sweep's pilot launches inside them). */
-export const egJumpLands = (pair, t) => jumpLands(pair, t);
+export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, B);   // (THE AUDIT: a build named - egSpanBuildOf)
 
 /**
  * THE TIMED SOLVER on one pair: its windows over EG_SOLVE_HORIZON_S - `{ open, worst12, wait, clearRun }`: the share of
@@ -719,7 +783,9 @@ function solvedLegs(spec, road) {
   kept[r] ??= egRouteLegs(spec, r).map((g) => {
     const pairs = g.kind === 'span' && g.steps.length ? egSpanPairs({ steps: g.steps }) : [], last = pairs[pairs.length - 1];
     const zn = last ? [...pairs.map(launchZ), last.b ? last.b.z + last.b.d / 2 : last.edge] : [];
-    return { g, pairs, zn, span: egLegSeconds(g, ROUTE_SPAN), fast: egLegSeconds(g, ROUTE_FAST), owed: egLegGripOwed(g) };
+    // (THE BROKEN WAY - spec law 10: a turned span leg's own start along its heading, where its pairs are read)
+    const hd = g.steps[0]?.hd ?? 0, z0 = hd ? egAlongOf(hd, g.from[0], g.from[2])[1] : g.z0;
+    return { g, pairs, zn, z0, span: egLegSeconds(g, ROUTE_SPAN), fast: egLegSeconds(g, ROUTE_FAST), owed: egLegGripOwed(g) };
   });
   return kept[r];
 }
@@ -728,7 +794,7 @@ function solvedLegs(spec, road) {
 function spanLegAt(L, t, B) {
   let waited = 0;
   for (const p of L.pairs) {
-    const at = t + (launchZ(p) - L.g.z0) / EG_SPAN_RUN_MPS + waited;
+    const at = t + (launchZ(p) - L.z0) / EG_SPAN_RUN_MPS + waited;
     let w = 0;
     while (w < EG_SOLVE_HORIZON_S && !jumpLands(p, at + w, B)) w += EG_SOLVE_STEP_S;
     waited += w;
@@ -750,8 +816,8 @@ function routeCrossAt(legs, t0, B) {
  *  first launch (fastChain), then the rest of its walked length at the run - egFastCrossAt's own arithmetic. */
 function fastLegAt(L, t, B) {
   if (!L.pairs.length) return L.fast;
-  const run = EG_FAST_RUN_MPS, m = L.pairs.length, E = fastChain(L.pairs, L.zn, roadOfPair, B, t + Math.max(0, L.zn[0] - L.g.z0) / run);
-  return E === Infinity ? Infinity : E - t + Math.max(0, L.g.len - (L.zn[m] - L.g.z0)) / run;
+  const run = EG_FAST_RUN_MPS, m = L.pairs.length, E = fastChain(L.pairs, L.zn, roadOfPair, B, t + Math.max(0, L.zn[0] - L.z0) / run);
+  return E === Infinity ? Infinity : E - t + Math.max(0, L.g.len - (L.zn[m] - L.z0)) / run;
 }
 /** A routed road crossed at THE FAST BUILD from shared second `t0` (s; Infinity where a span leg has no landing). */
 function routeFastAt(legs, t0, B) {
@@ -796,15 +862,21 @@ export const egRouteSolved = (/** @type {any} */ spec, road = 0) => solvedLegs(s
  * @param {any} spec @param {boolean} [median]
  */
 export function egSpanProof(spec, median = true) {
-  const why = [], [B] = buildsOf(spec.v), law8 = (spec.v ?? 0) >= EG_SOLVE_LAW;   // AUDIT EG V: a law-8 hall on THE LAW'S CLOCK
+  const why = [], [B] = buildsOf(spec.v), law8 = (spec.v ?? 0) >= EG_SOLVE_LAW, law10 = (spec.v ?? 0) >= EG_SOLVE_FLIGHT_LAW;   // AUDIT EG V: a law-8 hall on THE LAW'S CLOCK
   for (const s of spec.steps ?? []) {
     if (s.kind === 'vent' && Math.min(s.w, s.d) < EG_VENT_MIN_W) why.push(`${s.i}: a Vent's platform under ${EG_VENT_MIN_W} m`);
     if (s.kind === 'drop' && s.d < EG_DROP_LAND_MIN) why.push(`${s.i}: a Drop's landing under ${EG_DROP_LAND_MIN} m`);
     if (EG_CRUMBLE_KINDS.includes(s.kind) && s.d / EG_SPAN_RUN_MPS + EG_CRUMBLE_SLACK_S > EG_CRUMBLE_DELAY_S) why.push(`${s.i}: a Crumble too deep to cross before it falls`);
     if (s.kind === 'rail' || s.kind === 'drum') {
       const next = (spec.steps ?? [])[s.i + 1];
-      const after = next && (next.road ?? 0) === (s.road ?? 0) && Math.abs(next.z - next.d / 2 - (next.gap ?? 0) - (s.z + s.d / 2)) < 1e-6 ? next.gap ?? 0 : Infinity;
-      if (s.amp > Math.min(s.gap ?? 0, after) - EG_RAIL_CLEAR) why.push(`${s.i}: a Rail's travel closes on what stands beside it`);
+      const meets = next && (next.road ?? 0) === (s.road ?? 0) && Math.abs(next.z - next.d / 2 - (next.gap ?? 0) - (s.z + s.d / 2)) < 1e-6;
+      const after = meets ? next.gap ?? 0 : Infinity;
+      // THE BROKEN WAY (spec law 10): a travelling neighbour (a Rail, a Drum) is no still ground - the two apart by EG_RAIL_CLEAR
+      // through both travels, each at its place on THE LAW'S CLOCK (law 9 held the next at rest: 63 of 71 open-course runs met)
+      const moving = law10 && meets && (next.kind === 'rail' || next.kind === 'drum');
+      const closes = `${s.i}: a Rail's travel closes on what stands beside it`;
+      if (s.amp > Math.min(s.gap ?? 0, moving ? Infinity : after) - EG_RAIL_CLEAR) why.push(closes);
+      if (moving && railsMeet(s, next, B)) why.push(`${closes} - travelling`);   // (the next's travel meets its own)
     }
     // EG-ZC: a slag crust is left onto still ground - the ground itself, or a step of its road that keeps no time
     if (s.kind === 'slag') {
@@ -849,6 +921,17 @@ export function egSpanProof(spec, median = true) {
     if (c.n && c.median > EG_SHAFT_MAX_S) why.push(`a shaft crossed in ${c.median.toFixed(1)} s, past ${EG_SHAFT_MAX_S} s`);
   }
   return { ok: why.length === 0, why };
+}
+/** THE BROKEN WAY (spec law 10): do travelling neighbours `a` and `b` (b the next along the road) come within EG_RAIL_CLEAR of each
+ *  other over THE SOLVER's horizon - each at its place on build `B`'s clock? */
+function railsMeet(a, b, B) {
+  const n = Math.round(EG_SOLVE_HORIZON_S / EG_SOLVE_STEP_S), pa = { dx: 0, dz: 0, solid: true }, pb = { dx: 0, dz: 0, solid: true };
+  for (let k = 0; k < n; k++) {
+    const t = k * EG_SOLVE_STEP_S;
+    B.at(a, t, pa); B.at(b, t, pb);
+    if (b.z + pb.dz - b.d / 2 - (a.z + pa.dz + a.d / 2) < EG_RAIL_CLEAR - 1e-9) return true;
+  }
+  return false;
 }
 /** Is a Forge Line hammer (the spec's `hammerline` hazard - its phase in seconds) live at shared millisecond `ms`? Integer ms. */
 const hammerLive = (hz, ms) => { const u = (((ms + Math.round((hz.phase ?? 0) * 1000)) % EG_HAMMER_LINE.period) + EG_HAMMER_LINE.period) % EG_HAMMER_LINE.period; return u >= EG_HAMMER_LINE.period - EG_HAMMER_LINE.live; };
@@ -933,7 +1016,7 @@ export function egBridgeOf(spec, g, P = null) {
   const p = (P ?? egSpanPairs(spec ?? {}))[g];
   if (!p) return null;
   const a = p.a, b = p.b, on = b ?? a;
-  if ((on.road ?? 0) === 2) return null;
+  if ((on.road ?? 0) === 2 || on.hd) return null;   // THE BROKEN WAY: a plank stands along +z - never over a turned gap
   const za = a ? a.z + a.d / 2 : p.edge, zb = b ? b.z - b.d / 2 : p.edge;
   if (!(zb - za > 0.05)) return null;
   const y0 = a ? a.y : floorAt(spec, b.x, za - EG_SB_LAP_M) ?? b.y, y1 = b ? b.y : floorAt(spec, a.x, zb + EG_SB_LAP_M) ?? a.y;

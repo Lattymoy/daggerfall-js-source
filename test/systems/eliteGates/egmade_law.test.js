@@ -51,11 +51,13 @@ test('EG-H2 THE LAW (section 24): madeLevelOf names each made location by its ow
   for (const loc of [null, undefined, {}, { name: 'Old Maze', dungeon: { recordElement: { header: { locationId: 99 } } } }, { ...sdRealmLocation({ s: 3 }), sdRealm: null }]) assert.equal(madeLevelOf(loc), null);
   assert.deepEqual([...MADE_LEVELS], ['court', 'hour', 'spire']);
   const none = Object.fromEntries(MADE_LEVEL_RULE_KEYS.map((k) => [k, k === 'jumpBuffer' || k === 'latePress' ? 0 : null]));
+  // PIN MOVED (EG-PERFECT, 2026-10-18): the running leap refused on the Spire's spans and the Hour's Steps (`runLeap` -
+  // test/player/egperfect_runleap.test.js runs it on the real motor)
   assert.deepEqual(MADE_LEVEL_RULES, {
     court: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', death: 'castOut', unstuck: 'refused', says: 'mid' },
-    hour: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned', resurrect: 'refused', death: 'final', unstuck: 'wayHome', says: 'hour' },
+    hour: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned', runLeap: 'refused', resurrect: 'refused', death: 'final', unstuck: 'wayHome', says: 'hour' },
     spire: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', potions: 'counted', levitate: 'banned', slowfall: 'banned',
-      techFlight: 'refused', jumpBuffer: 0.12, latePress: 0.12, resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
+      techFlight: 'refused', jumpBuffer: 0.12, latePress: 0.12, runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
   });
   for (const lv of MADE_LEVELS) { assert.ok(Object.isFrozen(MADE_LEVEL_RULES[lv])); assert.deepEqual(Object.keys(MADE_LEVEL_RULES[lv]), [...MADE_LEVEL_RULE_KEYS], lv); }
   assert.deepEqual([EG_JUMP_BUFFER_S, EG_LATE_PRESS_S], [0.12, 0.12], 'section 10.8: 0.12 s each');
@@ -253,7 +255,7 @@ test('EG-H2 THE SPIRE\'S TRAVERSAL GROUND AND THE CLIENT\'S LAW PIN (sections 10
 
 test('EG-H2 THE SWEEP (section 24, THE ONE CONSTRUCTION SEAM): every rule\'s door in the hosts and the systems reads the made level\'s law for its rule and asks no made level itself; no line anywhere pairs a level\'s own predicate with a rule\'s act; every rule the law names is read at a door (mutants: a door asking the level again; a rule no door reads)', () => {
   const PRED = /gateArenaDay|sdRealmSlot|egHallBreach|isGateArena\(|isSdRealm\(|isEgHall\(|\b_sdRealm\b|\b_egHall\b|diedHere\(/;
-  const FILES = { W: 'src/scenes/world.js', D: 'src/scenes/dungeonContext.js', M: 'src/scenes/worldModes.js', K: 'src/systems/eliteGates/spireKit.js', T: 'src/combat/techniques.js' };
+  const FILES = { W: 'src/scenes/world.js', D: 'src/scenes/dungeonContext.js', M: 'src/scenes/worldModes.js', K: 'src/systems/eliteGates/spireKit.js', T: 'src/combat/techniques.js', S: 'src/scenes/shared.js' };
   const src = Object.fromEntries(Object.entries(FILES).map(([k, p]) => [k, read(p)]));
   /** [file, where the door begins, where it ends, the rules it must read] */
   const DOORS = [
@@ -281,6 +283,7 @@ test('EG-H2 THE SWEEP (section 24, THE ONE CONSTRUCTION SEAM): every rule\'s doo
     ['K', 'export function spirePotionRefusal(item) {', 'try {', ['potions']],
     ['K', 'export function spirePotionDrunk(item) {', 'try {', ['potions']],
     ['T', 'export function refusal(hand, ctx) {', '\n}\n', ['techFlight']],
+    ['S', 'export function parkourDeps(', '\n}\n', ['runLeap']],   // EG-PERFECT: the running leap's door, the four hosts' one parkour deps
   ];
   const readRules = new Set();
   for (const [f, from, to, rules] of DOORS) {

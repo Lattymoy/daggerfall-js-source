@@ -54,8 +54,25 @@
 //
 // Pure: a pose, a spec and a clock in; the accumulator moved in place. In the relay bundle (net/eliteGates/egBrain.js); the client
 // reads the ridden poses' half. Not a DFU member. Ledger A (ELITE-GATES).
+//   EG-PERFECT (2026-10-18, Mac: "I want to ensure the boss attacks, the design of the halls, and everything is absolutely
+//     perfect. Traversing between sections should present a challenge, platforming should be detailed"):
+//     - THE COLLAPSING TUBE'S CLOCK IN A ROUTED HALL (egTubeEdgeIn): LAW 9 stands the tube's mouth 34-82 s of walking from
+//       the plate, and its fall began a fixed EG_TUBE_START_MS (18 s) after the wake - always fallen before anyone reached it,
+//       so the hall could not be finished. In a routed hall it falls from the instant the company reaches its mouth (the room
+//       records the first fair pose within EG_TUBE_MOUTH_M - net/eliteGates/egBrain.js egPoseIn - and says it with the stage,
+//       `tm`), EG_TUBE_MOUTH_S after it; laws 4-8 keep their fixed clock from the wake.
+//     - THE VOID ZONES ENFORCED (egVoidCrossed; Elite-Gates-Ascent.md section 2): `spec.voids` (net/eliteGates/egAscent.js voidsOf)
+//       were read by nothing - off a high bridge onto a later leg skipped 160-290 m of the way. A stretch that falls through a
+//       void zone's heights within its footprint (widened by the step-off reach) from a floor over it is a fall into the void:
+//       the screen casts it back (scenes/eliteGates/egSpan.js ride), the fair trail breaks and credits nothing past the floor
+//       it left until the member stands there again (`vd`), and the census owes the cast-back (`vz` - egPoseIn).
+//     - THE TOLL'S NEW GROUND KEYED BY ITS HERO (groundAt): a hero floor's key was its index within its own hero, `h<i>`,
+//       and LAW 9 lays a hero a room - the first floor of every room after the first was "seen" already. From law 9 the key
+//       is `h<hero>:<floor>`; laws 4-8 keep `h<i>`.
 import { poseTsDiff } from '../wire.js';
 import { egPieceAt, egCrossMin, EG_BODY_R, EG_SINK_GONE_M, EG_FAST_RUN_MPS } from './egSpanLaw.js';
+import { EG_SPAN_RUN_MPS, EG_JUMP_G, EG_WAIT_MAX, EG_SET_MARGIN, EG_DROP_CM } from './egSpanLaw.js';   // EG-PERFECT: the tube's start, the step-off reach
+import { egRouted } from './egRouteProof.js';   // EG-PERFECT: a hall proven over its route (LAW 9) - its tube falls from its mouth
 import { egBridgeOf, egOnBridge } from './egSpanLaw.js';   // AUDIT EG III: Spirebridge's plank, ground while it stands
 import { segDist, egPolyIn } from './egShape.js';   // EG-HERO-LAY: a hero's floors are polygons
 import { egWallFallenZ } from './egLaw.js';   // EG-ZB: a Falling Wall's fallen edge - and the Collapsing Tube's, below
@@ -223,29 +240,129 @@ export const EG_CLIMB_NEAR_M = 3;
  *  ground that is no island (the end plate, an alcove), a piece. */
 export const EG_HOLD = Object.freeze({ none: 0, island: 1, still: 2, piece: 3 });
 const yOn = (y, fy) => y <= fy + EG_SUPPORT_UP_M && y >= fy - EG_SUPPORT_DOWN_M;
+// ── EG-PERFECT: THE COLLAPSING TUBE'S CLOCK (section 11.3) ───────────────────────────────────────────────────────
+/** How near the tube's mouth - its first metre, `{x, y, z0}` (the hall's frame) - a fair pose's feet stand (m, in three
+ *  dimensions) when the room records that the company has reached it (a routed hall's tube falls from then). */
+export const EG_TUBE_MOUTH_M = 3;
+/**
+ * HOW LONG AFTER THE COMPANY REACHES IT A ROUTED HALL'S TUBE BEGINS TO FALL (s). The fall runs behind the company at a fixed
+ * EG_TUBE_MPS (4 m/s) and a segment holds while the fallen edge has not reached its far end, so a body stays up while it is
+ * ahead of the edge. Two numbers make the start, and nothing else:
+ *  - THE SPAN BUILD keeps the set piece's margin over the whole tube (section 10.5, `egTubeFair`'s EG_SET_MARGIN): a member
+ *    at the trigger's reach (EG_TUBE_MOUTH_M short of the mouth) running at THE SPAN BUILD's pace reaches every metre z of the
+ *    tube by (z + 3) / 5.47 s, the edge by START + z / 4 s, so the margin (the edge's time at least 1.25 x the runner's) holds
+ *    everywhere when it holds at the mouth - 1.25 x 3 / 5.47 = 0.69 s (1.25 / 5.47 < 1 / 4: the runner gains from there on);
+ *  - THE COMPANY: the member right behind the first may have missed the launch the first one took at the gap before, and
+ *    the solver's no-queue law (EG_WAIT_MAX, section 10.5) waits it at most 4 s for the next - so the start waits that too.
+ * 4.69 s: the first member into the mouth is 22 m down the tube before the vault starts to go behind it, a member one launch
+ * behind runs it with the margin, and a member who stood about at the mouth is caught and cast forward (section 11.3) - the
+ * fall chases the company as it runs, never a tube fallen before it came (the fixed 18 s from the wake) nor one that waits
+ * so long that no runner ever sees it go (18 s after the mouth would be past the end of a 60-80 m tube at the run).
+ */
+export const EG_TUBE_MOUTH_S = EG_WAIT_MAX + (EG_SET_MARGIN * EG_TUBE_MOUTH_M) / EG_SPAN_RUN_MPS;
+/** Is the tube of hall `spec` started from its mouth (a routed hall - LAW 9, net/eliteGates/egRouteProof.js egRouted), rather than from
+ *  its wake (laws 4-8)? */
+export const egTubeFromMouth = (spec) => !!spec?.tube && egRouted(spec);
+/** Do feet at (x, y, z) (the hall's frame) stand at a routed hall's tube's mouth - within EG_TUBE_MOUTH_M of its first metre, or
+ *  past it down the tube (THE AUDIT: a pose a beat late, already in, starts it too - at the mouth's sphere alone a pose that
+ *  skipped it never did, and the tube stood for good), its floor's height within EG_TUBE_MOUTH_M? */
+export const egTubeAtMouth = (spec, x, y, z) => {
+  const T = spec?.tube;
+  if (!egTubeFromMouth(spec) || Math.abs(y - (T.y ?? 0)) > EG_TUBE_MOUTH_M) return false;
+  return Math.hypot(x - T.x, y - (T.y ?? 0), z - T.z0) <= EG_TUBE_MOUTH_M || (Math.abs(x - T.x) <= T.halfW && z >= T.z0 && z <= T.z1);
+};
+/**
+ * THE COLLAPSING TUBE'S FALLEN EDGE (m along the hall, -Infinity before it begins) in hall `spec` at shared ms `tMs`: a routed
+ * hall's from `tm`, the instant (relay ms) the room recorded the company at its mouth (0 not yet - it stands), EG_TUBE_MOUTH_S
+ * after it; the laws before from the hall's wake `hw`, the tube's own `start` after it, as they always fell. One law for the
+ * relay's judge (bandFallen) and the screen's segments (scenes/eliteGates/egSpan.js), allocating nothing: the mouth's start is the
+ * law's egTubeEdge (net/eliteGates/egFragLaw.js) on a clock moved by its difference from the tube's own `start`. Pure.
+ * @param {any} spec @param {number} hw @param {number} tm @param {number} tMs
+ */
+export function egTubeEdgeIn(spec, hw, tm, tMs) {
+  const T = spec?.tube;
+  if (!T) return -Infinity;
+  if (egRouted(spec)) return tm > 0 ? egTubeEdge(T, tMs - tm - (EG_TUBE_MOUTH_S - T.start) * 1000) : -Infinity;
+  return hw > 0 ? egTubeEdge(T, tMs - hw) : -Infinity;
+}
+
 /** EG-ZB (section 21; EG-H1's departure 3 closed): is band `b` fallen at `z` - a Falling Wall's walkway behind its fallen edge
- *  (net/eliteGates/egLaw.js egWallFallenZ), the Collapsing Tube's floor behind its (net/eliteGates/egFragLaw.js egTubeEdge) - with the hall woken
- *  at `hw` (relay ms) and the shared time `tMs`? A fallen segment holds nobody. */
-const bandFallen = (spec, b, z, hw, tMs) => hw > 0 && ((b.role === 'walk' && z < egWallFallenZ(spec, hw, tMs)) || (b.role === 'tube' && !!spec.tube && z < egTubeEdge(spec.tube, tMs - hw)));
+ *  (net/eliteGates/egLaw.js egWallFallenZ), the Collapsing Tube's floor behind its (egTubeEdgeIn - EG-PERFECT: a routed hall's from the
+ *  company's arrival at its mouth, `tm`) - with the hall woken at `hw` (relay ms) and the shared time `tMs`? A fallen segment
+ *  holds nobody. */
+const bandFallen = (spec, b, z, hw, tMs, tm = 0) => hw > 0 && ((b.role === 'walk' && z < egWallFallenZ(spec, hw, tMs)) || (b.role === 'tube' && !!spec.tube && z < egTubeEdgeIn(spec, hw, tm, tMs)));
+
+// ── EG-PERFECT: THE VOID ZONES (Elite-Gates-Ascent.md section 2) ────────────────────────────────────────────────────
+/** A fall that passed a void zone is a fall into the void once the feet are this far under the floor they left (m - the fair
+ *  trail's own fall, EG_FALL_M): a running jump down a stair at THE SPAN BUILD lands 2.55 m under its tread, and every zone
+ *  stands over a way at least 5 m under the one it was left from (net/eliteGates/egAscent.js voidsOf), so a fall through one passes
+ *  this mark in the air. THE AUDIT: past the deepest Drop (EG_DROP_CM, a quarter metre more) - spec law 10 lays its Drops 3 to
+ *  4.5 m under their road, and at a Gale-Swept fork a zone about the plate held the Drop past its edge: at 3 m every way down
+ *  onto it was the void's (seed 3's hall 7, both roads). */
+export const EG_VOID_DROP_M = EG_DROP_CM / 100 + 0.25;
+/** THE STEP-OFF REACH: how far out a body run off an edge at THE SPAN BUILD carries while it falls `dy` metres (its run held,
+ *  the motor's g - EG_JUMP_G), its capsule beside (m). A void zone's footprint is the lower way's plan under the upper's 3 m
+ *  about it (net/eliteGates/egAscent.js voidsOf); a running step-off from 10 m carries 6 m, past it - so it is read widened by this. */
+export const egStepOffReach = (dy) => EG_SPAN_RUN_MPS * Math.sqrt((2 * Math.max(0, dy)) / EG_JUMP_G) + EG_BODY_R;
+/**
+ * DOES A STRETCH PASS ONE OF HALL `spec`'s VOID ZONES (Elite-Gates-Ascent.md section 2: "wherever a fall would skip ahead along
+ * the route, the law lays a VOID ZONE ... over which a body is cast back as into the void"): the stretch from feet `a` to feet
+ * `b` (`[x, y, z]`, the hall's frame), going down, by a body that last stood on a floor `fromY` high over the zone's foot,
+ * through the zone's heights (`y0`-`y1`) over its footprint widened by the step-off reach from that floor to the zone's foot
+ * (egStepOffReach) - tested where the stretch meets the zone's top and its foot, and at `b`. Answers the zone, or null (a hall
+ * that lays none - laws 4-8). A fall that passed one is the void's once it is EG_VOID_DROP_M under the floor it left (the
+ * screen's ride and the fair trail keep the passage until the feet stand again: a thin zone is passed in a frame, and a
+ * stair's hop through a well's widened plan lands before the mark). Pure.
+ * @param {any} spec @param {number} fromY @param {number[]} a @param {number[]} b
+ */
+export function egVoidCrossed(spec, fromY, a, b) {
+  const V = spec?.voids;
+  if (!V?.length || !a || !b || !Number.isFinite(fromY) || !(b[1] < a[1])) return null;
+  for (const v of V) {
+    if (!(fromY > v.y0 && b[1] <= v.y1 && a[1] >= v.y0)) continue;
+    const pad = egStepOffReach(fromY - v.y0), along = (y) => { const k = (a[1] - y) / (a[1] - b[1]); return [a[0] + (b[0] - a[0]) * k, a[2] + (b[2] - a[2]) * k]; };
+    const yTop = Math.min(a[1], v.y1), yFoot = Math.max(b[1], v.y0);
+    for (const [x, z] of [along(yTop), along(yFoot), [b[0], b[2]]]) if (egPolyIn(v.poly, x, z, pad)) return v;
+  }
+  return null;
+}
+/**
+ * ONE STEP OF A FALL OVER THE VOID ZONES - the screen's frame (scenes/eliteGates/egSpan.js ride) and the fair trail's pose (egFairPose)
+ * alike: `P` the fall's memory (`{ v }` - the zone it passed, null none), moved in place. The stretch from feet `a` to feet `b`
+ * passing a zone (egVoidCrossed - from a floor `fromY` high) is kept; the feet at `b` EG_VOID_DROP_M under that floor with a
+ * zone passed are the void's - answers that zone; feet standing at `b` (`held`) let the memory go once judged. Pure but for `P`.
+ * @param {{ v: any }} P @param {any} spec @param {number} fromY @param {number[]|null} a @param {number[]} b @param {boolean} held
+ */
+export function egVoidStep(P, spec, fromY, a, b, held) {
+  if (!P.v && a) P.v = egVoidCrossed(spec, fromY, a, b);
+  const hit = P.v && fromY - b[1] >= EG_VOID_DROP_M ? P.v : null;
+  if (held || hit) P.v = null;
+  return hit;
+}
 /**
  * EG-ZI (section 10.6): THE STILL GROUND under a body's feet at (x, y, z) at shared second `tS` - its key, or '' none: `a`
  * the arrival plate, `e` the end plate, `d<i>` another disc (an island, a court, a balcony), `b<i>` a band (a passage's
  * floor, a walkway, a bridge), `l<i>` a lane, `r<i>` a ramp (a stair, a slope); EG-HERO-LAY: `h<i>` a hero's floor (its law's
  * polygon, a fight floor or not - spec law 7's `heroes`). egSupportAt's first reads, in its order, so the toll's "new island,
- * or a fragment's node" is the support law's own ground. Pure.
+ * or a fragment's node" is the support law's own ground. EG-PERFECT: from spec law 9 a hero's floor is keyed by its hero too,
+ * `h<hero>:<i>` - LAW 9 lays a hero a room, and `h<i>` named floor 0 of every room alike, so no room after the first was new
+ * ground (the toll's waiver - net/eliteGates/egBrain.js egTollOf - never came); the laws before keep `h<i>`. `tm` the instant the
+ * company reached a routed hall's Collapsing Tube (egTubeEdgeIn). Pure.
  * @param {any} spec @param {number} x @param {number} y @param {number} z @param {number} tS @param {boolean} plan @param {number} hw
+ * @param {number} [tm]
  */
-function groundAt(spec, x, y, z, tS, plan, hw) {
+function groundAt(spec, x, y, z, tS, plan, hw, tm = 0) {
   const P = EG_SUPPORT_PAD + (plan ? EG_CLIMB_NEAR_M : 0), on = (fy) => plan || yOn(y, fy ?? 0);
   const D = spec?.discs ?? [], Bd = spec?.bands ?? [], Ln = spec?.lanes ?? [], R = spec?.ramps ?? [];
   for (let i = 0; i < D.length; i++) { const d = D[i]; if (Math.hypot(x - d.x, z - d.z) <= d.r + P && on(d.y)) return d.role === 'end' ? 'e' : d.role === 'arrive' ? 'a' : `d${i}`; }
-  for (let i = 0; i < Bd.length; i++) { const b = Bd[i]; if (z >= b.z0 - P && z <= b.z1 + P && Math.abs(x - b.x) <= b.halfW + P && on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000)) return `b${i}`; }
+  for (let i = 0; i < Bd.length; i++) { const b = Bd[i]; if (z >= b.z0 - P && z <= b.z1 + P && Math.abs(x - b.x) <= b.halfW + P && on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000, tm)) return `b${i}`; }
   for (let i = 0; i < Ln.length; i++) { const l = Ln[i]; if (segDist(x, z, l.ax, l.az, l.bx, l.bz) <= l.hw + P && on(l.y)) return `l${i}`; }
   for (let i = 0; i < R.length; i++) {
     const r = R[i], dx = r.bx - r.ax, dz = r.bz - r.az, L2 = dx * dx + dz * dz, u = L2 > 0 ? Math.max(0, Math.min(1, ((x - r.ax) * dx + (z - r.az) * dz) / L2)) : 0;
     if (segDist(x, z, r.ax, r.az, r.bx, r.bz) <= r.hw + P && on(r.y0 + (r.y1 - r.y0) * u)) return `r${i}`;
   }
-  for (const q of spec?.heroes ?? []) for (const [i, f] of q.floors.entries()) if (on(f.y) && egPolyIn(f.poly, x, z, P)) return `h${i}`;
+  const H = spec?.heroes ?? [], byHero = (spec?.law ?? 0) >= 9;   // EG-PERFECT: law 9 keys a floor by its hero
+  for (let k = 0; k < H.length; k++) for (const [i, f] of H[k].floors.entries()) if (on(f.y) && egPolyIn(f.poly, x, z, P)) return byHero ? `h${k}:${i}` : `h${i}`;
   return '';
 }
 /**
@@ -253,12 +370,13 @@ function groundAt(spec, x, y, z, tS, plan, hw) {
  * alone, every height (a climb's hold). EG-ZB: `hw` the hall's wake (relay ms) - a Falling Wall's and the Collapsing Tube's
  * fallen segments hold nothing after it. EG-ZI: still ground is groundAt's - the end plate still, the rest an island. AUDIT
  * EG III: `bridges` the Spirebridges the room raised (`{ h, g, from, until }`, relay ms) - one of this hall standing at `tS`
- * holds its top as a piece does. Pure.
+ * holds its top as a piece does. EG-PERFECT: `tm` the instant the company reached a routed hall's Collapsing Tube (relay ms, 0
+ * not yet - egTubeEdgeIn). Pure.
  * @param {any} spec @param {number} x @param {number} y @param {number} z @param {number} tS @param {boolean} [plan] @param {number} [hw]
- * @param {Array<{h: number, g: number, from: number, until: number}>|null} [bridges]
+ * @param {Array<{h: number, g: number, from: number, until: number}>|null} [bridges] @param {number} [tm]
  */
-export function egSupportAt(spec, x, y, z, tS, plan = false, hw = 0, bridges = null) {
-  const g = groundAt(spec, x, y, z, tS, plan, hw);
+export function egSupportAt(spec, x, y, z, tS, plan = false, hw = 0, bridges = null, tm = 0) {
+  const g = groundAt(spec, x, y, z, tS, plan, hw, tm);
   if (g) return g === 'e' ? EG_HOLD.still : EG_HOLD.island;
   const P = EG_SUPPORT_PAD + (plan ? EG_CLIMB_NEAR_M : 0), on = (fy) => plan || yOn(y, fy ?? 0);
   if (egBridgeHolds(spec, bridges, x, y, z, tS * 1000, plan ? Infinity : EG_SUPPORT_UP_M, plan ? Infinity : EG_SUPPORT_DOWN_M, P)) return EG_HOLD.piece;
@@ -284,13 +402,13 @@ export function egBridgeHolds(spec, bridges, x, y, z, tMs, up = EG_SUPPORT_UP_M,
   return false;
 }
 /** EG-ZB (section 21): IS A BODY CAUGHT BY FALLEN GROUND - its feet at (x, y, z) over a Falling Wall's or the Collapsing
- *  Tube's fallen segment at shared ms `tMs` (the hall woken at `hw`), and nothing else holding it? The screen casts it on to
- *  the nearest standing segment at the cast-back's cost (section 8.3), and the census owes that cost (net/eliteGates/egBrain.js
- *  egPoseIn). Pure. */
-export function egFallenAt(spec, hw, x, y, z, tMs) {
+ *  Tube's fallen segment at shared ms `tMs` (the hall woken at `hw`; EG-PERFECT: a routed hall's tube from `tm`, the company at
+ *  its mouth), and nothing else holding it? The screen casts it on to the nearest standing segment at the cast-back's cost
+ *  (section 8.3), and the census owes that cost (net/eliteGates/egBrain.js egPoseIn). Pure. */
+export function egFallenAt(spec, hw, x, y, z, tMs, tm = 0) {
   if (!(hw > 0)) return false;
-  const over = (spec?.bands ?? []).some((b) => z >= b.z0 && z <= b.z1 && Math.abs(x - b.x) <= b.halfW && yOn(y, b.y ?? 0) && bandFallen(spec, b, z, hw, tMs));
-  return over && egSupportAt(spec, x, y, z, tMs / 1000, false, hw) === EG_HOLD.none;
+  const over = (spec?.bands ?? []).some((b) => z >= b.z0 && z <= b.z1 && Math.abs(x - b.x) <= b.halfW && yOn(y, b.y ?? 0) && bandFallen(spec, b, z, hw, tMs, tm));
+  return over && egSupportAt(spec, x, y, z, tMs / 1000, false, hw, null, tm) === EG_HOLD.none;
 }
 
 // ── THE FAIR TRAIL ───────────────────────────────────────────────────────────────────────────────────────────
@@ -326,7 +444,10 @@ export const EG_FAIR_REPEAT_MS = 5000;
  * EG-ZI (section 10.6): `far` the furthest fair point (its progress along THE ROUTE - net/eliteGates/egRoute.js; laws 4-8 the road's
  * +z - null none yet), `fnew` when the newest still ground was first stood on fairly (shared ms), `seen` the still ground
  * so stood on (groundAt's keys), `atEnd` stood at the door on a fair trail (net/eliteGates/egBrain.js egPoseIn) - the pull's toll
- * reads them.
+ * reads them. EG-PERFECT: `tm` the instant the company reached a routed hall's Collapsing Tube (net/eliteGates/egBrain.js egPoseIn
+ * sets it before each pose - egTubeEdgeIn), and THE VOID ZONES' marks, made as they are first needed: `vp` the fall's passage
+ * (egVoidStep's memory), `vz` this pose fell into the void (the census owes its cast-back), `vd` the progress of the floor a
+ * void fall left - the break holds until the member stands on still ground no further along than it.
  * @param {number} h @param {number} [hw]
  */
 export const egFairNew = (h, hw = 0) => ({ h, hw, last: /** @type {number[]|null} */ (null), sup: /** @type {number[]|null} */ (null), isl: /** @type {number[]|null} */ (null), airAt: 0, airBrk: 0,
@@ -350,8 +471,9 @@ function broke(A, why, t) {
 export function egFairPose(A, spec, p, t, bridges = null) {
   if (![p.x, p.y, p.z, t].every(Number.isFinite)) return;
   const L = A.last;
-  const hold = p.ride ? EG_HOLD.piece : egSupportAt(spec, p.x, p.y, p.z, t / 1000, false, A.hw ?? 0, bridges) || (p.cl && egSupportAt(spec, p.x, p.y, p.z, t / 1000, true, 0, bridges) ? EG_HOLD.piece : EG_HOLD.none);
+  const hold = p.ride ? EG_HOLD.piece : egSupportAt(spec, p.x, p.y, p.z, t / 1000, false, A.hw ?? 0, bridges, A.tm ?? 0) || (p.cl && egSupportAt(spec, p.x, p.y, p.z, t / 1000, true, 0, bridges) ? EG_HOLD.piece : EG_HOLD.none);
   A.last = [t, p.x, p.y, p.z];
+  A.vz = 0;   // EG-PERFECT: this pose fell into no void yet
   if (!A.from) A.from = t;
   if (!L) { if (hold) { A.sup = [t, p.x, p.y, p.z]; if (hold === EG_HOLD.island) A.isl = [p.x, p.z]; } farther(A, spec, p, t, hold); return; }
   const dt = t - L[0];
@@ -359,8 +481,9 @@ export function egFairPose(A, spec, p, t, bridges = null) {
   A.span += dt;
   let fair = true;
   if (dt > EG_BLIND_MS) {
-    // BLIND: the stretch judges nothing either way - its speed unknown, its air begun again here
-    A.blind += dt; A.win = null; A.airAt = hold ? 0 : t; A.airBrk = 0;
+    // BLIND: the stretch judges nothing either way - its speed unknown, its air begun again here (EG-PERFECT: and a fall's
+    // passage over a void zone forgotten - where the body went in it is not known)
+    A.blind += dt; A.win = null; A.airAt = hold ? 0 : t; A.airBrk = 0; A.vp = null;
   } else {
     // THE SPEED: over stretches of at least EG_FAIR_WIN_MS, the law's run plus a carry and the game's own snaps; a step back
     // to where the member last stood or last held an island (a cast-back), or out of a fall, is no step
@@ -384,10 +507,18 @@ export function egFairPose(A, spec, p, t, bridges = null) {
       const falling = !!A.sup && p.y < A.sup[2] - EG_FALL_M;
       if (!falling && !A.airBrk && (t - A.airAt) / 1000 > EG_AIR_MAX_S) { A.airBrk = 1; broke(A, 'air', t); fair = false; }
     }
+    // EG-PERFECT - THE VOID ZONES (Elite-Gates-Ascent.md section 2): a fall from the last floor stood on that passed a void zone
+    // and is EG_VOID_DROP_M under that floor fell into the void (egVoidStep - the screen's own law): it breaks the trail, the
+    // census owes its cast-back (`vz` - net/eliteGates/egBrain.js egPoseIn), and nothing past the floor it left is credited (`vd`)
+    if (A.sup && egVoidStep((A.vp ??= { v: null }), spec, A.sup[2], [L[1], L[2], L[3]], [p.x, p.y, p.z], !!hold)) {
+      A.vz = 1; A.vd = egRouteAlongAt(spec, A.sup[1], A.sup[2], A.sup[3]); broke(A, 'void', t); fair = false;
+    }
   }
   if (hold) A.sup = [t, p.x, p.y, p.z];
-  // THE LAST ISLAND: a fair pose on still ground (never the end plate) ends the window
-  if (hold === EG_HOLD.island && fair) { A.brk = 0; A.isl = [p.x, p.z]; }
+  // THE LAST ISLAND: a fair pose on still ground (never the end plate) ends the window - EG-PERFECT: after a fall into a void,
+  // only still ground no further along the route than the floor it left (the screen's cast-back stands it there): a body
+  // that landed on the way further on is still the void's
+  if (hold === EG_HOLD.island && fair && !(A.vd != null && egRouteAlongAt(spec, p.x, p.y, p.z) > A.vd + EG_FAIR_SNAP_M)) { A.brk = 0; A.isl = [p.x, p.z]; A.vd = null; }
   farther(A, spec, p, t, hold);
 }
 /**
@@ -403,7 +534,7 @@ function farther(A, spec, p, t, hold) {
   const at = egRouteAlongAt(spec, p.x, p.y, p.z);
   if (A.far == null || at > A.far) A.far = at;
   if (hold !== EG_HOLD.island) return;
-  const g = groundAt(spec, p.x, p.y, p.z, t / 1000, false, A.hw ?? 0);
+  const g = groundAt(spec, p.x, p.y, p.z, t / 1000, false, A.hw ?? 0, A.tm ?? 0);
   if (!g || g === 'a' || (A.seen ??= []).includes(g)) return;
   A.seen.push(g); A.fnew = t;
 }

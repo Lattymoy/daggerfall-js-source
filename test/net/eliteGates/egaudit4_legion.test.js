@@ -108,6 +108,7 @@ test('AUDIT EG IV A SUMMONS IS HELD TO THE ROOM (section 12: "Every wave is held
   // Morvayn: the odd member's Wraith (a chain's mechanic) stands at the cap and counts; the Last Rites raise none
   {
     const S = stand('morvayn', 3), cap = fill(S.F);
+    S.L.hp = S.L.max * 0.6;   // EG-PERFECT (PIN MOVED): the Chaining is her second phase's - turned at 0.66
     let t = T0;
     for (let k = 0; k < 4 * 16 && !S.F.mem.chains?.length; k++) S.beat((t += 250));
     assert.equal(S.F.mem.chains.length, 1, 'one chain of two');

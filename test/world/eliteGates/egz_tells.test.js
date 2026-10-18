@@ -15,7 +15,7 @@ import { glslFunctions } from '../../glsl.mjs';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
 import { createEgPieceBatch, EG_BATCH_HIDE_Y } from '../../../src/scenes/eliteGates/egPieceBatch.js';
 import { spherePlanes } from '../../../src/render/bounds.js';
-import { createEgSpan, egHangModel, egStepKey, EG_FLOOR_KEY, EG_GHOSTS_MAX, EG_GHOST_SLAB } from '../../../src/scenes/eliteGates/egSpan.js';
+import { createEgSpan, egHangModel, egHangReach, egStepKey, EG_FLOOR_KEY, EG_GHOSTS_MAX, EG_GHOST_SLAB, EG_HANG_CABLE_M } from '../../../src/scenes/eliteGates/egSpan.js';
 import { SD_BEAT_FRAMES, SD_STEPS_SOUNDS, SD_CHUNK, SD_CRUMBLE_SHAKE, SD_BEAT_OUT_STAGE_S, SD_BEAT_BLINK_HZ, sdChunkWays, sdChunkMatrix } from '../../../src/scenes/superDungeon/sdSteps.js';
 import { SdStepsPass, SD_STEPS_PASS_VS, SD_STEPS_PASS_FS, SD_GHOSTS_MAX, sdStepsPassVs, sdStepsPassFs, sdGhostVertices } from '../../../src/render/superDungeon/sdStepsPass.js';
 import { stepEdges, SD_PENDULUM, pendulumAngle, SD_BEAT_DISSOLVE, buildCrumbleChunks, sdWaystonesOf, sdVaneAt, vaneYawAt } from '../../../src/world/superDungeon/sdStepsModel.js';
@@ -347,7 +347,10 @@ test('EG-ZL A DRIFT\'S HANG (section 10.3: "hangs on two chains from an anchor 1
   const R = fakeRenderer(), Bt = stood(seed, c, R);
   Bt.span.ride(t, 0.016, null, false); Bt.span.cull(null, null);
   const hm = egHangModel(egBandOfCircle(c)), V = hm.positions.length / 3;
-  const halls = egCircleSpecs(seed, c, 0).filter((q) => q.steps.some((p) => p.kind === 'drift'));
+  // (EG-PERFECT: a hall whose drifts all hang whole - a drift capped under a floor over it hangs its own shorter model in its
+  // hall's kind, egHangReach)
+  const halls = egCircleSpecs(seed, c, 0).filter((q) => q.steps.some((p) => p.kind === 'drift') && q.steps.filter((p) => p.kind === 'drift').every((p) => full(egHangReach(q, p, egBandOfCircle(c)))));
+  function full(R) { return R.len === SD_PENDULUM.len && R.over === EG_HANG_CABLE_M; }
   // a hang kind's mesh: its copies' texture places the hang's own, laid at the build
   const hangs = R.made.filter((g) => g.model.uvs.length % (V * 2) === 0 && g.model.uvs.length >= V * 2 && hm.uvs.every((q, k) => q === g.model.uvs[k]));
   assert.equal(hangs.length, halls.length, 'a kind a hall');

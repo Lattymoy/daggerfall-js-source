@@ -146,8 +146,8 @@
   {
     "name": "L8-leaps-under-slowfall",
     "file": "src/player/motor.js",
-    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater; }",
-    "new": "_pkMayLeap() { return !this.onExteriorWater; }",
+    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater && this.parkour?.leap?.() !== false; }",
+    "new": "_pkMayLeap() { return !this.onExteriorWater && this.parkour?.leap?.() !== false; }",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "L8-leaps-wading-outdoor-water",
     "file": "src/player/motor.js",
-    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater; }",
-    "new": "_pkMayLeap() { return !this.slowFalling; }",
+    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater && this.parkour?.leap?.() !== false; }",
+    "new": "_pkMayLeap() { return !this.slowFalling && this.parkour?.leap?.() !== false; }",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]

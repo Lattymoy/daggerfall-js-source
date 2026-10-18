@@ -289,8 +289,8 @@
   {
     "name": "EGZK-a-run-at-another-height",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "\n      && (!b.run || oneLevel(view, L, target)) && (b.ch || egSameStorey(view, L, target)));",
-    "new": "\n      && (b.ch || egSameStorey(view, L, target)));",
+    "old": "\n      && (!b.run || oneLevel(view, L, target)) && (b.ch || egSameStorey(view, L, target)) && !(duel && b.duelNo));",
+    "new": "\n      && (b.ch || egSameStorey(view, L, target)) && !(duel && b.duelNo));",
     "tests": [
       "test/net/eliteGates/egz_lords.test.js"
     ]

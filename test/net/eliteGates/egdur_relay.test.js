@@ -245,12 +245,14 @@ test('EG-H2 THE LAW PIN (section 22): a member\'s `spec` answered with its hall 
   // PIN MOVED (EG-HERO-LAY): spec law 7 (the heroes laid) became the law on 2026-10-13 too, laws 4, 5 and 6 kept beside it.
   // PIN MOVED (AUDIT EG V, f): spec law 8 (the ways laid) became the law on 2026-10-15, laws 4 to 7 kept beside it.
   // PIN MOVED (THE ASCENT - THE ROOMS): spec law 9 (the hall a way of rooms) became the law on 2026-10-16, laws 4 to 8 kept beside it
-  assert.equal(EG_LAWS[EG_SPEC], '2026-10-16', 'this build draws its own law');
-  assert.equal(EG_LAWS[EG_SPEC - 1], '2026-10-15', 'and the law before, kept');
-  assert.equal(EG_LAWS[EG_SPEC - 2], '2026-10-13', 'and the one before it, inside its seven days');
+  // PIN MOVED (EG-PERFECT): spec law 10 (THE BROKEN WAY) became the law on 2026-10-18, laws 4 to 9 kept beside it
+  assert.equal(EG_LAWS[EG_SPEC], '2026-10-18', 'this build draws its own law');
+  assert.equal(EG_LAWS[EG_SPEC - 1], '2026-10-16', 'and the law before, kept');
+  assert.equal(EG_LAWS[EG_SPEC - 2], '2026-10-15', 'and the one before it, inside its seven days');
   assert.equal(EG_LAWS[EG_SPEC - 3], '2026-10-13', 'and the one before that, inside its seven days');
-  assert.equal(EG_LAWS[EG_SPEC - 4], '2026-10-12', 'and the one before that, inside its seven days');
-  assert.equal(EG_LAWS[EG_SPEC - 5], '2026-10-11', 'and the first, inside its seven days');
+  assert.equal(EG_LAWS[EG_SPEC - 4], '2026-10-13', 'and the one before that, inside its seven days');
+  assert.equal(EG_LAWS[EG_SPEC - 5], '2026-10-12', 'and the one before that, inside its seven days');
+  assert.equal(EG_LAWS[EG_SPEC - 6], '2026-10-11', 'and the first, inside its seven days');
 
   assert.equal(EG_LAW_KEEP_DAYS, 7);
   assert.deepEqual([egLawKnown(EG_SPEC), egLawKnown(EG_SPEC - 1), egLawKnown(999), egLawKnown('4')], [true, true, false, false]);

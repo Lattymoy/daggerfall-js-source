@@ -58,7 +58,7 @@ test('AUDIT EG V L3-7 THE LAW PIN\'S LOOK IS THE BREACH\'S OWN (section 22: "A c
 
 test('AUDIT EG V L3-7 THE LAW PIN\'S FIGHT IS THE BREACH\'S OWN HALL (section 22): the fight\'s hall, read when the company stands in it - before the room\'s answer for a circle\'s first hall - is read again once the room gives that hall in the breach\'s law: its fight floors (a Deepway of seed 7, Hall 17: seven under my law, five under law 6) are the given hall\'s, in the same hall (mutants: the given hall never read)', () => {
   try {
-    const OLD = 8;   // PIN MOVED (AUDIT EG V, the merge of fix group F: spec law 8 lays this Deepway's floors as law 7 did - the law before them both, 6, still parts); PIN MOVED (THE ASCENT, LAW 9): law 9 lays this hall's fight on five floors, as law 6 did - law 8's seven part
+    const OLD = 9;   // PIN MOVED (EG-PERFECT, spec law 10 - 2026-10-18: law 10 lays this Deepway's fight on seven floors as law 8 did - law 9's five part from it); PIN MOVED (AUDIT EG V, the merge of fix group F: spec law 8 lays this Deepway's floors as law 7 did - the law before them both, 6, still parts); PIN MOVED (THE ASCENT, LAW 9): law 9 lays this hall's fight on five floors, as law 6 did - law 8's seven part
     const { B, t } = breachAt(7, 17, { egv: OLD });
     const E = foldEg(EG_STATE_EMPTY, wire(egStateOf(B, t)), t);
     const fight = createEgFight({ link: { state: () => E, now: () => t }, now: () => t, me: () => ME });

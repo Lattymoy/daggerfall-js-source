@@ -101,8 +101,8 @@
   {
     "name": "EG6A-the-roads-laid-unsorted",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "    lay() { return this.courses().flatMap((c) => c.steps).sort((a, b) => a.i - b.i); },",
-    "new": "    lay() { return this.courses().flatMap((c) => c.steps); },",
+    "old": "lay() { return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))].sort((a, b) => a.i - b.i); },",
+    "new": "lay() { return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))]; },",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EG6A-another-answer-than-the-windows",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "export const egJumpLands = (pair, t) => jumpLands(pair, t);",
-    "new": "export const egJumpLands = (pair, t) => jumpLands(pair, t, FAST_BUILD);",
+    "old": "export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, B);",
+    "new": "export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, FAST_BUILD);",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EG6A-a-riser-jumped",
     "file": "tools/egSpanSolve.mjs",
-    "old": "        climbing = true;\n        let up = false;",
-    "new": "        climbing = false;\n        let up = false;",
+    "old": "const parkour = { enabled: () => true, leap:",
+    "new": "const parkour = { enabled: () => false, leap:",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]
@@ -533,7 +533,7 @@
   {
     "name": "EG6A-a-gust-launched-into",
     "file": "tools/egSpanSolve.mjs",
-    "old": " && !gusty((p.b ?? p.a)?.road ?? 0, lzOf(p, u, lane), u - 0.2, u + airOf(p) + 0.1, (p.b ?? p.a)?.x ?? null) && ",
+    "old": " && (turn || !gusty((p.b ?? p.a)?.road ?? 0, lzOf(p, u, lane), u - 0.2, u + airOf(p) + 0.1, (p.b ?? p.a)?.x ?? null)) && ",
     "new": " && ",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"

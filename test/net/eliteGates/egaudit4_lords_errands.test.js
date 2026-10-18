@@ -53,6 +53,7 @@ function court(seed, h, key, n, rng = seeded(seed), nums = undefined) {
 
 test('AUDIT EG IV lane1 #5 THE CHAIN SNAPS ON THE PAIR IT NAMES (section 13.4, Morvayn: "A pair stretched past 8 m both take 30% (a CHECK)"): the pair walking apart at 6 m/s stretches its chain - the snap names both (`on`), and lands on both by the relay\'s census and on each one\'s own screen wherever they have run to, never on a member it does not name standing in its marks; its marks keep THE WIDTH RULE; the wire carries `on` (mutants: the snap naming no one; egBlowOn by the stamps alone; the census by the stamps; the wire dropping `on`)', () => {
   const C = court(1, 50, 'morvayn', 3);
+  C.L.hp = C.L.max * 0.6;   // EG-PERFECT (PIN MOVED): the Chaining is her second phase's - turned at 0.66
   const c0 = { x: C.f.x, z: C.f.z };
   let here = C.subs.map((sub, j) => ({ sub, x: c0.x + j * 2, z: c0.z }));
   for (let k = 0; k < 4 * 16 && !(C.F.mem.chains ?? []).length; k++) C.step(here);

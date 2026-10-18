@@ -189,9 +189,13 @@ function ruinLaw(spec) {
   for (const s of spec.steps ?? []) {
     const hw = s.w / 2 + (s.amp ?? 0);
     boxes.push([s.x - hw - 0.3, s.y - 1.5, s.z - s.d / 2 - 0.3, s.x + hw + 0.3, s.y + 3, s.z + s.d / 2 + 0.3]);
-    air.push([s.x - hw - 0.3, s.y - 4, s.z - s.d / 2 - (s.gap ?? 0) - 0.3, s.x + hw + 0.3, s.y + 4, s.z + s.d / 2 + (s.after ?? 0) + 0.3]);
+    // (THE AUDIT: a piece turned along its broken bridge - spec law 10's `hd`, 1 +x, 2 -z, 3 -x - leaps along its heading: its
+    // air before and after it there, its landing its bridge's lane end)
+    const g = s.gap ?? 0, a = s.after ?? 0;
+    if (s.hd === 1 || s.hd === 3) { const lo = s.hd === 1 ? g : a, hi = s.hd === 1 ? a : g; air.push([s.x - s.w / 2 - lo - 0.3, s.y - 4, s.z - s.d / 2 - 0.3, s.x + s.w / 2 + hi + 0.3, s.y + 4, s.z + s.d / 2 + 0.3]); }
+    else air.push([s.x - hw - 0.3, s.y - 4, s.z - s.d / 2 - (s.hd === 2 ? a : g) - 0.3, s.x + hw + 0.3, s.y + 4, s.z + s.d / 2 + (s.hd === 2 ? g : a) + 0.3]);
     ways.push([s.x, s.z - s.d / 2, hw], [s.x, s.z + s.d / 2, hw]);
-    if ((s.road ?? 0) === 0 && s.after > 0) ways.push([s.x, s.z + s.d / 2 + s.after, s.w / 2]);   // egMoltenRim's landing
+    if ((s.road ?? 0) === 0 && s.after > 0 && !s.hd) ways.push([s.x, s.z + s.d / 2 + s.after, s.w / 2]);   // egMoltenRim's landing
   }
   for (const v of spec.vents ?? []) boxes.push([v.x - v.halfW, 0.05, v.z - v.d / 2, v.x + v.halfW, 8, v.z + v.d / 2]);   // a vent's fire, over the walk
   for (const l of spec.lanes ?? []) ways.push([l.ax, l.az, l.hw], [l.bx, l.bz, l.hw]);
