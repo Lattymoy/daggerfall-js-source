@@ -17182,7 +17182,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   async function pump() {
     if (building) return;
-    const next = state.takeOwed(queue, built);   // STREAM-OWED (bible/06-Systems/Travel-View.md): the nearest pixel still owed - never one let go, never one standing
+    const next = state.takeOwed(queue, built);   // QUEUE-OWED, STREAM-OWED (bible/06-Systems/Travel-View.md): the nearest pixel still owed - never one let go, never one standing
     if (!next) { _streamSince = null; return; }   // PERF-EXT24: nothing owed - the run of streamed builds is over
     building = true;
     _streamSince ??= performance.now();   // PERF-EXT24: a run of streamed builds begins

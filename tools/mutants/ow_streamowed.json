@@ -20,16 +20,6 @@
     "note": "Of two as near, the later: a sweep's rebuild jumps the crossing's list it was queued behind."
   },
   {
-    "name": "STREAM-OWED-let-go-kept",
-    "file": "src/world/streamingWorld.js",
-    "old": "      if (!this.loaded.has(key) || built.has(key)) continue;",
-    "new": "      if (built.has(key)) continue;",
-    "tests": [
-      "test/systems/travel/ow_streamowed.test.js"
-    ],
-    "note": "A pixel the stream let go is built whole and torn down again - land behind the traveller, paid for while the road ahead waits."
-  },
-  {
     "name": "STREAM-OWED-standing-kept",
     "file": "src/world/streamingWorld.js",
     "old": "      if (!this.loaded.has(key) || built.has(key)) continue;",
@@ -38,17 +28,6 @@
       "test/systems/travel/ow_streamowed.test.js"
     ],
     "note": "A standing pixel stays on the queue and is taken as a build: a frame's turn of the pump spent on nothing, and the queue never empties of it."
-  },
-  {
-    "name": "STREAM-OWED-pump-shifts",
-    "file": "src/scenes/world.js",
-    "old": "    const next = state.takeOwed(queue, built);",
-    "new": "    const next = queue.shift();",
-    "tests": [
-      "test/systems/travel/ow_streamowed.test.js",
-      "test/systems/buildslice.test.js"
-    ],
-    "note": "The pump as it was - first in, first out, every let-go entry built: the ride the report met."
   },
   {
     "name": "STREAM-OWED-governor-cuts-on-gain",

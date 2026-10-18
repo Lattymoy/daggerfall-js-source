@@ -7,8 +7,9 @@
 // walking pace with nothing near, and the view's own reset (raised again: a fresh x100) was the players' way out:
 // - THE PUMP SPENT ITS QUEUE FIRST IN, FIRST OUT, and built whole every entry the stream had already let go - a pixel
 //   a crossing listed and the next one dropped behind a turn - before tearing it down again (the pump's own
-//   `!state.loaded.has` arm). On a winding road one build in twenty was for land behind the traveller, and the near
-//   pixels the governor waits on queued behind them and behind the far ring a crossing lists first.
+//   `!state.loaded.has` arm): on a winding road one build in twenty was for land behind the traveller. QUEUE-OWED
+//   dropped those at the queue's head; the near pixels the governor waits on still queued behind the far ring a
+//   crossing lists first, and behind the land a turn left.
 // - THE GOVERNOR CUT ON WHILE THE STREAM GAINED. A hole the faster rate left takes its builds to fill whatever the
 //   rate is cut to; the governor halved again at every settle while any of it stood, so one town on the road took
 //   x40 to x1 though the stream was catching up at x20.
@@ -173,7 +174,7 @@ test('STREAM-OWED, the governor\'s law: A SETTLED CUT IS CUT AGAIN ONLY IF THE H
   assert.deepEqual(at, [[0.25, 50], [2.25, 25], [4.25, 10], [6.25, 5], [8.25, 1]], 'one pixel in flight the whole while: the cadence AUDIT DEEP2 B-2 set, to walking pace');
 });
 
-test('STREAM-OWED, the host: A RIDE ON A WINDING ROAD UNDER THE OVERWORLD NO LONGER SINKS TO WALKING PACE - the host\'s own pump never builds land the stream has let go, takes the nearest owed pixel every time, and the governor holds the rate the stream gains at; four ten-minute rides at Enhanced\'s land view, a town in ten pixels, nothing near (they spent 206 s of their forty minutes at x1 and built 314 pixels already left behind; the pump fixed alone, 88 s; the governor alone, 59 s)', async (t) => {
+test('STREAM-OWED, the host: A RIDE ON A WINDING ROAD UNDER THE OVERWORLD NO LONGER SINKS TO WALKING PACE - the host\'s own pump never builds land the stream has let go, takes the nearest owed pixel every time, and the governor holds the rate the stream gains at; four ten-minute rides at Enhanced\'s land view, a town in ten pixels, nothing near (before QUEUE-OWED they spent 206 s of their forty minutes at x1 and built 314 pixels already left behind; QUEUE-OWED alone, 208 s and none; QUEUE-OWED with the governor\'s change, 68 s; the take with the old governor, 88 s)', async (t) => {
   t.after(() => { resetTimeScale(); _resetTravelPace(); });
   let walking = 0, ridden = 0, builds = 0;
   for (const road of ROADS) {

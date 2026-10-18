@@ -243,15 +243,15 @@ export class StreamingWorldState {
     this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity });
   }
 
-  /** STREAM-OWED (bible/06-Systems/Travel-View.md STREAM-OWED - a departure, named: DFU's UpdateTerrains walks its
-   *  terrain array in index order, skipping a terrain CollectTerrains took out of range as it began): THE PUMP'S NEXT
-   *  BUILD, off the host's queue - the pixel the stream still owes nearest
-   *  the traveller (the load list's own order, `nearestFirstFrom`; the earlier of two as near), and every entry it no
-   *  longer owes dropped from the queue on the way: one let go (out of the grid, a build that threw - `loaded` no
-   *  longer holds it) or one that stands (`built` holds it: a crossing's re-list, a second ask). The queue was spent
-   *  first in, first out, and a let-go entry was built whole and torn down again - so on a journey the pixels the
-   *  traveller had already passed, and the far ring a crossing listed first, were built before the near ones the
-   *  Overworld's governor waits on. Null when nothing is owed. */
+  /** QUEUE-OWED, STREAM-OWED (bible/06-Systems/Travel-View.md): THE PUMP'S NEXT BUILD, off the host's queue - the
+   *  pixel the stream still owes nearest the traveller (the load list's own order, `nearestFirstFrom`; the earlier of two
+   *  as near), and every entry it no longer owes dropped from the queue on the way: one let go (out of the grid behind a
+   *  crossing, a build that threw - `loaded` no longer holds it) or one that stands (`built` holds it: a crossing's
+   *  re-list, a second ask). The queue was spent first in, first out, and a let-go entry was built whole and torn down
+   *  again; QUEUE-OWED dropped the let-go ones at its head, and the near pixels the Overworld's governor waits on still
+   *  queued behind the far ring a crossing lists first and behind the land a turn left. A departure, named: DFU's
+   *  UpdateTerrains walks its terrain array in index order, skipping a terrain CollectTerrains took out of range as it
+   *  began (StreamingWorld.cs:654-657). Null when nothing is owed. */
   takeOwed(queue, built) {
     const near = nearestFirstFrom(this.current);
     let n = 0, best = -1;
