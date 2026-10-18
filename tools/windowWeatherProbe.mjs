@@ -13,18 +13,21 @@
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { writeFileSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 if (!process.env.PW_CHANNEL) process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const W = 960, H = 540;
-const server = await createServer({ server: { port: 5308, strictPort: true }, logLevel: 'error' });
+const server = await createServer({ server: { port: 5308, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
 await server.listen();
 const browser = await chromium.launch({
   headless: true, ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {}),
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  args: ['--mute-audio', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
 let failed = false;
 try {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
+  // The synthetic scene needs only this loopback server; the landing page's external fonts are irrelevant.
+  await page.route((url) => /^https?:$/.test(url.protocol) && url.hostname !== 'localhost', (route) => route.fulfill({ status: 204, body: '' }));
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e.message)));
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.text().slice(0, 400)); });
@@ -79,6 +82,7 @@ try {
       sub(3001, 0, (q) => { frontZ(q, -13, -16, 4, 3); frontZ(q, 1, -18, 5, 2); frontX(q, -15, -2, 4, 2); });
       sub(3001, 2, (q) => q([-80, 0, 80], [80, 0, 80], [80, 0, -80], [-80, 0, -80], [0, 1, 0], 40, 40));
     });
+    const nearWall = build((sub) => sub(3001, 1, (q) => q([-1.5, 0, -4.5], [0.3, 0, -4.5], [0.3, 4, -4.5], [-1.5, 4, -4.5], [0, 0, 1], 1, 2)));
     // the room: inward faces round the eye, its front (looking -z) the glass; a 5 x 3 x 5 box
     const room = build((sub) => {
       sub(3002, 0, (q) => q([-2.5, 0, -2.5], [2.5, 0, -2.5], [2.5, 3, -2.5], [-2.5, 3, -2.5], [0, 0, 1], 2, 1.2));
@@ -100,13 +104,14 @@ try {
     const read = () => { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
     window.__ww = {
       // the room from inside, the street through its glass, and what falls past it; `flash` waits for a lit frame
-      inside(word, level, lane, flash = false, mode = 'full') {
+      inside(word, level, lane, flash = false, mode = 'full', wall = false) {
         r.setLightingLane(lane ? EL_LANE : null);
         r.setAir?.(!!lane);
         if (r.air) r.air._now = () => 1000;
         r.setLighting(new Float32Array([0.8, 0.8, 0.85]), 0.3, new Float32Array([0.816, 0.954, 1])); r.setMoonlight(null);
         r.setIndirectLight([0, 0, 0], 0, new Float32Array(3)); r.setFog('linear', 0, 40, 300, new Float32Array([0.5, 0.55, 0.6]));
         r.setWindowEmission(windowEmissionRGB('day')); r.setClearColor([0.45, 0.5, 0.56, 1]);
+        r.setPointLights(new Float32Array(0)); r.setFlashLight(null);
         const eye = [0.4, 1.6, 1.5], view = lookAt(eye, [-0.6, 1.6, -6], [0, 1, 0]);
         r.beginFrame(proj, view, new Float32Array([0.35, 0.8, 0.25]), WORLD_FRAME);
         r.setWindowRooms('full');
@@ -114,14 +119,15 @@ try {
         if (lane) r.resolveFrame();
         const ww = createWindowWeather({ renderer: r, on: () => true, falling: () => ({ word, level }) });
         const state = createViewOut();
-        const scene = { draw: ({ renderer }) => renderer.drawMesh(street, I, null) };
+        const scene = { draw: ({ renderer }) => { renderer.drawMesh(street, I, null); if (wall) renderer.drawMesh(nearWall, I, null); } };
         let px = null, vo = null, now = 0, lit = false;
         for (let f = 0; f < (flash ? 400 : 3); f++) {
-          now += flash ? 500 : 16;
+          now += flash ? 500 : 300; // exercise a subscribed depth refresh before the final sample
           vo = viewOutFrame(state, { renderer: r, mode, proj, view, now, scene });
           r.setLighting(new Float32Array([0.3, 0.28, 0.26]), 0); r.setMoonlight(null); r.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
           r.setWindowEmission(windowEmissionRGB('disabled'));
           r.setPointLights(new Float32Array([0, 2.6, 1.5, 6]), new Float32Array([1, 0.85, 0.6]));
+          r.setFlashLight(null);
           ww.light({ dt: flash ? 0.5 : 0.016 });
           r.setClearColor([0, 0, 0, 1]);
           r.beginFrame(proj, view, new Float32Array([0, 1, 0]), WORLD_FRAME);
@@ -132,12 +138,18 @@ try {
           px = read();
           if (flash && ww.flashing && ww.window) { lit = true; break; }
         }
-        return { gl: gl.getError(), px: Array.from(px), vo, lit, window: ww.window };
+        const result = { gl: gl.getError(), px: Array.from(px), vo, lit, window: ww.window };
+        ww.release();
+        return result;
       },
     };
   }, { W, H });
-  mkdirSync('tools/shots', { recursive: true });
-  const shot = async (name) => { const buf = await page.locator('#wwc').screenshot(); writeFileSync(`tools/shots/windowweather-${name}.png`, buf); };
+  const output = process.env.WINDOW_WEATHER_OUTPUT ?? 'tools/shots';
+  mkdirSync(output, { recursive: true });
+  const shot = async (name) => {
+    const png = await page.locator('#wwc').evaluate((canvas) => canvas.toDataURL('image/png').split(',')[1]);
+    writeFileSync(join(output, `windowweather-${name}.png`), Buffer.from(png, 'base64'));
+  };
   const lum = (px, i) => px[i] + px[i + 1] + px[i + 2];
   const differs = (p, q, i) => Math.abs(p[i] - q[i]) + Math.abs(p[i + 1] - q[i + 1]) + Math.abs(p[i + 2] - q[i + 2]) > 6;
   /** The pixels that differ from the clear shot on the glass (the mask: where the street is cut into the room) and off
@@ -153,7 +165,7 @@ try {
   const results = {};
   for (const lane of [false, true]) {
     const tag = lane ? '-lane' : '';
-    const run = (...a) => page.evaluate((x) => window.__ww.inside(...x), [...a.slice(0, 3), a[3] ?? false, a[4] ?? 'full']);
+    const run = (...a) => page.evaluate((x) => window.__ww.inside(...x), [...a.slice(0, 3), a[3] ?? false, a[4] ?? 'full', a[5] ?? false]);
     const clear = await run('clear', 0, lane);
     await shot(`clear${tag}`);
     if (!clear.vo?.view) { console.log(`clear${tag}: the view out drew no street - the probe has no glass to look through`); failed = true; continue; }
@@ -172,6 +184,33 @@ try {
       results[`${name}${tag}`] = { gl: res.gl, ...j };
       if (!(j.inDiff > noise + 200)) { console.log(`${name}${tag}: nothing seen falling through the glass (${j.inDiff} pixels changed, noise ${noise})`); failed = true; }
       if (j.outDiff > noise) { console.log(`${name}${tag}: ${j.outDiff} pixels of the room changed (noise ${noise}) - something fell in the room`); failed = true; }
+    }
+    if (!lane) {
+      const wallClear = await run('clear', 0, false, false, 'full', true);
+      const wallRain = await run('rain', 1, false, false, 'full', true);
+      await shot('street-wall-rain');
+      const wallMask = new Uint8Array(W * H);
+      for (let k = 0; k < wallMask.length; k++) wallMask[k] = mask[k] && differs(wallClear.px, clear.px, k * 4) ? 1 : 0;
+      let wallN = 0, openN = 0, wallChanged = 0, openChanged = 0;
+      // Ignore the two-pixel silhouette: the cached half-size street samples its edge differently.
+      for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) {
+        const k = y * W + x;
+        if (!mask[k]) continue;
+        let boundary = false;
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+          const n = k + dy * W + dx;
+          if (!mask[n] || wallMask[n] !== wallMask[k]) boundary = true;
+        }
+        if (boundary) continue;
+        const changed = differs(wallRain.px, wallClear.px, k * 4);
+        if (wallMask[k]) { wallN++; if (changed) wallChanged++; }
+        else { openN++; if (changed) openChanged++; }
+      }
+      const wallRate = wallChanged / wallN, openRate = openChanged / openN;
+      results.streetWall = { gl: wallRain.gl, wallN, openN, wallChanged, openChanged, wallRate, openRate, ratio: wallRate / openRate };
+      if (!(wallN > 500 && openN > 500 && openChanged > 200 && wallRate < openRate * 0.35)) {
+        console.log('street depth did not hide rain behind the near wall sufficiently'); failed = true;
+      }
     }
     const storm = await run('thunder', 0, lane, true);
     await shot(`flash${tag}`);

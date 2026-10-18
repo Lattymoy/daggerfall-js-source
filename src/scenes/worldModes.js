@@ -11240,7 +11240,7 @@ export function createWorldModes(host) {
       magic?.candleLight(), (_iilOnIt ? iilTorch : (l) => l)(playerTorchLight(playerEntity, player.feetAt(), cam.yaw)), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(host.modeLights?.() ?? []), ...(host.peerLights?.() ?? []), ...interiorTorches.lights());   // PEERLIGHT1: the others' torches   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
     renderer.setPointLights(_itLit.data, null, _itLit.colors);
     renderer.everyLightCasts();   // DISC15: the building is drawn whole below (no view cull) - every lamp keeps a shadow map, none lights through the ceiling as the nearest eight change
-    windowWeatherFor(renderer).light({ dt });   // WINDOW-WEATHER (render/windowWeather.js): the storm's schedule, and a lit frame's light through the window - composed into the room's lamps (stored above)
+    windowWeatherFor(renderer).light({ dt, collider: interiorCtx.collider });   // WINDOW-WEATHER (render/windowWeather.js): the storm's schedule, and a lit frame's light through the window - composed into the room's lamps (stored above)
     // AUDIT 39 (#33): the gate the dungeon arm above already carries.
     // A paused game advances no movers - DFU's door swing is an iTween
     // that never opts out of timeScale - so a swing begun before the

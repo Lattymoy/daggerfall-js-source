@@ -13,19 +13,19 @@
 // frames a second, and drawing the street every frame to fix that would double the cost of standing at a window. So the
 // street stays cached and the drops are drawn over it by the interior frame, after the room's own draws: the lab's
 // rain program (render/precipitation.js LAB_WX_VS / LAB_WX_FS - the enhanced skin's own drops, byte for byte) with
-// three lines added, under the far-plane trick the sky and the far ring use (farRing.js: depthRange(1, 1), LEQUAL,
+// clipping added, under the far-plane trick the sky and the far ring use (farRing.js: depthRange(1, 1), LEQUAL,
 // no depth write). Every fragment then lands at the far plane, so a drop draws only where nothing in the room wrote a
-// depth - the glass texels the real windows cut, the street behind them. The lines added keep the drops honest:
-//   - a drop inside the room's box (the interior collider's bounds, WW_ROOM_MARGIN past them) is discarded - it is
-//     on the room's side of the glass. The interior's own walls are its box's faces (DFU's interior is laid out apart
-//     from the house, and its glass is on its outer walls), so what is outside the box is outside the window;
+// depth - the glass texels the real windows cut, the street behind them. The added clipping keeps the drops honest:
+//   - windowWeatherDepth.js reuses the real pane depth and copies the cached street depth at each view-out refresh:
+//     a fragment must be beyond its pane and before the exterior surface. Actual pane geometry handles rotated
+//     caravan walls; without depth attachments the collider's bounds grown by WW_ROOM_MARGIN remain a fallback;
 //   - and a fragment outside the view out's rectangle is discarded (the rectangle the renderer cuts glass in -
 //     renderer.setGlassView's own pixels), so a gap in a room's walls never rains.
 // The volume round the eye is WW_BOX metres, not the street's LAB_BOX - through a pane the drops past the next house
 // are a few pixels each - and the count is the street's DENSITY over it (wwDropCount), so a shower is the same shower
 // on both sides of the glass. The fall's clock is re-origined as the street's is (precipitation.js RAIN-CLOCK).
 // A SANDSTORM is the wisps' program in the sand's look (render/windWisps.js WISP_VS / WISP_FS, SAND_LOOK - WEATHER2d's
-// own), with the same three lines added and drawn the same way, at the street's sand density over the same volume.
+// own), with the same clipping added and drawn the same way, at the street's sand density over the same volume.
 //
 // WHAT FALLS: the street's word and level as the outdoor frame last wrote them (systems/weather/weatherSim.js
 // fallingWeather - WET-FALL's one truth, the ear's and the skin's), mapped by the world's own law
@@ -46,6 +46,10 @@
 //
 // THE SWITCH: the real windows' own - Full (the view out) on the enhanced skin (realWindowsMode); Rooms only and Off
 // cut no glass, so there is nothing to see weather through. `?windowweather=off` is this add-on's own kill door.
+// `?windowweatherdepth=off` disables only the depth path, retaining weather with the room-box fallback.
+// After leaving a building, this add-on's programs and depth copy (at most about 2 MB at half resolution) stay until
+// the next building or frame()'s idle release. The host has no line to spare; the real windows keep their own exit.
+// light() drops the old room's anchor and depth copy before composing any light in a new building.
 //
 // Not a DFU member: DFU draws no street through an interior's glass (DaggerfallInterior.cs:473 lays it out under
 // WindowStyle.Disabled), so it shows no weather there either. The port's own presentation (Port-Doctrine).
@@ -61,6 +65,7 @@ import { WIND_STEP_DT_MAX } from '../systems/wind/windDrive.js';
 import { pageParam } from '../systems/pageQuery.js';
 import { multiply } from '../world/mat4.js';
 import { invert4 } from '../player/tapRay.js';
+import { createWindowWeatherDepth, WW_DEPTH_UNIFORMS } from './windowWeatherDepth.js';
 
 // ---------------------------------------------------------------------------------------------------------------
 // THE NUMBERS
@@ -233,7 +238,25 @@ export function windowWeatherShaders(vs = LAB_WX_VS, fs = LAB_WX_FS, needles = W
   let v = patch(vs, N.vsOut, (n) => `${n}\nout vec3 vWorld;   // WINDOW-WEATHER: the drop's world point`, 'vertex stage');
   v = patch(v, N.vsPos, (n) => `vWorld = p;\n  ${n}`, 'vertex stage');
   let f = patch(fs, N.fsIn, (n) => `${n}\nin vec3 vWorld;\nuniform vec3 uRoomMin, uRoomMax;   // WINDOW-WEATHER: the room's box\nuniform vec4 uGlassRect;           // and the view out's rectangle, in the world pass's pixels`, 'fragment stage');
-  f = patch(f, N.fsMain, (n) => `${n}\n  if (all(greaterThan(vWorld, uRoomMin)) && all(lessThan(vWorld, uRoomMax))) discard;   // the room's side of the glass\n  if (gl_FragCoord.x < uGlassRect.x || gl_FragCoord.y < uGlassRect.y || gl_FragCoord.x >= uGlassRect.z || gl_FragCoord.y >= uGlassRect.w) discard;`, 'fragment stage');
+  f = patch(f, N.fsMain, (n) => `uniform highp sampler2D uStreetDepth, uPaneDepth;
+uniform mat4 uStreetPV;
+uniform vec2 uPaneScale;
+uniform float uStreetDepthOn, uPaneDepthOn;
+${n}
+  if (uPaneDepthOn < 0.5) {
+    if (all(greaterThan(vWorld, uRoomMin)) && all(lessThan(vWorld, uRoomMax))) discard;   // fallback without a pane depth
+  }
+  if (gl_FragCoord.x < uGlassRect.x || gl_FragCoord.y < uGlassRect.y || gl_FragCoord.x >= uGlassRect.z || gl_FragCoord.y >= uGlassRect.w) discard;
+  if (uStreetDepthOn > 0.5) {
+    vec4 street = uStreetPV * vec4(vWorld, 1.0);
+    if (street.w <= 0.0) discard;
+    vec3 ndc = street.xyz / street.w;
+    if (any(greaterThan(abs(ndc), vec3(1.0)))) discard;
+    vec2 uv = ndc.xy * 0.5 + 0.5;
+    float depth = ndc.z * 0.5 + 0.5;
+    if (depth > texture(uStreetDepth, uv).r + 0.00001) discard;
+    if (uPaneDepthOn > 0.5 && depth <= texture(uPaneDepth, uv * uPaneScale).r + 0.00001) discard;
+  }`, 'fragment stage');
   return { vs: v, fs: f };
 }
 
@@ -248,8 +271,8 @@ void main() { o = vec4(uFlash, 1.0); }`;
 // THE ADD-ON
 // ---------------------------------------------------------------------------------------------------------------
 
-const DROP_UNIFORMS = ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff', 'uRoomMin', 'uRoomMax', 'uGlassRect'];
-const SAND_UNIFORMS = ['uVP', 'uEye', 'uTime', 'uBox', 'uStrength', 'uWindV', 'uWindOff', 'uLen', 'uColor', 'uAlpha', 'uRoomMin', 'uRoomMax', 'uGlassRect'];
+const DROP_UNIFORMS = ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff', 'uRoomMin', 'uRoomMax', 'uGlassRect', ...WW_DEPTH_UNIFORMS];
+const SAND_UNIFORMS = ['uVP', 'uEye', 'uTime', 'uBox', 'uStrength', 'uWindV', 'uWindOff', 'uLen', 'uColor', 'uAlpha', 'uRoomMin', 'uRoomMax', 'uGlassRect', ...WW_DEPTH_UNIFORMS];
 
 /**
  * The weather through a building's glass, for one renderer. Two calls an interior frame (scenes/worldModes.js):
@@ -260,6 +283,7 @@ const SAND_UNIFORMS = ['uVP', 'uEye', 'uTime', 'uBox', 'uStrength', 'uWindV', 'u
  */
 export function createWindowWeather({ renderer, on = () => windowWeatherOn(), falling = () => fallingWeather() }) {
   const gl = renderer.gl;
+  const depth = createWindowWeatherDepth(renderer, () => { const fell = falling(); return on() && !!wwFall(fell?.word, fell?.level); });
   /** @type {any} */
   let res = null;   // the programs and buffers, built on the first drop drawn
   let usedAt = -Infinity;
@@ -305,6 +329,7 @@ export function createWindowWeather({ renderer, on = () => windowWeatherOn(), fa
   /** EVERY ALLOCATION HAS AN OWNER: this instance, one a renderer (windowWeatherFor) - a building without weather frees
    *  them after WW_RELEASE_MS, and `release` at once. */
   const release = () => {
+    depth.release();
     room.collider = null; room.box = null;
     anchor.room = null; anchor.ok = false;
     flash = false;
@@ -328,9 +353,14 @@ export function createWindowWeather({ renderer, on = () => windowWeatherOn(), fa
   /**
    * Once the room's lamps are stored (renderer.setPointLights), before its beginFrame: the storm's schedule ticks, and a
    * lit frame composes the window's light into the lamps (renderer.setFlashLight - first, under the same cap).
-   * @param {{ dt: number }} f
+   * @param {{ dt: number, collider?: any }} f
    */
-  const light = ({ dt }) => {
+  const light = ({ dt, collider }) => {
+    // The host lights before frame(): invalidate the previous room before its light can be composed.
+    if (collider !== undefined && anchor.room !== collider) {
+      anchor.room = collider; anchor.ok = false; anchor.at = -Infinity;
+      depth.release();
+    }
     const storm = on() && falling()?.word === 'thunder';
     flash = storm ? lightning.tick(Math.max(0, dt || 0)) > 1 : false;
     if (!flash || !anchor.ok) return;
@@ -358,12 +388,14 @@ export function createWindowWeather({ renderer, on = () => windowWeatherOn(), fa
     if (!seen || !box || (!fall && !flash)) { if (res && now - usedAt > WW_RELEASE_MS) release(); return; }
     usedAt = now;
     if (!res) res = build();
+    if (fall) depth.prepare();
     const vp = renderer.worldViewportPx ?? [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight];
     wwGlassRectPx(glass.rect, vp, rectPx);
     // the far-plane trick (farRing.js): every fragment at the far plane, tested LEQUAL - only where the room wrote no depth
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(false); gl.depthRange(1, 1);
     gl.disable(gl.CULL_FACE);
     gl.enable(gl.BLEND);
+    let restoreDepth = () => {};
     if (fall) {
       wwWind(fall.mode, (box.min[0] + box.max[0]) / 2, (box.min[2] + box.max[2]) / 2, 0, windV);
       const ds = Math.min(WIND_STEP_DT_MAX, Math.max(0, dt || 0));
@@ -387,6 +419,7 @@ export function createWindowWeather({ renderer, on = () => windowWeatherOn(), fa
         gl.uniform3f(u.uRoomMin, box.min[0], box.min[1], box.min[2]);
         gl.uniform3f(u.uRoomMax, box.max[0], box.max[1], box.max[2]);
         gl.uniform4f(u.uGlassRect, rectPx[0], rectPx[1], rectPx[2], rectPx[3]);
+        restoreDepth = depth.bind(u);
       } else {
         const t = wwClock(clockState, now / 1000);
         clockState.windOff[0] += windV[0] * ds; clockState.windOff[1] += windV[1] * ds;
@@ -406,10 +439,12 @@ export function createWindowWeather({ renderer, on = () => windowWeatherOn(), fa
         gl.uniform3f(u.uRoomMin, box.min[0], box.min[1], box.min[2]);
         gl.uniform3f(u.uRoomMax, box.max[0], box.max[1], box.max[2]);
         gl.uniform4f(u.uGlassRect, rectPx[0], rectPx[1], rectPx[2], rectPx[3]);
+        restoreDepth = depth.bind(u);
       }
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);   // the drops' and the wisps' own blend (precipitation.js drawLab, windWisps.js draw)
       gl.bindVertexArray(res.vao);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, Math.min(fall.count, res.max));
+      restoreDepth();
     }
     if (flash) {
       gl.useProgram(res.flash);

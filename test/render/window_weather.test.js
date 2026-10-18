@@ -289,7 +289,7 @@ test('WINDOW-WEATHER W11: where the storm\'s light stands - down the ray from th
 test('WINDOW-WEATHER W9: THE ADD-ON IS WIRED BESIDE THE REAL WINDOWS, NOT INTO THEM - the interior host asks its one instance (one a renderer) to light once the room\'s lamps are stored and before its beginFrame, and to draw after the room\'s own draws and before the viewmodel, adding two lines and changing none of the real windows\' own; the real windows\' module names it nowhere, and the hosts with no glass to look out of ask nothing (mutants: the frame dropped, the light dropped)', () => {
   const modes = hostText('src/scenes/worldModes.js');
   assert.ok(modes.includes("import { windowWeatherFor } from '../render/windowWeather.js';"));
-  const lit = modes.indexOf('windowWeatherFor(renderer).light({ dt });');
+  const lit = modes.indexOf('windowWeatherFor(renderer).light({ dt, collider: interiorCtx.collider });');
   assert.ok(lit > modes.indexOf('renderer.setPointLights(_itLit.data, null, _itLit.colors);'), 'after the room\'s lamps are stored (setFlashLight composes into them)');
   const begin = modes.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);', lit);
   assert.ok(begin > lit && begin < modes.indexOf('renderer.setGlassView(_rwView);'), 'before the interior frame begins');
