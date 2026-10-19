@@ -212,9 +212,14 @@ const TRADE_IN_SENDERS_MAX = 64;
  *  other seat of my party sharing at the hub's own per-socket cooldown (QUEST_HUB_MIN_MS), with all of them at once for its burst. */
 const QUEST_IN_ROOM_HZ = ((PARTY_MAX - 1) * 1000) / QUEST_HUB_MIN_MS;
 export const DEFAULT_SERVER = 'wss://daggerfall-online.mackcothran.workers.dev';
-/** DEV-ENV (serviceHome.js): the relay a build stamped with `built` calls home - that one, if the client may connect to
- *  it (relayUrl), and the players' (DEFAULT_SERVER, the one the deploys read) otherwise. */
-export const homeServerOf = (built) => relayUrl(built ?? '') ?? DEFAULT_SERVER;
+/** DEV-ENV (serviceHome.js): the relay a build stamped with `built` calls home. None stamped: the players'
+ *  (DEFAULT_SERVER, the one the deploys read). Stamped: that relay, exactly as the relay law writes it (relayUrl) - or
+ *  none at all. AUDIT RELEASE-FLOW E1: a refused stamp used to become the players' relay; now it stops the build. */
+export const homeServerOf = (built) => {
+  if (built == null) return DEFAULT_SERVER;
+  if (relayUrl(built) !== built) throw new Error(`this build is stamped with the relay ${JSON.stringify(built)} (VITE_DFO_RELAY), which is no relay a client may connect to as written - it calls no relay home, the players' least of all`);
+  return built;
+};
 /** The relay this BUILD calls home: the dev environment's in a build made for it, the players' in every other. */
 export const HOME_SERVER = homeServerOf(BUILD_RELAY);
 /** A peer silent this long is HIDDEN (out of range, or its socket is

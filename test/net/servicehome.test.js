@@ -9,7 +9,9 @@ import { readFileSync, readdirSync, mkdtempSync, rmSync, statSync } from 'node:f
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { build } from 'vite';
+import { execFileSync } from 'node:child_process';
+import { build, createServer } from 'vite';
+import viteConfig from '../../vite.config.js';
 import { BUILD_RELAY, BUILD_ACCOUNTS } from '../../src/net/serviceHome.js';
 import { DEFAULT_SERVER, HOME_SERVER, homeServerOf } from '../../src/net/online.js';
 import { DEFAULT_ACCOUNT_SERVICE, HOME_ACCOUNT_SERVICE, homeAccountServiceOf, serviceBase } from '../../src/net/accountClient.js';
@@ -18,46 +20,82 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 const DEV_RELAY = 'wss://dev.daggerfalljs.dev/relay';
 const DEV_ACCOUNTS = 'https://dev.daggerfalljs.dev/accounts';
+/** A variable of the builder's environment the client never reads - and no bundle may carry (AUDIT RELEASE-FLOW E2). */
+const STRAY = 'VITE_DFO_NOT_FOR_THE_BUNDLE';
 
-/** serviceHome.js built by Vite with the environment given - the way dev-deploy.yml builds the site - and imported. */
-async function builtHome(env) {
-  const dir = mkdtempSync(join(tmpdir(), 'servicehome-'));
-  const kept = { VITE_DFO_RELAY: process.env.VITE_DFO_RELAY, VITE_DFO_ACCOUNTS: process.env.VITE_DFO_ACCOUNTS };
+/** `env` set in this process for `fn`, and put back after. */
+async function withEnv(env, fn) {
+  const kept = Object.fromEntries(Object.keys(env).map((k) => [k, process.env[k]]));
   try {
     for (const [k, v] of Object.entries(env)) process.env[k] = v;
-    await build({
-      root: dir, configFile: false, logLevel: 'silent',
-      build: { outDir: join(dir, 'dist'), minify: false, lib: { entry: join(root, 'src/net/serviceHome.js'), formats: ['es'], fileName: 'home' } },
-    });
-    const out = readdirSync(join(dir, 'dist')).find((f) => /^home\.m?js$/.test(f));
-    return await import(pathToFileURL(join(dir, 'dist', out)).href);
+    return await fn();
   } finally {
     for (const [k, v] of Object.entries(kept)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  }
+}
+
+/** serviceHome.js built by Vite with `env` in the builder's environment - the way dev-deploy.yml builds the site: the
+ *  built text, and what the module exports to a node holding NO `VITE_*` variable of its own. AUDIT RELEASE-FLOW E3:
+ *  imported by this process, which still held the variables, a module that read process.env passed for Vite. */
+async function builtHome(env) {
+  const dir = mkdtempSync(join(tmpdir(), 'servicehome-'));
+  try {
+    await withEnv(env, () => build({
+      root: dir, configFile: false, logLevel: 'silent',
+      build: { outDir: join(dir, 'dist'), minify: false, lib: { entry: join(root, 'src/net/serviceHome.js'), formats: ['es'], fileName: 'home' } },
+    }));
+    const file = join(dir, 'dist', readdirSync(join(dir, 'dist')).find((f) => /^home\.m?js$/.test(f)));
+    const clean = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('VITE_')));
+    const out = execFileSync(process.execPath, ['--input-type=module', '-e',
+      `const m = await import(${JSON.stringify(pathToFileURL(file).href)}); console.log(JSON.stringify([m.BUILD_RELAY, m.BUILD_ACCOUNTS]));`],
+    { env: clean, encoding: 'utf8' });
+    return { text: readFileSync(file, 'utf8'), stamps: JSON.parse(out) };
+  } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 }
 
-test('DEV-ENV: a build made for the dev environment carries its services into the bundle, and one made for nobody carries none - through Vite itself (mutants: the stamp unread)', async () => {
-  const dev = await builtHome({ VITE_DFO_RELAY: DEV_RELAY, VITE_DFO_ACCOUNTS: DEV_ACCOUNTS });
-  assert.equal(dev.BUILD_RELAY, DEV_RELAY);
-  assert.equal(dev.BUILD_ACCOUNTS, DEV_ACCOUNTS);
+test('DEV-ENV (AUDIT RELEASE-FLOW E2, E3): a build made for the dev environment writes its two services into the bundle, by value, and nothing else of the builder\'s environment; one made for nobody writes none - each read by a node that holds no stamp of its own (mutants: the stamp unread; the whole environment read; the stamp read from the process)', async () => {
+  const dev = await builtHome({ VITE_DFO_RELAY: DEV_RELAY, VITE_DFO_ACCOUNTS: DEV_ACCOUNTS, [STRAY]: 'leaked' });
+  assert.deepEqual(dev.stamps, [DEV_RELAY, DEV_ACCOUNTS], 'the bundle carries its home');
+  assert.ok(dev.text.includes(`"${DEV_RELAY}"`) && dev.text.includes(`"${DEV_ACCOUNTS}"`), 'written in by value, as Vite builds it');
+  assert.ok(!dev.text.includes(STRAY) && !dev.text.includes('leaked'), 'and no other variable of the builder\'s environment');
   const players = await builtHome({});
-  assert.equal(players.BUILD_RELAY, null, 'a release names no relay of its own');
-  assert.equal(players.BUILD_ACCOUNTS, null);
+  assert.deepEqual(players.stamps, [null, null], 'a release names no service of its own');
+  assert.ok(!players.text.includes('dev.daggerfalljs.dev'));
   // ...and node, a test, a Worker: no stamp at all
   assert.equal(BUILD_RELAY, null);
   assert.equal(BUILD_ACCOUNTS, null);
+  // the project's own config hands Vite's VITE_ variables to the client, and writes none over
+  assert.ok(viteConfig.envPrefix === undefined || [].concat(viteConfig.envPrefix).includes('VITE_'), 'envPrefix keeps VITE_');
+  assert.ok(!Object.keys(viteConfig.define ?? {}).some((k) => /import\.meta\.env|VITE_DFO/.test(k)), 'no define stands over the stamp');
 });
 
-test('DEV-ENV: the client calls a stamped service home only if its own law takes it - wss:// (ws:// on localhost), https:// - and the players\' otherwise; an unstamped build is the players\' (mutants: a refused relay taken; a refused service taken)', () => {
+test('DEV-ENV (AUDIT RELEASE-FLOW E2): Vite\'s dev server serves the stamp as a build writes it - `npm run dev` with VITE_DFO_RELAY set calls that relay, never the players\' (mutants: the whole environment read)', async () => {
+  await withEnv({ VITE_DFO_RELAY: DEV_RELAY, VITE_DFO_ACCOUNTS: DEV_ACCOUNTS }, async () => {
+    const server = await createServer({ root, configFile: false, logLevel: 'silent', appType: 'custom', server: { middlewareMode: true, hmr: false, ws: false }, optimizeDeps: { noDiscovery: true, include: [] } });
+    try {
+      const served = (await server.transformRequest('/src/net/serviceHome.js'))?.code ?? '';
+      assert.ok(served.includes(DEV_RELAY) && served.includes(DEV_ACCOUNTS), 'the dev server writes both stamps in');
+    } finally {
+      await server.close();
+    }
+  });
+});
+
+test('DEV-ENV (AUDIT RELEASE-FLOW E1): the client calls a stamped service home only exactly as its own law writes it - wss:// (ws:// on the machine itself), https:// with no trailing slash - and a stamp its law refuses stops the build, said, where it used to become the players\' service; an unstamped build is the players\' (mutants: a refused relay taken; a refused service taken; a refused relay the players\'; a refused service the players\')', () => {
   assert.equal(homeServerOf(DEV_RELAY), DEV_RELAY);
   assert.equal(homeServerOf('ws://localhost:8787'), 'ws://localhost:8787', 'a relay on the machine itself');
-  for (const refused of ['http://dev.daggerfalljs.dev/relay', 'ws://dev.daggerfalljs.dev/relay', 'dev.daggerfalljs.dev', '', null, undefined]) {
-    assert.equal(homeServerOf(refused), DEFAULT_SERVER, String(refused));
+  for (const refused of ['ws://10.66.0.1:8787', 'http://dev.daggerfalljs.dev/relay', 'wss://dev_env.example/relay', `${DEV_RELAY}/`, ` ${DEV_RELAY}`, `${DEV_RELAY}\n`, 'dev.daggerfalljs.dev', '']) {
+    assert.throws(() => homeServerOf(refused), /no relay a client may connect to as written - it calls no relay home, the players' least of all/, JSON.stringify(refused));
   }
   assert.equal(homeAccountServiceOf(DEV_ACCOUNTS), DEV_ACCOUNTS);
-  for (const refused of ['http://dev.daggerfalljs.dev/accounts', 'https://', 'dev.daggerfalljs.dev', '', null, undefined]) {
-    assert.equal(homeAccountServiceOf(refused), DEFAULT_ACCOUNT_SERVICE, String(refused));
+  for (const refused of ['http://10.66.0.1:8788', 'http://dev.daggerfalljs.dev/accounts', `${DEV_ACCOUNTS}/`, ` ${DEV_ACCOUNTS}`, `${DEV_ACCOUNTS}\n`, 'https://', 'dev.daggerfalljs.dev', '']) {
+    assert.throws(() => homeAccountServiceOf(refused), /may not be pointed at as written - it calls no account service home, the players' least of all/, JSON.stringify(refused));
+  }
+  for (const none of [null, undefined]) {
+    assert.equal(homeServerOf(none), DEFAULT_SERVER, 'no stamp: the players\' relay');
+    assert.equal(homeAccountServiceOf(none), DEFAULT_ACCOUNT_SERVICE, 'no stamp: the players\' service');
   }
   assert.equal(HOME_SERVER, DEFAULT_SERVER, 'this build - node - is the players\'');
   assert.equal(HOME_ACCOUNT_SERVICE, DEFAULT_ACCOUNT_SERVICE);

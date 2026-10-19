@@ -50,13 +50,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # a build that names the players' services is never shipped to the dev environment
+      # a build that names the players' services is never shipped to the dev environment - and AUDIT RELEASE-FLOW E1: the
+      # stamps are asked of the client's own laws before anything is built, so one the client would refuse builds nothing
       - name: Build the site for the dev environment
         env:
           VITE_DFO_RELAY: wss://${{ env.DEV_HOST }}/relay
           VITE_DFO_ACCOUNTS: https://${{ env.DEV_HOST }}/accounts
         run: |
           set -euo pipefail
+          node --input-type=module -e "
+            const { homeServerOf } = await import('./src/net/online.js');
+            const { homeAccountServiceOf } = await import('./src/net/accountClient.js');
+            const { VITE_DFO_RELAY: relay, VITE_DFO_ACCOUNTS: accounts } = process.env;
+            if (!relay || !accounts) throw new Error('a dev build names both of its services');
+            if (homeServerOf(relay) !== relay || homeAccountServiceOf(accounts) !== accounts) throw new Error('the stamps are not the client\'s own');
+          "
           npm run build
           if ! grep -rqF "$VITE_DFO_RELAY" dist/assets || ! grep -rqF "$VITE_DFO_ACCOUNTS" dist/assets; then
             echo "::error::the build does not call the dev services home - nothing is shipped"

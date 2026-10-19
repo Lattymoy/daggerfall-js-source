@@ -78,10 +78,15 @@ import { BUILD_ACCOUNTS } from './serviceHome.js';   // DEV-ENV: the account ser
 export const DEFAULT_ACCOUNT_SERVICE = 'https://daggerfall-accounts.mackcothran.workers.dev';
 /** A service this device may be pointed at: https, and nothing else. */
 const SERVICE_URL = /^https:\/\/\S+$/;
-/** DEV-ENV (serviceHome.js): the account service a build stamped with `built` calls home - that one, if it is a
- *  service this device may be pointed at (SERVICE_URL), and the players' (DEFAULT_ACCOUNT_SERVICE, the one the deploys
- *  read) otherwise. */
-export const homeAccountServiceOf = (built) => (SERVICE_URL.test(built ?? '') ? built : DEFAULT_ACCOUNT_SERVICE);
+/** DEV-ENV (serviceHome.js): the account service a build stamped with `built` calls home. None stamped: the players'
+ *  (DEFAULT_ACCOUNT_SERVICE, the one the deploys read). Stamped: that service, if SERVICE_URL takes it and it ends in no
+ *  `/` (every call joins its own `/v1/...` on) - or none at all. AUDIT RELEASE-FLOW E1: a refused stamp used to become the
+ *  players' service; now it stops the build. */
+export const homeAccountServiceOf = (built) => {
+  if (built == null) return DEFAULT_ACCOUNT_SERVICE;
+  if (!SERVICE_URL.test(built) || built.endsWith('/')) throw new Error(`this build is stamped with the account service ${JSON.stringify(built)} (VITE_DFO_ACCOUNTS), which this device may not be pointed at as written - it calls no account service home, the players' least of all`);
+  return built;
+};
 /** The account service this BUILD calls home: the dev environment's in a build made for it, the players' in every other. */
 export const HOME_ACCOUNT_SERVICE = homeAccountServiceOf(BUILD_ACCOUNTS);
 

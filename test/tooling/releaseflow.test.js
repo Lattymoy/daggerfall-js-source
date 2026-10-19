@@ -433,7 +433,7 @@ test('CHECK-ASK: `/check` from someone who can push dispatches check.yml on the 
 
 // ═══ DEV-ENV: MAIN, ON ITS OWN VM, INSIDE WIREGUARD ══════════════════════════════════════════════════════════════
 
-test('DEV-ENV: the dev deploy is dispatched on main alone, in the dev environment; it builds the site to call the dev services home and ships nothing that does not; it passes only when the site, the relay and the account service answer with this commit, by name and over TLS through the network (mutants: the build unstamped; a deploy from any branch)', () => {
+test('DEV-ENV: the dev deploy is dispatched on main alone, in the dev environment; it builds the site to call the dev services home and ships nothing that does not - its stamps asked of the client\'s own laws before anything is built (AUDIT RELEASE-FLOW E1); it passes only when the site, the relay and the account service answer with this commit, by name and over TLS through the network (mutants: the build unstamped; a deploy from any branch; the stamps unasked)', { skip: BASH }, (t) => {
   const yml = WF('dev-deploy.yml');
   assert.equal(onOf(yml), 'on:\n  workflow_dispatch:\n\n');
   const [job] = jobsOf(yml);
@@ -443,6 +443,21 @@ test('DEV-ENV: the dev deploy is dispatched on main alone, in the dev environmen
   assert.match(yml, /VITE_DFO_RELAY: wss:\/\/\$\{\{ env\.DEV_HOST \}\}\/relay\n {10}VITE_DFO_ACCOUNTS: https:\/\/\$\{\{ env\.DEV_HOST \}\}\/accounts\n/, 'the stamp src/net/serviceHome.js reads');
   const build = runBlock(yml, 'Build the site for the dev environment');
   assert.match(build, /npm run build\nif ! grep -rqF "\$VITE_DFO_RELAY" dist\/assets \|\| ! grep -rqF "\$VITE_DFO_ACCOUNTS" dist\/assets; then\n[^\n]*\n {2}exit 1\n/);
+  // the step run as the runner runs it, `npm` a stand-in that marks it was reached: a stamp the client refuses builds nothing
+  const asked = (relay, accounts) => {
+    const tmp = scratch(t, 'stamp');
+    mkdirSync(join(tmp, 'bin'));
+    writeFileSync(join(tmp, 'bin', 'npm'), '#!/bin/bash\ntouch "$BUILT"\nexit 1\n');
+    chmodSync(join(tmp, 'bin', 'npm'), 0o755);
+    const r = spawnSync('bash', ['-e', '-c', build], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, PATH: `${join(tmp, 'bin')}:${process.env.PATH}`, BUILT: join(tmp, 'built'), VITE_DFO_RELAY: relay, VITE_DFO_ACCOUNTS: accounts } });
+    return { built: existsSync(join(tmp, 'built')), status: r.status };
+  };
+  const [relay, accounts] = ['wss://dev.daggerfalljs.dev/relay', 'https://dev.daggerfalljs.dev/accounts'];
+  assert.equal(asked(relay, accounts).built, true, 'the stamps the workflow writes are the client\'s own');
+  for (const [r, a] of [['ws://10.66.0.1:8787', accounts], [relay, 'http://10.66.0.1:8788'], [`${relay}/`, accounts], [relay, `${accounts}/`], ['', accounts]]) {
+    const run = asked(r, a);
+    assert.ok(!run.built && run.status !== 0, `${r} and ${a}: refused before the build`);
+  }
   const answers = runBlock(yml, 'The dev environment answers with this commit');
   assert.match(answers, /grep -oP "\^export const RELAY_VERSION = '\\K\[\^'\]\+" src\/net\/wire\.js/);
   assert.match(answers, /grep -oP "\^export const ACCOUNT_VERSION = '\\K\[\^'\]\+" server-account\/src\/service\.js/);

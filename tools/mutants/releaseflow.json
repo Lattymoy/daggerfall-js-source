@@ -389,6 +389,16 @@
     "note": "Any branch could be deployed to the dev environment."
   },
   {
+    "name": "DEV-ENV-the-stamps-unasked",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": "          node --input-type=module -e \"\n            const { homeServerOf } = await import('./src/net/online.js');\n",
+    "new": "          true || node --input-type=module -e \"\n            const { homeServerOf } = await import('./src/net/online.js');\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW E1: a stamp the client refuses would build, ship, and stop every tab of the dev site."
+  },
+  {
     "name": "DEV-ENV-a-cron-of-its-own",
     "file": "ops/dev/dfo-dev-cron",
     "old": "cron=41+*+*+*+*'",
@@ -431,7 +441,7 @@
   {
     "name": "DEV-ENV-the-stamp-unread",
     "file": "src/net/serviceHome.js",
-    "old": "export const BUILD_RELAY = stamped.VITE_DFO_RELAY || null;",
+    "old": "export const BUILD_RELAY = import.meta.env?.VITE_DFO_RELAY ?? null;",
     "new": "export const BUILD_RELAY = null;",
     "tests": [
       "test/net/servicehome.test.js"
@@ -441,8 +451,8 @@
   {
     "name": "DEV-ENV-a-refused-relay-taken",
     "file": "src/net/online.js",
-    "old": "export const homeServerOf = (built) => relayUrl(built ?? '') ?? DEFAULT_SERVER;",
-    "new": "export const homeServerOf = (built) => built || DEFAULT_SERVER;",
+    "old": "  if (relayUrl(built) !== built) throw new Error(",
+    "new": "  if (false) throw new Error(",
     "tests": [
       "test/net/servicehome.test.js"
     ],
@@ -451,8 +461,8 @@
   {
     "name": "DEV-ENV-a-refused-service-taken",
     "file": "src/net/accountClient.js",
-    "old": "(SERVICE_URL.test(built ?? '') ? built : DEFAULT_ACCOUNT_SERVICE)",
-    "new": "(built || DEFAULT_ACCOUNT_SERVICE)",
+    "old": "  if (!SERVICE_URL.test(built) || built.endsWith('/')) throw new Error(",
+    "new": "  if (false) throw new Error(",
     "tests": [
       "test/net/servicehome.test.js"
     ],
@@ -467,5 +477,55 @@
       "test/net/servicehome.test.js"
     ],
     "note": "The dev environment's world would join the players' rooms."
+  },
+  {
+    "name": "DEV-ENV-the-whole-environment-read",
+    "file": "src/net/serviceHome.js",
+    "old": "export const BUILD_RELAY = import.meta.env?.VITE_DFO_RELAY ?? null;",
+    "new": "const stamped = /** @type {any} */ (import.meta).env ?? {};\nexport const BUILD_RELAY = stamped.VITE_DFO_RELAY ?? null;",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW E2: the dev server never served the stamp, and a build wrote every VITE_ variable of the builder's environment into the bundle."
+  },
+  {
+    "name": "DEV-ENV-the-stamp-read-from-the-process",
+    "file": "src/net/serviceHome.js",
+    "old": "export const BUILD_RELAY = import.meta.env?.VITE_DFO_RELAY ?? null;",
+    "new": "export const BUILD_RELAY = globalThis.process?.env?.VITE_DFO_RELAY ?? null;",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW E3: the build test imported the module in a process still holding the variables, so this passed for Vite's stamp."
+  },
+  {
+    "name": "DEV-ENV-a-refused-relay-the-players",
+    "file": "src/net/online.js",
+    "old": "  if (relayUrl(built) !== built) throw new Error(",
+    "new": "  if (relayUrl(built) !== built) return DEFAULT_SERVER; if (false) throw new Error(",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW E1: a mistyped stamp played main's unreleased code against the players' relay."
+  },
+  {
+    "name": "DEV-ENV-a-refused-service-the-players",
+    "file": "src/net/accountClient.js",
+    "old": "  if (!SERVICE_URL.test(built) || built.endsWith('/')) throw new Error(",
+    "new": "  if (!SERVICE_URL.test(built) || built.endsWith('/')) return DEFAULT_ACCOUNT_SERVICE; if (false) throw new Error(",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW E1: a mistyped stamp signed dev testers in to the players' account service."
+  },
+  {
+    "name": "DEV-ENV-a-trailing-slash-taken",
+    "file": "src/net/accountClient.js",
+    "old": "  if (!SERVICE_URL.test(built) || built.endsWith('/')) throw new Error(",
+    "new": "  if (!SERVICE_URL.test(built)) throw new Error(",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW E1: every call would join `//v1/...` on."
   }
 ]
