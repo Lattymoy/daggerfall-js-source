@@ -53,8 +53,8 @@ test('DA6/REL1/REL3: the release\'s number is ONE variable - the tag and the sta
   const on = wf.slice(wf.indexOf('\non:'), wf.indexOf('\npermissions:'));
   assert.equal(on, '\non:\n  workflow_dispatch:\n', 'a dispatch, nothing pushed - no merge, no tag cuts a release');
   const resolve = wf.slice(wf.indexOf('- name: Resolve release version'), wf.indexOf('VERSION="${TAG#app-v}"'));
-  assert.match(resolve, /\n {10}TAG=''\n {10}if \[ "\$GITHUB_REF" = refs\/heads\/release \]; then\n {12}BASE=[^\n]+\n {12}TAG="app-v\$\{BASE\}\.\$\(git rev-list --count HEAD\)"\n {10}fi\n/,
-    'the tag is derived on release, and on nothing else');
+  assert.match(resolve, /\n {10}TAG=''\n {10}if \[ "\$GITHUB_REF" = refs\/heads\/release \]; then\n {12}BASE=[^\n]+\n {12}TAG="app-v\$\{BASE\}\.\$\(git rev-list --count HEAD\)"\n(?: {12}#[^\n]*\n)* {12}node scripts\/desktopRelease\.mjs line "\$TAG"\n {10}fi\n/,
+    'the tag is derived on release, and on nothing else - and asked whether release\'s line holds the release before (releaseflow.test.js)');
   const code = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
   assert.doesNotMatch(code, /release_tag|RELEASE_TAG|refs\/tags/, 'the hand doors are gone');
   // a release half uploaded is worse than one late - and AUDIT INSTALL L3-6: release's runs share one group (the newest

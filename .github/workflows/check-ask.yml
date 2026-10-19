@@ -29,7 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write         # the dispatch
-      issues: write          # the answer - a pull request's comments and reactions are its issue's
+      issues: write          # the answer and the reaction - a pull request's comments are its issue's, by REST (gh pr
+                             # comment asks GraphQL's addComment, which a pull request refuses without pull-requests: write)
       pull-requests: read    # the pull request's branch
     steps:
       - name: Dispatch the check on the pull request's branch
@@ -41,7 +42,7 @@ jobs:
           BODY: ${{ github.event.comment.body }}
         run: |
           set -euo pipefail
-          say() { printf '%s\n' "$1" > "$RUNNER_TEMP/say.md"; gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/say.md"; }
+          say() { printf '%s\n' "$1" > "$RUNNER_TEMP/say.md"; gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F "body=@$RUNNER_TEMP/say.md" --silent; }
           first=$(printf '%s\n' "$BODY" | head -n 1 | tr -d '\r' | sed 's/[[:space:]]*$//')
           if [ "$first" != '/check' ]; then echo "the first line is not /check - nothing asked"; exit 0; fi
           perm=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$WHO/permission" --jq .permission 2>/dev/null || echo none)

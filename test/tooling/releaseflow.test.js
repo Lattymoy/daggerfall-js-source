@@ -397,7 +397,7 @@ function askCheck(t, { body = '/check', permission = 'write', pull = {} } = {}) 
     env: { PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: tmp, GITHUB_REPOSITORY: 'o/r', GH_CALLS: join(tmp, 'calls'), PR: '12', WHO: 'someone', COMMENT: '345', BODY: body, FAKE_PERMISSION: permission, FAKE_PULL: JSON.stringify(pr) },
   });
   assert.equal(r.status, 0, r.stderr);
-  return { calls: callsOf(join(tmp, 'calls')), said: existsSync(join(tmp, 'say.md')) ? readFileSync(join(tmp, 'say.md'), 'utf8') : null };
+  return { tmp, calls: callsOf(join(tmp, 'calls')), said: existsSync(join(tmp, 'say.md')) ? readFileSync(join(tmp, 'say.md'), 'utf8') : null };
 }
 
 test('CHECK-ASK: `/check` from someone who can push dispatches check.yml on the pull request\'s own branch and says so with a reaction; a reader is told who may ask, a fork\'s pull request why it cannot be, a closed one that it is closed; a comment that is not `/check` asks nothing; and nothing of the comment is pasted into the script (mutants: anyone may ask; a fork\'s branch dispatched; the check dispatched on the default branch)', { skip: BASH }, (t) => {
@@ -416,6 +416,8 @@ test('CHECK-ASK: `/check` from someone who can push dispatches check.yml on the 
     const no = askCheck(t, { permission });
     assert.ok(!no.calls.some((c) => c[0] === 'workflow'), `${permission}: nothing dispatched`);
     assert.match(no.said, /someone who can push here, and @someone cannot/);
+    assert.ok(no.calls.some((c) => c.join(' ') === `api -X POST repos/o/r/issues/12/comments -F body=@${no.tmp}/say.md --silent`),
+      `${permission}: said on the pull request's issue, by REST - the job holds issues: write, and GraphQL's addComment asks pull-requests: write`);
   }
   const fork = askCheck(t, { pull: { head: { repo: { full_name: 'stranger/r' }, ref: 'main', sha: 'a'.repeat(40) } } });
   assert.ok(!fork.calls.some((c) => c[0] === 'workflow'), 'a fork\'s branch is not this repository\'s');

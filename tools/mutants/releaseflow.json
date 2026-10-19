@@ -337,6 +337,16 @@
     "note": "The check would run on the default branch, never the pull request's."
   },
   {
+    "name": "CHECK-ASK-the-answer-by-graphql",
+    "file": ".github/workflows/check-ask.yml",
+    "old": "gh api -X POST \"repos/$GITHUB_REPOSITORY/issues/$PR/comments\" -F \"body=@$RUNNER_TEMP/say.md\" --silent; }",
+    "new": "gh pr comment \"$PR\" --repo \"$GITHUB_REPOSITORY\" --body-file \"$RUNNER_TEMP/say.md\"; }",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The refusals go through GraphQL's addComment, which a pull request refuses a token without pull-requests: write - the job holds issues: write, so a reader asking /check would be told nothing and the run would fail."
+  },
+  {
     "name": "DEV-ENV-the-build-unstamped",
     "file": ".github/workflows/dev-deploy.yml",
     "old": "          VITE_DFO_RELAY: wss://${{ env.DEV_HOST }}/relay\n",

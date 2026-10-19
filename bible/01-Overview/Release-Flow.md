@@ -26,7 +26,7 @@ account deploy on a path filter: since this, NOTHING THE PLAYERS USE MOVES WHEN 
 | DEV-ENV | main's game, relay and account service on a VM of its own, reached through WireGuard alone | `dev-deploy.yml`, `ops/dev/`, `tools/devPeer.mjs`, `src/net/serviceHome.js` |
 
 Held by `test/tooling/releaseflow.test.js`, `test/tooling/rel4_release.test.js` (the notes) and
-`test/net/servicehome.test.js`; `tools/mutants/releaseflow.json` (43 mutants, all dead).
+`test/net/servicehome.test.js`; `tools/mutants/releaseflow.json` (44 mutants, all dead).
 
 ## The branches
 
@@ -48,7 +48,8 @@ Held by `test/tooling/releaseflow.test.js`, `test/tooling/rel4_release.test.js` 
    the one beneath it - the account service for the relay to serve the release's `RELAY_VERSION`, the site for the
    account service to serve its `ACCOUNT_VERSION`.
 3. **Approve.** Each run stops at its production job - the relay's and the account service's deploy, the site's
-   publish, the desktop release's publish - until a release manager approves it (*Review deployments*). The relay
+   publish, the desktop release's publish - until a release manager approves it (*Review deployments*). GitHub lets
+   anyone who can push here press *Run workflow*; it is the approval that is a release manager's alone. The relay
    deploys only when `RELAY_VERSION` moved, and A RELAY DEPLOY DROPS EVERY CONNECTED PLAYER: approve it at an hour they
    can spare.
 4. **Verify.** The relay's and the account service's deploys poll what they deployed until it answers with the
@@ -115,7 +116,8 @@ times where every pull request finds them (`09-Testing/Testing.md`, CI-TIMES).
 
 The holders above are the defaults this was written with, FOR THE OWNER TO CONFIRM. A reviewer must be a collaborator
 with write access (GitHub ignores a code owner without it). On a repository a personal account owns, GitHub has no
-teams and no custom roles, so the roles are people named in the file.
+teams and no custom roles, so the roles are people named in the file. A release manager may approve a run they
+dispatched themselves (`prevent_self_review` is off): with one release manager, nothing could ship otherwise.
 
 TO CHANGE A ROLE: a pull request editing `ops/github/settings.json` (and `.github/CODEOWNERS` for a reviewer - the
 test and the tool hold the two together). Once it is merged, an admin, signed in (`gh auth login`), runs
