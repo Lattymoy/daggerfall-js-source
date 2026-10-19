@@ -319,7 +319,7 @@ test('AUDIT HOME-STATIONS (the batch\'s cross-cutting audit, F8) the service: a 
   assert.equal(p2.body.piece?.station, 'spells');
 });
 
-test('DECOR1 the client\'s door: every call rides the one session as a Bearer header to its route, and no session is a word, not a throw; every refusal the service can say has a sentence; the deploy bundles the law and its smoke reads a room and refuses a guest (mutants: a route misspelt, the secret in the body)', async () => {
+test('DECOR1 the client\'s door: every call rides the one session as a Bearer header to its route, and no session is a word, not a throw; every refusal the service can say has a sentence; the deploy\'s smoke reads a room and refuses a guest (mutants: a route misspelt, the secret in the body)', async () => {
   const seen = [];
   const fetch = async (url, init) => { seen.push({ url, init }); return { ok: true, status: 200, json: async () => ({ ok: true }) }; };
   const storage = new Map([[SESSION_KEY, JSON.stringify({ secret: 'sek', id: 'p' })]]);
@@ -343,7 +343,6 @@ test('DECOR1 the client\'s door: every call rides the one session as a Bearer he
   }
   assert.match(REFUSALS['decor-cap'], /at most 200 pieces/);
   const wf = src('.github/workflows/account-deploy.yml');
-  assert.match(wf, /- "src\/net\/decorLaw\.js"/);
   assert.match(wf, /\$base\/v1\/homes\/decor"/);
   assert.match(wf, /grep -q '"homes-need-account"' \/tmp\/place\.json/);
 });

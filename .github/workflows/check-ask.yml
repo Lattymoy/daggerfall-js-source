@@ -1,0 +1,64 @@
+# CHECK-ASK (2026-10-19, bible/01-Overview/Release-Flow.md): `/check` ON A PULL REQUEST RUNS THE WHOLE CHECK - A
+# CONFLICTED ONE TOO.
+#
+# check.yml runs on `pull_request`, and GitHub starts no `pull_request` run for a pull request that conflicts with its
+# base: there is no merge commit to test. So a conflicted pull request showed no check at all until its branch was
+# brought up to its base, and nobody could see whether the branch itself was green. Now a comment whose first line is
+# `/check`, from someone who can push here, dispatches check.yml on the pull request's own branch - verify.yml's every
+# part on the branch's head, reported as the same `check` on the pull request's head commit, where its merge box reads
+# it. A clean pull request has its usual run on the merge besides; the branch's run is the one a conflict cannot stop.
+#
+# issue_comment runs THIS file, from the default branch, with the repository's token - so nothing here checks out or
+# runs a pull request's code. It reads the pull request through the API, as data, and asks for the dispatch; the run it
+# starts is the branch's own check.yml, as if its author had pressed "Run workflow" on it. A fork's branch is not this
+# repository's and cannot be dispatched here, so `/check` on a fork's pull request says so and does nothing - its own
+# `pull_request` run comes once it is brought up to its base.
+name: check-ask
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  ask:
+    # a comment on a pull request (an issue's are not asked) that opens with the word
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/check')
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write         # the dispatch
+      issues: write          # the answer - a pull request's comments and reactions are its issue's
+      pull-requests: read    # the pull request's branch
+    steps:
+      - name: Dispatch the check on the pull request's branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.issue.number }}
+          WHO: ${{ github.event.comment.user.login }}
+          COMMENT: ${{ github.event.comment.id }}
+          BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+          say() { printf '%s\n' "$1" > "$RUNNER_TEMP/say.md"; gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/say.md"; }
+          first=$(printf '%s\n' "$BODY" | head -n 1 | tr -d '\r' | sed 's/[[:space:]]*$//')
+          if [ "$first" != '/check' ]; then echo "the first line is not /check - nothing asked"; exit 0; fi
+          perm=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$WHO/permission" --jq .permission 2>/dev/null || echo none)
+          case "$perm" in
+            admin|maintain|write) ;;
+            *) say "\`/check\` runs for someone who can push here, and @$WHO cannot - one who can may ask it."; exit 0 ;;
+          esac
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" > "$RUNNER_TEMP/pr.json"
+          state=$(jq -r '.state' "$RUNNER_TEMP/pr.json")
+          repo=$(jq -r '.head.repo.full_name // ""' "$RUNNER_TEMP/pr.json")
+          ref=$(jq -r '.head.ref' "$RUNNER_TEMP/pr.json")
+          sha=$(jq -r '.head.sha' "$RUNNER_TEMP/pr.json")
+          if [ "$state" != open ]; then say "This pull request is $state - nothing to check."; exit 0; fi
+          if [ "$repo" != "$GITHUB_REPOSITORY" ]; then
+            say "\`/check\` dispatches the check on a branch of this repository, and this one is \`${repo:-a deleted fork}\`'s - merge its base into it and its own check runs."
+            exit 0
+          fi
+          gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$ref"
+          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/comments/$COMMENT/reactions" -f content=rocket --silent
+          echo "dispatched check.yml on $ref ($sha) for #$PR, asked by $WHO"

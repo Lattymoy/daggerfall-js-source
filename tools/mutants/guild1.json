@@ -738,15 +738,5 @@
     "tests": [
       "test/server/guild1.test.js"
     ]
-  },
-  {
-    "name": "GUILD1-the-law-not-bundled",
-    "file": ".github/workflows/account-deploy.yml",
-    "old": "      - \"src/net/guild/guildLaw.js\"\n",
-    "new": "",
-    "tests": [
-      "test/server/guild1.test.js",
-      "test/server/accountdeploy.test.js"
-    ]
   }
 ]

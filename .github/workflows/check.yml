@@ -7,9 +7,19 @@ name: check
 # verification. It runs whatever happened above it (`always()`): a required
 # check that is SKIPPED because a job it needs failed would count as a
 # pass, so this one reads the result and fails itself.
+#
+# RELEASE-FLOW (2026-10-19, bible/01-Overview/Release-Flow.md): and on every
+# push to main - main's own head after each merge, which the site's deploy
+# verified until it moved to release; its green run is also what saves the
+# shards' times where every pull request finds them (CI-TIMES: a branch's
+# saved times are its own, main's everyone's). A dispatch runs it on any
+# branch: CHECK-ASK's `/check` (check-ask.yml) dispatches it on a pull
+# request's own branch - the one way a conflicted pull request is checked.
 
 on:
   pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

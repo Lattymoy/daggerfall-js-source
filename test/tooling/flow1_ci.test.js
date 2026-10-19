@@ -68,11 +68,13 @@ test('FLOW1 the workflows: verify.yml is the one check - lint and the types, eve
   assert.match(c, /\n {2}check:\n {4}if: \$\{\{ always\(\) \}\}\n {4}needs: \[verify\]/);
   assert.match(c, /if \[ "\$\{\{ needs\.verify\.result \}\}" != "success" \]; then[\s\S]*?exit 1/);
   const d = read('.github/workflows/deploy.yml');
-  assert.match(d, /\n {2}main:\n[\s\S]*?ref: main\n[\s\S]*?sha=\$\(git rev-parse HEAD\)/, 'main\'s head, pinned once');
-  assert.match(d, /\n {2}verify:\n {4}needs: main\n {4}uses: \.\/\.github\/workflows\/verify\.yml\n {4}with:\n {6}ref: \$\{\{ needs\.main\.outputs\.sha \}\}\n {6}build: false/);
-  assert.match(d, /\n {2}site:\n {4}needs: main[\s\S]*?Checkout production\n[\s\S]*?ref: \$\{\{ needs\.main\.outputs\.sha \}\}[\s\S]*?run: npm run build\n {8}working-directory: production/);
+  // RELEASE-FLOW (bible/01-Overview/Release-Flow.md): release's head, pinned once - the dispatch's own commit, and a run
+  // dispatched anywhere else stops at the pin before anything is built
+  assert.match(d, /\n {2}release:\n {4}runs-on: ubuntu-latest\n {4}outputs:\n {6}sha: \$\{\{ steps\.sha\.outputs\.sha \}\}\n {4}steps:\n {6}- name: Only release publishes the site\n {8}if: github\.ref != 'refs\/heads\/release'\n {8}run: \|\n[^\n]*\n {10}exit 1\n {6}- id: sha\n {8}run: echo "sha=\$GITHUB_SHA" >> "\$GITHUB_OUTPUT"\n/, 'release\'s head, pinned once');
+  assert.match(d, /\n {2}verify:\n {4}needs: release\n {4}uses: \.\/\.github\/workflows\/verify\.yml\n {4}with:\n {6}ref: \$\{\{ needs\.release\.outputs\.sha \}\}\n {6}build: false/);
+  assert.match(d, /\n {2}site:\n {4}needs: release[\s\S]*?Checkout production\n[\s\S]*?ref: \$\{\{ needs\.release\.outputs\.sha \}\}[\s\S]*?run: npm run build\n {8}working-directory: production/);
   assert.match(d, /\n {2}deploy:\n {4}needs: \[verify, site\]\n[\s\S]*?uses: actions\/deploy-pages@v4/);
-  assert.equal((d.match(/ref: main/g) ?? []).length, 1, 'only the pin reads main - every other job the commit it pinned');
+  assert.doesNotMatch(d, /ref: (?:main|release)\n/, 'no job reads a production branch by name - every one the commit the pin took');
   assert.equal((d.match(/actions\/deploy-pages/g) ?? []).length, 1);
   // REL-FAST (2026-10-15, Mac: "Yes, thats insanely slow" - a release spent 27.4 of its 33 minutes on `npm run check` in
   // series): the desktop release's gate is the same check, in parallel, on the commit its legs build

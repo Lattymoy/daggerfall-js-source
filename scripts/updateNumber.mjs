@@ -1,10 +1,12 @@
 // REL8 (2026-10-09, Mac: "Let's officially start numbering updates beginning with 0.0.1") - THE UPDATE NUMBER.
 //
-// Every merge to main cuts a release (REL3) and deploys the site; each is a player's UPDATE, numbered
-// MAJOR.MINOR.PATCH. MAJOR.MINOR is the line (scripts/updateLine.mjs, by hand). PATCH is DERIVED, never bumped: the
-// first-parent commit on main whose diff last changed the line is the line's update 1, and each first-parent commit
-// after it the next - so it needs no file touched per merge (no two branches conflict on it), it is the same number
-// on every machine that has the history, and it reads 1 for the merge that brought the line, whatever merged first.
+// Each release is a player's UPDATE, numbered MAJOR.MINOR.PATCH. MAJOR.MINOR is the line (scripts/updateLine.mjs, by
+// hand). PATCH is DERIVED, never bumped: the first-parent commit whose diff last changed the line is the line's update
+// 1, and each first-parent commit after it the next - so it needs no file touched per merge (no two branches conflict
+// on it), it is the same number on every machine that has the history, and it reads 1 for the merge that brought the
+// line, whatever merged first. RELEASE-FLOW (2026-10-19, bible/01-Overview/Release-Flow.md): a release is cut by hand
+// from `release` now, so the count is along release's first parents - one a promotion of main, one a hotfix - where it
+// was along main's while every merge to main was released (REL3); main's own count is the dev environment's.
 //
 // It is NOT the installer's version. The desktop updater compares installer versions (REL3's app-v0.1.<count>) and
 // never takes a lower one, so the installers keep theirs and the update number rides beside it: stamped into the

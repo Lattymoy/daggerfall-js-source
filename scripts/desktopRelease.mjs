@@ -50,11 +50,17 @@
 // they were built for (`shell`, a digest of the shell's sources at the commit): a release that changes the shell goes
 // out by the installer. And the publish job measures the update a player of the release before takes (`delta`).
 //
+// RELEASE-FLOW (2026-10-19, bible/01-Overview/Release-Flow.md): A RELEASE IS CUT FROM `release`, and the pull requests
+// players read about were merged into main. They reach release inside the merge that promoted main, so `notes` reads
+// release's own first-parent line (the promotions and the hotfixes) and, under each promotion, main's line since the
+// release before it (pullRequestsSince).
+//
 //   node scripts/desktopRelease.mjs alias <dir>           each download copied under its name from before BR5
 //   node scripts/desktopRelease.mjs check <dir>           exit 1 naming any file missing
 //   node scripts/desktopRelease.mjs notes <tag>           the release body, markdown, to stdout (gh api: GH_TOKEN)
 //   node scripts/desktopRelease.mjs renotes <tag> <body>  a published release's body, its notes read again (REL7)
 //   node scripts/desktopRelease.mjs latest <tag> [<cur>]  "true" when <tag> should be marked latest
+//   node scripts/desktopRelease.mjs line [<tag>]          RELEASE-FLOW: exit 1 unless HEAD's line holds the release before
 //   node scripts/desktopRelease.mjs shell                 DA13: the shell's id at HEAD, to stdout
 //   node scripts/desktopRelease.mjs seed <dist> <file>    DA13: the bundled copy's index (VERSION, DFO_SHELL)
 //   node scripts/desktopRelease.mjs pack <dist> <dir>     DA13: the game's pack and manifest (VERSION, DFO_UPDATE, DFO_SHELL)
@@ -190,18 +196,69 @@ export function previousReleaseTag(tag, run = git, at = 'HEAD') {
 }
 
 /**
+ * RELEASE-FLOW: why `at`'s own first-parent line does not hold the release before `tag`, or null when it does (or there
+ * is none). The update number counts that line (scripts/updateNumber.mjs) and the notes read it from the release before
+ * (pullRequestsSince), and both are right only while every release stands on it - as every release cut from `release`
+ * does, and every one main cut before it, so long as release was branched from main at or after the last of them.
+ * Branched earlier, release would count from its branch point - an update number main has already published - and its
+ * first promotion would bring again every pull request main released since.
+ */
+export function releaseLineProblem(tag = '', run = git, at = 'HEAD') {
+  const prev = previousReleaseTag(tag, run, at);
+  if (!prev) return null;
+  const commit = run(['rev-parse', `${prev}^{commit}`]);
+  if (run(['rev-list', '--first-parent', at]).split('\n').includes(commit)) return null;
+  return `${prev} (${commit.slice(0, 12)}) is not on ${at}'s first-parent line: release was branched from main before main cut it - bring release to main's head before anything is released from it (bible/01-Overview/Release-Flow.md, "Where release begins")`;
+}
+
+/** RELEASE-FLOW: where main's first-parent line is read - CI's full checkout of it first (fetch-depth 0 fetches every
+ *  branch), then a clone's own. */
+export const MAINLINE_REFS = Object.freeze(['refs/remotes/origin/main', 'refs/heads/main']);
+
+/** The first of MAINLINE_REFS this clone has, or null. */
+export function mainlineRef(run = git) {
+  for (const ref of MAINLINE_REFS) {
+    try {
+      if (run(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`])) return ref;
+    } catch { /* not in this clone */ }
+  }
+  return null;
+}
+
+/**
  * The pull requests merged from `from` (the previous release's tag) to
  * `to` (HEAD, or REL7 the release's own tag), newest first, by number:
  * every commit on the first-parent line that is GitHub's "Merge pull
  * request #N" or a squash's "... (#N)", once. A commit pushed straight to
  * the branch names none.
+ *
+ * RELEASE-FLOW: a merge on that line whose second parent stands on main's
+ * own first-parent line is a PROMOTION of main into release, and it brings
+ * main's pull requests since the release before it (`<merge>^1..<merge>^2`,
+ * read along main's line, right after the merge itself). A hotfix's merge
+ * is on release's line and brings its own number; a pull request merged
+ * into a branch, never main, is on neither line. A clone with no main
+ * cannot tell a promotion, and the notes it would write would be short of
+ * every pull request one brought - so it throws, and nothing is published.
  */
 export function pullRequestsSince(from, run = git, to = 'HEAD') {
   if (!from) return [];
+  const mainline = mainlineRef(run);
+  if (!mainline) throw new Error(`no main in this clone (${MAINLINE_REFS.join(', ')}) - the pull requests a promotion brings cannot be read`);
+  const onMain = new Set(run(['rev-list', '--first-parent', `${from}..${mainline}`]).split('\n').filter(Boolean));
   const numbers = new Set();
-  for (const subject of run(['log', '--first-parent', '--format=%s', `${from}..${to}`]).split('\n')) {
+  const take = (subject) => {
     const m = /^Merge pull request #(\d+)\b/.exec(subject) ?? /\(#(\d+)\)\s*$/.exec(subject);
     if (m) numbers.add(Number(m[1]));
+  };
+  for (const row of run(['log', '--first-parent', '--format=%H %P%x09%s', `${from}..${to}`]).split('\n')) {
+    const tab = row.indexOf('\t');
+    if (tab < 0) continue;
+    const [, first, second] = row.slice(0, tab).split(' ');
+    take(row.slice(tab + 1));
+    if (second && onMain.has(second)) {
+      for (const subject of run(['log', '--first-parent', '--format=%s', `${first}..${second}`]).split('\n')) take(subject);
+    }
   }
   return [...numbers];
 }
@@ -525,7 +582,16 @@ function main(argv) {
     console.log(String(shouldMarkLatest(a, b)));
     return 0;
   }
-  console.error('usage: desktopRelease.mjs alias <dir> | check <dir> | notes <tag> | renotes <tag> <body-file> | latest <tag> [<current>] | shell | seed <dist> <file> | pack <dist> <dir> | delta <prev> <next> [<prev-tag>]');
+  if (cmd === 'line') {
+    const problem = releaseLineProblem(a ?? '');
+    if (problem) {
+      console.error(`nothing is released: ${problem}`);
+      return 1;
+    }
+    console.log('the release before stands on this line');
+    return 0;
+  }
+  console.error('usage: desktopRelease.mjs alias <dir> | check <dir> | notes <tag> | renotes <tag> <body-file> | latest <tag> [<current>] | line [<tag>] | shell | seed <dist> <file> | pack <dist> <dir> | delta <prev> <next> [<prev-tag>]');
   return 2;
 }
 

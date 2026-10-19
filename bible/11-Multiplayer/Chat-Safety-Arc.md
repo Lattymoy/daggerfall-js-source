@@ -350,16 +350,20 @@ player's words are drawn in a code block, so no line is markdown.
 
 **Discord is code** (DISCORD-CODE, 2026-10-17, Mac: "Is there a way we can set up something where you can handle all
 future discord integrations and changes yourself?", then "Do it"; the rule is in `CLAUDE.md`). Every Discord change is a
-change to the repository, merged, that the account deploy applies:
+change to the repository, merged - and since RELEASE-FLOW released (`01-Overview/Release-Flow.md`) - that the account
+deploy applies:
 
 - **The commands are declared once**, beside the service that answers them: `DISCORD_COMMANDS` in
   `server-account/src/discordCommands.js`. The deploy writes the WHOLE list (Discord's bulk overwrite), so a command
   added there appears in the server, one taken out is gone, and one made by hand in the Developer Portal is written
   over. `discord.js` builds its usage text from the declared subcommands, so the declaration and its handler ship in
   one Worker; the test drives every declared command and subcommand through the service and holds each to a handler.
-- **A change to any of it deploys.** The commands live under `server-account/`, and the deploy's path filter lists the
+- **A change to any of it deploys.** ~~The commands live under `server-account/`, and the deploy's path filter lists the
   setup tool's own import graph (`tools/discordModCommands.mjs`, `tools/lib/isMain.mjs`), held to it by the test - a
-  change to `/mod` alone used to deploy nothing, so reached Discord only with some later change to the service.
+  change to `/mod` alone used to deploy nothing, so reached Discord only with some later change to the service.~~
+  RELEASE-FLOW (2026-10-19): the deploy has no path filter left to miss one - it is dispatched by hand on `release` and
+  applies the whole service and the whole of Discord's setup every time, so a change reaches Discord with the release
+  that carries it.
 - **The bot's hands are checked.** After the URL and the commands, the deploy reads the server's roles and the bot's,
   computes its permissions in the moderators' channel the way Discord does (its Permissions page: `@everyone` and the
   bot's roles, Administrator for everything, then the channel's overwrites - `@everyone`'s, its roles' together, its

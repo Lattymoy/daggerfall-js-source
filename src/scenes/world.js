@@ -781,7 +781,7 @@ import { poiMe } from '../poi/poiService.js';   // POI-3: the store's word on wh
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
-import { OnlineSession, steadyNow, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS, SHOWN_MOVE_HOLD_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory; AUDIT 637 D7: the move hold, one law both ends
+import { OnlineSession, steadyNow, roomKeyFor, HOME_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS, SHOWN_MOVE_HOLD_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory; AUDIT 637 D7: the move hold, one law both ends
 import { createSeatClock } from '../net/seatLive.js';   // FIELD BUGS 2026-10-18d SEAT-LIVE: the named seat's patience, which this page's own absence never spends
 import { pageWave } from '../net/reconnectWave.js';   // SCALE2c: a relay deploy's reconnect, spread by the hub's count
 import { quietFoesGate } from '../net/foesQuiet.js';   // SCALE2c: a full foes frame that says nothing, said once
@@ -21136,7 +21136,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const grants = createGrantHost({ session: () => online, climateAt: (x, y) => maps.getClimateIndex(x, y) });   // GRANT3: the spawn grants (scenes/grantHost.js) - the pool's net and my session's answers
   const onlineStart = () => {
     online = new OnlineSession({
-      url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
+      url: params.get('server') || getPref('onlineServer') || HOME_SERVER,
       // ACC1g: THE RELAY TAKES THE NAME OUT OF THE TOKEN AND IGNORES
       // THIS ONE. Two typed sources stood here - a `?name=` in the URL
       // and the `onlineName` pref - and both were the impersonation

@@ -26,6 +26,9 @@ concurrency:
 jobs:
   read:
     runs-on: ubuntu-latest
+    # RELEASE-FLOW (bible/01-Overview/Release-Flow.md): production's token, in the environment that keeps it - run on
+    # release, with a release manager's approval
+    environment: production
     # AUDIT PLAN-1000 H10: three questions of a minute's bound each - a hung call never holds a runner for six hours
     timeout-minutes: 10
     defaults:

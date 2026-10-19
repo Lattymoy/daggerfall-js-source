@@ -11,16 +11,18 @@
 # THE SEAM BETWEEN THEM IS A SIGNATURE. This service holds the private
 # key; the relay holds the public half and can verify but never mint.
 #
-# ─── THE DEPLOY IS AUTOMATIC, AND SO IS EVERYTHING BEFORE IT ───────
+# ─── THE DEPLOY IS BY HAND, FROM `release`; EVERY STEP IN IT IS AUTOMATIC ───
 # Mac (2026-09-21): "The token provided allows you to take this on
 # yourself. I am not needed at all."
 #
-# `.github/workflows/account-deploy.yml` does all four steps on every
-# push to main that touches this service, with the Cloudflare API token
-# read from `secrets.CLOUDFLARE_API_TOKEN`, where it already lives for
-# the relay. NOBODY TYPES A CREDENTIAL ANYWHERE. Every step is
-# idempotent, so the job is safe to re-run and a deploy that failed is
-# retried by the next push instead of silently staying stale:
+# `.github/workflows/account-deploy.yml` does all four steps when a
+# release manager dispatches it on the release branch and approves its
+# deploy (RELEASE-FLOW, 2026-10-19, bible/01-Overview/Release-Flow.md;
+# until then every push to main that touched this service ran it), with
+# the Cloudflare API token read from `secrets.CLOUDFLARE_API_TOKEN` - the
+# `production` environment's, where it lives for the relay too. NOBODY
+# TYPES A CREDENTIAL ANYWHERE. Every step is idempotent, so the job is
+# safe to re-run, and a deploy that failed is dispatched again:
 #
 #   1. Create the database if it is not there, then read its id back
 #      out of Cloudflare and write it into this file's copy IN THE
@@ -41,8 +43,8 @@
 #
 # A DEPLOY HERE DROPS NOBODY. That is the entire point of the split:
 # this Worker holds no sockets, so it can be fixed at any hour - which
-# is also why this one may fire on a path filter where the relay's
-# deploy may not.
+# is also why every release may deploy it whole, where the relay's
+# deploy waits for its version to move.
 name = "daggerfall-accounts"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
@@ -305,7 +307,7 @@ CHAPTERS_OPEN = "on"
 FIRMAMENT_OPEN = "on"
 # CHAP4c (Chapters-Arc 6): THE CHAPTERS' TITLES - a seat's Master, officer and Former Master signed on the token - by
 # this switch, "on" or anything else for off. Shipped OFF: the relay must carry the five ids first (RELAY_VERSION
-# world183, which relay-deploy.yml deploys on the merge to main - AUDIT CHAP4 R2; CHAP6e's High Master and Season
+# world183, which relay-deploy.yml deploys - AUDIT CHAP4 R2; CHAP6e's High Master and Season
 # Master beside the three, AUDIT CHAP5 R1) - a token with a title the relay does not know is refused at the hello, so
 # turning this on before that relay is live keeps every seated player who wears one out of the world. world183 live
 # first, then "on".

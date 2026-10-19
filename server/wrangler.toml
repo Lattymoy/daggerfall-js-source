@@ -5,23 +5,27 @@
 # host's snapshot of the place in the object's storage; the save stays
 # on the player's machine.
 #
-# THE DEPLOY IS AUTOMATIC, and has been since SRV-N/CI (PR #209):
-# `.github/workflows/relay-deploy.yml` runs on EVERY PUSH TO MAIN. It
-# reads RELAY_VERSION out of src/net/wire.js, asks the live /health, and
+# THE DEPLOY IS BY HAND, FROM `release` (RELEASE-FLOW, 2026-10-19,
+# bible/01-Overview/Release-Flow.md): a release manager dispatches
+# `.github/workflows/relay-deploy.yml` on the release branch, in CI, and
+# approves its deploy job in the `production` environment. It reads
+# RELAY_VERSION out of src/net/wire.js, asks the live /health, and
 # deploys only when the two differ - then POLLS /health until it names
 # the version the run built, because a wrangler exit code of 0 over an
 # unchanged Worker is a green deploy that did not happen. The token
-# lives in the repo's secrets, so nobody has to hold it, and a
-# workflow_dispatch forces a run.
+# lives in the production environment's secrets, so nobody has to hold
+# it. (From SRV-N/CI, PR #209, until RELEASE-FLOW it ran on every merge
+# into main by itself.)
 #
 # ═══ AND A DEPLOY DROPS EVERY CONNECTED PLAYER ════════════════════
 # Every Durable Object restarts and every socket in the game closes at
-# once: peers vanish, chat goes quiet. That is the cost of merging a
-# relay-changing slice, and it is paid the moment the merge lands
-# rather than whenever somebody gets round to it.
+# once: peers vanish, chat goes quiet. That is the cost of releasing a
+# relay-changing slice, and it is paid when a release manager deploys
+# it - so a release that moves the relay is cut at an hour the players
+# can spare.
 #
-# (This block claimed the opposite until 2026-09-21, fifteen weeks after
-# #209 made that false, and Mac had to be the one to notice.
+# (This block claimed the opposite of the truth until 2026-09-21, fifteen
+# weeks after #209 made it false, and Mac had to be the one to notice.
 # test/server/relaydeploy.test.js reads the workflow's OWN TRIGGER now and
 # holds every live comment to it - the claim is derived from the
 # workflow rather than retyped beside it, which is what let the old

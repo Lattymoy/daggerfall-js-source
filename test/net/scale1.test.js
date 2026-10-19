@@ -207,7 +207,7 @@ test('SCALE1 D: the market\'s materials view asked for the whole catalogue binds
 
 test('SCALE1 E: the account service deploys only after the suite passes; the relay runs the suite only when it would deploy, and deploys only when it passed; the bookmark is written before the migrations (mutants: each gate dropped)', () => {
   const acct = src('.github/workflows/account-deploy.yml');
-  assert.match(acct, /\n {2}verify:\n {4}uses: \.\/\.github\/workflows\/verify\.yml\n {4}with:\n {6}build: false\n/);
+  assert.match(acct, /\n {2}verify:\n {4}needs: release\n {4}uses: \.\/\.github\/workflows\/verify\.yml\n {4}with:\n {6}build: false\n/);   // RELEASE-FLOW: after the release guard
   assert.match(acct, /\n {2}deploy:\n {4}needs: verify\n/);
   const bookmark = acct.indexOf("time-travel info \"$DB_NAME\" --json");
   const apply = acct.indexOf('d1 migrations apply "$DB_NAME" --remote');
@@ -215,7 +215,9 @@ test('SCALE1 E: the account service deploys only after the suite passes; the rel
   const relay = src('.github/workflows/relay-deploy.yml');
   assert.match(relay, /\n {2}verify:\n {4}needs: drift\n {4}if: needs\.drift\.outputs\.deploying == 'true'\n {4}uses: \.\/\.github\/workflows\/verify\.yml/);
   assert.match(relay, /\n {2}deploy:\n {4}needs: \[drift, verify\]\n/);
-  assert.match(relay, /if: \$\{\{ !cancelled\(\) && needs\.drift\.result == 'success' && \(needs\.verify\.result == 'success' \|\| needs\.verify\.result == 'skipped'\) \}\}/);
+  // PIN MOVED (RELEASE-FLOW): the deploy runs only when the drift says deploy - a skipped suite meant nothing to deploy, and
+  // the deploy job now waits on a release manager, who is never asked to approve a deploy that would do nothing
+  assert.match(relay, /if: \$\{\{ !cancelled\(\) && needs\.drift\.result == 'success' && needs\.drift\.outputs\.deploying == 'true' && needs\.verify\.result == 'success' \}\}/);
 });
 
 // ═══ F. HOW A TAB ASKS AGAIN ═════════════════════════════════════════════════════════════════════════════════════════

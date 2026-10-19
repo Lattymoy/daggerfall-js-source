@@ -230,16 +230,6 @@
     "note": "The usage would leave out the last subcommand."
   },
   {
-    "name": "DCODE-tool-not-deployed",
-    "file": ".github/workflows/account-deploy.yml",
-    "old": "      - \"tools/discordModCommands.mjs\"\n",
-    "new": "",
-    "tests": [
-      "test/server/discord_setup.test.js"
-    ],
-    "note": "A change to the tool alone would not deploy, so would not reach Discord."
-  },
-  {
     "name": "DCODE-404-unexplained",
     "file": "tools/discordModCommands.mjs",
     "old": "  if (read.status === 404) throw new Error(",

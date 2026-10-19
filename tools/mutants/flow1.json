@@ -56,8 +56,8 @@
   {
     "name": "FLOW1-a-job-on-main-not-the-pin",
     "file": ".github/workflows/deploy.yml",
-    "old": "          ref: ${{ needs.main.outputs.sha }}\n          path: production",
-    "new": "          ref: main\n          path: production",
+    "old": "          ref: ${{ needs.release.outputs.sha }}\n          path: production",
+    "new": "          ref: release\n          path: production",
     "tests": [
       "test/tooling/flow1_ci.test.js"
     ]

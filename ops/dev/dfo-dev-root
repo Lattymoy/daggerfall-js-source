@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# DEV-ENV (2026-10-19, bible/01-Overview/Release-Flow.md): WHAT A DEV DEPLOY MAY DO AS ROOT, AND NOTHING ELSE.
+#
+# Installed to /usr/local/sbin by bootstrap.sh; `dfo` - the user dev-deploy.yml signs in as - may run it with sudo, and
+# it alone (/etc/sudoers.d/dfo-dev). Three verbs:
+#   peers [<peers.json>]  the dev network's members as a release names them, over this VM's own base (its key and the
+#                         CI runner's peer, written by bootstrap.sh): EVERY ENTRY CHECKED BEFORE ANYTHING IS APPLIED -
+#                         a name, a WireGuard key, a member's address (10.66.0.3 to .250), none twice - and applied
+#                         without dropping a session (wg syncconf). With no file, the base alone.
+#   stop | start          the two Workers' services and the account service's cron timer
+# It runs no code a release ships: the list is data, read with jq.
+set -euo pipefail
+WG_DIR=${DFO_DEV_WG_DIR:-/etc/wireguard}   # a test's own directory; sudo's env_reset keeps it /etc/wireguard for dfo
+
+case "${1:-}" in
+  peers)
+    file=${2:-}
+    out=$(mktemp)
+    trap 'rm -f "$out"' EXIT
+    cat "$WG_DIR/wg0.base" > "$out"
+    if [ -n "$file" ]; then
+      [ -f "$file" ] || { echo "no members' list at $file" >&2; exit 1; }
+      jq -e 'type == "array" and all(.[]; type == "object")' "$file" >/dev/null || { echo "$file is no list of members" >&2; exit 1; }
+      declare -A seen=()
+      n=$(jq 'length' "$file")
+      for ((i = 0; i < n; i++)); do
+        name=$(jq -r --argjson i "$i" '.[$i].name // ""' "$file")
+        key=$(jq -r --argjson i "$i" '.[$i].key // ""' "$file")
+        ip=$(jq -r --argjson i "$i" '.[$i].ip // ""' "$file")
+        [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,38}$ ]] || { echo "member $i: \"$name\" is no name" >&2; exit 1; }
+        [[ "$key" =~ ^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw480]=$ ]] || { echo "$name: \"$key\" is no WireGuard public key" >&2; exit 1; }
+        if ! [[ "$ip" =~ ^10\.66\.0\.([1-9][0-9]{0,2})$ ]] || [ "${BASH_REMATCH[1]}" -lt 3 ] || [ "${BASH_REMATCH[1]}" -gt 250 ]; then
+          echo "$name: $ip is no member's address (10.66.0.3 to 10.66.0.250)" >&2; exit 1
+        fi
+        for k in "name:$name" "key:$key" "ip:$ip"; do
+          [ -z "${seen[$k]:-}" ] || { echo "$name: ${k%%:*} ${k#*:} is a second member's too" >&2; exit 1; }
+          seen[$k]=1
+        done
+        printf '\n# %s\n[Peer]\nPublicKey = %s\nAllowedIPs = %s/32\n' "$name" "$key" "$ip" >> "$out"
+      done
+    fi
+    install -m 0600 "$out" "$WG_DIR/wg0.conf"
+    wg syncconf wg0 <(wg-quick strip wg0)
+    echo "the dev network holds $(wg show wg0 peers | wc -l) peers"
+    ;;
+  stop) systemctl stop dfo-dev-cron.timer dfo-dev-relay dfo-dev-accounts ;;
+  start) systemctl start dfo-dev-accounts dfo-dev-relay dfo-dev-cron.timer ;;
+  *) echo "usage: dfo-dev-root peers [<peers.json>] | stop | start" >&2; exit 2 ;;
+esac

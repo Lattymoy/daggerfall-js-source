@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# DEV-ENV (2026-10-19, bible/01-Overview/Release-Flow.md): THE ACCOUNT SERVICE'S CRONS, IN THE DEV ENVIRONMENT.
+#
+# Cloudflare fires server-account/wrangler.toml's [triggers] crons; `wrangler dev` fires none by itself, and opens a
+# door to fire one (--test-scheduled, on the loopback alone - Caddy refuses `/__*` from the network). dfo-dev-cron.timer
+# runs this each minute: every minute's cron, and at :41 the hour's (server-account/src/cron.js CRON_MINUTE, CRON_HOUR).
+set -euo pipefail
+curl -fsS --max-time 50 -o /dev/null 'http://127.0.0.1:8788/__scheduled?cron=*+*+*+*+*'
+if [ "$(date -u +%M)" = 41 ]; then
+  curl -fsS --max-time 50 -o /dev/null 'http://127.0.0.1:8788/__scheduled?cron=41+*+*+*+*'
+fi

@@ -48,6 +48,9 @@ concurrency:
 jobs:
   restore:
     runs-on: ubuntu-latest
+    # RELEASE-FLOW (bible/01-Overview/Release-Flow.md): production's token, in the environment that keeps it - run on
+    # release, with a release manager's approval
+    environment: production
     defaults:
       run:
         shell: bash

@@ -1,0 +1,34 @@
+# DEV-ENV (2026-10-19, bible/01-Overview/Release-Flow.md): THE DEV ENVIRONMENT'S ONE SITE.
+#
+# https://{$DFO_DEV_HOST} - main's game, its relay at /relay and its account service at /accounts - one origin, so a
+# page's own calls cross no other. Port 443 is open inside the WireGuard network alone (nftables.conf); port 80 is open
+# to the internet for Let's Encrypt's HTTP challenge, which Caddy answers there for this name's certificate before it
+# redirects anything else to 443. DFO_DEV_HOST is set on caddy.service by bootstrap.sh.
+#
+# Each Worker's own doors stay on the loopback: wrangler's explorer (`/cdn-cgi/`) and its cron door (`/__scheduled`)
+# are refused from the network. Each request names its member's address as Cloudflare would (Cf-Connecting-Ip), so the
+# services' per-address limits hold per member, not for the whole network as one.
+{$DFO_DEV_HOST} {
+	encode zstd gzip
+
+	handle_path /relay/* {
+		@inner path /cdn-cgi/* /__*
+		respond @inner 404
+		reverse_proxy 127.0.0.1:8787 {
+			header_up Cf-Connecting-Ip {remote_host}
+		}
+	}
+
+	handle_path /accounts/* {
+		@inner path /cdn-cgi/* /__*
+		respond @inner 404
+		reverse_proxy 127.0.0.1:8788 {
+			header_up Cf-Connecting-Ip {remote_host}
+		}
+	}
+
+	handle {
+		root * /srv/dfo-dev/current/site
+		file_server
+	}
+}

@@ -119,8 +119,10 @@ test('REL7: the workflow - by hand with a tag, or ON ITS OWN when a merged pull 
   const wf = rd('.github/workflows/release-notes.yml');
   assert.match(wf, /\non:\n {2}workflow_dispatch:\n {4}inputs:\n {6}tag:\n[\s\S]*?\n {2}pull_request_target:\n {4}types: \[edited\]\n\n/, 'by hand, and on a description edited');
   assert.doesNotMatch(wf, /\n {2}(push|pull_request|schedule|release):/, 'no other trigger');
-  assert.match(wf, /\n {4}if: github\.event_name == 'workflow_dispatch' \|\| \(github\.event\.pull_request\.merged && github\.event\.changes\.body && github\.event\.pull_request\.base\.ref == github\.event\.repository\.default_branch\)\n/,
+  // RELEASE-FLOW: a merge into release is a hotfix, and its notes are its release's as well
+  assert.match(wf, /\n {4}if: github\.event_name == 'workflow_dispatch' \|\| \(github\.event\.pull_request\.merged && github\.event\.changes\.body && \(github\.event\.pull_request\.base\.ref == github\.event\.repository\.default_branch \|\| github\.event\.pull_request\.base\.ref == 'release'\)\)\n/,
     'an open pull request, a title edited, a merge into another branch: nothing');
+
   assert.match(wf, /\npermissions:\n {2}contents: read\n/, 'the workflow reads; only its job writes');
   assert.match(wf, /\n {4}permissions:\n {6}contents: write {8}# the release's body\n {6}pull-requests: read {4}# /);
   assert.match(wf, /- uses: actions\/checkout@v4\n {8}with:\n {10}ref: \$\{\{ github\.event\.repository\.default_branch \}\}\n {10}fetch-depth: 0 .*\n {10}persist-credentials: false /, 'main, every tag, no token left behind');

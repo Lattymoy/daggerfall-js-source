@@ -1,0 +1,10 @@
+# DEV-ENV (bible/01-Overview/Release-Flow.md): one firing of the account service's crons (dfo-dev-cron).
+[Unit]
+Description=DFO dev environment: the account service's crons
+After=dfo-dev-accounts.service
+
+[Service]
+Type=oneshot
+User=dfo
+Group=dfo
+ExecStart=/usr/local/bin/dfo-dev-cron

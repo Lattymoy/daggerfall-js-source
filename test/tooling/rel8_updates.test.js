@@ -70,6 +70,34 @@ test('REL8: the merge that brings the line is Update 0.0.1 - whatever merged bef
   assert.equal(r.at(), '1.0.1');
 });
 
+test('RELEASE-FLOW: on release each promotion of main and each hotfix is the next update, however many merges main took between - and a line set on main is .1 at the promotion that brings it; main counts on, the dev environment\'s number', (t) => {
+  const r = repo(t);
+  r.put('a.txt', 'a\n'); r.commit('root');
+  r.pr('numbering', [[UPDATE_LINE_FILE, LINE_TEXT]]);
+  r.pr('one', [['b.txt', 'b\n']]);
+  r.git('branch', 'release');   // cut from main at 0.0.2
+  r.pr('two', [['c.txt', 'c\n']]);
+  r.pr('three', [['d.txt', 'd\n']]);
+  assert.equal(r.at(), '0.0.4', 'main counts its own merges');
+  /** main into release, by the promotion's pull request (a merge commit - release takes no squash). */
+  const promote = () => {
+    r.git('checkout', '-q', 'release');
+    r.git('merge', '-q', '--no-ff', 'main', '-m', 'Merge pull request from o/main');
+    const sha = r.git('rev-parse', 'HEAD');
+    r.git('checkout', '-q', 'main');
+    return sha;
+  };
+  assert.equal(r.at(promote()), '0.0.3', 'a promotion is ONE update, whatever main merged since the release before');
+  r.git('checkout', '-q', '-b', 'hotfix', 'release');
+  r.put('h.txt', 'h\n'); r.commit('the fix');
+  r.git('checkout', '-q', 'release');
+  r.git('merge', '-q', '--no-ff', 'hotfix', '-m', 'Merge pull request from o/hotfix');
+  assert.equal(r.at(), '0.0.4', 'a hotfix is the next');
+  r.git('checkout', '-q', 'main');
+  r.pr('minor', [[UPDATE_LINE_FILE, lineAs('0.1')]]);
+  assert.equal(r.at(promote()), '0.1.1', 'the promotion that brings a new line is its .1');
+});
+
 test('REL8: a clone with no history says nothing rather than a wrong number (CI\'s depth-1 checkout counted from its cut); the release\'s legs are TOLD the number, digits only', (t) => {
   const r = repo(t);
   r.put('a.txt', 'a\n'); r.commit('root');
@@ -139,7 +167,7 @@ test('REL8: the game says it - the pause window\'s version line leads with the n
 
 test('REL8: the site and the release derive it where the history is whole, and every leg is told the one number; the release is named for it', () => {
   const deploy = rd('.github/workflows/deploy.yml');
-  assert.match(deploy, /- name: Checkout production\n\s+uses: actions\/checkout@v4\n\s+with:\n\s+ref: \$\{\{ needs\.main\.outputs\.sha \}\}\n\s+path: production\n(?:\s+#[^\n]*\n)*\s+fetch-depth: 0\n/, 'the production build counts main\'s history');
+  assert.match(deploy, /- name: Checkout production\n\s+uses: actions\/checkout@v4\n\s+with:\n\s+ref: \$\{\{ needs\.release\.outputs\.sha \}\}\n\s+path: production\n(?:\s+#[^\n]*\n)*\s+fetch-depth: 0\n/, 'the production build counts release\'s history');
   const rel = rd('.github/workflows/release-desktop.yml');
   assert.match(rel, /\n {6}update: \$\{\{ steps\.reltag\.outputs\.update \}\}\n/, 'the version job\'s output');
   assert.match(rel, /UPDATE=\$\(node scripts\/updateNumber\.mjs\)\n\s+if \[ -n "\$UPDATE" \] && ! \[\[ "\$UPDATE" =~ \^\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+\$ \]\]; then/, 'derived once, digits only');

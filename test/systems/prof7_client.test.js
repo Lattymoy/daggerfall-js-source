@@ -574,7 +574,6 @@ test('PROF7 wiring: the street and the dungeon stamp and list their bodies for H
   // SEAT2b part two (PIN MOVED): and the held town the station stands in (`seat`, its crafting halls' steps)
   assert.match(c, /craft: \(character, recipe, clean, name, rid, heartwood = false, dye = null, seat = null, cracked = false\) => post\('\/v1\/prof\/craft', \{ character, recipe, clean, name, rid, heartwood, \.\.\.\(dye == null \? \{\} : \{ dye \}\), \.\.\.\(seat == null \? \{\} : \{ seat \}\), \.\.\.\(cracked === true \? \{ cracked: true \} : \{\}\) \}\),/);   // PIN MOVED (PROF10): a Lapidary's `cracked` gem
   for (const word of ['prof-hunt-cap', 'prof-hunt-high', 'prof-foe', 'prof-dye']) assert.doesNotMatch(accountRefusalText(word), /problem|could not be read/, word);
-  assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/characters\/dyes\.js"/);
   assert.match(src('src/systems/foraging/foragingInstall.js'), /hudText\(brokeMessage\(item\.templateIndex, item\.name\)\);/);
   assert.equal(recipeById('knife:iron').templateIndex, SKINNING_KNIFE.templateIndex);
   assert.equal(TRACE_ACT.startDeg < TRACE_ACT.spanYawDeg, true);

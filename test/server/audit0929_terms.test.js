@@ -119,7 +119,7 @@ ${upto ? `seq() { command seq 1 ${upto}; }\n` : ''}${loop}`;
   const pause = (src, name) => Number(/\n\s+sleep (\d+)\n/.exec(runBlock(src, name))?.[1]);
   const siteS = asks(deployJob, 'Wait for the account service to serve this build\'s version') * pause(deployJob, 'Wait for the account service to serve this build\'s version');
   const acct = read('.github/workflows/account-deploy.yml');
-  const relayS = asks(acct, 'Wait for the relay to serve this push\'s version') * pause(acct, 'Wait for the relay to serve this push\'s version');
+  const relayS = asks(acct, 'Wait for the relay to serve this release\'s version') * pause(acct, 'Wait for the relay to serve this release\'s version');
   assert.equal(asks(deployJob, 'Wait for the account service to serve this build\'s version'), 1050, 'five hours fifty minutes of asking');
   assert.ok(relayS > 0 && siteS > 0, 'both waits read');
   assert.ok(siteS >= relayS + 10 * 60, `the site outwaits the service's own wait on the relay, and ten minutes of its deploy and checks (${siteS} s against ${relayS} s)`);

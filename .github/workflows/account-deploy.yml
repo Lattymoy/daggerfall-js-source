@@ -10,372 +10,35 @@
 # database and set a Worker secret, and every one of the four steps has
 # an idempotent spelling. So there is no by-hand list any more.
 #
-# ═══ WHY A PATH FILTER IS ALLOWED HERE, AND IS NOT ON THE RELAY ════
+# ═══ RELEASE-FLOW (2026-10-19): BY HAND, FROM `release`, WHOLE ═════
 #
-# `relay-deploy.yml` refuses a path filter and triggers on a VERSION
-# instead, because a relay deploy drops every connected player and
-# `src/net/wire.js` changes several times a day for reasons the running
-# Worker does not care about.
+# Every push to main that touched this Worker's files ran this until
+# RELEASE-FLOW (bible/01-Overview/Release-Flow.md), on a path filter that
+# listed every file the Worker bundles (ACC4 held the list to the real
+# import graph, because a file left off it shipped nowhere). Now a release
+# manager dispatches this on `release` - a run dispatched on any other
+# branch stops at its first job - and its deploy job waits in the
+# `production` environment until a release manager approves it.
 #
-# THIS WORKER HOLDS NO SOCKETS. A deploy here restarts nothing a player
-# is attached to, so the worst a spurious run costs is a minute of
-# Actions time. That is the entire point of ACC1b's two-Worker split,
-# and it is what buys this file the simpler trigger.
+# THERE IS NO FILTER, because nothing is pushed: a dispatch deploys the
+# release whole. THIS WORKER HOLDS NO SOCKETS - a deploy here restarts
+# nothing a player is attached to, so deploying it with a release that did
+# not change it costs a minute of Actions time and nothing else. That is
+# the entire point of ACC1b's two-Worker split, and it is why this Worker
+# needs no version drift to decide on, where the relay's deploy does.
 #
 # ═══ EVERY STEP IS IDEMPOTENT ══════════════════════════════════════
 #
 # Re-running the whole job must be safe, because that is how a failed
-# deploy gets retried - by the next push, not by somebody remembering.
-# So: the database is created only if absent, migrations are applied
-# through wrangler's own `d1_migrations` ledger, and THE SIGNING PAIR IS
-# MINTED ONLY IF THERE IS NOT ONE ALREADY. That last one is not a
-# nicety: re-minting would invalidate every token in flight and sign
-# out everybody who is online.
+# deploy gets retried - by dispatching it again, not by somebody
+# remembering what it did. So: the database is created only if absent,
+# migrations are applied through wrangler's own `d1_migrations` ledger,
+# and THE SIGNING PAIR IS MINTED ONLY IF THERE IS NOT ONE ALREADY. That
+# last one is not a nicety: re-minting would invalidate every token in
+# flight and sign out everybody who is online.
 name: Deploy account service (drops nobody)
 
 on:
-  push:
-    branches: [main]
-    # EVERY FILE OUTSIDE server-account/ THAT THE WORKER BUNDLES is
-    # listed, and test/server/accountdeploy.test.js walks the Worker's import
-    # graph and holds this list to it. Only identityToken.js was listed
-    # until ACC4 - a change to the name filter or the handle shape was
-    # bundled into this Worker and did not deploy it.
-    # INT1 (bible/06-Systems/Integrity-Arc.md): the judge reads every
-    # realm checkpoint through src/systems/item/itemLaw.js - the loot's own
-    # records, spoils and Broker, one law at both ends - so that graph
-    # is listed too (the block after src/systems/wind/wind.js).
-    # DISCORD-CODE: and the deploy's last step runs tools/discordModCommands.mjs, so its own graph is listed (after this
-    # workflow's own line) - test/server/discord_setup.test.js holds it, and the commands it writes live under
-    # server-account/. No comment inside the list: the pins read it as one run of lines.
-    paths:
-      - "server-account/**"
-      - "src/net/identityToken.js"
-      - "src/net/sessionPassLaw.js"
-      - "src/net/staffTeleport.js"
-      - "src/net/relayCfg.js"
-      - "src/net/hubShards.js"
-      - "src/net/privateInterior.js"
-      - "src/net/instanceRoom.js"
-      - "src/net/boatIdentity.js"
-      - "src/net/handleShape.js"
-      - "src/net/letterLaw.js"
-      - "src/net/nameFilter.js"
-      - "src/net/houseLaw.js"
-      - "src/net/moderation.js"
-      - "src/net/safety/chatStamp.js"
-      - "src/net/safety/chatFeed.js"
-      - "src/net/grantMeasure.js"
-      - "src/net/grantLaw.js"
-      - "src/net/safety/safetyLaw.js"
-      - "src/net/safety/conduct.js"
-      - "src/net/playClock.js"
-      - "src/net/renown.js"
-      - "src/net/npcChapterLaw.js"
-      - "src/systems/gems.js"
-      - "src/systems/guild/guildFactions.js"
-      - "src/net/homeLaw.js"
-      - "src/net/decorLaw.js"
-      - "src/world/npcFlatArchives.js"
-      - "src/net/homeVoteLaw.js"
-      - "src/net/guild/guildLaw.js"
-      - "src/net/repairLaw.js"
-      - "src/net/hallLaw.js"
-      - "src/net/heraldryLaw.js"
-      - "src/net/townSeatLaw.js"
-      - "src/net/townEconLaw.js"
-      - "src/net/tideLaw.js"
-      - "src/net/fortLaw.js"
-      - "src/net/watchReceipt.js"
-      - "src/net/marksLaw.js"
-      - "src/net/motherlodeLaw.js"
-      - "src/net/boardLaw.js"
-      - "src/net/professionLaw.js"
-      - "src/net/firmament/firmamentLaw.js"
-      - "src/net/firmament/firmamentTree.js"
-      - "src/net/nodeLaw.js"
-      - "src/world/ethericSea.js"
-      - "src/net/skyLaw.js"
-      - "src/net/kingdomLaw.js"
-      - "src/net/busyLaw.js"
-      - "src/net/recipeLaw.js"
-      - "src/net/productRecord.js"
-      - "src/net/marketLaw.js"
-      - "src/net/vendorLaw.js"
-      - "src/net/patronLaw.js"
-      - "src/net/writLaw.js"
-      - "src/net/gate/gateLaw.js"
-      - "src/formats/mapsTables.js"
-      - "src/systems/foraging/foragingCore.js"
-      - "src/systems/gameDate.js"
-      - "src/systems/textManager.js"
-      - "src/systems/localizedBook.js"
-      - "src/systems/translationPacks.js"
-      - "src/systems/quest/tables.js"
-      - "src/systems/quest/table.js"
-      - "src/systems/quest/parseUtils.js"
-      - "src/systems/quest/questPatches.js"
-      - "src/systems/item/itemTemplatesData.js"
-      - "src/net/raid/raidLaw.js"
-      - "src/net/gate/gateReceipt.js"
-      - "src/net/bossBody.js"
-      - "src/net/legalLaw.js"
-      - "src/net/raid/raidReceipt.js"
-      - "src/net/serpent/serpentReceipt.js"
-      - "src/net/serpent/serpentHoardLaw.js"
-      - "src/net/arena/arenaReceipt.js"
-      - "src/net/arena/arenaLaw.js"
-      - "src/net/wire.js"
-      - "src/net/eliteGates/egShape.js"
-      - "src/net/siege/siegeRef.js"
-      - "src/net/siege/siegeReceipt.js"
-      - "src/net/duel/duelReceipt.js"
-      - "src/net/wild/wildReceipt.js"
-      - "src/net/wild/wildLaw.js"
-      - "src/systems/wild/wildDropLaw.js"
-      - "src/systems/item/itemKinds.js"
-      - "src/net/gate/gateMods.js"
-      - "src/net/insignia.js"
-      - "src/net/dice.js"
-      - "src/net/holdemTable.js"
-      - "src/net/card/cardLaw.js"
-      - "src/net/card/cardReceipt.js"
-      - "src/net/iliac/iliacTable.js"
-      - "src/net/iliac/iliacHand.js"
-      - "src/net/iliac/iliacCards.js"
-      - "src/net/iliac/iliacReceipt.js"
-      - "src/net/gambit/gambitTable.js"
-      - "src/net/gambit/gambitStakes.js"
-      - "src/net/gambit/gambitReceipt.js"
-      - "src/net/kingsGambit.js"
-      - "src/systems/mathf.js"
-      - "src/net/card/cardWorthLaw.js"
-      - "src/net/realm/realmTradeLaw.js"
-      - "src/net/bagLaw.js"
-      - "src/net/guild/guildVaultLaw.js"
-      - "src/net/canon.js"
-      - "src/net/realm/realmGoldLaw.js"
-      - "src/net/realm/realmSaveCodec.js"
-      - "src/world/mat4.js"
-      - "src/characters/nameGen.json"
-      - "src/characters/dyes.js"
-      - "src/net/alchemyLaw.js"
-      - "src/net/temperLaw.js"
-      - "src/systems/potionRecipes.js"
-      - "src/characters/itemTemplates.json"
-      - "src/net/superDungeon/sdReceipt.js"
-      - "src/net/eliteGates/egReceipt.js"
-      - "src/net/eliteGates/egFeats.js"
-      - "src/net/eliteGates/egLaw.js"
-      - "src/net/eliteGates/egRoute.js"
-      - "src/net/eliteGates/egRouteProof.js"
-      - "src/net/eliteGates/egAscent.js"
-      - "src/net/eliteGates/egRoomLaw.js"
-      - "src/net/eliteGates/egWalkGraph.js"
-      - "src/net/superDungeon/sdBrain.js"
-      - "src/net/eliteGates/egSpanLaw.js"
-      - "src/net/eliteGates/egFragLaw.js"
-      - "src/net/eliteGates/egHeroFrags.js"
-      - "src/assets/egfrags/egRefFrag.law.json"
-      - "src/assets/egfrags/egheroOssuary.law.json"
-      - "src/assets/egfrags/egheroMistStair.law.json"
-      - "src/assets/egfrags/egheroGloam.law.json"
-      - "src/assets/egfrags/egheroEclipse.law.json"
-      - "src/assets/egfrags/egheroCaverns.law.json"
-      - "src/assets/egfrags/egheroStacks.law.json"
-      - "src/assets/egfrags/egheroColonnade.law.json"
-      - "src/assets/egfrags/egheroForgeGut.law.json"
-      - "src/assets/egfrags/egheroClanPit.law.json"
-      - "src/assets/egfrags/egheroDeepCaverns.law.json"
-      - "src/net/eliteGates/egPay.js"
-      - "src/net/eliteGates/egStartLaw.js"
-      - "src/net/superDungeon/sdMarks.js"
-      - "src/net/postLaw.js"
-      - "src/net/reportLaw.js"
-      - "src/systems/wind/wind.js"
-      - "src/ai/blowShapes.js"
-      - "src/ai/cover.js"
-      - "src/ai/foeBlows.js"
-      - "src/ai/tactics.js"
-      - "src/ai/tacticsClock.js"
-      - "src/ai/tells.js"
-      - "src/characters/enemy/enemyBasics.js"
-      - "src/characters/enemy/enemyMotor.js"
-      - "src/characters/equipRules.js"
-      - "src/characters/equipTable.js"
-      - "src/characters/mobile/mobileTypes.js"
-      - "src/characters/nameHelper.js"
-      - "src/characters/paperdoll/paperdoll.js"
-      - "src/characters/paperdoll/paperdollArt.js"
-      - "src/characters/thunderlockIds.js"
-      - "src/characters/weaponStates.js"
-      - "src/characters/weapons.js"
-      - "src/combat/clawMetal.js"
-      - "src/combat/enemyEquipment.js"
-      - "src/combat/formulas.js"
-      - "src/combat/gun/gunFeel.js"
-      - "src/formats/blocksFile.js"
-      - "src/formats/bsaFile.js"
-      - "src/formats/characterRecord.js"
-      - "src/formats/classFile.js"
-      - "src/formats/color32Order.js"
-      - "src/formats/dfRandom.js"
-      - "src/formats/factionFile.js"
-      - "src/formats/fileProxy.js"
-      - "src/formats/magicDef.js"
-      - "src/formats/mapsFile.js"
-      - "src/formats/pakFile.js"
-      - "src/formats/save/saveTreeFile.js"
-      - "src/formats/spellsStd.js"
-      - "src/formats/umRandom.js"
-      - "src/formats/woodsFile.js"
-      - "src/formats/worldData/worldDataDoor.js"
-      - "src/net/duel/duelSession.js"
-      - "src/net/iliac/iliacCards.js"
-      - "src/player/classSkins.js"
-      - "src/player/climbing.js"
-      - "src/player/exteriorSurface.js"
-      - "src/player/motor.js"
-      - "src/player/moveScanner.js"
-      - "src/player/parkour.js"
-      - "src/systems/absorption.js"
-      - "src/systems/aetheric.js"
-      - "src/systems/appRoot.js"
-      - "src/systems/appStorage.js"
-      - "src/systems/arcanePaths.js"
-      - "src/systems/armorMaterials.js"
-      - "src/systems/artifactEffects.js"
-      - "src/systems/ayleidStones.js"
-      - "src/systems/blowTaken.js"
-      - "src/systems/clothingStanding.js"
-      - "src/systems/comeSailAway/comeSailAwayItems.js"
-      - "src/systems/comeSailAway/comeSailAwayHulls.js"
-      - "src/systems/concealment.js"
-      - "src/systems/conditionRepair.js"
-      - "src/systems/courtRules.js"
-      - "src/systems/createItemRows.js"
-      - "src/systems/deepWater/deepWatersFishRows.js"
-      - "src/systems/effectBroker.js"
-      - "src/systems/effects.js"
-      - "src/systems/eliteGates/weirKeyRow.js"
-      - "src/systems/enchanting.js"
-      - "src/systems/enchantmentCatalogue.js"
-      - "src/systems/enchantments.js"
-      - "src/systems/entityMods.js"
-      - "src/systems/equip.js"
-      - "src/systems/features.js"
-      - "src/systems/feudLedger.js"
-      - "src/systems/foraging/foragingLaw.js"
-      - "src/systems/gate/gateSpoils.js"
-      - "src/systems/gilded.js"
-      - "src/systems/harmMark.js"
-      - "src/systems/horse/horseCartLaw.js"
-      - "src/systems/iliac/iliacItems.js"
-      - "src/systems/iliac/iliacCardWords.js"
-      - "src/systems/inventory.js"
-      - "src/systems/inventorySession.js"
-      - "src/systems/item/itemDye.js"
-      - "src/systems/item/itemFields.js"
-      - "src/systems/item/itemLaw.js"
-      - "src/systems/item/itemIds.js"
-      - "src/systems/item/possessedItems.js"
-      - "src/systems/bossCards.js"
-      - "src/systems/item/itemLock.js"
-      - "src/systems/item/itemTemplates.js"
-      - "src/systems/legacy/heirloom.js"
-      - "src/systems/legacy/houseName.js"
-      - "src/systems/legacy/legacyLaw.js"
-      - "src/systems/livingWorld/keepsake.js"
-      - "src/systems/livingWorld/seed.js"
-      - "src/systems/loot/loot.js"
-      - "src/systems/loot/lootDataTables.js"
-      - "src/systems/loot/lootRarity.js"
-      - "src/combat/technique/techniqueRoster.js"
-      - "src/systems/masterSkills.js"
-      - "src/systems/mentorMode.js"
-      - "src/systems/modSaveData.js"
-      - "src/systems/modSettings.js"
-      - "src/systems/naval/navalStores.js"
-      - "src/systems/naval/tradeGoods.js"
-      - "src/systems/naval/treasureCharts.js"
-      - "src/systems/naval/harbourBoard.js"
-      - "src/systems/naval/navalShips.js"
-      - "src/combat/blood/bloodArt.js"
-      - "src/systems/nearbyObjects.js"
-      - "src/systems/online/onlineLane.js"
-      - "src/systems/pageQuery.js"
-      - "src/systems/professions/profTemplates.js"
-      - "src/systems/races.js"
-      - "src/systems/racialLive.js"
-      - "src/systems/rarityTier.js"
-      - "src/systems/rest/restItemRows.js"
-      - "src/systems/roleplayRealismItems/rriIndex.js"
-      - "src/systems/roleplayRealismItems/rriItems.js"
-      - "src/systems/roleplayRealismItems/rriRealism.js"
-      - "src/systems/sceneCache.js"
-      - "src/systems/settings/settings.js"
-      - "src/systems/settings/settingsDefaults.js"
-      - "src/systems/shotTally.js"
-      - "src/systems/sigil/sigil.js"
-      - "src/systems/sigil/sigilBroker.js"
-      - "src/systems/sigil/sigilSets.js"
-      - "src/systems/skillSoftcap.js"
-      - "src/systems/skills.js"
-      - "src/systems/soundClips.js"
-      - "src/systems/specialAdvantages.js"
-      - "src/systems/spell/spellPower.js"
-      - "src/systems/spellcast.js"
-      - "src/systems/spellcost.js"
-      - "src/systems/statMods.js"
-      - "src/systems/stolenGoods.js"
-      - "src/systems/survival/difficulty.js"
-      - "src/systems/survival/food.js"
-      - "src/systems/survival/items.js"
-      - "src/systems/survival/needs.js"
-      - "src/systems/survival/switch.js"
-      - "src/systems/survival/temperature.js"
-      - "src/systems/textureReplacement.js"
-      - "src/systems/thunderlock.js"
-      - "src/systems/timeScale.js"
-      - "src/systems/transport.js"
-      - "src/systems/travel/travelPace.js"
-      - "src/systems/travel/travelPaths.js"
-      - "src/systems/uiPrefs.js"
-      - "src/systems/wagon/wagonKinds.js"
-      - "src/systems/walletItem.js"
-      - "src/systems/upkeep/upkeepItemRows.js"
-      - "src/systems/upkeep/upkeepTiers.js"
-      - "src/world/buildingNames.js"
-      - "src/world/meshReader.js"
-      - "src/world/perlin.js"
-      - "src/world/puddleDry.js"
-      - "src/world/puddleMask.js"
-      - "src/world/road/roadNetwork.js"
-      - "src/world/spawnedDungeons.js"
-      - "src/world/terrain/terrainSampler.js"
-      - "src/world/terrain/terrainSurface.js"
-      - "src/world/terrain/terrainTiles.js"
-      - "src/world/water/waterCorners.js"
-      - "src/world/weather.js"
-      - "src/systems/party/partyScale.js"
-      - "src/systems/books.js"
-      - "src/systems/booksData.js"
-      - "src/formats/bookFile.js"
-      - "src/formats/textRsc.js"
-      - "src/formats/rscTable.js"
-      - "src/systems/portBooks.js"
-      - "src/systems/potions.js"
-      - "src/systems/loot/lootThemes.js"
-      - "vendor/class-skins/skins.json"
-      - "vendor/foraging/ItemTemplates.json"
-      - "vendor/iliac-puddle-no-more/ItemTemplates.json"
-      - ".github/workflows/account-deploy.yml"
-      - "tools/discordModCommands.mjs"
-      - "tools/lib/isMain.mjs"
-      - "src/systems/legacy/revived.js"
-      - "src/poi/poiLaw.js"
-      - "src/poi/poiMesh.js"
-      - "src/poi/poiImage.js"
   workflow_dispatch:
 
 permissions:
@@ -388,20 +51,35 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # RELEASE-FLOW: production deploys from release alone - a run dispatched
+  # on any other branch stops here, before the suite or anything else runs
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only release deploys the account service
+        if: github.ref != 'refs/heads/release'
+        run: |
+          echo "::error::the account service is deployed from the release branch alone - dispatch this on release (bible/01-Overview/Release-Flow.md)"
+          exit 1
+
   # SCALE1 (2026-09-30, the scaling audit): THE SUITE FIRST. This service
   # deployed on every push that touched it whatever the check said - on
   # 2026-09-30 the site's deploy stopped at a red "lint and types" while
   # this job shipped the same commit's service to every player. The
-  # site's deploy waits up to thirty minutes for this service's version
-  # (deploy.yml), which the suite's few minutes fit inside.
+  # site's deploy waits for this service's version (deploy.yml), which the
+  # suite's few minutes fit inside.
   verify:
+    needs: release
     uses: ./.github/workflows/verify.yml
     with:
       build: false
 
+  # RELEASE-FLOW: and it waits in the `production` environment until a
+  # release manager approves it - the environment holds the secrets below
   deploy:
     needs: verify
     runs-on: ubuntu-latest
+    environment: production
     defaults:
       run:
         shell: bash
@@ -645,16 +323,17 @@ jobs:
       # title or glyph - was refused whole by its claimsValid (`token
       # claims`), which on the presence socket is terminal until the
       # player changes room or reloads. This job and relay-deploy.yml
-      # start on the same push with nothing ordering them, and the last
-      # three paired deploys landed either way round. So this step waits
-      # until the relay's /health serves the version wire.js names (or a
-      # later one) - the relay carrying this push's vocabulary - and the
-      # job deploys NOTHING if it never does: the old service keeps
-      # minting the old vocabulary, which every relay admits. A push that
-      # changed no relay behaviour finds it served already: one request.
+      # started on the same push with nothing ordering them, and three
+      # paired deploys landed either way round - and since RELEASE-FLOW
+      # they are dispatched apart. So this step waits until the relay's
+      # /health serves the version wire.js names (or a later one) - the
+      # relay carrying this release's vocabulary - and the job deploys
+      # NOTHING if it never does: the old service keeps minting the old
+      # vocabulary, which every relay admits. A release that changed no
+      # relay behaviour finds it served already: one request.
       # The relay's address is the client's own (online.js
       # DEFAULT_SERVER), never typed here.
-      - name: Wait for the relay to serve this push's version
+      - name: Wait for the relay to serve this release's version
         run: |
           set -euo pipefail
           want=$(grep -oP "^export const RELAY_VERSION = '\K[^']+" src/net/wire.js)
@@ -848,10 +527,12 @@ jobs:
       # Patreon, and the service needs the two things only Patreon and Mac
       # hold - the API client's secret (to spend the code a player comes
       # back with) and the webhook's (to believe Patreon's word on a
-      # member). Each is a REPOSITORY secret, PATREON_CLIENT_SECRET and
-      # PATREON_WEBHOOK_SECRET, put on the Worker here on EVERY deploy - so
-      # a secret changed in the repository reaches the service on the next
-      # push. An unset one is not an error: linking stays off (patreon.js
+      # member). Each is a secret of the `production` environment
+      # (RELEASE-FLOW; a repository secret of the same name stands in until
+      # it is moved there), PATREON_CLIENT_SECRET and PATREON_WEBHOOK_SECRET,
+      # put on the Worker here on EVERY deploy - so a secret changed there
+      # reaches the service on the next deploy. An unset one is not an
+      # error: linking stays off (patreon.js
       # patreonLinkOn) and the webhook answers `patreon-closed`.
       #
       # ONE PUT FOR BOTH (`secret bulk`, one redeploy), fed through a pipe:
@@ -883,8 +564,8 @@ jobs:
 
       # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's
       # ANTHROPIC_API_KEY (server-account/src/modAi.js) and the Discord bot's DISCORD_BOT_TOKEN (discord.js), each put
-      # on the Worker here on EVERY deploy from the repository's own secrets, so a key changed there reaches the service
-      # on the next push. An unset one is not an error: the reviewer reads nothing (MOD_AI is a switch over a key), and
+      # on the Worker here on EVERY deploy from the production environment's secrets, so a key changed there reaches the
+      # service on the next deploy. An unset one is not an error: the reviewer reads nothing (MOD_AI is a switch over a key), and
       # no card is posted - the cases still gather. One put for both, fed through jq as the Patreon pair is: neither
       # value is ever echoed, written to a file, or an argument. The summary names the door Discord's application is
       # given (its Interactions Endpoint URL), read off this deploy - never typed.
@@ -1320,7 +1001,7 @@ jobs:
       # application's Interactions Endpoint URL pointed at this deploy's door, and /mod registered in the server the
       # moderators' channel is in, from the bot's token alone (tools/discordModCommands.mjs --setup: the application's id
       # and public key are Discord's answer, the server the channel's). Every deploy, because both are idempotent and a
-      # changed /mod or a moved Worker then reaches Discord on the next push. LAST, so a refusal hides no check above it;
+      # changed /mod or a moved Worker then reaches Discord on the next deploy. LAST, so a refusal hides no check above it;
       # and red when Discord refuses, because a service that deployed but cannot be pressed is the failure the setup
       # exists for. Skipped, said, when the token, the channel or the public key is not set. The token is an env var
       # here and in the tool, never an argument and never echoed.

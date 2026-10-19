@@ -56,12 +56,20 @@ test('SRV-N/CI: the deploy greps RELAY_VERSION out of the file that actually dec
   assert.match(want ?? '', /^world\d+$/, 'the declared version is a deploy name');
 });
 
-test('SRV-N/CI: the deploy is triggered by the VERSION drifting, not by a path filter', () => {
+test('SRV-N/CI: the deploy is decided by the VERSION drifting, not by a path filter - and RELEASE-FLOW: dispatched by hand, on release alone, approved in the production environment (mutants: a branch that is not release deployed; the deploy out of the environment; a deploy asked to approve nothing)', () => {
   const wf = rd(WF);
 
-  // It runs on every push to main...
-  assert.match(wf, /on:\s*\n\s*push:\s*\n\s*branches: \[main\]/, 'it runs on push to main');
-  assert.match(wf, /workflow_dispatch:/, 'and can still be forced by hand');
+  // RELEASE-FLOW (bible/01-Overview/Release-Flow.md): it is dispatched, never pushed - on release, whose first job
+  // stops a run on any other branch before anything is checked out...
+  assert.equal(wf.slice(wf.search(/^on:/m), wf.search(/^permissions:/m)).replace(/\n {6}#[^\n]*/g, ''),
+    "on:\n  workflow_dispatch:\n    inputs:\n      force:\n        description: 'Deploy now - even while a siege is live (voids it), or over a relay that does not answer'\n        type: boolean\n        default: false\n\n",
+    'a dispatch, and nothing pushed');
+  const drift = wf.slice(wf.indexOf('\n  drift:\n'), wf.indexOf('\n  verify:\n'));
+  assert.match(drift, /\n {4}steps:\n {6}- name: Only release deploys the relay\n {8}if: github\.ref != 'refs\/heads\/release'\n {8}run: \|\n[^\n]*\n {10}exit 1\n {6}- uses: actions\/checkout@v4\n/,
+    'a run on any other branch stops before it reads anything');
+  // ...and the deploy waits on a release manager, asked only when there is something to deploy
+  const job = wf.slice(wf.indexOf('\n  deploy:\n'));
+  assert.match(job, /^\n {2}deploy:\n {4}needs: \[drift, verify\]\n(?: {4}#[^\n]*\n)* {4}if: \$\{\{ !cancelled\(\) && needs\.drift\.result == 'success' && needs\.drift\.outputs\.deploying == 'true' && needs\.verify\.result == 'success' \}\}\n {4}runs-on: ubuntu-latest\n {4}environment: production\n/);
 
   // ...but a PATH FILTER would be the wrong automation and must not appear.
   // The relay's law lives in src/net/wire.js, which changes constantly for
@@ -82,8 +90,8 @@ test('SRV-N/CI: the deploy is triggered by the VERSION drifting, not by a path f
     'and says so, rather than silently doing nothing, when they agree');
 
   // An unreadable relay is not "no drift" and is not a reason to deploy.
-  assert.match(wf, /steps\.live\.outputs\.version == '' && github\.event_name == 'push'/,
-    'a push will not deploy blind over a relay it could not read');
+  assert.match(wf, /- name: Refuse to deploy over a relay that could not be read\n {8}if: steps\.live\.outputs\.version == '' && github\.event\.inputs\.force != 'true'\n/,
+    'a dispatch without force will not deploy blind over a relay it could not read');
 
   // One at a time, and not cancelled between deploy and verify.
   assert.match(wf, /concurrency:\s*\n\s*group: relay-deploy\s*\n\s*cancel-in-progress: false/,
@@ -133,9 +141,19 @@ test('SRV-N/CI: the token is the repo\'s, never a literal', () => {
 // from it.
 //
 // So this asks the WORKFLOW what the deploy is and holds the tree to the
-// answer. It is deliberately two-directional: make the deploy manual
-// again and the pin does not merely stop caring, it starts requiring the
-// files to say so. A claim about the deploy is a claim this test owns.
+// answer. It is deliberately two-directional: change how the deploy moves
+// and the pin does not merely stop caring, it starts requiring the files
+// to say so. A claim about the deploy is a claim this test owns.
+//
+// RELEASE-FLOW (2026-10-19, bible/01-Overview/Release-Flow.md) TURNED IT
+// OVER AGAIN, ON PURPOSE: the relay is deployed when a release manager
+// dispatches the workflow on `release` - by hand, and IN CI. So prose can
+// now be wrong two ways, and this holds it against both: that a deploy is
+// AUTOMATIC (it ran on every push to main from SRV-N/CI until RELEASE-FLOW,
+// and both Workers' configs and src/net/updateNotice.js said so), and that
+// it is a command somebody runs OUTSIDE CI (the claim SRV-N/CI retired).
+// Comment markers and line breaks are read through (proseOf): the
+// updateNotice.js sentence ran "on\n//   every push to main".
 //
 // THE POPULATION IS LIVE SOURCE AND CONFIG, not the bible. A dated arc
 // entry that says "the deploy was by hand when this was written" is a
@@ -149,68 +167,81 @@ test('SRV-N/CI: the token is the repo\'s, never a literal', () => {
 // included, deliberately: `/health` answers "is the Worker running the
 // bundle I built?", and a bundle whose comments differ is a different
 // bundle. So correcting a COMMENT in `src/net/wire.js` forces a
-// RELAY_VERSION bump, and a bump on main deploys the relay and drops
-// every connected player. A prose fix is not worth a player's dungeon
-// run, so the words in there are left for a slice that is redeploying
-// anyway - and `src/net/wire.js` does still carry the stale sentence as
-// this is written (2026-09-21), which is recorded here rather than
-// hidden.
+// RELAY_VERSION bump, and a bump deploys the relay and drops every
+// connected player. A prose fix is not worth a player's dungeon run, so
+// the words in there are left for a slice that is redeploying anyway -
+// and `src/net/wire.js` does still carry the stale sentence as this is
+// written (2026-10-19), which is recorded here rather than hidden.
 //
 // The exclusion is DERIVED from `RELAY_GRAPH`, not listed: if wire.js
 // ever leaves the bundle it falls straight back into the population, and
 // a file that JOINS the bundle leaves it without anyone editing this.
-const MANUAL_CLAIM = /(deploy(ed)?\s+(is\s+)?by\s+hand|by\s+hand\s*[-,]\s*`?npx wrangler|manual on purpose|nothing in CI does it|hand-deployed)/i;
+const AUTO_CLAIM = /(deploy is automatic|on every (?:push|merge) to main|runs on every push|every (?:push|merge) to main (?:cuts|deploys|publishes))/i;
+const OUTSIDE_CI_CLAIM = /(by\s+hand\s*[-,(]\s*`?npx wrangler|manual on purpose|nothing in CI does it|hand-deployed)/i;
+/** A text's prose with its comment markers and line breaks read through - a claim may run across lines. */
+const proseOf = (text) => text.replace(/\s*\n\s*(?:\/\/+|#+|\*+(?!\/))?\s*/g, ' ');
 
-test('SRV-N/CI: nothing in live source calls the deploy a hand command while the workflow runs on push', () => {
-  // (0) THE GATE MUST BE ABLE TO CATCH ITS OWN SUBJECT. A pattern that
-  //     matches nothing is green over any prose in the tree - which is
-  //     EXACTLY the state this file was in for fifteen weeks, and a
-  //     mutation that emptied MANUAL_CLAIM survived the first cut of
-  //     this very test. The three sentences below are the ones that
-  //     were actually live in the tree on 2026-09-21, quoted here
-  //     because a test is not in the population it checks.
+test('SRV-N/CI + RELEASE-FLOW: live source says how the relay really moves - by hand, from release, in CI - and calls no deploy automatic and no deploy a command run outside CI (mutants: a gate blind to its own subject; the push trigger back with the prose unmoved)', () => {
+  // (0) THE GATES MUST BE ABLE TO CATCH THEIR OWN SUBJECTS. A pattern
+  //     that matches nothing is green over any prose in the tree - which
+  //     is EXACTLY the state this file was in for fifteen weeks, and a
+  //     mutation that emptied the first pattern survived the first cut of
+  //     this very test. The sentences below are ones that were actually
+  //     live in the tree (2026-09-21, then 2026-10-19), quoted here because
+  //     a test is not in the population it checks.
   for (const real of [
     '# that did not happen. It is manual on purpose: a deploy restarts every',
     '/** AUDIT WORLD34 D4: the relay names itself in /health - the deploy is by hand (`npx wrangler deploy`), nothing in',
     '//   deployed BY HAND - `npx wrangler deploy`, nothing in CI does it -',
   ]) {
-    assert.match(real, MANUAL_CLAIM, 'the gate can no longer see the sentence it exists to catch');
+    assert.match(real, OUTSIDE_CI_CLAIM, 'the gate can no longer see the sentence it exists to catch');
   }
-  // ...and it does not fire on the true prose that replaced them
-  for (const fine of [
+  for (const real of [
     '# THE DEPLOY IS AUTOMATIC, and has been since SRV-N/CI (PR #209):',
-    '//   SRV-N/CI it is deployed by `.github/workflows/relay-deploy.yml` on',
+    '# `.github/workflows/relay-deploy.yml` runs on EVERY PUSH TO MAIN. It',
+    proseOf('//   SRV-N/CI it is deployed by `.github/workflows/relay-deploy.yml` on\n//   every push to main, but only when RELAY_VERSION has moved - so it'),
+    '// Every merge to main cuts a release (REL3) and deploys the site; each is a player\'s UPDATE, numbered',
   ]) {
-    assert.doesNotMatch(fine, MANUAL_CLAIM, 'the gate fires on prose that says the right thing');
+    assert.match(real, AUTO_CLAIM, 'the gate can no longer see the sentence it exists to catch');
+  }
+  // ...and neither fires on the true prose that replaced them
+  for (const fine of [
+    '# THE DEPLOY IS BY HAND, FROM `release` (RELEASE-FLOW): a release manager dispatches',
+    '//   RELEASE-FLOW it is deployed by `.github/workflows/relay-deploy.yml` when a release manager dispatches it on',
+  ]) {
+    assert.doesNotMatch(fine, AUTO_CLAIM, 'the gate fires on prose that says the right thing');
+    assert.doesNotMatch(fine, OUTSIDE_CI_CLAIM, 'the gate fires on prose that says the right thing');
   }
 
   const wf = rd(WF);
 
   // (1) WHAT IS THE DEPLOY? Derived from the workflow's own trigger.
-  const on = wf.slice(wf.search(/^on:/m));
-  const head = on.slice(0, on.search(/^permissions:/m) >>> 0);
-  const auto = /push:/.test(head) && /branches:\s*\[\s*main\s*\]/.test(head);
+  const head = wf.slice(wf.search(/^on:/m), wf.search(/^permissions:/m));
+  const byHand = /^on:\n {2}workflow_dispatch:/.test(head) && !/\n {2}push:/.test(head);
 
-  // (2) EVERY LIVE .js AND THE WORKER'S OWN CONFIG. Walked, so a file
-  //     added later is in the population without anyone remembering.
+  // (2) EVERY LIVE .js AND THE WORKERS' OWN CONFIGS, and the build's own
+  //     scripts. Walked, so a file added later is in the population
+  //     without anyone remembering.
   const bundled = new Set(RELAY_GRAPH);   // see the note above: a comment here costs a deploy
-  const files = [...walk('src'), ...walk('server/src'), 'server/wrangler.toml']
+  const files = [...walk('src'), ...walk('server/src'), ...walk('server-account/src'), 'server/wrangler.toml', 'server-account/wrangler.toml',
+    ...readdirSync(join(root, 'scripts')).filter((f) => /\.m?js$/.test(f)).map((f) => `scripts/${f}`)]
     .filter((f) => !bundled.has(f));
-  const claims = files.filter((f) => MANUAL_CLAIM.test(rd(f)));
+  const said = (claim) => files.filter((f) => claim.test(proseOf(rd(f))));
 
   // ...and the exclusion is exactly the bundle, nothing wider. wire.js is
   // in it today and IS carrying a stale claim - if that ever stops being
   // true the note above is wrong and should come out.
   assert.ok(bundled.has('src/net/wire.js'), 'the exclusion no longer covers the file it was written for');
-  assert.ok([...bundled].some((f) => MANUAL_CLAIM.test(rd(f))),
-    'nothing in the relay bundle claims a hand deploy any more - delete this exclusion and the note above it');
+  assert.ok([...bundled].some((f) => OUTSIDE_CI_CLAIM.test(proseOf(rd(f)))),
+    'nothing in the relay bundle claims a deploy outside CI any more - delete this exclusion and the note above it');
 
-  if (auto) {
-    assert.deepEqual(claims, [],
-      'the workflow deploys on every push to main, so no comment over running code may call it a hand command');
+  assert.deepEqual(said(OUTSIDE_CI_CLAIM), [], 'the deploy runs in CI, so no comment over running code may call it a command run by hand');
+  const howItMoves = /deploy is by hand, from `?release`?/i;
+  if (byHand) {
+    assert.deepEqual(said(AUTO_CLAIM), [], 'a deploy is dispatched by hand now, so no comment over running code may call one automatic');
+    assert.match(proseOf(rd('server/wrangler.toml')), howItMoves, 'and the relay\'s own config says how it moves');
   } else {
-    assert.ok(claims.length > 0,
-      'the workflow no longer deploys on push - some file must now tell a reader how the relay actually moves');
+    assert.doesNotMatch(proseOf(rd('server/wrangler.toml')), howItMoves, 'the workflow runs on a push again - its config must stop saying a person dispatches it');
   }
 
   // (3) AND THE COST IS STILL WRITTEN DOWN WHERE THE DEPLOY IS

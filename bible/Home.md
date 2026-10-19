@@ -216,13 +216,25 @@ editing a merged pull request's description has
 
 UPDATES ARE NUMBERED, AND NOBODY BUMPS THEM (REL8, 2026-10-09, Mac:
 "Let's officially start numbering updates beginning with 0.0.1"). Every
-merge to main is the player's next update, MAJOR.MINOR.PATCH: the line is
-`scripts/updateLine.mjs` (`0.0`), the patch is counted from git
-(`scripts/updateNumber.mjs`) - so no pull request writes a number, and the
-merge that carries a new line is its `.1`. It is not the installer's
-version (`app-v0.1.<count>`, which the updater compares): the release is
-named `Update <n>` and the game shows it beside the commit
+release is the player's next update, MAJOR.MINOR.PATCH - every merge to
+main until RELEASE-FLOW, each promotion or hotfix merged into `release`
+since: the line is `scripts/updateLine.mjs` (`0.0`), the patch is counted
+from git (`scripts/updateNumber.mjs`) - so no pull request writes a number,
+and the release that carries a new line is its `.1`. It is not the
+installer's version (`app-v0.1.<count>`, which the updater compares): the
+release is named `Update <n>` and the game shows it beside the commit
 (`01-Overview/Desktop-App.md` REL8).
+
+MAIN IS DEVELOPMENT, RELEASE IS PRODUCTION (RELEASE-FLOW, 2026-10-19,
+`01-Overview/Release-Flow.md`). A change merges into main by a pull request
+a reviewer approved (`.github/CODEOWNERS`) and the check passed, and is
+played in the dev environment; the players get it only when main is
+promoted into `release` and a release manager dispatches the deploys there
+and approves them. A hotfix branches from release and merges into release
+first; the workflow opens its way back to main. Nothing that is not a
+release manager merges into release, dispatches a production workflow or
+approves one - a session included. `/check` on a pull request runs its
+whole check, conflicted or not.
 
 THE HOSTS DO NOT GROW (HOST-SPLIT, 2026-10-15). bootWorld, createWorldModes,
 buildDungeonContext, bootExterior, navalHost's createNavalHost and Come Sail Away's
@@ -321,9 +333,10 @@ are in `01-Overview/Active-Arcs.md`.
 
 ## Deploy
 
-Production is GitHub Pages via `.github/workflows/deploy.yml` (push to
-main or manual dispatch), gated on `npm run check` - a red suite never
-ships. Builds contain NO game data (Port-Doctrine: ARENA2 is
+Production is GitHub Pages via `.github/workflows/deploy.yml`, dispatched
+by hand on `release` and approved by a release manager (RELEASE-FLOW,
+`01-Overview/Release-Flow.md` - main is the dev environment's), gated on
+the whole check - a red suite never ships. Builds contain NO game data (Port-Doctrine: ARENA2 is
 non-redistributable). The runtime data path is
 `src/scenes/dataSource.js`: getBytes resolves memory -> IndexedDB ->
 network `./arena2/*` (the dev middleware unchanged); on the deployed

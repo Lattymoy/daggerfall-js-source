@@ -69,12 +69,21 @@ import { busyRead, busyAnswer, busyWaitMs, retryAfterMs, BUSY_HOLD_MS } from './
 import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
 import { cardById } from './iliac/iliacCards.js';   // AUDIT CARDS-6 D7: the card a short deck lacks, said by its name
 import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
+import { BUILD_ACCOUNTS } from './serviceHome.js';   // DEV-ENV: the account service a build made for the dev environment calls home
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
  *  ACC0's whole argument is that they deploy apart - a player pointing
  *  at a test relay has not moved their account. */
 export const DEFAULT_ACCOUNT_SERVICE = 'https://daggerfall-accounts.mackcothran.workers.dev';
+/** A service this device may be pointed at: https, and nothing else. */
+const SERVICE_URL = /^https:\/\/\S+$/;
+/** DEV-ENV (serviceHome.js): the account service a build stamped with `built` calls home - that one, if it is a
+ *  service this device may be pointed at (SERVICE_URL), and the players' (DEFAULT_ACCOUNT_SERVICE, the one the deploys
+ *  read) otherwise. */
+export const homeAccountServiceOf = (built) => (SERVICE_URL.test(built ?? '') ? built : DEFAULT_ACCOUNT_SERVICE);
+/** The account service this BUILD calls home: the dev environment's in a build made for it, the players' in every other. */
+export const HOME_ACCOUNT_SERVICE = homeAccountServiceOf(BUILD_ACCOUNTS);
 
 /** The bounds the SERVICE enforces, restated here for the field caps
  *  alone. `password.js` PASSWORD_MIN/MAX and `guestName.js` HANDLE_RE
@@ -981,7 +990,7 @@ function heardHomeOrders(/** @type {any} */ data) {
   }
 }
 
-export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = null, keepalive = false, now = Date.now, rand = Math.random, hold = holdFor }, path, body = null) {
+export async function call({ fetch, base = HOME_ACCOUNT_SERVICE, secret = null, keepalive = false, now = Date.now, rand = Math.random, hold = holdFor }, path, body = null) {
   const headers = { accept: 'application/json' };
   if (body) headers['content-type'] = 'application/json';
   // THE ONE PLACE A CREDENTIAL IS SENT. There is no `?secret=` branch
@@ -2249,6 +2258,6 @@ export function accountWrits({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
 export function serviceBase(storage) {
   try {
     const v = storage?.getItem?.(SERVICE_KEY);
-    return (typeof v === 'string' && /^https:\/\/\S+$/.test(v)) ? v : DEFAULT_ACCOUNT_SERVICE;
-  } catch { return DEFAULT_ACCOUNT_SERVICE; }
+    return (typeof v === 'string' && SERVICE_URL.test(v)) ? v : HOME_ACCOUNT_SERVICE;
+  } catch { return HOME_ACCOUNT_SERVICE; }
 }

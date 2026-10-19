@@ -155,6 +155,6 @@ test('CI-TIMES THE WORKFLOWS: `times` finds the newest saved times (a lookup, no
 
   assert.match(c, /\n {2}times:\n {4}needs: \[verify\]\n {4}uses: \.\/\.github\/workflows\/test-times\.yml\n {4}with:\n {6}planned: \$\{\{ needs\.verify\.outputs\.times \}\}\n/);
   assert.match(c, /\n {2}check:\n {4}if: \$\{\{ always\(\) \}\}\n {4}needs: \[verify\]\n/, 'the check never waits on the save');
-  assert.match(d, /\n {2}times:\n {4}needs: \[main, verify\]\n {4}uses: \.\/\.github\/workflows\/test-times\.yml\n {4}with:\n {6}ref: \$\{\{ needs\.main\.outputs\.sha \}\}\n {6}planned: \$\{\{ needs\.verify\.outputs\.times \}\}\n/);
+  assert.match(d, /\n {2}times:\n {4}needs: \[release, verify\]\n {4}uses: \.\/\.github\/workflows\/test-times\.yml\n {4}with:\n {6}ref: \$\{\{ needs\.release\.outputs\.sha \}\}\n {6}planned: \$\{\{ needs\.verify\.outputs\.times \}\}\n/);
   assert.match(d, /\n {2}deploy:\n {4}needs: \[verify, site\]\n/, 'nor the publish');
 });

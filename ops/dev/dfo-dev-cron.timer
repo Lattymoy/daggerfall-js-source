@@ -1,0 +1,10 @@
+# DEV-ENV (bible/01-Overview/Release-Flow.md): the account service's crons each minute, as Cloudflare fires them.
+[Unit]
+Description=DFO dev environment: the account service's crons, each minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

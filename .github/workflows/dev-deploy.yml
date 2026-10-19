@@ -1,0 +1,128 @@
+# DEV-ENV (2026-10-19, bible/01-Overview/Release-Flow.md): MAIN, IN THE DEV ENVIRONMENT - BY HAND.
+#
+# The dev environment is main's game, relay and account service on a VM of its own (ops/dev/bootstrap.sh), reached
+# through WireGuard alone at https://dev.daggerfalljs.dev: the place a merged change is played before it is promoted
+# into release. Dispatched on main - a run dispatched anywhere else stops at its first step, and the `dev` environment
+# admits main alone - it builds the site to call the dev services home (src/net/serviceHome.js), joins the network as
+# its CI peer (10.66.0.2), ships the release over SSH inside the network, and has the VM make it current
+# (ops/dev/deploy.sh: the account service's migrations on the dev database, the network's members from
+# ops/dev/peers.json, the two Workers restarted). It passes only once the site, the relay and the account service
+# answer as a member's browser asks them - by name, over TLS, through the network - with this commit's versions.
+#
+# The `dev` environment keeps the way in: DEV_WG_PRIVATE_KEY (the CI peer's key), DEV_WG_ENDPOINT (the VM's public
+# address and port) and DEV_SSH_PRIVATE_KEY / DEV_SSH_KNOWN_HOSTS (the deploy's key and the VM's host key) as secrets,
+# and DEV_WG_SERVER_KEY (the VM's public key) as a variable - bootstrap.sh prints what each takes. Nothing of
+# production's is here: the dev services have their own keys, made on the VM.
+name: dev-deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      DEV_HOST: dev.daggerfalljs.dev
+    steps:
+      - name: Only main is the dev environment's
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::the dev environment runs main alone - dispatch this on main (bible/01-Overview/Release-Flow.md)"
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # nothing here pushes; and depth 1 - a dev build names its commit, never an update number (REL8)
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # a build that names the players' services is never shipped to the dev environment
+      - name: Build the site for the dev environment
+        env:
+          VITE_DFO_RELAY: wss://${{ env.DEV_HOST }}/relay
+          VITE_DFO_ACCOUNTS: https://${{ env.DEV_HOST }}/accounts
+        run: |
+          set -euo pipefail
+          npm run build
+          if ! grep -rqF "$VITE_DFO_RELAY" dist/assets || ! grep -rqF "$VITE_DFO_ACCOUNTS" dist/assets; then
+            echo "::error::the build does not call the dev services home - nothing is shipped"
+            exit 1
+          fi
+
+      - name: Into the dev network
+        env:
+          WG_PRIVATE_KEY: ${{ secrets.DEV_WG_PRIVATE_KEY }}
+          WG_ENDPOINT: ${{ secrets.DEV_WG_ENDPOINT }}
+          WG_SERVER_KEY: ${{ vars.DEV_WG_SERVER_KEY }}
+        run: |
+          set -euo pipefail
+          for v in WG_PRIVATE_KEY WG_ENDPOINT WG_SERVER_KEY; do
+            [ -n "${!v}" ] || { echo "::error::the dev environment holds no DEV_${v} - ops/dev/bootstrap.sh prints what it takes"; exit 1; }
+          done
+          sudo apt-get install -y -q wireguard-tools > /dev/null
+          printf '[Interface]\nPrivateKey = %s\nAddress = 10.66.0.2/32\n\n[Peer]\nPublicKey = %s\nEndpoint = %s\nAllowedIPs = 10.66.0.1/32\nPersistentKeepalive = 25\n' \
+            "$WG_PRIVATE_KEY" "$WG_SERVER_KEY" "$WG_ENDPOINT" | sudo install -m 0600 /dev/stdin /etc/wireguard/dfo-dev.conf
+          sudo wg-quick up dfo-dev
+          for _ in $(seq 1 15); do
+            if nc -z -w 3 10.66.0.1 22; then echo "inside the dev network"; exit 0; fi
+            sleep 2
+          done
+          echo "::error::the dev VM does not answer inside the network (10.66.0.1)"
+          exit 1
+
+      - name: Ship the release, and make it current
+        env:
+          SSH_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEV_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 0700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/dfo-dev"
+          chmod 0600 "$HOME/.ssh/dfo-dev"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          ssh="ssh -i $HOME/.ssh/dfo-dev -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
+          rel="/srv/dfo-dev/releases/$GITHUB_SHA"
+          # the files the release before already holds are linked, not sent again
+          rsync -a --delete -e "$ssh" --rsync-path="mkdir -p $rel/repo $rel/site && rsync" --link-dest=/srv/dfo-dev/current/repo/ \
+            server server-account src vendor ops "dfo@10.66.0.1:$rel/repo/"
+          rsync -a --delete -e "$ssh" --link-dest=/srv/dfo-dev/current/site/ dist/ "dfo@10.66.0.1:$rel/site/"
+          $ssh dfo@10.66.0.1 "$rel/repo/ops/dev/deploy.sh" "$GITHUB_SHA"
+
+      # as a member's browser asks: the site by its name, over TLS (Caddy's certificate), at the VM's network address
+      - name: The dev environment answers with this commit
+        run: |
+          set -euo pipefail
+          want_relay=$(grep -oP "^export const RELAY_VERSION = '\K[^']+" src/net/wire.js)
+          want_accounts=$(grep -oP "^export const ACCOUNT_VERSION = '\K[^']+" server-account/src/service.js)
+          tag=$(git rev-parse --short=12 HEAD)
+          ask() { curl -fsS --max-time 15 --resolve "$DEV_HOST:443:10.66.0.1" "https://$DEV_HOST$1" || true; }
+          for i in $(seq 1 30); do
+            relay=$(ask /relay/health | jq -r '.version // empty' 2> /dev/null || true)
+            accounts=$(ask /accounts/v1/health | jq -r '.v // empty' 2> /dev/null || true)
+            if [ "$relay" = "$want_relay" ] && [ "$accounts" = "$want_accounts" ] && ask / | grep -qF "$tag"; then
+              echo "VERIFIED: https://$DEV_HOST runs $tag - relay $relay, account service $accounts"
+              exit 0
+            fi
+            echo "attempt $i: relay '${relay:-no answer}', account service '${accounts:-no answer}' - want $want_relay, $want_accounts and the page at $tag"
+            sleep 5
+          done
+          echo "::error::the dev environment never answered with this commit"
+          exit 1
+
+      - name: Out of the network
+        if: always()
+        run: sudo wg-quick down dfo-dev 2> /dev/null || true

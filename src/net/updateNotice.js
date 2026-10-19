@@ -10,19 +10,21 @@
 // wrong about the other:
 //
 //   THE RELAY (`server/`, a Cloudflare Worker + Durable Objects). Since
-//   SRV-N/CI it is deployed by `.github/workflows/relay-deploy.yml` on
-//   every push to main, but only when RELAY_VERSION has moved - so it
-//   moves rarely, on the merges that change the relay's own law. When
-//   it does, every Durable Object restarts and every socket in the game
-//   drops at once. That is a SERVER RESTART in
-//   the most literal sense: peers vanish, chat goes quiet, and the
-//   player currently has no idea why. This is the half Mac's words name.
+//   RELEASE-FLOW it is deployed by `.github/workflows/relay-deploy.yml`
+//   when a release manager dispatches it on `release`, and only when
+//   RELAY_VERSION has moved - so it moves rarely, on the releases that
+//   change the relay's own law. When it does, every Durable Object
+//   restarts and every socket in the game drops at once. That is a
+//   SERVER RESTART in the most literal sense: peers vanish, chat goes
+//   quiet, and the player currently has no idea why. This is the half
+//   Mac's words name.
 //
 //   THE BUILD (the client, on GitHub Pages). It is deployed by CI on
-//   every merge to main - several times a day. Nothing restarts and
-//   nothing drops; the player simply keeps running code we have
-//   replaced. This is the half that actually happens "whenever we push",
-//   and it is the half with a known failure at the end of it:
+//   each release (`.github/workflows/deploy.yml`, dispatched on
+//   `release`). Nothing restarts and nothing drops; the player simply
+//   keeps running code we have replaced. This is the half that actually
+//   happens "whenever we push", and it is the half with a known failure
+//   at the end of it:
 //   `systems/staleChunk.js` exists because a tab held open across a
 //   deploy eventually asks for a hashed chunk that has been DELETED, and
 //   the game breaks in their hands with no warning.

@@ -232,8 +232,8 @@
   {
     "name": "SCALE1-E-the-relay-deploys-over-a-red-suite",
     "file": ".github/workflows/relay-deploy.yml",
-    "old": "(needs.verify.result == 'success' || needs.verify.result == 'skipped')",
-    "new": "(needs.verify.result != 'cancelled')",
+    "old": "needs.drift.outputs.deploying == 'true' && needs.verify.result == 'success'",
+    "new": "needs.drift.outputs.deploying == 'true' && needs.verify.result != 'cancelled'",
     "tests": [
       "test/net/scale1.test.js"
     ]

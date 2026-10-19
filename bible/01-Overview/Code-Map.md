@@ -45,6 +45,7 @@ and what it takes out lands loose in `src/scenes/` or `src/systems/`.
 | `test/` | Every test, in the folder of the layer it tests and, there, its feature's folder (`test/systems/arena/`) - mapped below. `bible/09-Testing/Testing.md` has one row per file, by its name. |
 | `tools/` | Developer tools run by hand or by the suite: probes, bakes, gates, the mutation lists (`tools/mutants/`). |
 | `scripts/` | Build, release and bake scripts run by npm and CI (`buildTag`, `desktopRelease`, `updateNumber`, the `bake*` scripts). |
+| `ops/` | What runs the project rather than the game (RELEASE-FLOW, `Release-Flow.md`): `ops/github/settings.json`, the repository's roles, environments and branch rules, applied by `tools/repoSettings.mjs`; `ops/dev/`, the dev environment's VM - its bootstrap, deploy, services, firewall and the network's members (`peers.json`). |
 | `public/` | Vite's static root, copied into the build as-is: art, sound, fonts, the mods' assets. No game data (`Port-Doctrine.md`). |
 | `vendor/` | Daggerfall Unity mods' published files, kept as handed over, for reference and for the bakes. |
 | `locales/` | Translations: one folder per language, string tables in DFU's format (`locales/README.md`). |

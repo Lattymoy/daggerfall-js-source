@@ -1,0 +1,439 @@
+[
+  {
+    "name": "RELEASE-FLOW-no-descent-into-a-promotion",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "    if (second && onMain.has(second)) {",
+    "new": "    if (second && onMain.has(second) && false) {",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "A release cut from release would carry the notes of its promotion's pull request alone - none of main's."
+  },
+  {
+    "name": "RELEASE-FLOW-every-merge-descended",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "    if (second && onMain.has(second)) {",
+    "new": "    if (second) {",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "A pull request merged into a feature branch, never main, would bring its notes."
+  },
+  {
+    "name": "RELEASE-FLOW-no-main-read-as-no-promotion",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  if (!mainline) throw new Error(",
+    "new": "  if (!mainline && false) throw new Error(",
+    "tests": [
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "A clone with no main would publish notes short of every pull request a promotion brought."
+  },
+  {
+    "name": "RELEASE-FLOW-the-line-read-as-ancestry",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  if (run(['rev-list', '--first-parent', at]).split('\\n').includes(commit)) return null;",
+    "new": "  if (run(['rev-list', at]).split('\\n').includes(commit)) return null;",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A release branched before main's last release passes - that release is an ancestor through the promotion - and its first update repeats a number main published."
+  },
+  {
+    "name": "RELEASE-FLOW-the-line-unread",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  if (run(['rev-list', '--first-parent', at]).split('\\n').includes(commit)) return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Nothing is ever refused: the guard is a comment."
+  },
+  {
+    "name": "RELEASE-FLOW-the-refusal-passed",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "      console.error(`nothing is released: ${problem}`);\n      return 1;",
+    "new": "      console.error(`nothing is released: ${problem}`);\n      return 0;",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The step says what is wrong and the run goes on to publish it."
+  },
+  {
+    "name": "RELEASE-FLOW-the-desktop-release-unasked",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "            node scripts/desktopRelease.mjs line \"$TAG\"\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A release cut from a release branched too soon is named after an update main already published."
+  },
+  {
+    "name": "RELEASE-FLOW-the-site-unasked",
+    "file": ".github/workflows/deploy.yml",
+    "old": "      - name: Release's line holds the release before\n        run: node scripts/desktopRelease.mjs line\n        working-directory: production\n\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The site stamps an update number main already published."
+  },
+  {
+    "name": "RELEASE-FLOW-the-site-published-from-main-again",
+    "file": ".github/workflows/deploy.yml",
+    "old": "on:\n  workflow_dispatch:\n\npermissions:",
+    "new": "on:\n  push:\n    branches: [main]\n  workflow_dispatch:\n\npermissions:",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Every merge to main would reach the players again, the release branch passed by."
+  },
+  {
+    "name": "RELEASE-FLOW-site-from-any-branch",
+    "file": ".github/workflows/deploy.yml",
+    "old": "      - name: Only release publishes the site\n        if: github.ref != 'refs/heads/release'",
+    "new": "      - name: Only release publishes the site\n        if: github.ref == 'refs/heads/never'",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/tooling/flow1_ci.test.js"
+    ],
+    "note": "A dispatch on any branch would publish its site."
+  },
+  {
+    "name": "RELEASE-FLOW-relay-from-any-branch",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "      - name: Only release deploys the relay\n        if: github.ref != 'refs/heads/release'",
+    "new": "      - name: Only release deploys the relay\n        if: github.ref == 'refs/heads/never'",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/server/relaydeploy.test.js"
+    ],
+    "note": "A dispatch on any branch would deploy its relay and drop every player."
+  },
+  {
+    "name": "RELEASE-FLOW-account-from-any-branch",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "      - name: Only release deploys the account service\n        if: github.ref != 'refs/heads/release'",
+    "new": "      - name: Only release deploys the account service\n        if: github.ref == 'refs/heads/never'",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/server/accountdeploy.test.js"
+    ],
+    "note": "A dispatch on any branch would deploy its account service."
+  },
+  {
+    "name": "RELEASE-FLOW-a-release-cut-anywhere",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "          if [ \"$GITHUB_REF\" = refs/heads/release ]; then",
+    "new": "          if true; then",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/tooling/updatecheck.test.js"
+    ],
+    "note": "A dispatch on any branch would cut a release the updaters take."
+  },
+  {
+    "name": "RELEASE-FLOW-the-relay-deploy-out-of-the-environment",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "    environment: production\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/server/relaydeploy.test.js"
+    ],
+    "note": "The relay would deploy with no release manager asked, and its token outside the environment that keeps it."
+  },
+  {
+    "name": "RELEASE-FLOW-the-account-deploy-out-of-the-environment",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "    runs-on: ubuntu-latest\n    environment: production\n    defaults:",
+    "new": "    runs-on: ubuntu-latest\n    defaults:",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/server/accountdeploy.test.js"
+    ],
+    "note": "The account service would deploy with no release manager asked."
+  },
+  {
+    "name": "RELEASE-FLOW-a-data-operation-out-of-the-environment",
+    "file": ".github/workflows/guild-grant.yml",
+    "old": "    environment: production\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A grant of production gold would run on any branch, unapproved."
+  },
+  {
+    "name": "RELEASE-FLOW-the-publish-out-of-the-environment",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "    runs-on: ubuntu-latest\n    environment: production\n    permissions:",
+    "new": "    runs-on: ubuntu-latest\n    permissions:",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A desktop release would publish with no release manager asked."
+  },
+  {
+    "name": "RELEASE-FLOW-the-relay-asks-approval-for-nothing",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "needs.drift.result == 'success' && needs.drift.outputs.deploying == 'true' && needs.verify.result == 'success'",
+    "new": "needs.drift.result == 'success' && (needs.verify.result == 'success' || needs.verify.result == 'skipped')",
+    "tests": [
+      "test/server/relaydeploy.test.js",
+      "test/net/scale1.test.js"
+    ],
+    "note": "A release that moves no relay would still ask a release manager to approve a deploy that does nothing."
+  },
+  {
+    "name": "RELEASE-FLOW-production-admitting-main",
+    "file": "ops/github/settings.json",
+    "old": "\"production\": { \"reviewers\": \"releaseManagers\", \"branches\": [\"release\"] }",
+    "new": "\"production\": { \"reviewers\": \"releaseManagers\", \"branches\": [\"release\", \"main\"] }",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Production's secrets would reach a run on main."
+  },
+  {
+    "name": "RELEASE-FLOW-a-workflow-environment-undeclared",
+    "file": "ops/github/settings.json",
+    "old": "\"dev\": { \"reviewers\": null, \"branches\": [\"main\"] }",
+    "new": "\"devel\": { \"reviewers\": null, \"branches\": [\"main\"] }",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "dev-deploy.yml would name an environment the settings never make."
+  },
+  {
+    "name": "RELEASE-FLOW-check-off-main",
+    "file": ".github/workflows/check.yml",
+    "old": "  push:\n    branches: [main]\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Main's head would go unverified after a merge, and the shards' times saved where every pull request reads them would go stale."
+  },
+  {
+    "name": "ROLES-codeowners-and-the-roles-apart",
+    "file": ".github/CODEOWNERS",
+    "old": "* @Lattymoy @EdoardoBramini",
+    "new": "* @Lattymoy",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "GitHub would ask, and accept the approval of, a different set of reviewers than the roles name."
+  },
+  {
+    "name": "ROLES-a-squash-into-release",
+    "file": "ops/github/settings.json",
+    "old": "\"allowed_merge_methods\": [\"merge\"]",
+    "new": "\"allowed_merge_methods\": [\"merge\", \"squash\"]",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A squashed promotion leaves no second parent, and the release's notes would miss main's pull requests."
+  },
+  {
+    "name": "ROLES-the-plan-blind-to-a-moved-branch",
+    "file": "tools/repoSettings.mjs",
+    "old": "      if (!env.branches.includes(p.name) || (p.type ?? 'branch') !== 'branch') {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "github-pages would go on admitting main."
+  },
+  {
+    "name": "ROLES-an-undeclared-rule-unseen",
+    "file": "tools/repoSettings.mjs",
+    "old": "  if (!same(sorted((have.rules ?? []).map((r) => r.type)), sorted(want.rules.map((r) => r.type)))) return false;\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A rule added by hand would never be taken back to the file."
+  },
+  {
+    "name": "HOTFIX-BACK-a-promotion-read-as-a-lack",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "if tree=$(git merge-tree --write-tree origin/main origin/release) && [ \"$tree\" = \"$(git rev-parse 'origin/main^{tree}')\" ]; then",
+    "new": "if false; then",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Every promotion would open a back-merge of nothing."
+  },
+  {
+    "name": "HOTFIX-BACK-a-conflict-read-as-nothing",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "if tree=$(git merge-tree --write-tree origin/main origin/release) && [",
+    "new": "if ! tree=$(git merge-tree --write-tree origin/main origin/release) || [",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A fix that conflicts with main would never come back to it."
+  },
+  {
+    "name": "HOTFIX-BACK-release-forced-over-an-open-branch",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "if [ -n \"$pr\" ] && git rev-parse -q --verify refs/remotes/origin/backmerge/release >/dev/null; then",
+    "new": "if false; then",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A conflict someone resolved on the open back-merge would be thrown away by the next push to release."
+  },
+  {
+    "name": "HOTFIX-BACK-a-conflict-resolved-for-a-person",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "if ! git merge -q --no-edit -m 'Merge release into backmerge/release' origin/release; then",
+    "new": "if ! git merge -q --no-edit -X theirs -m 'Merge release into backmerge/release' origin/release; then",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A conflict would be settled by taking release's side, unseen."
+  },
+  {
+    "name": "HOTFIX-BACK-the-check-not-asked",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "run: gh workflow run check.yml --repo \"$GITHUB_REPOSITORY\" --ref backmerge/release",
+    "new": "run: echo the check runs on its own",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The back-merge's required check would never run - a pull request the workflow opens starts none."
+  },
+  {
+    "name": "CHECK-ASK-anyone-may-ask",
+    "file": ".github/workflows/check-ask.yml",
+    "old": "            admin|maintain|write) ;;",
+    "new": "            admin|maintain|write|read|triage|none) ;;",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Anyone who can comment could set the whole check running."
+  },
+  {
+    "name": "CHECK-ASK-a-fork-dispatched",
+    "file": ".github/workflows/check-ask.yml",
+    "old": "          if [ \"$repo\" != \"$GITHUB_REPOSITORY\" ]; then",
+    "new": "          if false; then",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A fork's pull request would dispatch the check on this repository's branch of the same name."
+  },
+  {
+    "name": "CHECK-ASK-the-default-branch-checked",
+    "file": ".github/workflows/check-ask.yml",
+    "old": "          gh workflow run check.yml --repo \"$GITHUB_REPOSITORY\" --ref \"$ref\"",
+    "new": "          gh workflow run check.yml --repo \"$GITHUB_REPOSITORY\"",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The check would run on the default branch, never the pull request's."
+  },
+  {
+    "name": "DEV-ENV-the-build-unstamped",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": "          VITE_DFO_RELAY: wss://${{ env.DEV_HOST }}/relay\n",
+    "new": "          VITE_DFO_RELAYS: wss://${{ env.DEV_HOST }}/relay\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The dev environment's build would call the players' relay home."
+  },
+  {
+    "name": "DEV-ENV-a-deploy-from-any-branch",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": "        if: github.ref != 'refs/heads/main'",
+    "new": "        if: github.ref == 'refs/heads/never'",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Any branch could be deployed to the dev environment."
+  },
+  {
+    "name": "DEV-ENV-a-cron-of-its-own",
+    "file": "ops/dev/dfo-dev-cron",
+    "old": "cron=41+*+*+*+*'",
+    "new": "cron=0+*+*+*+*'",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The dev environment would fire an hourly cron the account service does not route."
+  },
+  {
+    "name": "DEV-ENV-the-explorer-open-to-the-network",
+    "file": "ops/dev/Caddyfile",
+    "old": "\t\trespond @inner 404\n\t\treverse_proxy 127.0.0.1:8787 {",
+    "new": "\t\treverse_proxy 127.0.0.1:8787 {",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "wrangler's explorer - every room's storage, read and written - would be open to the network."
+  },
+  {
+    "name": "DEV-ENV-a-strangers-address-taken",
+    "file": "ops/dev/dfo-dev-root",
+    "old": "-gt 250 ]",
+    "new": "-gt 254 ]",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A member could take an address past the members' range."
+  },
+  {
+    "name": "DEV-ENV-a-key-twice",
+    "file": "ops/dev/dfo-dev-root",
+    "old": "for k in \"name:$name\" \"key:$key\" \"ip:$ip\"; do",
+    "new": "for k in \"name:$name\" \"ip:$ip\"; do",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Two members with one key would leave WireGuard with one of them, silently."
+  },
+  {
+    "name": "DEV-ENV-the-stamp-unread",
+    "file": "src/net/serviceHome.js",
+    "old": "export const BUILD_RELAY = stamped.VITE_DFO_RELAY || null;",
+    "new": "export const BUILD_RELAY = null;",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "The dev environment's build would call the players' relay home."
+  },
+  {
+    "name": "DEV-ENV-a-refused-relay-taken",
+    "file": "src/net/online.js",
+    "old": "export const homeServerOf = (built) => relayUrl(built ?? '') ?? DEFAULT_SERVER;",
+    "new": "export const homeServerOf = (built) => built || DEFAULT_SERVER;",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "A stamp the client may not connect to would be its home."
+  },
+  {
+    "name": "DEV-ENV-a-refused-service-taken",
+    "file": "src/net/accountClient.js",
+    "old": "(SERVICE_URL.test(built ?? '') ? built : DEFAULT_ACCOUNT_SERVICE)",
+    "new": "(built || DEFAULT_ACCOUNT_SERVICE)",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "A stamp that is no https service would be its home."
+  },
+  {
+    "name": "DEV-ENV-the-world-host-on-the-players-relay",
+    "file": "src/scenes/world.js",
+    "old": "|| getPref('onlineServer') || HOME_SERVER,",
+    "new": "|| getPref('onlineServer') || 'wss://daggerfall-online.mackcothran.workers.dev',",
+    "tests": [
+      "test/net/servicehome.test.js"
+    ],
+    "note": "The dev environment's world would join the players' rooms."
+  }
+]

@@ -177,13 +177,10 @@ test('DISCORD-CODE: every declared command and subcommand reaches a handler in t
   assert.deepEqual(subcommandsOf('mod'), ['lookup', 'mute', 'unmute', 'ban', 'unban']);
 });
 
-test('DISCORD-CODE: the commands live under server-account/, and the deploy\'s path filter holds the setup tool\'s whole import graph - a change to either deploys, and so reaches Discord', () => {
+test('DISCORD-CODE: the commands live under server-account/, and every account deploy runs the setup tool - RELEASE-FLOW: dispatched on release with no path filter, so a change to the commands or the tool reaches Discord with the next release\'s deploy (the filter that held the tool\'s import graph went with the push)', () => {
   const wf = readFileSync(new URL('../../.github/workflows/account-deploy.yml', import.meta.url), 'utf8');
-  const listed = [...(/paths:\s*\n((?:\s*(?:#[^\n]*|-\s*"[^"]+")\n)+)/.exec(wf)?.[1] ?? '').matchAll(/-\s*"([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(listed.includes('server-account/**'), 'the service itself');
-  const outside = graph('tools/discordModCommands.mjs').filter((f) => !f.startsWith('server-account/'));
-  assert.ok(outside.includes('tools/discordModCommands.mjs') && outside.includes('tools/lib/isMain.mjs'), `the walk sees the tool: ${outside.slice(0, 4).join(', ')}`);
-  for (const f of outside) assert.ok(listed.includes(f), `${f} is read by the deploy's Discord step and a change to it would not deploy`);
+  assert.equal(wf.slice(wf.search(/^on:/m), wf.search(/^permissions:/m)), 'on:\n  workflow_dispatch:\n\n', 'no filter - a deploy is the release whole');
+  assert.match(wf, /node tools\/discordModCommands\.mjs --setup/, 'every deploy runs the tool');
   assert.ok(graph('server-account/src/index.js').includes('server-account/src/discordCommands.js'), 'the Worker reads the declaration (its usage), so the two ship together');
   assert.doesNotMatch(readFileSync(new URL('../../tools/discordModCommands.mjs', import.meta.url), 'utf8'), /name: 'mod'/, 'no command is declared in the tool');
 });

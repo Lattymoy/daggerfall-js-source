@@ -1,9 +1,9 @@
-# The DOWNLOADABLE build (Desktop-App.md). Pushing a tag shaped
-# app-v* builds the desktop shell's installers on all three OSes and
-# attaches them to a GitHub Release at that tag - which is where the
-# landing page's "On your desktop" section points. workflow_dispatch
-# builds the same installers as run artifacts, for trying a build
-# without cutting a release.
+# The DOWNLOADABLE build (Desktop-App.md). Dispatched on `release`, it
+# builds the desktop shell's installers on all three OSes and attaches
+# them to a GitHub Release - which is where the landing page's "On your
+# desktop" section points. Dispatched on any other branch it builds the
+# same installers as run artifacts, for trying a build without cutting
+# a release.
 #
 # The house gate rides in front: the `gate` job runs the whole check,
 # and every OS leg `needs` it (a red suite never ships an installer any
@@ -22,18 +22,23 @@
 name: release-desktop
 
 # REL3 (2026-09-21, Mac: "is there a way to auto push a release on each
-# merge?"): EVERY MAIN PUSH CUTS A RELEASE, from the same commit the
-# site deploys. The version is DERIVED, never bumped by hand: MAJOR.MINOR
-# from app/package.json's committed base, PATCH the count of commits on
-# main - monotonic, reproducible from the commit, and no file to remember
-# to touch. The marker file that used to name the tag and the REL1 gate
-# that held it to the package version are retired with it: ONE shell
-# variable names the number, and both the tag and the stamp electron-
-# builder bakes in read it, which is the whole of REL1's lesson.
-# A pushed app-v* tag and a dispatch with release_tag remain as manual
-# doors (a hotfix off a branch - at a NEW tag: a published release is
-# never re-cut in place, AUDIT INSTALL L3-2) and take their version from
-# the tag they name.
+# merge?"): every main push cut a release, from the same commit the site
+# deployed. The version is DERIVED, never bumped by hand: MAJOR.MINOR
+# from app/package.json's committed base, PATCH the count of commits
+# behind the release's own - monotonic, reproducible from the commit, and
+# no file to remember to touch. The marker file that used to name the tag
+# and the REL1 gate that held it to the package version are retired with
+# it: ONE shell variable names the number, and both the tag and the stamp
+# electron-builder bakes in read it, which is the whole of REL1's lesson.
+#
+# RELEASE-FLOW (2026-10-19, bible/01-Overview/Release-Flow.md): A RELEASE
+# IS CUT BY HAND, FROM `release`. A run dispatched on release derives the
+# number as REL3 did and publishes, once a release manager approves the
+# publish job (the `production` environment); a run dispatched anywhere
+# else builds the installers as run artifacts and publishes nothing. The
+# pushed app-v* tag and the release_tag input, REL3's two manual doors,
+# are gone: a hotfix is merged into release and cut from there like any
+# other release, and nothing else reaches the players.
 #
 # REL4 (2026-09-29, Mac: "drastically improve the install experience"):
 # THE RELEASE IS PUBLISHED WHOLE, ONCE. Each OS leg used to create-or-
@@ -51,49 +56,36 @@ name: release-desktop
 # publishes it in one step. `latest` never names a release that is half
 # there.
 on:
-  push:
-    tags:
-      - 'app-v*'
-    branches:
-      - main
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: 'Tag to create a Release at (app-v*); empty = run artifacts only'
-        required: false
-        default: ''
 
 permissions:
   contents: read
 
-# One MAIN release at a time, never cancelled once it runs: a release half
+# One release at a time, never cancelled once it runs: a release half
 # uploaded is worse than one late. GitHub keeps ONE run waiting per group
 # and cancels an older waiting run when a newer one queues - so of several
-# merges that land during a release, the newest is cut next, carrying the
-# others' commits under a higher number. A manual door (a pushed tag, a
-# dispatch) is a group of its own, so the next merge never cancels it.
+# dispatches on release, the newest waiting is cut next, carrying the
+# others' commits under a higher number. A run anywhere else builds
+# artifacts alone and is a group of its own, so no release cancels it.
 # AUDIT INSTALL L3-6: "runs queue rather than cancel" was true of one
 # waiting run only, and a dispatch waiting behind a release was cancelled
 # by the next merge without a word.
 concurrency:
-  group: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'release-desktop-main' || format('release-desktop-{0}', github.run_id) }}
+  group: ${{ github.ref == 'refs/heads/release' && 'release-desktop-release' || format('release-desktop-{0}', github.run_id) }}
   cancel-in-progress: false
 
 jobs:
-  # REL3: ONE NUMBER. The dispatch input or the pushed tag names it
-  # outright; a main push derives it - MAJOR.MINOR from the committed
-  # base, PATCH from `git rev-list --count HEAD`. A dispatch with no
-  # tag is artifacts-only, as before. Both the release tag and the
-  # version electron-builder stamps come from this one VERSION.
-  # AUDIT 68: the dispatch input is READ from the environment, never
-  # pasted into the script - a quote in it is text, not bash.
+  # REL3: ONE NUMBER. A run on release derives it - MAJOR.MINOR from the
+  # committed base, PATCH from `git rev-list --count HEAD`; a run anywhere
+  # else is artifacts-only (RELEASE-FLOW: nothing names a tag by hand any
+  # more). Both the release tag and the version electron-builder stamps
+  # come from this one VERSION.
   # REL4: resolved ONCE, here, and read by every job below - three legs
   # and the publish job cannot disagree about a number none of them
   # computes.
   # AUDIT INSTALL L1-5: and it is app-v<n>.<n>.<n> EXACTLY, or the run
-  # fails here. A tag name may carry quotes and `$` (git accepts
-  # app-v1.2.3";touch${IFS}x;"), and the number is written into scripts
-  # below - read from the environment there, and never anything but digits.
+  # fails here - the number is written into scripts below, read from the
+  # environment there, and never anything but digits.
   version:
     runs-on: ubuntu-latest
     outputs:
@@ -110,14 +102,14 @@ jobs:
       - name: Resolve release version
         id: reltag
         shell: bash
-        env:
-          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          TAG="$RELEASE_TAG"
-          if [ -z "$TAG" ] && [[ "$GITHUB_REF" == refs/tags/app-v* ]]; then TAG="$GITHUB_REF_NAME"; fi
-          if [ -z "$TAG" ] && [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF" = refs/heads/main ]; then
+          TAG=''
+          if [ "$GITHUB_REF" = refs/heads/release ]; then
             BASE=$(node -p "require('./app/package.json').version.split('.').slice(0,2).join('.')")
             TAG="app-v${BASE}.$(git rev-list --count HEAD)"
+            # RELEASE-FLOW: the update number and the notes count release's own line from the release before - which
+            # must stand on it (a release branched from main before main's last release would repeat both)
+            node scripts/desktopRelease.mjs line "$TAG"
           fi
           if [ -n "$TAG" ] && ! [[ "$TAG" =~ ^app-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::release tag must be app-v<major>.<minor>.<patch>, digits only"
@@ -278,10 +270,14 @@ jobs:
   # REL4: ONE publish, and only when every leg passed - `needs: build`
   # waits for the whole matrix, and a failed leg skips this job, so no
   # partial release is ever cut.
+  # RELEASE-FLOW: and only once a release manager approves it - the
+  # `production` environment admits release alone and asks its reviewers
+  # (ops/github/settings.json).
   publish:
     needs: [version, build]
     if: needs.version.outputs.tag != ''
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: write
       pull-requests: read   # REL6: the notes are the merged pull requests' own
@@ -375,8 +371,8 @@ jobs:
 
       # AUDIT 68: target_commitish cuts a NEW tag at the commit these
       # installers were built from. Without it GitHub cuts it at the
-      # default branch's head at upload time - main has moved on by
-      # then, and a dispatched hotfix branch's tag lands on main.
+      # default branch's head at upload time - main, never the release
+      # branch these were built from (RELEASE-FLOW).
       # REL4: a DRAFT, so nothing is visible while the files upload.
       # The body is the patch notes; GitHub appends its generated list
       # of merged changes beneath them, once.

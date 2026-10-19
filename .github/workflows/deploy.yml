@@ -1,28 +1,32 @@
 # Production + experimental preview deploy: GitHub Pages via Actions.
 #
-# Root always comes from main and keeps the house `npm run check` gate -
+# Root always comes from release and keeps the house `npm run check` gate -
 # FLOW1 (2026-09-26): as verify.yml's parallel jobs (lint and the types,
-# four balanced test shards) beside the site's own build, every one of
-# them on the SAME commit (the `main` job pins it: two merges in a row can
-# not deploy a tree the shards did not see). `deploy` publishes only once
-# all of them passed. The same gate as one serial `npm run check` - it
-# was ~7 minutes of every deploy, the PR's check run over again.
+# eight balanced test shards) beside the site's own build, every one of
+# them on the SAME commit (the `release` job pins it: two merges in a row
+# can not deploy a tree the shards did not see). `deploy` publishes only
+# once all of them passed. The same gate as one serial `npm run check`.
 # The exact-face-atlas experiment is built separately and mounted beneath
 # /preview/exact-face-atlas/ so it can be opened on a phone without merging
 # experimental rendering code into production.
 #
-# IMPORTANT: only main is allowed to publish Pages. A preview-branch push used
-# to start a second Pages run in the same concurrency group, cancel the main
-# build, then fail the protected github-pages environment before any steps ran.
-# Main still checks out the preview branch below, so every main deploy carries
-# the latest preview without letting the preview branch deploy by itself.
+# RELEASE-FLOW (2026-10-19, bible/01-Overview/Release-Flow.md): THE SITE IS
+# PUBLISHED BY HAND, FROM `release`. Every push to main published it until
+# now; main is the dev environment's now (dev-deploy.yml), and a player
+# meets a change only once it is promoted into release and a release
+# manager dispatches this and approves its publish (the github-pages
+# environment admits release alone and asks its reviewers).
+#
+# IMPORTANT: only release is allowed to publish Pages. A preview-branch push
+# used to start a second Pages run in the same concurrency group, cancel the
+# production build, then fail the protected github-pages environment before
+# any steps ran. Release still checks out the preview branch below, so every
+# deploy carries the latest preview without letting the preview branch
+# deploy by itself.
 # Preview refresh: traced classic weapon/shield art on voxel held items.
 name: deploy
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -35,38 +39,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # the one commit every job below verifies, builds and publishes: main's
-  # head as this run began
-  main:
+  # the one commit every job below verifies, builds and publishes: release's
+  # head as this run began - and RELEASE-FLOW: a run dispatched on any other
+  # branch stops here, before anything is built or published
+  release:
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.sha.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
+      - name: Only release publishes the site
+        if: github.ref != 'refs/heads/release'
+        run: |
+          echo "::error::the site is published from the release branch alone - dispatch this on release (bible/01-Overview/Release-Flow.md)"
+          exit 1
       - id: sha
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        run: echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
 
   verify:
-    needs: main
+    needs: release
     uses: ./.github/workflows/verify.yml
     with:
-      ref: ${{ needs.main.outputs.sha }}
+      ref: ${{ needs.release.outputs.sha }}
       build: false
 
   # CI-TIMES (2026-10-19): the shards' times this green run recorded, saved
-  # for every later run's split (test-times.yml) - beside the publish, which
-  # never waits on it
+  # for release's later runs (test-times.yml) - beside the publish, which
+  # never waits on it (main's are saved by check.yml's run on main)
   times:
-    needs: [main, verify]
+    needs: [release, verify]
     uses: ./.github/workflows/test-times.yml
     with:
-      ref: ${{ needs.main.outputs.sha }}
+      ref: ${{ needs.release.outputs.sha }}
       planned: ${{ needs.verify.outputs.times }}
 
   site:
-    needs: main
+    needs: release
     runs-on: ubuntu-latest
     outputs:
       account_version: ${{ steps.account.outputs.version }}
@@ -75,10 +82,10 @@ jobs:
       - name: Checkout production
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.main.outputs.sha }}
+          ref: ${{ needs.release.outputs.sha }}
           path: production
           # REL8: the whole history - the build stamps the player's update number (scripts/updateNumber.mjs), counted
-          # along main's first parents from the merge that set the line; a depth-1 clone cannot count it
+          # along release's first parents from the merge that set the line; a depth-1 clone cannot count it
           fetch-depth: 0
 
       # AUDIT PRE-MERGE 0929 T2: the account service this build's forms
@@ -100,6 +107,12 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: production/package-lock.json
+
+      # RELEASE-FLOW: the update number this build stamps counts release's own line, and the release before must stand
+      # on it (a release branched from main before main's last release would publish a number main already had)
+      - name: Release's line holds the release before
+        run: node scripts/desktopRelease.mjs line
+        working-directory: production
 
       - name: Install production dependencies
         run: npm ci
@@ -136,7 +149,7 @@ jobs:
       # THE GUN LAB, ON ITS OWN (Mac, 2026-09-19: "I want to test this
       # as its own deploy"). Pages serves ONE site per repository, so a
       # thing that wants its own link gets its own directory under it,
-      # and only main publishes. It builds from its OWN config
+      # and only release publishes. It builds from its OWN config
       # (vite.config.gun.js) - the page, its module, its art and its
       # sounds, nothing of the game - so the lab's link does not ride
       # on the game's build, and the directory carries an index.html so
@@ -146,8 +159,8 @@ jobs:
       # name, which is a loaded gun pointed at production - deleting
       # that branch after the merge would fail this step and take the
       # whole Pages deploy down with it, game and all. It builds from
-      # the production checkout instead: the lab is on main once this
-      # merges, and a preview that needs its own branch is what the
+      # the production checkout instead: the lab is in the tree it
+      # publishes, and a preview that needs its own branch is what the
       # `exact-face-atlas` block above is for.
       - name: Build gun lab
         run: npx vite build --config vite.config.gun.js

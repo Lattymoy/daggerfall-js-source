@@ -429,7 +429,7 @@ test('GUILD1 succession: a guild whose guildmaster\'s account went is given its 
 
 // ─── THE WIRE ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('GUILD1 the wire: every guild route is the service\'s and behind a session; the client\'s door posts each to its route with the session as a Bearer header and no session is a word, not a throw; every refusal has a sentence naming its bound; the deploy bundles the law (mutants: a route misspelt, a refusal unsaid)', async () => {
+test('GUILD1 the wire: every guild route is the service\'s and behind a session; the client\'s door posts each to its route with the session as a Bearer header and no session is a word, not a throw; every refusal has a sentence naming its bound (mutants: a route misspelt, a refusal unsaid)', async () => {
   const routes = ['mine', 'invites', 'found', 'invite', 'answer', 'leave', 'remove', 'rank', 'ranks', 'deposit', 'withdraw', 'handover', 'disband'].map((r) => `/v1/guilds/${r}`);
   for (const r of routes) assert.ok(ROUTES.has(r), r);
   const sent = [];
@@ -461,5 +461,4 @@ test('GUILD1 the wire: every guild route is the service\'s and behind a session;
   }
   assert.match(REFUSALS['guild-renown'], /Renown 10/);
   assert.match(REFUSALS['guild-full'], /50/);
-  assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/guild\/guildLaw\.js"/);
 });

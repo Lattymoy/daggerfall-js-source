@@ -47,29 +47,38 @@
   {
     "name": "DEPLOY-1-the-trigger-is-not-read",
     "file": "test/server/relaydeploy.test.js",
-    "old": "  const auto = /push:/.test(head) && /branches:\\s*\\[\\s*main\\s*\\]/.test(head);",
-    "new": "  const auto = true;",
+    "old": "  const byHand = /^on:\\n {2}workflow_dispatch:/.test(head) && !/\\n {2}push:/.test(head);",
+    "new": "  const byHand = false;",
     "tests": [
       "test/server/relaydeploy.test.js"
     ],
-    "equivalent": true,
-    "why": "The workflow DOES deploy on push, so hard-coding the answer agrees with it today. What the derivation buys is the OTHER direction - the day someone makes the deploy manual again, the real reading flips the pin to require the files to say so and this one would silently keep demanding they do not. A fixture cannot see that without a second workflow to read, and inventing one would be pinning the fixture rather than the repo."
+    "note": "RELEASE-FLOW re-aim: the answer hard-coded the wrong way round - the pin then demands the relay's config stop saying a person dispatches it, which it does, and dies. (Hard-coded the right way it agrees with the workflow today; what the derivation buys is the day the trigger moves again.)"
   },
   {
     "name": "DEPLOY-2-a-stale-claim-passes",
     "file": "test/server/relaydeploy.test.js",
-    "old": "const MANUAL_CLAIM = /(deploy(ed)?\\s+(is\\s+)?by\\s+hand|by\\s+hand\\s*[-,]\\s*`?npx wrangler|manual on purpose|nothing in CI does it|hand-deployed)/i;",
-    "new": "const MANUAL_CLAIM = /this phrase appears in no file/i;",
+    "old": "const AUTO_CLAIM = /(deploy is automatic|on every (?:push|merge) to main|runs on every push|every (?:push|merge) to main (?:cuts|deploys|publishes))/i;",
+    "new": "const AUTO_CLAIM = /this phrase appears in no file/i;",
     "tests": [
       "test/server/relaydeploy.test.js"
     ],
     "note": "A gate that matches nothing is green over any prose at all - which is precisely the state the tree was in for fifteen weeks."
   },
   {
+    "name": "DEPLOY-2b-a-claim-outside-ci-passes",
+    "file": "test/server/relaydeploy.test.js",
+    "old": "const OUTSIDE_CI_CLAIM = /(by\\s+hand\\s*[-,(]\\s*`?npx wrangler|manual on purpose|nothing in CI does it|hand-deployed)/i;",
+    "new": "const OUTSIDE_CI_CLAIM = /this phrase appears in no file/i;",
+    "tests": [
+      "test/server/relaydeploy.test.js"
+    ],
+    "note": "RELEASE-FLOW: the second gate, the claim SRV-N/CI retired - one that matches nothing is green over any prose."
+  },
+  {
     "name": "DEPLOY-3-the-cost-goes-unwritten",
     "file": "server/wrangler.toml",
-    "old": "# once: peers vanish, chat goes quiet. That is the cost of merging a",
-    "new": "# once. That is the cost of merging a",
+    "old": "# once: peers vanish, chat goes quiet. That is the cost of releasing a",
+    "new": "# once. That is the cost of releasing a",
     "tests": [
       "test/server/relaydeploy.test.js"
     ],
@@ -78,8 +87,8 @@
   {
     "name": "DEPLOY-4-wrangler-stops-naming-the-workflow",
     "file": "server/wrangler.toml",
-    "old": "# `.github/workflows/relay-deploy.yml` runs on EVERY PUSH TO MAIN. It",
-    "new": "# The CI workflow runs on EVERY PUSH TO MAIN. It",
+    "old": "# `.github/workflows/relay-deploy.yml` on the release branch, in CI, and",
+    "new": "# the CI workflow on the release branch, in CI, and",
     "tests": [
       "test/server/relaydeploy.test.js"
     ],
@@ -88,13 +97,13 @@
   {
     "name": "DEPLOY-5-the-population-stops-walking",
     "file": "test/server/relaydeploy.test.js",
-    "old": "  const files = [...walk('src'), ...walk('server/src'), 'server/wrangler.toml']\n    .filter((f) => !bundled.has(f));",
-    "new": "  const files = ['server/wrangler.toml'];",
+    "old": "  const files = [...walk('src'), ...walk('server/src'), ...walk('server-account/src'), 'server/wrangler.toml', 'server-account/wrangler.toml',",
+    "new": "  const files = ['server/wrangler.toml', 'server-account/wrangler.toml',",
     "tests": [
       "test/server/relaydeploy.test.js"
     ],
     "equivalent": true,
-    "why": "Only wrangler.toml carries the claim today, so narrowing the population still passes. The walk is here for the file NOT YET WRITTEN - updateNotice.js was the worst offender of the three and no enumeration would have listed it. Held by the walk's own shape rather than by a fixture."
+    "why": "No live file carries a claim today, so narrowing the population still passes. The walk is here for the file NOT YET WRITTEN - updateNotice.js was the worst offender of the three and no enumeration would have listed it. Held by the walk's own shape rather than by a fixture."
   },
   {
     "name": "DEPLOY-6-the-exclusion-widens-past-the-bundle",
