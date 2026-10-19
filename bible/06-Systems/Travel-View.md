@@ -2306,7 +2306,9 @@ the old governor 14-37, 27); no let-go builds. Holes within three rings of the t
 0.6-9.6 before); the outermost counted ring (four pixels out at this view) stands unbuilt a little longer (the counted
 grid holed 95-127 s a ride, 91-117 before), the rate the stream gains at held while it builds. The rides' average x12.4
 -> x13.6: past the sink the stream's own pace is the cap - TV2's "Cap it to what loads cleanly" - and the governor now
-rides at it rather than under it.
+rides at it rather than under it. OW-BUILD (below, landed beside this) raises that pace itself - a build's slice
+under the Overworld - and composes with it: this section changes what is built when and how the clock holds, that one
+how fast a build runs.
 
 **The four hosts.** `scenes/world.js` wired - it alone streams pixels and raises the Overworld. `scenes/exterior.js`
 streams nothing (one fixed city); `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a dungeon)
@@ -2323,6 +2325,49 @@ ow_loadowed, ow_buildretry, perfextc, tv2 and this one) re-run: 175 dead; the tr
 (audit_etherow, ether_ow, ow2, ow3j, ow4j, ow4x, ow5, ow5d, ow6s, ratelaw, tv3, tv5, tv_wasd) 384 dead, and the five
 that live there (OW6-S-reason-unshown, EDGE-FURNITURE-stale-on-show, AUDIT-DEEP2-E6-bands-unshared, -E7-corner-piece-ignored
 and -E8-foot-ends-overlap) live on main's tree as well, untouched here.
+
+## OW-BUILD - the Overworld's ground first (2026-10-18, the owner, after QUEUE-OWED)
+
+QUEUE-OWED took the wasted builds out of the stream and left this standing: on a machine that builds a pixel more slowly
+than a journey crosses them, TV2's governor still holds the clock down to x1, on a straight road as on a turning one.
+Offered three ways on - build the ground faster during Overworld travel, a softer floor under the governor, or both - the
+owner chose the first: *"1"*.
+
+**What paced the ground.** A streamed pixel's build breathes (systems/buildBreather.js, PERF7): a slice of work a frame,
+then it gives the frame back. PERF-EXT24 sized the slice to what the display's frame left - 3 to 6 ms - so that a
+streaming frame still made its beat. Under the Overworld that is the wrong trade. The traveller is watching the land from
+the sky with the clock at up to x100, and what holds that clock is the ground the stream has not built.
+
+**FIXED.** While the view is up the host's budget says so (world.js:"overworld: !!travelView?.active"), and
+frameFitBudget sizes the slice against a frame of 30 a second instead of the display's
+(buildBreather.js:"export const BUILD_OVERWORLD_FRAME_MS"). The slice is what that frame leaves past the frame's own
+script and the margin, up to 20 ms (BUILD_SLICE_OVERWORLD_MS) and never less than the ordinary 6. A light frame drops to
+30 a second while ground is owed. A frame already under 60 loses nothing. A frame too heavy to leave 6 is sized as an old
+stream always was. With the view down, or nothing queued, nothing changes.
+
+Measured: the real breather over a pixel's work on a 60 Hz display, and the journey rig QUEUE-OWED measured with (the
+host's own stream, pump, governor and count; a horse at x100, 300 s). The work is set so that a pixel takes 1 s on the
+ordinary slice at 8 ms of frame script.
+
+| Frame script | Slice | Frame rate | Pixel build | x1, straight road | x1, turning road |
+|---|---|---|---|---|---|
+| 4 or 8 ms | 6 -> 20 ms | 60 -> 30 | 1.00 -> 0.60 s | 39.9 -> 11.4 s | 56.4 -> 12.9 s |
+| 12 ms | 6 -> 18.8 ms | 30 -> 30 | 2.00 -> 0.67 s | 133.1 -> 13.1 s | 162.9 -> 19.7 s |
+| 20 ms | 6 -> 10.8 ms | 30 -> 30 | 2.00 -> 1.13 s | 133.1 -> 46.8 s | 162.9 -> 91.8 s |
+
+Not measured: the frame's own script under the Overworld on a player's machine, and how much of a pixel's build is the
+breather's slices rather than the terrain worker's round trip or a cold read (there is no game data in the container).
+Only the slices are made faster. The governor is unchanged here (TV2: "Cap it to what loads cleanly"), and so is its floor;
+STREAM-OWED (above, landed beside this) changed what the pump takes and when a settled cut is cut again, not the slice.
+
+**The four hosts.** `scenes/world.js` wired - it alone streams pixels and raises the Overworld. `scenes/exterior.js`
+builds one fixed city once, through no breather; `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a
+dungeon) stream no pixels and raise no Overworld.
+
+`test/systems/travel/ow_buildpace.test.js` (3), `tools/mutants/ow_buildpace.json` (7, all dead). PIN MOVED: `buildslice`
+(the host's budget line carries the view; its lifted budget is handed one); `tools/mutants/perfextc.json`
+PERF-EXT24-review-awaited-is-inferred-from-an-idle-pump-again re-aimed by content. The record of the slice it changes:
+`07-Rendering/Performance-Exterior.md` PERF-EXT24.
 
 ## TIME-DILATION - the sea's AI never on the journey's clock (2026-10-17, the owner)
 

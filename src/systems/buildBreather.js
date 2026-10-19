@@ -34,6 +34,11 @@ export const BUILD_SLICE_MARGIN_MS = 2.5;
 /** PERF-EXT24: a stream that has been at it this long gets the whole
  *  slice again - the bound on how much later a pixel can arrive. */
 export const BUILD_STREAM_AGE_MS = 2000;
+/** OW-BUILD (bible/06-Systems/Travel-View.md OW-BUILD): the frame a slice is sized against while the Overworld is up -
+ *  30 a second, whatever the display's. */
+export const BUILD_OVERWORLD_FRAME_MS = 1000 / 30;
+/** OW-BUILD: the most an Overworld slice lends - a light frame still draws at 30 a second or better. */
+export const BUILD_SLICE_OVERWORLD_MS = 20;
 
 /**
  * PERF-EXT24 (2026-09-25, the players: "fps issues in the exterior but
@@ -52,10 +57,22 @@ export const BUILD_STREAM_AGE_MS = 2000;
  * stream that has run BUILD_STREAM_AGE_MS gets the whole slice again, and
  * a build something is waiting on (the boot's, a teleport's) always does.
  * Pure: every input is an argument.
- * @param {{ intervalMs: number, busyMs: number, streamingMs?: number, awaited?: boolean }} frame
+ *
+ * OW-BUILD (bible/06-Systems/Travel-View.md OW-BUILD; the owner's call, 2026-10-18): UNDER THE OVERWORLD THE GROUND
+ * COMES FIRST. A journey there runs the clock at up to a hundred times walking pace, the ground the stream has not
+ * built is what holds it (TV2's governor halves it to x1 - systems/travel/travelGovernor.js), and the traveller is
+ * watching the land from the sky, not fighting on it. So while the view is up (`overworld`) a slice is what a frame of
+ * 30 a second leaves past the frame's own script and the margin, up to BUILD_SLICE_OVERWORLD_MS, and never less than
+ * the whole ordinary slice: the stream builds up to three times as fast, and a light frame gives up its rate to 30 for
+ * it while ground is owed. A frame heavy enough to leave less is sized as an old stream always was.
+ * @param {{ intervalMs: number, busyMs: number, streamingMs?: number, awaited?: boolean, overworld?: boolean }} frame
  * @returns {number} this slice's milliseconds
  */
-export function frameFitBudget({ intervalMs, busyMs, streamingMs = 0, awaited = false }) {
+export function frameFitBudget({ intervalMs, busyMs, streamingMs = 0, awaited = false, overworld = false }) {
+  if (overworld) {
+    const left = BUILD_OVERWORLD_FRAME_MS - busyMs - BUILD_SLICE_MARGIN_MS;
+    return Number.isNaN(left) ? BUILD_SLICE_MS : Math.max(BUILD_SLICE_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));
+  }
   if (awaited || streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;
   const left = intervalMs - busyMs - BUILD_SLICE_MARGIN_MS;
   if (Number.isNaN(left)) return BUILD_SLICE_MS;   // a NaN in is the old slice out, never a stall

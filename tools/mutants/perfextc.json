@@ -911,8 +911,8 @@
  {
   "name": "PERF-EXT24-review-awaited-is-inferred-from-an-idle-pump-again",
   "file": "src/scenes/world.js",
-  "old": "awaited: _awaitedBuilds > 0 }),",
-  "new": "awaited: _streamSince == null }),",
+  "old": "awaited: _awaitedBuilds > 0, overworld: !!travelView?.active }),",
+  "new": "awaited: _streamSince == null, overworld: !!travelView?.active }),",
   "tests": [
    "test/systems/buildslice.test.js"
   ]

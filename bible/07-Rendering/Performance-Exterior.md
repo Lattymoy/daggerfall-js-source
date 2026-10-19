@@ -1148,6 +1148,11 @@ unbuilt pixel stays open that much longer. That is visible, and it is
 not claimed away. `BUILD_SLICE_FLOOR_MS` and `BUILD_STREAM_AGE_MS`
 (`systems/buildBreather.js`) are the two knobs.
 
+OW-BUILD (2026-10-18, the owner; `06-Systems/Travel-View.md` OW-BUILD): while the Overworld is up the trade goes the
+other way. A slice is what a frame of 30 a second leaves (`BUILD_OVERWORLD_FRAME_MS`), up to 20 ms
+(`BUILD_SLICE_OVERWORLD_MS`) and never under 6, so a light frame drops to 30 a second while ground is owed and the
+stream builds up to three times as fast. The ground under a sky-high view is what holds the journey's clock.
+
 | `sliceTree.mjs` (headless Chromium, relative only) | frame JS 9 ms | 12 ms | 14 ms | 18 ms |
 |---|---|---|---|---|
 | no build | 60 fps | 60 | 59.7 | 55.0 |

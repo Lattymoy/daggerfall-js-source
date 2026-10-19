@@ -5808,7 +5808,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // neither saw the stream at all.
   let _streamSince = null;   // PERF-EXT24: when the pump's current run of builds began; null while it is idle
   const breather = createBreather({   // PERF7: one slice clock for the stream; each build resets it
-    budget: () => frameFitBudget({ intervalMs: frameInterval(), busyMs: lastBusy(), streamingMs: _streamSince == null ? 0 : performance.now() - _streamSince, awaited: _awaitedBuilds > 0 }),
+    budget: () => frameFitBudget({ intervalMs: frameInterval(), busyMs: lastBusy(), streamingMs: _streamSince == null ? 0 : performance.now() - _streamSince, awaited: _awaitedBuilds > 0, overworld: !!travelView?.active }),   // OW-BUILD: the Overworld's ground first
     onSlice: (ms) => { lendFrame(ms); meterFor(renderer.gl)?.addCpu('build', ms); },
     frames: framesBegun,   // PERF-EXT24 (the review): a slice a frame ran inside held a wait, and is not lent
   });
