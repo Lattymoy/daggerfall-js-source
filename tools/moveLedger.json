@@ -4532,5 +4532,8 @@
   ["test/law9_rooms.test.js","test/net/eliteGates/law9_rooms.test.js"],
   ["test/law9_route.test.js","test/net/eliteGates/law9_route.test.js"],
   ["test/lootbulk.test.js","test/ui/lootbulk.test.js"],
-  ["test/containerpreview.test.js","test/systems/containerpreview.test.js"]
+  ["test/containerpreview.test.js","test/systems/containerpreview.test.js"],
+  ["src/systems/townEcon.js","src/systems/town/townEcon.js"],
+  ["test/townecon.test.js","test/systems/townecon.test.js"],
+  ["bible/01-Overview/Audit-Town-Econ.md","bible/01-Overview/audits/Audit-Town-Econ.md"]
 ]

@@ -101,7 +101,7 @@ export function createPixelBuild(host) {
     livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownsIndex, livingTripsOf, loadGroundSet, lookOfHome,
     lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
-    townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
+    townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight
   } = host;
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
@@ -714,6 +714,7 @@ export function createPixelBuild(host) {
           // CHAP5b (Chapters-Arc 9): a guild's chapter here off the sheet the tab holds - its band, its guild named - for
           // its hall's evenings and the town's talk of it; none offline (no sheet: the living world is today's)
           chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,   // AUDIT CHAP4 C2: this town's own pixel
+          econBandOf: () => townEcon.bandOf(livingTown.mapId),   // TOWN-ECON TE3: the town's economy, as its talk tells it (none offline)
           extraPeople: (day, town) => host.legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight

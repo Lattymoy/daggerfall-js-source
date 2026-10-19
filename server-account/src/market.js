@@ -92,6 +92,7 @@ import { mintVersionOf } from '../../src/net/productRecord.js';   // CRAFT-PROCS
 import { takeTradeGoods, giveTradeGoods } from '../../src/net/realm/realmTradeLaw.js';   // MARKET-ANY: a piece out of one record and into another, as a trade moves it
 import { prepareCraftedPiece, pieceComingBack } from './craftedPiece.js';   // INT19: a crafted piece out of its seller's record, and back as it
 import { vendorOf, VENDOR_STATION, VENDOR_LISTING_S, VENDOR_STOCK_SHOWN, VENDOR_STOCK_MAX, VENDOR_BOARD_SHOWN } from '../../src/net/vendorLaw.js';   // HOME-VENDOR: a home's trader
+import { tradeActStatements, patronActStatements } from './townEcon.js';   // TOWN-ECON TE2: a trader's sale and a patron's, counted at their town
 
 const DAY_S = 86_400;
 /** GOLD-MARKET: the Stores origin of units bought in the row's own currency (a listing's or a sale's `currency`). */
@@ -1232,7 +1233,7 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
   ]);
   const road = courierOf(hubsNow, from, region, units, courierSlow(env, nowS, region));
   if (!road) return { error: 'market-no-road' };
-  if (at) return buyWithGold(ctx, player, { character, region, l, units, max, rid, road, own, at, answer });
+  if (at) return buyWithGold(ctx, player, { character, region, l, units, max, rid, road, own, at, answer, vend });
   const total = units * Number(l.price);
   // AUDIT 30 L6: the tax of the listing's running total - what it has sold before this, units x its price
   const left = Number(l.own) + Number(l.bought);
@@ -1304,6 +1305,8 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
       SELECT day, material, price, units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material'
       ON CONFLICT (day, material, price) DO UPDATE SET units = market_prices.units + excluded.units`).bind(me, rid, nonce),
     ...witnessStatements(db, player, nowS, [from, region], own, 'EXISTS (SELECT 1 FROM market_sales WHERE buyer = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),
+    // TOWN-ECON TE2: a trader's sale counted at its town, the buyer's act - by this sale's row alone
+    ...tradeActStatements(db, player, nowS, vend?.map ?? null, 'EXISTS (SELECT 1 FROM market_sales WHERE buyer = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),
     db.prepare('SELECT * FROM market_sales WHERE buyer = ?1 AND rid = ?2').bind(me, rid),
   ]);
   const made = decided[decided.length - 1][0] ?? null;
@@ -1329,7 +1332,7 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
  * gold's, a piece's owner moved and marked bought with gold. The tax and the fee, and the courier, are burnt: gold no
  * row holds. Answers the sale and the record's new sequence (`realm.seq`).
  */
-async function buyWithGold(ctx, player, { character, region, l, units, max, rid, road, own, at, answer }) {
+async function buyWithGold(ctx, player, { character, region, l, units, max, rid, road, own, at, answer, vend = null }) {
   const { db, bucket, nowS, rand } = ctx;
   const me = player.id;
   const courier = road.courier * MARK_WORTH_GOLD;
@@ -1394,6 +1397,7 @@ async function buyWithGold(ctx, player, { character, region, l, units, max, rid,
         SELECT day, material, price, units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material'
         ON CONFLICT (day, material, price) DO UPDATE SET units = market_gold_prices.units + excluded.units`).bind(me, rid, nonce),
       ...witnessStatements(db, player, nowS, [from, region], own, 'EXISTS (SELECT 1 FROM market_sales WHERE buyer = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),
+      ...tradeActStatements(db, player, nowS, vend?.map ?? null, 'EXISTS (SELECT 1 FROM market_sales WHERE buyer = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),   // TOWN-ECON TE2
     ]);
   } catch {
     await dropIfUnnamed(db, bucket, me, at.id, prep.key);   // AUDIT REALM2 S3
@@ -2306,6 +2310,7 @@ export async function reckonPatrons(ctx, { maps = null, region = null } = {}, en
                 faucetStatement(db, 'patron', hour, gets),
                 // AUDIT LW-II-2 S2: the ledger told - the piece out of the realm, a copy claiming it charged to its claimant
                 ...(l.key ? escrowSpentSteps(db, l.key, claim, nowS) : []),
+                ...patronActStatements(db, l.seller, map, day),   // TOWN-ECON TE2: the patron's purchase counted at its town, the seller's act
               ]);
               gone.add(l.id);
               sold++;

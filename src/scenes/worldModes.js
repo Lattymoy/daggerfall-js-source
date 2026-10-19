@@ -3864,7 +3864,7 @@ export function createWorldModes(host) {
         carriedWeightKg: carriedWeight(playerEntity),
         maxEncumbranceKg: entityMaxEncumbrance(playerEntity),   // DaggerfallTradeWindow.cs:1039 reads PlayerEntity.MaxEncumbrance
       }),
-      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),
+      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell, { holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0), guildFactionId }),   // AUDIT TOWN-ECON 2 PRICE-1: the purchase's own asks
       // AUDIT 63 F48: DoSteal's five effects (DaggerfallTradeWindow.cs
       // :913-928). The same four sinks the private-property theft
       // above already uses, in DoSteal's own - inverted - order, which
@@ -3896,7 +3896,7 @@ export function createWorldModes(host) {
       ...(road ? {
         commit: (m, staged, price, proceeds) => {
           if (road.allow?.(m, staged, price) === false) { if (m === 'Sell' || m === 'SellMagic') (playerEntity.items ??= []).push(...staged); return false; }
-          const r = commitTrade(shelf, m, staged, price, proceeds, identifySpell);
+          const r = commitTrade(shelf, m, staged, price, proceeds, identifySpell, { holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0), guildFactionId });
           road.done?.(m, staged, price);
           return r;
         },
@@ -3909,10 +3909,10 @@ export function createWorldModes(host) {
   /** ConfirmTrade_OnButtonClick's Yes arm (:1027-1092), host side.
    *  One Mercantile tally per CONCLUDED DEAL, not per item - DFU
    *  raises OnTrade once and tallies once, however many goods moved. */
-  function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null) {
+  function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null, asked = {}) {
     if (mode === 'Buy') {
       deductGold(playerEntity, price);
-      markCounterBought(staged);   // AUDIT LW-II-2 S1: online, a counter's piece is never a patron's (before a stack's merge takes it)
+      markCounterBought(staged, { price, ...asked });   // AUDIT LW-II-2 S1: online, a counter's piece is never a patron's (before a stack's merge takes it); LAW-3: and what it cost
       for (const it of staged) {
         const i = shelf.items.indexOf(it);
         if (i >= 0) shelf.items.splice(i, 1);
@@ -4046,7 +4046,7 @@ export function createWorldModes(host) {
     if (totalGoldAmount(playerEntity) < price) return null;
     deductGold(playerEntity, price);
     shelf.items.splice(at, 1);
-    markCounterBought([it]);   // AUDIT LW-II-2 S1: the keyed list's purchase marked as the counter's
+    markCounterBought([it], { price });   // AUDIT LW-II-2 S1: the keyed list's purchase marked as the counter's; LAW-3: and what it cost
     playerEntity.items = playerEntity.items || [];
     if (isFurnishing(it)) decorDeliver([it]);   // DECOR2b: the furnisher delivers
     // AUDIT HOLDINGS F8: a ship's deed off the keyed shelf goes to the Fleet's book as the counter's does (she waits at
@@ -4088,12 +4088,15 @@ export function createWorldModes(host) {
   function itemValue(it) { return itemValueOf(it); }   // JAN1: the one value read (a non-finite value is an absent one)
   // SEAT1d (Seats-Arc 7.2, 7.6): a seat town's shop asks its holder's members less, and everyone less on Market Day - a
   // multiplier of its own on the shop's price adjustment (never regionPriceAdjustment's region-wide index), for what the
-  // player BUYS and has REPAIRED alone; what a shop pays for a sale is the shop's own
+  // player BUYS and has REPAIRED - and, SEAT-LOOP (Town-Economy-Arc 7.5), what a shop pays for a sale held to that ask.
+  // TOWN-ECON TE1 (bible/06-Systems/Town-Economy-Arc.md 3): online, the town's own economy too - its asking factor with
+  // the seat's (never below net/townEconLaw.js TOWN_FACTOR_FLOOR), and a sale's paying factor, which only ever falls and
+  // never passes the ask (systems/town/townEcon.js; AUDIT TOWN-ECON 2 PRICE-7)
   function shopAdjustment(b, mode) {
     if (Number.isFinite(b?.priceIndex)) return b.priceIndex;   // AUDIT MERCHANT-YARDS Y2: a counter that names its own index (a yard's, systems/merchantYards.js YARD_PRICE_INDEX) is priced at it, both ways
     const adj = regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0);
-    const f = mode === 'Buy' || mode === 'Repair' ? host.seatShopFactor?.(b) ?? 1 : 1;
-    if (b?.roadDiscount && mode === 'Buy') return Math.round(adj * f * (1 - b.roadDiscount));   // LW11: a friend's counter on the road
+    const f = host.townShopFactor?.(b, mode) ?? (mode === 'Buy' || mode === 'Repair' ? host.seatShopFactor?.(b) ?? 1 : mode === 'Sell' || mode === 'SellMagic' ? Math.min(1, host.seatShopFactor?.(b) ?? 1) : 1);   // AUDIT TOWN-ECON 2 PRICE-4: no town law wired, SEAT-LOOP's bound here - a counter pays no more than it asks this player
+    if (b?.roadDiscount && (mode === 'Buy' || mode === 'Sell' || mode === 'SellMagic')) return Math.round(adj * f * (1 - b.roadDiscount));   // LW11: a friend's counter on the road; AUDIT TOWN-ECON 2 PRICE-4: its friend's price both ways, so an endless shelf's essentials sold back never pay
     return f === 1 ? adj : Math.round(adj * f);
   }
   function buyPrice(it) {
@@ -4119,7 +4122,7 @@ export function createWorldModes(host) {
     return getTradePrice('Sell', lot.cost, b.quality, {
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
       personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
-    }, lot.pieces);
+    }, lot.pieces, lot.resale);   // LAW-3: a counter's piece never fetches more than it cost
   }
   // ── U23: THE STATIC NPC SEAM ────────────────────────────────────
   // PlayerActivate.ActivateStaticNPC/StaticNPCClick (:742-766,

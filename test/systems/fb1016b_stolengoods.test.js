@@ -538,8 +538,8 @@ test('STOLEN-GOODS AUDIT S3: no shelf piece is stolen - the room\'s word for a s
     assert.equal(stash.counterBought === true, online, 'and the counter\'s own mark as it was');
   }
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /if \(mode === 'Buy'\) \{\n\s+deductGold\(playerEntity, price\);\n\s+markCounterBought\(staged\);/, 'the counter\'s Buy - the door the clear rides');
-  assert.match(wm, /shelf\.items\.splice\(at, 1\);\n\s+markCounterBought\(\[it\]\);/, 'and the keyed list\'s');
+  assert.match(wm, /if \(mode === 'Buy'\) \{\n\s+deductGold\(playerEntity, price\);\n\s+markCounterBought\(staged, \{ price, \.\.\.asked \}\);/, 'the counter\'s Buy - the door the clear rides');   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-1)   // PIN MOVED (LAW-3): the lot's price handed in
+  assert.match(wm, /shelf\.items\.splice\(at, 1\);\n\s+markCounterBought\(\[it\], \{ price \}\);/, 'and the keyed list\'s');
 });
 
 /** The real naval host's boarding: a ship struck alongside, boarded from my helm and taken - her hold drawn by the

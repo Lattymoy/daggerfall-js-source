@@ -39,8 +39,8 @@
   {
     "name": "AUDITLWII2-S1-stamp-online",
     "file": "src/systems/tradeModes.js",
-    "old": "  if (!online) return 0;\n  let n = 0;\n  for (const it of items ?? [])",
-    "new": "  let n = 0;\n  for (const it of items ?? [])",
+    "old": "  if (!online) return 0;\n  const lot = (items ?? []).filter(",
+    "new": "  const lot = (items ?? []).filter(",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AUDITLWII2-S1-stamp-mark",
     "file": "src/systems/tradeModes.js",
-    "old": "{ it[PATRON_COUNTER_MARK] = true; n++; }",
-    "new": "{ n++; }",
+    "old": "    it[PATRON_COUNTER_MARK] = true;\n    if (paid)",
+    "new": "    if (paid)",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -84,7 +84,7 @@
   {
     "name": "AUDITLWII2-S1-door-counter",
     "file": "src/scenes/worldModes.js",
-    "old": "      markCounterBought(staged);",
+    "old": "      markCounterBought(staged, { price, ...asked });",
     "new": "",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
@@ -93,7 +93,7 @@
   {
     "name": "AUDITLWII2-S1-door-keyed",
     "file": "src/scenes/worldModes.js",
-    "old": "    markCounterBought([it]);",
+    "old": "    markCounterBought([it], { price });",
     "new": "",
     "tests": [
       "test/systems/auditlwii2_service.test.js"

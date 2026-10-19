@@ -31,6 +31,13 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
    NARROWS IT BY ONE INPUT: online, the chapter sheet the playing tab holds (`net/chapterSheet.js`, the service's) - a
    guild's evenings at its hall by its chapter's band, the town's talk of a chapter not Steady - so every player reading
    one sheet sees one hall; with no sheet (offline, the sheet unread, a chapter it does not name) it is the world above.
+   TOWN-ECON TE3 (2026-10-18; `06-Systems/Town-Economy-Arc.md` section 5) NARROWS IT BY ONE INPUT MORE: online, a town's
+   economy band (`net/townEconLaw.js` townBandOf - its seat's rule the seat list, its players' share the account
+   service's, both read by every tab within minutes of one another) - the town's talk of its trade, read live, and a
+   market town's market days (the band at its first asking, kept a town a day, so a day's plans never change under it;
+   kept only once the shares and the seat list have answered - AUDIT TOWN-ECON 2 CLI-1 - so two tabs agree on the days
+   both first asked after the same reads, and a band's crossing reaches a carter's market days at the next cycle he
+   plans, an hour of real time a sky day online); offline there is no band and it is the world above.
 3. **PEOPLE WALK AT THEIR OWN PACE.** On the street a resident walks DFU's 1.3 m/s (`PERSON_MOVE_SPEED`); the clock's
    rate turns it into the clock's minutes (`CLASSIC_MINUTES_PER_SECOND`, twelve a real minute; the sky's
    `skyMinutesPerMsAt`, twenty-four), so a resident beside the player keeps pace with them and every day is lived at

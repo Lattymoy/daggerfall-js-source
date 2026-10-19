@@ -4,90 +4,116 @@
     "file": "src/ui/noticeWindow.js",
     "old": "    const walled = w.state === 'open' && held < w.qty ? Number(work.book.walled?.(w.material)) || 0 : 0;",
     "new": "    const walled = 0;",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-said-where-the-writ-fills",
     "file": "src/ui/noticeWindow.js",
     "old": "    const walled = w.state === 'open' && held < w.qty ? Number(",
     "new": "    const walled = w.state === 'open' && true ? Number(",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-the-line-where-nothing-is-walled",
     "file": "src/ui/noticeWindow.js",
     "old": "    const walledSaid = walled > 0 ? writWalledText(walled, work.countName(w.material, walled)) : null;",
     "new": "    const walledSaid = walled >= 0 ? writWalledText(walled, work.countName(w.material, walled)) : null;",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-the-card-line-suppressed",
     "file": "src/ui/noticeWindow.js",
     "old": "    if (walledSaid) li.append(el('p', 'writ-walled', walledSaid));   // WRIT-WALL: on the card - a phone has no hover\n",
     "new": "",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-the-title-the-old-words",
     "file": "src/ui/noticeWindow.js",
     "old": "      if (held < w.qty) b.title = walledSaid ?? (",
     "new": "      if (held < w.qty) b.title = (",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-the-guild-card-unwired",
     "file": "src/ui/noticeWindow.js",
     "old": "    walled: (m) => Number(work.book.walled?.(m)) || 0,   // WRIT-WALL: and what is held past it\n",
     "new": "",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-the-guild-line-suppressed",
     "file": "src/ui/workTab.js",
     "old": "    if (walledSaid) li.append(el('p', 'writ-walled', walledSaid));   // WRIT-WALL: on the card - a phone has no hover\n",
     "new": "",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-the-guild-card-says-none",
     "file": "src/ui/workTab.js",
     "old": " : walledSaid ? null\n",
     "new": " : false ? null\n",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-gold-dropped",
     "file": "src/net/profBook.js",
     "old": "      return (s.gold | 0) + (s[LOOSE_ORIGIN] | 0) + (carry ?",
     "new": "      return (s[LOOSE_ORIGIN] | 0) + (carry ?",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-loose-dropped",
     "file": "src/net/profBook.js",
     "old": "      return (s.gold | 0) + (s[LOOSE_ORIGIN] | 0) + (carry ?",
     "new": "      return (s.gold | 0) + (carry ?",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-the-carried-excess-dropped",
     "file": "src/net/profBook.js",
-    "old": " + (carry ? Math.max(0, carry.held(material) - this.carriedUsable(material)) : 0);",
+    "old": " + (carry ? Math.max(0, heldAll(material) - this.carriedUsable(material)) : 0);",
     "new": " + 0;",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-read-as-UNCOUNTED-carried-gold-left-out",
     "file": "src/net/profBook.js",
-    "old": "Math.max(0, carry.held(material) - this.carriedUsable(material)) : 0);",
-    "new": "Math.max(0, carry.held(material) - carriedTotal(clampedCarried(material))) : 0);",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "old": "Math.max(0, heldAll(material) - this.carriedUsable(material)) : 0);",
+    "new": "Math.max(0, heldAll(material) - carriedTotal(clampedCarried(material))) : 0);",
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   },
   {
     "name": "WRIT-WALL-stores-gold-sends-to-withdraw",
     "file": "src/net/accountClient.js",
     "old": "'What you bought with gold is not used there, in your Stores or out of them: it goes to your pack or back on the market for gold.'",
     "new": "'What you bought with gold is not used there. Withdraw it to your pack, or sell it again for gold.'",
-    "tests": ["test/systems/professions/fb1013e_writwall.test.js"]
+    "tests": [
+      "test/systems/professions/fb1013e_writwall.test.js"
+    ]
   }
 ]

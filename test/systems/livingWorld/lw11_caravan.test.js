@@ -450,9 +450,9 @@ test('LW11 the session forgotten with its character: another character\'s record
   assert.equal(host.shelfOf(trip).items.length, 2, 'and back: theirs');
 });
 
-test('LW11 the host\'s wiring: the road\'s trade window (its counter\'s discount on Buy, the purse\'s refusal returning the goods, its steal the road\'s crime and no city guard), the talk\'s door before the words, the roads reading a robbed caravan, the hand caught on the road no town\'s crime, the step once a second (mutants: each wire)', () => {
+test('LW11 the host\'s wiring: the road\'s trade window (its counter\'s discount on Buy - and, AUDIT TOWN-ECON 2 PRICE-4, on a sale: what it pays never above what it asks -, the purse\'s refusal returning the goods, its steal the road\'s crime and no city guard), the talk\'s door before the words, the roads reading a robbed caravan, the hand caught on the road no town\'s crime, the step once a second (mutants: each wire, TOWNECON-AUDIT2-PRICE4-road-sale)', () => {
   const modes = readFileSync(new URL('../../../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(modes, /if \(b\?\.roadDiscount && mode === 'Buy'\) return Math\.round\(adj \* f \* \(1 - b\.roadDiscount\)\);/);
+  assert.match(modes, /if \(b\?\.roadDiscount && \(mode === 'Buy' \|\| mode === 'Sell' \|\| mode === 'SellMagic'\)\) return Math\.round\(adj \* f \* \(1 - b\.roadDiscount\)\);/);   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-4): the friend's price both ways - what it pays held to what it asks
   assert.match(modes, /if \(road\.allow\?\.\(m, staged, price\) === false\) \{ if \(m === 'Sell' \|\| m === 'SellMagic'\) \(playerEntity\.items \?\?= \[\]\)\.push\(\.\.\.staged\); return false; \}/);
   assert.match(modes, /crimeTheft: \(\) => road\.caught\?\.\(\),\n\s+spawnCityGuards: \(\) => \{\},/);
   assert.match(modes, /return !!mountServiceWindow\(openTradeWindow\(o\.shelf, o\.b, tradeMode, \{\}, o\)\);/);

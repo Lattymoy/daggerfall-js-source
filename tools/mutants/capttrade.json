@@ -155,8 +155,8 @@
   {
     "name": "OFFICE-buy-unpaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    deps.pay?.(k * r.sell);\n    deps.stow?.(hold, mintGood(id, k));",
-    "new": "    deps.stow?.(hold, mintGood(id, k));",
+    "old": "    deps.pay?.(k * r.sell);\n    const goods = mintGood(id, k);",
+    "new": "    const goods = mintGood(id, k);",
     "tests": [
       "test/systems/naval/capttrade.test.js"
     ]

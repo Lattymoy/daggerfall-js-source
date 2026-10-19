@@ -543,7 +543,7 @@ test('X11b hosts: a spell window lands in the slot the CURRENT mode draws', () =
   // closure openTradeWindow builds per window.
   assert.ok(!/^\s*let _identifySpell/m.test(s), 'the module-level identify latch is back');
   assert.ok(s.includes('identifySpell = null } = {}'), 'openTradeWindow does not take the latch');
-  assert.ok(s.includes('commitTrade(shelf, m, staged, price, proceeds, identifySpell)'),
+  assert.ok(s.includes('commitTrade(shelf, m, staged, price, proceeds, identifySpell, '),   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-1): and the purchase's holiday and guild after it
     'the commit closure does not carry the latch');
 });
 

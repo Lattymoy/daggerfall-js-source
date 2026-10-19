@@ -975,7 +975,7 @@ test('BAG1 full: a carrying book\'s node is full when neither the bag nor the pa
 test('BAG1 wired: the world host hands the book its hands on the bag and the pack, mints each answer there, reaches the Stores in a town, and puts a writ\'s shortfall in first; the potion maker spends the bag (by source)', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /mint: \(key, n\) => \{ const got = mintCarried\(playerEntity, key, n, carryOpts\(key\)\);/);
-  assert.match(w, /take: \(key, n, stamp = null, order = null\) => \{\n\s+const t = takeCarried\(playerEntity, key, n, stamp, order\);/);
+  assert.match(w, /take: \(key, n, stamp = null, order = null, counter = false\) => \{\n\s+const t = takeCarried\(playerEntity, key, n, stamp, order, \{ counter \}\);/);   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-2): a counter's pieces a station's put-in's alone
   // AUDIT2: every unit handed over minted; the deposits' stamps in the save; the checkpoint that LANDED before a deposit
   assert.match(w, /give: \(key, n\) => \{ const got = giveCarried\(playerEntity, key, n, carryOpts\(key\)\);/);
   assert.match(w, /stamped: \(id\) => Object\.hasOwn\(bagTakesOf\(playerEntity\), id\),/);

@@ -56,8 +56,8 @@
   {
     "name": "JAN1-the-sell-arm-reads-the-value-raw",
     "file": "src/systems/tradeModes.js",
-    "old": "        cost += calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1",
-    "new": "        cost += calculateCost(item.value, quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1",
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1",
+    "new": "        const c = calculateCost(item.value, quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1",
     "tests": [
       "test/systems/jan1_fixes.test.js"
     ]

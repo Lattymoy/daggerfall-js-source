@@ -56,7 +56,7 @@
   {
     "name": "EVENT-TIP-a-card-without-bounds",
     "file": "src/ui/eventMapMarks.js",
-    "old": "(Array.isArray(tip.lines) ? tip.lines : []).slice(0, TIP_LINES_MAX).map(",
+    "old": "(Array.isArray(tip.lines) ? tip.lines : []).slice(0, linesMax).map(",
     "new": "(Array.isArray(tip.lines) ? tip.lines : []).map(",
     "tests": [
       "test/ui/eventtip.test.js"

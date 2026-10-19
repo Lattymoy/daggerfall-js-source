@@ -329,7 +329,7 @@ test('SEAT1b THE HOSTS BY SOURCE: the relay ticks in its pose arm and nowhere el
   const online = rd('src/net/online.js');
   assert.match(online, /const w = primary && isCellRoom\(room\) \? readWatchReceipt\(m\.r\) : null;\n\s*if \(w\) this\._deliver\('watch', \(\) => this\.onWatch\?\.\(m\.r, w\)\);/);
   const w = rd('src/scenes/world.js');
-  assert.match(w, /online\.onWatch = \(r\) => \{ seatBook\?\.keepWatch\(r\); motherlodeBook\?\.watch\(r\); \};/);   // PIN MOVED (PROF2b): and the Motherlodes' book keeps it too
+  assert.match(w, /online\.onWatch = \(r\) => \{ seatBook\?\.keepWatch\(r\); motherlodeBook\?\.watch\(r\); townEcon\.keepWatch\(r\); \};/);   // PIN MOVED (TOWN-ECON TE2: the towns' book keeps it beside); PIN MOVED (PROF2b): and the Motherlodes' book keeps it too
   assert.match(w, /if \(seatBook\?\.claimWatchDue\(\)\) seatBook\.claimWatch\(\);/);   // PIN MOVED (AUDIT-SEATS C12): asked in sync first - a frame with nothing due makes no Promise
   assert.match(w, /isSeatPixel: \(x, y\) => seatPixels\.has\(`\$\{x\},\$\{y\}`\),/);
   assert.match(w, /const seatPixels = new Set\(townSeats\.list\.map\(\(s\) => `\$\{s\.pixel\[0\]\},\$\{s\.pixel\[1\]\}`\)\);/);

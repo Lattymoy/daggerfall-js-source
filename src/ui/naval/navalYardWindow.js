@@ -31,6 +31,7 @@ import { injectNavalKit } from './navalHud.js';
 import { injectNavalWindowStyle } from './navalPlunderWindow.js';
 import { ETHER_SEA_NAME } from '../../world/ethericSea.js';   // ELTHERIC: the sea's name, one home
 import { t } from '../../systems/textManager.js';   // GROG-WORD: the day's round said in the player's language
+import { townBandWord } from '../../net/townEconLaw.js';   // SEA-TRADE: the port town's economy in the exchange's lede
 
 export const NAVAL_YARD_STYLE_ID = 'dagger-naval-yard-style';
 /** The yard's own rules beside the naval windows' sheet: a row's three columns. */
@@ -164,8 +165,10 @@ export function exchangeText(x) {
   if (!x) return null;
   const g = (n) => `${Math.round(n).toLocaleString('en-US')} gold`;
   const room = x.room == null ? '' : x.room > 0 ? ` - room for ${x.room} kg more before the ship can't move` : ' - the ship can\'t carry any more';   // AUDIT CAPTAIN'S SEA B11
-  const lede = x.weight == null ? `${x.port}'s exchange - trade from the helm, into the hold.`
-    : `${x.port}'s exchange. The hold carries ${Math.round(x.weight)} kg of goods${room}; your purse ${g(x.gold)}.`;
+  // SEA-TRADE (Town-Economy-Arc section 8): online, the port town's economy, whose prices the exchange keeps
+  const band = x.band ? ` ${t('sea.exchange.band', 'Port economy: {band} - the exchange\'s prices follow it.', { band: townBandWord(x.band) })}` : '';
+  const lede = (x.weight == null ? `${x.port}'s exchange - trade from the helm, into the hold.`
+    : `${x.port}'s exchange. The hold carries ${Math.round(x.weight)} kg of goods${room}; your purse ${g(x.gold)}.`) + band;
   const STAND = { makes: 'Made here - cheap', wants: 'Wanted here - dear', neither: '' };
   const rows = (x.rows ?? []).map((r) => ({
     id: r.id, title: r.name, canBuy: r.sells > 0 && x.weight != null, canSell: r.have > 0 && r.buys > 0,

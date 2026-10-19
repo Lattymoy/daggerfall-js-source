@@ -461,8 +461,8 @@
   {
     "name": "LW11-wire-discount",
     "file": "src/scenes/worldModes.js",
-    "old": "if (b?.roadDiscount && mode === 'Buy') return Math.round(adj * f * (1 - b.roadDiscount));",
-    "new": "if (b?.roadDiscount && mode === 'Buy') return Math.round(adj * f);",
+    "old": "if (b?.roadDiscount && (mode === 'Buy' || mode === 'Sell' || mode === 'SellMagic')) return Math.round(adj * f * (1 - b.roadDiscount));",
+    "new": "if (b?.roadDiscount && (mode === 'Buy' || mode === 'Sell' || mode === 'SellMagic')) return Math.round(adj * f);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]

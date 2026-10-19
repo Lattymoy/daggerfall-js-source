@@ -163,6 +163,7 @@ disputed only by 2 who agree on another answer (the one dispute rule above) - in
 | a location | map id | name, region, pixel, kind, whether it is a seat (and its tier), whether it has a Notice Board | the seats (3.1), the bailiwicks (7.2), the boards (PROF0 10.1) |
 | a map pixel | x, y | climate, region | the nodes' tables (PROF0 6) |
 | a gate day | game day | the gate's region and pixel | gate kills (4.2), gate-touched ground (PROF0 4.7) |
+| a town (TOWN-ECON TE2) | map id | its pixel, region and location index | the town economy's footsteps and raids (`06-Systems/Town-Economy-Arc.md` 4) |
 
 A disputed row keeps its confirmed worth until a moderator settles it - so no lone account can zero a rival's seat,
 board or gate day; an unconfirmed row is worth the least its kind allows (PROF0 6). Three colluding accounts can forge one row - which is why each kind's reward is bounded and every
@@ -173,7 +174,10 @@ professions' pixels, dungeons and hubs), keyed by the map id, its report the sea
 (townSeatLaw.js seatReportText); the ignored accounts, the audit and the strike as written above
 (`server-account/src/townSeats.js`). CHAP2a (Chapters-Arc 4): the kind `npchall`, a town's guild halls - the three, the age,
 the first answer and the hour; AUDIT CHAP2 E1 gave it this kind's ignored accounts, audit and strike too
-(`server-account/src/npcHalls.js`). As built: a witness's FIRST answer on a seat stands (the table's INSERT OR IGNORE,
+(`server-account/src/npcHalls.js`). TOWN-ECON TE2 (2026-10-18, `06-Systems/Town-Economy-Arc.md` section 4): the kind
+`town`, a town's pixel, region and location index (townEconLaw.js townReportText) - the three and the age; confirmed into
+its own table (`town_econ_towns`), after which the key takes no more reports, so it has no dispute, no ignored accounts
+and no strike (`server-account/src/townEcon.js`). As built: a witness's FIRST answer on a seat stands (the table's INSERT OR IGNORE,
 as every kind's); a struck key is never witnessed again (the strike's history row says so); "the audit" reads "a seat
 whose confirmation still rests on exactly three witnesses, whom nobody else has joined".
 
@@ -615,7 +619,10 @@ accounts whose last play beat fell in the week) and Overreach, paid at the Turni
   more; applied on the member's own client as **a multiplier of its own where the shop's `calculateCost` is called**
   (the trade and repair windows in `scenes/worldModes.js`), for that town only - never through `regionPriceAdjustment`
   (`shopStock.js`, ECON1), a region-wide index that also sets quest gold. Their own gold, nothing to cheat but
-  themselves.
+  themselves. SEAT-LOOP (2026-10-18, `06-Systems/Town-Economy-Arc.md` 7.5, Mac: "Close it"): what the shop PAYS this
+  player falls with what it asks them (`net/townEconLaw.js` townShopFactor, `systems/town/townEcon.js` shopFactor) -
+  the discount and Market Day's lowered the ask alone, and an essential (half its price online) bought and sold back
+  paid: five firewood, 13 in and 15 out on Market Day.
 - **The hall** - DECIDED (Mac, the Holdings plan): the palace interior is the holder's guild hall. The court stays
   where DFU stands it. The holder gains: the **Charter Room** - the palace's largest room, decorated by Officers
   with DECOR's catalogue (at most **100** pieces, DECOR's gold a placement); the guild's roster board; the guild
@@ -763,7 +770,7 @@ Edict may be proclaimed two weeks running except Market Day.
 
 | Edict | Tier | Effect | Cost |
 |---|---|---|---|
-| **Market Day** | any | the seat town's shop prices -10% for everyone (client-applied, the discount's seam, 7.2) | - |
+| **Market Day** | any | the seat town's shop prices -10% for everyone (client-applied, the discount's seam, 7.2) - what a shop pays held to it too (SEAT-LOOP, Town-Economy-Arc 7.5; AUDIT TOWN-ECON 2 REC-17) | - |
 | **Bounty** | any | World of Daggerfall camps in the region (WOD7's shared camps, `src/world/worldOfDaggerfall/wodShared.js`) pay double loot; the treasury pays 20 Marks per camp cleared, up to the sum set aside - a transfer, never a mint. **Bounded**: a camp's clearing is validated at the reader, never the relay (`wodShared.js`), so an account is paid for at most **5 camps a UTC day** | the set-aside, escrowed |
 | **Levy** | any | 10% of gathering yields goes to the seat's stockpile, from the nodes of the region nearer this seat than any other seat of the region (the bailiwick's rule, by pixel), so two holders' Levies never share a node | Standing -2 |
 | **Open Gates** | any | homes in the town may not be set private this week | Standing +3 |

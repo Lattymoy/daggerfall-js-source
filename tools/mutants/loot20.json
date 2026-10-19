@@ -350,8 +350,8 @@
   {
     "name": "LOOT20-the-gem-kept",
     "file": "src/systems/reforge.js",
-    "old": "  takeGem(player.items, gem, from);   // AUDIT GEM: the pressed stone first\n  const line = setGem(item, gem, at);",
-    "new": "  const line = setGem(item, gem, at);",
+    "old": "  const stone = takeGem(player.items, gem, from);   // AUDIT GEM: the pressed stone first\n",
+    "new": "  const stone = null;\n",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ],

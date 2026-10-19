@@ -214,7 +214,7 @@ test('PROF2b the seams by source: the professions\' book sends a harvest\'s Watc
   assert.match(w, /const motherlodeBook = motherlodeDoor \? createMotherlodeBook\(\{/);
   assert.match(w, /nowS: \(\) => Math\.floor\(\(Date\.now\(\) \+ _sharedOffsetMs\) \/ 1000\),/);
   assert.match(w, /onChange: \(l\) => gatherHost\?\.restandAt\(l\.x, l\.y\),/);
-  assert.match(w, /online\.onWatch = \(r\) => \{ seatBook\?\.keepWatch\(r\); motherlodeBook\?\.watch\(r\); \};/);
+  assert.match(w, /online\.onWatch = \(r\) => \{ seatBook\?\.keepWatch\(r\); motherlodeBook\?\.watch\(r\); townEcon\.keepWatch\(r\); \};/);   // PIN MOVED (TOWN-ECON TE2): and the towns' book keeps it where a town stands
   assert.match(w, /motherlodeBook\?\.tick\(\{ sense: profBook\.track\('mining'\)\.specs\?\.\[100\] === 'motherlode-sense' \}\)/);
   assert.match(w, /mineKind\(\{ book: profBook, lodes: motherlodeBook, marks: marksBook \}\)/);
   assert.match(w, /for \(const l of motherlodeBook\.markedAll\(_lodesUp\)\) \{/);   // AUDIT SILVER-WAYS D7 (PIN MOVED): into the frame's own list; FIELD BUGS 2026-10-12g LODE-MARK (PIN MOVED): from its warning on

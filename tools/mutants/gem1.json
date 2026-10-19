@@ -517,7 +517,7 @@
   {
     "name": "GEM1-extract-shatters",
     "file": "src/systems/reforge.js",
-    "old": "  addItem(player.items, /** @type {any} */ (mintGem(gem)));\n",
+    "old": "  addItem(player.items, stone);\n",
     "new": "",
     "tests": [
       "test/systems/loot20_sockets.test.js"
@@ -526,8 +526,8 @@
   {
     "name": "GEM1-extract-free",
     "file": "src/systems/reforge.js",
-    "old": "  deductGold(player, price);\n  addItem(player.items",
-    "new": "  addItem(player.items",
+    "old": "  deductGold(player, price);\n  const stone",
+    "new": "  const stone",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]

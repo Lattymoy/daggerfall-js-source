@@ -184,8 +184,8 @@
   {
     "name": "BAG1-a-shortfall-spends-gold",
     "file": "src/net/profBook.js",
-    "old": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend' });",
-    "new": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'all' });",
+    "old": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend', counter: work === true });",
+    "new": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'all', counter: work === true });",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "AUDIT-BAG1-B2-a-deposit-out-uncounted",
     "file": "src/net/profBook.js",
-    "old": "(carry ? carry.held(m) : 0) + depositsOut().reduce",
-    "new": "(carry ? carry.held(m) : 0) + 0 * depositsOut().reduce",
+    "old": "(carry ? (counter ? heldAll(m) : carry.held(m)) : 0) + depositsOut().reduce",
+    "new": "(carry ? (counter ? heldAll(m) : carry.held(m)) : 0) + 0 * depositsOut().reduce",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "AUDIT-BAG1-B6-the-wagon-unread",
     "file": "src/systems/materialsBag.js",
-    "old": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {\n    for (const it of list) if (materialKeyOfItem(it) === key) n += it.stackCount ?? 1;",
-    "new": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? []]) {\n    for (const it of list) if (materialKeyOfItem(it) === key) n += it.stackCount ?? 1;",
+    "old": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {\n    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1;",
+    "new": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? []]) {\n    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

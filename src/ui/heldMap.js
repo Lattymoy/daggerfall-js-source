@@ -109,7 +109,7 @@ import { EG_ARCH_RING_CSS, EG_ARCH_LEGEND_TEXT } from './eliteGates/egArchMapMar
 import { LODE_RING_CSS, LODE_LEGEND_TEXT, lodeLegendText } from './lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, read by the bounty's reader
 import { POI_RING_CSS, POI_MARKS_MAX, poiLegendText } from './poi/poiMapMark.js';   // POI-2: the approved POIs' marks, read by the bounty's reader
 import { readBountyMarks, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bounty/bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
-import { readRaidMarks, raidMarksKey, placeTip, tipKey, readTip, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX, SEAT_TIP_TEXT_MAX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
+import { readRaidMarks, raidMarksKey, placeTip, tipKey, readTip, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
 import { readVendorMark, vendorMarkKey, VENDOR_MARK_CSS, VENDOR_RIM_CSS, VENDOR_LEGEND_TEXT } from './vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint
 import { readQuestMarks, questMarksKey, QUEST_MARK_CSS, QUEST_LEGEND_TEXT, QUEST_HIT_PX, QUEST_MARK_LIFT, QUEST_RAID_LIFT, QUEST_FOLLOWED_TEXT } from './quest/questMarks.js';   // GUIDE5: where the quests point
 import {
@@ -2053,6 +2053,10 @@ export class HeldMapWindow {
     const travKey = travellerMarksKey(trav);
     if (travKey !== this._travKey) { this._travKey = travKey; this._trav = trav; gateMoved = true; this._dirty = true; }
     if (gateMoved) this._refreshTip();
+    // AUDIT TOWN-ECON UI-6: a town's card under a still pointer follows its town too - the seats' list read anew, an
+    // Edict proclaimed, a day turned move no mark - asked at the poll's cadence while a card shows, rewritten only when
+    // its words change (_showTip)
+    if (!gateMoved && this._tipKey && this._hoverAt) this._refreshTip();
     const marks = readPartyMarks(this.deps.party, this._size);
     const key = partyMarksKey(marks);
     if (key === this._partyKey) { if (gateMoved) this._renderLegend(); return gateMoved; }
@@ -3713,8 +3717,11 @@ export class HeldMapWindow {
       // TIER1 (Super-Dungeons.md section 12): a dungeon's tier and its size, online - the host's word (deps.tierAt)
       const tier = tierPhrase(this.deps.tierAt?.(m.summary) ?? null);
       // SEAT-TIP (FIELD BUGS 2026-10-04e): a seat - a town that can be taken - answers with its card: who holds it, and
-      // this week's battle (the mark's seat is the one the poll dressed; the EVENT-TIP card shows it)
-      const tip = m.seat ? readTip(seatTipOf(m.seat), { textMax: SEAT_TIP_TEXT_MAX }) : null;
+      // this week's battle (the mark's seat is the one the poll dressed; the EVENT-TIP card shows it). TOWN-ECON
+      // (bible/06-Systems/Town-Economy-Arc.md 3): online every town answers with its own - its economy, then its guild
+      // control, a seat's lines after the town's (deps.townTipAt, net/townEconLaw.js townTipOf)
+      const card = this.deps.townTipAt?.(m.summary) ?? (m.seat ? seatTipOf(m.seat) : null);
+      const tip = card ? readTip(card, { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : null;
       return { label: (region && name ? `${region} : ${name}` : name) + hub + (tier ? ` (${tier})` : ''), cursor: 'pointer', ...(tip ? { tip } : {}) };
     }
     // EVENT-TIP: the gate's ring holds an area - anywhere in it that is not a place answers with the gate's card

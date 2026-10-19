@@ -128,7 +128,7 @@
   {
     "name": "LW9-market-day",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    for (let d = start; d < start + len; d++) if (marketDay(to, d)) { day = d; break; }",
+    "old": "    for (let d = start; d < start + len; d++) if (marketDay(to, d, world.marketBandOf?.(to, d) ?? null)) { day = d; break; }   // TOWN-ECON TE3: its band kept for that day (AUDIT TOWN-ECON 2 LIV-9: read at its first asking)",
     "new": "    for (let d = start; d < start + len; d++) { day = d; break; }",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"

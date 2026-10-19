@@ -782,7 +782,7 @@ export class NativeTradeWindow {
 
   /** DoModeAction -> ShowTradePopup (:954-998, :1100-1134). */
   _modeAction() {
-    const { cost, modeActionEnabled, pieces } = this.cost();
+    const { cost, modeActionEnabled, pieces, resale } = this.cost();
     if (!modeActionEnabled) return;          // DFU disables the button outright
     // AUDIT 39 F144: DoModeAction opens on the SPELL (:955-995) and
     // ShowTradePopup is its ELSE. The spell pays in magicka, rolls per
@@ -792,7 +792,7 @@ export class NativeTradeWindow {
     // false, which leaves the lot staged as DFU's early return does).
     if (this.hooks.usingIdentifySpell) { this._castIdentifySpell(); return; }
     const ctx = this.hooks.priceCtx?.() ?? {};
-    const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {}, pieces);   // FB0929: a purchase asks a gold a piece at least
+    const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);   // FB0929: a purchase asks a gold a piece at least; LAW-3: a counter's piece no more than it cost
     const d = tradeDecision(this.mode, { cost, tradePrice: price, gold: this.hooks.gold() });
     if (d.kind === 'notEnoughGold') {
       // the two records CONCATENATED into one click-anywhere box

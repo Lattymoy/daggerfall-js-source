@@ -160,11 +160,17 @@ export function priceOf(port, id, day) {
  * its price, its stand, and how many more it sells (`sells`) and buys (`buys`) today - `dealt` the captain's dealing
  * here today: `{ bought: { id: n } }` from the exchange, `{ sold: { id: n } }` to it. CAPTAIN-TREE: `edge` the share of the
  * SPREAD the captain's dealing closes (systems/naval/captainTree.js `trade`, to TRADE_MOST): each price nearer the
- * good's middle, the exchange still buying under what it sells.
+ * good's middle, the exchange still buying under what it sells. SEA-TRADE (bible/06-Systems/Town-Economy-Arc.md section
+ * 8): `town` the port town's economy, online (net/townEconLaw.js townExchangeFactors - `ask` on what it sells, `pay` on
+ * what it pays, the pay never above the ask), or null (offline, an isle of the Veil: no town economy) - the prices as
+ * they were.
  * @param {{ key: string, crown?: string|null, ether?: boolean }} port @param {number} day @param {{ sold?: any, bought?: any }} [dealt] @param {number} [edge]
+ * @param {{ ask: number, pay: number } | null} [town]
  */
-export function exchangeOf(port, day, dealt = {}, edge = 0) {
+export function exchangeOf(port, day, dealt = {}, edge = 0, town = null) {
   const k = SPREAD * (1 - Math.max(0, Math.min(TRADE_MOST, Number(edge) || 0)));
+  const ask = town && Number.isFinite(town.ask) && town.ask > 0 ? town.ask : 1;
+  const pay = town && Number.isFinite(town.pay) && town.pay > 0 ? Math.min(ask, town.pay) : 1;
   const rows = [];
   for (const g of GOODS) {
     const stand = standOf(port, g.id);
@@ -175,9 +181,9 @@ export function exchangeOf(port, day, dealt = {}, edge = 0) {
     const exotic = other && stand !== 'makes';   // ISLE-TRADE: an isle's own good of the Bay is its own, sold as made
     // AUDIT 2: never buying at what it sells - a cheap good's two prices, the spread closed by the captain's stars, rounded
     // to one number (made grain at the tree's most: 7 and 7), and the round trip was free and paid the log's `traded`
-    const sell = Math.max(2, Math.round(p.mid * (1 + k)));
+    const sell = Math.max(2, Math.round(p.mid * (1 + k) * ask));   // SEA-TRADE: the port town's asking factor
     rows.push({
-      id: g.id, name: g.name, unit: g.unit, units: g.units, kg: g.kg, stand, sell, buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k)))), exotic,   // AUDIT CAPTAIN'S SEA B16: the other sea's - never sold here
+      id: g.id, name: g.name, unit: g.unit, units: g.units, kg: g.kg, stand, sell, buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic,   // SEA-TRADE: and its paying factor   // AUDIT CAPTAIN'S SEA B16: the other sea's - never sold here
       sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)), buys: Math.max(0, stock.buy - (dealt.sold?.[g.id] | 0)),
     });
   }

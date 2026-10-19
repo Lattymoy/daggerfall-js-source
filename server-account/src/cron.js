@@ -74,6 +74,7 @@ import { REALM_FINDINGS_KEEP_S, REALM_WEALTH_KEEP_S } from './review.js';   // I
 import { WILD_FALLS_KEEP_S } from './wild.js';   // INT9: a death's drop's keeping
 import { settleHolds, REZ_SETTLE_MAX } from './legacy.js';   // REZ-BLOODLINE AUDIT R1: a held fall's window closed
 import { spendLapsedStakes } from './eg.js';   // EG-ZM: the Weir Key's stake's clock
+import { TOWN_ECON_SWEEPS, TOWN_ECON_SEEN_SWEEP, townEconKeptFrom, townEconSeenFrom, keepTownShares, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: a town's acts past the days kept; AUDIT TOWN-ECON 2 SVC-3: the shares kept once
 
 /** The two schedules - wrangler.toml's [triggers] crons name exactly these (test/server/scale4b.test.js holds the two to
  *  each other). The hour's minute is off the hour, where every other Worker's cron lands. */
@@ -132,6 +133,9 @@ export const MINUTE_JOBS = Object.freeze([
   // to anyone (`dev` too: a developer's player reads them) - one read of the rows and one row kept, where every isolate
   // read the rows each minute
   ['seat-facts', async (ctx, env) => (seatsSwitchOf(env?.SEATS_OPEN) === 'off' ? 0 : keepSeatFacts(ctx.db, ctx.nowS))],
+  // AUDIT TOWN-ECON 2 SVC-3 (townEcon.js keepTownShares): the towns' shares counted once for the whole service each keeping,
+  // into the one row every isolate reads - where every isolate read every town's days on the primary
+  ['town-shares', async (ctx, env) => (townsOpen(env) ? keepTownShares(ctx.db, ctx.nowS) : 0)],
   // the season's #1, counted before a reader would count it (arena.js championNow, STORM-SHED 2's kept word). AUDIT SCALE
   // A4: COUNTED ONLY WHEN A BOUT HAS COME SINCE - the board moves through a bout alone (claimArena counts it at once; no
   // route deletes an account), so a kept word no bout is newer than is stamped again rather than counted: the count
@@ -183,6 +187,13 @@ export const HOUR_JOBS = Object.freeze([
       n += r.changed;
       if (!r.full || !ctx.budget()) break;
     }
+    return n;
+  }],
+  // TOWN-ECON TE2 (townEcon.js): a town's days, its accounts' acts and the ticks seen, past the days the share weighs
+  ['town-econ', async (ctx) => {
+    let n = 0;
+    for (const sql of TOWN_ECON_SWEEPS) n += await rounds(() => deleted(ctx.db, sql, townEconKeptFrom(ctx.nowS)), SWEEP_ROWS, ctx.budget);
+    n += await rounds(() => deleted(ctx.db, TOWN_ECON_SEEN_SWEEP, townEconSeenFrom(ctx.nowS)), SWEEP_ROWS, ctx.budget);   // AUDIT TOWN-ECON 2 SVC-5: a receipt's life
     return n;
   }],
   ['rate-limits', (ctx) => rounds(() => deleted(ctx.db,

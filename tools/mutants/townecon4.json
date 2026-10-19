@@ -1,0 +1,282 @@
+[
+  {
+    "name": "TOWNECON4-lane-term",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_SEA_LANE = 2;",
+    "new": "export const TOWN_SEA_LANE = 3;",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "a lane worth more"
+  },
+  {
+    "name": "TOWNECON4-lanes-max",
+    "file": "src/net/townEconLaw.js",
+    "old": "Math.min(TOWN_SEA_LANES_MAX, /** @type {number} */ (lanes)) * TOWN_SEA_LANE",
+    "new": "/** @type {number} */ (lanes) * TOWN_SEA_LANE",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "no most lanes"
+  },
+  {
+    "name": "TOWNECON4-lanes-unread",
+    "file": "src/net/townEconLaw.js",
+    "old": "+ share + townSeaTerm(lanes));",
+    "new": "+ share);",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the lanes never in the Prosperity"
+  },
+  {
+    "name": "TOWNECON4-harbour-first",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (players >= 1) return TOWN_REASONS.players;\n  return townSeaTerm(lanes) > 0 ? TOWN_REASONS.harbour : null;",
+    "new": "  if (townSeaTerm(lanes) > 0) return TOWN_REASONS.harbour;\n  return players >= 1 ? TOWN_REASONS.players : null;",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the harbour said before the players' share"
+  },
+  {
+    "name": "TOWNECON4-factors-swapped",
+    "file": "src/net/townEconLaw.js",
+    "old": "Object.freeze({ ask: townBuyFactor(p), pay: townSaleFactor(p) })",
+    "new": "Object.freeze({ ask: townSaleFactor(p), pay: townBuyFactor(p) })",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the exchange's factors swapped"
+  },
+  {
+    "name": "TOWNECON4-ask-unread",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "const sell = Math.max(2, Math.round(p.mid * (1 + k) * ask));",
+    "new": "const sell = Math.max(2, Math.round(p.mid * (1 + k)));",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the exchange's sale price never the town's"
+  },
+  {
+    "name": "TOWNECON4-pay-unread",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "Math.round(p.mid * (1 - k) * pay)",
+    "new": "Math.round(p.mid * (1 - k))",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the exchange's pay never the town's"
+  },
+  {
+    "name": "TOWNECON4-pay-unheld",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "? Math.min(ask, town.pay) : 1;",
+    "new": "? town.pay : 1;",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "a pay above the ask"
+  },
+  {
+    "name": "TOWNECON4-bad-factor",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "const ask = town && Number.isFinite(town.ask) && town.ask > 0 ? town.ask : 1;",
+    "new": "const ask = town && town.ask != null ? Number(town.ask) || 0.01 : 1;",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "a factor not a number read"
+  },
+  {
+    "name": "TOWNECON4-good-unmarked",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    markCounterBought([goods], { price: k * r.sell });",
+    "new": "    void markCounterBought;",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "a good bought of the exchange carries nothing"
+  },
+  {
+    "name": "TOWNECON4-office-unpriced",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "const townAt = (port) => deps.town?.exchangeAt?.(port) ?? null;",
+    "new": "const townAt = (port) => null && port;",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the exchange never the town's"
+  },
+  {
+    "name": "TOWNECON4-deal-untold",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    L.note('traded', k * r.buy);\n    deps.town?.seaDeal?.(port);",
+    "new": "    L.note('traded', k * r.buy);",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "a sale never told"
+  },
+  {
+    "name": "TOWNECON4-refusal-told",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "    const fit = roomFor(room?.(), r.kg);",
+    "new": "    deps.town?.seaDeal?.(port);\n    const fit = roomFor(room?.(), r.kg);",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "a refused purchase told"
+  },
+  {
+    "name": "TOWNECON4-office-unwired",
+    "file": "src/scenes/world.js",
+    "old": "etherGoods: () => etherOut, town: townEcon,",
+    "new": "etherGoods: () => etherOut,",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the world host hands the office no town economy"
+  },
+  {
+    "name": "TOWNECON4-host-lanes-once",
+    "file": "src/scenes/townEconHost.js",
+    "old": "    return laneCounts.get(`${px},${py}`) ?? 0;",
+    "new": "    const n = laneCounts.get(`${px},${py}`) ?? 0;\n    laneCounts = null;\n    return n;",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the lanes counted every reading"
+  },
+  {
+    "name": "TOWNECON4-host-lanes-cached-empty",
+    "file": "src/scenes/townEconHost.js",
+    "old": "      if (!lanes?.length) return 0;",
+    "new": "      if (!lanes?.length) { laneCounts = new Map(); return 0; }",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "the lanes not yet standing kept as none"
+  },
+  {
+    "name": "TOWNECON4-host-ether",
+    "file": "src/scenes/townEconHost.js",
+    "old": "if (!port || port.ether || !Number.isSafeInteger(port.px)",
+    "new": "if (!port || !Number.isSafeInteger(port.px)",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "an isle past the Veil priced by a town"
+  },
+  {
+    "name": "TOWNECON4-host-deal-unbooked",
+    "file": "src/scenes/townEconHost.js",
+    "old": "? book.seaDeal(port.px, port.py) : false),",
+    "new": "? false : false),",
+    "tests": [
+      "test/systems/naval/townecon_sea.test.js"
+    ],
+    "note": "a dealing never told to the book"
+  },
+  {
+    "name": "TOWNECON4-sea-reach",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_SEA_REACH_PX = 1;",
+    "new": "export const TOWN_SEA_REACH_PX = 2;",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a dealing two pixels off"
+  },
+  {
+    "name": "TOWNECON4-sea-seen",
+    "file": "server-account/src/townEcon.js",
+    "old": "    else act('sea', port.map, day, `${ref}:sea`, { x: null, y: null });",
+    "new": "    else act('sea', port.map, day, `${ref}:sea:${Math.random()}`, { x: null, y: null });",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a tick vouches a dealing every claim"
+  },
+  {
+    "name": "TOWNECON4-sea-cap",
+    "file": "src/net/townEconLaw.js",
+    "old": "TOWN_ECON_CAPS = Object.freeze({ watch: 30, trade: 10, raid: 1, sea: 10 });",
+    "new": "TOWN_ECON_CAPS = Object.freeze({ watch: 30, trade: 10, raid: 1, sea: 99 });",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "no cap on dealings"
+  },
+  {
+    "name": "TOWNECON4-sea-unflagged",
+    "file": "server-account/src/townEcon.js",
+    "old": "    if (!seaAt.has(at)) continue;",
+    "new": "    if (seaAt.has(-1)) continue;",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "every tick of a claim counts a dealing"
+  },
+  {
+    "name": "TOWNECON4-sea-bad",
+    "file": "server-account/src/townEcon.js",
+    "old": "  return s.size === sea.length && sea.every((i) => Number.isSafeInteger(i) && i >= 0 && i < n) ? s : null;",
+    "new": "  return new Set(sea.filter((i) => Number.isSafeInteger(i)));",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a bad `sea` taken"
+  },
+  {
+    "name": "TOWNECON4-book-unvouched",
+    "file": "src/net/townEconBook.js",
+    "old": "      if (held) held.sea = true;\n      else list.push({ r: pick.r, s: pick.s, i: pick.i, e: pick.e, sea: true });",
+    "new": "      if (!held) list.push({ r: pick.r, s: pick.s, i: pick.i, e: pick.e });",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the tick never flagged"
+  },
+  {
+    "name": "TOWNECON4-book-twice",
+    "file": "src/net/townEconBook.js",
+    "old": "seaSpent.has(w.r) || list.some((h) => h.r === w.r && h.sea)) return false;",
+    "new": "false) return false;",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "one tick vouches every dealing"
+  },
+  {
+    "name": "TOWNECON4-book-stale",
+    "file": "src/net/townEconBook.js",
+    "old": "|| t - w.i > TOWN_SEA_TICK_S ||",
+    "new": "||",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "any tick alive vouches"
+  },
+  {
+    "name": "TOWNECON4-book-reach",
+    "file": "src/net/townEconBook.js",
+    "old": "return !!c && Math.abs(c.x - px) <= TOWN_SEA_REACH_PX && Math.abs(c.y - py) <= TOWN_SEA_REACH_PX;",
+    "new": "return !!c;",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a tick anywhere vouches"
+  },
+  {
+    "name": "TOWNECON4-book-unsent",
+    "file": "src/net/townEconBook.js",
+    "old": "      const sea = batch.flatMap((w, k) => (w.sea ? [k] : []));",
+    "new": "      const sea = [];",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the claim sends no dealings"
+  }
+]

@@ -35,6 +35,12 @@ export const TIP_TEXT_MAX = 80;
 /** SEAT-TIP (FIELD BUGS 2026-10-04e): a seat's card says whole sentences - its holder's and its battle's each name two
  *  guilds and run past 80 - so its lines are bounded here instead (the card wraps them in its 320 px). */
 export const SEAT_TIP_TEXT_MAX = 160;
+/** TOWN-ECON (bible/06-Systems/Town-Economy-Arc.md 3): a town's card holds its economy's lines above a held seat's own
+ *  four (net/townEconLaw.js townTipOf: the economy, the prices, one reason, then the guild's lines - AUDIT TOWN-ECON UI-1:
+ *  a held seat's Charter line left out, its holder line naming the guild), so it is bounded here. TE3's patrons' line
+ *  comes last and only where the card has room for it (townEconLaw.js TOWN_TIP_PATRONS_ROOM - AUDIT TOWN-ECON 2 LIV-3,
+ *  REC-17: it had been an eighth line this bound cut). */
+export const TOWN_TIP_LINES_MAX = 7;
 /** How near the pointer a raided town answers, paper pixels - the location marks' own 16 (_markerAt): the raid's ring
  *  stands on the town's mark, so pointing at either is pointing at the raid. */
 export const RAID_HIT_PX = 16;
@@ -83,12 +89,13 @@ export function raidMapMarks(raids, nowMinutes, { regionName = () => '', localTi
 }
 
 /** A tip read and checked: a title and its lines as bounded text (each line at most `textMax` - TIP_TEXT_MAX, or a seat's
- *  SEAT_TIP_TEXT_MAX), or null for anything else. */
-export function readTip(tip, { textMax = TIP_TEXT_MAX } = {}) {
+ *  SEAT_TIP_TEXT_MAX; at most `linesMax` of them - TIP_LINES_MAX, or a town's TOWN_TIP_LINES_MAX), or null for anything
+ *  else. */
+export function readTip(tip, { textMax = TIP_TEXT_MAX, linesMax = TIP_LINES_MAX } = {}) {
   if (!tip || typeof tip !== 'object') return null;
   const title = String(tip.title ?? '').slice(0, TIP_TEXT_MAX);
   if (!title) return null;
-  const lines = (Array.isArray(tip.lines) ? tip.lines : []).slice(0, TIP_LINES_MAX).map((l) => String(l ?? '').slice(0, textMax)).filter(Boolean);
+  const lines = (Array.isArray(tip.lines) ? tip.lines : []).slice(0, linesMax).map((l) => String(l ?? '').slice(0, textMax)).filter(Boolean);
   return Object.freeze({ title, lines: Object.freeze(lines) });
 }
 

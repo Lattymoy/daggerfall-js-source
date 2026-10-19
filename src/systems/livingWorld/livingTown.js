@@ -53,7 +53,7 @@ import { NAV_CELL } from '../../world/city/cityNavigation.js';   // LW-DAWN: a b
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, spotRound, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
 import { spotIncidents, stirLine, stirLoud, smallVoice, gateWord } from './stir.js';
-import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, HEARD_GREETINGS, watchBand, fillLine, firstNameOf, CHAPTER_NEWS, CHAPTER_NEWS_DAYS, CHAPTER_EVENT_NEWS } from './lines.js';
+import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, HEARD_GREETINGS, watchBand, fillLine, firstNameOf, CHAPTER_NEWS, CHAPTER_NEWS_DAYS, townEconNews, TOWN_ECON_NEWS_DAYS, CHAPTER_EVENT_NEWS } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
@@ -278,6 +278,7 @@ export class LivingTown {
    *   extraPeople?: (day: number, town: LivingTown) => readonly Resident[],
    *   familyNews?: (t: number) => readonly any[] | null,
    *   chapterOf?: (faction: number) => ({ band: string, name: string, event?: string | null, shut?: boolean } | null),
+   *   econBandOf?: () => (string | null),
    *   dangers?: () => (readonly number[][] | null),
    *   patronsOf?: () => ({ v: number, told: readonly { door: number, t: number, seed: number }[], traders: readonly number[] } | null),
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
@@ -300,7 +301,8 @@ export class LivingTown {
    *   town says of that house at the minute (systems/legacy/influence.js newsFor), told beside the roads' and the deeds'
    *   news. CHAP5b: `chapterOf(faction)` a guild's chapter here as the chapter sheet says it now - its band and its guild's
    *   name ("the Fighters Guild") - or null (offline, a chapter the sheet does not name): its hall's evenings
-   *   (dayPlan.js hallGuildDays) and the town's talk of it (chapterNews).
+   *   (dayPlan.js hallGuildDays) and the town's talk of it (chapterNews). TOWN-ECON TE3: `econBandOf()` the town's economy's
+   *   band now (net/townEconLaw.js townBandOf) - or null (offline, no economy): the town's talk of its trade (econNews).
    */
   constructor(nav, o) {
     this.nav = nav;
@@ -473,6 +475,20 @@ export class LivingTown {
       const kind = c?.shut ? 'shut' : c?.event && /** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[c.event] ? c.event : c?.band;
       return c && kind && (/** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[kind] || /** @type {Record<string, unknown>} */ (CHAPTER_NEWS)[kind]) ? [{ kind, chapter: true, guild: c.name, who: '', foe: '', place: '' }] : [];
     });
+  }
+
+  /**
+   * TOWN-ECON TE3 (Town-Economy-Arc 5): WHAT THE TOWN SAYS OF ITS TRADE on the day of minute `t` - its band's news
+   * (lines.js townEconNews) on TOWN_ECON_NEWS_DAYS of the week, its own drawn on the seed by the town, as a chapter's
+   * days are; none for a Steady town, a band the talk has no words for, or none read (offline). @param {number} t
+   */
+  econNews(t) {
+    const band = this.o.econBandOf?.() ?? null;
+    const kind = typeof band === 'string' ? band.toLowerCase() : null;
+    if (!kind || !Object.prototype.hasOwnProperty.call(townEconNews(), kind)) return [];
+    const d = ((this.dayOf(t) % 7) + 7) % 7;
+    const w = lwSeed(this.o.town.mapId, 0x65636f6e) % 7;   // 'econ'
+    return GUILD_DAY_OFFSETS.slice(0, TOWN_ECON_NEWS_DAYS).some((o) => d === (w + o) % 7) ? [{ kind, econ: true, who: '', foe: '', place: '' }] : [];
   }
 
   /** A resident's day - a traveller's bent round its trips, a visitor's round its stay. @param {Resident} res @param {number} day */
@@ -1565,6 +1581,8 @@ export class LivingTown {
     if (kin.length) ctx.news = [...(ctx.news ?? []), ...kin];
     const chapters = this.chapterNews(t);   // CHAP5b: and of its guilds' chapters
     if (chapters.length) ctx.news = [...(ctx.news ?? []), ...chapters];
+    const trade = this.econNews(t);   // TOWN-ECON TE3: and of its trade
+    if (trade.length) ctx.news = [...(ctx.news ?? []), ...trade];
     const carried = this.carriedAt(t);   // LW16: the word carried in from the towns about
     if (carried.length) ctx.news = [...(ctx.news ?? []), ...carried];
     ctx.player = this.o.playerName?.() ?? '';

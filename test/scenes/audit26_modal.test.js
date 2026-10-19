@@ -288,7 +288,7 @@ test('AUDIT 26 F017: the popup Talk reads the same StaticNPC.Data the click deri
 // ---------------------------------------------------------------------
 
 test('AUDIT 26 F063: a native-mode sale takes the goods out of the pack, and the two sell paths agree', () => {
-  const commit = bodyOf(WM, 'function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null) {');
+  const commit = bodyOf(WM, 'function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null, asked = {}) {');
   // the Sell arm removes what it just paid for
   // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): and lands it through landSold - the shelf for an honest piece, nowhere
   // for a stolen one (systems/stolenGoods.js)

@@ -129,7 +129,7 @@ town stands unchanged, and `lw9_traffic.test.js` pins it against the same town r
 
    | Job | Who | Class | Cycle | Where | Hazard |
    |---|---|---|---|---|---|
-   | `carter` (a farmer to market) | a farm (type 3) 1; a hamlet (1) or village (2) 1 + blocks/4, to 3 | none | 7 days | the nearest town within 1-2 px (AUDIT LW-II E5: 1-4 before - a walk from first light in by noon reaches two at the calendar's pace, one at the online pace) keeping a market (a city or a village of MARKET_BLOCKS, 4), on its MARKET DAY (`trips.js marketDay`: one in seven, by its map id) - in by MARKET_IN_H (noon), at a stall till MARKET_OUT_H (13:30), home by nightfall | 0.003 |
+   | `carter` (a farmer to market) | a farm (type 3) 1; a hamlet (1) or village (2) 1 + blocks/4, to 3 | none | 7 days | the nearest town within 1-2 px (AUDIT LW-II E5: 1-4 before - a walk from first light in by noon reaches two at the calendar's pace, one at the online pace) keeping a market (a city or a village of MARKET_BLOCKS, 4), on its MARKET DAY (`trips.js marketDay`: one in seven, by its map id - TOWN-ECON TE3, online: two for a Booming town, one in fourteen for a Destitute one, `06-Systems/Town-Economy-Arc.md` 5) - in by MARKET_IN_H (noon), at a stall till MARKET_OUT_H (13:30), home by nightfall | 0.003 |
    | `hunter` | a hamlet, village or farm: 1 | an Archer or a Ranger | 4 days | THE WILD (2.2) | 0.01 |
    | `patrol` | a city of CITY_COURT_BLOCKS (16): 2 + blocks/32, to 4 | Knight, level 6-14 | 6 days | a ROUND to a town of its own region within 3-12 px, and back | 0.008 |
    | `noble` | a city of 16 blocks: 1 | none | 20 days | another court (a city of 16 blocks) within 6-18 px | 0.004 |
@@ -411,7 +411,9 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
   and `mountServiceWindow`: outdoors on the talk's overlay, never `interiorOverlay`. Its building is the counter's
   (kind, quality, name - "Ada Lark's caravan" - and the region at the party's place). Prices are the counter's own,
   with the region's adjustment.
-  - A friend's counter takes FRIEND_DISCOUNT (10%) off what the player buys (`shopAdjustment`'s `roadDiscount`).
+  - A friend's counter takes FRIEND_DISCOUNT (10%) off what the player buys (`shopAdjustment`'s `roadDiscount`) - and,
+    AUDIT TOWN-ECON 2 PRICE-4 (2026-10-18, `06-Systems/Town-Economy-Arc.md` 7.5), off what it pays: what a counter pays is
+    never above what it asks this player, so its endless Campfire bought and sold back never pays.
   - The window's own steal, caught, is the road's crime (4.3), never the watch: no city guard is called.
 
 ### 4.3 The deeds, reported (Living World II decision 5)

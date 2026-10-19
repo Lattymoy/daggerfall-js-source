@@ -125,6 +125,7 @@ export const DRY_STEP_N = 80;
  *   fate?: (trip: Trip) => (Trip | undefined),
  *   lanesFrom?: (town: LwTown) => ({ to: LwTown, len: number, key: string }[] | undefined),
  *   dryAt?: (nx: number, nz: number) => boolean,
+ *   marketBandOf?: (town: LwTown, day: number) => (string | null),
  * }} TripWorld - the host's: towns near a pixel (the game's own rows, populated); the planner's way between two towns
  *   (undefined while it is being asked, null for none); a town's travellers (census.js travellerRoster). LW4: who holds
  *   a traveller's place in a cycle (lives.js - null while it stands empty; unasked, the census's own), whether its
@@ -392,8 +393,20 @@ export function leaderOf(res, roster) {
   return null;
 }
 
-/** LW9: a market town's market day - one day in seven, by its map id: true on `day`. @param {LwTown} town @param {number} day */
-export const marketDay = (town, day) => ((day + (lwSeed(town.mapId >>> 0, 0x6d6b74) % 7)) % 7) === 0;   // 'mkt'
+/** TOWN-ECON TE3 (bible/06-Systems/Town-Economy-Arc.md 5): a Booming town holds a second market day a week,
+ *  MARKET_BOOM_DAY after its own; a Destitute town holds its own one week in MARKET_DESTITUTE_WEEKS. AUDIT TOWN-ECON 2
+ *  LIV-14: a carter never misses a Destitute town's market because the online window is exactly fourteen sky days
+ *  (paceScale at TimeScale 24) - a longer fortnight, or a shorter window, would leave a cycle without one. */
+export const MARKET_BOOM_DAY = 4;
+export const MARKET_DESTITUTE_WEEKS = 2;
+/** LW9: a market town's market day - one day in seven, by its map id: true on `day`. TOWN-ECON TE3: `band` its economy
+ *  that day (net/townEconLaw.js townBandOf) - Booming two days in seven, Destitute one in fourteen; any other, or none
+ *  (offline: the world LW9 made), one in seven. @param {LwTown} town @param {number} day @param {string|null} [band] */
+export const marketDay = (town, day, band = null) => {
+  const s = day + (lwSeed(town.mapId >>> 0, 0x6d6b74) % 7);   // 'mkt'
+  if (band === 'Destitute') return s % 7 === 0 && Math.floor(s / 7) % MARKET_DESTITUTE_WEEKS === 0;
+  return s % 7 === 0 || (band === 'Booming' && s % 7 === MARKET_BOOM_DAY);
+};
 
 /**
  * LW9: A CARTER'S DAY TO MARKET - the nearest town within reach that keeps a market (a city or a village of
@@ -413,7 +426,7 @@ export function marketTrip(res, home, k, world, { start, len, pace, rng }) {
   const leave = Math.floor((5 + rng()) * 60);
   for (const to of near) {
     let day = -1;
-    for (let d = start; d < start + len; d++) if (marketDay(to, d)) { day = d; break; }
+    for (let d = start; d < start + len; d++) if (marketDay(to, d, world.marketBandOf?.(to, d) ?? null)) { day = d; break; }   // TOWN-ECON TE3: its band kept for that day (AUDIT TOWN-ECON 2 LIV-9: read at its first asking)
     if (day < 0) continue;
     const plan = world.routeOf(home, to);
     if (plan === undefined) return undefined;

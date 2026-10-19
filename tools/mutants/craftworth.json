@@ -2,8 +2,8 @@
   {
     "name": "CRAFT-WORTH-sell-arm-reads-the-roll",
     "file": "src/systems/tradeModes.js",
-    "old": "        cost += calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
-    "new": "        cost += calculateCost(itemValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
+    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
     "tests": [
       "test/systems/craftworth.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CRAFT-WORTH-sellmagic-reads-the-roll",
     "file": "src/systems/tradeModes.js",
-    "old": "        cost += calculateCost(counterValueOf(item), quality, priceAdjustment);",
-    "new": "        cost += calculateCost(itemValueOf(item), quality, priceAdjustment);",
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment);",
+    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment);",
     "tests": [
       "test/systems/craftworth.test.js"
     ]

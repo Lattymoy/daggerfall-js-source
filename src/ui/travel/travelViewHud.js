@@ -40,7 +40,7 @@ import { drawShield } from '../heraldryArt.js';   // AUDIT HERALDRY H4: the guil
 import { TV_FILTER_GROUPS, TV_FILTER_TEXT, travelViewFilters, toggleTravelViewFilter, onTravelViewFilters, markShown, countGroups } from '../../systems/travel/travelViewFilters.js';   // OW-FILTER
 import { TV_WHO_GROUPS, TV_WHO_TEXT, TV_KIN_COLORS, travelViewWho, toggleTravelViewWho, cycleTravelViewRenown, cycleTravelViewNodeKm } from '../../systems/travel/travelViewFilters.js';   // OW-WHO / OW-NODE-KM / OW-KIN
 import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's wheel on its dot
-import { placeTip, readTip, tipKey, SEAT_TIP_TEXT_MAX } from '../eventMapMarks.js';   // SEAT-TIP: the held map's card, at the pointer here too
+import { placeTip, readTip, tipKey, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from '../eventMapMarks.js';   // SEAT-TIP: the held map's card, at the pointer here too
 import { tickHudLayout } from '../hud/hudLayout.js';   // HUD-MOVE: the Overworld's block and the travel bar move too
 import { travelPathMode, setTravelPathMode, onTravelPathMode, TRAVEL_PATH_MODES, TRAVEL_PATH_TEXT } from '../../systems/travel/travelPathMode.js';   // OW-PATH: the Roads / Free switch
 import { buildPaceControls } from './travelPaceControls.js';   // PACE-DIALS: the travel speed dials, journey or none
@@ -646,7 +646,7 @@ let tipShown = '', tipSize = null, tipAt = '';
 function showMarkTip(tip, at, vw, vh) {
   const box = parts?.tip;
   if (!box) return;
-  const t = tip && at ? readTip(typeof tip === 'function' ? tip() : tip, { textMax: SEAT_TIP_TEXT_MAX }) : null;
+  const t = tip && at ? readTip(typeof tip === 'function' ? tip() : tip, { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : null;
   if (!t) { if (tipShown) { tipShown = ''; tipSize = null; tipAt = ''; box.style.display = 'none'; } return; }
   const key = tipKey(t);
   if (key !== tipShown) {

@@ -282,7 +282,8 @@ test('SEAT1d THE HOSTS BY SOURCE: the service\'s routes and the Turning\'s write
   assert.match(w, /minutes: \(\) => worldMinutes\(\),\n\s*regionAt: \(px, py\) => maps\.getRegionIndexAt\(px, py\),/);   // PIN MOVED (AUDIT SEATS-3 F5): the edicts' own, not REP4's
   assert.match(w, /board: \[town\.px, town\.py\],/);
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /const f = mode === 'Buy' \|\| mode === 'Repair' \? host\.seatShopFactor\?\.\(b\) \?\? 1 : 1;/);
+  // PIN MOVED (TOWN-ECON TE1, test/systems/townecon.test.js): the town's factor first (online, the seat's folded in), the seat's alone without it
+  assert.match(wm, /const f = host\.townShopFactor\?\.\(b, mode\) \?\? \(mode === 'Buy' \|\| mode === 'Repair' \? host\.seatShopFactor\?\.\(b\) \?\? 1 : mode === 'Sell' \|\| mode === 'SellMagic' \? Math\.min\(1, host\.seatShopFactor\?\.\(b\) \?\? 1\) : 1\);/);   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-4): with no town law wired, a sale held to the seat's factor
   assert.match(wm, /priceAdjustment: shopAdjustment\(b, mode\),/);
   assert.match(wm, /priceAdjustment: shopAdjustment\(b, 'Buy'\) \}\);/);   // (main's #500 reverted MANA-SHOP's buyer level: the pin is back where SEAT1d set it)
   assert.match(wm, /priceAdjustment: shopAdjustment\(b, 'Repair'\),/);

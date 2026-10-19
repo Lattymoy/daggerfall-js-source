@@ -30,7 +30,7 @@ export function createTravelViewMarks(host) {
     TV_PLACE_LIFT, _bandChase, _bandSpent, _hiddenPeers, _lodesSensed, _peerMapPoses, _townOfMapId, _tvBountyHold,
     _tvLodeHold, _tvPartyHold, _tvVendorHold, _tvWaypointHold, _veils, _wildStrangerIds, bandMake, bandNowMs,
     bandPlace, cam, carriageTown, csaOn, exteriorFoes, livingHideoutsHostOf, lodeSense, lodeWords, motherlodeBook,
-    myGuildTag, params, player, playerTravelPixel, seaRaidPeerChase, seatTipAt, state, travelViewBands,
+    myGuildTag, params, player, playerTravelPixel, seaRaidPeerChase, townEcon, state, travelViewBands,
     travelViewCamps, travelViewDungeons, travelViewFarPlaces, travelViewPlaces, travelViewRaiders, travellerBook,
     tvRaid, tvSceneKept, tvTrip, tvTripLive, walkMode, wildCampKeys, wildHidesPlayer
   } = host;
@@ -51,7 +51,7 @@ export function createTravelViewMarks(host) {
       // grid wears TV2's plate (travelViewDungeons leaves it to this list), and every plate here was kind 'place' - a
       // town's brass dot, and the Towns switch's count. Its kind says so now: the dungeons' arch, the Dungeons switch.
       const isDungeon = TV_DUNGEON_TYPES.has(p.summary.loc?.mapTableData?.locationType);
-      marks.push({ key: p.key, at: tvSceneKept(p, p.x, p.z, TV_PLACE_LIFT), label: p.summary.name, ...(tier ? { sub: tier } : {}), kind: isDungeon ? 'place dungeon' : 'place', pick: true, hub: carriageTown(p.summary.mapId), tip: seatTipAt(p.summary.mapId) });   // OW-HUBS: a carriage town's wheel; SEAT-TIP: a seat's card
+      marks.push({ key: p.key, at: tvSceneKept(p, p.x, p.z, TV_PLACE_LIFT), label: p.summary.name, ...(tier ? { sub: tier } : {}), kind: isDungeon ? 'place dungeon' : 'place', pick: true, hub: carriageTown(p.summary.mapId), tip: townEcon.tipFnAt(p.summary.mapId) });   // OW-HUBS: a carriage town's wheel; SEAT-TIP: a seat's card; TOWN-ECON: every town's (made only when its plate is asked)
     }
     // TV5: the far places, held at the edge with their distance (the journey's own end is the flag's)
     const farEnd = endKey ? `far:${tvTrip.plan.summary.mapId}` : null;
@@ -59,7 +59,7 @@ export function createTravelViewMarks(host) {
     for (const f of travelViewFarPlaces()) {
       if (f.key === farEnd) continue;
       const km = (Math.hypot(f.x - here.x, f.z - here.z) / 32768) * PIXEL_KM;   // native units a pixel (MapsFile.WorldMapTerrainDim)
-      marks.push({ key: f.key, at: tvSceneKept(f, f.x, f.z, TV_PLACE_LIFT), label: f.summary.name, sub: farDistanceText(km), kind: 'far', pick: true, edge: true, hub: carriageTown(f.summary.mapId), tip: seatTipAt(f.summary.mapId) });   // OW-HUBS; SEAT-TIP
+      marks.push({ key: f.key, at: tvSceneKept(f, f.x, f.z, TV_PLACE_LIFT), label: f.summary.name, sub: farDistanceText(km), kind: 'far', pick: true, edge: true, hub: carriageTown(f.summary.mapId), tip: townEcon.tipFnAt(f.summary.mapId) });   // OW-HUBS; SEAT-TIP; TOWN-ECON
     }
     // TV6: THE DUNGEONS - a found one past the grid a far plate (within it TV2's plate stands - AUDIT OW3 D3: the list
     // leaves those out, so they spend none of its twelve), the rest unnamed lairs. AUDIT OW3 D1: a spawn the player has

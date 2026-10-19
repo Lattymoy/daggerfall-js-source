@@ -57,8 +57,8 @@
   {
     "name": "ACS-B16-exotic",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k)))), exotic,",
-    "new": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k)))), exotic: false,",
+    "old": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic,",
+    "new": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic: false,",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

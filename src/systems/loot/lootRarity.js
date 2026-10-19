@@ -1871,6 +1871,8 @@ function layGemLines(item) {
  *  business; free setting, three sockets and law 6 made it a faucet - a 10-gold Jade lifted its piece by its +360 of
  *  Willpower, three Jades by 1,080 though they read one Rare line. */
 const gemWorth = (gem) => itemBaseValue({ group: 'Gems', templateIndex: gemTemplateOf(gem) });
+/** AUDIT TOWN-ECON 2 PRICE-2: what a set gem adds to its piece's value (gemWorth) - its share of a sale. @param {unknown} gem */
+export const gemWorthOf = (gem) => (isGemId(gem) ? gemWorth(gem) : 0);
 export function setGem(item, gem, at = null) {
   const list = socketsOf(item);
   const i = at == null ? list.indexOf(SOCKET_EMPTY) : at;

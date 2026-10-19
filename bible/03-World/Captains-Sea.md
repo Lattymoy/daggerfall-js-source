@@ -379,6 +379,14 @@ carpenter's stores' - and the chart's - so the account service's Worker bundles 
 the ships' table, the hash), and its deploy's path filter names each (`.github/workflows/account-deploy.yml`, ACC4's
 walk). A port's key hashes on the wire's FNV-1a (net/wire.js `hashKey`, the board's re-export - one home).
 
+SEA-TRADE (2026-10-18, Mac: "Ensure the sea trade routes plug into this system also"; `06-Systems/Town-Economy-Arc.md`
+section 8): online, the exchange is its port TOWN'S - `exchangeOf`'s `town`, the town economy's asking factor on what it
+sells and its paying factor (never above the ask) on what it pays, so a Booming port's goods are cheaper and a Destitute
+one's dearer and the spread only widens; the tab says the port's band. A good bought carries what it cost and the
+counter's mark (LAW-3; no patron takes it). Each dealing is told to the town economy and, vouched by the Watch tick that
+stood the captain at the port, counts in its players' share; a port town's packet lanes lift its Prosperity. Offline,
+and on an isle past the Veil, the exchange is as above.
+
 ## CAPT-CHARTS - treasure charts
 
 A pirate the captain ends - sunk or taken - carries a TREASURE CHART among her papers CHART_CHANCE of the time (more in

@@ -18,6 +18,7 @@
 // and the day's "Fine day." keep their hours (heard at six in the evening, and by the night watch), and a trade's pool
 // is the trade's once however many share it: a pair of homemakers drew their trade's one script half the time, and
 // "The baker's bread is getting smaller." opened a fifth of the town's talk.
+import { t, textRevision } from '../textManager.js';   // TOWN-ECON TE3: the town's talk of trade in the player's language (L10N4)
 import { seededRng } from '../wind/wind.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 
@@ -557,6 +558,37 @@ export const CHAPTER_EVENT_NEWS = Object.freeze({
   ]),
 });
 
+/** TOWN-ECON TE3 (bible/06-Systems/Town-Economy-Arc.md 5): WHAT THE TOWN SAYS OF ITS TRADE - by its economy's band
+ *  (net/townEconLaw.js townBandOf), lower-case; `{town}` its name, filled by the meeting. A Steady town is no news.
+ *  Through the text core (L10N4), read when it is told - each pool kept while the language holds, so a script is its
+ *  pool's own. */
+const econRows = () => [
+  ['booming', t('lw.econ.booming.a', 'Trade has never been better in {town}.'), t('lw.econ.booming.b', 'Every stall sold out by noon.')],
+  ['thriving', t('lw.econ.thriving.a', 'Business is good in {town} these days.'), t('lw.econ.thriving.b', 'Long may it last.')],
+  ['struggling', t('lw.econ.struggling.a', 'Trade is slow in {town} lately.'), t('lw.econ.struggling.b', 'Everyone\'s holding on to their coin.')],
+  ['destitute', t('lw.econ.destitute.a', 'Half the shops in {town} have shut.'), t('lw.econ.destitute.b', 'Hard times. Hard times.')],
+];
+/** @type {Readonly<Record<string, ReadonlyArray<ReadonlyArray<string>>>> | null} */
+let _econNews = null;
+let _econSig = '';
+let _econRev = -1;
+/** TOWN-ECON TE3: the town's talk of trade by band, in the player's language now. AUDIT TOWN-ECON 2 LIV-12: its words
+ *  read again only when the text core's revision moved (textRevision - a locale switched, a table patched): every
+ *  built town's talk asks it each frame, and each ask said its eight lines and joined them to look at its memo. */
+export function townEconNews() {
+  if (_econNews && textRevision() === _econRev) return _econNews;
+  _econRev = textRevision();
+  const rows = econRows();
+  const sig = rows.flat().join('\u0001');
+  if (!_econNews || sig !== _econSig) {
+    _econSig = sig;
+    _econNews = Object.freeze(Object.fromEntries(rows.map(([band, a, b]) => [band, Object.freeze([Object.freeze([a, b])])])));
+  }
+  return _econNews;
+}
+/** TOWN-ECON TE3: the days a week a town's trade is told - drawn on the seed, by the town. */
+export const TOWN_ECON_NEWS_DAYS = 3;
+
 /** Of a meeting with news to tell, the share that tells it. */
 export const NEWS_SHARE = 0.4;
 /** LW16: of the news told, the share that is the word carried in from the towns about (a town with none tells its own). */
@@ -581,10 +613,12 @@ export const HEARD_GREETINGS = Object.freeze({
 
 /** LW7: a news item's words - a deed's (struck down by the player, seen or not; died at their side; WATCH-FIX: one of
  *  the watch another hand killed), a fight the player turned, a passage by sea's (LW5b), a dive's (LW6), the road's.
- *  LEGACY6: or Project Legacy's house's (`kin`). CHAP5b: or a guild's chapter's (`chapter`).
- *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean, watch?: boolean, kin?: boolean, chapter?: boolean }} item */
+ *  LEGACY6: or Project Legacy's house's (`kin`). CHAP5b: or a guild's chapter's (`chapter`). TOWN-ECON TE3: or the town's
+ *  trade (`econ`).
+ *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean, watch?: boolean, kin?: boolean, chapter?: boolean, econ?: boolean }} item */
 const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]   // LEGACY6: the house's own words
   : item.chapter ? (/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)])   // CHAP5b: a chapter's standing; CHAP6c: its Season
+  : item.econ ? townEconNews()[item.kind]   // TOWN-ECON TE3: the town's trade
   : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']
   : item.kind === 'died' ? DIED_NEWS
   : item.kind === 'killed' ? KILLED_NEWS[item.watch ? 'watch' : 'town']

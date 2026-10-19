@@ -100,6 +100,6 @@ test('UNCOUNTED: the Stores page lists the looted blood and says what it is; LOO
 
 test('UNCOUNTED wired: the world host hands the page every material held', () => {
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /carriedHeld: \(k\) => bagHeldOf\(playerEntity, k\),\n\s+heldKeys: \(\) => bagHeldKeysOf\(playerEntity\),/);
+  assert.match(w, /carriedHeld: \(k\) => bagHeldOf\(playerEntity, k, \{ counter: false \}\),[^\n]*\n\s+heldKeys: \(\) => bagHeldKeysOf\(playerEntity\),/);   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-2): the page never puts a counter's piece in
   assert.match(w, /deposit: async \(k, n, order = 'all'\) => \{[^\n]*\n\s+const r = await profBook\.deposit\(k, n, \{ order \}\);/, 'LOOT-LOOSE: the page\'s order reaches the book');
 });

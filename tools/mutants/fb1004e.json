@@ -682,7 +682,7 @@
   {
     "name": "SEATTIP-the-held-map-tip-dropped",
     "file": "src/ui/heldMap.js",
-    "old": "      const tip = m.seat ? readTip(seatTipOf(m.seat), { textMax: SEAT_TIP_TEXT_MAX }) : null;",
+    "old": "      const tip = card ? readTip(card, { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : null;",
     "new": "      const tip = null;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
@@ -752,8 +752,8 @@
   {
     "name": "SEATTIP-the-seats-lines-cut-at-80",
     "file": "src/ui/travel/travelViewHud.js",
-    "old": "readTip(typeof tip === 'function' ? tip() : tip, { textMax: SEAT_TIP_TEXT_MAX })",
-    "new": "readTip(typeof tip === 'function' ? tip() : tip)",
+    "old": "readTip(typeof tip === 'function' ? tip() : tip, { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX })",
+    "new": "readTip(typeof tip === 'function' ? tip() : tip, { linesMax: TOWN_TIP_LINES_MAX })",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],

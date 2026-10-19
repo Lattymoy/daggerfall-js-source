@@ -82,6 +82,7 @@ on:
       - "src/net/hallLaw.js"
       - "src/net/heraldryLaw.js"
       - "src/net/townSeatLaw.js"
+      - "src/net/townEconLaw.js"
       - "src/net/tideLaw.js"
       - "src/net/fortLaw.js"
       - "src/net/watchReceipt.js"

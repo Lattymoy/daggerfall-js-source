@@ -245,7 +245,8 @@ test('FB0929: one law at every counter - the keyed shelf and repair rows price t
     for (const c of callsOf(code(`src/${f}`), 'getTradePrice')) calls.push([f, c]);
   }
   assert.ok(calls.length >= 6, `the classic offer, the enhanced quote, offer and quick sale, the two keyed rows: ${calls.length}`);
-  for (const [f, c] of calls) assert.match(c, /,\s*(?:lot\.)?pieces\)$/, `${f}: ${c}`);
+  // PIN MOVED (LAW-3, Town-Economy-Arc 7.4): a sale's call hands the walk's resale tally after its pieces
+  for (const [f, c] of calls) assert.match(c, /,\s*(?:lot\.)?pieces(?:,\s*(?:lot\.)?resale)?\)$/, `${f}: ${c}`);
 });
 
 test('FB0929: the sale is not floored - Daggerfall\'s offline, at most half the floored asking price online; the floor only raises an ask, so the loop that bought a bandage for nothing and sold it back for a gold nets nothing', () => {

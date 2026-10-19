@@ -47,6 +47,7 @@ export const BUSY_READS = new Map([
   ['/v1/saves', 'GET'],             // the cloud saves' list
   ['/v1/heartbeat', 'POST'],        // BUSY-HEART: the box, the board, the post and the beat - the overload's busiest
   ['/v1/prof/motherlodes', 'POST'], // BUSY-HEART: the day's three, and its pick
+  ['/v1/towns/econ', 'POST'],       // AUDIT TOWN-ECON 2 CLI-8: the towns' shares - a display read every page asks each keeping
 ]);
 
 /** Whether a call is one of the reads that stand back. */

@@ -269,7 +269,7 @@ function bodyOf(text, header) {
 
 test('audit26 F067: the identify SPELL refuses on magicka and never reaches the Mercantile tally', () => {
   const commit = bodyOf(src('src/scenes/worldModes.js'),
-    'function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null) {');
+    'function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null, asked = {}) {');
 
   // the refusal, and it comes BEFORE any identifying
   const gate = commit.indexOf('if (identifySpell.cost > (playerEntity.magicka ?? 0)) {');

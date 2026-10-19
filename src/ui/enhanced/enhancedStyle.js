@@ -5625,6 +5625,7 @@ ${tierMarkCss({ wash: (k) => TIER_MARKS[k], washAlpha: 0.2, edge: '#0b0805', sel
 /* EVENT-TIP: a world event's card at the pointer - the gate's ring, a raided town (ui/eventMapMarks.js) - in the
    pixel home's plaque language; placed in viewport pixels over the root (ui/heldMap.js _showTip) */
 .hmtip { position: absolute; z-index: 3; display: none; pointer-events: none; max-width: min(320px, calc(100vw / var(--hm-ui, 1) - 16px));
+  max-height: calc(100vh / var(--hm-ui, 1) - 16px); overflow: hidden;   /* AUDIT TOWN-ECON UI-1: CARD-FIT's bound in height too - a card taller than a landscape phone is held on it */
   padding: 8px 12px; background: rgba(10,12,17,0.9); border: 2px solid rgba(216,207,174,0.7);
   outline: 2px solid rgba(125,116,96,0.35); outline-offset: 2px; color: #d8cfae; font-family: inherit;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }

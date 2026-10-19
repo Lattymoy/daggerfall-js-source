@@ -57,7 +57,7 @@ import { calculateCost, calculateTradePrice, essentialPrice } from './shopStock.
 import { GOLD_PIECE_WEIGHT_KG, isEnchanted } from './inventory.js';
 import { calculateItemRepairCost, repairRefusal } from './repairService.js';
 import { itemValueOf, conditionPercentage } from './item/itemTemplates.js';
-import { craftedRarityWorth } from './loot/lootRarity.js';   // CRAFT-WORTH: a crafted piece's rolled worth, never a counter's
+import { craftedRarityWorth, socketsOf, gemWorthOf } from './loot/lootRarity.js';   // CRAFT-WORTH: a crafted piece's rolled worth, never a counter's
 import { isOnlinePage } from './online/onlineLane.js';   // SELL-AS-FOUND: online, a sale reads a piece as it was found
 import { isCampfireKit } from './survival/items.js';   // AUDIT REST: the Campfire an essential online
 import { isFirewood } from './rest/restItems.js';
@@ -68,7 +68,7 @@ import { isBagItem } from '../net/bagLaw.js';   // BAG1: a loaded Materials Bag 
 import { activeWagonItem } from './wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): the wagon driven, read once for every counter (sellGuardOf)
 import { wagonSoldWhole } from './wagon/wagonUpkeep.js';   // WAGON-TIERS: a wagon's wear prices its sale only on Hard
 import { wagonUpkeepRules } from './upkeep/upkeepSwitch.js';   // WAGON-TIERS: the tier, through wagon upkeep's one accessor
-import { PATRON_COUNTER_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: online, a counter's piece is no patron's
+import { PATRON_COUNTER_MARK, COUNTER_PAID_MARK, COUNTER_VALUE_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: online, a counter's piece is no patron's; LAW-3: nor sold on for more than it cost
 import { clearStolen } from './stolenGoods.js';   // STOLEN-GOODS AUDIT S3: a piece bought at a counter is the buyer's, honestly
 import {
   cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID,
@@ -261,13 +261,33 @@ export function saleConditionPercentage(item, { online = isOnlinePage() } = {}) 
  *  mark (systems/stolenGoods.js) cleared before a stack's merge takes it. No shelf piece is stolen by construction (a sold
  *  one never reaches a shelf - landSold), yet a peer's word for a shelf could carry one (an older build's sale, a hostile
  *  client - world/interior/interiorShared.js applyInteriorLoot strips it too), and a piece stolen elsewhere and left on a shut
- *  shelf stays marked there: paid for, it is the buyer's. */
-export function markCounterBought(items, { online = isOnlinePage() } = {}) {
+ *  shelf stays marked there: paid for, it is the buyer's.
+ *  LAW-3 (Town-Economy-Arc 7.4, the carry between regions): with the lot's `price`, each piece is marked with what the
+ *  counter was paid for it (COUNTER_PAID_MARK) - the price shared by each piece's own ask at one counter (buyItemPrice
+ *  at the middle quality and index: the essentials' half among the shares), floored a piece, so no piece is held to
+ *  more than it cost. AUDIT TOWN-ECON 2 PRICE-1: the asks the purchase's own (its `holidayId` and `guildFactionId`) -
+ *  a Warriors Festival's halved weapon shared by its full ask held a piece bought beside it to less than it cost, and
+ *  itself to more; PRICE-5: a lot that paid a gold a piece or more gives every piece one, and the rest by the asks (a
+ *  cheap stack bought beside a dear piece floored to 0, and sold for 0 ever after); PRICE-6: and the value each piece
+ *  was bought at (COUNTER_VALUE_MARK). */
+export function markCounterBought(items, { online = isOnlinePage(), price = null, holidayId = HOLIDAYS.None, guildFactionId = null } = {}) {
   for (const it of items ?? []) clearStolen(it);
   if (!online) return 0;
-  let n = 0;
-  for (const it of items ?? []) if (it && typeof it === 'object') { it[PATRON_COUNTER_MARK] = true; n++; }
-  return n;
+  const lot = (items ?? []).filter((it) => it && typeof it === 'object');
+  const stackOf = (it) => (Number.isInteger(it.stackCount) && it.stackCount > 1 ? it.stackCount : 1);
+  const asks = lot.map((it) => Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)));   // a gold a piece at least, as a purchase asks
+  const total = asks.reduce((a, b) => a + b, 0);
+  const paid = typeof price === 'number' && Number.isFinite(price) && price >= 0 && total > 0;
+  const pieces = lot.reduce((n, it) => n + stackOf(it), 0);
+  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0;   // PRICE-5: a gold a piece first, where the lot paid it
+  const rest = paid ? /** @type {number} */ (price) - base * pieces : 0;
+  lot.forEach((it, i) => {
+    it[PATRON_COUNTER_MARK] = true;
+    if (paid) it[COUNTER_PAID_MARK] = base + Math.floor((rest * asks[i]) / total / stackOf(it));
+    const v = counterValueOf(it);
+    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v);   // PRICE-6
+  });
+  return lot.length;
 }
 
 /** CRAFT-WORTH (2026-10-11): THE VALUE A COUNTER PAYS A PIECE ON - its own (itemValueOf), less what a crafted piece's
@@ -306,6 +326,28 @@ export function tradeCost(mode, staged = [], {
   let cost = 0;
   let modeActionEnabled = false;
   let pieces = 0;
+  /** LAW-3: the lot's pieces a counter sold online - their cost, and what the counter was paid for them */
+  let resale = null;
+  const live = online ?? isOnlinePage();
+  const sold = (item, c, stack) => {
+    if (!live) return;
+    const now = counterValueOf(item);
+    // AUDIT TOWN-ECON 2 PRICE-2: a gem a counter sold, set in the piece - its share of the sale held to what it cost
+    for (const [i, paid] of Array.isArray(item.socketBought) ? item.socketBought : []) {
+      const w = gemWorthOf(socketsOf(item)[i]);
+      if (paid == null || !(w > 0) || !(now > 0)) continue;
+      resale ??= { cost: 0, paid: 0 };
+      resale.cost += Math.round((c * Math.min(w, now)) / now);
+      resale.paid += paid;
+    }
+    if (item[PATRON_COUNTER_MARK] !== true || !Number.isInteger(item[COUNTER_PAID_MARK])) return;
+    resale ??= { cost: 0, paid: 0 };
+    // AUDIT TOWN-ECON 2 PRICE-6: a piece worth more than it was bought at (a gem set, a hone, a reforge) - the cost of the
+    // part the counter sold alone is capped, the rest is the player's own work, haggled on its own
+    const was = item[COUNTER_VALUE_MARK];
+    resale.cost += Number.isInteger(was) && was < now && now > 0 ? Math.round((c * was) / now) : c;
+    resale.paid += item[COUNTER_PAID_MARK] * stack;
+  };
   for (const item of staged) {
     const stack = item.stackCount ?? 1;
     switch (mode) {
@@ -314,22 +356,28 @@ export function tradeCost(mode, staged = [], {
         cost += buyItemPrice(item, { quality, priceAdjustment, holidayId, guildFactionId });
         pieces += stack;
         break;
-      case 'Sell':
+      case 'Sell': {
         modeActionEnabled = true;
         // DFU passes ConditionPercentage (:462) into a slot its own
         // CalculateCost never reads - see the header; RRI2: Roleplay &
         // Realism: Items' override reads it, so the slot is passed.
         // SELL-AS-FOUND: online, no better than the condition the world handed the piece over at
-        cost += calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth
+        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth
+        cost += c;
+        sold(item, c, stack);   // LAW-3
         break;
-      case 'SellMagic':
+      }
+      case 'SellMagic': {
         // DFU's own TODO sits on this line: "Fencing base price higher
         // and guild rep affects it". Until it does, SellMagic is Sell
         // WITHOUT the stack multiply - a stack of five soul gems fences
         // for the price of one. Verbatim, and deliberately not "fixed".
         modeActionEnabled = true;
-        cost += calculateCost(counterValueOf(item), quality, priceAdjustment);   // CRAFT-WORTH: a fenced crafted piece at its plain worth
+        const c = calculateCost(counterValueOf(item), quality, priceAdjustment);   // CRAFT-WORTH: a fenced crafted piece at its plain worth
+        cost += c;
+        sold(item, c, stack);   // LAW-3: the stack it hands over cost what it cost
         break;
+      }
       case 'Repair':
         if (isBeingRepaired(item)) break;
         modeActionEnabled = true;
@@ -350,7 +398,7 @@ export function tradeCost(mode, staged = [], {
         break;
     }
   }
-  return { cost, modeActionEnabled, pieces };
+  return resale ? { cost, modeActionEnabled, pieces, resale } : { cost, modeActionEnabled, pieces };   // LAW-3: the tally only where a counter's piece is sold
 }
 
 /** FB0929: the least a purchase asks for each piece it buys or mends -
@@ -383,15 +431,27 @@ export const MIN_PRICE_PER_PIECE = 1;
  *  ask is nothing; offline that candle rode the horse for no gold, so a
  *  gold for selling it alone would be minted. The floor only raises an
  *  asking price, so no buy-and-sell-back gains by it. Identify keeps its
- *  cost - the Witches Festival's free one is DFU's design. */
-export function getTradePrice(mode, cost, quality, skills, pieces = cost > 0 ? 1 : 0) {
+ *  cost - the Witches Festival's free one is DFU's design.
+ *
+ *  LAW-3 (Town-Economy-Arc 7.4, the carry between regions) - ONLINE A COUNTER
+ *  NEVER PAYS MORE FOR A PIECE A COUNTER SOLD THAN WAS PAID FOR IT. `resale`
+ *  is tradeCost's (the lot's pieces marked with COUNTER_PAID_MARK, their cost
+ *  and what was paid for them). Where the sale of those pieces would pass what
+ *  was paid, they fetch what was paid and the rest of the lot is haggled on
+ *  its own; the whole lot's price is never passed. A town's discount (TOWN-
+ *  ECON) and the regions' walk made a piece bought cheap and carried dear pay
+ *  on 1,752 of 4,000 world days, and an essential at half price on most. */
+export function getTradePrice(mode, cost, quality, skills, pieces = cost > 0 ? 1 : 0, resale = null) {
   switch (mode) {
     case 'Buy':
     case 'Repair':
       return Math.max(pieces * MIN_PRICE_PER_PIECE, calculateTradePrice(cost, quality, skills, false));
     case 'Sell':
-    case 'SellMagic':
-      return calculateTradePrice(cost, quality, skills, true);
+    case 'SellMagic': {
+      const whole = calculateTradePrice(cost, quality, skills, true);
+      if (!(resale?.cost > 0) || calculateTradePrice(resale.cost, quality, skills, true) <= resale.paid) return whole;
+      return Math.min(whole, calculateTradePrice(Math.max(0, cost - resale.cost), quality, skills, true) + resale.paid);
+    }
     case 'Identify':
       return cost;
     default:

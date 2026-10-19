@@ -167,6 +167,17 @@ export const ITEM_FIELDS = Object.freeze({
   // town's patron takes it (net/patronLaw.js patronTakes, PATRON_COUNTER_MARK). Never a receiver's mark: it rides the wire
   // and the market's listing with the piece
   counterBought: bool(),
+  // LAW-3 (Town-Economy-Arc 7.4): what the counter was paid for it, gold a piece (net/patronLaw.js COUNTER_PAID_MARK) -
+  // online no counter pays more for it. Never a receiver's mark, as the counter's mark is not
+  counterPaid: int({ min: 0 }),
+  // AUDIT TOWN-ECON 2 PRICE-6: the value it was bought at (net/patronLaw.js COUNTER_VALUE_MARK) - an improvement since sells
+  // as the player's own work. Never a receiver's mark
+  counterValue: int({ min: 0 }),
+  // AUDIT TOWN-ECON 2 PRICE-2: the sockets whose gem an NPC counter sold online - `[socket, paid a piece or null]` pairs
+  // (systems/reforge.js setGemPiece): the gem's sale on its piece held to what it cost, and an extraction gives it back
+  // marked. Never a receiver's mark
+  socketBought: list((v) => Array.isArray(v) && v.length === 2 && Number.isSafeInteger(v[0]) && v[0] >= 0 && v[0] < 8
+    && (v[1] === null || (Number.isSafeInteger(v[1]) && v[1] >= 0))),
   // STOLEN-GOODS (FIELD BUGS 2026-10-16b): a piece taken from someone else's keeping (systems/stolenGoods.js) - true, or
   // absent: a counter's sale is rid of it, never shelved, and a guilty verdict takes it (court.js confiscateStolen).
   // Never a receiver's mark: it rides the wire and a realm trade with the piece, so a hand-off launders nothing

@@ -132,6 +132,12 @@ with the rest of the spoils.
 - **The Reforge's Sockets page** rows every socket of every socketed piece, sets in an empty one, and extracts from a
   set one.
 
+**A stone a counter sold** (AUDIT TOWN-ECON 2 PRICE-2, 2026-10-18, `06-Systems/Town-Economy-Arc.md` 7.4): online it
+keeps its counter's mark on its socket (`socketBought`, `[socket, paid]` pairs, `reforge.js` setGemPiece) - its share of
+the piece's sale held to what it cost (`tradeModes.js` tradeCost), and extracted it comes out marked as it went in; a
+shattered stone's mark goes with it. A Diamond bought, set and extracted had come out unmarked and sold +282 past the
+fee.
+
 ## 6. The wire and the save
 
 `sockets` is a declared item field (an array of `SOCKET_VALUES` - the field sets no length; `validSocket` caps it);

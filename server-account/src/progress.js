@@ -70,6 +70,10 @@ export const PROGRESS_ROUTES = Object.freeze({
   '/v1/seats/bounty': Object.freeze(['bounty', true]),
   '/v1/seats/orc-camp': Object.freeze(['camp', true]),
   '/v1/seats/watch': Object.freeze(['watch', true]),
+  // AUDIT TOWN-ECON 2 SVC-2: the town Watch's footsteps too - asked of the account's seat (the body names none), as every
+  // claim of the Watch is; it earns its player nothing, so it spends no bucket (progressSpentOf), and an enforced line
+  // whose Watch bucket is empty refuses it as it refuses the seats'
+  '/v1/towns/watch': Object.freeze(['watch', false]),
   '/v1/marks/find': Object.freeze(['find', false]),
   '/v1/prof/harvest': Object.freeze(['prof', true]),
   '/v1/prof/smelt': Object.freeze(['prof', true]),
@@ -186,6 +190,7 @@ export function progressSpentOf(path, a) {
     case '/v1/seats/bounty': if (n(a.paid)) add('bounty', 1); break;
     case '/v1/seats/orc-camp': if (a.counted === true) add('camp', 1); break;
     case '/v1/seats/watch': add('watch', n(a.counted)); break;
+    case '/v1/towns/watch': break;   // AUDIT TOWN-ECON 2 SVC-2: a town's share, never its player's progress
     case '/v1/marks/find': if (n(a.struck)) add('find', 1); break;
     case '/v1/writs/deliver': if (a.ok) { add('prof', writXp(n(a.pay))); add('renown', n(a.renown?.credited)); } break;
     default:

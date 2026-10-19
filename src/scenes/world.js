@@ -681,7 +681,7 @@ import { warmAshesOn, LeaveShip, setWarmAshesHost, onPreFastTravel as warmAshesP
 import { laneNetwork, laneWay, packetsAt, packetAt, LANE_PATH_PX, LANE_DWELL_S } from '../systems/naval/seaLanes.js';   // SEA-LANES: the Bay's packets; LW5: where one is, and her dwell
 import { raidersNear, raiderAt, raiderSight, chaseStep as raiderChaseStep, pixelOfNative, NATIVE_PIXEL as RAID_NATIVE_PIXEL, RAIDER_CONTACT_M, RAIDER_CONTACT_PLAY_M, RAIDER_CHASE_MPS, RAIDERS_WIRE_MAX, RAIDER_WORD_MS, raiderWordOf, validRaiderWord, raiderLifeOf, raiderNearMe, RAIDER_LIFE_MS } from '../systems/seaRaiders.js';   // OWS3: Warm Ashes' raiders on the Overworld's sea
 import { RAIDER_LEAD_S } from '../systems/naval/navalRaiders.js';   // NAV-R: a raider ship steers its seeded course this far on
-import { setRaidingPartiesHost, raidFrame as raidingPartiesFrame, raidState, raidingPartiesOn, raidTypeName as raidKindName, raidDefendingHere, outOfSight as raidOutOfSight, raidWireWord, raidPeerWord, raidRelayWord, raidTownsFor, raidPoolCleared, raidRelayState, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties, the towns' raids
+import { setRaidingPartiesHost, raidFrame as raidingPartiesFrame, raidState, raidActive, raidingPartiesOn, raidTypeName as raidKindName, raidDefendingHere, outOfSight as raidOutOfSight, raidWireWord, raidPeerWord, raidRelayWord, raidTownsFor, raidPoolCleared, raidRelayState, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties, the towns' raids
 import { modSaveRecords, restoreModSaveRecords, newGameModSaveRecords, registerModSaveData } from '../systems/modSaveData.js';   // WA1: DFU's per-mod save slot, for the mods after HCC; OH-D: Ocean Holes' OceanHoleSaveData
 import { applyDeathPenalty, deathPenaltyText, stateDeathLoss, statedDeathLoss } from '../systems/deathPenalty.js';   // DEATH-PENALTY: an online death costs a tenth of the purse
 import { createLegacyHost, LEGACY_TEXT, REMAINS_FLAT } from './legacyHost.js';   // LEGACY1: Project Legacy's family - the record, the deaths, the births
@@ -809,7 +809,6 @@ import { dungeonTier, tierPhrase } from '../systems/dungeon/dungeonTier.js';   /
 import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';   // ...with its size, never over a place the port made
 import { deriveTownSeats, seatAtMapId } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
-import { seatTipOf } from '../net/townSeatLaw.js';   // SEAT-TIP: a seat's card on the Overworld's plate
 import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
 import { seatArrivalLine, seatHallOf, seatBannerOf, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; SEAT-HALL: whose hall a palace is; CROWN-HALL: the throne room's banners; AUDIT SEATS-3 D3: a board's Tithe
 import { hallMay } from '../net/hallLaw.js';   // SEAT-HALL: a palace's keepers are a hall's
@@ -828,6 +827,7 @@ import { setSetsDueling, setsDueling, drinkWorn, setSetsWearer } from '../system
 import { lootHudChips } from '../systems/loot/lootPowers.js'; import { setSetPowersVoice, setHudChips, heldPlayerBlow, remarkPlayerBlow } from '../systems/sigil/sigilSetPowers.js'; import '../systems/loot/lootDrought.js'; import '../systems/loot/lootCodex.js'; import { createLootLines } from './lootLines.js';   // SET3: what the sets DO - every power registered at import; its voice is this host's; SET5: its chips; LOOT4: and lootPowers.js beside it, what a loot piece DOES (the Loot arc), every kind registered at import; LOOT8: lootDrought.js, the drought's finder and take listener, registered at import; LOOT10: lootCodex.js, the codex's take listener, round sweep and record; LOOT11: the lines of light over a find
 import { computeEntityMods, registerEntityFold, EMPTY_MODS } from '../systems/entityMods.js';   // SET3: the sets' stat fold, recomputed the moment they wake or sleep; SEAT1d: the Festive buff's
 import { createSeatEdicts, FESTIVE_FOLD, festiveMods } from '../systems/seatEdicts.js';   // SEAT1d: a held seat as this client lives it
+import { createTownEconHost } from './townEconHost.js';   // TOWN-ECON TE1: every town's economy - its counters' factor, its card; TE2: the players' share
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // SET3: the Wrath's and Eventide's sounds are the cast sounds of their schools
 import { itemLongName } from '../systems/item/itemInfo.js';   // SIGIL1: the weapon's name as its tooltip reads it
 import { trivialOnRoad, roadCompany, wandererCount } from '../systems/roadEncounters.js';   // WILD-ROAD: the road's wanderers - a rat passed by, a patrol now and then
@@ -1675,7 +1675,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _bandPlacePixels = new Set();   // AUDIT OW4 B2 / AUDIT OW5 B2: the land a band may NOT stand on (below)
   const _layoutKeyPixel = new Map();   // WD3: a town's location key -> its pixel in the index (the layout pins' refresh)
   const _layoutKeyOfMapId = new Map();   // WD3: a town's map id (unsigned) -> its location key (a save's records name towns so)
-  const _townOfMapId = new Map();   // HOME-VENDOR: a town's map id (unsigned) -> { name, px, py, region } - a trader's town, named and found
+  const _townOfMapId = new Map();   // HOME-VENDOR: a town's map id (unsigned) -> { name, px, py, region, type } - a trader's town, named and found (TOWN-ECON: its type, whether it has an economy)
   for (let r = 0; r < maps.regionCount; r++) {
     const region = maps.getRegion(r);
     if (!region) continue;
@@ -1688,7 +1688,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (l < baseCount) { _hubRows.push(loc); _bandPlacePixels.add(`${p.x},${p.y}`); }   // OW6: the band's places
       _layoutKeyPixel.set(makeLocationKey(r, l), `${p.x},${p.y}`);   // WD3
       _layoutKeyOfMapId.set(loc.mapTableData.mapId >>> 0, makeLocationKey(r, l));   // WD3
-      _townOfMapId.set(loc.mapTableData.mapId >>> 0, { name: String(loc.name ?? ''), px: p.x, py: p.y, region: r });   // HOME-VENDOR
+      _townOfMapId.set(loc.mapTableData.mapId >>> 0, { name: String(loc.name ?? ''), px: p.x, py: p.y, region: r, type: loc.mapTableData.locationType, location: l });   // HOME-VENDOR; TOWN-ECON: and its type; TE2: its index in its region (a raid's key)
       if (l < baseCount) {   // BOUNTY1: the game's own rows alone - a mod's addition stands on one client and not another
         _bountyLocPixels.add(`${p.x},${p.y}`);   // the pixels a hunt's ground may not be
         // a dungeon a board may name - the game's own, never a town's (a city's castle is the city's)
@@ -1939,6 +1939,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     tideAt: (region) => seatBook?.tideAt(region) ?? 'calm',
     orcCamp: (site, region) => seatBook?.orcCamp(site, region) ?? Promise.resolve({ counted: false }),
   });
+  // TOWN-ECON TE1 (bible/06-Systems/Town-Economy-Arc.md 3): every town's economy online - its counters' factor, the seat's
+  // folded in, and its card on the Held Map and the Overworld (SEAT-TIP's seat card is its guild lines now); TE2 (4): the
+  // players' share - the towns' book reads it, keeps the Watch's ticks at a town's pixel and witnesses a town walked into
+  const townEcon = createTownEconHost({ online: isOnlinePage, townOf: (mapId) => _townOfMapId.get(mapId), seatAt: seatHere, nowMs: battleNowMs, chapters: chapterSheet, clockHeard: () => _sharedClockHeard,   // AUDIT TOWN-ECON LAW-2: the relay's clock, as every shared day is (AUDIT TOWN-ECON 2 CLI-6: a tick's life the relay's once heard); TE3: the chapters' patrons
+    seats: () => (seatBook?.open === true ? seatBook.data?.seats ?? null : null), seatsHeard: () => !seatBook || seatBook.open != null, onBandsReady: () => _livingTripMemo.clear(),   // unread: nothing said of the area, never "no guild"; AUDIT TOWN-ECON 2 CLI-1: the market's band kept once the shares and the seats have answered, the trips planned before made again
+    raidedAt: (px, py) => raidingPartiesOn() && raidState().raids.some((r) => r.px === px && r.py === py && raidActive(r, worldMinutes())), regionHere: () => { const p = playerTravelPixel(); try { return maps.getRegionIndexAt(p.x, p.y); } catch { return null; } },   // AUDIT TOWN-ECON 2 SVC-1: the `/town audit`'s region
+    locAt: (x, y) => locationIndex.get(`${x},${y}`)?.mapTableData ?? null, portLanes: () => (_lanesReady && mapDict ? laneNet() : null) });   // TE2: a Watch tick is kept where a town stands; SEA-TRADE: a port's town and its lanes (the lanes once they stand - BOOT-TDZ II)
   // SEASON1 part two: a Storm Season's slow sea, on every voyage this client reckons (systems/travel/travel.js) - online alone
   setSeaTide(seatBook ? (end) => (seatBook.tideAt(maps.getRegionIndexAt(end.x, end.y)) === 'storms' ? TIDE_EFFECTS.stormsSea : 1) : null);
   registerEntityFold(FESTIVE_FOLD, (e) => (e === playerEntity && seatEdicts.festive() ? festiveMods(STAT_KEYS_ORDER) : EMPTY_MODS));
@@ -1952,11 +1959,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // words as a withdrawal's always did (profMint's), and every change asks the one checkpoint (saveSoon, below).
   const carryOpts = (key) => ({ slowRot: key === 'food:meat' && profBook?.track('hunting')?.specs?.[100] === 'butcher', noRot: profBook?.track('cooking')?.specs?.[100] === 'provisioner' });
   const carryHands = {
-    held: (key) => bagHeldOf(playerEntity, key),
+    held: (key) => bagHeldOf(playerEntity, key, { counter: false }), heldAll: (key) => bagHeldOf(playerEntity, key),   // AUDIT TOWN-ECON 2 PRICE-2: a counter's pieces no service unit - a station's alone
     room: (key) => bagRoomFor(playerEntity, key),
     mint: (key, n) => { const got = mintCarried(playerEntity, key, n, carryOpts(key)); if (got.bag + got.pack > 0) saveSoon.changed(); if (got.bag > 0) noteFirstUse('materials'); return got; },   // TUT1: the first material bagged
-    take: (key, n, stamp = null, order = null) => {
-      const t = takeCarried(playerEntity, key, n, stamp, order);
+    take: (key, n, stamp = null, order = null, counter = false) => {
+      const t = takeCarried(playerEntity, key, n, stamp, order, { counter });
       if (t.taken > 0) saveSoon.changed();
       return { taken: t.taken, back: () => { t.back(); saveSoon.changed(); } };
     },
@@ -3146,7 +3153,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
     dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
     dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
-    townsIn: (region) => livingTownsOfRegion(region),   // LW12: a region's towns, its bands' legs
+    townsIn: (region) => livingTownsOfRegion(region), marketBandOf: townEcon.marketBandOf,   // LW12: a region's towns, its bands' legs; TOWN-ECON TE3: a market town's band on a day
   };
   const _livingTripMemo = new Map();
   let _livingWaysSeen = 0;
@@ -5823,7 +5830,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownsIndex, livingTripsOf, loadGroundSet, lookOfHome,
     lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
-    townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
+    townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight,
     get _gateClearNow() { return _gateClearNow; },
     get _homeLookV() { return _homeLookV; }, set _homeLookV(v) { _homeLookV = v; },
@@ -9516,7 +9523,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     waters: () => { const p = playerTravelPixel(); return etherSea && inEther(p.x, p.y) ? null : navalCrownOf(p.x, p.y, navalCapitals(), _questRegionIndex()).name; },   // ETHER-SEA: no crown's waters past the Veil
     carrack: (price, port) => { const deed = mintDeed(4, 0, csaNewItemUid(), price); return !!titleDeed(deed, { port: { name: port.name } }); },
     stow: (hold, item) => addItem(hold, item),   // CAPT-TRADE: goods into her hold
-    etherGoods: () => etherOut,   // AUDIT CAPTAIN'S SEA B16: the other sea's goods listed where the captain may sail for them
+    etherGoods: () => etherOut, town: townEcon,   // AUDIT CAPTAIN'S SEA B16: the other sea's goods listed where the captain may sail for them; SEA-TRADE: the port town's economy
   });
   // ETHER-SEA (bible/03-World/Eltheric-Ocean.md): THE ELTHERIC OCEAN'S HOST - its waters (the naval host's `where`), the isles
   // charted as they are sighted, the wild isles' strands (sites of the naval host's), its legends' coming and their ends,
@@ -11708,7 +11715,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         },
         inTown: () => _storesReached(),
         room: (k) => bagRoomFor(playerEntity, k),
-        carriedHeld: (k) => bagHeldOf(playerEntity, k),
+        carriedHeld: (k) => bagHeldOf(playerEntity, k, { counter: false }),   // AUDIT TOWN-ECON 2 PRICE-2: the Stores page never puts a counter's piece in
         heldKeys: () => bagHeldKeysOf(playerEntity),   // UNCOUNTED: what is held that the Stores will not take, named
         bag: () => ({ has: hasBag(playerEntity.items), kg: bagWeight(playerEntity), max: BAG_KG_LIMIT, count: playerEntity.bagItems?.length ?? 0 }),
         // AUDIT2 BAG1 H1/U2: the bag emptied into the pack, from the Stores page - anywhere, on either skin
@@ -16915,6 +16922,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       } : null,
       // SEAT1a: each seat's ring (and a crown's crown, a March's and a Free Land's second ring) - while the seats are open
       seatAt: seatBook ? (summary) => seatHere(summary?.mapID ?? summary?.mapId) : null,
+      townTipAt: (summary) => townEcon.tipAt(summary?.mapID ?? summary?.mapId),   // TOWN-ECON TE1: every town's card - its economy and its guild control
       carriageAt: (summary) => carriageTown(summary?.mapID ?? summary?.mapId),   // OW-HUBS: a carriage town's wheel
       oreAt: profBook ? oreMapAt : null,   // ORE-MAP: bare ground's ore card - online, where the professions are
       // TO1: the mod itself rides travelFareDeps (above); the reads its additions to this window need follow.
@@ -21400,7 +21408,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
     online.onGrant = (g) => grants.answer(g);   // GRANT3: my cell's answer to a grant ask, or an heir's grant
-    online.onWatch = (r) => { seatBook?.keepWatch(r); motherlodeBook?.watch(r); };   // SEAT1b: the Watch's tick, kept where it stands in a seat's pixel; PROF2b: and where it stands on a Motherlode's
+    online.onWatch = (r) => { seatBook?.keepWatch(r); motherlodeBook?.watch(r); townEcon.keepWatch(r); };   // SEAT1b: the Watch's tick, kept where it stands in a seat's pixel; PROF2b: and where it stands on a Motherlode's; TOWN-ECON TE2: and in any town's
     // SEAT2a part four: A SIEGE'S BATTLE - its words to the session; a step refused or a rise at the camp moves me there
     // (the ground's own height to settle - the motor stands me on it); my receipt carried to the service
     if (seatBook) {
@@ -21709,7 +21717,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         }
         // AUDIT CHAP2 E1: `/hall audit` and `/hall strike <map id>` - the halls' audit list for the region this player
         // stands in, and a false town struck. NOT GUARDED HERE (RED1's law): the service asks whether this player may.
-        const hallCmd = parseHallCommand(text);
+        const hallCmd = parseHallCommand(text); if (townEcon.command(text, (line) => chatLog.push(tabId, { text: line, system: true }))) return true;   // AUDIT TOWN-ECON 2 SVC-1: `/town audit`, `/town strike <map id>` - the service asks whether this player may
         if (hallCmd) {
           const say = (line) => chatLog.push(tabId, { text: line, system: true });
           if ('error' in hallCmd) { say(hallCmd.error); return true; }
@@ -29887,6 +29895,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // again, without waiting, when the guild book's look is old), the hall bought and opened through the book, and the
     // hall's chest: the guild Stores on the Guild tab
     seatShopFactor: (b) => seatEdicts.shopFactor(b),   // SEAT1d (Seats-Arc 7.2, 7.6): a seat town's shops - its holder's members, Market Day
+    townShopFactor: (b, mode) => townEcon.shopFactor(b, mode, seatEdicts.shopFactor(b)),   // TOWN-ECON TE1: the town's own, the seat's folded in (the law applies it to what a counter asks, and SEAT-LOOP holds what it pays to that ask - AUDIT TOWN-ECON 2 PRICE-7)
     // CHAP7b (Chapters-Arc 8): the playing account's player guild - a chapter's patron's members pay the Thriving prices.
     // AUDIT CHAP5 C1: asked again, without waiting, when the book's look is old (the seats' own guildId's way) - the book
     // looks first at the Guild tab, so a fresh page's member paid the band's price until it was opened
@@ -30758,16 +30767,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     let on = _carriageOf.get(id);
     if (on === undefined) { on = hasCarriageGate(locationIndex.get(`${id % 1000},${Math.floor(id / 1000)}`)); _carriageOf.set(id, on); }
     return on;
-  };
-  /** SEAT-TIP (FIELD BUGS 2026-10-04e): a town that can be taken - its card for the Overworld's hover (who holds it,
-   *  this week's battle), or null; while the seats are open (seatHere). */
-  const _seatTipFns = new Map();
-  /** ...as a function the readout asks only of the plate under the pointer (one kept a town), or null for no seat. */
-  const seatTipAt = (mapId) => {
-    if (seatBook?.open !== true || !seatAtMapId(townSeats, mapId)) return null;
-    let f = _seatTipFns.get(mapId);
-    if (!f) _seatTipFns.set(mapId, (f = () => seatTipOf(seatHere(mapId))));
-    return f;
   };
   // ETHER-OW (2026-10-13, the owner: "Also allow the player to zoom out into the overworld like in the Iliac Bay for easy
   // travel"): THE ISLES' PLACES ON THE OVERWORLD. Past the Veil no place is a row of the Bay's dictionary - an isle's town
@@ -31983,7 +31982,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     TV_PLACE_LIFT, _bandChase, _bandSpent, _hiddenPeers, _lodesSensed, _peerMapPoses, _townOfMapId, _tvBountyHold,
     _tvLodeHold, _tvPartyHold, _tvVendorHold, _tvWaypointHold, _veils, _wildStrangerIds, bandMake, bandNowMs,
     bandPlace, cam, carriageTown, csaOn, exteriorFoes, livingHideoutsHostOf, lodeSense, lodeWords, motherlodeBook,
-    myGuildTag, params, player, playerTravelPixel, seaRaidPeerChase, seatTipAt, state, travelViewBands,
+    myGuildTag, params, player, playerTravelPixel, seaRaidPeerChase, townEcon, state, travelViewBands,
     travelViewCamps, travelViewDungeons, travelViewFarPlaces, travelViewPlaces, travelViewRaiders, travellerBook,
     tvRaid, tvSceneKept, tvTrip, tvTripLive, walkMode, wildCampKeys, wildHidesPlayer,
     get _sharedOffsetMs() { return _sharedOffsetMs; },
@@ -34726,6 +34725,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
         revealMemberGuildHalls({ witness: onlineOn });   // CHAP2a: and the town's halls witnessed, online
+        townEcon.witness(_musicLoc?.mapTableData?.mapId);   // TOWN-ECON TE2: and the town itself, for the registry (online alone - the host builds no book offline)
         // HUB1: walking into a region's hub says so, online - "Daggerfall, capital of the Kingdom of Daggerfall."
         // SEAT1a (Seats-Arc 3.3): a seat town says its Charter instead - "Anticlere. Its Charter is unheld." - and this
         // client, standing in it, reports the seat it derived (once a day; net/townSeatBook.js witness)

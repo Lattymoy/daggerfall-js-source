@@ -119,9 +119,9 @@ const dayOf = (ms) => Math.floor(ms / 86_400_000);
  * }} deps `character` the character this device plays now; `now` the shared clock's wall time (ms)
  */
 /**
- * @typedef {{ held: (key: string) => number, room: (key: string) => number,
+ * @typedef {{ held: (key: string) => number, heldAll?: (key: string) => number, room: (key: string) => number,
  *   mint: (key: string, n: number) => { bag: number, pack: number, left: number },
- *   take: (key: string, n: number, stamp?: string|null, order?: string|null) => { taken: number, back: () => void },
+ *   take: (key: string, n: number, stamp?: string|null, order?: string|null, counter?: boolean) => { taken: number, back: () => void },
  *   give?: (key: string, n: number) => { bag: number, pack: number, over: number },
  *   stamped?: (id: string) => boolean, unstamp?: (id: string) => void,
  *   stamps?: () => { id: string, material: string, qty: number, order?: string }[],
@@ -165,6 +165,9 @@ export function createProfBook({ door, storage = null, character = () => null, n
   const account = () => { try { return door.account?.() ?? null; } catch { return null; } };
   /** BAG1: the carried count as far as the bag and the pack still hold it (bagLaw.js clampCarried). */
   const clampedCarried = (m) => { const c = state.carried.get(m) ?? { own: 0, bought: 0 }; return carry ? clampCarried(c, carry.held(m)) : c; };
+  /** AUDIT TOWN-ECON 2 PRICE-2: every unit of a material the bag, the pack and the wagon hold, a counter's pieces among them
+   *  (a station's to work; `carry.held` is the service's units alone). @param {string} m */
+  const heldAll = (m) => (carry ? (carry.heldAll?.(m) ?? carry.held(m)) : 0);
   const slot = () => `${account() ?? ''}|${character() ?? ''}`;
 
   // ─── THE KEPT ACTS ─────────────────────────────────────────────────
@@ -350,8 +353,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
    *  a gem or a second find, any material) or a withdrawal of this one: a state read made `seen` the service's own, and
    *  the cut then took the units the kept act's answer is yet to mint. `self` the act being asked, which is not pending
    *  for itself (landed, the service answers it before any cut). The held count only ever cuts: saying the count skips it. */
-  const heldNow = (m, self = null) => {
-    const held = (carry ? carry.held(m) : 0) + depositsOut().reduce((n, d) => n + (d.material === m ? d.qty | 0 : 0), 0);
+  const heldNow = (m, self = null, counter = false) => {
+    const held = (carry ? (counter ? heldAll(m) : carry.held(m)) : 0) + depositsOut().reduce((n, d) => n + (d.material === m ? d.qty | 0 : 0), 0);   // AUDIT TOWN-ECON 2 PRICE-2: a station's put-in of a counter's pieces says them
     const k = keptOf();
     const pending = k.harvests.some((h) => h.carry === true && h.rid !== self) || k.withdrawals.some((w) => w.carry === true && w.rid !== self && w.material === m);
     return pending ? Math.max(held, seenNow(m)) : held;
@@ -426,7 +429,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
      *  them, so "0 held" beside a pack of 100 says why. */
     walled(material) {
       const s = this.store(material);
-      return (s.gold | 0) + (s[LOOSE_ORIGIN] | 0) + (carry ? Math.max(0, carry.held(material) - this.carriedUsable(material)) : 0);
+      return (s.gold | 0) + (s[LOOSE_ORIGIN] | 0) + (carry ? Math.max(0, heldAll(material) - this.carriedUsable(material)) : 0);   // AUDIT TOWN-ECON 2 PRICE-2: a counter's pieces too
     },
     /** BAG-CRAFT (FIELD BUGS 2026-10-09d, Mac: "I just want players to also be able to craft from their inventory, not
      *  just the store"): WHAT A STATION MAY WORK OF IT - a craft, a brew, a smelt, a temper: the Stores' and everything the
@@ -447,7 +450,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
     /** BAG1: what of the carried count a station may use - as far as the bag and the pack still hold it, never gold's. */
     carriedUsable(material) { return carry ? carriedUsable(this.carried(material), carry.held(material)) : 0; },
     /** BAG-CRAFT: what of what the character carries a station may work - every unit held but gold's, counted or not. */
-    carriedWorkable(material) { return carry ? carriedWorkable(this.carried(material), carry.held(material)) : 0; },
+    carriedWorkable(material) { return carry ? carriedWorkable(this.carried(material), heldAll(material)) : 0; },   // AUDIT TOWN-ECON 2 PRICE-2: a counter's pieces a station's
     /** BAG1: whether one more unit of a material has nowhere to go - neither the bag nor the pack has room, or the
      *  service's count of it is at its bound (professionLaw.js storesFullIn asks it of a carrying book). */
     carryFull(material) { return !carry || carry.room(material) < 1 || carriedTotal(clampedCarried(material)) >= CARRIED_MAX; },
@@ -646,7 +649,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
      * settle (pendingDeposits). `order` 'all' (the Stores page's Put in) or 'spend' (a craft's shortfall - never gold's).
      * @returns {Promise<{ ok: boolean, data?: any, error?: string, kept?: boolean }>}
      */
-    async deposit(material, qty, { order = 'all' } = {}) {
+    async deposit(material, qty, { order = 'all', counter = false } = {}) {
       if (!carry) return { ok: false, error: 'bad-held' };
       const c = character();
       if (!c || !account()) return { ok: false, error: 'no-session' };
@@ -660,9 +663,10 @@ export function createProfBook({ door, storage = null, character = () => null, n
         // save later knows whether that save saw the items go: a refusal gives back exactly what the stamp says left, and a
         // save with no stamp never saw them go (askDeposit). Never a copy, never a loss: the `before` count this replaced
         // lost a harvest's units minted since, and two deposits' shortfalls shared one
-        const took = carry.take(material, qty, id, order);
+        // AUDIT TOWN-ECON 2 PRICE-2: a counter's pieces only for a station's own put-in (`counter`), spent there and then
+        const took = carry.take(material, qty, id, order, counter === true && order === 'work');
         if (took.taken < qty) { took.back(); return { ok: false, error: 'carried-short' }; }
-        const d = { id, character: c, material, qty, order };
+        const d = { id, character: c, material, qty, order, ...(counter === true && order === 'work' ? { counter: true } : {}) };
         depositBacks.set(d.id, took.back);
         const kept = keptOf(key);
         kept.deposits.push(d);
@@ -703,7 +707,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
         let left = n - inStores(k);
         while (left > 0) {
           const q = Math.min(left, DEPOSIT_MAX);
-          const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend' });
+          const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend', counter: work === true });
           // AUDIT BAG1 B8: a put-in whose answer has not come is no shortfall - its items are on their way, and said so
           if (!r?.ok) return { ok: false, error: r?.kept === true ? 'deposit-kept' : (r?.error ?? 'offline'), material: k, kept: r?.kept === true, moved };
           left -= q;
@@ -1211,7 +1215,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       }
       if (!saved) return { ok: false, error: 'deposit-kept', kept: true };
     }
-    const r = await ask(() => door.deposit(d.character, d.material, d.qty, heldNow(d.material), d.order, d.id, seenNow(d.material)), key);
+    const r = await ask(() => door.deposit(d.character, d.material, d.qty, heldNow(d.material, null, d.counter === true), d.order, d.id, seenNow(d.material)), key);
     if (keptAnswer(r) || r?.error === 'prof-rate') return { ok: false, error: r?.error ?? 'offline', kept: true };
     if (key !== slot()) return { ok: false, error: 'elsewhere', kept: true };   // its own character's settle hears it again
     const kept = keptOf(key);

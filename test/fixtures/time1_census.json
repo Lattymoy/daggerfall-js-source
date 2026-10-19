@@ -516,6 +516,12 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "raidActive(r, worldMinutes())",
+   "clock": "event",
+   "why": "TOWN-ECON: a raid at a town's gates, on the raids' schedule"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "nowClassicMinutes: () => playerTicker.classicMinutes,",
    "clock": "event",
    "why": "the rumours' lifetimes"
@@ -646,6 +652,13 @@
    "has": "holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0),",
    "clock": "sky",
    "why": "a shop's holiday prices"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "commitTrade(shelf, m, staged, price, proceeds, identifySpell, { holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0), guildFactionId }",
+   "clock": "sky",
+   "why": "the purchase's holiday its LAW-3 share is reckoned by, as its price was (AUDIT TOWN-ECON 2 PRICE-1)",
+   "count": 2
   },
   {
    "file": "src/scenes/worldModes.js",

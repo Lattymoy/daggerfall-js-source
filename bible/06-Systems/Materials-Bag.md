@@ -92,6 +92,10 @@ material's Stores count and, beside it, what is carried; for a
 material, **Take out** (into the bag, then the pack) and **Put in** (from the bag, then the pack), and **Put everything
 in** - every counted unit the bag and the pack hold, in one press, whatever the page's filter shows: it says how many
 went in and names each material refused (its Stores full) and goes on past it; the counting-house's silence ends it.
+A piece an NPC counter sold online (`counterBought`) is no unit of the service's (AUDIT TOWN-ECON 2 PRICE-2, 2026-10-18,
+`06-Systems/Town-Economy-Arc.md` 7.4): a Put in of it came back out of a Take out minted fresh, LAW-3's price and the
+counter's mark gone, so the bag's hands count the service's units without it (`materialsBag.js` heldOf `counter`), and
+only a station's own shortfall puts it in - spent there and then; Put in, a writ and the market leave it in the pack.
 Put in and Put everything in stop at the Stores' own room (5,000 a material, every origin), and a full material is said,
 never asked; why Take out or Put in is shut is drawn under the bar, not only on a title (the second audit's U1, U14).
 **What is held and never counted is named** (UNCOUNTED, FIELD BUGS 2026-10-09c, "Some ingredients won't let you store

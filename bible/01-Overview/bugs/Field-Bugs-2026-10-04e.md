@@ -192,8 +192,9 @@ Pins: `test/ui/fb1004e_overworld.test.js`.
 and who holds it; how long and how firmly (seatHolderLine); the holder's rule (seatRuleLine); this week's battle and a
 called siege. The travel map's hover over a seat answers with it (`ui/heldMap.js` `_hoverLabel`'s place branch); the
 Overworld's plate under the pointer shows the same card (`ui/travel/travelViewHud.js` showMarkTip, the held map's `.hmtip`
-look) - a seat town's mark carries a function that makes it while the seats are open (`scenes/world.js` seatTipAt, one
-kept a town), asked only of the plate under the pointer; the card is measured once (a layout read each frame forced
+look) - a seat town's mark carries a function that makes it while the seats are open (~~`scenes/world.js` seatTipAt~~ -
+TOWN-ECON, 2026-10-16: `systems/town/townEcon.js` tipFnAt, every town's card with a seat's lines in it; one kept a town),
+asked only of the plate under the pointer; the card is measured once (a layout read each frame forced
 one) and moved only when it moves; over the block's own controls no plate is lit and no card shown. A seat's lines are
 whole sentences that name two guilds, so they are bounded at SEAT_TIP_TEXT_MAX (160, `ui/eventMapMarks.js` readTip's
 `textMax`) where every other card keeps TIP_TEXT_MAX's 80 - the card wraps them in its 320 px. And the travel map's I

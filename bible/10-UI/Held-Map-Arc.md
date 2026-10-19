@@ -1304,6 +1304,8 @@ still look for the box ENH-NOTICE3 moved onto the notice panel - its own repair,
 
 ## OW-WHO, OW-KIN, OW-HUBS, SEAT-TIP on the travel map (FIELD BUGS 2026-10-04e)
 
+TOWN-ECON (2026-10-16, `06-Systems/Town-Economy-Arc.md` section 3): the seat's card is now every town's - its economy and prices above, a seat's own lines below (a held seat's Charter line left out: its holder line names the guild) - made by `systems/town/townEcon.js` (`tipAt`, and `tipFnAt` for the Overworld's plate); `scenes/world.js` seatTipAt is gone.
+
 The region's travellers are filtered by the Overworld's own Players switches (the key gains a Players row while any are
 in the book) and drawn in their kin's colour (the legend names a friend's and a guild-mate's while one is drawn); a
 carriage town wears a wheel left of its mark, clear of its hub circle and seat ring, at every band, and names keep off

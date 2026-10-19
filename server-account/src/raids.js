@@ -99,7 +99,7 @@ export async function raidRecordOf({ db }, playerId) {
  *   claim's silver, each a statement (or statements) its batch runs by its own row - null where Marks are not this
  *   account's (marks.js raidStrikeStatement, deedStatements; contracts.js contractPayStatements)
  */
-export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey, { strike = null, deeds = null, contracts = null } = {}) {
+export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey, { strike = null, deeds = null, contracts = null, econ = null } = {}) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifyRaidReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -119,6 +119,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
   const mint = strike?.(c.w, nonce) ?? null;
   const deed = deeds?.(c.w, nonce, character) ?? null;
   const paid = contracts ? await contracts(c.w, nonce) : null;
+  const town = econ?.(c.w, nonce) ?? null;   // TOWN-ECON TE2: the town driven clear of it (townEcon.js raidActStatements)
   const mine = 'EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)';
   const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
   // AUDIT RAID R5: WHAT THE TRACK CAN TAKE and WHAT THE HOUR HAS LEFT, as a report's (renownTracks.js) - and a new
@@ -171,6 +172,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
     ...(mint ? [mint] : []),
     ...(deed ?? []),
     ...(paid?.statements ?? []),
+    ...(town ?? []),
   ]);
   const [row, decided, , , , after, count] = res;
   const spoils = thanks ? thanksAnswer(res[8], cid) : false;

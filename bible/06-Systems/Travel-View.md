@@ -1842,6 +1842,8 @@ my party's - every mark keeps its order now, a crowd where its first member stoo
 
 ## OW-NODE-KM, OW-HUBS, OW-KIN, OW-WHO, SEAT-TIP, HORSE-FACE (FIELD BUGS 2026-10-04e)
 
+TOWN-ECON (2026-10-16, `06-Systems/Town-Economy-Arc.md` section 3): the seat's card is now every town's - its economy and prices above, a seat's own lines below (a held seat's Charter line left out: its holder line names the guild) - made by `systems/town/townEcon.js` (`tipAt`, and `tipFnAt` for the Overworld's plate); `scenes/world.js` seatTipAt is gone.
+
 The Overworld's block gains a Players section (Friends, Guild, Others, the least Renown) and the node reach (any, 0.5,
 1, 2 km) - one store with the travel map's (`systems/travel/travelViewFilters.js`); a friend's name is drawn in the friends'
 blue and a guild-mate's in violet; a town whose gate stands a carriage driver wears a brass wheel; a seat's plate under

@@ -180,7 +180,7 @@ test('CAPTAIN-TREE the exchange: the captain\'s `trade` closes a share of the sp
   assert.deepEqual(exchangeOf(port, day, {}, 9).map((r) => [r.sell, r.buy]), exchangeOf(port, day, {}, TRADE_MOST).map((r) => [r.sell, r.buy]), 'the cap');
   assert.equal(TRADE_MOST, 0.75);
   const office = rd('src/scenes/harbourOffice.js');
-  assert.equal(office.split('exchangeOf(port, day, L.dealtAt(port.key, day), L.stats?.().trade)').length - 1, 3, 'the board, a purchase and a sale read the same prices');
+  assert.equal(office.split('exchangeOf(port, day, L.dealtAt(port.key, day), L.stats?.().trade, townAt(port))').length - 1, 3, 'the board, a purchase and a sale read the same prices');   // PIN MOVED (SEA-TRADE): and the port town's factors
 });
 
 test('CAPTAIN-TREE the hosts read the stars where the ship\'s own numbers are read: the sea fight\'s worth, aim, my shot and its fire, my ram and its foul; Come Sail Away\'s oars and helm through the refit seam; the Fleet\'s refit a ship of mine\'s alone (PIN: the seams)', () => {

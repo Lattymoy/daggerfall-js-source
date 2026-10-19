@@ -20,12 +20,13 @@ test('BUSY-GATE the law: the reads that stand back are the fourteen display read
     ['/v1/realm/unions', 'POST'], ['/v1/saves', 'GET'],
     // PIN MOVED (BUSY-HEART, 2026-10-16): and the heartbeat and the day's motherlodes (test/net/busy_heart.test.js)
     ['/v1/heartbeat', 'POST'], ['/v1/prof/motherlodes', 'POST'],
+    ['/v1/towns/econ', 'POST'],   // PIN MOVED (AUDIT TOWN-ECON 2 CLI-8): and the towns' shares, an isolate's kept read
   ]);
   for (const [path, method] of BUSY_READS) {
     assert.ok(ROUTES.has(path), `${path}: a route the service serves`);
     // PIN MOVED (DISPLAY-REPLICA, 2026-10-13): each was no replica's read; each is one now (service.js REPLICA_ROUTES), and
     // still stands back - without the tab's bookmark its first statement is the primary's
-    assert.equal(REPLICA_ROUTES.get(path) === method || ['/v1/homes/yards', '/v1/homes/layouts', '/v1/seats/list'].includes(path), true, `${path}: a replica's read, or one an isolate keeps`);
+    assert.equal(REPLICA_ROUTES.get(path) === method || ['/v1/homes/yards', '/v1/homes/layouts', '/v1/seats/list', '/v1/towns/econ'].includes(path), true, `${path}: a replica's read, or one an isolate keeps`);
     assert.equal(busyRead(path, method), true);
     assert.equal(busyRead(path, method === 'GET' ? 'POST' : 'GET'), false, `${path}: by its method alone`);
   }
