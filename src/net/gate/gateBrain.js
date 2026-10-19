@@ -338,6 +338,11 @@ export const SEAT_KEEP_MS = 30_000;
  *  stood alive in the court. It keeps a seat in a full court, and (AUDIT PRE-MERGE 0929 W1-1) it is what a fall must
  *  have behind it to feed a Soul-Hungry Warden. */
 export const hasPart = (p) => p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS;
+/** COURT-WATCH (bible/11-Multiplayer/World-Bosses.md section 24): a full court's watcher asks it for a seat again this often
+ *  (scenes/gate/gateCourt.js askAgain). A seat frees only as freeSeat frees one - a fighter gone with no real part in the
+ *  fight (hasPart): one who fought keeps its seat, and its claim, for the whole fight (AUDIT PLAN-1000 G2). Here, beside the
+ *  seat's law, because the relay holds a socket's asks to it (AUDIT PLAN-1000 G7). */
+export const COURT_WATCH_ASK_MS = 15_000;
 
 // ── WB8b: the Warden's marks, as law ────────────────────────────────────
 /** WB8b: SCARRED GROUND - under the Scarring trial his Ground Slam leaves it at his feet and his Crushing Leap where it

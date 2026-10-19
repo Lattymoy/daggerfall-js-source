@@ -1,0 +1,88 @@
+name: Relay load
+
+# RELAY-LOAD (2026-10-18, from play: "Server is kinda breaking down near oblivion gate cause so many ppl lol") - WHAT IS
+# FILLING THE RELAY, READ BY THE OPERATOR. Run it by hand from the Actions tab; the run's summary carries the relay's own
+# metrics (server/src/relayScale.js RoomMetrics, one Analytics Engine point per room per five busy minutes): the rooms by
+# kind, every five minutes by kind, and the busiest rooms. The questions are tools/relayLoad.mjs's, tested in
+# test/server/relayload.test.js - not written again here. It READS ONLY. d1-load.yml is the account database's twin.
+
+on:
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: "How many hours back to read (1 to 168)."
+        required: false
+        default: "3"
+        type: string
+
+permissions:
+  contents: read
+
+# Its own group, never the deploy's (d1-load.yml's law).
+concurrency:
+  group: relay-load
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    # AUDIT PLAN-1000 H10: three questions of a minute's bound each - a hung call never holds a runner for six hours
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      # The input reaches the scripts as ENVIRONMENT, never pasted into them (account-recovery.yml's law); the tool
+      # refuses anything but whole hours. AUDIT PLAN-1000 A10: the token is the two steps' that use it, never the job's -
+      # the checkout and the toolchain's steps hold no secret.
+      HOURS: ${{ inputs.hours }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Refuse to start without a token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            exit 1
+          fi
+          node tools/relayLoad.mjs --sql kinds "$HOURS" > /dev/null
+
+      - name: Read the relay's metrics
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          acct=$(grep -oP '^account_id\s*=\s*"\K[^"]+' server/wrangler.toml)
+          echo "**Window: the last $(node tools/relayLoad.mjs --hours "$HOURS") hour(s), to $(date -u +%H:%M) UTC**" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          failed=0
+          answered=0
+          for q in $(node tools/relayLoad.mjs --names); do
+            node tools/relayLoad.mjs --sql "$q" "$HOURS" > "$RUNNER_TEMP/$q.sql"
+            code=$(curl -sS --max-time 60 -o "$RUNNER_TEMP/$q.json" -w '%{http_code}' -X POST \
+              "https://api.cloudflare.com/client/v4/accounts/$acct/analytics_engine/sql" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data-binary "@$RUNNER_TEMP/$q.sql") || true
+            if [ "${code:-000}" = "200" ] && node tools/relayLoad.mjs --table "$q" "$RUNNER_TEMP/$q.json" >> "$GITHUB_STEP_SUMMARY"; then
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              answered=$((answered + 1))
+            else
+              failed=1
+              # AUDIT PLAN-1000 H3: the token is named only where the API refused it - any other answer (a 422, the SQL
+              # the API would not run) says its own words, which follow
+              case "${code:-000}" in
+                401|403) echo "::warning::the $q question was refused (HTTP $code) - the token needs Account Analytics: Read" ;;
+                *) echo "::warning::the $q question was not answered (HTTP ${code:-000}) - the API's own words follow" ;;
+              esac
+              head -c 400 "$RUNNER_TEMP/$q.json" || true
+              echo
+            fi
+          done
+          [ "$failed" = "0" ] || echo "::warning::some readings are missing from the summary - see the warnings above"
+          # AUDIT PLAN-1000 H3: a run that read nothing is no reading - red, its partial summary kept
+          if [ "$answered" = "0" ]; then echo "::error::no question was answered - nothing was read"; exit 1; fi

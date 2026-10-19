@@ -11,8 +11,8 @@
   {
     "name": "FAST-default-concurrency",
     "file": "tools/testShards.mjs",
-    "old": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...extra];",
-    "new": "  const head = ['--test', ...extra];",
+    "old": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...(summary || record ? summaryReporters(root) : []), ...extra];",
+    "new": "  const head = ['--test', ...(summary || record ? summaryReporters(root) : []), ...extra];",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "FAST-shard-own-spawn",
     "file": "tools/testShards.mjs",
-    "old": "  return runTests(files, { extra: runnerFlags(argv.slice(1)) });\n}",
+    "old": "  return runTests(files, { times, extra: runnerFlags(argv.slice(1)), record });\n}",
     "new": "  return spawnSync(process.execPath, ['--test', ...files], { cwd: ROOT, stdio: 'inherit' }).status ?? 1;\n}",
     "tests": [
       "test/tooling/fastsuite.test.js"
@@ -112,10 +112,90 @@
   {
     "name": "FAST-F7-flags-ahead-of-concurrency",
     "file": "tools/testShards.mjs",
-    "old": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...extra];",
-    "new": "  const head = ['--test', ...extra, `--test-concurrency=${Math.max(1, cores | 0)}`];",
+    "old": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...(summary || record ? summaryReporters(root) : []), ...extra];",
+    "new": "  const head = ['--test', ...extra, `--test-concurrency=${Math.max(1, cores | 0)}`, ...(summary || record ? summaryReporters(root) : [])];",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ]
+  },
+  {
+    "name": "CI-FAST-summary-never-handed",
+    "file": "tools/testShards.mjs",
+    "old": "...(summary || record ? summaryReporters(root) : [])",
+    "new": "...[]",
+    "tests": [
+      "test/tooling/fastsuite.test.js"
+    ],
+    "why": "CI-FAST: a red shard names nothing again - its log says '# fail 2' and no more"
+  },
+  {
+    "name": "CI-FAST-own-reporter-dropped",
+    "file": "tools/testShards.mjs",
+    "old": "  `--test-reporter=${tty ? 'spec' : 'tap'}`, '--test-reporter-destination=stdout',\n",
+    "new": "",
+    "tests": [
+      "test/tooling/fastsuite.test.js"
+    ],
+    "why": "CI-FAST: the runner's own report replaced by the summary alone - a run prints only its failures"
+  },
+  {
+    "name": "CI-FAST-parent-named",
+    "file": "tools/failSummary.mjs",
+    "old": "export const ownFailure = (data) => data?.details?.error?.failureType !== 'subtestsFailed';",
+    "new": "export const ownFailure = () => true;",
+    "tests": [
+      "test/tooling/cifast_failsummary.test.js"
+    ],
+    "why": "CI-FAST: a parent failing only through its child named too - every failure twice"
+  },
+  {
+    "name": "CI-FAST-cause-unread",
+    "file": "tools/failSummary.mjs",
+    "old": "  const e = error?.cause ?? error;",
+    "new": "  const e = error;",
+    "tests": [
+      "test/tooling/cifast_failsummary.test.js"
+    ],
+    "why": "CI-FAST: the runner's wrapper's message ('test failed') in place of the assertion's"
+  },
+  {
+    "name": "CI-FAST-no-annotation",
+    "file": "tools/failSummary.mjs",
+    "old": "  for (const a of annotations) yield `${a}\\n`;\n",
+    "new": "",
+    "tests": [
+      "test/tooling/cifast_failsummary.test.js"
+    ],
+    "why": "CI-FAST: nothing on the check's page"
+  },
+  {
+    "name": "CI-FAST-escape-skipped",
+    "file": "tools/failSummary.mjs",
+    "old": "const escData = (s) => String(s).replace(/%/g, '%25').replace(/\\r/g, '%0D').replace(/\\n/g, '%0A');",
+    "new": "const escData = (s) => String(s);",
+    "tests": [
+      "test/tooling/cifast_failsummary.test.js"
+    ],
+    "why": "CI-FAST: a reason with a newline cuts its annotation short"
+  },
+  {
+    "name": "CI-FAST-summary-unwritten",
+    "file": "tools/failSummary.mjs",
+    "old": "    try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\\n`); } catch { /* the summary is a convenience; the log has it */ }",
+    "new": "",
+    "tests": [
+      "test/tooling/cifast_failsummary.test.js"
+    ],
+    "why": "CI-FAST: the job's summary page says nothing"
+  },
+  {
+    "name": "CI-FAST-install-every-time",
+    "file": ".github/workflows/verify.yml",
+    "old": "        if: steps.deps.outputs.cache-hit != 'true'\n        run: npm ci\n      - name: The times the shards split by\n",
+    "new": "        run: npm ci\n      - name: The times the shards split by\n",
+    "tests": [
+      "test/tooling/cifast_failsummary.test.js"
+    ],
+    "why": "CI-FAST: a shard installs on a cache hit too"
   }
 ]

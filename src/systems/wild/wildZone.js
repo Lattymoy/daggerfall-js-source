@@ -75,6 +75,9 @@ export const WILD_GIANT_CHANCE = 0.15;
 export const WILD_GIANT_MAX = 2;
 export const WILD_GIANT_HEALTH_MULT = 10;
 export const WILD_GIANT_DAMAGE_MULT = 4;
+/** ZONE-WATCH: the open zone's towns post their watch ten times as strong (scenes/world.js guardScale -> scenes/cityGuards.js
+ *  stands it on a watchman's health); FOE-BOUNDS reads it (net/foeBounds.js FOE_BOUND.zoneWatch). */
+export const ZONE_WATCH_SCALE = 10;
 /** A body's size over its sprite's: a giant of the zone's open country's four, anyone else's one. */
 export const wildGiantSize = (entity) => (entity?.wildGiant ? WILD_GIANT_SIZE : 1);
 /** GREATER-GIANT (2026-10-08, the owner: "Name the giant Greater Giant which spawns 10 normal gants when half health"): the

@@ -177,5 +177,5 @@ test('WEATHER2d records: the arc page\'s D and its close, the ledger row, Home\'
   assert.match(rd('bible/07-Rendering/Weather-Arc.md'), /^## D - THE SANDSTORM \(WEATHER2d, 2026-09-14\)/m);
   assert.match(rd('bible/01-Overview/Port-Ledger.md'), /^\| \*\*THE SANDSTORM \(WEATHER2d, 2026-09-14\)\*\*/m);
   assert.match(rd('bible/01-Overview/Page-Index.md'), /D: the sandstorm/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
-  assert.match(rd('bible/09-Testing/Testing.md'), /^\| weather2d_sandstorm\.test\.js \| \d+ \| WEATHER2d/m);
+  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| weather2d_sandstorm\.test\.js \| \d+ \| WEATHER2d/m);
 });

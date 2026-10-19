@@ -783,7 +783,15 @@ deed underground makes that dungeon its lair.
 
 - Entering the lair while it is living, unsworn and not out, and **due or known**, stands it at the layout marker
   farthest from the entrance once the layout has stood (`dungeonContext.js spawnLooseFoe`), with a new revenant arm in
-  `buildFoeAt` (`applyRevenant`, `grantRevenantLoot`, its taunt) and its band about it.
+  `buildFoeAt` (`applyRevenant`, `grantRevenantLoot`, its taunt) and its band about it. LAIR-REACH (FIELD BUGS
+  2026-10-19, `01-Overview/bugs/Field-Bugs-2026-10-19.md`): the farthest of SD-REACH's candidates - an interior block's
+  enemy marker, out of the water where any is (`dungeonContext.js` `dungeonEnd`, the Rift's own end) - never a border
+  cap's, where the raw markers stood it in a pocket no walk reaches. LAIR-WALK: of those, the farthest a walk from the way
+  in reaches on the dungeon's navmesh - its floor flooded once from the first frame's feet (`navmesh.js reachableFrom`;
+  AUDIT FB1019 B1) - else the farthest layout marker on it, else SD-REACH's end; the lair waits for the bake,
+  `LAIR_WALK_WAIT_MS` at most. LAIR-HOME: "not out" is now "its body not here, in a fight with me (its harm on me, or my
+  feud with it open - AUDIT FB1019 C3), kneeling, or standing up" - one out on the road goes home, the road body it left
+  stale for good and withdrawn (`revenant.js goesHome`, `revenantStale`; C1).
 - **Found resting**: unaware (idle, not hunting) until it sees or hears the player, so a first blow may be a backstab
   (not on a Watchful one). Its drop's gold x1.25 (`LAIR_GOLD`).
 - **Gates**: REVENANT-DUNGEON's - a foe of the player's alone (offline; online, a loose foe of mine on the SUMMON-SYNC
@@ -2253,7 +2261,8 @@ and `dungeonContext.js`.
   x LAIR_GOLD when `lairStand`); `spawnLooseFoe` and `_spawnEncounter` carry the record (a returning person's gender and
   level - `revenantSpawnOptions`).
 - **The stand** - `standLairRevenant`, asked once a visit on the first frame (`_lairAsked`): at the layout marker
-  farthest from the entrance (`dungeon.enterMarker`, else the start marker), a loose foe of mine (online on the room's
+  farthest from the entrance (`dungeon.enterMarker`, else the start marker; LAIR-REACH: among SD-REACH's candidates,
+  `dungeonEnd`; LAIR-WALK: the farthest of them a walk reaches on the navmesh, else of every layout marker, asked once the bake has landed or failed, `LAIR_WALK_WAIT_MS` at most), a loose foe of mine (online on the room's
   SUMMON-SYNC lane, never a room's layout foe), FOUND RESTING (`detected` false, no target - a first blow may be a
   backstab, never on a Watchful one: RVN2's door), its band about it.
 - **Its band underground** - RVN6's law in the dungeon's pool: `standDungeonBand` (PlaceFoeFreely's ring, loose - the

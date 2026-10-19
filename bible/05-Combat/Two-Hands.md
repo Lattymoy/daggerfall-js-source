@@ -384,7 +384,7 @@ second weapon. So the second hand is the sprite lane's idea on a skeleton: THE L
   pair is held, through the guard's own memo (`pairBladeMeasure`, now one for both: the guard's measure moved out of
   `createFpArm` with it, `guardMeasure`, so the arm's closure gains the wiring alone - 1,997 -> 1,999 code lines, under
   HOST-SPLIT's 2,000-line knot). The angle eases on `PAIR_SPREAD.TAU` (0.12 s) in either view (`pairSpreadStep`) and is
-  laid in first person alone (the body in third person holds a pair at its own sides), over every composition and its
+  laid in first person alone (the body in third person carries a pair its own way - BODY-MOTION, `04-Characters/Body-Motion.md`: down and away from its sides at rest, swept behind it at a run; with Morrowind Body Motion switched off, the clips' own pair as before - AUDIT BODY-MOTION DOC-16), over every composition and its
   guard, so the carry starts from what was drawn; sheathed or with the hands taken, it eases back. Measured on the
   fixture: its blades stand clear at rest, so MIN (0.046 rad); a blade leaned 0.45 rad across the middle, 0.121 rad, the
   two GAP apart.
@@ -421,7 +421,7 @@ second weapon. So the second hand is the sprite lane's idea on a skeleton: THE L
   line from the rig's eye through a share of the frame, laid in the arm LENS's pitched frame (AUDIT, L3 11: with
   follow-camera off a look half a radian down lifted the hands 0.4 rad up the picture), a point `d` metres out -
   reached by the climb's solver (`climbRig.js`) with the fist clenched, the palm in, the elbow out and back; first
-  person alone (the body's own run group swings its arms in third). **Solved under the climb** (AUDIT, L3 4): its own
+  person alone (in third the body's own gait swings its arms - BODY-MOTION, `04-Characters/Body-Motion.md`). **Solved under the climb** (AUDIT, L3 4): its own
   `run` slot in `poseAssembly`, before the climb's request, which eases each wrist on from where the run put it - the
   first frame onto the wall moved the wrists 1.19 units, now 0.52 (the climb's own ease), the frame a sheet comes up
   1.05, now 0.005.

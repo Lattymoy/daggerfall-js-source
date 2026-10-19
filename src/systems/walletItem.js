@@ -24,7 +24,7 @@
 //
 // Not a DFU member: Daggerfall's currencies are its gold and its letters, in the pack's lists. Ledger A (WALLET1).
 import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from './item/itemTemplates.js';
-import { addItem, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';
+import { addItem, itemWeight, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';   // WALLET-WEIGHT: what its pieces weigh
 import { SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE } from './gate/gateSpoils.js';
 import { isEquipped } from './equip.js';
 
@@ -116,13 +116,16 @@ export function walletSilver() {
  * WHAT THE WALLET HOLDS, from the pack (`items`) and the purse (`entity`): the gold, the silver (null where it is not
  * counted here, and `silverWhy` why - AUDIT 625 W5), the letters of credit (how many, and the gold they are worth), the
  * embers and the shards (their counts, every stack together), and the pieces themselves (`held`, in the pack's own order
- * - worn ones aside, as the pages leave them).
+ * - worn ones aside, as the pages leave them). WALLET-WEIGHT: and what they weigh - each holding's (`weights`) and all of
+ * them (`weight`), every stack the encumbrance's own way (inventory.js itemWeight), so the sheet says what the carry
+ * weight counts.
  * @param {any[]} items @param {any} entity
  */
 export function walletContents(items, entity, { silver = walletSilver(), here = walletSilverHere() } = {}) {
   const held = (Array.isArray(items) ? items : []).filter((it) => walletHolds(it) && !isEquipped(it));
   const count = (t) => held.reduce((n, it) => n + (it.templateIndex === t ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0), 0);
   const letters = held.filter((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);
+  const kg = (t) => held.reduce((w, it) => w + (it.templateIndex === t ? itemWeight(it) : 0), 0);
   return {
     gold: Math.max(0, Math.trunc(Number(entity?.goldPieces) || 0)),
     silver: typeof silver === 'number' && Number.isSafeInteger(silver) ? silver : null,   // a count, or none counted (`false` is the account's none: silverWhy says so)
@@ -132,11 +135,15 @@ export function walletContents(items, entity, { silver = walletSilver(), here = 
     letters: { count: letters.length, gold: letters.reduce((g, it) => g + Math.max(0, Math.trunc(Number(it.value) || 0)), 0) },
     embers: count(SIGIL_STONE_TEMPLATE),
     shards: count(WELKYND_SHARD_TEMPLATE),
+    weights: { letters: kg(LETTER_OF_CREDIT_TEMPLATE), embers: kg(SIGIL_STONE_TEMPLATE), shards: kg(WELKYND_SHARD_TEMPLATE) },
+    weight: held.reduce((w, it) => w + itemWeight(it), 0),
     held,
   };
 }
 
 const num = (/** @type {number} */ n) => Number(n).toLocaleString('en-US');
+/** WALLET-WEIGHT: a weight as the pack's card and rows say one ("30.90 kg"). */
+export const walletKg = (/** @type {number} */ kg) => `${(Number(kg) || 0).toFixed(2)} kg`;
 /** TRADE-LOC II (2026-10-11, from play: "Cant see how much a letter of credit is worth when trading directly with
  *  players"): a LETTER OF CREDIT's worth as the gold it stands for ("12,500 gold"), or null for anything else - the line
  *  below's figure, for a surface that names it under its own word (the pack's card says it as its Worth pair). */
@@ -158,21 +165,24 @@ export const SILVER_WHY = Object.freeze({ offline: 'kept by your account online'
  * letters of credit, the Deadlands Embers, the Welkynd Shards), each a label and a figure: `none` for one it holds none
  * of (`none` true), null where the silver is not counted here (its `note` says why), and a `note` where the figure needs
  * one (what the letters are worth). The enhanced sheet draws the rows; the classic box says each as a line (walletLines) -
- * one set of words for both.
+ * one set of words for both. WALLET-WEIGHT (2026-10-19, from play: "Are these supposed to be weighing us down even in the
+ * wallet?"): a holding it holds any of says what it weighs (`weight`, null for none and for the coin - the gold is the
+ * purse's, the silver no piece) - the enhanced sheet's alone: the classic window keeps the pieces on DFU's tabs, each
+ * piece's Info saying its own weight, and its box's words stand.
  * @param {ReturnType<typeof walletContents>} c
  */
 export function walletLedger(c) {
-  const count = (/** @type {string} */ key, /** @type {string} */ label, /** @type {number} */ n, /** @type {string|null} */ note = null) =>
-    ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null });
-  const silver = c.silver != null ? { key: 'silver', label: 'Silver', figure: num(c.silver), none: false, note: null }
-    : c.silverWhy === 'none' ? { key: 'silver', label: 'Silver', figure: 'none', none: true, note: null }
-      : { key: 'silver', label: 'Silver', figure: null, none: false, note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline };
+  const count = (/** @type {string} */ key, /** @type {string} */ label, /** @type {number} */ n, /** @type {number} */ kg, /** @type {string|null} */ note = null) =>
+    ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null, weight: n ? walletKg(kg) : null });
+  const silver = c.silver != null ? { key: 'silver', label: 'Silver', figure: num(c.silver), none: false, note: null, weight: null }
+    : c.silverWhy === 'none' ? { key: 'silver', label: 'Silver', figure: 'none', none: true, note: null, weight: null }
+      : { key: 'silver', label: 'Silver', figure: null, none: false, note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline, weight: null };
   return [
-    { head: 'Coin', rows: [{ key: 'gold', label: 'Gold', figure: num(c.gold), none: false, note: null }, silver] },
+    { head: 'Coin', rows: [{ key: 'gold', label: 'Gold', figure: num(c.gold), none: false, note: null, weight: null }, silver] },
     { head: 'In the wallet', rows: [
-      count('letters', 'Letters of credit', c.letters.count, `worth ${num(c.letters.gold)} gold`),
-      count('embers', 'Deadlands Embers', c.embers),
-      count('shards', 'Welkynd Shards', c.shards),
+      count('letters', 'Letters of credit', c.letters.count, c.weights.letters, `worth ${num(c.letters.gold)} gold`),
+      count('embers', 'Deadlands Embers', c.embers, c.weights.embers),
+      count('shards', 'Welkynd Shards', c.shards, c.weights.shards),
     ] },
   ];
 }

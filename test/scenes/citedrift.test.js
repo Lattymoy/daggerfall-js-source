@@ -735,7 +735,7 @@ const SOURCE_CITES = [
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
   ['bible/01-Overview/audits/Audit-58.md', /`src\/scenes\/exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?` now/, EX, /setDefaultEnchantCtx/],
   ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`/, EX, /playerTicker\.advance\(60\);/],
-  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
+  ['bible/09-Testing/Testing-Rows-2026-10-19.md', /keydown ladder \(exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
     EX, /^ {4}if \(e\.code === 'Escape'\) backButtonHeld = true;$/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\. It is the only window/, EX, /createSpellbookWindow\(\{/],
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
@@ -928,7 +928,7 @@ const LEDGER_CITES = [
   ['src/systems/passiveSpecials.js', [/ENCHANTING, WHOLE/]],
   ['test/tooling/faceuvresidue.test.js', [/FaceUVTool's 1,803-UV residual/]],
   ['test/tooling/probehygiene.test.js', [/THREE PROBES THE T2 SWEEP FOUND STALE/]],
-  ['bible/09-Testing/Testing.md', [/THREE PROBES THE T2 SWEEP FOUND STALE/,
+  ['bible/09-Testing/Testing-Rows-2026-10-19.md', [/THREE PROBES THE T2 SWEEP FOUND STALE/,
     /FaceUVTool's 1,803-UV residual/]],
   ['bible/01-Overview/handoffs/Port-Status-2026-09-02.md',
     [/THE KEYBINDING REGISTRY/, /THE KEYBINDING REGISTRY/, /VidFile: a MID-STREAM PALETTE/]],
@@ -1223,9 +1223,9 @@ test('CD8b: the C# members ROAD-G G4 names EXIST, and at the lines it cites', ()
   // QUOTE the line they name, so the quote and the number must agree.
   // MUTANT: any name or number below back to the one it replaced.
   // The walk spans the port, its tests and the bible; the records that
-  // QUOTE the retired name (this pin, Testing.md's row, the audit
+  // QUOTE the retired name (this pin, Testing.md's row - in the closed table since LEGIBLE 1b - the audit
   // records) are the only files allowed to carry it.
-  const quotes = (f) => f === 'test/scenes/citedrift.test.js' || f === 'bible/09-Testing/Testing.md' || /^bible\/01-Overview\/(?:[\w-]+\/)*Audit-\d+\.md$/.test(f);
+  const quotes = (f) => f === 'test/scenes/citedrift.test.js' || f === 'bible/09-Testing/Testing-Rows-2026-10-19.md' || /^bible\/01-Overview\/(?:[\w-]+\/)*Audit-\d+\.md$/.test(f);   // LEGIBLE 1b: Testing.md's row stands in the closed table
   for (const f of [...tracked('src'), ...tracked('test'), ...tracked('bible')].filter((f) => /\.(js|mjs|md)$/.test(f) && !quotes(f))) {
     assert.equal(/IsAlreadyPlaced/.test(read(f)), false,
       `${f} names IsAlreadyPlaced; DFU's guard is IsAlreadyInjected (GameObjectHelper.cs:978)`);

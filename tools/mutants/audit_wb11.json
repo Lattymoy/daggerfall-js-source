@@ -30,11 +30,12 @@
   {
     "name": "AUDIT-WB11-W1-one-stand-in-a-look",
     "file": "src/scenes/gate/gateHost.js",
-    "old": "entity: hostStandIn(b.look, a.i),",
-    "new": "entity: hostStandIn(b.look),",
+    "old": "entity: hostStandIn(b.look, a.i, ",
+    "new": "entity: hostStandIn(b.look, null, ",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-18f RELAY-SHARE (PIN MOVED): re-aimed by content - the stand-in now takes its body's health reader after its number."
   },
   {
     "name": "AUDIT-WB11-W1-every-stand-in-to-him",
@@ -120,11 +121,12 @@
   {
     "name": "AUDIT-WB11-W3-the-court-two-sequences",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "send: sendHost, blowQ: (who) => blowQ(who),",
-    "new": "send: sendHost,",
+    "old": "send: (x) => !watching() && sendHost(x), blowQ: (who) => blowQ(who),",
+    "new": "send: (x) => !watching() && sendHost(x),",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (COURT-WATCH / CHECKPOINT-5): re-aimed by content."
   },
   {
     "name": "AUDIT-WB11-W3-a-frame-not-ending-the-blow",

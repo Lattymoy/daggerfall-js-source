@@ -20,11 +20,12 @@
   {
     "name": "AUDIT-CHAP4-S2-OFF-RETURN",
     "file": "server-account/src/npcChapters.js",
-    "old": "  if (sw === 'off') {\n    if (last == null || Number(last) + 1 >= current) return 0;",
+    "old": "  if (sw === 'off') {\n    if (last == null) return 0;",
     "new": "  if (sw === 'off') {\n    return 0;",
     "tests": [
       "test/net/audit_chap4.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "AUDIT-CHAP4-S2-OFF-ROW",
@@ -38,11 +39,12 @@
   {
     "name": "AUDIT-CHAP4-S2-OFF-NEVER-SETTLED",
     "file": "server-account/src/npcChapters.js",
-    "old": "    if (last == null || Number(last) + 1 >= current) return 0;",
-    "new": "    if (Number(last) + 1 >= current) return 0;",
+    "old": "    if (last == null) return 0;\n",
+    "new": "",
     "tests": [
       "test/net/audit_chap4.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "AUDIT-CHAP4-S2-OPENED",

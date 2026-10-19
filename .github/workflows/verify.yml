@@ -5,7 +5,7 @@
 # after another in one job - ~7 minutes - and it ran twice for every
 # change: the PR's check, then again on main before the site deployed.
 # This is the same check, split into jobs that run at once: lint and the
-# types, the suite in four shards balanced by recorded times
+# types, the suite in shards balanced by recorded times (eight - CI-FAST)
 # (tools/testShards.mjs - every test file in exactly one shard), and the
 # build. Nothing is skipped and nothing is weaker: every file still runs,
 # every part must pass. The PR's check (check.yml) and the deploy
@@ -17,12 +17,34 @@
 # token in .git/config (AUDIT INSTALL L1-1's law for that workflow).
 #
 # The shard count is in two places that must agree - the matrix and the
-# `/4` - and test/tooling/flow1_ci.test.js holds them together.
+# `/8` - and test/tooling/flow1_ci.test.js holds them together.
+#
+# CI-FAST (2026-10-19, Mac: "Do both and whatever else could speed up
+# everything"): EIGHT SHARDS, not four - a run was the slowest of four
+# ~12-minute shards; the suite (30,606 tests, 3,557 files) splits into
+# eight of about half that (CI-TIMES keeps their times current). Every job restores
+# node_modules from the cache keyed by package-lock.json and runs `npm ci`
+# only on a miss. And a red shard names its failing tests at the end of its
+# log, on the check's page and in its summary (tools/failSummary.mjs).
+#
+# CI-TIMES (2026-10-19, Mac: "Do it"): THE SHARDS' TIMES, RECORDED BY CI.
+# The split's times were tools/testTimes.json, re-taken by hand
+# (`npm run test:times`, hours) and so rarely that 1,327 files stood at the
+# median. Now every shard records each of its files' wall time (`--record`,
+# tools/fileTimes.mjs) and keeps it as an artifact; after a green run
+# test-times.yml (check.yml and deploy.yml call it, beside the result, so
+# no check waits on it) merges the eight onto the times the run was split
+# by and saves them in the Actions cache. `times` finds the newest saved
+# times (a lookup, nothing downloaded) and every shard restores THAT ONE
+# key - all eight split by the same times, so every file is still in
+# exactly one shard; a key gone between the two fails the shard, never
+# splits it apart. No saved times yet: the committed file, as before.
 #
 # EG6a (2026-10-12): and THE COURSE SWEEP - every Elite Breach course crossed
 # step by step by the real player motor, `sweep` seeds a band (25 here;
 # relay-deploy.yml asks 500), in eg-sweep.yml's four band jobs beside the
-# shards. test/tooling/eg6a_sweep.test.js holds the wiring.
+# shards (six parts a band past a hundred seeds - SWEEP-FAST).
+# test/tooling/eg6a_sweep.test.js holds the wiring.
 name: verify
 
 on:
@@ -40,6 +62,10 @@ on:
         description: Seeds a band the course sweep crosses with the real motor (eg-sweep.yml) - 25 on a pull request, 500 before a relay deploy.
         type: number
         default: 25
+    outputs:
+      times:
+        description: The cache key of the times the shards were split by (empty - the committed tools/testTimes.json); test-times.yml merges this run's records onto them.
+        value: ${{ jobs.times.outputs.key }}
 
 permissions:
   contents: read
@@ -57,21 +83,45 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Cached dependencies
+        id: deps
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
       - name: Install dependencies
+        if: steps.deps.outputs.cache-hit != 'true'
         run: npm ci
       - name: Lint
         run: npm run lint
       - name: Type-check
         run: npm run types
 
+  times:
+    name: the shards' times
+    runs-on: ubuntu-latest
+    outputs:
+      key: ${{ steps.find.outputs.cache-matched-key }}
+    steps:
+      - name: The newest recorded times
+        id: find
+        continue-on-error: true   # no cache service: the committed times, as before
+        uses: actions/cache/restore@v4
+        with:
+          path: tools/testTimes.json
+          key: test-times-none
+          restore-keys: test-times-
+          lookup-only: true
+
   test:
-    name: tests ${{ matrix.shard }}/4
+    name: tests ${{ matrix.shard }}/8
+    needs: times
     runs-on: ubuntu-latest
     strategy:
       # every shard reports, so one red run shows every failing file
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,10 +131,34 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Cached dependencies
+        id: deps
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
       - name: Install dependencies
+        if: steps.deps.outputs.cache-hit != 'true'
         run: npm ci
-      - name: Test shard ${{ matrix.shard }} of 4
-        run: node tools/testShards.mjs ${{ matrix.shard }}/4
+      - name: The times the shards split by
+        if: needs.times.outputs.key != ''
+        uses: actions/cache/restore@v4
+        with:
+          path: tools/testTimes.json
+          key: ${{ needs.times.outputs.key }}
+          fail-on-cache-miss: true
+      - name: Test shard ${{ matrix.shard }} of 8
+        run: node tools/testShards.mjs ${{ matrix.shard }}/8 --record "$RUNNER_TEMP/test-times.json"
+      - name: Keep this shard's times
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        continue-on-error: true   # the next run's balance, never this run's verdict
+        with:
+          name: test-times-shard-${{ matrix.shard }}
+          path: ${{ runner.temp }}/test-times.json
+          retention-days: 7
+          if-no-files-found: ignore
+          overwrite: true   # a re-run of the shard replaces its own record
 
   sweep:
     uses: ./.github/workflows/eg-sweep.yml
@@ -104,7 +178,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Cached dependencies
+        id: deps
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
       - name: Install dependencies
+        if: steps.deps.outputs.cache-hit != 'true'
         run: npm ci
       - name: Build
         run: npm run build

@@ -103,7 +103,8 @@ import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperC
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 import { armKickMatrix } from './gun/gunFeel.js';   // MW-GUN-FEEL: the gun's recoil and reload, as one pose over the viewmodel
 import { rifleStanceStep, applyRifleStance } from './gun/rifleStance.js';   // RIFLE-STANCE: a long gun held in the hands - the low ready, the aim
-import { createLanternSwing, stepLanternSwing, lanternSwingMatrix } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed
+import { createHipLantern } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed (BODY-MOTION: its rider moved there)
+import { createBodyMotion, motionWord } from '../characters/bodyMotion/bodyMotion.js';   // BODY-MOTION: the third-person body's gait, carry and blows
 import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/morrowind/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
 import { spellFxPlan } from '../formats/morrowind/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
 import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
@@ -3685,11 +3686,14 @@ export function createFpArm() {
   let torchMissRig = null;       // the rig whose sources carry no "torch" group - asked once, not per frame
   // HT-WAIST: THE LANTERN AT THE WAIST - `hipLit` is the game's word (weaponRig's setHipLight, per frame, off
   // systems/playerTorch.js lanternAtWaist), the swing is the one law (systems/lanternSwing.js) stepped off the
-  // body's motion while it hangs there, and `hipYaw` is last frame's heading for the turn's pull.
+  // body's motion while it hangs there - its rider (createHipLantern) keeps the swing and last frame's heading.
   let hipLit = false;
   let pendingHipLight = null;    // the lantern that arrived mid-build (MAC-S1's law, MW-D51's queue)
-  const hipSwing = createLanternSwing();
-  let hipYaw = null;
+  const hipLantern = createHipLantern();
+  // BODY-MOTION (characters/bodyMotion/bodyMotion.js; bible/04-Characters/Body-Motion.md): THE THIRD-PERSON BODY'S OWN
+  // MOTION - its gait, its carry and a blow's body - one per rig, stepped below after the clips and laid on the pose
+  // through poseAssembly's `motion` slot; the clips still decide every group, and it steps aside where they own the body
+  const motion = createBodyMotion();
   // AUDIT MW-TORCH F4: THE OVERLAY ALLOCATES ONCE PER CHANGE, NOT PER
   // FRAME. update()'s contract is "no allocation after the first pack";
   // the merged track map is rebuilt only when the base tracks, the torch
@@ -4621,27 +4625,6 @@ export function createFpArm() {
   function hipVisible() {
     return hipLit && !!(thirdBuilt && thirdBuilt.ok && thirdBuilt.hipLight);
   }
-  /** HT-WAIST: one frame of the swing, off the body's motion - the motor's bag the movement slot already reads
-   *  (`cam.move`: the input axes and the applied speed), the heading's turn, and the walk clip's phase while one
-   *  plays - written into the hang's attitude for the pose that follows. At rest it settles plumb. */
-  function stepHipSwing(cam, dt) {
-    const hang = thirdBuilt && thirdBuilt.hipHang;
-    if (!hang) return;
-    const mv = (cam && cam.move) || null;
-    const f = mv ? (mv.forward || 0) : 0, st = mv ? (mv.strafe || 0) : 0;
-    const len = Math.hypot(f, st);
-    const speed = len > 0 && mv ? (mv.speed || 0) : 0;
-    const yaw = cam ? (cam.yaw || 0) : 0;
-    const yawRate = hipYaw != null && dt > 0 ? wrapAngle(yaw - hipYaw) / dt : 0;
-    hipYaw = yaw;
-    stepLanternSwing(hipSwing, dt, {
-      forward: len > 0 ? speed * f / len : 0,
-      side: len > 0 ? speed * st / len : 0,
-      yawRate,
-      stride: movementState && speed > 0 ? clipCompletion(movementState) % 1 : null,
-    });
-    lanternSwingMatrix(hipSwing, hang.rot);
-  }
   /** MW-D51: the "torch" slot's refresh, the reference's own lines
    *  (character.cpp, update(): a Light in Slot_CarriedLeft and the
    *  carried-left visible -> play "torch" at Priority_Torch on
@@ -5236,7 +5219,7 @@ export function createFpArm() {
         // HT-WAIST: likewise the lantern at the waist; the new body's hang starts plumb and still.
         hipLit = !!(opts && opts.hipLight);
         if (thirdBuilt && thirdBuilt.ok) thirdBuilt.hipHang = thirdBuilt.arm.pieces.find((p) => p.slot === HIP_LIGHT_SLOT)?.hang ?? null;
-        Object.assign(hipSwing, createLanternSwing()); hipYaw = null;
+        hipLantern.reset();
         if (!res.ok) { reason = `${res.stage}: ${res.error}`; built = res; return res; }
         refreshWeaponGroup();
         refreshIdle(true);
@@ -5284,7 +5267,7 @@ export function createFpArm() {
       notes.length = 0; aimFactor = 0; sneaking = false;
       idleSource = null; actionSource = null; poseSource = null;
       torchLit = false; torchState = null; torchSource = null; torchGroup = null; torchMissRig = null;   // MW-D51
-      hipLit = false; pendingHipLight = null; Object.assign(hipSwing, createLanternSwing()); hipYaw = null;   // HT-WAIST
+      hipLit = false; pendingHipLight = null; hipLantern.reset();   // HT-WAIST
       pendingWerewolf = null;   // WEREWOLF1
       pendingVampire = null;   // PORTRAIT3D
       reason = 'unloaded';
@@ -6039,7 +6022,7 @@ export function createFpArm() {
       if (hipLit === want) return false;
       hipLit = want;
       if (lastBuildOpts) lastBuildOpts.hipLight = want;
-      if (want) { Object.assign(hipSwing, createLanternSwing()); hipYaw = null; }   // lit afresh: it hangs still, then swings
+      if (want) hipLantern.reset();   // lit afresh: it hangs still, then swings
       const tRig = thirdBuilt && thirdBuilt.ok ? thirdBuilt : null;
       if (!want || !tRig || tRig.hipLight || tRig.hipLightTried || !pickLanternRecord(built.allLights)) {
         for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
@@ -6343,6 +6326,13 @@ export function createFpArm() {
       refreshTorch();
       if (torchState) advanceClip(torchState, (torchSource || rig()).keys, dt, null);
       aimFactor = aimingFactor(aimFactor, accurateAiming(upper), dt);
+      // BODY-MOTION: its clocks, after the clips so a blow reads this frame's section (a frame that does not pose still walks)
+      // the word the layer reads, a line for each of what it says: the body, its blow, its hands (AUDIT BODY-MOTION RIG-10)
+      motion.step(dt, motionWord({
+        cam, third: viewMode === 'third', rig: thirdBuilt, built, dead, hit: !!hitState && !actionState, climb: climbWorld.w, upper: UPPER_BODY_NAME[upper],
+        attackType, reversed: attackReversed, hand: attackHand, progress: actionState ? clipCompletion(actionState) : 0, strength: attackStrength,
+        shown: weaponInHand(), hands: handsMode, torch: torchVisible(), spell: spellStance(), rifle: rifle.w, guard: pairDip(),
+      }));
       if (!actionState && !movementState && !jumpState && !idleState && !hitState && !deathState) return;
       // THE WINNER, not a blend. See the two-slot note above: in first
       // person both animations are played on BlendMask_All, so the higher
@@ -6377,8 +6367,9 @@ export function createFpArm() {
         const tBase = poseSource ? poseSource.trackMap : t.tracks;
         const tOverlay = torchState && torchSource && !deathState && t.leftArm && t.leftArm.size;   // MWNPC4: the death takes the left arm too (Priority_Death over Priority_Torch)
         if (tOverlay) overlayClock = torchState.time;
-        // HT-WAIST: the lantern at the waist swings on the frame's motion before the body is posed around it.
-        if (hipVisible()) stepHipSwing(cam, dt);
+        // HT-WAIST: the lantern at the waist swings on the frame's motion before the body is posed around it - on the
+        // body motion's stride while it walks the legs (BODY-MOTION), else on the walk clip's
+        if (hipVisible() && thirdBuilt.hipHang) hipLantern.step(cam, dt, motion.stride().move > 0.5 ? motion.stride().phase : movementState ? clipCompletion(movementState) % 1 : null, thirdBuilt.hipHang.rot, motion.stride().hipYaw);
         // PEER-CADENCE: a frame that does not pose keeps last frame's
         // skin, upload and bounds; the clips above advanced all the
         // same, so the next posing frame lands where the clock is.
@@ -6392,6 +6383,7 @@ export function createFpArm() {
             climb: thirdClimb(climbWorld, cam),   // CLIMB6
             mirror: mirrorFor('third', t, dt),   // TWO-HANDS: the second hand - the pair's left arm, a left-hand blow
             hold: rifleHold('third', t),   // RIFLE-STANCE: the long gun in the hands
+            motion: motion.slot,   // BODY-MOTION: the gait, the carry and a blow's body over the clip's
             skin: !thirdSkinReady(t),   // MWNPC1: the skin in the vertex shader - the pose is the skeleton alone
           });
           uploadThirdMesh(t);
@@ -7052,7 +7044,7 @@ export function createFpArm() {
       const pose = portraitPose(t);
       thirdSkinReady(t);   // MWNPC1: posed on the CPU (its exact boxes frame it), drawn through the palette
       if (pose) {
-        if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (stepHipSwing re-swings it)
+        if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (the hip lantern's rider re-swings it)
         poseAssembly(t.arm, {
           tracks: pose.source.trackMap,
           sampleTrack,
@@ -7158,7 +7150,8 @@ export function createFpArm() {
         hipLight: thirdBuilt && thirdBuilt.ok ? thirdBuilt.hipLight ?? null : null,
         hipLit,
         hipShown: hipVisible(),
-        hipSwing: { fore: hipSwing.fore, side: hipSwing.side },
+        hipSwing: { fore: hipLantern.swing.fore, side: hipLantern.swing.side },
+        motion: motion.status(),   // BODY-MOTION
         loopsLeft: idleState && Number.isFinite(idleState.loopCount) ? idleState.loopCount : null,
         groups: built && built.ok ? built.groups : null,
         sources: built && built.ok ? built.sourcePaths : null,

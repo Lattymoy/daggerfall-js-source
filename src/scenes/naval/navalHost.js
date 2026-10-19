@@ -31,7 +31,8 @@
 //   law: { crime(region, crime), legal(region, n), faction(id, n) }
 //   board: { leaveHelm(), placePlayer(pos, yaw), deckSpots(boat, n) -> [pos, yaw][], spawnFoe(mobile, pos, yaw, side,
 //            { name }?) -> handle (AUDIT NAV1: `name` - her captain's, on the target bar), foeDown(handle) -> bool, removeFoe(handle), startRaid(name) -> quest | null,
-//            endRaid(quest, { withdraw }) (AUDIT NAV1: a raid let go of ends with it - its boarders withdrawn),
+//            endRaid(quest, { withdraw, won, crew }) (AUDIT NAV1: a raid let go of ends with it - its boarders withdrawn;
+//            RAID-WON: a won one ended as one thrown back ashore, and her ship gone, its crew home),
 //            standDown(handle) (AUDIT NAV1: a foe who yields - hostile no more, standing where he is),
 //            takeHelm(boat) (AUDIT NAV1: Come Sail Away's StartSailing - back at her wheel),
 //            openPlunder(model) -> bool (false: no window could open), giveItems(items, boat | null) -> { left: items },
@@ -3483,7 +3484,7 @@ export function createNavalHost(deps) {
     if (!entry) {   // AUDIT NAV1 (B4, B6): her ship gone - her boarders fight on stranded, and her raid sends no more
       const quest = b.quest;
       endBoarding();
-      if (quest) { raidUids.delete(quest.uid); deps.board?.endRaid?.(quest, { withdraw: false }); }
+      if (quest) { raidUids.delete(quest.uid); deps.board?.endRaid?.(quest, { withdraw: false, crew: true }); }   // RAID-WON (AUDIT FB1019 D2): its crew home, never left on my deck counted as enemies near
       return;
     }
     const was = b.phase;
@@ -3603,6 +3604,13 @@ export function createNavalHost(deps) {
     }
   }
 
+  /** RAID-WON (bible/01-Overview/bugs/Field-Bugs-2026-10-19.md): a raid this throw-back won ends with it - its living foes
+   *  withdrawn, its `_ally_` among them, and its quest ended as its own `end quest` ends one (world.js endRaid's `won`,
+   *  scenes/raidAshore.js) - never left running with its crew on my deck, counted as enemies near. Its uid stays mine until
+   *  the quest ends (raidEnded): a Leave Ship or a wave its grace ticks still run is the sea fight's, never a voyage's. */
+  function wonRaid(quest) {
+    if (quest) deps.board?.endRaid?.(quest, { won: true });
+  }
   /** The fight won: a boarding's prize, or boarders thrown back. */
   function winBoarding(b, entry) {
     // SHIP-CREW: a boarding stood - each hand's count - and won: a prize taken, or the boarders thrown back
@@ -3617,6 +3625,7 @@ export function createNavalHost(deps) {
         entry.boardedAgain = true;
         entry.ship.damage.apply({ hull: 0, sail: 0, crew: entry.ship.damage.crew / 2 }, clock);
         endBoarding();
+        wonRaid(b.quest);   // RAID-WON: her first wave's raid won - its crew home before the second comes over
         deps.mid?.(`The boarders are thrown back - and ${entry.ship.names?.name ?? 'it'} sends more over the rail!`, 3);
         startBoarding('repel', entry, again);
         return;
@@ -3629,6 +3638,7 @@ export function createNavalHost(deps) {
       entry.ship.damage.apply({ hull: 0, sail: 0, crew: entry.ship.damage.crew }, clock);
       entry.ship.boarded = false;
       endBoarding();
+      wonRaid(b.quest);   // RAID-WON: after the boarding's end, as castOff's lost raid (the raid's end comes back through raidEnded)
       return;
     }
     b.win();
@@ -3962,13 +3972,12 @@ export function createNavalHost(deps) {
    */
   function leaveShipGate(quest) {
     const b = raids.get(quest);
-    if (b) {
-      raidUids.delete(quest.uid);
+    if (b) {   // RAID-WON (AUDIT FB1019 D1): won - its uid mine until the quest ends (raidEnded), so its grace is the sea fight's
       const entry = sea.get(b.shipId);
-      if (entry) winBoarding(b, entry); else endBoarding();
+      if (entry) winBoarding(b, entry); else { endBoarding(); wonRaid(quest); }   // her ship gone: won all the same
       return 'naval';
     }
-    if (quest && raidUids.has(quest.uid)) { raidUids.delete(quest.uid); return 'naval'; }   // a raid of mine a load carried: thrown back, nothing sailed
+    if (quest && raidUids.has(quest.uid)) { wonRaid(quest); return 'naval'; }   // a raid of mine a load carried: thrown back, nothing sailed - RAID-WON: and ended as won
     if (!enabled || setting('RaidPrize', true) !== true) return 'proceed';
     if (prizeRaid?.quest === quest) return prizeRaid.state === 'done' ? 'proceed' : 'wait';
     // the voyage's raiders beaten: their vessel's hold, before the ship sails on

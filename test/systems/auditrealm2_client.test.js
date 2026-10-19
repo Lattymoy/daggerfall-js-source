@@ -193,7 +193,7 @@ test('AUDIT REALM2 C1: a realm checkpoint that lands clears a town\'s thanks as 
   assert.equal(one.spoilsPool.grant({ day: 700, seed: 99, level: 30, acct: 'acct-a' }), true);
   assert.ok(one.pack.items.length > 0 && one.pack.gold > 0, 'both in the pack');
   assert.equal(JSON.parse(disk.getItem(RAID_SPOILS_KEYS.store)).length, 1, 'the thanks kept on the device until a save holds them');
-  one.save({ v: 1 });   // the two-minute checkpoint, composed holding both
+  one.save({ v: 1 });   // the periodic checkpoint, composed holding both
   await settle();
   assert.equal(disk.getItem(SPOILS_STORE_KEY), null, 'the gate\'s record cleared (REALM P1.3)');
   assert.equal(disk.getItem(RAID_SPOILS_KEYS.store), null, 'and the town\'s - the realm checkpoint holds them too');
@@ -362,7 +362,7 @@ test('AUDIT REALM2 C3: with Come Sail Away off its record is carried whole - the
   csaBoot(null, pe);
   restoreModSaveRecords({ [COME_SAIL_AWAY_VENDOR]: csaRecord() });   // the load's mod loop (world.js worldQuickLoad)
   assert.deepEqual(modSaveRecords()[COME_SAIL_AWAY_VENDOR], csaRecord(), 'the save writes the record it loaded');
-  // ...through the realm: the two-minute checkpoint of an off boot, then a boot with the mod on
+  // ...through the realm: the periodic checkpoint of an off boot, then a boot with the mod on
   const dev = await device();
   const c = await joined(dev, { v: 1, name: 'Nystul', modData: { [COME_SAIL_AWAY_VENDOR]: csaRecord() } });
   const boot = await openRealmBoot({ io: dev.io, id: c.id });
@@ -609,7 +609,7 @@ test('AUDIT REALM2 M5: realmCheckpoint answers what its composer did - a save th
   // the world composer's own refusal, mid-descent: said to F9, never to the quiet checkpoint
   const worldQuickSave = mount(`${W.fn('worldQuickSave')}\nreturn worldQuickSave;`, { ohAbyss: { entering: true }, townTalk: { say: (t) => said.push(t) }, QUICK_SAVE_NAME: 'QuickSave' });
   assert.equal(worldQuickSave('QuickSave', { quiet: true }), false);
-  assert.deepEqual(said, [], 'the two-minute checkpoint says nothing');
+  assert.deepEqual(said, [], 'the periodic checkpoint says nothing');
   assert.equal(worldQuickSave('QuickSave'), false);
   assert.deepEqual(said, ['You cannot save now.'], 'F9 is told');
 });

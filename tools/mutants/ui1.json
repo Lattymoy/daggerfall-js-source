@@ -319,7 +319,7 @@
     "name": "AUDIT-UI-A3-a-repaint-on-every-resize",
     "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "if (sig !== fitSig) { fitSig = sig; if (host) render(); }",
-    "new": "{ fitSig = sig; if (host) render(); }",
+    "new": "if (sig !== fitSig || true) { fitSig = sig; if (host) render(); }",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]

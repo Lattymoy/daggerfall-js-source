@@ -114,11 +114,14 @@ test('RVN7d THE DUNGEON\'S BUILD: a revenant\'s record stands on the built body 
 });
 
 test('RVN7d THE STAND: asked once a visit, the first frame I stand there; this dungeon\'s pixel; at the layout marker farthest from the entrance; a loose foe of mine with its record\'s gender and level, found resting, its band about it; a stand that stood nobody frees the claim (mutants: never asked; asked every frame; the nearest marker; aware; no band; the claim kept)', () => {
-  assert.match(D, /if \(playerFeet && !_lairAsked\) \{ _lairAsked = true; standLairRevenant\(\)\.catch\(\(\) => null\); \}/);
+  // PIN MOVED (LAIR-WALK): once the navmesh a walk is measured on has landed, when one is coming (test/systems/revenant/lair_walk.test.js)
+  assert.match(D, /if \(playerFeet && !_lairAsked && \(!enhancedNav\.requested \|\| enhancedNav\.settled \|\| Date\.now\(\) - \(_lairWaitFrom \?\?= Date\.now\(\)\) > LAIR_WALK_WAIT_MS\)\) \{ _lairAsked = true; standLairRevenant\(\)\.catch\(\(\) => null\); \}/);
   assert.match(D, /let _lairAsked = false;/);
-  assert.match(D, /const r = revenantForLair\(playerEntity, lairPixel\(\)\);/);
-  assert.match(D, /const far = dungeonEndOf\(from, marks\);/);   // SD4b (PIN MOVED): the farthest-marker law lifted to world/dungeon/dungeonEnd.js, where a Super dungeon's Rift reads it too - its behaviour pinned there (test/world/superDungeon/sd4b_rift.test.js)
-  assert.match(D, /const from = dungeon\.enterMarker \?\? dungeon\.startMarker \?\? null;/);
+  assert.match(D, /const r = revenantForLair\(playerEntity, lairPixel\(\), \{ foes \}\);/);   // PIN MOVED (LAIR-HOME): and this pool, where a body of it may stand already (test/systems/revenant/lair_home.test.js)
+  // SD4b (PIN MOVED): the farthest-marker law lifted to world/dungeon/dungeonEnd.js, where a Super dungeon's Rift reads it
+  // too - its behaviour pinned there (test/world/superDungeon/sd4b_rift.test.js). PIN MOVED (LAIR-REACH): over SD-REACH's
+  // candidates, the Rift's own end (test/systems/revenant/lair_reach.test.js) - the raw markers stood it in a border cap
+  assert.match(D, /const far = \(reaches && dungeonEnd\(reaches\)\) \|\| dungeonEnd\(\);/);   // PIN MOVED (LAIR-WALK): the farthest a walk reaches, else SD-REACH's
   assert.match(D, /const f = await spawnLooseFoe\(r\.mobileType, \[sp\.x, sp\.y, sp\.z\], \{ gender: so\.gender, level: so\.level, revenant: r, lairStand: true \}\)\.catch\(\(\) => null\);\n\s*if \(!f \|\| !f\.entity\?\.revenant\) \{ releaseRevenantStand\(r\); return null; \}/);
   assert.match(D, /f\._lairStand = true;\n\s*if \(f\.ai\) \{ f\.ai\.detected = false; f\.ai\.target = null; \}   \/\/ found resting/);
   assert.match(D, /standDungeonBand\(f, bandMembers\(r, effectiveLevel\(playerEntity\)\)\);\n\s*return f;/);
@@ -147,7 +150,7 @@ test('RVN7d THE TAUNT AND THE REST: one found in its lair says what it came to s
   assert.match(D, /if \(f\._lairStand && !f\._taunted && f\.ai\.inSight && f\.ai\.detected && _pf && Math\.hypot\(_pf\[0\] - f\.ai\.feet\[0\], _pf\[2\] - f\.ai\.feet\[2\]\) < REVENANT_TAUNT_DISTANCE\) \{\n\s*f\._taunted = true;/);
   assert.match(D, /if \(l === 0 && !onlineRoom\(\) && restInLair\(\)\) break;\n\s*if \(hit\) \{ restEncounter\(hit\); break; \}/);
   assert.match(D, /if \(!onlineRoom\(\)\) return restReturn\(hit\) \? null : _spawnEncounter\(hit\);/);
-  assert.match(D, /const r = revenantForLair\(playerEntity, lairPixel\(\), \{ dueOnly: true \}\);/);
+  assert.match(D, /const r = revenantForLair\(playerEntity, lairPixel\(\), \{ dueOnly: true, foes \}\);/);   // PIN MOVED (LAIR-HOME): and this pool
   assert.match(D, /revenantSay\(revenantWakeEvent\(r, \{ archive: f\.mobileArchive \}\), \(l\) => hudText\.add\(l\)\);/);
   assert.match(D, /const r = revenantToReturn\(playerEntity\);\n\s*if \(!r\) return false;\n\s*_spawnEncounter\(\{ \.\.\.hit, mobileType: r\.mobileType \}, \{ revenant: r \}\)/);
   assert.match(D, /\.\.\.\(so \? \{ revenant, lairStand: !!lairStand, \.\.\.\(Number\.isFinite\(so\.level\) \? \{ level: so\.level \} : \{\}\) \} : \{\}\),/);

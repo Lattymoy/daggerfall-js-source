@@ -235,8 +235,8 @@
   {
     "name": "ACC1b-24-the-preflight-forbids-the-header",
     "file": "server-account/src/index.js",
-    "old": "          'access-control-allow-headers': 'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match',",
-    "new": "          'access-control-allow-headers': 'content-type, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match',",
+    "old": "          'access-control-allow-headers': 'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass',",
+    "new": "          'access-control-allow-headers': 'content-type, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass',",
     "tests": [
       "test/server/accountworker.test.js"
     ],

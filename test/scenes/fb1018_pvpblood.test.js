@@ -1,9 +1,11 @@
 // FIELD BUGS 2026-10-18 PVP-BLOOD (bible/01-Overview/bugs/Field-Bugs-2026-10-18.md, found reading Anon-e-moose's
 // "Gradual FPS loss then crash" and left in its first pass). A duel's blow and the open zone's both splashed into the
 // street's pool (`hitEffects`), which only the street's frame ticks and draws, and whose marks are the street's ring on
-// the street's collider. A blow of mine in a room or the zone's halls bled nowhere I stood: the splash sat frozen until
-// I stepped out, and its mark went into the street's ring at the room's coordinates. A peer's blow already took the
-// pool I stand in (`modes.liveHitEffects`, PEERFX2); these take it too. Source pins: bootWorld is not run in Node.
+// the street's collider; a peer's blow already took the pool I stand in (`modes.liveHitEffects`, PEERFX2), and these
+// take it too. AUDIT FB1018 L3-5 (bible/01-Overview/audits/Audit-Field-Bugs-2026-10-18.md): neither could bleed off the
+// street - a duel is outdoors only, and in the zone's dungeons every peer was refused (wildFair read a dungeon-frame pose
+// as the map's corner pixel); fixed, the zone's halls fight and their blood is the dungeon's pool's. Source pins:
+// bootWorld is not run in Node.
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

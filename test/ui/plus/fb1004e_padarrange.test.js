@@ -309,3 +309,19 @@ test('PAD-ARRANGE bar: the hand is put down only by the click of a press that be
     hb.setHotbarDropMode('chest', false); hb.setHotbarDropMode('pack', false);
   });
 });
+
+// LAST in the file: it hands the page a host's input hooks (ui/input.js noteHostInput), and lets them go after.
+test('AUDIT FB1018f L2-5/L2-6 THE CROSSBAR AND THE KEYS ASK ONE PAUSE: after a frame of play the crossbar is in force, and a window up since that frame (the host\'s hooks say so - the ones it hands the pad) stands it down at once, as it stands the keyboard\'s slots down; the window gone, in force again before any frame (mutant: the crossbar reading the last frame\'s word)', async () => {
+  await withBar(async ({ hb }) => {
+    let up = false;
+    attachGamepad(null, { paused: () => up, overlayActive: () => up, attack() {}, look() {} }, { getPads: () => [] });
+    try {
+      hb.drawEnhancedHotbar(null, { paused: false });   // the HUD's last frame: play
+      assert.equal(crossbarApi().inForce(), true, 'in play, the crossbar is in force');
+      up = true;
+      assert.equal(crossbarApi().inForce(), false, 'a window since the frame: the crossbar stands down with the keys');
+      up = false;
+      assert.equal(crossbarApi().inForce(), true, 'and is back with them the moment it goes');
+    } finally { attachGamepad(null, {}, { getPads: () => [] }); }
+  });
+});

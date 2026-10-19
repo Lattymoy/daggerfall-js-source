@@ -50,6 +50,9 @@ export const MUSTERS = Object.freeze({
 });
 /** The hands a crewed ship of the player's sends: Warm Ashes' `_ally_` (Foe _ally_ is Warrior). */
 export const HAND = MOBILE.Warrior;
+/** RAID-WON (bible/01-Overview/bugs/Field-Bugs-2026-10-19.md): the raids' own crew - their `_ally_` Foe, by the inner name
+ *  the machine keys a symbol by (quest/symbol.js getInnerSymbolName): the hands a raid stands in my crew's place. */
+export const RAID_CREW = 'ally';
 
 /** Warm Ashes' two raids, as the naval arc starts them (systems/warmAshesShips.js WA_RAID_QUEST's list). */
 export const WA_SMALLRAID = 'WAQ_SHIP_SMALLRAID';

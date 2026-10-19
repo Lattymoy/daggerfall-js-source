@@ -2,22 +2,24 @@
   {
     "name": "BANNER-SHAFT-every-kind-held",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "(r === HIT_KINDS.Melee || egStacked(V, pose.x, sm, pose.z, bx, sb, bz))",
-    "new": "(true || egStacked(V, pose.x, sm, pose.z, bx, sb, bz))",
+    "old": "  return !egOneStorey(sm, sb) && (melee || egStacked(view, x, sm, z, bx, sb, bz));",
+    "new": "  return !egOneStorey(sm, sb) && (true || egStacked(view, x, sm, z, bx, sb, bz));",
     "tests": [
       "test/net/eliteGates/fb1018d_bannershaft.test.js"
     ],
-    "why": "the bug: a shaft or a spell from the court never lands on a banner a storey up"
+    "why": "the bug: a shaft or a spell from the court never lands on a banner a storey up",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f, AUDIT FB1018f L3-6, at the merge): the storey rule is one law, net/eliteGates/egBodies.js egStoreyApart, which egHitBody and every screen ask - its `melee` the blow's kind."
   },
   {
     "name": "BANNER-SHAFT-swing-let-up",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "(r === HIT_KINDS.Melee || egStacked(V, pose.x, sm, pose.z, bx, sb, bz))",
-    "new": "(egStacked(V, pose.x, sm, pose.z, bx, sb, bz))",
+    "old": "  return !egOneStorey(sm, sb) && (melee || egStacked(view, x, sm, z, bx, sb, bz));",
+    "new": "  return !egOneStorey(sm, sb) && (egStacked(view, x, sm, z, bx, sb, bz));",
     "tests": [
       "test/net/eliteGates/fb1018d_bannershaft.test.js"
     ],
-    "why": "a sword reaches a banner 4 m over the court"
+    "why": "a sword reaches a banner 4 m over the court",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f, AUDIT FB1018f L3-6, at the merge): the storey rule is one law, net/eliteGates/egBodies.js egStoreyApart, which egHitBody and every screen ask - its `melee` the blow's kind."
   },
   {
     "name": "BANNER-SHAFT-stack-off-the-higher",

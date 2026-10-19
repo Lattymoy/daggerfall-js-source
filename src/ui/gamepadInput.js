@@ -51,7 +51,7 @@
 // code this layer presses it releases when the pad goes, the setting
 // turns off, or the layer is disposed - a held key with no hand on it
 // is the disease the touch layer's `up()` guards against.
-import { bindings } from './input.js';
+import { bindings, noteHostInput } from './input.js';   // AUDIT FB1018f L2-5: and the host's hooks, noted for the hotbar's keys
 import { getBinding, getAxisBinding, getAxisInversion, getJoystickUIBinding, DEFAULT_SHARES } from '../systems/inputActions.js';
 import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, parseAxisKeyName, movementAxes, cameraAxes, controllerLookDegrees, controllerSettings, CURSOR_SPEED, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
 import { getBinding as getBindingOf, isPadCode } from '../systems/inputActions.js';
@@ -164,6 +164,7 @@ export function pickPad(list) {
  * @returns { tick(dt), axes(), usingController(), dispose() } or null without the API
  */
 export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = synth, makeEvent = defaultMakeEvent } = {}) {
+  noteHostInput(hooks);   // AUDIT FB1018f L2-5: the host's pause, for the hotbar's keys too - before the refusal below
   if (!getPads && !hasGamepadApi()) return null;
   getPads ??= () => navigator.getGamepads();
   const axes = new Float32Array(NUM_AXES + 1);

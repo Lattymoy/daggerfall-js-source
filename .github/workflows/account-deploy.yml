@@ -51,6 +51,7 @@ on:
     paths:
       - "server-account/**"
       - "src/net/identityToken.js"
+      - "src/net/sessionPassLaw.js"
       - "src/net/staffTeleport.js"
       - "src/net/relayCfg.js"
       - "src/net/hubShards.js"
@@ -552,7 +553,7 @@ jobs:
             exit 0
           fi
           echo "before the migrations: $b"
-          { echo "The database before this deploy's migrations, should it need putting back:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "The database before this deploy's migrations, should it need putting back:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; echo "then redeploy the Worker (its isolates keep the weeks they read settled - server-account/src/weekKept.js)."; echo ""; } >> "$GITHUB_STEP_SUMMARY"
 
       # SCALE4e (2026-10-10, PR #755's own deploy): AN OVERLOADED DATABASE
       # IS WAITED OUT, NOTHING ELSE IS. A merge that touches the relay and

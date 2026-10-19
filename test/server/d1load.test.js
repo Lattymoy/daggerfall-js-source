@@ -100,6 +100,9 @@ case "$sql" in *"blob2 = 'CRON'"*) cp "$FAKE_DIR/cron.json" "$out"; echo -n "$FA
   assert.doesNotMatch(refused.summary, /\*\*The clock's jobs\*\*/, 'a refusal is never drawn as a table');
   assert.match(refused.out, /::warning::the cron question was refused \(HTTP 403\)/);
   assert.match(refused.summary, /\*\*Minute by minute\*\*/, 'the other questions still answer');
+  // AUDIT PLAN-1000 A7 (relay-load.yml's twin): a refusal whose body carries rows is still a refusal - never drawn
+  const odd = run({ data: [{ job: 'cron:odd', firings: 1, failed: 0, d1_wait_s: 1, statements: 1, changed: 0, p95_ms: 1 }] }, '500');
+  assert.doesNotMatch(odd.summary, /\| cron:odd \|/, 'an HTTP 500 is never drawn, whatever its body');
 });
 
 const ENV = { SEATS_OPEN: 'on' };

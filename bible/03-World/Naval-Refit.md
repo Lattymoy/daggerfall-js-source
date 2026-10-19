@@ -179,12 +179,20 @@ CHANGED (DECLARED, Port-Ledger section A):
 - **Leave Ship ashore** (`warmAshesShips.js LeaveShip.update`, the arm off region 31): the ship blocks back to `_base`
   (the IL resets them only at sea), the host's `raidAshore(quest)` withdraws the raid, and the quest ends as its own
   `end quest` ends one (`questBreak`, `endQuest` - the machine tombstones it after its two ticks of grace). Message 1014
-  ("The attackers have been fought off") is the quest's own, said before. At sea nothing changes.
+  ("The attackers have been fought off") is the quest's own, said before. At sea the sea fight's gate answers (NAV-D) -
+  and RAID-WON (2026-10-19, `01-Overview/bugs/Field-Bugs-2026-10-19.md`): a raid the sea fight WON ends the same way,
+  through the naval host's win (`navalHost.js wonRaid` -> world.js endRaid's `won` -> `raidAshore.js won`): its living
+  foes withdrawn, its `_ally_` among them, and its quest ended with `end quest`'s two ticks of grace (`endQuest`; AUDIT
+  FB1019 D3: no break from outside a tick - the pirate attack's victory gong rides that grace), its uid the sea fight's
+  until it ends (D1). It ran on, five Warriors on the deck counted as enemies near. Her ship gone from the sea under the
+  fight, its crew goes home and her boarders fight on (`raidAshore.js crew`, D2).
 - **The withdraw** (`scenes/raidAshore.js createRaidAshore`, built once by the world host before the quest bridge):
   every LIVING foe the quest stood (`questFoesOf`, the quest resource behaviour's UID - world.js endRaid's law) out of
   every pool it can stand in now - the street's (`exteriorFoes`) and, below deck, the room's (`modes.interiorPool()`) -
   the dead left lying to be looted. Its grace ticks can still place a wave a CreateFoe had in flight, so the quest's end
-  (world.js `onQuestEnded`) sweeps again, for a raid ended ashore only, once.
+  (world.js `onQuestEnded`) sweeps again, for a raid ended ashore or won at sea, once; and a raid's wave that lands past
+  both sweeps (its art or an online grant awaited) is withdrawn as it lands - on the deck, the open ground's ring and
+  below deck (`raidAshore.js late`, a raid's foe alone; AUDIT FB1019 D1, D5).
 - **One raid at a time on the fast travel too** (`onPreFastTravel`): the IL arms its ambush whatever runs, so a voyage by
   ship while a raid's quest ran started a second over the first. It answers 'busy' now, as `raidAtSea` and the sea
   fight's boarders already did (`raidRefusal`), the blocks left as the running raid set them.

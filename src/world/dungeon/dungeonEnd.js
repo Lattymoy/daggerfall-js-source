@@ -22,3 +22,24 @@ export function dungeonEndOf(from, marks) {
   const d = (/** @type {M} */ m) => Math.hypot(m.x - from.x, m.z - from.z);
   return list.reduce((a, m) => (d(m) > d(a) ? m : a));
 }
+
+/** LAIR-WALK: how long a revenant's lair waits on the dungeon's navmesh to know where a walk reaches (wall ms) - a bake
+ *  that never lands stands it by the marker law alone. */
+export const LAIR_WALK_WAIT_MS = 20000;
+/**
+ * LAIR-WALK (bible/01-Overview/bugs/Field-Bugs-2026-10-19.md): THE END A WALK REACHES - the farthest of `marks` from `from`
+ * that `reaches` answers true for (the host's: the floor the navmesh floods from where I came in, ai/nav/navmesh.js
+ * reachableFrom), the farthest asked first and a tie keeping the list's order as dungeonEndOf does; null when none does.
+ * No test (`reaches` null): dungeonEndOf.
+ * @template {{ x: number, z: number }} M
+ * @param {{ x: number, z: number } | null | undefined} from
+ * @param {M[] | null | undefined} marks
+ * @param {((m: M) => boolean) | null} [reaches]
+ * @returns {M | null}
+ */
+export function reachableEndOf(from, marks, reaches = null) {
+  if (typeof reaches !== 'function') return dungeonEndOf(from, marks);
+  const list = Array.isArray(marks) ? marks.filter((m) => Number.isFinite(m?.x) && Number.isFinite(m?.z)) : [];
+  const d = (/** @type {M} */ m) => (from ? Math.hypot(m.x - from.x, m.z - from.z) : 0);
+  return list.map((m, i) => ({ m, i, d: d(m) })).sort((a, b) => b.d - a.d || a.i - b.i).find(({ m }) => reaches(m))?.m ?? null;
+}

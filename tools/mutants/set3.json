@@ -146,11 +146,12 @@
   {
     "name": "SET3-the-doubling-at-half-health-itself",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "e.health < e.maxHealth / 2",
-    "new": "e.health <= e.maxHealth / 2",
+    "old": "(healthShare(e) ?? 1) < 0.5;",
+    "new": "(healthShare(e) ?? 1) <= 0.5;",
     "tests": [
       "test/systems/set3_powers.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-18f RELAY-SHARE (PIN MOVED): re-aimed by content - under half is read through the one share law (combat/healthShare.js)."
   },
   {
     "name": "SET3-the-carry-dropped",

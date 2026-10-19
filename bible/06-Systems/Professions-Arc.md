@@ -144,6 +144,9 @@ Enchanting - ten professions a character holds, with the five that gather.
 
 - **The crafter's limit** - DECIDED: a character may raise at most **two crafts above Journeyman (50)**. Gathering is
   unlimited. CRAFT3 (41.6): two of the five crafts. No one character makes everything; trade equips an army.
+  CRAFT-LIMIT-SAID (41.10, FIELD BUGS 2026-10-18f): a third craft stops at 26,009 XP, one short of rank 51, and every
+  act of it then pays none - said at every station, on the Professions tab and in the craft's word since. No rank is
+  ever lowered, so the two are the character's for good (OPEN, the owner's: a craft let go).
 - **Online only** - DECIDED: nothing offline earns profession XP.
 
 ### 3.3 Specialisations
@@ -4175,6 +4178,81 @@ outfitting. I got somehow it once from...Fishing net? Then never after."
   the host's one call, and every station's box read off the real book. `tools/mutants/fb1015f_firstcraft.json` (20, all
   dead). PIN MOVED: `craft1_chain` (the host's craft word, its chain still first) and `prof10_client` (the jeweller's
   XP its own line).
+
+### 41.10 CRAFT-LIMIT-SAID - the crafter's limit said where it acts, and a station's XP the service's own (BUILT 2026-10-18, FIELD BUGS 2026-10-18f)
+
+The Discord, CC/Astro, "Smithing stuck at 50": "I am unsure if its meant to stop here or if I am missing something but
+I have been stuck at level 50 smithing for about 3 days now. it is literally 1xp off of levelling up but everything I
+craft gives me 0xp." The screenshot: the anvil's Silver Dagger at Smithing 50, "60 Smithing XP, and 500 more the first
+time you make this piece at this tier.", and the word "You made a Fine Silver Dagger (+0 Smithing XP)."
+
+- **FOUND - the limit held, and nothing said it.** 3.2's crafter's limit (DECIDED; Mac kept it at CAP-OFF, section 40):
+  a character raises at most two crafts past Journeyman, and every other craft stops at `craftXpCap`'s
+  `xpForRank(51) - 1` - 26,009 XP, rank 50, one XP short of 51: the report's "1xp off". The service credits
+  `MAX(0, MIN(earned, cap - held))` in the act's own INSERT (`craftAtAnvil`; the smelt's, the temper's, the brew's and
+  the disenchant's alike), so at that ceiling every act of the track pays none, its first's 500 too. Reproduced on the
+  real Worker: Smithing at 26,009 behind Building 60 and Provisioning 55, the anvil's box read word for word as the
+  screenshot, and the Worker answered `xp: 0, first: true`; with Provisioning at 50 the same craft paid its 60 and 500.
+  The player's other two crafts are not in the screenshot, but nothing else pays a rank-50 craft none (the Firmament's
+  XP channels floor at -30%, and `scaleXp` of 60 is 42 at worst), and the ceiling's exact XP is the limit's alone.
+- **And the station's line read another law.** `craftXpLine` said `craftXp` alone; the service pays it with the
+  Firmament's percent on it (FIRM1's `scaleXp`, never on the 500), the 500 laid on, under the room the track has left.
+  The line read neither the limit (the report's 0) nor the stars (a Smithing XP star's percent, paid and never said),
+  and a Master's stations promised figures a full track never takes (`PROF_XP_MAX - held` is none).
+- **DECIDED: the limit stands (the owner's) and is said where it acts; a station says what the service credits.**
+  The service decides by the same law; AUDIT FB1018f L5-1 made it one decision: each act's INSERT and its track's write
+  count the other crafts past Journeyman in their own statement (`server-account/src/professions.js` craftCapSql, a
+  D1 batch one transaction) - the ceiling had been `craftXpCap` of a track read before the batch, bound as a literal,
+  so two acts at once could raise a third craft past 50 and freeze all three for good. No wire or account version
+  moved. A craft already held past its ceiling is said at its own rank (L5-2); a third craft below 50 reads its next
+  rank's figure (L5-3); a Master's craft word is the top's, `prof.craft.xpTop` (L5-4).
+  - The law (`src/net/professionLaw.js`): `craftLimit(profession, ranks, xp)` - `{ cap, room, by }`: `craftXpCap`'s
+    ceiling, what the track can still take, and the crafts past Journeyman that hold it, in the tab's order (a
+    gathering track never held, 3.2's "Gathering is unlimited"); `craftLimitOf(tracks, profession)` the same off the
+    service's track views, each rank the service's own (`rankOfXp` of its XP); `creditedXp(earned, room)`, the
+    decision's `MAX(0, MIN(...))`. The book (`src/net/profBook.js`): `limit(profession)`.
+  - The words (`src/ui/craftXpWords.js`): `paidXp` - an act's figure as the service pays it; `capLine` - "No Smithing
+    XP: Building and Provisioning stand above Journeyman, and the crafter's limit holds Smithing at rank 50." ("At most
+    9 Smithing XP: ..." where a little room is left; "No Smithing XP: Smithing is at Master." at the top), said in place
+    of a line the track cannot take, by `craftXpLine` (now with the Firmament's percent on the craft's XP),
+    `dishFirstLine` and `masonWorksFirstLine`; `craftXpText` - "(+0 Smithing XP - Building and Provisioning stand above
+    Journeyman, and the crafter's limit holds Smithing at rank 50)" where the craft left the track no room (it said
+    "(+0 Smithing XP, with the first-time bonus)" for a first the limit ate); `limitRuleLine`.
+  - The stations (`src/ui/professions/profPages.js` `craftPayOf` - the limit off the book's tracks, the Firmament's
+    percent in force, `systems/firmamentLive.js`): the anvil, the workbench, the loom, a Sculptor's carving and the
+    jeweller's bench say `craftXpLine` with it; the mason's works; the fire (its pans' XP unsaid where none is paid -
+    "3 pans." - and the limit's line for its first's); the alchemy station; the enchanting station and the temper (each
+    row its credited figure, "+0", and the limit's line once).
+  - The Professions tab: a held craft's XP line its ceiling - "26,009 / 26,009 XP - the crafter's limit holds it at rank
+    50", where "26,009 / 26,010 XP" read as one XP from a rank it cannot reach - and under "Crafts above Journeyman: 2 of
+    2" what the count does: "A character raises only 2 crafts past Journeyman: yours are Building and Provisioning, so
+    your other crafts stop at rank 50. No craft's rank is ever lowered." Before the second: "...; once 2 of yours pass
+    rank 50, the others stop there."
+- **FACT - nothing unlocks it on that character.** Every write to `prof_tracks` raises a track's XP or holds it (the
+  harvest's, the craft's, the smelt's, the temper's, the brew's, the disenchant's, a writ's, a Motherlode's; a
+  specialisation's change moves no XP; 0088 kept the higher parent); only deleting the character removes its tracks
+  (`server-account/src/realm.js`, PROF-DELETE). So a character's two crafts past 50 are its for good, and the tab now
+  says so before the second is raised. DECIDED (Mac, 2026-10-19: "Stop with the decisions for me"): a craft is not let go back to 50 - 3.2's limit stands, said
+  before the second craft passes it.
+- **The four hosts**: `scenes/world.js`'s craft word hands the book's limit in, in its one call (`craftXpText(rec,
+  r.data, st.xp, profBook.limit(rec?.profession))` - the line edited, none added to bootWorld, which stands at its
+  ceiling); `worldModes.js`, `exterior.js` and `dungeonContext.js` build no station page and no craft word - none to
+  wire. Left as they were: the brew's, the temper's and the disenchant's words in `world.js` ("(+0 Provisioning XP)") -
+  their stations say it first, and those words never claim a first's bonus.
+- **The words in the player's language**: six new keys (`prof.page.craft.xpLimit`, `prof.page.craft.xpTop`,
+  `prof.craft.xpLimit`, `prof.page.xpHeld`, `prof.page.limit.rule`, `prof.page.fire.pansOnly`), drafted in-session in
+  the thirteen whole languages (`tools/l10nInSession.mjs`; each glossary given "crafter's limit"), the twelve drafting
+  languages owing them with the rest.
+- **As built**: `src/net/professionLaw.js`, `src/net/profBook.js`, `src/ui/craftXpWords.js`,
+  `src/ui/professions/profPages.js`, `src/scenes/world.js` (one line), `locales/*`. Pinned:
+  `test/net/fb1018f_craftlimit.test.js` (6) - the report end to end on the real Worker, book and pages (and the limit
+  shown the cause); the line against the Worker at seven rooms; the Firmament's percent on the anvil, the jeweller's
+  and a temper, as the Worker pays it; every station at the limit; the tab before the choice, a gathering track,
+  Master; the law and the host's one call. `tools/mutants/fb1018f_craftlimit.json` (46, all dead). PIN MOVED:
+  `fb1015f_firstcraft` (the host's word; Building 100's boxes - a Master takes none - and the quarter and the 500 at
+  Building 99), `craft1_chain` (the host's word), `prof9_client` (a Master's fire; AUDIT PROF-541 K7's steps at an
+  Expert's 90), `prof12_client` (a Master's enchanting station; AUDIT PROF12 E2's quarter at 90). Re-aimed by
+  content: 13 records of `fb1015f_firstcraft.json` and one of `prof9.json`, all dead.
 
 ## 42. PROF-FOUND - the station shops found as every shop is (BUILT 2026-10-12)
 

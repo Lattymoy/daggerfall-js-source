@@ -102,11 +102,12 @@
   {
     "name": "CRAFT3-service-smelt-the-discipline",
     "file": "server-account/src/professions.js",
-    "old": "      .bind(player.id, character, rid, cap, nowS, nonce, trackOf(r.xp))] : []),",
-    "new": "      .bind(player.id, character, rid, cap, nowS, nonce, r.xp)] : []),",
+    "old": "      .bind(player.id, character, rid, nowS, nonce, trackOf(r.xp))] : []),",
+    "new": "      .bind(player.id, character, rid, nowS, nonce, r.xp)] : []),",
     "tests": [
       "test/net/prof11_service.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1018f L5-1: re-aimed by content - the cap read in the statement (craftCapSql), no longer bound."
   },
   {
     "name": "CRAFT3-service-asked-unmapped",

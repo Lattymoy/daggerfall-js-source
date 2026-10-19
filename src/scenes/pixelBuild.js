@@ -143,10 +143,8 @@ export function createPixelBuild(host) {
         await wod.settle();
         const picks = wod.picksFor({
           mapPixelX: px, mapPixelY: py, hasLocation: !!dfLocation,
-          // TerrainHelper.GetMapPixelData fills mapRegionIndex from the
-          // location alone: -1 on a pixel without one.
-          mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,
           worldHeight: host.woods.getHeightMapValue(px, py),
+          regionIndex: maps.getRegionIndexAt(px, py),   // WOD-SEA-TEST: the PIXEL's region (the sea's 31), never the location's
         }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect) && gateSite(name, prefab, rect));   // ROADS-CLEAR: a camp, fort, shrine or ruin whose pieces reach a road is not stood (world/road/roadClearance.js); GATE-CLEAR: nor one reaching the Oblivion Gate's clearing
         if (picks.length && onTheBay(px, py)) wodPicks = picks;   // TAMRIEL2: the mod's sites are the Bay's
       } catch (e) {

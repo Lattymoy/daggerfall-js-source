@@ -329,7 +329,7 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
     .map(([a, b]) => new RegExp(`${a} ${b}`));
   for (const rel of ['src/scenes/world.js', 'test/scenes/roadg_pools.test.js', 'test/scenes/enchantpool.test.js',
     'bible/01-Overview/audits/Audit-58.md', 'bible/04-Characters/Characters-Arc.md',
-    'bible/06-Systems/Systems-Arc.md', 'bible/09-Testing/Testing.md']) {
+    'bible/06-Systems/Systems-Arc.md', 'bible/09-Testing/Testing.md', 'bible/09-Testing/Testing-Rows-2026-10-19.md']) {
     const t = read(rel);
     for (const re of struck) {
       assert.equal(re.test(t), false, `${rel}: the false "${re.source}" rationale is struck, not reworded`);

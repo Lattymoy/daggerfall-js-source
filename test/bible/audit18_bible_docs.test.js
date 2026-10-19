@@ -578,7 +578,7 @@ test('AUDIT 39r: three pages teach the move-sound RE-ARM, not the resume', () =>
   assert.match(read('src/systems/lycanthropy.js'), /the third call site[\s\S]{0,200}entry\.moveSoundTimer = initMoveSoundTimer\(rolls\);/,
     'the port lost the morph-side re-arm the three pages now teach');
 
-  const testing = read('bible/09-Testing/Testing.md');
+  const testing = read('bible/09-Testing/Testing.md') + read('bible/09-Testing/Testing-Rows-2026-10-19.md');   // LEGIBLE 1b: the page and its closed table
   assert.ok(!testing.includes('morphing back mid-wait RESUMES rather than restarting'),
     'Testing.md is teaching the resume again');
   assert.ok(!testing.includes('THE TIMER IS ARMED AT THE CURSE, in Start (:67), not at the first transform'),
@@ -594,7 +594,7 @@ test('AUDIT 39r: three pages teach the move-sound RE-ARM, not the resume', () =>
 });
 
 test('AUDIT 39r: the three re-read Testing.md rows agree with the suites they describe', () => {
-  const testing = read('bible/09-Testing/Testing.md');
+  const testing = read('bible/09-Testing/Testing.md') + read('bible/09-Testing/Testing-Rows-2026-10-19.md');   // LEGIBLE 1b: the page and its closed table
 
   // bss: ReadImageData short-reads rather than throwing (BssFile.cs:210-222)
   assert.ok(!testing.includes('a truncated body is a load failure that leaves no record behind'),
@@ -770,11 +770,8 @@ test('AUDIT 58: the campaign record is cited to the file that holds it, and the 
     'the cross-cut table still bills the permanent metric offset as staleness');
   assert.match(status, /Testing\.md:4`'s Suite line is not a stale record/,
     'Port-Status no longer says what Testing.md:4 mechanically is');
-  const manifest = read('test/bible/manifest.test.js');
-  assert.match(manifest, /Suite: \(\\d\+\) tests across \(\\d\+\) files\\\./,
-    'manifest.test.js no longer reads the Suite line Port-Status now points at');
-  assert.match(manifest, /src\.match\(\/\^test\\\(\/gm\)/,
-    'the pin no longer counts top-of-line test\\( calls, which is the metric Port-Status names');
+  // LEGIBLE 1b (2026-10-19) retired the Suite line and the manifest's count of it on purpose: Port-Status is the
+  // record of 2026-09-02, when the line was pinned, and says so as of that day.
 
   // 3. NO UN-DELETED RESIDUE. A rewritten entry that leaves its
   //    predecessor below it reads as a second, live claim; the tell is

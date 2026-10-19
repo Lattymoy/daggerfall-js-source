@@ -278,11 +278,12 @@
   {
     "name": "PROF3-svc-uncapped-xp",
     "file": "server-account/src/professions.js",
-    "old": "MAX(0, MIN(?10 + f * ?13, ${Number(cap)} - COALESCE(",
-    "new": "MAX(0, MIN(?10 + f * ?13, ${Number(999999)} - COALESCE(",
+    "old": "MAX(0, MIN(?10 + f * ?13, ${cap} - COALESCE(",
+    "new": "MAX(0, MIN(?10 + f * ?13, 999999 - COALESCE(",
     "tests": [
       "test/net/prof3_service.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1018f L5-1: re-aimed by content - the cap read in the statement (craftCapSql), no longer bound."
   },
   {
     "name": "PROF3-svc-one-kit",

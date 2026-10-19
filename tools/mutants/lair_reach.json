@@ -1,0 +1,47 @@
+[
+  {
+    "name": "LAIR-REACH-the-lair-off-the-law",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const far = (reaches && dungeonEnd(reaches)) || dungeonEnd();",
+    "new": "    const far = reachableEndOf(dungeon.enterMarker ?? dungeon.startMarker ?? null, _layoutEnemies);",
+    "tests": [
+      "test/systems/revenant/lair_reach.test.js"
+    ]
+  },
+  {
+    "name": "LAIR-REACH-the-rift-off-the-law",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const end = dungeonEnd();",
+    "new": "    const end = reachableEndOf(dungeon.enterMarker ?? dungeon.startMarker ?? null, _layoutEnemies);",
+    "tests": [
+      "test/systems/revenant/lair_reach.test.js"
+    ]
+  },
+  {
+    "name": "LAIR-REACH-the-candidates-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return reachableEndOf(from, sdEndMarks(",
+    "new": "    return reachableEndOf(from, _layoutEnemies ?? sdEndMarks(",
+    "tests": [
+      "test/systems/revenant/lair_reach.test.js"
+    ]
+  },
+  {
+    "name": "LAIR-REACH-the-claim-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!far) { releaseRevenantStand(r); return null; }",
+    "new": "    if (!far) { return null; }",
+    "tests": [
+      "test/systems/revenant/lair_reach.test.js"
+    ]
+  },
+  {
+    "name": "LAIR-REACH-the-caps-kept",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  const inner = marks.filter((m) => !SD_BORDER_BLOCK_RE.test(blockOf(m)?.name ?? ''));",
+    "new": "  const inner = marks;",
+    "tests": [
+      "test/systems/revenant/lair_reach.test.js"
+    ]
+  }
+]

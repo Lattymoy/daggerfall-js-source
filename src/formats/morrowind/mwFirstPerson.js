@@ -2755,7 +2755,7 @@ export function posePartClocks(assembly, value, { frameTime = value, slots = WEA
 }
 
 export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
-  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null, climb = null, skin = true, mirror = null, run = null, hold = null } = {}) {
+  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null, climb = null, skin = true, mirror = null, run = null, hold = null, motion = null } = {}) {
   const { fns, skeleton, pieces } = assembly;
   if (!fns || !skeleton) return assembly;
   // MIRROR-BIND: an arm mirrored across the picture is mirrored by the binds of the skins it wears (mirrorBindsOf)
@@ -2775,6 +2775,10 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
   // transform is identity - true of every fixture, false of retail data,
   // where the difference is a hand floating away from its forearm.
   applyFirstPersonNeck(skeleton, pose, GRAPH_ROOT, fns.skelMats, neckPitch, neckAim, neckOffset);
+  // BODY-MOTION (characters/bodyMotion/bodyMotion.js, the third-person body's): the gait, the carry and a blow's body
+  // solved over the clip's pose - after the mirror (a pair's arm is the layer's to place) and UNDER the run, the climb,
+  // the seat and the long gun's hold, which still win the bones they ask for
+  assembly.motionFit = motion ? motion(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;
   // TWO-HANDS AUDIT: the running hands' reach (combat/fpArm.js firstRun), by the climb's own solver and UNDER the
   // climb's request - each at its own weight: the climb eases every wrist on from where the run put it, so the two
   // blend (no choosing: a run easing out as a climb or a sheet comes in is still drawn, never dropped whole)

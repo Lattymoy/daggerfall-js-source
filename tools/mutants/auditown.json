@@ -2,30 +2,30 @@
   {
     "name": "AOWN-O3-growth-fanned",
     "file": "server/src/index.js",
-    "old": "  return out.length > sentLength + id.length + 8 ? null : out;",
+    "old": "  return out.length > sentLength + id.length + 8 + (g ? 6 : 0) ? null : out;",
     "new": "  return out;",
     "tests": ["test/net/own1.test.js"]
   },
   {
     "name": "AOWN-O4-stringify-unguarded",
     "file": "server/src/index.js",
-    "old": "  try { out = JSON.stringify({ t, id, data }); } catch { return null; }",
-    "new": "  out = JSON.stringify({ t, id, data });",
+    "old": "  try { out = JSON.stringify(g ? { t, id, g: 1, data } : { t, id, data }); } catch { return null; }",
+    "new": "  out = JSON.stringify(g ? { t, id, g: 1, data } : { t, id, data });",
     "tests": ["test/net/own1.test.js"]
   },
   {
     "name": "AOWN-own-arm-unguarded",
     "file": "server/src/index.js",
-    "old": "    const out = fanOut(kind, a.id, data, length);   // AUDIT (pre-merge) O3/O4\n    if (out == null) { this._junk(ws); return budget.bucket; }",
-    "new": "    const out = kind === 'own' ? JSON.stringify({ t: 'own', id: a.id, data }) : fanOut(kind, a.id, data, length);   // AUDIT (pre-merge) O3/O4\n    if (out == null) { this._junk(ws); return budget.bucket; }",
+    "old": "    const out = fanOut(kind, a.id, data, length, a.gv === 1);   // AUDIT (pre-merge) O3/O4; GRANT-DOOR: vouched\n    if (out == null) { this._junk(ws); return budget.bucket; }",
+    "new": "    const out = kind === 'own' ? JSON.stringify({ t: 'own', id: a.id, data }) : fanOut(kind, a.id, data, length, a.gv === 1);   // AUDIT (pre-merge) O3/O4; GRANT-DOOR: vouched\n    if (out == null) { this._junk(ws); return budget.bucket; }",
     "tests": ["test/net/own1.test.js"],
     "note": "SCALE5b (re-aimed by content): the foes and own arms share `_foesFan` - the own arm's frame unguarded."
   },
   {
     "name": "AOWN-foes-arm-unguarded",
     "file": "server/src/index.js",
-    "old": "    const out = fanOut(kind, a.id, data, length);   // AUDIT (pre-merge) O3/O4\n    if (out == null) { this._junk(ws); return budget.bucket; }",
-    "new": "    const out = kind === 'foes' ? JSON.stringify({ t: 'foes', id: a.id, data }) : fanOut(kind, a.id, data, length);   // AUDIT (pre-merge) O3/O4\n    if (out == null) { this._junk(ws); return budget.bucket; }",
+    "old": "    const out = fanOut(kind, a.id, data, length, a.gv === 1);   // AUDIT (pre-merge) O3/O4; GRANT-DOOR: vouched\n    if (out == null) { this._junk(ws); return budget.bucket; }",
+    "new": "    const out = kind === 'foes' ? JSON.stringify({ t: 'foes', id: a.id, data }) : fanOut(kind, a.id, data, length, a.gv === 1);   // AUDIT (pre-merge) O3/O4; GRANT-DOOR: vouched\n    if (out == null) { this._junk(ws); return budget.bucket; }",
     "tests": ["test/net/own1.test.js"],
     "note": "SCALE5b (re-aimed by content): the foes and own arms share `_foesFan` - the foes arm's frame unguarded."
   },

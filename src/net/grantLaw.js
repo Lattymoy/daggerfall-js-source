@@ -289,6 +289,11 @@ export const grantMarksAllow = (g, i, { z, cp }) => GRANT_MARKLESS.includes(g.k)
 export const GRANT_RELAY_MIN = 218;
 /** Does the relay at version `v` take a grant's ask? */
 export const relaySupportsGrant = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= GRANT_RELAY_MIN;
+/** FOE-BOUNDS (Spawn-Grants section 19): the first relay that takes a tally's `stats` - an older one refuses the whole tally
+ *  for a word it does not know, so a reader hands that row only to a relay at this or later. */
+export const GRANT_STATS_RELAY_MIN = 223;
+/** Does the relay at version `v` take a tally's `stats`? */
+export const relaySupportsGrantStats = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= GRANT_STATS_RELAY_MIN;
 
 /** The law's modes (relayCfg `grantMode`, the welcome's `gm`): `off` - no ask is made or answered; `measure` - every ask
  *  is granted and what the gate would refuse is counted (GRANT2 to GRANT5); `enforce` - the gate refuses (GRANT6). */
@@ -306,14 +311,15 @@ export const GRANT_RENEW_MAX = 32;
 export const GRANT_TALLY_ROWS_MAX = 32;
 export const GRANT_TALLY_MS = 10 * 60 * 1000;
 export const GRANT_TALLY_COUNT_MAX = 10_000;
-/** The reasons a READER refuses for (grantRefusal, grantMarksAllow, the signature and the dice) - a tally's words. */
-export const GRANT_READER_REFUSALS = Object.freeze(['unsigned', 'sender', 'cell', 'expired', 'member', 'marks', 'dice', 'twice', 'ungranted']);
+/** The reasons a READER refuses for (grantRefusal, grantMarksAllow, the signature and the dice) - a tally's words. FOE-BOUNDS
+ *  (section 19): `stats`, a record whose health no builder could give it (net/foeBounds.js foeStatsRefusal). */
+export const GRANT_READER_REFUSALS = Object.freeze(['unsigned', 'sender', 'cell', 'expired', 'member', 'marks', 'dice', 'twice', 'ungranted', 'stats']);
 /** GRANT6-GRANT7 (Spawn-Grants section 15): THE REASONS ONLY A CHANGED CLIENT GIVES - a grant no relay signed (once the
  *  reader has waited for it), another's, a member past it, marks past it, a member standing twice. GRANT7's case counts
  *  these alone. The rest come of an honest client's timing or settings too - a record that beat its carry (`cell`) or its
  *  renewal (`expired`), a level risen since its checkpoint (`dice`), a stand whose grant never came (`ungranted`) - and are
- *  the measure's. */
-export const GRANT_CASE_REASONS = Object.freeze(['unsigned', 'sender', 'member', 'marks', 'twice']);
+ *  the measure's. FOE-BOUNDS (section 19): `stats` - a health past every builder's worst is no timing and no setting. */
+export const GRANT_CASE_REASONS = Object.freeze(['unsigned', 'sender', 'member', 'marks', 'twice', 'stats']);
 /** GRANT6: what an enforcing reader stands down - the case's reasons and a record with no grant (the law's whole point:
  *  without it a changed client sends none). An honest owner never streams one while the law enforces (scenes/
  *  exteriorFoes.js spawnFoe drops a stand its grant did not come for). A reader stands nothing down for the rest. */

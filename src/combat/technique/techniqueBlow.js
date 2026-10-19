@@ -5,7 +5,7 @@
 // arrow lands through it). Neither grows a second performer: the swing still runs DFU's CalculateAttackDamage on every
 // foe it reaches and each pool's own door still lands the number (its corpse, its crime, a puppet's owner); the blow
 // only answers WHICH foes it reaches and WHAT the formula's number is weighed by - and (MARTIAL3) tells who listens that
-// it landed. A leaf: imports nothing.
+// it landed. A leaf but for the one share law (combat/healthShare.js, itself a leaf).
 //
 // A blow (combat/techniques.js makes them):
 //   { id, mult, wounded, toHit, reach, arc, lane, single, feet, yaw }
@@ -17,6 +17,8 @@
 //   lane     { from: [x, z], dir: [x, z] (unit), len, halfW } - a dash's path: every foe the body passed
 //   single   the nearest foe it reaches alone
 //   feet     where the strike is made from, in the host's frame; `yaw` the look's
+
+import { healthShare } from '../healthShare.js';   // AUDIT FB1018f L3-5: Headsman's Chop reads a body's share by the one law
 
 /** A foe's capsule (the DaggerfallEnemy prefab's controller radius) when its record states none. */
 export const TECH_BODY_RADIUS = 0.45;
@@ -66,13 +68,12 @@ export function blowReaches(blow, foe, sight) {
   return cos >= Math.cos(/** @type {number} */ (blow.arc));
 }
 
-/** The blow's weight on this foe: its multiplier, and Headsman's Chop's share of what the foe has lost. */
+/** The blow's weight on this foe: its multiplier, and Headsman's Chop's share of what the foe has lost. AUDIT FB1018f L3-5:
+ *  that share by the one law (combat/healthShare.js healthShare) - a body the relay runs by the relay's word of it, never its
+ *  stand-in's 1e9 placeholder (whole, so the Chop gave nothing on any of them); none heard, whole, as before. */
 export function blowMult(blow, foe) {
   let m = Number.isFinite(blow?.mult) ? blow.mult : 1;
-  if (blow?.wounded > 0) {
-    const e = foe?.entity, max = e?.maxHealth;
-    if (max > 0) m += blow.wounded * Math.max(0, Math.min(1, 1 - (Number.isFinite(e.health) ? e.health : max) / max));
-  }
+  if (blow?.wounded > 0) m += blow.wounded * Math.max(0, Math.min(1, 1 - (healthShare(foe?.entity) ?? 1)));
   return m;
 }
 

@@ -235,9 +235,9 @@
   {
     "name": "SERPENT-SET-the-bow-refused",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!(damage > 0) || !weapon) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  if (ranged(weapon)) return;",
-    "new": "  if (!(damage > 0) || !weapon) return;\n  if (ranged(weapon)) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone",
-    "why": "a bow's blow never tightens it",
+    "old": "  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  if (ranged(weapon)) return;",
+    "new": "  if (ranged(weapon)) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone",
+    "why": "PIN MOVED (AUDIT FB1018f L3-3): the guard above reads the ward too; a bow's blow never tightens it",
     "tests": [
       "test/systems/serpentset.test.js"
     ],

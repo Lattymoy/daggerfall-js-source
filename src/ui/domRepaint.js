@@ -19,20 +19,54 @@
 // the same list it did a moment ago. When the tree genuinely differs -
 // a different stage, a sheet that opened - the path simply misses and
 // the new element starts at the top, which is what it should do.
+//
+// FB1018f SPELL-SCROLL: AND A PANE CAN SAY WHAT IT SHOWS. A tree of the
+// same shape can show another thing in the same place - the next spell's
+// page beside the book's list, another section of the Chronicle - and
+// that pane should start at its top as a new shape does. An element
+// carrying `data-scroll-key` puts the key into its step of the path: the
+// same key keeps its offset, another misses. A pane with no key is kept
+// by its place alone, as before.
 
 /** The path from the host to one element: each step is a tag plus the
- *  element's index among its siblings. Cheap, and stable for a tree
- *  that is rebuilt the same way. */
+ *  element's index among its siblings, and its `data-scroll-key` where
+ *  it carries one. Cheap, and stable for a tree that is rebuilt the
+ *  same way. `at` is the indices alone, host first - the way back down
+ *  to the one element that can have this path. */
 function pathOf(host, el) {
   const parts = [];
+  const at = [];
   let n = el;
   while (n && n !== host) {
     const parent = n.parentNode;
     if (!parent) break;
-    parts.push(`${n.tagName}.${n.className || ''}:${[...parent.children].indexOf(n)}`);
+    const key = n.getAttribute?.('data-scroll-key');
+    const i = [...parent.children].indexOf(n);
+    parts.push(`${n.tagName}.${n.className || ''}${key != null ? `#${key}` : ''}:${i}`);
+    at.push(i);
     n = parent;
   }
-  return parts.reverse().join('>');
+  return { path: parts.reverse().join('>'), at: at.reverse() };
+}
+
+/** AUDIT FB1018f L2-4: THE ELEMENT A SAVED PATH NAMES, found by walking
+ *  down its indices - the only element that can carry them - and taken
+ *  when its own path reads the same (the tags, the classes and the keys
+ *  on the way). The rebuilt tree is never mapped whole: every element's
+ *  path built its siblings' list at every step, so one fold press in a
+ *  Chronicle of 500 notes, scrolled, cost ~400 ms in Chromium against
+ *  61 ms at its top (1000 notes: ~1.4 s against 117 ms) - a tree's
+ *  worth of sibling lists for the one or two panes that were scrolled.
+ *  Found this way the scrolled press costs what the unscrolled one does
+ *  (69 ms; 121 ms). What is restored is the same: a path is its indices
+ *  and its steps, and two elements never share both. */
+function findPath(host, { path, at }) {
+  let n = host;
+  for (const i of at) {
+    n = n.children?.[i];
+    if (!n) return null;
+  }
+  return pathOf(host, n).path === path ? n : null;
 }
 
 /**
@@ -55,10 +89,8 @@ export function repaintKeepingScroll(host, rebuild, { focus = false } = {}) {
   rebuild();
   if (kept) giveFocus(host, kept);
   if (!saved.length || !host) return;
-  const byPath = new Map();
-  for (const el of host.querySelectorAll('*')) byPath.set(pathOf(host, el), el);
   for (const [path, top, left] of saved) {
-    const el = byPath.get(path);
+    const el = findPath(host, path);   // AUDIT FB1018f L2-4: the one element that can be it, never the whole tree mapped
     if (!el) continue;   // the tree changed shape - the new element starts fresh
     if (top) el.scrollTop = top;
     if (left) el.scrollLeft = left;

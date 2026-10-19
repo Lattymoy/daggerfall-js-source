@@ -499,12 +499,12 @@
   {
     "name": "CHAP7A-PATRONS-SEASON",
     "file": "server-account/src/npcChapters.js",
-    "old": "    : db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region)).all();",
-    "new": "    : db.prepare(`${head} WHERE c.region = ?2`).bind(n, region)).all();",
+    "old": ": db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region);",
+    "new": ": db.prepare(`${head} WHERE c.region = ?2`).bind(n, region);",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ],
-    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
+    "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved. PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "CHAP7A-SHEET",

@@ -128,16 +128,20 @@ test('FB1012d ALLY-RACE a revenant is the person it was born as: the body that d
   assert.equal(foe.entity.revenant.person, seed, 'stamped on the body still standing');
   assert.deepEqual(who(foe), born, 'which does not change before my eyes');
   // ITS RETURNS - stood as every host stands one (revenantSpawnOptions over applyRevenant's stamp), anywhere, any number
+  let last = null;
   for (const [i, at] of [[1, [40, 0, -12]], [2, [-7, 0, 90]], [3, [210, 0, 33]]]) {
     const p = createExteriorFoes(poolRig());
-    const back = await p.spawnFoe(r.mobileType, at, { feetGiven: true, ...N.revenantSpawnOptions(r, me.level) });
+    const back = last = await p.spawnFoe(r.mobileType, at, { feetGiven: true, ...N.revenantSpawnOptions(r, me.level) });
     assert.equal(ownPerson(back), r.person, `return ${i}: its record's person`);
     assert.deepEqual(who(back), born, `return ${i}: the same person`);
   }
   // a dungeon's record (its layout marker the stand's law) - the stamp wins there too
   assert.equal(foeSeed({ mobileType: r.mobileType, marker: [12, 0, 7], entity: { revenant: foe.entity.revenant } }), r.person, 'a dungeon return: its person over the marker');
-  // THE OATH: sworn, stood by the companion layer at my side through doors - the one that knelt
-  assert.ok(N.revenantSpared(me, foe.entity, { state: 'with' }), 'sworn');
+  // THE OATH: sworn, stood by the companion layer at my side through doors - the one that knelt. PIN MOVED (AUDIT FB1019
+  // C1, C2 - bible/01-Overview/audits/Audit-Field-Bugs-2026-10-19.md): the body its returns replaced is LEFT for good and
+  // swears nothing in its name; the one that kneels is its latest
+  assert.ok(!N.revenantSpared(me, foe.entity, { state: 'with' }), 'the body a later stand replaced swears nothing');
+  assert.ok(N.revenantSpared(me, last.entity, { state: 'with' }), 'sworn');
   const sworn = RC.revenantParty();
   assert.equal(sworn.party[0].person, r.person, 'the sworn member carries its person');
   const { stands, layer } = await throughDoors(sworn, 4);

@@ -389,21 +389,23 @@
   {
     "name": "CHAP3B-SHEET-HIDDEN",
     "file": "server-account/src/npcChapters.js",
-    "old": "(await allChapters(db, nowS)).filter((c) => !hallHidden(c.faction));",
-    "new": "(await allChapters(db, nowS));",
+    "old": "(await allChapters(db, nowS, hallRows?.results ?? [])).filter((c) => !hallHidden(c.faction));",
+    "new": "(await allChapters(db, nowS, hallRows?.results ?? []));",
     "tests": [
       "test/net/chap3b_strength.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "CHAP3B-SHEET-SETTLE",
     "file": "server-account/src/npcChapters.js",
-    "old": "  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
-    "new": "  void seasonZeroOf;\n  const chapters = (await allChapters",
+    "old": "  await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const n = seasonNumberAt(nowS",
+    "new": "  void seasonZeroOf;\n  const n = seasonNumberAt(nowS",
     "tests": [
       "test/net/chap3b_strength.test.js",
       "test/net/audit_chap3.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "CHAP3B-SHEET-DEFAULT",

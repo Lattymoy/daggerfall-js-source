@@ -226,8 +226,11 @@ export async function lineageBirthRefusal(db, playerId, lineage, person) {
  * @param {any} db @param {string} playerId @param {string} character
  */
 export async function isTombstone(db, playerId, character) {
-  return !!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NOT NULL').bind(character, playerId).first());
+  return !!(await db.prepare(`SELECT 1 FROM realm_characters WHERE ${TOMB_WHERE}`).bind(playerId, character).first());
 }
+/** AUDIT PLAN-1000 C2: THE TOMBSTONE'S ONE WHERE (?1 the account, ?2 the character) - isTombstone's and the door's
+ *  (door.js DOOR_SQL), never two literals. */
+export const TOMB_WHERE = 'id = ?2 AND player = ?1 AND dead_at IS NOT NULL';
 
 /**
  * THE TOMBSTONE: the playing tab's character is dead for good - stamped under its lease, which goes with it. A second

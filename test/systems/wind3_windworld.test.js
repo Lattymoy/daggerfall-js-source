@@ -339,5 +339,5 @@ test('WIND3 records: the rendering page, the features arc, the ledger\'s wind ro
   assert.match(rd('bible/07-Rendering/Rendering.md'), /\*\*WIND3 \(2026-09-14\) THE WIND\s+SEEN AND HEARD\.\*\*/, 'the heading wraps on the page');
   assert.match(rd('bible/10-UI/Features-Arc.md'), /^## WIND3 - THE WIND'S THREE ROWS \(2026-09-14\)/m);
   assert.match(rd('bible/01-Overview/Port-Ledger.md'), /\*\*THE WIND \(WIND1, 2026-09-02\)\*\*[^\n]*WIND3 \(2026-09-14\): the wind is seen and heard/);
-  assert.match(rd('bible/09-Testing/Testing.md'), /^\| wind3_windworld\.test\.js \| \d+ \| WIND3/m);
+  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| wind3_windworld\.test\.js \| \d+ \| WIND3/m);
 });

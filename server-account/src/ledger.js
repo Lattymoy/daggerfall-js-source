@@ -47,11 +47,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { JUDGE_VERSION } from './judge.js';
+import { rehomedPrint } from '../../src/systems/loot/lootRarity.js';   // AUDIT FB1018f L1-1: the one move a load's repair makes to a print
 import { LOCKED_SAID_MAX } from '../../src/net/realm/realmTradeLaw.js';   // AUTO-HOLD: the locked pieces an answer names - one number with the session's
 
-/** How long a claim waits for its holder's checkpoint before the holder's still having the piece proves it a copy - a
- *  checkpoint every two minutes, and one in flight when the claim was made. */
-export const DUPE_GRACE_S = 300;
+/** How long a claim waits for its holder's checkpoint before the holder's still having the piece proves it a copy - two
+ *  checkpoints, every five minutes (systems/online/onlineCheckpoint.js ONLINE_CHECKPOINT_MS, CHECKPOINT-5), and half of
+ *  one in flight: the span two and a half checkpoints were before it (AUDIT PLAN-1000 G9 - at 300 it was one). */
+export const DUPE_GRACE_S = 750;
 /** How many keys one statement asks about - D1 binds at most 100 a statement. */
 export const UID_CHUNK = 90;
 /** How many rows one INSERT writes: the four the rows share (?1-?4) and two of each row's own, under D1's hundred. */
@@ -128,12 +130,17 @@ export async function ledgerStep(db, at, pieces, known = null) {
   const fresh = [];
   /** @type {string[]} */
   const copies = [], forged = [], claim = [], takeUp = [], letGo = [], moveOn = [], withdraw = [];
+  /** @type {[string, string, string][]} AUDIT FB1018f L1-1: the rows a load's repair moved - key, its print now, then */
+  const reprint = [];
   /** @type {Map<string, string[]>} the claims proven copies, by claimant */
   const proven = new Map();
   for (const [key, { fp, n }] of shown) {
     if (copiesKnown.has(key)) continue;   // a copy already written down: it moves by no route, and is charged once
     const r = rows.get(key);
-    if (r && r.fp !== fp) { forged.push(key); continue; }   // another piece's key: no claim to that piece
+    if (r && r.fp !== fp) {
+      if (!rehomedPrint(r.fp, fp)) { forged.push(key); continue; }   // another piece's key: no claim to that piece
+      reprint.push([key, fp, r.fp]);   // AUDIT FB1018f L1-1: the piece itself, its base moved home by the load (lootRarity.js)
+    }
     if (n > 1) { copies.push(key); if (!r) fresh.push([key, fp]); continue; }   // one piece twice in one record
     if (!r) { if (fresh.length < LEDGER_NEW_MAX) fresh.push([key, fp]); continue; }
     if (r.char_id === char && r.state === 'held') {
@@ -172,6 +179,7 @@ export async function ledgerStep(db, at, pieces, known = null) {
   }
   // the writes - only what changed
   steps.push(...insertSteps(db, at, fresh, 'ON CONFLICT (uid) DO NOTHING'));
+  for (const [key, fp, was] of reprint) steps.push(db.prepare('UPDATE item_uids SET fp = ?2 WHERE uid = ?1 AND fp = ?3').bind(key, fp, was));   // AUDIT FB1018f L1-1
   if (copies.length) steps.push(...copyRows(db, copies, char, nowS));
   steps.push(...overKeys(db, claim, [char, nowS], (m) => `UPDATE item_uids SET claim_char = ?1, claim_at = ?2 WHERE uid IN (${m}) AND claim_char IS NULL`));
   steps.push(...overKeys(db, takeUp, [at.player, char, at.seq, nowS], (m) => `UPDATE item_uids SET player = ?1, char_id = ?2, seen_seq = ?3, state = 'held', claim_char = NULL, claim_at = NULL, at = ?4 WHERE uid IN (${m}) AND state = 'gone'`));

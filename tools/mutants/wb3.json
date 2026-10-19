@@ -399,11 +399,12 @@
   {
     "name": "WB3-the-state-to-everyone",
     "file": "server/src/index.js",
-    "old": "      this._send(ws, JSON.stringify({ t: 'gate', ...GATE_SEAM.stateOf(f) }));",
+    "old": "      this._send(ws, JSON.stringify({ t: 'gate', ...GATE_SEAM.stateOf(f), me: 1 }));",
     "new": "      this._gateFan([GATE_SEAM.stateOf(f)]);",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (COURT-WATCH / CHECKPOINT-5): re-aimed by content."
   },
   {
     "name": "WB3-the-peer-id-credited",

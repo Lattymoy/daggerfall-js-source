@@ -144,8 +144,8 @@
   {
     "name": "SEAT-LIVE-stream-no-word",
     "file": "src/net/online.js",
-    "old": "{ if (primary && m.id === this.host) this._seatHeardAt = now; this._deliver",
-    "new": "{ this._deliver",
+    "old": "{ if (primary && m.id === this.host) this._seatHeardAt = now; if (m.g === 1) this._grantSender(m.id); this._deliver",
+    "new": "{ if (m.g === 1) this._grantSender(m.id); this._deliver",
     "tests": [
       "test/net/fb1018d_seatlive.test.js"
     ],

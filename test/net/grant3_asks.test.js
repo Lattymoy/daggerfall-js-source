@@ -58,7 +58,7 @@ test('GRANT3 THE ASKS\' LAW: a renewal and a carry only signed grants (AUDIT GRA
   assert.equal(validGrantAsk({ k: 'carry', id: 1, grs: [S] }).grs[0].sg, sg);
   assert.deepEqual(validGrantAsk({ k: 'heir', id: 2, hs: [hand({ ...S, h: 1 }, 1), hand(S, 2, 'sock-zed-01')] })?.hs.map((x) => [x.i, x.to]), [[1, 'sock-ann-01'], [2, 'sock-zed-01']], 'a handed grant handed on again, its own member; two heirs in one ask');
   assert.deepEqual(validGrantAsk({ k: 'tally', id: 3, rows: [{ o: 'sock-ann-01', r: 'marks', n: 2, x: 1 }] }), { k: 'tally', id: 3, rows: [{ o: 'sock-ann-01', r: 'marks', n: 2 }] });
-  assert.deepEqual(GRANT_READER_REFUSALS, ['unsigned', 'sender', 'cell', 'expired', 'member', 'marks', 'dice', 'twice', 'ungranted']);
+  assert.deepEqual(GRANT_READER_REFUSALS, ['unsigned', 'sender', 'cell', 'expired', 'member', 'marks', 'dice', 'twice', 'ungranted', 'stats']);   // PIN MOVED (FOE-BOUNDS, Spawn-Grants section 19): `stats`, a record whose health no builder could give it
   assert.deepEqual(validGrantOut({ k: 'carry', id: 4, grs: [S, null] }).grs.map((g) => g && g.g), [41, null]);
   assert.equal(validGrantOut({ k: 'renew', id: 4, grs: [{ g: 1 }] }), null);
   assert.equal(validGrantOut({ k: 'heir', id: 4, gr: S }).gr.g, 41);

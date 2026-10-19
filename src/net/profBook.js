@@ -55,7 +55,7 @@
 // Pure - the door, the storage, the clock and the ids are handed in - so
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs
+import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf, craftLimitOf } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs; CRAFT-LIMIT-SAID: the crafter's limit over a track
 import { CARRIED_MAX, DEPOSIT_MAX, LOOSE_ORIGIN, carriedUsable, carriedWorkable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
 import { recipeById, recipeInputs, recipeOpen } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
@@ -416,6 +416,10 @@ export function createProfBook({ door, storage = null, character = () => null, n
       }
       return t;
     },
+    /** CRAFT-LIMIT-SAID (FIELD BUGS 2026-10-18f): the crafter's limit over a craft's track as the service last said the
+     *  character's tracks (professionLaw craftLimitOf - `{ cap, room, by, rank }`, the law the service's decisions bind;
+     *  AUDIT FB1018f L5-2: `rank` the rank it is held at) - a discipline its craft's. */
+    limit(profession) { return craftLimitOf(state.tracks.values(), profession); },
     /** One material's count in the Stores, own and bought (GOLD-MARKET: and `gold`, bought with gold, where held). */
     store(material) { return state.stores.get(material) ?? { material, own: 0, bought: 0 }; },
     /** What a writ or the market may spend of it - never what gold bought (GOLD-MARKET's wall). BAG1: the Stores' and, for

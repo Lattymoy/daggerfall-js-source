@@ -328,7 +328,7 @@ export function seatFor(b, f, yaw, st) {
   return b.seatSpec;
 }
 
-export function peerCamera(shown, feet, speed = 0, cam = null, yaw = peerBodyYaw(shown)) {
+export function peerCamera(shown, feet, speed = 0, cam = null, yaw = peerBodyYaw(shown), travel = null) {
   const c = cam ?? { pos: [0, 0, 0], yaw: 0, pitch: 0, sneaking: false, bob: [0, 0], move: { forward: 0, strafe: 0, running: false, speed: 0, grounded: true, jumping: false, swimming: false, levitating: false } };
   const moving = peerMoving(shown);   // CLIMB5: a shimmy along a lip is no walk
   c.move.grounded = !peerClimbing(shown);   // CLIMB5: on the wall the body is off the ground - the in-air pose the local third person takes there
@@ -337,6 +337,7 @@ export function peerCamera(shown, feet, speed = 0, cam = null, yaw = peerBodyYaw
   c.move.forward = moving ? 1 : 0;
   c.move.running = shown.mv === 2;
   c.move.speed = moving ? speed : 0;
+  c.move.travel = travel;   // AUDIT BODY-MOTION RIG-3: the ground the drawn feet crossed (world, cumulative) - the legs' own travel and its way
   c.sneaking = peerKneeling(shown);   // PEER-ACTS: kneeling at an act (a herb, the Basket's search, the knife at a body) - the rig's crouched idle, Morrowind's own (it has no kneel)
   return c;
 }
@@ -679,6 +680,14 @@ export class PeerBodies {
     // on a moving deck stood in a walk at the ship's speed - and a change of deck (or onto one, or off) starts afresh
     const on = peer.shown.deckKey ?? null, at = on ? peer.shown.deck : f;
     b.speed = stepPeerPace(b.speed, b.paceKey === on ? b.paceAt : null, at, dt);   // HT-WAIST-BACK: net/peer/peerPace.js, the one home
+    // AUDIT BODY-MOTION RIG-3: and the ground itself, as a vector - so the Morrowind body's legs walk the way the body
+    // went (a strafe, a backpedal), not always along its facing. Off a deck only: a deck's place is in the deck's own
+    // turned frame, where the pace alone is read; a jump is a placement, never a stride
+    const prev = b.feet;
+    if (!on && b.paceKey === on && prev && Math.hypot(f[0] - prev[0], f[2] - prev[2]) <= JUMP_UNITS) {
+      b.travel ??= [0, 0, 0];
+      b.travel[0] += f[0] - prev[0]; b.travel[1] += f[1] - prev[1]; b.travel[2] += f[2] - prev[2];
+    } else if (on) b.travel = null;
     b.paceAt = at; b.paceKey = on;
     b.feet = f;
     // the yaw eased toward the pose's (AUDIT MWBODY A8): the rig reads turning off the yaw's change frame to frame,
@@ -690,7 +699,7 @@ export class PeerBodies {
     else b.yaw = Number.isFinite(b.yaw) ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1) : want;   // ...and one born on a bad one takes the first good one
     b.d2 = near ? dist2(f, near) : 0;
     b.far = !!near && b.d2 > this._range * this._range * (b.far ? 1 : this._hyst * this._hyst);   // MWNPC11: a standing body held to the hysteresis past the range, a far one back within it
-    b.cam = peerCamera(peer.shown, f, b.speed, b.cam, b.yaw);
+    b.cam = peerCamera(peer.shown, f, b.speed, b.cam, b.yaw, b.travel ?? null);
     // CLIMB6: the climb the body's limbs take - the hold rebuilt from the pose, a move from its kind, lip and time
     b.cam.climb = (b.climbTrack ??= new PeerClimbTrack()).input(peer.shown, f, b.yaw, this._now(), this._collider());
     // CARDS2b: seated at a card table - the same seated request the sitter's own body takes (player/seatPose.js), at the

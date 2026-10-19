@@ -52,8 +52,7 @@
   "tests": [
    "test/server/d1load.test.js"
   ],
-  "equivalent": true,
-  "why": "Belt and braces: an SQL API refusal carries no data array, and loadTable throws on any answer without rows (pinned in the first test), so the step still never draws a refusal; the status check keeps a non-200 body that happens to carry rows out too."
+  "note": "AUDIT PLAN-1000 A7: not equivalent - an HTTP 500 whose body carries rows was drawn; its fixture now kills it."
  },
  {
   "name": "D1LOAD-input-spliced",

@@ -168,5 +168,5 @@ test('TEX1 records: the arc note on both torch pages, the ledger row, the WW3 co
   assert.match(rd('bible/01-Overview/Port-Ledger.md'), /\*\*ONE SHAPE FOR EVERY TEXTURE DOOR \(TEX1, 2026-09-14\)\*\*/);
   // WW3's record said the crash was the widget's; it was the torches'. Corrected in place.
   assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /the crash itself was HANDHELD TORCHES'/);
-  assert.match(rd('bible/09-Testing/Testing.md'), /^\| tex1_texturedoors\.test\.js \| \d+ \| TEX1/m);
+  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| tex1_texturedoors\.test\.js \| \d+ \| TEX1/m);
 });

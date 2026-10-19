@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-A2-the-load-keeps-the-mark",
     "file": "src/systems/revenant/revenant.js",
-    "old": "_state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); },   // the last game's harm",
-    "new": "_state.mirrorId = null; _lastSlew = null; endPlayerFights(); },   // the last game's harm",
+    "old": "_state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); forgetBodies(); },   // the last game's harm",
+    "new": "_state.mirrorId = null; _lastSlew = null; endPlayerFights(); forgetBodies(); },   // the last game's harm",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]

@@ -96,7 +96,8 @@ test('EG6a THE SWEEP IN CI: verify.yml (every pull request, every deploy) runs e
   assert.match(w, /matrix:\n {8}band: \[0, 1, 2, 3\]/, 'every band');
   assert.match(w, /fail-fast: false/);
   assert.match(w, /ref: \$\{\{ inputs\.ref \}\}/);
-  assert.match(w, /run: node tools\/egSpanSolve\.mjs --sweep --band \$\{\{ matrix\.band \}\} --seeds \$\{\{ inputs\.seeds \|\| 500 \}\} --golden\n/, 'a scheduled run (no inputs) sweeps the nightly\'s 500');
+  // PIN MOVED (SWEEP-FAST): and its part of the band's seeds (test/tooling/sweepfast.test.js)
+  assert.match(w, /run: node tools\/egSpanSolve\.mjs --sweep --band \$\{\{ matrix\.band \}\} --seeds \$\{\{ inputs\.seeds \|\| 500 \}\} --golden --part \$\{\{ matrix\.part \}\}\/\$\{\{ matrix\.parts \}\}\n/, 'a scheduled run (no inputs) sweeps the nightly\'s 500');
   const r = read('.github/workflows/relay-deploy.yml');
   assert.match(r, /\n {2}verify:\n {4}needs: drift\n {4}if: needs\.drift\.outputs\.deploying == 'true'\n {4}uses: \.\/\.github\/workflows\/verify\.yml\n {4}with:\n {6}build: false\n {6}sweep: 500\n/, '500 seeds a band before a relay deploy');
   assert.match(r, /\n {2}deploy:\n {4}needs: \[drift, verify\]\n/, 'and the deploy waits on it');

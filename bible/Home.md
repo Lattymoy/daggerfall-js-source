@@ -230,8 +230,9 @@ createComeSailAwayRuntime each keep their whole state in one
 function's scope, and world.js grew from 8,897 lines to 36,374 in a month. New
 behaviour goes into a module the host wires (`fishHost.js` is the shape) - and
 on the relay into a Room method of its own, not into `_message` - never into the
-host's own function. `test/scenes/hostceiling.test.js` holds each to a ceiling in code
-lines (comments are no weight; a fix's 250 lines of room), on a pull request
+host's own function. `test/scenes/hostceiling.test.js` holds each to a ceiling in logical
+lines (statements and entries, so layout and comments are no weight - LEGIBLE 1,
+`01-Overview/Readability-Arc.md`; a fix's 400 of room), on a pull request
 and on a contributor's machine, never on a deploy; a slice that moves code out
 lowers it in the same change. The method and the map are
 `01-Overview/Host-Split.md`.

@@ -8,6 +8,36 @@
 
 Newest first.
 
+**2026-10-19 - AUDIT PLAN-1000 lanes E-H (SESSION-SIGN; lanes B-D's fixes; COURT-WATCH and CHECKPOINT-5; lane A's
+fixes and the branch whole).** Mac: *"Lets do a comprehensive audit and ensure perfection"*. Four more cold lanes on
+frozen worktrees - two of the slices had had no cold read at all (COURT-WATCH, CHECKPOINT-5, and lane A's own fixes) -
+and no edit until each had reported. The worst: SESSION-SIGN's saving was mostly the replicas' (some 5-6 primary trips a
+second, not 36 - E1, recorded); a pass let the checkpoint and the beat write through a sign-out or a ban (E3 - each asks
+its session and the ban in its own statement now); a new registration read as a guest for four minutes (E2); a watcher
+was bitten by his burning ground (G1); a client on a relay before world222 would be seated and never told (G3 - the
+watcher now waits on a relay that says `me`); a claim whose rate window turned mid-door was refused `progress-seat`
+(F1); the relay-load workflow finished green having read nothing (H3). Every finding fixed, pinned or recorded in
+`11-Multiplayer/Scale-Arc.md` (the lane blocks under RELAY-LOAD, PRIMARY-FOLD, SESSION-SIGN and the owner's calls) and
+`11-Multiplayer/World-Bosses.md` section 24; one call made for the owner (G2: a seat frees only of a fighter gone with
+no part - one who fought keeps it; seating past 256 is COURT-WIDE's). The audit's own slips caught too: two re-aimed
+records that did not parse (E4), a dangling cite (H1), counts said wrong (E12, H8, H9, F8). Relay world222 re-hashed in
+place, account acct157 (undeployed; world218 and acct155 on the branch, renumbered past main's at the merge). Mutants: sessionsign 38, plan1000 30 (one equivalent), primaryfold 42 (four
+equivalent), gatedoor 14 (one equivalent), relayload 38 - all dead or recorded.
+
+**2026-10-18 - AUDIT PLAN-1000 (RELAY-LOAD, GATE-DOOR, PRIMARY-FOLD parts one to three).** Mac, at a thousand
+online: *"We also need to audit everything so far"*. Four cold lanes on frozen worktrees at `81fdd3b5d` - the relay's
+load reader (A), the court's door (B), the door's reads in one trip (C), a week kept and the batches (D) - and no edit
+until all had reported. The worst two: the fold widened a race that loses a progression debit (two overlapping claims of
+one stream; the spend now steps its bucket inside its own upsert and reads nothing - C1), and a court the Worker refused
+before it opened was still counted silence, its player cast out at 21 s (B1). The rest - the `chat` kind's sockets four
+a player not two, a windows question a LIMIT cut, a look change cutting the court's door to 9, the seat's and the
+tombstone's WHEREs one export each, a claim the rate refuses paying the door's reads, the fold's saving overstated, a
+twin-race pin made vacuous, the kept word's key unpinned, the model's means said as medians - fixed, pinned or recorded,
+each in `11-Multiplayer/Scale-Arc.md` beside the slice it is about (RELAY-LOAD's text, GATE-DOOR's and PRIMARY-FOLD's
+lane blocks). Left with reasons: tokenless junk at 48 a second shuts a court's door (SCALE5a's trade, B7), a mid-fight
+deploy's wave against COURT_SILENT_MS, a D1 Time Travel restore under warm isolates (redeploy after - D6). Mutants:
+relayload 32, gatedoor 13, primaryfold 34 (one equivalent as recorded), all dead; AUDIT CHAP S1's two dead again.
+
 **2026-10-17 - AUDIT RVN-STARS (RVN-STARS - PR #999).** Mac: *"Do a comprehensive audit on this and ensure
 perfection"*. Five cold lanes on the frozen branch - the law and the record, the seams, the window and its doors, the
 words in 13 languages with the docs, the balance measured - and no edit until all had reported. The worst: the Blade's

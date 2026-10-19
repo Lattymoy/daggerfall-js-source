@@ -1,0 +1,22 @@
+[
+  {
+    "name": "UNSEEN-KEEPER-warning-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "const failed = (why) => { textures.set(archive, { failed: true }); console.warn(",
+    "new": "const failed = (why) => { textures.set(archive, { failed: true }); (() => {})(",
+    "tests": [
+      "test/scenes/eliteGates/fb1018f_unseenkeeper.test.js"
+    ],
+    "why": "art that will not load hides its mobile's every body for the session, and says so nowhere"
+  },
+  {
+    "name": "UNSEEN-KEEPER-null-art-unsaid",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (tex) textures.set(archive, { tex, archive }); else failed('no texture');",
+    "new": "if (tex) textures.set(archive, { tex, archive }); else textures.set(archive, { failed: true });",
+    "tests": [
+      "test/scenes/eliteGates/fb1018f_unseenkeeper.test.js"
+    ],
+    "why": "a texture answered empty hides its bodies unsaid"
+  }
+]

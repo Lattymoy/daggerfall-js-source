@@ -323,7 +323,7 @@
   {
     "name": "HT-WAIST-the-body-never-swings-it",
     "file": "src/combat/fpArm.js",
-    "old": "        if (hipVisible()) stepHipSwing(cam, dt);\n",
+    "old": "        if (hipVisible() && thirdBuilt.hipHang) hipLantern.step(cam, dt, motion.stride().move > 0.5 ? motion.stride().phase : movementState ? clipCompletion(movementState) % 1 : null, thirdBuilt.hipHang.rot, motion.stride().hipYaw);\n",
     "new": "",
     "tests": [
       "test/combat/htwaist_mwbody.test.js"
@@ -422,7 +422,7 @@
   {
     "name": "HT-WAIST-the-portrait-swings",
     "file": "src/combat/fpArm.js",
-    "old": "        if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (stepHipSwing re-swings it)\n",
+    "old": "        if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (the hip lantern's rider re-swings it)\n",
     "new": "",
     "tests": [
       "test/combat/htwaist_mwbody.test.js"

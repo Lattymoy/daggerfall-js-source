@@ -96,7 +96,7 @@ test('AUDIT D1-NEAR M1 M2 M6: the records say what the data holds - both probes\
   const comment = toml.slice(i + 1, p).map((l) => l.replace(/^# ?/, '')).join(' ');
   assert.ok(comment.includes('the primary is in western North America (the record has the bounds)'), 'the toml says western North America');
   const index = src('bible/01-Overview/Active-Arcs.md').split('\n').find((l) => l.startsWith('- `11-Multiplayer/Scale-Arc.md` D1-NEAR'));
-  const row = src('bible/09-Testing/Testing.md').split('\n').find((l) => l.startsWith('| d1near.test.js |'));
+  const row = src('bible/09-Testing/Testing-Rows-2026-10-19.md').split('\n').find((l) => l.startsWith('| d1near.test.js |'));   // LEGIBLE 1b: the closed table
   assert.ok(index && row);
   const CALIFORNIA = /primary (?:stands|is) in California|which is California|California \(Los Angeles or San Jose\)/;
   for (const [name, text] of [['wrangler.toml', comment], ['the record', record], ['Active-Arcs', index], ['Testing.md', row]]) {

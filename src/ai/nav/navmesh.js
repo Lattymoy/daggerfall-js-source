@@ -37,6 +37,34 @@ function surfaceY(c, x, z) {
   return c.yLo + (c.yHi - c.yLo) * t;
 }
 
+// LAIR-WALK (2026-10-19, bible/01-Overview/bugs/Field-Bugs-2026-10-19.md; AUDIT FB1019 B1, B2): THE PORT'S OWN QUERY,
+// here above the body and outside its digest (test/ai/nav/enhancedAI.test.js) - it calls the body's own locate and
+// heights and changes none of them, so the body stays project-final's. A path search per candidate walked the whole of
+// the way in's floor for each one that failed; this floods it ONCE.
+/** How far a point's height may stand from the surface on the floor it is located onto (m): a point whose own floor never
+ *  made the mesh (a narrow or low space) is not taken for the one under or over it. */
+export const REACH_LEVEL_M = 1;
+/** THE FLOOR A WALK REACHES FROM `start`: its poly and every poly joined to it across a shared edge (a door the bake left
+ *  open stands open; a locked door, a teleporter's jump or a lever's lift joins nothing). Answers a test of a point -
+ *  located as a path's ends are (by its level), on one of those polys, and within REACH_LEVEL_M of that poly's surface
+ *  under it - or null when `start` stands on no poly. */
+export function reachableFrom(chf, start) {
+  const mesh = chf?.mesh;
+  if (!mesh || !mesh.polys.length || !start) return null;
+  const s = locatePoly(chf, start[0], start[2], start[1]);
+  if (s < 0) return null;
+  const seen = new Uint8Array(mesh.polys.length);
+  seen[s] = 1;
+  const stack = [s];
+  while (stack.length) { const cur = stack.pop(); for (const q of mesh.polys[cur].neis) if (q >= 0 && !seen[q]) { seen[q] = 1; stack.push(q); } }
+  return (p) => {
+    const pi = locatePoly(chf, p[0], p[2], p[1]);
+    if (pi < 0 || seen[pi] !== 1) return false;
+    const y = chf.colliders ? surfHNear(chf.colliders, p[0], p[2], chf.ground, polyRefY(mesh, pi)) : polyRefY(mesh, pi);
+    return Number.isFinite(y) && Math.abs(y - p[1]) <= REACH_LEVEL_M;
+  };
+}
+
 // Agent params - set ONCE here, never per level; the bake adapts to whatever geometry it is handed.
 // radius / height / maxStep / maxSlope drive the walkable filter (4.2+); cs / ch are the voxel sizes.
 export const AGENT = {

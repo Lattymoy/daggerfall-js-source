@@ -289,7 +289,7 @@ export class WodWorld {
   /**
    * AddLocation's decision for one pixel (wodLocationLoader.pickLocations).
    * @param {{mapPixelX:number, mapPixelY:number, hasLocation:boolean,
-   *   mapRegionIndex:number, worldHeight:number}} tile
+   *   worldHeight:number, regionIndex?:number}} tile - `regionIndex` the pixel's own (WOD-SEA-TEST)
    * @param {?(x:number, y:number) => number} pathsPoint
    * @param {?(prefabName:string, prefab:object, rect:object) => boolean} siteClear - ROADS-CLEAR (pickLocations)
    */

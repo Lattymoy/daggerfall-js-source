@@ -278,7 +278,10 @@ test('AUDIT CONTRIB H1 (re-aimed by KB1): a mod\'s hotkey is the mod\'s ACTION -
   const b = rd('src/ui/enhanced/enhancedHotbar.js');
   assert.match(b, /const i = slotOfActions\(eventActions\(e\)\);/, 'the bar asks the registry which slot a key is (AUDIT KB1: through eventAction, the event\'s own read - no latch written; UXB1-S: every action a shared key carries)');
   assert.match(b, /const slotOfActions = \(acts\) => acts\.map\(\(a\) => HOTBAR_SLOT_ACTIONS\.indexOf\(a\)\)\.find\(\(i\) => i >= 0\) \?\? -1;/, '...the first of them that is a slot');
-  assert.match(b, /if \(!bar \|\| !hotbarMode\(\) \|\| dropOwners\.size \|\| lastPaused\) return;/, 'gated on the game\'s pause, not the HUD\'s visibility');
+  assert.match(b, /if \(!bar \|\| !hotbarMode\(\) \|\| dropOwners\.size \|\| keysPaused\(\)\) return;/, 'gated on the game\'s pause, not the HUD\'s visibility');
+  // AUDIT FB1018f L2-5: the pause at the press, the host's own (the hooks it hands the finger and the pad), the HUD's
+  // last frame's word only where no host handed any (test/ui/hud/fb1018f_dungeondigits.test.js drives it)
+  assert.match(b, /const keysPaused = \(\) => hostPaused\(\) \?\? lastPaused;/);
   assert.match(rd('src/ui/hud/hud.js'), /paused: !!cursorActive,/);
   setBindings(null);
 });

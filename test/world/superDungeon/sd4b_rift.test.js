@@ -64,9 +64,11 @@ test('SD4b the end: the marker farthest from the entrance across the floor plan 
   assert.deepEqual(marks, [{ x: 1, y: 0, z: 2 }]);
   assert.deepEqual(sdEndMarks([], ends), [{ x: 101, y: 3, z: 201 }]);
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const far = dungeonEndOf\(from, marks\);/, 'RVN7d\'s lair stand');
+  // PIN MOVED (LAIR-REACH): RVN7d's lair stand and the Rift ask ONE end (dungeonEnd - test/systems/revenant/lair_reach.test.js)
+  assert.match(D, /const far = \(reaches && dungeonEnd\(reaches\)\) \|\| dungeonEnd\(\);/, 'RVN7d\'s lair stand');   // PIN MOVED (LAIR-WALK): the farthest a walk reaches, else this end
+  assert.match(D, /const end = dungeonEnd\(\);/, 'a Super dungeon\'s end');
   // PIN MOVED (AUDIT SD IV F38): and the floor under each candidate - the end out of the water where any is
-  assert.match(D, /const end = dungeonEndOf\(dungeon\.enterMarker \?\? dungeon\.startMarker \?\? null, sdEndMarks\(_layoutEnemies, dungeon\.blocks, \(m\) => floorLanding\(collider, \[m\.x, m\.y \+ 0\.2, m\.z\]\)\[1\]\)\);/, 'a Super dungeon\'s end, from the same entrance');
+  assert.match(D, /const from = dungeon\.enterMarker \?\? dungeon\.startMarker \?\? null;\n\s*return reachableEndOf\(from, sdEndMarks\(_layoutEnemies, dungeon\.blocks, \(m\) => floorLanding\(collider, \[m\.x, m\.y \+ 0\.2, m\.z\]\)\[1\]\), reaches\)/, 'from the same entrance');   // PIN MOVED (LAIR-WALK): world/dungeon/dungeonEnd.js reachableEndOf - dungeonEndOf with no walk
 });
 
 test('SD4b the Rift\'s size: 7 m at most, the hall\'s own less its air, never under 2.6 m - and in a cramped corner it moves a step or two to the widest hall on the end\'s own floor (mutants: the ring never fitted; never moved; moved through a wall; moved onto another floor)', () => {
@@ -330,7 +332,7 @@ test('SD4b the hosts by source: the dungeon stands them for a Super dungeon alon
   assert.match(D, /const rift = sdRiftPlace\(floorLanding\(collider, \[end\.x, end\.y \+ 0\.2, end\.z\]\), probe\);\n\s*_sdRetAt = sdReturnPlace\(rift, probe\);\n\s*_sdLanding = sdLandingPlace\(rift, _sdRetAt, probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: _sdRetAt, dynamicDraws, probe \}\);/);   // SD5a (PIN MOVED): the Return's place kept - the way back from the Hour stands a player there; AUDIT SD II (L6 F18, PIN MOVED): past it, never on its foot
   assert.match(D, /if \(playerFeet && !_sdEndAsked\) \{ _sdEndAsked = true; standSdEnd\(\); \}/);
   assert.match(D, /if \(sdEnd\.hasRet && t >= _sdEndCheckAt\) \{ _sdEndCheckAt = t \+ 1000; const w = sdEndWord\(\); if \(w && !w\.returns\) sdEnd\.returnOut\(\); \}/);   // PIN MOVED (AUDIT SD V P1): asked `hasRet`
-  assert.match(D, /if \(playerFeet && !_lairAsked\) \{[^\n]*\n {4}if \(sdEnd\) sdEndFrame\(playerFeet\);/, 'the frame, beside the lair\'s stand');
+  assert.match(D, /if \(playerFeet\) \{ lastPlayerFeet = \[\.\.\.playerFeet\]; lastPlayerHeight = playerHeight; \}\n {4}if \(sdEnd\) sdEndFrame\(playerFeet\);/, 'the frame, the first I stand there');   // PIN MOVED (LAIR-WALK): the lair's stand asked below the navmesh's bake now
   assert.match(D, /const _dropBatches = [^\n]*\n {4}if \(sdEnd\) _dropBatches\.push\(\.\.\.sdEnd\.batches\(\)\);/);
   assert.match(D, /targets\.push\(\.\.\.camps\.targets\(\)\);[^\n]*\n {4}if \(sdEnd\) targets\.push\(\.\.\.sdEnd\.targets\(\)\);/);
   assert.match(D, /\(key\) => sdEnd\?\.hoverName\(key\) \?\? null,/);

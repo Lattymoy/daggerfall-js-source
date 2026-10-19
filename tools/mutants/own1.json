@@ -119,15 +119,15 @@
   {
     "name": "OWN1-session-hears-strangers",
     "file": "src/net/online.js",
-    "old": "m.id !== this.id && this.peers.has(m.id) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('own',",
-    "new": "m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('own',",
+    "old": "m.id !== this.id && this.peers.has(m.id) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { if (m.g === 1) this._grantSender(m.id); this._deliver('own',",
+    "new": "m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { if (m.g === 1) this._grantSender(m.id); this._deliver('own',",
     "tests": ["test/net/own1.test.js"]
   },
   {
     "name": "OWN1-session-hears-itself",
     "file": "src/net/online.js",
-    "old": "isWorldRoom(this.room) && m.id !== this.id && this.peers.has(m.id) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('own',",
-    "new": "isWorldRoom(this.room) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('own',",
+    "old": "isWorldRoom(this.room) && m.id !== this.id && this.peers.has(m.id) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { if (m.g === 1) this._grantSender(m.id); this._deliver('own',",
+    "new": "isWorldRoom(this.room) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { if (m.g === 1) this._grantSender(m.id); this._deliver('own',",
     "tests": ["test/net/own1.test.js"]
   },
   {

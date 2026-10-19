@@ -18,16 +18,16 @@
   {
     "name": "INT16-no-lease",
     "file": "server-account/src/progress.js",
-    "old": "WHERE player = ?1 AND lease IS NOT NULL AND dead_at IS NULL",
-    "new": "WHERE player = ?1 AND dead_at IS NULL",
+    "old": "export const SEAT_WHERE = 'player = ?1 AND lease IS NOT NULL AND dead_at IS NULL';",
+    "new": "export const SEAT_WHERE = 'player = ?1 AND dead_at IS NULL';",
     "why": "a character another device's join unseated still claims",
     "tests": ["test/server/int16_progress.test.js"]
   },
   {
     "name": "INT16-the-dead-seated",
     "file": "server-account/src/progress.js",
-    "old": "WHERE player = ?1 AND lease IS NOT NULL AND dead_at IS NULL",
-    "new": "WHERE player = ?1 AND lease IS NOT NULL",
+    "old": "export const SEAT_WHERE = 'player = ?1 AND lease IS NOT NULL AND dead_at IS NULL';",
+    "new": "export const SEAT_WHERE = 'player = ?1 AND lease IS NOT NULL';",
     "why": "a dead character's lease still claims a find - the find names no character, so the tombstone door never asks",
     "tests": ["test/server/int16_progress.test.js"]
   },
@@ -98,16 +98,16 @@
   {
     "name": "INT17-first-claim-empty",
     "file": "server-account/src/progress.js",
-    "old": "const playedSince = (/** @type {{ now: number, playedAt: number | null }} */ b) => (b.playedAt == null ? 0 : Math.max(0, b.now - b.playedAt));",
-    "new": "const playedSince = (/** @type {{ now: number, playedAt: number | null }} */ b) => (b.playedAt == null ? b.now : Math.max(0, b.now - b.playedAt));",
+    "old": "CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
+    "new": "CASE WHEN b.played_at IS NULL THEN COALESCE(p.played_s, 0) ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
     "why": "a first claim credits the account's whole life of play to the hour it lands in",
     "tests": ["test/server/int16_progress.test.js"]
   },
   {
     "name": "INT17-measure-keeps-debt",
     "file": "server-account/src/progress.js",
-    "old": "band: line, enforce: config.enforce });",
-    "new": "band: line, enforce: true });",
+    "old": "SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3",
+    "new": "SELECT ?1, ?2, s.left, s.now, ?3",
     "why": "a measured week's debt holds every claimant the day staff turn the line on (AUDIT INT's lesson, the budget's)",
     "tests": ["test/server/int16_progress.test.js"]
   },

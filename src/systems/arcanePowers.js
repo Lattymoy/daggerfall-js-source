@@ -48,6 +48,7 @@ import { playerDoor } from './playerDoor.js';
 import { isMagicallyConcealed } from './effects.js';
 import { near, foeGroup, elementShare } from './loot/lootPowers.js';   // AUDIT SCHOOLS (L1 H1-H2, L3 F1): the one reach law, the one foe group, the one element share
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { healthShare } from '../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
 import { hudText } from './notify.js';
 import { t } from './textManager.js';
 
@@ -79,7 +80,7 @@ export function awakePathId(entity) {
   return pathAwake(entity)?.id ?? null;
 }
 const me = () => playerDoor()?.player?.() ?? playerEntity;
-const share = (e) => (Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1);
+const share = (e) => healthShare(e) ?? 1;   // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law (combat/healthShare.js)
 /** AUDIT SCHOOLS L1 H2: through the loot's one foe group (lootPowers.js foeGroup) - a class foe's careerIndex is its
  *  class's, and read as a monster's it named a Barbarian, a Knight and the City Watch undead. */
 const undeadOrDaedra = (t) => { const g = foeGroup(t); return g === 'undead' || g === 'daedra'; };
@@ -226,7 +227,10 @@ export const pathAbsorbChance = (target) => (awakePathId(target) === 'wardwright
  *  @param {{ caster?: any, target?: any, foe?: any, spell?: any, r?: any, self?: boolean, reflected?: boolean, took?: number, cast?: any }} [landing] */
 export function pathLanded({ caster = null, target = null, foe = null, spell = null, r = null, self = false, reflected = false, took = null, cast = null } = {}) {
   const id = awakePathId(caster);
-  if (!id || !r || reflected) return;
+  // AUDIT FB1018f L3-2: a spell on a stand-in its referee turns whole (`warded` - the Warden's ward, the Remnant shut, the
+  // Spire's turned blows: scenes/eliteGates/egFight.js turnStandIn) landed nothing - no Siphon Life, no Conflux, no rider
+  // answers it, as the leech refuses a warded blow (systems/loot/lootPowers.js lootStrike)
+  if (!id || !r || reflected || target?.warded) return;
   const landed = Number.isFinite(took) ? took : Number.isFinite(r.damage) ? r.damage : 0;
   const paid = Number.isFinite(cast?.cost) ? cast.cost : 0;
   const now = _now();

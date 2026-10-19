@@ -122,8 +122,17 @@ export const forgetProgressConfig = (/** @type {any} */ db) => { const key = key
  * character (`character`); a route that names none asks the seat alone.
  * @param {any} db @param {string} playerId @param {{ named: boolean, character?: unknown }} claim
  */
-export async function progressRefusal(db, playerId, { named, character }) {
-  const row = await db.prepare('SELECT id, held FROM realm_characters WHERE player = ?1 AND lease IS NOT NULL AND dead_at IS NULL').bind(playerId).first();
+export async function progressRefusal(db, playerId, claim) {
+  return seatRefusalOf(await seatRead(db, playerId).first(), claim);
+}
+/** PRIMARY-FOLD: the seat's question, and its row's answer - progressRefusal's, whichever way the row was read (the door
+ *  asks it beside its other questions, door.js doorReads). */
+const seatRead = (/** @type {any} */ db, /** @type {string} */ playerId) =>
+  db.prepare(`SELECT id, held FROM realm_characters WHERE ${SEAT_WHERE}`).bind(playerId);
+/** AUDIT PLAN-1000 C2: THE SEAT'S ONE WHERE (?1 the account) - the account's realm character holding its lease, alive:
+ *  progressRefusal's and the door's (door.js DOOR_SQL), never two literals. */
+export const SEAT_WHERE = 'player = ?1 AND lease IS NOT NULL AND dead_at IS NULL';
+export function seatRefusalOf(/** @type {any} */ row, /** @type {{ named: boolean, character?: unknown }} */ { named, character }) {
   if (!row || (named && character !== row.id)) return { error: 'progress-seat' };
   if (row.held) return { error: 'trade-held', held: row.held };
   return null;
@@ -131,8 +140,15 @@ export async function progressRefusal(db, playerId, { named, character }) {
 
 /** A stream's bucket and the account's play, as one read: `{ now, allowance, playedAt }`, or null for no account row. */
 async function bucketOf(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ stream) {
-  const row = await db.prepare('SELECT p.played_s AS now, b.allowance, b.played_at FROM players p LEFT JOIN progress_play b ON b.player = p.id AND b.stream = ?2 WHERE p.id = ?1')
-    .bind(playerId, stream).first();
+  return bucketFrom(await bucketRead(db, playerId, stream).first());
+}
+/** PRIMARY-FOLD: the bucket's question, and its row read as bucketOf answers (the door asks it for the enforced room of
+ *  the route's own stream, door.js doorReads; the spend steps the bucket where it stands - spendProgress, AUDIT PLAN-1000
+ *  C1). */
+const bucketRead = (/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ stream) =>
+  db.prepare('SELECT p.played_s AS now, b.allowance, b.played_at FROM players p LEFT JOIN progress_play b ON b.player = p.id AND b.stream = ?2 WHERE p.id = ?1')
+    .bind(playerId, stream);
+export function bucketFrom(/** @type {any} */ row) {
   if (!row) return null;
   return { now: Number(row.now) || 0, allowance: row.allowance == null ? null : Number(row.allowance), playedAt: row.played_at == null ? null : Number(row.played_at) };
 }
@@ -140,36 +156,53 @@ async function bucketOf(/** @type {any} */ db, /** @type {string} */ playerId, /
 const playedSince = (/** @type {{ now: number, playedAt: number | null }} */ b) => (b.playedAt == null ? 0 : Math.max(0, b.now - b.playedAt));
 
 /** What a stream's bucket holds now - what an enforced line lets the next claim take. */
-export async function progressRoom(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ stream, /** @type {any} */ config) {
-  const b = await bucketOf(db, playerId, stream);
+export async function progressRoom(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ stream, /** @type {any} */ config, /** @type {any} */ bucket = undefined) {
+  const b = bucket !== undefined ? bucket : await bucketOf(db, playerId, stream);   // PRIMARY-FOLD: the door's read, when it asked it
   if (!b) return 0;
   return stepBudget({ allowance: b.allowance, played: playedSince(b), gain: 0, band: config.streams[stream] }).allowance;
 }
 
 /**
  * A CLAIM'S SPEND: the bucket filled by the play since it last moved and spent by `amount`, and the hour's measure - the
- * amount, the play it came in, and what it took past the bucket (`over`) - in one batch. Answers the step
- * (`{ allowance, over }`), or null for nothing spent.
+ * amount, the play it came in, and what it took past the bucket (`over`) - in one batch. Answers `{ allowance }` (the
+ * bucket after), or null for nothing spent (no stream, nothing claimed, or no account row).
+ *
+ * AUDIT PLAN-1000 C1: THE STEP IS THE DATABASE'S, OVER THE ROW AS IT STANDS. The spend read the bucket, stepped it here
+ * (budget.js stepBudget) and wrote the step back whole - so two claims of one stream on one account that overlapped
+ * read the same bucket and the later write erased the earlier one's debit (measured over the real Worker: 1 offset in 5
+ * lost one; and PRIMARY-FOLD, which handed the spend the door's read of the bucket, widened it to 3 in 5). The same
+ * law is written in SQL below - the start the cap where none, the fill the play since it last moved at its rate an hour,
+ * a full bucket never refilled past its cap, the claim taken, a measured bucket kept at none - and each statement of the
+ * batch steps the bucket as it stands when it runs: a batch is one transaction, so no claim writes between them, and
+ * none is lost. No read is asked at all. Pinned against stepBudget itself (test/server/primaryfold.test.js).
  * @param {any} db @param {string} playerId @param {string} stream @param {number} amount @param {number} nowS @param {any} config
  */
 export async function spendProgress(db, playerId, stream, amount, nowS, config) {
   const line = config.streams[stream];
   if (!line || !Number.isFinite(amount) || amount <= 0) return null;
-  const b = await bucketOf(db, playerId, stream);
-  if (!b) return null;
-  const played = playedSince(b);
-  const step = stepBudget({ allowance: b.allowance, played, gain: Math.trunc(amount), band: line, enforce: config.enforce });
   const hour = nowS - (nowS % 3600);
-  await db.batch([
-    db.prepare(`INSERT INTO progress_hours (player, stream, hour, amount, played_s, over, claims) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1)
+  // ?1 the account, ?2 the stream, ?3 the claim's clock, ?4 the cap, ?5 the rate an hour, ?6 the claim, ?7 enforce, ?8 the hour
+  const args = [playerId, stream, nowS, line.cap, line.rate, Math.trunc(amount), config.enforce ? 1 : 0, hour];
+  const [, play] = await db.batch([
+    db.prepare(`INSERT INTO progress_hours (player, stream, hour, amount, played_s, over, claims)
+      SELECT ?1, ?2, ?8, ?6, s.played, CASE WHEN s.left < 0 THEN -s.left ELSE 0 END, 1 FROM (${BUCKET_STEP_SQL}) s WHERE true
       ON CONFLICT (player, stream, hour) DO UPDATE SET amount = amount + excluded.amount, played_s = played_s + excluded.played_s,
-        over = over + excluded.over, claims = claims + 1`).bind(playerId, stream, hour, Math.trunc(amount), played, step.over),
-    db.prepare(`INSERT INTO progress_play (player, stream, allowance, played_at, at) VALUES (?1, ?2, ?3, ?4, ?5)
-      ON CONFLICT (player, stream) DO UPDATE SET allowance = excluded.allowance, played_at = excluded.played_at, at = excluded.at`)
-      .bind(playerId, stream, step.allowance, b.now, nowS),
+        over = over + excluded.over, claims = claims + 1`).bind(...args),
+    db.prepare(`INSERT INTO progress_play (player, stream, allowance, played_at, at)
+      SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true
+      ON CONFLICT (player, stream) DO UPDATE SET allowance = excluded.allowance, played_at = excluded.played_at, at = excluded.at
+      RETURNING allowance`).bind(...args.slice(0, 7)),   // its parameters end at ?7 (the hour is the measure's alone)
   ]);
-  return step;
+  const row = play?.results?.[0];
+  return row ? { allowance: Number(row.allowance) } : null;
 }
+/** AUDIT PLAN-1000 C1: THE BUCKET'S STEP, budget.js stepBudget in SQL over the row as it stands (the parameters spendProgress
+ *  names): the account's play (`now`), the play since the bucket last moved (`played` - none for a bucket never filled),
+ *  and what it holds after the claim (`left`) - the start the cap where none, filled at the rate an hour (whole units,
+ *  down), never past the cap and never refilled once at it, the claim taken. No row for an account with none. */
+const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) - MAX(0, ?6) AS left
+  FROM (SELECT COALESCE(p.played_s, 0) AS now, CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played, COALESCE(b.allowance, ?4) AS start
+    FROM players p LEFT JOIN progress_play b ON b.player = p.id AND b.stream = ?2 WHERE p.id = ?1) t`;
 
 /**
  * WHAT A ROUTE'S ANSWER SPENT, stream by stream: `[[stream, amount]...]` - nothing for a refusal or a repeat (an answer
@@ -202,7 +235,8 @@ export function progressSpentOf(path, a) {
   return out;
 }
 
-/** A route's answer, spent: every stream it took from (progressSpentOf), each its own bucket. */
+/** A route's answer, spent: every stream it took from (progressSpentOf), each its own bucket - stepped where it stands
+ *  (AUDIT PLAN-1000 C1: spendProgress asks no read, so no claim overlapping it loses a debit). */
 export async function progressSpent(/** @type {any} */ ctx, /** @type {string} */ playerId, /** @type {string} */ path, /** @type {any} */ answer) {
   const spent = progressSpentOf(path, answer);
   if (!spent.length) return;

@@ -43,7 +43,12 @@ const ID_HEX_RE = /^[0-9a-f]{16}$/;
 const ROOM_RE = /^[A-Za-z0-9_.,:+-]{1,80}$/;   // net/wire.js roomOf's own
 
 /** @typedef {{ a: string, k: string, asks: number, members: number, bucket: number, ceiling: number }} GrantMeasureRow */
-/** @typedef {{ a: string, b: string, r: string, n: number }} GrantTallyRow */
+/** @typedef {{ a: string, b: string, r: string, n: number, e?: { t: number, k: number, mx: number } }} GrantTallyRow */
+/** FOE-BOUNDS (bible/11-Multiplayer/Spawn-Grants.md section 19): THE RELAY AS A READER - the tally of what the relay
+ *  itself stripped (GRANT9's switch on: a record no builder could give, server/src/index.js _grantStripped), in the batch
+ *  the relay signs. Never an account's id (net/identityToken.js ID_RE refuses its `~`), so no reader's tally is its; the
+ *  service opens a case on it alone (server-account/src/grants.js) - the relay saw the sender's own frame. */
+export const GRANT_RELAY_READER = '~relay';
 /** @typedef {{ from: number, live: number, rows: Map<string, GrantMeasureRow>, tallies: Map<string, GrantTallyRow> }} GrantMeasure */
 
 /** A cell's window, begun at `nowMs`. Pure. @param {number} nowMs @returns {GrantMeasure} */
@@ -71,18 +76,23 @@ export function foldGrantAsk(w, a, k, n, refusal, live) {
 }
 /**
  * GRANT3: ONE READER'S TALLY ROW FOLDED IN - reader `a`'s game refused `n` of sender `b`'s foes for reason `r`. Answers
- * whether the window is full. In place.
- * @param {GrantMeasure} w @param {string} a @param {string} b @param {string} r @param {number} n
+ * whether the window is full. In place. FOE-BOUNDS: `e` the relay's evidence (`{ t, k, mx }`: a type, what it claimed,
+ * its bound) - the row keeps the worst it was handed.
+ * @param {GrantMeasure} w @param {string} a @param {string} b @param {string} r @param {number} n @param {{ t: number, k: number, mx: number }|null} [e]
  */
-export function foldGrantTally(w, a, b, r, n) {
+export function foldGrantTally(w, a, b, r, n, e = null) {
   const key = `${a}|${b}|${r}`;
   const row = w.tallies.get(key);
   if (row) row.n = capped(row.n + n);
   else w.tallies.set(key, { a, b, r, n: capped(n) });
+  const kept = w.tallies.get(key);
+  if (e && (!kept.e || e.k - e.mx > kept.e.k - kept.e.mx)) kept.e = { t: e.t, k: e.k, mx: e.mx };
   return full(w);
 }
 
 const count = (n) => Number.isSafeInteger(n) && n >= 0 && n <= GRANT_MEASURE_COUNT_MAX;
+/** FOE-BOUNDS: a tally's evidence - none, or a type, a claim and a bound, each a number in its law. */
+const evidenceOk = (e) => e === undefined || (!!e && typeof e === 'object' && Number.isInteger(e.t) && e.t >= 0 && e.t <= 255 && Number.isFinite(e.k) && e.k >= 0 && e.k <= GRANT_MEASURE_COUNT_MAX && Number.isFinite(e.mx) && e.mx >= 0 && e.mx <= GRANT_MEASURE_COUNT_MAX * 1000);
 /** Whether a parsed batch is one: its version, a 16-hex id, its clocks, its room, and 1 to GRANT_MEASURE_ROWS rows and
  *  tallies together - each row an account, a kind, and counts in their law (the members within the asks' most); each
  *  tally a reader's account, another's, a reader's reason and a count. Pure. @param {any} b */
@@ -91,8 +101,8 @@ export function grantMeasureValid(b) {
   if (typeof b.id !== 'string' || !ID_HEX_RE.test(b.id) || !Number.isSafeInteger(b.at) || b.at <= 0) return false;
   if (!Number.isSafeInteger(b.from) || b.from <= 0 || b.from > b.at || typeof b.q !== 'string' || !ROOM_RE.test(b.q) || !count(b.live)) return false;
   if (!Array.isArray(b.rows) || !Array.isArray(b.tl) || !(b.rows.length + b.tl.length) || b.rows.length + b.tl.length > GRANT_MEASURE_ROWS) return false;
-  const tallyOk = b.tl.every((t) => t && typeof t === 'object' && typeof t.a === 'string' && ID_RE.test(t.a) && typeof t.b === 'string' && ID_RE.test(t.b)
-    && t.a !== t.b && GRANT_READER_REFUSALS.includes(t.r) && count(t.n) && t.n >= 1);
+  const tallyOk = b.tl.every((t) => t && typeof t === 'object' && typeof t.a === 'string' && (ID_RE.test(t.a) || t.a === GRANT_RELAY_READER) && typeof t.b === 'string' && ID_RE.test(t.b)
+    && t.a !== t.b && GRANT_READER_REFUSALS.includes(t.r) && count(t.n) && t.n >= 1 && evidenceOk(t.e));
   return tallyOk && b.rows.every((r) => r && typeof r === 'object' && typeof r.a === 'string' && ID_RE.test(r.a)
     && typeof r.k === 'string' && Object.hasOwn(GRANT_KINDS, r.k)
     && count(r.asks) && r.asks >= 1 && count(r.members) && r.members <= r.asks * GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r.k)].max

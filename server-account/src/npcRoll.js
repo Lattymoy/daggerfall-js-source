@@ -100,10 +100,14 @@ async function heldUnder(/** @type {any} */ db, /** @type {string} */ playerId, 
  */
 /** The character's twenty-two rows as they stand, by faction. */
 async function rowsOf(/** @type {any} */ db, /** @type {string} */ character) {
-  const r = await db.prepare('SELECT faction_id, rep, gained_day, gained, owed, member, rank, joined_at, dormant FROM npc_roll WHERE char_id = ?').bind(character).all();
+  return rowsFrom((await rowsRead(db, character).all())?.results ?? []);
+}
+/** PRIMARY-FOLD: the Roll's rows' question, as a statement a claim's batch carries, and its rows read as rowsOf answers. */
+const rowsRead = (/** @type {any} */ db, /** @type {string} */ character) => db.prepare('SELECT faction_id, rep, gained_day, gained, owed, member, rank, joined_at, dormant FROM npc_roll WHERE char_id = ?').bind(character);
+function rowsFrom(/** @type {any[]} */ results) {
   /** @type {Map<number, RollRow>} */
   const rows = new Map();
-  for (const x of r?.results ?? []) {
+  for (const x of results) {
     rows.set(Number(x.faction_id), {
       rep: Number(x.rep), gainedDay: Number(x.gained_day), gained: Number(x.gained), owed: Number(x.owed),
       member: !!x.member, rank: x.rank == null ? null : Number(x.rank), joinedAt: x.joined_at == null ? null : Number(x.joined_at),
@@ -253,14 +257,20 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
   // sending ±1 on all twenty-two as fast as the account's door allowed wrote 22 record lines a claim. An honest tab sends
   // sixty an hour at most, and a hall writ's refresh three a day
   if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };
-  const head = await db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id).first();
+  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's
+  // word of this claim's id in one trip, each asked as it was alone
+  const [headQ, rowsQ, takenQ] = await db.batch([
+    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),
+    rowsRead(db, who.character),
+    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),
+  ]);
+  const head = headQ?.results?.[0] ?? null;
   if (!head) return { error: 'roll-unseeded' };
   const seq = Number(head.seq), kseq = Number(head.kseq);
-  const rows = await rowsOf(db, who.character);
+  const rows = rowsFrom(rowsQ?.results ?? []);
   // AUDIT CHAP S6: a repeat is the head's last id, or any id the record still holds - an older claim replayed after a
   // newer one is the same claim
-  const taken = head.last_rid === rid
-    || !!(await db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid).first());
+  const taken = head.last_rid === rid || !!takenQ?.results?.[0];
   if (taken) return { roll: viewOf(kseq, rows), repeat: true };
   const day = utcDay(nowS);
   /** @type {Map<number, number> | null} */

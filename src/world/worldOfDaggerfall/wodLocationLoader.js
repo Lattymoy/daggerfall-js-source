@@ -59,7 +59,9 @@ export const WOD_TERRAIN_HEIGHT_MAX = Math.fround(MAX_TERRAIN_HEIGHT * STREAMING
 export const WOD_AWAKE_REGION = 17;
 /** :76 - "Ocean Region Detected! Unsupported!" */
 export const WOD_REFUSED_REGION = 31;
-/** :117-121 - the regions whose low tiles (worldHeight <= 2) are sea. */
+/** :117-121 - the regions whose low tiles (worldHeight <= 2) are sea. 31 is the sea itself: the region a pixel of the
+ *  sea answers (PlayerGPS's politic 64, `mapsFile.js` getRegionIndexAt). FIELD BUGS 2026-10-18f WOD-SEA-TEST: asked of
+ *  the PIXEL's own region (the tile's `regionIndex`), never MapPixelData's mapRegionIndex - see pickState. */
 export const WOD_OCEAN_REGIONS = Object.freeze([31, 3, 29, 28, 30]);
 
 const f32 = Math.fround;
@@ -182,8 +184,9 @@ export class LocationSession {
  * data, so this runs before the terrain kernel and hands it the rects.
  *
  * @param {{mapPixelX:number, mapPixelY:number, hasLocation:boolean,
- *   mapRegionIndex:number, worldHeight:number}} tile - MapPixelData's
- *   fields the loop reads (worldHeight is the raw WOODS byte).
+ *   worldHeight:number, regionIndex?:number}} tile - MapPixelData's fields the loop reads
+ *   (worldHeight is the raw WOODS byte), and in place of its mapRegionIndex the pixel's own
+ *   region (`regionIndex`, `mapsFile.js` getRegionIndexAt - the sea's is 31; WOD-SEA-TEST).
  * @param {LocationSession} session
  * @param {(name:string) => ?{height:number,width:number}} getPrefab -
  *   LoadLocationPrefab by name; null for a missing file (:156-160).
@@ -224,7 +227,7 @@ export function pickLocations(tile, session, getPrefab, pathsPoint = null, siteC
  * AddLocation's loop VERBATIM (:91-256): the whole list scanned for the tile. The law `pickLocations`' pixel walk is
  * held to (test/systems/flow2_fast_tests.test.js), and the walk itself for a session without the index or a pixel off the map.
  * Same parameters and answer as `pickLocations`.
- * @param {{mapPixelX:number, mapPixelY:number, hasLocation:boolean, mapRegionIndex:number, worldHeight:number}} tile
+ * @param {{mapPixelX:number, mapPixelY:number, hasLocation:boolean, worldHeight:number, regionIndex?:number}} tile
  * @param {LocationSession} session
  * @param {(name:string) => ?{height:number,width:number}} getPrefab
  * @param {?(x:number, y:number) => number} [pathsPoint]
@@ -254,9 +257,17 @@ export function pickLocationsScan(tile, session, getPrefab, pathsPoint = null, s
   return st.out;
 }
 
-/** The loop's state for one tile (FLOW2: the scan's and the walk's). */
+/**
+ * The loop's state for one tile (FLOW2: the scan's and the walk's).
+ *
+ * FIELD BUGS 2026-10-18f WOD-SEA-TEST (Mac: "Yes fix WOD"; `01-Overview/Port-Ledger.md` section A): THE SEA ARM ASKS
+ * THE PIXEL'S OWN REGION. The mod reads `mapRegionIndex` (:117), which GetMapPixelData fills from the pixel's LOCATION
+ * alone - and a pixel with one has already left at :103 - so in DFU the arm never fired, and every site its lists name
+ * on the sea stood there: rocks off Tlactrn Manor in open water (æther), the rocks ships met (FIELD BUGS 2026-10-02). The
+ * port asks the region the pixel itself answers (`tile.regionIndex`, the sea's 31), so the arm does what :117-121 says.
+ */
 function pickState(tile, getPrefab, pathsPoint, siteClear) {
-  return { out: [], hasLocation: !!tile.hasLocation, ocean: WOD_OCEAN_REGIONS.includes(tile.mapRegionIndex) && tile.worldHeight <= 2, pathsDataPoint: 0, getPrefab, pathsPoint, siteClear };
+  return { out: [], hasLocation: !!tile.hasLocation, ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2, pathsDataPoint: 0, getPrefab, pathsPoint, siteClear };
 }
 
 /** The loop's body for an instance on the tile's own pixel (:139-230) - FLOW2: one copy, the scan's and the walk's. */

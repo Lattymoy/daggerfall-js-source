@@ -212,8 +212,8 @@
   {
     "name": "WB9h-the-pose-copied-for-its-yaw",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.cam = peerCamera(peer.shown, f, b.speed, b.cam, b.yaw);",
-    "new": "    b.cam = peerCamera({ ...peer.shown, yaw: b.yaw }, f, b.speed, b.cam);",
+    "old": "    b.cam = peerCamera(peer.shown, f, b.speed, b.cam, b.yaw, b.travel ?? null);",
+    "new": "    b.cam = peerCamera({ ...peer.shown, yaw: b.yaw }, f, b.speed, b.cam, undefined, b.travel ?? null);",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]

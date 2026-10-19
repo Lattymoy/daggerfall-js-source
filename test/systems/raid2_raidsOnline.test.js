@@ -329,9 +329,11 @@ test('RAID2 the world host by source: my word rides my cell frame, a peer\'s rea
   const pool = rd('src/scenes/exteriorFoes.js');
   assert.match(pool, /if \(data\.rk !== undefined\) _onRaids\?\.\(from, data\.rk, _now\(\)\);/);
   // PIN MOVED (GRANT9, bible/11-Multiplayer/Spawn-Grants.md section 16): the relay reads a foes frame's records - and its
-  // allies' `al` - in one method alone, `_grantStripped`, and only while its `grantStrip` switch is on (off unset)
+  // allies' `al` - in one method alone, `_grantStripped`, and only while its `grantStrip` switch is on (off unset); PIN MOVED
+  // (FOE-BOUNDS, section 19): the strip runs with the grants' law off too - a record no builder could give is no grant's
+  // question - and is handed the frame's kind and the clock
   const relay = rd('server/src/index.js');
-  assert.match(relay, /if \(this\._grants && relayCfgValue\(this\._relayCfg, this\.env, 'grantStrip'\) === 'on' [^\n]*\) data = this\._grantStripped\(a, data\);/);
-  assert.doesNotMatch(relay.replace(/\n {2}_grantStripped\(a, data\) \{[\s\S]*?\n {2}\}\n/, '\n'), /\brz\b|\brk\b|\bal\b/, 'the relay reads nothing inside a foes frame - no relay change');
+  assert.match(relay, /if \(relayCfgValue\(this\._relayCfg, this\.env, 'grantStrip'\) === 'on' [^\n]*\) data = this\._grantStripped\(a, data, kind, now\);/);
+  assert.doesNotMatch(relay.replace(/\n {2}_grantStripped\(a, data, kind = 'foes', now = Date\.now\(\)\) \{[\s\S]*?\n {2}\}\n/, '\n'), /\brz\b|\brk\b|\bal\b/, 'the relay reads nothing inside a foes frame - no relay change');
   assert.doesNotMatch(rd('src/net/wire.js'), /RAID2|raidKey/, 'nor does the record\'s law change');
 });

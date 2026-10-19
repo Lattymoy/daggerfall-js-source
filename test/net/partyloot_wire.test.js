@@ -222,6 +222,7 @@ function dungeon(id, { authority, level, luck, renown, seed, foraging, partners,
     ${declSrc('FOES_FRAME_SLACK')} ${declSrc('FOE_MAX_PER_FRAME')} ${declSrc('_maxLeft')} ${declSrc('foeMaxOf')}
     ${['lootKeyOf', 'lootableBody', 'lootHolder', 'roomLootKey', 'lootRecords', 'publishLoot', 'sayRoomWord', 'applyLoot', 'applyActions'].map(fnSrc).join('\n')}
     ${BLOCK}
+    function grants() { return null; }   // FOE-BOUNDS: applyFoeRecord asks the grants' host - none open here (src/scenes/grantHost.js's own tests judge it)
     ${['_runsFoe', 'damageFoe', 'freeCorpse', 'setFoeDead', 'spawnCorpse', 'applyFoeRecord', 'fitMaxima', 'roomRecord', 'foesFrame', 'applyFoesFrame', 'applySharedRecords', 'applyFoes', 'rollPileItems'].map(fnSrc).join('\n')}
     let _respawnSweptAt = -Infinity;
     const RESPAWN_BURST = 4;

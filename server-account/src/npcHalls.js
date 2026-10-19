@@ -182,13 +182,18 @@ async function chaptersOf(/** @type {any} */ db, /** @type {number} */ region, /
   return chapters;
 }
 
+/** PRIMARY-FOLD: every region's row, as allRegionChapters asks it - a statement a caller's batch may carry (npcChapters.js
+ *  chapterSheet's), its rows handed back to allRegionChapters. */
+export const hallRowsRead = (/** @type {any} */ db) => db.prepare('SELECT region, chapters, ver, done FROM npc_hall_regions ORDER BY region');
+
 /**
  * AUDIT CHAP3 S3: EVERY REGION'S CHAPTERS, `[{ faction, region }]` - each region a town's report has named, its row read
- * (62 at most), a region whose change is not computed yet computed now.
- * @param {any} db @param {number} nowS
+ * (62 at most), a region whose change is not computed yet computed now. PRIMARY-FOLD: `rows` the regions' rows a caller
+ * read in a batch of its own (hallRowsRead's), else read here.
+ * @param {any} db @param {number} nowS @param {any[]} [rows]
  */
-export async function allRegionChapters(db, nowS) {
-  const { results = [] } = await db.prepare('SELECT region, chapters, ver, done FROM npc_hall_regions ORDER BY region').all();
+export async function allRegionChapters(db, nowS, rows = undefined) {
+  const results = rows ?? (await hallRowsRead(db).all()).results ?? [];   // PRIMARY-FOLD: the rows a caller's batch read (npcChapters.js chapterSheet)
   const out = [];
   for (const row of results) {
     const g = Number(row.region);

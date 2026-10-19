@@ -1,0 +1,232 @@
+[
+  {
+    "name": "HELD-BASE-no-redraw",
+    "file": "src/systems/loot/loot.js",
+    "old": "  if (powersNeedWearing(enchantments)) {\n    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);\n    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);   // a dead stream: armour, every set's first group, every piece worn\n  }\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "the pre-fix mint: DFU's one draw, a held power on a Holy Tome or a Wand"
+  },
+  {
+    "name": "HELD-BASE-redraw-every-power",
+    "file": "src/systems/loot/loot.js",
+    "old": "  if (powersNeedWearing(enchantments)) {",
+    "new": "  if (enchantments.length > 0) {",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "a Used cast drawn again too - the Leaping Wand gone, DFU's draw lost where nothing needed it"
+  },
+  {
+    "name": "HELD-BASE-redraw-on-wearable",
+    "file": "src/systems/loot/loot.js",
+    "old": "for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++)",
+    "new": "for (let i = 1; i < MAGIC_BASE_DRAWS; i++)",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "a wearable draw drawn again - the stream walked sixty-four draws deep for every held power"
+  },
+  {
+    "name": "HELD-BASE-loop-start",
+    "file": "src/systems/loot/loot.js",
+    "old": "for (let i = 1; i < MAGIC_BASE_DRAWS",
+    "new": "for (let i = 0; i < MAGIC_BASE_DRAWS",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "the first draw not counted - one draw past the bound"
+  },
+  {
+    "name": "HELD-BASE-bound",
+    "file": "src/systems/loot/loot.js",
+    "old": "export const MAGIC_BASE_DRAWS = 64;",
+    "new": "export const MAGIC_BASE_DRAWS = 65;",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "the soul trap's bound moved"
+  },
+  {
+    "name": "HELD-BASE-no-fallback",
+    "file": "src/systems/loot/loot.js",
+    "old": "    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);   // a dead stream: armour, every set's first group, every piece worn\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "a dead stream mints the Wand it last drew"
+  },
+  {
+    "name": "HELD-BASE-fallback-unguarded",
+    "file": "src/systems/loot/loot.js",
+    "old": "    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);",
+    "new": "    base = createRandomArmor(playerLevel, rolls);",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "every held power on armour, the redraw's wearable piece thrown away"
+  },
+  {
+    "name": "HELD-BASE-empty-record",
+    "file": "src/systems/loot/loot.js",
+    "old": "export const powersNeedWearing = (rows) => rows.some((r) => !worksUnworn(r));",
+    "new": "export const powersNeedWearing = (rows) => !rows.some(worksUnworn);",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-4: a piece of no live row read as needing wearing - every plain piece redrawn (the empty list's some is false)"
+  },
+  {
+    "name": "HELD-BASE-predicate-held",
+    "file": "src/systems/enchantments.js",
+    "old": "export const worksUnworn = (e) => ((REGISTRY.get(e?.type)?.flags ?? 0) & PAYLOAD.Used) !== 0;",
+    "new": "export const worksUnworn = (e) => ((REGISTRY.get(e?.type)?.flags ?? 0) & PAYLOAD.Held) !== 0;",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "the Held payload read as off the body - Enhances Skill kept on the Holy Tome, the casts drawn again"
+  },
+  {
+    "name": "HELD-BASE-predicate-any-power",
+    "file": "src/systems/enchantments.js",
+    "old": "export const worksUnworn = (e) => ((REGISTRY.get(e?.type)?.flags ?? 0) & PAYLOAD.Used) !== 0;",
+    "new": "export const worksUnworn = (e) => REGISTRY.has(e?.type);",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "every power read as working off the body - nothing drawn again"
+  },
+  {
+    "name": "HELD-BASE-guard-offset",
+    "file": "src/systems/loot/loot.js",
+    "old": "  const magicItem = regular[chosenItem];",
+    "new": "  const magicItem = regular[(chosenItem + 1) % regular.length];",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "the report's question: a name and a power from different records (a table offset)"
+  },
+  {
+    "name": "HELD-BASE-repair-again",
+    "file": "src/systems/save/save.js",
+    "old": "  // HELD-BASE (FIELD BUGS 2026-10-18f) mends the mint alone:",
+    "new": "  for (const list of repairLists) for (const it of list ?? []) if (it?.magic && it.templateIndex === 271) it.templateIndex = 133;\n  // HELD-BASE (FIELD BUGS 2026-10-18f) mends the mint alone:",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-1: a load moves a saved dud's base again - the ledger reads it forged"
+  },
+  {
+    "name": "HELD-BASE-redraw-gender",
+    "file": "src/systems/loot/loot.js",
+    "old": "i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);",
+    "new": "i++) base = magicItemBase(magicItem, playerLevel, gender === 'female' ? 'male' : 'female', rolls);",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-3: the redraw minted for the other gender"
+  },
+  {
+    "name": "HELD-BASE-redraw-level",
+    "file": "src/systems/loot/loot.js",
+    "old": "i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);",
+    "new": "i++) base = magicItemBase(magicItem, 1, gender, rolls);",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-3: the redraw minted at level 1"
+  },
+  {
+    "name": "HELD-BASE-fallback-level",
+    "file": "src/systems/loot/loot.js",
+    "old": "if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);",
+    "new": "if (!wearableItem(base)) base = createRandomArmor(1, rolls);",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-3: the dead stream's armour at level 1"
+  },
+  {
+    "name": "HELD-BASE-enchanted-unworn",
+    "file": "src/systems/enchantments.js",
+    "old": "& PAYLOAD.Used) !== 0;",
+    "new": "& (PAYLOAD.Used | PAYLOAD.Enchanted)) !== 0;",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-4: the table classified another way"
+  },
+  {
+    "name": "HELD-BASE-unknown-unworn",
+    "file": "src/systems/enchantments.js",
+    "old": "REGISTRY.get(e?.type)?.flags ?? 0",
+    "new": "REGISTRY.get(e?.type)?.flags ?? PAYLOAD.Used",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-4: an unknown kind counted as working off the body"
+  },
+  {
+    "name": "HELD-BASE-some-every",
+    "file": "src/systems/loot/loot.js",
+    "old": "rows.some((r) => !worksUnworn(r));",
+    "new": "rows.length > 0 && !rows.some(worksUnworn);",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-4 (decided): the old law - a piece with a Used cast and a worn power kept its Wand, the worn half working for nothing"
+  },
+  {
+    "name": "HELD-BASE-ledger-move-refused",
+    "file": "server-account/src/ledger.js",
+    "old": "      if (!rehomedPrint(r.fp, fp)) { forged.push(key); continue; }",
+    "new": "      forged.push(key); continue;",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-1: the load's one move read as a forgery again - an honest holder of a RARITY-WEAR Wand held by the law"
+  },
+  {
+    "name": "HELD-BASE-ledger-row-unprinted",
+    "file": "server-account/src/ledger.js",
+    "old": "  for (const [key, fp, was] of reprint) steps.push(db.prepare('UPDATE item_uids SET fp = ?2 WHERE uid = ?1 AND fp = ?3').bind(key, fp, was));   // AUDIT FB1018f L1-1\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-1: the move taken and never written - the row keeps the old print, every checkpoint after asks again"
+  },
+  {
+    "name": "HELD-BASE-rehome-any-template",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return wm === nm && Object.entries(RARITY_HOMED_FROM).some(([g, from]) => Number(nt) === RARITY_HOME[g] && from.includes(Number(wt)));",
+    "new": "  return wm === nm;",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-1: any base move taken as the same piece - an Amulet's key shown on a Wand passes"
+  },
+  {
+    "name": "HELD-BASE-rehome-material-moves",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return wm === nm && Object.entries(RARITY_HOMED_FROM)",
+    "new": "  return Object.entries(RARITY_HOMED_FROM)",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-1: the repair keeps the material; a move that changes it is another piece"
+  },
+  {
+    "name": "HELD-BASE-rehome-from-widened",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const RARITY_HOMED_FROM = Object.freeze({ Jewellery: Object.freeze([140]) });",
+    "new": "export const RARITY_HOMED_FROM = Object.freeze({ Jewellery: Object.freeze([140, 271]) });",
+    "tests": [
+      "test/systems/loot/fb1018f_heldbase.test.js"
+    ],
+    "why": "AUDIT FB1018f L1-1: a base the repair never moves taken as moved - the Holy Tome's"
+  }
+]

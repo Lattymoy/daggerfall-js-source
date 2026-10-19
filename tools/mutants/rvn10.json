@@ -245,8 +245,8 @@
   {
     "name": "RVN10-load-ends-nothing",
     "file": "src/systems/revenant/revenant.js",
-    "old": "clearPlayerHarm(); endPlayerFights(); },   // the last game's harm",
-    "new": "clearPlayerHarm(); },   // the last game's harm",
+    "old": "clearPlayerHarm(); endPlayerFights(); forgetBodies(); },   // the last game's harm",
+    "new": "clearPlayerHarm(); forgetBodies(); },   // the last game's harm",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]

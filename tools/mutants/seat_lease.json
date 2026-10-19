@@ -40,10 +40,11 @@
  {
   "name": "SEATLEASE-nothing-due",
   "file": "server-account/src/seatTurning.js",
-  "old": "if (last != null && Number(last) + 1 >= weekAt(nowS)) return { settled: 0, pending: false };",
-  "new": "if (last != null && Number(last) + 1 > weekAt(nowS)) return { settled: 0, pending: false };",
+  "old": "if (last != null && Number(last) + 1 >= weekAt(nowS)) { keepWeekSettled",
+  "new": "if (last != null && Number(last) + 1 > weekAt(nowS)) { keepWeekSettled",
   "tests": [
    "test/net/seat1c_service.test.js"
-  ]
+  ],
+  "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
  }
 ]

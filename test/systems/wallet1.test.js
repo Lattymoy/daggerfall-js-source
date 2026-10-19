@@ -149,8 +149,10 @@ test('WALLET1 what it holds: DFU\'s letters of credit, the Deadlands Embers and 
   const worn = Object.assign(sigilStone(), { stackCount: 3, equipSlot: 6 });
   e.items.push(worn);
   const c = walletContents(e.items, e, { silver: 35 });
-  // PIN MOVED (AUDIT 625 W5): and why no figure is counted - none to say for a counted one
-  assert.deepEqual({ ...c, held: undefined }, { gold: 1240, silver: 35, silverWhy: null, letters: { count: 2, gold: 12000 }, embers: 12, shards: 40, held: undefined });
+  // PIN MOVED (AUDIT 625 W5): and why no figure is counted - none to say for a counted one. PIN MOVED (WALLET-WEIGHT): and
+  // what each holding weighs, and all of them (test/systems/wallet_weight.test.js pins the weights)
+  assert.deepEqual({ ...c, held: undefined }, { gold: 1240, silver: 35, silverWhy: null, letters: { count: 2, gold: 12000 }, embers: 12, shards: 40,
+    weights: { letters: 0.5, embers: 3, shards: 4 }, weight: 7.5, held: undefined });
   assert.deepEqual(c.held, [letters[0], embers, shards, letters[1]], 'in the pack\'s own order, the worn one aside');
   assert.deepEqual(walletLines(c), ['Your wallet holds:', 'Gold: 1,240', 'Silver: 35', 'Letters of credit: 2, worth 12,000 gold', 'Deadlands Embers: 12', 'Welkynd Shards: 40']);
   assert.deepEqual(walletLines(walletContents([], { goldPieces: 0 }, { silver: null })).slice(1),

@@ -76,19 +76,19 @@ test('WOD2: the FIRST valid instance naming a pixel takes it - placing it sets h
   assert.deepEqual(picks.map((p) => [p.index, p.flatten]), [[0, false], [1, true]]);
 });
 
-test('WOD2: a pixel that already holds a location - a type-0 instance ANYWHERE in the list ends the call; the sea arm is dead code (mapRegionIndex is -1 off a location)', () => {
+test('WOD2: a pixel that already holds a location - a type-0 instance ANYWHERE in the list ends the call; the sea arm reads the PIXEL\'s region (PIN MOVED, FIELD BUGS 2026-10-18f WOD-SEA-TEST: the mod read mapRegionIndex, the location\'s, so the arm never fired)', () => {
   const loc = { ...TILE, hasLocation: true, mapRegionIndex: 17 };
   assert.deepEqual(picked(loc, [{}, { type: 2 }]), [], 'type 2 skips a location\'s pixel');
   assert.deepEqual(picked(loc, [{ type: 1 }]), [0], 'an "other" type falls through the flag');
   assert.deepEqual(picked(loc, [{ type: 0, worldX: 999 }, { type: 1 }]), [], 'a type 0 on ANOTHER pixel returns first');
   // The sea: regions 31/3/29/28/30 with a WOODS height of 2 or less...
   assert.deepEqual([...WOD_OCEAN_REGIONS], [31, 3, 29, 28, 30]);
-  const sea = { ...TILE, mapRegionIndex: 29, worldHeight: 2 };
-  assert.deepEqual(picked(sea, [{}]), [], 'the arm, when it can fire');
+  const sea = { ...TILE, regionIndex: 29, worldHeight: 2 };
+  assert.deepEqual(picked(sea, [{}]), [], 'the arm fires on the pixel\'s own region');
   assert.deepEqual(picked({ ...sea, worldHeight: 3 }, [{}]), [0]);
-  // ...but GetMapPixelData fills mapRegionIndex from the LOCATION, -1
-  // without one, so on the pixels the loader can use the arm never fires.
-  assert.deepEqual(picked({ ...TILE, mapRegionIndex: -1, worldHeight: 0 }, [{}]), [0], 'a low wilderness pixel still takes its rocks');
+  // ...asked of the pixel, never of a location: the mod's mapRegionIndex is not read
+  assert.deepEqual(picked({ ...TILE, mapRegionIndex: 29, worldHeight: 0 }, [{}]), [0], 'a location\'s region is not the arm\'s');
+  assert.deepEqual(picked({ ...TILE, regionIndex: 31, worldHeight: 0 }, [{}]), [], 'the sea itself (31) refuses its rocks');
 });
 
 test('WOD2: the bounds - terrainX/Y in 1..128, then the prefab against 128 and 127 with HEIGHT on x and WIDTH on y', () => {
@@ -389,7 +389,9 @@ test('WOD2: the streaming host wires the loader where DFU does - decision before
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const wod = wodOn\(\) \? openWodWorld\(\{ online: params\.has\('online'\) \}\) : null;/);
   assert.match(w, /wod\.noteRegion\(maps\.getRegionIndexAt\(here\.x, here\.y\)\);\s*await wod\.settle\(\);/);
-  assert.match(w, /mapRegionIndex: dfLocation \? dfLocation\.regionIndex : -1,/, 'GetMapPixelData\'s -1 off a location');
+  // PIN MOVED (FIELD BUGS 2026-10-18f WOD-SEA-TEST): the tile carries the pixel's own region for the sea arm, where it carried
+  // GetMapPixelData's mapRegionIndex (the location's, -1 off one - under which the arm never fired)
+  assert.match(w, /regionIndex: maps\.getRegionIndexAt\(px, py\),/, 'the pixel\'s own region, the sea arm\'s');
   assert.match(w, /worldHeight: host\.woods\.getHeightMapValue\(px, py\),/);
   assert.match(w, /wod: wodPicks \? \{ picks: wodPicks\.map\(\(p\) => \(\{ flatten: p\.flatten, rect: p\.rect, hide: !wodPiecewise\(p\.prefabName\), bounds: forests \? wodSiteFootprint\(p\.prefab, p\.rect\) : null \}\)\) \} : null,/);   // FOREST1: and which picks are sites, with their footprints
   assert.match(w, /return net\?\.source === 'basic-roads' \? basicRoadsPathsPoint\(net, x, y\) : 0;/, 'only his mod answers getPathsPoint');

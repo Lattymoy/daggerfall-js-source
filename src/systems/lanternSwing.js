@@ -25,6 +25,8 @@
 // second; a frame longer than `maxDt` (a hitch, a tab come back) is cut to it rather than integrated whole.
 // Allocation-free: the state object is the caller's, stepped in place.
 
+import { wrapAngle } from '../world/mat4.js';   // BODY-MOTION: the hip lantern's turn (createHipLantern)
+
 export const LANTERN_SWING = Object.freeze({
   length: 0.25,          // m, hook to the lantern's middle: T = 2*pi*sqrt(L/g), about one second
   gravity: 9.81,
@@ -104,4 +106,43 @@ export function lanternSwingMatrix(s, out = new Float32Array(9)) {
   out[3] = -sf * ss; out[4] = cf; out[5] = -sf * cs;
   out[6] = cf * ss; out[7] = sf; out[8] = cf * cs;
   return out;
+}
+
+
+/**
+ * HT-WAIST: THE LANTERN AT THE MORROWIND BODY'S WAIST - the swing and last frame's heading, one per body (combat/fpArm.js
+ * keeps one per rig; BODY-MOTION moved it here from the rig's own scope, bible/04-Characters/Body-Motion.md). `step` takes
+ * the motor's bag the movement slot already reads (`cam.move`: the input axes and the applied speed), the heading's
+ * turn, and the walking body's stride phase (0..1 - the body motion's gait while it walks the legs, else the walk
+ * clip's; null standing) - and writes the hang's attitude into `rot` for the pose that follows. At rest it settles plumb.
+ * `hipYaw` (radians, the body motion's turn of the hips off the facing - bodyKit.js bodyTurn's sense, + to the left):
+ * the hang rides the hips, so the way the body goes is read in theirs (AUDIT BODY-MOTION RIG-7: read in the facing's, a
+ * strafe's lantern swung 60 degrees off its own way, the hips turned toward the travel under it).
+ */
+export function createHipLantern() {
+  const swing = createLanternSwing();
+  let yaw = null;
+  return {
+    swing,
+    /** Hanging still and plumb again (a new body, a lantern lit afresh). */
+    reset() { Object.assign(swing, createLanternSwing()); yaw = null; },
+    step(cam, dt, stride, rot, hipYaw = 0) {
+      const mv = (cam && cam.move) || null;
+      const f0 = mv ? (mv.forward || 0) : 0, s0 = mv ? (mv.strafe || 0) : 0;
+      const ch = Math.cos(Number(hipYaw) || 0), sh = Math.sin(Number(hipYaw) || 0);
+      const f = f0 * ch - s0 * sh, st = s0 * ch + f0 * sh;   // the hips' forward (-sin, cos) and right (cos, sin) of the turn
+      const len = Math.hypot(f, st);
+      const speed = len > 0 && mv ? (mv.speed || 0) : 0;
+      const y = cam ? (cam.yaw || 0) : 0;
+      const yawRate = yaw != null && dt > 0 ? wrapAngle(y - yaw) / dt : 0;
+      yaw = y;
+      stepLanternSwing(swing, dt, {
+        forward: len > 0 ? speed * f / len : 0,
+        side: len > 0 ? speed * st / len : 0,
+        yawRate,
+        stride: speed > 0 && stride != null ? stride : null,
+      });
+      lanternSwingMatrix(swing, rot);
+    },
+  };
 }

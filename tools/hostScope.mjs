@@ -44,20 +44,43 @@ const isFn = (n) => n.type === 'FunctionDeclaration' || n.type === 'FunctionExpr
 /** A node's length in source lines, its first and last counted. */
 export const lines = (n) => n.loc.end.line - n.loc.start.line + 1;
 
-/** A node's length in CODE lines - lines holding anything but whitespace and comments. The ceiling counts these: the
- *  knot is code, and the bible's comments are no weight to be shed to make room. `comments` is acorn's onComment list. */
-export function codeLines(src, node, comments) {
-  const chars = src.slice(node.start, node.end).split('');
-  for (const c of comments) for (let i = Math.max(c.start, node.start); i < Math.min(c.end, node.end); i++) if (chars[i - node.start] !== '\n') chars[i - node.start] = ' ';
-  return chars.join('').split('\n').filter((l) => l.trim()).length;
+const FOR_HEAD = /^For(In|Of)?Statement$/;
+
+/** Whether `node`, sitting under `parent` at `parent[key]`, is one logical line of code. */
+function isLogicalLine(node, parent, key) {
+  const type = node.type;
+  if (type === 'BlockStatement' || type === 'EmptyStatement') return false;   // braces and stray semicolons are layout
+  if (type.endsWith('Statement') || type.endsWith('Declaration')) {
+    const isLoopHeadDeclaration = type === 'VariableDeclaration' && FOR_HEAD.test(parent.type) && key !== 'body';
+    return !isLoopHeadDeclaration;   // `for (let i = 0; ...)` is one line, not two
+  }
+  if (type === 'Property') return parent.type === 'ObjectExpression';   // an object literal's entry, not a destructuring pattern's
+  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock' || type === 'SwitchCase') return true;
+  return type === 'ArrowFunctionExpression' && node.expression;   // `() => value` holds an implicit return statement
 }
 
-/** parseModule, keeping the comments (for codeLines). */
-export const parseModuleWithComments = (src) => {
-  const comments = [];
-  const ast = parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true, allowHashBang: true, onComment: comments });
-  return { ast, comments };
-};
+/** A function's size in LOGICAL lines: its statements, the entries of its object literals and classes, its switch
+ *  cases and the implicit returns of its expression-bodied arrows. The ceiling counts these because they do not move
+ *  with layout - splitting a crowded line, reformatting a file, renaming a variable or adding a comment leaves the
+ *  count where it was - while every kind of growth, wiring included, moves it.
+ *  Readability-Arc.md, LEGIBLE 1, has the measurement this replaced and why. */
+export function logicalLines(fn) {
+  let count = 0;
+  const visit = (node, parent, key) => {
+    if (isLogicalLine(node, parent, key)) count++;
+    for (const childKey of Object.keys(node)) {
+      if (childKey === 'loc' || childKey === 'start' || childKey === 'end') continue;
+      const value = node[childKey];
+      if (Array.isArray(value)) {
+        for (const child of value) if (child && typeof child.type === 'string') visit(child, node, childKey);
+      } else if (value && typeof value.type === 'string') {
+        visit(value, node, childKey);
+      }
+    }
+  };
+  visit(fn.body, fn, 'body');
+  return count;
+}
 
 /** A module's source parsed as the port parses it - with locations. */
 export const parseModule = (src) => parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true, allowHashBang: true });

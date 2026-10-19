@@ -39,7 +39,9 @@ import {
   GRANT_FRAME_GRANTS_MAX, GRANT_SKEW_MS, GRANT_STANDDOWN_REASONS, validGrant, verifyGrant, grantRefusal, grantMarksAllow, wireGrant, grantDice,
 } from '../net/grantLaw.js';
 import { isNight } from '../world/worldClock.js';
-import { isCellRoom } from '../net/wire.js';
+import { isCellRoom, mapPixelOfWire } from '../net/wire.js';
+import { foeStatsRefusal } from '../net/foeBounds.js';   // FOE-BOUNDS: the most health a streamed foe can legally have
+import { wildHere, wildMask, wildRingAt, WILD_NEAR_PX } from '../systems/wild/wildZone.js';
 import { KNIGHT_CITYWATCH_ID } from '../characters/enemy/enemyEntity.js';
 import { importPublicKeyB64 } from '../net/identityToken.js';
 import { serviceBase } from '../net/accountClient.js';
@@ -362,7 +364,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
    *  build a puppet again, so a foe stood down is not rebuilt, checked and tallied on every frame. */
   const downed = (from, r) => { const v = judged(from, r); return !!v && standsDown(v.why); };
   async function judge(from, cell, r) {
-    if (!r?.gr) return capable.has(from) ? note(from, 'ungranted') : null;   // GRANT4: the City Watch's too (watchReady)
+    if (!r?.gr) return capable.has(from) || session()?.grantSenders?.has(from) ? note(from, 'ungranted') : null;   // GRANT4: the City Watch's too (watchReady); GRANT-DOOR: a sender the relay vouches stands on grants (net/online.js grantSenders)
     const [g, i] = r.gr;
     const v = verdicts.get(`${from}|${g}`) ?? await heardOf(`${from}|${g}`);
     if (!v) return note(from, 'ungranted');   // GRANT-UNHEARD: never heard is no forgery - the relay drops frames past its byte budget, the full ones (the grants') first
@@ -399,6 +401,36 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
     capMap(members, GRANT_MEMBERS_MAX);
     return was !== undefined && was !== seq ? 'twice' : null;
   }
+  /** FOE-BOUNDS (Spawn-Grants section 19): MAY THE OPEN ZONE BE ABOUT RECORD `r`? Its lane's own question - a street's
+   *  foe in a cell by its own pixel (WILD_NEAR_PX about it: its owner's ring is the owner's feet, a stride away), anything
+   *  else by the zone under my own feet (a building's and a dungeon's: its door's) - and yes while no zone is known. */
+  function wildAbout(r, lane) {
+    const mask = wildMask();
+    if (!mask || wildHere()) return true;
+    if (lane !== 'street' || !isCellRoom(session()?.room) || !Array.isArray(r?.f)) return false;
+    const [px, py] = mapPixelOfWire(r.f[0], r.f[2]);
+    for (let dy = -WILD_NEAR_PX; dy <= WILD_NEAR_PX; dy++) for (let dx = -WILD_NEAR_PX; dx <= WILD_NEAR_PX; dx++) if (wildRingAt(px + dx, py + dy, mask) > 0) return true;
+    return false;
+  }
+  const statsSaid = new Set();   // `${owner}|${record}`: a record refused for its health, tallied once (the spec's one case an enemy)
+  /**
+   * FOE-BOUNDS (Spawn-Grants section 19; the hand-off spec "REJECT AND REMOVE INVALID ENEMY HANDOFFS; DO NOT RESCALE"):
+   * IS RECORD `r` FROM `from` PROVABLY IMPOSSIBLE - a health no builder could give it (net/foeBounds.js foeStatsRefusal)?
+   * Then its pool stands nothing of it - never builds it, never updates its copy, never ADOPTS it (a hand-off of it is
+   * refused before it is mine, so it never rides as mine and its receiver is never blamed) - and takes down a copy
+   * already standing, silently (no death, no body, no loot, no experience). Tallied `stats` against its sender, once a
+   * record. Judged whenever the law is on, measuring or enforcing - a bound is no estimate - and never while it is off
+   * (`/relay grantMode off`, the staff's own switch). `lane` 'street' (a cell's pool or a building's) or 'dungeon';
+   * `camp` its frame tags it a camp's; `ally` an ally, a companion or a crewman (unverified: never refused).
+   * @param {string} from @param {any} r @param {{ lane?: 'street'|'dungeon', camp?: boolean, ally?: boolean }} [o]
+   */
+  function statsRefused(from, r, { lane = 'street', camp = false, ally = false } = {}) {
+    if (ally || !open() || typeof from !== 'string') return false;
+    if (!foeStatsRefusal(r, { lane, wild: wildAbout(r, lane), camp })) return false;
+    const k = `${from}|${r.i}`;
+    if (!statsSaid.has(k)) { statsSaid.add(k); capMap(statsSaid, GRANT_MEMBERS_MAX); note(from, 'stats'); }
+    return true;
+  }
   function note(from, why) {
     const k = `${from}|${why}`;
     tallies.set(k, Math.min(GRANT_TALLY_COUNT_MAX, (tallies.get(k) ?? 0) + 1));
@@ -406,9 +438,10 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
   }
   function flushTally() {
     if (!tallies.size) return;
-    const rows = [...tallies].sort((a, b) => b[1] - a[1]).slice(0, GRANT_TALLY_ROWS_MAX).map(([k, n]) => { const at = k.lastIndexOf('|'); return { o: k.slice(0, at), r: k.slice(at + 1), n }; });
+    const said = session()?.grantStatsOk;   // FOE-BOUNDS: `stats` to a relay that knows the word (net/grantLaw.js relaySupportsGrantStats) - an older one refuses the whole tally
+    const rows = [...tallies].filter(([k]) => said || !k.endsWith('|stats')).sort((a, b) => b[1] - a[1]).slice(0, GRANT_TALLY_ROWS_MAX).map(([k, n]) => { const at = k.lastIndexOf('|'); return { o: k.slice(0, at), r: k.slice(at + 1), n }; });
     tallies.clear();
-    send({ k: 'tally', rows });
+    if (rows.length) send({ k: 'tally', rows });
   }
 
   /** My cell's answer (net/online.js onGrant): an heir's grant, or the answer an ask of mine waits on. */
@@ -451,5 +484,5 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
     for (const [g, p] of watchmen) if (p === pool && (!here.has(g) || g._gone)) { watchmen.delete(g); ended(g); }
   }
 
-  return { memberFor, stood, ended, handed, tick, frameGrants, adopted, heard, check, downed, answer, enforcing, standsDown, watchReady, watchSweep, speciesOf, tallied: () => new Map(tallies), live: () => [...live] };
+  return { memberFor, stood, ended, handed, tick, frameGrants, adopted, heard, check, downed, statsRefused, answer, enforcing, standsDown, watchReady, watchSweep, speciesOf, tallied: () => new Map(tallies), live: () => [...live] };
 }

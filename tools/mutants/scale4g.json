@@ -52,8 +52,8 @@
   {
     "name": "SCALE4g-unexposed",
     "file": "server-account/src/index.js",
-    "old": "    out.headers.append('access-control-expose-headers', 'x-d1-bookmark');\n",
-    "new": "",
+    "old": " out.headers.append('access-control-expose-headers', 'x-d1-bookmark'); }",
+    "new": " }",
     "tests": [
       "test/server/scale4g.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SCALE4g-preflight-refuses",
     "file": "server-account/src/index.js",
-    "old": "x-realm-summary, x-d1-bookmark, if-none-match',",
-    "new": "x-realm-summary, if-none-match',",
+    "old": "x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass',",
+    "new": "x-realm-summary, if-none-match, x-session-pass',",
     "tests": [
       "test/server/scale4g.test.js"
     ],

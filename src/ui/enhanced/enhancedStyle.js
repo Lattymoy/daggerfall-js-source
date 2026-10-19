@@ -2928,6 +2928,13 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
    FAMILY rather than for the window that was reported. */
 .sb-shell, .cr-shell { display: flex; align-items: center; justify-content: center; }
 .sb-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
+/* FB1018f SPELL-SCROLL: THE BOOK'S LIST SCROLLS IN ITS OWN COLUMN, as DFU's does (its ListBox in its own rect, the
+   chosen spell's panels standing beside it). The journal grew with its rows (min-height: 100%), so the one scroll was the
+   body's: a spell picked down the list had its page scrolled away above it, and a phone's page stood under every row.
+   The journal is held to the body; the list and the page scroll each on their own - the grimoire dress's book, worn plain. */
+.sb-shell .px-body { display: flex; flex-direction: column; overflow: hidden; }
+.sb-shell .px-journal { flex: 1 1 auto; min-height: 0; }
+.sb-shell .px-qrail, .sb-shell .px-qdetail { min-height: 0; overflow-y: auto; }
 .sb-shell .sb-top, .cr-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
   align-items: center; padding: 12px 16px;
   border-bottom: 2px solid rgba(125,116,96,0.35); }
@@ -4694,6 +4701,7 @@ ${paceControlsCss('tview')}
 .pack-shell .walletsheet .wallet-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
   padding: 3px 0; font-size: 14px; line-height: 1.35; }
 .pack-shell .walletsheet .wallet-k { color: var(--dim); }
+.pack-shell .walletsheet .wallet-kg { margin-left: 4px; font-size: 12px; opacity: 0.75; font-variant-numeric: tabular-nums; white-space: pre; }
 .pack-shell .walletsheet .wallet-v { color: var(--bone); text-align: right; font-variant-numeric: tabular-nums; }
 .pack-shell .walletsheet .wallet-row.none .wallet-v, .pack-shell .walletsheet .wallet-v.why { color: var(--dim); opacity: 0.75; }
 .pack-shell .walletsheet .wallet-v.why { font-size: 12px; }

@@ -479,5 +479,7 @@ test('CLIMB6 C16: THE FOUR HOSTS hand the rig the snapshot (world, exterior, int
   // request (`assembly.runFit`) - the climb's hook is still the last before the matrices
   // PIN MOVED (RIFLE-STANCE, 2026-10-17): a held long gun's hands (`hold`, combat/gun/rifleStance.js) are solved in the same
   // place, after the climb's slot and before the matrices
-  assert.match(rd('src/formats/morrowind/mwFirstPerson.js'), /applyFirstPersonNeck\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.runFit = run \? applyClimbRig\(skeleton, pose, GRAPH_ROOT, fns\.skelMats, run\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.climbFit = climb \? applyClimbRig\(skeleton, pose, GRAPH_ROOT, fns\.skelMats, climb\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.holdFit = hold \? hold\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n\s*const mats = fns\.skelMats/, 'the hook between the neck and the matrices');
+  // PIN MOVED (BODY-MOTION, 2026-10-18): the third-person body's own motion (`motion`, characters/bodyMotion/) is solved
+  // after the neck and before the run - the climb's and the hold's hooks still the last before the matrices
+  assert.match(rd('src/formats/morrowind/mwFirstPerson.js'), /applyFirstPersonNeck\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.motionFit = motion \? motion\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.runFit = run \? applyClimbRig\(skeleton, pose, GRAPH_ROOT, fns\.skelMats, run\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.climbFit = climb \? applyClimbRig\(skeleton, pose, GRAPH_ROOT, fns\.skelMats, climb\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.holdFit = hold \? hold\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n\s*const mats = fns\.skelMats/, 'the hook between the neck and the matrices');
 });

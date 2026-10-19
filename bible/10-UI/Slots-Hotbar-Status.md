@@ -377,3 +377,32 @@ save. A player who had chosen Diamond left no trace and moves to the hotbar with
 
 Pinned: `test/systems/hb_lycfree.test.js` (8). The diamond's own suites choose the diamond now that it is not the default
 (Testing.md's row names them).
+
+## DUNGEON-DIGITS - a dungeon window gets its digits (FIELD BUGS 2026-10-18f)
+
+> "Usable items hotkeys do not function in dungeons. 1-9 works outside, but not in dungeons for some reason." -
+> Aspidichelon, #bug-reports, over the use-magic-item list (each row numbered on the right)
+
+**The bar took them.** The hotbar listens on the window's capture phase, ahead of every host's ladder, and takes a key
+whose action is one of its ten slots (Digit1-Digit0 by default) - stopped, so nothing after it hears the key
+(`enhancedHotbar.js:"function onKey(e) {"`). It stands down while the HUD's last frame said the game is paused: drawHud
+hands it `paused: !!cursorActive` (AUDIT CONTRIB H1), and nothing else writes that word. The street, the fixed city and
+a building draw the HUD on every frame, a window up or not. Both dungeon hosts return above `drawFoes` while a window
+pauses the game, and `drawFoes` is their only drawHud, so underground the bar heard the last frame of play for the whole
+life of a window: it took every digit, and pressed its own slot behind the window through the doors that frame had
+handed it (the dungeon's quick use - a potion on slot 1 drunk). The list's own digits (`ui/listPicker.js` input) were
+never it. With the diamond the digits go through the host's key route, which a window owns.
+
+**The fix.** The HUD's hide door both dungeon branches already call (`ui/hud/hud.js` hideHudTextSurfaces, the context's
+`hideHudText`) says to the enhanced HUD what drawHud says under a window: `hideEnhancedHud` (`ui/enhanced/enhancedHud.js`)
+runs its frame with `hidden` and `paused`, so the HUD and its bar hide and the keys are the window's - the pad's
+crossbar too (its `inForce` reads the same word). The window gone, the next frame of play gives them back. A HUD never
+built answers nothing. No host gained a line.
+
+Left, said so: between a key that opens a window and the next frame the bar still holds the last frame's word, in every
+host. And the dungeon context's own drawHud reads its own slot alone (`cursorActive: !!activeOverlay`), so a street-slot
+window standing over ?world's dungeon arm (Recall's prompt) leaves the bar its keys - not proven to meet a window that
+reads digits.
+
+Pinned: `test/ui/hud/fb1018f_dungeondigits.test.js` (3). Mutants: `tools/mutants/fb1018f_dungeondigits.json` (11, all
+dead).

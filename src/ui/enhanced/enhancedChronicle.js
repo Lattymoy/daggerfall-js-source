@@ -21,6 +21,7 @@
 // a COUNT beside each name, because "Notes 0" answers the question a
 // player opens this window with before they have clicked anything.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { repaintKeepingScroll } from '../domRepaint.js';   // FB1018f SPELL-SCROLL: a press keeps the page where it was
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { overlayAction, eventMeans } from '../input.js';   // LV1's audit: the REGISTRY's answer (AUDIT KB1: `eventAction`, the event's own read) for the key this window is named after
 import { questRail, questTitleOf, remainWords, QUEST_URGENT_SECONDS } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
@@ -309,9 +310,17 @@ function disarmClocks() {
   clockSpans.clear();
 }
 
+/** FB1018f SPELL-SCROLL: the spellbook's bones, and its fault - every press here (a card folded, a note removed, a quest's
+ *  Share or Abandon, a deadline run out) drew the window from nothing and the page stood at its top again, the card just
+ *  pressed scrolled away. Drawn through the house's one repaint (ui/domRepaint.js), as the pause window's journal pages
+ *  are; the page names its section, so another section starts at its top. */
 function render() {
   disarmClocks();   // GUIDE2: this render's spans replace the last one's
   if (!host) return;
+  repaintKeepingScroll(host, paint);
+}
+
+function paint() {
   host.innerHTML = '';
   const model = chronicleModel(deps);
   const counts = { quests: model.quests.length, notes: model.notes.length, messages: model.messages.length, history: model.history.length,
@@ -334,6 +343,7 @@ function render() {
   win.append(head);
 
   const body = el('div', 'px-body');
+  body.setAttribute('data-scroll-key', section);   // FB1018f SPELL-SCROLL: a press keeps the page; another section starts at its top
   const wrap = el('div', 'px-journal');
   const rail = el('div', 'px-qrail');
   for (const [id, label] of sections) {

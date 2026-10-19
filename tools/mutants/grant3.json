@@ -172,7 +172,7 @@
   {
     "name": "GRANT3-tally-never-handed",
     "file": "src/scenes/grantHost.js",
-    "old": "    send({ k: 'tally', rows });",
+    "old": "    if (rows.length) send({ k: 'tally', rows });",
     "new": "    void rows;",
     "why": "a reader's tally kept at home",
     "tests": [

@@ -704,7 +704,7 @@ export class PersistentTrackField {
    *  TV-SAVE (FIELD BUGS 2026-10-09: "the game is starting to slow down, and especially freeze"): a field unchanged since
    *  the last record writes that record's text again rather than packing it again - the same text, character for
    *  character. A full field (65,536 cells) packed in 80-90 ms on this thread, and every save asked it: online, the
-   *  checkpoint every two minutes. */
+   *  periodic checkpoint (systems/online/onlineCheckpoint.js ONLINE_CHECKPOINT_MS). */
   writeSaveData(data) {
     if (!data) return;
     data.FormatVersion = 1;

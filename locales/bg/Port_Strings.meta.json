@@ -8014,6 +8014,11 @@
   "tr": "db45cf86abd4",
   "by": "claude-in-session"
  },
+ "eg.hit.noFooting": {
+  "en": "36cafe71cf04",
+  "tr": "c6b41dcc7aaf",
+  "by": "claude-in-session"
+ },
  "eg.panel.noteTouch": {
   "en": "7a7fe891ec83",
   "tr": "60ef09296fd6",
@@ -8682,6 +8687,16 @@
  "features.mwBillboardLook.title": {
   "en": "1ba578fcc93d",
   "tr": "c0a3e93e85e7",
+  "by": "claude-in-session"
+ },
+ "features.mwBodyMotion.note": {
+  "en": "7559b7458180",
+  "tr": "e06e0de13358",
+  "by": "claude-in-session"
+ },
+ "features.mwBodyMotion.title": {
+  "en": "6fb981a99ca7",
+  "tr": "3642b97c34c4",
   "by": "claude-in-session"
  },
  "features.navalCombat.aimCamera": {
@@ -17039,6 +17054,11 @@
   "tr": "e8bb8e10260c",
   "by": "claude-in-session"
  },
+ "net.gate.courtWatch": {
+  "en": "98f8568d319f",
+  "tr": "f560433da7c0",
+  "by": "claude-in-session"
+ },
  "net.mod.ambiguous": {
   "en": "fb38a201f710",
   "tr": "cd588bbf603a",
@@ -20234,6 +20254,16 @@
   "tr": "e16a3752657a",
   "by": "claude-in-session"
  },
+ "prof.craft.xpLimit": {
+  "en": "ebd9569af9a3",
+  "tr": "ea7f4c02127c",
+  "by": "claude-in-session"
+ },
+ "prof.craft.xpTop": {
+  "en": "bf5e8dd5fd87",
+  "tr": "6c0613c6dd9a",
+  "by": "claude-in-session"
+ },
  "prof.lode.legend": {
   "en": "80b1736b1dfb",
   "tr": "14a37a28c22a",
@@ -20574,9 +20604,19 @@
   "tr": "524e6a9f9af8",
   "by": "claude-in-session"
  },
+ "prof.page.craft.xpLimit": {
+  "en": "0a83e8c8e02b",
+  "tr": "455fa0f53bd4",
+  "by": "claude-in-session"
+ },
  "prof.page.craft.xpShop": {
   "en": "78aff271f890",
   "tr": "f49fa8947ff0",
+  "by": "claude-in-session"
+ },
+ "prof.page.craft.xpTop": {
+  "en": "fb99bb33663b",
+  "tr": "aae68557e104",
   "by": "claude-in-session"
  },
  "prof.page.crafting": {
@@ -20807,6 +20847,11 @@
  "prof.page.fire.pans": {
   "en": "3757cfb14f50",
   "tr": "30736fe350cc",
+  "by": "claude-in-session"
+ },
+ "prof.page.fire.pansOnly": {
+  "en": "3f775f27b64d",
+  "tr": "0eed71581114",
   "by": "claude-in-session"
  },
  "prof.page.fire.quick": {
@@ -21081,7 +21126,12 @@
  },
  "prof.page.limit": {
   "en": "b9efd5663578",
-  "tr": "140ee5d87a6f",
+  "tr": "8cb6ca9f0ee7",
+  "by": "claude-in-session"
+ },
+ "prof.page.limit.rule": {
+  "en": "8074c8ae816c",
+  "tr": "75d4b8242fb5",
   "by": "claude-in-session"
  },
  "prof.page.loom": {
@@ -21837,6 +21887,11 @@
  "prof.page.xp": {
   "en": "68e1984a6285",
   "tr": "68e1984a6285",
+  "by": "claude-in-session"
+ },
+ "prof.page.xpHeld": {
+  "en": "97f273d26381",
+  "tr": "9958cf72a0ee",
   "by": "claude-in-session"
  },
  "prof.page.xpMaster": {

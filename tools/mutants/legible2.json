@@ -1,0 +1,128 @@
+[
+  {
+    "name": "LEGIBLE2-a-literal-compared-by-its-spelling",
+    "file": "tools/sameProgram.mjs",
+    "old": "      if (!Object.is(a.value, b.value)) differ(`the literal ${a.raw} became ${b.raw}`, a, b);",
+    "new": "      if (a.raw !== b.raw) differ(`the literal ${a.raw} became ${b.raw}`, a, b);",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-a-rename-not-asked-for-passes",
+    "file": "tools/sameProgram.mjs",
+    "old": "      if (renames[a.name] !== b.name) differ(`\\`${a.name}\\` was renamed to \\`${b.name}\\`, and that rename was not asked for`, a, b);",
+    "new": "      void 0;",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-the-pairing-unchecked",
+    "file": "tools/sameProgram.mjs",
+    "old": "    } else if (pairedWith !== varB || pairedFrom !== varA) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-member-names-free",
+    "file": "tools/sameProgram.mjs",
+    "old": "        if (!node.computed) fixedName.add(node.property);",
+    "new": "        void 0;",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-exported-declarations-free",
+    "file": "tools/sameProgram.mjs",
+    "old": "        markDeclaredNames(node.declaration);",
+    "new": "        void 0;",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-an-imports-outer-name-free",
+    "file": "tools/sameProgram.mjs",
+    "old": "      if (outerName(a) !== outerName(b)) differ(`the ${outer} name \\`${outerName(a)}\\` became \\`${outerName(b)}\\``, a, b);",
+    "new": "      void 0;",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-a-templates-text-uncompared",
+    "file": "tools/sameProgram.mjs",
+    "old": "      if (a.value.raw !== b.value.raw || a.value.cooked !== b.value.cooked || a.tail !== b.tail) differ('a template literal\\'s text differs', a, b);",
+    "new": "      void 0;",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-a-rename-beside-eval-passes",
+    "file": "tools/sameProgram.mjs",
+    "old": "        if (node.callee.type === 'Identifier' && node.callee.name === 'eval') dynamicScope = true;",
+    "new": "        void 0;",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-a-regex-flag-uncompared",
+    "file": "tools/sameProgram.mjs",
+    "old": "        if (a.regex?.pattern !== b.regex?.pattern || a.regex?.flags !== b.regex?.flags) differ('a regular expression differs', a, b);",
+    "new": "        if (a.regex?.pattern !== b.regex?.pattern) differ('a regular expression differs', a, b);",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-the-stretch-never-widened",
+    "file": "tools/carryPins.mjs",
+    "old": "  while (occurrences(transformed, stretch()) !== 1 || stretch() === '') {",
+    "new": "  while (stretch() === '') {",
+    "tests": [
+      "test/tooling/legible2_carrypins.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-a-quote-not-followed",
+    "file": "tools/carryPins.mjs",
+    "old": "      if (quoted !== undefined && matched[quoted] >= 0) lines.add(b[matched[quoted]].line);",
+    "new": "      void quoted;",
+    "tests": [
+      "test/tooling/legible2_carrypins.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-a-comments-inner-lines-lost",
+    "file": "tools/carryPins.mjs",
+    "old": "        if (a[k].line < line && line <= a[k].endLine && matched[k] >= 0 && a[k].endLine - a[k].line === b[matched[k]].endLine - b[matched[k]].line) {",
+    "new": "        if (false && a[k].line < line && line <= a[k].endLine && matched[k] >= 0 && a[k].endLine - a[k].line === b[matched[k]].endLine - b[matched[k]].line) {",
+    "tests": [
+      "test/tooling/legible2_carrypins.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-an-anchor-in-code-written",
+    "file": "tools/carryPins.mjs",
+    "old": "        if (!forbid) { fail('the anchor stands in code, outside a comment - a person writes it'); continue; }",
+    "new": "        if (false) { fail('the anchor stands in code, outside a comment - a person writes it'); continue; }",
+    "tests": [
+      "test/tooling/legible2_carrypins.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE2-only-the-first-split-line-tried",
+    "file": "tools/carryPins.mjs",
+    "old": "        for (const candidate of newLines) {",
+    "new": "        for (const candidate of newLines.slice(0, 1)) {",
+    "tests": [
+      "test/tooling/legible2_carrypins.test.js"
+    ]
+  }
+]

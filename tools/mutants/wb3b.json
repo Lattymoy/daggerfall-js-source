@@ -227,11 +227,12 @@
   {
     "name": "WB3b-no-level-claim",
     "file": "src/scenes/world.js",
-    "old": "online.welcomes !== _gateInFor && online.sendGate({ k: 'in',",
-    "new": "online.welcomes !== _gateInFor && false && online.sendGate({ k: 'in',",
+    "old": "(online.welcomes !== _gateInFor || gateCourt?.askAgain()) && online.sendGate({ k: 'in',",
+    "new": "(online.welcomes !== _gateInFor || gateCourt?.askAgain()) && false && online.sendGate({ k: 'in',",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (COURT-WATCH / CHECKPOINT-5): re-aimed by content."
   },
   {
     "name": "WB3b-no-ring-in-the-court",

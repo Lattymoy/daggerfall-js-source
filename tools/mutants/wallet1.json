@@ -202,8 +202,8 @@
   {
     "name": "WALLET1-lines-silver-unknown",
     "file": "src/systems/walletItem.js",
-    "old": "      : { key: 'silver', label: 'Silver', figure: null, none: false, note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline };",
-    "new": "      : { key: 'silver', label: 'Silver', figure: num(0), none: false, note: null };",
+    "old": "      : { key: 'silver', label: 'Silver', figure: null, none: false, note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline, weight: null };",
+    "new": "      : { key: 'silver', label: 'Silver', figure: num(0), none: false, note: null, weight: null };",
     "why": "an unknown silver said as none",
     "tests": [
       "test/systems/wallet1.test.js"

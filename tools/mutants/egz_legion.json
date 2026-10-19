@@ -218,20 +218,22 @@
   {
     "name": "EGZ-the-strike-rule-gone",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "if (!egGroundAt(view, p.x, p.y, p.z, EG_STRIKE_PAD_M) && !(body.role === EG_ROLE.obj && !egGroundAt(view, body.x, egFeetY(view, body.y), body.z, body.r ?? 1))) return out;",
+    "old": "if (egStruckOff(view, body, p.x, p.y, p.z)) return out;",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
-    ]
+    ],
+    "why": "PIN MOVED (FIELD BUGS 2026-10-18f TURNED-BLOW): the strike rule moved into net/eliteGates/egBodies.js egStruckOff - its call in egBlow"
   },
   {
     "name": "EGZ-the-false-wall-unstruck",
-    "file": "src/net/eliteGates/egBrain.js",
-    "old": "&& !(body.role === EG_ROLE.obj && !egGroundAt(view, body.x, egFeetY(view, body.y), body.z, body.r ?? 1))) return out;",
-    "new": ") return out;",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "&& !(b?.role === EG_ROLE.obj && !egGroundAt(view, b.x, egFeetY(view, b.y), b.z, b.r ?? 1));",
+    "new": ";",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
-    ]
+    ],
+    "why": "PIN MOVED (FIELD BUGS 2026-10-18f TURNED-BLOW): the false wall's exception moved into net/eliteGates/egBodies.js egStruckOff"
   },
   {
     "name": "EGZ-the-height-dropped",

@@ -1006,7 +1006,10 @@ Section 6, in the dungeon host.
 - **The end** is the dungeon's enemy or start marker farthest from its entrance across the floor plan (the layout's
   enemy markers, an Elite copy left out, and every block's start markers - `sdEndMarks`). The law is RVN7d's lair law,
   lifted out of `scenes/dungeonContext.js` into `world/dungeon/dungeonEnd.js` (`dungeonEndOf`): the lair's stand reads it now
-  too, so the two are one law. Pure: the same markers give the same end on every client, and a tie keeps the first.
+  too, so the two are one law. (LAIR-REACH, 2026-10-19: SD-REACH below fixed the Rift's candidates alone, and the lair kept
+  the raw markers - its revenant stood in a border cap; both now ask the host's one `dungeonEnd`,
+  `01-Overview/bugs/Field-Bugs-2026-10-19.md`. LAIR-WALK takes the lair's end further - the farthest a walk reaches on the
+  client's own navmesh - and leaves the Rift on this law alone: the Rift stands the same on every client.) Pure: the same markers give the same end on every client, and a tie keeps the first.
 - **The Rift** stands on the floor the collider finds under the end - or a step or two about it, where its hall is
   widest (`sdRiftPlace`: the end itself, then eight bearings at 1.5 m and 3 m, each on the end's own floor and reached
   by a clear line at chest height). It is as wide and as tall as that hall lets it stand (`sdRiftFit`): 7 m at most,

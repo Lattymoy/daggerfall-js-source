@@ -174,6 +174,7 @@ const mkEl = (tag = 'div') => ({
   attrs: {}, setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k]; }, removeAttribute() {}, remove() {},
   append(...c) { this.children.push(...c); }, appendChild(c) { this.children.push(c); return c; }, replaceChildren(...c) { this.children = c; },
   addEventListener() {}, removeEventListener() {}, querySelector() { return null; }, focus() {},
+  querySelectorAll() { return []; },   // FB1018f SPELL-SCROLL: the repaint asks for the scrolled panes first (ui/domRepaint.js) - a fake with no layout has none
 });
 const findAll = (n, cls, out = []) => { if (String(n.className ?? '').split(/\s+/).includes(cls)) out.push(n); for (const c of n.children ?? []) findAll(c, cls, out); return out; };
 

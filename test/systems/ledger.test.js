@@ -12,8 +12,8 @@
 // Every figure below is computable from a module. Stating it once in
 // the ledger and pinning it here means the two cannot disagree
 // silently: change the code and this fails until the doc is updated,
-// and vice versa. That is the same contract manifest.test.js already
-// holds over Testing.md's suite count.
+// and vice versa. (manifest.test.js held Testing.md's suite count the
+// same way until LEGIBLE 1b retired the count, 2026-10-19.)
 import { test } from 'node:test';
 import { indexText } from '../bibleIndex.mjs';   // HARD5: a doesNotMatch aimed at one page goes vacuous when its subject moves
 import assert from 'node:assert/strict';

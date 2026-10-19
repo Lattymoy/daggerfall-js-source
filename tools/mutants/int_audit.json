@@ -12,11 +12,12 @@
   {
     "name": "INTA-the-print-unread",
     "file": "server-account/src/ledger.js",
-    "old": "    if (r && r.fp !== fp) { forged.push(key); continue; }   // another piece's key: no claim to that piece\n",
+    "old": "    if (r && r.fp !== fp) {\n      if (!rehomedPrint(r.fp, fp)) { forged.push(key); continue; }   // another piece's key: no claim to that piece\n      reprint.push([key, fp, r.fp]);   // AUDIT FB1018f L1-1: the piece itself, its base moved home by the load (lootRarity.js)\n    }\n",
     "new": "",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1018f L1-1 (re-aimed by content): the print check is a block now - a load's one move taken (rehomedPrint), every other print forged; the mutant drops the whole check"
   },
   {
     "name": "INTA-no-grace",

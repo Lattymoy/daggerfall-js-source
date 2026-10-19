@@ -96,6 +96,7 @@ import { weaponSkillUsed } from '../../characters/weapons.js';
 import { friendlyProtected } from '../../combat/playerWeapon.js';
 import { careerTolerance, EFFECT_FLAGS } from '../spellcast.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
+import { healthShare } from '../../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
 import {
   wornSets, setsAwake, RAMPAGE_SECONDS, RAMPAGE_STACKS, CLEAVE_METRES, WRATH_BELOW, NOVA_METRES, WRATH_SECONDS,
   RIPOSTE_SECONDS, MARK_METRES, MARK_SECONDS, BLOOD_SECONDS, BLOOD_STACKS, COIL_STACKS, COIL_SECONDS, SHED_BELOW,
@@ -199,7 +200,7 @@ export const coilStacksAt = (foe, now = _now()) => {
 /** The foe my last landed blow coiled, while its coil holds, and its stacks (the states' - a card's, the pins'). */
 export const coiledFoe = (now = _now()) => (coilStacksAt(_s.coilFoe, now) ? _s.coilFoe : null);
 export const coilStacks = (now = _now()) => coilStacksAt(_s.coilFoe, now);
-const belowHalf = (e) => Number.isFinite(e?.health) && e.maxHealth > 0 && e.health < e.maxHealth / 2;
+const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5;   // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)
 const ranged = (w) => weaponSkillUsed(w?.templateIndex) === SKILLS.Archery;
 /** @type {WeakMap<object, number>} */
 let _carry = new WeakMap();
@@ -256,7 +257,7 @@ export function setBlow(weapon, damage, attacker, target, info) {
  *  modifiers, the share was of a number PCAAO then reduced for the struck foe's armour alone, so its neighbour could take
  *  more than it did. SERPENT-SET: and Constrict's coil tightens - a bow's blow too (the tier says a weapon blow). */
 export function setStrike(attacker, target, damage, weapon, info = null) {
-  if (!(damage > 0) || !weapon) return;
+  if (!(damage > 0) || !weapon || target?.warded) return;   // AUDIT FB1018f L3-3: a blow its referee turns whole landed nothing - no Discipline's return, no coil, no Cleave off it (setBlow's own AUDIT SETS L4)
   if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)
   if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone
   if (ranged(weapon)) return;

@@ -402,7 +402,8 @@ test('CSA-K: the host - another\'s boat stands in MY collider beside my boats, a
   assert.match(peersFrame, /if \(_csaPeersPosed\) return;\n\s+_csaPeersPosed = true;/, 'once a frame');
   assert.match(peersFrame, /allowed: csaOn\(\) && !!online && walkMode && playerSpawned && !_teleporting && !_traveling && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && !\(playerEntity\.health <= 0 \|\| modes\?\.deathUp\?\.\(\)\),/);
   assert.match(peersFrame, /ground: \(b\) => \(!player\.grounded \? null : typeof player\.groundKey === 'string' && player\.groundKey\.startsWith\(`csaBoat:\$\{csaBoatId\(b\)\}:`\) \? 'boat' : 'other'\),/, 'its own buckets are the boat\'s ground');
-  assert.match(peersFrame, /carry: \(d, yawDeg\) => \{ player\.carryBy\(d\[0\], d\[1\], d\[2\]\); cam\.yaw \+= \(yawDeg \* Math\.PI\) \/ 180; _csaMovedPlayer = true; \}/);
+  // PIN MOVED (AUDIT BODY-MOTION RIG-6): the deck's turn handed to the motor too (carryTurn), so the body's legs ride it
+  assert.match(peersFrame, /carry: \(d, yawDeg\) => \{ player\.carryBy\(d\[0\], d\[1\], d\[2\]\); cam\.yaw \+= \(yawDeg \* Math\.PI\) \/ 180; player\.carryTurn\?\.\(\(yawDeg \* Math\.PI\) \/ 180\); _csaMovedPlayer = true; \}/);
   assert.match(peersFrame, /if \(boat \|\| _csaBuckets\.size\) csaSyncColliders\(\);/, 'the boats where they stand now');
   const pool = cut(WORLD, 'function csaPoolFrame(dt) {', '\n  }\n');
   assert.match(pool, /csaPeersFrame\(dt\);[^\n]*\n\s+_csaPeersPosed = false;/, 'posed here when the step did not run; the latch re-armed for the next frame');

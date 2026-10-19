@@ -20,8 +20,8 @@
   {
     "name": "SD4B-the-lair-off-the-law",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    const far = dungeonEndOf(from, marks);",
-    "new": "    const far = marks[0] ?? null;",
+    "old": "    const far = (reaches && dungeonEnd(reaches)) || dungeonEnd();",
+    "new": "    const far = (_layoutEnemies ?? [])[0] ?? null;",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js",
       "test/systems/rvn7d_stand.test.js"

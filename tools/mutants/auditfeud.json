@@ -192,8 +192,8 @@
   {
     "name": "AF-R6-load-keeps",
     "file": "src/systems/revenant/revenant.js",
-    "old": "_state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); },   // the last game's harm",
-    "new": "_state.mirrorId = null; clearPlayerHarm(); endPlayerFights(); },   // the last game's harm",
+    "old": "_state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); forgetBodies(); },   // the last game's harm",
+    "new": "_state.mirrorId = null; clearPlayerHarm(); endPlayerFights(); forgetBodies(); },   // the last game's harm",
     "tests": [
       "test/systems/auditfeud.test.js"
     ]

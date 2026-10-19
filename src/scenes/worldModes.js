@@ -2159,7 +2159,7 @@ export function createWorldModes(host) {
       gender: questFoeGender(foe),
       yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player (:328)
       questBehaviour: handle.behaviour,
-    })).catch((e) => console.error('[quest] interior foe stand failed:', e?.message ?? e));
+    })).then((f) => host.raidLate?.(foe.parentQuest, f)).catch((e) => console.error('[quest] interior foe stand failed:', e?.message ?? e));   // RAID-WON (AUDIT FB1019 D1): a raid's wave landing after its raid ended, withdrawn
     return true;
   }
 

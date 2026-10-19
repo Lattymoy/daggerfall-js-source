@@ -85,7 +85,7 @@ async function player(R, id, { mode, room, climate = () => 231, wait = 300, verd
 const watchman = () => ({ mobileType: 146, gender: 'male', ai: { feet: [5, 0, 5], yaw: 0, target: null, moving: false }, entity: { health: 30, maxHealth: 30, level: 9, items: [] }, dead: false });
 
 test('GRANT6 THE LAW\'S WORDS: a case\'s reasons are what only a changed client gives - a grant never signed, another\'s, a member past it, marks past it, a member twice; an enforcing reader stands those down and a record with none; the rest (a record that beat its carry or renewal, a level since its checkpoint, a species off its tables) are the measure\'s (mutants: a timing word counted against a sender)', () => {
-  assert.deepEqual(GRANT_CASE_REASONS, ['unsigned', 'sender', 'member', 'marks', 'twice']);
+  assert.deepEqual(GRANT_CASE_REASONS, ['unsigned', 'sender', 'member', 'marks', 'twice', 'stats']);   // PIN MOVED (FOE-BOUNDS, Spawn-Grants section 19): a health past every builder's worst is no timing and no setting
   assert.deepEqual(GRANT_STANDDOWN_REASONS, [...GRANT_CASE_REASONS, 'ungranted']);
   assert.ok([...GRANT_STANDDOWN_REASONS].every((r) => GRANT_READER_REFUSALS.includes(r)));
   assert.deepEqual(GRANT_READER_REFUSALS.filter((r) => !GRANT_STANDDOWN_REASONS.includes(r)), ['cell', 'expired', 'dice']);

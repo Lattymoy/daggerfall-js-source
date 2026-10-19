@@ -51,7 +51,8 @@ import {
   PROFESSIONS, isProfession, rankOfXp, tierOpen, harvestXp, writXp, specOk, specsAt, SPEC_RANKS, RESPEC, trackOf,   // CRAFT3: a discipline's track its craft's
   STORES_MAX, WITHDRAW_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, HARVEST_LATE_S, HARVEST_EARLY_S,
   PROF_RID_RE, PROF_XP_MAX, profSwitchOf, basketStep, herbKey, professionOfFamily, courtWritCount, COURT_WRITS_PER_DAY,
-  glintsMax, smeltRecipe, SMELT_MAX, smeltXp, craftXpCap, DEEP_UNCONFIRMED_PER_DAY,   // CAP-OFF: no day's cap to import
+  glintsMax, smeltRecipe, SMELT_MAX, smeltXp, DEEP_UNCONFIRMED_PER_DAY,   // CAP-OFF: no day's cap to import
+  xpForRank, JOURNEYMAN_RANK, CRAFTS_ABOVE_JOURNEYMAN,   // AUDIT FB1018f L5-1: the crafter's limit read in the decision (craftCapSql)
   stockOf, STOCK_MAX, withdrawable, cutsMax, workPer, workSpecRank, hideOfFoe, HIGH_HIDES_PER_DAY, HIGH_HIDE_TIER,
   HAUL_YIELD, FISH_KEY, haulTier,   // PROF8
   herbXpTier,   // HERB-XP
@@ -210,6 +211,19 @@ export const spendableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_st
 /** AUDIT BAG-CRAFT A1: THE UNITS A STATION MAY SPEND - a craft, a smelt, a brew, a temper: own, bought and loose, never
  *  gold's (bagLaw.js STATION_ORIGINS); spent by `workStatements`, loose first. */
 export const workableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ${p} AND char_id = ${c} AND material = ${m} AND origin IN (${originsSql(STATION_ORIGINS)})), 0)`;
+/** AUDIT FB1018f L5-1 (the crafter's limit was not one decision): THE CRAFTER'S LIMIT IN SQL - professionLaw craftXpCap's
+ *  ceiling over `profession`'s track (a discipline its craft's), read off the character's tracks as they stand when the
+ *  statement runs: one XP short of rank 51 where CRAFTS_ABOVE_JOURNEYMAN of its other crafts hold rank 51's XP, else
+ *  Master's. Every act's decision and its track's write read it in the act's own batch (a D1 batch is one transaction):
+ *  the cap was craftXpCap of a SELECT several awaits before the batch, bound in as a literal, so two acts at once on two
+ *  tracks at 50 with one other craft past each read one past, each bound Master's 100,000 and both crossed - three past,
+ *  and every craft of the three then held at 26,009 for good (nothing lowers a track). `p` and `c` the player's and the
+ *  character's SQL. Pinned to craftXpCap over every craft and every standing of the others (fb1018f_craftlimit.test.js). */
+export function craftCapSql(p, c, profession) {
+  const own = trackOf(profession), past = xpForRank(JOURNEYMAN_RANK + 1);
+  const others = PROFESSIONS.filter((x) => x.kind === 'crafting' && x.id !== own).map((x) => `'${x.id}'`).join(', ');
+  return `(CASE WHEN (SELECT COUNT(*) FROM prof_tracks WHERE player = ${p} AND char_id = ${c} AND profession IN (${others}) AND xp >= ${past}) >= ${CRAFTS_ABOVE_JOURNEYMAN} THEN ${past - 1} ELSE ${PROF_XP_MAX} END)`;
+}
 /** A character's harvests today, by profession. */
 async function todayOf(db, player, character, day) {
   return todayFrom((await todayStatement(db, player, character, day).all()).results ?? []);
@@ -1126,7 +1140,8 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
   // PROF11: a mason's work's XP is a craft's (recipeLaw masonXp: the rank's tier a unit, a clean chisel's half again) and
   // its first time's 500 (?11, where firstCraftPays) laid on in the decision; every other work's the smelt's
   const act = r.act ? clean === true : false;
-  const cap = r.xp ? craftXpCap(r.xp, ranks) : 0;
+  // AUDIT FB1018f L5-1: the crafter's limit read in the decision itself (craftCapSql); a work that pays none, none
+  const cap = r.xp ? craftCapSql('?1', '?2', r.xp) : '0';
   const xp = scaleXp(r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, rank) : 0,   // AUDIT 29 A7: the record's quarter, at the smith's rank
     r.xp ? xpPct(await firmStatsOf(db, player, env, character), trackOf(r.xp)) : 0);   // FIRM1: the Firmament's hand on the craft's XP
   const nonce = mintId(rand);
@@ -1152,7 +1167,7 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
     // first of a work its 500 laid on (`f`, kept), and its chisel kept
     db.prepare(`INSERT OR IGNORE INTO prof_smelts (player, rid, char_id, recipe, count, own, bought, loose, xp, at, n, first, clean)
       SELECT ?1, ?3, ?2, ?4, ?5, ${per} * (?5 - MIN(?5, ${bought})), ${per} * (MIN(?5, ${bought}) - MIN(?5, ${loose})), ${per} * MIN(?5, ${loose}),
-        MAX(0, MIN(?8 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${trackOf(r.xp ?? 'smithing')}'), 0))), ?9, ?10, f, ?12
+        MAX(0, MIN(?8 + f * ?11, ${cap} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${trackOf(r.xp ?? 'smithing')}'), 0))), ?9, ?10, f, ?12
       FROM (SELECT CASE WHEN ?11 > 0 AND NOT EXISTS (SELECT 1 FROM prof_smelts WHERE player = ?1 AND char_id = ?2 AND recipe = ?4) THEN 1 ELSE 0 END AS f)
       WHERE ${held.join(' AND ')}
         AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?6), 0) + ${per} * ?5 <= ?7`).bind(...binds),
@@ -1167,9 +1182,9 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(player.id, character, rid, r.out, nonce)),
     // the XP the decision credited, under the crafter's limit - a smelt's Smithing; a log's none (PROF0 25)
     ...(r.xp ? [db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
-      SELECT ?1, ?2, ?7, MIN(?4, xp), ?5 FROM prof_smelts WHERE player = ?1 AND rid = ?3 AND n = ?6
-      ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(?4, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
-      .bind(player.id, character, rid, cap, nowS, nonce, trackOf(r.xp))] : []),   // CRAFT3: its craft's track
+      SELECT ?1, ?2, ?6, MIN(${cap}, xp), ?4 FROM prof_smelts WHERE player = ?1 AND rid = ?3 AND n = ?5
+      ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(${cap}, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
+      .bind(player.id, character, rid, nowS, nonce, trackOf(r.xp))] : []),   // CRAFT3: its craft's track
   ]);
   const made = await db.prepare('SELECT * FROM prof_smelts WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
   if (made?.n === nonce) return answer(made);
@@ -1276,7 +1291,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   const crack = cracked === true;   // PROF10: a Siege-cracked Gem set as the piece's gem - a Lapidary's (3.3), in a piece that sets one
   if (crack && !(takesCracked(r) && specs[100] === LAPIDARY)) return { error: 'prof-lapidary' };
   if (!recipeOpen(r, rank, specs)) return { error: 'prof-rank' };
-  const cap = craftXpCap(craft, ranks);
+  const cap = craftCapSql('?1', '?2', craft);   // AUDIT FB1018f L5-1: the crafter's limit read in the decision itself
   const wood = heartwood === true && takesHeartwood(r);
   const inputs = recipeInputs(r, { heartwood: wood, joiner: specs[50] === 'joiner', cracked: crack });
   // SEAT2b part two: the seat's crafting halls' steps, where the crafter's guild holds the town it crafts in (seatStepsFor)
@@ -1337,7 +1352,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
     // 500 laid on when the character has made none of the recipe (and the recipe pays it - AUDIT 32 S1)
     db.prepare(`INSERT OR IGNORE INTO prof_crafts (player, rid, char_id, recipe, quality, count, provenance, provenance2, seed, xp, first, at, n, heartwood, dye)
       SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?9,
-        MAX(0, MIN(?10 + f * ?13, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?14), 0))),
+        MAX(0, MIN(?10 + f * ?13, ${cap} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?14), 0))),
         f, ?11, ?12, ?15, ?16
       FROM (SELECT CASE WHEN EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND char_id = ?2 AND ${madeBefore}) THEN 0 ELSE 1 END AS f)
       WHERE ${held.join(' AND ')}`).bind(...binds),
@@ -1356,9 +1371,9 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
     })),
     // the XP the decision credited, under the crafter's limit - the recipe's profession's
     db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
-      SELECT ?1, ?2, ?7, MIN(?4, xp), ?5 FROM prof_crafts WHERE player = ?1 AND rid = ?3 AND n = ?6
-      ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(?4, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
-      .bind(player.id, character, rid, cap, nowS, nonce, craft),
+      SELECT ?1, ?2, ?6, MIN(${cap}, xp), ?4 FROM prof_crafts WHERE player = ?1 AND rid = ?3 AND n = ?5
+      ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(${cap}, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
+      .bind(player.id, character, rid, nowS, nonce, craft),
   ]);
   const made = await db.prepare('SELECT * FROM prof_crafts WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
   if (made?.n === nonce) return craftAnswer(db, player, made, nowS);
@@ -1429,7 +1444,7 @@ export async function temperPiece(ctx, player, env, { character, recipe: id, qua
     record = await mintProductRecord({ p: c.p, s: c.s, h: c.h, r: c.r, q: quality + 1, m: c.m, c: c.c, a: c.a === 1, u: c.u ?? null, f: c.f ?? null, v: c.v ?? null }, await signingKey(env, subtle), { subtle, nowS });   // CRAFT-PROCS: the craft's mint version kept - a piece made before mints as it was
   }
   const cost = temperCost(r);
-  const cap = craftXpCap(craft, ranks);
+  const cap = craftCapSql('?1', '?2', craft);   // AUDIT FB1018f L5-1: the crafter's limit read in the decision itself
   const xp = scaleXp(temperXp(r, rank), xpPct(await firmStatsOf(db, player, env, character), craft));   // AUDIT UICALM-FIRM1 L2 L3: the Firmament's hand on a temper's XP, as on the anvil's
   const nonce = mintId(rand);
   const decided = 'EXISTS (SELECT 1 FROM prof_tempers WHERE player = ?1 AND rid = ?2 AND n = ?3)';
@@ -1442,7 +1457,7 @@ export async function temperPiece(ctx, player, env, { character, recipe: id, qua
     // THE DECISION: the input held (never gold's units), a made piece as asked - and the XP what the track can take
     db.prepare(`INSERT OR IGNORE INTO prof_tempers (player, rid, char_id, recipe, provenance, quality, material, qty, xp, at, n)
       SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8,
-        MAX(0, MIN(?9, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?12), 0))), ?10, ?11
+        MAX(0, MIN(?9, ${cap} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?12), 0))), ?10, ?11
       WHERE ${workableSql('?1', '?2', '?7')} >= ?8 AND ${piece}`)   // AUDIT BAG-CRAFT A1: a station's loose units too
       .bind(player.id, character, rid, r.id, provenance, quality + 1, cost.key, cost.n, xp, nowS, nonce, craft),
     // a made piece's row at its new quality, its record re-signed - AUDIT BAG-CRAFT A1: walled to gold where the input held a
@@ -1455,9 +1470,9 @@ export async function temperPiece(ctx, player, env, { character, recipe: id, qua
     ...workStatements(db, { player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_tempers WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [cost.key, cost.n, rid, nonce] }),
     // the XP the decision credited, under the crafter's limit - the craft's
     db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
-      SELECT ?1, ?2, ?7, MIN(?4, xp), ?5 FROM prof_tempers WHERE player = ?1 AND rid = ?3 AND n = ?6
-      ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(?4, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
-      .bind(player.id, character, rid, cap, nowS, nonce, craft),
+      SELECT ?1, ?2, ?6, MIN(${cap}, xp), ?4 FROM prof_tempers WHERE player = ?1 AND rid = ?3 AND n = ?5
+      ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(${cap}, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
+      .bind(player.id, character, rid, nowS, nonce, craft),
   ]);
   const made = await db.prepare('SELECT * FROM prof_tempers WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
   if (made?.n === nonce) return temperAnswer(db, player, made, nowS);

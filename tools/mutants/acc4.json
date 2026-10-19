@@ -42,8 +42,8 @@
   {
     "name": "ACC4-5-read-then-write",
     "file": "server-account/src/accounts.js",
-    "old": "export async function creditPlay({ db, nowS }, playerId) {\n",
-    "new": "export async function creditPlay({ db, nowS }, playerId) {\n  const was = await db.prepare('SELECT played_at FROM players WHERE id = ?').bind(playerId).first();\n  const gap = Number.isSafeInteger(was?.played_at) ? nowS - was.played_at : -1;\n  await db.prepare('UPDATE players SET played_s = played_s + ?, played_at = MAX(COALESCE(played_at, 0), ?) WHERE id = ?').bind(gap > 0 && gap <= PLAY_GRACE_S ? gap : 0, nowS, playerId).run();\n  if (playerId) return { playedS: (await db.prepare('SELECT played_s FROM players WHERE id = ?').bind(playerId).first()).played_s };\n",
+    "old": "export async function creditPlay({ db, nowS }, playerId, sessionId = null) {\n",
+    "new": "export async function creditPlay({ db, nowS }, playerId, sessionId = null) {\n  const was = await db.prepare('SELECT played_at FROM players WHERE id = ?').bind(playerId).first();\n  const gap = Number.isSafeInteger(was?.played_at) ? nowS - was.played_at : -1;\n  await db.prepare('UPDATE players SET played_s = played_s + ?, played_at = MAX(COALESCE(played_at, 0), ?) WHERE id = ?').bind(gap > 0 && gap <= PLAY_GRACE_S ? gap : 0, nowS, playerId).run();\n  if (playerId) return { playedS: (await db.prepare('SELECT played_s FROM players WHERE id = ?').bind(playerId).first()).played_s };\n",
     "tests": [
       "test/server/acc4played.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "ACC4-7-the-route-believes-the-body",
     "file": "server-account/src/index.js",
-    "old": "        return json(await creditPlay(ctx, who.player.id), 200, origin);",
-    "new": "        if (Number.isSafeInteger(body.playedS)) { await db.prepare('UPDATE players SET played_s = ? WHERE id = ?').bind(body.playedS, who.player.id).run(); return json({ playedS: body.playedS }, 200, origin); }\n        return json(await creditPlay(ctx, who.player.id), 200, origin);",
+    "old": "        return json(await creditPlay(ctx, who.player.id, who.session?.id ?? null), 200, origin);",
+    "new": "        if (Number.isSafeInteger(body.playedS)) { await db.prepare('UPDATE players SET played_s = ? WHERE id = ?').bind(body.playedS, who.player.id).run(); return json({ playedS: body.playedS }, 200, origin); }\n        return json(await creditPlay(ctx, who.player.id, who.session?.id ?? null), 200, origin);",
     "tests": [
       "test/server/acc4played.test.js"
     ],

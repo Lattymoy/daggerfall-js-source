@@ -168,7 +168,7 @@ test('AUDIT-DW: checked and standing - the shipped set, the index, the door orde
   // GetName's dye arm and its one exception, in one home
   assert.match(rd('src/characters/dyes.js'), /if \(!Number\.isFinite\(v\) \|\| v === DYE_COLORS\.Unchanged\) return '';/);
   // the records
-  const testing = rd('bible/09-Testing/Testing.md');
+  const testing = rd('bible/09-Testing/Testing-Rows-2026-10-19.md');   // LEGIBLE 1b: the testing rows, in the closed table
   for (const f of ['dw1_diverseweapons.test.js', 'dw2_shipped.test.js', 'dw3_icons.test.js', 'unitybundleworker.test.js', 'auditdw.test.js']) assert.match(testing, new RegExp(`\\| ${f.replace('.', '\\.')} \\| \\d+ \\|`), f);
   assert.match(rd('bible/05-Combat/Diverse-Weapons.md'), /## AUDIT-DW \(2026-09-23\)/);
 });

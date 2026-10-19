@@ -94,12 +94,13 @@
   {
     "name": "ACHAP-S6-EVENTS-REPEAT",
     "file": "server-account/src/npcRoll.js",
-    "old": "|| !!(await db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1')",
-    "new": "|| false && !!(await db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1')",
+    "old": "  const taken = head.last_rid === rid || !!takenQ?.results?.[0];",
+    "new": "  const taken = head.last_rid === rid;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part three): re-aimed by content - the record read in the claim's one batch of reads."
   },
   {
     "name": "ACHAP-S7-NOOP",

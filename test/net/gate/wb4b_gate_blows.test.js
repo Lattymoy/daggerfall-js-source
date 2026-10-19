@@ -122,7 +122,8 @@ test('WB4b the seams, by source: the dungeon context meets him as a foe-shaped b
   assert.match(dc, /if \(foe === boss\) \{ hitEnemy = true; swingOnBoss\(boss, damage, lookDir\); continue; \}/);
   assert.match(dc, /const \{ point: p, dist \} = bossReach\(eye, boss\.ai\);/);
   assert.match(dc, /landOnBoss\(boss, damage, HIT_KINDS\.Melee\);/);
-  assert.match(dc, /if \(boss && missileHitsCapsule\(m\.pos, boss\.ai\.feet, boss\.ai\.height, boss\.ai\.radius\)\) \{\n\s*if \(boss\.warded\) wardTurns\(boss\);\n\s*else playerArrowHitFoe\(m, boss, \{[^\n]*dealDamage: \(t, d\) => landOnBoss\(boss, d, HIT_KINDS\.Shaft\) \}\);/, 'a shaft meets his whole body');
+  // PIN MOVED (AUDIT FB1018f L3-7): a shaft his ward turns says its word ("Warded") beside the ward's ring
+  assert.match(dc, /if \(boss && missileHitsCapsule\(m\.pos, boss\.ai\.feet, boss\.ai\.height, boss\.ai\.radius\)\) \{\n\s*if \(boss\.warded\) \{ wardTurns\(boss\); reportPlayerAttack\(\{ hit: true, damage: 0, target: boss\.entity \}\); \}[^\n]*\n\s*else playerArrowHitFoe\(m, boss, \{[^\n]*dealDamage: \(t, d\) => landOnBoss\(boss, d, HIT_KINDS\.Shaft\) \}\);/, 'a shaft meets his whole body');
   assert.match(dc, /try \{ r = applySpell\(harm, playerEntity\.level, boss\.entity, sinks, Math\.random, \{ entity: playerEntity \}\); \} finally \{ boss\.entity\.activeEffects = \[\]; \}/);   // PIN MOVED (AUDIT SCHOOLS L2 F4): its answer kept, for the paths' riders
   assert.match(dc, /return landOnBoss\(boss, dealt, HIT_KINDS\.Spell\);/);
   assert.match(dc, /castAtBoss: opts\.gateBoss \? \(sp, caster\) => spellOnBoss\(sp, caster\) : null,/);   // PIN MOVED (AUDIT SCHOOLS L2 F4): and the cast's wrapper

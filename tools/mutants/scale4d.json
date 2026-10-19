@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-SCALE4d-D8-session-unbound",
     "file": "server-account/src/service.js",
-    "old": "      if (key === DB_ANY) return constraint === REPLICA_ANY;   // BOOKMARK-SPIRAL: its lookup's miss asks the primary\n      const v = Reflect.get(target, key);\n      return typeof v === 'function' ? v.bind(target) : v;",
-    "new": "      if (key === DB_ANY) return constraint === REPLICA_ANY;   // BOOKMARK-SPIRAL: its lookup's miss asks the primary\n      const v = Reflect.get(target, key);\n      return v;",
+    "old": "      if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT;   // SESSION-SIGN: its lookup the primary's\n      const v = Reflect.get(target, key);\n      return typeof v === 'function' ? v.bind(target) : v;",
+    "new": "      if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT;   // SESSION-SIGN: its lookup the primary's\n      const v = Reflect.get(target, key);\n      return v;",
     "tests": [
       "test/server/scale4d.test.js"
     ],

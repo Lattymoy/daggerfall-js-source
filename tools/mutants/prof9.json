@@ -1339,12 +1339,12 @@
   {
     "name": "AUDIT-PROF-541-K7-steps-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "xp: steps > 0 ? cookXp(rank, { steps }) : cookXp(rank),",
-    "new": "xp: cookXp(rank),",
+    "old": "xp: paidXp(steps > 0 ? cookXp(rank, { steps }) : cookXp(rank), { pct: pay.pct }),",
+    "new": "xp: paidXp(cookXp(rank), { pct: pay.pct }),",
     "tests": [
       "test/systems/prof9_client.test.js"
     ],
-    "note": "CRAFT3: re-aimed by content."
+    "note": "CRAFT3: re-aimed by content. PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
   },
   {
     "name": "AUDIT-PROF-541-K7-steps-unread",

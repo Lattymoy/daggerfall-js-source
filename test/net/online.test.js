@@ -22,7 +22,7 @@ import {
   POSE_HZ, HEARTBEAT_MS, WORLD_CELL, PEER_TIMEOUT_MS, BACKOFF_MIN_MS, BACKOFF_MAX_MS, DEFAULT_SERVER, SNAP_WORLD_UNITS, SNAP_SCENE_UNITS,
   slug, worldRoom, roomKeyFor, poseChanged, lerpPose, peerId, peerSecret, OnlineSession,
 } from '../../src/net/online.js';
-import { WORLD_CELL as WIRE_CELL, RANGE_PIXELS, PIXEL_UNITS, POSE_BOUND, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, roomOf, validPose, relayUrl, POSE_TS_MOD, GROUND_LAW } from '../../src/net/wire.js';
+import { WORLD_CELL as WIRE_CELL, RANGE_PIXELS, PIXEL_UNITS, POSE_BOUND, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, roomOf, validPose, relayUrl, POSE_TS_MOD, GROUND_LAW, GRANT_HELLO_LAW } from '../../src/net/wire.js';
 import * as relay from '../../server/src/relay.js';
 import { composeLook, lookKey, peerStubEntity, alphaBounds, cropRgba, LOOK_ITEM_FIELDS, LOOK_GROUPS, PEER_ARCHIVE, PEER_HEIGHT, DOLLS_MAX, DOLL_RETRY_MS, RemotePlayers } from '../../src/net/remotePlayers.js';
 import { LOOK_GROUPS as WIRE_GROUPS, LOOK_ITEM_FIELDS as WIRE_FIELDS } from '../../src/net/wire.js';
@@ -116,7 +116,7 @@ test('ONLINE1: the session over a fake socket, on its own clock - hello on open,
   assert.equal(s.sendPose(pose(1)), false, 'nothing goes before the socket opens');
   sockets[0].open();
   assert.equal(s.status, 'open'); assert.equal(s.statusLine(), null);
-  assert.deepEqual(sockets[0].sent[0], { t: 'hello', id: 'mac-0001', secret: 'shh-shh-shh-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, pose: { ...pose(1), ts: now % POSE_TS_MOD }, gl: GROUND_LAW }, 'the hello carries the id, its secret and the latest pose - stamped with when it is said (SCALE2b) - and, to a cell, the ground this build stands on (PIN MOVED: GROUND-GATE, Field-Bugs-2026-10-17f)');
+  assert.deepEqual(sockets[0].sent[0], { t: 'hello', id: 'mac-0001', secret: 'shh-shh-shh-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, pose: { ...pose(1), ts: now % POSE_TS_MOD }, gl: GROUND_LAW, gv: GRANT_HELLO_LAW }, 'PIN MOVED (GRANT-DOOR, Spawn-Grants section 20: and the spawn grants it stands on, to a room whose foes ride): the hello carries the id, its secret and the latest pose - stamped with when it is said (SCALE2b) - and, to a cell, the ground this build stands on (PIN MOVED: GROUND-GATE, Field-Bugs-2026-10-17f)');
   assert.equal(s.sendPose(pose(2)), false, 'SD-HELLO (PIN MOVED): nothing past the hello until the room welcomes the socket');
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [] });   // SD-HELLO (PIN MOVED): welcomed - the pose's law below as it was
   assert.equal(s.sendPose(pose(2)), true); now += 20; assert.equal(s.sendPose(pose(3)), false, 'twenty ms later: throttled');

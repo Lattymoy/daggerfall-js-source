@@ -125,5 +125,5 @@ test('WIND4 (3) the grass darkens: the sward takes the sun\'s SCALE and the moon
 test('WIND4 records: the rendering page, the ledger row and the testing row', () => {
   assert.match(read('bible/07-Rendering/Rendering.md'), /^## WIND4 - THE WISPS' COUNT, THE SKY'S DIRECTION, THE GRASS AT NIGHT \(2026-09-15\)/m);
   assert.match(read('bible/01-Overview/Port-Ledger.md'), /THE WISPS' COUNT, THE SKY'S DIRECTION, THE GRASS AT NIGHT \(WIND4, 2026-09-15\)/);
-  assert.match(read('bible/09-Testing/Testing.md'), /^\| wind4_windweather\.test\.js \| \d+ \| WIND4/m);
+  assert.match(read('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| wind4_windweather\.test\.js \| \d+ \| WIND4/m);
 });

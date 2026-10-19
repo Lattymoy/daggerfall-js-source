@@ -11,6 +11,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { readReceipt } from './gateReceipt.js';
+import { t } from '../../systems/textManager.js';   // COURT-WATCH: the watcher's line in the player's language (L10N4)
 import { ATTACKS, nearestCourt, COURTS, hostAt } from './gateBrain.js';   // WB9b: the bound's word and the court it lands in; WB11b: where one of his host stands
 
 /**
@@ -184,6 +185,12 @@ export function bossAt(s, now) {
   return [m.x + ((m.tx - m.x) / len) * along, m.z + ((m.tz - m.z) / len) * along];
 }
 
+/** COURT-WATCH: the words a full court keeps its watcher in (the refusal's own, 'The Burning Court is full.', cast them out),
+ *  in the player's language. */
+export const courtWatchText = () => t('net.gate.courtWatch', 'The Burning Court is full - you watch from its edge until a place frees.');
+/** COURT-WATCH: the refusals that keep their player in the court as its watcher (the relay's word, net/wire.js GATE_NO_WORDS). */
+const WATCHED_NO = Object.freeze({ 'the court is full': true });
+
 /** The gate refusals' words as the player reads them (net/wire.js GATE_NO_WORDS). */
 export const GATE_NO_TEXT = Object.freeze({
   'the gate is closed': 'The gate is closed.',
@@ -204,23 +211,28 @@ export const gateRefusalText = (word) => (word === 'the gate is closed' ? GATE_O
 
 /**
  * The link: the state, the falls by day, the receipts by day, and the words said.
- * @param {{now: () => number, say?: (text: string) => void, onFell?: (day: number, fell: {at: number, top: string[], n: number}) => void, onReceipt?: (receipt: string) => void, onRefused?: (why: string) => void, place?: (s: Readonly<GateState>, now: number) => number[]}} deps
+ * @param {{now: () => number, say?: (text: string) => void, onFell?: (day: number, fell: {at: number, top: string[], n: number}) => void, onReceipt?: (receipt: string) => void, onRefused?: (why: string) => void, place?: (s: Readonly<GateState>, now: number) => number[], watches?: () => boolean}} deps
  *   `onReceipt` is told every receipt the relay hands this socket - the same one again after a reconnect or from the hub
  *   (WB5b: net/gate/gateClaims.js carries it to the account service, and keeps one a day). AUDIT WB B5: `onRefused` is told
  *   the relay's refusal of my `in` (its word, net/wire.js GATE_NO_WORDS) - the court this player stands in is not theirs
  *   to fight in, and the host takes them out of it.
  */
-export function createGateLink({ now, say = () => {}, onFell = () => {}, onReceipt = () => {}, onRefused = () => {}, place = bossAt }) {
+export function createGateLink({ now, say = () => {}, onFell = () => {}, onReceipt = () => {}, onRefused = () => {}, place = bossAt, watches = () => true }) {
   /** @type {Readonly<GateState>} */
   let state = GATE_STATE_EMPTY;
   const falls = new Map();     // day -> {at, top, n}
   const receipts = new Map();  // day -> the receipt (net/gate/gateReceipt.js), keyed by the day it names
+  let watching = false;        // COURT-WATCH: the court full when I asked - I watch it
   return {
     /** A word from the court's room or the hub - the hub says a kill (of any day's gate) and a receipt, and the fold
      *  moves the court for a kill of its own day alone. */
     word(g) {
       if (!g) return;
+      // COURT-WATCH (bible/11-Multiplayer/World-Bosses.md section 24): a full court keeps me as its watcher - its fight
+      // heard and seen, never fought - until the answer to an `in` asked again (gateBrain.js COURT_WATCH_ASK_MS) gives me a seat
+      if (g.k === 'no' && WATCHED_NO[g.m] === true && watches()) { if (!watching) say(courtWatchText()); watching = true; return; }   // AUDIT PLAN-1000 G3: a relay that says `me` (relaySupportsCourtWatch)
       if (g.k === 'no') { say(gateRefusalText(g.m)); onRefused(g.m); return; }   // GATE-RELOAD: in what the word means
+      if (g.k === 'st' && g.me === 1) watching = false;   // COURT-WATCH: my `in` answered - the seat mine
       if (g.k === 'rcpt') { const c = readReceipt(g.r); if (c) { receipts.set(c.d, g.r); onReceipt(g.r); } return; }   // one a day: the receipt says which
       if (g.k === 'fell') {
         const day = g.d ?? state.day;
@@ -234,7 +246,9 @@ export function createGateLink({ now, say = () => {}, onFell = () => {}, onRecei
     fellAt: (day) => falls.get(day)?.at ?? null,
     /** A day's receipt, or null (WB5 rolls the spoils off its seed and carries it to the account service). */
     receipt: (day) => receipts.get(day) ?? null,
+    /** COURT-WATCH: whether I watch this court - it was full when I asked, and no answer has given me a seat since. */
+    watching: () => watching,
     /** Out of the court: its state forgotten (the falls and the receipts are kept - they outlive the court). */
-    leave() { state = GATE_STATE_EMPTY; },
+    leave() { state = GATE_STATE_EMPTY; watching = false; },
   };
 }

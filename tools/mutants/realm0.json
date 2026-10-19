@@ -402,11 +402,12 @@
   {
     "name": "REALM0-checkpoint-ten-minutes",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "export const ONLINE_CHECKPOINT_MS = 120_000;",
+    "old": "export const ONLINE_CHECKPOINT_MS = 300_000;",
     "new": "export const ONLINE_CHECKPOINT_MS = 600_000;",
     "tests": [
       "test/systems/realm0.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (COURT-WATCH / CHECKPOINT-5): re-aimed by content."
   },
   {
     "name": "REALM0-checkpoint-due-late",

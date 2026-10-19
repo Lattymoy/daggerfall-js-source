@@ -49,8 +49,8 @@ const refuse = (name, prefab, rect) => (name.charCodeAt(1) + rect.x + rect.y) % 
 function tiles() {
   const out = [];
   for (const x of [0, 9, 10, 11, 12, 13, 999, 1000]) for (const y of [-1, 6, 7, 8, 9, 10, 499]) {
-    for (const hasLocation of [false, true]) for (const [mapRegionIndex, worldHeight] of [[-1, 10], [WOD_OCEAN_REGIONS[0], 1], [WOD_OCEAN_REGIONS[1], 3]]) {
-      out.push({ mapPixelX: x, mapPixelY: y, hasLocation, mapRegionIndex, worldHeight });
+    for (const hasLocation of [false, true]) for (const [regionIndex, worldHeight] of [[-1, 10], [WOD_OCEAN_REGIONS[0], 1], [WOD_OCEAN_REGIONS[1], 3]]) {
+      out.push({ mapPixelX: x, mapPixelY: y, hasLocation, regionIndex, worldHeight });   // AUDIT FB1018f L4-3: the pixel's region, the field the sea arm reads (WOD-SEA-TEST)
     }
   }
   return out;

@@ -48,9 +48,10 @@
 // for the save as stored and opens it here.
 // ═══════════════════════════════════════════════════════════════════
 
-import { storedSession, serviceBase, forgetSession, accountRefusalText, forgetD1Bookmark } from '../net/accountClient.js';   // AUDIT SCALE II A-2: a write forgets the page's D1 bookmark
+import { storedSession, serviceBase, forgetSession, accountRefusalText, forgetD1Bookmark, sessionPassFor, noteSessionPass, forgetSessionPass, passKeptThrough } from '../net/accountClient.js';   // AUDIT SCALE II A-2: a write forgets the page's D1 bookmark; SESSION-SIGN: the checkpoint carries the session's pass
 import { realmTradeRefusalText, LOCKED_SAID_MAX } from '../net/realm/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
 import { REALM_DOOR_WORD } from '../net/wire.js';   // REALM-DOOR: the relay's word for a token that names no realm character
+import { SESSION_PASS_HEADER } from '../net/sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
 import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house on the roster's tile
 
@@ -77,6 +78,8 @@ async function realmAsk(io, path, { method = 'GET', json = null, raw = null, hea
   if (!io) return { ok: false, error: 'signed-out' };
   /** @type {Record<string, string>} */
   const headers = { accept: 'application/json', authorization: `Bearer ${io.secret}`, ...extra };
+  const pass = sessionPassFor(io.secret);   // SESSION-SIGN: the checkpoint is a hot route - its pass, as the one door sends it
+  if (pass) headers[SESSION_PASS_HEADER] = pass;
   if (json) headers['content-type'] = 'application/json';
   if (raw != null) headers['content-type'] = 'application/octet-stream';
   // AUDIT SCALE II A-2 (2026-10-11; Mac: "Lets do an audit on everything. Ensure perfection"): A WRITE FORGETS THE PAGE'S
@@ -90,11 +93,13 @@ async function realmAsk(io, path, { method = 'GET', json = null, raw = null, hea
     res = await io.fetch(`${io.base}${path}`, {
       method, headers, body: json ? JSON.stringify(json) : (raw ?? undefined), ...(keepalive ? { keepalive: true } : {}),
     });
-  } catch {
+  } catch (e) {
     if (writes) forgetD1Bookmark();
+    if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: a call that could not be made forgets the pass (accountClient.js call's law)
     return { ok: false, error: 'offline' };
   }
   if (writes) forgetD1Bookmark();
+  noteSessionPass(io.secret, res);
   const type = res.headers?.get?.('content-type') ?? '';
   if (!res.ok) {
     let data = null;

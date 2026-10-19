@@ -94,7 +94,8 @@ test('PRIMARY-TRIPS SAVE-BATCH: a checkpoint reads its record\'s row, the ledger
   assert.equal(cold.trips.length, 3, `the lookup, the reads, the write (${cold.trips.map((t) => t.batch ? `BATCH(${t.batch.length})` : t.sql.slice(0, 40)).join(' | ')})`);
   const reads = cold.trips[1].batch ?? [];
   assert.equal(reads.length, 4);
-  assert.ok(has(cold.trips[1], /FROM realm_characters WHERE id = \? AND player = \?/) && has(cold.trips[1], /FROM item_uids WHERE char_id = \?1 OR claim_char = \?1/) && has(cold.trips[1], /FROM item_dupes WHERE char_id = \?/) && has(cold.trips[1], /FROM realm_config WHERE key = 'budget'/));
+  // PIN MOVED (SESSION-SIGN, AUDIT PLAN-1000 E3): the record's row asks its session and the ban beside it, its places numbered
+  assert.ok(has(cold.trips[1], /FROM realm_characters WHERE id = \?1 AND player = \?2/) && has(cold.trips[1], /FROM item_uids WHERE char_id = \?1 OR claim_char = \?1/) && has(cold.trips[1], /FROM item_dupes WHERE char_id = \?/) && has(cold.trips[1], /FROM realm_config WHERE key = 'budget'/));
   const warm = await ask(save);
   assert.equal(warm.r.status, 200);
   assert.equal(warm.trips[1].batch?.length, 3, 'the config this isolate keeps is not asked');

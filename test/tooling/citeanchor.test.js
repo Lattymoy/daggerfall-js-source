@@ -1,5 +1,5 @@
 // CITE-ANCHOR (2026-10-06, Mac - asked how to stop the merge conflicts the cites made, "Merge #630, then fix cites";
-// tools/citeAnchor.mjs, bible/09-Testing/Testing.md CITE-ANCHOR): A CITE INTO OUR OWN CODE NAMES WHAT IT POINTS AT.
+// tools/citeAnchor.mjs, bible/09-Testing/Testing-Rows-2026-10-19.md CITE-ANCHOR): A CITE INTO OUR OWN CODE NAMES WHAT IT POINTS AT.
 // The law the line numbers served stands (test/scenes/citedrift.test.js: the citation is part of the claim, and checkable);
 // the claim is a quote now - the one line of the file that holds it - and a change to a file moves no doc but the ones
 // that cite the lines it changed. CA1 resolves every anchor in the docs; CA2 holds the tree to the law: no live line

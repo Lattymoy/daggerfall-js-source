@@ -28,7 +28,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { PIXEL_STACK } from '../pixelifyFive.js';
 import { getPref } from '../../systems/uiPrefs.js';
-import { isTextEntryTarget, bindings, eventActions, mouseCode } from '../input.js';
+import { isTextEntryTarget, bindings, eventActions, mouseCode, hostPaused } from '../input.js';   // AUDIT FB1018f L2-5: and the host's pause, at the press
 import { HOTBAR_SLOT_ACTIONS } from '../../systems/inputActions.js';   // KB1: the ten slots are ten registry actions
 import { quickslotTag } from '../quickslotTags.js';   // KB1: a slot's chip names the key its action is bound to
 import {
@@ -93,6 +93,12 @@ let liveOpts = {};
 let liveEntity = null;
 let lastHidden = true;
 let lastPaused = true;   // AUDIT CONTRIB H1: a window or the freed cursor - the keys are not the player's
+/** AUDIT FB1018f L2-5: ARE THE KEYS A WINDOW'S - asked at the press, of the host itself (ui/input.js hostPaused: the
+ *  hooks the finger and the pad ask, so the three hands agree), and the HUD's last frame's word only on a page whose
+ *  host handed none. That word is a frame old: a window opened by one key and a digit before the next frame gave the
+ *  digit to the bar - slot 1's potion drunk behind the use-magic-item list - and a window no frame of the bar's host
+ *  saw (the street's slot over ?world's dungeon arm) left the bar its keys under it. */
+const keysPaused = () => hostPaused() ?? lastPaused;
 let keysRev = -1;   // KB1: the bindings revision the chips were named at
 let lastSig = null;
 let keysBound = false;
@@ -218,7 +224,7 @@ function setActiveSet(set) {
   bar.dataset.xbset = set == null ? '' : String(set);
 }
 registerCrossbar({
-  inForce: () => !!bar && xbOn && crossbarMode() && !lastPaused && !dropOwners.size,
+  inForce: () => !!bar && xbOn && crossbarMode() && !keysPaused() && !dropOwners.size,   // AUDIT FB1018f L2-5: the keys' one gate
   press: (i) => { if (i >= 0 && i < HOTBAR_CAPACITY) pressHotbar(i); },
   setActive: setActiveSet,
   // PAD-ARRANGE: the bar under a window, for the pad (gamepadInput.js plusFrame's window branch)
@@ -634,8 +640,9 @@ export function holdHotbarKeys() {
 }
 function onKey(e) {
   // AUDIT CONTRIB H1: gated on the GAME's pause, not the HUD's visibility - with the HUD toggled off the keys fell
-  // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing
-  if (!bar || !hotbarMode() || dropOwners.size || lastPaused) return;
+  // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing. AUDIT FB1018f
+  // L2-5: the pause at this press, the host's (keysPaused) - never the last frame's while a host can answer
+  if (!bar || !hotbarMode() || dropOwners.size || keysPaused()) return;
   if (keyHolds.size) return;   // AUDIT POI E1: a surface that owns the keys is up
   if (e.metaKey || isTextEntryTarget(e.target)) return;
   // KB1: THE SLOTS ARE REGISTRY ACTIONS. This read `Digit1`-`Digit0` off the event and stepped aside for any digit
@@ -659,7 +666,7 @@ function onKey(e) {
  *  mouse (the pointer locked), because a click with the cursor free is a click on the page. */
 function onMouse(e) {
   hbTook = null;   // AUDIT 27h B1 (HB1c's twin): every press anywhere, before a socket's own - no press of the world's inherits a socket's
-  if (!bar || !hotbarMode() || dropOwners.size || lastPaused) return;
+  if (!bar || !hotbarMode() || dropOwners.size || keysPaused()) return;   // AUDIT FB1018f L2-5: the keys' one gate
   if (typeof document === 'undefined' || !document.pointerLockElement) return;
   const code = mouseCode(e.button);
   if (!code) return;

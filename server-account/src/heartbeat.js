@@ -29,8 +29,9 @@ export const HEARTBEAT_PARTS = Object.freeze(['beat', 'mail', 'board', 'post']);
  * refuses one); `board: <map>` - a town's Notice Board (/v1/board/read's `readBoard`, its refusals its own). A part the
  * body does not name is not answered; none reads another's, so the reads are asked first and the beat, the one write, last (BEAT-LAST).
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} env @param {any} body
+ * @param {string|null} [sessionId] the session the beat came under (SESSION-SIGN: a beat asks it still stands)
  */
-export async function heartbeat(ctx, player, env, body) {
+export async function heartbeat(ctx, player, env, body, sessionId = null) {
   /** @type {Record<string, any>} */
   const out = {};
   const part = async (/** @type {string} */ name, /** @type {() => Promise<any>} */ fn) => {
@@ -48,6 +49,6 @@ export async function heartbeat(ctx, player, env, body) {
   if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));
   // SERVER-POST: the server's post (/v1/post/box's `postBoxOf`, refused `post-needs-account` to a guest as its door refuses one)
   if (body?.post === true) await part('post', async () => (accountKind(player) !== 'linked' ? { error: 'post-needs-account' } : postBoxOf(ctx, player, env)));   // PRIVATE-REPORT: env, a reader's count
-  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id));
+  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id, sessionId));   // SESSION-SIGN E3: under its session
   return out;
 }

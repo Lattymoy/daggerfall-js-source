@@ -282,7 +282,7 @@
   {
     "name": "NAVB-B4-the-stranded-raid-left-running",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      if (quest) { raidUids.delete(quest.uid); deps.board?.endRaid?.(quest, { withdraw: false }); }\n      return;\n    }\n    const was = b.phase;",
+    "old": "      if (quest) { raidUids.delete(quest.uid); deps.board?.endRaid?.(quest, { withdraw: false, crew: true }); }   // RAID-WON (AUDIT FB1019 D2): its crew home, never left on my deck counted as enemies near\n      return;\n    }\n    const was = b.phase;",
     "new": "      return;\n    }\n    const was = b.phase;",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js"

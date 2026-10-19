@@ -66,7 +66,8 @@ otherwise (`test/systems/item/packPages.test.js`) asked about a `Currency` 276 -
 Template 580, beside the gate's 570-572 and below the professions' reserved 600 (`Professions-Arc.md` 4.8). DFU's
 Small Sack's picture and price (ItemTemplates 86): the picture is DFU's own, and the price is the one every minted item
 carries (`test/systems/startinggear.test.js`'s 17e F2 law) - it is never sold. No weight (`hasNoEncumbrance`, the Small Cart's
-column), so a wallet costs a pack nothing; the pieces it holds weigh what they always did. `UselessItems2`, the
+column), so a wallet costs a pack nothing; the pieces it holds weigh what they always did (WALLET-WEIGHT, below: the
+enhanced pack's row and card for the wallet say what they weigh). `UselessItems2`, the
 Materials Bag's group.
 
 **BOUND** (`systems/item/itemBound.js` SS1): never dropped, traded or sold, and the realm's service refuses it in a realm
@@ -136,3 +137,41 @@ untouched.
   empty holding said as nought). `tools/walletProbe.mjs` stands the real pack in Chromium at a desktop's width and a
   phone's, the silver counted and kept online: the sheet inside the viewport, nothing spilling, a row for every
   currency, the figures in one column.
+
+## WALLET-WEIGHT (2026-10-19, from play) - the wallet says what it holds weighs
+
+Flylighter, on the Discord: "Are these supposed to be weighing us down even in the wallet? ... If this isn't a bug, it
+might be prudent to list the total weight of the wallet up top as the wallet's weight" - and "I was wandering around
+wondering why I gained 3[0 kg] for no reason": 309 Welkynd Shards at the shard's 0.1 kg (`gateSpoils.js`
+WELKYND_SHARD_TEMPLATES), on the wallet's sheet, under a card that said **Weight 0.00 kg**.
+
+NOT A BUG - WALLET1's call (The piece, above): the pieces it holds weigh what they always did, the shard 0.1 kg, the
+ember 0.25 kg, DFU's letter of credit 0.25 kg (ItemTemplates 275); the wallet itself weighs nothing. But the enhanced pack
+had moved them off its pages, and the one place left that named them - the wallet - said its own weight alone. The
+owner's call (2026-10-19), of three put to the owner (the card says what it holds; the shards and embers weightless; everything
+in it weightless): **the card says what it holds**, and no weight changes.
+
+- **The wallet's row and card** (`ui/enhanced/enhancedInventory.js` shownKg): its own weight (none) and what it holds -
+  `walletContents`' new `weight`, the held pieces' `itemWeight` (inventory.js: a stack its count of its row's
+  effective weight, the encumbrance's own sum), worn crystals aside as the sheet leaves them. Every other piece's row
+  and card says its own, as before - a shard picked off the sheet says its 30.90 kg.
+- **The ledger's rows** (`systems/walletItem.js` walletLedger): a holding it holds any of says its weight beside its
+  name (`weight`, from `walletContents`' `weights`; `walletKg`'s "30.90 kg", the card's own form), dimmed and small
+  (`.wallet-kg`); an empty holding and the coin say none - the gold is the purse's (E4's counter, weighed by
+  `carriedWeight` as DFU's PlayerEntity.CarriedWeight does), the silver no piece.
+- **What does not move**: the carry weight (each piece counted once, where it lies - the wallet adds nothing to it); the
+  classic window (it keeps the pieces on DFU's tabs, each piece's Info saying its own weight - AUDIT FB1019 A4: its rows
+  show none) and its box's words; the hotbar's line.
+- **Another window's card** (AUDIT FB1019 A1): a shop's, a trade's - it lists the wallet's pieces on rows of their own, so
+  its wallet card says the wallet's own weight (`infoCard`'s `own: false` from `showItemHover`), never a closed pack's
+  figure (the pack's model is let go at its unmount) nor the pieces twice. A holding's weight carries its own space (A3:
+  read aloud or copied, "Welkynd Shards 30.90 kg").
+- **Pinned**: `test/systems/wallet_weight.test.js` (3: what it holds weighs - each holding, all of them, what the
+  carry weight counts for them, the ledger's weights, the classic words unmoved; the pack - the wallet's row and card,
+  the sheet's weights beside the names, a held piece's own card, the carry weight counting each piece once, an empty
+  wallet's 0.00 kg; another window's card through the real shop, the pack shut and open, and the label's space).
+  PIN MOVED: `test/systems/wallet1.test.js` (`walletContents` carries `weights` and `weight`).
+  `tools/mutants/wallet_weight.json` (12: 11 dead, 1 equivalent as recorded - the model let go is memory once no other
+  window reads it). Re-aimed by content: `wallet1.json`'s WALLET1-lines-silver-unknown
+  and `wallet_ui.json`'s WALLET-UI-the-worth-in-no-note and WALLET-UI-the-silver-counted-as-nought, onto the rows that
+  now carry their weight.

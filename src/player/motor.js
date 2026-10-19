@@ -130,6 +130,12 @@ export function motionBagOf(player) {
     // AUDIT PRE-MERGE 0929 D1/D2: and the yaw the motor moved by (its own, beside forward and strafe; NaN before a
     // step) - the collision-trigger pass turns forward/strafe into the direction the body presses (actionContact)
     yaw: Number.isFinite(player.moveYaw) ? player.moveYaw : NaN,
+    // AUDIT BODY-MOTION GAIT-9 / GAIT-17 / RIG-6: what the third-person body's legs read (characters/bodyMotion/) - the
+    // ground the body's own steps crossed (as drawn, cumulative), the yaw it is drawn at (bodyYawFor's own: a bench's or
+    // a climb's facing, else the view's turned by the climb's easing offset) and the turns a deck gave it
+    travel: typeof player.travelAt === 'function' ? player.travelAt() : null,
+    bodyYaw: player.drawYaw ?? player._bodyYaw ?? null, bodyYawOff: Number.isFinite(player._bodyYawOff) ? player._bodyYawOff : 0,
+    carriedYaw: Number.isFinite(player.carriedYaw) ? player.carriedYaw : 0,
   };
 }
 /** CLIMB5 (the Enhanced Climbing arc - bible/03-World/Parkour-Arc.md): THE CLIMB ON THE WIRE - `cl` 1 hanging from a
@@ -548,6 +554,13 @@ export class PlayerMotor {
     // MOVE-REAL: the ground this body covered under its OWN steps, across (h) and up or down (v) - what the movement
     // skills count past 100 (systems/skillSoftcap.js movementTallyWeight). Hosts hand this live object on.
     this.odometer = { h: 0, v: 0 };
+    // AUDIT BODY-MOTION GAIT-9: and the same steps' move AS A VECTOR (world metres, x y z), latched at each step's start
+    // as the render span is - so a body's legs read the ground the body itself crossed this frame, as drawn (a wall that
+    // stops the capsule stops the stride; a deck's carry, a pin, a spawn and an origin shift are never a step); and
+    // the turns the world gave the body that it did not take itself (a deck's - RIG-6), so its feet ride the deck
+    this.travel = [0, 0, 0];
+    this._travelPrev = [0, 0, 0];
+    this.carriedYaw = 0;
     this._alpha = 1;               // _acc / FIXED_DT after the last update
     this._eyeFeetY = null;         // MAC1: the render eye's LOW-PASSED interpolated feet height (eyeAt); null = not yet primed
     this._eyeSmoothing = true;     // MAC1: the harness's off switch, so a bare walk can be measured beside a smoothed one
@@ -948,6 +961,20 @@ export class PlayerMotor {
     if (!(h + v <= ODOMETER_MAX_SPEED * step)) return;
     this.odometer.h += h;
     this.odometer.v += v;
+    this.travel[0] += p[0] - q[0]; this.travel[1] += p[1] - q[1]; this.travel[2] += p[2] - q[2];   // AUDIT BODY-MOTION GAIT-9
+  }
+
+  /** AUDIT BODY-MOTION GAIT-9: THE BODY'S OWN TRAVEL as drawn - the steps' move (`travel`) across the render span by the
+   *  span's own alpha, as bodyFeetAt lerps the feet (world metres, cumulative: a reader takes the change frame to frame). */
+  travelAt(alpha = this._alpha) {
+    const a = Math.max(0, Math.min(1, alpha)), p = this.travel, q = this._travelPrev;
+    return [q[0] + (p[0] - q[0]) * a, q[1] + (p[1] - q[1]) * a, q[2] + (p[2] - q[2]) * a];
+  }
+
+  /** AUDIT BODY-MOTION RIG-6: the world turned the body `rad` it did not turn itself (a deck's turn - the view turned
+   *  with it): counted, so the legs read it as the ground's, never as a turn on the spot. */
+  carryTurn(rad) {
+    if (Number.isFinite(rad)) this.carriedYaw += rad;
   }
 
   /** CSA-D: another script writes the PlayerObject's transform - Come Sail Away's helm pin (`playerObject.transform
@@ -1620,6 +1647,7 @@ export class PlayerMotor {
       // fix-your-timestep shape) and a zero-step frame keeps the
       // previous span and just advances alpha.
       this._prevPos[0] = this.pos[0]; this._prevPos[1] = this.pos[1]; this._prevPos[2] = this.pos[2];
+      this._travelPrev[0] = this.travel[0]; this._travelPrev[1] = this.travel[1]; this._travelPrev[2] = this.travel[2];   // AUDIT BODY-MOTION GAIT-9
       this._step(step, moveInput, yaw, pitch);
       this._pushStep(step);   // TELL6e: a blow's push, after the step's own move
       if (this.arena) this._keepInArena();   // DUEL1: after the collider's move, so both ends of the span stand inside

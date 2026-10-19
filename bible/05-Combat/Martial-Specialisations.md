@@ -112,11 +112,17 @@ climb the foes' edge reads, so the climb that raises them is the climb that pays
 
 The two halves of a fight read as one: a foe killed from full health by blows of one size takes its first half at x1
 and its second at x1.8 (the Axe), x1.29 over the fight - so the heavy two-handers, which lead the six raw, climb a little
-less than the sword does. ON A BODY THE RELAY RUNS the line is unread: the Warden, his crystals and host, the Remnant,
-the Elite Gates' court and the sea serpent are stand-ins whose health is a placeholder nothing here empties
-(`world/gate/gateBoss.js` bossStandIn, marked `relayHealth`), and each half pays the halves' mean there - x1.4, the
-sword's own (AUDIT MARTIAL L3 F2 / L2 F1: read as full, the hammer took its x1.8 on every blow of a boss fight and the
-axe never its own).
+less than the sword does. ON A BODY THE RELAY RUNS the line is the relay's word: the Warden, his crystals and host, the
+Remnant, its Echoes and Hearts, the Elite Gates' court and the sea serpent are stand-ins whose health is a placeholder
+nothing here empties (`world/gate/gateBoss.js` bossStandIn, marked `relayHealth`; AUDIT MARTIAL L3 F2 / L2 F1: read as
+full, the hammer took its x1.8 on every blow of a boss fight and the axe never its own). FIELD BUGS 2026-10-18f
+RELAY-SHARE: each stand-in carries its owner's reader of the relay's word of that body's health - the share its bar
+draws - and the one share law (`combat/healthShare.js` healthShare) reads it, so each half pays its own there too; the
+halves' mean, x1.4, the sword's own, stands only where no word is heard. Gutting Lunge reads the same law, as the
+loot's execute does, and its second blow there is owed to the blow's claim (AUDIT MARTIAL had kept it "never fires on a
+body the relay runs"). Headsman's Chop reads it too (AUDIT FB1018f L3-5: `combat/technique/techniqueBlow.js` kept a
+share of its own and read the placeholder as whole - x1.20 on a lord at a fifth, for its x2.00). The arcane Blood Boil reads it too, but its second burn has no record to land on at a stand-in
+(the dungeon context's `tellStandIn` tells the riders no foe), so it burns nothing there.
 
 **THE SWING PACE** (`characters/weaponStates.js` registerSwingPaceMod) - named modifiers `fn(ctx, w) -> percent`, as
 CAST-SPEED's rate (`castSpeed.js`): the swing's frame time is divided by 1 + their sum, at most `SWING_PACE_MOST` 50%,
@@ -269,8 +275,6 @@ Recorded by AUDIT MARTIAL, not changed:
   reload starts every power ready - the sets', the loot's and the arcane paths' shared pattern (AUDIT SCHOOLS L1 L3).
 - **Open PvP** (a siege, the Wild Zone - no refereed fight): the paths' attributes and the swing's pace are mine, as the
   sets' are (L3 F4 / L2 F8; AUDIT SCHOOLS L1 L4 kept the same). FIRM1 alone takes the sky off a PvP sheet.
-- **Gutting Lunge never fires on a body the relay runs** (its share unread), as the loot's execute and the arcane Blood
-  Boil do not.
 - **Found here, outside the arc, left for their own arcs:** the Firmament's `hpRegen`, the loot's `regen` and the arcane
   Steadfast regrow health in the courts whose law bars regeneration (`courtRules.js` regenBarred - Grit now reads it, L3
   F3); the loot's own leech counts the overkill Savage Whirl's no longer does (L1 L4).

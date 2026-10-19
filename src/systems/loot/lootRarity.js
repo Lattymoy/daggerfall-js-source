@@ -1230,6 +1230,19 @@ export function repairRarityBases(items) {
   return n;
 }
 
+/** AUDIT FB1018f L1-1: THE BASES repairRarityBases MOVES FROM, by group - the group's templates no slot takes (the Wand;
+ *  pinned against the table, fb1018f_heldbase.test.js). */
+export const RARITY_HOMED_FROM = Object.freeze({ Jewellery: Object.freeze([140]) });
+/** AUDIT FB1018f L1-1 (decided, Mac: "Stop with the decisions for me"): WHETHER A LEDGER PRINT MOVED AS A LOAD'S REPAIR
+ *  MOVES IT - `was` and `now` prints (`template:material`, server-account/src/judge.js ledgerPrintOf); true when `now`
+ *  is `was`'s base gone home (RARITY_HOMED_FROM to RARITY_HOME), its material kept. The realm ledger takes it as the same
+ *  piece (ledger.js ledgerStep): a rolled Wand the service held through RARITY-WEAR - a guild vault's, a market's - comes
+ *  back on its old print, the taker's load moves it, and the next checkpoint read the honest piece as forged. */
+export function rehomedPrint(was, now) {
+  const [wt, wm] = String(was).split(':'), [nt, nm] = String(now).split(':');
+  return wm === nm && Object.entries(RARITY_HOMED_FROM).some(([g, from]) => Number(nt) === RARITY_HOME[g] && from.includes(Number(wt)));
+}
+
 /** The gold the affixes add - LOOT14: on a garment, half (GARMENT_WORTH_SHARE). */
 export const affixesWorth = (affixes, item = null) => Math.round((affixes ?? []).reduce((n, a) => n + (AFFIX_WORTH[a.id] ?? 0) * (a.value | 0), 0)
   * (isGarment(item) ? GARMENT_WORTH_SHARE : 1));

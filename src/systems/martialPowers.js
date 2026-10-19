@@ -64,6 +64,7 @@ import { regenBarred } from './courtRules.js';   // WBX6: the Deadlands keep no 
 import { maxFatigue } from './statMods.js';
 import { showFollowUp } from '../ui/hitNumbers.js';   // a follow-up's own number (ROSE-SEEN)
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { healthShare } from '../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
 import { hudText } from './notify.js';
 import { t } from './textManager.js';
 
@@ -103,7 +104,7 @@ export function awakeMartialId(entity) {
   return martialAwake(entity)?.id ?? null;
 }
 const me = () => playerDoor()?.player?.() ?? playerEntity;
-const share = (e) => (Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1);
+const share = (e) => healthShare(e) ?? 1;   // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Gutting Lunge there too)
 const undeadOrDaedra = (e) => { const g = foeGroup(e); return g === 'undead' || g === 'daedra'; };
 const neverCounts = (e) => e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';
 /** A foe of mine the port may answer: a body that is no player's, no ward's. */

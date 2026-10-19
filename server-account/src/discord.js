@@ -37,6 +37,7 @@ import { importPublicKey, ID_RE } from '../../src/net/identityToken.js';
 import { actionStatement, banAccount, unbanAccount, findAccount, strikesLook, lawOrder, pushLaw, reasonOf, muteMinutesOk, strikesOf, isBanned, bannedUntil, voidAutoMutes } from './sanctions.js';
 import { resolveCase, CASE_CLAIM_S } from './safety.js';
 import { usageOf } from './discordCommands.js';
+import { GRANT_CASE_TAB } from './grants.js';   // FOE-BOUNDS: a spawn grants' case is its count's, not the chat reviewer's (read at a card's call, never at load)
 import { LADDER_BAN_AT, ladderMinutes, BAN_FOREVER, banUntil, reportReasonLabel } from '../../src/net/safety/safetyLaw.js';
 
 /** The door Discord posts its interactions to (the application's Interactions Endpoint URL). */
@@ -128,6 +129,10 @@ const standingOf = (t, nowS) => [isBanned(t, nowS) ? `Banned ${banWord(bannedUnt
  * @param {{ c: any, name: string, target?: any, lines: any[], reasons: string[], notes?: string[], strikes: number, nowS?: number }} o
  */
 export function caseCard({ c, name, target = null, lines, reasons, notes = [], strikes, nowS = 0 }) {
+  // FOE-BOUNDS (bible/11-Multiplayer/Spawn-Grants.md section 21): a case the spawn grants' count opened (its lines under
+  // GRANT_CASE_TAB, no report, no chat verdict) says so - the chat reviewer never read it, so "found nothing against the
+  // code" read as a verdict it never gave
+  const spawn = c.source === 'review' && !c.ai_category && lines.some((l) => l.tab === GRANT_CASE_TAB);
   const shown = [];
   let size = 0;
   for (const l of [...lines].reverse().slice(0, CARD_LINES_MAX)) {
@@ -139,7 +144,7 @@ export function caseCard({ c, name, target = null, lines, reasons, notes = [], s
   }
   const fields = [
     { name: 'Player', value: `${md(name) || '?'} (\`${c.target}\`)`, inline: true },
-    { name: 'Reports', value: c.reports ? `${c.reports} (${c.credible} counted)` : 'none - the reviewer opened it', inline: true },
+    { name: 'Reports', value: c.reports ? `${c.reports} (${c.credible} counted)` : spawn ? 'none - the spawn grants\' count opened it' : 'none - the reviewer opened it', inline: true },
     { name: 'Strikes (90 days)', value: `${strikes} - next: ${strikes >= LADDER_BAN_AT ? 'a ban' : minutesWord(ladderMinutes(strikes))}`, inline: true },
   ];
   const standing = target ? standingOf(target, nowS) : null;
@@ -150,12 +155,13 @@ export function caseCard({ c, name, target = null, lines, reasons, notes = [], s
   if (c.ai_state === 'done' && c.ai_category) {
     const shadow = c.ai_mode === 'shadow' ? 'SHADOW - nothing was done on it. ' : '';
     fields.push({ name: 'Reviewer', value: `${shadow}${c.ai_category}, severity ${c.ai_severity}, ${Math.round(Number(c.ai_confidence) * 100)}% sure${c.ai_line_at != null ? ' (the line marked !)' : ''}: ${md(c.ai_reason)}`.slice(0, 1024), inline: false });
-  } else if (c.ai_state === 'done') fields.push({ name: 'Reviewer', value: `${c.ai_mode === 'shadow' ? 'SHADOW - ' : ''}found nothing against the code.`, inline: false });
+  } else if (spawn) fields.push({ name: 'Spawn grants', value: 'what the relay or players\' games counted against this account\'s foes (the lines above) - the chat reviewer did not read it. A moderator decides.', inline: false });
+  else if (c.ai_state === 'done') fields.push({ name: 'Reviewer', value: `${c.ai_mode === 'shadow' ? 'SHADOW - ' : ''}found nothing against the code.`, inline: false });
   else if (c.ai_state === 'failed') fields.push({ name: 'Reviewer', value: 'could not read this case - read it yourself.', inline: false });
   if (c.auto) fields.push({ name: 'Done automatically', value: c.auto === 'reports' ? 'Muted 30 min - three reports that count.' : 'Muted 30 min - the reviewer\'s verdict, read twice.', inline: false });
   const color = c.status !== 'open' ? 0x808080 : (c.ai_severity ?? 0) >= 3 ? 0xd03030 : (c.ai_severity ?? 0) === 2 ? 0xe08020 : 0x3070d0;
   const embed = {
-    title: `Case ${c.id}${c.source === 'review' ? ' (opened by the reviewer)' : ''}`,
+    title: `Case ${c.id}${spawn ? ' (opened by the spawn grants)' : c.source === 'review' ? ' (opened by the reviewer)' : ''}`,
     description: c.lines_kept === 0 ? 'Its lines were deleted ninety days after it closed.' : shown.length ? `\`\`\`\n${shown.join('\n')}\n\`\`\`` : 'No lines kept.',
     color,
     fields,

@@ -33,9 +33,10 @@
 //
 // Pure: a fight and a beat in, frames out. In the relay bundle (the looks are data the client reads). Not a DFU member.
 // Ledger A (ELITE-GATES).
-import { EG_ROLE, EG_FL, EG_GONE, egBodyNew, egBodyWire, egWalk, egStop, egPlace, egAim, egGone, egHas, egSetFl, egHpMean, egHpTeam, egBodiesOf, egShareX } from './egBodies.js';
+import { EG_ROLE, EG_FL, EG_GONE, egBodyNew, egWalk, egStop, egPlace, egAim, egGone, egHas, egSetFl, egHpMean, egHpTeam, egBodiesOf, egShareX } from './egBodies.js';
 import { egCut } from './egBodies.js';   // AUDIT EG IV: a spotted add's wind-up cut
 import { egFace } from './egBodies.js';   // AUDIT EG V (lane1 #7): an add's turn said
+import { egRisen } from './egBodies.js';   // AUDIT FB1018f L3-4: a body risen said with its radius
 import { shDisc, shLaneAt, shCone, egChainGapMs } from './egShape.js';
 import { egKeepOnFight, egOnFight } from './egLaw.js';
 import { egWalkNext, egAirNext, egAirKeep, egArchCut, egGroundAt, egWalkFeet, egFeetAt, egWayOn, EG_PIECE_TOUCH_M } from './egWalkGraph.js';   // EG-ZB: the walk graph and the air; EG-ZJ: the feet on it; EG-ZQ: the way on kept only while walked
@@ -242,7 +243,7 @@ export function egLegionRaise(F, kinds, spots, now, out, { wave = 0, fl = 0, hpX
       : egBodyNew(F, EG_ROLE.add, k, x + (j % 3) * 0.7 - 0.7, z + Math.floor(j / 3) * 0.7, hp, { r: K.r, fl: f, up: EG_ADD_RISE_MS, now, wv: wave, h0: hp, rally: 0, ...(Number.isFinite(y) ? { y } : {}) });
     if (b) made.push(b);
   });
-  if (made.length) out.push({ k: 'ead', a: made.map((b) => egBodyWire(b)), at: now });
+  if (made.length) out.push(egRisen(made, now));   // AUDIT FB1018f L3-4: their radii beside them
   return made;
 }
 /**

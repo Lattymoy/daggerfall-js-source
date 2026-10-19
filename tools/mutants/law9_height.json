@@ -432,22 +432,22 @@
   {
     "name": "LAW9H-hit-storey-unasked",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "  if (Number.isFinite(H) && Number.isFinite(b.y) && !egOneStorey(",
-    "new": "  if (false && Number.isFinite(b.y) && !egOneStorey(",
+    "old": "  if (egStoreyApart(F.view ?? spec, pose.x, pose.y, pose.z, bx, b.y, bz, r === HIT_KINDS.Melee)) return { got: 0, b: null };",
+    "new": "  if (false) return { got: 0, b: null };",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
-    "note": "a body a storey up struck"
+    "note": "a body a storey up struck - PIN MOVED (AUDIT FB1018f L3-6): the storey rule moved into net/eliteGates/egBodies.js egStoreyApart, the one law every screen asks too - its call in egHitBody"
   },
   {
     "name": "LAW9H-hit-floor-in-plan",
     "file": "src/net/eliteGates/egBodies.js",
-    "old": "egOnFight(spec, pose.x, pose.z, POSE_SLACK + 6, pose.y);",
-    "new": "egOnFight(spec, pose.x, pose.z, POSE_SLACK + 6);",
+    "old": "!egOnFight(spec, x, z, POSE_SLACK + 6, y)",
+    "new": "!egOnFight(spec, x, z, POSE_SLACK + 6)",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
-    "note": "a blow from a bridge over the floor read as from the floor"
+    "note": "a blow from a bridge over the floor read as from the floor - PIN MOVED (AUDIT FB1018f, the merge with FB1018D): the reach off the floor is egBodies.js egOutOfReach, the one law egHitBody and every screen ask"
   },
   {
     "name": "LAW9H-zones-any-floor",

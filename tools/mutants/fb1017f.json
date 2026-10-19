@@ -192,8 +192,8 @@
   {
     "name": "GROUND-GATE-door-dropped",
     "file": "server/src/index.js",
-    "old": "if (await this._groundRefusal(a.key, m, now)) {",
-    "new": "if (false && await this._groundRefusal(a.key, m, now)) {",
+    "old": "    if (await this._groundRefusal(key, m, now)) {",
+    "new": "    if (false && await this._groundRefusal(key, m, now)) {",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "GROUND-GATE-reason-whole",
     "file": "server/src/index.js",
-    "old": "this._refuse(ws, GROUND_OLD_WORDS, CLOSE_POLICY, GROUND_OLD_REASON); return; }",
-    "new": "this._refuse(ws, GROUND_OLD_WORDS); return; }",
+    "old": "this._refuse(ws, GROUND_OLD_WORDS, CLOSE_POLICY, GROUND_OLD_REASON); return true; }",
+    "new": "this._refuse(ws, GROUND_OLD_WORDS); return true; }",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ],

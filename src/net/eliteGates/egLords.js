@@ -632,6 +632,10 @@ export function egLordsWake(F, spec, now, out, ctx) {
     if (L.up2) continue;
     woke++;
     L.up2 = true; L.nextAt = now + EG_LORD_WAKE_MS; L.wokeAt = now; egSaid(L, L.ph, now);   // EG-ZJ: awake - its phase on the wire (0 asleep)
+    // AUDIT FB1018f L3-1: and said at once (`eph`, its first) - a screen holds a lord asleep until it hears a phase
+    // (net/eliteGates/egBodies.js egLordAsleep), and the whole fight's word that carried it came up to EG_STATE_EVERY_MS
+    // later: every blow the relay lands meanwhile, the screen turned
+    out.push({ k: 'eph', i: L.i, ph: L.ph });
     KITS[L.key]?.wake?.(F, spec, L, now, out, ctx);
   }
   if (!woke) return;

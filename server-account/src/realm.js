@@ -68,8 +68,10 @@ export const REALM_CHARACTERS_MAX = 6;
 export const REALM_NAME_MAX = 32;
 /** The summary's JSON, in bytes. */
 export const REALM_SUMMARY_MAX = 512;
-/** A lease renewed this recently is a character in play ("playing now" on the tile). Checkpoints come every two minutes. */
-export const REALM_PLAYING_S = 300;
+/** A lease renewed this recently is a character in play ("playing now" on the tile). Two checkpoints' span: they come every
+ *  five minutes (systems/online/onlineCheckpoint.js ONLINE_CHECKPOINT_MS, CHECKPOINT-5 - AUDIT PLAN-1000 G9: at 300 a
+ *  playing character's tile said "not playing" a moment each period, and RESCUE-SAVE's sweep guard reads the flag). */
+export const REALM_PLAYING_S = 600;
 /** The largest save a checkpoint may carry - the cloud save's own bound. REALM-GZIP: the REQUEST's bound - a tab packs
  *  its save, and the text a checkpoint opens to is REALM_TEXT_MAX_BYTES (src/net/realm/realmSaveCodec.js). */
 export const REALM_MAX_BYTES = SAVE_MAX_BYTES;
@@ -550,7 +552,7 @@ export async function craftHoldOf(/** @type {any} */ db, /** @type {string} */ p
  * @param {any} ctx @param {string} playerId
  * @param {{ id: string, lease: unknown, seq: unknown, summary?: unknown }} at @param {ArrayBuffer} body @param {number} bytes
  */
-export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id, lease, seq, summary = null }, body, bytes) {
+export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id, lease, seq, summary = null, session = null }, body, bytes) {
   if (!bucket) return { error: 'no-storage' };
   if (!REALM_ID_RE.test(id) || typeof lease !== 'string' || !LEASE_RE.test(lease) || !Number.isSafeInteger(seq) || /** @type {number} */ (seq) < 1) return { error: 'body' };
   // SAVE-BATCH (2026-10-16, the account database's primary at its ceiling of round trips - bible/11-Multiplayer/
@@ -559,8 +561,13 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   // primary's statements. One snapshot, read before anything is judged, as the reads were
   const keptConfig = budgetKept(db);
   const [rowRes, mineRes, dupesRes, configRes] = await db.batch([
+    // SESSION-SIGN (AUDIT PLAN-1000 E3): and the session the save is asked under, and the account's ban, as they stand
     db.prepare(`SELECT seq, lease, obj, prev, origin_id, summary, dead_at, ${JUDGE_COLUMNS},
-    (SELECT played_s FROM players p WHERE p.id = realm_characters.player) AS played_now FROM realm_characters WHERE id = ? AND player = ?`).bind(id, playerId),
+    (SELECT played_s FROM players p WHERE p.id = realm_characters.player) AS played_now,
+    (SELECT banned_until FROM players p WHERE p.id = realm_characters.player) AS ban_until_now,
+    (SELECT ban_reason FROM players p WHERE p.id = realm_characters.player) AS ban_reason_now,
+    (SELECT 1 FROM sessions s WHERE s.id = ?3 AND s.player_id = realm_characters.player) AS session_alive
+    FROM realm_characters WHERE id = ?1 AND player = ?2`).bind(id, playerId, session),
     ...ledgerReads(db, id),
     ...(keptConfig ? [] : [budgetRead(db)]),
   ]);
@@ -569,6 +576,11 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   const config = keptConfig ?? budgetFrom(db, configRes?.results?.[0] ?? null);
   const row = rowRes?.results?.[0] ?? null;
   if (!row) return { error: 'no-realm-character' };
+  // SESSION-SIGN (AUDIT PLAN-1000 E3; sessionPass.js): A SAVE IS A WRITE, AND ASKS ITS OWN SESSION AND THE BAN in the read it
+  // already makes - a hot route believes a pass for its reads, and a session signed out, or an account banned, since its
+  // pass was minted saves nothing (a request the lookup answered knows both already; the save asks them all the same)
+  if (session != null && row.session_alive == null) return { error: 'auth' };
+  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS) return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };
   if (row.dead_at != null) return { error: 'dead' };   // LEGACY7: the tombstone - nothing of the dead is written again
   if (row.lease !== lease) return { error: 'lease' };
   if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq };   // the service's own: a client whose last answer was lost resyncs

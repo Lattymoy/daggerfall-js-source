@@ -36,6 +36,7 @@ import { sdTick, handToTwelve } from '../../world/superDungeon/sdLook.js';
 import { SD_BLOW_COLOR } from './sdRemnantBlows.js';
 import { remnantRig, rigMatrices, restRig, sdGearsAt, sdGatherGearsAt, gearMatrix, gatherGearMatrix, gearFlightOf, sdKeptList, dialHandMatrix, dialFallMatrix, heartFallMatrix, SD_RIG_PARTS, SD_REM_HAND } from './sdRemnantRig.js';
 import { bossStandIn, crystalStandIn, hostStandIn } from '../../world/gate/gateBoss.js';
+import { wordShare } from '../../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's health's share, the realm's word
 
 /** The look the stand-ins wear for the formulas (characters/enemy/enemyBasics.js): an Iron Atronach's - a thing of metal. */
 export const SD_REMNANT_MOBILE = 36;
@@ -316,10 +317,12 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
   const _tells = new Uint8Array(SD_TELLS.length), _hand = new Float64Array(2), _fellBase = new Float32Array(16);
   let fellOf = null;
   const _fellHand = new Float64Array(2);
-  /** the stand-ins (made once), my blows' sequence and the bodies one blow of mine has met this frame */
-  const standIn = bossStandIn({ mobile: SD_REMNANT_MOBILE }, SD_REMNANT_NAMES.remnant);
-  const echoIns = [0, 1].map((e) => hostStandIn({ mobile: SD_REMNANT_MOBILE, name: SD_REMNANT_NAMES.echoes[e] }, e));
-  const heartIns = Array.from({ length: SD_HEARTS[1] }, (_, c) => { const h = crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c); h.name = SD_REMNANT_NAMES.heart; return h; });
+  /** the stand-ins (made once), my blows' sequence and the bodies one blow of mine has met this frame. FIELD BUGS 2026-10-18f
+   *  RELAY-SHARE: each reads its health as the realm says it - the Remnant's `h` of `m`, an Echo's own, a Heart's of the
+   *  Reset's whole */
+  const standIn = bossStandIn({ mobile: SD_REMNANT_MOBILE }, SD_REMNANT_NAMES.remnant, () => { const { s } = read(); return wordShare(s.h, s.m); });
+  const echoIns = [0, 1].map((e) => hostStandIn({ mobile: SD_REMNANT_MOBILE, name: SD_REMNANT_NAMES.echoes[e] }, e, () => { const E = read().s.ec?.[e]; return wordShare(E?.h, E?.m); }));
+  const heartIns = Array.from({ length: SD_HEARTS[1] }, (_, c) => { const h = crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c, () => { const { s } = read(); return wordShare(s.cx?.c?.[c]?.[2], s.cx?.m); }); h.name = SD_REMNANT_NAMES.heart; return h; });
   let blowSeq = 0;
   const blowMet = new Set();
   /** AUDIT SD III (V6): each body's drawn facing - the Remnant's, then the Echoes' (NaN: not shown last frame; a typed

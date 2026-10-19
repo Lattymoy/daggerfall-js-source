@@ -1936,7 +1936,7 @@ distance is a share of the right arm's own length.
 
 Third person reads the body's frame (right from shoulder to shoulder, up the spine); first person the lens's (it looks
 down the rig's +Y), and its stances are pulled in toward the shoulders so both hands reach from under the eye and the gun
-stays in the 60-degree lens. The legs, the spine and the head keep the clip's walk.
+stays in the 60-degree lens. The legs, the spine and the head keep the body's walk (since BODY-MOTION the body's own gait over the clip's - `04-Characters/Body-Motion.md`; the hold is solved over it, after its slot).
 
 **When** (`combat/fpArm.js` `stepRifle`, `rifleStanceStep`): held while the gun is in the hands and nothing else has them -
 not during the draw or the sheathe (the clip carries the gun from the holster and back), not on the stone, a seat, a

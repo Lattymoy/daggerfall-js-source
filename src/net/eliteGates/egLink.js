@@ -59,11 +59,14 @@ const stageOf = (w) => ({ h: w.h, sg: w.sg, sa: w.sa, su: w.su, cl: w.cl, ca: w.
  * rises again); `had` the body this screen already holds, whose own memory it keeps - when it rose, when it was last hurt and
  * whether by my blow. EG-ZQ (section 14): a lord's size over its look's (`sz` - Colossal's; 1 its look's own), which the screen
  * draws it at (scenes/eliteGates/egFight.js egLookOf). AUDIT EG V (lane1 #7): `yaw` its facing (`yw`, the relay's - net/eliteGates/egBodies.js egYawOf).
+ * AUDIT FB1018f L3-4: `r` its radius, the relay's own (the word's `r` beside its row - net/eliteGates/egBodies.js egRadiusWire); none
+ * heard (a relay before it), none - the strike rule then judges its object as it did (egStruckOff).
  */
-export function egBodyOf(t, now, had = null, born = now) {
+export function egBodyOf(t, now, had = null, born = now, r = NaN) {
   const b = { i: t[0], role: t[1], k: t[2], pt: t[3], x: t[4], z: t[5], y: t[13] ?? 0, hp: t[6], max: t[7], fl: t[8], mv: t[11] > 0 ? { x: t[4], z: t[5], tx: t[9], tz: t[10], v: t[11], at: t[12], y: t[13] ?? 0, ty: t[14] ?? t[13] ?? 0 } : null, born: had ? had.born : born, yaw: Number.isFinite(t[18]) ? t[18] : had?.yaw ?? 0 };
   if (t[1] === EG_ROLE.obj) { b.st = t[15] ?? 0; b.stAt = t[16] ?? 0; }
   else if (t[1] === EG_ROLE.lord) { b.ph = t[15] ?? 0; b.sz = t[17] > 0 ? t[17] / 1000 : 1; if ((t[8] & EG_FL.fell) !== 0) b.fellAt = t[16] || had?.fellAt || now; }
+  if (Number.isFinite(r)) b.r = r;   // AUDIT FB1018f L3-4: the relay's own radius
   if (had?.hurtAt != null) b.hurtAt = had.hurtAt;
   if (had?.mineAt != null) b.mineAt = had.mineAt;
   return b;
@@ -97,9 +100,9 @@ function foldFight(f, w, now) {
       // EG-ZJ (section 22): the room's whole fight over what this screen holds of it - each body known kept its own memory
       // (egBodyOf's `had`), one first heard here standing all along; the zones the room still burns
       const same = f.h === w.h, had = same ? new Map(f.bodies.map((b) => [b.i, b])) : null;
-      return { ...EG_FIGHT_EMPTY, h: w.h, wk: w.wk, bodies: w.b.map((t) => egBodyOf(t, now, had?.get(t[0]) ?? null, 0)), blows: w.bl, tx: w.tx, mk: w.mk, pg: w.pg, zones: w.zs ?? (same ? f.zones : []), says: same ? f.says : [], gone: same ? f.gone : [], fells: same ? f.fells : [], phases: same ? f.phases : [], told: same ? f.told ?? [] : [], gust: f.gust, dark: f.dark, rail: f.rail, bridges: (f.bridges ?? []).filter((q) => q.h === w.h) };   // AUDIT EG III: the hall's Spirebridges kept (one heard before its fight was)
+      return { ...EG_FIGHT_EMPTY, h: w.h, wk: w.wk, bodies: w.b.map((t, j) => egBodyOf(t, now, had?.get(t[0]) ?? null, 0, w.r?.[j])), blows: w.bl, tx: w.tx, mk: w.mk, pg: w.pg, zones: w.zs ?? (same ? f.zones : []), says: same ? f.says : [], gone: same ? f.gone : [], fells: same ? f.fells : [], phases: same ? f.phases : [], told: same ? f.told ?? [] : [], gust: f.gust, dark: f.dark, rail: f.rail, bridges: (f.bridges ?? []).filter((q) => q.h === w.h) };   // AUDIT EG III: the hall's Spirebridges kept (one heard before its fight was)
     }
-    case 'ead': { const had = new Set(f.bodies.map((b) => b.i)); return { ...f, bodies: [...f.bodies, ...w.a.filter((t) => !had.has(t[0])).map((t) => egBodyOf(t, now))] }; }
+    case 'ead': { const had = new Set(f.bodies.map((b) => b.i)); return { ...f, bodies: [...f.bodies, ...w.a.flatMap((t, j) => (had.has(t[0]) ? [] : [egBodyOf(t, now, null, now, w.r?.[j])]))] }; }   // AUDIT FB1018f L3-4: each with its radius
     case 'emv': {
       const by = new Map(w.m.map((t) => [t[0], t]));   // EG-ZJ: `[i, x, z, tx, tz, v, at, y, ty, yw]` - its height and its end's; AUDIT EG V: its facing
       return { ...f, bodies: f.bodies.map((b) => { const t = by.get(b.i); return t ? { ...b, x: t[1], z: t[2], y: t[7] ?? b.y, yaw: Number.isFinite(t[9]) ? t[9] : b.yaw, mv: t[5] > 0 ? { x: t[1], z: t[2], tx: t[3], tz: t[4], v: t[5], at: t[6], y: t[7] ?? b.y, ty: t[8] ?? t[7] ?? b.y } : null } : b; }) };
@@ -116,7 +119,7 @@ function foldFight(f, w, now) {
     case 'ecut': return { ...f, blows: f.blows.map((b) => (b.i === w.i ? { ...b, cut: Number.isFinite(w.at) ? Math.min(now, w.at) : now } : b)) };   // EG-PERFECT: frozen at the instant the relay cut it (its FEINT_AT), never the beat's
     case 'etx': return { ...f, tx: w.t };
     case 'emk': return { ...f, mk: w.m };
-    case 'eph': return { ...f, bodies: f.bodies.map((b) => (b.i === w.i ? { ...b, ph: w.ph } : b)), phases: keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6) };
+    case 'eph': return { ...f, bodies: f.bodies.map((b) => (b.i === w.i ? { ...b, ph: w.ph } : b)), phases: w.ph > 1 ? keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6) : f.phases };   // AUDIT FB1018f L3-1: a wake's word (its first phase, net/eliteGates/egLords.js egLordsWake) wakes it here and turns no phase - no card, no growl (the wake's own roar)
     case 'efell': return { ...f, bodies: f.bodies.map((b) => (b.i === w.i ? { ...b, fellAt: w.at, hp: 0 } : b)), fells: keepLast(f.fells, { i: w.i, at: w.at, n: w.n }, 6) };
     case 'eob': return { ...f, bodies: f.bodies.map((b) => (b.i === w.i ? { ...b, st: w.st, stAt: w.at } : b)) };
     case 'ez': return { ...f, zones: [...f.zones.filter((z) => z.i !== w.i && z.until > now - 2000), w].slice(-32) };

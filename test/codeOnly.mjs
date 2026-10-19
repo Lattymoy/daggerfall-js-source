@@ -1,6 +1,6 @@
 // A SOURCE PIN READS CODE, NEVER PROSE (AUDIT 28e). The records lane reverted five pinned lines and kept each old text
 // as a trailing comment - `currentLocationMapId: () => (_musicLoc)... // currentLocationMapId: () => travelOriginMapId(),`
-// - and every text pin on them stayed green: the hazard Testing.md already records ("A VACUOUS PIN CAUGHT ITSELF").
+// - and every text pin on them stayed green: the hazard bible/09-Testing/Testing-Rows-2026-10-19.md records ("A VACUOUS PIN CAUGHT ITSELF").
 // This is test/systems/rest/restwhere.test.js's walk made shared: `//` and `/* */` comments blanked, strings kept whole. It knows
 // nothing of regex literals, so it is for a SLICE - a function, a block, a small file - never a whole host file, where
 // one `/'/` could put the walk out of step. Pins then ask for their line exactly once in what is left.

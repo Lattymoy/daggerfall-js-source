@@ -92,9 +92,10 @@ test('AUDIT WB B7 his death cry is heard at his fall, not minutes after it: a pl
 test('AUDIT WB B5 the link tells its host the relay\'s refusal of my `in`, with its word; nothing else is a refusal', () => {
   const refused = [], said = [];
   const link = createGateLink({ now: () => 0, say: (s) => said.push(s), onRefused: (m) => refused.push(m) });
-  link.word({ k: 'no', m: 'the court is full' });
-  assert.deepEqual(refused, ['the court is full']);
-  assert.deepEqual(said, [GATE_NO_TEXT['the court is full']]);
+  // PIN MOVED (COURT-WATCH, World-Bosses.md section 24): a full court keeps its watcher - no refusal; a sealed gate still refuses
+  link.word({ k: 'no', m: 'the gate is sealed' });
+  assert.deepEqual(refused, ['the gate is sealed']);
+  assert.deepEqual(said, [GATE_NO_TEXT['the gate is sealed']]);
   link.word({ k: 'hp', h: 5, m: 10 });
   link.word({ k: 'rcpt', r: 'junk' });
   assert.equal(refused.length, 1);

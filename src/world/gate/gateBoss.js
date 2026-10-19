@@ -44,15 +44,19 @@ export const bossLookOf = (id) => BOSS_LOOKS[id] ?? BOSS_LOOKS.ruhn;
  * longsword lands more than half its swings and a level-20 blade nearly all - bible section 5's numbers, measured in the
  * pins), and a health nothing here
  * can empty (the relay holds his real one). Named for the numbers and the lines a blow says.
+ * FIELD BUGS 2026-10-18f RELAY-SHARE: `share` - its owner's reader of the relay's own word of this body's health (a share,
+ * 0..1, or null where none is heard; combat/healthShare.js wordShare builds one): what every "under its health" power
+ * reads of it (combat/healthShare.js healthShare). Without one the share is unknown, as before.
  */
 export const BOSS_ARMOR = 60;
-export function bossStandIn(look, name) {
+export function bossStandIn(look, name, share = null) {
   const e = makeEnemyEntity(look.mobile, ENEMY_BASICS[look.mobile], null, 1, () => 0.5);
   e.minMetalToHit = 0;
   e.armor = BOSS_ARMOR;
   e.armorValues = new Array(7).fill(BOSS_ARMOR);
   e.maxHealth = e.health = 1e9;
   e.relayHealth = true;   // AUDIT MARTIAL L3 F2: the relay's to know - a share of the 1e9 here is no word (systems/weaponMastery.js)
+  e.relayShare = typeof share === 'function' ? share : null;   // FIELD BUGS 2026-10-18f RELAY-SHARE: the relay's word of it, its owner's reader
   e.name = name;
   e.spareGear = true;   // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)
   e.mobileType ??= look.mobile;   // WBX7: a soul trap reads the target's mobile (systems/effects.js) - his is a Daedra Lord's, no humanoid
@@ -72,8 +76,8 @@ export function bossStandIn(look, name) {
  */
 export const CRYSTAL_ARMOR = 100;
 export const CRYSTAL_NAME = 'Crystal of Oblivion';
-export function crystalStandIn(look, c = null) {
-  const e = bossStandIn(look, CRYSTAL_NAME);
+export function crystalStandIn(look, c = null, share = null) {   // FIELD BUGS 2026-10-18f RELAY-SHARE: `share` its own word's reader (bossStandIn)
+  const e = bossStandIn(look, CRYSTAL_NAME, share);
   e.armor = CRYSTAL_ARMOR;
   e.armorValues = new Array(7).fill(CRYSTAL_ARMOR);
   e.skills = 0;
@@ -493,8 +497,8 @@ export function hostLookOf(k, aspectId) {
  *  bites, a knight's plate for armour, a health nothing here can empty - the relay holds its real one, never swayed),
  *  named for the lines a blow says. AUDIT WB11 W1: one a BODY, naming it (`hostI`) - a Cast When Strikes spell on it is
  *  that body's (scenes/hostEnchant.js asks the stand-in it met), where one shared by a look sent it to HIM. */
-export function hostStandIn(look, i = null) {
-  const e = bossStandIn({ mobile: look.mobile }, look.name);
+export function hostStandIn(look, i = null, share = null) {   // FIELD BUGS 2026-10-18f RELAY-SHARE: `share` its own word's reader (bossStandIn)
+  const e = bossStandIn({ mobile: look.mobile }, look.name, share);
   if (i !== null) e.hostI = i;
   return e;
 }

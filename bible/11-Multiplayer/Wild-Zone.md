@@ -128,7 +128,7 @@ ZONE-WATCH (2026-10-08, the owner: "attacking other players in cities will call 
 player in a town of the zone is Assault, the watch's own crime - set and answered (`zoneWatchCall`,
 `world.js:"const zoneWatchCall"`) at most once each ten seconds, so a fight keeps the watch called without a storm of
 posts. And the watch is ten times as strong there (the owner: "Guards in the cities are 10x times as strong"):
-`ZONE_WATCH_SCALE` (`world.js:"const ZONE_WATCH_SCALE"`) through the street host's `guardScale`
+`ZONE_WATCH_SCALE` (`wildZone.js:"export const ZONE_WATCH_SCALE"`) through the street host's `guardScale`
 (`world.js:"guardScale: () =>"`) - a watchman's health and every blow it lands (`cityGuards.js:"the zone's watch"`).
 
 ## 4. A death in the zone

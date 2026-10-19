@@ -2,8 +2,8 @@
   {
     "name": "RVN7d-home-switch",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  if (!revenantOn() || wildHere() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;   // PVPDUNGEONS: no lair in the open zone\n  ensureMirror(player);\n  const r = livingRevenants().filter((x) => !x.out",
-    "new": "  if (wildHere() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;   // PVPDUNGEONS: no lair in the open zone\n  ensureMirror(player);\n  const r = livingRevenants().filter((x) => !x.out",
+    "old": "  if (!revenantOn() || wildHere() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;   // PVPDUNGEONS: no lair in the open zone\n  ensureMirror(player);\n  const wall = Date.now();\n  const r = livingRevenants().filter((x) => (!x.out || goesHome(x, wall, foes))",
+    "new": "  if (wildHere() || !here || !Number.isInteger(here.px) || !Number.isInteger(here.py)) return null;   // PVPDUNGEONS: no lair in the open zone\n  ensureMirror(player);\n  const wall = Date.now();\n  const r = livingRevenants().filter((x) => (!x.out || goesHome(x, wall, foes))",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "RVN7d-home-out-twice",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  const r = livingRevenants().filter((x) => !x.out && x.lair",
+    "old": "  const r = livingRevenants().filter((x) => (!x.out || goesHome(x, wall, foes)) && x.lair",
     "new": "  const r = livingRevenants().filter((x) => x.lair",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "RVN7d-home-order",
     "file": "src/systems/revenant/revenant.js",
-    "old": "    .sort((a, b) => b.rank - a.rank || a.dueAt - b.dueAt)[0] ?? null;\n  if (!r) return null;\n  r.out = true;",
-    "new": "    .sort((a, b) => a.dueAt - b.dueAt)[0] ?? null;\n  if (!r) return null;\n  r.out = true;",
+    "old": "    .sort((a, b) => b.rank - a.rank || a.dueAt - b.dueAt)[0] ?? null;\n  if (!r) return null;\n  claim(r, wall);",
+    "new": "    .sort((a, b) => a.dueAt - b.dueAt)[0] ?? null;\n  if (!r) return null;\n  claim(r, wall);",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RVN7d-home-unclaimed",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  if (!r) return null;\n  r.out = true;\n  r.outAt = Date.now();\n  return r;\n}\n/** A claimed stand",
-    "new": "  if (!r) return null;\n  return r;\n}\n/** A claimed stand",
+    "old": "  if (!r) return null;\n  claim(r, wall);\n  return r;\n}",
+    "new": "  if (!r) return null;\n  return r;\n}",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "RVN7d-never-asked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (playerFeet && !_lairAsked) { _lairAsked = true; standLairRevenant().catch(() => null); }\n",
+    "old": "    if (playerFeet && !_lairAsked && (!enhancedNav.requested || enhancedNav.settled || Date.now() - (_lairWaitFrom ??= Date.now()) > LAIR_WALK_WAIT_MS)) { _lairAsked = true; standLairRevenant().catch(() => null); }\n",
     "new": "",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "RVN7d-asked-every-frame",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (playerFeet && !_lairAsked) { _lairAsked = true; standLairRevenant()",
-    "new": "    if (playerFeet) { _lairAsked = true; standLairRevenant()",
+    "old": "    if (playerFeet && !_lairAsked && (!enhancedNav.requested",
+    "new": "    if (playerFeet && (!enhancedNav.requested",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "RVN7d-lair-roll-known",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    const r = revenantForLair(playerEntity, lairPixel(), { dueOnly: true });",
-    "new": "    const r = revenantForLair(playerEntity, lairPixel());",
+    "old": "    const r = revenantForLair(playerEntity, lairPixel(), { dueOnly: true, foes });",
+    "new": "    const r = revenantForLair(playerEntity, lairPixel(), { foes });",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
     ]

@@ -29,6 +29,7 @@
 // that reorders a list you are looking at is a worse answer than the
 // order being right.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { repaintKeepingScroll } from '../domRepaint.js';   // FB1018f SPELL-SCROLL: a pick keeps the list where it was
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { overlayAction, eventMeans } from '../input.js';   // KB1: and the registry's answer for the book's own key
 import {
@@ -166,7 +167,20 @@ function pxDivider(word) {
   return d;
 }
 
+/** FB1018f SPELL-SCROLL (FIELD BUGS 2026-10-18f; cmagoun on the Discord: "Clicking a spell returns you to the top of a
+ *  spell list ... Save the scroll position when you click a spell"): every press draws the book again from nothing, and a
+ *  list drawn from nothing stands at its top - a pick put the list back at its first spell, and lit whichever row then
+ *  stood under the pointer.
+ *  DFU's book never moves on a pick: ListBox.MouseClick (ListBox.cs:465-504) sets the selection and raises OnSelectItem,
+ *  and SpellsListBox_OnSelectItem -> UpdateSelection (DaggerfallSpellBookWindow.cs:507-512, :765-768) sets the scroll
+ *  bar FROM the list's own ScrollIndex - the classic book here keeps that law (spellbookWindow.js:"this.selectedIndex = index;          // MouseClick").
+ *  So the book is drawn through the house's one repaint (ui/domRepaint.js, A REPAINT MUST NOT MOVE THE PAGE UNDER THE
+ *  PLAYER): every scrolled pane is read, the book drawn, and each given back. */
 function render() {
+  if (host) repaintKeepingScroll(host, paint);
+}
+
+function paint() {
   if (!host) return;
   host.innerHTML = '';
   const shell = el('div', 'px-home px-over sb-shell');
@@ -223,6 +237,12 @@ function render() {
 
   const sel = rows[picked];
   const detail = el('div', 'px-qdetail');
+  // FB1018f SPELL-SCROLL: another spell's page starts at its top; the list keeps its place. AUDIT FB1018f L2-2: THE KEY
+  // IS THE SPELL, NOT ITS ROW - it was `picked`, and a delete keeps `picked` (confirmDelete: the row gone, the next spell
+  // takes its place), so the spell after a deleted one opened at the deleted one's offset. The spell's index is the port's
+  // name for a spell, the one the quickslot and the hotbar key it by (systems/quickslots.js keyedSpell): a rename or an
+  // icon keeps the page (editBookSpell writes a new record under the same index), another spell in the row misses
+  detail.setAttribute('data-scroll-key', `spell ${sel.spell?.index}`);
   const name = el('div', 'px-qname');
   name.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
   detail.append(name);

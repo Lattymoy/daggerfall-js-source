@@ -200,7 +200,9 @@ async function serpentGolden() {
 
 /** The hashes taken on the tree before the seam (4f0e71965), and how many words each heard. */
 const GOLDEN = Object.freeze({
-  gate: Object.freeze({ n: 192, h: 'b834e08be997ead417e31e9887435d0d368e209d8736d9c6b351d997b87d10df' }),
+  // PIN MOVED (COURT-WATCH, bible/11-Multiplayer/World-Bosses.md section 24): the answer to an `in` that seats a fighter
+  // says so (`me`) - the two answers here; every frame else word for word (`,"me":1` taken out, b834e08b... as before)
+  gate: Object.freeze({ n: 192, h: '05991c48e5055f6fd608f0c4a2676215d8d5da559b6e47cf8bc3977aba7b2510' }),
   sd: Object.freeze({ n: 140, h: 'b0019f8f7fd56073923afc19176cba6cf95d3d295840299ee38804d233195ee9' }),
   serpent: Object.freeze({ n: 232, h: '8569aebc4ba221743d3191c8d952bcca99e72e164b032cfd37f00eb613ce3ded' }),
   orrery: Object.freeze({ n: 288, h: '2a803880284730aad89cc34c064edbda5b846e4ffd6c3d76631cb95567ba3bc1' }),

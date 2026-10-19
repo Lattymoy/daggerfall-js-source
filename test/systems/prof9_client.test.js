@@ -288,7 +288,10 @@ test('PROF9 pages: The Fire - away from one, the word (no dish offered); at one,
     assert.match(page.text(), /Provisioning 100 \(Master\)\. Your Skillet widens the pan's window\./);   // PIN MOVED (CRAFT3): the fire reads Provisioning's track
     page.dish('Hunter\'s Stew (northern').onclick();
     assert.match(page.text(), /Endurance \+5 for 2 hours\. Yours never spoil\./);
-    assert.match(page.text(), /Two servings \(a Cook's\), into your pack\. 3 pans; every pan taken off done is a clean pan, half again its 140 Provisioning XP\./);   // PIN MOVED (CRAFT3): a dish raises Provisioning
+    // PIN MOVED (CRAFT3): a dish raises Provisioning. PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): a Master's track
+    // takes no more XP (the service credits MIN(earned, PROF_XP_MAX - held), none), so the pans say no XP and the line why;
+    // the pans' XP at an Expert's 90, in AUDIT PROF-541 K7's pin
+    assert.match(page.text(), /Two servings \(a Cook's\), into your pack\. 3 pans\.No Provisioning XP: Provisioning is at Master\./);
     page.button('Cook').onclick();
     assert.deepEqual([_cookForTests().act.state.lo, _cookForTests().act.state.hi], panWindow(100, 1, true));
     assert.ok(_cookForTests().act.state.hi - _cookForTests().act.state.lo > PAN_ACT.w * 1.5 * 1.5 - 1e-9);
@@ -620,19 +623,21 @@ test('AUDIT PROF-541 K6: the Orchard Tart\'s stamina is the player\'s to end, as
 });
 
 test('AUDIT PROF-541 K7: the fire\'s XP line says what the service pays - the town Apothecary\'s steps in it (recipeLaw cookXp\'s `steps`, the host\'s cookSteps), a plain line where there are none', () => {
-  stubPages({ rank: 100, over: { cookSteps: () => 2 } });
+  // PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): an Expert's 90 - the same top tier, 7, as a Master's, with room left
+  // to take it (a Master's track takes none: the service credits MIN(earned, PROF_XP_MAX - held))
+  stubPages({ rank: 90, over: { cookSteps: () => 2 } });
   let page = pageOf();
   try {
     page.dish('Hunter\'s Stew (northern').onclick();
     // PIN MOVED (CRAFT3): a dish raises Provisioning - its XP said so
     assert.match(page.text(), /every pan taken off done is a clean pan, 350 Provisioning XP to a plain dish's 280 - the town's Apothecary's 2 steps in both\./);
     page.done();
-    stubPages({ rank: 100, over: { cookSteps: () => 1 } });
+    stubPages({ rank: 90, over: { cookSteps: () => 1 } });
     page = pageOf();
     page.dish('Hunter\'s Stew (northern').onclick();
     assert.match(page.text(), /a clean pan, 280 Provisioning XP to a plain dish's 210 - the town's Apothecary's step in both\./);   // PIN MOVED (CRAFT3): Provisioning XP
     page.done();
-    stubPages({ rank: 100, over: { cookSteps: () => 0 } });
+    stubPages({ rank: 90, over: { cookSteps: () => 0 } });
     page = pageOf();
     page.dish('Hunter\'s Stew (northern').onclick();
     assert.match(page.text(), /a clean pan, half again its 140 Provisioning XP\./);   // PIN MOVED (CRAFT3): Provisioning XP

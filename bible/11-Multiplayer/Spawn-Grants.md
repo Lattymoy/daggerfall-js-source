@@ -659,3 +659,103 @@ foes in 10 minutes: unsigned 6"): **"Is this the system working?"**, then **"Yes
 
 Pins: `test/scenes/grantunheard.test.js` (2); `grant4_lanes`' GRANT6 wait and `grantaudit_host`'s A11 (PIN MOVED:
 unheard, never `unsigned`); `tools/mutants/grantunheard.json` (3, all dead).
+
+## 19. FOE-BOUNDS: a foe no builder could give is refused, never rescaled (2026-10-19)
+
+Mac, after GRANT-UNHEARD: **"My friend spotted someone doing spawning and yet it didnt show through the moderation
+panel"**, then **"So basically the entire grant system we built is worthless"** - against a deliberate cheat, as built, it
+was: the law measured (nothing refused), a sender that never asked a grant was read as an old build for good (section
+20), and a case opened only on three readers' word of a forged grant. Then a hand-off spec - **"LATTY: REJECT AND REMOVE
+INVALID ENEMY HANDOFFS; DO NOT RESCALE"**: at a hand-off reject a provably impossible monster and remove its network
+copy, never shrink it to a legal one, keep the evidence in the moderators' queue, and never blame the player it was
+handed to - answered **"Spec + B + A"** and, for its limits, **"The game's own code"** (its tables and `modifiers.json`
+were not attached).
+
+- **The bound** (`net/foeBounds.js` foeHealthBound): every stage that builds a foe's maximum rounds once and never lowers
+  it, so the highest base and every highest multiplier in the builders' own order and rounding is the exact legal most -
+  each input a reader cannot see (the owner's dice, its combat standing and hero level, a revenant's rank, wrath and the
+  Dread, the wild ring, a Rite's Summoner) taken at its worst, and each mark the record says of itself (`z`, `cp`, `nm`,
+  `gg`) only raising it. Two chains: the street's (`scenes/exteriorFoes.js` spawnFoe - a building's pool is the same
+  module) and the dungeon's (`scenes/dungeonContext.js` buildFoeAt - its record carries no marks, so a layout foe's worst
+  and a revenant's lair stand's are both taken). A class foe's base is DFU's roll at its worst (10 + level x
+  CreateCharCustomClass.cs's most hit points a level, 30); a monster's the most of its row over the three profiles a game
+  can build with (vanilla, Meaner Monsters, Meaner Monsters with PCAAO's edit - online forces the last). The wild zone's
+  x8 only where the zone may be about the foe (its own pixel in a cell, WILD_NEAR_PX about it; the zone under the reader's
+  feet elsewhere; yes while no zone mask is loaded), the Rite's x3 only for a class foe in a camp (the frame's `cz`).
+  `test/net/foebounds_law.test.js` holds each copied constant to its home and the bound EQUAL to what the game's own
+  builders make at their worst - every monster, class foes at three levels, each combination of marks - the spec's
+  "exact legal max and max+1".
+- **Refused at the reader** (`scenes/grantHost.js` statsRefused, whenever the law is not `off`): a record over its bound,
+  or a mark no builder gives its kind (an elite or a champion City Watch, a champion under level 3), is never built,
+  never updated and never ADOPTED - the street's record loop and the dungeon's own lane refuse it before anything is
+  stood, so a hand-off of it is refused before it is the receiver's, and it never rides as theirs; a copy already
+  standing is taken down silently (exteriorFoes.js removePuppet, dungeonContext.js dropOwnPuppet: no death, no body, no
+  loot, no experience). The dungeon host's stream (applyFoeRecord) does not apply such a record - the reader's copy
+  stands as it was. Tallied `stats` against the SENDER, once a record, never against the receiver.
+- **`stats` is a case's reason** (net/grantLaw.js GRANT_CASE_REASONS) and a reader's tally word; a reader hands it only
+  to a relay at world223 or later (GRANT_STATS_RELAY_MIN - an older one refuses the whole tally).
+- **The relay's strip** (GRANT9, `grantStrip` on): a record over its bound goes to nobody - the one authority every copy
+  hears, so no copy stands it, adopts it or passes it on (the spec's tombstone, while the switch is on) - and is counted
+  once a sender, record and claim under the relay's own name (net/grantMeasure.js GRANT_RELAY_READER, `~relay` - no
+  account id is one), the worst one's evidence beside it (`{ t, k, mx }`), in the batch the relay signs.
+- **THE FOUR HOSTS** (Home.md): `scenes/world.js` (the street's pool) and `scenes/worldModes.js` (a building's - the same
+  createExteriorFoes) refuse in exteriorFoes.js's record loop; `scenes/dungeonContext.js` in its own lane's loop and on
+  the host's stream; `scenes/exterior.js` streams no foe.
+
+Departures from the spec, named: no per-foe spawn record holds the owner's skills, place or settings - the grant is
+the provenance (relay-signed: the monster's number and member, its creator and account, its seed, its signed level and
+Renown, its elite and champion marks; a hand-off is a relay-signed grant of its own), and what no grant names is taken
+at its worst, so the bound proves gross forgeries, not a few points of inflation; the case is one per account a window,
+its line carrying the count and the worst evidence (section 21), not one per foe; the relay's removal stands while
+`grantStrip` is on, and a reader's alone otherwise; an ally, a companion and a crewman (the frame's own lists) are
+unverified; the in-game moderation panel still calls a spawn grants' case "opened by the reviewer" (a localised line,
+left for its own slice - the Discord card says the spawn grants opened it).
+
+Pins: `test/net/foebounds_law.test.js` (5), `test/scenes/foebounds_pool.test.js` (5).
+
+## 20. GRANT-DOOR: a build that says no spawn grants is turned away, and every sender is held to them (2026-10-19)
+
+The hole section 19 names: a reader held a sender to grants only once it had heard a grant from it (`capable`), so an
+older build's foes were never refused - and a changed client that never asked one was that older build, for good, even
+while the law enforced.
+
+- **The hello says it** (net/wire.js GRANT_HELLO_LAW, `gv`): a foes room's hello (a cell, a world room) says the spawn
+  grants its build stands on; the relay keeps it on the socket.
+- **The relay vouches** (server/src/index.js fanOut): every foes frame it fans from such a socket carries `g` 1, the
+  relay's word, never the sender's; the session keeps such senders (net/online.js grantSenders) and a reader holds each
+  to grants from its first frame - a record of its with none is `ungranted`, stood down while the law enforces. The strip
+  (GRANT9) holds such a socket to grants as it holds one that asked.
+- **The door** (`grantDoor`, var GRANT_DOOR, off unset): while on, a foes room refuses a hello that does not say it - an
+  older build, or a changed one leaving it off to pass for one - with GROUND-GATE's words and GRANT_OLD_REASON, before
+  anything is written; GROUND-GATE's own law - a current build's hello asks nothing, a cold room asks the hub before its
+  first such hello, the hub lets anyone in. **Off until the site serves the build that says it** (the relay deploys first);
+  then `/relay grantDoor on`. A player on an older build is turned away until it reloads or updates.
+
+Pins: `test/net/grantdoor_relay.test.js` (5); the hello's pins (`online`, `world6biiib`, `fb1017f_groundgate`'s current
+build) and relayCfg's keys and vars (`scale5b`) moved.
+
+## 21. GRANT-ASKS and the relay's own count: cases with no reader's word (2026-10-19)
+
+GRANT7's case needed three readers' accounts to tally a forgery; spawning on real grants, fast, was counted and never a
+case. The account service (server-account/src/grants.js) now opens one on the relay's own count too:
+
+- **What the relay stripped** (section 19): a `~relay` tally opens its sender's case alone - the relay saw the sender's own
+  frame - its line "the relay itself dropped N of this account's foes no builder could give - the worst a type T at K
+  health, its most M".
+- **An account's own asks** (grantAskText): in one cell's window, GRANT_ASK_CASE_TIMES (4) times the most its budget lets
+  honest play ask (the kind's `cap` and its `rate` over the window) and GRANT_ASK_CASE_OVER_MIN (16) past it. Its asks, not
+  its bucket's refusals: the cell's ceiling is asked first, so a flood that filled the cell is counted `ceiling` from
+  then. Both numbers ride with GRANT5's buckets.
+- **One line an account a batch** (grantCaseLines): a case line is keyed by its case, second and account, so a batch's
+  findings on one account - readers', the relay's, its asks - are one line, joined; one line a window as GRANT7's.
+- **No flood**: the relay's own count opens at most GRANT_OWN_CASES_HOUR (30) cases an hour; a case already open takes
+  its line regardless.
+- **The card** (server-account/src/discord.js caseCard): a case of the spawn grants' with no reviewer's verdict is titled
+  "(opened by the spawn grants)", its reports "none - the spawn grants' count opened it", and never "Reviewer: found
+  nothing against the code" - which read as a verdict the chat reviewer never gave.
+
+Departures: the spec asked for a new enemy-transfer ingress; the relay's signed batch to `/v1/mod/grant-feed` is that
+receipt already, so no new route. Pins: `test/server/grantcase_own.test.js` (4). Mutants for sections 19-21:
+`tools/mutants/foebounds.json`. Relay world223, account service acct158 - deploy the service with or before the relay;
+nothing else orders them.
+

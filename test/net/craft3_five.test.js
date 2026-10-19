@@ -210,9 +210,9 @@ test('CRAFT3 service source: every track read and credit is the craft\'s - the c
   const svc = src('server-account/src/professions.js');
   assert.match(svc, /db\.prepare\('SELECT \* FROM prof_tracks WHERE player = \?1 AND char_id = \?2 AND profession = \?3'\)\.bind\(player, character, trackOf\(profession\)\);/);   // PIN MOVED (GATHER-SPEED): the track's read a statement, for a harvest's batch
   assert.match(svc, /const craft = trackOf\(prof\);/);
-  assert.match(svc, /\.bind\(player\.id, character, rid, cap, nowS, nonce, trackOf\(r\.xp\)\)\] : \[\]\),/);
+  assert.match(svc, /\.bind\(player\.id, character, rid, nowS, nonce, trackOf\(r\.xp\)\)\] : \[\]\),/);   // PIN MOVED (AUDIT FB1018f L5-1): the cap read in the statement (craftCapSql), no longer bound
   assert.match(svc, /const profession = trackOf\(asked\);/);
-  assert.match(src('server-account/src/alchemy.js'), /SELECT \?1, \?2, '\$\{trackOf\('alchemy'\)\}', MIN\(\?4, xp\), \?5 FROM prof_brews/);
+  assert.match(src('server-account/src/alchemy.js'), /SELECT \?1, \?2, '\$\{trackOf\('alchemy'\)\}', MIN\(\$\{cap\}, xp\), \?4 FROM prof_brews/);   // PIN MOVED (AUDIT FB1018f L5-1): the cap read in the statement
   const forts = src('server-account/src/seatForts.js');
   assert.match(forts, /t\.profession = '\$\{trackOf\('masonry'\)\}'/);
   assert.match(forts, /t\.profession = '\$\{trackOf\('carpentry'\)\}'/);

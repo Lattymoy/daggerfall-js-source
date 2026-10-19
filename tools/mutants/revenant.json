@@ -337,7 +337,7 @@
   {
     "name": "REVENANT-AAA-no-claim",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  due[0].out = true;\n",
+    "old": "  claim(due[0]);\n",
     "new": "",
     "tests": [
       "test/systems/revenant_card.test.js"
@@ -346,8 +346,8 @@
   {
     "name": "REVENANT-AAA-the-claim-never-freed",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  if (r && r.out && !r.defeated && !r.gone) { r.out = false; r.outAt = 0; }",
-    "new": "  /* kept */",
+    "old": "  r.out = false; r.outAt = 0;\n}",
+    "new": "  /* kept */\n}",
     "tests": [
       "test/systems/revenant_card.test.js"
     ]

@@ -205,7 +205,7 @@ const HANDLERS = new Map([
       if (st) entity.activeEffects.splice(entity.activeEffects.indexOf(st), 1);
     },
     strikes({ entity, target, damage, nowMinutes, rolls = Math.random }) {
-      if (!entity || !target || damage === 0) return null;
+      if (!entity || !target || damage === 0 || target.warded) return null;   // AUDIT FB1018f L1-2: a ward lands nothing, so it gives nothing (VAMPIRIC-WARD's law)
       if (savingThrow(ELEMENTS.Magic, EFFECT_FLAGS.Magic, target, 0, rolls) === 0) return null;
       const st = maceState(entity, true);
       if ((target.magicka ?? 0) > 0) {

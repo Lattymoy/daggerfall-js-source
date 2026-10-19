@@ -753,6 +753,9 @@ export function repairItemLists(repairLists) {
     const n = repairRarityBases(list);
     if (n) console.info(`[save] RARITY-WEAR: ${n} rolled piece(s) on a base nothing can wear moved to one a slot takes`);
   }
+  // HELD-BASE (FIELD BUGS 2026-10-18f) mends the mint alone: AUDIT FB1018f L1-1 - a load that moved a saved piece's base
+  // rewrote the print the realm ledger follows it by (server-account/src/judge.js ledgerPrintOf, templateIndex:material),
+  // and the next checkpoint read an honest piece as forged and held its player. A piece a save kept stays as it was.
   // AUDIT CARDS-6 A6: every card worth its tier's worth (iliacItems.js cleanBinders - a card minted before CARDS9 carried
   // a coin's) in every list, not the pack's alone: one in the wagon, the bag or a house chest kept its coin after a load
   for (const list of repairLists) cleanBinders(list);

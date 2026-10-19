@@ -875,13 +875,13 @@
   {
     "name": "PROF12-svc-brew-xp-uncapped",
     "file": "server-account/src/alchemy.js",
-    "old": "SELECT ?1, ?2, '${trackOf('alchemy')}', MIN(?4, xp), ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6",
-    "new": "SELECT ?1, ?2, '${trackOf('alchemy')}', 0, ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6",
+    "old": "SELECT ?1, ?2, '${trackOf('alchemy')}', MIN(${cap}, xp), ?4 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?5",
+    "new": "SELECT ?1, ?2, '${trackOf('alchemy')}', 0, ?4 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?5",
     "tests": [
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
     ],
-    "note": "CRAFT3: re-aimed by content."
+    "note": "AUDIT FB1018f L5-1: re-aimed by content - the cap read in the statement (craftCapSql), no longer bound."
   },
   {
     "name": "PROF12-svc-dis-listed",
@@ -976,12 +976,13 @@
   {
     "name": "PROF12-svc-dis-no-xp",
     "file": "server-account/src/alchemy.js",
-    "old": "SELECT ?1, ?2, 'enchanting', MIN(?4, xp), ?5 FROM prof_disenchants",
-    "new": "SELECT ?1, ?2, 'enchanting', 0, ?5 FROM prof_disenchants",
+    "old": "SELECT ?1, ?2, 'enchanting', MIN(${cap}, xp), ?4 FROM prof_disenchants",
+    "new": "SELECT ?1, ?2, 'enchanting', 0, ?4 FROM prof_disenchants",
     "tests": [
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1018f L5-1: re-aimed by content - the cap read in the statement (craftCapSql), no longer bound."
   },
   {
     "name": "PROF12-svc-herb-unbruised-never",
@@ -1242,11 +1243,12 @@
   {
     "name": "PROF12-book-dis-unapplied",
     "file": "src/net/profBook.js",
-    "old": "        if (r?.ok) { applyStore(r.data?.store); applyTrack(r.data?.track); } else shutBy(r);\n        return r;\n      })();\n      return m.promise;\n    },\n    /** The smith's stock (PROF3)",
-    "new": "        return r;\n      })();\n      return m.promise;\n    },\n    /** The smith's stock (PROF3)",
+    "old": "        if (r?.ok) { applyStore(r.data?.store); applyTrack(r.data?.track); } else shutBy(r);\n        return r;\n      })();\n      return m.promise;\n    },\n    /** CRAFT4: A TEMPER",
+    "new": "        return r;\n      })();\n      return m.promise;\n    },\n    /** CRAFT4: A TEMPER",
     "tests": [
       "test/systems/prof12_client.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1018f L5-5: re-aimed at the disenchant - its old text ended at \"/** The smith's stock (PROF3)\", which CRAFT4 put the reforge above, so it named the reforge (CRAFT4-book-reforge-no-store's site, craft4.json) and survived its own test."
   },
   {
     "name": "PROF12-pages-alchemy-undrawn",

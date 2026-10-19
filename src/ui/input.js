@@ -86,6 +86,25 @@ export function setKeybindNoticeSink(fn) { _carriedSink = fn; deliverCarried(); 
 /** Tests (and the I3 controls window) swap the live store. */
 export function setBindings(b) { _bindings = b; setStatusBindings(b); }   // STATUS-LIVE: a rebound Status key renames the readout's caption with it
 
+// AUDIT FB1018f L2-5: THE HOST'S PAUSE, ASKED AT THE KEY. A host hands its input layers one hooks object (GP1: the
+// finger's and the pad's; `paused()` is AUDIT 62 F7's gate, the game's pause, the predicate the mouse arms carry), and
+// both ask it live. The hotbar takes its slots' keys on the window's capture phase, BETWEEN frames, and read the pause
+// off the HUD's last frame instead: a key that opened a window and a digit before the next frame - the use-magic-item
+// list put in the dungeon's slot, then Digit1 - pressed slot 1 behind the window (its potion drunk) and the list never
+// heard its 1; and over ?world's dungeon arm a window in the street's slot (Recall's prompt), which no dungeon frame
+// knows, left the bar its digits while the pad's crossbar, asking these hooks, stood down. So the layers a host hands
+// its hooks note them here, each before its own refusal (ui/touch/touch.js attachTouch, ui/gamepadInput.js
+// attachGamepad - a page with neither a finger nor a pad still has its host's pause), and the bar asks the same object.
+let _hostInput = null;
+/** @param {any} hooks a host's input hooks (the object it hands attachTouch and attachGamepad) */
+export function noteHostInput(hooks) { if (hooks && typeof hooks === 'object') _hostInput = hooks; }
+/** The host's pause NOW - its hooks' `paused()` - or null while no host has handed its hooks to an input layer. */
+export function hostPaused() {
+  const paused = _hostInput?.paused;
+  if (typeof paused !== 'function') return null;
+  try { return !!paused(); } catch { return null; }   // a host mid-boot answers nothing yet
+}
+
 /**
  * SWING-SAY (2026-09-22, Mac: "its not working on the install but works
  * on the browser. Each time I bring this up you avoid it"): THE SWING

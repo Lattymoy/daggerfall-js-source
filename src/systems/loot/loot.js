@@ -30,7 +30,8 @@ import { dice100 } from '../../combat/formulas.js';
 import { goldStack } from '../inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue, setItemFields } from '../item/itemTemplates.js';   // F103: SetItem writes the value with the name; MAC-N1: through the one export
 import { CLOTHING_DYES } from '../../characters/dyes.js';
-import { legacyEnchantmentValue } from '../enchantments.js';   // G4: ItemBuilder's closing value sum
+import { legacyEnchantmentValue, worksUnworn } from '../enchantments.js';   // G4: ItemBuilder's closing value sum; HELD-BASE: a power that works off the body
+import { wearableItem } from '../equip.js';   // HELD-BASE: whether any slot could ever take a piece (RARITY-WEAR's one law)
 import { validItemField, validItemFields, itemFieldsOfKind, ITEM_STR_MAX } from '../item/itemFields.js';   // RF5: the one declaration of every item field's kind (LR4's affix check rides it)
 import { validSetMarks } from '../aetheric.js';   // AUDIT SET D6: the wire's cross-checks of a sigil and an Aetheric piece
 import { validGildedMarks } from '../gilded.js';   // GILDED1: and a Gilded piece's - its record's exactly
@@ -314,15 +315,9 @@ export function shownSpellName(spell) {
 const MAGIC_GROUPS_0 = Object.freeze([2, 3, 6, 10, 12, 14, 25]);
 const MAGIC_GROUPS_1 = Object.freeze([2, 3, 6, 12, 25]);
 
-export function createRegularMagicItem(templates, playerLevel, gender, rolls = Math.random, chosenItem = -1) {
-  const regular = templates.filter((t) => t.type === 0);   // RegularMagicItem
-  // Q2b-ii: the quest mint's "item class 4 subclass N" passes a CHOSEN
-  // index (-1 = random, as every earlier caller). C#'s guard is `>`
-  // Length - chosenItem == Length walks off the array and crashes
-  // there too (kept: regular[length] is undefined and throws below).
-  if (chosenItem > regular.length) throw new Error(`Magic item subclass ${chosenItem} does not exist`);
-  if (chosenItem === -1) chosenItem = Math.floor(rolls() * regular.length);
-  const magicItem = regular[chosenItem];
+/** CreateRegularMagicItem's base (ItemBuilder.cs:555-582), one draw in DFU's order: the group off the template's group
+ *  byte, then that group's minter. */
+function magicItemBase(magicItem, playerLevel, gender, rolls) {
   let groupId;
   if (magicItem.group === 0) groupId = MAGIC_GROUPS_0[Math.floor(rolls() * 7)];
   else if (magicItem.group === 1) groupId = MAGIC_GROUPS_1[Math.floor(rolls() * 5)];
@@ -336,6 +331,42 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   else if (groupId === 10) base = createRandomReligiousItem(rolls);
   else if (groupId === 14) base = createRandomGem(rolls);
   else base = createRandomJewellery(rolls);
+  return base;
+}
+
+/** HELD-BASE (FIELD BUGS 2026-10-18f, SuperDaddy: "appears on things you can't equip like wands"): POWERS THAT WORK
+ *  WORN - a piece has a live row that does not work off the body (enchantments.js worksUnworn: no Used payload).
+ *  MAGIC.DEF's own: Cast When Held, Absorbs Spells and Enhances Skill. AUDIT FB1018f L1-4 (decided, Mac: "Stop with the
+ *  decisions for me"): ANY such row - a piece with a Used cast and a worn power takes a base a slot takes, which loses
+ *  neither half (the cast works from any base); every regular MAGIC.DEF row is one power, so no draw moves. */
+export const powersNeedWearing = (rows) => rows.some((r) => !worksUnworn(r));
+/** HELD-BASE: the draws a held power's base takes before the stream is called dead - the soul trap's bound
+ *  (shopStock.js createRandomlyFilledSoulTrap). A live stream needs one more draw in six at the worst (Venom Spitting:
+ *  a religious item or a Wand, 9 in 56). */
+export const MAGIC_BASE_DRAWS = 64;
+
+export function createRegularMagicItem(templates, playerLevel, gender, rolls = Math.random, chosenItem = -1) {
+  const regular = templates.filter((t) => t.type === 0);   // RegularMagicItem
+  // Q2b-ii: the quest mint's "item class 4 subclass N" passes a CHOSEN
+  // index (-1 = random, as every earlier caller). C#'s guard is `>`
+  // Length - chosenItem == Length walks off the array and crashes
+  // there too (kept: regular[length] is undefined and throws below).
+  if (chosenItem > regular.length) throw new Error(`Magic item subclass ${chosenItem} does not exist`);
+  if (chosenItem === -1) chosenItem = Math.floor(rolls() * regular.length);
+  const magicItem = regular[chosenItem];
+  const enchantments = magicItem.enchantments.filter((e) => e.type !== -1);
+  // HELD-BASE: A HELD POWER IS MINTED ON A PIECE A SLOT TAKES (a departure from ItemBuilder.cs:555-582, Port-Ledger A).
+  // DFU draws the base off the template's group byte and never asks what the power needs: group 0 holds the religious
+  // items and the Jewellery (its Wand), group 1 the Jewellery, and no slot takes a religious item or a Wand
+  // (equip.js wearableItem). A power read on a worn piece alone then never reaches its holder - MAGIC.DEF's
+  // "%it of Venom Spitting" (Enhances Skill) a Holy Tome or a Wand one draw in six, "%it of the Wise" and the other
+  // Cast When Held rows a Wand one in forty. The base is drawn again, as DFU draws again over an Arrow, so a draw that
+  // was wearable is the draw it was; a power that works off the body (a Used cast: "Leaping Wand") keeps any base.
+  let base = magicItemBase(magicItem, playerLevel, gender, rolls);
+  if (powersNeedWearing(enchantments)) {
+    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);
+    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);   // a dead stream: armour, every set's first group, every piece worn
+  }
   // The regular name is replaced by the magic name; enchantments ride
   // raw; condition = uses.
   //
@@ -350,7 +381,6 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   // stored `value` field too, which is why that field is read and
   // never used. On the shipping file the two disagree by up to a
   // factor of six.
-  const enchantments = magicItem.enchantments.filter((e) => e.type !== -1);
   return {
     ...base,
     name: magicItem.name,

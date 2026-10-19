@@ -139,5 +139,5 @@ test('HT2 records: the pack page, the ledger row and the testing row', () => {
   assert.match(read('bible/10-UI/UI-Arc.md'), /^## HT2 THE ACT ON A LIGHT SOURCE \(2026-09-14/m);
   assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2 - LIGHTING ONE FROM THE PACK \(2026-09-14\)/m);
   assert.match(read('bible/01-Overview/Port-Ledger.md'), /HT2 \(2026-09-14\): the enhanced pack lights a light source/);
-  assert.match(read('bible/09-Testing/Testing.md'), /^\| ht2_packlight\.test\.js \| \d+ \| HT2/m);
+  assert.match(read('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| ht2_packlight\.test\.js \| \d+ \| HT2/m);
 });

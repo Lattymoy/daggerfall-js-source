@@ -85,7 +85,7 @@
 import { createGestureRecognizer, TAP_PX, TAP_MS } from './touchGestures.js';
 import { PIXEL_FONT_CSS } from '../pixelifyFive.js';   // FONT1: the enhanced skin's face for the layer's text
 import { overlayOpen } from '../enhanced/enhancedOverlays.js';
-import { bindings } from '../input.js';                       // AUDIT 62 F8: the live registry
+import { bindings, noteHostInput } from '../input.js';        // AUDIT 62 F8: the live registry; AUDIT FB1018f L2-5: the host's hooks, noted
 import { getBinding, getCombo, DEFAULT_SHARES } from '../../systems/inputActions.js';   // GetBinding (:641-671), GetCombo (:1195-1207)
 import { getPref } from '../../systems/uiPrefs.js';             // TI2: the touch* knobs
 import { lookNormalisation, analogAxes, gyroLookDelta } from './touchLook.js';   // TI2: the pure halves
@@ -194,6 +194,7 @@ const codesOf = (code) => (code == null ? [] : (getCombo(code) ?? [code]));
  *   is on; null otherwise, so the host's MoveAxes takes the key path.
  */
 export function attachTouch(canvas, hooks = {}) {
+  noteHostInput(hooks);   // AUDIT FB1018f L2-5: the host's pause, for the hotbar's keys too - before the refusal below
   if (!isTouchDevice()) return null;
 
   const ui = document.createElement('div');

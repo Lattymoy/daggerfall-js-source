@@ -46,7 +46,12 @@ instance list, in list order, and for each instance:
 1. the tile already holds a location (`MapData.hasLocation`) - a type-0
    instance anywhere in the list ends the call, a type-2 skips;
 2. the tile is sea (region 31, 3, 29, 28 or 30 AND a WOODS height of 2
-   or less) - the same two arms;
+   or less) - the same two arms. Dead in DFU: it asks MapPixelData's
+   `mapRegionIndex`, which `GetMapPixelData` fills from the pixel's
+   location alone, and a pixel with one has left at step 1. The port
+   asks the pixel's own region (`formats/mapsFile.js` getRegionIndexAt,
+   the sea's politic 64 is 31), a departure - WOD-SEA-TEST (FIELD BUGS
+   2026-10-18f, `01-Overview/Port-Ledger.md` section A);
 3. the instance names another map pixel - skip;
 4. `terrainX`/`terrainY` outside 1..128 - skip;
 5. Basic Roads says a road or a track crosses the pixel

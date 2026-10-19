@@ -190,13 +190,15 @@
     ]
   },
   {
-    "name": "the-host-reads-a-location-region-for-every-pixel",
+    "name": "WOD-SEA-TEST-the-location-region-again",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,",
-    "new": "        mapRegionIndex: maps.getRegionIndexAt(px, py),",
+    "old": "          regionIndex: maps.getRegionIndexAt(px, py),",
+    "new": "          regionIndex: dfLocation ? dfLocation.regionIndex : -1,",
     "tests": [
-      "test/world/terrain/wod2_loader.test.js"
-    ]
+      "test/world/terrain/wod2_loader.test.js",
+      "test/world/worldOfDaggerfall/fb1018f_wodsea.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f WOD-SEA-TEST, Mac: \"Yes fix WOD\"): the record held the host to the LOCATION's region, under which the mod's sea arm never fired; the arm now reads the pixel's own, and the mutant is the old read"
   },
   {
     "name": "the-grass-grows-through-the-site",

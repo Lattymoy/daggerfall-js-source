@@ -21,6 +21,7 @@ import { HOST, HOST_KINDS, HOST_BLOWS, COURT_CENTRE as GATE_COURT_CENTRE, ATTACK
 import { hostVerdict, hostTelegraphAt } from '../../net/gate/gateStrike.js';
 import { hostLookOf, hostAct, hostFallAct, hostStandIn, hostCue, bossFrame, bossPlace, HOST_BITE_COLOR, hostPulseColor, emberColor, WARD_COLOR, BOSS_CUES, gateHitFlash } from '../../world/gate/gateBoss.js';
 import { setBatchHitFlash } from '../../systems/hitFlash.js';   // WB13d: a body of his host struck flashes, as he does
+import { wordShare } from '../../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's health's share, the relay's word
 import { TELEGRAPH_KIND, TELEGRAPH_STYLE, TELEGRAPH_FLASH_MS, TELEGRAPH_EDGE, TELEGRAPH_POOL } from '../../render/gate/gateTelegraph.js';
 import { ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
 import { mobileBillboardSize } from '../../world/rmbFlats.js';
@@ -240,8 +241,8 @@ export function createGateHost({ renderer = null, getTexture = null, uploadRecor
         if (b.shown && b.batch) _batches.push(b.batch);
         // the body my blows meet - its feet in the dungeon's frame, its own body (the relay measures a blow to the same);
         // one a body, its feet refilled, its stand-in its own (AUDIT WB11 W1: naming it - a Cast When Strikes spell on it
-        // is this body's)
-        const T = (b.target ??= { i: a.i, feet: [0, 0, 0], height: HOST_KINDS[a.k].h, radius: HOST_KINDS[a.k].r, entity: hostStandIn(b.look, a.i), mobile: b.look.mobile, name: b.look.name, m: a.m });
+        // is this body's) - FIELD BUGS 2026-10-18f RELAY-SHARE: and reading its health as the relay says it (`b.hp` of its whole)
+        const T = (b.target ??= { i: a.i, feet: [0, 0, 0], height: HOST_KINDS[a.k].h, radius: HOST_KINDS[a.k].r, entity: hostStandIn(b.look, a.i, () => wordShare(b.hp, b.target?.m)), mobile: b.look.mobile, name: b.look.name, m: a.m });
         // AUDIT WB11 W4: where it is DRAWN - one still rising out of the stone is met only above the floor (its whole body
         // stood offered from its first moment, a shaft stopped by nothing seen)
         T.feet[0] = COURT_CENTRE[0] + x; T.feet[1] = COURT_CENTRE[1] + b.look.hover - act.sink; T.feet[2] = COURT_CENTRE[2] + z;

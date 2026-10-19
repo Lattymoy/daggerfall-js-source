@@ -62,10 +62,8 @@ export function readBuildSha(read = (p) => readFileSync(p, 'utf8')) {
    the size of the suite and the size of the port. Both come from the
    tree the build is made of, the way the sha does, so the page can
    never claim a number the repository does not hold. The test count
-   uses the manifest gate's own definition (test/bible/manifest.test.js:
-   top-of-line `test(` calls in every *.test.js under test/), which that gate pins
-   equal to bible/09-Testing/Testing.md - so the strip, the doc and
-   the runner agree or the suite is red. */
+   is the declared tests: top-of-line `test(` calls in every *.test.js
+   under test/ (test/ui/enhanced/landing.test.js walks the tree to hold it). */
 export function countTests(dir = 'test', read = (p) => readFileSync(p, 'utf8')) {
   let n = 0;
   for (const f of readdirSync(dir, { recursive: true })) {   // TIDY5: every folder under test/

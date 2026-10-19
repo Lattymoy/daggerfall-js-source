@@ -364,7 +364,7 @@ test('AUDIT RESCUE-SAVE A1: a kept save names the spoils it was composed holding
   const c = await joined(acct, dev);
   const one = hostBoot(dev, c.id, c.session, null);
   const got = spoiled(one, c.id);
-  // the two-minute checkpoint, composed holding both - and the service away
+  // the periodic checkpoint, composed holding both - and the service away
   dev.door.plan = ['offline'];
   one.save({ v: 1, name: 'SwordsmanEB', level: 12, pack: got });
   await settle();

@@ -454,12 +454,12 @@
   {
     "name": "PROF4-saw-smithing-xp",
     "file": "server-account/src/professions.js",
-    "old": "  const cap = r.xp ? craftXpCap(r.xp, ranks) : 0;\n  const xp = scaleXp(r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, rank) : 0,",
-    "new": "  const cap = craftXpCap(r.xp ?? 'smithing', ranks);\n  const xp = scaleXp(r.act ? masonXp(count, rank, { clean: act }) : smeltXp(out.tier, count, rank),",
+    "old": "  const cap = r.xp ? craftCapSql('?1', '?2', r.xp) : '0';\n  const xp = scaleXp(r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, rank) : 0,",
+    "new": "  const cap = craftCapSql('?1', '?2', r.xp ?? 'smithing');\n  const xp = scaleXp(r.act ? masonXp(count, rank, { clean: act }) : smeltXp(out.tier, count, rank),",
     "tests": [
       "test/net/prof4_service.test.js"
     ],
-    "note": "CRAFT3: re-aimed by content."
+    "note": "AUDIT FB1018f L5-1: re-aimed by content - the cap read in the statement (craftCapSql), no longer bound."
   },
   {
     "name": "PROF4-craft-as-smith",

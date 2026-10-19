@@ -20,7 +20,8 @@ export const RELAY_CFG_VARS = Object.freeze({
   groundGate: 'GROUND_GATE',   // GROUND-GATE (bible/01-Overview/bugs/Field-Bugs-2026-10-17f.md): 'on' refuses a ground room's hello from a build on an older ground (net/wire.js GROUND_LAW) - off until the site serves the build that says it, since the relay deploys first
   grantMode: 'GRANT_MODE',   // GRANT2 (bible/11-Multiplayer/Spawn-Grants.md section 12): the spawn grants' law - 'measure' (and unset: net/grantLaw.js grantModeOf), 'enforce' (GRANT6), 'off'
   grantRoll: 'GRANT_ROLL',   // GRANT8 (Spawn-Grants.md section 16): 'on' - an encounter's grant rolls its species from its seed (`encr`); off unset
-  grantStrip: 'GRANT_STRIP',   // GRANT9 (Spawn-Grants.md section 16): 'on' - the relay drops a record its grant does not stand; off unset
+  grantStrip: 'GRANT_STRIP',   // GRANT9 (Spawn-Grants.md section 16): 'on' - the relay drops a record its grant does not stand (FOE-BOUNDS, section 19: and one no builder could give); off unset
+  grantDoor: 'GRANT_DOOR',   // GRANT-DOOR (Spawn-Grants.md section 20): 'on' - a foes room refuses a build whose hello says no spawn grants (net/wire.js GRANT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first
 });
 /** The settings a developer may set. */
 export const RELAY_CFG_KEYS = Object.freeze(Object.keys(RELAY_CFG_VARS));

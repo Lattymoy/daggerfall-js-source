@@ -442,7 +442,8 @@ test('CRAFT1 host: the world\'s craft says what its chain refined first - made o
   assert.match(world, /const chain = \[refinedText\(r\?\.refined, materialLabel, \(prof\) => profBook\.track\(prof\)\), r\?\.ok \? '' : chainStopText\(r\?\.stopped, r\?\.material, materialLabel\)\]\.filter\(Boolean\)\.join\(' '\);/);
   assert.match(world, /text: r\?\.kept \? `\$\{st\.kept\}\$\{chain \? ` \$\{chain\}` : ''\}` : /, 'AUDIT CRAFT1 F3: a kept craft says what its chain refined');
   // PIN MOVED (CRAFT-FIRST-SHOWN, FIELD BUGS 2026-10-15f): the craft's XP is said by craftXpText (ui/craftXpWords.js), its first with it
-  assert.match(world, /return \{ ok: true, text: `\$\{chain \? `\$\{chain\} ` : ''\}\$\{made\} \$\{craftXpText\(rec, r\.data, st\.xp\)\}/);
+  // PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): and the crafter's limit over the track, the book's (profBook.js limit)
+  assert.match(world, /return \{ ok: true, text: `\$\{chain \? `\$\{chain\} ` : ''\}\$\{made\} \$\{craftXpText\(rec, r\.data, st\.xp, profBook\.limit\(rec\?\.profession\)\)\}/);
   assert.match(world, /movedFirstText\(r\)\}\$\{chain \? ` \$\{chain\}` : ''\}` \};/);
   const pages = src('src/ui/professions/profPages.js');
   for (const st of ['_anvil', '_bench', '_loom', '_mason', '_jewel']) assert.match(pages, new RegExp(`\\(craftable\\(r, held(, spends)?\\) \\|\\| chain\\?\\.ok === true\\) && !${st}\\.`), `${st} offers the chain`);

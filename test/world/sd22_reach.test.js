@@ -67,8 +67,10 @@ test('SD-REACH a Rift somewhere, never none: every enemy marker when the interio
 
 test('SD-REACH the host unchanged: the end asked from the way in over the layout\'s enemies and its blocks, each block carrying its name from the dungeon\'s own layout', () => {
   const D = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
-  // PIN MOVED (AUDIT SD IV F38): and the floor under each candidate (test/world/sd26_dungeon.test.js)
-  assert.match(D, /const end = dungeonEndOf\(dungeon\.enterMarker \?\? dungeon\.startMarker \?\? null, sdEndMarks\(_layoutEnemies, dungeon\.blocks, \(m\) => floorLanding\(collider, \[m\.x, m\.y \+ 0\.2, m\.z\]\)\[1\]\)\);/);
+  // PIN MOVED (AUDIT SD IV F38): and the floor under each candidate (test/world/sd26_dungeon.test.js). PIN MOVED
+  // (LAIR-REACH): asked through the host's one end, which the lair's stand asks too (test/systems/revenant/lair_reach.test.js)
+  assert.match(D, /const from = dungeon\.enterMarker \?\? dungeon\.startMarker \?\? null;\n\s*return reachableEndOf\(from, sdEndMarks\(_layoutEnemies, dungeon\.blocks, \(m\) => floorLanding\(collider, \[m\.x, m\.y \+ 0\.2, m\.z\]\)\[1\]\), reaches\)/);   // PIN MOVED (LAIR-WALK): dungeonEndOf with no walk - the Rift asks none
+  assert.match(D, /const end = dungeonEnd\(\);/);
   const L = readFileSync(new URL('../../src/world/dungeon/dungeonLayout.js', import.meta.url), 'utf8');
   assert.match(L, /blocks\.push\(\{\n\s*name: block\.blockName,\n\s*originX,\n\s*originZ,/);
 });

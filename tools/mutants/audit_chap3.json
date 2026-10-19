@@ -68,11 +68,12 @@
   {
     "name": "A3-S2-SHEET-OPEN",
     "file": "server-account/src/npcChapters.js",
-    "old": "seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
-    "new": "seasonZeroOf(env?.SEASON_ZERO_WEEK));\n  const chapters = (await allChapters",
+    "old": "seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const n = seasonNumberAt(nowS",
+    "new": "seasonZeroOf(env?.SEASON_ZERO_WEEK));\n  const n = seasonNumberAt(nowS",
     "tests": [
       "test/net/audit_chap3.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "A3-S2-BOARD-OPEN",
@@ -281,11 +282,12 @@
   {
     "name": "A3-T1-SHEET-ZERO",
     "file": "server-account/src/npcChapters.js",
-    "old": "await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
-    "new": "await settleChaptersDue(db, nowS, null, env?.CHAPTERS_OPEN);\n  const chapters = (await allChapters",
+    "old": "await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);\n  const n = seasonNumberAt(nowS",
+    "new": "await settleChaptersDue(db, nowS, null, env?.CHAPTERS_OPEN);\n  const n = seasonNumberAt(nowS",
     "tests": [
       "test/net/audit_chap3.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "A3-T1-BOARD-ZERO",

@@ -1,0 +1,497 @@
+[
+  {
+    "name": "BODY-MOTION-hip-bone-the-pelvis",
+    "file": "src/characters/bodyMotion/bodyKit.js",
+    "old": "  const hipBone = thighParentL === thighParentR && skeleton.nodes.has(thighParentL) ? thighParentL : (bones.pelvis ?? bones.spine[0]);",
+    "new": "  const hipBone = bones.pelvis ?? bones.spine[0];",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-kind-any-path",
+    "file": "src/characters/bodyMotion/bodyKit.js",
+    "old": "  if (!s.includes('base_anim') || s.includes('wolf')) return null;",
+    "new": "  if (s.includes('wolf')) return null;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-stride-exponent",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  return Math.min(2.3 * h * Math.pow((v * v) / (G * h), 0.3), style.strideMax * h);",
+    "new": "  return Math.min(2.3 * h * Math.pow((v * v) / (G * h), 0.5), style.strideMax * h);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-stride-uncapped",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  return Math.min(2.3 * h * Math.pow((v * v) / (G * h), 0.3), style.strideMax * h);",
+    "new": "  return 2.3 * h * Math.pow((v * v) / (G * h), 0.3);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-duty-flat",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  return lerp(style.duty[0], style.duty[1], clamp01(fr / style.frFull));",
+    "new": "  return style.duty[0];",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-phase-by-time",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  s.dPhase = s.walking && stride > 1e-6 ? (dist * uH) / stride : 0;",
+    "new": "  s.dPhase = s.walking && stride > 1e-6 ? 1.8 * dt : 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-stance-half-length",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  const A = (stride * beta) / 2;\n  const hf = [",
+    "new": "  const A = (stride * beta) / 4;\n  const hf = [",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-stance-backward",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    const land = rotXY([n[0] + d[0] * (A + shift) - body.restHip[0], n[1] + d[1] * (A + shift) - body.restHip[1]], turn);",
+    "new": "    const land = rotXY([n[0] - d[0] * (A + shift) - body.restHip[0], n[1] - d[1] * (A + shift) - body.restHip[1]], turn);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-walk-bob-inverted",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  const walkBob = (1 - Math.cos(4 * Math.PI * (phi - midL))) / 2;",
+    "new": "  const walkBob = (1 + Math.cos(4 * Math.PI * (phi - midL))) / 2;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-reach-unheld",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    hipZ = lerp(hipZ, smin(hipZ, top, L * 0.04), holds);",
+    "new": "    hipZ = Math.max(hipZ, top - 1e9);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-steer-sign",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    : -clamp(s.th * STEER.forward, -STEER.max * RAD, STEER.max * RAD);",
+    "new": "    : clamp(s.th * STEER.forward, -STEER.max * RAD, STEER.max * RAD);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-backpedal-never",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "} else if (offDeg > STEER.back + STEER.hyst) s.back = true;",
+    "new": "} else if (offDeg > 1e9) s.back = true;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-feet-turn-with-the-body",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    const carry = (p) => { const q = rotXY([p[0] - dx, p[1] - dy], dYaw); return [q[0], q[1], p[2] - dz]; };",
+    "new": "    const carry = (p) => { const q = rotXY([p[0] - dx, p[1] - dy], 0); return [q[0], q[1], p[2] - dz]; };",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-step-the-wrong-foot",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  const turnSide = s.yawRate > 0.05 ? 'R' : s.yawRate < -0.05 ? 'L' : null;",
+    "new": "  const turnSide = s.yawRate > 0.05 ? 'L' : s.yawRate < -0.05 ? 'R' : null;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-female-track",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  female: Object.freeze({ width: 0.72,",
+    "new": "  female: Object.freeze({ width: 1,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-height-ignored",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  const L = body.leg, h = input.legM, U = input.unitsPerM || 1;",
+    "new": "  const L = body.leg, h = 1, U = input.unitsPerM || 1;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-rocker-pivot",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "  const pivotLen = pitch > 0 ? -FOOT.heel * body.leg : FOOT.ball * body.leg;",
+    "new": "  const pivotLen = pitch > 0 ? FOOT.ball * body.leg : -FOOT.heel * body.leg;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-hips-not-moved",
+    "file": "src/characters/bodyMotion/bodySolve.js",
+    "old": "    if (len(dv) > 1e-6) moveSubtree(skeleton, pose, mats, bones, bones.root, dv);",
+    "new": "    if (len(dv) > 1e9) moveSubtree(skeleton, pose, mats, bones, bones.root, dv);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-chest-turn-dropped",
+    "file": "src/characters/bodyMotion/bodySolve.js",
+    "old": "      decided.set(ref, ref === body.chest ? Rt : mul(rotFraction(Q, shares[i] ?? 0.5), carried[i]));",
+    "new": "      decided.set(ref, ref === body.chest ? carried[i] : mul(rotFraction(Q, shares[i] ?? 0.5), carried[i]));",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-turn-unsquared",
+    "file": "src/combat/climbRig.js",
+    "old": "  const rotation = orthonormal(mat33Mul(mat33Mul(mat33Mul(transpose(Rp), D), Rp), local.rotation));",
+    "new": "  const rotation = mat33Mul(mat33Mul(mat33Mul(transpose(Rp), D), Rp), local.rotation);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-weight-ignored",
+    "file": "src/characters/bodyMotion/bodySolve.js",
+    "old": "  const w = clamp01(plan?.w ?? 0);",
+    "new": "  const w = plan?.w > 0 ? 1 : 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_gait.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-axe-two-as-one",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "case MW_WEAPON_TYPE.BluntTwoClose: case MW_WEAPON_TYPE.AxeTwoHand: return 'two';",
+    "new": "case MW_WEAPON_TYPE.BluntTwoClose: return 'two';",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-spell-carried",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  if (spell) return 'clip';",
+    "new": "  if (spell && false) return 'clip';",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-two-grip-spacing",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "export const TWO_HAND_GRIP = Object.freeze({ two: -0.4,",
+    "new": "export const TWO_HAND_GRIP = Object.freeze({ two: 0.2,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-flex-backward",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  const Rf = rotAxisAngle(F.right, flex * RAD);",
+    "new": "  const Rf = rotAxisAngle(F.right, -flex * RAD);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-abduct-inward",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  const Ra = rotAxisAngle(F.fwd, -sgn * abduct * RAD);",
+    "new": "  const Ra = rotAxisAngle(F.fwd, sgn * abduct * RAD);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-elbow-backward",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  const fore = apply(rotAxisAngle(hinge, Math.max(0, elbow) * RAD), upper);",
+    "new": "  const fore = apply(rotAxisAngle(hinge, -Math.max(0, elbow) * RAD), upper);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-one-idle-blade",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    idle: { R: row(5, 21, 8, -7, 0, { blade: dir(0.26, 0.74, -0.62),",
+    "new": "    idle: { R: row(5, 21, 8, -7, 0, { blade: dir(0.26, 0.74, 0.62),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-one-run-blade",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(16, -3, 46, -42, 0.35, { blade: dir(0.54, -0.51, -0.67),",
+    "new": "    run: { R: row(16, -3, 46, -42, 0.35, { blade: dir(0.54, 0.51, -0.67),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-carry-weapon-unturned",
+    "file": "src/characters/bodyMotion/bodySolve.js",
+    "old": "  const RhWant = mul(Rwb, transpose(relR));",
+    "new": "  const RhWant = Rh;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-haft-hand-unplaced",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    const haf = hafHand(out.R, out.grip.R, out.R.frame,",
+    "new": "    const haf = null && hafHand(out.R, out.grip.R, out.R.frame,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-two-run-at-the-chest",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(11, 24, 24, -43, 0.12,",
+    "new": "    run: { R: row(40, 24, 95, -43, 0.12,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-pair-left-unmirrored",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "      out.L = req && mirrorRequest(req, C, F.right);",
+    "new": "      out.L = req;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-pair-run-forward",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(-47, 21, 7, 0, 0.1,",
+    "new": "    run: { R: row(47, 21, 7, 0, 0.1,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-torch-arm-taken",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "        const want = hands && !(side === 'L' && input.torch) ? 1 : 0;",
+    "new": "        const want = hands ? 1 : 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-equip-arms-taken",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      const hands = !input.equip && !input.rifle && cls !== 'clip';",
+    "new": "      const hands = !input.rifle && cls !== 'clip';",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-release-misses-the-hit",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "  if (section === 'release') return U.windup + (U.hit - U.windup) * Math.pow(p, 1.6);",
+    "new": "  if (section === 'release') return U.windup + (U.hit - U.windup) * 0.9 * Math.pow(p, 1.6);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-windup-unfinished",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "  if (section === 'windup') return U.windup * smooth(p);",
+    "new": "  if (section === 'windup') return U.windup * 0.8 * smooth(p);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-slash-hit-behind",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.5, { grip: [0.12, 0.66, -0.06], blade: [0.04, 1, -0.08],",
+    "new": "      k(0.5, { grip: [0.12, -0.2, -0.06], blade: [0.04, 1, -0.08],",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-slash-edge-trailing",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "edge: [-1, 0, 0], chest: [6, 2, 7]",
+    "new": "edge: [1, 0, 0], chest: [6, 2, 7]",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-blow-chest-unturned",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "gp.chest.yaw * (1 - k) + (bp ? bp.chest[0] * RAD * wind : 0))),",
+    "new": "gp.chest.yaw * (1 - k))),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-chop-from-below",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.3, { grip: [0.32, -0.05, 0.78],",
+    "new": "      k(0.3, { grip: [0.32, -0.05, -0.6],",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-thrust-short",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.5, { grip: [0.14, 1.02, -0.04],",
+    "new": "      k(0.5, { grip: [0.14, 0.3, -0.04],",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-backhand-the-forehand",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "    const name = blowName(b.type, b.reversed);",
+    "new": "    const name = blowName(b.type, false);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-left-blow-unmirrored",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "  const strike = bp.side === 'L' ? mirrorRequest(req, C, X) : req;",
+    "new": "  const strike = req;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-two-blow-haft-dropped",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "    if (haf) out.L = { ...haf, w: armW.L, pole: norm([-0.55, -0.2, -0.75]) };",
+    "new": "    if (haf && false) out.L = { ...haf, w: armW.L, pole: norm([-0.55, -0.2, -0.75]) };",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-blow-stops-the-legs",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      if (input.on && body) stepGait(gait, gaitInput(), body, dt);",
+    "new": "      if (input.on && body && !input.blow) stepGait(gait, gaitInput(), body, dt);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-on-in-first-person",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "  const on = !!third && !!kind && !!rig?.ok",
+    "new": "  const on = !!kind && !!rig?.ok",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-creature-walked",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "&& !built?.creature && !built?.werewolf",
+    "new": "&& !built?.werewolf",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-switch-ignored",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "!built?.werewolf && getPref('mwBodyMotion') !== false;",
+    "new": "!built?.werewolf;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-section-misnamed",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "AttackRelease: 'release', AttackEnd: 'follow' });",
+    "new": "AttackRelease: 'release', AttackEnd: 'release' });",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-slot-unwired",
+    "file": "src/combat/fpArm.js",
+    "old": "            motion: motion.slot,   // BODY-MOTION: the gait, the carry and a blow's body over the clip's\n",
+    "new": "",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-never-stepped",
+    "file": "src/combat/fpArm.js",
+    "old": "        cam, third: viewMode === 'third', rig: thirdBuilt,",
+    "new": "        cam, third: false && viewMode === 'third', rig: thirdBuilt,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-lantern-off-the-gait",
+    "file": "src/combat/fpArm.js",
+    "old": "hipLantern.step(cam, dt, motion.stride().move > 0.5 ? motion.stride().phase : ",
+    "new": "hipLantern.step(cam, dt, false ? motion.stride().phase : ",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "BODY-MOTION-stale-heading",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      if (input.on && !wasOn) Object.assign(gait, createGaitState());",
+    "new": "      if (input.on && !wasOn) gait.yawRate = 0;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  }
+]

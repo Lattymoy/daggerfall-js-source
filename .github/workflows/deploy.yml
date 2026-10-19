@@ -55,6 +55,16 @@ jobs:
       ref: ${{ needs.main.outputs.sha }}
       build: false
 
+  # CI-TIMES (2026-10-19): the shards' times this green run recorded, saved
+  # for every later run's split (test-times.yml) - beside the publish, which
+  # never waits on it
+  times:
+    needs: [main, verify]
+    uses: ./.github/workflows/test-times.yml
+    with:
+      ref: ${{ needs.main.outputs.sha }}
+      planned: ${{ needs.verify.outputs.times }}
+
   site:
     needs: main
     runs-on: ubuntu-latest

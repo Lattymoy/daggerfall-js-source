@@ -31,6 +31,9 @@
 //
 // THE POSE MAP: an untracked bone's entry is the skeleton's own shared `node.rest` (mwSkin.js poseSkeleton) - every
 // write here is a NEW entry through pose.set, never a mutation (the hazard applyFirstPersonNeck's note names).
+//
+// BODY-MOTION (characters/bodyMotion/bodySolve.js) poses the walking, carrying and striking body on the same algebra -
+// `rotationPart`, `restAxes` and `orthonormal` are exported for it beside the solves it already took.
 
 import { mat33Mul } from '../formats/morrowind/mwNifMesh.js';
 import { HELD_BONE_ALIASES } from './heldPose.js';
@@ -50,7 +53,7 @@ const IDENT = Object.freeze([1, 0, 0, 0, 1, 0, 0, 0, 1]);
 const transpose = (m) => Float32Array.from([m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]);
 const apply = (m, v) => [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[3] * v[0] + m[4] * v[1] + m[5] * v[2], m[6] * v[0] + m[7] * v[1] + m[8] * v[2]];
 /** A matrix's rotation with its (uniform, NIF) scale divided out. */
-function rotationPart(a) {
+export function rotationPart(a) {
   const s = Math.hypot(a[0], a[3], a[6]);
   if (!(s > 1e-8) || Math.abs(s - 1) < 1e-7) return a;
   const out = new Float32Array(9);
@@ -202,15 +205,33 @@ function refresh(skeleton, pose, mats, bones, ref) {
   mats.set(ref, m);
   for (const k of bones.children.get(ref) ?? []) refresh(skeleton, pose, mats, bones, k);
 }
+/**
+ * BODY-MOTION: A ROTATION KEPT A ROTATION - Gram-Schmidt on the columns, the third rebuilt from the first two with the
+ * original's handedness (a mirrored bone - the pair's Weapon Bone Left - stays mirrored). A turn's local is a product of
+ * four float32 matrices through a parent frame that carries every turn above it; unsquared, the skew compounds about
+ * fourfold a level down a chain of turns - a deep climb (the body moved and swung, the spine bent, the shoulders drawn,
+ * both arms, both legs, the look) left its rotations 2.65e-3 from orthonormal and its hands up to 3e-3 units off their
+ * holds. Squared, it stays at float32's own rounding however deep the chain (bible/04-Characters/Body-Motion.md).
+ */
+export function orthonormal(m) {
+  let x = [m[0], m[3], m[6]], y = [m[1], m[4], m[7]];
+  const zIn = [m[2], m[5], m[8]];
+  x = norm(x);
+  y = norm(sub(y, scale(x, dot(x, y))));
+  let z = cross(x, y);
+  if (dot(z, zIn) < 0) z = scale(z, -1);
+  return Float32Array.from([x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]]);
+}
 /** Turn bone `ref` by the RIG-SPACE rotation `D` about its own joint: written as its new local (R_local' =
- *  Rp^T D Rp R_local - the parent's frame conjugates the turn; the joint's point is unmoved), its subtree refreshed. */
+ *  Rp^T D Rp R_local - the parent's frame conjugates the turn; the joint's point is unmoved; kept a rotation -
+ *  `orthonormal`), its subtree refreshed. */
 function turn(skeleton, pose, mats, bones, ref, D) {
   const node = skeleton.nodes.get(ref);
   if (!node) return;
   const local = pose.get(ref) ?? node.rest;
   const parent = mats.get(node.parent);
   const Rp = parent ? rotationPart(parent.a) : IDENT;
-  const rotation = mat33Mul(mat33Mul(mat33Mul(transpose(Rp), D), Rp), local.rotation);
+  const rotation = orthonormal(mat33Mul(mat33Mul(mat33Mul(transpose(Rp), D), Rp), local.rotation));
   pose.set(ref, { rotation, translation: local.translation, scale: local.scale });
   refresh(skeleton, pose, mats, bones, ref);
 }
@@ -258,7 +279,7 @@ export function handFrame(mats, limb, side) {
  *  the skeleton's rest pose - so a bone with no child to point along (a foot without a toe, a hand without fingers)
  *  can still be turned to face a way. Memoised per skeleton. */
 const _restAxes = new WeakMap();
-function restAxes(skeleton, ref) {
+export function restAxes(skeleton, ref) {
   let per = _restAxes.get(skeleton);
   if (!per) { per = new Map(); _restAxes.set(skeleton, per); }
   if (per.has(ref)) return per.get(ref);

@@ -1,0 +1,416 @@
+[
+ {
+  "name": "PRIMARYFOLD-seat-always-found",
+  "file": "server-account/src/door.js",
+  "old": "out.seat = r?.seat_id != null ? { id: r.seat_id, held: r.seat_held } : null;",
+  "new": "out.seat = { id: r?.seat_id, held: r?.seat_held };",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-bucket-of-no-account",
+  "file": "server-account/src/door.js",
+  "old": "out.bucket = r?.player ? bucketFrom(",
+  "new": "out.bucket = r ? bucketFrom(",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-tombstone-of-nothing",
+  "file": "server-account/src/door.js",
+  "old": "    if (tomb != null) out.dead = await isTombstone(db, playerId, tomb);\n",
+  "new": "    out.dead = await isTombstone(db, playerId, tomb ?? '');\n    out.dead = true;\n",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-seat-hold-of-another-row",
+  "file": "server-account/src/door.js",
+  "old": "  (SELECT held FROM realm_characters WHERE ${SEAT_WHERE}) AS seat_held,",
+  "new": "  (SELECT held FROM realm_characters WHERE player = ?1 AND dead_at IS NULL) AS seat_held,",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "PIN MOVED (AUDIT PLAN-1000 C2/C4): re-aimed by content."
+ },
+ {
+  "name": "PRIMARYFOLD-room-asks-again",
+  "file": "server-account/src/index.js",
+  "old": "const room = await progressRoom(db, who.player.id, stream, line, read.bucket);",
+  "new": "const room = await progressRoom(db, who.player.id, stream, line);",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-door-asks-no-stream",
+  "file": "server-account/src/index.js",
+  "old": "{ tomb: path !== '/v1/auth/token' && typeof body.character === 'string' ? body.character : null, stream: claimed });",
+  "new": "{ tomb: path !== '/v1/auth/token' && typeof body.character === 'string' ? body.character : null, stream: null });",
+  "tests": [
+   "test/server/primaryfold.test.js",
+   "test/server/int16_progress.test.js"
+  ],
+  "note": "PIN MOVED (AUDIT PLAN-1000 C2/C4): re-aimed by content."
+ },
+ {
+  "name": "PRIMARYFOLD-week-never-kept",
+  "file": "server-account/src/weekKept.js",
+  "old": "  m.set(name, week);\n",
+  "new": "",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-week-kept-past-its-week",
+  "file": "server-account/src/weekKept.js",
+  "old": "return !!k && kept.get(k)?.get(name) === week;",
+  "new": "return !!k && kept.get(k)?.get(name) !== undefined;",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-chapters-kept-word-unread",
+  "file": "server-account/src/npcChapters.js",
+  "old": "  if (weekSettled(db, `chapters:${sw}`, current)) return 0;",
+  "new": "  if (false) return 0;",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-seats-kept-word-unread",
+  "file": "server-account/src/seatTurning.js",
+  "old": "  if (weekSettled(db, 'seats', weekAt(nowS))) return { settled: 0, pending: false };",
+  "new": "  if (false) return { settled: 0, pending: false };",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-seats-never-kept",
+  "file": "server-account/src/seatTurning.js",
+  "old": "{ keepWeekSettled(db, 'seats', weekAt(nowS)); return { settled: 0, pending: false }; }",
+  "new": "{ return { settled: 0, pending: false }; }",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-chapters-settle-unkept",
+  "file": "server-account/src/npcChapters.js",
+  "old": "  if (from + n >= current) keepWeekSettled(db, `chapters:${sw}`, current);",
+  "new": "",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-sheet-halls-read-again",
+  "file": "server-account/src/npcChapters.js",
+  "old": "const chapters = (await allChapters(db, nowS, hallRows?.results ?? [])).filter(",
+  "new": "const chapters = (await allChapters(db, nowS)).filter(",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-sheet-patrons-never-read",
+  "file": "server-account/src/npcChapters.js",
+  "old": "  const patrons = patronsFrom(patronRows?.results ?? []);",
+  "new": "  const patrons = patronsFrom([]);",
+  "tests": [
+   "test/server/primaryfold.test.js",
+   "test/net/chap7a_patrons.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-claim-rows-unread",
+  "file": "server-account/src/npcRoll.js",
+  "old": "  const rows = rowsFrom(rowsQ?.results ?? []);",
+  "new": "  const rows = rowsFrom([]);",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-claim-head-asked-again",
+  "file": "server-account/src/npcRoll.js",
+  "old": "  const head = headQ?.results?.[0] ?? null;",
+  "new": "  const head = headQ?.results?.[0] ? await db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id).first() : null;",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-step-no-fill",
+  "file": "server-account/src/progress.js",
+  "old": "t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)",
+  "new": "t.start",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-fill-rounded",
+  "file": "server-account/src/progress.js",
+  "old": "CAST((?5 * t.played) / 3600.0 AS INTEGER)",
+  "new": "ROUND((?5 * t.played) / 3600.0)",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-past-the-cap",
+  "file": "server-account/src/progress.js",
+  "old": "ELSE MIN(?4, t.start + CAST",
+  "new": "ELSE MAX(?4, t.start + CAST",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-full-refilled",
+  "file": "server-account/src/progress.js",
+  "old": "CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(",
+  "new": "CASE WHEN t.start > ?4 THEN t.start ELSE MIN(",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget.",
+  "equivalent": true,
+  "why": "At a bucket exactly full both branches answer the cap (MIN(cap, cap + fill) is cap), and past the cap both keep the start: `>=` and `>` step the same - stepBudget's own `>=` reads as the clearer law, kept."
+ },
+ {
+  "name": "PRIMARYFOLD-step-start-nothing",
+  "file": "server-account/src/progress.js",
+  "old": "COALESCE(b.allowance, ?4) AS start",
+  "new": "COALESCE(b.allowance, 0) AS start",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-debt-measured",
+  "file": "server-account/src/progress.js",
+  "old": "CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END",
+  "new": "s.left",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-played-from-zero",
+  "file": "server-account/src/progress.js",
+  "old": "CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
+  "new": "COALESCE(p.played_s, 0) AS played",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-over-unsaid",
+  "file": "server-account/src/progress.js",
+  "old": "CASE WHEN s.left < 0 THEN -s.left ELSE 0 END, 1 FROM",
+  "new": "0, 1 FROM",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-claim-untaken",
+  "file": "server-account/src/progress.js",
+  "old": "END) - MAX(0, ?6) AS left",
+  "new": "END) AS left",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-moved-now",
+  "file": "server-account/src/progress.js",
+  "old": "MAX(0, s.left) END, s.now, ?3 FROM",
+  "new": "MAX(0, s.left) END, ?3, ?3 FROM",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-step-read-then-write",
+  "file": "server-account/src/progress.js",
+  "old": "  if (!line || !Number.isFinite(amount) || amount <= 0) return null;\n  const hour = nowS - (nowS % 3600);\n",
+  "new": "  if (!line || !Number.isFinite(amount) || amount <= 0) return null;\n  { const _b = await bucketOf(db, playerId, stream); if (_b) { const st = stepBudget({ allowance: _b.allowance, played: playedSince(_b), gain: Math.trunc(amount), band: line, enforce: config.enforce }); await db.batch([db.prepare('INSERT INTO progress_play (player, stream, allowance, played_at, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (player, stream) DO UPDATE SET allowance = excluded.allowance, played_at = excluded.played_at, at = excluded.at').bind(playerId, stream, st.allowance, _b.now, nowS)]); return { allowance: st.allowance }; } }\n  const hour = nowS - (nowS % 3600);\n",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 C1: the spend's one step, held to stepBudget."
+ },
+ {
+  "name": "PRIMARYFOLD-refused-claim-read",
+  "file": "server-account/src/index.js",
+  "old": "const claimed = progressRoute && !accountRateFull(who.player.id, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S) ? progressRoute[0] : null;",
+  "new": "const claimed = progressRoute ? progressRoute[0] : null;",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-rate-peek-counts",
+  "file": "server-account/src/accounts.js",
+  "old": "  return !!w && w.start >= Math.floor(nowS / windowS) * windowS && w.count + 1 > max;",
+  "new": "  return overAccountRate(id, nowS, max, windowS);",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ]
+ },
+ {
+  "name": "PRIMARYFOLD-week-kept-by-the-proxy",
+  "file": "server-account/src/weekKept.js",
+  "old": "db[DB_ROOT] ?? db",
+  "new": "db",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 D2: the word kept by the binding, not the per-request Proxy METRICS wraps it in - keyed by the Proxy, every request is a fresh isolate and the saving is gone."
+ },
+ {
+  "name": "PRIMARYFOLD-chapters-read-seats-word",
+  "file": "server-account/src/npcChapters.js",
+  "old": "if (weekSettled(db, `chapters:${sw}`, current)) return 0;",
+  "new": "if (weekSettled(db, 'seats', current)) return 0;",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 D3: the seats' word and the chapters' apart - the seats' kept week read as the chapters' skips their Turning."
+ },
+ {
+  "name": "PRIMARYFOLD-partial-catch-up-kept",
+  "file": "server-account/src/npcChapters.js",
+  "old": "  if (from + n >= current) keepWeekSettled(",
+  "new": "  if (n > 0) keepWeekSettled(",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 D4: a catch-up that settled part of its weeks keeps nothing - kept, the rest wait a week."
+ },
+ {
+  "name": "PRIMARYFOLD-claim-rate-after-reads",
+  "file": "server-account/src/npcRoll.js",
+  "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n",
+  "new": "  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 D5: the hour's rate asked before the reads - a claim it refuses reads nothing."
+ },
+ {
+  "name": "PRIMARYFOLD-claim-rate-after-repeat",
+  "file": "server-account/src/npcRoll.js",
+  "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  const head = headQ?.results?.[0] ?? null;\n  if (!head) return { error: 'roll-unseeded' };\n  const seq = Number(head.seq), kseq = Number(head.kseq);\n  const rows = rowsFrom(rowsQ?.results ?? []);\n  // AUDIT CHAP S6: a repeat is the head's last id, or any id the record still holds - an older claim replayed after a\n  // newer one is the same claim\n  const taken = head.last_rid === rid || !!takenQ?.results?.[0];\n  if (taken) return { roll: viewOf(kseq, rows), repeat: true };\n",
+  "new": "  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  const head = headQ?.results?.[0] ?? null;\n  if (!head) return { error: 'roll-unseeded' };\n  const seq = Number(head.seq), kseq = Number(head.kseq);\n  const rows = rowsFrom(rowsQ?.results ?? []);\n  // AUDIT CHAP S6: a repeat is the head's last id, or any id the record still holds - an older claim replayed after a\n  // newer one is the same claim\n  const taken = head.last_rid === rid || !!takenQ?.results?.[0];\n  if (taken) return { roll: viewOf(kseq, rows), repeat: true };\n  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000 D5: a repeat counts toward the hour - answered before the rate, a repeat is a free claim."
+ },
+ {
+  "name": "PRIMARYFOLD-seat-unasked-after-turn",
+  "file": "server-account/src/index.js",
+  "old": "const read = door.seat === undefined ? await doorReads(db, who.player.id, { tomb: null, stream }) : door;",
+  "new": "const read = door;",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F1 - a claim whose rate window turned between the peek and the count asks its seat, never progress-seat."
+ },
+ {
+  "name": "PRIMARYFOLD-rate-peek-one-late",
+  "file": "server-account/src/accounts.js",
+  "old": "&& w.count + 1 > max;",
+  "new": "&& w.count > max;",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F2 - the window's very next request is the first refused."
+ },
+ {
+  "name": "PRIMARYFOLD-rate-peek-any-window",
+  "file": "server-account/src/accounts.js",
+  "old": "return !!w && w.start >= Math.floor(nowS / windowS) * windowS && w.count + 1 > max;",
+  "new": "return !!w && w.count + 1 > max;",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F2 - the peek reads this window alone."
+ },
+ {
+  "name": "PRIMARYFOLD-hour-over-not-summed",
+  "file": "server-account/src/progress.js",
+  "old": "over = over + excluded.over, claims",
+  "new": "over = excluded.over, claims",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F3 - the hour sums what each claim took past its bucket."
+ },
+ {
+  "name": "PRIMARYFOLD-hour-claims-not-counted",
+  "file": "server-account/src/progress.js",
+  "old": "over = over + excluded.over, claims = claims + 1`",
+  "new": "over = over + excluded.over, claims = 1`",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F3 - the hour counts its claims."
+ },
+ {
+  "name": "PRIMARYFOLD-bucket-at-unmoved",
+  "file": "server-account/src/progress.js",
+  "old": "played_at = excluded.played_at, at = excluded.at",
+  "new": "played_at = excluded.played_at, at = progress_play.at",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F9 - the bucket row's at.",
+  "equivalent": true,
+  "why": "No route reads progress_play.at: it says when the row last moved, for a person reading the table. Kept as the column's own meaning."
+ },
+ {
+  "name": "PRIMARYFOLD-claim-untruncated",
+  "file": "server-account/src/progress.js",
+  "old": "line.rate, Math.trunc(amount), config.enforce",
+  "new": "line.rate, amount, config.enforce",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F9 - the amount truncated.",
+  "equivalent": true,
+  "why": "progressSpentOf truncates every amount before spendProgress is asked, so the trunc here repeats it; kept, as spendProgress is exported and may be asked with any number."
+ },
+ {
+  "name": "PRIMARYFOLD-returning-the-start",
+  "file": "server-account/src/progress.js",
+  "old": "      RETURNING allowance`)",
+  "new": "      RETURNING (SELECT allowance FROM progress_play WHERE player = ?1 AND stream = ?2) AS allowance`)",
+  "tests": [
+   "test/server/primaryfold.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F9 - the spend answers the row it wrote.",
+  "equivalent": true,
+  "why": "A RETURNING subquery reads the table after the upsert, in SQLite and in D1 alike - the same value as the column the row returns."
+ }
+]

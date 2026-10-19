@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { GROUND_LAW, GROUND_LAW_WIRE_MAX, GROUND_OLD_REASON, groundRoom, isLayered, nativePoseRoom, parseClient, CLOSE_POLICY } from '../../src/net/wire.js';
+import { GROUND_LAW, GROUND_LAW_WIRE_MAX, GROUND_OLD_REASON, GRANT_HELLO_LAW, groundRoom, isLayered, nativePoseRoom, parseClient, CLOSE_POLICY } from '../../src/net/wire.js';
 import { RELAY_CFG_KEYS, RELAY_INTERNAL_CFG, RELAY_CFG_TTL_MS, parseRelayCfgCommand } from '../../src/net/relayCfg.js';
 import { OnlineSession } from '../../src/net/online.js';
 import { groundPrint, groundMoved, GROUND_PRINT_FILE, GROUND_PRINT_TOLERANCE_M } from '../../tools/groundPrint.mjs';
@@ -69,7 +69,7 @@ test('GROUND-GATE the relay\'s door, through a real Room: off, an old build is l
       const fetch0 = H.room.fetch.bind(H.room);
       H.room.fetch = (req) => { if (new URL(req.url).pathname === RELAY_INTERNAL_CFG) asked++; return fetch0(req); };
       const B = W.room('world:10,10');
-      const now0 = await join(B, 'new-0001', { gl: GROUND_LAW });
+      const now0 = await join(B, 'new-0001', { gl: GROUND_LAW, gv: GRANT_HELLO_LAW });   // PIN MOVED (GRANT-DOOR, Spawn-Grants section 20): the current build says its spawn grants too - one that did not would ask the hub for the grant door
       assert.equal(now0.closed, null, 'the current build is let in');
       assert.equal(asked, 0, 'and asks the hub nothing');
       const old2 = await join(B, 'old-0003');

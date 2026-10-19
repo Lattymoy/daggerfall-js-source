@@ -3260,7 +3260,7 @@ test('PX29: the movement rate divides by the PLAYING clip\u2019s own velocity (M
 // Source-pinned, like AUDIT 33's checks above it, because a live pin
 // would need a third-person BUILD and the fixtures reach the first-
 // person arm only - and a check that cannot run is worse than one that
-// says what it is (Testing.md's own lesson from the nine dead probes).
+// says what it is (the lesson of the nine dead probes, bible/09-Testing/Testing-Rows-2026-10-19.md).
 test('PX32: the inventory figure poses the body before it uploads it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   const start = arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {');

@@ -523,6 +523,12 @@ export const WAY_IN_NEAR_M = 6;
  *  door until he falls, a relay that stalled, a room that would not answer or a socket that never came back held them in
  *  an empty court until the collapse. A frame this long after the last counts no silence (a screen asleep). */
 export const COURT_SILENT_MS = 20000;
+/** GATE-DOOR (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): A DOOR THAT ANSWERS IS NOT A SILENCE - a court that
+ *  refuses me busy (its door full in the seconds the gate opens) is a room answering, so each refusal counts as a word of it
+ *  for this long after I stepped in; past it a court that still only refuses casts me out as a silent one does. At the
+ *  court's door (net/wire.js GATE_HELLO_HZ_MAX) a court's crowd (256 within 5 s) is in as it arrives, and four courts'
+ *  through one door (1,024 within 20 s) the last by some 25 s (tools/hubWaveModel.mjs, AUDIT PLAN-1000 B5). */
+export const COURT_DOOR_WAIT_MS = 60000;
 export const COURT_FRAME_GAP_MS = 2000;
 /**
  * GATE-FBX: THE WAY IN, ONE STEP OF ITS FIRE: how far it stands (`open`, 0 shut .. 1 whole) after `dtMs` more, opening

@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-SCALE-II-A2-realm-after",
     "file": "src/systems/realmSaves.js",
-    "old": "  }\n  if (writes) forgetD1Bookmark();\n  const type",
-    "new": "  }\n  const type",
+    "old": "  }\n  if (writes) forgetD1Bookmark();\n  noteSessionPass(io.secret, res);\n  const type",
+    "new": "  }\n  noteSessionPass(io.secret, res);\n  const type",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],

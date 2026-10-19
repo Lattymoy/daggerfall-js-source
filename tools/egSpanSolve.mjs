@@ -9,7 +9,7 @@
 //         12 s, its longest wait), the proof, the road's crossing at THE SPAN BUILD (fastest, median) and at THE FAST BUILD,
 //         and the crossing's bound (EG_CROSS_MIN, section 10.5)
 //
-//     node tools/egSpanSolve.mjs --sweep [--band <0-3>] [--seeds <n>] [--from <seed>] [--golden]
+//     node tools/egSpanSolve.mjs --sweep [--band <0-3>] [--seeds <n>] [--from <seed>] [--golden] [--part <p>/<k>]
 //         THE SWEEP (section 10.5): every course the generator lays in a circle of the band, for each seed, crossed STEP BY
 //         STEP BY THE REAL MOTOR - player/motor.js PlayerMotor at THE SPAN BUILD (Speed 10, Running 0, Jumping 0, every gap
 //         a plain running jump; EG-PERFECT: the online page's parkour at skill 0 in every frame, as the game forces it, its
@@ -27,6 +27,10 @@
 //
 // CI runs 25 seeds a band on every pull request (.github/workflows/eg-sweep.yml, called by verify.yml), 500 nightly, and
 // 500 again before every relay deploy (relay-deploy.yml).
+//
+// SWEEP-FAST (2026-10-19, Mac: "Yes" - a relay deploy took an hour, ~53 minutes of it one band's 500 seeds):
+// `--part <p>/<k>` sweeps the p-th of k parts of the band's seeds - every k-th seed of the list from its p-th (sweepPart),
+// the golden ones among them - so k jobs sweep a band at once and every seed is swept by exactly one of them.
 //
 // THE ASCENT (LAW 9, 2026-10-16; bible/11-Multiplayer/Elite-Gates-Ascent.md section 6): A HALL OF THE ASCENT'S LAW IS WALKED
 // ALONG ITS ROUTE (sweepRoute), every road the route proves (net/eliteGates/egRouteProof.js egRouteRoads - the main way, THE FORK's
@@ -597,6 +601,17 @@ export function sweepSynth9(seed, band) {
 /** The sweep's seeds: `n` from `from`, the law pin's beside them when asked. */
 export const sweepSeeds = (n, from = 1, golden = false) => [...new Set([...Array.from({ length: n }, (_, i) => from + i), ...(golden ? SWEEP_GOLDEN : [])])];
 
+/** SWEEP-FAST: `p/k` -> {p, k} (1 <= p <= k), or null. */
+export function sweepPartOf(s) {
+  const m = /^(\d+)\/(\d+)$/.exec(String(s ?? ''));
+  if (!m) return null;
+  const p = Number(m[1]), k = Number(m[2]);
+  return k >= 1 && p >= 1 && p <= k ? { p, k } : null;
+}
+/** SWEEP-FAST: the p-th of k parts of `seeds` - every k-th seed from its p-th, so each part's circles are the band's
+ *  mix (a seed's circle is its fifth) and every seed is in exactly one part. */
+export const sweepPart = (seeds, p, k) => seeds.filter((_, i) => i % k === p - 1);
+
 /** THE SOLVER'S READING of a hall: each road's pairs and their windows, its proof, its crossings, its bound. */
 export function solveReport(seed, hall, geo = 0) {
   const spec = egHallOf(seed, hall, geo), lines = [];
@@ -668,14 +683,19 @@ export function main(argv, log = console.log, sweep = sweepSeed) {
   const law9 = argv.includes('--law9');   // THE ASCENT: the synthetic LAW 9 halls (tools/lib/egLaw9Synth.mjs), given
   if (!argv.includes('--sweep')) {
     const [seed, hall, geo] = argv.filter((x, i) => !x.startsWith('--') && argv[i - 1] !== '--band').map(Number);
-    if (!Number.isSafeInteger(seed) || !Number.isSafeInteger(hall) || hall < 1) { log('usage: node tools/egSpanSolve.mjs <seed> <hall> [geo] [--law9 [--band 0-3]] | --sweep [--band 0-3] [--seeds n] [--from seed] [--golden] [--law9]'); return 2; }
+    if (!Number.isSafeInteger(seed) || !Number.isSafeInteger(hall) || hall < 1) { log('usage: node tools/egSpanSolve.mjs <seed> <hall> [geo] [--law9 [--band 0-3]] | --sweep [--band 0-3] [--seeds n] [--from seed] [--golden] [--part p/k] [--law9]'); return 2; }
     if (law9) egSynth9Give(seed, Math.ceil(hall / 5), geo || 0, Number(arg('--band', 0)));
     try { for (const l of solveReport(seed, hall, geo || 0)) log(l); } finally { if (law9) egSpecForget(); }
     return 0;
   }
   const bands = argv.includes('--band') ? [Number(arg('--band'))] : [0, 1, 2, 3];
   if (!bands.every((b) => [0, 1, 2, 3].includes(b))) { log('--band is 0, 1, 2 or 3'); return 2; }
-  const { bad } = runSweep(bands, sweepSeeds(Number(arg('--seeds', 25)), Number(arg('--from', 1)), argv.includes('--golden')), law9 && sweep === sweepSeed ? sweepSynth9 : sweep, log);
+  const part = argv.includes('--part') ? sweepPartOf(arg('--part')) : { p: 1, k: 1 };
+  if (!part) { log('--part is p/k, 1 <= p <= k'); return 2; }
+  const all = sweepSeeds(Number(arg('--seeds', 25)), Number(arg('--from', 1)), argv.includes('--golden'));
+  const seeds = sweepPart(all, part.p, part.k);
+  if (part.k > 1) log(`part ${part.p}/${part.k}: ${seeds.length} of the ${all.length} seeds`);
+  const { bad } = runSweep(bands, seeds, law9 && sweep === sweepSeed ? sweepSynth9 : sweep, log);
   return bad ? 1 : 0;
 }
 

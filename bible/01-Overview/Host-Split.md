@@ -46,7 +46,7 @@ wiring, not the feature. (Not every `*Host.js` module is that
 shape: `navalHost.js`'s `createNavalHost` is itself a single scope of 4,865
 lines - the same knot, one size down. HOST-SPLIT NAVAL (2026-10-15) gave it a
 ceiling of its own, and any function in `src/` or the relay's `server/src/` that
-grows past 2,000 code lines is now held to one too: the suite walks both and
+grows past 2,000 code lines (2,400 logical lines since LEGIBLE 1) is now held to one too: the suite walks both and
 reads every outermost function, whatever its name or shape. AUDIT HOST-SPLIT NAVAL found the first walk
 read only each `*Host.js`'s first `export function create...` - five hosts never
 measured - and a knot outside the folder already standing: Come Sail Away's
@@ -64,15 +64,17 @@ relay the new code goes into a Room method of its own, as the SCALE5 arms did.
 
 `test/scenes/hostceiling.test.js` holds it: each host function - the four hosts, the
 two modules grown into knots of their own (`createNavalHost`,
-`createComeSailAwayRuntime`) and the relay's `_message` - has a ceiling in CODE lines, its length when measured
-plus 250 - a fix's room, not a feature's. Comments and blank lines do not count
-(AUDIT HOST-SPLIT 0: a third of bootWorld is the bible's own explanation, and a
-ceiling on raw lines made deleting it the cheapest room). A change that pushes
+`createComeSailAwayRuntime`) and the relay's `_message` - has a ceiling in LOGICAL lines, its length when measured
+plus 400 - a fix's room, not a feature's. A logical line is a statement, an entry of an object literal or a class, a
+switch case or an expression arrow's implicit return (`tools/hostScope.mjs` `logicalLines`), so comments, blank lines
+and layout do not count (AUDIT HOST-SPLIT 0: a third of bootWorld is the bible's own explanation, and a
+ceiling on raw lines made deleting it the cheapest room; LEGIBLE 1, `Readability-Arc.md`: a ceiling on code lines
+made cramming two statements onto one line the cheapest room, and splitting them for a reader cost it). A change that pushes
 a host over fails with where to put the code instead. A fix
 that truly cannot live elsewhere raises the ceiling with its reason written
 beside it, in the same change, where review sees it. And a ceiling comes down
 with its host: a slice that moves code out lowers it in the same change (the
-suite fails a ceiling left more than 500 lines over its host), so the room a
+suite fails a ceiling left more than 800 logical lines over its host), so the room a
 slice frees never becomes room to grow back into.
 
 THE CEILING GATES A CHANGE, NEVER A DEPLOY. Every open pull request is measured
@@ -133,7 +135,7 @@ One group per slice, one pull request each, behaviour unchanged:
    `world.js` reads the new module instead, in the same change - the pin keeps
    its claim and names where the code now lives. A cite into the moved lines
    names the new file (`npm run cites -- --check`, then `citeanchor`).
-4. **Lower the ceiling** to the host's new length in code lines plus 250.
+4. **Lower the ceiling** to the host's new length in logical lines plus 400.
 `tools/hostMove.mjs` does 2 and the mechanical half of 3 (HOST-SPLIT 1): it
 decides every name by those rules (by value, live, import, refused), writes the
 module and the host's construction, drops the imports the host no longer reads,

@@ -1198,6 +1198,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwSpellEffects', initial: true, online: 'player' }),
   }),
+  // BODY-MOTION (2026-10-18, Mac: "I want to build improved animations for the morrowind rig (3rd person)"; bible/04-Characters/
+  // Body-Motion.md): the Morrowind body's own motion in third person - its walk, run and sneak paced to its speed and its
+  // race's leg, each weapon carried its own way, a blow thrown with the whole body while the legs keep moving
+  // (characters/bodyMotion/) - over Morrowind's clips. On by default. The VIEWER'S, as the Steel Helm is: how this machine
+  // draws a body - mine, a peer's, the people's - never the wire. Read every frame where each rig builds its word
+  // (characters/bodyMotion/bodyMotion.js motionWord), so it eases in or out at once.
+  Object.freeze({
+    id: 'mw-body-motion',
+    group: 'combat',
+    get title() { return t('features.mwBodyMotion.title', 'Morrowind Body Motion'); },
+    get note() { return t('features.mwBodyMotion.note', 'In third person a Morrowind body strides at the pace you move, for every race, carries each weapon '
+      + 'its own way, and swings with its whole body while its legs keep moving. Off plays Morrowind\u2019s own animations.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwBodyMotion', initial: true, online: 'player' }),
+  }),
   // MWNPC5b (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE PEOPLE IN
   // MORROWIND BODIES - the NPC lanes (characters/npcBodies.js) under ONE frame budget (MWNPC11, NPC_FRAME_TIERS): Off, the
   // classic sprites; Near, the nearest 24 a frame within a street's width, whoever they are; All, 48 across a square. The

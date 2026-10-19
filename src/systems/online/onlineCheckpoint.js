@@ -19,8 +19,18 @@
 // checkpoint or the exit save, and a crash between lost what the service had already moved (the Stores spent, the Marks
 // paid). `createSaveSoon` gathers every change of one task into ONE checkpoint on the next (MERGE 2 open question 2).
 
-/** Real milliseconds between two periodic checkpoints. */
-export const ONLINE_CHECKPOINT_MS = 120_000;
+/** Real milliseconds between two periodic checkpoints. CHECKPOINT-5 (2026-10-18; bible/11-Multiplayer/Scale-Arc.md THE
+ *  PLAN PAST 1,000, decision 6 - the owner: "Make the best call for future proofing"): five minutes, where it was two. The
+ *  realm checkpoint was the account primary's busiest writer (PRIMARY-TRIPS: some 69 of its 200 statements a second at the
+ *  evening's peak, a player's save moving every two minutes it walks), and what the periodic one guards is a crash alone:
+ *  a trade, a craft, every professions act and every act the service settles save at once (createSaveSoon), and a page put
+ *  away checkpoints as it hides (scenes/world.js whenPageHides) - a close may cut that put off, and RESCUE-SAVE keeps the
+ *  hide's save on this device for its next join, while another device reads the service's. AUDIT PLAN-1000 G10: so a
+ *  killed browser or a crash between checkpoints loses at most five minutes of what the service did not settle - the
+ *  walking and looting, a quest's steps, a level and its skills, a local shop's buys - never a trade's goods; and a give
+ *  a receiver took from a giver that crashed before its record saw it (a drop, a chest, a body) is locked as the
+ *  receiver's copy (server-account/src/ledger.js AUTO-HOLD), its window five minutes where it was two. */
+export const ONLINE_CHECKPOINT_MS = 300_000;
 
 /**
  * Whether a checkpoint may be written now.

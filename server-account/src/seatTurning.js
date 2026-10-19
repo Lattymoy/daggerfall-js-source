@@ -43,6 +43,7 @@ import { royalTurning } from './seatRoyal.js';   // CROWN1 part two: a Royal Tou
 import { incursionStatements } from './seatIncursion.js';   // AUDIT-SEATS: a Daedric Incursion's Marks
 import { fortsSeasonStatements, campsSpent, fortTiersOf, fortsLapsedStatements, campsWorn } from './seatForts.js';   // SEAT2b: a Season's wear, the Siege Camps spent; part two: a holder's Shrine; AUDIT SEATS-2 S5, S4: a lapse's projects fallen, the worn gate's Rams
 import { shrineStanding, marketHallTitheCap } from '../../src/net/fortLaw.js';   // SEAT2b part two (7.5): the Shrine's Standing a week
+import { weekSettled, keepWeekSettled } from './weekKept.js';   // PRIMARY-FOLD: a week read settled, kept
 import { swordsSettled } from './seatSiege.js';   // AUDIT-SEATS S3: a void battle's Sellsword escrow home
 import { gameDayAt, gateTimes } from '../../src/net/gate/gateLaw.js';
 import { guildActorOf } from './guilds.js';
@@ -494,12 +495,13 @@ export const SETTLE_LEASE_S = 60;
  * its batch committed, and the next began another, so the week never settled and the database drowned with it. Here a
  * caller that finds a week due takes the one lease (`town_seat_settling`, SETTLE_LEASE_S) and settles, freeing it after;
  * a caller that finds the lease held settles nothing and is told so - `{ settled, pending }`, `pending` while another
- * holds the Turning. Nothing due costs the one read it always did.
+ * holds the Turning. Nothing due costs the one read it always did - once a week an isolate, since PRIMARY-FOLD (weekKept.js).
  * @param {any} db @param {number} nowS @param {number|null} [zero]
  */
 export async function settleDueOnce(db, nowS, zero = null) {
+  if (weekSettled(db, 'seats', weekAt(nowS))) return { settled: 0, pending: false };   // PRIMARY-FOLD: this isolate read the week settled (weekKept.js)
   const last = (await db.prepare('SELECT MAX(week) AS w FROM town_seat_weeks').first())?.w;
-  if (last != null && Number(last) + 1 >= weekAt(nowS)) return { settled: 0, pending: false };
+  if (last != null && Number(last) + 1 >= weekAt(nowS)) { keepWeekSettled(db, 'seats', weekAt(nowS)); return { settled: 0, pending: false }; }
   // D1-LOAD: a lease held is READ, never asked of the one writer - every seat request that finds the week due while
   // another settles (every client's list at the Turning) asked an INSERT that changed nothing, each one the writer's turn
   const held = await db.prepare('SELECT until FROM town_seat_settling WHERE id = 1').first();

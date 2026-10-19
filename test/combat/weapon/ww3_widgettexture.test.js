@@ -150,5 +150,5 @@ test('WW3 records: the widget page, the ledger row and the testing row', () => {
   // TEX1 corrected this section the same day: the crash was the torches', the widget's door carried the same fault
   assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /\*\*CORRECTED THE SAME DAY \(TEX1\):\*\*/);
   assert.match(rd('bible/01-Overview/Port-Ledger.md'), /WW3 \(2026-09-14\): the mod's own textures reached the GL/);
-  assert.match(rd('bible/09-Testing/Testing.md'), /^\| ww3_widgettexture\.test\.js \| \d+ \| WW3/m);
+  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| ww3_widgettexture\.test\.js \| \d+ \| WW3/m);
 });

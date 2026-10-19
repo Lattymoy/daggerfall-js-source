@@ -44,8 +44,8 @@ test('FLOW1 the split: every file in exactly one shard, whatever the count; the 
   }
   assert.deepEqual(parseShard('2/4'), { index: 2, total: 4 });
   for (const bad of ['0/4', '5/4', '2', 'a/b', '2/0', '', null]) assert.equal(parseShard(bad), null, String(bad));
-  // the suite as it stands: four shards, every file of `npm test`'s glob in exactly one
-  const suite = testFiles(), shards = shardsOf(suite, 4, readTimes());
+  // the suite as it stands: eight shards (CI-FAST - four until 2026-10-19), every file of `npm test`'s glob in exactly one
+  const suite = testFiles(), shards = shardsOf(suite, 8, readTimes());
   assert.ok(suite.length > 1000);
   assert.deepEqual(shards.flatMap((s) => s.files).sort(), suite);
   assert.ok(Object.keys(readTimes()).length > 1000, 'the times are recorded (npm run test:times)');

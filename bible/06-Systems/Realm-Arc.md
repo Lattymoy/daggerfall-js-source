@@ -198,7 +198,7 @@ Items have no unique ids: "the port's items have no UID" (`save.js`), and "the p
   - The service grants a lease on the character: ONE-SEAT, taken from the account to the character.
   - It returns the blob and `seq`. The blob always comes from the service, never from a local slot.
 - **Checkpoint.** The client writes `{seq + 1, blob, summary}`:
-  - every 2 real minutes;
+  - every 5 real minutes (ONLINE_CHECKPOINT_MS; 2 until CHECKPOINT-5, 2026-10-18 - `11-Multiplayer/Scale-Arc.md` THE PLAN PAST 1,000, decision 6);
   - before any hand-over (section 3);
   - on exit.
   The service takes a checkpoint only from the lease holder, and only at `seq + 1`. So these can never write again:

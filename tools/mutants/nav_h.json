@@ -119,8 +119,8 @@
   {
     "name": "NAV-H-the-gate-sailing-home",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      if (entry) winBoarding(b, entry); else endBoarding();\n      return 'naval';",
-    "new": "      if (entry) winBoarding(b, entry); else endBoarding();\n      return 'proceed';",
+    "old": "      if (entry) winBoarding(b, entry); else { endBoarding(); wonRaid(quest); }   // her ship gone: won all the same\n      return 'naval';",
+    "new": "      if (entry) winBoarding(b, entry); else { endBoarding(); wonRaid(quest); }   // her ship gone: won all the same\n      return 'proceed';",
     "tests": [
       "test/systems/naval/nav_h_host.test.js"
     ]

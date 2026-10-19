@@ -101,7 +101,7 @@ import { CAMP_SIGHT_RADIUS, CAMP_ALERT_RADIUS, PACK_ALERT_RADIUS } from '../syst
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { foeHitFlash, setBatchHitFlash, puppetHurtStep, setBatchGlint, prefersReducedMotion } from '../systems/hitFlash.js';   // TELL2: a wind-up's glint
 import { isOnlinePage } from '../systems/online/onlineLane.js';   // ELITE FOES: online play only
-import { revenantRoutable, revenantRouted, revenantRoutedEvent, revenantFleeStep, revenantUnbrokenEvent, revenantFlinch, revenantSignatureEvent, revenantFleeHealth, revenantDeed, revenantSlain, applyRevenant, grantRevenantLoot, revenantById, revenantSay, revenantTauntEvent, revenantFleeEvent, revenantCorneredEvent, revenantEscapeEvent, revenantSlainEvent, REVENANT_TAUNT_DISTANCE } from '../systems/revenant/revenant.js';   // REVENANT: the foes that kill you or run, and come back
+import { revenantRoutable, revenantRouted, revenantRoutedEvent, revenantFleeStep, revenantUnbrokenEvent, revenantFlinch, revenantSignatureEvent, revenantFleeHealth, revenantDeed, revenantSlain, applyRevenant, grantRevenantLoot, revenantById, revenantSay, revenantTauntEvent, revenantFleeEvent, revenantCorneredEvent, revenantEscapeEvent, revenantSlainEvent, REVENANT_TAUNT_DISTANCE, revenantStale } from '../systems/revenant/revenant.js';   // REVENANT: the foes that kill you or run, and come back
 import { revenantMayYield, beginYield, yieldStep, slipEvent, kneelPose, beginExecution, executionStep, finishExecution, beginSpare, spareDone, fateDissolve, fateModel, dropFateHeld, revenantWillHolds, beginTearAway, revenantLastStandDue, beginLastStand, roarStep, ownersWholeKill } from '../systems/revenant/revenantFate.js';   // REVENANT-FATE: beaten, it yields - kill it or spare it; RVN-OWNERS-CHOICE: a whole blow closes it only as its owner's
 import { setBatchDissolve } from '../systems/dissolve.js';   // DISSOLVE: burnt away, or gathered through a portal
 import { createPortalSet } from './portalFx.js';   // COMPANION-PORTAL
@@ -1297,6 +1297,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const r = revenantRouted(playerEntity, f);
     if (r) revenantSay(revenantRoutedEvent(r, { archive: f.archive }), say);
   }
+  /** LAIR-HOME: a stale revenant body withdrawn - it and its band gone as the cull takes a foe (its batch freed, no corpse,
+   *  no kill, no deed; online their records leave the stream). */
+  function withdrawStale(f) {
+    const id = f.entity.revenant.id;
+    for (const g of foes) if (g !== f && !g.dead && !g.puppet && g.retinueOf === id) { releaseFoeBatch(g); g.dead = true; }
+    releaseFoeBatch(f);
+    f.dead = true;
+    if (f.ai?.detected) setEnemyAlert(playerEntity, false);
+  }
   /** RVN5 (Feud-Arc.md 16.1): ITS SIGNATURE - called out the first time a stand it winds it up (its card), and a pyre
    *  that landed on me: a blast of its element through the host's own spell door (my saving throw answers it). */
   function signatureFrame(f) {
@@ -1598,6 +1607,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         }
         continue;
       }
+      // LAIR-HOME (bible/01-Overview/bugs/Field-Bugs-2026-10-19.md): a revenant's body its record has left - it went home to
+      // its lair, where I found it - is gone as the cull takes a foe, its band with it (no corpse, no kill, no deed)
+      if (revenantStale(f.entity)) { withdrawStale(f); continue; }
       // REVENANT-FATE: a beaten revenant kneels - no step, no blow, no cast - until its fate is chosen (or it slips away);
       // its execution and its oath play out where it knelt. COMPANION-PORTAL: a companion stepping out stands still.
       if (f.yielded || f.executing || f.sparing) { fateFrame(f, dt, playerFeet, eye); continue; }
@@ -2657,6 +2669,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const site = tags.get(r.i) ?? null;
       const key = pupKey(from, r.i);
       const f = _pupIndex.get(key) ?? null;
+      if (_net.grants?.statsRefused?.(from, r, { camp: campTags.has(r.i), ally: comp.has(r.i) || allied.has(r.i) || crew.has(r.i) })) { if (f) removePuppet(f); _pupPending.delete(key); continue; }   // FOE-BOUNDS (Spawn-Grants section 19): provably impossible - refused, never rescaled: never built, updated or ADOPTED (its hand-off refused before it is mine), a standing copy taken down silently
       const qt = questTags.get(r.i) ?? null;
       // AUDIT DISC28 QS-J: a record that names ME its heir is taken on party membership (partyPeer, the pre-J law) - the
       // owner has let it go, and a copy with no link to its quest stands none of its puppets, so refused here it was

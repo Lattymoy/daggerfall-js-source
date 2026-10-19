@@ -7295,3 +7295,25 @@ have casting speed a new rarity affix along with scaling with speed"*.
 
 `test/systems/castspeed.test.js` (5), `test/systems/hostmagic.test.js` (the tail gate),
 `tools/mutants/castspeed.json` (17, all dead).
+
+## DECLARED DIVERGENCE (BODY-MOTION, 2026-10-18): the third-person body's own motion over the clips
+
+Mac: *"I want to build improved animations for the morrowind rig (3rd person) ... No band aids."* The record is
+`04-Characters/Body-Motion.md`; the departures it makes from this page, said here where they are departed from:
+
+- **Rule 26's gap, closed for third person.** MW-D26's three slots (and MW-D39's and MWNPC4's after them) resolve the
+  whole body from one winner, so a blow while walking showed the swing on the legs. The ladder is unchanged - the
+  winner still poses the skeleton - and the body-motion layer (`src/characters/bodyMotion/`, through `poseAssembly`'s
+  `motion` slot) then lays the gait on the legs under the blow, as the reference's per-bone-group vector would have
+  laid the walk under the weapon's upper body. First person is untouched: the arm has no legs to walk.
+- **[C] "DO NOT IMPLEMENT smooth animation transitions", departed from in the layer only.** The clips beneath still
+  switch with no cross-fade, exactly as the reference does; the layer over them eases its own weight, its arms' and its
+  carry class's (`MOTION_EASE`, `GAIT_EASE`), so a weapon drawn or a blow begun does not snap the body.
+- **MW-D26's play rate stands, under the layer.** The movement clip still advances at the actor's speed over the
+  clip's (and PX29's picked source still divides); in third person, on a body the layer walks, its legs are covered by
+  the gait (Alexander's stride on the body's own leg, the phase by distance, the feet planted).
+- **The blow's sections are read, never re-timed.** MW-PACE1's fitted sections stay the clock; the layer's choreography
+  reads each section's own completion (`melee.js` blowU), so the blade lands on the frame the machine deals the blow.
+
+Pinned by `test/characters/bodyMotion/bodymotion_gait.test.js` (10) and `test/characters/bodyMotion/bodymotion_carry.test.js`
+(14); `tools/mutants/bodymotion.json` (55, all dead).

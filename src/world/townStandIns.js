@@ -214,16 +214,31 @@ export function rockMesh(id) {
   const [x0, x1, down, up, z0, z1] = RMBRP_ROCKS[id].map((v) => v * RMBRP_ROCK_SCALE[id]);
   return boulderMesh(x1 - x0, up, down, z1 - z0, Number(id), (x0 + x1) / 2, (z0 + z1) / 2);
 }
+/** ROCK-SMEAR (FIELD BUGS 2026-10-18f, æther: "Rock missing textures and clipping with the pole. In Ipsmoth."): the
+ *  boulder was drawn INSIDE OUT. Its faces took the normal their corners' order gave - 40 of its 48 (its sides and its
+ *  underside) looking into the rock - and MeshBuilder winds a face to look along its normal, so under the world's
+ *  back-face culling the near side of every rock was culled and the inside of its far side drawn: a hollow grey shell,
+ *  and whatever stood in it seen through it. Since TEMPLE-STEPS stood the rocks at their prefab's scale (2-8), that is
+ *  a shell up to nine metres across. Each face now looks out of the boulder (boulderMesh's `face`).
+ *  And its picture was laid by one plan for every face, the side view (x, -y): one row of the texture across the
+ *  underside, every side that faces x squeezed to a sliver - 25 to 75 per cent of each rock's surface stretched past
+ *  four to one, a flat grey smear. `boulderUv`: a face's picture laid along the axis its normal `n` leans on most (box
+ *  mapping, a repeat a metre), so no face is stretched past 1 : 1/sqrt(3) and a side's rows lie level. */
+export const boulderUv = (p, n) => {
+  const ax = Math.abs(n[0]), ay = Math.abs(n[1]), az = Math.abs(n[2]);
+  if (ay >= ax && ay >= az) return [p[0], -p[2]];   // the crown and the underside: from above
+  return ax >= az ? [p[2], -p[1]] : [p[0], -p[1]];   // a side: along the axis it faces, its rows level
+};
 /** A boulder: an eight-sided lump, its rim and crown pushed in and out by a seed, `w` x `l` across round (cx, cz), `up`
  *  above its origin and `down` below - never out past its box (TEMPLE-STEPS: the rim had been pushed out by up to 12%,
- *  half a metre past the pack's own rock at its prefab's scale). */
+ *  half a metre past the pack's own rock at its prefab's scale). Each face dressed by boulderUv (ROCK-SMEAR). */
 export function boulderMesh(w, up, down, l, seed, cx = 0, cz = 0) {
   const m = new MeshBuilder(), N = 8;
   let h = seed >>> 0;
   const rnd = () => { h = (Math.imul(h ^ (h >>> 15), 2246822507) + 0x9e3779b9) >>> 0; return (h & 0xffff) / 0xffff; };
   const ring = (y, k) => Array.from({ length: N }, (_, i) => { const a = (i / N) * Math.PI * 2, r = k * (0.82 + rnd() * 0.18); return [cx + Math.cos(a) * (w / 2) * r, y, cz + Math.sin(a) * (l / 2) * r]; });
   const base = ring(-Math.max(down, 0.05), 0.92), mid = ring(up * 0.45, 1), top = ring(up * 0.85, 0.62), crown = [cx, up, cz], foot = [cx, -Math.max(down, 0.05), cz];
-  const face = (a, b, c) => { const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]; const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l2 = Math.hypot(...n) || 1; m.tri(ROCK, a, b, c, [n[0] / l2, n[1] / l2, n[2] / l2], [a[0], -a[1]], [b[0], -b[1]], [c[0], -c[1]]); };
+  const face = (a, b, c) => { const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]; const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const g = [(a[0] + b[0] + c[0]) / 3 - cx, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3 - cz]; const l2 = (n[0] * g[0] + n[1] * g[1] + n[2] * g[2] < 0 ? -1 : 1) * (Math.hypot(...n) || 1), nn = [n[0] / l2, n[1] / l2, n[2] / l2]; m.tri(ROCK, a, b, c, nn, boulderUv(a, nn), boulderUv(b, nn), boulderUv(c, nn)); };   // ROCK-SMEAR: out of the boulder (its origin on the axis), never into it
   for (let i = 0; i < N; i++) {
     const j = (i + 1) % N;
     for (const [lo, hi] of [[base, mid], [mid, top]]) { face(lo[i], hi[j], hi[i]); face(lo[i], lo[j], hi[j]); }
@@ -850,8 +865,14 @@ function dock({ decks, piles }) {
   for (const [x, z] of piles) m.cylinderY(DOCK_PILE, dockPoint(x, -2.5, z), 0.15 * S, 3 * S, 5, 1);
   return m.build();
 }
-/** A prism of the four (x, y) corners `pts`, counter-clockwise seen from +z, standing from z0 to z1. */
-function prismZ(m, tex, pts, z0, z1) {
+/** A prism of the four (x, y) `corners`, standing from z0 to z1 - its sides wound by the corners' own order, read off
+ *  their area. ROCK-SMEAR, found beside it: the sides took "counter-clockwise seen from +z" on trust, and both callers
+ *  hand it a clockwise list (the ramp's reversed, the steps' mirrored by dockPoint), so the ramp's deck and both
+ *  stringers looked into their prisms - drawn inside out under the world's culling. */
+export function prismZ(m, tex, corners, z0, z1) {
+  let area = 0;
+  for (let i = 0; i < corners.length; i++) { const a = corners[i], b = corners[(i + 1) % corners.length]; area += a[0] * b[1] - b[0] * a[1]; }
+  const pts = area < 0 ? [...corners].reverse() : corners;   // counter-clockwise seen from +z: each side's outward normal is its edge turned right
   const at = (p, z) => [p[0], p[1], z];
   m.quad(tex, ...pts.map((p) => at(p, z1)), [0, 0, 1]);
   m.quad(tex, ...[...pts].reverse().map((p) => at(p, z0)), [0, 0, -1]);

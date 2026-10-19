@@ -303,11 +303,12 @@
   {
     "name": "AUDIT-CHAP5-S5-PATRONS-SPLIT",
     "file": "server-account/src/npcChapters.js",
-    "old": "  const { results = [] } = await (region == null ? db.prepare(`${head} WHERE c.patron_season = ?1`).bind(n)\n    : db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region)).all();",
-    "new": "  const { results = [] } = await db.prepare(`${head} WHERE c.patron_season = ?1 AND (?2 IS NULL OR c.region = ?2)`).bind(n, region).all();",
+    "old": "  return region == null ? db.prepare(`${head} WHERE c.patron_season = ?1`).bind(n) : db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region);",
+    "new": "  return db.prepare(`${head} WHERE c.patron_season = ?1 AND (?2 IS NULL OR c.region = ?2)`).bind(n, region);",
     "tests": [
       "test/net/audit_chap5.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "AUDIT-CHAP5-E4-KEEPS",

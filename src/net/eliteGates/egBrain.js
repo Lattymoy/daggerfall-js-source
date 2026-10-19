@@ -79,6 +79,7 @@ import { EG_SPEC, EG_SEALED_MS, EG_GATHER_MS, EG_ARRIVE_MAX_MS, EG_CLOSING_FIGHT
 import { EG_LATE_HALLS, EG_LATE_ARRIVE_MS, EG_TOLL_STEP, EG_TOLL_QUARTERS, EG_TOLL_WAIVE_MS, EG_TOLL_KINDS } from './egLaw.js';   // EG-ZI: the late wake and the pull's toll (sections 7 and 10.6)
 import { egCountRedoubt, egRedoubtHold, egCountOver, EG_OPEN_ENDS } from './egLaw.js';   // AUDIT EG III (lane2 #1, #2): the count's one law, the good ends
 import { EG_ROLE, EG_FL, EG_GONE, EG_STATE_EVERY_MS, egFightNew, egFightBind, egCarry, egMovesOut, egHpOut, egBlowsStep, egHitBody, egGone, egHas, egSetFl, egBodiesOf, egBodyById, egHpTeam, egRaise, egWalk, egAim, egTethersOut, egMarksOut, egStruck, egMark, egUnmark, egMarkOf, egBodyAt } from './egBodies.js';
+import { egStruckOff } from './egBodies.js';   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from off the fight ground, the one law
 import { EG_KIND, EG_LEGION_KINDS, EG_DIVER_WAIT_R, egIsleAhead, egAirY, egLegionStep, egLegionRaise, egWaveKinds, egWaveSize, egAddSlain, egSquad } from './egLegion.js';
 import { egLegionRoom, egLegionCapOf, egEscortOf, egLurkerWake } from './egLegion.js';   // AUDIT EG III: the room under the legion's cap, a champion's escort, a struck Lurker's wake
 import { egLegionSummon, egBinderBroken, egSpotted } from './egLegion.js';   // AUDIT EG IV: a summons held to the room, a Binder's raise broken, a Spotter's arrow
@@ -1930,7 +1931,7 @@ export function egBlow(B, sub, m, pose, now) {
   // traversal ground (a step, a ledge, a side span, the top of an arch's wall over the floor) strikes nothing; an object
   // standing off it (a false wall in its alcove) is struck from beside it, as before (net/eliteGates/egBodies.js egHitBody)
   const view = egFightView(spec);
-  if (!egGroundAt(view, p.x, p.y, p.z, EG_STRIKE_PAD_M) && !(body.role === EG_ROLE.obj && !egGroundAt(view, body.x, egFeetY(view, body.y), body.z, body.r ?? 1))) return out;   // THE ASCENT: the object's own floor by its feet
+  if (egStruckOff(view, body, p.x, p.y, p.z)) return out;   // THE ASCENT: the object's own floor by its feet; FIELD BUGS 2026-10-18f TURNED-BLOW: the rule moved into egBodies.js egStruckOff, the one law every screen asks too
   const here = egPosedHere(B);   // AUDIT EG V (L2-2): the living company by its poses of this hall
   mm.pose = { x: p.x, z: p.z, h: B.h };   // AUDIT EG V (L3-22, L2-2): the hall it struck in, as egStep keeps a pose (a fall's Memento and egPosedHere read it)
   // AUDIT EG IV (lane1 #19): COUNTERSTROKE ARMED AT THE BLOW - a lord's blow landed within EG_COUNTER_M of this member since the

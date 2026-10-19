@@ -8,7 +8,7 @@
 //   C. the towns' layouts - a scan of every home at every boot, and every 24 s while unheard - kept until the database's
 //      own triggers say a town's homes moved (`homes_gen`);
 //   D. a Project Legacy save that changed nothing - stamped, rev moved, stored and written to the realm at every
-//      two-minute checkpoint, and the checkpoint never idle - leaves the line as it was.
+//      periodic checkpoint, and the checkpoint never idle - leaves the line as it was.
 // Each pin failed on the build before it. tools/mutants/stormshed2.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

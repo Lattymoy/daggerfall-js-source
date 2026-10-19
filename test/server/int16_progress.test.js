@@ -230,5 +230,7 @@ test('INT16-INT17 clients: a refused seat or hold ends the Renown tracker\'s ask
   assert.match(src('src/net/townSeatBook.js'), /const WATCH_SETTLED = Object\.freeze\(\['bad-watch', 'seats-need-account', 'seats-closed', 'progress-seat', 'trade-held'\]\);/);
   assert.match(src('src/net/profBook.js'), /if \(keptAnswer\(r\) \|\| r\?\.error === 'prof-rate' \|\| r\?\.error === 'progress-play'\) \{/);
   for (const k of ['progress-seat', 'progress-play', 'trade-held']) assert.equal(typeof REFUSALS[k], 'string', k);
-  assert.match(src('server-account/src/index.js'), /const seat = await progressRefusal\(db, who\.player\.id, \{ named, character: body\.character \}\);\n\s+if \(seat\) return json\(seat, 403, origin\);/);
+  // PIN MOVED (PRIMARY-FOLD, Scale-Arc.md THE PLAN PAST 1,000): the seat is the door's one statement's read (door.js doorReads), judged by progressRefusal's own law
+  // PIN MOVED (AUDIT PLAN-1000 F1): the seat the door read - or, a window turned between the rate's peek and its count, read then
+  assert.match(src('server-account/src/index.js'), /const read = door\.seat === undefined \? await doorReads\(db, who\.player\.id, \{ tomb: null, stream \}\) : door;\n\s+const seat = seatRefusalOf\(read\.seat, \{ named, character: body\.character \}\);[^\n]*\n\s+if \(seat\) return json\(seat, 403, origin\);/);
 });

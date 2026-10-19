@@ -455,16 +455,19 @@ export function accountView(player, nowS) {
  * two tabs count the wall clock once. `MAX` keeps a beat that arrives
  * out of order from dragging the clock backwards.
  */
-export async function creditPlay({ db, nowS }, playerId) {
+export async function creditPlay({ db, nowS }, playerId, sessionId = null) {
+  // SESSION-SIGN (AUDIT PLAN-1000 E3; sessionPass.js): a beat is a write, and asks in its own statement that the session it
+  // came under still stands and the account is not banned - a hot route believes a pass for its reads alone
   const row = await db.prepare(
     `UPDATE players SET
        played_s = played_s + CASE
          WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at
          ELSE 0 END,
        played_at = MAX(COALESCE(played_at, ?1), ?1)
-     WHERE id = ?3
+     WHERE id = ?3 AND COALESCE(banned_until, 0) <= ?1
+       AND (?4 IS NULL OR EXISTS (SELECT 1 FROM sessions s WHERE s.id = ?4 AND s.player_id = ?3))
      RETURNING played_s`,
-  ).bind(nowS, PLAY_GRACE_S, playerId).first();
+  ).bind(nowS, PLAY_GRACE_S, playerId, sessionId).first();
   return { playedS: Number.isSafeInteger(row?.played_s) ? row.played_s : 0 };
 }
 
@@ -724,6 +727,12 @@ export function overAccountRate(id, nowS, max = ACCOUNT_MAX, windowS = ACCOUNT_W
   }
   w.count++;
   return w.count > max;
+}
+/** AUDIT PLAN-1000 C4: whether the account's next request in this window is past its rate - overAccountRate's answer,
+ *  asked WITHOUT counting: the door asks a progression claim's reads of no request the rate will refuse (index.js). */
+export function accountRateFull(id, nowS, max = ACCOUNT_MAX, windowS = ACCOUNT_WINDOW_S) {
+  const w = accountWindows.get(id);
+  return !!w && w.start >= Math.floor(nowS / windowS) * windowS && w.count + 1 > max;
 }
 /** The accounts counted in this isolate (the pins' window). */
 export const accountRateKeys = () => accountWindows.size;

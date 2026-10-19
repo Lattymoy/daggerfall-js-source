@@ -39,6 +39,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { HANDLE_RE } from './handleShape.js';
+import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
 import { AURAS } from './identityToken.js';   // WB9g: the auras that exist - a stored one is one of them, or none
 import { NAME_MAX } from './wire.js';   // NAME-AS: the wire's bound on a name, in the sentence that says a character's is past it
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
@@ -925,6 +926,32 @@ export function noteD1Bookmark(/** @type {string|null} */ secret, /** @type {unk
  *  (systems/realmSaves.js realmAsk, systems/cloudSaves.js ask). */
 export function forgetD1Bookmark() { _d1Mark = { secret: null, mark: null }; _d1Era += 1; }
 
+/** SESSION-SIGN (server-account/src/sessionPass.js; bible/11-Multiplayer/Scale-Arc.md SESSION-SIGN): THE SESSION'S PASS -
+ *  who the service's lookup found, signed for five minutes and bound to the secret it was minted for, which a hot route
+ *  believes without asking the database. The page keeps the one an answer last handed it, with that secret, and sends it
+ *  with that secret's calls alone - so a service from before SESSION-SIGN, whose preflight lets no such header through,
+ *  is never sent one: it never handed one. */
+let _pass = { secret: /** @type {string|null} */ (null), pass: /** @type {string|null} */ (null) };
+/** The pass to send with a call under `secret` - null for none, or for another session's. */
+export function sessionPassFor(/** @type {string|null} */ secret) { return secret && _pass.secret === secret ? _pass.pass : null; }
+/** An answer under `secret` (`res`, a fetch Response) handed a pass: kept. An answer with none keeps the one held. */
+export function noteSessionPass(/** @type {string|null} */ secret, /** @type {any} */ res) {
+  let p = null;
+  try { p = res?.headers?.get?.(SESSION_PASS_HEADER) ?? null; } catch { p = null; }   // a fake answer with no headers hands none
+  if (secret && typeof p === 'string' && p) _pass = { secret, pass: p };
+}
+/** Forget the pass: a sign-out, a refusal of the session (`auth`), a call that could not be made (a preflight refusing the
+ *  header - a service rolled back past SESSION-SIGN), and an answer to a call that changes the account a pass names under
+ *  its secret (PASS_MOVES) - the next call asks without one. */
+export function forgetSessionPass() { _pass = { secret: null, pass: null }; }
+/** AUDIT PLAN-1000 E2: the calls whose answer moves what a pass says - a guest registered under the same secret is a pass's
+ *  handle changed (a guest's pass answered `mail-needs-account` for four minutes), and a sign-in, a recovery, a new guest,
+ *  a sign-out or a password changed move the session itself. */
+const PASS_MOVES = new Set(['/v1/auth/register', '/v1/auth/login', '/v1/auth/recover', '/v1/auth/guest', '/v1/auth/logout', '/v1/account/password']);
+/** AUDIT PLAN-1000 E7: a call that timed out or was aborted reached a service that let its header through - the pass stays
+ *  (the heartbeat's own timeout, under the very overload the pass is for, would otherwise cost the next call its lookup). */
+export const passKeptThrough = (/** @type {any} */ e) => e?.name === 'TimeoutError' || e?.name === 'AbortError';
+
 /** BUSY-GATE (net/busyLaw.js): the page's word from the service on its load - the overload answers in a row (`n`) and
  *  the moment the reads may be asked again (`until`, ms). One for the page: the database is one, whichever book asked. */
 let _busy = { n: 0, until: 0 };
@@ -975,6 +1002,8 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
   const era = _d1Era;
   const mark = d1BookmarkFor(secret);   // SCALE4g: the session's newest D1 position, for a read a replica serves
   if (mark) headers['x-d1-bookmark'] = mark;
+  const pass = sessionPassFor(secret);   // SESSION-SIGN: the session's pass, for a hot route
+  if (pass) headers[SESSION_PASS_HEADER] = pass;
 
   let res;
   try {
@@ -986,13 +1015,15 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
       // it after the page is gone - through this one door, so the credential still rides the header and nowhere else
       ...(keepalive ? { keepalive: true } : {}),
     });
-  } catch {
+  } catch (e) {
     // A NETWORK FAILURE IS A REFUSAL, NOT A THROW. ONCRASH1's law on
     // this side too: a throw out of a button handler ends more than the
     // button. Every arm of this function returns the same shape.
     forgetD1Bookmark();   // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them
+    if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: the same, for the pass's - but a timeout's (E7)
     return { ok: false, error: 'offline' };
   }
+  if (PASS_MOVES.has(path)) forgetSessionPass(); else noteSessionPass(secret, res);   // SESSION-SIGN E2
 
   // SCALE4g: a read's answer says its session's newest position. AUDIT SCALE II: kept only in the era it was sent in (A-2);
   // a read answered with none lets the page's go (C-7); any other call forgets it again, now that it is answered (A-2)
@@ -1006,6 +1037,7 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
   try { data = await res.json(); parsed = true; } catch { data = null; }
 
   if (!res.ok) {
+    if (data?.error === 'auth') forgetSessionPass();   // SESSION-SIGN: a session refused is no pass's
     // BUSY-GATE: the service says it is overloaded - its reads stand back, the wait doubling with each such answer in a
     // row, never shorter than the answer's own Retry-After
     if (busyAnswer(res.status, typeof data?.error === 'string' ? data.error : 'server')) {
@@ -1277,6 +1309,7 @@ export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, na
  *  is not a session - keeping it would make every later call fail the
  *  same way with nothing on screen explaining why. */
 export function forgetSession(storage) {
+  forgetSessionPass();   // SESSION-SIGN: the session's pass with it
   try { storage?.removeItem?.(SESSION_KEY); return true; } catch { return false; }
 }
 

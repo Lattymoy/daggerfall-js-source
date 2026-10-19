@@ -75,7 +75,7 @@
   {
     "name": "AUDWB-A1-nobody-present",
     "file": "server/src/index.js",
-    "old": "      for (const [, b] of this._courtSockets()) if (b.id && b.sub) present.add(b.sub);",
+    "old": "      if (full && Object.values(f.players).some((p) => !hasPart(p))) for (const [, b] of this._courtSockets()) if (b.id && b.sub) present.add(b.sub);",
     "new": "",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"

@@ -50,8 +50,8 @@
   {
     "name": "SCALE2b-hello-bucket-stored-again",
     "file": "server/src/index.js",
-    "old": "        gate = tokenGate(this._hellos, now, chat ? CHAT_HELLO_HZ_MAX : HELLO_HZ_MAX);   // SCALE2b: in memory - see `_hellos`\n        this._hellos = gate.bucket;",
-    "new": "        gate = tokenGate(this._hellos, now, chat ? CHAT_HELLO_HZ_MAX : HELLO_HZ_MAX);   // SCALE2b: in memory - see `_hellos`\n        this._hellos = gate.bucket; await this.state.storage.put('hellos', gate.bucket);",
+    "old": "        gate = tokenGate(this._hellos, now, this._helloHz(a.key));   // SCALE2b: in memory - see `_hellos`; GATE-DOOR: a court's (and its copies') door is its opening's\n        this._hellos = gate.bucket;",
+    "new": "        gate = tokenGate(this._hellos, now, this._helloHz(a.key));   // SCALE2b: in memory - see `_hellos`; GATE-DOOR: a court's (and its copies') door is its opening's\n        this._hellos = gate.bucket; await this.state.storage.put('hellos', gate.bucket);",
     "tests": [
       "test/net/scale2b.test.js",
       "test/server/online_relay.test.js",

@@ -70,6 +70,7 @@
 import { HIT_KINDS, CRYSTAL_R, CRYSTAL_H } from '../../net/gate/gateBrain.js';
 import { strikeDamage, savedShare } from '../../net/gate/gateStrike.js';
 import { bossFrame, crystalStandIn, hostStandIn, hostCue, BOSS_CUES, CRYSTAL_CLIPS } from '../../world/gate/gateBoss.js';
+import { wordShare } from '../../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's health's share, the relay's word
 import { GateTelegraphRenderer, TELEGRAPH_KIND, TELEGRAPH_STYLE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_EDGE_SAFE, TELEGRAPH_POOL, TELEGRAPH_POOL_HAVEN, TELEGRAPH_POOL_SPIRE } from '../../render/gate/gateTelegraph.js';
 import { CourtCrystalRenderer } from '../../render/courtCrystals.js';
 import { titleCardModel, drawGateTitleCard, TITLE_HOLD_MS } from '../../ui/gate/gateTitleCard.js';
@@ -100,8 +101,9 @@ import { egSlagState, egSlagX, EG_SLAG_SPOUTS, EG_SLAG_CRUST_S, EG_SLAG_WARN_S }
 import { egBodyPlace, egBodyHeight } from '../../net/eliteGates/egLink.js';   // EG-ZJ: a body's feet
 import { egBlowVerdict, egInShape, egShapeOrder, coneInscribed } from '../../net/eliteGates/egShape.js';
 import { EG_ROLE, EG_FL, EG_FEINT_AT } from '../../net/eliteGates/egBodies.js';
+import { egStruckOff, egStrikeTurned } from '../../net/eliteGates/egBodies.js';   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow the relay will refuse, by its own law
 import { EG_BEAT_TRIAL_MS } from '../../net/eliteGates/egDurable.js';   // EG-PERFECT: the relay's beat, which a feint's cut can pass FEINT_AT by
-import { t } from '../../systems/textManager.js';   // EG-PERFECT: the words this pass adds, in the player's language; FB1018D DUEL-RING: the open duel's
+import { t } from '../../systems/textManager.js';   // EG-PERFECT: the words this pass adds, in the player's language; FB1018D DUEL-RING: the open duel's; FIELD BUGS 2026-10-18f TURNED-BLOW: the ground's word
 import { egKindLook, EG_LEGION_KINDS } from '../../net/eliteGates/egLegion.js';
 import { EG_BOSS_KEYS, EG_OBJ, egBossLook, egBossName } from '../../net/eliteGates/egLords.js';
 import { EG_MARK_FIRE, EG_MARK_FROST, EG_TOUCH_X } from '../../net/eliteGates/egLords.js';   // AUDIT EG III (lane1 #4): the Touched marks and their weight - the lords' one home
@@ -265,6 +267,9 @@ const PEER_EYE_M = 1.6;
 const DROP_STOOD_M = 0.25;
 const SHAKE_MIN = 0.05;
 const GLASS_CUE = Object.freeze({ clip: CRYSTAL_CLIPS.shatter, pitch: 2.2, volume: 0.9, reach: 30 });
+/** FIELD BUGS 2026-10-18f TURNED-BLOW: what a blow from off the fight ground says where its number pops (ui/hitNumbers.js) - the
+ *  ground turns it, not a ward (a ward's blow says the ward's own word), in the player's language (L10N4). */
+export const egNoFooting = () => t('eg.hit.noFooting', 'No footing');
 /** EG-G2: THE FOG FLOOR as the Spire's stage takes it (world/eliteGates/egLook.js EG_FOG_FLOOR). */
 const EG_FOG_FLOOR_ARR = Object.freeze([EG_FOG_FLOOR.floor, EG_FOG_FLOOR.within, EG_FOG_FLOOR.ease]);
 /** EG-G2: two colours the same (a shape's colour is a table's - read by value, so a copy reads as its table's). */
@@ -533,6 +538,19 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
   /** EG-ZR (section 15): Shield-Hymn's window on my blows (`[from, until, subs]` - `rally`, the census's `B.hy`); Momentum's
    *  body and stacks (`q` the blow that last built them); an Arcane Echo's roll for the cast `q` */
   let hymn = /** @type {any[]|null} */ (null), mom = { i: -1, n: 0, q: -1 }, echo = { q: -1, on: false };
+  /** FIELD BUGS 2026-10-18f TURNED-BLOW: where my blows are struck from this frame - my feet in the hall's frame, the relay's own
+   *  pose shape (`[x, y, z]`; null while I stand nowhere on this screen) - and each body's stand-in told whether the relay will
+   *  take nothing from a blow struck there (net/eliteGates/egBodies.js egStrikeTurned): `warded`, the word every heal and power
+   *  of a landed blow already refuses (systems/loot/lootPowers.js lootStrike, systems/enchantments.js VampiricEffect, the
+   *  sets' and the martial powers), the door that sends it (hostHit) and the swing's ring (scenes/dungeonContext.js swingOnHost). */
+  let strikeAt = /** @type {number[]|null} */ (null);
+  const _strikeAt = [0, 0, 0];
+  function turnStandIn(t, b) {
+    const e = t.entity, view = egFightView(spec), at = strikeAt;
+    const off = !at || egStruckOff(view, b, at[0], at[1], at[2]);
+    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);   // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor
+    e.wardText = off && at ? egNoFooting() : null;   // ui/hitNumbers.js: the ground's word, else the ward's
+  }
 
   const play3 = (cue, at) => { if (!cue || !audio || !at) return; try { if (cue.id != null) audio.play3dId?.(cue.id, at, cue.volume, { maxDistance: cue.reach, distanceModel: 'linear', pitch: cue.pitch }); else audio.play3d?.(cue.clip, at, cue.volume, { maxDistance: cue.reach, distanceModel: 'linear', pitch: cue.pitch }); } catch { /* a sound is never the fight */ } };
   /** EG-ZG: a sound of my own (a Drop's thud, the Eclipse's wind and toll) - `{ rec, vol, pitch }`, the engine's one-shot. */
@@ -582,7 +600,11 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     const had = textures.get(archive);
     if (had && !(had instanceof Promise)) return had.failed ? null : had;
     if (!had) {
-      const p = Promise.resolve().then(() => getTexture(archive)).then((tex) => { textures.set(archive, tex ? { tex, archive } : { failed: true }); }, () => { textures.set(archive, { failed: true }); });
+      // FIELD BUGS 2026-10-18f UNSEEN-KEEPER (not proven - the record says what would prove it): art that will not load is held
+      // failed for the fight's whole life (one driver a session - scenes/eliteGates/egClient.js), and every body of its mobile then
+      // stands undrawn and unoffered while its blows still draw; it said so nowhere. It says so once now, on the console
+      const failed = (why) => { textures.set(archive, { failed: true }); console.warn(`[eg] the art of mobile ${mobile} (TEXTURE.${archive}) would not load - its bodies stand undrawn and unstruck`, why ?? ''); };
+      const p = Promise.resolve().then(() => getTexture(archive)).then((tex) => { if (tex) textures.set(archive, { tex, archive }); else failed('no texture'); }, (e) => failed(e?.message ?? e));
       textures.set(archive, p);
     }
     return null;
@@ -691,9 +713,11 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     // bodyR - the reach the law judges), its HEIGHT the drawn sprite's (the relay judges no height: a blow or a bolt at the head
     // you see meets him, never passes through it); it stands where the sprite's feet are drawn
     if (!b.fellAt && b.hp > 0 && (b.fl & (EG_FL.friend | EG_FL.hidden)) === 0) {
-      d.target ??= { i: b.i, feet: [0, 0, 0], height: 2, radius: 0.6, entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i), mobile: look.mobile, name: look.name, m: b.max };
+      // FIELD BUGS 2026-10-18f RELAY-SHARE: its stand-in reads its health as the relay says it - `hp` of its whole, refilled below
+      d.target ??= { i: b.i, feet: [0, 0, 0], height: 2, radius: 0.6, entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m)), mobile: look.mobile, name: look.name, m: b.max, hp: b.hp };
       d.target.feet[0] = d.at[0]; d.target.feet[1] = centre[1] + y; d.target.feet[2] = d.at[2];
-      d.target.height = (look.lord ? 2.2 : EG_LEGION_KINDS[b.k]?.h ?? 2) * (look.lord ? look.drawn / 1.2 : 1); d.target.radius = look.lord ? Math.max(0.8, (1.8 * look.scale) / 3) : EG_LEGION_KINDS[b.k]?.r ?? 0.6; d.target.m = b.max;
+      d.target.height = (look.lord ? 2.2 : EG_LEGION_KINDS[b.k]?.h ?? 2) * (look.lord ? look.drawn / 1.2 : 1); d.target.radius = look.lord ? Math.max(0.8, (1.8 * look.scale) / 3) : EG_LEGION_KINDS[b.k]?.r ?? 0.6; d.target.m = b.max; d.target.hp = b.hp;
+      turnStandIn(d.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from where I stand, on it as it stands, that the relay will refuse is turned here too
       _targets.push(d.target);
     }
     // EG-H1: the WIND once the wind-up is past FEINT_AT and the blow still stands - a feint's cut comes first, so it never glints
@@ -711,8 +735,9 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     c.grow = (b.fl & EG_FL.ward) !== 0 ? 0.6 : 1;
     _crystals.push(c);
     if (!b.goneAt && (b.fl & EG_FL.ward) === 0) {
-      c.target ??= { i: b.i, feet: [0, 0, 0], height: CRYSTAL_H, radius: CRYSTAL_R, entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i), mobile: 31, name: key, m: b.max };
+      c.target ??= { i: b.i, feet: [0, 0, 0], height: CRYSTAL_H, radius: CRYSTAL_R, entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp), mobile: 31, name: key, m: b.max };   // FIELD BUGS 2026-10-18f RELAY-SHARE: its health as the relay says it (`c.hp`, the share it is drawn at)
       c.target.feet[0] = c.at[0]; c.target.feet[1] = c.at[1]; c.target.feet[2] = c.at[2]; c.target.m = b.max;
+      turnStandIn(c.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: an errand's object struck from traversal ground (but one standing off the floor, struck from beside it)
       _targets.push(c.target);
     }
     const L = (c.light ??= { x: 0, y: 0, z: 0, range: 6, color: [0, 0, 0] }), k = 0.8 + 0.25 * Math.sin(t / 240 + c.seed * 6);
@@ -1146,6 +1171,8 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       dropStep(t);   // EG-ZG (section 25.8)
       const f = myFeet(), e = player(), standing = !!f && !!e && e.health > 0, d0f = feet(), fy = d0f && centre ? d0f[1] - centre[1] : 0;
       if (standing) { trail.push([t, f[0], fy, f[1], hall]); while (trail.length > 1 && trail[1][0] <= t - EG_TRAIL_MS) trail.shift(); }   // EG-ZP: my trail, the census's shape
+      if (standing) { _strikeAt[0] = f[0]; _strikeAt[1] = fy; _strikeAt[2] = f[1]; }
+      strikeAt = standing ? _strikeAt : null;   // FIELD BUGS 2026-10-18f TURNED-BLOW: where this frame's blows are struck from, as the relay reads my pose
       if (!F) { groundFrame(t, standing ? f : null, fy, null); snapFrame(); titleFrame(t); return; }
       placeDark(F, t);   // AUDIT EG V (lane1 #13): Gutterdark, the Long Night and the Rails
       const blowBy = _blowBy;
@@ -1252,7 +1279,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     hostHit({ i, d, r } = /** @type {any} */ ({})) {
       if (!Number.isInteger(i) || !(Math.round(d) >= 1) || !Object.values(HIT_KINDS).includes(r)) return false;
       const E = link.state(), b = E.fight.bodies.find((q) => q.i === i);
-      if (!b) return false;
+      if (!b || (drawn.get(i)?.target ?? crystalSlots.get(i)?.target)?.entity?.warded) return false;   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow the relay will refuse is never sent, nor flashes it
       b.hurtAt = b.mineAt = now();   // EG-ZG: mine - its flash full (an ally's is 0.4)
       // EG-ZR (section 15): THE VESTIGES I HOLD ON THE BLOW - Searing Edge's fire on a melee blow, Momentum's stacks on
       // this body, Bloodied Fury under half my health, Overcharge on a spell (egHolderBlow); the relay's bucket grown by

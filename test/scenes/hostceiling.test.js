@@ -20,56 +20,69 @@
 //   on a pull request (GITHUB_EVENT_NAME pull_request*) and on a contributor's
 //   own machine (no GITHUB_EVENT_NAME) - an overflow on main is the next pull
 //   request's to fix, by moving code out or by a raise with its reason.
+//
+// LEGIBLE 1 (bible/01-Overview/Readability-Arc.md) added a third:
+// - IT IS BLIND TO LAYOUT. The ceiling counts LOGICAL lines (tools/hostScope.mjs
+//   logicalLines: statements, object and class entries, switch cases and the
+//   implicit returns of expression arrows), not physical ones. Counting physical
+//   lines made splitting a crowded line cost room and joining two lines free it,
+//   so the cheapest way to fit a change was to cram it. Every ceiling and ROOM
+//   were converted on 2026-10-19 with the room each host had then, so the
+//   conversion gave no host room it did not already have.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseModuleWithComments, findHostFunction, codeLines } from '../../tools/hostScope.mjs';
+import { parseModule, findHostFunction, logicalLines } from '../../tools/hostScope.mjs';
 
 const ROOT = join(fileURLToPath(new URL('..', import.meta.url)), '..');
 const EVENT = process.env.GITHUB_EVENT_NAME;
 const GATED = !EVENT || EVENT.startsWith('pull_request');
 const SKIP = GATED ? false : `the ceiling gates a change, never a deploy (${EVENT})`;
 
-/** The room a ceiling leaves above its host, in code lines - a fix's worth, not a feature's. */
-const ROOM = 250;
+/** The room a ceiling leaves above its host, in logical lines - a fix's worth, not a feature's (250 code lines before
+ *  LEGIBLE 1, at the 1.6 logical lines per code line the hosts measured then). */
+const ROOM = 400;
 /** Where new code goes instead, by the host's shape. */
 const MODULE = 'a module the host wires (src/scenes/fishHost.js is the shape)';
 const METHOD = 'a Room method of its own (the SCALE5 arms\' shape)';
-/** Each host's one-scope function and its ceiling in code lines: its length when measured (2026-10-15, main at
- *  HOST-SPLIT 0's last merge), plus ROOM. A slice that moves code OUT lowers its ceiling in the same change (the
- *  second test makes it). Raise one only with the reason written beside it: the ceiling is the line between wiring a
- *  module in and growing the knot. */
+/** Each host's one-scope function and its ceiling in logical lines: its length when measured plus the room it had.
+ *  A slice that moves code OUT lowers its ceiling in the same change (the second test makes it). Raise one only with
+ *  the reason written beside it: the ceiling is the line between wiring a module in and growing the knot. Each row's
+ *  history, and the code-line ceilings these replaced, are in bible/01-Overview/Host-Split.md and Readability-Arc.md. */
 const CEILINGS = [
-  ['src/scenes/world.js', 'bootWorld', 21_186, MODULE],   // HOST-SPLIT 2: buildPixelNow out (21,675 -> 20,936 code lines, main at 5d48ff13, whose own ceiling stood a line over its length); at the sixth merge of main into PR #800 (2026-10-16) the merged host stood at 21,162 and at the seventh (2026-10-17, GRAVE-PARTY's activateGrave out) at 21,124 - the Elite Breach's wiring (226 lines) under this ceiling, nothing raised, its cut into a module the host wires still owed (Elite-Gates.md section 31)
-  ['src/scenes/worldModes.js', 'createWorldModes', 7_119, MODULE],   // HOST-SPLIT (EG-LOOK, 2026-10-15): the Spire's circle out to scenes/eliteGates/egCircleHost.js (7,263 -> 7,131 code lines on the arc's branch); at the fifth and sixth merges of main into PR #800 (2026-10-16) the merged host stood at 7,145, at the seventh (2026-10-17) 7,150, under main's own 7,159 - the arc's circle cut paid, nothing raised; OUTDOOR-LOOT slice 2 (2026-10-17): WORLD6a's loot doors (interiorPublishLoot, interiorLootOpened, interiorLootSettle) out to world/interior/interiorShared.js and the cupboards' room law to world/interior/interiorRoomLoot.js (7,155 -> 7,134 code lines with the cupboards' wiring in), the ceiling down with them to the length plus the 4 it stood over - not the standard 250, which would RAISE it; 7,136 after main's merges (AUDIT OUTDOOR-LOOT, 2026-10-18); F-1 (PR A 1b, 2026-10-19): the yard counter (openYardTrade, openYardCounter, _yardWait) out to scenes/yardCounter.js (7,137 -> 7,112 code lines), the ceiling down to the length plus the 6 lines of wiring the shop shelf's claim law needs (the stole hook, commitTrade's deal door, doBuy's and doSell's, openShelf's refusal and its room) and the 1 it stood over
-  ['src/scenes/dungeonContext.js', 'buildDungeonContext', 5_446, MODULE],
-  ['src/scenes/exterior.js', 'bootExterior', 3_446, MODULE],
-  ['src/scenes/naval/navalHost.js', 'createNavalHost', 3_942, MODULE],   // HOST-SPLIT NAVAL: a *Host.js grown into a knot of its own (3,692 code lines)
-  ['src/systems/comeSailAway/comeSailAway.js', 'createComeSailAwayRuntime', 2_315, MODULE],   // AUDIT HOST-SPLIT NAVAL: the Come Sail Away runtime, one scope of 2,065 code lines
-  ['server/src/index.js', '_message', 1_093, METHOD],   // the relay's Room is 473 methods already - its knot is the one dispatcher
+  ['src/scenes/world.js', 'bootWorld', 36_233, MODULE],
+  ['src/scenes/worldModes.js', 'createWorldModes', 10_998, MODULE],
+  ['src/scenes/dungeonContext.js', 'buildDungeonContext', 8_601, MODULE],
+  ['src/scenes/exterior.js', 'bootExterior', 5_441, MODULE],
+  ['src/scenes/naval/navalHost.js', 'createNavalHost', 6_470, MODULE],   // a *Host.js grown into a knot of its own (HOST-SPLIT NAVAL)
+  ['src/systems/comeSailAway/comeSailAway.js', 'createComeSailAwayRuntime', 2_783, MODULE],   // the Come Sail Away runtime, one scope (AUDIT HOST-SPLIT NAVAL)
+  ['server/src/index.js', '_message', 2_046, METHOD],   // the relay's Room is 473 methods already - its knot is the one dispatcher
+  // knots the code-line count missed because their lines are crowded (createFpArm stood at 1,999 code lines against
+  // KNOT's 2,000); held from LEGIBLE 1 at their length plus ROOM
+  ['src/scenes/exteriorFoes.js', 'createExteriorFoes', 3_343, MODULE],
+  ['src/combat/fpArm.js', 'createFpArm', 3_252, MODULE],
+  ['src/scenes/eliteGates/egClient.js', 'createEgClient', 3_175, MODULE],
 ];
 
 const sizes = new Map();
-/** A host function's code lines (each file parsed once for both tests). */
+/** A host function's logical lines (each file parsed once for both tests). */
 const measure = (file, fn) => {
   const key = `${file}#${fn}`;
   if (!sizes.has(key)) {
-    const src = readFileSync(join(ROOT, file), 'utf8');
-    const { ast, comments } = parseModuleWithComments(src);
-    const host = findHostFunction(ast, fn);
+    const host = findHostFunction(parseModule(readFileSync(join(ROOT, file), 'utf8')), fn);
     assert.ok(host, `${file} has no function ${fn} - renamed or taken apart: move or remove its ceiling in test/scenes/hostceiling.test.js`);
-    sizes.set(key, codeLines(src, host.fn, comments));
+    sizes.set(key, logicalLines(host.fn));
   }
   return sizes.get(key);
 };
 
-test('HOST-SPLIT THE HOSTS DO NOT GROW: bootWorld, createWorldModes, buildDungeonContext, bootExterior, navalHost\'s createNavalHost, Come Sail Away\'s createComeSailAwayRuntime and the relay\'s _message each stay under their ceiling in code lines - new behaviour goes into a module the host wires (a Room method, on the relay), not into the host\'s own scope; on a pull request and on a contributor\'s machine, never on a deploy (mutants: a ceiling under its host; comments counted)', { skip: SKIP }, () => {
+test('HOST-SPLIT THE HOSTS DO NOT GROW: bootWorld, createWorldModes, buildDungeonContext, bootExterior, navalHost\'s createNavalHost, Come Sail Away\'s createComeSailAwayRuntime and the relay\'s _message each stay under their ceiling in logical lines - new behaviour goes into a module the host wires (a Room method, on the relay), not into the host\'s own scope; on a pull request and on a contributor\'s machine, never on a deploy (mutants: a ceiling under its host)', { skip: SKIP }, () => {
   const over = [];
   for (const [file, fn, ceiling, instead] of CEILINGS) {
     const n = measure(file, fn);
-    if (n > ceiling) over.push(`${file} ${fn}: ${n} code lines, over its ceiling ${ceiling} by ${n - ceiling}. Put the new code in ${instead} (bible/01-Overview/Host-Split.md, THE HOSTS DO NOT GROW) - or, for a fix that cannot live elsewhere, raise its ceiling in test/scenes/hostceiling.test.js with the reason beside it`);
+    if (n > ceiling) over.push(`${file} ${fn}: ${n} logical lines, over its ceiling ${ceiling} by ${n - ceiling}. Put the new code in ${instead} (bible/01-Overview/Host-Split.md, THE HOSTS DO NOT GROW) - or, for a fix that cannot live elsewhere, raise its ceiling in test/scenes/hostceiling.test.js with the reason beside it`);
   }
   assert.deepEqual(over, []);
 });
@@ -78,25 +91,64 @@ test('HOST-SPLIT A CEILING COMES DOWN WITH ITS HOST: no ceiling stands more than
   const slack = [];
   for (const [file, fn, ceiling] of CEILINGS) {
     const n = measure(file, fn);
-    if (ceiling - n > 2 * ROOM) slack.push(`${file} ${fn}: ${n} code lines under a ceiling of ${ceiling} - lower it to ${n + ROOM} in test/scenes/hostceiling.test.js`);
+    if (ceiling - n > 2 * ROOM) slack.push(`${file} ${fn}: ${n} logical lines under a ceiling of ${ceiling} - lower it to ${n + ROOM} in test/scenes/hostceiling.test.js`);
   }
   assert.deepEqual(slack, []);
 });
 
-/** A function this long is a knot of its own, whatever wires it (HOST-SPLIT NAVAL). */
-const KNOT = 2_000;
+// Every kind of logical line, each once, and every look-alike that is not one: 20 logical lines, however laid out.
+const SAME_CODE_CROWDED = 'function host() { let a = 1; for (let i = 0; i < 3; i++) a += i; const o = { x: 1, y: () => a }; const { x } = o; '
+  + 'switch (a) { case 1: a++; break; default: a--; } class K { m() { return 1; } f = 2; } return () => a; }';
+const SAME_CODE_SPREAD = `function host() {
+  // a comment is no weight
+  let a = 1;
+  for (let i = 0; i < 3; i++) {
+    a += i;
+  }
+  const o = {
+    x: 1,
+    y: () => a,
+  };
+  const { x } = o;
+  switch (a) {
+    case 1:
+      a++;
+      break;
+    default:
+      a--;
+  }
+  class K {
+    m() {
+      return 1;
+    }
+
+    f = 2;
+  }
+  return () => a;
+}`;
+
+test('LEGIBLE 1 THE CEILING IS BLIND TO LAYOUT: a host is measured in logical lines - statements, object and class entries, switch cases, the implicit returns of expression arrows - so the same code crowded onto one line or spread over twenty-six measures the same, and splitting a crowded line for its reader costs no room (bible/01-Overview/Readability-Arc.md) (mutants: a loop head counted; a destructuring entry counted; object entries not counted; class members not counted; expression arrows not counted; braces counted)', () => {
+  const sizeOf = (src) => logicalLines(findHostFunction(parseModule(src), 'host').fn);
+  assert.equal(sizeOf(SAME_CODE_CROWDED), 20, 'each kind of logical line counted once, and no look-alike counted');
+  assert.equal(sizeOf(SAME_CODE_SPREAD), 20, 'the same code spread out, with a comment and a blank line, measures the same');
+});
+
+/** A function this long is a knot of its own, whatever wires it (HOST-SPLIT NAVAL). In logical lines: 2,000 code lines
+ *  before LEGIBLE 1, set where every knot that line held is still held - Come Sail Away's runtime, the least crowded,
+ *  measures 2,484. */
+const KNOT = 2_400;
 
 /** Every source file under a folder. */
 const sources = (dir) => readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? sources(`${dir}/${e.name}`) : /\.m?js$/.test(e.name) ? [`${dir}/${e.name}`] : [])).sort();
 
-/** A module's OUTERMOST functions past `raw` lines, in any shape - a declaration, an arrow, a method, async or not -
- *  named as tools/hostScope.mjs names them. (A function inside another is the outer one's: its host's ceiling holds it.) */
-const outermost = (ast, raw) => {
+/** A module's OUTERMOST functions, in any shape - a declaration, an arrow, a method, async or not - named as
+ *  tools/hostScope.mjs names them. (A function inside another is the outer one's: its host's ceiling holds it.) */
+const outermost = (ast) => {
   const out = [];
   const isFn = (n) => /^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression)$/.test(n.type) && n.body?.type === 'BlockStatement';
   const visit = (n, name) => {
     if (!n || typeof n.type !== 'string') return;
-    if (isFn(n)) { if (n.loc.end.line - n.loc.start.line + 1 > raw) out.push({ fn: n, name: n.id?.name ?? name }); return; }
+    if (isFn(n)) { out.push({ fn: n, name: n.id?.name ?? name }); return; }
     const nm = n.type === 'VariableDeclarator' ? n.id?.name
       : (n.type === 'MethodDefinition' || n.type === 'Property' || n.type === 'PropertyDefinition') && !n.computed ? n.key?.name : undefined;
     for (const k of Object.keys(n)) {
@@ -109,26 +161,32 @@ const outermost = (ast, raw) => {
   return out;
 };
 
-test('HOST-SPLIT NAVAL A MODULE THAT BECOMES A HOST GETS A CEILING: every function in src/ and the relay\'s server/src/ past KNOT code lines - a module the host wires that grew into one scope of its own, as navalHost\'s createNavalHost did unnoticed to 4,865 lines and Come Sail Away\'s runtime to 2,065 code lines - stands in CEILINGS; found by walking src/ and reading every outermost function, whatever its name or shape, not by a list (mutants: the naval ceiling dropped; the sail runtime\'s ceiling dropped; the knot never reached; the walk by the first create* export alone; the walk by declarations alone)', { skip: SKIP }, () => {
+/** The outermost functions in a module's source past KNOT logical lines, as `{ fn, name, size }`. */
+const knotsOf = (src) => {
+  // a logical line takes at least two characters (`a;`), so a source shorter than that cannot hold a knot - a bound on
+  // characters, not lines: a crowded file can hold more logical lines than it has physical ones
+  if (src.length < 2 * KNOT) return [];
+  return outermost(parseModule(src)).map(({ fn, name }) => ({ fn, name, size: logicalLines(fn) })).filter((f) => f.size > KNOT);
+};
+
+test('HOST-SPLIT NAVAL A MODULE THAT BECOMES A HOST GETS A CEILING: every function in src/ and the relay\'s server/src/ past KNOT logical lines - a module the host wires that grew into one scope of its own, as navalHost\'s createNavalHost did unnoticed to 4,865 lines and Come Sail Away\'s runtime to 2,065 code lines - stands in CEILINGS; found by walking src/ and reading every outermost function, whatever its name or shape, not by a list (mutants: the naval ceiling dropped; the sail runtime\'s ceiling dropped; the knot never reached; the walk by the first create* export alone; the walk by declarations alone; a crowded file skipped by its line count)', { skip: SKIP }, () => {
   // AUDIT HOST-SPLIT NAVAL, the second read: every shape the walk claims to read, read - the held knots are all
   // declarations, so a walk narrowed to declarations passed on them; a fixture of each shape holds the rest
   const shapes = 'function decl() {\n\n}\nasync function* gen() {\n\n}\nexport const arrow = async () => {\n\n};\nconst expr = function () {\n\n};\n'
     + 'class C {\n  method() {\n\n  }\n  field = () => {\n\n  };\n  #hidden() {\n\n  }\n}\nexport const o = {\n  objMethod() {\n\n  },\n  prop: function () {\n\n  },\n};\n'
     + 'export default function named() {\n\n}\n';
-  assert.deepEqual(outermost(parseModuleWithComments(shapes).ast, 2).map((x) => x.name), ['decl', 'gen', 'arrow', 'expr', 'method', 'field', 'hidden', 'objMethod', 'prop', 'named'], 'the walk reads every shape a function takes');
+  assert.deepEqual(outermost(parseModule(shapes)).map((x) => x.name), ['decl', 'gen', 'arrow', 'expr', 'method', 'field', 'hidden', 'objMethod', 'prop', 'named'], 'the walk reads every shape a function takes');
+  // LEGIBLE 1: and a knot crowded onto one physical line is still a knot
+  assert.deepEqual(knotsOf(`function crowded() {${' a();'.repeat(KNOT + 1)} }`).map((x) => x.name), ['crowded'], 'the walk skips no file by its line count');
   const held = new Set(CEILINGS.map(([file, fn]) => `${file}#${fn}`));
   const loose = [], knots = [];
   const files = [...sources('src'), ...sources('server/src')];   // the relay's Room too (AUDIT HOST-SPLIT NAVAL, the second read)
   for (const file of files) {
     const src = readFileSync(join(ROOT, file), 'utf8');
-    if (src.split('\n').length <= KNOT) continue;   // shorter than the line: no function in it can reach it
-    const { ast, comments } = parseModuleWithComments(src);
-    for (const { fn, name } of outermost(ast, KNOT)) {
-      const n = codeLines(src, fn, comments);
-      if (n <= KNOT) continue;
+    for (const { fn, name, size: n } of knotsOf(src)) {
       knots.push(`${file}#${name}`);
-      if (!name) loose.push(`${file}: an unnamed function at line ${fn.loc.start.line}, ${n} code lines - name it (a declaration or a const) and give it a ceiling in CEILINGS`);
-      else if (!held.has(`${file}#${name}`)) loose.push(`${file} ${name}: ${n} code lines and no ceiling - add ['${file}', '${name}', ${n + ROOM}, MODULE] to CEILINGS in test/scenes/hostceiling.test.js`);
+      if (!name) loose.push(`${file}: an unnamed function at line ${fn.loc.start.line}, ${n} logical lines - name it (a declaration or a const) and give it a ceiling in CEILINGS`);
+      else if (!held.has(`${file}#${name}`)) loose.push(`${file} ${name}: ${n} logical lines and no ceiling - add ['${file}', '${name}', ${n + ROOM}, MODULE] to CEILINGS in test/scenes/hostceiling.test.js`);
     }
   }
   assert.ok(files.length >= 1000, `only ${files.length} source files under src/ - the walk is reading the wrong tree`);

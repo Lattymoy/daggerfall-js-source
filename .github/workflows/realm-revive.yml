@@ -166,7 +166,7 @@ jobs:
           echo "NOW_BOOKMARK=$b" >> "$GITHUB_ENV"
           echo "NOW_COUNTS=$c" >> "$GITHUB_ENV"
           echo "the present: bookmark $b, $c"
-          { echo "The present's bookmark, should it ever need putting back by hand:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "The present's bookmark, should it ever need putting back by hand:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; echo "then redeploy the Worker (its isolates keep the weeks they read settled - server-account/src/weekKept.js)."; echo ""; } >> "$GITHUB_STEP_SUMMARY"
 
       # REWOUND is set BEFORE the rewind is asked for: a rewind that fails half-way is put back as one that landed.
       # Proven there by content: the character stands in it (the tombstone is the present's).

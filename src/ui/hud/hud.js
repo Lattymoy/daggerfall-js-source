@@ -18,7 +18,7 @@
 import { bitmapToColor32 } from '../../formats/color32Order.js';   // BOOT2: the indexed-to-color32 door is a formats concern; it lived here and put the HUD on the entry's boot path through ui/cursor.js
 import { maxFatigue, maxBreath, liveStat } from '../../systems/statMods.js';
 import { isEnhanced } from '../../systems/uiSkin.js';   // PX30: the HUD is a skin too
-import { drawEnhancedHud } from '../enhanced/enhancedHud.js';   // PX30
+import { drawEnhancedHud, hideEnhancedHud } from '../enhanced/enhancedHud.js';   // PX30; FB1018f DUNGEON-DIGITS: its word under a window, for the hide door
 import { drawLevelNotices } from '../levelUp/levelNotice.js';   // LV2: the level-up notification, on the same one call
 import { drawQuestHerald } from '../quest/questHerald.js';   // GUIDE3: the quest news, on the same one call
 import { drawQuestTracker } from '../quest/questTracker.js';   // GUIDE4: the quest the HUD follows, on the same one call
@@ -491,8 +491,17 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
  *
  * ONE call rather than two lines in each host, because the next host
  * to grow an early return is the one that remembers one of them.
+ *
+ * FB1018f DUNGEON-DIGITS: and the enhanced HUD itself. Its root stood
+ * painted under every dungeon window, and its hotbar - whose keys follow
+ * the `paused` drawHud hands it - heard the last frame of play and took
+ * every digit before the window could read one.
  */
 export function hideHudTextSurfaces(hudText = null) {
+  // FB1018f DUNGEON-DIGITS: the enhanced HUD itself, with its bar - drawHud's word under a window (hidden, paused),
+  // which is all that hands a window the digits the bar takes ahead of every host (enhancedHud.js). A HUD never built
+  // (the classic skin builds none: a skin is changed by a reload) answers nothing.
+  hideEnhancedHud();
   hudText?.hide();
   midScreenText.hide();
   horseNameTooltip.hide();   // AUDIT HCC U6: the mod's HUD label, the same door

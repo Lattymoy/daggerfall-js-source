@@ -224,7 +224,7 @@
 import {
   createGuest, openSession, resolveSession, closeSession, closeAllSessions,
   devicesOf, accountView, displayName, accountKind,
-  register, login, recover, changePassword, setEmail, overRate, overAccountRate,
+  register, login, recover, changePassword, setEmail, overRate, overAccountRate, accountRateFull,
   newRecoveryCodes,   // RECOVERY-SET: a new set of codes from the profile
   accountWardrobe, equipTitle, equipAura, equipGlyph, buyInsignia, insigniaPurse, creditPlay, muteAccount, isMuted, mutedUntil,
   duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
@@ -314,11 +314,14 @@ import {
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget
 import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
-import { PROGRESS_ROUTES, progressRefusal, progressConfig, progressRoom, progressSpent } from './progress.js';   // INT16-INT17: a progression claim's seat, and the play that pays for it
+import { doorReads } from './door.js';   // PRIMARY-FOLD: the door's reads in one trip
+import { passRoute, passKey, mintPass, readPass, passMintable } from './sessionPass.js';   // SESSION-SIGN: the hot routes believe a pass
+import { SESSION_PASS_HEADER } from '../../src/net/sessionPassLaw.js';   // SESSION-SIGN: its one name on the wire
+import { PROGRESS_ROUTES, seatRefusalOf, progressConfig, progressRoom, progressSpent } from './progress.js';   // INT16-INT17: a progression claim's seat, and the play that pays for it
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { wildFall, wildCollect, wildReclaim, wildEscrows } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record; MAC (2026-10-14): its killer's piece in escrow - collected, taken back, listed
-import { listLineages, putLineage, realmDie, realmRaise, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone; REZ-BLOODLINE AUDIT R1: a Resurrect inside its hold
+import { listLineages, putLineage, realmDie, realmRaise, realmWed, listUnions, LINEAGE_BODY_MAX } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone; REZ-BLOODLINE AUDIT R1: a Resurrect inside its hold
 import { measured, heartbeatPartsOf } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine); AUDIT SCALE II A-3: a heartbeat's parts, of the body the route read
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
 import { blocksOf, blockAccount, unblockAccount, fileReport, agreeConduct, conductAgreed, takeFeed, bannedAnswer, resolveCase, modCases, modCase, modDismiss, REPORT_BODY_MAX } from './safety.js';   // SAFE1-SAFE7: the chat's safety
@@ -417,7 +420,7 @@ const REPORT_STATUS = Object.freeze({ 'report-rate': 429, 'report-full': 409, 'n
 const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
 const REALM_STATUS = Object.freeze({
   ...JUDGE_STATUS,   // INT3/INT4
-  'no-realm-character': 404, 'no-data': 404, lease: 409, seq: 409, 'too-many-characters': 409,
+  'no-realm-character': 404, 'no-data': 404, lease: 409, seq: 409, 'too-many-characters': 409, auth: 401,   // SESSION-SIGN E3: a checkpoint's session gone
   'customs-never-online': 403, 'customs-other-account': 403, 'customs-already': 409, 'no-storage': 503,   // CUSTOMS-ELSEWHERE: the other account's
   'trade-spent': 409,   // REALM P2.1: a trade's sid another pair settled
   'guild-master-leaves': 409,   // AUDIT REALM L1-F7: a guildmaster deleted hands the guild over first
@@ -700,17 +703,18 @@ const service = {
    *  read starts no older than everything this one saw and wrote - the routes `route` answers are untouched.
    *  AUDIT SCALE II A-3: `said` is what the route tells the metrics point (metrics.js measured) - a heartbeat's parts. */
   async fetch(request, env, said = { parts: '' }, exec = null) {
-    const held = { session: null, said, exec };
+    const held = { session: null, said, exec, pass: null };
     const res = await service.route(request, env, held);
     let mark = null;
     try { mark = held.session?.getBookmark?.() ?? null; } catch { mark = null; }
-    if (typeof mark !== 'string' || !D1_BOOKMARK_RE.test(mark)) return res;
+    const marked = typeof mark === 'string' && D1_BOOKMARK_RE.test(mark);
+    if (!marked && !held.pass) return res;
     const out = new Response(res.body, res);   // its status and headers, copied - a copy's headers may be set
-    out.headers.set('x-d1-bookmark', mark);
-    out.headers.append('access-control-expose-headers', 'x-d1-bookmark');
+    if (marked) { out.headers.set('x-d1-bookmark', mark); out.headers.append('access-control-expose-headers', 'x-d1-bookmark'); }
+    if (held.pass) { out.headers.set(SESSION_PASS_HEADER, held.pass); out.headers.append('access-control-expose-headers', SESSION_PASS_HEADER); }   // SESSION-SIGN: the pass a lookup on a hot route minted
     return out;
   },
-  async route(request, env, held = { session: null, said: { parts: '' } }) {
+  async route(request, env, held = { session: null, said: { parts: '' }, pass: null }) {
     const subtle = crypto.subtle;
     const rand = (b) => crypto.getRandomValues(b);
     const nowS = Math.floor(Date.now() / 1000);
@@ -724,7 +728,7 @@ const service = {
         headers: {
           'access-control-allow-origin': origin,
           'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'access-control-allow-headers': 'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match',   // REALM P1: a checkpoint's lease, sequence and tile; SCALE4g: the tab's D1 bookmark; POI-1: the feed version a game holds
+          'access-control-allow-headers': 'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass',   // REALM P1: a checkpoint's lease, sequence and tile; SCALE4g: the tab's D1 bookmark; POI-1: the feed version a game holds; SESSION-SIGN: the session's pass
           'access-control-max-age': '86400',
         },
       });
@@ -994,11 +998,18 @@ const service = {
       const auth = request.headers.get('authorization') ?? '';
       const bearer = /^Bearer (.+)$/.exec(auth)?.[1];
       const secret = bearer ?? (request.method === 'POST' ? body.secret : null);
-      const who = await resolveSession(ctx, secret);
+      // SESSION-SIGN (sessionPass.js; bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000, decision 4): A HOT ROUTE
+      // BELIEVES ITS PASS - who the lookup found, signed for five minutes and bound to this secret - and asks the lookup
+      // only for one it cannot believe, minting the next beside its answer
+      const hot = passRoute(path, request.method) ? await passKey(env, subtle) : null;
+      const who = (hot && await readPass(hot, request.headers.get(SESSION_PASS_HEADER), secret, nowS, subtle)) || await resolveSession(ctx, secret);
       if (!who) return no('auth', 401, origin);
       // SAFE4: A BANNED ACCOUNT ACTS IN NOTHING - no token (so no room), no save, no trade - and is told until when, and why,
       // on every door; it may still sign out
       if (isBanned(who.player, nowS) && path !== '/v1/auth/logout') return json(bannedAnswer(who.player), 403, origin);
+      // SESSION-SIGN: the next pass, after the ban (a banned account pays its lookup - AUDIT PLAN-1000 E6) and off the
+      // primary's own answer alone (a replica's may stand before a sign-out - E5)
+      if (hot && !('pass' in who) && passMintable(db, env.DB)) held.pass = await mintPass(hot, who, secret, nowS, subtle);
 
       // AUDIT LEGACY III O12: A TOMBSTONE ACTS IN NOTHING. Every act a character does names it as the body's
       // `character` - the professions, the Stores, the writs, the market, Renown, the guilds - and a fallen Bloodline
@@ -1007,7 +1018,15 @@ const service = {
       // death. Asked here, once, before any route - but the token's mint, which is no act: it vouches for the account,
       // and mints a tombstone no realm character (REALM-DOOR's `rc` 0, no house, no `ci`), which the relay's door refuses;
       // a page under its death screen still mints for the hub it stands in.
-      if (path !== '/v1/auth/token' && typeof body.character === 'string' && (await isTombstone(db, who.player.id, body.character))) return no('dead', 410, origin);
+      // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the door's reads - the tombstone of a body's
+      // `character`, and a progression claim's seat and its stream's bucket - in one trip (door.js doorReads), answered in
+      // the order each was asked on its own
+      const progressRoute = request.method === 'POST' ? PROGRESS_ROUTES[/** @type {keyof typeof PROGRESS_ROUTES} */ (path)] : undefined;
+      // AUDIT PLAN-1000 C4: a claim the account's rate will refuse (asked without counting - the count is the door's below,
+      // after the tombstone, as ever) asks the tombstone alone
+      const claimed = progressRoute && !accountRateFull(who.player.id, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S) ? progressRoute[0] : null;
+      const door = await doorReads(db, who.player.id, { tomb: path !== '/v1/auth/token' && typeof body.character === 'string' ? body.character : null, stream: claimed });
+      if (door.dead) return no('dead', 410, origin);
 
       // AUDIT-ACC F12: A CREDENTIAL IS NOT A LICENCE TO HAMMER. The
       // open routes were bounded per address and everything behind a
@@ -1028,14 +1047,16 @@ const service = {
       // camp, the Watch, a silver find, a profession's XP (progress.js PROGRESS_ROUTES) asked of the account's realm character
       // holding its lease, never one the judge holds, before any route reads a word of it. INT17: and once staff enforce the
       // line, a stream whose bucket play has not refilled is refused, and a Renown report asks no more than the bucket holds.
-      const progressRoute = request.method === 'POST' ? PROGRESS_ROUTES[/** @type {keyof typeof PROGRESS_ROUTES} */ (path)] : undefined;
       if (progressRoute) {
         const [stream, named] = progressRoute;
-        const seat = await progressRefusal(db, who.player.id, { named, character: body.character });
+        // AUDIT PLAN-1000 F1: a claim the rate's peek found full and its count let through (the window turned between the two,
+        // another request of the account opening the next) asked no seat at the door - it asks now, as the door would have
+        const read = door.seat === undefined ? await doorReads(db, who.player.id, { tomb: null, stream }) : door;
+        const seat = seatRefusalOf(read.seat, { named, character: body.character });   // PRIMARY-FOLD: the door's read of the seat
         if (seat) return json(seat, 403, origin);
         const line = await progressConfig(db);
         if (line.enforce) {
-          const room = await progressRoom(db, who.player.id, stream, line);
+          const room = await progressRoom(db, who.player.id, stream, line, read.bucket);   // PRIMARY-FOLD: and of the bucket
           if (room < 1) return no('progress-play', 429, origin);
           if (stream === 'renown' && Number.isSafeInteger(body.xp)) body.xp = Math.min(body.xp, room);
         }
@@ -2068,13 +2089,13 @@ const service = {
       if (path === '/v1/heartbeat') {
         if (request.method !== 'POST') return no('method', 405, origin);
         held.said.parts = heartbeatPartsOf(body);   // AUDIT SCALE II A-3: the parts of the body read above - capped, and behind the session
-        return json(await heartbeat(ctx, who.player, env, body), 200, origin);
+        return json(await heartbeat(ctx, who.player, env, body, who.session?.id ?? null), 200, origin);   // SESSION-SIGN E3: the beat asks its session
       }
       if (path === '/v1/account/played' && request.method === 'POST') {
         // ACC4: A BEAT, AND NOTHING IN IT IS READ. Whatever the body
         // says, the credit is the gap by THIS clock (accounts.js
         // `creditPlay`), so there is no field a client could inflate.
-        return json(await creditPlay(ctx, who.player.id), 200, origin);
+        return json(await creditPlay(ctx, who.player.id, who.session?.id ?? null), 200, origin);
       }
 
       if (path === '/v1/auth/register' && request.method === 'POST') {
@@ -2348,10 +2369,12 @@ const service = {
             try { summary = JSON.parse(request.headers.get('x-realm-summary') || 'null'); } catch { summary = null; }
             const r = await checkpointRealm(rctx, me, {
               id: realmSlot.id, lease: request.headers.get('x-realm-lease'), seq: Number(request.headers.get('x-realm-seq')), summary,
+              session: who.session?.id ?? null,   // SESSION-SIGN (AUDIT PLAN-1000 E3): the save asks its session and the ban itself
             }, raw, raw.byteLength);
             // a sequence refused says the service's own, so a tab whose last answer was lost can resync (never a way in:
             // the write still needs the lease)
             if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);
+            if (r.error === 'banned') return json(bannedAnswer(r.player), 403, origin);   // E3: a ban under a pass, at once
             return answer(r);
           }
           if (request.method === 'GET') {

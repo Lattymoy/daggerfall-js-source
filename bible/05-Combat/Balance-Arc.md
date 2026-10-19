@@ -667,6 +667,13 @@ RECORDED, NOT CHANGED:
   stacked burst on a cooldown.
 - **Gortwog's Cleaver** keeps its record's Vampiric Effect: one named Legendary, never a random draw.
 
+FIELD BUGS 2026-10-18f VAMPIRIC-WARD: the heal is the damage a blow DEALS, and a blow a referee's ward turns whole deals
+none. The stand-in says so (`warded`: the Warden's ward, the Brass Remnant shut, the Spire's turned blows - Elite-Gates.md
+section 11.7, TURNED-BLOW). Every other heal and power of a landed blow already refused one (the leech since AUDIT
+WORLD-REWARDS B3). The payload did not, and healed the whole claim (`systems/enchantments.js` VampiricEffect `strikes`).
+DFU never meets the case - its target is always the entity whose health the blow then takes - so this is VampiricEffect.cs's
+own law told what the blow dealt. Pinned: `test/systems/fb1018f_vampiricward.test.js` (2).
+
 Pinned: `test/systems/bal7_loot.test.js` (3) by execution - 3,000 seeded Rare blades never drawing Vampiric Effect and drawing
 every other weapon flavour, a piece that drew it lawful, the Cleaver's record; a line and a gem healing 10 of 100;
 Hist-Sap's round at 61 and 42 of 100; Open Hand's 20 again for 10, a 1 for 1, a weapon's for nothing.
