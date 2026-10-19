@@ -31,7 +31,6 @@ import { resurrectionSpell } from '../systems/resurrect.js';   // RESURRECT1
 import { sharedCartographySpell } from '../systems/party/partyMap.js';   // PARTY-MAP
 import { signatureOffers } from '../systems/signatureSpells.js';   // SCHOOLS3: a path's signature spell on the Buy Spells shelf
 import { isOnlinePage } from '../systems/online/onlineLane.js';   // RESURRECT1: the shelf's online arm
-import { horseCareRules } from '../systems/upkeep/upkeepSwitch.js';   // STEED1: a Stable prices its horses by what they are while horses are cared for (HORSE-TIERS: any tier but Off, through the one accessor)
 import { bloodDecalDeps } from '../combat/blood/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/blood/bloodMarks.js';   // BLOOD1a
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines
@@ -109,7 +108,6 @@ import { lookAt, perspective, mirrorProjectionX, trs, multiply, identity, UP_Y }
 const BATCH_IDENTITY = identity();   // PERF5: the merged level is in world space already
 import { pressed, released, routeKey, routeKeyUp, actionOf, held, moveHeld, anyMove, swallowBrowserKey, isSwingButton, swingHeld, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
-import { validYardKind, yardCounter, yardStock, YARD_TEXT } from '../systems/merchantYards.js';   // MERCHANT-YARDS: a town's Stable and Wagon Yard - their counters
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE; AUDIT PRE-MERGE 0928 U8: and the HUD's outright hide
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/footsteps.js';   // FS-slice; AUDIT DROPS E2: the kind the pose carries
@@ -474,6 +472,7 @@ import { chapterHallFactor, chapterHallShelf, chapterHallShut, CHAPTER_HALL_SHUT
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import '../ui/tutorialPopup.js';   // TUT1: the popup's handler, registered by this host (the four hosts' rule)
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a tinted copy of a light is that light (the dungeon's flame tint, the abyss's candle)
+import { createYardCounter } from './yardCounter.js';   // HOST-SPLIT
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -3681,49 +3680,12 @@ export function createWorldModes(host) {
       },
     }, playerEntity);
   }
-  /** MERCHANT-YARDS: A YARD'S COUNTER (systems/merchantYards.js) - the Stable's or the Wagon Yard's, opened from the
-   *  street (scenes/merchantYardsHost.js): Buy over the yard's whole stock, minted fresh (a yard never sells out - a custom
-   *  merchant's openBuy, RR3's door), or Sell into a basket of its own, the yard buying what yardBuysItem says and nothing
-   *  else; priced by the counter's one law at YARD_QUALITY. The counter's art and font come in first, the press waiting
-   *  for them (ASYNC NEVER DROPS) - once: a game folder that will not give them opens nothing, and says so. Answers
-   *  whether the press was handled. `name` the yard's (merchantYards.js yardName), over the window.
-   *  AUDIT MERCHANT-YARDS Y3: ONE press waits - the latest, coalesced (two presses during the load opened two
-   *  windows) - and when the art comes in it opens only where it was pressed: the street, its slot still free. A door
-   *  gone through or a talk opened meanwhile makes the press the player's past, and nothing opens (a window opened
-   *  then took the interior's slot over whatever stood there, or the talk's in the street). */
-  let _yardWait = null;
-  function openYardTrade(kind, regionIndex, tradeMode = 'Buy', name = '', mapId = 0) {
-    if (!validYardKind(kind) || mode !== 'exterior') return false;
-    if (!tradeDoorReady() || (!isEnhanced() && !_shopFont)) {
-      const first = !_yardWait;
-      _yardWait = { kind, regionIndex, tradeMode, name, mapId };
-      if (first) {
-        ensureShopFont().then(() => {
-          const w = _yardWait;
-          _yardWait = null;
-          if (!w || mode !== 'exterior' || townTalk?.overlay) return;
-          if (!tradeDoorReady() || (!isEnhanced() && !_shopFont)) { setMidScreenText(YARD_TEXT.shut); return; }
-          openYardCounter(w.kind, w.regionIndex, w.tradeMode, w.name, w.mapId);
-        });
-      }
-      return true;
-    }
-    return openYardCounter(kind, regionIndex, tradeMode, name, mapId);
-  }
-  /** The yard's counter itself, its art and font in. STEED1/WAGONS4: the stock of the town (`mapId`) on the world's day -
-   *  the Stable's three horses, none the player owns, priced by what they are while horses are cared for; the oats and
-   *  the kits where they may be sold (merchantYards.js yardStock). */
-  function openYardCounter(kind, regionIndex, tradeMode, name, mapId = 0) {
-    const b = yardCounter(kind, regionIndex, name);
-    const stock = () => yardStock(kind, {
-      mapId, day: Math.floor(worldMinutes() / 1440), online: isOnlinePage(), priced: !!horseCareRules(),
-      owned: (playerEntity.items ?? []).map((it) => it?.horseSeed).filter(Number.isInteger),
-    });
-    const win = openTradeWindow({ items: tradeMode === 'Sell' ? [] : stock() }, b, tradeMode === 'Sell' ? 'Sell' : 'Buy');
-    if (!win) return true;   // DISC10-E L3: the trade door refused the beast (and said so) - handled, nothing to mount
-    mountServiceWindow(win);   // the street's slot (townTalk's) - the interior's is never drawn outdoors
-    return true;
-  }
+  // MERCHANT-YARDS: a yard's counter, opened from the street (the doc stands in yardCounter.js).
+  const { openYardTrade } = createYardCounter({   // HOST-SPLIT: src/scenes/yardCounter.js
+    ensureShopFont, mountServiceWindow, openTradeWindow, townTalk,
+    get _shopFont() { return _shopFont; },
+    get mode() { return mode; },
+  });
   /** U40: the merchant's own Sell screen. DFU's merchant popup sells
    *  into the SHOP rather than into a shelf, so the goods land on the
    *  building's first shelf - the same place the shelf flow puts
