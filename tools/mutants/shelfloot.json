@@ -1,0 +1,157 @@
+[
+  {
+    "name": "F1-sale-lifts-the-piece",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "lifts = how !== 'sale',",
+    "new": "lifts = true,",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-theft-does-not-lift",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "lifts = how !== 'sale',",
+    "new": "lifts = how === 'take',",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-theft-lifts-the-unmarked-record",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "obj = how === 'theft' ? theftOf(shown) : takenAs(cup, shown);",
+    "new": "obj = takenAs(cup, shown);",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-shut-shelf-credit-paid-at-the-close",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorLootCredit(interiorCtx, `shelf:${i}`, room, () => tallyCrimeGuildRequirements(playerEntity, true, 1))",
+    "new": "tallyCrimeGuildRequirements(playerEntity, true, 1)",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-counter-settled-every-frame",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "} else if (cup.st?.base && !cup.trade && settle(ctx, cup)) due.add(cup);",
+    "new": "} else if (cup.st?.base && settle(ctx, cup)) due.add(cup);",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-leave-settles-a-trade-window",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "if (cup.st?.base && !cup.trade && settle(ctx, cup)) say(cup);",
+    "new": "if (cup.st?.base && settle(ctx, cup)) say(cup);",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-hidden-without-stowed",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "...(cup.canon.startsWith('shelf:') ? carried.stowed ?? [] : [])",
+    "new": "...[]",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-compose-keeps-the-mark",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "if (cup.canon.startsWith('shelf:')) for (const it of list) clearStolen(it);",
+    "new": "",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-no-home-put-goes-home",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "const home = how === 'take';",
+    "new": "const home = true;",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-stole-answer-ignored-native",
+    "file": "src/ui/native/nativeTrade.js",
+    "old": "if (!this.hooks.stole?.(lot)) this.hooks.tallyCrimeGuild?.(true, 1);",
+    "new": "this.hooks.stole?.(lot); this.hooks.tallyCrimeGuild?.(true, 1);",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-stole-answer-ignored-enhanced",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "if (!deps.stole?.(lot)) deps.tallyCrimeGuild?.(true, 1);",
+    "new": "deps.stole?.(lot); deps.tallyCrimeGuild?.(true, 1);",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-body-targets-without-the-empty-gate",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "if (!lootableCorpse(e, isCorpse)) return;",
+    "new": "if (!isCorpse(e) || e.corpseDisabled) return;",
+    "tests": [
+      "test/net/emptybody.test.js"
+    ]
+  },
+  {
+    "name": "F1-empty-gate-applied-to-puppets",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "(!!entry.puppet || entry.entity?.items?.length > 0)",
+    "new": "(entry.entity?.items?.length > 0)",
+    "tests": [
+      "test/net/emptybody.test.js",
+      "test/net/bodyloot_party.test.js"
+    ]
+  },
+  {
+    "name": "F1-search-row-without-the-empty-gate",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "corpseKeyOf: (f) => (lootableCorpse(f, corpseLens.isCorpse) ?",
+    "new": "corpseKeyOf: (f) => (corpseLens.isCorpse(f) && !f.corpseDisabled ?",
+    "tests": [
+      "test/net/emptybody.test.js"
+    ]
+  },
+  {
+    "name": "F1-m2-refusal-removed",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (_intShared?.unreadable?.has(`shelf:${i}`)) { setMidScreenText(LOOT_NEWER_TEXT); return; }",
+    "new": "",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  },
+  {
+    "name": "F1-stock-writes-the-roll-before-minting",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "      cup.roll = { items, today };\n      mint(ctx, cup);\n      return true;",
+    "new": "      cup.roll = { items, today };\n      targetOf(ctx, canon).items = items;\n      mint(ctx, cup);\n      return true;",
+    "tests": [
+      "test/net/shelfloot.test.js",
+      "test/net/shelfstock.test.js"
+    ]
+  },
+  {
+    "name": "F1-quiet-flag-ignored",
+    "file": "src/systems/loot/claimLedger.js",
+    "old": "} else if (!withdrawn && !c.quiet && !won.has(key)) tell(ROOM_TAKEN_TEXT);",
+    "new": "} else if (!withdrawn && !won.has(key)) tell(ROOM_TAKEN_TEXT);",
+    "tests": [
+      "test/net/shelfloot.test.js"
+    ]
+  }
+]

@@ -385,8 +385,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-the-host-shelf-by-count",
     "file": "src/scenes/worldModes.js",
-    "old": "if (shopShelfTheft(shelfBefore, shelf.items)) tallyCrimeGuildRequirements(playerEntity, true, 1);",
-    "new": "if (shelf.items.length < shelfBefore.size) tallyCrimeGuildRequirements(playerEntity, true, 1);",
+    "old": "if (shopShelfTheft(shelfBefore, shelf.items)) interiorLootCredit(interiorCtx, `shelf:${i}`, room, () => tallyCrimeGuildRequirements(playerEntity, true, 1));",
+    "new": "if (shelf.items.length < shelfBefore.size) interiorLootCredit(interiorCtx, `shelf:${i}`, room, () => tallyCrimeGuildRequirements(playerEntity, true, 1));",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js",
       "test/systems/theft.test.js"
