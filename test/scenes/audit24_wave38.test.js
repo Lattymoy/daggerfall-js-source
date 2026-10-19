@@ -114,7 +114,7 @@ test('AUDIT 39: a pool that prunes keys its corpses by a stable id, not by the a
   // built is a different body once anything ahead of it leaves. Pools
   // that never splice (exteriorFoes) keep the index, which is what the
   // default is for.
-  const bodies = [{ corpse: true, id: 7 }, { corpse: true, id: 9 }];
+  const bodies = [{ corpse: true, id: 7, entity: { items: [{ name: 'Dagger' }] } }, { corpse: true, id: 9, entity: { items: [{ name: 'Mace' }] } }];   // F-1 EMPTY-BODY: bodies that hold a piece (an emptied one is no target)
   const byId = corpseLootTargets(bodies, 'guardCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0], idOf: (e) => e.id });
   assert.deepEqual(byId.map((t) => t.key), ['guardCorpse:7', 'guardCorpse:9']);
   bodies.shift();   // the walk-away ahead of it is pruned
@@ -192,7 +192,12 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   // NOT disabled: DFU disables on the activation that FINDS it empty,
   // which is the NEXT one - so the player still gets told.
   assert.notEqual(arrows.corpseDisabled, true);
-  assert.equal(corpseLootTargets([arrows], 'k', { isCorpse: () => true, feetOf: () => [0, 0, 0] }).length, 1);
+  // F-1 EMPTY-BODY (2026-10-19, DESIGN-1b D9): the departure from DFU - the body the take just emptied is no target (the owner's
+  // word, "show nothing if there is no loot"), though it is not DISABLED: it is a live predicate, so a refill makes it a target again
+  assert.equal(corpseLootTargets([arrows], 'k', { isCorpse: () => true, feetOf: () => [0, 0, 0] }).length, 0, 'emptied: no target');
+  arrows.entity.items.push({ name: 'laid back' });
+  assert.equal(corpseLootTargets([arrows], 'k', { isCorpse: () => true, feetOf: () => [0, 0, 0] }).length, 1, 'a refill makes it a target again');
+  arrows.entity.items.length = 0;
 
   // anything else hands its items over
   say.length = 0;
@@ -202,7 +207,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   assert.deepEqual(say, ['You take 2 items.']);
   assert.equal(player.items.length, 2);
   assert.equal(body.entity.items.length, 0, 'the body is emptied');
-  assert.notEqual(body.corpseDisabled, true, 'still activatable - the empty line is owed');
+  assert.notEqual(body.corpseDisabled, true, 'not disabled - the line is still owed to a press that races the emptying (it is no target now: F-1)');
   // ...and the next activation is the one that closes it
   say.length = 0;
   assert.equal(takeCorpseLoot(body, player, s), 0);
@@ -389,7 +394,7 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   // the target reach is the corpse one, everywhere it is built - and
   // MC-2 put it in `reach`, the handler's gate, while `distance` is the
   // RAY's so the pick can hand the body to that handler at all.
-  const t = corpseLootTargets([{ corpse: true }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [2, 3, 4] });
+  const t = corpseLootTargets([{ corpse: true, entity: { items: [{ name: 'Dagger' }] } }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [2, 3, 4] });   // F-1: holding a piece
   assert.equal(t[0].reach, CORPSE_ACTIVATION_DISTANCE);
   assert.equal(t[0].distance, RAY_DISTANCE);
   assert.deepEqual(t[0].aabb.min, [1.5, 3, 3.5]);

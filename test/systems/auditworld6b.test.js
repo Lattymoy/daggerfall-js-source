@@ -321,6 +321,7 @@ test('AUDIT WORLD6b B8/B9/B11/B12/B13/B15: the pool - removeFoe and zeroFoeHealt
   assert.ok(p7, 'the build landed'); assert.equal(p7.dead, true, 'B13: dead on arrival, where the latest word put it'); assert.deepEqual(p7.ai.feet, [30, 0, 30]);
   // B15: the stable loot key
   const mine = await pool.spawnFoe(0, [5, 0, 5], { feetGiven: true });
+  (mine.entity.items ??= []).push({ name: 'Dagger' });   // F-1 EMPTY-BODY: a body is a target while it holds a piece
   mine.entity.health = 1; pool.damageFoe(mine, 5, [0, 0, 0], null);
   assert.equal(mine.dead, true);
   const targets = pool.lootTargets();

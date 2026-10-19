@@ -179,7 +179,7 @@ const poolDeps = (freed) => ({
   rolls: () => 0.5,
 });
 const standFoe = (mobileType, feet) => ({
-  mobileType, gender: 'male', dead: false, entity: { health: 10, maxHealth: 10, items: [], activeEffects: [] },
+  mobileType, gender: 'male', dead: false, entity: { health: 10, maxHealth: 10, items: [{ name: 'Dagger' }], activeEffects: [] },   // F-1 EMPTY-BODY: a body is a loot target while it holds a piece
   ai: { feet: [...feet], isHostile: true, detected: false, height: 1.8 },
   tex: stubTex, archive: ENEMY_BASICS[mobileType].maleTexture, batch: {}, _mout: null,
 });

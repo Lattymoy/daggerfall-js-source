@@ -316,7 +316,7 @@ test('audit18: corpses reach 150 * GlobalScale, not the 128-unit default', () =>
   assert.ok(/distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE/.test(hostSrc('dungeonContext.js')),
     'dungeonContext.js corpse targets compete for the RAY');
   const built = corpseLootTargets(
-    [{ corpse: true, entity: { items: [] } }],
+    [{ corpse: true, entity: { items: [{ name: 'Dagger' }] } }],   // F-1 EMPTY-BODY: a body holding a piece (an emptied one is no target)
     'x', { isCorpse: (e) => !!e.corpse, feetOf: () => [1, 2, 3] },
   );
   assert.equal(built.length, 1);
