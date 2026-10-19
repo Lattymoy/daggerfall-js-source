@@ -102,6 +102,7 @@ jobs:
     with:
       build: false
       sweep: 500
+      ceilings: false   # AUDIT RELEASE-FLOW F1: the ceiling gates a change, never a deploy
 
   # RELEASE-FLOW: only a release that moves the relay reaches this job, and it waits in the `production` environment
   # until a release manager approves it - nobody is asked to approve a deploy that would do nothing

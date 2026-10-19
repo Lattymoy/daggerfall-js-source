@@ -441,8 +441,8 @@
   {
     "name": "HOTFIX-BACK-a-promotion-read-as-a-lack",
     "file": ".github/workflows/release-backmerge.yml",
-    "old": "if tree=$(git merge-tree --write-tree origin/main origin/release) && [ \"$tree\" = \"$(git rev-parse 'origin/main^{tree}')\" ]; then",
-    "new": "if false; then",
+    "old": "&& tree=$(git merge-tree --write-tree origin/main origin/release) && [ \"$tree\" = \"$(git rev-parse 'origin/main^{tree}')\" ]; then",
+    "new": "&& false; then",
     "tests": [
       "test/tooling/releaseflow.test.js"
     ],
@@ -451,8 +451,8 @@
   {
     "name": "HOTFIX-BACK-a-conflict-read-as-nothing",
     "file": ".github/workflows/release-backmerge.yml",
-    "old": "if tree=$(git merge-tree --write-tree origin/main origin/release) && [",
-    "new": "if ! tree=$(git merge-tree --write-tree origin/main origin/release) || [",
+    "old": "&& tree=$(git merge-tree --write-tree origin/main origin/release) && [",
+    "new": "&& ! tree=$(git merge-tree --write-tree origin/main origin/release) || [",
     "tests": [
       "test/tooling/releaseflow.test.js"
     ],
@@ -479,14 +479,64 @@
     "note": "A conflict would be settled by taking release's side, unseen."
   },
   {
-    "name": "HOTFIX-BACK-the-check-not-asked",
+    "name": "HOTFIX-BACK-the-history-unasked",
     "file": ".github/workflows/release-backmerge.yml",
-    "old": "run: gh workflow run check.yml --repo \"$GITHUB_REPOSITORY\" --ref backmerge/release",
-    "new": "run: echo the check runs on its own",
+    "old": "if [ ! -s \"$RUNNER_TEMP/commits.md\" ] && tree=$(git merge-tree",
+    "new": "if tree=$(git merge-tree",
     "tests": [
       "test/tooling/releaseflow.test.js"
     ],
-    "note": "The back-merge's required check would never run - a pull request the workflow opens starts none."
+    "note": "AUDIT RELEASE-FLOW B3: a fix carried by hand or a squashed back-merge leaves the histories apart, and the next promotion conflicts with no back-merge open."
+  },
+  {
+    "name": "HOTFIX-BACK-mains-pushes-unwatched",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "    branches: [release, main]\n  workflow_dispatch:",
+    "new": "    branches: [release]\n  workflow_dispatch:",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW B3: a squashed back-merge opens the next only at the next hotfix."
+  },
+  {
+    "name": "HOTFIX-BACK-a-forks-pull-request-taken",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "'[.[] | select(.head.repo.full_name == $repo)][0].number // \"\"'",
+    "new": "'.[0].number // \"\"'",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW B2: a stranger's fork branch of the same name is edited as the back-merge, and the fix never returns."
+  },
+  {
+    "name": "HOTFIX-BACK-a-refused-push-unsaid",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "            if ! git push -q origin HEAD:refs/heads/backmerge/release; then",
+    "new": "            git push -q origin HEAD:refs/heads/backmerge/release; if false; then",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW B4: the run goes red and the pull request is told nothing."
+  },
+  {
+    "name": "HOTFIX-BACK-forced-past-a-push",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "git push -q --force-with-lease=\"backmerge/release:$old\" origin",
+    "new": "git push -q --force origin",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A push made while the run read the branch is overwritten."
+  },
+  {
+    "name": "HOTFIX-BACK-the-approval-unsaid",
+    "file": ".github/workflows/release-backmerge.yml",
+    "old": "          **Its check waits for you.** GitHub holds",
+    "new": "          **Its check.** GitHub holds",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW B1: the pull request waits on a held run nobody is told to approve."
   },
   {
     "name": "CHECK-ASK-anyone-may-ask",
@@ -527,6 +577,86 @@
       "test/tooling/releaseflow.test.js"
     ],
     "note": "The refusals go through GraphQL's addComment, which a pull request refuses a token without pull-requests: write - the job holds issues: write, so a reader asking /check would be told nothing and the run would fail."
+  },
+  {
+    "name": "CHECK-ASK-a-reader-commented-on",
+    "file": ".github/workflows/check-ask.yml",
+    "old": "            *) react -1; echo \"$WHO cannot push here - nothing asked\"; exit 0 ;;",
+    "new": "            *) say \"`/check` runs for someone who can push here\"; exit 0 ;;",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW B6: anyone can make the bot post comments."
+  },
+  {
+    "name": "CHECK-ASK-the-first-line-by-pipe",
+    "file": ".github/workflows/check-ask.yml",
+    "old": "          first=${BODY%%$'\\n'*}",
+    "new": "          first=$(printf '%s\\n' \"$BODY\" | head -n 1 | tr -d '\\r')",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW B6: under pipefail a long comment dies with SIGPIPE and nothing is asked or said."
+  },
+  {
+    "name": "CHECK-ASK-the-asked-run-silent",
+    "file": ".github/workflows/check.yml",
+    "old": "          gh api -X POST \"repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA\" -f state=\"$state\"",
+    "new": "          true || gh api -X POST \"repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA\" -f state=\"$state\"",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW B1: a /check's result reaches the Actions tab alone - GitHub shows no dispatched run's check on a pull request."
+  },
+  {
+    "name": "CHECK-ASK-the-asked-run-named-the-required-check",
+    "file": ".github/workflows/check.yml",
+    "old": "-f state=\"$state\" -f context='check (asked)'",
+    "new": "-f state=\"$state\" -f context='check'",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A branch's result would stand for the merge's required check."
+  },
+  {
+    "name": "CHECK-ASK-a-dispatch-cancelling-mains-check",
+    "file": ".github/workflows/check.yml",
+    "old": "  group: check-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}",
+    "new": "  group: check-${{ github.event.pull_request.number || github.ref }}",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW B5: /check on the promotion (head main) cancels main's own push run."
+  },
+  {
+    "name": "HOST-CEILINGS-off-for-a-check",
+    "file": ".github/workflows/verify.yml",
+    "old": "every check of a change does; a deploy never.\n        type: boolean\n        default: true",
+    "new": "every check of a change does; a deploy never.\n        type: boolean\n        default: false",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW F1: a pull request's check stops holding the hosts to their ceilings."
+  },
+  {
+    "name": "HOST-CEILINGS-a-deploy-held",
+    "file": ".github/workflows/deploy.yml",
+    "old": "      ceilings: false   # AUDIT RELEASE-FLOW F1: the ceiling gates a change, never a deploy\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A host grown past its ceiling on main holds the players' release."
+  },
+  {
+    "name": "HOST-CEILINGS-told-by-the-event",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "const GATED = process.env.DFO_HOST_CEILINGS !== '0';",
+    "new": "const GATED = !process.env.GITHUB_EVENT_NAME || process.env.GITHUB_EVENT_NAME.startsWith('pull_request');",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW F1: /check, a dispatch, skips the ceilings it is said to hold."
   },
   {
     "name": "DEV-ENV-the-build-unstamped",

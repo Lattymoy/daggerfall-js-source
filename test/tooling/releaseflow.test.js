@@ -62,6 +62,7 @@ function fakeGh(dir) {
     '  "pr list") printf "%s\\n" "${FAKE_PR:-}" ;;',
     '  "api repos/"*) case "$2" in',
     '      */permission) printf "%s\\n" "${FAKE_PERMISSION:-none}" ;;',
+    '      */pulls\\?*) printf "%s\\n" "${FAKE_PULLS:-[]}" ;;',
     '      */pulls/*) printf "%s\\n" "$FAKE_PULL" ;;',
     '    esac ;;',
     'esac',
@@ -381,16 +382,17 @@ function backStep(t, cwd, name, env = {}) {
   const bin = fakeGh(tmp);
   const r = spawnSync('bash', ['-e', '-c', runBlock(WF('release-backmerge.yml'), name)], {
     cwd, encoding: 'utf8',
-    env: { PATH: `${bin}:${process.env.PATH}`, HOME: tmp, GITHUB_OUTPUT: out, RUNNER_TEMP: tmp, GITHUB_REPOSITORY: 'o/r', GH_CALLS: join(tmp, 'calls'), ...env },
+    env: { PATH: `${bin}:${process.env.PATH}`, HOME: tmp, GITHUB_OUTPUT: out, RUNNER_TEMP: tmp, GITHUB_REPOSITORY: 'o/r', GITHUB_REPOSITORY_OWNER: 'o', GH_CALLS: join(tmp, 'calls'), ...env },
   });
   const outputs = Object.fromEntries(readFileSync(out, 'utf8').trim().split('\n').filter(Boolean).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
   return { ...r, outputs, calls: callsOf(join(tmp, 'calls')), tmp };
 }
 
-test('HOTFIX-BACK: every push to release asks one question - would merging release into main change main - so a promotion opens nothing, a hotfix opens the back-merge with its commits named, a fix carried to main by hand opens nothing, and a conflicting fix opens it all the same (mutants: a promotion read as a lack; a conflict read as nothing)', { skip: BASH }, (t) => {
-  assert.equal(onOf(WF('release-backmerge.yml')), 'on:\n  push:\n    branches: [release]\n\n', 'every update to release, and nothing else');
+test('HOTFIX-BACK: every push to release or main, and a hand, asks what release holds that main lacks - a commit of its own main\'s history does not hold, or a change merging release would make to main\'s tree - so a promotion opens nothing, a hotfix opens the back-merge with its commits named, and a fix main holds another way - carried by hand, or a back-merge squashed - opens it again until main\'s history holds release\'s, after which the next promotion cannot conflict (AUDIT RELEASE-FLOW B3) (mutants: a promotion read as a lack; a conflict read as nothing; the history unasked; main\'s pushes unwatched)', { skip: BASH }, (t) => {
+  assert.equal(onOf(WF('release-backmerge.yml')), 'on:\n  push:\n    branches: [release, main]\n  workflow_dispatch:\n\n', 'every update to release and to main, and by hand');
   const r = remote(t);
   const ask = () => backStep(t, r.runner(), 'What release has that main does not');
+  const promotable = () => spawnSync('git', ['merge-tree', '--write-tree', 'release', 'main'], { cwd: r.origin }).status === 0;
   // a promotion: main merged into release brings main nothing
   r.put('feature.txt', 'f\n'); r.commit('a feature on main');
   r.git(r.work, 'push', '-q', 'origin', 'main');
@@ -406,57 +408,110 @@ test('HOTFIX-BACK: every push to release asks one question - would merging relea
   got = ask();
   assert.equal(got.outputs.lack, 'yes');
   assert.match(readFileSync(join(got.tmp, 'commits.md'), 'utf8'), /^- [0-9a-f]{7,} Fix the second line\n$/, 'its commits named, the merges not');
-  // the same fix carried to main by hand: nothing to bring back
+  // the same fix carried to main by hand: the trees agree and the histories do not - main's next change to the line
+  // would conflict at the promotion with no back-merge open (the experiment the audit ran), so it is a lack
   r.git(r.work, 'checkout', '-q', 'main');
   r.put('game.txt', 'one\nTWO\nthree\n'); r.commit('carried by hand');
   r.git(r.work, 'push', '-q', 'origin', 'main');
-  assert.equal(ask().outputs.lack, '', 'main already holds it');
-  // main moved the same line another way: the merge conflicts - still a lack, for a person to resolve
-  r.put('game.txt', 'one\n2\nthree\n'); r.commit('main changes it again');
+  assert.equal(ask().outputs.lack, 'yes', 'a fix main holds another way still comes back, as history');
+  // a back-merge squashed is the same case; one merged with a merge commit ends it - and the promotion after is clean
+  r.git(r.work, 'merge', '-q', '--squash', 'release');
+  r.git(r.work, 'commit', '-qm', 'Back-merge release into main (#9)', '--allow-empty');
   r.git(r.work, 'push', '-q', 'origin', 'main');
+  assert.equal(ask().outputs.lack, 'yes', 'a squashed back-merge opens the next');
+  r.git(r.work, 'merge', '-q', '--no-ff', '-m', 'Merge pull request #10 from o/backmerge/release', 'release');
+  r.git(r.work, 'push', '-q', 'origin', 'main');
+  assert.equal(ask().outputs.lack, '', 'main\'s history holds release\'s: nothing to bring back');
+  r.put('game.txt', 'one\nTWO!\nthree\n'); r.commit('main moves the line on');
+  r.git(r.work, 'push', '-q', 'origin', 'main');
+  assert.equal(ask().outputs.lack, '');
+  assert.ok(promotable(), 'and the promotion cannot conflict');
+  // main moved the same line another way and release fixes it again: the merge conflicts - a lack, for a person
   r.git(r.work, 'checkout', '-q', 'release');
   r.put('game.txt', 'one\nII\nthree\n'); r.commit('Fix it again');
   r.git(r.work, 'push', '-q', 'origin', 'release');
   got = ask();
   assert.equal(got.status, 0, got.stderr);
   assert.equal(got.outputs.lack, 'yes', 'a conflict is a lack');
+  // main takes release's history keeping its own line; then a promotion resolved by hand carries a change of the
+  // merge's own, and main moves that line another way: no commit of release's is missing from main, and the merge
+  // conflicts - a lack all the same, asked of the trees
+  r.git(r.work, 'checkout', '-q', 'main');
+  r.git(r.work, 'merge', '-q', '--no-ff', '-s', 'ours', '-m', 'Merge pull request #11 from o/backmerge/release', 'release');
+  r.git(r.work, 'push', '-q', 'origin', 'main');
+  assert.equal(ask().outputs.lack, '', 'release\'s history held, its line not taken');
+  r.git(r.work, 'checkout', '-q', 'release');
+  r.git(r.work, 'merge', '-q', '--no-ff', '--no-commit', 'main');
+  r.put('game.txt', 'one\nRELEASE-ONLY\nthree\n');
+  r.git(r.work, 'commit', '-qam', 'Merge pull request #12 from o/main');
+  r.git(r.work, 'push', '-q', 'origin', 'release');
+  r.git(r.work, 'checkout', '-q', 'main');
+  r.put('game.txt', 'one\nMAIN-ONLY\nthree\n'); r.commit('main moves it once more');
+  r.git(r.work, 'push', '-q', 'origin', 'main');
+  got = ask();
+  assert.equal(got.outputs.lack, 'yes', 'a merge of release\'s own that conflicts with main');
+  assert.match(readFileSync(join(got.tmp, 'commits.md'), 'utf8'), /none of its own: release's merges carry changes main does not/);
 });
 
-test('HOTFIX-BACK: the branch - set to release when no back-merge is open; release MERGED INTO it when one is, keeping a resolution pushed there; a merge that conflicts left to a person, said on the pull request and nothing pushed - then the pull request opened or brought up to date, and its check dispatched (mutants: release forced over an open branch; the conflict pushed)', { skip: BASH }, (t) => {
+test('HOTFIX-BACK: the branch - set to release when no back-merge is open, never forced past a push it did not read; release MERGED INTO it when one is, keeping a resolution pushed there; a merge that conflicts, or that GitHub refuses this token, left to a person, said on the pull request and nothing pushed; a fork\'s branch of the same name never taken for the back-merge (AUDIT RELEASE-FLOW B2, B4) - then the pull request opened or brought up to date, telling its reviewer to approve its held check, and nothing dispatched that no pull request reads (B1) (mutants: release forced over an open branch; the conflict pushed; a fork\'s pull request taken; a refused push unsaid; forced past a push; the approval unsaid)', { skip: BASH }, (t) => {
   const r = remote(t);
   r.git(r.work, 'checkout', '-q', '-b', 'release', 'origin/release');
   r.put('fix.txt', 'fixed\n'); r.commit('Fix one');
   r.git(r.work, 'push', '-q', 'origin', 'release');
   const head = (ref) => execFileSync('git', ['rev-parse', ref], { cwd: r.origin, encoding: 'utf8' }).trim();
-  // none open: the branch is release's head, whatever an old one held
-  let got = backStep(t, r.runner(), 'Keep backmerge/release level with release', { FAKE_PR: '' });
+  const keep = (pulls, env = {}) => backStep(t, r.runner(), 'Keep backmerge/release level with release', { FAKE_PULLS: JSON.stringify(pulls), ...env });
+  const ours = (n) => ({ number: n, head: { repo: { full_name: 'o/r' } } });
+  // none open: the branch is release's head, whatever an old one held - and a stranger's fork of the name is not ours
+  let got = keep([{ number: 77, head: { repo: { full_name: 'stranger/r' } } }]);
   assert.equal(got.status, 0, got.stderr);
+  assert.equal(got.outputs.pr, '', 'a fork\'s backmerge/release is not the back-merge');
   assert.equal(head('backmerge/release'), head('release'));
-  assert.deepEqual(got.calls.map((c) => c.slice(0, 2)), [['pr', 'list']]);
-  // one open, and someone resolved a conflict on it: release is merged in, the resolution kept
+  assert.deepEqual(got.calls.map((c) => c.slice(0, 2)), [['api', 'repos/o/r/pulls?state=open&base=main&head=o:backmerge/release&per_page=100']], 'this repository\'s owner\'s branch, asked by REST');
+  // never forced past a push this run did not read
+  const stale = r.runner();
   r.git(r.work, 'fetch', '-q', 'origin');
   r.git(r.work, 'checkout', '-q', '-b', 'backmerge/release', 'origin/backmerge/release');
+  r.put('someone.txt', 'pushed meanwhile\n'); r.commit('a push since');
+  r.git(r.work, 'push', '-q', 'origin', 'backmerge/release');
+  const theirs = head('backmerge/release');
+  got = backStep(t, stale, 'Keep backmerge/release level with release', { FAKE_PULLS: '[]' });
+  assert.notEqual(got.status, 0, 'the lease refuses');
+  assert.equal(head('backmerge/release'), theirs, 'their push stands');
+  // one open, and someone resolved a conflict on it: release is merged in, the resolution kept
   r.put('resolution.txt', 'by hand\n'); r.commit('Merge main into backmerge/release');
   r.git(r.work, 'push', '-q', 'origin', 'backmerge/release');
   const resolved = head('backmerge/release');
   r.git(r.work, 'checkout', '-q', 'release');
   r.put('fix2.txt', 'fixed\n'); r.commit('Fix two');
   r.git(r.work, 'push', '-q', 'origin', 'release');
-  got = backStep(t, r.runner(), 'Keep backmerge/release level with release', { FAKE_PR: '41' });
+  got = keep([{ number: 77, head: { repo: { full_name: 'stranger/r' } } }, ours(41)]);
   assert.equal(got.status, 0, got.stderr);
-  assert.equal(got.outputs.pr, '41');
+  assert.equal(got.outputs.pr, '41', 'ours, after a stranger\'s');
   const ancestor = (a, b) => spawnSync('git', ['merge-base', '--is-ancestor', a, b], { cwd: r.origin }).status === 0;
   assert.ok(ancestor(resolved, head('backmerge/release')) && ancestor(head('release'), head('backmerge/release')), 'both kept: the resolution and release');
-  // release moves the resolved file another way: the merge conflicts - said, nothing pushed
-  const before = head('backmerge/release');
-  r.put('resolution.txt', 'release says otherwise\n'); r.commit('Fix three');
+  // GitHub refuses the push (a workflow file this token may not write): said, nothing pushed, the run green
+  const hook = join(r.origin, 'hooks', 'pre-receive');
+  writeFileSync(hook, '#!/bin/sh\nwhile read old new ref; do [ "$ref" = refs/heads/backmerge/release ] && { echo "refusing to allow a GitHub App to create or update workflow" >&2; exit 1; }; done\nexit 0\n');
+  chmodSync(hook, 0o755);
+  let before = head('backmerge/release');
+  r.put('fix3.txt', 'fixed\n'); r.commit('Fix three');
   r.git(r.work, 'push', '-q', 'origin', 'release');
-  got = backStep(t, r.runner(), 'Keep backmerge/release level with release', { FAKE_PR: '41' });
+  got = keep([ours(41)]);
+  assert.equal(got.status, 0, got.stderr);
+  assert.equal(got.outputs.conflict, 'yes');
+  assert.equal(head('backmerge/release'), before);
+  assert.deepEqual(got.calls.at(-1).slice(0, 3), ['pr', 'comment', '41'], 'said on the pull request');
+  rmSync(hook);
+  // release moves the resolved file another way: the merge conflicts - said, nothing pushed
+  before = head('backmerge/release');
+  r.put('resolution.txt', 'release says otherwise\n'); r.commit('Fix four');
+  r.git(r.work, 'push', '-q', 'origin', 'release');
+  got = keep([ours(41)]);
   assert.equal(got.status, 0, got.stderr);
   assert.equal(got.outputs.conflict, 'yes');
   assert.equal(head('backmerge/release'), before, 'nothing pushed over the branch');
   assert.deepEqual(got.calls.at(-1).slice(0, 3), ['pr', 'comment', '41'], 'said on the pull request');
-  // the pull request: opened when none is, its body naming the commits; brought up to date when one is - and checked
+  // the pull request: opened when none is, its body naming the commits; brought up to date when one is
   const commits = scratch(t, 'c');
   writeFileSync(join(commits, 'commits.md'), '- abc1234 Fix one\n');
   const open = backStep(t, r.runner(), 'The pull request into main', { PR: '', RUNNER_TEMP: commits });
@@ -465,15 +520,15 @@ test('HOTFIX-BACK: the branch - set to release when no back-merge is open; relea
   assert.ok(open.calls[0].includes('backmerge/release'));
   const body = readFileSync(join(commits, 'body.md'), 'utf8');
   assert.match(body, /\n- abc1234 Fix one\n/);
+  assert.match(body, /\*\*Its check waits for you\.\*\* GitHub holds the `check` of a pull request that a workflow opened or pushed until\nsomeone who can push here approves it: \*Approve workflows to run\*/, 'the held run named, and how to start it');
   assert.match(body, /\*\*Merge it with a merge commit, not a squash\*\*/);
   assert.doesNotMatch(body, /^#+ *patch[ -]?notes/im, 'a back-merge carries no patch notes - its fix\'s release did');
   const edit = backStep(t, r.runner(), 'The pull request into main', { PR: '41', RUNNER_TEMP: commits });
   assert.deepEqual(edit.calls[0].slice(0, 3), ['pr', 'edit', '41']);
   const yml = WF('release-backmerge.yml');
-  assert.match(yml, /- name: Its check\n {8}if: steps\.lack\.outputs\.lack == 'yes' && steps\.branch\.outputs\.conflict != 'yes'\n {8}run: gh workflow run check\.yml --repo "\$GITHUB_REPOSITORY" --ref backmerge\/release\n/,
-    'a pull request the workflow opens starts no run of its own - the check is asked for');
+  assert.doesNotMatch(yml, /gh workflow run/, 'nothing dispatched: GitHub reads no dispatched run\'s check for a pull request');
   const job = jobsOf(yml)[0].text;
-  assert.match(job, /\n {4}permissions:\n {6}contents: write[^\n]*\n {6}pull-requests: write[^\n]*\n {6}actions: write[^\n]*\n/);
+  assert.match(job, /\n {4}permissions:\n {6}contents: write[^\n]*\n {6}pull-requests: write[^\n]*\n {4}env:\n/, 'and no `actions` to dispatch with');
 });
 
 // ═══ CHECK-ASK: `/check` ON A PULL REQUEST ════════════════════════════════════════════════════════════════════════
@@ -491,7 +546,7 @@ function askCheck(t, { body = '/check', permission = 'write', pull = {} } = {}) 
   return { tmp, calls: callsOf(join(tmp, 'calls')), said: existsSync(join(tmp, 'say.md')) ? readFileSync(join(tmp, 'say.md'), 'utf8') : null };
 }
 
-test('CHECK-ASK: `/check` from someone who can push dispatches check.yml on the pull request\'s own branch and says so with a reaction; a reader is told who may ask, a fork\'s pull request why it cannot be, a closed one that it is closed; a comment that is not `/check` asks nothing; and nothing of the comment is pasted into the script (mutants: anyone may ask; a fork\'s branch dispatched; the check dispatched on the default branch)', { skip: BASH }, (t) => {
+test('CHECK-ASK: `/check` from someone who can push dispatches check.yml on the pull request\'s own branch and says so with a reaction; a reader is answered by a reaction alone (AUDIT RELEASE-FLOW B6), a fork\'s pull request told why it cannot be, a closed one that it is closed; a comment that is not `/check` asks nothing, and a long one asks as a short one does; nothing of the comment is pasted into the script (mutants: anyone may ask; a fork\'s branch dispatched; the check dispatched on the default branch; the answer by GraphQL; a reader commented on; the first line by a pipe)', { skip: BASH }, (t) => {
   const yml = WF('check-ask.yml');
   assert.equal(onOf(yml), 'on:\n  issue_comment:\n    types: [created]\n\n');
   assert.match(yml, /\n {4}if: github\.event\.issue\.pull_request && startsWith\(github\.event\.comment\.body, '\/check'\)\n/);
@@ -500,24 +555,63 @@ test('CHECK-ASK: `/check` from someone who can push dispatches check.yml on the 
   const ok = askCheck(t);
   assert.deepEqual(ok.calls.map((c) => c.slice(0, 2).join(' ')), ['api repos/o/r/collaborators/someone/permission', 'api repos/o/r/pulls/12', 'workflow run', 'api -X']);
   assert.deepEqual(ok.calls[2], ['workflow', 'run', 'check.yml', '--repo', 'o/r', '--ref', 'feature/x'], 'the pull request\'s own branch');
-  assert.ok(ok.calls[3].includes('repos/o/r/issues/comments/345/reactions') && ok.calls[3].includes('content=rocket'), 'a reaction says it was asked');
+  assert.deepEqual(ok.calls[3], ['api', '-X', 'POST', 'repos/o/r/issues/comments/345/reactions', '-f', 'content=rocket', '--silent'], 'a reaction says it was asked');
   assert.equal(ok.said, null, 'and nothing more');
   for (const permission of ['admin', 'maintain']) assert.ok(askCheck(t, { permission }).calls.some((c) => c[0] === 'workflow'), permission);
   for (const permission of ['read', 'triage', 'none']) {
     const no = askCheck(t, { permission });
     assert.ok(!no.calls.some((c) => c[0] === 'workflow'), `${permission}: nothing dispatched`);
-    assert.match(no.said, /someone who can push here, and @someone cannot/);
-    assert.ok(no.calls.some((c) => c.join(' ') === `api -X POST repos/o/r/issues/12/comments -F body=@${no.tmp}/say.md --silent`),
-      `${permission}: said on the pull request's issue, by REST - the job holds issues: write, and GraphQL's addComment asks pull-requests: write`);
+    assert.equal(no.said, null, `${permission}: no comment - anyone could make the bot speak (B6)`);
+    assert.deepEqual(no.calls.at(-1), ['api', '-X', 'POST', 'repos/o/r/issues/comments/345/reactions', '-f', 'content=-1', '--silent'], `${permission}: a reaction alone`);
   }
   const fork = askCheck(t, { pull: { head: { repo: { full_name: 'stranger/r' }, ref: 'main', sha: 'a'.repeat(40) } } });
   assert.ok(!fork.calls.some((c) => c[0] === 'workflow'), 'a fork\'s branch is not this repository\'s');
   assert.match(fork.said, /`stranger\/r`'s - merge its base into it/);
+  assert.ok(fork.calls.some((c) => c.join(' ') === `api -X POST repos/o/r/issues/12/comments -F body=@${fork.tmp}/say.md --silent`),
+    'said on the pull request\'s issue, by REST - the job holds issues: write, and GraphQL\'s addComment asks pull-requests: write');
   const closed = askCheck(t, { pull: { state: 'closed' } });
   assert.ok(!closed.calls.some((c) => c[0] === 'workflow'));
   assert.match(closed.said, /closed - nothing to check/);
   for (const body of ['/checkout', '/check please', 'please /check']) assert.deepEqual(askCheck(t, { body }).calls, [], `"${body}": nothing asked`);
   assert.ok(askCheck(t, { body: '/check\r\nthe tests again' }).calls.some((c) => c[0] === 'workflow'), 'the first line is the ask');
+  assert.ok(askCheck(t, { body: '/check  \t\r\n' }).calls.some((c) => c[0] === 'workflow'), 'trailing space aside');
+  assert.ok(askCheck(t, { body: `/check\n${'a pasted log line\n'.repeat(5000)}` }).calls.some((c) => c[0] === 'workflow'), 'a 90 KB comment asks as a short one does (B6)');
+});
+
+test('CHECK-ASK: check.yml says a dispatched run\'s result on its commit as `check (asked)` - pending when it begins, success or failure as its parts end - because GitHub reads no check a dispatched run reports for a pull request (AUDIT RELEASE-FLOW B1); its runs are grouped by event too, so a `/check` never cancels main\'s own (B5); and every check of a change holds the hosts to their ceilings, a deploy\'s never (F1) (mutants: the asked run silent; the asked run named the required check; a dispatch cancelling main\'s check; the ceilings off for a check; a deploy held to them; the ceiling told by the event)', { skip: BASH }, (t) => {
+  const yml = WF('check.yml');
+  assert.match(yml, /\nconcurrency:\n {2}group: check-\$\{\{ github\.event_name \}\}-\$\{\{ github\.event\.pull_request\.number \|\| github\.ref \}\}\n {2}cancel-in-progress: true\n/);
+  const jobs = Object.fromEntries(jobsOf(yml).map((j) => [j.name, j.text]));
+  assert.match(jobs.asked, /\n {4}if: github\.event_name == 'workflow_dispatch'\n/);
+  assert.match(jobs.answered, /\n {4}if: \$\{\{ always\(\) && github\.event_name == 'workflow_dispatch' \}\}\n {4}needs: \[verify\]\n/);
+  for (const name of ['asked', 'answered']) assert.match(jobs[name], /\n {4}permissions:\n {6}statuses: write\n/, `${name}: a status, and nothing more`);
+  /** A status job's script, run as the runner runs it against a gh that records: the call it made. */
+  const said = (script, env = {}) => {
+    const tmp = scratch(t, 'status');
+    const bin = fakeGh(tmp);
+    const r = spawnSync('bash', ['-e', '-c', script], {
+      encoding: 'utf8', env: { PATH: `${bin}:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GITHUB_SHA: 'f'.repeat(40), GITHUB_SERVER_URL: 'https://github.com', GITHUB_RUN_ID: '9', GH_CALLS: join(tmp, 'calls'), ...env },
+    });
+    assert.equal(r.status, 0, r.stderr);
+    return callsOf(join(tmp, 'calls'))[0];
+  };
+  const status = (call) => Object.fromEntries(call.filter((_, i) => call[i - 1] === '-f').map((kv) => [kv.slice(0, kv.indexOf('=')), kv.slice(kv.indexOf('=') + 1)]));
+  const begun = said(/\n {8}run: (gh api [^\n]+)\n/.exec(jobs.asked)[1]);
+  assert.equal(begun[3], `repos/o/r/statuses/${'f'.repeat(40)}`, 'on the commit the run checks');
+  assert.deepEqual(status(begun), { state: 'pending', context: 'check (asked)', description: 'the whole check, asked by /check', target_url: 'https://github.com/o/r/actions/runs/9' });
+  const done = (result) => said(runBlock(jobs.answered, 'Said as done'), { RESULT: result });
+  assert.deepEqual(status(done('success')), { state: 'success', context: 'check (asked)', description: 'the whole check: success', target_url: 'https://github.com/o/r/actions/runs/9' });
+  for (const result of ['failure', 'cancelled', 'skipped']) assert.equal(status(done(result)).state, 'failure', result);
+  // F1: the ceilings, said by the caller
+  const verify = WF('verify.yml');
+  assert.match(verify, /\n {6}ceilings:\n(?: {8}#[^\n]*\n)* {8}description: [^\n]+\n {8}type: boolean\n {8}default: true\n/);
+  assert.match(verify, /- name: Test shard \$\{\{ matrix\.shard \}\} of 8\n {8}env:\n {10}DFO_HOST_CEILINGS: \$\{\{ inputs\.ceilings && '1' \|\| '0' \}\}\n/);
+  assert.doesNotMatch(jobs.verify, /ceilings/, 'a change\'s check keeps them on');
+  for (const f of ['deploy.yml', 'relay-deploy.yml', 'account-deploy.yml', 'release-desktop.yml']) {
+    assert.match(WF(f), /uses: \.\/\.github\/workflows\/verify\.yml\n {4}with:\n(?: {6}[^\n]*\n)*? {6}ceilings: false/, `${f}: a deploy is never held by a ceiling`);
+  }
+  assert.match(rd('test/scenes/hostceiling.test.js'), /^const GATED = process\.env\.DFO_HOST_CEILINGS !== '0';$/m);
+  assert.doesNotMatch(rd('test/scenes/hostceiling.test.js'), /GITHUB_EVENT_NAME\b(?!, which)/, 'never told by the event');
 });
 
 // ═══ DEV-ENV: MAIN, ON ITS OWN VM, INSIDE WIREGUARD ══════════════════════════════════════════════════════════════

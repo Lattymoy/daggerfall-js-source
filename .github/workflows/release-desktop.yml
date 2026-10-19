@@ -142,6 +142,7 @@ jobs:
     uses: ./.github/workflows/verify.yml
     with:
       ref: ${{ github.sha }}
+      ceilings: false   # AUDIT RELEASE-FLOW F1: the ceiling gates a change, never a deploy
 
   build:
     needs: [version, gate]

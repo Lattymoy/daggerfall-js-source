@@ -73,6 +73,7 @@ jobs:
     uses: ./.github/workflows/verify.yml
     with:
       build: false
+      ceilings: false   # AUDIT RELEASE-FLOW F1: the ceiling gates a change, never a deploy
 
   # RELEASE-FLOW: and it waits in the `production` environment until a
   # release manager approves it - the environment holds the secrets below

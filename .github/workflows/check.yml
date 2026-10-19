@@ -15,6 +15,10 @@ name: check
 # saved times are its own, main's everyone's). A dispatch runs it on any
 # branch: CHECK-ASK's `/check` (check-ask.yml) dispatches it on a pull
 # request's own branch - the one way a conflicted pull request is checked.
+# AUDIT RELEASE-FLOW B1: GitHub reads no check a dispatched run reports for a
+# pull request, so such a run says its result on its commit as a status of its
+# own, `check (asked)` (the `asked` and `answered` jobs) - which the pull
+# request shows, and which no rule requires.
 
 on:
   pull_request:
@@ -25,11 +29,25 @@ on:
 permissions:
   contents: read
 
+# AUDIT RELEASE-FLOW B5: one group per event as well - a `/check` on the
+# promotion's branch (main) cancelled main's own run, the one that counts
 concurrency:
-  group: check-${{ github.event.pull_request.number || github.ref }}
+  group: check-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # CHECK-ASK (AUDIT RELEASE-FLOW B1): a dispatched run's result, said where the pull request reads it
+  asked:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Said as begun
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state=pending -f context='check (asked)' -f description='the whole check, asked by /check' -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
+
   verify:
     uses: ./.github/workflows/verify.yml
 
@@ -54,3 +72,18 @@ jobs:
             exit 1
           fi
           echo "lint, types, every test shard and the build passed"
+
+  answered:
+    if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+    needs: [verify]
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Said as done
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ needs.verify.result }}
+        run: |
+          if [ "$RESULT" = success ]; then state=success; else state=failure; fi
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='check (asked)' -f description="the whole check: $RESULT" -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
