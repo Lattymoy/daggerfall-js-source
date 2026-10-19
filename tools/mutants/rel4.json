@@ -61,10 +61,10 @@
   {
     "name": "REL4-9-the-tag-being-cut-is-its-own-previous",
     "file": "scripts/desktopRelease.mjs",
-    "old": "'--match', 'app-v*', '--exclude', tag, at",
-    "new": "'--match', 'app-v*', at",
+    "old": ".find((t) => t && t !== tag) ?? null;",
+    "new": ".find((t) => t) ?? null;",
     "tests": ["test/tooling/rel4_release.test.js"],
-    "note": "On the tag door the tag already names HEAD, so the diff would be empty and the notes would say nothing came with the release."
+    "note": "On the tag door the tag already named HEAD, so the diff would be empty and the notes would say nothing came with the release. RELEASE-FLOW re-aimed it by content: the lookup is the newest release the commit holds, and REL7's renotes reads from the tag itself."
   },
   {
     "name": "REL4-10-the-check-passes-anything",

@@ -59,8 +59,8 @@
   {
     "name": "PERF-ON4-the-base-taking-another-host",
     "file": "tools/onlineFrameProbe.mjs",
-    "old": "http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.1:\\\\d+)$/.test(v)\"]] },",
-    "new": "http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.\\\\d:\\\\d+)$/.test(v)\"]] },",
+    "old": "http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.1:\\\\d+)$/;\"]] },",
+    "new": "http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.\\\\d:\\\\d+)$/;\"]] },",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ],

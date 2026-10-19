@@ -186,10 +186,18 @@ export function shouldMarkLatest(tag, currentLatest) {
 
 const git = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }).trim();
 
-/** The release tag before `tag` in the history of `at` (HEAD, or REL7 the tag itself), or null. */
+/**
+ * The release before `tag`: the newest release `at` holds (HEAD, or REL7 the tag itself), `tag` aside, or null.
+ *
+ * RELEASE-FLOW: NEWEST BY VERSION, NEVER NEAREST BY `git describe`. Describe names the tag with the fewest commits between
+ * it and `at`, found by a walk that is a heuristic - and where releases stand on two lines (main's, cut before the
+ * cut-over, and release's, a promotion joining them) its answer moved with commit dates and with git's own version:
+ * PR #1060's first CI run, on git 2.55, found no release on main's line where git 2.43 here found main's newer one. A
+ * release's version only grows (REL3: its commit count), so the newest release a commit holds IS the release before it.
+ */
 export function previousReleaseTag(tag, run = git, at = 'HEAD') {
   try {
-    return run(['describe', '--tags', '--abbrev=0', '--match', 'app-v*', '--exclude', tag, at]) || null;
+    return run(['tag', '--merged', at, '--list', 'app-v*', '--sort=-v:refname']).split('\n').find((t) => t && t !== tag) ?? null;
   } catch {
     return null;
   }

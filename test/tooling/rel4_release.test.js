@@ -110,11 +110,13 @@ test('REL4: the notes are the patch notes the release brings, once, and say so p
   assert.equal(composeReleaseNotes([]), `${NO_NOTES_TEXT}\n`);
   assert.equal(composeReleaseNotes([{ pr: 3, text: '  \n' }]), `${NO_NOTES_TEXT}\n`, 'empty notes are no note');
   assert.equal(composeReleaseNotes(undefined), `${NO_NOTES_TEXT}\n`);
+  // RELEASE-FLOW (PIN MOVED): the newest release HEAD holds, by version - never `git describe`'s nearest
   assert.equal(previousReleaseTag('app-v0.1.4644', (args) => {
-    assert.equal(args.join(' '), 'describe --tags --abbrev=0 --match app-v* --exclude app-v0.1.4644 HEAD', 'the tag being cut is never its own "previous"');
-    return 'app-v0.1.4615';
-  }), 'app-v0.1.4615');
-  assert.equal(previousReleaseTag('app-v0.1.1', () => { throw new Error('no names found'); }), null);
+    assert.equal(args.join(' '), 'tag --merged HEAD --list app-v* --sort=-v:refname', 'the releases HEAD holds, newest first by version');
+    return 'app-v0.1.4644\napp-v0.1.4615\napp-v0.1.960';
+  }), 'app-v0.1.4615', 'the tag being cut is never its own "previous"');
+  assert.equal(previousReleaseTag('app-v0.1.1', () => ''), null, 'no release before it');
+  assert.equal(previousReleaseTag('app-v0.1.1', () => { throw new Error('not a git repository'); }), null);
   const never = () => { throw new Error('never asked'); };
   assert.deepEqual(pullRequestNotesSince(null, { run: never, api: never }), [], 'no previous release, no pile of every note ever written');
 });

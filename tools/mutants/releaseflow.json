@@ -60,6 +60,28 @@
     "note": "The step says what is wrong and the run goes on to publish it."
   },
   {
+    "name": "RELEASE-FLOW-the-release-before-by-name",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "    return run(['tag', '--merged', at, '--list', 'app-v*', '--sort=-v:refname']).split('\\n').find((t) => t && t !== tag) ?? null;",
+    "new": "    return run(['tag', '--merged', at, '--list', 'app-v*', '--sort=-refname']).split('\\n').find((t) => t && t !== tag) ?? null;",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "Sorted by name, app-v0.1.9992 stands before app-v0.1.10041: the notes would read from a release long gone, and the guard would ask after the wrong one."
+  },
+  {
+    "name": "RELEASE-FLOW-the-release-before-by-nearness",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "    return run(['tag', '--merged', at, '--list', 'app-v*', '--sort=-v:refname']).split('\\n').find((t) => t && t !== tag) ?? null;",
+    "new": "    return run(['describe', '--tags', '--abbrev=0', '--match', 'app-v*', '--exclude', tag, at]) || null;",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/tooling/rel4_release.test.js"
+    ],
+    "note": "git describe's walk is a heuristic whose pick moved with git's version (PR #1060's first CI run): the guard found nothing wrong with a release branched too soon."
+  },
+  {
     "name": "RELEASE-FLOW-the-desktop-release-unasked",
     "file": ".github/workflows/release-desktop.yml",
     "old": "            node scripts/desktopRelease.mjs line \"$TAG\"\n",

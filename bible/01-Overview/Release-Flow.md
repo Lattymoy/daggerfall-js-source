@@ -26,7 +26,7 @@ account deploy on a path filter: since this, NOTHING THE PLAYERS USE MOVES WHEN 
 | DEV-ENV | main's game, relay and account service on a VM of its own, reached through WireGuard alone | `dev-deploy.yml`, `ops/dev/`, `tools/devPeer.mjs`, `src/net/serviceHome.js` |
 
 Held by `test/tooling/releaseflow.test.js`, `test/tooling/rel4_release.test.js` (the notes) and
-`test/net/servicehome.test.js`; `tools/mutants/releaseflow.json` (44 mutants, all dead).
+`test/net/servicehome.test.js`; `tools/mutants/releaseflow.json` (46 mutants, all dead).
 
 ## The branches
 

@@ -54,8 +54,10 @@ test('PERF-ON4 (AUDIT PERF-ON4 F4): EACH EDIT DOES WHAT IT IS FOR, as the probes
   const was = flags(src('src/systems/online/onlineLane.js')), now = flags(served('src/systems/online/onlineLane.js'));
   assert.ok(was.includes('shot'), 'the tree refuses `?shot` online');
   assert.deepEqual(now, was.filter((f) => f !== 'shot'), 'the probe\'s page refuses all else, and not `?shot`');
-  // the account base
-  const base = (code) => new RegExp(/\(typeof v === 'string' && \/(.+)\/\.test\(v\)\)/.exec(code)[1]);
+  // the account base - PIN MOVED (RELEASE-FLOW DEV-ENV): the rule's one home is SERVICE_URL, which the base stored on the
+  // device (serviceBase) and a build's stamp (homeAccountServiceOf) both read, so the probe edits it there
+  assert.match(src('src/net/accountClient.js'), /\(typeof v === 'string' && SERVICE_URL\.test\(v\)\) \? v : HOME_ACCOUNT_SERVICE;/, 'serviceBase reads SERVICE_URL');
+  const base = (code) => new RegExp(/\nconst SERVICE_URL = \/(.+)\/;\n/.exec(code)[1]);
   const tree = base(src('src/net/accountClient.js')), probe = base(served('src/net/accountClient.js'));
   for (const v of ['https://account.example', 'http://127.0.0.1:8870', 'http://example.com', 'http://127.0.0.2:8870', 'http://127.0.0.1', 'http://localhost:8870', 'https://a b']) {
     const want = tree.test(v) || /^http:\/\/127\.0\.0\.1:\d+$/.test(v);

@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { readSettings, codeownersReviewers, planSettings, sameRuleset, ROLES } from '../../tools/repoSettings.mjs';
 import { wgKeyPair, wgPublicOf, memberConfig, memberIpProblem, WG_KEY_RE, MEMBER_NAME_RE, NETWORK } from '../../tools/devPeer.mjs';
-import { releaseLineProblem } from '../../scripts/desktopRelease.mjs';
+import { releaseLineProblem, previousReleaseTag } from '../../scripts/desktopRelease.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -125,7 +125,7 @@ test('RELEASE-BRANCH: the environments the workflows name are the ones ops/githu
   assert.equal(onOf(WF('check.yml')), 'on:\n  pull_request:\n  push:\n    branches: [main]\n  workflow_dispatch:\n\n');
 });
 
-test('RELEASE-BRANCH: where release begins - the release before must stand on the first-parent line a release is cut from, since the update number counts that line and the notes read it from there: release branched at main\'s last release passes, and so does every release cut from release after it, a hotfix\'s and a promotion\'s; branched before it, both would repeat main\'s, so the desktop release and the site refuse, said (mutants: the line read as ancestry; the line unread; the refusal passed; the desktop release unasked; the site unasked)', { skip: BASH }, (t) => {
+test('RELEASE-BRANCH: where release begins - the release before must stand on the first-parent line a release is cut from, since the update number counts that line and the notes read it from there: release branched at main\'s last release passes, and so does every release cut from release after it, a hotfix\'s and a promotion\'s; branched before it, both would repeat main\'s, so the desktop release and the site refuse, said; the release before is the newest a commit holds BY VERSION, whatever git\'s describe would call nearest (mutants: the line read as ancestry; the line unread; the refusal passed; the desktop release unasked; the site unasked; the release before by name; the release before by nearness)', { skip: BASH }, (t) => {
   // both jobs that publish an update number ask, before they publish it
   assert.match(runBlock(WF('release-desktop.yml'), 'Resolve release version'), /^if \[ "\$GITHUB_REF" = refs\/heads\/release \]; then\n(?: {2}[^\n]*\n)*? {2}node scripts\/desktopRelease\.mjs line "\$TAG"\nfi\n/m,
     'the desktop release asks on release, of the tag it is about to cut');
@@ -178,9 +178,11 @@ test('RELEASE-BRANCH: where release begins - the release before must stand on th
   assert.equal(releaseLineProblem('', run), null, 'the site deployed after its desktop release reads HEAD\'s own tag');
   merged(31, 'hotfix/x', 'release');
   assert.equal(releaseLineProblem('app-v0.1.6', run), null, 'a hotfix\'s release: the release before it is on the line');
+  git('tag', 'app-v0.1.10');                  // the hotfix, released
   merged(23, 'f3', 'main');
   promoted('release');
-  assert.equal(releaseLineProblem('app-v0.1.9', run), null, 'and a promotion\'s after that');
+  assert.equal(previousReleaseTag('app-v0.1.12', run), 'app-v0.1.10', 'the newest BY VERSION - 10 after 4, where a sort by name puts 4 first');
+  assert.equal(releaseLineProblem('app-v0.1.12', run), null, 'and a promotion\'s after that');
 });
 
 // ═══ ROLES: WHO REVIEWS, WHO RELEASES ═════════════════════════════════════════════════════════════════════════════
