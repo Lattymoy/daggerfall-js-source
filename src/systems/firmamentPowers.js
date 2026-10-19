@@ -48,6 +48,7 @@ import { foeGroup } from './loot/lootPowers.js';   // the loot's one foe group
 import { healMine, manaMine } from './playerHeal.js';
 import { playerDoor } from './playerDoor.js';
 import { setOnlineLayerExtra, renownHpOf, renownMpOf } from './renownLayer.js';
+import { evenHpOf } from './levelEven.js';   // AUDIT LEVEL-EVEN L2-4: the floored body a health star's share is of
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
 
@@ -93,6 +94,9 @@ function shareOf(key, damage, pct, keep = true) {
 /** `v` held inside channel `key`'s budget (STAT_DEFS) - a key star's raw points and a small star's share are one channel. */
 const capAt = (key, v) => { const d = statDef(key); return d ? Math.max(d.min, Math.min(d.max, v)) : v; };
 
+/** An attribute's gain off the stars `read` answers: a key star's raw points and a small star's share of the permanent
+ *  value, the two held to the channel's budget together. The fold's, and the online layer's Endurance (LEVEL-EVEN). */
+const attributeGain = (entity, a, read) => capAt(a, read(a) + pctOf(entity.stats?.[a], read(`pct.${a}`)));
 /** THE ENTITY FOLD: the attributes, the skills, the saving throws, armour on every part, the carry, standing and the
  *  wardrobe's channels - the combat ones while awake, the life ones while in force. */
 export function firmamentFold(entity) {
@@ -107,7 +111,7 @@ export function firmamentFold(entity) {
   // live ceiling by itself too, so +2% Speed on a 100 reads 102 - liveStat had held it at MAX_STAT_VALUE, and a star
   // did nothing for a maxed stat. A departure from GetLiveStatValue's ceiling for the sky's gains alone.
   for (const a of ATTRIBUTES) {
-    const v = capAt(a, read(a) + pctOf(entity.stats?.[a], read(`pct.${a}`)));
+    const v = attributeGain(entity, a, read);
     if (v) mods.stats[a] = v;
     if (v > 0) mods.statMax[a] = v;
   }
@@ -208,7 +212,11 @@ export function firmamentLayer(entity = me()) {
   const baseHp = Number.isFinite(entity.rawMaxHealth) ? entity.rawMaxHealth : (entity.maxHealth ?? 0) - renownHpOf(entity);
   const baseMp = (entity.maxMagicka ?? 0) - renownMpOf(entity);
   // AUDIT UICALM-FIRM1 L1 H1: the raw points and the share together inside the budget (+75 Health, +75 Spell Points)
-  setOnlineLayerExtra(entity, { hp: capAt('hp', (c.hp ?? 0) + pctOf(baseHp, c.hpPct ?? 0)), mp: capAt('mp', (c.mp ?? 0) + pctOf(baseMp, c.mpPct ?? 0)) });
+  // LEVEL-EVEN (systems/levelEven.js): and the stars' Endurance, which the online health floor reads
+  const end = attributeGain(entity, 'endurance', (key) => c[key] ?? 0);   // an attribute is a combat channel (firmamentLaw.js statDef)
+  // AUDIT LEVEL-EVEN L2-4: a small star's share is of the body the floor stands the stored one at (never of the layer)
+  const floored = baseHp + (Number.isFinite(entity.rawMaxHealth) ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + end) : 0);
+  setOnlineLayerExtra(entity, { hp: capAt('hp', (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0)), mp: capAt('mp', (c.mp ?? 0) + pctOf(baseMp, c.mpPct ?? 0)), end });
 }
 
 // ── registered at import ───────────────────────────────────────────

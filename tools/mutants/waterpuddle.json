@@ -128,7 +128,7 @@
   {
     "name": "WATERPUDDLE-shader-alpha-not-read",
     "file": "src/render/waterSurface.js",
-    "old": "edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);",
+    "old": "edge *= smoothstep(0.3, 0.7, pa);",
     "new": "edge *= 1.0;",
     "tests": [
       "test/world/waterpuddle.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "WATERPUDDLE-world-uploads-the-bare-layers",
     "file": "src/scenes/world.js",
-    "old": "renderer.uploadTileArray(groundArchive, modLayers ? layers : markPuddleWater(layers));",
-    "new": "renderer.uploadTileArray(groundArchive, layers);",
+    "old": "return { modLayers, layers: modLayers ? carryPuddleMask(modLayers, markPuddleWater(classic)) : markPuddleWater(classic) };",
+    "new": "return { modLayers, layers: modLayers ? carryPuddleMask(modLayers, markPuddleWater(classic)) : classic };",
     "tests": [
       "test/world/waterpuddle.test.js"
     ]

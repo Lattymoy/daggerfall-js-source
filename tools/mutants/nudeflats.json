@@ -56,8 +56,8 @@
   {
     "name": "NUDEFLATS-world-flats-born",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      [archive, record] = drawnFlat(archive, record);   // NUDE-FLATS: base-anchored, so the stand-in stands where the figure did\n",
-    "new": "",
+    "old": "    const [archive, record] = drawnFlat(pics[j][0], pics[j][1]);",
+    "new": "    const [archive, record] = pics[j];",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]

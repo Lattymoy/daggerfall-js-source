@@ -90,7 +90,8 @@ could see or play. That is where the identity goes.
   Offline with the switch off, the path is neither and its signature spell casts as the plain bundle it is - nothing
   is lost, as Master Skills keeps a skill past 100 while off.
 - **Never at a player.** A rider or passive that strikes reaches foes only (`ownSpellAt`, BAL9's gate); a signature
-  spell cast at a duel opponent or given to a party mate lands as its plain classic bundle.
+  spell cast at a duel opponent or given to a party mate lands as its plain classic bundle. SKILL-SWAP (2026-10-19, `10-UI/Growth.md` section 11):
+  such a class can now change one unmastered class skill for a school, for gold, and a line under the guide's headline says so where one swap would open a path (AUDIT SUGGESTIONS-1019 L5-1).
 
 ## 4. SCHOOLS2 - the schools past 100
 

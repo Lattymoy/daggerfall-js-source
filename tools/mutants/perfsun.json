@@ -83,16 +83,17 @@
   {
     "name": "PERF-SUN2-the-flats-gate-goes-so-every-sprite-in-the-world-reads-the-sun-map-at-midnight",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vBBSunVis = dot(uBBSun, uBBSun) > 0.0 ? (uMesh > 0.5 ? sunShadowAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
-    "new": "  vBBSunVis = (uMesh > 0.5 ? sunShadowAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0), uSize.y));",
+    "old": "  vBBSunVis = dot(uBBSun, uBBSun) > 0.0 ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
+    "new": "  vBBSunVis = (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y));",
     "tests": [
       "test/render/perfsun_fragment.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (AUDIT BANTHA1 TREE-2, 2026-10-18): the read at `sunAt`."
   },
   {
     "name": "PERF-SUN2-the-flat-reads-its-shadow-at-its-own-fragment-so-a-sprite-shadows-itself",
     "file": "src/render/enhancedLighting.js",
-    "old": "sunShadowSoftAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
+    "old": "sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
     "new": "sunShadowSoftAt(vBBWorld, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
     "tests": [
       "test/render/perfsun_fragment.test.js"
@@ -183,8 +184,8 @@
   {
     "name": "TREES1-the-flat-goes-back-to-the-cheap-tap-and-a-distant-tree-flips-lit-to-dark",
     "file": "src/render/enhancedLighting.js",
-    "old": "sunShadowSoftAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
-    "new": "sunShadowAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0))) : 1.0;",
+    "old": "sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
+    "new": "sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0))) : 1.0;",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]

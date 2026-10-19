@@ -61,6 +61,13 @@ export const CURTAIN_MEMO_M = 32;
 /** Rain's and snow's colour, display-encoded (the lit lane's frame image is 8-bit and display encoded - airPass.js). */
 export const CURTAIN_RAIN_COLOR = Object.freeze([0.5, 0.54, 0.6]);
 export const CURTAIN_SNOW_COLOR = Object.freeze([0.84, 0.86, 0.9]);
+const _mix = new Float32Array(3);
+/** PRECIP1: the curtain's colour at its snow share `k` (0 rain, 1 snow) - one scratch, read before the next. */
+export function mixColor(a, b, k) {
+  const t = Math.min(1, Math.max(0, Number(k) || 0));
+  for (let i = 0; i < 3; i++) _mix[i] = a[i] + (b[i] - a[i]) * t;
+  return _mix;
+}
 /** The streaks' fall, cycles a second up the curtain's height (a whole number over the clock's period, so it never
  *  stutters as a float's seconds grow - duelWall.js's law). */
 export const CURTAIN_CLOCK_PERIOD = 120;
@@ -107,7 +114,7 @@ export function curtainsOf(cells, { focus, eye, ground = null, groundAt = null, 
     const ramp = (dist) => Math.min(1, Math.max(0, (dist - radius * 0.85) / (radius * 0.3)));
     const alpha = ramp(Math.hypot(c.x - eye[0], c.z - eye[2])) * Math.max(CURTAIN_OWN_ALPHA, ramp(d));
     if (alpha <= 0.001) continue;
-    out.push({ centre: [c.x, 0, c.z], radius, height: base, depth: CURTAIN_EXT * c.fall, kind: c.fallKind ? 1 : 0, alpha, d, shape, clip });
+    out.push({ centre: [c.x, 0, c.z], radius, height: base, depth: CURTAIN_EXT * c.fall, kind: c.fallKind ?? 0, alpha, d, shape, clip });   // PRECIP1: the snow share, 0..1
   }
   out.sort((a, b) => a.d - b.d);
   const kept = [];
@@ -245,6 +252,7 @@ function mat4Multiply(out, a, b) {
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_WATER_FOG = new Float32Array(20);
+const NO_HAZE = new Float32Array(8);   // BANTHA1: uJungleHaze off ([1].x 0)
 const NO_FOCUS = new Float32Array(4);
 const CIRCLE = packShape(null);
 
@@ -254,7 +262,7 @@ export class RainCurtainsRenderer {
     const prog = buildProgram(gl, CURTAIN_VS, CURTAIN_FS);
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uCentre', 'uRadius', 'uHeight', 'uEye', 'uDepth', 'uAlpha', 'uTime', 'uColor', 'uLight', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog', 'uFocus', 'uShapeA', 'uShapeB', 'uClip', 'uClipA', 'uClipB']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uCentre', 'uRadius', 'uHeight', 'uEye', 'uDepth', 'uAlpha', 'uTime', 'uColor', 'uLight', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog', 'uJungleHaze', 'uFocus', 'uShapeA', 'uShapeB', 'uClip', 'uClipA', 'uClipB']) this.u[n] = gl.getUniformLocation(prog, n);
     const verts = ringVertices(CURTAIN_SEGMENTS);
     this.count = verts.length / 2;
     const vao = gl.createVertexArray();
@@ -293,6 +301,7 @@ export class RainCurtainsRenderer {
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // TV1's focus: the fog is the traveller's
     if (U.uDwFog) gl.uniform4fv(U.uDwFog, fog?.dw ?? NO_WATER_FOG);
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze); none handed, off
     gl.bindVertexArray(this.vao);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -306,7 +315,7 @@ export class RainCurtainsRenderer {
       if (cl) { gl.uniform4f(U.uClip, cl.x, cl.z, cl.r, cl.rim); const ks = cl.shape ?? CIRCLE; gl.uniform4f(U.uClipA, ks[0], ks[1], ks[2], ks[3]); gl.uniform4f(U.uClipB, ks[4], ks[5], ks[6], ks[7]); } else gl.uniform4f(U.uClip, 0, 0, -1, 1);
       gl.uniform1f(U.uDepth, c.depth);
       gl.uniform1f(U.uAlpha, Math.min(1, c.alpha) * k);
-      gl.uniform3fv(U.uColor, c.kind ? CURTAIN_SNOW_COLOR : CURTAIN_RAIN_COLOR);
+      gl.uniform3fv(U.uColor, mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, c.kind));   // PRECIP1: a curtain over the snow line greys toward white
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;
     }

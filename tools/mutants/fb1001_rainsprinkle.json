@@ -47,8 +47,8 @@
   {
     "name": "RAIN-SPRINKLE-the-world-host-wears-the-row",
     "file": "src/scenes/world.js",
-    "old": "blendTerms(wxFrom, fallTerms(weatherTerms(), fx.intensity, weather, FALL_LIGHT), fx.t)",
-    "new": "blendTerms(wxFrom, weatherTerms(), fx.t)",
+    "old": "blendTerms(wxFrom, fallTerms(weatherTerms(fx.snow), fx.intensity, weather, FALL_LIGHT), fx.t)",
+    "new": "blendTerms(wxFrom, weatherTerms(fx.snow), fx.t)",
     "tests": [
       "test/systems/weatherfront.test.js"
     ]

@@ -304,7 +304,7 @@ export function writeRibbon(out, v, points, eye, width, color, { vh = 0, period 
   return v;
 }
 
-const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus'];
+const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze'];
 
 export class NavalRenderer {
   /** @param {any} renderer - render/renderer.js's (its matrices, light and fog are this pass's too) */
@@ -366,6 +366,7 @@ export class NavalRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
   }
 
   /**

@@ -182,13 +182,14 @@ function careerFields(entity) {
     // AUDIT LEGACY III O10/P1: a stock career is its index's (its CLASS*.CFG is read fresh at a birth - bornResult); only
     // a custom one is kept whole, as isCustomCareer and inheritCareer read it. Every played member carried six hundred
     // bytes of a career the game ships
-    career: career && String(career.name ?? '') !== CLASS_CAREERS[idx] ? JSON.parse(JSON.stringify(career)) : null,
+    // AUDIT SUGGESTIONS-1019 L5-4: and a stock class with a class skill changed (skillSwap.js) is no longer its index's
+    career: career && (career.swapped === true || String(career.name ?? '') !== CLASS_CAREERS[idx]) ? JSON.parse(JSON.stringify(career)) : null,
     groups: groupsOf(career),
   };
 }
 
 /** Is a person's career a custom one - a career object whose name is not its index's stock name. */
-export const isCustomCareer = (person) => !!person?.career && String(person.career.name ?? '') !== CLASS_CAREERS[person.careerIndex];
+export const isCustomCareer = (person) => !!person?.career && (person.career.swapped === true || String(person.career.name ?? '') !== CLASS_CAREERS[person.careerIndex]);   // AUDIT SUGGESTIONS-1019 L5-4: a swapped class too
 
 /** Write the PLAYED character into their person: identity, level, the permanent eight and thirty-five, the career and
  *  the character id. The mod's `SaveCurrentCharacter` / `SaveCharacterData`, the parts the port keeps (D8: no kit -

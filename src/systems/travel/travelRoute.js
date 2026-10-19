@@ -51,6 +51,11 @@ export const ROUTE_COST = Object.freeze({ road: 1, track: 1.6, open: 3.5 });
 export const SEA_COST = Object.freeze({ sea: 1.2, coast: 1.5, shore: 6 });
 /** OWS2: the kinds a crossing's steps are. */
 export const SEA_KINDS = Object.freeze(['sea', 'embark', 'landfall']);
+/** PASSAGE (AUDIT PASSAGE A1, bible/03-World/Passage.md): a booked voyage (`sea.voyage`) comes ashore only this near its
+ *  goal (map pixels, the longest axis) - the port's own roadstead, as far as SEA-LANES finds one from its town
+ *  (systems/naval/seaLanes.js ROADSTEAD_PX, pinned equal) - so a coast road is never the cheaper way to the port a passenger
+ *  paid to sail to. */
+export const VOYAGE_LANDFALL_PX = 3;
 /** OWS2: the search's layers - ashore with the boat to hand, afloat, ashore with it left behind (the one layer without
  *  `sea` is the last's law: no launch). */
 const ASHORE = 0, AFLOAT = 1, LEFT = 2;
@@ -293,7 +298,8 @@ class Heap {
  * none. `isWater(x, y)` refuses a pixel - never the two ends, which the traveller already stands on or asked for.
  * OWS2: `sea` puts the boat in the search - `start` 'sea' when the traveller is afloat already (at the helm), 'land'
  * with the boat to hand ashore; `again` when a landfall packs it (it launches again later); `goal` 'sea' when the end
- * is a spot on the water (reached afloat), 'land' when it is ashore (the default).
+ * is a spot on the water (reached afloat), 'land' when it is ashore (the default); PASSAGE: `voyage` a booked passage's -
+ * its landfall only within VOYAGE_LANDFALL_PX of the goal.
  * @param {{x:number,y:number}} from
  * @param {{x:number,y:number}} to
  * @param {{ roads?: ArrayLike<number>|null, tracks?: ArrayLike<number>|null, isWater?: (x:number,y:number)=>boolean,
@@ -301,7 +307,7 @@ class Heap {
  *   openBlocked?: ((ax:number, ay:number, bx:number, by:number, leaving?:boolean) => boolean)|null, goalExempt?: boolean,
  *   peakAt?: ((x:number, y:number) => boolean)|null,
  *   apart?: ((from:{x:number,y:number}, to:{x:number,y:number}, net:{roads:any, tracks:any}) => boolean)|null,
- *   sea?: { start: 'land'|'sea', again?: boolean, goal?: 'land'|'sea' } | null }} [opts] -
+ *   sea?: { start: 'land'|'sea', again?: boolean, goal?: 'land'|'sea', voyage?: boolean } | null }} [opts] -
  *   `openBlocked`: an OPEN step refused (OW-MOUNTAINS) - never a road's or a track's; AUDIT OW3 J5: asked of the step out
  *   of the start too, and of the step onto the goal unless `goalExempt` (a place: a town among the peaks is reached; a
  *   spot is not - false, the cliff up to a plateau refused). AUDIT OW4 J1: told `leaving` - the step starts in the
@@ -413,6 +419,7 @@ function search(from, to, { roads, tracks, isWater, width, height, bounds, margi
           // the landfall: the step up the beach, and the boat taken out - to hand again when it packs. THE MERGE: never
           // up onto the peaks (OW-MOUNTAINS) but a place's own pixel asked for
           if (peakAt && peakAt(nx, ny) && !(n === goal && goalExempt)) continue;
+          if (sea.voyage && Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX) continue;   // PASSAGE: ashore at the port she sails for
           nl = sea.again ? ASHORE : LEFT; kindIx = 5; step = diag * ROUTE_COST.open + SEA_COST.shore;
         }
       } else if (wet && (seaGoal || n !== goal)) {   // a place's own pixel on the water is walked into (the harbour town), a spot on it sailed to

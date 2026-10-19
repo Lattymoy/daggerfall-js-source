@@ -121,8 +121,8 @@
   {
     "name": "NODE-MARKS-a-felled-tree-marked",
     "file": "src/scenes/treeHost.js",
-    "old": "    mark: (n) => (goneIn(book, n.key, 'logs') ? null : TREE_MARK),",
-    "new": "    mark: () => TREE_MARK,",
+    "old": "    mark: (n) => (goneIn(book, n.key, 'logs') ? null : n.flat?.jungle != null ? jungleTreeMark(n.flat) : TREE_MARK),",
+    "new": "    mark: (n) => (n.flat?.jungle != null ? jungleTreeMark(n.flat) : TREE_MARK),",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ],
@@ -414,7 +414,7 @@
   {
     "name": "AUDIT-NODE-MARKS-the-fog-not-handed",
     "file": "src/render/nodeGlow.js",
-    "old": "{ mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus }, reduced(t));",
+    "old": "{ mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze }, reduced(t));",
     "new": "null, reduced(t));",
     "tests": [
       "test/scenes/nodemarks.test.js"
@@ -423,8 +423,8 @@
   {
     "name": "AUDIT-NODE-MARKS-the-still-form-never-asked",
     "file": "src/render/nodeGlow.js",
-    "old": "camPos: renderer._camPos, focus: renderer._focus }, reduced(t));",
-    "new": "camPos: renderer._camPos, focus: renderer._focus }, false);",
+    "old": "focus: renderer._focus, haze: renderer._haze }, reduced(t));",
+    "new": "focus: renderer._focus, haze: renderer._haze }, false);",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]

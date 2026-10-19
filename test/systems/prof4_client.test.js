@@ -411,6 +411,7 @@ test('PROF4 pages: the Workbench at a Furniture Store - the saws for the logs he
   assert.deepEqual(bought, [['cloth:linen', 2]]);
   press('Small Table');   // PIN MOVED (CRAFT2): the pattern - in the wood the last craft here was made of, held
   assert.match(text(), /Small Oak Table - rank 10/);
+  assert.match(text(), /Quality chances: Crude 20% \| Standard 60% \| Fine 20%\. They get better the further your rank \(10\) is above the recipe's \(10\)\. Draw the plane true to the grain to raise the result one quality\./);   // PLAIN-ODDS
   assert.match(text(), /Use a Heartwood for a plank - a step better \(1 stored\)/);
   const box = [...root.querySelectorAll('input')].find((i) => i.type === 'checkbox' && /Heartwood/.test(i.parentNode?.textContent ?? ''));
   box.checked = true; box.onchange();
@@ -471,10 +472,11 @@ test('PROF4 wiring: a built pixel keeps its forest (the tree flats by World of D
   const w = hostText('src/scenes/world.js');
   // PIN MOVED (ECOTONE1, 2026-10-07): a flat's climate is its own - the pixel's, or the neighbour's a border stood it by
   // (`base` its summer archive, the Tree table's key; `archive` the season's set it is drawn in)
-  assert.match(w, /if \(isTreeRecord\(base, f\.record\)\) pixelTrees\.push\(\{ id: pixelTrees\.length, group: `\$\{archive\}_\$\{f\.record\}`, i, x: f\.x, y: f\.y, z: f\.z, wood: f\.wood \?\? 0, base, archive \}\);/);   // FOREST1 (AUDIT F3): and how wooded its tile is
+  assert.match(w, /const tree = isTreeRecord\(base, f\.record\) \? \{ id: pixelTrees\.length, group: '', i: 0, x: f\.x, y: f\.y, z: f\.z, wood: f\.wood \?\? 0, base, archive \} : null;\n\s+if \(tree\) pixelTrees\.push\(tree\);/);   // PIN MOVED (AUDIT PRECIP HOST-7): its group and place the log's grouping writes (placeTrees)
+  assert.match(w, /if \(t\) \{ t\.group = places\[j\]\[0\]; t\.i = places\[j\]\[1\]; t\.archive = archives\[j\]; \}/);   // FOREST1 (AUDIT F3): and how wooded its tile is
   assert.match(w, /forest: \{ base: climate\.natureArchive, archive: natureArchive, trees: pixelTrees\.filter\(\(t\) => forestGroups\.has\(t\.group\)\), groups: forestGroups \},/);
   // PIN MOVED (ECOTONE1): any of the pixel's nature archives - its own, or a neighbour climate's a border stood here
-  assert.equal((w.match(/if \(natureSet\.has\(archive\)\) forestGroups\.set\(k, \{ batch, centers, size[^}]*\}\);/g) ?? []).length, 3, 'the season\'s batch, the classic one and (LPT1) a low-poly tree\'s far pictures');
+  assert.equal((w.match(/if \(g\.natureSet\.has\(archive\)\) forestGroups\.set\(k, \{ batch, centers, size[^}]*\}\);/g) ?? []).length, 3, 'the season\'s batch, the classic one and (LPT1) a low-poly tree\'s far pictures');
   assert.match(w, /if \(isCraftedFurniture\(it\)\) \(playerEntity\.furnishings \?\?= \[\]\)\.push\(it\);\n\s*else addItem\(\(playerEntity\.items \?\?= \[\]\), it, 'back'\);/);
   // PROF7 moved it: the station a recipe's profession names (craftStation) - the workbench Carpentry's, the loom Outfitting's
   assert.match(w, /const st = craftStation\(recipeById\(recipe\)\?\.profession\);\n\s*const f = st\.here\(\);/);

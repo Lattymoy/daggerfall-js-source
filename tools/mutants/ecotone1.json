@@ -121,7 +121,7 @@
   {
     "name": "ECOTONE1-glsl-switch-ignored",
     "file": "src/render/ecotoneGlsl.js",
-    "old": "  if (uEcoOrigin.z == 0) return own;\n",
+    "old": "  if (uEcoOrigin.z == 0) return vec4(1.0, 0.0, 0.0, 0.0);   // every neighbour wears the pixel's own set\n",
     "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "ECOTONE1-classic-call-dropped",
     "file": "src/render/renderer.js",
-    "old": "  tex = ecotone(tex, vLocalXZ, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n  ${waterBedMix()}",
-    "new": "  ${waterBedMix()}",
+    "old": "  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -148,7 +148,7 @@
   {
     "name": "ECOTONE1-lane-call-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  tex = ecotone(tex, vLocalXZ, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "old": "  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
     "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"
@@ -193,7 +193,7 @@
   {
     "name": "ECOTONE1-world-neighbour-unheld",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      for (const a of archives) await loadGroundSet(a, pipeline);\n",
+    "old": "      for (const a of archives) await loadGroundSet(a, pipeline, snowCover?.winterOf(near[groundNear.indexOf(a)]) ?? null);   // PRECIP4: the neighbours' twins\n",
     "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"

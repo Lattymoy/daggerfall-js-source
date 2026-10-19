@@ -168,7 +168,8 @@ export function residentOf(family, p, home) {
   const set = PERSON_TEXTURES[outfitRace][sex];
   const variant = pick % set.length;
   const faces = PERSON_FACE_RECORDS[outfitRace][sex];
-  const stock = Number.isInteger(p.careerIndex) && p.careerIndex >= 0 && p.careerIndex < CLASS_CAREERS.length && !isCustomCareer(p);
+  // AUDIT SUGGESTIONS-1019 L5-4: a stock class with a class skill changed still wears its class (isCustomCareer counts it, for the heir's copy)
+  const stock = Number.isInteger(p.careerIndex) && p.careerIndex >= 0 && p.careerIndex < CLASS_CAREERS.length && (!isCustomCareer(p) || (p.career?.swapped === true && String(p.career.name ?? '') === CLASS_CAREERS[p.careerIndex]));
   return {
     id: familyResId(family.id, p.id), town: home.mapId >>> 0, slot: FAMILY_SLOT_BASE + p.id, roll: FAMILY_ROLL,
     name: fullNameOf(p.given, p.surname), gender: sex === 'female' ? GENDERS.Female : GENDERS.Male, sex, race: p.race,

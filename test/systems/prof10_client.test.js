@@ -134,7 +134,7 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
     assert.match(page.text(), /Gold Ruby Ring - rank 25Gold 1 \/ 1 \(1 stored\)Ruby 1 \/ 1 \(1 stored\)/);
     assert.match(page.text(), /2,160 enchantment points \(\+20%\)\. The item maker spends them, beside a Masterwork's own enchantment\./);
     // PIN MOVED (CRAFT-FIRST-SHOWN, FIELD BUGS 2026-10-15f): the XP its own line under the odds, the first's 500 with it
-    assert.match(page.text(), /Your rank 25, margin 0: Crude 20 \| Standard 60 \| Fine 20\. A clean facet is a step better\.60 Smithing XP, and 500 more the first time you make this piece at this tier\./);   // PIN MOVED (CRAFT3): a jewel's XP is Smithing's
+    assert.match(page.text(), /Quality chances: Crude 20% \| Standard 60% \| Fine 20%\. They get better the further your rank \(25\) is above the recipe's \(25\)\. Stop every turn where the stone catches the light to raise the result one quality\.60 Smithing XP, and 500 more the first time you make this piece at this tier\./);   // PIN MOVED (CRAFT3): a jewel's XP is Smithing's
     page.button('Craft').onclick();
     assert.equal(profActUnderWay(), true);
     assert.match(page.text(), /The facet \(Gold Ruby Ring\) - stop the turn where the stone catches the light \(Space\): 5 facets/);
@@ -312,7 +312,7 @@ test('PROF10 pages: a Wand\'s Heartwood for a plank and a Lapidary\'s Siege-crac
     const crack = page.box('Set a Siege-cracked Gem as the Ruby (2 stored)');
     crack.checked = true; crack.onchange();
     assert.match(page.text(), /plank:ironwood 1 \/ 1 \(1 stored\)gem:siege 1 \/ 1 \(2 stored\)wood:heartwood 1 \/ 1 \(1 stored\)/);
-    assert.match(page.text(), /Your rank 100, margin 30: Standard 20 \| Fine 50 \| Superior 28 \| Masterwork 2\./, 'a Lapidary\'s odds: no Masterwork points');
+    assert.match(page.text(), /Quality chances: Standard 20% \| Fine 50% \| Superior 28% \| Masterwork 2%\. They get better the further your rank \(100\) is above the recipe's \(70\)\./, 'a Lapidary\'s odds: no Masterwork points');   // PIN MOVED (PLAIN-ODDS): the odds said in plain words
     page.button('Craft').onclick();
     assert.deepEqual([page.box('Use a Heartwood for a plank').disabled, page.box('Set a Siege-cracked Gem').disabled], [true, true], 'held as the facet began');
     assert.equal(_jewelForTests().act.state.half, facetWindow(100) / 2, 'a Master\'s window, 15 degrees');
@@ -328,7 +328,7 @@ test('PROF10 pages: a Wand\'s Heartwood for a plank and a Lapidary\'s Siege-crac
     assert.equal(page.box('Set a Siege-cracked Gem'), null);
     assert.equal(page.recipe('Silver Emerald Ring').textContent, 'Silver Emerald Ringwants its inputs');
     page.recipe('Silver Ruby Ring').onclick();
-    assert.match(page.text(), /Your rank 100, margin 100: Fine 35 \| Superior 52 \| Masterwork 13\./);
+    assert.match(page.text(), /Quality chances: Fine 35% \| Superior 52% \| Masterwork 13%\. They get better the further your rank \(100\) is above the recipe's \(0\)\./);   // PIN MOVED (PLAIN-ODDS): the odds said in plain words
     page.button('Quick craft').onclick();
     await tick();
     assert.deepEqual(calls.at(-1), ['craft', 'ring:silver:ruby', false, false, false]);
@@ -678,13 +678,13 @@ test('AUDIT PROF-541 R2-C5: the item maker\'s cap counts a crafted piece\'s kept
 });
 
 test('AUDIT PROF-541 R2-C6: the jeweller\'s bench\'s odds say the town Apothecary\'s quality steps the service adds (professions.js seatStepsFor) - a whole number or none; the world hands them by Jewelcrafting\'s station', () => {
-  for (const [steps, says] of [[2, ' (+2 steps from the town\'s Apothecary)'], [1.6, ' (+1 step from the town\'s Apothecary)'], [0, ''], [-2, '']]) {
+  for (const [steps, says] of [[2, ' The town\'s Apothecary raises it 2 more.'], [1.6, ' The town\'s Apothecary raises it one more.'], [0, ''], [-2, '']]) {
     stubPages({ rank: 25, held: { 'metal:gold': 9 }, over: { jewelSteps: () => steps } });
     const page = pageOf();
     try {
       page.family('Gold').onclick();
       page.recipe('Gold Ring').onclick();
-      assert.ok(page.text().includes(`Your rank 25, margin 0: Crude 20 | Standard 60 | Fine 20${says}. A clean facet is a step better`), String(steps));
+      assert.ok(page.text().includes(`Quality chances: Crude 20% | Standard 60% | Fine 20%. They get better the further your rank (25) is above the recipe's (25). Stop every turn where the stone catches the light to raise the result one quality.${says}`), String(steps));   // PIN MOVED (PLAIN-ODDS): the odds said in plain words
     } finally { page.done(); setProfessionsPages(null); }
   }
   assert.match(src('src/scenes/world.js'), /jewelSteps: \(\) => myHall\('jewelcrafting'\)\.steps,/);

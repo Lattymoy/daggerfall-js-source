@@ -140,13 +140,14 @@ test('PERF-SUN2: a FLAT has no normal, so its gate is the sun’s own share of t
   // LA-COST3 (2026-09-27): the map is read by the lane's billboard VERTEX shader now, once a quad - and the gate went
   // with it: at night that stage reads nothing either, and the fragment's cloud read stays behind the same gate
   assert.match(bb, /vec3 sunLit = dot\(uBBSun, uBBSun\) > 0\.0 \? uBBSun \* cloudShadowAt\(vBBWorld\) \* vBBSunVis : vec3\(0\.0\);/);
-  assert.match(EL_LANE.bbVs.main, /vBBSunVis = dot\(uBBSun, uBBSun\) > 0\.0 \? \(uMesh > 0\.5 \? sunShadowAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the vertex stage takes the same gate');
+  assert.match(EL_LANE.bbVs.main, /vBBSunVis = dot\(uBBSun, uBBSun\) > 0\.0 \? \(uMesh > 0\.5 \? sunShadowAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the vertex stage takes the same gate');   // AUDIT BANTHA1 TREE-2 (PIN MOVED): read at `sunAt` - half a unit up, or a jungle tree's crown
   assert.match(bb, /uTint \+ sunLit \+ elPointFlat/, 'and it enters the sum exactly where the product did');
   assert.doesNotMatch(bb, /uBBSun \* cloudShadowAt\(vBBWorld\) \* (?:sunShadowSoftAt\(base[^)]*\)\)|vBBSunVis) \+ elPointFlat/, 'the inline product is gone');
   // the shadow is still read at the flat's BASE, once for the whole
   // sprite - a sprite in its own map would shadow itself (EL2); LA-COST3: the base the fragment's elPointFlat reads
   assert.match(bb, /vec3 base = vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\);/);
-  assert.match(EL_LANE.bbVs.main, /sunShadowSoftAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)/);
+  assert.match(EL_LANE.bbVs.main, /vec3 sunAt = vBBBase \+ vec3\(0\.0, max\(0\.5, uSunLift \* /);
+  assert.match(EL_LANE.bbVs.main, /sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)/);
 });
 
 test('PERF-SUN: the tree sway is CLEARED as a suspect - the lean is baked at build, not decided a frame', () => {
@@ -161,7 +162,7 @@ test('PERF-SUN: the tree sway is CLEARED as a suspect - the lean is baked at bui
   const w = hostText('src/scenes/world.js'), ex = read('src/scenes/exterior.js');
   for (const [name, src] of [['world', w], ['exterior', ex]]) {
     // PIN MOVED (ECOTONE1, 2026-10-07): the streaming host's pixel asks by its nature set (its climate's and a border's)
-    assert.match(src, name === 'world' ? /batch\.sway = floraSwayOf\(archive, natureSet, size\.h\);/ : /batch\.sway = floraSwayOf\(archive, natureArchive, size\.h\);/, `${name}: set at BUILD`);
+    assert.match(src, name === 'world' ? /batch\.sway = floraSwayOf\(archive, g\.natureSet, size\.h\);/ : /batch\.sway = floraSwayOf\(archive, natureArchive, size\.h\);/, `${name}: set at BUILD`);
     assert.equal((src.match(/renderer\.setFlatWind\(/g) ?? []).length, 1, `${name}: one wind upload a frame, for every flat there is`);
   }
   assert.doesNotMatch(w, /floraSwayOf\([^)]*\)[^\n]*\n[^\n]*for \(const b of p\.batches\)/, 'nothing recomputes a lean inside the draw walk');
@@ -282,10 +283,10 @@ test('TREES1: a FLAT keeps the kernel at every distance, because it samples once
   const bb = body(EL_BB_FS);
   // LA-COST3 (2026-09-27): the flat's read is its vertex shader's now (once a quad, EL_BB_VS_EXT) - the soft one there
   const bbVs = body(EL_LANE.bbVs.head + EL_LANE.bbVs.main);
-  assert.match(bbVs, /sunShadowSoftAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)/, 'the flat reads the soft one');
+  assert.match(bbVs, /sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)/, 'the flat reads the soft one');   // AUDIT BANTHA1 TREE-2 (PIN MOVED): at `sunAt`
   // LPT1 (AUDIT LPT B4): a low-poly tree in the billboard program's mesh mode is no flat - its every VERTEX would run
   // the kernel, so it takes one tap at its root; the flat's path is what is left without that arm
-  const meshArm = 'uMesh > 0.5 ? sunShadowAt(vBBBase + vec3(0.0, 0.5, 0.0), vec3(0.0, 1.0, 0.0)) : ';
+  const meshArm = 'uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : ';   // AUDIT BANTHA1 TREE-2 (PIN MOVED): one tap at `sunAt` - its root's half unit, a jungle tree's crown
   assert.ok(bbVs.includes(meshArm), 'the tree\'s arm, gated on the mesh mode');
   assert.ok(!/[^t]sunShadowAt\(/.test(bbVs.replace(meshArm, '')), 'and never the cheap one, at the vertex either');
   assert.ok(!/sunShadow(?:Soft)?At\(/.test(bb), 'the flat’s fragment reads no sun map at all');

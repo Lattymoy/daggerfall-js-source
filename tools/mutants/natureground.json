@@ -16,8 +16,8 @@
   {
     "name": "NATUREGROUND-lift-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": " : flat.y + lift), fz);",
-    "new": " : flat.y), fz);",
+    "old": " : flat.y + lift), fz, { block, n });",
+    "new": " : flat.y), fz, { block, n });",
     "tests": ["test/world/terrain/natureground.test.js"]
   },
   {

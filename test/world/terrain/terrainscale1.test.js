@@ -218,8 +218,9 @@ function pump({ publish = false } = {}) {
   const collider = { removeBucket: (k) => buckets.delete(k) };
   const built = new Map();
   const buildingDoors = [{ pixelKey: '1,1' }, { pixelKey: '2,2' }, { pixelKey: '1,1' }];
-  const hums = [];
+  const hums = [], handed = [];
   const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums,
+    trees: { releasedBuild: (m) => handed.push(m) },   // LPT1 / BANTHA1: the far pictures' handles the build took, the trees' host's to give back (scenes/treesHost.js)
     // DW-D: DeepWaterRuntime's location-load count rides a location's build - none here
     locationIndex: new Map(), spawnedDungeonAt: () => null, _locationToBuild: () => null, dwLocationLoadBegan: () => {}, dwLocationLoadEnded: () => {} };   // AUDIT OW5b D2: the build's one ask
   const body = `${WORLD.slice(i, j)}
@@ -238,7 +239,7 @@ function pump({ publish = false } = {}) {
     }
     return { buildPixel, inFlight, _building };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
-  return { ...api, freed, buckets, buildingDoors, built, hums };
+  return { ...api, freed, buckets, buildingDoors, built, hums, handed };
 }
 
 test('BUILD-FAIL1: a build that throws frees what it made - the GPU surfaces and batches, its collider bucket and its gates\', its doors - and a published one is left to destroyPixel', async () => {
@@ -248,11 +249,13 @@ test('BUILD-FAIL1: a build that throws frees what it made - the GPU surfaces and
   assert.deepEqual([...h.buckets].sort(), ['2,2'], 'the pixel\'s bucket and both gates\' - the one past the last record too - gone; another pixel\'s kept');
   assert.deepEqual(h.buildingDoors.map((d) => d.pixelKey), ['2,2'], 'its doors are no E-targets');
   assert.deepEqual(h.hums, ['1,1'], 'its windmills\' hums are stopped');
+  assert.equal(h.handed.length, 1, 'its far pictures\' handles handed to the trees\' host with the ledger');
   assert.equal(h._building.size, 0); assert.equal(h.inFlight.size, 0);
   const p = pump({ publish: true });
   await assert.rejects(p.buildPixel(1, 1));
   assert.deepEqual(p.freed, [], 'published: the entry owns them, and destroyPixel frees them');
   assert.deepEqual(p.hums, []);
+  assert.deepEqual(p.handed, []);
   assert.equal(p.buckets.size, 4);
   // the ledger is kept where the build makes each thing, and handed over at publish
   assert.match(WORLD, /    const made = \{\};[^\n]*\n    _building\.set\(key, made\);/, 'opened as the build begins');

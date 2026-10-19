@@ -38,8 +38,8 @@
   {
     "name": "WET-FALL-the-level-never-handed",
     "file": "src/systems/survival/temperature.js",
-    "old": "sheltered: !!env.sheltered, fall: env.falling?.level ?? 1 })",
-    "new": "sheltered: !!env.sheltered })",
+    "old": "sheltered: !!env.sheltered, fall: env.falling?.level ?? 1, snow:",
+    "new": "sheltered: !!env.sheltered, snow:",
     "tests": [
       "test/systems/survival/fb1015f_wetfall.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WET-FALL-the-fallback-the-sim-s-word",
     "file": "src/systems/weather/weatherSim.js",
-    "old": "{ word: _heard, level: _heardGain } : { word: shown, level: 1 });",
-    "new": "{ word: _heard, level: _heardGain } : { word: currentWeather(), level: 1 });",
+    "old": ": { word: shown, level: 1, snow: null });",
+    "new": ": { word: currentWeather(), level: 1, snow: null });",
     "tests": [
       "test/systems/survival/fb1015f_wetfall.test.js"
     ]

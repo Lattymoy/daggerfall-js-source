@@ -61,6 +61,7 @@ export const SMOOTH_GRADIENT_THRESHOLD = 20;
 export function dilateCoastalClimate(maps, passes = 2) {
   const pak = maps?.climatePak;
   if (!pak?.buffer) return 0;
+  pak.undilated ??= pak.buffer;   // AUDIT PRECIP AIR-10: the file's own climates kept - the air's (a texture repair is no weather); each pass writes a new buffer
   let changed = 0;
   for (let pass = 0; pass < passes; pass++) {
     const src = pak.buffer;

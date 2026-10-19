@@ -103,7 +103,7 @@ export function frameFitBudget({ intervalMs, busyMs, streamingMs = 0, awaited = 
  *   wait it cannot see is a fetch that settles before the next frame
  *   begins (a cold texture off the disk cache): that slice still counts
  *   the wait, at most what the frame interval left.
- * @returns {{breathe: () => Promise<void>, reset: () => void, yields: number}}
+ * @returns {{breathe: () => Promise<void>, reset: () => void, left: () => number, yields: number}}
  */
 export function createBreather({
   now = () => performance.now(),
@@ -132,6 +132,9 @@ export function createBreather({
     },
     /** A new build starts a fresh slice (the awaits before it were someone else's). */
     reset() { sliceStart = now(); sliceFrame = null; sliceBudget = budget ? budget() : sliceMs; },
+    /** AUDIT PRECIP HOST-N2: the milliseconds the slice has left - a unit of work sized to the frame (the snow's
+     *  integration, scenes/snowCoverHost.js settle) asks it, never a fixed slice of its own over the frame's. */
+    left() { return Math.max(0, sliceBudget - (now() - sliceStart)); },
   };
   return b;
 }

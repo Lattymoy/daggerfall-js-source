@@ -34,6 +34,7 @@
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
 import { SD_BRASS_GLSL } from '../world/superDungeon/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
+import { HAZE_SKY_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the sky (render/hazeGlsl.js)
 
 export const SKY_ANGLE_PER_PIXEL = Math.PI / 512;
 
@@ -175,6 +176,7 @@ uniform float uBrass;  // AUDIT SD III (V8): the brass air's, 0 = none
 out vec4 outColor;
 ${DREAD_GLSL}
 ${SD_BRASS_GLSL}
+${HAZE_SKY_GLSL}
 void main() {
   // View ray from the fragment, rotated by pitch (about X) then yaw (about Y)
   // to match the scene camera (fwd = (sin yaw * cos pitch, sin pitch,
@@ -191,6 +193,7 @@ void main() {
   float v = elevation / uVSpan;
   vec3 color = v > 1.0 ? uClear : texture(uSky, vec2(u, clamp(v, 0.0, 1.0))).rgb;  // uClear = fillColor
   outColor = vec4(brassGrade(dreadGrade(mix(color, uFogColor, uFogMix), uDread), uBrass), 1.0);
+  outColor.rgb = hazeSky(outColor.rgb, dir);   // BANTHA1: the jungle's haze toward the horizon - AUDIT BANTHA1 HAZE-8: after the grades, its colour the frame's fog colour, graded once already (shared.js fogColorFor)
 }`;
 
 export class SkyRenderer {
@@ -209,11 +212,14 @@ export class SkyRenderer {
     this.uFogColor = gl.getUniformLocation(prog, 'uFogColor');
     this.uDread = gl.getUniformLocation(prog, 'uDread');
     this.uBrass = gl.getUniformLocation(prog, 'uBrass');
+    this.uHazeSky = gl.getUniformLocation(prog, 'uHazeSky');   // BANTHA1
     this.fogMix = 0;
     /** EVENT1: the live event's grade over the panorama, 0..1 (world/dreadSky.js) - the host's. */
     this.dread = 0;
     /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/superDungeon/sdBrassSky.js) - the host's. */
     this.brass = 0;
+    /** BANTHA1: the jungle's haze over the sky - rgb its colour, w its depth straight up (render/hazeGlsl.js uHazeSky); the host's, w 0 none. */
+    this.hazeSky = new Float32Array(4);
     this.fogColor = new Float32Array([0.5, 0.5, 0.5]);
 
     // Fullscreen triangle pair.
@@ -281,6 +287,7 @@ export class SkyRenderer {
     gl.uniform1f(this.uFogMix, this.fogMix);
     gl.uniform1f(this.uDread, this.dread);   // EVENT1
     gl.uniform1f(this.uBrass, this.brass);   // AUDIT SD III (V8)
+    gl.uniform4fv(this.uHazeSky, this.hazeSky);   // BANTHA1
     gl.uniform3fv(this.uFogColor, this.fogColor);
     // HANDEDNESS: the fullscreen triangle winds CCW and the renderer
     // runs frontFace(CW) - without culling off, the whole sky culls

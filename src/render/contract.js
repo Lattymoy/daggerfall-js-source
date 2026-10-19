@@ -66,6 +66,7 @@
  * @property {ArrayLike<number>|null} [_scales]       LPT1: each flat's share of the batch's size (null: all whole), kept for a move
  * @property {object|null} [lptProto]                 LPT1: the low-poly tree a far picture stands for (its handle) - it gives way to the tree near the eye (renderer setLowPolyTrees)
  * @property {number} [farH]                          LPT1: the height MAC1's far-ring rule reads in place of size.h (a far picture's classic flat's)
+ * @property {number} [sunLift]                       AUDIT BANTHA1 TREE-2: the share of its height its sun is read at (a jungle tree's crown; none, its root)
  * @property {boolean} [_dyn]                         BLOOD1b: born DYNAMIC_DRAW, because its centres move every frame
  * @property {object|null} [_arena]                   PERF-ARENA: a still batch's arena (renderer _bbArenaFor) - its VAO and buffers the arena's; null for one with its own (dynamic), or freed
  * @property {number} [_q0]                           PERF-ARENA: the first of its arena's quads it holds

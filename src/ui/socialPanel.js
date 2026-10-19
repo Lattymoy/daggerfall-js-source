@@ -72,6 +72,38 @@ import { homeSaleRefund } from '../net/homeLaw.js';   // GUILD1d: what the hall 
 import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD1d: where the hall stands
 import { wagonItemName } from '../systems/wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon by its kind's name
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { t } from '../systems/textManager.js';   // GUILD-UX: the storage pages' new words in the player's language
+import { storeFilterAccepts, storeRarityAccepts, storeQuery, storeFilterOptions, storeRarityOptions } from './storeFilter.js';   // GUILD-UX: the stores' one filter
+import { showItemHover, hideItemHover } from './enhanced/enhancedInventory.js';   // GUILD-UX: the pack's one item card
+import { playerEntity } from '../characters/playerEntity.js';   // GUILD-UX: the card's comparison is against what I wear
+import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT SUGGESTIONS-1019 L4-4: the card is the enhanced skin's
+import { itemLongName } from '../systems/item/itemInfo.js';   // AUDIT SUGGESTIONS-1019 L4-6: a row named as the pack names the piece
+import { LOOSE_ORIGIN } from '../net/bagLaw.js';   // AUDIT SUGGESTIONS-1019 L4-1: the loose units the service's room counts
+/** GUILD-UX: the vault row's card - the pack's own (enhancedInventory.js showItemHover), compared against what I wear. */
+// AUDIT SUGGESTIONS-1019 L4-4: on the enhanced skin alone - the card's sheet is the enhanced dress's (enhancedPlusStyle.js),
+// and on the classic skin it fell, unstyled, below the screen
+export const ITEM_CARD = Object.freeze({
+  show: (rec, row, { asked = false } = {}) => { if (isEnhanced()) showItemHover(rec, { entity: playerEntity }, row, 'shop', { asked }); },
+  hide: () => hideItemHover(),
+});
+/** AUDIT SUGGESTIONS-1019 L4-6: a vault row's name as the pack would say it (itemInfo.js itemLongName - an unidentified
+ *  piece unnamed), never the service's record name, which is the piece's true one; a wagon by its kind; an old row with
+ *  no record by the service's line. */
+export const vaultRowName = (row) => String(wagonItemName(row?.rec) ?? (row?.rec?.group ? itemLongName(row.rec) : row?.name) ?? t('social.vault.anItem', 'an item'));
+/** The first node under `n` (itself included) wearing class `cls` - a walk of `children`, so it reads any DOM. */
+const childOfClass = (n, cls) => {
+  if (String(n?.className ?? '').split(/\s+/).includes(cls)) return n;
+  for (const c of n?.children ?? []) { const f = childOfClass(c, cls); if (f) return f; }
+  return null;
+};
+/** GUILD-UX: whether a vault row answers the filter `f` - its record's page and rarity (storeFilter.js, the stores' own
+ *  tests) and the search over the name the row shows. */
+export function vaultRowAccepts(row, f) {
+  const rec = row?.rec ?? {};
+  const q = storeQuery(f?.query);
+  const name = vaultRowName(row).toLowerCase();
+  return storeFilterAccepts(rec, f?.cat ?? 'all') && storeRarityAccepts(rec, f?.rarity ?? 'all') && (!q || name.includes(q));
+}
 /** A piece of the pack as the vault's Put in names it - the Open Wagon and the Caravan by their own names (their record's
  *  is the Small Cart's), anything else by its record's (the account service names the vault's row so - guildVault.js). */
 const vaultPieceName = (it) => String(wagonItemName(it) ?? it?.name ?? 'an item');
@@ -258,6 +290,19 @@ export function guildWordText(error, r = null, nowS = Math.floor(Date.now() / 10
  *  book's `letter`: the pack could not carry the coin) says so in the trade window's own line, or the gold reads as
  *  never paid. */
 export const guildDoneText = (okWord, r) => (r?.letter === true ? `${okWord} ${LETTER_OF_CREDIT_TEXT}` : okWord);
+
+/** GUILD-UX (2026-10-19, Discord #suggestions "Guild Hall Storage Improvements"): the guild Stores' Put in all - each
+ *  `[material, units]` of `moves` deposited through the writs book's own door (`W.deposit`), one after another. Answers
+ *  `{ ok: true, moved }`, or the first refusal with how many materials went in before it (`moved`). */
+export async function guildPutAll(W, moves) {
+  let moved = 0;
+  for (const [material, units] of moves) {
+    const r = await W.deposit(material, units);
+    if (!r?.ok) return { ...(r ?? { ok: false, error: 'server' }), moved };
+    moved++;
+  }
+  return { ok: true, moved };
+}
 
 /** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is
  *  not loaded - the same bargain ui/chatPanel.js strikes.
@@ -488,7 +533,7 @@ export function friendOrder(friends) {
  * a panel with something above it IGNORES the key (does not close, does not stop it), and the one that handles it
  * calls `stopImmediatePropagation` so no other window listener - the host's pause door included - sees that press.
  */
-export function createSocialPanel({ social, send = null, mail = null, guild = null, keepLetter = null, journey = () => null, canLead = () => false, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
+export function createSocialPanel({ social, send = null, mail = null, guild = null, keepLetter = null, journey = () => null, canLead = () => false, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), itemCard = ITEM_CARD } = {}) {
   injectSocialStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
 
@@ -1089,8 +1134,11 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       return out;
     }
     if (!gs.rows.length) out.push(el('div', 'dfsocial-note', 'The guild Stores hold nothing yet. Any member may put in from their own Stores.'));
-    for (const r of gs.rows) out.push(personRow({ name: `${Number(r.qty).toLocaleString('en-US')} ${ps.name(r.material, r.qty)}`, sub: r.mine ? `${Number(r.mine).toLocaleString('en-US')} of them yours` : '' }));
+    // GUILD-UX (2026-10-19, Discord #suggestions "Guild Hall Storage Improvements", Alkfay: "you have to scroll past all of
+    // the stored materials to get to the input section, and then you have to manually enter the amount to store"): the
+    // form and its acts come FIRST, the stored rows after them; Units left empty is all of it, as the vault's How many is
     const unitsTyped = () => { const t = String(d.storeUnits ?? '').trim(); const n = /^\d+$/.test(t) ? Number(t) : 0; return guildMoveOk(n) ? n : 0; };
+    const unitsEmpty = () => String(d.storeUnits ?? '').trim() === '';
     const pick = (label, options, value, onPick) => {
       const s = doc.createElement('select');
       s.className = 'dfsocial-field';
@@ -1101,11 +1149,16 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     };
     const stores = ps.mine?.() ?? new Map();
     const heldOf = (k) => { const v = [...stores.values()].find((x) => x.material === k); return v ? v.own + v.bought : 0; };
+    // AUDIT SUGGESTIONS-1019 L4-1: the room the service counts - every origin of it, gold-bought and loose units too (writs.js moveGuildStores)
+    const roomHeld = (k) => { const v = [...stores.values()].find((x) => x.material === k); return v ? v.own + v.bought + (v.gold | 0) + (v[LOOSE_ORIGIN] | 0) : 0; };
     const guildOf = (k) => gs.rows.find((r) => r.material === k)?.qty ?? 0;
     const mine = [...stores.values()].filter((v) => v.own + v.bought > 0);
     // R1: what this character may take out - an Officer or the Guildmaster any of it, a member their own deposit
     const takeable = gs.rows.filter((r) => gs.mayWithdraw || r.mine > 0);
     const outMost = (k) => { const r = gs.rows.find((x) => x.material === k); return r ? (gs.mayWithdraw ? r.qty : r.mine) : 0; };
+    // GUILD-UX: empty is all of it - all you hold that the guild has room for in, all you may take that your Stores have room for out
+    const putUnits = (k) => (unitsEmpty() ? Math.min(heldOf(k), Math.max(0, GUILD_STORES_MAX - guildOf(k))) : unitsTyped());
+    const takeUnits = (k) => (unitsEmpty() ? Math.min(outMost(k), Math.max(0, STORES_MAX - roomHeld(k))) : unitsTyped());
     const form = el('div', 'dfsocial-form');
     if (mine.length) {
       if (!mine.some((v) => v.material === d.storeIn)) d.storeIn = mine[0].material;
@@ -1115,33 +1168,49 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       if (!takeable.some((r) => r.material === d.storeOut)) d.storeOut = takeable[0].material;
       form.append(el('div', 'dfsocial-label', 'Take out'), pick('A material of the guild Stores', takeable.map((r) => [r.material, `${ps.name(r.material, 2)} (${outMost(r.material).toLocaleString('en-US')})`]), d.storeOut, (k) => { d.storeOut = k; }));
     }
-    guildField(form, 'Units', d.storeUnits ?? '', String(STORES_MAX).length, (x) => { d.storeUnits = x; });
+    guildField(form, t('social.stores.units', 'Units (all of it when empty)'), d.storeUnits ?? '', String(STORES_MAX).length, (x) => { d.storeUnits = x; });
     out.push(form);
     const acts = el('div', 'dfsocial-acts');
     if (mine.length) {
       acts.append(liveBtn('Put in', () => {
-        const n = unitsTyped(), k = d.storeIn;
-        const why = W.busy ? 'a moment' : !n ? `a number from 1 to ${STORES_MAX.toLocaleString('en-US')}`
+        const n = putUnits(d.storeIn), k = d.storeIn;
+        const why = W.busy ? 'a moment' : !n ? (unitsEmpty() ? t('social.stores.noRoom', 'the guild Stores have no room for more of it') : `a number from 1 to ${STORES_MAX.toLocaleString('en-US')}`)
           : n > heldOf(k) ? `your Stores hold ${heldOf(k).toLocaleString('en-US')}`
             : guildOf(k) + n > GUILD_STORES_MAX ? `the guild Stores hold at most ${GUILD_STORES_MAX.toLocaleString('en-US')} of a material` : '';
         return { enabled: !why, why };
       }, {
-        run: () => { const n = unitsTyped(), k = d.storeIn; if (n > 0 && k) guildDo(W.deposit(k, n), `${n.toLocaleString('en-US')} ${ps.name(k, n)} put in the guild Stores.`, () => { d.storeUnits = ''; }); },
+        run: () => { const k = d.storeIn, n = putUnits(k); if (n > 0 && k) guildDo(W.deposit(k, n), `${n.toLocaleString('en-US')} ${ps.name(k, n)} put in the guild Stores.`, () => { d.storeUnits = ''; }); },
+      }));
+      // GUILD-UX (the thread: "having an 'transfer all' button that empties your personal store into the guild's store
+      // would be wonderful"): every material of your Stores put in, each up to the guild's room for it, one deposit a
+      // material in turn (the service's own door, so its every check and the writs' hour budget stand); a refusal stops
+      // the run and says why, what went in staying in
+      const allMoves = () => mine.map((v) => [v.material, Math.min(v.own + v.bought, Math.max(0, GUILD_STORES_MAX - guildOf(v.material)))]).filter(([, n]) => n > 0);
+      acts.append(liveBtn(t('social.stores.putAll', 'Put in all'), () => {
+        const why = W.busy ? 'a moment' : !allMoves().length ? t('social.stores.noRoomAll', 'the guild Stores have no room for any of it') : '';
+        return { enabled: !why, why };
+      }, {
+        // AUDIT SUGGESTIONS-1019 L4-5: a run the service stopped part way says what went in before it, and why it stopped
+        run: () => guildDo(guildPutAll(W, allMoves()).then((r) => (!r.ok && r.moved > 0 ? { ok: true, moved: r.moved, stopped: r } : r)),
+          (r) => (r.stopped
+            ? t('social.stores.putAllStopped', '{n, plural, one {# material} other {# materials}} went in, then the guild Stores refused: {why}', { n: r.moved, why: guildWordText(r.stopped.error, r.stopped, Math.floor(social.now() / 1000)) })
+            : t('social.stores.putAllDone', '{n, plural, one {# material} other {# materials}} put in the guild Stores.', { n: r.moved }))),
       }));
     }
     if (gs.rows.length) {
       acts.append(liveBtn('Take out', () => {
-        const n = unitsTyped(), k = d.storeOut;
+        const n = takeUnits(d.storeOut), k = d.storeOut;
         const why = !takeable.length ? 'Officers and the guildmaster, or what you put in of your own'
-          : W.busy ? 'a moment' : !n ? `a number from 1 to ${STORES_MAX.toLocaleString('en-US')}`
+          : W.busy ? 'a moment' : !n ? (unitsEmpty() ? t('social.stores.noRoomMine', 'your Stores have no room for more of it') : `a number from 1 to ${STORES_MAX.toLocaleString('en-US')}`)
             : n > outMost(k) ? (gs.mayWithdraw ? `the guild Stores hold ${outMost(k).toLocaleString('en-US')}` : `you put in ${outMost(k).toLocaleString('en-US')} of your own`)
-              : heldOf(k) + n > STORES_MAX ? `your Stores hold at most ${STORES_MAX.toLocaleString('en-US')} of a material` : '';
+              : roomHeld(k) + n > STORES_MAX ? `your Stores hold at most ${STORES_MAX.toLocaleString('en-US')} of a material` : '';
         return { enabled: !why, why };
       }, {
-        run: () => { const n = unitsTyped(), k = d.storeOut; if (n > 0 && k) guildDo(W.withdrawStores(k, n), `${n.toLocaleString('en-US')} ${ps.name(k, n)} taken into your Stores.`, () => { d.storeUnits = ''; }); },
+        run: () => { const k = d.storeOut, n = takeUnits(k); if (n > 0 && k) guildDo(W.withdrawStores(k, n), `${n.toLocaleString('en-US')} ${ps.name(k, n)} taken into your Stores.`, () => { d.storeUnits = ''; }); },
       }));
     }
     out.push(acts);
+    for (const r of gs.rows) out.push(personRow({ name: `${Number(r.qty).toLocaleString('en-US')} ${ps.name(r.material, r.qty)}`, sub: r.mine ? `${Number(r.mine).toLocaleString('en-US')} of them yours` : '' }));   // GUILD-UX: after the form
     if (gs.moves?.length) out.push(el('div', 'dfsocial-label', `The last ${gs.moves.length === 1 ? 'move' : `${gs.moves.length} moves`}`));
     for (const m of gs.moves ?? []) out.push(personRow({ name: `${m.who} ${m.delta > 0 ? 'put in' : 'took out'} ${Math.abs(m.delta).toLocaleString('en-US')} ${ps.name(m.material, Math.abs(m.delta))}` }));
     // THE OFFICERS' WRIT BUDGET (11): the Guildmaster sets it; an Officer reads what is left this week
@@ -1419,13 +1488,52 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     return out;
   };
 
+  /** GUILD-UX: the vault's filter, kept across repaints (a read, a take) and let go with the guild's page. */
+  const vaultFilter = () => (guildUi.vaultFilter ??= { cat: 'all', rarity: 'all', query: '' });
+  /** GUILD-UX: each vault row shown or hidden by the filter as it stands - `shown` its `[row element, vault row]` pairs. */
+  const applyVaultFilter = (shown, none = null) => {
+    const f = vaultFilter();
+    let seen = 0;
+    for (const [r, row] of shown) { const ok = vaultRowAccepts(row, f); r.style.display = ok ? '' : 'none'; if (ok) seen++; }   // a style, not `hidden`: the row's own display rule outranks the attribute
+    if (none) none.style.display = shown.length && !seen ? '' : 'none';   // AUDIT SUGGESTIONS-1019 L4-7: a filter that hides every row says so
+  };
+  /** GUILD-UX: the bar - a search, the pack's pages and the rarities, each holding what this vault holds, with counts. */
+  const vaultFilterBar = (items, shown, none) => {
+    const f = vaultFilter();
+    const recs = items.map((r) => r.rec ?? {});
+    const bar = el('div', 'dfsocial-form');
+    const q = doc.createElement('input');
+    q.className = 'dfsocial-field'; q.type = 'search'; q.maxLength = 40; q.value = f.query;
+    q.placeholder = t('social.vault.find', 'Find a piece'); q.setAttribute('aria-label', q.placeholder);
+    q.setAttribute('autocomplete', 'off'); q.setAttribute('spellcheck', 'false');
+    q.addEventListener('input', () => { f.query = q.value; applyVaultFilter(shown, none); });
+    const menu = (label, options, key) => selectOf(label, options.map((o) => [o.id, `${o.label} (${o.count})`]), f[key], (v) => { f[key] = v; applyVaultFilter(shown, none); });
+    bar.append(q, menu(t('social.vault.page', 'A page of the pack'), storeFilterOptions(recs, f.cat), 'cat'), menu(t('social.vault.rarity', 'A rarity'), storeRarityOptions(recs, f.rarity), 'rarity'));
+    return bar;
+  };
+  /** GUILD-UX: a vault row's card - the pack's own, beside the row on a hover, and on a press of the row for a finger;
+   *  gone when the pointer leaves and at every repaint, so it never outlives the row it was for. */
+  // AUDIT SUGGESTIONS-1019 L4-3: a MOUSE's pointer brings the card and takes it; a press of the name toggles it - on a
+  // phone a tap fired enter, click and leave in one, and the card came and went at once
+  let cardRow = null;
+  const hideCard = () => { cardRow = null; itemCard.hide(); };
+  const vaultCardOn = (r, rec) => {
+    const mouse = (e) => (e?.pointerType ?? 'mouse') === 'mouse';
+    r.addEventListener('pointerenter', (e) => { if (mouse(e)) { cardRow = r; itemCard.show(rec, r); } });
+    r.addEventListener('pointerleave', (e) => { if (mouse(e)) hideCard(); });
+    childOfClass(r, 'dfsocial-name')?.addEventListener('click', () => {
+      if (cardRow === r) { hideCard(); return; }
+      cardRow = r; itemCard.show(rec, r, { asked: true });
+    });
+  };
+
   /** GUILD2b: THE VAULT - the guild's pieces, each with its depositor; Take for a member who may, Put in from the pack for
    *  one who may; reached in a town (the host's word), read again at each look at the page. */
   const guildVaultNodes = (g, v) => {
     const out = [];
     const d = guildUi.draft;
     const whose = `${v.id}|${guildWho()}`;
-    if (guildUi.vaultFor !== whose) { guildUi.vaultFor = whose; guildUi.vaultAsked = false; }
+    if (guildUi.vaultFor !== whose) { guildUi.vaultFor = whose; guildUi.vaultAsked = false; guildUi.vaultFilter = null; }   // GUILD-UX: another vault starts unfiltered
     if (!guildUi.vaultAsked && g.readVault) {
       guildUi.vaultAsked = true;
       Promise.resolve(g.readVault()).then(() => { ui++; }, () => { ui++; });
@@ -1452,9 +1560,20 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const takeOf = () => { const why = !reachNow() ? 'in a town' : g.busy ? 'a moment' : ''; return { enabled: !why, why }; };
     const takeRun = (run) => () => { if (reachNow()) run(); };
     if (!vv.items.length) out.push(el('div', 'dfsocial-empty', GUILD_VAULT_EMPTY_TEXT));
+    // GUILD-UX (2026-10-19, Discord #suggestions "Guild Hall Storage Improvements", Alkfay: "the inability to preview items
+    // (e.g. for legendary items that can have different bases you can't tell what base it is, and for rare items you
+    // can't see what their mods are... nor is there any way to filter items)"): the FILTER - the stores' own (storeFilter.js:
+    // the search, the pack's pages, the rarities this vault holds) over the pieces' records, hiding rows in place so the
+    // search keeps its focus as it is typed - and each row's CARD, the pack's own (enhancedInventory.js showItemHover), on
+    // a hover or a press of its name
+    const shown = [];
+    const none = el('div', 'dfsocial-empty', t('social.vault.noMatch', 'No piece in the vault matches.'));
+    if (vv.items.length) out.push(vaultFilterBar(vv.items, shown, none));
     for (const row of vv.items) {
-      const it = { ...row, name: wagonItemName(row.rec) ?? row.name };   // WAGONS2 (FINAL AUDIT): a marked wagon put in before its row was named by its kind
+      const it = { ...row, name: vaultRowName(row) };   // WAGONS2 (FINAL AUDIT): a marked wagon put in before its row was named by its kind; AUDIT SUGGESTIONS-1019 L4-6: and an unidentified piece unnamed
       const r = personRow({ name: it.count > 1 ? `${it.name} x${it.count}` : it.name, sub: `put in by ${it.by}` });
+      if (row.rec) vaultCardOn(r, row.rec);
+      shown.push([r, row]);
       if (mayTake) {
         const acts = rowActs(r);
         acts.append(liveBtn('Take', takeOf, { run: takeRun(() => guildDo(g.vaultTake(it.slot), `${it.name} taken into your pack.`)) }));
@@ -1462,6 +1581,8 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       }
       out.push(r);
     }
+    out.push(none);
+    applyVaultFilter(shown, none);
     // PUT IN, from the pack - what may leave it (systems/tradePack.js tradeRefusal: never a worn, a quest's, a summoned,
     // a bound piece, gold, a boat's or the Materials Bag)
     if (vaultMayPut(st) && g.pack) {
@@ -1741,6 +1862,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
 
   /** The whole body, and the tab badges over it. */
   const repaint = () => {
+    hideCard();   // GUILD-UX: a vault row's card never outlives the row it was for
     painted = social.version; paintedUi = ui; paintedMail = mail?.version ?? 0; paintedGuild = guild?.version ?? 0; paintedWho = guildWho();
     paintedJourney = journeyKey();   // PARTY-UI
     paintedLead = !!canLead();   // PARTY-LEAD
@@ -1837,6 +1959,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     if (!alive || !open) return false;
     open = false; confirm = null; ui++;
     root.dataset.open = '0';
+    hideCard();   // AUDIT SUGGESTIONS-1019 L4-2: nor the panel - closed, the pointer locked, no leave ever came
     onClose?.();   // and takes it back inside the closing gesture, the only place a lock request is honoured
     return true;
   };
@@ -1942,6 +2065,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     destroy() {
       if (!alive) return;
       alive = false;
+      hideCard();   // AUDIT SUGGESTIONS-1019 L4-2
       win.removeEventListener('keydown', onKey, true);
       if (social.onInvite === mineInvite) social.onInvite = priorInvite;
       root.remove?.();

@@ -108,9 +108,18 @@
     ]
   },
   {
+    "name": "WAGONS2-FINAL-the-vault-row-name-skips-the-kind",
+    "file": "src/ui/socialPanel.js",
+    "old": "export const vaultRowName = (row) => String(wagonItemName(row?.rec) ?? (row?.rec?.group",
+    "new": "export const vaultRowName = (row) => String((row?.rec?.group",
+    "tests": [
+      "test/systems/wagons2_final.test.js"
+    ]
+  },
+  {
     "name": "WAGONS2-FINAL-the-vaults-rows-by-the-record",
     "file": "src/ui/socialPanel.js",
-    "old": "      const it = { ...row, name: wagonItemName(row.rec) ?? row.name };",
+    "old": "      const it = { ...row, name: vaultRowName(row) };",
     "new": "      const it = row;",
     "tests": [
       "test/systems/wagons2_final.test.js"

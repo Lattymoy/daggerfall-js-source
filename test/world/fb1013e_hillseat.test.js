@@ -277,7 +277,7 @@ test('HILL-SEAT: the pads ride the pixel\'s own static merge - one GPU mesh with
   const remap = new Map([['302_2', '102_2']]);   // a climate's grass
   const sb = new StaticBatchBuilder(), resolve = keyResolver(remap), hill = drawn(52758);
   sb.add(hill, multiply(origin, house(52758).matrix), resolve);   // the hill, merged as any model of the block is
-  sb.add(patch, origin, resolve);   // world.js's own call: staticBuilder.add(hillPatch, originMatrix, resolveTexKey)
+  sb.add(patch, origin, resolve);   // world.js's own call: addStatic(hillPatch, originMatrix, false) - staticBuilder.add through the pixel's table (PIN MOVED, AUDIT PRECIP HOST-7: the merge's models logged)
   const merged = sb.finish();
   const batch = renderer.createMesh(merged);
   assert.equal(live.size, 1, 'one GPU mesh for the pixel\'s statics, pads and all');
@@ -292,7 +292,7 @@ test('HILL-SEAT by source: THE FOUR HOSTS - world.js lays the pads into its pixe
   const w = hostText('src/scenes/world.js');
   const seatAt = w.indexOf('const hillSeat = blockHillSeat(b.layout.models);');
   const wPatch = 'const hillPatch = blockHillPatch(hillSeat, b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum)));';
-  const wWire = 'if (hillPatch) { staticBuilder.add(hillPatch, originMatrix, resolveTexKey); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }';
+  const wWire = 'if (hillPatch) { addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }';
   assert.ok(seatAt > 0 && w.indexOf(wPatch) > seatAt, 'world.js: the pads, off the block\'s seat and the meshes it drew');
   assert.ok(w.indexOf(wWire) > w.indexOf(wPatch), 'world.js: merged with the pixel\'s statics, solid in the pixel\'s bucket, inside its culling box');
   assert.ok(w.indexOf(wWire) < w.indexOf('seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz))'), 'world.js: before the trees read the seat');

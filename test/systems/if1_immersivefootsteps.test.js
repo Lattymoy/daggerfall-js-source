@@ -630,7 +630,8 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
   }
   // the exterior hosts hand the exterior arm's reads; the inside hosts the water arm's
   for (const src of [world, ext]) {
-    assert.match(src, /inside: false, inDungeon: false,\s*season, climateIndex: [^\n]*, tileMapIndex: _surf\.tileIndex \?\? -1,[^\n]*\n\s*waterWalking: _surf\.water === ON_EXTERIOR_WATER\.WaterWalking,/, 'AUDIT-IF F2: off terrain is -1, never the water tile');
+    // AUDIT PRECIP (PIN MOVED): the world host's season is the snow's under the feet on the snow lane (snowCoverHost.js footSeason)
+    assert.match(src, /inside: false, inDungeon: false,\s*season(?:: snowCover\.footSeason\(player\.pos, season\))?, climateIndex: [^\n]*, tileMapIndex: _surf\.tileIndex \?\? -1,[^\n]*\n\s*waterWalking: _surf\.water === ON_EXTERIOR_WATER\.WaterWalking,/, 'AUDIT-IF F2: off terrain is -1, never the water tile');
     assert.match(src, /swimming: !!player\.isPlayerSwimming, pos: player\.pos,/, 'PlayerEnterExit.IsPlayerSwimming, not the motor flag');
   }
   assert.match(wm, /inside: true, inDungeon: mode === 'dungeon',\s*centreY: player\.pos\[1\] \+ player\.height \/ 2, waterSurfaceY: mode === 'dungeon' \? \(_surf \?\? null\) : null,/);

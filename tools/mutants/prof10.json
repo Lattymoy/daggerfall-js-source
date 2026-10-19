@@ -1604,8 +1604,8 @@
   {
     "name": "PROF-541-R2-C6-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "{odds}{steps, plural, =0 {} one { (+# step from the town\\'s Apothecary)} other { (+# steps from the town\\'s Apothecary)}}.",
-    "new": "{odds}.",
+    "old": "one quality.{steps, plural, =0 {} one { The town\\'s Apothecary raises it one more.} other { The town\\'s Apothecary raises it # more.}}',",
+    "new": "one quality.',",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

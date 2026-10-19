@@ -62,6 +62,7 @@ import { MATERIAL_DEFAULTS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, 
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
 import { SD_BRASS_GLSL } from '../world/superDungeon/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
+import { HAZE_SKY_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the sky (render/hazeGlsl.js)
 
 /** Which material properties are COLOURS (SetColor -> linearised at
  *  upload under linear colour space). Every other vec4 is SetVector. */
@@ -95,7 +96,7 @@ const ST_PROPERTIES = TEXTURE_SLOTS.map((s) => s + '_ST');
  *  read by the shader and fetched by nobody, so its upload was a silent
  *  no-op and the mod's red-only boost never happened). Pinned against
  *  the FS's own declarations in test/systems/dynamicSkies.test.js. */
-export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uBandDither', 'uDread', 'uBrass', '_WorldSpaceLightPos0', '_LightColor0',
+export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uBandDither', 'uDread', 'uBrass', 'uHazeSky', '_WorldSpaceLightPos0', '_LightColor0',
   '_CloudTopColorBoost',   // the float3-fed-by-a-float quirk, uploaded apart from the float list
   ...FLOAT_PROPERTIES, ...COLOR_PROPERTIES, ...VEC4_RAW, ...VEC3_RAW, ...TEXTURE_SLOTS, ...ST_PROPERTIES]);
 
@@ -117,6 +118,7 @@ uniform float uDread;       // EVENT1: the live event's grade over the encoded d
 uniform float uBrass;       // AUDIT SD III (V8): the brass air's, 0 = none
 ${DREAD_GLSL}
 ${SD_BRASS_GLSL}
+${HAZE_SKY_GLSL}
 // Unity's per-frame light globals for the skybox pass
 uniform vec3 _WorldSpaceLightPos0;   // toward the sun (SunlightManager's rotation, unclamped)
 uniform vec3 _LightColor0;           // SunLight colour x intensity, linear
@@ -768,6 +770,7 @@ void main() {
   vec3 lin = clamp(col.rgb, 0.0, 1.0);
   vec3 enc = vec3(linearToSrgb(lin.r), linearToSrgb(lin.g), linearToSrgb(lin.b));
   outColor = vec4(brassGrade(dreadGrade(enc, uDread), uBrass), 1.0);   // EVENT1: graded where the port's own dome grades - on the colour shown; AUDIT SD III (V8): the brass air's after it
+  outColor.rgb = hazeSky(outColor.rgb, dir);   // BANTHA1: the jungle's haze toward the horizon - the port's ground haze, in front of the mod's skybox (it takes no fog of its own); AUDIT BANTHA1 HAZE-8: after the grades
 }`;
 
 /** The pass. Textures arrive through `setTexture(name, image)` as the
@@ -805,6 +808,7 @@ export class DynamicSkiesRenderer {
     this.dread = 0;
     /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/superDungeon/sdBrassSky.js) - the host's. */
     this.brass = 0;
+    this.hazeSky = new Float32Array(4);   // BANTHA1: the jungle's haze over the sky (render/hazeGlsl.js uHazeSky) - the host's, w 0 none
     this.bandDither = true;                            // PS3: the ordered dither over the mod's own colour reduction; false is its raw ceil, 1:1
     this.cloudsExternal = false;                       // DS2: the volumetric clouds are drawn over this pass - its two cloud sheets stand down (the dome's cloudsExternal, one pass over)
     this.fogMix = 0;                                   // written by the host on every pass; unread here - the mod's skybox takes no fog (see the FS)
@@ -879,6 +883,7 @@ export class DynamicSkiesRenderer {
     gl.uniform1f(u.uBandDither, this.bandDither ? 1 : 0);   // PS3
     gl.uniform1f(u.uDread, this.dread);   // EVENT1
     gl.uniform1f(u.uBrass, this.brass);   // AUDIT SD III (V8)
+    gl.uniform4fv(u.uHazeSky, this.hazeSky);   // BANTHA1
     gl.uniform3f(u._WorldSpaceLightPos0, s.sunDir[0], s.sunDir[1], s.sunDir[2]);
     gl.uniform3f(u._LightColor0, s.lightColor[0], s.lightColor[1], s.lightColor[2]);
     for (const name of FLOAT_PROPERTIES) gl.uniform1f(u[name], this.cloudsExternal && (name === '_CloudTopOpacity' || name === '_CloudOpacity') ? 0 : (mat[name] ?? MATERIAL_DEFAULTS[name] ?? 0));   // DS2: opacity 0 to the shader under the volumetric clouds; the material keeps the preset's

@@ -68,10 +68,13 @@ test('REALM P0.1 by source: the world host drops them beside the Test Room refus
   const drop = w.indexOf('if (refuseOnlinePowerFlags(params).length) publishBootParams(params);');
   assert.ok(drop > 0, 'the drop is at the boot, and it is published');
   assert.ok(drop > w.indexOf("if (testRoomOffline) { params.delete('online'); publishBootParams(params); }"), 'after the Test Room refusal (which may take `online` itself away)');
-  for (const reader of ["const regionName = params.get('region')", "const shotMode = params.has('shot');", "window.__addGold = (n) => addGold(playerEntity, n);"]) {
+  // PIN MOVED (HOST-SPLIT, 2026-10-19: the town probes - __addGold among them - moved verbatim to scenes/townProbes.js;
+  // the host installs them, and that call is its read)
+  for (const reader of ["const regionName = params.get('region')", "const shotMode = params.has('shot');", 'if (shotMode) { modes.installShotProbes(); installTownProbes(); }']) {
     const at = w.indexOf(reader);
     assert.ok(at > drop, `${reader} reads after the drop`);
   }
+  assert.ok(src('src/scenes/townProbes.js').includes('window.__addGold = (n) => addGold(playerEntity, n);'), 'the gold probe stands in the town probes, installed by that call');
   assert.match(w, /if \(shotMode\) \{/, 'the probe seams stand only in ?shot - which an online page no longer has');
 });
 

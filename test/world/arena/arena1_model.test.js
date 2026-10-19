@@ -75,9 +75,10 @@ test('ARENA1 model: 864102 registers climate-free, naming the pieces it reads; t
 
 test('ARENA1 model: the hosts draw a climate-free model by its own table and give it the collider every placed model gets', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const climateFree = isClimateFreeModel\(placed\.modelIdNum\);[^\n]*\n\s*if \(!climateFree\) await remapSubMeshes\(gpu\.subMeshes, texRemap, townClimateArchive, pipeline\);/);
+  assert.match(w, /const climateFree = isClimateFreeModel\(placed\.modelIdNum\);[^\n]*\n\s*if \(!climateFree\) await remapSubMeshes\(gpu\.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase\);/);
   assert.match(w, /if \(climateFree\) entry\.texRemap = NO_CLIMATE_REMAP;/);
-  assert.match(w, /staticBuilder\.add\(cpu, local, climateFree \? ownTexKey : resolveTexKey\)/);
+  assert.match(w, /addStatic\(cpu, local, climateFree\)/);   // PIN MOVED (AUDIT PRECIP HOST-7): the merge's models logged - a climate-free one by its own table
+  assert.match(w, /staticBuilder\.add\(cpu, local, own \? ownTexKey : resolveTexKey, nm\)/);
   assert.match(w, /const ownTexKey = keyResolver\(NO_CLIMATE_REMAP\);/);
   assert.match(w, /collider\.addMesh\(gateKey, cpu\.positions, cpu\.indices, local,/, 'the world host: the mesh collider of every placed model (the colosseum\'s tiers, floor and walls)');
   const e = read('src/scenes/exterior.js');

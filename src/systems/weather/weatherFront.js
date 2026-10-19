@@ -60,6 +60,7 @@
 
 import { seededRng } from '../wind/wind.js';
 import { precipitationForWeather } from '../../world/weather.js';
+import { precipLawOn, currentSnowShare, systemWordOf } from './weatherSim.js';   // PRECIP1: rain and snow one fall, its phase the air's; AUDIT PRECIP FALL-2: a weather is its system
 
 /** Each mode's peak range, as a fraction of the profile's count: what
  *  a cut into that weather can roll. A rain can be a sprinkle; a storm
@@ -84,7 +85,7 @@ export const WANDER_FLOOR = 0.6;
 const WANDER_SLOW = (2 * Math.PI) / 240;
 const WANDER_FAST = (2 * Math.PI) / 73;
 /** Below this the drops are not drawn and the mode reads as nothing. */
-const SHOWN_FLOOR = 0.002;
+export const SHOWN_FLOOR = 0.002;
 
 export const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -100,6 +101,10 @@ export { smoothstep };
 
 /** The LOOK a mode has: storm shares the rain's. null for no mode. */
 export const precipKind = (mode) => (mode === 'snow' ? 'snow' : mode === 'sand' ? 'sand' : mode ? 'rain' : null);   // WEATHER2d: the sand is its own look
+/** PRECIP1: the FALL a mode belongs to, for the taper - under the air's law rain, a storm and snow are one fall whose
+ *  phase is the air's (the drops and flakes drawn at its snow share, render/precipitation.js draw), so a phase change
+ *  walks the peak across with no gap, as a shower thickening into a storm does; off it, the look (precipKind). */
+const fallOf = (mode) => (mode && mode !== 'sand' && precipLawOn() ? 'wet' : precipKind(mode));
 
 /** A roll `u` in 0..1 placed in the mode's peak range, by its skew (RAIN-SPRINKLE). */
 export function rollPeak(mode, u) {
@@ -171,10 +176,33 @@ export function fallTerms(terms, intensity, weather, light) {
   };
 }
 
+/** AUDIT PRECIP FALL-2/3: THE WORLD'S TERMS UNDER A FALL OF TWO PHASES, on the law's lane: the sun and the grass's light
+ *  are the DECK's - the system's own row (`rowOf(word)` the host's row for a word: a storm falling as snow is lit as the
+ *  storm it is) - and the fog is the FALL's, its rain side's (a storm's, a rain's; a snow system falling as rain the
+ *  rain's) walked toward the snow's by the fall's snow `share`. So nothing steps where the phase turns. `own` (the
+ *  word's own row) off the lane, for a dry word, or with no share. */
+export function phaseTerms(own, word, rowOf, share) {
+  if (share == null || !precipLawOn()) return own;
+  const sys = systemWordOf(word);
+  if (!isWetWord(word) || !isWetWord(sys)) return own;
+  const deck = rowOf(sys), wetSide = rowOf(sys === 'snow' ? 'rain' : sys), snowRow = rowOf('snow');
+  return { sun: deck.sun, dim: deck.dim, fog: blendFog(wetSide.fog, snowRow.fog, Math.min(1, Math.max(0, share))) };
+}
+const isWetWord = (w) => w === 'rain' || w === 'thunder' || w === 'snow';
+
 /** The weather the AMBIENCE should hear: what is falling, not the sim's
  *  word. A rain word with nothing down yet is a cloudy day to the ear;
- *  the outgoing rain keeps its loop while it tapers. */
+ *  the outgoing rain keeps its loop while it tapers. PRECIP1 (AUDIT PRECIP
+ *  FALL-4): on the law's lane the ear hears the DROPS - the rain (a storm's
+ *  under a storm) whenever any are drawn (`sample.rain`), at their own level
+ *  (the hosts read it), whatever the word rounds to; a fall of flakes alone
+ *  is the word's own. */
 export function soundWeather(sample, weather) {
+  if (sample.rain != null) {
+    if (sample.rain >= SHOWN_FLOOR && sample.shown !== 'sand') return sample.shown === 'storm' ? 'thunder' : 'rain';
+    if (sample.shown === 'sand') return 'cloudy';
+    return weather === 'rain' || weather === 'thunder' || weather === 'sandstorm' ? 'cloudy' : weather;
+  }
   if (sample.shown === 'storm') return 'thunder';
   if (sample.shown === 'rain') return 'rain';
   if (sample.shown === 'sand') return 'cloudy';   // WEATHER2d: DFU's ambience has no sand; the wind loop (WIND3) is the storm's voice
@@ -190,40 +218,45 @@ export function soundWeather(sample, weather) {
  * intensity at the player (0..1, placed in the mode's range) or null
  * where there is no map (the episode rolls its own). Returns the sample, which `sample()`
  * repeats:
- *   { changed, from, to, t, shown, kind, intensity, peak }
+ *   { changed, from, to, t, shown, kind, intensity, peak, snow }
  * `changed` is true on the tick that saw a cut; `t` is the arrival,
  * clamped; `shown` is the mode being drawn (null for none); `intensity`
  * is the fraction of the profile's drops on screen; `peak` is the
  * incoming episode's.
  */
 export function createWeatherFront({ seed = 7 } = {}) {
-  let last = null;        // the sim's word at the last tick
+  let last = null;        // the weather (its system, on the law's lane) at the last tick
   let from = null;        // the word the terms blend FROM
   let to = null;          // ...and TO
   let episode = null;     // { mode, peak, phase } for `to`, or null
-  let outgoing = null;    // the episode tapering out, or null
+  let outgoing = null;    // the episode tapering out, or null - on the law's lane with the snow share it fell at (`snow`)
   let intensity = 0;
   let shown = null;
+  let drawnSnow = 0;      // the share the fall was last drawn at
   let out = null;
 
   return {
     tick({ dt = 0, weather = 'sunny', arrival = 1, nowMinutes = 0, tsec = 0, jump = false, peak = null } = {}) {
       const first = last === null;
+      const law = precipLawOn();
+      // AUDIT PRECIP FALL-2/3: a weather is its SYSTEM on the law's lane - the sim's word rounds the fall's phase, and a
+      // phase turning under the same storm is no cut: no new episode, no peak placed in another word's range
+      const id = systemWordOf(weather);
       // WX2a (AUDIT 57): a JUMP is a change the player was not present for
       // - a load, a travel landing, a respawn roll, a day rolled while
       // underground. It is taken as a first word is: nothing crosses,
       // nothing tapers, the drops land whole. The arrival is 1 by
       // contract (the wind builds no front for it), whatever the model's
       // last frame still says.
-      const whole = first || (jump && weather !== last);
+      const whole = first || (jump && id !== last);
       let changed = false;
-      if (weather !== last) {
+      if (id !== last) {
         changed = !whole;
-        from = whole ? weather : last;
+        from = whole ? weather : (to ?? last);
         to = weather;
-        last = weather;
-        outgoing = whole ? null : episode;
-        const mode = precipitationForWeather(weather);
+        last = id;
+        outgoing = whole ? null : episode && { ...episode, snow: drawnSnow };   // AUDIT PRECIP FALL-1: the outgoing fall keeps the share it fell at
+        const mode = precipitationForWeather(id);
         if (mode) {
           // THE EPISODE'S ROLL: seeded on the cut's minute, as WIND1
           // seeds the front's strength, so a replayed day rains alike.
@@ -232,6 +265,8 @@ export function createWeatherFront({ seed = 7 } = {}) {
         } else {
           episode = null;
         }
+      } else {
+        to = weather;   // the word itself may turn (its phase) under the same weather
       }
       // WEATHER3b: on the world weather map's lane the PLACE sets the peak - the system's envelope, falling from its
       // heart out (weatherSim currentWeatherIntensity) - and it moves as the player or the storm does: walking in from
@@ -240,31 +275,45 @@ export function createWeatherFront({ seed = 7 } = {}) {
       const a = whole && jump ? 1 : Math.min(1, Math.max(0, arrival));
       const inMode = episode?.mode ?? null;
       const outMode = outgoing?.mode ?? null;
+      const live = law ? currentSnowShare() : 0;   // the incoming fall's share: the air's at the player, now
       let mode = null;
       let target = 0;
-      if (inMode && outMode && precipKind(inMode) === precipKind(outMode)) {
+      let snow = live;
+      if (inMode && outMode && fallOf(inMode) === fallOf(outMode)) {
         // one look, the peak walks across - a shower thickening into a storm
         mode = a >= 0.5 ? inMode : outMode;
-        target = lerp(outgoing.peak, episode.peak, smoothstep(PRECIP_IN[0], PRECIP_IN[1], a)) * wander(tsec, episode.phase);
+        const k = smoothstep(PRECIP_IN[0], PRECIP_IN[1], a);
+        target = lerp(outgoing.peak, episode.peak, k) * wander(tsec, episode.phase);
+        snow = lerp(outgoing.snow, live, k);   // ...and its phase walks with it, from the share the old fall fell at
       } else if (outMode && a < PRECIP_OUT[1]) {
         // the old kind thins out first
         mode = outMode;
         target = outgoing.peak * wander(tsec, outgoing.phase) * (1 - smoothstep(PRECIP_OUT[0], PRECIP_OUT[1], a));
+        snow = outgoing.snow;
       } else if (inMode) {
         // the new kind fills in when the deck is mostly in
         mode = inMode;
         target = episode.peak * wander(tsec, episode.phase) * smoothstep(PRECIP_IN[0], PRECIP_IN[1], a);
       } else if (outMode) {
         mode = outMode;   // nothing incoming: the last of it drains
+        snow = outgoing.snow;   // AUDIT PRECIP FALL-1: at the share it fell at - the last flakes are never a few drops
       }
       // a change of kind mid-fall never relabels the residual - the last
       // few flakes are not a few drops
-      if (shown && mode && precipKind(shown) !== precipKind(mode)) intensity = 0;
+      if (shown && mode && fallOf(shown) !== fallOf(mode)) intensity = 0;
       if (whole) intensity = target;   // a boot into rain is rain (the sky's own first-call law); so is a load into it
       else intensity += (target - intensity) * (1 - Math.exp(-Math.max(0, dt) / PRECIP_SMOOTH_SECONDS));
       if (intensity < SHOWN_FLOOR && target === 0) intensity = 0;
       shown = intensity >= SHOWN_FLOOR ? mode : null;
-      out = { changed, from, to, t: a, shown, kind: precipKind(shown), intensity, peak: episode?.peak ?? 0 };
+      drawnSnow = snow;
+      // PRECIP1: `snow` the fall's snow share on the law's lane (null off it - the mode is its own look); AUDIT PRECIP
+      // AIR-5/FALL-4: `rain` and `flakes` the levels of its two looks - the drops' the ear, the soak and the water's
+      // rings read, the flakes' beside them
+      const wet = law && shown !== 'sand' && !!shown;
+      out = {
+        changed, from, to, t: a, shown, kind: precipKind(shown), intensity, peak: episode?.peak ?? 0,
+        snow: law ? snow : null, rain: law ? (wet ? intensity * (1 - snow) : 0) : null, flakes: law ? (wet ? intensity * snow : 0) : null,
+      };
       return out;
     },
     /** The last tick's answer. */

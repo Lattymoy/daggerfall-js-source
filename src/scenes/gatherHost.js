@@ -1339,9 +1339,9 @@ export function createGatherHost(deps) {
         const reach = m.reach ?? NODE_MARK_M;
         const d = Math.hypot(x - pos[0], z - pos[2]);
         if (!(d <= reach)) return;
-        const r = _markPool[used] ??= { key: '', profession: '', at: [0, 0, 0], w: 0, h: 0, d: 0, reach: 0 };
+        const r = _markPool[used] ??= { key: '', profession: '', at: [0, 0, 0], w: 0, h: 0, d: 0, reach: 0, pull: null };
         used++;
-        r.key = n.key; r.profession = k.professions[0]; r.at[0] = x; r.at[1] = y; r.at[2] = z; r.w = m.w; r.h = m.h; r.d = d; r.reach = reach;
+        r.key = n.key; r.profession = k.professions[0]; r.at[0] = x; r.at[1] = y; r.at[2] = z; r.w = m.w; r.h = m.h; r.d = d; r.reach = reach; r.pull = m.pull ?? null;   // AUDIT BANTHA1 TREE-3: a mark's own pull
         out.push(r);
       };
       const under = !!dungeon;

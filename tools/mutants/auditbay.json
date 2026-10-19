@@ -767,8 +767,8 @@
   {
     "name": "BAY-A18-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "casks, spent: spentSaid, laid }, toWire);",
-    "new": "casks, laid }, toWire);",
+    "old": "casks, spent: spentSaid, gone: goneSaid(), laid }, toWire);",
+    "new": "casks, gone: goneSaid(), laid }, toWire);",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "BAY-A18-wire-word-of-spent-alone",
     "file": "src/systems/naval/navalWire.js",
-    "old": "out.t !== undefined || out.f || out.w || out.l || out.g ? out : null;",
-    "new": "out.t !== undefined || out.f || out.w || out.g ? out : null;",
+    "old": "out.t !== undefined || out.f || out.w || out.l || out.g || out.q ? out : null;",
+    "new": "out.t !== undefined || out.f || out.w || out.g || out.q ? out : null;",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
     ]
@@ -916,8 +916,8 @@
   {
     "name": "BAY-A20-port-own-unclaimed",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "own.has(e.ship.seed) && e.ship.damage.state === SHIP_STATES.afloat) { adopt(e); e.retiring = false; }",
-    "new": "own.has(e.ship.seed) && e.ship.damage.state === SHIP_STATES.afloat) { e.retiring = e.retiring; }",
+    "old": "own.has(e.ship.seed) && !goneSeed(e.ship.seed) && e.ship.damage.state === SHIP_STATES.afloat) { adopt(e); e.retiring = false; }",
+    "new": "own.has(e.ship.seed) && !goneSeed(e.ship.seed) && e.ship.damage.state === SHIP_STATES.afloat) { e.retiring = e.retiring; }",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
     ]

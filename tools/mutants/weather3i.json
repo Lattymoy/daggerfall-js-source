@@ -8,7 +8,7 @@
  {"name": "WEATHER3i-edge-moved", "file": "src/systems/weather/weatherMap.js",
   "old": "export const EDGE_INTENSITY = 0.2;", "new": "export const EDGE_INTENSITY = 0.3;", "tests": ["test/systems/weather/weather3i_strength.test.js"]},
  {"name": "WEATHER3i-sim-reads-raw", "file": "src/systems/weather/weatherSim.js",
-  "old": "  const worn = wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes));", "new": "  const worn = wornAmong(_mapNear, at[0], at[1]);", "tests": ["test/systems/weather/weather3i_strength.test.js"]},
+  "old": "wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes))", "new": "wornAmong(_mapNear, at[0], at[1])", "tests": ["test/systems/weather/weather3i_strength.test.js"]},
  {"name": "WEATHER3i-sim-loses-storm-word", "file": "src/systems/weather/weatherSim.js",
   "old": "_set(WEATHER_ENUM[worn.raw],", "new": "_set(WEATHER_ENUM[worn.word],", "tests": ["test/systems/weather/weather3i_strength.test.js"]}
 ]

@@ -130,7 +130,8 @@ test('WAGONS2 (FINAL AUDIT) A MARKED WAGON BY ITS KIND\'S NAME, WHEREVER A LIST 
   assert.deepEqual([cart, open, caravan].map((r) => pieceName(JSON.parse(JSON.stringify(r)))), ['Small Cart', 'Open Wagon', 'Caravan'], 'the service names the row and the log by the kind');
   const sp = read('src/ui/socialPanel.js');
   assert.match(sp, /offers\.map\(\(it, i\) => \[String\(i\), \(it\.stackCount \?\? 1\) > 1 \? `\$\{vaultPieceName\(it\)\} x\$\{it\.stackCount\}` : vaultPieceName\(it\)\]\)/, 'the Put in list');
-  assert.match(sp, /const it = \{ \.\.\.row, name: wagonItemName\(row\.rec\) \?\? row\.name \};/, 'the rows (a row named before the service did)');
+  assert.match(sp, /const it = \{ \.\.\.row, name: vaultRowName\(row\) \};/, 'the rows (a row named before the service did)');
+  assert.match(sp, /export const vaultRowName = \(row\) => String\(wagonItemName\(row\?\.rec\) \?\? /, 'the row\'s name reads the wagon\'s kind first (AUDIT SUGGESTIONS-1019 L4-6 moved it into vaultRowName)');
   assert.match(read('src/scenes/worldModes.js'), /\?\? wagonItemName\(it\) \?\? shownItemName\(it\) \?\? /, 'the keyed shelf');
 });
 

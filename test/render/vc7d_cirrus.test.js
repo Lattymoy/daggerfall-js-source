@@ -169,7 +169,9 @@ test('VC7d: THE ICE\'S OWN SUN - three degrees past the ground\'s horizon, in th
 
 test('VC7d: BEHIND THE SLAB - the march lays it under what it found, and uploads what it reads', () => {
   const main = MARCH_FS.slice(MARCH_FS.indexOf('void main() {', MARCH_FS.indexOf('vec4 cirrus(')));
-  const fade = main.indexOf('  if (!veiled) { col += T * mix(back.rgb, uHorizonColor * (1.0 - back.a), fade); T *= back.a; }');   // SLAB-SPAN: the slab's last word, each span in its own aerial perspective
+  const fade = main.indexOf('  if (!veiled) { col += T * back.rgb; T *= back.a; }');   // SLAB-SPAN: the slab's last word; SKY-ARC; AUDIT PRECIP SKY-5 (PIN MOVED): already in its own perspective
+  const rest = main.indexOf('  { float a = farA(rest); col += T * uHorizonColor * a; T *= 1.0 - a; }');   // AUDIT PRECIP SKY-1: the slab past the walk, behind all the walk found
+  assert.ok(rest > fade && rest < main.indexOf('vec4 ice = cirrus(cam, dir);'), 'the slab the walk left, laid behind what it found and in front of the cirrus');
   const ice = main.indexOf('vec4 ice = cirrus(cam, dir);'), add = main.indexOf('col += T * ice.rgb;'), thru = main.indexOf('T *= ice.a;');
   const out = main.lastIndexOf('outColor = vec4(front.rgb + front.a * col, T * front.a);');
   assert.ok(fade > 0 && fade < ice && ice < add && add < thru && thru < out, 'after the slab, weighted by what the slab let through, before the curtains in front of it');

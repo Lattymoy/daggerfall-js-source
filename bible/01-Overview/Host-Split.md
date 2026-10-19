@@ -482,3 +482,19 @@ refusal and its `room`), and the host stood at 7,137 code lines of its 7,138. So
 - THE CEILING came down with the code: 7,138 -> 7,119, the length plus the six lines of wiring and the one it stood over. The
   pins that read the moved block read the module (`test/world/merchantyards1.test.js`, `horsetiers.test.js`, the TIME1 census row,
   `tools/mutants/merchantyards1*.json`).
+- AMENDED at the merge of main (LEGIBLE 1): the ceilings are logical lines now (`test/scenes/hostceiling.test.js`, main's
+  numbers); the yard cut stands, and these code-line figures are the slice's own history.
+
+## PASSAGE's merge - the wiring trimmed to fit (2026-10-19)
+
+Not a slice: a pull request whose own wiring took `bootWorld` over. Merging main into PASSAGE and BATCH-SALVAGE
+(`03-World/Passage.md`) met LEGIBLE 1's logical-line ceiling: main's `bootWorld` stood at 36,198 of its 36,233, and the
+passage's wiring added 66 - 31 over. No raise: the wiring was cut to what only the host can hand. The passage host's
+doors are the world's own functions handed as they are (`navalPortList`, `travelViewRouteTo`, `worldMoveBusy`,
+`csaStandsOn`, `setTransportModeHere` - each declared above the construction, never in its temporal dead zone) and its
+objects (`player`, `townTalk`) rather than a wrapper per field; the purse and the pack are the player entity's own,
+read by `src/scenes/naval/passageHost.js` itself (`court.js`); aboard is composed there from the runtime, her deck and
+the naval host's boat in play; and the voyage the planner is asked for rides the means of a booked ship's helm
+(`tvSeaMeans`' `voyage`) instead of a copy of them. `bootWorld` 36,264 -> 36,230 logical lines, under its ceiling,
+which stays. The pins that read the wiring by source moved with it (`passagehost.test.js`, `passageaudit.test.js`,
+`ows2_crossing.test.js`), the boat in play now held by behaviour, and 21 mutant records re-aimed and dead.

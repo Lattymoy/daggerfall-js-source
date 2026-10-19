@@ -83,11 +83,12 @@
   {
     "name": "TACT1-first-not-nearest",
     "file": "src/ai/cover.js",
-    "old": "            if (s < best) best = s;",
-    "new": "            if (s < best) return s;",
+    "old": "            it._mark = stamp;\n            const s = rayCylinder(lo, dir, it, Math.min(maxDist, best), endAt);\n            if (s < best) best = s;",
+    "new": "            it._mark = stamp;\n            const s = rayCylinder(lo, dir, it, Math.min(maxDist, best), endAt);\n            if (s < best) return s;",
     "tests": [
       "test/scenes/tact1.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (AUDIT BANTHA1 TREE-1): aimed by the fine grid's own stamp line - the wide grid's loop carries the same test"
   },
   {
     "name": "TACT1-one-cell",
@@ -173,8 +174,8 @@
   {
     "name": "TACT1-pixel-unstood",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (coverItems.length) collider.cover.add(key, coverItems, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]));",
-    "new": "    if (coverItems.length) collider.cover.add(key, coverItems);",
+    "old": "collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE), coverT);",
+    "new": "collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE));",
     "tests": [
       "test/scenes/tact1.test.js"
     ]

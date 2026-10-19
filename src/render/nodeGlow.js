@@ -73,7 +73,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3;
 
 /**
- * @typedef {{ at: number[], w: number, h: number, rgb: readonly number[], alpha: number, seed: number, form: readonly number[] }} NodeGlow
+ * @typedef {{ at: number[], w: number, h: number, rgb: readonly number[], alpha: number, seed: number, form: readonly number[], pull?: number }} NodeGlow
  * @typedef {{ nodes: Map<string, { kindle: number, seen: number, seed: number }>, frame: number, lastS: number|null, pool: NodeGlow[] }} NodeGlowState
  */
 /** A fresh state for `nodeGlows` - each node's kindling, by its key, and the records `out` is refilled from. */
@@ -107,8 +107,9 @@ export function nodeGlows(marks, eye, nowS, state, out) {
       const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);
       if (!(alpha > 0.001)) continue;
       const rgb = m.rgb ?? nodeMarkRgb(m.profession);
-      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM };
+      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM, pull: NODE_GLOW_PULL };
       g.at = m.at; g.w = m.w; g.h = m.h; g.rgb = rgb; g.alpha = alpha; g.seed = n.seed;
+      g.pull = Number.isFinite(m.pull) ? m.pull : NODE_GLOW_PULL;   // AUDIT BANTHA1 TREE-3: a mark may stand its card further out (a jungle trunk's)
       g.form = m.form ?? NODE_GLOW_FORM;   // AUDIT DELVE D6: a sense mark's own form (systems/dungeon/dungeonSense.js SENSE_FORM); a node's is whole
       out.push(g);
     }
@@ -196,6 +197,7 @@ export function nodeGlowVertices() {
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);   // no travel view - w 0, the fog measures from the camera
+const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
   return out;
@@ -206,7 +208,7 @@ export class NodeGlowRenderer {
     this.gl = gl;
     this.program = buildProgram(gl, NODE_GLOW_VS, NODE_GLOW_FS, 'node glow');
     this.u = {};
-    for (const n of ['uVP', 'uAt', 'uSize', 'uEye', 'uPull', 'uColor', 'uAlpha', 'uSeed', 'uTime', 'uStill', 'uForm', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uVP', 'uAt', 'uSize', 'uEye', 'uPull', 'uColor', 'uAlpha', 'uSeed', 'uTime', 'uStill', 'uForm', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(this.program, n);
     const verts = nodeGlowVertices();
     this.count = verts.length / 2;
     this.vao = gl.createVertexArray();
@@ -237,12 +239,13 @@ export class NodeGlowRenderer {
     gl.uniform1f(U.uTime, nodeGlowClock(seconds));
     gl.uniform1f(U.uStill, still ? 1 : 0);
     gl.uniform3f(U.uEye, eye[0], eye[1], eye[2]);
-    gl.uniform1f(U.uPull, NODE_GLOW_PULL);
+    let pull = NaN;   // AUDIT BANTHA1 TREE-3: the card's pull a glow's own, sent as it changes
     gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
     gl.bindVertexArray(this.vao);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
@@ -252,6 +255,7 @@ export class NodeGlowRenderer {
       if (!g || !isVec3(g.at) || !(g.alpha > 0.001)) continue;
       gl.uniform3f(U.uAt, g.at[0], g.at[1], g.at[2]);
       gl.uniform2f(U.uSize, g.w, g.h);
+      if (g.pull !== pull) { pull = g.pull ?? NODE_GLOW_PULL; gl.uniform1f(U.uPull, pull); }
       gl.uniform3f(U.uColor, g.rgb[0], g.rgb[1], g.rgb[2]);
       gl.uniform1f(U.uAlpha, Math.min(1, g.alpha));
       gl.uniform1f(U.uSeed, Number.isFinite(g.seed) ? g.seed : 0);
@@ -308,7 +312,7 @@ export function createNodeGlowPass(renderer, { now = () => performance.now() / 1
       const t = now();
       if (!asked && marks?.length) { asked = true; idle(make); }   // the first node marked: the compile, at idle
       if (!nodeGlows(marks, eye, t, state, list).length || !proj || !view || !pass) return 0;
-      pass.draw(list, proj, view, eye, t, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus }, reduced(t));
+      pass.draw(list, proj, view, eye, t, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze }, reduced(t));
       renderer.markForeignPass();
       return pass.drawn;
     },

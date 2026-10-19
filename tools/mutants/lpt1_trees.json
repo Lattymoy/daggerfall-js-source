@@ -2,8 +2,8 @@
   {
     "name": "LPT1-cut-any-picture",
     "file": "src/render/renderer.js",
-    "old": "const lc = b.lptProto && this._lpt?.cut.has(b.lptProto) ? 1 : 0;",
-    "new": "const lc = b.lptProto && this._lpt ? 1 : 0;",
+    "old": "const lc = b.lptProto ? this._lptFrameOf(b.lptProto) : null;",
+    "new": "const lc = b.lptProto ? (this._lptSlots.find((f) => f) ?? null) : null;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "LPT1-frame-not-spent",
     "file": "src/render/renderer.js",
-    "old": "    }\n    this._lpt = null;",
+    "old": "    }\n    if (slots) slots.fill(null);",
     "new": "    }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
@@ -334,9 +334,9 @@
   },
   {
     "name": "LPT1-B3-mid-install-paint",
-    "file": "src/scenes/world.js",
-    "old": "seasonsActive && !seasons.installing && seasons.lookup(a, 1)",
-    "new": "seasonsActive && seasons.lookup(a, 1)",
+    "file": "src/scenes/treesHost.js",
+    "old": "seasonsActive() && !seasons.installing && seasons.lookup(a, 1)",
+    "new": "seasonsActive() && seasons.lookup(a, 1)",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "LPT1-B4-the-host-culls-nothing",
     "file": "src/scenes/world.js",
-    "old": "if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);",
-    "new": "if (lowPolyTrees) lowPolyTreesFrame(null);",
+    "old": "trees.frame(_pixelOrder, cam.pos, cullOn ? _planes : null);",
+    "new": "trees.frame(_pixelOrder, cam.pos, null);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -433,16 +433,16 @@
   },
   {
     "name": "LPT1-B5-pixel-keeps-its-handles",
-    "file": "src/scenes/world.js",
-    "old": "    if (p.lowPolyTrees) for (const h of p.lowPolyTrees.handles) lowPolyTrees?.release(h);",
-    "new": "    // gone",
+    "file": "src/scenes/treesHost.js",
+    "old": "      if (p.lowPolyTrees) for (const h of p.lowPolyTrees.handles) lowPolyTrees?.release(h);",
+    "new": "      // gone",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-B5-failed-build-keeps-its-handles",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/treesHost.js",
     "old": "      for (const h of m.lptHandles ?? []) lowPolyTrees?.release(h);",
     "new": "      // gone",
     "tests": [
@@ -559,9 +559,9 @@
   },
   {
     "name": "LPT1-B10-set-never-let-go",
-    "file": "src/scenes/world.js",
-    "old": "if (p._dist2 > 8 && set.trees) { set.trees = null; set.centers = null; }",
-    "new": "if (false) { set.trees = null; set.centers = null; }",
+    "file": "src/scenes/treesHost.js",
+    "old": "if (p._dist2 > 8) { drop(a); drop(b); }",
+    "new": "if (false) { drop(a); drop(b); }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -912,7 +912,7 @@
   },
   {
     "name": "LPT1-felled-tree-stands",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/treesHost.js",
     "old": "skip: (set, i) => FELLED.has(set.centers[i]),",
     "new": "skip: null,",
     "tests": [
@@ -922,7 +922,7 @@
   {
     "name": "LPT1-every-flat-wild",
     "file": "src/scenes/pixelBuild.js",
-    "old": "wild[i] = wildFlats.has(`${k}#${i}`) ? 1 : 0;",
+    "old": "wild[i] = g.wild.has(`${k}#${i}`) ? 1 : 0;",
     "new": "wild[i] = 0;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
@@ -931,7 +931,7 @@
   {
     "name": "LPT1-flats-unscaled",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          const v = lptVariety(px, py, c[0], c[2], !wild[i]).scale;",
+    "old": "          const v = lptVariety(g.px, g.py, c[0], c[2], !wild[i]).scale;",
     "new": "          const v = LPT_SCALE_MAX;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
@@ -940,8 +940,8 @@
   },
   {
     "name": "LPT1-set-at-pixel-local",
-    "file": "src/scenes/world.js",
-    "old": "set.ox = p._t[0]; set.oy = p._t[1]; set.oz = p._t[2];",
+    "file": "src/scenes/treesHost.js",
+    "old": "set.ox = t[0]; set.oy = t[1]; set.oz = t[2];",
     "new": "set.ox = 0; set.oy = 0; set.oz = 0;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
@@ -949,9 +949,9 @@
   },
   {
     "name": "LPT1-stamp-not-handed",
-    "file": "src/scenes/world.js",
-    "old": "    _lptOpts.stamp = FOREST_STAMP.n;",
-    "new": "    // the stamp",
+    "file": "src/scenes/treesHost.js",
+    "old": "      opts.stamp = FOREST_STAMP.n;",
+    "new": "      // the stamp",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -987,8 +987,8 @@
   {
     "name": "LPT1-sway-of-the-tree",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        batch.sway = floraSwayOf(archive, natureSet, plain.h);\n        _lptSway",
-    "new": "        batch.sway = floraSwayOf(archive, natureSet, far.size.h);\n        _lptSway",
+    "old": "        batch.sway = floraSwayOf(archive, g.natureSet, plain.h);\n        _lptSway",
+    "new": "        batch.sway = floraSwayOf(archive, g.natureSet, far.size.h);\n        _lptSway",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]

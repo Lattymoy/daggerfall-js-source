@@ -110,8 +110,8 @@ test('LPT-FIT: the set the frame draws takes the cap - each tree its variety or 
 test('LPT-FIT by source: the world host fits every Low Poly tree of a pixel - the wild\'s and a location\'s - under clear roadsides, by the drawn prototype\'s turned crown, on its far picture and its near set alike; THE FOUR HOSTS', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const crown = verges \? \(LPT_CROWNS\[lpt\.key\] \?\? 0\) : 0;/, 'under the clear roadsides\' switch, the turned crown');
-  assert.match(w, /if \(crown > 0 && !lptPathMask\) lptPathMask = pathTileMask\(tilemap, paths\);/, 'the pixel\'s finished tiles and the painter\'s mask');
-  assert.match(w, /if \(fit\) fit\[i\] = lptFitCap\(lptPathMask, vergeNet, px, py, c\[0\], c\[2\], crown, v\);/, 'every centre - wild or not');
+  assert.match(w, /if \(crown > 0 && !lptPathMask\) lptPathMask = pathTileMask\(g\.tilemap, g\.paths\);/, 'the pixel\'s finished tiles and the painter\'s mask');
+  assert.match(w, /if \(fit\) fit\[i\] = lptFitCap\(lptPathMask, g\.vergeNet, g\.px, g\.py, c\[0\], c\[2\], crown, v\);/, 'every centre - wild or not');
   assert.match(w, /scales\[i\] = \(fit \? Math\.min\(v, fit\[i\]\) : v\) \/ LPT_SCALE_MAX;/, 'the far picture');
   assert.match(w, /lptGroups\.push\(\{ h: lptHandles\.length - 1, centers, wild, fit \}\);/, 'the near set');
   assert.equal(LPT_SCALE_MAX, 1.4);

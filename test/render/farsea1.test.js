@@ -89,12 +89,12 @@ test('FAR-SEA1: every ring shader - classic, the lane, the classic-shadow lane -
   // AUDIT FAR-SEA1 C1: the whole output line, and the sea's line between the light and it - inverted or dead, it fails
   order(classicFs, ['vec3 lit = vColor * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));',
     'float sea = vSea * uSeaLook;', 'if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor), sea);',
-    'outColor = vec4(mix(lit, uFogColor, horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)), 1.0);'], 'classic');
+    'outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);'], 'classic');   // BANTHA1: the jungle's haze over the horizon's
   // the lane: its ground through the tonemap into display space, the sea in the water's own space from the light as given
   for (const [name, text] of [['lane', EL_FAR_RING_FS], ['classic shadows', classicShadowLane().farRingFs]]) {
     order(text, ['vec3 shown = elEncode(elTonemapRGB(lit * ex));', 'float sea = vSea * uSeaLook;',
       'if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor), sea);',
-      'vec3 col = mix(shown, uFogColor, horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold));'], name);
+      'vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));'], name);
   }
   for (const text of [classicFs, EL_FAR_RING_FS]) {
     assert.ok(!/uHazeHold \* clamp\(/.test(text), 'the scaled ramp is gone');
@@ -290,7 +290,7 @@ test('FAR-SEA1: the world host - the ring takes the water\'s sky, body and eye, 
   const ring = w.slice(at, w.indexOf('    frameRing();', at));
   assert.ok(ring.includes("if (farRing && fogNow.mode === 'linear') {"), 'the ring\'s own gate');
   assert.ok(ring.includes('skyZenith: waterSkyNow?.zenith, skyHorizon: waterSkyNow?.horizon, eye: renderer._camPos, worldProj: renderer._proj,'), 'the dome\'s sky; the eye and the world\'s own lens the fill is counted from');
-  assert.ok(ring.includes('seaTiles: waterSkyNow ? renderer.tileArrays.get(seaGroundArchive()) : null, seaTint: _dwFrame && !_dwFrame.underwater ? _dwFrame.look.topColor : null,'), 'the water\'s own body: the camera climate\'s tiles, Iliac Puddle No More\'s tint');
+  assert.ok(ring.includes('seaTiles: waterSkyNow ? snowCover.arrayOf(seaGroundArchive()) : null, seaTint: _dwFrame && !_dwFrame.underwater ? _dwFrame.look.topColor : null,'), 'the water\'s own body: the camera climate\'s tiles, Iliac Puddle No More\'s tint');   // AUDIT PRECIP GROUND-2 (PIN MOVED): the set as the snow lane holds it - its twin, whose first half it is
   assert.match(ring, /\n      if \(waterSkyNow\) renderer\.setSeaHaze\(RING_HAZE_HOLD, seaYNow\);\n    \}\n    \};\n$/,
     'the gate\'s last statement, only with a sky to reflect - never on a frame without the ring (?ring=off, exp fog), where the held sea would meet the bare sky');
   // AUDIT FAR-SEA1 C3: found, and before the ring
@@ -300,7 +300,8 @@ test('FAR-SEA1: the world host - the ring takes the water\'s sky, body and eye, 
   assert.ok(skyAt > 0 && skyAt < at, 'the sky read once, with the water on');
   assert.ok(w.indexOf('    frameRing();') < w.indexOf('    frameWater();'), 'the haze is set before the water draws');
   // one home for the sea's climate: Iliac Puddle No More's sea and the ring's sea read the same archive
-  assert.equal((w.match(/renderer\.tileArrays\.get\(seaGroundArchive\(\)\)/g) || []).length, 2, 'the open sea and the ring\'s sea, one body');
+  assert.equal((w.match(/snowCover\.arrayOf\(seaGroundArchive\(\)\)/g) || []).length, 2, 'the open sea and the ring\'s sea, one body');   // AUDIT PRECIP GROUND-2 (PIN MOVED)
+  assert.equal((w.match(/renderer\.tileArrays\.get\(seaGroundArchive\(\)\)/g) || []).length, 0, 'never the bare set, which the snow lane does not upload');
   assert.match(w, /import \{ FarRingRenderer, ringDisabled, ringHeight, RING_HAZE_HOLD \} from '\.\.\/render\/farRing\.js';/);
   // THE FOUR HOSTS: the fixed city draws the water and no ring, the interiors and the dungeons neither - none sets it
   for (const f of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js', 'src/tools/waterLab.js']) assert.ok(!rd(f).includes('setSeaHaze'), `${f}: the world's fog alone`);

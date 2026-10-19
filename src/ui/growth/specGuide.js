@@ -19,6 +19,8 @@ import { MAGIC_SKILLS, SKILL_NAMES } from '../../systems/skills.js';
 import { masterSkillsActive, masterSkillsSwitchable, isMasteredSkill, careerGroupOf, masterySlots, masterableCount, masterCappedSkill } from '../../systems/masterSkills.js';
 import { signatureSpell } from '../../systems/signatureSpells.js';
 import { specResetRefusal, resetSpec, resetField } from '../../systems/specReset.js';   // SPEC-RESET: a held path given up, for gold
+import { SKILL_SWAP_GOLD, swapOutChoices, swapInChoices, skillSwapRefusal, swapGroupOf, swapSkill, swappedCareer, swapOpens } from '../../systems/skillSwap.js';   // SKILL-SWAP: a class skill given up for another, for gold
+import { alreadyMasteredASkill } from '../../systems/advancement.js';   // AUDIT SUGGESTIONS-1019 L5-2: the 95 lock a swap moves
 import { computeEntityMods } from '../../systems/entityMods.js';   // AUDIT SPEC-RESET L1-3: a chosen path's stats now
 import { sigilDueling } from '../../systems/sigil/sigil.js';
 import { lootRarityOn } from '../../systems/loot/lootRarity.js';
@@ -187,11 +189,11 @@ function resetModel(entity, id, law, held, on) {
 
 /**
  * THE GUIDE'S MODEL for `entity` - both families, every path. Pure: reads the laws and the entity, writes nothing.
- * `{ masterOn, switchable, families: [{ id, held, asleep, possible, classPossible, skills, open, paths: [{ id, name,
+ * `{ masterOn, switchable, families: [{ id, held, asleep, possible, classPossible, skills, open, swapOpens, paths: [{ id, name,
  *  pairText, pair, state, passive, signature, choose, ask }], reset }] }` - a family's paths in SPEC_STATES order, the
  *  nearest first within a state (the points its pair still owes 100), then the laws' order. `asleep` why the held path
  *  does nothing now (pathAsleep); `classPossible` the family's law on this class with no mastery spent yet; `reset` the
- *  held path's Reset (resetModel), null with none held.
+ *  held path's Reset (resetModel), null with none held; `swapOpens` whether one class skill swap would open a path.
  */
 export function specGuideModel(entity) {
   const on = masterSkillsActive(entity);
@@ -212,9 +214,28 @@ export function specGuideModel(entity) {
       skills: law.skills.map((s) => skillStand(entity, s)), open: open.length,
       paths: paths.map((p) => ({ ...p, ask: () => law.ask(entity, p.id), choose: () => chooseNow(entity, law, p.id) })),
       reset: held ? resetModel(entity, id, law, held, on) : null,
+      swapOpens: false,
     };
   });
-  return { masterOn: on, switchable: masterSkillsSwitchable(entity), families };
+  // SKILL-SWAP (systems/skillSwap.js): the class skill given up for one outside it - the choices, and the law's words
+  const swap = entity?.career ? {
+    out: swapOutChoices(entity), in: swapInChoices(entity),
+    refusal: (out, inn) => skillSwapRefusal(entity, out, inn), group: (out) => swapGroupOf(entity, out), go: (out, inn) => swapSkill(entity, out, inn),
+    // AUDIT SUGGESTIONS-1019 L5-1: the group's mastery slots left - none, and what comes in can never be mastered
+    slotsLeft: (out) => masterySlots(entity, swapGroupOf(entity, out)).left,
+    // AUDIT SUGGESTIONS-1019 L5-2: offline with Master Skills off, whether the swap starts ('on') or ends ('off') DFU's 95 lock
+    lockTurn: (out, inn) => {
+      if (masterSkillsActive(entity)) return null;
+      const before = alreadyMasteredASkill(entity), after = alreadyMasteredASkill({ ...entity, career: swappedCareer(entity, out, inn) });
+      return before === after ? null : after ? 'on' : 'off';
+    },
+  } : null;
+  // AUDIT SUGGESTIONS-1019 L5-1: a family's hint only where ONE swap would open a path, the masteries and slots as they stand
+  for (const f of families) {
+    const law = FAMILY_LAW[f.id];
+    f.swapOpens = !!swap && !f.possible && swap.out.some((out) => law.skills.some((inn) => swap.in.includes(inn) && swapOpens(entity, out, inn, law.possible)));
+  }
+  return { masterOn: on, switchable: masterSkillsSwitchable(entity), families, swap };
 }
 
 /** A state's tag on the row. */
@@ -270,9 +291,12 @@ let _all = false;
 let _note = /** @type {string|null} */ (null);
 /** The note was just written - the next draw brings it into view (AUDIT SPEC-RESET L3-2). */
 let _noteFresh = false;
+/** SKILL-SWAP: the two picks of the swap's form, kept across a redraw. */
+let _swapOut = /** @type {number|null} */ (null);
+let _swapIn = /** @type {number|null} */ (null);
 /** A new visit: the page starts on `fam` (a door's - the classic sheet's S or W row), else the family this character
  *  can reach; nothing open. */
-export function resetSpecGuide(fam = null) { _fam = fam === 'arcane' || fam === 'martial' ? fam : null; _open = null; _all = false; _note = null; _noteFresh = false; }
+export function resetSpecGuide(fam = null) { _fam = fam === 'arcane' || fam === 'martial' ? fam : null; _open = null; _all = false; _note = null; _noteFresh = false; _swapOut = null; _swapIn = null; }
 
 /**
  * THE PAGE into `detail` (the Growth rail's detail pane). `kit` the menu's makers: `{ el, divider, skillMeter, askCard,
@@ -318,6 +342,8 @@ export function drawSpecGuide(detail, rerender, { el, divider, skillMeter = null
   // the family's standing: the path held, or how many are open, or how one opens - and its six skills
   const head = el('section', 'px-mgroup gr-head');
   head.append(el('div', 'gr-headline', familyLine(fam)));
+  // SKILL-SWAP: a class that can never meet a path is told the one way it now can
+  if (fam.swapOpens) head.append(el('p', 'gr-fine', fam.id === 'arcane' ? t('growth.swap.hintArcane', 'You can change one of your class skills for a school of magic below.') : t('growth.swap.hintMartial', 'You can change one of your class skills for a weapon skill below.')));
   const grid = el('div', 'gr-skills');
   for (const s of fam.skills) {
     const cell = el('div', 'gr-skill');
@@ -364,6 +390,56 @@ export function drawSpecGuide(detail, rerender, { el, divider, skillMeter = null
     more.onclick = () => { _all = !_all; rerender(); };
     detail.append(more);
   }
+  if (m.swap?.out.length && m.swap.in.length) drawSkillSwap(detail, rerender, { el, divider, askCard }, m.swap);
+}
+
+/** SKILL-SWAP (systems/skillSwap.js): the form - the class skill to give up, the one to take in its place, and the
+ *  swap, asked first; refused (the press stands, disabled, and says why) short of the gold. */
+function drawSkillSwap(detail, rerender, { el, divider, askCard }, sw) {
+  if (!sw.out.includes(_swapOut)) _swapOut = sw.out[0];
+  if (!sw.in.includes(_swapIn)) _swapIn = sw.in[0];
+  detail.append(divider(t('growth.swap.title', 'Change a class skill')));
+  detail.append(el('p', 'gr-lead', t('growth.swap.lead', 'Give up a class skill you have not mastered, and take a skill from outside your class in its place, in the same group. It costs {gold, number} gold. Your level and your skills\' values do not change.', { gold: SKILL_SWAP_GOLD })));
+  const box = el('section', 'px-mgroup gr-swap');
+  const pick = (label, ids, value, onPick) => {
+    const s = el('select', 'act');
+    s.setAttribute('aria-label', label);
+    for (const id of ids) { const o = el('option', null, SKILL_NAMES[id] ?? String(id)); o.value = String(id); if (id === value) o.selected = true; s.append(o); }
+    s.onchange = () => { onPick(Number(s.value)); rerender(); };
+    return s;
+  };
+  box.append(el('div', 'gr-skilltop', t('growth.swap.out', 'Give up')), pick(t('growth.swap.out', 'Give up'), sw.out, _swapOut, (v) => { _swapOut = v; }));
+  box.append(el('div', 'gr-skilltop', t('growth.swap.in', 'Take instead')), pick(t('growth.swap.in', 'Take instead'), sw.in, _swapIn, (v) => { _swapIn = v; }));
+  const out = _swapOut, inn = _swapIn, refusal = sw.refusal(out, inn);
+  const words = { out: SKILL_NAMES[out], inn: SKILL_NAMES[inn], gold: SKILL_SWAP_GOLD, group: groupWord(sw.group(out)) };
+  // AUDIT SUGGESTIONS-1019 L5-1/L5-2: what the swap costs beyond the gold, said beside the picks and again in the ask
+  const lock = sw.lockTurn(out, inn);
+  const warns = [
+    ...(sw.slotsLeft(out) === 0 ? [t('growth.swap.noSlots', 'Your {group} mastery slots are spent, so {inn} could never be mastered.', words)] : []),
+    ...(lock === 'on' ? [t('growth.swap.lockOn', 'With Master Skills off, {inn} at 100 as a primary skill holds your other skills at 95.', words)]
+      : lock === 'off' ? [t('growth.swap.lockOff', 'With Master Skills off, your other skills are no longer held at 95 once {out} leaves your primary skills.', words)] : []),
+  ];
+  for (const w of warns) box.append(el('p', 'gr-fine gr-swap-warn', w));
+  const acts = el('div', 'gr-acts');
+  const b = el('button', 'act', t('growth.swap.btn', 'Swap · {gold, number} gold', words).replace(/ ·/g, '\u00a0·'));
+  b.disabled = !!refusal;
+  b.onclick = () => {
+    if (refusal) return;
+    askCard([
+      t('growth.swap.ask', 'Give up {out} for {inn} for {gold, number} gold?', words),
+      t('growth.swap.askGroup', '{inn} becomes one of your {group} skills. {out} becomes a miscellaneous skill: it keeps its value but can no longer be mastered.', words),
+      ...warns,
+    ], () => { _note = sw.go(out, inn).text; _noteFresh = true; rerender(); });
+  };
+  acts.append(b);
+  box.append(acts);
+  if (refusal) {
+    const why = el('p', 'gr-fine gr-reset-why', refusal);
+    why.id = 'gr-swap-why';
+    b.setAttribute('aria-describedby', why.id);
+    box.append(why);
+  }
+  detail.append(box);
 }
 
 /** The family the page opens on: one with a choice waiting, then the one held, then one this class can reach (AUDIT
@@ -506,6 +582,8 @@ export const SPEC_GUIDE_CSS = `
 .px-sys .gr-steps li.is-full, .px-sys .gr-steps li.is-misc { color: #9c937d; }
 .px-sys .gr-more { margin: 4px 0 8px; }
 .px-sys .gr-reset-why { margin-top: 6px; color: #b8a27a; }
+.px-sys .gr-swap select { max-width: 100%; }   /* AUDIT SUGGESTIONS-1019 L5-3: a long skill name never pushes the pane sideways */
+.px-sys .gr-swap-warn { color: #e0a54a; }
 @media (max-width: 660px) {
   .px-sys .gr-pathbar { grid-template-columns: minmax(0, 1fr) auto; }
   .px-sys .gr-pathpair { grid-column: 1 / -1; grid-row: 2; }

@@ -57,3 +57,17 @@ export async function naturePicture({ door = null, seasons = null, renderer, upl
   uploadRecord(archive, record);
   return { key: record, size: plain, plain, sib: null, proto: null, far: null };
 }
+
+/**
+ * BANTHA1 (bible/03-World/Bantha-Jungle.md): THE PICTURE A JUNGLE TREE STANDS AS - the jungle door's far picture of
+ * `species` (systems/jungleTreesAssets.js createJungleTrees - proto, farPicture; the door already loaded) as
+ * `{ proto, far }` (the far picture not yet held), or null where it would not stand - the host stands the Tree record the
+ * flat carries, as the choice above stands the classic record. A jungle tree has no classic flat and no season of its
+ * own to weigh: the owner's tree, or its record.
+ * @param {any} door @param {number} species
+ */
+export async function junglePicture(door, species) {
+  const proto = door.proto(species);
+  const far = proto ? await door.farPicture(proto) : null;
+  return far ? { proto, far } : null;
+}

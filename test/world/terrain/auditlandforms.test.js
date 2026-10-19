@@ -1099,6 +1099,7 @@ test('AUDIT LANDFORMS II H1: THE ONE CONSTRUCTION SEAM for C1 - every height wor
     ['sceneToOnline = nativeFrame ? campToWire : (q) => [q[0], shedY ? q[1] - state.compensation[1] : q[1], q[2]];   // AUDIT MERGE-PLUS B1', 'the online pose'],
     ['restandSceneHeight: (y, x, z, was) => restandHeight(y - state.compensation[1], x, z, was) + state.compensation[1],', 'the read side'],
     ['toWire: (feet) => [feet[0], feet[1] - state.compensation[1], feet[2]],', 'the wire'],
+    ['const fieldXZ = () => { const p = walkMode ? player.pos : cam.pos, wc = state.worldCoords(p); return [...fieldFromNative(wc.x, wc.z), altitudeOfWorldY(p[1] - state.compensation[1])]; };   // PRECIP1: and the height above the sea the air is read at', 'PRECIP1: the air\'s height at the eye, a sample\'s - the drawn ground\'s frame, as the snow\'s fragments read theirs'],
   ]);
   // AUDIT HOST-SPLIT 2, the second read: and as a moved module spells it, host.state - the pixel build is the host's too
   const raw = WORLD.split('\n').map((l) => l.trim()).filter((l) => /-\s*(?:host\.)?state\.compensation\[1\]/.test(l) && !/groundFrame(Height|Native)\(/.test(l));

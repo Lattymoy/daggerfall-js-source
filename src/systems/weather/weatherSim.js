@@ -46,13 +46,15 @@ import { isEnhanced } from '../uiSkin.js';   // CLK2: the evolution is the enhan
 import { getPref } from '../uiPrefs.js';
 import { groundWearsSnow, climateSeasonFromMinutes } from '../../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
 import { fieldAt, FIELD_RANGE_M, pixelOfField } from './weatherField.js';   // WEATHER2b: the day's words as places
-import { systemsNear, wornAmong, skyCells, approachAt, insideClip } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land; WEATHER3c: its sky and its wind
+import { systemsNear, wornAmong, skyCells, approachAt, insideClip, isWet } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land; WEATHER3c: its sky and its wind
 
 export { WEATHER_TYPES };
 
 // The table, its dispatch and the roll live in weatherTable.js (WEATHER3:
 // the world weather map reads the same odds); re-exported whole.
 import { WEATHER_ENUM, rollWeather } from './weatherTable.js';
+import { airTemperature, snowShareOf, airGround } from './airTemperature.js';   // PRECIP1: the air decides what falls
+import { pageParam, pageHas } from '../pageQuery.js';   // PERF-URL: the page's one parse (the law's door)
 export { WEATHER_ENUM, WEATHER_TABLE, weatherTableFor, rollWeather } from './weatherTable.js';
 
 // ---- the module state ----------------------------------------------
@@ -158,7 +160,7 @@ export function sampleWeatherField(nowMinutes, climateIndex, at, climateAt, how 
   if (!_climateWeathersValid && !_climateWeathersRolled) return false;   // no words yet: the drain rolls them first
   const f = fieldAt({ day: Math.floor(nowMinutes / 1440), minuteOfDay: nowMinutes % 1440, at, climateAt, wordOfClimate: (c) => WEATHER_TYPES[weatherForClimate(c)] });
   _fieldCells = f.cells; _fieldInside = f.inside;
-  const changed = _set(WEATHER_ENUM[f.word], climateIndex, nowMinutes);
+  const changed = _set(WEATHER_ENUM[f.word], climateIndex, nowMinutes, at);
   if (changed && how === 'live') _crossings++;
   else if (changed && how === 'jump') _jumps++;
   return changed;
@@ -235,21 +237,38 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
   // AUDIT-3i: the player's word through the SAME ground law as every other reader's - rain over snow ground is snow
   // BEFORE the strongest is chosen, so the strength the player feels is the one that falls there (resolved raw first,
   // a rain front's intensity was worn under a stronger snow front's word); `raw` keeps the painting system's own word
-  // for the sky's violence
+  // for the sky's violence. AUDIT PRECIP AIR-8: on the law's lane the AIR's law in its place - one air at the player's
+  // own place and height for every band over them (weatherMap.js wornAmong `air`)
   const ground = mapGround(climateAt);
-  const worn = wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes));
+  const law = precipLawOn();
+  const alt = Number.isFinite(at[2]) ? at[2] : null;   // PRECIP1: the player's own height above the sea, where the host says it
+  const worn = law ? wornAmong(_mapNear, at[0], at[1], null, lawAir(nowMinutes, alt)) : wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes));
   _mapIntensity = worn.intensity;
   // WEATHER3c: THE SKY IS THE MAP'S. Every system within the sky's reach gives the clouds its bands as nested discs -
   // a fair-weather field, a deck's edge, a fog bank on the low ground, a storm's skirt, rain and tower - each word
   // through the ground law at ITS OWN place (a winter storm is a snow cloud where it stands), ranked by how much of
   // the sky it fills from here; the renderer keeps what its slots hold and draws the lowest priority first
-  _fieldCells = skyCells(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes)).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);
-  _fieldInside = _fieldCells.find((c) => c.d < c.r && insideClip(c, at[0], at[1]) && c.word === worn.word) ?? null;   // c.d in the system's own measure (WEATHER3h); a storm cell only inside its front
+  _fieldCells = skyCells(_mapNear, at[0], at[1], law ? null : (w, cx, cz) => ground(w, cx, cz, nowMinutes)).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);
+  if (law) {
+    // PRECIP1 / AUDIT PRECIP AIR-4, FALL-5, FALL-9: EACH WET CELL'S SNOW SHARE where its fall is nearest the player - the
+    // one over them the player's own (the curtain overhead is what falls on them), every other at its own near edge in
+    // the air there (its ground, its fall, its cloud: one air per place) - and its word that share's rounding; its look,
+    // its rank and its weight stay its system's own (volumetricClouds.js cellOfField walks the look by the share)
+    const mine = worn.system ? `${worn.system.id}:${worn.raw}` : null;
+    for (const c of _fieldCells) {
+      if (!isWet(c.raw)) continue;
+      c.snow = c.id === mine && worn.share != null ? worn.share : wornAmong(_mapNear, c.near[0], c.near[1], null, lawAir(nowMinutes)).share ?? snowShareAt(c.near[0], c.near[1], nowMinutes, null, { intensity: c.fall, snow: c.raw === 'snow' ? c.fall : 0, cover: 1 });
+      c.word = phaseRound(c.raw, c.snow);
+    }
+    _fieldInside = _fieldCells.find((c) => c.id === mine) ?? null;
+  } else {
+    _fieldInside = _fieldCells.find((c) => c.d < c.r && insideClip(c, at[0], at[1]) && c.word === worn.word) ?? null;   // c.d in the system's own measure (WEATHER3h); a storm cell only inside its front
+  }
   _mapApproach = approachAt(_mapNear, at[0], at[1]);
   const away = _mapSampledAt === null || minute < _mapSampledAt || minute - _mapSampledAt > STALE_DRAIN_MINUTES
     || !_mapAt || Math.hypot(at[0] - _mapAt[0], at[1] - _mapAt[1]) > MAP_JUMP_M;
   _mapAt = [at[0], at[1]]; _mapSampledAt = minute;
-  const changed = _set(WEATHER_ENUM[worn.raw], climateIndex, nowMinutes);
+  const changed = _set(WEATHER_ENUM[worn.raw], climateIndex, nowMinutes, at, law ? worn : null);
   if (how === 'jump' || away) _arrivals++;   // AUDIT WEATHER3 R5: an arrival whether or not the word moved
   if (changed && (how === 'jump' || away)) _jumps++;
   else if (changed) _crossings++;
@@ -260,12 +279,92 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
  *  `(word, x, z, minutes)` answers the word as it falls at field (x, z) at that minute (WEATHER2a: rain or a storm over
  *  a ground that wears snow is snow). One law, so no reader says "Rain" where the player standing there gets snow. */
 export function mapGround(climateAt) {
-  return (word, x, z, minutes) => {
+  const ground = (word, x, z, minutes, altitude = null, fall = null) => {
     if (word !== 'rain' && word !== 'thunder' && word !== 'snow') return word;
+    if (precipLawOn()) return phaseWord(word, x, z, minutes, altitude, fall);   // PRECIP1: the air at that place and height
     const px = pixelOfField(x, z);
     return WEATHER_TYPES[overGround(WEATHER_ENUM[word], climateAt(px.x, px.y), minutes)];
   };
+  /** AUDIT PRECIP AIR-8: on the law's lane the AIR's law a reader of the map's systems wears them under (weatherMap.js
+   *  weatherAt hands it to wornAmong) - one air per place - at `minutes`; null off it (the word law above). */
+  ground.lawAir = (minutes) => (precipLawOn() ? lawAir(minutes) : null);
+  /** Whether a storm strikes at field (x, z) - its lightning and its thunder (distantStorms.js): off the law's lane only
+   *  where the ground law leaves it a storm (WEATHER2a: over a snow ground a snow squall); on it, always - a storm
+   *  system is a storm whatever phase its fall takes (thundersnow), so its strikes walk no line the air draws. */
+  ground.strikes = (x, z, minutes) => precipLawOn() || ground('thunder', x, z, minutes) === 'thunder';
+  return ground;
 }
+
+// ---- PRECIP1 (2026-10-19): WHAT FALLS IS THE AIR'S TO SAY -----------------------------------------------------------
+// The owner: "It shouldnt snow everywhere or rain everywhere when the season is winter ... If its snowing in one area and
+// raining in the next, the transition should be seamless". WEATHER2a's law above asked a climate's ARCHIVE on the
+// calendar: every pixel of a snowy climate snowed all winter (the rainforest and the sea among them) and rained the rest
+// of the year (a 1,900 m peak in First Seed among them), and the line between ran along a map pixel's edge. On the
+// world weather map's lane of the enhanced skin, with a host that has handed the air its map (airTemperature.js
+// setAirGround), the PHASE of what falls is the air's at that place and height (airTemperature.js airTemperature): its
+// snow share (snowShareOf - all snow at 0 C and under, all rain at 2.5 and over, sleet between) is a continuous field
+// and everything that falls, sounds, soaks and looks walks with it - the drops and the flakes (render/precipitation.js
+// drawFall), the rain's loop and its level, the skin's soak, the fog and the light (weatherFront.js phaseTerms), the
+// clouds' look (volumetricClouds.js cellOfField). The WORD is its rounding (snow from a half up), pure in the place and
+// the minute, for DFU's readers of a word (the flags, the songs). A system is a system whatever its phase (`raw`, its
+// own word): a thunderstorm in air under freezing is a blizzard that still strikes, and a phase turning under the same
+// system is no new weather - no front, no new episode, no wind (AUDIT PRECIP FALL-2). `?biomeprecip=off` the door back
+// to WEATHER2a's law (refused online: one room, one sky and one ground); the classic lane is DFU's word, 1:1.
+/** The intensity the phase law reads for a place no system's band was measured at (a reader with a word and a place
+ *  alone) - its chill (airTemperature.js FALL) at a middling fall under full cloud. */
+export const PHASE_INTENSITY = 0.6;
+let _precipOverride = null;   // tests: true/false; null reads the lane
+/** Tests and the lab: force the phase law on or off (null: the lane decides). */
+export function setPrecipLaw(on) { _precipOverride = on == null ? null : !!on; }
+/** PRECIP1: whether the air decides what falls - the enhanced lane's ground law (snowGroundLawOn) on the world weather
+ *  map's lane (AUDIT PRECIP AIR-2: the map's history is what the snow lies from and a place is what every write carries
+ *  - off it, WEATHER2a's calendar and DFU's season stand whole) with a host that handed the air its map, and
+ *  `?biomeprecip=off` not given - an online page refuses the door (the jungle's and the landforms' way, shared.js). The
+ *  door is read each call (pageQuery.js memoises the page's one parse). */
+export function precipLawOn() {
+  if (_precipOverride !== null) return _precipOverride;
+  return (pageHas('online') || pageParam('biomeprecip') !== 'off') && snowGroundLawOn() && weatherMapOn() && airGround() !== null;
+}
+/** THE SNOW SHARE at field (x, z), `altitude` metres above the sea (null: the ground's mean height there), at event
+ *  minute `minutes`, under `fall` (airTemperature.js airFall - the place's fall, its snow systems' and its cloud: wornAmong's
+ *  `fall`): 1 all snow, 0 all rain. Pure in its arguments and the air's map. */
+export function snowShareAt(x, z, minutes, altitude = null, fall = null) {
+  return snowShareOf(airTemperature(x, z, altitude, minutes, skyMinuteOfEvent(minutes), fall));
+}
+/** THE AIR'S LAW as weatherMap.js wornAmong takes it (`air`): the snow share at a place under its fall, at event minute
+ *  `minutes` and `altitude` metres above the sea (null: the ground's mean height at each place asked). */
+export const lawAir = (minutes, altitude = null) => (x, z, fall) => snowShareAt(x, z, minutes, altitude, fall);
+/** The word a wet system's `word` falls as there under `fall` (a place's - wornAmong's; null: a middling fall of the
+ *  word's own system under full cloud): its share's rounding (phaseRound). A dry word is itself. */
+export function phaseWord(word, x, z, minutes, altitude = null, fall = null) {
+  if (word !== 'rain' && word !== 'thunder' && word !== 'snow') return word;
+  return phaseRound(word, snowShareAt(x, z, minutes, altitude, fall ?? { intensity: PHASE_INTENSITY, snow: word === 'snow' ? PHASE_INTENSITY : 0, cover: 1 }));
+}
+/** THE WORD OFF A SNOW SHARE: a wet system's `raw` word falls as snow from a half's share up, else as its own (a snow
+ *  system's as rain). Pure in the share - AUDIT PRECIP AIR-6: it held the word a client last wore either side of the
+ *  half, so two clients at one place and minute could wear two words; nothing continuous reads the word now (the share
+ *  does), and a turn of it under the same system is no new weather (`_set`). */
+export function phaseRound(raw, share) {
+  return share >= 0.5 ? 'snow' : raw === 'snow' ? 'rain' : raw;
+}
+let _snowShare = 0;   // the player's, at the last wet sample on the law's lane
+let _systems = 0;   // the count of the weather's own changes (a new system - never its phase alone)
+let _phaseFlip = false;   // whether the word's last change was its phase alone
+/** PRECIP1: THE PLAYER'S SNOW SHARE - what falls on them now, 1 all snow, 0 all rain, between them both (the drops and
+ *  the flakes are drawn at it); under a dry word the share the last fall fell at (AUDIT PRECIP FALL-1: what still drains
+ *  is that fall's); off the law's lane, 1 under a 'snow' word and 0 under any other. */
+export const currentSnowShare = () => (precipLawOn() ? _snowShare : _current === WEATHER_ENUM.snow ? 1 : 0);
+/** AUDIT PRECIP FALL-2: THE WEATHER'S OWN CHANGES - a stamp that moves when the weather becomes another (a new system
+ *  over the player, a word set whole, a roll) and never when only its phase turns. A host re-applies its weather when
+ *  it moves (the storm's strobe, Come Sail Away's new wind) as well as when the word does. */
+export const weatherSystemStamp = () => _systems;
+/** Whether the word's last change was its phase alone - the same system, its fall turning between rain and snow. */
+export const weatherPhaseFlip = () => _phaseFlip;
+/** AUDIT PRECIP FALL-2: THE SYSTEM A HOST'S WORD IS - on the law's lane, when the word is the sim's own, the system
+ *  falling there (`raw`: a storm falling as snow is a storm - its wind, its episode, its deck, its strikes); any other
+ *  word (off the lane, a pin, the Sun Baby's sky) is itself. What the hosts key a weather's identity on; its phase reaches
+ *  them through the share. */
+export const systemWordOf = (word) => (precipLawOn() && word === WEATHER_TYPES[_current] ? WEATHER_TYPES[_raw] : word);
 
 /** WEATHER3b: the indoor tick's sample - the map over the place the
  *  player is inside (`at` the field position the host answers for it: the
@@ -318,13 +417,34 @@ export function overGround(word, climateIndex, nowMinutes) {
   return snowy ? WEATHER_ENUM.snow : word;   // TIME1: the ground the sky's season dresses   // an unknown climate takes the default's ground, as the terrain does
 }
 /** The ONE write of the sim's word from a roll or the array: the raw word
- *  kept, the ground law applied. Answers true when the worn word changed. */
-function _set(next, climateIndex, nowMinutes) {
+ *  kept, the ground law applied. Answers true when the weather changed - on
+ *  the law's lane its system (AUDIT PRECIP FALL-2: a phase turning under the
+ *  same system moves the word and nothing else), off it the worn word.
+ *  `worn` the map's answer at the player on the law's lane (its share). */
+function _set(next, climateIndex, nowMinutes, at = null, worn = null) {
+  const prevRaw = _raw, prev = _current;
   _raw = next;
-  const word = overGround(next, climateIndex, nowMinutes);
-  if (word === _current) return false;
+  let word, changed;
+  if (at && precipLawOn() && nowMinutes != null && Number.isFinite(nowMinutes)) {
+    // PRECIP1: the phase at the player's own place and height - the share the drops are drawn at, and its rounding;
+    // AUDIT PRECIP FALL-1: a dry word leaves the share where the last fall left it (what still drains fell at it)
+    const raw = WEATHER_TYPES[next];
+    if (isWet(raw)) {
+      _snowShare = worn?.share ?? snowShareAt(at[0], at[1], nowMinutes, Number.isFinite(at[2]) ? at[2] : null, worn?.fall ?? null);
+      word = WEATHER_ENUM[phaseRound(raw, _snowShare)];
+    } else {
+      word = next;
+    }
+    changed = next !== prevRaw;
+  } else {
+    word = overGround(next, climateIndex, nowMinutes);
+    _snowShare = word === WEATHER_ENUM.snow ? 1 : 0;   // a word with no place (a zone's roll, a respawn's): its own phase
+    changed = word !== prev;
+  }
+  if (word !== prev) _phaseFlip = !changed;
   _current = word;
-  return true;
+  if (changed) _systems++;
+  return changed;
 }
 
 /** SetWeather's state half - the presentation halves (fog, sky
@@ -335,6 +455,8 @@ export function setWeather(type) {
   if (w == null) return false;
   _current = w;
   _raw = w;   // WEATHER2a: a word taken whole is its own violence
+  _snowShare = w === WEATHER_ENUM.snow ? 1 : 0;   // PRECIP1: and its own phase
+  _systems++; _phaseFlip = false;   // AUDIT PRECIP FALL-2: a word taken whole is a weather of its own
   return true;
 }
 
@@ -400,7 +522,13 @@ function applyFromArray(climateIndex, nowMinutes) {
 let _heard = null;
 let _heardGain = 1;
 let _heardAtJump = -1;
-export function setHeardWeather(word, rainGain = 1) { _heard = word ?? null; _heardGain = Number.isFinite(rainGain) ? Math.max(0, Math.min(1, rainGain)) : 1; _heardAtJump = _jumps; }
+let _heardFall = null;   // AUDIT PRECIP FALL-4: the whole fall and its snow share, on the law's lane
+export function setHeardWeather(word, rainGain = 1, fall = null) {
+  _heard = word ?? null; _heardGain = Number.isFinite(rainGain) ? Math.max(0, Math.min(1, rainGain)) : 1; _heardAtJump = _jumps;
+  // AUDIT PRECIP FALL-4: on the law's lane the WHOLE fall beside the drops' level - `fall` the front's sample (`intensity`,
+  // `snow`): the skin is soaked by the rain and the snow in their shares (survival/temperature.js weatherWetGain)
+  _heardFall = fall && fall.snow != null && Number.isFinite(fall.intensity) ? { level: Math.max(0, Math.min(1, fall.intensity)), snow: Math.max(0, Math.min(1, fall.snow)) } : null;
+}
 export const heardWeather = () => (_heard != null && _heardAtJump === _jumps ? _heard : currentWeather());
 /** DISC11 (Mac: "ITS LOUDER ON THE INSIDE COMPARED TO THE OUTSIDE"): the street's rain LEVEL, beside its word - the
  *  front's intensity on the enhanced lane (a light shower is 0.15), 1 on the classic one. Every rain the player hears
@@ -411,7 +539,7 @@ export const heardRainGain = () => (_heard != null && _heardAtJump === _jumps ? 
  *  made most rain a sprinkle the eye barely sees, and the soak read the sim's word at the downpour's rate - and soaked
  *  before the front's first drop. `shown` is the host's own word for its sky (world.js's: the Sun Baby's clear day,
  *  AUDIT TEMP-UI E11), taken whole where the street holds none: after a jump, as the ear's, and before the first frame. */
-export const fallingWeather = (shown = currentWeather()) => (_heard != null && _heardAtJump === _jumps ? { word: _heard, level: _heardGain } : { word: shown, level: 1 });
+export const fallingWeather = (shown = currentWeather()) => (_heard != null && _heardAtJump === _jumps ? { word: _heard, level: _heardFall?.level ?? _heardGain, snow: _heardFall?.snow ?? null } : { word: shown, level: 1, snow: null });
 
 /** WX2a: the count of weather changes that were jumps. A host keeps the
  *  last value it saw; a new one means the change on this frame (if any)
@@ -621,11 +749,12 @@ export function resetWeatherSim() {
   _current = WEATHER_ENUM.sunny;
   _raw = WEATHER_ENUM.sunny;   // WEATHER2a
   _snowGroundOverride = null; _snowGroundUrlDoor = null;
+  _precipOverride = null; _snowShare = 0; _systems = 0; _phaseFlip = false;   // PRECIP1 (AUDIT PRECIP AIR-13: the law's own state forgotten too)
   _climateWeathersRolled = false;
   _updateFromClimateArray = false;
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
   _jumps = 0;
-  _heard = null; _heardGain = 1; _heardAtJump = -1;   // DISC9 / DISC11
+  _heard = null; _heardGain = 1; _heardAtJump = -1; _heardFall = null;   // DISC9 / DISC11; AUDIT PRECIP FALL-4
   _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
   _mapOverride = null; _mapUrlDoor = null; _mapAt = null; _mapSampledAt = null;   // WEATHER3b
   _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapIntensity = 0; _mapApproach = 0; _arrivals = 0;

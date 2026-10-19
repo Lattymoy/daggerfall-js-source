@@ -297,7 +297,7 @@ export function softParticleTexture(size = 64) {
 }
 
 const locs = (gl, p, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)]));
-const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus'];   // TV1: and the travel view's focus (fogGlsl.js FOCUS_GLSL)
+const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze'];   // TV1: and the travel view's focus (fogGlsl.js FOCUS_GLSL)
 
 /** #4: a chain of levels (systems/comeSailAway/comeSailAwayWaves.js wavePaintLevels), every level uploaded - texelFetch reads it,
  *  at a level the shader picks. */
@@ -398,6 +398,7 @@ export class ComeSailAwayRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);   // AUDIT DEEP R-1 (merged beside CSA-F): under the travel view the fog is the traveller's
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
   }
 
   /** Streams the quads of `parts` ({ position, size, rotation, maxSize }) into the quad buffer; returns the vertex count. */
@@ -543,7 +544,7 @@ export class ComeSailAwayRenderer {
     const gl = this.gl;
     const p = buildProgram(gl, WAVE_VS, WAVE_FS, 'come sail away waves');
     this._wave = { p, u: locs(gl, p, ['uProj', 'uView', 'uOrigin', 'uScale', 'uTile', 'uPaint', 'uSnow', 'uFrameSize', 'uSnowSize', 'uLastLevel', 'uScroll', 'uTileOffset',
-      'uColor', 'uCutoff', 'uDitherStart', 'uDitherEnd', 'uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus']),
+      'uColor', 'uCutoff', 'uDitherStart', 'uDitherEnd', 'uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze']),
     vao: gl.createVertexArray(), vbo: gl.createBuffer(), ebo: gl.createBuffer() };
     return this._wave;
   }
@@ -609,6 +610,7 @@ export class ComeSailAwayRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);   // AUDIT DEEP R-1 (merged beside CSA-F): under the travel view the fog is the traveller's
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this._frames.paints[spec.paint]);
     gl.uniform1i(u.uPaint, 0);

@@ -65,12 +65,13 @@ test('PERF4 keyResolver: the pixel\'s remap is applied exactly as drawMesh appli
 test('PERF4 pins: the world host merges each placed model as it arrives (gates stay out), uploads the merge once, draws it with the pixel matrix before the per-model loop, skips the batched models there, and frees it with the pixel (mutant: any one dropped)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const staticBuilder = new StaticBatchBuilder\(\);\n\s+const resolveTexKey = keyResolver\(texRemap\);/, 'one builder per pixel build, resolving through the pixel\'s remap');
-  assert.match(w, /models\.push\(entry\);\n\s+if \(!entry\._home && !isCityGate\(placed\.modelIdNum\) && cpu\.normals && cpu\.uvs\) \{ staticBuilder\.add\(cpu, local, climateFree \? ownTexKey : resolveTexKey\); entry\._batched = true; \}/, 'added right after the entry, after the remap was awaited; gates excluded');   // ARENA1 re-aim: a climate-free model (the colosseum) merges by its own empty table   // HOME-LOOK re-aim: a player's home stays out (drawn with its own table)
+  assert.match(w, /models\.push\(entry\);\n\s+if \(!entry\._home && !isCityGate\(placed\.modelIdNum\) && cpu\.normals && cpu\.uvs\) \{ addStatic\(cpu, local, climateFree\); entry\._batched = true; \}/, 'added right after the entry, after the remap was awaited; gates excluded');   // PIN MOVED (AUDIT PRECIP HOST-7): through addStatic, which logs the merge's models for a re-skin and adds by the climate-free model's own table or the pixel's
+  assert.match(w, /const addStatic = \(cpu, local, own, nm = null\) => \{ statics\.push\(\[cpu, local, own, nm\]\); staticBuilder\.add\(cpu, local, own \? ownTexKey : resolveTexKey, nm\); \};/);   // ARENA1 re-aim: a climate-free model (the colosseum) merges by its own empty table   // HOME-LOOK re-aim: a player's home stays out (drawn with its own table)
   // PERF-EXT23: merged a breath at a time, the spheres handed to the upload (test/render/publishtail.test.js)
   assert.match(w, /const staticMerged = await staticBuilder\.finishSliced\(\(\) => breather\.breathe\(\)\);[^\n]*\n\s+const staticBatch = staticMerged \? renderer\.createMesh\(staticMerged, \{ bounds: staticMerged\.bounds \}\) : null;/, 'uploaded once at the end');
   assert.match(w, /built\.set\(key, \{\n\s+staticBatch,/, 'kept on the pixel');
   assert.match(w, /if \(p\.staticBatch\) renderer\.drawMesh\(p\.staticBatch, pixelMatrix, null\);[^\n]*\n\s+for \(const m of p\.models\) \{\n\s+if \(m\._batched\) continue;/, 'drawn once, then the individual models minus the batched');
   assert.match(w, /if \(p\.staticBatch\) \{ renderer\.destroyMesh\(p\.staticBatch\); p\.staticBatch = null; \}/, 'freed in destroyPixel');
-  const mills = w.indexOf("models.push({ gpu: parts.body, local, _box: box, _order: -1 });");
-  assert.ok(mills > 0 && !w.slice(mills, mills + 200).includes('staticBuilder.add'), 'the mills are not batched: their rotor turns');
+  const mills = w.indexOf("models.push({ gpu: parts.body, local, _box: box, _order: -1, _mill: true });");   // PIN MOVED (AUDIT PRECIP HOST-7): a body a re-skin dresses
+  assert.ok(mills > 0 && !/staticBuilder\.add|addStatic/.test(w.slice(mills, mills + 400)), 'the mills are not batched: their rotor turns');
 });

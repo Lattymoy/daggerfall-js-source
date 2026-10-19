@@ -228,10 +228,16 @@ export function naturalParts(env = {}) {
 
 /** How wet a minute in this weather makes you, outdoors - AUDIT C&C I2: and none at rest in a tent (`sheltered`: the
  *  mod's camp rest is its "inside or camping" arm, where the counter only dries). */
-export function weatherWetGain(weather, { cloak = false, hood = false, insideBuilding = false, insideDungeon = false, sheltered = false, fall = 1 } = {}) {
+export function weatherWetGain(weather, { cloak = false, hood = false, insideBuilding = false, insideDungeon = false, sheltered = false, fall = 1, snow = null } = {}) {
   if (insideBuilding || insideDungeon || sheltered) return 0;
-  const row = WEATHER_WET[weather];
+  let row = WEATHER_WET[weather];
   if (!row) return 0;
+  // PRECIP1 (AUDIT PRECIP FALL-4): a fall of two phases - sleet, wet snow - soaks as its rain (a storm's) and its snow in
+  // their shares (`snow`, the fall's snow share: weatherSim.js fallingWeather), never as the word it rounds to
+  if (snow != null && (weather === 'rain' || weather === 'thunder' || weather === 'snow')) {
+    const wet = WEATHER_WET[weather === 'snow' ? 'rain' : weather], white = WEATHER_WET.snow, k = Math.max(0, Math.min(1, snow));
+    row = wet.map((v, i) => v + (white[i] - v) * k);
+  }
   // WET-FALL (FIELD BUGS 2026-10-15f): a rain, a storm or a snow soaks by how hard it FALLS - `fall`, the front's level
   // (weatherSim.js fallingWeather; 1 on the classic sky, as the mod's every-minute row) - so a sprinkle soaks as a
   // sprinkle and a word with nothing yet falling not at all. Fog is not falling: its row stands whole.
@@ -434,7 +440,7 @@ export function feltTemperature(env = {}, worn = null, ctx = {}) {
     // TEMP-UI: the rest of the sum, so a breakdown adds up to `felt` exactly (temperatureBreakdown): the resistances on
     // the air, the ground's correction, the heat loss, the drink to hand, a garment's degrees
     worldResist: natTemp - air, dungeon: air - natural, naked: NAKED_OFFSET, waterCools: watered - unwatered, degrees: felt - watered,
-    wetGain: weatherWetGain(env.falling?.word ?? env.weather, { cloak: cloakState(worn).cloak, hood: clothes.hood, insideBuilding: env.insideBuilding, insideDungeon: env.insideDungeon, sheltered: !!env.sheltered, fall: env.falling?.level ?? 1 })   // WET-FALL: what falls, not the sky's word
+    wetGain: weatherWetGain(env.falling?.word ?? env.weather, { cloak: cloakState(worn).cloak, hood: clothes.hood, insideBuilding: env.insideBuilding, insideDungeon: env.insideDungeon, sheltered: !!env.sheltered, fall: env.falling?.level ?? 1, snow: env.falling?.snow ?? null })   // WET-FALL: what falls, not the sky's word; AUDIT PRECIP FALL-4: at its snow share
         * (1 - Math.min(GEAR_DRY_MOST, Math.max(0, Number(ctx.gearDry) || 0)) / 100)   // LOOT14: weatherproofing turns the weather's soaking aside
       + environmentWet(env),
   };

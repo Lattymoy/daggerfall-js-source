@@ -4,6 +4,7 @@
 // use as `host.<name>` - as the code read them where it was.
 import { ANIMAL_SOUND_BY_RECORD, ANIMALS_ARCHIVE } from '../systems/soundClips.js';
 import { applyClimate, getNatureArchive, getTerrainGroundArchive, INTERIOR_SEASON, SEASON } from '../world/climateSwaps.js';
+import { SEA_LEVEL_M } from '../systems/weather/airTemperature.js';   // PRECIP4: heights above the sea, the snow's
 import { ARENA_BLOCK } from '../world/arena/arenaCity.js';
 import { armFlatAnim, FlatAnimator } from '../render/flatAnimation.js';
 import { billboardSize, centredBase, collectBlockFlats, isNatureArchive, NATURE_FLATS_Y } from '../world/rmbFlats.js';
@@ -21,7 +22,7 @@ import { carveYards } from '../world/merchantYards/merchantYardSites.js';
 import { CityNavigation, NAV_CELL } from '../world/city/cityNavigation.js';
 import { collectCityLights, LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';
-import { coverProxies, coverProxy, isCoverFlat } from '../ai/cover.js';
+import { coverProxies, coverProxy, FELLED, isCoverFlat } from '../ai/cover.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { doorCornersOf, doorNormalOf } from './hallBanners.js';
 import { drawnFlat } from '../characters/nudeFlats.js';
@@ -52,7 +53,7 @@ import { isPortTown } from '../systems/portPlaces.js';
 import { isStandFlat, standFlatId, standFlatRecord } from '../world/standFlats.js';
 import { isStandingHorseFlat } from '../world/standingHorses.js';
 import { isTombstoneModel } from '../systems/searchables.js';
-import { isTreeRecord } from './treeHost.js';
+import { FOREST_STAMP, isTreeRecord, sinkFelled } from './treeHost.js';   // AUDIT PRECIP HOST-7: a re-skin's felled trees lie as they lay
 import { isWardenTown } from '../systems/wagon/wagonWarden.js';
 import { isWodShrub, rockSeatDrop, WOD_ROCK_SITES, wodLightPosition, wodLightProperties } from '../world/worldOfDaggerfall/wodLocationObjects.js';
 import { isYardTown } from '../systems/merchantYards.js';
@@ -64,13 +65,18 @@ import { LivingTown } from '../systems/livingWorld/livingTown.js';
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
 import { LPT_CROWNS } from '../world/lptCrowns.js';
 import { LPT_SCALE_MAX, lptVariety } from '../world/lowPolyTrees.js';
+import { JUNGLE_ARCHIVE, JUNGLE_MEASURES, JUNGLE_SPECIES, jungleCover } from '../world/jungle/jungleModels.js';
+import { JUNGLE } from '../world/terrain/jungleNature.js';   // AUDIT BANTHA1 PERF-5: the storeys' scales   // BANTHA1: the jungle's trees, their measures and their cover
+import { JUNGLE_SCALE_MAX, JUNGLE_SUN_LIFT } from '../systems/jungleTreesAssets.js';
+/** AUDIT BANTHA1 TREE-1: a pixel's cover stood this many proxies at a time, the stream breathing between. */
+const COVER_SLICE = 2048;
 import { lptFitCap, natureReach, pathTileMask, vergeClear } from '../world/road/roadVerge.js';
 import { makeBuildingKey } from '../systems/talk/talkTopics.js';
 import { makeCityGate } from '../world/city/cityGate.js';
-import { markRemapLaw, remapSubMeshes } from '../world/texRemap.js';
+import { markRemapLaw, remapAsked, remapLawOf, remapSubMeshes, reskinRemap } from '../world/texRemap.js';
 import { MobilePerson, PERSON_MOVE_SPEED, walkerRace } from '../characters/mobile/mobilePerson.js';
 import { multiply, trs } from '../world/mat4.js';
-import { naturePicture } from '../world/naturePicture.js';
+import { naturePicture, junglePicture } from '../world/naturePicture.js';
 import { onFloatingFrame } from '../player/collider.js';
 import { inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';
 import { ownMinutes, skyMinutes, trustedWorldMinutes } from '../systems/worldTick.js';
@@ -96,14 +102,94 @@ export function createPixelBuild(host) {
     _livingPatrons, _locationToBuild, _lptSway, _lptWindfall, _reskin, adoptWodCarry, archAabb, blocks, boardSplitOf,
     breather, buildingDoors, built, chapterSheet, climates3x3, collider, cpuModels, deepWaters, destroyPixel,
     dfMeshSize, dwDecor, ecotones, ensurePersonTex, forests, gateClearSweep, getTexture, getWindmillMeshes,
-    halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, labGrass, landform, livingArmOf, livingAshore,
+    halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, jungle, labGrass, landform, livingArmOf, livingAshore,
     livingBaseRate, livingCarriedOf, livingChapterOf, livingCrews, livingCycleOf, livingDeadAt, livingFlatOf,
     livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownsIndex, livingTripsOf, loadGroundSet, lookOfHome,
     lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
-    seasons, siegeFieldsByTown, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
+    seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight
   } = host;
+  /**
+   * THE FLATS' GROUPS STOOD (AUDIT PRECIP HOST-7: the build's and a re-skin's one law) - a batch a drawn picture, each
+   * flat's group (`g.groups`, its centres) stood as Low Poly Trees' far picture, the Seasons mod's record or the plain
+   * record (world/naturePicture.js), with its sway, its windfall, its forest, its cover and its far pictures' handles
+   * written into `out` as each is made (BUILD-FAIL1's ledger holds the build's).
+   * @param {{ px: number, py: number, groups: Map<string, number[][]>, wild: Set<string>, natureSet: Set<number>,
+   *   natureBase: (a: number) => number|undefined, tilemap: any, paths: any, vergeNet: any, uploadRecord: Function,
+   *   uploadRecordFrame: Function, flatAnims: any, unionBox: (b: number[]) => void }} g
+   * @param {{ batches: any[], forestGroups: Map<string, any>, coverItems: any[], lptHandles: any[], lptGroups: any[] }} out
+   */
+  async function standFlatGroups(g, { batches, forestGroups, coverItems, lptHandles, lptGroups }) {
+    let lptPathMask = null;   // LPT-FIT: the pixel's path tiles, made at its first fitted tree
+    for (const [k, centers] of g.groups) {
+      await breather.breathe();   // PERF-EXT23: a flat group a breath - its texture is a cached promise, a microtask, and gave no frame back
+      const [archive, record] = k.split('_').map(Number);
+      const t = await getTexture(archive);
+      if (record >= t.recordCount) continue;
+      // SIB1: what MaterialReader's cache holds for this archive NOW -
+      // the mod's seasonal record (its texture at the mod's size, one
+      // frame) while a season is installed over it, the classic record
+      // otherwise. The seasonal texture keys on the install so a later
+      // season never reads an earlier one's upload.
+      // LPT1: A FLAT LOW POLY TREES HAS A TREE FOR stands as that tree's far picture - the batch sized for the tallest
+      // tree it stands, each flat's own scale on its corner - and as the tree itself near the eye (the pixel's
+      // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
+      // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
+      const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);
+      if (far) {
+        lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
+        const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
+        // LPT-FIT (Mac: "roads still show on roads and pathways. You're not taking the entire model into account"):
+        // under clear roadsides every tree here - a location's as well as the wild's - is drawn no wider than the room
+        // its root has from the pixel's roads, tracks and streets (world/road/roadVerge.js lptFitCap): its crown, turned
+        const crown = verges ? (LPT_CROWNS[lpt.key] ?? 0) : 0;
+        if (crown > 0 && !lptPathMask) lptPathMask = pathTileMask(g.tilemap, g.paths);
+        const fit = crown > 0 ? new Float32Array(centers.length) : null;
+        centers.forEach((c, i) => {
+          wild[i] = g.wild.has(`${k}#${i}`) ? 1 : 0;
+          const v = lptVariety(g.px, g.py, c[0], c[2], !wild[i]).scale;
+          if (fit) fit[i] = lptFitCap(lptPathMask, g.vergeNet, g.px, g.py, c[0], c[2], crown, v);
+          scales[i] = (fit ? Math.min(v, fit[i]) : v) / LPT_SCALE_MAX;
+        });
+        lptGroups.push({ h: lptHandles.length - 1, centers, wild, fit });
+        const batch = renderer.createBillboardBatch(archive, far.record, far.size, centers, { scales });
+        batch.lptProto = far;
+        batch.farH = plain.h;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's
+        batch._box = flatBatchAabb(centers, far.size);
+        batch.sway = floraSwayOf(archive, g.natureSet, plain.h);
+        _lptSway.set(lpt, Math.max(_lptSway.get(lpt) ?? 0, batch.sway));
+        batch.windfall = windfallResponse(archive, record);   // WINDFALL1: its record's wind mask - the stock record's (Low Poly Trees' tree stands for it, not the season's picture)
+        _lptWindfall.set(lpt, Math.max(_lptWindfall.get(lpt) ?? 0, batch.windfall));
+        g.unionBox(batch._box);
+        batches.push(batch);
+        if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
+        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));
+        continue;
+      }
+      if (sib) {   // uploaded under the install's key, with no mip chain (AUDIT 61) - world/naturePicture.js
+        const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
+        batch._box = flatBatchAabb(centers, sib.size);   // EV3
+        batch.sway = floraSwayOf(archive, g.natureSet, sib.size.h);   // WIND3: the season's trees lean too
+        batch.windfall = windfallResponse(archive, record, seasonPrefixOf(seasons.installedSeason, archive));   // WINDFALL1: the mod's table for the season's atlas
+        g.unionBox(batch._box);
+        batches.push(batch);
+        if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: sib.size });   // PROF4: a felled tree's batch
+        if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
+        continue;
+      }
+      const size = plain;   // the record, uploaded (world/naturePicture.js)
+      const batch = renderer.createBillboardBatch(archive, record, size, centers);
+      batch._box = flatBatchAabb(centers, size);   // EV3
+      batch.sway = floraSwayOf(archive, g.natureSet, size.h);   // WIND3: the flora lean with the wind, nothing else does
+      batch.windfall = windfallResponse(archive, record);   // WINDFALL1: its record's wind mask - every nature batch, as the mod patches them (TryPatchBatch: 500..511)
+      g.unionBox(batch._box);
+      armFlatAnim(batch, t, archive, record, g.flatAnims, g.uploadRecordFrame);
+      batches.push(batch);
+      if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size });   // PROF4: a felled tree's batch
+      if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(...coverProxies(c, size, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
+    }
+  }
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     breather.reset();   // PERF7
     const key = `${px},${py}`, pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel
@@ -167,10 +253,13 @@ export function createPixelBuild(host) {
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)
-      wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,
+      wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests || jungle ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,   // AUDIT BANTHA1 LAY-4: the jungle keeps a site's own pieces' ground as the woods do
       // FOREST1: the woods' archive (the climate's summer one, which names its Trees) and whether this pixel's place is one they hide
       forests: forests ? { archive: climate.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType) } : null,
       ecotone: natureBorder,   // ECOTONE1: null unless a neighbour's nature differs
+      // BANTHA1: the jungle's field about this pixel (scenes/jungleHost.js job - null where it cannot reach), and whether
+      // its location is a place the woods close round
+      jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
     });
     // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
@@ -183,15 +272,25 @@ export function createPixelBuild(host) {
     // WM3: this pixel's climate law, bound once - the one argument the
     // shared remap seam takes that differs between the climate hosts
     // and the dungeon.
-    const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, host.season);
+    // PRECIP4 (scenes/snowCoverHost.js): THE PIXEL'S SEASON - DFU's calendar season, or on the snow lane the snow at its
+    // middle's ground (a town's planed height, else its ground's middle), which its buildings, its town's climate swaps and
+    // its windmills wear; its trees and plants wear the snow at their own feet (flatSeason, below), its ground the snow at
+    // every fragment (render/snowCoverGlsl.js - the set's summer records and their winter twins)
+    let groundLo = Infinity, groundHi = -Infinity;
+    for (let i = 1; i < positions.length; i += 3) { if (positions[i] < groundLo) groundLo = positions[i]; if (positions[i] > groundHi) groundHi = positions[i]; }
+    const groundMid = dfLocation ? avg * worldHeight : (groundLo + groundHi) / 2;
+    if (snowCover?.on) await snowCover.settle(breather);   // the snow about the player integrated to the clock's minute before a season is read
+    const snowRec = snowCover?.recorder(px, py) ?? null;   // AUDIT PRECIP HOST-6: every season this build takes, kept as it takes it
+    const pixelSeason = snowRec ? snowRec.pixel(groundMid - SEA_LEVEL_M, host.season) : host.season;
+    const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, pixelSeason);
     // WD3 (AUDIT WD3 G5): A TOWN'S BUILDINGS WEAR ITS LOCATION'S CLIMATE - DaggerfallLocation's ClimateUse.UseLocation
     // (ApplyClimateSettings: Summary.Climate, from DFLocation.Climate), the terrain the pixel's. One and the same for
     // every classic town (MAPS.BSA reads the location's climate off the pixel); a world-data file says its own (81 of
     // Beautiful Villages' towns name a climate other than their pixel's), as DFU stands them.
     const townClimateBase = dfLocation?.climate?.climateType ?? climateBase;
-    const townClimateArchive = townClimateBase === climateBase ? climateArchive : (archive, record) => applyClimate(archive, record, townClimateBase, host.season);
-    const groundArchive = getTerrainGroundArchive(climate, host.season);   // the TERRAIN member, Desert winter-guarded (TerrainMaterialProvider.cs:126-133)
-    const natureArchive = getNatureArchive(climate.natureArchive, host.season);
+    const townClimateArchive = townClimateBase === climateBase ? climateArchive : (archive, record) => applyClimate(archive, record, townClimateBase, pixelSeason);
+    const groundArchive = snowCover ? snowCover.groundArchive(climate, pixelSeason) : getTerrainGroundArchive(climate, pixelSeason);   // the TERRAIN member, Desert winter-guarded (TerrainMaterialProvider.cs:126-133); PRECIP4: the summer set on the snow lane
+    const natureArchive = getNatureArchive(climate.natureArchive, pixelSeason);
     // VERGE1 (Mac: "Making sure objects, like trees, avoid pathways and roads. Currently they slightly overlap"): THE
     // ROADS THIS PIXEL WAS PAINTED WITH - none when the kernel painted none (the roads sweep builds it again when the
     // network lands) - and the half widths of the climate's own pictures, its summer set's (a season moves no flat)
@@ -202,14 +301,14 @@ export function createPixelBuild(host) {
 
     // R9 tilemap pass: shared-index height grid + per-pixel tilemap
     // texture + one cached texture array per ground archive (loadGroundSet).
-    await loadGroundSet(groundArchive, pipeline);
+    await loadGroundSet(groundArchive, pipeline, snowCover?.winterOf(climate) ?? null);   // PRECIP4: on the snow lane its twin, its winter in it
     // ECOTONE1: and at a climate border the neighbours' sets, held by this pixel as its own is - which set each of
     // its eight neighbours wears (0 its own, 1-3 the sets on the terrain program's units 3-5), and its lattice origin
-    const groundNear = near ? near.map((c) => getTerrainGroundArchive(c, host.season)) : null;
+    const groundNear = near ? near.map((c) => (snowCover ? snowCover.groundArchive(c, pixelSeason) : getTerrainGroundArchive(c, pixelSeason))) : null;
     let eco = null;
     if (groundNear?.some((a) => a !== groundArchive)) {
       const archives = [...new Set(groundNear.filter((a) => a !== groundArchive))];
-      for (const a of archives) await loadGroundSet(a, pipeline);
+      for (const a of archives) await loadGroundSet(a, pipeline, snowCover?.winterOf(near[groundNear.indexOf(a)]) ?? null);   // PRECIP4: the neighbours' twins
       const slot = (k) => (groundNear[k] === groundArchive ? 0 : archives.indexOf(groundNear[k]) + 1);
       const [ox, oz] = ecoOrigin(px, py);
       eco = {
@@ -244,8 +343,11 @@ export function createPixelBuild(host) {
     const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
     made.tilemapTex = tilemapTex;   // BUILD-FAIL1
 
-    // Flat groups: pixel-local base positions.
-    const groups = new Map();
+    // Flat groups: pixel-local base positions. AUDIT PRECIP HOST-7: THE PIXEL'S FLATS, logged in the order they stand
+    // (groupFlats groups them) - each with its own centre, the flat's identity (a felled tree is known by it), and how it
+    // takes the season: `block` its block's flat list (`skinBlocks`, read again in a season), `wild` the summer archive the
+    // snow at its own foot dresses, neither a flat whose picture no season turns
+    const flatLog = [], skinBlocks = [];
     const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
     const pixelHearths = []; // HEARTH1: the braziers and fire bowls among them, pixel-local
     const pixelAnimals = []; // A4: archive-201 town animals, pixel-local {pos, sound}
@@ -257,13 +359,7 @@ export function createPixelBuild(host) {
     const light210 = await getTexture(LIGHTS_ARCHIVE);
     const lightSize = (record) =>
       billboardSize(light210, record);
-    const addFlat = (archive, record, x, y, z) => {
-      [archive, record] = drawnFlat(archive, record);   // NUDE-FLATS: base-anchored, so the stand-in stands where the figure did
-      const k = `${archive}_${record}`;
-      if (!groups.has(k)) groups.set(k, []);
-      groups.get(k).push([x, y, z]);
-      return groups.get(k).length - 1;   // PROF4: the flat's place in its group (a felled tree is sunk there)
-    };
+    const addFlat = (archive, record, x, y, z, skin = null) => { flatLog.push({ archive, record, c: [x, y, z], ...skin }); };
     // WOD2: a flat the mod SCALES (LoadObject's `localScale *= scale`,
     // LocationHelper.cs:1243) is a batch of its own at its own size; the
     // shipped layouts scale four records, always uniformly.
@@ -277,7 +373,7 @@ export function createPixelBuild(host) {
     // Per-pixel climate swap table: pixels from the swapped archive, UVs
     // from the original (the SetDungeonTextures pattern; verbatim
     // MaterialReader.ChangeClimate semantics).
-    const texRemap = markRemapLaw(new Map(), `climate:${townClimateBase}.${host.season}`);   // AUDIT MENU-ORDER C3: named by the law it is built in (townClimateArchive's)
+    const texRemap = markRemapLaw(new Map(), `climate:${townClimateBase}.${pixelSeason}`);   // AUDIT MENU-ORDER C3: named by the law it is built in (townClimateArchive's)
     const models = []; // { gpu, local } - local precomposed pixel-local matrix
     // PERF4: the pixel's static models, merged as they arrive (the
     // transform rides the build's own awaits) into one mesh per pixel,
@@ -286,6 +382,8 @@ export function createPixelBuild(host) {
     const staticBuilder = new StaticBatchBuilder();
     const resolveTexKey = keyResolver(texRemap);
     const ownTexKey = keyResolver(NO_CLIMATE_REMAP);   // ARENA1: a climate-free model (RuntimeMaterials, ApplyClimate 0) wears its own pictures in the merge
+    const statics = [];   // AUDIT PRECIP HOST-7: the merge's models in its order - a re-skin merges them again through its table
+    const addStatic = (cpu, local, own, nm = null) => { statics.push([cpu, local, own, nm]); staticBuilder.add(cpu, local, own ? ownTexKey : resolveTexKey, nm); };
     const pixelGates = [];   // AUDIT 64 F14: {gate, entry, local, bucketKey} - this pixel's DaggerfallCityGates
     made.cityGates = pixelGates;   // BUILD-FAIL1
     // AUDIT 64 F11: this pixel's StaticBuildings (RMBLayout.cs:864-882),
@@ -365,7 +463,7 @@ export function createPixelBuild(host) {
         // player and a world-keyed phase would re-seed every mill in
         // sight on every shift.
         if (b.layout.windmills.length && isEnhanced()) {
-          const parts = await getWindmillMeshes(townClimateBase, host.season === SEASON.Winter);
+          const parts = await getWindmillMeshes(townClimateBase, pixelSeason === SEASON.Winter);
           if (!host.millParts) {
             host.millParts = parts;
             console.log(`[windmills] first mill streamed in (${b.blockName})`);
@@ -375,7 +473,7 @@ export function createPixelBuild(host) {
             const box = transformedAabb(archAabb('millBody', BODY.positions), local);
             for (let i = 0; i < 3; i++) { box[i] -= MILL_SAIL_PAD; box[3 + i] += MILL_SAIL_PAD; }
             unionBox(box);
-            models.push({ gpu: parts.body, local, _box: box, _order: -1 });   // EV6: the mills group together
+            models.push({ gpu: parts.body, local, _box: box, _order: -1, _mill: true });   // EV6: the mills group together; AUDIT PRECIP HOST-7: a body a re-skin dresses
             collider.addMesh(key, BODY.positions, BODY.indices, local,
               onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));   // BLOOD1 AUDIT 3: one array a bucket, not one a call - every ray asks every bucket; PERF-COL2: riding the floating origin, filed by place
             windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
@@ -388,7 +486,7 @@ export function createPixelBuild(host) {
           const gpu = await getGpuMesh(placed.modelIdNum, () => breather.breathe());   // AUDIT PRE-MERGE 1003 W6: a model built here breathes with the pixel (the colosseum's seal)
           if (!gpu) continue;
           const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table
-          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);
+          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate
           const local = multiply(originMatrix, placed.matrix);
           if (WATER_SOURCE_MODELS.includes(placed.modelIdNum)) pixelSprings.push({ pos: [local[12], local[13], local[14]], dry: false });   // SURV3: a trough is a water source
           const cpu = cpuModels.get(placed.modelIdNum);
@@ -414,11 +512,11 @@ export function createPixelBuild(host) {
           // GUILD-YARD: and a guild's hall this character keeps - its painter tries a look on it as an owner's does
           if (homeRow && (homeLook || homeRow.mine || homeRow.keeper)) {
             entry._home = { bk: homeKey, sig: homeLookSig(homeLook), seq: 0 };
-            entry.texRemap = homeLook ? await homeLookRemap(gpu.subMeshes, texRemap, homeLook, host.season, pipeline) : null;
+            entry.texRemap = homeLook ? await homeLookRemap(gpu.subMeshes, texRemap, homeLook, pixelSeason, pipeline) : null;
             pixelHomeKeys.add(homeKey);
           }
           models.push(entry);
-          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { staticBuilder.add(cpu, local, climateFree ? ownTexKey : resolveTexKey); entry._batched = true; }   // PERF4: the remap for this model's textures is in the map by now (awaited above); HOME-LOOK: a home stays out
+          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { addStatic(cpu, local, climateFree); entry._batched = true; }   // PERF4: the remap for this model's textures is in the map by now (awaited above); HOME-LOOK: a home stays out
           await breather.breathe();   // PERF7: a warm build gives the frame back every few milliseconds
           // AUDIT 64 F14: a city gate takes a collider bucket of its own
           // (the pixel's shared bucket has no per-mesh removal), keyed
@@ -467,7 +565,7 @@ export function createPixelBuild(host) {
             const otherGpu = await getGpuMesh(otherId);
             const otherCpu = cpuModels.get(otherId);
             if (otherGpu && otherCpu) {
-              await remapSubMeshes(otherGpu.subMeshes, texRemap, townClimateArchive, pipeline);
+              await remapSubMeshes(otherGpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);
               unionBox(transformedAabb(archAabb(otherId, otherCpu.positions), local));
             }
             pixelGates.push({
@@ -513,10 +611,12 @@ export function createPixelBuild(host) {
         const hillSeat = blockHillSeat(b.layout.models);   // TREES-SEATED: the block's hills as the port draws them, null for none of ours. No RMB ground plane on terrain (addGroundPlane = false).
         // FIELD BUGS 2026-10-13e HILL-SEAT: the pads under what the author stood on those hills (laid into the seat, so the trees below stand on them too) - merged with the pixel's statics and solid in its bucket, both freed with the pixel (destroyPixel)
         const hillPatch = blockHillPatch(hillSeat, b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum)));
-        if (hillPatch) { staticBuilder.add(hillPatch, originMatrix, resolveTexKey); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }
+        if (hillPatch) { addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }
         // FIELD BUGS 2026-10-04d CROPS: a crop field's batch reads the climate (the second desert's plant is its own) and
         // keeps a metre off the block's solids - the models this build drew and collided just above (IsOverlapping)
-        const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: maps.getClimateIndex(px, py), solid: blockSolids(b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum))) });
+        const flatOpts = { climateIndex: maps.getClimateIndex(px, py), solid: blockSolids(b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum))) };
+        const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, flatOpts);
+        const block = skinBlocks.push({ dfBlock: b.dfBlock, opts: flatOpts }) - 1;   // AUDIT PRECIP HOST-7: read again in a season (the same flats, in the same order)
         // AUDIT 26 (F019): ...and the same flats' STATIC NPCs
         // (RMBLayout.cs:366-378 / :442-454 - the non-zero FactionID
         // rule), pixel-local like everything else this host builds.
@@ -530,7 +630,7 @@ export function createPixelBuild(host) {
             z: locLocal[2] + b.originZ + npc.z,
           });
         }
-        for (const flat of blockFlats) {
+        for (const [n, flat] of blockFlats.entries()) {
           // A4: every archive-201 town animal is an audio source
           // (AddAnimalAudioSource on RMB flats, verbatim). It runs
           // BEFORE DFU's faction test (:363-377), so it is not part of
@@ -575,7 +675,7 @@ export function createPixelBuild(host) {
           // plane. TREES-SEATED (Rissa: "Floating trees in Tamhope"): in a block whose hills the port draws as its stand-ins, a flat
           // of the nature range (the 504 trees stood on the pack's bigger hills) stands on the higher of the ground and the mounds.
           const lift = flat.archive === natureArchive ? groundOffPlane(samples, avg, fx, fz) : 0;
-          addFlat(flat.archive, flat.record, fx, locLocal[1] + (hillSeat && isNatureArchive(flat.archive) ? seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz)) : flat.y + lift), fz);
+          addFlat(flat.archive, flat.record, fx, locLocal[1] + (hillSeat && isNatureArchive(flat.archive) ? seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz)) : flat.y + lift), fz, { block, n });
         }
         for (const light of collectCityLights(b.dfBlock, lightSize)) {
           const lp = [
@@ -605,7 +705,7 @@ export function createPixelBuild(host) {
         const gpuB = await getGpuMesh(BULLETIN_BOARD_MODEL_ID, () => breather.breathe());
         const cpuB = cpuModels.get(BULLETIN_BOARD_MODEL_ID);
         if (gpuB && cpuB) {
-          await remapSubMeshes(gpuB.subMeshes, texRemap, townClimateArchive, pipeline);
+          await remapSubMeshes(gpuB.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);
           // GOTHWAY-NORTH: at the north entrance, either side of the road from Privateer's Hold - the road read off the
           // town's own walk grid (its people's cells), the boards a few paces inside the border, facing north
           const navB = new CityNavigation(loc.width, loc.height);
@@ -623,7 +723,7 @@ export function createPixelBuild(host) {
             unionBox(box);
             const entry = { gpu: gpuB, local, _box: box, _order: BULLETIN_BOARD_MODEL_ID };
             models.push(entry);
-            if (cpuB.normals && cpuB.uvs) { staticBuilder.add(cpuB, local, resolveTexKey); entry._batched = true; }
+            if (cpuB.normals && cpuB.uvs) { addStatic(cpuB, local, false); entry._batched = true; }
             collider.addMesh(key, cpuB.positions, cpuB.indices, local, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));   // PERF-COL2: riding the floating origin
             pixelBoards.push({ box, local, extra: true });
           }
@@ -812,7 +912,7 @@ export function createPixelBuild(host) {
         if (rockPick(m.pick)) { const foot = rockFootprint(cpu.positions, cpu.indices, m.matrix, samples); if (foot) pixelRocks.push(foot); }   // PROF2: a rock piece that stood - a vein's foot or a boulder; ROCK-FOOT: as it stands out of the ground, never its whole mesh's box (none if wholly under it)
         const entry = { gpu, local: m.matrix, _box: box, _order: m.modelId };
         models.push(entry);
-        if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, m.matrix, resolveTexKey, m.normalMatrix); entry._batched = true; }
+        if (cpu.normals && cpu.uvs) { addStatic(cpu, m.matrix, false, m.normalMatrix); entry._batched = true; }
         collider.addMesh(key, cpu.positions, cpu.indices, m.matrix, wodBucket);   // CreateDaggerfallMeshGameObject's MeshCollider
         await breather.breathe();
       }
@@ -870,7 +970,10 @@ export function createPixelBuild(host) {
     // PROF4 (bible/06-Systems/Professions-Arc.md 25): THE FOREST'S TREES KEPT - the flats World of Daggerfall's table names
     // a Tree by the climate's summer archive, each its group and its place in it: Logging's trees stand at them
     const pixelTrees = [];
-    const wildFlats = new Set();   // LPT1: the terrain's own nature flats (`${group}#${i}`) - DFU's terrain variety is theirs, a location's flat takes none
+    // BANTHA1: THE JUNGLE'S TREES - the flats its layout stood as the owner's trees (world/terrain/jungleNature.js: a
+    // species and a scale each), by species: the owner's tree where its door has loaded, else the Tree record it carries
+    const jungleGroups = new Map();
+    const jungleOk = !!jungle && nature.some((f) => f.jungle != null) && !!(await jungle.door.load());
     const borderNature = new Map();   // ECOTONE1: a neighbour climate's nature archive the border stood here -> its summer archive
     for (const f of nature) {
       // GATE-CLEAR (AUDIT FOREST1 F5): the day's Oblivion Gate keeps its clearing of nature as it keeps it of World of
@@ -878,15 +981,35 @@ export function createPixelBuild(host) {
       // pixel again when the gate's day turns). FOREST1 (F1): and a wood's flats keep out of the rock pieces it grows
       // round - DFU's own scatter, with the switch off, is left as DFU lays it
       if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;
-      if (forests && insideRocks(pixelRocks, f.x, f.z)) continue;
-      // ECOTONE1: a border's flat is its own climate's - the summer archive the kernel names, worn in the season's set
-      const base = f.archive ?? climate.natureArchive, archive = f.archive == null ? natureArchive : getNatureArchive(f.archive, host.season);
-      // VERGE1: and none reaches over a road or a track - the disc of its widest picture (world/road/roadVerge.js)
-      if (vergeNet && !vergeClear(vergeNet, px, py, f.x, f.z, natureReach(vergeHalf.get(base)[f.record] ?? 0, base, f.record, px, py, f.x, f.z))) { vergeOff++; continue; }
+      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // AUDIT BANTHA1 LAY-4: and the jungle's, whatever the woods' switch
+      const base = f.archive ?? climate.natureArchive;   // ECOTONE1: a border's flat is its own climate's - the summer archive the kernel names
+      // VERGE1: and none reaches over a road or a track - the disc of its widest picture (world/road/roadVerge.js);
+      // BANTHA1: a jungle tree's its FOOT - its roots, buttresses and the curtains it hangs to the ground - at its own
+      // scale, never its crown: a road is cut through the jungle, and the canopy may close over it
+      // AUDIT BANTHA1 LAY-5/HOST-6: the foot whether or not the owner's files loaded (the measures are a table), so the
+      // trees a road keeps are the layout's alone - every peer's the same
+      const jungleTree = jungleOk && f.jungle != null;
+      if (vergeNet && !vergeClear(vergeNet, px, py, f.x, f.z, f.jungle != null ? JUNGLE_MEASURES[f.jungle].foot * f.js : natureReach(vergeHalf.get(base)[f.record] ?? 0, base, f.record, px, py, f.x, f.z))) { vergeOff++; continue; }
+      if (jungleTree) {
+        // AUDIT BANTHA1 PERF-5: a species' young trees a group of their own (`J<species>y`) - the understorey, which the far
+        // rings stand as they stand the floor (below)
+        const young = f.js <= JUNGLE.underScale[1], gk = young ? `J${f.jungle}y` : `J${f.jungle}`;
+        let g = jungleGroups.get(gk);
+        if (!g) jungleGroups.set(gk, (g = { species: f.jungle, young, centers: [], own: [] }));
+        g.centers.push([f.x, f.y, f.z]); g.own.push(f.js);
+        pixelTrees.push({ id: pixelTrees.length, group: gk, i: g.centers.length - 1, x: f.x, y: f.y, z: f.z, wood: f.wood ?? 1, base, archive: getNatureArchive(base, pixelSeason), jungle: f.jungle, js: f.js });   // a tree of the woods - Logging fells it; AUDIT BANTHA1 TREE-3: its species and scale its mark's; AUDIT PRECIP HOST-7: the rainforest's set wears no winter (climateSwaps.js NATURE_WINTER_SETS), so its foot's snow is never asked
+        continue;
+      }
+      // PRECIP4: on the snow lane each wears the snow at its own foot against its own draw (scenes/snowCoverHost.js flatSeason)
+      // - AUDIT PRECIP HOST-6: and kept; HOST-7: once it is known to stand (a flat the verge refused turned no pixel)
+      const fSeason = snowRec ? snowRec.flat(f.x, f.z, f.y - SEA_LEVEL_M, pixelSeason) : pixelSeason;
+      const archive = getNatureArchive(base, fSeason);   // worn in its season's set
       if (archive !== natureArchive) borderNature.set(archive, base);
-      const i = addFlat(archive, f.record, f.x, f.y, f.z);
-      if (lowPolyTrees) wildFlats.add(`${archive}_${f.record}#${i}`);   // LPT1
-      if (isTreeRecord(base, f.record)) pixelTrees.push({ id: pixelTrees.length, group: `${archive}_${f.record}`, i, x: f.x, y: f.y, z: f.z, wood: f.wood ?? 0, base, archive });   // FOREST1: how wooded its tile is - Logging's trees stand in the woods; ECOTONE1: and whose climate it is (its stump)
+      // FOREST1: how wooded its tile is - Logging's trees stand in the woods; ECOTONE1: and whose climate it is (its stump);
+      // its group and place in it groupFlats' (placeTrees)
+      const tree = isTreeRecord(base, f.record) ? { id: pixelTrees.length, group: '', i: 0, x: f.x, y: f.y, z: f.z, wood: f.wood ?? 0, base, archive } : null;
+      if (tree) pixelTrees.push(tree);
+      addFlat(archive, f.record, f.x, f.y, f.z, { wild: base, tree });   // LPT1: a wild flat - DFU's terrain variety is its, a location's flat takes none
     }
     // WOD4: THE CAMP AT PRIVATEER'S HOLD (world/worldOfDaggerfall/wodPrivateersHold.js).
     // DungeonExterior finds the block by name and PrivateersHold.Start
@@ -905,14 +1028,14 @@ export function createPixelBuild(host) {
         for (const hm of HOLD_MODELS) {
           const gpu = await getGpuMesh(hm.modelId);
           if (!gpu) continue;
-          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);
+          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);
           const local = multiply(origin, holdModelMatrix(hm));
           const cpu = cpuModels.get(hm.modelId);
           const box = transformedAabb(archAabb(hm.modelId, cpu.positions), local);
           unionBox(box);
           const entry = { gpu, local, _box: box, _order: hm.modelId };
           models.push(entry);
-          if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, local, resolveTexKey); entry._batched = true; }
+          if (cpu.normals && cpu.uvs) { addStatic(cpu, local, false); entry._batched = true; }
           collider.addMesh(key, cpu.positions, cpu.indices, local, holdBucket);   // CreateDaggerfallMeshGameObject's MeshCollider
           await breather.breathe();
         }
@@ -946,78 +1069,66 @@ export function createPixelBuild(host) {
     // (lowPolyTreesFrame - AUDIT LPT B10)
     const lptHandles = [], lptGroups = [];
     made.lptHandles = lptHandles;   // BUILD-FAIL1
-    let lptPathMask = null;   // LPT-FIT: the pixel's path tiles, made at its first fitted tree
     // ECOTONE1: the pixel's nature archives - its own and any a border stood - each the flora (it sways, it is the forest
     // a tree is felled in, its Trees are cover's trunks) and each named by its summer archive (the Tree table's key; the
     // season's own number named none in winter, so a winter wood's trees were cover as flats - mended with it)
     const natureSet = new Set([natureArchive, ...borderNature.keys()]);
     const natureBase = (a) => (a === natureArchive ? climate.natureArchive : borderNature.get(a));
-    for (const [k, centers] of groups) {
-      await breather.breathe();   // PERF-EXT23: a flat group a breath - its texture is a cached promise, a microtask, and gave no frame back
-      const [archive, record] = k.split('_').map(Number);
-      const t = await getTexture(archive);
-      if (record >= t.recordCount) continue;
-      // SIB1: what MaterialReader's cache holds for this archive NOW -
-      // the mod's seasonal record (its texture at the mod's size, one
-      // frame) while a season is installed over it, the classic record
-      // otherwise. The seasonal texture keys on the install so a later
-      // season never reads an earlier one's upload.
-      // LPT1: A FLAT LOW POLY TREES HAS A TREE FOR stands as that tree's far picture - the batch sized for the tallest
-      // tree it stands, each flat's own scale on its corner - and as the tree itself near the eye (the pixel's
-      // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
-      // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
-      const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record);
-      if (far) {
-        lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
-        const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
-        // LPT-FIT (Mac: "roads still show on roads and pathways. You're not taking the entire model into account"):
-        // under clear roadsides every tree here - a location's as well as the wild's - is drawn no wider than the room
-        // its root has from the pixel's roads, tracks and streets (world/road/roadVerge.js lptFitCap): its crown, turned
-        const crown = verges ? (LPT_CROWNS[lpt.key] ?? 0) : 0;
-        if (crown > 0 && !lptPathMask) lptPathMask = pathTileMask(tilemap, paths);
-        const fit = crown > 0 ? new Float32Array(centers.length) : null;
-        centers.forEach((c, i) => {
-          wild[i] = wildFlats.has(`${k}#${i}`) ? 1 : 0;
-          const v = lptVariety(px, py, c[0], c[2], !wild[i]).scale;
-          if (fit) fit[i] = lptFitCap(lptPathMask, vergeNet, px, py, c[0], c[2], crown, v);
-          scales[i] = (fit ? Math.min(v, fit[i]) : v) / LPT_SCALE_MAX;
-        });
-        lptGroups.push({ h: lptHandles.length - 1, centers, wild, fit });
-        const batch = renderer.createBillboardBatch(archive, far.record, far.size, centers, { scales });
-        batch.lptProto = far;
-        batch.farH = plain.h;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's
-        batch._box = flatBatchAabb(centers, far.size);
-        batch.sway = floraSwayOf(archive, natureSet, plain.h);
-        _lptSway.set(lpt, Math.max(_lptSway.get(lpt) ?? 0, batch.sway));
-        batch.windfall = windfallResponse(archive, record);   // WINDFALL1: its record's wind mask - the stock record's (Low Poly Trees' tree stands for it, not the season's picture)
-        _lptWindfall.set(lpt, Math.max(_lptWindfall.get(lpt) ?? 0, batch.windfall));
+    // AUDIT PRECIP HOST-7: the groups stood by the one function a re-skin stands them by (standFlatGroups, above)
+    const { groups, wild: wildFlats, places } = groupFlats(flatLog, flatLog.map((f) => [f.archive, f.record]));
+    placeTrees(flatLog, flatLog.map((f) => f.archive), places);
+    await standFlatGroups({ px, py, groups, wild: wildFlats, natureSet, natureBase, tilemap, paths, vergeNet, uploadRecord, uploadRecordFrame, flatAnims, unionBox },
+      { batches, forestGroups, coverItems, lptHandles, lptGroups });
+    const groupBatches = batches.slice(), groupForest = new Set(forestGroups.keys()), groupCover = coverItems.length;
+    // BANTHA1: THE JUNGLE'S TREES STAND - a species a batch of its far picture (the owner's tree drawn once from the
+    // side, systems/jungleTreesAssets.js), each tree's own scale on its corner, and its 3D tree near the eye (the pixel's
+    // `jungleTrees` set, the jungle door's) - Low Poly Trees' own handover. Each is a Tree of the rainforest: it sways as
+    // the flora do, it is the forest Logging fells in (its group `J<species>`), its cover is its own trunk and crown
+    // (JUNGLE_MEASURES), and the far rings stand it by its own height
+    const jungleHandles = [], jungleSet = [];
+    made.jungleHandles = jungleHandles;   // BUILD-FAIL1
+    const junglePics = new Map();   // a species' picture and its handle's index, asked and held once for its storeys
+    for (const [gk, g] of jungleGroups) {
+      await breather.breathe();
+      const species = g.species, record = JUNGLE_SPECIES[species].record;
+      if (!junglePics.has(species)) junglePics.set(species, await junglePicture(jungle.door, species));   // THE ONE CONSTRUCTION SEAM (world/naturePicture.js)
+      const pic = junglePics.get(species);
+      if (!pic) {   // its picture would not stand (a decode refused): the species stands as the Tree record it carries
+        const t = await getTexture(JUNGLE_ARCHIVE);
+        if (record >= t.recordCount) continue;
+        uploadRecord(JUNGLE_ARCHIVE, record);
+        const size = billboardSize(t, record);
+        const batch = renderer.createBillboardBatch(JUNGLE_ARCHIVE, record, size, g.centers);
+        batch._box = flatBatchAabb(g.centers, size);
+        batch.sway = floraSwayOf(JUNGLE_ARCHIVE, natureSet, size.h);
+        batch.windfall = windfallResponse(JUNGLE_ARCHIVE, record);
+        if (g.young) batch.farH = 0;   // PERF-5: the understorey as the floor, past ring 1
         unionBox(batch._box);
         batches.push(batch);
-        if (natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
-        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));
+        forestGroups.set(gk, { batch, centers: g.centers, size });
+        if (isCoverFlat(JUNGLE_ARCHIVE, record, size)) for (const c of g.centers) coverItems.push(...coverProxies(c, size, { tree: true }));
         continue;
       }
-      if (sib) {   // uploaded under the install's key, with no mip chain (AUDIT 61) - world/naturePicture.js
-        const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
-        batch._box = flatBatchAabb(centers, sib.size);   // EV3
-        batch.sway = floraSwayOf(archive, natureSet, sib.size.h);   // WIND3: the season's trees lean too
-        batch.windfall = windfallResponse(archive, record, seasonPrefixOf(seasons.installedSeason, archive));   // WINDFALL1: the mod's table for the season's atlas
-        unionBox(batch._box);
-        batches.push(batch);
-        if (natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: sib.size });   // PROF4: a felled tree's batch
-        if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
-        continue;
-      }
-      const size = plain;   // the record, uploaded (world/naturePicture.js)
-      const batch = renderer.createBillboardBatch(archive, record, size, centers);
-      batch._box = flatBatchAabb(centers, size);   // EV3
-      batch.sway = floraSwayOf(archive, natureSet, size.h);   // WIND3: the flora lean with the wind, nothing else does
-      batch.windfall = windfallResponse(archive, record);   // WINDFALL1: its record's wind mask - every nature batch, as the mod patches them (TryPatchBatch: 500..511)
+      const { proto, far } = pic;
+      if (pic.h == null) { jungle.door.acquire(far); jungleHandles.push(far); pic.h = jungleHandles.length - 1; }   // AUDIT LPT B5: held until the pixel goes - once a species
+      const own = Float32Array.from(g.own), scales = Float32Array.from(g.own, (v) => v / JUNGLE_SCALE_MAX);
+      jungleSet.push({ h: pic.h, centers: g.centers, wild: null, own, fit: null });
+      const batch = renderer.createBillboardBatch(JUNGLE_ARCHIVE, far.record, far.size, g.centers, { scales });
+      batch.lptProto = far;
+      batch.sunLift = JUNGLE_SUN_LIFT;   // AUDIT BANTHA1 TREE-2: its sun read at its crown, as its 3D tree's
+      // MAC1's far rings: the tree's own height - it has no classic flat to stand for; AUDIT BANTHA1 PERF-5: the young
+      // trees under the canopy none (the floor's): past ring 1 every eye meets the crowns about them first - from outside
+      // the jungle looking in they were 41% of its trees drawn, 170,000 quads against the rainforest's 103,000
+      batch.farH = g.young ? 0 : proto.size.h;
+      batch._box = flatBatchAabb(g.centers, far.size);
+      batch.sway = floraSwayOf(JUNGLE_ARCHIVE, natureSet, proto.size.h);
+      _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, batch.sway));
+      batch.windfall = windfallResponse(JUNGLE_ARCHIVE, record);   // WINDFALL1: its Tree record's mask
+      _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, batch.windfall));
       unionBox(batch._box);
-      armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
       batches.push(batch);
-      if (natureSet.has(archive)) forestGroups.set(k, { batch, centers, size });   // PROF4: a felled tree's batch
-      if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(...coverProxies(c, size, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
+      forestGroups.set(gk, { batch, centers: g.centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
+      g.centers.forEach((c, i) => coverItems.push(...jungleCover(c, species, own[i])));   // TACT1: its own trunk and crown
     }
     // WOD2: the scaled flats - billboardSize times the object's own scale.
     for (const { archive, record, scale, centers } of scaledGroups.values()) {
@@ -1056,7 +1167,12 @@ export function createPixelBuild(host) {
     }
     // TACT1: under the pixel's own bucket key - it leaves with the pixel (Collider.removeBucket) - and a rebuild stands it anew
     collider.cover.remove(key);
-    if (coverItems.length) collider.cover.add(key, coverItems, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]));
+    // AUDIT BANTHA1 TREE-1: in slices on the stream's own clock - a jungle pixel stands 10,000 proxies
+    const coverT = ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]);
+    for (let i = 0; i < coverItems.length; i += COVER_SLICE) {
+      if (i) await breather.breathe();
+      collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE), coverT);
+    }
 
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
@@ -1143,6 +1259,7 @@ export function createPixelBuild(host) {
       tier: seatTier, castle: castleGate,
     }) : null;
     if (siegeField) siegeFieldsByTown.set(dfLocation.mapTableData?.mapId, { key, px, py, field: siegeField });
+    const snowSeen = snowRec?.done(models.length > 0 || dfLocation != null) ?? null;
     const wodKept = adoptWodCarry(key, wodSpawners, privateersHold);
     const wodLife = wodKept.life ?? {};   // L1-3: this terrain's identity - kept across a rebuild or a pool, new on a promote
     if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again
@@ -1162,7 +1279,14 @@ export function createPixelBuild(host) {
       chapterHalls: pixelChapterHalls,   // CHAP7b (above)
       beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
-      tilemapBytes, season: host.season,   // GR1: the placer reads the tiles and the season
+      tilemapBytes, season: pixelSeason,   // GR1: the placer reads the tiles and the season (PRECIP4: the pixel's)
+      _snow: snowSeen,   // PRECIP4: the snow it was built under, every season it took (the sweep's - AUDIT PRECIP HOST-6)
+      // AUDIT PRECIP HOST-7: what a re-skin reads (reskinPixelNow), on the snow lane alone - its flats as logged, its blocks'
+      // lists, the merge's models (none where its table asked nothing a season turns), the batches, forest groups and cover
+      // its groups stood and the cover it keeps (the jungle's, the scaled flats'), its trees, its roads and its middle's
+      // ground; `_skinGen` counts its re-skins (a yard stands its pieces again in the new season - scenes/homeYards.js)
+      _skin: snowSeen ? { log: flatLog, blocks: skinBlocks, statics: remapAsked(texRemap) ? statics : null, batches: groupBatches, forest: groupForest, cover: coverItems.slice(groupCover), trees: pixelTrees, vergeNet, groundMid, usesSeason: models.length > 0 || dfLocation != null, climate, coverT } : null,
+      _skinGen: 0,
       townClimate: townClimateBase,   // DECOR-OUTDOOR: the climate its town's buildings wear - a yard's pieces wear it too (scenes/homeYards.js)
       paths,   // GRASS-PATH1: which tiles the road painter wrote; null on a pixel built before the network arrived
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
@@ -1197,6 +1321,7 @@ export function createPixelBuild(host) {
       // them and the archive they are drawn from, and their groups' batches where a felled tree is sunk
       forest: { base: climate.natureArchive, archive: natureArchive, trees: pixelTrees.filter((t) => forestGroups.has(t.group)), groups: forestGroups },
       lowPolyTrees: lptGroups.length ? { px, py, ox: 0, oy: 0, oz: 0, handles: lptHandles, groups: lptGroups, trees: null, centers: null } : null,   // LPT1: its 3D trees (gatherNear's set, made near the eye; the frame writes its translation)
+      jungleTrees: jungleSet.length ? { px, py, ox: 0, oy: 0, oz: 0, handles: jungleHandles, groups: jungleSet, trees: null, centers: null } : null,   // BANTHA1: the jungle's 3D trees, the jungle door's set (scenes/treesHost.js)
       wodSpawners, // WOD2: LoadObject's spawn markers, for WOD3
       privateersHold,   // WOD4: the camp's block origins and its Start's state, null off the Hold
       arena: arenaOrigin,   // ARENA2: the colosseum's block origin, pixel-local - null off Daggerfall's cell (4,3)
@@ -1340,5 +1465,168 @@ export function createPixelBuild(host) {
     await standPixelNpcs(entry);
     return entry;
   }
+  /**
+   * AUDIT PRECIP HOST-7: A STANDING PIXEL RE-SKINNED IN PLACE - DaggerfallLocation.ApplyClimateSettings (:133-148), what
+   * stands re-read for its season, where the snow's turn tore the whole pixel down and built it again: its terrain, its
+   * collider, its doors, its people and its grass, and the motor held on the player's own pixel through the build. The
+   * snow's seasons are taken again as the build takes them (scenes/snowCoverHost.js recorder) - its buildings' at its
+   * middle, each standing flat's at its foot - and only what wears them is made again: its climate table
+   * (world/texRemap.js reskinRemap) and the merge drawn through it, its homes' looks, its mills' bodies, and its flats'
+   * groups with their forest, cover, far pictures and animation, each flat in its own place (its centre, by which a
+   * felled tree is known and lies felled). All of it made aside and traded in one step; a pixel gone meanwhile lets it
+   * all go. The snow lane's alone (`_skin`); answers whether it re-skinned.
+   * @param {string} key
+   */
+  async function reskinPixelNow(key) {
+    breather.reset();   // PERF7: a pump's turn
+    const p = built.get(key), sk = p?._skin;
+    if (!sk || !snowCover?.on) return false;
+    await snowCover.settle(breather);   // the snow about the player integrated to the clock's minute before a season is read
+    if (built.get(key) !== p) return false;
+    const { px, py } = p, pipeline = p.placeHold;
+    const rec = snowCover.recorder(px, py);
+    const pixelSeason = rec.pixel(sk.groundMid - SEA_LEVEL_M, host.season);
+    const natureArchive = getNatureArchive(sk.climate.natureArchive, pixelSeason);
+    // each flat's picture in its season: a block's read again from its list (the same flats, in the same order), a wild
+    // one's by the snow at its own foot
+    const lists = new Map();
+    const pics = sk.log.map((f) => {
+      if (f.block != null) {
+        let list = lists.get(f.block);
+        if (!list) lists.set(f.block, (list = collectBlockFlats(sk.blocks[f.block].dfBlock, natureArchive, sk.blocks[f.block].opts)));
+        return [list[f.n].archive, list[f.n].record];
+      }
+      if (f.wild != null) return [getNatureArchive(f.wild, rec.flat(f.c[0], f.c[2], f.c[1] - SEA_LEVEL_M, pixelSeason)), f.record];
+      return [f.archive, f.record];
+    });
+    const flatsTurn = pics.some((pic, j) => pic[0] !== sk.log[j].archive || pic[1] !== sk.log[j].record);
+    const law = `climate:${p.townClimate}.${pixelSeason}`, turns = remapLawOf(p.texRemap) !== law;
+    const lawOf = (c) => (a, r) => applyClimate(a, r, c, pixelSeason);
+    const made = { mesh: undefined, batches: [], forestGroups: new Map(), coverItems: [], lptHandles: [], lptGroups: [] };
+    let traded = false;
+    try {
+      // THE BUILDINGS' SEASON: the table, the merge drawn through it, the homes' looks, the mills' bodies
+      let table = turns ? await reskinRemap(p.texRemap, law, lawOf, pipeline) : p.texRemap;
+      if (table !== p.texRemap && sameTable(table, p.texRemap)) table = p.texRemap;   // a season that swaps nothing here: the table, the merge and every draw's cache stand
+      if (table !== p.texRemap && sk.statics) {
+        const merge = new StaticBatchBuilder(), resolve = keyResolver(table), own = keyResolver(NO_CLIMATE_REMAP);
+        for (const [cpu, local, isOwn, nm] of sk.statics) { merge.add(cpu, local, isOwn ? own : resolve, nm); await breather.breathe(); }
+        const merged = await merge.finishSliced(() => breather.breathe());   // PERF-EXT23: a unit a breath, as the build's
+        made.mesh = merged ? renderer.createMesh(merged, { bounds: merged.bounds }) : null;
+      }
+      const homes = [];   // HOME-LOOK: [a home drawn on its own, its look's table in the season - null: the pixel's]
+      if (turns) {
+        for (const m of p.models) {
+          if (!m._home) continue;
+          const look = onlineHomes && p.homeTown ? lookOfHome(p.homeTown, m._home.bk, onlineHomes.homesIn(p.homeTown)?.get(m._home.bk) ?? null) : null;
+          homes.push([m, look ? await homeLookRemap(m.gpu.subMeshes, table, look, pixelSeason, pipeline) : null]);
+        }
+      }
+      const mill = turns && p.models.some((m) => m._mill) ? (await getWindmillMeshes(p.townClimate, pixelSeason === SEASON.Winter)).body : null;
+      // THE FLATS' SEASONS: their groups stood again by the build's own law, aside
+      let flats = null;
+      if (flatsTurn) {
+        const { groups, wild, places } = groupFlats(sk.log, pics);
+        const borderNature = new Map();
+        sk.log.forEach((f, j) => { if (f.wild != null && pics[j][0] !== natureArchive) borderNature.set(pics[j][0], f.wild); });
+        const natureSet = new Set([natureArchive, ...borderNature.keys()]);
+        const natureBase = (a) => (a === natureArchive ? sk.climate.natureArchive : borderNature.get(a));
+        if (await host.seasonsReady) await seasons.onTerrainInstantiated();   // SIB1: as the build asks it, before its batches take their material
+        const seasonsGen = seasons?.generation ?? 0;
+        const box = [...p._box];
+        const unionBox = (b) => { for (let i = 0; i < 3; i++) { if (b[i] < box[i]) box[i] = b[i]; if (b[3 + i] > box[3 + i]) box[3 + i] = b[3 + i]; } };
+        await standFlatGroups({ px, py, groups, wild, natureSet, natureBase, tilemap: p.tilemap, paths: p.paths, vergeNet: sk.vergeNet, uploadRecord: pipeline.uploadRecord, uploadRecordFrame: pipeline.uploadRecordFrame, flatAnims: p.flatAnims, unionBox }, made);
+        // TACT1: its cover set aside, in slices on the stream's clock (AUDIT BANTHA1 TREE-1), traded with its flats
+        const cover = collider.cover.staged(sk.coverT);
+        const items = [...made.coverItems, ...sk.cover];
+        for (let i = 0; i < items.length; i += COVER_SLICE) {
+          if (i) await breather.breathe();
+          collider.cover.fill(cover, items.slice(i, i + COVER_SLICE));
+        }
+        flats = { places, seasonsGen, box, cover };
+      }
+      if (table !== p.texRemap) table = await reskinRemap(p.texRemap, law, lawOf, pipeline, table);   // what the standing table was asked meanwhile (a yard's, a farm's) - nothing is awaited past it
+      if (built.get(key) !== p) return false;
+      // THE TRADE, in one step
+      traded = true;
+      if (p.season !== pixelSeason) p._skinGen++;   // its buildings' season turned: a yard stands its pieces again in it (scenes/homeYards.js)
+      p.season = pixelSeason;
+      p._snow = rec.done(sk.usesSeason);
+      p.texRemap = table;
+      if (made.mesh !== undefined) { if (p.staticBatch) renderer.destroyMesh(p.staticBatch); p.staticBatch = made.mesh; }
+      for (const [m, map] of homes) { m._home.seq++; m.texRemap = map; }   // an ask of refreshHomeLooks under way is the old season's: spent
+      if (mill) for (const m of p.models) if (m._mill) m.gpu = mill;
+      if (flats) {
+        for (const b of sk.batches) {
+          p.flatAnims.remove(b);
+          renderer.destroyBatch(b);
+          const i = p.batches.indexOf(b);
+          if (i >= 0) p.batches.splice(i, 1);
+        }
+        p.batches.unshift(...made.batches);
+        const forestGroups = new Map();
+        for (const [k, g] of p.forest.groups) if (!sk.forest.has(k)) forestGroups.set(k, g);   // the jungle's stand as they stood
+        for (const [k, g] of made.forestGroups) forestGroups.set(k, g);
+        placeTrees(sk.log, pics.map((pic) => pic[0]), flats.places);
+        p.forest = { base: sk.climate.natureArchive, archive: natureArchive, trees: sk.trees.filter((t) => forestGroups.has(t.group)), groups: forestGroups };
+        const sunk = new Set();
+        for (const [k, g] of made.forestGroups) g.centers.forEach((c, i) => { if (FELLED.has(c)) sunk.add(`${k}#${i}`); });
+        sinkFelled({ groups: made.forestGroups }, sunk, renderer);   // PROF4: a felled tree lies felled in its new picture
+        const was = p.lowPolyTrees?.handles ?? [];
+        p.lowPolyTrees = made.lptGroups.length ? { px, py, ox: 0, oy: 0, oz: 0, handles: made.lptHandles, groups: made.lptGroups, trees: null, centers: null } : null;
+        for (const h of was) lowPolyTrees?.release(h);   // AUDIT LPT B5: the new ones held first
+        FOREST_STAMP.n++;   // LPT1: the near 3D trees gathered anew
+        collider.cover.place(key, flats.cover);
+        for (let i = 0; i < 6; i++) p._box[i] = flats.box[i];
+        p._seasonsGen = flats.seasonsGen;
+        sk.batches = made.batches;
+        sk.forest = new Set(made.forestGroups.keys());
+      }
+      sk.log.forEach((f, j) => { f.archive = pics[j][0]; f.record = pics[j][1]; });
+      host.gatherHost?.restandAt(px, py);   // PROF4: a felled tree's stump in its season
+      return true;
+    } finally {
+      if (!traded) {
+        for (const b of made.batches) { p.flatAnims?.remove(b); renderer.destroyBatch(b); }
+        for (const h of made.lptHandles) lowPolyTrees?.release(h);
+        if (made.mesh) renderer.destroyMesh(made.mesh);
+      }
+    }
+  }
+  _reskin.skinWith(reskinPixelNow);   // AUDIT PRECIP HOST-7: the snow's turn, re-skinned in place (world/seasonReskin.js runSkin)
   return { buildPixelNow };
 }
+
+// The build's helpers stand after its constructor: a moved module's constructor is its first exported function
+// (test/scenes/bootorder.test.js BOOT-TDZ2 walks it as the host's).
+/**
+ * AUDIT PRECIP HOST-7: THE FLAT LOG GROUPED - a group a drawn picture (NUDE-FLATS' stand-in's: base-anchored, so it stands
+ * where the figure did), its centres the flats' own in the log's order; `pics[j]` flat j's picture now. Answers the groups,
+ * the wild flats' marks (`${group}#${i}`, LPT1 - DFU's terrain variety is theirs, a location's flat takes none) and each
+ * flat's place, [group, index].
+ * @param {Array<{ c: number[], wild?: number }>} log @param {Array<number[]>} pics
+ */
+export function groupFlats(log, pics) {
+  const groups = new Map(), wild = new Set(), places = new Array(log.length);
+  for (let j = 0; j < log.length; j++) {
+    const [archive, record] = drawnFlat(pics[j][0], pics[j][1]);
+    const k = `${archive}_${record}`;
+    let g = groups.get(k);
+    if (!g) groups.set(k, (g = []));
+    places[j] = [k, g.length];
+    if (log[j].wild != null) wild.add(`${k}#${g.length}`);
+    g.push(log[j].c);
+  }
+  return { groups, wild, places };
+}
+/** AUDIT PRECIP HOST-7: each logged tree's group, place and archive (`archives[j]`, flat j's) as it stands - PROF4's
+ *  `${group}#${i}`, where a felled tree is sunk.
+ *  @param {Array<{ tree?: any }>} log @param {number[]} archives @param {Array<[string, number]>} places */
+export function placeTrees(log, archives, places) {
+  for (let j = 0; j < log.length; j++) {
+    const t = log[j].tree;
+    if (t) { t.group = places[j][0]; t.i = places[j][1]; t.archive = archives[j]; }
+  }
+}
+/** AUDIT PRECIP HOST-7: two climate tables that swap every picture alike. */
+const sameTable = (a, b) => a.size === b.size && [...a].every(([k, v]) => b.get(k) === v);

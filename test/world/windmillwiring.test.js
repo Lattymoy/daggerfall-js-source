@@ -117,7 +117,7 @@ test('WM2e: the mill is skinned for the climate it stands in', () => {
   // differ across them, and DESERT NEVER WINTERS - his prefabs and
   // ClimateSwaps.cs's own rule agreeing.
   for (const host of EXTERIOR_HOSTS) {
-    assert.match(src(host), /getWindmillMeshes\((?:town)?[cC]limateBase, (?:host\.)?season === SEASON\.Winter\)/,   // AUDIT WD3 G5: the world host's town climate (HOST-SPLIT 2: its pixel build reads the season live, host.season)
+    assert.match(src(host), /getWindmillMeshes\((?:town)?[cC]limateBase, (?:host\.|pixel)?[sS]eason === SEASON\.Winter\)/,   // AUDIT WD3 G5: the world host's town climate (HOST-SPLIT 2: its pixel build reads the season live, host.season)
       `${host} uploads the mill without telling it which climate it stands in`);
   }
   const tex = (m) => m.subMeshes.map((sm) => `${sm.textureArchive}_${sm.textureRecord}`);

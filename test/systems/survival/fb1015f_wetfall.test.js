@@ -24,12 +24,12 @@ const deps = { sinks: {}, autoDrink: false, autoEat: false, rules: SURVIVAL_RULE
 // a cool woodland morning, outdoors, nothing worn - the air under 10 dries a point a dry minute
 const street = (falling) => ({ ...ENV_DEFAULTS, climateIndex: CLIMATES.Woodlands, month: 2, hour: 9, weather: 'rain', falling });
 /** The street's frame, as both open-world hosts run it: the front ticks on the sim's word, the ear's word and level are
- *  written from what it shows (world.js:"setHeardWeather(ambientWord, enhancedFront ? fx.intensity : 1);"). */
+ *  written from what it shows (world.js:"setHeardWeather(ambientWord, enhancedFront ? fx.rain ?? fx.intensity : 1, enhancedFront ? fx : null);"). */
 const streetFrames = (front, n, { arrival, t0 = 0, peak = null }) => {
   let fx = null;
   for (let i = 0; i < n; i++) {
     fx = front.tick({ dt: 1 / 60, weather: W.currentWeather(), arrival, nowMinutes: 1000, tsec: t0 + i / 60, jump: false, peak });
-    W.setHeardWeather(soundWeather(fx, W.currentWeather()), fx.intensity);
+    W.setHeardWeather(soundWeather(fx, W.currentWeather()), fx.rain ?? fx.intensity, fx);   // AUDIT PRECIP FALL-4: the drops' level, the whole fall beside it
   }
   return fx;
 };
@@ -80,10 +80,13 @@ test('WET-FALL: the front\'s own frames - the sim says rain, the cloud has not c
 test('WET-FALL: after a jump the street\'s word no longer stands - the host\'s own sky, whole: the Sun Baby\'s clear day stays dry (mutant: the fallback the sim\'s word)', () => {
   W.setWeather('rain');
   W.setHeardWeather('rain', 0.4);
-  assert.deepEqual(W.fallingWeather('sunny'), { word: 'rain', level: 0.4 }, 'the street\'s word stands until a jump');
+  // AUDIT PRECIP FALL-4 (PIN MOVED): the fall carries its snow share - null off the law's lane (the word's own row)
+  assert.deepEqual(W.fallingWeather('sunny'), { word: 'rain', level: 0.4, snow: null }, 'the street\'s word stands until a jump');
+  W.setHeardWeather('rain', 0.25, { intensity: 0.5, snow: 0.5 });
+  assert.deepEqual(W.fallingWeather('sunny'), { word: 'rain', level: 0.5, snow: 0.5 }, 'on the law\'s lane the whole fall and its share - the drops\' level is the ear\'s');
   W.restoreWeather('rain');
-  assert.deepEqual(W.fallingWeather('sunny'), { word: 'sunny', level: 1 }, 'a jump: the host\'s shown sky, at the classic level');
-  assert.deepEqual(W.fallingWeather(), { word: 'rain', level: 1 }, 'with no shown word, the sim\'s');
+  assert.deepEqual(W.fallingWeather('sunny'), { word: 'sunny', level: 1, snow: null }, 'a jump: the host\'s shown sky, at the classic level');
+  assert.deepEqual(W.fallingWeather(), { word: 'rain', level: 1, snow: null }, 'with no shown word, the sim\'s');
 });
 
 test('WET-FALL: a road the clock jumped over meets no fall it cannot know - the host\'s `falling` is cleared with its weather (mutant: the road keeps the departure\'s rain)', () => {

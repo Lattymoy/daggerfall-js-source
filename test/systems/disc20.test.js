@@ -70,7 +70,7 @@ test('DISC20-A: the grass\'s fog is the terrain\'s - its fogFactorAt is TERRAIN_
   const grass = rd('src/render/labGrass.js');
   for (const n of ['uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) assert.ok(grass.includes(`'${n}'`), `${n} is looked up`);
   assert.match(grass, /gl\.uniform1i\(u\.uFogMode, fog \? fog\.mode : 0\);/, 'no fog handed, mode 0 - the lab\'s picture');
-  assert.match(hostText('src/scenes/world.js'), /\{ fog: \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos, dw: renderer\._dwFog \},/);   // DW-C: the sea's fog rides with the frame's
+  assert.match(hostText('src/scenes/world.js'), /\{ fog: \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos, dw: renderer\._dwFog, haze: renderer\._haze \},/);   // DW-C: the sea's fog rides with the frame's
 });
 
 // ── DISC20-E: "The weapon widget default toggle under diverse weapons should be set to off by default" ──
@@ -522,7 +522,7 @@ test('DISC20-C: the world host asks the pool to re-stand over every pixel it bui
   assert.ok(decl > 0 && decl < first && first < pool && pool < bind, 'declared before the first build, bound after the pool');
   const set = s.indexOf('built.set(key, {');
   const call = s.indexOf('host.hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);');   // HOST-SPLIT 2: the publish is the pixel build's, its live names read through host
-  assert.ok(set > 0 && call > set && call - set < 10400, 'after the pixel is published, over its own bounds (THE MERGE: the entry grew by GATE-CLEAR\'s fields and the batch\'s; PROF4 by its forest; GRASS-LIT2 by the near grid\'s normals; ARENA2 by the sand\'s origin; LPT1 by its low-poly trees; VERGE1 by the road\'s question and ECOTONE1 by the border\'s sets; AUDIT LANDFORMS II H2 by the beach a gathering node asks; LEFAY1 by the monument\'s spot; MERCHANT-YARDS by the yards\' sites; WARDEN1 by its watch\'s town; MWNPC19 by its stand flats)');   // PIN MOVED (AUDIT LANDFORMS II H2): 9000 -> 9500, the entry's one new line; PIN MOVED (LEFAY1): 9500 -> 9700, its `lefay` line; PIN MOVED (WARDEN1): 9900 -> 10200, its `wardenTown` line; PIN MOVED (MWNPC19): 10200 -> 10400, its `standFlats` line
+  assert.ok(set > 0 && call > set && call - set < 11600, 'after the pixel is published, over its own bounds (THE MERGE: the entry grew by GATE-CLEAR\'s fields and the batch\'s; PROF4 by its forest; GRASS-LIT2 by the near grid\'s normals; ARENA2 by the sand\'s origin; LPT1 by its low-poly trees; VERGE1 by the road\'s question and ECOTONE1 by the border\'s sets; AUDIT LANDFORMS II H2 by the beach a gathering node asks; LEFAY1 by the monument\'s spot; MERCHANT-YARDS by the yards\' sites; WARDEN1 by its watch\'s town; MWNPC19 by its stand flats; BANTHA1 by its jungle\'s trees; PRECIP4 by the snow it was built under; AUDIT PRECIP HOST-7 by what a re-skin reads)');   // PIN MOVED (AUDIT LANDFORMS II H2): 9000 -> 9500, the entry's one new line; PIN MOVED (LEFAY1): 9500 -> 9700, its `lefay` line; PIN MOVED (WARDEN1): 9900 -> 10200, its `wardenTown` line; PIN MOVED (MWNPC19): 10200 -> 10400, its `standFlats` line; PIN MOVED (BANTHA1): 10400 -> 10600, its `jungleTrees` line; PIN MOVED (PRECIP4): 10600 -> 10800, its `_snow` line
   assert.match(s.slice(call - 200, call), /if \(host\.hccGroundMoved\) \{\s+const t = host\.state\.pixelTranslation\(px, py\);\s+$/);
 });
 

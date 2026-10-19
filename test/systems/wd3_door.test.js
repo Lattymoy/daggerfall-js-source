@@ -321,7 +321,7 @@ test('WD3 a town\'s buildings wear its LOCATION\'s climate, the terrain its pixe
   assert.match(W, /const townClimateBase = dfLocation\?\.climate\?\.climateType \?\? climateBase;/);
   // PIN MOVED (GOTHWAY-BOARDS): the fourth is Gothway Garden's own bounty boards at its north entrance (`gpuB`), the
   // blocks' board model stood by the town and dressed in the town's climate as the block's own boards are
-  assert.equal((W.match(/remapSubMeshes\([a-zA-Z]+\.subMeshes, texRemap, townClimateArchive, pipeline\)/g) ?? []).length, 4, 'every town mesh');
+  assert.equal((W.match(/remapSubMeshes\([a-zA-Z]+\.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase\)/g) ?? []).length, 4, 'every town mesh');
   assert.match(W, /getWindmillMeshes\(townClimateBase,/);
   assert.match(W, /recordIndex: placed\.recordIndex, climateBase: townClimateBase, season: INTERIOR_SEASON,/, 'and the interiors entered from them');
   assert.doesNotMatch(W, /texRemap, climateArchive, pipeline/);

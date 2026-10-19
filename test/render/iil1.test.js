@@ -93,9 +93,10 @@ test('GROUND1-W a mod tile set takes each puddle record\'s shape from the classi
   const a = (x, y) => out[rec].colors[(y * 4 + x) * 4 + 3];
   assert.deepEqual([a(0, 0), a(3, 0), a(0, 3), a(3, 3)], [255, 0, 0, 255]);
   assert.equal(out[rec - 1 >= 0 ? 0 : rec], out[0], 'a record that is not a puddle is left as the mod paints it');
-  for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(src(host), /const layers = modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : classic;/, host);
-  }
+  // PIN MOVED (AUDIT PRECIP GROUND-2): the streaming host's layers are made in one home (groundLayersOf - the set and its
+  // twin's winter both), the puddles marked there
+  assert.match(src('scenes/world.js'), /layers: modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : markPuddleWater\(classic\) \};/, 'scenes/world.js');
+  assert.match(src('scenes/exterior.js'), /const layers = modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : classic;/, 'scenes/exterior.js');
 });
 
 test('IIL2 the mod\'s own shadows: a classic-look lane - the lane shaders with Daggerfall\'s look put back - put on inside, taken off outside, never over Enhanced Lighting', async () => {

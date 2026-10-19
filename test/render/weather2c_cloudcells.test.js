@@ -109,21 +109,28 @@ test('SLAB-SPAN both marches: a cell a ray never passes changes nothing it draws
   const behind = sky([thin], [east, el1, 0, 1]);
   const bare = sky([], [east, el1, 0, 1]);
   assert.ok(behind[3] < 0.05, `the deck behind a thin cell is still walked (T ${behind[3]}, without the cell ${bare[3]})`);
-  // and it keeps its own distance's haze: each span is faded by where it begins, so a cell that holds nothing leaves the
-  // deck behind it the colour it has without the cell (by the ray's first entry, it came out a pale block the cell's shape)
+  // and it keeps its own distance's haze: each sample is faded by its own distance (SKY-ARC; SLAB-SPAN faded each span by
+  // where it began), so a cell that holds nothing leaves the deck behind it the colour it has without the cell (by the
+  // ray's first entry, it came out a pale block the cell's shape)
   for (const elDeg of [1, 2]) {
     const frag = [east, (elDeg / 90) * ZONE.uMapSize[1], 0, 1], a = sky([thin], frag), b = sky([], frag);
     assert.ok(a.every((v, i) => Math.abs(v - b[i]) < 0.01), `${elDeg} degrees: ${a.map((v) => v.toFixed(3))} against ${b.map((v) => v.toFixed(3))} without the cell`);
   }
-  // the aerial perspective itself: what the horizon's colour adds is its share of the cloud's opacity, fade(entry) (1 - T)
-  // - the one span's entry for all of it with no cells, as the fade over the whole ray was
+  // the aerial perspective itself (PIN MOVED, SKY-ARC: each sample's own distance): what the horizon's colour adds is a share
+  // of the cloud's opacity between fade(entry) (1 - T) and fade(exit) (1 - T) - every sample faded by where it stands
+  // in the slab, never all of it by where it begins
   for (const elDeg of [3, 8, 20]) {
     const frag = [0.6 * ZONE.uMapSize[0] + 0.5, (elDeg / 90) * ZONE.uMapSize[1], 0, 1];
     const run = (H) => { const f = marchFns([], { textureLod: tex, uCover: 0.55, uHorizonColor: H, gl_FragCoord: frag }); f.main(); return f.globals.outColor; };
     const a = run([0, 0, 0]), b = run([1, 1, 1]);
-    const el = ((frag[1] / ZONE.uMapSize[1]) * Math.PI) / 2, fade = 1 - Math.exp(-(ZONE.uBase / Math.sin(el)) / 14000);
+    const el = ((frag[1] / ZONE.uMapSize[1]) * Math.PI) / 2, fadeAt = (h) => 1 - Math.exp(-(h / Math.sin(el)) / 14000);
+    const lo = fadeAt(ZONE.uBase) * (1 - a[3]), hi = fadeAt(ZONE.uTop) * (1 - a[3]);
     assert.ok(a[3] < 0.99, `${elDeg} degrees: cloud on the ray (T ${a[3]})`);
-    for (let i = 0; i < 3; i++) assert.ok(Math.abs(b[i] - a[i] - fade * (1 - a[3])) < 1e-9, `${elDeg} degrees: the horizon's share is fade(entry) (1 - T)`);
+    for (let i = 0; i < 3; i++) {
+      const share = b[i] - a[i];
+      assert.ok(share >= lo - 1e-9 && share <= hi + 1e-9, `${elDeg} degrees: the horizon's share ${share} within [${lo}, ${hi}]`);
+      assert.ok(share > lo + 1e-6, `${elDeg} degrees: deeper in the slab, more of the horizon - not the entry's alone`);
+    }
   }
   // the ground's shadow: a square far west of the storm is the no-cell square, texel for texel
   const shadow = (cells, frag) => { const f = glslFunctions(SHADOW_FS, { ...ZONE, ...cellUniforms(cells), textureLod: tex, uCover: 0.55, uMapSize: [64, 64], uOrigin: [-30000, -3000], uExtent: 6000, uSteps: 12, gl_FragCoord: frag }); f.main(); return f.globals.outColor[0]; };

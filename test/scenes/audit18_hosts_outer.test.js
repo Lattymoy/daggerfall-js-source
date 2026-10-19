@@ -533,7 +533,7 @@ test('audit18 hosts: BOTH exterior hosts take the fog colour from the shared law
     // Dynamic Skies, whose own RenderSettings.fogColor it hands back
     // instead (the mod switches DaggerfallSky off, so nothing else
     // writes it). The pin below on the controller keeps the law itself.
-    assert.match(s, /const fogColor = sky\.fogColorFor\(fogNow\)/,   // WX2: the row on the front
+    assert.match(s, /const fogColor = (?:jungle \? jungle\.haze\(\{ fogColor: sky\.fogColorFor\(fogNow\), [^\n]*\}\) : )?sky\.fogColorFor\(fogNow\)/,   // WX2: the row on the front; BANTHA1: in the streaming host the jungle's haze weighs the law's colour (scenes/jungleHost.js haze)
       `${host} passes the sky colour unconditionally - a blizzard fogs to a blue tint`);
     assert.doesNotMatch(s, /sky\.renderer\.fogColor = sky\.renderer\.clearColor;/);
   }

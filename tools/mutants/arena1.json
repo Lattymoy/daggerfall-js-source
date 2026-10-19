@@ -129,8 +129,8 @@
   {
     "name": "ARENA1-CLIMATE-SWAPPED",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);",
-    "new": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline);",
+    "old": "          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);",
+    "new": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);",
     "tests": [
       "test/world/arena/arena1_model.test.js"
     ]

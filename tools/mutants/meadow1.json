@@ -160,8 +160,8 @@
  {
   "name": "MEADOW1-the-green-anchored-to-nothing",
   "file": "src/render/grassMeadow.js",
-  "old": "export const meadowArtGround = (tone) => MEADOW_GREEN.map((v, i) => v / tone[i]);",
-  "new": "export const meadowArtGround = (tone) => MEADOW_GREEN.map((v) => v);",
+  "old": "export const meadowArtGround = (tone, green = MEADOW_GREEN) => green.map((v, i) => v / tone[i]);",
+  "new": "export const meadowArtGround = (tone, green = MEADOW_GREEN) => green.map((v) => v);",
   "tests": [
    "test/render/grassmeadow.test.js"
   ]
@@ -235,7 +235,7 @@
  {
   "name": "MEADOW1-the-box-as-tall-as-a-blade",
   "file": "src/render/labGrass.js",
-  "old": "if (placed.rootY[i] + hd * MEADOW_TOP > cardTop) cardTop = placed.rootY[i] + hd * MEADOW_TOP;",
+  "old": "if (placed.rootY[i] + hd * artTop > cardTop) cardTop = placed.rootY[i] + hd * artTop;",
   "new": "if (placed.rootY[i] + hd > cardTop) cardTop = placed.rootY[i] + hd;",
   "tests": [
    "test/render/grassmeadow.test.js"
@@ -491,8 +491,8 @@
  {
   "name": "AUDIT-MEADOW1-the-wind-left-out-of-the-box",
   "file": "src/render/labGrass.js",
-  "old": "this._cardReach = MEADOW_REACH + MEADOW_WIND_REACH * Math.hypot(windV[0], windV[1]);",
-  "new": "this._cardReach = MEADOW_REACH;",
+  "old": "this._cardReach = this.art.reach + this.art.windReach * Math.hypot(windV[0], windV[1]);",
+  "new": "this._cardReach = this.art.reach;",
   "tests": [
    "test/render/grassmeadow.test.js"
   ]
@@ -602,7 +602,7 @@
  {
   "name": "AUDIT-MEADOW1-the-palette-leaves-the-art",
   "file": "src/render/labGrass.js",
-  "old": "this[classic ? 'artGroundClassic' : 'artGround'] = new Float32Array(meadowArtGround(tones[1]));",
+  "old": "this[classic ? 'artGroundClassic' : 'artGround'] = new Float32Array(meadowArtGround(tones[1], this.art.green));",
   "new": "void tones;",
   "tests": [
    "test/render/grassmeadow.test.js"

@@ -328,7 +328,7 @@ test('WIND3 the hosts: both exterior hosts read the one wind once a frame, feed 
     one(new RegExp(`renderer\\.setFlatWind\\(floraSwayOn\\(\\) && wd\\.on \\? \\[wd\\.windV\\[0\\], wd\\.windV\\[1\\], ${clock}, wd\\.gust\\] : null, floraSwayOn\\(\\) && wd\\.on \\? windfallLaw : null\\);[^\\n]*\\n\\s*renderer\\.drawBillboards\\(`, 'g'), 'the flats\' wind, right before their draw');
     // PIN MOVED (ECOTONE1, 2026-10-07): the streaming host asks by its pixel's nature set - its own climate's archive and any
     // a climate border stood there (windDrive.js floraSwayOf takes a Set); the exterior host has one climate
-    const flora = host === 'src/scenes/world.js' ? 'natureSet' : 'natureArchive';
+    const flora = host === 'src/scenes/world.js' ? 'g\\.natureSet' : 'natureArchive';   // PIN MOVED (AUDIT PRECIP HOST-7): the groups' own function's
     assert.equal((s.match(new RegExp(`batch\\.sway = floraSwayOf\\(archive, ${flora}, (sib\\.)?size\\.h\\);`, 'g')) || []).length, 2, `${host}: the season's batch and the classic one tagged`);
     for (const imp of ["from '../systems/wind/windDrive.js'", "from '../render/windWisps.js'", "from '../systems/wind/windAudio.js'"]) assert.ok(s.includes(imp), `${host}: imports ${imp}`);
   }

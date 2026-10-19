@@ -486,7 +486,7 @@ export function createHomeYards(deps) {
   const asking = new Map();
   /** @type {Map<number, {at: number, n: number}>} YARD-SHED: each town's last failure and the failures in a row */
   const failed = new Map();
-  /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, src: any[] | null, srcSig: string, kept: boolean, lot: any, frame: any, entry: any, trees: Map<string, any>, treeSet: any}>} */
+  /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, src: any[] | null, srcSig: string, kept: boolean, lot: any, frame: any, entry: any, skin: number, trees: Map<string, any>, treeSet: any}>} */
   const yards = new Map();
   const yardFigs = [];   // MWNPC18 (AUDIT MWNPC16-18 D4): figures()'s one list
   let mergesLeft = 0;   // YARD-MERGE: this frame's merges still to make (draw refills it)
@@ -544,7 +544,7 @@ export function createHomeYards(deps) {
   function climateOf(y, gpu) {
     const p = entryOf(y);
     if (!p?.texRemap || p.townClimate == null) return null;
-    return remapSubMeshes(gpu?.subMeshes, p.texRemap, (a, r) => applyClimate(a, r, p.townClimate, p.season), { getTexture: deps.getTexture, uploadRecord: deps.uploadRecord });
+    return remapSubMeshes(gpu?.subMeshes, p.texRemap, (a, r) => applyClimate(a, r, p.townClimate, p.season), { getTexture: deps.getTexture, uploadRecord: deps.uploadRecord }, p.townClimate);   // AUDIT PRECIP HOST-7: in the table's recipe - a re-skin asks it again
   }
 
   /** The world point a yard's frame stands at, now. */
@@ -554,7 +554,7 @@ export function createHomeYards(deps) {
     return [t[0] + f.at[0], t[1] + f.at[1], t[2] + f.at[2]];
   };
   function makeYard(key, p, bk, frame) {
-    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept: false, lot: yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), pool: null, entry: p, trees: new Map(), treeSet: null };
+    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept: false, lot: yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
@@ -615,8 +615,9 @@ export function createHomeYards(deps) {
         const sig = pieces ? y.srcSig : '';
         y.kept = homeOutsideKept(home);
         // DECOR-OUTDOOR: its pixel BUILT AGAIN (a season's turn, an install, a painted home leaving the merge) - every piece
-        // stood again in the new pixel's climate table, animator and season, as the town's own flats are
-        const rebuilt = y.entry !== p;
+        // stood again in the new pixel's climate table, animator and season, as the town's own flats are; AUDIT PRECIP
+        // HOST-7: or RE-SKINNED where it stands (the snow's turn - scenes/pixelBuild.js reskinPixelNow), its season new
+        const rebuilt = y.entry !== p || y.skin !== (p._skinGen ?? 0);
         // AUDIT 05b A4: the owner writing this yard holds it - the pieces standing are the truth until the decorator
         // is put away, and the town's answer waits (its `sig` unread); moved or built again meanwhile, it stands again as it
         // stands. The rebuild stood the town's answer under the open decorator - a hall's other keeper's write the panel
@@ -625,6 +626,7 @@ export function createHomeYards(deps) {
         if (moved || rebuilt || (sig !== y.sig && !holding)) {
           y.t = [...t];
           y.entry = p;
+          y.skin = p._skinGen ?? 0;
           if (!holding) y.sig = sig;
           y.pool.set(holding ? y.pool.list() : pieces ?? y.pool.list());
         }
@@ -771,8 +773,8 @@ export function createHomeYards(deps) {
   function frame({ dt, cam, overlayUp }) {
     syncIn -= dt > 0 ? dt : 0;
     // AUDIT: the world recentred - every yard stood again this frame, never half a second in the old place; DECOR-OUTDOOR:
-    // nor half a second out of its rebuilt pixel's climate and season
-    if (syncIn > 0) for (const y of yards.values()) { const t = deps.translation(y.px, y.py); if (t[0] !== y.t[0] || t[1] !== y.t[1] || t[2] !== y.t[2] || entryOf(y) !== y.entry) { syncIn = 0; break; } }
+    // nor half a second out of its rebuilt pixel's climate and season (AUDIT PRECIP HOST-7: nor its re-skinned one's)
+    if (syncIn > 0) for (const y of yards.values()) { const t = deps.translation(y.px, y.py), e = entryOf(y); if (t[0] !== y.t[0] || t[1] !== y.t[1] || t[2] !== y.t[2] || e !== y.entry || (e?._skinGen ?? 0) !== y.skin) { syncIn = 0; break; } }
     if (syncIn <= 0) { syncIn = YARD_SYNC_S; sync(); }
     if (!tool.flying() && !tool.panelOpen()) cur = ownYardHere();   // the yard is held while the decorator is up
     else if (cur && yards.get(cur.yard.key) !== cur.yard) {

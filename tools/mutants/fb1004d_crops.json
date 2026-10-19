@@ -114,8 +114,8 @@
   {
     "name": "CROPS-15-world-host-no-solids",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: maps.getClimateIndex(px, py), solid: blockSolids(b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum))) });",
-    "new": "const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: maps.getClimateIndex(px, py), solid: null });",
+    "old": "const flatOpts = { climateIndex: maps.getClimateIndex(px, py), solid: blockSolids(b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum))) };",
+    "new": "const flatOpts = { climateIndex: maps.getClimateIndex(px, py), solid: null };",
     "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The streamed world's fields grow through the block again."
   },

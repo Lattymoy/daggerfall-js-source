@@ -76,6 +76,7 @@ import { reliefByteHeight, cliffFadeAt, CLIFF_REACH } from '../world/landforms.j
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { RING_SEA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the horizon's haze and the sea's own look, one text for the ring (both lanes) and the sea
+import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring, both lanes' one text (render/hazeGlsl.js)
 import { WATER_F0, WATER_TINT } from './waterSurface.js';   // FAR-SEA1: the water's own Fresnel; AUDIT FAR-SEA1 L1: and its tint
 
 /** Ring radius in map pixels around the base - ~39 km of horizon. */
@@ -346,6 +347,7 @@ uniform float uRimStart; // where the hold starts closing into the sky
 uniform float uRimEnd;   // the mesh rim - fully sky by here
 uniform float uHazeHold;
 ${RING_SEA_GLSL}
+${RING_HAZE_GLSL}
 out vec4 outColor;
 void main() {
   // PERF2: at the far plane - under LEQUAL it draws only where the streamed world did not, and over the sky. AUDIT
@@ -360,7 +362,7 @@ void main() {
   if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor), sea);
   // the world fog's own ramp, capped at the hold - silhouettes read
   // through the haze - then closed to 1 at the rim (FAR-SEA1: the horizon's one law)
-  outColor = vec4(mix(lit, uFogColor, horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)), 1.0);
+  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);   // BANTHA1: and the jungle's haze
 }`;
 
 const FLAT_UP = new Float32Array([0, 1, 0]);
@@ -369,6 +371,7 @@ const NO_SKY = new Float32Array(3);   // FAR-SEA1: a frame with no sky to reflec
  *  mark forgets the renderer's texture shadows after it (PERF-TEX), beside the lane's eye on 11. */
 export const RING_SEA_UNIT = 12;
 const FLAT_WHITE = new Float32Array([1, 1, 1]);
+const NO_HAZE = new Float32Array(8);   // BANTHA1: uJungleHaze off ([1].x 0)
 
 /** ?ring=off - the escape hatch, read once at scene build. */
 export function ringDisabled(search = globalThis.location?.search) {
@@ -392,7 +395,7 @@ export class FarRingRenderer {
       'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold',
       'uSkyZenith', 'uSkyHorizon', 'uSeaF0', 'uSeaLook',   // FAR-SEA1: the sea's sky, its Fresnel, and whether it has one
       'uEye', 'uSeaTiles', 'uSeaTint', 'uSeaAmbient', 'uSeaSunColor', 'uSeaMoonColor',   // AUDIT FAR-SEA1 L1: the water's body, its light (the lane's in the water's own space)
-      'uELExposure', 'uAdapt']) {
+      'uELExposure', 'uAdapt', 'uJungleHaze', 'uHazeEye']) {   // BANTHA1: the jungle's haze and the eye it is measured from
       this.u[name] = gl.getUniformLocation(p, name);
     }
     this.vao = null;
@@ -488,7 +491,7 @@ export class FarRingRenderer {
    * the world's 6000-unit far plane is 7.3 map pixels.
    */
   draw(view, { origin, lightDir, ambient, sunScale, sunColor, moonDir, moonScale = 0, moonColor, fogColor, fogStart = 0, fogEnd, fovY, aspect, exposure = 1, adaptTex = null,
-    skyZenith = null, skyHorizon = null, eye = null, worldProj = null, seaTiles = null, seaTint = null }) {   // FAR-SEA1: the sky the sea reflects (the water's); AUDIT FAR-SEA1: the eye and the world's lens the fill is counted from (P1), the water's tiles and tint (L1)
+    skyZenith = null, skyHorizon = null, eye = null, worldProj = null, seaTiles = null, seaTint = null, haze = null, hazeEye = null }) {   // BANTHA1: the jungle's haze and its eye; FAR-SEA1: the sky the sea reflects (the water's); AUDIT FAR-SEA1: the eye and the world's lens the fill is counted from (P1), the water's tiles and tint (L1)
     if (!this._built || !this.indexCount) return;
     const gl = this.gl;
     const far = (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
@@ -530,6 +533,8 @@ export class FarRingRenderer {
     gl.uniform1f(this.u.uRimStart, RING_RIM_START);
     gl.uniform1f(this.u.uRimEnd, RING_RIM_END);
     gl.uniform1f(this.u.uHazeHold, RING_HAZE_HOLD);
+    gl.uniform4fv(this.u.uJungleHaze, haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze) - off ([1].x 0) when none is handed
+    gl.uniform3fv(this.u.uHazeEye, hazeEye ?? eye ?? FLAT_UP);
     // FAR-SEA1: the sky the water reflects this frame and the water's own Fresnel - and without a sky (the classic
     // panorama publishes none: sky.waterSky() is null; AUDIT FAR-SEA1 H2: nor does the host with the Enhanced water off)
     // the sea lit as ground, as it was, never a day sky at night. AUDIT FAR-SEA1 L1: nor without the water's tiles - its

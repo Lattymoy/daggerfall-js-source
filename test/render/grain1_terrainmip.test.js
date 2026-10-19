@@ -79,7 +79,8 @@ test('GRAIN1: the tile array is the ONLY texture this touches - the sprites keep
   // every other generateMipmap in the renderer predates this; the sprite and
   // flat paths must not have acquired one, or every billboard goes soft.
   const mips = [...r.matchAll(/gl\.generateMipmap\(([^)]*)\)/g)].map((m) => m[1]);
-  assert.deepEqual(mips, ['gl.TEXTURE_2D_ARRAY'], `only the tile array is mipmapped (found: ${mips.join(', ')})`);
+  // AUDIT PRECIP GROUND-2: a ground set's twin is uploaded through uploadTileArray itself - the one mipmapped texture still
+  assert.deepEqual(mips, ['gl.TEXTURE_2D_ARRAY'], `only the tile arrays are mipmapped (found: ${mips.join(', ')})`);
 });
 
 test('GRAIN2: the anisotropy is a DIAL, and its tiers never exceed what the driver allows', async () => {
@@ -185,7 +186,7 @@ test('GRAIN AUDIT 1: the tier is sampler state - EXECUTED: one chain per archive
   // the hosts: both call the re-apply at their world load, AFTER the tile-array guard
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
-    const guard = h.indexOf('if (!renderer.tileArrays.has(groundArchive)) {');
+    const guard = Math.max(h.indexOf('if (!renderer.tileArrays.has(groundArchive)) {'), h.indexOf('if (!renderer.tileArrays.has(key)) {'));   // AUDIT PRECIP GROUND-2 (PIN MOVED): world.js guards the set's key - its twin's on the snow lane
     const apply = h.indexOf('renderer.applyGroundSharpness();', guard);
     assert.ok(guard > 0 && apply > guard && apply - guard < 1200, `${host}: the tier is re-applied right after the guard, cached or not`);
   }

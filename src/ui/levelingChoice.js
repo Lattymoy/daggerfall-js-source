@@ -41,6 +41,8 @@ import {
 } from '../systems/oblivionLeveling.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // LEVEL-PLUS: the Enhanced Plus face
 import { drawLevelingFace, releaseLevelingFace } from './enhanced/enhancedLevelingChoice.js';
+import { ONLINE_BONUS_POOL } from '../systems/levelEven.js';   // LEVEL-EVEN: online, every level's five
+import { t } from '../systems/textManager.js';
 
 /** LEVEL-ONLINE-2: why Oblivion's option is shut on the online page (oblivionLeveling.js newCharacterLevelingSystem). */
 export const LEVELING_OFFLINE_ONLY_NOTE = 'Offline characters only';
@@ -76,7 +78,7 @@ export function levelingOptions(s = null, { online = false } = {}) {
         'Level with your skills, the classic way.',
         'Primary, major and minor skills make a sum;',
         `every ${LEVELUP_SKILL_SUM_PER_LEVEL} points of it is a level.`,
-        `Each level rolls ${LEVELUP_BONUS_POOL_MIN} to ${LEVELUP_BONUS_POOL_MAX} attribute points.`,
+        online ? t('leveling.classic.poolOnline', 'Each level gives {n} attribute points.', { n: ONLINE_BONUS_POOL }) : `Each level rolls ${LEVELUP_BONUS_POOL_MIN} to ${LEVELUP_BONUS_POOL_MAX} attribute points.`,   // LEVEL-EVEN
       ]),
     }),
     Object.freeze({

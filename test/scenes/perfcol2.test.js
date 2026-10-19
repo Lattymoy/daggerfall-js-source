@@ -152,7 +152,7 @@ test('PERF-COL2: the world host marks every streamed pixel\'s bucket as riding i
   // HOST-SPLIT 2: the pixel's buckets are laid by its build (src/scenes/pixelBuild.js), which reads the state live,
   // host.state - and a provider the host lays itself reads it as state: the census counts both spellings, or a bucket
   // the host lays unmarked goes uncounted (AUDIT HOST-SPLIT 2, the second read)
-  const pix = lines.filter((l) => /\(\(o\) => \(\) => (?:host\.)?state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/.test(l) && !l.includes('collider.cover.add('));
+  const pix = lines.filter((l) => /\(\(o\) => \(\) => (?:host\.)?state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/.test(l) && !l.includes('collider.cover.add(') && !l.includes('const coverT = '));   // AUDIT BANTHA1 TREE-1: the cover's provider made once for its slices
   assert.equal(pix.length, 7, 'the seven pixel-translation providers a bucket takes (the cover index is no bucket)');   // PIN MOVED (FIELD BUGS 2026-10-13e HILL-SEAT): the seventh is a block's hill pads, solid in the pixel's bucket
   for (const l of pix) assert.match(l, /onFloatingFrame\((host\.)?state, \(\(o\) => \(\) => \1state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)\)/, `marked: ${l.trim().slice(0, 120)}`);
   assert.ok(w.includes('collider.addMesh(h.bucket, pos, idx, _ohIdentity, onFloatingFrame(state, () => state.pixelTranslation(entry.px, entry.py, o)));'), 'the ocean holes\' bucket marked');

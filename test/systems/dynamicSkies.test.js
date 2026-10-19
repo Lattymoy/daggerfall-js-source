@@ -677,7 +677,7 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
       assert.match(s, /fogForWeather\(weather, sky\.fogSettings\)/, `${host}: the boot fog over the mod’s table`);
       assert.match(s, /fogForWeather\(w, sky\.fogSettings\)/, `${host}: and every change`);
     }
-    assert.match(s, /const fogColor = sky\.fogColorFor\(fogNow\);/, `${host}: the fog colour through the controller`);
+    assert.match(s, /const fogColor = (?:jungle \? jungle\.haze\(\{ fogColor: sky\.fogColorFor\(fogNow\), [^\n]*\}\) : )?sky\.fogColorFor\(fogNow\);/, `${host}: the fog colour through the controller`);   // BANTHA1: the jungle's haze over it, in the streaming host
     assert.match(s, /ambience\.onPlayEffect = \(clip, playerPos\) => sky\.onAmbientEffect\(playerPos, ambientWord === 'thunder'\);/, `${host}: OnPlayEffect reaches the listener, with the word the ambience plays`);
     assert.match(s, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;/, `${host}: the ambient word is the preset’s`);
     assert.match(s, /if \(!skyInside\) \{ skyInside = true; sky\.setInside\(true\); \}/, `${host}: InteriorTransitionEvent on the modal edge (AUDIT 61)`);

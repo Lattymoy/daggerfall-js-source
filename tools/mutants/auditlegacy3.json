@@ -706,7 +706,7 @@
   {
     "name": "AUDIT-LEGACY-III-O10-a-stock-career-kept-whole",
     "file": "src/systems/legacy/family.js",
-    "old": "    career: career && String(career.name ?? '') !== CLASS_CAREERS[idx] ? JSON.parse(JSON.stringify(career)) : null,",
+    "old": "    career: career && (career.swapped === true || String(career.name ?? '') !== CLASS_CAREERS[idx]) ? JSON.parse(JSON.stringify(career)) : null,",
     "new": "    career: career ? JSON.parse(JSON.stringify(career)) : null,",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"

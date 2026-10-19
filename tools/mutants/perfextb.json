@@ -65,8 +65,8 @@
   {
     "name": "PERF-EXT10-8-a-host-writes-a-field-the-factory-never-minted",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      batch.sway = floraSwayOf(archive, natureSet, size.h);",
-    "new": "      batch.sway = floraSwayOf(archive, natureSet, size.h); batch._flora = true;",
+    "old": "      batch.sway = floraSwayOf(archive, g.natureSet, size.h);",
+    "new": "      batch.sway = floraSwayOf(archive, g.natureSet, size.h); batch._flora = true;",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "PERF-EXT13-9-the-host-draws-each-pixel-through-its-own-call-again",
     "file": "src/scenes/world.js",
-    "old": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = renderer.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;\n      }\n      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);\n",
-    "new": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = renderer.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;\n        renderer.drawWaterSurface(p.water, p._pixelMatrix, row[2], p.tilemapTex, 6.4, wu);\n      }\n",
+    "old": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);\n      }\n      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);\n",
+    "new": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);\n        renderer.drawWaterSurface(p.water, p._pixelMatrix, row[2], p.tilemapTex, 6.4, wu);\n      }\n",
     "tests": [
       "test/render/perfextb.test.js",
       "test/world/terrain/water.test.js"

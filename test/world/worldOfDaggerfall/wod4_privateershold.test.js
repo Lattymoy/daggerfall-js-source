@@ -122,9 +122,9 @@ test('WOD4: the streaming host stands the camp on the block, climate and collide
   const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(wod && b\.blockName === PRIVATEERS_HOLD_BLOCK\) holdBlocks\.push\(originMatrix\);   \/\/ WOD4/);
   const block = w.slice(w.indexOf('    let privateersHold = null;'), w.indexOf('    // SIB1: DaggerfallTerrain.OnInstantiateTerrain'));
-  assert.match(block, /await remapSubMeshes\(gpu\.subMeshes, texRemap, townClimateArchive, pipeline\);/, 'the location re-skins every mesh under its blocks (in its own climate - AUDIT WD3 G5)');
+  assert.match(block, /await remapSubMeshes\(gpu\.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase\);/, 'the location re-skins every mesh under its blocks (in its own climate - AUDIT WD3 G5)');
   assert.match(block, /const local = multiply\(origin, holdModelMatrix\(hm\)\);/);
-  assert.match(block, /staticBuilder\.add\(cpu, local, resolveTexKey\);/);
+  assert.match(block, /addStatic\(cpu, local, false\);/);   // PIN MOVED (AUDIT PRECIP HOST-7): the merge's models logged
   assert.match(block, /collider\.addMesh\(key, cpu\.positions, cpu\.indices, local, holdBucket\);/);
   assert.match(block, /addFlat\(hf\.archive, hf\.record, \.\.\.centredBase\(\[origin\[12\] \+ hf\.pos\[0\], origin\[13\] \+ hf\.pos\[1\], origin\[14\] \+ hf\.pos\[2\]\], billboardSize\(t, hf\.record\)\)\);/, 'no AlignToBase: centred');
   assert.match(block, /for \(const l of holdFireLights\(\)\) pixelWodLights\.push\(/, 'at every hour, on the per-light channel');

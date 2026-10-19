@@ -4,6 +4,7 @@
 // selectable with ?region=<name>&loc=<name>. Ground archive comes from the
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 
+import { setAirGround } from '../systems/weather/airTemperature.js';   // PRECIP1: the air's map (none here)
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
 import { YesNoBoxWindow } from '../ui/yesNoBox.js';   // SOFTCAP3: the Master Skills offer
 import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around
@@ -574,7 +575,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   let wxFrom = wxNow;
   let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   let seenCrossing = weatherCrossingStamp();   // WEATHER2b: the sim's crossing stamp as this host last saw it
-  const climateAt = (px, py) => maps.getClimateIndex(px, py);   // WEATHER2b: the map's climate lookup for the field
+  const climateAt = (px, py) => maps.getClimateIndex(px, py); setAirGround(null);   // WEATHER2b: the map's climate lookup for the field; PRECIP1: and no map for the air - the fixed city's ground wears DFU's season, so the season's law says what falls on it
   const mapGroundHere = mapGround(climateAt);   // AUDIT WEATHER3 R1: the ground law the map's words go through, here
   const fieldCellsHere = () => currentFieldCells().map((c) => cellOfField(c, (x, z) => pixelLocalOfField(_locPixel.x, _locPixel.y, x, z))).filter(Boolean);   // WEATHER2b/c; WEATHER3c: the map's cells carry their importance and rank; WEATHER3g: a storm cell its clip
   function applyWeather(w) {
@@ -6227,7 +6228,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // falls next and never what has already fallen.
       precip.enhanced = !!sky?.cloudShadow;
       if (precip.enhanced) {
-        precip.intensity = fx.intensity;   // WX2: the front's share of the profile
+        precip.intensity = fx.intensity; precip.snowShare = fx.snow ?? null;   // WX2: the front's share of the profile; PRECIP1: and its snow share
         // WX1: THE LAB'S WIND LAW, term for term - the rate handed to the
         // shader is the lab's metres a second WITHOUT the gust, and the
         // travel integrated on the CPU carries it, as grass-proto.html's
@@ -6238,7 +6239,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         precip.windV[0] = wd.windV[0]; precip.windV[1] = wd.windV[1];
         precip.windOff[0] += wd.step[0]; precip.windOff[1] += wd.step[1];
       }
-      precip.draw(precipShown, proj, view, eye32, camRight, now / 1000);
+      precip.drawFall(precipShown, proj, view, eye32, camRight, now / 1000);   // PRECIP1: at the air's snow share
       renderer.markForeignPass();   // EV6: so did the rain
     }
     // WIND3: THE WISPS - the wind, seen (render/windWisps.js). After the

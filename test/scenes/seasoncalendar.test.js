@@ -146,7 +146,8 @@ test('A1: both hosts take the season from the clock, with ?season demoted to a p
     assert.doesNotMatch(text, /const season = /, `${host}: the season is frozen again`);
     // PlayerFootsteps (:107, :122-133) re-reads SeasonValue every
     // frame and re-picks the set; the snow crunch is not a boot value.
-    assert.match(text, /winter: season === SEASON\.Winter/,
+    // AUDIT PRECIP (PIN MOVED): the world host asks the snow under the feet on the snow lane - the season's winter off it
+    assert.match(text, /winter: (?:snowCover\.winterAt\(player\.pos, )?season === SEASON\.Winter/,
       `${host}: the footstep set lost its winter arm`);
     // SetSunlightScale (WeatherManager.cs:316-319).
     assert.match(text, /weatherSun = weatherSunlightScale\(weather, season === SEASON\.Winter\)/,
@@ -391,15 +392,18 @@ test('R1 CLOSEOUT: the frame cannot poll the straightened season away while the 
   // the last write left is what the destination is skinned with.
   const world = hostText('src/scenes/world.js');
   const build = world.slice(world.indexOf('async function buildPixelNow'));
-  assert.ok(build.indexOf('await terrainGen.generate') < build.indexOf('getTerrainGroundArchive(climate, host.season)'),
-    'the ground archive is chosen after the worker yields - the window is real');
+  // PIN MOVED (PRECIP4, 2026-10-19): the pixel's season is read there too - off the host's, or the snow's on the lane
+  // (AUDIT PRECIP HOST-6, PIN MOVED: through the build's recorder, which keeps it)
+  assert.ok(build.indexOf('await terrainGen.generate') < build.indexOf('snowRec ? snowRec.pixel(groundMid - SEA_LEVEL_M, host.season) : host.season'),
+    'the season is read after the worker yields - the window is real');
+  assert.ok(build.indexOf('snowRec.pixel(') < build.indexOf('getTerrainGroundArchive(climate, pixelSeason)'), 'and the ground archive after it');
 
   // THE LATCH. The frame's poll is the first thing tickSeason answers
   // to, the teleport raises it beside the straightening, and it comes
   // down in a `finally` so a failed build cannot switch the frame's
   // season off for the rest of the session.
   const tick = world.slice(world.indexOf('function tickSeason() {'));
-  assert.match(tick.slice(0, tick.indexOf('\n  }')), /^function tickSeason\(\) \{\n(\s*\/\/[^\n]*\n)*\s*if \(_seasonStraightening\) return;[^\n]*\n\s*if \(refreshSeason\(\)\) _reskin\.markAll\(\);/,
+  assert.match(tick.slice(0, tick.indexOf('\n  }')), /^function tickSeason\(\) \{\n(\s*\/\/[^\n]*\n)*\s*if \(_seasonStraightening\) return;[^\n]*\n\s*if \(refreshSeason\(\)(?: && !snowCover\.on)?\) _reskin\.markAll\(\);/,
     'the frame poll stands down FIRST - above the refreshSeason that would otherwise mutate the cache');
   const tp = world.slice(world.indexOf('async function _teleportToPixel'));
   const core = tp.slice(0, tp.indexOf('\n  }'));

@@ -33,4 +33,12 @@ float cloudShadowAt(vec3 wp) {
   if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
   return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
 }
+// SKY-CAP: the transmittance at the texel NEAREST ground point g (x, z) the map knows - past the square, its edge. Clamped
+// in the map's own UV, never in world metres: the square's far side in metres (corner + 1 / z, in fp32) carried back
+// into UV lands a hair past 1.0 for some squares, where cloudShadowAt answers "outside: full sun"
+float cloudShadowNearest(vec2 g) {
+  if (uCloudShadowRect.w <= 0.0) return 1.0;
+  vec2 uv = clamp((g - uCloudShadowRect.xy) * uCloudShadowRect.z, 0.0, 1.0);
+  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
+}
 `;

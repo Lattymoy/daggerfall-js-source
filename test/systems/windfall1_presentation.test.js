@@ -312,7 +312,7 @@ test('WINDFALL1 the hosts: world.js and exterior.js build the one runtime on the
     assert.match(s, /renderer\.setFlatWind\([^\n]*, floraSwayOn\(\) && wd\.on \? windfallLaw : null\);/, `${host}: the law under the sway's switch`);
     assert.ok(s.indexOf('windfall.draw(proj, view, renderer.flatLightAt(') < s.indexOf('if (hazeGl) {', s.indexOf('windfall.draw(proj')), `${host}: the particles before the haze grabs the world`);
     assert.equal((s.match(/batch\.windfall = windfallResponse\(archive, record/g) || []).length, 3, `${host}: the far picture, the season's and the classic batch`);
-    assert.match(s, /windfallOf: \(proto\) => _?lptWindfall\.get\(proto\) \?\? 0/, `${host}: the 3D trees by their far pictures' mask`);
+    assert.match(host.endsWith('world.js') ? read('src/scenes/treesHost.js') : s, /windfallOf: \(proto\) => _?lptWindfall\.get\(proto\) \?\? 0/, `${host}: the 3D trees by their far pictures' mask`);   // BANTHA1 (HOST-SPLIT): the world's near trees are scenes/treesHost.js's
   }
   assert.match(hostText('src/scenes/world.js'), /windfall\.offsetOrigin\(r\.offset\);/);
   assert.match(hostText('src/scenes/world.js'), /csaReanchor\(state\.initOffset\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*snowfall\.offsetOrigin\(state\.initOffset\);\n\s*windfall\.offsetOrigin\(state\.initOffset\);/, 'AUDIT ENVIRONS: a teleport\'s new frame carries the anchor and the leaves in the air, as a recentre does');

@@ -393,12 +393,12 @@ test('WOD2: the streaming host wires the loader where DFU does - decision before
   // GetMapPixelData's mapRegionIndex (the location's, -1 off one - under which the arm never fired)
   assert.match(w, /regionIndex: maps\.getRegionIndexAt\(px, py\),/, 'the pixel\'s own region, the sea arm\'s');
   assert.match(w, /worldHeight: host\.woods\.getHeightMapValue\(px, py\),/);
-  assert.match(w, /wod: wodPicks \? \{ picks: wodPicks\.map\(\(p\) => \(\{ flatten: p\.flatten, rect: p\.rect, hide: !wodPiecewise\(p\.prefabName\), bounds: forests \? wodSiteFootprint\(p\.prefab, p\.rect\) : null \}\)\) \} : null,/);   // FOREST1: and which picks are sites, with their footprints
+  assert.match(w, /wod: wodPicks \? \{ picks: wodPicks\.map\(\(p\) => \(\{ flatten: p\.flatten, rect: p\.rect, hide: !wodPiecewise\(p\.prefabName\), bounds: forests \|\| jungle \? wodSiteFootprint\(p\.prefab, p\.rect\) : null \}\)\) \} : null,[^\n]*/);   // FOREST1: and which picks are sites, with their footprints
   assert.match(w, /return net\?\.source === 'basic-roads' \? basicRoadsPathsPoint\(net, x, y\) : 0;/, 'only his mod answers getPathsPoint');
   // The object block: a collider per model, no climate remap, no doors.
   const block = w.slice(w.indexOf('const place = wod.placements(wodPicks, wodAverages);'), w.indexOf('// EV7: the nature layout arrived'));
   assert.match(block, /collider\.addMesh\(key, cpu\.positions, cpu\.indices, m\.matrix, wodBucket\);/);
-  assert.match(block, /staticBuilder\.add\(cpu, m\.matrix, resolveTexKey, m\.normalMatrix\);/);
+  assert.match(block, /addStatic\(cpu, m\.matrix, false, m\.normalMatrix\);/);
   assert.doesNotMatch(block, /remapSubMeshes|getStaticDoors|buildingDoors/, 'no climate swap and no doors off the terrain');
   assert.match(block, /pixelAnimals\.push/);
   assert.match(w, /wodLights: pixelWodLights,/);

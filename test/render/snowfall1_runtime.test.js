@@ -302,7 +302,8 @@ test('SNOWFALL1 the shader: the snow program is the ground\'s own fragment progr
   for (const v of ['out vec3 vNormal;', 'out vec3 vWorldPos;', 'out vec2 vLocalXZ;', 'out vec4 vSnow;']) assert.ok(SNOW_VS.includes(v), v);
   // AUDIT ENVIRONS: the vertex law's surface offset stands on the blanket's painted track edge as the fragment's coverage
   // does (DynamicSnow.glsl: max(onPath, st.g) before _SurfaceOffset); the blanket reads no window mask (it rises by its own)
-  assert.match(SNOW_VS, /float cover = st\.g;[^\n]*\n\s*if \(blanket && st\.b != 0\.0\) cover = max\(cover, snowOnPath\(st\.b, statUV\)\);\n\s*float offset = cover \* uSnowRadius\.z \* st\.a \* fade;/);
+  // AUDIT PRECIP GROUND-9 (PIN MOVED): and the coverage laid where the ground wears snow (precip4_snowground pins snowLaid)
+  assert.match(SNOW_VS, /float cover = st\.g;[^\n]*\n\s*if \(blanket && st\.b != 0\.0\) cover = max\(cover, snowOnPath\(st\.b, statUV\)\);\n\s*cover \*= laid;\n\s*float offset = cover \* uSnowRadius\.z \* st\.a \* fade;/);
   assert.match(SNOW_VS, /if \(!blanket\) \{[^\n]*\n\s*float depth = snowResolve\(textureLod\(uSnowContext/);
   assert.throws(() => snowTerrainFs('void main() { }'), /ONE span/);
   assert.deepEqual(Object.values(SNOW_ATTR), [0, 1, 2, 3, 4, 5, 6, 7]);
@@ -314,8 +315,11 @@ test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on the
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(host);
     assert.match(s, /const snowfall = createSnowfallHost\(\{ gl: renderer\.gl, renderer, enhanced: !!sky\.enhanced, ground: /, `${host}: built on the lane, over its ground`);
-    assert.match(s, /snowfall\.frame\(\{ now: now \/ 1000, inside: true, player: null, weather, seconds: worldMinutes\(\) \* 60, winter: season === SEASON\.Winter, /, `${host}: ticked indoors`);
-    assert.match(s, /snowfall\.frame\(\{ now: now \/ 1000, inside: false, player: snowPlayer\(\), weather, seconds: worldMinutes\(\) \* 60, winter: season === SEASON\.Winter, [^\n]*npcs: snowNpcs, corpses: snowBodies \}\);/, `${host}: ticked outdoors, the walkers and the bodies handed`);
+    // AUDIT PRECIP GROUND-9 (PIN MOVED): the world host's winter is whether snow lies about the player on the snow lane
+    assert.match(s, /snowfall\.frame\(\{ now: now \/ 1000, inside: true, player: null, weather, seconds: worldMinutes\(\) \* 60, winter: (?:snowCover\.winterNear\()?season === SEASON\.Winter\)?, /, `${host}: ticked indoors`);
+    // PIN MOVED (PRECIP4, 2026-10-19): the streamed world's winter is the snow under the player on the snow lane
+    // (scenes/snowCoverHost.js winterAt - the season off it)
+    assert.match(s, /snowfall\.frame\(\{ now: now \/ 1000, inside: false, player: snowPlayer\(\), weather, seconds: worldMinutes\(\) \* 60, winter: (?:season === SEASON\.Winter|snowCover\.winterNear\(season === SEASON\.Winter\)), [^\n]*npcs: snowNpcs, corpses: snowBodies \}\);/, `${host}: ticked outdoors, the walkers and the bodies handed`);
     const draw = s.search(/^ {4}(if \(!tvf\) )?snowfall\.draw\(/m), ground = s.indexOf('renderer.drawTerrain(', draw), deck = s.lastIndexOf('renderer.setCloudShadow(sky?.cloudShadow ?? null);', draw);
     assert.ok(draw > 0 && deck > 0 && deck < draw && ground > draw, `${host}: the snow under the frame's cloud deck, before the ground under it`);
     assert.equal(s.indexOf('renderer.drawTerrain(', s.lastIndexOf('renderer.setCloudShadow(sky?.cloudShadow ?? null);', ground) + 1), ground, `${host}: and no ground drawn between the deck and the snow`);

@@ -337,7 +337,7 @@ test('OWS2 host wiring by source: the boat a journey crosses in; the plan asked 
   const w = rd('src/scenes/world.js');
   // the means: at its helm, mine moored in reach, the parts in the pack - a boat that crosses
   assert.match(w, /const tvSeaCrosses = \(rig\) => !!rig && \(rig\.sails > 0 \|\| rig\.crewed\) && \(rig\.cargo > 0 \|\| !!csaRuntime\?\.helmResponsive\(\)\);/);   // PIN MOVED (AUDIT NAV2 F16): the Carrack crosses where the responsive helm sails her
-  assert.match(w, /return tvSeaCrosses\(tvSeaRig\(b\)\) \? \{ start: 'sea', again: !!b\.packable, boat: b, how: 'helm' \} : null;/);
+  assert.match(w, /return tvSeaCrosses\(tvSeaRig\(b\)\) \? \{ start: 'sea', again: !!b\.packable, boat: b, how: 'helm', voyage: !!b\.charter \} : null;/);   // PIN MOVED (PASSAGE): a booked ship's helm asks a voyage
   assert.match(w, /if \(Math\.hypot\(p\[0\] - feet\[0\], p\[2\] - feet\[2\]\) <= TV_SEA_MOORED_M\) return \{ start: 'sea', again: !!b\.packable, boat: b, how: 'moored' \};/);
   assert.match(w, /return tvSeaParts\(\) \? \{ start: 'land', again: true, boat: null, how: 'parts' \} : null;/);
   assert.match(w, /it\?\.templateIndex === CSA_PARTS_TEMPLATE && tvSeaCrosses\(csa\.hullRig\?\.\(csaHullFromMessage\(it\.message \?\? 0\)\)\)/);

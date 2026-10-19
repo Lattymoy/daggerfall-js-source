@@ -13,6 +13,9 @@
 //                 (software GL) and its numbers are only relative.
 //   SECONDS=8     how long each scene is sampled after it settles
 //   SCENES=city,road,dungeon   which to run
+//   SCENES=jungle  BANTHA1 (AUDIT BANTHA1 DOC-10; BANTHA2's area): the city of Satakalaam, deep in the jungle and its haze
+//                 (LOC=<a town of Satakalaam's> for another - tools/jungleExtent.mjs lists the area's); JUNGLE=off its kill
+//                 door, to A/B the jungle
 //   OUT=perf.json where to append the rows (default: print only)
 //
 // The scene is settled when the world says so (`window.__shotReady`:
@@ -36,11 +39,15 @@ const GROUND = process.env.GROUND ? `&ground=${encodeURIComponent(process.env.GR
 // LPT1: TREES=off runs every scene with Low Poly Trees' kill door (`?trees=off`), so the trees' cost is an A/B on a real
 // GPU: HEADED=1 SCENES=road TREES=off npm run perf, then again without it, and compare frameMs, draws and scriptMs.
 const TREES = process.env.TREES === 'off' ? '&trees=off' : '';
+// BANTHA1 (AUDIT BANTHA1 DOC-10): JUNGLE=off runs every scene with the jungle's kill door (`?jungle=off`) - HEADED=1
+// SCENES=jungle npm run perf, then again with JUNGLE=off, and compare frameMs, draws and scriptMs.
+const JUNGLE = process.env.JUNGLE === 'off' ? '&jungle=off' : '';
 
 const SCENES = {
   city: `/play/?world&region=Daggerfall&loc=Daggerfall&class=1&novideo&shot&fps`,
   road: `/play/?world&spawn=random&class=1&novideo&shot&fps`,
   dungeon: `/play/?shot&class=0&fps`,
+  jungle: `/play/?world&region=Satakalaam&loc=${encodeURIComponent(process.env.LOC || 'Satakalaam')}&class=1&novideo&shot&fps`,
 };
 
 const server = await createServer({ root: ROOT, server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
@@ -54,7 +61,7 @@ page.on('pageerror', (e) => errors.push(e.message));
 
 const rows = [];
 for (const name of WANT) {
-  const url = SCENES[name] && `${SCENES[name]}${TREES}`;   // LPT1: the trees' door on every scene the TREES switch names
+  const url = SCENES[name] && `${SCENES[name]}${TREES}${JUNGLE}`;   // LPT1: the trees' door on every scene the TREES switch names; BANTHA1: the jungle's
   if (!url) { console.warn(`perf: no scene "${name}"`); continue; }
   await page.goto(`http://localhost:${PORT}${url}${GROUND}`);
   await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 300000 });

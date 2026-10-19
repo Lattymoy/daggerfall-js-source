@@ -75,10 +75,14 @@ test('WATER-PUDDLE: cleanMask - a small wet patch dries wherever it lies, a smal
 test('WATER-PUDDLE: the pass keeps a puddle record\'s fragment by its layer\'s alpha, read through the tile\'s turn at the record\'s own texel; the hosts write the alpha before the upload; the feet keep DFU\'s whole tile (pins)', () => {
   const fs = waterSurfaceFs('', '');
   assert.match(fs, /bool isPuddleRecord\(uint r\) \{ return r == 8u \|\| r == 9u \|\| r == 23u \|\| r == 33u \|\| r == 34u \|\| r == 35u \|\| r == 36u; \}/);
-  assert.match(fs, /vec2 puv = PUDDLE_ROT\[turn\] \* f \+ PUDDLE_TRANS\[turn\];\n\s+edge \*= smoothstep\(0\.3, 0\.7, textureGrad\(uTileArr, vec3\(puv, float\(rec\)\), PUDDLE_ROT\[turn\] \* wgx, PUDDLE_ROT\[turn\] \* wgy\)\.a\);\n\s+\}\n\s+if \(edge <= 0\.002\) discard;/);
+  // AUDIT PRECIP GROUND-5 (PIN MOVED): under the snow the mask walks to the winter record's (the twin's second half) by the
+  // ground's own cover - the one function the terrain asks (render/snowCoverGlsl.js snowCover), at the sheet's footprint
+  assert.match(fs, /vec2 puv = PUDDLE_ROT\[turn\] \* f \+ PUDDLE_TRANS\[turn\];\n\s+float pa = textureGrad\(uTileArr, vec3\(puv, float\(rec\)\), PUDDLE_ROT\[turn\] \* wgx, PUDDLE_ROT\[turn\] \* wgy\)\.a;\n(?:\s+\/\/[^\n]*\n)*\s+float pc = snowCover\(vLocalXZ, vWorldPos\.y, vec3\(0\.0, 1\.0, 0\.0\), wgx, wgy\);\n\s+if \(pc > 0\.0\) pa = mix\(pa, textureGrad\(uTileArr, vec3\(puv, float\(rec\) \+ float\(uSnowArr\.x\)\), PUDDLE_ROT\[turn\] \* wgx, PUDDLE_ROT\[turn\] \* wgy\)\.a, pc\);\n\s+edge \*= smoothstep\(0\.3, 0\.7, pa\);\n\s+\}\n\s+if \(edge <= 0\.002\) discard;/);
   assert.match(fs, /const mat2 PUDDLE_ROT\[4\] = mat2\[4\]\(mat2\(1\.0, 0\.0, 0\.0, 1\.0\), mat2\(0\.0, -1\.0, 1\.0, 0\.0\), mat2\(-1\.0, 0\.0, 0\.0, -1\.0\), mat2\(0\.0, 1\.0, -1\.0, 0\.0\)\);/, 'TERRAIN_FS\'s turns');
   assert.match(rd('src/render/renderer.js'), /const mat2 ROT\[4\] = mat2\[4\]\(\n\s+mat2\(1\.0, 0\.0, 0\.0, 1\.0\),\n\s+mat2\(0\.0, -1\.0, 1\.0, 0\.0\),\n\s+mat2\(-1\.0, 0\.0, 0\.0, -1\.0\),\n\s+mat2\(0\.0, 1\.0, -1\.0, 0\.0\)\);/, 'and TERRAIN_FS still turns so');
-  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+  // AUDIT PRECIP GROUND-2 (PIN MOVED): world.js writes it in its one layers' helper, for a set and its twin's winter alike
+  assert.match(rd('src/scenes/world.js'), /return \{ modLayers, layers: modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : markPuddleWater\(classic\) \};/, 'src/scenes/world.js: the alpha written before the upload');
+  for (const f of ['src/scenes/exterior.js']) {
     assert.match(rd(f), /renderer\.uploadTileArray\(groundArchive, modLayers \? layers : markPuddleWater\(layers\)\);/, `${f}: the alpha written before the upload`);
   }
   for (const r of SHALLOW_WHOLE) assert.equal(waterCorners(r << 2, WATER_MASK_TABLE), 15, `record ${r}: the feet still wade the whole tile`);

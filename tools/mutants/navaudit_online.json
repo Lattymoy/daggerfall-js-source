@@ -613,8 +613,8 @@
   {
     "name": "NAV1O-wire-self-alone-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "return s.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.w || out.l || out.g ? out : null;",
-    "new": "return s.length || v.length || b.length || out.t !== undefined || out.f || out.w || out.l || out.g ? out : null;",
+    "old": "return s.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.w || out.l || out.g || out.q ? out : null;",
+    "new": "return s.length || v.length || b.length || out.t !== undefined || out.f || out.w || out.l || out.g || out.q ? out : null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -821,8 +821,8 @@
   {
     "name": "NAV1O-wire-traffic-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "traffic: raw.t === undefined ? TRAFFIC_DEFAULT : DENSITY_KEYS[raw.t], casks, captains, boat, spent: [...spent], laid };",
-    "new": "traffic: TRAFFIC_DEFAULT, casks, captains, boat, spent: [...spent], laid };",
+    "old": "traffic: raw.t === undefined ? TRAFFIC_DEFAULT : DENSITY_KEYS[raw.t], casks, captains, boat, spent: [...spent], gone: [...gone], laid };",
+    "new": "traffic: TRAFFIC_DEFAULT, casks, captains, boat, spent: [...spent], gone: [...gone], laid };",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -997,8 +997,8 @@
   {
     "name": "NAV1O-traffic-unsaid-host",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "traffic: setting('ShipsAtSea', TRAFFIC_DEFAULT), casks, spent: spentSaid, laid }, toWire);",
-    "new": "traffic: TRAFFIC_DEFAULT, casks, spent: spentSaid, laid }, toWire);",
+    "old": "traffic: setting('ShipsAtSea', TRAFFIC_DEFAULT), casks, spent: spentSaid, gone: goneSaid(), laid }, toWire);",
+    "new": "traffic: TRAFFIC_DEFAULT, casks, spent: spentSaid, gone: goneSaid(), laid }, toWire);",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
     ]

@@ -36,11 +36,11 @@ import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';   // AUDIT
 import { ecotoneOwner, ECOTONE_REACH } from '../ecotone.js';   // ECOTONE1: which climate owns a tile at a border
 
 const MAX_STEEPNESS = 50;
-const SLOPE_SINK_RATIO = 70;
+export const SLOPE_SINK_RATIO = 70;   // BANTHA1: and the jungle's (world/terrain/jungleNature.js)
 const BASE_CHANCE_ON_DIRT = 0.2;
 const BASE_CHANCE_ON_GRASS = 0.9;
 const BASE_CHANCE_ON_STONE = 0.05;
-const NATURE_CLEARANCE = 4;
+export const NATURE_CLEARANCE = 4;   // BANTHA1: and the jungle's
 const CLIMATE_TYPE_DESERT = 0; // DFLocation.ClimateBaseType.Desert
 
 /** World of Daggerfall's Tree records, by the climate's summer nature archive (LocationHelper.cs billboards). FOREST1:

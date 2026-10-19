@@ -65,7 +65,9 @@ nothing a player could see. That is where the identity goes.
   Growth tab's guide says so in its headline, and the Master Skills page draws no specialisation line for it - GROWTH2,
   AUDIT GROWTH LANE5-6). AUDIT MARTIAL L4 L3: it counted the career's weapon skills alone, so two that were both minor
   skills - one minor slot between them - showed the card for good; the arcane `pathPossible` the same, and both now read
-  the slots - and the guide counts each path's pair the same way (AUDIT GROWTH LANE1-1).
+  the slots - and the guide counts each path's pair the same way (AUDIT GROWTH LANE1-1). SKILL-SWAP (2026-10-19,
+  `10-UI/Growth.md` section 11): such a class can now change one unmastered class skill for a weapon skill, for gold, and
+  a line under the guide's headline says so where one swap would open a path (AUDIT SUGGESTIONS-1019 L5-1).
 - **The choice.** Any pair of the player's mastered weapon skills names one path (section 5); with three mastered, the
   player picks among their pairs. `entity.martialPath` holds the path's id. **Held until given up for 200,000 gold**
   (SPEC-RESET, `10-UI/Growth.md` section 10) - nothing else undoes it; a mastery is never undone. Asked ONCE on the first quiet pass after the second weapon is mastered (`scenes/shared.js`

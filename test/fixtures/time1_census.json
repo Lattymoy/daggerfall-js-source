@@ -246,6 +246,12 @@
    "why": "the weather's pace"
   },
   {
+   "file": "src/scenes/world.js",
+   "has": "now: () => (_snowArrival !== null && worldMinutes() < _snowArrival ? _snowArrival : ((_snowArrival = null), worldMinutes()))",
+   "clock": "event",
+   "why": "PRECIP4 / AUDIT PRECIP HOST-2: the snow's one clock - the snowpack's event minute for the frames, a build's settle and the feet, a trip's arrival minute until its own time has run"
+  },
+  {
    "file": "src/scenes/exterior.js",
    "has": "nowMinutes: playerTicker.classicMinutes, tsec",
    "clock": "event",

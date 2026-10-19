@@ -151,7 +151,9 @@ test('ECOTONE1: the GLSL is the JS - the hash bit for bit, the lattice noise and
     let blended = 0;
     const corners = [[0, 160, 0, 160], [660, PIXEL, 0, 160], [0, 160, 660, PIXEL], [660, PIXEL, 660, PIXEL]];
     for (const [x, z] of [...points(200), ...corners.flatMap(([x0, x1, z0, z1]) => points(80, x0, x1, z0, z1))]) {
-      const got = fns.ecotone([0, 0, 0], [x, z], [0.5, 0.5, 2], [0.01, 0], [0, 0.01]);
+      const w = fns.ecoWeights([x, z]);   // AUDIT PRECIP GROUND-6 (PIN MOVED): the shares once, the blend by them
+      assert.ok(Math.abs(w[0] + w[1] + w[2] + w[3] - 1) < 1e-9, 'the shares sum to one');
+      const got = fns.ecotone([0, 0, 0], w, [0.5, 0.5, 2], [0.01, 0], [0, 0.01]);
       const want = bySlot(ecotoneShares(PX, PY, x, z));
       for (let k = 1; k <= 3; k++) assert.ok(Math.abs(got[k - 1] - want[k]) < 1e-9, `slot ${k} at ${x.toFixed(1)},${z.toFixed(1)}: ${got} against ${want}`);
       if (want[1] + want[2] + want[3] > 0.01) blended++;
@@ -159,7 +161,8 @@ test('ECOTONE1: the GLSL is the JS - the hash bit for bit, the lattice noise and
     assert.ok(blended > least, `the neighbours blend in (${blended})`);
     // the switch off: the pixel's own texel, untouched
     fns.globals.uEcoOrigin = [origin[0], origin[1], 0];
-    assert.deepEqual(fns.ecotone([0.2, 0.3, 0.4], [PIXEL - 1, PIXEL - 1], [0.5, 0.5, 2], [0.01, 0], [0, 0.01]), [0.2, 0.3, 0.4]);
+    assert.deepEqual(fns.ecoWeights([PIXEL - 1, PIXEL - 1]), [1, 0, 0, 0], 'the switch is the weights\' own');
+    assert.deepEqual(fns.ecotone([0.2, 0.3, 0.4], fns.ecoWeights([PIXEL - 1, PIXEL - 1]), [0.5, 0.5, 2], [0.01, 0], [0, 0.01]), [0.2, 0.3, 0.4]);
   }
 });
 
@@ -167,8 +170,9 @@ test('ECOTONE1: both terrain programs sample their neighbours right after their 
   const r = read('src/render/renderer.js');
   const classic = r.slice(r.indexOf('const TERRAIN_FS = `'), r.indexOf('}`;', r.indexOf('const TERRAIN_FS = `')));
   assert.match(classic, /\$\{ecotoneGlsl\(\)\}/);
-  assert.match(classic, /vec3 tex = textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb;\n {2}tex = ecotone\(tex, vLocalXZ, vec3\(tuv, float\(layer\)\), gx, gy\);/);
-  assert.match(EL_TERRAIN_FS, /vec3 tex = elDecode\(textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb\);\n {2}tex = ecotone\(tex, vLocalXZ, vec3\(tuv, float\(layer\)\), gx, gy\);/);
+  // AUDIT PRECIP GROUND-6 (PIN MOVED): the weights asked once, the blend by them - the snow crosses the border by the same
+  assert.match(classic, /vec3 tex = textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb;\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);/);
+  assert.match(EL_TERRAIN_FS, /vec3 tex = elDecode\(textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb\);\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);/);
   assert.match(EL_TERRAIN_FS, /c \+= w\.y \* elDecode\(textureGrad\(uEcoArr1, tl, gx, gy\)\.rgb\);/, 'the lane blends in its own linear light');
   assert.match(ecotoneGlsl(''), /c \+= w\.y \* \(textureGrad\(uEcoArr1, tl, gx, gy\)\.rgb\);/, 'the classic program in its display values');
   // a phone's mediump int is sixteen bits: the origin runs to 128,000 and the hash wraps at 2^32, so every integer of the
@@ -328,16 +332,17 @@ test('ECOTONE1: the world host - the 3x3 read once a build; the kernel handed th
   assert.match(w, /const near = ecotones \? climates3x3\(px, py, climate\) : null;/);
   assert.match(w, /ecotone: natureBorder,/);
   assert.match(read('src/world/terrain/terrainGen.js'), /ecotone,   \/\/ ECOTONE1/);
-  assert.match(w, /const loadGroundSet = async \(groundArchive, hold\) => \{\n\s+hold\.tileArray\(groundArchive\); const groundTex = await getTexture\(groundArchive\);/, 'the one home, held for the pixel');
-  assert.match(w, /await loadGroundSet\(groundArchive, pipeline\);/);
-  assert.match(w, /for \(const a of archives\) await loadGroundSet\(a, pipeline\);/);
+  // AUDIT PRECIP GROUND-2 (PIN MOVED): on the snow lane the set held and drawn is its twin
+  assert.match(w, /const loadGroundSet = async \(groundArchive, hold, winter = null\) => \{\n(?:\s+\/\/[^\n]*\n)*\s+const key = winter == null \? groundArchive : twinKey\(groundArchive\);\n\s+hold\.tileArray\(key\); const groundTex = await getTexture\(groundArchive\);/, 'the one home, held for the pixel');
+  assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
+  assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(a, pipeline, /);
   assert.match(w, /side: Int32Array\.of\(slot\(3\), slot\(5\), slot\(1\), slot\(7\)\),/, 'W, E, S, N of the 3x3 indexed (dz + 1) * 3 + (dx + 1)');
   assert.match(w, /corner: Int32Array\.of\(slot\(0\), slot\(2\), slot\(6\), slot\(8\)\),/, 'SW, SE, NW, NE');
   assert.match(w, /out\[\(dz \+ 1\) \* 3 \+ dx \+ 1\] = \(dx === 0 && dz === 0\) \|\| x < 0 \|\| y < 0 \|\| x >= MAP_W \|\| y >= MAP_H \? own : getWorldClimateSettings\(maps\.getClimateIndex\(x, y\)\);/, 'north is the row above: y = py - dz');
   assert.match(w, /const y = py - dz|x = px \+ dx, y = py - dz/);
   assert.match(w, /const ga = p\.ecoGround \? borderGround\(p, lx, lz\) : p\.groundArchive;/, 'the grass by the border');
   assert.match(w, /return groundMeanColour\.get\(p\.ecoGround \? borderGround\(p, lx, lz\) : p\.groundArchive\)\?\.\[rec\] \?\? null;/);
-  assert.match(w, /const i = addFlat\(archive, f\.record, f\.x, f\.y, f\.z\);/, 'a border flat its own climate\'s archive');
-  assert.match(w, /batch\.sway = floraSwayOf\(archive, natureSet, plain\.h\);/);
+  assert.match(w, /addFlat\(archive, f\.record, f\.x, f\.y, f\.z, \{ wild: base, tree \}\);/, 'a border flat its own climate\'s archive');   // PIN MOVED (AUDIT PRECIP HOST-7: logged, its place groupFlats')
+  assert.match(w, /batch\.sway = floraSwayOf\(archive, g\.natureSet, plain\.h\);/);
   assert.match(read('src/scenes/treeHost.js'), /const base = n\.flat\?\.base \?\? f\.base, archive = n\.flat\?\.archive \?\? f\.archive;/, 'a felled border tree\'s own stump');
 });

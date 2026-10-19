@@ -8,7 +8,7 @@
 //
 //   - `ui/spell/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:933)". Section A carried no widget row at all -
+//     (Port-Ledger.md:934)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -398,7 +398,7 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
   // every figure below is read out of the page and compared with the
   // list Home.md actually holds.
   const WORDS = { six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
-    thirteen: 13, fourteen: 14, seventeen: 17, eighteen: 18, nineteen: 19 };   // WARDEN1: the eighteenth
+    thirteen: 13, fourteen: 14, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20 };   // WARDEN1: the eighteenth; BANTHA1: the twentieth
   const statusText = read(STATUS);
   const prose = [
     [/(\d+) stand after Wave E/, 'the head paragraph\'s "N stand" figure'],

@@ -39,6 +39,7 @@
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (RENOWN1).
 
 import { renownBonus } from '../net/renown.js';
+import { evenHpOf } from './levelEven.js';   // LEVEL-EVEN: the floor's health, a term of the layer
 
 /** The layer's health on an entity: whole, never negative. */
 export const renownHpOf = (e) => (Number.isFinite(e?.renownHp) && e.renownHp > 0 ? Math.trunc(e.renownHp) : 0);
@@ -76,7 +77,10 @@ export function setRenownLayer(entity, level) {
   const online = Number.isSafeInteger(level) && level >= 1;
   _levels.set(entity, online ? level : null);
   const x = online ? _extras.get(entity) : null;
-  const b = x ? { hp: r.hp + x.hp, mp: r.mp + x.mp } : r;
+  // LEVEL-EVEN (systems/levelEven.js): the floor's health, at the permanent Endurance with the Firmament's in it
+  const even = online ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + (x?.end ?? 0)) : 0;
+  const b = x || even ? { hp: r.hp + (x?.hp ?? 0) + even, mp: r.mp + (x?.mp ?? 0) } : r;
+  entity.evenHp = even;   // AUDIT LEVEL-EVEN L2-3: the floor's share of the layer, for the readers that size the body (mentorMode.js)
   if (renownHpOf(entity) === b.hp && renownMpOf(entity) === b.mp) return b;
   const hpFrom = entity.maxHealth, mpFrom = entity.maxMagicka;
   entity.renownHp = b.hp;
@@ -95,14 +99,27 @@ const _levels = new WeakMap();
  * the same two fields, so the same never-saved, fraction-kept law holds for them (offlineVitals takes the whole layer
  * off). `extra` `{ hp, mp }`, whole and never negative; laid on at once where the layer is on, and kept for when it
  * goes on. Answers the layer's bonus as it now stands.
- * @param {any} entity @param {{ hp?: number, mp?: number }|null} extra
+ * @param {any} entity @param {{ hp?: number, mp?: number, end?: number }|null} extra
  */
 export function setOnlineLayerExtra(entity, extra) {
   if (!entity) return { hp: 0, mp: 0 };
   const hp = Math.max(0, Math.trunc(Number(extra?.hp) || 0)), mp = Math.max(0, Math.trunc(Number(extra?.mp) || 0));
-  if (hp || mp) _extras.set(entity, { hp, mp }); else _extras.delete(entity);
+  const end = Math.trunc(Number(extra?.end) || 0);   // LEVEL-EVEN: the stars' Endurance, which the floor reads
+  if (hp || mp || end) _extras.set(entity, { hp, mp, end }); else _extras.delete(entity);
   const level = _levels.get(entity);
   return level == null ? { hp: renownHpOf(entity), mp: renownMpOf(entity) } : setRenownLayer(entity, level);
+}
+
+/** LEVEL-EVEN: put the layer on again at the Renown it was last put on for - a level-up moved the stored maximum the
+ *  floor is read against. Nothing where the layer is off. AUDIT LEVEL-EVEN L2-1: `keepHealth` - a level-up's refresh
+ *  leaves current health as it stands (DFU's level-up never moves CurrentHealth), only bounded by the new maximum; the
+ *  layer's fraction-keeping is for the layer going on and off, and here it took a high roll's own health away. */
+export function refreshOnlineLayer(entity, { keepHealth = false } = {}) {
+  const level = entity ? _levels.get(entity) : null;
+  if (level == null) return;
+  const health = entity.health;
+  setRenownLayer(entity, level);
+  if (keepHealth && Number.isFinite(health)) entity.health = Math.min(health, entity.maxHealth);
 }
 
 /**

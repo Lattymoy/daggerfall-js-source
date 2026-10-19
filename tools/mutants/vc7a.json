@@ -38,9 +38,9 @@
  {"name": "VC7a-grows-without-depth", "file": "src/render/volumetricClouds.js",
   "old": "top: cell.base + (cell.top - cell.base) * at(GROWTH_FLOOR.depth), density", "new": "top: cell.top, density", "tests": ["test/render/vc7a_living.test.js"]},
  {"name": "VC7a-host-drops-envelope", "file": "src/render/volumetricClouds.js",
-  "old": "  const cell = grownCell(cellOf(c.word, x, z, c.r), c.env);", "new": "  const cell = cellOf(c.word, x, z, c.r);", "tests": ["test/render/vc7a_living.test.js"]},
+  "old": "  const cell = grownCell(own, c.env);", "new": "  const cell = own;", "tests": ["test/render/vc7a_living.test.js"]},
  {"name": "VC7a-map-drops-envelope", "file": "src/systems/weather/weatherMap.js",
-  "old": ", env: s.env ?? 1 });", "new": " });", "tests": ["test/render/vc7a_living.test.js"]},
+  "old": ", env: s.env ?? 1 };", "new": " };", "tests": ["test/render/vc7a_living.test.js"]},
  {"name": "VC7a-lab-no-step", "file": "src/tools/skyLab.js",
   "old": " + (Number(params.get('t')) || 0);", "new": ";", "tests": ["test/render/vc7a_living.test.js"]}
 ]

@@ -33,6 +33,7 @@
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
 import { WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';
+import { snowCoreGlsl } from './snowCoverGlsl.js';   // AUDIT PRECIP GROUND-5: the ground's snow, for a puddle's mask under it
 import { PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the records whose water is their art's   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind/wind.js';
 import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
@@ -362,6 +363,8 @@ in float vDepth;
 in float vGrow;
 uniform sampler2DArray uTileArr;
 uniform usampler2D uTilemap;
+uniform highp ivec3 uEcoOrigin;   // AUDIT PRECIP GROUND-5: the pixel's first world tile on the snow lane (render/snowCoverGlsl.js)
+${snowCoreGlsl()}
 uniform float uTileSize;
 uniform int uTileDim;          // WATER-AUDIT: the tilemap's side (128 in the world, the town's own in the fixed city)
 uniform uvec4 uWaterMask[8];   // WATER1: 256 nibbles - converted tile byte -> water corners
@@ -486,7 +489,12 @@ void main() {
     if (isPuddleRecord(rec)) {
       int turn = int(data & 3u);
       vec2 puv = PUDDLE_ROT[turn] * f + PUDDLE_TRANS[turn];
-      edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);
+      float pa = textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a;
+      // AUDIT PRECIP GROUND-5: under the snow the water is the texel's the ground wears there - its winter record's mask
+      // in the cover's share (a puddle frozen under snow is the winter art's, a thaw's the summer's)
+      float pc = snowCover(vLocalXZ, vWorldPos.y, vec3(0.0, 1.0, 0.0), wgx, wgy);
+      if (pc > 0.0) pa = mix(pa, textureGrad(uTileArr, vec3(puv, float(rec) + float(uSnowArr.x)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a, pc);
+      edge *= smoothstep(0.3, 0.7, pa);
     }
     if (edge <= 0.002) discard;
     // the water's own colour: the climate's water texel (record 0), averaged to one colour by its mip chain
@@ -594,7 +602,7 @@ void main() {
   // the fogs over the water's own light at its share - the air's, then DW-C's sea fog - as a premultiplied colour takes
   // them (an affine fog of x is x * m + c; at a share s, x * m + c * s): the copy's share is left as it was drawn
   vec3 ownShare = uSceneOn == 1 ? vec3(1.0) - trans : vec3(cover);
-  float fw = fogFactorAt(vWorldPos);
+  float fw = weatherFogAt(vWorldPos);   // BANTHA1: the weather's half - the sea's haze below is its law; the jungle's haze multiplies after
   // FAR-SEA1: THE SEA REACHES THE HORIZON. On a frame the far ring is drawn (the host sets uSeaHaze), the water at the
   // sea's own level takes the ring's haze - the world's linear ramp capped at the hold - so it no longer closes into a
   // band of solid fog in front of the ring's sea: the two meet at one haze at the streamed grid's edge. Nearer than the
@@ -606,6 +614,7 @@ void main() {
     float seaW = 1.0 - smoothstep(${(SEA_HAZE_BAND * 0.5).toFixed(2)}, ${SEA_HAZE_BAND.toFixed(2)}, abs(vWorldPos.y - uSeaHaze.y));
     fw = mix(fw, max(fw, 1.0 - uSeaHaze.x), seaW);
   }
+  fw *= hazeAt(vWorldPos, focusOrigin());   // BANTHA1: the jungle's haze closes over the sea's floor too - no sea shows through it
   vec3 fogged = own * fw + uFogColor * (1.0 - fw) * ownShare;
   fogged = dwWaterFogAdd(fogged, vWorldPos) + dwWaterFog(vec3(0.0), vWorldPos) * ownShare;
   outColor = uSceneOn == 1 ? vec4(under * trans + fogged, edge) : vec4(fogged / max(cover, 1e-3), edge * cover);

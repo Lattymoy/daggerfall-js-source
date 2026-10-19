@@ -923,6 +923,23 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'realForests', initial: true, online: true }),
   }),
+  // BANTHA1 (2026-10-18, the owner: "Bantha, north of daggerfall is going to be the first region in the continent to
+  // recieve a biome expansion"): THE JUNGLE - since BANTHA2 (2026-10-19, the owner: "The area is red in bantha and should be
+  // the jungle biome") the area the owner painted on Hammerfell's shore of the Bay (world/jungle/banthaArea.js; BANTHA1
+  // stood it on Glenpoint), grown over with the owner's jungle trees in storeys,
+  // under its own humid haze (bible/03-World/Bantha-Jungle.md). FORCED ON ONLINE: its trees are where Logging's trees
+  // stand there (scenes/treeHost.js standTrees), so a room has one jungle. `?jungle=off` the kill door; scenes/shared.js
+  // jungleOn composes it.
+  Object.freeze({
+    id: 'bantha-jungle',
+    group: 'world',
+    get title() { return t('features.banthaJungle.title', 'Jungle of Bantha'); },
+    get note() { return t('features.banthaJungle.note', 'Bantha, from Lainlyn to Mournoth, grows into dense jungle - giant trees overhead, palms, and ferns and '
+      + 'broad leaves underfoot - under a humid haze, thickest at dawn and in rain. Off, it keeps its original woods.'); },
+    get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'banthaJungle', initial: true, online: true }),
+  }),
   // LANDFORM1-3 (2026-10-06, Mac: "Can we adjust the heightmap to be more of this? and allow roads to carve through
   // terrian and caverns without breaking anything and rivers to actually have depth"): LANDFORMS - the small heightmap
   // stands taller, roads are graded into the land, rivers lie in channels (world/landforms.js, inside the terrain's

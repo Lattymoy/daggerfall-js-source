@@ -290,7 +290,7 @@ test('AUDIT TACT D8: the mark lies on the ground it marks - fitted to a ramp und
 
 test('AUDIT TACT D9: the mark is fogged as the ground is - the renderer hands the pass its fog', () => {
   // PIN MOVED (SNOW-TELL, bible/01-Overview/bugs/Field-Bugs-2026-10-11d.md): the frame's snow height handed beside the fog
-  assert.match(rd('src/render/renderer.js'), /this\._foeTelegraph\.draw\(list, this\._proj, this\._view, \{ mode: this\._fogMode, density: this\._fogDensity, range: this\._fogRange, camPos: this\._camPos, focus: this\._focus \}, \{ snowRise: this\._snowRise \}\)/);
+  assert.match(rd('src/render/renderer.js'), /this\._foeTelegraph\.draw\(list, this\._proj, this\._view, \{ mode: this\._fogMode, density: this\._fogDensity, range: this\._fogRange, camPos: this\._camPos, focus: this\._focus, haze: this\._haze \}, \{ snowRise: this\._snowRise \}\)/);   // AUDIT BANTHA1 HAZE-3: and the jungle's haze
   // PIN MOVED (TELL2, bible/12-Enhanced-AI/Feud-Arc.md 4.4): the fog's factor goes into the boss's line as `fogK`, floored
   // for a mark near the player
   assert.match(rd('src/render/foeTelegraph.js'), /float fogK = max\(fogFactorAt\(vWorld\), uNearFloor\);\n\s*oColor = telegraphStyle\([^;]*fogK\);/);
@@ -329,7 +329,7 @@ test('AUDIT TACT B2: no one-way hiding place - a tree is a trunk and a crown, an
   // ECOTONE1: PIN MOVED - any of the pixel's nature archives (a climate border stands its neighbour's too), its Trees
   // named by that archive's SUMMER set: the season's own number names none in winter, so a winter wood's trees were cover
   // as flats until then
-  assert.match(hostText('src/scenes/world.js'), /coverProxies\(c, size, \{ tree: natureSet\.has\(archive\) && isTreeRecord\(natureBase\(archive\), record\) \}\)/);
+  assert.match(hostText('src/scenes/world.js'), /coverProxies\(c, size, \{ tree: g\.natureSet\.has\(archive\) && isTreeRecord\(g\.natureBase\(archive\), record\) \}\)/);
   assert.match(hostText('src/scenes/world.js'), /const natureBase = \(a\) => \(a === natureArchive \? climate\.natureArchive : borderNature\.get\(a\)\);/);
 });
 

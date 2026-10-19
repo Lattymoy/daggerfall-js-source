@@ -51,7 +51,7 @@
  {
   "name": "the-level-row-moves-under-the-player",
   "file": "src/ui/levelUp/levelNotice.js",
-  "old": "    return out.sort((a, b) => (Number(a.kind === NOTICE_LEVEL) - Number(b.kind === NOTICE_LEVEL)) || (b.seq - a.seq));",
+  "old": "    return out.sort((a, b) => (rank(a) - rank(b)) || (b.seq - a.seq));",
   "new": "    return out.sort((a, b) => b.seq - a.seq);",
   "tests": [
    "test/ui/levelNotice.test.js"
@@ -99,8 +99,8 @@
  {
   "name": "the-hidden-HUD-keeps-its-strip",
   "file": "src/ui/levelUp/levelNotice.js",
-  "old": "  const rows = hidden ? [] : levelNotices.frame(now, { owed });",
-  "new": "  const rows = levelNotices.frame(now, { owed });",
+  "old": "  const rows = hidden ? [] : levelNotices.frame(now, { owed, improvable: improvable ?? skillsImprovable() });",
+  "new": "  const rows = levelNotices.frame(now, { owed, improvable: improvable ?? skillsImprovable() });",
   "tests": [
    "test/ui/levelNotice.test.js"
   ],
@@ -249,8 +249,8 @@
  {
   "name": "the-pool-is-re-rolled-on-every-open-again",
   "file": "src/systems/advancement.js",
-  "old": "  if (entity.pendingBonusPool == null) {\n    entity.pendingBonusPool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  }\n  return entity.pendingBonusPool;",
-  "new": "  entity.pendingBonusPool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  return entity.pendingBonusPool;",
+  "old": "  if (entity.pendingBonusPool == null) {\n    // LEVEL-EVEN (systems/levelEven.js): online the pool is BonusPool's mean, drawn from no stream\n    entity.pendingBonusPool = online ? ONLINE_BONUS_POOL : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  }\n  return entity.pendingBonusPool;",
+  "new": "  entity.pendingBonusPool = online ? ONLINE_BONUS_POOL : LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));\n  return entity.pendingBonusPool;",
   "tests": [
    "test/ui/levelNotice.test.js"
   ],

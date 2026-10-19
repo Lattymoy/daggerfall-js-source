@@ -263,7 +263,7 @@
   {
     "name": "DISC20-D-the-strike-point-s-ground-unread",
     "file": "src/systems/distantStorms.js",
-    "old": "          if (ground && ground('thunder', px, pz, minutes) !== 'thunder') continue;\n",
+    "old": "          if (ground && !strikesAt(ground, px, pz, minutes)) continue;\n",
     "new": "",
     "tests": [
       "test/systems/disc20.test.js"

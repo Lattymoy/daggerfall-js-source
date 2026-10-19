@@ -540,7 +540,8 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // PIN MOVED (HELM-JUMP, FIELD BUGS 2026-10-11), 7300 -> 7800: a jump lets go of Come Sail Away's helm first, with its note
   // PIN MOVED (AUDIT CAPTAIN'S SEA G2/P7, at the merge of main), 7800 -> 8100: a pixel this game does not stream is landed
   // where the world stands (`_streamedLanding`) beside the resets, with its note - three lines above the needles
-  const core = WORLD.slice(t, t + 8100);
+  // PIN MOVED (AUDIT PRECIP HOST-2), 8100 -> 8300: the snow's clock takes the arrival's minute beside the season's, one statement
+  const core = WORLD.slice(t, t + 8300);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

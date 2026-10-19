@@ -387,6 +387,7 @@ function host({ online = null, removeSiteFoes = () => {} } = {}) {
     _dwRubble: new Map(), _dwRubbleCarry: new Map(), _dwGuards: new Map(), dwFreeRubble: () => {},   // DW-E5 / AUDIT DW-F: the sunken loot's rubble and the wrecks' guards leave with a pixel - none in this rig
     oceanHoles: null,   // OH-B: and its pit to There's a Hole in the Bottom of the Ocean's host - none in this rig
     gatherHost: null,   // PROF1/PROF2: destroyPixel tells the gathering host its pixel's nodes went - none in this rig
+    trees: { released: () => {} },   // LPT1 / BANTHA1: and the trees' host its far pictures' handles - none in this rig
     seatEdicts: { bountyAt: () => false },   // SEAT1d: a Bounty's camp yields double - none in this rig
   };
   const names = Object.keys(env);

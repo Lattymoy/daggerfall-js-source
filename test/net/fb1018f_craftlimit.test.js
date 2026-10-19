@@ -151,7 +151,7 @@ test('CRAFT-LIMIT-SAID THE REPORT, end to end: Smithing 50 one XP short of 51 be
     page.press('The Anvil', 'Silver', true);
     const [head, lines] = page.box('The Anvil');
     assert.equal(head, 'Silver Dagger - rank 25');
-    assert.equal(lines[0], 'Your rank 50, margin 25: Standard 20 | Fine 50 | Superior 28 | Masterwork 2. A clean heat is a step better.', 'the screenshot\'s odds line');
+    assert.equal(lines[0], 'Quality chances: Standard 20% | Fine 50% | Superior 28% | Masterwork 2%. They get better the further your rank (50) is above the recipe\'s (25). Land every strike while the glow is in the band to raise the result one quality.', 'the screenshot\'s odds line');   // PIN MOVED (PLAIN-ODDS): the odds said in plain words
     assert.equal(lines[1], LIMIT(0, 'Smithing', 'Building and Provisioning'), 'where the screenshot read "60 Smithing XP, and 500 more the first time you make this piece at this tier."');
     // the Worker: the craft made, its XP none - the first's 500 eaten by the cap as well
     const r = await book.craft('dagger:silver', { clean: false, name: 'Mac' }, (data) => mintPieces(data));

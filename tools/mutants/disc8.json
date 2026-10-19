@@ -110,7 +110,7 @@
   {
     "name": "DISC9-world-never-writes-the-ear",
     "file": "src/scenes/world.js",
-    "old": "    setHeardWeather(ambientWord, enhancedFront ? fx.intensity : 1);   // DISC9",
+    "old": "    setHeardWeather(ambientWord, enhancedFront ? fx.rain ?? fx.intensity : 1, enhancedFront ? fx : null);   // DISC9/DISC11: what the street hears - word AND level - is what every indoor ear hears through the walls; AUDIT PRECIP FALL-4: the drops' level, and the whole fall at its share for the skin",
     "new": "    // DISC9",
     "tests": [
       "test/systems/disc8.test.js"

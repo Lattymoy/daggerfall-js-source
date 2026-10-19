@@ -369,7 +369,11 @@ test('GROUND1 door: `<archive>-TexArray` is that ground archive\'s tile set - wh
   assert.equal(await dfmodGroundLayers(302, tex(3)), null, 'the gate shut: classic');
   setValue('Enhancements', 'AssetInjection', 'True');
   clearDfmodSources();
-  for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
+  // AUDIT PRECIP GROUND-2 (PIN MOVED): world.js reads a set's layers through one helper, for its own set and the winter
+  // its twin carries (scenes/snowCoverHost.js twinLayers) - the mod's tiles first, the classic set's puddles carried
+  assert.match(src('scenes/world.js'), /const groundLayersOf = async \(archive, tex\) => \{\n\s+const modLayers = await dfmodGroundLayers\(archive, tex\), classic = \[\];\n[^\n]*\n\s+return \{ modLayers, layers: modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : markPuddleWater\(classic\) \};/);
+  assert.match(src('scenes/world.js'), /renderer\.uploadTileArray\(key, winter == null \? own\.layers : twinLayers\(own\.layers, \(await groundLayersOf\(winter, await getTexture\(winter\)\)\)\.layers\)\);/);
+  for (const host of ['scenes/exterior.js']) {
     assert.match(src(host), /const modLayers = await dfmodGroundLayers\(groundArchive, groundTex\);[\s\S]{0,400}?const layers = modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : classic;\n\s+renderer\.uploadTileArray\(groundArchive, modLayers \? layers : markPuddleWater\(layers\)\);/, host);   // GROUND1-W: and the puddles' shapes from the classic set
   }
 });

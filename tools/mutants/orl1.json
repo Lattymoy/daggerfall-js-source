@@ -280,8 +280,8 @@
   {
     "name": "commit-jumps-the-level",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.level += 1;\n  rollOverLevelProgress(entity);",
-    "new": "  entity.level += 2;\n  rollOverLevelProgress(entity);",
+    "old": "  entity.level += 1;\n  refreshOnlineLayer(entity, { keepHealth: true });",
+    "new": "  entity.level += 2;\n  refreshOnlineLayer(entity, { keepHealth: true });",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]

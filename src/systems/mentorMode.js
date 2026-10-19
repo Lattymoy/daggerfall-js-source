@@ -100,7 +100,9 @@ export function mentorProfile(entity, partnerLevels) {
     statCut[k] = excess > 0 ? Math.min(ex, Math.round((pool * ex) / excess)) : 0;
   }
   // health, off this character's own average
-  const rawMax = entity.rawMaxHealth ?? entity.maxHealth ?? 0;
+  // AUDIT LEVEL-EVEN L2-3: the stored body with the online floor's share on it (renownLayer.js `evenHp`) - the body the
+  // blows land on; the stored value alone made an unlucky roller tougher mentored than an average one
+  const rawMax = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) + (Number.isFinite(entity.evenHp) && entity.evenHp > 0 ? entity.evenHp : 0);
   const perLevel = r > 1 ? Math.max(1, (rawMax - MENTOR_HP_BASE) / (r - 1)) : 0;
   const mentoredMax = Math.max(1, rawMax - perLevel * (r - t));
   const damageTakenMult = rawMax > 0 ? Math.min(MENTOR_MAX_DAMAGE_MULT, Math.max(1, rawMax / mentoredMax)) : 1;

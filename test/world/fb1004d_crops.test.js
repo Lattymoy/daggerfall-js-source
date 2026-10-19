@@ -218,7 +218,7 @@ test('CROPS the plant: the second desert sows its own record (20) where the firs
 // ---- the hosts ----------------------------------------------------------------------------------------------------------
 test('CROPS by source: the streamed world and the one-location exterior hand a field\'s batch the climate and the block\'s solids - the models each drew and collided; the interior and dungeon hosts sow no field', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const blockFlats = collectBlockFlats\(b\.dfBlock, natureArchive, \{ climateIndex: maps\.getClimateIndex\(px, py\), solid: blockSolids\(b\.layout\.models, \(m\) => \(m\.enhancedOnly && !isEnhanced\(\) \? null : cpuModels\.get\(m\.modelIdNum\)\)\) \}\);/);
+  assert.match(w, /const flatOpts = \{ climateIndex: maps\.getClimateIndex\(px, py\), solid: blockSolids\(b\.layout\.models, \(m\) => \(m\.enhancedOnly && !isEnhanced\(\) \? null : cpuModels\.get\(m\.modelIdNum\)\)\) \};\n\s+const blockFlats = collectBlockFlats\(b\.dfBlock, natureArchive, flatOpts\);/);   // PIN MOVED (AUDIT PRECIP HOST-7): the options kept, the block read again in a season
   const e = src('src/scenes/exterior.js');
   assert.match(e, /const fieldSolids = blockSolids\(b\.layout\.models, \(m\) => \(m\.enhancedOnly && !isEnhanced\(\)\) \|\| !gpuMeshes\.get\(m\.modelIdNum\) \? null : cpuModels\.get\(m\.modelIdNum\)\);/);
   assert.match(e, /const blockFlats = collectBlockFlats\(b\.dfBlock, natureArchive, \{ climateIndex: locClimateIndex, solid: fieldSolids \}\)/);

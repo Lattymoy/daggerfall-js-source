@@ -111,8 +111,8 @@
   },
   {
     "name": "DECORLPT-world-unwired",
-    "file": "src/scenes/world.js",
-    "old": "    for (const set of yards?.treeSets() ?? []) _lptSets.push(set);   // DECOR-LPT: the yards' placed trees, where their yards stand now\n",
+    "file": "src/scenes/treesHost.js",
+    "old": "      for (const set of yards()?.treeSets() ?? []) lptSets.push(set);   // DECOR-LPT: the yards' placed trees, where their yards stand now\n",
     "new": "",
     "tests": [
       "test/scenes/decorlpt.test.js"

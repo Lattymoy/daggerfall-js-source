@@ -76,8 +76,8 @@
  {
   "name": "GRAIN1-the-water-pass-keeps-the-wrapped-footprint-so-the-scroll-rollover-draws-a-line",
   "file": "src/render/waterSurface.js",
-  "old": "      edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);",
-  "new": "      edge *= smoothstep(0.3, 0.7, texture(uTileArr, vec3(puv, float(rec))).a);",
+  "old": "float pa = textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a;",
+  "new": "float pa = texture(uTileArr, vec3(puv, float(rec))).a;",
   "tests": [
    "test/render/grain1_terrainmip.test.js",
    "test/world/terrain/water.test.js"

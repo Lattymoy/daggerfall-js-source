@@ -141,7 +141,7 @@
   {
     "name": "DECOROUTDOOR-rebuild-unheard",
     "file": "src/scenes/homeYards.js",
-    "old": "        const rebuilt = y.entry !== p;",
+    "old": "        const rebuilt = y.entry !== p || y.skin !== (p._skinGen ?? 0);",
     "new": "        const rebuilt = false;",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"

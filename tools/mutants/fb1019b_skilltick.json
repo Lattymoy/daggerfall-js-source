@@ -1,0 +1,112 @@
+[
+  {
+    "name": "SKILL-TICK-reflexes-dropped",
+    "file": "src/systems/advancement.js",
+    "old": "  const have = (tally * reflexesMod) >> 16;\n",
+    "new": "  const have = tally;\n",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "the line counts raw uses where the pass counts them scaled"
+  },
+  {
+    "name": "SKILL-TICK-level-one-price",
+    "file": "src/systems/advancement.js",
+    "old": "entity.career?.advancementMultiplier ?? 1, entity.level ?? 1);",
+    "new": "entity.career?.advancementMultiplier ?? 1, 1);",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "the requirement at level 1 - a level-7 player told a skill is closer than it is"
+  },
+  {
+    "name": "SKILL-TICK-ready-early",
+    "file": "src/systems/advancement.js",
+    "old": "  return { have, need: needed, ready: !held && have >= needed, held, wait };",
+    "new": "  return { have, need: needed, ready: !held && have + 1 >= needed, held, wait };",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "the strip says ready one use short - the rest raises nothing"
+  },
+  {
+    "name": "SKILL-TICK-lock-forgotten",
+    "file": "src/systems/advancement.js",
+    "old": "value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i) ? 'lock' : null;",
+    "new": "false ? 'lock' : null;",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "a skill held at 95 reads ready, and its uses go at the rest"
+  },
+  {
+    "name": "SKILL-TICK-cap-forgotten",
+    "file": "src/systems/advancement.js",
+    "old": "  const held = value >= 100 ? (masteryRefusal(entity, i) == null ? 'master' : 'cap')",
+    "new": "  const held = false ? 'cap'",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "an unmastered 100 reads ready forever"
+  },
+  {
+    "name": "SKILL-TICK-bank-forgotten",
+    "file": "src/systems/advancement.js",
+    "old": "ready: banked + uses / cost >= 1, held: null, wait };",
+    "new": "ready: uses / cost >= 1, held: null, wait };",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "past 100 the banked part of a point read as nothing"
+  },
+  {
+    "name": "SKILL-TICK-held-words-swapped",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (p.held === 'cap') return t('pause.skills.tickCap',",
+    "new": "  if (p.held === 'lock') return t('pause.skills.tickCap',",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "the lock said as the cap"
+  },
+  {
+    "name": "SKILL-TICK-strip-line-never",
+    "file": "src/ui/levelUp/levelNotice.js",
+    "old": "    if (improvable > 0) out.push(",
+    "new": "    if (improvable > 99) out.push(",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "the thread's 'your skills can be improved' never shows"
+  },
+  {
+    "name": "SKILL-TICK-strip-ranked-under",
+    "file": "src/ui/levelUp/levelNotice.js",
+    "old": "r.kind === NOTICE_IMPROVE ? 1 : 0);",
+    "new": "r.kind === NOTICE_IMPROVE ? 3 : 0);",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "the standing skills line moves under the level's - the row a player looks for, moved"
+  },
+  {
+    "name": "SKILL-TICK-tutorial-unsaid",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "          ? t('tutorials.characterSheet.skillRaiseStats',",
+    "new": "          ? false && t('tutorials.characterSheet.skillRaiseStats',",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "the page never says when a skill goes up"
+  },
+  {
+    "name": "SKILL-TICK-model-dropped",
+    "file": "src/ui/enhanced/enhancedCharSheet.js",
+    "old": "    progress: (id, now = null) => skillAdvanceProgress(e, id, { now }),",
+    "new": "    progress: undefined,",
+    "tests": [
+      "test/systems/fb1019b_skilltick.test.js"
+    ],
+    "why": "the page has no reading to draw"
+  }
+]

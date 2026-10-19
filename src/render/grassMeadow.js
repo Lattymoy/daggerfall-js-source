@@ -139,7 +139,7 @@ export function meadowSpriteMean(sprite) {
 export const MEADOW_GREEN = Object.freeze(meadowSpriteMean(MEADOW_SPRITES[0]));
 /** the ground the art is drawn FOR, given the tone (render/labGrass.js GRASS_TONES[1], or the classic lane's) its
  *  green should stand at over that ground */
-export const meadowArtGround = (tone) => MEADOW_GREEN.map((v, i) => v / tone[i]);
+export const meadowArtGround = (tone, green = MEADOW_GREEN) => green.map((v, i) => v / tone[i]);   // BANTHA2: a set's own anchor (the jungle floor's is this tuft's too)
 /** and the ratio is held to this span, so a tile far off grass's mean (a shore, a mod's odd record) tints the art
  *  and never repaints it */
 export const MEADOW_SHIFT = Object.freeze([0.5, 1.6]);
@@ -150,11 +150,12 @@ export const MEADOW_SHIFT = Object.freeze([0.5, 1.6]);
  *  the bush, greyer, takes three quarters. */
 export const MEADOW_GREEN_EDGE = 12;
 /** the JS twin of the fragment's colour (before the light): a texel `art` (0..1) over a ground of mean `ground`, the
- *  art drawn for `artGround` */
-export function meadowTexel(art, ground, artGround) {
+ *  art drawn for `artGround`; `hue` the share of the ground's hue its set's green texels take (uArtHue - BANTHA2: the
+ *  meadow's 1, the jungle floor's 0, its own greens under the ground's light) */
+export function meadowTexel(art, ground, artGround, hue = 1) {
   const s = ground.map((g, i) => Math.min(MEADOW_SHIFT[1], Math.max(MEADOW_SHIFT[0], g / artGround[i])));
   const lum = s[0] * 0.299 + s[1] * 0.587 + s[2] * 0.114;
-  const k = Math.min(1, Math.max(0, (art[1] - Math.max(art[0], art[2])) * MEADOW_GREEN_EDGE));
+  const k = Math.min(1, Math.max(0, (art[1] - Math.max(art[0], art[2])) * MEADOW_GREEN_EDGE)) * hue;
   return art.map((a, i) => a * (lum + (s[i] - lum) * k));
 }
 
@@ -187,11 +188,13 @@ export function meadowPick(r, tint) {
  * into it), so no fragment is shaded where the sprite has no texel: a whole card was 52 to 85 per cent air. The cut
  * loses nothing - the uv stays the corner's own place on the card, so every texel lands where it did - and a mirrored
  * card is the card turned about its root, not its texture flipped, so an off-centre box holds both ways.
- * @param {{ width: number, height: number, rows: readonly string[] }} sprite
+ * @param {{ width: number, height: number, rows?: readonly string[], rgba?: Uint8Array }} sprite its rows, or (BANTHA2,
+ *   a picture's - fitSprite) its RGBA, top row first, alpha 0 or 255
  */
 export function meadowSpriteBox(sprite) {
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-  sprite.rows.forEach((row, y) => {
+  const rows = sprite.rows ?? Array.from({ length: sprite.height }, (_, y) => Array.from({ length: sprite.width }, (__, x) => (sprite.rgba[(y * sprite.width + x) * 4 + 3] ? '#' : '.')).join(''));
+  rows.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
       if (row[x] === '.') continue;
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
@@ -221,17 +224,28 @@ export const LAB_GUST_MAX = 0.55 + 0.75;
  *  top sideways, over its side */
 const LEAN_MAX = Math.hypot(0.25, 0.25);
 
-/** THE BOX A CELL IS CULLED BY must hold its cards, which stand taller and reach wider than any blade - over the
- *  blade's height, the most a card's top stands (its scale, the lush patch's, the share of its side its sprite fills) */
-export const MEADOW_TOP = Math.max(...MEADOW_VARIANTS.map((v, i) => v.scale * MEADOW_PATCH_SCALE[1] * MEADOW_BOXES[i].v1));
-/** ...the most a card reaches sideways from its root, standing: the wider half of its box plus its own lean at its top */
-export const MEADOW_REACH = Math.max(...MEADOW_VARIANTS.map((v, i) => {
-  const b = MEADOW_BOXES[i];
-  return v.scale * MEADOW_PATCH_SCALE[1] * (Math.max(0.5 - b.u0, b.u1 - 0.5) + LEAN_MAX * v.stiff * b.v1 * b.v1);
-}));
-/** ...and how much further a metre a second of wind carries it, at a full gust - the frame's wind is the host's, so
- *  the reach is too (LabGrassRenderer._drawVisibleSlots): a gale leans the field further than any standing lean */
-export const MEADOW_WIND_REACH = Math.max(...MEADOW_VARIANTS.map((v, i) => v.scale * MEADOW_PATCH_SCALE[1] * LAB_LEAN_PER_PUSH * LAB_GUST_MAX * v.sway * MEADOW_BOXES[i].v1 ** 2));
+/**
+ * THE BOX A CELL IS CULLED BY must hold its cards, which stand taller and reach wider than any blade - over the blade's
+ * height, for a set of `variants` and their sprites' `boxes` (BANTHA2: the meadow's, or the jungle floor's): `top` the
+ * most a card's top stands (its scale, the lush patch's, the share of its side its sprite fills); `reach` the most a
+ * card reaches sideways from its root, standing (the wider half of its box plus its own lean at its top); `windReach`
+ * how much further a metre a second of wind carries it, at a full gust - the frame's wind is the host's, so the reach
+ * is too (LabGrassRenderer._drawVisibleSlots): a gale leans the field further than any standing lean.
+ */
+export function cardMeasures(variants, boxes) {
+  const top = Math.max(...variants.map((v, i) => v.scale * MEADOW_PATCH_SCALE[1] * boxes[i].v1));
+  const reach = Math.max(...variants.map((v, i) => {
+    const b = boxes[i];
+    return v.scale * MEADOW_PATCH_SCALE[1] * (Math.max(0.5 - b.u0, b.u1 - 0.5) + LEAN_MAX * v.stiff * b.v1 * b.v1);
+  }));
+  const windReach = Math.max(...variants.map((v, i) => v.scale * MEADOW_PATCH_SCALE[1] * LAB_LEAN_PER_PUSH * LAB_GUST_MAX * v.sway * boxes[i].v1 ** 2));
+  return { top, reach, windReach };
+}
+const _meadowMeasures = cardMeasures(MEADOW_VARIANTS, MEADOW_BOXES);
+/** the meadow's (cardMeasures) */
+export const MEADOW_TOP = _meadowMeasures.top;
+export const MEADOW_REACH = _meadowMeasures.reach;
+export const MEADOW_WIND_REACH = _meadowMeasures.windReach;
 
 /** AUDIT MEADOW1: the slots a card's corners take in its array - four, and two no index names. The cards are drawn
  *  INDEXED, so a corner two triangles share is shaded once; and both of a card's triangles end on slot 2, the corner
@@ -264,7 +278,8 @@ export function meadowCardIndices(cards = MEADOW_CARDS) {
  * THE ATLAS: MEADOW_SLOTS cells of MEADOW_CELL square, row 0 the BASE (the sprites are stored top row first, so each
  * is turned the right way up here - the pixel sheet's convention, which vUV.y = 0 at a card's foot reads), every
  * sprite laid at `cell / its size` texels a pixel, nearest - never filtered. RGB is the sprite's colour and alpha 0
- * or 255, never between.
+ * or 255, never between. BANTHA2: a sprite is its palette and rows (meadowArt.js) or a picture's RGBA (fitSprite).
+ * @param {{ sprites?: readonly ({ name: string, width: number, height: number, palette?: readonly string[], rows?: readonly string[], rgba?: Uint8Array })[], cell?: number, slots?: number }} [o]
  */
 export function buildMeadowAtlas({ sprites = MEADOW_SPRITES, cell = MEADOW_CELL, slots = MEADOW_SLOTS } = {}) {
   if (sprites.length > slots) throw new Error(`${sprites.length} sprites in an atlas of ${slots}`);
@@ -273,6 +288,17 @@ export function buildMeadowAtlas({ sprites = MEADOW_SPRITES, cell = MEADOW_CELL,
   sprites.forEach((s, v) => {
     if (s.width !== s.height || cell % s.width) throw new Error(`${s.name}: a ${s.width}x${s.height} sprite does not tile a ${cell} cell`);
     const k = cell / s.width;
+    if (s.rgba) {   // BANTHA2: a picture's (fitSprite), top row first - laid as the rows are
+      for (let y = 0; y < cell; y++) {
+        for (let x = 0; x < cell; x++) {
+          const i = ((s.height - 1 - Math.floor(y / k)) * s.width + Math.floor(x / k)) * 4;
+          if (!s.rgba[i + 3]) continue;
+          const o = (y * width + v * cell + x) * 4;
+          data[o] = s.rgba[i]; data[o + 1] = s.rgba[i + 1]; data[o + 2] = s.rgba[i + 2]; data[o + 3] = 255;
+        }
+      }
+      return;
+    }
     const rgb = s.palette.map((hex) => [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)));
     for (let y = 0; y < cell; y++) {
       const row = s.rows[s.height - 1 - Math.floor(y / k)];   // row 0 of the cell is the sprite's bottom row
@@ -286,6 +312,30 @@ export function buildMeadowAtlas({ sprites = MEADOW_SPRITES, cell = MEADOW_CELL,
     }
   });
   return { width, height, data, variants: sprites.length, slots, cell };
+}
+
+/**
+ * BANTHA2: A PICTURE AS A SPRITE - `picture` ({ width, height, data }: RGBA, top row first, any size; a TEXTURE record's)
+ * laid in a `cell` square at whole texels a pixel where it fits (else shrunk, nearest), centred across with its foot on
+ * the square's bottom, as the meadow's are drawn; alpha 0 or 255 (a pack's soft alpha cut at a half). Answers
+ * { name, width, height, rgba }.
+ * @param {{ width: number, height: number, data: Uint8Array | Uint8ClampedArray }} picture @param {string} name
+ */
+export function fitSprite(picture, name, cell = MEADOW_CELL) {
+  const { width: w, height: h, data } = picture;
+  const fit = Math.min(cell / w, cell / h), k = fit >= 1 ? Math.floor(fit) : fit;   // whole texels a pixel, or shrunk to fit
+  const fw = Math.max(1, Math.round(w * k)), fh = Math.max(1, Math.round(h * k)), x0 = Math.floor((cell - fw) / 2), y0 = cell - fh;
+  const rgba = new Uint8Array(cell * cell * 4);
+  for (let y = 0; y < fh; y++) {
+    const sy = Math.min(h - 1, Math.floor((y + 0.5) / k));   // nearest, at the texel's centre - a shrunk picture keeps its last row
+    for (let x = 0; x < fw; x++) {
+      const sx = Math.min(w - 1, Math.floor((x + 0.5) / k)), i = (sy * w + sx) * 4;
+      if (data[i + 3] < 128) continue;   // a pack's soft edge cut at a half, as the meadow's alpha test is
+      const o = ((y0 + y) * cell + x0 + x) * 4;
+      rgba[o] = data[i]; rgba[o + 1] = data[i + 1]; rgba[o + 2] = data[i + 2]; rgba[o + 3] = 255;
+    }
+  }
+  return { name, width: cell, height: cell, rgba };
 }
 
 /** each slot's covered share of its own cell, at a level */

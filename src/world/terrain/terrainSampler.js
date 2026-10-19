@@ -49,7 +49,7 @@ export const BASE_HEIGHT_SCALE = 8;
 /** LANDFORM2: exported - the landforms grade a road to the kernel's own macro height, and a second literal of this 4
  *  is how the two would part (Home.md, ONE DFU MEMBER, ONE EXPORT). */
 export const NOISE_MAP_SCALE = 4;
-const EXTRA_NOISE_SCALE = 10;
+export const EXTRA_NOISE_SCALE = 10;
 // WATER-AUDIT (2026-09-08): THE REFERENCE'S FLOATS. `3.4f * baseHeightScale`
 // is 27.200000762939453 in C#, not the double 27.2 - and the tile job's
 // ocean compare is float32's (terrainTiles.js generateTileData), so the
@@ -140,6 +140,21 @@ export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMEN
 }
 
 /**
+ * The kernel's two windows for one map pixel - the small heightmap's 4 x 4 (`shmAt(r, c)`: r east, c the map's rows from
+ * the pixel's two north-west) and the large heightmap's 9 x 9 (`lhmAt(r, c)`) - read once. kernelTerms interpolates them;
+ * world/landforms.js groundTopOf bounds the same control points (AUDIT PRECIP PACK-1), so a bound and a sample read one
+ * window.
+ * @returns {{ shmAt: (r: number, c: number) => number, lhmAt: (r: number, c: number) => number }}
+ */
+export function kernelWindows(woods, mapPixelX, mapPixelY) {
+  const sd = 4;
+  const shm = woods.getHeightMapValuesRange1Dim(mapPixelX - 2, mapPixelY - 2, sd);
+  const lhm = woods.getLargeHeightMapValuesRange(mapPixelX - 1, mapPixelY, 3);
+  const ld = 9;
+  return { shmAt: (r, c) => shm[r + c * sd], lhmAt: (r, c) => lhm[r + c * ld] };   // JobA.Idx
+}
+
+/**
  * The kernel's two bicubic terms for one map pixel, its window reads done once - the small heightmap's (`base`, in
  * WOODS bytes, before BASE_HEIGHT_SCALE) and the large heightmap's (`noise`, before NOISE_MAP_SCALE), each answering
  * any (x, y) in the pixel's sample space, a fraction between samples included. sampleKernel is built on these two and
@@ -150,12 +165,7 @@ export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMEN
 export function kernelTerms(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION) {
   // Divisor ensures continuous 0-1 range of height samples.
   const div = (hDim - 1) / 3;
-  const sd = 4;
-  const shm = woods.getHeightMapValuesRange1Dim(mapPixelX - 2, mapPixelY - 2, sd);
-  const lhm = woods.getLargeHeightMapValuesRange(mapPixelX - 1, mapPixelY, 3);
-  const ld = 9;
-  const shmAt = (r, c) => shm[r + c * sd]; // JobA.Idx
-  const lhmAt = (r, c) => lhm[r + c * ld];
+  const { shmAt, lhmAt } = kernelWindows(woods, mapPixelX, mapPixelY);
 
   const base = (x, y) => {
     const sfracx = x / (hDim - 1);

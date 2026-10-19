@@ -84,10 +84,12 @@ test('GR1: grass records come from the archive\u2019s own texels - none for road
   assert.equal(grassRecordsOf(winter).size, 0, 'a winter archive has no green base, so nothing is grass');
   // the host: the near ring, the season, the sea plane, the record
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /p\._stride === 1 && p\.tilemapBytes && p\.season !== SEASON\.Winter/, 'near ring only, never in winter');
+  assert.match(w, /p\._stride === 1 && p\.tilemapBytes && \(snowCover\.on \|\| p\.season !== SEASON\.Winter\)/, 'near ring only, never in winter (PRECIP4: on the snow lane each blade asks the snow instead)');
   // PIN MOVED (ECOTONE1, 2026-10-07): the records of the ground the root stands in - its pixel's (`grass`), or at a climate
   // border the neighbour's set the ground's border gives it there
-  assert.match(w, /const g = ga === p\.groundArchive \? grass : grassRecords\.get\(ga\);\n\s*if \(rec === 0 \|\| !g \|\| !g\.has\(rec\)\) return null;/, 'a water record or a non-grass record: no blade');
+  // PIN MOVED (BANTHA2): the keep is the jungle floor's too - its own records (grass and dirt) when asked for it, the meadow's
+  // grass records otherwise, and no meadow blade where the floor claims the point
+  assert.match(w, /const g = ga === p\.groundArchive \? grass : grassRecords\.get\(ga\);\n\s*if \(rec === 0 \|\| !\(floor \? floorRecords\.get\(ga\) : g\)\?\.has\(rec\) \|\| \(!floor && jungleFloor\?\.claims\(x, z\)\)\) return null;/, 'a water record or a non-grass record: no blade');
   assert.match(w, /if \(h <= sea\) return null;/, 'under the sea plane: no blade');
   // GR5: the field follows the eye by CELLS now - filled at the leading
   // edge, freed at the trailing one - rather than re-scattering whole
@@ -223,7 +225,7 @@ test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texe
   // ground(x, z) is keep's OWN lookup - same pieces, same tile maths -
   // answering with the colour instead of the height, so the root under
   // a blade takes the colour of the very tile keep let it stand on.
-  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('if (!labGrassField) labGrassField = createGrassField('));   // AUDIT 68: `createGrassFields(` was never there - the slice ran to -1
+  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('if (!labGrassField) labGrassField = '));   // PIN MOVED (BANTHA2): the field's line pairs the jungle floor's   // AUDIT 68: `createGrassFields(` was never there - the slice ran to -1
   assert.match(g, /const tx = Math\.floor\(lx \/ 6\.4\); const tz = Math\.floor\(lz \/ 6\.4\);/);
   assert.match(g, /const rec = p\.tilemapBytes\[tz \* TERRAIN_TILE_DIM \+ tx\] >> 2;/);
   // PIN MOVED (ECOTONE1, 2026-10-07): the colour of the set the ground there is drawn from - at a climate border, the one
@@ -295,7 +297,7 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
 
 test('GR5: the host runs the field, not the walk', () => {
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /labGrassField = createGrassField\(labGrass, \{ keep, ground, slope, density: grassDensity \}\);/);   // PERF1: at the pane's fraction of the lab's field
+  assert.match(world, /labGrassField = jungleFloor \? jungleFloor\.pair\(createGrassField\(labGrass, \{ keep, ground, slope, density: grassDensity \}\)\) : createGrassField\(labGrass, \{ keep, ground, slope, density: grassDensity \}\);/);   // PERF1: at the pane's fraction of the lab's field; PIN MOVED (BANTHA2): the jungle floor's paired with it
   assert.match(world, /labGrassField\.update\(ex, ez, keep, ground, slope\);/, 'this frame\'s keep/ground, since the near pieces move with the eye');
   assert.doesNotMatch(world, /placeLabGrassSteps|labGrassWalk\b|labGrass\.set\(/, 'the whole-field walk and its 60MB swap are gone');
   assert.match(world, /    arrows\.arrows\.length = 0;[^\n]*\n(    \/\/[^\n]*\n)+    labGrassField = null;\n/, 'a new world starts empty (PERF-EXT21: the teleport says so; the crossing keeps its field)');

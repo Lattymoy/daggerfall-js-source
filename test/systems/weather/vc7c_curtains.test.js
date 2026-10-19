@@ -237,25 +237,31 @@ test('VC7c: THE SLAB\'S START CUTS THE VEIL - before it in front of everything, 
     assert.ok(Math.abs(-Math.log(front[3]) - tauOf(cell, cam, dir, 0, split)) < 1e-6, `at ${split}: the front is the density before it`);
     assert.ok(Math.abs(-Math.log(back[3]) - tauOf(cell, cam, dir, split)) < 1e-6, `at ${split}: the back is the density past it`);
     assert.ok(tBack >= split && tBack <= tb, `at ${split}: the back hangs past the cut (${tBack.toFixed(0)})`);
-    for (const ch of back.slice(0, 3)) assert.ok(Math.abs(ch - GREY[0] * (1 - back[3])) < 1e-9, 'the back\'s colour is its own, not yet in any perspective - the slab\'s takes it');
+    for (const ch of back.slice(0, 3)) assert.ok(Math.abs(ch - GREY[0] * (1 - back[3])) < 1e-9, 'the back\'s colour is the veil\'s (AUDIT PRECIP SKY-5: in its own perspective - a grey horizon here, so the tint)');
   }
   assert.deepEqual(veils(f, cam, dir, 0).front, [0, 0, 0, 1], 'a cut at the eye: all of it among the slab');
   // the march: the back goes in before the first LIT sample past it, or behind everything; the front last of all
   const main = MARCH_FS.slice(MARCH_FS.indexOf('void main() {', MARCH_FS.indexOf('vec4 cirrus(')));
   assert.ok(main.includes('curtains(cam, dir, t0, front, back, tBack);') && main.includes('bool veiled = back.a >= 1.0;'), 'cut where the slab begins');
-  const lit0 = main.indexOf('    if (!veiled && tBack <= t) { col += T * mix(back.rgb, uHorizonColor * (1.0 - back.a), fade); T *= back.a; veiled = true; }');   // SLAB-SPAN: in its span's aerial perspective
+  const lit0 = main.indexOf('    if (!veiled && tBack <= t) { col += T * back.rgb; T *= back.a; veiled = true; }');   // SLAB-SPAN; SKY-ARC; AUDIT PRECIP SKY-5 (PIN MOVED): each of its samples in its own aerial perspective already (veilPiece)
   assert.ok(lit0 > main.indexOf('if (strode) { t -= coarse;') && lit0 < main.indexOf('float tau = lightDepth(p);'), 'at a lit sample, after a stride is backed out - only a lit sample has an order to keep');
-  const after = main.indexOf('  if (!veiled) { col += T * mix(back.rgb, uHorizonColor * (1.0 - back.a), fade); T *= back.a; }');
+  const after = main.indexOf('  if (!veiled) { col += T * back.rgb; T *= back.a; }');   // AUDIT PRECIP SKY-5 (PIN MOVED)
   assert.ok(after > lit0 && after < main.indexOf('vec4 ice = cirrus(cam, dir);'), 'behind every lit sample, and under the slab\'s own aerial perspective (SLAB-SPAN: the last span\'s)');
   const exits = main.match(/outColor = [^;]*;/g);
-  assert.deepEqual(exits, ['outColor = underCurtains(uHorizonColor, 0.0, cam, dir);', 'outColor = underCurtains(uHorizonColor, 0.0, cam, dir);', 'outColor = vec4(front.rgb + front.a * col, T * front.a);'], 'the rows with no slab to cut take all of it in front; the march\'s end lays the front over everything');
+  // AUDIT PRECIP SKY-1 (PIN MOVED): the far early-out lays the slab it never walks by its length (farA) - the march's own law
+  assert.deepEqual(exits, ['outColor = underCurtains(uHorizonColor, 0.0, cam, dir);', 'outColor = underCurtains(uHorizonColor * a, 1.0 - a, cam, dir);', 'outColor = vec4(front.rgb + front.a * col, T * front.a);'], 'the rows with no slab to cut take all of it in front; the march\'s end lays the front over everything');
   const under = fnBody(MARCH_FS, 'vec4 underCurtains(vec3 col, float T, vec3 cam, vec3 dir)');
   assert.ok(under.includes('curtains(cam, dir, 1e9, front, back, tBack);') && under.includes('return vec4(front.rgb + front.a * col, T * front.a);'));
-  // the front's own aerial perspective, taken at its NEAR entry
+  // the front's own aerial perspective - AUDIT PRECIP SKY-5: each of its samples by its own distance (veilFade), never the
+  // whole veil by its nearest entry: the share the horizon takes is one share for every channel, past the entry's and
+  // short of the exit's
   const H = [0.9, 0.2, 0.1], g = marchFns([rain()], { ...FLAT, uHorizonColor: H, uCloudShade: GREY, uCloudLit: GREY });
-  const low = unit([1, 0.02, 0]), fr = veils(g, cam, low).front, T = fr[3], entry = (20000 - rad) / Math.hypot(low[0], low[2]);
-  const k = 1 - Math.exp(-entry / CURTAIN_FADE_M), tint = [0, 1, 2].map((i) => 0.7 * GREY[i] + 0.3 * H[i]);   // rain: the shade, a third of the way to the horizon
-  for (let i = 0; i < 3; i++) assert.ok(Math.abs(fr[i] - ((1 - k) * tint[i] * (1 - T) + k * H[i] * (1 - T))) < 1e-9, `channel ${i}: faded by its entry at ${entry.toFixed(0)} m`);
+  const low = unit([1, 0.02, 0]), fr = veils(g, cam, low).front, T = fr[3], lxz = Math.hypot(low[0], low[2]);
+  const entry = (20000 - rad) / lxz, exit = (20000 + rad) / lxz, fade = (t) => 1 - Math.exp(-t / CURTAIN_FADE_M);
+  const tint = [0, 1, 2].map((i) => 0.7 * GREY[i] + 0.3 * H[i]);   // rain: the shade, a third of the way to the horizon
+  const k = (fr[0] / (1 - T) - tint[0]) / (H[0] - tint[0]);
+  for (let i = 1; i < 3; i++) assert.ok(Math.abs(fr[i] - ((1 - k) * tint[i] + k * H[i]) * (1 - T)) < 1e-9, `channel ${i}: the one share ${k.toFixed(4)}`);
+  assert.ok(k > fade(entry) + 1e-4 && k < fade(exit) - 1e-4, `the share ${k.toFixed(4)} past its entry's ${fade(entry).toFixed(4)}, short of its exit's ${fade(exit).toFixed(4)}`);
 });
 
 test('VC7c: UNDER THE AXIS - an eye under the rain sees no curtain, and no NaN (AUDIT-VC7 G5: atan(0, 0))', () => {

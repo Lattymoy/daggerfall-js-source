@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-DEEP-R1-duel-fogs-from-the-eye",
     "file": "src/scenes/world.js",
-    "old": "dw: renderer._dwFog, focus: renderer._focus });",
-    "new": "dw: renderer._dwFog });",
+    "old": "dw: renderer._dwFog, haze: renderer._haze, focus: renderer._focus });",
+    "new": "dw: renderer._dwFog, haze: renderer._haze });",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],

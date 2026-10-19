@@ -936,42 +936,52 @@ test('LPT1 the felled trees: a sink or a stand moves FOREST_STAMP (the near set 
 });
 
 test('LPT1 the hosts: world.js and exterior.js stand the trees behind the mod\'s switch and ?trees=off, through the one door; a far-picture batch a handle, HELD while it stands (AUDIT LPT B5), MAC1\'s far rings reading the flat\'s own height (AUDIT LPT A8/B1); the near set handed on between the gibs\' call and the wind (WIND3 keeps the wind and the flats\' draw adjacent), culled to the view; the terrain\'s own flats alone take DFU\'s variety', () => {
-  const w = hostText('src/scenes/world.js'), x = read('src/scenes/exterior.js');
-  for (const [name, src] of [['world.js', w], ['exterior.js', x]]) {
-    assert.match(src, /modSetting\('low-poly-trees', 'Enabled'\) && params\.get\('trees'\) !== 'off' \? createLowPolyTrees\(/, name);
+  // PIN MOVED (BANTHA1, HOST-SPLIT): the streaming host's door, its near sets and its handles' owners are the trees' host's
+  // (scenes/treesHost.js), which world.js builds behind the same switch and the same door
+  const w = hostText('src/scenes/world.js'), x = read('src/scenes/exterior.js'), th = read('src/scenes/treesHost.js');
+  assert.match(w, /lowPolyTreesOn: modSetting\('low-poly-trees', 'Enabled'\) && params\.get\('trees'\) !== 'off'/, 'world.js: the switch and the door');
+  assert.match(th, /const lowPolyTrees = lowPolyTreesOn \? createLowPolyTrees\(/, 'treesHost.js: the one door, behind it');
+  assert.match(x, /modSetting\('low-poly-trees', 'Enabled'\) && params\.get\('trees'\) !== 'off' \? createLowPolyTrees\(/, 'exterior.js');
+  for (const [name, src, door] of [['world.js', w, th], ['exterior.js', x, x]]) {
     assert.match(src, /renderer\.createBillboardBatch\(archive, far\.record, far\.size, centers, \{ scales/, name);
     assert.match(src, /lowPolyTrees\.acquire\(far\); lptHandles\.push\(far\);/, name);
     assert.match(src, /batch\.lptProto = far;\n\s+batch\.farH = plain\.h;/, name);
-    assert.match(src, /key: \(a\) => \([^)]*seasons\.lookup\(a, 1\) \? `s\$\{seasons\.installedSeason\}\.\$\{seasons\.generation\}` : ''\)/, `${name}: the season by the tree's own archive, keyed by the install`);
-    assert.match(src, /generation: \(\) => seasons\.generation/, name);
+    assert.match(door, /key: \(a\) => \((?:[^)]|\(\))*seasons\.lookup\(a, 1\) \? `s\$\{seasons\.installedSeason\}\.\$\{seasons\.generation\}` : ''\)/, `${name}: the season by the tree's own archive, keyed by the install`);
+    assert.match(door, /generation: \(\) => seasons\.generation/, name);
     const flats = src.indexOf('renderer.drawBillboards(');
     const wind = src.lastIndexOf('renderer.setFlatWind(', flats), gibs = src.lastIndexOf('bloodMarks.draw(', flats);
-    assert.match(src.slice(gibs, wind), /lowPolyTrees/, `${name}: the frame's trees between the gibs and the wind`);
+    assert.match(src.slice(gibs, wind), name === 'world.js' ? /trees\.frame\(_pixelOrder/ : /lowPolyTrees/, `${name}: the frame's trees between the gibs and the wind`);
   }
-  assert.match(w, /!seasons\.installing && seasons\.lookup\(a, 1\)/, 'the streaming host paints nothing seasonal mid-install (AUDIT LPT B3)');
+  assert.match(th, /seasonsActive\(\) && !seasons\.installing && seasons\.lookup\(a, 1\)/, 'the streaming host paints nothing seasonal mid-install (AUDIT LPT B3)');
   // PIN MOVED (ECOTONE1, 2026-10-07): by the archive the flat is drawn in - a border's flat is a neighbour climate's
-  assert.match(w, /if \(lowPolyTrees\) wildFlats\.add\(`\$\{archive\}_\$\{f\.record\}#\$\{i\}`\);/, 'the terrain layout\'s flats marked wild');
-  assert.match(w, /wild\[i\] = wildFlats\.has\(`\$\{k\}#\$\{i\}`\) \? 1 : 0;\n\s+const v = lptVariety\(px, py, c\[0\], c\[2\], !wild\[i\]\)\.scale;\n[^\n]*\n\s+scales\[i\] = \(fit \? Math\.min\(v, fit\[i\]\) : v\) \/ LPT_SCALE_MAX;/);   // PIN MOVED (LPT-FIT): the variety read into `v`, the far picture the lesser of it and the tree's fit
+  // PIN MOVED (AUDIT PRECIP HOST-7): logged wild, and marked by the log's grouping (scenes/pixelBuild.js groupFlats) - the build's and a re-skin's
+  assert.match(w, /addFlat\(archive, f\.record, f\.x, f\.y, f\.z, \{ wild: base, tree \}\);/, 'the terrain layout\'s flats logged wild');
+  assert.match(w, /if \(log\[j\]\.wild != null\) wild\.add\(`\$\{k\}#\$\{g\.length\}`\);/, '...and marked');
+  assert.match(w, /wild\[i\] = g\.wild\.has\(`\$\{k\}#\$\{i\}`\) \? 1 : 0;\n\s+const v = lptVariety\(g\.px, g\.py, c\[0\], c\[2\], !wild\[i\]\)\.scale;\n[^\n]*\n\s+scales\[i\] = \(fit \? Math\.min\(v, fit\[i\]\) : v\) \/ LPT_SCALE_MAX;/);   // PIN MOVED (LPT-FIT): the variety read into `v`, the far picture the lesser of it and the tree's fit
   assert.match(x, /buildTreeSet\(0, 0, lptGroups\)/, 'the location host: one set, none of it wild');
   assert.match(x, /lptGroups\.push\(\{ h: lptHandles\.length - 1, centers, wild: null \}\);/);
   assert.match(w, /lowPolyTrees: lptGroups\.length \? \{ px, py, ox: 0, oy: 0, oz: 0, handles: lptHandles, groups: lptGroups, trees: null, centers: null \} : null/);
-  assert.match(w, /if \(p\.lowPolyTrees\) for \(const h of p\.lowPolyTrees\.handles\) lowPolyTrees\?\.release\(h\);/, 'destroyPixel lets its handles go');
+  assert.match(th, /if \(p\.lowPolyTrees\) for \(const h of p\.lowPolyTrees\.handles\) lowPolyTrees\?\.release\(h\);/, 'destroyPixel lets its handles go');
+  assert.match(w, /trees\.released\(p\);/, '...asked by destroyPixel');
   assert.match(w, /made\.lptHandles = lptHandles;/, 'BUILD-FAIL1\'s ledger carries them...');
-  assert.match(w, /for \(const h of m\.lptHandles \?\? \[\]\) lowPolyTrees\?\.release\(h\);/, '...and a build that throws lets them go');
+  assert.match(th, /for \(const h of m\.lptHandles \?\? \[\]\) lowPolyTrees\?\.release\(h\);/, '...and a build that throws lets them go');
+  assert.match(w, /trees\.releasedBuild\(m\);/, '...asked by releaseFailedBuild');
   assert.match(w, /farFlatVisibleAt\(ring, b\.farH \?\? b\.size\?\.h \?\? 0, b\.frame != null\)/);
-  assert.match(w, /skip: \(set, i\) => FELLED\.has\(set\.centers\[i\]\)/, 'a felled tree stands no 3D tree');
-  const fr = w.slice(w.indexOf('function lowPolyTreesFrame('), w.indexOf('lowPolyTrees.frame(_lptSets'));
-  assert.match(fr, /if \(p\._dist2 > 2\) \{ if \(p\._dist2 > 8 && set\.trees\) \{ set\.trees = null; set\.centers = null; \} continue; \}/, 'the eye\'s pixel and its eight; a set past the 5x5 let go (AUDIT LPT B10)');
-  assert.match(fr, /if \(!set\.trees\) \{ const made = buildTreeSet\(set\.px, set\.py, set\.groups\);/, '...made as it comes near');
-  assert.match(fr, /_lptOpts\.planes = planes;/);
-  assert.match(w, /if \(lowPolyTrees\) lowPolyTreesFrame\(cullOn \? _planes : null\);/, 'the frame\'s normalised planes');
+  assert.match(th, /skip: \(set, i\) => FELLED\.has\(set\.centers\[i\]\)/, 'a felled tree stands no 3D tree');
+  const fr = th.slice(th.indexOf('    frame(pixels, eye, planes) {'), th.indexOf('lowPolyTrees?.frame(lptSets'));
+  assert.match(fr, /if \(p\._dist2 > 2\) \{ if \(p\._dist2 > 8\) \{ drop\(a\); drop\(b\); \} continue; \}/, 'the eye\'s pixel and its eight; a set past the 5x5 let go (AUDIT LPT B10)');
+  assert.match(th, /const drop = \(set\) => \{ if \(set\?\.trees\) \{ set\.trees = null; set\.centers = null; \} \};/, '...each door\'s');
+  assert.match(th, /if \(!set\.trees\) \{ const made = buildTreeSet\(set\.px, set\.py, set\.groups\);/, '...made as it comes near');
+  assert.match(fr, /opts\.planes = planes;/);
+  assert.match(w, /trees\.frame\(_pixelOrder, cam\.pos, cullOn \? _planes : null\);/, 'the frame\'s normalised planes');
   assert.match(x, /if \(cullOn\) spherePlanes\(_pv, _lptPlanes\); lowPolyTrees\.frame\(lptSets, cam\.pos\[0\], cam\.pos\[1\], cam\.pos\[2\], lptOpts\);/, 'the location host normalises its own, at its eye');
   assert.match(x, /renderer\.createBillboardBatch\(archive, far\.record, far\.size, centers, \{ scales: centers\.map\(\(\) => 1 \/ LPT_SCALE_MAX\) \}\)/, 'a location\'s tree at its own size');
-  assert.match(fr, /set\.ox = p\._t\[0\]; set\.oy = p\._t\[1\]; set\.oz = p\._t\[2\];/, 'each set at its pixel\'s translation this frame');
-  assert.match(fr, /_lptOpts\.stamp = FOREST_STAMP\.n;/, 'a felling regathers');
+  assert.match(th, /set\.ox = t\[0\]; set\.oy = t\[1\]; set\.oz = t\[2\];/, 'each set at its pixel\'s translation this frame');
+  assert.match(fr, /ready\(a, p\._t\)/, '...the pixel\'s, this frame');
+  assert.match(fr, /opts\.stamp = FOREST_STAMP\.n;/, 'a felling regathers');
   for (const [name, src] of [['world.js', w], ['exterior.js', x]]) {
     // PIN MOVED (ECOTONE1, 2026-10-07): the streaming host's pixel asks by its nature set (its climate's and a border's)
-    assert.match(src, name === 'world.js' ? /batch\.sway = floraSwayOf\(archive, natureSet, plain\.h\);/ : /batch\.sway = floraSwayOf\(archive, natureArchive, plain\.h\);/, `${name}: the flat's sway share`);
+    assert.match(src, name === 'world.js' ? /batch\.sway = floraSwayOf\(archive, g\.natureSet, plain\.h\);/ : /batch\.sway = floraSwayOf\(archive, natureArchive, plain\.h\);/, `${name}: the flat's sway share`);
     assert.match(src, /coverProxies\(c, plain, \{ tree:/, `${name}: the flat's cover (AUDIT LPT D3)`);
   }
   assert.ok(LPT_NEAR_M + LPT_BAND_M + LPT_REGATHER_M < 819.2, 'the 3x3 reaches every tree in reach');

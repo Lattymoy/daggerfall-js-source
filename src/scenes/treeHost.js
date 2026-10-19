@@ -35,6 +35,7 @@ import { materialLabel } from '../systems/professions/profItems.js';
 import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
+import { JUNGLE_MEASURES, FOOT_TOP } from '../world/jungle/jungleModels.js';   // AUDIT BANTHA1 TREE-3: a jungle tree's mark
 import { insideRocks, TREE_RECORDS, isTreeRecord, FOREST } from '../world/terrain/terrainNature.js';   // NODE-CLEAR: the rock check's one home; FOREST1: and the Tree records', and what the woods are
 
 /** World of Daggerfall's Tree records (FOREST1: their home is world/terrain/terrainNature.js, where the forests read them). */
@@ -53,6 +54,22 @@ export const LOGS_TAKE_M = 1.5;
 export const TRUNK_LIFT = 1.2;
 /** NODE-MARKS: a tree's glow about its root (m) - up its trunk, not its crown. */
 export const TREE_MARK = Object.freeze({ w: 2.6, h: 3.4 });
+/** AUDIT BANTHA1 TREE-3: A JUNGLE TREE'S MARK stands outside what the tree draws about its root - its trunk at its scale,
+ *  and where its crown hangs to the ground (the banyan's roots, the flame tree's curtains) its foot - and this much more
+ *  (m): the mark's 0.6 m (render/nodeGlow.js NODE_GLOW_PULL) stood it inside a jungle trunk, 90-100% of it hidden. */
+export const JUNGLE_MARK_CLEAR = 0.6;
+const _jungleMarks = new Map();
+/** A jungle tree's mark (made once a species and scale). @param {{ jungle: number, js: number }} flat */
+export function jungleTreeMark(flat) {
+  const key = flat.jungle * 1000 + Math.round(flat.js * 100);
+  let m = _jungleMarks.get(key);
+  if (!m) {
+    const t = JUNGLE_MEASURES[flat.jungle], hung = t.crownFrom <= FOOT_TOP;
+    m = Object.freeze({ w: TREE_MARK.w, h: TREE_MARK.h, pull: (hung ? t.foot : t.trunk) * flat.js + JUNGLE_MARK_CLEAR });
+    _jungleMarks.set(key, m);
+  }
+  return m;
+}
 /** The Wood-Axe in the hand (FORAGE0 14.1): DFU's own War Axe, its chop StrikeDownRight's frames. */
 export const AXE_HAND = Object.freeze({ group: 'Weapons', templateIndex: 128, material: 0 });
 const CHOP_FRAMES = 5;
@@ -188,7 +205,7 @@ export function treeKind({ book, renderer = null, flatBatchAabb = null, getTextu
     },
     gone: (n) => goneIn(book, n.key, 'logs'),
     goneSound: 'fall',   // GATHER-FEEL: the tree heard coming down, its ground struck as the picture lies flat (FALL_S)
-    mark: (n) => (goneIn(book, n.key, 'logs') ? null : TREE_MARK),   // NODE-MARKS: a standing tree; a felled one's stump none
+    mark: (n) => (goneIn(book, n.key, 'logs') ? null : n.flat?.jungle != null ? jungleTreeMark(n.flat) : TREE_MARK),   // NODE-MARKS: a standing tree; a felled one's stump none; AUDIT BANTHA1 TREE-3: a jungle tree's outside its trunk
     tools: Object.freeze([FT.WoodAxe]),   // TOOL-USE: the Wood-Axe's Use at a tree is E there
     where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS),   // SETTLE-SAID
     /** PROF-MENU: the menu's title - the tree its wood is. */

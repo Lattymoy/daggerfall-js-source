@@ -279,9 +279,11 @@ test('VE2 the records\' set: record 0\'s size, else the classic; a record of ano
 });
 
 test('VE2 the hosts: the two terrain hosts hand the classic file and upload what comes back; the interior and dungeon hosts draw no ground (THE FOUR HOSTS)', () => {
-  for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(src(host), /const modLayers = await dfmodGroundLayers\(groundArchive, groundTex\);[\s\S]{0,400}?renderer\.uploadTileArray\(groundArchive, modLayers \? layers : markPuddleWater\(layers\)\);/, host);
-  }
+  assert.match(src('scenes/exterior.js'), /const modLayers = await dfmodGroundLayers\(groundArchive, groundTex\);[\s\S]{0,400}?renderer\.uploadTileArray\(groundArchive, modLayers \? layers : markPuddleWater\(layers\)\);/, 'scenes/exterior.js');
+  // PIN MOVED (AUDIT PRECIP GROUND-2): the streaming host asks in one home (groundLayersOf) for its set and its twin's winter,
+  // and uploads the set - or on the snow lane its twin, the two as one array - once
+  assert.match(src('scenes/world.js'), /const modLayers = await dfmodGroundLayers\(archive, tex\), classic = \[\];/, 'scenes/world.js');
+  assert.match(src('scenes/world.js'), /renderer\.uploadTileArray\(key, winter == null \? own\.layers : twinLayers\(own\.layers, \(await groundLayersOf\(winter, await getTexture\(winter\)\)\)\.layers\)\);/, 'scenes/world.js');
   const uploaders = readdirSync(new URL('../../src/scenes/', import.meta.url), { recursive: true }).filter((f) => f.endsWith('.js') && /uploadTileArray\(/.test(src(`scenes/${f}`)));
   assert.deepEqual(uploaders.sort(), ['exterior.js', 'world.js'], 'worldModes.js (interiors) and dungeonContext.js have no ground to dress');
 });

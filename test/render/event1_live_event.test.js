@@ -418,8 +418,8 @@ test('EVENT1 host: the sky controller grades every pass and the fog by the one w
   assert.match(shared, /const d = dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/, 'the fog');   // SD19 moved it (PIN MOVED): the brass graded over it
   assert.match(shared, /dreadGlow = dreadW > 0 \? Math\.max\(0, Math\.min\(1, Number\(glow\) \|\| 0\)\) : 0;/, 'no glow without the dread');
   assert.equal((shared.match(/\(extra\?\.flash \?\? 0\) \+ dreadGlow/g) ?? []).length, 2, 'the deck lit by the red strikes under both skies');
-  assert.match(shared, /const skyWord = dreadW > 0 \? DREAD_SKY_WORD : weatherName;\s*const want = weatherRow\(skyWord\);/);
-  assert.match(shared, /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName,/, 'the wind is the weather\'s');
+  assert.match(shared, /const skyWord = dreadW > 0 \? DREAD_SKY_WORD : systemWordOf\(weatherName\);[^\n]*\n\s*const want = weatherRow\(skyWord\);/);   // AUDIT PRECIP FALL-2 (PIN MOVED): the sky is the weather's SYSTEM
+  assert.match(shared, /windModel\.tick\(extra\?\.classicMinutes \?\? 0, systemWordOf\(weatherName\),/, 'the wind is the weather\'s');   // AUDIT PRECIP FALL-2 (PIN MOVED)
   assert.match(shared, /weather: skyWord, seconds, dt: dtReal,/, 'Dynamic Skies wears it');
   assert.equal((shared.match(/const cb = dreadW > 0 \? \{ word: skyWord, row: weatherRowNow \} : cloudBaseOf\(extra, weatherName, weatherRowNow\);/g) ?? []).length, 2, 'the clouds under both skies');
 });

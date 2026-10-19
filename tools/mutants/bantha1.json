@@ -1,0 +1,940 @@
+[
+  {
+    "name": "BANTHA1-the-mirror-lost",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "const x = -(P[c[0] * 3] - rx), y",
+    "new": "const x = (P[c[0] * 3] - rx), y",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-root-left-where-it-stood",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "  const rx = (x0 + x1) / 2, rz = (z0 + z1) / 2;",
+    "new": "  const rx = 0, rz = 0;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-winding-by-the-normals-lost",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "if (turned) idx.push(ids[0], ids[k], ids[k + 1]); else idx.push(ids[0], ids[k + 1], ids[k]);",
+    "new": "idx.push(ids[0], ids[k + 1], ids[k]);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-foot-read-at-the-crown",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "    if (samples[i] < FOOT_TOP) foot = Math.max(foot, samples[i + 1]);",
+    "new": "    if (samples[i] < FOOT_TOP * 4) foot = Math.max(foot, samples[i + 1]);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-a-measure-drifted",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "Object.freeze({ foot: 7.58, crown: 9.42, crownFrom: 8, trunk: 1.1, height: 22.53 })",
+    "new": "Object.freeze({ foot: 7.58, crown: 9.42, crownFrom: 8, trunk: 1.0, height: 22.53 })",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-sign-lost",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "      dist[i] = me ? best : -best;",
+    "new": "      dist[i] = best;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-an-axis-neighbour-read-as-its-diagonal",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "return Math.min(best, Math.hypot(Math.max(Math.abs(dx) - 0.5, 0), Math.max(Math.abs(dy) - 0.5, 0)));",
+    "new": "return Math.min(best, Math.hypot(Math.abs(dx) - 0.5, Math.abs(dy) - 0.5));",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-a-ring-stopped-short",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "r <= reach && r - 0.5 < best; r++",
+    "new": "r <= reach && r < best; r++",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-wander-off-the-world-lattice",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "  const origin = ecoOrigin(px, py), tx = x / TILE_M, tz = z / TILE_M;\n  let w = 0;",
+    "new": "  const origin = [0, 0], tx = x / TILE_M, tz = z / TILE_M;\n  let w = 0;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-canopy-chance-whole",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "if (tileDraw(wx, wz, 22) >= JUNGLE.canopy * share[ti] * (1 - light) * groundOf[ti]) continue;",
+    "new": "if (tileDraw(wx, wz, 22) >= share[ti] * (1 - light) * groundOf[ti]) continue;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-an-emergent-of-any-species",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "const species = emergent ? fromPool(JUNGLE.emergents, tileDraw(wx, wz, 24)) : canopySpecies(",
+    "new": "const species = emergent ? Math.floor(tileDraw(wx, wz, 24) * 5) : canopySpecies(",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-young-trees-scale-the-canopys",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "        const [u0, u1] = JUNGLE.underScale;",
+    "new": "        const [u0, u1] = JUNGLE.canopyScale;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-track-ignored",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "      if (!ground || paths?.[ti]) continue;",
+    "new": "      if (!ground) continue;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-slope-test-off",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "      if (g2 > TAN_FLOOR_SQ) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-trunk-clearance-its-own-cell-alone",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "    for (let j = cy - 1; j <= cy + 1; j++) {\n      for (let i = cx - 1; i <= cx + 1; i++) {",
+    "new": "    for (let j = cy; j <= cy; j++) {\n      for (let i = cx; i <= cx; i++) {",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-a-stream-walked-across-the-pixel",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "jungleStandNoise(origin, x + 0.5, y + 0.5) < j",
+    "new": "jungleStandNoise(origin, x + 0.5 + own.length, y + 0.5) < j",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-reach-test-answers-a-copy",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return own;",
+    "new": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return [...own];",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-ground-ignored",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "    const ground = lerp(1, JUNGLE.lowland[s], lowW) * lerp(1, JUNGLE.upland[s], highW);",
+    "new": "    const ground = 1;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-light-ignored",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "    return b * grove * ground * (s === 3 ? 1 + JUNGLE.light * light : 1);",
+    "new": "    return b * grove * ground;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-floors-share-dropped",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "  return ((lo0 - lo) + (Math.exp(-lo0) - Math.exp(-hi))) / span;",
+    "new": "  return (Math.exp(-lo0) - Math.exp(-hi)) / span;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-floors-share-dropped-on-the-gpu",
+    "file": "src/render/hazeGlsl.js",
+    "old": "  return ((lo0 - lo) + (exp(-lo0) - exp(-hi))) / span;",
+    "new": "  return (exp(-lo0) - exp(-hi)) / span;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-clear-start-ignored-on-the-gpu",
+    "file": "src/render/hazeGlsl.js",
+    "old": "  float run = length(worldPos - origin) - uJungleHaze[0].w;",
+    "new": "  float run = length(worldPos - origin);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-skys-depth-not-over-the-rays-rise",
+    "file": "src/render/hazeGlsl.js",
+    "old": "  return 1.0 - exp(-uHazeSky.w / max(y, 0.004));",
+    "new": "  return 1.0 - exp(-uHazeSky.w);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-boxs-bottom-read-for-its-top",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "(box[4] + t[1] - u[1]) * u[2])) < JUNGLE_HAZE.cull;",
+    "new": "(box[1] + t[1] - u[1]) * u[2])) < JUNGLE_HAZE.cull;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-bound-turned",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "* u[2])) < JUNGLE_HAZE.cull;",
+    "new": "* u[2])) > JUNGLE_HAZE.cull;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-no-easing",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "const eased = (jumped, from, to, dt, lag) => (jumped ? to : from + (to - from) * (1 - Math.exp(-Math.max(0, dt) / lag)));",
+    "new": "const eased = (jumped, from, to) => to;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-weight-inverted",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "const h = hazeColorOf(fogColor, _hazeColour), w = th / (th + tw);",
+    "new": "const h = hazeColorOf(fogColor, _hazeColour), w = tw / (th + tw);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-dawn-thinned",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "Object.freeze([6.5, 1.65])",
+    "new": "Object.freeze([6.5, 0.7])",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-haze-measured-from-the-wrong-pixel",
+    "file": "src/scenes/jungleHost.js",
+    "old": "py = state.mapOrigin.y - Math.floor((z - c[2]) / S);",
+    "new": "py = state.mapOrigin.y + Math.floor((z - c[2]) / S);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-colour-left-the-weathers",
+    "file": "src/scenes/jungleHost.js",
+    "old": "      return u[4] ? colour : fogColor;",
+    "new": "      return fogColor;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-one-slot-drawn",
+    "file": "src/render/renderer.js",
+    "old": "      for (let i = 0; i < slots.length; i++) if (slots[i]?.runs.length) this._drawLowPolyTrees(slots[i]);",
+    "new": "      if (slots[0]?.runs.length) this._drawLowPolyTrees(slots[0]);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-first-slots-radius-for-every-picture",
+    "file": "src/render/renderer.js",
+    "old": "    for (let i = 0; i < slots.length; i++) if (slots[i]?.cut.has(proto)) return slots[i];",
+    "new": "    for (let i = 0; i < slots.length; i++) if (slots[i]?.cut.has(proto)) return slots[0] ?? slots[i];",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-slots-never-spent",
+    "file": "src/render/renderer.js",
+    "old": "    if (slots) slots.fill(null);",
+    "new": "    // kept",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-arming-ignored",
+    "file": "src/render/renderer.js",
+    "old": "    if (!this._hazeArmed && this._haze[4] !== 0) this._haze[4] = 0;",
+    "new": "    if (this._haze[4] !== 0) this._haze[4] = 0;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-upload-left-out-of-the-fogs",
+    "file": "src/render/renderer.js",
+    "old": "    if (prog.haze && (this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-haze-never-sent-off",
+    "file": "src/render/renderer.js",
+    "old": "(this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))",
+    "new": "(this._haze[4] !== 0)",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-haze-sent-every-frame",
+    "file": "src/render/renderer.js",
+    "old": "(this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))",
+    "new": "(this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)) || true)",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-slot-0",
+    "file": "src/systems/jungleTreesAssets.js",
+    "old": "    renderer, breathe, warn, now, slot: 1, scaleMax",
+    "new": "    renderer, breathe, warn, now, slot: 0, scaleMax",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-scale-ceiling-low-poly-trees",
+    "file": "src/systems/jungleTreesAssets.js",
+    "old": "    renderer, breathe, warn, now, slot: 1, scaleMax: JUNGLE_SCALE_MAX,",
+    "new": "    renderer, breathe, warn, now, slot: 1,",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-domes-block-left-out",
+    "file": "src/render/enhancedSky.js",
+    "old": "${SD_BRASS_GLSL}\n${HAZE_SKY_GLSL}\n",
+    "new": "${SD_BRASS_GLSL}\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "BANTHA1-the-mod-skyboxs-block-left-out",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "${SD_BRASS_GLSL}\n${HAZE_SKY_GLSL}\n",
+    "new": "${SD_BRASS_GLSL}\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-canopy-light-not-handed-to-the-species",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "canopySpecies(origin, tx, tz, above, light, tileDraw(wx, wz, 24))",
+    "new": "canopySpecies(origin, tx, tz, above, 0, tileDraw(wx, wz, 24))",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-species-height-not-over-the-beach",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "const above = groundAt(heightmapData, mx, mz) - BEACH_M;",
+    "new": "const above = groundAt(heightmapData, mx, mz);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-no-mid-storey",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "const palm = JUNGLE.palm * j * ground * fields;",
+    "new": "const palm = 0 * j * ground * fields;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-glades-off",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "const closed = smoothstep(JUNGLE.glade.edge[0], JUNGLE.glade.edge[1], glade(x, y)),",
+    "new": "const closed = 1,",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-gap-law-swapped",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "(gap ? JUNGLE.gapUnder : JUNGLE.under)",
+    "new": "(gap ? JUNGLE.under : JUNGLE.gapUnder)",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-floors-glade-light-ignored",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "lerp(JUNGLE.cover, JUNGLE.gladeCover, gladeOf[ti])",
+    "new": "JUNGLE.cover",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-own-flats-tile-read-x-for-z",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "!mine[Math.min(tDim - 1, Math.floor(f.z / scale + 1e-6)) * tDim + Math.min(tDim - 1, Math.floor(f.x / scale + 1e-6))]",
+    "new": "!mine[Math.min(tDim - 1, Math.floor(f.x / scale + 1e-6)) * tDim + Math.min(tDim - 1, Math.floor(f.z / scale + 1e-6))]",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-reach-without-the-wander",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return own;",
+    "new": "if (hi * TERRAIN_SIZE <= -JUNGLE_EDGE.out) return own;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-reach-test-deleted",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return own;   // the line, wander and all, cannot reach a tile\n",
+    "new": "",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ],
+    "equivalent": true,
+    "why": "a shortcut alone: past the reach every tile reads a share of 0, nothing is the jungle's and the loop answers `own` itself (`if (!any) return own`) - the same answer, a pixel's 16,384 depth reads later (AUDIT BANTHA1 DOC-14)"
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-whole-pixel-without-the-wander",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "return lo * TERRAIN_SIZE - JUNGLE_WANDER_MAX >= JUNGLE_EDGE.in;",
+    "new": "return lo * TERRAIN_SIZE >= JUNGLE_EDGE.in;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-glade-fields-rows-mirrored",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "oz = -py * WORLD_MAP_TILE_DIM + JUNGLE.glade.off[1];",
+    "new": "oz = py * WORLD_MAP_TILE_DIM + JUNGLE.glade.off[1];",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-culls-clear-start-ignored",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "const run = d - u[3];",
+    "new": "const run = d;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-haze-grey-lean-dropped",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "(fog[c] + (lum - fog[c]) * JUNGLE_HAZE.grey)",
+    "new": "fog[c]",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-thunder-thins",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "thunder: 1.42",
+    "new": "thunder: 1",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-hazes-band-the-trees",
+    "file": "src/world/jungle/jungleHaze.js",
+    "old": "edge: Object.freeze({ out: 320, in: 760 })",
+    "new": "edge: Object.freeze({ out: 61, in: 481 })",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-hosts-floor-3x3-ignored",
+    "file": "src/scenes/jungleHost.js",
+    "old": "return Number.isFinite(here) ? (n ? Math.min(here, sum / n) : here) : (n ? sum / n : 0);",
+    "new": "return Number.isFinite(here) ? here : (n ? sum / n : 0);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-banks-read-at-the-pixels-own-place",
+    "file": "src/scenes/jungleHost.js",
+    "old": "hazeDrift(w.px * PIXEL_M + w.lx, -w.py * PIXEL_M + w.lz, clock, wind)",
+    "new": "hazeDrift(w.lx, w.lz, clock, wind)",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-travel-focus-ignored",
+    "file": "src/scenes/jungleHost.js",
+    "old": "const focus = renderer._focus?.[3] > 0.5 ? renderer._focus : eye;",
+    "new": "const focus = eye;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-rings-haze-dropped",
+    "file": "src/render/hazeGlsl.js",
+    "old": "float ringHaze(float m) { return 1.0 - (1.0 - m) * hazeAt(vWorld, uHazeEye); }",
+    "new": "float ringHaze(float m) { return m; }",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-rings-haze-never-uploaded",
+    "file": "src/render/farRing.js",
+    "old": "gl.uniform4fv(this.u.uJungleHaze, haze ?? NO_HAZE);",
+    "new": "gl.uniform4fv(this.u.uJungleHaze, NO_HAZE);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-grasss-haze-never-uploaded",
+    "file": "src/render/labGrass.js",
+    "old": "gl.uniform4fv(u.uJungleHaze, fog?.haze ?? NO_HAZE);",
+    "new": "gl.uniform4fv(u.uJungleHaze, NO_HAZE);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-sky-never-handed-the-haze",
+    "file": "src/scenes/shared.js",
+    "old": "if (v) r.hazeSky.set(v); else r.hazeSky[3] = 0;",
+    "new": "if (!v) r.hazeSky[3] = 0;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-panel-drops-the-haze",
+    "file": "src/render/renderer.js",
+    "old": "    this._haze.set(s.haze);   // BANTHA1\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-fields-distance-not-kept",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "      dist[i] = me ? best : -best;\n      return dist[i];",
+    "new": "      return me ? best : -best;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-an-objs-negative-index-unread",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "return n < 0 ? count + n : n - 1;",
+    "new": "return n - 1;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-trees-host-never-gathers-the-jungle",
+    "file": "src/scenes/treesHost.js",
+    "old": "        if (b && jungleDoor) jungleSets.push(ready(b, p._t));\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-trees-host-never-frames-the-jungle",
+    "file": "src/scenes/treesHost.js",
+    "old": "      jungleDoor?.frame(jungleSets, eye[0], eye[1], eye[2], opts);",
+    "new": "      void jungleSets;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-a-gone-pixels-jungle-handles-kept",
+    "file": "src/scenes/treesHost.js",
+    "old": "      if (p.jungleTrees) for (const h of p.jungleTrees.handles) jungleDoor?.release(h);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-a-failed-builds-jungle-handles-kept",
+    "file": "src/scenes/treesHost.js",
+    "old": "      for (const h of m.jungleHandles ?? []) jungleDoor?.release(h);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-far-picture-at-the-emergents-size",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "scales = Float32Array.from(g.own, (v) => v / JUNGLE_SCALE_MAX);",
+    "new": "scales = Float32Array.from(g.own, (v) => v);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-jungles-sway-unshared",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, batch.sway));\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-jungles-windfall-unshared",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, batch.windfall));\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-the-fallback-not-loggings",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        forestGroups.set(gk, { batch, centers: g.centers, size });\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-HOST-1-the-uniforms-left-standing",
+    "file": "src/scenes/jungleHost.js",
+    "old": "hs.share = 0; hs.primed = false; u.fill(0);",
+    "new": "hs.share = 0; hs.primed = false;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-HOST-2-the-state-in-the-scenes-frame",
+    "file": "src/scenes/jungleHost.js",
+    "old": "_abs[0] = w.px * PIXEL_M + w.lx;",
+    "new": "_abs[0] = _eye[0];",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-HOST-2-the-floor-sent-in-the-worlds-frame",
+    "file": "src/scenes/jungleHost.js",
+    "old": "      u[1] += cy;\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-HAZE-7-the-haze-stacked-on-the-seas-fog",
+    "file": "src/scenes/world.js",
+    "old": " jungle?.under(sky); }",
+    "new": " }",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-HAZE-6-the-view-out-unhazed",
+    "file": "src/render/renderer.js",
+    "old": "    k.haze.set(this._haze);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-HAZE-8-the-dome-grades-it-twice",
+    "file": "src/render/skyRenderer.js",
+    "old": "  outColor = vec4(brassGrade(dreadGrade(mix(color, uFogColor, uFogMix), uDread), uBrass), 1.0);\n  outColor.rgb = hazeSky(outColor.rgb, dir);",
+    "new": "  outColor = vec4(brassGrade(dreadGrade(hazeSky(mix(color, uFogColor, uFogMix), dir), uDread), uBrass), 1.0);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-HAZE-3-a-glow-left-unhazed",
+    "file": "src/render/nodeGlow.js",
+    "old": "    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);",
+    "new": "    void NO_HAZE;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-HAZE-3-a-hosts-fog-without-it",
+    "file": "src/scenes/hostMagic.js",
+    "old": "camPos: eye, focus: renderer._focus, haze: renderer._haze });",
+    "new": "camPos: eye, focus: renderer._focus });",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-1-no-wide-grid",
+    "file": "src/ai/cover.js",
+    "old": "      if (it.r > COVER_CELL) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-1-the-wide-search-not-widened",
+    "file": "src/ai/cover.js",
+    "old": "        const R = set.wideR;",
+    "new": "        const R = 0;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-3-the-jungle-mark-an-ordinary-trees",
+    "file": "src/scenes/treeHost.js",
+    "old": "n.flat?.jungle != null ? jungleTreeMark(n.flat) : TREE_MARK",
+    "new": "TREE_MARK",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-3-the-curtains-read-as-the-trunk",
+    "file": "src/scenes/treeHost.js",
+    "old": "pull: (hung ? t.foot : t.trunk) * flat.js + JUNGLE_MARK_CLEAR",
+    "new": "pull: t.trunk * flat.js + JUNGLE_MARK_CLEAR",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-3-the-glow-ignores-the-marks-pull",
+    "file": "src/render/nodeGlow.js",
+    "old": "g.pull = Number.isFinite(m.pull) ? m.pull : NODE_GLOW_PULL;",
+    "new": "g.pull = NODE_GLOW_PULL;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-5-the-trunk-window-empty",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "const trunkTo = crownFrom > FOOT_TOP ? crownFrom : FOOT_TOP + TRUNK_BAND;",
+    "new": "const trunkTo = crownFrom;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-6-a-failed-load-the-sessions",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "      loading.then((v) => { if (!v) loading = null; });",
+    "new": "      void loading;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-7-a-second-material-read-as-the-first",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "  if (materials.size > 1) throw new Error(",
+    "new": "  if (false) throw new Error(",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-7-a-comment-read-into-a-face",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "const line = raw.replace(/#.*/, '').trim();",
+    "new": "const line = raw.trim();",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-TREE-9-the-idle-upload",
+    "file": "src/systems/lowPolyTreesAssets.js",
+    "old": "if (visible.count || shown) gpu.setInstances(vis, visible.count);",
+    "new": "gpu.setInstances(vis, visible.count);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-LAY-1-the-grove-off-the-lattice",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "grove: Object.freeze({ cell: 32,",
+    "new": "grove: Object.freeze({ cell: 24,",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-LAY-2-a-canopy-tree-up-a-cliff",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ) continue;",
+    "new": "if (!groundOf[ti]) continue;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-LAY-2-a-young-tree-up-a-cliff",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "const under = g2 > TAN_MAX_SQ ? 0 :",
+    "new": "const under =",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-LAY-3-the-fields-a-light-gap",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "const fields = 1 - openOf[ti];",
+    "new": "const fields = 1;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-LAY-6-the-crowns-whole-reach",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "r: m.crown * JUNGLE_CROWN_COVER * scale,",
+    "new": "r: m.crown * scale,",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-LAY-7-the-neighbour-pixels-trunks-unseen",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "    const wx = ox + i * C, wz = oz + j * C;\n    t[0] =",
+    "new": "    return false;\n    const wx = ox + i * C, wz = oz + j * C;\n    t[0] =",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-LAY-8-the-first-read-float64",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "      return dist[i];",
+    "new": "      return me ? best : -best;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-LAY-9-the-stands-a-tiles-white-noise",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "jungleStandNoise(origin, x + 0.5, y + 0.5) < j",
+    "new": "tileDraw(ox + x, oz + y, 6) < j",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-PERF-2-a-lacked-field-read-as-nan",
+    "file": "src/world/terrain/natureWire.js",
+    "old": "const at = (c, i) => { if (!c) return undefined; const v = c[i]; return v === v ? v : undefined; };",
+    "new": "const at = (c, i) => { if (!c) return undefined; return c[i]; };",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-PERF-2-the-buffers-not-transferred",
+    "file": "src/world/terrain/natureWire.js",
+    "old": "export const natureBuffers = (packed) => (packed?.wire === 'nature' ? packed.cols.map((c) => c.buffer) : []);",
+    "new": "export const natureBuffers = () => [];",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-PERF-5-the-young-to-the-horizon",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "batch.farH = g.young ? 0 : proto.size.h;",
+    "new": "batch.farH = proto.size.h;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BANTHA1-PERF-6-a-whole-pixel-laid-twice",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(",
+    "new": "withJungle(jungle && false ? [] : layoutNature(",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  }
+]

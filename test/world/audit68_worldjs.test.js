@@ -329,7 +329,7 @@ test('AUDIT 68 S22-tl2-edge-facing: the roof refusal falls back to the edge of t
 // ---- S17: the grass root takes the tile's real mean colour ----
 
 test('AUDIT 68 S17-ground-mean-colour: a blade\'s root is the mean of the tile\'s own texels, off the color32 getColor32 mints - learned whenever the scene lacks it', async () => {
-  const { tileMeanColour, grassRecordsOf } = await import('../../src/render/labGrass.js');
+  const { tileMeanColour, grassRecordsOf, floorRecordsOf } = await import('../../src/render/labGrass.js');
   const { TextureFile } = await import('../../src/formats/textureFile.js');
   assert.equal(typeof tileMeanColour, 'function');
   // the producer: a real TextureFile over a palette where index 7 is (200,200,200) and 9 is (100,50,0)
@@ -350,9 +350,11 @@ test('AUDIT 68 S17-ground-mean-colour: a blade\'s root is the mean of the tile\'
   const groundPuddles = new Map();   // WATER-PUDDLE: the same block learns the pass's puddle mask for the blades
   // GRASS-LIT2: `drawnMeans` is the record means of a texture mod's tile set where one dresses the archive (null: none -
   // the classic's); AUDIT GRASS-LIT2 B2: taken at the upload, off the layers drawn
-  const run = (drawnMeans) => new Function('grassRecords', 'groundArchive', 'groundTex', 'grassRecordsOf', 'groundMeanColour', 'tileMeanColour', 'groundPuddles', 'markPuddleWater', 'drawnMeans', block)(
-    new Map(), 302, groundTex, grassRecordsOf, groundMeanColour, tileMeanColour, groundPuddles, markPuddleWater, drawnMeans);
+  const floorRecords = new Map();   // BANTHA2: the jungle floor's records, learned beside the meadow's
+  const run = (drawnMeans) => new Function('grassRecords', 'groundArchive', 'groundTex', 'grassRecordsOf', 'groundMeanColour', 'tileMeanColour', 'groundPuddles', 'markPuddleWater', 'drawnMeans', 'floorRecords', 'floorRecordsOf', block)(
+    new Map(), 302, groundTex, grassRecordsOf, groundMeanColour, tileMeanColour, groundPuddles, markPuddleWater, drawnMeans, floorRecords, floorRecordsOf);
   run(null);
+  assert.ok(floorRecords.has(302), 'the floor\'s records learned in the same step');
   assert.equal(groundPuddles.get(302)?.length, 2, 'and the puddle mask with them, off the same layers');
   assert.ok(groundMeanColour.has(302), 'the scene learned the archive\'s colours though the tile array was the renderer\'s already');
   near(groundMeanColour.get(302)[0], [150 / 255, 125 / 255, 100 / 255]);

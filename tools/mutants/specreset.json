@@ -482,8 +482,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L5-6-resetSpecGuide-keeps-note",
     "file": "src/ui/growth/specGuide.js",
-    "old": "_all = false; _note = null; _noteFresh = false; }",
-    "new": "_all = false; _noteFresh = false; }",
+    "old": "_all = false; _note = null; _noteFresh = false; _swapOut = null; _swapIn = null; }",
+    "new": "_all = false; _noteFresh = false; _swapOut = null; _swapIn = null; }",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L3-7-dot-breaks",
     "file": "src/ui/growth/specGuide.js",
-    "old": ".replace(/ ·/g, '\\u00a0·')",
-    "new": "",
+    "old": "{ gold: SPEC_RESET_GOLD }).replace(/ ·/g, '\\u00a0·')",
+    "new": "{ gold: SPEC_RESET_GOLD })",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]

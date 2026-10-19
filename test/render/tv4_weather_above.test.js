@@ -198,22 +198,22 @@ test('AUDIT DEEP R-1: EVERY fogged program under the travel view measures its fo
   assert.match(dwall, /if \(U\.uFocus\) gl\.uniform4fv\(U\.uFocus, fog\?\.focus \?\? NO_FOCUS\);/);
   // GUILD1d (2026-09-30) joined the list: the guild halls' banners hang in the streets the view flies over, and upload it
   assert.match(readFileSync(new URL('bannerPass.js', dir), 'utf8'), /if \(U\.uFocus\) gl\.uniform4fv\(U\.uFocus, fog\?\.focus \?\? NO_FOCUS\);/);
-  assert.match(rd('src/scenes/world.js'), /const hung = bannersHung\(\);[\s\S]{0,650}dw: renderer\._dwFog, focus: renderer\._focus \},/, 'the banners handed it');
+  assert.match(rd('src/scenes/world.js'), /const hung = bannersHung\(\);[\s\S]{0,650}dw: renderer\._dwFog, haze: renderer\._haze, focus: renderer\._focus \},/, 'the banners handed it');
   // SHIP-COLOURS (2026-10-17) joined the list: a ship's flag at her masthead, on the sea the view flies over - handed the focus as the banners are
   assert.match(readFileSync(new URL('shipFlagPass.js', dir), 'utf8'), /if \(U\.uFocus\) gl\.uniform4fv\(U\.uFocus, fog\?\.focus \?\? NO_FOCUS\);/);
-  assert.match(rd('src/scenes/world.js'), /const frameShipFlags = \(\) => \{   \/\/ PERF-V8[\s\S]{0,900}dw: renderer\._dwFog, focus: renderer\._focus \},/, 'the flags handed it');
+  assert.match(rd('src/scenes/world.js'), /const frameShipFlags = \(\) => \{   \/\/ PERF-V8[\s\S]{0,900}dw: renderer\._dwFog, haze: renderer\._haze, focus: renderer\._focus \},/, 'the flags handed it');
   // NAV-B (2026-09-28) joined the list: the naval pass's smoke, flashes and aim ride Come Sail Away's frame, under the view too
   assert.deepEqual(fogged.filter((f) => !RENDERER_OWNED[f] && !NEVER_UNDER_THE_VIEW[f]).sort(), ['bannerPass.js', 'comeSailAwayRender.js', 'deepWatersRender.js', 'duelWall.js', 'foeTelegraph.js', 'gatePass.js', 'navalRender.js', 'oceanHolesRender.js', 'rainCurtains.js', 'riteSmoke.js', 'serpentRender.js', 'shipFlagPass.js', 'spellImpactFx.js'], 'the passes the view draws, all accounted for (merged beside CSA-F and OH-C: the boats\' parts and waves, the pits; NAV-B: the sea fight\'s; WB12d: the rite\'s smoke; SERPENT1: the sea serpent over the open sea; IMPACTFX: a spell\'s landing - the world pass draws the missiles, and so their bursts, under the view too)');
   // IMPACTFX (2026-10-05) joined the list: the cast engine hands its burst pass the renderer\'s focus
-  assert.match(rd('src/scenes/hostMagic.js'), /fxPass\.draw\([^\n]*camPos: eye, focus: renderer\._focus \}\);/, 'the spell impacts handed it');
+  assert.match(rd('src/scenes/hostMagic.js'), /fxPass\.draw\([^\n]*camPos: eye, focus: renderer\._focus, haze: renderer\._haze \}\);/, 'the spell impacts handed it');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /camPos: renderer\._camPos, dw: renderer\._dwFog, focus: renderer\._focus \}\);   \/\/ DW-C/, 'the duel wall handed it');
+  assert.match(w, /camPos: renderer\._camPos, dw: renderer\._dwFog, haze: renderer\._haze, focus: renderer\._focus \}\);   \/\/ DW-C/, 'the duel wall handed it');
   // R-11: the red storms stand round the traveller, and each peer shows the picture the view's eye sees
   assert.match(w, /const tvStand = tvf \? cam\.pos : mwv\.eye;[^\n]*\n\s*const gateSky = gateOmen\?\.sky\(tvStand, gateSkyTranslate\)/);
   assert.match(w, /dreadStorm\.tick\(\{ sharedMs: Date\.now\(\) \+ _sharedOffsetMs, eye: tvStand, weight: dreadW \}\)/);
   assert.match(w, /gateStorm\.tick\(\{ sharedMs: Date\.now\(\) \+ _sharedOffsetMs, eye: tvStand,/);
   assert.match(w, /dt, eye: travelView\?\.eye \?\? player\.pos, poseAgeMs:/);
-  assert.match(w, /camPos: renderer\._camPos, focus: renderer\._focus \}\)\) renderer\.markForeignPass\(\);   \/\/ AUDIT DEEP R-1/, 'the gate handed it');
+  assert.match(w, /camPos: renderer\._camPos, focus: renderer\._focus, haze: renderer\._haze \}\)\) renderer\.markForeignPass\(\);   \/\/ AUDIT DEEP R-1/, 'the gate handed it');
   // the gate's own upload, driven: a fake GL hears the focus it was handed, and w 0 without one
   const { GatePassRenderer } = await import('../../src/render/gate/gatePass.js');
   {
@@ -234,7 +234,7 @@ test('TV4 host wiring: the curtains built on the enhanced lane, drawn under the 
   assert.match(w, /if \(!deepWaters\) return g;\n(\s*\/\/[^\n]*\n)*\s*return Math\.max\(g, tvSeaY\(\) \+ CURTAIN_FOOT_MARGIN_M\);/, 'AUDIT DEEP R-4: the sea\'s surface over the water - AUDIT DEEP2 D4: at every point, a coast\'s and a carved cell\'s in a land pixel too');
   assert.match(w, /const tvSeaY = \(\) => \(deepWaters\?\.oceanLocalY \?\? SCALED_OCEAN_ELEVATION \* STREAMING_TERRAIN_SCALE\) \+ state\.pixelTranslation\(state\.current\.x, state\.current\.y, _tvSeaT\)\[1\];/);
   assert.match(w, /water = !place && hit\.point\[1\] <= tvSeaY\(\) \+ TV_SEA_EPS_M;/, 'AUDIT DEEP2 B-5: water where the click landed');
-  assert.match(w, /fog: \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, camPos: renderer\._camPos, focus: renderer\._focus, dw: renderer\._dwFog \} \}\)\) renderer\.markForeignPass\(\);/);
+  assert.match(w, /fog: \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, camPos: renderer\._camPos, focus: renderer\._focus, dw: renderer\._dwFog, haze: renderer\._haze \} \}\)\) renderer\.markForeignPass\(\);/);
   assert.ok(((i, j) => i >= 0 && j >= 0 && i > j)(w.indexOf('rainCurtains.draw(curtains'), w.indexOf('gatePool.drawPass(proj, view')), 'after the world and its other foreign passes');
 });
 

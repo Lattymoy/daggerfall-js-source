@@ -421,7 +421,7 @@
   {
     "name": "AUDIT-GRASSLIT2-B2-means-asked-again",
     "file": "src/scenes/world.js",
-    "old": "if (labGrass) groundDrawnMeans.set(groundArchive, modLayers ? modLayers.map(tileMeanColour) : null);",
+    "old": "if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);",
     "new": "// means not kept",
     "tests": [
       "test/render/grasslit2.test.js"

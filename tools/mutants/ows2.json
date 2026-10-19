@@ -372,7 +372,7 @@
   {
     "name": "OWS2-host-no-means-helm",
     "file": "src/scenes/world.js",
-    "old": "return tvSeaCrosses(tvSeaRig(b)) ? { start: 'sea', again: !!b.packable, boat: b, how: 'helm' } : null;",
+    "old": "return tvSeaCrosses(tvSeaRig(b)) ? { start: 'sea', again: !!b.packable, boat: b, how: 'helm', voyage: !!b.charter } : null;",
     "new": "return null;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"

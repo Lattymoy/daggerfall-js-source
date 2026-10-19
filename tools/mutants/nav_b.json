@@ -92,8 +92,8 @@
   {
     "name": "NAV-B-the-focus-unsent",
     "file": "src/render/navalRender.js",
-    "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);\n  }",
-    "new": "  }",
+    "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);\n    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)\n  }",
+    "new": "    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)\n  }",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js",
       "test/render/tv4_weather_above.test.js"

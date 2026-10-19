@@ -251,7 +251,7 @@ test('TV-SNOW under the Overworld the snow\'s tiers stand down and its uploads w
   assert.ok(view.clocks.wild > 0.4, `four hours of snow raised the wild\'s depth: ${view.clocks.wild}`);
   assert.equal(view.clocks.snowing, false, 'and the clear sky is its phase now');
   // the world host hands the view's word, beside the walkers and the bodies
-  assert.match(WORLD, /snowfall\.frame\(\{ now: now \/ 1000, inside: false, player: snowPlayer\(\), weather, seconds: worldMinutes\(\) \* 60, winter: season === SEASON\.Winter, climate: maps\.getClimateIndex\(_wfPx\.x, _wfPx\.y\), overworld: !!tvf, npcs: snowNpcs, corpses: snowBodies \}\);/);
+  assert.match(WORLD, /snowfall\.frame\(\{ now: now \/ 1000, inside: false, player: snowPlayer\(\), weather, seconds: worldMinutes\(\) \* 60, winter: snowCover\.winterNear\(season === SEASON\.Winter\), climate: maps\.getClimateIndex\(_wfPx\.x, _wfPx\.y\), overworld: !!tvf, npcs: snowNpcs, corpses: snowBodies \}\);/);
   assert.ok(WORLD.indexOf('const tvf = travelView?.frame(') < WORLD.indexOf('overworld: !!tvf'), 'read after the view\'s frame');
 });
 

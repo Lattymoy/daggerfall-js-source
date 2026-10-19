@@ -18,6 +18,7 @@ export const SD_OMEN_COLOR = Object.freeze([1.0, 0.7, 0.26]);
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);
+const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 const WHITE = new Float32Array([1, 1, 1]);
 const COLOR = new Float32Array(SD_OMEN_COLOR);
 
@@ -28,7 +29,7 @@ export class SdOmenPassRenderer {
     this.gl = gl;
     this.program = buildProgram(gl, BEACON_VS, BEACON_FS, 'sd omen');
     this.u = {};
-    for (const n of ['uVP', 'uOrigin', 'uEye', 'uRadius', 'uTime', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uVP', 'uOrigin', 'uEye', 'uRadius', 'uTime', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(this.program, n);
     const verts = beaconVertices();
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
@@ -67,6 +68,7 @@ export class SdOmenPassRenderer {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? WHITE);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.bindVertexArray(this.vao);
     for (const o of list) {

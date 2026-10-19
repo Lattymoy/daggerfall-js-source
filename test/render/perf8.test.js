@@ -95,7 +95,7 @@ test('PERF8 pins: keep and ground take the piece from the index and no longer lo
   // the law is that `pieceAt` IS pieceIndex over TERRAIN_SIZE, not which
   // statement mints it.
   assert.match(w, /pieceIndex\([\s\S]{0,400}TERRAIN_SIZE\)/);
-  assert.match(w, /const keep = \(x, z\) => \{\n\s+const hit = pieceAt\(x, z\);\n\s+if \(!hit\) return null;\n\s+const \{ p, t, grass \} = hit;/);
+  assert.match(w, /const keep = \(x, z, floor = false\) => \{[^\n]*\n\s+const hit = pieceAt\(x, z\);\n\s+if \(!hit\) return null;\n\s+const \{ p, t, grass \} = hit;/, 'PIN MOVED (BANTHA2: the keep serves the jungle floor too - its `floor` flag)');
   assert.match(w, /const ground = \(x, z\) => \{\n\s+const hit = pieceAt\(x, z\);[^\n]*\n\s+if \(!hit\) return null;/);
   assert.doesNotMatch(w, /for \(const \{ p, t(, grass)? \} of pieces\)/, 'no scan left');
 });

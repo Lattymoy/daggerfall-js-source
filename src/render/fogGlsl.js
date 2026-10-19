@@ -4,7 +4,8 @@
 // surface and the lighting lane's five - and it was pasted into nine of
 // them; DS1's exp2 mode had to be added to every copy. A leaf with no
 // imports, as cloudShadow.js is, so the classic page's static graph grows by
-// this file alone. Each shader declares its own uniforms (uFogMode,
+// this file alone (BANTHA1: and the jungle's haze law, render/hazeGlsl.js -
+// its one import, itself a leaf). Each shader declares its own uniforms (uFogMode,
 // uFogDensity, uFogRange, uCamPos); renderer.js's setFog/_uploadFog is
 // their one producer.
 //
@@ -42,16 +43,23 @@
  * program takes the fog block once, and no other block declares it (the shader evaluator, test/glsl.mjs, takes no
  * preprocessor, and a second declaration is a compile error).
  */
+import { HAZE_LAW_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze - its one import, itself a leaf
+
 export const FOCUS_GLSL = `uniform vec4 uFocus;
 vec3 focusOrigin() { return uFocus.w > 0.5 ? uFocus.xyz : uCamPos; }`;
 
 /** fogFactorAt(worldPos): 1 unfogged, 0 all fog. uFogMode 0 off, 1 linear
  *  over uFogRange (start, end), 2 exp, 3 exp2 (DS1: FogMode.ExponentialSquared).
+ *  BANTHA1: and the jungle's haze over it (render/hazeGlsl.js hazeAt - a
+ *  transmittance, so the two multiply); weatherFogAt(worldPos) the weather's
+ *  half alone, for a pass that holds that half to a law of its own (the
+ *  water's sea haze, render/waterSurface.js).
  *  dwWaterFog(colour, worldPos): the Deep Waters distance fog over a
  *  finished colour (the colour back unchanged while it is off);
  *  dwWaterFogAdd(colour, worldPos): an ADDED colour's share of it. */
 export const FOG_GLSL = `${FOCUS_GLSL}
-float fogFactorAt(vec3 worldPos) {
+${HAZE_LAW_GLSL}
+float weatherFogAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
   float d = length(worldPos - focusOrigin());   // TV1: the traveller's eye under the travel view, the camera otherwise
   if (uFogMode == 1) {
@@ -60,6 +68,7 @@ float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
   return exp(-uFogDensity * d);
 }
+float fogFactorAt(vec3 worldPos) { return weatherFogAt(worldPos) * hazeAt(worldPos, focusOrigin()); }   // BANTHA1
 uniform vec4 uDwFog[5];   // DW-C: on, sea Y, vision, strength | absorb rgb, scatter per m | in-scatter rgb, darkening | fog rgb, far factor | far start, far end, sky distance, -
 float dwWaterDistance(vec3 worldPos) {   // the ray's length in the water: capped where it climbs through the surface
   vec3 r = worldPos - uCamPos;

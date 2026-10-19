@@ -715,3 +715,75 @@ keeping its own sweep's pace. Mutants: `tools/mutants/rainfps.json`, 12, 12 dead
 pane's cloud quality, Low, costs a rain sky a quarter of Default's (151 ms
 against 551 in the lab); High costs five times Default in rain (2869 ms) and
 is for strong GPUs only.
+
+## SKY-ARC - the aerial perspective is the light path's (2026-10-19)
+
+**From play:** a player's screenshot on the Discord, "BY THE RING", posted by the owner with "can you fix this weird
+issue in the sky?". One hard, smooth arc ran across a dusk sky. On one side the player's own overcast deck was warm
+yellow-ochre, on the other blue-grey, and the line swept from high overhead down to the horizon.
+
+**Reproduced** in the game at Daggerfall: minute 525200 (the 5th of Morning Star 3E405, 17:20 - AUDIT PRECIP DOC-3: the
+record said the 4th; the date's day is 0-based), the map's word cloudy, facing north,
+under Dynamic Skies. It also reproduces in the sky lab with that minute's map cells. Removing one cell from the lab's
+list removes the line: the eastern system's overcast ring, its centre 84 km east, its own cloud 13 km away, and its
+SLAB-SPAN reach (85 km) putting its bounding column's wall 0.7 km west of the eye. That cell brings no cloud where the
+line is drawn.
+
+**The cause.** The march faded every sample toward the horizon's colour by where the span holding it BEGAN. SLAB-SPAN
+had moved the fade from the ray's one entry to each span's own start (above). But spans are bookkeeping: they only say
+where the walk may skip air, and they merge and split where the cells' bounding columns meet the zone's slab.
+
+- A ray that leaves the cell's column below the zone's base keeps the zone's deck in a span of its own, so the deck is
+  faded by `uBase / dir.y`.
+- A ray that leaves the column above the zone's base merges the column (from the cell's own, lower base) with the zone,
+  so the same deck is faded by the column's start.
+
+The locus between the two is the column's wall at the zone's base. That wall is a horizontal circle, so on the sky it is
+a smooth conic, and since the fade steps across it the line is hard. The warm side is the side faded LESS - the deck's
+own dusk gold (VC6b); the blue-grey side is the same deck faded more toward the horizon's colour, at that minute a dark
+blue-grey (AUDIT PRECIP DOC-2: the record said the warm side was the horizon's).
+
+**The law.** Aerial perspective belongs to the light's path from the eye to the point that scattered it. Each sample is
+now faded by its own distance (`volumetricClouds.js:"float aerial(float t)"`), and so are the back veils at theirs
+(`aerial(tBack)`). The spans decide only where the march walks, never what colour it finds. SLAB-SPAN's pale block
+cannot come back either: a sample far behind an empty cell's disc is faded
+by its own distance, as before. The deck is a little hazier through its depth than at its base, by between the fade at
+its base and the fade at its top.
+
+Rejected alternatives:
+
+- **Feathering or resizing the bounding columns** would only move the line.
+- **Fading by the ray's entry again** brings back SLAB-SPAN's pale block.
+
+**Pinned** in `test/render/skyarc_aerial.test.js` (2), on the march's own GLSL through `test/cloudSky.mjs`: the colour
+step across the merge locus is the sky's own step beside it (it was ten times that), and a cell whose cloud a ray never
+meets leaves that ray as the zone alone draws it. `weather2c_cloudcells.test.js`'s aerial law moved with it: the horizon's
+share is between the fade at the slab's base and at its top, times the cloud's opacity, and more than the entry's alone.
+`vc7d_cirrus.test.js` and `vc7c_curtains.test.js` quote the veils' `aerial(tBack)`. Mutants: `tools/mutants/skyarc.json`
+(4, 4 dead); SLAB-SPAN's and AUDIT VC7's records on the fade re-aimed onto the new law (4 dead).
+
+**Also found while reproducing it**, and fixed by AUDIT PRECIP (`01-Overview/audits/Audit-Precip.md`, SKY):
+
+- **The span law was not yet the whole sky's** (DOC-5: the record said "no merge or split of spans can draw a line
+  again", false while two things still keyed on where a span began). The curtains were cut at the first span's start with
+  a fade law either side (SKY-2), and the far early-out keyed on it too (SKY-BAND, below). Now every veil sample is faded
+  at its own distance (`volumetricClouds.js:"vec2 veilPiece(int i, vec3 cam, vec3 dir, float a, float b, float rad, float yb, float yt) {"`
+  answers its depth and its faded share; the front and back veils pre-faded), and the lane's curtains keep their envelope
+  (SKY-3: the fall set before the growth). With them, no span's start decides a colour.
+- **A stair-stepped band at the horizon under Dynamic Skies** on the weather map's lane at dusk (SKY-BAND; DOC-1: the
+  record called it the mod's fog handed ungreyed - the mod's fog is never saturated, and greying it left the band). It
+  was the mod's DOME showing through rows the walk left transparent: a cell's empty column took the walk short of the
+  zone's deck, and the far slab it never reached was left bare. The slab the walk does not reach is now the horizon's by
+  its own length (`volumetricClouds.js:"float farA(float rest)"`), and the early-out past `FAR_M` is that same law with
+  nothing walked.
+- **The far fade's colour** (SKY-HZN, the smaller fault DOC-1 found under the band): on the map's lane the clouds faded
+  into the CLEAR base's horizon, not the sky's - under the mod its fog's colour greyed by the base's row, on the port's
+  dome its ungreyed palette. Now the mod's is greyed by the player's eased row (`dynamicSkiesBridge.js`
+  `cloudsStateUnderMod`'s `skyRow`) and the port's dome hands its own horizon (`scenes/shared.js`).
+- **A sun-coloured cap at dusk** in the far haze (SKY-CAP). Upward rays' sun-path foot left the 13.1 km cloud-shadow
+  square, and the metre clamp in fp32 landed a hair outside it, where the map read full sun. The edge is now read in the
+  map's own UV (`cloudShadow.js` `cloudShadowNearest`), and a crossing's uncovered strips are MARCHED in the same update
+  (DOC-4: the record proposed extending the old map's edge - a guess at ground never marched, wrong wherever a cloud's
+  edge lies in the strip).
+
+Pinned in `test/render/audit_precip_sky.test.js` (8) with `tools/mutants/audit_precip.json`'s SKY records - all dead.

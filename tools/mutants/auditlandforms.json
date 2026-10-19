@@ -1405,8 +1405,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-H2-nature-handed-none",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    beach: classic,\n  });",
-    "new": "    beach: null,\n  });",
+    "old": "    beach: classic,\n  };",
+    "new": "    beach: null,\n  };",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1441,8 +1441,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-H3-nature-on-dfu",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const nature = layoutNature(samples, tilemap, {",
-    "new": "  const nature = layoutNature(classic ?? samples, tilemap, {",
+    "old": "  const nature = withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,",
+    "new": "  const nature = withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(classic ?? samples, tilemap, natureOpts), samples, tilemap,",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

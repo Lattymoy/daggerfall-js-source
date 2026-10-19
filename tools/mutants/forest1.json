@@ -173,8 +173,8 @@
   {
     "name": "FOREST1-kernel-hidden-flag",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "hide: !!forests.hidden }",
-    "new": "hide: true }",
+    "old": "[{ ...locationRect, hide: !!hidden }]",
+    "new": "[{ ...locationRect, hide: true }]",
     "tests": [
       "test/systems/forest1.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "FOREST1-kernel-location-a-place",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "...(hasLocation && locationRect ? [{ ...locationRect, hide: !!forests.hidden }] : []),",
+    "old": "...(hasLocation && locationRect ? [{ ...locationRect, hide: !!hidden }] : []),",
     "new": "",
     "tests": [
       "test/systems/forest1.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "FOREST1-host-rocks",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      if (forests && insideRocks(pixelRocks, f.x, f.z)) continue;\n",
+    "old": "      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // AUDIT BANTHA1 LAY-4: and the jungle's, whatever the woods' switch\n",
     "new": "",
     "tests": [
       "test/systems/forest1.test.js"

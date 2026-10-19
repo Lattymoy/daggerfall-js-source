@@ -17,6 +17,7 @@
 //   that changes how a system plays changes its page.
 
 import { t } from './textManager.js';   // KG3: a page's words read through the text core when shown
+import { isEnhanced } from './uiSkin.js';   // AUDIT SUGGESTIONS-1019 L6-4: a line only the enhanced skin's Stats page bears out
 import { ROLL_GAIN_DAY_MAX, ROLL_BOOK_RANK_MAX, SEAT_RANK } from '../net/npcChapterLaw.js';   // SEAT-WORDS: the Chapters page's numbers, the law's own
 
 /** @typedef {{ id: string, group: string, title: string, trigger: string, body: ReadonlyArray<string>, points?: ReadonlyArray<string> }} Tutorial */
@@ -174,9 +175,16 @@ export const TUTORIALS = Object.freeze([
   }),
   page({
     id: 'character-sheet', group: 'character', title: 'Your Character', trigger: 'When you first open your character sheet.',
-    body: [
-      'This shows your attributes, skills and standing with each faction. Skills improve as you use them, and when your main skills have gone up enough, you level up.',
-    ],
+    get body() {
+      return [
+        'This shows your attributes, skills and standing with each faction. Skills improve as you use them, and when your main skills have gone up enough, you level up.',
+        // SKILL-TICK (systems/advancement.js skillAdvanceProgress): when a used skill goes up, and where to see how close -
+        // AUDIT SUGGESTIONS-1019 L6-4: the Stats page's line is the enhanced skin's alone, so the classic skin is not sent to it
+        isEnhanced()
+          ? t('tutorials.characterSheet.skillRaiseStats', 'A used skill goes up when you rest or travel, at most once every 6 hours. Your Stats page shows how close each skill is.')
+          : t('tutorials.characterSheet.skillRaise', 'A used skill goes up when you rest or travel, at most once every 6 hours.'),
+      ];
+    },
   }),
   page({
     id: 'level-up', group: 'character', title: 'Level Up', trigger: 'When you first level up.',

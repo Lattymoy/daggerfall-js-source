@@ -78,7 +78,7 @@ test('SD19 THE SKY AND THE LIGHT, by source: the sky controller grades the land\
   assert.match(w, /const sdAirNow = \(eye, minuteNow\) => \{\n\s*const o = sdHost\?\.omen\(\);\n\s*if \(!o\?\.hollow\?\.site \|\| \(modes\?\.mode \?\? 'exterior'\) !== 'exterior' \|\| !eye\) return 0;/);
   assert.match(w, /return sdAirWeight\(o\.light, Math\.hypot\(eye\[0\] - x, eye\[2\] - z\), minuteNow\);/);
   assert.match(w, /const sdAirW = sdHost \? sdAirNow\(tvStand, minute\) : 0;[^\n]*\n\s*sky\.setBrass\?\.\(sdAirW\);/);
-  assert.ok(w.indexOf('sky.setBrass?.(sdAirW);') < w.indexOf('const fogColor = sky.fogColorFor(fogNow);'), 'before the haze is read');
+  assert.ok(w.indexOf('sky.setBrass?.(sdAirW);') < w.indexOf('sky.fogColorFor(fogNow)'), 'before the haze is read');   // BANTHA1 (PIN MOVED): the law's colour read inside the jungle's haze call
   assert.match(w, /sdBrassLight\(sunbabyLight\(dreadLight\(withMoonAmbient\(/, 'the ambient');
   // PIN MOVED (ETHER-LIGHT, bible/03-World/Eltheric-Ocean.md): and the key leaned again past the Veil, outermost of the chain
   assert.match(w, /sdBrassLight\(sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW, ETHER_KEY_TINT\)\);/, 'the key');

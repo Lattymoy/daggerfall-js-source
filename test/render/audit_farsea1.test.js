@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { glslFunctions } from '../glsl.mjs';
 import { RING_SEA_GLSL } from '../../src/render/horizonHaze.js';
+import { RING_HAZE_GLSL } from '../../src/render/hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring (off here: uJungleHaze[1].x 0)
 import {
   buildFarRingGrid, buildSeaFillIndices, seaFillCount, ringHeight,
   RING_HAZE_HOLD, RING_RIM_START, RING_RIM_END,
@@ -25,7 +26,7 @@ const rd = (p) => readFileSync(p, 'utf8');
 const SEA_Y = ringHeight(0);
 const FS_W = waterSurfaceFs(CLOUD_SHADOW_GLSL);
 const fr = rd('src/render/farRing.js');
-const RING_FS = (() => { const a = fr.indexOf('const FS = `#version 300 es'); return fr.slice(a + 'const FS = `'.length, fr.indexOf('}`;', a) + 1).replace('${RING_SEA_GLSL}', RING_SEA_GLSL); })();
+const RING_FS = (() => { const a = fr.indexOf('const FS = `#version 300 es'); return fr.slice(a + 'const FS = `'.length, fr.indexOf('}`;', a) + 1).replace('${RING_SEA_GLSL}', RING_SEA_GLSL).replace('${RING_HAZE_GLSL}', RING_HAZE_GLSL); })();
 // the lane's ring without its eye's texture and its dither (a byte of noise): the sea is summed in the water's space
 const LANE_FS = EL_FAR_RING_FS.replace('float ex = uELExposure * elAdapt();', 'float ex = uELExposure;')
   .replace(/outColor = vec4\(col \+ \(bayer4\(gl_FragCoord\.xy\) - [0-9.]+\) \/ 255\.0, 1\.0\);/, 'outColor = vec4(col, 1.0);');

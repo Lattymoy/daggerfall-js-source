@@ -32,7 +32,7 @@
   {
     "name": "HILLSEAT-4-world-not-drawn",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (hillPatch) { staticBuilder.add(hillPatch, originMatrix, resolveTexKey); ",
+    "old": "if (hillPatch) { addStatic(hillPatch, originMatrix, false); ",
     "new": "if (hillPatch) { ",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "HILLSEAT-5-world-not-solid",
     "file": "src/scenes/pixelBuild.js",
-    "old": "staticBuilder.add(hillPatch, originMatrix, resolveTexKey); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));",
-    "new": "staticBuilder.add(hillPatch, originMatrix, resolveTexKey);",
+    "old": "addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));",
+    "new": "addStatic(hillPatch, originMatrix, false);",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -52,7 +52,7 @@
   {
     "name": "HILLSEAT-6-world-own-upload",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (hillPatch) { staticBuilder.add(hillPatch, originMatrix, resolveTexKey);",
+    "old": "if (hillPatch) { addStatic(hillPatch, originMatrix, false);",
     "new": "if (hillPatch) { models.push({ gpu: renderer.createMesh(hillPatch), local: originMatrix, _box: transformedAabb(localAabb(hillPatch.positions), originMatrix), _order: -2 });",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"

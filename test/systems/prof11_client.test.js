@@ -153,7 +153,7 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
     page.draw();
     page.buttons().find((b) => b.textContent.startsWith('Stone Column')).onclick();
     assert.match(page.text(), /Stone Column - a Sculptor's/);
-    assert.match(page.text(), /margin 90: Fine 40 \| Superior 52 \| Masterwork 8\. A clean chisel is a step better\./);
+    assert.match(page.text(), /Quality chances: Fine 40% \| Superior 52% \| Masterwork 8%\. They get better the further your rank \(100\) is above the recipe's \(10\)\. Hit the marked line with every strike to raise the result one quality\./);   // PIN MOVED (PLAIN-ODDS): the odds said in plain words
     page.button('Craft').onclick();
     assert.match(page.text(), /The chisel \(Stone Column\) - strike the marked line, 7 strikes/);
     const realRandom = globalThis.crypto.getRandomValues.bind(globalThis.crypto);

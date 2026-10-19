@@ -1691,7 +1691,7 @@ export function createPlayerMagic({
       if (!fxPass) { try { fxPass = new SpellImpactPass(renderer.gl); } catch (e) { fxBroken = true; console.warn('[magic] the impact pass would not build', e?.message ?? e); return mw; } }
       renderer.endUiRun?.();
       const eye = renderer._camPos;
-      fxPass.draw(fx.buf, n, renderer._proj, renderer._view, eye, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: eye, focus: renderer._focus });
+      fxPass.draw(fx.buf, n, renderer._proj, renderer._view, eye, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: eye, focus: renderer._focus, haze: renderer._haze });   // AUDIT BANTHA1 HAZE-3: and the jungle's haze
       renderer.markForeignPass?.();
       return true;
     },

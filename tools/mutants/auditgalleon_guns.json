@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-GN-G3-word-without-my-lay",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "casks, spent: spentSaid, laid }, toWire);",
-    "new": "casks, spent: spentSaid }, toWire);",
+    "old": "casks, spent: spentSaid, gone: goneSaid(), laid }, toWire);",
+    "new": "casks, spent: spentSaid, gone: goneSaid() }, toWire);",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]

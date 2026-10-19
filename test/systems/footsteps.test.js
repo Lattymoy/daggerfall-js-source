@@ -94,6 +94,8 @@ test('footsteps: every host drives the machine into playOneShot', () => {
   assert.ok(wm.includes('dungeonShallow:'), 'the dungeon water arms ride the block water line');
   for (const f of ['world.js', 'exterior.js']) {
     const s = readFileSync(join(root, 'src/scenes', f), 'utf8');
-    assert.ok(s.includes('winter: season === SEASON.Winter'), `${f}: the season feeds the snow gate`);
+    // PIN MOVED (PRECIP4, AUDIT PRECIP GROUND-3): the streaming host's gate is the snow under the feet on the snow lane
+    // (scenes/snowCoverHost.js winterAt), DFU's season off it
+    assert.ok(s.includes(f === 'world.js' ? 'winter: snowCover.winterAt(player.pos, season === SEASON.Winter)' : 'winter: season === SEASON.Winter'), `${f}: the season feeds the snow gate`);
   }
 });

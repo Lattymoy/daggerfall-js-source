@@ -122,7 +122,8 @@ test('NUDE-FLATS by source: every host that draws a person asks drawnFlat, and t
   assert.match(ic, /const redrawn = v \|\| da !== pn\.textureArchive \|\| dr !== pn\.textureRecord;\s*return \{ \.\.\.pn, x, y, z, active: visible, questBehaviour: null, \.\.\.\(redrawn \? \{ drawArchive: da, drawRecord: dr \} : \{\}\) \};/,
     'drawn through RR2\'s own door, textureArchive/textureRecord untouched');
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const addFlat = \(archive, record, x, y, z\) => \{\s*\[archive, record\] = drawnFlat\(archive, record\);/, 'every flat the streaming host batches');
+  // PIN MOVED (AUDIT PRECIP HOST-7): the flats are logged, and grouped by their drawn picture (scenes/pixelBuild.js groupFlats)
+  assert.match(w, /export function groupFlats\(log, pics\) \{[^]*?const \[archive, record\] = drawnFlat\(pics\[j\]\[0\], pics\[j\]\[1\]\);\n\s+const k = `\$\{archive\}_\$\{record\}`;/, 'every flat the streaming host batches');
   assert.match(w, /const \[drawArchive, drawRecord\] = drawnFlat\(flat\.archive, flat\.record\);\s*const t = await getTexture\(drawArchive\);\s*if \(!t \|\| drawRecord >= t\.recordCount\) continue;\s*const size = billboardSize\(t, drawRecord\);/,
     'a street NPC\'s box is its picture\'s');
   assert.match(w, /pixelNpcs\.push\(\{ \.\.\.pn, drawArchive, drawRecord, width: size\.w,/);

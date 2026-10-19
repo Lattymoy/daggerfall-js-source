@@ -145,7 +145,7 @@ test('CRAFT-FIRST-SHOWN the stations say it, read off the real book: the loom\'s
     // THE LOOM, Outfitting 10: the Weavers' cloth alone says it earns none; a boot's Cured Leather and the leathers the 500
     press('The Loom', 'Clothing', true);
     press('The Loom', 'Straps');
-    assert.deepEqual([box('The Loom')[0], box('The Loom')[1].slice(-2)], ['Linen Straps - rank 0', ['Your rank 10, margin 10: Standard 50 | Fine 40 | Superior 10. A clean stitch is a step better.', SHOP(20)]], 'under the odds');
+    assert.deepEqual([box('The Loom')[0], box('The Loom')[1].slice(-2)], ['Linen Straps - rank 0', ['Quality chances: Standard 50% | Fine 40% | Superior 10%. They get better the further your rank (10) is above the recipe\'s (0). Press every stitch on the beat to raise the result one quality.', SHOP(20)]], 'under the odds');   // PIN MOVED (PLAIN-ODDS): the odds said in plain words
     press('The Loom', 'Boots');
     assert.equal(box('The Loom')[0], 'Linen Boots - rank 0');
     assert.equal(box('The Loom')[1].at(-1), FIRST(20, 'Outfitting'));
@@ -169,7 +169,7 @@ test('CRAFT-FIRST-SHOWN the stations say it, read off the real book: the loom\'s
     press('The Jeweller\'s Bench', 'Silver Ring');
     const jewel = box('The Jeweller\'s Bench');
     assert.equal(jewel[0], 'Silver Ring - rank 0');
-    assert.ok(jewel[1].includes('Your rank 0, margin 0: Crude 20 | Standard 60 | Fine 20. A clean facet is a step better.'), jewel[1].join('|'));
+    assert.ok(jewel[1].includes('Quality chances: Crude 20% | Standard 60% | Fine 20%. They get better the further your rank (0) is above the recipe\'s (0). Stop every turn where the stone catches the light to raise the result one quality.'), jewel[1].join('|'));
     assert.equal(jewel[1].at(-1), FIRST(20, 'Smithing'));
     // THE WORKBENCH, Building 100. PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): a Master's track takes no more XP -
     // the service credits MIN(earned, PROF_XP_MAX - held), none - so the Staff, the works and a Sculptor's carving say so

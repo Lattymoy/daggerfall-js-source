@@ -239,8 +239,8 @@ test('WX2 the wind model\u2019s arrival: 0 at the cut, 1 when the front lands, a
 test('WX2 the renderer: the lab draw scales the profile by the intensity and draws nothing at zero; the classic draw never reads it', () => {
   const p = read('src/render/precipitation.js');
   assert.match(p, /this\.intensity = 1;/, 'the whole profile by default');
-  assert.match(p, /const full = Math\.round\(\(LAB_COUNTS\[mode\] \?\? LAB_COUNTS\.rain\) \* Math\.min\(1, Math\.max\(0, this\.intensity\)\)\);\s*\n\s*const count = this\.countCap \? Math\.min\(full, this\.countCap\) : full;\s*\n\s*if \(count <= 0\) return;/,
-    'the count is the profile times the intensity, capped as before, and zero draws nothing');
+  assert.match(p, /const full = Math\.round\(\(LAB_COUNTS\[mode\] \?\? LAB_COUNTS\.rain\) \* Math\.min\(1, Math\.max\(0, this\.intensity\)\)\);\s*\n\s*const count = this\.countCap != null \? Math\.min\(full, this\.countCap\) : full;\s*\n\s*if \(count <= 0\) return;/,
+    'the count is the profile times the intensity, capped as before, and zero draws nothing');   // AUDIT PRECIP FALL-8 (PIN MOVED): a cap of 0 is a cap
   // the classic draw() body carries no intensity term
   const classic = p.slice(p.indexOf('  draw(mode, proj, view, camPos, camRight, timeSeconds) {'));
   assert.doesNotMatch(classic, /intensity/, 'DFU\u2019s cap is drawn whole on the classic path');
@@ -251,15 +251,20 @@ test('WX2 the hosts: both read the front under the enhanced sky only, and the cl
     const h = read(host);
     assert.match(h, /const enhancedFront = !!sky\?\.cloudShadow && params\.get\('front'\) !== 'off';/, `${host}: the front rides the enhanced sky, and ?front=off is its kill switch`);
     assert.match(h, /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump, peak: weatherOverride \? null : currentWeatherIntensity\(\) \}\)/, `${host}: the arrival is the wind's under the enhanced sky and 1 under the classic, and the jump rides along (WEATHER3b: and the map's intensity as the peak, none under a ?weather pin)`);
-    assert.match(h, /if \(fx\.changed\) wxFrom = wxNow;\s*\n\s*wxNow = enhancedFront \? blendTerms\(wxFrom, fallTerms\(weatherTerms\(\), fx\.intensity, weather, FALL_LIGHT\), fx\.t\) : weatherTerms\(\);/, `${host}: the terms cross from what was ON SCREEN, and classic takes the row whole`);   // PIN MOVED (RAIN-SPRINKLE): the row under what falls (test/systems/weather/fb1001_rainsprinkle.test.js)
-    assert.match(h, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;[^\n]*\n\s*setHeardWeather\(ambientWord, enhancedFront \? fx\.intensity : 1\);[^\n]*\n\s*ambience\.setPreset\(presetForExterior\(ambientWord, isNight\(minute\)\)\);\s*\n\s*ambience\.rainGain = enhancedFront \? fx\.intensity : 1;/, `${host}: the ear follows the front, the gain too, classic verbatim (AUDIT 61: the word is named once, for the mod's lightning listener too)`);
+    // AUDIT PRECIP FALL-2 (PIN MOVED): the world host's terms at the fall's own snow share (the law's lane; exterior.js has none)
+    assert.match(h, /if \(fx\.changed\) wxFrom = wxNow;\s*\n\s*wxNow = enhancedFront \? blendTerms\(wxFrom, fallTerms\(weatherTerms\((?:fx\.snow)?\), fx\.intensity, weather, FALL_LIGHT\), fx\.t\) : weatherTerms\(\);/, `${host}: the terms cross from what was ON SCREEN, and classic takes the row whole`);   // PIN MOVED (RAIN-SPRINKLE): the row under what falls (test/systems/weather/fb1001_rainsprinkle.test.js)
+    // AUDIT PRECIP FALL-4 (PIN MOVED): on the law's lane the ear hears the DROPS' level (fx.rain - null off it, the fall's
+    // own), and the world host hands the indoor skin the whole fall
+    assert.match(h, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;[^\n]*\n\s*setHeardWeather\(ambientWord, enhancedFront \? fx\.(?:rain \?\? fx\.)?intensity : 1(?:, enhancedFront \? fx : null)?\);[^\n]*\n\s*ambience\.setPreset\(presetForExterior\(ambientWord, isNight\(minute\)\)\);\s*\n\s*ambience\.rainGain = enhancedFront \? fx\.(?:rain \?\? fx\.)?intensity : 1;/, `${host}: the ear follows the front, the gain too, classic verbatim (AUDIT 61: the word is named once, for the mod's lightning listener too)`);
     assert.match(h, /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown === 'sand'\) \{[\s\S]{0,600}?\} else if \(precipShown && precip\) \{/, `${host}: what falls is what the front shows`);
     assert.match(h, /if \(precip\.enhanced\) \{\s*\n\s*precip\.intensity = fx\.intensity;/, `${host}: the intensity is set inside the enhanced branch only`);
-    assert.match(h, /precip\.draw\(precipShown, proj, view/, `${host}: the draw takes the shown mode`);
+    assert.match(h, /precip\.drawFall\(precipShown, proj, view/, `${host}: the draw takes the shown mode (PRECIP1: the fall at the air's snow share)`);
     assert.match(h, /const fogNow = wxNow\.fog;/, `${host}: the fog row is the front's`);
     assert.doesNotMatch(h.slice(h.indexOf('function frame(now)')), /[^.]weatherSun\b(?!\s*=)/, `${host}: no frame consumer reads the raw sun scale any more`);
     assert.doesNotMatch(h.slice(h.indexOf('function frame(now)')), /\bweatherFog\b(?!\s*=)/, `${host}: no frame consumer reads the raw fog row any more`);
-    assert.match(h, /const weatherTerms = \(\) => \(\{ sun: weatherSun, dim: (LAB_DIM\[weather\] \?\? 1|1), fog: weatherFog \}\);/, `${host}: the terms are the weather's own numbers`);
+    // AUDIT PRECIP FALL-3 (PIN MOVED): the world host's terms through phaseTerms - the word's own numbers off the law's
+    // lane and at a share of 0 or none (test/systems/weather/precip1_air.test.js pins phaseTerms itself)
+    assert.match(h, /const weatherTerms = \((?:snowShare = null)?\) => (?:phaseTerms\()?\(?\{ sun: weatherSun, dim: (LAB_DIM\[weather\] \?\? 1|1), fog: weatherFog \}(?:\);|, weather, )/, `${host}: the terms are the weather's own numbers`);
   }
   // GRASS-LIT (2026-10-01): the grass takes NO weather dim - the ambient and the sun it is handed are weathered already, and
   // the dim on top darkened a rainy field a third past the ground it stood in. The sward darkens with the ground by the

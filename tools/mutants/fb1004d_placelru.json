@@ -242,8 +242,8 @@
   {
     "name": "PLACE-LRU-a-tile-array-kept-in-the-cache",
     "file": "src/render/renderer.js",
-    "old": "    this.tileArrays.delete(archive);\n    if (tex) this.gl.deleteTexture(tex);",
-    "new": "    if (tex) this.gl.deleteTexture(tex);",
+    "old": "    this.tileArrays.delete(archive);\n    this._tileDims.delete(archive);   // PRECIP4",
+    "new": "    this._tileDims.delete(archive);   // PRECIP4",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -292,7 +292,7 @@
   {
     "name": "PLACE-LRU-world-ground-held-after-the-ask",
     "file": "src/scenes/world.js",
-    "old": "    hold.tileArray(groundArchive); const groundTex",
+    "old": "    hold.tileArray(key); const groundTex",
     "new": "    const groundTex",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"

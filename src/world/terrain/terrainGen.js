@@ -25,6 +25,7 @@ import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSam
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
+import { withJungle, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
 import { paintRoads, smoothRoadHeights, pathCorners } from '../road/roadPainter.js';
 import { MAP_W } from '../road/roadNetwork.js';
 import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
@@ -62,6 +63,10 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
  *   is pulled to (the client's, never the job's: it rides beside the woods and the network).
  * @param {?Uint8Array} [job.climates] - LANDFORM6: landforms.js landformClimates, the land each climate wears (the
  *   client's, beside the sites).
+ * @param {?{nine:number[], hidden?:boolean}} [job.jungle] - BANTHA1: the
+ *   jungle's field about this pixel (world/jungle/jungleRegion.js jungleNine)
+ *   and whether its location is one the woods hide; null where the jungle
+ *   cannot reach or its row is off (world/terrain/jungleNature.js withJungle).
  * @param {?{nature:number[], type:number[]}} [job.ecotone] - ECOTONE1: the
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
@@ -71,7 +76,7 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, jungle = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
@@ -133,7 +138,16 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   const tilemapBytes = convertTilemap(tilemap);
   // PERF-EXT26: the one grid law, the restride's too; AUDIT WATER-NEXT P1: and the bed under its water, carved here
   const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });
-  const nature = layoutNature(samples, tilemap, {
+  // FOREST1's places - the location (hidden or not, as the caller says) and every World of Daggerfall SITE (the loader's
+  // rect is only the last), each its whole footprint; never a rock field or a mountain (AUDIT FOREST1 F1: the caller marks
+  // them `hide: false` and they are no place). BANTHA1: the jungle's clearings are the same places
+  const placesFor = (hidden) => [
+    ...(hasLocation && locationRect ? [{ ...locationRect, hide: !!hidden }] : []),
+    ...(wod?.picks ?? []).filter((p) => p.hide !== false).map(({ rect: r, bounds: b }) => (b
+      ? { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, hide: true }
+      : { xMin: r.x, xMax: r.x + r.width, yMin: r.y, yMax: r.y + r.height, hide: true })),
+  ];
+  const natureOpts = {
     mapPixelX: px,
     mapPixelY: py,
     rawWorldHeight: woods.getHeightMapValue(px, py),
@@ -142,29 +156,21 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // and the nature layout reads that field - so the trees keep their
     // clearance off a camp exactly as they keep it off a town.
     locationRect: wodResult?.locationRect ?? locationRect,
-    // FOREST1: the places the woods close round or draw back from - the
-    // location (hidden or not, as the caller says) and every World of
-    // Daggerfall SITE (the loader's rect is only the last), each its whole
-    // footprint; never a rock field or a mountain (AUDIT FOREST1 F1: the
-    // caller marks them `hide: false` and they are no place). And the road
-    // painter's own track mask, which a forest keeps off (AUDIT FOREST1 F8).
-    forests: forests ? {
-      archive: forests.archive,
-      pois: [
-        ...(hasLocation && locationRect ? [{ ...locationRect, hide: !!forests.hidden }] : []),
-        ...(wod?.picks ?? []).filter((p) => p.hide !== false).map(({ rect: r, bounds: b }) => (b
-          ? { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, hide: true }
-          : { xMin: r.x, xMax: r.x + r.width, yMin: r.y, yMax: r.y + r.height, hide: true })),
-      ],
-      paths,
-    } : null,
+    // FOREST1: the places the woods close round or draw back from (placesFor, above), and the road painter's own track
+    // mask, which a forest keeps off (AUDIT FOREST1 F8).
+    forests: forests ? { archive: forests.archive, pois: placesFor(forests.hidden), paths } : null,
     ecotone,   // ECOTONE1: the neighbours' climates - a border's tiles laid by the climate the ground's border gives them
     // AUDIT LANDFORMS II H2: and its beach line asked of DFU's own blend, as the tiles' is (D3) - on the shaped blend a
     // road's bed or a river's channel moved a coastal town's mean, and the line moved with it at 85 tiles in 43 of the
     // 351 coastal location pixels (a tree there, none here; the scatter's records reshuffled after each). The flats
     // still stand on the shaped ground.
     beach: classic,
-  });
+  };
+  // BANTHA1: the jungle over the pixel's own layout - its tiles laid again by the jungle's law, its clearings FOREST1's
+  // places, its trees off the tracks as a forest's are; AUDIT BANTHA1 PERF-6: a pixel the jungle owns whole lays no
+  // layout of its own - every flat of it would be dropped
+  const nature = withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
+    { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths } : null });
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says
     // ROADS 25: whether a network was PRESENT when this pixel was painted.

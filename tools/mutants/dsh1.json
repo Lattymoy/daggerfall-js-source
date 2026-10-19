@@ -2,8 +2,8 @@
  {
   "name": "DSH1-the-mod-s-fog-colour-goes-back-in-raw-and-the-red-line-returns",
   "file": "src/render/dynamicSkiesBridge.js",
-  "old": "    horizon: modHorizon(st.clearColor ?? base.horizon, base.cloudShade, row ?? WEATHER_SKY[weather] ?? WEATHER_SKY.sunny),",
-  "new": "    horizon: st.clearColor ?? base.horizon,",
+  "old": "horizon: modHorizon(st.clearColor ?? base.horizon, base.cloudShade, skyRow ?? row ?? WEATHER_SKY[weather] ?? WEATHER_SKY.sunny),",
+  "new": "horizon: st.clearColor ?? base.horizon,",
   "tests": ["test/render/dsh1_horizon.test.js", "test/render/ds2_cloudsUnderMod.test.js"]
  },
  {
@@ -114,9 +114,9 @@
  {
   "name": "DSH1-the-two-early-outs-disagree-so-the-lid-seams-where-one-takes-over",
   "file": "src/render/volumetricClouds.js",
-  "old": "  if (t0 > 120000.0) { outColor = underCurtains(uHorizonColor, 0.0, cam, dir); return; }",
-  "new": "  if (t0 > 120000.0) { outColor = underCurtains(uHorizonColor, 1.0, cam, dir); return; }",
-  "tests": ["test/render/dsh1_horizon.test.js"]
+  "old": "if (t0 >= FAR_M) { float a = farA(len); outColor = underCurtains(uHorizonColor * a, 1.0 - a, cam, dir); return; }",
+  "new": "if (t0 >= FAR_M) { outColor = underCurtains(uHorizonColor, 1.0, cam, dir); return; }",
+  "tests": ["test/render/dsh1_horizon.test.js", "test/render/audit_precip_sky.test.js"]
  },
  {
   "name": "DSH1-the-greying-is-done-in-the-controller-instead-of-the-bridge",

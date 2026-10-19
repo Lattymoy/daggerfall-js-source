@@ -536,7 +536,7 @@ test('NODE-MARKS the glow\'s draw: nothing to draw touches nothing; one quad a n
 
 test('NODE-MARKS the world host\'s glow pass (createNodeGlowPass), over a fake renderer: the marks lit under the frame\'s own camera and fog (its focus too), kindling node by node; AUDIT: the program built at IDLE once a node is first marked - never on a frame - and nothing lit until it stands; a build that throws costs the glow, never the game, and is never tried again; a pass that RAN is a foreign pass, whatever it drew; under reduced motion its still form; no camera or null marks light nothing (mutants: built on the frame; built every frame; the throw let through; the foreign pass marked only for a draw; the fog not handed; the still form never asked)', () => {
   const marked = [];
-  const renderer = { _proj: new Float32Array(16), _view: new Float32Array(16), _camPos: new Float32Array([0, 1.6, 0]), _fogMode: 2, _fogDensity: 0.01, _fogRange: [0, 1], _focus: new Float32Array([1, 2, 3, 1]), gl: {}, markForeignPass: () => marked.push(1) };
+  const renderer = { _proj: new Float32Array(16), _view: new Float32Array(16), _camPos: new Float32Array([0, 1.6, 0]), _fogMode: 2, _fogDensity: 0.01, _fogRange: [0, 1], _focus: new Float32Array([1, 2, 3, 1]), _haze: new Float32Array(8), gl: {}, markForeignPass: () => marked.push(1) };
   let t = 10, builds = 0, still = false;
   const idled = [];
   const drawn = [];
@@ -558,7 +558,7 @@ test('NODE-MARKS the world host\'s glow pass (createNodeGlowPass), over a fake r
   assert.equal(idled.length, 1, 'asked once');
   assert.equal(drawn[0].proj, renderer._proj);
   assert.equal(drawn[0].eye, renderer._camPos, 'the frame\'s own camera');
-  assert.deepEqual(drawn[0].fog, { mode: 2, density: 0.01, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus }, 'the frame\'s fog and the travel view\'s focus');
+  assert.deepEqual(drawn[0].fog, { mode: 2, density: 0.01, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze }, 'the frame\'s fog and the travel view\'s focus - and the jungle\'s haze (AUDIT BANTHA1 HAZE-3)');
   assert.equal(drawn[0].seconds, t);
   assert.equal(drawn[0].st, false, 'moving');
   assert.equal(marked.length, 1, 'a foreign pass');

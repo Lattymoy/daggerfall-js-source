@@ -204,7 +204,7 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   // and handed on flat - the fragment wears it under the cloud's.
   assert.match(EL_BB_FS, /uBBSun \* cloudShadowAt\(vBBWorld\) \* vBBSunVis/);
   assert.match(EL_BB_FS, /flat in float vBBSunVis;/);
-  assert.match(EL_LANE.bbVs.main, /vBBSunVis = dot\(uBBSun, uBBSun\) > 0\.0 \? \(uMesh > 0\.5 \? sunShadowAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\), vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the flat\'s point, the soft kernel, the night gate (LPT1, AUDIT LPT B4: a low-poly tree\'s every vertex one tap at its root)');
+  assert.match(EL_LANE.bbVs.main, /vec3 sunAt = vBBBase \+ vec3\(0\.0, max\(0\.5, uSunLift \* uSize\.y \* \(uMesh > 0\.5 \? aScale : abs\(aCorner\.x\) \* 2\.0\)\), 0\.0\);[^\n]*\n\s*vBBSunVis = dot\(uBBSun, uBBSun\) > 0\.0 \? \(uMesh > 0\.5 \? sunShadowAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the flat\'s point, the soft kernel, the night gate (LPT1, AUDIT LPT B4: a low-poly tree\'s every vertex one tap at its root - AUDIT BANTHA1 TREE-2: half a unit up, or a jungle tree\'s uSunLift share of its drawn height)');
   assert.ok(EL_LANE.bbVs.head.includes(SHADOW_GLSL), 'the vertex stage carries the receiver block');
   assert.match(EL_BB_FS, /elPointFlat\(vBBWorld, base\)/);
   assert.ok(!EL_FAR_RING_FS.includes('uSunShadow'), 'the far ring receives no shadow');
@@ -324,7 +324,7 @@ test('EL2: the renderer\'s wiring - the three draw paths record behind one gate,
   assert.match(r, /if \(this\._casting && this\._spriteDepth === 0 && this\._studioDepth === 0\) this\._shadows\.recordCharacter\(mesh, modelMatrix\);/, 'EL7: the rigs, never from the sprite target or the studio');
   assert.match(r, /if \(!wire && !noShadow && this\._casting\) this\._shadows\.recordMesh\(mesh, modelMatrix, texRemap, 1 - \(this\._dissolve \?\? 1\)\);/, 'a wireframe draw (the automap) is not a caster - nor a mesh drawn with noShadow (AUDIT WAGON-HITCH B2: a grown wagon)');   // AUDIT BAY A12 PIN MOVED: with a fading ship's cut
   assert.match(r, /get _casting\(\) \{ return !!this\._shadows && !this\._panelSaved; \}/);
-  const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir, opts = null) {'), r.indexOf('beginFrame(proj, view, lightDir, opts = null) {') + 3400);   // AUDIT-EL F5; LC1: the grid's build sits between the passes and the clear, so the window grew; FAR-SEA1: the sea's haze cleared beside the sea's fog (PIN MOVED)
+  const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir, opts = null) {'), r.indexOf('beginFrame(proj, view, lightDir, opts = null) {') + 3600);   // AUDIT-EL F5; LC1: the grid's build sits between the passes and the clear, so the window grew; FAR-SEA1: the sea's haze cleared beside the sea's fog (PIN MOVED); BANTHA1: and the jungle's haze (PIN MOVED, 3400 -> 3600)
   const passes = bf.indexOf('this._beginLane(proj, view, lightDir, opts?.world === true)');
   assert.ok(passes > 0 && passes < bf.indexOf('gl.clear('), 'the maps before the clear (EL3: with the air\'s images; AUDIT-EL F5: one call, for a WORLD frame)');
   assert.match(r, /if \(this\._shadows && world\) this\._renderPasses\(proj, view, lightDir\);/);

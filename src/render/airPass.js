@@ -1098,8 +1098,6 @@ vec3 haze() {
   float dt = reach / ${AIR_HAZE_STEPS}.0;
   float t = dt * bayer4(gl_FragCoord.xy);
   float lit = 0.0;
-  // the square the shadow map holds
-  vec2 lo = uCloudShadowRect.xy, hi = uCloudShadowRect.xy + vec2(1.0 / uCloudShadowRect.z);
   for (int i = 0; i < ${AIR_HAZE_STEPS}; i++) {
     vec3 p = uEye + dir * t;
     // where this point's sun ray meets the map's ground: the maps are drawn with the eye at their y = 0 (the sky map's
@@ -1108,9 +1106,8 @@ vec3 haze() {
     float h = max(p.y - uEye.y, 0.0);
     vec2 g = p.xz - uLightDir.xz * (h / uLightDir.y);
     // AUDIT-VC7 (B7): a low sun's ray meets the ground kilometres off, past the square; there the map knows nothing,
-    // and nothing is not full sun - the nearest the map does know is its edge
-    g = clamp(g, lo, hi);
-    lit += cloudShadowAt(vec3(g.x, 0.0, g.y)) * exp(-sigma * t);
+    // and nothing is not full sun - the nearest the map does know is its edge (SKY-CAP: clamped in the map's UV)
+    lit += cloudShadowNearest(g) * exp(-sigma * t);
     t += dt;
   }
   float phase = hazePhase(dot(dir, uLightDir));

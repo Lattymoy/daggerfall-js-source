@@ -120,7 +120,7 @@ test('PERF-EXT23: createMesh handed the measured spheres takes them and reads no
 
 test('PERF-EXT23: the world host merges a breath at a time, hands the spheres to the upload, and breathes between flat groups', () => {
   assert.match(WORLD, /const staticMerged = await staticBuilder\.finishSliced\(\(\) => breather\.breathe\(\)\);[^\n]*\n\s+const staticBatch = staticMerged \? renderer\.createMesh\(staticMerged, \{ bounds: staticMerged\.bounds \}\) : null;/);
-  assert.match(WORLD, /    for \(const \[k, centers\] of groups\) \{\n      await breather\.breathe\(\);/, 'a flat group a breath');
+  assert.match(WORLD, /    for \(const \[k, centers\] of g\.groups\) \{\n      await breather\.breathe\(\);/, 'a flat group a breath');
   // the interior and the dungeon merge once at their first frame, and keep finish()
   for (const f of ['src/scenes/interiorContext.js', 'src/scenes/dungeonContext.js']) {
     assert.match(readFileSync(join(root, f), 'utf8'), /const m = staticBuilder\.finish\(\); staticBatch = m \? renderer\.createMesh\(m\) : null;/, f);

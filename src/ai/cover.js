@@ -28,6 +28,11 @@ export const COVER_HEIGHT_FRAC = 0.9;
 export const NOT_COVER_ARCHIVES = Object.freeze(new Set([199, 201, 210, 216]));
 /** The broad phase's cell, metres. */
 export const COVER_CELL = 4;
+/** AUDIT BANTHA1 TREE-1: a proxy wider than a cell (a jungle tree's crown, up to 15 m) is filed ONCE, under its centre's
+ *  cell of this wide grid, beside the fine one - filed in every 4 m cell it touched, a jungle pixel's 10,500 proxies
+ *  were 148,000 references in 43,000 cells, 26-99 ms of the main thread and 11 MB a pixel - and a ray searches the wide
+ *  cells within its set's widest such radius of it. Metres. */
+export const COVER_WIDE = 32;
 
 /** Is this flat cover? `size` is its drawn { w, h } (rmbFlats billboardSize). */
 export function isCoverFlat(archive, record, size) {
@@ -114,17 +119,20 @@ export const coverSwitchOn = () => getPref('enhancedAI') === true;
  * @param {{ enabled?: () => boolean }} [opts] `enabled` - is cover read at all (by default the Enhanced AI switch)
  */
 export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
-  /** @type {Map<any, { items: any[], t: () => number[], grid: Map<string, any[]>, min: number[], max: number[] }>} */
+  /** @type {Map<any, { items: any[], t: () => number[], grid: Map<number, any[]>, wide: Map<number, any[]>, wideR: number, min: number[], max: number[] }>} */
   const sets = new Map();
   let stamp = 0;
 
+  /** A set of no proxies yet, `t` its frame's translation - in the index once placed (add, place). */
+  const fresh = (t) => ({ items: [], t: t || (() => ZERO3), grid: new Map(), wide: new Map(), wideR: 0, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] });
   /** Add proxies to the set `key` (appended to what it holds); `t` its frame's translation. */
   function add(key, items, t = null) {
     let set = sets.get(key);
-    if (!set) {
-      set = { items: [], t: t || (() => ZERO3), grid: new Map(), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
-      sets.set(key, set);
-    }
+    if (!set) sets.set(key, (set = fresh(t)));
+    return fill(set, items);
+  }
+  /** Proxies into a set, placed or not. */
+  function fill(set, items) {
     for (const it of items) {
       if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;   // AUDIT TACT B3: a person is no cover
       it._mark = 0;
@@ -133,6 +141,14 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
       set.min[0] = Math.min(set.min[0], x - it.r); set.max[0] = Math.max(set.max[0], x + it.r);
       set.min[1] = Math.min(set.min[1], y - 64); set.max[1] = Math.max(set.max[1], y + (it.lift ?? 0) + it.h + 64);   // slack, not a bound
       set.min[2] = Math.min(set.min[2], z - it.r); set.max[2] = Math.max(set.max[2], z + it.r);
+      if (it.r > COVER_CELL) {   // TREE-1: a wide proxy, once, under its centre
+        const k = cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE));
+        let cell = set.wide.get(k);
+        if (!cell) set.wide.set(k, cell = []);
+        cell.push(it);
+        if (it.r > set.wideR) set.wideR = it.r;
+        continue;
+      }
       for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {
         for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) {
           const k = cellKey(gx, gz);
@@ -146,6 +162,10 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   }
 
   function remove(key) { sets.delete(key); }
+  /** AUDIT PRECIP HOST-7: a set built aside (`staged`, filled a slice at a time with `fill`) put in for `key` in one
+   *  step, whatever it held before - a pixel re-skinned in place trades its cover as it trades its flats, never a frame
+   *  with neither or both. */
+  function place(key, set) { sets.set(key, set); }
 
   /** The nearest cover along the unit ray `dir` from `origin` within `maxDist`; Infinity for none. `sight`: the ray
    *  is a line of sight to a target at `maxDist`, which a proxy holding that end does not hide (AUDIT TACT B2). */
@@ -176,16 +196,35 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
           }
         }
       }
+      if (set.wideR > 0) {   // TREE-1: the wide proxies whose centre stands within the widest radius of the ray's box
+        const R = set.wideR;
+        const wx0 = Math.floor((Math.min(lo[0], ex) - R) / COVER_WIDE), wx1 = Math.floor((Math.max(lo[0], ex) + R) / COVER_WIDE);
+        const wz0 = Math.floor((Math.min(lo[2], ez) - R) / COVER_WIDE), wz1 = Math.floor((Math.max(lo[2], ez) + R) / COVER_WIDE);
+        for (let gx = wx0; gx <= wx1; gx++) {
+          for (let gz = wz0; gz <= wz1; gz++) {
+            const cell = set.wide.get(cellKey(gx, gz));
+            if (!cell) continue;
+            for (const it of cell) {
+              const s = rayCylinder(lo, dir, it, Math.min(maxDist, best), endAt);
+              if (s < best) best = s;
+            }
+          }
+        }
+      }
     }
     return best;
   }
 
   return {
-    add, remove, hit,
+    add, remove, hit, fill, place,
+    /** AUDIT PRECIP HOST-7: a set of no proxies, outside the index until it is placed. */
+    staged: (t = null) => fresh(t),
     /** Is cover read at all (the Enhanced AI switch). */
     on: () => !!enabled(),
     /** How many proxies, over every set (tests, probes). */
     size: () => { let n = 0; for (const s of sets.values()) n += s.items.length; return n; },
+    /** AUDIT BANTHA1 TREE-1: how many references the grids hold, over every set (tests, probes) - a wide proxy is one. */
+    refs: () => { let n = 0; for (const s of sets.values()) for (const g of [s.grid, s.wide]) for (const cell of g.values()) n += cell.length; return n; },
     has: (key) => sets.has(key),
   };
 }

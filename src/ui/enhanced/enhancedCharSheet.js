@@ -72,6 +72,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
+import { skillAdvanceProgress } from '../../systems/advancement.js';   // SKILL-TICK: the uses toward each skill's next point
 import { SKILLS, SKILL_NAMES, skillValue, displaySkillValue, realSkillValue, skillValueText, skillModOf } from '../../systems/skills.js';
 import { mentorStatusText } from '../../systems/mentorMode.js';   // SOFTCAP1
 import { masterSkillsActive, masterSkillsSwitchable, masterSkillsBlockReason, setMasterSkills, MASTER_SKILLS_ABOUT, MASTERY_GROUP_NAMES, masterySlots, masteryCandidates, masteryChoiceRows, masterSkill, isMasteredSkill } from '../../systems/masterSkills.js';   // SOFTCAP3/4
@@ -174,6 +175,8 @@ export function sheetModel(entity) {
     skillBase: (id) => displaySkillValue(e, id) - skillModOf(e, id),
     skillReal: (id) => realSkillValue(e, id),
     skillText: (id) => skillValueText(e, id),
+    // SKILL-TICK: where each skill stands against the next pass's raise (systems/advancement.js skillAdvanceProgress)
+    progress: (id, now = null) => skillAdvanceProgress(e, id, { now }),   // AUDIT SUGGESTIONS-1019 L3-1: `now` the character's own clock, for the gate
     mentor: e._mentor ? mentorStatusText(e) : null,   // automatic: said only while mentoring
     // ARENA2: the arena's title and record (systems/arena/arenaLadder.js) - null until a bout has been fought on its sand
     arena: arenaSheetLine(e.arenaLadder, e.arenaLeague),

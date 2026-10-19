@@ -236,7 +236,8 @@ test('SUNBABY1 host: world.js hears the sun baby on the hub\'s one onEvent, SHOW
   const world = rd('src/scenes/world.js');
   assert.match(world, /const shownWeather = \(\) => \(sunbaby\.on \? SUNBABY_WEATHER : currentWeather\(\)\);/);
   assert.equal((world.match(/applyWeather\(currentWeather\(\)\)/g) ?? []).length, 0, 'no door applies the sim\'s word past the event');
-  assert.equal((world.match(/if \(shownWeather\(\) !== weather\) applyWeather\(shownWeather\(\)\);/g) ?? []).length, 3, 'the frame\'s drain, the teleport\'s and the travel\'s');
+  assert.match(world, /const weatherStale = \(\) => shownWeather\(\) !== weather \|\| weatherSystemStamp\(\) !== seenSystem;/, 'stale is the SHOWN word moved (or the system under it)');   // AUDIT PRECIP FALL-2 (PIN MOVED): one test for the three doors
+  assert.equal((world.match(/if \(weatherStale\(\)\) applyWeather\(shownWeather\(\)\);/g) ?? []).length, 3, 'the frame\'s drain, the teleport\'s and the travel\'s');
   assert.match(world, /link\.onEvent = \(ev, o\) => \{ dread\.set\(ev, o\); sunbaby\.set\(ev, o\); \};/);
   assert.match(world, /const sunbabyW = sunbaby\.tick\(dt\);/);
   assert.match(world, /if \(isEnhanced\(\) && !weatherOverride && !sunbaby\.on\) \{[^\n]*\n\s*const ds = distantStorms\.tick\(/);

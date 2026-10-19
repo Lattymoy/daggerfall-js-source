@@ -73,6 +73,8 @@ import { buttonText } from '../../systems/controlsConfig.js';    // GetButtonTex
 // four more places to forget it. The module is a leaf here: it imports
 // systems/skills.js and a faction constant, and nothing in ui/.
 import { playerEntity } from '../../characters/playerEntity.js';
+import { countReadyToImprove } from '../../systems/advancement.js';   // SKILL-TICK: the standing skills line
+import { ownMinutes } from '../../systems/worldTick.js';   // AUDIT SUGGESTIONS-1019 L3-1: the character's own clock, the skill check's gate (read at a call, never at load)
 import { openLevelUpWindow } from './levelUpOpener.js';   // LV3: the strip's level row is a button now
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
@@ -86,6 +88,12 @@ export const NOTICE_RENOWN = 'renown';
 /** QUEST-NOTE: a quest's word - its foe fallen (a player, 2026-10-13: "Would it be possible to implement kill/quest
  *  notifications?"). News, as a skill's row is. */
 export const NOTICE_QUEST = 'quest';
+/** SKILL-TICK (systems/advancement.js skillsReadyToImprove): THE SKILLS A REST WOULD RAISE - a standing line, as the
+ *  level's is: state read off the character every frame, never news. Cruor's thread: "'your skills can be improved'
+ *  notification to let players know they should probably rest, since XP does not hang over". */
+export const NOTICE_IMPROVE = 'improve';
+export const improveTitle = () => t('notice.skills.improve', 'Skills can be improved');
+export const improveSub = (n) => t('notice.skills.improveSub', '{n, plural, one {# skill is ready - rest or travel to raise it} other {# skills are ready - rest or travel to raise them}}', { n });   // AUDIT SUGGESTIONS-1019 L6-6: the pronoun in each arm
 export const questSlainTitle = () => t('pause.journal.questSlain', 'Quest target slain');   // L10N4: read when it is drawn
 /** QUEST-NOTE: who fell, as the notice and the chat name it - the Foe's own name, else its type's, else the quest's foe. */
 export const questFoeName = (foe) => String(foe?.displayName || foe?.typeName || t('pause.journal.questFoe', 'Your quest\'s foe')).trim();
@@ -187,7 +195,7 @@ export class LevelNotices {
    * the level is unspent, and it goes the moment the points are in the
    * player's stats - however they got there.
    */
-  frame(now, { owed = false } = {}) {
+  frame(now, { owed = false, improvable = 0 } = {}) {
     const out = [];
     for (const r of this.rows) {
       const age = now - r.at;
@@ -213,6 +221,8 @@ export class LevelNotices {
     if (owed && !out.some((r) => r.kind === NOTICE_LEVEL)) {
       out.push({ key: NOTICE_LEVEL, kind: NOTICE_LEVEL, title: AWAITS_TITLE, sub: '', at: -Infinity, seq: -1, standing: true });
     }
+    // SKILL-TICK: the skills the next pass raises - standing while any is ready, gone the pass that raises them
+    if (improvable > 0) out.push({ key: NOTICE_IMPROVE, kind: NOTICE_IMPROVE, title: improveTitle(), sub: improveSub(improvable), at: -Infinity, seq: -2, standing: true });
     // NEWEST FIRST, and THE LEVEL'S ROW IS ALWAYS LAST - which on a
     // strip pinned by its foot means nearest the vitals, where the eye
     // already is. It is the only row that asks for something, so it
@@ -220,7 +230,9 @@ export class LevelNotices {
     // player (PlayerEntity.cs:1371-1414), so a plain newest-first sort
     // would put it on top at a level-up and at the bottom on the next
     // skill raise - the one row a player is looking for, moving.
-    return out.sort((a, b) => (Number(a.kind === NOTICE_LEVEL) - Number(b.kind === NOTICE_LEVEL)) || (b.seq - a.seq));
+    // SKILL-TICK: the skills' standing line sits just above it - the other row that asks for something
+    const rank = (r) => (r.kind === NOTICE_LEVEL ? 2 : r.kind === NOTICE_IMPROVE ? 1 : 0);
+    return out.sort((a, b) => (rank(a) - rank(b)) || (b.seq - a.seq));
   }
 
   /** Drop what has expired, so the queue cannot grow across an
@@ -442,7 +454,7 @@ function rowNode(doc, r) {
   }
   const gem = doc.createElement('span');
   gem.className = 'lv-note-gem';
-  gem.textContent = r.kind === NOTICE_SKILL ? '▲' : r.kind === NOTICE_QUEST ? '⚔' : '✦';
+  gem.textContent = r.kind === NOTICE_SKILL || r.kind === NOTICE_IMPROVE ? '▲' : r.kind === NOTICE_QUEST ? '⚔' : '✦';
   const body = doc.createElement('span');
   body.className = 'lv-note-body';
   const t = doc.createElement('span');
@@ -483,10 +495,13 @@ function rowNode(doc, r) {
  * compare rather than a fresh DOM sixty times over.
  */
 export const levelOwed = (e = playerEntity) => !!e?.readyToLevelUp;
+/** SKILL-TICK: how many skills the next pass would raise - what the strip's standing skills line counts. */
+export const skillsImprovable = (e = playerEntity) => countReadyToImprove(e, { now: ownMinutes() });   // AUDIT SUGGESTIONS-1019 L3-1/L3-4: on the gate's clock, building nothing
 
-export function drawLevelNotices({ owed = levelOwed(), hidden = false, now = nowMs(), doc = (typeof document === 'undefined' ? null : document) } = {}) {
+export function drawLevelNotices({ owed = levelOwed(), improvable = undefined, hidden = false, now = nowMs(), doc = (typeof document === 'undefined' ? null : document) } = {}) {
   if (!doc || !isEnhanced()) return null;
-  const rows = hidden ? [] : levelNotices.frame(now, { owed });
+  // AUDIT SUGGESTIONS-1019 L3-4: the skills counted only for a strip that shows
+  const rows = hidden ? [] : levelNotices.frame(now, { owed, improvable: improvable ?? skillsImprovable() });
   levelNotices.sweep(now, { owed });
   // Checked on every frame the strip is up rather than only when the
   // paint changes: the HUD host is built by the call that runs right

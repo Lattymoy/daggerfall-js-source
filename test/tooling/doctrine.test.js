@@ -765,6 +765,27 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/grass/source/flowers.png', "SUPPLIED - Mac's flower tuft for the meadow grass (MEADOW1, 2026-10-06), 32x32 indexed, his own PNG bytes - his own pixel art, no ARENA2 pixel in it (his word, AUDIT MEADOW1 2026-10-06)"],
   ['src/assets/grass/source/tuft-dry.png', "SUPPLIED - Mac's dry grass tuft for the meadow grass (MEADOW1, 2026-10-06), 32x32 indexed, his own PNG bytes - his own pixel art, no ARENA2 pixel in it (his word, AUDIT MEADOW1 2026-10-06)"],
   ['src/assets/grass/source/bush.png', "SUPPLIED - Mac's bush for the meadow grass (MEADOW1, 2026-10-06), 64x64 indexed, his own PNG bytes - his own pixel art, no ARENA2 pixel in it (his word, AUDIT MEADOW1 2026-10-06)"],
+  // BANTHA1 (2026-10-18, the owner: "Using the attached file, populate the area in a dense jungle like format"): THE
+  // JUNGLE'S FIVE TREES, supplied as jungle_trees.zip - each a Blender 5.2 OBJ, its MTL and its one 252x164 picture -
+  // committed as the owner handed them over, byte for byte. They ship as they are: systems/jungleTreesAssets.js fetches
+  // them and world/jungle/jungleModels.js reads them at run time (no bake), and test/world/bantha1_jungle.test.js reads
+  // the same bytes. The owner's own art for their biome - the pictures included, recorded 2026-10-18 at the audit's
+  // opening (the owner: "These textures are ours"; bible/03-World/Bantha-Jungle.md): no pixel of them is ARENA2's.
+  ['src/assets/jungle/source/jungle_tree.obj', "SUPPLIED - the owner's banyan for the Jungle of Bantha (BANTHA1, 2026-10-18), the owner's Blender 5.2 OBJ export as handed over - geometry only, read at run time by world/jungle/jungleModels.js"],
+  ['src/assets/jungle/source/jungle_tree.mtl', "SUPPLIED - the owner's banyan's material (BANTHA1, 2026-10-18), as handed over - it names the picture its tree is cut from"],
+  ['src/assets/jungle/source/jungle_tree_252w.png', "SUPPLIED - the owner's banyan picture for the Jungle of Bantha (BANTHA1, 2026-10-18), 252x164 RGBA cut by its alpha, the owner's own PNG bytes as handed over - the owner's art (the owner, 2026-10-18: \"These textures are ours\" - no ARENA2 pixel)"],
+  ['src/assets/jungle/source/jungle_tree2.obj', "SUPPLIED - the owner's kapok for the Jungle of Bantha (BANTHA1, 2026-10-18), the owner's Blender 5.2 OBJ export as handed over - geometry only, read at run time by world/jungle/jungleModels.js"],
+  ['src/assets/jungle/source/jungle_tree2.mtl', "SUPPLIED - the owner's kapok's material (BANTHA1, 2026-10-18), as handed over - it names the picture its tree is cut from"],
+  ['src/assets/jungle/source/jungle_tree2_252w.png', "SUPPLIED - the owner's kapok picture for the Jungle of Bantha (BANTHA1, 2026-10-18), 252x164 RGBA cut by its alpha, the owner's own PNG bytes as handed over - the owner's art (the owner, 2026-10-18: \"These textures are ours\" - no ARENA2 pixel)"],
+  ['src/assets/jungle/source/jungle_tree3.obj', "SUPPLIED - the owner's fig for the Jungle of Bantha (BANTHA1, 2026-10-18), the owner's Blender 5.2 OBJ export as handed over - geometry only, read at run time by world/jungle/jungleModels.js"],
+  ['src/assets/jungle/source/jungle_tree3.mtl', "SUPPLIED - the owner's fig's material (BANTHA1, 2026-10-18), as handed over - it names the picture its tree is cut from"],
+  ['src/assets/jungle/source/jungle_tree3_252w.png', "SUPPLIED - the owner's fig picture for the Jungle of Bantha (BANTHA1, 2026-10-18), 252x164 RGBA cut by its alpha, the owner's own PNG bytes as handed over - the owner's art (the owner, 2026-10-18: \"These textures are ours\" - no ARENA2 pixel)"],
+  ['src/assets/jungle/source/jungle_tree4.obj', "SUPPLIED - the owner's flame tree for the Jungle of Bantha (BANTHA1, 2026-10-18), the owner's Blender 5.2 OBJ export as handed over - geometry only, read at run time by world/jungle/jungleModels.js"],
+  ['src/assets/jungle/source/jungle_tree4.mtl', "SUPPLIED - the owner's flame tree's material (BANTHA1, 2026-10-18), as handed over - it names the picture its tree is cut from"],
+  ['src/assets/jungle/source/jungle_tree4_252w.png', "SUPPLIED - the owner's flame tree picture for the Jungle of Bantha (BANTHA1, 2026-10-18), 252x164 RGBA cut by its alpha, the owner's own PNG bytes as handed over - the owner's art (the owner, 2026-10-18: \"These textures are ours\" - no ARENA2 pixel)"],
+  ['src/assets/jungle/source/jungle_tree5.obj', "SUPPLIED - the owner's mahogany for the Jungle of Bantha (BANTHA1, 2026-10-18), the owner's Blender 5.2 OBJ export as handed over - geometry only, read at run time by world/jungle/jungleModels.js"],
+  ['src/assets/jungle/source/jungle_tree5.mtl', "SUPPLIED - the owner's mahogany's material (BANTHA1, 2026-10-18), as handed over - it names the picture its tree is cut from"],
+  ['src/assets/jungle/source/jungle_tree5_252w.png', "SUPPLIED - the owner's mahogany picture for the Jungle of Bantha (BANTHA1, 2026-10-18), 252x164 RGBA cut by its alpha, the owner's own PNG bytes as handed over - the owner's art (the owner, 2026-10-18: \"These textures are ours\" - no ARENA2 pixel)"],
   // COATS3D (2026-10-11, the owner: "The first image is for the horse itself and the second is for the tail"): THE
   // COURSER, a rigged horse supplied as five saves of one Blender rig and two pictures painted for its own UV layout -
   // the newest whole save committed, as the ships' and the wagons' scenes are. tools/bakeHorse.mjs re-makes

@@ -114,6 +114,7 @@ export function clothVertices(rows = BANNER_ROWS) {
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_WATER_FOG = new Float32Array(20);
+const NO_HAZE = new Float32Array(8);   // BANTHA1: uJungleHaze off ([1].x 0)
 const NO_FOCUS = new Float32Array(4);
 const GREY = new Float32Array([0.5, 0.5, 0.5]);
 const UP = new Float32Array([0, 1, 0]);
@@ -127,7 +128,7 @@ export class BannerRenderer {
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uTop', 'uRight', 'uOut', 'uSize', 'uTime', 'uWind', 'uPhase', 'uTex', 'uSunDir', 'uAmb', 'uSunCol', 'uSunScale', 'uMoonDir', 'uMoonCol', 'uMoonScale',
-      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog', 'uFocus']) this.u[n] = gl.getUniformLocation(prog, n);
+      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog', 'uJungleHaze', 'uFocus']) this.u[n] = gl.getUniformLocation(prog, n);
     const verts = clothVertices();
     this.count = verts.length / 2;
     const vao = gl.createVertexArray();
@@ -208,6 +209,7 @@ export class BannerRenderer {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? GREY);
     if (U.uDwFog) gl.uniform4fv(U.uDwFog, fog?.dw ?? NO_WATER_FOG);
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze); none handed, off
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
     gl.uniform1i(U.uTex, 0);
     gl.activeTexture(gl.TEXTURE0);

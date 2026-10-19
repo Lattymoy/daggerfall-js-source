@@ -13,6 +13,7 @@
 // because a worker has no DOM and the import graph is evaluated whole.
 // ═══════════════════════════════════════════════════════════════════
 
+import { packNature, natureBuffers } from './natureWire.js';   // AUDIT BANTHA1 PERF-2
 import { WoodsFile } from '../../formats/woodsFile.js';
 import { groundWoods, dropGroundCache } from '../tamriel/tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay
 import { etherWoods } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground
@@ -104,6 +105,8 @@ function handle(m) {
     if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
     if (out.beach) transfer.push(out.beach.buffer);   // AUDIT LANDFORMS II H2: a location's DFU blend, with the row on
     if (out.bed) transfer.push(out.bed.depths.buffer, out.bed.sheetDepths.buffer, out.bed.positions.buffer, out.bed.normals.buffer, ...(out.bed.halo ? [out.bed.halo.bits.buffer] : []));   // AUDIT WATER-NEXT P1: the bed, carved here
+    out.nature = packNature(out.nature);   // AUDIT BANTHA1 PERF-2: by column, its buffers transferred - never a clone of 12,000 objects
+    transfer.push(...natureBuffers(out.nature));
     globalThis.postMessage({ t: 'done', ...out }, transfer);
   } catch (e) {
     globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });

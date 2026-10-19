@@ -29,7 +29,7 @@ import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field
 import { smoothstep } from '../systems/mathf.js';   // GRASS2: the host's blade budget is a bound on the shader's fade, so the two must be the SAME curve
 import { buildTuftMips, buildTuftSheet, pixelGrass, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
 import { meadowGrass, buildMeadowMips, meadowCardCorners, meadowCardIndices, MEADOW_SLOTS, MEADOW_CARDS, MEADOW_CARDS_FAR, MEADOW_NEAR_AT, MEADOW_BLADES_PER_TUFT, MEADOW_VARIANTS, MEADOW_LUSH, MEADOW_SHARES, MEADOW_PATCH_SCALE,
-  MEADOW_FACE, meadowArtGround, MEADOW_SHIFT, MEADOW_GREEN_EDGE, MEADOW_TOP, MEADOW_REACH, MEADOW_WIND_REACH, MEADOW_BOXES, MEADOW_SEED, MEADOW_NEAR_BAND, MEADOW_SLOPE_FLOOR, MEADOW_CELL, MEADOW_BUSH, MEADOW_FLOWERS, MEADOW_DRY, MEADOW_SHORT, MEADOW_TALL } from './grassMeadow.js';   // MEADOW1: the owner's sprites on crossed cards
+  MEADOW_FACE, meadowArtGround, MEADOW_GREEN, MEADOW_SHIFT, MEADOW_GREEN_EDGE, MEADOW_TOP, MEADOW_REACH, MEADOW_WIND_REACH, MEADOW_BOXES, MEADOW_SEED, MEADOW_NEAR_BAND, MEADOW_SLOPE_FLOOR, MEADOW_CELL, MEADOW_BUSH, MEADOW_FLOWERS, MEADOW_DRY, MEADOW_SHORT, MEADOW_TALL } from './grassMeadow.js';   // MEADOW1: the owner's sprites on crossed cards
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home - the terrain's own text, not a tenth copy
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // GRASS-LIT: the deck's shadow, the reader the terrain takes
@@ -255,6 +255,7 @@ const UP = new Float32Array([0, 1, 0]);
 const WHITE = new Float32Array([1, 1, 1]);
 const NO_FOG_RANGE = new Float32Array([0, 1]);   // DISC20-A: a range for the unfogged draw (mode 0 never reads it)
 const NO_WATER_FOG = new Float32Array(20);   // DW-C: uDwFog off ([0].x 0)
+const NO_HAZE = new Float32Array(8);   // BANTHA1: uJungleHaze off ([1].x 0)
 const NO_DECK = new Float32Array(4);   // GRASS-LIT: a vec4 of zeros - no deck, no sun map, no player's light
 const NO_CASTERS = new Int32Array(SHADOW_CASTER_TABLE).fill(-1);   // AUDIT GRASS-LIT2 A2: every light without a map
 const NO_CASTER_PARAMS = new Float32Array(SHADOW_POINT_CASTERS * 4);   // AUDIT GRASS-LIT2 A2: and every slot off (far 0)
@@ -747,14 +748,47 @@ export const GRASSLIT_FS_EDITS = Object.freeze([
 
 /** a JS number as a GLSL float literal - a whole number keeps its point */
 const glf = (v) => (Number.isInteger(v) ? v.toFixed(1) : String(v));
-/** a per-variant value chosen by `mVar`, as a ternary ladder (a const array indexed at runtime is the kind of thing a
- *  driver gets wrong - GRASS-PX's bayer4 says why) */
-const byVariant = (key) => MEADOW_VARIANTS.slice(0, -1).map((v, i) => `mVar < ${glf(i + 0.5)} ? ${glf(v[key])} : `).join('') + glf(MEADOW_VARIANTS.at(-1)[key]);
 const share = (pair) => `mix(${glf(pair[0])}, ${glf(pair[1])}, mLush)`;
 /** AUDIT MEADOW1: the sprite's drawn box by `mVar` - u0, u1, v0, v1 (render/grassMeadow.js MEADOW_BOXES) */
 const box4 = (b) => `vec4(${glf(b.u0)}, ${glf(b.u1)}, ${glf(b.v0)}, ${glf(b.v1)})`;
-const byBox = () => MEADOW_BOXES.slice(0, -1).map((b, i) => `mVar < ${glf(i + 0.5)} ? ${box4(b)} : `).join('') + box4(MEADOW_BOXES.at(-1));
-export const GRASSMEADOW_VS_EDITS = Object.freeze([
+/**
+ * BANTHA2: A SET OF SPRITES THE MEADOW'S PROGRAM WEARS - the meadow's own (MEADOW_ART), or the jungle floor's
+ * (render/jungleFloorArt.js): its variants (scale, stiff, sway) and their sprites' boxes, written into the vertex stage as
+ * ladders on `mVar`; `pick` the GLSL that takes a blade's variant off its width byte `mR` and its patch `mLush`; `green`
+ * the colour its art is anchored by (meadowArtGround) and `hue` the share of the ground's hue its green texels take
+ * (the meadow's whole; uArtHue); `top`, `reach`, `windReach` its cards' measures (cardMeasures);
+ * `mips` its atlas's chain. One program a set: the ladders are the set's constants.
+ */
+const MEADOW_PICK = `    float mB = ${share(MEADOW_SHARES.bush)}, mF = ${share(MEADOW_SHARES.flowers)}, mD = ${share(MEADOW_SHARES.dry)};\n`
+  + '    float mR = aPB.w;\n'
+  + `    mVar = mR < mB ? ${glf(MEADOW_BUSH)} : (mR < mB + mF ? ${glf(MEADOW_FLOWERS)} : (mR < mB + mF + mD ? ${glf(MEADOW_DRY)}`
+  + ` : ((mR - mB - mF - mD) / (1.0 - mB - mF - mD) < ${share(MEADOW_SHARES.short)} ? ${glf(MEADOW_SHORT)} : ${glf(MEADOW_TALL)})));\n`;
+/** @typedef {{ name: string, variants: readonly { name: string, scale: number, stiff: number, sway: number }[],
+ *    boxes: readonly { u0: number, u1: number, v0: number, v1: number }[], pick: string, green: readonly number[], hue: number,
+ *    top: number, reach: number, windReach: number, mips: () => any[] }} GrassArt */
+/** @type {GrassArt} */
+export const MEADOW_ART = Object.freeze({
+  name: 'meadow', variants: MEADOW_VARIANTS, boxes: MEADOW_BOXES, pick: MEADOW_PICK, green: MEADOW_GREEN, hue: 1,
+  top: MEADOW_TOP, reach: MEADOW_REACH, windReach: MEADOW_WIND_REACH, mips: () => buildMeadowMips(),
+});
+/** BANTHA2: a set's pick as a ladder - `shares` [variant, poor share, lush share] taken off the width byte in order (each
+ *  mixed by the patch, as the meadow's are), the last variant's the rest. Its JS twin: render/jungleFloorArt.js floorPick. */
+export function ladderPick(shares) {
+  let at = '0.0', out = '    float mR = aPB.w;\n', ladder = '';
+  shares.slice(0, -1).forEach(([v, poor, lush], i) => {
+    out += `    float mS${i} = ${at} + ${share([poor, lush])};\n`;
+    ladder += `mR < mS${i} ? ${glf(v)} : `;
+    at = `mS${i}`;
+  });
+  return `${out}    mVar = ${ladder}${glf(shares.at(-1)[0])};\n`;
+}
+/** the meadow program's vertex edits for a sprite set (MEADOW_ART's are the shipped meadow's) */
+export function meadowVsEdits(art) {
+  /** a per-variant value chosen by `mVar`, as a ternary ladder (a const array indexed at runtime is the kind of thing a
+   *  driver gets wrong - GRASS-PX's bayer4 says why) */
+  const byVariant = (key) => art.variants.slice(0, -1).map((v, i) => `mVar < ${glf(i + 0.5)} ? ${glf(v[key])} : `).join('') + glf(art.variants.at(-1)[key]);
+  const byBox = () => art.boxes.slice(0, -1).map((b, i) => `mVar < ${glf(i + 0.5)} ? ${box4(b)} : `).join('') + box4(art.boxes.at(-1));
+  return Object.freeze([
   Object.freeze({
     why: 'the card a vertex stands on - the meadow\'s corner arrays carry its turn; the blade arrays leave the attribute unset, which reads 0',
     from: '// GRASS5: u8 ground.rgb, phase\n',
@@ -777,10 +811,7 @@ export const GRASSMEADOW_VS_EDITS = Object.freeze([
       + '  float mVar = 0.0, mStiff = 1.0, mSway = 1.0; vec2 mC = aCorner, mDir = vec2(1.0, 0.0), mLean = vec2(0.0);\n'
       + '  if (uArt > 0.5) {\n'
       + `    float mLush = smoothstep(${glf(MEADOW_LUSH[0])}, ${glf(MEADOW_LUSH[1])}, aInst2.z);\n`
-      + `    float mB = ${share(MEADOW_SHARES.bush)}, mF = ${share(MEADOW_SHARES.flowers)}, mD = ${share(MEADOW_SHARES.dry)};\n`
-      + '    float mR = aPB.w;\n'
-      + `    mVar = mR < mB ? ${glf(MEADOW_BUSH)} : (mR < mB + mF ? ${glf(MEADOW_FLOWERS)} : (mR < mB + mF + mD ? ${glf(MEADOW_DRY)}`
-      + ` : ((mR - mB - mF - mD) / (1.0 - mB - mF - mD) < ${share(MEADOW_SHARES.short)} ? ${glf(MEADOW_SHORT)} : ${glf(MEADOW_TALL)})));\n`
+      + art.pick
       + `    h *= (${byVariant('scale')}) * mix(${glf(MEADOW_PATCH_SCALE[0])}, ${glf(MEADOW_PATCH_SCALE[1])}, mLush);\n`
       + `    mStiff = ${byVariant('stiff')};\n`
       + `    mSway = ${byVariant('sway')};   // AUDIT MEADOW1: its share of the wind - the trees' own\n`
@@ -831,12 +862,14 @@ export const GRASSMEADOW_VS_EDITS = Object.freeze([
       + `    vMoonLam *= mix(1.0, clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), mMoon), ${glf(MEADOW_FACE.floor)}, 1.0), length(mMoon.xz));\n`
       + '  }\n',
   }),
-]);
+  ]);
+}
+export const GRASSMEADOW_VS_EDITS = meadowVsEdits(MEADOW_ART);
 export const GRASSMEADOW_FS_EDITS = Object.freeze([
   Object.freeze({
-    why: 'the switch, and the ground the owner\'s colours were drawn for',
+    why: 'the switch, the ground the owner\'s colours were drawn for, and how much of its hue a set takes (BANTHA2: the meadow all, the jungle floor none - its own greens under the ground\'s light)',
     from: 'uniform vec3 uGrassTone[4];',
-    to: 'uniform float uArt; uniform vec3 uArtGround;   // MEADOW1: the owner\'s art, and the ground its colours are drawn for (meadowArtGround)\n'
+    to: 'uniform float uArt; uniform vec3 uArtGround; uniform float uArtHue;   // MEADOW1: the owner\'s art, and the ground its colours are drawn for (meadowArtGround); BANTHA2: its hue\'s share\n'
       + 'uniform vec3 uGrassTone[4];',
   }),
   Object.freeze({
@@ -864,7 +897,7 @@ export const GRASSMEADOW_FS_EDITS = Object.freeze([
     from: 'three flat tones, and the tuft\'s blades a shade apart\n',
     to: 'three flat tones, and the tuft\'s blades a shade apart\n'
       + `  if (uArt > 0.5) { vec3 mS = clamp(vGround / uArtGround, ${glf(MEADOW_SHIFT[0])}, ${glf(MEADOW_SHIFT[1])}); `
-      + `c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS, clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0)); }   // MEADOW1: his green, the tile's own; his petals his own\n`,
+      + `c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS, clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0) * uArtHue); }   // MEADOW1: his green, the tile's own; his petals his own\n`,
   }),
   Object.freeze({
     why: 'AUDIT MEADOW1: no ramp in the meadow - its palette is the owner\'s own shading, and banding its light folded his shades a rung apart into one (and cost two pow a fragment)',
@@ -877,6 +910,9 @@ export const GRASSMEADOW_FS_EDITS = Object.freeze([
  *  ground's colour and light (GRASS-LIT), then the meadow's (MEADOW1) */
 export const GAME_GRASS_VS = applyGrassEdits(applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS), GRASSLIT_VS_EDITS), GRASSMEADOW_VS_EDITS);
 export const GAME_GRASS_FS = applyGrassEdits(applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS), GRASSFOG_FS_EDITS), GRASSLIT_FS_EDITS), GRASSMEADOW_FS_EDITS);
+/** BANTHA2: the stages a sprite set's renderer compiles - the game's, with the set's vertex edits in the meadow's place */
+export const grassStagesOf = (art) => (art === MEADOW_ART ? { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }
+  : { vs: applyGrassEdits(applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS), GRASSLIT_VS_EDITS), meadowVsEdits(art)), fs: GAME_GRASS_FS });
 
 /**
  * GRASS-LIT: THE FRAGMENT'S COLOUR IN JS, term for term (the smooth style, at a blade's height `t`, no patch tint,
@@ -969,6 +1005,7 @@ export function grassLit(ground, t, light, lane = false, adapt = 1, tones = null
 // correctly - it just churns cells it did not need to, which is the
 // hitch GR5 was built to remove. The lab's 210 was a multiple by luck
 // (420 = 14 x 30); this one is by intent.
+/** @type {Readonly<{ density: number, height: number, range: number, span: number, densitySpan: number, seed: number }>} */
 export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });
 
 /**
@@ -1416,6 +1453,11 @@ export const GRASS_CATCH_UP = 8;
  * few thousand keep() lookups, milliseconds. PERF-EXT22: and on a walk
  * that is the spike - a rim cell is placed a slice a frame (see update).
  */
+/**
+ * @param {LabGrassRenderer} renderer
+ * @param {{ keep: (x: number, z: number) => number | null | undefined, ground?: any, slope?: any, span?: number, density?: number,
+ *   height?: number, seed?: number, cell?: number, range?: number, perFrame?: number, slots?: number }} o
+ */
 export function createGrassField(renderer, { keep, ground = null, slope = null, span = LAB_GRASS.span, density = LAB_GRASS.density, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, range = LAB_GRASS.range, perFrame = 2, slots: slotsOverride = 0 }) {
   const perCell = grassPerCell(density);   // GRASS2: the RATE, off the lab's own span - `span` below is the window, and the two are not the same question
   // PERF10 (2026-09-19, Mac: "when youre further out in the wilderniss
@@ -1760,6 +1802,33 @@ export function grassRecordsOf(layers, { roadRecords = new Set([46, 47, 55]) } =
 }
 
 /**
+ * BANTHA2: WHICH RECORDS OF A GROUND ARCHIVE THE JUNGLE'S FLOOR STANDS ON. DFU's tile bases are by PLACE - 0 water, 1
+ * dirt, 2 grass, 3 stone (world/terrain/terrainTiles.js: the generator writes them and their blends) - and the floor
+ * stands on dirt and grass whatever their colour, as the jungle's own layout reads them (world/terrain/jungleNature.js
+ * JUNGLE.ground): the Rainforest's ground is the Swamp's (402), whose grass is an olive mud and whose stone a green moss,
+ * so a colour's test (grassRecordsOf's, the meadow's) took its stone and refused its grass - and the floor stood on the
+ * odd patch of dirt and nowhere else. A blend, or a place's own tile, is the floor's when more than half its texels are
+ * nearest the dirt's or the grass's mean (and near it); stone, roads and water stand none.
+ */
+export function floorRecordsOf(layers, { roadRecords = new Set([46, 47, 55]) } = {}) {
+  if (!layers || layers.length < 4) return new Set();
+  const means = [0, 1, 2, 3].map((i) => meanRgb(layers[i]));
+  const out = new Set([1, 2]);   // the dirt and the grass, by their place
+  for (let rec = 4; rec < layers.length; rec++) {
+    if (roadRecords.has(rec)) continue;
+    const l = layers[rec]; const n = l.width * l.height; let g = 0;
+    for (let k = 0; k < n; k++) {
+      const r = l.colors[k * 4], gg = l.colors[k * 4 + 1], b = l.colors[k * 4 + 2];
+      let best = 0, bd = Infinity;
+      for (let i = 0; i < 4; i++) { const d = (r - means[i][0]) ** 2 + (gg - means[i][1]) ** 2 + (b - means[i][2]) ** 2; if (d < bd) { bd = d; best = i; } }
+      if ((best === 1 || best === 2) && bd < 42 * 42) g++;
+    }
+    if (g / n > 0.5) out.add(rec);
+  }
+  return out;
+}
+
+/**
  * GR1: the lab's grass pass, as a renderer of its own beside the world
  * renderer - the same shape as PrecipitationRenderer. Owns its program,
  * its blade quad, its instance buffers and a 1x1 zero field texture.
@@ -1776,16 +1845,18 @@ export class LabGrassRenderer {
    *  until GRASS-LIT painted the game's field in the ground's colours;
    *  and the lab's text reads the height lane as GRASS5 packed it (a
    *  u16 height), so since GRASS-LIT2 its blades stand up to 7 mm off
-   *  the game's - the lab's pair draws the lab's look, not the game's. */
-  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null, provoke = true } = {}) {   // GRASS-PX4: `tuft` ({ w, h }) lays the sheet at another size - the probe photographs the old 16x32 beside the shipped 8x16 through it; GRASS-ON: `provoke` false keeps GL's convention (below)
+   *  the game's - the lab's pair draws the lab's look, not the game's.
+   *  @param {WebGL2RenderingContext} gl
+   *  @param {{ art?: GrassArt, stages?: { vs: string, fs: string }, tuft?: { w: number, h: number } | null, provoke?: boolean }} [o] */
+  constructor(gl, { art = MEADOW_ART, stages = grassStagesOf(art), tuft = null, provoke = true } = {}) {   // BANTHA2: `art` the sprite set the meadow wears (MEADOW_ART; the jungle floor's)   // GRASS-PX4: `tuft` ({ w, h }) lays the sheet at another size - the probe photographs the old 16x32 beside the shipped 8x16 through it; GRASS-ON: `provoke` false keeps GL's convention (below)
     this.gl = gl;
     const prog = buildProgram(gl, LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs);   // GRASS-PX: the lab's text under the declared edits
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',
       'uPixel', 'uPxVariants', 'uPxSteps', 'uPxTintBands', 'uPxSheet',   // GRASS-PX: the pixel style's five (GRASS-PX3 took the sway's two)
-      'uArt', 'uArtGround',   // MEADOW1: the meadow's switch and the ground its art was drawn for
-      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog',   // DISC20-A: the terrain's fog; DW-C: and the sea's
+      'uArt', 'uArtGround', 'uArtHue',   // MEADOW1: the meadow's switch and the ground its art was drawn for; BANTHA2: the share of its hue it takes
+      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog', 'uJungleHaze',   // DISC20-A: the terrain's fog; DW-C: and the sea's; BANTHA1: and the jungle's haze
       'uLane', 'uELExposure', 'uAdapt', 'uIndirect', 'uIndirectColor', 'uCloudShadowMap', 'uCloudShadowRect', 'uGrassTone',   // GRASS-LIT: the lane, the eye, the player's light, the deck
       'uPointCount', 'uPointLights', 'uPointColors', 'uPointIdx']) this.u[n] = gl.getUniformLocation(prog, n);   // GRASS-LIT2: the lanterns; AUDIT A1: a cell's
     // GRASS-LIT: the sun map's block, by the names ShadowPass.upload binds (the receiver the terrain takes)
@@ -1800,8 +1871,9 @@ export class LabGrassRenderer {
     /** GRASS-LIT2: and on the classic lane (GRASS_TONES_CLASSIC) */
     this.tonesClassic = new Float32Array(GRASS_TONES_CLASSIC.flat());
     /** MEADOW1: the ground the owner's art is drawn for on each lane - his green at the lane's middle tone */
-    this.artGround = new Float32Array(meadowArtGround(GRASS_TONES[1]));
-    this.artGroundClassic = new Float32Array(meadowArtGround(GRASS_TONES_CLASSIC[1]));
+    this.art = art;
+    this.artGround = new Float32Array(meadowArtGround(GRASS_TONES[1], art.green));
+    this.artGroundClassic = new Float32Array(meadowArtGround(GRASS_TONES_CLASSIC[1], art.green));
     // AUDIT GRASS-LIT2 A1: a cell's lantern list, its distances, and the list last uploaded
     this._cellIdx = new Int32Array(GRASS_CELL_LIGHTS); this._cellDist = new Float64Array(GRASS_CELL_LIGHTS);
     this._cellLast = new Int32Array(GRASS_CELL_LIGHTS); this._cellN = -1; this._pn = 0; this._pts = null;
@@ -1894,12 +1966,12 @@ export class LabGrassRenderer {
     this.pxSheet = this._sheet(mips);
     // MEADOW1: THE OWNER'S ATLAS, up the same way - its own coverage chain (render/grassMeadow.js buildMeadowMips),
     // bound on the sheet's unit when the meadow draws
-    this.meadowSheet = this._sheet(buildMeadowMips());
+    this.meadowSheet = this._sheet(art.mips());   // BANTHA2: its set's
     this.count = 0;
     this._vp = new Float32Array(16);
     this._planes = new Float32Array(24);   // PERF2
     this._cardBox = new Float64Array(6);   // AUDIT MEADOW1: the meadow's widened box, asked of the frustum - one, reused every slot
-    this._cardReach = MEADOW_REACH;        // AUDIT MEADOW1: the cards' reach over a blade's height, this frame's (draw)
+    this._cardReach = art.reach;           // AUDIT MEADOW1: the cards' reach over a blade's height, this frame's (draw)
     this.slotBox = null;                    // PERF2: per slot, the cell's world box, or null while empty
     this.slotCount = null;                  // GRASS2: per slot, the blades that actually STOOD - the rest of the slot is pad
     this.drawn = { slots: 0, blades: 0, kept: 0 };   // PERF2: what the last draw actually submitted; GRASS2: and how much of it was not pad
@@ -1910,7 +1982,7 @@ export class LabGrassRenderer {
    *  palette study that moved the tones alone left the meadow on the shipped middle tone */
   setTones(tones, classic = false) {
     this[classic ? 'tonesClassic' : 'tones'] = new Float32Array(tones.flat());
-    this[classic ? 'artGroundClassic' : 'artGround'] = new Float32Array(meadowArtGround(tones[1]));
+    this[classic ? 'artGroundClassic' : 'artGround'] = new Float32Array(meadowArtGround(tones[1], this.art.green));
   }
 
   /** GRASS-PX: a sheet and its hand-built chain on a texture of its own - every level uploaded, NEAREST both ways,
@@ -2011,6 +2083,7 @@ export class LabGrassRenderer {
     // for the meadow alone, by these and by the frame's wind.
     const tufts = Math.ceil(n / MEADOW_BLADES_PER_TUFT), hTop = 2 ** GRASS_HEIGHT_BITS - 1, slopeStep = GRASS_SLOPE_SPAN / GRASS_SLOPE_STEPS;
     let cardH = 0, cardTop = -Infinity, cardTilt = 0;
+    const artTop = this.art.top;   // BANTHA2: its set's tallest card
     for (let i = 0; i < n; i++) {
       const x = placed.inst[i * 4], z = placed.inst[i * 4 + 1], h = placed.inst[i * 4 + 2], ph = placed.inst[i * 4 + 3];
       A[i * 4] = u16((x - ox) / xSpan);
@@ -2020,7 +2093,7 @@ export class LabGrassRenderer {
       if (i < tufts) {
         const hd = hFloor + (A[i * 4 + 3] >> 10) / hTop * hSpan;
         if (hd > cardH) cardH = hd;
-        if (placed.rootY[i] + hd * MEADOW_TOP > cardTop) cardTop = placed.rootY[i] + hd * MEADOW_TOP;
+        if (placed.rootY[i] + hd * artTop > cardTop) cardTop = placed.rootY[i] + hd * artTop;
         const w = A[i * 4 + 3];   // the normal the stage decodes off this word (unpackHeightSlope's law, unrolled: no object a blade)
         const gx = ((((w >> 5) & 31) ^ GRASS_SLOPE_STEPS) - GRASS_SLOPE_STEPS) * slopeStep, gz = (((w & 31) ^ GRASS_SLOPE_STEPS) - GRASS_SLOPE_STEPS) * slopeStep;
         const tilt = Math.hypot(gx, gz) / Math.max(Math.sqrt(Math.max(1 - gx * gx - gz * gz, 0)), MEADOW_SLOPE_FLOOR);
@@ -2078,6 +2151,7 @@ export class LabGrassRenderer {
    *  `style` (GRASS-PX) is the grass-style row's word - 'smooth' is the
    *  lab's blade, anything else the tuft sprite. */
   draw(proj, view, eye, timeSeconds, light, wind, range = LAB_GRASS.range, style = 'smooth') {
+    this.frame = [proj, view, eye, timeSeconds, light, wind, range];   // BANTHA2: the frame's draw as asked - a field drawn beside this one under its light and wind (scenes/jungleFloorHost.js drawBeside)
     if (!this.count || !this.slotBox) return;   // AUDIT 68 S16-grass-set-broken-dead: the field's slots are the one thing it draws
     const gl = this.gl; const u = this.u;
     // out = proj * view, column-major
@@ -2122,7 +2196,7 @@ export class LabGrassRenderer {
     const meadow = meadowGrass(style);
     gl.uniform1f(u.uArt, meadow ? 1 : 0);
     // AUDIT MEADOW1: the cards a cell's box must hold lean as far as this frame's wind carries them (MEADOW_WIND_REACH)
-    this._cardReach = MEADOW_REACH + MEADOW_WIND_REACH * Math.hypot(windV[0], windV[1]);
+    this._cardReach = this.art.reach + this.art.windReach * Math.hypot(windV[0], windV[1]);
     // GRASS-PX2: THE TUFT IS ONE QUAD. The lab's near blade is five
     // stacked quads so that it can CURVE; the sprite carries its own
     // curve, so in the pixel style every cell draws the one-quad blade
@@ -2160,6 +2234,7 @@ export class LabGrassRenderer {
     gl.uniform1f(u.uLane, lane ? 1 : 0);
     gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic);   // GRASS-LIT2: each lane its own
     gl.uniform3fv(u.uArtGround, lane ? this.artGround : this.artGroundClassic);   // MEADOW1: and the meadow's art its own ground
+    gl.uniform1f(u.uArtHue, this.art.hue);   // BANTHA2: its set's share of the ground's hue
     gl.uniform1f(u.uELExposure, light.exposure ?? EL_EXPOSURE);
     gl.activeTexture(gl.TEXTURE0 + GRASS_ADAPT_UNIT);   // the far ring's unit for the eye; a frame with no air pass reads a 1
     gl.bindTexture(gl.TEXTURE_2D, light.adaptTex ?? this._adaptOne());
@@ -2215,6 +2290,7 @@ export class LabGrassRenderer {
     gl.uniform3fv(u.uFogColor, fog?.color ?? WHITE);
     gl.uniform3fv(u.uCamPos, fog?.camPos ?? eye);
     if (u.uDwFog) gl.uniform4fv(u.uDwFog, fog?.dw ?? NO_WATER_FOG);   // DW-C: the frame's (renderer.setWaterFog); none handed, off
+    if (u.uJungleHaze) gl.uniform4fv(u.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1: the frame's (renderer.setJungleHaze); none handed, off
     gl.bindVertexArray(this.vao);
     const pv = this._pv;
     if (pv) pv.provokingVertexWEBGL(pv.FIRST_VERTEX_CONVENTION_WEBGL);   // GRASS-ON: the native convention for the field's draws (the constructor says why)

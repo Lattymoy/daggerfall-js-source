@@ -125,6 +125,10 @@ export function thunderSourceAt(cam, x, z) {
  * player stands under the core of is DFU's, not this: the strobe and the
  * ambience have it.
  */
+/** Whether a storm strikes at field (x, z) under the map's ground law: the law's own answer where it gives one (weatherSim.js
+ *  mapGround `strikes` - AUDIT PRECIP FALL-2: on the precipitation law's lane a storm is a storm whatever phase its fall
+ *  takes), else whether the law leaves the word a storm there. */
+const strikesAt = (ground, x, z, minutes) => (ground.strikes ? ground.strikes(x, z, minutes) : ground('thunder', x, z, minutes) === 'thunder');
 export function createDistantStorms() {
   let last = null;
   let bolt = null;       // { x, z, r, strength, at } - the latest strike's light
@@ -135,7 +139,7 @@ export function createDistantStorms() {
       const fired = [];
       for (const s of systems) {
         if (s.type !== 'thunder') continue;
-        if (ground && ground('thunder', s.x, s.z, minutes) !== 'thunder') continue;   // AUDIT WEATHER3 R1: over a snow ground the storm is a snow squall (the sky's cell says so) - no lightning, no thunder
+        if (ground && !strikesAt(ground, s.x, s.z, minutes)) continue;   // AUDIT WEATHER3 R1: over a snow ground the storm is a snow squall (the sky's cell says so) - no lightning, no thunder
         if (radialOf(s, at[0], at[1]) < s.bands[0][0] && insideClip(s, at[0], at[1])) continue;   // under its heart (its own shape, inside its front): DFU's own storm
         const envAt = (m) => envelope(SYSTEM_TYPES.thunder, (m - s.bornAt) / s.life);   // weatherMap's own envelope, at the strike's minute
         for (const t of strikesIn(s.id, last, minutes, envAt)) {
@@ -149,7 +153,7 @@ export function createDistantStorms() {
           // strike lands where its storm is drawn, and not on a ground that turns it to snow where it lands (the
           // centre's test above is the cloud's: a cell centred over snow is drawn a snow squall, whole).
           if (!insideClip(s, px, pz)) continue;
-          if (ground && ground('thunder', px, pz, minutes) !== 'thunder') continue;
+          if (ground && !strikesAt(ground, px, pz, minutes)) continue;
           bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds, strike };
           fired.push({ x: px, z: pz, seed, kind: strike.kind, strength: envAt(t) });
           const th = thunderOf(Math.hypot(px - at[0], pz - at[1]));   // BOLT: heard from where it struck

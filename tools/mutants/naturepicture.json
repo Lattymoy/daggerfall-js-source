@@ -52,8 +52,8 @@
   {
     "name": "NATUREPIC-world-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record)",
-    "new": "await naturePicture({ door: null, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record)",
+    "old": "await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record)",
+    "new": "await naturePicture({ door: null, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record)",
     "tests": [
       "test/world/naturepicture.test.js"
     ],

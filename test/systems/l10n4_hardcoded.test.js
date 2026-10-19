@@ -223,7 +223,7 @@ const HARDCODED = {
   'src/render/superDungeon/sdVeil.js': 1,
   'src/render/serpentRender.js': 4,
   'src/render/shadowPass.js': 6,
-  'src/render/skyRenderer.js': 2,
+  'src/render/skyRenderer.js': 1,
   'src/render/snowfallGlsl.js': 2,
   'src/render/spellImpactFx.js': 2,
   'src/render/spoilsGlow.js': 2,

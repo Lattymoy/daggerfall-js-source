@@ -122,7 +122,7 @@
 // (1.25 m - STREAMING_TERRAIN_SCALE).
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, sampleKernel, generateSamples, cubicInterpolator } from './terrain/terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, EXTRA_NOISE_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, kernelWindows, sampleKernel, generateSamples, cubicInterpolator } from './terrain/terrainSampler.js';
 import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect } from './terrain/terrainTiles.js';
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
@@ -909,6 +909,78 @@ function pullTo(list, gx, gy, land, out) {
 export function reliefByteHeight(byte, fade = 1) {
   const low = byte * BASE_HEIGHT_SCALE;
   return Math.max(low, SCALED_OCEAN_ELEVATION) + reliefLift(low) * fade;
+}
+
+/**
+ * AUDIT PRECIP AIR-3: THE MEAN GROUND of pixel (px, py) at a point (x, y) of its sample space (0..span, y north), in
+ * kernel units - what the landforms stand their hills on: DFU's two bicubic terms without the ground noise, held to the
+ * sea and to DFU's ceiling as the shaper is handed them (sampleKernel), and with `landforms` the relief's lift its own
+ * `low` earns, faded beside the sea. The hills are centred (hillsAt: a land's mean is its own), so this is the middle of
+ * the ground the player walks wherever it stands - the height a reader that has a place and no feet (the air:
+ * systems/weather/airTemperature.js) asks the ground. The byte alone (DFU's base term at the pixel) stood 110 m to 900 m
+ * under it in High Rock's and Hammerfell's ranges.
+ * @returns {(x: number, y: number) => number}
+ */
+export function meanGroundField(woods, px, py, landforms, hDim = HEIGHTMAP_DIMENSION) {
+  const { base, noise } = kernelTerms(woods, px, py, hDim);
+  const fade = landforms ? cliffFade(woods, px, py, hDim) : null;
+  return (x, y) => {
+    const low = base(x, y) * BASE_HEIGHT_SCALE;
+    let h = low + noise(x, y) * NOISE_MAP_SCALE;
+    h = h < SCALED_OCEAN_ELEVATION ? SCALED_OCEAN_ELEVATION : h > MAX_TERRAIN_HEIGHT ? MAX_TERRAIN_HEIGHT : h;
+    return landforms ? h + reliefLift(low) * (fade ? fade(x, y) : 1) : h;
+  };
+}
+
+/** DFU's cubic (cubicInterpolator) over [a, b] of its fraction as its four Bernstein coefficients, into `out` - a cubic
+ *  piece lies inside its control polygon's hull, so the largest is a bound on it there. */
+function cubicBernstein(v0, v1, v2, v3, a, b, out, o = 0) {
+  const A = (v3 - v2) - (v0 - v1), B = (v0 - v1) - A, C = v2 - v0, D = v1, w = b - a;
+  const d = ((A * a + B) * a + C) * a + D, c = w * ((3 * A * a + 2 * B) * a + C), q = w * w * (3 * A * a + B), p = w * w * w * A;
+  out[o] = d; out[o + 1] = d + c / 3; out[o + 2] = d + (2 * c + q) / 3; out[o + 3] = p + q + c + d;
+}
+const _rows = new Float64Array(16), _net = new Float64Array(4);
+/** The Bernstein net of a DFU bicubic (`at(i, j)`: its control i along x, j along y in the cubic's own order) over
+ *  [x0, x1] x [y0, y1] of its unit square, times `k`, added into `into` (16, x index fastest). */
+function bicubicNet(at, x0, x1, y0, y1, k, into) {
+  for (let j = 0; j < 4; j++) cubicBernstein(at(0, j), at(1, j), at(2, j), at(3, j), x0, x1, _rows, j * 4);
+  for (let i = 0; i < 4; i++) {
+    cubicBernstein(_rows[i], _rows[4 + i], _rows[8 + i], _rows[12 + i], y0, y1, _net);
+    for (let l = 0; l < 4; l++) into[l * 4 + i] += k * _net[l];
+  }
+}
+const _sum = new Float64Array(16), _low = new Float64Array(16);
+/**
+ * AUDIT PRECIP PACK-1: THE HIGHEST pixel (px, py)'s own ground can stand, in kernel units - a BOUND, never a sample. DFU's
+ * height is its two terms' bicubic pieces (the small heightmap's one over the pixel, the large one's three by three),
+ * each bounded by its Bernstein net, summed piece by piece; then the ground noise's whole amplitude, the ocean's floor
+ * and DFU's ceiling as sampleKernel holds them; with `landforms` the lift the highest `low` earns (reliefLift rises with
+ * it) and the tallest hill of the lands its samples blend (landShares' four nodes about any sample of it: the 3x3's
+ * climates, `climates` the landforms' table - null the tallest of any land's, a bound whatever the table). The pixel's own: a town's level or a road's bed is made of the ground about
+ * it (a site reaches no further than the pixels beside its own - sitesAbout), so a reader bounding a SAMPLE takes the
+ * 3x3's (systems/weather/snowpack.js).
+ * @returns {number}
+ */
+export function groundTopOf(woods, px, py, landforms, climates = null, hDim = HEIGHTMAP_DIMENSION) {
+  const { shmAt, lhmAt } = kernelWindows(woods, px, py);
+  const base = (i, j) => shmAt(i, 3 - j);   // kernelTerms' `base`: its rows run x4 (c 0) .. x1 (c 3) as its fraction runs north
+  let top = -Infinity, lowTop = -Infinity;
+  _low.fill(0);
+  bicubicNet(base, 0, 1, 0, 1, BASE_HEIGHT_SCALE, _low);
+  for (let k = 0; k < 16; k++) if (_low[k] > lowTop) lowTop = _low[k];
+  for (let iy = 0; iy < 3; iy++) {
+    for (let ix = 0; ix < 3; ix++) {
+      _sum.fill(0);
+      bicubicNet(base, ix / 3, (ix + 1) / 3, iy / 3, (iy + 1) / 3, BASE_HEIGHT_SCALE, _sum);
+      bicubicNet((i, j) => lhmAt(ix + i, iy + j), 0, 1, 0, 1, NOISE_MAP_SCALE, _sum);
+      for (let k = 0; k < 16; k++) if (_sum[k] > top) top = _sum[k];
+    }
+  }
+  let h = Math.min(MAX_TERRAIN_HEIGHT, Math.max(SCALED_OCEAN_ELEVATION, top + EXTRA_NOISE_SCALE));
+  if (!landforms) return h;
+  let hill = climates ? 0 : HILLS_TOP;
+  if (climates) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) hill = Math.max(hill, LAND_TOP[etherLandAt(px + dx, py + dy, climates)]);
+  return h + reliefLift(lowTop) + hill;
 }
 
 /**

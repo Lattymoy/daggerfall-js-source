@@ -437,6 +437,23 @@ function ceilings() {
   for (const t of PRIORITY) c[t] *= maxDiurnal(t);
   return (_ceilings = Object.freeze(c));
 }
+/** AUDIT PRECIP DOC-7: each type's ceiling IN A SEASON - the largest weight any climate asks of it then, times its largest
+ *  diurnal factor then: a candidate whose draw no climate's law could keep in its season is thinned before its place is
+ *  read (drawCells). Every law is a climate's in KNOWN (tableOf), so it bounds every keep. */
+let _seasonCeilings = null;
+export function seasonCeilings() {
+  if (_seasonCeilings) return _seasonCeilings;
+  const c = Object.fromEntries(PRIORITY.map((t) => [t, {}]));
+  for (const season of Object.values(SEASONS)) {
+    for (const t of PRIORITY) c[t][season] = 0;
+    for (const climate of KNOWN) {
+      const law = birthLaw(climate, season);
+      if (law) for (const t of PRIORITY) c[t][season] = Math.max(c[t][season], law.weight[t]);
+    }
+    for (const t of PRIORITY) { const d = SYSTEM_TYPES[t].diurnal; c[t][season] *= 1 + Math.abs((d[season] ?? d.other)[0]); }
+  }
+  return (_seasonCeilings = c);
+}
 /** The widest a type's disc can reach at full growth (its rings unthinned, its shape at its most stretched). */
 export const maxRadius = (type) => SYSTEM_TYPES[type].core[1] * Math.sqrt(1 + SYSTEM_TYPES[type].rings.reduce((s, [, share]) => s + share, 0)) * shapeMax(type);
 
@@ -617,15 +634,16 @@ function drawCells(front, climateAt) {
   const reach = front.core * shapeBound(front.shape) + spec.core[1] * shapeMax(type), lead = spec.life[1];
   const n = poisson(ceiling * Math.PI * reach * reach * (lead + front.life), r);
   const out = [];
-  const fh = hostHeadings(front);
+  const fh = hostHeadings(front), seasonCeil = seasonCeilings()[type];
   for (let i = 0; i < n; i++) {
     const bornAt = front.bornAt - lead + r() * (lead + front.life), rad = reach * Math.sqrt(r()), ang = r() * Math.PI * 2;
     const keep = r(), rc = r(), rl = r(), u1 = r(), u2 = r(), u3 = r(), u4 = r(), u5 = r(), u6 = r();
+    const skyBorn = skyMinuteOfEvent(bornAt);   // TIME1: the sky's season and hour at the birth
+    const season = seasonValue(dateFromClassicMinutes(skyBorn));
+    if (keep * ceiling >= seasonCeil[season]) continue;   // AUDIT PRECIP DOC-7: no climate's law keeps it this season - thinned before its place is read
     const ox = rad * Math.cos(ang), oz = rad * Math.sin(ang);
     const [px, pz] = pathWith(fh, front.bornAt, bornAt);   // FLOW2: the front's own headings, read once for all its cells
     const bornX = front.bornX + px * fspec.speed + ox, bornZ = front.bornZ + pz * fspec.speed + oz;
-    const skyBorn = skyMinuteOfEvent(bornAt);   // TIME1: the sky's season and hour at the birth
-    const season = seasonValue(dateFromClassicMinutes(skyBorn));
     const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);
     const hour = (((skyBorn % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
@@ -705,16 +723,29 @@ export function searchReach(type, range = 0) {
 
 /** Every system alive at `minutes` whose shaped disc may come within
  *  `range` of (x, z) (its shape's bound), nearest centre first, each with
- *  its centre's distance `d`. */
-export function systemsNear(x, z, minutes, climateAt, range = 0) {
+ *  its centre's distance `d`. `types` the front types asked (PRECIP3: the
+ *  snowpack asks the wet ones alone - a cell comes with its front). */
+export function systemsNear(x, z, minutes, climateAt, range = 0, types = PRIORITY) {
+  const walk = systemsNearWalk(x, z, minutes, climateAt, range, types);
+  let r = walk.next();
+  while (!r.done) r = walk.next();
+  return r.value;
+}
+/** A born system into `out` at `minutes` where its outline reaches the disc ((x, z), `range`), with its centre's distance
+ *  `d` - the walk's and the span's one test. */
+function takeNear(out, b, x, z, range, minutes) {
+  const s = systemAt(b, minutes);
+  if (!s) return;
+  const d = Math.hypot(s.x - x, s.z - z);
+  if (d - s.reach <= range) out.push({ ...s, d });
+}
+/** AUDIT PRECIP PACK-6: systemsNear as a walk that pauses after every lattice node it asks (a node not yet drawn costs
+ *  its births and its fronts' cells - up to a fifth of a second for a day the memo has not seen), so a reader with a
+ *  frame's budget (snowpack.js) takes it a node at a time and finishes on a later frame; its value the same array. */
+export function* systemsNearWalk(x, z, minutes, climateAt, range = 0, types = PRIORITY) {
   const out = [];
-  const take = (b) => {
-    const s = systemAt(b, minutes);
-    if (!s) return;
-    const d = Math.hypot(s.x - x, s.z - z);
-    if (d - s.reach <= range) out.push({ ...s, d });
-  };
-  for (const type of PRIORITY) {
+  const take = (b) => takeNear(out, b, x, z, range, minutes);
+  for (const type of types) {
     const spec = SYSTEM_TYPES[type];
     if (spec.parent) continue;   // cells are found through their fronts
     const cell = CELL_OF[type] && SYSTEM_TYPES[CELL_OF[type]];
@@ -734,9 +765,63 @@ export function systemsNear(x, z, minutes, climateAt, range = 0) {
             if (Math.hypot(fx - x, fz - z) - (b.core * shapeBound(b.shape) + 2 * cell.core[1] * shapeMax(CELL_OF[type])) > range) continue;
             for (const c of cellsOf(b, climateAt)) take(c);
           }
+          yield;
         }
       }
     }
+  }
+  return out.sort((a, b) => a.d - b.d);
+}
+
+/**
+ * THE SYSTEMS NEAR A DISC OVER A SPAN OF MINUTES (AUDIT PRECIP DOC-7: the snowpack's history walked every node of a
+ * front's reach at every three-hour step, and asked the same births and the same cells again eight times a day) -
+ * systemsNearWalk's own walk once for every minute of [t0, t1]: its nodes over the span's (the step's are a run of them),
+ * and in its order every birth alive at some minute of the span and each such front's cells alive in it. A birth or a
+ * cell dead over the whole span is null at each of its minutes, and a front dead at a minute brings none of its cells
+ * there, so `systemsAmong` answers at any minute of the span exactly the walk's array there (`systemsNearWalk`): the
+ * same systems, the same order. A walk that pauses after every node, as PACK-6's; its value the span.
+ */
+export function* systemsSpanWalk(x, z, t0, t1, climateAt, range = 0, types = PRIORITY) {
+  const list = [];
+  for (const type of types) {
+    const spec = SYSTEM_TYPES[type];
+    if (spec.parent) continue;   // cells are found through their fronts
+    const cell = CELL_OF[type] && SYSTEM_TYPES[CELL_OF[type]];
+    const lives = spec.life[1];
+    const reach = searchReach(type, range);
+    const [nodeM, nodeMinutes] = spec.node;
+    const gx0 = Math.floor((x - reach) / nodeM), gx1 = Math.floor((x + reach) / nodeM);
+    const gz0 = Math.floor((z - reach) / nodeM), gz1 = Math.floor((z + reach) / nodeM);
+    const gt0 = Math.floor((t0 - lives) / nodeMinutes), gt1 = Math.floor(t1 / nodeMinutes);
+    const cellReach = cell ? 2 * cell.core[1] * shapeMax(CELL_OF[type]) : 0;
+    for (let gt = gt0; gt <= gt1; gt++) {
+      for (let gx = gx0; gx <= gx1; gx++) {
+        for (let gz = gz0; gz <= gz1; gz++) {
+          for (const b of birthsIn(type, gx, gz, gt, climateAt)) {
+            if (b.bornAt > t1 || b.bornAt + b.life <= t0) continue;   // dead at every minute of the span
+            list.push({ b, cellReach, cells: cell ? undefined : null });   // a front's cells drawn the first time it is near (systemsAmong), as the walk draws them
+          }
+          yield;
+        }
+      }
+    }
+  }
+  return { x, z, t0, t1, range, list, climateAt };
+}
+/** The span's systems at `minutes` (t0 <= minutes <= t1 - systemsSpanWalk): systemsNear's array there. A front's cells
+ *  are drawn the first minute it comes near, and kept for the span. */
+export function systemsAmong(span, minutes) {
+  const { x, z, range } = span, out = [];
+  const take = (b) => takeNear(out, b, x, z, range, minutes);
+  for (const e of span.list) {
+    const b = e.b;
+    take(b);
+    if (e.cells === null || minutes < b.bornAt || minutes >= b.bornAt + b.life) continue;
+    const [fx, fz] = placeAt(b, minutes);
+    if (Math.hypot(fx - x, fz - z) - (b.core * shapeBound(b.shape) + e.cellReach) > range) continue;
+    e.cells ??= cellsOf(b, span.climateAt).filter((c) => c.bornAt <= span.t1 && c.bornAt + c.life > span.t0);   // alive in the span: the rest are null at every minute of it
+    for (const c of e.cells) take(c);
   }
   return out.sort((a, b) => a.d - b.d);
 }
@@ -782,30 +867,68 @@ export function bandAt(s, d) {
  *  always, for a system with none. */
 export const insideClip = (s, x, z) => !s.clip || Math.hypot(s.clip[0] - x, s.clip[1] - z) / shapeFactor(s.clip[3], x - s.clip[0], z - s.clip[1]) < s.clip[2];
 
+/** AUDIT PRECIP AIR-9: HOW MUCH OF THE SKY a system's cloud covers over a place - its type's own deck (a front's or a
+ *  storm's whole, a fair-weather field's broken), as grown as the system, thinning to nothing over the outer COVER_EDGE
+ *  of its outline - so the cover under a deck's edge walks, never steps at a band's. */
+export const CLOUD_COVER = Object.freeze({ thunder: 1, rain: 1, snow: 1, overcast: 1, sandstorm: 0.6, fog: 0.5, cloudy: 0.4 });
+export const COVER_EDGE = 0.25;
+const WET = new Set(['rain', 'thunder', 'snow']);
+/** Whether a word falls (rain, a storm, snow). */
+export const isWet = (word) => WET.has(word);
+/** A standing system's cloud cover at radial distance `rad` (radialOf, its own measure). */
+export function coverAtRadial(s, rad) {
+  if (!(rad < s.r)) return 0;
+  const t = Math.min(1, Math.max(0, (rad / s.r - (1 - COVER_EDGE)) / COVER_EDGE));
+  return (CLOUD_COVER[s.type] ?? CLOUD_COVER.cloudy) * (s.env ?? 1) * (1 - t * t * (3 - 2 * t));
+}
+
 /**
  * THE WORN WORD AMONG SYSTEMS already found (each standing where it is
  * this minute): the highest-priority word any of them paints over (x, z)
  * - 'sunny', clear air, where none does - with the strongest intensity
  * that word has there (0 in clear air), the system that paints it, and
  * `raw`, that system's own word before the ground law (a winter storm's
- * 'thunder' where the word is 'snow'). `ground(word, x, z)` (optional) is
+ * 'thunder' where the word is 'snow'). `ground(word, x, z, intensity)` (optional) is
  * the ground law a word goes through before priority (WEATHER2a: rain
  * over snow ground is snow). One resolution for every reader: `weatherAt`
  * below and the sim's sample, which finds its systems once a minute and
  * resolves every frame (the travel map's field was a third, until
  * DISC17-C took the weather off the map).
+ *
+ * AUDIT PRECIP AIR-8: `air(x, z, fall)` (optional, in place of `ground`) is the AIR'S law - ONE air per place: every
+ * system over the place is walked once for `fall` - the strongest wet band's intensity, the snow systems' own and the
+ * cloud cover (CLOUD_COVER) - the air answers the place's snow share once, the systems rank by their own words, and the
+ * winner falls at that share: `word` its rounding (snow from a half up), `share` the share itself. A rain band and a
+ * snow band over one place can no longer fall as two airs, the rain's winning by rank. `fall` comes back on every
+ * answer - the strongest band of each wet word too (`rain`, `thunder`, `snow`: the snowpack's fall is the heaviest of
+ * them, PACK-10).
  */
-export function wornAmong(systems, x, z, ground = null) {
-  let best = null;
+export function wornAmong(systems, x, z, ground = null, air = null) {
+  let best = null, wet = 0, rain = 0, thunder = 0, snow = 0, cover = 0;
   for (const s of systems) {
     const dx = x - s.x, dz = z - s.z, reach = s.reach ?? s.r;
     if (dx * dx + dz * dz >= reach * reach || !insideClip(s, x, z)) continue;   // beyond its outline's furthest: the cheap test first
-    const band = bandAt(s, radialOf(s, x, z));
+    const rad = radialOf(s, x, z), band = bandAt(s, rad);
     if (!band) continue;
-    const word = ground ? ground(band.word, x, z) : band.word;
+    const c = coverAtRadial(s, rad);
+    if (c > cover) cover = c;
+    if (WET.has(band.word)) {
+      if (band.intensity > wet) wet = band.intensity;
+      if (band.word === 'snow') { if (band.intensity > snow) snow = band.intensity; }
+      else if (band.word === 'rain') { if (band.intensity > rain) rain = band.intensity; }
+      else if (band.intensity > thunder) thunder = band.intensity;
+    }
+    const word = !air && ground ? ground(band.word, x, z, band.intensity) : band.word;   // PRECIP1: the band's own fall chills the air it falls through
     if (!best || RANK[word] < RANK[best.word] || (word === best.word && band.intensity > best.intensity)) best = { word, intensity: band.intensity, system: s, raw: band.word };
   }
-  return best ?? { word: 'sunny', intensity: 0, system: null, raw: 'sunny' };
+  const fall = { intensity: wet, rain, thunder, snow, cover };
+  if (!best) return { word: 'sunny', intensity: 0, system: null, raw: 'sunny', fall };
+  best.fall = fall;
+  if (air && WET.has(best.raw)) {
+    best.share = air(x, z, fall);
+    best.word = best.share >= 0.5 ? 'snow' : best.raw === 'snow' ? 'rain' : best.raw;
+  }
+  return best;
 }
 
 /**
@@ -813,7 +936,8 @@ export function wornAmong(systems, x, z, ground = null) {
  * standing there. `ground(word, x, z, minutes)` as above.
  */
 export function weatherAt(x, z, minutes, climateAt, { ground = null } = {}) {
-  return wornAmong(systemsNear(x, z, minutes, climateAt, 0), x, z, ground && ((w, gx, gz) => ground(w, gx, gz, minutes)));
+  const air = ground?.lawAir?.(minutes) ?? null;   // AUDIT PRECIP AIR-8: the law's one air, where the ground carries it
+  return wornAmong(systemsNear(x, z, minutes, climateAt, 0), x, z, ground && ((w, gx, gz) => ground(w, gx, gz, minutes)), air);
 }
 
 // ---- the sky (WEATHER3c) ---------------------------------------------
@@ -842,7 +966,15 @@ export function skyCells(systems, x, z, ground = null) {
     for (const [r, raw] of s.bands) {
       const word = ground ? ground(raw, s.x, s.z) : raw;
       const imp = (SKY_WEIGHT[word] ?? 0.5) * (d <= r ? 2 : r / d);
-      out.push({ x: s.x, z: s.z, r, word, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d, shape: s.shape ?? null, clip: s.clip ?? null, env: s.env ?? 1 });   // VC7a: its envelope - the cloud grows and thins with its system
+      const cell = { x: s.x, z: s.z, r, word, raw, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d, shape: s.shape ?? null, clip: s.clip ?? null, env: s.env ?? 1 };   // VC7a: its envelope - the cloud grows and thins with its system; PRECIP1: and the band's own word
+      if (WET.has(raw)) {
+        // AUDIT PRECIP AIR-4/FALL-9: WHERE ITS FALL IS NEAREST the point (its band's disc in the system's own measure, held
+        // a hair inside its rim) and the band's own intensity there - what its curtain's air is read at
+        const k = d > 0 ? Math.min(1, (r * 0.999) / d) : 0;
+        cell.near = [s.x + (x - s.x) * k, s.z + (z - s.z) * k];
+        cell.fall = bandAt(s, Math.min(d, r * 0.999))?.intensity ?? 0;
+      }
+      out.push(cell);
     }
   }
   return out;

@@ -27,8 +27,10 @@ uniform uvec4 uBedMask[8];     // the draw's water corners, packed as the water'
 // SHORE-SILT: tl/gx/gy the ground's own texel of this tile (its layer, turned) - a shore's art paints its water past
 // the corner table's line, and that paint goes under the silt too (its mask in the layer's alpha, world/puddleMask.js
 // markShoreWater), or a bank is freckled with flat blue where neither the bed nor the sheet reaches. Answers the bed's
-// share and, of it, the FRINGE's - the art's water past the sheet, which no water darkens: drawn as wet mud, not silt
-vec2 bedCover(uint data, vec2 f, vec3 tl, vec2 gx, vec2 gy) {
+// share and, of it, the FRINGE's - the art's water past the sheet, which no water darkens: drawn as wet mud, not silt.
+// AUDIT PRECIP GROUND-5: under the snow (\`snowC\`, the ground's cover - render/snowCoverGlsl.js) the art's water is the
+// texel's it wears there: the summer record's mask walked to its winter record's (uSnowArr.x layers on) by the cover
+vec2 bedCover(uint data, vec2 f, vec3 tl, vec2 gx, vec2 gy, float snowC) {
   if (uWaterBed < 0.5) return vec2(0.0);
   uint rec = data >> 2u;
   if (${PUDDLE_RECORDS.map((r) => `rec == ${r}u`).join(' || ')}) return vec2(0.0);
@@ -39,13 +41,18 @@ vec2 bedCover(uint data, vec2 f, vec3 tl, vec2 gx, vec2 gy) {
   if (m == 0u) return vec2(0.0);
   float c = mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);
   float k = smoothstep(0.3, 0.7, c);
-  float art = m != 15u && k < 1.0 ? smoothstep(0.3, 0.7, textureGrad(uTileArr, tl, gx, gy).a) : 0.0;
+  float art = 0.0;
+  if (m != 15u && k < 1.0) {
+    float a = textureGrad(uTileArr, tl, gx, gy).a;
+    if (snowC > 0.0) a = mix(a, textureGrad(uTileArr, vec3(tl.xy, tl.z + float(uSnowArr.x)), gx, gy).a, snowC);
+    art = smoothstep(0.3, 0.7, a);
+  }
   return vec2(max(k, art), max(art - k, 0.0));
 }`;
 
 /** The call site's line: the bed's texel mixed into `tex` (a decode wrapped round the sample for the lane). */
 export const waterBedMix = (decode = (s) => s) =>
-  `vec2 bedK = bedCover(data, tileUV, vec3(tuv, float(layer)), gx, gy);
+  `vec2 bedK = bedCover(data, tileUV, vec3(tuv, float(layer)), gx, gy, snowC);
   if (bedK.x > 0.0) {   // WATER-NEXT 2: under the water, a bed
     vec3 silt = ${decode(`textureGrad(uTileArr, vec3(tuv, ${BED_RECORD.toFixed(1)}), gx, gy).rgb`)} * vec3(${BED_SILT.map((v) => v.toFixed(2)).join(', ')});
     silt = mix(silt, vec3(dot(silt, vec3(0.299, 0.587, 0.114))) * ${WET_MUD.toFixed(2)}, ${WET_MUD_SHARE.toFixed(2)} * bedK.y);   // SHORE-SILT: the fringe past the sheet is wet mud - darker, greyer

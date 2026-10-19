@@ -379,14 +379,14 @@ test('PROF6 the Guild tab: the guild Stores read once, each material\'s count an
   assert.match(t, /Writ budget/);
   assert.equal(calls.filter((c) => c[0] === 'read').length, 1, 'read once');
   const fields = byClass(panel.root, 'dfsocial-field');
-  const units = fields.find((f) => f.getAttribute('aria-label') === 'Units');
+  const units = fields.find((f) => f.getAttribute('aria-label') === 'Units (all of it when empty)');   // GUILD-UX (PIN MOVED): empty is all of it
   units.value = '15'; units.dispatch('input', {});
   const btn = (label) => byClass(panel.root, 'dfsocial-btn').find((b) => b.textContent.startsWith(label));
   btn('Put in').click();
   await ticks();
   assert.deepEqual(calls.at(-1), ['deposit', OAK, 15]);
   panel.render();
-  const units2 = byClass(panel.root, 'dfsocial-field').find((f) => f.getAttribute('aria-label') === 'Units');
+  const units2 = byClass(panel.root, 'dfsocial-field').find((f) => f.getAttribute('aria-label') === 'Units (all of it when empty)');   // GUILD-UX (PIN MOVED): empty is all of it
   units2.value = '10'; units2.dispatch('input', {});
   btn('Take out').click();
   await ticks();

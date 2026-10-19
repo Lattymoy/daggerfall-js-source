@@ -221,7 +221,7 @@ test('PROF3 anvil page: at a smith\'s forge - the families and metals, a recipe\
   row.onclick();
   assert.match(text(), /Mithril Longsword - rank 55/);
   assert.match(text(), /Cured Leather|leather:cured/);
-  assert.match(text(), /margin 0: Crude 20 \| Standard 60 \| Fine 20/);
+  assert.match(text(), /Quality chances: Crude 20% \| Standard 60% \| Fine 20%\. They get better the further your rank \(55\) is above the recipe's \(55\)\./);   // PIN MOVED (PLAIN-ODDS): the odds said in plain words
   assert.equal(buttons().find((b) => b.textContent === 'Craft').disabled, true);
   await press('Buy 1 from the smith - 4 silver');
   assert.deepEqual(bought, [['leather:cured', 1]]);

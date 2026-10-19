@@ -1,0 +1,227 @@
+[
+  {
+    "name": "BATCH-SALVAGE-a-piece-chosen-twice-breaks-twice",
+    "file": "src/systems/reforge.js",
+    "old": "for (const it of new Set(Array.isArray(pieces) ? pieces : []))",
+    "new": "for (const it of (Array.isArray(pieces) ? pieces : []))",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-a-refusal-unnamed",
+    "file": "src/systems/reforge.js",
+    "old": "if (r.ok) { count++; shards += r.shards; } else refused.push({ item: it, reason: r.reason });",
+    "new": "if (r.ok) { count++; shards += r.shards; }",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-what-would-break-by-shards-alone",
+    "file": "src/systems/reforge.js",
+    "old": "export const salvageable = (items) => (Array.isArray(items) ? items : []).filter((it) => !salvageRefusal(it));",
+    "new": "export const salvageable = (items) => (Array.isArray(items) ? items : []).filter((it) => salvageShards(it) > 0);",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-a-row-press-picks",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (choosing) { chooseSalvage(item); return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-a-refused-piece-ticked",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const why = salvageRefusal(item);\n  if (why) notice = batchRefusal(",
+    "new": "  const why = null;\n  if (why) notice = batchRefusal(",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-a-refused-piece-undimmed",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": ": choosing && salvageRefusal(item) ? ' salvno' : ''",
+    "new": ": ''",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-a-sweep-takes-a-Legendary",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    const these = open.filter((it) => sweeps(it) && !sweepSpares(it));",
+    "new": "    const these = open.filter((it) => sweeps(it));",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-a-sweep-takes-the-worn-and-locked",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const open = salvageable(pack);\n  for (const [label, sweeps]",
+    "new": "  const open = pack.filter((it) => salvageShards(it) > 0);\n  for (const [label, sweeps]",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-Keep-breaks",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  no.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };   // every piece kept",
+    "new": "  no.onclick = (e) => ok.onclick(e);   // every piece kept",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-Back-keeps-choosing",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (overlayAction(e) === 'back' && salvageSel) { e.preventDefault(); e.stopPropagation(); if (!e.repeat) { salvageSel = null; notice = null; render(); } return; }",
+    "new": "if (overlayAction(e) === 'back' && salvageSel) { e.preventDefault(); e.stopPropagation(); return; }",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-the-break-unsaid",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    notice = BATCH_DONE(r.count, r.shards, r.refused.length);",
+    "new": "    notice = null;",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-the-button-for-a-Common-pack",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (salvageSel || salvageable(deps.items?.() ?? []).length) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SALVAGE-Cancel-keeps-choosing",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  stop.onclick = () => { salvageSel = null; notice = null; render(); };",
+    "new": "  stop.onclick = () => { notice = null; render(); };",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C3-the-menu-opens",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (choosing) row.oncontextmenu = (e) => { e.preventDefault(); chooseSalvage(item); };",
+    "new": "",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C3-the-pad-wears",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (salvageSel) { chooseSalvage(item); return true; }   // AUDIT BATCH C3",
+    "new": "  // AUDIT BATCH C3",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C3-a-ticked-piece-dragged",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (from === 'local' && !choosing) dragFrom(row, item);",
+    "new": "  if (from === 'local') dragFrom(row, item);",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C3-stash-all-while-choosing",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (STORE_FILTER_KINDS.has(remote.kind) && !salvageSel) {",
+    "new": "    if (STORE_FILTER_KINDS.has(remote.kind)) {",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C4-the-stale-tick-drawn",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (salvageSel) pruneSalvage(deps.items?.() ?? []);   // AUDIT BATCH C4",
+    "new": "  // AUDIT BATCH C4",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C5-Y-keeps",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (answer === 'yes') ok.onclick({ detail: 1, stopPropagation() {} }); else closeDismantle();\n  };\n  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);\n  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };\n}\nlet targetEl",
+    "new": "    closeDismantle();\n  };\n  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);\n  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };\n}\nlet targetEl",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C5-the-kept-count-unsaid",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    notice = BATCH_DONE(r.count, r.shards, r.refused.length);",
+    "new": "    notice = BATCH_DONE(r.count, r.shards);",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C5-the-names-unbounded",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const names = chosen.slice(0, BATCH_NAMES_SHOWN).map(",
+    "new": "  const names = chosen.map(",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C5-the-pair-unguarded",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  row.append(pairGuard(ok), no);   // AUDIT BATCH C5",
+    "new": "  row.append(ok, no);   // AUDIT BATCH C5",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C7-the-tick-under-the-rune",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "right: 2px; top: 1px; z-index: 3; color: rgb(243,239,44);",
+    "new": "right: 2px; top: 1px; color: rgb(243,239,44);",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C5-no-prune-at-the-asking",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  hideTip(); closeMenu(); closeInfo(); closeDismantle();\n  pruneSalvage(deps.items?.() ?? []);\n  const chosen = [...salvageSel];",
+    "new": "  hideTip(); closeMenu(); closeInfo(); closeDismantle();\n  const chosen = [...salvageSel];",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BATCH-C5-a-later-refusal-unpruned",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (!pack.includes(it) || salvageRefusal(it)) salvageSel.delete(it);",
+    "new": "if (!pack.includes(it)) salvageSel.delete(it);",
+    "tests": [
+      "test/systems/batchsalvage.test.js"
+    ]
+  }
+]

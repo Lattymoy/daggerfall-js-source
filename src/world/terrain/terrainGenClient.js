@@ -26,6 +26,7 @@
 //    directly and can overlap a pump build mid-flight.
 // ═══════════════════════════════════════════════════════════════════
 
+import { unpackNature } from './natureWire.js';   // AUDIT BANTHA1 PERF-2
 import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the trace, for the fallback kernel
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { dropGroundCache } from '../tamriel/tamrielGround.js';
@@ -275,6 +276,7 @@ export class TerrainGenClient {
     // worker path alone - the fallback arms resolve the whole object,
     // and node always takes the fallback.
     const { t: _tag, ...out } = m;
+    out.nature = unpackNature(out.nature);   // AUDIT BANTHA1 PERF-2: the flats again, from the columns the worker transferred
     p.resolve(out);
   }
 

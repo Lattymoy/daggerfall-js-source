@@ -44,6 +44,7 @@ import { lunarPhaseFractionsFromMinutes, LUNAR_PHASES } from '../systems/gameDat
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
 import { SD_BRASS_GLSL } from '../world/superDungeon/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
+import { HAZE_SKY_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the sky (render/hazeGlsl.js)
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
 const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -472,6 +473,7 @@ uniform float uBrass;   // AUDIT SD III (V8): the brass air's, 0 = none
 out vec4 outColor;
 ${DREAD_GLSL}
 ${SD_BRASS_GLSL}
+${HAZE_SKY_GLSL}
 
 float hash21(vec2 p) { p = mod(p, ${DECK_LATTICE}.0); p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }   // CLK1 review: the lattice has a period
 float vnoise(vec2 p) {
@@ -675,6 +677,7 @@ void main() {
   float ign = fract(52.9829189 * fract(0.06711056 * gl_FragCoord.x + 0.00583715 * gl_FragCoord.y));
   out3 += (ign - 0.5) / 255.0;
   outColor = vec4(brassGrade(dreadGrade(out3, uDread), uBrass), 1.0);   // EVENT1; AUDIT SD III (V8): the brass air's after it
+  outColor.rgb = hazeSky(outColor.rgb, dir);   // BANTHA1: the jungle's haze toward the horizon - AUDIT BANTHA1 HAZE-8: after the grades, its colour the frame's fog colour, graded once already (shared.js fogColorFor)
 }`;
 
 /** The pass. Same contract as SkyRenderer: draw(yaw, pitch, fovY, aspect)
@@ -688,7 +691,7 @@ export class EnhancedSkyRenderer {
     this.u = {};
     for (const name of ['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uZenith', 'uHorizon', 'uSunColor', 'uGlowColor', 'uCloudLit', 'uCloudShade',
       'uFogColor', 'uSunDir', 'uSunRadius', 'uSunVis', 'uGlowAmount', 'uStars', 'uMoonA', 'uMoonB', 'uMoonAColor', 'uMoonBColor',
-      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uDrift', 'uFogMix', 'uStarPole', 'uStarAngle', 'uDread', 'uBrass']) {
+      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uDrift', 'uFogMix', 'uStarPole', 'uStarAngle', 'uDread', 'uBrass', 'uHazeSky']) {   // BANTHA1: the jungle's haze
       this.u[name] = gl.getUniformLocation(prog, name);
     }
     this.vao = gl.createVertexArray();
@@ -704,6 +707,7 @@ export class EnhancedSkyRenderer {
     this.dread = 0;
     /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/superDungeon/sdBrassSky.js) - the host's. */
     this.brass = 0;
+    this.hazeSky = new Float32Array(4);   // BANTHA1: the jungle's haze over the sky (render/hazeGlsl.js uHazeSky) - the host's, w 0 none
     this.fogColor = new Float32Array([0.5, 0.5, 0.5]);
     this.clearColor = new Float32Array([0.66, 0.78, 0.92]);
     this.fillColor = new Float32Array([0.17, 0.35, 0.72]);
@@ -765,6 +769,7 @@ export class EnhancedSkyRenderer {
     gl.uniform1f(u.uStarAngle, s.starAngle);
     gl.uniform1f(u.uDread, this.dread);   // EVENT1
     gl.uniform1f(u.uBrass, this.brass);   // AUDIT SD III (V8)
+    gl.uniform4fv(u.uHazeSky, this.hazeSky);   // BANTHA1
     // HANDEDNESS: as the classic pass - the triangle winds CCW under a
     // CW front face, so culling is off for it.
     gl.disable(gl.CULL_FACE);

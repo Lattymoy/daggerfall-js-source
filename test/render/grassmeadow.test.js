@@ -24,7 +24,7 @@ import { buildMeadowAtlas, buildMeadowMips, downsampleMeadow, slotCoverage, mead
   MEADOW_SLOPE_FLOOR, LAB_LEAN_PER_PUSH, LAB_GUST_MAX, MEADOW_BUSH, MEADOW_FLOWERS, MEADOW_DRY, MEADOW_SHORT, MEADOW_TALL } from '../../src/render/grassMeadow.js';
 import { LAB_GRASS_HEAD, GAME_GRASS_FIELD, LAB_GRASS_VS, LAB_GRASS_FS, GAME_GRASS_VS, GAME_GRASS_FS, GRASSPX_VS_EDITS, GRASSPX_FS_EDITS, GRASSFOG_VS_EDITS, GRASSFOG_FS_EDITS,
   GRASSLIT_VS_EDITS, GRASSLIT_FS_EDITS, GRASSMEADOW_VS_EDITS, GRASSMEADOW_FS_EDITS, applyGrassEdits, LabGrassRenderer, GRASS_CELL, GRASS_TONES, GRASS_TONES_CLASSIC,
-  GRASS_MAX_LIGHTS, heightFloor, heightSpan, packHeightSlope, unpackHeightSlope, labBladeCorners, GRASS_FAR_SEGMENTS } from '../../src/render/labGrass.js';
+  GRASS_MAX_LIGHTS, heightFloor, heightSpan, packHeightSlope, unpackHeightSlope, labBladeCorners, GRASS_FAR_SEGMENTS, MEADOW_ART } from '../../src/render/labGrass.js';
 import { SHADOW_POINT_CASTERS } from '../../src/render/shadowPass.js';
 import { EL_MAX_LIGHTS, elDecode3, elDecodeN } from '../../src/render/enhancedLighting.js';
 import { pixelGrass, PX_RAMP_STEPS } from '../../src/render/grassPixelArt.js';
@@ -407,7 +407,7 @@ test('MEADOW1: the owner\'s colours on any ground - the fragment stage\'s own te
       vT: 1, vTint: 0.5, vFade: 1, vLam: 0, vSnow: 0, vWet: 0, vGround: [...ground], vMoonLam: 0,
       vUV: [0.5, 1], vVar: 0, vWorld: [0, 0, 10], vSun: 1, vFar: 0, vNear: [0, 0, 0], vPoint: [0, 0, 0],
       uAmb: [1, 1, 1], uSunCol: [1, 1, 1], uMoonCol: [0, 0, 0], uDim: 1, uSunScale: 0, uMoonScale: 0,
-      uPixel: 1, uArt: 1, uArtGround: [...artGround], uPxSteps: 2, uPxVariants: MEADOW_SLOTS, uPxTintBands: 3, uLane: 0, uELExposure: 1,
+      uPixel: 1, uArt: 1, uArtGround: [...artGround], uArtHue: MEADOW_ART.hue, uPxSteps: 2, uPxVariants: MEADOW_SLOTS, uPxTintBands: 3, uLane: 0, uELExposure: 1,
       uGrassTone: GRASS_TONES_CLASSIC.map((k) => [...k]),
       uFogColor: [0, 0, 0], uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 0, 0], uFocus: [0, 0, 0, 0], uDwFog: zeros(5, 4),
       gl_FragCoord: [3, 5, 0.5, 1], o: [0, 0, 0, 0],
@@ -426,8 +426,10 @@ test('MEADOW1: the owner\'s colours on any ground - the fragment stage\'s own te
     const artGround = meadowArtGround(lane);
     for (const ground of [VE, SWAMP, MOUNTAIN, [0.9, 0.05, 0.9]]) {
       for (const art of [petal, leaf, dry, MEADOW_GREEN]) {
-        const got = fs(art, ground, artGround), want = meadowTexel(art, ground, artGround);
-        assert.ok(got.every((v, i) => Math.abs(v - want[i]) < 1e-5), `the stage's colour is the twin's - two ramp steps band nothing in the meadow: ${got} against ${want}`);
+        for (const hue of [MEADOW_ART.hue, 0, 0.5]) {   // BANTHA2: a set's share of the ground's hue (the meadow's whole, the jungle floor's none)
+          const got = fs(art, ground, artGround, { uArtHue: hue }), want = meadowTexel(art, ground, artGround, hue);
+          assert.ok(got.every((v, i) => Math.abs(v - want[i]) < 1e-5), `the stage's colour is the twin's at the hue ${hue} - two ramp steps band nothing in the meadow: ${got} against ${want}`);
+        }
       }
     }
     // the anchor: the owner's green, on any grass tile, is the tile at the lane's middle tone

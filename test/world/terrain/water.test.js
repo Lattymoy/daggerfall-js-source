@@ -160,7 +160,7 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   assert.match(fs, /uint word = j == 0u \? v\.x : \(j == 1u \? v\.y : \(j == 2u \? v\.z : v\.w\)\);/, 'the component by compare, never a dynamic index');
   assert.match(fs, /if \(corners == 0u\) discard;/, 'no water, no blend');
   assert.match(fs, /float edge = 1\.0;/, 'PIN MOVED (WATER-NEXT 2): the open sea\'s edge is the whole sheet');
-  assert.match(fs, /\n\s*edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*uint rec = data >> 2u;\n\s*if \(isPuddleRecord\(rec\)\) \{\n(?:[^\n]*\n){3}\s*\}\n\s*if \(edge <= 0\.002\) discard;/, 'the feather (WATER-PUDDLE: a puddle record\'s own art multiplied in), then nothing past it');
+  assert.match(fs, /\n\s*edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*uint rec = data >> 2u;\n\s*if \(isPuddleRecord\(rec\)\) \{\n(?:[^\n]*\n){8}\s*\}\n\s*if \(edge <= 0\.002\) discard;/, 'the feather (WATER-PUDDLE: a puddle record\'s own art multiplied in), then nothing past it');   // AUDIT PRECIP GROUND-5 (PIN MOVED): its winter art's under the snow, five lines
   assert.match(fs, /float diff = max\(dot\(n, uLightDir\), 0\.0\) \* shadow;/, 'the ground\'s sun term, shadowed by the deck');
   // PIN MOVED (WATER-NEXT 2): the body is the water's colour, lit by TERRAIN_FS's terms (the sun's softened - light
   // goes into water, it does not bounce off it like dirt); Schlick capped higher; the alpha is the shore's and, without
@@ -246,12 +246,14 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.ok(slot > w.indexOf('renderer.drawTerrain(p.terrain, pixelMatrix,'), 'after the ground');
   assert.ok(slot > w.lastIndexOf('renderer.drawMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local)'), 'after the last opaque model of the pixel loop');
   assert.ok(slot < w.indexOf('renderer.drawBillboards(allBatches, camRight, bbUp);'), 'before the first flat');   // TV1: the flats lean to the travel view's eye (bbUp)
-  assert.match(w, /const wu = _waterU = waterUniforms\(\{ seconds: now \/ 1000, wind: windNow, rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: waterSkyNow \}\);/,
+  // AUDIT PRECIP FALL-4 (PIN MOVED): on the law's lane the rings are the DROPS' (fx.rain - null off it)
+  assert.match(w, /const wu = _waterU = waterUniforms\(\{ seconds: now \/ 1000, wind: windNow, rain: (?:fx\.rain \?\? \()?precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0\)?, sky: waterSkyNow \}\);/,
     'the clock, the eased wind the mills take, the front\'s rain, the dome\'s colours');   // PIN MOVED (FAR-SEA1): the dome's colours read once a frame, the far ring's sea takes them too
   assert.match(w, /const waterSkyNow = waterOn \? sky\.waterSky\(\) : null;/, 'FAR-SEA1: ...read from the dome, once (AUDIT FAR-SEA1 H2: and only with the Enhanced water on)');
   // PERF-EXT13: the visible water pixels are collected - each pixel's water, its matrix, its ground array and its
   // tilemap - and drawn in ONE call after the walk
-  assert.match(w, /if \(!p\._visible \|\| !p\.water \|\| p\.deepWaters\?\.hide\) continue;[^\n]*\n\s*const row = _waterRows\[n\+\+\] \?\?= \[null, null, null, null\];\s*\n\s*row\[0\] = p\.water; row\[1\] = p\._pixelMatrix; row\[2\] = renderer\.tileArrays\.get\(p\.groundArchive\); row\[3\] = p\.tilemapTex;\s*\n\s*\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/);
+  // AUDIT PRECIP GROUND-5 (PIN MOVED): and its snow - the set as the lane holds it, and the pixel's draw (snowCover.drawOf)
+  assert.match(w, /if \(!p\._visible \|\| !p\.water \|\| p\.deepWaters\?\.hide\) continue;[^\n]*\n\s*const row = _waterRows\[n\+\+\] \?\?= \[null, null, null, null, null\];\s*\n\s*row\[0\] = p\.water; row\[1\] = p\._pixelMatrix; row\[2\] = snowCover\.arrayOf\(p\.groundArchive\); row\[3\] = p\.tilemapTex; row\[4\] = snowCover\.drawOf\(p\);\s*\n\s*\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/);
   // DW-C: a pixel whose cap Iliac Puddle No More hides takes its water with it (the condition above)
   const e = rd('src/scenes/exterior.js');
   assert.match(e, /const waterOn = waterSwitchOn\(\)[^\n]*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM\);/, 'exterior: the one composition, and the town\'s own has-water question beside it (FT6)');

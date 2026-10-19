@@ -1117,8 +1117,8 @@ const craftHead = (name, rank) => t('prof.page.craft.head', '{name} - rank {rank
 const inputLine = (name, have, need) => t('prof.page.craft.input', '{name} {have} / {need} ({held} stored)', { name, have: Math.min(have, need), need, held: have });
 /** A station's rank: "Smithing 12 (Apprentice)." */
 const rankLine = (id, rank) => t('prof.page.rankLine', '{profession} {rank} ({rankName}).', { profession: professionName(id), rank, rankName: rankName(rank) });
-/** The odds a margin rolls on: "Common 60 | Fine 40". */
-const oddsText = (odds) => odds.map((o, q) => (o ? `${QUALITY_NAMES[q]} ${o}` : null)).filter(Boolean).join(' | ');
+/** The odds a margin rolls on: "Standard 60% | Fine 40%". */
+const oddsText = (odds) => odds.map((o, q) => (o ? `${QUALITY_NAMES[q]} ${o}%` : null)).filter(Boolean).join(' | ');
 const craftWord = () => t('prof.page.craft.go', 'Craft');
 const strikeWord = () => t('prof.page.act.strike', 'Strike');
 /** A bench's button while its work is in flight (the mason's, the jeweller's). */
@@ -1489,7 +1489,7 @@ function drawAnvil(detail, rerender, { el, divider }) {
     _anvil.chained = chain?.ok === true;   // AUDIT CRAFT1 F1: a craft pressed now runs its chain - the work rows held under it
     if (rollsQuality(r) && recipeOpen(r, rank)) {   // CRAFT5: a Repair Kit's quality too
       const odds = qualityOdds(rank - r.rank, { masterwright: specs[100] === 'masterwright' });
-      box.append(el('p', 'px-note', t('prof.page.anvil.odds', 'Your rank {rank}, margin {margin}: {odds}. A clean heat is a step better.', { rank, margin: rank - r.rank, odds: oddsText(odds) })));
+      box.append(el('p', 'px-note', t('prof.page.anvil.odds', 'Quality chances: {odds}. They get better the further your rank ({rank}) is above the recipe\'s ({need}). Land every strike while the glow is in the band to raise the result one quality.', { odds: oddsText(odds), rank, need: r.rank })));
     }
     if (recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('smithing'), craftPayOf(book, 'smithing'))));   // CRAFT-FIRST-SHOWN; CRAFT-LIMIT-SAID: as the service credits it
     if (r.kind === 'kit') box.append(el('p', 'px-note', KIT_REACH_LINE));
@@ -1709,7 +1709,7 @@ function drawWorkbench(detail, rerender, { el, divider }) {
     else if (r.family === 'furniture') box.append(el('p', 'px-note', t('prof.page.bench.furniture', 'Furniture goes among your things, to set down in a room of your own (Decorate).')));
     if (takesQuality(r) && recipeOpen(r, rank)) {
       const odds = qualityOdds(rank - r.rank, { masterwright: false });
-      box.append(el('p', 'px-note', t('prof.page.bench.odds', 'Your rank {rank}, margin {margin}: {odds}. A clean pass of the plane is a step better.', { rank, margin: rank - r.rank, odds: oddsText(odds) })));
+      box.append(el('p', 'px-note', t('prof.page.bench.odds', 'Quality chances: {odds}. They get better the further your rank ({rank}) is above the recipe\'s ({need}). Draw the plane true to the grain to raise the result one quality.', { odds: oddsText(odds), rank, need: r.rank })));
     }
     if (!r.later && recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('carpentry'), craftPayOf(book, 'carpentry'))));   // CRAFT-FIRST-SHOWN: Building's; CRAFT-LIMIT-SAID
     heartwoodToggle(box, el, r, book, _bench, rerender, planing);
@@ -1934,10 +1934,10 @@ function drawLoom(detail, rerender, { el, divider }) {
     }
     if (takesQuality(r) && recipeOpen(r, rank)) {
       const odds = qualityOdds(rank - r.rank, { masterwright: false });
-      const a = { rank, margin: rank - r.rank, odds: oddsText(odds) };
-      box.append(el('p', 'px-note', specs[50] === 'tailor' && r.family === 'clothing' ? t('prof.page.loom.oddsTailor', 'Your rank {rank}, margin {margin}: {odds}. A clean stitch is a step better, and a Tailor\'s clothing another.', a)
-        : specs[50] === 'leatherworker' && r.family === 'leather' ? t('prof.page.loom.oddsLeather', 'Your rank {rank}, margin {margin}: {odds}. A clean stitch is a step better, and a Leatherworker\'s leather another.', a)
-          : t('prof.page.loom.odds', 'Your rank {rank}, margin {margin}: {odds}. A clean stitch is a step better.', a)));
+      const a = { odds: oddsText(odds), rank, need: r.rank };
+      box.append(el('p', 'px-note', specs[50] === 'tailor' && r.family === 'clothing' ? t('prof.page.loom.oddsTailor', 'Quality chances: {odds}. They get better the further your rank ({rank}) is above the recipe\'s ({need}). Press every stitch on the beat to raise the result one quality. Being a Tailor raises clothing one more.', a)
+        : specs[50] === 'leatherworker' && r.family === 'leather' ? t('prof.page.loom.oddsLeather', 'Quality chances: {odds}. They get better the further your rank ({rank}) is above the recipe\'s ({need}). Press every stitch on the beat to raise the result one quality. Being a Leatherworker raises leather one more.', a)
+          : t('prof.page.loom.odds', 'Quality chances: {odds}. They get better the further your rank ({rank}) is above the recipe\'s ({need}). Press every stitch on the beat to raise the result one quality.', a)));
     }
     // CRAFT-FIRST-SHOWN: its XP and its first's - or, wholly the Weavers' cloth, that it lays on none (AUDIT 32 S1)
     if (recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('outfitting'), craftPayOf(book, 'outfitting'))));   // CRAFT-LIMIT-SAID
@@ -2228,7 +2228,7 @@ function drawMasonBench(detail, rerender, { el, divider }) {
     const open = recipeOpen(r, rank, specs);
     if (open) {
       const odds = qualityOdds(rank - r.rank, { masterwright: false });
-      box.append(el('p', 'px-note', t('prof.page.mason.odds', 'Your rank {rank}, margin {margin}: {odds}. A clean chisel is a step better.', { rank, margin: rank - r.rank, odds: oddsText(odds) })));
+      box.append(el('p', 'px-note', t('prof.page.mason.odds', 'Quality chances: {odds}. They get better the further your rank ({rank}) is above the recipe\'s ({need}). Hit the marked line with every strike to raise the result one quality.', { odds: oddsText(odds), rank, need: r.rank })));
       box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('masonry'), craftPayOf(book, 'masonry'))));   // CRAFT-FIRST-SHOWN; CRAFT-LIMIT-SAID
     }
     const ready = open && (craftable(r, held) || chain?.ok === true) && !_mason.busy && !_mason.crafting && !_mason.act && !elsewhere && !short;
@@ -2609,8 +2609,8 @@ function drawJewellerBench(detail, rerender, { el, divider }) {
       const odds = qualityOdds(rank - r.rank, { masterwright: masterworkSpec(specs[100], r) });   // CRAFT3: the Master Jeweller's, on a jewel
       // AUDIT PROF-541 R2-C6: and the town Apothecary's quality steps the service adds (professions.js seatStepsFor)
       const steps = Math.max(0, Math.trunc(Number(p.jewelSteps?.()) || 0));
-      box.append(el('p', 'px-note', t('prof.page.jewel.odds', 'Your rank {rank}, margin {margin}: {odds}{steps, plural, =0 {} one { (+# step from the town\'s Apothecary)} other { (+# steps from the town\'s Apothecary)}}. A clean facet is a step better.',
-        { rank, margin: rank - r.rank, odds: oddsText(odds), steps })));
+      box.append(el('p', 'px-note', t('prof.page.jewel.odds', 'Quality chances: {odds}. They get better the further your rank ({rank}) is above the recipe\'s ({need}). Stop every turn where the stone catches the light to raise the result one quality.{steps, plural, =0 {} one { The town\'s Apothecary raises it one more.} other { The town\'s Apothecary raises it # more.}}',
+        { odds: oddsText(odds), rank, need: r.rank, steps })));
       box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('jewelcrafting'), craftPayOf(book, 'jewelcrafting'))));   // CRAFT-FIRST-SHOWN: its XP moved here, beside its first's; CRAFT-LIMIT-SAID
     }
     heartwoodToggle(box, el, r, book, _jewel, rerender, cutting);   // a Wand's plank (4.2: Heartwood "worth one quality step in any recipe")

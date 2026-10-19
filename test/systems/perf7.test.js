@@ -61,6 +61,6 @@ test('PERF7 pins: the world host keeps one breather for the stream, resets it at
   assert.match(w, /async function buildPixelNow\(px, py, \{ roadsRetry = false \} = \{\}\) \{\n\s+breather\.reset\(\);/, 'reset per build');
   assert.match(w, /entry\._batched = true; \}[^\n]*\n\s+await breather\.breathe\(\);/, 'after each model, inside the placements loop');
   const loopAt = w.indexOf('for (const placed of b.layout.models) {');
-  const breatheAt = w.indexOf('await breather.breathe();');
+  const breatheAt = w.indexOf('await breather.breathe();', loopAt);   // PIN MOVED (AUDIT PRECIP HOST-7): the flat groups' own loop (standFlatGroups, shared with the re-skin) breathes above the model loop - the breath this pins is the first after it
   assert.ok(loopAt > 0 && breatheAt > loopAt && breatheAt - loopAt < 4000, 'the breath is inside the model loop');   // WD3 (the arena merge): a model's alias grew the loop past 3000 - a runaway guard, not a law
 });

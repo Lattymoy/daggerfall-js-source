@@ -71,7 +71,7 @@ test('PUDDLE-RAIN: under the water the falling weather is still hidden, swimmer 
   assert.equal(gate(null, null, true, { isPlayerSwimming: true }).precip, false, 'no sea mod: the classic gate never hid it');
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(sand && !_dwPrecipOff\) \{/, 'the sand reads it');
-  assert.match(w, /if \((?:\(!_travelWeatherOff \|\| tvf\)|!_travelWeatherOff) && !_dwPrecipOff\) \{\s*\n\s*precip\.draw\(precipShown, proj, view/, 'the rain and the snow read it');
+  assert.match(w, /if \((?:\(!_travelWeatherOff \|\| tvf\)|!_travelWeatherOff) && !_dwPrecipOff\) \{\s*\n\s*precip\.drawFall\(precipShown, proj, view/, 'the rain and the snow read it (PRECIP1: the fall at the air\'s snow share)');
   assert.doesNotMatch(w.slice(w.indexOf('    const _dwAirOff = '), w.indexOf('    const precipShown = ')), /isPlayerSwimming/, 'the swim is no part of it');
 });
 
@@ -82,6 +82,6 @@ test('RAIN-OVER-GRASS + OW-RAIN (Mac: "it stops raining (you can still hear it) 
   assert.ok(w.indexOf('labGrass.draw(proj, view') < fall, 'after the grass');
   assert.ok(w.indexOf('if (hallBanners || seatBanners) {') < fall, 'after the banners');
   assert.ok(fall < w.indexOf('    drawVeiledPeerBodies();'), 'before the translucent bodies');
-  assert.ok(w.indexOf('const drawFalling = () => {') < w.indexOf('precip.draw(precipShown, proj, view'), 'the rain inside it');
+  assert.ok(w.indexOf('const drawFalling = () => {') < w.indexOf('precip.drawFall(precipShown, proj, view'), 'the rain inside it');
   assert.match(w, /if \(\(!_travelWeatherOff \|\| tvf\) && !_dwPrecipOff\) \{/, 'the Overworld keeps it');
 });

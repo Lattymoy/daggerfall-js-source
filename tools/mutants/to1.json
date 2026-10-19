@@ -873,8 +873,8 @@
   {
     "name": "j1-rain-falls-through-the-journey",
     "file": "src/scenes/world.js",
-    "old": "        if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {\n          precip.draw(precipShown, proj, view, wxEye32, camRight, now / 1000);",
-    "new": "        if (!_dwPrecipOff) {\n          precip.draw(precipShown, proj, view, wxEye32, camRight, now / 1000);",
+    "old": "        if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {\n          precip.drawFall(precipShown, proj, view, wxEye32, camRight, now / 1000);",
+    "new": "        if (!_dwPrecipOff) {\n          precip.drawFall(precipShown, proj, view, wxEye32, camRight, now / 1000);",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]

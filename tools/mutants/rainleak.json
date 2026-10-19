@@ -119,8 +119,8 @@
   {
     "name": "RAINLEAK-world-rain-fresh-array",
     "file": "src/scenes/world.js",
-    "old": "precip.draw(precipShown, proj, view, wxEye32, camRight, now / 1000);",
-    "new": "precip.draw(precipShown, proj, view, new Float32Array(wxEye), camRight, now / 1000);",
+    "old": "precip.drawFall(precipShown, proj, view, wxEye32, camRight, now / 1000);",
+    "new": "precip.drawFall(precipShown, proj, view, new Float32Array(wxEye), camRight, now / 1000);",
     "tests": [
       "test/systems/rainleak.test.js"
     ]

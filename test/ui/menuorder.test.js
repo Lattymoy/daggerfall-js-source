@@ -670,7 +670,7 @@ test('AUDIT MENU-ORDER the passes: a panel\'s ground is its whole rect (R1); the
   room.tool.drawPreview(b);
   assert.equal(room.draws.filter((d) => d.panel && d.panel.rect.w === DECOR_THUMB_PX).length, 0, 'none drawn again');
   assert.match(readFileSync('src/scenes/interiorContext.js', 'utf8'), /\n  markRemapLaw\(texRemap, `climate:\$\{climateBase\}\.\$\{season\}`\);/, 'a building\'s table named by its climate and season');
-  assert.match(w, /const texRemap = markRemapLaw\(new Map\(\), `climate:\$\{townClimateBase\}\.\$\{host\.season\}`\);/, 'a town\'s (a yard\'s) the same');
+  assert.match(w, /const texRemap = markRemapLaw\(new Map\(\), `climate:\$\{townClimateBase\}\.\$\{pixelSeason\}`\);/, 'a town\'s (a yard\'s) the same (PIN MOVED, PRECIP4: the pixel\'s own season)');
   assert.match(readFileSync('src/scenes/worldModes.js', 'utf8'), /thumbHold: \(\) => placeHoldOf\('decor-thumbs', 'interior'\),/, 'the room\'s decorator asks through a hold of its own');
   assert.match(readFileSync('src/scenes/homeYards.js', 'utf8'), /\.\.\.\(deps\.meshes\.hold \? \{ thumbHold: \(\) => deps\.meshes\.hold\('decor-thumbs', 'yard'\) \} : \{\}\),/, 'and a yard\'s');
 });

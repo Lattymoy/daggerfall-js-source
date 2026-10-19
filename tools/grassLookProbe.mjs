@@ -18,6 +18,10 @@
 // (comma-separated, default `Enter,n,n`); VARIANTS a JSON array of `{ name, tones?, classic?, eval? }` - a palette
 // paints the lane booted (`classic` the classic lane's, by default when PREFS turn Enhanced Lighting off); W/H the
 // viewport; PORT the dev server's (5201); DEBUG every console line. KEYS=',' presses none (an empty KEYS is the default's).
+// UNTIL an expression the page is waited on before the first shot (BANTHA2: `__grassStats().floor.cells >= 340` - a field
+// placed whole, its ~355 cells inside the 300 m range; SwiftShader's frames take seconds, and a field places two cells a
+// frame). The judgement counts the jungle floor's tufts with the meadow's: deep in the jungle the floor is the only grass
+// (03-World/Bantha-Jungle.md).
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 
@@ -58,6 +62,7 @@ if (process.env.EVAL) {
 }
 for (const k of (process.env.KEYS || 'Enter,n,n').split(',').filter(Boolean)) { await page.keyboard.press(k); await page.waitForTimeout(700); }
 await frames(3);
+if (process.env.UNTIL) { await page.waitForFunction(process.env.UNTIL, null, { timeout: 1800000, polling: 5000 }); await frames(3); }
 const variants = process.env.VARIANTS ? JSON.parse(process.env.VARIANTS) : null;
 if (!variants) { await page.screenshot({ path: out, timeout: 300000 }); console.log('shot', out); }
 else for (const v of variants) {
@@ -69,8 +74,8 @@ else for (const v of variants) {
 }
 // THE JUDGEMENT: the page drew without a fault, the field was found where one was asked for, and the grass stood in it
 const grass = await page.evaluate(() => window.__grassStats?.() ?? null);
-console.log('grass ->', JSON.stringify(grass && { blades: grass.blades, drawn: grass.drawn?.blades, cells: grass.cells }));
+console.log('grass ->', JSON.stringify(grass && { blades: grass.blades, drawn: grass.drawn?.blades, cells: grass.cells, floor: grass.floor?.drawn?.blades }));
 if (pageErrors.length) fail(`${pageErrors.length} page error(s): ${pageErrors[0]}`);
 if (process.env.EVAL && posed == null) fail('no field to stand on (EVAL answered nothing)');
-if (process.env.EVAL && !(grass?.drawn?.blades > 0)) fail('the grass drew no blades');
+if (process.env.EVAL && !((grass?.drawn?.blades ?? 0) + (grass?.floor?.drawn?.blades ?? 0) > 0)) fail('the grass drew no blades');
 await browser.close(); await server.close();

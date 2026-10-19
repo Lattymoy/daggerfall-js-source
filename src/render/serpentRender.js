@@ -370,7 +370,7 @@ void main() {
   outColor = vec4(dwWaterFog(vColor.rgb * f, vWorldPos), vColor.a * f);
 }`;
 
-const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uSeaY'];
+const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze', 'uSeaY'];
 /** The most vertices a frame lays: the tube, its cap, the sail, the horns, the eyes, the glob - and the marks. */
 export const MESH_MAX_VERTS = 24 * BODY_SUB * RING_SIDES * 6 + RING_SIDES * 3 + 24 * BODY_SUB * 6 + 64;
 export const FLAT_MAX_VERTS = 24_000;
@@ -414,6 +414,7 @@ export class SerpentRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (u.uDwFog && r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus && r._focus) gl.uniform4fv(u.uFocus, r._focus);
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
     if (u.uSeaY) gl.uniform1f(u.uSeaY, seaY);
   }
   _upload(prog, data, n, stride) {

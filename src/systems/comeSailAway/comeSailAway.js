@@ -1951,6 +1951,7 @@ export function createComeSailAwayRuntime(deps) {
    * Answers whether she was packed.
    */
   function PackBoat(boat, item = false, lost = false) {
+    if (item && boat?.charter) return false;   // PASSAGE (the port's own): a booked ship is her master's, never parts in my pack
     if (item) {
       const deed = boat.crewed && boat.uid ? deedInPack(boat.uid) : null;
       if (boat.crewed && boat.uid && deed == null) return false;
@@ -3087,6 +3088,7 @@ export function createComeSailAwayRuntime(deps) {
           lights: b.LightOn,
           inside: b.inside,
           ...(Number.isFinite(b.itemValue) ? { Value: b.itemValue } : {}),   // SHIP-PACK (the port's own): her worth, kept
+          ...(b.charter ? { Charter: JSON.parse(JSON.stringify(b.charter)) } : {}),   // PASSAGE (the port's own): a booked ship's voyage, kept with her
         });
         if (state.CurrentBoat === b) num = i;
       }
@@ -3133,6 +3135,7 @@ export function createComeSailAwayRuntime(deps) {
         boat.MapPixel = placedBoat.MapPixel ? { X: placedBoat.MapPixel.X, Y: placedBoat.MapPixel.Y } : null;
         boat.inside = !!placedBoat.inside;
         if (Number.isFinite(placedBoat.Value)) boat.itemValue = placedBoat.Value;   // SHIP-PACK: her worth
+        if (placedBoat.Charter && typeof placedBoat.Charter === 'object') boat.charter = placedBoat.Charter;   // PASSAGE: her voyage (scenes/naval/passageHost.js reads it through passage.js charterRecord)
         state.AllBoats.push(boat);
         PlaceBoatAtMapPixel(boat, boat.Position, boat.Direction, boat.MapPixel);
         boat.Cargo.Items = deps.packedItems.deserialize(placedBoat.Items ?? []);

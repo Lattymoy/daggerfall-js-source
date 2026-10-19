@@ -339,10 +339,10 @@ test('FOREST1: the switch - the row, the enhanced skin, ?forests=off; online the
 
 test('FOREST1: the world host reads the switch once at its mount and hands the kernel the climate\'s summer archive', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /picks: wodPicks\.map\(\(p\) => \(\{ flatten: p\.flatten, rect: p\.rect, hide: !wodPiecewise\(p\.prefabName\), bounds: forests \? wodSiteFootprint\(p\.prefab, p\.rect\) : null \}\)\)/, 'AUDIT F1/F7: the sites and their footprints');
-  assert.match(w, /if \(pointNearGate\(gateClear, px, py, f\.x, f\.z, WOD_FLAT_GATE_CLEAR_M\)\) continue;\n\s+if \(forests && insideRocks\(pixelRocks, f\.x, f\.z\)\) continue;/, 'AUDIT F5/F1: the gate\'s clearing and the rock pieces');
+  assert.match(w, /picks: wodPicks\.map\(\(p\) => \(\{ flatten: p\.flatten, rect: p\.rect, hide: !wodPiecewise\(p\.prefabName\), bounds: forests \|\| jungle \? wodSiteFootprint\(p\.prefab, p\.rect\) : null \}\)\)/, 'AUDIT F1/F7: the sites and their footprints');   // AUDIT BANTHA1 LAY-4: and the jungle's
+  assert.match(w, /if \(pointNearGate\(gateClear, px, py, f\.x, f\.z, WOD_FLAT_GATE_CLEAR_M\)\) continue;\n\s+if \(\(forests \|\| \(jungle && f\.archive === JUNGLE_ARCHIVE\)\) && insideRocks\(pixelRocks, f\.x, f\.z\)\) continue;/, 'AUDIT F5/F1: the gate\'s clearing and the rock pieces');
   // PIN MOVED (ECOTONE1, 2026-10-07): and its climate - a border's tree is a neighbour climate's, its stump that one's
-  assert.match(w, /wood: f\.wood \?\? 0, base, archive \}\);/, 'AUDIT F3: a tree flat carries its wood to Logging');
+  assert.match(w, /wood: f\.wood \?\? 0, base, archive \} : null;/, 'AUDIT F3: a tree flat carries its wood to Logging');
   assert.match(w, /const forests = realForestsOn\(\);/);
   assert.match(w, /forests: forests \? \{ archive: climate\.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES\.has\(dfLocation\?\.mapTableData\?\.locationType\) \} : null,/);
   assert.equal((w.match(/realForestsOn\(/g) ?? []).length, 1, 'once, not a pixel at a time');
