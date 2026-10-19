@@ -34,7 +34,8 @@ import { setModSetting } from '../../src/systems/modSettings.js';
 import { FORAGING_VENDOR } from '../../src/systems/foraging/foragingLaw.js';
 import { installForaging } from '../../src/systems/foraging/foragingInstall.js';
 import { installSmithing } from '../../src/systems/smithItems.js';
-import { installHealingSupply } from '../../src/systems/healingSupply.js';
+import { installHealingSupply, mintHealingPotion } from '../../src/systems/healingSupply.js';
+import { armorOfMaterial } from '../../src/combat/enemyEquipment.js';
 import { installRestItemLoot, isDeepPileKey } from '../../src/systems/rest/restItems.js';
 import { installSurvivalLoot } from '../../src/systems/survival/loot.js';
 import { grantEliteLoot } from '../../src/systems/eliteFoes.js';
@@ -882,3 +883,158 @@ test('OUTDOOR-LOOT D-2.1 (a verdict frame the relay dropped): the host\'s word w
   for (const it of stored) assert.equal(holding(r.A, it), 0, `${it.name}: not in the host's pack either`);
   for (const it of stored) assert.equal(whereIs([r.A, r.B], key, it).listed, 0, `${it.name}: gone from the body`);
 });
+
+// ═══ OUTDOOR-LOOT FOLLOW-UPS, PHASE 0 (2026-10-19): BACK AND FORTH, THREE PLAYERS, A DUNGEON BODY ══════════════════════════════
+// A (the host) kills; the body holds the room's Gold (the base roll's own purse), a Buckler and a Potion of Healing (the game's
+// own producers - enemyEquipment.js armorOfMaterial, healingSupply.js mintHealingPotion - laid in by the host's window, the door
+// every stored piece comes through). B takes the Buckler through its window, C the Gold through Quick Loot, A the Potion through
+// its own window; then B tries the Gold and C the Buckler - each is refused, holds nothing extra, and is told "Someone took that
+// first.". B and C hear nothing of the others' moves until the end (their inbound link is HELD - for 3.5 s in the second run -
+// by a per-peer flush below, the relay's own queue untouched), so each plaque keeps the list it last heard less what the player
+// took itself, and the tries are real races the host judges first come. Every step asserts what every player's plaque lists;
+// the end asserts the census and the empty body. (The emptied body's plaque is NOT asserted: Phase 1b changes it.)
+const BACK_AND_FORTH_AT = 1_700_000_000_000;
+/** A window stand-in over the dungeon host's own takeLoot: `openInventory` hands the SOURCE ARRAY to the window (dungeonContext.js
+ *  takeLoot), whose clicks are itemTransfer.js's planTake + applyTransfer and whose close is openInventory's own onClose
+ *  (dungeonContext.js:"if (lootKey) { _lootOpenKey = null; publishLoot(lootKey); }"). */
+function openWindow(p, key) {
+  const w = { done: false, list: null, onEmptied: null, lootKey: null };
+  p.state.openInventory = (source, onEmptied, deps) => { w.list = source; w.onEmptied = onEmptied; w.lootKey = deps?.lootKey ?? null; return w; };
+  setPref('quickLoot', false);   // the press that opens the window: the quick door is off (J, or the setting), and no lit row is left over
+  resetQuickLoot();
+  try { p.as(() => p.host.api.takeLoot(key)); } finally { p.state.openInventory = () => null; setPref('quickLoot', true); }
+  assert.ok(w.list, `${p.id}'s press on ${key} opened a window`);
+  w.take = (piece) => {
+    const it = w.list.find((x) => !RL.isPersonalLoot(x) && pieceKey(x) === pieceKey(piece));
+    if (!it) return null;
+    const plan = planTake(it, { bag: p.player.items, entity: null, mode: 'remove' });
+    applyTransfer(it, plan, w.list, p.player.items, { entity: p.player, toPlayer: true });
+    p.as(() => p.host.roomClaimTick(clock.t));   // the host's frame tick reads the list's change as a claim
+    return it;
+  };
+  w.close = () => { w.done = true; w.onEmptied?.(); if (w.lootKey) { p.state._lootOpenKey = null; p.as(() => p.host.publishLoot(w.lootKey)); } };
+  return w;
+}
+/** The relay's flush with some peers' INBOUND links held: what they would have heard waits in `backlog` until `release`. */
+function lagged(r) {
+  const backlog = new Map([[r.B.id, []], [r.C.id, []]]);
+  const held = new Set();
+  const every = [r.A, r.B, r.C];
+  const send = (p, f) => p.as(() => p.host.applyActions(f.from, f.data));
+  return {
+    hold(...ids) { ids.forEach((id) => held.add(id)); },
+    flush() {
+      let guard = 0;
+      while (r.net.frames.length && guard++ < 1000) {
+        const f = r.net.frames.shift();
+        for (const p of every) if (p.id !== f.from) (held.has(p.id) ? backlog.get(p.id).push(f) : send(p, f));
+      }
+    },
+    release() {
+      held.clear();
+      for (const p of [r.B, r.C]) { const b = backlog.get(p.id); while (b.length) send(p, b.shift()); }
+      this.flush();
+    },
+    waiting: (id) => backlog.get(id).length,
+  };
+}
+
+for (const slow of [false, true]) {
+  for (const order of ['late', 'mid']) {
+    test(`PARTY-LOOT back and forth [dungeon body, ${slow ? 'B\'s and C\'s inbound links held 3.5 s' : 'immediate'}, ${order === 'late' ? 'A takes before the tries' : 'the tries before A takes'}]: B takes the Buckler (window), C the Gold (Quick Loot), A the Potion (window); B's Gold and C's Buckler are refused and told; every plaque lists what is left after each step; each piece in one place`, () => {
+      setPref('quickLoot', true);
+      clock.t = BACK_AND_FORTH_AT;   // the base is the room's roll on the room's clock: every run of this scene is one run, whatever ran before it
+      const r = room3();
+      fall(r);
+      const { A, B, C } = r;
+      // a body whose base roll is a purse alone: the Gold is the room's own, the rest is laid in by the host's window
+      const key = KEYS.find((k) => k.startsWith('corpse:') && baseRows(shown(A, k)).length === 1 && isGoldPieces(shown(A, k).find((it) => !RL.isPersonalLoot(it))));
+      assert.ok(key, `a body whose base is a purse alone: ${KEYS.map((k) => `${k} ${JSON.stringify(baseRows(shown(A, k)).map((x) => JSON.parse(x).name))}`).join('; ')}`);
+      const gold = shown(A, key).find((it) => !RL.isPersonalLoot(it));
+      const buckler = armorOfMaterial(109, 0), potion = mintHealingPotion();
+      stockBody(r, key, [buckler, potion]);
+      const PIECES = [gold, buckler, potion];
+      const goldN = RL.pieceCount(gold);
+      const keysOf = (p) => shown(p, key).filter((it) => !RL.isPersonalLoot(it)).map(pieceKey).sort();
+      const want = (...ps) => ps.map(pieceKey).sort();
+      const views = (what, w) => {
+        for (const p of [A, B, C]) {
+          assert.deepEqual(keysOf(p), want(...w[p.id]), `${what}: ${p.id}'s plaque lists ${JSON.stringify(keysOf(p))}, not what is left for it ${JSON.stringify(want(...w[p.id]))}`);
+          const rows = hoverLines(shown(p, key), Infinity);
+          if (w[p.id].length) assert.equal(rows.empty, false, `${what}: ${p.id}'s plaque is not "Empty" while it lists something`);
+        }
+      };
+      const ids = { aaaa: 'A', bbbb: 'B', cccc: 'C' };
+      const all = (...ps) => ({ aaaa: ps, bbbb: ps, cccc: ps });
+      const base0 = { A: { items: A.player.items.length, gold: A.player.goldPieces ?? 0 }, B: { items: B.player.items.length, gold: B.player.goldPieces ?? 0 }, C: { items: C.player.items.length, gold: C.player.goldPieces ?? 0 } };
+      views('before any move', all(gold, buckler, potion));
+      const link = lagged(r);
+      link.hold(B.id, C.id);
+      const told = (p) => p.said.filter((l) => l === RL.ROOM_TAKEN_TEXT).length;
+      for (const p of [A, B, C]) p.said.length = 0;
+
+      // 1. B takes the Buckler through its window
+      { const w = openWindow(B, key); assert.ok(w.take(buckler), 'step 1: B\'s click moved the Buckler out of its window'); w.close(); }
+      link.flush();
+      views('step 1 (B took the Buckler)', { aaaa: [gold, potion], bbbb: [gold, potion], cccc: [gold, buckler, potion] });
+      // 2. C takes the Gold through Quick Loot
+      quickTakePiece(C, key, gold);
+      link.flush();
+      views('step 2 (C quick-took the Gold)', { aaaa: [potion], bbbb: [gold, potion], cccc: [buckler, potion] });
+
+      const takePotion = (when) => {
+        const w = openWindow(A, key);
+        assert.ok(w.take(potion), `${when}: A's click moved the Potion out of its own window`);
+        w.close();
+        link.flush();
+      };
+      const tries = (aLeft) => {
+        // B tries the Gold its plaque still lists: the host granted it to C a moment ago
+        { const w = openWindow(B, key); assert.ok(w.take(gold), 'B\'s window still lists the Gold'); w.close(); }
+        link.flush();
+        views('B tried the Gold', { aaaa: aLeft, bbbb: [potion], cccc: [buckler, potion] });
+        // C tries the Buckler its plaque still lists: the host granted it to B
+        quickTakePiece(C, key, buckler);
+        link.flush();
+        views('C tried the Buckler', { aaaa: aLeft, bbbb: [potion], cccc: [potion] });
+      };
+      const settle = (what, w) => {
+        if (slow) {
+          assert.equal(holding(B, buckler), 0, `${what}: B's Buckler waits on the held link`);
+          assert.equal(told(B), 0, `${what}: and B has not been told of its refused Gold`);
+          clock.t += 3500;
+        }
+        assert.ok(link.waiting(B.id) > 0 && link.waiting(C.id) > 0, 'B and C have heard nothing of the moves (guard)');
+        link.release();
+        settleAll(r);
+        views(what, w);
+      };
+      if (order === 'late') {
+        takePotion('step 3');
+        views('step 3 (A took the Potion)', { aaaa: [], bbbb: [gold, potion], cccc: [buckler, potion] });
+        tries([]);
+        settle('the links whole again', all());
+      } else {
+        tries([potion]);
+        settle('the links whole again, the Potion left', all(potion));
+        takePotion('step 3 (after the tries)');
+        settleAll(r);
+        views('step 3 (A took the Potion)', all());
+      }
+      // the end: every piece in exactly one place, nobody holding anything extra, the refused told
+      for (const [it, who, n] of [[buckler, B, 1], [gold, C, goldN], [potion, A, 1]]) {
+        for (const p of [A, B, C]) assert.equal(holding(p, it) - (isGoldPieces(it) ? base0[ids[p.id]].gold : 0), p === who ? n : 0, `${it.name ?? 'Gold'}: ${p.id} holds ${p === who ? 'it' : 'none of it'}`);
+      }
+      for (const p of [A, B, C]) assert.equal(whereIs([A, B, C], key, PIECES[0]).listed + whereIs([A, B, C], key, PIECES[1]).listed + whereIs([A, B, C], key, PIECES[2]).listed, 0, `${p.id}: the body lists none of the three`);
+      assert.equal(B.player.items.length - base0.B.items, 1, 'B\'s pack grew by the Buckler alone');
+      assert.equal(C.player.items.length - base0.C.items, 0, 'C\'s pack holds no piece (its Gold is coin; its refused Buckler is nowhere)');
+      assert.equal(A.player.items.length - base0.A.items, 1, 'A\'s pack grew by the Potion alone');
+      assert.equal((B.player.goldPieces ?? 0) - base0.B.gold, 0, 'B\'s refused Gold left no coin in its purse');
+      assert.equal((A.player.goldPieces ?? 0) - base0.A.gold, 0, 'A took no coin');
+      assert.equal(told(B), 1, 'B was told "Someone took that first." once - for the Gold');
+      assert.equal(told(C), 1, 'C was told "Someone took that first." once - for the Buckler');
+      assert.equal(told(A), 0, 'A was not told');
+      setPref('quickLoot', false);
+    });
+  }
+}

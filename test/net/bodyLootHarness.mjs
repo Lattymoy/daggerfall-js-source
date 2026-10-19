@@ -76,7 +76,7 @@ export const clock = { t: 1_000_000 };
  *  frames wait in the relay until the test releases them; `dead` - a player whose socket is HALF-OPEN (R-2: a Wi-Fi drop
  *  until the relay's dead-socket detection fires): still in every roster, so a frame to it is ACCEPTED and lost, and it
  *  sends and hears nothing; `tamper(from, to, data)` - the frame as it travels (null: lost in transit; the log keeps what
- *  the sender said); `foesFilter(from, frame)` - the foes frame as its readers hear it (an OLDER owner's is the real
+ *  the sender said); `foesFilter(from, frame, to)` - the foes frame as its reader `to` hears it (an OLDER owner's is the real
  *  owner's with `bw` stripped); `unseen` (SLICE 1 REVIEW, S1-1) - a player the others' pools do NOT read in their pose list
  *  (`peers()`: a cell crossed, a stale pose, a deck below) while the roster still holds it: a frame to it is still ACCEPTED
  *  (net/online.js `sendHit` tests the roster, `this.peers.has(owner)`) and a frame from it still arrives. */
@@ -114,7 +114,7 @@ export function relay() {
       foesLog.push({ from, frame: clone(frame), at: clock.t });
       for (const p of players.values()) {
         if (p.id === from || !p.here || dead.has(p.id)) continue;
-        const f = this.foesFilter ? this.foesFilter(from, clone(frame)) : clone(frame);
+        const f = this.foesFilter ? this.foesFilter(from, clone(frame), p.id) : clone(frame);   // the reader's id is the third argument: a link that drops one reader's stream alone
         if (f) p.foes(from, f);
       }
     },
@@ -333,8 +333,9 @@ export async function offlineOwner() {
  *  Options (the phase-1 pins pass none): `extra` pieces on the body; `ghosts` - older builds standing at the body;
  *  `stripBw` - Bob is an OLDER OWNER (his foes frames reach the takers without the takes digest `bw`); `hold` - directions
  *  `from>to` whose hits wait in the relay from the start (a peek answer not yet heard); `late` - `{ 'from>to': ms }`;
- *  `tamper` - the relay's in-transit rewrite of a hit. */
-export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts = [], stripBw = false, hold = [], late = {}, tamper = null } = {}) {
+ *  `tamper` - the relay's in-transit rewrite of a hit; `pile` - a function minting the body's own pieces in place of the loot table's three (PARTY-LOOT
+ *  back-and-forth: a purse, a Buckler and a Potion of Healing, minted by the game's own producers). */
+export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts = [], stripBw = false, hold = [], late = {}, tamper = null, pile: base = null } = {}) {
   const net = relay();
   if (stripBw) net.foesFilter = (from, frame) => { delete frame.bw; return frame; };
   for (const [dir, ms] of Object.entries(late)) net.late.set(dir, ms);
@@ -349,7 +350,7 @@ export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts =
     assert.ok(rat, 'the owner\'s foe stands');
     run(net, 400);
     for (let i = 0; i < 40 && !them.every((t) => t.pool().foes.some((x) => x.puppet === bob.id)); i++) { await settle(); run(net, 50); }
-    const pile = () => [...PILE(), ...extra.map((it) => ({ ...it }))];
+    const pile = () => [...(base ?? PILE)().map((it) => ({ ...it })), ...extra.map((it) => ({ ...it }))];
     rat.entity.items = pile();
     if (extra.length) delete rat.entity.lootCap;   // FOE-CAP: a body carrying more than a plain foe's three (a revenant's, a boss's)
     bob.pool().damageFoe(rat, 9999, [12, 0, 11]);
@@ -365,7 +366,7 @@ export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts =
     const keyOf = (t) => { const pup = t.pool().foes.find((x) => x.puppet === bob.id && x.corpse); return pup ? `foeCorpse:${pup.uid}` : null; };
     for (const t of them) assert.ok(keyOf(t), `${t.id} stands Bob's foe's body`);
     const body = rat.entity.items.map((it) => ({ ...it }));
-    assert.equal(body.length, 3 + extra.length, 'the body holds the pieces it fell with');
+    assert.equal(body.length, (base ?? PILE)().length + extra.length, 'the body holds the pieces it fell with');
     const before = new Map([bob, ...them, ...olds].map((p) => [p.id, { items: p.entity.items.map(pieceOf), gold: p.entity.goldPieces | 0 }]));
     /** A hit frame a build would hand Bob about this body: the cell's key, the body's number, and the building's own lane. */
     const frame = (to, fields) => ({ to, k: roomKey, i: rat.seq, ...(where === 'building' ? { own: 1 } : {}), ...fields });
