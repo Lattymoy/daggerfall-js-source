@@ -105,6 +105,7 @@ export class Boat {
     this.crewed = false;
     this.itemValue = null;   // SHIP-PACK (the port's own): the worth of the item that placed her, deed or parts (comeSailAway.js takePlaceItem) - her parts are packed at it
     this.groundAsked = false;   // FIELD BUGS 29h (LOST-BOAT, the port's own): the ground under it asked once (comeSailAway.js recoverLostBoats)
+    /** @type {any} */ this.charter = null;   // PASSAGE (the port's own): a booked ship's voyage (systems/naval/passage.js charterRecord) - none on a boat of mine
     this.modifierMoveSpeedOar = 0; this.modifierMoveAccelerationOar = 0;
     this.modifierMoveSpeedSail = 0; this.modifierMoveAccelerationSail = 0;
     this.modifierTurnSpeedOar = 0; this.modifierTurnAccelerationOar = 0;

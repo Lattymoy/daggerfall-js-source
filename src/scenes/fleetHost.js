@@ -58,8 +58,8 @@ export function createFleetHost(deps) {
   const csa = () => deps.csa?.() ?? null;
   const naval = () => deps.naval?.() ?? null;
   const pack = () => deps.pack?.() ?? [];
-  /** The boats of mine standing, by number. */
-  const placed = () => (csa()?.AllBoats ?? []).filter((b) => b?.uid);
+  /** The boats of mine standing, by number - never a booked ship's (PASSAGE: her master's, no ship of the Fleet's). */
+  const placed = () => (csa()?.AllBoats ?? []).filter((b) => b?.uid && !b.charter);
   const partsOf = (uid) => pack().find((it) => it?.templateIndex === BOAT_PARTS_TEMPLATE && it.UID === uid) ?? null;
   /** A laid-up ship's stand-in: what the sea fight's state and the yard read of a boat - her number, hull, whether she
    *  has hands, and her laid-up hold (Come Sail Away's PackedCargoes under her number, live). */

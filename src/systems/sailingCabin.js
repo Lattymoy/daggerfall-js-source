@@ -10,7 +10,7 @@ export const cabinBlockName = (hull) => WA_SHIP_BLOCKS[cabinShipType(hull)] ?? n
 export { boatUid as cabinUid, readSailingCabin } from '../net/boatIdentity.js';
 import { boatUid as cabinUid, readSailingCabin } from '../net/boatIdentity.js';
 export const cabinSceneName = (uid) => cabinUid(uid) ? `SailingCabin [UID=${uid}]` : null;
-export const hasSailingCabin = (boat) => !!boat && cabinUid(boat.uid) && cabinBlockName(boat.hull) !== null && !boat.inside;
+export const hasSailingCabin = (boat) => !!boat && !boat.charter && cabinUid(boat.uid) && cabinBlockName(boat.hull) !== null && !boat.inside;   // AUDIT PASSAGE B4: no cabin of mine in a booked ship - what was put in it went with her
 
 export const CABIN_REFUSAL = Object.freeze({
   helm: 'Leave the helm before entering the cabin.',

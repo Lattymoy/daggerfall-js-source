@@ -689,6 +689,29 @@ says); the Salvage page lists it after every piece that breaks, its press "Class
 the reason its title; the pack card's Salvage, pressed, says why (`enhancedInventory.js` `SALVAGE_CLASSIC`) and asks
 nothing. `test/systems/fb1012d_salvageclassic.test.js` (4), `tools/mutants/fb1012d_salvageclassic.json` (11, all dead).
 
+**BATCH-SALVAGE (2026-10-19, the owner: "We need to add the ability to batch salvage in the inventory")**: the pack
+breaks many pieces at once. The enhanced pack's header gains Batch salvage, shown while any piece would break (or while
+it chooses); pressed, a pack row's press puts a tick on it instead of opening its card - ahead of Shift's stow and drop
+and the double click's wear - and so does every other gesture on a pack row while it chooses: the menu's press
+(right-click, long-press, pad Y) and pad X tick, no drag starts, and Stash all is not offered (AUDIT BATCH C3: no press
+of the choosing moves or wears a piece). A piece that will not break is dimmed, and pressed says why in the card's own
+words where it has them (`enhancedInventory.js` `batchRefusal`: the lock's, the gems', classic magic's); a piece that
+stops breaking (locked from the menu, worn) is let go of the choice before its row is drawn (C4). A foot under the list
+counts the chosen and their shards and sweeps in every Magic, every Rare or every junk piece (LOOT18's mark) that would
+break now - never a Legendary, an Exalted one or a junk-marked one with it, each one chosen by hand (`sweepSpares`,
+C2); Clear empties the choice, Cancel, Back or the button again stop it. Its Salvage asks once, in the one question's
+slot with the single piece's keys (Y breaks, N, Enter, Escape or a press outside keep; a double press's second click
+breaks nothing) - the count, the shards and the first six names and "and n more" - and Keep keeps every piece with its
+tick. Yes breaks them through `reforge.js` `salvageMany`: each through `salvagePiece`, in order, so a refusal since the
+choice (worn, locked) costs only its own piece and is counted in the line it says ("Salvaged 3 pieces, for 7 Welkynd
+Shards. 1 would not break and was kept."); a piece chosen twice breaks once. The law is LOOT9's unchanged. Its words
+are the text core's (`t('inventory.batch.*')`, L10N4 - the question's two buttons too), drafted in-session for the
+thirteen whole languages; the single piece's refusals it borrows (`lockedText`, SALVAGE_GEMS, SALVAGE_CLASSIC) and
+`shardsText`'s plural are English still (LOOT9, LOCK1 - recorded, AUDIT BATCH C6). The tick is drawn over the Plus
+face's sigil rune (C7). The classic pack has no card and no batch: the Reforge's Salvage page and its "Salvage every
+Magic" (LOOT18) stay its doors. `test/systems/batchsalvage.test.js` (9), `tools/mutants/batchsalvage.json` (25, all
+dead). Audited: `01-Overview/audits/Audit-Passage-Batch-Salvage.md`.
+
 ### LOOT10 - the codex, and the imprint (2026-10-01)
 
 **`systems/loot/lootCodex.js`** (new): the character's CODEX - every Legendary record and every Aetheric piece taken, with

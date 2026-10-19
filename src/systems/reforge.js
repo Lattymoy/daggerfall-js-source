@@ -97,6 +97,21 @@ export function salvagePiece(item, { items }) {
   addItem(items, welkyndShards(shards));
   return { ok: true, shards };
 }
+/** BATCH-SALVAGE (2026-10-19, the owner: "We need to add the ability to batch salvage in the inventory"): MANY PIECES
+ *  AT ONCE, on a pack - each through salvagePiece, in the order given, so every piece answers to the one law and a
+ *  refusal costs only its own piece. A piece refused since it was chosen (worn, locked or gone) is kept and named.
+ *  Answers `{ count, shards, refused: [{ item, reason }] }`. Not a DFU member: Daggerfall has no salvage (Loot-Arc.md). */
+export function salvageMany(pieces, { items }) {
+  let count = 0, shards = 0;
+  const refused = [];
+  for (const it of new Set(Array.isArray(pieces) ? pieces : [])) {
+    const r = salvagePiece(it, { items });
+    if (r.ok) { count++; shards += r.shards; } else refused.push({ item: it, reason: r.reason });
+  }
+  return { count, shards, refused };
+}
+/** BATCH-SALVAGE: the pieces of a pack that would break now - salvageRefusal's null, in the pack's order. */
+export const salvageable = (items) => (Array.isArray(items) ? items : []).filter((it) => !salvageRefusal(it));
 
 // ── the purse ───────────────────────────────────────────────────────
 /** A shard the purse may draw on: unlocked (a locked stack is the player's word to keep it) and not WORN - a shard is a

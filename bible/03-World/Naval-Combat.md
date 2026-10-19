@@ -412,6 +412,9 @@ them, and no captain takes them for a contact.
   pirate took on one screen what she left on the other; the living crew counts her men off it, F9). AUDIT BAY A18: and
   `l`, a key of its own the same way - the lanes' packets the owner has seen spent, each her voyage's seed, the last
   NAVAL_WIRE_SPENT (8), said on by every reader (a player who never saw her go stood her afresh where she went down).
+  AUDIT PASSAGE B5 (`03-World/Passage.md`): and `q`, the same way - the harbour ships booked for a passage, each her
+  seed (harbourFrame's: her port, the day, her berth), the last NAVAL_WIRE_GONE (8), said on by every reader: no player
+  stands her at her berth again that day, takes her over there or keeps a copy of her.
   `validNavalRecord` takes it whole or not at all, every number bounded (the pose bounds are `net/wire.js`'s own). NO
   RELAY CHANGE: the relay passes the foes
   frame through and routes a cell's hit by its `to`.

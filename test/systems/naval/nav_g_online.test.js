@@ -77,8 +77,9 @@ test('NAV-G a peer\'s word through the door, whole or not at all: my own word co
   assert.deepEqual(validNavalRecord({ b: [[5, 7, 8, 9, 3]] }).barrels, [{ id: 5, pos: [7, 8, 9], shooter: 3 }], 'her ship\'s number, read');
   // AUDIT NAV2 F1-F3: PIN MOVED - the record reads the captains' key and the boat's too; an older build's word says neither.
   // AUDIT GN-G3: PIN MOVED - and her laid broadsides (`g`): none in an older build's word
-  assert.deepEqual(validNavalRecord({}), { ships: [], volleys: [], barrels: [], me: null, law: {}, traffic: TRAFFIC_DEFAULT, casks: [], captains: new Map(), boat: null, spent: [], laid: [] }, 'an empty word stands for none');   // AUDIT BAY A18 PIN MOVED: and no spent packet
-  assert.deepEqual(validNavalRecord({ p: [43, 1, 0], n: [[1, 80]] }), { ships: [], volleys: [], barrels: [], me: { hull: 0.43, crippled: true, boarders: false }, law: { Wayrest: 80 }, traffic: TRAFFIC_DEFAULT, casks: [], captains: new Map(), boat: null, spent: [], laid: [] });
+  // AUDIT PASSAGE B5: PIN MOVED - and the booked harbour ships (`q`): none in an older build's word
+  assert.deepEqual(validNavalRecord({}), { ships: [], volleys: [], barrels: [], me: null, law: {}, traffic: TRAFFIC_DEFAULT, casks: [], captains: new Map(), boat: null, spent: [], gone: [], laid: [] }, 'an empty word stands for none');   // AUDIT BAY A18 PIN MOVED: and no spent packet
+  assert.deepEqual(validNavalRecord({ p: [43, 1, 0], n: [[1, 80]] }), { ships: [], volleys: [], barrels: [], me: { hull: 0.43, crippled: true, boarders: false }, law: { Wayrest: 80 }, traffic: TRAFFIC_DEFAULT, casks: [], captains: new Map(), boat: null, spent: [], gone: [], laid: [] });
   // AUDIT NAV1 (online #15): the casks afloat - the class and the lot by their rows, the place to half a metre
   const casks = navalWireRecord({ casks: [{ id: 7, pos: [10.3, 0.12, -4.74], from: 'pirateBrig', lot: 'E' }, { id: 8, pos: [0, 0, 0], from: 'ghostShip', lot: 'E' }, { id: 9, pos: [0, 0, 0], from: 'pirateBrig', lot: 'Z' }] });
   assert.deepEqual(casks, { s: [], v: [], b: [], f: [[7, 10.5, 0, -4.5, SHIP_CLASSES.findIndex((c) => c.id === 'pirateBrig'), LOT_KEYS.indexOf('E')]] }, 'no such class, no such lot: not said');

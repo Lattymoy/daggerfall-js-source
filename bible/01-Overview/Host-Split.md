@@ -467,3 +467,17 @@ none, used by three (the drop's receipt, the zone's frame, the room's collect) -
 the module's `held`, `frame` and `collectHeard`. `bootWorld` 21,750 -> 21,688 code lines, and its ceiling back to
 21,695, where it stood before FB1015's raise. The pins that read the block by source (`test/systems/fb1014_pvpescrow.test.js`)
 read the module, and the bible's anchors name it (`01-Overview/bugs/Field-Bugs-2026-10-15c.md`).
+
+## PASSAGE's merge - the wiring trimmed to fit (2026-10-19)
+
+Not a slice: a pull request whose own wiring took `bootWorld` over. Merging main into PASSAGE and BATCH-SALVAGE
+(`03-World/Passage.md`) met LEGIBLE 1's logical-line ceiling: main's `bootWorld` stood at 36,198 of its 36,233, and the
+passage's wiring added 66 - 31 over. No raise: the wiring was cut to what only the host can hand. The passage host's
+doors are the world's own functions handed as they are (`navalPortList`, `travelViewRouteTo`, `worldMoveBusy`,
+`csaStandsOn`, `setTransportModeHere` - each declared above the construction, never in its temporal dead zone) and its
+objects (`player`, `townTalk`) rather than a wrapper per field; the purse and the pack are the player entity's own,
+read by `src/scenes/naval/passageHost.js` itself (`court.js`); aboard is composed there from the runtime, her deck and
+the naval host's boat in play; and the voyage the planner is asked for rides the means of a booked ship's helm
+(`tvSeaMeans`' `voyage`) instead of a copy of them. `bootWorld` 36,264 -> 36,230 logical lines, under its ceiling,
+which stays. The pins that read the wiring by source moved with it (`passagehost.test.js`, `passageaudit.test.js`,
+`ows2_crossing.test.js`), the boat in play now held by behaviour, and 21 mutant records re-aimed and dead.
