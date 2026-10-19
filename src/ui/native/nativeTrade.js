@@ -230,6 +230,9 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *   pickpocketSkill()      -> the LIVE Pickpocket skill (:913)
  *   tallyPickpocket(n)     -> TallySkill(Pickpocket, 1) (:914)
  *   tallyCrimeGuild(a, n)  -> TallyCrimeGuildRequirements(true, 1) (:921)
+ *   stole(lot)             -> F-1: a successful Steal's lot, as it was staged, handed to the building's room as thefts it claims
+ *                             (the room then owns the guild tally: paid once, for a piece won); true when the room took it,
+ *                             and the window tallies the guild itself otherwise (no room, a yard, the road, a guild's shelf)
  *   crimeTheft()           -> CrimeCommitted = Crimes.Theft (:927)
  *   spawnCityGuards(flag)  -> SpawnCityGuards(true) (:928)
  *   say(line, seconds)     -> AddHUDText(text, 2) (:918, :925)
@@ -749,9 +752,10 @@ export class NativeTradeWindow {
     if (!out.caught) {
       this.hooks.say?.(stealSuccessText(), 2);
       markStolen(this.basket);   // STOLEN-GOODS: the lot is stolen - marked before TransferAll merges it into the pack's stacks
+      const lot = [...this.basket];   // F-1: the lot as it was staged, for the room's claim (copied before the delivery and the transfer empty the basket)
       this._deliverFurniture(this.basket);   // DECOR2b
       transferAll(this.basket, this.hooks.packItems());
-      this.hooks.tallyCrimeGuild?.(true, 1);
+      if (!this.hooks.stole?.(lot)) this.hooks.tallyCrimeGuild?.(true, 1);   // F-1: a room that took the lot as thefts pays the guild itself, for a piece won
     } else {
       this.hooks.say?.(stealFailureText(), 2);
       this.hooks.crimeTheft?.();

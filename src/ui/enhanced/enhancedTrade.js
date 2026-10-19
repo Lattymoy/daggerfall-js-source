@@ -576,10 +576,11 @@ function runSteal() {
   if (!out.caught) {
     deps.say?.(stealSuccessText(), 2);
     markStolen(items);   // STOLEN-GOODS: the basket, or the one piece picked - marked before it merges into the pack's stacks
+    const lot = [...items];   // F-1: the lot as it was staged, for the room's claim (copied before the delivery and the transfer)
     if (basket.length) { deliverFurniture(basket); transferAll(basket, deps.packItems()); }
     else if (!deliverFurniture(deps.shelfItems(), items[0])) move(items[0], deps.shelfItems(), deps.packItems());
     selected = null;
-    deps.tallyCrimeGuild?.(true, 1);
+    if (!deps.stole?.(lot)) deps.tallyCrimeGuild?.(true, 1);   // F-1: a room that took the lot as thefts pays the guild itself, for a piece won
   } else {
     deps.say?.(stealFailureText(), 2);
     deps.crimeTheft?.();

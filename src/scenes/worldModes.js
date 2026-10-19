@@ -274,7 +274,7 @@ import { setUnleveledLootWorld, unleveledLootPreTransition, unleveledLootExterio
 import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt, shownBuildingName } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talk/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { carriedPieces } from '../systems/item/itemIds.js';   // AUTO-HOLD: the room's word never lands a piece I carry (world/interior/interiorShared.js)
-import { interiorLocationKey, mintInteriorShared, composeInteriorShared, applyInteriorShared, applyInteriorLoot, interiorActionRecords, interiorLootOpen, interiorLootFrame, interiorLootUnborn, interiorLootRoll, interiorLootBirth, interiorLootAside, interiorLootLeave } from '../world/interior/interiorShared.js';   // WORLD6a: the building as a world room - the pure half; AUDIT WORLD6a A1: the bag minted there
+import { interiorLocationKey, mintInteriorShared, composeInteriorShared, applyInteriorShared, applyInteriorLoot, interiorActionRecords, interiorLootOpen, interiorLootFrame, interiorLootUnborn, interiorLootRoll, interiorLootBirth, interiorLootAside, interiorLootLeave, interiorLootStock, interiorLootCredit, interiorShelfDeal, interiorShelfStole } from '../world/interior/interiorShared.js';   // WORLD6a: the building as a world room - the pure half; AUDIT WORLD6a A1: the bag minted there
 import { wallMsForClassicMinutes } from '../net/wire.js';   // OUTDOOR-LOOT: the SHARED clock - the relay's wall - a cupboard's first-open instant is read from (R-3)
 import { getHolidayId } from '../systems/holidays.js';
 import { guildOfFaction, guildGroupOfFaction, isMember } from '../systems/guild/guilds.js';
@@ -3611,11 +3611,12 @@ export function createWorldModes(host) {
     // once per interior BUILD, which made the whole economy static:
     // every shop in the world held whatever it rolled the first time
     // the player walked in, for ever.
+    if (_intShared?.unreadable?.has(`shelf:${i}`)) { setMidScreenText(LOOT_NEWER_TEXT); return; }   // F-1 D8 (AUDIT SETS M2): a shelf the room spoke of in words this build cannot read opens nothing - minting a roll over it would erase the mark
     const today = stockedToday();
     const fresh = needsRestock(shelf, today);   // AUDIT WORLD6a A5: said at the window's mount, whichever window
     if (fresh) {
-      shelf.stockedDate = today;
-      shelf.items = shelfLootSpawned(stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity, { shelfIndex: i }), b);   // PlayerActivate.OnLootSpawned (:885): RRI2's three shelf hooks, then the other mods' in load order (Foraging's FORAGE3, Come Sail Away's CSA-H)
+      const rolled = shelfLootSpawned(stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity, { shelfIndex: i }), b);
+      if (!interiorLootStock(interiorCtx, `shelf:${i}`, rolled, _intShared, today)) { shelf.stockedDate = today; shelf.items = rolled; }   // F-1 D2: a shelf asks no Yes - its stock is the room's at once (offline, written as it always was)   // PlayerActivate.OnLootSpawned (:885): RRI2's three shelf hooks, then the other mods' in load order (Foraging's FORAGE3, Come Sail Away's CSA-H)
     }
     // AUDIT 26 F066: DFU NEVER opens a paying trade window in a
     // closed shop. PlayerActivate gates shelf activation on
@@ -3632,15 +3633,17 @@ export function createWorldModes(host) {
       // used to sit here promised "the shoplifting ROLL and its crime
       // tally"; the roll belongs to the house-container arm and never
       // to this one.
+      const room = _intShared;
       const shelfBefore = new Set(shelf.items);   // STOLEN-GOODS AUDIT S1: the shop's keeping as the window opens - what the mark and the tally both read
       const win = interiorInventory({
         loot: { items: () => shelf.items, stolenFrom: shelfBefore },   // STOLEN-GOODS: a take of the shop's own piece off a shut shelf is a theft - the piece is marked as it lands
         onClose: () => {
-          if (shopShelfTheft(shelfBefore, shelf.items)) tallyCrimeGuildRequirements(playerEntity, true, 1);
+          // F-1 D7: the guild's credit is for a piece actually won - the room pays it on a grant or a keep (interiorRoomLoot.js credit)
+          if (shopShelfTheft(shelfBefore, shelf.items)) interiorLootCredit(interiorCtx, `shelf:${i}`, room, () => tallyCrimeGuildRequirements(playerEntity, true, 1));
           decorDeliverCarried();   // DECOR2b: furniture taken off the shelf is delivered, never carried
         },
       });
-      if (win) { interiorOverlay = win; interiorLootOpen(interiorCtx, `shelf:${i}`, win, _intShared, { fresh }); }   // WORLD6a: the shelf is the room's from the open
+      if (win) { interiorOverlay = win; interiorLootOpen(interiorCtx, `shelf:${i}`, win, _intShared, { fresh, keeping: shelfBefore }); }   // WORLD6a: the shelf is the room's from the open
       return;
     }
     // U8c: the native trade screen when the art is up (the E2/E3
@@ -3651,7 +3654,7 @@ export function createWorldModes(host) {
       const w = openTradeWindow(shelf, b, 'Buy');
       if (!w) return;   // DISC10-E L3: the counter refused the beast at its door (and said so) - nothing to mount, nothing claimed
       interiorOverlay = w;
-      interiorLootOpen(interiorCtx, `shelf:${i}`, interiorOverlay, _intShared, { fresh });   // WORLD6a: and so from the trade window - its close is the frame's settle
+      interiorLootOpen(interiorCtx, `shelf:${i}`, interiorOverlay, _intShared, { fresh, trade: true });   // WORLD6a: and so from the trade window - its close is the frame's settle
       return;
     }
     showShelfList(shelf, 0, fresh);   // AUDIT WORLD6a A4: the keyed fallback claims too
@@ -3707,15 +3710,15 @@ export function createWorldModes(host) {
     const today = stockedToday();
     const fresh = needsRestock(target, today);   // AUDIT WORLD6a A5: said at the window
     if (fresh) {
-      target.stockedDate = today;
-      target.items = isShop(b.buildingType)
+      const rolled = isShop(b.buildingType)
         ? shelfLootSpawned(stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity), b)   // RRI2, FORAGE3: the same OnLootSpawned, whichever door stocked it
         : [];
+      if (!(shelf && interiorLootStock(interiorCtx, 'shelf:0', rolled, _intShared, today))) { target.stockedDate = today; target.items = rolled; }   // F-1 D2: the same door the shelf arm stocks through
     }
     let win = null;
     win = openTradeWindow(target, b, 'Sell');
     if (!win) return true;   // DISC10-E L3: refused at the trade door, which said so - handled, never the keyed fallback
-    if (shelf) interiorLootOpen(interiorCtx, 'shelf:0', win, _intShared, { fresh });   // WORLD6a: what is sold lands on the room's shelf
+    if (shelf) interiorLootOpen(interiorCtx, 'shelf:0', win, _intShared, { fresh, trade: true });   // WORLD6a: what is sold lands on the room's shelf
     // Found wiring X6: neither trade skin calls hooks.onClose - they set
     // `done` and the frame's own sweep frees the slot, so a trade window
     // that needs cleanup on close hangs it off that sweep.
@@ -3834,6 +3837,7 @@ export function createWorldModes(host) {
       // the window owns; these are only the effects. The HUD lines go
       // at AddHUDText's 2-second delay (:918, :925), the same seam the
       // shop-quality lines take.
+      stole: (lot) => interiorShelfStole(interiorCtx, shelf, _intShared, lot, () => tallyCrimeGuildRequirements(playerEntity, true, 1)),   // F-1 D6: a successful Steal's lot is the room's thefts, the guild paid for a piece won
       stealRefusal: () => b.noSteal ?? null,   // AUDIT MERCHANT-YARDS Y1: a counter whose keeper never looks away (a yard's) answers the window's Steal with its word, and nothing moves
       pickpocketSkill: () => skillValue(playerEntity, SKILLS.Pickpocket),
       tallyPickpocket: (n) => tallySkill(playerEntity, SKILLS.Pickpocket, n),
@@ -3989,6 +3993,7 @@ export function createWorldModes(host) {
       // that stood for that return aliased each item into it a second
       // time - and doubled the count of anything stackable.
     }
+    interiorShelfDeal(interiorCtx, shelf, _intShared);   // F-1 D5: the counter's deal is read at its door - the pieces gone are sales, the pieces laid no-home puts
     tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
   }
@@ -4016,6 +4021,7 @@ export function createWorldModes(host) {
     // this town's port); one the book will not take (no number) into the pack as before
     else if (!(it?.templateIndex === FLEET_DEED_TEMPLATE && titleDeed(it, { port: buildingDirectory?.()?.locationName ? { name: buildingDirectory().locationName } : null }))) addItem(playerEntity.items, it);
     restockEndless(shelf.items, [it]);   // ENDLESS-STOCK: the keyed list's purchase, as the counter's
+    interiorShelfDeal(interiorCtx, shelf, _intShared);   // F-1 D5
     tallySkill(playerEntity, SKILLS.Mercantile, 1);   // per completed trade (DFU OnTrade)
     surfacePlayer();
     return price;
@@ -4037,6 +4043,7 @@ export function createWorldModes(host) {
     playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
     landSold(shelf.items, it);   // sold goods land on the open shelf (DFU's remoteItems) - STOLEN-GOODS: an honest piece; a stolen one is gone
     setJunk(it, false);   // AUDIT LOOT II C5: sold, its junk mark ends
+    interiorShelfDeal(interiorCtx, shelf, _intShared);   // F-1 D5: a sold piece is a put with no home
     tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
     return price;
@@ -7080,7 +7087,7 @@ export function createWorldModes(host) {
     // AUDIT WORLD6a A4: the keyed fallback (no trade art) claimed nothing and guarded nothing - the room's word landed
     // under its rows and a purchase was never told; every page of it is an open on the shelf, like the art's windows
     const si = interiorCtx?.shelves?.indexOf(shelf) ?? -1;
-    if (si >= 0) interiorLootOpen(interiorCtx, `shelf:${si}`, interiorOverlay, _intShared, { fresh });
+    if (si >= 0) interiorLootOpen(interiorCtx, `shelf:${si}`, interiorOverlay, _intShared, { fresh, trade: true });
   }
   function buyItem(shelf, it) {
     const bought = doBuy(shelf, it);
