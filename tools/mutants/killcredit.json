@@ -1,0 +1,135 @@
+[
+  {
+    "name": "KILLCREDIT-window-back-to-three-seconds",
+    "file": "src/net/strikeLedger.js",
+    "old": "export const SLAIN_KEEP_MS = 60_000;",
+    "new": "export const SLAIN_KEEP_MS = 3000;",
+    "tests": [
+      "test/net/killcredit.test.js",
+      "test/net/strikeledger.test.js",
+      "test/systems/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-first-blow-sets-the-minute",
+    "file": "src/net/strikeLedger.js",
+    "old": "      struck.delete(k);   // the last blow's place in the order\n      struck.set(",
+    "new": "      if (struck.has(k)) return;   // the last blow's place in the order\n      struck.set(",
+    "tests": [
+      "test/net/strikeledger.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-ledger-key-drops-the-number",
+    "file": "src/net/strikeLedger.js",
+    "old": "const key = (/** @type {string} */ owner, /** @type {number} */ seq) => `${owner}:${seq}`;",
+    "new": "const key = (/** @type {string} */ owner, /** @type {number} */ seq) => `${owner}`;",
+    "tests": [
+      "test/net/killcredit.test.js",
+      "test/net/strikeledger.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-ledger-unbounded",
+    "file": "src/net/strikeLedger.js",
+    "old": "export const STRIKES_KEPT_MAX = 64;",
+    "new": "export const STRIKES_KEPT_MAX = 1_000_000;",
+    "tests": [
+      "test/net/strikeledger.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-expired-never-trimmed",
+    "file": "src/net/strikeLedger.js",
+    "old": "if (now - s.at > SLAIN_KEEP_MS || struck.size > STRIKES_KEPT_MAX) struck.delete(k); else break;",
+    "new": "if (struck.size > STRIKES_KEPT_MAX) struck.delete(k); else break;",
+    "tests": [
+      "test/net/strikeledger.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-clear-keeps-the-old-world",
+    "file": "src/net/strikeLedger.js",
+    "old": "    clear() { struck.clear(); },",
+    "new": "    clear() { },",
+    "tests": [
+      "test/net/strikeledger.test.js",
+      "test/net/killcredit.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-mobile-type-trusted-from-anything",
+    "file": "src/net/strikeLedger.js",
+    "old": "mobileType: Number.isInteger(mobileType) ? mobileType : null",
+    "new": "mobileType",
+    "tests": [
+      "test/net/strikeledger.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-sweep-forgets-the-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    _owners.clear();\n    _pupKept.clear();   // AUDIT DISC28 QS-J: and the records kept beside their puppets",
+    "new": "    _owners.clear(); strikes.clear();\n    _pupKept.clear();   // AUDIT DISC28 QS-J: and the records kept beside their puppets",
+    "tests": [
+      "test/net/killcredit.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-prune-forgets-the-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        removePuppet(f);\n      }\n      // AUDIT DISC28 QS-J: AND THE RECORDS MY UNLINKED COPY KEPT.",
+    "new": "        removePuppet(f); strikes.clear();\n      }\n      // AUDIT DISC28 QS-J: AND THE RECORDS MY UNLINKED COPY KEPT.",
+    "tests": [
+      "test/net/killcredit.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-credit-needs-the-puppet",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      reportPlayerKill(f?.entity ?? struck.entity, { kind: 'remote' });",
+    "new": "      if (!f) return true;\n      reportPlayerKill(f.entity, { kind: 'remote' });",
+    "tests": [
+      "test/net/killcredit.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-destroy-keeps-the-ledger",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    strikes.clear();   // KILL CREDIT: no blow of the old world is credited in the next\n",
+    "new": "",
+    "tests": [
+      "test/net/killcredit.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-note-never-written",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        strikes.note(f.puppet, f.seq, _now(), f.entity, f.mobileType);   // DISC10-E",
+    "new": "        // DISC10-E",
+    "tests": [
+      "test/net/killcredit.test.js",
+      "test/systems/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-note-keys-the-wrong-owner",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        strikes.note(f.puppet, f.seq, _now(),",
+    "new": "        strikes.note('', f.seq, _now(),",
+    "tests": [
+      "test/net/killcredit.test.js",
+      "test/systems/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "KILLCREDIT-land-reads-the-wrong-sender",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const struck = strikes.land(from, data.i | 0, _now());",
+    "new": "      const struck = strikes.land(String(data.k), data.i | 0, _now());",
+    "tests": [
+      "test/net/killcredit.test.js",
+      "test/systems/disc10_online_kill.test.js"
+    ]
+  }
+]

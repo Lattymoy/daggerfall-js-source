@@ -198,7 +198,7 @@ test('SET2 the player\'s own kills: every listener told the killed entity and th
   } finally { registerPlayerKillListener('set2-kill', null); registerPlayerKillListener('set2-throws', null); }
   const ext = strip(read('src/scenes/exteriorFoes.js'));
   assert.match(ext, /f\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(f\.entity, \{ kind \}\);/, 'the outdoor pool');
-  assert.match(ext, /playerWeaponKillReported\(playerEntity, \{ mobileType: f\.mobileType \}\);\s*reportPlayerKill\(f\.entity, \{ kind: 'remote' \}\);/, 'a puppet\'s owner\'s word');
+  assert.match(ext, /playerWeaponKillReported\(playerEntity, \{ mobileType: struck\.mobileType \}\);\s*reportPlayerKill\(f\?\.entity \?\? struck\.entity, \{ kind: 'remote' \}\);/, 'a puppet\'s owner\'s word');
   assert.match(strip(read('src/scenes/dungeonContext.js')), /foe\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(foe\.entity, \{ kind \}\);/, 'the dungeon');
   assert.match(strip(read('src/scenes/cityGuards.js')), /g\.dead = true;\s*if \(fromPlayer && !peer\) reportPlayerKill\(g\.entity, \{ kind: 'melee' \}\);/, 'the watch');
 });

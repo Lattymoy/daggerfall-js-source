@@ -22,6 +22,7 @@ import { LYCANTHROPY_TYPES } from '../../src/systems/infection.js';
 import { setWorldMinutes, playerWeaponKillReported } from '../../src/systems/worldTick.js';
 import { createVampirismCurse, liveVampirism } from '../../src/systems/vampirism.js';
 import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
+import { SLAIN_KEEP_MS } from '../../src/net/strikeLedger.js';
 
 const NOW = 523530 + 40 * MINUTES_PER_DAY;   // forty days past the curse: the urge has been rising for ten
 
@@ -147,7 +148,7 @@ test('DISC10-E online: the report is the STRIKER\'s - refused for a puppet I nev
   s.bob.pool.damageFoe(s.pup, 1, null, null, { kind: 'melee' });
   assert.equal(s.bob.pool.applyHit('eve-0003', report), false, 'another owner\'s word about Mac\'s watchman: nothing');
   assert.equal(s.bob.pool.applyHit('mac-0001', { ...report, slain: 2 }), false, 'a malformed report: nothing');
-  s.bob.clock.ms += 3001;
+  s.bob.clock.ms += SLAIN_KEEP_MS + 1;   // KILL CREDIT (2026-10-19): the window is a minute from the last blow now (it was TAKE_WINDOW_MS + 1 = 3001; test/net/killcredit.test.js pins 3.5 s to 59 s credited)
   assert.equal(s.bob.pool.applyHit('mac-0001', report), false, 'past the window: nothing');
   s.bob.pool.damageFoe(s.pup, 1, null, null, { kind: 'melee' });
   assert.equal(s.bob.pool.applyHit('mac-0001', report), true, 'inside it, once');
