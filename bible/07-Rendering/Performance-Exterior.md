@@ -1152,6 +1152,9 @@ OW-BUILD (2026-10-18, the owner; `06-Systems/Travel-View.md` OW-BUILD): while th
 other way. A slice is what a frame of 30 a second leaves (`BUILD_OVERWORLD_FRAME_MS`), up to 20 ms
 (`BUILD_SLICE_OVERWORLD_MS`) and never under 6, so a light frame drops to 30 a second while ground is owed and the
 stream builds up to three times as fast. The ground under a sky-high view is what holds the journey's clock.
+OW-LAG (2026-10-19, the owner: "People are lagging in the overworld"; `06-Systems/Travel-View.md` OW-LAG): lent only
+while fast travel under the view owes ground the view can see (TV2's own count) and no enemy holds the clock to x1 - a
+view raised to look about, and a journey whose ground keeps up, keep the display's rate.
 
 | `sliceTree.mjs` (headless Chromium, relative only) | frame JS 9 ms | 12 ms | 14 ms | 18 ms |
 |---|---|---|---|---|

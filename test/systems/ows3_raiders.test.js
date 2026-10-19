@@ -229,7 +229,7 @@ test('OWS3 host wiring by source: the open sea a raider is born on, the shared c
   assert.match(w, /const said = warmAshesRaidAtSea\(\);\n\s*if \(said !== 'raid' && said !== 'raid-lent'\) return;\n\s*travelControlUI\?\.closeWindow\?\.\(\);\n\s*tvSay\(TRAVEL_VIEW_TEXT\.raidersAlongside\);/);
   assert.match(w, /tvRaid\.chase\.clear\(\); tvRaid\.spent\.clear\(\); tvRaid\.list = \[\]; tvRaid\.at = -Infinity; tvRaid\.peer\.clear\(\); tvRaid\.spentAt\.length = 0;   \/\/ OWS3: no chase across a load/);
   assert.ok(w.indexOf('const tvRaid = {') < w.indexOf('tvRaid.chase.clear(); tvRaid.spent.clear();'), 'BOOT-TDZ: declared above the load that clears it');
-  assert.match(w, /raidFrame\(dt\);[^\n]*\n\s*travelViewGovern\(dt\);/, 'each walking frame, before the cap');
+  assert.match(w, /raidFrame\(dt\);[^\n]*\n\s*tvGroundOwed = travelViewGovern\(dt\);/, 'each walking frame, before the cap');   // PIN MOVED (OW-LAG): the frame keeps the governor's word
   // NAV-R (2026-09-28): a raider stood as a ship of the sea chases as her captain does - `chase` is the ship's word, or the
   // Overworld's own chase with no sea fight (test/systems/naval/nav_r_raiders.test.js pins which)
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js

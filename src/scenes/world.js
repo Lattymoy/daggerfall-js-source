@@ -4078,6 +4078,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const tvRaid = { list: [], at: -Infinity, chase: new Map(), spent: new Set(), clock: 0, life: -1, peer: new Map(), spentAt: [] };   // OWS3: Warm Ashes' raiders about the traveller, and the chases (BOOT-TDZ: a load ends them); OW6: a peer's chases heard, and my spent ones said
   const tvSea = { means: null, helm: createSeaHelm(), phase: null, boat: null, probeAt: 0, best: Infinity, bestS: 0, legAt: -1, wasLive: false };   // OWS2: the crossing's state (BOOT-TDZ: above the load that clears it and the Travel Options atSea that reads it)
   let travelView = null;   // TV1: assigned beside the look gate, read by the cursor toggle's guard and the frame (BOOT-TDZ)
+  let tvGroundOwed = false;   // OW-LAG: travelViewGovern's word this frame - a fast journey under the Overworld owes ground in the view's reach (BOOT-TDZ: above the breather that reads it)
   let travelAsked = 1;   // TV2 (AUDIT TV A2): the rate Travel Options itself last asked the clock for - its ground's (RATE-LAW; it was the spinner), or its own cap (the ring walk's x15, an interrupt's x1) - the one the travel view's governor may hold under, and hands back
   const travellerBook = createTravellerBook();   // TV3: the region's travellers (BOOT-TDZ: read by the map, the view and the chat's links)
   const travellerSent = { room: null, last: null, at: 0 };   // TV3: what my region's room holds of me
@@ -5808,7 +5809,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // neither saw the stream at all.
   let _streamSince = null;   // PERF-EXT24: when the pump's current run of builds began; null while it is idle
   const breather = createBreather({   // PERF7: one slice clock for the stream; each build resets it
-    budget: () => frameFitBudget({ intervalMs: frameInterval(), busyMs: lastBusy(), streamingMs: _streamSince == null ? 0 : performance.now() - _streamSince, awaited: _awaitedBuilds > 0, overworld: !!travelView?.active }),   // OW-BUILD: the Overworld's ground first
+    budget: () => frameFitBudget({ intervalMs: frameInterval(), busyMs: lastBusy(), streamingMs: _streamSince == null ? 0 : performance.now() - _streamSince, awaited: _awaitedBuilds > 0, overworld: tvGroundOwed && !!travelView?.active }),   // OW-BUILD: the Overworld's ground first - OW-LAG: only while a fast journey there owes it
     onSlice: (ms) => { lendFrame(ms); meterFor(renderer.gl)?.addCpu('build', ms); },
     frames: framesBegun,   // PERF-EXT24 (the review): a slice a frame ran inside held a wait, and is not lent
   });
@@ -32359,7 +32360,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       tvHeldWhy = tvHeld != null ? 'ground' : null;   // AUDIT OW5 G1: and says it as what it is (OW6: the one word for it)
       tvWalking = 0;   // TV-WASD: no keys' travel on the ground
       travelGovernor.reset();
-      return;
+      return false;
     }
     const walk = travelWalkRate({
       viewUp: travelView?.state === 'up', journey,
@@ -32384,14 +32385,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       journeySlowSaid(tvHeldWhy);
       tvWalking = 0;
       travelGovernor.reset();
-      return;
+      return false;
     }
     if (!travelView?.active || !(journey || walk)) {
       if (tvHeld != null) { tvHeld = null; if (journey) setWorldTimeScale(travelAsked); }
       tvHeldWhy = null; journeySlowSaid(null);   // OW6: the line said again when an enemy next holds it
       if (tvWalking) { tvWalking = 0; if (!travelControlUI?.isShowing && !csaHoldsTimeScale() && worldTimeScale() !== 1) resetTimeScale(); }   // TV-WASD: let go, x1 at once
       travelGovernor.reset();
-      return;
+      return false;
     }
     const grid = Math.max(1, state.terrainDistance ?? 3);
     // AUDIT DEEP T2-2: never the grid's OUTERMOST ring - the streamer queues it after every pixel crossed, so it is always
@@ -32427,6 +32428,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvHeldWhy = tvHeld == null ? null : foeCap < load ? 'foes' : 'load';
     journeySlowSaid(tvHeldWhy);
     tvWalking = journey ? 0 : walk;
+    return unbuilt > 0 && foeCap > 1;   // OW-LAG: the ground owed is what holds a fast clock - an enemy's x1 waits on no build
   }
   let tvCursorWas = false;   // AUDIT TV B9: the cursor as the view found it
   travelView = createTravelView({
@@ -32956,7 +32958,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // what interrupts a journey interrupts it on its own honest clock.
         tvSeaFrame(dt);   // OWS2: the crossing - a launch, the helm, a landfall - before the mod's own stops see the frame
         raidFrame(dt);   // OWS3: Warm Ashes' raiders - a sail sighted under the view gives chase; alongside, the mod's raid
-        travelViewGovern(dt);   // TV2: under the travel view the clock runs no faster than the land loads
+        tvGroundOwed = travelViewGovern(dt);   // TV2: under the travel view the clock runs no faster than the land loads; OW-LAG: and says whether the ground owed holds it
         const travelScale = worldTimeScale();
         const _overlayHeld = staffTeleportHeld || _partyArrivalPending || (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
         // TO1: THE MOD'S OWN FRAME - TravelOptionsMod.Update, in its

@@ -2274,7 +2274,7 @@ then it gives the frame back. PERF-EXT24 sized the slice to what the display's f
 streaming frame still made its beat. Under the Overworld that is the wrong trade. The traveller is watching the land from
 the sky with the clock at up to x100, and what holds that clock is the ground the stream has not built.
 
-**FIXED.** While the view is up the host's budget says so (world.js:"overworld: !!travelView?.active"), and
+**FIXED.** While the view is up the host's budget says so (its line, narrowed since by OW-LAG below: world.js:"overworld: tvGroundOwed && !!travelView?.active"), and
 frameFitBudget sizes the slice against a frame of 30 a second instead of the display's
 (buildBreather.js:"export const BUILD_OVERWORLD_FRAME_MS"). The slice is what that frame leaves past the frame's own
 script and the margin, up to 20 ms (BUILD_SLICE_OVERWORLD_MS) and never less than the ordinary 6. A light frame drops to
@@ -2303,6 +2303,50 @@ dungeon) stream no pixels and raise no Overworld.
 (the host's budget line carries the view; its lifted budget is handed one); `tools/mutants/perfextc.json`
 PERF-EXT24-review-awaited-is-inferred-from-an-idle-pump-again re-aimed by content. The record of the slice it changes:
 `07-Rendering/Performance-Exterior.md` PERF-EXT24.
+
+### OW-LAG - the Overworld's frame kept unless the ground holds the journey (2026-10-19, the owner: "People are lagging in the overworld")
+
+The day after OW-BUILD merged. Nothing on the relay's pose path had changed in the PRs merged since 2026-10-15 (GRANT,
+GROUND-GATE, SAFE, PROX-VOICE and its revert - each read). OW-BUILD had changed the Overworld's frame, and it lent its
+slice far more often than it needed to.
+
+**What it did.** The budget asked one thing: is the view up (`travelView.active`). A stream with anything queued then
+took up to 20 ms a frame, so every frame under the view drew at 30 a second whenever a pixel was building:
+- a view raised only to look about, its grid filling in;
+- every journey, on every machine. The streamer queues the grid's outermost ring at every crossing, so at x40 to x100
+  something is always building. A machine whose ground kept up with the journey, which the governor never holds, lost
+  its frame rate for nothing;
+- a 144 Hz display at a fifth of its rate. The 30 is the Overworld's frame, whatever the display's.
+
+Script time is all `lastBusy` counts, so a frame whose GPU was the heavy half went lower still.
+
+**FIXED.** The slice is lent only when it buys the journey time. The governor already counts the ground the view can
+see that the stream still owes (the whole grid but its outermost ring - TV2, LOAD-OWED). It now answers whether that
+count is above zero while fast travel runs under the view (a journey, or the keys' travel) and no enemy holds the clock
+to x1 (world.js:"return unbuilt > 0 && foeCap > 1;"). Every other exit answers false: the view down, nothing travelling,
+or the ground on the ground (THE MODAL CONTRACT - one type from every exit). The frame keeps that word
+(world.js:"tvGroundOwed = travelViewGovern(dt);"), and the budget lends the Overworld's slice only on it and the view
+(world.js:"overworld: tvGroundOwed && !!travelView?.active"). The flag is declared above the breather, whose birth asks
+its budget (BOOT-TDZ). The result:
+- a machine that keeps up draws at its display's rate all journey long;
+- one that cannot still trades its frame for ground, as the owner chose, while the trade buys clock;
+- looking about under the view costs nothing.
+
+OW-BUILD's law (frameFitBudget's Overworld arm, its 30 a second, its 20 ms) is unchanged.
+
+Not measured: a player's frame under the view before and after (no game data in the container). The claim is the law's,
+not a profile's. A journey on a machine that cannot keep up is still at 30 a second while it is held, by the owner's
+choice.
+
+**The four hosts.** `scenes/world.js` wired, as OW-BUILD. The other three raise no Overworld and stream no pixels.
+
+`test/systems/travel/ow_buildpace.test.js` (3 -> 4: the host's budget re-pinned on the word and the view, and the
+governor's word mounted from its own source over the real load governor and clock). `tools/mutants/ow_buildpace.json`
+(7 -> 13, all dead): the view alone (OW-BUILD as it shipped), the view forgotten, the word never kept, the count ignored,
+the enemies ignored, an exit answering undefined. PIN MOVED: `buildslice` (the budget line, and its lifted budget declares
+the word), `ows3_raiders` and `tv2_click_to_move` (the frame keeps the governor's word; its exits answer false).
+`tools/mutants/perfextc.json` PERF-EXT24-review-awaited-is-inferred-from-an-idle-pump-again and `tools/mutants/tv2.json`
+TV2-no-cap re-aimed by content (both dead).
 
 ## TIME-DILATION - the sea's AI never on the journey's clock (2026-10-17, the owner)
 

@@ -2,12 +2,72 @@
   {
     "name": "OW-BUILD-the-host-never-says-the-view-is-up",
     "file": "src/scenes/world.js",
-    "old": "awaited: _awaitedBuilds > 0, overworld: !!travelView?.active }),",
+    "old": "awaited: _awaitedBuilds > 0, overworld: tvGroundOwed && !!travelView?.active }),",
     "new": "awaited: _awaitedBuilds > 0, overworld: false }),",
     "tests": [
       "test/systems/travel/ow_buildpace.test.js"
     ],
     "note": "The Overworld's ground comes at the 60-a-second frame's pace: the report's x1 on every machine that cannot keep up."
+  },
+  {
+    "name": "OW-LAG-the-view-alone",
+    "file": "src/scenes/world.js",
+    "old": "awaited: _awaitedBuilds > 0, overworld: tvGroundOwed && !!travelView?.active }),",
+    "new": "awaited: _awaitedBuilds > 0, overworld: !!travelView?.active }),",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "OW-BUILD as it shipped: every frame under the view drops to 30 a second while anything is queued - the report."
+  },
+  {
+    "name": "OW-LAG-the-view-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "awaited: _awaitedBuilds > 0, overworld: tvGroundOwed && !!travelView?.active }),",
+    "new": "awaited: _awaitedBuilds > 0, overworld: tvGroundOwed }),",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "A word left from the view's last frame lends the Overworld's slice on the ground."
+  },
+  {
+    "name": "OW-LAG-the-word-never-kept",
+    "file": "src/scenes/world.js",
+    "old": "        tvGroundOwed = travelViewGovern(dt);",
+    "new": "        travelViewGovern(dt);",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "The governor's word dropped: the Overworld never builds faster, OW-BUILD undone."
+  },
+  {
+    "name": "OW-LAG-the-count-ignored",
+    "file": "src/scenes/world.js",
+    "old": "    return unbuilt > 0 && foeCap > 1;",
+    "new": "    return foeCap > 1;",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "Any fast travel under the view takes the frame to 30 a second, the ground keeping up or not."
+  },
+  {
+    "name": "OW-LAG-the-enemies-ignored",
+    "file": "src/scenes/world.js",
+    "old": "    return unbuilt > 0 && foeCap > 1;",
+    "new": "    return unbuilt > 0;",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "An enemy holding the clock to x1 still costs the frame its rate for a build that lifts nothing."
+  },
+  {
+    "name": "OW-LAG-an-exit-answers-undefined",
+    "file": "src/scenes/world.js",
+    "old": "      if (tvWalking) { tvWalking = 0; if (!travelControlUI?.isShowing && !csaHoldsTimeScale() && worldTimeScale() !== 1) resetTimeScale(); }   // TV-WASD: let go, x1 at once\n      travelGovernor.reset();\n      return false;",
+    "new": "      if (tvWalking) { tvWalking = 0; if (!travelControlUI?.isShowing && !csaHoldsTimeScale() && worldTimeScale() !== 1) resetTimeScale(); }   // TV-WASD: let go, x1 at once\n      travelGovernor.reset();\n      return;",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "THE MODAL CONTRACT broken: one exit answers undefined where the rest answer a boolean."
   },
   {
     "name": "OW-BUILD-the-arm-never-taken",

@@ -192,7 +192,7 @@
   {
     "name": "TV2-no-cap",
     "file": "src/scenes/world.js",
-    "old": "        travelViewGovern(dt);   // TV2: under the travel view the clock runs no faster than the land loads\n",
+    "old": "        tvGroundOwed = travelViewGovern(dt);   // TV2: under the travel view the clock runs no faster than the land loads; OW-LAG: and says whether the ground owed holds it\n",
     "new": "",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"

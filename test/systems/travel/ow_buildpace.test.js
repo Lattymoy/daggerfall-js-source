@@ -5,10 +5,20 @@
 // slice of work a frame, 3 to 6 ms (PERF-EXT24's frameFitBudget), so the ground came at the pace of a 60-a-second frame
 // while the traveller watched it from the sky. While the view is up a slice is now what a frame of 30 a second leaves,
 // up to BUILD_SLICE_OVERWORLD_MS, never less than the ordinary 6 ms. Run on the real breather and the host's own budget.
+// OW-LAG (2026-10-19, the owner: "People are lagging in the overworld"): that slice held EVERY frame under the view to
+// 30 a second while anything at all was queued - a view raised to look about, a journey whose ground kept up, a 144 Hz
+// display at a fifth of its rate. It is lent now only while the governor's own count says a fast journey (or the keys'
+// travel) owes ground in the view's reach; otherwise the view's frames are sized as the ground's are.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as BB from '../../../src/systems/buildBreather.js';
+import { travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
+import { createLoadGovernor, unbuiltAround } from '../../../src/systems/travel/travelGovernor.js';
+import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
+import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
+import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
+import { setPaceGround, setTravelPace, _resetTravelPace } from '../../../src/systems/travel/travelPace.js';
 
 const W = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 const VSYNC = 1000 / 60;
@@ -30,26 +40,79 @@ test('OW-BUILD, the law: under the Overworld a slice is what a frame of 30 a sec
   assert.equal(f({ intervalMs: VSYNC, busyMs: 8, streamingMs: 5000 }), BB.BUILD_SLICE_MS);
 });
 
-test('OW-BUILD, the host: the breather\'s budget asks whether the Overworld is up - the view\'s `active`, read at each slice; down, every arm as it was (the host\'s own budget line, lifted)', () => {
+test('OW-BUILD, the host (OW-LAG): the breather\'s budget lends the Overworld\'s slice only while the view is up AND the governor said this frame that a fast journey owes ground in its reach - read at each slice; otherwise every arm as it was (the host\'s own budget line, lifted)', () => {
   const m = /\n {4}budget: (\(\) => frameFitBudget\(\{[^\n]*?\}\)),[^\n]*\n/.exec(W);
   assert.ok(m, 'the breather\'s budget');
-  assert.match(m[1], /overworld: !!travelView\?\.active/, 'the view\'s own flag');
+  assert.match(m[1], /overworld: tvGroundOwed && !!travelView\?\.active/, 'the governor\'s word and the view\'s own flag');
+  assert.match(W, /\n {8}tvGroundOwed = travelViewGovern\(dt\);/, 'the frame keeps the governor\'s word');
+  assert.ok(W.indexOf('  let tvGroundOwed = false;') < W.indexOf('  const breather = createBreather({'), 'BOOT-TDZ: declared above the breather, whose birth asks its budget');
   const view = { active: false };
   const env = { frameFitBudget: BB.frameFitBudget, frameInterval: () => VSYNC, lastBusy: () => 8, performance: { now: () => 10000 }, travelView: view };
-  const host = new Function(...Object.keys(env), `let _streamSince = null; let _awaitedBuilds = 0;
+  const host = new Function(...Object.keys(env), `let _streamSince = null; let _awaitedBuilds = 0; let tvGroundOwed = false;
     const budget = ${m[1]};
-    return { budget, stream: (v) => { _streamSince = v; }, wait: (n) => { _awaitedBuilds = n; } };`)(...Object.values(env));
+    return { budget, stream: (v) => { _streamSince = v; }, wait: (n) => { _awaitedBuilds = n; }, owed: (v) => { tvGroundOwed = v; } };`)(...Object.values(env));
   host.stream(9900);   // a stream begun 100 ms ago
   const down = host.budget();
   assert.ok(down >= BB.BUILD_SLICE_FLOOR_MS && down <= BB.BUILD_SLICE_MS, `the view down: the frame-fit slice (${down})`);
   view.active = true;
-  assert.equal(host.budget(), BB.BUILD_SLICE_OVERWORLD_MS, 'the view up: the Overworld\'s slice');
+  assert.equal(host.budget(), down, 'OW-LAG: the view up with no journey owed ground - looking about, or a journey the ground keeps up with: the frame-fit slice, the frame keeps its rate');
+  host.owed(true);
+  assert.equal(host.budget(), BB.BUILD_SLICE_OVERWORLD_MS, 'the view up and a fast journey owed ground: the Overworld\'s slice');
   view.active = false;
+  assert.equal(host.budget(), down, 'the view down with a word left over from its last frame: never the Overworld\'s slice');
+  host.owed(false);
   host.stream(1000);   // nine seconds on
   assert.equal(host.budget(), BB.BUILD_SLICE_MS, 'down again: an old stream\'s whole slice, as ever');
   const none = new Function('frameFitBudget', 'frameInterval', 'lastBusy', 'performance', 'travelView',
-    `let _streamSince = null; let _awaitedBuilds = 1; return (${m[1]})();`)(BB.frameFitBudget, () => VSYNC, () => 8, { now: () => 0 }, null);
+    `let _streamSince = null; let _awaitedBuilds = 1; let tvGroundOwed = false; return (${m[1]})();`)(BB.frameFitBudget, () => VSYNC, () => 8, { now: () => 0 }, null);
   assert.equal(none, BB.BUILD_SLICE_MS, 'no view at all (the boot, before it is made): an awaited build\'s whole slice');
+});
+
+/** world.js's governor, mounted from its own source (as test/systems/travel/tv_wasd.test.js mounts it) over the real load
+ *  governor and clock: `let tvHeld` through the end of travelViewGovern, the keys' travel its fast travel. */
+function governorRig() {
+  const w = { keys: new Set(), view: { active: true, state: 'up' }, unbuilt: new Set(), held: false };
+  const env = {
+    travelControlUI: { isShowing: false }, travelOptions: { state: { autopilot: null } }, tvOwnsJourneys: () => true,
+    travellerOnRoad: () => true, foePaced, foeRate, travelWalkRate, TV_MOVE_ACTIONS,
+    travelView: w.view, held: (keys, a) => keys.has(a), keys: w.keys,
+    walkMode: true, playerSpawned: true, player: { isPlayerSwimming: false },
+    csaBoatUnderMe: () => null, gamePaused: () => false,
+    setWorldTimeScale: setTimeScale, worldTimeScale: timeScale, resetTimeScale,
+    travelAsked: 1, csaHoldsTimeScale: () => false,
+    travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
+    state: { terrainDistance: 3, loaded: { has: () => true } }, playerTravelPixel: () => ({ x: 100, y: 200 }), tvGroundGenNow: () => w.unbuilt.size,
+    unbuiltAround, built: { has: (k) => !w.unbuilt.has(k) }, StreamingWorldState,
+    journeyThreatCap: () => (w.held ? { cap: Infinity, held: true } : { cap: Infinity }), journeySlowSaid: () => {},
+  };
+  const from = W.indexOf('  let tvHeld = null;');
+  const fn = W.indexOf('  function travelViewGovern(dt) {', from);
+  const end = W.indexOf('\n  }\n', fn) + 4;
+  assert.ok(from >= 0 && fn > from && end > fn, 'the governor\'s source');
+  const names = Object.keys(env);
+  const g = new Function(...names, `${W.slice(from, end)}\nreturn { govern: travelViewGovern };`)(...names.map((k) => env[k]));
+  return { w, govern: () => g.govern(1 / 60) };
+}
+
+test('OW-LAG, the governor\'s word: travelViewGovern answers true only while fast travel under the view owes ground in its counted reach and no enemy holds the clock to x1 - a boolean from every exit (THE MODAL CONTRACT); looking about, a journey the ground keeps up with, the view down: false, and the frame keeps its rate (mutants: the count ignored, the enemies ignored, an exit answering undefined)', (t) => {
+  t.after(() => { resetTimeScale(); _resetTravelPace(); });
+  _resetTravelPace(); setPaceGround(true); setTravelPace('speed', 100);
+  resetTimeScale();
+  const { w, govern } = governorRig();
+  w.unbuilt.add('101,200');   // a pixel of the counted grid still building
+  assert.equal(govern(), false, 'the view up, nothing travelling: looking about owes the clock nothing');
+  w.keys.add('MoveForwards');
+  assert.equal(govern(), true, 'the keys\' x100 under the view, ground owed: the stream\'s turn');
+  w.unbuilt.clear();
+  assert.equal(govern(), false, 'the ground kept up: nothing owed, the frame\'s rate');
+  w.unbuilt.add('101,200');
+  w.held = true;
+  assert.equal(govern(), false, 'an enemy holds the clock to x1: no build would lift it');
+  w.held = false;
+  w.view.active = false; w.view.state = 'down';
+  assert.equal(govern(), false, 'the view down');
+  w.keys.clear();
+  assert.equal(typeof govern(), 'boolean', 'and a boolean, not undefined, from the view-down exit');
 });
 
 /** The real breather over a pixel's `workMs` of build, in 1 ms units, on a 60 Hz display: each frame the host's own

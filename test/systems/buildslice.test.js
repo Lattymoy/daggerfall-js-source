@@ -100,7 +100,7 @@ test('PERF-EXT24: `?perf=cpu` carries the stream as a `build` span; the GPU cloc
 });
 
 test('PERF-EXT24: the world host sizes the stream\'s slice by the frame clock, lends each slice back, and lends an awaited build the whole slice', () => {
-  assert.match(WORLD, /  const breather = createBreather\(\{   \/\/ PERF7[^\n]*\n    budget: \(\) => frameFitBudget\(\{ intervalMs: frameInterval\(\), busyMs: lastBusy\(\), streamingMs: _streamSince == null \? 0 : performance\.now\(\) - _streamSince, awaited: _awaitedBuilds > 0, overworld: !!travelView\?\.active \}\),[^\n]*\n    onSlice: \(ms\) => \{ lendFrame\(ms\); meterFor\(renderer\.gl\)\?\.addCpu\('build', ms\); \},\n    frames: framesBegun,[^\n]*\n  \}\);/);
+  assert.match(WORLD, /  const breather = createBreather\(\{   \/\/ PERF7[^\n]*\n    budget: \(\) => frameFitBudget\(\{ intervalMs: frameInterval\(\), busyMs: lastBusy\(\), streamingMs: _streamSince == null \? 0 : performance\.now\(\) - _streamSince, awaited: _awaitedBuilds > 0, overworld: tvGroundOwed && !!travelView\?\.active \}\),[^\n]*\n    onSlice: \(ms\) => \{ lendFrame\(ms\); meterFor\(renderer\.gl\)\?\.addCpu\('build', ms\); \},\n    frames: framesBegun,[^\n]*\n  \}\);/);
   const pump = WORLD.slice(WORLD.indexOf('  async function pump() {'), WORLD.indexOf('\n  }\n', WORLD.indexOf('  async function pump() {')));
   assert.match(pump, /const next = queue\.shift\(\);\n    _streamSince \?\?= performance\.now\(\);/, 'the pump\'s builds are the stream');
   assert.match(pump, /building = false;\n    if \(!state\.owes\(queue\)\) _streamSince = null;/, 'and the stream ends with the queue - with what it still owes (QUEUE-OWED: a queue holding only pixels the stream let go owes nothing)');
@@ -186,7 +186,7 @@ test('PERF-EXT24 (the review): a build something waits on says so - the boot and
   assert.ok(budgetSrc, 'the breather\'s budget');
   let settle;
   const env = { frameFitBudget: BB.frameFitBudget, frameInterval: () => 6.9, lastBusy: () => 3, performance: { now: () => 500 }, travelView: null, buildPixel: () => new Promise((r, j) => { settle = { r, j }; }) };
-  const host = new Function(...Object.keys(env), `let _streamSince = null; let _awaitedBuilds = 0;\n${helper}\nconst budget = ${budgetSrc};\nreturn { awaitedBuild, budget, stream: (v) => { _streamSince = v; } };`)(...Object.values(env));
+  const host = new Function(...Object.keys(env), `let _streamSince = null; let _awaitedBuilds = 0; let tvGroundOwed = false;\n${helper}\nconst budget = ${budgetSrc};\nreturn { awaitedBuild, budget, stream: (v) => { _streamSince = v; } };`)(...Object.values(env));
   host.stream(400);   // the pump has started the new ring's first pixel, 100 ms ago
   assert.equal(host.budget(), BB.BUILD_SLICE_FLOOR_MS, 'the stream alone, on a 144 Hz display: the floor');
   const arrival = host.awaitedBuild(1, 2);
