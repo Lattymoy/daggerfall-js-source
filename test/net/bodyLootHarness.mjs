@@ -38,10 +38,17 @@ import { movedOutOf } from '../hostText.mjs';
 
 export { FOES_MS, FOES_FULL_MS, FOES_STALE_MS };
 
+/** PARTY-SKIN: WHOSE MACHINE IS RUNNING. Every player of a scene lives in one process, so the module-level kill report
+ *  (systems/playerKills.js) reaches every player's listener; on the real wire it reaches the one browser that struck. The
+ *  harness brackets everything one player's page runs - its pool's frame, a hit or a foes frame it hears, a blow the test
+ *  makes for it (`as`) - so a listener can tell whose kill it is told of. */
+export const actor = { id: null };
+export const as = (p, fn) => { const prev = actor.id; actor.id = p.id; try { return fn(); } finally { actor.id = prev; } };
+
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 function craftCfg() { const b = new Uint8Array(74); const v = new DataView(b.buffer); b[10] = 0x08; v.setUint16(52, 4, true); const attrs = [40, 50, 50, 85, 50, 50, 90, 55]; for (let i = 0; i < 8; i++) v.setUint16(58 + i * 2, attrs[i], true); return b; }
 function craftMonsterBsa(records) { const NAME_FIELD = 14, ENTRY = 18; const dataLen = records.reduce((a, [, b]) => a + b.length, 0); const out = new Uint8Array(4 + dataLen + ENTRY * records.length); const v = new DataView(out.buffer); v.setInt16(0, records.length, true); v.setUint16(2, 0x0100, true); let pos = 4; for (const [, bytes] of records) { out.set(bytes, pos); pos += bytes.length; } for (const [name, bytes] of records) { for (let i = 0; i < name.length; i++) out[pos + i] = name.charCodeAt(i); v.setInt32(pos + NAME_FIELD, bytes.length, true); pos += ENTRY; } return out; }
-const bsa = craftMonsterBsa([['ENEMY000.CFG', craftCfg()]]);
+const bsa = craftMonsterBsa([['ENEMY000.CFG', craftCfg()], ['ENEMY013.CFG', craftCfg()], ['ENEMY041.CFG', craftCfg()], ['ENEMY007.CFG', craftCfg()]]);   // PARTY-SKIN: a Rat, a Harpy and a Dreugh (tier 5 hides, the rare ones) and an Orc (no knife takes a hide from it)
 const stubTex = { getSize: () => ({ width: 64, height: 100 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 8, getFrameCount: () => 1 };
 export const settle = () => new Promise((r) => setTimeout(r, 0));
 export const lcg = (seed) => { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
@@ -115,8 +122,8 @@ export function relay() {
       foesLog.push({ from, frame: clone(frame), at: clock.t });
       for (const p of players.values()) {
         if (p.id === from || !p.here || dead.has(p.id)) continue;
-        const f = this.foesFilter ? this.foesFilter(from, clone(frame)) : clone(frame);
-        if (f) p.foes(from, f);
+        const f = this.foesFilter ? this.foesFilter(from, clone(frame), p.id) : clone(frame);   // PARTY-SKIN: and for whom (an older reader hears no `bs`)
+        if (f) as(p, () => p.foes(from, f));
       }
     },
     deliver() {
@@ -124,7 +131,7 @@ export function relay() {
         const e = q[i];
         if (e.at > clock.t || held.has(`${e.from}>${e.to}`)) { i++; continue; }
         q.splice(i, 1);
-        if (this.here(e.to) && !dead.has(e.to)) players.get(e.to).hit(e.from, e.data);
+        if (this.here(e.to) && !dead.has(e.to)) as(players.get(e.to), () => players.get(e.to).hit(e.from, e.data));
       }
     },
   };
@@ -134,7 +141,7 @@ export function relay() {
  *  while the socket is open - AUDIT WORLD6b-iii(b) C3/B5: no answer is not "nobody"). */
 export function tickPlayer(net, p, ms) {
   if (p.ghost) return;   // an older build with no pool: it only hears, and says what the test hands it
-  p.pool().update(ms / 1000, p.feet, [p.feet[0], 1.6, p.feet[2]], senses(p.entity));
+  as(p, () => p.pool().update(ms / 1000, p.feet, [p.feet[0], 1.6, p.feet[2]], senses(p.entity)));
   p.pend.flush(clock.t);
   if (!p.here) return;
   if (clock.t - p.sentAt >= FOES_MS) {
@@ -336,9 +343,10 @@ export async function offlineOwner() {
  *  `from>to` whose hits wait in the relay from the start (a peek answer not yet heard); `late` - `{ 'from>to': ms }`;
  *  `tamper` - the relay's in-transit rewrite of a hit; `pile` - a function minting the body's own pieces in place of the loot table's three (PARTY-LOOT
  *  back-and-forth: a purse, a Buckler and a Potion of Healing, minted by the game's own producers). */
-export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts = [], stripBw = false, hold = [], late = {}, tamper = null, pile: base = null } = {}) {
+export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts = [], stripBw = false, hold = [], late = {}, tamper = null, pile: base = null, species = 0, armed = null, foesFilter = null, kill = true } = {}) {   // PARTY-SKIN: `species` the foe's MobileTypes value; `armed({ where, net, bob, them, rat })` runs once the foe stands, before the blow that fells it; `foesFilter` the relay's as an older build hears it
   const net = relay();
   if (stripBw) net.foesFilter = (from, frame) => { delete frame.bw; return frame; };
+  if (foesFilter) net.foesFilter = foesFilter;
   for (const [dir, ms] of Object.entries(late)) net.late.set(dir, ms);
   for (const dir of hold) net.hold(dir);
   net.tamper = tamper;
@@ -347,14 +355,19 @@ export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts =
   const them = takers.map((id, i) => mk(net, id, [11 + i, 0, 11]));
   Math.random = lcg(7);
   {
-    const rat = await bob.pool().spawnFoe(0, [12, 0, 12], { feetGiven: true });
+    const rat = await bob.pool().spawnFoe(species, [12, 0, 12], { feetGiven: true });
     assert.ok(rat, 'the owner\'s foe stands');
     run(net, 400);
+    await armed?.({ where, net, bob, them, rat });
+    if (!kill) {   // PARTY-SKIN: the foe is left standing - a taker's blow is to fell it
+      const roomKey0 = where === 'building' ? ROOM_BUILDING : ROOM_STREET;
+      return { where, net, bob, them, mac: them[0], eve: them[1] ?? null, ghosts: [], old: null, rat, roomKey: roomKey0, frame: (to, fields) => ({ to, k: roomKey0, i: rat.seq, ...(where === 'building' ? { own: 1 } : {}), ...fields }) };
+    }
     for (let i = 0; i < 40 && !them.every((t) => t.pool().foes.some((x) => x.puppet === bob.id)); i++) { await settle(); run(net, 50); }
     const pile = () => [...(base ?? PILE)().map((it) => ({ ...it })), ...extra.map((it) => ({ ...it }))];
     rat.entity.items = pile();
     if (extra.length) delete rat.entity.lootCap;   // FOE-CAP: a body carrying more than a plain foe's three (a revenant's, a boss's)
-    bob.pool().damageFoe(rat, 9999, [12, 0, 11]);
+    as(bob, () => bob.pool().damageFoe(rat, 9999, [12, 0, 11]));
     // the death chain rolls on the dice (a collector's card, a rarity, FOE-CAP trimming a piece for it - the building pool rolls
     // on Math.random, whose order of use the event loop moves): the body is the pile this test names, whatever they rolled
     rat.entity.items = pile();
