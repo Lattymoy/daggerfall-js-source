@@ -15,7 +15,8 @@
 // 3.5 s (net.hold), so B's verdicts (its Buckler's grant, its Gold's refusal) land past the old 3 s mark. Every step asserts
 // what EVERY player's plaque and view list - the real resolveHover over the pool's own namer and contents doors, and for a
 // player with a window open that window's list - and the end asserts the census (each piece in exactly one place) and that the
-// body is empty for everyone. (The emptied body's own plaque is NOT asserted here: Phase 1b of loot-followups changes it.)
+// body is empty for everyone - and (Phase 1b of loot-followups, EMPTY-BODY AC-B4) that NO PLAQUE STANDS over it for A, B or C: an emptied
+// body is no target for its owner either (read through the pick, onRay - never a hit the test made itself).
 //
 // Mounted, not matched: the pools are the real createExteriorFoes (the street's, and the building's as worldModes.js wires it),
 // behind the real hit queue (net/hitPend.js), on the controllable clock of ./bodyLootHarness.mjs; the window is the harness's
@@ -29,7 +30,7 @@ import { mintHealingPotion } from '../../src/systems/healingSupply.js';
 import { foldQuickLoot, quickLootWheel, resetQuickLoot } from '../../src/systems/quickLoot.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import {
-  FOES_FULL_MS, PILE, pieceOf, GOLD, clock, restoreRandom, scene, lootWindow, choosing, census, misplaced, plaque, run,
+  FOES_FULL_MS, PILE, pieceOf, GOLD, clock, restoreRandom, scene, lootWindow, choosing, census, misplaced, plaque, run, onRay,
 } from './bodyLootHarness.mjs';
 
 afterEach(restoreRandom);
@@ -171,6 +172,11 @@ async function play(where, { slow, order }) {
   assert.deepEqual(at.get(POTION), [['the owner\'s pack', 1]], 'the Potion is in A\'s pack alone');
   assert.equal(s.rat.entity.items.length, 0, 'the owner\'s body is empty');
   for (const p of [A, B, C]) assert.deepEqual(viewOf(s, p), [], `${p.id}'s view of the body is empty`);
+  // T-B7 EMPTY-BODY AC-B4: B and C see no plaque, and A sees no plaque - the emptied body is no target for its owner either
+  for (const p of [A, B, C]) {
+    const f = onRay(p, keyFor(s, p));
+    assert.equal(f, null, `T-B7 EMPTY-BODY/AC-B4: ${p.id}'s plaque on the ray over the emptied body is ${f ? `"${f.title}"${f.empty ? ' - "Empty"' : ''}` : 'nothing'} - an emptied body is no target for anyone, its owner included`);
+  }
   assert.equal(countOf(B, BUCKLER), 1, 'B holds the Buckler');
   assert.equal(goldOf(B), from0.gold.get(B.id), 'B\'s refused Gold left no coin in its purse');
   assert.equal(B.entity.items.length - from0.items.get(B.id), 1, 'B\'s pack grew by the Buckler alone');

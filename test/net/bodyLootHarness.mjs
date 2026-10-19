@@ -32,6 +32,7 @@ import { isGoldPieces, addGoldPieces } from '../../src/systems/inventory.js';
 import { filterStore } from '../../src/ui/storeFilter.js';
 import { runBulk, bulkVerdict } from '../../src/ui/storeBulk.js';
 import { lootPile } from '../../src/player/lootStack.js';
+import { pickActivatableHit } from '../../src/player/activate.js';
 import { isActionDoorObject } from '../../src/world/actionSystem.js';
 import { movedOutOf } from '../hostText.mjs';
 
@@ -515,6 +516,19 @@ export function misplaced(s) {
 /** The plaque a player sees over a body: the real resolveHover over the pool's own doors, as the hosts' ladders read them. */
 export const plaque = (p, key) => resolveHover({ key, distance: 1, reach: 3.75 }, { name: composeNamer([(k) => p.names(k)]), contents: composeContents([(k) => p.holds(k)]) });
 export const saysEmpty = (f) => f?.kind === 'items' && f.empty === true;
+/** EMPTY-BODY (F-1 / PR A phase 1b): THE PLAQUE AS THE RAY SEES IT. `plaque(p, key)` above hands resolveHover a hit it made itself, so it still
+ *  says "Empty" over a body the ray can no longer strike. This is the player's pick: the real hit queue's ray (player/activate.js
+ *  pickActivatableHit) cast from the eye, a metre and a half over the body, straight down at it, over THIS player's pool's own
+ *  lootTargets - and the plaque the real resolveHover makes of whatever the pick strikes (null when it strikes nothing: no
+ *  target, no plaque). The world between is open air; the geometry is not the code under test. */
+const OPEN_AIR = Object.freeze({ raycast: () => Infinity, raycastHit: () => ({ dist: Infinity, key: null }) });
+export function onRay(p, key) {
+  const f = p.pool().foes.find((x) => `foeCorpse:${x.uid}` === key);
+  assert.ok(f, `${p.id}'s pool stands the body ${key}`);
+  const at = f.corpseMarker?.pos ?? f.ai?.feet;
+  const hit = pickActivatableHit([at[0], at[1] + 1.6, at[2]], [0, -1, 0], p.pool().lootTargets(), OPEN_AIR);
+  return resolveHover(hit, { name: composeNamer([(k) => p.names(k)]), contents: composeContents([(k) => p.holds(k)]) });
+}
 export const SETTLED_MS = 120_000;   // past every timeout the street has (TAKE_WINDOW_MS, GRANT_BACK_MS, FOES_STALE_MS) and any a fix adds, many times over
 
 // ═══ SCENARIO DRIVERS ═════════════════════════════════════════════════════════════════════════════════════════════════

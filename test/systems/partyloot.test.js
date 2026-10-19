@@ -23,6 +23,7 @@ import { addItem, stacksWith, isGoldPieces, addGoldPieces } from '../../src/syst
 import { isEquipped, unequipItem } from '../../src/systems/equip.js';
 import { spawnEnemyLoot, wildLootAfter, rollRoomBonus } from '../../src/scenes/hostCombat.js';
 import { raiseEnemyDeath } from '../../src/scenes/corpseMarker.js';
+import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE, CORPSE_ACTIVATION_DISTANCE } from '../../src/player/activate.js';
 import { rollCorpseKit, capFoeLoot } from '../../src/systems/foeLootCap.js';
 import { makeEnemyEntity } from '../../src/characters/enemy/enemyEntity.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
@@ -164,8 +165,9 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     wildPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, CLAIM_KEEP_MS, CLAIMS_KEPT_MAX, SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX, sharedClassicMinutes, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,
     spawnCorpseNow: async (f) => { f.corpsePos = [...f.ai.feet]; }, renderer: { destroyBillboardBatch: () => {} }, billboardBatches: [], renownFoeRevived: () => {},
-    respawnFoe: () => false, camps: { applyOwner: () => {}, activate: () => false }, roomEncounterAsked: () => false, actions: { applyRemote: () => 0 },
-    droppedLoot: { physical: { owns: () => false }, pileFor: () => null, lootFinds: () => [] }, lootCrown: (pos) => pos, droppedTorches: { activate: () => false }, plaqueActionFor: () => null,
+    respawnFoe: () => false, camps: { applyOwner: () => {}, activate: () => false, targets: () => [] }, roomEncounterAsked: () => false, actions: { applyRemote: () => 0 },
+    droppedLoot: { physical: { owns: () => false }, pileFor: () => null, lootFinds: () => [], lootTargets: () => [] }, lootCrown: (pos) => pos, droppedTorches: { activate: () => false, targets: () => [] },
+    RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE, CORPSE_ACTIVATION_DISTANCE,   // EMPTY-BODY: lootTargets' reaches (the pick's own constants) plaqueActionFor: () => null,
     activateSearchable: () => 0, setMidScreenText: (t) => said.push(t), activeOverlay: null, silverFindKey: () => null, silverFindAt: () => {},
     quickLootTake, showPickups: null, lootPile: () => null, pileBody: () => null, openInventory: () => null, RANDOM_TREASURE_ARCHIVE: 216,
   };
@@ -173,6 +175,8 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     ${declSrc('LOOT_KEY_RE')}
     ${fnSrc('lootKeyOf')}
     ${fnSrc('lootableBody')}
+    ${fnSrc('corpseAt')}
+    ${fnSrc('lootTargets')}
     ${fnSrc('lootHolder')}
     ${fnSrc('roomLootKey')}
     ${fnSrc('lootRecords')}
@@ -189,7 +193,7 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     ${fnSrc('respawnSweep')}
     ${fnSrc('rollPileItems')}
     ${optFn('setAuthority')}
-    const api = { lootContents: ${memberSrc('lootContents')}, takeLoot: ${memberSrc('takeLoot')}, lootFinds: ${memberSrc('lootFinds')}, corpseKeyOf: ${memberSrc('corpseKeyOf')} };
+    const api = { lootContents: ${memberSrc('lootContents')}, takeLoot: ${memberSrc('takeLoot')}, lootFinds: ${memberSrc('lootFinds')}, corpseKeyOf: ${memberSrc('corpseKeyOf')}, lootTargets };
     const buildPile = () => { ${PILE_BUILD}
       return items; };
     return { api, applyActions, setFoeDead, respawnSweep, rollPileItems, buildPile, publishLoot, setAuthority: typeof setAuthority === 'function' ? setAuthority : null, roomClaimTick: typeof roomClaimTick === 'function' ? roomClaimTick : () => {}, lootBuiltOf: typeof lootBuiltOf === 'function' ? lootBuiltOf : null, bases: typeof _roomBase === 'undefined' ? null : _roomBase };
@@ -1038,3 +1042,29 @@ for (const slow of [false, true]) {
     });
   }
 }
+
+// ═══ EMPTY-BODY AC-B1 (dungeon, guard - PR A phase 1b, test-harness/loot-followups/DESIGN-1b.md T-B3) ═══════════════════════════════
+// An emptied dungeon body is no loot target for its host or for either party member - dungeonContext.js lootTargets' own gate
+// (`!f.entity?.items?.length`, AUDIT 68 S19), mounted here as the host builds it. The street's and a building's body, whose owner's
+// emptied body is still a target today, are test/net/emptybody.test.js's; this is the rule they follow, pinned so it stays. The body is
+// a purse alone (the room's own base), taken by C through Quick Loot as the Phase 0 scenario does, then read by all three peers.
+test('T-B3 EMPTY-BODY AC-B1 (dungeon, guard): an emptied dungeon body is no target for its host or either party member - and it was a target for all three while it held its purse', () => {
+  setPref('quickLoot', true);
+  clock.t = BACK_AND_FORTH_AT;
+  const r = room3();
+  fall(r);
+  const { A, B, C } = r;
+  const key = KEYS.find((k) => k.startsWith('corpse:') && baseRows(shown(A, k)).length === 1 && isGoldPieces(shown(A, k).find((it) => !RL.isPersonalLoot(it))));
+  assert.ok(key, 'a body whose base is a purse alone');
+  const targetsOf = (p) => p.as(() => p.host.api.lootTargets()).map((t) => t.key);
+  for (const p of [A, B, C]) assert.ok(targetsOf(p).includes(key), `${p.id}: the body with its purse is a loot target (guard)`);
+  const gold = quickTakePiece(C, key, shown(A, key).find((it) => !RL.isPersonalLoot(it)));
+  assert.ok(gold, 'C quick-took the purse');
+  r.net.flush(); settleAll(r);
+  for (const p of [A, B, C]) assert.equal(shown(p, key).filter((it) => !RL.isPersonalLoot(it)).length, 0, `${p.id}: the base is gone from the body (guard)`);
+  // each peer's own bonus (PARTY-LOOT: a shared base plus a personal bonus) is theirs to take: the body is empty for a peer only when both are gone
+  for (const p of [A, B, C]) for (let guard = 0; guard < 8 && shown(p, key).length; guard++) quickTake(p, key, 0);
+  r.net.flush(); settleAll(r);
+  for (const p of [A, B, C]) assert.equal(shown(p, key).length, 0, `${p.id}: nothing is left on the body, the bonus included (guard)`);
+  for (const p of [A, B, C]) assert.equal(targetsOf(p).includes(key), false, `EMPTY-BODY/AC-B1 (dungeon): ${p.id} stands a loot target for the emptied body ${key} - the dungeon's emptied body is none, for its host and its party alike`);
+});
