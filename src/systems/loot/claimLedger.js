@@ -51,6 +51,7 @@ const ASKS_KEPT_MAX = 256;
  * @property {number} wait       the gap before the next re-ask
  * @property {number} nextAt     when the next re-ask is due
  * @property {string} [by]       the one peer whose verdict lands it (the container's authority)
+ * @property {boolean} [quiet]   a refusal says nothing (F-1: a sale at a shop's counter - the buyer keeps what was paid for)
  * @property {any} meta          whatever the transport needs to say it again (the owner, the cell, the number)
  */
 
@@ -72,12 +73,14 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
   const placeKey = (/** @type {Claim} */ c) => `${c.container}|${c.p ?? c.sp}`;
   const tell = (/** @type {string} */ line) => { try { say?.(line); } catch { /* a line that cannot be said is not the claim's */ } };
 
-  /** A take of `n` of `item` off a container: lifted out of the taker's hands now, stood as a claim until its verdict. */
-  function take(/** @type {string} */ container, /** @type {{ p?: number, sp?: string }} */ ref, /** @type {any} */ item, /** @type {number} */ n, /** @type {{ by?: string, [k: string]: any }} */ meta, /** @type {number} */ now) {
-    const give = liftPiece(entity, item, n);
+  /** A take of `n` of `item` off a container: lifted out of the taker's hands now, stood as a claim until its verdict.
+   *  F-1: `lift: false` is a SALE (a shop's counter - the buyer paid, the piece stays in the pack): nothing is lifted, so a
+   *  grant gives nothing and a keep gives nothing; `quiet` says nothing on a refusal (the buyer is told nothing). */
+  function take(/** @type {string} */ container, /** @type {{ p?: number, sp?: string }} */ ref, /** @type {any} */ item, /** @type {number} */ n, /** @type {{ by?: string, [k: string]: any }} */ meta, /** @type {number} */ now, /** @type {{ lift?: boolean, quiet?: boolean }} */ { lift = true, quiet = false } = {}) {
+    const give = lift ? liftPiece(entity, item, n) : 0;
     const { by, ...rest } = meta ?? {};
     /** @type {Claim} */
-    const c = { id: newId(), container, ...(ref.p !== undefined ? { p: ref.p } : { sp: ref.sp }), n, item, give, at: now, lapsed: false, done: false, wait: resendMs, nextAt: now + resendMs, ...(by !== undefined ? { by } : {}), meta: rest };
+    const c = { id: newId(), container, ...(ref.p !== undefined ? { p: ref.p } : { sp: ref.sp }), n, item, give, at: now, lapsed: false, done: false, wait: resendMs, nextAt: now + resendMs, ...(by !== undefined ? { by } : {}), ...(quiet ? { quiet: true } : {}), meta: rest };
     claims.set(c.id, c);
     trim();
     return c;
@@ -110,7 +113,7 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
       givePiece(entity, c.item, Math.min(g, c.give));
       won.add(key);
       while (won.size > ROOM_CLAIMS_MAX * 4) won.delete(/** @type {string} */ (won.values().next().value));
-    } else if (!withdrawn && !won.has(key)) tell(ROOM_TAKEN_TEXT);
+    } else if (!withdrawn && !c.quiet && !won.has(key)) tell(ROOM_TAKEN_TEXT);
     return c;
   }
 
