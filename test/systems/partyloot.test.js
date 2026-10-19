@@ -167,7 +167,7 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     spawnCorpseNow: async (f) => { f.corpsePos = [...f.ai.feet]; }, renderer: { destroyBillboardBatch: () => {} }, billboardBatches: [], renownFoeRevived: () => {},
     respawnFoe: () => false, camps: { applyOwner: () => {}, activate: () => false, targets: () => [] }, roomEncounterAsked: () => false, actions: { applyRemote: () => 0 },
     droppedLoot: { physical: { owns: () => false }, pileFor: () => null, lootFinds: () => [], lootTargets: () => [] }, lootCrown: (pos) => pos, droppedTorches: { activate: () => false, targets: () => [] },
-    RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE, CORPSE_ACTIVATION_DISTANCE,   // EMPTY-BODY: lootTargets' reaches (the pick's own constants) plaqueActionFor: () => null,
+    RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE, CORPSE_ACTIVATION_DISTANCE, plaqueActionFor: () => null,   // EMPTY-BODY: lootTargets' reaches (the pick's own constants)
     activateSearchable: () => 0, setMidScreenText: (t) => said.push(t), activeOverlay: null, silverFindKey: () => null, silverFindAt: () => {},
     quickLootTake, showPickups: null, lootPile: () => null, pileBody: () => null, openInventory: () => null, RANDOM_TREASURE_ARCHIVE: 216,
   };
