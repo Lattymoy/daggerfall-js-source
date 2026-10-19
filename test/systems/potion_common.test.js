@@ -55,7 +55,7 @@ test('POTION-COMMON: an alchemist stocks 2 + a fifth of its quality a day, a gen
   const second = stockShopShelf({ buildingType: BUILDING_TYPES.Alchemist, quality: 10 }, { level: 5 }, { rolls: at(0.999), torchesFromItems: false, shelfIndex: 1 });
   assert.equal(healing(second), 0, 'a second shelf: none');
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /shelf\.items = shelfLootSpawned\(stockShopShelf\(\{ buildingType: b\.buildingType, quality: b\.quality \}, playerEntity, \{ shelfIndex: i \}\), b\);/, 'openShelf hands its index');
+  assert.match(wm, /const rolled = shelfLootSpawned\(stockShopShelf\(\{ buildingType: b\.buildingType, quality: b\.quality \}, playerEntity, \{ shelfIndex: i \}\), b\);/, 'openShelf hands its index');   // PIN MOVED (F-1, 2026-10-19): the roll is held a line (`rolled`) and the room mints it at the stock (interiorLootStock) - offline it is written as it was
   assert.match(wm, /const shelf = interiorCtx\?\.shelves\?\.\[0\] \?\? null;[\s\S]{0,900}shelfLootSpawned\(stockShopShelf\(\{ buildingType: b\.buildingType, quality: b\.quality \}, playerEntity\), b\)/, 'the counter stocks shelf 0, the default');
   assert.equal((wm.match(/stockShopShelf\(/g) ?? []).length, 3, 'the shelf, the counter and the probe - no fourth door');
 });
