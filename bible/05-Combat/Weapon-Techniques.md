@@ -440,6 +440,10 @@ the step, the fold and the hands - each under 2 bytes a frame. The measure found
   bound late in the dict - the technique key is the last), the HUD chip's key lookup (10 KB and 11 µs a frame), the
   rig's technique context made anew (about 450 bytes a frame, every player), the technique line's `find` closure, the
   cooldowns' Map, the marks call's clock read at rest, and the renderer's offset pair made anew a set.
+- **ALLOC-INLINE (2026-10-19)**: the chip asked its cooldown through `techniqueWait` - a call whose non-integer answer
+  is boxed whenever the optimiser leaves it a call, which one deploy's run did (16 bytes a frame cooling; the same
+  tree green on its pull request). It reads `_s.wait` itself now, and the measure runs again with the optimiser
+  inlining nothing (`09-Testing/Testing.md` ALLOC-INLINE).
 
 The lens's two numbers (`fovRad`, `pitch`) are returned as numbers: at rest 0, which costs nothing; while a spring
 moves, a call the engine does not inline boxes its answer (16 bytes, as the climb's own kick has since CLIMB4). What

@@ -769,7 +769,7 @@ export function techniqueHudChips(entity, pw, keyName = '') {
   const hand = techniqueInHand(entity, pw);
   if (!hand || (!hand.signature && !lootRarityOn())) return NONE;   // TECH-FX: no technique in hand - the frozen empty list, never a new one a frame (MARTIAL3: a signature needs no ladder)
   if (sigilDueling()) return NONE;   // FINAL AUDIT: nor while a duel sleeps the key (law 3) - the set powers' chips' law, none while they sleep; the card's block says why
-  const left = techniqueWait(hand.id);
+  const left = _s.wait[TECH_INDEX[hand.id]];   // TECH-FX (ALLOC-INLINE): read where it is kept - techniqueWait's answer, a non-integer number, was boxed a frame whenever the JIT left that call un-inlined (a deploy's run read 16 bytes a frame, cooling); no slot reads undefined, never > 0
   _chip.name = techniqueName(hand);
   if (left > 0) {
     const secs = Math.ceil(left);

@@ -20,8 +20,8 @@
   {
     "name": "ALLOC-RACE-a-suite-spells-its-own-list",
     "file": "test/systems/techfx1.test.js",
-    "old": "[...ALLOC_CHILD_ARGS, '--input-type=module'",
-    "new": "['--expose-gc', '--min-semi-space-size=64', '--max-semi-space-size=64', '--input-type=module'",
+    "old": "[...ALLOC_CHILD_ARGS, ...extra, '--input-type=module'",
+    "new": "['--expose-gc', '--min-semi-space-size=64', '--max-semi-space-size=64', ...extra, '--input-type=module'",
     "tests": [
       "test/tooling/allocchild.test.js"
     ]

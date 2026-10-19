@@ -625,8 +625,8 @@
   {
     "name": "TECHFX1-AUDIT-the-chip-word-every-frame",
     "file": "src/combat/techniques.js",
-    "old": "  const left = techniqueWait(hand.id);\n  _chip.name",
-    "new": "  const left = techniqueWait(hand.id);\n  if (typeof keyName === 'function') keyName();\n  _chip.name",
+    "old": "  const left = _s.wait[TECH_INDEX[hand.id]];   // TECH-FX (ALLOC-INLINE): read where it is kept - techniqueWait's answer, a non-integer number, was boxed a frame whenever the JIT left that call un-inlined (a deploy's run read 16 bytes a frame, cooling); no slot reads undefined, never > 0\n  _chip.name",
+    "new": "  const left = _s.wait[TECH_INDEX[hand.id]];   // TECH-FX (ALLOC-INLINE): read where it is kept - techniqueWait's answer, a non-integer number, was boxed a frame whenever the JIT left that call un-inlined (a deploy's run read 16 bytes a frame, cooling); no slot reads undefined, never > 0\n  if (typeof keyName === 'function') keyName();\n  _chip.name",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -768,6 +768,16 @@
     "new": "      _techCtx = {",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
+    ]
+  },
+  {
+    "name": "TECHFX1-ALLOC-INLINE-the-chips-wait-through-a-call",
+    "file": "src/combat/techniques.js",
+    "old": "  const left = _s.wait[TECH_INDEX[hand.id]];   // TECH-FX (ALLOC-INLINE): read where it is kept - techniqueWait's answer, a non-integer number, was boxed a frame whenever the JIT left that call un-inlined (a deploy's run read 16 bytes a frame, cooling); no slot reads undefined, never > 0",
+    "new": "  const left = techniqueWait(hand.id);",
+    "tests": [
+      "test/systems/techfx1.test.js",
+      "test/systems/techfx1_audit.test.js"
     ]
   }
 ]

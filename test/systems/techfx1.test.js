@@ -580,7 +580,7 @@ test('TECHFX1 THE SETTING: "Technique camera motion" is a port row under Game (F
 
 // ── the frame's allocation ────────────────────────────────────────
 
-test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB young space, the least of six windows): at rest - the springs\' step, the view fold, the lens, the sky\'s pitch, the hands, the marks (the hosts\' own call, and the exported one), the chip with no technique, the runner\'s step with a technique in hand and with its cooldown running, the chip ready and recovering, the technique key\'s held poll - and with all five springs in flight the step, the fold and the hands, none past 2 bytes a frame, against a control of three numbers into a fresh list a frame, which must show (mutants: the marks\' fresh empty list; the hosts\' clock read at rest; the chip\'s fresh list; an output copied a frame; the view fold\'s eye destructured; the cooldowns a Map; the poll walking the dicts)', () => {
+test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB young space, the least of six windows - and again with the optimiser inlining nothing, ALLOC-INLINE: a call it leaves un-inlined boxes a non-integer answer, as a deploy\'s run once left the chip\'s wait): at rest - the springs\' step, the view fold, the lens, the sky\'s pitch, the hands, the marks (the hosts\' own call, and the exported one), the chip with no technique, the runner\'s step with a technique in hand and with its cooldown running, the chip ready and recovering, the technique key\'s held poll - and with all five springs in flight the step, the fold and the hands, none past 2 bytes a frame, against a control of three numbers into a fresh list a frame, which must show (mutants: the marks\' fresh empty list; the hosts\' clock read at rest; the chip\'s fresh list; an output copied a frame; the view fold\'s eye destructured; the cooldowns a Map; the poll walking the dicts; the chip\'s wait asked through a call)', () => {
   const url = (p) => JSON.stringify(pathToFileURL(join(ROOT, p)).href);
   const script = `
     await import(${url('test/modsOff.js')});
@@ -645,13 +645,19 @@ test('TECHFX1 THE FRAME MAKES NOTHING (L2 F9\'s measure, in a child with a 64 MB
     const v = FX.techniqueView(), h = FX.techniqueHands();
     console.log(JSON.stringify({ out, live: FX.techniqueFxLive(), waiting, down, moving: [v.pitch, v.roll, v.eye[1], v.fov, h.y].every((x) => x !== 0), acc: lens.every((x) => Number.isFinite(x) && x !== 0) && V[6] !== 0 }));
   `;
-  const run = spawnSync(process.execPath, [...ALLOC_CHILD_ARGS, '--input-type=module', '-e', script], { encoding: 'utf8' });
-  assert.equal(run.status, 0, run.stderr);
-  const r = JSON.parse(run.stdout.trim().split('\n').pop());
-  assert.ok(r.live && r.moving && r.acc, 'every spring in flight through the last measure, and the view and the lens moved by it');
-  assert.ok(r.waiting, 'the cooldown measure ran with the cooldown running');
-  assert.equal(r.down, false);
-  const m = r.out;
-  assert.ok(m.control >= 40, `the control made ${m.control.toFixed(2)} bytes a frame - the measure is blind`);
-  for (const [path, b] of Object.entries(m)) if (path !== 'control') assert.ok(b < 2, `${path}: ${b.toFixed(2)} bytes a frame (the control ${m.control.toFixed(2)})`);
+  // ALLOC-INLINE (2026-10-19, a deploy's verify: "cooling: 16.00 bytes a frame", the same tree green on its pull request):
+  // what the optimiser inlines is its own choice, made per run - so the frame is measured as it compiles, and again
+  // with it inlining nothing, where every call that answers a non-integer number boxes it (V8's own switch,
+  // --no-turbo-inlining). A frame that makes nothing either way makes nothing whatever a run's compile decides.
+  for (const [how, extra] of [['as compiled', []], ['inlining nothing', ['--no-turbo-inlining']]]) {
+    const run = spawnSync(process.execPath, [...ALLOC_CHILD_ARGS, ...extra, '--input-type=module', '-e', script], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr);
+    const r = JSON.parse(run.stdout.trim().split('\n').pop());
+    assert.ok(r.live && r.moving && r.acc, `${how}: every spring in flight through the last measure, and the view and the lens moved by it`);
+    assert.ok(r.waiting, `${how}: the cooldown measure ran with the cooldown running`);
+    assert.equal(r.down, false);
+    const m = r.out;
+    assert.ok(m.control >= 40, `${how}: the control made ${m.control.toFixed(2)} bytes a frame - the measure is blind`);
+    for (const [path, b] of Object.entries(m)) if (path !== 'control') assert.ok(b < 2, `${how}: ${path}: ${b.toFixed(2)} bytes a frame (the control ${m.control.toFixed(2)})`);
+  }
 });
