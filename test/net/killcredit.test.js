@@ -1,4 +1,4 @@
-// OUTDOOR-LOOT follow-ups, PHASE 1 (2026-10-19, Travis: "a lot of the time it doesn't give me credit for the kill"): THE KILL CREDIT
+// OUTDOOR-LOOT follow-ups, PHASE 1 (2026-10-19, Travis: "I heard a report of someone killing a bear and not seeing the skin option even though they had a skinning knife"): THE KILL CREDIT
 // MUST NOT DEPEND ON A 3-SECOND ROUND TRIP. RED PINS, written before the fix.
 //
 // THE BUG (src/scenes/exteriorFoes.js). A blow on a peer's foe is handed to the owner as a hit; the owner's door applies it and, if

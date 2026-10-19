@@ -1,5 +1,5 @@
 // @ts-check
-// OUTDOOR-LOOT FOLLOW-UPS (2026-10-19, Travis: "a lot of the time it doesn't give me credit for the kill"): THE STRIKER'S LEDGER.
+// OUTDOOR-LOOT FOLLOW-UPS (2026-10-19, Travis: "I heard a report of someone killing a bear and not seeing the skin option even though they had a skinning knife"): THE STRIKER'S LEDGER.
 //
 // A blow on a PEER'S foe is handed to the owner as a hit (scenes/exteriorFoes.js damageFoe's divert); the foe dies at the owner,
 // and the owner says `slain: 1` to the striker whose blow killed it. DISC10-E latched the blow on the PUPPET OBJECT
