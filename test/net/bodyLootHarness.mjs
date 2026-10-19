@@ -76,7 +76,7 @@ export const clock = { t: 1_000_000 };
  *  frames wait in the relay until the test releases them; `dead` - a player whose socket is HALF-OPEN (R-2: a Wi-Fi drop
  *  until the relay's dead-socket detection fires): still in every roster, so a frame to it is ACCEPTED and lost, and it
  *  sends and hears nothing; `tamper(from, to, data)` - the frame as it travels (null: lost in transit; the log keeps what
- *  the sender said); `foesFilter(from, frame, to)` - the foes frame as its reader `to` hears it (an OLDER owner's is the real
+ *  the sender said); `foesFilter(from, frame)` - the foes frame as its readers hear it (an OLDER owner's is the real
  *  owner's with `bw` stripped); `unseen` (SLICE 1 REVIEW, S1-1) - a player the others' pools do NOT read in their pose list
  *  (`peers()`: a cell crossed, a stale pose, a deck below) while the roster still holds it: a frame to it is still ACCEPTED
  *  (net/online.js `sendHit` tests the roster, `this.peers.has(owner)`) and a frame from it still arrives. */
@@ -114,7 +114,7 @@ export function relay() {
       foesLog.push({ from, frame: clone(frame), at: clock.t });
       for (const p of players.values()) {
         if (p.id === from || !p.here || dead.has(p.id)) continue;
-        const f = this.foesFilter ? this.foesFilter(from, clone(frame), p.id) : clone(frame);   // the reader's id is the third argument: a link that drops one reader's stream alone
+        const f = this.foesFilter ? this.foesFilter(from, clone(frame)) : clone(frame);
         if (f) p.foes(from, f);
       }
     },
