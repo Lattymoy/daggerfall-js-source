@@ -176,19 +176,38 @@ export function playRareDrop(audio, pos, items) {
 }
 
 /**
+ * F-1 / EMPTY-BODY: whether a pool's entry is a body worth a press - a corpse, not disabled, and holding something: its list
+ * (as this reader holds it) is not empty. A PUPPET (a peer's body) keeps its own rule (`body.isTarget`, bodyLootHost.js): its
+ * `entity.items` is the composed view only once `contents` or `takePuppet` has run, so its length is never read here.
+ * @param {any} entry @param {(e: any) => boolean} isCorpse
+ */
+export const lootableCorpse = (entry, isCorpse) => isCorpse(entry) && !entry.corpseDisabled && (!!entry.puppet || entry.entity?.items?.length > 0);
+
+/**
  * The activation targets for a pool's corpses. `entries` is the
  * pool's own list; `isCorpse` says which of them are lootable bodies
  * and `feetOf` where each one lies.
  *
- * An EMPTY corpse is still a target: DFU only tells you the body has
- * no treasure once you have activated it (:942-947). A corpse the
- * player has already emptied has been DISABLED by then and is gone
- * from this list.
+ * AN EMPTY BODY IS NO TARGET (F-1 / EMPTY-BODY, 2026-10-19,
+ * test-harness/loot-followups/DESIGN-1b.md D9; the owner's word, "show
+ * nothing if there is no loot"). DFU kept an emptied body a target and
+ * only told you "The body has no treasure." once you pressed it, then
+ * DISABLED it (:942-947) - so the only thing a press on an emptied body
+ * ever did was say that line and remove it from the targets. Here the
+ * body whose list is empty is gone from the targets at once, for the
+ * owner as for the party and as a dungeon's already is: an invisible
+ * target with no plaque would win the ray from everything behind it.
+ * THE DEPARTURE, named: that line is no longer heard on an emptied body
+ * above ground (corpsePrelude is unchanged and still answers a press
+ * that races the emptying). `lootableCorpse` is a live predicate, not a
+ * latch: a refill (a lapsed claim read back, an F4 `back`, a piece laid
+ * in the owner's still-open window) makes it a target again. A corpse
+ * the player has DISABLED is gone as before.
  */
 export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf = null }) {
   const targets = [];
   entries.forEach((e, i) => {
-    if (!isCorpse(e) || e.corpseDisabled) return;
+    if (!lootableCorpse(e, isCorpse)) return;
     const p = feetOf(e);
     if (!p) return;
     // AUDIT 39: a pool that PRUNES its list keys by a stable id
