@@ -5045,6 +5045,12 @@ the company scattered across the Bay is called by a horn and a prompt and answer
   choice closes the list before it is acted on, and is made once. On both skins the lists are DFU's
   DaggerfallListPickerWindow (`ui/listPicker.js` - the boat variant picker's way, on the mode machine's window slot),
   which draws itself in the enhanced skin (`ui/enhanced/enhancedPicker.js`).
+  STAKE-ROW (`01-Overview/bugs/Field-Bugs-2026-10-18c.md`): the stake, the keyless line and the quest warning are words;
+  picked, the port's picker has already closed itself, so the main list is asked again - never no window and the key
+  answering that the Spire already asks. AUDIT STAKE-ROW (`01-Overview/audits/Audit-Stake-Row.md`): the list's doors
+  are the window's own (`egStartWindow.js` egStartListDoors) - a finished window in the slot (the question's box,
+  answered No) given up before the list mounts, a list put off the screen unpicked a cancel; and the key used from the
+  pack closes the pack, so the window has the screen when its preflight lands.
 - **The preflight** (`/v1/eg/starts`, `server-account/src/egStarts.js`): for the opener and each member it names (at most
   8), the starts they may make - `src/net/eliteGates/egStartLaw.js` `egStartsFrom`, the one law both ends read: Hall 1, this
   season's Redoubts (the arena's season, `arenaSeasonOf`), else half the all-time best; null for a guest. With it the

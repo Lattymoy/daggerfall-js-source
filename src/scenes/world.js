@@ -345,7 +345,7 @@ import { egRoomKey, EG_TEXT } from '../net/eliteGates/egLaw.js';   // EG-PLAY: a
 import { createEgClient } from './eliteGates/egClient.js';   // EG-PLAY: the breach on this screen - the key, the call, the halls, the receipts
 import { createEgArchPool, egArchPlace, egArchSite, EG_ARCH_GATE_NEAR_M } from './eliteGates/egArch.js';   // EG-F: the Elite Breach's arch - its pool, its place, its site; a Dagon's Breach near
 import { createEgCallPortal, createEgCallPrompt } from './eliteGates/egCall.js';   // EG-F: the call's portal at my feet, and its prompt
-import { openEgStartWindow, egStartAsk } from '../ui/eliteGates/egStartWindow.js';   // EG-F: the start window, over DFU's list picker; AUDIT EG III (lane4 #12): its question's door
+import { openEgStartWindow, egStartAsk, egStartListDoors } from '../ui/eliteGates/egStartWindow.js';   // EG-F: the start window, over DFU's list picker; AUDIT EG III (lane4 #12): its question's door; AUDIT STAKE-ROW: its list's doors
 import { gateClearSet } from '../world/gate/gateClearance.js';   // EG-F: the gate's clearing and every standing arch's, one set
 import { EG_LAST_WORD_MIN } from '../net/eliteGates/egLaw.js';   // EG-F: a quest falling due inside a breach's last word
 import { createEgFight } from './eliteGates/egFight.js';   // EG-PLAY: a hall's fight
@@ -24299,23 +24299,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** EG-ZM (Elite-Gates.md section 20, THE BOARD WINDOW): THE BOARDS' ONE DOOR (ui/eliteGates/egBoardWindow.js createEgBoardDoor) -
    *  `/breach board`, the Timers row's Elite entries and the start window all open the boards here, in the skin worn (the
    *  enhanced panel, or the classic skin's DFU pickers on the mode's window slot), one at a time. */
+  const egWindowSlot = { top: () => modes?.topWindow?.() ?? null, mount: (w) => modes?.mountWindow?.(w), close: (w) => modes?.closeWindow?.(w) };   // AUDIT STAKE-ROW: the boards' and the start list's one slot
   const egBoardDoor = createEgBoardDoor({
     open: (o) => openEgBoard({ doc: document, classic: !isEnhancedPlus(), fetchBoard: () => _accountEg.board(), listPickerReady: listPickerArtLoaded, runs: () => egRecapsKept(appStorage()), ...o }),   // AUDIT EG V (c, L7-19): and the last runs
-    slot: { top: () => modes?.topWindow?.() ?? null, mount: (w) => modes?.mountWindow?.(w), close: (w) => modes?.closeWindow?.(w) },
+    slot: egWindowSlot,
   });
   /** THE START WINDOW's three doors: DFU's list picker on the mode machine's window slot (the boat's variant picker's own
-   *  way - csaOpenListPicker), and DFU's YesNo box on the overlay. EG-ZM: and the boards' door (egBoardDoor). */
+   *  way - csaOpenListPicker; AUDIT STAKE-ROW: its doors are the window's own, egStartListDoors), and DFU's YesNo box on the
+   *  overlay. EG-ZM: and the boards' door (egBoardDoor). */
   const egStartWindow = (o) => openEgStartWindow({
     ...o,
     board: (onClosed) => egBoardDoor(onClosed),
-    openList: (labels, onPick, onCancel) => {
-      if (!listPickerArtLoaded()) { Promise.resolve().then(onCancel); return null; }   // no list to ask with: nothing staked
-      const win = new ListPickerWindow({ items: labels, backdrop: 'none', onPick: (i) => onPick(i), onCancel: () => onCancel() });
-      if (modes?.mountWindow?.(win)) return win;
-      Promise.resolve().then(onCancel);
-      return null;
-    },
-    closeList: (win) => { if (win) modes?.closeWindow?.(win); },
+    ...egStartListDoors({ ready: listPickerArtLoaded, slot: egWindowSlot, makeList: (items, onPick, onCancel) => new ListPickerWindow({ items, backdrop: 'none', onPick: (i) => onPick(i), onCancel: () => onCancel() }) }),
     ask: egStartAsk((w) => townTalk.showOverlay(w), (o) => new YesNoBoxWindow(o)),   // AUDIT EG III (lane4 #12): a box put out of its slot unanswered ends the window
   });
   const egClient = params.has('online') ? createEgClient({

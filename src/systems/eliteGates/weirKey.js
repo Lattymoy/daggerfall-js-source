@@ -53,7 +53,12 @@ export function restackWeirKeys(items, n) {
   if (n > 0) items.push(weirKeys(n));
   return true;
 }
-/** The host's opener: answers the line its use shows, and starts the open (scenes/world.js). */
+/** The host's opener: answers the line its use shows, and starts the open (scenes/world.js). AUDIT STAKE-ROW (L1-2): an
+ *  empty line is the opener's "the start window will ask" (scenes/eliteGates/egClient.js useKey) - the use closes the pack,
+ *  so the window has the screen when its preflight lands; a pack left up held the slot and the window was refused, unsaid. */
 let _opener = null;
 export function setWeirKeyOpener(/** @type {((item: any) => string)|null} */ fn) { _opener = typeof fn === 'function' ? fn : null; }
-registerItemUseHandler(WEIR_KEY_TEMPLATE, (item) => ({ kind: 'text', text: _opener ? _opener(item) : EG_TEXT.cold }));
+registerItemUseHandler(WEIR_KEY_TEMPLATE, (item) => {
+  const text = _opener ? _opener(item) : EG_TEXT.cold;
+  return { kind: 'text', text, closesWindow: text === '' };
+});

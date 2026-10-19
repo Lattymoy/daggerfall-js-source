@@ -459,8 +459,8 @@
   {
     "name": "EGZM-door-slot-not-the-modes",
     "file": "src/scenes/world.js",
-    "old": "slot: { top: () => modes?.topWindow?.() ?? null,",
-    "new": "slot: { top: () => null,",
+    "old": "egWindowSlot = { top: () => modes?.topWindow?.() ?? null,",
+    "new": "egWindowSlot = { top: () => null,",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
