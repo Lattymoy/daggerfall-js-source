@@ -358,7 +358,7 @@ export function player(net, id, { seed = 1, home = null, skew = 0, roll = null, 
     interiorBuilding: building ?? { buildingKey: 7, buildingType: BUILDING_TYPES.House2, quality: 10 },
     interiorHome: home, interiorSeatHall: null, privateVisitRoom: null, interiorCabin: null, interiorDecor: null,
     questSceneCtx: () => ({ mapId: 1 }), visitLayoutNow: () => null,
-    stockedToday: () => TODAY + (p.dayShift | 0),   // F-1: a pin turns the day by setting `p.dayShift` (the world's day is shared: every player's) hallMemberHere: () => false, caravanGuestHere: () => false, openHallChest: () => {},
+    stockedToday: () => TODAY + (p.dayShift | 0), /* F-1: a pin turns the day by setting `p.dayShift` (the world's day is shared: every player's) */ hallMemberHere: () => false, caravanGuestHere: () => false, openHallChest: () => {},
     houseOwnedAt: () => owned,   // worldModes.js "const houseOwnedAt = (b, key) =>"; a stranger's cupboard: the player owns no house here
     hallOfRecordsHere: () => false, decorDeliverCarried: () => {}, decorDeliver: () => {},   // DECOR2b's furnisher delivers: no furniture stands on a pin's shelf
     host: { onActions: offline ? undefined : (data) => p.act.send(data), onLootClaimed: () => {}, spawnCityGuards: (f) => guards.push(f), roomHost: () => net.seat(), selfId: () => (offline ? null : id) },
