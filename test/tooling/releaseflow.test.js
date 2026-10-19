@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readSettings, codeownersReviewers, planSettings, sameRuleset, ROLES } from '../../tools/repoSettings.mjs';
+import { readSettings, codeownersReviewers, planSettings, sameRuleset, notMainsOwn, ROLES } from '../../tools/repoSettings.mjs';
 import { wgKeyPair, wgPublicOf, memberConfig, memberIpProblem, WG_KEY_RE, MEMBER_NAME_RE, NETWORK } from '../../tools/devPeer.mjs';
 import { releaseLineProblem, previousReleaseTag } from '../../scripts/desktopRelease.mjs';
 
@@ -119,9 +119,9 @@ test('RELEASE-BRANCH: the environments the workflows name are the ones ops/githu
     for (const m of WF(f).matchAll(/\n {4}environment:(?: (\S+)|\n {6}name: (\S+))\n/g)) named.add(m[1] ?? m[2]);
   }
   assert.deepEqual([...named].sort(), Object.keys(settings.environments).sort(), 'every environment a workflow names is declared, and none declared unused');
-  assert.deepEqual(settings.environments.production, { reviewers: 'releaseManagers', branches: ['release'] });
-  assert.deepEqual(settings.environments['github-pages'], { reviewers: 'releaseManagers', branches: ['release'] });
-  assert.deepEqual(settings.environments.dev, { reviewers: null, branches: ['main'] });
+  assert.deepEqual(settings.environments.production, { reviewers: 'releaseManagers', branches: ['release'], wait_timer: 0, prevent_self_review: false });
+  assert.deepEqual(settings.environments['github-pages'], { reviewers: 'releaseManagers', branches: ['release'], wait_timer: 0, prevent_self_review: false });
+  assert.deepEqual(settings.environments.dev, { reviewers: null, branches: ['main'], wait_timer: 0, prevent_self_review: false });
   assert.equal(onOf(WF('check.yml')), 'on:\n  pull_request:\n  push:\n    branches: [main]\n  workflow_dispatch:\n\n');
 });
 
@@ -187,76 +187,165 @@ test('RELEASE-BRANCH: where release begins - the release before must stand on th
 
 // ═══ ROLES: WHO REVIEWS, WHO RELEASES ═════════════════════════════════════════════════════════════════════════════
 
-test('ROLES: the settings read whole; CODEOWNERS names the reviewers, in order; main and release take a pull request, a code owner\'s approval and the check, and release a merge commit alone (a promotion\'s notes are found through its second parent); the admins may bypass by a pull request only (mutants: CODEOWNERS and the roles apart; a squash into release)', () => {
+test('ROLES: the settings read whole and hold what the record says - the gates (the check from GitHub Actions, no deletion, no force push) bypassed by nobody, the reviews (one code owner\'s approval, a push dismisses it, never after the approver\'s own push) by the admins through a pull request alone; release merged into by the admins alone, by a merge commit alone (a promotion\'s notes are found through its second parent); a release tag never moved or deleted; the Actions token read-only by default; CODEOWNERS one rule naming the reviewers, in order (mutants: CODEOWNERS and the roles apart; a squash into release; the check bypassed with the review; a reviewer approving their own push; the check from any app; release merged into by any writer; a second CODEOWNERS rule read)', () => {
   const settings = readSettings(rd('ops/github/settings.json'));
   assert.deepEqual(codeownersReviewers(rd('.github/CODEOWNERS')), settings.roles.reviewers, 'CODEOWNERS is roles.reviewers');
   for (const role of ROLES) assert.ok(settings.roles[role].length > 0, role);
-  for (const name of ['main', 'release']) {
-    const r = settings.rulesets.find((x) => x.name === name);
-    assert.deepEqual(r.conditions.ref_name.include, [`refs/heads/${name}`]);
-    assert.deepEqual(r.bypass_actors, [{ actor_id: 5, actor_type: 'RepositoryRole', bypass_mode: 'pull_request' }], `${name}: the admins, by a pull request`);
-    const types = r.rules.map((x) => x.type).sort();
-    assert.deepEqual(types, ['deletion', 'non_fast_forward', 'pull_request', 'required_status_checks']);
-    const pr = r.rules.find((x) => x.type === 'pull_request').parameters;
-    assert.equal(pr.required_approving_review_count, 1);
-    assert.equal(pr.require_code_owner_review, true, `${name}: a reviewer's approval, not any writer's`);
-    assert.deepEqual(r.rules.find((x) => x.type === 'required_status_checks').parameters.required_status_checks, [{ context: 'check' }]);
+  assert.deepEqual(settings.actions, { default_workflow_permissions: 'read', can_approve_pull_request_reviews: true }, 'read by default; may open the back-merge');
+  const set = (name) => settings.rulesets.find((r) => r.name === name);
+  const ADMIN_BY_PR = [{ actor_id: 5, actor_type: 'RepositoryRole', bypass_mode: 'pull_request' }];
+  for (const branch of ['main', 'release']) {
+    const gate = set(`${branch}-gate`), review = set(`${branch}-review`);
+    for (const r of [gate, review]) assert.deepEqual(r.conditions.ref_name, { include: [`refs/heads/${branch}`], exclude: [] });
+    assert.deepEqual(gate.bypass_actors, [], `${branch}: nobody bypasses the gate - not the check, not a deletion, not a force push (AUDIT RELEASE-FLOW C1)`);
+    assert.deepEqual(gate.rules.map((x) => x.type).sort(), ['deletion', 'non_fast_forward', 'required_status_checks']);
+    assert.deepEqual(gate.rules.find((x) => x.type === 'required_status_checks').parameters,
+      { strict_required_status_checks_policy: false, do_not_enforce_on_create: false, required_status_checks: [{ context: 'check', integration_id: 15368 }] }, `${branch}: the check, from GitHub Actions alone`);
+    assert.deepEqual(review.bypass_actors, ADMIN_BY_PR, `${branch}: the admins skip a review, by a pull request alone`);
+    const pr = review.rules.find((x) => x.type === 'pull_request').parameters;
+    assert.deepEqual({ ...pr, allowed_merge_methods: undefined }, {
+      required_approving_review_count: 1, dismiss_stale_reviews_on_push: true, require_code_owner_review: true,
+      require_last_push_approval: true, required_review_thread_resolution: false, allowed_merge_methods: undefined,
+    }, `${branch}: a code owner's approval, never after the approver's own push (C2)`);
   }
-  assert.deepEqual(settings.rulesets.find((x) => x.name === 'release').rules.find((x) => x.type === 'pull_request').parameters.allowed_merge_methods, ['merge']);
-  assert.throws(() => readSettings(rd('ops/github/settings.json').replace('"releaseManagers": ["Lattymoy"]', '"releaseManagers": []')), /releaseManagers names nobody/);
-  assert.throws(() => readSettings(rd('ops/github/settings.json').replace('"reviewers": "releaseManagers"', '"reviewers": "everyone"')), /is no role/);
+  assert.deepEqual(set('main-review').rules.map((x) => x.type), ['pull_request'], 'any writer merges a reviewed pull request into main');
+  assert.deepEqual(set('main-review').rules[0].parameters.allowed_merge_methods, ['merge', 'squash', 'rebase']);
+  assert.deepEqual(set('release-review').rules.map((x) => x.type).sort(), ['pull_request', 'update'], 'release is updated by its bypass alone - the admins, by a pull request (F3)');
+  assert.deepEqual(set('release-review').rules.find((x) => x.type === 'pull_request').parameters.allowed_merge_methods, ['merge']);
+  const tags = set('release-tags');
+  assert.equal(tags.target, 'tag');
+  assert.deepEqual(tags.conditions.ref_name.include, ['refs/tags/app-v*']);
+  assert.deepEqual(tags.rules.map((x) => x.type).sort(), ['deletion', 'update'], 'a published release\'s tag is never moved or deleted - created, by the release');
+  assert.deepEqual(settings.rulesets.map((r) => r.name).sort(), ['main-gate', 'main-review', 'release-gate', 'release-review', 'release-tags']);
+  for (const [name, env] of Object.entries(settings.environments)) assert.equal(env.wait_timer, 0, name);
+  assert.deepEqual([settings.environments.production.reviewers, settings.environments['github-pages'].reviewers, settings.environments.dev.reviewers], ['releaseManagers', 'releaseManagers', null]);
+  // refused whole, before GitHub is asked
+  const file = rd('ops/github/settings.json');
+  assert.throws(() => readSettings(file.replace('"releaseManagers": ["Lattymoy"]', '"releaseManagers": []')), /releaseManagers names nobody/);
+  assert.throws(() => readSettings(file.replace('"reviewers": "releaseManagers", "branches": ["release"], "wait_timer": 0', '"reviewers": "everyone", "branches": ["release"], "wait_timer": 0')), /is no role/);
+  assert.throws(() => readSettings(file.replace('"releaseManagers": ["Lattymoy"]', `"releaseManagers": [${['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((x) => `"${x}"`).join(', ')}]`)), /GitHub takes 6 reviewers at most/, 'seven release managers (C7)');
+  assert.throws(() => readSettings(file.replace('"wait_timer": 0, "prevent_self_review": false }', '"wait_timer": 43201, "prevent_self_review": false }')), /wait_timer is no number of minutes/);
+  assert.throws(() => readSettings(file.replace('"bypass_mode": "always"', '"bypass_mode": "pull_request"')), /a tag ruleset has no pull request to bypass by/);
+  // C4: GitHub applies a path's LAST matching pattern - one rule, or none read
+  const owners = rd('.github/CODEOWNERS');
+  for (const tail of ['* @mallory\n', '/.github/workflows/\n', '/src/ @mallory\n']) {
+    assert.throws(() => codeownersReviewers(`${owners}${tail}`), /one rule, `\* @reviewer \.\.\.`, and nothing else - it holds 2/, tail.trim());
+  }
 });
 
-test('ROLES: the plan - a repository with nothing set gets every setting, in the order GitHub needs; one that holds them gets nothing; GitHub\'s own defaults beside a ruleset\'s are no difference; a branch an environment no longer admits is taken off (mutants: the plan blind to a moved branch; a default read as a change)', () => {
+/** GitHub, as `gh api` answers the plan: `state` its settings now. Every list read a hundred to a page (C6). */
+const githubAs = (settings, state) => (method, path) => {
+  const repo = settings.repository;
+  const ids = { Lattymoy: 98724681, EdoardoBramini: 241148409 };
+  assert.equal(method, 'GET', 'the plan only reads');
+  if (path === `repos/${repo}`) return { private: state.private ?? false };
+  const perm = /^repos\/[^/]+\/[^/]+\/collaborators\/([^/]+)\/permission$/.exec(path);
+  if (perm) return { permission: (state.access ?? {})[perm[1]] ?? (perm[1] === 'Lattymoy' ? 'admin' : 'write') };
+  const owners = /^repos\/[^/]+\/[^/]+\/contents\/\.github\/CODEOWNERS\?ref=(main|release)$/.exec(path);
+  if (owners) {
+    const text = (state.codeowners ?? {})[owners[1]];
+    if (text === undefined) throw new Error('HTTP 404');
+    return { content: Buffer.from(text).toString('base64') };
+  }
+  if (path === `repos/${repo}/actions/permissions/workflow`) return state.workflow;
+  if (path.startsWith('users/')) return { id: ids[path.slice(6)] };
+  if (path === `repos/${repo}/environments?per_page=100`) return { environments: state.environments };
+  const pol = /^repos\/[^/]+\/[^/]+\/environments\/([^/]+)\/deployment-branch-policies\?per_page=100$/.exec(path);
+  if (pol) return { branch_policies: state.policies[pol[1]] ?? state.policies[pol[1].toLowerCase()] ?? [] };
+  if (path === `repos/${repo}/rulesets?per_page=100&includes_parents=false`) return state.rulesets.map(({ id, name }) => ({ id, name, source_type: 'Repository' }));
+  const rs = /\/rulesets\/(\d+)$/.exec(path);
+  if (rs) return state.rulesets.find((r) => r.id === Number(rs[1]));
+  throw new Error(`asked ${path}`);
+};
+
+/** GitHub as it answers once the settings are set: reviewers by their whole record, its defaults beside the parameters. */
+function heldAs(settings) {
+  const ids = { Lattymoy: 98724681, EdoardoBramini: 241148409 };
+  return {
+    workflow: { ...settings.actions },
+    environments: Object.entries(settings.environments).map(([name, env]) => ({
+      name, deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
+      protection_rules: [
+        ...(env.reviewers ? [{ type: 'required_reviewers', prevent_self_review: env.prevent_self_review, reviewers: settings.roles[env.reviewers].map((l) => ({ type: 'User', reviewer: { login: l, id: ids[l] } })) }] : []),
+        { type: 'branch_policy' },
+      ],
+    })),
+    policies: Object.fromEntries(Object.entries(settings.environments).map(([name, env]) => [name, env.branches.map((b, i) => ({ id: i + 1, name: b, type: 'branch' }))])),
+    rulesets: settings.rulesets.map((r, i) => ({
+      ...structuredClone(r), id: 100 + i, source_type: 'Repository',
+      rules: r.rules.map((x) => (x.type === 'pull_request' ? { ...x, parameters: { automatic_copilot_code_review_enabled: false, required_reviewers: [], ...x.parameters } } : structuredClone(x))),
+    })),
+  };
+}
+
+test('ROLES: the plan - a repository with nothing set gets every setting, in the order GitHub needs; one that holds them gets nothing; GitHub\'s own unset defaults are no difference, and everything the file sends is compared - a reviewer who may approve their own run, a wait, a narrowed merge, the check left to another app, a rule GitHub enforces on creation (AUDIT RELEASE-FLOW C3); an environment\'s name in any case is that environment (C6); a branch an environment no longer admits is taken off (mutants: the plan blind to a moved branch; a default read as a change; an undeclared parameter unseen; prevent_self_review unread; the wait unread; the check\'s app unread; an environment\'s name by case)', () => {
   const settings = readSettings(rd('ops/github/settings.json'));
   const repo = settings.repository;
   const ids = { Lattymoy: 98724681, EdoardoBramini: 241148409 };
-  const api = (state) => (method, path) => {
-    assert.equal(method, 'GET', 'the plan only reads');
-    if (path === `repos/${repo}/actions/permissions/workflow`) return state.workflow;
-    if (path.startsWith('users/')) return { id: ids[path.slice(6)] };
-    if (path === `repos/${repo}/environments`) return { environments: state.environments };
-    const pol = /^repos\/[^/]+\/[^/]+\/environments\/([^/]+)\/deployment-branch-policies$/.exec(path);
-    if (pol) return { branch_policies: state.policies[pol[1]] ?? [] };
-    if (path === `repos/${repo}/rulesets`) return state.rulesets.map(({ id, name }) => ({ id, name, source_type: 'Repository' }));
-    const rs = /\/rulesets\/(\d+)$/.exec(path);
-    if (rs) return state.rulesets.find((r) => r.id === Number(rs[1]));
-    throw new Error(`asked ${path}`);
-  };
-  const bare = planSettings(settings, api({ workflow: { default_workflow_permissions: 'write', can_approve_pull_request_reviews: false }, environments: [], policies: {}, rulesets: [] }));
-  assert.deepEqual(bare.calls.map((c) => `${c.method} ${c.path.replace(`repos/${repo}/`, '')}`), [
+  const plan = (state, opts) => planSettings(settings, githubAs(settings, state), opts);
+  const paths = (p) => p.calls.map((c) => `${c.method} ${c.path.replace(`repos/${repo}/`, '')}`);
+  const bare = plan({ workflow: { default_workflow_permissions: 'write', can_approve_pull_request_reviews: false }, environments: [], policies: {}, rulesets: [] });
+  assert.deepEqual(paths(bare), [
     'PUT actions/permissions/workflow',
     'PUT environments/production', 'POST environments/production/deployment-branch-policies',
     'PUT environments/github-pages', 'POST environments/github-pages/deployment-branch-policies',
     'PUT environments/dev', 'POST environments/dev/deployment-branch-policies',
-    'POST rulesets', 'POST rulesets',
+    'POST rulesets', 'POST rulesets', 'POST rulesets', 'POST rulesets', 'POST rulesets',
   ]);
-  assert.deepEqual(bare.calls[1].body.reviewers, [{ type: 'User', id: ids.Lattymoy }], 'production asks the release managers');
+  assert.deepEqual(bare.calls[1].body, { wait_timer: 0, prevent_self_review: false, reviewers: [{ type: 'User', id: ids.Lattymoy }], deployment_branch_policy: { protected_branches: false, custom_branch_policies: true } }, 'production asks the release managers');
   assert.deepEqual(bare.calls[5].body.reviewers, [], 'dev asks nobody');
   assert.deepEqual(bare.calls[2].body, { name: 'release', type: 'branch' });
-  // GitHub as it answers once set: reviewers by their whole record, defaults beside the declared parameters
-  const held = {
-    workflow: { ...settings.actions },
-    environments: Object.entries(settings.environments).map(([name, env]) => ({
-      name, deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
-      protection_rules: env.reviewers ? [{ type: 'required_reviewers', prevent_self_review: false, reviewers: settings.roles[env.reviewers].map((l) => ({ type: 'User', reviewer: { login: l, id: ids[l] } })) }] : [],
-    })),
-    policies: Object.fromEntries(Object.entries(settings.environments).map(([name, env]) => [name, env.branches.map((b, i) => ({ id: i + 1, name: b, type: 'branch' }))])),
-    rulesets: settings.rulesets.map((r, i) => ({
-      ...r, id: 100 + i, source_type: 'Repository',
-      rules: r.rules.map((x) => (x.type === 'pull_request' ? { ...x, parameters: { allowed_merge_methods: ['merge', 'squash', 'rebase'], automatic_copilot_code_review_enabled: false, ...x.parameters } } : x)),
-    })),
-  };
-  assert.deepEqual(planSettings(settings, api(held)).calls, [], 'a repository that holds the settings is left alone');
+  assert.deepEqual(paths(plan({ workflow: { default_workflow_permissions: 'write', can_approve_pull_request_reviews: false }, environments: [], policies: {}, rulesets: [] }, { rulesets: false })).filter((c) => c.includes('rulesets')), [],
+    '--without-rulesets: the token and the environments alone (C8)');
+  const held = heldAs(settings);
+  assert.deepEqual(plan(held).calls, [], 'a repository that holds the settings is left alone');
+  // every field the file sends, compared (C3)
+  const variant = (fn) => { const h = structuredClone(held); fn(h); return paths(plan(h)); };
+  const envOf = (h, name) => h.environments.find((e) => e.name === name);
+  assert.deepEqual(variant((h) => { envOf(h, 'production').protection_rules[0].prevent_self_review = true; }), ['PUT environments/production'], 'a release manager kept from approving the run they started - with one, nothing ships');
+  assert.deepEqual(variant((h) => { envOf(h, 'production').protection_rules.push({ type: 'wait_timer', wait_timer: 43200 }); }), ['PUT environments/production'], 'a month\'s wait');
+  const ruleOf = (h, name, type) => h.rulesets.find((r) => r.name === name).rules.find((x) => x.type === type).parameters;
+  assert.deepEqual(variant((h) => { ruleOf(h, 'main-review', 'pull_request').allowed_merge_methods = ['squash']; }), ['PUT rulesets/101'], 'main narrowed to squash');
+  assert.deepEqual(variant((h) => { ruleOf(h, 'main-review', 'pull_request').required_reviewers = [{ minimum_approvals: 1 }]; }), ['PUT rulesets/101'], 'a parameter the file does not declare, set');
+  assert.deepEqual(variant((h) => { ruleOf(h, 'main-gate', 'required_status_checks').required_status_checks = [{ context: 'check', integration_id: 999 }]; }), ['PUT rulesets/100'], 'the check left to another app');
+  assert.deepEqual(variant((h) => { ruleOf(h, 'release-gate', 'required_status_checks').do_not_enforce_on_create = true; }), ['PUT rulesets/102']);
+  assert.deepEqual(variant((h) => { h.rulesets[0].rules.push({ type: 'creation' }); }), ['PUT rulesets/100'], 'a rule the file does not declare is one');
+  // C6: an environment's name in any case is that environment - neither made again nor left unmanaged
+  const upper = structuredClone(held);
+  envOf(upper, 'production').name = 'Production';
+  upper.policies.Production = upper.policies.production;
+  assert.deepEqual(plan(upper).calls, []);
+  assert.deepEqual(plan(upper).unmanaged, []);
   const pagesFromMain = { ...held, policies: { ...held.policies, 'github-pages': [{ id: 7, name: 'main', type: 'branch' }] } };
-  assert.deepEqual(planSettings(settings, api(pagesFromMain)).calls.map((c) => `${c.method} ${c.path.replace(`repos/${repo}/`, '')}`),
-    ['POST environments/github-pages/deployment-branch-policies', 'DELETE environments/github-pages/deployment-branch-policies/7'], 'Pages from release, and no more from main');
-  const want = settings.rulesets[0];
-  assert.equal(sameRuleset(held.rulesets[0], want), true);
-  const looser = structuredClone(held.rulesets[0]);
+  assert.deepEqual(paths(plan(pagesFromMain)), ['POST environments/github-pages/deployment-branch-policies', 'DELETE environments/github-pages/deployment-branch-policies/7'], 'Pages from release, and no more from main');
+  const want = settings.rulesets[1];
+  assert.equal(sameRuleset(held.rulesets[1], want), true);
+  const looser = structuredClone(held.rulesets[1]);
   looser.rules.find((x) => x.type === 'pull_request').parameters.required_approving_review_count = 0;
   assert.equal(sameRuleset(looser, want), false, 'an approval taken off is a difference');
-  assert.equal(sameRuleset({ ...held.rulesets[0], rules: [...held.rulesets[0].rules, { type: 'creation' }] }, want), false, 'a rule the file does not declare is one');
+});
+
+test('ROLES: nothing is applied while GitHub disagrees with the file about who holds a role, nor on a private repository; CODEOWNERS as main and release hold it is said; and `--apply` applies origin/main\'s files alone (AUDIT RELEASE-FLOW C4, C5, C7, C9; F4) (mutants: the roles unread on GitHub; a private repository planned; the apply of any checkout)', () => {
+  const settings = readSettings(rd('ops/github/settings.json'));
+  const owners = rd('.github/CODEOWNERS');
+  const plan = (state) => planSettings(settings, githubAs(settings, { ...heldAs(settings), ...state }), { codeowners: owners });
+  const clean = plan({ codeowners: { main: owners, release: owners } });
+  assert.deepEqual([clean.problems, clean.notes, clean.calls], [[], [], []], 'GitHub and the file agree');
+  assert.deepEqual(plan({ codeowners: { main: owners, release: owners }, access: { EdoardoBramini: 'read' } }).problems,
+    ['roles.reviewers: EdoardoBramini holds read on GitHub, and the role needs admin or write'], 'a code owner without write access counts for nothing');
+  assert.deepEqual(plan({ codeowners: { main: owners, release: owners }, access: { Lattymoy: 'write' } }).problems,
+    ['roles.admins: Lattymoy holds write on GitHub, and the role needs admin'], 'roles.admins is GitHub\'s, checked');
+  assert.match(plan({ codeowners: { main: owners, release: owners }, private: true }).problems[0], /is private: GitHub holds no environment reviewers/);
+  assert.deepEqual(plan({ codeowners: { main: owners } }).notes, ['release holds no .github/CODEOWNERS: its pull requests ask no code owner until it does']);
+  assert.deepEqual(plan({ codeowners: { main: owners, release: '* @Lattymoy\n' } }).notes, ['release\'s .github/CODEOWNERS is not this one: its pull requests are reviewed by the one it holds']);
+  // C7: origin/main's files, or nothing applied
+  const local = { 'ops/github/settings.json': 'S', '.github/CODEOWNERS': 'C' };
+  assert.deepEqual(notMainsOwn(local, (p) => local[p]), []);
+  assert.deepEqual(notMainsOwn(local, (p) => (p === '.github/CODEOWNERS' ? 'older' : local[p])), ['.github/CODEOWNERS']);
+  assert.deepEqual(notMainsOwn(local, () => { throw new Error('no origin/main'); }), ['ops/github/settings.json', '.github/CODEOWNERS'], 'no main to read is no main\'s file');
+  const cli = rd('tools/repoSettings.mjs');
+  assert.match(cli, /const stale = notMainsOwn\(local\);\n {2}if \(stale\.length && apply\) \{\n[^\n]*\n {4}process\.exit\(1\);/, 'the CLI refuses to apply a checkout that is not main\'s');
+  assert.match(cli, /if \(problems\.length\) \{\n[^\n]*\n[^\n]*\n {4}process\.exit\(1\);\n {2}\}\n[^\n]*\n {2}else if \(apply\) applySettings\(calls, ghApi\);/, 'and applies nothing over a problem');
 });
 
 // ═══ HOTFIX-BACK: A FIX ON RELEASE COMES BACK TO MAIN ═════════════════════════════════════════════════════════════

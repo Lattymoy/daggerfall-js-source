@@ -211,8 +211,8 @@
   {
     "name": "RELEASE-FLOW-production-admitting-main",
     "file": "ops/github/settings.json",
-    "old": "\"production\": { \"reviewers\": \"releaseManagers\", \"branches\": [\"release\"] }",
-    "new": "\"production\": { \"reviewers\": \"releaseManagers\", \"branches\": [\"release\", \"main\"] }",
+    "old": "\"production\": { \"reviewers\": \"releaseManagers\", \"branches\": [\"release\"],",
+    "new": "\"production\": { \"reviewers\": \"releaseManagers\", \"branches\": [\"release\", \"main\"],",
     "tests": [
       "test/tooling/releaseflow.test.js"
     ],
@@ -221,8 +221,8 @@
   {
     "name": "RELEASE-FLOW-a-workflow-environment-undeclared",
     "file": "ops/github/settings.json",
-    "old": "\"dev\": { \"reviewers\": null, \"branches\": [\"main\"] }",
-    "new": "\"devel\": { \"reviewers\": null, \"branches\": [\"main\"] }",
+    "old": "    \"dev\": { \"reviewers\": null,",
+    "new": "    \"dev-vm\": { \"reviewers\": null,",
     "tests": [
       "test/tooling/releaseflow.test.js"
     ],
@@ -277,6 +277,166 @@
       "test/tooling/releaseflow.test.js"
     ],
     "note": "A rule added by hand would never be taken back to the file."
+  },
+  {
+    "name": "ROLES-the-check-bypassed-with-the-review",
+    "file": "ops/github/settings.json",
+    "old": "\"name\": \"main-gate\",\n      \"target\": \"branch\",\n      \"enforcement\": \"active\",\n      \"conditions\": { \"ref_name\": { \"include\": [\"refs/heads/main\"], \"exclude\": [] } },\n      \"bypass_actors\": [],",
+    "new": "\"name\": \"main-gate\",\n      \"target\": \"branch\",\n      \"enforcement\": \"active\",\n      \"conditions\": { \"ref_name\": { \"include\": [\"refs/heads/main\"], \"exclude\": [] } },\n      \"bypass_actors\": [{ \"actor_id\": 5, \"actor_type\": \"RepositoryRole\", \"bypass_mode\": \"pull_request\" }],",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C1: the owner - who authors most pull requests, and every session's - merging past a red check."
+  },
+  {
+    "name": "ROLES-a-reviewer-approving-their-own-push",
+    "file": "ops/github/settings.json",
+    "old": "\"require_last_push_approval\": true,\n            \"required_review_thread_resolution\": false,\n            \"allowed_merge_methods\": [\"merge\", \"squash\", \"rebase\"]",
+    "new": "\"require_last_push_approval\": false,\n            \"required_review_thread_resolution\": false,\n            \"allowed_merge_methods\": [\"merge\", \"squash\", \"rebase\"]",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C2: a reviewer pushes to the owner's branch, then approves it as code owner."
+  },
+  {
+    "name": "ROLES-release-merged-into-by-any-writer",
+    "file": "ops/github/settings.json",
+    "old": "        { \"type\": \"update\", \"parameters\": { \"update_allows_fetch_and_merge\": false } },\n        {\n          \"type\": \"pull_request\",",
+    "new": "        {\n          \"type\": \"pull_request\",",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW F3: any writer merges a code owner's approval into production's branch."
+  },
+  {
+    "name": "ROLES-a-second-codeowners-rule-read",
+    "file": "tools/repoSettings.mjs",
+    "old": "  if (rules.length !== 1 || !/^\\*\\s+@/.test(rules[0])) throw new Error(",
+    "new": "  if (!/^\\*\\s+@/.test(rules[0])) throw new Error(",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C4: a later rule takes paths from the reviewers - GitHub applies the last match."
+  },
+  {
+    "name": "ROLES-an-undeclared-parameter-unseen",
+    "file": "tools/repoSettings.mjs",
+    "old": "        if (!unset(held[key])) return false;",
+    "new": "        if (false) return false;",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C3: a parameter set by hand that the file does not declare reads as in sync."
+  },
+  {
+    "name": "ROLES-a-default-read-as-a-change",
+    "file": "tools/repoSettings.mjs",
+    "old": "const unset = (v) => v === undefined || v === null || v === false || v === 0",
+    "new": "const unset = (v) => v === undefined || v === null || v === 0",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "GitHub answers its own false defaults beside the declared parameters: a plan that never converges."
+  },
+  {
+    "name": "ROLES-the-checks-app-unread",
+    "file": "tools/repoSettings.mjs",
+    "old": "return sorted((v ?? []).map((c) => `${c.context}@${c.integration_id ?? ''}`));",
+    "new": "return sorted((v ?? []).map((c) => `${c.context}`));",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C3: the required check left to another app reads as in sync."
+  },
+  {
+    "name": "ROLES-prevent-self-review-unread",
+    "file": "tools/repoSettings.mjs",
+    "old": "      || (reviewers.length > 0 && (asks?.prevent_self_review ?? false) !== env.prevent_self_review)",
+    "new": "      || false",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C3: the one release manager kept from approving their own run - nothing ships - reads as in sync."
+  },
+  {
+    "name": "ROLES-the-wait-unread",
+    "file": "tools/repoSettings.mjs",
+    "old": "sorted(reviewers.map((r) => r.id))) || haveWait !== env.wait_timer",
+    "new": "sorted(reviewers.map((r) => r.id)))",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C3: a month's wait on production reads as in sync."
+  },
+  {
+    "name": "ROLES-an-environment-name-by-case",
+    "file": "tools/repoSettings.mjs",
+    "old": "e.name.toLowerCase(), e]",
+    "new": "e.name, e]",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C6: \"Production\" is made again on every run and listed as left as it stands."
+  },
+  {
+    "name": "ROLES-the-roles-unread-on-github",
+    "file": "tools/repoSettings.mjs",
+    "old": "  problems.push(...roleProblems(settings, api));\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C5, F4: roles.admins changes nothing, and a code owner without write access counts for nothing."
+  },
+  {
+    "name": "ROLES-a-private-repository-planned",
+    "file": "tools/repoSettings.mjs",
+    "old": "  if (api('GET', `repos/${repo}`)?.private) problems.push(",
+    "new": "  if (false) problems.push(",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C9: on a private repository the production gate waits for nobody."
+  },
+  {
+    "name": "ROLES-seven-release-managers",
+    "file": "tools/repoSettings.mjs",
+    "old": "    if (env.reviewers && s.roles[env.reviewers].length > ENV_REVIEWERS_MAX) fail(",
+    "new": "    if (false) fail(",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C7: GitHub refuses the seventh with a 422, after the Actions token was already set."
+  },
+  {
+    "name": "ROLES-without-rulesets-planning-them",
+    "file": "tools/repoSettings.mjs",
+    "old": "  if (!withRulesets) return {",
+    "new": "  if (false) return {",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C8: the cut-over's first apply would lock release before it is brought to main."
+  },
+  {
+    "name": "ROLES-the-codeowners-unsaid",
+    "file": "tools/repoSettings.mjs",
+    "old": "  if (codeowners !== null) notes.push(...codeownersNotes(repo, codeowners, api));\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C4: release reviewed by a CODEOWNERS it does not hold, unsaid."
+  },
+  {
+    "name": "ROLES-the-apply-of-any-checkout",
+    "file": "tools/repoSettings.mjs",
+    "old": "  if (stale.length && apply) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "AUDIT RELEASE-FLOW C7: a branch's draft or a stale checkout applied as the repository's rules."
   },
   {
     "name": "HOTFIX-BACK-a-promotion-read-as-a-lack",
