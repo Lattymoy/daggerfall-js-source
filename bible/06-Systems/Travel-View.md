@@ -2237,15 +2237,17 @@ None is begun now. A straight road is unchanged (on foot 4.9 s, a horse 39.9 s a
 outlives the grid, and what holds the clock is the machine's build rate - TV2's cap as designed ("Cap it to what loads
 cleanly"). Recorded, not changed.
 
-**FIXED.** The pump asks the stream's books before it starts a build and as one ends (streamingWorld.js:"owes(queue) {",
-world.js:"if (building || !state.owes(queue)) return;"): the let-go pixels at the queue's head are dropped unbuilt, the
-rest keep their order, and with nothing owed the stream's run is over (PERF-EXT24's `_streamSince`). Both asks are
-needed - the one as a build ends catches what left the grid while it built, the one before a build what the frame's own
-crossing let go before the pump's turn. A pixel let go while its build is in flight is still torn down when it lands. The
-pump is no longer than it was (HOST-SPLIT). Every producer that queues a pixel puts it on the books - the init's and a
-crossing's load lists, BUILD-RETRY's re-ask, and the rebuild sweeps (the roads, World of Daggerfall's late regions, the
-hollow, the gate's clearing, the season's re-skin, a layout pin), each of a pixel standing in `built` - so nothing of
-theirs is dropped while the stream holds it.
+**FIXED.** The pump's take is the stream's books (since STREAM-OWED, below, `StreamingWorldState.takeOwed`,
+streamingWorld.js:"takeOwed(queue, built) {", its one call world.js:"const next = state.takeOwed"): every pixel the
+stream let go is dropped off the queue unbuilt, wherever it stands, and with nothing owed the stream's run is over
+(PERF-EXT24's `_streamSince`). QUEUE-OWED shipped it as `owes(queue)`, asked before a build and as one ended: the let-go
+pixels at the queue's head dropped, the rest kept first in, first out (the "x1 now" column above). STREAM-OWED takes
+from the whole queue at every take, nearest the traveller first, so its one ask before a build drops what left the grid
+while a build ran as well as what the frame's own crossing let go before the pump's turn. A pixel let go while its build
+is in flight is still torn down when it lands. The pump is no longer than it was (HOST-SPLIT). Every producer that
+queues a pixel puts it on the books - the init's and a crossing's load lists, BUILD-RETRY's re-ask, and the rebuild
+sweeps (the roads, World of Daggerfall's late regions, the hollow, the gate's clearing, the season's re-skin, a layout
+pin), each of a pixel standing in `built` - so nothing of theirs is dropped while the stream holds it.
 
 Recorded, not changed: the terrain worker chains a job that arrives while the roads network loads on `pendingRoads`
 (terrainGenWorker.js:"if (m.t === 'job' && pendingRoads)"), and nothing clears it if the network's build throws - every
@@ -2260,7 +2262,69 @@ build queue.
 
 `test/systems/travel/ow_queueowed.test.js` (3), `tools/mutants/ow_queueowed.json` (4, all dead). PIN MOVED: `buildslice`
 (PERF-EXT24: the stream ends with what the queue still owes); `tools/mutants/perfextc.json`
-PERF-EXT24-the-stream-never-ends-so-its-age-guard-trips-at-once-next-time re-aimed by content.
+PERF-EXT24-the-stream-never-ends-so-its-age-guard-trips-at-once-next-time re-aimed by content. Moved again by
+STREAM-OWED (below): the suite's law is `takeOwed`'s, and its mutants re-aimed at it.
+
+## STREAM-OWED - the pump takes the nearest pixel owed, and the governor rides at what the stream gains (2026-10-18, the player)
+
+*"Theres this bug with overworld travel where you always slowly degrade to x1 speed and have to exit the overworld and
+go back into to reset. And you can also see the unloaded overworld chunk"* - after LOAD-OWED, BUILD-RETRY and
+QUEUE-OWED, with no build failing.
+
+**Measured** on the host's own code (the stream, the pump, the view's governor and its count, lifted out of
+`scenes/world.js` as LOAD-OWED's test lifts them): eight ten-minute rides under the view on a winding road, a rider at
+10.8 m/s, Enhanced's land view (LAND_VIEW_DEFAULT 5: an 11 by 11 grid, 11 to 21 new pixels a crossing), a town in ten
+pixels building in 2 s and the wild in 0.15 s, nothing near. The clock stood at x1 for 34-77 s of each ride (60 on
+average) before QUEUE-OWED and 34-73 s (56) after it: it took the let-go builds away (54-87 a ride, one in twenty)
+and left the sink. The view brought down and raised again - TV2's ceiling forgotten, a fresh x100 (AUDIT DEEP T2-8) -
+was the way out until the next town. Two faults remained, neither a failure:
+- **The pump spent its queue first in, first out** (the line world.js:"const next = state.takeOwed" was
+  `const next = queue.shift();`), and a crossing appends its row (world.js:"queue.push(...r.load)"). The near rings the
+  governor counts queued behind the far ring every crossing lists first and, on a winding road, behind the land a turn
+  left. QUEUE-OWED dropped a let-go pixel only when it reached the head, and a standing one (a crossing's re-list) still
+  took a turn of the pump.
+- **The governor cut on while the stream gained.** The hole a faster rate left takes its builds to fill whatever the
+  clock is cut to, and AUDIT DEEP2 B-2's settle cut again every TV_GOV_SETTLE_S while any of it stood, gaining or not:
+  one town on the road took x40 to x1 in six seconds, and the climb back is TV_GOV_STEP every TV_GOV_CLEAR_S clean.
+
+**FIXED.**
+- **The pump takes the nearest pixel still owed** (`StreamingWorldState.takeOwed`, streamingWorld.js:"takeOwed(queue, built) {",
+  its one call world.js:"const next = state.takeOwed"): the load list's own order (`nearestFirstFrom` - ring by ring,
+  then by distance, the earlier of two as near) over the whole queue at every take, every entry the stream no longer
+  owes dropped on the way - one let go (`loaded` holds it no more) or one standing (`built` holds it). Nothing owed is
+  nothing built, and the stream's run (PERF-EXT24's `_streamSince`) ends there. It is QUEUE-OWED's `owes` grown to the
+  whole queue, and replaces it (QUEUE-OWED, above, carries the law as it stands). A departure from DFU, named:
+  UpdateTerrains walks its terrain array in index order (StreamingWorld.cs:654-657); nearest first is the load list's
+  own law, and the governor counts the near rings.
+- **A settled cut is cut again only if the hole has not shrunk since the last look**
+  (travelGovernor.js:"if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S))"): fewer owed than then is the stream
+  gaining at the rate just cut to. A hole that never shrinks - LOAD-OWED's pixel in flight - halves to walking pace at
+  the old cadence (0.25, 2.25, 4.25, 6.25, 8.25 s).
+
+The same eight rides: x1 0-25 s a ride (7 on average; QUEUE-OWED with the governor alone 0-33, 14; the take alone over
+the old governor 14-37, 27); no let-go builds. Holes within three rings of the traveller as they were (1.6-9.2 s a ride,
+0.6-9.6 before); the outermost counted ring (four pixels out at this view) stands unbuilt a little longer (the counted
+grid holed 95-127 s a ride, 91-117 before), the rate the stream gains at held while it builds. The rides' average x12.4
+-> x13.6: past the sink the stream's own pace is the cap - TV2's "Cap it to what loads cleanly" - and the governor now
+rides at it rather than under it. OW-BUILD (below, landed beside this) raises that pace itself - a build's slice
+under the Overworld - and composes with it: this section changes what is built when and how the clock holds, that one
+how fast a build runs.
+
+**The four hosts.** `scenes/world.js` wired - it alone streams pixels and raises the Overworld. `scenes/exterior.js`
+streams nothing (one fixed city); `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a dungeon)
+stream no pixels and run no journey.
+
+`test/systems/travel/ow_streamowed.test.js` (3), `tools/mutants/ow_streamowed.json` (6, all dead). PIN MOVED:
+`ow_queueowed` (its stream's law is the take's - every let-go pixel dropped wherever it stands, the owed ones nearest
+first - and its pump no longer reads the queue as a build lands; `tools/mutants/ow_queueowed.json` re-aimed at the take
+by content, QUEUE-OWED-one-let-go-dropped-a-turn replaced by QUEUE-OWED-let-go-dropped-at-the-head-alone: the take has
+no turns); `buildslice` (PERF-EXT24: the stream ends where nothing is owed); `tools/mutants/perfextc.json`
+PERF-EXT24-the-stream-never-ends-so-its-age-guard-trips-at-once-next-time, `tools/mutants/tv2.json` TV2-governor-no-hold
+and AUDIT-DEEP-T2-2-walking-teaches-x1 re-aimed by content. The lists naming the files touched (ow_queueowed,
+ow_loadowed, ow_buildretry, perfextc, tv2 and this one) re-run: 175 dead; the travel lists LOAD-OWED re-ran
+(audit_etherow, ether_ow, ow2, ow3j, ow4j, ow4x, ow5, ow5d, ow6s, ratelaw, tv3, tv5, tv_wasd) 384 dead, and the five
+that live there (OW6-S-reason-unshown, EDGE-FURNITURE-stale-on-show, AUDIT-DEEP2-E6-bands-unshared, -E7-corner-piece-ignored
+and -E8-foot-ends-overlap) live on main's tree as well, untouched here.
 
 ## OW-BUILD - the Overworld's ground first (2026-10-18, the owner, after QUEUE-OWED)
 
@@ -2293,7 +2357,8 @@ ordinary slice at 8 ms of frame script.
 
 Not measured: the frame's own script under the Overworld on a player's machine, and how much of a pixel's build is the
 breather's slices rather than the terrain worker's round trip or a cold read (there is no game data in the container).
-Only the slices are made faster. The governor is unchanged (TV2: "Cap it to what loads cleanly"), and so is its floor.
+Only the slices are made faster. The governor is unchanged here (TV2: "Cap it to what loads cleanly"), and so is its floor;
+STREAM-OWED (above, landed beside this) changed what the pump takes and when a settled cut is cut again, not the slice.
 
 **The four hosts.** `scenes/world.js` wired - it alone streams pixels and raises the Overworld. `scenes/exterior.js`
 builds one fixed city once, through no breather; `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a

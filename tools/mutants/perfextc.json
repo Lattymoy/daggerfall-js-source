@@ -586,8 +586,8 @@
  {
   "name": "PERF-EXT24-the-stream-never-ends-so-its-age-guard-trips-at-once-next-time",
   "file": "src/scenes/world.js",
-  "old": "    if (!state.owes(queue)) _streamSince = null;   // PERF-EXT24: and ends with the queue (QUEUE-OWED: with what it still owes)",
-  "new": "    // PERF-EXT24: and ends with the queue (QUEUE-OWED: with what it still owes)",
+  "old": "    if (!next) { _streamSince = null; return; }   // PERF-EXT24: nothing owed - the run of streamed builds is over",
+  "new": "    if (!next) return;   // PERF-EXT24: nothing owed - the run of streamed builds is over",
   "tests": [
    "test/systems/buildslice.test.js"
   ]

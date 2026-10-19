@@ -2,41 +2,44 @@
   {
     "name": "QUEUE-OWED-pump-builds-the-head",
     "file": "src/scenes/world.js",
-    "old": "    if (building || !state.owes(queue)) return;   // QUEUE-OWED: a pixel the stream let go while it waited is never built",
-    "new": "    if (building || queue.length === 0) return;",
+    "old": "    const next = state.takeOwed(queue, built);",
+    "new": "    const next = queue.shift();",
     "tests": [
-      "test/systems/travel/ow_queueowed.test.js"
+      "test/systems/travel/ow_queueowed.test.js",
+      "test/systems/travel/ow_streamowed.test.js",
+      "test/systems/buildslice.test.js"
     ],
-    "note": "The pump starts on the queue's head whatever the stream holds: a pixel let go by the frame's crossing before the pump's turn is built whole and thrown away, while the grid round the traveller waits - the report."
+    "note": "The pump starts on the queue's head whatever the stream holds: a pixel let go by the frame's crossing before the pump's turn is built whole and thrown away, while the grid round the traveller waits - the report. (PIN MOVED, STREAM-OWED: re-aimed by content at the pump's take.)"
   },
   {
     "name": "QUEUE-OWED-books-unread",
     "file": "src/world/streamingWorld.js",
-    "old": "    while (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();",
-    "new": "    while (queue.length && false) queue.shift();",
+    "old": "      if (!this.loaded.has(key) || built.has(key)) continue;",
+    "new": "      if (built.has(key)) continue;",
     "tests": [
-      "test/systems/travel/ow_queueowed.test.js"
+      "test/systems/travel/ow_queueowed.test.js",
+      "test/systems/travel/ow_streamowed.test.js"
     ],
-    "note": "owes() drops nothing: every queued pixel is built, let go or not (the pump as it was)."
+    "note": "The take drops nothing the stream let go: every queued pixel is built, let go or not (the pump as it was). (PIN MOVED, STREAM-OWED: owes() is takeOwed now.)"
   },
   {
     "name": "QUEUE-OWED-the-whole-queue-dropped",
     "file": "src/world/streamingWorld.js",
-    "old": "    while (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();",
-    "new": "    if (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.length = 0;",
+    "old": "      if (!this.loaded.has(key) || built.has(key)) continue;",
+    "new": "      if (!this.loaded.has(key) || built.has(key)) break;",
     "tests": [
       "test/systems/travel/ow_queueowed.test.js"
     ],
-    "note": "A let-go head takes the owed pixels behind it with it: the grid's new edge is never built."
+    "note": "A let-go pixel takes the owed pixels queued behind it with it: the grid's new edge is never built."
   },
   {
-    "name": "QUEUE-OWED-one-let-go-dropped-a-turn",
+    "name": "QUEUE-OWED-let-go-dropped-at-the-head-alone",
     "file": "src/world/streamingWorld.js",
-    "old": "    while (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();",
-    "new": "    if (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();",
+    "old": "      if (!this.loaded.has(key) || built.has(key)) continue;",
+    "new": "      if ((!this.loaded.has(key) && best < 0) || built.has(key)) continue;",
     "tests": [
       "test/systems/travel/ow_queueowed.test.js"
     ],
-    "note": "One let-go pixel dropped a call: a second one behind it answers owed and is built."
+    "note": "Only the let-go pixels ahead of the first owed one are dropped (owes() as it shipped): one behind it stays on the queue, and taken nearest is built for nobody. Replaces QUEUE-OWED-one-let-go-dropped-a-turn - takeOwed drops in one pass and has no turns."
   }
 ]

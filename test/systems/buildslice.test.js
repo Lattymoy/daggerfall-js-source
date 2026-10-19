@@ -102,8 +102,10 @@ test('PERF-EXT24: `?perf=cpu` carries the stream as a `build` span; the GPU cloc
 test('PERF-EXT24: the world host sizes the stream\'s slice by the frame clock, lends each slice back, and lends an awaited build the whole slice', () => {
   assert.match(WORLD, /  const breather = createBreather\(\{   \/\/ PERF7[^\n]*\n    budget: \(\) => frameFitBudget\(\{ intervalMs: frameInterval\(\), busyMs: lastBusy\(\), streamingMs: _streamSince == null \? 0 : performance\.now\(\) - _streamSince, awaited: _awaitedBuilds > 0, overworld: !!travelView\?\.active \}\),[^\n]*\n    onSlice: \(ms\) => \{ lendFrame\(ms\); meterFor\(renderer\.gl\)\?\.addCpu\('build', ms\); \},\n    frames: framesBegun,[^\n]*\n  \}\);/);
   const pump = WORLD.slice(WORLD.indexOf('  async function pump() {'), WORLD.indexOf('\n  }\n', WORLD.indexOf('  async function pump() {')));
-  assert.match(pump, /const next = queue\.shift\(\);\n    _streamSince \?\?= performance\.now\(\);/, 'the pump\'s builds are the stream');
-  assert.match(pump, /building = false;\n    if \(!state\.owes\(queue\)\) _streamSince = null;/, 'and the stream ends with the queue - with what it still owes (QUEUE-OWED: a queue holding only pixels the stream let go owes nothing)');
+  // PIN MOVED (STREAM-OWED, bible/06-Systems/Travel-View.md): the pump takes the nearest pixel still owed
+  // (StreamingWorldState.takeOwed), so the stream ends where nothing is owed - a queue of let-go entries is no stream
+  assert.match(pump, /if \(!next\) \{ _streamSince = null; return; \}[^\n]*\n    building = true;\n    _streamSince \?\?= performance\.now\(\);/, 'the pump\'s builds are the stream, and it ends where nothing is owed');
+  assert.match(pump, /const next = state\.takeOwed\(queue, built\);/, 'what is owed is the stream\'s own books');
   assert.equal((WORLD.match(/(?<!let )_streamSince = /g) || []).length, 2, 'only the pump and a teleport\'s sweep end a stream');
 });
 

@@ -23,7 +23,10 @@
 // TV_GOV_HOLD_S and the ceiling HALVES (to a
 // multiple of five, Travel Options' own spinner step - timeScale.js
 // accelLimitOf), and again only after TV_GOV_SETTLE_S more (AUDIT DEEP2
-// B-2); none for TV_GOV_CLEAR_S and it climbs back a step
+// B-2) in which the hole has not shrunk (STREAM-OWED: a stream gaining
+// on it at the rate just cut to is loading that rate cleanly - cut on, and
+// the journey sank to x1 while the faster rate's backlog built); none for
+// TV_GOV_CLEAR_S and it climbs back a step
 // toward what the player asked for. Walking pace (x1) is the floor - the
 // governor slows a journey, it never stops one (the ground gate,
 // systems/travel/travelAutopilot.js travelDriveForward, already holds the feet
@@ -60,6 +63,7 @@ export function createLoadGovernor({ max = 100 } = {}) {
   let dirty = 0;
   let clear = 0;
   let settling = false;   // AUDIT DEEP2 B-2: a cut made, no climb since - the next cut waits TV_GOV_SETTLE_S
+  let seen = 0;   // STREAM-OWED: the count at the last cut, or the last look after one - read only while settling, which a cut begins
   return {
     get ceiling() { return ceiling; },
     /**
@@ -73,7 +77,9 @@ export function createLoadGovernor({ max = 100 } = {}) {
         dirty += dt;
         // AUDIT DEEP T2-2: nothing is learned at walking pace - streaming's ordinary lag at x1 taught a ceiling of 1, and
         // the next journey's x40 then climbed from it for half a minute of clean view
-        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) { if (want > TV_GOV_FLOOR) { ceiling = stepDown(Math.min(ceiling, want) / 2); settling = true; } dirty = 0; }
+        // STREAM-OWED: and a settled cut is cut again only if the stream has not gained on the hole since - fewer owed
+        // than at the last look is the stream gaining at the rate just cut to, the hole the faster rate's backlog
+        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) { if (want > TV_GOV_FLOOR && !(settling && unbuilt < seen)) { ceiling = stepDown(Math.min(ceiling, want) / 2); settling = true; } seen = unbuilt; dirty = 0; }
       } else {
         dirty = 0;
         if (ceiling < max) {

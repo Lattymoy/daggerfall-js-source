@@ -9,6 +9,9 @@
 // on a road that turns, and each pixel built for nobody was a build the grid round the traveller waited for: holes in the
 // view, and TV2's governor holding the clock at x1 while the land loaded (scenes/world.js travelViewGovern).
 //
+// PIN MOVED (STREAM-OWED, bible/06-Systems/Travel-View.md): the law is the pump's take now, StreamingWorldState.takeOwed -
+// every let-go pixel dropped wherever it stands, the owed ones taken nearest the traveller first.
+//
 // Run here on the real producers: the stream (world/streamingWorld.js), the host's pump, its view governor and its count
 // (lifted whole out of scenes/world.js, as test/systems/travel/ow_loadowed.test.js lifts them), the governor
 // (systems/travel/travelGovernor.js) and the clock (systems/timeScale.js).
@@ -35,25 +38,26 @@ const cut = (name) => {
 const line = (head) => { const at = W.indexOf(`\n  ${head}`); assert.ok(at >= 0, `world.js holds ${head}`); return W.slice(at, W.indexOf('\n', at + 1) + 1); };
 const settle = () => new Promise((r) => setImmediate(r));
 
-test('QUEUE-OWED, the stream\'s law: owes() drops the queued pixels at the head that the stream let go while they waited, answers whether one it still holds stands next, and leaves the rest in order', () => {
+test('QUEUE-OWED, the stream\'s law: the pump\'s take (StreamingWorldState.takeOwed) never hands it a queued pixel the stream let go while it waited - every one dropped, wherever it stands on the queue - and takes what it still holds nearest the traveller first; nothing owed is null (PIN MOVED, STREAM-OWED: owes() dropped the let-go pixels at the head alone and kept the queue\'s own order)', () => {
   const key = (p) => `${p.px},${p.py}`;
   const s = new StreamingWorldState(1);
+  const built = new Map();
   const queue = s.init(500, 250);
   assert.equal(queue.length, 9);
   s.update([TERRAIN_SIZE + 1, 0, TERRAIN_SIZE / 2]);   // one pixel east: the west column leaves the grid
   for (const y of [249, 250, 251]) s.release(499, y);
-  const order = queue.filter((p) => p.px !== 499).map(key);
   const got = [];
-  while (s.owes(queue)) got.push(key(queue.shift()));
-  assert.deepEqual(got, order, 'every pixel still on the books, in the queue\'s own order, none of the three let go');
+  for (let p; (p = s.takeOwed(queue, built));) got.push(key(p));
+  assert.deepEqual(got, ['501,250', '500,250', '501,249', '501,251', '500,249', '500,251'],
+    'every pixel still on the books, the traveller\'s own first and then ring by ring, none of the three let go');
   assert.equal(queue.length, 0, 'the queue spent');
-  assert.equal(s.owes([]), false, 'an empty queue owes nothing');
+  assert.equal(s.takeOwed([], built), null, 'an empty queue owes nothing');
   const lone = [{ px: 499, py: 250 }];
-  assert.equal(s.owes(lone), false, 'nor one holding only what was let go');
+  assert.equal(s.takeOwed(lone, built), null, 'nor one holding only what was let go');
   assert.deepEqual(lone, [], 'and that is dropped');
-  const tail = [{ px: 499, py: 250 }, { px: 499, py: 249 }, { px: 501, py: 250 }, { px: 499, py: 251 }, { px: 500, py: 250 }];
-  assert.equal(s.owes(tail), true);
-  assert.deepEqual(tail, [{ px: 501, py: 250 }, { px: 499, py: 251 }, { px: 500, py: 250 }], 'every let-go pixel at the head dropped, the owed one next, and what follows waits its turn');
+  const tail = [{ px: 499, py: 250 }, { px: 499, py: 249 }, { px: 500, py: 250 }, { px: 499, py: 251 }, { px: 501, py: 250 }];
+  assert.deepEqual(s.takeOwed(tail, built), { px: 501, py: 250 }, 'the owed pixel nearest the traveller, though it was queued last');
+  assert.deepEqual(tail, [{ px: 500, py: 250 }], 'every let-go pixel dropped - the one behind an owed pixel too - and what is owed waits its turn');
 });
 
 test('QUEUE-OWED, the host\'s pump: crossings that leave queued pixels behind - while a build is in flight, and in the frame the next build starts - none of them is built, every pixel of the new grid is, and a pixel let go while its build was in flight is still torn down when it lands (the host\'s own pump, lifted)', async () => {
@@ -91,9 +95,13 @@ test('QUEUE-OWED, the host\'s pump: crossings that leave queued pixels behind - 
   assert.equal(state.current.x, 502);
   release();
   await settle();   // it lands: the pump's end, between frames
-  assert.equal(queue[0] && state.loaded.has(`${queue[0].px},${queue[0].py}`), true, 'the queue\'s head is owed as the build ends');
   cross();   // and the next frame crosses again before the pump's turn - the head it left is let go
   assert.equal(state.current.x, 503);
+  // PIN MOVED (STREAM-OWED): the queue is no longer read as a build lands (QUEUE-OWED's second ask) - the next take drops
+  // what every crossing let go and begins the nearest pixel still owed
+  pump();
+  await settle();
+  assert.equal(begun[1], '503,250', 'the next build begun is the traveller\'s own pixel, owed and nearest');
   for (let i = 0; i < 40; i++) { pump(); await settle(); }
   const left = begun.filter((k) => !state.loaded.has(k));
   assert.deepEqual(left, ['500,250'], `no build begun for a pixel the stream had let go - only the one in flight as it left (${left.join(' ')})`);

@@ -243,6 +243,29 @@ export class StreamingWorldState {
     this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity });
   }
 
+  /** QUEUE-OWED, STREAM-OWED (bible/06-Systems/Travel-View.md): THE PUMP'S NEXT BUILD, off the host's queue - the
+   *  pixel the stream still owes nearest the traveller (the load list's own order, `nearestFirstFrom`; the earlier of two
+   *  as near), and every entry it no longer owes dropped from the queue on the way: one let go (out of the grid behind a
+   *  crossing, a build that threw - `loaded` no longer holds it) or one that stands (`built` holds it: a crossing's
+   *  re-list, a second ask). The queue was spent first in, first out, and a let-go entry was built whole and torn down
+   *  again; QUEUE-OWED dropped the let-go ones at its head, and the near pixels the Overworld's governor waits on still
+   *  queued behind the far ring a crossing lists first and behind the land a turn left. A departure, named: DFU's
+   *  UpdateTerrains walks its terrain array in index order, skipping a terrain CollectTerrains took out of range as it
+   *  began (StreamingWorld.cs:654-657). Null when nothing is owed. */
+  takeOwed(queue, built) {
+    const near = nearestFirstFrom(this.current);
+    let n = 0, best = -1;
+    for (const p of queue) {
+      const key = StreamingWorldState.key(p.px, p.py);
+      if (!this.loaded.has(key) || built.has(key)) continue;
+      queue[n] = p;
+      if (best < 0 || near(p, queue[best]) < 0) best = n;
+      n++;
+    }
+    queue.length = n;
+    return best < 0 ? null : queue.splice(best, 1)[0];
+  }
+
   /** BUILD-RETRY: a pixel that stood - its failures forgotten. */
   stood(px, py) {
     this.failed.delete(StreamingWorldState.key(px, py));
@@ -262,17 +285,6 @@ export class StreamingWorldState {
       out.push(p);
     }
     return out.sort(nearestFirstFrom(this.current));
-  }
-
-  /** QUEUE-OWED (bible/06-Systems/Travel-View.md QUEUE-OWED): whether the host's build queue holds a pixel the stream
-   *  still owes next - the ones at its head the stream let go while they waited (left the grid behind a crossing) are
-   *  dropped unbuilt, so what stands at the head is the next to build. DFU's UpdateTerrains collects first and builds
-   *  only the terrains still active (StreamingWorld.cs:654-657); the pump built every entry and threw the ones let go
-   *  away after, so a fast journey's road spent the stream's time on ground nobody would see while the grid round the
-   *  traveller waited. */
-  owes(queue) {
-    while (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();
-    return queue.length > 0;
   }
 
   /**

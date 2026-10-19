@@ -1,0 +1,63 @@
+[
+  {
+    "name": "STREAM-OWED-first-in-first-out",
+    "file": "src/world/streamingWorld.js",
+    "old": "      if (best < 0 || near(p, queue[best]) < 0) best = n;",
+    "new": "      if (best < 0) best = n;",
+    "tests": [
+      "test/systems/travel/ow_streamowed.test.js"
+    ],
+    "note": "The queue spent in the order it was filled: the far ring a crossing lists first, and every pixel queued before a turn, are built before the near ones the governor waits on."
+  },
+  {
+    "name": "STREAM-OWED-later-of-two",
+    "file": "src/world/streamingWorld.js",
+    "old": "      if (best < 0 || near(p, queue[best]) < 0) best = n;",
+    "new": "      if (best < 0 || near(p, queue[best]) <= 0) best = n;",
+    "tests": [
+      "test/systems/travel/ow_streamowed.test.js"
+    ],
+    "note": "Of two as near, the later: a sweep's rebuild jumps the crossing's list it was queued behind."
+  },
+  {
+    "name": "STREAM-OWED-standing-kept",
+    "file": "src/world/streamingWorld.js",
+    "old": "      if (!this.loaded.has(key) || built.has(key)) continue;",
+    "new": "      if (!this.loaded.has(key)) continue;",
+    "tests": [
+      "test/systems/travel/ow_streamowed.test.js"
+    ],
+    "note": "A standing pixel stays on the queue and is taken as a build: a frame's turn of the pump spent on nothing, and the queue never empties of it."
+  },
+  {
+    "name": "STREAM-OWED-governor-cuts-on-gain",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "if (want > TV_GOV_FLOOR && !(settling && unbuilt < seen)) {",
+    "new": "if (want > TV_GOV_FLOOR) {",
+    "tests": [
+      "test/systems/travel/ow_streamowed.test.js"
+    ],
+    "note": "Cut again at every settle while any of the hole stands, the stream gaining on it or not: one town on the road takes x40 to x1."
+  },
+  {
+    "name": "STREAM-OWED-governor-one-cut",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": "if (want > TV_GOV_FLOOR && !(settling && unbuilt < seen)) {",
+    "new": "if (want > TV_GOV_FLOOR && !settling) {",
+    "tests": [
+      "test/systems/travel/ow_streamowed.test.js",
+      "test/systems/travel/ow_loadowed.test.js"
+    ],
+    "note": "One cut and no more until a climb: a hole that never shrinks holds the journey at half its pace, outrunning the land."
+  },
+  {
+    "name": "STREAM-OWED-governor-never-looks",
+    "file": "src/systems/travel/travelGovernor.js",
+    "old": " seen = unbuilt; dirty = 0; }",
+    "new": " dirty = 0; }",
+    "tests": [
+      "test/systems/travel/ow_streamowed.test.js"
+    ],
+    "note": "The count at the last look never taken: nothing is ever fewer than it, and every settle cuts again."
+  }
+]
