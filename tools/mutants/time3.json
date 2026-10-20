@@ -289,8 +289,8 @@
   {
     "name": "TIME3-a-copy-on-the-senders-clock",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
-    "new": "    questData = { ...questData, ...NO_SHELF, ...NO_INSTANCE };\n    const quest = this._newQuest();",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };   // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid\n    const quest = this._newQuest();",
+    "new": "    questData = { ...questData, ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };\n    const quest = this._newQuest();",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]

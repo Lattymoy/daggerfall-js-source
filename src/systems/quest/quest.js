@@ -35,6 +35,7 @@ import { smallerDungeonsStateNow } from '../../world/smallerDungeons.js';   // A
 import { askAgain } from './noAsksAgain.js';   // NO-ASKS-AGAIN (FIELD BUGS 2026-10-13e): a No that leads nowhere asks again
 import { isInstanceEpoch } from '../../net/instanceRoom.js';   // INSTANCES: a quest's instance epoch, its one spelling
 import { QUEST_SUCCESS_REP, QUEST_FAILURE_REP } from './questRepute.js';   // WAY-BACK: Quest.cs:36-37's one home, a leaf the guild hall reads
+import { readState, writeState } from '../questlines/qlState.js';   // QL1: a stamped quest's state - the layer's, kept by the quest (bible/06-Systems/Questlines-Arc.md 2.4)
 
 /** ShowMessagePopup's chunker (Quest.cs:777, 793-819): a message
  *  longer than 22 LINES becomes several click-through boxes. A line
@@ -168,6 +169,9 @@ export class Quest {
     this.shelvedSites = null;
     this.shelvedItems = null;   // QUEST-SHELF-DROP: its items the pack held as it was set aside, by symbol
     this.instanceEpoch = null;   // INSTANCES: its instance's epoch, minted when one first opens (systems/instancePlaces.js questInstanceEpoch)
+    // QL1 (bible/06-Systems/Questlines-Arc.md decision 1): the questlines' stamp and state - null, DFU's quest; set once,
+    // at its start (machine.js startQuestImmediate), and kept for life. The machine never reads it; the layer does.
+    this.ql = null;
   }
 
   // ---- Q1 structure ----
@@ -376,6 +380,10 @@ export class Quest {
     // Two ticks of grace so tasks started directly before "end quest"
     // still execute (DFU's Sx017 note).
     this.ticksToEnd = 2;
+    // QL3 (bible/06-Systems/Questlines-Arc.md section 5): a stamped quest's outcome is settled HERE, at its own `end
+    // quest` - before the notebook files it, so the filed entry carries how it ended. A quest that never ends this way
+    // (an error's removal, a restart) has no outcome and pays nothing, as it moves no reputation in DFU.
+    this.hooks?.questEnding?.(this);
     // Quest.cs:375-379 (Q2b): the quest's PROGRESS rumors and its
     // questor post-quest message leave the talk pool at end - the
     // tombstone later scrubs the "rumor mill" rumors and info topics.
@@ -556,6 +564,7 @@ export class Quest {
       shelvedAt: this.shelvedAt ?? null,   // QUEST-SHELF: the port's own, absent in DFU's saves (an older envelope: not set aside)
       shelvedSites: this.shelvedSites ? [...this.shelvedSites] : null,
       shelvedItems: this.shelvedItems ? [...this.shelvedItems] : null,   // QUEST-SHELF-DROP
+      ql: writeState(this.ql),   // QL1: the questlines' stamp and state - the port's own, absent in DFU's saves (an older envelope: DFU's quest)
       // TIME3: the clock its countdowns stand on - the holder's own, as it read when this was taken. A party member's copy
       // moves them onto theirs by the distance (quest/questStamps.js); an envelope without it is from before TIME3.
       ownSecondsAt: Number.isFinite(this.nowSeconds?.()) ? Math.floor(this.nowSeconds()) : null,
@@ -578,6 +587,7 @@ export class Quest {
     this.shelvedAt = Number.isFinite(data.shelvedAt) && data.shelvedAt !== 0 ? data.shelvedAt : null;   // QUEST-SHELF
     this.shelvedSites = this.shelvedAt != null && Array.isArray(data.shelvedSites) ? data.shelvedSites.filter((n) => typeof n === 'string') : null;
     this.shelvedItems = this.shelvedAt != null && Array.isArray(data.shelvedItems) ? data.shelvedItems.filter((n) => typeof n === 'string') : null;   // QUEST-SHELF-DROP
+    this.ql = readState(data.ql);   // QL1: a stamp this law knows, else DFU's quest
     this.questComplete = data.questComplete;
     this.questSuccess = data.questSuccess;
     this.questName = data.questName;

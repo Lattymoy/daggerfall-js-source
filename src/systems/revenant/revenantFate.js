@@ -32,6 +32,7 @@ import { clearPlayerHarm } from '../harmMark.js';   // AUDIT (2026-10-02): a bea
 import { willMatters, willBroken, LAST_STAND_RANK, LAST_STAND_ROAR, PHASE_TWO, lastStandHealth, phaseTwo } from './revenantFeud.js';   // RVN3: the will (bible/12-Enhanced-AI/Feud-Arc.md 14.2); RVN4: the last stand (15)
 import { endCraft, DREAD, dreadStandHealth } from './revenantUnquiet.js';   // UNQUIET (Revenants.md section 46): a flight's craft put down; the Dread's two stands
 import { t } from '../textManager.js';   // AUDIT UNQUIET: the slip's words through the text core
+import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** How long a beaten revenant kneels before it slips away (ms). */
 export const REVENANT_YIELD_MS = 90000;
@@ -141,6 +142,7 @@ export function beginYield(player, f, { now = Date.now(), rolls = Math.random } 
   setRetinuePlayer(player);
   const r = revenantYielded(player, f.entity);
   if (!r) return null;
+  noteAct('revenant-knelt');   // QL11: a revenant made to kneel - one of mine, beaten (revenantMayYield: never a puppet, never twice)
   f.trophy = revenantTrophy(r, { entity: f.entity, level: player?.level ?? 1, rolls });
   const ev = revenantMomentEvent('yield', r, player?.name, { body: 'Beaten, it awaits your judgment. Go to it to kill it or spare it.', archive: f.archive, rolls });
   f.yieldEvent = ev;

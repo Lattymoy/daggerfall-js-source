@@ -370,7 +370,9 @@ test('PX22: the rail is three named sections, always - Main, Side, Archived', ()
   const at = src.indexOf('const mains = active.filter');
   const fn = src.slice(at, src.indexOf('wrap.append(rail);', at));
   // One helper, three calls, in order - not a conditional pair.
-  assert.match(fn, /section\(t\('pause\.journal\.main', 'Main Quests'\), mains, '', true\);/);
+  // PIN MOVED (QL3): Main Quests is the first heading unless the rewards waiting stand above it (their section takes the
+  // first heading's place while any wait) - the three sections stand either way
+  assert.match(fn, /section\(t\('pause\.journal\.main', 'Main Quests'\), mains, '', !offers\.length\);/);
   assert.match(fn, /section\(t\('pause\.journal\.side', 'Side Quests'\), sides, ''\);/);
   assert.match(fn, /section\(t\('pause\.journal\.archived', 'Archived'\), finished, ' done'\);/);
   assert.ok(fn.indexOf("'Main Quests'") < fn.indexOf("'Side Quests'"), 'main above side');

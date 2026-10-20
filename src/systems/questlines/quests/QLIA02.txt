@@ -1,0 +1,54 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE HERALD'S CALL, step 2 of 2 - the line's
+-- last. Begun with the Herald's word in the journal at once (the line's runner starts it an hour after the first
+-- purse). The act: three bouts won in the Arena (`ql act arena-won 3` - systems/questlines/qlActs.js); the Herald pays
+-- at the gate where the third is won (bible/11-Multiplayer/Arena.md section 1), so no Person is placed. The giver is
+-- unnamed, as the registry's (qlLines.js "the Arena's Herald").
+Quest: QLIA02
+DisplayName: A Name in the Sand
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        The crowd has found a new name to shout. It is not
+<ce>                          yours.
+
+QuestComplete:  [1004]
+<ce>         The Herald counts _gold_ gold into your hand while
+<ce>                   the crowd shouts your name.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Herald of the Arena told me a purse makes no
+ name. Three bouts won on the sand of the Arena in
+ Daggerfall do. When I have won three, the Herald
+ will call my name to the crowd.
+
+Message:  1013
+<ce>         The Herald of the Arena steps out onto the sand
+<ce>          and raises both arms, and the crowd falls quiet.
+<ce>
+<ce>              "Three bouts, three wins! Iliac Bay, mark
+<ce>               this name: %pcn!"
+<ce>
+<ce>          The crowd takes it up until the stands shake.
+<ce>         "There," the Herald says. "Now you have a name.
+<ce>          Keep it."
+
+QBN:
+Item _gold_ gold range 200 to 400
+
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	log 1010 step 0
+	start timer _wait_
+
+_won_ task:
+	ql act arena-won 3
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

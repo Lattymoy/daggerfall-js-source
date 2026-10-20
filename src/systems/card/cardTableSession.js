@@ -20,6 +20,7 @@
 import { newHand, act, foldSeat, legalActions, viewFor, shuffleDeck, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX } from '../../net/card/cardLaw.js';
 import { patronDecision, unit, PATRON_TEMPERS } from './cardPatrons.js';
 import { DEAL_STAGGER, THROW_LAND_S, FLIP_S, RIFFLE_S, GATHER_S } from '../../world/card/cardMotion.js';
+import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** MEASURE (CARDS4): a patron's thought before he acts, and its spread - a table with a rhythm. */
 export const THINK_MS = 900;
@@ -211,6 +212,7 @@ export class CardTableSession {
       const end = { t: 'showdown', hand: this.handNo, seats: this.handSeats.slice(), result: structuredClone(h.result), board: h.board.slice(), holes: viewFor(h, -1).seats.map((s) => s.hole) };
       this.lastShowdown = structuredClone(end);
       this._say(end, now);
+      if (this.playerInHand >= 0 && h.result.pots[0]?.winners.includes(this.playerInHand)) noteAct('cards-won');   // QL11: a hand won - the main pot mine (or my share of it)
       for (const i of this.handSeats) {
         const s = this.seats[i];
         if (s.kind === 'patron' && s.stack <= 0 && !s.gone) { s.gone = true; this._say({ t: 'leave', seat: i, name: s.name }, now); }

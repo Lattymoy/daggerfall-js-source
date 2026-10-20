@@ -1,0 +1,130 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): WRITTEN IN THE STARS, step 1 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the chart is the offer. The giver is unnamed (an astrologer): a Spellcaster of the player's own town,
+-- reading the sky at its temple. The act is the Firmament's (qlActs.js star-taken - net/firmament/firmamentBook.js, a
+-- star the account service holds that it did not; Firmament.md: Stars come with Renown, Craft points with the
+-- professions). Online, as the sky is.
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName).
+Quest: QLIF01
+DisplayName: The First Star
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        _seer_ has put your chart away, still blank.
+
+QuestComplete:  [1004]
+<ce>          "The stars pay those who read them. Here."
+<ce>          _seer_ sets _gold_ gold upon your chart.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _seer_, an astrologer who reads the sky at
+ _temple_ in __temple_, sent me a chart with my
+ name on it. My fortune is written on the
+ Firmament, the astrologer says, and I can write
+ the rest myself. I am to take a star of my own,
+ then go to _temple_ to have it read.
+
+Message:  1011
+%pcn,
+
+     I cast your chart last night. I did not like
+ it. Half of it is blank.
+
+     That is no ill omen. It is an invitation. The
+ sky is not fixed for such as you: every name you
+ make for yourself in the realm earns you a star,
+ and the stars you take become part of you.
+
+     Take one. Any one. Then come to _temple_ in
+ __temple_, and I will read what you chose.
+
+<ce>                              _seer_, astrologer
+
+Message:  1012
+<ce>         A novice with ink-stained fingers hands you
+<ce>         a rolled chart, tied with a black ribbon.
+<ce>         "From _seer_, at _temple_. The astrologer
+<ce>                  says you are expected."
+
+Message:  1013
+<ce>        _seer_ hears which star you took, and draws
+<ce>          one bright point on your blank chart.
+<ce>
+<ce>       "There. The first star is the hardest to take.
+<ce>        It tells the sky which way you mean to go."
+<ce>        The astrologer taps the empty half of the
+<ce>        chart. "The rest of it is waiting for you."
+
+Message:  1014
+The astrologer at _temple_? Reads the sky every night. Never sleeps.
+<--->
+_seer_ cast my chart once. Said I would marry well. I have not married at all.
+<--->
+Looking for _seer_? Try _temple_, on a clear night. Look up.
+
+Message:  1015
+%qdt:
+ I have taken my first star on the Firmament.
+ _seer_ is waiting to read it at _temple_ in
+ __temple_.
+
+Message:  1016
+<ce>        "Your chart is still blank. Take a star -
+<ce>         when your renown has earned you one - and
+<ce>               then come back to me."
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--              %pcn occurs 1 time.
+--            _seer_ occurs 9 times.
+--            _gold_ occurs 1 time.
+--          _temple_ occurs 7 times.
+--         __temple_ occurs 3 times.
+
+QBN:
+Item _chart_ letter used 1011
+Item _gold_ gold range 100 to 200
+
+Person _seer_ group Spellcaster local anyInfo 1014
+Place _temple_ local temple
+
+Clock _courier_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _seer_ at _temple_
+	start timer _courier_
+
+_courier_ task:
+	give pc _chart_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_star_ task:
+	ql act star-taken 1
+
+_told_ task:
+	when _courier_ and _star_
+	log 1015 step 1
+
+_clicked_ task:
+	clicked npc _seer_
+
+_early_ task:
+	when _clicked_ and not _star_
+	say 1016
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _star_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

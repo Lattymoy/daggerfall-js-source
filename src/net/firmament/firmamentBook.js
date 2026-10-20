@@ -16,9 +16,13 @@
 
 import { unpackTree, packTree, pointsLeft, EMPTY_TREE, FIRM_RESPEC_GOLD } from './firmamentLaw.js';
 import { walletReserve } from '../realm/realmGoldLaw.js';   // a refused respec gives back exactly what it took
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** Where this device keeps a change whose answer did not come: { [account|character]: { rid, tree } }. */
 export const FIRM_KEPT_KEY = 'firm1.kept';
+/** AUDIT QUESTLINES ACTS-5: where this device keeps every star it has seen each character's sky hold:
+ *  { [account|character]: key[] } - a star is taken once (createFirmamentBook's `held`). */
+export const FIRM_TAKEN_KEY = 'firm1.taken';
 /** The refusals that are no word on the change - kept and asked again. AUDIT UICALM-FIRM1 L2 M3: and the Worker's own
  *  account-wide two, given before any route looks (`rate`, `maintenance` - profBook.js RETRY's). */
 const UNHEARD = new Set(['offline', 'server', 'no-session', 'firm-rate', 'rate', 'maintenance']);
@@ -65,6 +69,37 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
     if (entry) all[slot()] = entry; else delete all[slot()];
     try { storage?.setItem?.(FIRM_KEPT_KEY, JSON.stringify(all)); } catch { /* storage is a convenience */ }
   };
+  // AUDIT QUESTLINES ACTS-5: A STAR IS TAKEN ONCE. `star-taken` (systems/questlines/qlActs.js) counted each star the
+  // service held after a change that it did not hold before it - so one star taken, given back (free below Renown 10,
+  // firmamentLaw.js refundSilver) and taken again counted every time, and a quest's three stars were one point toggled;
+  // and a change whose answer was lost, carried again by `read`, counted none. Now the book remembers every star it has
+  // seen this character's sky hold (FIRM_TAKEN_KEY, by account and character - a reload forgets none) and a star counts
+  // the first time a change of this book's makes it held - `send`'s answer, or the lost one `read` carries again (the
+  // service answers it as its `repeat`; it was counted nowhere). A sky READ is remembered uncounted: its stars were
+  // taken before (here, or on another device that counted them). A book that knows nothing of the sky yet (no read
+  // answered, a store cleared) learns it uncounted - never a whole sky counted at once.
+  const takenMemo = new Map();
+  /** The stars this book has seen the character's sky hold, or null for none known. */
+  const takenKnown = () => {
+    if (takenMemo.has(slot())) return takenMemo.get(slot());
+    let v = null;
+    try { v = JSON.parse(storage?.getItem?.(FIRM_TAKEN_KEY) ?? '{}')?.[slot()]; } catch { v = null; }
+    return Array.isArray(v) ? new Set(v.filter((k) => typeof k === 'string')) : null;
+  };
+  /** The sky holds `keys` now: each star it never held before is a star taken, said when `count`; all remembered. */
+  const held = (/** @type {string[]} */ keys, count = false) => {
+    const known = takenKnown();
+    const fresh = known ? keys.filter((k) => !known.has(k)) : [];
+    if (known && !fresh.length) return;
+    const all = new Set([...(known ?? []), ...keys]);
+    takenMemo.set(slot(), all);
+    try {
+      const o = JSON.parse(storage?.getItem?.(FIRM_TAKEN_KEY) ?? '{}') ?? {};
+      o[slot()] = [...all];
+      storage?.setItem?.(FIRM_TAKEN_KEY, JSON.stringify(o));
+    } catch { /* storage is a convenience - the memo holds it for the session */ }
+    if (count && fresh.length) noteAct('star-taken', fresh.length);   // QL11: a star taken - each newly held, once
+  };
   const apply = (data) => {
     state.tree = unpackTree(data?.tree ?? '');
     state.renown = Number.isSafeInteger(data?.renown) ? data.renown : state.renown;
@@ -94,7 +129,13 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
     tell();
     const r = await door.set(who, packTree(tree), id);
     state.sending = null;
-    if (r?.ok) { keep(null); apply(r.data); tell(); return { ok: true, silver: Number(r.data?.silver) || 0 }; }
+    if (r?.ok) {
+      keep(null);
+      apply(r.data);
+      held(state.tree.keys, true);   // QL11: a star taken - each the service holds now that the sky never held (AUDIT QUESTLINES ACTS-5)
+      tell();
+      return { ok: true, silver: Number(r.data?.silver) || 0 };
+    }
     const error = r?.error ?? 'server';
     state.error = error;
     if (!UNHEARD.has(error)) { keep(null); await book.read(); state.error = error; tell(); }
@@ -118,9 +159,11 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       if (left?.rid && !state.sending) {
         const r = await door.set(who, left.tree, left.rid);
         if (r?.ok || !UNHEARD.has(r?.error)) keep(null);
+        if (r?.ok) held(unpackTree(left.tree).keys, true);   // AUDIT QUESTLINES ACTS-5: the stars the lost answer's change took, counted here - the tree this book asked for
         if (!r?.ok && !UNHEARD.has(r?.error)) refused = r?.error ?? 'server';
       }
       const r = await door.state(who);
+      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys);   // AUDIT QUESTLINES ACTS-5: the sky read (the tree `apply` lays), remembered uncounted
       if (r?.ok) { apply(r.data); if (refused) state.error = refused; tell(); return true; }
       state.error = r?.error ?? 'server';
       state.status = Number.isSafeInteger(r?.status) ? r.status : null;   // UI-CALM: the window says WHY no stars came (a 404 is a service without the Firmament)

@@ -2262,6 +2262,44 @@ ${badgeCss()}
 .px-qverdict { text-align: center; color: #9c937d; font-size: 14px; letter-spacing: 0.2em;
   text-transform: uppercase; margin: -6px 0 12px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .px-qverdict.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* QL2 (bible/06-Systems/Questlines-Arc.md section 6): a stamped quest's objectives, choices and outcome, and a reward
+   waiting (ui/questlines/qlJournal.js) - the journal's own type and ink, the loot ladder's colours */
+.px-qobj { margin: 0 0 6px; }
+.px-qobj-list { list-style: none; margin: 0 0 10px; padding: 0; }
+.px-qobj-row { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px; font-size: 16px; line-height: 1.45;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qobj-mark { flex: none; color: var(--brass); font-size: 13px; }
+.px-qobj-row.done .px-qobj-text { text-decoration: line-through; color: var(--dim); }
+.px-qobj-row.failed .px-qobj-text { color: #d08a72; }
+.px-qobj-state, .px-qobj-tag { flex: none; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.px-qobj-or { list-style: none; margin: -2px 0 4px 23px; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--dim); }
+.px-qobj-choice { display: flex; flex-direction: column; gap: 2px; margin: 0 0 8px; font-size: 15px; line-height: 1.4;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qobj-q { color: var(--dim); }
+.px-qobj-a { padding-left: 14px; }
+.px-qobj-outcome { margin: 0 0 10px; font-size: 16px; font-style: italic; text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qobj-outcome.failed { color: #d08a72; }
+.px-qobj-reward { margin: 4px 0 12px; font-size: 14px; text-align: center; color: var(--dim); }
+.px-qoffer-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.px-qpiece { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; }
+.px-qpiece-name { font-size: 17px; line-height: 1.3; }
+.px-qpiece[data-rarity="magic"] .px-qpiece-name { color: #6f9ee8; }
+.px-qpiece[data-rarity="rare"] .px-qpiece-name { color: #e4c34f; }
+.px-qpiece[data-rarity="legendary"] .px-qpiece-name { color: #e07a2e; }
+.px-qpiece-tier { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.px-qpiece-stat { font-size: 14px; line-height: 1.35; }   /* AUDIT QUESTLINES UI-11: what the piece is - damage or armour, hands, weight */
+.px-qpiece-lines { margin: 0; padding-left: 16px; font-size: 14px; line-height: 1.4; }
+.px-qpiece .act { margin-top: auto; }
+.px-qline-what { margin: 0 0 8px; font-size: 13px; color: var(--dim); text-align: center; }
+.px-qline-lead { margin: 0 0 8px; font-size: 16px; line-height: 1.45; font-style: italic; }
+.px-qline-giver { margin: 0 0 6px; font-size: 15px; }
+.px-qline-state { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
+.px-qline-state.done, .px-qline-state.locked { color: var(--dim); }
+.px-qline-state.retry, .px-qobj-tag.failed { color: #d08a72; }   /* AUDIT QUESTLINES UI-7: a failed step offered again; a deed not yet seen */
+.px-qline-steps .px-qobj-row.next .px-qobj-text { color: var(--dim); }
+.px-qline-said { list-style: none; margin: -4px 0 8px 23px; font-size: 14px; font-style: italic; color: var(--dim); }
+.px-qline-said.failed { font-style: normal; color: #d08a72; }   /* AUDIT QUESTLINES UI-19: a claim the service refused */
 @media (max-width: 900px) {
   .px-tabs button { font-size: 18px; letter-spacing: 0.1em; text-indent: 0.1em; padding: 6px 10px; gap: 6px; }
 }

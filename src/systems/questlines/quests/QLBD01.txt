@@ -1,0 +1,99 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE BURNING DOORS, step 1 of 5.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the letter is the offer. Lore: Ysolde Marnhel wrote "On the Burning Doors" (systems/breachBook.js).
+-- AUDIT QUESTLINES LINES-24: the purse is the line's tier-3 band (300 to 600), as every other step of the Cycle's; and
+-- the letter signs off with her name (LINES-26: DFU's pack names a quest letter by its last line, ItemHelper.cs:335).
+Quest: QLBD01
+DisplayName: A Letter from Wayrest
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          Ysolde Marnhel has left _hall_ without you.
+
+QuestComplete:  [1004]
+<ce>          "For the road, and for the doors we will close."
+<ce>          Ysolde presses a purse of _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A courier brought me a letter from Ysolde Marnhel,
+ Master Conjurer of the Mages Guild of Wayrest, who
+ wrote the book on Dagon's Breaches. She is waiting
+ for me at _hall_ in __hall_, and will say
+ no more in a letter.
+
+Message:  1011
+%pcn,
+
+     You will have seen the breaches. Everyone has
+ seen the breaches. What no one has seen is the hand
+ that opens them, and I am tired of writing books
+ about doors while someone keeps the keys.
+
+     The Guild has given me rooms at _hall_
+ in __hall_. Come when you can. Come armed.
+
+<ce>                 Ysolde Marnhel, Master Conjurer of Wayrest
+
+Message:  1012
+<ce>             A courier in the Mages Guild's gray steps out
+<ce>               of the crowd and presses a sealed letter
+<ce>                 into your hand. "From Wayrest," is all
+<ce>                     the courier says, and is gone.
+
+Message:  1013
+<ce>        "You came. Good. Sit, and do not touch the ember."
+<ce>
+<ce>       "Dagon's Breaches do not open themselves. Someone
+<ce>        stands at each one before it opens - a ring of
+<ce>        his faithful, chanting. Break the ring before
+<ce>        the door opens and the door is weaker for it.
+<ce>        Let it finish and Valkynaz Ruhn walks through."
+<ce>
+<ce>       "I know where one of their covens meets. When you
+<ce>        are ready, I will send you."
+
+Message:  1014
+Ysolde Marnhel? The conjurer who wrote the book on the breaches.
+<--->
+Marnhel has taken rooms at _hall_. She hardly sleeps, they say.
+<--->
+The Master Conjurer from Wayrest? She is looking for someone brave or foolish.
+
+-- Symbols used in the QRC file:
+--
+--              %pcn occurs 1 time.
+--              %qdt occurs 1 time.
+--             _hall_ occurs 4 times.
+--            __hall_ occurs 2 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 300 to 600
+
+Person _ysolde_ faction The_Mages_Guild female anyInfo 1014
+Place _hall_ remote magery
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _ysolde_ Ysolde_Marnhel
+	place npc _ysolde_ at _hall_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_met_ task:
+	clicked npc _ysolde_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

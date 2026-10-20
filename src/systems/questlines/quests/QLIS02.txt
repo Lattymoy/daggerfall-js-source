@@ -1,0 +1,74 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE HARBOURMASTER'S WORD, step 2 of 3.
+-- Begun with the harbourmaster's word by a note (the line's runner starts it an hour after the first). The act: a
+-- cargo delivered (`ql act cargo-delivered 1` - systems/questlines/qlActs.js, a delivery contract off a harbourmaster's
+-- board done, bible/03-World/Captains-Sea.md CAPT-BOARD); the bonus waits at the quay the cargo comes in to, so a
+-- delivery never ends in a walk back. The giver is unnamed, as the registry's (qlLines.js "a harbourmaster").
+Quest: QLIS02
+DisplayName: A Hold Full
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        The harbormaster's cargoes have gone to other ships.
+
+QuestComplete:  [1004]
+<ce>          The runner counts _gold_ gold into your hand, on
+<ce>               top of what the contract paid.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The harbormaster who sent me to sea has written
+ again: a captain who can sail can carry. I am to
+ take a cargo off a harbormaster's board, at the
+ helm lying to any quay, and deliver it. A bonus
+ waits where the cargo comes in.
+
+Message:  1011
+Captain,
+
+     Any fool can sail. A captain carries. Lie to a
+ quay, take the helm, and look at the harbormaster's
+ board: every port posts cargoes for other ports.
+ Take one, and bring it in whole.
+
+     The harbormaster where it comes in will have a
+ bonus for you, on top of the contract. I have
+ friends up and down the coast.
+
+<ce>                                  the harbormaster
+
+Message:  1012
+<ce>           A runner from the docks catches you up with
+<ce>              another folded note. "Same harbormaster,"
+<ce>                    the runner grins. "More work."
+
+Message:  1013
+<ce>         As the cargo comes ashore, a runner from the
+<ce>         harbor office finds you. "You're the one the
+<ce>         harbormaster wrote about? Then this is yours,
+<ce>               with the harbormaster's thanks."
+
+QBN:
+Item _note_ letter used 1011
+Item _gold_ gold range 200 to 400
+
+Clock _word_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	start timer _word_
+
+_word_ task:
+	give pc _note_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_delivered_ task:
+	ql act cargo-delivered 1
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

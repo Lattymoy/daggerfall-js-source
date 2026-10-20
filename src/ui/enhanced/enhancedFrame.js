@@ -147,6 +147,7 @@ export const FRAME_ROLES = {
     '.lv-pick .lv-press', '.shell .look-arrow', '.cr-shell .cr-rm', '.px-winclose', '.talk-head .act', '.talk-say .act',
     '.px-qwhere .act', '.px-qentry-where .act', '.cr-shell .cr-where .act',   // GUIDE2: the journal's way there
     '.px-qmeta .act',   // GUIDE4: the Quests tab's Track toggle (the chronicle's rides .cr-where's)
+    '.px-qoffer .act',   // QL3: a reward waiting's Take (ui/questlines/qlJournal.js)
     'body .dfsocial-btn', 'body .dfsocial-close', 'body .dfprofile-close', '.dlg-shell .dlg-btn',
     'body .broker-shell .act',   // SET7: the Broker's Buy and Close
     'body .bounty-shell .act',   // BOUNTY1: Take, Give up, Share, Close, Take the reward
@@ -214,7 +215,8 @@ export const FRAME_ROLES = {
     'body .dfgambit button[data-kind="warn"]',   // KG3: Forfeit, and Stand up mid-game - the stake given up
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
     'body .fmt-btn.fmt-exit'],
-  tile: ['.port-host .port-tile', '.pack-shell .sf-chip', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.pack-shell .wornsock', '.wizard .racegrid button',
+  tile: ['.px-qoffer .px-qpiece',   // QL3: a reward waiting's piece
+    '.port-host .port-tile', '.pack-shell .sf-chip', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.pack-shell .wornsock', '.wizard .racegrid button',
     '.wizard .facegrid button', '.shell .ft-tile', '.shell .ft-seg', '.shell .ft-mchip', '.shell .ft-tile-more',   // FT18: a condensed tile's parts toggle
     '.sb-shell .sb-chip', '.cr-shell .sb-chip', '.piletab',
     // PLUS3: the shop's shelf rows and the tavern's food & drink rows - the same `.itemrow` the pack

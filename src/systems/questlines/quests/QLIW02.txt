@@ -1,0 +1,95 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE BAY'S TROUBLES, step 2 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner an hour after
+-- step 1 ends: the watch's word is in the journal at once. The giver is unnamed (a captain of the watch, of the
+-- region's ruling faction) - and ANOTHER captain than step 1's, a Person being made fresh in each step's quest, so the
+-- words name _captain_ as another of the watch's (AUDIT QUESTLINES LINES-10). A revenant rises where it rises, so the
+-- pay comes as a letter of thanks, not a return - and the letter waits for a town by day, as a courier's does (GivePc's
+-- notify form), the purse and the end waiting for the letter in the pack (`have _thanks_ set _paid_`, $CUREVAM's shape;
+-- AUDIT QUESTLINES LINES-8: the purse and the end came in the letter's own tick, so a revenant that knelt outside a
+-- town ended the quest with the letter never given, and "Wait in a town for word" was untrue). The act is the
+-- revenants' (qlActs.js revenant-knelt - systems/revenant/revenantFate.js: one of the player's own revenants yields,
+-- whoever struck it, and kneels to the player for judgement - so the words say "brought to its knees", never "beat",
+-- AUDIT QUESTLINES ACTS-7; what is done with it then, kill or spare, is the player's and not this quest's).
+Quest: QLIW02
+DisplayName: The Kneeling Dead
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        The watch has stopped waiting to hear of it.
+
+QuestComplete:  [1004]
+<ce>          The watch's purse holds _gold_ gold.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Word from the watch, under the seal of _captain_,
+ another of its captains: the dead will not lie
+ down. Some foes I have fought do not stay beaten:
+ they come back, named, stronger and better armed.
+ Revenants. I am to see one of mine brought to its
+ knees. Word of it will find me in a town, by day.
+
+Message:  1011
+%pcn,
+
+     The watch has heard. One of the ones who would
+ not stay down knelt to you, and the Bay is quieter
+ for it - whatever you did with it after.
+
+     Some of them come back for the one who beat
+ them. The rest go looking for easier prey, which is
+ to say, for my watchmen. Every one that kneels is
+ one less I have to bury men for. Take the purse.
+
+<ce>                    _captain_, Captain of the Watch
+
+Message:  1012
+<ce>         A watchman, out of breath, finds you and
+<ce>          presses a letter and a heavy purse into
+<ce>          your hands. "From the captain," he says.
+<ce>                 "With the watch's thanks."
+
+Message:  1014
+_captain_ of the watch? Says the dead are walking. Not the usual dead, either.
+<--->
+The captain has been asking after anyone who came back from a fight they lost.
+<--->
+_captain_? Never sleeps. Too many raids, and now this business with the revenants.
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 1 time.
+--              %pcn occurs 1 time.
+--         _captain_ occurs 4 times.
+--            _gold_ occurs 1 time.
+
+QBN:
+Item _thanks_ letter used 1011
+Item _gold_ gold range 200 to 400
+
+Person _captain_ factiontype Province local anyInfo 1014
+
+Clock _heard_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	log 1010 step 0
+	start timer _wait_
+
+_knelt_ task:
+	ql act revenant-knelt 1
+	stop timer _wait_
+	start timer _heard_
+
+_heard_ task:
+	give pc _thanks_ notify 1012
+	have _thanks_ set _paid_
+
+_paid_ task:
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

@@ -119,6 +119,7 @@ import { createNavalLoads } from './navalLoads.js';   // SHOT-KINDS: the captain
 import { createVolleyTally } from './navalTally.js';   // AUDIT NAV1 G17: my volley's tally - CARD-CREW: and her men it took
 import { seaLiveryOf, seaFlagsOf } from '../../systems/naval/seaColours.js';   // SEA-COLOURS: the sea's ships in their own paint and flags
 import { liveryCode } from '../../systems/naval/shipLivery.js';
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The record's name in the save's per-mod slot (systems/modSaveData.js) - the port's own, as the Sigil Broker's is. */
 export const NAVAL_SAVE_VENDOR = 'NavalCombat';
@@ -1181,7 +1182,9 @@ export function createNavalHost(deps) {
     const news = by === myId() || newsworthy(entry);   // SEA-PEACE: a fight between ships a bay away is no news of mine
     if (change === SHIP_STATES.struck) {
       entry.struck = { by, at: clock };
-      if (by === myId()) crewEvent(boatInPlay() ?? myBoat(), 'win');   // SHIP-CREW: she struck to us
+      // SHIP-CREW: she struck to us; QL11: a ship made to strike her colours - by my guns (a peer's are theirs). AUDIT
+      // QUESTLINES ACTS-8: the act in the crew's own arm, no line of its own (HOST-SPLIT)
+      if (by === myId()) struckToMe();   // SHIP-CREW: she struck to us; QL11: the act
       if (news) deps.say?.(`${s.names?.name ?? 'It'} surrenders!`, 4);
       sound(NAVAL_CLASSIC.bell, s.pos, 0.8);   // her bell as the colours come down
     } else if (change === SHIP_STATES.sinking) {
@@ -3762,6 +3765,9 @@ export function createNavalHost(deps) {
     const st = myBoatState(boat);
     if (st?.crew && boat.crewed) st.crew.event(kind);
   }
+  /** A ship struck to my guns - in a sea I stand (stateChanged) or in her stander's word (applyWord, AUDIT CC-E4): my
+   *  crew's win, and QL11's act - one say for both arms (AUDIT QUESTLINES ACTS-8, ACTS-11; HOST-SPLIT). */
+  const struckToMe = () => { crewEvent(boatInPlay() ?? myBoat(), 'win'); noteAct('ship-struck'); };
   /** The boat of mine nearest a place, within COLLIDE_RANGE - the one a prize taken on foot answers to. */
   function nearestBoat(pos) {
     let best = null, bestD = COLLIDE_RANGE;
@@ -4861,8 +4867,9 @@ export function createNavalHost(deps) {
       const down = (st) => st === SHIP_STATES.sinking || st === SHIP_STATES.sunk;
       if (!down(was) && down(dmg.state) && clock - (e.myBlowAt ?? -Infinity) <= SINK_CREDIT_S) chargePlayer('sink', e);
       // AUDIT CC-E4: a ship another stands struck to MY guns - her stander's strike is the one that runs, and it pays the
-      // win to nobody's crew but the shooter's, so my crew heard of it never
-      if (was === SHIP_STATES.afloat && dmg.state === SHIP_STATES.struck && clock - (e.myBlowAt ?? -Infinity) <= SINK_CREDIT_S) crewEvent(boatInPlay() ?? myBoat(), 'win');
+      // win to nobody's crew but the shooter's, so my crew heard of it never. AUDIT QUESTLINES ACTS-11: nor my quests -
+      // online every ship but the stander's own is stood by another, so a group's other captains struck none
+      if (was === SHIP_STATES.afloat && dmg.state === SHIP_STATES.struck && clock - (e.myBlowAt ?? -Infinity) <= SINK_CREDIT_S) struckToMe();
       if (!fresh && was !== SHIP_STATES.sinking && dmg.state === SHIP_STATES.sinking) { sound(NAVAL_CLASSIC.bubbles, e.ship.pos, 1); feel.sinking(e, w.seed, w.fire); }   // COMBAT-FEEL (AUDIT 2026-10-17): her going down as her stander's - her magazine by her seed on every screen; AUDIT 2: never a copy first seen already going down (a player sailing into sight of her heard her go, and her powder went up again)
       // AUDIT NAV2 F1/F3/F5: her captain as her stander sails her - an older build's word says none, and she keeps her
       // seed's temper and a puppet's 'cruise'

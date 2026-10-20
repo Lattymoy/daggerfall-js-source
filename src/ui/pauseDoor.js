@@ -231,6 +231,9 @@ function openPauseFlowNow(show, hooks) {
   // has no tabs, so its pages open the enhanced pause on either skin, as the family's do (the owner, asked: the classic skin
   // reaches it)
   if (growthPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  // AUDIT QUESTLINES UI-6 (REWARD-8): the Quests tab - a reward waiting is chosen there (ui/questlines/qlJournal.js), and the
+  // classic pause has no tabs - so a door that names it opens the enhanced pause on either skin, as the family's pages do
+  if (hooks.at === 'quests' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   // `document` is the second half of the test for the reason
   // chargenSession's fork gives: a node test drives these hosts
   // headless, has no document, and must keep the canvas window rather

@@ -167,6 +167,8 @@ import { EG_LORDS, EG_LAST_WORD_MS } from '../../net/eliteGates/egLaw.js';
 import { isEnhanced } from '../../systems/uiSkin.js';
 import { isTouchDevice } from '../../ui/touch/touchDevice.js';
 import { getPref } from '../../systems/uiPrefs.js';
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { egValkRedoubt } from '../../net/eliteGates/egPay.js';   // QL11: a Valkynaz's Redoubt - the one law the service pays a `w` receipt by
 import { createEgLookDraw } from './egLookDraw.js';   // EG-G2: the Spire's sky, mist and lines (section 25)
 import { egQuietCompany } from '../../world/eliteGates/egLook.js';
 import { egRibbonPush, egTrailSegs, EG_TRAIL } from '../../world/eliteGates/egLook.js';   // AUDIT EG V (h; section 8.2): THE TRAIL
@@ -463,6 +465,19 @@ export const egRefusalText = (error) => REFUSED[error] ?? (typeof error === 'str
 export function egClaimDone(a) {
   if (a?.ok) return true;
   return a?.error === 'receipt' || a?.error === 'not-yours';
+}
+
+/**
+ * QL11: THE REDOUBT'S ACTS, off a claim's answer `a` for its receipt `c` - a Redoubt taken, its e1 receipt counted once
+ * (`recorded`; a Rehearsal's is practice), and a Valkynaz's besides: every fifth Court (egLaw.js egBossOf), the receipt's
+ * own `w` (egPay.js egValkRedoubt - the one law the service pays a `w` receipt by). AUDIT QUESTLINES ACTS-8: here, out of
+ * createEgClient's scope, which the host ceiling holds (test/scenes/hostceiling.test.js) - its claim loop calls it, one line.
+ * @param {any} a @param {any} c
+ */
+function redoubtActs(a, c) {
+  if (!a?.ok || !a.data?.recorded || a.data.q !== 'w' || c?.rh === 1) return;
+  noteAct('redoubt-taken');
+  if (egValkRedoubt(c.w)) noteAct('valkynaz-felled');
 }
 
 /** A request id the service takes (server-account/src/eg.js EG_RQ_RE). */
@@ -982,6 +997,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
         const seq = keysAsk(), a = await account.claim(r);   // AUDIT EG IV (lane3 #10): its balance in its ask's order
         if (a?.ok && Number.isSafeInteger(a.data?.keys)) restack(a.data.keys, seq);
         if (a?.ok && a.data?.recorded && a.data.q === 'w') say(`Redoubt ${a.data.w} is yours.`);
+        redoubtActs(a, c);   // QL11: a Redoubt taken, and a Valkynaz's (AUDIT QUESTLINES ACTS-8: said at module scope, below egClaimDone)
         // EG-E (section 19): WHAT IT PAID - the service's word on a Redoubt's receipt (the week's pay, the pity's passes,
         // the Marks, the deed, the embers), and the spoils it rolls; a re-claim answers the same (`again`), a guest's its
         // gold alone. Never for a Rehearsal (the service pays none).

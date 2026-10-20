@@ -1,0 +1,6 @@
+{
+  "family": "MagesGuild",
+  "patches": {
+    "N0B40Y07": [{"old":"_reward_ task:\n\twhen _qgclicked_ and _S.10_ and not _S.06_ \n","new":"_reward_ task:\n\twhen _qlkeep_\n","count":1},{"old":"\nQBN:","new":"\nMessage:  1900\n<ce> Banished, and none the worse for it -\n<ce> exactly as I wanted. Now, my scroll,\n<ce> if you please. That is =daedra_'s\n<ce> true name you are carrying, and I\n<ce> shall have need of it again.\n\nMessage:  1901\nHere is your scroll.\n\nMessage:  1902\nI will burn the scroll.\n\nQBN:","count":1},{"old":"\twhen _out_ and not _S.06_ \n\tsay 1060","new":"\twhen _out_ and not _S.06_ \n\tsay 1060\n\n_qlask_ task:\n\twhen _qgclicked_ and _S.10_ and not _S.06_\n\task 1900 choices 1901 _qlkeep_ 1902 _qlalt_\n\nvariable _qlkeep_\nvariable _qlalt_\n\n_qlaltpath_ task:\n\twhen _qlalt_\n\tql paid\n\tunset _qgclicked_\n\tend quest","count":1}]
+  }
+}

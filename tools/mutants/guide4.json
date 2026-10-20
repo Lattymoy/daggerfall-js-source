@@ -92,8 +92,8 @@
   {
     "name": "GUIDE4-the-heralds-cap",
     "file": "src/ui/quest/questTracker.js",
-    "old": "      opening: entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),",
-    "new": "      opening: entryOpening(v.latest?.lines),",
+    "old": "entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),",
+    "new": "entryOpening(v.latest?.lines),",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]

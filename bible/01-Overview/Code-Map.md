@@ -309,6 +309,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/party/` | A party: travelling, resting and walking together - the law. |
 | `src/systems/professions/` | The professions' law (`06-Systems/Professions-Arc.md`): their items, templates and sounds. |
 | `src/systems/quest/` | The quest machine: the parser, its tables, actions and conditions. |
+| `src/systems/questlines/` | The questlines over the quest machine (`06-Systems/Questlines-Arc.md`): the objective sheets and branch patches by family, the actions, the rewards, the acts feed and the elite foe's act (`qlEliteFoe.js`, which the dungeon host hands its place - AUDIT QUESTLINES ACTS-8), the questlines, their runner and the guilds' ladders - the law. |
 | `src/systems/region/` | A region's conditions, hubs and power - the law. |
 | `src/systems/rest/` | Resting: the rest window, its supplies and its warning - the law. |
 | `src/systems/revenant/` | The Revenant: the feud, its companions (their kit, their errands abroad, their stars), its art, personality, voice, trophy and fate. |
@@ -367,6 +368,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/poi/` | Points of interest: the editor's panels - its windows. |
 | `src/ui/professions/` | The professions on screen: the HUD, the reticle, the pages and their styles. |
 | `src/ui/quest/` | Quests - its windows. |
+| `src/ui/questlines/` | The Quests tab's questline parts: objectives, rewards waiting, a questline's and a ladder's page (`06-Systems/Questlines-Arc.md` section 6). |
 | `src/ui/revenant/` | The Revenant on screen: its card, its page and its fate. |
 | `src/ui/settings/` | The settings window's law, its map of rows and its copy. |
 | `src/ui/spell/` | Spells on screen: the icons, the icon picker and the spell maker's window. |

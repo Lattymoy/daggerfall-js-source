@@ -499,7 +499,9 @@ test('AUDIT CC-E3/E4: a companion lifted on the street makes the next frame whol
   assert.equal(A.foesFrame(false), null, 'nothing changed');
   A.removeFoe(mate);
   assert.equal(A.foesFrame(false)?.full, 1, 'whole');
-  assert.match(rd('src/scenes/naval/navalHost.js'), /if \(was === SHIP_STATES\.afloat && dmg\.state === SHIP_STATES\.struck && clock - \(e\.myBlowAt \?\? -Infinity\) <= SINK_CREDIT_S\) crewEvent\(boatInPlay\(\) \?\? myBoat\(\), 'win'\);/);
+  // PIN MOVED (AUDIT QUESTLINES ACTS-11): the win and the questlines' act, one arm (test/systems/questlines/ql11_acts.test.js drives it)
+  assert.match(rd('src/scenes/naval/navalHost.js'), /if \(was === SHIP_STATES\.afloat && dmg\.state === SHIP_STATES\.struck && clock - \(e\.myBlowAt \?\? -Infinity\) <= SINK_CREDIT_S\) struckToMe\(\);/);
+  assert.match(rd('src/scenes/naval/navalHost.js'), /const struckToMe = \(\) => \{ crewEvent\(boatInPlay\(\) \?\? myBoat\(\), 'win'\); noteAct\('ship-struck'\); \};/);
 });
 
 // ── CC-F: the safety net - behaviour the audit's mutants found unpinned ──────────────────────────────────────────
