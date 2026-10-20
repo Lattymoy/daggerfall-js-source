@@ -355,7 +355,7 @@ test('AUDIT MINE-PERKS a change of mind come due is the book\'s at once - the se
 });
 
 test('AUDIT MINE-PERKS the Mining page tells a Surveyor what their word does on unwitnessed ground, under the line that says Silver at most - theirs alone, the choice named by its card (mutants: said to anyone; never said)', () => {
-  assert.equal(MINING_SURVEYOR_LINE, 'As a {name}, your own word witnesses the ground: your veins there can be any ore of its land. A region\'s own ore still waits on the witnesses.');
+  assert.equal(MINING_SURVEYOR_LINE, 'As a {name}, you need no witnesses: your own veins can give any ore the land holds. A region\'s own ore still appears only once the ground has been witnessed.');   // VOICE1 (PIN MOVED): the same law in plain words
   const src = read('src/ui/professions/profPages.js');
   assert.match(src, /const miningSurveyorLine = \(\) => t\('prof\.page\.how\.miningSurveyor', MINING_SURVEYOR_LINE, \{ name: specOf\('mining', 100, SURVEYOR\)\?\.name \?\? '' \}\);/);
   assert.match(src, /if \(_sel === 'mining'\) pane\.append\(el\('p', 'px-note', miningGroundLine\(\)\)\);[^\n]*\n\s*if \(_sel === 'mining' && tr\.specs\?\.\[100\] === SURVEYOR\) pane\.append\(el\('p', 'px-note', miningSurveyorLine\(\)\)\);/);

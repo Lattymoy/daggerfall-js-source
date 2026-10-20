@@ -114,8 +114,8 @@ export const TV_WHO_TEXT = Object.freeze({
   renown: (n) => (n > 0 ? `Renown ${n}+` : 'Any renown'),
   nodeKm: (km) => (km == null ? 'Nodes: any km' : `Nodes: ${km} km`),
   tip: (label, on) => `${on ? 'Hide' : 'Show'} ${label.toLowerCase()} on the maps`,
-  renownTip: 'The least Renown a player shows at - press for the next',
-  nodeTip: 'How far off a gathering group still shows - press for the next',
+  renownTip: 'The least Renown at which a player is shown. Press for the next',
+  nodeTip: 'How far off a gathering group is still shown. Press for the next',
 });
 /** OW-KIN: a player's names are coloured by who they are to me - my party's green stays the party's (net/social.js). */
 export const TV_KIN_COLORS = Object.freeze({

@@ -464,8 +464,8 @@ export const WILD_TEXT = Object.freeze({
     : t('wild.escrow.deathHeldAnon', 'Another player claimed your {item} - it is held until they collect it, and comes back to you if they do not.', { item: item || t('wild.escrow.gear', 'gear') })),
   heldNote: (name, item, min) => (name
     ? t('wild.escrow.heldNote', 'Your {item} is held for {name} - if they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { name, item: item || t('wild.escrow.gear', 'gear'), min })
-    : t('wild.escrow.heldNoteAnon', 'Your {item} is held for your killer - if they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { item: item || t('wild.escrow.gear', 'gear'), min })),
-  heldBack: (item) => t('wild.escrow.heldBack', 'Your {item} has come back to you - it was never collected.', { item: item || t('wild.escrow.gear', 'gear') }),
+    : t('wild.escrow.heldNoteAnon', 'Your {item} is held for your killer. If they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { item: item || t('wild.escrow.gear', 'gear'), min })),
+  heldBack: (item) => t('wild.escrow.heldBack', 'Your {item} has come back to you. It was never collected.', { item: item || t('wild.escrow.gear', 'gear') }),
   heldTaken: (name, item) => (name
     ? t('wild.escrow.heldTaken', '{name} collected your {item}.', { name, item: item || t('wild.escrow.gear', 'gear') })
     : t('wild.escrow.heldTakenAnon', 'Your killer collected your {item}.', { item: item || t('wild.escrow.gear', 'gear') })),
@@ -479,7 +479,7 @@ export const WILD_TEXT = Object.freeze({
   picked: (name, item) => `You take ${item} from ${name || 'the body'}.`,
   chosen: (name, item) => `You choose ${item} from ${name || 'the body'} - it comes to you from their remains.`,   // INT9: the pick is the relay's to sign
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
-  dropLate: 'What you dropped at your death in the mountains has left your pack - it lies where you fell.',   // INT9 (AUDIT): a receipt that found the fallen risen
+  dropLate: 'What you dropped at your death in the mountains has left your pack. It lies where you fell.',   // INT9 (AUDIT): a receipt that found the fallen risen
   burntLate: () => t('wild.death.burntLate', 'What you dropped at your death in the mountains has left your pack - this character\'s trading is frozen, so it was lost, not left.'),   // BURNT-SAID: the same, for a held record
   noFight: 'You cannot attack a member of your party.',
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it

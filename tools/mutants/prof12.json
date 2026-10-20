@@ -1446,7 +1446,7 @@
   {
     "name": "PROF12-E1-refusal-words",
     "file": "src/net/accountClient.js",
-    "old": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays in the Stores - it never goes to the pack.'),",
+    "old": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays in the Stores. It never goes into your pack.'),",
     "new": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays at the bench until its own craft is practised.'),",
     "tests": [
       "test/systems/prof12_client.test.js"
@@ -1677,8 +1677,8 @@
   {
     "name": "PROF12-E3-page-three",
     "file": "src/ui/professions/profPages.js",
-    "old": "turns two of a metal and a Mercury into one of the next",
-    "new": "turns three of a metal and a Mercury into one of the next",
+    "old": "turns two of a metal and one Mercury into one of the next",
+    "new": "turns three of a metal and one Mercury into one of the next",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]

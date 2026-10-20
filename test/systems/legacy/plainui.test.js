@@ -61,7 +61,7 @@ test('PLAIN-UI the Seat tab says what a seat is and the reader\'s next step befo
     [week(mine({ pledges: [{ region: 21, key: 3099 }] })), 'Your guild fights for another seat of this region this week, and what you earn counts there.'],
     [week(mine({ pledges: [here], seasoned: false })), `You count for your guild once you have been in it ${SEAT_MEMBER_WAIT_S / 86400} days.`],
     [week(mine({ pledges: [here], bound: 'g9' })), 'Your account fights for another guild this week, and what you earn counts there.'],
-    [week(mine({ pledges: [{ ...here, held: true }] })), /^Your guild holds this Charter\. Earn influence here to keep its defence above every challenger: /],
+    [week(mine({ pledges: [{ ...here, held: true }] })), /^Your guild holds this Charter\. Earn influence here to keep its defense above every challenger: /],
     [week(mine({ pledges: [{ region: 4, key: 400 }, here] })), /^Earn influence for your guild here: walk the town, close Dagon's Breaches/],
   ];
   for (const [data, want] of rows) {

@@ -58,7 +58,7 @@ const mentions = (role) => (role ? { roles: [role] } : { parse: [] });
  */
 export function sdRisePost({ rec, role = null }) {
   return {
-    content: `${ping(role)}**A bell rings where there is no bell: an Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the city it stands by speak of it. No map shows it - the first to stand at its door finds it. Unfound, it fades ${heraldStamp(rec.until, 'R')}.`,
+    content: `${ping(role)}**A bell rings where there is no bell: an Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the city it stands by speak of it. No map shows it. Whoever first stands at its door finds it. Unfound, it fades ${heraldStamp(rec.until, 'R')}.`,
     allowed_mentions: mentions(role),
   };
 }

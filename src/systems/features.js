@@ -329,7 +329,7 @@ export const FEATURES = Object.freeze([
     id: 'smaller-dungeons',
     group: 'world',
     get title() { return t('features.smallerDungeons.title', 'Smaller dungeons'); },
-    get note() { return t('features.smallerDungeons.note', 'Dungeons bigger than five blocks are cut down to five: a centre block with four around it, the same '
+    get note() { return t('features.smallerDungeons.note', 'Dungeons bigger than five blocks are cut down to five: a center block with four around it, the same '
       + 'every visit. Main-story dungeons keep full size; a quest keeps the size it was set up at. Online every '
       + 'dungeon has its own size instead.'); },
     get effect() { return t('features.smallerDungeons.effect', 'Takes effect on the next dungeon you enter. A save made at the other size puts you at the dungeon\u2019s start.'); },
@@ -760,7 +760,7 @@ export const FEATURES = Object.freeze([
     id: 'loot-rarity',
     group: 'loot',
     get title() { return t('features.lootRarity.title', 'Loot rarity'); },
-    get note() { return t('features.lootRarity.note', 'Weapons, armour and jewellery can drop as Magic, Rare or Legendary, with extra bonuses you can read '
+    get note() { return t('features.lootRarity.note', 'Weapons, armor and jewelry can drop as Magic, Rare or Legendary, with extra bonuses you can read '
       + 'and compare. The odds depend on what you killed, where, and your luck, never your level. Rare and '
       + 'Legendary items drop unidentified. Off is the classic loot exactly. Online, some weapons carry a '
       + 'sigil that grows with your Renown.'); },   // SIGIL1
@@ -872,7 +872,7 @@ export const FEATURES = Object.freeze([
     group: 'interface',
     title: 'Tamriel on the map',
     note: 'The enhanced map zooms out past the Iliac Bay to the whole of Tamriel, hand-drawn: the provinces, their '
-      + 'capitals, the mountains and the seas, joined to the Bay’s own coast. Nothing beyond the Bay can be travelled to.',
+      + 'capitals, the mountains and the seas, joined to the Bay’s own coast. Nothing beyond the Bay can be traveled to.',
     effect: 'Takes effect the next time a map is opened.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),
@@ -1394,14 +1394,15 @@ export const FEATURES = Object.freeze([
     id: 'quick-slots',
     group: 'interface',
     get title() { return t('features.quickSlots.title', 'Quick slots'); },
-    get note() { return t('features.quickSlots.note', 'Diamond puts your weapon, off hand and two quick items in a diamond at the bottom left, set from the '
-      + 'inventory. Hotbar puts ten slots above your health bars on keys 1 to 0, filled by dragging from your '
-      + 'pack and spellbook. Off hides the diamond, but its keys still work.'); },
+    get note() { return t('features.quickSlots.note', 'Diamond puts four slots in a diamond at the bottom left, on keys 1 to 4. Hotbar puts ten above your '
+      + 'health bars on keys 1 to 0; Diamonds makes them diamonds. Drag an item or spell onto a slot, or point at it '
+      + 'and press the key. Off hides them, keys still working.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
       store: 'prefs', key: 'quickbarStyle', initial: 'hotbar', online: 'player', lane: 'quickSlots',   // HB1: ui/enhanced/enhancedHotbar.js HOTBAR_PREF
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' })]),   // QS: ui/enhanced/enhancedHud.js hides the diamond on false
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),   // QS: ui/enhanced/enhancedHud.js hides the diamond on false
+        Object.freeze({ store: 'prefs', key: 'hotbarShape', initial: 'square', online: 'player' })]),   // DIAMOND-HB: ui/enhanced/enhancedHotbar.js HOTBAR_SHAPE_PREF
     }),
   }),
   // LOAD1 (2026-10-05, Mac: "add loading screens where needed for the game in an enhanced UI type fashion, maybe make

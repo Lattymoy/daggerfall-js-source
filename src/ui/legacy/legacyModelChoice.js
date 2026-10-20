@@ -29,7 +29,7 @@ export const LEGACY_MODEL_FACE = Object.freeze({
 export const LEGACY_CHOICE_FACE = Object.freeze({
   eyebrow: 'A new character',
   title: 'Will your line endure?',
-  lead: 'Found a house and choose its way with death - or play without one. It cannot be changed later.',
+  lead: 'Found a house and choose how it meets death, or play without one. It cannot be changed later.',
   pick: 'Choose',
   hint: 'Click one · up/down and Enter · 1, 2 or 3',
 });
@@ -49,7 +49,7 @@ export function legacyModelOptions({ online = isOnlinePage(), tollShare = legacy
   const pct = Math.round(tollShare * 100);
   return Object.freeze([
     Object.freeze({ id: MODELS.enduring, title: 'Enduring', locked: false, lockNote: null, lines: Object.freeze([
-      'A death is not the end - but it costs years.',
+      'A death is not the end, but it costs years.',
       `Arkay takes ${pct}% of a lifespan for every road back,`,
       'and when the span is spent the mantle passes on',
       'to an heir. Elders may pass it on at any time.',

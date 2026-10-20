@@ -295,7 +295,7 @@ async function finishIngest(entries, msg) {
     for (const e of entries) if (e) { mem.set(e[0], new Uint8Array(e[1])); kept++; }
     if (kept === entries.length) return null;
     mem.clear();
-    return `storage failed (${err?.name || err}) - your device may be low on space. Freed the partial data; clear some space and pick again.`;
+    return `storage failed (${err?.name || err}). Your device may be low on space. The partial data was freed; clear some space and pick again.`;
   }
 }
 

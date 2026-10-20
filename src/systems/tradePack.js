@@ -43,7 +43,7 @@ export function tradeRefusal(item) {
  *  non empty wagon?"), a trade, the market and the vault say in words. */
 export const WAGON_LOADED_TRADE_TEXT = 'Empty your wagon before it changes hands.';
 /** The market's List form's words for it (GOOD_REFUSAL_WORDS' way). */
-export const WAGON_LOADED_MARKET_WORDS = 'your wagon - empty it first';
+export const WAGON_LOADED_MARKET_WORDS = 'your wagon. Empty it first';
 /** Why an item of `entity`'s pack may not leave it for another player, or null: tradeRefusal's, and the wagon the
  *  player drives while it holds anything (WAGONS2 AUDIT: a loaded caravan traded away left its cargo on the cart the
  *  pack drove next, 2000 kg in a 750 kg store, and the caravan's 2000 kg fresh for its new owner). */

@@ -22,6 +22,7 @@ import {
 } from './enemyEquipment.js';
 import { dice100 } from './formulas.js';
 import { mintCondition, setItemFields, templateByIndex, itemBaseValue } from '../systems/item/itemTemplates.js';
+import { markFound } from '../systems/item/foundMark.js';   // AUDIT MEND-THIRD L3-2: a worn kit's piece handed over marked
 import { rriModule, customItemClass } from '../systems/roleplayRealismItems/rriItems.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { DYE_COLORS } from '../characters/dyes.js';
@@ -130,6 +131,10 @@ const mintClothing = (female, templateIndex, rolls) => {
 function wornCondition(item, rolls) {
   if (item.group === 'Armor' || item.group === 'Weapons' || item.group === 'MensClothing' || item.group === 'WomensClothing') {
     item.currentCondition = Math.trunc((0.3 + rolls() * (0.75 - 0.3)) * (item.maxCondition ?? 0));
+    // AUDIT MEND-THIRD L3-2 (A DEPARTURE, the mod's dice unmoved): SELL-AS-FOUND's mark (systems/item/foundMark.js). The body's
+    // own roll re-wears and marks what stays on the corpse; a piece PLAIN-LOOT's keep let go never meets it, and PARTY-LOOT's
+    // personal bonus handed the clone over worn and unmarked - mended at a smith, sold whole online
+    markFound(item);
   }
   return item;
 }

@@ -230,7 +230,7 @@ test('SEAT2b part two (c) A REVOLT\'S PASS AND ITS WEEK: its pass the holder\'s 
   assert.equal(chronicleLine({ kind: 'revolt-down', week: 3, data: { guild: SH } }, seat).replace(/^.*?, /, ''), 'Anticlere rose against Silver Hand <SH>. The rebel captain fell at the palace door, and the Charter held.');
   assert.match(chronicleLine({ kind: 'revolt-stood', week: 3, data: { guild: SH } }, seat), /rose against Silver Hand <SH>, and the rebel captain held the palace door\. .* lapsed\.$/);
   assert.match(chronicleLine({ kind: 'revolt', week: 3, data: { guild: SH } }, seat), /Standing under Silver Hand <SH> fell to nothing, and the town rose in revolt\.$/);
-  assert.equal(seatBattleLine({ kind: 'revolt', guild: null, against: SH }), 'The town rises against Silver Hand <SH> this week - a Rebel Captain holds the palace door.');
+  assert.equal(seatBattleLine({ kind: 'revolt', guild: null, against: SH }), 'The town rises against Silver Hand <SH> this week. A Rebel Captain holds the palace door.');
   assert.match(battleAnnouncement({ kind: 'revolt', startsAt: siegeStartMs(W, 1, 21), defenderGuild: SH, attackerGuild: null }, 'Anticlere'),
     /^Anticlere rises against Silver Hand <SH>: a Rebel Captain and twelve rebels hold its palace door\. The revolt begins Thursday at 21:00 UTC: fell the Captain within two hours, or the Charter lapses\.$/);
   assert.equal(STANDING_CHANGES.revoltTo, 20);

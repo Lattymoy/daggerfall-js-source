@@ -137,7 +137,7 @@ export function createEtherHost(deps) {
     if (!o.can) return { ok: false, text: o.why };
     deps.pay?.(o.price);
     const n = islesNear(port.px, port.py, CHART_BUY_PX).filter((i) => L.chartIsle(i.key)).length;
-    return { ok: true, text: `The harbourmaster unrolls a chart of these waters: ${n} ${n === 1 ? 'isle' : 'isles'} marked on yours.` };
+    return { ok: true, text: `The harbormaster unrolls a chart of these waters: ${n} ${n === 1 ? 'isle' : 'isles'} marked on yours.` };
   }
   /** A corsair's papers (her class and seed, where she was ended): on PAPERS_CHANCE of her seed's own stream, a chart of
    *  her waters - every isle within PAPERS_PX charted. Answers how many were new. */

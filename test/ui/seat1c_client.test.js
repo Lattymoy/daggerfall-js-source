@@ -89,7 +89,7 @@ test('SEAT1c THE WORDS AND THE MARKS: the Chronicle\'s lines; the holder\'s, the
   assert.equal(seatBattleLine({ kind: 'siege', guild: EO, against: SH }), 'Ebon Oath <EO> has won a Right of Siege against the Silver Hand <SH> this week.');
   assert.equal(seatBattleLine(null), null);
   assert.match(seatClaimLine(ANTICLERE), /6,000 influence, and 8,000 silver/);
-  assert.match(seatClaimLine(ANTICLERE, 7410), /the holder's defence of 7,410, and at least 6,000 influence/);
+  assert.match(seatClaimLine(ANTICLERE, 7410), /the holder's defense of 7,410, and at least 6,000 influence/);
   assert.equal(seatArrivalLine(ANTICLERE, SH), 'Anticlere, held by the Silver Hand <SH>.');
   assert.equal(seatInfoLine(ANTICLERE, SH), 'The Charter of Anticlere: held by the Silver Hand <SH>');
   const heldSeat = { ...ANTICLERE, holder: { guild: SH } };
@@ -143,7 +143,7 @@ test('SEAT1c THE BOOK AND THE SEAT TAB: a derived seat dressed in its holder and
   assert.match(text, /The Charter of Anticlere: held by the Silver Hand <SH>/);
   assert.match(text, /Held by the Silver Hand <SH> since week 3\. Standing 55\./);
   assert.match(text, /Ebon Oath <EO> has won a Right of Siege against the Silver Hand <SH> this week\./);
-  assert.match(text, /the holder's defence of 4,500/);
+  assert.match(text, /the holder's defense of 4,500/);
   assert.deepEqual(byClass(host, 'notice-chronicle')[0].querySelectorAll('li').map((li) => li.textContent), ['In week 15, the Silver Hand <SH> held Anticlere unchallenged.', 'In week 3, the Silver Hand <SH> took the Charter of Anticlere with 6,100 influence.']);
   const give = () => byClass(host, 'notice-seat-relinquish')[0];
   give().click();

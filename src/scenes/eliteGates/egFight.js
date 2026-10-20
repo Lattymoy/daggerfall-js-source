@@ -210,23 +210,23 @@ export const EG_SAY = Object.freeze({
   // FB1018D DUEL-RING: at n = 1 no ring rises nor falls (section 13.3) - the open duel's own words
   challenge: (n, w) => (w === EG_DUEL_OPEN ? t('eg.say.duelOpen', 'A challenge in the open! Deal him a tenth of his health within 15 s.') : 'A challenge! The ring of fire rises.'),
   challengewon: () => 'The challenge is met.', challengeend: (n, w) => (w === EG_DUEL_OPEN ? t('eg.say.duelUnmet', 'The challenge goes unmet.') : 'The ring falls.'),
-  conquest: () => 'Banners claim the floor - it burns, and two standing ward the lord. Break them!',   // FB1018D WARD-BAR: what they do, said (section 13.4)
-  muster: () => 'The Muster-Call! The balconies fill.', tithe: () => 'The Soul Tithe: lay your soul in a gem!', bare: () => 'The gems are full - the Cairn-Keeper is laid bare!',
-  twinfell: (n) => `${n} falls - fell the other within fifteen seconds!`, twinraised: (n) => `${n} rises again.`, crossing: () => 'The Twins cross the walkway!',
+  conquest: () => 'Banners claim the floor, and it burns. Two standing ward the lord. Break them!',   // FB1018D WARD-BAR: what they do, said (section 13.4)
+  muster: () => 'The Muster-Call! The balconies fill.', tithe: () => 'The Soul Tithe: lay your soul in a gem!', bare: () => 'The gems are full. The Cairn-Keeper is laid bare!',
+  twinfell: (n) => `${n} falls. Bring down the other within fifteen seconds!`, twinraised: (n) => `${n} rises again.`, crossing: () => 'The Twins cross the walkway!',
   chaining: () => 'Soul-chains bind you. Stay close!', grounded: () => 'The Mother of Dusk is dragged down!', anchors: () => 'The anchors rise again.', vanish: () => 'The Night-Stalker vanishes.',
-  tether: () => 'Blood Tether! Stand apart.', tetherbroken: () => 'The tether snaps.', eclipse: () => 'The Eclipse comes - stand in the light!', mirrors: () => 'Mirror lords rise. Only the true lord casts a mark.',
+  tether: () => 'Blood Tether! Stand apart.', tetherbroken: () => 'The tether snaps.', eclipse: () => 'The Eclipse comes. Stand in the light!', mirrors: () => 'Mirror lords rise. Only the true lord casts a mark.',
   relit: () => 'A heart relights!', landed: () => 'The Wyrm lands!', perches: () => t('eg.say.perches', 'The perches rise again, molten!'), broken: (n, t) => `${n || 'Someone'} breaks a ${t || 'ward'}.`, stirs: () => 'Something stirs.', raised: () => 'A Binder raises the fallen.',
   raisebroken: () => 'The raising is broken.', door: () => 'The way down opens.', recalled: (n) => `${n} is called back.`, home: (n) => `${n} walks home.`, goldrun: () => 'Gold run. +1:00',
-  mimic: () => 'The cache breathes - a Kyn Mimic!', memento: (n, t) => `${n} carries ${t}'s Memento.`, relicbroken: () => 'The relic breaks! The hold falls back.', silenced: () => 'A caster is silenced.',
-  orrerytrue: () => 'The Orrery turns true. A Vestige waits.', chamberdone: () => 'The chamber is cleared. Find the way down.', freed: () => 'The Battlemage is freed - a Cantrip for each of you.',
+  mimic: () => 'The cache breathes. A Kyn Mimic!', memento: (n, t) => `${n} carries ${t}'s Memento.`, relicbroken: () => 'The relic breaks! The hold falls back.', silenced: () => 'A caster is silenced.',
+  orrerytrue: () => 'The Orrery turns true. A Vestige waits.', chamberdone: () => 'The chamber is cleared. Find the way down.', freed: () => 'The Battlemage is freed, and grants a Cantrip to each of you.',
   desertertook: () => 'The Deserter takes the cache.', sapperfed: () => 'A Sapper reaches its lord and heals it.', reopened: () => 'A Sapper tears a rift open again!', cantrip: (n, t) => `${n} uses ${t}.`,
   bargain: (n, t) => `Dagon's Bargain is struck: ${t}.`, respite: (n, t) => `A respite: ${t} seconds.`, ready: () => 'The company is ready.',
-  gateheld: () => 'The march holds the gate - break it, or the Ward-Bearers stand warded.',   // AUDIT EG IV (section 8.3)
+  gateheld: () => 'The march holds the gate. Break it, or the Ward-Bearers stay warded.',   // AUDIT EG IV (section 8.3)
   // EG-FULL LAYER THREE: the fragments' beats
-  seam: (n) => `${n || 'Someone'} breaks a false wall - an alcove opens.`, engine: (n, t) => `${n || 'Someone'} works the ${t || 'engine'}!`,
-  horn: (n) => `The Honour Horn sounds - ${n || 'one of you'} is called into the ring. Answer alone!`, hornwon: (n) => `${n || 'The challenger'} fought with honour - the tiers throw Reliquaries!`,
-  hornfoul: () => 'Another steps into the ring - the crowd throws fire! Ashfall in the Pit.', niche: (n) => `${n || 'Someone'} rests at the Battlemage's niche.`,
-  hcache: (n) => `${n || 'Someone'} takes the High Road's cache - a Reliquary.`, lowroad: () => 'Something stirs on the Low Road.',
+  seam: (n) => `${n || 'Someone'} breaks a false wall, and an alcove opens.`, engine: (n, t) => `${n || 'Someone'} works the ${t || 'engine'}!`,
+  horn: (n) => `The Honor Horn sounds - ${n || 'one of you'} is called into the ring. Answer alone!`, hornwon: (n) => `${n || 'The challenger'} fought with honor, and the stands throw down Reliquaries!`,
+  hornfoul: () => 'Another steps into the ring, and the crowd throws fire! Ash falls in the Pit.', niche: (n) => `${n || 'Someone'} rests at the Battlemage's niche.`,
+  hcache: (n) => `${n || 'Someone'} takes the High Road's cache: a Reliquary.`, lowroad: () => 'Something stirs on the Low Road.',
 });
 
 /**

@@ -49,7 +49,8 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // cup), which is the strongest shape of "a render of game data is
   // game data" a page about the game can hold.
   // FIX-D: one url() is allowed, and it is not a picture - the digit five's
-  // @font-face data URI (a 520-byte OFL glyph; see below). Every other url()
+  // @font-face data URI (a 520-byte OFL glyph; see below), and since TWO
+  // (2026-10-18) the 2 and Z's beside it. Every other url()
   // is still forbidden. <img\s, not <img: the asks' comment SAYS "<img>"
   // while explaining why the marks are drawn in box-shadow instead of being one.
   // BR2 (2026-09-13) had put ONE raster here - Mac's uploaded logo as the

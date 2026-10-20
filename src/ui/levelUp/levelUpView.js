@@ -617,7 +617,7 @@ export const ROLE_IDLE = 'idle';            // a minor that is not the best, or 
 export const ROLE_NOTE = Object.freeze({
   get [ROLE_COUNTS]() { return t('levelup.role.counts', 'Every point counts toward your next level.'); },
   get [ROLE_DROPPED]() { return t('levelup.role.dropped', 'Your lowest major skill. It doesn\'t count toward your next level.'); },
-  get [ROLE_BEST]() { return t('levelup.role.best', 'Your highest minor skill - the only minor skill that counts toward your next level.'); },
+  get [ROLE_BEST]() { return t('levelup.role.best', 'Your highest minor skill, the only minor skill that counts toward your next level.'); },
   get [ROLE_IDLE]() { return t('levelup.role.idle', 'Doesn\'t count toward your next level.'); },
 });
 

@@ -265,7 +265,7 @@ export function sigilLines(item) {
   // (systems/sigil/sigilSets.js setLines)
   const blow = sigilHasBlow(s);
   const full = blow ? `: +${s.power}% at Ascendant` : '';
-  if (_renown == null) return [`Sigil (Dormant - wakes online, with your Renown)${full}`];
+  if (_renown == null) return [`Sigil (Dormant. It wakes online, with your Renown)${full}`];
   const st = sigilStageIn(s, _renown);
   const out = [blow ? `Sigil (${SIGIL_STAGES[st].name}): +${pctText(sigilPercent(s, _renown))}% damage, +${s.power}% at Ascendant` : `Sigil (${SIGIL_STAGES[st].name})`];
   const next = SIGIL_STAGES[rank + 1];

@@ -40,7 +40,7 @@ test('SD-HERALD law: THE NAMES - a slot\'s name when it needs no city, else none
 test('SD-HERALD law: THE RISE\'S POST - the role pinged first and the ONLY mention Discord may make; never where (a find); when it fades unfound, in each reader\'s own time (mutants: a ping with no role; every mention allowed; the fade\'s stamp the next rise\'s)', () => {
   const rec = risen(2, 17);
   const p = sdRisePost({ rec, role: ROLE });
-  assert.equal(p.content, `<@&${ROLE}> **A bell rings where there is no bell: an Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the city it stands by speak of it. No map shows it - the first to stand at its door finds it. Unfound, it fades <t:${s(rec.until)}:R>.`);
+  assert.equal(p.content, `<@&${ROLE}> **A bell rings where there is no bell: an Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the city it stands by speak of it. No map shows it. Whoever first stands at its door finds it. Unfound, it fades <t:${s(rec.until)}:R>.`);
   assert.deepEqual(p.allowed_mentions, { roles: [ROLE] }, 'the one role, and nothing else');
   assert.ok(!p.content.includes('Daggerfall') && !p.content.includes('Stopped Bell'), 'neither its region nor its name: it must be found');
   const bare = sdRisePost({ rec });

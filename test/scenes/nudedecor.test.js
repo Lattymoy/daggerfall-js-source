@@ -122,7 +122,7 @@ test('NUDE-DECOR the decorator: a figure placed while Show Nudity was on shows i
     await settle();
     assert.equal(rowPicture(root, id), 'url:184.29', 'the stand-in\'s picture, asked anew - never the one kept from before');
     assert.ok(asked.includes('184.29'));
-    tab(root, /^Catalogue/).fire('click');
+    tab(root, /^Catalog/).fire('click');   // PIN MOVED (VOICE2): the tab says Catalog (Voice.md rule 8, American spelling)
     assert.equal(rows(root).some((r) => r.dataset.key === 'f184.11'), false, 'the catalogue offers the figure no more');
     assert.equal(rows(root).some((r) => r.dataset.key === 'f184.29'), true, 'its stand-in, as itself');
     // moved: the ghost is what the room stands it as

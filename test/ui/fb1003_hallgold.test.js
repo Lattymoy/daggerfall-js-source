@@ -25,7 +25,7 @@ test('HALL-GOLD the words: short of the price says where the gold goes (the Guil
   assert.match(short, /Guild tab's Treasury/);
   assert.match(short, new RegExp(`at most ${GUILD_MOVE_MAX.toLocaleString('en-US')} at a time`));
   assert.match(short, /bank account does not pay for a hall/);
-  assert.match(old, /less than 1,274,880 gold that realm characters put in - only that gold buys a hall/);
+  assert.match(old, /less than 1,274,880 gold that realm characters put in, and only that gold buys a hall/);
   assert.match(old, /before the realm, or by a character outside it, stays in the treasury but does not count/);
   // the door's press says each refusal its own way
   const modes = rd('src/scenes/worldModes.js');

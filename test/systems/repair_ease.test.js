@@ -48,7 +48,7 @@ test('REPAIR-EASE: a Field Repair Kit mends ANY metal\'s weapon or armour by 15%
   assert.ok(!items.includes(kit), 'spent');
   const none = mintFieldRepairKit();
   assert.equal(repairKitUse(none, [none, sword(1, 100)]).text, 'Nothing here wants mending.');
-  assert.deepEqual(pieceLines(kit), ['Mends 15% of a weapon\'s or armour\'s condition, up to 75%, once'], 'KIT-CEILING');
+  assert.deepEqual(pieceLines(kit), ['Mends 15% of a weapon\'s or armor\'s condition, up to 75%, once'], 'KIT-CEILING');
   assert.equal(validItemField('fieldKit', true), true);
 });
 

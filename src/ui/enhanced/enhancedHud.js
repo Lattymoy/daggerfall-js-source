@@ -861,8 +861,12 @@ function build(doc) {
   // and grows up from the caption (the block is anchored by its bottom), never down into the diamond
   const stat = el('div', 'hud-stat');
   bindStatEnding(stat);   // BUFF-END
+  // DIAMOND-HB: where the hotbar goes when Quick slots is set to Diamond (ui/enhanced/enhancedHotbar.js mountHotbarDock).
+  // `display: contents`, like the hotDock.
+  const gemDock = el('div', 'hud-gemdock');
   quick.append(stat, cap, diamond);
   root.append(quick);
+  quick.append(gemDock);
   // DEPARTURE 2 (see the header): the only listeners this readout owns.
   // Bound once, reading the LIVE options bag - a frame binds nothing.
   // AUDIT QS F8: a FINGER, not a mouse that happens to live on a
@@ -937,7 +941,7 @@ function build(doc) {
     stat, quickCap: cap, quickDiamond: diamond, top,   // UI3: the status widget, the caption it stands on, the diamond it may stand beside and the top block over it (its band is measured from them)
     renown, renownBox, renownFill, renownGhost, renownNum,
     breath, breathFill, grip, gripFill, gripLabel, readied, reticle, cross, centreWord, cornerWord,
-    quick, quickCells: cells, quickTags: tags, hotDock,
+    quick, quickCells: cells, quickTags: tags, hotDock, gemDock,
     spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName, icon: spellIcon } };
 }
 
@@ -1050,7 +1054,7 @@ export function hideEnhancedHud() {
 export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   const { hidden = false } = opts;
   if (typeof document === 'undefined') return;
-  if (!host) { parts = build(document); host = parts.root; mountHotbarDock(parts.hotDock); }
+  if (!host) { parts = build(document); host = parts.root; mountHotbarDock(parts.hotDock, parts.gemDock); }   // DIAMOND-HB: and the diamond's corner
   tickHudLayout(document);   // HUD-MOVE: starts once - the player's layout and the lock; its sweeps are its own interval's (PERF-HUD1)
   wearUiPillar(document, host);   // RETRO-UI: inside retro mode's pillarbox, as the held map stands (DISC25-B)
   tickFoeTarget(dt);

@@ -421,7 +421,7 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
   door({ player: { isPlayerSwimming: true, feetAt: () => [0, 0, 0] }, boat: {} }, PS.PORTAL_TEXT.water);
   door({ boat: {} }, PS.PORTAL_TEXT.aboard);
   door({ isOnShip: () => true }, PS.PORTAL_TEXT.aboard);
-  door({ here: { x: veilhaven().px, y: veilhaven().py }, travelMapDoorReady: () => false }, 'Nothing of the Bay\'s magic reaches across the Veil - only the crossing does.');   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it - before the map's own
+  door({ here: { x: veilhaven().px, y: veilhaven().py }, travelMapDoorReady: () => false }, 'None of the Bay\'s magic reaches across the Veil. Only the crossing does.');   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it - before the map's own
   door({ travelMapDoorReady: () => false }, PS.PORTAL_TEXT.noMap);
   playerEntity.health = 0; door({}, PS.PORTAL_HOLD_TEXT.busy); playerEntity.health = 10;
   assert.equal(built.length, 0, 'no map for a refusal');

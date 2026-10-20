@@ -135,7 +135,7 @@ export const paidText = (pay, tax) => (tax > 0 ? t('prof.work.paidTax', '{pay} s
  *  gold wall in UNCOUNTED's words, on the card and on its button's title alike: a Court or chapter writ's
  *  (ui/noticeWindow.js writNode) and a guild writ's (guildWritCard). `material` its name, counted. */
 export const writWalledText = (n, material) => t('prof.work.writ.walled',
-  '{n, number} {material} you hold cannot fill a writ: only what you gathered, or bought with silver, counts - not what was looted, bought at a shop or with gold, or given by another player.',
+  '{n, number} {material} you hold cannot fill a writ. Only what you gathered, or bought with silver, counts. What was looted, bought at a shop or with gold, or given by another player does not.',
   { n: Number(n), material });
 
 /**
@@ -195,7 +195,7 @@ export function createWorkTab(w, ui) {
   /** AUDIT 31 U11: Decline pressed once arms it, twice declines - a stray tap never sends a crafter's work away. */
   const declineButton = (c) => {
     const armed = () => st.arm?.id === c.id && nowMs() - st.arm.at < WORK_ARM_MS;
-    const d = button(`work-decline${armed() ? ' armed' : ''}`, armed() ? t('prof.work.declineArmed', 'Decline - press again') : t('prof.work.decline', 'Decline'), () => {
+    const d = button(`work-decline${armed() ? ' armed' : ''}`, armed() ? t('prof.work.declineArmed', 'Decline? Press again') : t('prof.work.decline', 'Decline'), () => {
       if (!armed()) { st.arm = { id: c.id, at: nowMs() }; ui.rerender(); return; }
       st.arm = null;
       return act(() => w.writs.decline(c.id), t('prof.work.declined', 'Declined. Its pay goes back to its poster.'));
@@ -240,7 +240,7 @@ export function createWorkTab(w, ui) {
       // AUDIT BAG1: a carrying book's count is the Stores' and what is carried - said as such. WRIT-WALL: never "You have
       // none" beside units held and walled - the walled line under the bar says what they are
       const none = held > 0 ? t('prof.work.writ.guildFull', 'The guild\'s Stores can take no more of it.') : walledSaid ? null
-        : w.carrying?.() ? t('prof.work.writ.noneCarried', 'You have none - in your Stores, Materials Bag or pack.') : t('prof.work.writ.noneHeld', 'Your Stores hold none of it.');
+        : w.carrying?.() ? t('prof.work.writ.noneCarried', 'You have none in your Stores, Materials Bag or pack.') : t('prof.work.writ.noneHeld', 'Your Stores hold none of it.');
       if (none) bar.append(el('span', 'work-none', none));
     }
     bar.append(el('span', null, w.carrying?.() ? t('prof.work.writ.heldCarried', '{n, number} held', { n: Number(held) }) : t('prof.work.writ.held', '{n, number} in your Stores', { n: Number(held) })));
@@ -295,7 +295,7 @@ export function createWorkTab(w, ui) {
     const pieces = w.pieces(c);
     if (!pieces.length) {
       // AUDIT 31 H8: one that answers it is in the pack but will not leave it - said, never "you carry none"
-      return [el('span', 'work-none', /** @type {any} */ (pieces).blocked > 0 ? t('prof.work.fill.blocked', 'Your piece for it is equipped, locked or bound - free it first.')
+      return [el('span', 'work-none', /** @type {any} */ (pieces).blocked > 0 ? t('prof.work.fill.blocked', 'Your piece for it is equipped, locked or bound. Free it first.')
         : t('prof.work.fill.none', 'You carry no unworn piece of your own make for it.'))];
     }
     const picked = () => pieces.find((p) => p.item.provenance === st.pick[c.id]) ?? pieces[0];
@@ -330,7 +330,7 @@ export function createWorkTab(w, ui) {
       const where = here ? t('prof.work.here', 'here') : w.regionNameOf(c.region);
       // AUDIT 31 H6: a filled one of yours comes by the market's deliveries - collected at the Market tab
       const said = c.state === 'open' ? writLeftText(c.expiresAt, ui.nowS())
-        : c.mine && c.state === 'filled' ? t('prof.work.yours.collect', 'filled - collect it at the Market tab')
+        : c.mine && c.state === 'filled' ? t('prof.work.yours.collect', 'filled. Collect it at the Market tab')
           : !c.mine ? commissionSaid(c.state)
             : c.returned ? t('prof.work.yours.silverBack', '{state} - silver back', { state: commissionSaid(c.state) }) : t('prof.work.yours.silverToCome', '{state} - silver to come back', { state: commissionSaid(c.state) });
       li.append(el('span', 'work-what', who), el('span', 'work-where', t('prof.work.yours.where', '{where} · {said}', { where, said })));

@@ -484,7 +484,7 @@ export function drawEgPanel(model, { hidden = false, doc = globalThis.document, 
   }
   // AUDIT EG V (c, L7-9): the recap closes by a tap - its own button - and a screen in hand reads no key's words (L7-20)
   if (recap) { const row = doc.createElement('div'); row.className = 'eg-cards eg-ask'; const b = doc.createElement('button'); b.className = 'eg-close'; b.textContent = t('eg.recap.close', 'Close'); b.addEventListener?.('click', () => onClose()); row.append(b); panel.append(row); }
-  const noteText = recap ? (touch ? '' : 'Press Enter to close.') : touch ? t('eg.panel.noteTouch', 'Tap a card or a choice.') : 'Y: the Ready vote - R: a respite - 1-6: a card or a choice; /breach pick and /breach vote work in chat.';
+  const noteText = recap ? (touch ? '' : 'Press Enter to close.') : touch ? t('eg.panel.noteTouch', 'Tap a card or a choice.') : 'Y: the Ready vote. R: a respite. 1-6: a card or a choice. /breach pick and /breach vote work in chat.';
   if (noteText) { const note = doc.createElement('div'); note.className = 'eg-note'; note.textContent = noteText; panel.append(note); }
   (doc.body ?? doc.documentElement)?.append(panel);
 }

@@ -470,7 +470,7 @@
   {
     "name": "QS-A-a-share-unworded",
     "file": "src/systems/quest/questShare.js",
-    "old": "  shelved: 'have abandoned it - reclaim it from your journal to take it up again.',",
+    "old": "  shelved: 'have abandoned it. Reclaim it from your journal to take it up again.',",
     "new": "",
     "tests": [
       "test/systems/quest/questshelf.test.js"

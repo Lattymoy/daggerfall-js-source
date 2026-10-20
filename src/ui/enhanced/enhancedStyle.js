@@ -2603,6 +2603,17 @@ ${SUPPORT_MARKS_CSS}
   background: rgba(192,138,62,0.12); }
 .card button.skintile:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
 .card .skinart { height: 72px; width: auto; image-rendering: pixelated; pointer-events: none; }
+/* LAYERED-GEAR (the owner: "a proper toggle in the account profile for
+   players to either equip skins or use this integration"): Look, two
+   presses side by side over the panels - the chosen one in brass. */
+.card .skinmode { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0 0; flex-wrap: wrap; }
+.card .skinmode .fieldlabel { margin: 0; }
+.card .skinmodeset { display: flex; gap: 6px; }
+.card button.skinmodebtn { font: inherit; font-size: 13px; color: var(--dim); min-height: 36px; padding: 6px 12px;
+  background: rgba(0,0,0,0.25); border: 1px solid var(--iron); border-radius: 2px; cursor: pointer; }
+.card button.skinmodebtn:hover { color: var(--bone); border-color: var(--dim); }
+.card button.skinmodebtn.on { color: var(--bone); border-color: var(--brass); background: rgba(192,138,62,0.12); }
+.card button.skinmodebtn:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
 .px-winfoot { display: flex; justify-content: center; padding: 6px 0 18px; }
 .px-winclose {
   font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;

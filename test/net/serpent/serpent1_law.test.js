@@ -136,7 +136,7 @@ test('SERPENT1 words: the boss table, and each line the event, where and when (m
   assert.equal(serpentBossOf(363).id, 'sethrakul');
   assert.equal(serpentBossById('nobody').id, 'sethrakul');
   const w = { near: 'Sentinel', boss: 'Sethrakul', at: '14:32', left: '4m 07s' };
-  assert.equal(sightingLine(w), 'Bells ring in the harbours: a great serpent is sighted off Sentinel. Sethrakul rises at 14:32 your time.');
+  assert.equal(sightingLine(w), 'Bells ring in the harbors: a great serpent is sighted off Sentinel. Sethrakul rises at 14:32 your time.');
   // PIN MOVED: SERPENT4 - its waters open until it dives: the rising counts to the dive, the storm says a ship may still join
   assert.equal(risingLine(w), 'Sethrakul rises off Sentinel. It dives in 4m 07s - sail out and join the fight.');
   assert.equal(sealLine(w), 'A storm breaks over Sethrakul\'s waters off Sentinel - every ship may still join the fight. It dives at 14:32 your time.');

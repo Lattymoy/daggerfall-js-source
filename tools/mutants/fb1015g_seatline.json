@@ -29,7 +29,7 @@
   {
     "name": "SEAT-LINE-the-seats-line-dropped",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "      t('guild.rankNeeds.seat', \"Ranks {officer} and {master} are each chapter's council and Master, won by Merit - no review gives them\",\n        { officer: SEAT_RANK.officer, master: SEAT_RANK.master }),\n",
+    "old": "      t('guild.rankNeeds.seat', \"Ranks {officer} and {master} are each chapter's council and Master, won by Merit. No review grants them\",\n        { officer: SEAT_RANK.officer, master: SEAT_RANK.master }),\n",
     "new": "",
     "tests": [
       "test/systems/fb1015g_seatline.test.js"

@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D3-stand",
     "file": "src/net/motherlodeBook.js",
-    "old": "Walk about on it a moment - the Watch marks those on the move, every two minutes.",
-    "new": "Stand a moment - it will within two minutes.",
+    "old": "Walk about on it a moment. The Watch notes those on the move every two minutes.",
+    "new": "Stand a moment. It will within two minutes.",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ]

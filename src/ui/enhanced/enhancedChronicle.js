@@ -587,7 +587,7 @@ function paint() {
         if (clean?.abandon && clean.canAbandon?.(e.uid)) {
           const armed = bountyArmed === `q:${e.uid}`;
           const ab = el('button', 'cr-rm cr-share', armed ? t('chronicle.quests.abandonArmed', 'Click again') : t('chronicle.quests.abandon', 'Abandon'));
-          ab.title = t('chronicle.quests.abandonTitle', 'Give up this quest for now - reclaim it from the pause menu\'s Quests tab');
+          ab.title = t('chronicle.quests.abandonTitle', 'Give up this quest for now. Reclaim it from the pause menu\'s Quests tab');
           ab.setAttribute('aria-label', armed ? t('chronicle.quests.abandonArmedLabel', 'Click again to abandon this quest') : t('chronicle.quests.abandonLabel', 'Abandon this quest'));
           ab.onclick = () => {
             if (bountyArmed !== `q:${e.uid}`) { bountyArmed = `q:${e.uid}`; render(); return; }
@@ -604,7 +604,7 @@ function paint() {
         if (reset?.restart && reset.canRestart?.(e.uid)) {
           const armed = bountyArmed === `r:${e.uid}`;
           const rs = el('button', 'cr-rm cr-share', armed ? t('chronicle.quests.restartArmed', 'Click again') : t('chronicle.quests.restart', 'Restart'));
-          rs.title = t('chronicle.quests.restartTitle', 'Start this quest again from its first step - what it placed and gave is taken back');
+          rs.title = t('chronicle.quests.restartTitle', 'Start this quest again from its first step. What it placed and gave is taken back');
           rs.setAttribute('aria-label', armed ? t('chronicle.quests.restartArmedLabel', 'Click again to restart this quest') : t('chronicle.quests.restartLabel', 'Restart this quest'));
           rs.onclick = () => {
             if (bountyArmed !== `r:${e.uid}`) { bountyArmed = `r:${e.uid}`; render(); return; }

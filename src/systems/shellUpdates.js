@@ -30,8 +30,8 @@ export function updateReadyText(info) {
   // DA13: "the next time you start" is true of both kinds of update - an installer's, installed at quit, and a version of
   // the game the shell's own channel brought, which the page loads at its next start
   return info?.manual
-    ? `${name} is out. Download it from the File menu when you are ready - your saves stay where they are.`
-    : `${name} is ready. It plays the next time you start, or now from File > Restart to Update - save first.`;
+    ? `${name} is out. Download it from the File menu when you are ready. Your saves stay where they are.`
+    : `${name} is ready. It runs the next time you start, or now from File > Restart to Update. Save first.`;
 }
 
 /**

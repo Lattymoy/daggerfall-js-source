@@ -77,8 +77,8 @@ export const YARD_MARK_LIFT = 4;
 /** What a wagon on show says it carries (its hover's line). */
 export const WAGON_SHOW_LINE = Object.freeze({
   cart: 'Carries 750 kg',
-  openWagon: 'Carries 1,500 kg - seats four in its back',
-  caravan: 'Carries 2,000 kg - a room to live in',
+  openWagon: 'Carries 1,500 kg and seats four in the back',
+  caravan: 'Carries 2,000 kg, with a room to live in',
 });
 const NONE = Object.freeze([]);
 

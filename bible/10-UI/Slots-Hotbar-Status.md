@@ -406,3 +406,47 @@ reads digits.
 
 Pinned: `test/ui/hud/fb1018f_dungeondigits.test.js` (3). Mutants: `tools/mutants/fb1018f_dungeondigits.json` (11, all
 dead).
+
+## DIAMOND-HB - the diamond as part of the hotbar, Diamonds, hover + key (2026-10-18)
+
+> "fix the 4 style hotbar. And to make it so clicking an item and pressing a hotbar key adds it to that hotbar" -
+> LostMyLeg, Discord. RookieG asked for diamond-shaped slots on the ten-slot bar; LostMyLeg: "i prefer the squares tbh
+> but i can make it an option".
+
+**Diamond.** The Quick slots tile's Diamond now writes `quickbarStyle: 'diamond'`. That style is the hotbar
+(`systems/uiSkin.js` HOTBAR_STYLES, so `hotbarInForce` is true), showing only slots 1-4. They are laid out in d-pad
+order (1 top, 2 bottom, 3 left, 4 right) where the old diamond was, inside `.hud-quick`, at its size (`--qs-cell`,
+`--qs-box`). Filling, dragging, clearing, the keys and the press are the ten-slot bar's code
+(`src/ui/enhanced/enhancedHotbar.js`), so the two behave the same. The diamond is never a crossbar. Keys 5-0 are not
+taken while it is shown. Under a window it keeps its diamond shape at the phone size (the bar only shows there while
+something is dragged, PADPLUS5). The layout follows the tile and nothing else. The old QS diamond (hands from the equip table, two consumables, the cycling
+hold) is still there for Off, which keeps `quickbarStyle: 'quickbar'` and `quickslots: false`.
+
+An old save with `quickbarStyle: 'quickbar'` and the switch on had chosen Diamond. `systems/uiPrefs.js` loadPrefs
+moves it to `'diamond'`. Off saves are not touched, and neither is the HB-LYCFREE rev-1 migration.
+
+**Diamonds.** A fourth state on the tile: the ten-slot bar with diamond-shaped slots (`hotbarShape: 'diamond'`, declared
+on the Quick slots row). Hotbar sets it back to `'square'`, which is the default. As with the old diamond, slots are not
+rotated: the slot is clipped to a diamond with clip-path, which also limits the click area, and the frame is a clipped
+ring coloured through its background. The key sits at the top point and the count at the bottom point.
+
+**Dresses.** The rim colours are variables a dress sets on `.hb` (`--gem-rim`, `--gem-rim-empty`, `--gem-rim-active`,
+`--gem-rim-strike`), copied from how each dress coloured the old diamond's rim: the Plus kit's stone bevel with brass in
+hand (`src/ui/enhanced/enhancedFrame.js`), DFO Grimoire's gilded rim with yellow gold in hand
+(`src/ui/grimoireDress.js`). Under Grimoire a diamond slot drops the shelf box's border-image, which a diamond clip would
+cut at the corners, and takes the old diamond's wood ground. The Plus themes colour the slot ground as they colour the
+square slots (chip colour, Stone's marble). A rarity tier is the old diamond's tier gradient. Checked by rendering the
+square bar, Diamond and Diamonds with the real sheets under Slate, Stone, Ember and Grimoire.
+
+**Hover + key.** With the pack or the spellbook open, pressing a slot key puts the item or spell under the mouse on that
+slot. Pack rows (local only, not loot), worn panels and worn sockets carry `_hotbarItem`; spellbook rows carry
+`_hotbarSpell`. If nothing is under the mouse, the window's selection is used (`setHotbarPick`: the pack's selected item,
+the spellbook's selected spell). If there is neither, the key goes to the window as before. Text fields keep their keys.
+
+`hotbarShownSlotOf` replaces `hotbarSlotOf` in the pack's row chip, the item card button and the spellbook button, so
+something on slot 7 counts as not on the bar while the diamond shows four slots. "Add to hotbar" fills the first free
+shown slot.
+
+Pins moved: `test/systems/ft18_features.test.js` (four tiers), `test/systems/hb_lycfree.test.js` (Diamond stores
+`'diamond'`), `test/systems/qs2_tooltip.test.js` (the pack's import), `test/ui/enhanced/qs3_hud.test.js` (the row's
+covered prefs), `test/ui/enhanced/ui3_status.test.js` (the quickslot block's children include the diamond dock). New: `test/ui/enhanced/diamondhb_hotbar.test.js` (6).

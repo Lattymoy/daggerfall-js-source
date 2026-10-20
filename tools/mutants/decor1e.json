@@ -83,8 +83,8 @@
   {
     "name": "DECOR1e-the-tabs-idle",
     "file": "src/ui/decorPanel.js",
-    "old": "chip('Catalogue', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this room",
-    "new": "chip('Catalogue', mode === 'catalogue', () => {}, 'all'), chip(`In this room",
+    "old": "chip('Catalog', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this room",
+    "new": "chip('Catalog', mode === 'catalogue', () => {}, 'all'), chip(`In this room",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]

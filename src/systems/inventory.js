@@ -29,6 +29,7 @@ import { noteShot } from './shotTally.js';   // ARENA-ARROWS: the shots a bout l
 import { cardWorth } from '../net/card/cardWorthLaw.js';   // AUDIT CARDS-6 A6: a card split off is worth its card (the law imports nothing of systems/)
 import { PATRON_COUNTER_MARK, COUNTER_PAID_MARK, COUNTER_VALUE_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: a stack keeps the counter's mark (the law imports nothing)
 import { isStolen, markStolen } from './stolenGoods.js';   // STOLEN-GOODS: a stolen piece stacks with stolen kin alone, and a split keeps the mark (a leaf)
+import { sameFoundMark, carryFoundMark } from './item/foundMark.js';   // AUDIT MEND-THIRD: a found stack keeps its mark
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -256,7 +257,10 @@ export function stacksWith(a, b) {
     // STOLEN-GOODS (FIELD BUGS 2026-10-16b; the port's own field, Ledger A): a stolen piece stacks only with stolen kin -
     // three arrows off a shut shop's shelf merged into the pack's twenty were twenty-three honest arrows (or twenty-three
     // stolen ones), and the court took the wrong count
-    isStolen(a) === isStolen(b);
+    isStolen(a) === isStolen(b) &&
+    // AUDIT MEND-THIRD L1-5, L3-3 (SELL-AS-FOUND's mark - the port's own field, Ledger A): a found book stacks only with its
+    // like - a worn found copy merged into a whole one took the held copy's condition and lost its mark, and sold whole
+    sameFoundMark(a, b);
 }
 
 /** ItemCollection.AddItem (ItemCollection.cs:217-252): merge into an
@@ -401,6 +405,7 @@ export function splitStack(list, stack, numberToPick, { rolls = Math.random } = 
   if (Number.isInteger(stack[COUNTER_PAID_MARK])) picked[COUNTER_PAID_MARK] = stack[COUNTER_PAID_MARK];   // LAW-3: and what the counter was paid a piece
   if (Number.isInteger(stack[COUNTER_VALUE_MARK])) picked[COUNTER_VALUE_MARK] = stack[COUNTER_VALUE_MARK];   // AUDIT TOWN-ECON 2 PRICE-6: and the value it was bought at
   if (isStolen(stack)) markStolen([picked]);   // STOLEN-GOODS: and the theft's (systems/stolenGoods.js) - nor is a split
+  carryFoundMark(stack, picked);   // AUDIT MEND-THIRD L3-3: and a found stack's condition and mark - DFU's fresh mint handed a worn found book over whole
   list.push(picked);                              // AddItem(noStack: true)
   stack.stackCount = count - numberToPick;
   return picked;

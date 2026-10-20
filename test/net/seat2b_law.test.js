@@ -25,7 +25,7 @@ test('SEAT2b THE WORKS: the 7.5 table whole - ten works, their tiers\' Marks and
     ['forge', 'Forge', 'any', [[1000, '200 stone:cut, 100 ingot:iron'], [2500, '300 stone:cut, 100 ingot:steel']]],
     ['workshop', 'Workshop', 'any', [[1000, '200 plank:oak, 50 ingot:iron'], [2500, '300 plank:teak, 50 ingot:steel']]],
     ['apothecary', 'Apothecary', 'any', [[1000, '100 stone:cut, 100 plank:oak'], [2500, '200 stone:cut, 20 gem:pearl']]],
-    ['harbour', 'Harbour', 'coast', [[2000, '400 plank:oak, 200 stone:cut'], [5000, '800 plank:teak, 400 stone:cut']]],
+    ['harbour', 'Harbor', 'coast', [[2000, '400 plank:oak, 200 stone:cut'], [5000, '800 plank:teak, 400 stone:cut']]],   // PIN MOVED (VOICE2): the name American (Voice.md rule 8); the id a save key, as it was
   ]);
   for (const w of FORT_WORKS) for (const t of w.tiers) for (const [k] of t.needs) assert.ok(minedMaterial(k), `${w.id}: ${k} is a Stores material`);
   assert.deepEqual(FORT_WORKS.map((w) => fortMaxTier(w.id)), [3, 3, 2, 3, 3, 2, 2, 2, 2, 2]);

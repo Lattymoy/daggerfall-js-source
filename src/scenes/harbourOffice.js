@@ -63,7 +63,7 @@ export function createHarbourOffice(deps) {
   /** What happened at sea, to the contracts held: each done paid and said, each failed said, each come further said. */
   function event(ev) {
     const r = L.contractEvent(ev);
-    for (const c of r.done) { deps.credit?.(c.pay); deps.mid?.(`Contract done - ${c.title}. ${gold(c.pay)} paid by ${c.port?.name ?? c.crown}'s harbourmaster.`, 5); }
+    for (const c of r.done) { deps.credit?.(c.pay); deps.mid?.(`Contract done - ${c.title}. ${gold(c.pay)} paid by ${c.port?.name ?? c.crown}'s harbormaster.`, 5); }
     for (const c of r.failed) deps.mid?.(`Contract failed - ${c.title}.${c.kind === 'delivery' ? ' The cargo went down with the ship.' : ''}`, 5);
     for (const c of r.moved) deps.say?.(`${c.title}: ${movedWords(c)}.`, 3);
     for (const c of r.voided ?? []) deps.mid?.(c.kind === 'delivery' ? cargoVoidWords(c) : `Bounty void - ${c.title}. Someone else sank it.`, 5);   // AUDIT CAPTAIN'S SEA B4; FIELD BUGS 2026-10-13c PORT-TOWNS
@@ -98,7 +98,7 @@ export function createHarbourOffice(deps) {
     if (L.contracts().length >= CONTRACTS_MAX) return { ok: false, text: `You hold ${CONTRACTS_MAX} contracts already.` };
     if (o.kind === 'delivery' && boat?.uid == null) return { ok: false, text: 'A cargo needs a ship of your own to carry it.' };
     const c = takeContract(o, { now: now(), boat: o.kind === 'delivery' ? boat.uid : null });
-    if (!L.holdContract(c)) return { ok: false, text: 'The harbourmaster will not give it to you.' };
+    if (!L.holdContract(c)) return { ok: false, text: 'The harbormaster will not give it to you.' };
     return { ok: true, text: o.kind === 'delivery' ? `The cargo is stowed in your hold. ${days(o.days)} to ${o.to.name}.` : `Taken: ${o.title}. ${days(o.days)}.` };
   }
   /** A held contract given up. */
@@ -114,7 +114,7 @@ export function createHarbourOffice(deps) {
     if (!o.can) return { ok: false, text: o.why };
     deps.pay?.(o.price);
     L.setMarque(port.crown, now() + o.days * MINUTES_PER_DAY);
-    return { ok: true, text: `${port.crown}'s letter of marque is yours for ${days(o.days)}: its rivals' ships are your prizes in ${port.crown}'s eyes - their own crowns still call it piracy.` };   // AUDIT CAPTAIN'S SEA L14
+    return { ok: true, text: `${port.crown}'s letter of marque is yours for ${days(o.days)}: its rivals' ships are your prizes in ${port.crown}'s eyes. Their own crowns still call it piracy.` };   // AUDIT CAPTAIN'S SEA L14
   }
   /** The Admiralty's carrack bought of this port's crown - her title to the Fleet's book. */
   function buyCarrack() {
@@ -223,10 +223,10 @@ export function createHarbourOffice(deps) {
   /** A chart read: its cache marked on the captain's charts. Answers `{ ok, text }` - ok, and the chart is spent. */
   function readChart(item) {
     const site = chartSite(item?.message ?? 0, deps.ports?.() ?? [], deps.seaAt ?? (() => false));
-    if (!site) return { ok: false, text: 'The chart\'s ink has run - no coast on it you know.' };
+    if (!site) return { ok: false, text: 'The chart\'s ink has run. You know no coast on it.' };
     if (L.charts().some((c) => c.id === site.id)) return { ok: true, text: `You have marked this cache already: ${site.words}.` };
-    if (L.wasRaised?.(site.id)) return { ok: true, text: `This cache was raised long since - the chart is worth no more than its parchment.` };   // AUDIT CAPTAIN'S SEA B8: the same chart, read again, paid again
-    if (!L.markChart(site)) return { ok: false, text: 'Your charts are crowded with marks - raise a cache first.' };
+    if (L.wasRaised?.(site.id)) return { ok: true, text: `This cache was raised long ago. The chart is worth no more than its parchment.` };   // AUDIT CAPTAIN'S SEA B8: the same chart, read again, paid again
+    if (!L.markChart(site)) return { ok: false, text: 'Your charts are crowded with marks. Raise a cache first.' };
     return { ok: true, text: `You mark the chart's cache on your own charts: ${site.words}. Sail there and your lookout will find it.` };
   }
   /** A cache raised (its site's id): off the charts, its gold paid. Answers the gold, or 0 for none. */

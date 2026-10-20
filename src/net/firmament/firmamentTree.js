@@ -63,7 +63,7 @@ export const SIGNS = Object.freeze([
   Object.freeze({ id: 'rt', name: 'The Ritual', angle: 300, attrs: Object.freeze(['willpower', 'strength']), lore: 'Charge of the Mage. Those born under the Ritual are healers, and a terror to the undead.' }),
 ]);
 /** The Serpent - the middle of the sky, the Scion's place. */
-export const SERPENT = Object.freeze({ id: 'sp', name: 'The Serpent', lore: 'The Serpent wanders the heavens and serves no Guardian. From the centre of the sky every road is open to it.' });
+export const SERPENT = Object.freeze({ id: 'sp', name: 'The Serpent', lore: 'The Serpent wanders the heavens and serves no Guardian. From the center of the sky every road is open to it.' });
 /** Every start's key: a sign's `<id>.start`, the Serpent's `sp.start`. */
 export const START_KEYS = Object.freeze([SERPENT.id, ...SIGNS.map((s) => s.id)].map((id) => `${id}.start`));
 
@@ -196,7 +196,7 @@ const SKY = {
       { id: 'c4', tpl: 'chain', n: 4, small: { meleeDmg: 2 }, notables: [N('Warlord', { meleeDmg: 5, strength: 4 })] },
       { id: 'c5', tpl: 'wheel', n: 5, small: { hp: 4 }, notables: [N("Troll's Blood", { hpRegen: 3, hp: 8 }), N("Giant's Heart", { hp: 18, endurance: 3 })] },
       { id: 'c6', tpl: 'fork', n: 3, small: { killHeal: 1 }, notables: [N('Carnage', { killHeal: 2, axeDmg: 4 }), N('Reaver', { rageDmg: 7, strength: 2 })] },
-      { id: 'c7', tpl: 'wheel', n: 4, small: { strength: 2 }, notables: [N("The Lady's Favour", { endurance: 4, hp: 8 })] },
+      { id: 'c7', tpl: 'wheel', n: 4, small: { strength: 2 }, notables: [N("The Lady's Favor", { endurance: 4, hp: 8 })] },
     ],
     keystone: K("Berserker's Fury", { rageDmg: 18, armor: -2 }, 'Below half Health you strike far harder, though your armor guards you a little less.'),
     life: { ring: [{ 'yield.mining': 1 }, { 'xp.smithing': 2 }], lr1: { 'xp.mining': 4 }, lr2: { 'yield.logging': 1 }, la: { 'xp.building': 4 } },

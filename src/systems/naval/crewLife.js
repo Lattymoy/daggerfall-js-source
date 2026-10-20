@@ -203,7 +203,7 @@ export const CHANTIES = Object.freeze([
     name: 'The Iliac Bay',
     chorus: 'Heave away, haul away, bound for the Iliac Bay!',
     verses: Object.freeze([
-      'Oh, we sailed out of Daggerfall under a grey sky,',
+      'Oh, we sailed out of Daggerfall under a gray sky,',
       'With a hold full of wool and a keg running dry,',
       'The bosun he swore by Stendarr and by Kyne,',
       'We\'d be drinking in Sentinel ere the next bell\'s chime!',

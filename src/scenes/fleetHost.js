@@ -121,7 +121,7 @@ export function createFleetHost(deps) {
       : sailing ? 'Not while you are at a helm.'
       : inFight ? 'Not while the ship is in combat.'
       : apart ? 'This ship is on the other side of the Veil. Sail it across yourself.'
-      : !atPort ? 'Your ships are brought round to a port - go to one.'
+      : !atPort ? 'Your ships are brought round to a port. Go to one.'
       : null;
     const away = !r ? 'Come Sail Away is not running.'
       : at.where === 'laidup' ? 'This ship is already laid up.'
@@ -341,7 +341,7 @@ export function createFleetHost(deps) {
       if ((deps.gold?.() ?? 0) < row.next.gold) return said(false, `The shipwright asks ${row.next.gold} gold.`);
       const lists = [pack(), at.boat?.Cargo?.Items ?? []];
       for (const m of row.next.mats) if (materialCount(lists, m.kind) < m.n) return said(false, `The shipwright needs ${m.n} ${m.label} (you have ${m.have}).`);
-      if (!materialsFor(lists, row.next.mats)) return said(false, t('naval.refit.short', 'Not enough materials - one item can\'t count for two requirements.'));   // REFIT-ORES: a steel ingot counted for Steel and Iron both
+      if (!materialsFor(lists, row.next.mats)) return said(false, t('naval.refit.short', 'Not enough materials. One item cannot count for two requirements.'));   // REFIT-ORES: a steel ingot counted for Steel and Iron both
       takeAllMaterials(lists, row.next.mats);   // AUDIT 2: as materialsFor tried them
       deps.pay?.(row.next.gold);
       addRefit(uid, row.id);

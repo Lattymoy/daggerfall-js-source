@@ -54,7 +54,7 @@ export function eventTimerRows(src) {
   // (gateLaw's words: 'sealed' is the risen gate not yet open, 'closed' the gate shut for the night)
   if (phase === 'quiet') coming(`gate:${t.day}`, 'gate', 'Dagon\'s Breach opens', t.openAt, null, 'Its omen burns in the sky 15 minutes before');
   else if (phase === 'omen' || phase === 'rising' || phase === 'sealed') coming(`gate:${t.day}`, 'gate', 'Dagon\'s Breach opens', t.openAt, place, 'The omen is in the sky');
-  else if (phase === 'open') live(`gate:${t.day}`, 'gate', 'Dagon\'s Breach open', t.sealAt, place, 'Seals when this runs out - get inside');
+  else if (phase === 'open') live(`gate:${t.day}`, 'gate', 'Dagon\'s Breach open', t.sealAt, place, 'Seals when this runs out. Get inside');
   else if (phase === 'closed') live(`gate:${t.day}`, 'gate', 'Dagon\'s Breach sealed', t.wrathAt, place, 'Collapses when this runs out');
   // ...and the gate after it, once this one is under way
   if (phase !== 'quiet') coming(`gate:${t.day + GATE_EVERY_DAYS}`, 'gate', 'Next Dagon\'s Breach opens', gateTimes(t.day + GATE_EVERY_DAYS).openAt);
@@ -67,11 +67,11 @@ export function eventTimerRows(src) {
   const sPhase = serpentPhase(s, now, src?.serpent?.fellAt?.(s.day) ?? null);
   const sName = serpentBossOf(s.day).name;
   const off = src?.serpent?.place ? `Off ${src.serpent.place}` : null;
-  if (sPhase === 'quiet') coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, null, 'The harbour bells ring 15 minutes before');
-  else if (sPhase === 'omen') coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, off, 'The harbour bells are ringing - its waters are ringed on your map');
+  if (sPhase === 'quiet') coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, null, 'The harbor bells ring 15 minutes before');
+  else if (sPhase === 'omen') coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, off, 'The harbor bells are ringing. Its waters are circled on your map');
   // SERPENT4 (2026-10-11): its waters stand open until it dives - one row from its rising to its dive, the storm's breaking
   // no instant a ship sails against
-  else if (sPhase === 'rising' || sPhase === 'hunt' || sPhase === 'late') live(`serpent:${s.day}`, 'serpent', `${sName} hunts`, s.soundAt, off, 'It dives when this runs out - sail out to join');
+  else if (sPhase === 'rising' || sPhase === 'hunt' || sPhase === 'late') live(`serpent:${s.day}`, 'serpent', `${sName} hunts`, s.soundAt, off, 'It dives when this runs out. Sail out to join the hunt');
   if (sPhase !== 'quiet') {
     const nextDay = s.day + SERPENT_EVERY_DAYS;
     coming(`serpent:${nextDay}`, 'serpent', 'Next sea serpent rises', serpentTimes(nextDay).riseAt);
@@ -85,10 +85,10 @@ export function eventTimerRows(src) {
   const sdNow = sdPhase(sdRec, now);
   const sdName = src?.sd?.name || 'The Abyss Dungeon';
   const sdWhere = src?.sd?.place ? `Near ${src.sd.place}` : null;
-  if (sdNow === 'found') live(`sd:${sdRec.s}`, 'super', `${sdName} stands`, sdRec.until, sdWhere, 'Found - it fades unbroken when this runs out');
-  else if (sdNow === 'fell') live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken - it folds in on itself when this runs out');
+  if (sdNow === 'found') live(`sd:${sdRec.s}`, 'super', `${sdName} stands`, sdRec.until, sdWhere, 'Found. It fades away unbroken when this runs out');
+  else if (sdNow === 'fell') live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken. It folds in on itself when this runs out');
   // SD19: the next one's rise, once this one is gone - never where (a Hollow risen is a find), only not before when
-  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(`sd:${(sdRec.s ?? 0) + 1}`, 'super', 'An Abyss Dungeon rises', sdRec.next, null, 'Not before this - somewhere in the Bay, its omen burning brass over it');
+  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(`sd:${(sdRec.s ?? 0) + 1}`, 'super', 'An Abyss Dungeon rises', sdRec.next, null, 'Not before this. It will rise somewhere in the Bay, its omen burning brass above it');
 
   // ── AN ELITE BREACH (net/eliteGates/egLaw.js egTimes: the call's opening, the open window, THE COUNT) ── EG-F (bible/11-Multiplayer/
   // Elite-Gates.md section 2, the Timers row): the company's alone (the host hands it only the call it holds) - a new kind

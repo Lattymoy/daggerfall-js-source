@@ -650,8 +650,8 @@
   {
     "name": "AC4-C7-lost-answer-unsaid",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!r.ok) { g.refused = (r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'; say(g.refused); paintCardGame(); return; }\n    g.stakeWord",
-    "new": "    if (!r.ok) { g.refused = CARD_STAKE_REFUSALS[r.error] ?? 'The realm could not hold your stake - try again.'; say(g.refused); paintCardGame(); return; }\n    g.stakeWord",
+    "old": "    if (!r.ok) { g.refused = (r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake. Try again.'; say(g.refused); paintCardGame(); return; }\n    g.stakeWord",
+    "new": "    if (!r.ok) { g.refused = CARD_STAKE_REFUSALS[r.error] ?? 'The realm could not hold your stake. Try again.'; say(g.refused); paintCardGame(); return; }\n    g.stakeWord",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",

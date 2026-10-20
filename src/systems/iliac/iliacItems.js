@@ -61,7 +61,7 @@ export const isIliacCard = (/** @type {any} */ item) => item?.templateIndex === 
 /** CARDS9: whether a record is a sealed pack. */
 export const isCardPack = (/** @type {any} */ item) => item?.templateIndex === CARD_PACK_TEMPLATE && item?.group === GROUP;
 /** CARDS9: a pack's lines on its item card. */
-export const CARD_PACK_LINES = Object.freeze(['Five Iliac Hand cards, sealed - one of them rare or better.', 'Use it to open it.']);
+export const CARD_PACK_LINES = Object.freeze(['Five Iliac Hand cards, sealed. One of them is rare or better.', 'Use it to open it.']);
 /** Whether a record is the binder. */
 export const isCardBinder = (/** @type {any} */ item) => item?.templateIndex === CARD_BINDER_TEMPLATE && item?.group === GROUP;
 /** The pack's binder, or null. */

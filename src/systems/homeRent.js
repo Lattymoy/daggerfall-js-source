@@ -38,7 +38,7 @@ export const RENT_PRICE_FIRST = 50;
 /** The door's row for a home with rooms free: the cheapest of them a day. */
 export const rentRowLabel = (from) => `Rent a room: from ${goldSum(from)} gold a day`;
 /** A tenant's row at the door: their own room, and how long it has left. */
-export const rentTenantLabel = (daysLeft) => `Your room: ${daysLeft} day${daysLeft === 1 ? '' : 's'} left - renew it`;
+export const rentTenantLabel = (daysLeft) => `Your room: ${daysLeft} day${daysLeft === 1 ? '' : 's'} left. Renew it`;
 /** What a tenant hears walking in. */
 export const rentWelcomeLine = (daysLeft) => `You rent a room here - ${daysLeft} day${daysLeft === 1 ? '' : 's'} left. You may rest here.`;
 /** The rent window's lines: the rooms to choose from. */

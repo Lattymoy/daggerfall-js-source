@@ -218,7 +218,7 @@
   {
     "name": "PERMADEATH-HOUSES-house-page-names-the-dead-as-holder",
     "file": "src/ui/familyPages.js",
-    "old": "  if (!isAlive(holder)) return `The late ${name}'s deed - it passes to whoever carries the line`;",
+    "old": "  if (!isAlive(holder)) return `The late ${name}'s deed, which passes to whoever carries on the line`;",
     "new": "  if (!isAlive(holder)) return `${name}'s deed`;",
     "tests": ["test/systems/legacy/permadeath_houses.test.js"]
   }

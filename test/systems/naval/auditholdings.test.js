@@ -250,7 +250,7 @@ test('AUDIT HOLDINGS C5/C6: a horse never named, renamed with nothing, keeps no 
   const runtime = { renameHorse: (v) => (owns ? (name = String(v ?? '').trim() || name) : null), stableView: () => ({}) };
   let owns = true;
   const p = stableProviderFor({ runtime, on: () => true, hasHorse: () => owns, hasCart: () => false });
-  assert.deepEqual(p.stableAct('rename', '  '), { ok: false, text: 'Your horse keeps no name - give him one.' });
+  assert.deepEqual(p.stableAct('rename', '  '), { ok: false, text: 'Your horse has no name. Give him one.' });
   assert.deepEqual(p.stableAct('rename', 'Shadowmere'), { ok: true, text: 'Your horse is called Shadowmere.' });
   owns = false;
   assert.deepEqual(p.stableAct('rename', 'X'), { ok: false, text: 'You do not own a horse.' });

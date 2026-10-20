@@ -185,7 +185,7 @@ export function createPoiReview({ doc = document, host, me, act, say, refusal, e
     // loser's refusal was said over the winner's word)
     if (deciding.has(key)) return;
     const word = note.trim();
-    if (verdict === 'reject' && !word) { say(t('poi.review.needWord', 'Say why it goes back - the builder reads it.'), 'bad'); return; }
+    if (verdict === 'reject' && !word) { say(t('poi.review.needWord', 'Say why it goes back. The builder reads it.'), 'bad'); return; }
     deciding.add(key);
     drawQueue();
     let r;

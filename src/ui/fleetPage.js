@@ -74,7 +74,7 @@ export function refitRowWords(r) {
     name,
     gain: t('naval.refit.gain', '{what}: +{now}% now, +{next}% with the next refit.', { what: r.what, now: pc(r.share), next: pc(r.next.share) }),
     asks: t('naval.refit.asks', 'Next: {gold}, {mats}.', { gold: goldWords(r.next.gold), mats }),
-    melt: melted.length ? t('naval.refit.melt', 'Melts down weapons and armour you carry for {pieces}. Worn, enchanted and quest items are never used.', { pieces: melted.map((m) => `${m.melt} ${m.label}`).join(', ') }) : null,
+    melt: melted.length ? t('naval.refit.melt', 'Melts down weapons and armor you carry for {pieces}. Worn, enchanted and quest items are never used.', { pieces: melted.map((m) => `${m.melt} ${m.label}`).join(', ') }) : null,
     lock: r.next.locked ? t('naval.refit.locked', 'Needs captain level {level}.', { level: r.next.level }) : null,
   };
 }
@@ -99,7 +99,7 @@ function refitPanel(el, s, rerender, act) {
     for (const m of kinds.values()) if (m.have < Math.min(...o.rows.flatMap((r) => (r.next?.mats ?? []).filter((x) => x.kind === m.kind).map((x) => x.n)))) box.append(el('span', 'hld-why', `${m.label}: ${m.hint}.`));
   }
   // REFIT-ORES: past the shipwright's third refit each tier is a metal, and asks her captain's level
-  if (o.rows.some((r) => r.next && r.next.level > 1)) box.append(el('span', 'hld-sub', t('naval.refit.captain', 'Captain level {level}. Refits after tier III use metals (Steel up to Daedric) and need a captain level.', { level: o.level ?? 1 })));
+  if (o.rows.some((r) => r.next && r.next.level > 1)) box.append(el('span', 'hld-sub', t('naval.refit.captain', 'Captain level {level}. Refits past grade III use metals (Steel up to Daedric) and need a captain\'s level.', { level: o.level ?? 1 })));
   for (const r of o.rows) {
     const w = refitRowWords(r);
     const card = el('div', 'hld-refit');
@@ -243,10 +243,10 @@ function coloursPanel(el, s, rerender, act, arms) {
   else {
     box.append(flagSwatches(el, t('naval.flag.field', 'Field'), d.field, (v) => set('field', v)));
     box.append(flagStepper(el, t('naval.flag.division', 'Division'), HERALDRY_DIVISIONS, d.division, (k) => HERALDRY_DIVISION_NAMES[k] ?? k, (v) => set('division', v)));
-    if (d.division !== 'plain') box.append(flagSwatches(el, t('naval.flag.field2', 'Second colour'), d.field2, (v) => set('field2', v), { not: [d.field] }));
+    if (d.division !== 'plain') box.append(flagSwatches(el, t('naval.flag.field2', 'Second color'), d.field2, (v) => set('field2', v), { not: [d.field] }));
     box.append(flagSwatches(el, t('naval.flag.border', 'Border'), d.border, (v) => set('border', v), { none: true, not: [d.field] }));
     box.append(flagStepper(el, t('naval.flag.device', 'Device'), [null, ...HERALDRY_DEVICES], d.device, (k) => (k ? heraldryDeviceName(k) : t('naval.flag.none.device', 'None')), (v) => set('device', v)));
-    if (d.device) box.append(flagSwatches(el, t('naval.flag.charge', 'Device colour'), d.charge, (v) => set('charge', v), { not: [d.field, d.field2].filter(Boolean) }));
+    if (d.device) box.append(flagSwatches(el, t('naval.flag.charge', 'Device color'), d.charge, (v) => set('charge', v), { not: [d.field, d.field2].filter(Boolean) }));
   }
   const acts = el('div', 'hld-acts');
   acts.append(button(el, t('naval.flag.hoist', 'Raise flag'), null, () => { _open = null; _flag = null; act('colours', d); }, 'act primary'));
@@ -262,7 +262,7 @@ const PAINT_WORDS = Object.freeze({
   oxblood: () => t('naval.paint.c.oxblood', 'Oxblood'), crimson: () => t('naval.paint.c.crimson', 'Crimson'), black: () => t('naval.paint.c.black', 'Tar black'),
   navy: () => t('naval.paint.c.navy', 'Navy'), bay: () => t('naval.paint.c.bay', 'Bay blue'), teal: () => t('naval.paint.c.teal', 'Teal'),
   sea: () => t('naval.paint.c.sea', 'Sea green'), forest: () => t('naval.paint.c.forest', 'Forest green'), ochre: () => t('naval.paint.c.ochre', 'Ochre'),
-  gold: () => t('naval.paint.c.gold', 'Gold leaf'), white: () => t('naval.paint.c.white', 'White lead'), grey: () => t('naval.paint.c.grey', 'Slate grey'),
+  gold: () => t('naval.paint.c.gold', 'Gold leaf'), white: () => t('naval.paint.c.white', 'White lead'), grey: () => t('naval.paint.c.grey', 'Slate gray'),
   purple: () => t('naval.paint.c.purple', 'Tyrian purple'), tan: () => t('naval.paint.c.tan', 'Tan'),
 });
 /** Each part's word. */

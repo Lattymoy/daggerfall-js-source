@@ -208,7 +208,7 @@ test('CARDS10 the panel\'s model: the setup (decks with the binder\'s words, the
   assert.deepEqual(setup.keeps, { on: false, enabled: false, why: 'Bors has paid a card tonight.' });
   assert.deepEqual(setup.actions.map((a) => [a.id, a.enabled]), [['deal', true], ['holdem', true], ['pack', true], ['stand', true]]);
   assert.equal(setup.actions[2].label, 'Buy a card pack (30 gold)');
-  assert.equal(iliacHudModel({ phase: 'setup', setup: { decks: [], foes: [] } }).message, 'Your binder holds no deck - build one under Holdings, Collections.');
+  assert.equal(iliacHudModel({ phase: 'setup', setup: { decks: [], foes: [] } }).message, 'Your binder holds no deck. Build one under Holdings, Collections.');
   assert.deepEqual(TEMPER_WORDS, { tight: 'careful', loose: 'reckless', bluffer: 'sly' });
   // the turn
   const s = new IliacTableSession({ player: { id: 'you', name: 'Ves', deck: STARTER_DECK.slice() }, patron: { id: 'regular:2', name: 'Ana', temper: 'tight', grade: 1, deck: patronDeck(3, 'tight', 1) }, rand32: src32(31), now: 0 });

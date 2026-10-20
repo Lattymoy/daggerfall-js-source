@@ -101,7 +101,7 @@ export function bindPlusRow(store, rowId, code, { save = saveKeyBinds } = {}) {
   const old = rowCode(store, row);
   if (old === code) return { ok: true };
   const other = PLUS_BIND_ROWS.find((r) => r !== row && rowCode(store, r) === code) ?? null;
-  if (other && !old && other.keep) return { ok: false, reason: `${other.label} needs that button - give it another first` };
+  if (other && !old && other.keep) return { ok: false, reason: `${other.label} needs that button. Give it another first` };
   if (other) writeRow(store, other, old);
   // an action outside these rows on that button (the player's own grid binding) gives it up, as a grid bind would
   writeRow(store, row, code);

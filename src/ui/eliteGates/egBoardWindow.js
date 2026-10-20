@@ -28,7 +28,7 @@ export const EG_BOARD_TABS = Object.freeze(['alone', 'few', 'company', 'depths',
 /** A tab's name. AUDIT EG V (c, L7-19; section 27.6 - "the last five runs are kept"): the sixth, this device's own last runs
  *  (ui/eliteGates/egHud.js egRecapsKept - the recaps it kept, read here and nowhere else before). */
 export const EG_BOARD_TAB_TEXT = Object.freeze({
-  alone: 'The Descent - Alone', few: 'The Descent - The Few', company: 'The Descent - The Company',
+  alone: 'The Descent: Alone', few: 'The Descent: The Few', company: 'The Descent: The Company',
   depths: 'The Depths', deepest: 'The Deepest Redoubts',
   get runs() { return t('eg.board.runs', 'Your last runs'); },
 });

@@ -127,8 +127,8 @@ export const DEFAULTS_PROMPT = 'Are you sure you want to set default controls?';
 export const CONFIRM_LABEL = 'Confirm';
 /** UNSAVED-MARK (FIELD BUGS 2026-10-11): a row whose staged key the registry does not hold yet says so, and the head
  *  counts what a Confirm still owes. */
-export const UNSAVED_ROW = 'Not saved yet - press Confirm.';
-export const unsavedCount = (n) => `${n} change${n === 1 ? '' : 's'} not saved yet - press ${CONFIRM_LABEL} to keep ${n === 1 ? 'it' : 'them'}.`;
+export const UNSAVED_ROW = 'Not saved yet. Press Confirm.';
+export const unsavedCount = (n) => `${n} change${n === 1 ? '' : 's'} not saved yet. Press ${CONFIRM_LABEL} to keep ${n === 1 ? 'it' : 'them'}.`;
 
 // ── PER-VISIT STATE ──────────────────────────────────────────────
 // `unsaved` is the staged pair of dicts. It is created on the first

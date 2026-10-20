@@ -226,7 +226,7 @@ test('HOME-PRICE the words: every sum a home\'s door, sale and rent say with its
   assert.equal(rentDaysLines(2, 1_200)[0], 'Room 2 - 1,200 gold a day.');
   assert.equal(rentConfirmLines(2, 30, 1_200)[1], 'It costs 36,000 gold.');
   assert.equal(rentShortLine(36_000), 'You need 36,000 gold, in your purse and your account at the Bank of the Empire together.');
-  assert.equal(ARENA_TEXT.homeMove.refund(12_400), '12,400 gold for your catalogue pieces was refunded to your bank account.');
+  assert.equal(ARENA_TEXT.homeMove.refund(12_400), '12,400 gold for your catalog pieces was refunded to your bank account.');
   const tool = src('src/scenes/decor/decorTool.js');
   assert.match(tool, /deps\.say\?\.\(`You collected \$\{goldSum\(res\.gold\)\} gold in rent\. It went to \$\{EMPIRE_ACCOUNT_WORDS\}\.`\)/);
   assert.match(tool, /is offered to rent at \$\{goldSum\(price\)\} gold a day\./);

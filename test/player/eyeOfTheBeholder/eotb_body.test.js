@@ -14,6 +14,11 @@ import { ARCHIVE_FOOT, ARCHIVE_HORSE, frameTime, TABLE_FRAMES } from '../../../s
 import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
 
 const MOD = 'eye-of-the-beholder';
+// PIN MOVED (LAYERED-GEAR-ON: Layered Gearing is on by default, the owner 2026-10-19): these pins are Eye of the
+// Beholder's own body, 1:1 with PlayerBillboard, so they wear its sets - Skins, Graphics.LayeredGear 0. The layered
+// body has its own pins (worn_armour.test.js, skinmode_toggle.test.js).
+const resetSettings = () => { _resetModSettings(); setModSetting(MOD, 'Graphics.LayeredGear', 0); };
+resetSettings();
 
 // ═══ EOTB5: THE BODY ON SCREEN ════════════════════════════════════
 
@@ -192,7 +197,7 @@ test('SPRITE-FLICKER (Mac: "very finicky when moving and then switching to run a
       assert.equal(rows.at(-1).shown, 2, `phase ${k}: it turns`);
       if (!settles(rows)) revert.push(`phase ${k}: ${show(rows)}`);
     }
-  } finally { _resetModSettings(); }
+  } finally { resetSettings(); }
   assert.deepEqual(revert, [], 'the mirror revert repaints the view chosen');
 });
 
@@ -228,7 +233,7 @@ test('EOTB-IL: the footfall is the picture’s - frames 0 and 2 of the four-fram
   try {
     const { b: off } = await liveBody();
     assert.equal(off.footstep().owns, false, 'SyncFootsteps off: DFU\'s own stride');
-  } finally { _resetModSettings(); }
+  } finally { resetSettings(); }
 });
 
 test('EOTB5: a MIRRORED sprite is its own upload, and says so', () => {
@@ -314,7 +319,7 @@ test('AUDIT-EOTB F7b: the MIRROR reaches the UPLOAD, and the draw keeps the LAST
   b.attach(r, () => ({}));
   await new Promise((res) => setTimeout(res, 5));
   b.toggle(true, false);
-  _resetModSettings();
+  resetSettings();
   // FACING THE CAMERA: orientation 0, not mirrored
   ticks(b, 12, still({ cameraPos: [0, 1.5, 2] }));
   assert.equal(b.state().shown.orientation, 0);
@@ -426,7 +431,7 @@ test('EOTB-IL: the first-person billboard - active while FirstPersonBillboard is
     await new Promise((res) => setTimeout(res, 2));
     b.draw(null, { eye: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0 });
     assert.equal(r.batches.at(-1).rec, '0-0m', 'Visible: the mirrored upload');
-  } finally { _resetModSettings(); }
+  } finally { resetSettings(); }
   // None: inactive in first person, nothing drawn (the camera's toggle passes false)
   const { b: none } = await liveBody({}, { third: false });
   none.toggle(false, false);

@@ -156,7 +156,7 @@ function composePane(k, key) {
     const last = desk.lastSend;
     if (!last || root.isConnected === false) return null;
     desk.lastSend = null;
-    if (last.ok) k.tell(last.repeat ? t('report.sentBefore', 'That report had already reached the developers. Thank you.') : t('report.sent', 'Sent. Thank you - only the developers can read it.'), true);
+    if (last.ok) k.tell(last.repeat ? t('report.sentBefore', 'That report had already reached the developers. Thank you.') : t('report.sent', 'Sent. Thank you. Only the developers can read it.'), true);
     else k.tell(k.refusal(last.error));
     return last;
   };

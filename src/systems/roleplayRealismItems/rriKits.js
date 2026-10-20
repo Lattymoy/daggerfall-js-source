@@ -27,6 +27,7 @@ import { liveStat } from '../statMods.js';
 import { equipTableOf, equipItem } from '../equip.js';
 import { getItemHands, ITEM_HANDS } from '../../characters/equipTable.js';   // SWING-LAW: a two-hander's handling
 import { isQuestionsDagger, QUESTIONS_DAGGER_WEAR } from '../conditionRepair.js';   // DISC21-A: the questions' dagger, one home
+import { markFound } from '../item/foundMark.js';   // AUDIT MEND-THIRD L3-6: the kit handed over worn, marked
 import { EQUIP_SLOTS } from '../../characters/paperdoll/paperdoll.js';
 import { WEAPON_TYPES } from '../../combat/fpsWeapon.js';
 import { techniqueFamily } from '../../combat/technique/techniqueRoster.js';   // BAL10: the family a weapon swings with (an RRI class's own)
@@ -74,6 +75,7 @@ function addOrEquipWornItem(entity, item, equip, rolls) {
   addItem(entity.items, item);
   if (item.group === 'Armor' || item.group === 'Weapons' || item.group === 'MensClothing' || item.group === 'WomensClothing') {
     item.currentCondition = Math.trunc((0.3 + rolls() * (0.75 - 0.3)) * (item.maxCondition ?? 0));
+    markFound(item);   // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is
   }
   if (equip) equipItem(entity, item);
   return item;
@@ -183,6 +185,7 @@ export function assignSkillEquipment(entity, { rolls = Math.random, torchesFromI
     if (isQuestionsDagger(dagger)) {
       mintCondition(dagger);
       dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);
+      markFound(dagger);   // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)
     }
   }
   for (const skill of career.primarySkills ?? []) assignSkillItems(entity, skill, rolls);

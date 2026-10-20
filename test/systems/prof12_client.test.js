@@ -103,7 +103,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     disenchant: async (pv) => {
       const r = await book.disenchant(pv, mac.at());
       if (r.ok) player.items = player.items.filter((it) => it.provenance !== pv);
-      return r.ok ? { ok: true, text: `Into ${r.data.essence} Arcane Essence (+${r.data.xp} Enchanting XP).` } : { ok: false, text: accountRefusalText(r.error) };
+      return r.ok ? { ok: true, text: `Into ${r.data.essence} Arcane Essence (+${r.data.xp} Enchanting experience).` } : { ok: false, text: accountRefusalText(r.error) };
     },
   });
   const page = pageOf();
@@ -122,7 +122,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     await settle(_alchemyForTests());
     page.draw();
     assert.deepEqual([book.held('reagent:troll-blood'), book.held('reagent:elixir-vitae')], [1, 1], 'the counter\'s goods in the Stores');
-    assert.match(page.text(), /A potion a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning XP, and 500 the first time\./);   // PIN MOVED (CRAFT3): the XP is Provisioning's
+    assert.match(page.text(), /A potion a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, and 500 the first time\./);   // PIN MOVED (CRAFT3): the XP is Provisioning's
     page.button('Brew').onclick();
     await settle(_alchemyForTests());
     assert.equal(player.items.length, 1);
@@ -152,7 +152,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     layRecord(s.env, mac.character, freshSave({ name: 'Mac', items: [{ ...player.items.at(-1), stackCount: 1 }] }));   // INT16: the ring in the realm character's record, as its checkpoint would hold it
     page.draw();
     assert.match(page.text(), /The Enchanting Station.*The guild's enchanter - 50 gold a piece\. Enchanting 0 \(Novice\)\./);
-    assert.match(page.text(), /2,160 points - 21 Arcane Essence, \+315 Enchanting XP/);   // AUDIT PROF12 E2: 5 x the Gold ring's tier 3 x 21
+    assert.match(page.text(), /2,160 points: 21 Arcane Essence, \+315 Enchanting experience/);   // AUDIT PROF12 E2: 5 x the Gold ring's tier 3 x 21
     page.button('Disenchant').onclick();
     assert.ok(page.button('Press again: it is gone'), 'pressed once: armed, nothing asked');
     page.button('Press again: it is gone').onclick();
@@ -212,7 +212,7 @@ test('PROF12 pages: The Alchemy Station - away, the word; at a home\'s, no fee; 
   page.recipe('Levitation').onclick();
   assert.match(page.text(), /A potion a brew\. Potent 0%/, 'Levitation\'s cauldron is the counter\'s alone: one');
   page.recipe('Healing').onclick();
-  assert.match(page.text(), /A Transmuter - Alchemy's choice at 100 - turns two of a metal and a Mercury/);
+  assert.match(page.text(), /A Transmuter, the Alchemy choice at 100, turns two of a metal and one Mercury/);
   assert.equal(page.button('Transmute'), null);
   page.done();
   const { calls: calls2 } = stubPages({ alchemy: { kind: 'shop', fee: ALCHEMY_FEE }, alchemyTrack: { rank: 100, specs: { 50: 'distiller', 100: 'transmuter' } }, held: { 'metal:tin': 3, 'metal:mercury': 1 } });
@@ -240,7 +240,7 @@ test('PROF12 pages: The Enchanting Station - away, the word; at a Mages Guild ha
   // PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): a Master's track takes no more XP - the service credits
   // MIN(earned, PROF_XP_MAX - held), none - so the piece says +0 and the station why (it said +7, which the Worker never
   // paid); AUDIT PROF12 E2's quarter is pinned at an Expert's 90 below, where it is paid
-  assert.match(page.text(), /No Enchanting XP: Enchanting is at Master\.Iron Longsword600 points - 6 Arcane Essence, \+0 Enchanting XP/);
+  assert.match(page.text(), /No Enchanting experience: Enchanting is at Master\.Iron Longsword600 points: 6 Arcane Essence, \+0 Enchanting experience/);   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
   assert.equal(enchantGoldPct(), 25, 'a Master\'s 20 and an Efficient\'s 5');
   // the item maker's window reads the share: its gold label and the gold it asks
   const player = { items: [], gold: 0, goldPieces: 0 };
@@ -292,12 +292,12 @@ test('PROF12 pages: Alchemy and Enchanting practised on the Professions page - t
       'Alchemy: Slow Falling, Water Breathing, Cure Disease, Heal Truerank 25', 'Alchemy: Resist Poison, Free Action, Levitationrank 40',
       'Alchemy: Chameleon Form, Shadow Form, Cure Poisonrank 55', 'Alchemy: Invisibilityrank 70', 'Cooking: Feast of the Hearthrank 70', 'Alchemy: Purificationrank 90',
     ]);
-    assert.match(page.text(), /Brew at an alchemy station/);
+    assert.match(page.text(), /Potions are brewed at an alchemy station/);   // VOICE1 (PIN MOVED): the same law in plain words
     assert.doesNotMatch(page.text(), /not practised in the Bay yet/);
     page.buttonStarting('Enchanting').onclick();
     page.draw();
-    assert.match(page.text(), /Level Enchanting by disenchanting crafted pieces into Arcane Essence at an enchanting station/);
-    assert.match(page.text(), /From Journeyman, your rank lowers its cost/);
+    assert.match(page.text(), /Enchanting improves as you break crafted pieces down into Arcane Essence at an enchanting station/);   // VOICE1 (PIN MOVED): the same law in plain words
+    assert.match(page.text(), /From Journeyman on, your rank lowers its prices/);   // VOICE1 (PIN MOVED)
     assert.doesNotMatch(page.text(), /not practised in the Bay yet/);
   } finally { page.done(); setProfessionsPages(null); }
 });
@@ -441,16 +441,16 @@ test('AUDIT PROF12 E2 client: the Enchanting Station says a piece\'s XP by its r
   ];
   stubPages({ enchanter: { kind: 'home', fee: 0 }, enchantingTrack: { rank: 0, specs: { 50: null, 100: null } }, over: { disenchantable: () => pieces } });
   let page = pageOf();
-  assert.match(page.text(), /Gold Ruby Ring2,160 points - 21 Arcane Essence, \+315 Enchanting XP/);
-  assert.match(page.text(), /Linen Plain Robes700 points - 7 Arcane Essence, \+0 Enchanting XP/);
-  assert.match(page.text(), /Iron Longsword600 points - 6 Arcane Essence, \+30 Enchanting XP/);
+  assert.match(page.text(), /Gold Ruby Ring2,160 points: 21 Arcane Essence, \+315 Enchanting experience/);
+  assert.match(page.text(), /Linen Plain Robes700 points: 7 Arcane Essence, \+0 Enchanting experience/);
+  assert.match(page.text(), /Iron Longsword600 points: 6 Arcane Essence, \+30 Enchanting experience/);
   page.done();
   // PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): the quarter at an Expert's 90 - the same top tier, 7, as a Master's,
   // with room left to take it (a Master's track takes none: the service credits MIN(earned, PROF_XP_MAX - held))
   stubPages({ enchanter: { kind: 'home', fee: 0 }, enchantingTrack: { rank: 90, specs: { 50: null, 100: null } }, over: { disenchantable: () => pieces } });
   page = pageOf();
-  assert.match(page.text(), /Gold Ruby Ring2,160 points - 21 Arcane Essence, \+78 Enchanting XP/, 'tier 3 at an Expert\'s 7: quartered');
-  assert.match(page.text(), /Iron Longsword600 points - 6 Arcane Essence, \+7 Enchanting XP/, 'AUDIT PROF12 E2: the Iron sword\'s tier 1, quartered at 7 - 30 / 4');
+  assert.match(page.text(), /Gold Ruby Ring2,160 points: 21 Arcane Essence, \+78 Enchanting experience/, 'tier 3 at an Expert\'s 7: quartered');
+  assert.match(page.text(), /Iron Longsword600 points: 6 Arcane Essence, \+7 Enchanting experience/, 'AUDIT PROF12 E2: the Iron sword\'s tier 1, quartered at 7 - 30 / 4');   // PIN MOVED (VOICE2): no dash aside, no "XP" in a sentence (Voice.md rules 3, 5)
   page.done();
   setProfessionsPages(null);
   assert.match(hostText('src/scenes/world.js'), /essence: essenceOf\(points, profBook\?\.track\('enchanting'\)\?\.specs\?\.\[50\] === DISENCHANTER\), recipe: it\.recipe \}/);
@@ -495,8 +495,8 @@ test('AUDIT PROF12 A3 client (Mac: "Potent lasts longer"): a Potent potion whose
 // ─── AUDIT PROF12 (2026-10-03) ───────────────────────────────────────
 
 test('AUDIT PROF12 P1: the Apothecary\'s words say each profession\'s step as the law gives it - a piece of jewellery a quality step a tier, a dish half again the XP (twice at tier 2: recipeLaw cookXp), a brew +10% Potent chance a tier (alchemyLaw potentChance) - never a quality step for a dish or a brew', () => {
-  assert.equal(FORT_EFFECT_WORDS.apothecary(1), 'members\' jewellery here a quality step better, their dishes half again the XP, their brews +10% Potent chance');
-  assert.equal(FORT_EFFECT_WORDS.apothecary(2), 'members\' jewellery here 2 quality steps better, their dishes twice the XP, their brews +20% Potent chance');
+  assert.equal(FORT_EFFECT_WORDS.apothecary(1), 'members\' jewelry here a quality step better, their dishes half again the XP, their brews +10% Potent chance');
+  assert.equal(FORT_EFFECT_WORDS.apothecary(2), 'members\' jewelry here 2 quality steps better, their dishes twice the XP, their brews +20% Potent chance');
   assert.deepEqual([1, 2].map((t) => cookXp(50, { steps: t }) / cookXp(50)), [1.5, 2], 'the XP the words say');
   assert.deepEqual([1, 2].map((t) => potentChance(75, { steps: t }) - potentChance(75)), [POTENT.apothecary, 2 * POTENT.apothecary], 'the Potent chance the words say');
   assert.deepEqual(STATION_PROFESSIONS.apothecary, ['alchemy', 'cooking', 'jewelcrafting']);
@@ -512,7 +512,7 @@ test('AUDIT PROF-541 B3/B4 client: the station\'s Potent chance carries the town
     page.recipe('Healing').onclick();
     assert.match(page.text(), /2 potions a brew\. Potent 30% \(\+25% magnitude\) - and \+5% for each of its herbs/);
     page.recipe('Cure Disease').onclick();
-    assert.match(page.text(), new RegExp(`2 potions a brew\\. ${POTENT_NONE_LINE.replace(/[()]/g, '\\$&')}\\. \\d+ Provisioning XP`));   // PIN MOVED (CRAFT3): the XP is Provisioning's
+    assert.match(page.text(), new RegExp(`2 potions a brew\\. ${POTENT_NONE_LINE.replace(/[()]/g, '\\$&')}\\. \\d+ Provisioning experience`));   // PIN MOVED (CRAFT3): the XP is Provisioning's
     page.recipe('Purification').onclick();
     assert.match(page.text(), /Potent 30% \(\+25% magnitude\)/, 'Purification\'s magnitude stays Potent');
   } finally { page.done(); setProfessionsPages(null); }
@@ -551,7 +551,7 @@ test('AUDIT PROF-541 B2 client: a realm character\'s disenchant names where its 
   asked.length = 0;
   await book.disenchant('bbbbbbbbbbbbbbbb');
   assert.ok(asked.length > 1 && asked.every(([, r]) => r === null), 'offline: the book asks again');
-  assert.match(accountRefusalText('prof-piece-gone'), /record does not hold that piece/);
+  assert.match(accountRefusalText('prof-piece-gone'), /record does not show that piece/);
   const bodies = [];
   const wire = accountProf({ fetch: async (u, i) => { bodies.push(JSON.parse(i.body)); return new Response('{}', { status: 200 }); }, storage: sessionStorageOf(SESSION_KEY, { secret: 's'.repeat(43), id: 'acc' }) });
   await wire.disenchant('char-1', 'aaaaaaaaaaaaaaaa', 'rid-1', at);

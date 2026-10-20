@@ -304,7 +304,7 @@ test('QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c, MD-Geist: "the Objective just did
   questAt(m, CRYPT);
   const there = repairActiveQuests(m, { mountCurrentSite: () => 'elsewhere' });
   assert.deepEqual([there.elsewhere, there.text], [true, questElsewhereLine()]);
-  assert.match(questElsewhereLine(), /in your instance/);
+  assert.match(questElsewhereLine(), /in your own instance/);   // PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
   const home = repairActiveQuests(m, { mountCurrentSite: () => undefined });
   assert.deepEqual([home.elsewhere, home.text], [false, 'Nothing was missing from your active quest.'], 'anywhere else: as before');
 });

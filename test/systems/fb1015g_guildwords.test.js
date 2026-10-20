@@ -72,7 +72,7 @@ test('SEAT-WORDS: online no knight is given the order\'s house - the chairs brin
   const knight = membershipOf(bookOf(memberAt(o, 7)), o);
   assert.equal(knight.guild, 'Order:Dragon', 'the order\'s own row');
   assert.deepEqual(receiveHouseDecision(knight, { rankCeiling: 7 }),
-    { kind: 'refuse', line: 'Online, ranks 8 and 9 are the order\'s chapter chairs, held while won by Merit - and a chair brings no house.' });
+    { kind: 'refuse', line: 'Online, ranks 8 and 9 are the order\'s chapter chairs, held while won by Merit, and a chair brings no house.' });
   const given = { ...knight };
   claimHouse(given);
   assert.deepEqual(receiveHouseDecision(given, { rankCeiling: 7 }), { kind: 'refuse', line: alreadyGivenHouseText() });
@@ -311,7 +311,7 @@ test('STANDING-WORDS: the hall\'s reputation row and the Standing page\'s book c
   const g = GUILDS.FightersGuild;
   const entity = memberAt(g, 1, {}, { factionRep: storeOf({ [FIGHTERS]: { name: 'The Fighters Guild', rep: 14 } }), skills: skilled(g, 40).skills });
   setStandingOwed({ [FIGHTERS]: 6 });
-  assert.deepEqual(rankNeedsLines(skilled(g, 40), g, bookOf(entity), entity.factionRep), ['Next rank: Swordsman', 'Reputation 14 of 20 (6 more already earned - it arrives at most 15 a real day)']);
+  assert.deepEqual(rankNeedsLines(skilled(g, 40), g, bookOf(entity), entity.factionRep), ['Next rank: Swordsman', 'Reputation 14 of 20 (6 more already earned; it arrives at no more than 15 a real day)']);
   const book = affiliations(entity);
   assert.deepEqual([book[0].owed, book[0].warnings], [6, []]);
 });
@@ -320,11 +320,11 @@ test('STANDING-WORDS: the hall\'s reputation row and the Standing page\'s book c
 
 test('SEAT-WORDS: the seat line\'s arms - the owed beside the chairs\' 80, a probation first, the 80 met says the Turning alone (mutants: the owed, the probation, the boundary)', () => {
   const g = GUILDS.MagesGuild;
-  const seats = 'Ranks 8 and 9 are each chapter\'s council and Master, won by Merit - no review gives them';
+  const seats = 'Ranks 8 and 9 are each chapter\'s council and Master, won by Merit. No review grants them';
   const merit = 'Each Sunday\'s Turning gives the chairs to the most Merit of the last 4 weeks, among members 14 real days in the guild, on accounts 7 real days old';
   setStandingOwed({ [MAGES]: 10 });
   assert.deepEqual(rankNeedsLines(skilled(g, 90), g, bookOf(memberAt(g, 7)), storeOf({ [MAGES]: { rep: 72 } }), ROLL),
-    ['Next rank: Master Wizard', seats, 'Reputation 72 of 80 (10 more already earned - it arrives at most 15 a real day)', merit]);
+    ['Next rank: Master Wizard', seats, 'Reputation 72 of 80 (10 more already earned; it arrives at no more than 15 a real day)', merit]);
   setStandingOwed(null);
   assert.deepEqual(rankNeedsLines(skilled(g, 90), g, bookOf(memberAt(g, 7)), storeOf({ [MAGES]: { rep: 80 } }), ROLL), ['Next rank: Master Wizard', seats, merit]);
   const onProbation = bookOf(memberAt(g, 7, { probation: true, lastRankChange: daySinceZero(day(10)) }));
@@ -441,16 +441,16 @@ test('AUDIT GUILD-WORDS II E-12: an unstamped membership is due now; no store, n
 test('SEAT-WORDS: the tutorial and the notice board\'s guide say the law - a review\'s 7, the chairs\' 8 and 9, a quest\'s pace in real days and the UTC day, a chair\'s services at its own halls, a chapter writ\'s 2 and a receipt\'s 1 beyond the pace (mutants: a number not the law\'s)', () => {
   const guilds = tutorialById('guilds');
   assert.deepEqual([guilds.title, guilds.trigger, guilds.body], ['Guilds', 'When you first visit a guild.',
-    ['Join a guild for its services and its quests. To rank up, raise the skills it cares about and keep working for it.', 'You can join one temple and one knightly order, and as many guilds as will take you.']]);
-  assert.deepEqual(guilds.points, ['Online, a review stops at rank 7: ranks 8 and 9 are chapter chairs. See Guild Chapters.']);
+    ['Join a guild for its services and its work. Do that work and practice the skills it teaches to rise in rank.', 'You may join one temple, one knightly order, and as many guilds as will have you.']]);
+  assert.deepEqual(guilds.points, ['Online, reviews promote you no further than rank 7. Ranks 8 and 9 are chapter chairs; see Guild Chapters.']);   // VOICE1 (PIN MOVED)
   const ch = tutorialById('chapters');
   assert.deepEqual([ch.group, ch.title], ['online', 'Guild Chapters']);
-  assert.deepEqual(ch.body, ['Online the realm keeps your guild standing. Quests raise it at most 15 a real day each (days turn at midnight UTC), the rest following later.',
-    'Reviews promote you up to rank 7; ranks 8 and 9 are chapter chairs, won by Merit at each Sunday\'s Turning. A notice board explains chapters.']);
+  assert.deepEqual(ch.body, ['Online, the realm keeps your standing with your guild. Each quest raises it by no more than 15 a real day (days turn at midnight UTC); the rest is counted later.',
+    'Reviews promote you up to rank 7. Ranks 8 and 9 are chapter chairs, won by Merit at each Sunday\'s Turning. A notice board explains chapters.']);   // VOICE1 (PIN MOVED)
   const guide = Object.fromEntries(chapterGuide());
   assert.equal(guide['Your rank'], 'A guild\'s own review still promotes you, up to rank 7. Ranks 8 and 9 are the chairs below; a chair\'s services are at its own chapter\'s halls, for a member at rank 7.');
-  assert.equal(guide.Standing, 'The realm keeps your standing with each of these guilds. Quests raise it at most 15 a real day for each, the day turning at midnight UTC - a larger reward is owed and paid on the days after. Beyond that pace, a chapter writ (yours or the chapter\'s) adds 2, and a closed Breach or a defended town adds 1 to each of your guilds that keeps a chapter there (2 more for the day\'s first, where the chapter asks for it).');
-  assert.match(guide.Merit, /in the guild 7 real days -/);
+  assert.equal(guide.Standing, 'The realm keeps your standing with each of these guilds. Quests raise it by no more than 15 a real day for each guild, the day turning at midnight UTC; a larger reward is owed and paid on the days after. Beyond that pace, a chapter writ (yours or the chapter\'s) adds 2, and a closed Breach or a defended town adds 1 to each of your guilds that keeps a chapter there (2 more for the first of the day, where the chapter asks for it).');
+  assert.match(guide.Merit, /in the guild 7 real days, /);
   assert.match(guide['The chairs'], /among those 14 real days in the guild, standing high enough in it for rank 8, on accounts 7 real days old\./);
 });
 
@@ -462,7 +462,7 @@ test('AUDIT GUILD-WORDS II B-6, F-7: a language\'s own list joins the line (no c
     assert.match(standingLine(entity, [{ f: MAGES, delta: 5, now: 35, owed: 0 }, { f: FIGHTERS, delta: -25, now: -20, owed: 0 }]), / und /);
     tm.setLocale(tm.PSEUDO_LOCALE);
     const page = tutorialById('guilds');
-    for (const [shown, english] of [[page.title, 'Guilds'], [page.trigger, 'When you first visit a guild.'], [page.body[0], 'Join a guild for its services and its quests. To rank up, raise the skills it cares about and keep working for it.'], [page.body[1], 'You can join one temple and one knightly order, and as many guilds as will take you.']]) {
+    for (const [shown, english] of [[page.title, 'Guilds'], [page.trigger, 'When you first visit a guild.'], [page.body[0], 'Join a guild for its services and its work. Do that work and practice the skills it teaches to rise in rank.'], [page.body[1], 'You may join one temple, one knightly order, and as many guilds as will have you.']]) {
       assert.notEqual(shown, english, `"${english}" drawn in the player's language`);
     }
   } finally { tm.setLocale(was); }

@@ -179,13 +179,13 @@ const OWN_CHOICES = Object.freeze({
   }),
   smithing: Object.freeze({
     50: pair(spec('weaponsmith', 'Weaponsmith', 'Weapons +1 quality step.'),
-      spec('armoursmith', 'Armoursmith', 'Armour +1 quality step.')),
+      spec('armoursmith', 'Armoursmith', 'Armor +1 quality step.')),
     100: pair(spec('masterwright', 'Masterwright', 'Masterwork chance +5%.'),
       spec('quartermaster', 'Quartermaster', 'Ingots and repair kits x2.')),
   }),
   outfitting: Object.freeze({
     50: pair(spec('tailor', 'Tailor', 'Clothing +1 quality step.'),
-      spec('leatherworker', 'Leatherworker', 'Leather armour +1 quality step.')),
+      spec('leatherworker', 'Leatherworker', 'Leather armor +1 quality step.')),
     100: pair(spec('couturier', 'Couturier', 'Two-colour dyes.', 'two-colour'),   // PROF7: DFU's cloth takes one dye
       spec('saddler', 'Saddler', 'A wagon upgrade (Horse Cart and Cargo) of +100 kg.', 'wagon')),   // PROF7: DFU's wagon has one limit
   }),
@@ -225,7 +225,7 @@ const OWN_CHOICES = Object.freeze({
   jewelcrafting: Object.freeze({
     50: pair(spec('gemcutter', 'Gemcutter', 'A set gem adds +10% enchantment points.'),
       spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.')),
-    100: pair(spec('master-jeweller', 'Master Jeweller', 'Jewellery Masterwork chance +5%.'),
+    100: pair(spec('master-jeweller', 'Master Jeweler', 'Jewelry Masterwork chance +5%.'),
       spec('lapidary', 'Lapidary', 'Siege-cracked Gems set as any gem.')),
   }),
 });

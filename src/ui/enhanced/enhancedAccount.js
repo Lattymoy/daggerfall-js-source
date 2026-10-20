@@ -397,7 +397,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
         chip.type = 'button';
         chip.disabled = !!flow.busy;
         chip.setAttribute('aria-pressed', shown ? 'true' : 'false');
-        chip.title = shown ? t('account.wear.glyphShown', 'Showing this - press to hide it') : t('account.wear.glyphHidden', 'Hidden - press to show it');
+        chip.title = shown ? t('account.wear.glyphShown', 'Shown. Press to hide it') : t('account.wear.glyphHidden', 'Hidden. Press to show it');
         chip.onclick = () => flow.toggleGlyph(g.key);
         // SHADOW-FANG: the one drawing's colourless half (ui/playerBadge.js glyphArtNode) - its shapes are
         // currentColor, which this chip's class colours; a gradient glyph brings its own fill and eye
@@ -487,7 +487,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
     const box = el('div', 'acctwear acctpatreon');
     box.append(el('span', 'fieldlabel', 'Patreon'));
     const row = el('div', 'acctwearrow');
-    if (p.linked) row.append(el('span', 'acctpatreonstate', titles.length ? t('account.patreon.linked', 'Linked - {titles}', { titles: titles.map((k) => TITLE_TEXT[k] ?? k).join(', ') }) : t('account.patreon.noTier', 'Linked - no tier yet')));
+    if (p.linked) row.append(el('span', 'acctpatreonstate', titles.length ? t('account.patreon.linked', 'Linked - {titles}', { titles: titles.map((k) => TITLE_TEXT[k] ?? k).join(', ') }) : t('account.patreon.noTier', 'Linked. No rank yet')));
     if (typeof p.link === 'string' && p.link.startsWith('https://')) {
       const a = keyedAs(el('a', 'act', p.linked ? t('account.patreon.refresh', 'Refresh') : t('account.patreon.link', 'Link Patreon')), 'patreon:link');
       a.href = p.link;
@@ -778,7 +778,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
       await globalThis.navigator.clipboard.writeText(recoveryCodesText(flow.codesFor, flow.recoveryCodes ?? []));
       flow.say(t('account.codes.copied', 'Copied. Paste them somewhere only you can read.'));
     } catch {
-      flow.say(t('account.codes.copyRefused', 'This page may not write the clipboard - save them as a file instead.'), true);
+      flow.say(t('account.codes.copyRefused', 'This page may not write to the clipboard. Save them as a file instead.'), true);
     }
   }
 
@@ -793,7 +793,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       flow.say(t('account.codes.saved', 'Saving as {name}.', { name }));   // AUDIT RECOVERY-SET B7: asked, not known - a save dialog can be cancelled
     } catch {
-      flow.say(t('account.codes.saveRefused', 'The file could not be saved - copy them instead.'), true);
+      flow.say(t('account.codes.saveRefused', 'The file could not be saved. Copy them instead.'), true);
     }
   }
 

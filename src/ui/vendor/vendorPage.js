@@ -29,7 +29,7 @@ export const VENDOR_PAGE_SECTIONS = Object.freeze([Object.freeze(['vendor', 'Ven
 export const VENDOR_PAGE_FRESH_MS = 30_000;
 /** The page's words. */
 export const VENDOR_PAGE_TEXT = Object.freeze({
-  noTraders: 'You have no trader. Place one in a home you own (Decorate, Catalogue, Vendors), then make it the "Hired trader" station.',
+  noTraders: 'You have no trader. Place one in a home you own (Decorate, Catalog, Vendors), then make it the "Hired trader" station.',
   noStock: 'Nothing is up for sale. Press your trader in its home to put a piece from your pack up.',
   noSales: 'Your traders have sold nothing yet.',
   noneFound: 'No trader in that region has anything for sale.',

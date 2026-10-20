@@ -178,7 +178,7 @@ test('WAGONS4 THE KIT: a Wagon Repair Kit spent on the wagon where its load is r
   assert.deepEqual([load.length, items[1].stackCount, passed], [0, 1, [60, 60]], 'the wagon\'s kit spent, the pack\'s kept');
   w.currentCondition = 900;
   assert.equal(u.act('kit').ok, false, 'over 60%: a kit does no more');
-  assert.match(itemStatRows(items[1]).map((x) => x.text).join(' '), /Mends 25% of a wagon, to 60% at most - an hour's work\./);
+  assert.match(itemStatRows(items[1]).map((x) => x.text).join(' '), /Mends 25% of a wagon, to 60% at most, an hour's work\./);
 });
 
 test('WAGONS4 THE WAGON YARD MENDS: its keeper\'s third row, the Stable\'s two; the press asks the host\'s wright (mutants: the row on the Stable, the press unread)', async () => {

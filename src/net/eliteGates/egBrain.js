@@ -1647,6 +1647,9 @@ function trial(B, spec, now, inHall, rng, out) {
     if (v === 'gauntlet') {
       for (const g of F.gauntlet) {
         if (g.done) continue;
+        // GAUNTLET-SLAIN (Field-Bugs-2026-10-19d): a Caster slain is a Caster silenced - its pillar was held open for the plate
+        // alone, which no screen marks, and a company that killed every Caster stood in a hall whose door would not give
+        if (g.i && !egBodyById(F, g.i)) { g.done = 1; out.push({ k: 'esay', w: 'silenced' }); continue; }
         const pl = g.p.plate, on = pl && here.concat(inHall).some((b) => dist(b.x, b.z, pl[0], pl[1]) <= EG_TOUCH_M);
         if (on) { g.stood = g.stood ? g.stood : now; if (now - g.stood >= EG_SILENCE_MS) { g.done = 1; const c = egBodyById(F, g.i); if (c) egGone(F, [c], EG_GONE.crumbled, '', now, out); out.push({ k: 'esay', w: 'silenced' }); } } else g.stood = 0;
       }

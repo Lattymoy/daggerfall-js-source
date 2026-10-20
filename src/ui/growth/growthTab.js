@@ -29,7 +29,7 @@ export { GROWTH_PAGE_SECTIONS, growthPageAt };
 /** The rail's words in the player's language. */
 const LABEL = Object.freeze({
   level: () => t('growth.rail.level', 'Level'),
-  specs: () => t('growth.rail.specs', 'Specialisations'),
+  specs: () => t('growth.rail.specs', 'Specializations'),
   firmament: () => t('growth.rail.firmament', 'Firmament'),
   captain: () => t('growth.rail.captain', 'Captain\'s Stars'),
 });

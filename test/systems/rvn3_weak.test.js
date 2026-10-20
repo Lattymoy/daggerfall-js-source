@@ -401,5 +401,5 @@ test('RVN3 the page: its weakness as I know it - unknown, its kind, what it is; 
   assert.equal(weaknessWords({ weak: 'daylight', weakKnown: 1 }), 'Weakness: The sun.');
   assert.equal(weaknessWords({ weak: 'axe', weakKnown: 2 }), 'Weakness: Axes.');
   assert.equal(willWords({ rank: 1 }), '');   // PIN MOVED (UNQUIET, Revenants.md section 46): from rank 2
-  assert.equal(willWords({ rank: 2 }), 'Its will must be broken - strike its weakness, stagger it, or dodge its blow perfectly.');   // PIN MOVED (FEUD BALANCE, OPEN 22)
+  assert.equal(willWords({ rank: 2 }), 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.');   // PIN MOVED (FEUD BALANCE, OPEN 22)
 });

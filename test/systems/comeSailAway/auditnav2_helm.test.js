@@ -244,8 +244,8 @@ test('AUDIT NAV2 F18 the in-irons word is the helm\'s own: under the mod\'s own 
   const keyOf = (a) => ({ BoatSailUp: 'UP', BoatSailDown: 'DOWN', TurnLeft: 'LEFT', TurnRight: 'RIGHT', MoveForwards: 'W', MoveBackwards: 'S' })[a] ?? '';
   const irons = { hull: 2, hasSails: true, inIrons: true };
   // PIN MOVED (HELM-LADDER): one rung down strikes the last of her sail and puts her on her oars - its two keys, no row key
-  assert.equal(helmHint(irons, { keyOf, mouseFree: true }), 'In irons - strike sail (S DOWN) and row to turn', 'the mod\'s own helm: as it was');
-  assert.equal(helmHint(irons, { touch: true }), 'In irons - strike sail and row to turn', 'a finger: the words alone');
+  assert.equal(helmHint(irons, { keyOf, mouseFree: true }), 'In irons. Strike sail (S DOWN) and row to turn', 'PIN MOVED (VOICE2): the mod\'s own helm: as it was');
+  assert.equal(helmHint(irons, { touch: true }), 'In irons. Strike sail and row to turn', 'PIN MOVED (VOICE2): a finger: the words alone');
 });
 
 // ── F20 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────

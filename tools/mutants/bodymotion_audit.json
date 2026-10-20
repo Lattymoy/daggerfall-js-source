@@ -85,7 +85,7 @@
   {
     "name": "AUDIT-BODY-MOTION-reach-taken-at-once",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    const inReach = f.stance || leaving ? 1 : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.1 * L)));",
+    "old": "    const inReach = f.stance || leaving ? 1 : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.2 * L)));",
     "new": "    const inReach = f.stance || leaving ? 1 : (Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) > dxy ? 1 : 0);",
     "tests": [
       "test/characters/bodyMotion/bodymotion_audit.test.js"

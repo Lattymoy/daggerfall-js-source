@@ -243,7 +243,7 @@ export function huntKind({ book, bodies, openLoot = null }) {
     actNote: (rep) => {
       if (!rep) return '';
       if (rep.clean) return ' (a clean pelt)';
-      if (rep.torn) return ' (a torn pelt - its part lost)';
+      if (rep.torn) return ' (a torn pelt, its part lost)';
       if (rep.score >= TRACE_ACT.clean) return rep.seconds < TRACE_ACT.minS ? ' (a true line, too quick for a clean pelt)' : ' (a true line, too slow for a clean pelt)';
       return '';
     },

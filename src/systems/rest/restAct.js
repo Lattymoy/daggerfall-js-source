@@ -54,9 +54,9 @@ export const REST_ACT_TEXT = Object.freeze({
   rested: 'Next night',   // AUDIT C&C (lens S): the interval's tile (ui/hud/hudStatus.js) - "Rested" stood beside Boons' Well rested
   carried: (name) => `${name} rests here, and you rest with them through the night.`,   // REST5: a member's night, carried
   carriedShort: (name) => `${name} rests here, and you rest a while with them.`,
-  carriedSkipped: (name) => `${name} rests here - you are too busy to rest with them.`,
-  carriedFar: (name) => `${name} rested a night without you - come within 15 m of them to rest with the party.`,   // AUDIT REST-PARTY: PARTY-REST-FAR1's word, online
-  carriedTown: (name) => `${name} rests here - it is illegal to camp in town.`,   // AUDIT REST II P4: the act's own town law, for a member it would carry
+  carriedSkipped: (name) => `${name} rests here, but you are too busy to rest with them.`,
+  carriedFar: (name) => `${name} rested a night without you. Come within 15 m of them to rest with the party.`,   // AUDIT REST-PARTY: PARTY-REST-FAR1's word, online
+  carriedTown: (name) => `${name} rests here, but it is illegal to camp in town.`,   // AUDIT REST II P4: the act's own town law, for a member it would carry
   campWait: (name) => `Resting with ${name}...`,   // CAMP-ROLL: a camp mate's night is the camp's - held until it lands
 });
 

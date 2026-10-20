@@ -138,8 +138,8 @@
   {
     "name": "FT18-the-diamond-beats-the-hotbar",
     "file": "src/systems/featureLanes.js",
-    "old": "  if (getPref(QUICKBAR_STYLE_PREF) === 'hotbar') return 'hotbar';\n  return getPref(QUICKSLOTS_PREF) === false ? 'off' : 'diamond';",
-    "new": "  if (getPref(QUICKSLOTS_PREF) === false) return 'off';\n  return getPref(QUICKBAR_STYLE_PREF) === 'hotbar' ? 'hotbar' : 'diamond';",
+    "old": "  const style = getPref(QUICKBAR_STYLE_PREF);\n  if (style === 'hotbar') return getPref(QUICKBAR_SHAPE_PREF) === 'diamond' ? 'gems' : 'hotbar';",
+    "new": "  const style = getPref(QUICKBAR_STYLE_PREF);\n  if (getPref(QUICKSLOTS_PREF) === false) return 'off';\n  if (style === 'hotbar') return getPref(QUICKBAR_SHAPE_PREF) === 'diamond' ? 'gems' : 'hotbar';",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "FT18-the-diamond-leaves-the-hotbar-up",
     "file": "src/systems/featureLanes.js",
-    "old": "  setPref(QUICKBAR_STYLE_PREF, 'quickbar');\n  setPref(QUICKSLOTS_PREF, v !== 'off');",
-    "new": "  setPref(QUICKSLOTS_PREF, v !== 'off');",
+    "old": "  setPref(QUICKBAR_STYLE_PREF, 'quickbar');\n  setPref(QUICKSLOTS_PREF, false);",
+    "new": "  setPref(QUICKSLOTS_PREF, false);",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]

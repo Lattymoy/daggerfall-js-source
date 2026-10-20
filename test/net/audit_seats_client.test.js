@@ -299,7 +299,7 @@ test('AUDIT-SEATS C7 EVERY SETTLING ANSWER REACHES THE CARD: claimed before, a v
   }
   assert.deepEqual([siegeClaimRefusal({ error: 'honours-twice' }), siegeClaimRefusal({ error: 'battle-none' }), siegeClaimRefusal({ error: 'receipt' }), siegeClaimRefusal({ error: 'whatever' })],
     [SIEGE_CLAIM_REFUSED['honours-twice'], SIEGE_CLAIM_REFUSED['battle-none'], SIEGE_CLAIM_REFUSED.receipt, SIEGE_CLAIM_REFUSED.receipt]);
-  assert.equal(siegeHonourLine('No Honours this battle: the battle was void.'), 'No Honours this battle: the battle was void.');
+  assert.equal(siegeHonourLine('No Honors this battle: the battle was void.'), 'No Honors this battle: the battle was void.');
   // the session's card
   const t = siegeRig();
   t.ses.enter(ANTICLERE, FIGHT, [[1, 2]]); await settle();

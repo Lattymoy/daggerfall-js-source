@@ -565,7 +565,7 @@ function fightCard(b) {
 /** RAM-BOARD: the card's line for a ship my stem has fouled, in reach - the grapples' key, or the heave-to's. */
 function fouledText(board, key) {
   if (board.kind === 'board') return t('naval.foul.board', 'Fouled - {key}: board', { key });
-  return board.heaving ? t('naval.foul.heaving', 'Fouled - heaving to') : t('naval.foul.heave', 'Fouled - {key}: heave to', { key });
+  return board.heaving ? t('naval.foul.heaving', 'Fouled, heaving to') : t('naval.foul.heave', 'Fouled - {key}: heave to', { key });
 }
 
 /** The card's state line: what she is doing, and - when she is in reach - the key that goes over her rail. */
@@ -578,12 +578,12 @@ function cardState(t, board, key) {
   // RAM-BOARD (systems/naval/navalFoul.js): her bow fouled in my stem - boarded as she stands, her colours flying
   if (t.fouled && t.state === 'afloat' && mine && (board.kind === 'board' || board.kind === 'heave')) return { text: fouledText(board, key), kind: 'board' };
   if (t.state === 'struck') {
-    if (mine && board.kind === 'board') return { text: `Colours struck - ${key}: board`, kind: 'board' };
+    if (mine && board.kind === 'board') return { text: `Colors struck - ${key}: board`, kind: 'board' };
     // AUDIT NAV1 (the helm): in reach but too fast - the refusal said nothing
-    if (mine && board.kind === 'heave') return { text: board.heaving ? 'Colours struck - heaving to' : `Colours struck - ${key}: heave to`, kind: 'board' };
-    return { text: 'Colours struck', kind: '' };
+    if (mine && board.kind === 'heave') return { text: board.heaving ? 'Colors struck, heaving to' : `Colors struck - ${key}: heave to`, kind: 'board' };
+    return { text: 'Colors struck', kind: '' };
   }
-  if (t.faction === 'unknown') return { text: 'Colours unknown', kind: '' };   // SPYGLASS: nothing of her stance till they are made out
+  if (t.faction === 'unknown') return { text: 'Colors unknown', kind: '' };   // SPYGLASS: nothing of her stance till they are made out
   // SHIP-STANCE, SHIP-TAGS: how she stands to me, and where she is bound
   const stance = t.hostile ? 'Hostile' : t.friendly ? 'Friendly' : '';
   return { text: [stance, t.bound].filter(Boolean).join(' - '), kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '' };
@@ -658,7 +658,7 @@ export function navalHudText(model, keys = {}, { touch = false } = {}) {
       : model.board ? (model.board.kind === 'heave' && model.board.heaving ? `Heaving to beside ${model.board.name}`
       : `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name
         : model.board.kind === 'heave' ? `heave to beside ${model.board.name}` : `board ${model.board.name}`}`)
-      : ship.wrecked ? (ship.repairing ? 'Crippled - crew repairing' : ship.repairOrdered ? 'Crippled - repairs ordered' : ship.stores > 0 ? 'Crippled - order repairs, or make port' : 'Crippled - make port for a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other
+      : ship.wrecked ? (ship.repairing ? 'Crippled, crew repairing' : ship.repairOrdered ? 'Crippled, repairs ordered' : ship.stores > 0 ? 'Crippled. Order repairs, or make for port' : 'Crippled. Make for port and a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other
       : !model.armed ? 'No guns aboard'
       : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,
     brace: touch && !!model.armed,

@@ -171,7 +171,7 @@ test('RVN-ERRAND SENT, AND BACK: it leaves the party (its portal - the layer rea
   assert.equal(RC.sendOnErrand(r.id, 'Skyrim', 'forage', { now: T0 }), 'It is already abroad.');
   const b = sworn({ state: 'away' }), c = sworn({ state: 'away' }), d = sworn({ state: 'away' });
   assert.equal(RC.sendOnErrand(b.id, 'Skyrim', 'forage', { now: T0 }), null);
-  assert.equal(RC.sendOnErrand(c.id, 'Skyrim', 'forage', { now: T0 }), '2 of your sworn are abroad already - the most at once.');
+  assert.equal(RC.sendOnErrand(c.id, 'Skyrim', 'forage', { now: T0 }), '2 of your sworn are abroad already, the most allowed at once.');
   N.revenantCompanionUpdate(me, d.id, (x) => { x.state = 'resting'; x.until = T0 + 60; });
   assert.equal(RC.errandRefusal(rec(d), T0), 'Still recovering.');
   const loyal = rec(r).companion.loyalty;
@@ -278,7 +278,7 @@ test('RVN-ERRAND AUDIT RVN F5, F7, F9, F10 THE RECORD: an errand an older clock 
   assert.equal(RC.takeSwornGear(k.id, 'weapon').length, 0, 'not taken abroad');
   const helm = { group: 'Armor', templateIndex: 102, material: 0, currentCondition: 100, maxCondition: 100 };
   me.items.push(helm);
-  assert.equal(RC.giveSwornGear(k.id, helm), 'It is abroad - its kit goes with it.');
+  assert.equal(RC.giveSwornGear(k.id, helm), 'It is abroad, and its gear goes with it.');
 });
 
 test('RVN-ERRAND AN ERRAND IS THE SAVE\'S: abroad in the save, abroad again after a reload - back on its minute with the same haul; begun since the save, never begun (where the save had it); an errand day moves no loyalty (mutants: the mirror\'s errand kept; the save\'s lost; the days counted)', () => {

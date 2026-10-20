@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { groundHit, canvasPoint, classifyPick, TV_PICK_MAX } from '../../../src/player/travelPick.js';
 import { planRoute, routeLegs, roadShare, edgeKind, ROUTE_COST, OPPOSITE_BIT, openStepBlocked, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE, TV_STEEP_RISE, routeGround, ROUTE_MARGINS } from '../../../src/systems/travel/travelRoute.js';
-import { createLoadGovernor, viewReach, unbuiltAround, stepDown, TV_GOV_HOLD_S, TV_GOV_CLEAR_S, TV_GOV_STEP, TV_GOV_SETTLE_S } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, viewReach, unbuiltAround, unbuiltCount, stepDown, TV_GOV_HOLD_S, TV_GOV_CLEAR_S, TV_GOV_STEP, TV_GOV_SETTLE_S } from '../../../src/systems/travel/travelGovernor.js';
 import { createTravelOptions, readTravelOptionsSettings } from '../../../src/systems/travel/travelOptions.js';
 import { TRAVEL_OPTIONS_TEXT } from '../../../src/systems/travel/travelOptionsText.js';
 import { mapPixelWorldOrigin, MID_LO, P_SIZE } from '../../../src/systems/travel/travelPaths.js';
@@ -545,7 +545,8 @@ test('TV2 host wiring: THE CAP - governed before the frame reads the travel scal
   // the ask handed back whole, never over the helm's own time step; under the view the lower of the ground's cap and the enemies'
   // PIN MOVED (WILD3/PVPNEAR, the Wrothgarian zone's merge): the enemies' cap, and under it a near stranger's own pace
   assert.match(w, /const rate = csaHoldsTimeScale\(\) \? null : \(foes\.strangerRate \? Math\.min\(foeRate\(foes, travelAsked\), foes\.strangerRate\) : foeRate\(foes, travelAsked\)\);\n\s*if \(rate != null && worldTimeScale\(\) !== rate\) setWorldTimeScale\(rate\);\n\s*tvHeld = rate != null && rate < travelAsked \? rate : null;/, 'the mod\'s own ask back');
-  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want \}\);\n\s*const foeCap = foes\.strangerRate \? Math\.min\(foeRate\(foes, want\), foes\.strangerRate\) : foeRate\(foes, want\);[^\n]*\n\s*const rate = Math\.min\(load, foeCap\);/);
+  // PIN MOVED (OW-LEAD, test/systems/travel/ow_lead.test.js): the land's cap is how near the nearest owed pixel is, at the traveller's pace
+  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want, owed: uc\.owed, feet: unbuilt \? state\.worldCoords\(player\.feetAt\(\)\) : null, speedMps: player\?\.speed \?\? 0 \}\);[^\n]*\n\s*const foeCap = foes\.strangerRate \? Math\.min\(foeRate\(foes, want\), foes\.strangerRate\) : foeRate\(foes, want\);[^\n]*\n\s*const rate = Math\.min\(load, foeCap\);/);
   // AUDIT TV A2: the ASK is the mod's - its ground's rate (RATE-LAW; it was the spinner) and its own caps (the ring walk's
   // x15, an interrupt's x1), recorded where the mod sets the clock - so the governor never lifts a journey past the mod's
   assert.doesNotMatch(w, /onTimeAccelerationChanged/, 'RATE-LAW: no spinner to tell the host');
@@ -557,7 +558,7 @@ test('TV2 host wiring: THE CAP - governed before the frame reads the travel scal
   // law, which past the map holds the continent's frame and the Eltheric Ocean's box (it was "off the map"); PIN MOVED
   // (LOAD-OWED, test/systems/travel/ow_loadowed.test.js): asked of the stream's own books - a pixel it is still building, never one whose
   // build threw and that it let go
-  assert.match(w, /if \(uc\.gen !== gen \|\| uc\.x !== px\.x \|\| uc\.y !== px\.y \|\| uc\.r !== radius\) \{\n(?:\s*\/\/[^\n]*\n)*\s*uc\.n = unbuiltAround\(px, radius, \(x, y\) => built\.has\(`\$\{x\},\$\{y\}`\) \|\| !state\.loaded\.has\(`\$\{x\},\$\{y\}`\)\);/);
+  assert.match(w, /if \(uc\.gen !== gen \|\| uc\.x !== px\.x \|\| uc\.y !== px\.y \|\| uc\.r !== radius\) \{\n(?:\s*\/\/[^\n]*\n)*\s*uc\.n = unbuiltAround\(px, radius, \(x, y\) => built\.has\(`\$\{x\},\$\{y\}`\) \|\| !state\.loaded\.has\(`\$\{x\},\$\{y\}`\), uc\.owed\);/);   // PIN MOVED (OW-LEAD): and which
   assert.match(w, /held: tvHeld,/, 'the travel panel says the clock is held');
   const panel = rd('src/ui/enhanced/enhancedTravelControl.js');
   assert.match(panel, /put\(parts\.accel, 'accel', held != null \? `×\$\{held\} \/ ×\$\{accel\}` : `×\$\{accel\}`\);/);   // RATE-LAW: every hold shown, the enemies' too
@@ -655,7 +656,8 @@ test('OW-ONLY (Mac: "Remove the ground travel alltogether. Now selecting a locat
   // PIN MOVED (OW-TOGGLE): and only the Overworld's journey - a first-person one walks on
   assert.match(w, /onLower: \(why\) => \{ if \(\(why === 'button' \|\| why === 'escape' \|\| why === 'key'\) && travelOptions\?\.isTravelActive && tvOwnsJourneys\(\)\) travelOptions\.messages\.pauseTravel\(\); \},/, 'brought down by the player: the journey stops (the map\'s resume takes it up again)');
   // PIN MOVED (OW-TOGGLE): the Overworld's journey alone is raised - the door asks the enhanced interface and the view itself
-  assert.match(w, /if \(!tvOwnsJourneys\(\) \|\| travelView\.state !== 'off' \|\| !travelOptions\.isTravelActive \|\| !travelOptions\.state\?\.autopilot\) return;\n\s*if \(gamePaused\(\) \|\| \(modes\?\.modalWindowUp\?\.\(\) \?\? false\) \|\| duelEnemyNear\(\) \|\| areEnemiesNearby\(exteriorFoePool\(\)\) \|\| navalHostileNear\(\) \|\| !travelViewAllowed\(\)\.ok\) return;[^\n]*\n\s*travelView\.enter\(\);/, 'any journey raises the view, silently, once nothing forbids it');
+  // PIN MOVED (OW-RISE): and the foes the view's danger asks - WILD-ALERT's wildSeen, never an unaware one (ow_rise.test.js)
+  assert.match(w, /if \(!tvOwnsJourneys\(\) \|\| travelView\.state !== 'off' \|\| !travelOptions\.isTravelActive \|\| !travelOptions\.state\?\.autopilot\) return;\n\s*if \(gamePaused\(\) \|\| \(modes\?\.modalWindowUp\?\.\(\) \?\? false\) \|\| duelEnemyNear\(\) \|\| areEnemiesNearby\(wildSeen\(exteriorFoePool\(\)\)\) \|\| navalHostileNear\(\) \|\| !travelViewAllowed\(\)\.ok\) return;[^\n]*\n\s*travelView\.enter\(\);/, 'any journey raises the view, silently, once nothing forbids it');
   assert.match(w, /tvJourneyUp\(\);   \/\/ OW-ONLY[^\n]*\n\s*const tvHeadEye/, 'every frame, before the view\'s own');
   // MOUNTAINS WALKABLE: the line stands, but the host's ground names no peak now (routeGround's peakAt) - it says nothing
   // on the real map (test/systems/travel/fb0929d_toroads.test.js walks a spot on a Mountain pixel); over a ground that refuses, it would

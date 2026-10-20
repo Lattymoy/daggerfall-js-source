@@ -16,7 +16,7 @@
 //
 // THE CLASSES (carryClassOf): 'free' (nothing in hand - the gait's own swing), 'one' (a one-hander, held down and away
 // from the side, Mac's stance; run "in the same format" - the arm low and out, the blade trailing), 'two' (a two-hander
-// in a low guard with both hands; run with it at the hip, the blade trailing behind, the left hand pumping), 'wide' (a
+// in a low guard with both hands; run with it at the hip in both hands, the blade trailing behind - TWO-RUN), 'wide' (a
 // staff, both hands across the body), 'spear' (a spear, both hands, the point forward), 'dual' (a pair, held down and
 // away from both sides; run with both swept behind), 'fists' (bare-handed with the fists up: a guard), and 'clip' (a
 // bow, a crossbow, a thrown weapon, a readied spell - the clip's own arms, which already carry them).
@@ -71,20 +71,21 @@ const dir = (...v) => Object.freeze(norm(v));
 /**
  * THE ROWS: CARRY[class][gait] = { R, L } (gaits: idle, walk, run, sneak - blended by the gait's own shares), plus a
  * class's STANDING FEET (`feet`, legs: [right, forward] added to each foot; `hipYaw`, degrees; `lean`) - a fighting
- * stance's split feet, laid only while the body stands. Tuned on the retail biped through tools/bodyMotionSheet.mjs;
+ * stance's split feet, laid only while the body stands - and its trunk at a run (degrees, by the run's share: `runLean`
+ * forward, `runTurn` the chest's turn, - toward the right). Tuned on the retail biped through tools/bodyMotionSheet.mjs;
  * one frozen table, for Mac to move on his own data.
  */
 export const CARRY = Object.freeze({
   free: Object.freeze({
     idle: { R: row(3, 7, 10, 4, 0), L: row(3, 7, 10, 4, 0) },
     walk: { R: row(2, 8, 12, 6, 1, { gaitElbow: 1 }), L: row(2, 8, 12, 6, 1, { gaitElbow: 1 }) },
-    run: { R: row(8, 10, 0, 22, 1, { gaitElbow: 1 }), L: row(8, 10, 0, 22, 1, { gaitElbow: 1 }) },
+    run: { R: row(8, 18, 0, -4, 1, { gaitElbow: 1 }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },
     sneak: { R: row(14, 16, 40, 10, 0.6), L: row(14, 16, 40, 10, 0.6) },
   }),
   one: Object.freeze({
     idle: { R: row(5, 21, 8, -7, 0, { blade: dir(0.26, 0.74, -0.62), edge: dir(-0.26, -0.56, -0.78) }), L: row(3, 8, 12, 4, 0) },
     walk: { R: row(5, 22, 3, -1, 0.3, { blade: dir(0.23, 0.81, -0.53), edge: dir(-0.39, -0.42, -0.82) }), L: row(2, 8, 12, 6, 1, { gaitElbow: 1 }) },
-    run: { R: row(16, -3, 46, -42, 0.35, { blade: dir(0.54, -0.51, -0.67), edge: dir(-0.21, 0.69, -0.69) }), L: row(8, 10, 0, 22, 1, { gaitElbow: 1 }) },
+    run: { R: row(16, -3, 46, -42, 0.35, { blade: dir(0.54, -0.51, -0.67), edge: dir(-0.21, 0.69, -0.69) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },
     sneak: { R: row(21, 29, 54, -44, 0.2, { blade: dir(0.12, 0.98, -0.18), edge: dir(0.8, -0.2, -0.56) }), L: row(14, 16, 40, 10, 0.6) },
     stand: { feet: { L: [0, 0.05], R: [0.02, -0.03] }, hipYaw: -6 },
     via: dir(0, -0.643, 0.766),
@@ -92,15 +93,16 @@ export const CARRY = Object.freeze({
   two: Object.freeze({
     idle: { R: row(29, 7, 10, 42, 0, { blade: dir(-0.3, 0.89, -0.35), edge: dir(-0.08, -0.39, -0.92) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
     walk: { R: row(40, -5, 7, 56, 0.12, { blade: dir(-0.52, 0.84, -0.15), edge: dir(0.13, -0.1, -0.99) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
-    run: { R: row(11, 24, 24, -43, 0.12, { blade: dir(0.33, -0.81, -0.48), edge: dir(-0.42, 0.33, -0.85) }), L: row(8, 10, 0, 22, 1, { gaitElbow: 1 }) },
+    run: { R: row(43, 10, 0, -31, 0, { blade: dir(0.8, -0.23, -0.55), edge: dir(-0.31, 0.62, -0.72) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
     sneak: { R: row(51, 2, 7, 22, 0.1, { blade: dir(-0.34, 0.94, 0.09), edge: dir(-0.1, 0.06, -0.99) }), L: row(0, 0, 0, 0, 0, { grip: true }) },   // AUDIT BODY-MOTION CARRY-3: the guard raised to level - the chest's lean tipped the low guard's blade into the ground and the right thigh
     stand: { feet: { L: [-0.02, 0.15], R: [0.04, -0.09] }, hipYaw: -16, lean: 3 },
     via: dir(0, -0.259, 0.966),
+    runTurn: -32, runLean: 10,
   }),
   wide: Object.freeze({
     idle: { R: row(18, 10, 50, 34, 0, { blade: dir(-0.55, 0.42, 0.72), edge: dir(0, 1, 0) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
     walk: { R: row(17, 12, 52, -8, 0.12, { blade: dir(-0.52, 0.42, 0.74), edge: dir(0.26, 0.91, -0.34) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
-    run: { R: row(-2, 15, 33, -49, 0.2, { blade: dir(0.44, -0.85, -0.3), edge: dir(-0.13, 0.27, -0.96) }), L: row(8, 10, 0, 22, 1, { gaitElbow: 1 }) },
+    run: { R: row(-2, 15, 33, -49, 0.2, { blade: dir(0.44, -0.85, -0.3), edge: dir(-0.13, 0.27, -0.96) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },
     sneak: { R: row(21, 11, 57, 8, 0.1, { blade: dir(-0.52, 0.53, 0.67), edge: dir(-0.06, 0.76, -0.65) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
     stand: { feet: { L: [-0.02, 0.12], R: [0.04, -0.07] }, hipYaw: -12, lean: 2 },
     via: dir(-0.259, 0, 0.966),
@@ -108,7 +110,7 @@ export const CARRY = Object.freeze({
   spear: Object.freeze({
     idle: { R: row(11, 12, 40, 55, 0, { blade: dir(-0.33, 0.74, 0.58), edge: dir(0.26, 0.66, -0.7) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
     walk: { R: row(3, 19, 62, 25, 0.12, { blade: dir(-0.54, 0.69, 0.49), edge: dir(0.05, 0.61, -0.79) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
-    run: { R: row(-7, 17, 35, -21, 0.2, { blade: dir(0.05, 0.97, -0.23), edge: dir(-0.09, -0.22, -0.97) }), L: row(8, 10, 0, 22, 1, { gaitElbow: 1 }) },
+    run: { R: row(-7, 17, 35, -21, 0.2, { blade: dir(0.05, 0.97, -0.23), edge: dir(-0.09, -0.22, -0.97) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },
     sneak: { R: row(-11, 5, 67, -15, 0.1, { blade: dir(-0.29, 0.76, 0.59), edge: dir(0.03, 0.62, -0.78) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
     stand: { feet: { L: [-0.02, 0.14], R: [0.04, -0.08] }, hipYaw: -14, lean: 2 },
   }),
@@ -124,7 +126,7 @@ export const CARRY = Object.freeze({
   fists: Object.freeze({
     idle: { R: row(34, 20, 118, 12, 0, { fist: true }), L: row(48, 18, 104, 10, 0, { fist: true }) },
     walk: { R: row(34, 20, 116, 12, 0.1, { fist: true }), L: row(48, 18, 102, 10, 0.1, { fist: true }) },
-    run: { R: row(14, 12, 20, 24, 1, { fist: true, gaitElbow: 1 }), L: row(14, 12, 20, 24, 1, { fist: true, gaitElbow: 1 }) },
+    run: { R: row(14, 18, 20, -4, 1, { fist: true, gaitElbow: 1 }), L: row(14, 18, 20, -4, 1, { fist: true, gaitElbow: 1 }) },
     sneak: { R: row(36, 20, 112, 12, 0.1, { fist: true }), L: row(46, 18, 100, 10, 0.1, { fist: true }) },
     stand: { feet: { L: [0, 0.16], R: [0.03, -0.08] }, hipYaw: -18, lean: 4 },
   }),
@@ -238,7 +240,6 @@ function withSwing(side, r, gp) {
     flex: r.flex + swing / RAD + (gp.arm.bias / RAD) * r.swing,
     elbow: lerp(r.elbow, gaitElbow, k),
     abduct: lerp(r.abduct, gp.arm.abduct / RAD, k),
-    twist: r.twist + (gp.arm.cross ?? 0) * 60 * k * fwdShare,
   };
 }
 

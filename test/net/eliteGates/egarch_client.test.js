@@ -55,7 +55,7 @@ test('EG-F THE START WINDOW: the stake, the warning, Hall 1 and every Redoubt th
     'Redoubt 7 - the Soul Cairn [++x]',
     'Hall 1 [++x]',
     'The Wager: Chained Blows, Hunting Pack',
-    'Rehearse - Halls 1-5, no key',
+    'Rehearse: Halls 1-5, no key',
   ]);
   assert.deepEqual(rows[2].missing, ['Mara', 'Ann'], 'a guest member makes no start at all');
   assert.deepEqual(egStartRows({ keys: 0, me: ME, members: [members[0]], starts, rehearsal: true }).map((r) => r.label), [EG_TEXT.noKeys, EG_TEXT.rehearsal], 'no key: the Rehearsal alone');
@@ -105,7 +105,7 @@ test('EG-F THE START WINDOW: the stake, the warning, Hall 1 and every Redoubt th
   pick('Hall 1 [+++]');
   assert.deepEqual(R.log.at(-1), ['choose', { ew: 0, wg: [0, 4, 9], rh: false }]);
   R = run();
-  pick('Rehearse - Halls 1-5, no key');
+  pick('Rehearse: Halls 1-5, no key');
   assert.deepEqual(R.log.at(-1), ['choose', { ew: 0, wg: [], rh: true }]);
   R = run();
   pick('Weir Keys: 3 - one will be staked.');
@@ -272,7 +272,7 @@ test('EG-F THE ARCH POOL: the company\'s arch from the call - placed, risen, col
   pool.activate(egArchKey('fedcba9876543210'));
   assert.deepEqual(said, ["The breach answers only to Ann's company."]);
   const lines = pool.sights([409.6, 0, 300]);
-  assert.deepEqual(lines, ['You see an Elite Breach 320 metres to the West!', 'You see an Elite Breach 80 metres to the North!'], 'once an arch, never my own');
+  assert.deepEqual(lines, ['You see an Elite Breach 320 meters to the West!', 'You see an Elite Breach 80 meters to the North!'], 'once an arch, never my own');
   assert.deepEqual(pool.sights([409.6, 0, 300]), []);
   // its end: the call gone (its window over, forgotten), the arch sinks from now, and is gone once it has
   pool.call(null);

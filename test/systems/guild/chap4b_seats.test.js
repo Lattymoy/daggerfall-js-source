@@ -69,8 +69,8 @@ test('CHAP4b the seats said, worded without gender: every seat at the page\'s fi
   assert.deepEqual(seatLinesOf([m, o], [m, o]), [], 'nothing moved, nothing said');
   assert.deepEqual(seatLinesOf([{ ...m, seat: 'officer' }, o], [m]), [seatLineOf(m), seatLineOf(o, false)]);
   assert.deepEqual(seatLinesOf([], [o]), [seatLineOf(o)]);
-  assert.equal(bookCappedLine([FIGHTERS]), 'The Fighters Guild keeps ranks 8 and 9 for its chapters\' Masters and councils, won by Merit - your rank there is 7.');
-  assert.equal(bookCappedLine([MAGES, FIGHTERS]), 'The Mages Guild and the Fighters Guild keep ranks 8 and 9 for their chapters\' Masters and councils, won by Merit - your rank there is 7.');
+  assert.equal(bookCappedLine([FIGHTERS]), 'The Fighters Guild keeps ranks 8 and 9 for its chapters\' Masters and councils, won by Merit. Your rank there is 7.');
+  assert.equal(bookCappedLine([MAGES, FIGHTERS]), 'The Mages Guild and the Fighters Guild keep ranks 8 and 9 for their chapters\' Masters and councils, won by Merit. Your rank there is 7.');
   assert.deepEqual([bookCappedLine([]), bookCappedLine(null), bookCappedLine([99])], [null, null, null]);
 });
 

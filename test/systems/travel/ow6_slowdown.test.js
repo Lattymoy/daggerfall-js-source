@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { THREAT_WARN_S, metresToReach, threatStep, threatCap, foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
-import { createLoadGovernor } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
 import { TRAVEL_HELD_TEXT, TRAVEL_HELD_WHY } from '../../../src/ui/enhanced/enhancedTravelControl.js';
 import { foeHostile, foeAlerted, areEnemiesNearby } from '../../../src/systems/encounters.js';
 import { TRAVEL_VIEW_TEXT, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
@@ -84,7 +84,7 @@ test('OW6: the panel says why the clock is held - the land loading, an enemy nea
   assert.equal(TRAVEL_HELD_TEXT(5, 40, 'foes'), 'Held to ×5 of ×40 with enemies near');
   assert.equal(TRAVEL_HELD_TEXT(1, 40, 'ground'), 'Held to ×1 of ×40 until the Overworld rises');   // AUDIT OW5 G1's word
   assert.equal(TRAVEL_HELD_TEXT(1, 40, 'junk'), `Held to ×1 of ×40 ${TRAVEL_HELD_WHY.load}`);
-  assert.equal(TRAVEL_VIEW_TEXT.enemiesSlow, 'Enemies near - you slow your pace.');
+  assert.equal(TRAVEL_VIEW_TEXT.enemiesSlow, 'Enemies are near. You slow your pace.');
   const foe = (o = {}) => ({ dead: false, ai: { isHostile: true, detected: true, inSight: true }, entity: { mobileEnemy: { team: 'Orcs' } }, ...o });
   assert.equal(foeHostile(foe()), true);
   assert.equal(foeHostile(foe({ dead: true })), false);
@@ -115,9 +115,10 @@ const governorHost = (over = {}) => {
     travellerOnRoad: () => !!d.onRoad, foePaced, foeRate,   // RATE-LAW: the keys' travel's ground; ENEMY-PACE's fixed floor
     travelView: { get active() { return d.up; }, get state() { return d.up ? 'up' : 'off'; } }, tvOwnsJourneys: () => d.owns,
     worldTimeScale: () => d.scale, setWorldTimeScale: (n) => { d.scale = n; },
-    travelGovernor: createLoadGovernor({ max: 100 }), state: { terrainDistance: 3, localFromWorld: (x, z) => [x, z] },
+    // OW-LEAD: the feet in the middle of pixel (100, 100), native - the rig's owed pixels are that one (the hole underfoot)
+    travelGovernor: createLoadGovernor({ max: 100 }), state: { terrainDistance: 3, localFromWorld: (x, z) => [x, z], worldCoords: () => ({ x: 100.5 * 32768, z: 399.5 * 32768 }) },
     playerTravelPixel: () => ({ x: 100, y: 100 }), tvGroundGenNow: () => 1, _tvUnbuilt: { gen: -1, x: NaN, y: NaN, r: -1, n: 0 },
-    unbuiltAround: () => d.unbuilt, built: new Set(),
+    unbuiltAround: (c, r, b, out) => { for (let i = 0; i < d.unbuilt; i++) out?.push([100, 100]); return d.unbuilt; }, built: new Set(),
     player: { feetAt: () => [0, 0, 0], get speed() { return d.speed; }, isPlayerSwimming: false },
     getPref: () => d.camps, playerEntity: { get preventEnemySpawns() { return d.prevent; } },
     bandNowMs: () => 0, bandSight: () => 320, tvBandSeen: { night: false }, travelViewBands: () => d.bands,
@@ -165,7 +166,7 @@ test('OW6 x WILD-ALERT host run: UNDER THE VIEW A BAND HOLDS THE JOURNEY ONLY ON
   assert.equal(g.d.said.length, 1, 'once, not every frame');
   // the ground's cap, lower still, is the reason
   const both = governorHost({ chases: chase(), unbuilt: 3 });
-  for (let i = 0; i < 20; i++) both.govern(0.05);   // a second of holes halves the ground's ceiling below the enemies'
+  for (let i = 0; i < 20; i++) both.govern(0.05);   // PIN MOVED (OW-LEAD): the hole underfoot holds the ground's cap to walking pace, below the enemies'
   assert.equal(both.held()[1], 'load');
   assert.ok(both.d.scale <= 20);
   for (const quiet of [{ camps: false }, { prevent: true }]) {

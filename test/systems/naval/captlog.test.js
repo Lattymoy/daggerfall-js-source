@@ -44,7 +44,7 @@ test('CAPT-LOG what a rank brings in its crown\'s harbours: the table - the ship
   assert.equal(perksOf(4, 25), RANK_PERKS[0], 'hunted: no favours');
   assert.equal(perksOf(9), RANK_PERKS[4], 'past the top, the top');
   // PIN MOVED (AUDIT CAPTAIN'S SEA B15): the discount the shipwright's repairs and powder - his stores and grog are what they cost
-  assert.equal(perkWords(RANK_PERKS[3]), 'the shipwright\'s repairs and powder 15% off - the harbour board pays 30% more, 2 more offers a day - a letter of marque - the Admiralty\'s Carrack - seasoned hands hired');
+  assert.equal(perkWords(RANK_PERKS[3]), 'the shipwright\'s repairs and powder 15% off - the harbor board pays 30% more, 2 more offers a day - a letter of marque - the Admiralty\'s Carrack - seasoned hands hired');
   assert.equal(perkWords(RANK_PERKS[0]), '');
 });
 

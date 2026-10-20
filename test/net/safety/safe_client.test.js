@@ -419,7 +419,7 @@ test('AUDIT SAFE CLIENT-3 / DOC-6 A NAME IS THE ONE ACCOUNT EVERYTHING HERE AGRE
   await settle(); await settle();
   assert.deepEqual(r.asked.filter((a) => a.path === '/v1/safety/block'), [], 'two accounts: nothing asked');
   const said = r.log.tab('world').messages.at(-1).text;
-  assert.match(said, /^2 players are called Bob\. Nobody was blocked/);
+  assert.match(said, /^2 players are called Bob\. No one was blocked/);
   r.host.onSend('world', '/report Bob hate');
   await settle(); await settle();
   assert.match(r.log.tab('world').messages.at(-1).text, /^2 players are called Bob\. Nothing was reported/);

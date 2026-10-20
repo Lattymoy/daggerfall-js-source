@@ -1981,7 +1981,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
       if (w.k === 'egot' && w.w === 'page' && EG_ANNALS[w.p]) { annals.add(w.p); say(`A page of the Annals of 3E 398 - ${EG_ANNALS[w.p][0]}: ${EG_ANNALS[w.p][1]}`); }
       else if (w.k === 'egot' && EG_GOT_TEXT[w.w]) say(EG_GOT_TEXT[w.w]);
       if (w.k === 'egot' && w.w === 'longstep') longStepHeard(link.state());   // AUDIT EG III (lane1 #5): LONG STEP on my crumbles, for one span
-      if (w.k === 'rd') say(w.cov ? `${EG_TEXT.redoubt(w.w)}: the Covenant has spoken - this Redoubt is the last.` : `${EG_TEXT.redoubt(w.w)}: the count gains ${egCountText(Math.max(0, w.g ?? 0))}.`);
+      if (w.k === 'rd') say(w.cov ? `${EG_TEXT.redoubt(w.w)}: the Covenant has spoken. This Redoubt is the last.` : `${EG_TEXT.redoubt(w.w)}: the count gains ${egCountText(Math.max(0, w.g ?? 0))}.`);
       void room;
     },
     /** `/breach` (answer the call - AUDIT EG V (c, L7-14): with no call of mine standing, the start window, where a keyless

@@ -105,7 +105,7 @@ function worldHost(b) {
     isEnhanced: () => true,
     tvOwnsJourneys: () => true,   // OW-TOGGLE's switch off, its default: the Overworld owns a map's journey
     travelOptions: { get isTravelActive() { return w.journey; }, get state() { return { autopilot: w.journey ? {} : null }; } },
-    duelEnemyNear: () => false, areEnemiesNearby: () => false, exteriorFoePool: () => [], navalHostileNear: () => false, travelViewAllowed: () => ({ ok: true }),   // TIME-DILATION: no hostile ship
+    duelEnemyNear: () => false, areEnemiesNearby: () => false, exteriorFoePool: () => [], wildSeen: (foes) => foes, navalHostileNear: () => false, travelViewAllowed: () => ({ ok: true }),   // TIME-DILATION: no hostile ship
   };
   const run = (src) => new Function('__s', `with (__s) { return (${src}); }`)(scope);
   const toggleSrc = TOGGLE.exec(WORLD);

@@ -106,8 +106,8 @@ test('SET1 the record: a sigil carries a power, a set, or both - never neither -
     const v = sigilView(piece);
     assert.equal(v.blow, false); assert.equal(v.pct, 0); assert.equal(v.full, null); assert.equal(v.set, 'dagon');
     setSigilOnline(false);
-    assert.deepEqual(sigilLines(piece), ['Sigil (Dormant - wakes online, with your Renown)']);
-    assert.deepEqual(sigilLines(weapon(120, null)), ['Sigil (Dormant - wakes online, with your Renown): +5% at Ascendant'], 'a weapon\'s words are what they were');
+    assert.deepEqual(sigilLines(piece), ['Sigil (Dormant. It wakes online, with your Renown)']);
+    assert.deepEqual(sigilLines(weapon(120, null)), ['Sigil (Dormant. It wakes online, with your Renown): +5% at Ascendant'], 'a weapon\'s words are what they were');
   } finally { _resetSigilForTests(); }
   assert.deepEqual(validItemField('sigil', armourSigil), armourSigil);
   assert.equal(validItemField('sigil', { set: 'nobody', party: 1, xp: 0 }), undefined);

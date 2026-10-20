@@ -227,7 +227,7 @@ test('PRIVATE-REPORT THE FORM IN THE MAILBOX: a door under the post; the form - 
   await click(byKey(w.root, 'send'));
   await until(() => box.desk.mine?.length === 1 && !box.desk.sending);
   w.draw();
-  assert.equal(all(w.root, 'pm-say')[0].textContent, 'Sent. Thank you - only the developers can read it.');
+  assert.equal(all(w.root, 'pm-say')[0].textContent, 'Sent. Thank you. Only the developers can read it.');
   assert.deepEqual([subject.value, body.value, exploit.checked], ['', '', false], 'the form empty for the next');
   // AUDIT PRIVATE-REPORT UI-3: the fields given back first, then the focus - never left on the page's body
   assert.equal(doc.activeElement, subject, 'the focus on the title, for the next');
@@ -248,7 +248,7 @@ test('PRIVATE-REPORT THE FORM IN THE MAILBOX: a door under the post; the form - 
   w2.stop();
   await until(() => !box.desk.sending && box.desk.mine?.length === 2);
   w2.draw();
-  assert.equal(all(w2.root, 'pm-say')[0].textContent, 'Sent. Thank you - only the developers can read it.', 'said where the player is');
+  assert.equal(all(w2.root, 'pm-say')[0].textContent, 'Sent. Thank you. Only the developers can read it.', 'said where the player is');
   assert.equal(doc2.activeElement, byKey(w2.root, 'subject'), 'and the focus given there - never left on the page\'s body');
   assert.equal(all(w.root, 'pm-say')[0].textContent, '', 'never to the window gone');
   assert.equal(box.desk.lastSend, null, 'said once');

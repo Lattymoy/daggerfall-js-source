@@ -61,7 +61,7 @@ async function cell(fn, { speakers = 3 } = {}) {
   } finally { Date.now = realNow; }
 }
 
-test('SCALE5b slimPose: a validated pose without its defaults, its place in its room\'s units (SLIM-FRAME: a cell\'s x and z whole world units, its height the scene\'s metres to the centimetre) and its turn to a ten-thousandth - validPose reads it back as the pose it was, over every field the wire carries (mutants: a default kept; a field dropped that is not at its default; the place unrounded; the turn rounded coarser)', () => {
+test('SCALE5b slimPose: a validated pose without its defaults, its place in its room\'s units (SLIM-FRAME: a cell\'s x and z whole world units, its height the scene\'s meters to the centimetre) and its turn to a ten-thousandth - validPose reads it back as the pose it was, over every field the wire carries (mutants: a default kept; a field dropped that is not at its default; the place unrounded; the turn rounded coarser)', () => {
   assert.equal(relay.slimPose, slimPose, 'one home, both ends');
   assert.equal(relay.POSE_BATCH_MS, POSE_BATCH_MS);
   const rnd = roll(11);

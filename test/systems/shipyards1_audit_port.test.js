@@ -660,7 +660,7 @@ test('AUDIT SHIPYARDS THE WORDS SEND THE PLAYER TO THE SHIPYARD (L7-1, L7-4, L7-
   const csa = MOD_SETTINGS['come-sail-away'].keys.Enabled.description;
   assert.match(csa, /Buy parts or a deed at a shipyard, put it in the water/);
   const page = (id) => TUTORIALS.find((t) => t.id === id).body.join(' ');
-  assert.match(page('ships'), /A bigger ship is laid up where you bought it: bring it round from the shipyard's Your fleet page\./);
+  assert.match(page('ships'), /A larger ship is laid up where you bought it; bring it round from the shipyard's Your fleet page\./);   // VOICE1 (PIN MOVED): the same law in plain words
   assert.doesNotMatch(page('ships'), /waits at the port/);
   assert.match(page('shipyard'), /^Port towns have a shipyard by the water\./);
 });

@@ -65,7 +65,7 @@
   {
     "name": "SALVAGE-CLASSIC-the-page-says-another-reason",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  classic: 'Classic magic will not break - the guilds sell and make it; shards come from a piece the loot ladder graded',",
+    "old": "  classic: 'Classic magic will not break. The guilds sell and make it; shards come only from a piece that bears a rarity',",
     "new": "  classic: 'Nothing the Reforge can roll',",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"

@@ -137,7 +137,7 @@
   {
     "name": "AD-B1-offer-editable-after-confirm",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this.myConfirm) return { ok: false, why: 'You have confirmed - cancel the trade to change your offer.' };",
+    "old": "    if (this.myConfirm) return { ok: false, why: 'You have confirmed. Cancel the trade to change your offer.' };",
     "new": "",
     "tests": [
       "test/systems/quest/auditdrops.test.js"

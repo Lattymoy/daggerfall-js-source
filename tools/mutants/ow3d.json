@@ -177,7 +177,7 @@
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "AUDIT OW3 D1: a spawn the player has just been told of ('You see a Dungeon 410 metres to the North!') is not marked unless the store has it."
+    "note": "AUDIT OW3 D1: a spawn the player has just been told of ('You see a Dungeon 410 meters to the North!') is not marked unless the store has it."
   },
   {
     "name": "OW3D1-host-said-is-named",

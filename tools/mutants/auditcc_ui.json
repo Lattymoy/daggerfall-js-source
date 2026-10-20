@@ -433,8 +433,8 @@
   {
     "name": "AUDITCC-UI-S13-beside-the-bars",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "Icons at the screen\\'s left edge show",
-    "new": "Icons next to your bars show",
+    "old": "Signs at the left edge of the screen show",
+    "new": "Signs next to your bars show",
     "why": "the page puts the tiles beside the bars",
     "tests": [
       "test/systems/auditcc_ui.test.js"

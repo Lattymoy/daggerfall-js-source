@@ -1312,7 +1312,7 @@ export function createNavalHost(deps) {
         e.blackFlag = true;
         // AUDIT CAPTAIN'S SEA S21: the trader she passed for named only while her colours held for me; seen through, she is
         // the pirate she is
-        if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.say?.(was === KNOW.colours ? `False colours! ${disguiseOf(e)?.name ?? 'The merchantman'} runs up the black flag!` : was >= KNOW.studied ? `${s.names?.name ?? 'It'} runs up the black flag!` : `${withArticle(hullWord(s.hull))} runs up the black flag!`, 4);
+        if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.say?.(was === KNOW.colours ? `False colors! ${disguiseOf(e)?.name ?? 'The merchantman'} runs up the black flag!` : was >= KNOW.studied ? `${s.names?.name ?? 'It'} runs up the black flag!` : `${withArticle(hullWord(s.hull))} runs up the black flag!`, 4);
       }
       if (was >= e.known) continue;
       if (was < KNOW.colours && !held && lookout && dist > reach.eye && dist <= reach.lookout) {
@@ -1324,7 +1324,7 @@ export function createNavalHost(deps) {
       if (e.known >= KNOW.studied && !e.blackFlag && !e.seenThrough && falseFlagFor(e)) {
         e.seenThrough = true;   // seen through: her colours are a lie - a pirate to me from now, whatever she flies
         // AUDIT CAPTAIN'S SEA S21: said only where she is seen - the glass on her, the eye, my Lookout (one struck far off is not)
-        if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.mid?.(`False colours! ${s.names?.name ?? 'It'} is a pirate.`, 4);
+        if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.mid?.(`False colors! ${s.names?.name ?? 'It'} is a pirate.`, 4);
       }
     }
   }
@@ -1461,9 +1461,9 @@ export function createNavalHost(deps) {
   }
   /** What a site's casks are said as when they float out. */
   const SITE_WORDS = Object.freeze({
-    cache: 'Your lookout spies a chest bobbing where the chart said - the cache!',
-    salvage: 'Wreckage and floating casks - the wreck the harbourmaster wants raised.',
-    strand: 'Your boat pulls in to the strand and back out with its haul - casks afloat alongside.',   // ETHER-SEA: a wild isle's good
+    cache: 'Your lookout spies a chest bobbing where the chart said it would be. The cache!',
+    salvage: 'Wreckage and floating casks. This is the wreck the harbormaster wants raised.',
+    strand: 'Your boat pulls in to the strand and back out with its haul, casks afloat alongside.',   // ETHER-SEA: a wild isle's good
   });
   /** THE SITES' STEP, SITE_CHECK_S apart: the berth said, then each held site within reach stood if it is not. */
   function siteStep(boat) {
@@ -2850,7 +2850,7 @@ export function createNavalHost(deps) {
     let said = null;
     if (order === CREW_ORDERS.repair) {
       if (!wantsRepair(st.damage)) said = `${who}No repairs needed, Captain.`;
-      else if (where().nearPort) said = `${who}We're in port, Captain - the shipwright can do the repairs.`;   // AUDIT CC-D1
+      else if (where().nearPort) said = `${who}We're in port, Captain. The shipwright can see to the repairs.`;   // AUDIT CC-D1
       else if (st.credit <= 1e-9 && (deps.stores?.count?.(boat) ?? 0) <= 0) said = `${who}We've no carpenter's stores aboard, Captain.`;
       if (said) { deps.say?.(said, 4); return { ok: false, said }; }
     }
@@ -3233,8 +3233,8 @@ export function createNavalHost(deps) {
     const boat = myBoat();
     if (!enabled || !boat) return null;
     const d = myBoatState(boat).damage;
-    if (d.state === SHIP_STATES.wrecked) return 'The ship is crippled - no sail will set.';
-    if (d.maxSail > 0 && d.sailShare() <= 0) return 'The rigging is shot away - no sail will set.';
+    if (d.state === SHIP_STATES.wrecked) return 'The ship is crippled. No sail will set.';
+    if (d.maxSail > 0 && d.sailShare() <= 0) return 'The rigging is shot away. No sail will set.';
     return null;
   }
 
@@ -3291,8 +3291,8 @@ export function createNavalHost(deps) {
     aiming = false;
     const side = lookSide(boat);
     if (!side) { deps.say?.('No guns bear there.', 1.5); return true; }
-    if (st.damage.state === SHIP_STATES.wrecked) { deps.say?.('Your guns are silent - the ship is crippled.', 2); return true; }
-    if (st.guns.braced) { deps.say?.('Braced - let go of the brace to fire.', 1.5); return true; }
+    if (st.damage.state === SHIP_STATES.wrecked) { deps.say?.('Your guns are silent. The ship is crippled.', 2); return true; }
+    if (st.guns.braced) { deps.say?.('Braced. Let go of the brace to fire.', 1.5); return true; }
     if (!st.guns.ready(side)) {
       const bat = batteryOf(boat.hull, side);
       deps.say?.(bat?.gun === 'barrel' && st.guns.barrels <= 0 ? 'No fire barrels left.' : `The ${side} guns are reloading (${st.guns.left(side).toFixed(1)} s).`, 1.5);
@@ -3477,7 +3477,7 @@ export function createNavalHost(deps) {
     entry.ship.damage.douse();   // AUDIT NAV1 (B4): grappled, her fires are fought - never a fight on a deck burning under it
     douse(entry);
     sound(NAVAL_SFX.grapple, entry.ship.pos, 0.9);
-    deps.say?.(kind === 'board' ? `Grapples away! Hauling ${entry.ship.names?.name ?? 'it'} alongside...` : `Grappling hooks! ${entry.ship.names?.name ? `${entry.ship.names.name} is` : 'The pirates are'} coming alongside - repel boarders!`, 3);
+    deps.say?.(kind === 'board' ? `Grapples away! Hauling ${entry.ship.names?.name ?? 'it'} alongside...` : `Grappling hooks! ${entry.ship.names?.name ? `${entry.ship.names.name} is` : 'The pirates are'} coming alongside. Repel boarders!`, 3);
   }
 
   /** The boarding's frame: the haul, then the fight's tally, then the prize. */
@@ -3630,7 +3630,7 @@ export function createNavalHost(deps) {
         entry.ship.damage.apply({ hull: 0, sail: 0, crew: entry.ship.damage.crew / 2 }, clock);
         endBoarding();
         wonRaid(b.quest);   // RAID-WON: her first wave's raid won - its crew home before the second comes over
-        deps.mid?.(`The boarders are thrown back - and ${entry.ship.names?.name ?? 'it'} sends more over the rail!`, 3);
+        deps.mid?.(`The boarders are thrown back, and ${entry.ship.names?.name ?? 'it'} sends more over the rail!`, 3);
         startBoarding('repel', entry, again);
         return;
       }
@@ -4398,7 +4398,7 @@ export function createNavalHost(deps) {
   function gangwayHint() {
     const g = gangwayInReach(false);
     const k = g ? `${g.way}:${g.boat.uid ?? ''}` : null;
-    if (k && k !== gangwaySaid) deps.say?.(g.way === 'aboard' ? `The gangway${g.name ? ` to the ${g.name}` : ''} - Activate to go aboard.` : 'The gangway - Activate to step ashore.', 3);
+    if (k && k !== gangwaySaid) deps.say?.(g.way === 'aboard' ? `The gangway${g.name ? ` to the ${g.name}` : ''} - Activate to go aboard.` : 'The gangway. Activate to step ashore.', 3);
     gangwaySaid = k;
   }
   // ── PASSAGE (2026-10-19; bible/03-World/Passage.md): a harbour's own friendly ship, booked from her quay - the sea's half
@@ -5431,7 +5431,7 @@ export function createNavalHost(deps) {
         const rec = pendingBoats.get(c.boat);
         if (rec?.mates) { const crew = createShipCrew({ seed: c.boat >>> 0, record: rec.mates }); crew.event('knocked'); rec.mates = crew.snapshot(); }
       }
-      deps.say?.(`${c.name} is knocked senseless - your crew carries ${c.gender === 'female' ? 'her' : 'him'} back aboard to rest.`, 4);
+      deps.say?.(`${c.name} is knocked senseless. Your crew carries ${c.gender === 'female' ? 'her' : 'him'} back aboard to rest.`, 4);
       if (c.items?.length) stowPack(c.boat, c.items.splice(0), c.name);   // COMPANION-KIT: and his pack with him
     },
     /** CREW-COMPANIONS: the party's hands no longer anyone's (fallen, the boat gone) out of it - answers them. */

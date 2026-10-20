@@ -1039,6 +1039,16 @@ export const MOD_SETTINGS = Object.freeze({
         labels: lazyWords(() => t('mods.eyeOfTheBeholder.skin.lightFighterFemale', 'Light Fighter (female)'), () => t('mods.eyeOfTheBeholder.skin.mediumFighterMale', 'Medium Fighter (male)'),
           () => t('mods.eyeOfTheBeholder.skin.mediumFighterFemale', 'Medium Fighter (female)'), () => t('mods.eyeOfTheBeholder.skin.heavyFighterMale', 'Heavy Fighter (male)'),
           () => t('mods.eyeOfTheBeholder.skin.heavyFighterFemale', 'Heavy Fighter (female)')) }),
+      // LAYERED-GEAR (2026-10-18, the owner: "add a option between those two thats also called On foot Layered Gearing
+      // Skin (WIP) Female and Male"): the on-foot body drawn in the helmet, chest and legs armor it wears
+      // (player/eyeOfTheBeholder/layeredArmor.js), as a woman or a man - a skin the player chooses on the profile
+      // (ui/skinCard.js, its Look toggle), not a feature's dial. 0 off (Skins), 1 female, 2 male, 3 the character's own
+      // body - the default (LAYERED-GEAR-ON, 2026-10-19, the owner: "Make sure this is on by default"; layeredArmor.js
+      // LAYERED_OWN). The look carries the body as `lg` (net/remotePlayers.js composeLook, wire.js validLook), so other
+      // players see it too.
+      'Graphics.LayeredGear': Object.freeze({ default: 3, min: 0, max: 3, get description() { return t('mods.eyeOfTheBeholder.Graphics.LayeredGear.description', 'On foot Layered Gearing Skin (WIP): drawn on foot in the helmet, chest and leg armor you wear'); },
+        labels: lazyWords(() => t('mods.eyeOfTheBeholder.skin.layeredOff', 'Off'), () => t('mods.eyeOfTheBeholder.skin.layeredFemale', 'Female'),
+          () => t('mods.eyeOfTheBeholder.skin.layeredMale', 'Male'), () => t('mods.eyeOfTheBeholder.skin.layeredOwn', 'Your own body')) }),
       'Graphics.ReadyStance': Object.freeze({ default: 2, options: lazyWords(() => t('mods.eyeOfTheBeholder.option.never', 'Never'), () => t('mods.eyeOfTheBeholder.option.whenIdle', 'When Idle'), () => t('mods.eyeOfTheBeholder.option.whenIdleOrMoving', 'When Idle or Moving')), get description() { return t('mods.eyeOfTheBeholder.Graphics.ReadyStance.description', 'Whether the sprite will change states when readying a weapon or spell'); } }),
       'Graphics.TurnToView': Object.freeze({ default: 2, options: lazyWords(() => t('mods.eyeOfTheBeholder.option.never', 'Never'), () => t('mods.eyeOfTheBeholder.option.onlyWhenAnimating', 'Only When Animating'), () => t('mods.eyeOfTheBeholder.option.whenWeaponReadied', 'When Weapon Readied'), () => t('mods.eyeOfTheBeholder.option.always', 'Always')), get description() { return t('mods.eyeOfTheBeholder.Graphics.TurnToView.description', 'Configure when the sprite turns to face the view'); } }),
       'Graphics.AttackStrings': Object.freeze({ default: 3, options: lazyWords(() => localizedText('none', 'None'), () => t('mods.eyeOfTheBeholder.option.mirror', 'Mirror'), () => t('mods.eyeOfTheBeholder.option.pingPong', 'PingPong'), () => t('mods.eyeOfTheBeholder.option.mixed', 'Mixed')), get description() { return t('mods.eyeOfTheBeholder.Graphics.AttackStrings.description', 'Optional attack animations. Every attack plays one stroke of the swing here, the two strokes alternating blow by blow, so PingPong plays as None and Mixed as Mirror.'); } }),

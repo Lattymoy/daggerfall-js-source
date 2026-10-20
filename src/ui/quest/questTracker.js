@@ -66,9 +66,9 @@ export const TRACKER_WORDS = Object.freeze({
   track: 'Track',
   // AUDIT GUIDE T6/U13: ONE name - the toggle's words and label never change with its state (WAI-ARIA APG);
   // aria-pressed says whether it is on, and the visible word begins the name (WCAG 2.5.3)
-  trackLabel: (title) => `Track ${title} on the HUD`,
+  trackLabel: (title) => `Track ${title} on screen`,
   // AUDIT GUIDE U14: the quest the HUD follows, said where the choice is made (the card itself is aria-hidden)
-  onHud: 'On the HUD',
+  onHud: 'On screen',
   onCompass: 'On the compass',
   main: 'Main Quest',   // AUDIT GUIDE U11: a main quest said, never colour alone (the pause tab's own tag, PX5)
 });

@@ -124,7 +124,7 @@ async function pressHeld(P) {
   const id = P.edit.create({ px: 1, py: 1, x: 5, z: 5, name: 'Camp' });
   P.edit.edit(id, 'add part', (d) => { d.parts.push(newPart(d, { mesh: P.sha, submeshes: 1, name: 'Hut' })); });
   P.edit.select({ id, part: null });
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'its model known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'its model known');
   const name = all(rightOf(P)).find((n) => n.tagName === 'INPUT' && n.value === 'Camp');
   name.focus(); name.value = 'Camp on the ridge';
   const save = button(rightOf(P), 'Save draft (Ctrl+S)');
@@ -451,7 +451,7 @@ test('AUDIT POI L10 A WITHDRAWAL THE STORE CLOSES \'withdrawn\': the builder\'s 
     const id = P.edit.create({ px: 1, py: 1, x: 5, z: 5, name: 'Camp' });
     P.edit.edit(id, 'add part', (d) => { d.parts.push(newPart(d, { mesh: P.sha, submeshes: 1, name: 'Hut' })); });
     P.edit.select({ id, part: null });
-    await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'its model known');
+    await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'its model known');
     press(button(rightOf(P), 'Save draft (Ctrl+S)'));
     await until(() => P.edit.entryOf(id).state === 'draft', 'saved'); await flush();
     press(button(rightOf(P), 'Send for approval'));

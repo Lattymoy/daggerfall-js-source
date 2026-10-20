@@ -410,7 +410,7 @@ export function swornArtStep(rec, r, door, { rolls = Math.random, say = null } =
     const ward = art === 'warding';
     door.castOnPlayer?.(ward ? shieldBundle(A.wardPoints, ART_LAW.SWORN_WARD.ROUNDS) : mightBundle(A.cryPoints, ART_LAW.SWORN_CRY.ROUNDS));
     s.ready = now + (ward ? A.wardCooldown : A.cryCooldown);
-    say?.(art === 'warding' ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given }) : t('rvn.art.sworn.roars', '{given} roars - your arm grows stronger.', { given: r.given }));
+    say?.(art === 'warding' ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given }) : t('rvn.art.sworn.roars', '{given} roars, and your arm grows stronger.', { given: r.given }));
     return art;
   }
   if (art === 'mending' || !tgt) return null;

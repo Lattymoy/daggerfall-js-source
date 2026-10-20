@@ -211,7 +211,7 @@ test('AUDIT CARDS-6 D7/D8: a short deck\'s card reaches the player - answered by
   }
   assert.equal(iliacRefusalText('cards-closed'), 'The realm is not vouching for decks right now. Try again later.');
   assert.equal(iliacRefusalText('ranked-needs-account'), 'Ranked games need a registered account.');
-  assert.equal(iliacRefusalText('offline'), 'The realm is not answering - try again.');
+  assert.equal(iliacRefusalText('offline'), 'The realm is not answering. Try again.');
   assert.equal(iliacRefusalText('lease'), accountRefusalText('lease'), 'a word not Iliac Hand\'s own is REFUSALS\'');
   assert.ok(Object.isFrozen(ILIAC_REFUSALS));
 });
@@ -245,7 +245,7 @@ test('AUDIT CARDS-6 D9 (E17): the host\'s carrier reads a receipt\'s life on the
   assert.equal(c.add(receipt), true, 'kept - its life the relay\'s');
   await c.flush();
   assert.deepEqual(asked, [receipt], 'and carried');
-  assert.match(said[0], /your rating 1016 \(\+16\)/);
+  assert.match(said[0], /Your rating is 1016 \(\+16\)/);
 });
 
 // ═══ D10: A DELETED CHAMPION'S TITLE ═════════════════════════════════════════════════════════════════════════════════
@@ -368,7 +368,7 @@ test('AUDIT CARDS-6 E6/E14: the ranked vouch is a read - the realm not answering
     ['an answer lost, then the record one on (a read lands nothing)', lostThenMoved()]]) {
     const { ranked, lost } = hostRanked(door);
     const r = await ranked.vouch(STARTER_DECK);
-    assert.deepEqual(r, { ok: false, why: 'The realm is not answering - try again.' }, what);
+    assert.deepEqual(r, { ok: false, why: 'The realm is not answering. Try again.' }, what);
     assert.deepEqual(lost, [], `${what}: the session stands`);
   }
   const said = async (answer) => (await hostRanked(async () => answer).ranked.vouch(STARTER_DECK)).why;

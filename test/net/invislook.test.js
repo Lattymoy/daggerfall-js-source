@@ -84,7 +84,7 @@ test('INVIS-LOOK executed: the walker and the rider - the chosen set and the sad
   const art = createEotbArt({ renderer, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }) });
   const pose = (o = {}) => ({ x: 4, y: 0, z: 9, yaw: 0, pitch: 0, mv: 0, wd: 0, an: 0, sr: 0, cn: 0, ar: 0, ...o });
   const V = peerDraw(2, true, 1, 'w').visual;
-  const w = createPeerWalkers({ art });
+  const w = createPeerWalkers({ art, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
   const walker = { id: 'w', look: { eo: 3 }, shown: pose() };
   w.sync([walker], toScene, { eye: [4, 1, 20], dt: 0, conceal: () => V }); await settle();
   w.sync([walker], toScene, { eye: [4, 1, 20], dt: 0, conceal: () => V });
@@ -103,7 +103,7 @@ test('INVIS-LOOK executed: the walker and the rider - the chosen set and the sad
   assert.equal(w.batches()[0].conceal, null, 'the spell ended: plain');
   // the lantern: from straight behind (the walker faces +Z, the eye on -Z) it is drawn - on a concealed walker it is not
   const lit = createEotbArt({ renderer: { ...renderer, drawBillboards() {} }, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }), loadLantern: async () => ({ width: 10, height: 20, colors: new Uint8ClampedArray(800) }) });
-  const lw = createPeerWalkers({ art: lit });
+  const lw = createPeerWalkers({ art: lit, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
   const back = (conceal) => { lw.sync([{ id: 'w', look: { eo: 3 }, shown: pose({ hl: 1 }) }], toScene, { eye: [4, 1.5, 7], right: [-1, 0, 0], dt: 1 / 60, conceal }); return lw.drawLanterns(); };
   back(() => null); await settle(); back(() => null); await settle();
   assert.equal(back(() => null), 1, 'open: the lantern at the hip, seen from behind');

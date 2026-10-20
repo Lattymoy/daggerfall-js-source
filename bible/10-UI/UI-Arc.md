@@ -13169,6 +13169,30 @@ DotGothic16, Press Start 2P, Silkscreen) before choosing; Press Start
 landing page's no-raster law (U60) now admits exactly one `url()`: the
 font data URI, which is typography, not a picture.
 
+## TWO: THE 2 AND THE Z (2026-10-18)
+
+Dudey: "the number 2 looks like a Z ... make it more readable", and then
+"change that as well to a readable Z". It is the glyph again: Pixelify's
+`two` and its `Z` are the same outline except one corner, so 12, 22 or
+2025 read as Z's and a Z reads as a 2. No pixel face drawn beside it fits
+better (Silkscreen's 2 is a Z too), so both are drawn for us on
+Pixelify's own grid at weight 500, the weight the skin reads in (columns
+60 to 531, base -12, top 633, advance 592): the 2 with a rounded top, the
+right side down one row and a diagonal stepping two cells wide to a full
+base, on the same lines Pixelify's own 4 and N step on; the Z with a flat
+top and base and one straight diagonal, 150 units across. The first cut
+drew the 2 on the weight-400 grid, whose lines sit a few units off the
+500 letters beside it, and at sizes where the grid falls between screen
+pixels its steps showed dark slits (Dudey: "theres a black line cutting
+through"); a straight 2 read worse ("the 2 looks worse now"), so the 2
+keeps its steps on the 500 grid and only the Z is straight. The small z is
+Pixelify's and was never confused. `tools/pixelifyGlyphs.py` builds both
+(416 bytes, `vendor/pixelify-glyphs/`); `ui/pixelifyFive.js` carries them
+as a second `@font-face` of the family `Pixelify Five` over U+0032 and
+U+005A, so every stack that already puts the five first takes them from
+it and nothing else moves. The landing page and the launcher carry the
+same rule, so the landing's no-raster law now admits two font data URIs.
+
 ## FIX-E: THE END OF A RUN NAVIGATES, WHATEVER THE VIDEO DOES (2026-09-08)
 
 Mac: "When dying and returning to the main menu, the game bugs and

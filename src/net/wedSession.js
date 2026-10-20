@@ -42,10 +42,10 @@ export function wedWhyText(why, name = 'They') {
   switch (why) {
     case 'declined': return `${name} declined your proposal.`;
     case 'busy': return `${name} cannot answer a proposal now.`;
-    case 'temple': return 'A wedding is made in a temple - both of you must stand inside one.';
+    case 'temple': return 'A wedding is made in a temple. Both of you must stand inside one.';
     case 'house': return 'Only two characters of houses (Project Legacy) can be wed in the realm.';
     case 'wed': return `${name} is wed already.`;
-    case 'timeout': return 'No answer came - the proposal lapsed.';
+    case 'timeout': return 'No answer came, and the proposal lapsed.';
     case 'cancelled': return `${name} took the proposal back.`;
     case 'refused': return 'The temple\'s book would not take the wedding.';
     default: return 'The wedding did not happen.';
@@ -57,7 +57,7 @@ export function wedMineText(why) {
   switch (why) {
     case 'house': return 'Only a character of a house (Project Legacy) can wed in the realm.';
     case 'wed': return 'You are wed already.';
-    case 'temple': return 'A wedding is made in a temple - stand inside one together.';
+    case 'temple': return 'A wedding is made in a temple. Stand inside one together.';
     case 'busy': return 'Not now.';
     default: return 'The wedding did not happen.';
   }
@@ -243,7 +243,7 @@ export function createWedManager({
           if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= WED_REASK_MS) quiet.delete(p);
           const fresh = !incoming.has(from);
           incoming.set(from, { s: d.s, at: now(), sub, sc });
-          if (fresh) { say(`${nameOf(from)} asks for your hand - answer on the prompt, or on their Inspect card.`); onPrompt(from); }
+          if (fresh) { say(`${nameOf(from)} asks for your hand. Answer on the prompt, or on their Inspect card.`); onPrompt(from); }
           changed();
           return;
         }

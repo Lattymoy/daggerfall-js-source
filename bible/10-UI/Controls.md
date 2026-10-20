@@ -297,7 +297,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `TurnRight` | RIGHT |  | Turn right |
 | `LookUp` | INS |  | Look up |
 | `LookDown` | DEL |  | Look down |
-| `CenterView` | HOME |  | Centre the view |
+| `CenterView` | HOME |  | Center the view |
 | `TogglePerspective` | MOUSE4 |  | First / third person |
 | `Jump` | SPACE | `JoystickButton5` | Jump |
 | `Crouch` | C | `JoystickButton4` | Crouch and sneak |

@@ -92,7 +92,7 @@ test('KG3 the stake\'s picks: the tier\'s least times the mod\'s three, each ref
   assert.equal(picks[0].label, '×1 - 50 gold');
   const poor = stakePicks(r, 120, 5);
   assert.deepEqual(poor.map((p) => p.enabled), [true, true, false]);
-  assert.equal(poor[2].why, 'Your purse holds 120 gold - not enough for a stake of 250.');
+  assert.equal(poor[2].why, 'Your purse holds 120 gold, not enough for a stake of 250.');
   assert.equal(poor[2].chosen, false, 'a refused pick is never the chosen one');
   const tired = stakePicks({ ...r, nightLeft: 100 }, 5000, null);
   assert.deepEqual(tired.map((p) => p.enabled), [true, true, false]);
@@ -106,7 +106,7 @@ test('KG3 the kings are the Bay deck\'s four, named off SUIT_CROWNS ("{name}, Ki
   assert.deepEqual(m.setup.crowns.map((c) => [c.key, c.name, c.chosen]), SUIT_CROWNS.map((c, i) => [c.crown.toLowerCase(), `${c.courts[2].name}, King of ${c.crown}`, c.crown === 'Wayrest']));
   assert.deepEqual(GAMBIT_CROWNS, ['orsinium', 'sentinel', 'wayrest', 'daggerfall']);
   assert.equal(kingName('nowhere'), 'Gothryd, King of Daggerfall', 'a key it does not hold: the game\'s own crown');
-  assert.equal(m.setup.kingLine, `The crown changes only your king's face: every king plays alike - level ${KG_KING_LEVEL}, ${KG_KING_HP} health, attack ${KG_KINGS[0].atk}.`);
+  assert.equal(m.setup.kingLine, `The crown changes only your king's face. Every king plays alike: level ${KG_KING_LEVEL}, ${KG_KING_HP} health, attack ${KG_KINGS[0].atk}.`);
   assert.ok(!/Knight|Barbarian/.test(JSON.stringify(m)));
   // inside a sentence the whole title wants the commas round it ("Your Gothryd, King of Daggerfall moves."): a king there
   // is "King {name}" - the log's, a refusal's, a press's; the box's head and the fall keep the whole title
@@ -141,7 +141,7 @@ test('KG3 the army: the 46 units in the law\'s order - a cost\'s ties by the nam
   assert.equal(m.army.unit.cost, '6 points');
   assert.equal(m.army.kingLine, 'Your king: Camaron, King of Sentinel - free. If your king falls, you lose.');
   const start = m.actions.find((a) => a.id === 'start');
-  assert.deepEqual([start.label, start.enabled, start.kind], ['Start the battle - stake 100 gold', true, 'primary']);
+  assert.deepEqual([start.label, start.enabled, start.kind], ['Start the battle and stake 100 gold', true, 'primary']);
   const empty = gambitHudModel({ phase: 'army', army: [], crown: 'sentinel', regulars: REGS, regular: 1, stakeMult: 2, purse: 5000 });
   assert.deepEqual([empty.actions.find((a) => a.id === 'start').enabled, empty.actions.find((a) => a.id === 'start').why, empty.next], [false, refusalWords('empty'), nextStep('addUnit')]);
   const fun = gambitHudModel({ phase: 'army', army, regulars: REGS, regular: 1, friendly: true, purse: 0 });
@@ -173,7 +173,7 @@ test('KG3 the turn: the title by whose turn, the chips (pips and words, both sid
   fell.pieces = fell.pieces.filter((p) => p.id !== mine.id);
   assert.equal(battle(fell, { dealt: dealtCounts }).battle.chips[3].text, 'Your fallen 1', 'a fallen piece counted against the deal');
   const forfeit = m.actions.find((a) => a.id === 'forfeit'), stand = m.actions.find((a) => a.id === 'stand');
-  assert.deepEqual([forfeit.label, forfeit.kind, stand.label, stand.kind], ['Forfeit - lose 100 gold', 'warn', 'Stand up - lose 100 gold', 'warn']);
+  assert.deepEqual([forfeit.label, forfeit.kind, stand.label, stand.kind], ['Forfeit - lose 100 gold', 'warn', 'Stand up and lose 100 gold', 'warn']);
   assert.equal(battle(st, { armed: 'forfeit' }).actions.find((a) => a.id === 'forfeit').label, 'Press again to confirm');
   // the regular's turn
   const out = gambitAct(st, 0, { type: 'end' });
@@ -259,13 +259,13 @@ test('KG3 the result: the headline, the king\'s fall, the gold in one sentence -
   const lost = over({ winner: 1, by: 'king' });
   assert.deepEqual([lost.result.head, lost.result.king, lost.result.gold], ['You lose', 'Gothryd, King of Daggerfall, falls.', 'Bors keeps your 100 gold.']);
   const ff = over({ winner: 1, by: 'forfeit' });
-  assert.deepEqual([ff.result.head, ff.result.king], ['You lose - by forfeit', null], 'a forfeit fells no king');
-  assert.equal(over({ winner: 0, by: 'king' }, 0).result.gold, 'Played for fun - no gold changed hands.');
-  assert.equal(over({ winner: null, by: 'void' }).result.gold, 'No contest - your 100 gold is back in your purse.');
+  assert.deepEqual([ff.result.head, ff.result.king], ['You lose by forfeit', null], 'a forfeit fells no king');
+  assert.equal(over({ winner: 0, by: 'king' }, 0).result.gold, 'Played for sport. No gold changed hands.');
+  assert.equal(over({ winner: null, by: 'void' }).result.gold, 'No contest. Your 100 gold is back in your purse.');
   assert.equal(over({ winner: 0, by: 'king' }, 100, true).result.night, 'Bors has paid out all they will tonight: the next game is for fun.');
   assert.deepEqual(won.actions.map((a) => [a.id, a.kind ?? null]), [['again', 'primary'], ['army', null], ['regulars', null], ['stand', 'quiet']]);
   assert.deepEqual([won.tone, lost.tone, won.message], ['', '', nextStep('over')], 'the line says the next step in no tone of the chrome\'s three: the verdict is the box\'s');
-  assert.equal(resultGold({ winner: 1, by: 'king' }, 0, 'Bors'), 'Played for fun - no gold changed hands.');
+  assert.equal(resultGold({ winner: 1, by: 'king' }, 0, 'Bors'), 'Played for sport. No gold changed hands.');
 });
 
 test('KG3 THE NUMBERS ARE THE LAW\'S (14.4): what it is, the guide\'s seven paragraphs and the words read every figure from its export (mutants: a typed number in any of them)', () => {
@@ -330,7 +330,7 @@ test('KG3 THE LOG: a line for every event the law and the session say - the play
   for (const [e, line] of lines) assert.equal(logLine(e, x), line, e.t);
   for (const t of ['over', 'result']) assert.equal(logLine({ t }, x), null, `${t}: the log keeps the decision's own line`);
   for (const [e] of lines) assert.ok(logLine(e, x).length <= 64, `one line of the panel: ${logLine(e, x)}`);
-  assert.equal(barkEnd(true, 0), 'A fine game - and mine.');
+  assert.equal(barkEnd(true, 0), 'A fine game. And mine.');
   assert.equal(barkEnd(false, 0.99), 'Again, and I will have you.');
 });
 

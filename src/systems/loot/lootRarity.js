@@ -504,7 +504,7 @@ const THORNS_PREFIX = Object.freeze(['Barbed', 'Spiked', 'Thorned']);
 const FOCUS_PREFIX = Object.freeze(["Adept's", "Magister's", "Sorcerer's"]);
 const SLAYER_SUFFIX = Object.freeze({
   undead: ['of Rest', 'of the Gravewatch', 'of Exorcism'], daedra: ['of Banishing', 'of the Exile', "of Oblivion's Bane"],
-  humanoid: ['of the Duellist', 'of the Headsman', 'of the Warlord'], animal: ['of the Hunt', 'of the Huntsman', 'of the Wild Hunt'],
+  humanoid: ['of the Duelist', 'of the Headsman', 'of the Warlord'], animal: ['of the Hunt', 'of the Huntsman', 'of the Wild Hunt'],
 });
 const SLAYER_NOUN = Object.freeze({ undead: 'the undead', daedra: 'daedra', humanoid: 'humanoids', animal: 'animals' });
 /** LOOT14: the five social groups a standing line names - FactionFile.SocialGroups 0..4, in clothingStanding.js
@@ -974,14 +974,14 @@ export const WARDROBE_LEGENDARIES = Object.freeze([
     enchantment: Object.freeze({ type: T.ImprovesTalents, param: 1 }),   // Athleticism
     found: 'beast',
     power: Object.freeze({ name: 'Desert-Born', kind: 'climate', heat: 20, survival: true,
-      brief: 'The heat is felt 20 less', text: 'The heat is felt twenty degrees less - the sun, the sand and your own clothes' }),
+      brief: 'The heat is felt 20 less', text: 'Heat is felt twenty degrees less, whether from the sun, the sand or your own clothes' }),
     lore: "Worn across the Alik'r by a caravan-master who crossed it forty times and drank at every well on the way twice." }),
   Object.freeze({ id: 'wrothgar-mantle', name: 'The Wrothgar Pass Mantle', group: GARMENT_RECORD_GROUP, templates: Object.freeze([155, 192]),   // Formal Cloak
     affixes: Object.freeze([{ id: 'warmth', value: 10 }, { id: 'dry', value: 40 }, { id: 'skill', param: 18, value: 25 }]),
     enchantment: Object.freeze({ type: T.ExtraSpellPts, param: 0 }),   // During Winter
     found: 'brute',
     power: Object.freeze({ name: 'Mountain-Born', kind: 'climate', cold: 20, survival: true,
-      brief: 'The cold is felt 20 less', text: 'The cold is felt twenty degrees less - the wind, the snow and the wet' }),
+      brief: 'The cold is felt 20 less', text: 'Cold is felt twenty degrees less, whether from the wind, the snow or the wet' }),
     lore: "Orsinium's sentries hold the Wrothgar passes in these. The one that came down without its sentry has never said where he went." }),
   Object.freeze({ id: 'stendarr-vestments', name: 'The Vestments of Stendarr', group: GARMENT_RECORD_GROUP, templates: Object.freeze([164, 201]),   // Priest Robes, Priestess Robes
     affixes: Object.freeze([{ id: 'skill', param: 23, value: 25 }, { id: 'standing', param: 'scholars', value: 6 }, { id: 'stat', param: 'personality', value: 12 }]),
@@ -1010,7 +1010,7 @@ export const WARDROBE_LEGENDARIES = Object.freeze([
     found: 'rogue',
     power: Object.freeze({ name: 'Unseen', kind: 'hood', skill: 16, more: 25,
       brief: '+25 Stealth while hooded', text: 'While its hood is up you carry 25 more Stealth' }),
-    lore: 'Made for a Daggerfall cutpurse who was never once seen. Nobody can say what she looked like - only that the cowl was grey.' }),
+    lore: 'Made for a Daggerfall cutpurse who was never once seen. Nobody can say what she looked like - only that the cowl was gray.' }),
 ]);
 /** BAL9c (2026-10-12; bible/05-Combat/Balance-Arc.md section 15): THE ARCANE THREE - a caster's Legendaries, the first
  *  whose powers reach a spell's damage, its throw and its magicka (systems/spell/spellPower.js, systems/loot/lootPowers.js). LOOT3's
@@ -1024,7 +1024,7 @@ export const ARCANE_LEGENDARIES = Object.freeze([
     enchantment: Object.freeze({ type: T.ExtraSpellPts, param: 2 }),   // During Summer
     found: 'caster',
     power: Object.freeze({ name: "Magnus's Gaze", kind: 'pierce', points: 15,
-      brief: 'Spells pierce 15 resistance', text: 'Your Destruction spells meet a saving throw 15 lower - a foe immune to their element stays immune' }),
+      brief: 'Spells pierce 15 resistance', text: 'Foes resist your Destruction spells as if their saving throw were 15 lower. A foe immune to the element stays immune' }),
     lore: 'Ground from a shard of the sun the Mages Guild swears it never kept. Look through it at noon and you will not look again.' }),
   Object.freeze({ id: 'ring-of-artaeum', name: 'The Ring of Artaeum', group: 'Jewellery', templates: Object.freeze([135]),   // Ring
     affixes: Object.freeze([{ id: 'stat', param: 'willpower', value: 12 }, { id: 'skill', param: 27, value: 25 }, { id: 'resist', param: 'fire', value: 40 }]),
@@ -1056,9 +1056,9 @@ export const LEGENDARY_POWERS = Object.freeze({
   stormcaller: Object.freeze({ name: 'Chain Lightning', kind: 'chain', metres: 6, share: 50,
     brief: 'Arrows arc 50% to a foe near', text: 'Each of its arrows that lands arcs to the nearest other foe within 6 m, for half its damage as shock' }),
   'anseis-edge': Object.freeze({ name: 'Way of the Sword', kind: 'flow', pct: 6, max: 5, seconds: 6,
-    brief: '+6% a hit, up to 5 (6s)', text: 'Each of its blows that lands grants Flow for 6 s, up to five: +6% weapon damage a stack' }),
+    brief: '+6% a hit, up to 5 (6s)', text: 'Each blow that lands grants Flow for 6 s, building up to five times: +6% weapon damage each time' }),
   'tsaesci-fang': Object.freeze({ name: "Serpent's Kiss", kind: 'venom', flat: 8,
-    brief: '+8 poison, x2 under half', text: 'Its blows carry 8 poison, twice that to a foe under half its health - none to a foe immune, half to one that resists' }),
+    brief: '+8 poison, x2 under half', text: 'Its blows carry 8 poison, twice that against a foe below half its health. A foe immune to poison takes none, and one that resists takes half' }),
   'orsiniums-anvil': Object.freeze({ name: 'Earthshaker', kind: 'quake', metres: 3, share: 25,
     brief: 'Blows quake 25% around', text: 'Each of its blows that lands shakes the ground: every other foe within 3 m takes a quarter of it' }),
   'glenmoril-bow': Object.freeze({ name: "Hunter's Moon", kind: 'moon', pct: 35, beast: 35,
@@ -1094,7 +1094,7 @@ export const LEGENDARY_POWERS = Object.freeze({
   'wall-of-daggerfall': Object.freeze({ name: 'Bulwark', kind: 'bulwark', less: 5,
     brief: 'Blows on you: -5 damage', text: 'Each foe\'s blow on you is lessened by 5 points, never under 1' }),
   foxglove: Object.freeze({ name: "Fortune's Favour", kind: 'fortune', mult: 1.5,
-    brief: 'Legendaries half again likelier', text: 'While you wear it, every Legendary you find is half again as likely - its source\'s own chance, times one and a half' }),
+    brief: 'Legendaries half again likelier', text: 'While you wear it, every Legendary is half again as likely to be found: its source\'s own chance, times one and a half' }),
   'kings-mark': Object.freeze({ name: 'Tribute', kind: 'tribute', gold: 5,
     brief: 'Kills pay 5 gold a level', text: 'Each foe you kill pays you 5 gold for each of its levels' }),
   'archmages-loop': Object.freeze({ name: 'Spell Mastery', kind: 'mastery', less: 15, low: 30,

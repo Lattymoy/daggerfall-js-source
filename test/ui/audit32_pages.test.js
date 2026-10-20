@@ -185,7 +185,7 @@ test('AUDIT 32 P8/R4: Standard-bearer\'s Silk says what it waits on; the Outfitt
     p.btn('Clothing').onclick();
     p.btn('Straps').onclick();   // PIN MOVED (CRAFT2): a garment, then its cloth in the box
     p.btn('Standard-bearer\'s Silk').onclick();
-    assert.match(p.text(), /cloth:standard comes with the sieges - a Siege Honour's Spoils\./);   // PIN MOVED (AUDIT-SEATS): the sieges yield it now
+    assert.match(p.text(), /cloth:standard comes only from the sieges, as a Siege Honor's Spoils\./);   // PIN MOVED (AUDIT-SEATS): the sieges yield it now
     assert.doesNotMatch(p.text(), /Nothing yields it yet/);
     const root = el('div');
     document.body.append(root);
@@ -223,7 +223,7 @@ test('AUDIT 32 P11: the trace\'s meter draws the line through its points, marks 
     act.tick(0.05, { held: true, aim: { yaw: act.state.points[0][0], pitch: act.state.points[0][1] } });
     act.tick(0.05, { held: false });
     hud.setMeter(act, 'E');
-    assert.match(document.body.querySelector('.prof-meter').textContent, /let go - hold E on the first point again/);
+    assert.match(document.body.querySelector('.prof-meter').textContent, /let go\. Hold E on the first point again/);
   } finally { hud.dispose(); }
 });
 

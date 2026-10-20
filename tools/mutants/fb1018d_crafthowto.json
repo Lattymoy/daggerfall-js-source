@@ -2,7 +2,7 @@
   {
     "name": "CRAFT-HOWTO-smithing-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  smithing: () => t('prof.page.how.smithing', 'Smithing is done at a forge: a Weaponsmith\\'s, an Armorer\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The Forge smelts the ore you mine into ingots, and the Anvil makes weapons, armour and tools from them - or from raw ore, smelting it first. Jewellery is made at a jeweller\\'s bench: a Pawn Shop\\'s, a Gem Store\\'s or one in your own home. Smelting and every piece you make earn Smithing XP.'),\n",
+    "old": "  smithing: () => t('prof.page.how.smithing', 'Smithing is done at a forge: a Weaponsmith\\'s, an Armorer\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The Forge smelts the ore you mine into ingots, and the Anvil makes weapons, armor and tools from them - or from raw ore, smelting it first. Jewelry is made at a jeweler\\'s bench: a Pawn Shop\\'s, a Gem Store\\'s or one in your own home. Smelting and every piece you make earn Smithing XP.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -22,7 +22,7 @@
   {
     "name": "CRAFT-HOWTO-outfitting-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting is done at a loom: a Clothing Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The loom\\'s tanning rack cures the hides you skin into leather, and the loom makes leather armour, clothing, rugs, tapestries and the Fishing-Net. Linen and Wool are bought from the Weavers, at a Clothing Store\\'s loom or a Notice Board\\'s Market. Every piece earns Outfitting XP; curing earns none.'),\n",
+    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting is done at a loom: a Clothing Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The loom\\'s tanning rack cures the hides you skin into leather, and the loom makes leather armor, clothing, rugs, tapestries and the Fishing-Net. Linen and Wool are bought from the Weavers, at a Clothing Store\\'s loom or a Notice Board\\'s Market. Every piece earns Outfitting XP; curing earns none.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "CRAFT-HOWTO-brew-stores-only",
     "file": "src/ui/professions/profPages.js",
-    "old": "from the Stores page, with what you carry or keep in your Stores.",
-    "new": "from the Stores page, with what your Stores hold.",
+    "old": "from the Stores page, using what you carry or keep in your Stores.",
+    "new": "from the Stores page, using what your Stores hold.",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "CRAFT-HOWTO-page-gem-store-unlisted",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "Jeweller\\'s bench: Pawn Shops, Gem Stores.",
-    "new": "Jeweller\\'s bench: Pawn Shops.",
+    "old": "Jeweler\\'s bench: Pawn Shops, Gem Stores.",
+    "new": "Jeweler\\'s bench: Pawn Shops.",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],

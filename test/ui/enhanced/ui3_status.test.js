@@ -318,7 +318,8 @@ test('UI3 the HUD, executed: the widget is the quickslot block\'s first child, o
     drawEnhancedHud(entity, 0, 0, opts);
     const root = document.body.children.find((n) => n.className === 'hud');
     const quick = find(root, 'hud-quick');
-    assert.deepEqual(quick.children.map((n) => n.className), ['hud-stat', 'hud-qcap', 'hud-qdiamond'], 'on the caption, in the block');
+    // DIAMOND-HB (PIN MOVED): the block also holds the hotbar's dock for the Diamond style, last
+    assert.deepEqual(quick.children.map((n) => n.className), ['hud-stat', 'hud-qcap', 'hud-qdiamond', 'hud-gemdock'], 'on the caption, in the block');
     assert.deepEqual(find(root, 'hud-bottom').children.map((n) => n.className), ['hud-hotdock', 'hud-breath', 'hud-breath hud-grip', 'hud-bars', 'hud-renown'], 'and not in the foot (CLIMB2: the grip beside the breath)');
     const stat = quick.children[0];
     assert.deepEqual(stat.children.map((c) => c.className), [

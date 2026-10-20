@@ -110,7 +110,7 @@ export function legalNoticeLine({ name, after, delta, cause }) {
     case 'acquittal': return `The court of ${name} clears your name (${by}). You are ${word}.`;
     case 'penance': return `Your penance is accepted in ${name} (${by}). You are ${word}.`;
     case 'contract': return `${name} thanks you for your work (${by}). You are ${word}.`;
-    case 'raid': return `${name} thanks you for its defence (${by}). You are ${word}.`;   // AUDIT REP F5
+    case 'raid': return `${name} thanks you for its defense (${by}). You are ${word}.`;   // AUDIT REP F5
     default: return `Your standing with the law of ${name} ${delta < 0 ? 'falls' : 'rises'} (${by}). You are ${word}.`;
   }
 }

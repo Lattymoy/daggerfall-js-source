@@ -2027,7 +2027,7 @@ discordgates, gateclear, loot7 and survtiers3 lists. world141 re-hashed in place
 > within. Every apprentice who calls a scamp into a circle proves as much, and every coven of the Bay that calls a
 > Prince on his own day proves it more loudly.
 >
-> **The faithful.** Mehrunes Dagon, Prince of Destruction, has never lacked for worshippers in a land as quarrelsome
+> **The faithful.** Mehrunes Dagon, Prince of Destruction, has never lacked for worshipers in a land as quarrelsome
 > as ours. His faithful keep to the wilds, and to a rite older than Wayrest. They gather about a ring of braziers, burn
 > his sigil into the earth, and bleed for him. What opens is not a gate as the Daedra raise them in their own realms.
 > It is a breach: a wound in the world, held open by the will of the Prince and the blood of his faithful, and by

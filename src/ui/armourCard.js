@@ -177,7 +177,7 @@ function delta(d, digits = 0) {
 export function armourBadge(entity, part) {
   const v = dollArmour(entity)[part];
   const b = el('span', `wornac${v ? '' : ' nil'}`, String(v));
-  b.title = `${PART_NAMES[part]}: armour ${v}`;
+  b.title = `${PART_NAMES[part]}: armor ${v}`;
   b.setAttribute('aria-label', b.title);
   return b;
 }
@@ -191,8 +191,8 @@ export function armourPlaque(entity) {
   n.append(el('span', 'k', 'Armour'), el('span', 'v', fig));
   const counts = struckCounts(table);
   const weights = PART_NAMES.map((name, p) => `${name.toLowerCase()} ${counts[p]}`).join(', ');
-  n.title = `Armour ${fig}: the armour a blow meets on average - each part's number weighed by how often a blow lands there (${weights} in ${table.length})`;
-  n.setAttribute('aria-label', `Armour ${fig}`);
+  n.title = `Armor ${fig}: the armor a blow meets on average - each part's number weighed by how often a blow lands there (${weights} in ${table.length})`;
+  n.setAttribute('aria-label', `Armor ${fig}`);
   return n;
 }
 

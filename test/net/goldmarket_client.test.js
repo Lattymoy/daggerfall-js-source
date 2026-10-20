@@ -322,6 +322,6 @@ test('AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked 
   await new Promise((r) => setTimeout(r, 0));
   const what = [...root.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'What to list');
   what.value = 'item'; what.onchange();
-  assert.ok(root.textContent.includes(`Not for the market: Bread (your own make - list it as a crafted piece); Mouldy Bread (${SPOILED_DISH_WHY}).`), root.textContent);
+  assert.ok(root.textContent.includes(`Not for the market: Bread (your own making. List it as a crafted piece); Mouldy Bread (${SPOILED_DISH_WHY}).`), root.textContent);
   root.remove();
 });

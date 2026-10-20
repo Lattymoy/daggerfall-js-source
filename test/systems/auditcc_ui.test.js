@@ -395,8 +395,8 @@ test('AUDIT C&C S8, S13: THE WORDS SAY WHAT IS SO - the credits and the Features
   assert.doesNotMatch(features, /nothing taken, a need met/);
   const page = TUTORIALS.find((t) => t.id === 'survival');
   assert.equal(page.trigger, 'When a need first shows on your screen.');
-  assert.equal(page.body[0], 'You need food, water, warmth and sleep. Icons at the screen\'s left edge show what you are short on, and on Boons what you have earned.');
-  assert.equal(page.body.join(' ').split(/\s+/).length, 58, 'TUT1\'s count: two paragraphs, under sixty');
+  assert.equal(page.body[0], 'You need food, water, warmth and sleep. Signs at the left edge of the screen show what you lack, and on Boons what you have earned.');   // VOICE1 (PIN MOVED): the same law in plain words
+  assert.equal(page.body.join(' ').split(/\s+/).length, 60, 'TUT1\'s count: two paragraphs, no more than sixty');   // VOICE1 (PIN MOVED)
 });
 
 // ═══ S9 - ONE READING ON THE HUD ════════════════════════════════════════

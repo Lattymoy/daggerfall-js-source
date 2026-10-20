@@ -491,7 +491,7 @@ export function createPoiEditorPanel({ doc = document, edit, editor, feed, io, m
   function problemRows(d, id) {
     const { list: ps, checking } = problemsOf(d);
     const out = [el('div', 'dfpoi-h', t('poi.editor.problems', 'What is wrong'))];
-    if (!ps.length) out.push(el('div', checking ? '' : 'dfpoi-ok', checking ? t('poi.editor.checking', 'Checking its models and pictures...') : t('poi.editor.noProblems', 'Nothing - it can be saved.')));
+    if (!ps.length) out.push(el('div', checking ? '' : 'dfpoi-ok', checking ? t('poi.editor.checking', 'Checking its models and pictures...') : t('poi.editor.noProblems', 'Nothing. It can be saved.')));
     for (const p of ps.slice(0, 40)) {
       const row = el('div', 'dfpoi-problem');
       const where = problemWhere(p.path, d);

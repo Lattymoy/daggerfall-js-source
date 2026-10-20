@@ -110,9 +110,9 @@ test('CHAT-SCROLL: while open, a reader who scrolled up keeps their place and th
   say(3);
   assert.equal(list.scrollTop, 10, 'not yanked');
   assert.equal(jump.className, 'dfchat-jump on');
-  assert.equal(jump.textContent, '3 new - jump to newest');
+  assert.equal(jump.textContent, '3 new. Jump to newest');
   say(2);
-  assert.equal(jump.textContent, '5 new - jump to newest', 'the count grows with what arrives');
+  assert.equal(jump.textContent, '5 new. Jump to newest', 'the count grows with what arrives');
   jump.fire('click');
   assert.ok(atNewest(), 'the bar takes the reader down');
   assert.equal(jump.className, 'dfchat-jump', 'and goes');

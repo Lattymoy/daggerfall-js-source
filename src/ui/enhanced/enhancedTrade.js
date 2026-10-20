@@ -1038,7 +1038,7 @@ function render() {
   // try to sell the buttom items cause clicking them causes the bar to appear over them"): the strip's room is ALWAYS
   // kept under the lists - empty until a click, filled after - so a click never shrinks the lists and moves the row
   // under the pointer away (the double click that sells it then landed on another row, or on nothing)
-  const detail = detailStrip() ?? (() => { const b = el('div', 'trade-detail trade-detail-empty'); b.append(el('p', 'meta', 'Click an item to see it and its price here - double-click to move it.')); return b; })();
+  const detail = detailStrip() ?? (() => { const b = el('div', 'trade-detail trade-detail-empty'); b.append(el('p', 'meta', 'Click an item to see it and its price here. Double-click to move it.')); return b; })();
   body.append(detail);
   win.append(body);
   win.append(footer());

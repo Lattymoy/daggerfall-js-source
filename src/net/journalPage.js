@@ -65,7 +65,7 @@ export function pageOfNote(entry) {
 /** Why a page cannot be shown, in the journal's own words - the page law's word, said. */
 export function pageRefusalText(error) {
   if (error === 'no-words') return 'There is nothing written on this page.';
-  if (error === 'page-long') return `This page is too long to show - a page shows ${PAGE_LINES_MAX} lines at most.`;
+  if (error === 'page-long') return `This page is too long to show. A page shows ${PAGE_LINES_MAX} lines at most.`;
   if (error === 'line-long') return 'A line on this page is too long to show.';
   if (error === 'head-long') return 'The date on this page is too long to show.';
   return 'This page cannot be shown.';

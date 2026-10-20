@@ -621,7 +621,7 @@ test('c2/S10 REVIEW: the rename push must not LATCH the panel drag - the uncover
   } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
 });
 
-test('c2/S10 REVIEW: ONE compass drawer (hud.js) at COMPBOX\'s own 69x17, and the plate tooltip is toolTip.js\'s box in DFU\'s two GUI colours', () => {
+test('c2/S10 REVIEW: ONE compass drawer (hud.js) at COMPBOX\'s own 69x17, and the plate tooltip is toolTip.js\'s box in DFU\'s two GUI colors', () => {
   _resetForTests(); _resetZoomForTests();
   restoreDiscovery(null);
   try {

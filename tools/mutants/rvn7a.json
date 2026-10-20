@@ -200,7 +200,7 @@
   {
     "name": "RVN7a-page-unknown-named",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  return r.lairKnown ? `Lair: ${r.lair.name} - on your map.` : 'Lair: unknown - the towns about it may have heard.';",
+    "old": "  return r.lairKnown ? `Lair: ${r.lair.name} - on your map.` : 'Lair: unknown. The towns nearby may have heard something.';",
     "new": "  return `Lair: ${r.lair.name} - on your map.`;",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"

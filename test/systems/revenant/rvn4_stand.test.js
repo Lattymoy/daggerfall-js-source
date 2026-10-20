@@ -128,7 +128,7 @@ test('RVN4 THE STAND on the REAL street pool: the killing blow brings a rank-3 o
   const ev = shown.find((e) => e.kind === 'laststand');
   assert.ok(ev);
   assert.equal(ev.kicker, 'Last stand');
-  assert.equal(ev.body, `${r.given} rises again - its last stand.`);
+  assert.equal(ev.body, `${r.given} rises again for its last stand.`);
   // the roar spent: blows land; the next killing blow is the will's (unbroken - it tears away), never a second stand
   f.roaring.until -= 5000;
   frame(pool);

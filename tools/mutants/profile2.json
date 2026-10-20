@@ -192,7 +192,7 @@
   {
     "name": "P2-body-set-change-not-preloaded",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (renderer && (was.onFoot !== cfg.onFoot || was.onHorse !== cfg.onHorse)) preload();\n",
+    "old": "    if (renderer && (was.onFoot !== cfg.onFoot || was.onHorse !== cfg.onHorse || was.wornArmour !== cfg.wornArmour || was.layeredGender !== cfg.layeredGender)) preload();\n",
     "new": "",
     "tests": [
       "test/net/profile2_pause_profile.test.js"

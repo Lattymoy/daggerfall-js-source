@@ -129,7 +129,7 @@ test('AUDIT REST-PARTY the night is heard with its spot, read before the night s
 });
 
 test('AUDIT REST-PARTY the words: a night out of reach says whose and how far', () => {
-  assert.equal(REST_ACT_TEXT.carriedFar('Ada'), 'Ada rested a night without you - come within 15 m of them to rest with the party.');
+  assert.equal(REST_ACT_TEXT.carriedFar('Ada'), 'Ada rested a night without you. Come within 15 m of them to rest with the party.');
 });
 
 test('AUDIT REST-PARTY by source: the follow tick hands the law its readings, sleeps at the carried kind, says the far word, and the vote\'s tally is shut online', () => {

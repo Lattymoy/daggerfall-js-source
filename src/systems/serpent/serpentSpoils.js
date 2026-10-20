@@ -57,7 +57,7 @@ export const serpentSpoilsDay = (d) => `serpent:${d}`;
  *  hoard goes into the pack, and the words say no more than that (never a ship's hold it is not in); B11: the name is the
  *  table's, never written here. */
 export const SERPENT_SPOILS_TEXT = Object.freeze({
-  granted: (boss) => `${boss.name}'s hoard is yours - it is in your pack.`,
+  granted: (boss) => `${boss.name}'s hoard is yours. It is in your pack.`,
   recovered: 'A sea serpent\'s hoard is in your pack.',
   kept: (name, boss) => `${boss.name}'s hoard waits for ${name || 'the one who fought it'}.`,
 });

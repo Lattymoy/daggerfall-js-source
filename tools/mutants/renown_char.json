@@ -157,8 +157,8 @@
   {
     "name": "RENOWN-CHAR-the-dialogs-old-word",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "- its Renown, its professions and their Stores, its home and its guild place with it. A copy you made offline stays.",
-    "new": "- its home and its guild place with it. Your Renown belongs to your account and stays, as does a copy you made offline.",
+    "old": "and with it its Renown, its professions and their Stores, its home and its guild place. A copy you made offline remains.",
+    "new": "and with it its home and its guild place. Your Renown belongs to your account and stays, as does a copy you made offline.",
     "tests": [
       "test/server/renown_char.test.js"
     ]

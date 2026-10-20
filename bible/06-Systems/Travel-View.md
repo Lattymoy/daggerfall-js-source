@@ -2321,3 +2321,33 @@ The owner: *"fix a pre existing issue where AI can actually use the overworld as
   `tvJourneyUp` and `travelViewCanGo` ask `navalHostileNear()` (NAV-H's enemy nearby) beside the land's foes and a duel.
 
 `test/systems/naval/timedilation.test.js` (3), `tools/mutants/timedilation.json` (16, all dead).
+
+## OW-RISE - the Overworld rises over a foe that has not noticed the traveller (2026-10-17)
+
+*"the overworld travel randomly slows down from speed multiplier even without enemies nearby"*. The view down under an
+Overworld journey walks it at x1 until `tvJourneyUp` raises the view again (AUDIT OW4 J5) - and the rise asked every
+hostile foe in classic spawn reach (`areEnemiesNearby(exteriorFoePool())`), where the view's own `danger` asks only the
+foes WILD-ALERT lets through (`wildSeen`). So once the view came down (a window, an alerted foe passed), an unaware camp
+beside the road kept it down and the journey at x1 with nothing coming. The rise asks the danger's pool now.
+`test/systems/travel/ow_rise.test.js` (1). PIN MOVED: `tv2_click_to_move` (the rise's gate), the rise's stubs in `ow_toggle`,
+`fb0929_overworld_mouse` and `fb0929d_toroads`.
+
+## OW-LEAD - the land's hold is how near the hole is, not how long it has stood (2026-10-17)
+
+*"iam 100% sure it even slowed down to 1x without enemies in 500m nearby ... it almost always [goes] down to 1x and
+after a while it goes up again"*. After LOAD-OWED and BUILD-RETRY the land's hold still did it with every build
+standing: TV2's halving cut again every TV_GOV_SETTLE_S while ANY pixel of the counted grid was building, and a slower
+clock builds nothing faster - a crossing's row the pump took eight seconds over (a town or two in it) took the journey
+50, 25, 10, 5, 1; the climb back was a step every TV_GOV_CLEAR_S, eighty seconds to x100; and at x100 the next crossing's
+row did it again. What slowing buys is the traveller NOT REACHING a pixel before it stands. So the host hands the
+governor the owed pixels themselves (`unbuiltAround`'s `out`, `uc.owed`), the feet (native) and the motor's pace, and
+the clock is held to the rate at which the traveller takes TV_GOV_LEAD_S of real time to reach the nearest owed pixel's
+square (travelGovernor.js `owedMetres`, `leadCap`; OW6's law for an enemy's reach, with the stream's books for the
+enemies), on the spinner's ladder, never under walking pace, and let go the frame the last build stands. The halving
+still answers a bare count (no host hands one now). TV_GOV_LEAD_S = 4, from the host's own code over builds of 0.3 - 3 s
+a pixel, rider and walker: nearly all of 2's pace where builds are quick, and where they are slow a deep queue held off
+the traveller (a few seconds at x1 where 2 had most of a minute). A rider at x100, every build a second: the halving
+31 s of 120 at x1, this none, and further on. `test/systems/travel/ow_lead.test.js` (2). PIN MOVED: `ow_loadowed` (P in flight
+held by its nearness, never entered), `tv_wasd` (a hole half a pixel off holds the keys at x20 from the first frame),
+`ow6_slowdown` (the hole underfoot), `ether_ow` and `tv2_click_to_move` (the count's line hands `uc.owed`).
+

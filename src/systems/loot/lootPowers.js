@@ -441,7 +441,7 @@ export function lootHurt(entity, { before, after, saved = false }) {
   _s.recovering.add('vigil');
   lootSpireHold('vigil');
   healMine(entity, (max * v.heal) / 100);
-  say("The Ghost-King's Vigil - you are not alone on the field.");
+  say("The Ghost-King's Vigil. You are not alone on the field.");
 }
 
 // ── LOOT5: a kill of mine ───────────────────────────────────────────

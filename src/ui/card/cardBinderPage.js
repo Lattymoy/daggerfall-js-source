@@ -232,7 +232,7 @@ function drawDecks(detail, rerender, el, divider, items, binder) {
     drop.setAttribute('data-focus', `binder-deck-drop-${i}`);   // AUDIT CARDS-5 D2: armed, its words change - the keyboard stays on it
     drop.onclick = () => {
       if (_dropArmed !== i) { _dropArmed = i; rerender(); return; }
-      dropBinderDeck(binder, i); _dropArmed = null; _said = `${d.name} taken apart - its cards stay in your binder.`; rerender();
+      dropBinderDeck(binder, i); _dropArmed = null; _said = `${d.name} taken apart. Its cards stay in your binder.`; rerender();
     };
     row.append(edit, drop);
     list.append(row);

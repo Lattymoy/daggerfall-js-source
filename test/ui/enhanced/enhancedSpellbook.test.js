@@ -240,7 +240,7 @@ test('PX23b: RENAME comes back, and the book says when you cannot afford a spell
   // AFFORDABILITY: the question a player opens the book with, which the
   // classic answers only by failing at the cast.
   assert.match(src, /const short = Number\.isFinite\(magicka\) && sel\.cost > magicka;/);
-  assert.match(src, /not enough magicka/);
+  assert.match(src, /Not enough magicka/);
   assert.match(read('src/ui/enhanced/enhancedStyle.js'), /\.sb-shell \.sb-rename input \{[\s\S]{0,120}min-height: 44px;/);
 });
 

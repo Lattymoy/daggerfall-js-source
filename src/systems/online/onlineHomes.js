@@ -338,12 +338,12 @@ export const hallBoughtLine = (name) => `This house is the hall of ${name} now. 
  *  "The treasury needs N gold put in by realm characters" - "the realm" read as a place, so the gold went to a bank
  *  account, which never pays for a hall - and neither said which guard held. A treasury short of the price, and one that
  *  holds it but not enough of it counted (halls.js buyHall: `treasury` and `realm_gold`, guild-treasury-short and -old). */
-export const hallShortLine = (cost) => `The guild's treasury holds less than ${gold(cost)} gold. Put it in at the Guild tab's Treasury (Social, then Guild), at most ${gold(GUILD_MOVE_MAX)} at a time - gold in a bank account does not pay for a hall.`;
-export const hallOldGoldLine = (cost) => `The treasury holds less than ${gold(cost)} gold that realm characters put in - only that gold buys a hall. Gold put in before the realm, or by a character outside it, stays in the treasury but does not count.`;
+export const hallShortLine = (cost) => `The guild's treasury holds less than ${gold(cost)} gold. Put it in at the Guild tab's Treasury (Social, then Guild), at most ${gold(GUILD_MOVE_MAX)} at a time. Gold in a bank account does not pay for a hall.`;
+export const hallOldGoldLine = (cost) => `The treasury holds less than ${gold(cost)} gold that realm characters put in, and only that gold buys a hall. Gold put in before the realm, or by a character outside it, stays in the treasury but does not count.`;
 /** AUDIT GUILD1d A6/A7: a hall's cupboard to its members, and a hall's own words for a drop (anyone's) and a spell (a
  *  visitor's - its members cast in it). */
 export const HALL_CHEST_TITLE = "The Guild's Chest";
-export const HALL_DROP_TEXT = "Nothing dropped in a guild's hall stays - put it in the guild's chest.";
+export const HALL_DROP_TEXT = "Nothing dropped in a guild's hall stays there. Put it in the guild's chest.";
 export const HALL_VISITOR_MAGIC_TEXT = "You cannot cast spells in another guild's hall.";
 /** GUILD1e: THE BOARD IN A HALL - its name to a member, what it says to anyone else, and where it cannot open. */
 export const HALL_BOARD_TITLE = "The Guild's Board";
@@ -354,7 +354,7 @@ export const HALL_BOARD_COLD = "The guild's board cannot be read now.";
 export const HALL_OF_RECORDS_TEXT = 'Hall of Records';
 export const HALL_OF_RECORDS_SHUT = 'The Hall of Records cannot be read now.';
 /** GUILD1d: a hall's chest pressed where the Guild tab cannot open. GUILD2b: the chest is the guild's vault now. */
-export const HALL_CHEST_SHUT = "The guild's chest is the guild's vault - open the Guild tab of the Social panel to reach it.";
+export const HALL_CHEST_SHUT = "The guild's chest is the guild's vault. Open the Guild tab of the Social panel to reach it.";
 
 /** Who may enter after `entry`, a press on the row: only me, my party, anyone, my guild, and round again. */
 export const homeNextEntry = (entry) => HOME_ENTRIES[(Math.max(0, HOME_ENTRIES.indexOf(entry)) + 1) % HOME_ENTRIES.length];

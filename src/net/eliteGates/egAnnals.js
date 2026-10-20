@@ -21,7 +21,7 @@ export const EG_ANNALS = Object.freeze([
   Object.freeze(['The Mist Stair', 'The mist hides the drop, never the step. Trust the gold at your feet and not the dark below it.']),
   Object.freeze(['A Shadow\'s Lesson', 'In the Shade the branches hold only under the moon. We learned to walk with the light, and the ones who ran ahead of it are not writing notes.']),
   Object.freeze(['The Eclipse', 'When the moon goes out in the Vault, stand in what light is left. The shafts walk slowly; walk with them.']),
-  Object.freeze(['Forge-Talk', 'Every hammer in the Wellhead tells you where it will fall before it falls. The Kyn call this honour; I call it a timetable.']),
+  Object.freeze(['Forge-Talk', 'Every hammer in the Wellhead tells you where it will fall before it falls. The Kyn call this honor; I call it a timetable.']),
   Object.freeze(['The Clan Pit', 'They called me into the ring alone and I went alone. The crowd threw silver; had another stepped in, they would have thrown fire.']),
   Object.freeze(['A Redoubt Taken Back', 'We lit the lamps again in the north Redoubt, if only for a night. Anyone who comes after will find a little of us there.']),
   Object.freeze(['The Last Lesson', 'If the Spire falls, the lessons stay in the stone. Take what we left; it was always meant for whoever stood up next.']),

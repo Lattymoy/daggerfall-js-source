@@ -111,7 +111,7 @@ async function camp(P, sel = null) {
   const id = P.edit.create({ px: 1, py: 1, x: 5, z: 5, name: 'Camp' });
   P.edit.edit(id, 'add part', (d) => { d.parts.push(newPart(d, { mesh: P.sha, submeshes: 2, name: 'Hut' })); });
   P.edit.select(sel ?? { id, part: null });
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'its model known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'its model known');
   return id;
 }
 /** Saved as a draft, by the store. */
@@ -268,7 +268,7 @@ test('AUDIT POI U4 P6 OPENED AS WHAT IT IS: my own sent-back revision says so an
   const P = await over({ handle: 'Mac' });
   P.svc.history.set(POI_ID, { id: POI_ID, liveRev: null, revs: [{ rev: 1, kind: 'doc', doc: docOf(P.sha, 'Tower'), base: null, author: 'Mac', state: 'rejected', reviewer: 'Ann', note: 'The door faces the cliff.' }] });
   await P.panel.open(POI_ID);
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'known');
   assert.deepEqual([P.edit.entryOf(POI_ID).state, P.edit.entryOf(POI_ID).rev, P.edit.dirty(POI_ID)], ['rejected', null, false]);
   assert.ok(all(P.root).some((n) => n.className === 'dfpoi-chip' && n.textContent === 'sent back'));
   press(button(rightOf(P), 'Send for approval'));
@@ -281,7 +281,7 @@ test('AUDIT POI U4 P6 OPENED AS WHAT IT IS: my own sent-back revision says so an
   // another builder's newest, nothing live: a change to save as my own draft
   P.svc.history.set(POI_ID, { id: POI_ID, liveRev: null, revs: [{ rev: 1, kind: 'doc', doc: docOf(P.sha, 'Tower'), base: null, author: 'Ann', state: 'draft' }] });
   await P.panel.open(POI_ID);
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'known');
   assert.equal(P.edit.dirty(POI_ID), true, 'not mine: a change to save');
   assert.equal(button(rightOf(P), 'Save draft (Ctrl+S)').disabled, false);
   P.edit.close(POI_ID);
@@ -504,7 +504,7 @@ test('AUDIT POI C4 C5 A PACK\'S REFUSALS IN THEIR OWN WORDS: an export the pack 
   const id = await shrine(P);
   await until(() => P.panel.root && all(P.root).length > 0, 'drawn');
   P.edit.select({ id, part: null });
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'known');
   P.nothing = true;   // the feed answers nothing: the pack names an asset it does not carry
   press(button(P.root, 'Export pack'));
   await until(() => statusOf(P) !== '' && !/^Opened/.test(statusOf(P)) && /pack/.test(statusOf(P)), 'said');

@@ -78,8 +78,8 @@ test('UNSAVED-MARK the pane: the Overworld row bound and not saved says so, the 
     const head = one(view.body, 'ctl-head');
     assert.ok(head.className.split(/\s+/).includes('ctl-owed'), 'the head lights its Confirm');
     assert.equal(one(head, 'ctl-pending').textContent, unsavedCount(1));
-    assert.equal(unsavedCount(1), `1 change not saved yet - press ${CONFIRM_LABEL} to keep it.`);
-    assert.equal(unsavedCount(2), `2 changes not saved yet - press ${CONFIRM_LABEL} to keep them.`);
+    assert.equal(unsavedCount(1), `1 change not saved yet. Press ${CONFIRM_LABEL} to keep it.`, 'PIN MOVED (VOICE2): a second sentence, no dash aside');
+    assert.equal(unsavedCount(2), `2 changes not saved yet. Press ${CONFIRM_LABEL} to keep them.`, 'PIN MOVED (VOICE2): a second sentence, no dash aside');
     assert.equal(getBinding(store, 'TravelView', true), null, 'staged only');
     one(head, 'ctl-continue').onclick();
     assert.equal(getBinding(store, 'TravelView', true), FREE, 'Confirm commits it');

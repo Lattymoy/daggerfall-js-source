@@ -200,7 +200,7 @@
   {
     "name": "RVN4-the-card-unsaid",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  const body = `${r.given} rises again - its last stand.`;",
+    "old": "  const body = `${r.given} rises again for its last stand.`;",
     "new": "  const body = `${r.given} fights on.`;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"

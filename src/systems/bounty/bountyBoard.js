@@ -249,13 +249,13 @@ export function distanceWord(d) {
 /** Who pinned the notice up. */
 export const BOUNTY_POSTERS = Object.freeze([
   'the Captain of the Guard', 'the town Reeve', 'a worried farmer', 'the Fighters Guild', 'the local magistrate',
-  'the shepherds\' guild', 'a travelling merchant', 'the temple\'s steward',
+  'the shepherds\' guild', 'a traveling merchant', 'the temple\'s steward',
 ]);
 /** The notices, by kind of trouble. {foes} the beasts, {count} how many, {town}, {dir}, {far}. */
 export const BOUNTY_STORIES = Object.freeze({
   vermin: Object.freeze([
     'The granaries {dir} of {town} are overrun. {count} {foes} have made a nest out there, and the next harvest will not survive them. Clear them out.',
-    'Travellers on the road {dir} of {town} come back bitten and feverish. Some {count} {foes} have taken the ditches there. Put an end to it.',
+    'Travelers on the road {dir} of {town} come back bitten and feverish. Some {count} {foes} have taken the ditches there. Put an end to it.',
     'Something has been stripping the orchards {dir} of town at night. The hands say {foes} - a great many of them. We want them gone.',
   ]),
   beast: Object.freeze([
@@ -306,7 +306,7 @@ export const BOUNTY_REWARD_STORIES = Object.freeze([
   'An unknown rider approaches you at a gallop, throws you a heavy sack and is gone as fast as he came. Inside you find {gold} gold pieces and {item}.',
   'A boy from {town} comes running up the road, red-faced and out of breath. "From the Captain," he gasps, pressing a pouch into your hands, and dashes off before you can thank him. It holds {gold} gold pieces and {item}.',
   'A hooded courier steps out of the brush, nods once at the bodies, and hands you a bundle wrapped in oilcloth. Before you can ask a thing, the stranger has vanished. Inside: {gold} gold pieces and {item}.',
-  'A grey-haired huntsman whistles low at the carnage. "The town will sleep easier," he says, tossing you a purse of {gold} gold pieces and {item}, and walks off whistling.',
+  'A gray-haired huntsman whistles low at the carnage. "The town will sleep easier," he says, tossing you a purse of {gold} gold pieces and {item}, and walks off whistling.',
   'A raven lands on the nearest carcass with a small satchel tied to its leg. It lets you take it, croaks once, and flies back toward {town}. Inside are {gold} gold pieces and {item}.',
 ]);
 export const BOUNTY_REWARD_TITLE = 'Bounty Fulfilled';

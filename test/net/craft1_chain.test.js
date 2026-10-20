@@ -143,7 +143,7 @@ test('AUDIT CRAFT1 law: F1 the Stores\' room - a product the Stores have no room
 test('CRAFT1 law: what a chain refined, said - the products and each profession\'s XP; nothing said where nothing was refined', () => {
   const name = (k) => ({ 'ingot:iron': 'Iron Ingot', 'wood:charcoal': 'Charcoal', 'ingot:steel': 'Steel Ingot', 'leather:cured': 'Cured Leather' })[k] ?? k;
   assert.equal(refinedText([{ id: 'ingot:iron', count: 3, xp: 30 }, { id: 'burn:pine', count: 3, xp: 0 }, { id: 'ingot:steel', count: 3, xp: 60 }, { id: 'cure:rat', count: 1, xp: 0 }], name),
-    'Refined first: Iron Ingot x3, Charcoal x3, Steel Ingot x3, Cured Leather x1 (+90 Smithing XP).');
+    'Refined first: Iron Ingot x3, Charcoal x3, Steel Ingot x3, Cured Leather x1 (+90 Smithing experience).');
   assert.equal(refinedText([{ id: 'saw:pine', count: 2, xp: 0 }], name), 'Refined first: plank:pine x4.');
   assert.equal(refinedText([{ id: 'cure:rat', count: 1, xp: 0, made: 2 }], name), 'Refined first: Cured Leather x2.', 'AUDIT CRAFT1 F4: the service\'s made, not the yield the book reads now');
   assert.equal(refinedText([{ id: 'cure:rat', count: 1, xp: 0 }], name, () => ({ specs: { 50: 'tanner' } })), 'Refined first: Cured Leather x2.', 'no made kept: the yield');
@@ -393,10 +393,10 @@ test('AUDIT CRAFT1 the other four benches drawn: the workbench\'s staff from Pin
     row('Bracer').onclick();
     // PIN MOVED (CRAFT2): the workbench and the loom list patterns - a case its row's name and its box's
     const cases = [
-      ['Staff', 'Pine Staff', 'Refined first, here: saw plank:pine x4 - from log:pine x2. Their XP is the works\' own; what is left over stays in your Stores.'],
-      ['Cuirass', 'Leather Cuirass', 'Refined first, here: cure leather:cured x6 - from hide:rat x12. Their XP is the works\' own; what is left over stays in your Stores.'],
-      ['Stone Column', 'Stone Column', 'Refined first, here: cut stone:cut x12, mix stone:mortar x10 - from stone:rough x29, metal:sulphur x1, metal:lead x1. Their XP is the works\' own; what is left over stays in your Stores.'],
-      ['Silver Bracer', 'Silver Bracer', 'Refined first, here: cure leather:cured x1 - from hide:rat x2. Their XP is the works\' own; what is left over stays in your Stores.'],
+      ['Staff', 'Pine Staff', 'Refined first, here: saw plank:pine x4 - from log:pine x2. The experience belongs to that work; what is left over stays in your Stores.'],
+      ['Cuirass', 'Leather Cuirass', 'Refined first, here: cure leather:cured x6 - from hide:rat x12. The experience belongs to that work; what is left over stays in your Stores.'],
+      ['Stone Column', 'Stone Column', 'Refined first, here: cut stone:cut x12, mix stone:mortar x10 - from stone:rough x29, metal:sulphur x1, metal:lead x1. The experience belongs to that work; what is left over stays in your Stores.'],
+      ['Silver Bracer', 'Silver Bracer', 'Refined first, here: cure leather:cured x1 - from hide:rat x2. The experience belongs to that work; what is left over stays in your Stores.'],
     ];
     for (const [name, boxed, words] of cases) {
       const r = row(name);
@@ -432,7 +432,7 @@ test('AUDIT CRAFT1 the yields said: a Quartermaster\'s ingots two a work on the 
   const qm = () => ({ specs: { 100: 'quartermaster' } });
   assert.equal(refinedText([{ id: 'ingot:iron', count: 2, xp: 0 }], name, qm), 'Refined first: ingot:iron x4.');
   assert.equal(refinedText([{ id: 'saw:pine', count: 1, xp: 0 }], name, () => ({ specs: { 100: 'timberwright' } })), 'Refined first: plank:pine x3.');
-  assert.equal(refinedText([{ id: 'ingot:iron', count: 100, xp: 1000, made: 100 }, { id: 'ingot:iron', count: 50, xp: 500, made: 50 }], name), 'Refined first: ingot:iron x150 (+1500 Smithing XP).');
+  assert.equal(refinedText([{ id: 'ingot:iron', count: 100, xp: 1000, made: 100 }, { id: 'ingot:iron', count: 50, xp: 500, made: 50 }], name), 'Refined first: ingot:iron x150 (+1500 Smithing experience).');
   // the lenient pass's spare: one log short for two planks asked apart - not two
   assert.deepEqual(chainPlan([{ key: 'plank:pine', n: 1 }, { key: 'plank:pine', n: 1 }], heldOf({})).short, [{ key: 'log:pine', n: 1 }]);
 });

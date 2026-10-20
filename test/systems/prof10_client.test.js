@@ -1,4 +1,4 @@
-// PROF10 (2026-10-02) - JEWELCRAFTING AS THE CLIENT MAKES IT: The Jeweller's Bench on the Stores page (a Pawn Shop's or a
+// PROF10 (2026-10-02) - JEWELCRAFTING AS THE CLIENT MAKES IT: The Jeweler's Bench on the Stores page (a Pawn Shop's or a
 // Gem Store's, 50 gold a piece; a home's jeweller's bench): DFU's eight pieces by piece and base, a gem a recipe, their
 // inputs and ranks, the points each piece will carry, the odds; THE FACET (the stone turning toward the light, stopped in
 // its window - every facet caught a clean act); Quick craft, Gentle acts, one act a page, Escape setting the stone down; a
@@ -127,14 +127,14 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
   });
   const page = pageOf();
   try {
-    assert.match(page.text(), /The Jeweller's Bench/);
-    assert.match(page.text(), /The jeweller's bench - 50 gold a piece\. Smithing 25 \(Apprentice\)\./);   // PIN MOVED (CRAFT3): the bench says the craft's track
+    assert.match(page.text(), /The Jeweler's Bench/);
+    assert.match(page.text(), /The jeweler's bench - 50 gold a piece\. Smithing 25 \(Apprentice\)\./);   // PIN MOVED (CRAFT3): the bench says the craft's track
     page.family('Gold').onclick();
     page.recipe('Gold Ruby Ring').onclick();
     assert.match(page.text(), /Gold Ruby Ring - rank 25Gold 1 \/ 1 \(1 stored\)Ruby 1 \/ 1 \(1 stored\)/);
     assert.match(page.text(), /2,160 enchantment points \(\+20%\)\. The item maker spends them, beside a Masterwork's own enchantment\./);
     // PIN MOVED (CRAFT-FIRST-SHOWN, FIELD BUGS 2026-10-15f): the XP its own line under the odds, the first's 500 with it
-    assert.match(page.text(), /Quality chances: Crude 20% \| Standard 60% \| Fine 20%\. They get better the further your rank \(25\) is above the recipe's \(25\)\. Stop every turn where the stone catches the light to raise the result one quality\.60 Smithing XP, and 500 more the first time you make this piece at this tier\./);   // PIN MOVED (CRAFT3): a jewel's XP is Smithing's
+    assert.match(page.text(), /Quality chances: Crude 20% \| Standard 60% \| Fine 20%\. They get better the further your rank \(25\) is above the recipe's \(25\)\. Stop every turn where the stone catches the light to raise the result one quality\.60 Smithing experience, and 500 more the first time you make this piece at this grade\./);   // PIN MOVED (CRAFT3): a jewel's XP is Smithing's; PLAIN-ODDS's odds; VOICE2's experience line
     page.button('Craft').onclick();
     assert.equal(profActUnderWay(), true);
     assert.match(page.text(), /The facet \(Gold Ruby Ring\) - stop the turn where the stone catches the light \(Space\): 5 facets/);
@@ -216,14 +216,14 @@ function stubPages({ bench = { kind: 'shop', fee: JEWEL_FEE }, rank = 0, specs =
   return { book, calls, held, tracks };
 }
 
-test('PROF10 pages: The Jeweller\'s Bench - away, the word; at a Pawn Shop or a Gem Store its fee; the eight pieces and a piece\'s bases; the recipes with their ranks; every facet caught asks the piece clean, one lost not, one let go round not; Quick craft plain; Gentle acts plain; the purse short; a home\'s bench', async () => {
+test('PROF10 pages: The Jeweler\'s Bench - away, the word; at a Pawn Shop or a Gem Store its fee; the eight pieces and a piece\'s bases; the recipes with their ranks; every facet caught asks the piece clean, one lost not, one let go round not; Quick craft plain; Gentle acts plain; the purse short; a home\'s bench', async () => {
   let { calls } = stubPages({ bench: null });
   let page = pageOf();
   try {
     assert.deepEqual([...PROF_STATIONS], ['forge', 'workbench', 'loom', 'mason', 'jeweller']);
     assert.equal(stationColdLine('jeweller'), JEWEL_COLD_LINE);
     assert.match(JEWEL_COLD_LINE, /Jewelcrafting is done online, from your Stores page/);
-    assert.match(page.text(), /The Jeweller's BenchJewelcrafting is done at a jeweller's bench: a Pawn Shop's or a Gem Store's \(50 gold a piece\), or your own home's\./);
+    assert.match(page.text(), /The Jeweler's BenchJewelcrafting is done at a jeweler's bench: a Pawn Shop's or a Gem Store's \(50 gold a piece\), or your own home's\./);
     assert.equal(page.recipe('Silver Ring'), null, 'no piece offered away from a bench');
     page.done();
     ({ calls } = stubPages());
@@ -288,18 +288,18 @@ test('PROF10 pages: The Jeweller\'s Bench - away, the word; at a Pawn Shop or a 
     stubPages({ purse: 20 });
     page = pageOf();
     page.recipe('Silver Ring').onclick();
-    assert.match(page.text(), /The jeweller asks 50 gold a piece; you carry 20\./);
+    assert.match(page.text(), /The jeweler asks 50 gold a piece; you carry 20\./);
     assert.equal(page.button('Craft').disabled, true);
     page.done();
     stubPages({ bench: { kind: 'home', fee: 0 }, purse: 0 });
     page = pageOf();
-    assert.match(page.text(), /Your jeweller's bench\. Smithing 0 \(Novice\)\./);   // PIN MOVED (CRAFT3): the bench says the craft's track
+    assert.match(page.text(), /Your jeweler's bench\. Smithing 0 \(Novice\)\./);   // PIN MOVED (CRAFT3): the bench says the craft's track
     page.recipe('Silver Ring').onclick();
     assert.equal(page.button('Craft').disabled, false, 'a home\'s asks no fee');
   } finally { page.done(); setProfessionsPages(null); setPref('gentleActs', false); }
 });
 
-test('PROF10 pages: a Wand\'s Heartwood for a plank and a Lapidary\'s Siege-cracked Gem for its gem - offered where held, each carried to the craft as the facet began; the cracked gem a Lapidary\'s alone; the odds a Master Jeweller\'s', async () => {
+test('PROF10 pages: a Wand\'s Heartwood for a plank and a Lapidary\'s Siege-cracked Gem for its gem - offered where held, each carried to the craft as the facet began; the cracked gem a Lapidary\'s alone; the odds a Master Jeweler\'s', async () => {
   let { calls } = stubPages({ rank: 100, specs: { 50: null, 100: 'lapidary' }, held: { 'plank:ironwood': 1, 'wood:heartwood': 1, 'gem:siege': 2, 'gem:ruby': 0 } });
   let page = pageOf();
   try {
@@ -320,7 +320,7 @@ test('PROF10 pages: a Wand\'s Heartwood for a plank and a Lapidary\'s Siege-crac
     await tick(); await tick();
     assert.deepEqual(calls.at(-1), ['craft', 'wand:ironwood:ruby', true, true, true]);
     page.done();
-    // a Master Jeweller: no cracked gem offered, the odds his
+    // a Master Jeweler: no cracked gem offered, the odds his
     ({ calls } = stubPages({ rank: 100, specs: { 50: null, 100: 'master-jeweller' }, held: { 'gem:siege': 2 } }));
     page = pageOf();
     page.family('Ring').onclick();
@@ -363,7 +363,7 @@ test('PROF10 pages: the facet\'s keys - Space stops the turn (a held key\'s repe
     page.button('Craft').onclick();
     page.draw();
     assert.equal(page.button('Cook').disabled, true, 'the facet holds the fire');
-    assert.match(page.text(), /Your hands are at the jeweller's bench - finish there first\./);
+    assert.match(page.text(), /Your hands are at the jeweler's bench - finish there first\./);
     setDownProfAct();
     page.draw();
     page.button('Cook').onclick();
@@ -391,12 +391,12 @@ test('PROF10 pages: Jewelcrafting practised on the Professions page - its four c
     assert.deepEqual(rows, ['Mining', 'Logging', 'Herbalism', 'Hunting', 'Fishing', 'Smithing', 'Building', 'Outfitting', 'Provisioning', 'Enchanting']);
     page.buttons().find((b) => b.textContent.startsWith('Smithing')).onclick();
     page.draw();
-    assert.doesNotMatch(page.text(), /not practised in the Bay yet/);
+    assert.doesNotMatch(page.text(), /not practiced in the Bay yet/);
     const cards = page.buttons().filter((b) => b.className.includes('prof-spec'));
     // PIN MOVED (CRAFT3): the track's four a rank, each named its discipline's - Jewelcrafting's four among the smith's
     assert.deepEqual(cards.map((c) => [c.querySelector('b').textContent, c.querySelector('.prof-of')?.textContent, c.disabled]),
       [['Weaponsmith', 'Smithing', false], ['Armoursmith', 'Smithing', false], ['Gemcutter', 'Jewelcrafting', false], ['Goldsmith', 'Jewelcrafting', true],
-        ['Masterwright', 'Smithing', true], ['Quartermaster', 'Smithing', true], ['Master Jeweller', 'Jewelcrafting', true], ['Lapidary', 'Jewelcrafting', true]],
+        ['Masterwright', 'Smithing', true], ['Quartermaster', 'Smithing', true], ['Master Jeweler', 'Jewelcrafting', true], ['Lapidary', 'Jewelcrafting', true]],
       'the Gemcutter offered (a change, as the smith\'s two), the Goldsmith chosen, the four at 100 shut below it');
     // PIN MOVED (CRAFT3): the jeweller's ladder among the smith's, each line its discipline's, by the rank it opens at
     const unlocks = [...page.root().querySelectorAll('.px-stat')].map((r) => [r.querySelector('.k').textContent, r.querySelector('.v').textContent, r.className.includes('prof-locked')]);
@@ -492,7 +492,7 @@ test('PROF10 wiring: the jeweller\'s bench a Pawn Shop\'s or a Gem Store\'s (ope
   assert.match(svc, /export async function craftAtAnvil\(ctx, player, env, \{ character, recipe: id, clean, name, heartwood = false, dye = null, rid, seat = null, cracked = false \} = \{\}\)/);
   assert.match(svc, /if \(crack && !\(takesCracked\(r\) && specs\[100\] === LAPIDARY\)\) return \{ error: 'prof-lapidary' \};/);
   assert.match(svc, /const hand = dishHand\(r, specs\[100\]\) \?\? jewelHand\(r, specs\[50\]\);/);
-  assert.match(svc, /qualityOdds\(rank - r\.rank, \{ masterwright: masterworkSpec\(specs\[100\], r\) \}\)/);   // PIN MOVED (CRAFT3): the Master Jeweller's points asked of the recipe (a jewel's alone)
+  assert.match(svc, /qualityOdds\(rank - r\.rank, \{ masterwright: masterworkSpec\(specs\[100\], r\) \}\)/);   // PIN MOVED (CRAFT3): the Master Jeweler's points asked of the recipe (a jewel's alone)
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'prof-lapidary': 403,/);
   assert.match(idx, /POST \/v1\/prof\/craft \{ character, recipe, clean, name\?, heartwood\?, dye\?, cracked\?, rid \}/);

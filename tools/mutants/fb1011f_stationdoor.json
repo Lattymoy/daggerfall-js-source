@@ -119,8 +119,8 @@
   {
     "name": "STATION-DOOR-how-says-nowhere",
     "file": "src/ui/professions/profPages.js",
-    "old": "(a Mages Guild hall or your own home) from the Stores page. ",
-    "new": "(a Mages Guild hall or your own home). ",
+    "old": "in a Mages Guild hall or your own home, from the Stores page. ",
+    "new": "in a Mages Guild hall or your own home. ",
     "tests": [
       "test/net/fb1011f_stationdoor.test.js"
     ]

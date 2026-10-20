@@ -182,7 +182,7 @@
   {
     "name": "EVENT-TIP-the-sealed-hours-said-as-open",
     "file": "src/systems/gate/gateOmen.js",
-    "old": ": `Sealed - collapses in ${countdownText(cd.ms)}`)",
+    "old": ": `Sealed. Collapses in ${countdownText(cd.ms)}`)",
     "new": ": `Open - seals in ${countdownText(cd.ms)}`)",
     "tests": [
       "test/ui/eventtip.test.js"

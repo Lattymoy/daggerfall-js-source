@@ -121,7 +121,7 @@ test('AUDIT GUILD3 S3: the silver the guildmaster\'s account has no room for is 
   assert.deepEqual(await keepsOf(s), [], 'room again: nothing');
   assert.equal((await s.call('/v1/guilds/disband', { character: s.gm.character }, s.gm.secret)).status, 200, 'and it goes');
   // the page says it in the going's own terms
-  assert.match(GUILD_KEEPS_WORDS['marks-full'], /comes to you when it goes/);
+  assert.match(GUILD_KEEPS_WORDS['marks-full'], /comes to you when it is dissolved/);
   assert.ok(GUILD_HOLD_CODES.includes('marks-full'), 'the view\'s word stands for it - a refusal\'s older word not repeated');
 });
 
@@ -325,7 +325,7 @@ test('AUDIT GUILD3 T6, T7: the client\'s hold codes are the service\'s, its gold
 test('AUDIT GUILD3 T9: the words, each a literal - the primer, the Overview\'s Elsewhere and its heading, every silver line\'s kind (mutants: each)', () => {
   assert.deepEqual([...GUILD_PRIMER_LINES], [
     'A guild\'s members share two treasuries, one of gold and one of silver, a vault for their pieces and, once the guild buys one, a hall under its own arms.',
-    'Together they can hold the seats of the Iliac Bay - a palace\'s or a crown\'s Charter, contested from that town\'s Notice Board.',
+    'Together they can hold the seats of the Iliac Bay: the Charter of a palace or a crown, contested from that town\'s Notice Board.',
   ]);
   assert.equal(GUILD_ELSEWHERE_TEXT, 'Seats and sieges are run from a seat town\'s Notice Board, on its Seat tab, where its Chronicle is read; guild writs and contracts are posted from any Notice Board\'s Work tab.');
   assert.match(src('src/ui/socialPanel.js'), /out\.push\(el\('div', 'dfsocial-sec', 'Elsewhere'\), el\('div', 'dfsocial-empty', GUILD_ELSEWHERE_TEXT\)\);/);

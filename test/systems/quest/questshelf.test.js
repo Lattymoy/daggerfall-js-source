@@ -179,7 +179,7 @@ test('QUEST-SHELF in the world: its questor\'s door opens and a click on them is
   assert.equal(r.m.updateSharedQuest(r.q.questName, step), null, 'no step taken');
   assert.equal(isShelved(r.q), true, 'still set aside');
   assert.match(src('src/scenes/world.js'), /if \(result\.reason === 'shelved' && quest\.data\?\.sync === 1\) return;/, 'a sync said nothing');
-  assert.equal(shareRefusalText({ reason: 'shelved' }), 'have abandoned it - reclaim it from your journal to take it up again.', 'a deliberate share is answered');
+  assert.equal(shareRefusalText({ reason: 'shelved' }), 'have abandoned it. Reclaim it from your journal to take it up again.', 'a deliberate share is answered');
   // reclaimed: running again, its share once more possible
   assert.equal(r.m.reclaimQuest(r.q.uid).ok, true);
   assert.ok(r.m.getShareableQuestData(r.q.uid), 'shareable again');
@@ -194,7 +194,7 @@ test('QUEST-SHELF the journal: the walk hands the quests set aside, their clocks
   assert.deepEqual(shelvedRail({ shelved: [relogged] })[0].entries.map((e) => e.join(' ')), ['second', 'first']);
   assert.deepEqual(['gone', 'shelved', 'running', 'ending', 'protected', 'raid', 'twin', 'x'].map(shelfRefusalText), [
     'That quest is over.', 'That quest is already abandoned.', 'That quest is not abandoned.', 'That quest is ending.',
-    'That quest cannot be abandoned.', 'Not while the raid is on.', 'You have taken that quest up again - finish or abandon it first.', 'That cannot be done now.']);
+    'That quest cannot be abandoned.', 'Not while the raid is on.', 'You have taken that quest up again. Finish or abandon it first.', 'That cannot be done now.']);
   const bridge = src('src/scenes/quest/questBridge.js');
   assert.match(bridge, /return \{ active, finished: notebook\?\.getFinishedQuests\(\) \?\? \[\], ended, hidden: notebook\?\.getHiddenQuests\?\.\(\) \?\? \[\], shelved \};/);
   assert.match(bridge, /const refuseRaid = \(q\) => \(WA_RAID_QUESTS\.includes\(q\.questName\) \? 'raid' : null\);/);

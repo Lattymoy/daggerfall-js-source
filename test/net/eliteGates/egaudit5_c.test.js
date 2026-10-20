@@ -86,7 +86,7 @@ test('AUDIT EG V L7-1 THE /breach DOOR TAKES ITS WORDS WHOLE (section 27.8\'s an
   assert.equal(breachCommandOf('say /breach pick 2'), null);
   // the host's own send path hands the door's words whole, and holds no door of its own
   const W = rd('src/scenes/world.js');
-  assert.match(W, /\{ const arg = breachCommandOf\(text\); if \(arg != null\) \{ if \(!egClient\) chatLog\.push\(tabId, \{ text: 'Elite Breaches are online - connect and sign in first\.', system: true \}\); else egClient\.command\(arg\); return true; \} \}/);
+  assert.match(W, /\{ const arg = breachCommandOf\(text\); if \(arg != null\) \{ if \(!egClient\) chatLog\.push\(tabId, \{ text: 'Elite Breaches are online only\. Connect and sign in first\.', system: true \}\); else egClient\.command\(arg\); return true; \} \}/);
   assert.doesNotMatch(W, /\\\/breach\(\?:/, 'no second /breach regex in the host');
   assert.ok(HOST_COMMANDS.includes('breach'));
   assert.deepEqual(parseChatLine('/breach pick 2'), { kind: 'host', name: 'breach' }, 'the parser knows it for the host\'s');

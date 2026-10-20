@@ -223,7 +223,7 @@ export function createPartyTravel(host) {
       if (refusal) { cancel(offWith(refusal)); return; }
       t.go = Math.max(t.at, Math.round(now));
       host.poseDirty();
-      const line = tally.ready.length ? `The party sets out for ${t.name}.` : `Nobody else is coming - you set out for ${t.name} alone.`;
+      const line = tally.ready.length ? `The party sets out for ${t.name}.` : `No one else is coming. You set out for ${t.name} alone.`;
       host.say(line);
       host.mid(line);   // PARTY-READY: the wait ends on the HUD too
       return;
@@ -433,7 +433,7 @@ export function createPartyTravel(host) {
       if (name === 'leader') { const r = offerLeader(); return r === true ? null : r; }
       if (s.leads()) {
         if (trip && trip.go == null) { trip = null; host.poseDirty(); host.mid('You call off the journey.'); return 'You call off the journey.'; }   // PARTY-READY: over the wait
-        return 'Choose a destination on the travel map - the party gathered with you is asked to come along.';
+        return 'Choose a destination on the travel map. The party gathered with you is asked to come along.';
       }
       const r = respondTo(null);
       return r.said ? null : r.line;

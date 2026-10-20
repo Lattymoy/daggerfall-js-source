@@ -555,5 +555,5 @@ test('AUDIT REALM L2-F6 / L5-F6: a settle whose goods this game refuses (a sende
   s._settle();
   s._settled({ ok: true, items: [{ ...sigilStone() }], gold: 5 });
   assert.deepEqual([abandoned, s.phase], [1, 'done']);
-  assert.match(s.lastMessage, /join again/);
+  assert.match(s.lastMessage, /Join again/);   // PIN MOVED (VOICE2): a sentence of its own, no dash aside (Voice.md rule 5)
 });

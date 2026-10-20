@@ -245,7 +245,7 @@ test('WB8c tonight\'s marks before the gate opens: the chat\'s line (his aspect\
   assert.equal(marksLine({ boss: 'Valkynaz Ruhn', md: ['storm'] }), 'Valkynaz Ruhn comes the Storm-Crowned tonight.');
   assert.equal(marksLine({ boss: 'Valkynaz Ruhn', md: ['venom', 'grudge', 'echoing', 'legion'] }), 'Valkynaz Ruhn comes the Venom-Blooded tonight, Grudge-Bearer, Echoing and Legion-Lord.');
   const c = { site: { place: 'Copperham, Wrothgarian Mountains' }, phase: 'open', t: { day } };
-  assert.deepEqual(gateTip(c, { to: 'seal', ms: 60_000 }), { title: 'Dagon\'s Breach', lines: ['Near Copperham, Wrothgarian Mountains', 'Open - seals in 1:00', 'Valkynaz Ruhn, Warden of the Burning Gate', 'The Rime-Wrought - Colossal, Unyielding'] });
+  assert.deepEqual(gateTip(c, { to: 'seal', ms: 60_000 }), { title: 'Dagon\'s Breach', lines: ['Near Copperham, Wrothgarian Mountains', 'Open. Seals in 1:00', 'Valkynaz Ruhn, Warden of the Burning Gate', 'The Rime-Wrought - Colossal, Unyielding'] });   // PIN MOVED (VOICE2): the countdown a sentence of its own (Voice.md rule 5)
   assert.deepEqual(gateTip(c, null, 123).lines.at(-1), 'Valkynaz Ruhn has fallen', 'no marks once he has fallen');
   const post = omenPost({ day }).content;
   assert.ok(post.endsWith('. The faithful work their rite nearby. Kill their Summoner before the breach opens. Valkynaz Ruhn comes **the Rime-Wrought** tonight, Colossal and Unyielding.'), post);   // WB12d: the rite, a line

@@ -230,7 +230,7 @@ test('THE TWO-PHASE HANDOFF (Mac, 2026-10-14: "the fallen must lose the worn pie
   assert.equal(lines[0], 'Borin claimed your longsword - it is held until they collect it, and comes back to you if they do not.');
   assert.notEqual(lines[0], WILD_TEXT.deathClaim('Borin', 'longsword'));
   assert.equal(WILD_TEXT.heldNote('Borin', 'longsword', Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)), `Your longsword is held for Borin - if they do not collect it within ${Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)} minutes, it comes back to you.`);
-  assert.equal(WILD_TEXT.heldNote(null, 'longsword', 1), 'Your longsword is held for your killer - if they do not collect it within 1 minute, it comes back to you.');
+  assert.equal(WILD_TEXT.heldNote(null, 'longsword', 1), 'Your longsword is held for your killer. If they do not collect it within 1 minute, it comes back to you.');
   // his game asks the room for it (the remains named it his) - and is answered a collect, not a record
   const his = hisBook(z);
   await his.run();
@@ -281,7 +281,7 @@ test('UNCOLLECTED, IT COMES BACK: nobody collecting by the time the remains coul
   assert.deepEqual(piece(swords(z.fallen.items, uid)[0]), piece(wildRecord(z.minted)), 'as it was minted');
   assert.equal(swords(recordOf(z.svc, z.ria.character).items, uid).length, 1, 'back in her record');
   assert.equal(escrowRow(z.svc, d.r).state, 'returned');
-  assert.equal(WILD_TEXT.heldBack('longsword'), 'Your longsword has come back to you - it was never collected.', 'and she is told');
+  assert.equal(WILD_TEXT.heldBack('longsword'), 'Your longsword has come back to you. It was never collected.', 'and she is told');
   assert.equal(z.svc.env.DB._raw.prepare('SELECT char_id FROM item_uids WHERE uid = ?').get(uid)?.char_id, z.ria.character, 'the ledger: hers again');
   // the collect he held, carried now: refused
   const late = await z.svc.call('/v1/wild/collect', { receipt: cr, realm: realmAt(z.svc.env, z.BO.id) }, z.bo.secret);

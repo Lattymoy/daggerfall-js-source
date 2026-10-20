@@ -58,7 +58,7 @@ export function eliteBreachPlaque({ opener = '', mine = false } = {}) {
 export function gateSightLine(metres, direction, tier = 'elite') {
   const m = Math.max(10, Math.round(metres / 10) * 10);
   const what = tier === 'regular' ? GATE_TIER_TEXT.regular : tier === 'super' ? `an ${GATE_TIER_TEXT.super}` : `an ${GATE_TIER_TEXT.elite}`;
-  return `You see ${what} ${m} metres to the ${direction}!`;
+  return `You see ${what} ${m} meters to the ${direction}!`;
 }
 
 /** THE TIMERS ROW (section 2, the company's alone): before it opens, *Elite Breach opens 4:12*; inside, *Hall 17 - 24:10

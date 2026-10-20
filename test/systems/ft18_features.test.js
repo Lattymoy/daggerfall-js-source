@@ -107,9 +107,17 @@ test('FT18: the quick slots are one bar of three - Off hides the diamond and kee
   quickSlotsWrite('hotbar');
   assert.equal(getPref('quickbarStyle'), 'hotbar');
   assert.equal(quickSlotsRead(), 'hotbar', 'while the hotbar is up the diamond is put away, whatever its switch says (HB1)');
+  // DIAMOND-HB (PIN MOVED): Diamond is the hotbar's four ('diamond'), and Diamonds the ten in diamond sockets
   quickSlotsWrite('diamond');
-  assert.deepEqual([getPref('quickslots'), getPref('quickbarStyle')], [true, 'quickbar']);
-  assert.deepEqual(tileStates(row('quick-slots')).labels, ['Off', 'Diamond', 'Hotbar']);
+  assert.deepEqual([getPref('quickslots'), getPref('quickbarStyle')], [true, 'diamond']);
+  assert.equal(quickSlotsRead(), 'diamond');
+  quickSlotsWrite('gems');
+  assert.deepEqual([getPref('quickbarStyle'), getPref('hotbarShape')], ['hotbar', 'diamond']);
+  assert.equal(quickSlotsRead(), 'gems');
+  quickSlotsWrite('hotbar');
+  assert.deepEqual([getPref('quickbarStyle'), getPref('hotbarShape')], ['hotbar', 'square'], 'Hotbar is the squares again');
+  assert.equal(quickSlotsRead(), 'hotbar');
+  assert.deepEqual(tileStates(row('quick-slots')).labels, ['Off', 'Diamond', 'Hotbar', 'Diamonds']);
   fresh();
 });
 

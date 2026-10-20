@@ -131,7 +131,7 @@ const WORDS = Object.freeze({
     name: t('schools.trickster.name', 'Trickster'),
     spell: t('schools.trickster.spell', FLEETING_HOLD),
     passiveName: t('schools.trickster.passive', 'Slip Away'),
-    passive: t('schools.trickster.passiveText', 'When damage drops you below {pct}% health, you turn invisible for {rounds} rounds. Once every {minutes} minutes.', { pct: pc(N.slipAway.below), rounds: N.slipAway.rounds, minutes: N.slipAway.recover / 60 }),
+    passive: t('schools.trickster.passiveText', 'When damage drops you below {pct}% health, you turn invisible for {rounds} rounds. This can happen once every {minutes} minutes.', { pct: pc(N.slipAway.below), rounds: N.slipAway.rounds, minutes: N.slipAway.recover / 60 }),
     rider: t('schools.trickster.rider', 'If it takes hold, you gain Chameleon for {rounds} rounds.', { rounds: N.fleetingHold.rounds }),
   }),
   riftwalker: () => ({
@@ -139,7 +139,7 @@ const WORDS = Object.freeze({
     spell: t('schools.riftwalker.spell', RIFT_LANCE),
     passiveName: t('schools.riftwalker.passive', 'Between Moments'),
     passive: t('schools.riftwalker.passiveText', 'You cast spells {pct}% faster.', { pct: N.betweenMoments.pct }),
-    rider: t('schools.riftwalker.rider', 'Other enemies within {metres} metres of the target take {pct}% of the damage.', { metres: N.riftLance.metres, pct: pc(N.riftLance.share) }),
+    rider: t('schools.riftwalker.rider', 'Other enemies within {metres} meters of the target take {pct}% of the damage.', { metres: N.riftLance.metres, pct: pc(N.riftLance.share) }),
   }),
   warden: () => ({
     name: t('schools.warden.name', 'Warden'),
@@ -166,7 +166,7 @@ const WORDS = Object.freeze({
     name: t('schools.spellbreaker.name', 'Spellbreaker'),
     spell: t('schools.spellbreaker.spell', UNRAVEL),
     passiveName: t('schools.spellbreaker.passive', 'Sunder'),
-    passive: t('schools.spellbreaker.passiveText', 'Enemies\' saves against your damage spells are {points} lower.', { points: N.sunder.points }),
+    passive: t('schools.spellbreaker.passiveText', 'Enemies\' saving throws against your damage spells are {points} lower.', { points: N.sunder.points }),
     rider: t('schools.spellbreaker.rider', 'On a hit, refunds {pct}% of its magicka cost.', { pct: pc(N.unravel.back) }),
   }),
   bloodmage: () => ({
@@ -180,15 +180,15 @@ const WORDS = Object.freeze({
     name: t('schools.elementalist.name', 'Elementalist'),
     spell: t('schools.elementalist.spell', CHAIN_LIGHTNING),
     passiveName: t('schools.elementalist.passive', 'Conflux'),
-    passive: t('schools.elementalist.passiveText', 'Each damage spell that hits gives you a stack for {seconds} seconds: +{pct}% spell damage per stack, up to {stacks} stacks.', { seconds: N.conflux.seconds, pct: N.conflux.pct, stacks: N.conflux.stacks }),
-    rider: t('schools.elementalist.rider', 'Jumps to up to {foes} other enemies within {metres} metres, dealing {pct}% of the damage.', { foes: N.chainLightning.foes, metres: N.chainLightning.metres, pct: pc(N.chainLightning.share) }),
+    passive: t('schools.elementalist.passiveText', 'Each of your damage spells that hits adds {pct}% to your spell damage for {seconds} seconds, building up to {stacks} times.', { seconds: N.conflux.seconds, pct: N.conflux.pct, stacks: N.conflux.stacks }),
+    rider: t('schools.elementalist.rider', 'Jumps to up to {foes} other enemies within {metres} meters, dealing {pct}% of the damage.', { foes: N.chainLightning.foes, metres: N.chainLightning.metres, pct: pc(N.chainLightning.share) }),
   }),
   seer: () => ({
     name: t('schools.seer.name', 'Seer'),
     spell: t('schools.seer.spell', PSYCHIC_LANCE),
     passiveName: t('schools.seer.passive', 'Foresight'),
     passive: t('schools.seer.passiveText', 'One enemy blow in {n} misses you.', { n: N.foresight.oneIn }),
-    rider: t('schools.seer.rider', 'For {seconds} seconds, the target\'s saves against your damage spells are {points} lower.', { seconds: N.psychicLance.seconds, points: N.psychicLance.points }),
+    rider: t('schools.seer.rider', 'For {seconds} seconds, the target\'s saving throws against your damage spells are {points} lower.', { seconds: N.psychicLance.seconds, points: N.psychicLance.points }),
   }),
   lightbringer: () => ({
     name: t('schools.lightbringer.name', 'Lightbringer'),
@@ -222,7 +222,7 @@ const WORDS = Object.freeze({
     name: t('schools.hierophant.name', 'Hierophant'),
     spell: t('schools.hierophant.spell', SANCTIFY),
     passiveName: t('schools.hierophant.passive', 'Absolution'),
-    passive: t('schools.hierophant.passiveText', 'When damage drops you below {below}% health, you heal {pct}% of your health. Once every {minutes} minutes.', { below: pc(N.absolution.below), pct: N.absolution.heal, minutes: N.absolution.recover / 60 }),
+    passive: t('schools.hierophant.passiveText', 'When damage drops you below {below}% health, you heal {pct}% of your health. This can happen once every {minutes} minutes.', { below: pc(N.absolution.below), pct: N.absolution.heal, minutes: N.absolution.recover / 60 }),
     rider: t('schools.hierophant.rider', 'Gives you {pct}% Spell Resistance for {rounds} rounds.', { pct: N.sanctify.chance, rounds: N.sanctify.rounds }),
   }),
 });
@@ -299,8 +299,8 @@ export function pathChoices(entity) {
 
 /** Why this path cannot be chosen now, or null when it can. */
 export function pathRefusal(entity, id) {
-  if (!isPathId(id)) return t('schools.refuse.none', 'No such specialisation.');
-  if (pathOf(entity)) return t('schools.refuse.already', 'Your specialisation is already chosen: {name}.', { name: pathOf(entity).name });
+  if (!isPathId(id)) return t('schools.refuse.none', 'No such specialization.');
+  if (pathOf(entity)) return t('schools.refuse.already', 'Your specialization is already chosen: {name}.', { name: pathOf(entity).name });
   if (!masterSkillsActive(entity)) return t('schools.refuse.off', 'Master Skills is off.');
   const p = PATH_BY_ID[id];
   if (!p.schools.every((s) => isMasteredSkill(entity, s))) return t('schools.refuse.schools', 'Master {a} and {b} first.', schoolsOf(p));
@@ -316,15 +316,15 @@ export function choosePath(entity, id) {
   // AUDIT MARTIAL L4 M1: one short line - the classic sheet's notice and the HUD draw it unwrapped in 312 px (with the
   // spell's sentence it ran past the screen in English and every Latin language); where it is sold is the card's and the
   // OK box's (schools.sheet.sold)
-  return { ok: true, text: t('schools.chosen', 'Specialisation chosen: {name}.', { name: p.name }) };
+  return { ok: true, text: t('schools.chosen', 'Specialization chosen: {name}.', { name: p.name }) };
 }
 
-export const PATH_DECLINED_TEXT = 'You can choose a specialisation later in your skill screen.';
+export const PATH_DECLINED_TEXT = 'You can choose a specialization later in your skill screen.';
 /** The No's line, in the player's language. */
 export const pathDeclinedText = () => t('schools.declined', PATH_DECLINED_TEXT);
 /** GROWTH4 (bible/10-UI/Growth.md section 7): the No's line where the enhanced pause window stands - its Growth tab is
  *  where every path is read and chosen (the classic skin's stays the skill screen's: its S row opens the same guide). */
-export const PATH_DECLINED_GROWTH_TEXT = 'You can choose a specialisation later on the Growth tab of the pause menu.';
+export const PATH_DECLINED_GROWTH_TEXT = 'You can choose a specialization later on the Growth tab of the pause menu.';
 export const pathDeclinedGrowthText = () => t('schools.declinedGrowth', PATH_DECLINED_GROWTH_TEXT);
 
 /** The first path the game still owes an ASK (asked once a character; the skill screen keeps the rest), or null. */
@@ -343,13 +343,13 @@ export function pathChoiceRows(entity, id, { others = true } = {}) {
   if (!p) return [];
   const more = others ? pathChoices(entity).length - 1 : 0;
   return [
-    t('schools.choice.title', 'Specialise as {name}?', { name: p.name }),
+    t('schools.choice.title', 'Specialize as {name}?', { name: p.name }),
     pathSchoolsText(p),
     '',
     ...pathPowerRows(p),
     '',
     t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),
-    ...(more > 0 ? [t('schools.choice.others', '{n, plural, one {# other specialisation is open to you.} other {# other specialisations are open to you.}}', { n: more })] : []),
+    ...(more > 0 ? [t('schools.choice.others', '{n, plural, one {# other specialization is open to you.} other {# other specializations are open to you.}}', { n: more })] : []),
   ];
 }
 
@@ -357,9 +357,9 @@ export function pathChoiceRows(entity, id, { others = true } = {}) {
  *  `growth` - the enhanced pause window's Growth tab, else the skill screen). */
 export function pathsOpenRows(open, { growth = false } = {}) {
   return [
-    t('schools.open.title', 'Specialisation'),
+    t('schools.open.title', 'Specialization'),
     '',
-    t('schools.open.count', '{n, plural, one {# specialisation is open to you:} other {# specialisations are open to you:}}', { n: open.length }),
+    t('schools.open.count', '{n, plural, one {# specialization is open to you:} other {# specializations are open to you:}}', { n: open.length }),
     open.map((p) => p.name).join(', '),
     '',
     growth ? t('schools.open.whereGrowth', 'See them all and choose one on the Growth tab of the pause menu.')

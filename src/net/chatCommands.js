@@ -313,7 +313,7 @@ export const hostMisuseText = (name) => (name === 'red' ? emptyCommandText(name)
  * @param {{ q?: string, l?: { name?: string }[], busy?: boolean }} [f] */
 export function foundText({ q, l, busy } = {}) {
   const names = (Array.isArray(l) ? l : []).map((p) => p?.name).filter((n) => typeof n === 'string' && n);
-  if (busy) return 'Too many are searching right now - try again in a moment.';
+  if (busy) return 'Too many are searching right now. Try again in a moment.';
   if (!names.length) return `No one online by "${q}".`;
   return `Online, by "${q}"${names.length >= HUB_FIND_MAX ? ` (the first ${HUB_FIND_MAX})` : ''}: ${names.join(', ')}.`;
 }
@@ -329,4 +329,4 @@ export const LANG_LINES = Object.freeze(['Language channels - /lang <code> joins
 /** CHAT-LANG: a code the table does not have. */
 export const unknownLangText = (code) => `There is no "${String(code).slice(0, 12)}" language channel. /lang lists them.`;
 /** EMOTE1: the gestures, as the lines `/emotes` shows. */
-export const EMOTE_LINES = Object.freeze(['Gestures, to those near you - add a name to make one AT someone:', Object.keys(EMOTES).map((n) => `/${n}`).join(' ')]);
+export const EMOTE_LINES = Object.freeze(['Gestures, seen by those near you. Add a name to direct one AT someone:', Object.keys(EMOTES).map((n) => `/${n}`).join(' ')]);

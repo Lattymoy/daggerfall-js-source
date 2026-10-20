@@ -468,8 +468,8 @@ test('AUQ B5 B8 THE MARK\'S REACH: never on the zone\'s or the sand\'s - tagged 
 test('AUQ A4 THE PAGE HEALS ONLY WHERE THEY HEAL: no healing said of the Dread, one out in the world, or while held; a held Dread says held; the cap\'s count is of those that hunt (mutants: each said)', () => {
   const w = { wounds: ['lamed'], woundDay: 10 };
   assert.ok(PG.woundLine(w, DAY * 11, false).endsWith('unless you find it first.'));
-  for (const x of [{ ...w, dread: true }, { ...w, out: true }]) assert.equal(PG.woundLine(x, DAY * 11, false), 'Wounds you left: Lamed (a lamed leg - it runs slower).');
-  assert.equal(PG.woundLine(w, DAY * 11, true), 'Wounds you left: Lamed (a lamed leg - it runs slower).', 'held');
+  for (const x of [{ ...w, dread: true }, { ...w, out: true }]) assert.equal(PG.woundLine(x, DAY * 11, false), 'Wounds you left: Lamed (a lamed leg: it runs more slowly).');
+  assert.equal(PG.woundLine(w, DAY * 11, true), 'Wounds you left: Lamed (a lamed leg: it runs more slowly).', 'held');
   assert.equal(PG.comeWords({ dread: true, lair: LAIR, dueAt: 0 }, 0, true).tag, 'Held');
   assert.match(read('src/ui/revenant/revenantPage.js'), /divider\(`Revenants \(\$\{living\.filter\(\(r\) => !r\.dread\)\.length\} of \$\{REVENANT_MAX\}\)`\)/);
 });

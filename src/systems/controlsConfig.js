@@ -331,12 +331,12 @@ const MOUSE_NAMES = Object.freeze({
  *  how. `mode` is Controls/WeaponSwingMode; `readyCode` is the live
  *  ReadyWeapon code (null when unbound). */
 export function swingHint(code, mode, readyCode) {
-  if (code == null) return 'Unbound - nothing can swing your weapon.';
+  if (code == null) return 'Unbound. Nothing can swing your weapon.';
   const side = { Mouse0: 'left', Mouse1: 'right', Mouse2: 'middle' }[code];
   const btn = side ? `the ${side} mouse button` : buttonText(code, true);
   const how = mode === 1 ? `Press ${btn} to swing.`
     : mode === 2 ? `Press or hold ${btn} to swing.`
-      : `Hold ${btn} and move the mouse to swing - the way you move picks the blow. A press without moving does nothing.`;
+      : `Hold ${btn} and move the mouse to swing. The way you move decides the blow. A press without moving does nothing.`;
   return readyCode == null ? how : `${how} Draw your weapon first with ${buttonText(readyCode, true)} (Ready Weapon).`;
 }
 

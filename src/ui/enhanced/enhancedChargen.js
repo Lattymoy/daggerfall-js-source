@@ -949,12 +949,12 @@ function classIoCard() {
   const say = (t) => { classIoNote = t; paint(); };
   if (classIo === 'export') {
     card.append(el('h3', null, 'Export this class'));
-    card.append(el('p', 'row-note', 'The name, the skills, the attributes, the special advantages and disadvantages and the reputations - everything you chose here.'));
+    card.append(el('p', 'row-note', 'The name, the skills, the attributes, the special advantages and disadvantages and the reputations. Everything you chose here.'));
     const acts = el('div', 'acts');
     const copy = el('button', 'act primary', 'Copy to clipboard');
     copy.onclick = async () => {
       try { await globalThis.navigator.clipboard.writeText(classDocText()); say('Copied. Paste it into Import on any DFO Online character.'); }
-      catch { say('The browser would not let this page write the clipboard - save it as a file instead.'); }
+      catch { say('The browser would not let this page write to the clipboard. Save it as a file instead.'); }
     };
     const save = el('button', 'act', 'Save as a file');
     save.onclick = () => {
@@ -989,7 +989,7 @@ function classIoCard() {
     const paste = el('button', 'act', 'Paste from clipboard');
     paste.onclick = async () => {
       try { load(await globalThis.navigator.clipboard.readText()); }
-      catch { say('The browser would not let this page read the clipboard - paste into the box instead.'); }
+      catch { say('The browser would not let this page read the clipboard. Paste into the box instead.'); }
     };
     const open = el('button', 'act', 'Open a file');
     open.onclick = () => {

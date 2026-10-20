@@ -60,7 +60,7 @@ test('AUDIT REST F7: a night\'s stamp is marked - the shared clock\'s second wit
 test('REST5 the words: carried, carried short, skipped - each names the member', () => {
   assert.equal(REST_ACT_TEXT.carried('Ada'), 'Ada rests here, and you rest with them through the night.');
   assert.equal(REST_ACT_TEXT.carriedShort('Ada'), 'Ada rests here, and you rest a while with them.');
-  assert.equal(REST_ACT_TEXT.carriedSkipped('Ada'), 'Ada rests here - you are too busy to rest with them.');
+  assert.equal(REST_ACT_TEXT.carriedSkipped('Ada'), 'Ada rests here, but you are too busy to rest with them.');
   assert.equal(REST_ACT_TEXT.noVote, 'Online there is no vote: rest at a fire, a tent or a bed, and your party within 15 m rests with you.');
 });
 

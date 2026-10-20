@@ -53,7 +53,7 @@ test('SWING-LABEL: the Swing Weapon line says what the gesture code actually doe
   assert.equal(swingHint('Mouse1', 2, null), 'Press or hold the right mouse button to swing.');
   // the player's own bindings, not the defaults
   assert.match(swingHint('KeyK', 0, 'KeyR'), /^Hold K and move the mouse.*with R \(Ready Weapon\)\.$/);
-  assert.equal(swingHint(null, 0, 'KeyZ'), 'Unbound - nothing can swing your weapon.');
+  assert.equal(swingHint(null, 0, 'KeyZ'), 'Unbound. Nothing can swing your weapon.');
 });
 
 test('SWING-LABEL: the enhanced pane shows the line under Swing Weapon, from the live swing style and Ready Weapon key', () => {

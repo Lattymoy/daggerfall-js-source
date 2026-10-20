@@ -44,7 +44,7 @@ export const FORT_WORKS = Object.freeze([
     tier(1000, ['plank:oak', 200], ['ingot:iron', 50]), tier(2500, ['plank:teak', 300], ['ingot:steel', 50])]) }),
   Object.freeze({ id: 'apothecary', name: 'Apothecary', where: 'any', tiers: Object.freeze([
     tier(1000, ['stone:cut', 100], ['plank:oak', 100]), tier(2500, ['stone:cut', 200], ['gem:pearl', 20])]) }),
-  Object.freeze({ id: 'harbour', name: 'Harbour', where: 'coast', tiers: Object.freeze([
+  Object.freeze({ id: 'harbour', name: 'Harbor', where: 'coast', tiers: Object.freeze([
     tier(2000, ['plank:oak', 400], ['stone:cut', 200]), tier(5000, ['plank:teak', 800], ['stone:cut', 400])]) }),
 ]);
 const BY_ID = new Map(FORT_WORKS.map((w) => [/** @type {string} */ (w.id), w]));
@@ -159,7 +159,7 @@ export function towersSee(standings, { holder, defence, t }) {
     .sort((a, b) => b.influence - a.influence || (a.guild < b.guild ? -1 : 1));
 }
 /** The holder's word from its Watchtowers: "The Watchtowers of Anticlere see the Iron Circle <IC> past half our defence." */
-export const towersText = (seatName, guildName, share) => `The Watchtowers of ${seatName} see ${guildName} past ${share <= 0.25 ? 'a quarter' : 'half'} of our defence.`;
+export const towersText = (seatName, guildName, share) => `The Watchtowers of ${seatName} see ${guildName} past ${share <= 0.25 ? 'a quarter' : 'half'} of our defense.`;
 /** The Barracks: the relay-run town guards that fight for the holder - 2, 4, 6. */
 export const barracksGuards = (t) => [0, 2, 4, 6][Math.max(0, Math.min(3, Number(t) || 0))];
 /** The Market Hall: the town's boards list a quarter more a tier; the Tithe's cap a point more a tier. */
@@ -250,7 +250,7 @@ export const revoltDue = (standing) => Number(standing) <= 0;
 export const FORT_EFFECT_WORDS = Object.freeze({
   walls: (t) => `the defenders' wave ${(WALLS_WAVE_STEP_MS / 1000) * t} s faster`,
   gatehouse: (t) => `its vitality ${gatehouseVitality(t).toLocaleString('en-US')}`,
-  watchtowers: (t) => `the holder told when a challenger passes ${t >= 2 ? 'a quarter' : 'half'} of its defence`,
+  watchtowers: (t) => `the holder told when a challenger passes ${t >= 2 ? 'a quarter' : 'half'} of its defense`,
   barracks: (t) => `${barracksGuards(t)} town guards fight for the holder`,
   market: (t) => `the town's boards list ${25 * t}% more, the Tithe's cap ${t} ${t === 1 ? 'point' : 'points'} higher`,
   shrine: (t) => `Standing +${shrineStanding(t)} a week, +${shrineGateInfluence(t)} influence for each gate felled in the region`,
@@ -258,7 +258,7 @@ export const FORT_EFFECT_WORDS = Object.freeze({
   workshop: (t) => `members' carpentry, outfitting and masonry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better`,
   // AUDIT PROF12 P1: a step each its own - a piece of jewellery's quality (the Forge's law), a dish's XP half again
   // (recipeLaw cookXp), a brew's Potent chance +10 (alchemyLaw POTENT.apothecary)
-  apothecary: (t) => `members' jewellery here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,
+  apothecary: (t) => `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,
   harbour: () => 'a port for the holder\'s members',
 });
 /**

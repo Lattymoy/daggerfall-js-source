@@ -580,7 +580,7 @@ test('AUDIT NAMES N1-6 readout: a titled player held at the top near a corner an
     hud.updateTravelViewHud({ feet: null, heading: null, yaw: 0, where: '', marks: [
       // PIN MOVED (OW-CROWD): held badges are my party's alone now - two of them
       { key: 'peer:top', x: -5047, y: -3176, front: true, label: 'Mack', kind: 'party', edge: true, badge: { title: 'developer', glyphs: ['dev'], lv: 40, gt: 'DAGR' } },
-      { key: 'peer:left', x: -5867, y: -3056, front: true, label: 'Aldric the Grey', kind: 'party', edge: true, badge: { title: 'founder', glyphs: ['sprout', 'dev'], lv: 12, gt: 'HND' } },
+      { key: 'peer:left', x: -5867, y: -3056, front: true, label: 'Aldric the Gray', kind: 'party', edge: true, badge: { title: 'founder', glyphs: ['sprout', 'dev'], lv: 12, gt: 'HND' } },
     ] });
     const [a, b] = draws.map(([, x, y, w, h]) => ({ x0: x, x1: x + w, y0: y, y1: y + h }));
     assert.ok(a && b, 'both drawn');

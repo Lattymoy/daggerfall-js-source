@@ -49,7 +49,7 @@ export const WAYPOINT_TEXT = Object.freeze({
   defaultName: (n) => `Waypoint ${n}`,
   follow: 'Follow waypoint…',
   following: 'Following',
-  none: 'No waypoints yet - right-click the map to add one',
+  none: 'No waypoints yet. Right-click the map to add one',
   tip: (label, on) => `${on ? 'Hide' : 'Show'} ${label.toLowerCase()} waypoints on the maps`,
   kindWord: { personal: 'Personal waypoint', party: 'Party waypoint', guild: 'Guild waypoint' },
 });

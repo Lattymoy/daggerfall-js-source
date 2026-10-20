@@ -1167,7 +1167,7 @@ function accountWindow() {
   for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
   const body = el('div', 'px-body');
   body.append(accountBody());
-  body.append(skinCard(document).root);   // DISC23-B2 (Mac: "a choosable skin system in the menu player profile system itself"): who you are drawn as, beside who you are
+  body.append(skinCard(document, { gender: () => playerEntity?.gender }).root);   // DISC23-B2 (Mac: "a choosable skin system in the menu player profile system itself"): who you are drawn as, beside who you are; LAYERED-GEAR: the character's own body, the one Layered Gearing first wears
   win.append(body);
   return win;
 }
@@ -1270,7 +1270,7 @@ function paneOnline(body) {
   // page in the bible cannot reach them.
   const foot = el('div', 'card svonlinefoot');
   // L10N4: ONE pattern, the sky's sentence an argument in it (skyDayWords is itself routed)
-  foot.append(el('p', 'meta', t('menu.online.rules', 'Everyone plays their own save, and you can see and talk to each other anywhere. Dungeons and buildings are shared: enemies, doors, levers and every chest, shelf or cupboard someone has opened are the same for everyone, and stay that way. In towns and the wilds you share who is around: what one player meets, everyone nearby sees and can fight, and those monsters can hurt you too. {skyDay} The world\u2019s clock and sky run on real time: resting, travelling, jail time or training don\u2019t move them, so a quest that waits for a time of day waits for the world\u2019s, and a full moon holds a lycanthrope for its night alone. Your character also keeps their own time: it runs while you play, resting, travelling, jail time and training use it, and it stops while you are logged off. Your wounds, spells, hunger, diseases, curses, guild ranks, rented rooms, loans and repairs run on it. Quest timers run on the world\u2019s clock while you play: resting, waiting and travelling don\u2019t spend a quest\u2019s days, and time logged off never counts. A quest that only makes you wait - a letter, a meeting, \u201ccome back in a few days\u201d - moves on after a couple of minutes of play. You rest at a fire, a tent or a bed: a night passes at once, at most once every ten minutes of play, and your party within 15 metres sleeps it with you. Every enhancement is on for everyone in the shared world, but your UI is your own, with chat, friends, the party and trading in their own panels. Most mods stay your choice online. A few are the room\u2019s: the ones that change the ground, the ones that change monsters and loot, and the rules everyone plays by. The Mods page marks each one.', { skyDay: skyDayWords() })));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door; QCLOCK-WORLD: the quests' clock; REST8: the short wait; REST9: the rest act and the party's night
+  foot.append(el('p', 'meta', t('menu.online.rules', 'Everyone plays their own save, and you can see and talk to each other anywhere. Dungeons and buildings are shared: enemies, doors, levers and every chest, shelf or cupboard someone has opened are the same for everyone, and stay that way. In towns and the wilds you share who is around: what one player meets, everyone nearby sees and can fight, and those monsters can hurt you too. {skyDay} The world\u2019s clock and sky run on real time: resting, traveling, jail time or training don\u2019t move them, so a quest that waits for a time of day waits for the world\u2019s, and a full moon holds a lycanthrope for its night alone. Your character also keeps their own time: it runs while you play, resting, traveling, jail time and training use it, and it stops while you are logged off. Your wounds, spells, hunger, diseases, curses, guild ranks, rented rooms, loans and repairs run on it. Quest timers run on the world\u2019s clock while you play: resting, waiting and traveling don\u2019t spend a quest\u2019s days, and time logged off never counts. A quest that only makes you wait - a letter, a meeting, \u201ccome back in a few days\u201d - moves on after a couple of minutes of play. You rest at a fire, a tent or a bed: a night passes at once, at most once every ten minutes of play, and your party within 15 meters sleeps it with you. Every enhancement is on for everyone in the shared world, but your UI is your own, with chat, friends, the party and trading in their own panels. Most mods stay your choice online. A few are the room\u2019s: the ones that change the ground, the ones that change monsters and loot, and the rules everyone plays by. The Mods page marks each one.', { skyDay: skyDayWords() })));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door; QCLOCK-WORLD: the quests' clock; REST8: the short wait; REST9: the rest act and the party's night
   foot.append(field(t('menu.online.relay', 'Relay'), 'onlineServer', HOME_SERVER, 200));
   body.append(foot);
   body.append(onlineSyncCard());   // UXB1-E: under the rules it copies
@@ -1306,8 +1306,8 @@ function realmCard(who) {
           // HOUSE-LOSS (2026-09-29, Mac: "GarySoup lost his house and furniture"): a character brought in whose first save
           // never landed is UNDONE, never deleted - its delete took the home customs had carried, and it could never come
           // in again. The undo gives back its home, its guild place and its customs (realm.js undoRealm).
-          row.customs && save.unfinished ? { label: t('menu.realm.undo', 'Undo bringing in'), disabled: realmBusy, onClick: () => ask(t('menu.realm.undoAsk', 'Undo bringing {name} in?', { name: row.name }), t('menu.realm.undoBody', '{name} never finished coming into the realm - its first save never landed. Undoing takes it out and gives everything back: its home, its guild place and its one customs, so the offline character can be brought online again. To finish instead, press Bring online on it below.', { name: row.name }), t('menu.realm.undoYes', 'Undo'), () => realmAct(() => realmUndo(realmIoNow(), row.id), () => [t('menu.realm.undone', '{name} is out of the realm and customs is undone: its home and guild place are back with the offline character. Bring it online again when you are ready.', { name: row.name })])) }
-            : { label: t('menu.realm.delete', 'Delete character'), disabled: realmBusy, onClick: () => ask(t('menu.realm.deleteAsk', 'Delete {name}?', { name: row.name }), t('menu.realm.deleteBody', 'An online character deleted is gone from the realm for good - its Renown, its professions and their Stores, its home and its guild place with it. A copy you made offline stays.'), t('menu.realm.deleteYes', 'Delete'), () => realmAct(() => realmDelete(realmIoNow(), row.id), () => [t('menu.realm.deleted', '{name} is gone from the realm.', { name: row.name })])) },
+          row.customs && save.unfinished ? { label: t('menu.realm.undo', 'Undo bringing in'), disabled: realmBusy, onClick: () => ask(t('menu.realm.undoAsk', 'Undo bringing {name} in?', { name: row.name }), t('menu.realm.undoBody', '{name} never finished coming into the realm, because its first save never arrived. Undoing takes it out and returns everything: its home, its guild place and its one customs, so the offline character can be brought online again. To finish instead, press Bring online on it below.', { name: row.name }), t('menu.realm.undoYes', 'Undo'), () => realmAct(() => realmUndo(realmIoNow(), row.id), () => [t('menu.realm.undone', '{name} is out of the realm and customs is undone: its home and guild place are back with the offline character. Bring it online again when you are ready.', { name: row.name })])) }
+            : { label: t('menu.realm.delete', 'Delete character'), disabled: realmBusy, onClick: () => ask(t('menu.realm.deleteAsk', 'Delete {name}?', { name: row.name }), t('menu.realm.deleteBody', 'A deleted online character is gone from the realm for good, and with it its Renown, its professions and their Stores, its home and its guild place. A copy you made offline remains.'), t('menu.realm.deleteYes', 'Delete'), () => realmAct(() => realmDelete(realmIoNow(), row.id), () => [t('menu.realm.deleted', '{name} is gone from the realm.', { name: row.name })])) },
         ],
       }));
     }
@@ -1409,7 +1409,7 @@ function copyToOffline(row) {
     snap.characterId = mintCharacterId();
     const r = saveSlot(snap.name || row.name, 'Copied from the realm', snap, { storage: appStorage() });
     return r.ok ? { ok: true } : { ok: false, error: 'no-room' };
-  }, () => [t('menu.realm.copied', '{name} is copied to offline - a new offline character. Nothing played on it comes back to the realm.', { name: row.name })]);
+  }, () => [t('menu.realm.copied', '{name} is copied as a new offline character. Nothing played on it comes back to the realm.', { name: row.name })]);
 }
 
 // UXB1-E (2026-09-25, the UX backlog: "Add a 'sync from server' option so players can ensure their offline play
@@ -2360,7 +2360,7 @@ const ONLINE_LOCK_NOTE = 'Always on online: the shared world uses every enhancem
 /** MODS-ONLINE-2: the Mods pane's own line. The lane's note (above)
  *  is about the PORT's switches and was wrong over the tiles the
  *  moment a mod stopped being forced. */
-const ONLINE_MODS_NOTE = 'Most mods are your choice online. A few are set for everyone in the room so everyone plays on the same ground by the same rules: the ones that change the ground (Basic Roads, World of Daggerfall, Detailed Ships, Iliac Puddle No More\u2019s sea and depth, and There\u2019s a Hole in the Bottom of the Ocean), and every setting of Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot, Roleplay & Realism, Roleplay & Realism: Items and Oblivion leveling (who stands behind a counter and which leveling your character uses stay yours). Travel Options is on for everyone, so every trip over land is travelled and ships sail only from ports. Immersive Travel is on for everyone too: its carriages stand at every city gate, a driver\u2019s fare is fast travel over land, and its fares and rules are the room\u2019s (how its map looks stays yours).';   // AUDIT IT1 W5: a port's ship passage is fast travel online too
+const ONLINE_MODS_NOTE = 'Most mods are your choice online. A few are set for everyone in the room so everyone plays on the same ground by the same rules: the ones that change the ground (Basic Roads, World of Daggerfall, Detailed Ships, Iliac Puddle No More\u2019s sea and depth, and There\u2019s a Hole in the Bottom of the Ocean), and every setting of Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot, Roleplay & Realism, Roleplay & Realism: Items and Oblivion leveling (who stands behind a counter and which leveling your character uses stay yours). Travel Options is on for everyone, so every trip over land is traveled and ships sail only from ports. Immersive Travel is on for everyone too: its carriages stand at every city gate, a driver\u2019s fare is fast travel over land, and its fares and rules are the room\u2019s (how its map looks stays yours).';   // AUDIT IT1 W5: a port's ship passage is fast travel online too
 const ONLINE_GROUND_NOTE = 'Set for everyone online: it changes the ground itself (roads, rivers, camp sites, the shared ship deck, the seafloor and its pits), and everyone in a room has to stand on the same ground. Your own choice comes back offline.';   // AUDIT LANDFORMS C4: the rivers' row is one of the ground's since LANDFORM3 cut their channels
 /** WOD1: the vendors whose room-owned switch is the GROUND's - the two
  *  that write terrain heights (roads' beds, World of Daggerfall's sites). */
@@ -2387,11 +2387,11 @@ const ONLINE_WORLD_EVENT_VENDORS = Object.freeze(['world-events-raiding-parties'
 const ONLINE_WORLD_EVENT_NOTE = 'On for everyone online: a raid is shared, so everyone in the town fights the same raiders and every kill counts for all. Your own choice comes back offline.';
 /** TRAVEL-ONLINE: Travel Options' three room switches - the mod and its two journey dials - and their own reason. */
 const ONLINE_TRAVEL_VENDORS = Object.freeze(['travel-options']);
-const ONLINE_TRAVEL_NOTE = 'On for everyone online: every trip over land is travelled, and ships sail only from ports. Your own choice comes back offline.';
+const ONLINE_TRAVEL_NOTE = 'On for everyone online: every trip over land is traveled, and ships sail only from ports. Your own choice comes back offline.';
 /** IT1: Immersive Travel's two room switches - the mod (its carriages stand at the gates, ground everyone walks among) and
  *  Disable Normal Travel held off - and their own reason. */
 const ONLINE_CARRIAGE_VENDORS = Object.freeze(['immersive-travel']);
-const ONLINE_CARRIAGE_NOTE = 'Set for everyone online: carriages stand at every city gate, the travel map\u2019s trips stay travelled, and a driver\u2019s fare is fast travel over land, its fares and rules the same for everyone. Your own choice comes back offline.';   // AUDIT IT1 W5
+const ONLINE_CARRIAGE_NOTE = 'Set for everyone online: carriages stand at every city gate, the travel map\u2019s trips stay traveled, and a driver\u2019s fare is fast travel over land, its fares and rules the same for everyone. Your own choice comes back offline.';   // AUDIT IT1 W5
 /** L10N4: the notes above in the player's language. Each constant stays the English identity the ladders below hand
  *  round (and the pins read); a note is turned into words where it is shown (noteText). */
 const NOTE_TEXT = new Map([
@@ -2781,7 +2781,7 @@ export const MIDI_OUT_NOTE = 'Play the music on a MIDI synth or device.';
 export const MIDI_OUT_NONE = 'This browser has no MIDI.';
 export const MIDI_OUT_DENIED = 'MIDI is blocked for this site.';
 export const MIDI_OUT_EMPTY = 'No MIDI device connected.';
-export const MIDI_OUT_AWAY = 'Not connected - the game\u2019s own synth plays.';
+export const MIDI_OUT_AWAY = 'Not connected. The game’s own synthesizer plays.';
 let midiOutList = null;   // the outputs as last asked - null until the row's first click
 function portRowsAudio() {
   const can = midiOutSupported();
@@ -2884,7 +2884,7 @@ function portRowsInterface({ pause = false } = {}) {
   out.push(hudScaleRow());
   out.push(mapScaleRow());   // MAP-SCALE
   out.push(prefRow('standingAll', 'Every faction\'s standing',
-    'Your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince on the character sheet\'s Standing page - not only the ones you belong to.'));   // EVERY-STANDING
+    'Your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince, shown on the Standing page of the character sheet, not only with those you belong to.'));   // EVERY-STANDING
   if (isEnhanced()) out.push(...hudLayoutRows());   // HUD-MOVE: the Enhanced Plus HUD's own - Classic draws none of it
   // FOEBAR1: the target bar's face is a two-way choice, not a switch - the
   // stick-position row's shape: a row whose button names the OTHER option.
@@ -2919,7 +2919,7 @@ function portRowsInterface({ pause = false } = {}) {
  *  player's language, as the rows around them (L10N4). */
 function spireAccessRows() {
   const motion = prefRow('reducedMotion', t('menu.spire.motion.name', 'Reduced motion'), t('menu.spire.motion.note', 'Nothing on the HUD pulses, flies or rises. Your system\'s own setting does the same.'));
-  const palette = choiceRow('dangerPalette', t('menu.spire.palette.name', 'Danger colours'), t('menu.spire.palette.note', 'The colour of a blow\'s edge, of safe ground and of a hazard.'),
+  const palette = choiceRow('dangerPalette', t('menu.spire.palette.name', 'Danger colors'), t('menu.spire.palette.note', 'The color of a blow\'s edge, of safe ground and of a hazard.'),
     EG_DANGER_PALETTE_KEYS.map((k) => [k, EG_DANGER_PALETTES[k].name]));   // AUDIT EG V (c, L7-10): each its own t() (ui/eliteGates/egAccess.js)
   const fill = choiceRow('telegraphFill', t('menu.spire.fill.name', 'Danger fill'), t('menu.spire.fill.note', 'How brightly a blow\'s ground fills. Its edge stays whole.'),
     [[1, '100%'], [0.85, '85%'], [0.7, '70%'], [0.5, '50%']]);
@@ -3128,7 +3128,7 @@ function peerSpritesCard() {
   c.append(prefRow('restWithParty', t('menu.peers.rest', 'Rest with my party'),
     t('menu.peers.restNote', 'Sleep when a party member within 15 m sleeps at a fire, a tent or a bed.'), { home: true }));   // AUDIT REST: REST5's night, no vote
   // TV3 (2026-09-28, bible/06-Systems/Travel-View.md): being SEEN - the region's travellers see where you are
-  c.append(prefRow('showToTravellers', t('menu.peers.show', 'Show me to travellers in my region'),
+  c.append(prefRow('showToTravellers', t('menu.peers.show', 'Show me to travelers in my region'),
     t('menu.peers.showNote', 'Outdoors, players in your region see you on the overworld and the map. '
     + 'Nothing is shared from indoors except with your party. Kept on this device.'), { home: true }));   // AUDIT DEEP2 C5: the party pose rides from indoors too
   // CHAT-LANG, CHAT-COLOURS, PING1 (2026-10-11, the players: "More chat channels per-language", "Chat color-coding per
@@ -3142,8 +3142,8 @@ function peerSpritesCard() {
     t('menu.chat.tradeNote', 'A chat tab for buying, selling and swapping with players anywhere. /join trade in the chat joins it too.'), { home: true }));
   c.append(prefRow('chatLfg', t('menu.chat.lfg', 'LFG channel'),
     t('menu.chat.lfgNote', 'A chat tab for finding a group, or one more for yours. /join lfg in the chat joins it too.'), { home: true }));
-  c.append(prefRow('chatChannelColours', t('menu.chat.colours', 'Chat colours by channel'),
-    t('menu.chat.coloursNote', 'World white, Region green, Guild purple, Local grey, Party teal, Language rose, Trade gold, LFG blue.'), { home: true }));
+  c.append(prefRow('chatChannelColours', t('menu.chat.colours', 'Chat colors by channel'),
+    t('menu.chat.coloursNote', 'World white, Region green, Guild purple, Local gray, Party teal, Language rose, Trade gold, LFG blue.'), { home: true }));
   c.append(prefRow('chatPingSound', t('menu.chat.ping', 'Chime when someone @mentions you'),
     t('menu.chat.pingNote', 'A line with @YourName is always marked in gold; this adds a chime.'), { home: true }));
   return c;
@@ -3217,7 +3217,7 @@ function packsCard() {
   const sameTitle = (t) => String(t ?? '').replace(/\b90s\b/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
   const seen = new Map();
   for (const m of mods) { const k = sameTitle(m.title); seen.set(k, (seen.get(k) ?? 0) + 1); }
-  if ([...seen.values()].some((n) => n > 1)) c.append(el('p', 'meta', t('menu.packs.twoVersions', 'Two versions of the same mod are attached (for example DREAM and DREAM 90s). Only one of them shows for each texture and both use memory - remove one.')));
+  if ([...seen.values()].some((n) => n > 1)) c.append(el('p', 'meta', t('menu.packs.twoVersions', 'Two versions of the same mod are attached (for example DREAM and DREAM 90s). Only one of them shows for each texture, yet both use memory. Remove one.')));
   c.append(el('p', 'meta', t('menu.packs.dfmodsBlurb', 'Daggerfall Unity texture mods - DREAM\u2019s sprites, NPCs, mobs, paperdoll, portraits, backgrounds and world textures, and mods like them. Pick the .dfmod files themselves; you can pick several at once. Mod scripts do not run. Vanilla Enhanced ships with the game (the Texture Overhaul card wears it); a copy you attach is read instead of the built-in one.')));
   // VE1: listed in load order - a mod loads after the mods it depends on, and where two carry the same texture the one
   // loaded later is drawn (DFU's ModManager)
@@ -3243,7 +3243,7 @@ function packsCard() {
   for (const u of unregisteredDfmods()) {
     const row = el('div', 'card');
     row.append(el('p', null, u.fileName));
-    row.append(el('p', 'meta', u.state === 'indexing' ? t('menu.packs.indexing', 'Being read - it joins the load order when that is done.')
+    row.append(el('p', 'meta', u.state === 'indexing' ? t('menu.packs.indexing', 'Being read. It joins the load order when that is done.')
       : u.state === 'nomods' ? t('menu.packs.nomods', 'Not loaded: this page was opened with ?nomods.') : t('menu.packs.notWorking', 'Not working: {error}.', { error: u.error })));
     row.append(acts([remove(t('menu.packs.removeYes', 'Remove'), t('menu.packs.removeMod', 'Remove {mod}', { mod: u.fileName }), t('menu.packs.removeModBody', 'This clears {mod} from this browser. It takes full effect the next time an area loads.', { mod: u.fileName }), (d) => d.removeStoredDfmod(u.key))]));
     c.append(row);
@@ -3898,7 +3898,7 @@ function systemFontRow(redraw) {
     b.onclick = async (e) => {
       e.stopPropagation();
       if (!fontFamiliesSeen?.length) fontFamiliesSeen = await installedFamilies();
-      b.textContent = fontFamiliesSeen.length ? fontsPickBelow(fontFamiliesSeen.length) : 'No list given - type the name';
+      b.textContent = fontFamiliesSeen.length ? fontsPickBelow(fontFamiliesSeen.length) : 'No list given. Type the name';
       input.focus();
       paint();
     };
@@ -3979,8 +3979,8 @@ function overhaulPanel(p) {
     } else {
     const row = el('div', 'look-colours');
     row.setAttribute('role', 'group');
-    row.setAttribute('aria-label', t('menu.ovh.plusColour', 'Enhanced Plus colour'));
-    row.append(el('span', 'look-colours-label', t('menu.ovh.uiColour', 'UI colour')));   // Mac, 2026-09-29
+    row.setAttribute('aria-label', t('menu.ovh.plusColour', 'Enhanced Plus color'));
+    row.append(el('span', 'look-colours-label', t('menu.ovh.uiColour', 'UI color')));   // Mac, 2026-09-29
     const now = plusTheme();
     for (const [id, th] of Object.entries(PLUS_THEMES)) {
       const b = el('button', 'look-colour');
@@ -4624,7 +4624,7 @@ function pauseHoldings(body) {
   // AUDIT HOLDINGS C6: a host with no page to show (the standalone dungeon sets no provider) says so - the Stable drawn
   // there told a player who owns both that they own no horse and no wagon
   if (!secs.length) {
-    detail.append(el('div', 'px-qverdict', 'Nothing here to hold'), el('p', null, 'What you own and who follows you is kept in the world - your horse, your wagon, your ships and your companions.'));
+    detail.append(el('div', 'px-qverdict', 'Nothing here to hold'), el('p', null, 'What you own and who follows you are kept in the world: your horse, your wagon, your ships and your companions.'));
     wrap.append(detail);
     body.append(wrap);
     return;
@@ -5004,9 +5004,9 @@ function statsMaster(detail, m) {
   // AUDIT GROWTH LANE5-6: and only for a character with a family still to reach or one held (AUDIT SCHOOLS L4 8)
   if (ms.on && (ms.paths?.open || ms.paths?.held)) {
     const card = el('section', 'px-mgroup px-spec');
-    card.append(el('div', 'px-master-about', ms.paths.open ? t('pause.master.specMoved', 'Master two schools of magic or two weapon skills to unlock a specialisation. See every path and what it needs on the Growth tab.')
-      : t('pause.master.specHeld', '{n, plural, one {Your specialisation is on the Growth tab.} other {Your specialisations are on the Growth tab.}}', { n: ms.paths.held })));
-    const go = acts([{ label: t('pause.master.specGo', 'Specialisations'), onClick: () => { setGrowthSection('specs'); pauseTab = 'growth'; render(); } }]);
+    card.append(el('div', 'px-master-about', ms.paths.open ? t('pause.master.specMoved', 'Master two schools of magic or two weapon skills to unlock a specialization. See every path and what it needs on the Growth tab.')
+      : t('pause.master.specHeld', '{n, plural, one {Your specialization is on the Growth tab.} other {Your specializations are on the Growth tab.}}', { n: ms.paths.held })));
+    const go = acts([{ label: t('pause.master.specGo', 'Specializations'), onClick: () => { setGrowthSection('specs'); pauseTab = 'growth'; render(); } }]);
     card.append(go);
     detail.append(card);
   }
@@ -5628,7 +5628,7 @@ function pauseQuests(body) {
       if (!isShelvedRow && sel.entries && sel.id != null && clean.restart && clean.canRestart?.(sel.id)) {
         const armed = journalCleanArmed === `rs:${sel.id}`;
         const rs = el('button', 'act', armed ? t('pause.journal.restartArmed', 'Click again to restart') : t('pause.journal.restart', 'Restart quest'));
-        rs.title = t('pause.journal.restartTitle', 'Start this quest again from its first step - what it placed and gave is taken back');
+        rs.title = t('pause.journal.restartTitle', 'Start this quest again from its first step. What it placed and gave is taken back');
         rs.onclick = () => {
           if (journalCleanArmed !== `rs:${sel.id}`) { journalCleanArmed = `rs:${sel.id}`; render(); return; }
           journalCleanArmed = null;

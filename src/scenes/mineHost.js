@@ -400,7 +400,7 @@ export function minePlan({ node, taken, counting, rank, pick, storesFull, fullWo
 export function motherlodePlan({ node, taken, counting, found, rank, pick, storesFull, fullWords = 'Stores full' }) {   // BAG1
   const name = materialLabel(node.material);
   const verb = `Strike the Motherlode of ${name}`;
-  if (taken) return { harvest: 'ore', verb: 'The Motherlode - struck today', rest: '', ready: false };
+  if (taken) return { harvest: 'ore', verb: 'The Motherlode: struck today', rest: '', ready: false };
   if (counting) return { harvest: 'ore', verb, rest: 'being counted', ready: false };
   if (found) return { harvest: 'ore', verb, rest: 'your Motherlode today is found', ready: false };
   if (rank < MOTHERLODE_RANK) return { harvest: 'ore', verb, rest: `needs Mining ${MOTHERLODE_RANK}`, ready: false, needsRank: MOTHERLODE_RANK };

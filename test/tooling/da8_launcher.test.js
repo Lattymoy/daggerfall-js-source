@@ -257,9 +257,9 @@ test('DA8: the shell - a sandboxed window on its own origin, two words of bridge
 test('DA8: in the game - the update is a HUD line saying what the player can do; a browser tab hears nothing', () => {
   assert.equal(updateReadyText({ version: '0.1.4684', manual: false }),
     // PIN MOVED: DA13 - the next start is when both kinds play: the installer's (run at quit) and the game channel's
-    'DFO Online 0.1.4684 is ready. It plays the next time you start, or now from File > Restart to Update - save first.');
+    'DFO Online 0.1.4684 is ready. It runs the next time you start, or now from File > Restart to Update. Save first.');
   assert.equal(updateReadyText({ version: '0.1.4684', manual: true }),
-    'DFO Online 0.1.4684 is out. Download it from the File menu when you are ready - your saves stay where they are.');
+    'DFO Online 0.1.4684 is out. Download it from the File menu when you are ready. Your saves stay where they are.');
   assert.match(updateReadyText({ version: '<img src=x>' }), /^A new version of DFO Online is ready\./, 'only a version\'s own shape is spoken');
   assert.equal(listenForShellUpdates(undefined, () => {}), false, 'a browser tab has no shell');
   assert.equal(listenForShellUpdates({}, () => {}), false, 'a shell too old to have the word');

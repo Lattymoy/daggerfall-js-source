@@ -78,7 +78,7 @@ test('SEAT2a part three HONOURS AND THE SPOILS: 50 Marks and 2,000 Renown XP to 
     'In week 20, the Tourney for Anticlere was fought, but neither guild could pay for the Charter of Anticlere.',
   ]);
   for (const [k, v] of Object.entries(SIEGE_WHY)) assert.equal(accountRefusalText(k), v, k);
-  assert.equal(accountRefusalText('field-unsettled'), 'Waiting for the other side\'s scouts to agree on the field - try again in a moment.');
+  assert.equal(accountRefusalText('field-unsettled'), 'Waiting for the other side\'s scouts to agree on the field. Try again in a moment.');
   assert.equal(accountRefusalText('not-yours'), 'That gate\'s receipt names another account.', 'the gate\'s words untouched');
 });
 

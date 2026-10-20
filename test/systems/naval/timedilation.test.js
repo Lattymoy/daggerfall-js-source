@@ -55,7 +55,8 @@ test('TIME-DILATION the sea\'s threats: each hostile ship afloat says her hold, 
   assert.match(W, /const foeCap = foes\.strangerRate \? Math\.min\(foeRate\(foes, want\), foes\.strangerRate\) : foeRate\(foes, want\);/);
   assert.equal((W.match(/foePaced\(/g) ?? []).length, 0, 'no journey under the bare floor');
   assert.match(W, /danger: \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(wildSeen\(exteriorFoePool\(\)\)\) \|\| navalHostileNear\(\),/);
-  assert.match(W, /duelEnemyNear\(\) \|\| areEnemiesNearby\(exteriorFoePool\(\)\) \|\| navalHostileNear\(\) \|\| !travelViewAllowed\(\)\.ok\) return;/);
+  // PIN MOVED (OW-RISE): the rise counts the foes the view's danger does - WILD-ALERT's wildSeen (test/systems/travel/ow_rise.test.js)
+  assert.match(W, /duelEnemyNear\(\) \|\| areEnemiesNearby\(wildSeen\(exteriorFoePool\(\)\)\) \|\| navalHostileNear\(\) \|\| !travelViewAllowed\(\)\.ok\) return;/);
   assert.match(W, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(exteriorFoePool\(\)\) \|\| navalHostileNear\(\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.enemies\); return false; \}/);
 });
 

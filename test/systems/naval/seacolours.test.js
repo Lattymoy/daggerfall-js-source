@@ -44,7 +44,7 @@ test('SEA-COLOURS the law: a navy wears her crown\'s livery under white canvas a
   assert.equal(seaFlagOf(cutter('Nowhere')), null);
 });
 
-test('SEA-COLOURS the law: a merchantman is of a house off her seed - its paint, and her crown\'s merchant colours parted with the house\'s colour under its device, a swallowtail; past the Veil the Isles\' teal; the house the same on every machine (mutants: the house\'s paint, the crown\'s field, the parting, the device, the shape, the salt)', () => {
+test('SEA-COLOURS the law: a merchantman is of a house off her seed - its paint, and her crown\'s merchant colors parted with the house\'s colour under its device, a swallowtail; past the Veil the Isles\' teal; the house the same on every machine (mutants: the house\'s paint, the crown\'s field, the parting, the device, the shape, the salt)', () => {
   assert.ok(MERCHANT_HOUSES.length >= 6);
   for (let n = 0; n < MERCHANT_HOUSES.length; n++) {
     const seed = seedOf(HOUSE_SALT, n, MERCHANT_HOUSES.length);
@@ -79,7 +79,7 @@ test('SEA-COLOURS the law: a pirate is of a crew off her seed - its dark paint, 
   const masked = who('pirateBrig', { seed: 21, disguise: 'Sentinel' });
   assert.deepEqual(seaLiveryOf(masked), seaLiveryOf(who('merchantGalleon', { seed: 21 })), 'her paint the house she passes for');
   const shown = seaFlagOf(masked, 'false');
-  assert.deepEqual([shown.field, shown.device, shown.shape], ['gold', houseOf(masked).device, 'swallowtail'], 'Sentinel\'s merchant colours');
+  assert.deepEqual([shown.field, shown.device, shown.shape], ['gold', houseOf(masked).device, 'swallowtail'], 'Sentinel\'s merchant colors');
   assert.deepEqual(seaFlagOf(masked, 'hers'), seaFlagOf(who('pirateBrig', { seed: 21 })), 'the black flag run up');
   assert.equal(seaFlagOf(who('pirateBrig', { seed: 21 }), 'false'), null, 'no false colours, none flown');
   for (const l of LEGENDS) {

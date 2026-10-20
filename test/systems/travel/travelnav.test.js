@@ -836,7 +836,7 @@ test('TRAVEL-NAV1 THE ARRIVAL STAND-OFF: a city that fills its pixel is arrived 
 
 // ─── the mod's door ─────────────────────────────────────────────────────
 
-test('TRAVEL-NAV1 THE DOOR: steerDrive speaks metres to the steer, leaves an open road\'s drive exactly as the mod made it, and turns and caps it only when it must', () => {
+test('TRAVEL-NAV1 THE DOOR: steerDrive speaks meters to the steer, leaves an open road\'s drive exactly as the mod made it, and turns and caps it only when it must', () => {
   const steer = createTravelSteer();
   const ap = new TravelAutopilot({ x: 500, y: 250 }, { xMin: 0, xMax: 40, zMin: 4000, zMax: 4040 }, 1);
   const frame = { speed: 4.4, dt: 1 / 60, scale: 10, asked: 0, ratio: SCENE_MAP_RATIO };

@@ -66,6 +66,7 @@ import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keep
 import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
 import { WEAPONS } from '../characters/weapons.js';   // MEND-WORN / MEND-ARMOUR: a tick is the classic Dagger's share
 import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
+import { creditOwnMend } from './item/foundMark.js';   // MEND-THIRD: the ring's mend credited past a found piece's mark
 export { ENCHANTMENT_TYPES };
 
 /** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
@@ -590,7 +591,9 @@ const REGISTRY = new Map([
       const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });
       if (!it) return;
       repoolWeapon(it);
+      const was = it.currentCondition;
       it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));
+      creditOwnMend(it, was);   // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells
     },
   }],
   /** AbsorbsSpells.cs - Held constant: IsAbsorbingSpells. */

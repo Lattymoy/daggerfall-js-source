@@ -546,6 +546,12 @@ ${list(r.wingFlip)} { -webkit-mask-image: linear-gradient(90deg, #000, transpare
 .hud-qdiamond .hud-qground { background: linear-gradient(135deg, rgba(4,5,7,0.92) 0%, rgba(14,16,20,0.86) 55%, rgba(26,28,33,0.84) 100%); }
 .hud-qdiamond .hud-qcell.socket .hud-qframe { background: linear-gradient(135deg, rgba(122,114,96,0.55), rgba(37,34,27,0.55)); }
 .hud-qdiamond .hud-qcell.cycling .hud-qframe { background: linear-gradient(135deg, #fff39a, ${T.gold} 50%, #9a8a14); }
+/* DIAMOND-HB: the hotbar's diamond slots (Diamond, Diamonds) take the same stone rim as the old diamond, brass when in
+   hand (ui/enhanced/enhancedHotbar.js reads these) */
+.hb { --gem-rim: linear-gradient(135deg, ${T.stoneHi} 0%, ${T.stoneMid} 45%, ${T.stoneDim} 70%, ${T.stoneDark} 100%);
+  --gem-rim-empty: linear-gradient(135deg, rgba(122,114,96,0.55), rgba(37,34,27,0.55));
+  --gem-rim-active: linear-gradient(135deg, ${T.brassHi}, ${T.brass} 50%, ${T.brassLo});
+  --gem-rim-strike: linear-gradient(135deg, #fff39a, ${T.gold} 50%, #9a8a14); }
 
 /* THE HUD'S OTHER TRACKS (target, breath) wear the vitals' frame */
 .hud-track { border-color: ${RAISED}; background-color: rgba(8,9,12,0.85);

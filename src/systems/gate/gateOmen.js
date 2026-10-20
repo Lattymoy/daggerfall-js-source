@@ -114,7 +114,7 @@ export const fellLine = ({ near, boss, top }) => `${boss} has fallen at Dagon's 
  */
 export function gateTip(c, cd, fell = null, boss = gateBossOf(c.t.day)) {
   const when = cd
-    ? (cd.to === 'open' ? `Opens in ${countdownText(cd.ms)}` : cd.to === 'seal' ? `Open - seals in ${countdownText(cd.ms)}` : `Sealed - collapses in ${countdownText(cd.ms)}`)
+    ? (cd.to === 'open' ? `Opens in ${countdownText(cd.ms)}` : cd.to === 'seal' ? `Open. Seals in ${countdownText(cd.ms)}` : `Sealed. Collapses in ${countdownText(cd.ms)}`)
     : (c.phase === 'collapsing' ? 'Collapsing' : null);
   return { title: 'Dagon\'s Breach', lines: [`Near ${c.site.place}`, ...(when ? [when] : []), ...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)])] };
 }

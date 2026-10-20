@@ -24,7 +24,7 @@ import { createPotion } from './loot/loot.js';
 import { potionById, potentOk, potentLasts, potentAble } from '../net/alchemyLaw.js';
 
 /** What the station says of a brew whose answer did not come (smithItems.js's kept words' shape). */
-export const BREW_KEPT_TEXT = 'The cauldron bubbled, but no word came back - the brew is kept, and bottled when the word comes.';
+export const BREW_KEPT_TEXT = 'The cauldron bubbled, but no word came back. The brew is kept and will be bottled when word comes.';
 /** The potions a brew's answer makes (`{ potion, count, potent }`), each DFU's own potion - or none for an answer that
  *  names no potion. */
 export function brewItems(data) {

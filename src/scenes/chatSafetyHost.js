@@ -57,15 +57,15 @@ export const BLOCKS_REREAD_MS = 30_000;
  */
 const NAMED = Object.freeze({
   block: {
-    many: (count, name) => t('net.safety.manyBlock', '{count} players are called {name}. Nobody was blocked - press the name on one of their lines in the chat to block that one.', { count, name }),
+    many: (count, name) => t('net.safety.manyBlock', '{count} players are called {name}. No one was blocked. Press the name on one of their lines in the chat to block that one.', { count, name }),
     none: (name) => t('net.safety.noneBlock', 'Nobody called {name} is here or said anything in your chat. Nobody was blocked.', { name }),
   },
   report: {
-    many: (count, name) => t('net.safety.manyReport', '{count} players are called {name}. Nothing was reported - press the name on one of their lines in the chat to report that one.', { count, name }),
+    many: (count, name) => t('net.safety.manyReport', '{count} players are called {name}. Nothing was reported. Press the name on one of their lines in the chat to report that one.', { count, name }),
     none: (name) => t('net.safety.noneReport', 'Nobody called {name} said anything in your chat. Nothing was reported.', { name }),
   },
   mod: {
-    many: (count, name) => t('net.safety.manyMod', '{count} players are called {name}. Nothing was done - name the account by its id: #id (/cases shows it).', { count, name }),
+    many: (count, name) => t('net.safety.manyMod', '{count} players are called {name}. Nothing was done. Name the account by its id: #id (/cases shows it).', { count, name }),
     none: () => '',
   },
 });

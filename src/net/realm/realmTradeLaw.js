@@ -272,20 +272,20 @@ export function realmTradeRefusalText(/** @type {string} */ why, /** @type {stri
     const notice = typeof said === 'string' && said ? said : typeof reason === 'string' ? /** @type {Record<string, string>} */ (TRADE_HELD_NOTICES)[reason] : undefined;
     return `${notice ?? 'The realm is reviewing your character, and its trading is frozen.'} Nothing was traded.`;
   }
-  if (why === 'trade-held' && held === 'theirs') return `The realm is reviewing the other character in this trade, and its trading is frozen - nothing was traded.${reason === null ? ' Your own trading is open.' : ''}`;
-  if (why === 'record-unjudged' && held === 'mine') return 'The realm has not read your latest save yet - nothing was traded. Try again in a moment.';
-  if (why === 'record-unjudged' && held === 'theirs') return 'The realm has not read the other character\'s latest save yet - nothing was traded. Try again in a moment.';
+  if (why === 'trade-held' && held === 'theirs') return `The realm is reviewing the other character in this trade, and its trading is frozen. Nothing changed hands.${reason === null ? ' Your own trading is open.' : ''}`;
+  if (why === 'record-unjudged' && held === 'mine') return 'The realm has not read your latest save yet. Nothing changed hands. Try again in a moment.';
+  if (why === 'record-unjudged' && held === 'theirs') return 'The realm has not read the other character\'s latest save yet. Nothing changed hands. Try again in a moment.';
   switch (why) {
-    case 'expired': return 'The other side never reached the realm - nothing was traded.';
-    case 'mismatch': return 'The two offers did not agree - nothing was traded.';
-    case 'goods': return 'The realm could not find the goods offered - nothing was traded.';
-    case 'moved': return 'A character moved on before the trade was settled - nothing was traded.';
-    case 'offline': return 'The realm could not be reached - nothing was traded.';
-    case 'trade-held': return 'The realm is reviewing a character in this trade, and its trading is frozen - nothing was traded.';   // INT3
-    case 'piece-dupe': return 'A piece in this trade is locked: a copy of it was found in the realm - nothing was traded.';   // INT4; AUTO-HOLD: the piece is locked, never its holder
-    case 'piece-claimed': return 'Another character shows a piece in this trade too, and the realm is still settling whose it is - nothing was traded.';   // INT4 (its audit)
-    case 'piece-legacy': return 'A piece in this trade came into the realm from a classic save, and the realm does not trade it - nothing was traded.';   // INT1 (its audit)
-    case 'record-unjudged': return 'The realm has not read a character\'s latest save yet - nothing was traded. Try again in a moment.';   // INT3 (its audit)
-    default: return 'The realm refused the trade - nothing was traded.';
+    case 'expired': return 'The other side never reached the realm. Nothing changed hands.';
+    case 'mismatch': return 'The two offers did not agree. Nothing changed hands.';
+    case 'goods': return 'The realm could not find the goods offered. Nothing changed hands.';
+    case 'moved': return 'A character moved on before the trade was settled. Nothing changed hands.';
+    case 'offline': return 'The realm could not be reached. Nothing changed hands.';
+    case 'trade-held': return 'The realm is reviewing a character in this trade, and its trading is frozen. Nothing changed hands.';   // INT3
+    case 'piece-dupe': return 'A piece in this trade is locked, because a copy of it was found in the realm. Nothing changed hands.';   // INT4; AUTO-HOLD: the piece is locked, never its holder
+    case 'piece-claimed': return 'Another character also holds a piece in this trade, and the realm is still settling whose it is. Nothing changed hands.';   // INT4 (its audit)
+    case 'piece-legacy': return 'A piece in this trade came into the realm from a classic save, and the realm does not trade it. Nothing changed hands.';   // INT1 (its audit)
+    case 'record-unjudged': return 'The realm has not read a character\'s latest save yet. Nothing changed hands. Try again in a moment.';   // INT3 (its audit)
+    default: return 'The realm refused the trade. Nothing changed hands.';
   }
 }

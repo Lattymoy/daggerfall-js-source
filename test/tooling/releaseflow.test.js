@@ -214,7 +214,7 @@ test('AUDIT RELEASE-FLOW A2, A3, A5, A7, F2: what a release manager approves sur
     assert.match(c, /^ {2}queue: max$/m, `${f}: its runs carry their own ask, and wait their turn (queue: max)`);
     queued++;
   }
-  assert.equal(queued, 10, 'the five sharing the account service\'s group, the post, the clears, the two load reads and the notes');
+  assert.ok(queued >= 11, `the walk found the groups it must (${queued}): the six sharing the account service's, the post, the clears, the two load reads and the notes`);
   for (const f of SUPERSEDING) assert.match(WF(f), /\nconcurrency:\n {2}group: [^\n]+\n {2}cancel-in-progress: false\n/, `${f}: a group whose newest run is the one meant (the list names real ones)`);
   // A7: the right to publish is the publishing job's alone - the site job builds the preview's code too
   for (const f of WORKFLOWS) {

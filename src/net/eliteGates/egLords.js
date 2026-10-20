@@ -943,7 +943,7 @@ export const EG_LORD_PHASES = Object.freeze({
   seyth: Object.freeze([['The Mirrorcourt', 'Strike the true lord.'], ['The Long Night', 'Keep to the moon-shafts.']]),
   colossus: Object.freeze([['Paired Hearts', 'Break each pair together.'], ['Breakdown', 'It kneels. Strike now.']]),
   wyrm: Object.freeze([['Burning Perches', 'Clear the perch it leaves.'], ['Grounded', 'Beware its sweeping breath.']]),
-  garoth: Object.freeze([['The Clan Muster', 'Answer the honour duel.']]),
+  garoth: Object.freeze([['The Clan Muster', 'Answer the honor duel.']]),
 });
 /** Garoth's borrowed signature's order, by the signature (its name EG_GAROTH_SIG_CARDS'). */
 export const EG_GAROTH_SIG_ORDERS = Object.freeze({ ilthys: 'Break his banners.', morvayn: 'Stay close to your chain.', seyth: 'Strike the true lord.' });

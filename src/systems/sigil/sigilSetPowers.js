@@ -727,7 +727,7 @@ export function setKill(entity = null) {
     _s.ward = hide.ward;
     _s.wardReady = now + hide.recover;
     _s.recovering.add('ward');
-    say(`Iron Hide - the next ${hide.ward} damage is turned aside.`);
+    say(`Iron Hide: the next ${hide.ward} damage is turned aside.`);
     sound('ward');
   }
 }
@@ -749,7 +749,7 @@ function markNext(door, killed, now) {
   _s.marked = best.entity;
   _s.markUntil = now + MARK_SECONDS;
   if (had === best.entity) return;   // AUDIT SETS L5: the same foe marked again - its time renewed, nothing said (Rampage's own law)
-  say('No Escape - the nearest of them is marked.');
+  say('No Escape: the nearest of them is marked.');
   sound('mark');
 }
 

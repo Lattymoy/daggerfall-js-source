@@ -655,7 +655,7 @@
   {
     "name": "DECOR2b-the-pack-words-for-furniture",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "!item ? `${name} taken down.` : isFurnishing(item) ? `${name} taken down - set it down again from Your things.` : `${name} is back in your pack.`",
+    "old": "!item ? `${name} taken down.` : isFurnishing(item) ? `${name} taken down. Set it down again from Your things.` : `${name} is back in your pack.`",
     "new": "!item ? `${name} taken down.` : `${name} is back in your pack.`",
     "tests": [
       "test/systems/decor/decor2b.test.js"

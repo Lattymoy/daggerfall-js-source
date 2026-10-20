@@ -31,9 +31,9 @@
   },
   {
     "name": "SELL-AS-FOUND-read-past-the-mark",
-    "file": "src/systems/tradeModes.js",
-    "old": "  if (!online || !Number.isInteger(found) || !(found < (item?.currentCondition ?? 0))) return conditionPercentage(item);",
-    "new": "  if (!online || !Number.isInteger(found)) return conditionPercentage(item);",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  if (!Number.isInteger(found) || !(found < current)) return conditionPercentage(item);",
+    "new": "  if (!Number.isInteger(found)) return conditionPercentage(item);",
     "tests": [
       "test/systems/sell_as_found.test.js",
       "test/systems/rri2_realism.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "SELL-AS-FOUND-offline-too",
     "file": "src/systems/tradeModes.js",
-    "old": "  if (!online || !Number.isInteger(found) || !(found < (item?.currentCondition ?? 0))) return conditionPercentage(item);",
-    "new": "  if (!Number.isInteger(found) || !(found < (item?.currentCondition ?? 0))) return conditionPercentage(item);",
+    "old": "  if (!online) return conditionPercentage(item);\n  return foundSalePercentage(item);",
+    "new": "  return foundSalePercentage(item);",
     "tests": [
       "test/systems/sell_as_found.test.js",
       "test/systems/rri2_realism.test.js"

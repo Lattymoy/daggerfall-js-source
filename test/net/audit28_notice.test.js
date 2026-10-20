@@ -50,7 +50,7 @@ test('AUDIT 28 N1/N16: a note\'s button is answered by ONE plan, the same shape 
   const answer = w.slice(w.indexOf('const answerNote = (note) => {'), w.indexOf('\n  };', w.indexOf('const answerNote = (note) => {')));
   assert.match(answer, /_letterPending = \{ draft: plan\.draft, at: performance\.now\(\), lost: NOTE_LETTER_LOST \}; closeNoticeDoor\(\);/);
   assert.doesNotMatch(answer, /openLetters/, 'never opened directly: the board still holds the slot this frame');
-  assert.match(w, /tradeSay\(_letterPending\.lost \?\? 'Your letters could not open - the page is still in your journal\.'\)/, 'a note\'s letter that cannot open says the note\'s words');
+  assert.match(w, /tradeSay\(_letterPending\.lost \?\? 'Your letters could not be opened\. The page is still in your journal\.'\)/, 'a note\'s letter that cannot open says the note\'s words');
   assert.equal(NOTE_LETTER_LOST, 'Your letters could not open. The note is still on the board.');
 });
 

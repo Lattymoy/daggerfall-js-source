@@ -426,8 +426,8 @@ test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows i
   assert.match(read('src/ui/enhanced/enhancedHud.js'), /if \(needs\.some\(\(c\) => c\.level !== 'boon'\)\) noteFirstUse\('survival'\);/, 'a boon is no felt need');
   const page = TUTORIALS.find((t) => t.id === 'survival');
   assert.deepEqual(page.body, [
-    'You need food, water, warmth and sleep. Icons at the screen\'s left edge show what you are short on, and on Boons what you have earned.',   // PIN MOVED (AUDIT C&C S13): where the tiles stand
-    'Survival can be Off, Boons (the default), Casual or Hard. On Boons, needs met give bonuses; on Hard, needs can hurt you and make you sick. Change it in Settings > Features.',   // PIN MOVED (BOONS-DEFAULT)
+    'You need food, water, warmth and sleep. Signs at the left edge of the screen show what you lack, and on Boons what you have earned.',   // PIN MOVED (AUDIT C&C S13): where the tiles stand; VOICE1: plain words
+    'Survival can be Off, Boons (the default), Casual or Hard, set under Settings > Features. On Boons, needs that are met give bonuses. On Hard, neglected needs hurt you and can make you ill.',   // PIN MOVED (BOONS-DEFAULT; VOICE1)
   ]);
   assert.match(read('src/ui/credits.js'), /in four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and a body kept fed, watered and rested earns bonuses\), Casual/);   // PIN MOVED (AUDIT C&C S8): the drink's swing is taken in Boons too
 });

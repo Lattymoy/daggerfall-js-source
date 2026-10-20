@@ -94,7 +94,7 @@ export function levelingOptions(s = null, { online = false } = {}) {
           : 'over. You have set the purse to nothing,',
         purse > 0
           ? `to spend on at most ${set.maxUpdatableAttribute} attributes.`
-          : 'so levelling raises only your health.',
+          : 'so leveling raises only your health.',
       ]),
     }),
   ]);

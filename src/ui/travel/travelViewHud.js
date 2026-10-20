@@ -267,7 +267,7 @@ function build(doc, hooks) {
   // dock holds this in its place: no journey, how to set out, and the map.
   const idle = el('div', 'tview-idle');
   const idleText = el('div', 'tview-idle-text');
-  idleText.append(el('span', 'tview-label', 'Journey'), el('span', 'tview-idle-name', 'Not travelling'),
+  idleText.append(el('span', 'tview-label', 'Journey'), el('span', 'tview-idle-name', 'Not traveling'),
     el('span', 'tview-idle-sub', 'Click a town or the land to set out'));
   idle.append(idleText);
   dock.append(idle);
@@ -350,7 +350,7 @@ function build(doc, hooks) {
   // own - a switch like the others that unfolds the waypoints as switches under it (a browser <select> wears no stone)
   const wpPick = /** @type {HTMLButtonElement} */ (el('button', 'tview-filter tview-cycle tview-cycle-wide tview-wp-pick on'));
   wpPick.type = 'button';
-  wpPick.title = 'Choose a waypoint to follow - it stays at the screen\'s edge with its distance';
+  wpPick.title = 'Choose a waypoint to follow. It stays at the edge of the screen with its distance';
   const wpPop = el('div', 'tview-wp-pop');
   wpPop.style.display = 'none';
   wpPick.onclick = (e) => { e.preventDefault(); if (wpPick.disabled) return; wpPop.style.display = wpPop.style.display === 'none' ? '' : 'none'; paintPickWord(); furniture.at = -Infinity; };

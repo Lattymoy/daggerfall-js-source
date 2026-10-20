@@ -16,7 +16,7 @@ import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../.
 import { MOD_CURATED, modDials } from '../../../src/systems/features.js';
 import { TRAVEL_OPTIONS_VENDOR } from '../../../src/systems/travel/travelOptions.js';
 import { travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
-import { createLoadGovernor, unbuiltAround } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
 import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
 
@@ -80,7 +80,7 @@ function rig({ firstPerson = false, enhanced = true } = {}) {
     tvWater: () => false, tvSeaY: () => 0, TV_SEA_EPS_M: 0.5, TRAVEL_VIEW_TEXT: { water: 'water' },
     locationIndex: new Map(), locationWorldRect: () => null,
     gamePaused: () => false, modes: { modalWindowUp: () => false }, duelEnemyNear: () => false, navalHostileNear: () => false,   // TIME-DILATION: no hostile ship
-    areEnemiesNearby: () => false, exteriorFoePool: () => [],
+    areEnemiesNearby: () => false, exteriorFoePool: () => [], wildSeen: (foes) => foes,   // OW-RISE: the raise counts the foes the view's danger does
   };
   const names = Object.keys(env);
   // PIN MOVED (TO-ROADS): the map's fork asks tvRoutesJourneys (First-Person Travel's roads key, off in this store) -
@@ -172,7 +172,7 @@ test('OW-TOGGLE host: a first-person journey under a view brought down runs at t
       setWorldTimeScale: setTimeScale, worldTimeScale: timeScale, resetTimeScale,
       travelAsked: 20, csaHoldsTimeScale: () => false, travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
       state: { terrainDistance: 3 }, playerTravelPixel: () => ({ x: 100, y: 200 }), tvGroundGenNow: () => 0,
-      unbuiltAround, built: { has: () => true },
+      unbuiltAround, unbuiltCount, built: { has: () => true },
       tvOwnsJourneys: () => owns,
       journeyThreatCap: () => ({ cap: Infinity }), journeySlowSaid: () => {},   // OW6: no enemy about (test/systems/travel/ow6_slowdown.test.js runs the cap)
     });

@@ -425,6 +425,12 @@ second weapon. So the second hand is the sprite lane's idea on a skeleton: THE L
   `run` slot in `poseAssembly`, before the climb's request, which eases each wrist on from where the run put it - the
   first frame onto the wall moved the wrists 1.19 units, now 0.52 (the climb's own ease), the frame a sheet comes up
   1.05, now 0.005.
+  **RUN-WIDE** (2026-10-19, Mac: "The hands are way too close together when running both in third and first person"):
+  the top of the stroke stood 0.36 of the half-frame across - 14 cm out at its 0.42 m on a 16:9 picture (11 on a 4:3),
+  inside the retail shoulder joint's 15.5 - so each fist came up toward the middle of the picture; now 0.6 (21 cm, 17),
+  before and just outside its own shoulder, and the bottom 0.8 (it was 0.6), the hand coming in a little as it rises.
+  Pinned in `test/combat/twohands_mw.test.js` (RUN-WIDE THE FIRST PERSON'S RUNNING FISTS); the third person's running
+  hands are the body's gait (`04-Characters/Body-Motion.md`, RUN-WIDE).
 
 ## Weapon glow on two hands (WEAPON-GLOW1, merged from main)
 

@@ -101,7 +101,7 @@ test('RAID4b the law: three sets after the gate boss\'s own - the Broken Oath (t
   }
   assert.equal(SIGIL_SETS.ruhn.raid, undefined, 'the gate boss\'s own names no party');
   const words = (id, i, st) => { const t = SIGIL_SETS[id].tiers[i]; return t.text(tierValues(t, st)); };
-  assert.equal(words('oath', 0, 0), '+1 armour on every part, +2 Willpower');
+  assert.equal(words('oath', 0, 0), '+1 armor on every part, +2 Willpower');
   assert.equal(words('oath', 1, SET_STAGE_MAX), `When a foe's blow lands on you, your next weapon blow within ${RIPOSTE_SECONDS} s deals +40% damage`);
   assert.equal(words('oath', 2, 0), 'While you are under half health, you take 10% less damage');
   assert.equal(words('thieftaker', 1, 0), 'Your weapon blows deal +8% damage to a foe under half health, arrows too');
@@ -205,7 +205,7 @@ test('RAID4b No Escape (the Thief-Taker\'s Garb, 6): a kill marks the NEAREST ot
   at(50);
   reportPlayerKill(killed.entity);
   assert.equal(markedFoe(), near.entity, 'the nearest, not the last in reach: never the one killed, the ally, the calmed foe, or one a storey up');
-  assert.deepEqual(v.said, ['No Escape - the nearest of them is marked.']);
+  assert.deepEqual(v.said, ['No Escape: the nearest of them is marked.']);
   assert.deepEqual(v.sounds, ['mark']);
   assert.equal(weaponBlowMods(s, 100, e, near.entity), 115, '+15% at Faint on the marked foe');
   assert.equal(weaponBlowMods(s, 100, e, far.entity), 100, 'no other');
@@ -281,7 +281,7 @@ test('RAID4b Iron Hide (Orcsbane Harness, 6): a kill when it is ready wards me -
   at(100);
   assert.equal(setDamageMod(e, 5), 5, 'no ward yet');
   reportPlayerKill(RAT);
-  assert.deepEqual(v.said, ['Iron Hide - the next 10 damage is turned aside.']);
+  assert.deepEqual(v.said, ['Iron Hide: the next 10 damage is turned aside.']);
   assert.deepEqual(v.sounds, ['ward']);
   assert.equal(setPowerStates().ward, 10);
   assert.equal(setDamageMod(e, 4), 0, 'four of the ten');

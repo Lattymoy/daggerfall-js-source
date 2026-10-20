@@ -2101,7 +2101,7 @@ export const EG_TEXT = Object.freeze({
   wayHome: 'The way home',
   walkHome: 'Walk home? The Redoubts you took are kept.',
   ended: 'The breach is over.',
-  rehearsal: 'Rehearse - Halls 1-5, no key',
+  rehearsal: 'Rehearse: Halls 1-5, no key',
   rehearsalDone: 'The Rehearsal is over. The Spire waits for a key.',
   noSave: 'The Spire keeps no saves.',
   noMap: 'The Spire keeps no map.',

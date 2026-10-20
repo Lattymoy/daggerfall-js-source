@@ -249,7 +249,8 @@ test('PR-WW1 the local body: the lycan sprite is the LIVE form\'s - a wereboar s
     // fetched on the first tick that names it - a walk it has not drawn yet included - not a sprite at a time
     assert.ok(r.uploads.includes(`${archive}:${STATE_TABLES.MoveLycan.base + 2}-3`), `form ${form}: the preload re-run for its own archive`);
   }
-  assert.match(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /const lookNow = \(\) => \(\{ \.\.\.cfg, lycanthropyType: last\.lycanthropyType, horse: last\.horseLook \?\? 0 \}\);/);
+  // PIN MOVED (LAYERED-GEAR): and, with the layered gearing skin chosen, the armor worn in the body chosen - the lycan tables never read it
+  assert.match(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /const lookNow = \(\) => \(\{ \.\.\.cfg, lycanthropyType: last\.lycanthropyType, horse: last\.horseLook \?\? 0(?:, \.\.\.\(cfg\.wornArmour \? wornOutfit\(layeredGenderOf\(cfg\.layeredChoice, playerEntity\?\.gender\)\) : \{\}\))? \}\);/);   // PIN MOVED (LAYERED-GEAR-ON): the own body read as the character is now
   assert.doesNotMatch(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /spriteFor\([^)]*, cfg[,)]/, 'no spriteFor on the settings alone');
 });
 

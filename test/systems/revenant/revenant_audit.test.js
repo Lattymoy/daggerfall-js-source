@@ -269,7 +269,7 @@ test('AUDIT B2/B3/B5/P1-P3: the execution pays its Renown and takes its soul; a 
 
 // ── THE UI ───────────────────────────────────────────────────────────────────────────────────────────────────────
 test('AUDIT D1/D4/D5: Enter on a focused button is that button\'s; the judgement opens in beast form; the classic box keys short and its details wrapped, a refused choice saying why (mutants: Enter confirms over Back; the beast refuses; a long label)', () => {
-  const fate = { options: [{ id: 'kill', key: 'K', label: 'Kill', detail: 'It drops a rod', disabled: false }, { id: 'spare', key: 'S', label: 'Spare', detail: 'You keep 6 sworn already - release one first', disabled: true }], name: 'Grushnak', sub: 'Rank II', plea: { speech: 'Mercy!' }, choose: () => {} };
+  const fate = { options: [{ id: 'kill', key: 'K', label: 'Kill', detail: 'It drops a rod', disabled: false }, { id: 'spare', key: 'S', label: 'Spare', detail: 'You keep 6 sworn already. Release one first', disabled: true }], name: 'Grushnak', sub: 'Rank II', plea: { speech: 'Mercy!' }, choose: () => {} };
   const got = [];
   const kit = { onPick: (id) => got.push(['pick', id]), onChoose: (id) => got.push(['choose', id]) };
   assert.equal(fateKey({ key: 'Enter', target: { closest: () => ({}) } }, fate, 'kill', kit), false, 'a focused button keeps its Enter');

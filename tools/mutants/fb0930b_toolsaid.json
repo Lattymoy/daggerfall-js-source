@@ -321,8 +321,8 @@
   {
     "name": "AUDIT-hunting-act-choice-again",
     "file": "src/ui/professions/profPages.js",
-    "old": "The body\\'s list also lets you search it.')));",
-    "new": "The act choice key searches the body instead.')));",
+    "old": "The carcass\\'s list also lets you search it.')));",
+    "new": "The act choice key searches the carcass instead.')));",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]

@@ -146,8 +146,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-stolen-merged-into-clean",
     "file": "src/systems/inventory.js",
-    "old": "    isStolen(a) === isStolen(b);",
-    "new": "    true;",
+    "old": "    isStolen(a) === isStolen(b) &&",
+    "new": "    true &&",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

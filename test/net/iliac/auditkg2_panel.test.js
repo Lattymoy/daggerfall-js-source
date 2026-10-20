@@ -50,7 +50,7 @@ test('AUDIT KG II D2 + D3 + D4 + D5 THE WATCHER\'S PANEL: its presses and More i
   const chips = find(hud.root, (n) => String(n.className).includes('dfgambit-chip') && !String(n.className).includes('dfgambit-chiprow') && n.attrs);
   assert.equal(chips.filter((n) => n.attrs['data-more'] === 'true').length, 4, 'potions and fallen are More\'s sheet\'s');
   assert.equal(watchGold({ winner: 0, by: 'king' }, 100, ['Ana', 'Bors']), 'Ana takes the pot: 100 gold.');
-  assert.equal(watchGold({ winner: null, by: 'void' }, 100, ['Ana', 'Bors']), 'No contest - each stake goes home.');
+  assert.equal(watchGold({ winner: null, by: 'void' }, 100, ['Ana', 'Bors']), 'No contest. Each stake goes back to its owner.');
   const over = gambitHudModel({ phase: 'over', online: online(), game: { state: st, crowns: ['daggerfall', 'wayrest'], name: 'Bors', stake: 0, pot: 100, over: { winner: 1, by: 'forfeit', how: 'forfeit' }, dealt: [7, 7] } });
   assert.equal(over.result.gold, 'Bors takes the pot: 100 gold.');
 });
@@ -84,7 +84,7 @@ test('AUDIT KG II D14 + D17 + D18 THE ARMY AND THE BOARD: the stake picks first;
   const empty = gambitHudModel({ phase: 'army', online: online({ watching: false, step: 'ready' }), army: [], crown: 'daggerfall' });
   assert.equal(empty.actions.find((a) => a.id === 'clear').why, 'Your army is already empty.');
   const staking = gambitHudModel({ phase: 'army', online: online({ watching: false, step: 'ready', staking: true, stakes }), army: full, crown: 'daggerfall' });
-  assert.equal(staking.actions.find((a) => a.id === 'ready').why, 'Your stake is on its way to the realm - wait a moment.');
+  assert.equal(staking.actions.find((a) => a.id === 'ready').why, 'Your stake is on its way to the realm. Wait a moment.');
   const board = { season: { n: 4 }, rows: [{ rank: 1, name: 'Eira', rating: 1612, wins: 1, losses: 0, you: true }], me: { rating: 1612, wins: 1, losses: 0, games: 1 }, champion: null, titleNeeds: { games: 10, foes: 5 } };
   const set = gambitHudModel({ phase: 'setup', online: online({ watching: false, step: 'sit', canSit: true, seats: [{ name: 'Ana', ready: false, mine: true }, null] }), canOnline: true, crown: 'daggerfall', board, boardOpen: true });
   assert.equal(set.actions.find((a) => a.id === 'board').label, 'Hide the season board');
@@ -96,7 +96,7 @@ test('AUDIT KG II D14 + D17 + D18 THE ARMY AND THE BOARD: the stake picks first;
 });
 
 test('AUDIT KG II D10 + D11 + D16 THE WORDS: the relay\'s own words with a way forward; a command\'s refusal names its piece; the season\'s cap and a foe with no account said - the carrier says it (mutants: the words; the cap; onFoeGuest)', async () => {
-  for (const [w, s] of [['seated', 'You already sit at this board.'], ['not seated', 'You are no longer seated at this board - sit down again.'], ['no table', 'Nobody sits at this board now - sit down to start one.'], ['no game', 'That game has already ended.'], ['table differs', 'This board is laid for other chairs - stand up and sit again.'], ['stale', 'Too late - that turn had already passed.']]) assert.equal(onlineRefusal(w), s);
+  for (const [w, s] of [['seated', 'You already sit at this board.'], ['not seated', 'You are no longer seated at this board. Sit down again.'], ['no table', 'Nobody sits at this board now. Sit down to start a game.'], ['no game', 'That game has already ended.'], ['table differs', 'This board is laid for other chairs. Stand up and sit down again.'], ['stale', 'Too late. That turn had already passed.']]) assert.equal(onlineRefusal(w), s);
   assert.notEqual(onlineRefusal('seated'), refusalWords('shape'), 'never the catch-all');
   assert.match(seasonKept('season'), /as often as this season allows/);
   assert.match(seasonKept('day'), /often enough today/);
@@ -122,7 +122,7 @@ test('AUDIT KG II D10 + D11 + D16 THE WORDS: the relay\'s own words with a way f
   g.relay({ t: 'gambit', table: 1, now: 1e12, error: 'full' });
   assert.match(g.g.why, new RegExp(`^${g.g.game.names.get(pc.id)} is at full health`), g.g.why);
   g.relay({ t: 'gambit', table: 1, now: 1e12, error: 'stale' });
-  assert.equal(g.g.why, 'Too late - that turn had already passed.');
+  assert.equal(g.g.why, 'Too late. That turn had already passed.');
 });
 
 test('AUDIT KG II B2 + B17 A GAME GONE WHILE AWAY, AND A LOOK THE GATE REFUSED: a session whose game the relay holds neither under way nor ended is let go; a new socket\'s look asked again until it goes (mutants: the lost game; the look\'s count)', () => {

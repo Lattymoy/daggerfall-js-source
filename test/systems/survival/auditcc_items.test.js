@@ -77,9 +77,9 @@ test('AUDIT C&C I5: FOOD THAT SPOILS IN THE PACK IS DRESSED AT EVERY STAGE - the
   assert.deepEqual([look(createSurvivalItem(TEMPLATE.Bread, { foodStage: 4 })), look(corpse)], [[4, 'Putrid Bread', 534, 1], [2, 'Mouldy Raw Fish', 535, 0]]);
   // the card: putrid cannot be eaten (it read "Nourishes for 36 minutes (putrid)"); a raw one can still be cooked
   assert.deepEqual(pack.map((it) => survivalInfoTokens(it).map((t) => t.text)), [
-    ['Putrid Bread', 'Weight: 1.50 kilograms', 'Putrid - too disgusting to force down.'],
-    ['Putrid Raw Fish', 'Weight: 2.00 kilograms', 'Putrid - too disgusting to force down.', 'Raw - cook it at a fire.'],
-    ['Putrid Apple', 'Weight: 0.10 kilograms', 'Putrid - too disgusting to force down.'],
+    ['Putrid Bread', 'Weight: 1.50 kilograms', 'Putrid. Too disgusting to force down.'],
+    ['Putrid Raw Fish', 'Weight: 2.00 kilograms', 'Putrid. Too disgusting to force down.', 'Raw. Cook it at a fire.'],
+    ['Putrid Apple', 'Weight: 0.10 kilograms', 'Putrid. Too disgusting to force down.'],
   ]);
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Bread, { foodStage: 3 }))[2].text, 'Nourishes for 45 minutes (rotten)', 'a stage short of putrid still feeds, by its stage');
   // and the Use names what it is: the real door (useItem.js), which refuses it

@@ -34,7 +34,7 @@ import { WATER_BYTE } from '../../../src/world/roadsProducer.js';
 import { DIR_DELTA } from '../../../src/world/road/roadNetwork.js';
 import { worldCoordToMapPixel } from '../../../src/formats/mapsFile.js';
 import { TRAVEL_VIEW_TEXT, travelTripLine, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
-import { createLoadGovernor, unbuiltAround } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
 import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelPathUsesRoads, TRAVEL_PATH_TEXT, setTravelPathMode } from '../../../src/systems/travel/travelPathMode.js';
 import { freePull } from '../../../src/systems/travel/freePull.js';
@@ -190,7 +190,7 @@ function host({ firstPerson = false, roads = false, enhanced = true } = {}) {
     tvOfferPassage: (place) => { h.offered.push(place.name); return false; },
     tvCautious: () => false, partyWalkBegin: (dest) => h.party.push(dest), travelGovernor: { reset() {} },
     dungeonApproach: refuse('dungeonApproach'), lastLegStart: refuse('lastLegStart'), pixelBox: refuse('pixelBox'),
-    gamePaused: () => false, duelEnemyNear: () => false, areEnemiesNearby: () => false, exteriorFoePool: () => [], navalHostileNear: () => false,   // TIME-DILATION: no hostile ship
+    gamePaused: () => false, duelEnemyNear: () => false, areEnemiesNearby: () => false, exteriorFoePool: () => [], wildSeen: (foes) => foes, navalHostileNear: () => false,   // TIME-DILATION: no hostile ship; OW-RISE: the rise counts the foes the view's danger does
     partyTravel: { propose: () => false }, hudFade: { clearFade() {} }, fastTravelTo: (p) => h.fast.push(p.name),
     TEST_GODMODE: false, staffPowers: () => ({ god: false }), teleportTo: refuse('teleportTo'),   // TESTBUILD: the shipped build's god mode is off
     wildMapMask: () => null, wildInside: () => false,   // WILD1: no open zone on this map
@@ -285,7 +285,7 @@ test('TO-ROADS, the journey\'s life (the host\'s own code): a foe stops it as th
       setWorldTimeScale: setTimeScale, worldTimeScale: timeScale, resetTimeScale,
       travelAsked: 20, csaHoldsTimeScale: () => false, travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
       state: { terrainDistance: 3 }, playerTravelPixel: () => ({ x: 505, y: 245 }), tvGroundGenNow: () => 0,
-      unbuiltAround, built: { has: () => true },
+      unbuiltAround, unbuiltCount, built: { has: () => true },
       tvOwnsJourneys: () => owns, tvRoutesJourneys: () => true,   // both journeys are routes; only the Overworld's is OWNED
       journeyThreatCap: () => ({ cap: Infinity }), journeySlowSaid: () => {},   // OW6: no enemy about
     });

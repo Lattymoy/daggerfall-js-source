@@ -1,0 +1,142 @@
+[
+  {
+    "name": "AUDIT-MEND-THIRD-L3-1-fence-reads-no-mark",
+    "file": "src/systems/tradeModes.js",
+    "old": "        const fenced = live && isFoundMarked(item) ? saleConditionPercentage(item, { online: true }) : -1;",
+    "new": "        const fenced = -1;",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "an enchanted found Daedric cuirass fences at its whole 47,553, unmended"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-1-fence-offline-too",
+    "file": "src/systems/tradeModes.js",
+    "old": "        const fenced = live && isFoundMarked(item) ? saleConditionPercentage(item, { online: true }) : -1;",
+    "new": "        const fenced = isFoundMarked(item) ? saleConditionPercentage(item, { online: true }) : -1;",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "offline's DFU fence reads the online law"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-2-worn-kit-unmarked",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "    markFound(item);\n  }\n  return item;\n}",
+    "new": "  }\n  return item;\n}",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "PARTY-LOOT's bonus hands a foe's worn sidearm over unmarked"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-3-found-stacks-merge",
+    "file": "src/systems/inventory.js",
+    "old": "    sameFoundMark(a, b);\n}",
+    "new": "    true;\n}",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a worn found book merged into a whole one sells whole"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-3-split-mints-whole",
+    "file": "src/systems/inventory.js",
+    "old": "  carryFoundMark(stack, picked);",
+    "new": "",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a found book split off its stack is handed over whole"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-3-arrows-held-apart",
+    "file": "src/systems/item/foundMark.js",
+    "old": "const markedStack = (/** @type {any} */ it) => it?.group === 'Books';",
+    "new": "const markedStack = (/** @type {any} */ it) => it != null;",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "found arrows at three marks fill three rows of the pack, never one quiver"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-4-stale-mark-kept",
+    "file": "src/world/oceanHoles.js",
+    "old": "    if (!enchanted) dropFoundMark(item);\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a whole Orcish re-mint sells at its Ebony original's mark"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L1-6-temper-leaves-the-mark",
+    "file": "src/systems/smithItems.js",
+    "old": "  scaleFoundMark(item, oldMax, item.maxCondition);\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a tempered found cuirass sells at 43% where it was found at 47%"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-owner-mends-not-moved",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a repooled or tempered piece's owner's mends left at their old number"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-6-start-kit-unmarked",
+    "file": "src/systems/roleplayRealismItems/rriKits.js",
+    "old": "    markFound(item);   // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a new character's worn kit, mended at a smith, sells whole"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-6-questions-dagger-unmarked",
+    "file": "src/systems/roleplayRealismItems/rriKits.js",
+    "old": "      markFound(dagger);   // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "the questions' dagger, worn to 20% at creation, handed over unmarked"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L3-6-dagger-unmarked",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    if (had === 0 && isQuestionsDagger(it)) markFound(it);",
+    "new": "",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a classic load's questions' dagger minted at 20% unmarked"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L1-4-patron-reads-no-condition",
+    "file": "src/net/patronLaw.js",
+    "old": "  return worth > 0 ? conditionCostBase(worth, foundSalePercentage(item)) : 0;",
+    "new": "  return worth;",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a found Daedric cuirass at 20% is worth its whole 153,600 to a patron"
+  },
+  {
+    "name": "AUDIT-MEND-THIRD-L1-4-patron-reads-no-mark",
+    "file": "src/net/patronLaw.js",
+    "old": "  return worth > 0 ? conditionCostBase(worth, foundSalePercentage(item)) : 0;",
+    "new": "  return worth > 0 ? conditionCostBase(worth, Math.trunc((100 * (item.currentCondition ?? 0)) / (item.maxCondition || 1))) : 0;",
+    "tests": [
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a found cuirass mended at a smith is worth its whole to a patron"
+  }
+]

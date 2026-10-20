@@ -529,7 +529,7 @@ const HARDCODED = {
   'src/systems/travel/travelPace.js': 5,
   'src/systems/travel/travelPathMode.js': 3,
   'src/systems/travel/travelViewFilters.js': 6,
-  'src/systems/tutorialCatalogue.js': 216,
+  'src/systems/tutorialCatalogue.js': 214,
   'src/systems/uiSkin.js': 1,
   'src/systems/upkeep/upkeepItemRows.js': 2,
   'src/systems/upkeep/upkeepRuntime.js': 8,

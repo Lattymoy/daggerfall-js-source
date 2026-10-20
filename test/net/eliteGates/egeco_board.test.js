@@ -149,7 +149,7 @@ test('EG-E2 THE BOARD WINDOW\'S LINES: each tab its name and the season, its ran
   assert.deepEqual([...EG_BOARD_TABS], ['alone', 'few', 'company', 'depths', 'deepest', 'runs']);   // PIN MOVED (AUDIT EG V, c: L7-19 - the sixth tab, this device's last runs)
   assert.deepEqual([egBoardClock(6252), egBoardClock(59), egBoardClock(3600), egBoardClock(-4)], ['1:44:12', '0:59', '1:00:00', '0:00']);
   assert.deepEqual(egBoardLines(BOARD, 'alone'), [
-    'The Descent - Alone', 'Season 3, day 12.',
+    'The Descent: Alone', 'Season 3, day 12.',   // PIN MOVED (VOICE2): a title's colon, no dash aside (Voice.md rule 5)
     "1. Avel - Hall 47 (The Soul Cairn) - 1:44:12 - unfallen - Kyn's Rally",
     '...', '14. Mac - Hall 30 (The Soul Cairn) - 50:00 - Ashfall - you',
     "This week's Proclamation: Kyn's Rally - A slain add strengthens its wave.", 'Your best: Hall 47 - 1:44:12',

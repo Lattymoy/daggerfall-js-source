@@ -123,7 +123,8 @@ A departure from FormulaHelper.CalculateTradePrice, named in Port-Ledger A: DFU'
 
 Not changed: a purse already below nothing. A save carries it as it is, and the judge reads a negative purse as a law
 finding (`judge.js purseWord`) - which holds trade, and at a death in the zone burns the drop (BURNT-SAID). A character
-it happened to is a staff repair (`review.js`), not a migration this change can know to be right.
+it happened to is a staff repair (`review.js`), not a migration this change can know to be right - run from the Actions
+tab since PURSE-BACK, below.
 
 ## NO-NAN-PAY: a price that is no number takes nothing
 
@@ -140,6 +141,59 @@ Pinned by `test/systems/fb1018b_tradewrap.test.js` (4): the sale of 250 Daedric 
 online and offline, paid in paper; DFU's price to the gold for every lot that never wrapped, bought or sold, over shops
 and skills; the purchase; and the payment's refusals with DFU's order kept. `tools/mutants/fb1018b_tradewrap.json` (4,
 all dead).
+
+## PURSE-BACK: a purse the wrap left below nothing, rolled back from the Actions tab
+
+ASKED (2026-10-19, the owner: "We need to restore Kurasawa's account to before they were in a negative balance"; offered
+a developer's sign-in from a machine or a workflow: "Build a workflow"). TRADE-WRAP stops new wraps and left the purses
+it had wrapped as they stood, for staff. A purse below nothing is a law finding (`judge.js purseWord`, code `gold`), so
+its character is held and no checkpoint after it is judged clean - and the review's rollback (`server-account/src/review.js`,
+INT6: the record back to its last clean checkpoint) puts such a character back to its last save before the sale, with the
+pieces it sold and the letters spent since. That act is a developer's, signed in (`tools/realmReview.mjs rollback`); no
+developer's session is a secret this repository holds, and none should be.
+
+BUILT:
+- `.github/workflows/realm-rollback.yml`, by hand from the Actions tab: `handle`; `character`, only when more than one of
+  the account's purses went below nothing; `apply`, off for a dry run. It runs `tools/realmRollback.mjs` in
+  `server-account/` and puts what the act answered on the run's page. It needs no maintenance hold and no rewind - the
+  act is one guarded statement over the row as it read it, as the route runs it live - and it queues in the deploy's group.
+- `tools/realmRollback.mjs` runs THE REVIEW'S OWN ACT - `reviewAct` itself: `characters` by the handle, `findings` for
+  each, then `rollback` - over `tools/lib/wranglerBindings.mjs`, the service's D1 and R2 bindings answered by `wrangler d1
+  execute` and `wrangler r2 object` with the repository's CLOUDFLARE_API_TOKEN. Nothing of the act's law is copied: its
+  developer gate (asked with the run's actor against the deployed `DEVELOPER_HANDLES`), its guards (`dead`, `no-clean`,
+  `service-moved`), its statement and its staff finding are the route's own. No line of the account service moved, so no
+  deploy and no version.
+- THE CHECK THE ROUTE CANNOT MAKE (`purseReach`): the clean save must be older than the earliest law finding naming
+  `gold`. A purse below nothing can be set at nothing again - a payment the letters could not cover (`court.js` deductGold),
+  a fare (deductGoldPieces), a death in the zone (`wildDropLaw.js`), a house bought through the bank - and the next
+  checkpoint is then judged clean, and the save from before the sale left the bucket when the clean one moved past it. A
+  rollback would land after the sale, undo the play since and give nothing back, so the run refuses (`clean-after`); a run
+  applied twice says so (`rolled-back`, off the staff finding the first wrote).
+- THE DRY RUN IS THE ACT WITH ITS WRITES HELD: the bindings read the live database and bucket and hold every write, so
+  each refusal is the act's own, said before anything is written, and the page names the writes an apply makes.
+- WRANGLER TAKES NO PARAMETERS: a statement's binds are written into it as literals (`literalSql`, through
+  `tools/lib/sqlLit.mjs` - `realmRestore.mjs`'s `lit`, moved there and handed on). Wrangler says nothing of a write's rows
+  (its local JSON's meta is `{ duration }`), so a write asks `SELECT changes()` in its own command: a guarded statement
+  that moved nothing answers as the route's does (`no-clean`, and no finding).
+- THE PAGE IS PUBLIC (a public repository's run): it names the account by the handle typed and its characters by name
+  and realm id; never an account's id, a save's key or a statement - a failure says wrangler's words and its exit, never
+  its command.
+
+PROVEN against wrangler 4 itself (`--local`: its D1 with all 132 migrations, its R2, and a wrapped character made by the
+real service): the dry run wrote nothing; the apply put the record back to its clean save (25,000 in the purse, three
+Daedric claymores, both letters), lifted the hold, took the seat, wrote the staff finding with the actor and the run, and
+dropped the save before the one rolled away; a second run refused `rolled-back`, a name off the list `not-developer`.
+Not provable from a session: the live run - it holds no Cloudflare token, and the workflow does.
+
+For the reporter: Actions, "Realm rollback (a purse below nothing)", Run workflow on main with `handle` Kurasawa and
+apply off; read the page; run again with apply on. What was played after the save it goes back to is undone - the
+check names that save, and the page the purse, the letters and the pieces it holds against the record's now.
+
+THE FOUR HOSTS: no host line - an operator's tool over the account service's own act.
+
+Pinned by `test/tooling/realm_rollback.test.js` (7) over the real service and migrations, its wrangler answered by the
+service's own database and bucket, every statement run as the literal the tool writes; `tools/mutants/purseback.json`
+(19, all dead).
 
 ## What would prove which door it was
 
@@ -160,4 +214,5 @@ load. If your letters went at a death in the open zone, that drop is the zone's 
 trading freeze then, they were lost outright with no word on screen, which was a bug: the death screen says so now and
 names the letters it took. The service's record of that fall will say which it was. And if you sold a large batch of
 Daedric gear in one go and got nothing for it, the counter's arithmetic wrapped and paid you millions below nothing -
-that is fixed too, and a purse left below nothing is for staff to repair.
+that is fixed too, and a purse left below nothing is for staff to repair (PURSE-BACK: back to your last save before the
+sale).

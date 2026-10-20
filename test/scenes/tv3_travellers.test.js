@@ -450,10 +450,10 @@ test('TV3 map: the travellers are marks placed to their 256th (the fraction turn
 
 // ── THE SWITCH AND THE HOST ─────────────────────────────────────────────────────────────────────────────────────────
 
-test('TV3 switch: "Show me to travellers in my region" - on by default, the player\'s own say online, on the Other players card', () => {
+test('TV3 switch: "Show me to travelers in my region" - on by default, the player\'s own say online, on the Other players card', () => {
   assert.equal(PREF_DEFAULTS.showToTravellers, true);
   assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes('showToTravellers'), 'the room never forces it');
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /prefRow\('showToTravellers', t\('menu\.peers\.show', 'Show me to travellers in my region'\),/);
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /prefRow\('showToTravellers', t\('menu\.peers\.show', 'Show me to travelers in my region'\),/);
 });
 
 test('TV3 host wiring: the book hoisted above its readers, filled by the Region tab\'s own link; my mark sent when due, on that link, from the open air alone and with the switch on; the view and the map draw the book', () => {

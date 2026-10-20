@@ -289,7 +289,7 @@ test('AUDIT 32 H8 (PROF-MENU): the list\'s search opens the body\'s own loot by 
 test('AUDIT 32 P10: the trace\'s end said - a clean pelt, a torn one (its part lost), a true line too quick or too slow', () => {
   const kind = huntKind({ book: { state: {} }, bodies: () => [] });
   assert.equal(kind.actNote({ clean: true, torn: false, score: 0.9, seconds: 2 }), ' (a clean pelt)');
-  assert.equal(kind.actNote({ clean: false, torn: true, score: 0.2, seconds: 2 }), ' (a torn pelt - its part lost)');
+  assert.equal(kind.actNote({ clean: false, torn: true, score: 0.2, seconds: 2 }), ' (a torn pelt, its part lost)');
   assert.equal(kind.actNote({ clean: false, torn: false, score: 0.95, seconds: TRACE_ACT.minS / 2 }), ' (a true line, too quick for a clean pelt)');
   assert.equal(kind.actNote({ clean: false, torn: false, score: 0.95, seconds: TRACE_ACT.maxS * 2 }), ' (a true line, too slow for a clean pelt)');
   assert.equal(kind.actNote({ clean: false, torn: false, score: 0.6, seconds: 2 }), '');

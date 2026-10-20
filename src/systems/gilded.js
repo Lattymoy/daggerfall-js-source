@@ -103,7 +103,7 @@ export const HOUR_TOLLS = Object.freeze({
 export const DRAGONFIRE = Object.freeze({
   name: 'Dragonfire', kind: 'dragonfire', group: 'daedra', share: 33, metres: 3,
   brief: 'Daedra burn +33%, and all in 3m',   // inside the card's row (sigilSets.js BRIEF_MAX)
-  text: 'Each of its blows that lands on a Daedra burns it again in Dragonfire for a third of the blow, and every other Daedra within 3 m for as much - and no Daedra resists it',
+  text: 'Each blow that lands on a Daedra burns it again in Dragonfire for a third of the blow, and every other Daedra within 3 m for as much. No Daedra resists it',
 });
 /** GILDED2: UNDERTOW - the Sunken Sovereign's power (systems/loot/lootPowers.js, kind 'undertow'). Each of its blows that LANDS on
  *  a foe drags it deeper: its next blows on that foe strike `pct`% harder for each landed before, up to `max`, while the

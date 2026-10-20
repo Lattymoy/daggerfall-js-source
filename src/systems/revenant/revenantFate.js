@@ -142,7 +142,7 @@ export function beginYield(player, f, { now = Date.now(), rolls = Math.random } 
   const r = revenantYielded(player, f.entity);
   if (!r) return null;
   f.trophy = revenantTrophy(r, { entity: f.entity, level: player?.level ?? 1, rolls });
-  const ev = revenantMomentEvent('yield', r, player?.name, { body: 'Beaten - it awaits your judgement. Go to it: kill it, or spare it.', archive: f.archive, rolls });
+  const ev = revenantMomentEvent('yield', r, player?.name, { body: 'Beaten, it awaits your judgment. Go to it, and kill it or spare it.', archive: f.archive, rolls });
   f.yieldEvent = ev;
   return ev;
 }
@@ -162,7 +162,7 @@ export function yieldStep(f, feet, dtMs = 0) {
 /** Its words as it slips away (the escape the pool makes of it). AUDIT UNQUIET (Revenants.md section 49): ended as every
  *  getting-away's card is - the wound it got away with, where its trail leads (revenant.js revenantEscapeTail). */
 export function slipEvent(player, r, { archive = null, rolls = Math.random } = {}) {
-  return revenantMomentEvent('slip', r, player?.name, { body: `${t('rvn.unq.slip', 'You hesitated. {given} got away - and it will remember.', { given: r.given })}${revenantEscapeTail(r)}`, archive, rolls });
+  return revenantMomentEvent('slip', r, player?.name, { body: `${t('rvn.unq.slip', 'You hesitated. {given} got away, and it will remember.', { given: r.given })}${revenantEscapeTail(r)}`, archive, rolls });
 }
 /** THE KNEEL: its hurt's last frame held (a breath every so often - the frame before it), facing the eye as ever. */
 export function kneelPose(f, eye, now = Date.now()) {
@@ -291,7 +291,7 @@ export function fateModel(player, f, { choose } = /** @type {any} */ ({})) {
       {
         id: 'spare', key: 'S', label: 'Spare', verb: 'Spare', tone: 'primary',
         title: `Spare ${r.given}`,
-        detail: !room ? `You keep ${REVENANT_RETINUE_MAX} sworn already - release one first`
+        detail: !room ? `You keep ${REVENANT_RETINUE_MAX} sworn already. Release one first`
           : free ? `It joins you as a companion (${used + 1} of ${COMPANION_SLOTS})`
             : `It is sworn to you, and waits until you call it (your ${COMPANION_SLOTS} companion slots are full)`,
         confirm: free ? `Spare ${r.name}? It will walk at your side.` : `Spare ${r.name}? It will wait, sent away, until you call it.`,

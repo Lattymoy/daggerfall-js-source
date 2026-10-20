@@ -248,7 +248,7 @@ test('RAID4 the device\'s queue: a signed receipt is kept with the character tha
   await q.flush();
   assert.deepEqual(asked.at(-1), { r: ra, ch: CH, nm: 'Ann' });
   assert.deepEqual(said, [RAID_CLAIM_TEXT.recorded(3, 780)]);
-  assert.equal(said[0], 'The town will remember you. Towns defended: 3. +780 Renown XP.');
+  assert.equal(said[0], 'The town will remember you. Towns defended: 3. +780 toward your Renown.');   // PIN MOVED (VOICE2): no XP in a sentence (Voice.md rule 3)
   assert.equal(heard[0].d.renown.credited, 780);
   assert.deepEqual(q.kept(), [], 'counted: let go');
   // a guest - kept, said once

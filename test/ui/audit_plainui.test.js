@@ -60,7 +60,7 @@ test('AUDIT PLAIN-UI W2 W3 W10 W11 the Family page: the estate is whoever carrie
   assert.match(said('Your house'), /any grown, living member of the blood can be played\.$/);
   assert.match(said('Who carries on'), /any grown, living member of the blood who has not retired, or a newborn heir .*\(in a Bloodline house the tree marks .*Has an heir; an Elder who passes the mantle may always choose a newborn\)/);
   assert.match(said('Heirlooms and remains'), new RegExp(`of their purse \\(at most ${REMAINS_GOLD_MAX.toLocaleString('en-US')}\\)\\. .*grows a step each time it is laid to rest beside the remains of the one who carried it`));
-  assert.match(said('Playing another'), /can be played from it \(Play as\) - never in a fight, nor while a Succession waits;/);
+  assert.match(said('Playing another'), /can be played from it \(Play as\), though never during a fight or while a Succession waits\./);
   assert.match(said('Marriage and children'), /A child is played only once the line passes to them\.$/);
   // the toll the Features tile chose, read where the page is drawn
   const was = modSetting(LEGACY_MOD, 'Legacy.Toll');
@@ -108,7 +108,7 @@ test('AUDIT PLAIN-UI W6 the badge\'s number toward nought, as the standing reads
   assert.deepEqual([regardBadge({ regard: -40.5, standing: 'enemy' }).value, regardBadge({ regard: -39.5, standing: 'neutral' }).value], ['-40', '-39']);
   assert.equal(regardBadge({ regard: -0.4, standing: 'neutral' }).value, '0');
   // PIN MOVED: TONE-TASTE (bible/06-Systems/Living-World.md) - the tone as they take it, townsfolk's named
-  assert.match(b.words, /a tone they dislike, a crime they see, a blow and - worst - one of their own struck down lower it\. Townsfolk like a Blunt word, not a Polite one\./);
+  assert.match(b.words, /A tone they dislike, a crime they witness, a blow and, worst of all, one of their own struck down lower it\. Townsfolk prefer a Blunt word to a Polite one\./);
 });
 
 test('AUDIT PLAIN-UI C1 a board fold records the reader\'s PRESS on its line, never a toggle - a browser fires toggle for the open a draw sets too, so the drawn default was kept as a choice and a redraw\'s echo could undo a fold; the words\' fold and the chapters\' fold kept across redraws as the guide\'s is (mutants: the words\' fold forgotten; the chapters\' fold forgotten)', async () => {

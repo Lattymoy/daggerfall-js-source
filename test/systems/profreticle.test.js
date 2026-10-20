@@ -142,7 +142,7 @@ test('PROF-RETICLE hold, basket: the hand\'s hold an arc round the crosshair, a 
   h.tick(0.1, { held: true, view: { yaw: 9, pitch: 0 } });
   p.update(h, { label: 'E' });
   assert.ok(root.querySelector('.prof-hold').className.includes('bruised'));
-  assert.match(root.textContent, /bruised - keep E held to keep what is left/);
+  assert.match(root.textContent, /bruised\. Keep E held to save what is left/);
   assert.equal(marksOf(createTraceAct({ tier: 1, gentle: true })), 'hold', 'Gentle acts: a hold');
   assert.equal(marksOf(createHerbAct({ kind: 'hand' })), 'hold');
   // the Basket

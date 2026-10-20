@@ -150,7 +150,7 @@ function picture(el, cls, r, box, rerender) {
 /** How long yet, in the words a roster uses. */
 export function restWords(until, now) {
   const h = Math.ceil(Math.max(0, until - now) / 60);
-  return h <= 1 ? 'Recovering - within the hour' : `Recovering - ${h} hours`;
+  return h <= 1 ? 'Recovering. Back within the hour' : `Recovering - ${h} hours`;
 }
 
 /** RVN11 (bible/12-Enhanced-AI/Feud-Arc.md 22.4): its loyalty - a bar (the kit's bone tone) and its word, the number on
@@ -188,8 +188,8 @@ function gearSheet(el, r, rerender, kindName) {
   const armed = armedKind(r.mobileType), rank = Math.max(1, Math.min(5, r.rank | 0));
   const kind = kindName?.(r.mobileType) ?? t('rvn.gear.itsKind', 'Its kind');
   box.append(el('span', 'cmp-sub', armed
-    ? t('rvn.roster.kitCaps', 'At Rank {rank} it bears up to {metal} and {tier} pieces. A slot left empty keeps the kit it carries.', { rank: ROMAN[rank], metal: metalName(GEAR.METAL_CAP[rank]), tier: tierWord(GEAR.RARITY_CAP[rank]) })
-    : t('rvn.roster.kitCharm', '{kind} wields no weapon and wears no armour - it may wear a charm.', { kind })));
+    ? t('rvn.roster.kitCaps', 'At Rank {rank} it can bear up to {metal} and {tier} pieces. An empty slot keeps the gear it already carries.', { rank: ROMAN[rank], metal: metalName(GEAR.METAL_CAP[rank]), tier: tierWord(GEAR.RARITY_CAP[rank]) })
+    : t('rvn.roster.kitCharm', '{kind} wields no weapon and wears no armor, but it may wear a charm.', { kind })));
   const grid = el('div', 'cmp-gear');
   const worn = new Set(wornGear(r).map(([, it]) => it));
   for (const s of GEAR_SLOTS) {
@@ -204,8 +204,8 @@ function gearSheet(el, r, rerender, kindName) {
       // AUDIT RVN G7: what it wears wears out - its condition, and a piece it holds off said so (broken; a shield with no
       // whole one-handed weapon beside it)
       const cur = Number(it.currentCondition), max = Number(it.maxCondition);
-      const state = broken ? t('rvn.roster.broken', 'Broken - not worn until it is mended')
-        : !worn.has(it) ? t('rvn.roster.heldOff', 'Not worn - it wants a whole one-handed weapon')
+      const state = broken ? t('rvn.roster.broken', 'Broken. Not worn until it is mended')
+        : !worn.has(it) ? t('rvn.roster.heldOff', 'Not worn. It needs a sound one-handed weapon')
           : max > 0 && Number.isFinite(cur) ? t('rvn.roster.condition', 'Condition {pct}%', { pct: Math.max(0, Math.min(100, Math.round(cur / max * 100))) }) : null;
       const back = keyed(el('button', 'act', t('rvn.roster.takeBack', 'Take back')), `cmp-${r.id}-take-${s.key}`);
       back.title = s.key === 'weapon' && r.companion.gear.shield ? t('rvn.roster.takeBackShield', 'Its shield comes back with it') : t('rvn.roster.takeBackTip', 'Back to your pack');
@@ -234,7 +234,7 @@ function gearSheet(el, r, rerender, kindName) {
     const nm = el('span', 'cmp-pickname', t('rvn.roster.pick', '{item} - {slot}', { item: itemLongName(it), slot: gearLabel(gearKeyOf(it)) }));
     const c = tone(it); if (c && nm.style) nm.style.color = c;
     const give = keyed(el('button', `act${why ? '' : ' primary'}`, t('rvn.roster.give', 'Give')), `cmp-${r.id}-give-${i}`);
-    give.title = why ?? t('rvn.roster.giveTip', 'It wears it from now on - take it back at any time');
+    give.title = why ?? t('rvn.roster.giveTip', 'It wears it from now on. You may take it back at any time');
     give.onclick = () => { const no = giveSwornGear(r.id, it, { kindName: kind }); _notice = no ? { id: r.id, text: no } : null; rerender(); };
     line.append(nm, give);
     list.append(line);
@@ -326,7 +326,7 @@ function row(el, r, { now, rerender, meter, here, kindName, stars }) {
   const acts = el('div', 'cmp-acts');
   if (_confirm === r.id) {
     const n = (r.companion?.items?.length ?? 0) + gearItems(r.companion?.gear).length;   // AUDIT (2026-10-02): its pack comes back to the player's - say so; AUDIT RVN G6: and its kit
-    text.append(el('span', 'cmp-confirm', `Release ${r.name}? Its oath is given back - it leaves you for good${n ? `, and hands you back what it carries (${n === 1 ? 'one item' : `${n} items`})` : ''}.`));
+    text.append(el('span', 'cmp-confirm', `Release ${r.name}? Its oath is returned and it leaves you for good${n ? `, and hands you back what it carries (${n === 1 ? 'one item' : `${n} items`})` : ''}.`));
     const yes = el('button', 'act warn', 'Release');
     yes.onclick = () => { _confirm = null; _notice = null; releaseRevenant(r.id); rerender(); };
     const no = el('button', 'act', 'Keep');
@@ -356,7 +356,7 @@ function row(el, r, { now, rerender, meter, here, kindName, stars }) {
       call.onclick = () => { const no = callRevenant(r.id, now); _notice = no ? { id: r.id, text: no } : null; rerender(); };
       acts.append(call);
     }
-    for (const [kind, label, tip] of [['gear', t('rvn.roster.gear', 'Gear'), t('rvn.roster.gearTip', 'Give it a weapon, armour or a charm from your pack')], ['errand', t('rvn.roster.mission', 'Mission'), t('rvn.roster.missionTip', 'Send it abroad - it comes back with a haul')]]) {   // RVN-GEAR, RVN-ERRAND
+    for (const [kind, label, tip] of [['gear', t('rvn.roster.gear', 'Gear'), t('rvn.roster.gearTip', 'Give it a weapon, armor or a charm from your pack')], ['errand', t('rvn.roster.mission', 'Mission'), t('rvn.roster.missionTip', 'Send it abroad and it comes back with a haul')]]) {   // RVN-GEAR, RVN-ERRAND
       const open = _sheet?.id === r.id && _sheet.kind === kind;
       const b = keyed(el('button', `act${open ? ' on' : ''}`, label), `cmp-${r.id}-sheet-${kind}`);
       b.setAttribute?.('aria-expanded', open ? 'true' : 'false');   // AUDIT RVN D15
@@ -407,7 +407,7 @@ export function drawCompanionsPage(detail, rerender, { el, divider, meter = null
   detail.append(strip);
   detail.append(el('p', 'cmp-slotline', crew.length
     ? `Your crew ashore take ${crew.length === 1 ? 'a slot' : `${crew.length} slots`} too: ${crew.map((c) => c.name).join(', ')}.`
-    : used >= COMPANION_SLOTS ? 'Every slot is taken - send one away to call another.' : 'Call a sworn companion to fill an open slot.'));
+    : used >= COMPANION_SLOTS ? 'Every place is taken. Send one away to call another.' : 'Call a sworn companion to fill an open slot.'));
   // AT YOUR SIDE
   if (withYou.length) {
     detail.append(divider('At your side'));
@@ -423,7 +423,7 @@ export function drawCompanionsPage(detail, rerender, { el, divider, meter = null
     detail.append(list);
   }
   if (!withYou.length && !away.length) {
-    detail.append(el('p', 'px-note', 'No revenant is sworn to you. Beat one of your revenants and it will yield - spare it, and it is yours.'));
+    detail.append(el('p', 'px-note', 'No revenant is sworn to you. Defeat one of your revenants and it will yield. Spare it, and it is yours.'));
   }
   const n = retinue().length;   // AUDIT (2026-10-02): the release's advice only where it is the way on
   if (n) detail.append(el('p', 'cmp-foot', `Sworn to you: ${n} of ${REVENANT_RETINUE_MAX}.${n >= REVENANT_RETINUE_MAX ? ' Release one to make room for another.' : ''}`));

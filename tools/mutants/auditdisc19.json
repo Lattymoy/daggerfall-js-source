@@ -597,7 +597,7 @@
   {
     "name": "AUDIT-DISC19-D1-notice-long",
     "file": "src/systems/staleChunk.js",
-    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated - reload the page for enemies.';",
+    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'The game was updated. Reload to see the enemies.';",
     "new": "export const STALE_CHUNK_IN_PLAY_TEXT = 'This page is from an older version of the game that has since been replaced, so the enemies here could not be built. Reload the page to fix it.';",
     "tests": [
       "test/systems/auditdisc19.test.js"

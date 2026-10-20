@@ -193,8 +193,8 @@ test('DECOR1d the panel: it opens over the room as the host slot\'s window (it p
 test('DECOR1d the panel reads the scan as it goes: "reading" while the blocks are read, a price of "..." until a size is measured and none placed until it is; a flat\'s row and preview wear its own picture; the preview follows the pointer and tells the host the piece it shows (mutants: an unmeasured piece placeable, the host never told)', async () => {
   const { panel, view, pointed, entries, radius } = panelRig();
   panel.open(view({ entries: null, ready: false, progress: 0.4 }));
-  assert.match(text(panel.root), /Reading the catalogue/);
-  assert.match(text(one(panel.root, 'dfdecor-foot')), /Reading the catalogue - 40%/);
+  assert.match(text(panel.root), /Reading the catalog/);
+  assert.match(text(one(panel.root, 'dfdecor-foot')), /Reading the catalog - 40%/);
   radius.delete(entries[0].key);
   panel.update(view({ ready: false, progress: 0.9 }));
   assert.equal(rows(panel.root).length, entries.length, 'the list the moment the blocks are read');

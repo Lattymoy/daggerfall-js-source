@@ -654,8 +654,8 @@
   {
     "name": "AUDIT31-tab-filled-unpointed",
     "file": "src/ui/workTab.js",
-    "old": "        : c.mine && c.state === 'filled' ? t('prof.work.yours.collect', 'filled - collect it at the Market tab')",
-    "new": "        : false ? t('prof.work.yours.collect', 'filled - collect it at the Market tab')",
+    "old": "        : c.mine && c.state === 'filled' ? t('prof.work.yours.collect', 'filled. Collect it at the Market tab')",
+    "new": "        : false ? t('prof.work.yours.collect', 'filled. Collect it at the Market tab')",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]

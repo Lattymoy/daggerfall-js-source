@@ -58,6 +58,20 @@ export const CREDITS = Object.freeze({
       link: 'https://github.com/googlefonts/silkscreen',
     }),
     Object.freeze({
+      get title() { return t('credits.pixelifyGlyphs.title', 'The 2 and the Z'); },
+      author: 'DFO',
+      get what() { return t('credits.pixelifyGlyphs.what', 'Two glyphs drawn for the enhanced skin on Pixelify Sans\'s own grid: a 2 and a Z that can no longer be taken for each other.'); },
+      get terms() { return t('credits.pixelifyGlyphs.terms', 'The game\'s own work (vendor/pixelify-glyphs/, built by tools/pixelifyGlyphs.py).'); },
+      vendor: Object.freeze(['pixelify-glyphs']),
+    }),
+    Object.freeze({
+      get title() { return t('credits.layeredArmor.title', 'Layered Gearing'); },
+      author: 'DFO',
+      get what() { return t('credits.layeredArmor.what', 'The art of the Layered Gearing look: every helmet, chest and leg armor in leather, chain and plate of seven metals, and the cloaks and hoods, for both bodies, made for the game from Daggerfall\'s own class and enemy sprites.'); },
+      get terms() { return t('credits.layeredArmor.terms', 'Made for DFO and carried under the owner\'s exception for art drawn from Daggerfall\'s own (vendor/layered-armor/README.md).'); },
+      vendor: Object.freeze(['layered-armor']),
+    }),
+    Object.freeze({
       title: 'Project Raum',
       author: 'Mac (Lattymoy)',
       get what() { return t('credits.raum.what', 'The book a Daggerfall book is read in under the enhanced skin (EB1): project-raum\'s physical journal - the leather cover that flips open, the two-page spreads, the leaves that turn as a cloth fold about the spine, the fore-edge stack and the slide up from below the screen - and its torn, stained paper. The words on its pages are Daggerfall\'s, in Daggerfall\'s own faces.'); },

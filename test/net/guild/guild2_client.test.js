@@ -92,7 +92,7 @@ test('GUILD2c the arms\' law: arms with no division and no colour of the device\
   assert.equal(armsWhy({ ...WOLF, division: 'pale', field2: 'gold' }), 'a device that stands out from the field');
   assert.equal(armsWhy({ ...WOLF, field: 'ash' }), 'Ash only as the border');
   assert.equal(armsWhy({ ...WOLF, border: 'azure' }), 'a border unlike the field');
-  assert.equal(armsWhy({ ...WOLF, division: 'pale', field2: 'ash' }), 'two different field colours, never Ash');
+  assert.equal(armsWhy({ ...WOLF, division: 'pale', field2: 'ash' }), 'two different field colors, never Ash');
 });
 
 // ─── THE ART ────────────────────────────────────────────────────────
@@ -518,7 +518,7 @@ test('GUILD2c (AUDIT G11-G14): a hole shows the field beneath it - both colours 
   for (const f of ['src/ui/nameLayer.js', 'src/ui/travel/travelViewHud.js']) assert.match(src(f), /heraldryKey\((arms|h)\)/, f);
   // G13
   assert.equal(heraldryOf({ ...owl, field2: 'gold', charge: 'argent' }), null, 'a border of the second colour, the device its own');
-  assert.equal(armsWhy({ ...owl, field2: 'gold', charge: 'argent' }), 'a border unlike either field colour');
+  assert.equal(armsWhy({ ...owl, field2: 'gold', charge: 'argent' }), 'a border unlike either field color');
   assert.ok(heraldryOf({ ...owl, field2: 'sable', charge: 'argent' }), 'and one unlike both stands');
   // G14
   assert.equal(heraldryText({ field: 'azure', border: 'gold', device: 'swords' }), 'Azure bordered Gold, a Pair of Swords');
@@ -581,19 +581,19 @@ test('GUILD2c the Arms page: the guildmaster\'s choices are pictures - the divis
   assert.equal(tiles.filter((x) => /^Field: /.test(x.attrs['aria-label'])).length, 8);
   assert.equal(tiles.filter((x) => /^Device: /.test(x.attrs['aria-label'])).length, 40);
   const sw = (label) => find(t.panel.root, 'dfsocial-swatch').find((x) => x.attrs['aria-label'] === label || x.attrs['aria-label'].startsWith(`${label} - `));
-  assert.equal(sw('Field colour: Ash').disabled, true, 'Ash never the field');
+  assert.equal(sw('Field color: Ash').disabled, true, 'Ash never the field');
   assert.match(src('src/ui/socialPanel.js'), /\.dfsocial\.touch \.dfsocial-swatch \{ width: 44px; height: 44px; \}/, 'AUDIT2 D4: a finger\'s swatch');
-  assert.equal(sw('Field colour: Gold').disabled, true, 'nor the border\'s colour');
+  assert.equal(sw('Field color: Gold').disabled, true, 'nor the border\'s colour');
   // AUDIT2 U14: a shut swatch says why - on its label and title, and drawn under its row for a finger
-  assert.equal(sw('Field colour: Gold').attrs['aria-label'], 'Field colour: Gold - shut: the arms need a border unlike the field');
-  assert.equal(sw('Field colour: Gold').attrs.title, 'Gold - shut: the arms need a border unlike the field');
+  assert.equal(sw('Field color: Gold').attrs['aria-label'], 'Field color: Gold - shut: the arms need a border unlike the field');
+  assert.equal(sw('Field color: Gold').attrs.title, 'Gold - shut: the arms need a border unlike the field');
   assert.ok(texts(t.panel.root).some((x) => /^Shut: the arms need .*a border unlike the field/.test(x)), 'drawn');
-  assert.equal(sw('Second colour: Crimson'), undefined, 'a plain field has no second colour');
+  assert.equal(sw('Second color: Crimson'), undefined, 'a plain field has no second colour');
   tiles.find((x) => x.attrs['aria-label'] === 'Field: Per pale').fire('click');
-  assert.ok(sw('Second colour: Crimson'), 'divided, it has');
-  assert.equal(sw('Second colour: Azure').disabled, true, 'never the field\'s');
-  sw('Second colour: Crimson').fire('click');
-  sw('Device colour (its border\'s, unless chosen): Argent').fire('click');
+  assert.ok(sw('Second color: Crimson'), 'divided, it has');
+  assert.equal(sw('Second color: Azure').disabled, true, 'never the field\'s');
+  sw('Second color: Crimson').fire('click');
+  sw('Device color (its border\'s, unless chosen): Argent').fire('click');
   const [banner] = find(t.panel.root, 'dfsocial-armspics')[0].children;
   assert.ok(decodeURIComponent(banner.src).includes('fill="#b3262e"'), 'the banner wears the draft');
   assert.ok(texts(t.panel.root).includes('Per pale Azure and Crimson, bordered Gold, a Wolf Argent'));
@@ -601,8 +601,8 @@ test('GUILD2c the Arms page: the guildmaster\'s choices are pictures - the divis
   assert.ok(find(t.panel.root, 'dfsocial-tagchip')[0].textContent.includes('HND'));
   // AUDIT GUILD2: every swatch asks the law itself - the device's colour against the second field colour was left open,
   // and a pick of it made arms the law refused (the border's too, while the device wears the border's)
-  assert.equal(sw('Device colour (its border\'s, unless chosen): Crimson').disabled, true, 'never the second colour');
-  sw('Device colour (its border\'s, unless chosen): Gold').fire('click');   // the border's again
+  assert.equal(sw('Device color (its border\'s, unless chosen): Crimson').disabled, true, 'never the second colour');
+  sw('Device color (its border\'s, unless chosen): Gold').fire('click');   // the border's again
   assert.equal(sw('Border: Crimson').disabled, true, 'a border the device would wear against the second colour');
   for (const label of find(t.panel.root, 'dfsocial-swatch').map((b) => b.attrs['aria-label'])) {
     const b = sw(label);   // drawn again at each pick: the swatch as it stands now

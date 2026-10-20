@@ -205,7 +205,7 @@ export const GATE_NO_TEXT = Object.freeze({
  *  loaded before the relay's deploy, a desktop copy whose update waits for the app to quit) - while the gate stands open
  *  (a closed window is refused at the hello, as an `error`, and never gets this far). "The gate is closed." in front of
  *  an open gate sent the players back through it, and out again, and to Discord. */
-export const GATE_OUTDATED_TEXT = 'Your game is older than this gate - save, then reload (or update the app) to enter.';
+export const GATE_OUTDATED_TEXT = 'Your game is older than this gate. Save, then reload (or update the app) to enter.';
 /** The words a refusal of my `in` (a `no`) is said and taken out of the court in. */
 export const gateRefusalText = (word) => (word === 'the gate is closed' ? GATE_OUTDATED_TEXT : GATE_NO_TEXT[word] ?? word);
 

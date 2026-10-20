@@ -417,11 +417,11 @@ test('AUTO-HOLD client: over the real Worker, the third strike heard timed with 
   assert.deepEqual(lockedPiecesOf(entity, ['f6f6f6f6f6f6f6f6', 'e5e5e5e5e5e5e5e5', '0000000000000009']), { pieces: [a, a2, b], unfound: 1 });
   assert.deepEqual(lockedPiecesOf(entity, ['f6f6f6f6f6f6f6f6']), { pieces: [b], unfound: 0 });
   const tail = 'Your other pieces and your trading are not affected.';
-  assert.equal(piecesLockedNotice([itemLongName(b)], 1), `The realm has locked your ${itemLongName(b)}: it found the same piece somewhere else too. A locked piece stays with you - it cannot be traded, sold, dropped or stored where others can take it. ${tail}`);
-  assert.match(piecesLockedNotice([], 1), /^The realm has locked one of your pieces: it found the same piece somewhere else too\. A locked piece stays with you/);
-  assert.match(piecesLockedNotice([], 6), /^The realm has locked 6 of your pieces: it found the same pieces somewhere else too\. Locked pieces stay with you - they cannot be traded/);
-  assert.match(piecesLockedNotice(['A', 'B', 'C', 'D'], 6), /^The realm has locked 6 of your pieces \(A, B, C and 3 more\): it found the same pieces somewhere else too\./);
-  assert.match(piecesLockedNotice(['A', 'B'], 2), /^The realm has locked 2 of your pieces \(A, B\): /);
+  assert.equal(piecesLockedNotice([itemLongName(b)], 1), `The realm has locked your ${itemLongName(b)}, because it found the same piece somewhere else too. A locked piece stays with you. It cannot be traded, sold, dropped or stored where others can take it. ${tail}`);
+  assert.match(piecesLockedNotice([], 1), /^The realm has locked one of your pieces, because it found the same piece somewhere else too\. A locked piece stays with you/);
+  assert.match(piecesLockedNotice([], 6), /^The realm has locked 6 of your pieces, because it found the same pieces somewhere else too\. Locked pieces stay with you\. They cannot be traded/);
+  assert.match(piecesLockedNotice(['A', 'B', 'C', 'D'], 6), /^The realm has locked 6 of your pieces \(A, B, C and 3 more\), because it found the same pieces somewhere else too\./);
+  assert.match(piecesLockedNotice(['A', 'B'], 2), /^The realm has locked 2 of your pieces \(A, B\), because /);
   assert.equal(piecesLockedNotice([], 0), null);
   for (const text of [piecesLockedNotice(['A'], 1), piecesLockedNotice(['A', 'B'], 3)]) assert.doesNotMatch(text, /copy of your|copies of|was found|were found/i, 'it says what happened, and accuses no one');
   // the wiring: the notices, the locked pieces bound while they are, the stowed read off the last save the realm took
@@ -470,9 +470,9 @@ test('AUTO-HOLD client (AUDIT): A PIECE THE REALM LOCKED STAYS WITH ITS HOLDER -
     setRealmLocked(['9d9d9d9d9d9d9d9d', 'abababababababab']);
     assert.deepEqual([isRealmLocked(piece), isRealmLocked(craft), isRealmLocked(free)], [true, true, false], 'by its key - an id, or a craft\'s provenance');
     assert.deepEqual([isBound(piece), isBoundByNature(piece), isBound(free)], [true, false, false]);
-    assert.equal(boundText('Dagger', piece), 'Dagger is locked by the realm: it found the same piece somewhere else too. It stays with you - it cannot be dropped, traded, sold or stored where others can take it.');
-    assert.equal(boundText('Stone', stone), 'Stone is bound to you - it cannot be dropped, traded or sold.', 'a binding of its nature says so');
-    assert.equal(boundLine(piece), 'Locked by the realm - it stays with you: it cannot be dropped, traded, sold or stored where others can take it.');
+    assert.equal(boundText('Dagger', piece), 'Dagger is locked by the realm, because it found the same piece somewhere else too. It stays with you. It cannot be dropped, traded, sold or stored where others can take it.');
+    assert.equal(boundText('Stone', stone), 'Stone is bound to you. It cannot be dropped, traded or sold.', 'a binding of its nature says so');
+    assert.equal(boundLine(piece), 'Locked by the realm. It stays with you, and cannot be dropped, traded, sold or stored where others can take it.');
     assert.deepEqual([boundLine(stone), boundLine(free)], [BOUND_LINE, null]);
     assert.deepEqual([boundTradeText(piece), boundTradeText(stone)], ['A piece the realm locked cannot be traded.', BOUND_TRADE_TEXT]);
     assert.equal(tradeRefusal(piece), 'A piece the realm locked cannot be traded.');

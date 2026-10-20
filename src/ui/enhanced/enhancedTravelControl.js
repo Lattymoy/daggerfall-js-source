@@ -84,7 +84,7 @@ function build(doc, hooks) {
   root.innerHTML = `
     <div class="travelpanel-bar">
       <div class="travelpanel-dest">
-        <span class="travelpanel-label">Travelling to</span>
+        <span class="travelpanel-label">Traveling to</span>
         <span class="travelpanel-name"></span>
         <span class="travelpanel-sub"></span>
       </div>

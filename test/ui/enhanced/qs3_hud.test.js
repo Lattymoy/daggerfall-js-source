@@ -575,7 +575,8 @@ test('QS the switch: the features row hides the DIAMOND alone - the caption and 
   // The switch exists, on the prefs shelf, on by default, the player's own online - FT18: as the Off of the one Quick
   // slots row, which covers the key (its lane writes it; test/systems/ft18_features.test.js drives the three states).
   const F = read('src/systems/features.js');
-  assert.match(F, /id: 'quick-slots',[\s\S]*?lane: 'quickSlots',[\s\S]*?also: Object\.freeze\(\[Object\.freeze\(\{ store: 'prefs', key: 'quickslots', initial: true, online: 'player' \}\)\]\)/);
+  // DIAMOND-HB (PIN MOVED): the row covers the ten-slot bar's shape too, after the switch
+  assert.match(F, /id: 'quick-slots',[\s\S]*?lane: 'quickSlots',[\s\S]*?also: Object\.freeze\(\[Object\.freeze\(\{ store: 'prefs', key: 'quickslots', initial: true, online: 'player' \}\),\s*(?:\/\/[^\n]*\n\s*)?Object\.freeze\(\{ store: 'prefs', key: 'hotbarShape', initial: 'square', online: 'player' \}\)\]\)/);
 });
 
 // AUDIT QS6 F3 + F4, both DRIVEN: two defects a source pin could not see.

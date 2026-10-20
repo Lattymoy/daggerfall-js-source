@@ -39,9 +39,9 @@ export const INSTANCE_TEXT = Object.freeze({
   join: (name) => t('instance.door.join', "{name}'s instance", { name }),
   leave: () => t('instance.door.leave', 'Leave'),
   questHere: () => t('instance.door.questHere', "Your quest's business here waits in your instance."),
-  questPublic: () => t('instance.door.questPublic', "Your quest's business here is in your instance alone - the shared dungeon is laid smaller and holds none of it."),
+  questPublic: () => t('instance.door.questPublic', "Your quest's business here is in your own instance. The shared dungeon is laid out smaller and holds none of it."),
   unavailable: () => t('instance.door.unavailable', 'Your instance could not be opened. Try again in a moment.'),
-  refused: () => t('instance.door.refused', 'That instance is closed to you - only its owner and their party may stand in it.'),
+  refused: () => t('instance.door.refused', 'That instance is closed to you. Only its owner and their party may enter it.'),
 });
 
 /** An entry: the place's public room, as the world lays it. */

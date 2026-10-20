@@ -50,9 +50,9 @@ export function resetGold(entity) {
 
 /** Why `family`'s path cannot be reset now, or null when it can: no such family, nothing held, or too little gold. */
 export function specResetRefusal(entity, family) {
-  if (!Object.hasOwn(LAW, family)) return t('schools.refuse.none', 'No such specialisation.');
+  if (!Object.hasOwn(LAW, family)) return t('schools.refuse.none', 'No such specialization.');
   const held = resetHeld(entity, family);
-  if (!held) return t('growth.spec.reset.refuse.nothing', 'You have no specialisation of this kind to reset.');
+  if (!held) return t('growth.spec.reset.refuse.nothing', 'You have no specialization of this kind to reset.');
   const have = resetGold(entity);
   if (have >= SPEC_RESET_GOLD) return null;
   const words = { gold: SPEC_RESET_GOLD, have };

@@ -3,7 +3,7 @@
 // with its signed record, Jewelcrafting's XP (20 x the piece's tier, the first time's 500), its rank asked; the jeweller's
 // hand at 50 (a Goldsmith's Silver, a Gemcutter's gem) signed into the record (`f`) and kept on the piece (0069's
 // `products.hand`) and answered; a Lapidary's Siege-cracked Gem set as the piece's gem, and refused to all others
-// (`prof-lapidary`); a Master Jeweller's Masterwork points; the market's Crafted view among the Jewellery with the hand.
+// (`prof-lapidary`); a Master Jeweler's Masterwork points; the market's Crafted view among the Jewellery with the hand.
 // Driven through the real Worker over node:sqlite with every migration applied (test/accountDb.mjs).
 // bible/06-Systems/Professions-Arc.md 3.3, 9.2, 9.3, 36.
 import { test } from 'node:test';
@@ -174,7 +174,7 @@ test('PROF10 service: a Lapidary\'s Siege-cracked Gem set as the piece\'s gem - 
   assert.deepEqual(s.stores(mac, 'gem:diamond'), []);
 });
 
-test('PROF10 service: a Master Jeweller\'s Masterwork points (3.3: "+5%") - the roll at 90 of 100 a Masterwork, a Lapidary\'s the same roll Superior; a Masterwork carries the maker\'s mark', async () => {
+test('PROF10 service: a Master Jeweler\'s Masterwork points (3.3: "+5%") - the roll at 90 of 100 a Masterwork, a Lapidary\'s the same roll Superior; a Masterwork carries the maker\'s mark', async () => {
   const s = await stand();
   const mac = await s.seated('Mac');
   s.stock(mac, 'ring:silver', 2);
@@ -183,7 +183,7 @@ test('PROF10 service: a Master Jeweller\'s Masterwork points (3.3: "+5%") - the 
   assert.deepEqual([plain.body.quality, plain.body.marked], [3, false], 'margin 100: Fine 40, Superior 52 - at 90, Superior');
   s.setXp(mac, xpForRank(100), { spec100: 'master-jeweller' });
   const mj = await steered(0xe6, () => s.cut(mac, 'ring:silver'));
-  assert.deepEqual([mj.body.quality, mj.body.marked, readProductRecord(mj.body.pieces[0].record).a], [4, true, 1], 'a Master Jeweller\'s: Fine 35, Superior 52, Masterwork 13 - at 90, a Masterwork, marked');
+  assert.deepEqual([mj.body.quality, mj.body.marked, readProductRecord(mj.body.pieces[0].record).a], [4, true, 1], 'a Master Jeweler\'s: Fine 35, Superior 52, Masterwork 13 - at 90, a Masterwork, marked');
 });
 
 test('PROF10 service: a Gemcutter\'s piece lists on the market among the Jewellery and is read with its hand - the Crafted view filtered and the lister\'s own', async () => {

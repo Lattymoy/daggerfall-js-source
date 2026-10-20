@@ -48,7 +48,7 @@ test('HAUL-CARDS the law: a material\'s tier wears the loot\'s colours - 1 and 2
   assert.equal(rankProgress(xpForRank(100) + 5000), 1, 'the top rank');
   assert.ok(HAUL_HOLD_MS > 2500 && LODE_HOLD_MS > HAUL_HOLD_MS);
   assert.deepEqual([HAUL_ICON_BOX, LODE_ICON_BOX], [32, 38]);
-  assert.equal(HAUL_CAPPED_TEXT, `No silver - the day's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts is reached`);   // SERPENT-SET: the serpents strike under the same cap; PIN MOVED (EG-E1): and the Spire's Redoubts
+  assert.equal(HAUL_CAPPED_TEXT, `No silver. The day's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts is reached`);   // SERPENT-SET: the serpents strike under the same cap; PIN MOVED (EG-E1): and the Spire's Redoubts; PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
 });
 
 test('HAUL-CARDS a harvest\'s cards: the goods one card - "+3", its material\'s name and tier, its picture the pack\'s own item, "Stores 41" (own, bought and gold\'s), the XP on it and the rank\'s bar, a clean act\'s words its head - and a gem and a second find each their own; nothing for an answer it cannot read (mutants: the Stores\' count; the XP off the card; the gem dropped; the head unsaid)', () => {
@@ -90,7 +90,7 @@ test('HAUL-CARDS a claim\'s cards: a raid\'s 30 with the day\'s combat bar and t
   const [raid, deed, pay, ...rest] = claimHauls(data, 'raid');
   assert.deepEqual(rest, [], 'a contract that paid nothing has no card');
   assert.deepEqual(haulWords(raid), { head: '', plus: '+30', name: 'silver', sub: 'Town defended', tag: '', end: '90', row: { text: 'Combat today', fill: 0.8, end: '120 / 150' }, lode: null });
-  assert.deepEqual([deed.tone, haulWords(deed).sub, haulWords(deed).plus], ['treasury', 'Guild deed - to The HND Guild', '+25']);
+  assert.deepEqual([deed.tone, haulWords(deed).sub, haulWords(deed).plus], ['treasury', 'Guild deed: to The HND Guild', '+25']);   // PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
   assert.deepEqual([pay.tone, haulWords(pay).sub, haulWords(pay).plus], [undefined, 'Contract (2 tax) - [HND]', '+38']);   // AUDIT HAUL-CARDS C3 (PIN MOVED): the tax before the guild
   assert.equal(haulWords(claimHauls({ marks: { struck: 50, balance: 50 } }, 'gate')[0]).sub, 'Breach closed');
   const capped = claimHauls({ marks: { struck: 0, balance: 150, why: 'cap', combat: { earned: 150, max: 150 } } }, 'gate');

@@ -1,0 +1,154 @@
+[
+  {
+    "name": "PURSE-BACK-check-gone",
+    "file": "tools/realmRollback.mjs",
+    "old": "clean == null ? 'no-clean' : clean >= first ? (back ? 'rolled-back' : 'clean-after') : null;",
+    "new": "clean == null ? 'no-clean' : null;",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "the rollback asked when the clean save is from after the wrap - it lands after the sale, undoing play and giving nothing back"
+  },
+  {
+    "name": "PURSE-BACK-equal-clean-passes",
+    "file": "tools/realmRollback.mjs",
+    "old": "clean >= first ? (back",
+    "new": "clean > first ? (back",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a clean save at the purse's own sequence passed"
+  },
+  {
+    "name": "PURSE-BACK-latest-gold-read",
+    "file": "tools/realmRollback.mjs",
+    "old": "(a && a.seq <= f.seq ? a : f)",
+    "new": "(a && a.seq >= f.seq ? a : f)",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "the latest gold finding read as the first - a clean save between two of them passed"
+  },
+  {
+    "name": "PURSE-BACK-rolled-back-unsaid",
+    "file": "tools/realmRollback.mjs",
+    "old": "(back ? 'rolled-back' : 'clean-after')",
+    "new": "'clean-after'",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a run applied twice told the purse was set at nothing since"
+  },
+  {
+    "name": "PURSE-BACK-any-of-several",
+    "file": "tools/realmRollback.mjs",
+    "old": "below.length === 1 ? below[0] : null;",
+    "new": "below.length ? below[0] : null;",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "the first of several wrapped characters rolled back, unasked"
+  },
+  {
+    "name": "PURSE-BACK-another-accounts",
+    "file": "tools/realmRollback.mjs",
+    "old": "character ? result.characters.find((/** @type {any} */ c) => c.id === character) : below",
+    "new": "character ? result.characters.find((/** @type {any} */ c) => c.id === character) ?? below[0] : below",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a character named that is not the account's - the account's first wrapped one rolled back instead"
+  },
+  {
+    "name": "PURSE-BACK-note-without-run",
+    "file": "tools/realmRollback.mjs",
+    "old": "note: noteFor(pick.reach, run) }",
+    "new": "note: noteFor(pick.reach) }",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "the staff finding forgets which run wrote it"
+  },
+  {
+    "name": "PURSE-BACK-dry-writes",
+    "file": "tools/lib/wranglerBindings.mjs",
+    "old": "          if (dry && WRITES.test(sql)) {\n            held.push(text);",
+    "new": "          if (false) {\n            held.push(text);",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "the dry run writes the rollback"
+  },
+  {
+    "name": "PURSE-BACK-dry-write-for-rows",
+    "file": "tools/lib/wranglerBindings.mjs",
+    "old": "    if (dry && WRITES.test(sql)) throw new Error('wranglerD1: a write asked for rows - a dry binding cannot answer it');\n",
+    "new": "",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a write asked for its rows runs on a dry binding"
+  },
+  {
+    "name": "PURSE-BACK-count-assumed",
+    "file": "tools/lib/wranglerBindings.mjs",
+    "old": "const changes = out[1]?.results?.[0]?.changes;",
+    "new": "const changes = 1;",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a guarded write that moved nothing answered as landed - the staff finding written for a rollback that did not happen"
+  },
+  {
+    "name": "PURSE-BACK-quoted-placeholder-bound",
+    "file": "tools/lib/wranglerBindings.mjs",
+    "old": "if (c === \"'\" || c === '\"') { quote = c; out += c; continue; }",
+    "new": "if (c === '\"') { quote = c; out += c; continue; }",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a ? inside a string literal bound as a parameter - every bind after it shifts"
+  },
+  {
+    "name": "PURSE-BACK-bare-mark-numbered-wrong",
+    "file": "tools/lib/wranglerBindings.mjs",
+    "old": "const n = digits ? Number(digits) : top + 1;",
+    "new": "const n = digits ? Number(digits) : 1;",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a bare ? after a numbered one bound the first value, not SQLite's next"
+  },
+  {
+    "name": "PURSE-BACK-binds-left-over",
+    "file": "tools/lib/wranglerBindings.mjs",
+    "old": "  if (top !== args.length) throw new Error(`literalSql: ${args.length} bound, ${top} asked`);\n",
+    "new": "",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a bind no placeholder asks for passed silently, where D1 refuses the statement"
+  },
+  {
+    "name": "PURSE-BACK-missing-key-throws",
+    "file": "tools/lib/wranglerBindings.mjs",
+    "old": "        if (MISSING.test(String(e?.stderr ?? '')) || MISSING.test(String(e?.message ?? ''))) return null;\n",
+    "new": "",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a save the bucket lost throws, where the binding answers null and the act says no-clean"
+  },
+  {
+    "name": "PURSE-BACK-command-in-the-log",
+    "file": "tools/lib/wranglerBindings.mjs",
+    "old": "new Error(`wrangler ${args.slice(0, 3).join(' ')} failed",
+    "new": "new Error(`wrangler ${args.join(' ')} failed",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a failure's message carries its statement - an account's id on a public run's page"
+  },
+  {
+    "name": "PURSE-BACK-apply-by-default",
+    "file": ".github/workflows/realm-rollback.yml",
+    "old": "        required: true\n        default: false\n        type: boolean",
+    "new": "        required: true\n        default: true\n        type: boolean",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "a run by hand writes unless told not to"
+  },
+  {
+    "name": "PURSE-BACK-actor-typed",
+    "file": ".github/workflows/realm-rollback.yml",
+    "old": "--by \"$GITHUB_ACTOR\"",
+    "new": "--by \"Lattymoy\"",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "the act recorded as the owner's whoever ran it"
+  },
+  {
+    "name": "PURSE-BACK-input-spliced",
+    "file": ".github/workflows/realm-rollback.yml",
+    "old": "--handle \"$HANDLE\"",
+    "new": "--handle \"${{ inputs.handle }}\"",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "an input pasted into the script - a shell command anyone who can start the run can type"
+  },
+  {
+    "name": "PURSE-BACK-page-lost",
+    "file": ".github/workflows/realm-rollback.yml",
+    "old": "          if [ -s \"$RUNNER_TEMP/summary.md\" ]; then cat \"$RUNNER_TEMP/summary.md\" >> \"$GITHUB_STEP_SUMMARY\"; fi\n",
+    "new": "",
+    "tests": ["test/tooling/realm_rollback.test.js"],
+    "why": "the run's page says nothing of what the act answered"
+  }
+]

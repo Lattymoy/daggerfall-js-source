@@ -993,7 +993,7 @@ export function bookCappedLine(/** @type {unknown} */ factions) {
   const names = [...new Set(Array.isArray(factions) ? factions : [])].map(hallPosterName).filter(Boolean).map((n) => `the ${n}`);
   if (!names.length) return null;
   const one = names.length === 1, said = listed(names);
-  return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils, won by Merit - your rank there is 7.`;
+  return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils, won by Merit. Your rank there is 7.`;
 }
 
 // ─── CHAP4c: THE CHAPTERS' TITLES (Chapters-Arc 6) ──────────────────

@@ -297,7 +297,7 @@
   {
     "name": "SAFE7-the-joke-unsaid",
     "file": "src/net/safety/conduct.js",
-    "old": "disability or age - not even as a joke.'",
+    "old": "disability or age, not even as a joke.'",
     "new": "disability or age.'",
     "tests": [
       "test/net/safety/safe_law.test.js"

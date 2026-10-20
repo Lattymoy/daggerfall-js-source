@@ -39,8 +39,8 @@ const storeOf = (reps) => {
 };
 const STANDING = 'Your standing here is -53. It takes members at 0 or more.';
 const QUESTS = (tail) => `As a stranger you may still ask its quest-giver for work: each quest done raises your standing 5${tail}.`;
-const DRIFT = 'Below 0 your standing also recovers a point every 7 days of your own time - rests and journeys count.';
-const DRIFT_ONLINE = 'Below 0 your standing also recovers a point every 7 days of your own time - rests and journeys count, and so does time logged off.';
+const DRIFT = 'Below 0 your standing also recovers a point every 7 days of your own time. Rests and journeys count.';
+const DRIFT_ONLINE = 'Below 0 your standing also recovers a point every 7 days of your own time. Rests and journeys count, and so does time logged off.';
 const PACE = (owed) => `Online, quests and the recovery raise it at most 15 a real day (days turn at midnight UTC)${owed}. Beyond that pace, a chapter writ of the guild's on a notice board adds 2.`;
 /** A character whose guild skills meet rank 0's bars (one at 22, a second at 4), as the join reads them - and one with none. */
 const skilled = (g) => ({ name: 'Glade', skills: Object.fromEntries(g.skills.map((sk) => [sk, 30])) });
@@ -73,7 +73,7 @@ test('WAY-BACK: the join\'s other bar is said with it - a stranger short of the 
   assert.equal(wayBackLines(g, oneHigh, {}, store)[1], SKILLS, 'one guild skill at the high bar is not two');
   assert.equal(wayBackLines(g, { name: 'Glade', skills: { [g.skills[0]]: 22, [g.skills[1]]: 4 } }, {}, store).includes(SKILLS), false, 'one at 22, a second at 4: the bars met');
   assert.deepEqual(wayBackLines(g, skilled(g), {}, store, { shut: true }),
-    [STANDING, QUESTS(' - 11 more quests reach 0'), 'This hall is shut this Season - the guild\'s halls in other regions still give work.', DRIFT]);
+    [STANDING, QUESTS(' - 11 more quests reach 0'), 'This hall is shut this Season. The guild\'s halls in other regions still give work.', DRIFT]);
 });
 
 test('WAY-BACK: said only where a join is offered and refused on the standing - not at 0, not to a member of the slot (this guild, or another temple or order in it), not for a guild joined by invitation, not without a store (mutants: the line at 0, the slot read as this guild alone, the invitation gate dropped)', () => {
