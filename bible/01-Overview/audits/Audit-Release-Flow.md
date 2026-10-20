@@ -123,3 +123,9 @@ this branch: IT1's and WD1's vendored patches rebuilding their authors' files (`
 CRATE-FREE's real-data landing (`fb1004d_cratefree`). EG-ZD's spans' clock test is a load flake: it fakes `Date.now`,
 but the span seconds run on the real `performance.now` (`render/deadlands.js` anchoredClock), and it allows 50 ms of
 real time between two readings.
+
+F1's other half, seen after the audit: merging main (#1047, QUESTLINES) on 2026-10-20 found main's own `bootWorld` one
+logical line over its ceiling. Each pull request had fit against the base it saw, and main's push runs skipped the
+ceiling as `/check` did - the same event-name gate - so main stood over it unmeasured until the questlines' own
+follow-up took it back out (#1073, the ask door built in the quest bridge). With F1's fix, `check.yml` holds the
+ceiling on main's pushes too, so the next overflow turns main's own check red the push it lands.
