@@ -377,6 +377,22 @@ export const TUTORIALS = Object.freeze([
       'Many quests must be finished in time. Turning work down costs you nothing, except in the main story.',
     ],
   }),
+  // QL2 (bible/06-Systems/Questlines-Arc.md section 6): what the questlines changed, the first time a quest carries them
+  page({
+    id: 'questlines', group: 'quests',
+    get title() { return t('tutorials.questlines.title', 'Questlines'); },
+    get trigger() { return t('tutorials.questlines.trigger', 'When you first take a quest with objectives.'); },
+    get body() {
+      return [
+        t('tutorials.questlines.body1', 'The Quests tab lists what each quest asks of you and ticks off each step. Some quests make you choose, and end differently for each choice.'),
+        // AUDIT QUESTLINES UI-4 (REWARD-6): not every quest pays gear - 24 sheets' outcomes pay none - so the page promises it
+        // only where the quest's own page does (ui/questlines/qlJournal.js qlObjectivesBlock, its row's `gear`). AUDIT
+        // QUESTLINES VOICE-QL: "longer stories, quest after quest, listed in the same tab" said plainly (Voice.md rule 4),
+        // in the questline page's own words (qlJournal.js ql.journal.lineWhat)
+        t('tutorials.questlines.gearBody', 'Some quests, once finished, let you pick one of three pieces of gear: the quest\u2019s page says so. Questlines are longer stories told in several quests, one after another. The same tab lists them.'),
+      ];
+    },
+  }),
   page({
     id: 'quest-guide', group: 'quests', title: 'Tracking Quests', trigger: 'When you first track a quest.',
     body: [

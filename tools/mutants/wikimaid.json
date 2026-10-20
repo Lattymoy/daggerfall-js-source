@@ -235,12 +235,12 @@
   {
     "name": "WIKIMAID-title-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'spirechampion', 'spirefirst', 'wikimaid']);",
-    "new": "'spirechampion', 'spirefirst']);",
+    "old": "'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
+    "new": "'spirechampion', 'spirefirst', 'doorwarden',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The relay and the client refuse the word."
+    "note": "QL12 (re-aimed by content: the questlines' five after it). The relay and the client refuse the word."
   },
   {
     "name": "WIKIMAID-aura-not-in-vocabulary",

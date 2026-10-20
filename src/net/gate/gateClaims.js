@@ -24,6 +24,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { readReceipt } from './gateReceipt.js';
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The device's receipts not yet settled with the account service. */
 export const GATE_CLAIMS_KEY = 'wb5.gateClaims';
@@ -108,6 +109,11 @@ export function createGateClaims({ claim, store = null, nowS = () => Math.floor(
         try { answer = await claim(r); } catch { answer = { ok: false, error: 'offline' }; }
         if (answer?.ok && answer.data?.recorded === true) {
           recorded++;
+          // QL11: the receipt says what was done - a fight's (`dealt`, `stood`) closed the breach, and `r` says its fighter
+          // broke the rite too; a receipt of the rite alone (`rite`) broke it and closed no breach of this account's
+          const c = readReceipt(r);
+          if (c && c.x !== 'rite') noteAct('breach-closed');   // QL11: a Dagon's Breach closed - counted once (`recorded`)
+          if (c && (c.x === 'rite' || c.r === 1)) noteAct('rite-broken');   // QL11: the faithful's rite broken before the breach opened
           const n = Number.isSafeInteger(answer.data.closed) ? answer.data.closed : null;
           if (n != null) { onClosed(n); say(answer.data.rite === true ? GATE_CLAIM_TEXT.rite : GATE_CLAIM_TEXT.recorded(n)); }   // WB12d: the rite alone closed no breach
           // MARKS1: and the gate's Marks, struck by the service as it counted the gate (marks.js strikeGateMarks) - the

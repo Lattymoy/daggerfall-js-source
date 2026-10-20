@@ -93,6 +93,7 @@ on:
       - "src/net/professionLaw.js"
       - "src/net/firmament/firmamentLaw.js"
       - "src/net/firmament/firmamentTree.js"
+      - "src/net/questlineClaims.js"
       - "src/net/nodeLaw.js"
       - "src/world/ethericSea.js"
       - "src/net/skyLaw.js"

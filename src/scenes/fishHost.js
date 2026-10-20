@@ -43,6 +43,7 @@ import { isOutdoorWaterTile } from '../world/terrain/terrainSurface.js';
 import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { sceneCompassWord } from '../systems/compassWords.js';   // AUDIT DELVE C8: the eight ways, one home
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The cast stands this far ahead of the look (m), and is reached from this far. */
 export const CAST_AHEAD_M = 3;
@@ -346,8 +347,10 @@ export function fishKind({ book, host }) {
     /** The goods, the species named. */
     storesLine: (d) => haulLine(d, speciesOfHaul(d.node, climateOf(d.node))),
     haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null,   // HAUL-CARDS: the catch's species on its card, the Raw Fish its sub
-    /** A trophy: the species' own item, into the pack once (every answer to the haul says it). */
+    /** A trophy: the species' own item, into the pack once (every answer to the haul says it). QL11: and every haul the
+     *  service answered is a catch. */
     answered(d, toast) {
+      noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag
       if (!d?.trophy || trophied.has(d.node)) return;
       trophied.add(d.node);
       const species = speciesOfHaul(d.node, climateOf(d.node));

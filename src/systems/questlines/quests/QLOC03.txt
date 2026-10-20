@@ -1,0 +1,156 @@
+-- QL16 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.3): THE OLD COIL, step 3 of 3 - the line's last,
+-- its branch the line's outcome. Witnessed (net/questlineClaims.js: `serpent`, the l1 receipt): it waits on the Sea
+-- Serpent slain (`ql act serpent-slain 1`). Then Hamid's question: the serpent's blood poured back to Satakal (the
+-- sailors' offering) or its scale kept. Lore: canon - Satakal, the World-Skin. The port's own: Sethrakul, the Old Coil,
+-- the harbour bells (bible/03-World/Sea-Serpent.md), the offering, Hamid al-Rasheen.
+Quest: QLOC03
+DisplayName: The Shed Skin
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          The Old Coil has gone down for the season, and
+<ce>            Hamid al-Rasheen has sailed home to Sentinel.
+
+QuestComplete:  [1004]
+<ce>         Hamid counts _gold_ gold into your hand. "For the
+<ce>             Old Coil. The lanes will sleep easier."
+
+QuestLogEntry:  [1010]
+%qdt:
+ Hamid al-Rasheen has written: the harbor bells
+ ring for the Old Coil now. When a great serpent is
+ sighted, I am to sail out and slay it, and then
+ find Hamid at _inn_ in __inn_.
+
+Message:  1011
+%pcn,
+
+     The bells. Every harbor from Sentinel to
+ Wayrest. The harbormasters call it a great serpent
+ and ring its waters on the charts. We know its name.
+
+     When the bells ring, sail out. Do not go alone if
+ you can help it - it has sunk better ships than
+ yours, and better than mine. When it is dead, find
+ me at _inn_ in __inn_. There is one thing left to
+ do, and the old sailors would want it done right.
+
+<ce>                              Hamid al-Rasheen
+
+Message:  1012
+<ce>          A sailor in a Sentinel cap catches you up and
+<ce>          hands you a letter. "From the captain," he says.
+<ce>                 "He says the bells are ringing."
+
+Message:  1013
+<ce>         "Is it dead? No? Then why are you here drinking
+<ce>          with me? Listen for the bells, captain, and sail."
+
+Message:  1014
+Hamid al-Rasheen is at _inn_. He jumps every time a bell rings.
+<--->
+That Sentinel captain at _inn_ says he is waiting for someone to kill a god.
+<--->
+The Redguard sailor? He keeps a flask for something he calls the offering.
+
+Message:  1015
+%qdt:
+ I have slain Sethrakul, the Old Coil. Its blood is
+ in a flask, and one great scale from its hide is
+ mine. Hamid al-Rasheen waits at _inn_ in __inn_.
+
+Message:  1020
+<ce>         Hamid al-Rasheen stands when he sees you, and for
+<ce>                  a long moment says nothing.
+<ce>
+<ce>         "So it is done. The skin that would not lie still
+<ce>          lies still." He looks at the flask of black blood
+<ce>          and the great scale you carried from the fight.
+<ce>
+<ce>         "The old sailors would pour its blood into the sea
+<ce>          - a shed skin given back to the World-Skin, an
+<ce>          offering to Satakal. Or keep the scale. A god's
+<ce>          hide will buy a captain a name in every port."
+
+Message:  1030
+<ce>                  "Which will it be, captain?"
+
+Message:  1031
+Pour the blood into the sea for Satakal
+
+Message:  1032
+Keep the scale
+
+Message:  1033
+<ce>         Hamid takes the flask in both hands. "At Sentinel,
+<ce>          then, at the harbor mouth, where my grandmother
+<ce>          poured hers. Satakal will have his skin back."
+<ce>
+<ce>         "The sailors will hear of this in every port, and
+<ce>          they will remember whose offering it was."
+
+Message:  1034
+<ce>         "Keep it, then. A god's hide in a captain's sea
+<ce>          chest." Hamid laughs, and then he does not.
+<ce>
+<ce>         "Wear it where the sailors can see it. Let them
+<ce>          know the Old Coil was slain, and by whom."
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 300 to 600
+
+Person _hamid_ faction People_of_Sentinel male anyInfo 1014
+Place _inn_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _hamid_ Hamid_al-Rasheen
+	place npc _hamid_ at _inn_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_slain_ task:
+	ql act serpent-slain 1
+	log 1015 step 1
+
+_qgclicked_ task:
+	clicked npc _hamid_
+
+_clearclick_ task:
+	when _qgclicked_ and not _slain_
+	say 1013
+	clear _qgclicked_ _clearclick_
+
+_home_ task:
+	when _slain_ and _qgclicked_
+	say 1020
+	ask 1030 choices 1031 _toSea_ 1032 _keepScale_
+
+variable _toSea_
+variable _keepScale_
+
+_poured_ task:
+	when _toSea_
+	say 1033
+	outcome _offering_
+	give pc _gold_
+	end quest
+
+_kept_ task:
+	when _keepScale_
+	say 1034
+	outcome _scale_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

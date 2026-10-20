@@ -125,6 +125,13 @@ export const TITLE_TEXT = Object.freeze({
   spirechampion: 'Spire Champion',
   spirefirst: 'First of the Spire',
   wikimaid: 'WikiMaid',           // WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title"): SylviaBun's own, spelled as she spelled it
+  // QL12 (2026-10-19, bible/06-Systems/Questlines-Arc.md section 5.3): THE QUESTLINES' FIVE, a title a line, in the lines'
+  // order (net/questlineClaims.js QL_TITLES) - paid by the account service on the line's last witnessed step, held for good
+  doorwarden: 'Doorwarden',                // the Burning Doors
+  covenbane: 'Covenbane',                  // the Covens' Hoard
+  weirwalker: 'Weirwalker',                // the Weir Road
+  hourwitness: 'Witness of the Hour',      // the Hour That Was Not
+  satakalwitness: "Satakal's Witness",     // the Old Coil
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -342,6 +349,16 @@ export const TITLE_RGBA = Object.freeze({
   spirechampion: Object.freeze([0.275, 0.839, 0.549, 1]),   // #46d68c
   spirefirst: SPIRE_DAWN,
   wikimaid: WARREN_LILAC,   // WIKIMAID: the rabbits' lilac - the colour a face that cannot draw a gradient uses, and the glyph's
+  // QL12 (no colour named): THE QUESTLINES' FIVE, each its line's place and each more than 40 from every title's - the
+  // Burning Doors' EMBER, redder than the Gatebreaker's fire and brighter than the Wellhead's Master's forge; the covens'
+  // hoarded GOLD, deeper than the Founder's and the Hour's; the Spire's own BLUE, bluer and deeper than the Herald's azure
+  // and brighter than the Battlemages'; Akatosh's BRASS, greener than the Warden's bronze; and the SEA's teal, bluer than
+  // the Coilbreaker's tide
+  doorwarden: Object.freeze([0.910, 0.251, 0.047, 1]),       // #e8400c
+  covenbane: Object.freeze([0.816, 0.667, 0.063, 1]),        // #d0aa10
+  weirwalker: Object.freeze([0.122, 0.373, 1, 1]),           // #1f5fff
+  hourwitness: Object.freeze([0.678, 0.647, 0.188, 1]),      // #ada530
+  satakalwitness: Object.freeze([0.071, 0.722, 0.722, 1]),   // #12b8b8
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left

@@ -65,8 +65,8 @@
   {
     "name": "SHARE-MEND-receiver-reads-slim",
     "file": "src/systems/quest/questShare.js",
-    "old": "takeLocalActions(local, fullShareMarkers(data))",
-    "new": "takeLocalActions(local, data)",
+    "old": "takeLocalActions(local, fullShareMarkers(data), live)",
+    "new": "takeLocalActions(local, data, live)",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]

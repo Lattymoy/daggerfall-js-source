@@ -46,6 +46,7 @@ import { getPref } from '../../systems/uiPrefs.js';
 import { drawEnhancedToasts, releaseEnhancedToasts } from '../enhanced/enhancedNotice.js';
 import { entryOpening, timeLeftWords, QUEST_URGENT_SECONDS } from './questRail.js';   // the rail, never the lens: the HUD imports this face (entryOpening's own comment says why)
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { t } from '../../systems/textManager.js';   // QL2: the objective's word, in the player's language
 
 /** The switch's prefs key (systems/features.js row `quest-herald`). */
 export const HERALD_PREF = 'questHerald';
@@ -63,6 +64,7 @@ export const HERALD_MAX = 3;
 export const HERALD_WORDS = Object.freeze({
   started: 'New quest',
   updated: 'Journal updated',
+  get objective() { return t('quest.herald.objective', 'Objective done'); },   // QL2: a stamped quest's objective, done
   urgent: 'Under a day left',
   completed: 'Quest completed',
   ended: 'Quest ended',
@@ -79,7 +81,7 @@ export const HERALD_LIVE_ID = 'quest-herald-live';
  *  player most needs: an ending is the last word, a new quest stays new
  *  while its first entries land, and a deadline outranks a routine
  *  entry. */
-const RANK = Object.freeze({ updated: 0, urgent: 1, started: 2, completed: 3, ended: 3 });
+const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 });   // QL2: an objective done outranks a routine entry
 
 /** Is the herald listening? The enhanced skin, the player's switch - and
  *  a page to say it on: node drives the hosts headless (the suite, the
@@ -97,6 +99,7 @@ const underADay = (view) => view?.urgent ?? (Number.isFinite(view?.clockSeconds)
  *  opening, the time left, or nothing for an ending. */
 function lineOf(type, event, view) {
   if (type === 'started' || type === 'updated') return entryOpening(view?.latest?.lines);
+  if (type === 'objective') return event.type === 'objective' ? event.text ?? '' : '';   // QL2: what was done
   if (type === 'urgent') {
     const s = event.type === 'urgent' ? event.clockSeconds : view?.clockSeconds;
     return Number.isFinite(s) ? heraldTimeLeft(s) : '';
@@ -138,7 +141,8 @@ export class QuestHerald {
         type,
         title: event.title ?? was?.title ?? '',
         main: !!event.main,
-        line: lineOf(type, event, view),
+        // AUDIT QUESTLINES UI-2: a kept "Objective done" keeps its words - the entry the script writes a tick later is not one
+        line: keeps && type === 'objective' ? was.line : lineOf(type, event, view),
         left: HERALD_SECONDS,
         said: false,   // AUDIT GUIDE H3: spoken once, whole, on the first frame it shows - a merge is new words
       };

@@ -37,7 +37,7 @@ test('MAC-K2: FOUR sections, and QUESTS leads them - the L key opens what it is 
   assert.match(read('src/ui/enhanced/enhancedMenu.js'), /from '\.\.\/quest\/questRail\.js'/, 'and so does the pause tab');
   assert.doesNotMatch(cr, /getLogMessages|remainingTimeInSeconds/,
     'neither face walks the machine itself - that is scenes/quest/questBridge.js questLog()');
-  assert.match(read('src/scenes/quest/questBridge.js'), /questLog\(\) \{/, 'the one walk');
+  assert.match(read('src/scenes/quest/questBridge.js'), /questLog\(\{ windows = true \} = \{\}\) \{/, 'the one walk');   // PIN MOVED (AUDIT QUESTLINES LAW-11): the lens's look asks it without the windows' rows
   assert.match(read('src/ui/chronicleDoor.js'), /QUESTS ARE IN IT, and MAC-K2 is why/);
 });
 

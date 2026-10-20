@@ -25,9 +25,10 @@ import { repaintKeepingScroll } from '../domRepaint.js';   // FB1018f SPELL-SCRO
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { overlayAction, eventMeans } from '../input.js';   // LV1's audit: the REGISTRY's answer (AUDIT KB1: `eventAction`, the event's own read) for the key this window is named after
 import { questRail, questTitleOf, remainWords, QUEST_URGENT_SECONDS } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
+import { qlObjectivesBlock } from '../questlines/qlJournal.js';   // QL2: a stamped quest's objectives, as the pause tab draws them
 import { entryTarget, targetWords, WHERE_TEXT } from '../quest/questLens.js';   // GUIDE2: where a quest points, said the way every face says it
 import { followOn, trackButton } from '../quest/questTracker.js';   // GUIDE4: the HUD's card - the Track toggle's one home
-import { breakableNote } from '../../systems/notebook.js';   // JOURNAL1: a note the notebook's wrap can take, whatever was typed
+import { breakableNote, filedOutcome } from '../../systems/notebook.js';   // JOURNAL1: a note the notebook's wrap can take, whatever was typed; AUDIT QUESTLINES UI-5: an archived quest's outcome
 import { pageOfNote, pageRefusalText } from '../../net/journalPage.js';   // JOURNAL1: a note as the page it would be shown as, or why it cannot be
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../../systems/bounty/bountyJournal.js';   // BOUNTY1: a bounty's Abandon and Share
 import { isHuntQuestId, abandonHuntQuest } from '../../systems/huntJournal.js';   // RVN7c: a revenant's hunt - its Abandon
@@ -173,12 +174,18 @@ export function chronicleModel(d = {}) {
         note: said?.note ?? null,
         find: said?.find ?? null,
         clockSeconds: q.clockSeconds,
+        ql: q.ql ?? null,   // QL2: a stamped quest's objectives, choices and outcome - the pause tab's own block (ui/questlines/qlJournal.js)
       };
     }),
-    ...rail.finished.map((q) => ({
-      head: `${questTitleOf(q.name)}${q.when ? ` \u2014 ${q.success === false ? 'ended' : 'completed'} ${q.when}` : ''}`,
-      body: [...q.lines],
-    })),
+    ...rail.finished.map((q) => {
+      // AUDIT QUESTLINES UI-5: how a stamped quest ended - the filed entry's side record (systems/notebook.js filedOutcome),
+      // the enhanced archive's alone to draw: DFU's classic logbook draws the entry as DFU filed it
+      const outcome = filedOutcome(log?.finished?.[Number(String(q.key).slice(2))]);
+      return {
+        head: `${questTitleOf(q.name)}${q.when ? ` \u2014 ${q.success === false ? 'ended' : 'completed'} ${q.when}` : ''}`,
+        body: outcome ? [...q.lines, t('quest.outcome.filed', 'Outcome: {text}', { text: outcome })] : [...q.lines],
+      };
+    }),
   ].filter((e) => e.head || e.body.length);
   // The history is already lines - chargen composes backStory as
   // strings, and playerHistory.js reads exactly this.
@@ -631,6 +638,8 @@ function paint() {
         }
         if (share && sharing === e.index) entry.append(shareStrip(share, e.index));
         if (!isFolded(folded, section, i)) {
+          // QL2: what the quest asks now, above its journal - the pause tab's block, one home (ui/questlines/qlJournal.js)
+          if (section === 'quests') { const block = qlObjectivesBlock(document, e.ql); if (block) entry.append(block); }
           for (const line of e.body) entry.append(el('p', null, line));
         }
         box.append(entry);

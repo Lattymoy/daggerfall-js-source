@@ -149,7 +149,8 @@ export class QuestTracker {
       title: v.title ?? '',
       main: !!v.main,
       pinned: this.isPinned(v.id),
-      opening: entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),
+      // QL2: a stamped quest's card says the objective it asks now; DFU's quest, its newest entry's opening
+      opening: v.objective ? entryOpening([v.objective], TRACKER_OPENING_MAX) : entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),
       where: v.words?.where ?? '',
       note: v.words?.note ?? '',   // GUIDE5: a named place not on the map - no mark, the talk arc's answer instead
       // AUDIT GUIDE U11: a main quest said on the time row - the one row every size of the card keeps

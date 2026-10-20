@@ -124,6 +124,9 @@ const CTX_PENDING = new Map([
   // (ui/hud/hudEscortFaces.js) - and the new onQuestEnded sweep beside
   // them.
   ['onQuestStarted', "an OPTIONAL host listener - the bridge already fans RaiseOnQuestStartedEvent to the QuestListsManager's one-time recording itself"],
+  // QL12: the questlines' two seams, both OPTIONAL BY DESIGN (questBridge.js QUEST_CTX_OPTIONAL_BY_DESIGN)
+  ['onQuestlineOffer', 'an OPTIONAL host listener - the runner starts a line\'s step itself; a host may hear it'],
+  ['questlineService', 'the bridge builds its own (scenes/quest/questlineHost.js questlineService - the account claim online, none offline); a test hands one in'],
 ]);
 
 /** Every `ctx.<name>` the bridge reaches for, and what world.js gives

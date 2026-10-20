@@ -205,12 +205,13 @@
   {
     "name": "HACKED-GOLD-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct158';",
+    "old": "export const ACCOUNT_VERSION = 'acct159';",
     "new": "export const ACCOUNT_VERSION = 'acct123';",
     "tests": [
       "test/systems/tech1_roster.test.js",
       "test/server/realm1.test.js"
-    ]
+    ],
+    "note": "QL12 (PIN MOVED): acct159."
   },
   {
     "name": "HACKED-GOLD-the-worn-offer-unworn",

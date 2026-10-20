@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct158"
+ACCOUNT_VERSION = "acct159"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -303,6 +303,12 @@ CHAPTERS_OPEN = "on"
 # everyone by this one line. FIRMAMENT-ON (2026-10-15, the owner, at the audit's merge: "switch it on for players"):
 # "on" - the Firmament is everyone's.
 FIRMAMENT_OPEN = "on"
+# QL12 (bible/06-Systems/Questlines-Arc.md section 5.3): THE QUESTLINES' CLAIM by this switch - "off", "dev" (the
+# DEVELOPER_HANDLES alone) or "on". The service pays a questline only what it witnessed - a step's endgame receipt written
+# after the step was opened here - a line's title, held for good, and the Covens' Hoard's Weir Key, once an account
+# (server-account/src/questlines.js). Shut, every claim is refused (`ql-closed`) and the client's lines still move on
+# its own quests, as the design has it: the service pays, it never gates. "on" - the owner's ask is the whole arc live.
+QUESTLINES_OPEN = "on"
 # CHAP4c (Chapters-Arc 6): THE CHAPTERS' TITLES - a seat's Master, officer and Former Master signed on the token - by
 # this switch, "on" or anything else for off. Shipped OFF: the relay must carry the five ids first (RELAY_VERSION
 # world183, which relay-deploy.yml deploys on the merge to main - AUDIT CHAP4 R2; CHAP6e's High Master and Season

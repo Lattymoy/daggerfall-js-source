@@ -17,6 +17,7 @@
 //
 // Pure - the call, the store and the clocks are handed in. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { readSdReceipt } from './sdReceipt.js';
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The device's Hour receipts not yet settled with the account service. */
 export const SD_CLAIMS_KEY = 'sd9.sdClaims';
@@ -96,6 +97,7 @@ export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Da
         try { answer = await claim(r); } catch { answer = { ok: false, error: 'offline' }; }
         if (answer?.ok && answer.data?.recorded === true) {
           recorded++;
+          noteAct('hour-broken');   // QL11: the Brass Remnant broken - its h1 receipt counted once (`recorded`)
           const n = Number.isSafeInteger(answer.data.broken) ? answer.data.broken : null;
           if (n != null) { onBroken(n); say(SD_CLAIM_TEXT.recorded(n)); }
           if (answer.data.title === true) say(SD_CLAIM_TEXT.title);

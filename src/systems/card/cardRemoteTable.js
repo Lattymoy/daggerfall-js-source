@@ -21,6 +21,7 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 
 import { validHoldemOut } from '../../net/holdemTable.js';
+import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** How long ago a hand already under way is told as having been dealt - past every throw and turn on the cloth. */
 export const CATCH_UP_MS = 20000;
@@ -123,6 +124,8 @@ export class RemoteCardTable {
       const broke = events.some((e) => e.t === 'leave' && e.seat === this.chair && e.broke);
       this._lose(!this.confirmed ? 'refused' : broke ? 'broke' : 'stood');   // another took the chair asked for; or the relay stood me up
     }
+    // QL11: a hand won - the main pot mine at my confirmed chair (a showdown rides one room frame; a look carries none)
+    for (const e of events) if (e.t === 'showdown' && this.confirmed && this.chair >= 0 && e.result?.pots?.[0]?.winners?.some((/** @type {number} */ k) => e.seats?.[k] === this.chair)) noteAct('cards-won');
     this.events.push(...events);
   }
 

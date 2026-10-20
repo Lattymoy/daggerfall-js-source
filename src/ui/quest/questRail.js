@@ -245,7 +245,18 @@ function railRow(q, i, readLines, tag) {
     clockSeconds: Number.isFinite(q.clockSeconds) ? q.clockSeconds : null,
     entries: written.map((e) => e.lines),
     written,
+    ql: q.ql ?? null,   // QL2: a stamped quest's objectives, choices and outcome (systems/questlines/qlLayer.js rowOf) - null for DFU's
   };
+}
+
+/** QL2 (bible/06-Systems/Questlines-Arc.md section 6): a stamped quest that has written no journal entry yet but whose
+ *  objectives the machine's state has opened - the walk's `unlogged` - as a row of the pause tab's (key `a:<id>`, no
+ *  entries). Every other face reads `active` alone: a quest with nothing in its journal is nothing to the lens. */
+export function unloggedRail(log) {
+  return (log?.unlogged ?? []).map((q, i) => ({
+    key: `a:${q.id ?? `u${i}`}`, id: q.id ?? null, name: q.name || `Quest ${i + 1}`, questName: q.questName ?? '',
+    main: isMainQuest(q.questName), clockSeconds: null, entries: [], written: [], ql: q.ql ?? null,
+  }));
 }
 
 /** QUEST-SHELF (2026-10-08): the quests set aside - the walk's `shelved` - each with its journal as it stood, for the

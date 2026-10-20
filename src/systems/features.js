@@ -998,6 +998,25 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'nearbyQuests', initial: true, online: 'player' }),
   }),
+  // QL1 (2026-10-19, the owner: "modernize the questing system to be more in line with the mainline games ... This would
+  // be toggled for online and not be able to be changed"): QUESTLINES (bible/06-Systems/Questlines-Arc.md) - every quest's
+  // objectives, branches whose choices end it differently, outcomes that pay gear, and the questlines. A rule, so the lane
+  // forces it on online (the owner: locked); offline the player's, on by default (the owner's answer). Read when a quest
+  // STARTS and stamped on it for life (systems/questlines/qlLaw.js startStamp), so turning it off strands nothing.
+  Object.freeze({
+    id: 'questlines',
+    group: 'world',
+    get title() { return t('features.questlines.title', 'Questlines'); },
+    // AUDIT QUESTLINES VOICE-QL: since UI-4/REWARD-6 only a quest whose sheet pays gear offers a piece (qlLayer.js rowOf
+    // `gear`, which qlJournal.js qlObjectivesBlock reads) - "each one finished offers" was no longer true. Still two
+    // sentences and no longer than it was (FT15's note budget)
+    get note() { return t('features.questlines.note', 'Every quest shows its objectives, some let you choose how they end, some offer a piece of gear '
+      + 'fitted to you when done, and questlines lead to the Breaches, the Battlespire and the Abyss. Off is the classic journal '
+      + 'and its rewards, and online it is always on.'); },
+    get effect() { return t('features.questlines.effect', 'Takes effect on the next quest you take; quests you already have keep the rules they began with.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'questlines', initial: true, online: true }),   // systems/questlines/qlLaw.js QUESTLINES_PREF
+  }),
   // LW2 (2026-10-04, Mac: "NPCs are no longer just random walking entities"): THE LIVING WORLD
   // (bible/06-Systems/Living-World.md) - a town's people are its residents, each with a name, a home, a trade and a
   // day (systems/livingWorld/livingTown.js stands them where DFU's wandering pool stood). The player's own online: every

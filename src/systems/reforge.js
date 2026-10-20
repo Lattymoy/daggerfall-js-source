@@ -48,6 +48,7 @@ import { isEquipped, notifyEquipChange } from './equip.js';   // GEM1: a worn pi
 import { addItem, isEnchanted } from './inventory.js';   // AUDIT GEM: an enchanted gem is no loose stone
 import { totalGoldAmount, deductGold } from './court.js';
 import { itemIsIdentified } from './tradeModes.js';
+import { noteAct } from './questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** What a piece salvages into, by its tier (an Exalted Legendary its own). */
 export const SALVAGE_SHARDS = Object.freeze({ magic: 1, rare: 3, legendary: 8, exalted: 15 });
@@ -273,6 +274,7 @@ export function setGemPiece(item, gem, player, at = null, { from = null } = {}) 
   unbought(item, i);
   if (stone?.[PATRON_COUNTER_MARK] === true) item.socketBought = [...(item.socketBought ?? []), [i, Number.isInteger(stone[COUNTER_PAID_MARK]) ? stone[COUNTER_PAID_MARK] : null]];
   refold(item, player);
+  noteAct('gem-socketed');   // QL11: a gem set in a socket - the pack's or the Reforge's press, made
   return { ok: true, line };
 }
 /** Why a piece's gem in socket `at` (the first set one when omitted) may not be unset now, or null: socketWork's,
@@ -329,5 +331,6 @@ export function reforgePiece(item, index, player, rolls = Math.random) {
   if (!line) { Object.assign(item, before); if (before.reforged === undefined) delete item.reforged; return { ok: false, reason: 'not' }; }
   spendShards(player.items, price.shards);
   deductGold(player, price.gold);
+  noteAct('piece-reforged');   // QL11: a piece reforged - paid, its line rolled again
   return { ok: true, line, price };
 }

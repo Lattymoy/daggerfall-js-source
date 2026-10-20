@@ -551,14 +551,17 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   // retyped here - the bridge's own factory needs a world's worth of
   // deps, and what is under test is these thirty lines.
   const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', '../src/scenes/quest/questBridge.js'), 'utf8');
-  const body = src.slice(src.indexOf('    questLog() {'), src.indexOf('\n    },', src.indexOf('    questLog() {')) + 6);
+  const body = src.slice(src.indexOf('    questLog({ windows = true } = {}) {'), src.indexOf('\n    },', src.indexOf('    questLog({ windows = true } = {}) {')) + 6);
   assert.ok(body.includes('remainingTimeInSeconds'), 'the slice really is the walk');
-  const questLog = new Function('machine', 'notebook', 'clockCounts',   // DEAD-CLOCK: whether a clock's end changes anything
+  // PIN MOVED (QL1/QL12): the walk asks the questlines' layer for each row's `ql`, and hands the lines and the ladders -
+  // a DFU-only layer here (no row of its own, the switch off), so what is under test stays these lines' arithmetic
+  const questLog = new Function('machine', 'notebook', 'clockCounts', 'questlines', 'quietText', 'questlinesOn', 'ladderRows',   // DEAD-CLOCK: whether a clock's end changes anything
     `const isShelved = (q) => q?.shelvedAt != null;   // QUEST-SHELF (PIN MOVED): the walk files a quest set aside apart
     const o = { ${body} }; return o.questLog();`);
+  const layerOff = [{ rowOf: () => null, lineRows: () => [] }, (_q, text) => text, () => false, () => []];
 
   const machine = { quests: new Map([[5, withLog], [6, silent], [7, done], [8, ghost], [9, paid], [10, lost]]) };
-  const log = questLog(machine, { getFinishedQuests: () => ['a finished one'] }, () => true);
+  const log = questLog(machine, { getFinishedQuests: () => ['a finished one'] }, () => true, ...layerOff);
 
   assert.equal(log.active.length, 1, 'only the quest that has really written a log entry is a row');
   assert.equal(log.active[0].id, '5', 'the uid, as a string - the rail keys on it');
@@ -567,16 +570,16 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   assert.deepEqual(log.active[0].messages, [{ id: 1010 }, { id: 1020 }], 'resolved, in the machine’s own order');
   assert.deepEqual(log.active[0].steps, [{ stepID: 0, messageID: 1010, time: 50 }, { stepID: 1, messageID: 1020, time: 40 }],
     'GUIDE1: each message beside the step it was written at - a step whose message is gone goes with it, so steps[i] is messages[i]\'s');
-  assert.deepEqual(log.ended, [{ id: '9', name: 'Paid', questName: 'M0B00Y02', success: true }, { id: '10', name: null, questName: 'M0B00Y03', success: false }]);
+  assert.deepEqual(log.ended, [{ id: '9', name: 'Paid', questName: 'M0B00Y02', success: true, ql: null }, { id: '10', name: null, questName: 'M0B00Y03', success: false, ql: null }]);   // PIN MOVED (QL1): `ql`, null for DFU's quest
   assert.equal(log.active[0].clockSeconds, 120,
     'the SHORTEST live clock, by its LIVE read (clock_b\'s field says 130) - a finished one and a disabled one are not timers');
   assert.deepEqual(log.finished, ['a finished one']);
   // DEAD-CLOCK (test/systems/quest/deadclock.test.js): a clock whose end changes nothing is not the line's - the next deadline is
-  const dead = questLog(machine, { getFinishedQuests: () => [] }, (q, r) => r !== withLog.resources.get('clock_b'));
+  const dead = questLog(machine, { getFinishedQuests: () => [] }, (q, r) => r !== withLog.resources.get('clock_b'), ...layerOff);
   assert.equal(dead.active[0].clockSeconds, 600, 'clock_b counts for nothing: clock_a\'s ten minutes are the deadline');
 
   // a host whose notebook has not been built yet is not a crash
-  assert.deepEqual(questLog({ quests: new Map() }, null), { active: [], finished: [], ended: [], hidden: [], shelved: [] });   // QUEST-SHELF (PIN MOVED): and none set aside
+  assert.deepEqual(questLog({ quests: new Map() }, null, undefined, ...layerOff), { active: [], finished: [], ended: [], hidden: [], shelved: [], unlogged: [], lines: [], ladders: [] });   // QUEST-SHELF (PIN MOVED): and none set aside; QL2/QL12 (PIN MOVED): no quest before its first entry, no line, no ladder
 
   // AND NO HOST WALKS IT ITSELF ANY MORE. Derived: the clock field is
   // the walk's own vocabulary, so a host that spells it has grown a

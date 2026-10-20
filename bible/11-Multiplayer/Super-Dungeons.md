@@ -255,6 +255,8 @@ where the Bay's broken endings still turn against each other and the last of the
 Bay's people crowd thickest, their many souls press the world thin, and a dungeon beneath them is swallowed by a seam
 of the Warp - a Hollow - whose deepest hall opens on the Hour.
 
+QL0 (2026-10-19, `06-Systems/Questlines-Arc.md` decision 5, the owner's answer): the online world is about 3E 406, eleven years before the Warp this paragraph tells. In the world the Hour is the echo of a Break to come - a Dragon Break has no before and after - and the questline that leads to it reads it so; no string a player reads names the year.
+
 The realm is a made level (`world/superDungeon/sdRealm.js`, the Court's pattern: a made location `0x7ffff200`, block index 900200,
 one pseudo-archive, 38151 - records 0-4 the realm's, 5-20 the Orrery's hall, 21-22 the Steps, 23-24 the Echoes, 25-30 the
 Endings' lights, 31-32 the Threshold's cobbles and the edge line, 33-36 the Rift's and its Return's hand-plate alight, 56-56 the

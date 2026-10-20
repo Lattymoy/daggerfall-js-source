@@ -783,6 +783,8 @@ const REFUSAL_WORDS = {
   'no-clean': () => t('account.refusal.noClean', 'That character has no save the realm judged clean to roll back to.'),   // INT6: the review's rollback (tools/realmReview.mjs)
   // FIRM1 (bible/06-Systems/Firmament.md): the Firmament's own (server-account/src/firmament.js)
   'firm-closed': () => t('account.refusal.firmClosed', 'The Firmament isn\'t available to you right now.'),
+  'ql-closed': () => t('account.refusal.qlClosed', 'The questlines\' rewards are not available to you right now.'),   // QL12: QUESTLINES_OPEN shut (AUDIT QUESTLINES VOICE-QL: "are not", the voice's plain word - Voice.md)
+  'ql-body': () => t('account.refusal.qlBody', 'That questline step could not be claimed.'),   // QL12: a claim the shared law refuses
   'firm-character': () => t('account.refusal.firmCharacter', 'This character could not be found for the Firmament. Try again.'),
   'firm-rid': () => t('account.refusal.firmRid', 'That request could not be read. Try again.'),
   'firm-key': () => t('account.refusal.firmKey', 'One of those stars is unknown.'),
@@ -1750,6 +1752,19 @@ export function accountLamp({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     // AUDIT FIVE-ASKS D3: a secret the service stopped honouring is not a session (forgetSession's law)
     claim: async () => { const r = await post('/v1/lamp/claim', {}); if (r?.error === 'auth') forgetSession(storage); return r; },
     account: () => storedSession(storage)?.id ?? null,   // AUDIT FIVE-ASKS D2: whose the lamp's answer is
+  };
+}
+
+/** QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 5.3): THE QUESTLINES' CLAIM (server-account/src/
+ *  questlines.js) through the one door - `claim({ line, step, phase, choice? })` a questline's step opened or ended,
+ *  `{ ok, data: { opened?, witnessed?, title?, key?, keys?, keyHeld?, why? } }`; no session is `no-session`, never a
+ *  throw. `guest()` whether the signed-in account is a guest's. */
+export function accountQuestlines({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    claim: async (body) => { const a = await post('/v1/ql/claim', body); if (a?.error === 'auth') forgetSession(storage); return a; },
+    account: () => storedSession(storage)?.id ?? null,   // whose the line's pay is: none signed in, none asked
+    guest: () => (storedSession(storage)?.kind ?? null) === 'guest',   // AUDIT QUESTLINES LINES-2: a guest's witnessed deed is never recorded
   };
 }
 

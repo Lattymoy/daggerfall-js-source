@@ -147,7 +147,7 @@ test('SERPENT5 THE ROUTE (AUDIT WORLD-REWARDS E9): through the real Worker, the 
 // ── the vocabulary and the badge ──────────────────────────────────────
 
 test('SERPENT5 THE VOCABULARY: Coilbreaker last of TITLES, The Maelstrom last of AURAS; their words; the title drawn the open sea into the tide into the foam, edged in black, its one colour the tide\'s and no other title\'s; the Maelstrom\'s button in its paint; both signed into a token and kept by the wire (mutants: the word; the paint)', async () => {
-  assert.equal(TITLES.at(-15), 'coilbreaker');   // PIN MOVED (EG-E2, the merges of main): the Spire's thirteen after it; PIN MOVED (WIKIMAID): the WikiMaid joined the list last
+  assert.equal(TITLES.at(-20), 'coilbreaker');   // PIN MOVED (QL12): the questlines' five joined the list last, after the WikiMaid; PIN MOVED (EG-E2, the merges of main): the Spire's thirteen after it; PIN MOVED (WIKIMAID): the WikiMaid joined the list last
   assert.equal(AURAS.at(-5), 'maelstrom');   // PIN MOVED (EG-E2, the merges of main): the Spire's three after it; PIN MOVED (WIKIMAID): the Lilac Warren joined the list last
   assert.deepEqual([TITLE_TEXT.coilbreaker, AURA_TEXT.maelstrom], ['Coilbreaker', 'The Maelstrom']);
   assert.equal(TITLE_RGBA.coilbreaker, COIL_TIDE);

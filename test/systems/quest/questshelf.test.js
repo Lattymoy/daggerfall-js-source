@@ -196,7 +196,7 @@ test('QUEST-SHELF the journal: the walk hands the quests set aside, their clocks
     'That quest is over.', 'That quest is already abandoned.', 'That quest is not abandoned.', 'That quest is ending.',
     'That quest cannot be abandoned.', 'Not while the raid is on.', 'You have taken that quest up again. Finish or abandon it first.', 'That cannot be done now.']);
   const bridge = src('src/scenes/quest/questBridge.js');
-  assert.match(bridge, /return \{ active, finished: notebook\?\.getFinishedQuests\(\) \?\? \[\], ended, hidden: notebook\?\.getHiddenQuests\?\.\(\) \?\? \[\], shelved \};/);
+  assert.match(bridge, /return \{ active, finished: notebook\?\.getFinishedQuests\(\) \?\? \[\], ended, hidden: notebook\?\.getHiddenQuests\?\.\(\) \?\? \[\], shelved(?:, [^}]*)? \};/);
   assert.match(bridge, /const refuseRaid = \(q\) => \(WA_RAID_QUESTS\.includes\(q\.questName\) \? 'raid' : null\);/);
   assert.match(bridge, /const r = machine\.shelveQuest\(Number\(id\), \{ refuse: refuseRaid \}\);/);
   assert.match(bridge, /canAbandon: \(id\) => machine\.shelveRefusal\(Number\(id\), \{ refuse: refuseRaid \}\) === null,/, 'the button asks the press\'s own ladder');
@@ -205,7 +205,9 @@ test('QUEST-SHELF the journal: the walk hands the quests set aside, their clocks
   const menu = src('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /if \(shelved\.length\) section\(t\('pause\.journal\.abandoned', 'Abandoned'\), shelved, ' done'\);/);
   assert.match(menu, /const ab = el\('button', 'act', armed \? 'Click again to abandon' : 'Abandon quest'\);/);
-  assert.match(menu, /} else if \(sel\.entries && sel\.id != null && clean\.abandon && clean\.canAbandon\?\.\(sel\.id\)\) \{/);
+  // AUDIT QUESTLINES UI-8 (PIN MOVED): a row with no journal entry yet (unloggedRail) offers no Abandon - set aside, it was
+  // no row at all, and no Reclaim could reach it
+  assert.match(menu, /} else if \(sel\.entries\?\.length && sel\.id != null && clean\.abandon && clean\.canAbandon\?\.\(sel\.id\)\) \{/);
   assert.match(menu, /const rc = el\('button', 'act', 'Reclaim quest'\);/);
   // its audit: the selection follows the quest only where it went
   assert.match(menu, /const out = clean\.reclaim\(sel\.id\); questShelfSaid = out\?\.text \?\? null; if \(out\?\.ok\) questSel = `a:\$\{sel\.id\}`;/);

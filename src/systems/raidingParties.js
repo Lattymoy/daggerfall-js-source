@@ -93,6 +93,7 @@ import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRando
 import { readRaidReceipt } from '../net/raid/raidReceipt.js';
 import { worldRoom, isCellRoom } from '../net/wire.js';
 import { isWildRegion } from './wild/wildZone.js';   // PVPDUNGEONS: no world event in the open zone
+import { noteAct } from './questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 export const RAIDING_PARTIES_VENDOR = 'world-events-raiding-parties';
 export const raidingPartiesOn = () => modSetting(RAIDING_PARTIES_VENDOR, 'Enabled') === true;
@@ -442,7 +443,10 @@ function cleanse(raid, { said = true, top = [], n = 0 } = {}) {
   raid.cleansed = true;
   routRaid(raid);
   const px = host().playerPixel?.();
-  if (raid.struck && px && px.x === raid.px && px.y === raid.py) grantRaidReputation(host().reputation?.() ?? null, raid.regionIndex);
+  if (raid.struck && px && px.x === raid.px && px.y === raid.py) {
+    grantRaidReputation(host().reputation?.() ?? null, raid.regionIndex);
+    noteAct('raid-repelled');   // QL11: a raid driven off - one I fought, in the town as it was cleansed (a cleanse comes once a raid)
+  }
   if (!said) return;
   const who = defendedLine(top, n);   // RAID3: the relay's cleanse names who held the town
   say(who ? `${cleansedLine(raid.locationName, regionName(raid.regionIndex), raid.type)} ${who}` : cleansedLine(raid.locationName, regionName(raid.regionIndex), raid.type));

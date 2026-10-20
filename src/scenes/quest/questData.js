@@ -14,6 +14,7 @@
 import { loadQuestTables } from '../../systems/quest/tables.js';
 import { applyForageFix } from '../../systems/foraging/foragingLaw.js';   // FORAGE-FIX: Foraging's quest and list patches, applied as they are read
 import { applyQuestPatches, QUEST_PATCHES } from '../../systems/quest/questPatches.js';   // SHAM-TRAIL: the port's patches over DFU's own quests, applied as they are read
+import { questlineLines } from '../../systems/questlines/qlPatches.js';   // QL4: a flagship quest's branch, patched in while the questlines' switch is on (bible/06-Systems/Questlines-Arc.md 2.3)
 
 const tableFiles = import.meta.glob('../../../vendor/dfu-quests/Tables/*.txt', { query: '?raw', import: 'default' });
 const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });
@@ -28,6 +29,8 @@ const modQuestFiles = {
   ...import.meta.glob('../../../vendor/warm-ashes-ships/Quests/*.txt', { query: '?raw', import: 'default' }),
   // FORAGE1: Foraging's list and its 22 quests, verbatim - FORAGE-FIX's patches applied as they are read (below)
   ...import.meta.glob('../../../vendor/foraging/Quests/*.txt', { query: '?raw', import: 'default' }),
+  // QL12-QL16: the questlines' own quests (systems/questlines/qlLines.js), the port's scripts on DFU's machine
+  ...import.meta.glob('../../systems/questlines/quests/*.txt', { query: '?raw', import: 'default' }),
 };
 
 const stripBom = (s) => s.replace(/^﻿/, '');
@@ -80,8 +83,11 @@ export async function loadQuestPack() {
     return {
       /** QuestList-<name>.txt (the QuestListsManager's dep). */
       readListTable: (name) => tables.get(`QuestList-${name}`) ?? null,
-      /** Quest source lines by name (the machine + lists dep). */
-      getQuestSourceLines: (name) => (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null,
+      /** Quest source lines by name (the machine + lists dep) - QL4: a flagship quest's branch over them while the
+       *  questlines' switch is on (the read the start's stamp follows - systems/questlines/qlPatches.js). AUDIT
+       *  QUESTLINES BRANCH-12: `questlines` reads it as a copy's stamp says it was read (machine.js parseQuestShape, a
+       *  stamped restart) - absent, the switch now. */
+      getQuestSourceLines: (name, questlines) => questlineLines(name, (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null, questlines),
       questCount: quests.size,
     };
   })();

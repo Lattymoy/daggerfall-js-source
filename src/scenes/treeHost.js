@@ -37,6 +37,7 @@ import { getPref } from '../systems/uiPrefs.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { JUNGLE_MEASURES, FOOT_TOP } from '../world/jungle/jungleModels.js';   // AUDIT BANTHA1 TREE-3: a jungle tree's mark
 import { insideRocks, TREE_RECORDS, isTreeRecord, FOREST } from '../world/terrain/terrainNature.js';   // NODE-CLEAR: the rock check's one home; FOREST1: and the Tree records', and what the woods are
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** World of Daggerfall's Tree records (FOREST1: their home is world/terrain/terrainNature.js, where the forests read them). */
 export { TREE_RECORDS, isTreeRecord };
@@ -298,6 +299,8 @@ export function treeKind({ book, renderer = null, flatBatchAabb = null, getTextu
       for (let i = logsLying.length - 1; i >= 0; i--) if (logsLying[i].entry === entry) logsLying.splice(i, 1);
     },
     cleanNote: () => ' (every chop a Clean Cut)',
+    /** QL11: a tree's logs the service answered (the host's one answer to a harvest: the act's own, or a kept one's). */
+    answered() { noteAct('wood-chopped'); },   // QL11: wood chopped
     title: () => 'Woodcutter',
   };
 }

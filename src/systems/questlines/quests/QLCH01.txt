@@ -1,0 +1,138 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE COVENS' HOARD, step 1 of 3.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: Ysolde's letter is the offer, as the Burning Doors' first was (QLBD01). The act: three of the covens'
+-- gold-lit champions slain in the Elite Dungeons (`ql act elite-foe-slain 3`, said by scenes/dungeonContext.js). Then
+-- her table, where she pays; a visit before the third falls is answered and cleared, as DFU's guild quests clear an
+-- early click (M0B30Y04's `_clearclick_`). Lore: canon - the Spire's portal keys, surrendered by the Imperial
+-- Secretary in 3E 398. The port's own - the covens hoard them in the deep places (bible/11-Multiplayer/Elite-Gates.md).
+Quest: QLCH01
+DisplayName: Gold-Lit
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>         Ysolde Marnhel has stopped waiting for word of
+<ce>                 the gold-lit champions.
+
+QuestComplete:  [1004]
+<ce>       "For three of the covens' best," Ysolde says, and
+<ce>             counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A letter from Ysolde Marnhel: the covens keep their
+ best in the Elite Dungeons, and those champions
+ glow gold. I am to slay three of them and tell her
+ what I saw, at _hall_ in __hall_.
+
+Message:  1011
+%pcn,
+
+     The faithful at the breaches are the least of
+ them. The covens keep their best in the deep
+ places - the Elite Dungeons, the worst the Guild
+ knows of - and those champions burn gold, as if
+ Dagon had gilded them himself.
+
+     They are guarding something down there. Kill
+ three of the gold-lit and tell me what you see. I
+ am at _hall_ in __hall_.
+
+<ce>                              Ysolde Marnhel
+
+Message:  1012
+<ce>         A Mages Guild courier finds you once more. "The
+<ce>         Master Conjurer has a new question," the courier
+<ce>                says, and leaves you the letter.
+
+Message:  1013
+<ce>       "Three, and each one gold to the bone, yes?"
+<ce>               Ysolde spreads a map on the table.
+<ce>
+<ce>       "The Guild's scouts say the covens fight hardest
+<ce>        where the deep places are deepest. They are not
+<ce>        guarding gold, %pcf. They are guarding keys -
+<ce>        the Battlespire's keys, the ones the Imperial
+<ce>        Secretary surrendered in 3E 398. Dagon's covens
+<ce>        have been hoarding them ever since."
+
+Message:  1014
+Ysolde Marnhel? She has been asking the Guild which dungeons no one comes back from.
+<--->
+The Master Conjurer is looking for someone who has seen gold in the dark.
+<--->
+They say Marnhel has a map with half the Bay's dungeons marked on it.
+
+Message:  1015
+<ce>       "Gold-lit, %pcf. Three of them. The Elite Dungeons
+<ce>                   will not come to you."
+
+Message:  1016
+%qdt:
+ I have slain three of the covens' gold-lit
+ champions. Ysolde Marnhel is waiting at _hall_ in
+ __hall_.
+
+Message:  1020
+<ce>       The third of the gold-lit champions falls, and the
+<ce>         gold goes out of it like a snuffed wick.
+
+-- Symbols used in the QRC file:
+--
+--               %pcf occurs 2 times.
+--               %pcn occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--             _hall_ occurs 3 times.
+--            __hall_ occurs 3 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 300 to 600
+
+Person _ysolde_ faction The_Mages_Guild female anyInfo 1014
+
+Place _hall_ remote magery
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _ysolde_ Ysolde_Marnhel
+	place npc _ysolde_ at _hall_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_slain_ task:
+	ql act elite-foe-slain 3
+	say 1020
+	log 1016 step 1
+	stop timer _wait_
+	start timer _meet_
+
+_clicked_ task:
+	clicked npc _ysolde_
+
+_notyet_ task:
+	when _clicked_ and not _slain_
+	say 1015
+	clear _clicked_ _notyet_
+
+_paid_ task:
+	when _clicked_ and _slain_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

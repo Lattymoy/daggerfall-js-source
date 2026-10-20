@@ -47,8 +47,8 @@
   {
     "name": "MAC-F-the-body-draws-through-the-fold",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "        if (!isFolded(folded, section, i)) {\n          for (const line of e.body) entry.append(el('p', null, line));\n        }",
-    "new": "        {\n          for (const line of e.body) entry.append(el('p', null, line));\n        }",
+    "old": "        if (!isFolded(folded, section, i)) {\n          // QL2: what the quest asks now, above its journal - the pause tab's block, one home (ui/questlines/qlJournal.js)\n          if (section === 'quests') { const block = qlObjectivesBlock(document, e.ql); if (block) entry.append(block); }\n          for (const line of e.body) entry.append(el('p', null, line));\n        }",
+    "new": "        {\n          // QL2: what the quest asks now, above its journal - the pause tab's block, one home (ui/questlines/qlJournal.js)\n          if (section === 'quests') { const block = qlObjectivesBlock(document, e.ql); if (block) entry.append(block); }\n          for (const line of e.body) entry.append(el('p', null, line));\n        }",
     "tests": [
       "test/ui/enhanced/macfg_fold_and_specials.test.js"
     ]

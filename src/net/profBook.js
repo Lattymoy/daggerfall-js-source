@@ -65,6 +65,7 @@ import { pixelKey, parseNodeKey } from './nodeLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
 import { t } from '../systems/textManager.js';   // L10N4: the Stores' words in the player's language
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** Where this device keeps the acts whose answers did not come: { [account|character]: { harvests, withdrawals } }. */
 export const PROF_KEPT_KEY = 'prof1.kept';
@@ -1143,6 +1144,9 @@ export function createProfBook({ door, storage = null, character = () => null, n
       applyTrack(r.data?.track);
       if (!had) return { ok: true, data: r.data, elsewhere: true };
       try { mint(r.data, w); } catch (e) { console.warn('[prof] a craft would not mint', e); }   // AUDIT 30 C4: the kept craft its fee
+      // AUDIT QUESTLINES ACTS-4: nor a dish - Cooking's recipes are crafts too (recipeLaw.js dishRecipe, kind 'dish'), and a
+      // stew cooked at any fire is no piece made at a station
+      if (w.brew !== true && recipeById(w.recipe)?.kind !== 'dish') noteAct('piece-crafted');   // QL11: a piece made at a station - minted once, by the tab that let it go (a brew's potions are no piece)
       return { ok: true, data: r.data };
     }
     if (keptAnswer(r)) return { ok: false, error: r?.error ?? 'offline', kept: true };

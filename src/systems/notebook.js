@@ -247,6 +247,19 @@ export class PlayerNotebook {
     this.finishedQuests.push(entry);
   }
 
+  /** QL3 (bible/06-Systems/Questlines-Arc.md section 2.4): a stamped quest's outcome, filed with the entry filed last -
+   *  AUDIT QUESTLINES UI-5: a SIDE RECORD on its header (`outcome`, beside L10N5's `render`), never a line of its tokens:
+   *  the classic logbook (ui/quest/questJournal.js) draws the tokens, and DFU's logbook is DFU's verbatim; the enhanced
+   *  archive draws the record (filedOutcome). The header is the last one filed - an overflow's headerless continuations
+   *  (the kept quirk, addFinishedQuest) after it are the same quest's. Saved and restored (getSaveData's
+   *  `finishedQuestOutcomes`). Answers whether it was filed; nothing when nothing is filed. */
+  fileFinishedOutcome(text) {
+    const entry = [...this.finishedQuests].reverse().find((e) => e[0]?.formatting === 'highlight');
+    if (!entry || typeof text !== 'string' || !text.trim()) return false;
+    entry[0].outcome = text.trim();
+    return true;
+  }
+
   _createFinishedQuest(questName, success, quest = null) {
     const status = success ? EN.completedQuest : EN.endedQuest;
     const header = { formatting: 'highlight', text: format(EN.finishQuestHeader, questName, status, this.deps.midDateTimeString?.() ?? '') };
@@ -278,6 +291,8 @@ export class PlayerNotebook {
       // L10N5: each entry's header render data, by entry - the port's own fields, written only when a header has some
       ...headerField('noteHeaders', this.notes),
       ...headerField('finishedQuestHeaders', this.finishedQuests),
+      // AUDIT QUESTLINES UI-5: each filed entry's outcome (fileFinishedOutcome), by entry - written only when one has any
+      ...outcomeField(this.finishedQuests),
       // JOURNAL-CLEAN: the port's own field beside DFU's two - written only when something is hidden, so a save with
       // nothing hidden is the shape it always was.
       ...(this.hiddenQuests.length ? { hiddenQuestIds: [...this.hiddenQuests] } : {}),
@@ -288,6 +303,7 @@ export class PlayerNotebook {
   restoreSaveData(data) {
     this.notes = redrawHeaders((data.notebookEntries ?? []).map(convertLines), data.noteHeaders);
     this.finishedQuests = redrawHeaders((data.finishedQuestEntries ?? []).map(convertLines), data.finishedQuestHeaders);
+    restoreOutcomes(this.finishedQuests, data.finishedQuestOutcomes);   // AUDIT QUESTLINES UI-5
     // JOURNAL-CLEAN: an older save carries no list and hides nothing; a malformed one is read for what it holds.
     const hidden = Array.isArray(data.hiddenQuestIds) ? data.hiddenQuestIds : [];
     this.hiddenQuests = [...new Set(hidden.filter((id) => typeof id === 'string' || Number.isFinite(id)).map(String))];
@@ -363,6 +379,26 @@ function redrawHeaders(entries, headers) {
     if (h && e[0]?.formatting === 'highlight') e[0] = { formatting: 'highlight', text: renderHeader(h), render: h };
   });
   return entries;
+}
+
+/** AUDIT QUESTLINES UI-5: a filed entry's outcome - the side record fileFinishedOutcome keeps on its header - or null.
+ *  The enhanced archive's to draw (ui/enhanced/enhancedMenu.js pauseQuests, ui/enhanced/enhancedChronicle.js). */
+export const filedOutcome = (entry) => (entry?.[0]?.formatting === 'highlight' && typeof entry[0].outcome === 'string' && entry[0].outcome ? entry[0].outcome : null);
+
+/** AUDIT QUESTLINES UI-5: `{ finishedQuestOutcomes: [text or null, by entry] }`, or nothing when no entry has one. */
+function outcomeField(entries) {
+  const list = entries.map(filedOutcome);
+  return list.some(Boolean) ? { finishedQuestOutcomes: list } : {};
+}
+
+/** AUDIT QUESTLINES UI-5: each restored entry's outcome back on its header; a line that is no text, or an entry with no
+ *  header, is read for nothing. */
+function restoreOutcomes(entries, outcomes) {
+  if (!Array.isArray(outcomes)) return;
+  entries.forEach((e, i) => {
+    const o = outcomes[i];
+    if (typeof o === 'string' && o.trim() && e[0]?.formatting === 'highlight') e[0].outcome = o.trim();
+  });
 }
 
 function convertEntry(entry) {
