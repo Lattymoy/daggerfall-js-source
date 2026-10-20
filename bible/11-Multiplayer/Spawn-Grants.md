@@ -425,6 +425,8 @@ The owner: GRANT1 ships with it, and the law **measures from its deploy**. Relay
   since every cell a player roams asks and the hub is every tab's. A staff `off` reaches a client at its next ask (`off`).
 - **The measure** (`net/grantMeasure.js`): each cell folds its asks per account and kind - asks, members, the bucket's and
   the ceiling's refusals - and the most live members it held, and posts the window every GRANT_MEASURE_MS (ten minutes)
+  [SUPERSEDED BY GRANT-SLEEP, section 22: at the first frame or close once its first ask has waited GRANT_MEASURE_MS,
+  and at the cell's drain - never on a timer, which kept the cell awake and billed]
   or at GRANT_MEASURE_ROWS rows, signed over `grant-measure1\n` with the relay's key, to GRANT_FEED_URL (the chat feed's
   door: never awaited, never retried, through the ACCOUNTS binding). The account service keeps a window once
   (`server-account/src/grants.js`, POST /v1/mod/grant-feed, migration 0131_grant_measure) and a developer reads it:
@@ -759,3 +761,36 @@ receipt already, so no new route. Pins: `test/server/grantcase_own.test.js` (4).
 `tools/mutants/foebounds.json`. Relay world223, account service acct158 - deploy the service with or before the relay;
 nothing else orders them.
 
+## 22. GRANT-SLEEP: a cell that took an ask still sleeps (2026-10-20)
+
+The owner, 2026-10-20: "the server cost is skyrocketing and this is becoming unsustainable", then, of the bill: "Its
+the durable objects". The relay's audit of what keeps its objects awake is `Scale-Arc.md` ROOM-SLEEP; this is its first
+fix, and the cause of the jump.
+
+- **What it cost.** A Durable Object is billed for its 128 MB for every second it is in memory and cannot hibernate,
+  and a pending `setTimeout` is one of the things that stops it (Cloudflare's Durable Object lifecycle: no timer set,
+  no awaited I/O, no event in process). GRANT2's measure (section 12) armed a GRANT_MEASURE_MS (ten-minute) timer at a
+  cell's first fold and again at the first fold after each post. Every foe the open world stands asks a grant
+  (`measure` is the law unset), so from world218 (deployed 2026-10-18) every cell a player stood in kept a timer
+  pending around the clock, and for ten minutes after they left: about $4 a month for each such cell, where a cell
+  with one player in it had been billed only for the moments it handled a frame.
+- **Built** (`server/src/index.js` `_grantTick`; relay world225): the window posts at a door, as the relay's metrics
+  window does (`_metricsTick`) - at the first frame or close after its first fold has waited GRANT_MEASURE_MS, and when
+  the cell drains (its last socket's close, forced whatever the window's age: the players it measured are gone, and the
+  cell then sleeps owing nothing). At its whole bound it posts at once, as before. No timer is armed anywhere on the
+  grants' path, and `G.timer` is gone.
+- **What it gives up.** The grants' state was always memory alone (section 12: "an evicted cell forgets them, and its
+  window with them"), and AUDIT GRANT A8 already signs again a renewal the cell has forgotten. The timer had made
+  eviction rare by keeping every cell awake; now a cell whose players all stand still between heartbeats (HEARTBEAT_MS,
+  20 s, past the runtime's 10 s to hibernation) is evicted and loses an open window. Those players make few asks (a
+  renewal folds nothing; a mint comes as foes stand around a player who moves, and a mover's poses keep its cell in
+  memory), so the measure loses little. A drained cell loses nothing: its window posts first. The service's rates
+  already floor a window's span at GRANT_RATE_SPAN_MIN_S (`server-account/src/grants.js`), so the shorter windows a
+  drain posts open no case and inflate no rate.
+- **The wire** is unchanged: no frame changes shape, and the relay and the clients deploy in either order.
+
+Pins: `test/net/grantsleep_relay.test.js` (3) - no long timer at a fold; the window at its door, not before; the
+drain's post, and none at a close that leaves a socket. `test/net/grant3_asks.test.js` and
+`test/net/grantaudit_relay.test.js` read a window posted at the frame it fell due. Mutants:
+`tools/mutants/grantsleep.json` (6 dead), and AUDIT-GRANT-A5 in `tools/mutants/grantaudit.json` killed again by the
+idle-hours frame posting nothing.

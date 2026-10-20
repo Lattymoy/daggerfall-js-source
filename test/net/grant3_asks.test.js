@@ -162,9 +162,13 @@ test('GRANT3 A READER\'S TALLY: folded into the cell\'s window under the reader\
   await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'marks', n: 40 }] });
   assert.deepEqual([...c0.room._grants.w.tallies.values()], [{ a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'marks', n: 4 }], 'a sender here alone, never the reader itself; one tally a window');
   W.tick(GRANT_TALLY_MS);
+  const before = W.posts.length;
   await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'unsigned', n: 1 }] });
-  assert.equal(c0.room._grants.w.tallies.size, 2, 'the next window\'s');
-  assert.equal(await c0.room._grantFlush(), true);
+  // GRANT-SLEEP (Spawn-Grants.md section 22): the window's first tally has waited GRANT_MEASURE_MS (GRANT_TALLY_MS is
+  // as long), so this frame folds the next tally and then posts the window at its door - there is no timer to wait on
+  for (let i = 0; i < 50 && W.posts.length === before; i++) await new Promise((res) => setImmediate(res));
+  assert.equal(W.posts.length, before + 1, 'the next window\'s tally folded, and the window posted at the frame it fell due');
+  assert.equal(c0.room._grants.w.tallies.size, 0);
   const opened = await openGrantMeasure(W.posts.at(-1).body, W.posts.at(-1).sig, W.kp.publicKey, { subtle, nowMs: W.now });
   assert.ok(opened.ok);
   assert.deepEqual(opened.batch.tl, [{ a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'marks', n: 4 }, { a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'unsigned', n: 1 }]);

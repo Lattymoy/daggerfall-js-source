@@ -5,10 +5,12 @@
 //
 // A cell room folds every ask it answers (foldGrantAsk): per account and kind, the asks, the members asked for, and what
 // the gate would have refused - the account's bucket, the cell's ceiling - and the most granted hostile members the cell
-// held live at once. Every GRANT_MEASURE_MS, or once GRANT_MEASURE_ROWS accounts and kinds wait, it posts the batch.
+// held live at once. At the first frame or close after its first ask has waited GRANT_MEASURE_MS, when the cell drains,
+// or once GRANT_MEASURE_ROWS accounts and kinds wait, it posts the batch - never on a timer, which would keep the cell's
+// Durable Object awake and billed (GRANT-SLEEP, bible/11-Multiplayer/Spawn-Grants.md section 22).
 // THE DOOR IS THE CHAT FEED'S (net/safety/chatFeed.js), kept as narrow:
 //   - ONE WAY. The relay posts; nothing the relay does waits on the answer. A post that fails is dropped: a measure is a
-//     sample, and a cell that sleeps before its post loses its window.
+//     sample, and a cell evicted before its post loses its window.
 //   - OFF UNTIL ASKED. The relay posts only while its GRANT_FEED_URL is set (server/wrangler.toml).
 //   - SIGNED with the relay's receipt key over "grant-measure1\n" + the body's bytes, in GRANT_MEASURE_SIG_HEADER; the
 //     service checks it with the public half, and a batch it has seen (`id`) is not read twice.
@@ -27,7 +29,7 @@ import { GRANT_KINDS, GRANT_READER_REFUSALS } from './grantLaw.js';
 export const GRANT_MEASURE_V = 'grant-measure1';
 /** The header the batch's signature rides. */
 export const GRANT_MEASURE_SIG_HEADER = 'x-relay-grant-sig';
-/** A cell posts its window this often, ms... */
+/** A cell posts its window at its first frame once the window's first ask has waited this long, ms... */
 export const GRANT_MEASURE_MS = 10 * 60 * 1000;
 /** ...or once this many accounts and kinds wait (the batch's whole bound: the relay posts at it). */
 export const GRANT_MEASURE_ROWS = 128;

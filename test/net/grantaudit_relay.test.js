@@ -66,4 +66,8 @@ test('AUDIT GRANT A4/A5 THE WINDOW: a reader\'s tally that fills it posts it at 
   W.tick(3 * 3600_000);
   await mac.ask({ k: 'mint', kind: 'enc', n: 1 });
   assert.equal(W.r.room._grants.w.from, W.now, 'three idle hours are no asking time');
+  // GRANT-SLEEP (Spawn-Grants.md section 22): and so the window is not due at the frame that began it - one begun at the
+  // last post would be three hours old here, and posted at this frame's door
+  await W.settle();
+  assert.equal(W.posts.length, 2, 'the bound\'s post and the flush\'s, nothing at the first ask after the idle hours');
 });

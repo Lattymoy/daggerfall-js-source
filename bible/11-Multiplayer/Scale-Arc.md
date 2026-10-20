@@ -3283,3 +3283,68 @@ Pins after it: `sessionsign.test.js` 5, `sessionsign_client.test.js` 2, both wid
 all dead (+14: the mint before the ban, off a replica, binding-only, the first-primary word, a route added, the bound
 unminted and unread, the save's and the beat's session and ban unread or unsent, a timeout forgetting, a registration
 keeping, the realm's offline keep).
+
+## ROOM-SLEEP - what keeps the relay's objects awake, and what it costs (2026-10-20)
+
+The owner, 2026-10-20: "the server cost is skyrocketing and this is becoming unsustainable", then, of the bill: "Its
+the durable objects". Two read-only surveys - every send the client makes over a relay socket, every timer, alarm and
+held call the relay makes - read against Cloudflare's billing for Durable Objects. **Nothing here is measured live**
+(this session had no Cloudflare token): every figure is counted in the code. The reading to take before and after is
+the GraphQL `durableObjectsPeriodicGroups` active time HUB-PULL read, by object.
+
+### The billing rule
+
+- **Duration:** an object is billed for its 128 MB, whatever it uses, for every second it is in memory and active - or
+  idle but unable to hibernate. $12.50 a million GB-s past Workers Paid's 400,000; an object awake all month is some
+  337,000 GB-s, **about $4.20**.
+- **What stops hibernation** (the Durable Object lifecycle): a `setTimeout` or `setInterval` set, awaited I/O (a
+  `fetch`, a request held open), an event in process. An object idle and eligible is not billed even before the runtime
+  evicts it, which it does after 10 s - and then its memory is gone.
+- **Requests:** an incoming socket message is a twentieth of one, an outgoing one and an auto-answered ping nothing, a
+  call to another object a whole one; each `setAlarm` is a row written.
+
+### What keeps an object awake, ranked
+
+1. **GRANT2's measure, a ten-minute timer in every cell a player stands in** (world218, deployed 2026-10-18 - the
+   jump). Every foe the open world stands asks a grant, the cell folds it and armed GRANT_MEASURE_MS's timer, again at
+   the first ask after each post: about one object a player online held awake around the clock, and every cell a
+   player left for ten minutes more. Some $4.20 a month a cell held so - at a thousand online, some $4,000 a month for
+   as long as they stay. **GRANT-SLEEP, below: built.**
+2. **The channels' held polls** (HUB-PULL): each hub and region shard holding a socket keeps one poll at its bus
+   (HUB_POLL_MS 20 s, asked again 25 ms after an empty answer) - the shard's awaited call and the bus's held request,
+   both billed. 16 hub shards and `chat:world`, and 62 regions of four shards and a bus: 327 objects, each awake while
+   anyone is in it - some $1,375 a month with all of them occupied. Older than GRANT2: HUB-PULL's reading found the hub's
+   shards awake 21-23 hours a day before it. **Decision 1.**
+3. **The second wire's pose batch** (SCALE5b, POSE_BATCH_MS 50): a 50 ms timer after each pose owed to a listener (a
+   halo's socket is one), so a room with a mover and anyone to hear it has a timer pending most of the time it is in
+   use, where without one it is billed only for the frames it handles. **Decision 2.**
+4. **Rooms that beat whatever their sockets:** an Elite Breach every EG_BEAT_SLOW_MS (1 s) for its life (EG_LIVE_MAX
+   64), a siege every SIEGE_TICK_MS (1 s) through its battle, an arena exhibition's bout every ARENA_TICK_MS (250 ms)
+   after its watchers leave. An alarm keeps nothing awake between beats, but each beat is a request and each re-arm a
+   row: 64 breaches at 1 Hz are some 168 million rows a month. Left, until the bill shows it.
+5. **Smaller:** a public channel's chat feed waits FEED_WAIT_MS (30 s) on a timer after its first line; the bus's
+   count timers (HUB_COUNT_MS, 1 s) after a join or leave.
+
+**Not a cost:** the client's idle traffic. A standing player's pose heartbeat (HEARTBEAT_MS, 20 s) wakes its cell for
+one handler, which then sleeps; pings are answered by the runtime unwoken; a hidden tab sends nothing.
+
+### GRANT-SLEEP: built (relay world225, one drop at the merge)
+
+The grants' window posts at a door - the first frame or close once due, and at the cell's drain - never on a timer
+(`server/src/index.js` `_grantTick`, as `_metricsTick`). `Spawn-Grants.md` section 22 is its record: what it gives up
+(a cell whose players all stand still is evicted between heartbeats and loses an open window, which the grants' memory
+was always allowed to do) and its pins. No frame changes shape.
+
+### Decisions for the owner
+
+1. **The channels' polls.** (a) **The regions unsharded** - one object a region, as the language, trade and LFG
+   channels are, which sleep: CHAT_SOCKETS_MAX (2,048) a region is past today's thousand online in all, and the 248
+   shards' and 62 buses' polls go (some $1,300 a month occupied). It undoes SCALE5c's region shards, which the design
+   target (10,000, each limit grown by adding objects) asked for: shard a region again when it nears its cap. (b) Keep
+   the shards and have the bus push from its own alarm - a fresh call, so no subrequest depth - which costs a request
+   and a row a push and is cheaper only while the hub is quiet. Recommended: (a) for the regions; the hub's 17 objects
+   are some $70 a month.
+2. **The pose batch.** Send at once below a count of listeners (an outgoing frame is free and a send costs
+   microseconds; the batch's timer costs the room's whole 128 MB while it waits), and batch above it, where the room is
+   busy anyway. It moves SCALE5b's pins (`scale5b`, `auditscale2_relay`, `scale5d_court`, `slimframe`): a slice of its
+   own, riding the same drop as 1 if both are taken.

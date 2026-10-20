@@ -2959,7 +2959,7 @@ export class Room {
 
   async webSocketMessage(ws, message) {
     this._metrics.c.frames++; this._metrics.c.bytesIn += typeof message === 'string' ? message.length : (message?.byteLength ?? 0);   // SCALE2b
-    try { await this._message(ws, message); } finally { await this._reap(); this._metricsTick(); }
+    try { await this._message(ws, message); } finally { await this._reap(); this._metricsTick(); this._grantTick(); }   // GRANT-SLEEP: the grants' window at its door, never a timer
   }
   /** SCALE2b: the window's metrics point, when it is due (or `force`d - a drain) - relayScale.js RoomMetrics. */
   _metricsTick(force = false) {
@@ -4776,7 +4776,7 @@ export class Room {
   }
 
   async webSocketClose(ws, code, reason) {
-    try { await this._leave(ws); } finally { await this._reap(); this._metricsTick(); }
+    try { await this._leave(ws); } finally { await this._reap(); this._metricsTick(); this._grantTick(); }
     try { ws.close(code, reason); } catch { /* already closed */ }
   }
 
@@ -4796,6 +4796,7 @@ export class Room {
     if (!listed.includes(ws)) this._forget(ws);   // SCALE5a: still listed, its place in the kept account index stands
     const last = (listed.length === 0 || (listed.length === 1 && listed[0] === ws)) && !this._vsocks.size;   // SCALE5a: nobody but this one - said without a filtered copy of every socket; SCALE5c: and no shard's either
     if (last) { try { await this._sweep(); this._swept = this.state.getWebSockets().length === 0; if (isWorldRoom(a.key)) await this.state.storage.setAlarm(Date.now() + worldTtlMsFor(a.key)); } catch { /* the next drain, or the next empty hello */ } this._metricsTick(true); }   // SCALE2b: a drained room says its last window
+    if (last) this._grantTick(true);   // GRANT-SLEEP: and its grants' window, the players it measured gone - a drained cell then sleeps
     if (!a.id) return;   // never said hello, or replaced - the id lives on in another socket
     // INT9 (AUDIT): a fighter whose last socket here went is out of the zone (a closed tab kept its `zone` for good, and a
     // room of them refused every newcomer)
@@ -10206,7 +10207,6 @@ export class Room {
     const G = this._grantState(a.key, now);
     this._grantFrom(G, now);
     if (foldGrantTally(G.w, GRANT_RELAY_READER, a.sub || a.id, 'stats', n, e)) void this._grantFlush();
-    else if (!G.timer) G.timer = setTimeout(() => { void this._grantFlush(); }, GRANT_MEASURE_MS);
   }
   /** GRANT2: the welcome's word of it, a cell's - `,"gm":"<mode>"`; a client asks only while it is not `off`. NEVER THE
    *  HUB'S CALL: a hello asks nothing - the setting this cell last had, or the Worker's var (a staff `off` reaches a
@@ -10217,9 +10217,9 @@ export class Room {
   /** GRANT2: A CELL'S GRANTS - its counter (begun anywhere in 31 bits, so a re-woken cell does not number its grants from
    *  its last life's), the live grants it minted (number -> members and expiry) and their members, each account's bucket
    *  per kind (`<account>|<kind>`), and the measure's window. In memory alone: an evicted cell forgets them, and its
-   *  window with them (a measure is a sample). */
+   *  window with them (a measure is a sample). GRANT-SLEEP: and no timer - the window posts at a frame (_grantTick). */
   _grantState(q, now) {
-    return this._grants ??= { q, n: rand32() >>> 1, live: new Map(), liveN: 0, buckets: new Map(), tallied: new Map(), w: newGrantMeasure(now), timer: null };
+    return this._grants ??= { q, n: rand32() >>> 1, live: new Map(), liveN: 0, buckets: new Map(), tallied: new Map(), w: newGrantMeasure(now) };
   }
   /** GRANT2: the expired forgotten - a live grant past its `x` (the ceiling errs high by at most its window: a granted foe
    *  that died early counts until then), a bucket full again (a first ask's is full). */
@@ -10374,34 +10374,40 @@ export class Room {
     G.tallied.set(a.id, now);
     const reader = a.sub || a.id;
     const subs = new Map([...this._all()].filter(([, b]) => b.id).map(([, b]) => [b.id, b.sub || b.id]));
-    let folded = false;
     for (const row of ask.rows) {
       const sender = subs.get(row.o);
       if (!sender || sender === reader) continue;
       this._grantFrom(G, now);
-      folded = true;
-      if (foldGrantTally(G.w, reader, sender, row.r, row.n)) { void this._grantFlush(); folded = false; }   // AUDIT GRANT A4: posted at its whole bound - the rest begin the next window (_grantFlush swaps it before its first await)
+      if (foldGrantTally(G.w, reader, sender, row.r, row.n)) void this._grantFlush();   // AUDIT GRANT A4: posted at its whole bound - the rest begin the next window (_grantFlush swaps it before its first await)
     }
-    if (folded && !G.timer) G.timer = setTimeout(() => { void this._grantFlush(); }, GRANT_MEASURE_MS);
   }
   /** GRANT2: an ask folded into the window (net/grantMeasure.js foldGrantAsk), which posts at its whole bound or once its
-   *  first ask has waited GRANT_MEASURE_MS - while GRANT_FEED_URL is set; unset, the window is dropped at its bound. */
+   *  first ask has waited GRANT_MEASURE_MS (_grantTick) - while GRANT_FEED_URL is set; unset, the window is dropped at its
+   *  bound. */
   _grantFold(G, who, ask, refusal, now) {
     this._grantFrom(G, now);
-    const full = foldGrantAsk(G.w, who, ask.kind, ask.n, refusal, G.liveN);
-    if (full) void this._grantFlush();
-    else if (!G.timer) G.timer = setTimeout(() => { void this._grantFlush(); }, GRANT_MEASURE_MS);
+    if (foldGrantAsk(G.w, who, ask.kind, ask.n, refusal, G.liveN)) void this._grantFlush();
   }
   /** AUDIT GRANT A5: a window begins at its first fold, never at the last post - an idle cell's hours are no asking time
    *  (grantsMeasure reads asks an hour over the window's length). */
   _grantFrom(G, now) { if (!G.w.rows.size && !G.w.tallies.size) G.w.from = now; }
+  /** GRANT-SLEEP (2026-10-20, the owner: "the server cost is skyrocketing", then "Its the durable objects";
+   *  bible/11-Multiplayer/Spawn-Grants.md section 22): THE WINDOW POSTED WHEN IT IS DUE, AT A DOOR - the first frame or
+   *  close after its first fold has waited GRANT_MEASURE_MS, or the cell's drain (`force`), as the metrics' window is
+   *  (_metricsTick). Never on a timer of its own: a Durable Object with a timer pending cannot hibernate and is billed
+   *  for every second of it, so GRANT2's ten-minute timer, armed at a cell's first ask and again at the first ask after
+   *  each post, kept every cell a player stood in awake around the clock, and ten minutes past their leaving. */
+  _grantTick(force = false) {
+    const G = this._grants;
+    if (!G || !(G.w.rows.size || G.w.tallies.size)) return;
+    if (force || Date.now() - G.w.from >= GRANT_MEASURE_MS) void this._grantFlush();
+  }
   /** GRANT2: THE WINDOW POSTED - signed with the relay's receipt key, to GRANT_FEED_URL through the ACCOUNTS binding where
    *  the Worker has it (the chat feed's door, _feedFlush); answered or not it is gone, and a new window begins. Answers
    *  whether it went. */
   async _grantFlush() {
     const G = this._grants;
     if (!G) return false;
-    if (G.timer) { clearTimeout(G.timer); G.timer = null; }
     const now = Date.now();
     const w = G.w;
     G.w = newGrantMeasure(now);

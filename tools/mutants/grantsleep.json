@@ -1,0 +1,62 @@
+[
+  {
+    "name": "GRANT-SLEEP-timer-back",
+    "file": "server/src/index.js",
+    "old": "    if (foldGrantAsk(G.w, who, ask.kind, ask.n, refusal, G.liveN)) void this._grantFlush();",
+    "new": "    if (foldGrantAsk(G.w, who, ask.kind, ask.n, refusal, G.liveN)) void this._grantFlush();\n    else setTimeout(() => { void this._grantFlush(); }, GRANT_MEASURE_MS);",
+    "why": "GRANT2's ten-minute timer armed at a fold - the cell never sleeps",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-SLEEP-frame-never-ticks",
+    "file": "server/src/index.js",
+    "old": "this._metricsTick(); this._grantTick(); }   // GRANT-SLEEP: the grants' window at its door, never a timer",
+    "new": "this._metricsTick(); }",
+    "why": "a window past its bound never posted at a frame",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-SLEEP-due-unread",
+    "file": "server/src/index.js",
+    "old": "    if (force || Date.now() - G.w.from >= GRANT_MEASURE_MS) void this._grantFlush();",
+    "new": "    void this._grantFlush();",
+    "why": "the window posted at any frame",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-SLEEP-bound-past",
+    "file": "server/src/index.js",
+    "old": "    if (force || Date.now() - G.w.from >= GRANT_MEASURE_MS) void this._grantFlush();",
+    "new": "    if (force || Date.now() - G.w.from > GRANT_MEASURE_MS) void this._grantFlush();",
+    "why": "the bound read as past it",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-SLEEP-drain-unforced",
+    "file": "server/src/index.js",
+    "old": "    if (last) this._grantTick(true);",
+    "new": "    if (last) this._grantTick();",
+    "why": "a drained cell's window left to its age - lost when the cell sleeps",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-SLEEP-every-close-forced",
+    "file": "server/src/index.js",
+    "old": "    if (last) this._grantTick(true);",
+    "new": "    this._grantTick(true);",
+    "why": "a window posted at every close, a socket still standing",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  }
+]
