@@ -542,6 +542,8 @@ test('AUDIT BANTHA1 HAZE-3: every fogged pass that draws where the haze is armed
   for (const p of ['render/nodeGlow.js', 'render/auraRing.js', 'render/spoilsGlow.js', 'render/gate/gatePass.js', 'render/riteSmoke.js', 'render/superDungeon/sdOmenPass.js', 'render/foeTelegraph.js']) {
     assert.match(text(`src/${p}`), /if \(U\.uJungleHaze\) gl\.uniform4fv\(U\.uJungleHaze, fog\?\.haze \?\? NO_HAZE\);/, `${p} uploads it`);
   }
+  // AUDIT NODE-GLINT: the nodes' glint reads the frame's own (the renderer's), as its fog
+  assert.match(text('src/render/nodeGlint.js'), /if \(L\.uJungleHaze\) gl\.uniform4fv\(L\.uJungleHaze, r\._haze\);/, 'render/nodeGlint.js uploads it');
 });
 
 test('AUDIT BANTHA1 HAZE-1: every program a module under src/render exports compiles whole in the repo\'s GLSL reader - a block\'s uniform redeclared beside it (the Deadlands\' sea declared its own uHaze under the fog block\'s, and on the branch the Burning Court\'s sky and sea would not build) is a type error there; the jungle\'s uniform has a name of its own (mutant: the jungle\'s uniform named uHaze again)', async () => {

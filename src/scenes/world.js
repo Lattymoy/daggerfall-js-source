@@ -266,7 +266,7 @@ import { createMotherlodeBook } from '../net/motherlodeBook.js';   // PROF2b: th
 import { createProfHud } from '../ui/professions/profHud.js';   // PROF1: the prompt, the act's meter, the toasts, the day's chip, the rank's banner
 import { createGatherHost } from './gatherHost.js'; // PROF1/PROF2: the gathering professions in the streaming world - the nodes, the target, the act
 import { herbKind } from './herbHost.js';   // PROF1: Herbalism's patches, a kind in it
-import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeOutlinePass } from '../render/nodeOutline.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand; NODE-OUTLINE: ringed along their own pictures
+import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlintPass } from '../render/nodeGlint.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand; NODE-GLINT: glinting on their own pictures
 import { treeKind } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it
 import { createTreesHost } from './treesHost.js';   // LPT1 / BANTHA1 (HOST-SPLIT): the near 3D trees - Low Poly Trees' door and the jungle's, and their frame
 import { createJungleHost } from './jungleHost.js';   // BANTHA1: Bantha's jungle - its field, its trees' door, its haze
@@ -26259,7 +26259,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const near = nodeMarksAt(feet), far = motherlodeMarks();
     return nodeCompassPoints(far.length ? [...far, ...(near ?? [])] : near, trackerAnimals());   // PROF2b: the far Motherlodes beside the near nodes - LODE-MARK: drawn over them
   };
-  const nodeOutlinePass = createNodeOutlinePass(renderer);   // NODE-MARKS: kindled node by node, built at idle; never in a building (nodeMarksAt) nor under the travel view (the hook's own gate); NODE-OUTLINE: ringed along its own picture - the glow a node with none
+  const nodeGlintPass = createNodeGlintPass(renderer);   // NODE-MARKS: kindled node by node, built at idle; never in a building (nodeMarksAt) nor under the travel view (the hook's own gate); NODE-GLINT: glinting on its own picture - the glow a node with none
   /** COMPASS-PARTY (2026-09-27, Discord - Ashley: "being able to see where party members are on compass? - just lil
    *  green marks that point in that direction"): the party on MY compass, in this scene's XZ (ui/partyMapMarks.js
    *  partyCompassPoints) - the bodies the maps mark where they stand, and the rest where their poses say: the leader's
@@ -29167,7 +29167,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye }); };   // LEGACY7 part four: and the line's own bodies, in the place they stood   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** INVIS-LOOK: the concealed peers' Morrowind bodies, translucent - blended with no depth write, so every mode's pass
    *  calls this AFTER its opaque world (net/peer/peerBodies.js drawVeiled), with the camera its body pass took. */
-  const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); drawAuras(); nodeOutlinePass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' glow
+  const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); drawAuras(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' light - NODE-GLINT's glints, the glow a node with no picture
   /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"):
    *  DAGON'S FIRE AT THE FEET (render/auraRing.js) - mine, as the service signed it (the session's `au`, adopted at each
    *  mint), and every peer's the relay vouched for (their hello's `au`), each kindling as it first stands. Gathered with

@@ -1986,7 +1986,7 @@ export class Renderer {
     }
     this._flatWind = new Float32Array(4);   // WIND3: rate x, z, clock, gust - zero until an exterior host sets it, and zero is still
     this._windfall = new Float32Array(8);   // WINDFALL1: the mod's law (render/windfallSway.js windfallUniforms) - zero is WIND3's
-    this._bbRight = new Float32Array([1, 0, 0]);   // NODE-OUTLINE: the last flats' call's basis (render/nodeOutline.js draws a node's flat again on it)
+    this._bbRight = new Float32Array([1, 0, 0]);   // NODE-OUTLINE: the last flats' call's basis (render/nodeGlint.js draws a node's flat again on it)
     this._bbUp = new Float32Array([0, 1, 0]);
     this._lptDrawn = [null, null];   // NODE-OUTLINE: the 3D trees' frames this frame drew, each slot's (spent in the flats' call - lptDrawnFrames)
     this._windfallSway = this._windfall.subarray(0, 4);   // its two vec4s, viewed once (EVERY ALLOCATION HAS AN OWNER: none a call)
@@ -6719,17 +6719,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *
    * @param {number[]|null} pos scene-space point; the camera by default,
    *        which is where a first-person sprite is
-   * @returns {number[]} [r, g, b], each at or above FLAT_LIGHT_FLOOR
+   * @param {number} [floor] the least each channel answers
+   * @param {number[]} [out] where to write it (GLINT-LIGHT: a pass asking it a node a frame makes none of its own)
+   * @returns {number[]} [r, g, b], each at or above `floor`
    */
-  flatLightAt(pos = null, floor = FLAT_LIGHT_FLOOR) {
-    if (!this._clockLit) return [1, 1, 1];
+  flatLightAt(pos = null, floor = FLAT_LIGHT_FLOOR, out = [0, 0, 0]) {
+    if (!this._clockLit) { out[0] = 1; out[1] = 1; out[2] = 1; return out; }
     const p = pos ?? this._camPos;
     const am = this._ambient, mc = this._moonColor, sc = this._sunColor;
-    const out = [
-      am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale * 0.5,
-      am[1] + mc[1] * this._moonScale * 0.5 + sc[1] * this._sunScale * 0.5,
-      am[2] + mc[2] * this._moonScale * 0.5 + sc[2] * this._sunScale * 0.5,
-    ];
+    out[0] = am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale * 0.5;
+    out[1] = am[1] + mc[1] * this._moonScale * 0.5 + sc[1] * this._sunScale * 0.5;
+    out[2] = am[2] + mc[2] * this._moonScale * 0.5 + sc[2] * this._sunScale * 0.5;
     const count = this._pointLights.length >> 2;
     if (count > 0) {
       const colors = this._pointColorData(count, true);   // EL1: the classic-space read, as the water takes
@@ -8151,8 +8151,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    */
   setLowPolyTrees(frame, slot = 0) { (this._lptSlots ??= [null, null])[slot] = frame && frame.gpu ? frame : null; }   // ??=: a test's bare prototype has no constructor run
 
-  /** NODE-OUTLINE (render/nodeOutline.js): the 3D trees' frames this frame DREW, each slot's or null - the slots are spent
-   *  in the flats' call, so a pass after it (a node's outline, drawn on the very trees and far pictures the frame stood)
+  /** NODE-OUTLINE (render/nodeGlint.js): the 3D trees' frames this frame DREW, each slot's or null - the slots are spent
+   *  in the flats' call, so a pass after it (a node's glint, drawn on the very trees and far pictures the frame stood)
    *  reads them here; a beginFrame forgets them. */
   lptDrawnFrames() { return this._lptDrawn ?? []; }
 
@@ -8300,7 +8300,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // and the wind, which the host sets for its flats' call and not with the frame
     gl.uniform3fv(this.bbURight, camRight);
     gl.uniform3fv(this.bbUUp, camUp);
-    // NODE-OUTLINE: kept for the nodes' outline (render/nodeOutline.js) - the three components the vec3 uniforms read, as
+    // NODE-OUTLINE: kept for the nodes' glint (render/nodeGlint.js) - the three components the vec3 uniforms read, as
     // they read them: a caller's longer array (a seam test hands a matrix) is no basis to copy whole
     const bbR = (this._bbRight ??= new Float32Array(3)), bbU = (this._bbUp ??= new Float32Array(3));
     bbR[0] = camRight[0]; bbR[1] = camRight[1]; bbR[2] = camRight[2];
@@ -8525,7 +8525,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (this._bbColumnOn) { gl.uniform1f(bc.uColumnOn, 0); this._bbColumnOn = 0; }
       for (let i = 0; i < slots.length; i++) if (slots[i]?.runs.length) this._drawLowPolyTrees(slots[i]);   // BANTHA1: every slot's trees
       const drawn = this._lptDrawn ??= [null, null];
-      for (let i = 0; i < slots.length; i++) drawn[i] = slots[i]?.runs.length ? slots[i] : null;   // NODE-OUTLINE: what this frame drew, for the nodes' outline
+      for (let i = 0; i < slots.length; i++) drawn[i] = slots[i]?.runs.length ? slots[i] : null;   // NODE-OUTLINE: what this frame drew, for the nodes' glint
       lastKey = null; lastW = NaN; lastH = NaN; lastOx = NaN; lastOy = NaN; lastOz = NaN; lastSway = null;
       this._bbLptCutOn = undefined;   // whatever the next batch's slot, it is sent
     }

@@ -21,8 +21,8 @@
   {
     "name": "NODE-MARKS-the-lift-kept",
     "file": "src/scenes/gatherHost.js",
-    "old": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty, n.local[2] + tz, s); }",
-    "new": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty + (n.lift ?? 0.3), n.local[2] + tz, s); }",
+    "old": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty, n.local[2] + tz, s, tx, ty, tz); }",
+    "new": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty + (n.lift ?? 0.3), n.local[2] + tz, s, tx, ty, tz); }",
     "note": "NODE-OUTLINE (PIN MOVED): the walk hands each mark its place (`s`) - where its pictures are found",
     "tests": [
       "test/scenes/nodemarks.test.js"
@@ -224,7 +224,7 @@
   {
     "name": "NODE-MARKS-glow-no-kindling",
     "file": "src/render/nodeGlow.js",
-    "old": "if (!n) { n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); } else n.kindle = Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S);",
+    "old": "if (!n) { n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); } else n.kindle = m.quiet === true ? Math.max(0, n.kindle - dt / NODE_GLOW_KINDLE_S) : Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S);",
     "new": "if (!n) { n = { kindle: 1, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); }",
     "tests": [
       "test/scenes/nodemarks.test.js"
@@ -323,7 +323,7 @@
   {
     "name": "NODE-MARKS-the-glow-never-drawn",
     "file": "src/scenes/world.js",
-    "old": "peerBodies?.drawVeiled(); drawAuras(); nodeOutlinePass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };",
+    "old": "peerBodies?.drawVeiled(); drawAuras(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };",
     "new": "peerBodies?.drawVeiled(); drawAuras(); };",
     "tests": [
       "test/scenes/nodemarks.test.js",
@@ -333,8 +333,8 @@
   {
     "name": "NODE-MARKS-lit-under-the-travel-view",
     "file": "src/scenes/world.js",
-    "old": "nodeOutlinePass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet()));",
-    "new": "nodeOutlinePass.draw(nodeMarksAt(enchantFeet()));",
+    "old": "nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet()));",
+    "new": "nodeGlintPass.draw(nodeMarksAt(enchantFeet()));",
     "tests": [
       "test/scenes/nodemarks.test.js",
       "test/net/invislook.test.js"

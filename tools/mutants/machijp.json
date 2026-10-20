@@ -40,8 +40,8 @@
   {
     "name": "MAC-I-a-clockless-scene-is-lit-by-nothing",
     "file": "src/render/renderer.js",
-    "old": "    if (!this._clockLit) return [1, 1, 1];",
-    "new": "    if (!this._clockLit) return [0, 0, 0];",
+    "old": "    if (!this._clockLit) { out[0] = 1; out[1] = 1; out[2] = 1; return out; }",
+    "new": "    if (!this._clockLit) { out[0] = 0; out[1] = 0; out[2] = 0; return out; }",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "MAC-I-the-sun-goes-in-whole-not-by-halves",
     "file": "src/render/renderer.js",
-    "old": "      am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale * 0.5,",
-    "new": "      am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale,",
+    "old": "    out[0] = am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale * 0.5;",
+    "new": "    out[0] = am[0] + mc[0] * this._moonScale * 0.5 + sc[0] * this._sunScale;",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
     ]

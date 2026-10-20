@@ -3101,8 +3101,9 @@ and nothing in the world set a node apart from the ground about it. DECIDED here
   view's focus when one is set, every rate a whole number of cycles over its 60 s clock. Drawn after each mode's
   opaque world through the veiled bodies' hook, as the auras are (the street's pass, the dungeon's `lateWorldDraw`);
   never under the travel view; built at idle once a node is first marked; a glow that will not build costs the glow,
-  never the game (`createNodeGlowPass`, the world host's one door to it). NODE-OUTLINE (section 46, 2026-10-19): a node with a
-  picture is ringed along its own picture instead; the glow lights a node with none (a body drawn as a 3D character).
+  never the game (`createNodeGlowPass`, the world host's one door to it). NODE-OUTLINE (section 46, 2026-10-19) ringed a node with a
+  picture along its own picture instead, and NODE-GLINT (section 47, 2026-10-20) lights it ON that picture now - glints and a
+  sheen, the ring retired; the glow lights a node with none (a body drawn as a 3D character).
 - **Not built, named**: the held map's node marks (section 21's "the held map marks the patches and veins a character
   has worked before" - still as PROF1 and PROF2 left it); no setting turns the glow or the marks off (the professions'
   own switch does).
@@ -4749,7 +4750,11 @@ the slice wires a line into (`scenes/world.js`, `scenes/dungeonContext.js`, `net
 (`test/tooling/mutantdrift.test.js`), and those on the lines the slice moved were re-aimed and judged above.
 Ledger A (PROFESSIONS, GATHER-FEEL II).
 
-## 46. NODE-OUTLINE - a node ringed along its own picture (BUILT 2026-10-19)
+## 46. NODE-OUTLINE - a node ringed along its own picture (BUILT 2026-10-19; the ring RETIRED 2026-10-20 by NODE-GLINT, section 47)
+
+NODE-GLINT (section 47) took the ring away and kept the rest - the pictures, the mask and the pass's seams - and its module, test,
+probe and mutants live on under its names (`render/nodeGlint.js`, `test/scenes/nodeglint.test.js`, `tools/nodeGlintProbe.mjs`,
+`tools/mutants/nodeglint.json`). The record below is the ring's, its files named as they stood then (RETIRED).
 
 The owner: **"Overhaul gathering material visuals. Actually outline the sprite itself instead of a faint sparkle like it
 is now."** FACT: NODE-MARKS' glow (section 31) is a card stood before the node - a halo, a shimmer and motes, slight by
@@ -4771,7 +4776,7 @@ its root under a 20 m crown. DECIDED and BUILT (`render/nodeOutline.js`):
   the width and half of it) is the ring, in the profession's colour (`ui/nodeMarks.js`, the compass's) at the depth of
   the silhouette it borders, stood `OUTLINE_RING_BACK` behind it - so a wall before the node hides it, the ground or a
   tree behind it shows it, and it never draws over the node itself. **Why not shifted copies** (WEAPON-GLOW1's law): the
-  copies of a 3D tree's front cards drew over its own back cards - lines through the canopy (`tools/nodeOutlineProbe.mjs`,
+  copies of a 3D tree's front cards drew over its own back cards - lines through the canopy (`tools/nodeOutlineProbe.mjs`, RETIRED,
   2026-10-19: 18% of the ring over the tree); pushing the copies behind the whole tree hid the ring wherever another tree
   stood close behind, which in the jungle is everywhere.
 - **Its measure.** `OUTLINE_PX` 2.5 pixels at 1080 rows, with the image, never under 1.5 (a retro image's pixels are
@@ -4785,12 +4790,229 @@ its root under a 20 m crown. DECIDED and BUILT (`render/nodeOutline.js`):
   `lateWorldDraw`); never in a building nor under the travel view. One draw a picture into the atlas and one quad a node
   on screen; the frame's target, its viewport and the world's baseline handed back (blend off, depth LESS and written,
   faces culled, a scissor where one stood).
-- **Pinned**: `test/scenes/nodeoutline.test.js` (9); `tools/nodeOutlineProbe.mjs` compiles and links both programs in a
+- **Pinned** (RETIRED with the ring): `test/scenes/nodeoutline.test.js` (9); `tools/nodeOutlineProbe.mjs` compiles and links both programs in a
   real WebGL2 context, draws a herb flat of a two-flat batch and a 3D tree of crossed cards through the pass, and reads
   the frame back (15 checks: the ring outside every picture and within its width, the neighbour flat unringed, the
-  colours, one even ring at half kindling, a wall hiding it, the baseline back). Mutants: `tools/mutants/nodeoutline.json`
+  colours, one even ring at half kindling, a wall hiding it, the baseline back). Mutants (RETIRED): `tools/mutants/nodeoutline.json`
   (26, all dead). PIN MOVED: NODE-MARKS' and WB9g's hook pins (`nodemarks.test.js`, `invislook.test.js`,
   `wb9g_insignia.test.js`, `nodemarks.json`, `wb9g.json`) read `nodeOutlinePass`.
+
+## 47. NODE-GLINT - a node catching the light on its own picture (BUILT 2026-10-20)
+
+The owner, of NODE-OUTLINE's ring (section 46), after "a lot of players dont like how its not immersive": **"Lets just
+bring the glint back but better."** FACT: the ring was a 2.5-pixel line in the profession's compass colour at 95%,
+breathing, round every node within 120 m, sixteen at once - a mark painted on the world. NODE-MARKS' glow before it
+(section 31) was a card stood before the node - a halo, a shimmer and six motes, slight by intent - so the eye found a
+sparkle NEAR a node and never its shape; a tree's was a 2.6 x 3.4 m patch at its root under a 20 m crown. A herb's and a
+vein's pictures are their own (the herb's item picture, the ore's washed flat), but a node tree is the forest's own flat
+(`scenes/treeHost.js` treeKind's `flatsOf`: none of its own), so whatever marks a node is the only tell a tree has.
+DECIDED and BUILT (`render/nodeGlint.js` - section 46's module, moved; its pictures, its mask and its seams unchanged):
+
+- **The glow's parts, moved onto the picture.** The halo is gone (it was the patch at the root); the motes are GLINTS
+  on the picture; the shimmer is a SHEEN across it. Drawn over the node's rectangle, one quad a node, ADDED (ONE, ONE) as
+  the glow was - it only ever brightens - at the depth of the picture where it stands, `GLINT_PULL` (0.3 m) toward the
+  eye and never past half its way: a wall before the node hides it, the node never does.
+- **The glints.** `GLINT_COUNT` (6) a node, each living its own short life - `GLINT_RATE` 0.35 a second, each next one
+  `GLINT_RATE_STEP` 0.05 faster (21 to 36 lives a minute, whole over the glow's 60 s clock) - its light sin(pi x life)
+  cubed (`GLINT_FLASH`): born, brightest mid-life, gone dark - each life numbered on the clock's own wrap, so the life
+  at the wrap is the life at zero (AUDIT NODE-GLINT). Each life stands at a spot of the picture chosen afresh, once for
+  the node in the light's vertex stage (AUDIT NODE-GLINT: every fragment found it again): the first of `GLINT_TRIES` (6;
+  3 before the audit) points of the node's own pictures (`GLINT_ANCHORS`, 8 at most: a flat at its base, width and
+  height at its own scale; a 3D tree's crown about its root), taken in the plane the picture stands in - so a spot is a
+  point of the picture and moves with it as the eye moves (AUDIT NODE-GLINT: it was a share of the screen's box, a
+  different point each frame) - on the screen and before the eye: a flat's judged by its own picture at its own texel,
+  at its own depth; a 3D crown's by the silhouette, `GLINT_HOLD_PX` (1.5) round on every side. None, and that life is
+  dark. A white-hot core (`GLINT_CORE_WHITE`, 0.6 of the way to white) in a
+  soft bloom, and four thin rays turned a little (each life its own turn, within 17 degrees), reaching `GLINT_SHARE`
+  (0.35) of the picture's longer side on screen, between `GLINT_PX_MIN` (4) and `GLINT_PX` (14) pixels at 1080 rows, both
+  with the image, never under 1.5 (`glintPx`) - so a far herb, a speck, still glints, and a tree filling the screen
+  glints no larger than a near herb.
+- **The sheen.** A soft band of light rising a little aslant across the picture's own box and lit only where the
+  silhouette is - the picture's own shape catching the light - once every 6.7 s (`GLINT_SHEEN_HZ` 0.15), crossing in the
+  first half of the period (`GLINT_SHEEN_SHARE`) and dark the rest, at `GLINT_GAIN.sheen` (0.14) at most; none within
+  `GLINT_SHEEN_NEAR_M` (6 m), whole from `GLINT_SHEEN_FULL_M` (18 m) (`glintSheen`). (This said "the tree under the
+  axe and the herb under the sickle never flash" - the sheen's fade alone, while the glints flashed on at full: AUDIT
+  NODE-GLINT, and the next bullet.)
+- **The act's node is quiet** (AUDIT NODE-GLINT). The node an act works lights nothing of its own - no glint, no sheen,
+  no glow over a body: the Basket's finds and the Pick-Axe's strike are glints the player watches for (`systems/herbAct.js`,
+  `ui/professions/profActStyle.js` `.prof-glint`, a warm-white four-rayed star), and NODE-GLINT's stars on the very
+  node looked the same. The host marks it `quiet` (`scenes/gatherHost.js` marks), and `nodeGlows` dims a quiet mark
+  over the 0.6 s it kindles in and kindles it again when the act ends.
+- **The light.** A warm daylight (`GLINT_LIGHT`: 1, 0.95, 0.84) carrying `GLINT_TINT` (35%) of the profession's compass
+  colour (`glintTint`, `ui/nodeMarks.js`) - the professions still told apart, none painted in its colour whole.
+- **Kept.** NODE-MARKS' law for who is lit and how much (`nodeGlows`: kindled over 0.6 s, faded from 80 to 120 m, 16 at
+  most - the atlas's tiles); the frame's fog and the jungle's haze where its depth stands, and the sea's murk (AUDIT
+  NODE-GLINT, `dwWaterFogAdd` - the duel wall's law for an added light); the glow for a node with no
+  picture (a body drawn as a 3D character) and for SENSE1's look round; the build at idle, and a glint that will not
+  build handing every mark to the glow. Under reduced motion every glint stands at its first life's place at
+  `GLINT_STILL` (0.6) and no sheen crosses.
+- **Where** (THE FOUR HOSTS RULE), as section 46 left it: `scenes/world.js` wires it (`nodeGlintPass`, in the hook after
+  each mode's opaque world - the street's, and a dungeon's through its `lateWorldDraw`); `scenes/dungeonContext.js` holds
+  no pass of its own (its glow is SENSE1's); `scenes/worldModes.js` lights none in a building (`nodeMarksAt` answers none
+  there); `scenes/exterior.js`, the fixed-city bench, stands no gathering host and no node. Never under the travel view.
+- **Not a setting.** The owner's word was the glint itself; section 31's "no setting turns the glow or the marks off"
+  stands.
+- **Pinned**: `test/scenes/nodeglint.test.js` (11 - section 46's three on the pictures carried); `tools/nodeGlintProbe.mjs`
+  compiles and links both programs in a real WebGL2 context, draws a herb flat of a two-flat batch and a 3D tree of
+  crossed cards through the pass and reads the frames back (21 checks: over 24 moments of the glints' lives the herb and
+  the tree glint; light only added; every lit pixel within a glint's reach of the picture, and every glint's heart within
+  3 px of it; the neighbour flat unlit; near, no sheen; half kindled, half the light; still under reduced motion and
+  moving without it; a wall hiding it; through a long lens at 25 m the herb's sheen crossing it from its foot to its
+  crown, dark between crossings; the baseline back). Mutants: `tools/mutants/nodeglint.json` (52, all dead - section
+  46's 19 on the pictures, the mask and the pass carried and re-aimed, its 6 on the ring retired with it, its 2 on the
+  screen's clamp and the host's wiring made again as NODE-GLINT's). AUDIT NODE-GLINT's counts are its own, below. PIN MOVED: the world host's hook pins (`nodemarks.test.js`,
+  `invislook.test.js`, `wb9g_insignia.test.js`, `nodemarks.json`, `wb9g.json`) read `nodeGlintPass`;
+  `tv4_weather_above.test.js` names `nodeGlint.js` among the fogged passes never drawn under the travel view;
+  `l10n4_hardcoded.test.js` counts its three words under its new name (two since AUDIT NODE-GLINT).
+
+### AUDIT NODE-GLINT (2026-10-20, the owner: "Audit this")
+
+Two lanes: the author's own adversarial re-read, and three independent passes that read the commit cold - the GL and its
+cost, the record with its pins and mutants, and the glint in the world as a player meets it - none touching the tree
+while the others read. FOUND, each fixed and pinned (`test/scenes/nodeglint.test.js`, `tools/nodeGlintProbe.mjs`,
+`tools/mutants/nodeglint.json`):
+
+- **HIGH - the glints mimicked the act's own glint on the node being worked** (the world lane and the record lane). The
+  Basket's finds and the Pick-Axe's strike are glints the player must react to (`systems/herbAct.js`: a press before a
+  find shows spends it; `ui/professions/profReticle.js`: a strike within 2.5 degrees of the glint counts double), drawn
+  as a warm-white four-rayed star (`ui/professions/profActStyle.js` `.prof-glint`, about 23 px) - and NODE-GLINT's stars,
+  warm-white and four-rayed (about 28 px), kept flashing at full on the very node: about 2.8 a second over the herb in
+  the Basket's gaps. Only the sheen faded near; the record said "never flash". FIXED: the node an act works is quiet
+  (`scenes/gatherHost.js` marks' `quiet`; `nodeGlows` dims it over 0.6 s and kindles it again) - its glints, its sheen
+  and a body's glow alike; the record's words corrected where they stand.
+- **HIGH - every node behind the player was a full-screen pass** (the GL lane and the world lane; carried from
+  NODE-OUTLINE's `screenRect`, its cost now four times the ring's a pixel). One corner of a node's box behind the eye
+  made its rectangle the whole screen - a box wholly behind too, and one across the eye's plane off to the side. About 8
+  of a frame's 16 nodes in any wood (the GL lane's sampling at 1920 x 1080: 16.8 M light fragments a frame for herbs,
+  19-23 M for trees); in SwiftShader, 16 nodes behind the eye cost the glint 2,366 ms a frame and the ring 551. FIXED:
+  a box wholly behind the eye is none, one across its plane bounded where its edges cross `GLINT_NEAR_W` (the GL lane's
+  re-measure: 0.01 M fragments for herbs, 0.9 M for trees).
+- **MEDIUM - every fragment searched for every glint's spot** (the GL lane): six glints, up to three hashed tries and a
+  texel each, the same for the whole node, answered again at every pixel of its rectangle (the ring had discarded a
+  silhouette pixel after one fetch). FIXED: the spots are found once, in the light's vertex stage (`texelFetch` there is
+  WebGL2's own), and handed to the fragments flat; a fragment reads one texel and draws six stars.
+- **MEDIUM - glints came and went as the eye moved a pixel or the picture swayed** (the GL lane: on a leafy picture, 9
+  and 12 comings and goings over 20 one-pixel steps; the world lane, the author). A life's spot was a share of the
+  node's box on the screen, chosen again every frame against the moving, pixel-snapped silhouette - a different point
+  of the picture each frame - so a spot near a leaf's edge flipped between tries or went dark mid-flash, a frame at a
+  time as the player walked; under reduced motion the held glints hopped too, and a node sliding off the screen dragged
+  its spots (its box was held to the screen). A margin round the spot alone did not cure it (the probe: 10 over 12
+  steps - any test on the mask's pixels flips as they move under it). FIXED at the root: a spot is a point of one of
+  the node's pictures (`GLINT_ANCHORS` - a flat at its own base, width and height; a 3D tree's crown about its root), in
+  the plane the picture stands in, so it moves with the picture; a flat's judged at its own texel of its own picture
+  (`uFlatTex`), at its own depth - nothing about it changes as the eye moves; a 3D crown's (no one plane) by the
+  silhouette, `GLINT_HOLD_PX` round; six tries a life; the picture's box kept whole past the screen's edge
+  (`GLINT_OVERHANG`). The probe: none over 12 one-pixel steps on a leafy picture, where the same flat judged by the
+  silhouette came and went 4 times (a glint is gone when no light of it stands within 2.5 px of its place - a peak only
+  dimming under the detector's 300 as it slides across a pixel is the same glint).
+- **MEDIUM - a small tree's glints mostly dark** (the world lane). A far tree's batch is sized for its tallest tree (each
+  flat its own `_scales`), and its box at the batch's size stood round a small tree - about a quarter of its lives found
+  it; under reduced motion one small tree in six showed none. FIXED: a flat boxed at its own scale, and none beside the
+  3D tree it has given way to.
+- **MEDIUM - the record's numbers and some of its laws had no pin that could fail** (the record lane, by mutants that
+  survived): 14 constants held by a bound or not at all; every node on one seed, a spot never chosen afresh, the depth
+  its own texel's, the jungle's haze never sent; the rays' room pinned at half; the tree's reach unscaled, the scissor
+  kept, the depth written, the pass's end forgotten. FIXED: the constants pinned by value, each law by a pin or a probe
+  check - the 52 records are 98, all dead (two the audit's own first pins missed, made to fail).
+- **LOW-MEDIUM - every glint jumped once a minute** (every lane). The glints' brightness was whole over the 60 s clock,
+  their life's number was not: at the wrap it fell to nought and every lit glint moved, on every node at once (the GL
+  lane read 206 pixels change across the wrap, none on either side of it). FIXED: a life numbered on the clock's wrap.
+- **LOW - a batch the walk had not placed drew pixel-local** (the world lane): a stood pixel's batch has no origin until
+  the world's walk first reaches it, and its node, behind the player at night, was boxed some 800 m off - a ghost glint.
+  FIXED: the mark carries its pictures' frame (`origin`, its pixel's translation), the batch's own first.
+- **LOW** - `pow` of a sine a hair below nought (NaN on a real GPU; the GL lane, plausible): FIXED, held at nought. The
+  sea's murk never taken (inherited from the glow and the ring): FIXED, `dwWaterFogAdd`. A tile a texel over its
+  rectangle where the float carries the width over: FIXED, whole pixels. A 3D tree's front card hiding its own light (the
+  GL lane, plausible): FIXED, the nearer picture's depth. The pass's own glow never freed (carried from HOST-SPLIT):
+  FIXED. Text that said what is and was not (`render/nodeGlow.js`'s head, Rendering.md's glow line, Bantha-Jungle's
+  trunk, the world host's hook): FIXED. Section 46's addresses rewritten onto files that now say other things (`(9)`,
+  `(15 checks: the ring...)`): FIXED - section 46 is its own words again, RETIRED where it names the ring's files.
+
+NOT CHANGED, named:
+- **The light at night and underground** (the world lane - DESIGN, the owner's). The glint is a fixed warm daylight, so at
+  midnight in a wood or in a black corridor each node near carries the brightest point in view, many times its picture's
+  own light, and every 6.7 s the sheen lifts the whole far silhouette. The glow and the ring were the same. Scaling it by
+  the frame's light with a floor (`renderer.flatLightAt`; TELL2's `glintLit` is the precedent) trades the night's
+  findability for its immersion: put to the owner. ANSWERED - "Follow the light": GLINT-LIGHT, below.
+- **The tint separates Mining and Logging by 0.12, on green alone** (the world lane - DESIGN, LOW): the picture itself
+  tells the kind; the compass carries the colour whole.
+- **A flat's spot stands on its unswayed plane**: in a gale the picture leans under it (a tall crown's top by a few
+  tenths of a metre) and the glint drifts against its leaf - it never jumps. **A 3D crown is no one plane**: its spots
+  stand on the plane through its root, judged by the silhouette, and the crown's leaves slide across them by their
+  parallax as the eye moves round it - far slower than the screen's box did, but a spot there may still come and go;
+  anchoring to the leaf cards themselves (the tree's mesh, the GPU's alone) is named, not built.
+- **The 0.3 m pull lets the light show through a grass blade at a herb's foot**; **the sheen's distance is the camera's**,
+  not the player's (a third-person camera); **the sheen on a tile fitted to fewer texels is blocky at its edge** (at most
+  a pixel at fit 0.44 - the rectangles behind the eye were the worst, and are gone). Each minor.
+- **The probe's tree picture is no `treeKind.picturesOf`'s** (it stands the 3D tree alone: the far flat's handover cut is
+  the billboard program's, pinned by the Low Poly Trees' own tests), and **the probe is not in CI** - the repo's probes
+  are run by hand, as this one was.
+
+CHECKED, SOUND (the lanes, read at the commit): GLSL ES 3.00 on ANGLE, Metal and the mobile translators (the uint hash, the
+loops, `texelFetch` on the depth atlas, `gl_FragDepth` on every path not discarded); the depth convention (standard,
+LESS, the atlas's depth the frame's at the same pixel); the GL handed back; the fog, the haze and the focus; reduced
+motion; a gone node, a stump, a neighbour flat in a shared batch; a school over the water; the four hosts; flashing well
+under 3 Hz over small areas; the shapes the tests feed the pass the producers'.
+
+Counts after the audit: `test/scenes/nodeglint.test.js` 15; `tools/nodeGlintProbe.mjs` 26 checks;
+`tools/mutants/nodeglint.json` 98, all dead; NODE-MARKS' two records the audit moved (`nodemarks.json`) re-aimed, dead;
+`test/world/bantha1_jungle.test.js`'s haze sweep reads the glint's own upload.
+
+### GLINT-LIGHT - the glints follow the light (2026-10-20, the owner: "Follow the light")
+
+The audit's design question, put to the owner: at night and underground, should the glints follow the scene's light? The
+answer, the option as it was put: "Scale glints by the light where the node stands, with a floor so nodes stay findable
+at night. The sheen goes away in the dark."
+
+THE LIGHT is the one the node's own flat takes where it stands - `renderer.flatLightAt` (MAC-I: the billboard program's
+composition - the ambient with the moons' lift, the sun's half, the Masser's half, every lamp at the flats' falloff, the
+indirect light), asked once a node a frame at the node's place, into the pass's one array (`flatLightAt` takes an `out`
+for it now). Its LEVEL is its luma by the 601 weights (`glintLightLevel`, written so a grey light's level is that grey
+exactly), in the display space `flatLightAt` answers in - the frame's own on both lanes, since the Enhanced Lighting
+lane encodes each fragment back to display space itself (`enhancedLighting.js` `elFinish`); the first-person hand's tint
+reads the same answer the same way. A renderer that answers none (a probe, a test's stand-in) lights it as the day.
+- **The glints are as bright as that level** (`uAlpha` is the kindling times it): a clear day's 1, the light whole.
+- **THE FLOOR is the flats' own**, `FLAT_LIGHT_FLOOR` (0.25 - MAC-I's: dark enough to read as unlit, bright enough to
+  keep a silhouette), asked of `flatLightAt` itself. It is also the clock's own night ambient (`EXTERIOR_NIGHT_AMBIENT`),
+  so outdoors at night the glint simply takes the night's light, a quarter of the day's. The floor reaches only under
+  that: a dungeon's 0.12, a room's 0.18, a mine with no lamp near. TELL2's floor (`glintLit`: 0.35 plus 0.8 of the
+  albedo's luma) was weighed and not taken: it is a warning's, which must read before a blow lands, and a node's glint
+  is a find. If night nodes read too faint in play, the floor is the one number to raise, and TELL2's 0.35 is the next
+  precedent.
+- **The sheen goes out in the dark** (`glintSheenLight`, a smoothstep from `GLINT_SHEEN_DARK` 0.4 to `GLINT_SHEEN_LIT`
+  0.55, times the sheen's distance gain). The edges are set from the clock's own light at a node, measured through
+  `flatLightAt` over the world's own terms (`exteriorAmbient`, `sunScale`, the weather's scale, EV5's moons):
+
+  | Light at the node | Level | Sheen |
+  |---|---|---|
+  | a moonless night | 0.25 | none |
+  | a night under both full moons | 0.39 | none |
+  | a storm's noon ("a storming noon reads near-night", `worldClock.js`) | 0.35 | none |
+  | a rainy noon | 0.48 | part |
+  | a clear day's first hour (07:00) | 0.59 | whole |
+  | an overcast noon | 0.66 | whole |
+  | a clear noon | 1 | whole |
+
+  So every night is dark to the sheen, as the owner's "the sheen goes away in the dark" reads at night and underground.
+  A vein beside a lamp in a mine is lit, and its sheen crosses it: the light decides, not the clock.
+- **Not a DFU member**, as the glint is not. The light it follows is DFU's billboard composition (MAC-I's own citations).
+
+NOT CHANGED, named:
+- **The glint's colour stays the warm daylight's** (`GLINT_LIGHT` with its profession's 35%). It is scaled by the
+  light's level, not tinted by its colour: a moonlit or a torchlit glint is the daylight's colour, dimmer. The node's
+  own picture takes the light's colour.
+- **The glow does not follow the light** (a body's, SENSE1's finds - `render/nodeGlow.js`), as the audit named.
+- **The sun's shadow is not in the level**: `flatLightAt` reads no texture, so neither the lane's shadow map nor the
+  clouds' shadow reaches it (the clouds' is MAC-I's own recorded departure, in `flatLightAt`'s comment). A node in a wall's shadow at noon glints as one in the
+  sun, while its picture is shaded.
+- **The lane's eye adaptation is not in the level**: `flatLightAt` is the light before the lane's exposure, as the hand's
+  tint reads it.
+
+Counts after GLINT-LIGHT: `test/scenes/nodeglint.test.js` 18 (the level and the sheen's edges against the clock's own
+hours; `flatLightAt`'s `out`; the draw asking each node's light at its place and the floor); `tools/nodeGlintProbe.mjs`
+30 checks (a clear noon's light whole; at night a quarter, its brightest still clear on the picture; a black mine's held
+at the night's by the floor; far, at night, no sheen at any moment it crossed by day - `renderer.flatLightAt` itself
+over the probe's scene); `tools/mutants/nodeglint.json` 107, all dead.
 
 ## Appendix A - a day of a gatherer
 
