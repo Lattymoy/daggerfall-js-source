@@ -140,7 +140,7 @@
   {
     "name": "NODE-MARKS-a-body-with-its-hide-taken-marked",
     "file": "src/scenes/huntHost.js",
-    "old": "    mark: (b) => (goneIn(book, b.key, 'hide') ? null : BODY_MARK),",
+    "old": "    mark: (b) => (goneIn(book, b.key, 'hide') || ['skinned', 'mineSkinned'].includes(b.skin?.view()) ? null : BODY_MARK),",
     "new": "    mark: () => BODY_MARK,",
     "tests": [
       "test/scenes/nodemarks.test.js"

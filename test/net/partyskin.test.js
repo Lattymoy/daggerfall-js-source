@@ -235,6 +235,13 @@ test('S5b PARTY-SKIN AC5: an act that slips for ever - Mac holds and renews past
   const grants = bsHistory(s.net, BOB, s.rat.seq).filter((x) => x.entry[2] === HELD && String(x.entry[3]).startsWith(`${MAC}:`));
   const firstOpenAfter = bsHistory(s.net, BOB, s.rat.seq).find((x) => x.entry[2] === OPEN && x.at > grants[0].at)?.at;
   assert.ok(firstOpenAfter && !grants.some((x) => x.at > firstOpenAfter), 'the stream never gave Mac the body again after the cap');
+  // a client that never stops - Mac's own claim id, said again after the cap by a socket that ignores it - is refused by the authority too
+  const macCid = sqLog(s.net, MAC).at(-1).cid;
+  const idNow = entryOf(s)[1];
+  assert.equal(s.net.sendHit(MAC, s.frame(BOB, { sq: [macCid, idNow, HOLD] })), true);
+  go(s.net, 800);
+  assert.equal(entryOf(s)[2], OPEN, `the authority refuses a renewal past the cap: ${said(entryOf(s))}`);
+  assert.equal(promptOf(eve), READY, 'and the body is still Eve\'s to claim');
   assert.equal(eve.host.press(), true);
   await traceAll(s.net, [eve]);
   oneHarvest(s, [mac, eve], EVE);
@@ -253,11 +260,18 @@ test('S6 PARTY-SKIN AC1 (guard + red): Zed 20 m off has no node (guard); a FORGE
   assert.equal(s.net.sendHit(ZED, s.frame(BOB, { sq: [`${ZED}:fake:1`, e0[1], HOLD] })), true, 'Zed\'s socket sends a HOLD it has no standing to');
   assert.equal(s.net.sendHit('forge-0005', s.frame(BOB, { sq: [`${MAC}:fake:7`, e0[1], HOLD] })), true, 'and a stranger names Mac\'s claim id');
   go(s.net, 1500);
-  assert.equal(entryOf(s)[2], OPEN, `Bob's entry is still open after both forgeries: ${said(entryOf(s))}`);
+  assert.equal(s.net.sendHit('forge-0005', s.frame(BOB, { sq: ['forge-0005:x:2', 'ffffffffffff', HOLD] })), true, 'and a claim on another body\'s id (a reloaded owner\'s earlier body under the same number)');
+  go(s.net, 1500);
+  assert.equal(entryOf(s)[2], OPEN, `Bob's entry is still open after the forgeries: ${said(entryOf(s))}`);
   assert.equal(mac.aim() !== null, true);
   assert.equal(mac.host.press(), true);
   await mac.trace(s.net);
-  oneHarvest(s, [mac, zed], MAC);
+  const done = oneHarvest(s, [mac, zed], MAC);
+  // a late claim on the skinned body - a peer in reach with a true id - is refused: a skin is final
+  for (const op of [HOLD, DONE]) assert.equal(s.net.sendHit('forge-0005', s.frame(BOB, { sq: ['forge-0005:x:3', done[1], op] })), true);
+  go(s.net, 1500);
+  assert.deepEqual(entryOf(s).slice(0, 2), [s.rat.seq, done[1]]);
+  assert.deepEqual([entryOf(s)[2], entryOf(s)[3]], [SKINNED, done[3]], `the body stays skinned to Mac's claim: ${said(entryOf(s))}`);
 });
 
 test('S6b PARTY-SKIN (guard): no knife in Mac\'s main pack - no node, no prompt; a body of a foe no knife takes a hide from - no entry, and no node for a player who holds a knife', async () => {
