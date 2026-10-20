@@ -25,7 +25,7 @@ import { SPEED_OF_SOUND, THUNDER_SOURCE_M } from '../../../src/systems/distantSt
 import { courtToDungeon, courtBraziers, LAVA_Y, ARRIVE_Z, RIM_OUT, SPIRES, GATE_BLOCK_SIDE } from '../../../src/world/gate/gateArena.js';
 import { GATE_ARCHIVE } from '../../../src/world/gate/gateModel.js';
 import { COURT_ARCHIVE } from '../../../src/world/gate/gateArena.js';
-import { COURT_R, COURTS, nearestCourt } from '../../../src/net/gate/gateBrain.js';
+import { COURT_R, COURTS, COURTS_HIS, nearestCourt } from '../../../src/net/gate/gateBrain.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -85,7 +85,7 @@ test('WB6b the islands: seeded and pure, round the court from ISLAND_NEAR to ISL
 test('WB6b the floor\'s shards: off the court past its rim, off the floor, clear of the tower\'s window and of the bridge, never touching the court\'s spires over the whole period; bobbing and turning whole over it (the matrix a period later the same), a rotation and a scale never mirrored; the flagstones on top, the gate\'s stone under (mutants: a shard in the tower\'s window; a turn off the whole; the matrix mirrored)', () => {
   const s = deadlandsShards();
   assert.deepEqual(s, deadlandsShards(), 'seeded, pure');
-  assert.equal(s.length, SHARD_COUNT + SHARD_COUNT_FAR * (COURTS.length - 1), 'WB9b: and SHARD_COUNT_FAR round each court past the first');
+  assert.equal(s.length, SHARD_COUNT + SHARD_COUNT_FAR * (COURTS_HIS - 1), 'WB9b: and SHARD_COUNT_FAR round each court past the first (WB14b: his courts - a portent\'s platform stands on its night alone)');
   assert.ok(SHARD_RING[0] > RIM_OUT + 5, 'past the rim');
   // WB9b: each shard hangs round its own court - the first SHARD_COUNT round the first, then SHARD_COUNT_FAR round each
   const ownOf = (i) => (i < SHARD_COUNT ? 0 : 1 + Math.floor((i - SHARD_COUNT) / SHARD_COUNT_FAR));
@@ -339,9 +339,11 @@ test('WB6b the seams, by source: the world host keeps the Deadlands\' clock on t
   assert.match(w, /const lived = deadlandsPass\(\)\?\.drawLife\(proj, view, _courtCentre, deadlandsSeconds\(\), fog, glow, _courtBeds, renderer\.worldViewportPx\?\.\[3\]\);\n\s+if \(told \|\| lived\) renderer\.markForeignPass\(\);/);
   assert.match(w, /\n    deadlandsSeconds: \(\) => deadlandsSeconds\(\),/);
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /if \(_courtMesh\) ctx\.dynamicDraws\.push\(\{ gpu: _courtMesh, object: \{ matrix: identity\(\) \} \}\);\n\s+standDeadlands\(ctx\);/, 'the land after the court, whose art it is cut from');
-  assert.match(wm, /if \(_shardMesh\) for \(const s of deadlandsShards\(\)\) ctx\.dynamicDraws\.push\(\{ gpu: _shardMesh, object: \{ matrix: shardMatrix\(s, host\.deadlandsSeconds\?\.\(\) \?\? 0\) \}, shard: s \}\);/);
-  assert.match(wm, /if \(_landMesh\) ctx\.dynamicDraws\.push\(\{ gpu: _landMesh, object: \{ matrix: identity\(\) \} \}\);/);
+  // WB14b (PIN MOVED): the court and its land are stood by scenes/gate/gateStand.js, out of the host whole
+  const gs = src('src/scenes/gate/gateStand.js');
+  assert.match(gs, /if \(courtMesh\) ctx\.dynamicDraws\.push\(\{ gpu: courtMesh, object: \{ matrix: identity\(\) \} \}\);\n\s+standDeadlands\(ctx\);/, 'the land after the court, whose art it is cut from');
+  assert.match(gs, /if \(shardMesh\) for \(const s of deadlandsShards\(\)\) ctx\.dynamicDraws\.push\(\{ gpu: shardMesh, object: \{ matrix: shardMatrix\(s, host\.deadlandsSeconds\?\.\(\) \?\? 0\) \}, shard: s \}\);/);
+  assert.match(gs, /if \(landMesh\) ctx\.dynamicDraws\.push\(\{ gpu: landMesh, object: \{ matrix: identity\(\) \} \}\);/);
   const shards = wm.indexOf('\n      if (isGateArena(dungeonLoc)) for (const d of dungeonCtx.dynamicDraws) if (d.shard) shardMatrix(d.shard, _deadS, d.object.matrix);');
   const clock = wm.indexOf('\n      const _deadS = isGateArena(dungeonLoc) ? (host.deadlandsSeconds?.() ?? performance.now() / 1000) : 0;');
   const begin = wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');

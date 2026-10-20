@@ -8,7 +8,7 @@ import {
   gateTimes, gateAt, gatePhase, gameDayAt, isGateDay, gateCountdown, countdownText, countdownWords, gateStands, gateMarked,
   gateRoomKey, isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateHash, gateRoll, pickGateRegion, pickGatePixel,
   gateSpotLocal, omenRing, gateBossOf, GATE_BOSSES, PIXEL_M, GATE_DAY_MINUTES, GATE_SPOT_SPREAD_M, OMEN_RING_PIXELS,
-  GATE_RISE_MS, GATE_COLLAPSE_MS, GATE_EVERY_DAYS, riseLine, wrathLine, marksLine, gateModsOf,
+  GATE_RISE_MS, GATE_COLLAPSE_MS, GATE_EVERY_DAYS, riseLine, wrathLine, marksLine, gateModsOf, gatePortentsOf, portentsLine,
 } from '../../src/net/gate/gateLaw.js';
 import { scanGatePixels, findGateSite, gateRegions, politicClaimed, gateSeaPixel, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX, GATE_TOWN_TYPES } from '../../src/systems/gate/gateSite.js';
 import { isWaterPixel } from '../../src/ui/overworldModel.js';
@@ -279,7 +279,7 @@ test('WB1 the chat: each moment\'s line ONCE, in order, and a late arrival hears
   const late = omenOver(601);
   late.clock.now = late.t.riseAt + GATE_RISE_MS + 90_000;
   late.omen.frame(); late.omen.frame();
-  assert.deepEqual(late.lines, [riseLine({ near: 'Copperham', left: countdownText(late.t.openAt - late.clock.now) }), riteOmenLine(), marksLine({ boss: 'Valkynaz Ruhn', md: gateModsOf(601) })]);   // WB12d: and the rite, while it holds - right after the rise (AUDIT WB12d D3)
+  assert.deepEqual(late.lines, [riseLine({ near: 'Copperham', left: countdownText(late.t.openAt - late.clock.now) }), riteOmenLine(), marksLine({ boss: 'Valkynaz Ruhn', md: gateModsOf(601) }), portentsLine(gatePortentsOf(601))]);   // WB14b: and its portents (day 601's Dire Breach); WB12d: and the rite, while it holds - right after the rise (AUDIT WB12d D3)
 });
 
 test('WB1 the chat: a fallen boss\'s gate says no wrath, and a host with no map data says nothing at all', () => {

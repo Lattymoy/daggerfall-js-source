@@ -116,7 +116,7 @@ import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/f
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
-import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, buildWalkSlabModel, walkSlabs, slabMatrix, courtFloorTris, courtLightsNear, withCourtLights, courtDoorAabb, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gate/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
+import { gateArenaLocation, gateArenaBlocks, isGateArena, slabMatrix, courtLightsNear, withCourtLights, courtDoorAabb, planOfDay, COURT_FOG } from '../world/gate/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
 import { isSdRealm, sdRealmLocation, sdRealmBlocks, buildRealmModel, realmColliderTris, realmLightsWith, realmLighting, SD_REALM_ARCHIVE, SD_REALM_FOG } from '../world/superDungeon/sdRealm.js';   // SD5a: the Shattered Hour, a made level as the court is
 import { realmArt } from '../world/superDungeon/sdRealmArt.js';   // SD5a: its art, made in code
 import { isEgHall, egHallLocation, egHallBlocks, egLightsWith, egHallLighting, egHallFog, egHallGrade } from '../world/eliteGates/egHall.js';   // EG-PLAY: an Elite Breach's circle, a made level as the Hour is
@@ -132,8 +132,8 @@ import { sdRoomKey } from '../net/superDungeon/sdLaw.js';   // SD5a: its room, t
 import { isBound } from '../systems/item/itemBound.js';   // AUDIT SS: the keyed shelf sells no bound piece
 import { lockRefuses } from '../systems/item/itemLock.js';   // AUDIT SS: nor a locked one
 import { courtLighting, deadlandsFlash } from '../render/deadlands.js';   // WB6a: the court's own light - the Deadlands' red from above, the fire's from below, the vortex's from behind the boss   // WB6b: and a strike's, flaring over it
-import { buildDeadlandsLand, buildShardModel, deadlandsShards, shardMatrix } from '../world/deadlandsLand.js';   // WB6b: the land out in the fire round the court, and the floor's broken shards over it
-import { gateArt, courtArt, GATE_ARCHIVE } from '../world/gate/gateArt.js';   // WB3b: the court's own art, and the gate's stone it is cut from   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
+import { shardMatrix } from '../world/deadlandsLand.js';   // WB6b: the floor's broken shards over the fire round the court
+import { createGateStand, NO_XA } from './gate/gateStand.js';   // WB3b/WB6b: the court and its land stood into the context - WB14b: the night's (out of this host)   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { createWeaponRig, envAttack, sheetHolderOf } from '../combat/weapon/weaponRig.js';   // MW-MAP1: the held map's holder, off the interior arm
 import { fpArm } from '../combat/fpArm.js';   // MW-MOUNT: a displayed item's Morrowind picture, from the build that stands
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible interior arrows; AUDIT 39 (#64): and the shaft that LANDS
@@ -9313,7 +9313,7 @@ export function createWorldModes(host) {
       if (no) { setMidScreenText(no); return false; }
       const site = host.gateArenaSite?.(g) ?? null;
       const dfLocation = gateArenaLocation({ day: g.day, near: g.near ?? '', regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });
-      const hit = { dfLocation, blocksFile: gateArenaBlocks(blocks), gateArena: g, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: `gate:${g.day}`, door: null, dfBlock: null, recordIndex: -1 };
+      const hit = { dfLocation, blocksFile: gateArenaBlocks(blocks, g.day), gateArena: g, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: `gate:${g.day}`, door: null, dfBlock: null, recordIndex: -1 };
       return gatedTransition((live) => dungeonTransition(hit, [], true, live));
     });
   }
@@ -9497,16 +9497,11 @@ export function createWorldModes(host) {
       veil?.reveal();
     }
   }
-  /** WB3b: the court's mesh - made once a session, with its art and the gate stone's - and the collider's bucket for
-   *  its floor. */
-  let _courtMesh = null;
-  /** WB6b: the islands out in the fire and the one shard every floating piece of the floor is drawn from - made with
-   *  the court, once a session. WB9b: and the one slab every walkway between the courts is laid in. */
-  let _landMesh = null, _shardMesh = null, _slabMesh = null;
-  const NO_XA = Object.freeze([]);   // WB9b: no crossings heard - every walkway under the fire
+  /** WB14b: the court and the Deadlands' land stood into the court's context - the night's plan's (scenes/gate/gateStand.js,
+   *  out of this host: WB3b's standCourt and WB6b's standDeadlands, whole) */
+  const gateStand = createGateStand({ renderer, host });
   const NO_TARGETS = Object.freeze([]);   // WB9f: a court with no spoils on its floor stands no targets
   const NO_LIGHTS = Object.freeze([]);   // AUDIT SD II (L2 F9): an Hour with no spoils' light hands none, and makes nothing
-  const COURT_BUCKET = 'wb:court';
   /** AUDIT WB D10: the court's equator light, one array filled each frame (the renderer reads it that frame). */
   const _courtEquator = new Float32Array(3);
   const courtEquatorOf = (ct) => { _courtEquator.set(ct.equator); return _courtEquator; };
@@ -9516,39 +9511,6 @@ export function createWorldModes(host) {
   /** AUDIT SD IV (R5): the Hour's fog and trilight, filled each frame (the lane's scaled to the dark) - nothing made. */
   const _hourFog = { mode: '', density: 0, start: 0, end: 0, color: [0, 0, 0] }, _hourFogColor = new Float32Array(3);
   const _hourTri = { sky: [0, 0, 0], equator: [0, 0, 0], ground: [0, 0, 0] };
-  /** WB3b: the court stood into a built context, before the start marker is read: its mesh among the context's own
-   *  draws, its floor on the collider (the spawn lands on it), and the way home's name - GATE-FBX: on the portal that
-   *  rises where he fell, the court's one door (scenes/gate/gateCourt.js lays it into the exit doors; the exit family's ray,
-   *  ladder and wagon word take it - no family of its own). */
-  function standCourt(ctx) {
-    if (!_courtMesh && renderer?.createMesh) {
-      try {
-        for (const [rec, art] of courtArt()) { renderer.uploadTexture?.(COURT_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(COURT_ARCHIVE, rec, art.emission, { white: true }); }   // AUDIT GATE-FBX G4: the court's fire its own colour, never the dungeon arm's day tint (AUDIT SD II L2 F3's law)
-        for (const [rec, art] of gateArt()) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true }); }
-        _courtMesh = renderer.createMesh(buildCourtModel());
-      } catch (e) { console.warn('[gate] the court would not build', e?.message ?? e); _courtMesh = null; }
-    }
-    if (_courtMesh) ctx.dynamicDraws.push({ gpu: _courtMesh, object: { matrix: identity() } });
-    standDeadlands(ctx);   // WB6b: and the land round it, cut from the same stone
-    // WB9b: THE WALKWAYS' SLABS - each a draw of the one slab with a matrix of its own, under the fire until a bound lays
-    // its walkway, then rising stone by stone toward the court he leapt to (moved every frame in the dungeon arm, on the
-    // relay's clock and the fight's crossings - host.gateFloor)
-    if (!_slabMesh && renderer?.createMesh) { try { _slabMesh = renderer.createMesh(buildWalkSlabModel()); } catch (e) { console.warn('[gate] the walkways would not build', e?.message ?? e); _slabMesh = null; } }
-    if (_slabMesh) { const fl = host.gateFloor?.() ?? null; for (const sl of walkSlabs()) ctx.dynamicDraws.push({ gpu: _slabMesh, object: { matrix: slabMatrix(sl, fl?.xa ?? NO_XA, fl?.now ?? 0) }, slab: sl }); }
-    const tris = courtFloorTris();
-    const n = tris.length / 3;
-    const idx = n > 65535 ? new Uint32Array(n) : new Uint16Array(n);
-    for (let i = 0; i < n; i++) idx[i] = i;
-    ctx.collider.addMesh(COURT_BUCKET, tris, idx, identity());
-    // GATE-FBX: and NO door of its own - the bridge's membrane is gone; until he falls the court is left by death or the Wrath
-    ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('exit:') ? { title: COURT_TEXT.wayHome } : null));   // before the dungeon exit's own namer, so it answers first
-    // WB9f (Mac: "The player should be able to inspect and pick up the ground item, not just walk over it"): HIS SPOILS
-    // ON THE FLOOR, PRESSED - each resting piece a target the one ray can win (the outer host's pool - scenes/spoilsPool.js
-    // targets), named by its own word, its item listed on the plaque (the context's lootContents asks `spoilContents`)
-    // and taken by the press (the dungeon arm's `spoil` rung)
-    ctx.addActivationTargets(() => host.spoilTargets?.() ?? NO_TARGETS);
-    ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('spoil') ? host.spoilName?.(key) ?? null : null));
-  }
   /** SD5a: THE SHATTERED HOUR stood into its built context (world/superDungeon/sdRealm.js), the court's way - its art made once a
    *  session (world/superDungeon/sdRealmArt.js), its mesh among the context's draws, its floors on the collider (the spawn lands on
    *  them). Its way back is the context's own Rift (scenes/superDungeon/sdEnd.js, at the Threshold's back); its lamps ride the frame's
@@ -9622,21 +9584,6 @@ export function createWorldModes(host) {
     host[gate] = (...a) => (mode === 'dungeon' && isEgHall(dungeonLoc) ? host[eg]?.(...a) ?? null : own?.(...a) ?? null);
   }
   { const own = host.extraBillboards; host.extraBillboards = () => { const b = own?.() ?? []; return mode === 'dungeon' && isEgHall(dungeonLoc) ? [...b, ...(host.egBatches?.() ?? [])] : b; }; }
-  /** WB6b: THE DEADLANDS' LAND stood into the court's context, after the court (whose art it is cut from): the islands
-   *  among its draws, and each of the floor's shards with a matrix of its own - moved every frame on the sky's clock
-   *  (the dungeon arm, before its draws), so the drift is the same on every screen. Made once a session; a land that
-   *  will not build costs the court its land, never the court. */
-  function standDeadlands(ctx) {
-    if (!_landMesh && renderer?.createMesh) {
-      try {
-        const land = buildDeadlandsLand(), shard = buildShardModel();
-        _landMesh = renderer.createMesh(land);
-        _shardMesh = renderer.createMesh(shard);
-      } catch (e) { console.warn('[gate] the Deadlands\' land would not build', e?.message ?? e); _landMesh = null; _shardMesh = null; }
-    }
-    if (_landMesh) ctx.dynamicDraws.push({ gpu: _landMesh, object: { matrix: identity() } });
-    if (_shardMesh) for (const s of deadlandsShards()) ctx.dynamicDraws.push({ gpu: _shardMesh, object: { matrix: shardMatrix(s, host.deadlandsSeconds?.() ?? 0) }, shard: s });
-  }
   /** OH-E: SuppressAbyssLights' candle - the Light spell's light at half its intensity (the colour channel's white) and
    *  half its range while the abyss's presentation holds. */
   const abyssCandle = (l, abyss) => (l && abyss ? adoptLight({ ...l, range: l.range * abyss.magicLightScale, color: (l.color ?? [1, 1, 1]).map((c) => c * abyss.magicLightScale) }, l) : l);   // LIGHT-ID: the candle's copy is the candle's light
@@ -9994,7 +9941,7 @@ export function createWorldModes(host) {
       layingOutLoc = null;
       if (!live()) { abandonContext(ctx); return false; }   // AUDIT 68 X3-transition-build-race: the world moved under the build - it hands its seams back and publishes nothing
       dungeonCtx = ctx;
-      if (hit.gateArena) standCourt(ctx);   // WB3b: the court, before the start marker is read and before any namer
+      if (hit.gateArena) gateStand.standCourt(ctx, hit.gateArena.day);   // WB3b: the court, before the start marker is read and before any namer - WB14b: its night's (scenes/gate/gateStand.js)
       if (hit.sdRealm != null) standSdRealm(ctx);   // SD5a: the Hour, before the start marker is read
       if (hit.egHall) standEgHall(ctx, hit.egHall);   // EG-PLAY: an Elite Breach's circle, the same
       if (hit.arenaFloor) standArenaFloor(ctx);   // ARENA2: the floor's gates, before any namer
@@ -11081,7 +11028,7 @@ export function createWorldModes(host) {
       // WB3b: the braziers, in their own fire's colour, after the player's lights; WB4: and the glow on the boss - WB9b: the
       // fight's own lights first (his glow, the crystals, the spoils), then the braziers nearest first, so the renderer's
       // cap drops a far court's fire, never him
-      if (isGateArena(dungeonLoc)) { const _court = withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos)]); renderer.setPointLights(_court.data, null, _court.colors); }
+      if (isGateArena(dungeonLoc)) { const _court = withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos, planOfDay(dungeonLoc.gate))]); renderer.setPointLights(_court.data, null, _court.colors); }
       if (isSdRealm(dungeonLoc)) { const _hour = realmLightsWith(_dgLit, host.sdRealmLights?.() ?? NO_LIGHTS, cam.pos, host.sdLampDim?.() ?? null); renderer.setPointLights(_hour.data, null, _hour.colors); }   // SD5a: the Hour's lamps, after the player's own lights, nearest first; SD9e: the spoils' light before them, as the court's; AUDIT SD II (L2 F9): into the realm's own arrays, made once; SD-LOOK S7: the arena's dimmed through the Reset
       if (isEgHall(dungeonLoc)) { const _sp = egLightsWith(_dgLit, host.egLights?.() ?? NO_LIGHTS, egCircle.lamps(), cam.pos); renderer.setPointLights(_sp.data, null, _sp.colors); }   // EG-PLAY: the Spire's lamps after the player's own lights, the fight's glows before them
       renderer.everyLightCasts();   // LA-SHADOW3: the level is drawn whole below (no view cull) - every torch keeps a shadow map, none lights through the rock as the nearest eight change (DISC15's rooms)

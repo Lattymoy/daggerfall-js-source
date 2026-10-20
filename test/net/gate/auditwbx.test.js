@@ -190,7 +190,7 @@ test('AUDIT WBX S2 the receipt says the level the fight admitted its account at,
   assert.equal(spoilsLevel(8, 30), 8, 'never over the player\'s own');
   assert.equal(spoilsLevel(50, undefined), 50);
   assert.equal(spoilsLevel(0, undefined), 1);
-  assert.match(read('server/src/index.js'), /mintReceipt\(\{ d: f\.day, b: f\.boss, s: sub, c: rand32\(\), x: earnedBy\(f, sub\), l: f\.players\[sub\]\.lv, \.\.\.\(helped\.has\(sub\) \? \{ r: 1 \} : \{\}\), \.\.\.this\._bodyMeasureOf\(f, sub, GATE_SEAM\.earned\) \}/, 'the relay signs the level it admitted');   // PIN MOVED (INT14): and the count's measure beside it   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
+  assert.match(read('server/src/index.js'), /mintReceipt\(\{ d: f\.day, b: f\.boss, s: sub, c: rand32\(\), x: earnedBy\(f, sub\), l: f\.players\[sub\]\.lv, \.\.\.\(helped\.has\(sub\) \? \{ r: 1 \} : \{\}\), \.\.\.this\._bodyMeasureOf\(f, sub, GATE_SEAM\.earned\), \.\.\.\(receiptPortents\(f\) \? \{ p: receiptPortents\(f\) \} : \{\}\) \}/, 'the relay signs the level it admitted');   // PIN MOVED (WB14g): and a portent night's `p` after the count's measure; PIN MOVED (INT14): and the count's measure beside it   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
 });
 
 // ═══ F: THE COURT ════════════════════════════════════════════════════════════════════════════════════════════════════

@@ -218,7 +218,7 @@ test('EVENT-TIP on the held map: the hover asks a party member, a raided town, a
     const [gx, gy] = toPaper(win._view, 5.2, 3.4);
     const onRing = win._hoverLabel(gx, gy);
     assert.equal(onRing.tip.title, 'Dagon\'s Breach');
-    assert.deepEqual(onRing.tip.lines, ['Near Copperham, Daggerfall', `Open. Seals in ${countdownText(t.sealAt - clock.now)}`, 'Valkynaz Ruhn, Warden of the Burning Gate', 'The Burning - Unyielding, Echoing']);   // WB8c: day 741's marks (WB11a's rotation - they were the Venom-Blooded, Scarring and Grudge-Bearer)
+    assert.deepEqual(onRing.tip.lines, ['Near Copperham, Daggerfall', `Open. Seals in ${countdownText(t.sealAt - clock.now)}`, 'Valkynaz Ruhn, Warden of the Burning Gate', 'The Burning - Unyielding, Echoing', 'The Captive']);   // WB14b: and its portent; WB8c: day 741's marks (WB11a's rotation - they were the Venom-Blooded, Scarring and Grudge-Bearer)
     assert.equal(onRing.label, `Dagon's Breach - seals in ${countdownText(t.sealAt - clock.now)}`);
     const [ox, oy] = toPaper(win._view, 9.5, 9.5);
     assert.equal(win._hoverLabel(ox, oy).tip, undefined, 'past the ring: the province, no card');

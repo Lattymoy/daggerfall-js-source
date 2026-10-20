@@ -29,8 +29,8 @@
   {
     "name": "EGSEAM-the-gate-unmarked",
     "file": "src/net/bossSeam.js",
-    "old": "newFight(day, now, wrathAt, boss, md)",
-    "new": "newFight(day, now, wrathAt, boss, null)",
+    "old": "newFight(day, now, wrathAt, boss, md, pt, ti)",
+    "new": "newFight(day, now, wrathAt, boss, null, pt, ti)",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]

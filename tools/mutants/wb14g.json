@@ -1,0 +1,121 @@
+[
+  {
+    "name": "WB14g-the-chained-knight-s-bit",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "portentBits((f?.pt ?? []).filter((id) => id !== 'captive' || f.cp?.f > 0))",
+    "new": "portentBits(f?.pt ?? [])",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-the-night-s-bits-unsaid",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "export const receiptPortents = (f) => portentBits(",
+    "new": "export const receiptPortents = (f) => 0 * portentBits(",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-a-p-past-every-bit",
+    "file": "src/net/gate/gateReceipt.js",
+    "old": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'",
+    "new": "c.p >= 1 && c.x !== 'rite'",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-a-p-on-the-rite-s-ember",
+    "file": "src/net/gate/gateReceipt.js",
+    "old": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX && c.x !== 'rite'",
+    "new": "c.p >= 1 && c.p <= RECEIPT_PORTENTS_MAX",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-a-p-of-0-written",
+    "file": "src/net/gate/gateReceipt.js",
+    "old": "...(p > 0 ? { p } : {})",
+    "new": "...(p !== undefined ? { p } : {})",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-the-relay-mints-none",
+    "file": "server/src/index.js",
+    "old": ", ...(receiptPortents(f) ? { p: receiptPortents(f) } : {}) }, key,",
+    "new": " }, key,",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-a-Common-piece",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));",
+    "new": "if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), 'common', rolls));",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14g-a-bit-paying-nothing",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "if ((p & bit) !== 0) more.push(",
+    "new": "if ((p & bit) !== 0 && bit !== 4) more.push(",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14g-the-claims-p-unread",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "rollSpoils(seed, level, claims?.p ?? 0)",
+    "new": "rollSpoils(seed, level)",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-the-pictures-shifted",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "record: p.tier === 'gilded' || i >= firstPortent ? null : flat()",
+    "new": "record: p.tier === 'gilded' ? null : flat()",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-a-portent-receipt-at-the-plain-odds",
+    "file": "server-account/src/eg.js",
+    "old": "c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS",
+    "new": "c.r === 1 ? EG_KEY_ODDS_RITE : EG_KEY_ODDS",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-the-portent-odds-a-sixth",
+    "file": "server-account/src/eg.js",
+    "old": "export const EG_KEY_ODDS_PORTENT = 1 / 4;",
+    "new": "export const EG_KEY_ODDS_PORTENT = 1 / 6;",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  },
+  {
+    "name": "WB14g-the-account-version-unmoved",
+    "file": "server-account/src/service.js",
+    "old": "export const ACCOUNT_VERSION = 'acct160';",
+    "new": "export const ACCOUNT_VERSION = 'acct159';",
+    "tests": [
+      "test/net/gate/wb14g_pays.test.js"
+    ]
+  }
+]

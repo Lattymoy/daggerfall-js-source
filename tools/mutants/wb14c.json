@@ -1,0 +1,367 @@
+[
+  {
+    "name": "WB14c-the-vanguard-on-every-night",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    vg: hasPortent(night, 'vanguard') ? newVanguard() : null,",
+    "new": "    vg: newVanguard(),",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14c-his-wake-said-while-it-holds",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "export const openedAt = (f) => (f?.vg && !f.vg.opened ? null : f?.openAt ?? f?.startedAt ?? null);",
+    "new": "export const openedAt = (f) => (f?.openAt ?? f?.startedAt ?? null);",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-wave-without-its-fighters",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (due && on.length) {\n      const W = S.waves[V.w]",
+    "new": "    if (due) {\n      const W = S.waves[V.w]",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-first-wave-at-once",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (V.w === 0 && !V.due && on.length) V.due = now + VG_OPEN_MS;",
+    "new": "    if (V.w === 0 && !V.due && on.length) V.due = now;",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-next-wave-at-once",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT) || now >= V.rose + VG_WAVE_MAX_MS;",
+    "new": "true;",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-clock-never-calls-the-next",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT) || now >= V.rose + VG_WAVE_MAX_MS;",
+    "new": "H.ads.length <= Math.floor(V.last * VG_WAVE_LEFT);",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-health-unshared",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "Math.round((total * VG_KIND_W[k]) / Math.max(1e-9, wsum))",
+    "new": "Math.round(total)",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-kinds-not-dealt",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "W.kinds[i % W.kinds.length]",
+    "new": "W.kinds[0]",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-walkway-never-laid",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (!Number.isFinite(f.xa[S.walk])) f.xa[S.walk] = now;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-clearing-unsaid",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    out.push({ k: 'vgw', e: V.s === VG_STAGES.length - 1 ? VG_WORD.broken : VG_WORD.clear, s: V.s, w: V.w, x: S.walk, at: f.xa[S.walk] });\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-imps-outliving-him",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "V.lord = 0; hostGone(f, now, out, HOST_GONE.crumbled, (a) => a.k === HOST.harrier); }",
+    "new": "V.lord = 0; }",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-markynaz-never-calls",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      if (spots.length) raiseHost(f, HOST.harrier, spots, harrierHpFor(on.map((b) => f.players[b.sub].lv)), now, out);\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-opened-at-the-break",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (!living.some((b) => inCourt(b.x, b.z, FLOOR.first, POSE_SLACK))) return true;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-his-blows-before-his-wake",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    f.openAt = now; f.nextAt = now + OPENING_MS; f.lastStateAt = -Infinity;",
+    "new": "    f.openAt = now; f.nextAt = now; f.lastStateAt = -Infinity;",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-meteor-clamped-to-his-court",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    const PC = point && atk === ATTACKS.meteor ? COURTS[nearestCourt(p[0], p[1])] : C;",
+    "new": "    const PC = C;",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-his-patience-said-every-time",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      if (!V.said) { V.said = true; out.push({ k: 'vgw', e: VG_WORD.patience",
+    "new": "      if (true) { V.said = true; out.push({ k: 'vgw', e: VG_WORD.patience",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14c-no-patience",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (V.first && now >= V.pat && !f.atk) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-a-caster-rushing-in",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (d < VG_CASTER_KEEP[0] && d > 1e-6) walkHost(a, a.x + ((a.x - mark.x) / d) * 6, a.z + ((a.z - mark.z) / d) * 6, 0, now, C, moves);",
+    "new": "  if (d < VG_CASTER_KEEP[0] && d > 1e-6) walkHost(a, mark.x, mark.z, 0, now, C, moves);",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-a-bolt-at-its-own-feet",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    a.atk = { at: now + B.windup, x: r2(mark.x), z: r2(mark.z), until: now + B.windup + B.active + B.recover };",
+    "new": "    a.atk = { at: now + B.windup, x: a.x, z: a.z, until: now + B.windup + B.active + B.recover };",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-brute-at-the-farthest",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "function vgMeleeBeat(a, now, on, C, moves, blows) {\n  if (a.atk) { if (now < a.atk.until) return; a.atk = null; }\n  let mark = null;\n  for (const b of on) if (!mark || dist(b.x, b.z, a.x, a.z) < dist(mark.x, mark.z, a.x, a.z)) mark = b;",
+    "new": "function vgMeleeBeat(a, now, on, C, moves, blows) {\n  if (a.atk) { if (now < a.atk.until) return; a.atk = null; }\n  let mark = null;\n  for (const b of on) if (!mark || dist(b.x, b.z, a.x, a.z) > dist(mark.x, mark.z, a.x, a.z)) mark = b;",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-blows-from-his-court-alone",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (!inCourt(pose.x, pose.z, nearestCourt(ax, az), POSE_SLACK)) return out;",
+    "new": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK)) return out;",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-vanguard-s-state-unsaid",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    ...(f.vg ? { vg: [f.vg.s, f.vg.w] } : {}),",
+    "new": "    ...({}),",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-wire-drops-the-stage",
+    "file": "src/net/wire.js",
+    "old": "...(lg ? { lg } : {}), ...(pt ? { pt } : {}), ...(vg ? { vg } : {}),",
+    "new": "...(lg ? { lg } : {}), ...(pt ? { pt } : {}),",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-a-word-past-the-table",
+    "file": "src/net/wire.js",
+    "old": "    case 'vgw': return intIn(m.e, 0, GATE_VG_WORDS - 1)",
+    "new": "    case 'vgw': return intIn(m.e, 0, GATE_VG_WORDS)",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-walkway-left-to-the-next-state",
+    "file": "src/net/gate/gateLink.js",
+    "old": "if (!Number.isFinite(w[g.x])) w[g.x] = g.at; xa = w; }",
+    "new": "xa = w; }",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-word-lost-to-a-state",
+    "file": "src/net/gate/gateLink.js",
+    "old": "vgw: same ? s.vgw ?? null : null,",
+    "new": "vgw: null,",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-its-waves-said-as-his-host-s",
+    "file": "src/scenes/gate/gateHost.js",
+    "old": "  if (s?.vg && s.vg[0] < 2) return null;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-bar-silent",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "    host: !s.fell && s.wrath == null && s.vg && s.vg[0] < 2 ?",
+    "new": "    host: false ?",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-each-wave-said",
+    "file": "src/scenes/gate/gateVanguard.js",
+    "old": "    case VG_WORD.wave: return w.s === 0 && w.w === 1 ? VANGUARD_TEXT.rises() : null;",
+    "new": "    case VG_WORD.wave: return VANGUARD_TEXT.rises();",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "WB14c-the-bolt-in-the-bite-s-colour",
+    "file": "src/scenes/gate/gateHost.js",
+    "old": "    const el = hostBlowUnder(a.k, P).el, pulse = el != null, sh = next();",
+    "new": "    const el = hostBlowUnder(a.k, P).el, pulse = a.k === HOST.bearer, sh = next();",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-never-holds-him",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (stepVanguard(f, now, bodies, rng, out, P)) return heldBeat(f, now, out);",
+    "new": "stepVanguard(f, now, bodies, rng, out, P);",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js",
+      "test/net/gate/audit_wb14.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-wave-count-off",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "export const vanguardCountFor = (n) => Math.max(3, Math.min(10, 2 + Math.ceil(Math.max(0, n) / 2)));",
+    "new": "export const vanguardCountFor = (n) => Math.max(3, Math.min(10, 2 + Math.ceil(Math.max(0, n) / 3)));",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-walkways-swapped",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "Object.freeze({ floor: FLOOR.bridgehead, walk: WALKWAY.muster,",
+    "new": "Object.freeze({ floor: FLOOR.bridgehead, walk: WALKWAY.warden,",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-a-kind-faster-than-a-run",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "Object.freeze({ id: 3, key: 'brute', r: 0.8, h: 2.4, speed: 2.8 }),",
+    "new": "Object.freeze({ id: 3, key: 'brute', r: 0.8, h: 2.4, speed: 8 }),",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-the-bolt-counted",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "Object.freeze({ kind: 4, key: 'bolt', get name() { return t('gate.host.bolt', 'Bolt'); }, windup: 1600, active: 200, recover: 400, r: 3, pct: 0.22, base: 7, el: 'aspect' }),",
+    "new": "Object.freeze({ kind: 4, key: 'bolt', get name() { return t('gate.host.bolt', 'Bolt'); }, windup: 1600, active: 200, recover: 400, r: 3, pct: 0.22, base: 7, el: null }),",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-caster-first-bolt-at-once",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  for (const a of H.ads) if (a.k === HOST.caster && a.next === now) a.next = now + 1500;",
+    "new": "  void 0;",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it).",
+    "equivalent": true,
+    "why": "a Caster rises for HOST_RISE_MS[caster] (1.5 s) and no host body strikes while it rises - its first Bolt waits that long whatever its `next` says; the line stands so a quicker rising never Bolts at once"
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-patience-from-the-birth",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (!V.first) { V.first = now; V.pat = now + VG_PATIENCE_MS; }",
+    "new": "if (!V.first) { V.first = now; V.pat = f.startedAt + VG_PATIENCE_MS; }",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-markynaz-lord-word-unsaid",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (W.lord) out.push({ k: 'vgw', e: VG_WORD.lord, s: V.s, w: V.w, at: now });",
+    "new": "void 0;",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-vanguard-broken-with-him-standing",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  } else if (!H.ads.length) {\n    // the platform cleared",
+    "new": "  } else if (!H.ads.some((a) => a.k !== HOST.markynaz)) {\n    // the platform cleared",
+    "tests": [
+      "test/net/gate/wb14c_vanguard.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  }
+]

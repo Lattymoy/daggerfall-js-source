@@ -378,7 +378,7 @@ test('AUDIT GATE-FBX E5 the fire\'s foot: down between the feet\'s sunk soles (G
 
 test('AUDIT GATE-FBX G4 the stone\'s glow is its own colour: every upload of a gate\'s or its court\'s emission (the street\'s gate, the court\'s, the rite\'s, the broker\'s) hands it WHITE - never tinted by the window light of the night or the dungeon arm\'s day (AUDIT SD II L2 F3\'s law) (mutants: the street gate\'s emission tinted)', () => {
   const sites = [];
-  for (const f of ['src/scenes/gate/gatePool.js', 'src/scenes/worldModes.js', 'src/scenes/riteHost.js', 'src/scenes/sigilBrokerPool.js']) {
+  for (const f of ['src/scenes/gate/gatePool.js', 'src/scenes/gate/gateStand.js', 'src/scenes/riteHost.js', 'src/scenes/sigilBrokerPool.js']) {   // WB14b: the court's two out of worldModes.js into gateStand.js
     for (const m of read(f).matchAll(/uploadEmissionTexture\?\.\((GATE_ARCHIVE|COURT_ARCHIVE), rec, art\.emission(, \{ white: true \})?\)/g)) sites.push([f, m[1], !!m[2]]);
   }
   assert.equal(sites.length, 5, 'the five uploads');

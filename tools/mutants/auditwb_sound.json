@@ -210,8 +210,8 @@
   {
     "name": "AUDWB-D10-the-braziers-made-again",
     "file": "src/world/gate/gateArena.js",
-    "old": "export const courtLights = () => (_courtLights ??= ",
-    "new": "export const courtLights = () => (",
+    "old": "  if (!L) { L = Object.freeze(allCourtBraziers(plan).map(",
+    "new": "  if (true) { L = Object.freeze(allCourtBraziers(plan).map(",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]

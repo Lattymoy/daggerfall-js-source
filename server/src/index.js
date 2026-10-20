@@ -230,7 +230,7 @@ import { LAYER_ASK_HEADER, LAYER_EMPTY_HEADER, LAYER_LAST_HEADER, LAYERS_MAX } f
 // deploy: net/gate/gateLaw.js (the day's window and the room key - it imports wire.js alone), net/gate/gateBrain.js (the fight,
 // pure law - it imports nothing) and net/gate/gateReceipt.js (the kill's receipt, the relay's first signature - it imports
 // identityToken.js, already here). bible/11-Multiplayer/World-Bosses.md sections 5, 6 and 8.
-import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, GATE_COLLAPSE_MS, isGateDay } from '../../src/net/gate/gateLaw.js';
+import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, gateTitheOf, GATE_COLLAPSE_MS, isGateDay } from '../../src/net/gate/gateLaw.js';
 import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '../../src/net/gate/gateRite.js';   // WB12d: the faithful's rite; BROKER-CAGE: the Broker's cage, omen to midnight
 import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siege/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
@@ -238,7 +238,7 @@ import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd
 import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildFallOf, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect
 import { mintDuelReceipt } from '../../src/net/duel/duelReceipt.js';   // INT8: a duel won, signed
-import { applyCrystalHit, applyHostHit, applyHeal, healRef, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX, hasPart, COURT_WATCH_ASK_MS } from '../../src/net/gate/gateBrain.js';
+import { applyCrystalHit, applyHostHit, applyHeal, healRef, earnedBy, receiptPortents, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX, hasPart, COURT_WATCH_ASK_MS } from '../../src/net/gate/gateBrain.js';
 import { mintReceipt, importReceiptKey, readReceipt, RECEIPT_TTL_S } from '../../src/net/gate/gateReceipt.js';
 import { bodyConfig, bodyStruck, bodySaid, bodyHealed, bodyLife, bodyCensus, bodyMeasure, bodyOut, bodyDown, bodyTellOwed, HULL_REFLOAT, BODY_TRAIL_MS, BODY_TRAIL_MAX } from '../../src/net/bossBody.js';   // INT11: the body counted
 import { BODY_DEFAULT, BODY_LINE_MAX } from '../../src/net/bossBody.js';   // AUDIT SCALE II R1-4: a relay setting's line, refused past it in words
@@ -6710,7 +6710,14 @@ export class Room {
   /** The fight this gate room holds, or null - the instance's while it is awake, storage's (the last checkpoint) after
    *  a wake. */
   async _gateFightOf() {
-    if (this._fight === undefined) { const v = await this.state.storage.get('gatefight'); this._fight = v && typeof v === 'object' ? v : null; }
+    if (this._fight === undefined) {
+      const v = await this.state.storage.get('gatefight');
+      this._fight = v && typeof v === 'object' ? v : null;
+      // AUDIT WB14 (WIRE-1): A FIGHT FROM BEFORE THE PORTENTS woken on a portent night (a deploy while its gate burned) was
+      // fought on floors the screens no longer build (they build the night's plan - the Vanguard's Bridgehead its arrival),
+      // so it is let go unfallen and the next `in` begins the night's own; a fallen one keeps its receipts
+      if (this._fight && !('pt' in this._fight) && !this._fight.fell && !this._fight.wrath && gatePortentsOf(this._fight.day)) { this._fight = null; await this.state.storage.delete('gatefight'); }
+    }
     return this._fight;
   }
   /** Why a hello into a gate's room is refused, or null to admit it (the hello's own note says when). */
@@ -6733,7 +6740,7 @@ export class Room {
       const had = newest.get(b.sub);
       if (!had || (b.since ?? 0) >= (had[1].since ?? 0)) newest.set(b.sub, [ws, b]);
     }
-    return [...newest.values()].map(([ws, b]) => { const c = this._courtOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd, tr: this._trailOf(ws, (p) => this._courtOf(p)) }; });   // INT11: and its trail - AUDIT INT11: the trail of the socket that speaks for it
+    return [...newest.values()].map(([ws, b]) => { const c = this._courtOf(b.pose); return { sub: b.sub, id: b.id, x: c.x, z: c.z, dead: !!b.pose.dd, tr: this._trailOf(ws, (p) => this._courtOf(p)) }; });   // INT11: and its trail - AUDIT INT11: the trail of the socket that speaks for it
   }
   // ── INT11-INT13: THE BODY COUNTED (net/bossBody.js, net/bossRef.js; bible/06-Systems/Integrity-Arc.md section 6) ──
   /** The line the boss fights' count runs by - the BOSS_BODY var (bodyConfig: a mistyped one is the default, which
@@ -6871,9 +6878,22 @@ export class Room {
   /** The brain's frames to everyone in the room, in order. */
   _gateFan(frames) {
     if (!frames.length) return;
+    // WB14e: a word for one account (`to` - a Tithe-Imp's tithe) goes to that fighter's sockets alone, `to` left off
+    if (frames.some((fr) => fr.to != null)) {
+      for (const fr of frames) if (fr.to != null) { const { to, ...word } = fr; const s = JSON.stringify({ t: 'gate', ...word }); for (const [ws, b] of [...this._courtSockets()]) if (b.sub === to) this._send(ws, s); }
+      frames = frames.filter((fr) => fr.to == null);
+      if (!frames.length) return;
+    }
     const outs = frames.map((fr) => JSON.stringify({ t: 'gate', ...fr }));
     this._fanFrames(outs, (b) => b.id);   // SCALE5b: a beat one frame to the second wire
     if (this._cper.size) for (const s of outs) this._courtSendAll(s);   // SCALE5d part two: and to every copy, one entry each
+  }
+  /** AUDIT WB14 (WIRE-2): frames fanned KEPT BEFORE THEY ARE SAID when one is a tithe paid (`to`) - AUDIT WB A10's law for
+   *  the receipts: said first, an eviction before the next checkpoint woke a fight whose Imp stood again, and caught again it
+   *  paid a fresh seed (a tithe twice). */
+  async _gateFanKept(f, frames, now) {
+    if (frames.some((fr) => fr.to != null)) await this._gateSave(f, now, true);
+    this._gateFan(frames);
   }
   /** The fight to storage - every CHECKPOINT_MS from the beat, at once on a join and on the kill. */
   async _gateSave(f, now, force) {
@@ -6895,7 +6915,7 @@ export class Room {
       // AUDIT WBX R7: a client that does not know this brain's attacks is not let fight them (a tab loaded before the
       // deploy judged each new one a miss) - refused in words it has, and taken out of the court by its own law
       if (!(m.bv >= GATE_BRAIN_MIN)) { this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: 'the gate is closed' })); return; }
-      if (!f) f = this._fight = GATE_SEAM.new({ day, now, wrathAt: gateTimes(day).wrathAt, boss: gateBossOf(day).id, md: gateModsOf(day) });   // WB8b: the day's marks, kept on the fight
+      if (!f) f = this._fight = GATE_SEAM.new({ day, now, wrathAt: gateTimes(day).wrathAt, boss: gateBossOf(day).id, md: gateModsOf(day), pt: gatePortentsOf(day), ti: gateTitheOf(day) });   // WB8b: the day's marks, kept on the fight; WB14b: and its portents; WB14e: and its Tithe-Imp's moment
       const joined = !f.players[a.sub];   // AUDIT WB A3: a newcomer - an `in` again (every welcome says one) changes nothing to keep
       // AUDIT PLAN-1000 G7: a full court's watcher asks every COURT_WATCH_ASK_MS - one that asks sooner (a modified client)
       // is answered as the last time and takes no seat ahead of the honest asks
@@ -6948,9 +6968,9 @@ export class Room {
     if (m.k === 'xhit') this._gateFan(applyCrystalHit(f, a.sub, m.c, m.d, m.r, at, now, m.q));
     // WB11b: a blow on one of his host (the Legion-Lord's) - the same caps; one slain said to the court at once (its
     // health goes out on the beat)
-    else if (m.k === 'ahit') this._gateFan(applyHostHit(f, a.sub, m.i, m.d, m.r, at, now, m.q));
+    else if (m.k === 'ahit') await this._gateFanKept(f, applyHostHit(f, a.sub, m.i, m.d, m.r, at, now, m.q, rand01), now);   // WB14e: a Tithe-Imp caught pays here, by the relay's dice
     else {
-      GATE_SEAM.hit(f, a.sub, m.d, m.r, at, now, m.q);   // AUDIT WB11 W3: the blow's sequence - once a blow
+      GATE_SEAM.hit(f, a.sub, m.d, m.r, at, now, m.q, m.b === 1 ? { b: 1 } : undefined);   // AUDIT WB11 W3: the blow's sequence - once a blow; WB14d: the half it lands on
       if (f.fell && !f.said) { await this._gateFall(f, now); return; }
     }
     // AUDIT WBX R6: a blow keeps the beat as an `in` does - a court that emptied slept until its day's end, and a client
@@ -6976,7 +6996,7 @@ export class Room {
       const line = this._bodyLine(), bodies = this._gateBodies(f), census = () => bodyCensus(f, bodies, now, line.body, line.enforce);
       await this._bodyCount('gate', f, GATE_SEAM.judge(f, census(), now), now, line.body);
       this._bodyTell('gate', f, now);   // AUDIT INT11: a fall its game has not taken, told again
-      this._gateFan(GATE_SEAM.step(f, now, this._bodiesBare(census()), rand01));
+      await this._gateFanKept(f, GATE_SEAM.step(f, now, this._bodiesBare(census()), rand01), now);   // AUDIT WB14 (WIRE-2): a tithe owed, kept before it is said
       this._riteAskAhead(f, now);   // AUDIT WB12d (R2, L3): the rite's helpers asked of the hub ahead of the kill, never awaited by the beat
       if (f.fell && !f.said) await this._gateFall(f, now);
       else if (f.said && !f.told) await this._gateTellHubOnce(f, now);   // AUDIT WB A10: the hub told until it answers
@@ -7012,7 +7032,7 @@ export class Room {
     f.rc = {};
     for (const sub of Object.keys(f.players)) {
       if (!GATE_SEAM.earned(f, sub)) continue;
-      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, GATE_SEAM.earned) }, key, { subtle: crypto.subtle, nowS }); }   // AUDIT WBX S2: the level the fight admitted it at; INT14: the count's measure
+      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, GATE_SEAM.earned), ...(receiptPortents(f) ? { p: receiptPortents(f) } : {}) }, key, { subtle: crypto.subtle, nowS }); }   // AUDIT WBX S2: the level the fight admitted it at; INT14: the count's measure
       catch (e) { console.warn('[gate] receipt refused', e?.message ?? e); }
     }
     // WB12d: one who broke the rite and took no part in the fight - a receipt of the rite alone (its ember, and nothing else)

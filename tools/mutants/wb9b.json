@@ -2,8 +2,8 @@
   {
     "name": "WB9b-a-court-moved-onto-another",
     "file": "src/net/gate/gateBrain.js",
-    "old": "export const COURTS = Object.freeze([Object.freeze([0, 0]), Object.freeze([-68, -22]), Object.freeze([-74, -94])]);",
-    "new": "export const COURTS = Object.freeze([Object.freeze([0, 0]), Object.freeze([-30, -10]), Object.freeze([-74, -94])]);",
+    "old": "export const COURTS = Object.freeze([Object.freeze([0, 0]), Object.freeze([-68, -22]),",
+    "new": "export const COURTS = Object.freeze([Object.freeze([0, 0]), Object.freeze([-30, -10]),",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB9b-the-next-court-open-before-its-walkway",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (k > 0 && walkFormed(xa, k - 1, now) < 1) break;\n    if (inCourt(x, z, k, pad)) return true;",
-    "new": "    if (k > 0 && walkFormed(xa, k - 1, now) <= 0) break;\n    if (inCourt(x, z, k, pad)) return true;",
+    "old": "|| !plan.floors.includes(w.b) || walkFormed(xa, k, now) < 1) continue;",
+    "new": "|| !plan.floors.includes(w.b) || walkFormed(xa, k, now) <= 0) continue;",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB9b-the-walkway-never-laid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    for (let k = 0; k < entry.court; k++) if (!Number.isFinite(f.xa[k])) f.xa[k] = now;",
-    "new": "",
+    "old": "    else for (let k = 0; k < entry.court; k++) if (!Number.isFinite(f.xa[k])) f.xa[k] = now;",
+    "new": "    else {}",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB9b-the-signature-cast-at-once",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (!here.length && now < (f.waitUntil ?? 0)) { hpFrame(f, now, out); stateFrame(f, now, out); return out; }",
-    "new": "    if (false) { hpFrame(f, now, out); stateFrame(f, now, out); return out; }",
+    "old": "    if (!here.length && now < (f.waitUntil ?? 0)) return;",
+    "new": "    if (false) return;",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js",
       "test/net/gate/wb3_gate_room.test.js"
@@ -93,7 +93,7 @@
   {
     "name": "WB9b-the-old-ring",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK)) return 0;",
+    "old": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))) return 0;",
     "new": "  if (Math.hypot(pose.x, pose.z) > COURT_R + POSE_SLACK) return 0;",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
@@ -102,7 +102,7 @@
   {
     "name": "WB9b-the-court-unbounded",
     "file": "src/net/wire.js",
-    "old": "(m.ct != null && !intIn(m.ct, 0, 2))",
+    "old": "(m.ct != null && !intIn(m.ct, 0, GATE_FLOORS_MAX - 1))",
     "new": "(m.ct != null && !Number.isInteger(m.ct))",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "WB9b-the-walkway-left-to-the-next-state",
     "file": "src/net/gate/gateLink.js",
-    "old": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0 } : {}), ...crossLaid(s, g) };",
-    "new": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0 } : {}) };",
+    "old": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}), ...crossLaid(s, g) };",
+    "new": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}) };",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -156,7 +156,7 @@
   {
     "name": "WB9b-the-telegraph-over-the-court-he-leaves",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  const at = A.aim === 'point' && marks.length ? marks[0] : [atk.x, atk.z];",
+    "old": "  const at = A.aim === 'point' && marks.length ? marks[0] : A.aim === 'players' && marks.length ? marks[0] : [atk.x, atk.z];",
     "new": "  const at = [atk.x, atk.z];",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"

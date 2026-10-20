@@ -584,8 +584,8 @@
   {
     "name": "EG5D-L9-6-the-rite-the-kills",
     "file": "server-account/src/eg.js",
-    "old": "drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : EG_KEY_ODDS)",
-    "new": "drawUnder(rand, EG_KEY_ODDS)",
+    "old": "drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS)",
+    "new": "drawUnder(rand, c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS)",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]

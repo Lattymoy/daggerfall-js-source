@@ -201,6 +201,8 @@ const NO_PERSON = Object.freeze({
   'src/scenes/gate/gateCourt.js': 'the gate boss as a mobile unit, and his corpse',
   'src/scenes/eliteGates/egFight.js': 'an Elite Breach\'s champion or Court lord as a mobile unit (EG-PLAY)',
   'src/scenes/gate/gateHost.js': 'the boss\'s host as mobile units',
+  'src/scenes/gate/gateFlame.js': 'the boss\'s Flame (WB14d) as a mobile unit - his aspect\'s Atronach',
+  'src/scenes/gate/gateCaptive.js': 'the Captive (WB14f) as a mobile unit - Daggerfall\'s Knight (archives 488 and 487), never the table\'s flats',
   'src/scenes/gatherHost.js': 'gathering nodes',
   'src/scenes/hideouts.js': 'a band\'s camp fire (its people are the encounter pool\'s own)',   // LW12
   'src/scenes/hitEffects.js': 'hit splashes',

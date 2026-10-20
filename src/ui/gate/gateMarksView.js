@@ -20,7 +20,7 @@
 // the aspects; a sign for each trial. Pure where it can be - `marksViewOf` and `marksCardModel` are the pins' door.
 //
 // Not a DFU member. Ledger A (WB).
-import { readGateMods } from '../../net/gate/gateMods.js';
+import { readGateMods, validGatePortents, portentOf } from '../../net/gate/gateMods.js';   // WB14b: and the night's portents
 import { ASPECT_COLORS, EMBER_COLOR } from '../../world/gate/gateBoss.js';
 import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';   // WB13c: the classic face, loaded by the gate's own screens
 
@@ -69,6 +69,10 @@ export const MARK_ICONS = Object.freeze({
   favoured: Object.freeze({ fill: true, d: 'M12 1.5l3 6.9 7.4.7-5.6 4.9 1.7 7.3L12 17.5l-6.5 3.8 1.7-7.3-5.6-4.9 7.4-.7z' }),
   echoing: Object.freeze({ fill: false, d: 'M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6zM12 2.5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19z' }),
   // WB11a: Legion-Lord - his host, three figures abreast
+  // WB14b: THE PORTENTS - the Vanguard a banner on its spear, the Sundering a shield split in two, the Captive a chain's links
+  vanguard: Object.freeze({ fill: false, d: 'M5 22.5V1.5M5 2.5h13l-3.2 4.2L18 11H5' }),
+  sunder: Object.freeze({ fill: false, d: 'M11 2.2L4 5v6.3c0 4.9 3 8.8 7 10.5M13 2.2L20 5v6.3c0 4.9-3 8.8-7 10.5M12 2.5l-1.6 5.2 2.6 3.1-2.2 4.4 1.4 6.3' }),
+  captive: Object.freeze({ fill: false, d: 'M7.5 3.5a3.5 3.5 0 0 1 0 7 3.5 3.5 0 0 1 0-7zM16.5 13.5a3.5 3.5 0 0 1 0 7 3.5 3.5 0 0 1 0-7zM9.8 9.8l4.4 4.4' }),
   legion: Object.freeze({ fill: false, d: 'M12 3.2a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM7.6 14.6c.6-3 2.3-4.6 4.4-4.6s3.8 1.6 4.4 4.6M5.4 8.6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM2.1 18.4c.5-2.5 1.7-3.7 3.3-3.7s2.8 1.2 3.3 3.7M18.6 8.6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM15.3 18.4c.5-2.5 1.7-3.7 3.3-3.7s2.8 1.2 3.3 3.7M2 21.4h20' }),
 });
 /** A sign as markup - static text of the port's own (no word of a player's ever reaches it), `size` pixels square. */
@@ -128,11 +132,12 @@ export const MARKS_CARD_MODES = Object.freeze(['arrive', 'gate']);
 /**
  * What the card shows now, or null (nothing to show): `mode` 'gate' near an unentered gate (no clock - it stands while
  * the player does), 'arrive' from the moment `since` a fighter stepped through, gone MARKS_CARD_ARRIVE_MS later.
- * @param {unknown} md @param {{name: string}} boss @param {{mode?: 'arrive'|'gate', since?: number, now?: number}} [o]
+ * @param {unknown} md @param {{name: string}} boss @param {{mode?: 'arrive'|'gate', since?: number, now?: number, pt?: unknown}} [o] (WB14b: `pt` the night's portents)
  */
-export function marksCardModel(md, boss, { mode = 'arrive', since = 0, now = 0 } = {}) {
+export function marksCardModel(md, boss, { mode = 'arrive', since = 0, now = 0, pt = null } = {}) {
   const view = marksViewOf(md);
   if (!view || !boss) return null;
+  const portents = portentRowsOf(pt);   // WB14b: and the night's portents, each its sign, name, line and tip
   let alpha = 1;
   if (mode === 'arrive') {
     const age = now - since;
@@ -143,9 +148,24 @@ export function marksCardModel(md, boss, { mode = 'arrive', since = 0, now = 0 }
     mode: mode === 'gate' ? 'gate' : 'arrive', key: view.key, alpha: Math.round(alpha * 100) / 100,
     title: MARKS_CARD_TEXT.title,
     sub: (mode === 'gate' ? MARKS_CARD_TEXT.gate : MARKS_CARD_TEXT.arrive)(boss.name, view.aspect.epithet),
-    aspect: view.aspect, trials: view.trials,
+    aspect: view.aspect, trials: view.trials, portents, ...(portents.length ? { key: `${view.key}|${portents.map((p) => p.id).join(',')}` } : {}),
   };
 }
+/** WB14b: THE NIGHT'S PORTENTS AS THE CARD SHOWS THEM - each its sign (MARK_ICONS), its name, its line and its tip
+ *  (net/gate/gateMods.js GATE_PORTENTS), in the table's order; none for a plain night. Made once a set. Pure. */
+export function portentRowsOf(pt) {
+  const ok = validGatePortents(pt);
+  if (!ok) return NO_PORTENTS;
+  const key = ok.join(',');
+  let rows = _portentRows.get(key);
+  // AUDIT WB14 (TEXT-8): each row's words read as it is written - in the player's language now, never the one it was made in
+  if (!rows) { rows = Object.freeze(ok.map((id) => { const p = portentOf(id); return Object.freeze({ kind: 'portent', id, get name() { return p.name; }, get text() { return p.line; }, get tip() { return p.tip; } }); })); _portentRows.set(key, rows); }
+  return rows;
+}
+const NO_PORTENTS = Object.freeze([]);
+const _portentRows = new Map();
+/** WB14b: a portent's sign in the card - Dagon's own crimson, apart from his aspect's colour and his trials' ember. */
+export const PORTENT_CSS = '#ff5a4a';
 
 /** PLUS-DRESS's law: the card's look as classes, so a skin's sheet can dress it (ui/enhanced/enhancedPlusStyle.js). */
 export const MARKS_CARD_STYLE_ID = 'dagger-gate-marks-style';
@@ -224,7 +244,7 @@ function build(doc) {
   const rows = [mark(doc), mark(doc), mark(doc)];
   root.append(title, sub, ...rows.map((r) => r.n));
   (doc.body ?? doc.documentElement)?.append(root);
-  parts = { title, sub, rows };
+  parts = { title, sub, rows, doc };
 }
 
 /** Write one row: a mark's sign, name and lines - or hide it (no mark for it); a trial's sign in the card's own ring
@@ -233,7 +253,7 @@ function writeRow(r, m, first, look = 'gate') {
   if (!m) { r.n.style.display = 'none'; return; }
   r.n.style.display = '';
   r.icon.innerHTML = markIconHtml(m, 20);   // SD18b: the Hour's own signs
-  r.icon.style.color = m.kind === 'aspect' ? m.color : look === 'brass' ? '#e8c060' : '#ffb27a';
+  r.icon.style.color = m.kind === 'aspect' ? m.color : m.kind === 'portent' ? PORTENT_CSS : look === 'brass' ? '#e8c060' : '#ffb27a';
   r.name.textContent = m.kind === 'aspect' ? `${m.name} - ${m.element}` : m.name;
   r.name.style.color = m.kind === 'aspect' ? m.color : '';
   r.text.textContent = m.text;
@@ -256,7 +276,8 @@ export function drawGateMarksCard(model, { hidden = false, doc = globalThis.docu
   if (model.key !== shown.key) {
     shown.key = model.key;
     parts.title.textContent = model.title;
-    const all = [model.aspect, ...model.trials];
+    const all = [model.aspect, ...model.trials, ...(model.portents ?? [])];   // WB14b: and the night's portents - a row more for each, made the first night that has one
+    while (parts.rows.length < all.length) { const r = mark(parts.doc); parts.rows.push(r); root.append(r.n); }
     parts.rows.forEach((r, i) => writeRow(r, all[i] ?? null, i === 0, model.look));
   }
   if (model.sub !== shown.sub) { shown.sub = model.sub; parts.sub.textContent = model.sub; }

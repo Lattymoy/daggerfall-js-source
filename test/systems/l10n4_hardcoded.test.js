@@ -98,7 +98,7 @@ const HARDCODED = {
   'src/net/firmament/firmamentLaw.js': 42,
   'src/net/firmament/firmamentTree.js': 113,
   'src/net/fortLaw.js': 21,
-  'src/net/gate/gateBrain.js': 9,
+  'src/net/gate/gateBrain.js': 7,   // AUDIT WB14 (TEXT-9): the phase names through the text core
   'src/net/gate/gateClaims.js': 5,
   'src/net/gate/gateHerald.js': 8,
   'src/net/gate/gateLaw.js': 4,
@@ -259,7 +259,7 @@ const HARDCODED = {
   'src/scenes/fishHost.js': 14,
   'src/scenes/fleetHost.js': 52,
   'src/scenes/foragingWait.js': 1,
-  'src/scenes/gate/gateCourt.js': 12,
+  'src/scenes/gate/gateCourt.js': 10,   // AUDIT WB14 (TEXT-9): the phase card's orders through the text core
   'src/scenes/gate/gateHost.js': 7,
   'src/scenes/gate/gatePool.js': 4,
   'src/scenes/gatherHost.js': 10,
