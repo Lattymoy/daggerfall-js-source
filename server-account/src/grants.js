@@ -9,7 +9,9 @@
 // GRANT7 (section 15): readers' tallies against one sender, from enough accounts at once, open the moderators' case.
 // FOE-BOUNDS and GRANT-ASKS (2026-10-19, Mac: "Spec + B + A"; sections 19 and 21): so does the relay's OWN count - a
 // record of a sender's it stripped because no builder could give it, and an account's own asks far past its budget.
-import { openGrantMeasure, GRANT_RELAY_READER } from '../../src/net/grantMeasure.js';
+import { openGrantMeasure, GRANT_RELAY_READER, GRANT_RATE_SPAN_MIN_S, grantAsksPastLine } from '../../src/net/grantMeasure.js';
+// AUDIT GRANT-SLEEP S1: GRANT-ASKS' line lives in net/grantMeasure.js, which the relay reads too - said here as it was
+export { GRANT_RATE_SPAN_MIN_S, GRANT_ASK_CASE_TIMES, GRANT_ASK_CASE_OVER_MIN } from '../../src/net/grantMeasure.js';
 import { GRANT_KINDS, GRANT_CELL_CEILING, GRANT_CASE_REASONS } from '../../src/net/grantLaw.js';
 import { gatePublicKey } from './signing.js';
 import { openCaseFor, keepCaseLines, credibleReporter } from './safety.js';
@@ -18,8 +20,6 @@ import { discordOn } from './discord.js';
 
 /** The door's path - the relay's GRANT_FEED_URL names it (server/wrangler.toml). */
 export const GRANT_FEED_PATH = '/v1/mod/grant-feed';
-/** The shortest window an account's rate is read over, s - a cell that slept a minute after one ask is not sixty an hour. */
-export const GRANT_RATE_SPAN_MIN_S = 600;
 /** GRANT7 (the owner, 2026-10-18, question 2: "3 accounts / 10 min"): how many readers' accounts, each one that counts
  *  (safety.js credibleReporter: registered, not muted, no sprout), tallying a case's reasons against one sender inside
  *  GRANT_CASE_WINDOW_S open its moderators' case. */
@@ -29,12 +29,6 @@ export const GRANT_CASE_WINDOW_S = 10 * 60;
 export const GRANT_CASE_SENDERS_MAX = 32;
 /** The tab a grant case's line is kept under (mod_case_lines.tab; the Discord card prints it). */
 export const GRANT_CASE_TAB = 'grant';
-/** GRANT-ASKS (Spawn-Grants section 21): an account's own asks of a kind in one cell's window open its case at this many
- *  times the most its budget lets honest play ask in that window (the kind's `cap` and its `rate` over the window, never
- *  under GRANT_RATE_SPAN_MIN_S) - and at least GRANT_ASK_CASE_OVER_MIN asks past it, so a kind whose budget is a handful
- *  is not a case at its fourth. The buckets are GRANT5's to set; both numbers ride with them. */
-export const GRANT_ASK_CASE_TIMES = 4;
-export const GRANT_ASK_CASE_OVER_MIN = 16;
 /** FOE-BOUNDS and GRANT-ASKS: the most cases the relay's own count may OPEN an hour (a case already open takes its line
  *  whatever this says) - a flood of fresh guest accounts never floods #mod-queue (safety.js UNCOUNTED_CASES_HOUR's way). */
 export const GRANT_OWN_CASES_HOUR = 30;
@@ -83,10 +77,8 @@ const grantRelayText = (/** @type {any} */ t) => `the relay itself dropped ${t.n
  * Pure. @param {any} r @param {number} span
  */
 export function grantAskText(r, span) {
-  const law = GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r?.k)];
-  if (!law || !Number.isFinite(r.asks)) return null;
-  const allow = Math.ceil(law.cap + law.rate * Math.max(span, GRANT_RATE_SPAN_MIN_S));
-  if (r.asks < GRANT_ASK_CASE_TIMES * allow || r.asks - allow < GRANT_ASK_CASE_OVER_MIN) return null;
+  const allow = grantAsksPastLine(r, span);   // AUDIT GRANT-SLEEP S1: the line net/grantMeasure.js holds for the relay too
+  if (!allow) return null;
   return `the relay's own count: this account asked ${r.asks} ${r.k} grants in ${Math.round(Math.max(span, 60) / 60)} minutes, ${Math.floor(r.asks / allow)} times the most its budget lets honest play ask (${allow}) (Spawn-Grants GRANT-ASKS)`;
 }
 

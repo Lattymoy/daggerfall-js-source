@@ -2,8 +2,8 @@
   {
     "name": "GRANT-SLEEP-timer-back",
     "file": "server/src/index.js",
-    "old": "    if (foldGrantAsk(G.w, who, ask.kind, ask.n, refusal, G.liveN)) void this._grantFlush();",
-    "new": "    if (foldGrantAsk(G.w, who, ask.kind, ask.n, refusal, G.liveN)) void this._grantFlush();\n    else setTimeout(() => { void this._grantFlush(); }, GRANT_MEASURE_MS);",
+    "old": "    else if (grantRowPastLine(G.w, who, ask.kind, now)) G.ev = 'line';",
+    "new": "    else setTimeout(() => { void this._grantFlush(); }, GRANT_MEASURE_MS);",
     "why": "GRANT2's ten-minute timer armed at a fold - the cell never sleeps",
     "tests": [
       "test/net/grantsleep_relay.test.js"
@@ -22,7 +22,7 @@
   {
     "name": "GRANT-SLEEP-due-unread",
     "file": "server/src/index.js",
-    "old": "    if (force || Date.now() - G.w.from >= GRANT_MEASURE_MS) void this._grantFlush();",
+    "old": "    if (force || now - G.w.from >= GRANT_MEASURE_MS || G.ev === 'line' || (G.ev === 'tally' && now - G.evAt >= GRANT_EVIDENCE_GAP_MS)) void this._grantFlush();",
     "new": "    void this._grantFlush();",
     "why": "the window posted at any frame",
     "tests": [
@@ -32,8 +32,8 @@
   {
     "name": "GRANT-SLEEP-bound-past",
     "file": "server/src/index.js",
-    "old": "    if (force || Date.now() - G.w.from >= GRANT_MEASURE_MS) void this._grantFlush();",
-    "new": "    if (force || Date.now() - G.w.from > GRANT_MEASURE_MS) void this._grantFlush();",
+    "old": "now - G.w.from >= GRANT_MEASURE_MS ||",
+    "new": "now - G.w.from > GRANT_MEASURE_MS ||",
     "why": "the bound read as past it",
     "tests": [
       "test/net/grantsleep_relay.test.js"
@@ -55,6 +55,106 @@
     "old": "    if (last) this._grantTick(true);",
     "new": "    this._grantTick(true);",
     "why": "a window posted at every close, a socket still standing",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-SLEEP-close-unticked",
+    "file": "server/src/index.js",
+    "old": "    try { await this._leave(ws); } finally { await this._reap(); this._metricsTick(); this._grantTick(); }",
+    "new": "    try { await this._leave(ws); } finally { await this._reap(); this._metricsTick(); }",
+    "why": "a window due at a close that leaves a socket waits for a frame that may never come (AUDIT GRANT-SLEEP S2)",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S2-tally-timer",
+    "file": "server/src/index.js",
+    "old": "      else G.ev ??= 'tally';   // AUDIT GRANT-SLEEP S1: a reader's word, posted at the door (_grantTick)",
+    "new": "      else setTimeout(() => { void this._grantFlush(); }, GRANT_MEASURE_MS);",
+    "why": "the ten-minute timer armed at a reader's tally",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S2-relay-tally-timer",
+    "file": "server/src/index.js",
+    "old": "    else G.ev ??= 'tally';   // AUDIT GRANT-SLEEP S1: a case's evidence, posted at the door (_grantTick)",
+    "new": "    else setTimeout(() => { void this._grantFlush(); }, GRANT_MEASURE_MS);",
+    "why": "the ten-minute timer armed at the relay's own count",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S1-line-unread",
+    "file": "server/src/index.js",
+    "old": "    else if (grantRowPastLine(G.w, who, ask.kind, now)) G.ev = 'line';",
+    "new": "",
+    "why": "GRANT-ASKS' line crossed and left to a window an evicted cell loses",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S1-line-word-unread",
+    "file": "server/src/index.js",
+    "old": " || G.ev === 'line' ||",
+    "new": " ||",
+    "why": "the line's word set and never read at the door",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S1-gap-unread",
+    "file": "server/src/index.js",
+    "old": "(G.ev === 'tally' && now - G.evAt >= GRANT_EVIDENCE_GAP_MS)",
+    "new": "G.ev === 'tally'",
+    "why": "a post a frame for fresh evidence a frame",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S1-gap-uncounted",
+    "file": "server/src/index.js",
+    "old": "    if (G.ev) G.evAt = now;   // AUDIT GRANT-SLEEP S1: the evidence it carried posted - the gap is counted from here",
+    "new": "",
+    "why": "the gap never counted from a post",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S1-tally-unread",
+    "file": "server/src/index.js",
+    "old": "      else G.ev ??= 'tally';   // AUDIT GRANT-SLEEP S1: a reader's word, posted at the door (_grantTick)",
+    "new": "",
+    "why": "a reader's word left to a window an evicted cell loses",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S1-relay-tally-unread",
+    "file": "server/src/index.js",
+    "old": "    else G.ev ??= 'tally';   // AUDIT GRANT-SLEEP S1: a case's evidence, posted at the door (_grantTick)",
+    "new": "",
+    "why": "the relay's own count left to a window an evicted cell loses",
+    "tests": [
+      "test/net/grantsleep_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GRANT-SLEEP-S1-line-span",
+    "file": "src/net/grantMeasure.js",
+    "old": "  return !!r && grantAsksPastLine(r, (nowMs - w.from) / 1000) > 0;",
+    "new": "  return !!r && grantAsksPastLine(r, 3600) > 0;",
+    "why": "the line read over an hour, not the window's span",
     "tests": [
       "test/net/grantsleep_relay.test.js"
     ]

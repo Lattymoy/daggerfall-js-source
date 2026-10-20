@@ -153,27 +153,32 @@ test('GRANT3 THE RELAY\'S ASKS: a renewal signs my live grants again with a new 
   assert.deepEqual([mac.last().r, ann.ws.sent.length], ['sender', toAnn2], 'a grant freed hands nothing on');
 });
 
-test('GRANT3 A READER\'S TALLY: folded into the cell\'s window under the reader\'s account and the sender\'s, a sender this cell holds; one tally a reader a window; posted signed and read back by the service\'s half (mutants: the tally under the sender\'s socket id; a second tally inside the window kept)', async (t) => {
+test('GRANT3 A READER\'S TALLY: folded into the cell\'s window under the reader\'s account and the sender\'s, a sender this cell holds; one tally a reader a window; posted signed and read back by the service\'s half - AUDIT GRANT-SLEEP S1: at its own door, a case\'s evidence (mutants: the tally under the sender\'s socket id; a second tally inside the window kept)', async (t) => {
   const W = await world(t);
   const c0 = W.cell(K0);
   const mac = await W.join(c0, 'sock-mac-01', P0), ann = await W.join(c0, 'sock-ann-01', P0);
   void mac;
-  await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'marks', n: 4 }, { o: 'sock-gone-01', r: 'dice', n: 2 }, { o: 'sock-ann-01', r: 'dice', n: 1 }] });
-  await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'marks', n: 40 }] });
-  assert.deepEqual([...c0.room._grants.w.tallies.values()], [{ a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'marks', n: 4 }], 'a sender here alone, never the reader itself; one tally a window');
-  W.tick(GRANT_TALLY_MS);
-  const before = W.posts.length;
-  // GRANT-SLEEP (Spawn-Grants.md section 22): the window's first tally has waited GRANT_MEASURE_MS (GRANT_TALLY_MS is
-  // as long), so this frame folds the next tally and then posts the window at its door - there is no timer to wait on.
-  // The post is never awaited by the frame, so the pin awaits the room's own flush (its signing takes a turn of its own)
+  // AUDIT GRANT-SLEEP S1 (Spawn-Grants.md section 22): a tally is a case's evidence and posts at its door, so the pin reads
+  // each batch as it goes - the post is never awaited by the frame, so it awaits the room's own flushes
   const flushes = [], flush = c0.room._grantFlush.bind(c0.room);
   c0.room._grantFlush = () => { const p = flush(); flushes.push(p); return p; };
+  const batch = async (i) => {
+    await Promise.all(flushes);
+    const opened = await openGrantMeasure(W.posts[i].body, W.posts[i].sig, W.kp.publicKey, { subtle, nowMs: W.now });
+    assert.ok(opened.ok, opened.error ?? '');
+    return opened.batch;
+  };
+  await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'marks', n: 4 }, { o: 'sock-gone-01', r: 'dice', n: 2 }, { o: 'sock-ann-01', r: 'dice', n: 1 }] });
+  await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'marks', n: 40 }] });
+  await Promise.all(flushes);
+  assert.equal(W.posts.length, 1, 'the first tally posted at its door; the second, inside the reader\'s window, dropped');
+  assert.deepEqual((await batch(0)).tl, [{ a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'marks', n: 4 }], 'a sender here alone, never the reader itself; one tally a window');
+  W.tick(GRANT_TALLY_MS);
   await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'unsigned', n: 1 }] });
   await Promise.all(flushes);
-  assert.equal(W.posts.length, before + 1, 'the next window\'s tally folded, and the window posted at the frame it fell due');
-  assert.equal(c0.room._grants.w.tallies.size, 0);
-  const opened = await openGrantMeasure(W.posts.at(-1).body, W.posts.at(-1).sig, W.kp.publicKey, { subtle, nowMs: W.now });
-  assert.ok(opened.ok);
-  assert.deepEqual(opened.batch.tl, [{ a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'marks', n: 4 }, { a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'unsigned', n: 1 }]);
-  assert.deepEqual(opened.batch.rows, []);
+  assert.equal(W.posts.length, 2, 'the next window\'s tally, posted at its own door');
+  const next = await batch(1);
+  assert.deepEqual(next.tl, [{ a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'unsigned', n: 1 }]);
+  assert.deepEqual(next.rows, []);
+  assert.equal(c0.room._grants.w.tallies.size, 0, 'nothing left owed');
 });

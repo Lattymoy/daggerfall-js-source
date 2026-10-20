@@ -53,22 +53,26 @@ test('AUDIT GRANT A4/A5 THE WINDOW: a reader\'s tally that fills it posts it at 
   await mac.ask({ k: 'mint', kind: 'enc', n: 1 });
   const G = W.r.room._grants;
   for (let i = 0; G.w.rows.size + G.w.tallies.size < GRANT_MEASURE_ROWS - 1; i++) foldGrantAsk(G.w, `acct-${1000 + i}`, 'camp', 1, null, 1);
+  // GRANT-SLEEP (Spawn-Grants.md section 22): a post is never awaited by the frame that begins it, so the pin awaits the
+  // room's own flushes; AUDIT GRANT-SLEEP S1: and the rest, a reader's word, posts at its door as the next window
+  const flushes = [], flush = W.r.room._grantFlush.bind(W.r.room);
+  W.r.room._grantFlush = () => { const p = flush(); flushes.push(p); return p; };
   await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'marks', n: 1 }, { o: 'sock-zed-01', r: 'twice', n: 2 }] });
-  await W.settle();
-  assert.equal(W.posts.length, 1, 'posted at its bound');
+  await Promise.all(flushes);
+  assert.equal(W.posts.length, 2, 'posted at its bound, and the rest at the door');
   const opened = await openGrantMeasure(W.posts[0].body, W.posts[0].sig, W.kp.publicKey, { subtle, nowMs: W.now });
   assert.ok(opened.ok, `a batch the service reads: ${opened.error ?? ''}`);
   assert.equal(opened.batch.rows.length + opened.batch.tl.length, GRANT_MEASURE_ROWS);
-  assert.deepEqual([...G.w.tallies.values()].map((x) => x.r), ['twice'], 'the rest begin the next window');
+  const rest = await openGrantMeasure(W.posts[1].body, W.posts[1].sig, W.kp.publicKey, { subtle, nowMs: W.now });
+  assert.ok(rest.ok, rest.error ?? '');
+  assert.deepEqual([rest.batch.rows.length, rest.batch.tl.map((x) => x.r)], [0, ['twice']], 'the rest began the next window');
   void zed;
-  // A5: the next window begins at its first fold
+  // A5: the next window begins at its first fold - and so it is not due at the frame that began it: one begun at the last
+  // post would be three hours old here, and posted at this frame's door (GRANT-SLEEP)
   await W.r.room._grantFlush();
   W.tick(3 * 3600_000);
-  // GRANT-SLEEP (Spawn-Grants.md section 22): and so the window is not due at the frame that began it - one begun at the
-  // last post would be three hours old here, and posted at this frame's door
-  const flushes = [], flush = W.r.room._grantFlush.bind(W.r.room);
-  W.r.room._grantFlush = () => { const p = flush(); flushes.push(p); return p; };
+  const before = flushes.length;
   await mac.ask({ k: 'mint', kind: 'enc', n: 1 });
   assert.equal(W.r.room._grants.w.from, W.now, 'three idle hours are no asking time');
-  assert.equal(flushes.length, 0, 'nothing posted at the first ask after the idle hours');
+  assert.equal(flushes.length, before, 'nothing posted at the first ask after the idle hours');
 });

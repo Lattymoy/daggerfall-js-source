@@ -426,7 +426,7 @@ The owner: GRANT1 ships with it, and the law **measures from its deploy**. Relay
 - **The measure** (`net/grantMeasure.js`): each cell folds its asks per account and kind - asks, members, the bucket's and
   the ceiling's refusals - and the most live members it held, and posts the window every GRANT_MEASURE_MS (ten minutes)
   [SUPERSEDED BY GRANT-SLEEP, section 22: at the first frame or close once its first ask has waited GRANT_MEASURE_MS,
-  and at the cell's drain - never on a timer, which kept the cell awake and billed]
+  at the cell's drain, and a case's evidence at its door - never on a timer, which kept the cell awake and billed]
   or at GRANT_MEASURE_ROWS rows, signed over `grant-measure1\n` with the relay's key, to GRANT_FEED_URL (the chat feed's
   door: never awaited, never retried, through the ACCOUNTS binding). The account service keeps a window once
   (`server-account/src/grants.js`, POST /v1/mod/grant-feed, migration 0131_grant_measure) and a developer reads it:
@@ -765,32 +765,71 @@ nothing else orders them.
 
 The owner, 2026-10-20: "the server cost is skyrocketing and this is becoming unsustainable", then, of the bill: "Its
 the durable objects". The relay's audit of what keeps its objects awake is `Scale-Arc.md` ROOM-SLEEP; this is its first
-fix, and the cause of the jump.
+fix. Whether it is the jump the owner saw is for the per-object reading to say (ROOM-SLEEP's GraphQL reading): the
+repository holds no bill. [Corrected by AUDIT GRANT-SLEEP C1, below: the first draft said every cell a player stood in.]
 
 - **What it cost.** A Durable Object is billed for its 128 MB for every second it is in memory and cannot hibernate,
   and a pending `setTimeout` is one of the things that stops it (Cloudflare's Durable Object lifecycle: no timer set,
   no awaited I/O, no event in process). GRANT2's measure (section 12) armed a GRANT_MEASURE_MS (ten-minute) timer at a
-  cell's first fold and again at the first fold after each post. Every foe the open world stands asks a grant
-  (`measure` is the law unset), so from world218 (deployed 2026-10-18) every cell a player stood in kept a timer
-  pending around the clock, and for ten minutes after they left: about $4 a month for each such cell, where a cell
+  window's first fold - a mint, or a reader's tally naming another socket; never a renewal, a free, a carry or an heir
+  - and again at the first fold after each post, and a later fold never moved it. Every foe a player's own game stands
+  asks its mint (never a puppet, nor a placed foe with no site; `measure` is the law unset), in a cell or a world room.
+  So from world218 (deployed 2026-10-18) each room that took a mint stayed in memory, billed, for ten minutes from its
+  window's first fold. Where foes keep standing - a player moving through the open country, camps rolled at each map
+  pixel - that is near around the clock, and a cell left behind stayed billed for what remained of its window (up to
+  ten minutes); a player who stands nothing new held their cell at most ten minutes past its last mint (idle in a town
+  by day, in a dungeon or a building, or with their foes already standing). A cell held all month is some $4.20; a cell
   with one player in it had been billed only for the moments it handled a frame.
 - **Built** (`server/src/index.js` `_grantTick`; relay world234 (world225, world226, world228, world229, world230 then world231 on its branch, renumbered past main's versions at each merge, to world233)): the window posts at a door, as the relay's metrics
   window does (`_metricsTick`) - at the first frame or close after its first fold has waited GRANT_MEASURE_MS, and when
   the cell drains (its last socket's close, forced whatever the window's age: the players it measured are gone, and the
-  cell then sleeps owing nothing). At its whole bound it posts at once, as before. No timer is armed anywhere on the
-  grants' path, and `G.timer` is gone.
+  cell then sleeps owing nothing). At its whole bound it posts at once, as before; a case's evidence posts at its door
+  (AUDIT GRANT-SLEEP S1, below). No timer is armed anywhere on the grants' path, and `G.timer` is gone.
 - **What it gives up.** The grants' state was always memory alone (section 12: "an evicted cell forgets them, and its
-  window with them"), and AUDIT GRANT A8 already signs again a renewal the cell has forgotten. The timer had made
-  eviction rare by keeping every cell awake; now a cell whose players all stand still between heartbeats (HEARTBEAT_MS,
-  20 s, past the runtime's 10 s to hibernation) is evicted and loses an open window. Those players make few asks (a
-  renewal folds nothing; a mint comes as foes stand around a player who moves, and a mover's poses keep its cell in
-  memory), so the measure loses little. A drained cell loses nothing: its window posts first. The service's rates
-  already floor a window's span at GRANT_RATE_SPAN_MIN_S (`server-account/src/grants.js`), so the shorter windows a
-  drain posts open no case and inflate no rate.
+  window with them"). The timer had made eviction rare in a cell that minted; now a cell whose players all stand still
+  between heartbeats (HEARTBEAT_MS, 20 s, past the runtime's 10 s to hibernation) is evicted and forgets all of it:
+  - **its open window** - a measure is a sample. Its players make few asks (a renewal folds nothing; a mint comes as
+    foes stand around a player who moves, and a mover's poses keep the cell in memory), so the measure loses little; a
+    drained cell loses nothing, its window posting first; and a case's evidence posts at its door (S1). The service's
+    rates floor a window's span at GRANT_RATE_SPAN_MIN_S (`src/net/grantMeasure.js`), so the shorter windows a drain
+    posts open no case and inflate no rate.
+  - **its live grants** (`G.live`, the ceiling's `liveN`) - a renewal it forgot is signed again and counted (AUDIT GRANT
+    A8), so they come back at the owner's next renewal, some eight minutes on. Until then an heir is refused: AUDIT GRANT
+    A15 hands nothing on from a grant forgotten or freed, and an evicted cell cannot tell the two apart. The heir's foe
+    then streams ungranted - in `measure`, a reader's `ungranted` in the tallies GRANT5 reads.
+  - **each account's buckets** (`G.buckets`) and the readers' tally clock (`G.tallied`), GRANT9's askers and the strips
+    seen - while the law measures, what is counted; **under `enforce` (GRANT6), ten quiet seconds would refill an
+    account's buckets and empty the cell's ceiling.** GRANT6 is not on; it must not be until the buckets outlive an
+    eviction (the asker's socket attachment survives one), or until the owner takes the trade.
+  - **the relay setting it read** - a woken cell's first ask waits on the hub for `grantMode` (at most ROOM_CALL_MS),
+    one call a wake that asks; a request, and a renewal's answer a moment later.
 - **The wire** is unchanged: no frame changes shape, and the relay and the clients deploy in either order.
 
-Pins: `test/net/grantsleep_relay.test.js` (3) - no long timer at a fold; the window at its door, not before; the
-drain's post, and none at a close that leaves a socket. `test/net/grant3_asks.test.js` and
-`test/net/grantaudit_relay.test.js` read a window posted at the frame it fell due. Mutants:
-`tools/mutants/grantsleep.json` (6 dead), and AUDIT-GRANT-A5 in `tools/mutants/grantaudit.json` killed again by the
-idle-hours frame posting nothing.
+### The audit (2026-10-20, the owner: "Audit this")
+
+Two read-only lenses over the branch - the relay's paths, and every claim the records and the pull request make
+against the code and Cloudflare's pages - each finding reproduced against the branch:
+
+| # | Found | Fixed | Pin |
+|---|---|---|---|
+| S1 | The timer had also held a window an evicted cell would lose: a sender could flood asks past GRANT-ASKS' line, or stream records the relay strips, then send nothing for ten seconds (pings are answered unwoken) - the cell evicted and the window that would open their case was lost. A reader's tally went the same way | A case's evidence posts at its door: a window whose account crossed GRANT-ASKS' line at the frame that crossed it; one holding a tally (a reader's, or the relay's own count) at the first door GRANT_EVIDENCE_GAP_MS (10 s) after the cell's last evidence post, so fresh bad records a frame never make a post a frame. GRANT-ASKS' line (`grantAsksPastLine`, GRANT_ASK_CASE_TIMES, GRANT_ASK_CASE_OVER_MIN, GRANT_RATE_SPAN_MIN_S) moved to `src/net/grantMeasure.js`, which `server-account/src/grants.js` reads - one line for both | grantsleep (the line at its door; the tallies' gap; no timer on any fold); grant3's tally, AUDIT GRANT A4's rest and FOE-BOUNDS' strip read a window posted at its door; mutants line-unread, line-word-unread, line-span, gap-unread, gap-uncounted, tally-unread, relay-tally-unread |
+| S2 | The no-timer pin covered a mint alone - a timer put back at a reader's tally or the relay's count passed, and the close's own tick was unpinned | Pinned | grantsleep (no timer on any fold; the close's door); mutants S2-tally-timer, S2-relay-tally-timer, close-unticked |
+| C1 | The records and the pull request said every cell a player stood in was held around the clock and ten minutes past their leaving, "about one object a player online" | Said as the code has it: a room that took a mint, ten minutes from its window's first fold; near around the clock where foes keep standing; up to ten minutes past a mover's leaving; at most ten minutes past an idle player's last mint. A thousand cells held all month is a ceiling, not an estimate | this section, Scale-Arc ROOM-SLEEP, Active-Arcs, the PR |
+| C2 | ROOM-SLEEP said an auto-answered ping costs nothing: Cloudflare exempts the protocol's own pings, and says of an auto-response only that it takes no wall-clock time - the relay's `{"t":"ping"}` is a message | Said: no duration; as a message, a twentieth of a request | Scale-Arc ROOM-SLEEP |
+| C3 | "The timing matches the jump in the bill" - the repository holds no bill | Said as the per-object reading's to decide | this section, the PR |
+
+Read and left, each with its reason: **eviction's other losses** (above, What it gives up) - an heir refused until the
+owner's next renewal (AUDIT GRANT A15 refuses a forgotten grant on purpose; re-adopting one would hand a freed grant on),
+and the buckets' and ceiling's reset, which binds GRANT6 before it is switched on. **A drain missed** while the runtime
+still lists a socket the object itself closed (a same-id reconnect's old socket, two dead sockets reaped together): the
+window waits for a frame, the blind spot `_sweep` and the metrics' drain already share - rare, a sample, and a case's
+evidence no longer waits on it (S1). **The hub's call a wake** (above). **`webSocketError`** ticks nothing unforced; its
+`_leave` still forces the drain. **AbortSignal.timeout** on a post (8 s) and a hub call (5 s) may hold a cell that long -
+bounded, once a window or a wake. No other timer or held call stands on a lone cell's path: `_owe` arms only with a
+listener, the chat feed only in a channel, the watch tick none.
+
+Pins: `test/net/grantsleep_relay.test.js` (7) - no long timer on any fold; the window at its door, not before; the
+drain's post, and none at a close that leaves a socket; a close's door; GRANT-ASKS' line at its door; the tallies'
+gap. `test/net/grant3_asks.test.js`, `test/net/grantaudit_relay.test.js` and `test/net/grantdoor_relay.test.js` read
+the windows posted at their doors. Mutants: `tools/mutants/grantsleep.json` (16 dead), `grantaudit.json` and
+`foebounds.json` (GRANT-ASKS' two re-aimed at `src/net/grantMeasure.js`) - 87 dead in all.

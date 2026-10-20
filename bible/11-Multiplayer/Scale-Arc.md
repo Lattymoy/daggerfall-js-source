@@ -3635,16 +3635,22 @@ the GraphQL `durableObjectsPeriodicGroups` active time HUB-PULL read, by object.
 - **What stops hibernation** (the Durable Object lifecycle): a `setTimeout` or `setInterval` set, awaited I/O (a
   `fetch`, a request held open), an event in process. An object idle and eligible is not billed even before the runtime
   evicts it, which it does after 10 s - and then its memory is gone.
-- **Requests:** an incoming socket message is a twentieth of one, an outgoing one and an auto-answered ping nothing, a
-  call to another object a whole one; each `setAlarm` is a row written.
+- **Requests:** an incoming socket message is a twentieth of one, an outgoing one nothing, a call to another object a
+  whole one; each `setAlarm` is a row written (the `Room` is SQLite-backed). An auto-answered ping takes no wall-clock
+  time, but the relay's `{"t":"ping"}` is a message, not the protocol's own ping, so it is still a twentieth of a request
+  (AUDIT GRANT-SLEEP C2: this said nothing).
 
 ### What keeps an object awake, ranked
 
-1. **GRANT2's measure, a ten-minute timer in every cell a player stands in** (world218, deployed 2026-10-18 - the
-   jump). Every foe the open world stands asks a grant, the cell folds it and armed GRANT_MEASURE_MS's timer, again at
-   the first ask after each post: about one object a player online held awake around the clock, and every cell a
-   player left for ten minutes more. Some $4.20 a month a cell held so - at a thousand online, some $4,000 a month for
-   as long as they stay. **GRANT-SLEEP, below: built.**
+1. **GRANT2's measure, a ten-minute timer in each room that took a mint** (world218, deployed 2026-10-18). Every foe a
+   player's own game stands asks its mint; the room folds it and armed GRANT_MEASURE_MS's timer at the window's first
+   fold (a mint, or a reader's tally - never a renewal, free, carry or heir), again at the first fold after each post,
+   never moved by a later one. So a room stayed billed ten minutes from each window's first fold: near around the clock
+   where foes keep standing (a player moving through the open country, camps rolled at each map pixel), up to ten
+   minutes past a mover's leaving - a fast traveller held several trailing cells - and at most ten minutes past an idle
+   player's last mint. Some $4.20 a month a room held so; a thousand cells held all month would be some $4,200, a
+   ceiling: players sharing cells, or idle, cost less, and the GraphQL reading decides. [AUDIT GRANT-SLEEP C1: this said
+   every cell a player stands in, and about one object a player online.] **GRANT-SLEEP, below: built.**
 2. **The channels' held polls** (HUB-PULL): each hub and region shard holding a socket keeps one poll at its bus
    (HUB_POLL_MS 20 s, asked again 25 ms after an empty answer) - the shard's awaited call and the bus's held request,
    both billed. 16 hub shards and `chat:world`, and 62 regions of four shards and a bus: 327 objects, each awake while
@@ -3665,10 +3671,11 @@ one handler, which then sleeps; pings are answered by the runtime unwoken; a hid
 
 ### GRANT-SLEEP: built (relay world234 - world225, world226, world228, world229, world230 then world231 on its branch, renumbered past main's versions at each merge, to world233; one drop at the merge)
 
-The grants' window posts at a door - the first frame or close once due, and at the cell's drain - never on a timer
-(`server/src/index.js` `_grantTick`, as `_metricsTick`). `Spawn-Grants.md` section 22 is its record: what it gives up
-(a cell whose players all stand still is evicted between heartbeats and loses an open window, which the grants' memory
-was always allowed to do) and its pins. No frame changes shape.
+The grants' window posts at a door - the first frame or close once due, at the cell's drain, and a case's evidence at
+its own door - never on a timer (`server/src/index.js` `_grantTick`, as `_metricsTick`). `Spawn-Grants.md` section 22
+is its record: what it gives up (a cell whose players all stand still is evicted between heartbeats and forgets its
+grants' state, which the grants' memory was always allowed to do - and which binds GRANT6 before it is switched on),
+its audit and its pins. No frame changes shape.
 
 ### Decisions for the owner
 

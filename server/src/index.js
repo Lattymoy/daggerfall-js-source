@@ -308,7 +308,7 @@ import { NEW_VOICE_GAP_MS, SAFE_LAW_PATH } from './relay.js';   // SAFE6: a new 
 import { mintStamp, stampTabOf, PUBLIC_TABS } from '../../src/net/safety/chatStamp.js';   // SAFE2: the relay's stamp on every line it relays
 import { sealFeed, FEED_SIG_HEADER, FEED_BATCH, FEED_WAIT_MS, FEED_POST_MS } from '../../src/net/safety/chatFeed.js';   // SAFE5: the reviewer's feed
 import { grantGate, grantModeOf, GRANT_MODES, GRANT_CFG_TTL_MS, validGrantAsk, grantMintGate, grantMarksFor, signGrant, grantBucketIdle, GRANT_TTL_MS, GRANT_SKEW_MS, GRANT_TALLY_MS, grantRenewed, grantCarried, grantHanded, grantSignedHere, GRANT_OPEN_KINDS, grantKindRolled, grantMarksAllow } from '../../src/net/grantLaw.js';   // GRANT2: the spawn grant's law (bible/11-Multiplayer/Spawn-Grants.md)
-import { newGrantMeasure, foldGrantAsk, foldGrantTally, grantMeasureBatch, sealGrantMeasure, GRANT_MEASURE_MS, GRANT_MEASURE_SIG_HEADER, GRANT_MEASURE_POST_MS, GRANT_RELAY_READER } from '../../src/net/grantMeasure.js';   // GRANT2: and its measure, to the service
+import { newGrantMeasure, foldGrantAsk, foldGrantTally, grantMeasureBatch, sealGrantMeasure, GRANT_MEASURE_MS, GRANT_MEASURE_SIG_HEADER, GRANT_MEASURE_POST_MS, GRANT_RELAY_READER, grantRowPastLine, GRANT_EVIDENCE_GAP_MS } from '../../src/net/grantMeasure.js';   // GRANT2: and its measure, to the service
 import { foeStatsRefusal } from '../../src/net/foeBounds.js';   // FOE-BOUNDS: the most health a streamed foe can legally have (GRANT9's strip reads it)
 import { seatOf, seatElder, seatStreams, seatTraffic, seatSilent, seatHeardAt, seatInAt, othersInOf } from '../../src/net/seatLive.js';   // FIELD BUGS 2026-10-18d SEAT-LIVE: a dungeon room's seat is a live socket's
 import { FOES_STALE_MS } from './relay.js';   // SEAT-LIVE: the seat's staleness, the page's own (net/wire.js)
@@ -10227,6 +10227,7 @@ export class Room {
     const G = this._grantState(a.key, now);
     this._grantFrom(G, now);
     if (foldGrantTally(G.w, GRANT_RELAY_READER, a.sub || a.id, 'stats', n, e)) void this._grantFlush();
+    else G.ev ??= 'tally';   // AUDIT GRANT-SLEEP S1: a case's evidence, posted at the door (_grantTick)
   }
   /** GRANT2: the welcome's word of it, a cell's - `,"gm":"<mode>"`; a client asks only while it is not `off`. NEVER THE
    *  HUB'S CALL: a hello asks nothing - the setting this cell last had, or the Worker's var (a staff `off` reaches a
@@ -10237,9 +10238,10 @@ export class Room {
   /** GRANT2: A CELL'S GRANTS - its counter (begun anywhere in 31 bits, so a re-woken cell does not number its grants from
    *  its last life's), the live grants it minted (number -> members and expiry) and their members, each account's bucket
    *  per kind (`<account>|<kind>`), and the measure's window. In memory alone: an evicted cell forgets them, and its
-   *  window with them (a measure is a sample). GRANT-SLEEP: and no timer - the window posts at a frame (_grantTick). */
+   *  window with them (a measure is a sample). GRANT-SLEEP: and no timer - the window posts at a frame (_grantTick); AUDIT
+   *  GRANT-SLEEP S1: `ev` the case's evidence it holds ('line', 'tally' or null), `evAt` when evidence last posted. */
   _grantState(q, now) {
-    return this._grants ??= { q, n: rand32() >>> 1, live: new Map(), liveN: 0, buckets: new Map(), tallied: new Map(), w: newGrantMeasure(now) };
+    return this._grants ??= { q, n: rand32() >>> 1, live: new Map(), liveN: 0, buckets: new Map(), tallied: new Map(), w: newGrantMeasure(now), ev: null, evAt: -Infinity };
   }
   /** GRANT2: the expired forgotten - a live grant past its `x` (the ceiling errs high by at most its window: a granted foe
    *  that died early counts until then), a bucket full again (a first ask's is full). */
@@ -10399,14 +10401,16 @@ export class Room {
       if (!sender || sender === reader) continue;
       this._grantFrom(G, now);
       if (foldGrantTally(G.w, reader, sender, row.r, row.n)) void this._grantFlush();   // AUDIT GRANT A4: posted at its whole bound - the rest begin the next window (_grantFlush swaps it before its first await)
+      else G.ev ??= 'tally';   // AUDIT GRANT-SLEEP S1: a reader's word, posted at the door (_grantTick)
     }
   }
-  /** GRANT2: an ask folded into the window (net/grantMeasure.js foldGrantAsk), which posts at its whole bound or once its
-   *  first ask has waited GRANT_MEASURE_MS (_grantTick) - while GRANT_FEED_URL is set; unset, the window is dropped at its
-   *  bound. */
+  /** GRANT2: an ask folded into the window (net/grantMeasure.js foldGrantAsk), which posts at its whole bound, once its
+   *  first ask has waited GRANT_MEASURE_MS, or at the frame its account crossed GRANT-ASKS' line (_grantTick) - while
+   *  GRANT_FEED_URL is set; unset, the window is dropped at its bound. */
   _grantFold(G, who, ask, refusal, now) {
     this._grantFrom(G, now);
     if (foldGrantAsk(G.w, who, ask.kind, ask.n, refusal, G.liveN)) void this._grantFlush();
+    else if (grantRowPastLine(G.w, who, ask.kind, now)) G.ev = 'line';   // AUDIT GRANT-SLEEP S1: GRANT-ASKS' line crossed - posted at this frame's door
   }
   /** AUDIT GRANT A5: a window begins at its first fold, never at the last post - an idle cell's hours are no asking time
    *  (grantsMeasure reads asks an hour over the window's length). */
@@ -10415,12 +10419,20 @@ export class Room {
    *  bible/11-Multiplayer/Spawn-Grants.md section 22): THE WINDOW POSTED WHEN IT IS DUE, AT A DOOR - the first frame or
    *  close after its first fold has waited GRANT_MEASURE_MS, or the cell's drain (`force`), as the metrics' window is
    *  (_metricsTick). Never on a timer of its own: a Durable Object with a timer pending cannot hibernate and is billed
-   *  for every second of it, so GRANT2's ten-minute timer, armed at a cell's first ask and again at the first ask after
-   *  each post, kept every cell a player stood in awake around the clock, and ten minutes past their leaving. */
+   *  for every second of it, so GRANT2's ten-minute timer, armed at a window's first fold (a mint, or a reader's tally),
+   *  kept the cell awake ten minutes from it, and again from the first fold after each post - near around the clock where
+   *  foes kept standing, and up to ten minutes past a mover's leaving.
+   *  AUDIT GRANT-SLEEP S1: AND A CASE'S EVIDENCE POSTS AT ITS DOOR. The timer had also held an evicted cell's window for
+   *  its post; without it, a sender could flood asks or stream bad records and then go quiet past the runtime's ten
+   *  seconds, and the window that would open their case was lost unposted. So a window whose account crossed GRANT-ASKS'
+   *  line (`G.ev` 'line', set at the fold) posts at that frame's door, and one holding a tally - a reader's word or the
+   *  relay's own count, each a case's evidence (`G.ev` 'tally') - at the first door GRANT_EVIDENCE_GAP_MS after the
+   *  cell's last evidence post, so fresh bad records a frame cannot make the relay post a frame. */
   _grantTick(force = false) {
     const G = this._grants;
     if (!G || !(G.w.rows.size || G.w.tallies.size)) return;
-    if (force || Date.now() - G.w.from >= GRANT_MEASURE_MS) void this._grantFlush();
+    const now = Date.now();
+    if (force || now - G.w.from >= GRANT_MEASURE_MS || G.ev === 'line' || (G.ev === 'tally' && now - G.evAt >= GRANT_EVIDENCE_GAP_MS)) void this._grantFlush();
   }
   /** GRANT2: THE WINDOW POSTED - signed with the relay's receipt key, to GRANT_FEED_URL through the ACCOUNTS binding where
    *  the Worker has it (the chat feed's door, _feedFlush); answered or not it is gone, and a new window begins. Answers
@@ -10431,6 +10443,8 @@ export class Room {
     const now = Date.now();
     const w = G.w;
     G.w = newGrantMeasure(now);
+    if (G.ev) G.evAt = now;   // AUDIT GRANT-SLEEP S1: the evidence it carried posted - the gap is counted from here
+    G.ev = null;
     const url = this.env?.GRANT_FEED_URL;
     if (typeof url !== 'string' || !url.startsWith('https://')) return false;
     try {
