@@ -57,7 +57,7 @@ export function isChunkLoadError(err) {
   return /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|dynamically imported module/i.test(m);
 }
 
-export const RELOAD_TEXT = 'The game was updated while this tab was open, so this screen could not be loaded. Reloading will fix it.';
+export const RELOAD_TEXT = 'The game was updated while this tab was open, so this screen could not load. Reload the page to fix it.';
 export const BROKEN_TEXT = 'This screen could not be loaded.';
 
 /** The notice, painted into the door's own host element with inline

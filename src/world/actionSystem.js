@@ -36,9 +36,9 @@
 // The matrix composition mirrors the tweens exactly: world translation
 // pre-multiplies the placement, self rotation post-multiplies it.
 // Collision (ours): doors own a collider bucket that exists only while
-// fully closed; moving action objects rebuild their bucket each frame
-// (DFU parents the player to platforms instead - riding is a later
-// milestone, standing collision is correct at every instant).
+// fully closed; moving action objects rebuild their bucket each frame,
+// and carry the body their step meets - or, where it is pinned against
+// the world, hold (MOVER-BODY, _standMover and player/moverBody.js).
 // KEYS (P10): object positions are BLOCK-LOCAL byte offsets and
 // 3108/4232 dungeons repeat at least one RDB, so every chain key is
 // namespaced by the block INSTANCE (ns): `act:{ns}:{position}`.
@@ -53,6 +53,7 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39
 import { triggerOpen, triggerLock } from '../systems/mysticism.js';   // X1: the Open/Lock door laws live there, not here
 import { dice100 } from '../combat/formulas.js';   // PT1: Dice100 has ONE home, and it is not this file
 import { localizedText, localizedTextList } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { moverSteps, meetBody } from '../player/moverBody.js';   // MOVER-BODY: a mover never closes on the body
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -925,8 +926,8 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  - NO MESH, so no collider bucket. AddAction's flat arm attaches a
    *    BoxCollider with `isTrigger = true` (RDBLayout.cs:977-987) -
    *    for raycasting, expressly not for standing on - so the object
-   *    carries an `aabb` that TRAVELS with it and never a solid.
-   *    `frameDelta` stays null for the same reason: a trigger is not a
+   *    carries an `aabb` that TRAVELS with it and never a solid -
+   *    and for the same reason it carries no body: a trigger is not a
    *    moving platform.
    *
    *  - THE ROTATION IS INVISIBLE AND THAT IS VERBATIM. DFU rotates the
@@ -1524,38 +1525,48 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     o.matrix = m;
   }
 
-  update(dt) {
+  /** The frame's tweens. `body` is the player's motor where the scene has one walking this graph's collider: the movers
+   *  meet it (MOVER-BODY, _standMover). */
+  update(dt, body = null) {
     for (const o of this.objects.values()) {
       if (o.kind === 'door') { this._tickDoor(o, dt); continue; }
-      if (o.state !== 'forward' && o.state !== 'reverse') { o.frameDelta = null; continue; }
+      if (o.state !== 'forward' && o.state !== 'reverse') continue;
       const dir = o.state === 'forward' ? 1 : -1;
+      const t0 = o.t, m0 = o.matrix;
       // A zero-duration tween is instant (and _play never leaves one
       // in a playing state), so the guard is for the restored-state
       // path and for a dt of exactly 0, which would otherwise make t
       // NaN rather than snapping it.
       o.t = Math.max(0, Math.min(1, o.t + (o.duration > 0 ? (dir * dt) / o.duration : dir)));
       if (o.kind === 'moveFlat') {
-        this._applyFlat(o);
         // A trigger box is not a moving platform - DFU's flat collider
         // is `isTrigger = true` and nothing rides it.
-        o.frameDelta = null;
+        this._applyFlat(o);
         if (o.state === 'forward' ? o.t >= 1 : o.t <= 0) o.state = o.state === 'forward' ? 'end' : 'start';
         continue;
       }
-      const px = o.matrix[12], py = o.matrix[13], pz = o.matrix[14];
       this._applyMatrix(o);
-      // Platform riding (2026-08-14): the frame's translation delta -
-      // the scene moves a standing player by exactly this (DFU
-      // MoveWithMovingPlatform's global-point delta, translation-only
-      // movers; doors rotate and never ride).
-      o.frameDelta = o.kind === 'action' ? [o.matrix[12] - px, o.matrix[13] - py, o.matrix[14] - pz] : null;
+      if (o.kind === 'action') this._standMover(o, t0, m0, body);
       const done = o.state === 'forward' ? o.t >= 1 : o.t <= 0;
-      if (o.kind === 'action') {
-        // Standing collision follows the mover every frame.
-        this.collider.removeBucket(o.key);
-        this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.matrix);
-      }
       if (done) o.state = o.state === 'forward' ? 'end' : 'start';
+    }
+  }
+
+  /** MOVER-BODY (FIELD BUGS 2026-10-19f, player/moverBody.js): standing collision follows the mover every frame - its
+   *  bucket stood at the new pose - and the body the step meets is carried with it (a rider, and any body the pose would
+   *  press, from any side), the frame's step met in MOVER_STEP pieces at the body. A body the carry cannot clear - pinned
+   *  between the mover and the world - HOLDS the mover at the last pose that closed on nobody, its `t` with it: the
+   *  tween waits there, and plays on when the body is clear (DaggerfallAction's tween never stops - Port-Ledger A). */
+  _standMover(o, t0, m0, body) {
+    const place = (m) => { this.collider.removeBucket(o.key); if (m) this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, m); };
+    place(o.matrix);
+    if (!body) return;
+    const t1 = o.t, m1 = o.matrix, n = moverSteps(this.collider, o.key, m0, m1, body);
+    for (let k = 1, t = t0, m = m0; k <= n; k++) {
+      o.t = k === n ? t1 : t0 + ((t1 - t0) * k) / n;
+      if (k < n) { this._applyMatrix(o); place(o.matrix); } else if (n > 1) { o.matrix = m1; place(m1); }
+      if (!meetBody(this.collider, o.key, m, o.matrix, body, place)) { o.t = t; o.matrix = m; place(m); return; }
+      t = o.t; m = o.matrix;
     }
   }
 
@@ -1565,7 +1576,6 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   _tickDoor(o, dt) {
     const swinging = o.state === 'forward' || o.state === 'reverse';
     const moving = o.moveState === 'forward' || o.moveState === 'reverse';
-    o.frameDelta = null;   // doors rotate and never ride
     if (!swinging && !moving) return;
     if (swinging) {
       const dir = o.state === 'forward' ? 1 : -1;

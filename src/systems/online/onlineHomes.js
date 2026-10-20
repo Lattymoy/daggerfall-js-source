@@ -331,19 +331,19 @@ export const hallOfferLabel = (price, guild) => `G - buy it for ${guild?.name ??
 /** GUILD1d: who may walk into a hall after `entry`, a press on the row: members, anyone, and round again. */
 export const hallNextEntry = (entry) => GUILD_HALL_ENTRIES[(Math.max(0, GUILD_HALL_ENTRIES.indexOf(entry)) + 1) % GUILD_HALL_ENTRIES.length];
 /** GUILD1d: the hall bought and refused at its door, in words. */
-export const hallBoughtLine = (name) => `This house is the hall of ${name} now. Its members may walk in; its Officers may furnish it.`;
+export const hallBoughtLine = (name) => `This house is now the hall of ${name}. Its members can enter, and its Officers can furnish it.`;
 /** HALL-GOLD (FIELD BUGS 2026-10-03, from the Patreon chat: "we have the cash, began with putting it all in guild bank,
  *  but then when we went to buy it says whats above ... so went and took all out and put in in bank thinking it meant it
  *  had to be within the realm ... that took all night to figure out"): THE TWO REFUSALS, EACH ITS OWN WORDS. Both read
  *  "The treasury needs N gold put in by realm characters" - "the realm" read as a place, so the gold went to a bank
  *  account, which never pays for a hall - and neither said which guard held. A treasury short of the price, and one that
  *  holds it but not enough of it counted (halls.js buyHall: `treasury` and `realm_gold`, guild-treasury-short and -old). */
-export const hallShortLine = (cost) => `The guild's treasury holds less than ${gold(cost)} gold. Put it in at the Guild tab's Treasury (Social, then Guild), at most ${gold(GUILD_MOVE_MAX)} at a time - gold in a bank account does not pay for a hall.`;
-export const hallOldGoldLine = (cost) => `The treasury holds less than ${gold(cost)} gold that realm characters put in - only that gold buys a hall. Gold put in before the realm, or by a character outside it, stays in the treasury but does not count.`;
+export const hallShortLine = (cost) => `The guild's treasury holds less than ${gold(cost)} gold. Put gold in at the Guild tab's Treasury (Social, then Guild), up to ${gold(GUILD_MOVE_MAX)} at a time. Gold in a bank account does not pay for a hall.`;
+export const hallOldGoldLine = (cost) => `The treasury holds less than ${gold(cost)} gold put in by realm characters, and only that gold buys a hall. Older gold, or gold from characters outside the realm, does not count.`;
 /** AUDIT GUILD1d A6/A7: a hall's cupboard to its members, and a hall's own words for a drop (anyone's) and a spell (a
  *  visitor's - its members cast in it). */
 export const HALL_CHEST_TITLE = "The Guild's Chest";
-export const HALL_DROP_TEXT = "Nothing dropped in a guild's hall stays - put it in the guild's chest.";
+export const HALL_DROP_TEXT = "Nothing dropped in a guild's hall stays there. Put it in the guild's chest.";
 export const HALL_VISITOR_MAGIC_TEXT = "You cannot cast spells in another guild's hall.";
 /** GUILD1e: THE BOARD IN A HALL - its name to a member, what it says to anyone else, and where it cannot open. */
 export const HALL_BOARD_TITLE = "The Guild's Board";
@@ -354,7 +354,7 @@ export const HALL_BOARD_COLD = "The guild's board cannot be read now.";
 export const HALL_OF_RECORDS_TEXT = 'Hall of Records';
 export const HALL_OF_RECORDS_SHUT = 'The Hall of Records cannot be read now.';
 /** GUILD1d: a hall's chest pressed where the Guild tab cannot open. GUILD2b: the chest is the guild's vault now. */
-export const HALL_CHEST_SHUT = "The guild's chest is the guild's vault - open the Guild tab of the Social panel to reach it.";
+export const HALL_CHEST_SHUT = "The guild's chest is the guild's vault. Open the Guild tab in the Social panel to use it.";
 
 /** Who may enter after `entry`, a press on the row: only me, my party, anyone, my guild, and round again. */
 export const homeNextEntry = (entry) => HOME_ENTRIES[(Math.max(0, HOME_ENTRIES.indexOf(entry)) + 1) % HOME_ENTRIES.length];
@@ -367,7 +367,7 @@ export const homeOwnerLines = (home) => ['This is your home.', homeEntryLine(hom
 export const homeEntryLine = (entry) => `Who may enter: ${HOME_ENTRY_WORDS[entry] ?? HOME_ENTRY_WORDS[HOME_ENTRY_DEFAULT]}.`;
 export const homeSaleLines = (refund, rentDue = 0) => [rentDue > 0 ? `Sell your home for ${gold(refund)} gold, and the ${gold(rentDue)} gold of rent you have not collected?` : `Sell your home for ${gold(refund)} gold?`,   // AUDIT HOME-PRICE C3: the held rent the sale pays with it
   `The gold goes to ${EMPIRE_ACCOUNT_WORDS}. Anything left inside is lost.`,
-  'Its placed pieces go too, for half of what they cost; your own things come back to your pack.'];   // DECOR1e; DECOR2a
+  'Its placed decorations are sold too, for half their cost. Your own items go back to your pack.'];   // DECOR1e; DECOR2a
 /** HOME-CROSSED (FIELD BUGS 2026-09-30): a home customs carried in is never bought back online - the bank's own words for
  *  a crossed deed (RESTORE), and that it stays a home. The door says them and asks no price. */
 export const HOME_CROSSED_LINES = Object.freeze([...CROSSED_DEED_LINES, 'It stays your home.']);

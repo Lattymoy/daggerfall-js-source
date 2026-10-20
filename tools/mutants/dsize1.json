@@ -2,8 +2,8 @@
   {
     "name": "DSIZE1-the-threshold-off-by-one",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (!blocks || blocks.length <= threshold) return dfLocation;",
-    "new": "  if (!blocks || blocks.length < threshold) return dfLocation;",
+    "old": "  return !!blocks && blocks.length > threshold;",
+    "new": "  return !!blocks && blocks.length >= threshold;",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]

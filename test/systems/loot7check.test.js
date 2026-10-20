@@ -136,11 +136,11 @@ test('LOOT7-CHECK CHAMP-SAID: the first blow either way says a champion on the l
   on();
   // THE ROWS, golden: the name the death line says, then the trait's own sentence
   assert.deepEqual(CH.CHAMPION_TRAITS.map((t, i) => CH.championLines(orc(i))), [
-    ['Mighty Orc stands as a champion.', 'Its blows land half again as hard.'],
-    ['Stalwart Orc stands as a champion.', 'Half again its health, on top of a champion\'s double.'],
-    ['Swift Orc stands as a champion.', 'Thirty more Speed: it closes, and it swings, sooner.'],
-    ['Vampiric Orc stands as a champion.', 'Half of what its blows take from you heals it.'],
-    ['Thorned Orc stands as a champion.', 'Your blows that land on it hurt you back, a seventh of them.'],
+    ['Mighty Orc stands as a champion.', 'Its blows hit 50% harder.'],
+    ['Stalwart Orc stands as a champion.', 'It has 50% more health, on top of a champion\'s double.'],
+    ['Swift Orc stands as a champion.', 'It has 30 more Speed, so it closes in and attacks sooner.'],
+    ['Vampiric Orc stands as a champion.', 'It heals for half the damage it deals you.'],
+    ['Thorned Orc stands as a champion.', 'Your hits on it hurt you for a seventh of their damage.'],
   ]);
   assert.equal(CH.championLines(orc()), null, 'a plain foe: none');
   assert.equal(CH.championLines(null), null);

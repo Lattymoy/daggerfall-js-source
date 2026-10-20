@@ -55,22 +55,22 @@ import { REPORT_PICK_AGE_MS, REPORT_LINES_MAX } from './safety/safetyLaw.js';   
 /** @type {ReadonlyArray<ChatTabRow>} */
 export const CHAT_TABS = Object.freeze([
   Object.freeze({ id: 'world', label: 'World', room: CHAT_WORLD_ROOM, link: true, hint: 'Everyone online' }),
-  Object.freeze({ id: 'region', label: 'Region', room: null, link: true, hint: 'Everyone in the region you stand in' }),
+  Object.freeze({ id: 'region', label: 'Region', room: null, link: true, hint: 'Everyone in your region' }),
   // CHAT-LANG (2026-10-11, the players: "More chat channels per-language"): the Region tab's shape - a room of its own
   // (net/wire.js chatLangRoom), its channel the language the player CHOSE (`chatLang`; /lang), and on the bar only while
   // one is chosen
-  Object.freeze({ id: 'lang', label: 'Lang', room: null, link: true, hint: 'Everyone who chose your language channel - /lang picks it', hidden: true }),
+  Object.freeze({ id: 'lang', label: 'Lang', room: null, link: true, hint: 'Everyone in your language channel. /lang picks one.', hidden: true }),
   // CHAT-TRADE (2026-10-14, Mac: "New channels: Trading, LFG" - "without introducing clutter"): the Language tab's shape
   // twice - a room of its own each (net/wire.js CHAT_TRADE_ROOM, CHAT_LFG_ROOM), on the bar only while the player has
   // JOINED it (`chatTrade`, `chatLfg`; /join, /leave), so a player who never joins sees no new tab and holds no new socket
   // (each hint a getter, read when the log is made - after the player chose a language - never at the boot's import)
-  Object.freeze({ id: 'trade', label: 'Trade', room: null, link: true, get hint() { return t('net.chat.tradeHint', 'Everyone in the Trade channel - buying, selling and swapping'); }, hidden: true }),
-  Object.freeze({ id: 'lfg', label: 'LFG', room: null, link: true, get hint() { return t('net.chat.lfgHint', 'Everyone in the LFG channel - looking for a group, or for one more'); }, hidden: true }),
-  Object.freeze({ id: 'party', label: 'Party', room: null, link: false, hint: 'Your party alone', hidden: true, peekAll: true }),
+  Object.freeze({ id: 'trade', label: 'Trade', room: null, link: true, get hint() { return t('net.chat.tradeHint', 'Everyone in the Trade channel: buying, selling and swapping'); }, hidden: true }),
+  Object.freeze({ id: 'lfg', label: 'LFG', room: null, link: true, get hint() { return t('net.chat.lfgHint', 'Everyone in the LFG channel: looking for a group or more players'); }, hidden: true }),
+  Object.freeze({ id: 'party', label: 'Party', room: null, link: false, hint: 'Only your party', hidden: true, peekAll: true }),
   // GUILD1c (Mac: "Do guild1c" - the guild's chat): the Party tab's shape - its lines ride the hub's link with
   // `ch: 'guild'` and reach the guild's members online alone, and the tab is on the bar while the character is in one
-  Object.freeze({ id: 'guild', label: 'Guild', room: null, link: false, hint: 'Your guild alone', hidden: true, peekAll: true }),
-  Object.freeze({ id: 'local', label: 'Local', room: null, link: false, hint: 'Those near enough to hear you - speak in character here, and put an aside out of character in (( ))' }),
+  Object.freeze({ id: 'guild', label: 'Guild', room: null, link: false, hint: 'Only your guild', hidden: true, peekAll: true }),
+  Object.freeze({ id: 'local', label: 'Local', room: null, link: false, hint: 'Players near enough to hear you. Speak in character here, and put out-of-character remarks in (( )).' }),
 ]);
 /** CHAT-CHAN: how long the player must stand in another region before the Region tab moves to its channel, ms - a
  *  walk along a border is not a churn of sockets. The first region is joined at once. */
@@ -110,16 +110,16 @@ const optArgs = (id) => ({ name: OPT_CHANNELS[id]?.name ?? id, id });
 /** CHAT-TRADE: the Trade and LFG tabs on a relay from before them (TRADE_CHAN_RELAY_MIN). */
 export const tradeChanOldText = () => t('net.chat.tradeOld', 'The Trade and LFG channels need the server\'s next update.');
 /** CHAT-TRADE: a tab's word while its channel is not joined - and how to join it. */
-export const notJoinedText = (id) => t('net.chat.notJoined', 'You are not in the {name} channel - /join {id} joins it.', optArgs(id));
+export const notJoinedText = (id) => t('net.chat.notJoined', 'You are not in the {name} channel. /join {id} joins it.', optArgs(id));
 /** CHAT-TRADE: the lines a join and a leave leave on the log - and a join a line said to the channel made, whose line
  *  waits in the field. */
 export const optJoinedText = (id) => t('net.chat.joined', '{name} channel joined. /leave {id} leaves it.', optArgs(id));
-export const optJoinedSayText = (id) => t('net.chat.joinedSay', '{name} channel joined - press Enter to say your line. /leave {id} leaves it.', optArgs(id));
+export const optJoinedSayText = (id) => t('net.chat.joinedSay', '{name} channel joined. Press Enter to speak. /leave {id} leaves it.', optArgs(id));
 export const optLeftText = (id) => t('net.chat.left', '{name} channel left.', optArgs(id));
 /** CHAT-TRADE: `/join` of a channel already joined (AUDIT CHAT-TRADE A5: the join's own line read as a join just made). */
-export const alreadyJoinedText = (id) => t('net.chat.already', 'You are already in the {name} channel - /leave {id} leaves it.', optArgs(id));
+export const alreadyJoinedText = (id) => t('net.chat.already', 'You are already in the {name} channel. /leave {id} leaves it.', optArgs(id));
 /** CHAT-TRADE: a line said to a channel joined but not open yet (the World link's welcome not heard, the socket opening). */
-export const optWaitText = (id) => t('net.chat.wait', 'The {name} channel is still opening - say it again in a moment.', optArgs(id));
+export const optWaitText = (id) => t('net.chat.wait', 'The {name} channel is still opening. Try again in a moment.', optArgs(id));
 /** PING1 (2026-10-11, the players: "A unique color or alert for @name pings"): does `text` name `name` with an @ - the
  *  whole name, any case, not run on into more of a word ("@Bran" pings Bran, "@Brandon" does not). A name of one letter
  *  or none pings nobody. */

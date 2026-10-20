@@ -234,7 +234,7 @@ export function refinedText(refined, name, track = () => null) {
     if (r.xp && Number(w.xp) > 0) xp.set(r.xp, (xp.get(r.xp) ?? 0) + Number(w.xp));
   }
   if (!made.size) return '';
-  const xps = [...xp].map(([prof, n]) => `+${n} ${professionName(prof)} XP`).join(', ');
+  const xps = [...xp].map(([prof, n]) => `+${n} ${professionName(prof)} experience`).join(', ');
   return `Refined first: ${[...made].map(([k, n]) => `${name(k)} x${n}`).join(', ')}${xps ? ` (${xps})` : ''}.`;
 }
 

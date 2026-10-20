@@ -172,7 +172,7 @@
   {
     "name": "LEGACY-CHOICE-online-unsaid",
     "file": "src/ui/familyPages.js",
-    "old": "      : prov.online?.() ? 'This character has no house - online, a house is founded only when a character is made. Make a new character to found one.'\n",
+    "old": "      : prov.online?.() ? 'This character has no house. Online, a house is founded only when a character is made. Make a new character to found one.'\n",
     "new": "",
     "tests": [
       "test/systems/legacychoice.test.js"

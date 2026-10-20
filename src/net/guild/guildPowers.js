@@ -50,15 +50,15 @@ export const GUILD_RANK_ACTS = Object.freeze([
   Object.freeze({ table: 'guild', power: 'invite', words: 'invite new members, and pin the guild\'s call for them on a town\'s Notice Board' }),
   Object.freeze({ table: 'guild', power: 'promote', words: 'promote and demote the ranks below their own' }),
   Object.freeze({ table: 'guild', power: 'remove', words: 'remove a member of a lower rank' }),
-  Object.freeze({ table: 'hall', power: 'hallEntry', words: 'choose who may walk into the hall' }),
+  Object.freeze({ table: 'hall', power: 'hallEntry', words: 'choose who may enter the hall' }),
   Object.freeze({ table: 'hall', power: 'decorate', words: 'decorate the hall, its yard and its outside' }),
   Object.freeze({ table: 'hall', power: 'notes', words: 'take down anyone\'s note on the guild\'s board' }),
-  Object.freeze({ table: 'writ', power: 'postWrit', words: 'post guild writs and contracts - an Officer within the weekly budget the guildmaster sets - and withdraw the ones they posted' }),
+  Object.freeze({ table: 'writ', power: 'postWrit', words: 'post guild writs and contracts (Officers within the weekly budget the guildmaster sets) and withdraw the ones they posted' }),
   Object.freeze({ table: 'writ', power: 'storesWithdraw', words: 'take any materials out of the guild Stores' }),
   Object.freeze({ table: 'seat', power: 'pledge', words: 'pledge the guild to a seat in the Muster' }),
-  Object.freeze({ table: 'levers', power: 'levers', words: 'run a held seat - its Tithe, its Edict, its battle window, its Works, its fealty and Pacts' }),
+  Object.freeze({ table: 'levers', power: 'levers', words: 'run a held seat: its Tithe, Edict, battle window, Works, fealty and Pacts' }),
   Object.freeze({ table: 'guild', power: 'withdraw', words: 'take gold and silver out of the treasuries' }),
-  Object.freeze({ table: 'writ', power: 'writBudget', words: 'set the Officers\' weekly budget - the silver they may post guild writs and contracts with' }),
+  Object.freeze({ table: 'writ', power: 'writBudget', words: 'set the Officers\' weekly silver budget for guild writs and contracts' }),
   Object.freeze({ master: true, words: 'withdraw any guild writ or contract' }),
   Object.freeze({ table: 'seat', power: 'tribute', words: 'pay Tribute at the seat the guild pledged' }),
   Object.freeze({ master: true, words: 'hire Sellswords for the guild\'s battles' }),
@@ -158,4 +158,4 @@ export function rankLinesOf(acts, names = GUILD_RANK_NAMES) {
 export const guildRankLines = (names = GUILD_RANK_NAMES) => rankLinesOf(actsOf, names);
 
 /** What the list closes on: a member's vault place is the guildmaster's to change, member by member. */
-export const GUILD_RANK_ACTS_NOTE = 'The guildmaster can grant or take back any member\'s use of the vault, member by member, on this page.';
+export const GUILD_RANK_ACTS_NOTE = 'The guildmaster can grant or remove each member\'s vault access on this page.';

@@ -56,7 +56,7 @@ test('ETHER-LEGENDS the six: two to a band past the Shallows, each her own class
   assert.ok(classById('legendRegent').skill >= 0.95, 'gunners who do not miss');
 });
 
-test('ETHER-SHIPS the names and colours: a corsair\'s and a trader\'s the Eltheric Ocean\'s own lists, on their own stream - her captain the Bay\'s own law\'s, unmoved; a legend\'s her own; a trader flies the Isles\' colours, a corsair and a legend the black flag; the glass reads "the Isles\' merchant colours" (mutants: the lists, the stream, the captain, the flag, the possessive)', () => {
+test('ETHER-SHIPS the names and colours: a corsair\'s and a trader\'s the Eltheric Ocean\'s own lists, on their own stream - her captain the Bay\'s own law\'s, unmoved; a legend\'s her own; a trader flies the Isles\' colours, a corsair and a legend the black flag; the glass reads "the Isles\' merchant colors" (mutants: the lists, the stream, the captain, the flag, the possessive)', () => {
   const pirate = classById('pirateBrig'), trader = classById('merchantGalleon');
   for (let seed = 1; seed < 40; seed++) {
     const p = etherShipNames(pirate, seed), t = etherShipNames(trader, seed);
@@ -69,8 +69,8 @@ test('ETHER-SHIPS the names and colours: a corsair\'s and a trader\'s the Elther
   assert.deepEqual(etherShipNames(classById('legendQueen'), 5), { name: 'The Drowned Queen', captain: 'Maraveth, Thrice Drowned', crown: null });
   assert.equal(ISLES_FLAG, 'the Isles');
   assert.equal(etherFlagOf(trader), 'the Isles'); assert.equal(etherFlagOf(pirate), null); assert.equal(etherFlagOf(classById('legendWake')), null);
-  assert.equal(coloursWords('merchant', ISLES_FLAG), 'the Isles\' merchant colours');
-  assert.equal(coloursWords('merchant', 'Wayrest'), 'Wayrest\'s merchant colours', 'the crowns\' as ever');
+  assert.equal(coloursWords('merchant', ISLES_FLAG), 'the Isles\' merchant colors');
+  assert.equal(coloursWords('merchant', 'Wayrest'), 'Wayrest\'s merchant colors', 'the crowns\' as ever');
   assert.equal(coloursWords('navy', 'Sentinel'), 'Sentinel\'s royal ensign');
 });
 
@@ -239,7 +239,7 @@ test('ETHER-SHIPS the strands at sea: a wild isle\'s site floats its casks out w
   s.run(1.2);
   const casks = s.host._shots.floaters().filter((f) => f.lot === 'site:strand:300,200');
   assert.equal(casks.length, 3, 'its casks afloat');
-  assert.ok(s.log.say.includes('Your boat pulls in to the strand and back out with its haul - casks afloat alongside.'));
+  assert.ok(s.log.say.includes('Your boat goes ashore and comes back with its haul. The casks float alongside.'));
   s.host._shots.floater(casks[0].id).pos = [0, 0, 0];
   s.run(0.3);
   assert.deepEqual(gathered, ['strand:300,200']);

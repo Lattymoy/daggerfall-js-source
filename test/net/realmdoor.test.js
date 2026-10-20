@@ -9,7 +9,7 @@
 // the relay admitted any token it could verify - it did not change at all (world124 before and after). So a build from
 // before the realm - a tab left open, or the desktop app's portable exe and macOS copies, which never update themselves -
 // went on playing online exactly as before, a character made after the census froze included, and nothing told its
-// player until a realm-era peer refused a trade ("They are playing an older build"). Everything that character did
+// player until a realm-era peer refused a trade ("They are playing an older version."). Everything that character did
 // online lives in a local slot the realm cannot admit: the census is frozen at the realm's start (AUDIT REALM L1-F5),
 // so customs answers `customs-never-online`, as the census law says it must.
 //
@@ -178,7 +178,7 @@ test('REALM-DOOR, the token law: `rc` is 0 or 1 or absent - a minter writes it o
 test('REALM-DOOR, the words: the refusal fits a WebSocket close reason and asks for the update, and a session refused with it says it on the HUD as it is and stops asking - the path a build from before the realm reads it by (mutants: the words past 123 bytes, which the runtime refuses to close with)', async () => {
   assert.ok(new TextEncoder().encode(REALM_DOOR_WORD).length <= 123, 'a close reason is at most 123 bytes of UTF-8 - past it close() throws and the socket stays open');
   assert.match(REALM_DOOR_WORD, /out of date/, 'it says what is wrong');
-  assert.match(REALM_DOOR_WORD, /update/, 'and what to do');
+  assert.match(REALM_DOOR_WORD, /[Uu]pdate/, 'and what to do');
   const sockets = [];
   class FakeWS {
     constructor(url) { this.url = url; this.sent = []; sockets.push(this); }

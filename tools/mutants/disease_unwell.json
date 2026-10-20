@@ -1,0 +1,136 @@
+[
+  {
+    "name": "DISEASE-UNWELL-incubation-over-still-unwell",
+    "file": "src/systems/diseases.js",
+    "old": "export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.ended && !a.incubationOver && a.disease != null;\n",
+    "new": "export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.ended && a.disease != null;\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js",
+      "test/systems/bookshelf.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-an-ended-one-unwell",
+    "file": "src/systems/diseases.js",
+    "old": "export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.ended && !a.incubationOver && a.disease != null;\n",
+    "new": "export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.incubationOver && a.disease != null;\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js",
+      "test/systems/bookshelf.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-an-infection-unwell",
+    "file": "src/systems/diseases.js",
+    "old": "export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.ended && !a.incubationOver && a.disease != null;\n",
+    "new": "export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.ended && !a.incubationOver;\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js",
+      "test/systems/bookshelf.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-the-tile-never-drawn",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "    } else if (!unwell && diseaseIncubating(a)) {\n",
+    "new": "    } else if (false) {\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-a-tile-a-disease",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "    } else if (!unwell && diseaseIncubating(a)) {\n",
+    "new": "    } else if (diseaseIncubating(a)) {\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-the-incubating-one-named",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'disease' });\n",
+    "new": "      out.push({ key: 'unwell', name: DISEASE_NAMES[a.disease], glyph: 'disease' });\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-another-picture",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'disease' });\n",
+    "new": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'poison' });\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-the-tile-at-the-end",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "  if (poisoned) out.unshift({ key: 'poison', name: 'Poisoned', glyph: 'poison' });\n",
+    "new": "  if (poisoned) out.unshift({ key: 'poison', name: 'Poisoned', glyph: 'poison' });\n  { const i = out.findIndex((r) => r.key === 'unwell'); if (i >= 0) out.push(...out.splice(i, 1)); }\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-the-tile-a-literal",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "export const unwellTileText = () => t('hud.status.unwell', UNWELL_TILE_TEXT);\n",
+    "new": "export const unwellTileText = () => UNWELL_TILE_TEXT;\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-the-box-silent",
+    "file": "src/systems/healthStatus.js",
+    "old": "    if (!unwell && diseaseIncubating(a)) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js",
+      "test/systems/bookshelf.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-the-line-a-disease",
+    "file": "src/systems/healthStatus.js",
+    "old": "    if (!unwell && diseaseIncubating(a)) {\n",
+    "new": "    if (diseaseIncubating(a)) {\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js",
+      "test/systems/bookshelf.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-the-line-in-no-row-shape",
+    "file": "src/systems/healthStatus.js",
+    "old": "      tokens = [...(tokens ?? []), like && typeof like === 'object' ? { ...like, text } : text];\n",
+    "new": "      tokens = [...(tokens ?? []), text];\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js",
+      "test/ui/enhanced/ui3_status.test.js",
+      "test/systems/bookshelf.test.js"
+    ]
+  },
+  {
+    "name": "DISEASE-UNWELL-the-line-a-literal",
+    "file": "src/systems/healthStatus.js",
+    "old": "      const text = t('status.health.unwell', UNWELL_LINE_TEXT);\n",
+    "new": "      const text = UNWELL_LINE_TEXT;\n",
+    "tests": [
+      "test/ui/fb1019f_unwell.test.js"
+    ]
+  }
+]

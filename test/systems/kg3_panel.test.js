@@ -92,7 +92,7 @@ test('KG3 the stake\'s picks: the tier\'s least times the mod\'s three, each ref
   assert.equal(picks[0].label, '×1 - 50 gold');
   const poor = stakePicks(r, 120, 5);
   assert.deepEqual(poor.map((p) => p.enabled), [true, true, false]);
-  assert.equal(poor[2].why, 'Your purse holds 120 gold - not enough for a stake of 250.');
+  assert.equal(poor[2].why, 'You have 120 gold, which is not enough for a stake of 250.');
   assert.equal(poor[2].chosen, false, 'a refused pick is never the chosen one');
   const tired = stakePicks({ ...r, nightLeft: 100 }, 5000, null);
   assert.deepEqual(tired.map((p) => p.enabled), [true, true, false]);
@@ -106,7 +106,7 @@ test('KG3 the kings are the Bay deck\'s four, named off SUIT_CROWNS ("{name}, Ki
   assert.deepEqual(m.setup.crowns.map((c) => [c.key, c.name, c.chosen]), SUIT_CROWNS.map((c, i) => [c.crown.toLowerCase(), `${c.courts[2].name}, King of ${c.crown}`, c.crown === 'Wayrest']));
   assert.deepEqual(GAMBIT_CROWNS, ['orsinium', 'sentinel', 'wayrest', 'daggerfall']);
   assert.equal(kingName('nowhere'), 'Gothryd, King of Daggerfall', 'a key it does not hold: the game\'s own crown');
-  assert.equal(m.setup.kingLine, `The crown changes only your king's face: every king plays alike - level ${KG_KING_LEVEL}, ${KG_KING_HP} health, attack ${KG_KINGS[0].atk}.`);
+  assert.equal(m.setup.kingLine, `The crown only changes how your king looks. Every king plays the same: level ${KG_KING_LEVEL}, ${KG_KING_HP} health, attack ${KG_KINGS[0].atk}.`);
   assert.ok(!/Knight|Barbarian/.test(JSON.stringify(m)));
   // inside a sentence the whole title wants the commas round it ("Your Gothryd, King of Daggerfall moves."): a king there
   // is "King {name}" - the log's, a refusal's, a press's; the box's head and the fall keep the whole title
@@ -139,9 +139,9 @@ test('KG3 the army: the 46 units in the law\'s order - a cost\'s ties by the nam
   assert.deepEqual(costs, costs.slice().sort((a, b) => b - a), 'dearest first');
   assert.equal(m.army.unit.line, 'Level 1 - Health 12 - Attack 2 - Melee');
   assert.equal(m.army.unit.cost, '6 points');
-  assert.equal(m.army.kingLine, 'Your king: Camaron, King of Sentinel - free. If your king falls, you lose.');
+  assert.equal(m.army.kingLine, 'Your king: Camaron, King of Sentinel (free). If your king falls, you lose.');
   const start = m.actions.find((a) => a.id === 'start');
-  assert.deepEqual([start.label, start.enabled, start.kind], ['Start the battle - stake 100 gold', true, 'primary']);
+  assert.deepEqual([start.label, start.enabled, start.kind], ['Start the battle and stake 100 gold', true, 'primary']);
   const empty = gambitHudModel({ phase: 'army', army: [], crown: 'sentinel', regulars: REGS, regular: 1, stakeMult: 2, purse: 5000 });
   assert.deepEqual([empty.actions.find((a) => a.id === 'start').enabled, empty.actions.find((a) => a.id === 'start').why, empty.next], [false, refusalWords('empty'), nextStep('addUnit')]);
   const fun = gambitHudModel({ phase: 'army', army, regulars: REGS, regular: 1, friendly: true, purse: 0 });
@@ -173,7 +173,7 @@ test('KG3 the turn: the title by whose turn, the chips (pips and words, both sid
   fell.pieces = fell.pieces.filter((p) => p.id !== mine.id);
   assert.equal(battle(fell, { dealt: dealtCounts }).battle.chips[3].text, 'Your fallen 1', 'a fallen piece counted against the deal');
   const forfeit = m.actions.find((a) => a.id === 'forfeit'), stand = m.actions.find((a) => a.id === 'stand');
-  assert.deepEqual([forfeit.label, forfeit.kind, stand.label, stand.kind], ['Forfeit - lose 100 gold', 'warn', 'Stand up - lose 100 gold', 'warn']);
+  assert.deepEqual([forfeit.label, forfeit.kind, stand.label, stand.kind], ['Forfeit - lose 100 gold', 'warn', 'Stand up and lose 100 gold', 'warn']);
   assert.equal(battle(st, { armed: 'forfeit' }).actions.find((a) => a.id === 'forfeit').label, 'Press again to confirm');
   // the regular's turn
   const out = gambitAct(st, 0, { type: 'end' });
@@ -219,7 +219,7 @@ test('KG3 the information box: a piece - its side, its numbers, its reach in wor
   const { st } = dealt(4);
   const king = st.pieces.find((p) => p.side === 0 && p.king);
   const box = infoBox(st, { piece: king.id }, ['daggerfall', 'orsinium'], 'Bors');
-  assert.deepEqual(box.lines, ['Gothryd, King of Daggerfall - yours', `Level ${KG_KING_LEVEL} - Attack ${KG_KINGS[0].atk} - Melee: strikes the cell beside it`, `Health ${KG_KING_HP} of ${KG_KING_HP}`, `Moves up to ${KG_MOVE_RANGE} cells a move.`, 'No foe in range now.', 'If this king falls, you lose.']);   // PIN MOVED (AUDIT KG II D21): range, a blow's word
+  assert.deepEqual(box.lines, ['Gothryd, King of Daggerfall - yours', `Level ${KG_KING_LEVEL} - Attack ${KG_KINGS[0].atk} - Melee: strikes the cell next to it`, `Health ${KG_KING_HP} of ${KG_KING_HP}`, `Moves up to ${KG_MOVE_RANGE} cells a move.`, 'No foe in range now.', 'If this king falls, you lose.']);   // PIN MOVED (AUDIT KG II D21): range, a blow's word
   const theirKing = st.pieces.find((p) => p.side === 1 && p.king);
   assert.equal(infoBox(st, { piece: theirKing.id }, ['daggerfall', 'orsinium'], 'Bors').lines.at(-1), 'If this king falls, Bors loses.');
   assert.equal(infoBox(st, { piece: theirKing.id }, ['daggerfall', 'orsinium'], 'Bors').lines[0], 'Gortwog, King of Orsinium - Bors\'s');
@@ -229,12 +229,12 @@ test('KG3 the information box: a piece - its side, its numbers, its reach in wor
   if (wall) assert.match(infoBox(st, { cell: wall }, ['daggerfall', 'orsinium'], 'Bors').lines[0], /no piece walks through it, and it blocks a ranged shot\./);
   const h = st.hazards[0];
   const hz = infoBox(st, { cell: [h.col, h.row] }, ['daggerfall', 'orsinium'], 'Bors').lines[0];
-  assert.equal(hz, `${h.kind[0].toUpperCase()}${h.kind.slice(1)}: a piece that ends its own side's turn here loses ${KG_HAZARD_DAMAGE[h.kind]} health.`, 'the deal\'s hazards are active');
+  assert.equal(hz, `${h.kind[0].toUpperCase()}${h.kind.slice(1)}: a piece that ends its turn here loses ${KG_HAZARD_DAMAGE[h.kind]} health.`, 'the deal\'s hazards are active');
   const warned = structuredClone(st);
   warned.hazards[0].active = false;
   for (const r of [1, 2, 3, 4]) {   // a round whose end arms them, and one whose end does not
     warned.round = r;
-    assert.equal(infoBox(warned, { cell: [h.col, h.row] }, ['daggerfall', 'orsinium'], 'Bors').lines[0], `A warning: it becomes ${h.kind} at the end of round ${warningsArmAt(r)}, and hurts nobody until then.`, `round ${r}`);
+    assert.equal(infoBox(warned, { cell: [h.col, h.row] }, ['daggerfall', 'orsinium'], 'Bors').lines[0], `Warning: this cell becomes ${h.kind} at the end of round ${warningsArmAt(r)}. It is harmless until then.`, `round ${r}`);
   }
   assert.deepEqual([1, 2, 3, 4].map(warningsArmAt), [1, 3, 3, 5]);
   // THE LAW'S OWN CLOCK (HazardTick, finishTurn): a warning standing in round r turns at the end of round
@@ -259,28 +259,28 @@ test('KG3 the result: the headline, the king\'s fall, the gold in one sentence -
   const lost = over({ winner: 1, by: 'king' });
   assert.deepEqual([lost.result.head, lost.result.king, lost.result.gold], ['You lose', 'Gothryd, King of Daggerfall, falls.', 'Bors keeps your 100 gold.']);
   const ff = over({ winner: 1, by: 'forfeit' });
-  assert.deepEqual([ff.result.head, ff.result.king], ['You lose - by forfeit', null], 'a forfeit fells no king');
-  assert.equal(over({ winner: 0, by: 'king' }, 0).result.gold, 'Played for fun - no gold changed hands.');
-  assert.equal(over({ winner: null, by: 'void' }).result.gold, 'No contest - your 100 gold is back in your purse.');
-  assert.equal(over({ winner: 0, by: 'king' }, 100, true).result.night, 'Bors has paid out all they will tonight: the next game is for fun.');
+  assert.deepEqual([ff.result.head, ff.result.king], ['You lose by forfeit', null], 'a forfeit fells no king');
+  assert.equal(over({ winner: 0, by: 'king' }, 0).result.gold, 'Played for fun. No gold changed hands.');
+  assert.equal(over({ winner: null, by: 'void' }).result.gold, 'No contest. Your 100 gold is back in your purse.');
+  assert.equal(over({ winner: 0, by: 'king' }, 100, true).result.night, 'Bors will not pay out any more tonight. The next game is for fun.');
   assert.deepEqual(won.actions.map((a) => [a.id, a.kind ?? null]), [['again', 'primary'], ['army', null], ['regulars', null], ['stand', 'quiet']]);
   assert.deepEqual([won.tone, lost.tone, won.message], ['', '', nextStep('over')], 'the line says the next step in no tone of the chrome\'s three: the verdict is the box\'s');
-  assert.equal(resultGold({ winner: 1, by: 'king' }, 0, 'Bors'), 'Played for fun - no gold changed hands.');
+  assert.equal(resultGold({ winner: 1, by: 'king' }, 0, 'Bors'), 'Played for fun. No gold changed hands.');
 });
 
 test('KG3 THE NUMBERS ARE THE LAW\'S (14.4): what it is, the guide\'s seven paragraphs and the words read every figure from its export (mutants: a typed number in any of them)', () => {
-  assert.equal(gambitWhat(), `The King's Gambit is a game of armies and kings on a board of ${KG_COLS} by ${KG_ROWS} cells laid on this table. Each side guards its king: fell the other king to win.`);
+  assert.equal(gambitWhat(), `The King's Gambit is a game of armies and kings, played on a board of ${KG_COLS} by ${KG_ROWS} cells. Each side protects its king. Defeat the other king to win.`);
   const g = gambitGuide();
   assert.equal(g.length, 7);
   const body = (i) => g[i].body;
-  assert.equal(body(1), `Stake ${GAMBIT_STAKE_MULTS[0]}, ${GAMBIT_STAKE_MULTS[1]} or ${GAMBIT_STAKE_MULTS[2]} times the regular's least stake. Win, and you take back ${GAMBIT_WIN_PAYS} times your stake. Lose, forfeit or stand up mid-game, and the regular keeps it.`);
-  assert.equal(body(2), `Up to ${KG_MAX_UNITS} units for ${KG_POINT_BUDGET} points. The stronger a unit, the more it costs; a ranged unit costs ${Math.round((KG_RANGED_COST_FACTOR - 1) * 100)}% more. Your king joins free.`);
+  assert.equal(body(1), `Stake ${GAMBIT_STAKE_MULTS[0]}, ${GAMBIT_STAKE_MULTS[1]} or ${GAMBIT_STAKE_MULTS[2]} times the regular's minimum stake. If you win, you get back ${GAMBIT_WIN_PAYS} times your stake. If you lose, forfeit or stand up mid-game, the regular keeps it.`);
+  assert.equal(body(2), `Up to ${KG_MAX_UNITS} units for ${KG_POINT_BUDGET} points. Stronger units cost more, and ranged units cost ${Math.round((KG_RANGED_COST_FACTOR - 1) * 100)}% extra. Your king joins for free.`);
   assert.equal(body(3), `${KG_ACTIONS_PER_TURN} actions a turn: move a piece up to ${KG_MOVE_RANGE} cells, strike, or give one of your pieces a potion that heals ${KG_POTION_HEAL} health. You have ${KG_POTIONS_PER_SIDE} potions a game.`);
-  assert.equal(body(4), `A melee piece strikes the cell beside it; a ranged piece shoots up to ${KG_RANGED_RANGE} cells when nothing blocks its line. A blow does ${Math.round(KG_BLOW_LOW * 100)}% to ${Math.round((KG_BLOW_LOW + KG_BLOW_SPREAD) * 100)}% of the striker's attack.`);
-  assert.equal(body(5), `Walls and pillars stop a piece and a shot; water stops a piece, not a shot. Every ${KG_HAZARD_SPAWN_EVERY} rounds the warnings turn into fire (${KG_HAZARD_DAMAGE.fire}), spikes (${KG_HAZARD_DAMAGE.spikes}) or poison (${KG_HAZARD_DAMAGE.poison}): a piece that ends its own side's turn on one loses that much health.`);
+  assert.equal(body(4), `A melee piece strikes the cell next to it. A ranged piece shoots up to ${KG_RANGED_RANGE} cells when nothing is in the way. A hit does ${Math.round(KG_BLOW_LOW * 100)}% to ${Math.round((KG_BLOW_LOW + KG_BLOW_SPREAD) * 100)}% of the attacker's attack.`);
+  assert.equal(body(5), `Walls and pillars block movement and shots. Water blocks movement, but shots pass over it. Every ${KG_HAZARD_SPAWN_EVERY} rounds, warning cells turn into fire (${KG_HAZARD_DAMAGE.fire}), spikes (${KG_HAZARD_DAMAGE.spikes}) or poison (${KG_HAZARD_DAMAGE.poison}). A piece that ends its turn on one loses that much health.`);
   const w = gambitWords();
   assert.equal(w.length, 28);
-  assert.deepEqual(w.map((x) => x.term).slice(0, 4), ['Regular', 'Tier', 'Blunder', 'Least stake']);
+  assert.deepEqual(w.map((x) => x.term).slice(0, 4), ['Regular', 'Tier', 'Blunder', 'Minimum stake']);
   assert.ok(w.every((x) => x.term && x.meaning && !/\bhe\b|\bhis\b|\bhim\b|click/i.test(x.meaning)), 'no pronoun guessed; a press, never a click');
 });
 
@@ -307,17 +307,17 @@ test('KG3 THE LOG: a line for every event the law and the session say - the play
     [{ t: 'move', side: 0, piece: 1 }, 'Your Rat moves.'],
     [{ t: 'move', side: 1, piece: 3 }, 'Bors\'s Orc moves.'],
     [{ t: 'attack', side: 0, piece: 1, target: 3, damage: 4, killed: false, shot: false }, 'Your Rat strikes Orc for 4.'],
-    [{ t: 'attack', side: 1, piece: 3, target: 1, damage: 9, killed: true, shot: false }, 'Bors\'s Orc strikes your Rat for 9 - it falls.'],
+    [{ t: 'attack', side: 1, piece: 3, target: 1, damage: 9, killed: true, shot: false }, 'Bors\'s Orc strikes your Rat for 9. It falls.'],
     [{ t: 'attack', side: 0, piece: 2, target: 3, damage: 7, killed: false, shot: true }, 'Your Imp shoots Orc for 7.'],
     [{ t: 'attack', side: 1, piece: 3, target: 2, damage: 7, killed: false, shot: true }, 'Bors\'s Orc shoots your Imp for 7.'],
     [{ t: 'potion', side: 0, piece: 1, healed: 30 }, 'Your Rat drinks a potion: +30.'],
     [{ t: 'potion', side: 1, piece: 3, healed: 12 }, 'Bors\'s Orc drinks a potion: +12.'],
     [{ t: 'hazard', side: 0, piece: 1, kind: 'fire', damage: 8, killed: false }, 'Fire bites your Rat for 8.'],
-    [{ t: 'hazard', side: 1, piece: 3, kind: 'poison', damage: 5, killed: true }, 'Poison takes Bors\'s Orc for 5 - it falls.'],
-    [{ t: 'armed', cells: [[1, 1], [2, 2]] }, 'The warnings turn: 2 hazards are live now.'],
-    [{ t: 'armed', cells: [[1, 1]] }, 'The warnings turn: 1 hazard is live now.'],
-    [{ t: 'warning', kind: 'spikes', cells: [[1, 1], [2, 2]] }, 'A warning: spikes are coming to 2 cells.'],
-    [{ t: 'warning', kind: 'fire', cells: [[1, 1], [2, 2]] }, 'A warning: fire is coming to 2 cells.'],
+    [{ t: 'hazard', side: 1, piece: 3, kind: 'poison', damage: 5, killed: true }, 'Poison hits Bors\'s Orc for 5. It falls.'],
+    [{ t: 'armed', cells: [[1, 1], [2, 2]] }, 'The warnings turn into hazards: 2 hazards are now active.'],
+    [{ t: 'armed', cells: [[1, 1]] }, 'The warnings turn into hazards: 1 hazard is now active.'],
+    [{ t: 'warning', kind: 'spikes', cells: [[1, 1], [2, 2]] }, 'Warning: spikes are coming to 2 cells.'],
+    [{ t: 'warning', kind: 'fire', cells: [[1, 1], [2, 2]] }, 'Warning: fire is coming to 2 cells.'],
     [{ t: 'turn', side: 0, round: 3 }, 'Round 3: your turn.'],
     [{ t: 'turn', side: 1, round: 3 }, 'Round 3: Bors\'s turn.'],
     [{ t: 'end', side: 0 }, 'You end your turn.'],
@@ -330,7 +330,7 @@ test('KG3 THE LOG: a line for every event the law and the session say - the play
   for (const [e, line] of lines) assert.equal(logLine(e, x), line, e.t);
   for (const t of ['over', 'result']) assert.equal(logLine({ t }, x), null, `${t}: the log keeps the decision's own line`);
   for (const [e] of lines) assert.ok(logLine(e, x).length <= 64, `one line of the panel: ${logLine(e, x)}`);
-  assert.equal(barkEnd(true, 0), 'A fine game - and mine.');
+  assert.equal(barkEnd(true, 0), 'A fine game. And mine.');
   assert.equal(barkEnd(false, 0.99), 'Again, and I will have you.');
 });
 
@@ -448,7 +448,7 @@ test('KG3 THE WORDS ARE ITS OWN (CARDS-PLUS\'s law, the third panel): every clas
   // AUDIT KG II D15: the board online too - its seats, the gold table's picks, the season board, a watcher, a result
   const seats = [{ name: 'Ana', ready: true, mine: false, stake: 50 }, { name: 'Ves', ready: false, mine: true, stake: null }];
   const online = { seats, names: ['Ana', 'Ves'], canSit: false, ready: false, step: 'theirReady', stepArgs: { name: 'Ana', a: 'Ana', b: 'Ves' }, watching: false, clock: 42, gold: true,
-    stakes: [10, 50, 200].map((n) => ({ n, enabled: n === 50, chosen: n === 50, why: n === 50 ? null : 'Ana stakes 50 gold: stake the same to play.' })), staking: false, canBoard: true };
+    stakes: [10, 50, 200].map((n) => ({ n, enabled: n === 50, chosen: n === 50, why: n === 50 ? null : 'Ana stakes 50 gold. Match it to play.' })), staking: false, canBoard: true };
   const board = { season: { n: 4 }, rows: [{ rank: 1, name: 'Eira', rating: 1612, wins: 14, losses: 2 }, { rank: 2, name: 'Ves', rating: 1530, wins: 6, losses: 4, you: true }], me: { rating: 1530, wins: 6, losses: 4, games: 10 }, champion: { name: 'Eira' }, titleNeeds: { games: 10, foes: 5 } };
   paint(gambitHudModel({ phase: 'setup', online: { ...online, step: 'sit', canSit: true }, canOnline: true, crown: 'daggerfall', board, boardOpen: true }));
   paint(gambitHudModel({ phase: 'army', online, canOnline: true, army: autoFill([], KG_POINT_BUDGET, xorshift(3)), crown: 'daggerfall' }));

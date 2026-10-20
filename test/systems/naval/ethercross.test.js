@@ -54,12 +54,12 @@ test('ETHER-CROSSING the voyage: three days; out to the open water off Veilhaven
   assert.deepEqual(crossingTarget('home', null), { ...HOME_WATERS });
   assert.deepEqual(crossingTarget('home', { px: NaN, py: 3 }), { ...HOME_WATERS });
   const out = crossingRows('out');
-  assert.match(out.join(' '), /Set a course into the open sea\? \(3 days - your ship,/);
+  assert.match(out.join(' '), /Set a course into the open sea\? \(3 days\. Your ship,/);
   assert.match(crossingRows('home').join(' '), /Set a course for home\? \(3 days\)/);
-  assert.match(crossingRows('out', { days: 1 }).join(' '), /\(1 day - your ship/);
+  assert.match(crossingRows('out', { days: 1 }).join(' '), /\(1 day\. Your ship/);
   assert.match(crossingWords('out'), /You have crossed into the Eltheric Ocean\. Veilhaven lies ahead\.$/);   // PIN MOVED (ELTHERIC): the Etheric Sea's
-  assert.match(crossingWords('home'), /The Iliac Bay - home\.$/);
-  assert.match(CROSS_REFUSED.passengers, /deck is your own/); assert.match(CROSS_REFUSED.hostile, /enemy/);
+  assert.match(crossingWords('home'), /The Iliac Bay, and home\.$/);   // PIN MOVED (VOICE2, in PLAIN-SWEEP's words): no dash aside (Voice.md rule 5)
+  assert.match(CROSS_REFUSED.passengers, /no one else is aboard/); assert.match(CROSS_REFUSED.hostile, /enemy/);
 });
 
 test('ETHER-CROSSING by source: asked at a helm in the exterior with no window up, an enemy near or another player aboard said instead; sailed - the helm let go first, the jump a travel of CROSS_DAYS whose arrival brings her round onto the landfall\'s middle, her helm taken after, the clock\'s days, the haven charted, the way home leaving the gate asked; the ship held while she crosses (mutants: each step and its order)', () => {
@@ -282,7 +282,7 @@ test('ETHER-CHART the doors: the travel map\'s door opens the chart past the Vei
   const t = officeText(o);
   assert.deepEqual(t, etherOfficeText(o));
   // PIN MOVED (ELTHERIC): the Etheric Sea's
-  assert.equal(t.lede, 'Veilhaven - a freeport of the Eltheric Ocean, in the Shallows, 7 leagues past the Veil. No crown\'s writ runs past the Veil, and no crown\'s favours. Your charts hold 1 isle.');
+  assert.equal(t.lede, 'Veilhaven - a freeport of the Eltheric Ocean, in the Shallows, 7 leagues past the Veil. No crown\'s writ runs past the Veil, and no crown\'s favors. Your charts hold 1 isle.');
   assert.deepEqual(t.board.map((b) => [b.title, b.words, b.press]), [['Talk on the quay', 'A tale.', ''], ['Talk on the quay', 'Another.', '']]);
   assert.deepEqual(t.letters, [{ id: 'chart', title: 'A chart of these waters', words: '12 isles your charts do not hold, marked on them.', press: 'Buy - 150 gold', can: true }]);
   assert.deepEqual(t.heads.board, ['The quay\'s talk', 'the legends of these waters']);

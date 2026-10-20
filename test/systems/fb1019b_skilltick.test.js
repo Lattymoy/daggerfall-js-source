@@ -88,10 +88,10 @@ test('SKILL-TICK: the HUD strip\'s standing line - there while any skill is read
   assert.equal(one.length, 1);
   assert.equal(one[0].kind, NOTICE_IMPROVE); assert.equal(one[0].standing, true);
   assert.equal(one[0].title, 'Skills can be improved');
-  assert.equal(one[0].sub, '1 skill is ready - rest or travel to raise it');   // AUDIT SUGGESTIONS-1019 L6-6
+  assert.equal(one[0].sub, '1 skill is ready. Rest or travel to raise it');   // AUDIT SUGGESTIONS-1019 L6-6
   const both = n.frame(10, { improvable: 3, owed: true });
   assert.deepEqual(both.slice(-2).map((r) => r.kind), [NOTICE_IMPROVE, NOTICE_LEVEL], 'the level\'s row last, the skills\' just above');
-  assert.equal(both.at(-2).sub, '3 skills are ready - rest or travel to raise them');
+  assert.equal(both.at(-2).sub, '3 skills are ready. Rest or travel to raise them');
 });
 
 test('SKILL-TICK: the tutorial says when a used skill goes up and where to look', () => {

@@ -66,7 +66,7 @@ import { RDB_RESOURCE_TYPES } from '../../formats/blocksFile.js';
 /** A piece's KIND - the panel's filter - and what it reads as. */
 export const DECOR_KINDS = Object.freeze({
   bed: 'Beds', storage: 'Storage', shelf: 'Shelves', furniture: 'Furniture', door: 'Doors',   // HOME-DOORS
-  light: 'Lights', clothing: 'Clothing', boxes: 'Boxes and bottles', arms: 'Arms and armour',
+  light: 'Lights', clothing: 'Clothing', boxes: 'Boxes and bottles', arms: 'Arms and armor',
   books: 'Books and scrolls', misc: 'Odds and ends', treasure: 'Treasure', decor: 'Decorations',
   people: 'Vendors',   // HOME-VENDOR (Mac: "People category sounds wrong call it vendors"): the people Daggerfall stands in its rooms - a home's trader is one of them, made the vendor station
   dungeon: 'Dungeon furniture',   // DECOR-DUNGEON: what Daggerfall stands in its dungeons and nowhere in a house - a throne, a cage, a coffin, a statue

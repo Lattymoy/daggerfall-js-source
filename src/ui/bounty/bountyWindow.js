@@ -40,8 +40,8 @@ const button = (cls, text, onPress) => {
 
 /** The piece a posting pays, in words: "a worn piece (half condition)", "a piece in full condition, Common or Magic". */
 export function itemHint(rule) {
-  const cond = rule.condition >= 1 ? 'in full condition' : rule.condition >= 0.75 ? 'lightly worn (three-quarter condition)' : 'well worn (half condition)';
-  return rule.magicChance > 0 ? `a weapon or armour piece ${cond}, Common or Magic` : `a Common weapon or armour piece, ${cond}`;
+  const cond = rule.condition >= 1 ? 'in full condition' : rule.condition >= 0.75 ? 'lightly worn (75% condition)' : 'well worn (50% condition)';
+  return rule.magicChance > 0 ? `a weapon or armor piece ${cond}, Common or Magic` : `a Common weapon or armor piece, ${cond}`;
 }
 /** The row's word for where the hunter stands with a notice. */
 export function stateWord(row) {
@@ -147,7 +147,7 @@ export function mountBountyBoard(host, deps) {
     note.textContent = word?.text ?? '';
     note.className = `bounty-note${word?.ok ? ' ok' : ''}`;
     for (const c of [...list.children]) c.remove();
-    if (!rows.length) list.append(el('li', 'bounty-empty', 'The board is bare - no hunt is posted in these parts today.'));
+    if (!rows.length) list.append(el('li', 'bounty-empty', 'No bounties are posted here today.'));
     rows.forEach((r, i) => {
       const p = r.posting;
       const li = el('li', `bounty-post bounty-post-i${i}${i === picked ? ' on' : ''} st-${r.state}`);
@@ -189,7 +189,7 @@ export function mountBountyBoard(host, deps) {
     reward.append(el('span', 'bounty-reward-head', 'Reward'), el('span', 'bounty-gold', `${p.gold} gold pieces`), el('span', 'bounty-itemhint', itemHint(p.item)));
     page.append(reward);
     if (r.held) page.append(el('p', 'bounty-progress', `${r.held.killed} of ${p.count} slain · ${bountyTimeText(r.held.left)} left`));
-    if (r.mates?.length && r.state !== 'held') page.append(el('p', 'bounty-mates', `${r.mates.join(', ')} ${r.mates.length > 1 ? 'are' : 'is'} already on this hunt - taking it joins them.`));
+    if (r.mates?.length && r.state !== 'held') page.append(el('p', 'bounty-mates', `${r.mates.join(', ')} ${r.mates.length > 1 ? 'are' : 'is'} already on this hunt. Take it to join them.`));
     card.append(page);
     const acts = el('div', 'bounty-acts');
     if (r.state === 'open') {

@@ -2,7 +2,7 @@
   {
     "name": "MEND-WORN-dfu-walk",
     "file": "src/systems/enchantments.js",
-    "old": "      const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });\n      if (!it) return;\n      repoolWeapon(it);\n      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));\n",
+    "old": "      const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });\n      if (!it) return;\n      repoolWeapon(it);\n      const was = it.currentCondition;\n      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));\n      creditOwnMend(it, was);   // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells\n",
     "new": "      for (const it of entity.items ?? []) {\n        if (it && it.currentCondition != null && it.maxCondition != null && it.currentCondition < it.maxCondition) {\n          if (isEnchantedItem(it) && !(ctx?.allowMagicRepairs ?? false)) continue;\n          it.currentCondition += 1;\n          return;\n        }\n      }\n",
     "tests": [
       "test/systems/mend_worn.test.js"
@@ -98,8 +98,8 @@
   {
     "name": "MEND-WORN-row-pool-kept",
     "file": "src/systems/enchantments.js",
-    "old": "      repoolWeapon(it);\n      it.currentCondition = Math.min(",
-    "new": "      it.currentCondition = Math.min(",
+    "old": "      repoolWeapon(it);\n      const was = it.currentCondition;\n      it.currentCondition = Math.min(",
+    "new": "      const was = it.currentCondition;\n      it.currentCondition = Math.min(",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]

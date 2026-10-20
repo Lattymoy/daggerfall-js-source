@@ -342,8 +342,8 @@
   {
     "name": "BAL4-the-plate-says-end-the-journey",
     "file": "src/ui/enhanced/enhancedDeath.js",
-    "old": "word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End the journey')",
-    "new": "word: t('death.key.end', 'End the journey')",
+    "old": "word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End your tale')",
+    "new": "word: t('death.key.end', 'End your tale')",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]

@@ -353,8 +353,10 @@ test('TOWN-ECON the wiring: the counter\'s factor in worldModes.js\'s shopAdjust
   assert.doesNotMatch(w, /seatTipAt/, 'SEAT-TIP\'s seat-only maker is gone: the town\'s card carries its lines');
   const tvm = rd('src/scenes/travelViewMarks.js');
   // AUDIT TOWN-ECON 2 REC-16: each loop its own plate's - a near plate's `p`, a far one's `f`
-  assert.match(tvm, /label: p\.summary\.name,[^\n]*tip: townEcon\.tipFnAt\(p\.summary\.mapId\) \}\);/, 'a near plate');
-  assert.match(tvm, /label: f\.summary\.name,[^\n]*tip: townEcon\.tipFnAt\(f\.summary\.mapId\) \}\);/, 'a far one');
+  // PIN MOVED (OW-FORECAST, 2026-10-19): the card is the town's with the place's weather put first (travelViewMarks.js placeTip)
+  assert.match(tvm, /label: p\.summary\.name,[^\n]*tip: placeTip\(townEcon\.tipFnAt\(p\.summary\.mapId\), p\.summary\.name, p\.x, p\.z\) \}\);/, 'a near plate');
+  assert.match(tvm, /label: f\.summary\.name,[^\n]*tip: placeTip\(townEcon\.tipFnAt\(f\.summary\.mapId\), f\.summary\.name, f\.x, f\.z\) \}\);/, 'a far one');
+  assert.match(tvm, /const base = econ\?\.\(\) \?\? null;/, 'the town\'s own card under the weather');
   const h = rd('src/ui/heldMap.js');
   assert.match(h, /const card = this\.deps\.townTipAt\?\.\(m\.summary\) \?\? \(m\.seat \? seatTipOf\(m\.seat\) : null\);/);
   assert.match(h, /if \(gateMoved\) this\._refreshTip\(\);\n(\s*\/\/[^\n]*\n)*\s*if \(!gateMoved && this\._tipKey && this\._hoverAt\) this\._refreshTip\(\);/, 'AUDIT UI-6: a card showing is asked again at the poll');

@@ -148,7 +148,7 @@ const WORDS = Object.freeze({
   'priest-of-zenithar': [() => t('cards.iliacSet.priestOfZenithar.rules', 'Reveal: gain +2 magicka next turn.'),
     () => t('cards.iliacSet.priestOfZenithar.flavor', 'Work honestly, and the god of trade pays honestly.')],
   'priest-of-akatosh': [() => t('cards.iliacSet.priestOfAkatosh.rules', 'End of turn: your weakest unit here gains +1 power.'),
-    () => t('cards.iliacSet.priestOfAkatosh.flavor', 'Time favours the patient.')],
+    () => t('cards.iliacSet.priestOfAkatosh.flavor', 'Time favors the patient.')],
   // ── the knightly orders ──
   'knight-of-the-dragon': [() => t('cards.iliacSet.knightOfTheDragon.rules', 'Ongoing: your knight units here have +1 power.'),
     () => t('cards.iliacSet.knightOfTheDragon.flavor', 'Daggerfall\'s order rides together or not at all.')],
@@ -213,7 +213,7 @@ const WORDS = Object.freeze({
   'namira': [() => t('cards.iliacSet.namira.rules', 'Ongoing: enemy units that cost 4 or more have -2 power.'),
     () => t('cards.iliacSet.namira.flavor', 'The Spurned pull down the proud.')],
   'boethiah': [() => t('cards.iliacSet.boethiah.rules', 'Ongoing: your warrior units have +2 power.'),
-    () => t('cards.iliacSet.boethiah.flavor', 'The Prince of Plots favours whoever is still standing.')],
+    () => t('cards.iliacSet.boethiah.flavor', 'The Prince of Plots favors whoever is still standing.')],
   'azura': [() => t('cards.iliacSet.azura.rules', 'Ongoing: your units have +1 power.'),
     () => t('cards.iliacSet.azura.flavor', 'Dusk and dawn, and every one of hers between.')],
   'malacath': [() => t('cards.iliacSet.malacath.rules', 'Ongoing: your orc units have +2 power.'),

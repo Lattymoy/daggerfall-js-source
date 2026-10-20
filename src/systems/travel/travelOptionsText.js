@@ -19,6 +19,7 @@
 // whatever scale the panel asks. It takes the SDF arm of both, which
 // is the one whose layout does not assume the narrower classic
 // measure, and carries the other strings so nothing is lost.
+import { t } from '../textManager.js';   // L10N4: the port's own words below (TRAVEL_NAV_TEXT), never the mod's table
 
 export const TRAVEL_OPTIONS_TEXT = Object.freeze({
   MsgArrived: "You have arrived at your destination.",
@@ -76,6 +77,9 @@ export const TRAVEL_OPTIONS_TEXT = Object.freeze({
 export const TRAVEL_NAV_TEXT = Object.freeze({
   MsgBlocked: "Paused the journey since the way ahead is blocked.",
   MsgStuck: "Paused the journey since you're making no headway.",
+  // OW-TOWN-WALK: a walled city's way out behind its gates (DaggerfallCityGate's night, offline) - the port's newest words, read
+  // in the player's language (L10N4)
+  get MsgGatesShut() { return t('travel.nav.gatesShut', 'Paused the journey since the city gates are shut for the night.'); },
 });
 
 /** C#'s `string.Format` for the placeholders these strings use: `{0}`,

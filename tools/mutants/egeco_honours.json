@@ -408,12 +408,12 @@
   {
     "name": "EGECO2-title-dropped",
     "file": "src/net/identityToken.js",
-    "old": "'masterwellhead', 'spirechampion', 'spirefirst', 'wikimaid']);   // WIKIMAID (2026-10-17, for SylviaBun: \"the WikiMaid title and a purple aura with bunnies\"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md WIKIMAID): WIKIMAID last - SylviaBun's own, granted by name with its glyph and the Lilac Warren (server-account/src/titles.js WIKIMAID_HANDLES);",
-    "new": "'masterwellhead', 'spirefirst', 'wikimaid']);   // WIKIMAID (2026-10-17, for SylviaBun: \"the WikiMaid title and a purple aura with bunnies\"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md WIKIMAID): WIKIMAID last - SylviaBun's own, granted by name with its glyph and the Lilac Warren (server-account/src/titles.js WIKIMAID_HANDLES);",
+    "old": "'masterwellhead', 'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
+    "new": "'masterwellhead', 'spirefirst', 'wikimaid', 'doorwarden',",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ],
-    "note": "WIKIMAID (re-aimed by content)."
+    "note": "QL12 (re-aimed by content: the questlines' five after the WikiMaid). WIKIMAID (re-aimed by content)."
   },
   {
     "name": "EGECO2-colour-shared",

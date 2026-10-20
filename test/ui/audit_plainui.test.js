@@ -47,21 +47,21 @@ const redraw = async (host) => { byClass(host, 'notice-tab')[0].onclick(); await
 test('AUDIT PLAIN-UI W1 How chapters work says the whole of Strength - the week\'s mark, the fall back toward 50, a week with none, the Failing band\'s fall, the Rivalry\'s swing and the Season\'s end; and the chairs\' account age (mutants: the short week\'s fall typed; the swing dropped)', () => {
   const said = (w) => chapterGuide().find(([k]) => k === w)[1];
   const s = said('Strength');
-  assert.match(s, new RegExp(`The week's mark is ${STRENGTH_TARGET} Merit for every hundred players active \\(at least ${STRENGTH_TARGET}\\)\\.`));
-  assert.match(s, new RegExp(`A week short of the mark brings a chapter above 50 back ${STRENGTH_SHORT} toward it; a week with no Merit at all costs ${STRENGTH_IDLE}; a Failing chapter loses ${CHAPTER_FAILING_FALL} more unless its Merit reaches twice the mark\\.`));
-  assert.match(s, new RegExp(`A Rivalry's winner takes ${CHAPTER_EVENT_EFFECTS.rivalrySwing} from the loser, and a Season's end brings every chapter halfway back to 50\\.$`));
-  assert.match(said('The chairs'), new RegExp(`on accounts ${SEAT_ACCOUNT_AGE_S / 86400} real days old\\.`));   // PIN MOVED (AUDIT GUILD-WORDS II C-8): real days, as the hall's line says them
-  assert.match(said('Patron'), /pay Thriving prices for training and spells in its halls, or the chapter's own where better\.$/, 'W9: an Ascendant chapter\'s own is better');
+  assert.match(s, new RegExp(`The week's mark is ${STRENGTH_TARGET} Merit for every 100 active players \\(at least ${STRENGTH_TARGET}\\)\\.`));
+  assert.match(s, new RegExp(`A week below the mark moves a chapter above 50 back ${STRENGTH_SHORT} toward it\\. A week with no Merit costs ${STRENGTH_IDLE}\\. A Failing chapter loses ${CHAPTER_FAILING_FALL} more unless its Merit reaches twice the mark\\.`));
+  assert.match(s, new RegExp(`A Rivalry's winner takes ${CHAPTER_EVENT_EFFECTS.rivalrySwing} from the loser, and a Season's end moves every chapter halfway back to 50\\.$`));
+  assert.match(said('The chairs'), new RegExp(`and an account ${SEAT_ACCOUNT_AGE_S / 86400} real days old\\.`));   // PIN MOVED (AUDIT GUILD-WORDS II C-8): real days, as the hall's line says them
+  assert.match(said('Patron'), /pay Thriving prices for training and spells in its halls, or the chapter's own prices if lower\.$/, 'W9: an Ascendant chapter\'s own is better');
 });
 
 test('AUDIT PLAIN-UI W2 W3 W10 W11 the Family page: the estate is whoever carries on and the blood and hearth a newborn\'s; a child and a retired elder play nobody and carry nothing; the Has an heir chip a Bloodline house\'s; the remains\' gold its cap; an heirloom grows at its rest; the toll the Features tile\'s, drawn (mutants: the toll setting unread; the cap typed)', () => {
   const g = familyGuide(MODELS.enduring, 0.06);
   const said = (w) => g.find(([k]) => k === w)[1];
   assert.match(said('Your house'), /any grown, living member of the blood can be played\.$/);
-  assert.match(said('Who carries on'), /any grown, living member of the blood who has not retired, or a newborn heir .*\(in a Bloodline house the tree marks .*Has an heir; an Elder who passes the mantle may always choose a newborn\)/);
+  assert.match(said('Who carries on'), /any grown, living member of the blood who has not retired, or a newborn heir .*In a Bloodline house, the tree shows Has an heir on a member who will leave one, and an Elder who passes the mantle can always choose a newborn\./);
   assert.match(said('Heirlooms and remains'), new RegExp(`of their purse \\(at most ${REMAINS_GOLD_MAX.toLocaleString('en-US')}\\)\\. .*grows a step each time it is laid to rest beside the remains of the one who carried it`));
-  assert.match(said('Playing another'), /can be played from it \(Play as\) - never in a fight, nor while a Succession waits;/);
-  assert.match(said('Marriage and children'), /A child is played only once the line passes to them\.$/);
+  assert.match(said('Playing another'), /can be played from it with Play as, but not during a fight or while a Succession waits\./);
+  assert.match(said('Marriage and children'), /You can only play a child once the line passes to them\.$/);
   // the toll the Features tile chose, read where the page is drawn
   const was = modSetting(LEGACY_MOD, 'Legacy.Toll');
   setModSetting(LEGACY_MOD, 'Legacy.Toll', 2);
@@ -91,9 +91,9 @@ test('AUDIT PLAIN-UI W4 W5 W7 W12 T4 the Seat tab\'s words: a pledge takes the r
   assert.ok(seatWords(ANT).some(([k]) => k === 'The Works') && seatWords(ANT).some(([k]) => k === 'Fealty and Pacts'), 'T6: the tab\'s Works and crown politics named');
   const full = Array.from({ length: SEAT_PLEDGE_REGIONS_MAX }, (_, i) => ({ region: 100 + i, key: 9000 + i }));
   const mine = (o) => ({ guild: 'g1', rank: 1, seasoned: true, bound: null, pledges: [], influence: 0, ...o });
-  assert.equal(seatNextStep(ANT, week(mine({ pledges: full }))), `Your guild has pledged in ${SEAT_PLEDGE_REGIONS_MAX} regions this week, the most it may: one must be taken down before it can pledge here.`);
+  assert.equal(seatNextStep(ANT, week(mine({ pledges: full }))), `Your guild has pledged in ${SEAT_PLEDGE_REGIONS_MAX} regions this week, the most it can. Take one pledge down to pledge here.`);
   assert.match(seatNextStep(ANT, week(mine({ pledges: full.slice(1) }))), /^Pledge your guild to Anticlere/, 'one short of the most: the lever');
-  assert.match(seatNextStep(ANT, week(null)), /\(a guild needs an account with a username and a password\)\.$/);
+  assert.match(seatNextStep(ANT, week(null)), /A guild needs an account with a username and a password\.$/);
   // T4: the producer's `bound` is null until the account's first influence (seatInfluence.js readStandings)
   assert.match(seatNextStep(ANT, week(mine({ pledges: [{ region: 21, key: 3021 }], bound: null }))), /^Earn influence for your guild here/);
 });
@@ -108,7 +108,7 @@ test('AUDIT PLAIN-UI W6 the badge\'s number toward nought, as the standing reads
   assert.deepEqual([regardBadge({ regard: -40.5, standing: 'enemy' }).value, regardBadge({ regard: -39.5, standing: 'neutral' }).value], ['-40', '-39']);
   assert.equal(regardBadge({ regard: -0.4, standing: 'neutral' }).value, '0');
   // PIN MOVED: TONE-TASTE (bible/06-Systems/Living-World.md) - the tone as they take it, townsfolk's named
-  assert.match(b.words, /a tone they dislike, a crime they see, a blow and - worst - one of their own struck down lower it\. Townsfolk like a Blunt word, not a Polite one\./);
+  assert.match(b.words, /A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it\. Townsfolk prefer Blunt to Polite\./);
 });
 
 test('AUDIT PLAIN-UI C1 a board fold records the reader\'s PRESS on its line, never a toggle - a browser fires toggle for the open a draw sets too, so the drawn default was kept as a choice and a redraw\'s echo could undo a fold; the words\' fold and the chapters\' fold kept across redraws as the guide\'s is (mutants: the words\' fold forgotten; the chapters\' fold forgotten)', async () => {

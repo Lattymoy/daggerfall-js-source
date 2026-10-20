@@ -12,9 +12,12 @@ import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
 import { LODE_COMPASS_CSS, lodeLabel } from '../ui/lodeMapMark.js';
 import { mapPixelToWorldCoords } from '../world/streamingWorld.js';
 import { markShown, travellerKin } from '../systems/travel/travelViewFilters.js';
+import { t } from '../systems/textManager.js';   // OW-FORECAST: a card's weather line in the player's language
 import { NAME_RANGE } from '../net/remotePlayers.js';
 import { pixelOfNative, RAIDER_LABEL } from '../systems/seaRaiders.js';
 import { playerEntity } from '../characters/playerEntity.js';
+import { marksOn, questMapMarks } from '../ui/quest/questMarks.js';
+import { questTracker } from '../ui/quest/questTracker.js';
 import { skyMinutes } from '../systems/worldTick.js';
 import { tierPhrase } from '../systems/dungeon/dungeonTier.js';
 import { RANGE_PIXELS as TV_BODY_RANGE } from '../net/wire.js';
@@ -24,19 +27,43 @@ import { warmAshesOn } from '../systems/warmAshesShips.js';
 import { WILD_MARK } from '../systems/wild/wildAlert.js';
 import { WILD_TEXT } from '../systems/wild/wildZone.js';
 
+/** OW-QUEST: a quest mark's words on the Overworld - the first quest's title (the followed one first, questMapMarks'
+ *  order) with how many more stand at the place, and under it the distance and the first quest's time left (AUDIT
+ *  OW-REVISITED L5-7: the followed one's where it stands here). The place itself is the town's plate's to say (or the
+ *  card's, on a hover). */
+export const QUEST_OW_TITLE_MAX = 40;
+export function questMarkWords(q, distance) {
+  const quests = Array.isArray(q?.quests) ? q.quests : [];
+  let title = String(quests[0]?.title || q?.label || '');
+  if (title.length > QUEST_OW_TITLE_MAX) title = `${title.slice(0, QUEST_OW_TITLE_MAX - 1).replace(/\s+\S*$/, '')}\u2026`;
+  const more = quests.length > 1 ? ` (+${quests.length - 1})` : '';
+  const left = String(quests[0]?.left ?? '');
+  return { label: `${title}${more}`, sub: left ? `${distance} \u00b7 ${left}` : distance };
+}
+
 /** @param {any} host */
 export function createTravelViewMarks(host) {
   const {
     TV_PLACE_LIFT, _bandChase, _bandSpent, _hiddenPeers, _lodesSensed, _peerMapPoses, _townOfMapId, _tvBountyHold,
     _tvLodeHold, _tvPartyHold, _tvVendorHold, _tvWaypointHold, _veils, _wildStrangerIds, bandMake, bandNowMs,
     bandPlace, cam, carriageTown, csaOn, exteriorFoes, livingHideoutsHostOf, lodeSense, lodeWords, motherlodeBook,
-    myGuildTag, params, player, playerTravelPixel, seaRaidPeerChase, townEcon, state, travelViewBands,
+    myGuildTag, owForecast, params, player, playerTravelPixel, questPixel, seaRaidPeerChase, townEcon, state, travelViewBands, tvPlaceRect, tvPlaceSummary,
     travelViewCamps, travelViewDungeons, travelViewFarPlaces, travelViewPlaces, travelViewRaiders, travellerBook,
     tvRaid, tvSceneKept, tvTrip, tvTripLive, walkMode, wildCampKeys, wildHidesPlayer
   } = host;
   /** OVERWORLD NAMES: a player's badge as their name wears it in play - the relay's stamps, never a frame's own words. */
   const tvBadgeOf = (p) => ({ title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [], lv: p.lv ?? null, gt: p.gt ?? null, rb: p.rb ?? null });   // AUDIT-SEATS: and a Season's banner ribbon
   const TV_PEER_HEAD_M = 1.8;   // m: a peer's head when no body layer knows their height
+  const _tvQuestHold = new Map();   // OW-QUEST: each quest place's point, kept by its key between frames (the bounties' own way)
+  /** OW-FORECAST (scenes/overworldForecastHost.js): A PLACE'S CARD - its own next hours first ("Weather: Rain - clearing in
+   *  about 2 h", the map's word at its middle, never one invented), then its town's card (TOWN-ECON's, online) under it;
+   *  the weather alone where the town has none. Made only when its plate is asked (the HUD's hover). */
+  const placeTip = (econ, name, x, z) => () => {
+    const base = econ?.() ?? null;
+    const sky = owForecast?.placeLine({ x, z }) ?? '';
+    if (!sky) return base;
+    return { title: base?.title ?? name, lines: [t('travelView.tip.weather', 'Weather: {sky}', { sky }), ...(base?.lines ?? [])] };
+  };
   /** The readout's marks: the plates (the journey's own end hides its plate), and the end. World points - the view
    *  projects them through the frame's matrices. */
   function travelViewMarks() {
@@ -51,7 +78,7 @@ export function createTravelViewMarks(host) {
       // grid wears TV2's plate (travelViewDungeons leaves it to this list), and every plate here was kind 'place' - a
       // town's brass dot, and the Towns switch's count. Its kind says so now: the dungeons' arch, the Dungeons switch.
       const isDungeon = TV_DUNGEON_TYPES.has(p.summary.loc?.mapTableData?.locationType);
-      marks.push({ key: p.key, at: tvSceneKept(p, p.x, p.z, TV_PLACE_LIFT), label: p.summary.name, ...(tier ? { sub: tier } : {}), kind: isDungeon ? 'place dungeon' : 'place', pick: true, hub: carriageTown(p.summary.mapId), tip: townEcon.tipFnAt(p.summary.mapId) });   // OW-HUBS: a carriage town's wheel; SEAT-TIP: a seat's card; TOWN-ECON: every town's (made only when its plate is asked)
+      marks.push({ key: p.key, at: tvSceneKept(p, p.x, p.z, TV_PLACE_LIFT), label: p.summary.name, ...(tier ? { sub: tier } : {}), kind: isDungeon ? 'place dungeon' : 'place', pick: true, hub: carriageTown(p.summary.mapId), tip: placeTip(townEcon.tipFnAt(p.summary.mapId), p.summary.name, p.x, p.z) });   // OW-HUBS: a carriage town's wheel; SEAT-TIP: a seat's card; TOWN-ECON: every town's (made only when its plate is asked)
     }
     // TV5: the far places, held at the edge with their distance (the journey's own end is the flag's)
     const farEnd = endKey ? `far:${tvTrip.plan.summary.mapId}` : null;
@@ -59,7 +86,7 @@ export function createTravelViewMarks(host) {
     for (const f of travelViewFarPlaces()) {
       if (f.key === farEnd) continue;
       const km = (Math.hypot(f.x - here.x, f.z - here.z) / 32768) * PIXEL_KM;   // native units a pixel (MapsFile.WorldMapTerrainDim)
-      marks.push({ key: f.key, at: tvSceneKept(f, f.x, f.z, TV_PLACE_LIFT), label: f.summary.name, sub: farDistanceText(km), kind: 'far', pick: true, edge: true, hub: carriageTown(f.summary.mapId), tip: townEcon.tipFnAt(f.summary.mapId) });   // OW-HUBS; SEAT-TIP; TOWN-ECON
+      marks.push({ key: f.key, at: tvSceneKept(f, f.x, f.z, TV_PLACE_LIFT), label: f.summary.name, sub: farDistanceText(km), kind: 'far', pick: true, edge: true, hub: carriageTown(f.summary.mapId), tip: placeTip(townEcon.tipFnAt(f.summary.mapId), f.summary.name, f.x, f.z) });   // OW-HUBS; SEAT-TIP; TOWN-ECON; OW-FORECAST: its weather
     }
     // TV6: THE DUNGEONS - a found one past the grid a far plate (within it TV2's plate stands - AUDIT OW3 D3: the list
     // leaves those out, so they spend none of its twelve), the rest unnamed lairs. AUDIT OW3 D1: a spawn the player has
@@ -121,6 +148,30 @@ export function createTravelViewMarks(host) {
       marks.push({ key: `bounty:${b.id}`, at: tvSceneKept(h, x, z, TV_PLACE_LIFT), label: `Bounty: ${b.label}`, sub: farDistanceText(km), kind: 'bounty', edge: true, pick: true });   // BOUNTY-SNAP: pressable, on its ring alone (ui/travel/travelViewHud.js pickBox)
     }
     for (const id of [..._tvBountyHold.keys()]) if (!bountyIds.has(id)) _tvBountyHold.delete(id);   // a bounty over lets its point go
+    // OW-QUEST (2026-10-19, the owner, of the Overworld's gaps: "1. Do it"): WHERE THE QUESTS POINT - the held map's own
+    // marks (ui/quest/questMarks.js questMapMarks: every active quest whose place is on the player's map, two quests at one
+    // place one mark), each at its PLACE's middle (AUDIT OW-REVISITED L5-1: the place's own rect, as its plate and the
+    // journey's end stand - the pixel's middle stood a hundred metres off the main quest's eight off-middle dungeons; the
+    // pixel's middle only where the place is not known), a diamond in the journal's gold, the followed quest's filled and
+    // held at the edge off the picture with its distance (the compass's TRACK-ONLY: the one being followed is never off the
+    // screen) - unless the journey under way is bound there, whose own end is held (L5-5: one arrow a place) - the rest
+    // where they lie. Pressed, a journey there (by the Path switch's way, as every press of the view's). Under the quest
+    // marks' own switch (marksOn), never the map filters' (a quest is never cluttering - it is the point)
+    {
+      const keep = new Set();
+      for (const q of marksOn() ? questMapMarks(questTracker.views, questTracker.shown()?.id ?? null, questPixel) : []) {
+        let h = _tvQuestHold.get(q.key);
+        if (!h) { h = {}; _tvQuestHold.set(q.key, h); }
+        if (!h.mid) { const s = tvPlaceSummary(q.px, q.py), r = s ? tvPlaceRect(s) : null; if (r) h.mid = { x: r.cx, z: r.cz }; }   // its place's middle, read once a mark
+        const o = h.mid ? null : mapPixelToWorldCoords(q.px, q.py);
+        const x = h.mid?.x ?? o.x + 16384, z = h.mid?.z ?? o.z + 16384;   // native units
+        keep.add(q.key);
+        const km = (Math.hypot(x - here.x, z - here.z) / 32768) * PIXEL_KM;
+        const bound = live && tvTrip.end?.kind === 'dest' && Math.hypot(tvTrip.end.x - x, tvTrip.end.z - z) < 1;   // the journey's own end, held as its own
+        marks.push({ key: q.key, at: tvSceneKept(h, x, z, TV_PLACE_LIFT), ...questMarkWords(q, farDistanceText(km)), kind: q.tracked ? 'quest tracked' : 'quest', tip: q.tip, edge: q.tracked && !bound, pick: true });
+      }
+      for (const k of [..._tvQuestHold.keys()]) if (!keep.has(k)) _tvQuestHold.delete(k);   // a quest done lets its point go
+    }
     // HOME-VENDOR: THE TRADER'S WAYPOINT - its town's pixel, in Travel Options' mark's own yellow (`target`), named for
     // the house and held at the edge off the picture with its distance, as a bounty is
     {

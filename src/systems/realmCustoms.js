@@ -401,7 +401,7 @@ export function customsLines({ called, owed, wealth, allowance, taken, crossed =
   if (what) lines.push(`${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${crossed.length > 1 ? 'them' : 'it'}; the realm's bank does not buy back what comes through customs.`);
   // AUDIT SHIPYARDS L1-2: Come Sail Away's ships come too, by number - sailed in the realm, never sold there
   if (fleet > 0) lines.push(`${fleet === 1 ? 'Your boat' : `Your ${fleet} boats`} ${before ? 'will come' : 'came'} with you; no shipyard in the realm buys a boat that comes through customs.`);
-  if (restKept > 0) lines.push(`Your rest supplies ${before ? 'will stay' : 'stayed'} with your offline character - they are not yet sold in the realm.`);   // AUDIT REST-PARTY B4; AUDIT REST II H13: the Tonics, Salts, Draughts and Candles are rest supplies, not camping
+  if (restKept > 0) lines.push(`Your rest supplies ${before ? 'will stay' : 'stayed'} with your offline character. They are not yet sold in the realm.`);   // AUDIT REST-PARTY B4; AUDIT REST II H13: the Tonics, Salts, Draughts and Candles are rest supplies, not camping
   // CARDS9: the cards past the allowance, the dearest first
   if (cardsKept > 0) lines.push(`Your cards are worth ${cardsWorth} gold; the realm lets a character of this level bring ${cardAllowance}. ${cardsKept} ${cardsKept === 1 ? 'card' : 'cards'}, the dearest, ${before ? 'will stay' : 'stayed'} with your offline character.`);
   // AUDIT CARDS-6 A9: and a binder's deck left naming a card that stayed - the table deals it again once the binder holds it

@@ -127,8 +127,8 @@ export const DEFAULTS_PROMPT = 'Are you sure you want to set default controls?';
 export const CONFIRM_LABEL = 'Confirm';
 /** UNSAVED-MARK (FIELD BUGS 2026-10-11): a row whose staged key the registry does not hold yet says so, and the head
  *  counts what a Confirm still owes. */
-export const UNSAVED_ROW = 'Not saved yet - press Confirm.';
-export const unsavedCount = (n) => `${n} change${n === 1 ? '' : 's'} not saved yet - press ${CONFIRM_LABEL} to keep ${n === 1 ? 'it' : 'them'}.`;
+export const UNSAVED_ROW = 'Not saved yet. Press Confirm.';
+export const unsavedCount = (n) => `${n} change${n === 1 ? '' : 's'} not saved yet. Press ${CONFIRM_LABEL} to keep ${n === 1 ? 'it' : 'them'}.`;
 
 // ── PER-VISIT STATE ──────────────────────────────────────────────
 // `unsaved` is the staged pair of dicts. It is created on the first
@@ -514,8 +514,8 @@ function fixedKeysCard() {
   }
   return c;
 }
-export const FIXED_KEYS_HEAD = 'Keys that do not move';
-export const FIXED_KEYS_NOTE = 'Fixed keys, listed so you know them: they cannot be rebound here.';
+export const FIXED_KEYS_HEAD = 'Fixed keys';
+export const FIXED_KEYS_NOTE = 'These keys are listed for reference and cannot be changed.';
 
 function group(body, heading, rows) {
   const c = el('div', 'card ctl-group');
@@ -547,8 +547,8 @@ export function paneControls(body, { render = () => {} } = {}) {
     + 'Hold Ctrl, Shift or Alt while you press to bind a combination. '
     + 'Right-click a binding, or press ✕, to clear it.'));
   intro.append(el('p', 'meta',
-    'A key that is already in use asks first: move it, or use it for both. A shared key does everything it is bound to, and each of its rows says what else it does. '
-    + 'Keys inside a window (Escape, Enter, the arrows, a window\'s own letters) belong to that window and are not listed here.'));
+    'A key already in use asks whether to move it or use it for both. A shared key does every job it is bound to, and its rows say so. '
+    + 'Keys used inside windows (Escape, Enter, the arrows and a window\'s own letters) are not listed here.'));
   intro.append(el('p', 'meta ctl-intro-law', `Nothing is saved until you press ${CONFIRM_LABEL}. A key not saved yet is marked on its row.`));
   body.append(intro);
 
@@ -559,7 +559,7 @@ export function paneControls(body, { render = () => {} } = {}) {
   if (defaultsPrompt) head.append(promptCard());
   else {
     head.append(el('p', 'meta',
-      `Nothing is saved until you press ${CONFIRM_LABEL}, Defaults included. Leave this page and your changes are dropped.`));
+      `Nothing is saved until you press ${CONFIRM_LABEL}, including Defaults. Leaving this page drops your changes.`));
 
     const acts = el('div', 'acts');
     // L10N3f: GameSettings' primary/secondary (DaggerfallControlsWindow.cs:139, :252), a pack's in its language

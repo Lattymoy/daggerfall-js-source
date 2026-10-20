@@ -166,12 +166,12 @@ export function artWords(r, { sworn = !!r?.sworn } = {}) {
   const young = (r.rank | 0) < ART_RANK, on = tacticsSwitchOn(), from = ROMAN[ART_RANK];   // AUDIT RVN D13: the rank its constant's
   const below = young ? (on ? t('rvn.art.note.fromRank', ' (from Rank {rank})', { rank: from }) : t('rvn.art.note.fromRankSwitch', ' (from Rank {rank}, with Enhanced AI)', { rank: from })) : on ? '' : t('rvn.art.note.switch', ' (with Enhanced AI)');
   switch (art) {
-    case 'mending': return t('rvn.art.hunt.mending', 'Art: {n} - hurt, it gathers itself to heal; strike it to break the spell{below}.', { n, below });
-    case 'warding': return t('rvn.art.hunt.warding', 'Art: {n} - hurt, it gathers a ward against your blows; strike it to break the spell{below}.', { n, below });
-    case 'warcry': return t('rvn.art.hunt.warcry', 'Art: {n} - it roars as the fight begins, and it and its band strike harder; strike it to cut it short{below}.', { n, below });
-    case 'siphon': return t('rvn.art.hunt.siphon', 'Art: {n} - a lane at you that drinks your life; step out of it{below}.', { n, below });
-    case 'barrage': return t('rvn.art.hunt.barrageCount', 'Art: {n} - {count} blasts at your feet, one after another; keep moving{below}.', { n, count: ART_LAW.BARRAGE.COUNT, below });
-    default: return t('rvn.art.hunt.novaRing', 'Art: {n} - a ring bursts where it stands; step out of it, or into its heart{below}.', { n, below });
+    case 'mending': return t('rvn.art.hunt.mending', 'Art: {n} - when hurt, it gathers itself to heal. Strike it to break the spell{below}.', { n, below });
+    case 'warding': return t('rvn.art.hunt.warding', 'Art: {n} - when hurt, it raises a ward against your blows. Strike it to break the spell{below}.', { n, below });
+    case 'warcry': return t('rvn.art.hunt.warcry', 'Art: {n} - it roars as the fight begins, and it and its band strike harder. Strike it to cut the roar short{below}.', { n, below });
+    case 'siphon': return t('rvn.art.hunt.siphon', 'Art: {n} - a beam that drains your life. Step out of its line{below}.', { n, below });
+    case 'barrage': return t('rvn.art.hunt.barrageCount', 'Art: {n} - {count} blasts at your feet, one after another. Keep moving{below}.', { n, count: ART_LAW.BARRAGE.COUNT, below });
+    default: return t('rvn.art.hunt.novaRing', 'Art: {n} - a ring bursts where it stands. Step out of it, or into its center{below}.', { n, below });
   }
 }
 const pct = (x) => `${Math.round(x * 100)}%`;
@@ -410,7 +410,7 @@ export function swornArtStep(rec, r, door, { rolls = Math.random, say = null } =
     const ward = art === 'warding';
     door.castOnPlayer?.(ward ? shieldBundle(A.wardPoints, ART_LAW.SWORN_WARD.ROUNDS) : mightBundle(A.cryPoints, ART_LAW.SWORN_CRY.ROUNDS));
     s.ready = now + (ward ? A.wardCooldown : A.cryCooldown);
-    say?.(art === 'warding' ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given }) : t('rvn.art.sworn.roars', '{given} roars - your arm grows stronger.', { given: r.given }));
+    say?.(art === 'warding' ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given }) : t('rvn.art.sworn.roars', '{given} roars, and your arm grows stronger.', { given: r.given }));
     return art;
   }
   if (art === 'mending' || !tgt) return null;

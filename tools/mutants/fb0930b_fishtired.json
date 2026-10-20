@@ -44,7 +44,7 @@
   {
     "name": "FISH-TIRED-the-refusal-says-nothing",
     "file": "src/scenes/fishHost.js",
-    "old": "export const NET_TIRED_WORDS = 'too tired to fish in the water - get out and rest';",
+    "old": "export const NET_TIRED_WORDS = 'too tired to fish in the water: get out and rest';",
     "new": "export const NET_TIRED_WORDS = '';",
     "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },

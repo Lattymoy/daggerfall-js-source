@@ -256,7 +256,7 @@ export function createPoiEditorPanel({ doc = document, edit, editor, feed, io, m
     const steps = editor.snapSteps();
     const stepIn = (k, title) => { const i = numberInput(steps[k], (v) => { if (v > 0) editor.setSnap(editor.snapOn(), { [k]: v }); }, { step: k === 'turn' ? 1 : 0.05, min: 0 }); i.title = title; return i; };
     const speed = el('span', '', t('poi.editor.speed', 'Eye {speed, number} m/s', { speed: Math.round(editor.eyeSpeed() * 10) / 10 }));   // AUDIT POI U13: a number in the reader's own digits
-    speed.title = t('poi.editor.speedHint', 'Hold the right mouse button to fly: your movement keys, Jump and Crouch up and down, Run faster, the wheel the speed.');
+    speed.title = t('poi.editor.speedHint', 'Hold the right mouse button to fly. Use your movement keys, Jump and Crouch to go up and down, Run to go faster, and the mouse wheel to set the speed.');
     const exitBack = btn(t('poi.editor.exitBack', 'Exit to where I stood'), () => onExit('back'));
     const exitHere = btn(t('poi.editor.exitHere', 'Exit here'), () => onExit('here'));
     exitHere.title = t('poi.editor.exitHereHint', 'Leave the editor standing on the ground under the eye.');
@@ -351,7 +351,7 @@ export function createPoiEditorPanel({ doc = document, edit, editor, feed, io, m
 
   function renderRight() {
     const sel = edit.selection();
-    if (!sel) { right.replaceChildren(el('div', 'dfpoi-h', t('poi.editor.nothingSelected', 'Nothing selected')), el('div', '', t('poi.editor.selectHint', 'Click a POI in the world or the list. Its first click takes the POI, the next its part.'))); return; }
+    if (!sel) { right.replaceChildren(el('div', 'dfpoi-h', t('poi.editor.nothingSelected', 'Nothing selected')), el('div', '', t('poi.editor.selectHint', 'Click a POI in the world or the list. Click once to select the POI, and again to select a part.'))); return; }
     const d = edit.docOf(sel.id), entry = edit.entryOf(sel.id);
     const change = (label, fn) => edit.edit(sel.id, label, fn);
     const out = [];
@@ -491,7 +491,7 @@ export function createPoiEditorPanel({ doc = document, edit, editor, feed, io, m
   function problemRows(d, id) {
     const { list: ps, checking } = problemsOf(d);
     const out = [el('div', 'dfpoi-h', t('poi.editor.problems', 'What is wrong'))];
-    if (!ps.length) out.push(el('div', checking ? '' : 'dfpoi-ok', checking ? t('poi.editor.checking', 'Checking its models and pictures...') : t('poi.editor.noProblems', 'Nothing - it can be saved.')));
+    if (!ps.length) out.push(el('div', checking ? '' : 'dfpoi-ok', checking ? t('poi.editor.checking', 'Checking its models and pictures...') : t('poi.editor.noProblems', 'Nothing. It can be saved.')));
     for (const p of ps.slice(0, 40)) {
       const row = el('div', 'dfpoi-problem');
       const where = problemWhere(p.path, d);
@@ -699,7 +699,7 @@ export function createPoiEditorPanel({ doc = document, edit, editor, feed, io, m
         // AUDIT POI U7: the part gone (taken out, its POI closed) - nothing wears it, and nothing is said applied
         if (!edit.docOf(id)?.parts.some((q) => q.key === key)) { say(t('poi.editor.uvGone', 'The part is gone: the UVs were not applied.'), 'bad'); return true; }
         edit.edit(id, 'uv', (x) => { const p = x.parts.find((q) => q.key === key); if (p) p.mesh = r.data.sha; });
-        say(t('poi.editor.uvApplied', 'The UVs are applied: the part wears its new model.'));
+        say(t('poi.editor.uvApplied', 'UVs applied. The part now uses its new model.'));
         return true;
       },
       onClose: () => { uvDialog = null; },   // once (AUDIT POI U7: poiUvPanel.js closes once)
@@ -719,7 +719,7 @@ export function createPoiEditorPanel({ doc = document, edit, editor, feed, io, m
     if (sel.part != null) removePart(sel.id, sel.part);
     else if (sel.light != null) edit.edit(sel.id, 'light', (x) => { x.lights.splice(sel.light, 1); }, { id: sel.id, part: null, light: null });
     else if (edit.entryOf(sel.id)?.state === 'new' && !edit.entryOf(sel.id)?.saved) edit.remove(sel.id);
-    else say(t('poi.editor.deleteSaved', 'A saved POI is taken out of the world by asking to retire it.'), 'bad');
+    else say(t('poi.editor.deleteSaved', 'To take a saved POI out of the world, ask to retire it.'), 'bad');
   }
   function duplicateSelection() {
     const sel = edit.selection();
@@ -818,7 +818,7 @@ export function createPoiEditorPanel({ doc = document, edit, editor, feed, io, m
       shelfEntry: whileOpen(box, (id) => poiShelfEntry(i, id)),   // AUDIT POI P4: the shelf asked before an entry is put (poiTransfer.js)
       progress: (n, of) => { if (mine()) say(t('poi.editor.uploading', 'Uploading {n} of {of}...', { n, of })); },
     }));
-    if (!mine()) { if (r) say(t('poi.pack.stopped', 'Stopped: nothing was opened. What went up before the stop stays in the store.')); return false; }
+    if (!mine()) { if (r) say(t('poi.pack.stopped', 'Stopped. Nothing was opened, but files uploaded before the stop stay in the store.')); return false; }
     go.disabled = false;
     if (!r) return false;
     if (!r.ok) { say(refusal(r), 'bad'); said.replaceChildren(...packRefusalRows(pack, r)); return false; }

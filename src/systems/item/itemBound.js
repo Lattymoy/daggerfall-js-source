@@ -78,14 +78,14 @@ const realmLockedOnly = (/** @type {any} */ item) => !!item && isRealmLocked(ite
 /** SS3/SS4: the refusal, in the windows' own voice (itemLock.js lockedText's shape) - the pack's and the counter's; for a
  *  piece the realm locked (`item`), the realm lock's (AUDIT AUTO-HOLD). */
 export const boundText = (/** @type {string} */ name, /** @type {any} */ item = null) => (realmLockedOnly(item)
-  ? t('realm.locked.refusal', '{name} is locked by the realm: it found the same piece somewhere else too. It stays with you - it cannot be dropped, traded, sold or stored where others can take it.', { name })
-  : `${name || 'That'} is bound to you - it cannot be dropped, traded or sold.`);
+  ? t('realm.locked.refusal', '{name} is locked by the realm because the same piece was found somewhere else too. It stays with you and cannot be dropped, traded, sold or stored where others can take it.', { name })
+  : `${name || 'That'} is bound to you. It cannot be dropped, traded or sold.`);
 
 /** The card's line for a bound piece. */
-export const BOUND_LINE = 'Bound - it cannot be dropped, traded or sold.';
+export const BOUND_LINE = 'Bound. It cannot be dropped, traded or sold.';
 /** ...and for one the realm locked (AUDIT AUTO-HOLD) - the card's line for `item`, null for a piece bound by neither. */
 export const boundLine = (/** @type {any} */ item) => (!isBound(item) ? null : realmLockedOnly(item)
-  ? t('realm.locked.line', 'Locked by the realm - it stays with you: it cannot be dropped, traded, sold or stored where others can take it.') : BOUND_LINE);
+  ? t('realm.locked.line', 'Locked by the realm. It stays with you and cannot be dropped, traded, sold or stored where others can take it.') : BOUND_LINE);
 
 /** WALLET1: a pack-only piece's refusal, in the windows' own voice - wherever it was put. */
 export const packOnlyText = (/** @type {string} */ name) => `${name || 'That'} stays in your pack.`;

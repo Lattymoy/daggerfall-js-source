@@ -5,20 +5,28 @@
 // most often one small ruin, crypt or tower - and from the view's eye, about 450 m up, its entrance is a speck; past
 // the streamed grid nothing stands at all, only TV6's plate or its "?". Now the dungeons about the traveller each stand
 // as their own entrance model - the model of their exterior's blocks that carries DFU's dungeon-entrance door - where
-// it stands, grown with the eye's distance as OW-BIG grows the traveller: a Mount & Blade map's icons.
+// it stands, grown to one height in the world (OW-DUNGEON-SIZE: it grew with the eye's distance until 2026-10-19): a
+// Mount & Blade map's icons.
 //
-// The law here is pure: which dungeons, which model, how much it grows and the matrix it is drawn by. The host
-// (scenes/world.js tvDungeonModels) lays each one's blocks, loads its model in its climate, finds its ground and draws.
+// The law here is pure: which dungeons, which model, how much it grows and the matrix it is drawn by. The host's half
+// (scenes/travelViewDungeonModels.js, moved out of scenes/world.js - HOST-SPLIT) lays each one's blocks, loads its model in
+// its climate, finds its ground and draws.
 // Not a DFU member: DFU has no raised travel camera (Travel-View.md "Enhanced lane only").
 import { multiply, trs } from '../../world/mat4.js';
 import { subMeshDoorType, DOOR_TYPE } from '../../world/meshReader.js';
 
 /** How many dungeons stand as models at once - the nearest, as TV6 marks twelve. */
 export const TV_DUNGEON_MODELS_MAX = 12;
-/** The height a dungeon's model is drawn at, metres for every metre from the eye: OW-BIG's figure stands about 0.056
- *  of its distance (1.8 m every TV_OWN_GROW_M = 32 m), and a dungeon a little over half again - about 40 m tall at the
- *  view's 450 m, some 75 px at 1080p, a landmark beside the traveller's icon. */
-export const TV_DUNGEON_ICON_K = 0.09;
+/** OW-DUNGEON-SIZE (2026-10-19, the owner: "shrink dungeons slightly, and ensure their size doesnt grow or shrink based
+ *  on distance"): THE HEIGHT EVERY DUNGEON'S MODEL STANDS AT, metres - one size in the world, as the land is. It was
+ *  TV_DUNGEON_ICON_K (0.09) of the eye's distance, so a dungeon stood the same size on the screen at every zoom and grew
+ *  as the eye drew back from it: about 30 m at the view's default (260 m up at 52 degrees, 330 m from the traveller -
+ *  player/travelCamera.js), 51 m at its top (450 m up at the default tilt; AUDIT OW-REVISITED L5-9). Four fifths of that
+ *  default: a dungeon stands slightly smaller there, and from then on reads nearer as the view zooms in and farther as it
+ *  draws back, as everything round it does. The one exception is the cap below (AUDIT OW-REVISITED L5-8): a door model
+ *  under 2 m tall - every keep's (model 43600, 0.58 m: 123 of the game's 4,238 dungeons) - stops at twelve times itself,
+ *  short of the 24 m; the grown size never varies with the eye either way. */
+export const TV_DUNGEON_ICON_M = 24;
 /** Never more than OW-BIG's twelve times its own size (player/travelCamera.js TV_OWN_GROW_MAX). */
 export const TV_DUNGEON_GROW_MAX = 12;
 
@@ -111,16 +119,20 @@ export function dungeonEntranceModel(blocks, locX, locZ, meshOf, enhanced = true
 }
 
 /**
- * HOW MUCH IT GROWS - the times its own size a dungeon's model is drawn at `dist` metres from the eye, its own height
- * `h` metres: TV_DUNGEON_ICON_K of the distance tall, never smaller than itself (near the ground the view comes down
- * to play, and the model is the world's own again) and never past TV_DUNGEON_GROW_MAX. Smooth, unlike OW-BIG's whole
- * steps - a mesh drawn by a matrix makes no batch again.
- * @param {number} dist
+ * HOW MUCH IT GROWS - the times its own size a dungeon's model of its own height `h` metres is drawn: to
+ * TV_DUNGEON_ICON_M tall, never smaller than itself and never past TV_DUNGEON_GROW_MAX - the same at every distance
+ * from the eye (OW-DUNGEON-SIZE). `blend` is the view's own (scenes/travelView.js frame `blend`: 0 the head, 1 the sky):
+ * the model grows from the world's own as the view rises and shrinks back to it as the view comes down to play, so it
+ * never stands grown over a traveller on the ground. Smooth, unlike OW-BIG's whole steps - a mesh drawn by a matrix
+ * makes no batch again.
  * @param {number} h
+ * @param {number} [blend]
  */
-export function owDungeonGrow(dist, h) {
-  if (!(Number.isFinite(dist) && dist > 0) || !(Number.isFinite(h) && h > 0)) return 1;
-  return Math.max(1, Math.min(TV_DUNGEON_GROW_MAX, (TV_DUNGEON_ICON_K * dist) / h));
+export function owDungeonGrow(h, blend = 1) {
+  if (!(h > 0)) return 1;   // NaN, none or below: itself (Infinity grows to the floor of itself below)
+  const b = Number.isFinite(blend) ? Math.max(0, Math.min(1, blend)) : 1;
+  const full = Math.max(1, Math.min(TV_DUNGEON_GROW_MAX, TV_DUNGEON_ICON_M / h));
+  return 1 + (full - 1) * b;
 }
 
 /**

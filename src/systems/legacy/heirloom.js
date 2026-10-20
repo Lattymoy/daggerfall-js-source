@@ -161,5 +161,5 @@ export function heirloomLine(it) {
   if (!isHeirloom(it)) return null;
   const g = it.heirloom.gen | 0;
   const house = houseWord(it.heirloom.house);
-  return `Heirloom of the house${house ? ` of ${house}` : ''}, first borne by ${it.heirloom.from} - ${g ? `carried home ${g} ${g === 1 ? 'time' : 'times'}` : 'not yet carried home'}.`;
+  return `Heirloom of the house${house ? ` of ${house}` : ''}, first borne by ${it.heirloom.from} and ${g ? `carried home ${g} ${g === 1 ? 'time' : 'times'}` : 'not yet carried home'}.`;
 }

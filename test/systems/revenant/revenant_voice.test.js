@@ -57,7 +57,7 @@ test('REVENANT-VOICE who it is: one personality per id on every read, leaning by
 
 test('REVENANT-VOICE what it says: the player\'s name filled, the roll picks; a beast\'s deed in its temperament (mutants: the name unfilled; the manner lost)', () => {
   assert.equal(voiceLine('honourable', 'yield', { p: 'Ayla', rolls: () => 0 }), 'I yield, Ayla. Your blade is the better.');
-  assert.equal(voiceLine('honourable', 'yield', { p: 'Ayla', rolls: () => 0.99 }), 'I have lost fairly. Do what honour demands.');
+  assert.equal(voiceLine('honourable', 'yield', { p: 'Ayla', rolls: () => 0.99 }), 'I have lost fairly. Do what honor demands.');
   assert.equal(voiceLine('cold', 'spared', { rolls: () => 0 }), 'An unexpected variable. I will follow it.');
   assert.equal(beastBody('humorous', 'yield'), 'Sinks low before you with a playful yip, beaten.');
   assert.equal(beastBody('nope', 'arrive'), 'Steps through the portal with a savage snarl.', 'an unknown one reads as brutal');

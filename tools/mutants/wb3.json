@@ -2,11 +2,12 @@
   {
     "name": "WB3-the-share-off-the-claim",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX;",
-    "new": "  const share = BOSS_TTK_S * dpsRef(LV_MAX) * profileOf(f).hpX;",
+    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1);",
+    "new": "  const share = BOSS_TTK_S * dpsRef(LV_MAX) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1);",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB3-the-bucket-rate-off-the-claim",
@@ -20,8 +21,8 @@
   {
     "name": "WB3-the-one-blow-cap-lifted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp));",
-    "new": "  const got = Math.max(0, Math.min(want, p.bucket, f.hp));",
+    "old": "  const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp, H ? H.h * f.max : Infinity));",
+    "new": "  const got = Math.max(0, Math.min(want, p.bucket, f.hp, H ? H.h * f.max : Infinity));",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -56,8 +57,8 @@
   {
     "name": "WB3-no-shield",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (now < f.shieldUntil) return 0;",
-    "new": "  if (now < f.shieldUntil - SHIELD_MS * 10) return 0;",
+    "old": "  if (now < B.shieldUntil) return 0;",
+    "new": "  if (now < B.shieldUntil - SHIELD_MS * 10) return 0;",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -74,8 +75,8 @@
   {
     "name": "WB3-a-blow-from-off-the-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK)) return 0;",
-    "new": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK * 30)) return 0;",
+    "old": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))) return 0;",
+    "new": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK * 30, planOf(f))) return 0;",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js",
       "test/net/gate/audit_wb11.test.js"
@@ -327,7 +328,7 @@
   {
     "name": "WB3-the-wire-carries-extra-fields",
     "file": "src/net/wire.js",
-    "old": "  return { k: 'hit', q: m.q, d: m.d, r: m.r };",
+    "old": "  return { k: 'hit', q: m.q, d: m.d, r: m.r, ...(m.b === 1 ? { b: 1 } : {}) };",
     "new": "  return { ...m, k: 'hit' };",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
@@ -473,11 +474,12 @@
   {
     "name": "WB3-the-wake-forgets",
     "file": "server/src/index.js",
-    "old": "    if (this._fight === undefined) { const v = await this.state.storage.get('gatefight');",
-    "new": "    if (this._fight === undefined) { const v = await this.state.storage.get('gatefight-not');",
+    "old": "      const v = await this.state.storage.get('gatefight');\n      this._fight = v && typeof v === 'object' ? v : null;",
+    "new": "      const v = await this.state.storage.get('gatefight-not');\n      this._fight = v && typeof v === 'object' ? v : null;",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB3-the-storage-kept",
@@ -518,8 +520,8 @@
   {
     "name": "WB3-the-session-ignores-the-version",
     "file": "src/net/online.js",
-    "old": "      if (primary) this.gateOk = relaySupportsGate(relayV);   // WB3",
-    "new": "      if (primary) this.gateOk = true;   // WB3",
+    "old": "      if (primary) { this.gateOk = relaySupportsGate(relayV); this.portentsOk",
+    "new": "      if (primary) { this.gateOk = true; this.portentsOk",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]

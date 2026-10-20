@@ -86,7 +86,7 @@ test('LW11 who keeps it: the trip\'s leader, standing, on the road out or home a
   const fought = troubledTrip(trip, enc);
   const tf = Math.ceil(enc.t0) + 1;
   assert.equal(partyAt(fought, tf).fight, true, 'at its fight');
-  assert.equal(keepsCounter(fought, fought.leader, tf), false, 'never in a fight');
+  assert.equal(keepsCounter(fought, fought.leader, tf), false, 'never during a fight');
   assert.equal(keepsCounter(fought, fought.leader, Math.ceil(enc.fightEnd) + 1), true, 'the fight done, its halt kept');
   const fallen = { ...trip, fallen: [{ res: trip.leader, t: t - 1 }] };
   assert.equal(keepsCounter(fallen, trip.leader, t), false, 'the fallen keep nothing');

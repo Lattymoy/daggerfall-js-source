@@ -124,7 +124,7 @@ test('AUDIT CARDS-4 C5, C7: a stake\'s or a table kind\'s refusal loses the pend
     assert.equal(t.lost?.why, 'refused', w);
   }
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /unknown: 'The realm did not answer - your stake will be settled when it does\.', offline: 'The realm could not be reached - try again\.'/);
+  assert.match(wm, /unknown: 'The realm did not answer\. Your stake will be settled when it does\.', offline: 'The realm could not be reached\. Try again\.'/);
   assert.match(wm, /say\(\(r\.unknown \? CARD_STAKE_REFUSALS\.unknown : CARD_STAKE_REFUSALS\[r\.error\]\) \?\? /);
 });
 

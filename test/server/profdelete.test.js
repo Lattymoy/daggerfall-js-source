@@ -145,6 +145,6 @@ test('PROF-DELETE while the character has market business open the delete is ref
 test('PROF-DELETE the words: the door says what to settle, and the delete dialog says the professions and their Stores go with the character', () => {
   const said = realmRefusalText('realm-market-open');
   assert.equal(said, accountRefusalText('realm-market-open'));
-  assert.match(said, /^This character still has business on the market - a listing, an auction, a bid, a buy order, a commission, or goods on the way or waiting to be collected\. Settle it first\.$/);
-  assert.match(src('src/ui/enhanced/enhancedMenu.js'), /'An online character deleted is gone from the realm for good - its Renown, its professions and their Stores, its home and its guild place with it\. A copy you made offline stays\.'/);
+  assert.match(said, /^This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, or goods on the way or waiting to be collected\. Settle it first\.$/);
+  assert.match(src('src/ui/enhanced/enhancedMenu.js'), /'Deleting an online character is permanent\. Its Renown, professions, Stores, home and guild place are lost\. Any offline copy you made stays\.'/);
 });

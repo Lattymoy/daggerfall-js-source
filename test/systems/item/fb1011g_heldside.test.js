@@ -67,9 +67,9 @@ test('HELD-SIDE: the words - mine says my hold\'s reason, the same sentence the 
     assert.equal(tradeHeldNotice(null, why), TRADE_HELD_NOTICES[why], 'the notice that said the hold began, word for word');
   }
   assert.equal(realmTradeRefusalText('trade-held', 'mine', undefined), 'The realm is reviewing your character, and its trading is frozen. Nothing was traded.', 'no checkpoint answered yet: mine, no reason');
-  assert.equal(realmTradeRefusalText('trade-held', 'theirs', null), 'The realm is reviewing the other character in this trade, and its trading is frozen - nothing was traded. Your own trading is open.');
-  assert.equal(realmTradeRefusalText('trade-held', 'theirs', 'law'), 'The realm is reviewing the other character in this trade, and its trading is frozen - nothing was traded.', 'mine held too: never told it is open');
-  assert.equal(realmTradeRefusalText('trade-held'), 'The realm is reviewing a character in this trade, and its trading is frozen - nothing was traded.', 'an older service\'s word, as before');
+  assert.equal(realmTradeRefusalText('trade-held', 'theirs', null), 'The realm is reviewing the other character in this trade, and its trading is frozen. Nothing changed hands. Your own trading is open.');
+  assert.equal(realmTradeRefusalText('trade-held', 'theirs', 'law'), 'The realm is reviewing the other character in this trade, and its trading is frozen. Nothing changed hands.', 'mine held too: never told it is open');
+  assert.equal(realmTradeRefusalText('trade-held'), 'The realm is reviewing a character in this trade, and its trading is frozen. Nothing changed hands.', 'an older service\'s word, as before');
   assert.match(realmTradeRefusalText('record-unjudged', 'theirs'), /the other character's latest save/);
   assert.match(realmTradeRefusalText('record-unjudged', 'mine'), /your latest save/);
 });

@@ -103,9 +103,9 @@ test('EG-G2 THE GATE\'S TIERS (section 2): Regular, Elite, Abyss as the dungeons
   assert.equal(gateTierText({ b: 'ab' }), 'Elite Breach'); assert.equal(gateTierText({ day: 3 }), "Dagon's Breach"); assert.equal(gateTierText({}), null);
   assert.deepEqual(eliteBreachPlaque({ opener: 'Mac', mine: true }), { title: 'Elite Breach', subs: [GATE_TIER_SUB.elite] });
   assert.deepEqual(eliteBreachPlaque({ opener: 'Mac', mine: false }), { title: 'Elite Breach', subs: ['The Battlespire', "Mac's company"] });
-  assert.equal(gateSightLine(137, 'North'), 'You see an Elite Breach 140 metres to the North!');
+  assert.equal(gateSightLine(137, 'North'), 'You see an Elite Breach 140 meters to the North!');
   for (const m of [3, 14, 15, 137, 1004]) assert.equal(gateSightLine(m, 'East').replace('an Elite Breach', 'X'), dungeonSightLine(m, 'East', 'elite').replace('an Elite Dungeon', 'X'), `${m} m rounds as the dungeon's`);
-  assert.equal(gateSightLine(50, 'West', 'regular'), "You see Dagon's Breach 50 metres to the West!");
+  assert.equal(gateSightLine(50, 'West', 'regular'), "You see Dagon's Breach 50 meters to the West!");
   assert.equal(eliteTimerText({ clock: '4:12' }), 'Elite Breach opens 4:12');
   assert.equal(eliteTimerText({ h: 17, clock: '24:10' }), 'Hall 17 - 24:10 left');
 });

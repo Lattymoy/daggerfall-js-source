@@ -84,7 +84,7 @@ export const LAMP_TEXT = Object.freeze({
   leave: () => t('lamp.leave', 'Leave'),
   granted: () => t('lamp.granted', 'The lamp glows warmly. You have earned the title I Love Lamp.'),
   guest: () => t('lamp.guest', 'Add a username to your account to keep the title I Love Lamp.'),
-  offline: () => t('lamp.offline', 'I Love Lamp is an account\'s title - speak to a lamp online to earn it.'),
+  offline: () => t('lamp.offline', 'I Love Lamp is a title for your account. Speak to a lamp online to earn it.'),
   signin: () => t('lamp.signin', 'Sign in to an account to earn the title I Love Lamp.'),
 });
 

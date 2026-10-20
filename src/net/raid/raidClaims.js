@@ -51,7 +51,7 @@ export const RAID_ME_POLL_MS = 1000;
 
 /** The words. */
 export const RAID_CLAIM_TEXT = Object.freeze({
-  recorded: (n, xp) => `The town will remember you. Towns defended: ${n}.${xp > 0 ? ` +${xp} Renown XP.` : ''}`,
+  recorded: (n, xp) => `The town will remember you. Towns defended: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`,
   guest: 'This town is not on your record yet: only registered accounts keep one. Add a username this week and it counts.',
   dayFull: 'You have been counted for every raid one day allows.',
 });

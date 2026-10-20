@@ -26,6 +26,7 @@ import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
 import { withJungle, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
+import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
 import { paintRoads, smoothRoadHeights, pathCorners } from '../road/roadPainter.js';
 import { MAP_W } from '../road/roadNetwork.js';
 import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
@@ -122,6 +123,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
     if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
   }
+  // JUNGLE-TRAILS: the jungle's own trails worn into its corners before the squares run - dirt they blend, every tile
+  // they touch kept as a track's is (world/jungle/jungleTrails.js); the heights never moved
+  if (jungle) paths = paintJungleTrails(tileData, tilemap, paths, { px, py, nine: jungle.nine, whole: jungleWhole(jungle.nine), rect: hasLocation ? locationRect : null });
   assignTiles(tileData, tilemap, true);
   // WOD2: World of Daggerfall's "Smooth the terrain" arms
   // (LocationLoader.cs:174-230). The mod runs on
@@ -172,7 +176,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   const nature = withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
     { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths } : null });
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
-    paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says
+    paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)
     // ROADS 25: whether a network was PRESENT when this pixel was painted.
     // The network loads asynchronously and the world starts building at
     // once, so the first pixels can be painted with none - and were then

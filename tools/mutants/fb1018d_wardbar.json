@@ -42,7 +42,7 @@
   {
     "name": "WARD-BAR-conquest-unexplained",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "conquest: () => 'Banners claim the floor - it burns, and two standing ward the lord. Break them!',",
+    "old": "conquest: () => 'Banners claim the floor, and it burns. Two standing ward the lord. Break them!',",
     "new": "conquest: () => 'Banners claim the floor. Break them!',",
     "tests": [
       "test/ui/eliteGates/fb1018d_wardbar.test.js"

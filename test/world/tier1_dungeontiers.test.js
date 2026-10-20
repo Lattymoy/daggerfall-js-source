@@ -100,10 +100,10 @@ test('TIER1: the places the port made stand in the dungeon host and are no dunge
 });
 
 test('TIER1: the words on the overworld - the sight line names the tier, the plates carry it under the name online, and one line is said on entering', () => {
-  assert.equal(dungeonSightLine(410, 'North'), 'You see a Dungeon 410 metres to the North!');
-  assert.equal(dungeonSightLine(410, 'North', 'regular'), 'You see a Dungeon 410 metres to the North!');
-  assert.equal(dungeonSightLine(410, 'North', 'elite'), 'You see an Elite Dungeon 410 metres to the North!');
-  assert.equal(dungeonSightLine(410, 'North', 'super'), 'You see an Abyss Dungeon 410 metres to the North!');
+  assert.equal(dungeonSightLine(410, 'North'), 'You see a Dungeon 410 meters to the North!');
+  assert.equal(dungeonSightLine(410, 'North', 'regular'), 'You see a Dungeon 410 meters to the North!');
+  assert.equal(dungeonSightLine(410, 'North', 'elite'), 'You see an Elite Dungeon 410 meters to the North!');
+  assert.equal(dungeonSightLine(410, 'North', 'super'), 'You see an Abyss Dungeon 410 meters to the North!');
   const w = rd('src/scenes/world.js');
   assert.match(w, /tvSay\(dungeonSightLine\(Math\.hypot\(dx, dz\), _capitalize\(directionHintString\(dx, dz\)\), dungeonTier\(loc\)\), 5\);/);
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js

@@ -47,8 +47,8 @@
   {
     "name": "the-online-line-stops-saying-whose-days",
     "file": "src/ui/travel/travelPopUp.js",
-    "old": "'Online: the days pass on your own clock.",
-    "new": "'Online: the journey is instant.",
+    "old": "'Online, the trip\\'s days pass only for you.",
+    "new": "'Online, the journey is instant.",
     "tests": [
       "test/systems/online/travelinn.test.js"
     ]

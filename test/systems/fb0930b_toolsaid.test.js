@@ -453,15 +453,15 @@ test('TOOL-USE: the world host hands Foraging the professions, the keys, and the
 });
 
 test('TOOL-USE: the Professions page says a tool\'s Use at the node is the key\'s and from the pack only points the way; the empty Stores say where their goods come from', () => {
-  assert.match(GATHER_HOW.herbalism, /herb patch/);
-  assert.match(GATHER_HOW.mining, /ore vein or a boulder/);
+  assert.match(GATHER_HOW.herbalism, /patch of herbs/);   // VOICE1 (PIN MOVED): the same law in plain words
+  assert.match(GATHER_HOW.mining, /vein of ore or a boulder/);   // VOICE1 (PIN MOVED)
   assert.match(GATHER_HOW.logging, /tree/);
-  assert.match(GATHER_HOW.herbalism, /The Sickle or Basket also works from your hotbar or a quick slot\. Used from your pack, a tool just tells you where it works\.$/);
-  assert.match(GATHER_HOW.mining, /It also works from your hotbar or a quick slot\. Used from your pack, a tool just tells you where it works\.$/);
-  assert.match(GATHER_HOW.logging, /It also works from your hotbar or a quick slot\. Used from your pack, a tool just tells you where it works\.$/);
+  assert.match(GATHER_HOW.herbalism, /The Sickle and the Basket can be used from your hotbar or quick slots as well\. Used from your pack, a tool only tells you where it can be used\.$/);   // VOICE1 (PIN MOVED): the same law in plain words
+  assert.match(GATHER_HOW.mining, /The pick can also be used from your hotbar or quick slots\. Used from your pack, a tool only tells you where it can be used\.$/);   // VOICE1 (PIN MOVED): the same law in plain words
+  assert.match(GATHER_HOW.logging, /The axe can also be used from your hotbar or quick slots\. Used from your pack, a tool only tells you where it can be used\.$/);   // VOICE1 (PIN MOVED): the same law in plain words
   for (const k of ['herbalism', 'mining', 'logging']) assert.doesNotMatch(GATHER_HOW[k], /Foraging|earns no XP/);
   // PIN MOVED (2026-10-01 part four, TOUCH-HOLD): and the Skinning Knife's Use
-  assert.match(STORES_EMPTY_LINE, /or use the matching tool from your hotbar or a quick slot\. Tools used from your pack gather nothing\.$/);
+  assert.match(STORES_EMPTY_LINE, /You can also use the matching tool from your hotbar or a quick slot\. Tools used from your pack gather nothing\.$/);
   const src = readFileSync(new URL('../../src/ui/professions/profPages.js', import.meta.url), 'utf8');
   assert.match(src, /if \(GATHER_HOW\[_sel\]\) pane\.append\(el\('p', 'px-note', gatherHow\(_sel\)\)\);/);   // PIN MOVED (L10N4): said through its reader
   assert.match(src, /: storesEmptyLine\(\)\)\);/);
@@ -472,8 +472,8 @@ test('TOOL-USE: the Professions page says a tool\'s Use at the node is the key\'
   assert.doesNotMatch(GATHER_HOW.herbalism, /act choice key/);
   assert.match(GATHER_HOW.herbalism, /the patch's list also lets you search it for food/);
   assert.doesNotMatch(src, /act choice key searches/);
-  assert.match(src, /The body\\'s list also lets you search it\.'\)\)\);/);   // PIN MOVED (L10N4): said through t()
-  assert.match(STORES_EMPTY_CARRY_LINE, /goes into your Materials Bag or pack - put it in here in any town\.$/);
+  assert.match(src, /The carcass\\'s list also lets you search it\.'\)\)\);/);   // VOICE1 (PIN MOVED)   // PIN MOVED (L10N4): said through t()
+  assert.match(STORES_EMPTY_CARRY_LINE, /goes into your Materials Bag or pack\. Put it in here in any town\.$/);
   assert.match(src, /all\.size \? t\('prof\.page\.stores\.noMatch', 'Nothing in the Stores matches\.'\) : storesEmptyCarryLine\(\)\)\);/);   // PIN MOVED (L10N4): said through its reader
   assert.match(src, /const storesEmptyCarryLine = \(\) => t\('prof\.page\.stores\.emptyCarry', STORES_EMPTY_CARRY_LINE\);/);
 });

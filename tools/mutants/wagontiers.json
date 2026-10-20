@@ -227,7 +227,7 @@
   {
     "name": "WAGON-TIERS-the-boon-unsaid",
     "file": "src/ui/holdingsPages.js",
-    "old": "  get sound() { return t('holdings.wagon.boons.sound', 'Sound - it rolls faster for it.'); },",
+    "old": "  get sound() { return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.'); },",
     "new": "",
     "tests": [
       "test/systems/wagontiers.test.js"

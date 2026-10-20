@@ -2,7 +2,7 @@
   {
     "name": "WB13c-move-for-any-blow",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "move: !!aimed && aimed === P.atk[A.key].name }",
+    "old": "move: !!aimed && aimed === PC.atk[A.key].name }",
     "new": "move: !!aimed }",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "WB13c-the-bar-over-the-veil",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "peril?.name ?? null), { hidden: hudHidden() || veiled() });",
-    "new": "peril?.name ?? null), { hidden: hudHidden() });",
+    "old": "flameMine: !!F && !!fp && flameCourtMine(F, t, fp) }), { hidden: hudHidden() || veiled() });",
+    "new": "flameMine: !!F && !!fp && flameCourtMine(F, t, fp) }), { hidden: hudHidden() });",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "WB13c-move-never-asked",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "drawGateBossBar(bossBarModel(s, t, bossOf(s), peril?.name ?? null)",
-    "new": "drawGateBossBar(bossBarModel(s, t, bossOf(s), null)",
+    "old": "drawGateBossBar(bossBarModel(s, t, bossOf(s), onMe?.name ?? null,",
+    "new": "drawGateBossBar(bossBarModel(s, t, bossOf(s), null,",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]

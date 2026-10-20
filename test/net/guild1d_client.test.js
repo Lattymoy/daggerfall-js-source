@@ -295,7 +295,7 @@ test('GUILD1d the Guild tab: with no hall how one is bought; with one where it s
   assert.equal(button(gm.panel.root, 'Disband').disabled, true, 'sell the hall first');
   // a change short of Drakes - GUILD2c: the field's colour a swatch now, not a select (PIN MOVED)
   await gm.go('arms');
-  const crimson = find(gm.panel.root, 'dfsocial-swatch').find((b) => b.attrs['aria-label'] === 'Field colour: Crimson');
+  const crimson = find(gm.panel.root, 'dfsocial-swatch').find((b) => b.attrs['aria-label'] === 'Field color: Crimson');
   crimson.fire('click');
   assert.equal(button(gm.panel.root, 'Change it').disabled, true, `${HERALDRY_CHANGE_DRAKES} Drakes wanted, 100 held`);
   const recruit = await tabRig(view({ rank: 3, hall, heraldry: WOLF, members: [{ member: 'm2', name: 'Rhea', rank: 3, joinedAt: 1, you: true }] }));

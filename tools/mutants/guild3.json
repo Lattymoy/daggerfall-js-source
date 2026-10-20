@@ -43,8 +43,8 @@
   {
     "name": "GUILD3a-honour-in-marks",
     "file": "src/net/siege/siegeLink.js",
-    "old": "`Your Honour: ${marksText(Number(honours.marks))},",
-    "new": "`Your Honour: ${honours.marks} Marks,",
+    "old": "`Your Honor: ${marksText(Number(honours.marks))},",
+    "new": "`Your Honor: ${honours.marks} Marks,",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/siege/seat2a_siege_play.test.js"

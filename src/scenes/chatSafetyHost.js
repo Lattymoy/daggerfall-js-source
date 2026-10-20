@@ -57,15 +57,15 @@ export const BLOCKS_REREAD_MS = 30_000;
  */
 const NAMED = Object.freeze({
   block: {
-    many: (count, name) => t('net.safety.manyBlock', '{count} players are called {name}. Nobody was blocked - press the name on one of their lines in the chat to block that one.', { count, name }),
+    many: (count, name) => t('net.safety.manyBlock', '{count} players are called {name}. Nobody was blocked. Click the name on one of their chat lines to block that player.', { count, name }),
     none: (name) => t('net.safety.noneBlock', 'Nobody called {name} is here or said anything in your chat. Nobody was blocked.', { name }),
   },
   report: {
-    many: (count, name) => t('net.safety.manyReport', '{count} players are called {name}. Nothing was reported - press the name on one of their lines in the chat to report that one.', { count, name }),
+    many: (count, name) => t('net.safety.manyReport', '{count} players are called {name}. Nothing was reported. Click the name on one of their chat lines to report that player.', { count, name }),
     none: (name) => t('net.safety.noneReport', 'Nobody called {name} said anything in your chat. Nothing was reported.', { name }),
   },
   mod: {
-    many: (count, name) => t('net.safety.manyMod', '{count} players are called {name}. Nothing was done - name the account by its id: #id (/cases shows it).', { count, name }),
+    many: (count, name) => t('net.safety.manyMod', '{count} players are called {name}. Nothing was done. Use the account id instead: #id (/cases shows it).', { count, name }),
     none: () => '',
   },
 });
@@ -92,7 +92,7 @@ const reasonsText = (/** @type {unknown} */ reasons) => {
 };
 /** AUDIT SAFE DOC-4: the reviewer's word on a case, or ''. @param {any} ai */
 const verdictText = (ai) => (ai && typeof ai === 'object'
-  ? `${t('net.safety.caseVerdict', 'The reviewer says {category}, severity {severity}, confidence {confidence}.', { category: reportReasonLabel(String(ai.category ?? '')), severity: Number(ai.severity) || 0, confidence: `${Math.round((Number(ai.confidence) || 0) * 100)}%` })}${ai.mode === 'shadow' ? ` ${t('net.safety.shadow', '(shadow - it acted on nothing)')}` : ''}`
+  ? `${t('net.safety.caseVerdict', 'The reviewer says {category}, severity {severity}, confidence {confidence}.', { category: reportReasonLabel(String(ai.category ?? '')), severity: Number(ai.severity) || 0, confidence: `${Math.round((Number(ai.confidence) || 0) * 100)}%` })}${ai.mode === 'shadow' ? ` ${t('net.safety.shadow', '(shadow mode: no action taken)')}` : ''}`
   : '');
 
 /**
@@ -205,7 +205,7 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
     // AUDIT SAFE CLIENT-3: the ACCOUNT named, where the list's name is not the one the line showed (NAME-AS)
     const account = blocked.get(sub) ?? '';
     sayActive(account && sanitizeName(account).toLowerCase() !== sanitizeName(name).toLowerCase()
-      ? t('net.safety.blockedAs', 'You blocked {name} - the account {account}. You will not see their lines, invites or requests. /unblock {name} undoes it.', { name, account })
+      ? t('net.safety.blockedAs', 'You blocked {name} (account {account}). You will not see their lines, invites or requests. /unblock {name} undoes it.', { name, account })
       : t('net.safety.blocked', 'You blocked {name}. You will not see their lines, invites or requests. /unblock {name} undoes it.', { name }));
   };
   const unblock = async (sub, name) => {
@@ -388,7 +388,7 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
       if (!r.ok) { say(tabId, accountRefusalText(r.error)); return; }
       agreed = true;
       agreedHere = true;   // AUDIT SAFE CLIENT-1
-      say(tabId, t('net.safety.agreed', 'Thank you. Press Enter to send your line.'));
+      say(tabId, t('net.safety.agreed', 'Thank you. Press Enter to send your message.'));
     },
     /** One parsed safety command, run. @param {string} tabId @param {any} cmd */
     async command(tabId, cmd) {

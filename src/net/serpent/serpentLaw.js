@@ -193,11 +193,11 @@ export const serpentBossById = (id) => SERPENT_BOSSES.find((b) => b.id === id) ?
 // The chat's lines at the serpent's moments, each the event, where and when (WB13b's law: the map's ring and the bar
 // say the rest). `near` the port the site lies off ("Sentinel"); `at` a local time ("14:32" - TIME1: a line that names
 // a time names this machine's); `left` a countdown ("4:07").
-export const sightingLine = ({ near, at, boss }) => `Bells ring in the harbours: a great serpent is sighted off ${near}. ${boss} rises at ${at} your time.`;
+export const sightingLine = ({ near, at, boss }) => `Bells ring in the harbors: a great serpent is sighted off ${near}. ${boss} rises at ${at} your time.`;
 /** SERPENT4: its waters open until it dives - the rising counts to the dive, and the storm's breaking says a ship may
  *  still sail in. */
-export const risingLine = ({ near, boss, left }) => `${boss} rises off ${near}. It dives in ${left} - sail out and join the fight.`;
-export const sealLine = ({ near, boss, at }) => `A storm breaks over ${boss}'s waters off ${near} - every ship may still join the fight. It dives at ${at} your time.`;
+export const risingLine = ({ near, boss, left }) => `${boss} rises off ${near}. It dives in ${left}. Sail out and join the fight.`;
+export const sealLine = ({ near, boss, at }) => `A storm breaks over ${boss}'s waters off ${near}, but every ship may still join the fight. It dives at ${at} your time.`;
 export const soundLine = ({ near, boss }) => `${boss} dives off ${near} and is gone into the deep.`;
 /** The Bay hears the kill (the relay's word, fanned by the hub): "Sethrakul is slain off Sentinel by Ama, Bel and Cor."
  *  AUDIT SERPENT (words): the whole Bay hears it - its hoard is said to be the ships' that fought it, never everyone's. */

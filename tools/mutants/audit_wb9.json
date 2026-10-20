@@ -101,7 +101,7 @@
   {
     "name": "AUDIT-WB9-a-blow-on-him-from-anywhere-on-the-floor",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK)) return 0;\n",
+    "old": "  if (!inCourt(pose.x, pose.z, B.court, POSE_SLACK)) return 0;\n",
     "new": "",
     "tests": [
       "test/net/gate/audit_wb9.test.js",
@@ -165,7 +165,7 @@
   {
     "name": "AUDIT-WB9-the-stun-kept-through-the-wrath",
     "file": "src/net/gate/gateLink.js",
-    "old": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0 } : {}), ",
+    "old": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}), ",
     "new": "",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
@@ -228,8 +228,8 @@
   {
     "name": "AUDIT-WB9-the-far-walkway-for-the-middle-court",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "(one && w.k !== k0 && w.k !== k0 - 1)",
-    "new": "(one && w.k !== k0)",
+    "old": "(one && w.a !== k0 && w.b !== k0)",
+    "new": "(one && w.a !== k0)",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]

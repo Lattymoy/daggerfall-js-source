@@ -291,7 +291,7 @@ test('TOUCH-HOLD knife: the Skinning Knife\'s Use from the hotbar at a body star
   } finally { s.done(); }
 });
 
-test('TOUCH-HOLD knife: away from a body the Use says where Hunting is done; offline, and with the professions shut, the knife has no Use (mutants: the line unsaid; the knife usable offline); PARTY-SKIN: online the line names a body you may loot, not one your own blow felled', () => {
+test('TOUCH-HOLD knife: away from a body the Use says where Hunting is done; offline, and with the professions shut, the knife has no Use (mutants: the line unsaid; the knife usable offline)', () => {
   const s = stage();
   try {
     assert.equal(professionToolLine(SKINNING_KNIFE.templateIndex), PROFESSION_TOOL_HOW[SKINNING_KNIFE.templateIndex]('E'));

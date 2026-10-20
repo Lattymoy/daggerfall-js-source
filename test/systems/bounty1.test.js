@@ -349,7 +349,7 @@ test('BOUNTY-TRAIL: a pack of six or more is hunted in two groups, the second fo
   assert.ok(said.some((l) => /got away/.test(l)), 'the first group\'s fall is told');
   host.tick(1);
   assert.equal(asks.at(-1).stage, 1);
-  assert.ok(said.some((l) => /tracks leading away.*230 metres to the north/.test(l)), 'the clue names the way');
+  assert.ok(said.some((l) => /tracks leading away.*230 meters to the north/.test(l)), 'the clue names the way');
   assert.ok(host.questLogEntries()[0].messages[0].some((t) => /tracks leading away/.test(t.text)), 'and the journal keeps it');
   const n = said.length;
   host.tick(1); host.tick(1);

@@ -96,7 +96,7 @@ export function createPoiReview({ doc = document, host, me, act, say, refusal, e
   }
   function drawQueue() {
     if (!dialog || dialog.dataset.kind !== 'queue') return;
-    const rows = [el('div', 'dfpoi-h', t('poi.review.title', 'Approvals')), el('div', 'dfpoi-sub', t('poi.review.hint', 'Look at each in the world, then approve it or send it back with a word.'))];
+    const rows = [el('div', 'dfpoi-h', t('poi.review.title', 'Approvals')), el('div', 'dfpoi-sub', t('poi.review.hint', 'Look at each one in the world, then approve it or send it back with a note.'))];
     const top = el('div', 'dfpoi-row');
     top.append(btn(t('poi.editor.refresh', 'Refresh the list'), () => refreshQueue()), btn(t('poi.review.close', 'Close'), () => close()));
     rows.push(top);
@@ -104,7 +104,7 @@ export function createPoiReview({ doc = document, host, me, act, say, refusal, e
     else if (!queue.length) rows.push(el('div', 'dfpoi-ok', t('poi.review.none', 'Nothing waits for approval.')));
     else for (const item of queue) rows.push(queueRow(item));
     // AUDIT POI C3: the queue is bounded - what waits past it is said, not left to be guessed
-    if (queue?.length && more) rows.push(el('div', 'dfpoi-sub', t('poi.review.more', 'More submissions wait than are listed: decide on these to see the rest.')));
+    if (queue?.length && more) rows.push(el('div', 'dfpoi-sub', t('poi.review.more', 'More submissions are waiting. Decide on these to see the rest.')));
     dialog.replaceChildren(...rows);
   }
   function queueRow(item) {
@@ -112,7 +112,7 @@ export function createPoiReview({ doc = document, host, me, act, say, refusal, e
     const name = item.doc?.name ?? item.liveDoc?.name ?? item.id;
     const kind = item.kind === 'retire' ? t('poi.review.kindRetire', 'take out of the world') : item.liveDoc ? t('poi.review.kindChange', 'a change') : t('poi.review.kindNew', 'new');
     r.append(el('div', 'dfpoi-shelf-name', name), el('div', 'dfpoi-shelf-meta', t('poi.review.sent', '{kind} · by {author} · sent {ago}', { kind, author: item.author, ago: agoText(item.submittedAt, now()) })));
-    if (item.stale) r.append(el('div', 'dfpoi-warn', t('poi.review.stale', 'Made from an older live revision: approving it puts back over what went live since.')));
+    if (item.stale) r.append(el('div', 'dfpoi-warn', t('poi.review.stale', 'Made from an older live revision. Approving it overwrites what went live since.')));
     // what it changes
     const changes = poiDiff(item.liveDoc, item.kind === 'retire' ? null : item.doc);
     const list = el('div', 'dfpoi-sub');
@@ -122,7 +122,7 @@ export function createPoiReview({ doc = document, host, me, act, say, refusal, e
     // the law's report
     if (item.doc) {
       const { list: ps, checking } = lawOf(item.doc);
-      r.append(el('div', 'dfpoi-h', t('poi.review.law', 'The law')));
+      r.append(el('div', 'dfpoi-h', t('poi.review.law', 'Checks')));
       if (!ps.length) r.append(el('div', checking ? 'dfpoi-sub' : 'dfpoi-ok', checking ? t('poi.editor.checking', 'Checking its models and pictures...') : t('poi.review.lawOk', 'Nothing wrong.')));
       for (const p of ps.slice(0, 12)) { const where = problemWhere(p.path, item.doc); r.append(el('div', 'dfpoi-problem', where ? `${where}: ${problemText(p)}` : problemText(p))); }
     }
@@ -135,7 +135,7 @@ export function createPoiReview({ doc = document, host, me, act, say, refusal, e
       acts.append(toggle, el('span', 'dfpoi-chip', showing === 'after' ? t('poi.review.showingAfter', 'showing: the submission') : t('poi.review.showingBefore', 'showing: the live one')));
     }
     const note = el('textarea');
-    note.maxLength = POI_LIMITS.note; note.placeholder = t('poi.review.notePlaceholder', 'A word for the builder (needed to send it back)');
+    note.maxLength = POI_LIMITS.note; note.placeholder = t('poi.review.notePlaceholder', 'A note for the builder (needed to send it back)');
     note.value = notes.get(`${item.id}:${item.rev}`) ?? '';
     note.addEventListener('input', () => notes.set(`${item.id}:${item.rev}`, note.value));
     const decide = el('div', 'dfpoi-row');
@@ -185,7 +185,7 @@ export function createPoiReview({ doc = document, host, me, act, say, refusal, e
     // loser's refusal was said over the winner's word)
     if (deciding.has(key)) return;
     const word = note.trim();
-    if (verdict === 'reject' && !word) { say(t('poi.review.needWord', 'Say why it goes back - the builder reads it.'), 'bad'); return; }
+    if (verdict === 'reject' && !word) { say(t('poi.review.needWord', 'Say why it goes back. The builder reads it.'), 'bad'); return; }
     deciding.add(key);
     drawQueue();
     let r;

@@ -40,7 +40,7 @@ test('SD-HERALD law: THE NAMES - a slot\'s name when it needs no city, else none
 test('SD-HERALD law: THE RISE\'S POST - the role pinged first and the ONLY mention Discord may make; never where (a find); when it fades unfound, in each reader\'s own time (mutants: a ping with no role; every mention allowed; the fade\'s stamp the next rise\'s)', () => {
   const rec = risen(2, 17);
   const p = sdRisePost({ rec, role: ROLE });
-  assert.equal(p.content, `<@&${ROLE}> **A bell rings where there is no bell: an Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the city it stands by speak of it. No map shows it - the first to stand at its door finds it. Unfound, it fades <t:${s(rec.until)}:R>.`);
+  assert.equal(p.content, `<@&${ROLE}> **A bell rings where there is no bell. An Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door. Unfound, it fades <t:${s(rec.until)}:R>.`);
   assert.deepEqual(p.allowed_mentions, { roles: [ROLE] }, 'the one role, and nothing else');
   assert.ok(!p.content.includes('Daggerfall') && !p.content.includes('Stopped Bell'), 'neither its region nor its name: it must be found');
   const bare = sdRisePost({ rec });
@@ -51,7 +51,7 @@ test('SD-HERALD law: THE RISE\'S POST - the role pinged first and the ONLY menti
 test('SD-HERALD law: THE FIND\'S POST - the chat\'s own line with no city (who, in its region), its name when it needs no city, the way in and when it fades; the role pinged; a finder\'s name held to letters (mutants: the find pinging nobody; the finder taken raw; the region unnamed; a city name said bare)', () => {
   const rec = sdFind(risen(2, 17), T0 + 60_000, 'Mara');
   const p = sdFoundPost({ rec, role: ROLE });
-  assert.equal(p.content, `<@&${ROLE}> **Mara has found an Abyss Dungeon in the Daggerfall region!** The Stopped Bell is on every map now. Fight through it to the Rift at its end: the Shattered Hour waits beyond, one life each to break it before it fades <t:${s(rec.until)}:R>.`);
+  assert.equal(p.content, `<@&${ROLE}> **Mara has found an Abyss Dungeon in the Daggerfall region!** The Stopped Bell is on every map now. Fight through to the Rift at its end and break the Shattered Hour before it fades <t:${s(rec.until)}:R>. Each fighter has one life.`);
   assert.deepEqual(p.allowed_mentions, { roles: [ROLE] });
   const city = sdFoundPost({ rec: { ...sdFind(risen(4, -1), T0 + 60_000, 'Mara'), fb: '**@everyone**' } });
   assert.ok(city.content.startsWith('**everyone has found an Abyss Dungeon near the Iliac Bay!** It is on every map now.'), city.content);

@@ -431,7 +431,7 @@ test('DA13: the launcher - the game\'s download held before play like an install
   // and the game's HUD says what to do with one: it plays from the next start - true of the installer's update as well
   return import('../../src/systems/shellUpdates.js').then(({ updateReadyText }) => {
     assert.equal(updateReadyText({ version: '0.1.11', manual: false }),
-      'DFO Online 0.1.11 is ready. It plays the next time you start, or now from File > Restart to Update - save first.');
+      'DFO Online 0.1.11 is ready. It runs the next time you start, or now from File > Restart to Update. Save first.');
     assert.doesNotMatch(updateReadyText({ version: '0.1.11', manual: false }), /installs/, 'nothing installs when the channel brought it');
   });
 });

@@ -11,8 +11,8 @@
   {
     "name": "CART-AWAY-the-gold-share-still-taken",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const coin = takeWildGold(entity, { cart: withCart });",
-    "new": "  const coin = takeWildGold(entity);",
+    "old": "  const coin = takeWildGold(entity, { cart: withCart, packs });",
+    "new": "  const coin = takeWildGold(entity, { packs });",
     "tests": [
       "test/systems/fb1015_cartaway.test.js"
     ]
@@ -173,10 +173,11 @@
   {
     "name": "CART-AWAY-the-host-says-nothing",
     "file": "src/scenes/world.js",
-    "old": ", ...wildCartWord(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),",
+    "old": ", ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),",
     "new": " }),",
     "tests": [
       "test/systems/fb1015_cartaway.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1019f B2 (re-aimed): the fallen's own ask says its words through wildFallWords (systems/wild/wildDeath.js), the wagon's among them."
   }
 ]

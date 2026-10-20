@@ -123,8 +123,8 @@
   {
     "name": "DUNGEON-DIGITS-L2-5-key-gate-the-frame",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if (!bar || !hotbarMode() || dropOwners.size || keysPaused()) return;\n  if (keyHolds.size) return;",
-    "new": "  if (!bar || !hotbarMode() || dropOwners.size || lastPaused) return;\n  if (keyHolds.size) return;",
+    "old": "  if (keysPaused()) return;\n  if (keyHolds.size) return;",
+    "new": "  if (lastPaused) return;\n  if (keyHolds.size) return;",
     "tests": [
       "test/ui/hud/fb1018f_dungeondigits.test.js"
     ],

@@ -29,7 +29,7 @@
  {
   "name": "SWING-LABEL-the-gesture-line-stops-saying-a-click-does-nothing",
   "file": "src/systems/controlsConfig.js",
-  "old": " A press without moving does nothing.`",
+  "old": " Holding it without moving does nothing.`",
   "new": "`",
   "tests": [
    "test/systems/swinglabel.test.js"

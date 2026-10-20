@@ -62,6 +62,6 @@
       "test/net/slimframe.test.js",
       "test/net/scale5b.test.js"
     ],
-    "note": "the scene's metres to the decimetre - a peer up to five centimetres off the ground"
+    "note": "the scene's meters to the decimetre - a peer up to five centimetres off the ground"
   }
 ]

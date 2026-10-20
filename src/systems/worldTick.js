@@ -1337,7 +1337,7 @@ export function worldNightfallText() {
   const dusk = Math.floor(now / MINUTES_PER_DAY) * MINUTES_PER_DAY + DUSK_HOUR * 60;
   const ms = _skyWall ? _skyWall(dusk) - _skyWall(sky) : (dusk - sky) / ONLINE_MINUTES_PER_MS;
   const real = Math.max(1, Math.ceil(ms / 60000));
-  return `The sun is the world's - night falls in about ${real} minute${real === 1 ? '' : 's'}.`;
+  return `Online, resting does not move the sun. Night falls in about ${real} minute${real === 1 ? '' : 's'}.`;
 }
 /** LIVED1: a deadline on the CHARACTER's own clock (a room's end, a loan's due day, a repair's ready minute), said as
  *  what it is online - the time left on their clock, and what that is in play: their clock runs with the world's

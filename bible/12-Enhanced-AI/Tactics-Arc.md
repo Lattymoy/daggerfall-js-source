@@ -36,7 +36,9 @@ overdoing it"*. His calls, asked the same day:
 ### TACT1 - cover (sight and missiles)
 - Every billboard that reads as solid - trees, crates, barrels, statues, decor flats over a size floor - gets a
   **cover proxy**: an upright box of its drawn width and height (a tree: its trunk's width to its crown's height),
-  kept in a cover index beside the collider, never in it (walking is unchanged).
+  kept in a cover index beside the collider, never in it (walking is unchanged - PROP-BODIES, 2026-10-19, files a solid
+  flat's BODY in the same sets, a grid of its own no ray reads, and the player's clamp keeps the feet out of it:
+  `03-World/Player-Arc.md`).
 - `canSeeTarget` and `canHearTarget`'s line test, and every missile (arrows, thrown, spell bolts - the player's and the
   foes'), test the cover index after the collider. A target behind cover is unseen; a missile that meets cover stops
   there. Area spells still burst where they land.

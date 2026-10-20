@@ -52,5 +52,5 @@ test('DECOR-FLIP the ghost: turned past a quarter while it is placed, the pictur
   assert.ok(ghost().size.w < 0, `turned: mirrored (${ghost().size.w})`);
   assert.equal(await rig.tool.commit(), true);
   assert.equal(decorFlatMirrored(rig.standing.at(-1)), true, 'and it stands so');
-  assert.ok(decorBarKeys(false).some(([k, v]) => k === 'Turn' && /^wheel or Turn Left\/Right \(Shift: fine; a picture turned half round faces the other way\)$/.test(v)), 'the bar says what a turn does to a picture');   // MENU-ORDER: the legend's own pair
+  assert.ok(decorBarKeys(false).some(([k, v]) => k === 'Turn' && /^wheel or Turn Left\/Right \(Shift for fine turns; turn a picture half round to flip it\)$/.test(v)), 'the bar says what a turn does to a picture');   // MENU-ORDER: the legend's own pair
 });

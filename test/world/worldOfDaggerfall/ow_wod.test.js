@@ -241,8 +241,11 @@ test('OW-TOWN-RING: the ring a route walks - in on the side it arrives from, rou
   const sides = (from, to) => ringPassPoints(TOWN.locationRect, TOWN.locationBorderRect, from, to, MID);
   // Daggerfall's own byte (207,213): N|SE|W - a route in from the north and out to the south-east
   const ns = sides([0, -1], [1, 1]);
-  assert.equal(ns.length, 3, 'north side, the north-east corner, the south-east corner');
-  assert.ok(ns[0].z > TOWN.locationRect.zMax && ns[1].x > TOWN.locationRect.xMax && ns[2].z < TOWN.locationRect.zMin, 'n, ne, se');
+  // PIN MOVED (AUDIT OW-REVISITED L2-3): the south-east road leaves the ring where ITS diagonal crosses the band - Daggerfall
+  // is no square, so that is in the south band past the corner: the corner's square passed, then the road's own point
+  assert.equal(ns.length, 4, 'north side, the north-east corner, the south-east corner, the south-east road');
+  assert.ok(ns[0].z > TOWN.locationRect.zMax && ns[1].x > TOWN.locationRect.xMax && ns[2].z < TOWN.locationRect.zMin && ns[2].x > TOWN.locationRect.xMax, 'n, ne, se');
+  assert.ok(ns[3].z < TOWN.locationRect.zMin && Math.abs((ns[3].x - MID.x) + (ns[3].z - MID.z)) < 1e-6, 'on the road\'s own south-east diagonal through the middle');
   // straight through, west to east: round the north (the tie goes clockwise)
   const we = sides([-1, 0], [1, 0]);
   assert.equal(we.length, 4);

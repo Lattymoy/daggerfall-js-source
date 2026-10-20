@@ -56,8 +56,8 @@
   {
     "name": "BLOOD1-HOSTSPLIT2-a-bucket-the-build-lays-allocating-per-call",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            collider.addMesh(key, cpuB.positions, cpuB.indices, local, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));   // PERF-COL2: riding the floating origin\n",
-    "new": "            collider.addMesh(key, cpuB.positions, cpuB.indices, local, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));   // PERF-COL2: riding the floating origin\n            collider.addMesh(key + ':b', cpuB.positions, cpuB.indices, local, onFloatingFrame(host.state, () => host.state.pixelTranslation(px, py)));\n",
+    "old": "            late.add(key, cpuB.positions, cpuB.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });   // PERF-COL2: riding the floating origin\n",
+    "new": "            late.add(key, cpuB.positions, cpuB.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });   // PERF-COL2: riding the floating origin\n            collider.addMesh(key + ':b', cpuB.positions, cpuB.indices, local, onFloatingFrame(host.state, () => host.state.pixelTranslation(px, py)));\n",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

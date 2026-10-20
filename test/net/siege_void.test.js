@@ -460,7 +460,7 @@ test('AUDIT 529 V5 VOID AFTER ITS WEEK SETTLED: a void whose clock was read befo
   s.setNow(turning(W + 1) - 1);
   const late = await s.voidIt(s.mora);
   assert.deepEqual([late.status, late.body.error], [409, 'battle-settled']);
-  assert.equal(accountRefusalText('battle-settled'), 'That battle\'s week is settled - its Turning has reckoned it, and it can no longer be voided.');
+  assert.equal(accountRefusalText('battle-settled'), 'That battle\'s week is settled and can no longer be voided.');
   assert.equal(s.battle().state, 'fought');
   assert.equal(s.holdOf().guild_id, s.eo.gid, 'the capture stands as the Turning reckoned it');
   assert.deepEqual(s.voids(), []);

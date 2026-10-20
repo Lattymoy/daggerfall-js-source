@@ -167,8 +167,9 @@ grows UP from the caption and can never meet the diamond. One tile an effect, in
 - a POISON and a DISEASE, shown at last (a skull, a spore), on the Status box's own law (`systems/healthStatus.js`):
   ONE tile, "Poisoned", once any poison has left its waiting and until its damage has healed (the game names no poison:
   "You have been poisoned."); a tile a disease once its incubation is over, by the name its own contracted message
-  gives it (`diseases.js DISEASE_NAMES`, TEXT.RSC 100-116); nothing for a poison still waiting, a disease still
-  incubating, or an infection (DFU says nothing of one until the dream).
+  gives it (`diseases.js DISEASE_NAMES`, TEXT.RSC 100-116); while a disease still incubates, ONE tile of no name,
+  "Unwell", on the same spore (DISEASE-UNWELL, below - the owner's departure from DFU, which says nothing then);
+  nothing for a poison still waiting, or an infection (DFU says nothing of one until the dream).
 
 The ten glyphs are drawn on the classic spell icons' 16px grid, each pixel a letter in the module, every lit pixel
 outlined in the kit's black so it reads over any ground (made from shapes, outlined by a machine, then looked at). The
@@ -406,3 +407,79 @@ reads digits.
 
 Pinned: `test/ui/hud/fb1018f_dungeondigits.test.js` (3). Mutants: `tools/mutants/fb1018f_dungeondigits.json` (11, all
 dead).
+
+## DIAMOND-HB - the diamond as part of the hotbar, Diamonds, hover + key (2026-10-18)
+
+> "fix the 4 style hotbar. And to make it so clicking an item and pressing a hotbar key adds it to that hotbar" -
+> LostMyLeg, Discord. RookieG asked for diamond-shaped slots on the ten-slot bar; LostMyLeg: "i prefer the squares tbh
+> but i can make it an option".
+
+**Diamond.** The Quick slots tile's Diamond now writes `quickbarStyle: 'diamond'`. That style is the hotbar
+(`systems/uiSkin.js` HOTBAR_STYLES, so `hotbarInForce` is true), showing only slots 1-4. They are laid out in d-pad
+order (1 top, 2 bottom, 3 left, 4 right) where the old diamond was, inside `.hud-quick`, at its size (`--qs-cell`,
+`--qs-box`). Filling, dragging, clearing, the keys and the press are the ten-slot bar's code
+(`src/ui/enhanced/enhancedHotbar.js`), so the two behave the same. The diamond is never a crossbar. Keys 5-0 are not
+taken while it is shown. Under a window it keeps its diamond shape at the phone size (the bar only shows there while
+something is dragged, PADPLUS5). The layout follows the tile and nothing else. The old QS diamond (hands from the equip table, two consumables, the cycling
+hold) is still there for Off, which keeps `quickbarStyle: 'quickbar'` and `quickslots: false`.
+
+An old save with `quickbarStyle: 'quickbar'` and the switch on had chosen Diamond. `systems/uiPrefs.js` loadPrefs
+moves it to `'diamond'`. Off saves are not touched, and neither is the HB-LYCFREE rev-1 migration.
+
+**Diamonds.** A fourth state on the tile: the ten-slot bar with diamond-shaped slots (`hotbarShape: 'diamond'`, declared
+on the Quick slots row). Hotbar sets it back to `'square'`, which is the default. As with the old diamond, slots are not
+rotated: the slot is clipped to a diamond with clip-path, which also limits the click area, and the frame is a clipped
+ring coloured through its background. The key sits at the top point and the count at the bottom point.
+
+**Dresses.** The rim colours are variables a dress sets on `.hb` (`--gem-rim`, `--gem-rim-empty`, `--gem-rim-active`,
+`--gem-rim-strike`), copied from how each dress coloured the old diamond's rim: the Plus kit's stone bevel with brass in
+hand (`src/ui/enhanced/enhancedFrame.js`), DFO Grimoire's gilded rim with yellow gold in hand
+(`src/ui/grimoireDress.js`). Under Grimoire a diamond slot drops the shelf box's border-image, which a diamond clip would
+cut at the corners, and takes the old diamond's wood ground. The Plus themes colour the slot ground as they colour the
+square slots (chip colour, Stone's marble). A rarity tier is the old diamond's tier gradient. Checked by rendering the
+square bar, Diamond and Diamonds with the real sheets under Slate, Stone, Ember and Grimoire.
+
+**Hover + key.** With the pack or the spellbook open, pressing a slot key puts the item or spell under the mouse on that
+slot. Pack rows (local only, not loot), worn panels and worn sockets carry `_hotbarItem`; spellbook rows carry
+`_hotbarSpell`. If nothing is under the mouse, the window's selection is used (`setHotbarPick`: the pack's selected item,
+the spellbook's selected spell). If there is neither, the key goes to the window as before. Text fields keep their keys.
+
+`hotbarShownSlotOf` replaces `hotbarSlotOf` in the pack's row chip, the item card button and the spellbook button, so
+something on slot 7 counts as not on the bar while the diamond shows four slots. "Add to hotbar" fills the first free
+shown slot.
+
+Pins moved: `test/systems/ft18_features.test.js` (four tiers), `test/systems/hb_lycfree.test.js` (Diamond stores
+`'diamond'`), `test/systems/qs2_tooltip.test.js` (the pack's import), `test/ui/enhanced/qs3_hud.test.js` (the row's
+covered prefs), `test/ui/enhanced/ui3_status.test.js` (the quickslot block's children include the diamond dock). New: `test/ui/enhanced/diamondhb_hotbar.test.js` (6).
+
+## DISEASE-UNWELL - a disease incubating shows an unnamed tile (FIELD BUGS 2026-10-19f)
+
+A player's private report: after catching a disease, the rest's and the journey's warnings said they were diseased, and
+no disease's tile or name appeared until the character had died of it.
+
+**Both laws were DFU's, and they disagreed.** The warnings count every live disease, one still incubating too - the
+rest's (restWarning.js:"const plainDiseases") and the travel popup's (travelPopUp.js:"DiseaseCount > 0", DFU's
+own). The widget's tile (hudStatus.js:"=== 'disease' &&") and the Status box (healthStatus.js:"=== 'disease' &&")
+name a disease only once its incubation is over, which is DFU's `CreateHealthStatusBox` reading
+`DiseaseEffect.IncubationOver` - the first round past the day's turn on the character's own clock (`updateDiseases`,
+LIVED1's own minutes online). A rest or a journey catches those days up under a hidden HUD, so a disease could be
+caught, take hold and run its course with nothing on the screen but the warning. The classic skin shows a disease
+never: DFU's every classic disease sets `ShowSpellIcon = false` (`Plague.cs` SetProperties), so `HUDActiveSpells`
+leaves it out, and the port's row reads bundles alone (mysticism.js:"export function liveBundles") - a disease
+carries none.
+
+**The owner's decision (Mac, 2026-10-19): "Unnamed 'Unwell' tile"** - a departure from DFU, in Ledger A. While a plain
+disease incubates (diseases.js:"export const diseaseIncubating" - caught, live, a classic type, its incubation not
+over, never a vampirism or lycanthropy infection), the widget shows ONE tile of no name, "Unwell", on the disease
+tile's own spore, where the first of them stands (hudStatus.js:"} else if (!unwell && diseaseIncubating(a))"); the
+Status box both skins open says "You feel unwell." once in its place, in the shape of the host's own rows
+(healthStatus.js:"if (!unwell && diseaseIncubating(a))"). Once incubation is over, the named tile and the
+contracted message, as DFU; cured (the temple's or a spell's cure), nothing. A named disease and one still incubating
+show both. The word and the line are the catalog's (`hud.status.unwell`, `status.health.unwell` -
+hudStatus.js:"export const unwellTileText", healthStatus.js:"export const UNWELL_LINE_TEXT"), drafted for every
+whole language. The classic skin keeps DFU's: no disease icon, named or not; its Status box says unwell as the
+enhanced skin's does. The warnings are unchanged - they were right.
+
+Pinned: `test/ui/fb1019f_unwell.test.js` (5: on the real producer, the character's own clock and the rest's magic
+rounds); PIN MOVED: `test/ui/enhanced/ui3_status.test.js` (the afflictions' law), `test/systems/bookshelf.test.js`
+(F198's incubating arm). Mutants: `tools/mutants/disease_unwell.json`.

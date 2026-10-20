@@ -1157,7 +1157,7 @@
   {
     "name": "PROF11-door-sculptor-unworded",
     "file": "src/net/accountClient.js",
-    "old": "  'prof-sculptor': () => t('account.refusal.profSculptor', 'Only a Sculptor carves stone decor - a Building choice at 100 (Masonry\\'s).'),   // PROF11; CRAFT3: the craft's\n",
+    "old": "  'prof-sculptor': () => t('account.refusal.profSculptor', 'Only a Sculptor can carve stone decor. Choose it at Masonry 100, under Building.'),   // PROF11; CRAFT3: the craft's\n",
     "new": "",
     "tests": [
       "test/net/prof11_service.test.js",

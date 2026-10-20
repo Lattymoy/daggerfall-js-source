@@ -2861,30 +2861,35 @@ function mirrorWithPoses(req, fns, skeleton, accumRoot) {
  *   the anchor - the point of the part that hangs FROM the hook (`anchor`, in the part's placed coordinates:
  *                after its attitude, the mirror and rule 14's offset - hangAnchor measures it once, at bind)
  *   the attitude - `rot`, a rig-space 3x3 the part's owner writes each frame (plumb, times the swing)
+ *   the size   - `size`, a uniform scale about the anchor its owner sets once at bind (HT-WAIST-SIZE: a lantern made
+ *                for a street or a hand, hung at a belt lantern's height - combat/fpArm.js hipLanternSize); 1 unset
  *
- * and the answer is an affine placeAtBone takes like any other: v -> rot * (v - anchor) + hook. The rig space is
- * the actor's own (Z up), so plumb there is plumb in the world - the body only turns in yaw. The result is
- * written into the hang's own scratch, so the per-frame path allocates nothing.
+ * and the answer is an affine placeAtBone takes like any other: v -> rot * size * (v - anchor) + hook. The rig space
+ * is the actor's own (Z up), so plumb there is plumb in the world - the body only turns in yaw. The result is
+ * written into the hang's own scratch, so the per-frame path allocates nothing. (A normal under the size is
+ * renormalised as a bone's scale is - placeNormalsAtBone, and the skin shader's.)
  */
 export function hangAffine(at, hang) {
-  const out = hang._at ?? (hang._at = { a: hang.rot, t: [0, 0, 0] });
-  out.a = hang.rot;
-  const k = hang.hookLocal ?? ZERO3, n = hang.anchor ?? ZERO3, r = hang.rot, a = at.a;
+  const out = hang._at ?? (hang._at = { a: new Float32Array(9), t: [0, 0, 0] });
+  const s = hang.size > 0 ? hang.size : 1, r = hang.rot, A = out.a;
+  for (let i = 0; i < 9; i++) A[i] = r[i] * s;
+  const k = hang.hookLocal ?? ZERO3, n = hang.anchor ?? ZERO3, a = at.a;
   const hx = a[0] * k[0] + a[1] * k[1] + a[2] * k[2] + at.t[0];
   const hy = a[3] * k[0] + a[4] * k[1] + a[5] * k[2] + at.t[1];
   const hz = a[6] * k[0] + a[7] * k[1] + a[8] * k[2] + at.t[2];
-  out.t[0] = hx - (r[0] * n[0] + r[1] * n[1] + r[2] * n[2]);
-  out.t[1] = hy - (r[3] * n[0] + r[4] * n[1] + r[5] * n[2]);
-  out.t[2] = hz - (r[6] * n[0] + r[7] * n[1] + r[8] * n[2]);
+  out.t[0] = hx - (A[0] * n[0] + A[1] * n[1] + A[2] * n[2]);
+  out.t[1] = hy - (A[3] * n[0] + A[4] * n[1] + A[5] * n[2]);
+  out.t[2] = hz - (A[6] * n[0] + A[7] * n[1] + A[8] * n[2]);
   return out;
 }
 const ZERO3 = Object.freeze([0, 0, 0]);
 
 /** HT-WAIST: where a hanging part hangs FROM - the top of its placed shapes, centred: the ring a lantern's handle
  *  ends in on any mesh authored Z-up, wherever its author put the origin. Measured over EVERY rigid piece the
- *  part bound (they share the one `hang`), so its shapes hang as one. Writes `hang.anchor`; answers it. */
+ *  part bound (they share the one `hang`), so its shapes hang as one. Writes `hang.anchor` - and `hang.height`, the
+ *  shapes' own from that top to their foot, in the same units (HT-WAIST-SIZE) - and answers the anchor. */
 export function hangAnchor(pieces, hang) {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
   for (const p of pieces ?? []) {
     if (p.hang !== hang || !p.source) continue;
     const o = p.boneOffset;
@@ -2894,10 +2899,11 @@ export function hangAnchor(pieces, hang) {
       const z = p.source[v + 2] + (o ? o[2] : 0);
       if (x < minX) minX = x; if (x > maxX) maxX = x;
       if (y < minY) minY = y; if (y > maxY) maxY = y;
-      if (z > maxZ) maxZ = z;
+      if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
     }
   }
   hang.anchor = Number.isFinite(maxZ) ? [(minX + maxX) / 2, (minY + maxY) / 2, maxZ] : [0, 0, 0];
+  hang.height = Number.isFinite(maxZ) ? maxZ - minZ : 0;
   return hang.anchor;
 }
 

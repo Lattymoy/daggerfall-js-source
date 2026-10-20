@@ -123,7 +123,7 @@ test('TRUE-CURSE: it bites every blow - the wielder pays 8 health a strike - and
   assert.deepEqual(liftCurse(damned, payer), { ok: false, reason: 'damned' });
   assert.equal(LR.isDamned(damned), true, 'the curse stands');
   assert.equal(payer.goldPieces, 1_000_000, 'and nothing is taken');
-  assert.equal(LIFT_REFUSALS.damned, 'Damned - no temple can lift this curse');
+  assert.equal(LIFT_REFUSALS.damned, 'Damned: no temple can lift this curse');
   assert.equal(reforgeLabel('damned', { shards: 0, gold: 0 }, { shards: 0, gold: 0 }, 'Lift'), 'Damned');
   const plain = known(legendaryWeapon());
   LR.cursePiece(plain, all(0.5));

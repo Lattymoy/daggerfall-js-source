@@ -223,7 +223,7 @@ export function createPartyTravel(host) {
       if (refusal) { cancel(offWith(refusal)); return; }
       t.go = Math.max(t.at, Math.round(now));
       host.poseDirty();
-      const line = tally.ready.length ? `The party sets out for ${t.name}.` : `Nobody else is coming - you set out for ${t.name} alone.`;
+      const line = tally.ready.length ? `The party sets out for ${t.name}.` : `No one else is coming. You set out for ${t.name} alone.`;
       host.say(line);
       host.mid(line);   // PARTY-READY: the wait ends on the HUD too
       return;
@@ -324,7 +324,7 @@ export function createPartyTravel(host) {
     host.poseDirty();
     if (near !== round.at) { host.say(PARTY_TRAVEL_TEXT.lost); return; }
     follow = { at: round.at, x: round.x, y: round.y, o: round.o, acct: lead.acct, name: lead.name, since: host.clock() };
-    host.say(`The party sets out for ${dest} - you follow ${lead.name || 'the leader'}.`);
+    host.say(`The party sets out for ${dest}. You follow ${lead.name || 'the leader'}.`);
   }
 
   /** A FOLLOWER WAITS FOR THE LEADER TO ARRIVE, then goes: beside them once their pose stands in the destination's
@@ -385,7 +385,7 @@ export function createPartyTravel(host) {
   function respondTo(yes) {
     const lead = leaderRow();
     const round = roundOf(lead);
-    if (!round || round.go != null) return { line: 'There is no journey to ready up for. /leader travels to your leader.' };
+    if (!round || round.go != null) return { line: 'There is no journey to get ready for. /leader travels to your leader.' };
     if (near !== round.at && !host.nearLeader(lead)) return { line: `Gather with ${lead.name || 'the leader'} to travel with the party.` };
     if (promptFor === round.at) closePrompt();
     asked = round.at;
@@ -433,7 +433,7 @@ export function createPartyTravel(host) {
       if (name === 'leader') { const r = offerLeader(); return r === true ? null : r; }
       if (s.leads()) {
         if (trip && trip.go == null) { trip = null; host.poseDirty(); host.mid('You call off the journey.'); return 'You call off the journey.'; }   // PARTY-READY: over the wait
-        return 'Choose a destination on the travel map - the party gathered with you is asked to come along.';
+        return 'Choose a destination on the travel map. The party gathered with you is asked to come along.';
       }
       const r = respondTo(null);
       return r.said ? null : r.line;

@@ -86,6 +86,7 @@ import { egLegionSummon, egBinderBroken, egSpotted } from './egLegion.js';   // 
 import { egShieldTurns, egShieldSoak } from './egLegion.js';   // AUDIT EG V (L2-7): a Shielded elite's shield, one law for every blow
 import { EG_OBJ, egLordsWake, egLordsAwake, egLordsFell, egLordsOf, egObjBroken, egObjsOf, zoneOut, egStun, egZonesKeep, EG_ZONE_FIGHT_MS } from './egLords.js';
 import { EG_SEAM, egLordsFight } from './egLords.js';   // EG-ZK (section 13.1): every lord through THE BOSS SEAM, called inside the one beat
+import { egLordsStand } from './egLords.js';   // FIELD BUGS 2026-10-19e LORD-SHARES: the lords stood for the company on the plate
 import { egPieceIn, egPolyEdgeDist } from './egShape.js';   // AUDIT EG IV (lane1 #11): a champion's wake ring off its floor
 import { egAsk, egVote, egAskResult, egAsksDue, egDecreesAsk, egDecreesChosen, egDecreeRanks, egDecreesInForce, egBargainDecree, egTideOf, egStratumAt, egStrataTo, egOffers, egPick, egPicksClose, egSurplus,
   egLoseNewest, egCacheDraw, egGive, egBuy, egVestigeX, egThreatX, egFadeOn, egMarkFoe, egRunOf, EG_CANTRIPS, EG_LUMEN_ADD, EG_LUMEN_RIFT } from './egRun.js';
@@ -509,7 +510,7 @@ export function egFall(B, sub, now, out, at = null) {
   // a carrier's fall drops the Memento where they fall
   for (const q of B.mementos) if (q.by === sub) { q.by = null; if (at) { q.x = at.x; q.z = at.z; q.h = B.h; } }
   if (B.F) B.F.fellThisHall = (B.F.fellThisHall ?? 0) + 1;
-  if (B.F) EG_SEAM.join(egLordsFight(B.F, null, {}, now), sub, m.name, m.lv, now, null, { admits: false });   // EG-ZQ (section 13.2): A FALL RETIRES A SHARE - out of every lord standing, through the seam
+  if (B.F) EG_SEAM.join(egLordsFight(B.F, null, {}, now), sub, m.name, m.lv, now, null, { admits: false });   // EG-ZQ (section 13.2): a fall told every lord standing, through the seam - FIELD BUGS 2026-10-19e LORD-SHARES: a lord awake keeps its share, one asleep lets it go
   egTallyFall(B.F, sub);   // EG-ZF: on a Court's chart
   B.log.push({ h: B.h, fall: m.name });
   out.push({ k: 'fall', s: sub, n: m.name, at: now, fin: final || last ? 1 : 0 }, { k: 'co', co: egCompanyOf(B) });
@@ -753,7 +754,7 @@ function standFight(B, spec, now, rng, out) {
       const k = Math.min(pillars.length, 2 + Math.ceil(n / 2));
       F.gauntlet = pillars.slice(0, k).map((p) => ({ p, stood: 0, at: 0, done: 0 }));
       for (const g of F.gauntlet) { const [c] = egLegionRaise(F, [EG_KIND.caster], [onPillar(g.p)], now, out); if (c) { c.pinned = 1; g.i = c.i; } }
-      P.obj = 'gauntlet'; P.left = F.gauntlet.length;
+      P.obj = 'gauntlet'; P.left = F.gauntlet.length; P.silenced = F.gauntlet.map((g) => g.done);   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: each plate's word from the wake (trialStep's)
     } else {
       if (v !== 'winch') egLegionRaise(F, [EG_KIND.bearer, EG_KIND.bearer], spec.gate.bearers.map((q) => [q.x, q.z]), now, out);
       const k = Math.min(pillars.length, 1 + Math.ceil(n / 3));
@@ -823,6 +824,7 @@ function standFight(B, spec, now, rng, out) {
   if ((F.D.warband || B.tide === 'warband') && spec.fight && spec.kind !== 'court') egSquad(F, ringSpots(spec, spec.fight.x, spec.fight.z, 6, 4, rng), now, out);
   F.sparkAt = now + 20_000; F.ashAt = now + 12_000; F.packAt = now + 30_000;
   fragStand(B, F, spec, now, out);
+  egLordsStand(F, L.filter(([, m]) => m.hereH === B.h).map(([sub]) => sub));   // FIELD BUGS 2026-10-19e LORD-SHARES: every lord stood (the Twin Court's at its part), sized for the company on its arrival plate - the whole fight said by the wake
   return F;
 }
 
@@ -1552,8 +1554,9 @@ function trial(B, spec, now, inHall, rng, out) {
   fragStep(B, F, spec, now, inHall, here, rng, out);
   errandStep(B, F, spec, now, inHall);   // AUDIT EG III (lane2 #3): an errand's mark stood in - a hall's part (section 16.1)
   // EG-ZQ (section 13.2): THE SEEN-AND-RESTORE STEP - every living member in the hall joins the lords through the seam, its
-  // share in each lord's health: one the hall did not wake with brings it, a recalled one's comes back. The fallen are never
-  // seen here (their shares retired at the fall - egFall), so the next beat never restores one
+  // share in each lord's health: one the hall or its lords did not wake with brings it, a recalled one's comes back. The fallen
+  // are never seen here - FIELD BUGS 2026-10-19e LORD-SHARES: a lord awake kept their shares at the fall (egFall), one asleep let
+  // them go; stood for the company on the plate (net/eliteGates/egLords.js egLordsStand), it wakes for the company standing
   if (egLordsOf(F).length) { const lf = egLordsFight(F, spec, {}, now); for (const b of inHall) { const mm = B.mem[b.sub]; EG_SEAM.join(lf, b.sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home }); } }
   const lordCtx = { decrees: D, n: F.n, covenant: B.covenant, nums: Object.fromEntries(B.co.map((c) => [c.sub, c.n])) };   // AUDIT EG IV (lane1 #15): the company's numerals, its errands given by them
   const legionCtx = {
@@ -1647,10 +1650,17 @@ function trial(B, spec, now, inHall, rng, out) {
     if (v === 'gauntlet') {
       for (const g of F.gauntlet) {
         if (g.done) continue;
+        // GAUNTLET-SLAIN (Field-Bugs-2026-10-19d): a Caster slain is a Caster silenced - its pillar was held open for the plate
+        // alone, which no screen marks, and a company that killed every Caster stood in a hall whose door would not give
+        if (g.i && !egBodyById(F, g.i)) { g.done = 1; out.push({ k: 'esay', w: 'silenced' }); continue; }
         const pl = g.p.plate, on = pl && here.concat(inHall).some((b) => dist(b.x, b.z, pl[0], pl[1]) <= EG_TOUCH_M);
         if (on) { g.stood = g.stood ? g.stood : now; if (now - g.stood >= EG_SILENCE_MS) { g.done = 1; const c = egBodyById(F, g.i); if (c) egGone(F, [c], EG_GONE.crumbled, '', now, out); out.push({ k: 'esay', w: 'silenced' }); } } else g.stood = 0;
       }
       F.pg.left = F.gauntlet.filter((g) => !g.done).length;
+      // FIELD BUGS 2026-10-19f GAUNTLET-PLATES (section 8.3): and plate by plate, in `spots.pillar`'s order, whether its Caster is
+      // silenced (1) - by its plate held or its death (GAUNTLET-SLAIN, above) - so the screen marks the plates still to hold
+      // and dims a silenced one (scenes/eliteGates/egFight.js gauntletPlates).
+      F.pg.silenced = F.gauntlet.map((g) => g.done);
       if (!F.pg.left) { door(B, spec, now, out); return; }
     } else if (v === 'winch') {
       const plates = spec.spots.winch ?? [], need = Math.min(2, living(B).length);   // AUDIT EG V (L3-2; section 8.3): `n` the living company now, never the wake's

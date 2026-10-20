@@ -191,16 +191,82 @@ current design "does not work in an enjoyable manner"):
   nothing to a mace's blow until 92%.) A kit is not spent on less than a
   hundredth of a piece's condition, asks when the ceiling holds back a piece
   the player may have meant, and is kept, said, on every refusal.
-- **Selling, online** (SELL-AS-FOUND, AUDIT ECON O1, `src/systems/tradeModes.js`):
-  a counter pays for a piece no more than the condition the world handed it
-  over at. Roleplay & Realism: Items hands loot over worn and prices a sale
-  by condition, so at a third a repair cost less than the sale it added, and
-  mending loot to sell it paid every player - a printer opened by this arc's
-  own price, closed with it. A repair is for using a piece, never for
-  selling it; a piece handed over whole is untouched.
+- **Selling, online** (SELL-AS-FOUND, AUDIT ECON O1, and MEND-THIRD, below;
+  `src/systems/item/foundMark.js`, `src/systems/tradeModes.js`): a counter
+  pays for a found piece at the condition the world handed it over at, and a
+  third of what its owner's own mends - a kit, Repairs Objects, the Varla
+  Stone - put past it. Roleplay & Realism: Items hands loot over worn and
+  prices a sale by condition, so at a third a repair cost less than the sale
+  it added, and mending loot to sell it paid every player - a printer opened
+  by this arc's own price. SELL-AS-FOUND closed it by crediting a mend
+  nothing; MEND-THIRD credits its owner's own mends and never a smith's paid
+  one, which keeps it closed at every counter. A piece handed over whole is
+  untouched.
 - **Next** (Phase 3): the Vault and Loadouts make "the right tool for the
   job" a choice rather than a chore, and secure services let a smith or a
   mage sell repairs without either side being robbed.
+
+## A mend sells for a third (MEND-THIRD, 2026-10-19)
+
+The ask: the Discord's #feature-feedback, "Bring back loot price based on the
+condition!" (Laurah): "It is pointless change, goofy and actively discourage
+players to repair an item in order to maximalize the sell price - like with
+repair kits at early levels, and enchants at higher (which the latter is not
+that powerful while having entire bag full of items)". It came the day
+ASF-DEATH (`01-Overview/bugs/Field-Bugs-2026-10-19b.md`) gave Unleveled Loot's
+death drops SELL-AS-FOUND's mark, so online nearly every weapon and piece of
+armour a player loots sold as found, and a kit or Repairs Objects added nothing
+to its sale. Mac asked for a middle ground; offered a third of every mend,
+Mac: "Do it". Audited the same day (`01-Overview/audits/Audit-Mend-Third.md`),
+the third of a SMITH'S mend paid again - repaired at a cheap smith and sold at
+a dear counter (+10,433 on a Daedric cuirass found at 20%, Mercantile and
+Personality 100, a quality-1 smith and a quality-20 counter), or at the
+Fighters Guild's rank discount (+9,383 at rank 9, one counter) - and the first
+build's "a smith's repair is a loss on the sale" had held at one counter alone.
+Asked again, Mac: "Only your own mends", "Keep a third".
+
+**The rule** (`src/systems/item/foundMark.js`, the found mark's one home;
+`src/systems/tradeModes.js` `saleConditionPercentage`). A piece the world
+hands over worn carries `foundCondition`. Its owner's OWN mends - a Repair Kit
+(`smithItems.js` useRepairKit), a tick of Repairs Objects (`enchantments.js`),
+the Varla Stone (`ayleidStones.js`) - count the part of each mend above the
+mark to `selfMended` (`creditOwnMend`), never past the room above the mark; a
+smith's paid repair counts none. Online a counter reads a marked piece at its
+mark and `MEND_SALE_SHARE` (a third) of `selfMended`, no more than the piece
+holds above the mark, rounded down (`foundSalePercentage`). Wear after the
+find eats the credit first, and below the mark the piece reads its own
+condition; a piece with no mark, and every piece offline, sell at their own
+condition. The Mages Guild's Sell Magic Items reads the same, online, for a
+marked piece (AUDIT L3-1), and so does a patron's worth (L1-4).
+
+**What it does.** A smith's whole repair of a found piece adds nothing to its
+sale, at any counter, in any region, at any guild's discount - so mending to
+sell at a smith is the repair's price lost, as under SELL-AS-FOUND. An
+owner's mend sells for a third of what it put past the mark. On a Daedric
+cuirass found at 47% (Mercantile 30, Personality 40, a quality-10 counter): a
+field kit lifts its sale from 22,350 to 24,727 (+7,133 before SELL-AS-FOUND,
+nothing under it); a smith-made Daedric kit (one Daedric Ingot, base value
+800, and a Cured Leather) adds 3,804 (11,888 before SELL-AS-FOUND). A kit pays
+on the metals worth more than its ingot: at that counter from Moonstone and
+Dwarven up, about even at Silver, a loss at Iron and Steel - and on Daedric
+plate the ingot is worth more forged into a Standard cuirass (7,926 an ingot)
+than spent as a kit. A piece takes three smith's kits or four field kits to
+its ceiling (three quarters; nine tenths for a Superior kit).
+
+**The ring, the deliberate faucet** (AUDIT L2-3; Mac: "Keep a third"). A ring
+of Repairs Objects is free, mends one carried piece a fiftieth of its
+condition every four rounds, and runs through every rest: one 8-hour rest
+over six Daedric cuirasses found at 47% adds 37,092 to their sale (134,100 to
+171,192), about 309 gold for each of the rest's 120 ticks; and a found piece
+the ring mends whole sells about 37% above its as-found price, over the
+roll's whole range. It is bounded by the loot itself: no piece's credit passes a third of
+its room above the mark, and wear and re-mending cannot stack it. Before
+SELL-AS-FOUND the same rest added 114,126; under it, nothing. The Varla Stone
+mends a worn enchanted piece whole once, a rare find (an enchanted Daedric
+cuirass found at 20%: 9,510 to 21,874).
+
+`test/systems/mend_third.test.js`, `test/systems/auditmendthird.test.js`,
+`tools/mutants/mend_third.json`, `tools/mutants/auditmendthird.json`.
 
 ## Homes, priced by what you get (HOME-PRICE, 2026-10-04)
 

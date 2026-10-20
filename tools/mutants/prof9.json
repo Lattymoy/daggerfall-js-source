@@ -1254,7 +1254,7 @@
   {
     "name": "AUDIT-PROF12-P1-apothecary-old-words",
     "file": "src/net/fortLaw.js",
-    "old": "`members' jewellery here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
+    "old": "`members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
     "new": "`members' alchemy, cooking and jewelcrafting here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
     "tests": [
       "test/systems/prof12_client.test.js",

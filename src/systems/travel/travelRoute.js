@@ -514,8 +514,45 @@ export function joinPoint(me, a, b) {
  * @param {{x:number,z:number}} end
  * @param {(leg: {x:number,y:number}) => number[]} centre - a leg's pixel middle, native
  */
-export function routeDrawPoints(me, legs, end, centre) {
-  return [[me.x, me.z], ...legs.slice(0, -1).map((l) => (l.at ? [l.at.x, l.at.z] : centre(l))), [end.x, end.z]];
+export function routeDrawPoints(me, legs, end, centre, via = null) {
+  return [[me.x, me.z], ...legs.slice(0, -1).map((l) => (l.at ? [l.at.x, l.at.z] : centre(l))), ...(via ? [[via.x, via.z]] : []), [end.x, end.z]];   // AUDIT OW-REVISITED L2-1/L2-2: where the last leg leaves its road (finalRoadVia)
+}
+
+/**
+ * AUDIT OW-REVISITED L3-2 / L6-1: THE WAY STILL TO WALK - the drawn line's own (scenes/world.js travelViewRoute) as the
+ * forecast reads it: from `me`, a town's streets still ahead (`route.street`'s points from the run the walk is on, `seg`
+ * - the walked ones dropped: they ran the forecast's distances back through the town), the rejoin, then each leg's point
+ * from the one being walked on (`natives`, one a leg - routeDrawPoints - the last leg's road end and the journey's end
+ * its own). Native `[x, z]` points, and each stretch's own (`of`: the leg's index in the route, 'street' or 'join'). Null
+ * with no route or no line.
+ */
+export function wayStillToWalk(me, route, seg, natives) {
+  const n = natives ?? [];
+  if (!route || n.length < 2) return null;
+  const points = [[me.x, me.z]], of = [];
+  for (const q of (route.street?.pts ?? []).slice(Math.max(0, seg | 0))) { points.push([q.x, q.z]); of.push('street'); }
+  if (route.join) { points.push([route.join.x, route.join.z]); of.push('join'); }
+  const last = (route.legs?.length ?? 1) - 1;
+  for (let k = Math.min(n.length - 1, (route.i ?? 0) + 1); k < n.length; k++) { points.push([n[k][0], n[k][1]]); of.push(Math.min(k - 1, last)); }
+  return { points, of };
+}
+
+/**
+ * AUDIT OW-REVISITED L2-1 / L2-2: WHERE A ROUTE'S LAST LEG LEAVES ITS ROAD for the journey's end - a place: its leg's own
+ * pixel middle, the road's end (the place's middle lies off it for the main quest's eight off-middle dungeons, whose
+ * walk said "arrived" fifty metres short of them); a spot: the road's point nearest it (joinPoint), so the last run is
+ * walked on the road to there and off it to the spot (it was walked on one bearing from the leg before - a click 300 m
+ * beside a road walked 280 m beside it, and one past a bend cut the bend). Null where the last leg walks no road (open
+ * ground, the sea, a join's or a ring's own point) or has none behind it. `mid(leg)` a leg's pixel middle, native -
+ * `{x, z}` or `[x, z]`; `end` native `{x, z}`. The walk (travelOptions.js startRouteLeg) and the drawn line
+ * (routeDrawPoints' `via`) ask the same.
+ */
+export function finalRoadVia(legs, end, mid, { place = false } = {}) {
+  const last = legs?.[legs.length - 1], prev = legs?.[legs.length - 2];
+  if (!last || !prev || !end || last.at || last.ring || (last.kind !== 'road' && last.kind !== 'track')) return null;
+  const xz = (l) => { const v = l.at ?? mid(l); return Array.isArray(v) ? { x: v[0], z: v[1] } : { x: v.x, z: v.z }; };
+  const b = xz({ ...last, at: null }), a = xz(prev);
+  return place ? b : joinPoint(end, a, b);
 }
 
 /** How much of a route is on a road or a track - the readout's "by the road" line. 0..1. OWS2: a road or a track

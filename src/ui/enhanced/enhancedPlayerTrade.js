@@ -142,7 +142,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const staged = stagedSet();
     const worn = (it) => it.equipSlot != null;
     const items = (deps.items() ?? []).filter((it) => !worn(it) && !staged.has(it) && tabAccepts(it, tab));
-    if (!items.length) list.append(el('p', 'packempty', 'Nothing here answers to that page.'));
+    if (!items.length) list.append(el('p', 'packempty', 'Nothing here fits this page.'));
     for (const it of items) list.append(row(it, 'pack'));
     col.append(list);
     return col;
@@ -222,8 +222,8 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const bar = el('div', 'remoteacts trade-footer');
     const status = session.phase === 'committing' ? 'Exchanging goods...'
       : session.phase === 'done' || session.phase === 'cancelled' ? (session.lastMessage || '')
-        : session.withdrawing ? `Cancelling - waiting for ${session.peerName} to answer...`   // AUDIT 68: a confirm that left binds until the peer answers
-        : session.bothLocked ? 'Both locked - press Confirm to finish, or change your offer to reopen.'
+        : session.withdrawing ? `Canceling. Waiting for ${session.peerName} to answer...`   // AUDIT 68: a confirm that left binds until the peer answers
+        : session.bothLocked ? 'Both locked. Press Confirm to finish, or change your offer to reopen.'
           : session.myLock ? `Locked. Waiting for ${session.peerName} to lock...`
             : `Any change to either offer unlocks both sides. Stay within ${TRADE_RANGE_M} m of ${session.peerName}.`;
     bar.append(el('p', 'ptrade-note', note || status));

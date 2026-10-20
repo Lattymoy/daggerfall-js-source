@@ -127,7 +127,7 @@ test('RVN-GEAR THE REFUSALS: the rank\'s metal and its tier, each saying the ran
   assert.equal(G.gearRefusal(r, { ...blade(120, 0), timeForItemToDisappear: 99 }), 'A summoned piece fades in any hand but yours.');
   assert.equal(G.gearRefusal(r, { ...blade(120, 0), artifact: true }), 'It answers to you alone.');
   const bear = sworn({ mobileType: M.GrizzlyBear });
-  assert.equal(G.gearRefusal(bear, blade(120, 0), { kindName: 'Grizzly Bear' }), 'Grizzly Bear wields no weapon and wears no armour - only a charm.');
+  assert.equal(G.gearRefusal(bear, blade(120, 0), { kindName: 'Grizzly Bear' }), 'Grizzly Bear wields no weapon and wears no armor, only a charm.');
   assert.equal(G.gearRefusal(bear, amulet()), null, 'a charm on a cord');
   assert.equal(G.gearRefusal(r, plate(110, 0)), 'Give it a one-handed weapon first.');
   assert.equal(G.gearRefusal(r, plate(110, 0), { gear: { weapon: blade(122) } }), 'Its weapon needs both hands.');
@@ -335,7 +335,7 @@ test('RVN-GEAR THE PAGE: Gear opens its kit - a well a slot (a beast\'s the char
   buttons(d, 'Gear')[0].onclick();
   d = draw();
   assert.equal(byClass(d, 'cmp-gslot').length, 10, 'a well a slot');
-  assert.match(d.textContent, /At Rank I it bears up to Silver and Magic pieces\./);
+  assert.match(d.textContent, /At Rank I it can wear up to Silver and Magic pieces\./);
   assert.match(d.textContent, /From your pack/);
   const gives = buttons(d, 'Give');
   assert.equal(gives.length, 2);
@@ -353,7 +353,7 @@ test('RVN-GEAR THE PAGE: Gear opens its kit - a well a slot (a beast\'s the char
   d = draw();
   const wells = byClass(d, 'cmp-gslot');
   assert.equal(wells.length, 1, 'a beast: the charm alone');
-  assert.match(d.textContent, /Grizzly Bear wields no weapon and wears no armour - it may wear a charm\./);
+  assert.match(d.textContent, /Grizzly Bear can't use weapons or armor, but it can wear a charm\./);
   assert.ok(bear.sworn);
 });
 
@@ -388,13 +388,13 @@ test('RVN-GEAR AUDIT RVN G1, G6, G7 THE PAGE\'S LIST AND MARKS: the pieces it ca
   assert.match(d.textContent, /Condition 100%/);
   a.currentCondition = 0;
   d = draw();
-  assert.match(d.textContent, /Broken - not worn until it is mended/);
+  assert.match(d.textContent, /Broken: not worn until repaired/);
   assert.ok(byClass(d, 'cmp-gname').some((n) => n.classList.contains('is-broken')));
   // the release counts the kit
   N.revenantRecord(me, r.id).companion.items = [];
   buttons(d, 'Release')[0].onclick();
   d = draw();
-  assert.match(d.textContent, /hands you back what it carries \(one item\)/);
+  assert.match(d.textContent, /giving back what it carries \(one item\)/);
 });
 
 // ── the page's fake document (revenant_companions.test.js's) ────────

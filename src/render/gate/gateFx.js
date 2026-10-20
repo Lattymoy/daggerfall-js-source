@@ -65,6 +65,8 @@ export function fxBurstOf(A) {
     case 'meteor': return FX_KINDS.meteor;
     case 'nova': return FX_KINDS.nova;
     case 'wrath': case 'reckon': return FX_KINDS.dagon;
+    case 'sunder': return FX_KINDS.slam;   // WB14d: the tear at his feet, and the halves meeting as a bound lands
+    case 'rejoin': return FX_KINDS.cross;
     default: return null;
   }
 }

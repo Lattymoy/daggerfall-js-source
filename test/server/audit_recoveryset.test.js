@@ -321,7 +321,7 @@ test('AUDIT RECOVERY-SET C9 B7: the card numbers the codes as the file does; Cop
   try {
     Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: async () => { throw new Error('denied'); } } }, configurable: true });
     await buttons(card).find((b) => b.textContent === 'Copy').onclick();
-    assert.match(flow.error, /may not write the clipboard/, 'a refused copy said nothing');
+    assert.match(flow.error, /blocked copying to the clipboard/, 'a refused copy said nothing');
     card.paint();
     URL.createObjectURL = () => { throw new Error('no blobs here'); };
     buttons(card).find((b) => b.textContent === 'Save as a file').onclick();

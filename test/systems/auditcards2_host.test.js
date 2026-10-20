@@ -261,7 +261,7 @@ test('AUDIT CARDS-2 the dead stand up, the evening\'s end is said, fifty sitting
   assert.equal(g.phase, 'over');
   assert.ok(o.button('Leave the table'), 'the way out');
   assert.match(text(o.panel()), /You are out of chips\./);
-  assert.equal(hudm.cardHudModel({ phase: 'over', why: 'empty', stakes: g.stakes }).message, 'The table has emptied - every patron is broke.');
+  assert.equal(hudm.cardHudModel({ phase: 'over', why: 'empty', stakes: g.stakes }).message, 'The table has emptied. Every patron is broke.');
   assert.equal(hudm.cardHudModel({ phase: 'over', why: 'left', stakes: g.stakes }).message, 'You leave the table.');
   o.api.standFromCardTable();
   assert.equal(cursorHeld(), false, 'the over table lets it go');
@@ -380,7 +380,7 @@ test('CARDS9/10 the house at its card table: a pack bought from the purse at the
   poor.press('Buy a card pack');
   assert.equal(poor.playerEntity.goldPieces, 1, 'nothing taken');
   assert.equal(poor.playerEntity.items.length, 0);
-  assert.match(poor.said.at(-1), /your purse is short\.$/);
+  assert.match(poor.said.at(-1), /Your purse is short\.$/);
   poor.api.standFromCardTable();
   // the other game
   h.press('Play Iliac Hand');

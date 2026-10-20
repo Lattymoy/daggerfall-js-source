@@ -37,7 +37,7 @@ import { buildGateModel, gateArchProfile, insideGateStone, GATE_ARCHIVE, GATE_HE
 import { gateArt } from '../../world/gate/gateArt.js';
 import { GatePassRenderer, gateSpinRate } from '../../render/gate/gatePass.js';
 import { gateSceneXZ } from '../../systems/gate/gateOmen.js';
-import { gateYaw, gatePhase, gateCountdown, countdownText, countdownWords, gateModsOf, gateBossOf, GATE_RISE_MS, GATE_COLLAPSE_MS } from '../../net/gate/gateLaw.js';
+import { gateYaw, gatePhase, gateCountdown, countdownText, countdownWords, gateModsOf, gatePortentsOf, gateBossOf, GATE_RISE_MS, GATE_COLLAPSE_MS } from '../../net/gate/gateLaw.js';
 import { marksCardModel } from '../../ui/gate/gateMarksView.js';   // WB9a: tonight's marks, over the screen before the gate is entered
 import { trs } from '../../world/mat4.js';
 import { RAY_DISTANCE } from '../../player/activate.js';
@@ -268,7 +268,7 @@ export function createGatePool({
         // WB9a (Mac: "Allow people to see the modifers/trial as a popup before it starts"): TONIGHT'S MARKS beside the
         // countdown, while it stands - the day's draw (net/gate/gateLaw.js gateModsOf), which is what the relay's fight is
         // born under; a gate collapsing (its master fallen, or the Wrath) has none to show
-        marks(cd && place.phase !== 'collapsing' ? marksCardModel(gateModsOf(g.day), gateBossOf(g.day), { mode: 'gate' }) : null);
+        marks(cd && place.phase !== 'collapsing' ? marksCardModel(gateModsOf(g.day), gateBossOf(g.day), { mode: 'gate', pt: gatePortentsOf(g.day) }) : null);
       } else { banner(null); marks(null); }
       return place;
     },

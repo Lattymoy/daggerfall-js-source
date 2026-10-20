@@ -189,15 +189,15 @@ export const YARD_SYNC_S = 0.5;
  *  stands every yard at once, and its merges are spread a frame each. */
 export const YARD_MERGES_A_FRAME = 1;
 /** What the decorator says of a piece off the lot, in the house, or on another building's ground. */
-export const YARD_OFF_LOT = 'Outside your lot - keep it within the marked edge.';
-export const YARD_IN_HOUSE = 'That is inside your house - place it in the yard around it.';
+export const YARD_OFF_LOT = 'Outside your lot. Keep it within the marked edge.';
+export const YARD_IN_HOUSE = 'That is inside your house. Place it in the yard around it.';
 export const YARD_ON_OTHER = "That is another building's ground.";
 export const YARD_FULL = `Your yard already holds ${DECOR_YARD_CAP} pieces.`;   // the bar's words (ui/decorPanel.js decorWhyNot, `yard`)
 /** AUDIT GUILD-YARD: the same two in a guild hall's yard - the hall's, never "your house" (decorWhyNot's `hall`). */
-export const YARD_IN_HALL = "That is inside the hall - place it in the hall's yard around it.";
+export const YARD_IN_HALL = "That is inside the hall. Place it in the hall's yard around it.";
 export const YARD_HALL_FULL = `The hall's yard already holds ${DECOR_YARD_CAP} pieces.`;
 /** FB1001 ROAD-LOT: what the decorator says of a piece on the town's road or a path. */
-export const YARD_ON_ROAD = 'That is the road - keep the street and its paths clear.';
+export const YARD_ON_ROAD = 'That is the road. Keep the street and its paths clear.';
 /** YARD-HEIGHT: what the decorator says of a piece standing higher than a yard's may (net/decorLaw.js DECOR_YARD_HIGH) -
  *  AUDIT Y3: the service's own refusal's sentence. */
 export const YARD_TOO_HIGH = DECOR_YARD_HIGH_WHY;
@@ -558,6 +558,8 @@ export function createHomeYards(deps) {
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
+      // DECOR-CLEAR / ROCK-CLEAR: no body of its own - a piece landing round a passer-by is held back from the body the
+      // world collider's gate guards (world.js settles it every frame), solid once they are clear of it
       // YARD-LIGHT: a lamp lights as the town's (yardLampOf) - the room's machinery mounts it when its picture stands, moves
       // it with a recentre (restand) and takes it down with the piece; `lamps` reads them in the order the pieces stand
       lampOf: yardLampOf,

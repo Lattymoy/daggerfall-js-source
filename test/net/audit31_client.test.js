@@ -299,7 +299,7 @@ test('AUDIT 31 H2, R1, U8: the Guild tab reads the guild Stores at each look, pe
   btn('Try again').click();
   await ticks(6); panel.render(); await ticks(6); panel.render();
   assert.match(panel.root.textContent, /120 Oak Logs20 of them yours/);
-  const units = () => byClass(panel.root, 'dfsocial-field').find((f) => f.getAttribute('aria-label') === 'Units (all of it when empty)');   // GUILD-UX (PIN MOVED): empty is all of it
+  const units = () => byClass(panel.root, 'dfsocial-field').find((f) => f.getAttribute('aria-label') === 'Units (leave empty for all)');   // GUILD-UX (PIN MOVED): empty is all of it
   const type = (v) => { const u = units(); u.value = v; u.dispatch('input', {}); };
   type('21');
   assert.equal(btn('Take out').disabled, true, 'past their own 20');

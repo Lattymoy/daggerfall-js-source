@@ -27,7 +27,7 @@ export const SD_BAR_CSS = Object.freeze({
 export const SD_BAR_TEXT = Object.freeze({
   name: 'The Brass Remnant',
   stirs: (secs) => `It stirs - ${secs}s`,
-  outside: 'Outside time - strike the Echoes',
+  outside: 'Outside time. Strike the Echoes',
   returns: (secs) => `It returns - ${secs}s`,   // AUDIT SD II (L6 F10): the Last Moment's return, the Echoes gone
   rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises - ${secs}s`,   // AUDIT SD II (L6 F6): the pair's window; AUDIT SD III (T5): its count after the dash, as every countdown on the bar - "rises in 12s" came in afresh each second
   risesIn: (secs) => `rises in ${secs}s`,   // the Echoes' chip: "Gold 45% - Silver rises in 7s"

@@ -329,7 +329,7 @@ test('ENH-NOTICE1: the sheet - right edge, pointer-transparent, a slide the modu
 });
 
 // ── ENH-NOTICE2: THE WINDOWS' OWN BOXES ──────────────────────────────
-// Eight classic windows drawn on both skins raise DFU's click-anywhere
+// Nine classic windows drawn on both skins raise DFU's click-anywhere
 // box from inside themselves and paint it as their own parchment (a
 // host holds one overlay slot, so they do not push an ActionTextBox).
 // `noticeFrame` is their seam: rows while such a box is up, null when
@@ -459,8 +459,10 @@ test('ENH-NOTICE2: the service flow - plain text steps ride the panel in place, 
   });
 });
 
-test('ENH-NOTICE2: THE ROSTER - the eight windows drawn on both skins that raise their own click-anywhere box, and (ENH-NOTICE3) the model, the three DOM windows and the wait page - no more and no fewer', () => {
-  const ROSTER = ['potionMakerWindow', 'itemMakerWindow', 'spellMakerWindow', 'bankWindow', 'restWindow', 'covenWindow', 'guildServiceWindow', 'guildServiceWindows'];
+test('ENH-NOTICE2: THE ROSTER - the nine windows drawn on both skins that raise their own click-anywhere box, and (ENH-NOTICE3) the model, the three DOM windows and the wait page - no more and no fewer', () => {
+  // PIN MOVED, SPELLSHOP-SAID (FIELD BUGS 2026-10-19f): the spellbook is the ninth - ENH-NOTICE2 counted it among the
+  // windows the enhanced skin replaces with a DOM twin, and SHOP-PLUS brought it back, in buy mode, inside the port
+  const ROSTER = ['potionMakerWindow', 'itemMakerWindow', 'spellMakerWindow', 'bankWindow', 'restWindow', 'covenWindow', 'guildServiceWindow', 'guildServiceWindows', 'spellbookWindow'];
   const AT = { itemMakerWindow: 'item/', spellMakerWindow: 'spell/' };   // TIDY2: the two in feature folders
   for (const f of ROSTER) {
     const src = rd(`src/ui/${AT[f] ?? ''}${f}.js`);
@@ -472,7 +474,9 @@ test('ENH-NOTICE2: THE ROSTER - the eight windows drawn on both skins that raise
   // PopupText model takes drawEnhancedToasts (ENH-NOTICE3 - the HUD line
   // as a toast); the DOM-native windows that raise a box of their own
   // take noticeHold; Foraging's wait page takes noticeFrame; the
-  // quest herald (GUIDE3) takes drawEnhancedToasts as PopupText does.
+  // quest herald (GUIDE3) takes drawEnhancedToasts as PopupText does;
+  // the enhanced port (SPELLSHOP-SAID) takes noticeShown - a ported
+  // window's notice takes its first click.
   // TIDY2: an importer is one whose import RESOLVES to the notice, wherever the two stand - a spelled `./enhancedNotice.js`
   // stopped meaning that the day the windows went into feature folders
   const NOTICE = 'src/ui/enhanced/enhancedNotice.js';
@@ -480,7 +484,7 @@ test('ENH-NOTICE2: THE ROSTER - the eight windows drawn on both skins that raise
   const importers = readdirSync(new URL('../../src/ui/', import.meta.url), { recursive: true }).filter((f) => f.endsWith('.js'))
     .filter((f) => [...rd(`src/ui/${f}`).matchAll(/from '(\.[^']+)'/g)].some((m) => resolvesTo(`src/ui/${f}`, m[1])))
     .map((f) => f.split(/[\\/]/).pop().replace(/\.js$/, '')).sort();
-  assert.deepEqual(importers, [...ROSTER, 'actionText', 'talkWindow', 'hudText', 'enhancedTavern', 'enhancedInventory', 'heldMap', 'questHerald', 'waitWindow'].sort());
+  assert.deepEqual(importers, [...ROSTER, 'actionText', 'talkWindow', 'hudText', 'enhancedTavern', 'enhancedInventory', 'heldMap', 'questHerald', 'waitWindow', 'enhancedPort'].sort());
 });
 
 // ── ENH-NOTICE3 (2026-09-21, Mac: "All mods, including climates and

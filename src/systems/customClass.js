@@ -279,10 +279,10 @@ export function parseCustomClassDoc(input) {
   const fail = (error) => ({ ok: false, error });
   let doc = input;
   if (typeof input === 'string') {
-    try { doc = JSON.parse(input); } catch { return fail('That is not a class file - it could not be read as JSON.'); }
+    try { doc = JSON.parse(input); } catch { return fail('That is not a class file. It could not be read.'); }
   }
   if (!doc || typeof doc !== 'object' || doc.format !== CLASS_FILE_FORMAT) return fail('That is not a DFO Online class file.');
-  if (!Number.isInteger(doc.version) || doc.version < 1) return fail('That class file has no version it can be read by.');
+  if (!Number.isInteger(doc.version) || doc.version < 1) return fail('That class file has no valid version number.');
   if (doc.version > CLASS_FILE_VERSION) return fail('That class file was made by a newer version of the game.');
   // AUDIT UXB1: the name box types printable characters alone; a file could carry anything - a line break into the
   // classic font's one-line label, or a bidi override that turns the name around wherever another player reads it

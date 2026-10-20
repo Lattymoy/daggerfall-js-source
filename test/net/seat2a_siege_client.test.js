@@ -78,8 +78,8 @@ test('SEAT2a part three HONOURS AND THE SPOILS: 50 Marks and 2,000 Renown XP to 
     'In week 20, the Tourney for Anticlere was fought, but neither guild could pay for the Charter of Anticlere.',
   ]);
   for (const [k, v] of Object.entries(SIEGE_WHY)) assert.equal(accountRefusalText(k), v, k);
-  assert.equal(accountRefusalText('field-unsettled'), 'Waiting for the other side\'s scouts to agree on the field - try again in a moment.');
-  assert.equal(accountRefusalText('not-yours'), 'That gate\'s receipt names another account.', 'the gate\'s words untouched');
+  assert.equal(accountRefusalText('field-unsettled'), 'Waiting for the other side\'s scouts to agree on the field. Try again in a moment.');
+  assert.equal(accountRefusalText('not-yours'), 'That gate result belongs to another account.', 'the gate\'s words untouched');
 });
 
 test('SEAT2a part three THE BOOK\'S CALLS: a pass asked with the field this game derived, its answer passed on; an unsettled field said in words with its word kept, to ask again; a receipt claimed for this character, the standings read afresh (mutants: the field sent; the answer; the refusal; the character)', async () => {

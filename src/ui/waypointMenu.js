@@ -152,7 +152,7 @@ export function openWaypointMenu(o) {
       b.type = 'button';
       const allowed = k === 'personal' || o.canKind?.[k] !== false;
       b.disabled = !allowed;
-      b.title = k === 'personal' ? 'Only you see it' : !allowed ? `You are not in a ${k}` : !live ? 'Kept here - you are offline, share it later' : `Your ${k} sees it`;
+      b.title = k === 'personal' ? 'Only you see it' : !allowed ? `You are not in a ${k}` : !live ? 'Saved here. You are offline, so share it later' : `Your ${k} sees it`;
       b.onclick = (e) => { e.preventDefault(); kind = k; paint(); };
       kindBtns[k] = b;
       kinds.append(b);
@@ -160,7 +160,7 @@ export function openWaypointMenu(o) {
     box.append(kinds);
   }
   // the colour
-  box.append(el('label', 'wpm-label', 'Flag colour'));
+  box.append(el('label', 'wpm-label', 'Flag color'));
   const sw = el('div', 'wpm-swatches');
   const swatches = {};
   for (const c of WAYPOINT_COLORS) {
@@ -188,7 +188,7 @@ export function openWaypointMenu(o) {
   const doAdd = () => {
     const r = addWaypoint({ kind, mx: o.point.mx, my: o.point.my, name: input.value, color, by: o.by ?? '' });
     if (!r) { closeWaypointMenu(); return; }
-    if (r.shared === false) o.onNote?.(`Waypoint "${r.waypoint.name}" kept - it could not be sent to your ${kind} right now (use Share again later).`);
+    if (r.shared === false) o.onNote?.(`Waypoint "${r.waypoint.name}" saved, but it could not be sent to your ${kind} right now. Use Share again later.`);
     closeWaypointMenu();
   };
   const doRename = () => {

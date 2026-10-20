@@ -1,0 +1,156 @@
+[
+  {
+    "name": "QUESTOR-SAID-the-guild-door-closes-bare",
+    "file": "src/systems/quest/offerFlow.js",
+    "old": "    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return questorBusy(this.machine);\n",
+    "new": "    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return { kind: 'close' };\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js",
+      "test/systems/quest/questoffers.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-coven-door-closes-bare",
+    "file": "src/systems/quest/offerFlow.js",
+    "old": "    if (this.machine.isLastNPCClickedAnActiveQuestor()) return questorBusy(this.machine);\n",
+    "new": "    if (this.machine.isLastNPCClickedAnActiveQuestor()) return { kind: 'close' };\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js",
+      "test/systems/quest/covenwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-close-gives-no-reason",
+    "file": "src/systems/quest/offerFlow.js",
+    "old": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };\n",
+    "new": "  return { kind: 'close', quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js",
+      "test/systems/quest/covenwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-close-names-no-quest",
+    "file": "src/systems/quest/offerFlow.js",
+    "old": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };\n",
+    "new": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: null };\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js",
+      "test/systems/quest/covenwindow.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-bridge-boxes-nothing",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "        case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];\n",
+    "new": "        case 'close': return [];\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js",
+      "test/systems/quest/gql1.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-every-close-boxed",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "        case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];\n",
+    "new": "        case 'close': return [{ rows: questorBusyRows(step.quest) }];\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js",
+      "test/systems/quest/gql1.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-name-never-said",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "  const name = quest?.displayName || '';\n",
+    "new": "  const name = '';\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-row-off-centre",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.'), center: true }];\n",
+    "new": "    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.') }];\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-scan-finds-nothing",
+    "file": "src/systems/quest/machine.js",
+    "old": "        if (this.isNPCDataEqual(resource.questorData, clicked)) return { quest, person: resource };\n",
+    "new": "        if (this.isNPCDataEqual(resource.questorData, clicked)) return null;\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js",
+      "test/systems/quest/questoffers.test.js",
+      "test/systems/quest/questshelf.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-a-finished-quest-still-shuts-the-door",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (quest.questComplete) continue;\n      // QUEST-SHELF (Themicles' K'avar",
+    "new": "      // QUEST-SHELF (Themicles' K'avar",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js",
+      "test/systems/quest/questoffers.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-a-quest-set-aside-still-shuts-the-door",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (isShelved(quest)) continue;\n      for (const resource of quest.resources.values()) {\n        if (!resource.isPerson || !resource.isQuestor) continue;\n        if (this.isNPCDataEqual(resource.questorData, clicked)) return { quest, person: resource };",
+    "new": "      for (const resource of quest.resources.values()) {\n        if (!resource.isPerson || !resource.isQuestor) continue;\n        if (this.isNPCDataEqual(resource.questorData, clicked)) return { quest, person: resource };",
+    "tests": [
+      "test/systems/quest/questshelf.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-guild-not-lent",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (mcp != null) hit.quest.externalMCP = mcp;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questoffers.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-an-empty-chain-not-available-yet",
+    "file": "src/scenes/worldModes.js",
+    "old": "      flow = boxes.length ? new ServiceFlowWindow(boxes, { onClose: () => closeSelf() }) : DOOR_REFUSED;\n",
+    "new": "      flow = boxes.length ? new ServiceFlowWindow(boxes, { onClose: () => closeSelf() }) : null;\n",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-potion-maker-answers-null",
+    "file": "src/scenes/worldModes.js",
+    "old": "      return mountServiceWindow(potionWin);",
+    "new": "      mountServiceWindow(potionWin);\n      return null;",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SAID-the-item-maker-answers-null",
+    "file": "src/scenes/worldModes.js",
+    "old": "      return mountServiceWindow(itemWin);",
+    "new": "      mountServiceWindow(itemWin);\n      return null;",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1019f-F1-the-flow-box-unfitted",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "    this._box = layoutMessageBox(font, fitBoxRows(font, t.rows), buttons);",
+    "new": "    this._box = layoutMessageBox(font, t.rows, buttons);",
+    "tests": [
+      "test/systems/quest/fb1019f_questorsaid.test.js"
+    ],
+    "why": "the finding: on the classic skin the busy line naming a guild's quest runs past both edges of the 320-px panel"
+  }
+]

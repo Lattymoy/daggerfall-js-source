@@ -61,8 +61,8 @@ const G = 9.81;
  *    flat: the stance's shares [flat from, heel rises from];
  *  - width: the feet's track in hip widths; hipYaw, hipList, hipTilt, hipTiltWave: the pelvis's turn, drop, forward
  *    tilt and its wave; chestYaw, chestRoll, lean: the chest's counter-turn, its counter-drop and its forward lean;
- *  - arm: the free arm's swing (forward at the opposite foot's strike), its forward bias, the elbow [back, front], how
- *    far it is held out, and how far a running fist crosses toward the middle (the hand's shape is the clip's - carry.js).
+ *  - arm: the free arm's swing (forward at the opposite foot's strike), its forward bias, the elbow [back, front] and how
+ *    far it is held out (the hand's shape is the clip's - carry.js).
  */
 export const GAIT_STYLES = Object.freeze({
   walk: Object.freeze({
@@ -72,16 +72,16 @@ export const GAIT_STYLES = Object.freeze({
     heel: 16, toeOff: 34, swingToe: 10, flat: Object.freeze([0.16, 0.56]),
     width: 0.82, hipYaw: 8, hipList: 5, hipTilt: 4, hipTiltWave: 1.5,
     chestYaw: 9, chestRoll: 2.5, lean: 5,
-    arm: Object.freeze({ swing: 27, bias: 4, elbow: Object.freeze([12, 36]), abduct: 8, cross: 0 }),
+    arm: Object.freeze({ swing: 27, bias: 4, elbow: Object.freeze([12, 36]), abduct: 8 }),
   }),
   run: Object.freeze({
     strideMax: 4.1, duty: Object.freeze([0.42, 0.3]), frFull: 7,
-    height: 0.9, heightFast: 0.87, bob: 0.042, sway: 0.012,
-    lift: 0.24, liftFast: 0.4, land: 0.35,
+    height: 0.925, heightFast: 0.9, bob: 0.035, sway: 0.012,
+    lift: 0.18, liftFast: 0.29, land: 0.35,
     heel: 4, toeOff: 50, swingToe: 14, flat: Object.freeze([0.1, 0.32]),
-    width: 0.42, hipYaw: 11, hipList: 6, hipTilt: 10, hipTiltWave: 3,
+    width: 0.42, hipYaw: 9.5, hipList: 5, hipTilt: 9, hipTiltWave: 2.5,
     chestYaw: 14, chestRoll: 3, lean: 11,
-    arm: Object.freeze({ swing: 44, bias: 7, elbow: Object.freeze([74, 98]), abduct: 10, cross: 0.12 }),
+    arm: Object.freeze({ swing: 42, bias: 7, elbow: Object.freeze([74, 96]), abduct: 18 }),
   }),
   sneak: Object.freeze({
     strideMax: 1.3, duty: Object.freeze([0.72, 0.64]), frFull: 0.6,
@@ -90,7 +90,7 @@ export const GAIT_STYLES = Object.freeze({
     heel: 8, toeOff: 20, swingToe: 6, flat: Object.freeze([0.22, 0.6]),
     width: 1.05, hipYaw: 5, hipList: 3, hipTilt: 12, hipTiltWave: 1,
     chestYaw: 5, chestRoll: 1.5, lean: 26,
-    arm: Object.freeze({ swing: 12, bias: 14, elbow: Object.freeze([40, 58]), abduct: 16, cross: 0 }),
+    arm: Object.freeze({ swing: 12, bias: 14, elbow: Object.freeze([40, 58]), abduct: 16 }),
   }),
 });
 
@@ -235,7 +235,7 @@ export function blendStyle(run, sneak, kind) {
     arm: {
       swing: mix((s) => s.arm.swing) * m('swing'), bias: mix((s) => s.arm.bias),
       elbow: [mix((s) => s.arm.elbow[0]), mix((s) => s.arm.elbow[1])],
-      abduct: mix((s) => s.arm.abduct) * m('abduct'), cross: mix((s) => s.arm.cross),
+      abduct: mix((s) => s.arm.abduct) * m('abduct'),
     },
     footBias: fam.footBias ?? 0, standHeight: m('height'), standLean: m('lean'), standTilt: m('hipTilt'),
     run: wr, sneak: ws,
@@ -878,10 +878,11 @@ export function gaitPose(state, input, body) {
     // down to their floor after a foot already in the air)
     const dxy = Math.min(Math.hypot(f.at[0] - jx, f.at[1] - jy), leaving && f.held ? Math.hypot(f.held[0] - jx, f.held[1] - jy) : Infinity);
     // a foot in the air past what its leg reaches at the hips' lowest (a reversal's flight, flung ahead) holds the hips to
-    // nothing: the leg reaches toward it and falls short a frame - let go over the last tenth of a leg before it, so a
+    // nothing: the leg reaches toward it and falls short a frame - let go over the last fifth of a leg before it, so a
     // flight that comes into reach takes the hips in by degrees (AUDIT BODY-MOTION GAIT-21: taken at once, a running
-    // turn's landing foot dropped the hips 14 units in the frame it came within reach)
-    const inReach = f.stance || leaving ? 1 : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.1 * L)));
+    // turn's landing foot dropped the hips 14 units in the frame it came within reach; RUN-STIFF: over a tenth, the
+    // stiffer run's higher hips - less give in the leg - dropped 12 to 13.5 units in a back run turned fast into a strafe)
+    const inReach = f.stance || leaving ? 1 : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.2 * L)));
     // a leg asked past its reach asks the hips no lower than a deep knee's bend: the foot falls short instead - a crash to
     // the ground was the reach's answer to a foot it could not reach
     // a stride's foot in the air lets the hips go as it leaves the ground and holds them again as it comes down (a
@@ -899,7 +900,8 @@ export function gaitPose(state, input, body) {
   // ---- the chest ----
   const breath = Math.sin(breathT) * STAND.breathPitch * RAD * idle;
   const chestYaw = P.chestYaw * RAD * Math.cos(2 * Math.PI * phi) * move * c;
-  const chestRoll = -P.chestRoll * RAD * listWave * move + s.bank;
+  const counterDrop = -P.chestRoll * RAD * listWave * move;
+  const chestRoll = counterDrop + s.bank;
   const standLean = lerp(STAND.lean, STAND.sneak.lean, s.sneak) * P.standLean;
   const chestPitch = lerp(standLean, P.lean, move) * RAD + s.lean - breath + (stance?.lean ?? 0) * RAD * idle;
   // ---- the free arms: a backpedal swings them the other way, eased over (GAIT-12) ----
@@ -907,9 +909,11 @@ export function gaitPose(state, input, body) {
   return {
     move, phase: phi, duty: beta, stride, frShare, run: P.run, sneak: P.sneak, back: s.back, speed: s.speed,
     hip: { at: [hipXY[0], hipXY[1], hipZ], yaw: hipYaw, roll: hipRoll, pitch: hipPitch, limits },
-    chest: { yaw: chestYaw, roll: chestRoll, pitch: chestPitch, breath: Math.sin(breathT) * idle },
+    // `wave`: the stride's own share of the chest's turn - the counter-turn and the counter-drop the swinging arms ride
+    // (a held weapon's arm takes them by its row's swing share alone - carry.js carryHands, HELD-STEADY)
+    chest: { yaw: chestYaw, roll: chestRoll, pitch: chestPitch, breath: Math.sin(breathT) * idle, wave: { yaw: chestYaw, roll: counterDrop } },
     feet,
-    arm: { swing, bias: P.arm.bias * RAD * move, elbow: P.arm.elbow, abduct: P.arm.abduct * RAD, cross: P.arm.cross, phase: phi },
+    arm: { swing, bias: P.arm.bias * RAD * move, elbow: P.arm.elbow, abduct: P.arm.abduct * RAD, phase: phi },
   };
 }
 

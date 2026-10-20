@@ -85,47 +85,47 @@ export const EG_SPILL_M = 6;
 export const EG_VESTIGES = Object.freeze([
   // STONE
   Object.freeze({ id: 0, key: 'stoneskin', fam: 'stone', name: 'Stoneskin', v: [0.10, 0.18, 0.25], by: 'client', line: (v) => `+${pc(v)} maximum health.` }),
-  Object.freeze({ id: 1, key: 'ironfooting', fam: 'stone', name: 'Iron Footing', v: [0.35, 0.65, 1.0], by: 'client', line: (v) => `Pushes against you ${pc(v)} weaker.` }),
-  Object.freeze({ id: 2, key: 'secondwind', fam: 'stone', name: 'Second Wind', v: [0.15, 0.25, 0.35], by: 'client', line: (v) => `Once a hall, falling under ${pc(EG_SECOND_WIND_UNDER)} heals ${pc(v)}.` }),
-  Object.freeze({ id: 3, key: 'bastion', fam: 'stone', name: 'Bastion', v: [0.04, 0.08, 0.12], by: 'word', aura: 6, line: (v) => `Allies within 6 m take ${pc(v)} less from blows.` }),
-  Object.freeze({ id: 4, key: 'oath', fam: 'stone', name: "Challenger's Oath", v: [1.5, 2, 2.5], by: 'relay', line: (v) => `Your threat x${v}; lords' blows on you weaker.` }),
+  Object.freeze({ id: 1, key: 'ironfooting', fam: 'stone', name: 'Iron Footing', v: [0.35, 0.65, 1.0], by: 'client', line: (v) => `You are pushed ${pc(v)} less.` }),
+  Object.freeze({ id: 2, key: 'secondwind', fam: 'stone', name: 'Second Wind', v: [0.15, 0.25, 0.35], by: 'client', line: (v) => `Once a hall, falling under ${pc(EG_SECOND_WIND_UNDER)} health heals you ${pc(v)}.` }),
+  Object.freeze({ id: 3, key: 'bastion', fam: 'stone', name: 'Bastion', v: [0.04, 0.08, 0.12], by: 'word', aura: 6, line: (v) => `Allies within 6 m take ${pc(v)} less damage.` }),
+  Object.freeze({ id: 4, key: 'oath', fam: 'stone', name: "Challenger's Oath", v: [1.5, 2, 2.5], by: 'relay', line: (v) => `Your threat x${v}, and lords' blows hurt you less.` }),
   // BLADE
-  Object.freeze({ id: 5, key: 'searing', fam: 'blade', name: 'Searing Edge', v: [3, 6, 9], x: [1.04, 1.07, 1.10], by: 'client', line: (v) => `Melee blows +${v} fire.` }),
-  Object.freeze({ id: 6, key: 'momentum', fam: 'blade', name: 'Momentum', v: [3, 4, 5], x: [1.05, 1.07, 1.09], by: 'client', line: (v) => `Blows on one target +${pc(EG_MOMENTUM_STEP)} each, to ${v} stacks.` }),
-  Object.freeze({ id: 7, key: 'sweeping', fam: 'blade', name: 'Sweeping Arc', v: [0.20, 0.35, 0.50], by: 'relay', line: (v) => `Melee blows splash ${pc(v)} to adds within 3 m.` }),
-  Object.freeze({ id: 8, key: 'bloodied', fam: 'blade', name: 'Bloodied Fury', v: [0.10, 0.18, 0.25], x: [1.03, 1.05, 1.07], by: 'client', line: (v) => `Under half health, +${pc(v)} damage.` }),
-  Object.freeze({ id: 9, key: 'culling', fam: 'blade', name: 'Culling Edge', v: [0.30, 0.45, 0.60], by: 'relay', line: (v) => `+${pc(v)} on adds under a quarter health.` }),
+  Object.freeze({ id: 5, key: 'searing', fam: 'blade', name: 'Searing Edge', v: [3, 6, 9], x: [1.04, 1.07, 1.10], by: 'client', line: (v) => `Melee hits deal +${v} fire damage.` }),
+  Object.freeze({ id: 6, key: 'momentum', fam: 'blade', name: 'Momentum', v: [3, 4, 5], x: [1.05, 1.07, 1.09], by: 'client', line: (v) => `Each hit on one target adds ${pc(EG_MOMENTUM_STEP)} damage, up to ${v} times.` }),
+  Object.freeze({ id: 7, key: 'sweeping', fam: 'blade', name: 'Sweeping Arc', v: [0.20, 0.35, 0.50], by: 'relay', line: (v) => `Melee hits splash ${pc(v)} of their damage onto adds within 3 m.` }),
+  Object.freeze({ id: 8, key: 'bloodied', fam: 'blade', name: 'Bloodied Fury', v: [0.10, 0.18, 0.25], x: [1.03, 1.05, 1.07], by: 'client', line: (v) => `+${pc(v)} damage while under half health.` }),
+  Object.freeze({ id: 9, key: 'culling', fam: 'blade', name: 'Culling Edge', v: [0.30, 0.45, 0.60], by: 'relay', line: (v) => `+${pc(v)} damage to adds under a quarter health.` }),
   // HUNT
-  Object.freeze({ id: 10, key: 'longsight', fam: 'hunt', name: 'Long Sight', v: [0.08, 0.14, 0.20], by: 'relay', line: (v) => `Arrows and spells from beyond 12 m +${pc(v)}.` }),
-  Object.freeze({ id: 11, key: 'featherstep', fam: 'hunt', name: 'Featherstep', v: [0.2, 0.35, 0.5], by: 'client', line: (v) => `Your crumbles wait +${v} s; cast-backs cost less.` }),
-  Object.freeze({ id: 12, key: 'fade', fam: 'hunt', name: 'Fade', v: [1.5, 2.5, 3.5], by: 'relay', line: (v) => `After you strike, adds lose you for ${v} s.` }),
-  Object.freeze({ id: 13, key: 'huntersmark', fam: 'hunt', name: "Hunter's Mark", v: [0.05, 0.08, 0.12], by: 'relay', line: (v) => `Your first arrow from beyond 12 m marks a foe: the company deals +${pc(v)} to it.` }),
+  Object.freeze({ id: 10, key: 'longsight', fam: 'hunt', name: 'Long Sight', v: [0.08, 0.14, 0.20], by: 'relay', line: (v) => `Arrows and spells deal +${pc(v)} from beyond 12 m.` }),
+  Object.freeze({ id: 11, key: 'featherstep', fam: 'hunt', name: 'Featherstep', v: [0.2, 0.35, 0.5], by: 'client', line: (v) => `Crumbling ground holds ${v} s longer under you, and falls cost less.` }),
+  Object.freeze({ id: 12, key: 'fade', fam: 'hunt', name: 'Fade', v: [1.5, 2.5, 3.5], by: 'relay', line: (v) => `After you strike, adds lose track of you for ${v} s.` }),
+  Object.freeze({ id: 13, key: 'huntersmark', fam: 'hunt', name: "Hunter's Mark", v: [0.05, 0.08, 0.12], by: 'relay', line: (v) => `Your first arrow from beyond 12 m marks a foe, and the company deals +${pc(v)} damage to it.` }),
   Object.freeze({ id: 14, key: 'fleetfoot', fam: 'hunt', name: 'Fleetfoot', v: [0.04, 0.07, 0.10], by: 'client', line: (v) => `Run speed +${pc(v)}.` }),
   // ARCANA
   Object.freeze({ id: 15, key: 'focus', fam: 'arcana', name: "Battlemage's Focus", v: [0.10, 0.18, 0.25], by: 'client', line: (v) => `Spell cost -${pc(v)}.` }),
-  Object.freeze({ id: 16, key: 'overcharge', fam: 'arcana', name: 'Overcharge', v: [0.08, 0.14, 0.20], x: [1.08, 1.14, 1.20], by: 'client', line: (v) => `Spell blows +${pc(v)}.` }),
+  Object.freeze({ id: 16, key: 'overcharge', fam: 'arcana', name: 'Overcharge', v: [0.08, 0.14, 0.20], x: [1.08, 1.14, 1.20], by: 'client', line: (v) => `Spell damage +${pc(v)}.` }),
   Object.freeze({ id: 17, key: 'spellbane', fam: 'arcana', name: 'Spellbane', v: [10, 18, 25], by: 'client', line: (v) => `Every resistance +${v}.` }),
-  Object.freeze({ id: 18, key: 'shieldweaver', fam: 'arcana', name: 'Shieldweaver', v: [0.20, 0.35, 0.50], by: 'client', line: (v) => `Your Shield spell soaks +${pc(v)}.` }),
-  Object.freeze({ id: 19, key: 'echo', fam: 'arcana', name: 'Arcane Echo', v: [0.10, 0.16, 0.22], x: [1.05, 1.08, 1.11], by: 'client', line: (v) => `A damage spell repeats at half, ${pc(v)} of casts.` }),
+  Object.freeze({ id: 18, key: 'shieldweaver', fam: 'arcana', name: 'Shieldweaver', v: [0.20, 0.35, 0.50], by: 'client', line: (v) => `Your Shield spell absorbs ${pc(v)} more.` }),
+  Object.freeze({ id: 19, key: 'echo', fam: 'arcana', name: 'Arcane Echo', v: [0.10, 0.16, 0.22], x: [1.05, 1.08, 1.11], by: 'client', line: (v) => `${pc(v)} of your damage spells repeat at half strength.` }),
   // FELLOWSHIP
   Object.freeze({ id: 20, key: 'rally', fam: 'fellowship', name: 'Rally', v: [0.08, 0.14, 0.20], by: 'word', line: (v) => `When a hall's door opens, the company heals ${pc(v)}.` }),
-  Object.freeze({ id: 21, key: 'standard', fam: 'fellowship', name: "Spire's Standard", v: [0.04, 0.07, 0.10], by: 'relay', aura: 10, line: (v) => `Allies within 10 m +${pc(v)} damage.` }),
-  Object.freeze({ id: 22, key: 'watchfire', fam: 'fellowship', name: 'Watchfire', v: [0.15, 0.25, 0.35], by: 'relay', line: (v) => `Blows aimed near you are told ${v} s early to the company.` }),
-  Object.freeze({ id: 23, key: 'fallensdue', fam: 'fellowship', name: "Fallen's Due", v: [0.10, 0.15, 0.20], by: 'relay', line: (v) => `When an ally falls, the living deal +${pc(v)} for the hall.` }),
-  Object.freeze({ id: 24, key: 'steadfast', fam: 'fellowship', name: 'Steadfast Line', v: [0.05, 0.10, 0.15], by: 'client', line: (v) => `With three allies within 8 m, you take ${pc(v)} less.` }),
-  Object.freeze({ id: 25, key: 'mender', fam: 'fellowship', name: "Mender's Grace", v: [0.15, 0.25, 0.35], by: 'word', line: (v) => `Heals you cast on allies +${pc(v)}.` }),
-  Object.freeze({ id: 26, key: 'lifeline', fam: 'fellowship', name: 'Lifeline', v: [0.20, 0.25, 0.30], by: 'word', line: (v) => `A heal on an ally under 30% gives them ${pc(v)} less from blows for 3 s.` }),   // AUDIT EG III (lane2 #5): every rank under EG_DR_MAX, III at it - its 40% never applied
+  Object.freeze({ id: 21, key: 'standard', fam: 'fellowship', name: "Spire's Standard", v: [0.04, 0.07, 0.10], by: 'relay', aura: 10, line: (v) => `Allies within 10 m deal +${pc(v)} damage.` }),
+  Object.freeze({ id: 22, key: 'watchfire', fam: 'fellowship', name: 'Watchfire', v: [0.15, 0.25, 0.35], by: 'relay', line: (v) => `The company sees blows aimed near you ${v} s sooner.` }),
+  Object.freeze({ id: 23, key: 'fallensdue', fam: 'fellowship', name: "Fallen's Due", v: [0.10, 0.15, 0.20], by: 'relay', line: (v) => `When an ally falls, the rest deal +${pc(v)} damage for the hall.` }),
+  Object.freeze({ id: 24, key: 'steadfast', fam: 'fellowship', name: 'Steadfast Line', v: [0.05, 0.10, 0.15], by: 'client', line: (v) => `With 3 allies within 8 m, you take ${pc(v)} less damage.` }),
+  Object.freeze({ id: 25, key: 'mender', fam: 'fellowship', name: "Mender's Grace", v: [0.15, 0.25, 0.35], by: 'word', line: (v) => `Your heals on allies are ${pc(v)} stronger.` }),
+  Object.freeze({ id: 26, key: 'lifeline', fam: 'fellowship', name: 'Lifeline', v: [0.20, 0.25, 0.30], by: 'word', line: (v) => `Healing an ally under 30% health makes them take ${pc(v)} less damage for 3 s.` }),   // AUDIT EG III (lane2 #5): every rank under EG_DR_MAX, III at it - its 40% never applied
 ]);
 function pc(v) { return `${Math.round(v * 100)}%`; }
 export const EG_V_BY_KEY = Object.freeze(Object.fromEntries(EG_VESTIGES.map((v) => [v.key, v])));
 /** THE MASTERIES: one held at a time (a new one replaces it), offered as a fourth card at Redoubt 3 and every Valkynaz
  *  Redoubt. Numbered from 100. */
 export const EG_MASTERIES = Object.freeze([
-  Object.freeze({ id: 100, key: 'immovable', fam: 'stone', name: 'Immovable', line: 'Stand still 1 s on a fight floor: blows on you deal 25% less and pushes nothing, until you move.' }),
-  Object.freeze({ id: 101, key: 'counterstroke', fam: 'blade', name: 'Counterstroke', line: "A melee blow on a lord within 0.6 s after one of its blows lands near you deals x1.4." }),
-  Object.freeze({ id: 102, key: 'spotter', fam: 'hunt', name: 'Spotter', line: "Your arrow from beyond 12 m spots a foe: an add loses the blow it is winding (a Binder its raise), and the company deals +10% to it for 8 s, over any Hunter's Mark." }),   // AUDIT EG IV (lane10 #13): a verb - its wake every blow's since AUDIT EG III
+  Object.freeze({ id: 100, key: 'immovable', fam: 'stone', name: 'Immovable', line: 'Stand still for 1 s on a fight floor to take 25% less damage and ignore pushes until you move.' }),
+  Object.freeze({ id: 101, key: 'counterstroke', fam: 'blade', name: 'Counterstroke', line: "Strike a lord in melee within 0.6 s after its blow lands near you for x1.4 damage." }),
+  Object.freeze({ id: 102, key: 'spotter', fam: 'hunt', name: 'Spotter', line: "Your arrow from beyond 12 m spots a foe for 8 s. The company deals it +10% damage, and an add loses the attack it is winding." }),   // AUDIT EG IV (lane10 #13): a verb - its wake every blow's since AUDIT EG III
   Object.freeze({ id: 103, key: 'spillover', fam: 'arcana', name: 'Spillover', line: "A spell's overkill on an add carries to the nearest add within 6 m." }),
-  Object.freeze({ id: 104, key: 'spirebridge', fam: 'fellowship', name: 'Spirebridge', line: 'Once a span, a gold bridge over the next gap for the company, for 6 s.' }),
+  Object.freeze({ id: 104, key: 'spirebridge', fam: 'fellowship', name: 'Spirebridge', line: 'Once a span, raise a gold bridge over the next gap for 6 s.' }),
 ]);
 export const EG_M_BY_ID = Object.freeze(Object.fromEntries(EG_MASTERIES.map((m) => [m.id, m])));
 /** AUDIT EG III: each Mastery's number by its key (`EG_M_ID.counterstroke` 101) - the relay reads a held Mastery by it. */
@@ -154,22 +154,22 @@ export function egSpirebridge(B, sub, spec, p, now) {
 }
 /** THE ACCORDS: two members within 10 m holding a named pair from two families. */
 export const EG_ACCORDS = Object.freeze([
-  Object.freeze({ key: 'hammer', name: 'Hammer and Anvil', a: 'oath', b: 'huntersmark', line: "A foe the mark's holder marked takes +8% from the oath's holder." }),
+  Object.freeze({ key: 'hammer', name: 'Hammer and Anvil', a: 'oath', b: 'huntersmark', line: "A foe under Hunter's Mark takes +8% damage from the Challenger's Oath holder." }),
   Object.freeze({ key: 'hymn', name: 'Shield-Hymn', a: 'bastion', b: 'rally', line: "Rally's heal also gives 4 s of Bastion's protection." }),
-  Object.freeze({ key: 'ambush', name: 'Ambush', a: 'fade', b: 'standard', line: 'The first blow after a Fade, near the Standard, deals +15%.' }),
-  Object.freeze({ key: 'kindled', name: 'Kindled Steel', a: 'searing', b: 'overcharge', line: "The Edge holder's melee fire splashes 2 m." }),
-  Object.freeze({ key: 'farwatch', name: 'Far Watch', a: 'longsight', b: 'watchfire', line: "Watchfire's lead grows for blows aimed at the Long Sight holder." }),
-  Object.freeze({ key: 'livingwall', name: 'Living Wall', a: 'stoneskin', b: 'mender', line: 'Heals on the Stoneskin holder +10%.' }),
-  Object.freeze({ key: 'noquarter', name: 'No Quarter', a: 'culling', b: 'fallensdue', line: "While Fallen's Due burns, Culling Edge reaches adds under a third of their health." }),
-  Object.freeze({ key: 'warchorus', name: 'War-Chorus', a: 'echo', b: 'standard', line: 'Near the Standard, an Echo repeats at full.' }),
+  Object.freeze({ key: 'ambush', name: 'Ambush', a: 'fade', b: 'standard', line: 'Your first blow after a Fade deals +15% near the Standard.' }),
+  Object.freeze({ key: 'kindled', name: 'Kindled Steel', a: 'searing', b: 'overcharge', line: "Searing Edge's melee fire splashes 2 m." }),
+  Object.freeze({ key: 'farwatch', name: 'Far Watch', a: 'longsight', b: 'watchfire', line: 'Blows aimed at the Long Sight holder are seen even sooner.' }),
+  Object.freeze({ key: 'livingwall', name: 'Living Wall', a: 'stoneskin', b: 'mender', line: 'Heals on the Stoneskin holder are 10% stronger.' }),
+  Object.freeze({ key: 'noquarter', name: 'No Quarter', a: 'culling', b: 'fallensdue', line: "While Fallen's Due is active, Culling Edge works on adds under a third of their health." }),
+  Object.freeze({ key: 'warchorus', name: 'War-Chorus', a: 'echo', b: 'standard', line: 'Near the Standard, Arcane Echo repeats at full strength.' }),
 ]);
 /** RESONANCE: three different Vestiges of one family grant its capstone, for the breach. */
 export const EG_CAPSTONES = Object.freeze({
-  stone: Object.freeze({ name: 'Rooted', line: 'Immune to push, and your threat doubles.' }),
+  stone: Object.freeze({ name: 'Rooted', line: 'You cannot be pushed, and your threat doubles.' }),
   blade: Object.freeze({ name: 'Bladestorm', line: 'Every fifth melee blow strikes every foe within 3 m.' }),
   hunt: Object.freeze({ name: 'Deadeye', line: 'An arrow from beyond 12 m pierces the add behind its target.' }),
   arcana: Object.freeze({ name: 'Spellweave', line: 'Every fourth damage spell costs nothing.' }),
-  fellowship: Object.freeze({ name: 'Rallying Cry', line: "Rally's heal and every Second Wind in the company come again at each of a Court's phase turns, and when a hall's door opens." }),   // AUDIT EG IV (lane10 #14): where the support is tested
+  fellowship: Object.freeze({ name: 'Rallying Cry', line: "Rally's heal and the company's Second Winds come again at each Court phase and when a hall's door opens." }),   // AUDIT EG IV (lane10 #14): where the support is tested
 });
 
 /** A member's rank in a Vestige (0 none). */

@@ -256,8 +256,8 @@
   {
     "name": "RVN3-the-flinch-a-voice",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  const body = found ? `${name} - its weakness, laid bare.` : (FLINCH_LINES[r?.weak] ?? 'It shies from something.');",
-    "new": "  const body = found ? `${name} - its weakness, laid bare.` : 'It shies from something.';",
+    "old": "  const body = found ? `Its weakness laid bare: ${name}.` : (FLINCH_LINES[r?.weak] ?? 'It shies from something.');",
+    "new": "  const body = found ? `Its weakness laid bare: ${name}.` : 'It shies from something.';",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]

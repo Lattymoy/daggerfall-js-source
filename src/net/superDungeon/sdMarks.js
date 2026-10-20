@@ -39,46 +39,46 @@ export const SD_ELEMENTS = Object.freeze(['fire', 'frost', 'shock', 'poison', 'm
 export const SD_ENDINGS = Object.freeze([
   Object.freeze({
     id: 'daggerfall', stone: 'Daggerfall', sign: 'the lion', el: 'shock', light: Object.freeze([0.75, 0.82, 1.0]),
-    sig: 'The Lion\'s Roar', text: 'Its Stomp\'s ring rolls out to the arena\'s rim, and faster.',
+    sig: 'The Lion\'s Roar', text: 'Its Stomp\'s ring rolls faster, out to the arena\'s rim.',
     law: Object.freeze({ stompR1: 26, stompWave: 13 }),
   }),
   Object.freeze({
     id: 'sentinel', stone: 'Sentinel', sign: 'the sun', el: 'fire', light: Object.freeze([1.0, 0.62, 0.22]),
-    sig: 'Sunfall', text: 'Its Gear Volley throws seven, and the brass burns half again as long.',
+    sig: 'Sunfall', text: 'Its Gear Volley throws 7 gears, and its brass burns 50% longer.',
     law: Object.freeze({ volleyMax: 7, poolMsX: 1.5 }),
   }),
   Object.freeze({
     id: 'wayrest', stone: 'Wayrest', sign: 'the ship', el: 'frost', light: Object.freeze([0.55, 0.9, 1.0]),
-    sig: 'The Turning Tide', text: 'Its Hour-Hand sweeps three quarters of the arena, over five seconds.',
+    sig: 'The Turning Tide', text: 'Its Hour-Hand sweeps three quarters of the arena over 5 seconds.',
     law: Object.freeze({ handArc: 1.5 * Math.PI, handActive: 5000 }),
   }),
   Object.freeze({
     id: 'orsinium', stone: 'Orsinium', sign: 'the tusk', el: 'poison', light: Object.freeze([0.62, 1.0, 0.3]),
-    sig: 'The Tusk', text: 'It walks the faster, and its Stomp lands wider.',
+    sig: 'The Tusk', text: 'It walks faster, and its Stomp lands wider.',
     law: Object.freeze({ remSpeedX: 1.4, stompR: 8.5 }),
   }),
   Object.freeze({
     id: 'underking', stone: 'the Underking', sign: 'the crown of bone', el: 'magic', light: Object.freeze([0.78, 0.5, 1.0]),
-    sig: 'The Hungering Heart', text: 'The Mantella pulses every twenty-two seconds.',
+    sig: 'The Hungering Heart', text: 'The Mantella pulses every 22 seconds.',
     law: Object.freeze({ pulseMs: 22_000 }),
   }),
   Object.freeze({
     id: 'blades', stone: 'the Blades', sign: 'the dragon', el: 'fire', light: Object.freeze([1.0, 0.36, 0.26]),
-    sig: 'The Dragon\'s Haste', text: 'Its Echoes walk the faster, and must fall within ten seconds of each other.',   // AUDIT SD III (T9): "The Dragon's Break" beside its phase's "The Dragon Break", one apostrophe apart
+    sig: 'The Dragon\'s Haste', text: 'Its Echoes walk faster and must fall within 10 seconds of each other.',   // AUDIT SD III (T9): "The Dragon's Break" beside its phase's "The Dragon Break", one apostrophe apart
     law: Object.freeze({ pairMs: 10_000, echoSpeedX: 1.2 }),
   }),
 ]);
 /** THE OMENS - two a Hollow. @type {ReadonlyArray<Readonly<SdOmen>>} */
 export const SD_OMENS = Object.freeze([
-  Object.freeze({ id: 'brazen', name: 'The Brazen Hide', text: 'It stands with a quarter more health.', law: Object.freeze({ hpX: 1.25 }) }),
+  Object.freeze({ id: 'brazen', name: 'The Brazen Hide', text: 'It has 25% more health.', law: Object.freeze({ hpX: 1.25 }) }),
   Object.freeze({ id: 'quickened', name: 'The Quickened Gears', text: 'Its blows wind up faster.', law: Object.freeze({ windX: 0.85 }) }),
-  Object.freeze({ id: 'short', name: 'The Short Hour', text: 'The Hour ends at twelve minutes.', law: Object.freeze({ endsMs: 12 * 60_000 }) }),
-  Object.freeze({ id: 'hardened', name: 'The Hardened Hearts', text: 'Its Hearts hold a quarter again as much.', law: Object.freeze({ heartX: 1.25 }) }),   // AUDIT SD III (F5): half again made the Reset a race no party at reference damage could run between its Hearts
-  Object.freeze({ id: 'burning', name: 'The Burning Brass', text: 'Its brass burns twice as long, and wider.', law: Object.freeze({ poolMsX: 2, poolRX: 4 / 3 }) }),
-  Object.freeze({ id: 'fraying', name: 'The Fraying', text: 'The Orrery snaps back at thirty-six turns.', law: Object.freeze({ fray: 36 }) }),
+  Object.freeze({ id: 'short', name: 'The Short Hour', text: 'The Hour ends at 12 minutes.', law: Object.freeze({ endsMs: 12 * 60_000 }) }),
+  Object.freeze({ id: 'hardened', name: 'The Hardened Hearts', text: 'Its Hearts take 25% more to break.', law: Object.freeze({ heartX: 1.25 }) }),   // AUDIT SD III (F5): half again made the Reset a race no party at reference damage could run between its Hearts
+  Object.freeze({ id: 'burning', name: 'The Burning Brass', text: 'Its brass burns twice as long and spreads wider.', law: Object.freeze({ poolMsX: 2, poolRX: 4 / 3 }) }),
+  Object.freeze({ id: 'fraying', name: 'The Fraying', text: 'The Orrery snaps back at 36 turns.', law: Object.freeze({ fray: 36 }) }),
   Object.freeze({ id: 'restless', name: 'The Restless Pulse', text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.', law: Object.freeze({ pulseStep: 0.04 }) }),   // AUDIT SD III (T13): "climbs twice as steeply - to three quarters" read garbled
-  Object.freeze({ id: 'unending', name: 'The Unending Reset', text: 'The Reset comes every forty seconds.', law: Object.freeze({ resetMs: 40_000 }) }),
-  Object.freeze({ id: 'twin', name: 'The Twin Hands', text: 'The Echoes\' paired Hour-Hand comes every ten seconds.', law: Object.freeze({ pairHandMs: 10_000 }) }),
+  Object.freeze({ id: 'unending', name: 'The Unending Reset', text: 'The Reset comes every 40 seconds.', law: Object.freeze({ resetMs: 40_000 }) }),
+  Object.freeze({ id: 'twin', name: 'The Twin Hands', text: 'The Echoes\' paired Hour-Hand comes every 10 seconds.', law: Object.freeze({ pairHandMs: 10_000 }) }),
 ]);
 /** How many omens a Hollow keeps. */
 export const SD_OMENS_A_HOLLOW = 2;

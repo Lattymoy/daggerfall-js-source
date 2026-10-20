@@ -22,17 +22,17 @@ test('SEAT2b THE WORKS\' WORDS: a tier and what it does; a project and what it s
   assert.deepEqual(Object.entries(FORT_EFFECT_WORDS).map(([id, f]) => `${id}: ${f(2)}`), [
     'walls: the defenders\' wave 6 s faster',
     'gatehouse: its vitality 40,000',
-    'watchtowers: the holder told when a challenger passes a quarter of its defence',
+    'watchtowers: the holder is warned when a challenger gets past a quarter of its defense',
     'barracks: 4 town guards fight for the holder',
     'market: the town\'s boards list 50% more, the Tithe\'s cap 2 points higher',
     'shrine: Standing +2 a week, +100 influence for each gate felled in the region',
     'forge: members smithing here 2 quality steps better',
     'workshop: members\' carpentry, outfitting and masonry here 2 quality steps better',
-    'apothecary: members\' jewellery here 2 quality steps better, their dishes twice the XP, their brews +20% Potent chance',
+    'apothecary: members\' jewelry here 2 quality steps better, their dishes twice the XP, their brews +20% Potent chance',
     'harbour: a port for the holder\'s members',
   ]);
   assert.deepEqual([FORT_EFFECT_WORDS.watchtowers(1), FORT_EFFECT_WORDS.forge(1), FORT_EFFECT_WORDS.market(1)],
-    ['the holder told when a challenger passes half of its defence', 'members smithing here a quality step better', 'the town\'s boards list 25% more, the Tithe\'s cap 1 point higher']);
+    ['the holder is warned when a challenger gets past half of its defense', 'members smithing here a quality step better', 'the town\'s boards list 25% more, the Tithe\'s cap 1 point higher']);
 });
 
 test('SEAT2b THE WORKS PANEL: the works a palace may raise (no Gatehouse below tier-3 Walls, no Harbour inland), each line; the stockpile; the holder\'s lever a work at its next tier, none for one building or at its last, none for a reader without the rank; the lever\'s press begins that work (mutants: which works; the lever\'s rules; its words; the press)', () => {
@@ -48,7 +48,7 @@ test('SEAT2b THE WORKS PANEL: the works a palace may raise (no Gatehouse below t
   assert.match(lines[3], /Raising tier 1: 150 Oak Planks still wanted\./);
   assert.equal(byClass(host, 'notice-seat-works-stock')[0].textContent, 'The stockpile: 40 Iron Ingots.');
   assert.deepEqual(Object.keys(buttons), ['walls', 'watchtowers', 'barracks', 'forge', 'workshop', 'apothecary'], 'none for the Market Hall (building) nor the Shrine (at its last tier); the Apothecary\'s now its stations stand (AUDIT SEATS-2 L5; PIN MOVED (PROF12))');
-  assert.equal(buttons.walls.textContent, 'Raise the Walls to tier 2 (3,000 silver)');
+  assert.equal(buttons.walls.textContent, 'Raise the Walls to grade 2 (3,000 silver)');
   buttons.forge.click();
   assert.deepEqual(begun, ['forge']);
   // a port and tier-3 Walls: the Harbour and a gate of its own
@@ -182,7 +182,7 @@ test('SEAT2b THE BOOK\'S WORKS: the read is refused while the seats are shut; a 
   assert.deepEqual(asks[0], ['c1', 3021, 'walls', 'rid-0000-1', true]);
   answer = { ok: true, data: { work: 'walls', tier: 2, marks: 3000 } };
   const r = await book.fortFund(SEAT, 'walls', true);
-  assert.equal(r.text, 'Work on the Walls at Anticlere is begun toward tier 2: 3,000 silver from the treasury. Seat writs deliver what they need.');
+  assert.equal(r.text, 'Work on the Walls at Anticlere is begun toward grade 2: 3,000 silver from the treasury. Seat writs deliver what they need.');
   await book.fortFund(SEAT, 'walls', true);
   assert.notEqual(asks[3][3], asks[2][3], 'an answer lets the id go');
   answer = { ok: false, error: 'fort-building' };

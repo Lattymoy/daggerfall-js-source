@@ -935,8 +935,8 @@ export function wornAmong(systems, x, z, ground = null, air = null) {
  * THE WEATHER AT A PLACE AND A MINUTE: `wornAmong` over every system
  * standing there. `ground(word, x, z, minutes)` as above.
  */
-export function weatherAt(x, z, minutes, climateAt, { ground = null } = {}) {
-  const air = ground?.lawAir?.(minutes) ?? null;   // AUDIT PRECIP AIR-8: the law's one air, where the ground carries it
+export function weatherAt(x, z, minutes, climateAt, { ground = null, alt = null } = {}) {
+  const air = ground?.lawAir?.(minutes, alt) ?? null;   // AUDIT PRECIP AIR-8: the law's one air, where the ground carries it (AUDIT OW-REVISITED L3-4: at `alt` metres when asked - the sky's own, the player's height)
   return wornAmong(systemsNear(x, z, minutes, climateAt, 0), x, z, ground && ((w, gx, gz) => ground(w, gx, gz, minutes)), air);
 }
 
@@ -1007,12 +1007,12 @@ export function approachAt(systems, x, z) {
  * Answers { at, now, steps: [{ at, word, intensity }], next: { at, word } | null } - `at` the
  * minute it was read from.
  */
-export function forecastAt(x, z, minutes, climateAt, { hours = 12, step = 15, ground = null } = {}) {
-  const now = weatherAt(x, z, minutes, climateAt, { ground });
+export function forecastAt(x, z, minutes, climateAt, { hours = 12, step = 15, ground = null, alt = null } = {}) {
+  const now = weatherAt(x, z, minutes, climateAt, { ground, alt });
   const steps = [];
   let next = null;
   for (let at = minutes + step; at <= minutes + hours * 60; at += step) {
-    const w = weatherAt(x, z, at, climateAt, { ground });
+    const w = weatherAt(x, z, at, climateAt, { ground, alt });
     steps.push({ at, word: w.word, intensity: w.intensity });
     if (!next && w.word !== now.word) next = { at, word: w.word };
   }

@@ -198,7 +198,7 @@ test('WAGON-TIERS THE OLD SWITCH MIGRATED, through a real shelf: a player who tu
 test('WAGON-TIERS NO RED WHERE WEAR COSTS NOTHING, AND EACH TIER\'S WORDS: on Boons a failing wagon\'s chip on the saddle panel and its bar on the Stable page stop short of red, the panel says no lost pace, the Stable page says it still rolls at its pace, and a step down is said without a slowness it does not have; on Hard as the system stood (mutants: the chip red on Boons; the hint\'s pace on Boons; the bar red on Boons; Boons in Hard\'s words; the step down in Hard\'s words; the card\'s tier unread)', () => {
   const read = (wearSlows) => { const w = { name: 'Caravan', state: 'Failing', stateKey: 'failing', share: 0.07, wearSlows }; return { tone: saddleMeters({ mode: 'Cart', horse: null, wagon: w, load: null }).find((m) => m.key === 'wagon').tone, hint: saddleHint({ mode: 'Cart', horse: null, wagon: w }, { touch: true }), bar: wagonMeterTone(w) }; };
   assert.deepEqual(read(false), { tone: 'warn', hint: '', bar: '' }, 'Boons: amber, no lost pace said, rickety\'s plain bar');
-  assert.deepEqual(read(true), { tone: 'low', hint: 'The caravan is failing - mend it to get its pace back', bar: 'blood' }, 'Hard: red, and the pace to get back');
+  assert.deepEqual(read(true), { tone: 'low', hint: 'The caravan is failing. Mend it to restore its pace', bar: 'blood' }, 'Hard: red, and the pace to get back');
   assert.deepEqual(read(undefined), read(true), 'a read that does not say is the system as it stood');
   // THE MERGE of main's UI-CALM: the panel's one-line note stands for what needs the rider (saddleAlert) - on Boons a
   // worn wagon's wear takes nothing, so it raises none (its note would say a pace to get back it never lost)
@@ -225,8 +225,8 @@ test('WAGON-TIERS NO RED WHERE WEAR COSTS NOTHING, AND EACH TIER\'S WORDS: on Bo
   // the Stable page's lines, through its own builder (ui/holdingsPages.js wagonLines, by the page's words)
   const page = rd('src/ui/holdingsPages.js');
   assert.match(page, /const advice = w\.wearSlows === false && Object\.hasOwn\(WAGON_ADVICE_BOONS, w\.stateKey\) \? WAGON_ADVICE_BOONS\[w\.stateKey\]/);
-  assert.match(page, /get rickety\(\) \{ return t\('holdings\.wagon\.boons\.rickety', 'Rickety - it still rolls at its pace\.'\); \}/);
-  assert.match(page, /get failing\(\) \{ return t\('holdings\.wagon\.boons\.failing', 'Failing - it still rolls at its pace\.'\); \}/);
+  assert.match(page, /get rickety\(\) \{ return t\('holdings\.wagon\.boons\.rickety', 'Rickety, but it still rolls at full pace\.'\); \}/);
+  assert.match(page, /get failing\(\) \{ return t\('holdings\.wagon\.boons\.failing', 'Failing, but it still rolls at full pace\.'\); \}/);
 });
 
 test('WAGON-TIERS THE ONE ACCESSOR AND THE FOUR HOSTS: no module but the switch reads the wagon upkeep key, the old boolean switch is gone, and every reader is handed the one accessor - world.js and exterior.js hand it to the upkeep (the wear, the pace, the Stable page, the saddle panel) and to the kit\'s Use, world.js\'s Wagon Yard wright asks it, a counter\'s sale asks it; worldModes.js and dungeonContext.js stand no transport and read nothing', () => {
@@ -301,5 +301,5 @@ test('WAGON-TIERS A SOUND WAGON ROLLS FASTER (Mac, 2026-10-15: "Sound wagon roll
     assert.ok(Math.abs(speedAt(WAGON_SOUND_BOON) / speedAt(1) - WAGON_SOUND_BOON) < 1e-9, 'the motor rides the boon as it rides every pace');
   });
   assert.match(rd('src/scenes/world.js'), /player\.rideSpeedScale = upkeep\.rideScale\(player\.transportMode, wagonLoadShare\(\)\);/, 'world.js - the Overworld\'s and the journeys\' host - hands the motor the one scale');
-  assert.match(rd('src/ui/holdingsPages.js'), /get sound\(\) \{ return t\('holdings\.wagon\.boons\.sound', 'Sound - it rolls faster for it\.'\); \}/, 'the Stable page says the boon on Boons');
+  assert.match(rd('src/ui/holdingsPages.js'), /get sound\(\) \{ return t\('holdings\.wagon\.boons\.sound', 'Sound, and it rolls faster for it\.'\); \}/, 'the Stable page says the boon on Boons');
 });

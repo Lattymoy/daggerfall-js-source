@@ -111,7 +111,7 @@ async function camp(P, sel = null) {
   const id = P.edit.create({ px: 1, py: 1, x: 5, z: 5, name: 'Camp' });
   P.edit.edit(id, 'add part', (d) => { d.parts.push(newPart(d, { mesh: P.sha, submeshes: 2, name: 'Hut' })); });
   P.edit.select(sel ?? { id, part: null });
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'its model known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'its model known');
   return id;
 }
 /** Saved as a draft, by the store. */
@@ -268,7 +268,7 @@ test('AUDIT POI U4 P6 OPENED AS WHAT IT IS: my own sent-back revision says so an
   const P = await over({ handle: 'Mac' });
   P.svc.history.set(POI_ID, { id: POI_ID, liveRev: null, revs: [{ rev: 1, kind: 'doc', doc: docOf(P.sha, 'Tower'), base: null, author: 'Mac', state: 'rejected', reviewer: 'Ann', note: 'The door faces the cliff.' }] });
   await P.panel.open(POI_ID);
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'known');
   assert.deepEqual([P.edit.entryOf(POI_ID).state, P.edit.entryOf(POI_ID).rev, P.edit.dirty(POI_ID)], ['rejected', null, false]);
   assert.ok(all(P.root).some((n) => n.className === 'dfpoi-chip' && n.textContent === 'sent back'));
   press(button(rightOf(P), 'Send for approval'));
@@ -281,7 +281,7 @@ test('AUDIT POI U4 P6 OPENED AS WHAT IT IS: my own sent-back revision says so an
   // another builder's newest, nothing live: a change to save as my own draft
   P.svc.history.set(POI_ID, { id: POI_ID, liveRev: null, revs: [{ rev: 1, kind: 'doc', doc: docOf(P.sha, 'Tower'), base: null, author: 'Ann', state: 'draft' }] });
   await P.panel.open(POI_ID);
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'known');
   assert.equal(P.edit.dirty(POI_ID), true, 'not mine: a change to save');
   assert.equal(button(rightOf(P), 'Save draft (Ctrl+S)').disabled, false);
   P.edit.close(POI_ID);
@@ -447,7 +447,7 @@ test('AUDIT POI U9 A PACK GOES IN ONCE, AND CANCEL STOPS IT: pressed twice it up
   assert.equal(Q.edit.has(pack.doc.id), false, 'nothing opened');
   assert.equal(Q.svc.count('/v1/poi/shelf', 'PUT'), 0, 'nothing more put after the stop');
   assert.ok(Q.root.contains(importDlg), 'the dialog opened since left open');
-  assert.equal(statusOf(Q), 'Stopped: nothing was opened. What went up before the stop stays in the store.');
+  assert.equal(statusOf(Q), 'Stopped. Nothing was opened, but files uploaded before the stop stay in the store.');
 
   // the import: Cancel while its parts go up - nothing placed, the dialog opened since left open
   const glb = writeGlb({ name: 'Pair', parts: [{ key: 'left', name: 'left', mesh: quad(), t: [0, 0, 0], r: [0, 0, 0, 1], s: [1, 1, 1], materials: [{ ...DEFAULT_MATERIAL }, { ...DEFAULT_MATERIAL }] }], lights: [], pictures: new Map() });
@@ -504,7 +504,7 @@ test('AUDIT POI C4 C5 A PACK\'S REFUSALS IN THEIR OWN WORDS: an export the pack 
   const id = await shrine(P);
   await until(() => P.panel.root && all(P.root).length > 0, 'drawn');
   P.edit.select({ id, part: null });
-  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing - it can be saved.'), 'known');
+  await until(() => all(rightOf(P)).some((n) => n.textContent === 'Nothing. It can be saved.'), 'known');
   P.nothing = true;   // the feed answers nothing: the pack names an asset it does not carry
   press(button(P.root, 'Export pack'));
   await until(() => statusOf(P) !== '' && !/^Opened/.test(statusOf(P)) && /pack/.test(statusOf(P)), 'said');
@@ -691,7 +691,7 @@ test('AUDIT POI C1 C3 T8 THE QUEUE: a submission changed since it was listed is 
   press(button(P.root, 'Approvals'));
   await until(() => !!P.panel.review.queue(), 'listed'); await flush();
   const dlg = () => P.panel.review.dialog();
-  assert.ok(all(dlg()).some((n) => n.textContent === 'More submissions wait than are listed: decide on these to see the rest.'));
+  assert.ok(all(dlg()).some((n) => n.textContent === 'More submissions are waiting. Decide on these to see the rest.'));
   assert.equal(all(dlg()).filter((n) => n.className === 'dfpoi-warn' && /older live revision/.test(n.textContent)).length, 1, 'the stale one alone warned');
   // a retirement: nothing after; its before the live one
   const looks = () => all(dlg()).filter((n) => n.tagName === 'BUTTON' && n.textContent === 'Look at it');

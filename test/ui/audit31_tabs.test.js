@@ -176,7 +176,7 @@ test('AUDIT 31 U2, U10: every field under its visible name; a Post or a Commissi
   const go = () => btn(byClass(r.host, 'work-form')[0], 'Commission');
   assert.equal(go().getAttribute('title'), 'Name the crafter.');
   who.value = '1x'; who.oninput();
-  assert.equal(go().getAttribute('title'), 'That is not a name a crafter could have.');
+  assert.equal(go().getAttribute('title'), 'That isn\'t a valid username.');
   who.value = 'merra'; who.oninput();
   assert.equal(go().getAttribute('title'), 'You cannot commission yourself.');
   who.value = 'Silverthorn'; who.oninput();
@@ -201,13 +201,13 @@ test('AUDIT 31 U4, U11, H6, U13: Yours declines a commission naming you and says
   const yours = byClass(r.host, 'work-yours')[0];
   assert.match(yours.textContent, /Silas commissioned you: a Mithril Longsword, Fine or better, 900 silverhere · 5 days leftFill it on its card above\./);
   assert.match(yours.textContent, /Ann commissioned you: an Iron Repair Kit, 40 silverWayrest · 3 days leftFilled at the boards of Wayrest\./);
-  assert.match(yours.textContent, /You commissioned Joiner: a Small Oak Table, Standard or better, 60 silverhere · filled - collect it at the Market tab/);
+  assert.match(yours.textContent, /You commissioned Joiner: a Small Oak Table, Standard or better, 60 silverhere · filled. Collect it at the Market tab/);
   const declines = byClass(yours, 'work-decline');
   assert.equal(declines.length, 2);
   declines[1].click(); await ticks();
   assert.equal(r.calls.length, 0, 'armed, not sent');
   const armed = byClass(byClass(r.host, 'work-yours')[0], 'work-decline')[1];
-  assert.equal(armed.textContent, 'Decline - press again');
+  assert.equal(armed.textContent, 'Decline? Press again');
   armed.click(); await ticks();
   assert.deepEqual(r.calls.at(-1), ['decline', 'K4']);
   // the Fill's picker names its piece's quality; its aria a possessive
@@ -223,7 +223,7 @@ test('AUDIT 31 U4, U11, H6, U13: Yours declines a commission naming you and says
   const held = Object.assign([], { blocked: 1 });
   const h = workRig({ data: boardData(), pieces: held });
   await openWork(h.host);
-  assert.match(byClass(h.host, 'seal-commission')[0].textContent, /Your piece for it is equipped, locked or bound - free it first\./);   // BOARD-UI (PIN MOVED)
+  assert.match(byClass(h.host, 'seal-commission')[0].textContent, /Your piece for it is equipped, locked or bound\. Free it first\./);   // BOARD-UI (PIN MOVED)
   h.v.unmount();
 });
 

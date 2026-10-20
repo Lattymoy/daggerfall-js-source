@@ -72,10 +72,10 @@ test('TV5 host wiring: the far places are rebuilt on a pixel (or a reach) change
   assert.match(w, /const settlements = \(_tvSettlements \?\?= settlementPixels\(locationIndex\)\.filter\(\(t\) => !t\.loc\.ether\)\);\n\s*const list = farPlaces\(\{ at, near, settlements: etherSea && inEther\(at\.x, at\.y\) \? \[\.\.\.settlements, \.\.\.etherPlaceRows\(at, TV_FAR_RANGE, 'port'\)\] : settlements, summaryOf: tvPlaceSummary \}\)/);
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js
   const tvm = rd('src/scenes/travelViewMarks.js');
-  assert.match(tvm, /marks\.push\(\{ key: f\.key, at: tvSceneKept\(f, f\.x, f\.z, TV_PLACE_LIFT\), label: f\.summary\.name, sub: farDistanceText\(km\), kind: 'far', pick: true, edge: true, hub: carriageTown\(f\.summary\.mapId\), tip: townEcon\.tipFnAt\(f\.summary\.mapId\) \}\);/);   // PIN MOVED (FIELD BUGS 2026-10-04e OW-HUBS, SEAT-TIP; TOWN-ECON TE1: every town's card)
+  assert.match(tvm, /marks\.push\(\{ key: f\.key, at: tvSceneKept\(f, f\.x, f\.z, TV_PLACE_LIFT\), label: f\.summary\.name, sub: farDistanceText\(km\), kind: 'far', pick: true, edge: true, hub: carriageTown\(f\.summary\.mapId\), tip: placeTip\(townEcon\.tipFnAt\(f\.summary\.mapId\), f\.summary\.name, f\.x, f\.z\) \}\);/);   // PIN MOVED (FIELD BUGS 2026-10-04e OW-HUBS, SEAT-TIP; TOWN-ECON TE1: every town's card; OW-FORECAST: its weather on it)
   assert.match(tvm, /const farEnd = endKey \? `far:\$\{tvTrip\.plan\.summary\.mapId\}` : null;/, 'the journey\'s own end is the flag\'s, not a plate at the edge');
   assert.match(tvm, /for \(const f of travelViewFarPlaces\(\)\) \{\n\s*if \(f\.key === farEnd\) continue;/);
-  assert.match(w, /const plate = tvPlates\.list\.find\(\(p\) => p\.key === key\) \?\? tvFar\.list\.find\(\(p\) => p\.key === key\)( \?\? tvDng\.list\.find\(\(p\) => p\.key === key && p\.summary\))?;/);   // TV6: and a found dungeon's
+  assert.match(w, /const plate = (?:qp \? \{ summary: tvPlaceSummary\(Number\(qp\[1\]\), Number\(qp\[2\]\)\) \} : )?tvPlates\.list\.find\(\(p\) => p\.key === key\) \?\? tvFar\.list\.find\(\(p\) => p\.key === key\)( \?\? tvDng\.list\.find\(\(p\) => p\.key === key && p\.summary\))?;/);   // TV6: and a found dungeon's; PIN MOVED (OW-QUEST, 2026-10-19): a quest's mark first, its place's summary
   // PIN MOVED (AUDIT OW5 D1): the find's own list emptied beside the dungeons'
   assert.match(w, /tvFar = \{ at: null, near: -1, list: \[\] \};   \/\/ TV5: nor the far places\n\s*(tvDng = \{ at: null, dg: -1, list: \[\] \};   \/\/ TV6: nor the dungeons\n\s*tvFind = \{ at: null, dg: -1, n: -1, list: \[\] \};[^\n]*\n\s*)?(tvBandSeen = [^\n]*\n\s*)?travelView\?\.exit\('load', true\);/);
 });
@@ -580,7 +580,7 @@ test('AUDIT NAMES N1-6 readout: a titled player held at the top near a corner an
     hud.updateTravelViewHud({ feet: null, heading: null, yaw: 0, where: '', marks: [
       // PIN MOVED (OW-CROWD): held badges are my party's alone now - two of them
       { key: 'peer:top', x: -5047, y: -3176, front: true, label: 'Mack', kind: 'party', edge: true, badge: { title: 'developer', glyphs: ['dev'], lv: 40, gt: 'DAGR' } },
-      { key: 'peer:left', x: -5867, y: -3056, front: true, label: 'Aldric the Grey', kind: 'party', edge: true, badge: { title: 'founder', glyphs: ['sprout', 'dev'], lv: 12, gt: 'HND' } },
+      { key: 'peer:left', x: -5867, y: -3056, front: true, label: 'Aldric the Gray', kind: 'party', edge: true, badge: { title: 'founder', glyphs: ['sprout', 'dev'], lv: 12, gt: 'HND' } },
     ] });
     const [a, b] = draws.map(([, x, y, w, h]) => ({ x0: x, x1: x + w, y0: y, y1: y + h }));
     assert.ok(a && b, 'both drawn');

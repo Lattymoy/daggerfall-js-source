@@ -225,7 +225,7 @@ test('SD5a the mode machine by source: into the Hour from the open world (its ma
   assert.match(W, /async function enterSdRealm\(r\) \{\n\s+if \(mode !== 'exterior' \|\| !r \|\| !Number\.isSafeInteger\(r\.s\) \|\| !\(playerEntity\.health > 0\)\) return false;/);
   assert.match(W, /const hit = \{ dfLocation, blocksFile: sdRealmBlocks\(blocks\), sdRealm: r\.s, sdHollow: r\.hollow \?\? null, [^\n]*group: sdRoomKey\(r\.s\), door: null, dfBlock: null, recordIndex: -1 \};\n\s+return gatedTransition\(\(live\) => dungeonTransition\(hit, \[\], true, live\)\);/);
   assert.equal(sdRoomKey(7), 'sd:7');
-  assert.match(W, /if \(hit\.gateArena\) standCourt\(ctx\);[^\n]*\n\s+if \(hit\.sdRealm != null\) standSdRealm\(ctx\);/);
+  assert.match(W, /if \(hit\.gateArena\) gateStand\.standCourt\(ctx, hit\.gateArena\.day\);[^\n]*\n\s+if \(hit\.sdRealm != null\) standSdRealm\(ctx\);/);   // WB14b: the court stood by scenes/gate/gateStand.js, its night's
   assert.match(W, /for \(const \[rec, art\] of realmArt\(\)\) \{ renderer\.uploadTexture\?\.\(SD_REALM_ARCHIVE, rec, art\.albedo\); renderer\.uploadEmissionTexture\?\.\(SD_REALM_ARCHIVE, rec, art\.emission, \{ white: true \}\); \}[^\n]*\n\s+_realmMesh = renderer\.createMesh\(buildRealmModel\(\)\);/);   // AUDIT SD II (L2 F3 - PIN MOVED): its own light
   assert.match(W, /ctx\.collider\.addMesh\(REALM_BUCKET, tris, idx, identity\(\)\);/);
   assert.match(W, /sdHollow: hit\.sdHollow \?\? null,/);

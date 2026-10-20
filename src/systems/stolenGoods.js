@@ -100,4 +100,4 @@ export const piecesOf = (/** @type {any[]} */ items) => (items ?? []).reduce((n,
 export const confiscatedText = (/** @type {number} */ n) => t('stolen.taken', 'The guards take the stolen goods you carried ({n, plural, one {# item} other {# items}}).', { n });
 
 /** The piece's card line (the enhanced pack's, beside the lock's and the junk's). */
-export const stolenLine = () => t('stolen.card', 'Stolen - a merchant buys it only to be rid of it, and the court takes it if you are convicted.');
+export const stolenLine = () => t('stolen.card', 'Stolen. Merchants buy it but never sell it on, and the court takes it if you are convicted.');

@@ -29,6 +29,7 @@ import { TORCH_ARCHIVE, TORCH_RECORDS } from '../systems/soundClips.js';   // RD
 import { scaledSliderValue } from './deepWater/deepWaterLook.js';   // GetScaledSliderValue: the same member Iliac Puddle No More ships, one home
 import { colorLerp } from '../systems/mathf.js';          // Color.Lerp
 import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
+import { dropFoundMark } from '../systems/item/foundMark.js';   // AUDIT MEND-THIRD L3-4: a re-mint is handed over whole
 import { clampArmorVariant } from '../systems/armorMaterials.js';   // ItemBuilder.SetVariant's clamps: CurrentVariant
 
 const f32 = Math.fround;
@@ -338,6 +339,9 @@ export function upgradeLoot(items, { remintWeapon, remintArmor, isCustom = () =>
     Object.assign(item, fresh, { flags: 0, stackCount: 1 });   // SetItem (DaggerfallUnityItem.cs:565, :572), then the material pass
     delete item.isIdentified;
     if (enchanted) for (const [k, v] of Object.entries(kept)) { if (v === undefined) delete item[k]; else item[k] = v; }
+    // AUDIT MEND-THIRD L3-4: a re-minted piece is handed over whole - Roleplay & Realism: Items' roll ran first, and its mark
+    // stood on the whole piece, so an Ebony longsword marked at 31% became a whole Orcish one that sold at 51% online
+    if (!enchanted) dropFoundMark(item);
   }
 }
 

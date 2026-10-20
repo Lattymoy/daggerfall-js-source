@@ -67,8 +67,8 @@ export function setStageText(v, nameOf = (it) => String(it?.name ?? 'piece'), { 
     return compact ? '' : v.stageName;
   }
   const sleep = setSleepText(v.sleep);
-  if (sleep) return `Asleep · ${sleep}`;
-  return v.count ? '' : 'Wear two pieces to wake it';
+  if (sleep) return `Inactive · ${sleep}`;
+  return v.count ? '' : 'Wear 2 pieces to activate it';
 }
 
 /**
@@ -144,7 +144,7 @@ export function setStrip(wearer, { onPick = null } = {}) {
     const pips = el('span', 'setline-pips');
     for (const t of st.tiers) pips.append(el('i', t.awake ? 'on' : null));
     b.append(pips, el('span', 'setline-stage', st.stage < 0 ? 'Asleep' : st.stageName));
-    b.title = st.tiers.map((t) => `${t.at}: ${t.name}${t.awake ? '' : ' (asleep)'}`).join('\n');
+    b.title = st.tiers.map((t) => `${t.at}: ${t.name}${t.awake ? '' : ' (inactive)'}`).join('\n');
     const first = pieces.get(st.id)?.[0] ?? null;
     if (onPick && first) b.onclick = (e) => { e.stopPropagation(); onPick(first); };
     strip.append(b);

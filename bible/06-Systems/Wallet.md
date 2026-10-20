@@ -51,7 +51,7 @@ the wallet's pieces unchanged, and no spender, save or service changed for it.
 - **The hotbar**: a wallet pressed says its figures on the HUD's line, and asks the silver afresh for its next press, as
   the classic box asks it for its next look - one ask in flight at a time (AUDIT 625 W5: it never asked).
 - **The silver's words** where no figure is counted say why (AUDIT 625 W5 - every case once said the offline words):
-  offline "kept by your account online"; online and not known yet "asking your account" (every look asks); an account
+  offline "held in your online account"; online and not known yet "checking your account" (every look asks); an account
   that holds none - a guest's, or the counting-houses not striking yet - "none".
 - **Not held**: the Portal Stone (a thing used, not spent); gold, which is E4's counter and never a piece; silver, the
   account's (shown, never a piece).

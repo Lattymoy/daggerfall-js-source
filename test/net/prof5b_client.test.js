@@ -212,7 +212,7 @@ test('PROF5b tab: Auctions - each Masterwork\'s standing bid, bids and end, wher
   assert.match(text(), /Your auctionsSilverthorn's Mithril Longswordopening 50 silver - no bids yetends in 10 minutes/);
   assert.match(text(), /900 silver \(4 bids\)sold for 900 silver/);
   assert.match(text(), /Your bidsSilverthorn's Mithril Longsword - 300 silver \+ 17 courier - leading - ends in 25 hours/);
-  assert.match(text(), /80 silver - outbid - your silver comes back at the next look/);   // AUDIT 31 U13
+  assert.match(text(), /80 silver - outbid\. Your silver comes back the next time you look/);   // AUDIT 31 U13
   assert.match(text(), /Your silver: 1,000 silver \(397 silver held in bids\)/);
 });
 

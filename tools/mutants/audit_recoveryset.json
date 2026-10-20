@@ -341,8 +341,8 @@
   {
     "name": "C9-a-refused-copy-unsaid",
     "file": "src/ui/enhanced/enhancedAccount.js",
-    "old": "'This page may not write the clipboard - save them as a file instead.'), true);",
-    "new": "'This page may not write the clipboard - save them as a file instead.'));",
+    "old": "'The browser blocked copying to the clipboard. Save them as a file instead.'), true);",
+    "new": "'The browser blocked copying to the clipboard. Save them as a file instead.'));",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "C9-a-refused-save-unsaid",
     "file": "src/ui/enhanced/enhancedAccount.js",
-    "old": "'The file could not be saved - copy them instead.'), true);",
-    "new": "'The file could not be saved - copy them instead.'));",
+    "old": "'The file could not be saved. Copy them instead.'), true);",
+    "new": "'The file could not be saved. Copy them instead.'));",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]

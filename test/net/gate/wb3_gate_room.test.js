@@ -167,7 +167,7 @@ test('WB3 brain: the attacks\' tables - every attack\'s wind-up long enough to r
   // WB9b/c: nor the bound's across the fire nor Dagon's Reckoning's - each is its turn's own, the same in every phase
   assert.equal(windupOf(ATTACKS.cross, 3), ATTACKS.cross.windup);
   assert.equal(windupOf(ATTACKS.reckon, 3), ATTACKS.reckon.windup);
-  assert.deepEqual(ATTACK_BY_ID.map((a) => a.id), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'WBX5: the leap, the meteor and the spokes join the six; WB9b/c: the bound and the Reckoning');
+  assert.deepEqual(ATTACK_BY_ID.map((a) => a.id), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], 'WBX5: the leap, the meteor and the spokes join the six; WB9b/c: the bound and the Reckoning; WB14a: the new arsenal\'s six (test/net/gate/wb14a_arsenal.test.js); PIN MOVED (WB14d): the Sundering and the Rejoining (test/net/gate/wb14d_sundering.test.js)');
   assert.deepEqual(attacksFor(1, 1, 0).map((a) => a.key), ['cleave'], 'phase one, close, nobody inside the slam');
   assert.deepEqual(attacksFor(1, -1, 1).map((a) => a.key), ['cleave', 'slam'], 'a player inside his body is in reach of everything close');
   assert.deepEqual(attacksFor(1, 1, 1).map((a) => a.key), ['cleave', 'slam']);
@@ -401,7 +401,7 @@ test('WB3 wire: the client says two things - `in` with a level claim, `hit` with
   assert.deepEqual(validGateIn({ k: 'in', lv: 12, bv: 1.5 }), { k: 'in', lv: 12 });
   assert.deepEqual(validGateIn({ k: 'spent', d: 514, x: 1 }), { k: 'spent', d: 514 });
   for (const bad of [{ k: 'spent' }, { k: 'spent', d: -1 }, { k: 'spent', d: 1.5 }]) assert.equal(validGateIn(bad), null);
-  assert.deepEqual(GATE_OUT_KINDS, ['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no', 'fed', 'cx', 'cxh', 'cxb', 'stun', 'ad', 'amv', 'aatk', 'ah', 'adie', 'bd']);   // PIN MOVED (INT11): and the count's fall; WB8b: a Soul-Hungry Warden's feeding; WB9c: the crystals and the stun; WB11b: his host
+  assert.deepEqual(GATE_OUT_KINDS, ['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no', 'fed', 'cx', 'cxh', 'cxb', 'stun', 'ad', 'amv', 'aatk', 'ah', 'adie', 'bd', 'vgw', 'sdh', 'kn', 'kr', 'rj', 'tithe', 'cpf', 'cpw']);   // PIN MOVED (WB14f): the Captive freed and his ward given; PIN MOVED (WB14e): a Tithe-Imp's tithe; PIN MOVED (INT11): and the count's fall; PIN MOVED (WB14c): and a stage of the Vanguard; PIN MOVED (WB14d): the Sundering's four; WB8b: a Soul-Hungry Warden's feeding; WB9c: the crystals and the stun; WB11b: his host
   assert.deepEqual(validGateIn({ k: 'in', lv: 12, x: 1 }), { k: 'in', lv: 12 });
   assert.deepEqual(validGateIn({ k: 'hit', q: 3, d: 12.5, r: 2, extra: true }), { k: 'hit', q: 3, d: 12.5, r: 2 });
   for (const bad of [{ k: 'in' }, { k: 'in', lv: 0 }, { k: 'in', lv: GATE_LV_WIRE_MAX + 1 }, { k: 'in', lv: 1.5 }, { k: 'hit', q: -1, d: 1, r: 0 }, { k: 'hit', q: 1, d: 0, r: 0 },

@@ -55,7 +55,7 @@ export const LEFAY_TEXT = Object.freeze({
   read: Object.freeze([
     'Julian LeFay, 1965 - 2025.',
     'Father of The Elder Scrolls, and one of the makers of Daggerfall.',
-    'Travellers lay flowers at his stone.',
+    'Travelers lay flowers at his stone.',
   ]),
   laid: 'You lay flowers for Julian LeFay.',
   steal: 'You leave the flowers where they lie.',

@@ -297,7 +297,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `TurnRight` | RIGHT |  | Turn right |
 | `LookUp` | INS |  | Look up |
 | `LookDown` | DEL |  | Look down |
-| `CenterView` | HOME |  | Centre the view |
+| `CenterView` | HOME |  | Center the view |
 | `TogglePerspective` | MOUSE4 |  | First / third person |
 | `Jump` | SPACE | `JoystickButton5` | Jump |
 | `Crouch` | C | `JoystickButton4` | Crouch and sneak |
@@ -392,7 +392,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 
 | Action | Key | Pad | What it does |
 |---|---|---|---|
-| `ActChoice` | UP |  | At a profession node: the next of its acts on the list |
+| `ActChoice` | UP |  | Next action at a profession node |
 | `Professions` | DOWN |  | Open your Professions page (online) |
 
 ### Game

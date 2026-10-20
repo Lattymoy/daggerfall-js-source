@@ -152,7 +152,7 @@ test('TEXT-F1 the service: a rank\'s name with a caught word is refused, naming 
   assert.deepEqual([bad.status, bad.body], [400, { error: 'guild-rank-word', why: 'dickhead' }]);
   const good = await ranks(['Guildmaster', 'Officer', 'Member', 'Recruit']);
   assert.equal(good.status, 200, JSON.stringify(good.body));
-  assert.equal(guildWordText('guild-rank-word', { why: 'dickhead' }), 'A rank\'s name may not carry "dickhead" - a word the realm keeps out of names.');
+  assert.equal(guildWordText('guild-rank-word', { why: 'dickhead' }), 'A rank\'s name may not contain "dickhead". That word is not allowed in names.');
   assert.ok(REFUSALS['guild-rank-word'], 'the service\'s word has its sentence');
 });
 

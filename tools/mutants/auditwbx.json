@@ -141,8 +141,8 @@
   {
     "name": "AUDWBX-S2-the-level-unsigned",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "const claimsOf = ({ d, b, s, c, x, l, r, m }, nowS) => ({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), ...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });",
-    "new": "const claimsOf = ({ d, b, s, c, x, l, r, m }, nowS) => ({ d, b, s, c, x, ...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + RECEIPT_TTL_S });",
+    "old": "({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), ...(r === 1 ? { r } : {})",
+    "new": "({ d, b, s, c, x, ...(r === 1 ? { r } : {})",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ],
@@ -169,8 +169,8 @@
   {
     "name": "AUDWBX-F3-the-fall-at-the-words-start",
     "file": "src/net/gate/gateLink.js",
-    "old": "      const [x, z] = place(s, g.at);",
-    "new": "      const [x, z] = [s.x, s.z];",
+    "old": "      const [x, z] = place(s, g.at);\n      return { ...s, fell:",
+    "new": "      const [x, z] = [s.x, s.z];\n      return { ...s, fell:",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "AUDWBX-F7-the-lane-at-half-its-width",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "halfW: A.shape === 'lane' ? Math.max((A.width ?? 0) / 2, P.bossR) : (A.width ?? 0) / 2,",
-    "new": "halfW: (A.width ?? 0) / 2,",
+    "old": "halfW: tether ? TELEGRAPH_CHAIN_HALF_W : A.shape === 'lane' ? Math.max((A.width ?? 0) / 2, P.bossR) : (A.width ?? 0) / 2,",
+    "new": "halfW: tether ? TELEGRAPH_CHAIN_HALF_W : (A.width ?? 0) / 2,",
     "tests": [
       "test/net/gate/auditwbx.test.js",
       "test/net/gate/wb4_gate_boss.test.js"

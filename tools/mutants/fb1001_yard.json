@@ -268,9 +268,9 @@
   },
   {
     "name": "YARD-RECENTRE-the-bucket-left-behind",
-    "file": "src/scenes/decor/decorRoom.js",
-    "old": "        c?.removeBucket?.(decorKeyOf(e.piece.id));\n        c?.addMesh?.(decorKeyOf(e.piece.id), e.cpu.positions",
-    "new": "        c?.addMesh?.(decorKeyOf(e.piece.id), e.cpu.positions",
+    "file": "src/player/lateSolid.js",
+    "old": "      collider.removeBucket?.(key);\n      if (was) held.set(key, [h]); else stand(key, h);",
+    "new": "      if (was) held.set(key, [h]); else stand(key, h);",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ]
@@ -278,7 +278,7 @@
   {
     "name": "YARD-RECENTRE-the-bucket-never-stood-again",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "        c?.addMesh?.(decorKeyOf(e.piece.id), e.cpu.positions, e.cpu.indices, e.matrix);\n",
+    "old": "      if (e.cpu) late()?.replace(decorKeyOf(e.piece.id), e.cpu.positions, e.cpu.indices, e.matrix);\n",
     "new": "",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
@@ -287,8 +287,8 @@
   {
     "name": "YARD-RECENTRE-its-model-never-kept",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "{ entry.cpu = m.cpu; collider?.()?.addMesh?.(",
-    "new": "{ collider?.()?.addMesh?.(",
+    "old": "{ entry.cpu = m.cpu; late()?.add(",
+    "new": "{ late()?.add(",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ]

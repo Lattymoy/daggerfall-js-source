@@ -149,3 +149,118 @@ which said they did before their doors had a card; `src/scenes/exterior.js`, the
   31 mutants, 31 dead.
 - `tools/noticeBoardProbe.mjs` photographs the two guides unfolded (`work-guide`, `seat-guide`) beside its other shots,
   desktop and phone - every tab inside the viewport, nothing spilling sideways.
+
+## 6. PLAIN-SWEEP - the whole game's words, said plainly (2026-10-19)
+
+The owner: *"I wanna do a comprehensive sweep of text/descriptions that are not palatable or proper descriptions. Renove
+overexplaining text and replace it with proper palatable descriptions for ease of understanding. Absolutely no AI like
+text."*
+
+### 6.1 What a player met (FACT, at da3bb0d5c)
+
+Sections 1 to 5 made four surfaces explain themselves. Across the rest of the game the words had grown the other way:
+the house's own record voice on the screen. A setting's description ran to a paragraph and ended in its slice's code
+(*"INERT here: Animated Water is not in the port, so the mod's own waves always draw (CSA-J)."*); the About pane's credits
+named modules and slices (*"Ported 1:1 from the shipped 1.5.2 (characters/meanerMonsters.js); both lanes, under its own
+switch in Settings."*); a Features card explained what it was not (*"This is not Daggerfall Unity's "Smarter Enemies"
+setting, which the port does not run."*); refusals hung a second clause off a dash (*"The ship can't carry any more. Any
+heavier and it couldn't move."*, *"Your goods changed - the trade is off."*); guides said each rule twice; and the mods'
+own setting descriptions were shown as their authors typed them, defaults and typos included (*"If Player Footsteps
+Should Make A Sound || Default = True"*, *"underwate"*).
+
+### 6.2 The rules the sweep held every string to
+
+WB13b's (`11-Multiplayer/World-Bosses.md`): the event, then what to do, and stop; no "X, not Y"; no dash asides (" - "
+only between a label and its value); orders short; numbers as numerals. And the owner's: no developer talk on screen
+(no slice codes, file names, "ported 1:1", "the port", "INERT", "the law", "the relay"); no AI-sounding prose (no em
+dashes, no "seamless", "immersive", "elevate", "delve", no hype, no rhythm-of-three padding); plain everyday words over the
+house's phrasing ("a press" is a click or a tap; "the reader" is you); every fact a player needs kept; credits keep every
+author, mod, version and licence they name.
+
+### 6.3 What changed
+
+Thirteen lanes read every string a player sees - the keyed catalog's 5,288 and the code's hard-coded prose - in
+mod settings, Features and tutorials, the enhanced interface and menus, the credits and the account service's refusals,
+the online game's chat, social panel, party, realm and safety words, the living world, Revenants and Legacy, the
+professions and the Notice Board's guides, ships, the sea and the card tables, the Elite Breach's and the gates' law,
+combat, loot and sigils, the scene hosts and the points of interest, the systems, and the remaining windows. Words
+only: no logic moved, no ICU argument was added or dropped, no hard-coded literal was split.
+
+- 277 source files; 823 catalog keys (791 rewritten, 32 new - the Elite Breach's windows, `11-Multiplayer/Elite-Gates.md`
+  section 31 EG-PLUS) and several thousand hard-coded lines.
+- **The mods' own setting descriptions** (`src/systems/modSettings.js`) are said plainly too - a DEPARTURE from the
+  1:1-era rule that the pane shows nothing its author did not write (AUDIT 61, a test's own words, not the owner's;
+  SCOPE1 governs). About 250 lines changed; the vendored `modsettings.json` files are untouched, and each settings test
+  holds a `PLAIN` map of the rewritten keys - every key not in it must still equal its author's text. Five keys that do
+  nothing here now say "Has no effect" (Dynamic Skies' particle cap, Travel Options' real grass, Snowfall's three loader
+  keys, Immersive Footsteps' two logging keys).
+- **The credits** say what each mod or library does for the player and keep its whole attribution. Two claims were
+  corrected on the way: Roleplay & Realism's later modules were listed as coming in later slices and ship already; Eye
+  of the Beholder's attack and death animations, footsteps and cart were listed as missing and are in its vendor record.
+- **Terms**: the King's Gambit's *Least stake* is *Minimum stake* everywhere it is said (`11-Multiplayer/Kings-Gambit.md`
+  14.4 kept true).
+- **Translations**: the 823 keys drafted again in every language that holds them, in-session through
+  `tools/l10nInSession.mjs` (the thirteen whole languages all 823; the languages still drafting the rows they had).
+- **The relay** carries player-facing lines in its bundle (the Elite Breach's law, the arena's, the duel's, the
+  serpent's, the name filter's, the staff commands'): `world227`, words only (`test/net/relayversion.test.js`;
+  world224 on its branch, renumbered past LAYERED-GEAR and VOICE2's world224, GAUNTLET-SLAIN's world225 and
+  LORD-SHARES' world226 at the merges of main).
+
+### 6.4 Left alone, and why
+
+- Daggerfall's and Daggerfall Unity's own text (TEXT.RSC, quests, books, DFU's console help and native windows), item,
+  monster and place names.
+- In-world voice: a lord's taunt, an omen, a resident's greeting, a rumour, a bark, a probation letter.
+- The Code of Conduct (`net.conduct.*`): its wording is versioned (CONDUCT_VERSION), and a change would ask every player
+  to agree again.
+- Machine-read text: chat command syntax, protocol and save words, console lines, thrown errors.
+- Label-value lines (*"Crippled - make port for a shipwright"*, *"Recovering - 3 hours"*), which WB13b keeps.
+- The mods' own runtime messages (the Foraging mod's *"You cannot chop wood in a settlement!"*, Immersive Footsteps'
+  warning box), which are their authors' game text rather than this game's descriptions of them.
+
+### 6.5 The law added
+
+6. **THE SCREEN SPEAKS TO THE PLAYER.** No slice code, file name, module, "port" or record voice reaches a player; a
+   description says what a thing does and what to do with it, once.
+
+### 6.6 Proof
+
+The pins that held the old words were moved to the new ones exactly - never loosened (363 test files); the mutant
+records whose `old` quoted a changed line were re-aimed by content (114 files) and `test/tooling/mutantdrift.test.js`
+finds every one; `test/systems/l10n4_hardcoded.test.js`'s counts fell where a line was routed or merged and rose
+nowhere; `node tools/l10nExtract.mjs --check` is in step; the bible's prose quotes of changed lines were kept true where
+they describe the game as it is (dated records keep their history). The whole suite, run once with every lane in: 31,265 tests, the seven pins it found still on old words moved and green.
+
+### 6.7 At the merge of main: the sweep meets VOICE2 (2026-10-20)
+
+While the sweep was out, main merged VOICE1/VOICE2 (`10-UI/Voice.md`): a voice pass over 862 strings in 201 files, and
+American spelling across the game's own text. The two passes had rewritten many of the same lines, and the merge met
+746 conflicting hunks in 400 files. Each line was written once, to both rule sets: Voice.md's (whole sentences, the
+game's own words, no HUD, cooldown, stack, reroll, boss or XP in a sentence, no dash asides, American spelling) and
+section 6.2's (short, the event and then what to do, no developer talk).
+
+- **Source** (433 hunks, 172 files): counted per string, 360 kept the sweep's line, 122 took main's and 119 are a blend -
+  the sweep's shorter line with main's spelling and words (armor, harbor, experience for XP, a grade for a crafting
+  tier, lesser foes for adds). Where main changed a fact, main's fact stands. Where the sweep cut a clause as
+  over-explaining and main had only re-voiced it, the cut stands. The one hunk with code in it (LAYERED-GEAR's Skin
+  card) keeps main's code whole; no key or ICU argument differed.
+- **Facts checked against the code on the way**: a card pack holds exactly one card of rare or better (`cardSources.js`;
+  the sweep's "at least one" was wrong); a guild's daily chapter cap is for all quests together (main's "each quest" was
+  wrong); Masonry and Alchemy offer two choices at rank 100, so "a choice", never "the choice"; a party's travel vote is
+  called off when its leader moves, and only the leader is told; the market's bid line keeps U13's wording ("the next
+  time you look"), which the sweep had broken.
+- **The sweep's own lines that merged without a conflict** were brought into the same voice, as main did with its own at
+  its last merge: 71 lines changed (the mod settings' descriptions and the credits, which are this game's words now, in
+  American spelling; "stacks" said as a count of times; "reroll" said as what happens - *draw new cards*, *remake*; the
+  Shelf's "adds" as lesser foes) and 18 left - a mod setting's key, a variable read as a word, a label-value dash. Lines
+  neither pass wrote stay as they were, the mods' own words among them (Voice.md: *"the mods' setting names"*, Travel
+  Options' *"travelling"*).
+- **Tests** (270 hunks, 181 files; 52 hunks in 46 mutant files): every expectation follows the settled source; no check
+  dropped. Four of main's checks that could no longer fail (`/not practised/` after the spelling pass) now read
+  *practiced* and guard the line again.
+- **Translations**: the languages took main's tables, then the sweep's rows came back wherever they were drafted for the
+  English the catalog now holds (11,653 rows). A line whose English changed only in spelling kept its row and moved its
+  record (826 rows, VOICE2's own rule); the 50 keys whose meaning moved at the merge were drafted again in every
+  language that holds them.
+- **The relay**: `world227` (the sweep's world224, renumbered past LAYERED-GEAR and VOICE2's world224 and, at later
+  merges of main, GAUNTLET-SLAIN's world225 and LORD-SHARES' world226), words only.

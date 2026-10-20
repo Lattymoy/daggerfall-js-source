@@ -99,9 +99,9 @@ import { SEAT_HALL_TEXT } from '../../net/townSeatLaw.js';   // SEAT-HALL: the C
 import { forgeOffered, PROF_STATIONS, stationColdLine } from '../../ui/professions/profPages.js';   // AUDIT 29 B2; PROF4: the workbench too
 import { VENDOR_STATION, VENDOR_COLD_LINE } from '../../net/vendorLaw.js';   // HOME-VENDOR: a trader, sold only where it trades
 /** HOME-STATIONS: an online home whose service does not keep a station yet (one from before this) - said, and nothing paid. */
-export const DECOR_STATION_UNKEPT = 'Your home could not keep a station yet - nothing was paid.';
+export const DECOR_STATION_UNKEPT = 'Your home cannot hold a station yet. Nothing was paid.';
 /** AUDIT HOME-STATIONS S2: the gold went while the station was being made (spent elsewhere mid-write) - nothing paid. */
-export const DECOR_STATION_GOLD_WENT = 'Your gold ran short while the station was being made - nothing was paid.';
+export const DECOR_STATION_GOLD_WENT = 'Your gold ran short while the station was being made. Nothing was paid.';
 import { localAabb, transformedAabb } from '../../render/frustum.js';
 import { billboardSize, isNatureArchive } from '../../world/rmbFlats.js';   // DECOR-TURN (AUDIT Y6): a yard's tree turns in earnest
 import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../../world/mat4.js';
@@ -159,7 +159,7 @@ export const DOOR_SIGHT_SPARE = 0.6;
 export const DECOR_DOOR_NONE = 'This house has no open doorway for a door.';
 /** HOME-DOORS (AUDIT): what the bar says when the free doorways are all wider than the door can close. */
 export const DECOR_DOOR_TOO_WIDE = 'The free doorways here are too wide for this door to close.';
-export const decorDoorAimLine = (n) => `Look at a marked doorway to hang the door (${n} free) - turn to swing it the other way.`;
+export const decorDoorAimLine = (n) => `Look at a marked doorway to hang the door (${n} free). Turn to swing it the other way.`;
 /** HOME-DOORS: the most doorways marked at once, and their marks' colours - a free one, and the one looked at. */
 export const DECOR_DOOR_MARKS = 32;
 export const DECOR_DOOR_MARK_FREE = Object.freeze([0.35, 1, 0.45, 0.55]);
@@ -821,7 +821,7 @@ export function createDecorTool(deps) {
       } else if (what === 'withdraw') {
         if (!row?.offer || (!row.offer.listed && row.offer.taken)) return false;
         res = await door.withdraw({ room: row.offer.room });
-        if (res?.ok) deps.say?.(res.data?.gone === false ? `Room ${row.offer.room} is still rented - offered to nobody once its days run out.` : `Room ${row.offer.room} is no longer offered to rent.`);
+        if (res?.ok) deps.say?.(res.data?.gone === false ? `Room ${row.offer.room} is still rented. It will not be offered again once its days run out.` : `Room ${row.offer.room} is no longer offered to rent.`);
       } else if (what === 'collect') {
         res = await door.collect();
         if (res?.ok) deps.say?.(`You collected ${goldSum(res.gold)} gold in rent. It went to ${EMPIRE_ACCOUNT_WORDS}.`);
@@ -1205,7 +1205,7 @@ export function createDecorTool(deps) {
     }
     if (deps.visit?.() === visit) pool.remove(piece.id);
     if (decorIsDoor(piece)) forgetRooms();   // HOME-DOORS: its doorway open again, the rooms either side one
-    deps.say?.(toGuild > 0 ? `${entryOf(piece).name} removed - ${toGuild} gold back to the guild's treasury.` : `${entryOf(piece).name} removed - ${back} gold back.`);
+    deps.say?.(toGuild > 0 ? `${entryOf(piece).name} removed. ${toGuild} gold back to the guild's treasury.` : `${entryOf(piece).name} removed. ${back} gold back.`);
     return true;
   }
 
@@ -1226,7 +1226,7 @@ export function createDecorTool(deps) {
     const item = pool.takeOwn?.(piece.id) ?? null;
     if (item) deps.packGive?.(item);
     // DECOR2b: furniture is delivered again - back among "Your things", never the pack
-    deps.say?.(!item ? `${name} taken down.` : isFurnishing(item) ? `${name} taken down - set it down again from Your things.` : `${name} is back in your pack.`);
+    deps.say?.(!item ? `${name} taken down.` : isFurnishing(item) ? `${name} taken down. Set it down again from Your things.` : `${name} is back in your pack.`);
     return true;
   }
 
@@ -1338,7 +1338,7 @@ export function createDecorTool(deps) {
   const pieceWrites = new Map();
 
   /** HOME-STATIONS: a piece a station cannot be made in for want of gold. */
-  const decorStationGoldLine = (kind) => `${DECOR_STATION_NAMES[kind]}: ${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold, and you have not that much.`;
+  const decorStationGoldLine = (kind) => `${DECOR_STATION_NAMES[kind]}: ${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold, and you do not have that much.`;
 
   /** HOME-STATIONS: A PLACED PIECE MADE A CRAFTING STATION, or unmade - `kind` one of DECOR_STATIONS, or 'none'. The
    *  licence is paid once (DECOR_STATION_FEES) and never comes back; a piece that holds things, or one's own item, is

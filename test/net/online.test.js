@@ -237,10 +237,10 @@ test('ONLINE1: the look and the stub - the equipped items\' doll fields off the 
   const entity = { race: 'Redguard', gender: 'female', faceIndex: 4, equip: createEquipTable() };
   entity.equip.slots[3] = { templateIndex: 102, group: 'Armor', material: 2, dye: 3, variant: 1, equipSlot: 3, currentCondition: 40, name: 'x' };
   entity.equip.slots[10] = { templateIndex: 20, group: 'MensClothing', equipSlot: 10, uid: 99 };
-  const look = composeLook(entity);
+  const look = composeLook(entity, { layered: null });   // PIN MOVED (LAYERED-GEAR-ON): the doll's fields; the layered body's `lg`, on by default, is pinned in worn_armour.test.js
   assert.deepEqual(look, { race: 'Redguard', gender: 'female', faceIndex: 4, items: [{ templateIndex: 102, group: 'Armor', material: 2, dye: 3, variant: 1, equipSlot: 3 }, { templateIndex: 20, group: 'MensClothing', equipSlot: 10 }] }, 'the doll\'s fields, nothing else');
   assert.deepEqual(LOOK_ITEM_FIELDS, ['templateIndex', 'group', 'material', 'dye', 'variant', 'equipSlot']);
-  assert.deepEqual(composeLook(null), { race: 'Breton', gender: 'male', faceIndex: 0, items: [] });
+  assert.deepEqual(composeLook(null, { layered: null }), { race: 'Breton', gender: 'male', faceIndex: 0, items: [] });
   assert.equal(lookKey(look), lookKey(JSON.parse(JSON.stringify(look)))); assert.notEqual(lookKey(look), lookKey({ ...look, faceIndex: 5 }));
   const stub = peerStubEntity(look);
   assert.equal(stub.race, 'Redguard'); assert.equal(stub.equip.slots[3].templateIndex, 102); assert.equal(stub.equip.slots[10].templateIndex, 20);

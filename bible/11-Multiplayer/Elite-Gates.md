@@ -338,7 +338,8 @@ THE COUNT CHIP, THE RECAP, THE REHEARSAL, RIDDEN POSES, THE SPIRE MIX, ROLE READ
 **The item.** Template **575**, free today (the gate's 570-572 and the Ayleid stones' 573-574 come before it). It is a
 row of its own, `WEIR_KEY_ROW` in `src/systems/eliteGates/weirKey.js`:
 
-- `{index:575, baseWeight:0.25, hitPoints:1000, basePrice:500, rarity:20, bound:true, stackable:true}`, in the
+- `{index:575, baseWeight:0.25, hitPoints:1000, basePrice:500, rarity:20, bound:true, stackable:true, packOnly:true}`
+  (the leaf `WEIR_KEY_LAW_ROW`, `src/systems/eliteGates/weirKeyRow.js`, since KEY-LAW; pack-only since KEY-FACE, below), in the
   miscellany group (`UselessItems2`), never a gem (PORTAL1's lesson: every Gems piece is a crystal a slot takes);
 - its art: a Battlemage's key in gold leaf with a blue stone in its bow, painted in code under the Spire's held archive
   block (`src/world/eliteGates/egKeyArt.js`, EG-ZH), which EG1's registry holds - never a borrowed record, because Port-Doctrine
@@ -364,6 +365,23 @@ real relay instance, so the key is a service-side balance and the item is its fa
   staked, and those a lost open's answer took unseen (section 22) - says *The key turns to rust.*, and the stack is
   restacked (AUDIT EG IV).
 - It is bound to the account, never traded, and never lost to a death.
+- **The face is the pack's alone** (FIELD BUGS 2026-10-19f KEY-FACE). The restack reads the pack and nothing else
+  (`weirKey.js:"  const held = items.filter(isWeirKey);"`), so a face anywhere else is a key it cannot see. The row was
+  bound and not pack-only, and a bound piece goes to the wagon and the player's own storage (`itemBound.js`
+  `BOUND_KEEPS`): a face stowed there left the pack showing none, the next answer gave it a new one, and the stowed ones,
+  carried back, showed keys the account never held - every one of them rust at the next use (a player's private report:
+  a pack of keys gone at one use). So the row is **pack-only**, the Wallet's law (`06-Systems/Wallet.md`; `isPackOnly`):
+  both skins refuse the wagon and every storage (a home's chest, a ship's hold, a companion's pack) in its own words,
+  *Weir Key stays in your pack.*, and the doors that are no window's - a room's decoration (`decorStandOf`), a revenant's
+  take (`revenantMayTake`), the shift-drop (`physicalItems.js` `shiftDrop`) - read the same mark; the trade, the counter, a
+  death in the zone, a salvage and a peer's list refuse it as a bound piece already. A save from before holds faces out
+  of the pack; it loads with every one folded away (`foldStrayWeirKeys`, called from `save.js` restorePlayer beside the
+  load's item repairs, over every list the save holds but the pack - the one walk, `savedItemLists` - and a room's own
+  things, `decorOwn`), so the account's balance restacks the pack whole and nothing turns to rust. A face the find threw
+  on a body and the player never took up is folded the same way at the next load. OPEN: that throw is the one face
+  still made outside the pack - taken up only after a later answer restacked the pack to the whole balance, it leaves
+  the pack one over, and the next answer says the rust line for it (the account loses nothing). Pinned:
+  `test/net/eliteGates/fb1019f_keyface.test.js` (5), `tools/mutants/fb1019f_keyface.json` (13, all dead).
 
 **Where they come from.** The service rolls every one with its own `rand`, at a claim it already verifies. This is
 the `sdHonoursRoll` way: AUDIT SD III R4 moved the Hour's honours off the receipt seed because the page can read the
@@ -457,7 +475,8 @@ screen let go meanwhile, or a refusal come to stand (a step indoors), opens no w
 - **the Rehearsal** (section 27.7): *Rehearse - Halls 1-5, no key* (once a real day);
 - **the classic skin** asks with DFU's DaggerfallListPickerWindow (`src/ui/listPicker.js`, PICK00I0.IMG; the boat
   variant picker is the precedent), so the native-window rule holds: a list of DFU's own, no free-styled geometry;
-- **the enhanced skin** asks with `src/ui/enhanced/enhancedPicker.js`;
+- **the enhanced skin** asks in a breach window of its own (`src/ui/eliteGates/egStartPanel.js`, EG-PLUS in section 31):
+  a tile per start with each member's mark, the Wager's decrees as tiles by family, Open the breach on its dock;
 - **a warning line**, when one of the opener's quests falls due before the last word (36 game hours, three real
   hours): *A quest falls due before the breach can close.*
 
@@ -845,7 +864,7 @@ first written 90-160 m long, 3-4.5 m wide for a company of up to four and 5-6 m 
 | **the Siege-Walk** | the Galleries | as above |
 | **the Falling Wall** | the Galleries | 20 s after the wake, the walkway falls behind the company, segment by segment, at a fixed 1.5 m/s. A member caught is cast to the nearest standing segment ahead, at the cast-back's cost |
 | **the Winch** | the Cairn | the portcullis rises only while `min(2, n)` members stand on its winch plates, over 60 s, under the march - *n* the living company as it stands, so a pair that loses one raises it alone (AUDIT EG V). Each plate stands gold on every screen through the trial, the room's reach (`EG_TOUCH_M`) about it, as a stood-on errand does (`scenes/eliteGates/egFight.js` `winchPlates`; FIELD BUGS 2026-10-18d WINCH-PLATES - the objective named them and nothing marked them) |
-| **the Gauntlet** | the Shade | no march: `2 + ceil(n/2)` caster pillars, each silenced by standing 3 s on its side span's plate |
+| **the Gauntlet** | the Shade | no march: `2 + ceil(n/2)` caster pillars, each silenced by standing 3 s (`EG_SILENCE_MS`) on its plate - from spec law 10 on its pillar's top beside its stair's head (laws 8 and 9: 3 m up the stair) - or by slaying its Caster (GAUNTLET-SLAIN, `01-Overview/bugs/Field-Bugs-2026-10-19d.md`: a company that killed every Caster stood at a door that never gave). Each plate in play stands gold on every screen through the trial, on its own ground's height (`egPlateY`), the room's reach (`EG_TOUCH_M`) about it, and dims once its Caster is silenced, by its plate or its death - the room says each plate's word (`pg.silenced`, in `spots.pillar`'s order; relay world232 - a screen facing an older relay, world231 or before, draws every plate the hall lays while a Caster is left); the objective and its line name the plates (section 27.3) (`scenes/eliteGates/egFight.js` `gauntletPlates`; FIELD BUGS 2026-10-19f GAUNTLET-PLATES - from a player's private report: a company slew every Caster, the line still counted three, and nothing marked a plate) |
 | **the Forge Bridge** | the Wellhead | the walkway is a conveyor running toward the arrival plate at a fixed 1.0 m/s, under the march and the vents |
 
 ### 8.4 The Athenaeum (`athenaeum`) - the lock
@@ -1782,14 +1801,23 @@ byte. The Spire's lords are written to it. The gate's brain already exports the 
 - **Health**: `ttkRef(c)` seconds of reference damage per fighter (`dpsRef(lv)`, the gate's level claim), added as the
   gate adds its fighters. `ttkRef(c) = 180 x 1.07^(c-1)` to circle 20, then `x 1.03` a circle (`EG_TTK_S`,
   `EG_TTK_GROWTH`, `EG_TTK_GROWTH_DEEP`).
-- **A fall retires a share, which is new.** Both the gate and the Remnant call `retireShare` only for absence
-  (`ABSENT_RETIRE_MS`), and the Remnant restores the share of every body in its arena, alive or fallen. The Spire
-  retires a fallen member's share at the fall and restores it at the recall; its seen-and-restore step skips the
-  fallen, or the next tick would restore the share. Seven members never face a lord sized for eight.
-  - Built by EG-ZQ (its record, below), through the boss seam's `join`. The members a hall can gain mid-fight are those a
-    Memento calls back into it (a member is admitted only in the open window, before the first wake: section 6.1). Each
-    brings its share at the fraction the lord stands at, as the gate adds a fighter. The last share in a lord is never
-    retired.
+- **A lord is stood for the company on its hall's plate, and keeps what the fallen leave** (FIELD BUGS 2026-10-19e
+  LORD-SHARES, `01-Overview/bugs/Field-Bugs-2026-10-19e.md`, after a company's word on its breach: *"Felt like he wasnt
+  being damaged"* and *"It felt like the moment team died difficulty went down"*).
+  - **As its hall wakes** a lord is stood for the members on the arrival plate (`net/eliteGates/egLords.js` egLordsStand,
+    called by `net/eliteGates/egBrain.js` standFight once every lord of the hall stands). The hall's fight is still sized
+    by its whole living company (its legion, its errands). A member not on the plate brings its share when the director
+    first sees it in the hall, at the fraction the lord stands at, as the gate adds a fighter: a late arrival never heals
+    a lord. The lord is sized in the beat the hall wakes, whose whole fight every screen hears before any health word, so
+    no screen ever reads the sizing as a blow. A lord still asleep in its ring lets a fallen member's share go, and wakes
+    for the company standing before it.
+  - **From its wake no fall takes a share out of it.** The living finish what the fallen left, so a death makes a fight
+    harder for the company, never easier. The gate and the Remnant retire a share only for absence (`ABSENT_RETIRE_MS`),
+    and the Remnant keeps a fallen body's. A recall finds its member's share where it was. A member never seen whose
+    absence becomes a fall (section 6.1's 180 s) takes nothing with it: it never brought any.
+  - The members a hall can gain mid-fight are the late and those a Memento calls back into it (a member is admitted only
+    in the open window, before the first wake: section 6.1), each bringing its share at the fraction. The last share in
+    a lord is never let go. Built through the boss seam's `join` (EG-ZQ's record, below, and LORD-SHARES's).
 - **The bucket**: the gate's (`BUCKET_RATE_X` 3, `BUCKET_DEPTH_X` 15, `HIT_CAP_X` 12), each member's times their
   Vestiges' factors (section 15): the client-declared at most 1.25, the relay-established at most 1.6, and **together
   at most `EG_BUCKET_ALL_MAX` 1.6**.
@@ -2491,7 +2519,7 @@ word take the respite whole (section 6.2).
 
 **A fall.** A death in the Spire (the pose's `dd`), or 180 s gone in a trial, is a FALL:
 
-- the fallen's Reliquaries are lost, and their lord's share is retired (section 13.2);
+- the fallen's Reliquaries are lost, and their share stays in every lord awake for the living to finish (section 13.2);
 - they become a **witness** (below);
 - **THE FALL**, their own screen. Today the world host's online death runs the death screen
   (`src/ui/deathScreen.js`, counting `ONLINE_RESPAWN_SECONDS`, 60 s, to a respawn; the enhanced skin's *YOU DIED*
@@ -3778,6 +3806,13 @@ Pinned at 1280x720, 390x844 and 844x390.
 - **The objective**, from `EG_TEXT.objective`, stays as a chip with its progress: *Close the rifts.* (*Rifts 3 of 5*),
   *Fell the standard.*, *Hold the relic.* (*1:12*), *Cross.*, *Break the wards at the portcullis.*, *Turn the Orrery
   true.*, *Fell the champion.*, *Find the way down.*
+  FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the Gauntlet's names both ways a Caster is silenced, *Silence each caster: stand on
+  its plate, or slay it.* (*Casters left: 3. Hold a plate 3 s or slay its caster*) - *Silence the casters.* (*Casters left:
+  3*) named neither, and no plate was marked (section 8.3; a slain Caster silenced since GAUNTLET-SLAIN,
+  `01-Overview/bugs/Field-Bugs-2026-10-19d.md`). They are the first objective's words in the player's language
+  (`eg.objective.gauntlet`, `eg.progress.gauntlet` - `ui/eliteGates/egHud.js` `egObjectiveText`, both trackers and the
+  arrival card). The law's own word stays as laid (`EG_OBJECTIVES`): every spec carries it, so it is a hall's bytes
+  (section 22's law pin), and the screen's words are the screen's.
 - **The door** (section 7): a gold beam seen hall-wide, a compass and screen-edge marker, *The way down opens.*, a
   door's sound, and the closing's ring in every hall kind, not only spans.
 
@@ -10001,3 +10036,76 @@ of the sweep - but a player of the span build who jumps at the last of such a wi
 sweep's): `world219` stands as EG-PERFECT left it, and this is what lets its deploy through.
 
 **The four hosts.** None touched (HOST-SPLIT).
+
+### EG-PLUS - 2026-10-19 - THE BREACH'S WINDOWS IN THE STONE-AND-BRASS KIT
+
+The owner: *"We also need to improve the elite breach UI as its not enhanced plus UI standard."*
+
+**What was wrong (FACT, at da3bb0d5c).** Every Elite Breach window wore a look of its own. The panel at a rest (the
+Vestige offer, the company's word, the recap - `src/ui/eliteGates/egHud.js` `drawEgPanel`) and the call's tracker
+(`drawEgHud`) were Cormorant and Georgia on hand-picked browns with rounded corners; the boards
+(`src/ui/eliteGates/egBoardWindow.js`) were Georgia on a dark plate. None of their surfaces was in the kit
+(`src/ui/enhanced/enhancedFrame.js` FRAME_ROLES), so the Plus themes, DFO Grimoire and the pixel face never reached them -
+the state CARDS-PLUS took off the card tables (`Tavern-Cards.md` section 38). The start window on the enhanced skin was
+DFU's list picker drawn in the skin: the stake and the quest warning stood among the choices as rows, each member's
+readiness was spelt `[+x]`, and the Wager was a second list of twenty rows. A decree's choice at a rest was a press
+reading *Chained Blows - The legion's blows chain a second shape.*; Dagon's Bargain and the respite were one long title
+each; the panel's foot was a line of keys and chat commands.
+
+**What changed.**
+
+- **THE CHROME** (`src/ui/eliteGates/egKit.js`, new): one sheet every breach window wears (`.eg-win`) - the header band
+  (`.eg-k-head`, its title in brass capitals, chips beside it, a close), the body that scrolls inside a box the screen
+  bounds, sections (`.eg-k-sec`, a head over an engraved line), reading lines at 15px and their tones (dim, warn, gold,
+  the Vestiges' blue), tiles, presses, chips, list rows, tabs, the dock (`.eg-k-dock`, the band the presses stand on,
+  never scrolled away) and the foot. Geometry and words only, the card tables' law; the kit paints by role. The kit names
+  them (FRAME_ROLES: the window, the tracker and a section a panel, the presses and the close buttons, Open the breach and
+  a recap's Close primary, a choice a tile, a readout a chip, the head a header, a section's head a headerRule, the dock a
+  footer, the foot a ruleTop, a board's line a listRow, its tabs tabs) - so the Plus themes, Stone's lifted words and
+  DFO Grimoire (`src/ui/grimoireDress.js` INK_ROOTS and WOOD_ROOTS, read off the roles) reach every one. On the classic
+  skin `dressEgKit` lays the kit cut to the breach's selectors (`scopeRules`), as the Broker, the naval readout and the
+  card tables do; on every skin it asks for the face.
+- **THE PANEL**: a breach window. Its head says what it shows - *Choose a Vestige* (or *Choose 2 Vestiges*), *The company
+  decides*, *The breach is over* - with the keys and the Surplus as chips. Each Vestige a tile: its key, its name, its line,
+  the capstone it completes and the Accord it takes in blue. A decree's choice is tiles, each decree's name over what it
+  does (`egAskText` - the options their names and `lines` what each does); Dagon's Bargain and the respite a short title
+  with what a yes does on a line under it (*The rest runs 2 minutes longer and the count holds.*, read off
+  EG_RESPITE_STEP_MS); the choice I voted for pressed; each choice's seconds a chip; *The majority of those who answer
+  decides.* once; the keys in the foot (*1-6 to choose, Y for Ready, R for a respite*). The recap: its depth, time, why,
+  Reliquaries and board line, then Circles, Company and Vestiges as sections, its Close in brass on the dock.
+- **THE CALL'S TRACKER**: a plate over the world (the kit's panel) in the pixel face.
+- **THE BOARDS**: a breach window - the season a chip on the head, the six tabs a tablist, each row its parts
+  (`egBoardView`, new, pure: a rank, who, where - the hall and its band, the start, the Wager, the Proclamation - and the
+  time or the depth), the Unfallen and the reader as chips, the reader's row brass. `egBoardLines` stays the classic
+  picker's.
+- **THE START WINDOW on Enhanced Plus** (`src/ui/eliteGates/egStartPanel.js`, new): the head (*Elite Breach*, the Weir Keys
+  held as a chip), the stake in one line (or none held, and the Rehearsal the way in), the quest warning as a warning line;
+  *Where to start* - a tile per start (deepest first, Hall 1 last), its band, each member's mark as a chip (and *Without
+  Mara* where one cannot make it); *The Wager* folded until opened or while it holds a decree, its rule in one line, every
+  decree a tile by family; the dock - *Open the breach* (a start taken first; a refusal said on the dock), *Rehearse Halls
+  1-5*, *Boards*, *Cancel*. It is an overlay of the generic shape (`src/ui/brokerDoor.js`'s) on the mode machine's window
+  slot the list used (`scenes/world.js` `egWindowSlot`), and keeps the list's laws: the slot emptied before a choice is
+  acted on, before its question (*Go without Mara?*, the host's box) and before the boards; a window put out of its slot
+  cancels it once; a choice is handed on once. The host hands its doors on Enhanced Plus alone (`panel:` beside the
+  list's doors - one entry, HOST-SPLIT), and `openEgStartWindow` opens it in the list's place; the classic skin keeps
+  DFU's list (THE NATIVE-WINDOW RULE).
+- **THE SPIRE HUD** on Enhanced Plus: its chips, its decrees press and its touch buttons are the kit's to paint; the
+  classic skin keeps DFU's text colour and shadow.
+
+**New words** go through the text core (`eg.panel.*`, `eg.start.*`, `eg.ask.*`, `eg.board.fromRedoubt`); the hard-coded
+count of `egHud.js` fell by six (`test/systems/l10n4_hardcoded.test.js`).
+
+**The four hosts.** `src/scenes/world.js` WIRED (the start window's `panel:` doors). `src/scenes/worldModes.js`,
+`src/scenes/dungeonContext.js` and `src/scenes/exterior.js` build no Elite Breach window of their own: the breach is
+online's, opened through the world host.
+
+**Proof.** `test/ui/eliteGates/egplus_ui.test.js` (8): the roles, the cut, the sheets' paint and face, the classic skin's
+dress, the panel, the boards, the start window's model and its whole flow, and the doors. `tools/mutants/egplus.json`: 19
+records, every one dead (with the nine re-aimed: 442 dead, 0 survived). Pins moved: `egaudit3_pres` (the recap's capstones are a line), `egaudit5_c_hud` (the touch note is the foot; the
+last runs are rows), `egeco_board` (a row's parts); nine mutant records re-aimed by content (`cardsplus`,
+`egaudit3_pres`, `egaudit5_c`, `egz_mastery`, `egz_return`). `test/ui/font3_readable.test.js` holds the breach's five sheets
+to the type floor. `tools/egPlusProbe.mjs` draws each window through its real painter on Enhanced Plus, Stone, the classic
+skin and DFO Grimoire at 1280x800 and 390x844 and checks the face, the carved frame, the fit and 44px presses under a
+finger: 244 of 244.
+
+**The relay.** Nothing of this is in its bundle.

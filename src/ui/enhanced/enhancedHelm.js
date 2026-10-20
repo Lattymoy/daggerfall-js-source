@@ -378,7 +378,7 @@ export function helmHint(h, state = {}) {
   if (h.inIrons) {
     // HELM-LADDER: one rung down strikes the last of her sail and puts her on her oars, pulling ahead
     const strike = [key('MoveBackwards'), key(A.less)].filter(Boolean).join(' ');
-    return `In irons - strike sail${strike ? ` (${strike})` : ''} and row to turn`;
+    return `In irons. Strike sail${strike ? ` (${strike})` : ''} and row to turn`;
   }
   if (state.touch) return '';
   const keys = (label, ...as) => { const ks = [...new Set(as.map(key).filter(Boolean))]; return ks.length ? `${label} ${ks.join(' ')}` : ''; };

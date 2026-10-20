@@ -281,8 +281,8 @@
   {
     "name": "BODY-MOTION-two-run-at-the-chest",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(11, 24, 24, -43, 0.12,",
-    "new": "    run: { R: row(40, 24, 95, -43, 0.12,",
+    "old": "    run: { R: row(43, 10, 0, -31, 0,",
+    "new": "    run: { R: row(43, 10, 95, -31, 0,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "BODY-MOTION-pair-left-unmirrored",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "      out.L = req && mirrorRequest(req, C, F.right);",
-    "new": "      out.L = req;",
+    "old": "      out.L = held(req && mirrorRequest(req, C, F.right), S, r);",
+    "new": "      out.L = held(req, S, r);",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "BODY-MOTION-pair-run-forward",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(-47, 21, 7, 0, 0.1,",
-    "new": "    run: { R: row(47, 21, 7, 0, 0.1,",
+    "old": "    run: { R: row(-42, 10, 8, -60, 0.4,",
+    "new": "    run: { R: row(42, 10, 8, -60, 0.4,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "BODY-MOTION-torch-arm-taken",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "        const want = hands && !(side === 'L' && input.torch) ? 1 : 0;",
-    "new": "        const want = hands ? 1 : 0;",
+    "old": "        const want = hands && !(side === 'L' && (input.torch || shieldArm)) ? 1 : 0;",
+    "new": "        const want = hands && !(side === 'L' && shieldArm) ? 1 : 0;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "BODY-MOTION-blow-chest-unturned",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "gp.chest.yaw * (1 - k) + (bp ? bp.chest[0] * RAD * wind : 0))),",
-    "new": "gp.chest.yaw * (1 - k))),",
+    "old": "+ runTurn) * (1 - k) + (bp ? bp.chest[0] * RAD * wind : 0))),",
+    "new": "+ runTurn) * (1 - k))),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]

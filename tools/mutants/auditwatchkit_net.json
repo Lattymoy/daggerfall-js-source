@@ -65,8 +65,8 @@
   {
     "name": "LD-H-stow-empty-said",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (!items?.length) return;\n    const boat = (csa()",
-    "new": "    const boat = (csa()",
+    "old": "    if (!items?.length) return;\n    const boat = packStaysAshore()",
+    "new": "    const boat = packStaysAshore()",
     "tests": [
       "test/systems/naval/auditwatchkit_net.test.js"
     ]

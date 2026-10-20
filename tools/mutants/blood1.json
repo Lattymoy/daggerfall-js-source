@@ -312,8 +312,8 @@
   {
     "name": "BLOOD1b-the-hit-shape-lets-a-NaN-through",
     "file": "src/combat/blood/bloodDecals.js",
-    "old": "    damage: Number.isFinite(damage) ? damage : 0,\n    maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,",
-    "new": "    damage: damage ?? 0,\n    maxHealth: entity?.maxHealth ?? 0,",
+    "old": "    damage: Number.isFinite(damage) ? damage : 0,\n    maxHealth: Number.isFinite(entity?.maxHealth) && !entity?.relayHealth ? entity.maxHealth : 0,",
+    "new": "    damage: damage ?? 0,\n    maxHealth: !entity?.relayHealth ? entity?.maxHealth ?? 0 : 0,",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

@@ -23,10 +23,10 @@ test('HALL-GOLD the words: short of the price says where the gold goes (the Guil
   assert.notEqual(short, old, 'two refusals, two lines');
   assert.match(short, /less than 1,274,880 gold/);
   assert.match(short, /Guild tab's Treasury/);
-  assert.match(short, new RegExp(`at most ${GUILD_MOVE_MAX.toLocaleString('en-US')} at a time`));
+  assert.match(short, new RegExp(`up to ${GUILD_MOVE_MAX.toLocaleString('en-US')} at a time`));
   assert.match(short, /bank account does not pay for a hall/);
-  assert.match(old, /less than 1,274,880 gold that realm characters put in - only that gold buys a hall/);
-  assert.match(old, /before the realm, or by a character outside it, stays in the treasury but does not count/);
+  assert.match(old, /less than 1,274,880 gold put in by realm characters, and only that gold buys a hall/);
+  assert.match(old, /Older gold, or gold from characters outside the realm, does not count/);
   // the door's press says each refusal its own way
   const modes = rd('src/scenes/worldModes.js');
   assert.match(modes, /r\?\.error === 'guild-treasury-short' \? hallShortLine\(guildHallPrice\(price\)\)\s*\n\s*: r\?\.error === 'guild-treasury-old' \? hallOldGoldLine\(guildHallPrice\(price\)\)/);
@@ -44,7 +44,7 @@ test('HALL-GOLD the Guild tab: the service\'s view carries what of the treasury 
   v = await view();
   assert.deepEqual([v.treasury, v.hallGold], [100_000, 60_000], 'the treasury\'s whole, and what of it buys a hall');
   // PIN MOVED: AUDIT GUILD3 W15 - the Treasury's sentence, one rule said once: a hall, or a new name or tag
-  assert.equal(guildHallGoldText(v.hallGold, v.treasury), '60,000 gold of the treasury\'s 100,000 can buy a hall, or a new name or tag - the gold realm characters put in. A bank account\'s gold never does.');
+  assert.equal(guildHallGoldText(v.hallGold, v.treasury), '60,000 of the treasury\'s 100,000 gold was put in by realm characters and can buy a hall, or a new name or tag. Gold in a bank account cannot.');
   assert.equal(guildHallGoldText(undefined, 5), null, 'an older service\'s answer: nothing said');
   const panel = rd('src/ui/socialPanel.js');
   assert.match(panel, /const counted = guildHallGoldText\(v\.hallGold, v\.treasury\);/);

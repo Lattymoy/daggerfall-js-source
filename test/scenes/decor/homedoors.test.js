@@ -423,8 +423,8 @@ test('HOME-DOORS the mark\'s picture is a bright frame round a faint fill; the h
 
 test('HOME-DOORS the panel says where a door goes before it is placed: a door\'s line in the catalogue says it hangs in a doorway and how many this house has free, or that they are still being found, or that it has none (mutant: the line unread)', async () => {
   const { decorDoorLine } = await import('../../../src/ui/decorPanel.js');
-  assert.equal(decorDoorLine(null), 'hangs in a doorway - finding them...');
-  assert.equal(decorDoorLine(0), 'hangs in a doorway - this house has none free');
+  assert.equal(decorDoorLine(null), 'hangs in a doorway. Finding the doorways...');
+  assert.equal(decorDoorLine(0), 'hangs in a doorway. This house has none free');
   assert.equal(decorDoorLine(2), 'hangs in a doorway - 2 free here, marked while you place it');
   const rig = toolRig({ collider: rigHouse(), gold: 50_000, doors: [0], walls: WALLS, doorsHere: () => [] });
   rig.frame();

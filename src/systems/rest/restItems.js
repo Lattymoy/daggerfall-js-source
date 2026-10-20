@@ -87,39 +87,39 @@ export function createRestItem(templateIndex, { stackCount = 1 } = {}) {
 
 export const REST_ITEM_TEXT = Object.freeze({
   tonic: 'You drink the tonic. Your weariness lifts.',
-  tonicSleep: 'You drink the tonic. Your weariness lifts, and sleep can wait a while longer.',
-  candleLit: 'You light the candle. Rest to kneel and meditate by it.',
+  tonicSleep: 'You drink the tonic. Your weariness lifts, and you will not need sleep for a while longer.',
+  candleLit: 'You light the candle. Rest to kneel and meditate before it.',
   candleNotCarried: 'Carry the candle in your pack to light it.',   // AUDIT REST II H10
-  meditated: 'You meditate by the candle. Your mind clears.',
+  meditated: 'You meditate before the candle. Your mind clears.',
   candleOut: 'The candle burns down to nothing.',
-  salts: 'The salts sting your nose awake. Weariness can wait an hour.',
+  salts: 'The salts sting your nose and you are wide awake. Your weariness will not trouble you for an hour.',
   saltsNotTired: 'You are not weary enough to need the salts.',
-  saltsArcOff: 'The salts sting your nose. You were not tired.',
-  saltsEnd: 'The salts wear off, and your weariness comes back all at once.',
-  saltsHeld: 'The last of the salts is still in you.',   // AUDIT REST-PARTY B6
-  draught: 'You drink the draught. Tonight you will sleep as soundly as in a bed.',
+  saltsArcOff: 'The salts sting your nose, but you were not tired.',
+  saltsEnd: 'The salts wear off, and all your weariness returns at once.',
+  saltsHeld: 'The last dose of salts has not yet worn off.',   // AUDIT REST-PARTY B6
+  draught: 'You drink the draught. Tonight you will sleep as well as in a bed.',
   draughtHeld: 'You have already taken a draught for tonight.',
   // the placed three (scenes/camps.js)
   bedrollLaid: 'You lay out your bedroll.',
   bedrollWorn: 'Your bedroll is worn through.',
-  emberLit: 'You tip out the embers and they catch.',
+  emberLit: 'You tip out the embers and a fire catches.',
   firewoodFed: (n) => `You feed the fire. It has ${n} ${n === 1 ? 'night' : 'nights'} of fuel.`,
-  firewoodFull: 'Your Campfire has all the fuel it can take.',
+  firewoodFull: 'Your Campfire cannot take any more fuel.',
   firewoodNone: 'You have no Campfire to feed.',
-  notOnline: 'This cannot be used in the realm yet.',   // AUDIT REST-PARTY B4
+  notOnline: 'This cannot yet be used in the realm.',   // AUDIT REST-PARTY B4
 });
 
 /** Each item's card lines (systems/item/itemInfo.js builds the name and the weight around them). */
 export function restItemLines(item) {
   const n = item?.currentCondition ?? 0;
   switch (item?.templateIndex) {
-    case REST_ITEM.Bedroll: return [`${n} ${n === 1 ? 'night' : 'nights'} left`, 'A rough night anywhere a camp could stand.'];
-    case REST_ITEM.EmberJar: return ['A fire for one night - it cannot be carried on.'];
+    case REST_ITEM.Bedroll: return [`${n} ${n === 1 ? 'night' : 'nights'} left`, 'A rough night\'s sleep anywhere you could camp.'];
+    case REST_ITEM.EmberJar: return ['Makes a fire for one night. The fire cannot be carried.'];
     case REST_ITEM.Firewood: return [`Adds ${FIREWOOD_NIGHTS} nights of fuel to a Campfire.`];   // AUDIT REST II H13: the notes' own words
     case REST_ITEM.Tonic: return [`Restores ${Math.round(TONIC_FATIGUE * 100)}% of your fatigue.`, `With Climates & Calories, sleep can wait ${TONIC_SLEEP_HOURS} hours more.`];
     case REST_ITEM.Candle: return [`${n} ${n === 1 ? 'use' : 'uses'} left`, `Meditate by it to restore ${Math.round(CANDLE_MAGICKA * 100)}% of your magicka.`];
-    case REST_ITEM.Salts: return [`${n} ${n === 1 ? 'use' : 'uses'} left`, 'Holds weariness off for an hour; it lands after.'];
-    case REST_ITEM.Draught: return ['Your next night sleeps as a bed.'];
+    case REST_ITEM.Salts: return [`${n} ${n === 1 ? 'use' : 'uses'} left`, 'Keeps weariness away for an hour, then it returns all at once.'];
+    case REST_ITEM.Draught: return ['Your next night counts as sleeping in a bed.'];
     default: return [];
   }
 }

@@ -62,7 +62,7 @@
   {
     "name": "TV3-relay-not-kept",
     "file": "server/src/index.js",
-    "old": "      if (!this._setAttach(ws, m.p ? { ...rest, tm: { ...m.p, at: now } } : rest)) return;",
+    "old": "      if (!this._setAttach(ws, m.p ? { ...rest, tm: { ...m.p, at: now, ...(m.bd ? { bd: m.bd } : {}), ...(m.sr ? { sr: m.sr } : {}) } } : rest)) return;",
     "new": "",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "TV3-session-no-version-gate",
     "file": "src/net/online.js",
-    "old": "    if (!this.travOk || !isRegionRoom(this.room)) return false;\n    const mark",
-    "new": "    if (!isRegionRoom(this.room)) return false;\n    const mark",
+    "old": "    if (!this.travOk || !isRegionRoom(this.room)) return false;\n    // OW-CHASE-RANGE: the mark's chase words",
+    "new": "    if (!isRegionRoom(this.room)) return false;\n    // OW-CHASE-RANGE: the mark's chase words",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-TV-C1-a-reconnect-is-held",
     "file": "src/scenes/world.js",
-    "old": "        link.onTravellerRoom = (list) => { travellerBook.reset(list, Date.now()); travellerSent.last = null; travellerSent.at = 0; };",
-    "new": "        link.onTravellerRoom = (list) => { travellerBook.reset(list, Date.now()); };",
+    "old": "travellerBook.reset(list, Date.now()); travellerSent.last = null; travellerSent.at = 0; regionChase.room(list);",
+    "new": "travellerBook.reset(list, Date.now()); regionChase.room(list);",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],
@@ -322,7 +322,7 @@
   {
     "name": "AUDIT-DEEP-T3-6-relay-no-age",
     "file": "server/src/index.js",
-    "old": ", ag: Math.max(0, Math.floor((now - b.tm.at) / 1000)) }, b)",
+    "old": ", ag: Math.max(0, Math.floor((now - at) / 1000)) }, b)",
     "new": " }, b)",
     "tests": [
       "test/scenes/tv3_travellers.test.js"

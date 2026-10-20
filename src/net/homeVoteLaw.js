@@ -82,14 +82,14 @@ export const homeScoreText = (score) => {
   return n > 0 ? `+${n}` : String(n);
 };
 /** The door's line under a voted home, to anyone who may vote on it: its score, and the reader's own vote. */
-export const homeVotesLine = (score, mine = 0) => `Votes: ${homeScoreText(score)}${mine === HOME_VOTE_UP ? ' - you voted up' : mine === HOME_VOTE_DOWN ? ' - you voted down' : ''}`;
+export const homeVotesLine = (score, mine = 0) => `Votes: ${homeScoreText(score)}${mine === HOME_VOTE_UP ? ' (you voted up)' : mine === HOME_VOTE_DOWN ? ' (you voted down)' : ''}`;
 /** What a shunned home's insiders are told at its door - its decor hidden from everyone else until its score climbs. */
-export const homeShunnedInsiderLine = (score, hall = false) => `Votes: ${homeScoreText(score)} - ${hall ? "your hall's" : "your home's"} decorations are hidden from other players.`;
+export const homeShunnedInsiderLine = (score, hall = false) => `Votes: ${homeScoreText(score)}. ${hall ? "Your hall's" : "Your home's"} decorations are hidden from other players.`;
 /** What a visitor is told at a shunned home's door. */
 export const HOME_SHUNNED_LINE = 'Its decorations are hidden: the town has voted it down.';
 /** A vote refused in its own words where the home door's would mislead - a guest's (the route's wall says owning a home
  *  needs an account), a home nobody holds now (the door's word is "not yours any more") - else null. */
-export const homeVoteRefusalLine = (error) => (error === 'homes-need-account' ? 'Voting on a home needs a username and a password. Give this account one and you can vote.'
+export const homeVoteRefusalLine = (error) => (error === 'homes-need-account' ? 'Voting on homes needs a username and password. Add them to this account to vote.'
   : error === 'no-home' ? HOME_VOTE_GONE_LINE : null);
 /** A vote on a home nobody owns now. */
 export const HOME_VOTE_GONE_LINE = 'Nobody owns that home any more.';

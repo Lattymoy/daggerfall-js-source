@@ -1227,6 +1227,14 @@ ${G} .hud-qdiamond .hud-qframe { background: linear-gradient(135deg, #f0d276 0%,
 ${G} .hud-qdiamond .hud-qground { background: linear-gradient(135deg, rgba(58,36,20,0.95) 0%, rgba(30,18,8,0.92) 60%, rgba(18,10,4,0.9) 100%); }
 ${G} .hud-qdiamond .hud-qcell.socket .hud-qframe { background: linear-gradient(135deg, rgba(122,82,48,0.7), rgba(42,24,10,0.7)); }
 ${G} .hud-qdiamond .hud-qcell.cycling .hud-qframe { background: linear-gradient(135deg, #fff39a, ${T.yellow} 50%, #9a8a14); }
+/* DIAMOND-HB: the hotbar's diamond slots (Diamond, Diamonds) - the old diamond's wood and gilded rim. The shelf box's
+   border-image is for square slots; clipped to a diamond it would be cut at the corners */
+${G} .hb { --gem-rim: linear-gradient(135deg, #f0d276 0%, ${T.goldLeaf} 30%, #8a6418 70%, #4a3208 100%);
+  --gem-rim-empty: linear-gradient(135deg, rgba(122,82,48,0.7), rgba(42,24,10,0.7));
+  --gem-rim-active: linear-gradient(135deg, #fff39a, ${T.yellow} 50%, #9a8a14);
+  --gem-rim-strike: linear-gradient(135deg, #fff27a, ${T.goldLeaf} 50%, ${T.yellowDeep}); }
+${G} .hb.hb-gem .hb-slot { border-image: none; box-shadow: none;
+  background: linear-gradient(135deg, rgba(58,36,20,0.95) 0%, rgba(30,18,8,0.92) 60%, rgba(18,10,4,0.9) 100%); }
 
 /* THE DIAL - GRIM4 (Dudey: "instead of words give this fitting symbols, all in the style of grimoire"): each door of the
    Tab dial is a piece of the pack's own painting (ui/grimoireArt.js DIAL_ICONS) - the Empire's helm for Skills, the

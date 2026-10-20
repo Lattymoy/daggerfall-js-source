@@ -180,7 +180,7 @@ function resetModel(entity, id, law, held, on) {
         : t('growth.spec.reset.loseUnbought', 'You lose its passive, and its signature spell is no longer sold to you.'),
     t('growth.spec.reset.keep', 'Your mastered skills stay mastered.'),
     '',
-    ...(!on ? [t('growth.spec.reset.off', 'Master Skills is off. Turn it on to choose a specialisation again.')]
+    ...(!on ? [t('growth.spec.reset.off', 'Master Skills is off. Turn it on to choose a specialization again.')]
       : [t('growth.spec.reset.then', 'Open to you after the reset: {names}.', { names: after.open.join(', ') }),
         ...(after.later ? [t('growth.spec.reset.later', 'More paths unlock as you master more skills.')] : [])]),
   ];
@@ -274,11 +274,11 @@ export function stateLine(fam, p, on) {
 /** The chosen path's line: it works, or why it does nothing right now (pathAsleep). */
 function chosenLine(asleep) {
   switch (asleep) {
-    case 'off': return t('growth.spec.why.chosenOff', 'Your specialisation. Its powers are off while Master Skills is off.');
-    case 'mentor': return t('growth.spec.why.chosenMentor', 'Your specialisation. Its powers are off while you mentor a lower-level party.');
-    case 'duel': return t('growth.spec.why.chosenDuel', 'Your specialisation. Its powers are off during a duel.');
-    case 'beast': return t('growth.spec.why.chosenBeast', 'Your specialisation. Its powers are off in beast form.');
-    default: return t('growth.spec.why.chosen', 'Your specialisation.');
+    case 'off': return t('growth.spec.why.chosenOff', 'Your specialization. Its powers are off while Master Skills is off.');
+    case 'mentor': return t('growth.spec.why.chosenMentor', 'Your specialization. Its powers are off while you mentor a lower-level party.');
+    case 'duel': return t('growth.spec.why.chosenDuel', 'Your specialization. Its powers are off during a duel.');
+    case 'beast': return t('growth.spec.why.chosenBeast', 'Your specialization. Its powers are off in beast form.');
+    default: return t('growth.spec.why.chosen', 'Your specialization.');
   }
 }
 
@@ -305,11 +305,11 @@ export function resetSpecGuide(fam = null) { _fam = fam === 'arcane' || fam === 
  */
 export function drawSpecGuide(detail, rerender, { el, divider, skillMeter = null, askCard, entity, openMaster = null }) {
   const m = specGuideModel(entity);
-  detail.append(divider(t('growth.spec.title', 'Specialisations')));
-  detail.append(el('p', 'gr-lead', t('growth.spec.lead', 'Master two schools of magic or two weapon skills to unlock a specialisation: a passive bonus plus a signature spell or technique. You can have one arcane and one martial specialisation. Resetting one costs {gold, number} gold.', { gold: SPEC_RESET_GOLD })));
+  detail.append(divider(t('growth.spec.title', 'Specializations')));
+  detail.append(el('p', 'gr-lead', t('growth.spec.lead', 'Master two schools of magic or two weapon skills to unlock a specialization: a passive bonus plus a signature spell or technique. You can have one arcane and one martial specialization. Resetting one costs {gold, number} gold.', { gold: SPEC_RESET_GOLD })));
   if (!m.masterOn) {
     const off = el('div', 'gr-warn');
-    off.append(el('span', null, m.switchable ? t('growth.spec.masterOff', 'Master Skills is turned off, so no specialisation can be unlocked. Turn it on in Master Skills.') : t('growth.spec.masterOffLocked', 'Master Skills is off.')));
+    off.append(el('span', null, m.switchable ? t('growth.spec.masterOff', 'Master Skills is turned off, so no specialization can be unlocked. Turn it on in Master Skills.') : t('growth.spec.masterOffLocked', 'Master Skills is off.')));
     detail.append(off);
   }
   if (_note) {
@@ -386,7 +386,7 @@ export function drawSpecGuide(detail, rerender, { el, divider, skillMeter = null
   }
   detail.append(list);
   if (reachable.length < fam.paths.length) {
-    const more = el('button', 'act gr-more', _all ? t('growth.spec.showReach', 'Show only paths you can get') : t('growth.spec.showAll', 'Show all fifteen paths'));
+    const more = el('button', 'act gr-more', _all ? t('growth.spec.showReach', 'Show only paths you can get') : t('growth.spec.showAll', 'Show all 15 paths'));
     more.onclick = () => { _all = !_all; rerender(); };
     detail.append(more);
   }
@@ -452,7 +452,7 @@ export function firstFamily(m) {
  *  masteries spent - LANE1-4), or how one opens. */
 export function familyLine(fam) {
   const arc = fam.id === 'arcane';
-  if (fam.held) return t('growth.spec.heldLine', 'Your {family} specialisation: {name}.', { family: famWord(fam.id), name: fam.held.name });
+  if (fam.held) return t('growth.spec.heldLine', 'Your {family} specialization: {name}.', { family: famWord(fam.id), name: fam.held.name });
   if (fam.open) return t('growth.spec.openLine', '{n, plural, one {# path is available. Choose it below.} other {# paths are available. Choose one below.}}', { n: fam.open });
   if (!fam.possible && !fam.classPossible) return arc ? t('growth.spec.arcaneNever', 'Your class can\'t master two schools of magic, so no arcane path is available.') : t('growth.spec.martialNever', 'Your class can\'t master two weapon skills, so no martial path is available.');
   if (!fam.possible) return arc ? t('growth.spec.arcaneSpent', 'Your mastery slots left can\'t hold two schools of magic, so no arcane path is available.') : t('growth.spec.martialSpent', 'Your mastery slots left can\'t hold two weapon skills, so no martial path is available.');

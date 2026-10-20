@@ -679,7 +679,7 @@ test(`PARTY-SKIN (${guard}): the UTC-day lapse - a body killed before midnight U
   for (const h of [bobH, mac, eve]) noNode(h, 'the body\'s UTC day has ended');
 });
 
-for (const [what, pitchOff, note] of [['a clean pelt', 0, ' (a clean pelt)'], ['a torn pelt', 2.3, ' (a torn pelt - its part lost)']]) {
+for (const [what, pitchOff, note] of [['a clean pelt', 0, ' (a clean pelt)'], ['a torn pelt', 2.3, ' (a torn pelt, its part lost)']]) {
   test(`PARTY-SKIN (${guard}): XP and the ${what} note go to the skinner`, async () => {
     const s = await scene('street', [MAC, EVE]);
     const [mac, eve] = [await hunter(s, s.mac), await hunter(s, s.eve)];

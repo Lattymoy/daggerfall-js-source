@@ -45,7 +45,7 @@ test('SWING-LABEL: the Swing Weapon line says what the gesture code actually doe
   assert.equal(still.gesture(0, 0, true, 1 / 60, 1000, { swingMode: 0, attackThreshold: 0.005 }), null, 'a press without moving does nothing');
   const moved = new PlayerWeapon({ weapon: null, liveSpeed: 50 });
   assert.notEqual(moved.gesture(0, 40, true, 1 / 60, 1000, { swingMode: 0, attackThreshold: 0.005 }), null, 'a press with a drag swings');
-  assert.match(swingHint('Mouse1', 0, 'KeyZ'), /^Hold the right mouse button and move the mouse to swing.*A press without moving does nothing\. Draw your weapon first with Z \(Ready Weapon\)\.$/);
+  assert.match(swingHint('Mouse1', 0, 'KeyZ'), /^Hold the right mouse button and move the mouse to swing\. The direction you move picks the attack\. Holding it without moving does nothing\. Draw your weapon first with Z \(Ready Weapon\)\.$/);
   // Click (1): the press alone swings, and the line says so
   const click = new PlayerWeapon({ weapon: null, liveSpeed: 50 });
   assert.notEqual(click.gesture(0, 0, true, 1 / 60, 1000, { swingMode: 1, rolls: () => 0 }), null, 'Click mode swings on the press');
@@ -53,7 +53,7 @@ test('SWING-LABEL: the Swing Weapon line says what the gesture code actually doe
   assert.equal(swingHint('Mouse1', 2, null), 'Press or hold the right mouse button to swing.');
   // the player's own bindings, not the defaults
   assert.match(swingHint('KeyK', 0, 'KeyR'), /^Hold K and move the mouse.*with R \(Ready Weapon\)\.$/);
-  assert.equal(swingHint(null, 0, 'KeyZ'), 'Unbound - nothing can swing your weapon.');
+  assert.equal(swingHint(null, 0, 'KeyZ'), 'Unbound. Nothing can swing your weapon.');
 });
 
 test('SWING-LABEL: the enhanced pane shows the line under Swing Weapon, from the live swing style and Ready Weapon key', () => {

@@ -251,7 +251,7 @@ export function dungeonSightLine(metres, direction, tier = 'regular') {
  *  arch says it (scenes/eliteGates/egArch.js): "You see an Elite Breach 140 metres to the North!" */
 export function sightLineOf(what, metres, direction) {
   const m = Math.max(10, Math.round(metres / 10) * 10);
-  return `You see ${what} ${m} metres to the ${direction}!`;
+  return `You see ${what} ${m} meters to the ${direction}!`;
 }
 
 // ---------------------------------------------------------------- TTL1

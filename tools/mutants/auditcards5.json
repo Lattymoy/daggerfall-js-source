@@ -892,7 +892,7 @@
   {
     "name": "AC5-C-M4",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "if (!c) return ['A card this build does not know.'];",
+    "old": "if (!c) return ['An unknown card.'];",
     "new": "if (!c) return [];",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
@@ -1667,8 +1667,8 @@
   {
     "name": "AC5-D-B30-kept-stays-open",
     "file": "src/ui/card/cardBinderPage.js",
-    "old": "kept in your binder.`; _editing = null; }",
-    "new": "kept in your binder.`; }",
+    "old": "saved to your binder.`; _editing = null; }",
+    "new": "saved to your binder.`; }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",

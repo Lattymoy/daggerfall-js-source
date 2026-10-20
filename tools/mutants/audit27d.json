@@ -470,7 +470,7 @@
   {
     "name": "AUDIT-S4-unmake-at-once",
     "file": "src/ui/decorPanel.js",
-    "old": "return armed ? { pick, act: 'Press again to unmake - nothing back', what: 'station:none' } : { pick, act: 'Unmake station (nothing back)', what: 'arm' };",
+    "old": "return armed ? { pick, act: 'Press again to destroy it. Nothing is returned', what: 'station:none' } : { pick, act: 'Unmake station (nothing back)', what: 'arm' };",
     "new": "return { pick, act: 'Unmake station (nothing back)', what: 'station:none' };",
     "tests": [
       "test/ui/homestations.test.js"
@@ -497,7 +497,7 @@
   {
     "name": "AUDIT-S6-licence-back-unsaid",
     "file": "src/ui/decorPanel.js",
-    "old": "${it.piece.station ? ' (the station licence is not)' : ''}",
+    "old": "${it.piece.station ? ' (the station license is not)' : ''}",
     "new": "",
     "tests": [
       "test/ui/homestations.test.js"

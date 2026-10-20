@@ -52,12 +52,12 @@ export const EG_FRAGS = Object.freeze({
   caverns: Object.freeze({ band: 0, name: 'the Oblivion Caverns', classes: Object.freeze(['passage', 'chamber', 'shaft']), reverb: 'cave', light: Object.freeze([1.0, 0.45, 0.12]), engine: 'sluice', sign: 'Fire falls across the passage. Run between the burnings.' }),
   stacks: Object.freeze({ band: 0, name: 'the Fallen Stacks', classes: Object.freeze(['passage', 'chamber']), reverb: 'stoneroom', light: Object.freeze([1.0, 0.82, 0.5]), engine: 'shelf', sign: 'The shelves topple one after another. Run the gap between the falls.' }),
   colonnade: Object.freeze({ band: 0, name: 'the Broken Colonnade', classes: Object.freeze(['passage']), reverb: 'quarry', light: Object.freeze([1.0, 0.85, 0.6]), engine: null, sign: 'The drums roll along the course. Ride them.' }),
-  ossuary: Object.freeze({ band: 1, name: 'the Ossuary', classes: Object.freeze(['passage', 'chamber']), reverb: 'stoneroom', light: Object.freeze([0.6, 0.75, 1.0]), engine: 'soulbell', sign: 'The bone bridges crumble underfoot. Soul-wisps drink from the still.' }),
+  ossuary: Object.freeze({ band: 1, name: 'the Ossuary', classes: Object.freeze(['passage', 'chamber']), reverb: 'stoneroom', light: Object.freeze([0.6, 0.75, 1.0]), engine: 'soulbell', sign: 'The bone bridges crumble underfoot. Soul-wisps drain anyone who stands still.' }),
   mist: Object.freeze({ band: 1, name: 'the Mist Stair', classes: Object.freeze(['shaft', 'passage']), reverb: 'cave', light: Object.freeze([0.7, 0.8, 0.95]), engine: null, sign: 'The mist rises. Your footing never hides.' }),
   gloam: Object.freeze({ band: 2, name: 'the Gloam Thicket', classes: Object.freeze(['passage', 'chamber', 'shaft']), reverb: 'quarry', light: Object.freeze([0.62, 0.7, 1.0]), engine: 'mirror', sign: 'The branches hold only under the moon. Follow the light.' }),
   eclipse: Object.freeze({ band: 2, name: 'the Eclipse Vault', classes: Object.freeze(['chamber']), reverb: 'stoneroom', light: Object.freeze([0.55, 0.6, 1.0]), engine: 'mirror', sign: 'The Eclipse comes. Stand in the moonlight.' }),
   forge: Object.freeze({ band: 3, name: 'the Forge Gut', classes: Object.freeze(['passage', 'chamber', 'shaft']), reverb: 'cave', light: Object.freeze([1.0, 0.5, 0.15]), engine: 'hammer', sign: 'The hammers fall where they are told. The belts carry you.' }),
-  clanpit: Object.freeze({ band: 3, name: 'the Clan Pit', classes: Object.freeze(['chamber']), reverb: 'quarry', light: Object.freeze([1.0, 0.55, 0.2]), engine: null, sign: 'The Honour Horn calls one of you. Answer alone.' }),
+  clanpit: Object.freeze({ band: 3, name: 'the Clan Pit', classes: Object.freeze(['chamber']), reverb: 'quarry', light: Object.freeze([1.0, 0.55, 0.2]), engine: null, sign: 'The Honor Horn calls one of you. Answer alone.' }),
   deep: Object.freeze({ band: 3, name: 'the Oblivion Caverns, deep', classes: Object.freeze(['passage', 'chamber', 'shaft']), reverb: 'cave', light: Object.freeze([1.0, 0.4, 0.1]), engine: 'sluice', sign: 'The magma tide rises. Take the high floors.' }),
 });
 /** The passages each band's spans and Deepways run through, and the chambers its yards, proving courts and Deepways
@@ -126,11 +126,11 @@ export const EG_ENGINE_CD_MS = 30_000;
 export const EG_ENGINE_PCT = 0.2;
 export const EG_ENGINE_TELL_MS = 1500;
 export const EG_ENGINES = Object.freeze({
-  sluice: Object.freeze({ name: 'the Sluice', what: 'floods a channel for 6 s - adds in it lose 40% of their health', sh: 'lane', pct: 0.4, flood: 6000 }),   // EG-ZC: the channel flooded 6 s
-  shelf: Object.freeze({ name: 'the Shelf', what: 'topples once onto the adds', sh: 'lane', pct: 0.5, once: true }),
+  sluice: Object.freeze({ name: 'the Sluice', what: 'floods a channel for 6 s, and lesser foes caught in it lose 40% of their health', sh: 'lane', pct: 0.4, flood: 6000 }),   // EG-ZC: the channel flooded 6 s
+  shelf: Object.freeze({ name: 'the Shelf', what: 'topples once onto the lesser foes', sh: 'lane', pct: 0.5, once: true }),
   soulbell: Object.freeze({ name: 'the Soul-Bell', what: 'stuns Wraiths and Binders for 4 s', sh: 'disc', pct: 0, stun: 4000 }),
   mirror: Object.freeze({ name: 'the Moon-Mirror', what: 'lights a branch for 6 s and blinds the Divers for 4 s', sh: 'disc', pct: 0, stun: 4000, lit: 6000 }),   // EG-ZC: a branch lit 6 s
-  hammer: Object.freeze({ name: 'the Drop-Hammer', what: 'a disc of r 3 onto the adds - and once a phase it stuns the lord', sh: 'disc', pct: 0.5, lordStun: 2000 }),
+  hammer: Object.freeze({ name: 'the Drop-Hammer', what: 'crushes lesser foes within 3 m, and stuns the lord once each phase', sh: 'disc', pct: 0.5, lordStun: 2000 }),
 });
 /** EG-ZC - THE COOLING SLAG laid (section 11.2): the spec law it is laid from (net/eliteGates/egLaw.js EG_SPEC - the law before keeps
  *  its halls byte for byte), a crust's top (cm - a spout's lane 4 m wide, THE WIDTH RULE's least, 3 m along the course),

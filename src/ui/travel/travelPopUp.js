@@ -144,7 +144,7 @@ export const COUNTDOWN_TICK = 0.05;
 /** AUDIT LIVED1b U1: ...in TWO rows on the classic panel, one sentence each - whole, the line measured about 348 native
  *  px against a 320-px screen, and its first letters ("Onli") were off the canvas at 16:10 and 5:4 (centring measures
  *  a space a pixel wider than it draws, so the whole loss fell at the left). The enhanced skin says the line whole. */
-export const ONLINE_TRAVEL_ROWS = Object.freeze(['Online: the days pass on your own clock.', 'You arrive in the world\'s present.']);
+export const ONLINE_TRAVEL_ROWS = Object.freeze(['Online, the trip\'s days pass only for you.', 'The world\'s time does not move.']);
 export const ONLINE_TRAVEL_LINE = ONLINE_TRAVEL_ROWS.join(' ');
 const ONLINE_TRAVEL_ROW_H = 9;
 /** notEnoughGoldTextId (:396) and the diseased warning's record (:422). */

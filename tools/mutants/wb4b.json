@@ -56,8 +56,8 @@
   {
     "name": "WB4b-a-warded-blow-sent",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "      if (t < s.shieldUntil) return false;",
-    "new": "      if (false) return false;",
+    "old": "      if (t < s.shieldUntil || (s.sd && t < s.stunUntil)) return false;   // WB14d: nor a kneeling Blade",
+    "new": "      if (s.sd && t < s.stunUntil) return false;   // WB14d: nor a kneeling Blade",
     "tests": [
       "test/net/gate/wb4b_gate_blows.test.js"
     ]

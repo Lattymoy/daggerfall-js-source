@@ -162,7 +162,7 @@
   {
     "name": "AC6-D8-closed-sentence",
     "file": "src/net/accountClient.js",
-    "old": "  'cards-closed': 'The realm is not vouching for decks right now. Try again later.',\n",
+    "old": "  'cards-closed': 'The realm cannot check decks right now. Try again later.',\n",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
@@ -172,7 +172,7 @@
   {
     "name": "AC6-D8-receipt-sentence",
     "file": "src/net/accountClient.js",
-    "old": "  receipt: 'That game\\'s result was not signed by the table, or it has run out.',\n",
+    "old": "  receipt: 'That game\\'s result could not be verified, or it has expired.',\n",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"

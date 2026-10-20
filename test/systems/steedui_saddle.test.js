@@ -67,7 +67,7 @@ test('STEED-UI the meters: the breath a bar while ridden (Winded in words, short
   const bond = by(S(), 'bond');
   assert.equal(bond.share, 0.5, 'halfway from Familiar (35) to Trusting (55)');
   assert.deepEqual([bond.text, bond.tone, bond.title], ['Familiar', 'bond', '45 of 55 to Trusting']);
-  assert.deepEqual(by(S({ horse: { ...S().horse, bond: 99, tier: 'Kindred', tierAt: 95, next: null } }), 'bond'), { key: 'bond', label: 'Bond', share: 1, text: 'Kindred', tone: 'bond', title: 'Kindred - the bond is whole' });
+  assert.deepEqual(by(S({ horse: { ...S().horse, bond: 99, tier: 'Kindred', tierAt: 95, next: null } }), 'bond'), { key: 'bond', label: 'Bond', share: 1, text: 'Kindred', tone: 'bond', title: 'Kindred: the bond is complete' });
   // a team in harness: no breath (it never gallops)
   assert.deepEqual(keys(S({ mode: 'Cart', horse: { ...S().horse, breath: null } })), ['hunger', 'bond']);
   // the wagon and its load
@@ -88,8 +88,8 @@ test('STEED-UI the buttons: feed and the apple (the apple only with apples), dar
   const by = (s, a) => saddleButtons(s).find((b) => b.act === a);
   assert.deepEqual(acts(S()), ['feed', 'stable', 'dismount']);
   assert.deepEqual(by(S(), 'feed'), { act: 'feed', label: 'Feed oats (3)', disabled: false, why: '' });
-  assert.deepEqual(by(S({ oats: 0 }), 'feed'), { act: 'feed', label: 'Feed oats (0)', disabled: true, why: 'No oats - a Stable sells them' });
-  assert.deepEqual(by(S({ horse: { ...S().horse, full: true } }), 'feed'), { act: 'feed', label: 'Feed oats (3)', disabled: true, why: 'Full - it will not eat yet' });
+  assert.deepEqual(by(S({ oats: 0 }), 'feed'), { act: 'feed', label: 'Feed oats (0)', disabled: true, why: 'No oats. Stables sell them' });
+  assert.deepEqual(by(S({ horse: { ...S().horse, full: true } }), 'feed'), { act: 'feed', label: 'Feed oats (3)', disabled: true, why: 'Full. It will not eat yet' });
   assert.equal(by(S({ near: false }), 'feed').why, 'Your horse is not here');
   assert.deepEqual(acts(S({ apples: 2 })), ['feed', 'treat', 'stable', 'dismount']);
   assert.deepEqual(by(S({ apples: 2 }), 'treat'), { act: 'treat', label: 'Apple (2)', disabled: false, why: '' });
@@ -105,7 +105,7 @@ test('STEED-UI the buttons: feed and the apple (the apple only with apples), dar
   assert.deepEqual(acts(cart), ['feed', 'kit', 'cargo', 'stable', 'dismount']);
   assert.deepEqual(by(cart, 'dismount').label, 'Climb down');
   assert.deepEqual(by(cart, 'kit'), { act: 'kit', label: 'Repair kit (1)', disabled: false, why: '' });
-  assert.deepEqual(by({ ...cart, kits: 0 }, 'kit'), { act: 'kit', label: 'Repair kit (0)', disabled: true, why: 'No repair kit - a Wagon Yard sells them' });
+  assert.deepEqual(by({ ...cart, kits: 0 }, 'kit'), { act: 'kit', label: 'Repair kit (0)', disabled: true, why: 'No repair kit. Wagon Yards sell them' });
   assert.equal(by({ ...cart, wagonNear: false }, 'kit').why, 'The wagon is out of reach');
   assert.deepEqual(acts({ ...cart, wagon: { ...W, share: 0.7, kitWorks: false } }), ['feed', 'cargo', 'stable', 'dismount'], 'past the kit\'s ceiling: no kit');
   assert.deepEqual(by({ ...cart, cargo: false }, 'cargo'), { act: 'cargo', label: 'Cargo', disabled: true, why: 'The wagon is out of reach' });
@@ -120,10 +120,10 @@ test('STEED-UI the line under the title: what the horse needs first - winded, st
   assert.equal(saddleHint(S(), { keyOf: () => '', mouseFree: true }), '', 'no key bound: none named');
   assert.equal(saddleHint(S({ mode: 'Cart' }), { keyOf, mouseFree: true }), '', 'a bench gallops nowhere');
   assert.equal(saddleHint(S(), { touch: true, keyOf }), '');
-  assert.equal(saddleHint(S({ horse: { ...S().horse, winded: true, hungerKey: 'starving' } }), { touch: true }), 'Winded - ease off and let it breathe', 'winded first, under a finger too');
-  assert.equal(saddleHint(S({ horse: { ...S().horse, hungerKey: 'starving' } }), {}), 'Starving - it will not gallop until it eats');
-  assert.equal(saddleHint(S({ mode: 'Cart', horse: { ...S().horse, hungerKey: 'starving' } }), {}), 'Starving - feed your horse');
-  assert.equal(saddleHint(S({ mode: 'Cart', wagon: { name: 'Open Wagon', stateKey: 'failing' } }), { mouseFree: true }), 'The open wagon is failing - mend it to get its pace back');
+  assert.equal(saddleHint(S({ horse: { ...S().horse, winded: true, hungerKey: 'starving' } }), { touch: true }), 'Winded. Ease off and let it breathe', 'winded first, under a finger too');
+  assert.equal(saddleHint(S({ horse: { ...S().horse, hungerKey: 'starving' } }), {}), 'Starving. It will not gallop until it eats');
+  assert.equal(saddleHint(S({ mode: 'Cart', horse: { ...S().horse, hungerKey: 'starving' } }), {}), 'Starving. Feed your horse');
+  assert.equal(saddleHint(S({ mode: 'Cart', wagon: { name: 'Open Wagon', stateKey: 'failing' } }), { mouseFree: true }), 'The open wagon is failing. Mend it to restore its pace');
 });
 
 test('STEED-UI the panel on a page (UI-CALM: as the Always choice stands it): mounted over the vitals, titled, its gait and pace, its meters and buttons; a key hint on a button with a key (none on a finger); a click answers its hook, a dark one nothing; covered it hides, uncovered it stands again updated in place - made again only when its set changes; nothing to read, it goes (mutants: STEEDUI-covered, STEEDUI-rebuilt-every-frame, STEEDUI-dark-presses)', () => {
@@ -161,7 +161,7 @@ test('STEED-UI the panel on a page (UI-CALM: as the Always choice stands it): mo
     assert.equal(one(root, 'saddlepanel-hint').className, 'saddlepanel-hint warn');
     assert.equal(one(root, 'saddlepanel-gait').textContent, 'Standing · 0 km/h');
     assert.equal(btn('feed').disabled, true);
-    assert.equal(btn('feed').getAttribute('title'), 'Full - it will not eat yet');
+    assert.equal(btn('feed').getAttribute('title'), 'Full. It will not eat yet');
     btn('feed').fire('click');
     assert.equal(calls.length, 4, 'a dark button answers nothing');
     // a window over the HUD
@@ -343,7 +343,7 @@ test('STEED-UI the Stable page, polished: the bond a bar to the next word with t
     const d = el('div', 'px-qdetail');
     drawStablePage(d, () => {}, kit);
     const text = d.textContent;
-    assert.match(text, /Familiar - bond 45 of 100, \+9 to every stat\. Fed - food in it for 14 hours\./);
+    assert.match(text, /Familiar - bond 45 of 100, \+9 to every stat\. Fed, with food enough for 14 hours\./);
     const bond = rows(d, 'hld-meter').find((r) => r.children[0].textContent === 'Bond');
     assert.equal(bond.children[2].textContent, '10 to Trusting');
     assert.equal(bond.title, 'Fed by your hand, Familiar grows to Trusting at 55');
@@ -354,15 +354,15 @@ test('STEED-UI the Stable page, polished: the bond a bar to the next word with t
     const card = u.model().wagon;
     assert.equal(card.stateKey, 'rickety');
     assert.ok(card.mend > 0 && card.mendAway === Math.round(card.mend * 1.5), 'fetched: half again');
-    assert.match(text, new RegExp(`Rickety - its team pulls it slower\\. A Wagon Yard makes it whole for ${card.mend} gold - ${card.mendAway} if its wright must go out to it\\.`));
+    assert.match(text, new RegExp(`Rickety\\. Its team pulls it more slowly\\. A Wagon Yard repairs it fully for ${card.mend} gold, or ${card.mendAway} if its wright must travel to it\\.`));
     assert.ok(meters.some(([now, max, tone]) => max === 100 && tone === '' && Math.abs(now - card.share * 100) < 0.1), 'rickety: its bar plain (sound and worn verdigris, failing blood)');
   } finally { setHoldingsProvider(null); }
   // the words alone
   assert.equal(statWhy({ born: 50 }, 0, 0, 'Fed'), 'Born 50');
   assert.equal(statWhy({ born: 50 }, 9, 25, 'Starving'), 'Born 50, +9 from your bond, −25 starving');
-  assert.equal(hungerLine({ hungerKey: 'fed', fedHours: 1.5 }), 'Fed - food in it for 90 minutes.');
+  assert.equal(hungerLine({ hungerKey: 'fed', fedHours: 1.5 }), 'Fed, with food enough for 90 minutes.');
   assert.equal(hungerLine({ hungerKey: 'fed', fedHours: 0 }), 'Fed.');
-  assert.equal(hungerLine({ hungerKey: 'hungry', fedHours: 0 }), 'Hungry - every stat ten lower, and its breath slower back.');
+  assert.equal(hungerLine({ hungerKey: 'hungry', fedHours: 0 }), 'Hungry: every attribute 10 lower, and slower to catch its breath.');
   assert.equal(mendLine({ mend: 0 }), 'A town’s Wagon Yard mends it.');
 });
 

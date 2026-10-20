@@ -91,8 +91,11 @@
 
 import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
-import { questRail, shelvedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from '../quest/questRail.js';
-import { entryTarget, targetWords, WHERE_TEXT } from '../quest/questLens.js';   // GUIDE2: where a quest points, and the way there   // MAC-K2: the ONE quest walk, shared with the chronicle
+import { questRail, shelvedRail, unloggedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
+import { qlObjectivesBlock, qlOfferDetail, offerRowWords, qlLineDetail, lineStateWords, qlLadderDetail } from '../questlines/qlJournal.js';   // QL2: a stamped quest's objectives, choices and outcome; the rewards waiting
+import { TITLE_TEXT } from '../playerBadge.js';   // QL12: the title a questline earns, in the badge's own words
+import { filedOutcome } from '../../systems/notebook.js';   // AUDIT QUESTLINES UI-5: an archived quest's outcome, the archive's alone to draw
+import { entryTarget, targetWords, WHERE_TEXT } from '../quest/questLens.js';   // GUIDE2: where a quest points, and the way there
 import { questTracker, followOn, trackButton } from '../quest/questTracker.js';   // GUIDE4: the HUD's card - the Track toggle, and the quest the journal opens on
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
 import { drawTutorialsPane, releaseTutorialsPane } from '../tutorialsPane.js';   // TUT1: the Tutorials tab and section - every tutorial page, to read again
@@ -410,6 +413,7 @@ let questSel = null;        // PX4: the journal's selected row - 'a:<uid>' | 'f:
 let bountyAbandonArmed = null;   // BOUNTY1: the bounty whose Abandon was pressed once - the second press gives it up
 let journalCleanArmed = null;   // JOURNAL-CLEAN: 'f:<index>' (Remove) | 'clear' (Clear archive) pressed once - the second press acts
 let questShowHidden = false;    // JOURNAL-CLEAN: the rail's "Show hidden" - whether the hidden quests are drawn, in their own section
+let questReveal = false;   // AUDIT QUESTLINES UI-14: a row was just pressed - its page is brought into view on a phone
 let questShelfSaid = null;      // QUEST-SHELF: the last Abandon / Reclaim's words, said under the quest until the next press
 let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
 let famSec = 'tree';       // LEGACY3: the Family page's rail - tree | house | hall | guide
@@ -999,11 +1003,10 @@ function paneTest(body) {
   const intro = el('div', 'card');
   intro.append(el('h3', null, t('menu.test.title', 'The test room')));
   intro.append(el('p', 'meta', t('menu.test.blurb',
-    'A prebuilt character in the ordinary world, with one of every weapon, a full suit of '
-    + 'armor across materials, all four shields and a change of clothes already in the pack. '
-    + 'Equip through the inventory as usual; the paperdoll, the sprite weapons and - with '
-    + 'Morrowind data attached - the first- and third-person body all follow the equip table '
-    + 'live. Scroll to switch views. Nothing here is saved over your real game.')));
+    'A ready-made character in the normal world, with one of every weapon, armor in every '
+    + 'material, all four shields and spare clothes in the pack. Equip things from the inventory '
+    + 'to see them on the paperdoll and in your hands, and on the Morrowind body if you have its '
+    + 'data. Scroll to switch views. Nothing here touches your real saves.')));
   body.append(intro);
   for (const p of TEST_PRESETS) {
     const c = el('div', 'card');
@@ -1167,7 +1170,7 @@ function accountWindow() {
   for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
   const body = el('div', 'px-body');
   body.append(accountBody());
-  body.append(skinCard(document).root);   // DISC23-B2 (Mac: "a choosable skin system in the menu player profile system itself"): who you are drawn as, beside who you are
+  body.append(skinCard(document, { gender: () => playerEntity?.gender }).root);   // DISC23-B2 (Mac: "a choosable skin system in the menu player profile system itself"): who you are drawn as, beside who you are; LAYERED-GEAR: the character's own body, the one Layered Gearing first wears
   win.append(body);
   return win;
 }
@@ -1231,7 +1234,7 @@ function paneOnline(body) {
   // asked once a visit - and a character is played from here and nowhere else.
   body.append(realmCard(who));
   if (!saves.length) {
-    body.append(empty(t('menu.saves.none', 'No saved games'), t('menu.online.noSaves', 'An offline character the realm knew before it opened can be brought in from here, once.')));
+    body.append(empty(t('menu.saves.none', 'No saved games'), t('menu.online.noSaves', 'Each offline character can be brought online from here, once.')));
     body.append(onlineSyncCard());   // UXB1-E: the rules can come home before a character goes out
     return;
   }
@@ -1270,7 +1273,7 @@ function paneOnline(body) {
   // page in the bible cannot reach them.
   const foot = el('div', 'card svonlinefoot');
   // L10N4: ONE pattern, the sky's sentence an argument in it (skyDayWords is itself routed)
-  foot.append(el('p', 'meta', t('menu.online.rules', 'Everyone plays their own save, and you can see and talk to each other anywhere. Dungeons and buildings are shared: enemies, doors, levers and every chest, shelf or cupboard someone has opened are the same for everyone, and stay that way. In towns and the wilds you share who is around: what one player meets, everyone nearby sees and can fight, and those monsters can hurt you too. {skyDay} The world\u2019s clock and sky run on real time: resting, travelling, jail time or training don\u2019t move them, so a quest that waits for a time of day waits for the world\u2019s, and a full moon holds a lycanthrope for its night alone. Your character also keeps their own time: it runs while you play, resting, travelling, jail time and training use it, and it stops while you are logged off. Your wounds, spells, hunger, diseases, curses, guild ranks, rented rooms, loans and repairs run on it. Quest timers run on the world\u2019s clock while you play: resting, waiting and travelling don\u2019t spend a quest\u2019s days, and time logged off never counts. A quest that only makes you wait - a letter, a meeting, \u201ccome back in a few days\u201d - moves on after a couple of minutes of play. You rest at a fire, a tent or a bed: a night passes at once, at most once every ten minutes of play, and your party within 15 metres sleeps it with you. Every enhancement is on for everyone in the shared world, but your UI is your own, with chat, friends, the party and trading in their own panels. Most mods stay your choice online. A few are the room\u2019s: the ones that change the ground, the ones that change monsters and loot, and the rules everyone plays by. The Mods page marks each one.', { skyDay: skyDayWords() })));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door; QCLOCK-WORLD: the quests' clock; REST8: the short wait; REST9: the rest act and the party's night
+  foot.append(el('p', 'meta', t('menu.online.rules', 'Everyone plays their own save, and you can see and talk to each other anywhere. Dungeons and buildings are shared: enemies, doors, levers and opened chests are the same for everyone and stay that way. In towns and the wilds, everyone nearby sees the same monsters and can fight them, and they can hurt you too. {skyDay} The world\u2019s clock and sky run on real time. Resting, travel, jail and training don\u2019t move them, so a quest waiting for a time of day waits for the world\u2019s, and a lycanthrope\u2019s full moon lasts one night. Your character also has their own clock. It runs while you play and stops while you are logged off. Resting, travel, jail and training use it. Your wounds, spells, hunger, diseases, curses, guild ranks, rented rooms, loans and repairs run on it. Quest timers run on the world\u2019s clock while you play. Resting, waiting and traveling don\u2019t use up a quest\u2019s days, and time logged off never counts. A quest that only asks you to wait, like a letter or \u201ccome back in a few days\u201d, moves on after a couple of minutes of play. Rest at a fire, a tent or a bed: a night passes at once, at most once every 10 minutes of play, and party members within 15 meters sleep with you. Every enhancement is on for everyone, but your interface is your own. Most mods stay your choice online. A few are set for everyone: those that change the ground, monsters, loot or the rules. The Mods page marks each one.', { skyDay: skyDayWords() })));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door; QCLOCK-WORLD: the quests' clock; REST8: the short wait; REST9: the rest act and the party's night
   foot.append(field(t('menu.online.relay', 'Relay'), 'onlineServer', DEFAULT_SERVER, 200));
   body.append(foot);
   body.append(onlineSyncCard());   // UXB1-E: under the rules it copies
@@ -1306,8 +1309,8 @@ function realmCard(who) {
           // HOUSE-LOSS (2026-09-29, Mac: "GarySoup lost his house and furniture"): a character brought in whose first save
           // never landed is UNDONE, never deleted - its delete took the home customs had carried, and it could never come
           // in again. The undo gives back its home, its guild place and its customs (realm.js undoRealm).
-          row.customs && save.unfinished ? { label: t('menu.realm.undo', 'Undo bringing in'), disabled: realmBusy, onClick: () => ask(t('menu.realm.undoAsk', 'Undo bringing {name} in?', { name: row.name }), t('menu.realm.undoBody', '{name} never finished coming into the realm - its first save never landed. Undoing takes it out and gives everything back: its home, its guild place and its one customs, so the offline character can be brought online again. To finish instead, press Bring online on it below.', { name: row.name }), t('menu.realm.undoYes', 'Undo'), () => realmAct(() => realmUndo(realmIoNow(), row.id), () => [t('menu.realm.undone', '{name} is out of the realm and customs is undone: its home and guild place are back with the offline character. Bring it online again when you are ready.', { name: row.name })])) }
-            : { label: t('menu.realm.delete', 'Delete character'), disabled: realmBusy, onClick: () => ask(t('menu.realm.deleteAsk', 'Delete {name}?', { name: row.name }), t('menu.realm.deleteBody', 'An online character deleted is gone from the realm for good - its Renown, its professions and their Stores, its home and its guild place with it. A copy you made offline stays.'), t('menu.realm.deleteYes', 'Delete'), () => realmAct(() => realmDelete(realmIoNow(), row.id), () => [t('menu.realm.deleted', '{name} is gone from the realm.', { name: row.name })])) },
+          row.customs && save.unfinished ? { label: t('menu.realm.undo', 'Undo bringing in'), disabled: realmBusy, onClick: () => ask(t('menu.realm.undoAsk', 'Undo bringing {name} in?', { name: row.name }), t('menu.realm.undoBody', '{name} didn\u2019t finish coming online because its first save never arrived. Undo removes it and gives back its home and guild place, so you can bring the offline character online again. To finish instead, click Bring online on it below.', { name: row.name }), t('menu.realm.undoYes', 'Undo'), () => realmAct(() => realmUndo(realmIoNow(), row.id), () => [t('menu.realm.undone', '{name} is no longer online. Its home and guild place are back with the offline character. Bring it online again when you are ready.', { name: row.name })])) }
+            : { label: t('menu.realm.delete', 'Delete character'), disabled: realmBusy, onClick: () => ask(t('menu.realm.deleteAsk', 'Delete {name}?', { name: row.name }), t('menu.realm.deleteBody', 'Deleting an online character is permanent. Its Renown, professions, Stores, home and guild place are lost. Any offline copy you made stays.'), t('menu.realm.deleteYes', 'Delete'), () => realmAct(() => realmDelete(realmIoNow(), row.id), () => [t('menu.realm.deleted', '{name} is gone from the realm.', { name: row.name })])) },
         ],
       }));
     }
@@ -1394,7 +1397,7 @@ function customsNow(save) {
     copy.characterId = made.data.id;
     const put = await realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(copy) }, JSON.stringify(copy), { gzip: made.data.gzip === true });   // REALM-GZIP: a long offline life comes in packed
     return put.ok ? { ok: true, lines: [...(leveling ? [LEVELING_CROSS_LINE.after] : []), ...customsLines(report)] } : put;
-  }, (r) => [...r.lines, t('menu.realm.broughtIn', '{name} is in the realm now. Play them from above.', { name: save.name })]);
+  }, (r) => [...r.lines, t('menu.realm.broughtIn', '{name} is online now. Play them from the list above.', { name: save.name })]);
 }
 /** REALM P1.4: COPY TO OFFLINE - the realm's save read and written as a NEW offline character (a new id), a slot like
  *  any other. Nothing played on the copy ever goes back: the Online door loads only from the service. */
@@ -1409,7 +1412,7 @@ function copyToOffline(row) {
     snap.characterId = mintCharacterId();
     const r = saveSlot(snap.name || row.name, 'Copied from the realm', snap, { storage: appStorage() });
     return r.ok ? { ok: true } : { ok: false, error: 'no-room' };
-  }, () => [t('menu.realm.copied', '{name} is copied to offline - a new offline character. Nothing played on it comes back to the realm.', { name: row.name })]);
+  }, () => [t('menu.realm.copied', '{name} is copied as a new offline character. Nothing you play on the copy comes back online.', { name: row.name })]);
 }
 
 // UXB1-E (2026-09-25, the UX backlog: "Add a 'sync from server' option so players can ensure their offline play
@@ -1417,7 +1420,7 @@ function copyToOffline(row) {
 // systems/online/onlineSync.js's; this is the card - what differs, the one press, and the way back. Every relay plays by
 // the same rules (they are this build's, not the server's), so there is no host to pick: the card says so.
 export const ONLINE_SYNC_TITLE = 'Sync from server';
-export const ONLINE_SYNC_NOTE = 'Play offline by the same rules as online. Some settings are fixed online; this sets yours to match. They are the same on every server, and everything else stays your choice.';
+export const ONLINE_SYNC_NOTE = 'Play offline by the same rules as online. This sets the settings that are fixed online to match. Everything else stays your choice.';
 export const ONLINE_SYNC_SAME = 'Your offline game already plays by the online rules.';
 /** L10N4: the card's words in the player's language - the English constants above stay what the tests compare. */
 export const onlineSyncTitle = () => t('menu.sync.title', ONLINE_SYNC_TITLE);
@@ -1467,7 +1470,7 @@ function paneLoad(body) {
   const locked = hooks.loadingPrevented?.();
   if (locked) {
     body.append(empty(t('menu.load.onlineLocked', 'Loading is disabled during online play.'),
-      t('menu.load.onlineLockedWhy', 'Leave the shared world to load a save; other players are relying on this session staying put.')));
+      t('menu.load.onlineLockedWhy', 'Leave the shared world to load a save.')));
     return;
   }
   // SLOTS1: EVERY restorable slot, most recent first - the classic
@@ -1516,10 +1519,10 @@ function paneLoad(body) {
   // line ends "Save a game and every slot of it appears here", which
   // told a player with a shelf full of backups that they had none -
   // which is the very sentence this slice exists to stop being shown.
-  if (!saves.length && !onlyCloud) body.append(empty(t('menu.saves.none', 'No saved games'), t('menu.load.noneHint', 'Save a game and every slot of it appears here.')));
+  if (!saves.length && !onlyCloud) body.append(empty(t('menu.saves.none', 'No saved games'), t('menu.load.noneHint', 'Your saved games appear here.')));
   if (mode === 'pause' && typeof hooks.quickLoad !== 'function') {
     body.append(empty(t('menu.load.notHere', 'Not from here'),
-      t('menu.load.notHereWhy', 'This part of the game has no load door. Reach a saved game from the main menu instead.')));
+      t('menu.load.notHereWhy', 'You can\u2019t load a game from here. Use the main menu instead.')));
   }
   body.append(transferCard(saves.length));
 }
@@ -1601,7 +1604,7 @@ function paneSave(body) {
   const prevented = hooks.savingPrevented?.() || typeof hooks.quickSave !== 'function';
   if (prevented) {
     body.append(empty(localizedText('cannotSaveNow', 'You cannot save now.'),
-      t('menu.save.notHereWhy', 'This part of the game holds no save door. Step back outside and the quicksave returns.')));
+      t('menu.save.notHereWhy', 'You can\u2019t save here. Step back outside to save again.')));
     return;
   }
   // SLOTS1 (Mac: "multiple save slots"): a save is (character, slot
@@ -1672,8 +1675,7 @@ function paneExit(body) {
   const save = savedGame();
   const c = el('div', 'card');
   c.append(el('h3', null, t('menu.exit.title', 'Back to the main menu')));
-  c.append(el('p', 'meta', t('menu.exit.blurb', "A browser tab cannot close itself, so the port's door out is the "
-    + 'front door - the same unwind the death sequence uses.')));
+  c.append(el('p', 'meta', t('menu.exit.blurb', 'This takes you back to the main menu. A browser tab can\u2019t close itself.')));
   c.append(stats([[t('menu.exit.lastSave', 'Last save'), save ? saveLine(save) : t('menu.exit.none', 'none')]]));
   c.append(acts([{
     label: t('menu.exit.leave', 'Leave this game'),
@@ -2133,7 +2135,7 @@ function overhaulsLinkRow() {
   const row = el('div', 'row opt-link');
   const main = el('div', 'row-main');
   main.append(el('div', 'row-name', 'Overhauls'));
-  main.append(el('div', 'row-note', 'Whole looks for the world, its sounds and the interface - Vanilla Enhanced\u2019s textures and the rest - are chosen on the Overhauls page.'));
+  main.append(el('div', 'row-note', 'Overhauls for the world, its sounds and the interface, such as Vanilla Enhanced, are on the Overhauls page.'));
   row.append(main);
   const ctl = el('div', 'ctl');
   const b = el('button', 'act rowact', 'Open');
@@ -2353,15 +2355,15 @@ function write(key, next) {
 /** OL1: the lock a forced switch wears online - the button says so and
  *  answers nothing, so a player who presses it learns why rather than
  *  watching a press change nothing. */
-const ONLINE_LOCK_NOTE = 'Always on online: the shared world uses every enhancement. Your own choice comes back offline.';
+const ONLINE_LOCK_NOTE = 'Always on online: the shared world uses every enhancement. Offline, your own choice applies.';
 /** MODS-ONLINE-2: a mod switch wears a lock for a DIFFERENT reason - not
  *  the lane, the floor - and a lock that gives the wrong reason is a
  *  refusal nobody can read. The two road switches say which. */
 /** MODS-ONLINE-2: the Mods pane's own line. The lane's note (above)
  *  is about the PORT's switches and was wrong over the tiles the
  *  moment a mod stopped being forced. */
-const ONLINE_MODS_NOTE = 'Most mods are your choice online. A few are set for everyone in the room so everyone plays on the same ground by the same rules: the ones that change the ground (Basic Roads, World of Daggerfall, Detailed Ships, Iliac Puddle No More\u2019s sea and depth, and There\u2019s a Hole in the Bottom of the Ocean), and every setting of Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot, Roleplay & Realism, Roleplay & Realism: Items and Oblivion leveling (who stands behind a counter and which leveling your character uses stay yours). Travel Options is on for everyone, so every trip over land is travelled and ships sail only from ports. Immersive Travel is on for everyone too: its carriages stand at every city gate, a driver\u2019s fare is fast travel over land, and its fares and rules are the room\u2019s (how its map looks stays yours).';   // AUDIT IT1 W5: a port's ship passage is fast travel online too
-const ONLINE_GROUND_NOTE = 'Set for everyone online: it changes the ground itself (roads, rivers, camp sites, the shared ship deck, the seafloor and its pits), and everyone in a room has to stand on the same ground. Your own choice comes back offline.';   // AUDIT LANDFORMS C4: the rivers' row is one of the ground's since LANDFORM3 cut their channels
+const ONLINE_MODS_NOTE = 'Most mods are your choice online. A few are set for everyone, so all players share the same ground and rules. Ground: Basic Roads, World of Daggerfall, Detailed Ships, Iliac Puddle No More\u2019s sea and depth, and There\u2019s a Hole in the Bottom of the Ocean. Rules: every setting of Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot, Roleplay & Realism, Roleplay & Realism: Items and Oblivion leveling, except who stands behind shop counters and which leveling your character uses. Travel Options is on for everyone, so every trip over land is traveled and ships sail only from ports. Immersive Travel is on for everyone too: carriages wait at every city gate, a driver\u2019s fare is your fast travel over land, and fares are the same for everyone. Its map style stays your choice.';   // AUDIT IT1 W5: a port's ship passage is fast travel online too
+const ONLINE_GROUND_NOTE = 'Set for everyone online, because everyone has to stand on the same ground: roads, rivers, camp sites, ship decks and the seafloor. Offline, your own choice applies.';   // AUDIT LANDFORMS C4: the rivers' row is one of the ground's since LANDFORM3 cut their channels
 /** WOD1: the vendors whose room-owned switch is the GROUND's - the two
  *  that write terrain heights (roads' beds, World of Daggerfall's sites). */
 const ONLINE_GROUND_VENDORS = Object.freeze(['roads-hazelnut', 'world-of-daggerfall', 'detailed-ships', 'ocean-holes']);   // DS1: the ships' shared deck   // OH-A: the pits cut into the seafloor
@@ -2370,28 +2372,28 @@ const ONLINE_GROUND_VENDORS = Object.freeze(['roads-hazelnut', 'world-of-daggerf
 const ONLINE_GROUND_KEYS = Object.freeze({ 'iliac-puddle-no-more': Object.freeze(['Enabled', 'General.WaterDepth']) });
 /** MODS-ONLINE-4: the other three, and their reason is not the ground -
  *  it is that this switch would be spending somebody else's evening. */
-const ONLINE_SHARED_NOTE = 'On for everyone online: a dungeon\u2019s monsters belong to whoever hosts it and loot passes between players, so the room has to agree. Your own choice comes back offline.';
+const ONLINE_SHARED_NOTE = 'On for everyone online, because a dungeon\u2019s monsters belong to whoever hosts it and loot passes between players. Offline, your own choice applies.';
 /** MODS-ONLINE-5: one ruleset per room - the reason PCAAO is forced whole, and RR's six combat overrides and its
  *  intensive training with it. Not the ground's reason and not the host's foes', so its own words. */
-const ONLINE_RULESET_NOTE = 'Set for everyone online: a room plays by one set of combat, training and swimming rules. Your own choice comes back offline.';
+const ONLINE_RULESET_NOTE = 'Set for everyone online, so all players share one set of combat, training and swimming rules. Offline, your own choice applies.';
 const ONLINE_RULESET_KEYS = Object.freeze({
   'roleplay-realism': Object.freeze(['advancedArchery', 'weaponSpeed', 'weaponMaterials', 'classicStrengthDamageBonus', 'equipDamage', 'encumbranceEffects', 'RefinedTraining.intensiveTraining']),
   'iliac-puddle-no-more': Object.freeze(['General.SwimSpeedMultiplier', 'General.EnableSwimStroke', 'General.ArgonianInfiniteBreath']),   // DW-D: the swim and the breath
 });
 /** REALM P0.2: a dial of a balance mod the room owns whole (onlineLane.js ONLINE_WHOLE_MODS) - its own reason. */
-const ONLINE_BALANCE_NOTE = 'Set for everyone online, so no one\u2019s character ends up stronger or richer than the rest from a setting. Your own choice comes back offline.';
+const ONLINE_BALANCE_NOTE = 'Set for everyone online, so no setting makes one character stronger or richer than the rest. Offline, your own choice applies.';
 /** DISC22-A: a DFU setting the room plays by (onlineLane.js ONLINE_FORCED_SETTINGS) - its own reason. */
-const ONLINE_SETTING_NOTE = 'Set for everyone online: everyone uses the same smiths, so enchanted items are mended by one rule. Your own choice comes back offline.';
+const ONLINE_SETTING_NOTE = 'Set for everyone online, so enchanted items are repaired the same way for all players. Offline, your own choice applies.';
 /** RAID2: a world event the room shares - its own reason, not the ground's, the ruleset's or a host's foes'. */
 const ONLINE_WORLD_EVENT_VENDORS = Object.freeze(['world-events-raiding-parties']);
-const ONLINE_WORLD_EVENT_NOTE = 'On for everyone online: a raid is shared, so everyone in the town fights the same raiders and every kill counts for all. Your own choice comes back offline.';
+const ONLINE_WORLD_EVENT_NOTE = 'On for everyone online: a raid is shared, so everyone in town fights the same raiders and every kill counts for all. Offline, your own choice applies.';
 /** TRAVEL-ONLINE: Travel Options' three room switches - the mod and its two journey dials - and their own reason. */
 const ONLINE_TRAVEL_VENDORS = Object.freeze(['travel-options']);
-const ONLINE_TRAVEL_NOTE = 'On for everyone online: every trip over land is travelled, and ships sail only from ports. Your own choice comes back offline.';
+const ONLINE_TRAVEL_NOTE = 'On for everyone online: every trip over land is traveled, and ships sail only from ports. Offline, your own choice applies.';
 /** IT1: Immersive Travel's two room switches - the mod (its carriages stand at the gates, ground everyone walks among) and
  *  Disable Normal Travel held off - and their own reason. */
 const ONLINE_CARRIAGE_VENDORS = Object.freeze(['immersive-travel']);
-const ONLINE_CARRIAGE_NOTE = 'Set for everyone online: carriages stand at every city gate, the travel map\u2019s trips stay travelled, and a driver\u2019s fare is fast travel over land, its fares and rules the same for everyone. Your own choice comes back offline.';   // AUDIT IT1 W5
+const ONLINE_CARRIAGE_NOTE = 'Set for everyone online. Carriages wait at every city gate, trips on the travel map are traveled in full, and a driver\u2019s fare is your fast travel over land, at the same price for everyone. Offline, your own choice applies.';   // AUDIT IT1 W5
 /** L10N4: the notes above in the player's language. Each constant stays the English identity the ladders below hand
  *  round (and the pins read); a note is turned into words where it is shown (noteText). */
 const NOTE_TEXT = new Map([
@@ -2557,7 +2559,7 @@ function translationPackRow() {
   const main = el('div', 'row-main');
   main.append(el('div', 'row-name', t('settings.pack.name', 'Translation pack')));
   main.append(el('div', 'row-note', pack
-    ? t('settings.pack.installed', '{name}: {tables, plural, one {# table} other {# tables}}, {quests, plural, one {# quest} other {# quests}}, {books, plural, one {# book} other {# books}}. Its text takes the place of the machine translation.', { name: pack.name, tables: pack.counts?.table ?? 0, quests: pack.counts?.quest ?? 0, books: pack.counts?.book ?? 0 })
+    ? t('settings.pack.installed', '{name}: {tables, plural, one {# table} other {# tables}}, {quests, plural, one {# quest} other {# quests}}, {books, plural, one {# book} other {# books}}. Its text replaces the machine translation.', { name: pack.name, tables: pack.counts?.table ?? 0, quests: pack.counts?.quest ?? 0, books: pack.counts?.book ?? 0 })
     : t('settings.pack.none', 'Install a Daggerfall Unity translation into {language} from your own files. Nothing is uploaded.', { language: info.name })));
   row.append(main);
   const ctl = el('div', 'ctl');
@@ -2781,7 +2783,7 @@ export const MIDI_OUT_NOTE = 'Play the music on a MIDI synth or device.';
 export const MIDI_OUT_NONE = 'This browser has no MIDI.';
 export const MIDI_OUT_DENIED = 'MIDI is blocked for this site.';
 export const MIDI_OUT_EMPTY = 'No MIDI device connected.';
-export const MIDI_OUT_AWAY = 'Not connected - the game\u2019s own synth plays.';
+export const MIDI_OUT_AWAY = 'Not connected. The game’s own synthesizer plays.';
 let midiOutList = null;   // the outputs as last asked - null until the row's first click
 function portRowsAudio() {
   const can = midiOutSupported();
@@ -2884,7 +2886,7 @@ function portRowsInterface({ pause = false } = {}) {
   out.push(hudScaleRow());
   out.push(mapScaleRow());   // MAP-SCALE
   out.push(prefRow('standingAll', 'Every faction\'s standing',
-    'Your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince on the character sheet\'s Standing page - not only the ones you belong to.'));   // EVERY-STANDING
+    'Show your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince on the character sheet\'s Standing page, including ones you don\'t belong to.'));   // EVERY-STANDING
   if (isEnhanced()) out.push(...hudLayoutRows());   // HUD-MOVE: the Enhanced Plus HUD's own - Classic draws none of it
   // FOEBAR1: the target bar's face is a two-way choice, not a switch - the
   // stick-position row's shape: a row whose button names the OTHER option.
@@ -2919,7 +2921,7 @@ function portRowsInterface({ pause = false } = {}) {
  *  player's language, as the rows around them (L10N4). */
 function spireAccessRows() {
   const motion = prefRow('reducedMotion', t('menu.spire.motion.name', 'Reduced motion'), t('menu.spire.motion.note', 'Nothing on the HUD pulses, flies or rises. Your system\'s own setting does the same.'));
-  const palette = choiceRow('dangerPalette', t('menu.spire.palette.name', 'Danger colours'), t('menu.spire.palette.note', 'The colour of a blow\'s edge, of safe ground and of a hazard.'),
+  const palette = choiceRow('dangerPalette', t('menu.spire.palette.name', 'Danger colors'), t('menu.spire.palette.note', 'The color of a blow\'s edge, of safe ground and of a hazard.'),
     EG_DANGER_PALETTE_KEYS.map((k) => [k, EG_DANGER_PALETTES[k].name]));   // AUDIT EG V (c, L7-10): each its own t() (ui/eliteGates/egAccess.js)
   const fill = choiceRow('telegraphFill', t('menu.spire.fill.name', 'Danger fill'), t('menu.spire.fill.note', 'How brightly a blow\'s ground fills. Its edge stays whole.'),
     [[1, '100%'], [0.85, '85%'], [0.7, '70%'], [0.5, '50%']]);
@@ -2977,7 +2979,7 @@ function portRowsGame({ pause = false } = {}) {
  *  landed blow (systems/gatherBlow.js gatherBlowFeel - the springs' one door), on the enhanced skin. */
 function techniqueMotionRow() {
   const row = choiceRow('techniqueMotion', 'Technique camera motion',
-    'How much a weapon technique shakes and tilts the view and dips your hands - and, on the Enhanced skin, how far a tool\'s blow dips them as you gather.',
+    'How much a weapon technique shakes and tilts the view and dips your hands. On the Enhanced skin, it also sets how far your hands dip when you gather.',
     [[1, 'Full'], [0.75, '75%'], [0.5, 'Half'], [0.25, 'Low'], [0, 'Off']]);
   if (row?.dataset) { row.dataset.opt = 'techniqueMotion'; row.dataset.pref = 'techniqueMotion'; }   // ORG2: the map finds it by its key
   return row;
@@ -2995,8 +2997,8 @@ function drawsFlat(key) { const t = tierOf(key); return t === 'live' || t === 'r
  *  prefs shelf (uiPrefs isOpen/setOpen), which is what the shelf's
  *  `open` map was made for. */
 const TIER_GROUPS = Object.freeze([   // L10N4: each group's title and blurb read when drawn, in the player's language
-  ['stored', () => t('menu.settings.storedTitle', 'Saved for later'), () => t('menu.settings.storedBlurb', 'Kept in the file and written back exactly as DFU would; nothing in this build reads it yet.')],
-  ['unavailable', () => t('menu.settings.unavailableTitle', 'Not available here'), () => t('menu.settings.unavailableBlurb', 'Fixed by the browser or by a choice the port made. Each row says what you get instead.')],
+  ['stored', () => t('menu.settings.storedTitle', 'Saved for later'), () => t('menu.settings.storedBlurb', 'Kept in your settings file, but not used yet.')],
+  ['unavailable', () => t('menu.settings.unavailableTitle', 'Not available here'), () => t('menu.settings.unavailableBlurb', 'Fixed by the browser or by this game. Each row says what you get instead.')],
 ]);
 
 function tierGroup(catId, tier, title, blurb, keys) {
@@ -3110,7 +3112,7 @@ function peerSpritesCard() {
   // players, not drawn - the near tier is inside a player's shot (200 m), and the row says so; the row reads the law's own
   // answer, so a stored value that is no tier shows the 300 m it stands for (AUDIT PEER-RANGE A L2)
   c.append(choiceRow('peerRange', t('menu.peers.range', 'Draw distance'),
-    t('menu.peers.rangeNote', 'How far away other players are drawn. Your party and your duel opponent always show. Nearer is faster; 150 m can hide an archer.'),
+    t('menu.peers.rangeNote', 'How far away other players are drawn. Your party and your duel opponent always show. Shorter runs faster, but 150 m can hide an archer.'),
     PEER_RANGE_TIERS.map((m) => [m, m ? t('menu.peers.metres', '{m} m', { m }) : t('menu.peers.everyone', 'Everyone')]), { home: true, read: () => peerRangeOf(getPref('peerRange')) }));
   // YARD-RANGE (2026-10-11, a player: "20-40 fps in cities"): how far their yards' decorations are drawn - none, nearer, or
   // as far as ever; one's own yard always (scenes/homeYards.js)
@@ -3128,7 +3130,7 @@ function peerSpritesCard() {
   c.append(prefRow('restWithParty', t('menu.peers.rest', 'Rest with my party'),
     t('menu.peers.restNote', 'Sleep when a party member within 15 m sleeps at a fire, a tent or a bed.'), { home: true }));   // AUDIT REST: REST5's night, no vote
   // TV3 (2026-09-28, bible/06-Systems/Travel-View.md): being SEEN - the region's travellers see where you are
-  c.append(prefRow('showToTravellers', t('menu.peers.show', 'Show me to travellers in my region'),
+  c.append(prefRow('showToTravellers', t('menu.peers.show', 'Show me to travelers in my region'),
     t('menu.peers.showNote', 'Outdoors, players in your region see you on the overworld and the map. '
     + 'Nothing is shared from indoors except with your party. Kept on this device.'), { home: true }));   // AUDIT DEEP2 C5: the party pose rides from indoors too
   // CHAT-LANG, CHAT-COLOURS, PING1 (2026-10-11, the players: "More chat channels per-language", "Chat color-coding per
@@ -3142,8 +3144,8 @@ function peerSpritesCard() {
     t('menu.chat.tradeNote', 'A chat tab for buying, selling and swapping with players anywhere. /join trade in the chat joins it too.'), { home: true }));
   c.append(prefRow('chatLfg', t('menu.chat.lfg', 'LFG channel'),
     t('menu.chat.lfgNote', 'A chat tab for finding a group, or one more for yours. /join lfg in the chat joins it too.'), { home: true }));
-  c.append(prefRow('chatChannelColours', t('menu.chat.colours', 'Chat colours by channel'),
-    t('menu.chat.coloursNote', 'World white, Region green, Guild purple, Local grey, Party teal, Language rose, Trade gold, LFG blue.'), { home: true }));
+  c.append(prefRow('chatChannelColours', t('menu.chat.colours', 'Chat colors by channel'),
+    t('menu.chat.coloursNote', 'World white, Region green, Guild purple, Local gray, Party teal, Language rose, Trade gold, LFG blue.'), { home: true }));
   c.append(prefRow('chatPingSound', t('menu.chat.ping', 'Chime when someone @mentions you'),
     t('menu.chat.pingNote', 'A line with @YourName is always marked in gold; this adds a chime.'), { home: true }));
   return c;
@@ -3193,7 +3195,7 @@ function packsCard() {
     { label: t('menu.packs.attachSound', 'Attach sound pack'), onClick: async () => { const ds = await import('../../scenes/dataSource.js'); await ds.pickSoundFolder(); render(); } },   // SNDREP1
     ...(soundReplacementCount() > 0 ? [remove(t('menu.packs.removeSound', 'Remove sound pack'), t('menu.packs.removeSound', 'Remove sound pack'), t('menu.packs.removeSoundBody', 'This clears your sound files from this browser; the original game\u2019s own sounds play again. A music pack stays.'), (d) => d.clearStoredSounds())] : []),
     { label: t('menu.packs.attachTexture', 'Attach texture pack'), onClick: async () => { const ds = await import('../../scenes/dataSource.js'); await ds.pickTextureFolder(); render(); } },
-    ...(textureReplacementCount() > 0 ? [remove(t('menu.packs.removeTexture', 'Remove texture pack'), t('menu.packs.removeTexture', 'Remove texture pack'), t('menu.packs.removeTextureBody', 'This clears the loose texture files (a folder pick) from this browser. Attached .dfmod texture mods stay. It takes full effect the next time an area loads.'), (d) => d.clearStoredTexturePack())] : []),
+    ...(textureReplacementCount() > 0 ? [remove(t('menu.packs.removeTexture', 'Remove texture pack'), t('menu.packs.removeTexture', 'Remove texture pack'), t('menu.packs.removeTextureBody', 'This clears the texture folder you picked from this browser. Attached .dfmod texture mods stay. It takes full effect the next time an area loads.'), (d) => d.clearStoredTexturePack())] : []),
   ]));
   // IIL3 (Mac: "add a button for attach lighting mod, so players arent confused"): THE LIGHTING MOD HAS ITS OWN
   // SECTION. It is a .dfmod like the texture mods and rides the same store, but it carries no picture - listed among
@@ -3217,8 +3219,8 @@ function packsCard() {
   const sameTitle = (t) => String(t ?? '').replace(/\b90s\b/i, '').replace(/\s+/g, ' ').trim().toLowerCase();
   const seen = new Map();
   for (const m of mods) { const k = sameTitle(m.title); seen.set(k, (seen.get(k) ?? 0) + 1); }
-  if ([...seen.values()].some((n) => n > 1)) c.append(el('p', 'meta', t('menu.packs.twoVersions', 'Two versions of the same mod are attached (for example DREAM and DREAM 90s). Only one of them shows for each texture and both use memory - remove one.')));
-  c.append(el('p', 'meta', t('menu.packs.dfmodsBlurb', 'Daggerfall Unity texture mods - DREAM\u2019s sprites, NPCs, mobs, paperdoll, portraits, backgrounds and world textures, and mods like them. Pick the .dfmod files themselves; you can pick several at once. Mod scripts do not run. Vanilla Enhanced ships with the game (the Texture Overhaul card wears it); a copy you attach is read instead of the built-in one.')));
+  if ([...seen.values()].some((n) => n > 1)) c.append(el('p', 'meta', t('menu.packs.twoVersions', 'Two versions of the same mod are attached (for example DREAM and DREAM 90s). Only one shows for each texture, but both use memory. Remove one.')));
+  c.append(el('p', 'meta', t('menu.packs.dfmodsBlurb', 'Daggerfall Unity texture mods, such as DREAM. Pick one or more .dfmod files. Mod scripts don\u2019t run. Vanilla Enhanced comes with the game, and a copy you attach is used instead of the built-in one.')));
   // VE1: listed in load order - a mod loads after the mods it depends on, and where two carry the same texture the one
   // loaded later is drawn (DFU's ModManager)
   if (mods.length > 1) c.append(el('p', 'meta', t('menu.packs.loadOrder', 'In load order: where two mods carry the same texture, the later one is drawn. A mod always loads after the mods it is built on.')));
@@ -3243,7 +3245,7 @@ function packsCard() {
   for (const u of unregisteredDfmods()) {
     const row = el('div', 'card');
     row.append(el('p', null, u.fileName));
-    row.append(el('p', 'meta', u.state === 'indexing' ? t('menu.packs.indexing', 'Being read - it joins the load order when that is done.')
+    row.append(el('p', 'meta', u.state === 'indexing' ? t('menu.packs.indexing', 'Reading. It joins the load order when done.')
       : u.state === 'nomods' ? t('menu.packs.nomods', 'Not loaded: this page was opened with ?nomods.') : t('menu.packs.notWorking', 'Not working: {error}.', { error: u.error })));
     row.append(acts([remove(t('menu.packs.removeYes', 'Remove'), t('menu.packs.removeMod', 'Remove {mod}', { mod: u.fileName }), t('menu.packs.removeModBody', 'This clears {mod} from this browser. It takes full effect the next time an area loads.', { mod: u.fileName }), (d) => d.removeStoredDfmod(u.key))]));
     c.append(row);
@@ -3253,7 +3255,7 @@ function packsCard() {
   const cap = dfmodMaxSize();
   const detailLabel = Number.isFinite(cap) ? t('menu.packs.detailPx', '{px} px', { px: cap }) : t('menu.packs.detailFull', 'full');
   const nextDetail = () => { const i = DFMOD_DETAIL.indexOf(Number.isFinite(cap) ? cap : 0); return DFMOD_DETAIL[(i + 1) % DFMOD_DETAIL.length]; };
-  c.append(el('p', 'meta', t('menu.packs.detailNote', 'Texture detail: {detail}. Higher looks sharper and takes more memory and loading time; \u201cfull\u201d can run out of memory with HD packs. A change applies to areas loaded after it.', { detail: detailLabel })));
+  c.append(el('p', 'meta', t('menu.packs.detailNote', 'Texture detail: {detail}. Higher is sharper but uses more memory and loads slower. \u201cfull\u201d can run out of memory with HD packs. Applies to areas loaded afterwards.', { detail: detailLabel })));
   c.append(acts([
     { label: t('menu.packs.detail', 'Texture detail: {detail}', { detail: detailLabel }), onClick: () => { setPref('dfmodTextureDetail', nextDetail()); render(); } },
     { label: t('menu.packs.addDfmods', 'Add texture mods'), primary: !mods.some((m) => !m.shipped), onClick: async () => { const ds = await import('../../scenes/dataSource.js'); await ds.pickDfmodFiles(); render(); } },
@@ -3898,7 +3900,7 @@ function systemFontRow(redraw) {
     b.onclick = async (e) => {
       e.stopPropagation();
       if (!fontFamiliesSeen?.length) fontFamiliesSeen = await installedFamilies();
-      b.textContent = fontFamiliesSeen.length ? fontsPickBelow(fontFamiliesSeen.length) : 'No list given - type the name';
+      b.textContent = fontFamiliesSeen.length ? fontsPickBelow(fontFamiliesSeen.length) : 'No font list. Type the name';
       input.focus();
       paint();
     };
@@ -3979,8 +3981,8 @@ function overhaulPanel(p) {
     } else {
     const row = el('div', 'look-colours');
     row.setAttribute('role', 'group');
-    row.setAttribute('aria-label', t('menu.ovh.plusColour', 'Enhanced Plus colour'));
-    row.append(el('span', 'look-colours-label', t('menu.ovh.uiColour', 'UI colour')));   // Mac, 2026-09-29
+    row.setAttribute('aria-label', t('menu.ovh.plusColour', 'Enhanced Plus color'));
+    row.append(el('span', 'look-colours-label', t('menu.ovh.uiColour', 'UI color')));   // Mac, 2026-09-29
     const now = plusTheme();
     for (const [id, th] of Object.entries(PLUS_THEMES)) {
       const b = el('button', 'look-colour');
@@ -4182,7 +4184,7 @@ function paneAbout(body) {
   ]));
   body.append(c);
   body.append(creditsCard());
-  body.append(empty(t('menu.about.exit', 'Exit'), t('menu.about.exitNote', 'A browser tab cannot close itself. Close it yourself; the quicksave survives.')));
+  body.append(empty(t('menu.about.exit', 'Exit'), t('menu.about.exitNote', 'A browser tab can\u2019t close itself. Close the tab yourself. Your quicksave is kept.')));
 }
 
 // CR1: THE CREDITS (Mac, 2026-08-30). Rendered from ui/credits.js, the
@@ -4193,7 +4195,7 @@ function paneAbout(body) {
 function creditsCard() {
   const c = el('div', 'card credits');
   c.append(el('h3', null, t('menu.credits.title', 'Credits')));
-  c.append(el('p', 'meta', t('menu.credits.blurb', 'What this port is built on, and the mods carried in it with their authors\' permission.')));
+  c.append(el('p', 'meta', t('menu.credits.blurb', 'What this game is built on, and the mods included with their authors\' permission.')));
   const group = (heading, rows) => {
     c.append(el('h4', 'credits-head', heading));
     for (const r of rows) {
@@ -4624,7 +4626,7 @@ function pauseHoldings(body) {
   // AUDIT HOLDINGS C6: a host with no page to show (the standalone dungeon sets no provider) says so - the Stable drawn
   // there told a player who owns both that they own no horse and no wagon
   if (!secs.length) {
-    detail.append(el('div', 'px-qverdict', 'Nothing here to hold'), el('p', null, 'What you own and who follows you is kept in the world - your horse, your wagon, your ships and your companions.'));
+    detail.append(el('div', 'px-qverdict', 'Nothing here to hold'), el('p', null, 'Your horse, wagon, ships and companions can\u2019t be shown here.'));
     wrap.append(detail);
     body.append(wrap);
     return;
@@ -5004,9 +5006,9 @@ function statsMaster(detail, m) {
   // AUDIT GROWTH LANE5-6: and only for a character with a family still to reach or one held (AUDIT SCHOOLS L4 8)
   if (ms.on && (ms.paths?.open || ms.paths?.held)) {
     const card = el('section', 'px-mgroup px-spec');
-    card.append(el('div', 'px-master-about', ms.paths.open ? t('pause.master.specMoved', 'Master two schools of magic or two weapon skills to unlock a specialisation. See every path and what it needs on the Growth tab.')
-      : t('pause.master.specHeld', '{n, plural, one {Your specialisation is on the Growth tab.} other {Your specialisations are on the Growth tab.}}', { n: ms.paths.held })));
-    const go = acts([{ label: t('pause.master.specGo', 'Specialisations'), onClick: () => { setGrowthSection('specs'); pauseTab = 'growth'; render(); } }]);
+    card.append(el('div', 'px-master-about', ms.paths.open ? t('pause.master.specMoved', 'Master two schools of magic or two weapon skills to unlock a specialization. See every path and what it needs on the Growth tab.')
+      : t('pause.master.specHeld', '{n, plural, one {Your specialization is on the Growth tab.} other {Your specializations are on the Growth tab.}}', { n: ms.paths.held })));
+    const go = acts([{ label: t('pause.master.specGo', 'Specializations'), onClick: () => { setGrowthSection('specs'); pauseTab = 'growth'; render(); } }]);
     card.append(go);
     detail.append(card);
   }
@@ -5113,7 +5115,7 @@ export function skillTickText(p) {
   if (p.held === 'master') return t('pause.skills.tickMaster', 'At 100 - master it to climb further');
   if (p.held === 'lock') return t('pause.skills.tickLock', 'Held while a primary skill is at 100 - uses are not kept');
   // AUDIT SUGGESTIONS-1019 L3-1: ready, but the gate shut - a rest or a journey before it opens raises nothing
-  if (p.ready && p.wait > 0) return t('pause.skills.tickReadyLater', 'Ready - a rest or journey raises it once {hours, plural, one {# more hour has} other {# more hours have}} passed', { hours: Math.ceil(p.wait / 60) });
+  if (p.ready && p.wait > 0) return t('pause.skills.tickReadyLater', 'Ready - a rest or a trip raises it once {hours, plural, one {# more hour has} other {# more hours have}} passed', { hours: Math.ceil(p.wait / 60) });
   if (p.ready) return t('pause.skills.tickReady', 'Ready - rest or travel to raise it');
   return t('pause.skills.tick', '{have} / {need} uses to the next point', { have: p.have, need: p.need });
 }
@@ -5433,31 +5435,46 @@ function latestPlace(sel) {
  *  F5 logbook's flat seam); a host without the hook says so. */
 function pauseQuests(body) {
   if (!hooks.questLog) {
-    body.append(el('p', 'px-note', t('pause.journal.notWired', 'The journal is not wired into this place yet.')));
+    body.append(el('p', 'px-note', t('pause.journal.notWired', 'The journal isn\u2019t available here yet.')));
     return;
   }
   // MAC-K2: THE WALK IS ui/quest/questRail.js's now, because the chronicle
   // needs the same one - the L key's window had no quests in it at all
   // and a second copy of this here is how the two would drift.
   const log = hooks.questLog() ?? { active: [], finished: [] };
-  const { active, finished, hidden } = questRail(log);
+  const rail0 = questRail(log);
+  const { finished, hidden } = rail0;
+  // QL2: a stamped quest whose objectives stand before its first journal entry is a quest of the rail's too
+  const active = [...rail0.active, ...unloggedRail(log)];
   const shelved = shelvedRail(log);   // QUEST-SHELF: and the quests set aside
   // JOURNAL-CLEAN (2026-09-30, Discord: "Should there be a way to clean both finished and unfinished quests from your
   // journal for a cleaner look?"): the host's tidy-ups (scenes/quest/questBridge.js journalClean - remove / clear the
   // archive, hide / unhide an active quest). A host that hands none draws no buttons rather than buttons that do
   // nothing.
   const clean = hooks.journalClean?.() ?? null;
-  if (!active.length && !finished.length && !hidden.length && !shelved.length) {
+  // QL3 (bible/06-Systems/Questlines-Arc.md section 5.2): the rewards waiting to be chosen - each an ended quest's three
+  // pieces, its own rail section above the quests, one press from the Take (key `r:<id>`)
+  const offers = (clean?.offers?.() ?? []).map((o) => ({ key: `r:${o.id}`, name: offerRowWords(o), offer: o }));
+  // QL12 (Questlines-Arc.md section 6, the owner's fifth: "One unified place to view questlines"): THE QUESTLINES - every
+  // line, begun or not, under its own heading (key `l:<id>`): the ones under way first, then those still to begin, the
+  // finished last. None while the questlines are off (the bridge hands none).
+  const LINE_ORDER = { running: 0, retry: 1, shelved: 1, waiting: 1, locked: 2, done: 3 };   // AUDIT QUESTLINES UI-7: retry, shelved
+  const lines = (log.lines ?? []).map((l) => ({ key: `l:${l.id}`, name: l.title, line: l }))
+    .sort((a, b) => (LINE_ORDER[a.line.state] ?? 9) - (LINE_ORDER[b.line.state] ?? 9));
+  // QL12 (section 4.4): and each guild the player is a member of, as its own ladder (key `g:<guild>`)
+  const ladderRows = (log.ladders ?? []).map((g) => ({ key: `g:${g.key}`, name: g.name, ladder: g }));
+  lines.push(...ladderRows);
+  if (!active.length && !finished.length && !hidden.length && !shelved.length && !offers.length && !lines.length) {
     body.append(el('p', 'px-note', t('pause.journal.none', 'No active quests.')));
     return;
   }
   const shown = questShowHidden ? hidden : [];
-  const rows = [...active, ...shown, ...shelved, ...finished];
+  const rows = [...offers, ...active, ...shown, ...shelved, ...finished, ...lines];
   // GUIDE4: THE JOURNAL OPENS ON THE QUEST THE HUD SHOWS - the tracker's (the one tracked, else the one the journal
   // last changed) - and only then on the first row.
   if (!rows.some((r) => r.key === questSel)) {
     const onHud = followOn() ? questTracker.tracked()?.id : null;   // AUDIT GUIDE T2: the card's or the marks' quest
-    questSel = (onHud != null ? rows.find((r) => r.id === onHud)?.key : null) ?? rows[0]?.key ?? null;   // JOURNAL-CLEAN: every quest hidden is no row
+    questSel = (onHud != null ? rows.find((r) => r.id === onHud)?.key : null) ?? rows[0]?.key ?? null;   // JOURNAL-CLEAN: every quest hidden is no row; QL12: the lines come last, so a quest is opened on first
   }
   const sel = rows.find((r) => r.key === questSel);
 
@@ -5468,7 +5485,7 @@ function pauseQuests(body) {
       const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
       b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(questTitleOf(q.name)));   // PX28
       if (q.clockSeconds != null) b.append(el('span', 'px-qtimed', '\u25c6'));
-      b.onclick = () => { questSel = q.key; render(); };
+      b.onclick = () => { questSel = q.key; questReveal = true; render(); };   // AUDIT QUESTLINES UI-14
       rail.append(b);
     }
   };
@@ -5495,8 +5512,25 @@ function pauseQuests(body) {
     if (items.length) railList(items, cls);
     else rail.append(el('div', 'px-qnone', '\u2014'));
   };
-  section(t('pause.journal.main', 'Main Quests'), mains, '', true);
+  // QL3: a section only while a reward waits - a quest's choice of gear, the first thing the journal has to ask
+  if (offers.length) { rail.append(el('div', 'px-qarch px-qfirst', t('ql.journal.rewards', 'Rewards waiting'))); railList(offers, ' px-qreward'); }
+  section(t('pause.journal.main', 'Main Quests'), mains, '', !offers.length);
   section(t('pause.journal.side', 'Side Quests'), sides, '');
+  // QL12: the questlines - each row tagged with where it stands, a finished one dimmed as the archive is
+  if (lines.length) {
+    rail.append(el('div', 'px-qarch', t('ql.journal.lines', 'Questlines')));
+    for (const q of lines) {
+      const state = q.line?.state ?? 'running';
+      const cls = ['px-qrow', 'px-qlinerow'];
+      if (state === 'done' || state === 'locked') cls.push('done');
+      if (q.key === questSel) cls.push('on');
+      const b = el('button', cls.join(' '));
+      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(questTitleOf(q.name)));
+      b.title = q.ladder ? t('ql.journal.ladderRow', 'Your guild\u2019s quests, rank by rank') : lineStateWords(state);
+      b.onclick = () => { questSel = q.key; questReveal = true; render(); };   // AUDIT QUESTLINES UI-14
+      rail.append(b);
+    }
+  }
   // JOURNAL-CLEAN: the hidden quests, drawn only when asked for, under their own heading - and the toggle that asks,
   // which names how many are hidden so a tidied journal never looks like quests were lost.
   if (questShowHidden && hidden.length) section(t('pause.journal.hidden', 'Hidden'), hidden, ' done');
@@ -5530,12 +5564,38 @@ function pauseQuests(body) {
   wrap.append(rail);
 
   const detail = el('div', 'px-qdetail');
-  if (sel) {
+  if (sel?.offer) {
+    // QL3: a reward waiting - its quest's name, and its three pieces, each with its Take
+    const head2 = el('div', 'px-qname');
+    head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.offer.title)), el('span', 'px-qwing px-flip'));
+    // AUDIT QUESTLINES UI-10: a Take ARMS on its first press and takes on the second - BOUNTY1's arming, as Abandon, Remove
+    // and Clear archive do here: one press gave a choice away, and the focus then stood on the next reward's Take, so a
+    // second Enter chose for a reward never looked at. Armed by the piece (`take:<offer>:<index>`, its button's own key)
+    const takeKey = (i) => `take:${sel.offer.id}:${i}`;
+    const armedTake = sel.offer.pieces.findIndex((_, i) => journalCleanArmed === takeKey(i));
+    detail.append(head2, qlOfferDetail(document, sel.offer, (i) => {
+      if (journalCleanArmed !== takeKey(i)) { journalCleanArmed = takeKey(i); render(); return; }
+      journalCleanArmed = null;
+      clean?.takeOffer?.(sel.offer.id, i); questSel = null; render();
+    }, { armed: armedTake }));
+  } else if (sel?.line) {
+    // QL12: a questline - its story, its steps as the path walked, what it waits on and what it earns
+    const head2 = el('div', 'px-qname');
+    head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.line.title)), el('span', 'px-qwing px-flip'));
+    detail.append(head2, qlLineDetail(document, sel.line, { titleText: (k) => TITLE_TEXT[k] ?? k }));
+  } else if (sel?.ladder) {
+    // QL12 (section 4.4): a guild's ladder - its quests by the rank that opens them
+    const head2 = el('div', 'px-qname');
+    head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.ladder.name)), el('span', 'px-qwing px-flip'));
+    detail.append(head2, qlLadderDetail(document, sel.ladder));
+  } else if (sel) {
     const head2 = el('div', 'px-qname');
     head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.name)), el('span', 'px-qwing px-flip'));   // PX28
     detail.append(head2);
     const isShelvedRow = String(sel.key).startsWith('s:');   // QUEST-SHELF: a quest set aside - its clock stopped, nothing to track
-    if (sel.entries && !isShelvedRow) {
+    // AUDIT QUESTLINES UI-8: nor a stamped quest with no journal entry yet (unloggedRail) - no clock, no place, and no Track:
+    // the HUD's card reads the entries (ui/quest/questLens.js), so Track pinned a quest it never sees and the card went blank
+    if (sel.entries?.length && !isShelvedRow) {
       // PX22: NO KIND TAG. PX5 put "Main Quest" / "Side Quest" beside
       // the timer; with the rail always showing three named sections
       // that is the same fact twice, and a quest is not TITLED by its
@@ -5559,6 +5619,9 @@ function pauseQuests(body) {
       const where = questWhere(sel.written?.at(-1)?.message, 'px-qwhere');
       if (where) detail.append(where);
     }
+    // QL2 (bible/06-Systems/Questlines-Arc.md section 6): a stamped quest's objectives, its choices and how it ended -
+    // ui/questlines/qlJournal.js, the chronicle's own block too. DFU's quest (no `ql`) draws nothing here.
+    { const block = qlObjectivesBlock(document, sel.ql); if (block) detail.append(block); }
     // BOUNTY1 (Mac: "i also dont see the bounty in my questlog means i cant abandon it?"): a bounty's two presses - Abandon
     // (twice: the first arms it, so a stray click gives nothing up) and, in a party, Share
     if (sel.entries && isBountyQuestId(sel.id)) {
@@ -5610,7 +5673,9 @@ function pauseQuests(body) {
         // its audit: the selection follows the quest only where it went - a refusal is said under the quest it refused
         rc.onclick = () => { const out = clean.reclaim(sel.id); questShelfSaid = out?.text ?? null; if (out?.ok) questSel = `a:${sel.id}`; render(); };
         acts.append(rc);
-      } else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
+      // AUDIT QUESTLINES UI-8: and not on a quest with no journal entry yet - set aside, it was no row at all (the bridge's walk
+      // lists a quest set aside by its entries), so no Reclaim could reach it
+      } else if (sel.entries?.length && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
         const armed = journalCleanArmed === `ab:${sel.id}`;
         const ab = el('button', 'act', armed ? 'Click again to abandon' : 'Abandon quest');
         ab.onclick = () => {
@@ -5628,7 +5693,7 @@ function pauseQuests(body) {
       if (!isShelvedRow && sel.entries && sel.id != null && clean.restart && clean.canRestart?.(sel.id)) {
         const armed = journalCleanArmed === `rs:${sel.id}`;
         const rs = el('button', 'act', armed ? t('pause.journal.restartArmed', 'Click again to restart') : t('pause.journal.restart', 'Restart quest'));
-        rs.title = t('pause.journal.restartTitle', 'Start this quest again from its first step - what it placed and gave is taken back');
+        rs.title = t('pause.journal.restartTitle', 'Start this quest again from the beginning. Anything it placed or gave you is taken back');
         rs.onclick = () => {
           if (journalCleanArmed !== `rs:${sel.id}`) { journalCleanArmed = `rs:${sel.id}`; render(); return; }
           journalCleanArmed = null;
@@ -5639,7 +5704,9 @@ function pauseQuests(body) {
         };
         acts.append(rs);
       }
-      if (sel.entries && sel.id != null && !isShelvedRow) {
+      // AUDIT QUESTLINES UI-8: Hide is an entry's - a row with none (unloggedRail) stayed drawn, still saying Hide, and the
+      // Show hidden toggle never named it (the rail hides only the logged rows, ui/quest/questRail.js questRail)
+      if (sel.entries?.length && sel.id != null && !isShelvedRow) {
         const isHidden = hidden.some((q) => q.key === sel.key);
         const hb = el('button', 'act', isHidden ? t('pause.journal.unhide', 'Unhide') : t('pause.journal.hide', 'Hide from journal'));
         hb.onclick = () => {
@@ -5669,8 +5736,8 @@ function pauseQuests(body) {
       // beneath it, newest first.
       const latest = sel.entries[sel.entries.length - 1];
       const desc = el('div', 'px-qdesc');
-      for (const line of latest) desc.append(el('p', null, line));
-      detail.append(desc);
+      for (const line of latest ?? []) desc.append(el('p', null, line));   // QL2: a quest with no entry yet has its objectives alone
+      if (latest) detail.append(desc);
       if (sel.entries.length > 1) {
         detail.append(pxDivider(t('pause.journal.title', 'Journal')));
         const offered = latestPlace(sel);   // GUIDE2: the place the where line above already offers
@@ -5699,11 +5766,22 @@ function pauseQuests(body) {
         if (line === '') { desc.append(el('div', 'px-qgap')); continue; }
         desc.append(el('p', null, line));
       }
+      // AUDIT QUESTLINES UI-5: how a stamped quest ended - the filed entry's side record (systems/notebook.js filedOutcome),
+      // the archive's alone to draw: DFU's classic logbook draws the entry as DFU filed it
+      const outcome = filedOutcome(log.finished?.[Number(String(sel.key).slice(2))]);
+      if (outcome) desc.append(el('p', 'px-qoutcome', t('quest.outcome.filed', 'Outcome: {text}', { text: outcome })));
       detail.append(desc);
     }
   }
   wrap.append(detail);
   body.append(wrap);
+  // AUDIT QUESTLINES UI-14: on a phone the journal stacks (enhancedStyle.js PX4: the rail a strip over the page, at 480px),
+  // and a row pressed below the fold drew its page out of sight - the page pressed for is brought into view, after the
+  // repaint has put the scroll back (ui/domRepaint.js), as the broker's card is (ui/brokerWindow.js)
+  if (questReveal) {
+    questReveal = false;
+    if (globalThis.matchMedia?.('(max-width: 480px)')?.matches) Promise.resolve().then(() => { if (detail.isConnected !== false) detail.scrollIntoView?.({ block: 'start' }); });
+  }
 }
 
 function render() {
@@ -6059,6 +6137,7 @@ export function mountEnhancedMenu(host, {
   bountyAbandonArmed = null;   // AUDIT 28 B11: an armed Abandon never outlives the visit it was armed on
   journalCleanArmed = null;   // JOURNAL-CLEAN: ...nor an armed Remove or Clear archive
   questShowHidden = false;
+  questReveal = false;   // AUDIT QUESTLINES UI-14: a press is this visit's
   statsSec = 'character';
   resetProfPages();   // PROF1: an armed change of specialisation never outlives the visit
   resetCompanionRoster();   // COMPANION-ROSTER: nor an armed Release

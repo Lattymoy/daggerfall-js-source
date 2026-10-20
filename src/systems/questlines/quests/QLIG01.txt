@@ -1,0 +1,125 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE SMITH'S SECRETS, step 1 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the note is the offer. The giver is unnamed (an armourer): an Armorer of the player's own town, at its
+-- armoury. The act is the sockets' (qlActs.js gem-socketed - systems/reforge.js setGemPiece, LOOT20/GEM1: free, any
+-- socket, from the pack or the Reforge's press). The gem is the player's own: a quest's gift would read as its pay.
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName).
+Quest: QLIG01
+DisplayName: A Stone in the Setting
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          _smith_ has found someone else to teach.
+
+QuestComplete:  [1004]
+<ce>        "For the lesson. Next time, you pay me."
+<ce>          _smith_ counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _smith_, an armorer at _shop_ in __shop_,
+ sent me a note. A good piece of gear can still be
+ made into something better, and the armorer will
+ pay me to learn how. I am to set a gem in a socket,
+ any gem in any piece, then go to _shop_ to say so.
+
+Message:  1011
+%pcn,
+
+     Every weapon worth carrying has room in it for
+ a stone - one socket, two, three on the big ones.
+ Every piece of armor has one. Most fighters never
+ fill them. Most fighters are fools.
+
+     Set a gem in a socket. It costs you nothing but
+ the gem, and the gem's virtue goes into the steel.
+ The mines give gems up, and so do the dead. Then
+ come to _shop_ in __shop_ and tell me.
+
+<ce>                               _smith_, armorer
+
+Message:  1012
+<ce>         An apprentice in a scorched leather apron
+<ce>          catches your sleeve and hands you a note.
+<ce>         "From _smith_, at _shop_. The armorer
+<ce>               says you look under-dressed."
+
+Message:  1013
+<ce>        _smith_ hears which stone you set, and where,
+<ce>          and grunts. "Good. It will sit right."
+<ce>
+<ce>       "A stone is not set forever, mind. The Reforge
+<ce>        at the Mages Guild can take one out whole, for
+<ce>        a price. It can do more than that, too - but
+<ce>        that is a lesson for another day."
+
+Message:  1014
+The armorer at _shop_? Knows more about steel than anyone in __shop_.
+<--->
+_smith_? Sets gems in blades, they say. Swears it is worth it.
+<--->
+Looking for _smith_? Try _shop_. Follow the hammering.
+
+Message:  1015
+%qdt:
+ I have set a gem in a socket. _smith_ is waiting
+ to hear of it at _shop_ in __shop_.
+
+Message:  1016
+<ce>         "No stone in the setting yet? Any gem will
+<ce>          do, in any socket. Come back when one is."
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--              %pcn occurs 1 time.
+--           _smith_ occurs 9 times.
+--            _gold_ occurs 1 time.
+--            _shop_ occurs 7 times.
+--           __shop_ occurs 4 times.
+
+QBN:
+Item _note_ letter used 1011
+Item _gold_ gold range 100 to 200
+
+Person _smith_ group Armorer local anyInfo 1014
+Place _shop_ local armory
+
+Clock _courier_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _smith_ at _shop_
+	start timer _courier_
+
+_courier_ task:
+	give pc _note_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_set_ task:
+	ql act gem-socketed 1
+
+_told_ task:
+	when _courier_ and _set_
+	log 1015 step 1
+
+_clicked_ task:
+	clicked npc _smith_
+
+_early_ task:
+	when _clicked_ and not _set_
+	say 1016
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _set_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

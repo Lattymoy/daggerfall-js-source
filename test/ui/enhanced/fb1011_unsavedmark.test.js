@@ -78,8 +78,8 @@ test('UNSAVED-MARK the pane: the Overworld row bound and not saved says so, the 
     const head = one(view.body, 'ctl-head');
     assert.ok(head.className.split(/\s+/).includes('ctl-owed'), 'the head lights its Confirm');
     assert.equal(one(head, 'ctl-pending').textContent, unsavedCount(1));
-    assert.equal(unsavedCount(1), `1 change not saved yet - press ${CONFIRM_LABEL} to keep it.`);
-    assert.equal(unsavedCount(2), `2 changes not saved yet - press ${CONFIRM_LABEL} to keep them.`);
+    assert.equal(unsavedCount(1), `1 change not saved yet. Press ${CONFIRM_LABEL} to keep it.`, 'PIN MOVED (VOICE2): a second sentence, no dash aside');
+    assert.equal(unsavedCount(2), `2 changes not saved yet. Press ${CONFIRM_LABEL} to keep them.`, 'PIN MOVED (VOICE2): a second sentence, no dash aside');
     assert.equal(getBinding(store, 'TravelView', true), null, 'staged only');
     one(head, 'ctl-continue').onclick();
     assert.equal(getBinding(store, 'TravelView', true), FREE, 'Confirm commits it');
@@ -101,10 +101,10 @@ test('UNSAVED-MARK the sticky head is the law and its buttons: the how-to scroll
     const intro = one(view.body, 'ctl-intro'), head = one(view.body, 'ctl-head');
     assert.ok(view.body.children.indexOf(intro) < view.body.children.indexOf(head), 'the intro first, above the head');
     assert.match(textOf(intro), /Click a binding, then press the key you want\./);
-    assert.match(textOf(intro), /A key that is already in use asks first/);
+    assert.match(textOf(intro), /A key already in use asks whether to move it or use it for both/);
     assert.match(textOf(intro), /A key not saved yet is marked on its row\./);
-    assert.doesNotMatch(textOf(head), /Click a binding|already in use asks first/, 'none of the how-to rides the sticky head');
-    assert.match(textOf(head), /Nothing is saved until you press Confirm, Defaults included\./);
+    assert.doesNotMatch(textOf(head), /Click a binding|already in use asks whether/, 'none of the how-to rides the sticky head');
+    assert.match(textOf(head), /Nothing is saved until you press Confirm, including Defaults\./);
   });
 });
 

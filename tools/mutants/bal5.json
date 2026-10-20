@@ -104,8 +104,8 @@
   {
     "name": "BAL5-the-card-says-nothing",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "of it back - it wounds, but never kills`,",
-    "new": "of it back`,",
+    "old": "of the damage back. This never kills them`,",
+    "new": "of the damage back`,",
     "tests": [
       "test/systems/bal5_blowback.test.js"
     ]

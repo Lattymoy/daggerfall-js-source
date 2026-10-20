@@ -2237,7 +2237,7 @@ export class TravelMapWindow {
     const x = 4, y = REGION_PANEL_OFFSET + 112, w = 118, rowH = 9;
     drawRect(renderer, m, x, y, w, 8 + rowH * WILD_RINGS + 2, [0.04, 0.03, 0.03, 0.82]);
     drawRect(renderer, m, x, y, w, 1, [0.72, 0.17, 0.1, 1]);
-    shadowText(renderer, font, 'OPEN PVP - LOOT BY RING', m, x + 3, y + 2, { color: [0.95, 0.42, 0.3, 1] });
+    shadowText(renderer, font, 'OPEN PVP: LOOT BY RING', m, x + 3, y + 2, { color: [0.95, 0.42, 0.3, 1] });
     for (let r = 1; r <= WILD_RINGS; r++) {
       const ry = y + 2 + rowH * r;
       const f = RING_INK[r - 1].fill;

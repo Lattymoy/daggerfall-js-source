@@ -452,7 +452,7 @@ test('DISC19-D: every module the dungeon\'s foe subsystem loads lazily is one th
 
 test('DISC19-D: a chunk gone mid-session is said on the screen, not swallowed - and the log names what really failed', () => {
   assert.equal(isStaleChunk(new TypeError('Failed to fetch dynamically imported module: https://daggerfalljs.dev/play/assets/enhancedMotor-CPTnjkkD.js')), true);
-  assert.match(STALE_CHUNK_IN_PLAY_TEXT, /reload the page/i);
+  assert.match(STALE_CHUNK_IN_PLAY_TEXT, /\bReload\b/);   // PIN MOVED (VOICE2): 'The game was updated. Reload to see the enemies.' - a sentence, no dash aside (Voice.md rule 5)
   const dc = rd('src/scenes/dungeonContext.js');
   const c = dc.slice(dc.indexOf('} catch (err) {', dc.indexOf('if (opts.foes && palette) {')));
   assert.match(c.slice(0, 1200), /if \(isStaleChunk\(err\)\) _staleChunkNotice = true;/);   // AUDIT DISC19: said on the level's first frame (drawFoes), auditdisc19's pin

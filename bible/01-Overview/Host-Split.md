@@ -498,3 +498,55 @@ the naval host's boat in play; and the voyage the planner is asked for rides the
 (`tvSeaMeans`' `voyage`) instead of a copy of them. `bootWorld` 36,264 -> 36,230 logical lines, under its ceiling,
 which stays. The pins that read the wiring by source moved with it (`passagehost.test.js`, `passageaudit.test.js`,
 `ows2_crossing.test.js`), the boat in play now held by behaviour, and 21 mutant records re-aimed and dead.
+
+## STAND-IN-WHOLE - the four spell doors out of buildDungeonContext (FIELD BUGS 2026-10-19f)
+
+Not a slice of the order above: a fix (`11-Multiplayer/World-Bosses.md` section 26) whose door stood in `buildDungeonContext`
+four times - `spellOnBoss`, `spellOnCrystal`, `spellOnHost` and `spellOnRival` (and `tellStandIn`, `spellOnStandIn`), each
+counting a spell on a relay body's stand-in with its own copy of the counting sinks and popping its own number. The fix's
+number - what can land - belonged in one place, so the doors left as one rather than being edited four times.
+
+- THE MOVE, by hand and NOT verbatim: `node tools/hostScope.mjs` measured the group (6 members, 78 lines; reads 12 host
+  names - the four bodies' finders, the four land doors, `nextArenaQ`, `hudText`, `opts`, `swayToldAt` - writes only
+  `swayToldAt`, which went with it; used by the cast engine's seams, the enchant door and the api). The four doors are one
+  door in `src/scenes/gate/standInSpell.js` (`createStandInSpell(host)`: `countOnStandIn` the count, `onBody` the court's
+  three, the rival's and his own beside it), the module owning its clock and dice (`now`, `rolls`); the behaviour is the
+  doors' but for the fix's number and the riders' `took`. The context constructs it where his door stood - below every
+  `const` it hands over by value (the land doors, `nextArenaQ`) - and destructures the five names its seams already called;
+  the seams above it call them only inside arrows the built context runs, never during the build's awaits.
+- THE FOUR HOSTS: `dungeonContext.js` wired (the court, the Abyss's Hour, an Elite Breach's halls and a bout all run in a
+  dungeon context); `world.js` and `exterior.js` unchanged - their `bossSpell` mounts call `modes.dungeonCtx.spellOnBoss`,
+  the same api; `worldModes.js` unchanged (it hands the opts through). The serpent's own copy of the door followed with
+  BOSS-DOT, below.
+- THE PINS, by hand (`PIN MOVED`): the source pins that quoted the doors read the module, and two that quoted three
+  copies of one line now drive the one door on the real stand-ins (`fb1018f_turnedblow.test.js`'s numbers by the body
+  they met). The mutant records re-aimed by content; the two whose copies are gone retired with them.
+- `buildDungeonContext` 8,450 -> 8,312 logical lines; its ceiling 8,601 -> 8,463 (the 151 of room it had, not the
+  standard 400 over the new length, which would have raised it - OUTDOOR-LOOT's precedent).
+
+## BOSS-DOT - the serpent's spell door out of bootWorld (FIELD BUGS 2026-10-19f)
+
+BOSS-DOT (`11-Multiplayer/World-Bosses.md` section 27) carries a spell's lasting harm on every body a relay runs, and the
+sea serpent's door - `serpentSpellOn`, the fifth copy of the stand-in's door, in `bootWorld` - was the one host copy left.
+It went into the module rather than growing there: `createSerpentSpell` in `src/scenes/gate/standInSpell.js` (the count,
+the riders, the claim to `serpentHost.handStruck`, its rounds), which `bootWorld` constructs where it stood and asks once
+a frame of the serpent's fight (`serpentSpell.frame(fight)`). `bootWorld` 36,181 -> 36,157 logical lines, its ceiling
+36,219 -> 36,195. `buildDungeonContext` grew by its wiring alone - the rounds' frame destructured and asked in `drawFoes`,
+8,315 -> 8,317, under its 8,463. Pins moved by hand (`serpent4.test.js`, `audit_schools.test.js`).
+
+## OW-DUNGEON-SIZE's move - the dungeons' models out of bootWorld (2026-10-19)
+
+THE OVERWORLD REVISITED (`06-Systems/Travel-View.md`) wires six slices into the streaming host, and `bootWorld` stood at
+36,230 of its 36,233 logical lines. The slice that changes OW-DUNGEONS' grow moved OW-DUNGEONS' own host code out first:
+`tvDungeonModelList`, `tvDungeonModelLoad`, `_tvDngAt`, `drawTvDungeonModels` and `dropTvDungeonModels` - contiguous
+members - to `src/scenes/travelViewDungeonModels.js` (`createTravelViewDungeonModels(host)`) by `tools/hostMove.mjs`:
+23 names by value, four live (`_locIndexGen`, `_tvListsReady`, `season`, `tvDngModels` - written, so a getter and a
+setter), the two the host draws and drops by returned. 86 logical lines freed (36,230 -> 36,144); the six slices'
+wiring took 39 of them back (`bootWorld` 36,183; 36,181 after the merge with main), each slice's behaviour a module of its own
+(`scenes/townWalkHost.js`, `scenes/overworldForecastHost.js`, `systems/travel/regionChase.js`, `systems/travel/townWalk.js`,
+`systems/weather/owForecast.js`). The ceiling stays. The three pins that lifted the moved code read the host whole now
+(`test/hostText.mjs`: `owdungeons`, `fb1009_travelperf`, `ether_ow`), their lifted functions handed `host` for the live
+names; 24 mutant records re-aimed by the tool, every one dead. AUDIT OW-REVISITED (2026-10-20, `01-Overview/audits/Audit-Overworld-Revisited.md`): its fixes grew the region's
+chase hearing past three lines, so it moved out too - `src/scenes/regionChaseHost.js` (`createRegionChaseHearing`), the
+host wiring it in one statement; with the forecast's new inputs and the bands' and raiders' preference for a fresh cell
+word, `bootWorld` 36,205 of its 36,233 (36,209 with main merged in the same day).

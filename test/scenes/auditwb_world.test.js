@@ -7,9 +7,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createGateOmen, OMEN_SETTLE_MS, omenTimeLine, openTimeLine, riteOmenLine } from '../../src/systems/gate/gateOmen.js';   // TIME1: the lines that name a time say local time alone
-import { gateTimes, riseLine, marksLine, gateModsOf, GATE_RISE_MS } from '../../src/net/gate/gateLaw.js';
+import { gateTimes, riseLine, marksLine, gateModsOf, gatePortentsOf, portentsLine, GATE_RISE_MS } from '../../src/net/gate/gateLaw.js';
 /** WB8c: tonight's marks, said once a day beside the first moment a player hears - never a moment itself. */
 const marks = (day) => marksLine({ boss: 'Valkynaz Ruhn', md: gateModsOf(day) });
+/** WB14b: a day's portents as the chat says them, after its marks (day 640's Captive, day 643's Sundering). */
+const portents = (day) => portentsLine(gatePortentsOf(day));
 import { gateScanner, scanGatePixels, findGateSite } from '../../src/systems/gate/gateSite.js';
 import {
   GatePassRenderer, MEMBRANE_FS, MEMBRANE_TURN_SEALED_HZ, MEMBRANE_TURN_OPEN_HZ, gateSpinRate, gateSpinAt,
@@ -38,11 +40,11 @@ test('AUDIT WB C4 the omen waits for the world\'s clock: silent and standing now
   assert.equal(lines.length, 0);
   clock.now += 1;
   assert.equal(omen.frame().phase, 'open');
-  assert.deepEqual(lines, [openTimeLine({ near: 'Copperham', at: `L${640 * 1440 + 1320}` }), marks(640)], 'the one line for now - no omen, no rise - and (WB8c) tonight\'s marks beside it');
+  assert.deepEqual(lines, [openTimeLine({ near: 'Copperham', at: `L${640 * 1440 + 1320}` }), marks(640), portents(640)], 'the one line for now - no omen, no rise - and (WB8c) tonight\'s marks beside it, (WB14b) its portent after them');
   assert.equal(omen.standing().phase, 'open');
   clock.now -= 60_000;   // a correction steps the relay's clock back: the settled omen is not silenced by it
   assert.equal(omen.frame()?.phase, 'sealed', 'the gate as the stepped clock has it - not nothing');
-  assert.equal(lines.length, 2, 'and the rise behind the open is not said, nor the marks again');
+  assert.equal(lines.length, 3, 'and the rise behind the open is not said, nor the marks again');
   clock.now += 60_000;
   // the link drops and comes back: silent again for the settle, and the line already said is not said twice
   host.ready = false;
@@ -51,7 +53,7 @@ test('AUDIT WB C4 the omen waits for the world\'s clock: silent and standing now
   omen.frame();
   clock.now += OMEN_SETTLE_MS;
   omen.frame();
-  assert.equal(lines.length, 2);
+  assert.equal(lines.length, 3);
   assert.equal(OMEN_SETTLE_MS, 1500);
 });
 
@@ -63,17 +65,17 @@ test('AUDIT WB C4 a link lost and found settles again: a kill the relay saw whil
   let fell = null;
   const omen = createGateOmen({ now: () => clock.now, site: () => SITE, say: (s) => lines.push(s), localTime: (m) => `L${m}`, fellAt: () => fell, ready: () => host.ready, settleMs: OMEN_SETTLE_MS });
   omen.frame(); clock.now += OMEN_SETTLE_MS; omen.frame();
-  assert.deepEqual(lines.slice(1), [riteOmenLine(), marks(643)], 'the rise, and (WB12d; AUDIT WB12d D3) the faithful\'s rite right after it, then (WB8c) tonight\'s marks');
+  assert.deepEqual(lines.slice(1), [riteOmenLine(), marks(643), portents(643)], 'the rise, and (WB12d; AUDIT WB12d D3) the faithful\'s rite right after it, then (WB8c) tonight\'s marks and (WB14b) its portent');
   host.ready = false;
   clock.now = t.openAt + 120_000;   // away through the opening - and the Warden fell just before the return
   omen.frame();
   host.ready = true;
   omen.frame();
-  assert.equal(lines.length, 3, 'back, and holding: the hub\'s word is on its way');
+  assert.equal(lines.length, 4, 'back, and holding: the hub\'s word is on its way');
   fell = t.openAt + 115_000;
   clock.now += OMEN_SETTLE_MS;
   assert.equal(omen.frame().phase, 'collapsing');
-  assert.equal(lines.length, 3, 'no "the gate is open" over a gate whose boss is dead');
+  assert.equal(lines.length, 4, 'no "the gate is open" over a gate whose boss is dead');
 });
 
 test('AUDIT WB C4 a clock that steps BACK never says a line twice; a new day says its own from the start', () => {

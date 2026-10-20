@@ -211,12 +211,12 @@ test('AC-COMPARE the pack draws it: each part\'s number on the panel for its slo
         const b = n.querySelector('.wornac');
         onPanels[txt(n.querySelector('.wornslot'))] = b ? [b.textContent, b.classList.contains('nil'), b.title] : null;
       }
-      assert.deepEqual(onPanels, {
-        Head: ['13', false, 'Head: armour 13'], Cloaks: null,
-        'Chest armor': ['9', false, 'Chest: armour 9'], Shirt: null,
-        'Left arm': ['3', false, 'Left arm: armour 3'], 'Right arm': ['0', true, 'Right arm: armour 0'],
-        Hands: ['3', false, 'Hands: armour 3'], 'R·Weapon': null, 'L·Hand': null,
-        'Leg armor': ['10', false, 'Legs: armour 10'], 'Pants / skirt': null, Feet: ['7', false, 'Feet: armour 7'],
+      assert.deepEqual(onPanels, {   // PIN MOVED (VOICE2): each part's title says "armor" (Voice.md rule 8, American spelling)
+        Head: ['13', false, 'Head: armor 13'], Cloaks: null,
+        'Chest armor': ['9', false, 'Chest: armor 9'], Shirt: null,
+        'Left arm': ['3', false, 'Left arm: armor 3'], 'Right arm': ['0', true, 'Right arm: armor 0'],
+        Hands: ['3', false, 'Hands: armor 3'], 'R·Weapon': null, 'L·Hand': null,
+        'Leg armor': ['10', false, 'Legs: armor 10'], 'Pants / skirt': null, Feet: ['7', false, 'Feet: armor 7'],
         Mount: null, Cart: null,
       });
       const plaque = host.querySelector('.wornac-total');

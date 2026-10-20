@@ -150,7 +150,7 @@ test('GUILD-LETTER the host: the world\'s guild wallet weighs a withdrawal by th
 
 test('GUILD-LETTER the reporter\'s parenthesis: a realm character takes out only what realm characters put in (AUDIT REALM L1-F3) - and the refusal says that rule, where it said only "before the realm" (mutants: the old words)', () => {
   const said = accountRefusalText('guild-treasury-old');
-  assert.match(said, /takes out only the gold realm characters put in/);
+  assert.match(said, /can only take out gold that realm characters put in/);
   assert.match(said, /before the realm or from a character outside it/);
   assert.match(said, /stays in the treasury/);
 });

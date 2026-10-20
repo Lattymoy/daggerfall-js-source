@@ -481,7 +481,7 @@ test('TAMRIEL1 switch: the Features row `tamriel-map` is on by default on the pl
   assert.deepEqual([...row.kinds], ['enhanced']);
   assert.deepEqual(row.control, { store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' });
   assert.match(row.effect, /next time a map is opened/);
-  assert.match(row.note, /Nothing beyond the Bay can be travelled to/, 'the note says what the map is not');
+  assert.match(row.note, /You can’t travel beyond the Bay\./, 'the note says what the map is not');
   _resetForTests();
   try {
     assert.equal(tamrielMapOn(), true, 'on by default');

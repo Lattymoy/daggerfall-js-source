@@ -28,6 +28,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { GUILD_MEMBERS_MAX, GUILD_RANK_MASTER } from '../src/net/guild/guildLaw.js';
 import { isMain } from './lib/isMain.mjs';   // AUDIT 68: the one "am I the program" test
+import { lit } from './lib/sqlLit.mjs';
 import { reseatRestored } from './yardReseat.mjs';
 
 /** The realm's own ids (server-account/src/realm.js REALM_ID_RE): a home under one is a realm character's, never lost here. */
@@ -43,14 +44,8 @@ export function loadDump(/** @type {string} */ sql) {
   return db;
 }
 
-/** One SQL literal. The tables hold text and whole numbers; anything else is refused rather than guessed at. */
-export function lit(/** @type {unknown} */ v) {
-  if (v === null || v === undefined) return 'NULL';
-  if (typeof v === 'number' && Number.isSafeInteger(v)) return String(v);
-  if (typeof v === 'bigint') return String(v);
-  if (typeof v === 'string') return `'${v.replace(/'/g, "''")}'`;
-  throw new Error(`realmRestore: a value no restore writes: ${typeof v}`);
-}
+/** One SQL literal (tools/lib/sqlLit.mjs, its one home since PURSE-BACK - handed on for this tool's readers). */
+export { lit };
 /** AUDIT HOME-VOTE II A6: a home's row as it is put back - every column of the snapshot's but its `score`. */
 export const homeRowOf = (/** @type {Record<string, unknown>} */ home) => {
   const { score: _score, ...row } = home;

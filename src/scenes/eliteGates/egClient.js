@@ -167,6 +167,8 @@ import { EG_LORDS, EG_LAST_WORD_MS } from '../../net/eliteGates/egLaw.js';
 import { isEnhanced } from '../../systems/uiSkin.js';
 import { isTouchDevice } from '../../ui/touch/touchDevice.js';
 import { getPref } from '../../systems/uiPrefs.js';
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { egValkRedoubt } from '../../net/eliteGates/egPay.js';   // QL11: a Valkynaz's Redoubt - the one law the service pays a `w` receipt by
 import { createEgLookDraw } from './egLookDraw.js';   // EG-G2: the Spire's sky, mist and lines (section 25)
 import { egQuietCompany } from '../../world/eliteGates/egLook.js';
 import { egRibbonPush, egTrailSegs, EG_TRAIL } from '../../world/eliteGates/egLook.js';   // AUDIT EG V (h; section 8.2): THE TRAIL
@@ -276,7 +278,7 @@ export const EG_LOG_MAX = 200;
 /** EG-H2 (section 22, THE LAW PIN): how often a hall of the breach's own law is asked again while unanswered (ms), and
  *  what a member whose law is not the breach's is told, once a breach. */
 export const EG_SPEC_ASK_MS = 3000;
-export const EG_LAW_TEXT = 'This breach keeps another law. The Spire sends you its halls.';
+export const EG_LAW_TEXT = 'The Spire sends you this breach\'s halls.';
 /** EG-ZD (section 22): THE WAY BACK - where the device keeps the breach I stood in, how often my last island is written
  *  there at most (ms), and its words. */
 export const EG_BACK_KEY = 'eg.back';
@@ -363,7 +365,7 @@ export const EG_END_TEXT = Object.freeze({
 /** EG-F: no arch's clearing (one empty list, so the host's memo of the clearing set holds). */
 const NO_CLEARS = Object.freeze([]);
 /** AUDIT EG III (lane4 #12): the key turned while the start window still asks (or its preflight is out). */
-export const EG_START_ASKING_TEXT = 'The Spire already asks where you begin.';
+export const EG_START_ASKING_TEXT = 'The start window is already open.';
 /** AUDIT EG V (c, L7-21): THE WORDS `/breach` takes, said whole - in the breach, and outside it (`/breach help` too). */
 export const egBreachUsage = () => t('eg.cmd.inside', 'In the breach: /breach pick N, vote yes|no|N, respite [no], cant N, tonic, buy cant|tonic|shard, surplus [reroll], use, bridge, annals [N], ping [danger|mine|cache], watch, bequest N, forsake, home, board.');
 export const egBreachUsageOut = () => t('eg.cmd.outside', 'Outside the breach: /breach answers your company\'s call, or opens the start window; /breach rehearse, /breach board, /breach annals [N].');
@@ -375,17 +377,17 @@ const YES_NO_ASKS = Object.freeze(['ready', 'respite', 'bargain']);
 /** AUDIT EG V (c, L7-7; section 16.5 - "cycle with Q and E, the pad's shoulders"): the classic skin's pad's shoulders,
  *  LB and RB (systems/inputActions.js DEFAULT_SECONDARY_BINDINGS) - a witness has no body to crouch or jump. */
 export const EG_PAD_SHOULDERS = Object.freeze({ JoystickButton4: -1, JoystickButton5: 1 });
-export const egRespiteHow = () => t('eg.vote.respiteHow', 'A respite is its own word: R, or /breach respite.');
-export const egRespiteNone = () => t('eg.vote.respiteNone', 'No respite is asked now.');
+export const egRespiteHow = () => t('eg.vote.respiteHow', 'Answer a respite with R or /breach respite.');
+export const egRespiteNone = () => t('eg.vote.respiteNone', 'Nobody has asked for a respite.');
 /** No call of mine stands (a host with no start window). */
-const NO_CALL_TEXT = 'No breach calls you. A Weir Key opens one; /breach rehearse opens the day\'s Rehearsal.';
+const NO_CALL_TEXT = 'No breach is calling you. A Weir Key opens one, and /breach rehearse opens the day\'s Rehearsal.';
 /** AUDIT EG III (lane1 #5): A SPIRE TONIC's refusals on this screen (`/breach tonic` - section 17.1). */
 export const EG_TONIC_TEXT = Object.freeze({ none: 'You hold no Spire Tonic.', fallen: 'The fallen drink nothing.' });
 /** A gift's words (`egot`). */
 /** EG-FULL LAYER THREE: the relay's object types by number (net/eliteGates/egLords.js EG_OBJ) - the spans read Grath's islands and
  *  the false walls by name (systems/eliteGates/spireKit.js spireObjs). */
 const OBJ_NAME = Object.freeze(Object.fromEntries(Object.entries(EG_OBJ).map(([k, v]) => [v, k])));
-export const EG_GOT_TEXT = Object.freeze({ shard: 'You take a Vestige shard.', tonic: 'You take a Spire Tonic.', cant: 'You take a Cantrip.', lumen: 'You take 10 lumen.', rel: 'A Reliquary is sealed for you.', longstep: 'Long Step: your crumbles wait half a second more this span.' });
+export const EG_GOT_TEXT = Object.freeze({ shard: 'You take a Vestige shard.', tonic: 'You take a Spire Tonic.', cant: 'You take a Cantrip.', lumen: 'You take 10 lumen.', rel: 'A Reliquary is sealed for you.', longstep: 'Long Step: crumbling ground holds half a second longer this span.' });
 /** A hall's glyph on THE RECAP's strip. */
 const KIND_GLYPH = Object.freeze({ yard: 'Y', span: 'S', proving: 'P', rampart: 'R', court: 'C', athenaeum: 'A', deepway: 'D', brink: 'B', scriptorium: 's' });
 /** A push's pace (the Steps' breath's, sdSteps.js SD_GUST_SPEED), the longest frame it is carried for (s), the most one
@@ -463,6 +465,19 @@ export const egRefusalText = (error) => REFUSED[error] ?? (typeof error === 'str
 export function egClaimDone(a) {
   if (a?.ok) return true;
   return a?.error === 'receipt' || a?.error === 'not-yours';
+}
+
+/**
+ * QL11: THE REDOUBT'S ACTS, off a claim's answer `a` for its receipt `c` - a Redoubt taken, its e1 receipt counted once
+ * (`recorded`; a Rehearsal's is practice), and a Valkynaz's besides: every fifth Court (egLaw.js egBossOf), the receipt's
+ * own `w` (egPay.js egValkRedoubt - the one law the service pays a `w` receipt by). AUDIT QUESTLINES ACTS-8: here, out of
+ * createEgClient's scope, which the host ceiling holds (test/scenes/hostceiling.test.js) - its claim loop calls it, one line.
+ * @param {any} a @param {any} c
+ */
+function redoubtActs(a, c) {
+  if (!a?.ok || !a.data?.recorded || a.data.q !== 'w' || c?.rh === 1) return;
+  noteAct('redoubt-taken');
+  if (egValkRedoubt(c.w)) noteAct('valkynaz-felled');
 }
 
 /** A request id the service takes (server-account/src/eg.js EG_RQ_RE). */
@@ -982,6 +997,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
         const seq = keysAsk(), a = await account.claim(r);   // AUDIT EG IV (lane3 #10): its balance in its ask's order
         if (a?.ok && Number.isSafeInteger(a.data?.keys)) restack(a.data.keys, seq);
         if (a?.ok && a.data?.recorded && a.data.q === 'w') say(`Redoubt ${a.data.w} is yours.`);
+        redoubtActs(a, c);   // QL11: a Redoubt taken, and a Valkynaz's (AUDIT QUESTLINES ACTS-8: said at module scope, below egClaimDone)
         // EG-E (section 19): WHAT IT PAID - the service's word on a Redoubt's receipt (the week's pay, the pity's passes,
         // the Marks, the deed, the embers), and the spoils it rolls; a re-claim answers the same (`again`), a guest's its
         // gold alone. Never for a Rehearsal (the service pays none).
@@ -1235,7 +1251,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     }
     if (E.sg !== 'closing') downAt = -Infinity;
     // THE REDOUBT: the company healed once, the way home stood at the Court's heart through the rest
-    if (E.sg === 'rest') { if (rdSeen !== E.h) { rdSeen = E.h; redoubt?.(E.rd); say(`${EG_TEXT.redoubt(E.rd)} taken. Choose a Vestige; the way home stands at the Court's heart; the stair down opens when the rest ends.`); } standDoor(E); }
+    if (E.sg === 'rest') { if (rdSeen !== E.h) { rdSeen = E.h; redoubt?.(E.rd); say(`${EG_TEXT.redoubt(E.rd)} taken. Choose a Vestige. The way home stands at the Court's center, and the stair down opens when the rest ends.`); } standDoor(E); }
     else if (door) dropDoor();
   }
 
@@ -1964,7 +1980,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
           callSaid = key;
           // EG-F (section 6.4): the horn, and ONE line - "<opener> opens an Elite Breach." (the prompt says the rest)
           if (hornFor !== key) { hornFor = key; soundEgHorn(audio); }
-          say(w.os === me() ? `Your ${w.rh ? 'Rehearsal' : 'Elite Breach'} rises. It opens in ${egCountText(egTimes({ openedAt: w.op }).openAt - now())} - step through the arch, or answer the call where you stand.` : EG_TEXT.call(w.o || 'Your company'));   // AUDIT EG V (c, L7-20): in no one input's words
+          say(w.os === me() ? `Your ${w.rh ? 'Rehearsal' : 'Elite Breach'} rises and opens in ${egCountText(egTimes({ openedAt: w.op }).openAt - now())}. Step through the arch, or answer the call where you stand.` : EG_TEXT.call(w.o || 'Your company'));   // AUDIT EG V (c, L7-20): in no one input's words
         }
       }
       if (w.k === 'fall' && w.s !== me()) say(`${EG_TEXT.falls(w.n || 'A companion')}${w.fin ? ' The Spire will not take them back.' : ''}`);
@@ -1981,7 +1997,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
       if (w.k === 'egot' && w.w === 'page' && EG_ANNALS[w.p]) { annals.add(w.p); say(`A page of the Annals of 3E 398 - ${EG_ANNALS[w.p][0]}: ${EG_ANNALS[w.p][1]}`); }
       else if (w.k === 'egot' && EG_GOT_TEXT[w.w]) say(EG_GOT_TEXT[w.w]);
       if (w.k === 'egot' && w.w === 'longstep') longStepHeard(link.state());   // AUDIT EG III (lane1 #5): LONG STEP on my crumbles, for one span
-      if (w.k === 'rd') say(w.cov ? `${EG_TEXT.redoubt(w.w)}: the Covenant has spoken - this Redoubt is the last.` : `${EG_TEXT.redoubt(w.w)}: the count gains ${egCountText(Math.max(0, w.g ?? 0))}.`);
+      if (w.k === 'rd') say(w.cov ? `${EG_TEXT.redoubt(w.w)}: the Covenant has spoken. This Redoubt is the last.` : `${EG_TEXT.redoubt(w.w)}: the count gains ${egCountText(Math.max(0, w.g ?? 0))}.`);
       void room;
     },
     /** `/breach` (answer the call - AUDIT EG V (c, L7-14): with no call of mine standing, the start window, where a keyless
@@ -2012,7 +2028,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
         }
         if (a === 'use' || a === 'engine') { this.useEngine(); return; }
         if (a === 'bridge' || a === 'spirebridge') { bridgeAsk(); return; }   // AUDIT EG III (section 15)
-        if (a === 'bequest') { const run = egRunOfMember(E, me()), n = (Number(b) | 0) - 1, v = run.vs[n]?.[0]; if (!witness || v == null) say('A fallen member names one of their Vestiges: /breach bequest N.'); else o?.sendEg?.('bequest', { v }); return; }
+        if (a === 'bequest') { const run = egRunOfMember(E, me()), n = (Number(b) | 0) - 1, v = run.vs[n]?.[0]; if (!witness || v == null) say('The fallen may pass on one Vestige: /breach bequest N.'); else o?.sendEg?.('bequest', { v }); return; }
         say(egBreachUsage());   // AUDIT EG V (c, L7-21): every word
         return;
       }

@@ -17,7 +17,7 @@ import { REGION_NAMES } from '../formats/mapsTables.js';
 
 export const ORE_TIP_TITLE = 'Ore here';
 /** The rule the state line rests on, said where the ground is not yet witnessed. */
-export const ORE_WITNESS_RULE = `Witnessed once ${WITNESS.confirm} players (accounts a week old) gather here`;
+export const ORE_WITNESS_RULE = `Witnessed once ${WITNESS.confirm} players with accounts at least a week old gather here`;
 
 /** An ore as the card names it: DFU's own name, a new ore's without its "Ore" ("Mithril", "Dwarven Scrap"). */
 export const oreWord = (key) => materialLabel(key).replace(/ Ore$/, '');
@@ -45,8 +45,8 @@ export function oreMapTip({ climate, region = null, fact = null, surveyed = fals
   // what the witnesses hold back: the table's veins over the unwitnessed tier, and the signature - MINE-PERKS: from a
   // Surveyor the signature alone (their own word witnesses the rest), so their card says no vein waits, or only it
   const held = [...new Set([...(surveyed ? [] : table.filter((k) => tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...(sig ? [sig.ore] : [])])].map(oreWord);
-  if (factConfirmed(fact)) lines.push('Witnessed ground: all its veins can stand here');
-  else if (!held.length) lines.push('No vein here waits on witnesses');
+  if (factConfirmed(fact)) lines.push('Witnessed ground: every vein can appear here');
+  else if (!held.length) lines.push('No vein here needs witnesses');
   else lines.push(fact ? `Not yet witnessed: no ${orList(held)} here yet` : `${orList(held)} only on witnessed ground`, ORE_WITNESS_RULE);
   return { title: ORE_TIP_TITLE, lines };
 }

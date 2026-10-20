@@ -287,7 +287,7 @@ export function mapGround(climateAt) {
   };
   /** AUDIT PRECIP AIR-8: on the law's lane the AIR's law a reader of the map's systems wears them under (weatherMap.js
    *  weatherAt hands it to wornAmong) - one air per place - at `minutes`; null off it (the word law above). */
-  ground.lawAir = (minutes) => (precipLawOn() ? lawAir(minutes) : null);
+  ground.lawAir = (minutes, altitude = null) => (precipLawOn() ? lawAir(minutes, altitude) : null);   // AUDIT OW-REVISITED L3-4: at a height when asked
   /** Whether a storm strikes at field (x, z) - its lightning and its thunder (distantStorms.js): off the law's lane only
    *  where the ground law leaves it a storm (WEATHER2a: over a snow ground a snow squall); on it, always - a storm
    *  system is a storm whatever phase its fall takes (thundersnow), so its strikes walk no line the air draws. */

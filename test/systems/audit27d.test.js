@@ -79,7 +79,7 @@ test('AUDIT REST-OPT C2: a party mate\'s night beside mine that is not one with 
   assert.equal(restsApart(m({ nr: 1 }), true), false, 'not resting: no camp (the party may rest beside a mate who opted out)');
   assert.equal(restsApart(null, false), false);
   assert.equal(restsAlone(m({ nr: 1 })), true);
-  assert.match(REST_APART_TEXT, /resting apart from you nearby - rest farther away/);
+  assert.equal(REST_APART_TEXT, 'A party member is resting separately nearby. Rest farther away.');
   assert.match(W, /const otherPartyCamp = \(peerId\) => restsApart\(social\?\.others\(\)\.find\(\(o\) => o\.peers\?\.includes\(peerId\)\) \?\? null, restTogether\(\)\);/);
 });
 

@@ -44,7 +44,7 @@ test('SEA-TRADE the law: a port town\'s lanes each TOWN_SEA_LANE, TOWN_SEA_LANES
   assert.equal(townReasonLine({ lanes: 0 }), null);
   assert.equal(townReasonLine({ lanes: 2, players: 3 }), TOWN_REASONS.players, 'the players\' share nearer');
   assert.equal(townReasonLine({ lanes: 2, raided: true }), TOWN_REASONS.raid);
-  assert.equal(TOWN_REASONS.harbour, 'Its harbour brings trade.');
+  assert.equal(TOWN_REASONS.harbour, 'Its harbor brings trade.');   // PIN MOVED (VOICE2): American spelling (Voice.md rule 8)
   assert.ok(townTipOf({ name: 'Wayrest', p: 60, prev: 60, area: null, lanes: 1 }).lines.includes(TOWN_REASONS.harbour));
   for (const p of PS) {
     const f = townExchangeFactors(p);
@@ -132,7 +132,7 @@ test('SEA-TRADE the harbour office: online its exchange priced by the port town\
   const x = o.exchange({ uid: 1, cargo: hold });
   assert.deepEqual(x.rows.map(({ have, ...r }) => r), exchangeOf(WAYREST, 3, {}, 0, townExchangeFactors(95)));
   assert.equal(x.band, 'Booming');
-  assert.match(exchangeText(x).lede, / Port economy: Booming - the exchange's prices follow it\.$/);
+  assert.match(exchangeText(x).lede, / Port economy: Booming\. Exchange prices follow it\.$/);   // PIN MOVED (VOICE2, in PLAIN-SWEEP's words): no dash aside (Voice.md rule 5)
   assert.equal(x.buy('wine', 3).ok, true);
   assert.deepEqual(told, ['100,100']);
   assert.equal(x.sell('wine', 1).ok, true);

@@ -56,8 +56,8 @@
   {
     "name": "QSMAIN-chronicle-title-english",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "t('chronicle.quests.abandonTitle', 'Give up this quest for now - reclaim it from the pause menu\\'s Quests tab')",
-    "new": "'Give up this quest for now - reclaim it from the pause menu\\'s Quests tab'",
+    "old": "t('chronicle.quests.abandonTitle', 'Give up this quest for now. You can reclaim it from the pause menu\\'s Quests tab')",
+    "new": "'Give up this quest for now. You can reclaim it from the pause menu\\'s Quests tab'",
     "tests": [
       "test/systems/quest/questshelfmain.test.js"
     ]

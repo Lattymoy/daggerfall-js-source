@@ -18,7 +18,7 @@
     "old": "tone: share > 1 ? 'low'", "new": "tone: share > 2 ? 'low'",
     "tests": ["test/systems/steedui_saddle.test.js"] },
   { "name": "STEEDUI-feed-full", "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": ": h.full ? 'Full - it will not eat yet' : '';", "new": ": '';",
+    "old": ": h.full ? 'Full. It will not eat yet' : '';", "new": ": '';",
     "tests": ["test/systems/steedui_saddle.test.js"] },
   { "name": "STEEDUI-kit-shown", "file": "src/ui/enhanced/enhancedSaddle.js",
     "old": "if (s.wagon && s.wagon.kitWorks) {", "new": "if (s.wagon) {",

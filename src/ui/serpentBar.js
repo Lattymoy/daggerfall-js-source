@@ -22,7 +22,7 @@ export const STUN_CSS = '#fff2a6';
 export const SERPENT_BAR_TEXT = Object.freeze({
   ships: (n) => (n === 1 ? '1 ship fighting it' : `${n} ships fighting it`),   // AUDIT 2 XC8: the count is the ships fighting it (AUDIT SHIPS C1), not every hull in its waters
   sounds: (left) => `It dives in ${left}`,
-  stunned: (s) => `Stunned - strike its head! ${s}s`,
+  stunned: (s) => `Stunned. Strike its head! ${s}s`,
   coil: (h, m, mine) => (mine ? `Its coils hold YOUR ship - ${h} / ${m}` : `Break the coil - ${h} / ${m}`),
   phase: (n, name) => `${['I', 'II', 'III'][n - 1] ?? n} - ${name}`,
 });

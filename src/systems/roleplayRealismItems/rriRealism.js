@@ -113,7 +113,8 @@ export function shelfBandageStack(quality, rolls = Math.random) {
 // ---- conditionBasedPrices ---------------------------------------------
 // SELL-AS-FOUND (AUDIT ECON O1, 2026-10-01): A DEPARTURE in both rolls below - each leaves the condition it set on the
 // piece as `foundCondition` (itemFields.js), the condition the world handed it over at, which an online counter's sale
-// reads at best (tradeModes.js saleConditionPercentage). The rolls themselves, and the draws they take, are the mod's.
+// reads with a third of what was mended past it (tradeModes.js saleConditionPercentage, MEND-THIRD). The rolls
+// themselves, and the draws they take, are the mod's.
 
 /** RandomConditionFoundLootItems (:232-245): armor, weapons and books
  *  that are not artifacts land at `Range(0.2f, 0.75f)` of their max -

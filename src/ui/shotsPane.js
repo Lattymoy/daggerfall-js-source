@@ -80,9 +80,9 @@ export function shotKeyName(store = bindings()) {
 
 export const LOADING_WORDS = Object.freeze({
   shots: 'Loading screens show the screenshots marked for them below.',
-  art: `Loading screens show the night sky - choose Your screenshots on Loading screens (${optionPath('feat:loading-screen')}) to show these.`,   // ORG2
-  off: `Loading screens are off - turn them on in ${optionPath('feat:loading-screen')}.`,
-  classic: 'Loading screens are drawn under the enhanced UI - the classic UI keeps the original game\u2019s loads.',
+  art: `Loading screens show the night sky. Choose Your screenshots under Loading screens (${optionPath('feat:loading-screen')}) to show these.`,   // ORG2
+  off: `Loading screens are off. Turn them on in ${optionPath('feat:loading-screen')}.`,
+  classic: 'Loading screens only appear with the enhanced UI. The classic UI keeps the original loading screens.',
 });
 /** Which of the words above stands: the skin first (the classic UI draws no loading screen), then the row. */
 export const loadingWordsKey = () => (isEnhanced() ? loadingMode() : 'classic');
@@ -125,8 +125,8 @@ async function fill(root) {
 function topCard(root, count) {
   const c = el('div', 'card shots-top');   // no title of its own: the pane's head says Screenshots
   const key = shotKeyName();
-  c.append(el('p', 'meta', `${count} of ${GALLERY_MAX} kept in this browser - never uploaded. `
-    + (key ? `Press ${key} in the world to take one.` : 'The Screenshot action is bound to no key - bind one under Settings, Controls.')));
+  c.append(el('p', 'meta', `${count} of ${GALLERY_MAX} saved in this browser, never uploaded. `
+    + (key ? `Press ${key} in the world to take one.` : 'The Screenshot action has no key. Bind one under Settings, Controls.')));
   c.append(el('p', 'meta', LOADING_WORDS[loadingWordsKey()] ?? LOADING_WORDS.shots));
   const row = el('div', 'acts');
   const pick = el('input');
@@ -159,7 +159,7 @@ export async function addPictures(root, files) {
   }
   const words = [];
   if (unread) words.push(`${unread === 1 ? 'One picture' : `${unread} pictures`} could not be read.`);
-  if (full) words.push(`The gallery is full at ${GALLERY_MAX} - delete some to add more.`);
+  if (full) words.push(`The gallery is full at ${GALLERY_MAX}. Delete some to add more.`);
   if (words.length) say(root, words.join(' '));
   return { kept, unread, full };
 }
@@ -176,7 +176,7 @@ function emptyCard() {
   e.append(el('h3', null, 'No screenshots yet'));
   const key = shotKeyName();
   e.append(el('p', null, key
-    ? `Press ${key} anywhere in the world. Up to ${GALLERY_MAX} shots are kept here, and can stand on the loading screens.`
+    ? `Press ${key} anywhere in the world. Up to ${GALLERY_MAX} shots are kept here and can be shown on loading screens.`
     : 'Bind the Screenshot action under Settings, Controls, then take one anywhere in the world.'));
   return e;
 }

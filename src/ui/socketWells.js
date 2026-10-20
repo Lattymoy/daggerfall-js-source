@@ -95,7 +95,7 @@ export function socketWells(item, { picture = null, onWell = null, asking = null
       const pic = picture?.(v) ?? null;
       if (pic) w.append(pic);
     }
-    const said = asking === at && v !== SOCKET_EMPTY ? `${wellText(item, v)} - press again to shatter it` : wellText(item, v);
+    const said = asking === at && v !== SOCKET_EMPTY ? `${wellText(item, v)}. Click again to shatter it` : wellText(item, v);
     w.setAttribute('title', said);
     w.setAttribute('aria-label', said);
     if (asking === at && v !== SOCKET_EMPTY) w.dataset.asking = '';
@@ -117,7 +117,7 @@ export function socketWells(item, { picture = null, onWell = null, asking = null
 export function socketChooser(item, choices, onPick) {
   noteFirstUse('gem-sockets');   // TUT1
   ensureStyle(globalThis.document);
-  if (!choices.length) return el('p', 'sock-none', 'No gem in your pack to set - any grade of Ruby, Emerald, Sapphire, Diamond, Jade, Turquoise, Malachite or Amber.');
+  if (!choices.length) return el('p', 'sock-none', 'No gem in your pack to set. Any grade of Ruby, Emerald, Sapphire, Diamond, Jade, Turquoise, Malachite or Amber will do.');
   const ul = el('ul', 'sock-choose');
   for (const { id, count } of choices) {
     const li = el('li');

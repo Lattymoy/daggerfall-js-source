@@ -71,11 +71,12 @@ import { useItem, isLightSource, usableItem, isPotionRecipe, toggleHood, HOOD_TE
 // place a slot is filled - Mac's own words, "in the enhanced menu through the
 // tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
 // all a slot ever holds.
-import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot, hotbarSlotOf } from '../../systems/quickslots.js';
+import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot } from '../../systems/quickslots.js';
 // HB1: the hotbar - one more drop target for the drag this pane already
 // owns, and the click path beside it. The bar is up under this window
 // only while the player has chosen it over the diamond.
-import { setHotbarDropMode, hotbarSlotNode, hotbarTakesItem, hotbarDropItem, hotbarMode, toggleHotbarItem, hotbarKeyOf, setHotbarDragging } from './enhancedHotbar.js';
+import { setHotbarDropMode, hotbarSlotNode, hotbarTakesItem, hotbarDropItem, hotbarMode, toggleHotbarItem, hotbarKeyOf, setHotbarDragging,
+  hotbarShownSlotOf, setHotbarPick } from './enhancedHotbar.js';   // DIAMOND-HB: the slot among the ones shown; point and press
 import { registerQuickAct } from '../plus/plusPad.js';   // PADPLUS5: the pad's X on a row
 import { EQUIP_SLOTS } from '../../characters/paperdoll/paperdoll.js';
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';   // PX25
@@ -199,7 +200,7 @@ export const SLOT_MAP = Object.freeze({
   [EQUIP_SLOTS.Cloak1]: { x: 72, y: 76, label: 'Cloak' },
   [EQUIP_SLOTS.Cloak2]: { x: 148, y: 76, label: 'Cloak' },
   [EQUIP_SLOTS.ChestClothes]: { x: 110, y: 92, label: 'Chest, clothes' },
-  [EQUIP_SLOTS.ChestArmor]: { x: 110, y: 116, label: 'Chest, armour' },
+  [EQUIP_SLOTS.ChestArmor]: { x: 110, y: 116, label: 'Chest, armor' },
   [EQUIP_SLOTS.RightArm]: { x: 64, y: 106, label: 'Right arm' },
   [EQUIP_SLOTS.LeftArm]: { x: 156, y: 106, label: 'Left arm' },
   [EQUIP_SLOTS.Bracer0]: { x: 56, y: 134, label: 'Bracer' },
@@ -211,7 +212,7 @@ export const SLOT_MAP = Object.freeze({
   [EQUIP_SLOTS.RightHand]: { x: 42, y: 190, label: 'Right hand' },
   [EQUIP_SLOTS.LeftHand]: { x: 178, y: 190, label: 'Left hand' },
   [EQUIP_SLOTS.Gloves]: { x: 110, y: 172, label: 'Gloves' },
-  [EQUIP_SLOTS.LegsArmor]: { x: 110, y: 200, label: 'Legs, armour' },
+  [EQUIP_SLOTS.LegsArmor]: { x: 110, y: 200, label: 'Legs, armor' },
   [EQUIP_SLOTS.LegsClothes]: { x: 110, y: 224, label: 'Legs, clothes' },
   [EQUIP_SLOTS.Feet]: { x: 110, y: 258, label: 'Feet' },
   [EQUIP_SLOTS.Mark0]: { x: 44, y: 296, label: 'Mark', off: true },
@@ -2086,8 +2087,8 @@ function dollPanel(url) {
 const WORN_FAMILIES = Object.freeze([
   { id: 'head', label: 'Head', area: '1 / 1', slots: ['Head'] },
   { id: 'cloaks', label: 'Cloaks', area: '2 / 1', slots: ['Cloak'] },
-  { id: 'chest', label: 'Chest', area: '3 / 1', slots: ['Chest, armour', 'Chest, clothes'],
-    pair: [{ id: 'chestarmor', label: 'Chest armor', slots: ['Chest, armour'] },
+  { id: 'chest', label: 'Chest', area: '3 / 1', slots: ['Chest, armor', 'Chest, clothes'],
+    pair: [{ id: 'chestarmor', label: 'Chest armor', slots: ['Chest, armor'] },
       { id: 'shirt', label: 'Shirt', slots: ['Chest, clothes'] }] },
   { id: 'arms', label: 'Arms', area: '4 / 1', slots: ['Left arm', 'Right arm'],
     pair: [{ id: 'larm', label: 'Left arm', slots: ['Left arm'] },
@@ -2095,8 +2096,8 @@ const WORN_FAMILIES = Object.freeze([
   { id: 'hands', label: 'Hands', area: '5 / 1', slots: ['Gloves'] },
   { id: 'rhand', label: 'R\u00b7Weapon', area: '1 / 3', slots: ['Right hand'] },
   { id: 'lhand', label: 'L\u00b7Hand', area: '2 / 3', slots: ['Light', 'Left hand'] },
-  { id: 'legs', label: 'Legs', area: '3 / 3', slots: ['Legs, armour', 'Legs, clothes'],
-    pair: [{ id: 'legarmor', label: 'Leg armor', slots: ['Legs, armour'] },
+  { id: 'legs', label: 'Legs', area: '3 / 3', slots: ['Legs, armor', 'Legs, clothes'],
+    pair: [{ id: 'legarmor', label: 'Leg armor', slots: ['Legs, armor'] },
       { id: 'pants', label: 'Pants / skirt', slots: ['Legs, clothes'] }] },
   { id: 'feet', label: 'Feet', area: '4 / 3', slots: ['Feet'] },
   { id: 'transport', label: 'Travel', area: '5 / 3', slots: [], transport: true },
@@ -2303,6 +2304,7 @@ function wornPanel(fam, byLabel, area) {
   const hover = () => getPref('plusItemHover') !== false;
   if (hover()) b.removeAttribute?.('title');
   b.onmouseenter = () => { if (hover()) showTip(top.item, 'local', b); };
+  b._hotbarItem = top.item;   // DIAMOND-HB: point at it and press a hotbar key
   b.onmouseleave = hideTip;
   b.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(top.item, 'local', e.clientX, e.clientY); };   // DROPS-AUDIT F10
   return b;
@@ -2400,6 +2402,7 @@ function shelfSocket(r, g) {
   const hover = () => getPref('plusItemHover') !== false;
   if (hover()) b.removeAttribute?.('title');
   b.onmouseenter = () => { if (hover()) showTip(item, 'local', b); };
+  b._hotbarItem = item;   // DIAMOND-HB: point at it and press a hotbar key
   b.onmouseleave = hideTip;
   b.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, 'local', e.clientX, e.clientY); };   // DROPS-AUDIT F10
   return b;
@@ -2737,7 +2740,7 @@ function itemRow(item, from = 'local') {
   if (from === 'local') {
     if (hotbarMode()) {
       // HB1: the row on the hotbar says which key, the diamond's chip's law
-      const at = hotbarSlotOf(item);
+      const at = hotbarShownSlotOf(item);   // DIAMOND-HB: a kind on a slot the diamond does not show is on no key
       if (at >= 0) row.append(el('span', 'qs-mark', hotbarKeyOf(at) ?? String(at + 1)));
     } else {
       const slot = quickslotOf(item);
@@ -2803,6 +2806,7 @@ function itemRow(item, from = 'local') {
     side = from; notice = null; render();
   };
   row._padItem = item; row._padFrom = from;   // PADPLUS5: the row's item, for the pad's quick act
+  if (from === 'local') row._hotbarItem = item;   // DIAMOND-HB: hover + hotbar key slots it (pack rows only, not loot)
   // PLUS7: hover for the card, right click for the actions
   row.onmouseenter = () => { if (getPref('plusItemHover') !== false) showTip(item, from, row); };
   row.onmouseleave = hideTip;
@@ -3122,7 +3126,7 @@ function listCol() {
   const col = el('section', 'packcol');
   const rows = model.tabs.find((x) => x.tab === tab)?.items ?? [];
   if (!rows.length) {
-    col.append(el('p', 'packempty', 'Nothing in this pack answers to that page.'));
+    col.append(el('p', 'packempty', 'Nothing in your pack fits this page.'));
   }
   keepList(virtualRows(col, rows, (it) => itemRow(it), { onAim: rowsMoved }));   // VIRT: a long page draws the tiles on screen
   return col;
@@ -3172,7 +3176,7 @@ function quickslotActs(item) {
   // The drag is the main path; this is the click beside it.
   if (hotbarMode()) {
     if (!hotbarTakesItem(item)) return [];
-    const at = hotbarSlotOf(item);
+    const at = hotbarShownSlotOf(item);   // DIAMOND-HB
     const b = el('button', `act qs-act${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${at + 1}` : 'Add to hotbar');
     b.onclick = () => { notice = toggleHotbarItem(item); refresh(); render(); };
     return [b];
@@ -3635,9 +3639,9 @@ function askDismantle(item) {
 export const SALVAGE_ASK = (name, n) => [`Salvage ${name}?`, `It is gone for good, and you get ${shardsText(n)}.`];
 export const SALVAGED_LINE = (name, n) => `Salvaged: ${name}, for ${shardsText(n)}.`;
 /** AUDIT GEM: a piece holding a set gem is never salvaged with it (systems/reforge.js salvageRefusal 'gems'). */
-export const SALVAGE_GEMS = (name) => `${name} holds a gem - extract it at the Reforge, or unset it, first.`;
+export const SALVAGE_GEMS = (name) => `${name} holds a gem. Extract it at the Reforge or unset it first.`;
 /** FB1012d SALVAGE-CLASSIC: a piece that wears Magic the ladder never graded (systems/reforge.js salvageRefusal 'classic'). */
-export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is classic, the kind the guilds sell and make. Welkynd Shards come only from a piece the loot ladder graded.`;
+export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is the classic kind the guilds sell and make. Welkynd Shards come only from loot with a rarity grade.`;
 function askSalvage(item) {
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
@@ -4020,7 +4024,7 @@ function detailCol() {
   // reads as an explanation rather than as clutter.
   if (line.image && !big) {
     col.append(el('p', 'iconnote',
-      `No picture for this one yet — TEXTURE.${line.image.archive} record ${line.image.record}.`));
+      `No picture for this one yet (TEXTURE.${line.image.archive} record ${line.image.record}).`));
   }
   return col;
 }
@@ -4544,6 +4548,12 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   // HB1: the hotbar comes up under the pack as a drop target (a no-op
   // while the player wears the diamond instead).
   setHotbarDropMode('pack', true, d.entity ?? null);
+  // DIAMOND-HB: a hotbar key pressed while hovering a pack item (or with one selected) puts it on that slot, then the
+  // pack redraws so the row chips and the card button update
+  setHotbarPick('pack', {
+    selected: () => (picked && side === 'local' ? { kind: 'item', item: picked } : null),
+    changed: () => { if (host) { refresh(); render(); } },
+  });
   // The classic window composes on construction; so does this. Without
   // it the panel shows the schematic until the first equip.
   refreshFigure();

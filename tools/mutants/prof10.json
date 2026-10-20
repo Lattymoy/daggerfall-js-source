@@ -810,8 +810,8 @@
   {
     "name": "PROF10-kept-word-elsewhere",
     "file": "src/systems/smithItems.js",
-    "old": "'The last facet caught the light, but no word came back - the piece is kept, and made when the word comes.'",
-    "new": "'The last pan came off the fire, but no word came back - the dish is kept, and made when the word comes.'",
+    "old": "'The last facet caught the light, but the realm has not answered yet. Your piece is kept and will be made when it does.'",
+    "new": "'The last pan came off the fire, but the realm has not answered yet. Your dish is kept and will be made when it does.'",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -960,7 +960,7 @@
   {
     "name": "PROF10-refusal-unsaid",
     "file": "src/net/accountClient.js",
-    "old": "  'prof-lapidary': () => t('account.refusal.profLapidary', 'Only a Lapidary sets a Siege-cracked Gem as a piece\\'s gem - a Smithing choice at 100 (Jewelcrafting\\'s).'),   // PROF10; CRAFT3\n",
+    "old": "  'prof-lapidary': () => t('account.refusal.profLapidary', 'Only a Lapidary can set a Siege-cracked Gem in a piece. Choose it at Jewelcrafting 100, under Smithing.'),   // PROF10; CRAFT3\n",
     "new": "",
     "tests": [
       "test/systems/prof10_client.test.js"

@@ -22,7 +22,8 @@ test('HANDLE-EMAIL the law: a handle with an `@` is an address and refused as on
   assert.equal(handleRefusal('Olga@home'), 'email');
   assert.equal(handleRefusal('@olga'), 'shape', 'a handle starts with a letter: its shape first');
   assert.equal(handleRefusal('Nystul'), null);
-  assert.match(REFUSALS['handle-email'], /never an email address/);
+  assert.match(REFUSALS['handle-email'], /cannot be an email address, because other players see it/);
+  assert.match(REFUSALS['handle-email'], /cannot be an email address/);   // PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
 });
 
 test('HANDLE-EMAIL registration: an address offered as a username is refused and nothing is written - the guest stays a guest; a name is taken (mutants: the refusal)', async () => {

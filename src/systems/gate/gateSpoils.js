@@ -29,7 +29,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { seededRng } from '../wind/wind.js';
-import { createRandomWeapon, createRandomArmor, ITEM_GROUPS } from '../loot/loot.js';
+import { createRandomWeapon, createRandomArmor, createRandomGem, ITEM_GROUPS } from '../loot/loot.js';   // WB14e: a Tithe-Imp's gem, ItemBuilder's own draw
 import { setItemFields, isAmmunition, mintCondition, registerCustomTemplates, templateByIndex } from '../item/itemTemplates.js';
 import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass, techniquePass } from '../loot/lootRarity.js';   // GEM1: the sockets' passes, the spoils' last but the gems; TECH1: the technique pass, a door's last draw
 import { bossGems } from '../gems.js';   // GEM2: the Warden's gem
@@ -215,12 +215,14 @@ export function sigilStone() {
 }
 
 /**
- * THE SPOILS of one kill for one player: `{ gold, pieces: [{ item, tier }], sigil, card, gems }` - the pieces in the order they
+ * THE SPOILS of one kill for one player: `{ gold, pieces: [{ item, tier }], sigil, card, gems, portent }` - the pieces in the order they
  * leave him (the Rare-or-better first; SET6: a Regalia piece, when one drops, after them; GILDED2: the Dragonfire Oath,
- * when it drops, last). The same seed, level and world answer the same spoils.
+ * when it drops; WB14g: a portent night's pieces last, `portent` of them). The same seed, level, portents and world answer
+ * the same spoils.
  * @param {number} seed the receipt's `c` @param {number} level the player's
+ * @param {number} [p] WB14g: the receipt's portents (net/gate/gateReceipt.js `p`) - a bit each, none a plain night
  */
-export function rollSpoils(seed, level) {
+export function rollSpoils(seed, level, p = 0) {
   const rolls = seededRng(seed >>> 0);
   const lv = Math.max(1, Math.floor(Number(level) || 1));
   const gold = Math.round(SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));
@@ -251,7 +253,32 @@ export function rollSpoils(seed, level) {
   // technique pass), so every spoils before it is what it was for its seed; a static roll, so no pass ever reaches it
   const oath = rollDragonfireOath(rolls);
   if (oath) pieces.push({ item: oath, tier: oath.rarity });
-  return { gold, pieces, sigil: sigilStone(), card, gems };
+  // WB14g (bible/11-Multiplayer/Breach-Portents.md section 11): WHAT A PORTENT PAYS - one more piece of Magic or better for each
+  // portent the receipt says, after every draw before (the Oath's law: every spoils rolled before is what it was for its seed)
+  // AUDIT WB14 (PLAY-7): and each such piece through the passes every other piece had - the ladder's last (an Exalted), the
+  // sockets', the weapons' and the technique's - over them alone, after them, so nothing drawn before them moves
+  const more = [];
+  for (const bit of SPOILS_PORTENT_BITS) if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));
+  if (more.length) {
+    const items = more.map((q) => q.item);
+    lastPass(items, rolls); socketPass(items, rolls); weaponSocketPass(items, rolls); techniquePass(items, rolls);
+    for (const q of more) { q.tier = q.item.rarity ?? q.tier; pieces.push(q); }
+  }
+  return { gold, pieces, sigil: sigilStone(), card, gems, portent: more.length };
+}
+
+/** WB14g: the portents' bits a receipt's `p` may carry, in the order their pieces are drawn (net/gate/gateMods.js GATE_PORTENTS). */
+export const SPOILS_PORTENT_BITS = Object.freeze([1, 2, 4]);
+
+/** WB14e (bible/11-Multiplayer/Breach-Portents.md section 9): A TITHE-IMP'S TITHE for one who struck it - gold (TITHE_GOLD_PER_LEVEL
+ *  a level, the seed varying it a fifth either way) and one gem of the classic eight (ItemBuilder's own CreateRandomGem), off
+ *  its seed (the relay's `tithe` word): the same seed and level, the same tithe. In spoilsList's pieces, gold first. */
+export const TITHE_GOLD_PER_LEVEL = 60;
+export function titheList(seed, level) {
+  const rolls = seededRng(((seed >>> 0) ^ 0x7177e) >>> 0);
+  const lv = Math.max(1, Math.floor(Number(level) || 1));
+  const gold = Math.round(TITHE_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));
+  return [{ kind: 'gold', gold, tier: 'common' }, { kind: 'item', item: mintCondition(setItemFields(createRandomGem(rolls))), tier: 'common' }];
 }
 
 /** A piece laddered to its tier and known - a Legendary with no record for its kind falls to Rare (applyRarity's own

@@ -141,7 +141,8 @@ test('HB-LYCFREE: Diamond and Off are still the player\'s to choose, and are kep
   _resetForTests();
   quickSlotsWrite('diamond');
   assert.equal(quickSlotsRead(), 'diamond');
-  assert.equal(overridesOf({ ...PREF_DEFAULTS, quickbarStyle: getPref('quickbarStyle') }).quickbarStyle, 'quickbar', 'the choice is on the shelf');
+  // DIAMOND-HB (PIN MOVED): Diamond is the hotbar's four now, its own style ('diamond'), not QS's 'quickbar'
+  assert.equal(overridesOf({ ...PREF_DEFAULTS, quickbarStyle: getPref('quickbarStyle') }).quickbarStyle, 'diamond', 'the choice is on the shelf');
   quickSlotsWrite('off');
   assert.equal(quickSlotsRead(), 'off');
   quickSlotsWrite('hotbar');

@@ -331,12 +331,12 @@ const MOUSE_NAMES = Object.freeze({
  *  how. `mode` is Controls/WeaponSwingMode; `readyCode` is the live
  *  ReadyWeapon code (null when unbound). */
 export function swingHint(code, mode, readyCode) {
-  if (code == null) return 'Unbound - nothing can swing your weapon.';
+  if (code == null) return 'Unbound. Nothing can swing your weapon.';
   const side = { Mouse0: 'left', Mouse1: 'right', Mouse2: 'middle' }[code];
   const btn = side ? `the ${side} mouse button` : buttonText(code, true);
   const how = mode === 1 ? `Press ${btn} to swing.`
     : mode === 2 ? `Press or hold ${btn} to swing.`
-      : `Hold ${btn} and move the mouse to swing - the way you move picks the blow. A press without moving does nothing.`;
+      : `Hold ${btn} and move the mouse to swing. The direction you move picks the attack. Holding it without moving does nothing.`;
   return readyCode == null ? how : `${how} Draw your weapon first with ${buttonText(readyCode, true)} (Ready Weapon).`;
 }
 
@@ -366,7 +366,7 @@ export function floatHint(action, dict) {
 export function sharedFloatNote(action, holders, usingPrimary = true) {
   const f = FLOAT_PARTNERS[action];
   if (!f || !holders?.length || !holders.every((h) => h.action === f.partner)) return null;
-  return `${f.name} already ${f.verb} while you swim or levitate, so the key does both as it is, without ${SHARE_KEY_LABEL}: answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;
+  return `${f.name} already ${f.verb} while you swim or levitate, so this key already does both without ${SHARE_KEY_LABEL}. Answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;
 }
 
 /** GetButtonText + FormatButtonText. `full` skips the length cap

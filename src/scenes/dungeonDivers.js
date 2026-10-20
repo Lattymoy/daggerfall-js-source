@@ -174,7 +174,7 @@ export function createDungeonDivers(deps) {
           c.foes.set(m.id, rec);
         }).catch(() => {});
       });
-      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);
+      deps.say?.(`${trip.leader.name}'s company, and ${firstNameOf(hostile[0].name)} draws on you!`);
       return;
     }
     const stand = members.filter((m) => m.cls == null || (standing(m) !== 'enemy' && standing(m) !== 'hostile'));   // LW7b: an enemy keeps away
@@ -316,7 +316,7 @@ export function createDungeonDivers(deps) {
         if (t >= c.trip.backT0 || !listed.has(id)) { makeOut(id, c, `${name} make for the surface.`); continue; }   // their hours done
         // LW14: HURT - one under RETREAT_HP falls back; under half its strength the company makes for the way out
         const standing = [...c.allies.values()].filter((rec) => !rec.dead);
-        if (!c.pending && c.size > 1 && standing.length * 2 < c.size) { makeOut(id, c, `${name} have had enough - they make for the way out.`); continue; }
+        if (!c.pending && c.size > 1 && standing.length * 2 < c.size) { makeOut(id, c, `${name} have had enough and make for the way out.`); continue; }
         for (const rec of standing) {
           const e = rec.entity;
           if (!e || !rec.ai?.follow || rec.fellBack || !(e.maxHealth > 0) || e.health / e.maxHealth >= RETREAT_HP) continue;

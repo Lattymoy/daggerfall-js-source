@@ -115,7 +115,7 @@ test('AUDIT CARDS-6 B1: the stake held from the deal - a pack emptied mid-game s
   assert.ok(s.forKeeps && t.g.staked());
   assert.ok(STARTER_DECK.includes(s.stake), 'the stake is a card of his deck, drawn at the deal');
   assert.equal(held(entity.items), before - 1, 'lifted out of the pack at the deal');
-  assert.match(t.said.at(-1), new RegExp(`for a card - your ${cardById(s.stake).name} lies on the table\\.$`));
+  assert.match(t.said.at(-1), new RegExp(`playing for a card\\. Your ${cardById(s.stake).name} is on the table\\.$`));
   // turn 2: every card dropped to the floor (the binder's Drop), then a pass every turn - he means to lose
   const pile = [];
   for (let i = 0; i < 400 && t.g.g.phase === 'playing'; i++) {

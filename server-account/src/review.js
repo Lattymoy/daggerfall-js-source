@@ -35,6 +35,10 @@
 //                            a ticket (`realm_repairs`); the record moves one sequence on with its seat taken from any tab
 //                            (realm.js seizeRealmRecord - the rollback's way), so the playing tab writes it over never and
 //                            its next join plays it. The gold is the service's own faucet (`repair`) and witnessed
+//   /v1/mod/realm-mend       PURSE-MEND (FIELD BUGS 2026-10-19f): a purse a wrapped sale left below nothing set to nothing
+//                            and what the character is owed given as one letter of credit (net/repairLaw.js), the
+//                            repair's way and once a ticket with it - and the law's hold lifted when the purse was all
+//                            it held on (`realm-findings` says the purse a mend is reckoned from)
 //
 // THE MEASURE (Mac: "Measure 7 days, then enforce"). realm_wealth_hours keeps each character's hour - the gain no witness
 // explained and the seconds it played. The report reads every hour with play enough to say something (MEASURE_PLAYED_MIN),
@@ -43,9 +47,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isDeveloper } from './titles.js';
-import { REALM_ID_RE, REALM_PLAYING_S, realmSaveTextOf, dropObjects, seizeRealmRecord, dropIfUnnamed } from './realm.js';
+import { REALM_ID_RE, REALM_PLAYING_S, realmSaveTextOf, dropObjects, seizeRealmRecord, dropIfUnnamed, mustChange } from './realm.js';
 import { budgetConfig, budgetConfigOf, forgetBudgetConfig, BUDGET_DEFAULT, FAUCET_KINDS, faucetStatement } from './budget.js';   // AUDIT LW-II-2 S6: and the service's own faucets; SUMMON-REPAIR: a refund is one
-import { repairOf, applyRepair } from '../../src/net/repairLaw.js';   // SUMMON-REPAIR: the repair's law, the tool's too
+import { repairOf, applyRepair, purseMendOf, applyPurseMend } from '../../src/net/repairLaw.js';   // SUMMON-REPAIR: the repair's law, the tool's too; PURSE-MEND: the mend's
+import { lawSigOf } from './verdict.js';   // PURSE-MEND: the signature the purse's finding stands under
 import { isHandleShaped } from '../../src/net/handleShape.js';   // SUMMON-REPAIR: an account named by its handle
 import { wealthOf } from './judge.js';
 import { grantsMeasure } from './grants.js';   // GRANT2: the spawn grants' measure (bible/11-Multiplayer/Spawn-Grants.md section 12)
@@ -71,6 +76,17 @@ export const TRADES_LIST_MAX = 200;
 const repairAnswer = (/** @type {any} */ r, /** @type {boolean} */ repeat) => ({
   ok: true, repeat, ticket: r.ticket, seq: r.seq, faction: r.faction, flag: r.flag, was: r.was, cleared: (r.was & r.flag) !== 0, gold: r.gold, by: r.by_handle, at: r.at,
 });
+/** PURSE-MEND: a mend's row, as its answer says it - the purse it found, the letter it gave, and the hold its character
+ *  stands under now (null: none). */
+const mendAnswer = (/** @type {any} */ r, /** @type {boolean} */ repeat) => ({
+  ok: true, repeat, ticket: r.ticket, seq: r.seq, was: r.was, gold: r.gold, held: r.held_now ?? null, by: r.by_handle, at: r.at,
+});
+/** PURSE-MEND: a `realm_repairs` row is a mend's when it names no faction - a repair's is 1 or more (net/repairLaw.js
+ *  repairOf), so the two share the ticket's key and a ticket names one act on a character. */
+const isMendRow = (/** @type {any} */ r) => r.faction === 0;
+/** PURSE-MEND: the law finding's signature a purse below nothing stands under alone (verdict.js lawSigOf over the judge's
+ *  `gold` - judge.js characterFindings). */
+export const PURSE_SIG = lawSigOf([{ code: 'gold' }]);
 
 const noteOf = (/** @type {unknown} */ v) => (typeof v === 'string' ? v.slice(0, NOTE_MAX) : null);
 const parse = (/** @type {string} */ t) => { try { return JSON.parse(t); } catch { return null; } };
@@ -89,7 +105,9 @@ const rowOf = (/** @type {any} */ db, /** @type {unknown} */ id) => (typeof id =
  * 'no-clean' (409: no clean checkpoint kept to roll back to), 'service-moved' (409: the service moved the record since
  * it), 'dead' (409), SUMMON-REPAIR's 'no-player' (404: no account by that handle), 'repair-no-faction' (409: the record
  * holds no such faction), 'repair-not-set' (409: its faction does not carry the bit - the wrong character?) and 'seq'
- * (409: the record moved while the repair was written - ask again), or the act's answer.
+ * (409: the record moved while the repair was written - ask again), PURSE-MEND's 'mend-not-negative' (409: the record's
+ * purse is not below nothing), 'mend-moved' (409: not the purse the mend was reckoned from) and 'repair-ticket' (409: the
+ * ticket names the other kind of act on this character), or the act's answer.
  * @param {any} ctx @param {any} player @param {any} env @param {string} act @param {any} body
  */
 export async function reviewAct(ctx, player, env, act, body = {}) {
@@ -151,8 +169,12 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
   if (act === 'findings') {
     const f = await db.prepare('SELECT seq, at, law, kind, detail FROM realm_findings WHERE char_id = ? ORDER BY id DESC LIMIT 100').bind(row.id).all();
     const h = await db.prepare('SELECT hour, level, gain, loss, played_s, checkpoints FROM realm_wealth_hours WHERE char_id = ? ORDER BY hour DESC LIMIT 336').bind(row.id).all();
+    // PURSE-MEND: and the purse the record holds now - the one a mend is reckoned from and names (`was`); the wealth counts
+    // a purse below nothing as none, so nothing else here says it
+    let record = null;
+    try { record = bucket && row.obj ? parse(await realmSaveTextOf(await bucket.get(row.obj)) ?? '') : null; } catch { record = null; }
     return {
-      character: { id: row.id, name: row.name, held: row.held, heldUntil: row.held_until ?? null, strikes: row.strikes, lawHolds: row.law_holds ?? 0, dupes: row.dupes ?? 0, review: row.review, wealth: row.wealth, allowance: row.allowance, seq: row.seq, clean_seq: row.clean_seq },
+      character: { id: row.id, name: row.name, held: row.held, heldUntil: row.held_until ?? null, strikes: row.strikes, lawHolds: row.law_holds ?? 0, dupes: row.dupes ?? 0, review: row.review, wealth: row.wealth, allowance: row.allowance, seq: row.seq, clean_seq: row.clean_seq, purse: record?.goldPieces ?? null },
       findings: (f.results ?? []).map((/** @type {any} */ r) => ({ ...r, detail: parse(r.detail) })),
       hours: h.results ?? [],
     };
@@ -174,6 +196,7 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
     return { ok: true };
   }
   if (act === 'repair') return repairAct(ctx, row, by, note, body);
+  if (act === 'mend') return mendAct(ctx, row, by, note, body);   // PURSE-MEND
   if (act === 'rollback') {
     if (row.dead_at != null) return { error: 'dead' };
     if (!row.clean_obj || !bucket) return { error: 'no-clean' };
@@ -197,50 +220,96 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
 }
 
 /**
- * SUMMON-REPAIR: ONE REALM CHARACTER MENDED BY STAFF (net/repairLaw.js) - `{ ticket, faction, flag, gold }` as the body
- * names them, checked by the law; the dead mended never. ONCE A TICKET: a ticket this character's `realm_repairs` already
- * holds answers its row again (`repeat`) and moves nothing. Otherwise the record is SEIZED (realm.js seizeRealmRecord,
- * INT9's and the rollback's way): read where it stands, the repair applied, written one sequence on with the lease cleared
- * - so the tab playing it can write over it never (its next checkpoint is refused, its device's copy follows a sequence
- * the record has left, and its next join plays the repaired record) - and the gold given back is WITNESSED (the judge
- * charges no gain the service made). In the record's own batch: the repair's row (the ticket's key - two asked at once,
- * one rolls back), the staff finding (who, the note, the ticket, what was cleared and given) and the gold as the service's
- * own faucet, `repair`.
+ * SUMMON-REPAIR, PURSE-MEND: ONE REALM CHARACTER'S RECORD MENDED BY STAFF, ONCE A TICKET - what the repair and the mend
+ * share; the dead mended never. ONCE A TICKET: a ticket this character's `realm_repairs` already holds answers its row
+ * again (`repeat`) and moves nothing - a row of the other kind is 'repair-ticket', a ticket naming one act. Otherwise the
+ * record is SEIZED (realm.js seizeRealmRecord, INT9's and the rollback's way): read where it stands, `change(save)` applied
+ * (the act's law - its refusal's word, or null), written one sequence on with the lease cleared - so the tab playing it can
+ * write over it never (its next checkpoint is refused, its device's copy follows a sequence the record has left, and its
+ * next join plays the mended record) - and the gold given back is WITNESSED (the judge charges no gain the service made).
+ * `steps(seq)` are the act's own, in the record's own batch: its row (the ticket's key - two asked at once, one rolls
+ * back), the staff finding (who, the note, the ticket, what was mended and given) and the gold as the service's own
+ * faucet, `repair`. The answer is the row as it landed (`answer`), with the hold its character stands under.
+ * @param {any} ctx @param {any} row the character's row @param {'repair' | 'mend'} kind @param {string} ticket
+ * @param {(save: any) => string | null} change @param {(seq: number) => any[]} steps @param {(r: any, repeat: boolean) => any} answer
+ */
+async function staffMend(ctx, row, kind, ticket, change, steps, answer) {
+  const { db, bucket } = ctx;
+  if (row.dead_at != null) return { error: 'dead' };
+  const done = () => db.prepare('SELECT r.*, c.held AS held_now FROM realm_repairs r JOIN realm_characters c ON c.id = r.char_id WHERE r.char_id = ? AND r.ticket = ?').bind(row.id, ticket).first();
+  const said = (/** @type {any} */ r, /** @type {boolean} */ repeat) => (isMendRow(r) === (kind === 'mend') ? answer(r, repeat) : { error: 'repair-ticket' });
+  const had = await done();
+  if (had) return said(had, true);
+  const prep = await seizeRealmRecord({ ...ctx, bucket }, row.player, row.id, change, { escrow: false });
+  if ('error' in prep) return { error: prep.error };
+  try {
+    await db.batch([...prep.steps, ...steps(prep.seq)]);
+  } catch {
+    await dropIfUnnamed(db, bucket, row.player, row.id, prep.key);
+    // the same ticket landed meanwhile (asked twice at once): that one is the act; else the record moved under it
+    const landed = await done();
+    return landed ? said(landed, true) : { error: 'seq' };
+  }
+  await dropObjects(bucket, [prep.prev]);
+  const landed = await done();
+  return landed ? said(landed, false) : { error: 'seq' };
+}
+
+/**
+ * SUMMON-REPAIR: ONE OF FACTIONFILE'S FLAG BITS CLEARED ON ONE FACTION OF THE RECORD AND GOLD GIVEN BACK (net/repairLaw.js)
+ * - `{ ticket, faction, flag, gold }` as the body names them, checked by the law - the staff mend's way (staffMend).
  * @param {any} ctx @param {any} row the character's row @param {string} by @param {string | null} note @param {any} body
  */
 async function repairAct(ctx, row, by, note, body) {
-  const { db, bucket, nowS } = ctx;
+  const { db, nowS } = ctx;
   const repair = repairOf(body);
   if (!repair) return { error: 'body' };
-  if (row.dead_at != null) return { error: 'dead' };
-  const done = () => db.prepare('SELECT * FROM realm_repairs WHERE char_id = ? AND ticket = ?').bind(row.id, repair.ticket).first();
-  const had = await done();
-  if (had) return repairAnswer(had, true);
   let was = 0;
-  const prep = await seizeRealmRecord({ ...ctx, bucket }, row.player, row.id, (save) => {
+  return staffMend(ctx, row, 'repair', repair.ticket, (save) => {
     const r = applyRepair(save, repair);
     if (typeof r === 'string') return r;
     was = r.was;
     return null;
-  }, { escrow: false });
-  if ('error' in prep) return { error: prep.error };
-  const steps = [
-    ...prep.steps,
+  }, (seq) => [
     db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .bind(row.id, repair.ticket, row.player, by, nowS, repair.faction, repair.flag, was, repair.gold, prep.seq, note),
-    staffFinding(db, row, nowS, { act: 'repair', by, note, ticket: repair.ticket, faction: repair.faction, flag: repair.flag, was, gold: repair.gold, from: row.seq, to: prep.seq }),
+      .bind(row.id, repair.ticket, row.player, by, nowS, repair.faction, repair.flag, was, repair.gold, seq, note),
+    staffFinding(db, row, nowS, { act: 'repair', by, note, ticket: repair.ticket, faction: repair.faction, flag: repair.flag, was, gold: repair.gold, from: row.seq, to: seq }),
     ...(repair.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), repair.gold)] : []),
-  ];
-  try {
-    await db.batch(steps);
-  } catch {
-    await dropIfUnnamed(db, bucket, row.player, row.id, prep.key);
-    // the same ticket landed meanwhile (asked twice at once): that one is the repair; else the record moved under it
-    const landed = await done();
-    return landed ? repairAnswer(landed, true) : { error: 'seq' };
-  }
-  await dropObjects(bucket, [prep.prev]);
-  return repairAnswer({ ticket: repair.ticket, seq: prep.seq, faction: repair.faction, flag: repair.flag, was, gold: repair.gold, by_handle: by, at: nowS }, false);
+  ], repairAnswer);
+}
+
+/**
+ * PURSE-MEND (FIELD BUGS 2026-10-19f): A PURSE A WRAPPED SALE LEFT BELOW NOTHING, MENDED BY STAFF (net/repairLaw.js) -
+ * `{ ticket, was, gold }` as the body names them, checked by the law: the record's purse, still the `was` staff reckoned
+ * from, set to nothing and `gold` given as one letter of credit - the repair's machinery (staffMend), its row in
+ * `realm_repairs` naming no faction and no bit (0 and 0), `was` the purse it found and `gold` the letter.
+ * AND THE HOLD THE PURSE MADE, LIFTED WITH IT: when the judge's hold is the law's, the finding it stands on the purse's
+ * alone (PURSE_SIG) and no timed hold stands, the mend lifts it as the next clean checkpoint would - the hold and its
+ * signature gone, the row's `judge_rev` one on (its strike stands, fading as every strike does: verdict.js LAW_FADE_S;
+ * which strike the purse struck the row does not say) - guarded on the judgement the act read, so a verdict or a staff act
+ * landing in between moves nothing ('seq': ask again). Any other hold stays: the law's beside another finding, and a
+ * timed one, are the next checkpoint's to judge; staff's own is staff's.
+ * @param {any} ctx @param {any} row the character's row @param {string} by @param {string | null} note @param {any} body
+ */
+async function mendAct(ctx, row, by, note, body) {
+  const { db, nowS } = ctx;
+  const mend = purseMendOf(body);
+  if (!mend) return { error: 'body' };
+  const lift = row.held === 'law' && row.law_sig === PURSE_SIG && !(row.held_until > nowS);
+  return staffMend(ctx, row, 'mend', mend.ticket, (save) => {
+    const r = applyPurseMend(save, mend);
+    return typeof r === 'string' ? r : null;
+  }, (seq) => [
+    ...(lift ? [
+      db.prepare('UPDATE realm_characters SET held = NULL, held_at = NULL, law_sig = NULL, judge_rev = judge_rev + 1 WHERE id = ? AND judge_rev = ? AND judged_seq IS ?')
+        .bind(row.id, row.judge_rev, row.judged_seq),
+      mustChange(db),
+    ] : []),
+    db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?)')
+      .bind(row.id, mend.ticket, row.player, by, nowS, mend.was, mend.gold, seq, note),
+    staffFinding(db, row, nowS, { act: 'mend', by, note, ticket: mend.ticket, was: mend.was, gold: mend.gold, lifted: lift, from: row.seq, to: seq }),
+    ...(mend.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), mend.gold)] : []),
+  ], mendAnswer);
 }
 
 /** AUDIT INT14: THE RANKS OF `n` ROWS - each of MEASURE_QUANTILES and the most, every one read by its rank in order (`at`,

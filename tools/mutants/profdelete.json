@@ -155,8 +155,8 @@
   {
     "name": "PROF-DELETE-the-dialogs-old-word",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "- its Renown, its professions and their Stores, its home and its guild place with it.",
-    "new": "- its Renown, its home and its guild place with it.",
+    "old": "Its Renown, professions, Stores, home and guild place are lost.",
+    "new": "Its Renown, home and guild place are lost.",
     "tests": [
       "test/server/profdelete.test.js"
     ]

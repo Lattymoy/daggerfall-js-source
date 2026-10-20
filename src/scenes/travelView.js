@@ -93,7 +93,7 @@ export const TV_MOVE_ACTIONS = Object.freeze(['MoveForwards', 'MoveBackwards', '
 export const TRAVEL_VIEW_BUTTON = 'Overworld (O)';
 /** The view's own lines - the refusals the door says, and the readout's place line. */
 export const TRAVEL_VIEW_TEXT = Object.freeze({
-  enhancedOnly: 'The overworld is part of the enhanced interface.',
+  enhancedOnly: 'Turn on the enhanced interface to use the overworld.',
   indoors: 'You can only survey the land from the open air.',
   underwater: 'You cannot survey the land from under the water.',
   enemies: 'You cannot survey the land with enemies nearby.',
@@ -103,7 +103,7 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   far: 'That lies beyond what you can see from here.',
   noWay: 'There is no way there by land.',
   mountains: 'The mountains cannot be crossed on foot.',   // OW-MOUNTAINS: a spot among the peaks
-  placesOnly: 'Travel Options only travels to places - click a town.',   // AUDIT DEEP T2-8: coordinate targeting off
+  placesOnly: 'Travel Options travels only to places. Click a town.',   // AUDIT DEEP T2-8: coordinate targeting off
   spot: 'The marked spot',
   theSpot: 'the marked spot',   // AUDIT OW5 P5: inside a sentence ("L leads the party to the marked spot.")
   partyHalted: 'The party has stopped.',
@@ -114,10 +114,10 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   // OWS2: the crossing's words - the trip's line when it puts to sea, and why one cannot
   bySea: (name) => `To ${name}, by sea`,
   toSpotBySea: 'To the marked spot, by sea',
-  needBoat: 'There is no way there by land - a boat would carry you across the water.',
-  passenger: 'You are aboard another\'s boat - its helmsman sets the course.',
-  rider: 'You ride in another\'s wagon - its driver sets the course.',   // WAGONS2: seated in the back of another's wagon (scenes/wagon/wagonRiders.js)
-  climbing: 'You cannot set out on a journey from a wall - climb down first.',   // AUDIT FB1007b C2
+  needBoat: 'There is no way there by land. You need a boat to cross the water.',
+  passenger: 'You are aboard another\'s boat. Its helmsman sets the course.',
+  rider: 'You ride in another\'s wagon. Its driver sets the course.',   // WAGONS2: seated in the back of another's wagon (scenes/wagon/wagonRiders.js)
+  climbing: 'You cannot set out from a wall. Climb down first.',   // AUDIT FB1007b C2
   noLaunch: 'There is no water here for your boat to float in.',
   noWayAtSea: 'Your boat can make no way toward its mark.',
   noShore: 'There is no safe landing here. Your boat stays in the water.',
@@ -125,9 +125,9 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   noBoat: 'Your boat is not with you to cross the water.',
   aground: 'Your boat has run aground.',
   raidersAlongside: 'Pirates come alongside!',   // OWS3
-  enemiesSlow: 'Enemies near - you slow your pace.',   // OW6: the journey held for an enemy near (systems/travel/travelThreat.js), said once as it begins
+  enemiesSlow: 'Enemies are near. You slow your pace.',   // OW6: the journey held for an enemy near (systems/travel/travelThreat.js), said once as it begins
   // TV-WASD: the bar's line while the movement keys travel - the speed, and the governor's hold beside it (the land's; OW6: or an enemy's)
-  travelling: (rate, held = null) => (held != null && held < rate ? `Travelling at ×${held} of ×${rate}` : `Travelling at ×${rate}`),   // the travel strip's own sign
+  travelling: (rate, held = null) => (held != null && held < rate ? `Traveling at ×${held} of ×${rate}` : `Traveling at ×${rate}`),   // the travel strip's own sign
   inPlace: (place, region) => (region ? `${place}, ${region}` : place),
   nearPlace: (place, region) => (region ? `Near ${place}, ${region}` : `Near ${place}`),
   wilderness: (region) => (region ? `The wilds of ${region}` : 'The wilds'),
@@ -628,7 +628,7 @@ export function createTravelView(deps) {
     deps.hud.update({
       feet: f, heading: lastHeading, yaw: camera?.yaw ?? 0, where: deps.where?.() ?? '',
       touch: !!deps.touch, fade: t, marks, keys: hintKeys,
-      route: routeWorld.map(proj), trip: deps.trip?.() ?? '',
+      route: routeWorld.map(proj), trip: deps.trip?.() ?? '', sky: deps.sky?.() ?? '',   // OW-FORECAST: the weather ahead
       routeDots: routeGroundDots(routeWorld, proj, { w: deps.canvas?.clientWidth || Infinity, h: deps.canvas?.clientHeight || Infinity, keep: dotSpacing }),   // OW-DOTS-GROUND; OW-DOTS-EVEN: the line's spacing kept frame to frame
       routeDotSizes: ROUTE_DOT_SIZES,   // OW-DOTS-EVEN: the readout's path pair a size
       followDist: deps.followDist?.() ?? null,   // WAYPOINTS: the followed list's distances

@@ -78,7 +78,7 @@ test('NAV-F the hint says the press that matters most, in the registry\'s own na
   assert.equal(navalHudText(helm(), KEYS).plate.hint, 'Hold RIGHT CLICK to aim - C: brace');
   assert.equal(navalHudText(helm({ aiming: true }), KEYS).plate.hint, 'Let go to fire - E: hold fire', 'GUN-HOLD: laid, Activate holds fire');
   assert.equal(navalHudText(helm({ aiming: true, board: { name: 'The Red Wake', kind: 'board' } }), KEYS).plate.hint, 'Let go to fire - E: hold fire', 'GUN-HOLD: laid, Activate is the hold, never the boarding');
-  assert.equal(navalHudText(helm({ aiming: true, ship: { ...helm().ship, wrecked: true } }), KEYS).plate.hint, 'Crippled - make port for a shipwright', 'a wreck\'s guns are silent: the way out is what is said');
+  assert.equal(navalHudText(helm({ aiming: true, ship: { ...helm().ship, wrecked: true } }), KEYS).plate.hint, 'Crippled. Make for port and a shipwright', 'a wreck\'s guns are silent: the way out is what is said');
   assert.equal(navalHudText(helm({ armed: false, batteries: [] }), KEYS).plate.hint, 'No guns aboard');
   assert.equal(navalHudText(helm({ board: { name: 'The Red Wake', kind: 'board' } }), KEYS).plate.hint, 'E: board The Red Wake');
   assert.equal(navalHudText(helm({ board: { name: 'The Red Wake', kind: 'hold' } }), KEYS).plate.hint, "E: open The Red Wake's hold");
@@ -100,9 +100,9 @@ test('NAV-F the target card: her name and colours, her class, captain and distan
   assert.deepEqual(c, { id: 'The Red Wake', name: 'The Red Wake', faction: 'pirate', hostile: true, friendly: false, sub: 'Pirate Brigantine - Captain Irna Vosk - 142 m', hull: 30, sail: 75, crew: null, state: 'Hostile', stateKind: 'hostile' });   // PIN MOVED (COMBAT-FEEL CARD-CREW: her men - none known here)
   const st = (t, board = null) => { const x = navalHudText(helm({ target: card(t), board }), KEYS).card; return [x.state, x.stateKind]; };
   assert.deepEqual(st({ hostile: false }), ['', '']);
-  assert.deepEqual(st({ state: 'struck' }), ['Colours struck', '']);
-  assert.deepEqual(st({ state: 'struck' }, { name: 'The Red Wake', kind: 'board' }), ['Colours struck - E: board', 'board']);
-  assert.deepEqual(st({ state: 'struck' }, { name: 'The Black Kraken', kind: 'board' }), ['Colours struck', ''], 'another ship is the one in reach');
+  assert.deepEqual(st({ state: 'struck' }), ['Colors struck', '']);
+  assert.deepEqual(st({ state: 'struck' }, { name: 'The Red Wake', kind: 'board' }), ['Colors struck - E: board', 'board']);
+  assert.deepEqual(st({ state: 'struck' }, { name: 'The Black Kraken', kind: 'board' }), ['Colors struck', ''], 'another ship is the one in reach');
   assert.deepEqual(st({ state: 'afloat', boarded: true }), ['Boarded', '']);
   assert.deepEqual(st({ state: 'prize' }), ['Taken', '']);
   assert.deepEqual(st({ state: 'prize' }, { name: 'The Red Wake', kind: 'hold' }), ['Taken - E: open hold', 'board']);
@@ -122,7 +122,7 @@ test('NAV-F a finger\'s screen: no key is named - a tap boards her and opens her
   assert.equal(navalHudText(helm({ aiming: true }), KEYS, T).plate.hint, 'Lift to fire - Tap: hold fire');
   assert.equal(navalHudText(helm({ board: { name: 'The Red Wake', kind: 'board' } }), KEYS, T).plate.hint, 'Tap: board The Red Wake');
   assert.equal(navalHudText(helm({ board: { name: 'The Red Wake', kind: 'hold' } }), KEYS, T).plate.hint, "Tap: open The Red Wake's hold");
-  assert.equal(navalHudText(helm({ target: card({ state: 'struck' }), board: { name: 'The Red Wake', kind: 'board' } }), KEYS, T).card.state, 'Colours struck - Tap: board');
+  assert.equal(navalHudText(helm({ target: card({ state: 'struck' }), board: { name: 'The Red Wake', kind: 'board' } }), KEYS, T).card.state, 'Colors struck - Tap: board');
   assert.equal(navalHudText(helm({ armed: false, batteries: [] }), KEYS, T).plate.hint, 'No guns aboard');
   // the keys' own words off a finger's screen, unchanged
   assert.equal(navalHudText(helm(), KEYS).plate.hint, 'Hold RIGHT CLICK to aim - C: brace');
@@ -307,9 +307,9 @@ test('NAV-F the plunder window\'s words: her name, class and captain, the lede (
   assert.equal(raid.take, 'Take all into your pack', 'a raid\'s goods go to the pack');
   assert.equal(plunderText({ ...m, items: [{ id: 7 }] }, (it) => `#${it.id}`).rows[0], '#7', 'the host names the pieces');
   assert.equal(thingsText(2), '2 things');
-  assert.equal(takenText({ taken: 3, left: 0, where: 'hold' }, 'Carrack'), "3 things to your Carrack's hold.");
-  assert.equal(takenText({ taken: 1, left: 2, where: 'pack' }), '1 thing into your pack - 2 things will not fit and stay in the hold.');
-  assert.equal(takenText({ taken: 0, left: 4 }), 'You cannot carry any of it - 4 things stay in the hold.');
+  assert.equal(takenText({ taken: 3, left: 0, where: 'hold' }, 'Carrack'), "3 things moved to your Carrack's hold.");
+  assert.equal(takenText({ taken: 1, left: 2, where: 'pack' }), '1 thing moved into your pack. 2 things will not fit and stay in the hold.');
+  assert.equal(takenText({ taken: 0, left: 4 }), 'You cannot carry any of it. 4 things stay in the hold.');
   assert.equal(takenText(null), 'The hold is empty.');
 });
 
@@ -357,7 +357,7 @@ test('NAV-F the plunder window, driven: it opens on Take All; Take All empties h
   // take all
   press(take);
   assert.deepEqual(m.log, ['takeAll']);
-  assert.equal(byClass(shell, 'dfnaval-note')[0].textContent, "3 things to your Carrack's hold.");
+  assert.equal(byClass(shell, 'dfnaval-note')[0].textContent, "3 things moved to your Carrack's hold.");
   assert.deepEqual(byClass(shell, 'dfnaval-item').map((n) => n.textContent), ['Nothing left in the hold.']);
   assert.equal(take.getAttribute('disabled'), '', 'nothing left to take');
   assert.equal(byClass(shell, 'dfnaval-open')[0].getAttribute('disabled'), '');

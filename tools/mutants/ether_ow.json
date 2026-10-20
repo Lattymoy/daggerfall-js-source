@@ -72,8 +72,8 @@
   {
     "name": "EOW-governor-off-map-built",
     "file": "src/scenes/world.js",
-    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`));",
-    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => x < 0 || y < 0 || x >= 1000 || y >= 500 || built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`));",
+    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => x < 0 || y < 0 || x >= 1000 || y >= 500 || built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
     "tests": [
       "test/systems/travel/ether_ow.test.js",
       "test/systems/travel/tv2_click_to_move.test.js"

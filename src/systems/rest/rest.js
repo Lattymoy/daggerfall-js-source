@@ -95,7 +95,7 @@ export const exhaustedInWaterText = () => localizedText('exhaustedInWater', EXHA
  * rest hour it always was.
  */
 export const EXHAUSTED_SPENT_SHARE = 0.1;
-export const EXHAUSTED_SWIMMING_LINE = 'You are too exhausted to swim - get out of the water!';
+export const EXHAUSTED_SWIMMING_LINE = 'You are too exhausted to swim. Get out of the water!';
 /**
  * FIELD BUGS 2026-10-13e (SPENT-ASHORE; a player near Knightshead: "the death screen suddenly appeared ... several
  * seconds after combat, despite having full health"; Mac on SWIM-SPENT: "We're our own thing now", and on FULL-GUARD:
@@ -107,7 +107,7 @@ export const EXHAUSTED_SWIMMING_LINE = 'You are too exhausted to swim - get out 
  * stay about, some fifty real seconds from full health to get clear. With none about the collapse is the rest hour it
  * always was.
  */
-export const EXHAUSTED_FIGHTING_LINE = 'You are too exhausted to fight - get clear and rest!';
+export const EXHAUSTED_FIGHTING_LINE = 'You are too exhausted to fight. Get clear and rest!';
 /** The line as the HUD says it, in the player's language (L10N4's text core), read at the collapse. */
 export const exhaustedFightingText = () => t('rest.exhausted.fighting', EXHAUSTED_FIGHTING_LINE);
 /** What a drain to nothing costs, in the water and ashore alike: the share of the health pool, never nothing. */

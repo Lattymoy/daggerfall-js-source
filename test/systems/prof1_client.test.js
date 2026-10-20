@@ -392,5 +392,5 @@ test('PROF1 keys and hosts: the act choice is KB1\'s, on ;, in a Professions gro
   const rig = src('src/combat/weapon/weaponRig.js');
   assert.match(rig, /const tool = c && !paralyzed && !fpArm\.active\(\) && !eotbHidesWeapon\(\) \? actTool\(\) : null;/);
   assert.ok(rig.indexOf('actTool()') < rig.indexOf('const torchOnly ='), 'above every sheathe gate');
-  assert.equal(accountRefusalText('writ-cap'), 'You have filled 3 writs today - the most a day allows.');   // PIN MOVED (CHAP2a): the three are the Court's and the halls' together
+  assert.equal(accountRefusalText('writ-cap'), 'You have filled 3 writs today, the most a day allows.');   // PIN MOVED (CHAP2a): the three are the Court's and the halls' together
 });

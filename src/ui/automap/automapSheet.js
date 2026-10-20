@@ -1260,13 +1260,17 @@ export function createAutomapSheet(deps = {}) {
     else if (id === 'allFloors') toggleFullMap();
     else if (id === 'floorUp') floorStep(1);
     else if (id === 'floorDown') floorStep(-1);
-    else if (id === 'home') {
-      viewFloor = null; floorShift = 0;
-      const feet = deps.player?.()?.feet;
-      const f = ensureFrame();
-      if (feet && f.sheets.length) setFloor(sheetAt(f, feet[1]));
-      wantHome = false; wantMe = true; meLock = true;   // ME-PAN fix: centred on YOU; ME-PIVOT: and turned about you
-    }
+    else if (id === 'home') backToMe();
+  }
+  /** BACK TO YOU, in ONE place - the Home key, the Me button and (FINDME-TOWN) the window's Find me: the slice back to
+   *  the player's own floor (EM3-3D), and on the solid sheet the next reframe centred on them (ME-PAN fix: setFloor
+   *  asked for the rest view; Me wants the player) and turned about them (ME-PIVOT). */
+  function backToMe() {
+    viewFloor = null; floorShift = 0;
+    const feet = deps.player?.()?.feet;
+    const f = ensureFrame();
+    if (feet && f.sheets.length) setFloor(sheetAt(f, feet[1]));
+    if (solidOn) { wantHome = false; wantMe = true; meLock = true; }
   }
 
   /**
@@ -1549,14 +1553,7 @@ export function createAutomapSheet(deps = {}) {
       if (code === 'PageDown' || code === 'BracketLeft') return step(-1);
       // DISC22-G: HOME BRINGS YOU BACK - to your own floor and the view the map opened at (DFU's 3D map has its
       // focus-on-player key); the window reads 'home' and resets its view
-      if (code === 'Home') {
-        viewFloor = null; floorShift = 0;   // EM3-3D: and the slice back to the player's own floor
-        const feet = deps.player?.()?.feet;
-        const f = ensureFrame();
-        if (feet && f.sheets.length) setFloor(sheetAt(f, feet[1]));
-        if (solidOn) { wantHome = false; wantMe = true; meLock = true; }   // ME-PAN fix: setFloor asked for the rest view; Home wants the player
-        return 'home';
-      }
+      if (code === 'Home') { backToMe(); return 'home'; }
       return false;
     },
 
@@ -1646,8 +1643,8 @@ export function createAutomapSheet(deps = {}) {
       return [
         { id: 'turnLeft', group: 'turn', label: 'Turn', key: 'Q', icon: 'turnLeft', title: 'Turn left' },
         { id: 'turnRight', group: 'turn', label: 'Turn', key: 'E', icon: 'turnRight', title: 'Turn right' },
-        { id: 'tiltUp', group: 'tilt', label: 'Tilt', key: 'R', icon: 'tiltUp', title: 'Tilt toward a plan', disabled: orbit.goalPitch >= ORBIT.pitchMax - 1e-3 },
-        { id: 'tiltDown', group: 'tilt', label: 'Tilt', key: 'F', icon: 'tiltDown', title: 'Tilt toward the side', disabled: orbit.goalPitch <= ORBIT.pitchMin + 1e-3 },
+        { id: 'tiltUp', group: 'tilt', label: 'Tilt', key: 'R', icon: 'tiltUp', title: 'Tilt toward top-down', disabled: orbit.goalPitch >= ORBIT.pitchMax - 1e-3 },
+        { id: 'tiltDown', group: 'tilt', label: 'Tilt', key: 'F', icon: 'tiltDown', title: 'Tilt toward side view', disabled: orbit.goalPitch <= ORBIT.pitchMin + 1e-3 },
         ...(fw ? [
           { id: 'floorDown', group: 'floor', label: 'Down', key: 'PgDn', icon: 'floorDown', title: 'Down a floor', disabled: fw.bottom },
           { id: 'floorUp', group: 'floor', label: 'Up', key: 'PgUp', icon: 'floorUp', title: 'Up a floor', disabled: fw.top },
@@ -1763,6 +1760,16 @@ export function createAutomapSheet(deps = {}) {
       const rest = restScaleOf(limits);
       const scale = Math.min(SCALE_MAX, Math.max(rest, view?.scale ?? 0));
       return viewCentredOn(me[0], me[1], scale, limits);
+    },
+
+    /** FINDME-TOWN: where the player stands on this sheet, in the window's space - the window's Find me crosses it. */
+    me() { const m = mePoint(); return m ? { x: m[0], y: m[1] } : null; },
+
+    /** FINDME-TOWN: THE WINDOW'S FIND ME, ON THIS SHEET - its own Me: back to the player's floor, and the view on them.
+     *  Null where the level has no player to find (the window then moves nothing). */
+    findMe(limits, view = null) {
+      backToMe();
+      return mePoint() ? this.meView(limits, view) : null;
     },
 
     /** ME-PAN fix: THE PAN CLAMP'S BOX - what has been drawn (and the player, as `me`), in the window's space. The

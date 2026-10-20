@@ -119,7 +119,7 @@
   {
     "name": "POI6-sent-back-without-a-word",
     "file": "src/ui/poi/poiReviewPanel.js",
-    "old": "    if (verdict === 'reject' && !word) { say(t('poi.review.needWord', 'Say why it goes back - the builder reads it.'), 'bad'); return; }\n",
+    "old": "    if (verdict === 'reject' && !word) { say(t('poi.review.needWord', 'Say why it goes back. The builder reads it.'), 'bad'); return; }\n",
     "new": "\n",
     "tests": [
       "test/poi/poi6_review.test.js"

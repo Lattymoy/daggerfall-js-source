@@ -19,16 +19,17 @@
 // (the private rooms' own: social.acct, realmSession.id); members() - the party's other members, each with its party
 // pose `p` (net/social.js); questMachine(); openOverlay(window, onClosed) - the window laid over whatever is open
 // (townTalk.pushOverlay), true when it went up; say(line); wild() - the player stands in the open zone (WILD1), where
-// nothing keeps an instance: its real dungeons are sealed and its halls the relay refuses one.
+// nothing keeps an instance: its real dungeons are sealed and its halls the relay refuses one; remains() - HEIR-WHOLE:
+// where the line's remains lie (scenes/legacyHost.js remainsWhere), whose death quest's place a dungeon whole is.
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { t, getLocalizedLocationName } from '../systems/textManager.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { instanceOwnerOf, holdEpochOf, instanceOfWord, isInstanceRoom, INSTANCE_DOOR_WORD } from '../net/instanceRoom.js';
 import { roomKeyFor } from '../net/online.js';
 import { wdunHallOfRoom } from '../net/wire.js';
-import { openerQuestOf, partnerInstances, instanceOffer, questDungeonWhole, questsAtSite, questInstanceEpoch } from '../systems/instancePlaces.js';
+import { openerQuestOf, partnerInstances, instanceOffer, questDungeonWhole, questsAtSite, questInstanceEpoch, remainsWholeAt, remainsInstanceEpoch } from '../systems/instancePlaces.js';
 import { isPrivateersHold } from '../systems/startDungeon.js';   // HOLD-ONCE: online the Hold's public room is entered once - its instance any time
-import { dungeonSizeFor } from '../world/smallerDungeons.js';   // QUEST-ELSEWHERE: the size the world lays a dungeon's public room
+import { builtSizeFor } from '../world/smallerDungeons.js';   // QUEST-ELSEWHERE: the size the world builds a dungeon's public room at
 
 /** The words, one home - drafted in the thirteen whole languages (locales/), keys under `instance.door`. */
 export const INSTANCE_TEXT = Object.freeze({
@@ -39,20 +40,23 @@ export const INSTANCE_TEXT = Object.freeze({
   join: (name) => t('instance.door.join', "{name}'s instance", { name }),
   leave: () => t('instance.door.leave', 'Leave'),
   questHere: () => t('instance.door.questHere', "Your quest's business here waits in your instance."),
-  questPublic: () => t('instance.door.questPublic', "Your quest's business here is in your instance alone - the shared dungeon is laid smaller and holds none of it."),
+  questPublic: () => t('instance.door.questPublic', "Your quest's business here is only in your instance. The shared dungeon is smaller and has none of it."),
   unavailable: () => t('instance.door.unavailable', 'Your instance could not be opened. Try again in a moment.'),
-  refused: () => t('instance.door.refused', 'That instance is closed to you - only its owner and their party may stand in it.'),
+  refused: () => t('instance.door.refused', 'That instance is closed to you. Only its owner and their party can enter.'),
 });
 
 /** An entry: the place's public room, as the world lays it. */
 const PUBLIC = Object.freeze({ instance: null, whole: false });
 
 /** A dungeon's site, from the location its door names. QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): `relaid` - online the
- *  world lays its public room smaller (world/smallerDungeons.js dungeonSizeFor), where a quest's things never stand
- *  (systems/instancePlaces.js questMountsHere). */
+ *  world builds its public room smaller, where a quest's things never stand (systems/instancePlaces.js questMountsHere)
+ *  and the line's remains laid whole never lie (remainsWholeAt). AUDIT FB1019f B1: the size BUILT
+ *  (world/smallerDungeons.js builtSizeFor), the size the mount reads (worldModes.js mountQuestResources' builtDungeonSize) -
+ *  never the size drawn, which a dungeon at or under its size's threshold never takes: its public room is the dungeon
+ *  whole, and its quest's things and its remains stand there. */
 export const dungeonSite = (dfLocation) => {
   const mapId = (Number(dfLocation?.mapTableData?.mapId) || 0) >>> 0;
-  return { siteType: SITE_TYPES.Dungeon, mapId, buildingKey: 0, layout: null, isHold: isPrivateersHold(dfLocation), home: false, name: dfLocation?.name ? getLocalizedLocationName(mapId, dfLocation.name) : '', relaid: dungeonSizeFor(dfLocation, { online: true }) !== 'full' };
+  return { siteType: SITE_TYPES.Dungeon, mapId, buildingKey: 0, layout: null, isHold: isPrivateersHold(dfLocation), home: false, name: dfLocation?.name ? getLocalizedLocationName(mapId, dfLocation.name) : '', relaid: builtSizeFor(dfLocation, { online: true }) !== 'full' };
 };
 /** A building's site in the town `mapId`, from its building record (buildingDataForDoor's): `layout` its town's (the
  *  room's - WD3), `home` a player's home or a house of the player's own - whose room is its owner's, never an instance. */
@@ -74,8 +78,12 @@ export function createInstanceDoor(deps) {
   const machine = () => deps.questMachine?.() ?? null;
   /** Instances may be had here: online, at a relay that keeps them, at a place that keeps one. */
   const can = (site) => online() && !!deps.instanceOk?.() && !keepsNone(site) && !deps.wild?.();
-  /** A running quest of mine names this place (the Hold is no quest's). */
-  const questHere = (site) => !site.isHold && openerQuestOf(machine(), site) != null;
+  /** HEIR-WHOLE: the line's remains that lie in this place whole, where its public room is laid smaller
+   *  (systems/instancePlaces.js remainsWholeAt). */
+  const remainsHere = (site) => remainsWholeAt(deps.remains?.() ?? [], site);
+  /** A running quest of mine names this place (the Hold is no quest's) - or the death quest does: the line's remains lie
+   *  in it whole (HEIR-WHOLE), which only a build of its own stands. */
+  const questHere = (site) => !site.isHold && (openerQuestOf(machine(), site) != null || remainsHere(site).length > 0);
   /** My owner digest - worked out once an account. */
   async function myOwner() {
     const a = deps.account?.() ?? null;
@@ -84,12 +92,16 @@ export function createInstanceDoor(deps) {
     return owner;
   }
   /** My instance of `site`: my owner, and the epoch of the quest that names it (the oldest - its own, kept in its save:
-   *  questInstanceEpoch, minted here the first time), or the Hold's (my character's). */
+   *  questInstanceEpoch, minted here the first time), or the Hold's (my character's) - or, no quest of the machine's
+   *  naming it, the remains' that lie in it whole (HEIR-WHOLE: the first of the line's there, remainsInstanceEpoch). A
+   *  quest's room stands the remains too: both are the dungeon whole. */
   async function mine(site) {
     const o = await myOwner();
-    const epoch = site.isHold ? await holdEpochOf(deps.character?.() ?? null) : questInstanceEpoch(openerQuestOf(machine(), site));
+    const epoch = site.isHold ? await holdEpochOf(deps.character?.() ?? null) : (questInstanceEpoch(openerQuestOf(machine(), site)) ?? await remainsInstanceEpoch(remainsHere(site)[0]));
     return o && epoch ? { owner: o, epoch } : null;
   }
+  /** HEIR-WHOLE: the epochs of the rooms the line's remains here open - one a row. */
+  const remainsEpochs = (site) => Promise.all(remainsHere(site).map(remainsInstanceEpoch));
   /** The party's other members' owner digests, by account. */
   async function partyOwners() {
     const members = deps.members?.() ?? [];
@@ -102,12 +114,13 @@ export function createInstanceDoor(deps) {
   }
   /** May a RECORDED instance (a save's, an anchor's, a staff landing's) still be stood in? A staff landing's always (the
    *  relay admits staff); mine while what opened it runs - the Hold's for good, a quest's while a running quest that names
-   *  the place holds its epoch (an ended quest's room is never keyed again: Mac's "Kept until quest ends"); a partner's
-   *  while its owner is in my party (the relay's own law). */
+   *  the place holds its epoch (an ended quest's room is never keyed again: Mac's "Kept until quest ends"), the remains'
+   *  while they lie there whole (HEIR-WHOLE - taken up, the death quest's place is the heir's keeping); a partner's while
+   *  its owner is in my party (the relay's own law). */
   async function stillHeld(site, inst, staff) {
     if (!inst) return false;
     if (staff) return true;
-    if (inst.owner === await myOwner()) return site.isHold ? inst.epoch === await holdEpochOf(deps.character?.() ?? null) : questsAtSite(machine(), site).some((q) => q.instanceEpoch === inst.epoch);
+    if (inst.owner === await myOwner()) return site.isHold ? inst.epoch === await holdEpochOf(deps.character?.() ?? null) : questsAtSite(machine(), site).some((q) => q.instanceEpoch === inst.epoch) || (await remainsEpochs(site)).includes(inst.epoch);
     return [...(await partyOwners()).values()].includes(inst.owner);
   }
 
@@ -157,7 +170,8 @@ export function createInstanceDoor(deps) {
       const options = rows.map((r, i) => ({ code: `Digit${i + 1}`, label: `${i + 1} - ${r.kind === 'public' ? INSTANCE_TEXT.public() : r.kind === 'mine' ? INSTANCE_TEXT.mine() : INSTANCE_TEXT.join(r.name)}`, action: () => done(r) }));
       options.push({ code: 'Escape', label: `Esc - ${INSTANCE_TEXT.leave()}`, action: () => done(null) });
       // QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a quest's place laid smaller in public says, before the choice, that its
-      // things stand in the instance alone - the line said once inside (questElsewhere) came after Public was chosen
+      // things stand in the instance alone - the line said once inside (questElsewhere) came after Public was chosen; the
+      // death quest's remains laid whole among them (HEIR-WHOLE)
       const quest = !site.isHold && site.relaid === true && questHere(site);
       const win = new ChoiceWindow({ lines: [site.name ?? '', site.isHold ? INSTANCE_TEXT.holdLine() : INSTANCE_TEXT.line(), quest ? INSTANCE_TEXT.questPublic() : ''].filter(Boolean), options });
       const dispose = typeof win.dispose === 'function' ? win.dispose.bind(win) : null;

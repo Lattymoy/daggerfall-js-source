@@ -42,7 +42,7 @@ export const TRAVEL_PACE_TEXT = Object.freeze({
   speed: 'Speed',
   foe: 'Near enemies',
   tip: {
-    speed: `How fast a journey runs (×${ROAD_PACE_MAX} on a road only - leaving it drops to ×${OPEN_PACE_MAX})`,
+    speed: `How fast a journey runs (×${ROAD_PACE_MAX} on roads only, ×${OPEN_PACE_MAX} off them)`,
     foe: `The slowest the clock runs while enemies are near (×${ROAD_PACE_MAX} on a road only)`,
   },
   roadOnly: `×${ROAD_PACE_MAX} only on a road`,

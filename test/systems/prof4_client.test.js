@@ -345,9 +345,9 @@ test('PROF4 pieces: the woods withdraw as their templates (a log on Twigs\' pict
   const plain = mintPiece({ recipe: 'table-large:teak', quality: 0, seed: 7, maker: 'Ann' }, PROV);
   const base = templateByIndex(224).basePrice;
   assert.deepEqual([plain.group, plain.templateIndex, plain.value, plain.marked, itemLongName(plain)], ['Furniture', 224, Math.round(base * QUALITY_EFFECTS[0].condition), undefined, 'Large Teak Table']);
-  assert.equal(craftedText([plain]), 'You made a Crude Large Teak Table - it waits among your things for a room to stand in');
+  assert.equal(craftedText([plain]), 'You made a Crude Large Teak Table. It waits in your things until you place it in a room');
   const joined = mintPiece({ recipe: 'chair:oak', quality: 1, seed: 7, maker: 'Ann', marked: true }, PROV);
-  assert.deepEqual([joined.marked, itemLongName(joined), craftedText([joined])], [true, 'Ann\'s Oak Chair', 'You made Ann\'s Oak Chair - it waits among your things for a room to stand in']);
+  assert.deepEqual([joined.marked, itemLongName(joined), craftedText([joined])], [true, 'Ann\'s Oak Chair', 'You made Ann\'s Oak Chair. It waits in your things until you place it in a room']);
   const master = mintPiece({ recipe: 'chair:oak', quality: 4, seed: 7, maker: 'Ann', marked: true }, PROV);
   assert.deepEqual([master.marked, itemLongName(master)], [undefined, 'Ann\'s Oak Chair'], 'a Masterwork\'s mark is its own');
   assert.equal(isCraftedFurniture(master), true);
@@ -405,14 +405,14 @@ test('PROF4 pages: the Workbench at a Furniture Store - the saws for the logs he
   press('Furniture');
   // PIN MOVED (CRAFT2): the workbench lists its patterns, the wood chosen in the box - the bed is Oak's alone
   const bed = buttons().find((b) => b.textContent.startsWith('Plain Double Bed'));
-  assert.match(bed.textContent, /wants its inputs/, 'no Linen');
+  assert.match(bed.textContent, /needs materials/, 'no Linen');
   bed.onclick();
   await press('Buy 2 from the furnisher - 4 silver');
   assert.deepEqual(bought, [['cloth:linen', 2]]);
   press('Small Table');   // PIN MOVED (CRAFT2): the pattern - in the wood the last craft here was made of, held
   assert.match(text(), /Small Oak Table - rank 10/);
   assert.match(text(), /Quality chances: Crude 20% \| Standard 60% \| Fine 20%\. They get better the further your rank \(10\) is above the recipe's \(10\)\. Draw the plane true to the grain to raise the result one quality\./);   // PLAIN-ODDS
-  assert.match(text(), /Use a Heartwood for a plank - a step better \(1 stored\)/);
+  assert.match(text(), /Use a Heartwood for a plank one grade better \(1 stored\)/);
   const box = [...root.querySelectorAll('input')].find((i) => i.type === 'checkbox' && /Heartwood/.test(i.parentNode?.textContent ?? ''));
   box.checked = true; box.onchange();
   assert.match(text(), /wood:heartwood 1 \/ 1/, 'the Heartwood in a plank\'s place');
@@ -437,8 +437,8 @@ test('PROF4 pages: the Workbench at a Furniture Store - the saws for the logs he
   } finally { globalThis.performance.now = realPerf; }
   await tick(); await tick();
   assert.deepEqual(crafted.at(-1), ['table-small:oak', true, true], 'drawn true: a clean pass, the Heartwood asked');
-  assert.equal(planeWord({ clean: true, seconds: 2 }), 'A clean pass - true to the grain.');
-  assert.equal(planeWord({ clean: false, seconds: 0.4 }), 'Too quick - a plane is drawn, not flicked.');
+  assert.equal(planeWord({ clean: true, seconds: 2 }), 'A clean pass, true to the grain.');
+  assert.equal(planeWord({ clean: false, seconds: 0.4 }), 'Too quick. Draw the plane slowly.');
   await press('Quick craft');
   assert.deepEqual(crafted.at(-1).slice(0, 2), ['table-small:oak', false]);
   bench = { kind: 'home', fee: 0 };
@@ -458,7 +458,7 @@ test('PROF4 pages: the Workbench at a Furniture Store - the saws for the logs he
   smith.onclick();
   root.remove(); root = el('div'); document.body.append(root);
   drawProfessionsPage(root, () => {}, kit);
-  assert.doesNotMatch(root.textContent, /comes later|not practised/);
+  assert.doesNotMatch(root.textContent, /comes later|not practiced/);
   const weaponsmith = [...root.querySelectorAll('button')].find((b) => b.textContent.startsWith('Weaponsmith'));
   assert.equal(weaponsmith.disabled, false, 'at rank 50 the smith chooses');
   assert.match(root.textContent, /Steel; the chain/);

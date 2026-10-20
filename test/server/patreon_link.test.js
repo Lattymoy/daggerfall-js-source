@@ -505,7 +505,7 @@ test('PATREON-LINK: the card - Link Patreon is a LINK that opens at once in a ne
   assert.ok(all.some((n) => n.tag === 'button' && n.textContent === 'Unlink'));
   for (const c of rowClasses(all)) worn.add(c);
   ({ all } = draw({ on: true, linked: true, titles: [], link: LINK }));
-  assert.ok(all.some((n) => n.className === 'acctpatreonstate' && n.textContent === 'Linked - no tier yet'));
+  assert.ok(all.some((n) => n.className === 'acctpatreonstate' && n.textContent === 'Linked. No rank yet'));   // PIN MOVED (VOICE2): no dash aside, a tier a rank (Voice.md rules 3, 5)
 
   for (const [why, patreon, account] of [
     ['a guest', { on: true, linked: false, titles: [], link: null }, { ...ACCOUNT, handle: null, guestName: 'A B', kind: 'guest' }],

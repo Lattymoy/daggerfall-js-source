@@ -399,7 +399,7 @@ test('MERCHANT-YARDS THE PRESS - the Buy row (or no row) buys, the Sell row sell
   assert.equal(y.hoverName('yard:7:stable|horse.0').title, 'Horse');
   st.boxes.set('caravan', [-1.3, 0, -3.5, 1.3, 3.2, 3.5]);
   y.frame();
-  assert.deepEqual(y.hoverName('yard:7:transport|wagon.2'), { title: 'Caravan', subs: ['Carries 2,000 kg - a room to live in', 'Ask the wagonwright to buy.'], actions: [YARD_ROWS[0]] });
+  assert.deepEqual(y.hoverName('yard:7:transport|wagon.2'), { title: 'Caravan', subs: ['Carries 2,000 kg, with a room to live in', 'Ask the wagonwright to buy.'], actions: [YARD_ROWS[0]] });
   assert.equal(y.hoverName('board:0'), null);
 });
 

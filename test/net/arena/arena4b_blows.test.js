@@ -95,7 +95,11 @@ test('ARENA4b the dungeon\'s host numbers its blows and routes a spell on my opp
   // PVPDUNGEON: with no bout the seam is the open zone's (its fair players, wildSpellOut) - the arena's branch unchanged
   assert.match(D, /duelMark: opts\.arenaRival \? \(\) => \{ const rb = arenaRivalBody\(\); return rb \? \{ id: rb\.rival, name: rb\.entity\?\.name \?\? '', feet: rb\.ai\.feet, height: rb\.ai\.height \} : null; \} : \(opts\.wildSpellMarks \? \(\) => opts\.wildSpellMarks\(\) : null\),/);
   assert.match(D, /castAtDuel: opts\.arenaRival \? \(_id, sp\) => spellOnRival\(sp\) : \(opts\.wildSpellOut \? \(id, sp\) => opts\.wildSpellOut\(id, sp\) : null\),/);
-  const fn = D.slice(D.indexOf('function spellOnRival(sp) {'), D.indexOf('function spellOnRival(sp) {') + 900);
-  assert.match(fn, /applySpell\(harm, playerEntity\.level, rb\.entity, sinks/, 'the one door every spell lands through, against their stand-in');
-  assert.match(fn, /nextArenaQ\(\);\n\s+return landOnRival\(rb, dealt, 'spell'\);/, 'its own sequence, to the referee as a spell');
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): the spell door left the host for scenes/gate/standInSpell.js,
+  // which the host wires with the rival's body, its door and the sequence
+  assert.match(D, /const \{ spellOnBoss, spellOnCrystal, spellOnHost, spellOnRival, spellOnStandIn, standInRound \} = createStandInSpell\(\{[^]*?rival: arenaRivalBody,[^]*?landOnRival, nextArenaQ,/);
+  const S = readFileSync(new URL('../../../src/scenes/gate/standInSpell.js', import.meta.url), 'utf8');
+  const fn = S.slice(S.indexOf('function spellOnRival(sp) {'), S.indexOf('function spellOnRival(sp) {') + 900);
+  assert.match(fn, /countOnStandIn\(harm, rb\.entity, player\.level, player, rolls\)/, 'the one door every spell lands through, against their stand-in');
+  assert.match(fn, /host\.nextArenaQ\(\);\n\s+return host\.landOnRival\(rb, dealt, 'spell'\);/, 'its own sequence, to the referee as a spell');
 });

@@ -210,7 +210,7 @@ test('AUDIT KG II C6 THE BEAT AFTER A FORFEIT: decided, nobody\'s turn - the res
   r.g.press('forfeit'); r.g.press('forfeit');
   assert.ok(r.g.g.session.over && !r.g.g.session.shown, 'decided, its result not yet shown');
   const m = gambitHudModel({ ...r.g.g.hud.last ?? {}, phase: 'battle', regulars: [], army: [], game: { state: r.g.g.session.state, crowns: r.g.g.game.crowns, name: 'Ana', stake: r.g.g.game.stake, over: null, decided: true, dealt: [7, 7] }, selected: p.id, info: null, crown: 'daggerfall' });
-  assert.equal(m.title, 'The King\'s Gambit - the result');
+  assert.equal(m.title, 'The King\'s Gambit: the result');
   assert.equal(m.actions.find((a) => a.id === 'end').enabled, false);
   assert.equal(m.actions.find((a) => a.id === 'forfeit').enabled, false);
   assert.deepEqual(m.battle.lit, [], 'nothing lit');
@@ -245,7 +245,7 @@ test('AUDIT KG II C8 + D21 THE INFORMATION BOX: the foes in range by name, the p
   const crowns = ['daggerfall', 'wayrest'];
   const box = infoBox(st, { piece: mine.id }, crowns, 'Ana');
   assert.ok(box.lines.some((l) => /^In range now: .+\.$/.test(l)), box.lines.join(' | '));
-  assert.ok(box.lines.some((l) => /^Fire: a piece that ends its own side's turn here loses \d+ health\.$/.test(l)), 'its cell\'s hazard');
+  assert.ok(box.lines.some((l) => /^Fire: a piece that ends its turn here loses \d+ health\.$/.test(l)), 'its cell\'s hazard');
   assert.ok(!box.lines.some((l) => /reach now/.test(l)), 'range, a blow\'s word');
 });
 

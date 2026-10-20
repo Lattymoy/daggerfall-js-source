@@ -9,6 +9,7 @@
 // arrival turns the relay's `clockAt` into seconds left here.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
+import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 export class RemoteIliacTable {
   /** @param {{myId: string|null}} p */
@@ -48,7 +49,10 @@ export class RemoteIliacTable {
       if (this.mine && this.mine.gameNo !== f.state.gameNo) this.mine = null;
       if (this.seat() < 0) this.mine = null;
     }
-    return Array.isArray(f.events) ? f.events : [];
+    const events = Array.isArray(f.events) ? f.events : [];
+    // QL11: a hand won - the room's end names my seat the winner (a watcher sits in none; a look's answer carries no events)
+    if (events.some((e) => e?.t === 'end' && e.winner != null && e.winner === this.seat())) noteAct('cards-won');
+    return events;
   }
 
   /** The game as this client shows it - my own view while I play it, the spectator's while I watch (AUDIT CARDS-6 C9:

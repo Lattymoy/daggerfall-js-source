@@ -444,28 +444,28 @@ export function createPartyTruce(ms = WILD_PARTY_TRUCE_MS) {
 
 // ── the words ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 export const WILD_TEXT = Object.freeze({
-  enter: `You enter the ${WILD_NAME} - an open PvP zone. Foes here are four times as strong; what you carry is at stake.`,
+  enter: `You enter the ${WILD_NAME}, an open PvP zone. Foes here are four times as strong, and you can lose what you carry.`,
   leave: `You leave the ${WILD_NAME}.`,
   chip: 'Open PvP',
-  chipTip: `${WILD_NAME}: other players may attack you, foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart), and a death drops what you carry.`,
+  chipTip: `${WILD_NAME}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). If you die, you drop what you carry.`,
   mapKey: 'Open PvP zone',
   deathPvp: (name) => `${name || 'Another player'} may claim one piece of your worn gear.`,
   deathDrop: (n) => (n > 0 ? `${n} ${n === 1 ? 'thing you carried lies' : 'things you carried lie'} where you fell, for ten minutes.` : ''),
   // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop is taken and laid nowhere (Integrity-Arc, Lane 1's freeze) -
   // said, where it was said as nothing at all; and the letters of credit among what a death took, by their worth - through
   // the text core (L10N4), read when they are said
-  deathBurnt: (n) => (n > 0 ? t('wild.death.burnt', '{n, plural, one {# thing you carried was} other {# things you carried were}} lost where you fell - this character\'s trading is frozen, so nothing is left for anyone to take.', { n }) : ''),
+  deathBurnt: (n) => (n > 0 ? t('wild.death.burnt', '{n, plural, one {# thing you carried was} other {# things you carried were}} lost where you fell. This character\'s trading is frozen, so nothing is left for anyone to take.', { n }) : ''),
   deathLetters: (n, gold) => (n > 0 ? t('wild.death.letters', '{n, plural, one {A letter} other {# letters}} of credit worth {gold} gold left your wallet.', { n, gold: Number(gold).toLocaleString('en-US') }) : ''),
   deathClaim: (name, item) => `${name || 'Another player'} took your ${item || 'gear'}.`,
   // MAC (2026-10-14, the two-phase handoff): the piece claimed is held in escrow until its killer collects it - its words
   // through the text core (L10N4), read when they are said
   deathHeld: (name, item) => (name
-    ? t('wild.escrow.deathHeld', '{name} claimed your {item} - it is held until they collect it, and comes back to you if they do not.', { name, item: item || t('wild.escrow.gear', 'gear') })
-    : t('wild.escrow.deathHeldAnon', 'Another player claimed your {item} - it is held until they collect it, and comes back to you if they do not.', { item: item || t('wild.escrow.gear', 'gear') })),
+    ? t('wild.escrow.deathHeld', '{name} claimed your {item}. It is held until they collect it, and comes back to you if they do not.', { name, item: item || t('wild.escrow.gear', 'gear') })
+    : t('wild.escrow.deathHeldAnon', 'Another player claimed your {item}. It is held until they collect it, and comes back to you if they do not.', { item: item || t('wild.escrow.gear', 'gear') })),
   heldNote: (name, item, min) => (name
-    ? t('wild.escrow.heldNote', 'Your {item} is held for {name} - if they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { name, item: item || t('wild.escrow.gear', 'gear'), min })
-    : t('wild.escrow.heldNoteAnon', 'Your {item} is held for your killer - if they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { item: item || t('wild.escrow.gear', 'gear'), min })),
-  heldBack: (item) => t('wild.escrow.heldBack', 'Your {item} has come back to you - it was never collected.', { item: item || t('wild.escrow.gear', 'gear') }),
+    ? t('wild.escrow.heldNote', 'Your {item} is held for {name}. If they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { name, item: item || t('wild.escrow.gear', 'gear'), min })
+    : t('wild.escrow.heldNoteAnon', 'Your {item} is held for your killer. If they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { item: item || t('wild.escrow.gear', 'gear'), min })),
+  heldBack: (item) => t('wild.escrow.heldBack', 'Your {item} has come back to you. It was never collected.', { item: item || t('wild.escrow.gear', 'gear') }),
   heldTaken: (name, item) => (name
     ? t('wild.escrow.heldTaken', '{name} collected your {item}.', { name, item: item || t('wild.escrow.gear', 'gear') })
     : t('wild.escrow.heldTakenAnon', 'Your killer collected your {item}.', { item: item || t('wild.escrow.gear', 'gear') })),
@@ -477,23 +477,30 @@ export const WILD_TEXT = Object.freeze({
   taken: 'Someone took that first.',
   gone: 'The body gives nothing up.',
   picked: (name, item) => `You take ${item} from ${name || 'the body'}.`,
-  chosen: (name, item) => `You choose ${item} from ${name || 'the body'} - it comes to you from their remains.`,   // INT9: the pick is the relay's to sign
+  chosen: (name, item) => `You choose ${item} from ${name || 'the body'}. It comes to you from their remains.`,   // INT9: the pick is the relay's to sign
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
-  dropLate: 'What you dropped at your death in the mountains has left your pack - it lies where you fell.',   // INT9 (AUDIT): a receipt that found the fallen risen
-  burntLate: () => t('wild.death.burntLate', 'What you dropped at your death in the mountains has left your pack - this character\'s trading is frozen, so it was lost, not left.'),   // BURNT-SAID: the same, for a held record
+  dropLate: 'What you dropped when you died in the mountains has left your pack. It lies where you fell.',   // INT9 (AUDIT): a receipt that found the fallen risen
+  burntLate: () => t('wild.death.burntLate', 'What you dropped when you died in the mountains has left your pack. This character\'s trading is frozen, so it was lost.'),   // BURNT-SAID: the same, for a held record
   noFight: 'You cannot attack a member of your party.',
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it
-  truce: `No longer of your party - in the ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
-  walkInto: `It leads into the ${WILD_NAME} - an open PvP zone: other players may kill you there and take what you carry.`,
+  truce: `No longer in your party. In the ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
+  walkInto: `It leads into the ${WILD_NAME}, an open PvP zone. Other players may kill you there and take what you carry.`,
   // WILD3: the strangers
   stranger: 'Stranger',
   strangerNear: (m) => `A stranger is near - ${Math.max(10, Math.round(m / 10) * 10)} m.`,
   // WILD3: the journeys
-  travelIn: `No fast travel into the ${WILD_NAME} - its edge is crossed on foot or in the saddle (the Overworld map).`,
-  travelOut: `No fast travel out of the ${WILD_NAME} - walk or ride out (the Overworld map).`,
-  travelWait: (min) => `The mountain carriages run once every ten minutes - ${min} more minute${min === 1 ? '' : 's'}.`,
+  travelIn: `No fast travel into the ${WILD_NAME}. Cross its edge on foot or on horseback (the Overworld map).`,
+  travelOut: `No fast travel out of the ${WILD_NAME}. Walk or ride out (the Overworld map).`,
+  travelWait: (min) => `The mountain carriages run every ten minutes. The next leaves in ${min} minute${min === 1 ? '' : 's'}.`,
   travelPoor: (fee) => `A journey inside the ${WILD_NAME} costs ${fee.toLocaleString('en-US')} gold here.`,
   travelPaid: (fee) => `You pay ${fee.toLocaleString('en-US')} gold for the mountain road.`,
+  // COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner: "Bag drops; no send-off in zone"): a companion at my side drops his
+  // pack with mine, so none is sent off from inside the zone (the teleport's own refusal, said of a companion), nothing of
+  // mine reaches one waiting outside it, and one carried off knocked out leaves what it carries with me - through the
+  // text core (L10N4), read when they are said
+  companionStays: (name) => t('wild.companion.stays', '{name} stays at your side until you leave the {zone}.', { zone: WILD_NAME, name: name || t('wild.companion.yours', 'your companion') }),
+  companionAway: (name) => t('wild.companion.away', '{name} is waiting outside the {zone}. Come out to hand over gear.', { zone: WILD_NAME, name: name || t('wild.companion.yoursFirst', 'Your companion') }),
+  companionLeft: (name, n) => t('wild.companion.left', '{name} hands you {n, plural, one {# item} other {# items}} before leaving.', { zone: WILD_NAME, name: name || t('wild.companion.yoursFirst', 'Your companion'), n }),
   // WILD2: the rings
   ring: (r) => `${wildRingName(r)}: ${wildRingBonus(r)}.`,
   ringCross: (r, deeper) => `${deeper ? 'Deeper' : 'Back out'} - ${wildRingName(r)}: ${wildRingBonus(r)}.`,

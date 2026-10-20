@@ -274,11 +274,11 @@ test('AUDIT SERPENT D4/B8/B10/B11 and the words: the inspect card and the accoun
   for (const w of SERPENT_NO_WORDS) assert.ok(SERPENT_NO_TEXT[w], `words for "${w}"`);
   assert.equal(SERPENT_NO_TEXT['it is already slain'], 'The serpent is already slain.');
   const boss = { ...SERPENT_BOSSES[0], name: 'Vharos' };
-  assert.equal(SERPENT_SPOILS_TEXT.granted(boss), 'Vharos\'s hoard is yours - it is in your pack.');
+  assert.equal(SERPENT_SPOILS_TEXT.granted(boss), 'Vharos\'s hoard is yours. It is in your pack.');
   assert.doesNotMatch(SERPENT_SPOILS_TEXT.granted(boss), /hold/);
   assert.equal(SERPENT_SPOILS_TEXT.kept('Ama', boss), 'Vharos\'s hoard waits for Ama.');
   assert.match(SERPENT_CLAIM_TEXT.recorded(2, 0, boss), /^The Bay will remember Vharos's fall\./);
-  assert.equal(serpentBarModel({ name: 'S', title: 'T', hp: 1, max: 2, phase: 2, phaseName: 'x', fighters: 1, stunned: true, stunLeft: 8200, now: 0 }).callout.text, 'Stunned - strike its head! 9s');
+  assert.equal(serpentBarModel({ name: 'S', title: 'T', hp: 1, max: 2, phase: 2, phaseName: 'x', fighters: 1, stunned: true, stunLeft: 8200, now: 0 }).callout.text, 'Stunned. Strike its head! 9s');
   assert.doesNotMatch(src('src/scenes/serpentHost.js'), /[`'"]Sethrakul/, 'no name written in the host\'s words');
 });
 

@@ -1,0 +1,148 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE WEIR ROAD, step 1 of 4.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: Corvane Tull's letter is the offer (QLBD01's shape). WITNESSED (net/questlineClaims.js, `redoubt`): the
+-- step waits on an Elite Breach's first Court taken (`ql act redoubt-taken 1`, said by scenes/eliteGates/egClient.js).
+-- Then his table, where he pays; a visit before is answered and cleared, as DFU's guild quests clear an early click
+-- (M0B30Y04's `_clearclick_`). Lore: canon - Jagar Tharn gave the Spire to Dagon, and in 3E 398 his legions took it.
+-- The port's own - Corvane, the torn halls, the Kyn's proving ground (Elite-Gates.md section 3). AUDIT QUESTLINES
+-- LINES-9: no line counts the years since 3E 398 - the online calendar runs a game year about a real month
+-- (net/wire.js sharedClassicMinutes), so "eight years" would be wrong by the winter; the words say "since the Spire
+-- fell". LINES-10: Corvane keeps no room long (a fresh Place each step), and says so - never "I am always here".
+Quest: QLWR01
+DisplayName: The Weir Gate
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       Corvane Tull has left _tavern_. No one saw which
+<ce>                      way he went.
+
+QuestComplete:  [1004]
+<ce>       Corvane pushes a purse across the table: _gold_
+<ce>       gold, some of it in coin struck before the Spire
+<ce>              fell. "For the first Court."
+
+QuestLogEntry:  [1010]
+%qdt:
+ A letter from a stranger: Corvane Tull, who signs
+ himself a Battlemage of the Battlespire's last
+ class. He asks me to turn a Weir Key, raise an
+ Elite Breach and take its first Court - and then
+ to find him at _tavern_ in __tavern_.
+
+Message:  1011
+%pcn,
+
+     You do not know me. In 3E 398 I was the youngest
+ of the Battlespire's last class, and I was not
+ there when it fell. Everyone I knew was. Ysolde
+ Marnhel says you have a Weir Key, or can get one.
+
+     Turn it. Raise the breach and take its first
+ Court. The halls on the other side are the ones I
+ slept in. Then come and find me at _tavern_ in
+ __tavern_. I keep a room there, for now. I never
+ keep one long.
+
+<ce>                       Corvane Tull, Battlemage
+
+Message:  1012
+<ce>       A boy in a Mages Guild apprentice's robe, far too
+<ce>       big for him, pushes a letter into your hand. "From
+<ce>       the Battlemage," he says. "He paid me in old coin."
+
+Message:  1013
+<ce>       Corvane Tull is younger than his letter, and older
+<ce>       than his years. Every paper in front of him is
+<ce>                     dated 3E 398.
+<ce>
+<ce>       "You took the first Court. Were they still blue -
+<ce>        the banners in the Redoubts? They burned them at
+<ce>        the end, but some..." He stops himself.
+<ce>
+<ce>       "Jagar Tharn gave the Spire to Dagon. The halls
+<ce>        that tore away are still Dagon's. The Kyn fight
+<ce>        in them for rank, as if our school were their
+<ce>        proving ground. I mean to take it back."
+
+Message:  1014
+The Battlemage? Sits in the corner and writes letters dated 3E 398.
+<--->
+Corvane Tull pays in old coin and never speaks above a whisper.
+<--->
+They say he was a student at the Battlespire. They say a lot of things.
+
+Message:  1015
+<ce>       "The first Court," Corvane says, without looking
+<ce>        up from his papers. "Turn the key. Raise the
+<ce>        breach. I will be here until you have."
+
+Message:  1016
+%qdt:
+ I have taken the first Court of an Elite Breach.
+ Corvane Tull is waiting to hear of it at _tavern_
+ in __tavern_.
+
+Message:  1020
+<ce>       The first Court is taken. On the Redoubt's wall,
+<ce>       under the Kyn's soot, a banner still shows one
+<ce>                corner of Battlemage blue.
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--           _tavern_ occurs 4 times.
+--          __tavern_ occurs 3 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 500 to 900
+
+Person _corvane_ faction The_Mages_Guild male anyInfo 1014
+
+Place _tavern_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _corvane_ Corvane_Tull
+	place npc _corvane_ at _tavern_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_taken_ task:
+	ql act redoubt-taken 1
+	say 1020
+	log 1016 step 1
+	stop timer _wait_
+	start timer _meet_
+
+_clicked_ task:
+	clicked npc _corvane_
+
+_notyet_ task:
+	when _clicked_ and not _taken_
+	say 1015
+	clear _clicked_ _notyet_
+
+_paid_ task:
+	when _clicked_ and _taken_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

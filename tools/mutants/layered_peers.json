@@ -1,0 +1,32 @@
+[
+  {
+    "name": "LAYERED-PEERS-viewer-unread",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "      const lgBody = layeredGenderOf(peer?.look?.lg) ?? (all ? layeredGenderOf(LAYERED_OWN, peer?.look?.gender) : null);",
+    "new": "      const lgBody = layeredGenderOf(peer?.look?.lg);",
+    "tests": [
+      "test/net/layered_peers.test.js"
+    ],
+    "why": "the owner's report: in Layered Gearing you see it only on yourself and on those who chose it"
+  },
+  {
+    "name": "LAYERED-PEERS-own-body",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "      const lgBody = layeredGenderOf(peer?.look?.lg) ?? (all ? layeredGenderOf(LAYERED_OWN, peer?.look?.gender) : null);",
+    "new": "      const lgBody = layeredGenderOf(peer?.look?.lg) ?? (all ? 'male' : null);",
+    "tests": [
+      "test/net/layered_peers.test.js"
+    ],
+    "why": "every other player drawn in the male body, a woman's character as a man"
+  },
+  {
+    "name": "LAYERED-PEERS-setting-unread",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    const all = on && layeredAll();   // LAYERED-PEERS: read once a frame",
+    "new": "    const all = on;   // LAYERED-PEERS: read once a frame",
+    "tests": [
+      "test/net/layered_peers.test.js"
+    ],
+    "why": "a Skins viewer sees everyone in armor: the choice no longer the viewer's"
+  }
+]

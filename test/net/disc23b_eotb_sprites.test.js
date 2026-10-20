@@ -73,6 +73,7 @@ test('DISC23-B: the sets are NAMED - sixteen on foot, five in the saddle, the ar
 
 test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, the worn one marked, a press worn at once', () => {
   _resetModSettings();
+  setModSetting(V, 'Graphics.LayeredGear', 0);   // PIN MOVED (LAYERED-GEAR-ON): Layered Gearing is on by default; these pins are the Skins look's
   const sets = skinSets();
   assert.equal(sets.foot.length, FOOT_SKINS); assert.equal(sets.horse.length, 5);   // SKIN2: the mod's sixteen and the classes
   assert.deepEqual(sets.foot.map((s) => s.name), MOD_SETTINGS[V].keys['Graphics.OnFoot'].labels);
@@ -115,7 +116,8 @@ test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, th
     assert.equal(heads().length, 2);
   });
   // the profile window draws it, under the account card
-  assert.match(src('src/ui/enhanced/enhancedMenu.js'), /body\.append\(accountBody\(\)\);\s*\n\s*body\.append\(skinCard\(document\)\.root\);/);
+  // PIN MOVED (LAYERED-GEAR): the card is handed the character's own body, the one Layered Gearing first wears
+  assert.match(src('src/ui/enhanced/enhancedMenu.js'), /body\.append\(accountBody\(\)\);\s*\n\s*body\.append\(skinCard\(document, \{ gender: \(\) => playerEntity\?\.gender \}\)\.root\);/);
   _resetModSettings();
 });
 
@@ -157,7 +159,7 @@ const pose = (o = {}) => ({ x: 4, y: 0, z: 9, yaw: 0, pitch: 0, mv: 0, wd: 0, an
 
 test('DISC23-B: a peer on foot stands as the set they chose - their own archive, the move bit walking it, the name at its top', async () => {
   const { art } = rig();
-  const w = createPeerWalkers({ art });
+  const w = createPeerWalkers({ art, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
   const peer = { id: 'p1', look: { eo: 7 }, shown: pose({ mv: 1 }) };
   w.sync([peer], toScene, { eye: [4, 1, 20], dt: 0.01 });
   assert.equal(w.isWalking('p1'), false, 'art not up yet - the class sprite still stands for them, never nothing');
@@ -178,7 +180,7 @@ test('DISC23-B: a peer on foot stands as the set they chose - their own archive,
 
 test('DISC23-B: a swing, a loosed shaft and a cast each play their clip ONCE - and first sight is no swing', async () => {
   const { art } = rig();
-  const w = createPeerWalkers({ art });
+  const w = createPeerWalkers({ art, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
   const at = (o) => ({ id: 'p1', look: { eo: 2 }, shown: pose(o) });
   w.sync([at({ an: 41 })], toScene, { eye: [4, 1, 20], dt: 0 });
   assert.equal(w.walkers.get('p1').table, 'Idle', 'a peer met mid-session has a swing count of their own - not a swing');
@@ -215,7 +217,7 @@ test('DISC23-B: a swing, a loosed shaft and a cast each play their clip ONCE - a
 test('DISC23-B: who is NOT a walker - a Morrowind body on this screen, a rider, a beast, the dying, a look with no set, the card on the doll', async () => {
   const { art } = rig();
   let sprites = true;
-  const w = createPeerWalkers({ art, enabled: () => sprites });
+  const w = createPeerWalkers({ art, enabled: () => sprites, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
   const on = (o = {}, look = { eo: 1 }) => ({ id: 'p', look, shown: pose(o) });
   w.sync([on()], toScene, { eye: [0, 1, 0], dt: 0 }); await settle();
   const drawn = (peer, skip) => { w.sync([peer], toScene, { eye: [0, 1, 0], dt: 0, skip }); return w.isWalking('p'); };

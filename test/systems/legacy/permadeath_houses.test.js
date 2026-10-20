@@ -218,7 +218,7 @@ test('PERMADEATH-HOUSES: a house the one played cannot take yet WAITS - said onc
   assert.deepEqual(heir.deedsTaken, []);
   assert.equal(w.asked.filter((a) => a[0] === KEY_B).length, 2, 'the service still asked: asked again');
   assert.equal(f.houses.length, 2, 'the family lives on in both meanwhile');
-  assert.equal(deedLine(f, f.houses[0]), 'The late Ysolde Hlaalu\'s deed - it passes to whoever carries the line');
+  assert.equal(deedLine(f, f.houses[0]), 'The late Ysolde Hlaalu\'s deed, which passes to whoever carries on the line');
   w.answer = (row) => (houseKeyOf(row) === KEY_A ? 'given' : 'gone');
   w.host.tick();
   assert.deepEqual(heir.deedsTaken, [KEY_A], 'the region free: taken');

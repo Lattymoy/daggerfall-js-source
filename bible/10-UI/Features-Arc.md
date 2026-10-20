@@ -82,7 +82,7 @@ finding and the move.
 | `pcaao` | Physical Combat And Armor Overhaul 1.44 | Kirk.O | Enabled + 7 | `Enabled` **MOVED (FT9)**, at once - the registered arms read the switches live; the seven modules stay under its card |
 | `unleveledLoot` | Unleveled Loot 1.1.2 | Ralzar | Enabled + 10 | `Enabled` **MOVED (FT9)**; the ten materials stay under its card |
 | `windmills-kamer` | Windmills | Kamer | none | **DECIDED (FT9)** - no switch, no row: a row needs a control. Stays vendored, unconditional, credited |
-| `raum-book`, `silkscreen-five` | a book, a font | - | none | not features; data. Stay off the list |
+| `raum-book`, `silkscreen-five`, `pixelify-glyphs` | a book, a font, two glyphs | - | none | not features; data. Stay off the list |
 
 ### DFU Classic (DFU settings, `settings.js`) - today under Settings > Game
 

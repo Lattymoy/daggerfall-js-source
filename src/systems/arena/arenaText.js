@@ -44,7 +44,7 @@ export const ARENA_TEXT = F({
    *  bought from the catalogue paid back whole, a guild hall's letter (its keepers'), a room whose tenant the move
    *  carried, and the service's refusals (net/accountClient.js REFUSALS reads them). */
   homeMove: F({
-    refund: (gold) => `${goldSum(gold)} gold for your catalogue pieces was refunded to your bank account.`,
+    refund: (gold) => `${goldSum(gold)} gold for your catalog pieces was refunded to your bank account.`,
     hallMoved: F([
       'A letter from the Daggerfall Bank:',
       '',
@@ -145,7 +145,7 @@ export const ARENA_TEXT = F({
   }),
   /** The ladder's progress, said after a win. */
   ladder: F({
-    boutWon: (n) => `${n} of 3 won in this tier.`,
+    boutWon: (n) => `${n} of 3 won at this rank.`,
     champOpen: (tier) => `The ${tier} Champion will see you now.`,
     tierUp: (tier) => `You climb to ${tier}.`,
     runLost: (tier) => `Your run in ${tier} is over. Win three in a row to face its champion.`,   // AUDIT ARENA-LADDER: a loss breaks the tier's run
@@ -218,7 +218,7 @@ export const ARENA_TEXT = F({
   epithets: F([
     'the Unbroken', 'the Butcher', 'the Lion of the Bay', 'Iron-Hand', 'the Grinning', 'Bonecrusher', 'the Quick',
     'the Red', 'the Patient', 'the Wolf', 'Half-Ear', 'the Hammer', 'Dawnblade', 'the Scarred', 'the Mountain',
-    'Ironjaw', 'the Viper', 'the Unlucky', 'Stormfist', 'the Grey', 'the Smiling', 'Kingsbane', 'the Bear', 'the Last',
+    'Ironjaw', 'the Viper', 'the Unlucky', 'Stormfist', 'the Gray', 'the Smiling', 'Kingsbane', 'the Bear', 'the Last',
   ]),
   /** A beast's billing ("The Grizzly Bear of the Wrothgarian Mountains"). */
   beast: (kind, from) => `The ${kind} of ${from}`,
@@ -228,11 +228,11 @@ export const ARENA_TEXT = F({
     /** Its name - over the stair down ("To The Arena Undercroft") and wherever the place is named. */
     name: 'The Arena Undercroft',
     /** The hall's people with an office, by it (the fighters at rest keep their own names). */
-    names: F({ pitMaster: 'The Pit Master', hallKeeper: 'Keeper of the Hall', armourer: 'Arena Armourer', keeper: 'Arena Keeper' }),
+    names: F({ pitMaster: 'The Pit Master', hallKeeper: 'Keeper of the Hall', armourer: 'Arena Armorer', keeper: 'Arena Keeper' }),
     /** The Pit Master's word and his choice (a ChoiceWindow). */
     pitGreet: F([
       'The training pit. No purse, no crowd, no shame.',
-      'Spar with one of my fighters to train for the next tier.',
+      'Spar with one of my fighters to train for the next rank.',
     ]),
     pitFight: 'S - Spar',
     pitLeave: 'L - Leave',
@@ -241,7 +241,7 @@ export const ARENA_TEXT = F({
     /** The practice bout: its call, its sparring partner's billing, its end. */
     practiceCall: 'A practice bout! To the first fall or yield!',
     practiceLabel: 'Practice',
-    practiceWon: 'Good. The next tier will not be so kind.',
+    practiceWon: 'Good. The next rank will not be so kind.',
     practiceLost: 'On your feet. Again, when you are ready.',
     practiceDraw: 'Time. Neither of you learned much from that.',
     /** A chained beast struck: the keepers' warning. */
@@ -356,7 +356,7 @@ export const ARENA_TEXT = F({
     whyGold: 'You need 10 gold to bet.',
     // AUDIT PRE-MERGE 1003 B4: a favourite shorter than his shortest price (1 to 5) is not laid
     noPrice: 'no price',
-    notLaid: (name) => `No bets on ${name}. Too big a favourite.`,
+    notLaid: (name) => `No bets on ${name}. Too big a favorite.`,
     whyRefused: F({ none: 'No bout this hour.', closed: 'Betting is closed.', placed: 'You already bet on this bout.', stake: 'Bets are 10 to 1000 gold.', gold: 'Not enough gold.', price: 'No bets on that fighter.' }),
   }),
 
@@ -379,7 +379,7 @@ export const ARENA_TEXT = F({
     pursesWon: (n) => `Purses won: ${n} gold`,   // AUDIT PRE-MERGE 1003 U12: the header's chip says what it counts
     days: (n) => `${n} day${n === 1 ? '' : 's'}`,
     cleared: (n, tier) => `Tier ${n}, ${tier}`,
-    allTen: 'All tiers cleared',
+    allTen: 'All ranks cleared',
     leading: (b) => `${b} leads`,
     won: (b) => `${b} won`,
     levelShort: 'Tied',
@@ -409,7 +409,7 @@ export const ARENA_TEXT = F({
     whyHurt: 'Too hurt to fight',
     whyNotYet: (hh) => `Not until ${hh}`,
     // Ladder
-    ladderHead: 'The ten tiers',
+    ladderHead: 'The ten ranks',
     tierState: F({ cleared: 'Cleared', current: 'You are here', locked: 'Locked', waiting: 'Not loaded' }),   // ARENA-WAIT (AUDIT A1): online, before the account's climb is in - nobody's tier
     beaten: 'Beaten',
     nextFight: 'Next',
@@ -429,7 +429,7 @@ export const ARENA_TEXT = F({
     laurelMark: 'Laurel',
     // Leaderboards
     boards: F({
-      pve: 'Highest tier', pveSub: 'Furthest up the ladder this season.',
+      pve: 'Highest rank', pveSub: 'Furthest up the ladder this season.',
       fast: 'Fastest Grand Champion', fastSub: 'Fewest days from first bout to the title.',
       fastNone: 'No Grand Champion yet.',
       pvp: 'Season rating', pvpSub: 'Rated bouts between players.',
@@ -468,12 +468,12 @@ export const ARENA_TEXT = F({
         'No doors, rest or travel during a bout. Healers come after.',
       ]) }),
       F({ head: 'The ladder', lines: F([
-        'Ten tiers of three bouts. Win all three to face the Tier Champion.',
-        'Beat the champion to move up and earn a title. Lose and you start the tier again.',
+        'Ten ranks of three bouts each. Win all three to face that rank\'s champion.',
+        'Defeat the champion to move up and earn a title. Lose, and you begin the rank again.',
         'Tier champions fight as elites. Watch for the marks of their heavy blows.',
         'No potions on the sand, and no Levitate, Invisibility, Chameleon, Shadow or Calm.',
-        'In tier nine you fight two at once. Tier ten is the Grand Melee.',
-        'Beat the tier ten champion to become Grand Champion.',
+        'At the ninth rank you fight two at once. The tenth rank is the Grand Melee.',
+        'Defeat the champion of the tenth rank to become Grand Champion.',
         'The Pit Master in the undercroft will spar with you for practice.',
         // ARENA5: your ladder replay
         'Your last three ladder bouts are saved. Replay them from the Herald or Records.',
@@ -481,10 +481,10 @@ export const ARENA_TEXT = F({
       ]) }),
       F({ head: 'The banners', lines: F([
         'Join the Red or Blue Banner at its recruiter by the gate. It is free.',
-        'Ladder wins score points: 1 a bout, 3 a tier champion, 10 for Grand Champion.',
+        'Each win scores: 1 for a bout, 3 for a rank\'s champion, 10 for the Grand Champion.',
         'You can quit any time, but must wait a season to join the other banner.',
         'A season lasts a year. The banner with the most points wears the laurel.',
-        'The crowd favours laurel wearers all next season.',
+        'The crowd favors laurel wearers all next season.',
       ]) }),
       F({ head: 'Purses and the crowd', lines: F([
         'A win pays 50 gold in the Pit, up to 10,000 for Grand Champion.',
@@ -497,7 +497,7 @@ export const ARENA_TEXT = F({
         'The bookmaker by the gate takes bets of 10 to 1000 gold until the fight starts.',
         'A win pays his odds. A draw returns your stake.',
         // AUDIT PRE-MERGE 1003 B3/B4: a bout walked away from is the house's; a favourite too short is not laid
-        'Leave after the bout starts and he keeps your stake. No bets on heavy favourites.',
+        'Leave after the bout starts and he keeps your stake. No bets on heavy favorites.',
         'Collect your winnings at his stall. He only pays in person.',
       ]) }),
     ]),

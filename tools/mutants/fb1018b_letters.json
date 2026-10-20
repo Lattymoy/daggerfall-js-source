@@ -7,25 +7,28 @@
     "tests": [
       "test/systems/revenant/fb1018b_letters.test.js"
     ],
-    "why": "the field's bug: a revenant's kill takes a 650,000-gold letter, the pack's most valuable piece"
+    "why": "the field's bug: a revenant's kill takes a 650,000-gold letter, the pack's most valuable piece - since STEED-KEPT (FIELD BUGS 2026-10-19f) the letter is refused through a second door too: revenantMayTake reads the zone's kept-back list (decorLaw.js DECOR_OWN_KEPT_BACK), which names Letter_of_credit, so this check alone gone, the letter still stays - kept as LETTERS-HOME's own word on it; both doors gone is the bug again (test/systems/revenant/fb1018b_letters.test.js THE LAW)",
+    "equivalent": true
   },
   {
     "name": "LETTERS-HOME-handback-dropped",
     "file": "src/systems/revenant/revenant.js",
-    "old": "    if (r.took.some(isLetterOfCredit)) {",
-    "new": "    if (false) {",
+    "old": "    if (home.length) { player.items ??= [];",
+    "new": "    if (false) { player.items ??= [];",
     "tests": [
-      "test/systems/revenant/fb1018b_letters.test.js"
+      "test/systems/revenant/fb1018b_letters.test.js",
+      "test/systems/revenant/fb1019f_steedkept.test.js"
     ],
     "why": "a letter taken before the law stays on its record - lost for good on a fallen one whose body never carried it"
   },
   {
     "name": "LETTERS-HOME-handback-kept-on-record",
     "file": "src/systems/revenant/revenant.js",
-    "old": " r.took = r.took.filter((it) => !isLetterOfCredit(it)); }",
+    "old": " r.took = r.took.filter((it) => revenantMayTake(it)); }",
     "new": " }",
     "tests": [
-      "test/systems/revenant/fb1018b_letters.test.js"
+      "test/systems/revenant/fb1018b_letters.test.js",
+      "test/systems/revenant/fb1019f_steedkept.test.js"
     ],
     "why": "the letter comes home and stays on the record: a second copy at its fall or the next load"
   }

@@ -787,8 +787,8 @@
   {
     "name": "L5-locale-ru-rule-arms",
     "file": "locales/ru/Port_Strings.csv",
-    "old": "{full, select, yes {: ваши",
-    "new": "{full, select, no {: ваши",
+    "old": "{full, select, yes {. Ваши",
+    "new": "{full, select, no {. Ваши",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],

@@ -38,10 +38,10 @@ test('SEAT-LINE: a member at the Roll\'s 7 is answered the seat - the next rank,
 
 test('SEAT-LINE: the hall says the seat in words - the seats, the reputation short of 80, and the Turning\'s Merit with its tenure and account age (mutants: a line dropped, a number not the law\'s)', () => {
   const g = GUILDS.MagesGuild;
-  const seats = "Ranks 8 and 9 are each chapter's council and Master, won by Merit - no review gives them";
+  const seats = "Ranks 8 and 9 are each chapter's council and Master, won only by Merit";
   // PIN MOVED (AUDIT GUILD-WORDS L3-4, L1-2): the seats' days are real ones; and at 62 a Wizard's own 70 is short, so the
   // review's demotion comes first (the warnings' own pins are fb1015g_guildwords's) - 72 is the seat line alone
-  const merit = 'Each Sunday\'s Turning gives the chairs to the most Merit of the last 4 weeks, among members 14 real days in the guild, on accounts 7 real days old';   // PIN MOVED (AUDIT GUILD-WORDS II C-2): ranks 8 and 9 are chairs - "seats" is a town's word
+  const merit = 'At each Sunday\'s Turning the chairs go to the members with the most Merit over the last 4 weeks, with 14 real days in the guild and accounts 7 real days old';   // PIN MOVED (AUDIT GUILD-WORDS II C-2): ranks 8 and 9 are chairs - "seats" is a town's word
   assert.deepEqual(rankNeedsLines(withSkills(g, 90), g, atRank(g, 7), storeWith(g, 72), ROLL),
     ['Next rank: Master Wizard', seats, 'Reputation 72 of 80', merit]);
   assert.deepEqual(rankNeedsLines(withSkills(g, 90), g, atRank(g, 7), storeWith(g, 100), ROLL),

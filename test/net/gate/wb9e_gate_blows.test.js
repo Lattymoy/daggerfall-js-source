@@ -161,5 +161,5 @@ test('WB9e the court throws them: each landing its bursts at its own moment (his
   const gc = read('src/scenes/gate/gateCourt.js');
   const tel = gc.indexOf('if (shape) { pass.draw(shape'), fxAt = gc.indexOf('fxPass.draw(_fxLive, meteorNow, proj, view, eye, seconds, fog);');
   assert.ok(tel > 0 && fxAt > tel, 'over the telegraph');
-  assert.ok(COURTS.length === 3 && ATTACK_BY_ID.length === 11);
+  assert.ok(COURTS.length === 6 && ATTACK_BY_ID.length === 19);   // WB14b: the portents' floors in the one table; WB14a: the new arsenal's six; PIN MOVED (WB14d): the Sundering and the Rejoining
 });

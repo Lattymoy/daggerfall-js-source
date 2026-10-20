@@ -36,7 +36,7 @@ export function mintBountyItem(level, { rolls = Math.random, rarityOn = lootRari
   mintCondition(item);
   const max = Number(item.maxCondition) || 0;
   if (max > 0) item.currentCondition = Math.max(1, Math.round(max * rule.condition));
-  if (max > 0) item.foundCondition = item.currentCondition;   // AUDIT SUGGESTIONS-1019 L1-3: SELL-AS-FOUND's mark (tradeModes.js) - online a mended reward sells as it was handed over
+  if (max > 0) item.foundCondition = item.currentCondition;   // AUDIT SUGGESTIONS-1019 L1-3: SELL-AS-FOUND's mark (tradeModes.js) - online a mended reward sells as it was handed over and a third of the mend (MEND-THIRD)
   if (rarityOn && rule.magicChance > 0 && rolls() < rule.magicChance) applyRarity(item, 'magic', rolls);
   return item;
 }

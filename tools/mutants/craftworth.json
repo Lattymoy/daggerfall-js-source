@@ -11,8 +11,8 @@
   {
     "name": "CRAFT-WORTH-sellmagic-reads-the-roll",
     "file": "src/systems/tradeModes.js",
-    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment);",
-    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment);",
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, fenced);",
+    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment, fenced);",
     "tests": [
       "test/systems/craftworth.test.js"
     ]

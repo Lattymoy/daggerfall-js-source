@@ -141,10 +141,10 @@ const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
 const CSA_VENDOR = 'come-sail-away';
 /** The sea fight's record in a save's per-mod slot (scenes/naval/navalHost.js NAVAL_SAVE_VENDOR, pinned equal - the sea's host,
  *  which neither the Online door nor the Worker loads): AUDIT WK-P1, where my companions' packs ride. */
-const NAVAL_VENDOR = 'NavalCombat';
+export const NAVAL_VENDOR = 'NavalCombat';
 /** The feud's record in a save's per-mod slot (systems/revenant/revenant.js REVENANT_SAVE, pinned equal - the feud's runtime,
  *  which neither the Online door nor the Worker loads): ITEM-WALK C, where a sworn revenant's pack rides. */
-const REVENANT_VENDOR = 'Revenant';
+export const REVENANT_VENDOR = 'Revenant';
 
 /**
  * AUDIT REALM F2: WHAT THE PLAYER LEFT IN THE WORLD - every list of the character's own things a save carries outside its

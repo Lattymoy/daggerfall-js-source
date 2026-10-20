@@ -201,7 +201,7 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
   }
   if (kind === 'hunt') {
     const need = between(CONTRACT_NEED.hunt, r);
-    return { ...base, title: `Clear ${crown}'s waters`, words: `End ${need} pirate ships in ${crown}'s waters - sunk or taken - within ${TERM_DAYS.hunt} days.`,
+    return { ...base, title: `Clear ${crown}'s waters`, words: `Sink or capture ${need} pirate ships in ${crown}'s waters within ${TERM_DAYS.hunt} days.`,
       pay: payOf('hunt', { level, need, pay }), standing: STANDING_DONE.hunt * need, days: TERM_DAYS.hunt, need };
   }
   if (kind === 'delivery') {
@@ -211,7 +211,7 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
     const d = cheb(to, port);
     const days = DELIVERY_DAYS_BASE + Math.ceil(d / DELIVERY_PX_DAY);
     const cargo = CARGOES[Math.floor(r() * CARGOES.length) % CARGOES.length];
-    return { ...base, title: `Cargo for ${to.name}`, words: `${cargo.charAt(0).toUpperCase()}${cargo.slice(1)}, to ${to.name}'s harbourmaster within ${days} days. It goes in your hold - lose your ship and it is lost.`,
+    return { ...base, title: `Cargo for ${to.name}`, words: `${cargo.charAt(0).toUpperCase()}${cargo.slice(1)}, to ${to.name}'s harbormaster within ${days} days. It goes in your hold. If you lose your ship, you lose the cargo.`,
       pay: payOf('delivery', { level, px: d, pay }), standing: STANDING_DONE.delivery, days, to: { key: to.key, name: to.name, px: to.px, py: to.py }, cargo };
   }
   if (kind === 'salvage') {
@@ -225,7 +225,7 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
   }
   if (kind === 'survey') {
     const need = between(CONTRACT_NEED.survey, r);
-    return { ...base, title: 'The Admiralty\'s survey', words: `Take the measure of ${need} ships in ${crown}'s waters through your glass - their guns, hands and holds - within ${TERM_DAYS.survey} days.`,
+    return { ...base, title: 'The Admiralty\'s survey', words: `Study ${need} ships in ${crown}'s waters through your spyglass (their guns, crew and holds) within ${TERM_DAYS.survey} days.`,
       pay: payOf('survey', { level, need, pay }), standing: STANDING_DONE.survey * need, days: TERM_DAYS.survey, need };
   }
   return null;
@@ -330,7 +330,7 @@ export function restoreContract(c) {
  */
 export function marqueOffer({ crown, perks, gold: purse, held = null }) {
   const price = MARQUE_PRICE;
-  if (held) return { can: false, price, days: MARQUE_DAYS, why: held.crown === crown ? `You hold ${crown}'s letter already.` : `You hold ${held.crown}'s letter - one crown's at a time.` };
+  if (held) return { can: false, price, days: MARQUE_DAYS, why: held.crown === crown ? `You hold ${crown}'s letter already.` : `You already hold ${held.crown}'s letter. You can only hold one at a time.` };
   if (!perks?.marque) return { can: false, price, days: MARQUE_DAYS, why: `${crown} grants letters of marque to its Privateers.` };
   if ((Number(purse) || 0) < price) return { can: false, price, days: MARQUE_DAYS, why: `A letter costs ${gold(price)}.` };
   return { can: true, price, days: MARQUE_DAYS, why: '' };

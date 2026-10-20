@@ -32,6 +32,7 @@ import { clearPlayerHarm } from '../harmMark.js';   // AUDIT (2026-10-02): a bea
 import { willMatters, willBroken, LAST_STAND_RANK, LAST_STAND_ROAR, PHASE_TWO, lastStandHealth, phaseTwo } from './revenantFeud.js';   // RVN3: the will (bible/12-Enhanced-AI/Feud-Arc.md 14.2); RVN4: the last stand (15)
 import { endCraft, DREAD, dreadStandHealth } from './revenantUnquiet.js';   // UNQUIET (Revenants.md section 46): a flight's craft put down; the Dread's two stands
 import { t } from '../textManager.js';   // AUDIT UNQUIET: the slip's words through the text core
+import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** How long a beaten revenant kneels before it slips away (ms). */
 export const REVENANT_YIELD_MS = 90000;
@@ -141,8 +142,9 @@ export function beginYield(player, f, { now = Date.now(), rolls = Math.random } 
   setRetinuePlayer(player);
   const r = revenantYielded(player, f.entity);
   if (!r) return null;
+  noteAct('revenant-knelt');   // QL11: a revenant made to kneel - one of mine, beaten (revenantMayYield: never a puppet, never twice)
   f.trophy = revenantTrophy(r, { entity: f.entity, level: player?.level ?? 1, rolls });
-  const ev = revenantMomentEvent('yield', r, player?.name, { body: 'Beaten - it awaits your judgement. Go to it: kill it, or spare it.', archive: f.archive, rolls });
+  const ev = revenantMomentEvent('yield', r, player?.name, { body: 'Beaten, it awaits your judgment. Go to it to kill it or spare it.', archive: f.archive, rolls });
   f.yieldEvent = ev;
   return ev;
 }
@@ -162,7 +164,7 @@ export function yieldStep(f, feet, dtMs = 0) {
 /** Its words as it slips away (the escape the pool makes of it). AUDIT UNQUIET (Revenants.md section 49): ended as every
  *  getting-away's card is - the wound it got away with, where its trail leads (revenant.js revenantEscapeTail). */
 export function slipEvent(player, r, { archive = null, rolls = Math.random } = {}) {
-  return revenantMomentEvent('slip', r, player?.name, { body: `${t('rvn.unq.slip', 'You hesitated. {given} got away - and it will remember.', { given: r.given })}${revenantEscapeTail(r)}`, archive, rolls });
+  return revenantMomentEvent('slip', r, player?.name, { body: `${t('rvn.unq.slip', 'You hesitated. {given} got away, and it will remember.', { given: r.given })}${revenantEscapeTail(r)}`, archive, rolls });
 }
 /** THE KNEEL: its hurt's last frame held (a breath every so often - the frame before it), facing the eye as ever. */
 export function kneelPose(f, eye, now = Date.now()) {
@@ -223,7 +225,7 @@ export function beginSpare(player, f, { now = Date.now(), rolls = Math.random } 
   if (state === 'with') holdSworn(r.id, SPARING_MS);   // AUDIT (2026-10-02): its companion steps out once the kneeling one is through
   const body = (state === 'with'
     ? `Sworn to you. ${r.given} walks at your side now.`
-    : `Sworn to you. Your companions are full - ${r.given} waits until you call it.`)
+    : `Sworn to you. Your companions are full, so ${r.given} waits until you call it.`)
     + (back.length ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: "It's yours. It always was."` : '');   // AUDIT FEUD 2: its article gone after "your"
   return { r, state, event: revenantMomentEvent('spared', r, player?.name, { body, archive: f.archive, rolls }) };
 }
@@ -291,7 +293,7 @@ export function fateModel(player, f, { choose } = /** @type {any} */ ({})) {
       {
         id: 'spare', key: 'S', label: 'Spare', verb: 'Spare', tone: 'primary',
         title: `Spare ${r.given}`,
-        detail: !room ? `You keep ${REVENANT_RETINUE_MAX} sworn already - release one first`
+        detail: !room ? `You already have ${REVENANT_RETINUE_MAX} sworn. Release one first`
           : free ? `It joins you as a companion (${used + 1} of ${COMPANION_SLOTS})`
             : `It is sworn to you, and waits until you call it (your ${COMPANION_SLOTS} companion slots are full)`,
         confirm: free ? `Spare ${r.name}? It will walk at your side.` : `Spare ${r.name}? It will wait, sent away, until you call it.`,

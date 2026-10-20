@@ -395,7 +395,7 @@ test('LV1: the ribbon\'s roles RECONSTRUCT levelUpSkillSum exactly, over every s
   assert.deepEqual({ ...ROLE_NOTE }, {
     [ROLE_COUNTS]: 'Every point counts toward your next level.',
     [ROLE_DROPPED]: 'Your lowest major skill. It doesn\'t count toward your next level.',
-    [ROLE_BEST]: 'Your highest minor skill - the only minor skill that counts toward your next level.',
+    [ROLE_BEST]: 'Your highest minor skill, the only minor skill that counts toward your next level.',   // PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
     [ROLE_IDLE]: 'Doesn\'t count toward your next level.',
   });
 });

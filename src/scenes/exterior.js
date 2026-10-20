@@ -252,6 +252,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // WATER1: the water's switch
 import { createCoverIndex, isCoverFlat, coverProxies } from '../ai/cover.js';   // TACT1: billboards are cover
+import { flatBodies } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door (as world.js)
 import { LPT_SCALE_MAX, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { spherePlanes } from '../render/bounds.js';   // LPT1 (AUDIT LPT B4): the near trees' sphere test reads normalised planes
@@ -318,7 +319,7 @@ import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';   // ROAD-G G2: FinalizeFoe's Flying lift reads the behaviour flag
 import { isHouseOwned } from '../systems/banking.js';   // QX1/H1: Place.SetupSites' residence filter
 import { generateBuildingName } from '../world/buildingNames.js';   // QX1/IH1: %cbd regenerates the current building's name
-import { createQuestBridge, tokensToRows } from './quest/questBridge.js';   // QX1: THE QUEST MACHINE, in the fixed-city host
+import { createQuestBridge, tokensToRows, choiceDoor } from './quest/questBridge.js';   // QX1: THE QUEST MACHINE, in the fixed-city host
 import { QuestAudioSource } from '../systems/audio.js';   // QX1/E6: PlaySound's ONE source per machine
 import { WORLD_CONTEXT, makeAnchor, teleportPlan, ANCHOR_MUST_BE_SET } from '../systems/teleportAnchor.js';   // TP2/A10: the Recall anchor's law - shape, IsSameInterior, the plan, and the 4001 record id
 import { STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the anchor's stamp
@@ -1162,6 +1163,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // SIB1: the cache's answer for this archive; LPT1: its far picture and its 3D tree near - AUDIT 05b A12: the choice is
     // every host's one (world/naturePicture.js)
     const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons, renderer, uploadRecord }, t, archive, record);
+    collider.cover.add('prop-bodies', flatBodies(t, archive, record, plain, centers, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));   // PROP-BODIES: the record's own
     if (far) {
       lowPolyTrees.acquire(far); lptHandles.push(far);
       lptGroups.push({ h: lptHandles.length - 1, centers, wild: null });
@@ -4233,6 +4235,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       buttonsMulti: buttons,
       onButton: (b) => { respond(b); return []; },
     }),
+    showChoice: choiceDoor(showQuestBox),   // QL4: the questlines' `ask` (questBridge.js choiceBoxes, through choiceDoor - HOST-SPLIT)
     // E6: PlaySound's busy skip over the ONE source (PlaySound.cs:110-116).
     // AUDIT 58: the table id goes through the ID door, as
     // PlaySound.cs:74-75 does at create - the four-hosts twin of the

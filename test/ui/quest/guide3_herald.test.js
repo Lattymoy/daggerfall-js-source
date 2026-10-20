@@ -192,7 +192,7 @@ test('GUIDE3 WHAT IT SAYS - each news is its kind, the quest\'s title and one li
   const e = new QuestHerald();
   e.hear({ quests: [], events: [{ type: 'completed', id: '1', title: 'Won', main: false }, { type: 'ended', id: '2', title: 'Lost', main: false }] });
   assert.deepEqual(said(e), [['Quest completed', 'Won'], ['Quest ended', 'Lost']], 'an ending says only that it ended - no line row at all');
-  assert.deepEqual(Object.keys(HERALD_WORDS), ['started', 'updated', 'urgent', 'completed', 'ended'], 'the lens\'s five events, each with a word');
+  assert.deepEqual(Object.keys(HERALD_WORDS), ['started', 'updated', 'objective', 'urgent', 'completed', 'ended'], 'the lens\'s six events, each with a word (QL2: an objective done)');
   const n = new QuestHerald();
   n.hear({ quests: [], events: [{ type: 'updated', id: '4', title: 'No view' }] });
   assert.deepEqual(said(n), [['Journal updated', 'No view']], 'a quest the look did not carry has no line to say');
@@ -453,7 +453,9 @@ test('GUIDE3 ONE CALL, EVERY HOST - drawHud draws the herald on its one call, OU
   const gate = hud.indexOf("if (isEnhanced() && typeof document !== 'undefined') {\n    drawLevelNotices(");
   assert.ok(call > 0 && gate > call, 'drawHud draws the herald, before (outside) the enhanced gate');
   const bridge = rd('src/scenes/quest/questBridge.js');
-  assert.match(bridge, /machine\.tick\(\);\n\s*updateTimer = 0;\n\s*news\(\);\n\s*return true;/, 'the news is heard after the machine\'s tick, on the tick that fired');
+  // PIN MOVED (QL1): the questlines' layer latches what each stamped quest showed between the tick and the news, so the
+  // news it carries (an objective done) is the tick's own
+  assert.match(bridge, /machine\.tick\(\);\n\s*updateTimer = 0;\n(?:\s*questlines\.look\(\);[^\n]*\n)?\s*news\(\);\n\s*return true;/, 'the news is heard after the machine\'s tick, on the tick that fired');
   assert.match(bridge, /const herald = heraldOn\(\), follow = followOn\(\);\n[\s\S]*?\n\s*if \(!herald && !follow\) \{ lookedLast = false; return; \}\n[\s\S]*?\n\s*try \{\n\s*const seen = lens\.look\(ctx\.questWhere \?\? \{\}\);/,
     'the gate stands before the look: no face listening, no look (GUIDE4 made the tracker a face, GUIDE5 the marks; AUDIT GUIDE T2 named the pair followOn)');
   const hosts = { 'src/scenes/world.js': /questBridge\.tick\(dt\)/, 'src/scenes/worldModes.js': /questBridge\?\.tick\(dt\)/, 'src/scenes/exterior.js': /questBridge\?\.tick\(dt\)/ };

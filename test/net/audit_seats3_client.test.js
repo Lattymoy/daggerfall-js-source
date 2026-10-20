@@ -183,7 +183,7 @@ test('AUDIT SEATS-3 C6: the Tithe refused says the cap the Market Hall raises - 
   const t = REFUSALS['bad-tithe'];
   assert.equal(accountRefusalText('bad-tithe'), t);
   assert.doesNotMatch(t, /at most 10% at a palace seat, 15% at a crown\.$/);
-  assert.match(t, /10% at a palace and 15% at a crown, a point more for each tier of its Market Hall/);
+  assert.match(t, /10% at a palace and 15% at a crown, and a point more for each stage of its Market Hall/);
   assert.equal(seatTitheCap({ tier: 'palace', forts: { market: 3 } }), 13);
   assert.equal(seatTitheCap({ tier: 'crown', forts: { market: 3 } }), 18);
 });
@@ -232,12 +232,12 @@ test('AUDIT SEATS-3 D2: the market read names its board, the book keeps the list
   t.book.state.counts = { listings: 31, orders: 0 };
   t.book.state.listingsMax = 37;
   await mine(t);
-  assert.doesNotMatch(t.root.textContent, /listings up - the most allowed/, 'thirty-one of a Market Hall\'s thirty-seven: not full');   // BOARD-UI (PIN MOVED): the words cut
+  assert.doesNotMatch(t.root.textContent, /listings up, the most allowed/, 'thirty-one of a Market Hall\'s thirty-seven: not full');   // BOARD-UI (PIN MOVED): the words cut
   assert.match(t.root.textContent, /Fee \d+ silver, kept if you cancel\./);
   t.book.state.counts = { listings: 37, orders: 0 };
   await mine(t);
   assert.equal(buttons(t.root).find((b) => b.textContent === 'List').disabled, true);
-  assert.match(t.root.textContent, /You have 37 listings up - the most allowed here\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
+  assert.match(t.root.textContent, /You have 37 listings up, the most allowed here\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
   t.book.state.listingsMax = null;
   t.book.state.counts = { listings: MARKET_LISTINGS_MAX, orders: 0 };
   await mine(t);

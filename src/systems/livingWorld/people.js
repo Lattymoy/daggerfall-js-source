@@ -91,8 +91,8 @@ export function peoplePage(rel, day, townOf) {
 export function personWords(p) {
   if (p.fate === 'slain') return 'Slain by your hand.';
   if (p.fate === 'died') return 'Fell fighting at your side.';
-  const said = p.standing === 'friend' ? 'A friend.' : p.standing === 'hostile' ? 'Hostile - they mean you harm.'
-    : p.standing === 'enemy' ? 'An enemy - they will not speak to you.' : 'Knows you.';
+  const said = p.standing === 'friend' ? 'A friend.' : p.standing === 'hostile' ? 'Hostile. They mean you harm.'
+    : p.standing === 'enemy' ? 'An enemy. They will not speak to you.' : 'Knows you.';
   const seen = p.days === 0 ? 'Seen today.' : p.days === 1 ? 'Last seen yesterday.' : `Last seen ${p.days} days ago.`;
   return `${said} ${seen}`;
 }
@@ -116,6 +116,6 @@ export function regardBadge(card) {
   return {
     standing, label: STANDING_NAMES[standing], value: `${r > 0 ? '+' : ''}${r}`, share: (r + REGARD_MAX) / (2 * REGARD_MAX),
     words: `How they regard you: ${r > 0 ? '+' : ''}${r}, from -${REGARD_MAX} to +${REGARD_MAX}. A friend from +${FRIEND_AT}; an enemy from ${ENEMY_AT}, who will not speak to you; hostile from ${HOSTILE_AT}. `
-      + 'Talking once a day, a word in a tone they like and fighting at their side raise it; a tone they dislike, a crime they see, a blow and - worst - one of their own struck down lower it. Townsfolk like a Blunt word, not a Polite one. It fades toward nothing on days you are apart.',   // TONE-TASTE
+      + 'Talking once a day, speaking in a tone they like and fighting at their side raise it. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 on days you are apart.',   // TONE-TASTE
   };
 }

@@ -155,8 +155,8 @@
   {
     "name": "LW7c-words-hostile",
     "file": "src/systems/livingWorld/people.js",
-    "old": "p.standing === 'hostile' ? 'Hostile - they mean you harm.'",
-    "new": "p.standing === 'friend' ? 'Hostile - they mean you harm.'",
+    "old": "p.standing === 'hostile' ? 'Hostile. They mean you harm.'",
+    "new": "p.standing === 'friend' ? 'Hostile. They mean you harm.'",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]

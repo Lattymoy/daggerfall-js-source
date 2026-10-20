@@ -29,7 +29,7 @@
   {
     "name": "SEAT-LINE-the-seats-line-dropped",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "      t('guild.rankNeeds.seat', \"Ranks {officer} and {master} are each chapter's council and Master, won by Merit - no review gives them\",\n        { officer: SEAT_RANK.officer, master: SEAT_RANK.master }),\n",
+    "old": "      t('guild.rankNeeds.seat', \"Ranks {officer} and {master} are each chapter's council and Master, won only by Merit\",\n        { officer: SEAT_RANK.officer, master: SEAT_RANK.master }),\n",
     "new": "",
     "tests": [
       "test/systems/fb1015g_seatline.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "SEAT-LINE-the-merit-line-dropped",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "      t('guild.rankNeeds.seatMerit', 'Each Sunday\\'s Turning gives the chairs to the most Merit of the last {weeks} weeks, among members {days} real days in the guild, on accounts {age} real days old',\n        { weeks: SEAT_MERIT_WEEKS, days: SEAT_TENURE_S / 86_400, age: SEAT_ACCOUNT_AGE_S / 86_400 }),\n",
+    "old": "      t('guild.rankNeeds.seatMerit', 'At each Sunday\\'s Turning the chairs go to the members with the most Merit over the last {weeks} weeks, with {days} real days in the guild and accounts {age} real days old',\n        { weeks: SEAT_MERIT_WEEKS, days: SEAT_TENURE_S / 86_400, age: SEAT_ACCOUNT_AGE_S / 86_400 }),\n",
     "new": "",
     "tests": [
       "test/systems/fb1015g_seatline.test.js"

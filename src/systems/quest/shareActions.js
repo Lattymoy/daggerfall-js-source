@@ -16,6 +16,15 @@ const progress = {
   WhenPcEntersExits: { currentLocationType: location, previousLocationType: location },
   RunQuest: { questStarted: bool, questUId: (v) => v === null || count(v) },
 };
+// AUDIT QUESTLINES BRANCH-2: PROGRESS THAT IS THE HOLDER'S OWN - checked as progress is, never taken from the partner: a
+// fresh copy keeps its own parse's, a resync the copy it holds (takeLocalActions' `live`). `ql act`'s `from` is where this
+// copy's count of acts began (systems/questlines/qlActions.js QlAct), and an act is this world's (qlState.js
+// receivedState: a copy arrives having heard none) - so the partner's number read against this holder's acts a count
+// that never came, or one already met. Not listed, it failed the law closed: a step with `ql act` (25 of the 35 line
+// scripts) could not be shared once its trigger had been asked, and every resync of a party's copy was refused.
+const holders = {
+  QlAct: { from: (v) => v === null || count(v) },
+};
 
 // Save fields may be absent rather than undefined after JSON transport. Key order is irrelevant.
 const canonical = (value) => JSON.stringify(value, (_key, v) => v && typeof v === 'object' && !Array.isArray(v)
@@ -38,20 +47,27 @@ export function sharedActionMatches(own, incoming) {
     if (own.type === 'StartQuest' && key === 'questName' && value === '' && expected.questIndex1 > 0
       && received === `S${String(expected.questIndex1).padStart(7, '0')}`) continue;
     if (own.type === 'WorldUpdate' && key === 'variant' && value === '-' && received === '') continue;
-    const validate = progress[own.type]?.[key];
+    const validate = progress[own.type]?.[key] ?? holders[own.type]?.[key];
     if (!validate || !validate(received, value)) return false;
   }
   return true;
 }
 
-/** Copy the checked progress over locally authored action definitions and diagnostic source. */
-export function takeLocalActions(local, data) {
+/** Copy the checked progress over locally authored action definitions and diagnostic source. AUDIT QUESTLINES
+ *  BRANCH-2: the holder's own progress (`holders`) is `live`'s - the copy a resync lands on, its action in the same
+ *  place - or, for a fresh copy (no `live`), the local parse's. */
+export function takeLocalActions(local, data, live = null) {
   const ref = local.getSaveData();
+  const mine = live?.getSaveData?.() ?? null;
   return { ...data, tasks: data.tasks.map((task, i) => ({ ...task, actions: task.actions.map((action, j) => {
     const own = ref.tasks[i].actions[j];
     const specific = own.actionSpecific == null ? null : { ...own.actionSpecific };
     if (specific) for (const key of Object.keys(progress[own.type] ?? {})) {
       if (Object.hasOwn(action.actionSpecific, key)) specific[key] = action.actionSpecific[key];
+    }
+    const kept = mine?.tasks?.[i]?.actions?.[j];
+    if (specific && kept?.type === own.type && kept.actionSpecific) for (const key of Object.keys(holders[own.type] ?? {})) {
+      if (Object.hasOwn(kept.actionSpecific, key)) specific[key] = kept.actionSpecific[key];
     }
     return { ...own, isComplete: action.isComplete, actionSpecific: specific };
   }) })) };

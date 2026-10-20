@@ -15,6 +15,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';
 
 import {
   startDungeonLoads, TV_DUNGEON_LOADS_PER_FRAME, TV_DUNGEON_MODELS_MAX, dungeonEntranceModel, modelFoot, owDungeonGrow,
@@ -29,7 +30,7 @@ import { PersistentTrackField, SnowCoverage, TRACK_MAX_CELLS } from '../../src/s
 import { SnowfallRuntime } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost, snowPixelBox } from '../../src/scenes/snowfallHost.js';
 
-const WORLD = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+const WORLD = hostText('src/scenes/world.js');   // HOST-SPLIT (OW-DUNGEON-SIZE): the dungeons' models live in scenes/travelViewDungeonModels.js
 const lift = (re, what) => { const m = re.exec(WORLD); assert.ok(m, `lifted from scenes/world.js: ${what}`); return m[1]; };
 const settle = (ms = 1) => new Promise((r) => setTimeout(r, ms));
 
@@ -56,7 +57,7 @@ test('TV-BURST the law: the loads a frame starts - none while the view is not fu
 });
 
 test('TV-BURST the host: the view\'s first frames - twelve dungeons about the traveller - start no load while it rises, then one a frame, every one drawn once loaded; a set that moves lets its leaver go; the view down lets them all go to their shelf (mutants: the draw\'s own loop loading; fullyUp unread; the drop left out)', () => {
-  const draw = lift(/\n {2}(const _tvDngAt = \[0, 0, 0\];\n {2}function drawTvDungeonModels\(eye, up\) \{[\s\S]*?\n {2}\})\n/, 'drawTvDungeonModels');
+  const draw = lift(/\n {2}(const _tvDngAt = \[0, 0, 0\];\n {2}function drawTvDungeonModels\(eye, up, blend\) \{[\s\S]*?\n {2}\})\n/, 'drawTvDungeonModels');
   const drop = lift(/\n {2}(function dropTvDungeonModels\(\) \{[\s\S]*?\n {2}\})\n/, 'dropTvDungeonModels');
   const s = { list: [], loads: [], released: [], draws: 0 };
   const map = new Map();
@@ -70,7 +71,7 @@ test('TV-BURST the host: the view\'s first frames - twelve dungeons about the tr
     built: new Map(), tvGroundAt: () => 0, tvGroundGenNow: () => 1, renderer: { drawMesh: () => { s.draws++; } },
   };
   const names = Object.keys(d).join(', ');
-  const host = new Function('d', `const { ${names} } = d;\n${draw}\n${drop}\nreturn { drawTvDungeonModels, dropTvDungeonModels };`)(d);
+  const host = new Function('d', `const host = d; const { ${names} } = d;\n${draw}\n${drop}\nreturn { drawTvDungeonModels, dropTvDungeonModels };`)(d);
   s.list = Array.from({ length: TV_DUNGEON_MODELS_MAX }, (_, i) => ({ key: `dng:${i}`, px: i, py: 0 }));
   const eye = [0, 450, 0];
   for (let f = 0; f < 30; f++) host.drawTvDungeonModels(eye, false);
@@ -96,7 +97,7 @@ test('TV-BURST the host: the view\'s first frames - twelve dungeons about the tr
   assert.equal(map.size, 0);
   assert.equal(s.released.length, 1 + TV_DUNGEON_MODELS_MAX, 'each one released once');
   // the frame's own seams: the frame's fullyUp handed, and the view down drops them
-  assert.match(WORLD, /\n {4}if \(tvf\) drawTvDungeonModels\(travelView\?\.eye \?\? null, tvf\.fullyUp\);[^\n]*\n {4}else if \(_tvDngModel\.size\) dropTvDungeonModels\(\);/);
+  assert.match(WORLD, /\n {4}if \(tvf\) drawTvDungeonModels\(travelView\?\.eye \?\? null, tvf\.fullyUp, tvf\.blend\);[^\n]*\n {4}else if \(_tvDngModel\.size\) dropTvDungeonModels\(\);/);
   assert.match(readFileSync(new URL('../../src/scenes/travelView.js', import.meta.url), 'utf8'), /blend: t, fullyUp: state === 'up', state,/, 'the view\'s frame says when it is fully up');
 });
 
@@ -162,7 +163,7 @@ test('TV-PIN the climate\'s pictures are the dungeon\'s own: world.js\'s load ov
     transformedAabb: () => [-1, 0, -1, 1, 4, 1], archAabb: () => [-1, 0, -1, 1, 4, 1],
   };
   const names = Object.keys(d).join(', ');
-  const host = new Function('d', `const { ${names} } = d;\n${load}\n${drop}\nreturn { tvDungeonModelLoad, dropTvDungeonModels };`)(d);
+  const host = new Function('d', `const host = d; const { ${names} } = d;\n${load}\n${drop}\nreturn { tvDungeonModelLoad, dropTvDungeonModels };`)(d);
   host.tvDungeonModelLoad({ key: 'dng:1', px: 3, py: 4, loc: { climate: { climateType: 1 } } });
   for (let i = 0; i < 20 && !_tvDngModel.get('dng:1').ready; i++) await settle();
   const e = _tvDngModel.get('dng:1');

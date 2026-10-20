@@ -155,7 +155,7 @@ test('GOLD-MARKET Stores: the professions\' book keeps what gold bought as its o
   assert.equal(storesSplit({ own: 0, bought: 2, gold: 1 }), '2 bought · 1 bought with gold');
   assert.equal(storesSplit({ own: 2, bought: 1 }), '2 own · 1 bought', 'as before');
   assert.equal(storesSplit({ own: 2, bought: 0 }), 'own');
-  assert.match(GOLD_GOODS_LINE, /pack, or back on the market for gold/);
+  assert.match(GOLD_GOODS_LINE, /It can go to your pack or be sold on the market for gold/);
   assert.match(src('src/ui/professions/profPages.js'), /if \(\(pick\.gold \| 0\) > 0\) detail\.append\(el\('p', 'px-note', goldGoodsLine\(\)\)\);/);   // PIN MOVED (L10N4): said through its reader
   assert.match(src('src/ui/professions/profPages.js'), /const goldGoodsLine = \(\) => t\('prof\.page\.stores\.goldGoods', GOLD_GOODS_LINE\);/);
   // the listable units a currency's listing may take
@@ -322,6 +322,6 @@ test('AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked 
   await new Promise((r) => setTimeout(r, 0));
   const what = [...root.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'What to list');
   what.value = 'item'; what.onchange();
-  assert.ok(root.textContent.includes(`Not for the market: Bread (your own make - list it as a crafted piece); Mouldy Bread (${SPOILED_DISH_WHY}).`), root.textContent);
+  assert.ok(root.textContent.includes(`Not for the market: Bread (made by you. List it as a crafted piece); Mouldy Bread (${SPOILED_DISH_WHY}).`), root.textContent);
   root.remove();
 });

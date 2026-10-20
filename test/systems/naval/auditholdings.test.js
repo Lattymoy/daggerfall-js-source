@@ -250,7 +250,7 @@ test('AUDIT HOLDINGS C5/C6: a horse never named, renamed with nothing, keeps no 
   const runtime = { renameHorse: (v) => (owns ? (name = String(v ?? '').trim() || name) : null), stableView: () => ({}) };
   let owns = true;
   const p = stableProviderFor({ runtime, on: () => true, hasHorse: () => owns, hasCart: () => false });
-  assert.deepEqual(p.stableAct('rename', '  '), { ok: false, text: 'Your horse keeps no name - give him one.' });
+  assert.deepEqual(p.stableAct('rename', '  '), { ok: false, text: 'Your horse has no name. Give him one.' });
   assert.deepEqual(p.stableAct('rename', 'Shadowmere'), { ok: true, text: 'Your horse is called Shadowmere.' });
   owns = false;
   assert.deepEqual(p.stableAct('rename', 'X'), { ok: false, text: 'You do not own a horse.' });
@@ -518,7 +518,7 @@ test('AUDIT HOLDINGS Q9: a quay\'s lay that failed is laid again QUAY_RETRY_S la
   h.run(0.2);
   h.host.warp(h.boat, { struck: true, oars: false, dt: 0.1 });
   assert.equal(h.log.say.filter((s) => /brings the ship in alongside/.test(s)).length, 2, 'said again after the sea was cleared');
-  assert.deepEqual(whereWords({ where: 'away', docked: '', metres: null }), { state: 'Made fast', tone: 'is-away', line: 'Made fast at a quay.' });
+  assert.deepEqual(whereWords({ where: 'away', docked: '', metres: null }), { state: 'Moored', tone: 'is-away', line: 'Moored at a quay.' });
 });
 
 // ── THE REFUSALS AND THE GUNS ─────────────────────────────────────────────────────────────────────────────────────────

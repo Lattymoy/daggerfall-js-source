@@ -10,7 +10,7 @@ import '../../chargenDom.mjs';
 import { keydown } from '../../chargenDom.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { hostText } from '../../hostText.mjs';
 
 import * as ES from '../../../src/world/ethericSea.js';
 import { etherPlaceIsle, etherPlaceRows, etherTemplateOf, synthesizeEtherLocation, etherPlaceId, ETHER_REGION, ETHER_REGION_NAME, PLACE_KINDS } from '../../../src/world/etherPlaces.js';
@@ -18,7 +18,7 @@ import { mountEtherChartWindow } from '../../../src/ui/etherChartWindow.js';
 import { TRAVEL_VIEW_BUTTON } from '../../../src/scenes/travelView.js';
 import { TRAVEL_VIEW_BUTTON as HELD_MAP_BUTTON } from '../../../src/ui/heldMap.js';
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
-import { unbuiltAround } from '../../../src/systems/travel/travelGovernor.js';
+import { unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
 import { farPlaces, settlementPixels, TV_FAR_RANGE } from '../../../src/systems/travel/travelFarPlaces.js';
 import { nearDungeons, dungeonRows, spawnedPixels } from '../../../src/systems/travel/travelDungeons.js';
 import { dungeonModelSet } from '../../../src/systems/travel/travelDungeonModels.js';
@@ -29,7 +29,7 @@ import { WATER_BYTE } from '../../../src/world/roadsProducer.js';
 import { CLIMATES, REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { LOCATION_TYPES, getWorldClimateSettings } from '../../../src/formats/mapsFile.js';
 
-const W = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+const W = hostText('src/scenes/world.js');   // HOST-SPLIT (OW-DUNGEON-SIZE): the dungeons' models list lives in scenes/travelViewDungeonModels.js
 /** A block of world.js lifted whole: its first line, to the line at its own indent that closes it. */
 const lift = (head, close = '\n  }\n') => {
   const at = W.indexOf(head);
@@ -99,7 +99,8 @@ test('ETHER-OW, the door, the host: the chart is handed the door where the view 
 });
 
 test('ETHER-OW, the load: the governor\'s ground is the stream\'s own law - past the Veil the land it has not raised holds the clock as the Bay\'s does, and where the world streams nothing nothing is owed (the host\'s line, run over the real stream law; mutant: off the map is built)', () => {
-  const line = /\n {6}uc\.n = unbuiltAround\(px, radius, (\(x, y\) => [^\n]*)\);\n/.exec(W);
+  // PIN MOVED (OW-LEAD, test/systems/travel/ow_lead.test.js): the count's line hands the owed pixels on too (`uc.owed`)
+  const line = /\n {6}uc\.n = unbuiltAround\(px, radius, (\(x, y\) => [^\n]*?)(?:, uc\.owed)?\);\n/.exec(W);
   assert.ok(line, 'the governor\'s ground');
   // PIN MOVED (LOAD-OWED, test/systems/travel/ow_loadowed.test.js): what is owed is what the STREAM holds and has not built - its own
   // books (`state.loaded`), which load nothing where the world streams nothing; so each place below is streamed (`init`)
@@ -221,6 +222,7 @@ test('ETHER-OW, the find and the models: past the Veil an uncharted ruin within 
     tvFiledSpawns: () => [], tvSpawnKnown: () => false, tvSpawnFound: () => false, tvSpawnGone: () => false,
   };
   const v = run(env, `let tvFind = { at: null, dg: -1, n: -1, list: [] }, tvDngModels = { at: null, dg: -1, n: -1, list: [] }, _tvDungeonRows = null, _locIndexGen = 0;
+    const host = { get tvDngModels() { return tvDngModels; }, set tvDngModels(v) { tvDngModels = v; }, get _locIndexGen() { return _locIndexGen; } };
     ${liftLine('  const tvKnownGen = ')}
     ${lift('  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {', '\n  };\n')}
     ${liftLine('  const tvDungeonAt = ')}

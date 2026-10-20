@@ -657,3 +657,51 @@ Code: `ui/town/townMapMarks.js` (the rows and the reading), `ui/ink/inkTown.js` 
 `test/ui/town/town_marks.test.js` (9). Mutants: `tools/mutants/town_marks.json` (35, all dead); `disc23a.json`'s breathing
 record and `survtiers3.json`'s two cite records re-aimed.
 
+## FINDME-TOWN (2026-10-19) - Find me finds the player on the sheet that is up
+
+A player's private report: the town map's Find me never found them. FINDME (`11-Multiplayer/Wild-Zone.md`) was built
+for the bay - glide to the player's world pixel at the find's zoom and blink a red cross over it for three seconds, the
+cross drawn by the world sheet's own overlay - and FINDME-SHEET (`10-UI/Overhauls.md`) kept the button on the town's
+sheet. But no town door hands the window a world position (the bay is not handed over from a town, EM4 above), so
+the window's stand-in for a missing pixel, the bay's middle (500, 250), was read as a spot on the streets: every press
+landed on the town's right-hand edge, wherever the player stood, in every town, and no cross was drawn. The dungeon's
+sheet, where every dress but the grimoire's shows the button, did the same.
+
+**Find me asks the sheet that is up.** Two optional members join the sheet contract beside `meView` and `panBox`:
+
+- `findMe(limits, view)` - the view on the player, in the sheet's own space, or null where no player stands on it. The
+  bay's: the pixel's middle at FOCUS_SCALE or nearer, the zone map at its own zoom, as it was. The town's: the
+  player's own caret (`playerOnSheet`, EM-BUG3's one seam) at STREET ZOOM - `FIND_ME_BLOCKS` (two) blocks across the
+  paper's short side, or nearer where the plan is zoomed past it already (`townSheet.js:"findMe(limits, view = null) {"`).
+  The dungeon's: its own Me - back to the player's floor, then `meView`; the Home key, the Me button and Find me share
+  one "back to you" (`automapSheet.js:"function backToMe() {"`).
+- `me()` - where the player stands on the sheet. The cross is the WINDOW's now, painted after the sheet's overlay
+  through that point (`heldMap.js:"const me = this._findMeT > 0"`), so it crosses the caret on the streets and on the
+  floor as it crossed the pixel on the bay. It draws over the wild zone's crows and flames, where it drew under them.
+
+**Off the paper, the cross holds its edge** (AUDIT FB1019f E4). The town map opens anywhere in the location's pixel, and
+the town's blocks are not all of it: a player in the fields round the walls stands off the town's grid. Find me glides
+there as anywhere, the view keeps the town on the paper, and so it lands on the town's edge nearest them - the streets
+they would walk in by. The cross was drawn through their caret, off the paper: one of its lines off it, or both off a
+corner. It stands at the paper's edge on their side now, on their row west or east of the town, on their column north
+or south of it, in the corner off a corner, half its stroke inside the edge so all of the line shows
+(`heldMap.js:"const cx = clamp(fx, edge, paperW - edge), cy = clamp(fy, edge, paperH - edge);"`). On the paper nothing moves: it goes through the caret, the pixel and
+the dungeon's Me as before. A sheet dragged away while the cross blinks holds it the same way. Find me still answers
+there: a player stands on the sheet, only off its blocks, so "no answer, nothing moved and nothing blinked" stays the
+case with no player at all.
+
+**A missing position is never read as one.** A window whose host hands no pixel holds none
+(`heldMap.js:"const p = deps.getPlayerPixel?.() ?? null;"`), and a sheet with no player answers null: Find me moves
+nothing and blinks nothing. The bay's middle stood in nowhere else that a player reaches - the pixel's other readers
+(the bay's caret, the zone map's ring, ZONE-FIRST's centring, MAP2's journey centring, the party poll) are the travel
+map's, and its bag always carries the pixel (`playerTravelOrigin`).
+
+DFU reference: the classic town map's focus key, `DaggerfallExteriorAutomapWindow.ActionFocusPlayerPosition`, puts
+the camera on the player marker at its own zoom; the classic window keeps it whole
+(`exteriorAutomapWindow.js:"actionFocusPlayerPosition() {"`). The held map's Find me departs from it as FINDME did on
+the bay, on the enhanced skin alone (the held map's own row, `01-Overview/Port-Ledger.md` MAP1): it zooms in to the
+street, never out, and blinks the cross.
+
+Code: `ui/heldMap.js` (`_findMe`, `_paint`, the world sheet's `me`/`findMe`), `ui/town/townSheet.js`,
+`ui/automap/automapSheet.js`. Pins: `test/ui/town/fb1019f_findme_town.test.js` (7). Mutants:
+`tools/mutants/findme_town.json` (23, all dead). The record is `01-Overview/bugs/Field-Bugs-2026-10-19f.md` FINDME-TOWN.

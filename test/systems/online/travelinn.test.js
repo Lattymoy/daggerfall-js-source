@@ -90,7 +90,7 @@ test('TRAVEL-INN (LIVED1): online the toggle is live again - the days pass on th
   assert.ok(inn.cost > 0, 'the inn is billed online');
   assert.equal(camp.cost, 0, 'and camping out is still free, online as offline');
   // the player is TOLD whose days they are, in both skins
-  assert.match(ONLINE_TRAVEL_LINE, /the days pass on your own clock/);
+  assert.match(ONLINE_TRAVEL_LINE, /the trip's days pass only for you/);
   // ...and offline the toggle still forks the journey (the mod's rule, with its Inns dial off)...
   const settings = { cautiousTravel: true, stopAtInnsTravel: false };
   assert.equal(isPlayerControlledTravel(settings, { speedCautious: true, sleepModeInn: true, travelShip: false }), false,

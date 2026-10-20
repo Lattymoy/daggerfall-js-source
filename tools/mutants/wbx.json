@@ -150,7 +150,7 @@
   {
     "name": "WBX5-the-turn-unsaid",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": " const c = courtPhaseCard(s.phase); if (c) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...c }; }",
+    "old": " const c = courtPhaseCard(s.phase, s.pt); if (c && !(s.phase === 3 && rjCarded)) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...c }; }",
     "new": " }",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"

@@ -32,7 +32,7 @@ import { MARKS_COMBAT, MARKS_FAUCETS } from '../net/marksLaw.js';
 
 /** A strike the day's combat cap refused, as its muted card says it - the chat's own line keeps the whole of it.
  *  SERPENT-SET: the serpents strike under the same cap; EG-E1: and the Spire's Redoubts. */
-export const HAUL_CAPPED_TEXT = `No silver - the day's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts is reached`;
+export const HAUL_CAPPED_TEXT = `No silver: you've reached today's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts`;
 /** A gather card holds a little longer than a pickup's (ui/pickupFeed.js PICKUP_FEED_HOLD_MS) - it says more. */
 export const HAUL_HOLD_MS = 3200;
 /** A Motherlode's card stands longer still - the day's one. */
@@ -186,7 +186,7 @@ export function claimHauls(data, kind = 'gate') {
   if (strike) out.push(strike);
   const deed = data.deed;
   if (deed && Number.isSafeInteger(deed.struck) && deed.struck > 0) {
-    out.push({ key: `deed\u0002${deed.guild?.name ?? ''}`, haul: 'silver', tone: 'treasury', count: deed.struck, source: `Guild deed - to ${deed.guild?.name ?? 'your guild'}`, hold: HAUL_HOLD_MS, adds: ['count'] });
+    out.push({ key: `deed\u0002${deed.guild?.name ?? ''}`, haul: 'silver', tone: 'treasury', count: deed.struck, source: `Guild deed: to ${deed.guild?.name ?? 'your guild'}`, hold: HAUL_HOLD_MS, adds: ['count'] });
   }
   for (const c of Array.isArray(data.contracts) ? data.contracts : []) {
     if (!c || !Number.isSafeInteger(c.pay) || c.pay <= 0) continue;

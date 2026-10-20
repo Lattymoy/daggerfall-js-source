@@ -124,7 +124,7 @@ test('CAPT-BOARD the offers\' words and terms: a bounty names her captain and sh
   const d = by.delivery;
   assert.equal(d.to.name, 'Sentinel', 'the port six or more off - never the near one');
   assert.equal(d.days, 2 + Math.ceil(20 / 6));
-  assert.match(d.words, /to Sentinel's harbourmaster within 6 days\. It goes in your hold - lose your ship and it is lost\.$/);
+  assert.match(d.words, /to Sentinel's harbormaster within 6 days\. It goes in your hold\. If you lose your ship, you lose the cargo\.$/);
   assert.equal(by.salvage.target.px != null && /^Salvage: /.test(by.salvage.title), true);
   assert.deepEqual(['east', 'north', 'south-west'], [compassWords(1, 0), compassWords(0, -1), compassWords(-1, 1)]);
   assert.deepEqual([leaguesWords(6), leaguesWords(1)], ['1 league', '0.2 leagues']);
@@ -232,7 +232,7 @@ test('CAPT-BOARD the letters: a crown\'s letter of marque to its Privateers for 
   assert.match(marqueOffer({ crown: 'Wayrest', perks: RANK_PERKS[1], gold: 9999 }).why, /Privateers/);
   assert.equal(marqueOffer({ crown: 'Wayrest', perks: priv, gold: 1499 }).can, false);
   assert.deepEqual(marqueOffer({ crown: 'Wayrest', perks: priv, gold: 1500 }), { can: true, price: 1500, days: 7, why: '' });
-  assert.match(marqueOffer({ crown: 'Wayrest', perks: priv, gold: 5000, held: { crown: 'Sentinel' } }).why, /Sentinel's letter - one crown's at a time/);
+  assert.match(marqueOffer({ crown: 'Wayrest', perks: priv, gold: 5000, held: { crown: 'Sentinel' } }).why, /Sentinel's letter\. You can only hold one at a time/);
   const price = Math.round(HULL_PRICES[4] * 0.8);
   assert.deepEqual(admiraltyOffer({ crown: 'Wayrest', perks: com, gold: price }), { can: true, price, why: '' });
   assert.equal(admiraltyOffer({ crown: 'Wayrest', perks: priv, gold: price }).can, false);
@@ -277,7 +277,7 @@ test('CAPT-BOARD the harbour office: the board of the port lain at, an offer tak
   g.ledger.holdContract(c);
   g.office.event({ type: 'end', act: 'sink', faction: 'pirate', crown: 'Wayrest' });
   assert.deepEqual(g.log.credited, [c.pay]);
-  assert.equal(g.log.mid.at(-1), `Contract done - ${c.title}. ${c.pay.toLocaleString('en-US')} gold paid by Wayrest's harbourmaster.`);
+  assert.equal(g.log.mid.at(-1), `Contract done - ${c.title}. ${c.pay.toLocaleString('en-US')} gold paid by Wayrest's harbormaster.`);
   const s2 = takeContract({ ...off[0], kind: 'survey', need: 3, id: 's2' }, { now: 0 });
   g.ledger.holdContract(s2);
   g.office.event({ type: 'study', crown: 'Wayrest' });
@@ -373,7 +373,7 @@ test('CAPT-BOARD the shipwright\'s Harbourmaster tab: the port and the rank, the
   const h = officeOf();
   const o = h.office.model({ uid: 42 });
   const t = officeText(o);
-  assert.equal(t.lede, 'Wayrest - Wayrest\'s harbourmaster. You are Unsworn of Wayrest (standing 0).');
+  assert.equal(t.lede, 'Wayrest - Wayrest\'s harbormaster. You are Unsworn of Wayrest (standing 0).');
   assert.equal(t.board.length, 3);
   assert.match(t.board[0].terms, /^[\d,]+ gold - \d+ days? - \+\d+ with Wayrest$/);
   assert.deepEqual(t.letters.map((x) => [x.id, x.can]), [['marque', false], ['admiralty', false]]);
@@ -389,7 +389,7 @@ test('CAPT-BOARD the shipwright\'s Harbourmaster tab: the port and the rank, the
   const [tabs] = byClass(host, 'dfnaval-tabs');
   assert.ok(tabs && tabs.style.display !== 'none');
   const [yardTab, officeTab, tradeTab] = tabs.children;
-  assert.deepEqual([officeTab.style.display, tradeTab.style.display], ['', 'none'], 'the harbourmaster\'s tab; no exchange handed, none');
+  assert.deepEqual([officeTab.style.display, tradeTab.style.display], ['', 'none'], 'the harbormaster\'s tab; no exchange handed, none');
   officeTab.onclick({ stopPropagation() {} });
   const rows = byClass(host, 'dfnaval-officerow');
   assert.ok(rows.length >= 3 + 2, 'the board and the letters');

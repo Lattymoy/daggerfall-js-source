@@ -429,7 +429,7 @@ test('AUDIT SAFE CLIENT-3 / DOC-6 A NAME IS THE ONE ACCOUNT EVERYTHING HERE AGRE
   r2.host.onSend('world', '/block Bob');
   await settle(); await settle();
   assert.deepEqual(r2.asked.at(-1), { path: '/v1/safety/block', body: { target: 'acct-troll' } });
-  assert.match(r2.log.tab('world').messages.at(-1).text, /^You blocked Bob - the account xXbobXx\./);
+  assert.match(r2.log.tab('world').messages.at(-1).text, /^You blocked Bob \(account xXbobXx\)\./);
   r2.host.onSend('world', '/block Nobody');
   await settle();
   assert.equal(r2.log.tab('world').messages.at(-1).text, 'Nobody called Nobody is here or said anything in your chat. Nobody was blocked.');
@@ -690,7 +690,7 @@ test('AUDIT SAFE DOC-4 THE REPORTS REACH A MODERATOR IN THE GAME: /cases lists t
   const shown = lines().slice(-7);
   assert.equal(shown[0], 'The case on Troll (#acct-tro): 3 reports, 2 credible. Why: Hate or slurs, Harassment or bullying.');
   assert.equal(shown[1], 'Note: he follows me');
-  assert.match(shown[2], /^The reviewer says Hate or slurs, severity 3, confidence 95%\. \(shadow - it acted on nothing\) A slur about asexual players\.$/);
+  assert.match(shown[2], /^The reviewer says Hate or slurs, severity 3, confidence 95%\. \(shadow mode: no action taken\) A slur about asexual players\.$/);
   assert.equal(shown[3], 'Muted automatically.');
   assert.match(shown[4], /^- .+ Sylvia: happy pride$/);
   assert.match(shown[5], /^! .+ Troll: attention \*\*\*\*\*$/);

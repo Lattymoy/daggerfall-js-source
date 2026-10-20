@@ -79,7 +79,7 @@ test('SD9d THE LAW: The Brass of Numidium after the serpent\'s - Aetheric, Kagre
   ]);
   for (const t of s.tiers) for (let st = 0; st <= SET_STAGE_MAX; st++) { const b = t.brief(tierValues(t, st)); assert.ok(b.length <= BRIEF_MAX, `${t.key} at ${st}: "${b}"`); }
   assert.deepEqual(s.tiers.map((t) => t.brief(tierValues(t, SET_STAGE_MAX))), ['+10 magic, +10 shock resist', 'A foe\'s blow 30% lighter', 'Death turned back, heal 25%']);
-  assert.equal(s.tiers[1].text(tierValues(s.tiers[1], 0)), 'The gear catches the next foe\'s blow that lands on you: it is 15% lighter, and the gear winds again. Recovers in 18 s');
+  assert.equal(s.tiers[1].text(tierValues(s.tiers[1], 0)), 'The next enemy hit on you deals 15% less damage. Recovers in 18 s');
 });
 
 test('SD9d THE RECORDS: nine in the places\' order - the seven body pieces, a round shield and a ONE-HANDED Longsword (all nine worn at once) - Dwarven, the Dwemer\'s brass; every affix at the Legendary band\'s TOP (the Regalia\'s), the blow the sigil\'s greatest; never a magic or shock resistance (the 2-piece tier\'s) and one of an element at most; AETHERIC_RECORDS ends with them (mutants: a number off the top; a doubled element; the make; the order)', () => {

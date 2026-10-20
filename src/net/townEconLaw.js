@@ -278,7 +278,7 @@ export const TOWN_REASONS = Object.freeze({
   get levy() { return t('town.econ.reason.levy', 'The Levy weighs on trade.'); },
   get curfew() { return t('town.econ.reason.curfew', 'The Curfew keeps buyers home.'); },
   get players() { return t('town.econ.reason.players', 'Busy with travellers and traders.'); },
-  get harbour() { return t('town.econ.reason.harbour', 'Its harbour brings trade.'); },   // SEA-TRADE: a port town's lanes
+  get harbour() { return t('town.econ.reason.harbour', 'Its harbor brings trade.'); },   // SEA-TRADE: a port town's lanes
 });
 /** @param {{ raided?: boolean, edict?: string|null, players?: number, lanes?: number }} r */
 export function townReasonLine({ raided = false, edict = null, players = 0, lanes = 0 }) {

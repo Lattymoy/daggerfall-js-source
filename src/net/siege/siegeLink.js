@@ -202,9 +202,9 @@ export function siegeResultLine(s) {
  *  the battle void or gone, a receipt that is not the relay's (the account service's words for those - accountRefusalText
  *  - speak of a gate's receipt and of signing a roster, not of this battle's Honours). */
 export const SIEGE_CLAIM_REFUSED = Object.freeze({
-  'honours-twice': 'Your Honours from this battle are claimed already.',
-  'battle-none': 'No Honours this battle: the battle was void.',
-  receipt: 'No Honours this battle: your receipt from it could not be read.',
+  'honours-twice': 'Your Honors from this battle are claimed already.',
+  'battle-none': 'No Honors this battle: the battle was void.',
+  receipt: 'No Honors this battle: your receipt from it could not be read.',
 });
 /** AUDIT-SEATS C7: a settling refusal (`{ ok: false, error }`) in the card's words. */
 export const siegeClaimRefusal = (a) => SIEGE_CLAIM_REFUSED[a?.error] ?? SIEGE_CLAIM_REFUSED.receipt;
@@ -212,13 +212,13 @@ export const siegeClaimRefusal = (a) => SIEGE_CLAIM_REFUSED[a?.error] ?? SIEGE_C
  *  C7: a refusal's own words, siegeClaimRefusal). */
 export function siegeHonourLine(honours) {
   if (typeof honours === 'string') return honours;
-  if (!honours) return 'No Honours this battle: they are earned by standing half the battle or felling a foe.';
-  if (honours.spent) return 'Your Honour: these two guilds\' Honours were earned already this Season.';
-  return `Your Honour: ${marksText(Number(honours.marks))}, ${Number(honours.xp).toLocaleString('en-US')} Renown, one Spoils of War roll`;   // GUILD3a: silver, as every sentence says it
+  if (!honours) return 'No Honors this battle: they are earned by standing half the battle or felling a foe.';
+  if (honours.spent) return 'Your Honor: these two guilds\' Honors were earned already this Season.';
+  return `Your Honor: ${marksText(Number(honours.marks))}, ${Number(honours.xp).toLocaleString('en-US')} Renown, one Spoils of War roll`;   // GUILD3a: silver, as every sentence says it
 }
 
 /** SEAT2b part two (c): the card's word on Honours after a revolt. */
-export const SIEGE_REVOLT_HONOUR = 'A revolt earns no Honours - putting it down is its own reward.';
+export const SIEGE_REVOLT_HONOUR = 'A revolt earns no Honors. Putting it down is its own reward.';
 /**
  * WHAT THE HUD SAYS: `{ bar: [title, banners], works, sides, self: [...], card: { title, line, honour, claim } | null }`
  * (SEAT2b part two (b): `works` the Gatehouse's, the Ram's and the Walls' line, '' for none).
@@ -230,7 +230,7 @@ export function siegeHudModel(s, battle, me, now, { watching = false, honours = 
     title: siegeResultTitle(s.end, battle),
     line: siegeResultLine(s),
     // SEAT2b part two (c): a revolt earns no Honours (net/siege/siegeRef.js honoured) - its claim settles the result alone
-    honour: watching ? '' : battle.kind === 'revolt' ? SIEGE_REVOLT_HONOUR : honours === undefined ? (claimable ? 'Your receipt is kept - claim it for your Honours.' : '') : siegeHonourLine(honours),
+    honour: watching ? '' : battle.kind === 'revolt' ? SIEGE_REVOLT_HONOUR : honours === undefined ? (claimable ? 'Your receipt is saved. Claim it for your Honors.' : '') : siegeHonourLine(honours),
     claim: !watching && honours === undefined && claimable,
   } : null;
   return {

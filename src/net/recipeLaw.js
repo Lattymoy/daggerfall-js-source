@@ -915,7 +915,7 @@ export const markedName = (maker, name) => `${maker}'s ${name}`;
  *  as the item maker reads them (systems/enchanting.js craftedJewelPoints, client-side - this law is the Worker's too),
  *  the item's own where none is handed in. */
 export function pieceLines(item, points = null) {
-  if (item?.fieldKit === true) return [`Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armour's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`];   // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING
+  if (item?.fieldKit === true) return [`Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armor's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`];   // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING
   // CRAFT4: a found piece a temper raised says its quality (temperLaw.js - Fine or Superior; a found piece is Standard)
   if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];
   if (Number.isInteger(item.kitMetal)) {   // KIT-CEILING; CRAFT5: a kit's quality its reach

@@ -138,7 +138,7 @@ test('SURV5: the info box - a survival item\'s built tokens: the name, the weigh
   assert.deepEqual(t.map((r) => r.text), ['Stale Bread', 'Weight: 1.50 kilograms', 'Nourishes for 90 minutes (stale)']);
   assert.deepEqual(itemInfoRows(bread, rows).map((r) => r.text), t.map((r) => r.text), 'the box reads the built tokens, not a record');
   const fish = createSurvivalItem(TEMPLATE.RawFish);
-  assert.equal(survivalInfoTokens(fish).at(-1).text, 'Raw - cook it at a fire.');
+  assert.equal(survivalInfoTokens(fish).at(-1).text, 'Raw. Cook it at a fire.');
   const skin = createSurvivalItem(TEMPLATE.Waterskin, { water: 1.25 });
   assert.deepEqual(survivalInfoTokens(skin).map((r) => r.text), ['Waterskin', 'Weight: 1.75 kilograms', 'Water: 1.3 of 2.0 kg']);
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Campfire, { condition: 1 })).at(-1).text, '1 night of fuel', 'REST2: a Campfire\'s uses are nights of fuel');

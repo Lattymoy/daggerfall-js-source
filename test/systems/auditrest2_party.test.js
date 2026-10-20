@@ -219,7 +219,7 @@ test('AUDIT REST II P4: a member standing inside town limits outdoors is not car
   assert.equal(asked, 0, 'the town is asked only of a member who would be carried');
   assert.equal(carriedNightAction({ ...base, town }), 'town');
   assert.equal(asked, 1);
-  assert.equal(REST_ACT_TEXT.carriedTown('Ada'), 'Ada rests here - it is illegal to camp in town.');
+  assert.equal(REST_ACT_TEXT.carriedTown('Ada'), 'Ada rests here, but it is illegal to camp in town.');
   // the host's bag answers the act's own question - the place the window's open refuses on
   setSharedClock(() => 5_000_000);
   const bag = createRestDeps(sleeper(), { place: () => ({ inTownOutside: true, inTownLocation: true, insideBuilding: false }) });

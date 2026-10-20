@@ -245,7 +245,7 @@
   {
     "name": "SIGIL1-dormant-shows-power",
     "file": "src/systems/sigil/sigil.js",
-    "old": "if (_renown == null) return [`Sigil (Dormant - wakes online, with your Renown)${full}`];",
+    "old": "if (_renown == null) return [`Sigil (Dormant: works online only)${full}`];",
     "new": "if (_renown == null) return [];",
     "tests": [
       "test/systems/sigil/sigil1.test.js"

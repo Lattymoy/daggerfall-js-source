@@ -299,7 +299,7 @@ test('AUDIT-SEATS C7 EVERY SETTLING ANSWER REACHES THE CARD: claimed before, a v
   }
   assert.deepEqual([siegeClaimRefusal({ error: 'honours-twice' }), siegeClaimRefusal({ error: 'battle-none' }), siegeClaimRefusal({ error: 'receipt' }), siegeClaimRefusal({ error: 'whatever' })],
     [SIEGE_CLAIM_REFUSED['honours-twice'], SIEGE_CLAIM_REFUSED['battle-none'], SIEGE_CLAIM_REFUSED.receipt, SIEGE_CLAIM_REFUSED.receipt]);
-  assert.equal(siegeHonourLine('No Honours this battle: the battle was void.'), 'No Honours this battle: the battle was void.');
+  assert.equal(siegeHonourLine('No Honors this battle: the battle was void.'), 'No Honors this battle: the battle was void.');
   // the session's card
   const t = siegeRig();
   t.ses.enter(ANTICLERE, FIGHT, [[1, 2]]); await settle();
@@ -308,7 +308,7 @@ test('AUDIT-SEATS C7 EVERY SETTLING ANSWER REACHES THE CARD: claimed before, a v
   t.ses.onSiege({ k: 'end', r: 'attack', a: 1, rc: mine }, t.online.room);
   t.ses.tick();
   assert.equal(t.hud.at(-1).card.claim, true);
-  assert.match(t.hud.at(-1).card.honour, /^Your receipt is kept/);
+  assert.equal(t.hud.at(-1).card.honour, 'Your receipt is saved. Claim it for your Honors.');
   t.ses.claimed({ ok: false, error: 'honours-twice' }, old);
   t.ses.tick();
   assert.equal(t.hud.at(-1).card.claim, true, 'an older battle\'s answer is not this card\'s');

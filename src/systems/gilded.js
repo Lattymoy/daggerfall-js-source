@@ -91,7 +91,7 @@ export const SERPENT_GILDED_CHANCE = 1 / 100;
 export const HOUR_TOLLS = Object.freeze({
   name: 'The Hour Tolls', kind: 'toll', every: 3, pct: 100, refund: true,
   brief: 'Every 3rd hit x2; kills refund',   // inside the card's row (sigilSets.js BRIEF_MAX)
-  text: 'Every third of its shots that lands tolls the Hour and strikes for double, and a foe it fells gives back the pellet that felled it',
+  text: 'Every third shot that lands tolls the Hour and deals double damage. A kill returns the pellet',
 });
 
 /** GILDED2: DRAGONFIRE - the Dragonfire Oath's power (systems/loot/lootPowers.js, kind 'dragonfire'). A landed blow on a foe of
@@ -103,7 +103,7 @@ export const HOUR_TOLLS = Object.freeze({
 export const DRAGONFIRE = Object.freeze({
   name: 'Dragonfire', kind: 'dragonfire', group: 'daedra', share: 33, metres: 3,
   brief: 'Daedra burn +33%, and all in 3m',   // inside the card's row (sigilSets.js BRIEF_MAX)
-  text: 'Each of its blows that lands on a Daedra burns it again in Dragonfire for a third of the blow, and every other Daedra within 3 m for as much - and no Daedra resists it',
+  text: 'Each hit on a Daedra burns it with Dragonfire for a third of the damage, and burns every other Daedra within 3 m for the same. No Daedra resists it',
 });
 /** GILDED2: UNDERTOW - the Sunken Sovereign's power (systems/loot/lootPowers.js, kind 'undertow'). Each of its blows that LANDS on
  *  a foe drags it deeper: its next blows on that foe strike `pct`% harder for each landed before, up to `max`, while the
@@ -113,7 +113,7 @@ export const DRAGONFIRE = Object.freeze({
 export const UNDERTOW = Object.freeze({
   name: 'Undertow', kind: 'undertow', pct: 10, max: 5, seconds: 6, heal: 10,
   brief: '+10%/hit on a foe; kills heal',   // inside the card's row (sigilSets.js BRIEF_MAX)
-  text: 'Each of its blows that lands drags the foe deeper: +10% to its next blows on that foe for 6 s, up to +50%, and a foe it fells heals you 10% of your health',
+  text: 'Each hit drags the foe deeper: +10% damage to your next hits on it for 6 s, up to +50%. A kill heals you for 10% of your health',
 });
 
 /** A record's line, frozen. */

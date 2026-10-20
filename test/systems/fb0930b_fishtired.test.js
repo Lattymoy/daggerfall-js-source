@@ -12,7 +12,7 @@
 // SWIM-SPENT (systems/rest/rest.js; Mac: "I dont care about DFU") ends the death: a drain to nothing in the water now costs a
 // tenth of the health a game minute, said on the HUD. The net still keeps its angler off it: no net is cast in
 // the water on the last quarter of the fatigue bar, and an act there ends when the bar falls into it - the prompt, and
-// E, say "too tired to fish in the water - get out and rest", with a quarter of the bar to swim out on (of 6,400, four
+// E, say "too tired to fish in the water. Get out and rest", with a quarter of the bar to swim out on (of 6,400, four
 // minutes of treading water at the worst rate). On a pier or a deck (not swimming) the bar asks nothing. The real
 // gathering host (scenes/gatherHost.js), Fishing's real kind and act (scenes/fishHost.js, systems/fishAct.js), the real
 // player ticker (scenes/shared.js createPlayerTicker -> systems/worldTick.js) and world.js's collapse over it (a collapse in
@@ -35,7 +35,7 @@ import { MOBILE_TYPES } from '../../src/characters/mobile/mobileTypes.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
 
 const NOON = 100000 * 1440 + 12 * 60;   // a day's noon on the classic clock
-const TIRED = 'too tired to fish in the water - get out and rest';
+const TIRED = 'too tired to fish in the water: get out and rest';
 
 /** An angler with a Fishing-Net, in a lake (swimming) or on a pier at sea (not), `share` of the fatigue pool left. */
 function stand({ swimming = true, share = 1 } = {}) {

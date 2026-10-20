@@ -1,0 +1,103 @@
+[
+  {
+    "name": "SKINMODE-toggle-gone",
+    "file": "src/ui/skinCard.js",
+    "old": "    lookToggle(layeredOn);\n",
+    "new": "    void lookToggle;\n",
+    "tests": [
+      "test/ui/skinmode_toggle.test.js"
+    ],
+    "why": "the toggle the owner asked for is not drawn: no way to choose between skins and Layered Gearing"
+  },
+  {
+    "name": "SKINMODE-on-writes-off",
+    "file": "src/ui/skinCard.js",
+    "old": "        setModSetting(VENDOR, LAYERED, on ? layeredBodyToWear() : 0);",
+    "new": "        setModSetting(VENDOR, LAYERED, 0);",
+    "tests": [
+      "test/ui/skinmode_toggle.test.js"
+    ],
+    "why": "Layered Gearing pressed writes nothing on: the radio moves and the body is never drawn in its armor"
+  },
+  {
+    "name": "SKINMODE-off-writes-body",
+    "file": "src/ui/skinCard.js",
+    "old": "        setModSetting(VENDOR, LAYERED, on ? layeredBodyToWear() : 0);",
+    "new": "        setModSetting(VENDOR, LAYERED, layeredBodyToWear());",
+    "tests": [
+      "test/ui/skinmode_toggle.test.js"
+    ],
+    "why": "Skins pressed leaves Layered Gearing on: the player cannot go back to their skin"
+  },
+  {
+    "name": "SKINMODE-last-body-forgotten",
+    "file": "src/ui/skinCard.js",
+    "old": "export const layeredBodyToWear = () => lastBody || LAYERED_OWN;",
+    "new": "export const layeredBodyToWear = () => LAYERED_OWN;",
+    "tests": [
+      "test/ui/skinmode_toggle.test.js"
+    ],
+    "why": "the body the player chose is lost each time they switch back to skins"
+  },
+  {
+    "name": "SKINMODE-own-unmarked",
+    "file": "src/ui/skinCard.js",
+    "old": "      const worn = own ? (layeredGenderOf(LAYERED_OWN, gender()) === 'female' ? 1 : 2) : w.layered;",
+    "new": "      const worn = own ? 2 : w.layered;",
+    "tests": [
+      "test/ui/skinmode_toggle.test.js"
+    ],
+    "why": "the default marks the male body whatever the character: a woman sees the wrong body chosen"
+  },
+  {
+    "name": "SKINMODE-onfoot-in-layered",
+    "file": "src/ui/skinCard.js",
+    "old": "    if (layeredOn) {\n      // LAYERED-GEAR: the body",
+    "new": "    if (false) {\n      // LAYERED-GEAR: the body",
+    "tests": [
+      "test/ui/skinmode_toggle.test.js"
+    ],
+    "why": "the Layered Gearing look still lays out the On foot skins and never offers the bodies"
+  },
+  {
+    "name": "SKINMODE-body-grid-gone",
+    "file": "src/ui/skinCard.js",
+    "old": "      root.append(grid(bodyWord, (sets.layered ?? []).filter((s) => s.index === 1 || s.index === 2), LAYERED, worn));",
+    "new": "      void grid;",
+    "tests": [
+      "test/ui/skinmode_toggle.test.js"
+    ],
+    "why": "no body to choose: the player is stuck in the one the toggle first wore"
+  },
+  {
+    "name": "LAYERED-ON-default-off",
+    "file": "src/systems/modSettings.js",
+    "old": "'Graphics.LayeredGear': Object.freeze({ default: 3, min: 0, max: 3,",
+    "new": "'Graphics.LayeredGear': Object.freeze({ default: 0, min: 0, max: 3,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/worn_armour.test.js",
+      "test/ui/skinmode_toggle.test.js"
+    ],
+    "why": "the owner's default undone: every player starts in their skin, Layered Gearing hidden behind a toggle"
+  },
+  {
+    "name": "LAYERED-ON-own-unread",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (v === LAYERED_OWN) return entity?.gender === 'female' ? 1 : 2;\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/worn_armour.test.js"
+    ],
+    "why": "the default sends no body: other players see the skin while the player sees their armor"
+  },
+  {
+    "name": "LAYERED-ON-body-own-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  : choice === LAYERED_OWN ? bodyOf(own) : null);",
+    "new": "  : null);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/worn_armour.test.js"
+    ],
+    "why": "the default draws nothing layered: the body falls back to the skin though the card says Layered Gearing"
+  }
+]

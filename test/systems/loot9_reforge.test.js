@@ -190,7 +190,7 @@ test('LOOT9: the price and the press - Magic 2 and 100, Rare 4 and 400, Exalted 
   me.goldPieces = 1000;
   const unknown = Object.assign(LR.applyRarity(createWeapon(113, 1), 'rare', lcg(8)), { isIdentified: false });
   me.items.push(unknown);
-  assert.equal(RF.reforgeRefusal(unknown, 0, me), 'unknown', 'the guild identifies it first');
+  assert.equal(RF.reforgeRefusal(unknown, 0, me), 'unknown', 'The guild identifies it first');
   const r = RF.reforgePiece(piece, 2, me, lcg(2));
   assert.equal(r.ok, true);
   assert.deepEqual([RF.shardsHeld(me.items), me.goldPieces], [4, 600], 'four shards and four hundred gold');

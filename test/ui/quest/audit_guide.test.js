@@ -561,10 +561,10 @@ test('AUDIT GUIDE T5/U3: pressing Track changes the toggle IN PLACE - the focus 
 test('AUDIT GUIDE U14: the quest the HUD follows is SAID where the choice is made - its toggle carries "On the HUD" (the card is aria-hidden: this is where a screen reader learns it), followed or tracked alike (mutant: the note dropped)', () => withSwitches(() => {
   questTracker.hear({ quests: [{ id: '1', title: 'A', updatedAt: 10, latest: { lines: [' a'] } }, { id: '2', title: 'B', updatedAt: 5, latest: { lines: [' b'] } }], events: [] });
   const a = trackButton(document, '1', 'A'), bb = trackButton(document, '2', 'B');
-  assert.match(a.textContent, /On the HUD/, 'the followed quest');
-  assert.doesNotMatch(bb.textContent, /On the HUD/);
+  assert.match(a.textContent, /On screen/, 'the followed quest');   // PIN MOVED (VOICE2): 'On screen', not "HUD" (Voice.md rule 3)
+  assert.doesNotMatch(bb.textContent, /On screen/);
   (bb.querySelector('.qtrack-pin') ?? bb).click();
-  assert.match(bb.textContent, /On the HUD/, 'tracked, it is the HUD\'s');
+  assert.match(bb.textContent, /On screen/, 'tracked, it is the HUD\'s');
 }, { tracker: true }));
 
 // ---------------------------------------------------------------

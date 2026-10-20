@@ -169,7 +169,7 @@ export const STEED_TEXT = Object.freeze({
   stabled: 'Your horse is at the stable, where it is fed.',
   full: (who) => `${who} is not hungry.`,
   noFood: (kind) => (kind === 'apple' ? 'You have no apples.' : 'You have no oats. A Stable sells them.'),
-  ate: (who, food, tier, grew) => `${who} eats ${food}${grew ? ` - your bond grows (${tier}).` : '.'}`,
+  ate: (who, food, tier, grew) => `${who} eats ${food}${grew ? `. Your bond grows (${tier}).` : '.'}`,
   winded: 'Your horse is winded.',
   starving: 'Your horse is too weak to gallop. Feed it.',
   rested: 'Your horse has its breath back.',

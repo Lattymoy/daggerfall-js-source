@@ -208,7 +208,7 @@ test('CARDS10 the panel\'s model: the setup (decks with the binder\'s words, the
   assert.deepEqual(setup.keeps, { on: false, enabled: false, why: 'Bors has paid a card tonight.' });
   assert.deepEqual(setup.actions.map((a) => [a.id, a.enabled]), [['deal', true], ['holdem', true], ['pack', true], ['stand', true]]);
   assert.equal(setup.actions[2].label, 'Buy a card pack (30 gold)');
-  assert.equal(iliacHudModel({ phase: 'setup', setup: { decks: [], foes: [] } }).message, 'Your binder holds no deck - build one under Holdings, Collections.');
+  assert.equal(iliacHudModel({ phase: 'setup', setup: { decks: [], foes: [] } }).message, 'Your binder has no deck. Build one under Holdings, Collections.');
   assert.deepEqual(TEMPER_WORDS, { tight: 'careful', loose: 'reckless', bluffer: 'sly' });
   // the turn
   const s = new IliacTableSession({ player: { id: 'you', name: 'Ves', deck: STARTER_DECK.slice() }, patron: { id: 'regular:2', name: 'Ana', temper: 'tight', grade: 1, deck: patronDeck(3, 'tight', 1) }, rand32: src32(31), now: 0 });
@@ -229,7 +229,7 @@ test('CARDS10 the panel\'s model: the setup (decks with the binder\'s words, the
   // the end
   assert.equal(resultLine({ viewer: 0, result: { winner: 0, held: [0, 0, 1], total: [9, 4], by: 'holdings' } }, 'won'), 'You win - 2 of three holdings held.');
   assert.equal(resultLine({ viewer: 0, result: { winner: 1, held: [0, null, 1], total: [7, 8], by: 'power' } }, 'lost'), 'You lose on power, 7 to 8.');
-  assert.equal(resultLine({ viewer: 0, result: { winner: null, held: [0, 1, null], total: [5, 5], by: 'draw' } }, 'draw'), 'A draw - 1 holdings each way and 5 power to 5.');
+  assert.equal(resultLine({ viewer: 0, result: { winner: null, held: [0, 1, null], total: [5, 5], by: 'draw' } }, 'draw'), 'A draw: 1 holdings each, and 5 power to 5.');
   assert.equal(resultLine(null, 'left'), 'You concede the game.');
   assert.equal(prizeLine({ from: 'patron', card: 'lich' }, 'Ana'), 'Ana pays you a card: Lich.');
   assert.equal(prizeLine({ from: 'player', card: 'rat' }, 'Ana'), 'Ana takes a card from your deck: Rat.');
@@ -310,7 +310,7 @@ test('CARDS10 the host\'s half on a fake page: the binder\'s lawful deck and the
   assert.equal(game.g.phase, 'playing');
   assert.equal(game.g.session.forKeeps, true);
   assert.equal(game.g.session.seats[1].temper, iliacTemperOf(5));
-  assert.match(said.at(-1), /^You deal Iliac Hand with Ana, for a card - your .+ lies on the table\.$/);   // PIN MOVED (AUDIT CARDS-6 B1): the stake is lifted at the deal, and said
+  assert.match(said.at(-1), /^You deal Iliac Hand with Ana, playing for a card\. Your .+ is on the table\.$/);   // PIN MOVED (AUDIT CARDS-6 B1): the stake is lifted at the deal, and said
   assert.ok(game.playing());
   assert.ok(game.staked(), 'a card in play - the save waits');
   // force the end: a win for the player, for keeps

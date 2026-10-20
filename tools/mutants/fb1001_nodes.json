@@ -20,8 +20,9 @@
   {
     "name": "NODE-CLEAR-the-tree-inside-taken",
     "file": "src/scenes/treeHost.js",
-    "old": "      if (claimed.has(f.id) || insideRocks(rocks, f.x, f.z)) continue;",
-    "new": "      if (claimed.has(f.id)) continue;",
+    "old": "(woods.length ? woods : all).filter((f) => !insideRocks(rocks, f.x, f.z))",
+    "new": "(woods.length ? woods : all)",
+    "note": "JUNGLE-WOODS (PIN MOVED): the rock check is asked once a flat, before the trees' loop - the mutation is the rock check gone, as it was",
     "tests": [
       "test/scenes/fb1001_nodes.test.js"
     ]

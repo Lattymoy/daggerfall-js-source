@@ -293,7 +293,7 @@ test('REFIT-ORES the refit\'s words, the Fleet page\'s and the shipyard\'s: her 
   assert.equal(w.name, 'Guns III');
   assert.equal(w.gain, 'Broadside damage: +24% now, +28% with the next refit.');
   assert.equal(w.asks, 'Next: 6,000 gold, 4 Steel (you have 4), 10 Iron (you have 12).');
-  assert.match(w.melt, /Melts down weapons and armour you carry for 1 Steel/);
+  assert.match(w.melt, /Melts down weapons and armor you carry for 1 Steel/);
   assert.equal(w.lock, 'Needs captain level 3.');
   const done = refitRowWords({ ...row, tier: 12, share: 0.6, next: null });
   assert.deepEqual(done, { name: 'Guns XII', gain: 'Broadside damage: +60%.', asks: null, melt: null, lock: null });

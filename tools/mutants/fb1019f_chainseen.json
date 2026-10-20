@@ -1,0 +1,74 @@
+[
+  {
+    "name": "CHAIN-SEEN-the-arc-silent",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (best && n > 0) reachOn(door, best, n, word);",
+    "new": "  if (best && n > 0) door.hurtFoe(best, n);",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "the bug: Chain Lightning's arc lands and says nothing"
+  },
+  {
+    "name": "CHAIN-SEEN-the-arcs-word-never-handed",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "case 'chain': if (ranged(weapon)) arc(target, (damage * p.share) / 100, p.metres, p.name); break;",
+    "new": "case 'chain': if (ranged(weapon)) arc(target, (damage * p.share) / 100, p.metres); break;",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "the arc's number untagged: no word says which power it was"
+  },
+  {
+    "name": "CHAIN-SEEN-a-reach-unnumbered",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  showFollowUp(n, word);\n  door.hurtFoe(f, n);",
+    "new": "  door.hurtFoe(f, n);",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "every reach on another foe silent again"
+  },
+  {
+    "name": "CHAIN-SEEN-a-reach-untagged",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  showFollowUp(n, word);\n  door.hurtFoe(f, n);",
+    "new": "  showFollowUp(n);\n  door.hurtFoe(f, n);",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "a reach's number with no power's name"
+  },
+  {
+    "name": "CHAIN-SEEN-the-quake-silent",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  for (const f of near(door, struck.ai.feet, metres, target)) reachOn(door, f, Math.max(1, Math.round(amount)), word);",
+    "new": "  for (const f of near(door, struck.ai.feet, metres, target)) door.hurtFoe(f, Math.max(1, Math.round(amount)));",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "Earthshaker's quake lands and says nothing"
+  },
+  {
+    "name": "CHAIN-SEEN-the-quakes-word-never-handed",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "quake(target, (damage * p.share) / 100, p.metres, p.name); break;",
+    "new": "quake(target, (damage * p.share) / 100, p.metres); break;",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "the quake's numbers untagged"
+  },
+  {
+    "name": "CHAIN-SEEN-the-burst-silent",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "if (foeGroup(f.entity) === group) reachOn(door, f, Math.max(1, Math.round(amount)), word);",
+    "new": "if (foeGroup(f.entity) === group) door.hurtFoe(f, Math.max(1, Math.round(amount)));",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "Dragonfire's burst lands on the Daedra near and says nothing"
+  },
+  {
+    "name": "CHAIN-SEEN-the-burn-untagged",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  again(target, amount, word);",
+    "new": "  again(target, amount);",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "Dragonfire's second burn on the struck one rises with no name, as it did"
+  },
+  {
+    "name": "CHAIN-SEEN-dragonfires-word-never-handed",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name); break;",
+    "new": "dragonfire(target, (damage * p.share) / 100, p.metres, p.group); break;",
+    "tests": ["test/systems/fb1019f_chainseen.test.js"],
+    "why": "Dragonfire's numbers untagged"
+  }
+]

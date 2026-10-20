@@ -449,7 +449,7 @@ test('AUDIT CARDS-6 C10: each event is checked for the fields the panel reads of
   });
   for (const word of ['constructor', 'toString', '__proto__']) { g.relay({ table: 0, now: 0, error: word }); assert.equal(g.g.why, word); }
   g.relay({ table: 0, now: 0, error: 'stale' });
-  assert.equal(g.g.why, 'Too late - that turn had already turned over.');
+  assert.equal(g.g.why, 'Too late. That turn has already ended.');
   g.close();
 });
 
@@ -617,7 +617,7 @@ test('AUDIT CARDS-6 E5: a new socket asks the table again - seated but stood up 
     await C.reconnect();
     await W.settle();
     assert.equal(C.game.g.phase, 'setup');
-    assert.equal(C.msg(), 'The table did not hear you sit down - sit again.');
+    assert.equal(C.msg(), 'Your seat did not register. Sit down again.');
     C.game.press('deal'); C.deaf = true; await W.settle(); C.deaf = false;   // it landed; its echo did not
     await C.reconnect({ drop: false });
     await W.settle();
@@ -666,13 +666,13 @@ test('AUDIT CARDS-6 E9/E10/E19: the panel says why a press did nothing in the ga
     await W.settle();
     assert.equal(A.msg(), 'Waiting for another player to sit down.');
     B.game.press('deal'); await W.settle();
-    assert.equal(A.msg(), 'Both chairs are filled - the game deals in a moment.');
+    assert.equal(A.msg(), 'Both seats are taken. The game starts in a moment.');
     assert.doesNotMatch(A.msg(), /magicka 0 of 0/);
     await W.fire(ILIAC_FIRST_MS);
     // a refusal and a dead link in the game: said
     A.gateShut = true;
     A.game.press('commit');
-    assert.match(A.msg(), /The relay is not answering - try again\.$/);
+    assert.match(A.msg(), /The table is not responding\. Try again\.$/);
     A.gateShut = false;
     A.game.relay({ table: 0, now: W.clock(), error: 'committed' });
     assert.match(A.msg(), /You have committed this turn\.$/);
@@ -681,11 +681,11 @@ test('AUDIT CARDS-6 E9/E10/E19: the panel says why a press did nothing in the ga
     assert.equal(Z.game.g.phase, 'playing', 'watching');
     B.close(); await W.settle();
     assert.equal(A.game.g.phase, 'over');
-    assert.equal(A.msg(), 'Your opponent stands up and concedes - the game is yours. Waiting for another player to sit down.');
+    assert.equal(A.msg(), 'Your opponent concedes. You win. Waiting for another player to sit down.');
     assert.equal(Z.game.g.phase, 'setup', 'a chair free: the setup');
-    assert.match(Z.msg(), /^peer-b concedes - peer-a wins\. Sit down and wait for another player\.$/);
+    assert.match(Z.msg(), /^peer-b concedes\. peer-a wins\. Sit down and wait for another player\.$/);
     Z.game.press('deal'); await W.settle();
-    assert.equal(A.msg(), 'Your opponent stands up and concedes - the game is yours. The next game deals in a moment.', 'both chairs again');
+    assert.equal(A.msg(), 'Your opponent concedes. You win. The next game starts in a moment.', 'both chairs again');
   } finally { W.restore(); }
 });
 
@@ -713,7 +713,7 @@ test('AUDIT CARDS-6 E11/E13: a sit on its way is stood up on the way out (no gho
     await W2.settle();
     const end = W2.T().last;
     assert.deepEqual([end.gameNo, end.how, end.winner], [2, 'void', null], 'game two let go - no contest');
-    assert.match(B.msg(), /^No contest - the game is let go\./);
+    assert.match(B.msg(), /^No contest\. The game is called off\./);
   } finally { W2.restore(); }
   // pure: the window and the commit - a stand naming the last game late, or after a commit in the new one, concedes
   const ranked = () => {
@@ -774,7 +774,7 @@ test('AUDIT CARDS-6 C5/D2 (the client): a ranked seat answers the relay\'s ask -
     assert.deepEqual([W.T().gameNo, W.T().ranked], [2, true], 'game two ranked');
     refuseA = true;
     await play();
-    assert.match(A.msg(), /Your realm character does not hold every card of that deck\. You play friendly at this table from now\.$/);
+    assert.match(A.msg(), /Your realm character does not hold every card of that deck\. You play friendly games at this table from now on\.$/);
     await W.fire(ILIAC_GAP_MS);
     assert.deepEqual([W.T().gameNo, W.T().ranked], [3, false], 'game three friendly');
     await play();

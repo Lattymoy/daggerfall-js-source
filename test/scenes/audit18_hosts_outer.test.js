@@ -20,7 +20,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  motorStats, applyMotorEffectFlags, ridePlatform, adjustFallStart,
+  motorStats, applyMotorEffectFlags, adjustFallStart,
   offsetArrows, populatesWanderingNpcs, POPULATED_LOCATION_TYPES,
   applyFallLanding, NetRandom, applyNightStars, STAR_CHANCE, STAR_COLOR_INDICES,
   outdoorFogColor, RAINY_FOG_DENSITY, skyFrameForWeatherTime,
@@ -173,7 +173,7 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
   assert.match(decl, /dungeonCtx/, 'overlayHeld ignores the dungeon overlay - the motor walks under an open window');
   assert.match(decl, /uiOverlayActive/);
   // DFU PauseGame(true) stops the movers too (dungeon.js:"so the mode must" does).
-  assert.match(s, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt\);/,
+  assert.match(s, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt, player\);/,   // PIN MOVED (FIELD BUGS 2026-10-19f MOVER-BODY): the movers meet the body
     'the dungeon movers still travel under an open window');
 });
 
@@ -181,39 +181,48 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
 // 4. Platform riding was wired only into the standalone dungeon scene.
 // ---------------------------------------------------------------------
 
-test('audit18 hosts: ridePlatform applies the mover delta before the player moves', () => {
-  const moves = [];
-  const player = {
-    groundKey: 'obj7', pos: [1, 2, 3],
-    collider: { move: (p, x, y, z) => moves.push([p, x, y, z]) },
-  };
-  const actions = { objects: new Map([
-    ['obj7', { frameDelta: [0.5, -0.25, 2] }],
-    // The static dungeon shell IS in the object map with a live delta;
-    // DFU never rides it, so the key test must be the key, not absence.
-    ['dungeon', { frameDelta: [9, 9, 9] }],
-  ]) };
-  ridePlatform(player, actions);
-  assert.equal(moves.length, 1);
-  assert.deepEqual(moves[0].slice(1), [0.5, -0.25, 2]);
-  assert.equal(moves[0][0], player.pos);
-
-  // The static dungeon shell is not a platform, and neither is nothing.
-  moves.length = 0;
-  player.groundKey = 'dungeon';
-  ridePlatform(player, actions);
-  player.groundKey = null;
-  ridePlatform(player, actions);
-  player.groundKey = 'obj7';
-  ridePlatform(player, { objects: new Map([['obj7', { frameDelta: [0, 0, 0] }]]) });
-  ridePlatform(player, { objects: new Map() });
-  assert.equal(moves.length, 0, 'only a live non-zero mover delta may move the capsule');
+// PIN MOVED (FIELD BUGS 2026-10-19f MOVER-BODY): the ride is the movers' own - the action system carries the body its
+// step meets as it steps (world/actionSystem.js _standMover, player/moverBody.js), and shared.js's ridePlatform, a
+// host-side delta applied the next frame, is gone; test/world/fb1019f_moverbody.test.js holds the law whole.
+test('audit18 hosts: the mover carries its rider by its own step, the rider\'s own stance through the resolver - and a body on the static shell beside it is no rider', async () => {
+  const { Collider } = await import('../../src/player/collider.js');
+  const { ActionSystem } = await import('../../src/world/actionSystem.js');
+  const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const plate = (x0, x1) => ({ positions: new Float32Array([x0, 0, -1, x1, 0, -1, x1, 0, 1, x0, 0, 1]), indices: new Uint32Array([0, 1, 2, 0, 2, 3]) });
+  const col = new Collider(() => -Infinity);
+  const floor = plate(-20, 20);
+  col.addMesh('dungeon', floor.positions, floor.indices, I);
+  const actions = new ActionSystem(col);
+  const lift = actions.addAction(0, 7, plate(-1, 1), new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0.001, 0, 1]),
+    { duration: 20, rotation: { x: 0, y: 0, z: 0 }, translation: { x: 0, y: 2, z: 0 }, nextObject: -1, triggerFlag: 0x02 });
+  const rider = new PlayerMotor(col);
+  rider.spawn(0, 0.2, 0);
+  rider.crouching = true;   // PH1: the rider's own stance
+  const still = { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false };
+  for (let i = 0; i < 30; i++) rider.update(1 / 60, still, 0);
+  assert.equal(rider.groundKey, lift.key, 'the rider stands on the lift');
+  actions.activate(lift.key);
+  actions.update(0.25, rider);
+  assert.ok(Math.abs(rider.pos[1] - lift.matrix[13]) < 1e-6, `carried by the step itself: feet ${rider.pos[1]} on the lift at ${lift.matrix[13]}`);
+  // the static dungeon shell is not a platform: a body standing on it, beside the lift, stays where it stood
+  const by = new PlayerMotor(col);
+  by.spawn(5, 0.2, 0);
+  for (let i = 0; i < 30; i++) by.update(1 / 60, still, 0);
+  assert.equal(by.groundKey, 'dungeon');
+  const at = [...by.pos];
+  actions.update(0.25, by);
+  assert.deepEqual([...by.pos], at);
+  assert.equal(/ridePlatform/.test(src('src/scenes/shared.js')), false, 'no host-side ride beside the movers\' own');
 });
 
-test('audit18 hosts: BOTH dungeon-mounting hosts ride platforms', () => {
-  for (const host of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
-    assert.match(src(host), /ridePlatform\(/,
-      `${host} drops the mover frame delta - the lift penetrates the capsule`);
+test('audit18 hosts: BOTH dungeon-mounting hosts hand the movers the body (and the building\'s host its own)', () => {
+  const hosts = [
+    ['src/scenes/dungeon.js', /if \(!overlayHeld\) ctx\.actions\.update\(dt, walkMode \? player : null\);/],
+    ['src/scenes/worldModes.js', /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt, player\);/],
+    ['src/scenes/worldModes.js', /if \(!overlayHeld\) interiorCtx\.actions\.update\(dt, player\);/],
+  ];
+  for (const [host, call] of hosts) {
+    assert.match(src(host), call, `${host} keeps the body from its movers - the lift penetrates the capsule`);
   }
 });
 

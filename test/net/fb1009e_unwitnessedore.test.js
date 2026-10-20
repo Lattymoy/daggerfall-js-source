@@ -86,7 +86,7 @@ test('UNWITNESSED-ORE service: an unconfirmed Mountain pixel\'s Silver vein is m
 });
 
 test('UNWITNESSED-ORE page: the Mining page says what the ground holds on anyone\'s word and what waits on three players', () => {
-  assert.match(MINING_GROUND_LINE, /fewer than three players have gathered on holds Silver at most\. Gold, Platinum, Mithril and a region's own ore appear there once three different players/);
+  assert.match(MINING_GROUND_LINE, /^Veins hold Silver at most until three different players, each with an account at least a week old, have gathered on that ground\. Then Gold, Platinum and Mithril in the mountains, and the region's own ore, can appear/);   // VOICE1 (PIN MOVED): the same law in plain words
   const src = readFileSync(new URL('../../src/ui/professions/profPages.js', import.meta.url), 'utf8');
   assert.match(src, /if \(GATHER_HOW\[_sel\]\) pane\.append\(el\('p', 'px-note', gatherHow\(_sel\)\)\);[^\n]*\n\s+if \(_sel === 'mining'\) pane\.append\(el\('p', 'px-note', miningGroundLine\(\)\)\);/);
 });

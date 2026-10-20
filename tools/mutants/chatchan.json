@@ -534,8 +534,8 @@
     "tests": [
       "test/net/chatchan.test.js"
     ],
-    "old": "hint: 'Your party alone', hidden: true, peekAll: true }",
-    "new": "hint: 'Your party alone', peekAll: true }"
+    "old": "hint: 'Only your party', hidden: true, peekAll: true }",
+    "new": "hint: 'Only your party', peekAll: true }"
   },
   {
     "name": "CHAT-P-select-into-a-hidden-tab",

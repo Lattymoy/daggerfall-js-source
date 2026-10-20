@@ -373,8 +373,8 @@ test('HORSE-WALK IN A TOWN (TOWN-GALLOP, 2026-10-13, Mac: "Remove forced horse w
 });
 
 test('HORSE-WALK THE WORDS: the Features row and the Horses tutorial say the horse walks and Run gallops it - in a town too since TOWN-GALLOP (AUDIT HORSE-WALK\'s "outside towns" retired with the town walk), and the tutorial says what a gallop into the people of a town does: the trample Roleplay & Realism ships on (TUT1: a slice that changes how a system plays changes its page) (mutants: TOWNGALLOP-tutorial-towns-back, TOWNGALLOP-tutorial-trample-dropped, TOWNGALLOP-trample-ships-off)', () => {
-  assert.match(FEATURES.find((f) => f.id === 'horse-care').note, /walks unless you hold Run to gallop on its breath/);
-  assert.ok(TUTORIALS.find((t) => t.id === 'horse').body.some((b) => b.includes('Your horse walks; hold {Run} to gallop. Don\'t gallop into people in town: trampling them is a crime.')));
+  assert.match(FEATURES.find((f) => f.id === 'horse-care').note, /walks unless you hold Run to gallop, which tires it/);
+  assert.ok(TUTORIALS.find((t) => t.id === 'horse').body.some((b) => b.includes('Your horse walks; hold {Run} to gallop. Do not gallop into people in town: trampling them is a crime.')));
   _resetModSettings();
   assert.equal(rrRidingSetting('TrampleCivilians'), true, 'the trample the page warns of ships on');
 });

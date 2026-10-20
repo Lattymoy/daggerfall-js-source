@@ -27,15 +27,15 @@ import { passRetryMs, BATTLE_AWAY_MS } from './siege/siegeSession.js';
 export const ROYAL_PASS_RETRY_MS = 5000;
 /** The words. */
 export const ROYAL_SESSION_TEXT = Object.freeze({
-  notHere: (town) => `Go to ${town} to enter the Royal Tourney - its ring stands before the castle.`,
+  notHere: (town) => `Go to ${town} to enter the Royal Tourney. Its ring stands before the castle.`,
   old: 'The server does not keep Royal Tourneys yet.',
-  entered: (side) => (side === 'watch' ? 'You are watching the Royal Tourney. Nothing you do reaches it.' : 'You have entered the Royal Tourney. Challenge a contender from their card.'),
+  entered: (side) => (side === 'watch' ? 'You are watching the Royal Tourney as a spectator.' : 'You have entered the Royal Tourney. Challenge a contender from their card.'),
   left: 'You have left the Royal Tourney.',
   refused: (why) => `The Royal Tourney would not have you: ${why}`,
-  asked: (who) => `${who} challenges you to a bout - challenge them back from their card to accept.`,
+  asked: (who) => `${who} challenges you to a bout. Challenge them back from their card to accept.`,
   sent: (who) => `You challenge ${who} to a bout.`,
   away: (city) => `You have left ${city}, and the Royal Tourney with it.`,   // AUDIT-SEATS C1
-  closed: 'The Royal Tourney\'s door has closed on you - you have left it.',   // AUDIT-SEATS C1: its socket closed for good
+  closed: 'The connection to the Royal Tourney closed. You have left it.',   // AUDIT-SEATS C1: its socket closed for good
 });
 
 /**

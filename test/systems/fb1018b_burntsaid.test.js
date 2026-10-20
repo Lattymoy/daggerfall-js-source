@@ -65,7 +65,7 @@ test('BURNT-SAID THE HELD: a held record\'s death in the zone takes both letters
     '2 letters of credit worth 1,350,000 gold left your wallet.',
     WILD_TEXT.deathHold,
   ]);
-  assert.match(lines[0], /^3 things you carried were lost where you fell - this character's trading is frozen, so nothing is left for anyone to take\.$/);
+  assert.match(lines[0], /^3 things you carried were lost where you fell\. This character's trading is frozen, so nothing is left for anyone to take\.$/);
 });
 
 test('BURNT-SAID THE CLEAN: a record nobody holds lays its drop as ever - the screen says it lies where it fell, and now names the letters among it (mutants: the letters unsaid)', async () => {
@@ -81,7 +81,7 @@ test('BURNT-SAID THE WORDS AND THE HOST: one letter, none, a forged worth; world
   assert.deepEqual(wildLettersOf([letterOfCredit(-5), letterOfCredit(1.5)]), { n: 2, gold: 0 }, 'only a whole worth counts');
   assert.equal(WILD_TEXT.deathLetters(1, 650_000), 'A letter of credit worth 650,000 gold left your wallet.');
   assert.equal(WILD_TEXT.deathLetters(0, 0), '');
-  assert.equal(WILD_TEXT.deathBurnt(1), '1 thing you carried was lost where you fell - this character\'s trading is frozen, so nothing is left for anyone to take.');
+  assert.equal(WILD_TEXT.deathBurnt(1), '1 thing you carried was lost where you fell. This character\'s trading is frozen, so nothing is left for anyone to take.');
   assert.equal(WILD_TEXT.deathBurnt(0), '');
   setWildDeath({ killer: 'Ria', dropped: 3 });
   assert.deepEqual(wildDeathLines(), ['Ria may claim one piece of your worn gear.', '3 things you carried lie where you fell, for ten minutes.', 'In the mountains the dead wait two minutes.'], 'a death with no letters reads as it did');
@@ -89,5 +89,5 @@ test('BURNT-SAID THE WORDS AND THE HOST: one letter, none, a forged worth; world
   const w = rd('src/scenes/world.js');
   assert.ok(w.includes('if (dd) setWildDeath({ killer: dd.killer, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out });'), 'the host hands the burnt count and the pieces taken out');
   assert.ok(w.includes('townTalk.say(d.burnt ? WILD_TEXT.burntLate() : WILD_TEXT.dropLate);'), 'risen: the held case said its own way');
-  assert.match(WILD_TEXT.burntLate(), /trading is frozen, so it was lost, not left\.$/);
+  assert.match(WILD_TEXT.burntLate(), /trading is frozen, so it was lost\.$/);
 });

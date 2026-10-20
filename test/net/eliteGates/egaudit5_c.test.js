@@ -86,7 +86,7 @@ test('AUDIT EG V L7-1 THE /breach DOOR TAKES ITS WORDS WHOLE (section 27.8\'s an
   assert.equal(breachCommandOf('say /breach pick 2'), null);
   // the host's own send path hands the door's words whole, and holds no door of its own
   const W = rd('src/scenes/world.js');
-  assert.match(W, /\{ const arg = breachCommandOf\(text\); if \(arg != null\) \{ if \(!egClient\) chatLog\.push\(tabId, \{ text: 'Elite Breaches are online - connect and sign in first\.', system: true \}\); else egClient\.command\(arg\); return true; \} \}/);
+  assert.match(W, /\{ const arg = breachCommandOf\(text\); if \(arg != null\) \{ if \(!egClient\) chatLog\.push\(tabId, \{ text: 'Connect and sign in to use Elite Breaches\.', system: true \}\); else egClient\.command\(arg\); return true; \} \}/);
   assert.doesNotMatch(W, /\\\/breach\(\?:/, 'no second /breach regex in the host');
   assert.ok(HOST_COMMANDS.includes('breach'));
   assert.deepEqual(parseChatLine('/breach pick 2'), { kind: 'host', name: 'breach' }, 'the parser knows it for the host\'s');
@@ -279,7 +279,7 @@ test('AUDIT EG V L7-11 THE SPIRE\'S REFUSALS ARE THE CATALOG\'S OWN (net/account
   assert.equal(egRefusalText('no-such-word'), EG_TEXT.shut);
   assert.equal(egRefusalText(undefined), EG_TEXT.shut);
   const C = rd('src/scenes/eliteGates/egClient.js');
-  for (const s of ["Close a Dagon's Breach first", 'You have rehearsed the Spire today', 'That breach is spent.', 'That breach is not one the Spire knows.']) assert.ok(!C.includes(s), `no second copy of "${s}"`);
+  for (const s of ["The Spire opens only to those who have closed a Dagon's Breach", 'You have rehearsed the Spire today', 'That breach is spent.', 'That breach is not one the Spire knows.']) assert.ok(!C.includes(s), `no second copy of "${s}"`);
 });
 
 // ── L2-9 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────

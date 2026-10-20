@@ -360,7 +360,10 @@ ROSE-SEEN (`01-Overview/bugs/Field-Bugs-2026-10-15e.md`): a follow-up blow -
 Open Hand's second, Many Endings' echo - runs no formula, so the seam
 never heard it and the Rose looked like nothing. It raises its own
 number through `showFollowUp`, tagged with the power's name, under the
-same enhanced-only gate.
+same enhanced-only gate. CHAIN-SEEN (FIELD BUGS 2026-10-19f,
+`06-Systems/Loot-Arc.md` LOOT5): a blow's reach on another foe -
+Chain Lightning's arc, Earthshaker's quake, Dragonfire's burst - ran
+no formula either, and said nothing; each raises its number so now.
 
 
 
@@ -696,6 +699,60 @@ the frame in draw and release in `_close`, and nobody else imports
 it. Eight mutants over the hooks (a hook dropped, a decision handed
 to the panel, `_close` and the field step not releasing, the seam's
 null and classic arms), each killed.
+
+#### SPELLSHOP-SAID - THE NINTH WINDOW, AND THE NOTICE TAKES ITS CLICK (FIELD BUGS 2026-10-19f)
+
+Two players' private reports: at the Mages Guild's spell shop, Buy did
+nothing - no confirmation, no gold spent. Buy refused: no spellbook in
+the pack, or not the gold (DFU's
+`DaggerfallSpellBookWindow.BuyButton_OnMouseClick`, a
+`DaggerfallUI.MessageBox` for each - ClickAnywhereToClose). The survey
+above counted the spellbook among the windows the enhanced skin
+replaces with a DOM twin, and for the cast book it still is; but
+SHOP-PLUS then put the BUY-mode book inside the Enhanced Plus port
+(`enhancedPorts.js` spellShop), whose classic draw runs onto a
+renderer that paints nothing. Only a box with buttons takes an
+enhanced face of its own (the dialog); the refusal was laid out as
+parchment onto that renderer and never seen. It also STAYED UP: the
+port's dismiss (DROPS-AUDIT F6) asked `win.box`, which the book does
+not keep - its box is `top` and `_box` - so the next press, Leave,
+went to putting away a box nobody could see. An effect's description
+(the chosen spell's "What it does") was the same box, the same way.
+
+The book is the ninth window on the seam:
+`spellbookWindow.js:"if (noticeFrame(this, NOTES.includes(this.top) ? this._boxRows() : null)) {"`,
+the click-anywhere tops named once beside the ones that ask
+(`spellbookWindow.js:"const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note']);"`),
+BOX1's single read unchanged, and `_close` releasing as the others do.
+And the sweep found the same blindness in two windows the seam already
+drew: the guild's and the coven's box is their queue's head (`top`),
+so their notice never took a click on the window's ground, and a row
+that calls the window's own method (Heal Curse, the Reforge, the
+lifting) acted under it. So the port's dismiss asks the seam rather
+than a field: `enhancedPort.js:"if (noticeShown(win)) { win.click?.(-1, -1); return; }"`
+- the notice is the panel the window raised
+(`enhancedNotice.js:"export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);"`),
+whatever field holds its box, and it is up exactly while the player
+can read it. The bank, the potion maker, the item maker and the spell
+maker, which kept `box`, answer as before. The other ported windows
+(the house and ship lists, the transport picker, the daedra) raise no
+box.
+
+**Tests**: `test/ui/fb1019f_spellshopsaid.test.js` (7) - through the
+real port on the repo's DOM, the records through the real TEXT.RSC
+reader: a no-book Buy and a no-gold Buy put up the record as the
+notice (no parchment, BOX1's read once), the next click - Leave, or
+the window's ground - takes it down with nothing under it acting, a
+key too, and Leave then leaves; an effect's description is the notice;
+the haggle stays the enhanced dialog, is not dismissed by a click, and
+its Yes buys; `_close` releases; the classic skin keeps its parchment;
+the guild's and the coven's notices take the first click (a Heal Curse
+press under one heals nothing); `noticeShown` itself. PIN MOVED: the
+roster (`test/ui/enhancedNotice.test.js`, nine windows, the port the
+seam's one more importer) and DROPS-AUDIT F6
+(`test/ui/enhanced/dropsaudit.test.js`). `tools/mutants/spellshop_said.json`
+(12, all dead); `dropsaudit.json`'s DA-F6-notice-lets-tiles-act
+re-aimed by content.
 
 ### ENH-NOTICE3 - THE ONE DOOR, AND THE HUD LINE AS A TOAST (2026-09-21, Mac: "I do notice the new enhanced pop up system isn't working for everything. All mods, including climates and calories need to utilize the enhanced notification popup. This needs a proper detailed audit, maybe a refactor")
 
@@ -6775,6 +6832,56 @@ enchanted item is not offered again.
 
 Pins: 16 in `enchantmentcatalogue.test.js` (18 mutations, 16 dead,
 2 recorded equivalent) and 3 added to `enchanting.test.js`.
+
+**SIDE-ONCE - A SIDE EFFECT'S SETTING IS PICKED ONCE (FIELD BUGS
+2026-10-19f; the owner, 2026-10-19: "One copy per setting").** A
+DEPARTURE, Port-Ledger A. DFU gives User Takes Damage and Item
+Deteriorates `AllowMultipleSecondaryInstances` beside the primary flag
+(`UserTakesDamage.cs:35`, `ItemDeteriorates.cs:37`), and the secondary
+picker leaves a taken setting out only when that flag is absent
+(`DaggerfallItemMakerWindow.cs:849-855`). So the same setting could be
+picked again and again up to the ten-row guard, each copy adding its
+negative cost to the budget - the trade this section opens with, taken
+ten times over for one drawback. The port carried it verbatim; a
+player's private report found it. `ITEM_MAKER_EFFECT_FLAGS` now gives
+both effects the primary flag alone, so `primaryPick` hides a taken
+setting as it does every other effect's: in sunlight AND in holy
+places is still two rows, in holy places twice is not. No effect
+carries the secondary flag now.
+
+Its sibling ships with it: an effect whose every setting is taken -
+Health Leech with all three, Bad Reactions From with all three, User
+Takes Damage with both - stayed in the list and opened an empty
+chooser, because DFU's primary filter (`DaggerfallItemMakerWindow.cs:644`,
+`DaggerfallItemMakerWindow.cs:689`) asks whether the
+EFFECT may be taken again, never whether a setting is left
+(`HealthLeech.cs:37` allows more than one Health Leech, never one
+setting twice). `primaryPickerList` now drops an effect whose
+`primaryPick` would offer nothing. Both skins read the one list: the
+Enhanced skin's Add side effect presses the classic button and its
+list draws the classic picker's rows.
+
+A PIECE MADE BEFORE KEEPS ITS COPIES (the owner chose no refund and no
+fold). The item law still counts the maker's rows by EFFECT
+(`itemLaw.js` makerFindings, `many` reads the primary flag), so a piece
+enchanted under the old rule passes in the save and on the wire - the
+lesson of MAKER-KEPT (`01-Overview/bugs/Field-Bugs-2026-10-16c.md`),
+where a law tightened after the fact read honest pieces as forged and
+held their owners' trade. The account service judges with the same
+law (`server-account/src/judge.js`, the market's and the vault's
+`lawfulItem`), and nothing on a maker's row dates it, so the service
+does not yet tell a piece made after SIDE-ONCE from one made before;
+that waits on the owner.
+
+Pinned: `test/systems/fb1019f_sideonce.test.js` (4, on the real
+window, both skins: a taken setting gone from its chooser and the
+other settings still offered; "in holy places" asked for ten times
+landing once at -1000/1800; each of four effects gone from the list
+with every setting taken; the item maker's own write of a setting
+taken nine times passing the law). PIN MOVED:
+`enchantmentcatalogue.test.js` (no effect carries the secondary flag;
+Item Deteriorates' chooser without its taken setting).
+`tools/mutants/fb1019f_sideonce.json` (6, all dead).
 ## U41 - THE TRAVEL MAP (2026-08-24)
 
 The classic world map, at last: the province art on V, the region
@@ -13168,6 +13275,30 @@ DotGothic16, Press Start 2P, Silkscreen) before choosing; Press Start
 2P's 5 is a different weight, VT323's and DotGothic's sit lower. The
 landing page's no-raster law (U60) now admits exactly one `url()`: the
 font data URI, which is typography, not a picture.
+
+## TWO: THE 2 AND THE Z (2026-10-18)
+
+Dudey: "the number 2 looks like a Z ... make it more readable", and then
+"change that as well to a readable Z". It is the glyph again: Pixelify's
+`two` and its `Z` are the same outline except one corner, so 12, 22 or
+2025 read as Z's and a Z reads as a 2. No pixel face drawn beside it fits
+better (Silkscreen's 2 is a Z too), so both are drawn for us on
+Pixelify's own grid at weight 500, the weight the skin reads in (columns
+60 to 531, base -12, top 633, advance 592): the 2 with a rounded top, the
+right side down one row and a diagonal stepping two cells wide to a full
+base, on the same lines Pixelify's own 4 and N step on; the Z with a flat
+top and base and one straight diagonal, 150 units across. The first cut
+drew the 2 on the weight-400 grid, whose lines sit a few units off the
+500 letters beside it, and at sizes where the grid falls between screen
+pixels its steps showed dark slits (Dudey: "theres a black line cutting
+through"); a straight 2 read worse ("the 2 looks worse now"), so the 2
+keeps its steps on the 500 grid and only the Z is straight. The small z is
+Pixelify's and was never confused. `tools/pixelifyGlyphs.py` builds both
+(416 bytes, `vendor/pixelify-glyphs/`); `ui/pixelifyFive.js` carries them
+as a second `@font-face` of the family `Pixelify Five` over U+0032 and
+U+005A, so every stack that already puts the five first takes them from
+it and nothing else moves. The landing page and the launcher carry the
+same rule, so the landing's no-raster law now admits two font data URIs.
 
 ## FIX-E: THE END OF A RUN NAVIGATES, WHATEVER THE VIDEO DOES (2026-09-08)
 

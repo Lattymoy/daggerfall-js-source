@@ -193,8 +193,8 @@ test('WB13c a fight gone resets the bar - the next fight\'s comes up with its ow
 
 test('WB13c the court: the bar never over the step\'s fire, and the blow on my feet handed to it by name (mutants: the bar over the veil; MOVE never asked)', () => {
   const c = read('src/scenes/gate/gateCourt.js');
-  assert.match(c, /const peril = alive \? perilAt\(s, t, P, fp\[0\] - COURT_CENTRE\[0\], fp\[2\] - COURT_CENTRE\[2\], yaw\(\)\) : null;\n\s*drawGateBossBar\(bossBarModel\(s, t, bossOf\(s\), peril\?\.name \?\? null\), \{ hidden: hudHidden\(\) \|\| veiled\(\) \}\);/);
-  assert.match(c, /drawGateGround\(groundViewModel\(\{ inside: inFire, ground: groundName, color: groundColor, biteAt, biteColor, now: t, peril \}\), \{ hidden: hudHidden\(\) \}\);/, 'the same peril the ground says');
+  assert.match(c, /const peril = alive \? perilAt\(s, t, P, fp\[0\] - COURT_CENTRE\[0\], fp\[2\] - COURT_CENTRE\[2\], yaw\(\)\) : null;\n[^\n]*\n[^\n]*\n\s*const onMe = peril && pF \? \(pF\.now && !peril\.now \? pF : peril\) : peril \?\? pF;\n\s*drawGateBossBar\(bossBarModel\(s, t, bossOf\(s\), onMe\?\.name \?\? null, \{ flame: F, flameMine: [^}]*\}\), \{ hidden: hudHidden\(\) \|\| veiled\(\) \}\);/);   // PIN MOVED (WB14d): his blow on my feet, or his Flame's
+  assert.match(c, /drawGateGround\(groundViewModel\(\{ inside: inFire, ground: groundName, color: groundColor, biteAt, biteColor, now: t, peril: order \?\? onMe, blindAt: arsenal\.blindAt\(\) \}\), \{ hidden: hudHidden\(\) \}\);/, 'the same peril the ground says');
 });
 
 test('WB13c the screens on phones: the bar lower on a portrait phone; on a landscape one his marks\' row gone and the bar high, clear of the crosshair; the card at the foot on the left and the chart on the left under the menu\'s button, never off the screen, the chart narrow; beside the party\'s frames where the screen holds both (mutants: the landscape rules lost; the chart\'s fold never on a landscape phone; the party covered)', () => {

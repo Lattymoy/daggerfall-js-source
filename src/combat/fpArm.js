@@ -103,7 +103,7 @@ import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperC
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 import { armKickMatrix } from './gun/gunFeel.js';   // MW-GUN-FEEL: the gun's recoil and reload, as one pose over the viewmodel
 import { rifleStanceStep, applyRifleStance } from './gun/rifleStance.js';   // RIFLE-STANCE: a long gun held in the hands - the low ready, the aim
-import { createHipLantern } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed (BODY-MOTION: its rider moved there)
+import { createHipLantern, HIP_LANTERN_HEIGHT } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed (BODY-MOTION: its rider moved there); HT-WAIST-SIZE: the one height they hang
 import { createBodyMotion, motionWord } from '../characters/bodyMotion/bodyMotion.js';   // BODY-MOTION: the third-person body's gait, carry and blows
 import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/morrowind/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
 import { spellFxPlan } from '../formats/morrowind/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
@@ -1644,6 +1644,7 @@ export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes
  *                (Bip01 R Thigh at x 6.6), a little forward, at belt height (the scabbard's own 86.5);
  *   the HANG   - plumb from the hook, not the pelvis's rotation (mwFirstPerson.js hangAffine), times the swing
  *                law (systems/lanternSwing.js) stepped off the body's motion every frame it is drawn;
+ *   the SIZE   - a belt lantern's (hipLanternSize, HT-WAIST-SIZE), whatever size the record's mesh was made at;
  *   the RIG    - the third-person body ALONE: the first-person arms have no hip to hang it on, and a lantern at
  *                the waist is exactly the light the arm does NOT hold.
  *
@@ -1679,14 +1680,24 @@ export function resolveHipLanternPart({ hipLight = false, allLights, find, skele
   hipInfo = { id: rec.id, name: rec.name, model: rec.model, bone: HIP_LIGHT_BONE, fire: !!rec.fire };
   return { parts, hipInfo, notes };
 }
-/** HT-WAIST: a bound hip lantern's hook and anchor, measured once on the assembly it hangs from. Answers the hang
- *  (null when none is bound). */
+/**
+ * HT-WAIST-SIZE (2026-10-20, Mac: "the lantern attached to the waist in absolutely gigantic on the morrowind model"):
+ * THE SCALE A LANTERN'S MESH HANGS AT, from its own height (rig units, mwFirstPerson.js hangAnchor's) - a belt
+ * lantern's, systems/lanternSwing.js HIP_LANTERN_HEIGHT, the height Eye Of The Beholder's picture hangs at. Morrowind
+ * hangs no lantern on a belt: its carriable lanterns are lights made to hang in a street or be held up in a hand, and
+ * HT-WAIST hung the record's mesh at the size its author made it for that - nothing in the hang said how big a
+ * lantern at the waist is. 1 for a part with no height to read.
+ */
+export const hipLanternSize = (height) => (height > 1e-6 ? (HIP_LANTERN_HEIGHT * MW_UNITS_PER_METER) / height : 1);
+/** HT-WAIST: a bound hip lantern's hook, anchor and size, measured once on the assembly it hangs from. Answers the
+ *  hang (null when none is bound). */
 export function hangHipLight(arm) {
   const piece = arm?.pieces?.find((p) => p.slot === HIP_LIGHT_SLOT && p.hang);
   if (!piece) return null;
   const hang = piece.hang;
   hang.hookLocal = hookOnBone(arm, HIP_LIGHT_BONE, HIP_LANTERN_HOOK) ?? [...HIP_LANTERN_HOOK];
   hangAnchor(arm.pieces, hang);
+  hang.size = hipLanternSize(hang.height);   // HT-WAIST-SIZE
   return hang;
 }
 
@@ -1952,7 +1963,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
       // Not "your archives do not carry it": ours is SHIPPED, so a miss
       // here is the build's fault and not the player's, and saying so
       // is the difference between a bug report and a wild goose chase.
-      notes.push(`weapon: ${path} ships with the port and did not load - this is a build problem, not your data`);
+      notes.push(`weapon: ${path} comes with the game and did not load. This is a game problem, not your files`);
     } else if (!skeletonHasBone(skeletonBytes, own.bone)) {
       notes.push(noBoneNote('weapon', own.bone, own.name));
     } else {
@@ -3153,8 +3164,8 @@ export async function buildFpArm({
       return {
         ok: false,
         stage: 'camera',
-        error: 'this skeleton has no "Camera" bone and no "Head" bone - '
-          + 'rule 54 has nothing to track',
+        error: 'this skeleton has no "Camera" bone and no "Head" bone '
+          + 'for the view to follow',
         notes: [...missing, ...(arm.notes || [])],
         rows: wanted,
       };

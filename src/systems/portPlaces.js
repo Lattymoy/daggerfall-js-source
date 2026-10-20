@@ -40,7 +40,7 @@ export const PORT_PLACE_ORDER = Object.freeze(['shipyard', 'crewhall', 'lighthou
 export const PORT_PLACES = Object.freeze({
   shipyard: Object.freeze({ key: 'shipyard', title: 'Shipyard', keeper: 'Shipmaster', trade: 'Ships sold, bought back, mended and refitted', sign: 'SHIPS', seed: 0x5419a7, group: 'Shipyards' }),
   crewhall: Object.freeze({ key: 'crewhall', title: 'Crew Hall', keeper: 'Crewmaster', trade: 'Hands signed on for any ship', sign: 'CREW', seed: 0x0c4e11, group: 'Crew halls' }),
-  lighthouse: Object.freeze({ key: 'lighthouse', title: 'Lighthouse', keeper: 'Lightkeeper', trade: 'The harbour\'s light', sign: '', seed: 0x011947, group: 'Lighthouses' }),
+  lighthouse: Object.freeze({ key: 'lighthouse', title: 'Lighthouse', keeper: 'Lightkeeper', trade: 'The harbor\'s light', sign: '', seed: 0x011947, group: 'Lighthouses' }),
   docks: Object.freeze({ key: 'docks', title: 'Docks', keeper: '', trade: 'Ships made fast and cargo landed', sign: '', seed: 0x00d0c5, group: 'Docks' }),
 });
 /** A place the law knows, or null. */

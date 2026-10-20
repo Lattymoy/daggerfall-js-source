@@ -112,8 +112,8 @@
   {
     "name": "TV6-found-no-journey",
     "file": "src/scenes/world.js",
-    "old": "    const plate = tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);",
-    "new": "    const plate = tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key);",
+    "old": "?? tvDng.list.find((p) => p.key === key && p.summary);",
+    "new": ";",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],

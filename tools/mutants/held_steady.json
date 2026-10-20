@@ -1,0 +1,182 @@
+[
+  {
+    "name": "HELD-STEADY-never-held",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    return req && k > 1e-6 ? turnAbout(req, S, k < 1 - 1e-9 ? rotFraction(steady.turn, k) : steady.turn) : req;",
+    "new": "    return req;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "HELD-STEADY-blades-ride",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "export const rideOf = (r) => (r.blade ? 0 : clamp01(r.swing));",
+    "new": "export const rideOf = (r) => clamp01(r.swing);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "HELD-STEADY-empty-held",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "export const rideOf = (r) => (r.blade ? 0 : clamp01(r.swing));",
+    "new": "export const rideOf = (r) => (r.blade ? 0 : 0 * clamp01(r.swing));",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "HELD-STEADY-chest-unbound",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  return 1 - clamp01(blendRow(cls, 'L', shares).grip) * clamp01(armWL);",
+    "new": "  return 1;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "HELD-STEADY-bound-by-the-wrong-hand",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  return 1 - clamp01(blendRow(cls, 'L', shares).grip) * clamp01(armWL);",
+    "new": "  return 1 - clamp01(blendRow(cls, 'R', shares).grip) * clamp01(armWL);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "HELD-STEADY-turned-about-the-root",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  const pt = (p) => add(S, apply(R, sub(p, S)));",
+    "new": "  const pt = (p) => apply(R, p);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "HELD-STEADY-the-wave-never-split",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      const chest = chestAt(ride), calm = chestAt(0);",
+    "new": "      const chest = chestAt(ride), calm = chestAt(ride);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "HELD-STEADY-the-chest-rides-whole",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      const chest = chestAt(ride), calm = chestAt(0);",
+    "new": "      const chest = chestAt(1), calm = chestAt(0);",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "HELD-STEADY-no-wave-from-the-gait",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "wave: { yaw: chestYaw, roll: counterDrop } },",
+    "new": "wave: { yaw: 0, roll: 0 } },",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "DUAL-RUN-the-old-row",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }), L: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2, mirror: true }) },",
+    "new": "    run: { R: row(-47, 21, 7, 0, 0.1, { blade: dir(0.3, -0.93, 0.21), edge: dir(0.28, -0.12, -0.95) }), L: row(-47, 21, 7, 0, 0.1, { blade: dir(0.3, -0.93, 0.21), edge: dir(0.28, -0.12, -0.95), mirror: true }) },",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "DUAL-RUN-the-shoulder-square",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(-42, 10, 8, -60, 0.4,",
+    "new": "    run: { R: row(-42, 10, 8, 0, 0.4,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "DUAL-RUN-the-arms-held",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(-42, 10, 8, -60, 0.4,",
+    "new": "    run: { R: row(-42, 10, 8, -60, 0.1,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "DUAL-RUN-the-elbow-still",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }), L:",
+    "new": "edge: dir(0.3, -0.14, -0.94) }), L:",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_steady.test.js"
+    ]
+  },
+  {
+    "name": "RUN-EASE-the-stiff-swing",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    lift: 0.18, liftFast: 0.29, land: 0.35,",
+    "new": "    lift: 0.12, liftFast: 0.18, land: 0.35,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_run.test.js"
+    ]
+  },
+  {
+    "name": "RUN-EASE-the-stiff-carriage",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    height: 0.925, heightFast: 0.9, bob: 0.035, sway: 0.012,",
+    "new": "    height: 0.95, heightFast: 0.93, bob: 0.028, sway: 0.012,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_run.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-SIZE-unsized",
+    "file": "src/combat/fpArm.js",
+    "old": "  hang.size = hipLanternSize(hang.height);   // HT-WAIST-SIZE",
+    "new": "  // HT-WAIST-SIZE unsized",
+    "tests": [
+      "test/combat/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-SIZE-the-size-unlaid",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  for (let i = 0; i < 9; i++) A[i] = r[i] * s;",
+    "new": "  for (let i = 0; i < 9; i++) A[i] = r[i];",
+    "tests": [
+      "test/combat/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-SIZE-scaled-about-the-origin",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  out.t[2] = hz - (A[6] * n[0] + A[7] * n[1] + A[8] * n[2]);",
+    "new": "  out.t[2] = hz - (r[6] * n[0] + r[7] * n[1] + r[8] * n[2]);",
+    "tests": [
+      "test/combat/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-SIZE-height-from-the-origin",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  hang.height = Number.isFinite(maxZ) ? maxZ - minZ : 0;",
+    "new": "  hang.height = Number.isFinite(maxZ) ? maxZ : 0;",
+    "tests": [
+      "test/combat/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-SIZE-the-law-inverted",
+    "file": "src/combat/fpArm.js",
+    "old": "(height > 1e-6 ? (HIP_LANTERN_HEIGHT * MW_UNITS_PER_METER) / height : 1)",
+    "new": "(height > 1e-6 ? (HIP_LANTERN_HEIGHT * MW_UNITS_PER_METER) * height : 1)",
+    "tests": [
+      "test/combat/htwaist_mwbody.test.js"
+    ]
+  }
+]

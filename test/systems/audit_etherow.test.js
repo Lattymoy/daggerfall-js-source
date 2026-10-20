@@ -144,7 +144,7 @@ test('AUDIT ETHER-OW C2-3: "Your Ship" is boarded from the Bay alone - past the 
   };
   // from past the Veil: refused, said
   assert.equal(await mk({ pixel: { x: H.px, y: H.py } })(), undefined, 'no board from Veilhaven');
-  assert.deepEqual(said, ['Nothing of the Bay\'s magic reaches across the Veil - only the crossing does.']);
+  assert.deepEqual(said, ['The Bay\'s magic does not reach across the Veil. Only the crossing does.']);
   // from the Bay: boarded, to the ship's pixel
   assert.deepEqual((await mk({ pixel: { x: 300, y: 200 } })())?.go, { x: 2, y: 2 }, 'the Bay\'s board as ever');
   // aboard: leaving goes back where it was boarded, even across the Veil (it is the way home, never a way over)

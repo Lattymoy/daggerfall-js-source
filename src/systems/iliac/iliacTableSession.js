@@ -22,6 +22,7 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { newGame, commit, reveal, iliacView, legalPlays, playsRefusal, result as gameResult } from '../../net/iliac/iliacHand.js';
 import { patronPlays, forfeitCard } from './iliacPatrons.js';
+import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** MEASURE (CARDS10): a regular's thought before he commits a turn, and its spread. */
 export const ILIAC_THINK_MS = 1400;
@@ -98,6 +99,7 @@ export class IliacTableSession {
       this.prize = card ? { from, card } : null;
     }
     this._say({ t: 'end', why: this.over, result: r, prize: this.prize }, now);   // the table's word (the rules' own 'over' came before it)
+    if (r.winner === 0) noteAct('cards-won');   // QL11: a hand won - the player's game, seat 0 (a concession is `leave`'s, never here)
   }
 
   /** The plays the player may commit one at a time now (empty once he has, or the game is over). */

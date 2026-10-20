@@ -345,7 +345,7 @@
   {
     "name": "DISC19-D-in-play-text-says-nothing-to-do",
     "file": "src/systems/staleChunk.js",
-    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated - reload the page for enemies.';",
+    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'The game was updated. Reload to see the enemies.';",
     "new": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated.';",
     "tests": [
       "test/systems/disc19.test.js"

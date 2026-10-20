@@ -73,6 +73,6 @@ test('OWED-PACE: the hall\'s review reads the Roll\'s owed (onPushEffects - stan
     setReputation(store, g.factionId, 4);
     m.probation = false; m.rank = 0;   // the report's own hall: a Member, Journeyman next at 10
     assert.deepEqual(rankNeedsLines(entity, g, memberships, store), ['Next rank: Journeyman',
-      `Reputation 4 of 10 (36 more already earned - it arrives at most ${ROLL_GAIN_DAY_MAX} a real day)`]);
+      `Reputation 4 of 10 (36 more already earned, arriving at most ${ROLL_GAIN_DAY_MAX} a real day)`]);
   } finally { setStandingOwed(null); }
 });

@@ -16,7 +16,7 @@ import { mintReceipt, readReceipt, receiptValid, RECEIPT_TTL_S } from '../../../
 import { gateTimes, gateRoomKey } from '../../../src/net/gate/gateLaw.js';
 import { SOCIAL_ROOM, GATE_BRAIN_V, gateReceiptKey, relaySupportsGateSpent, GATE_SPENT_RELAY_MIN, validGateIn } from '../../../src/net/wire.js';
 import { foldGate, GATE_STATE_EMPTY } from '../../../src/net/gate/gateLink.js';
-import { bossPlace } from '../../../src/world/gate/gateBoss.js';
+import { bossPlace, bossStandIn, bossLookOf, STAND_IN_WHOLE } from '../../../src/world/gate/gateBoss.js';
 import { telegraphShape, telegraphField } from '../../../src/render/gate/gateTelegraph.js';
 import { inAttack, chargeStrikes } from '../../../src/net/gate/gateStrike.js';
 import { createSpoilsPool, spoilsStore, recoverSpoils, spoilsLevel, SPOILS_STORE_KEY, SPOILS_DAY_KEY, SPOILS_RECORD_V, spentKey } from '../../../src/scenes/spoilsPool.js';
@@ -190,7 +190,7 @@ test('AUDIT WBX S2 the receipt says the level the fight admitted its account at,
   assert.equal(spoilsLevel(8, 30), 8, 'never over the player\'s own');
   assert.equal(spoilsLevel(50, undefined), 50);
   assert.equal(spoilsLevel(0, undefined), 1);
-  assert.match(read('server/src/index.js'), /mintReceipt\(\{ d: f\.day, b: f\.boss, s: sub, c: rand32\(\), x: earnedBy\(f, sub\), l: f\.players\[sub\]\.lv, \.\.\.\(helped\.has\(sub\) \? \{ r: 1 \} : \{\}\), \.\.\.this\._bodyMeasureOf\(f, sub, GATE_SEAM\.earned\) \}/, 'the relay signs the level it admitted');   // PIN MOVED (INT14): and the count's measure beside it   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
+  assert.match(read('server/src/index.js'), /mintReceipt\(\{ d: f\.day, b: f\.boss, s: sub, c: rand32\(\), x: earnedBy\(f, sub\), l: f\.players\[sub\]\.lv, \.\.\.\(helped\.has\(sub\) \? \{ r: 1 \} : \{\}\), \.\.\.this\._bodyMeasureOf\(f, sub, GATE_SEAM\.earned\), \.\.\.\(receiptPortents\(f\) \? \{ p: receiptPortents\(f\) \} : \{\}\) \}/, 'the relay signs the level it admitted');   // PIN MOVED (WB14g): and a portent night's `p` after the count's measure; PIN MOVED (INT14): and the count's measure beside it   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
 });
 
 // ═══ F: THE COURT ════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -198,7 +198,12 @@ test('AUDIT WBX S2 the receipt says the level the fight admitted its account at,
 test('AUDIT WBX F1/F2 no weapon is worn or destroyed on him: the Razor\'s whole-health blow passes his stand-in by, and no Strikes payload bills its weapon for a blow on him - every other foe as DFU has it (mutants: the Razor on the stand-in; the payload\'s bill on him)', () => {
   const razor = SPECIAL_ARTIFACT_HANDLERS.get(ARTIFACTS.MehrunesRazor);
   const item = { currentCondition: 100, maxCondition: 100 };
-  assert.equal(razor.strikes({ target: { health: 1e9, spareGear: true }, item, rolls: () => 0.999 }), null, 'not him');
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE): his stand-in as its producer mints it - its whole a count the wire
+  // carries now, not 1e9 - and passed by even on a failed save: no wear pays for its kill on him (F2), so it STAYS
+  const him = bossStandIn(bossLookOf('ruhn'), 'Valkynaz Ruhn');
+  assert.equal(him.health, STAND_IN_WHOLE);
+  assert.equal(razor.strikes({ target: him, item, rolls: () => 0 }), null, 'not him');
+  assert.equal(razor.strikes({ target: him, item, rolls: () => 0.999 }), null, 'not him');
   const foe = razor.strikes({ target: { health: 40, stats: {} }, item, rolls: () => 0 });
   assert.ok(foe === null || foe.durabilityLoss === 40, 'a foe as the artifact has it');
   const e = read('src/systems/enchantments.js');
@@ -266,7 +271,10 @@ test('AUDIT WBX F6/F9 the court: my trap on him is said while it runs (a recast 
   assert.deepEqual(h.c.trapNow(), { chance: 40 });
   h.c.leave(); h.clock.t = 2000; h.c.frame();
   assert.deepEqual(h.c.trapNow(), { chance: 40 }, 'out and back in: still running');
-  assert.match(read('src/scenes/dungeonContext.js'), /const running = opts\.bossTrapNow\?\.\(\) \?\? null;\n\s*if \(running\) boss\.entity\.activeEffects = \[\{ kind: 'soulTrap', chance: running\.chance, roundsRemaining: 0 \}\];/, 'a recast\'s incumbent');
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): his spell door left the context (scenes/gate/standInSpell.js),
+  // the court's trap handed in by the context's wiring
+  assert.match(read('src/scenes/dungeonContext.js'), /trapNow: \(\) => opts\.bossTrapNow\?\.\(\) \?\? null, onTrap: \(trap\) => !!opts\.onBossTrap\?\.\(trap\),/);
+  assert.match(read('src/scenes/gate/standInSpell.js'), /const running = host\.trapNow\(\);\n\s*if \(running\) boss\.entity\.activeEffects = \[\{ kind: 'soulTrap', chance: running\.chance, roundsRemaining: 0 \}\];/, 'a recast\'s incumbent');
   // a leap in the air: no stride counted
   const g = court();
   const leap = { i: 2, a: ATTACKS.leap.id, at: 10_000, x: 0, z: -12, yw: 0, tg: [[0, 12]] };

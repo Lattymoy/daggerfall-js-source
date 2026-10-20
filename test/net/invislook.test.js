@@ -84,7 +84,7 @@ test('INVIS-LOOK executed: the walker and the rider - the chosen set and the sad
   const art = createEotbArt({ renderer, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }) });
   const pose = (o = {}) => ({ x: 4, y: 0, z: 9, yaw: 0, pitch: 0, mv: 0, wd: 0, an: 0, sr: 0, cn: 0, ar: 0, ...o });
   const V = peerDraw(2, true, 1, 'w').visual;
-  const w = createPeerWalkers({ art });
+  const w = createPeerWalkers({ art, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
   const walker = { id: 'w', look: { eo: 3 }, shown: pose() };
   w.sync([walker], toScene, { eye: [4, 1, 20], dt: 0, conceal: () => V }); await settle();
   w.sync([walker], toScene, { eye: [4, 1, 20], dt: 0, conceal: () => V });
@@ -103,7 +103,7 @@ test('INVIS-LOOK executed: the walker and the rider - the chosen set and the sad
   assert.equal(w.batches()[0].conceal, null, 'the spell ended: plain');
   // the lantern: from straight behind (the walker faces +Z, the eye on -Z) it is drawn - on a concealed walker it is not
   const lit = createEotbArt({ renderer: { ...renderer, drawBillboards() {} }, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }), loadLantern: async () => ({ width: 10, height: 20, colors: new Uint8ClampedArray(800) }) });
-  const lw = createPeerWalkers({ art: lit });
+  const lw = createPeerWalkers({ art: lit, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
   const back = (conceal) => { lw.sync([{ id: 'w', look: { eo: 3 }, shown: pose({ hl: 1 }) }], toScene, { eye: [4, 1.5, 7], right: [-1, 0, 0], dt: 1 / 60, conceal }); return lw.drawLanterns(); };
   back(() => null); await settle(); back(() => null); await settle();
   assert.equal(back(() => null), 1, 'open: the lantern at the hip, seen from behind');
@@ -247,7 +247,7 @@ test('INVIS-LOOK by source: the host - the look read once a frame and handed to 
   assert.match(w, /const veilOn = combatVisualsOn\(\);[^\n]*\n\s*const seen = \[\];\n\s*for \(const d of visiblePeers\) \{\n\s*const look = peerDraw\(d\.shown\?\.cv \| 0, veilOn, _veilT, d\.id\);\n\s*if \(look\.kind === 'hidden'\) \{ _hiddenPeers\.add\(d\.id\); continue; \}[^\n]*\n\s*const veil = look\.kind === 'conceal' \? look\.visual : egClient\?\.allyVeil\([^\n]*\) \?\? null; if \(veil\) _veils\.set\(d\.id, veil\);[^\n]*\n\s*seen\.push\(d\);\n\s*\}/, 'once a frame, off the shown pose');   // PIN MOVED (AUDIT EG V, h - Elite-Gates.md section 8.2): the veil a concealed peer's look, or an ally's at 60% on the Spire's traversal ground (scenes/eliteGates/egClient.js allyVeil)
   assert.match(w, /_veilT \+= dt > 0 \? dt : 0;\n\s*_veils\.clear\(\);/, 'the clock, and last frame\'s looks gone');
   for (const re of [/peerRiders\.sync\(seen, [^\n]*conceal: veilOf(?:, grow: tvGrow)? \}\);/, /peerBodies\.sync\(afoot, [^\n]*conceal: veilOf \}\);/, /peerWalkers\.sync\(seen, [^\n]*conceal: veilOf(?:, grow: tvGrow)? \}\);/, /remotePlayers\.sync\(visiblePeers, [^\n]*conceal: veilOf, hidden: \(id\) => _hiddenPeers\.has\(id\)(?:, grow: tvGrow)?(?:, room: drawable)? \}\);/]) assert.match(w, re);   // PIN MOVED (AUDIT PEER-RANGE + HALO-THIN A L1/L6: the room's whole list after the grow); PIN MOVED (OW-PEERS, FIELD BUGS 2026-10-01 #11): and the Overworld's grow
-  assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); drawAuras\(\); nodeGlowPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); \};/, 'WB9g: and the auras at the wearers\' feet after them, through the same hook; NODE-MARKS: and the gathering nodes\' glow');
+  assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); drawAuras\(\); nodeOutlinePass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); \};/, 'WB9g: and the auras at the wearers\' feet after them, through the same hook; NODE-MARKS: and the gathering nodes\' glow');
   assert.match(w, /drawVeiledPeerBodies: \(\) => drawVeiledPeerBodies\(\),/, 'the mode machine gets it');
   const grass = w.indexOf("renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back");
   const late = w.indexOf('    drawVeiledPeerBodies();   // INVIS-LOOK');

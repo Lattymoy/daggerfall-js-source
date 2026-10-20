@@ -190,19 +190,19 @@ test('SIGIL1 the drink and the words: the weapon in my hand drinks the Renown XP
   assert.equal(drinkSigil(sword, 0), null);
   assert.equal(drinkSigil(sword, -5), null);
   assert.equal(drinkSigil(null, 5), null);
-  assert.equal(sigilRiseLine('Longsword', 1), 'The sigil on your Longsword brightens: Kindled. Your Renown holds it at Faint until Renown 10.');
+  assert.equal(sigilRiseLine('Longsword', 1), 'The sigil on your Longsword brightens: Kindled. Your Renown limits it to Faint until Renown 10.');
   setSigilRenown(10);
   assert.equal(sigilRiseLine('Longsword', 1), 'The sigil on your Longsword brightens: Kindled.');
   assert.equal(sigilRiseLine('Longsword', 9), null);
   // the tooltip
   _resetSigilForTests();
   const rare = (xp, party = 3) => ({ group: 'Weapons', templateIndex: 120, material: 0, rarity: 'rare', affixes: [], sigil: { power: 8, party, xp } });
-  assert.deepEqual(sigilLines(rare(0)), ['Sigil (Dormant - wakes online, with your Renown): +8% at Ascendant'], 'offline');
+  assert.deepEqual(sigilLines(rare(0)), ['Sigil (Dormant: works online only): +8% at Ascendant'], 'offline');
   setSigilOnline(true);
-  assert.deepEqual(sigilLines(rare(0)), ['Sigil (Dormant - wakes online, with your Renown): +8% at Ascendant'], 'online, my Renown unknown');
+  assert.deepEqual(sigilLines(rare(0)), ['Sigil (Dormant: works online only): +8% at Ascendant'], 'online, my Renown unknown');
   setSigilRenown(15);
   assert.deepEqual(sigilLines(rare(7000)), ['Sigil (Kindled): +3.2% damage, +8% at Ascendant', 'Kindled: 7,000 / 12,500 to Bright', 'Won in a fight of 3']);
-  assert.deepEqual(sigilLines(rare(30000)), ['Sigil (Kindled): +3.2% damage, +8% at Ascendant', 'Held at Kindled by your Renown (Bright at Renown 20)', 'Won in a fight of 3']);
+  assert.deepEqual(sigilLines(rare(30000)), ['Sigil (Kindled): +3.2% damage, +8% at Ascendant', 'Limited to Kindled by your Renown (Bright at Renown 20)', 'Won in a fight of 3']);
   setSigilRenown(40);
   assert.deepEqual(sigilLines(rare(37500, 1)), ['Sigil (Ascendant): +8% damage, +8% at Ascendant'], 'full, and won alone');
   assert.deepEqual(sigilLines(rare(0, 1)), ['Sigil (Faint): +1.6% damage, +8% at Ascendant', 'Faint: 0 / 5,000 to Kindled']);

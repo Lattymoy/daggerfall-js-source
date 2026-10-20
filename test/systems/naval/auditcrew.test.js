@@ -395,7 +395,7 @@ test('AUDIT CC-D7: a knock after a load still costs her crew - the event lands o
 
 test('AUDIT CC-D8: the plate says her repairs while the order stands; the card marks a hand ashore; the next hand answers for a First Mate ashore', () => {
   assert.match(rd('src/scenes/naval/navalHost.js'), /repairing: !!st\.repairing, repairOrdered: st\.crew\.order === CREW_ORDERS\.repair,/);
-  assert.match(rd('src/ui/naval/navalHud.js'), /ship\.repairOrdered \? 'Crippled - repairs ordered'/);
+  assert.match(rd('src/ui/naval/navalHud.js'), /ship\.repairOrdered \? 'Crippled, repairs ordered'/);
   const lines = crewCard({ morale: 60, hands: [{ name: 'Aldric', role: 'First Mate', fights: 0, boardings: 0 }, { name: 'Brand', role: 'Bard', fights: 1, boardings: 0 }] }, { ashore: new Set(['Aldric']) });
   assert.ok(lines.some((l) => /^Aldric, First Mate.*ashore with you/.test(l)));
   assert.match(rd('src/scenes/naval/navalHost.js'), /const mateOf = \(boat, st\) =>/);
@@ -499,7 +499,9 @@ test('AUDIT CC-E3/E4: a companion lifted on the street makes the next frame whol
   assert.equal(A.foesFrame(false), null, 'nothing changed');
   A.removeFoe(mate);
   assert.equal(A.foesFrame(false)?.full, 1, 'whole');
-  assert.match(rd('src/scenes/naval/navalHost.js'), /if \(was === SHIP_STATES\.afloat && dmg\.state === SHIP_STATES\.struck && clock - \(e\.myBlowAt \?\? -Infinity\) <= SINK_CREDIT_S\) crewEvent\(boatInPlay\(\) \?\? myBoat\(\), 'win'\);/);
+  // PIN MOVED (AUDIT QUESTLINES ACTS-11): the win and the questlines' act, one arm (test/systems/questlines/ql11_acts.test.js drives it)
+  assert.match(rd('src/scenes/naval/navalHost.js'), /if \(was === SHIP_STATES\.afloat && dmg\.state === SHIP_STATES\.struck && clock - \(e\.myBlowAt \?\? -Infinity\) <= SINK_CREDIT_S\) struckToMe\(\);/);
+  assert.match(rd('src/scenes/naval/navalHost.js'), /const struckToMe = \(\) => \{ crewEvent\(boatInPlay\(\) \?\? myBoat\(\), 'win'\); noteAct\('ship-struck'\); \};/);
 });
 
 // ── CC-F: the safety net - behaviour the audit's mutants found unpinned ──────────────────────────────────────────
@@ -535,7 +537,7 @@ test('AUDIT CC-F1: the host\'s companion API on the real host - a press takes a 
   assert.equal(h.host.companions.isAshore(42, b.name), true);
   // the knock is said, with the hand's own pronoun
   h.host.companionKnocked({ boat: 42, name: b.name, gender: 'female' });
-  assert.ok(h.log.say.some((l) => l.includes(`${b.name} is knocked senseless - your crew carries her back aboard to rest.`)));
+  assert.ok(h.log.say.some((l) => l.includes(`${b.name} is knocked out. Your crew carries her back aboard to rest.`)));
   // an uncrewed boat: her rows refuse, her press sends nobody
   h.boat.crewed = false;
   assert.ok(h.host.companionRows(h.boat, 0).filter((r) => !r.back).every((r) => r.disabled), 'no crew, nobody to take (one ashore may still go back)');

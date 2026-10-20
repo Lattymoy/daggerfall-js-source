@@ -61,7 +61,7 @@ export const isIliacCard = (/** @type {any} */ item) => item?.templateIndex === 
 /** CARDS9: whether a record is a sealed pack. */
 export const isCardPack = (/** @type {any} */ item) => item?.templateIndex === CARD_PACK_TEMPLATE && item?.group === GROUP;
 /** CARDS9: a pack's lines on its item card. */
-export const CARD_PACK_LINES = Object.freeze(['Five Iliac Hand cards, sealed - one of them rare or better.', 'Use it to open it.']);
+export const CARD_PACK_LINES = Object.freeze(['Five sealed Iliac Hand cards. One is rare or better.', 'Use it to open it.']);
 /** Whether a record is the binder. */
 export const isCardBinder = (/** @type {any} */ item) => item?.templateIndex === CARD_BINDER_TEMPLATE && item?.group === GROUP;
 /** The pack's binder, or null. */
@@ -73,7 +73,7 @@ export const iliacCardName = (/** @type {any} */ item) => { const c = cardById(i
  *  its rules, its flavor. */
 export function iliacCardLines(/** @type {any} */ item) {
   const c = cardById(item?.card);
-  if (!c) return ['A card this build does not know.'];
+  if (!c) return ['An unknown card.'];
   const kind = { unit: 'Unit', spell: 'Spell', prince: 'Prince', location: 'Location' }[c.kind] ?? c.kind;
   const tier = c.tier.charAt(0).toUpperCase() + c.tier.slice(1);
   const flavor = cardFlavor(c);

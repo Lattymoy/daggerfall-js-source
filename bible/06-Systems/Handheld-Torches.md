@@ -787,6 +787,19 @@ compare, the slow path binding once on the body, a failed bind remembered (`hipL
 body's one mesh, so it needs no owner of its own (`releaseThirdMesh` frees it with the rest). Morrowind-Rules.md
 HT-WAIST.
 
+**HT-WAIST-SIZE (2026-10-20, Mac: "the lantern attached to the waist in absolutely gigantic on the morrowind model").**
+Morrowind hangs no lantern on a belt: its carriable lanterns are lights made to hang in a street or be held up in a hand,
+and the hang placed the picked record's mesh at the size its author made it for that - nothing said how big a lantern at
+the waist is. The sprite's picture always had a height (`HIP_LANTERN_SPRITE.height`, 0.3 m); the mesh had none. Now
+one height serves both bodies - `systems/lanternSwing.js` `HIP_LANTERN_HEIGHT`, 0.3 m from the ring to the foot, which
+the sprite's picture reads - and the Morrowind body's hang is scaled to it about its top: `hangAnchor` measures the
+part's own height beside its anchor, `combat/fpArm.js` `hipLanternSize` turns it into a scale once at the bind
+(`hangHipLight`, both the build's and a lantern lit later), and `hangAffine` lays `rot * size` about the anchor - so the
+ring stays on the hook, it swings as before, its flame (a particle system placed by the same affine) is sized with it,
+and its normals are renormalised on both skin paths. A peer's body takes the same bind. Not verified here: no Morrowind
+data is in this container, so how big the retail lantern was is not measured - the pin hangs the fixture's 2-unit mesh
+at 21 units (0.3 m), whatever its size (`test/combat/htwaist_mwbody.test.js` HT-WAIST-SIZE; `tools/mutants/held_steady.json`).
+
 **Eye Of The Beholder's sprite** (`player/eyeOfTheBeholder/eotbBody.js`; the lantern's law `player/eyeOfTheBeholder/eotbLantern.js` since HT-WAIST-BACK).
 A second billboard, apart from the IL's machine: the Lantern template's own world texture (TEXTURE.200 record 10, read
 off the template, loaded from the player's ARENA2 - never vendored; the mod's hand-and-lantern frames are the author's

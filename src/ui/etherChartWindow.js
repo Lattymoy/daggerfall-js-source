@@ -82,7 +82,7 @@ export const SCALE_MAX_PX = 120;
 export const RULER_H = 22;
 export const RULER_WORDS = Object.freeze({
   ...Object.fromEntries(BANDS.map((b) => [b.id, Object.freeze([b.name.toUpperCase(), b.name.replace(/^the /, '').toUpperCase()])])),
-  get veil() { return Object.freeze([t('sea.chart.ruler.veilHome', 'THE VEIL - TO THE ILIAC BAY'), t('sea.chart.ruler.veil', 'THE VEIL'), t('sea.chart.ruler.veilShort', 'VEIL')]); },
+  get veil() { return Object.freeze([t('sea.chart.ruler.veilHome', 'THE VEIL: TO THE ILIAC BAY'), t('sea.chart.ruler.veil', 'THE VEIL'), t('sea.chart.ruler.veilShort', 'VEIL')]); },
   get edge() { return Object.freeze([t('sea.chart.ruler.edge', 'THE WORLD\'S EDGE'), t('sea.chart.ruler.edgeShort', 'EDGE')]); },
 });
 /** ETHER-CHART2: the ship's pointer stands this far in from the canvas's edge. */
@@ -243,7 +243,7 @@ export function chartModel(word, v, w, h, { measure = null, pick = null } = {}) 
     const lair = hauntOf(legend);
     const [x, y] = toScreen(v, lair.px + 0.5, lair.py + 0.5, w, h);
     const r = HAUNT_PX * k;
-    if (on(x, y, r)) haunts.push({ x, y, r, name: l.name, sails: !!l.sails, sub: l.sails ? (l.trait === 'night' ? t('sea.chart.hauntNight', 'Territory - by night') : t('sea.chart.haunt', 'Territory')) : t('sea.chart.hauntSunk', 'Sunk - it will rise again'), inside: false, at: /** @type {number[]|null} */ (null), box: /** @type {number[]|null} */ (null) });
+    if (on(x, y, r)) haunts.push({ x, y, r, name: l.name, sails: !!l.sails, sub: l.sails ? (l.trait === 'night' ? t('sea.chart.hauntNight', 'Territory by night') : t('sea.chart.haunt', 'Territory')) : t('sea.chart.hauntSunk', 'Sunk. It will rise again'), inside: false, at: /** @type {number[]|null} */ (null), box: /** @type {number[]|null} */ (null) });
   }
   // AUDIT CAPTAIN'S SEA X14: the names placed greedily - ports first, then by the chart's own order - and one that would
   // stand over a name already lettered on both its sides left unlettered (a pointer or a tap still names it).
@@ -338,7 +338,7 @@ export function chartModel(word, v, w, h, { measure = null, pick = null } = {}) 
     pick: card,
     title: chartTitle(),   // the haunts' `r` the square's half side (X13)
     sub: st.legends
-      ? t('sea.chart.statsLegends', '{charted, plural, one {# isle} other {# isles}} charted - deepest {deepest} leagues past the Veil - {crossings, plural, one {# crossing} other {# crossings}} - {legends, plural, one {# legend} other {# legends}} ended', { charted: st.charted ?? 0, deepest: st.deepest ?? 0, crossings: st.crossings ?? 0, legends: st.legends })
+      ? t('sea.chart.statsLegends', '{charted, plural, one {# isle} other {# isles}} charted · deepest {deepest} leagues past the Veil · {crossings, plural, one {# crossing} other {# crossings}} · {legends, plural, one {# legend} other {# legends}} ended', { charted: st.charted ?? 0, deepest: st.deepest ?? 0, crossings: st.crossings ?? 0, legends: st.legends })
       : t('sea.chart.stats', '{charted, plural, one {# isle} other {# isles}} charted - deepest {deepest} leagues past the Veil - {crossings, plural, one {# crossing} other {# crossings}}', { charted: st.charted ?? 0, deepest: st.deepest ?? 0, crossings: st.crossings ?? 0 }),
   };
 }
@@ -634,7 +634,7 @@ export function mountEtherChartWindow(host, deps) {
   stage.append(canvas);
   const chart = el('div', 'dfchart-chart');
   chart.append(ruler, stage);
-  const hint = el('p', 'dfnaval-lede dfchart-hint', t('sea.chart.hint', 'Drag or the arrows to pan - the wheel, a pinch or + and - to zoom - C finds your ship - point at or tap an isle to name it.'));
+  const hint = el('p', 'dfnaval-lede dfchart-hint', t('sea.chart.hint', 'Drag or use the arrow keys to pan. Scroll, pinch or press + and - to zoom. C finds your ship. Point at or tap an isle to see its name.'));
   // AUDIT CAPTAIN'S SEA X6: the window's own presses - a finger and a pad's cursor zoom and find the ship by them
   const tools = el('div', 'dfnaval-chart-tools dfchart-tools');
   const tool = (label, fn) => { const b = /** @type {HTMLButtonElement} */ (el('button', 'dfnaval-btn', label)); b.type = 'button'; b.style.minWidth = '0'; b.addEventListener('click', () => { fn(); draw(); }); tools.append(b); return b; };

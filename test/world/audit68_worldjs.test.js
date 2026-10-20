@@ -228,7 +228,7 @@ test('AUDIT 68 S22-teleport-reentry: F11 during a fast travel\'s build is refuse
     { say: (l) => said.push(l) }, { clearTravelDestination() { said.push('travel cleared'); } }, () => 1, () => {}, null);
   return load().then((r) => {
     assert.equal(r, undefined, 'the load does not start while the travel\'s arrival is building');
-    assert.deepEqual(said, ['Loading is disabled while travelling.'], 'it says so, and touches nothing - not even the travel destination');
+    assert.deepEqual(said, ['Loading is disabled while traveling.'], 'it says so, and touches nothing - not even the travel destination');
     // the predicate: the core's own window (the arrival latch) and every mover's latch
     const q = new Function('s', `let { _seasonStraightening, _traveling, _teleporting, _recalling, _respawning, _loading, ohAbyss } = s;\n${busy}\nreturn worldMoveBusy();`);
     const idle = { _seasonStraightening: false, _traveling: false, _teleporting: false, _recalling: false, _respawning: false, _loading: false, ohAbyss: null };

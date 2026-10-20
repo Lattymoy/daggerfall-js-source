@@ -60,15 +60,15 @@ test('FIRST-PICK: a change waiting at 50 leaves the 100 cards open - the first p
     assert.match(before.Weaponsmith[1], /^In effect from /);
     assert.equal(before.Armoursmith[1], null, 'no change offered while one waits');
     // the 100 cards are a first choice: open, no price
-    for (const n of ['Masterwright', 'Quartermaster', 'Master Jeweller', 'Lapidary']) assert.deepEqual(before[n], [false, null], n);
+    for (const n of ['Masterwright', 'Quartermaster', 'Master Jeweler', 'Lapidary']) assert.deepEqual(before[n], [false, null], n);
 
     await p.cards().find((c) => c.querySelector('b').textContent === 'Masterwright').onclick();
     assert.deepEqual(book.track('smithing').specs, { 50: 'goldsmith', 100: 'masterwright' }, 'the Worker took the first pick');
     assert.equal(book.track('smithing').respec?.to, 'weaponsmith', 'the change at 50 still on its way');
     const after = at(p.read());
     // chosen at 100 now: a CHANGE there waits on the one at 50, as chooseSpec's prof-respec-pending
-    for (const n of ['Masterwright', 'Quartermaster', 'Master Jeweller', 'Lapidary']) assert.equal(after[n][0], true, n);
-    for (const n of ['Quartermaster', 'Master Jeweller', 'Lapidary']) assert.equal(after[n][1], null, `${n}: no price while a change waits`);
+    for (const n of ['Masterwright', 'Quartermaster', 'Master Jeweler', 'Lapidary']) assert.equal(after[n][0], true, n);
+    for (const n of ['Quartermaster', 'Master Jeweler', 'Lapidary']) assert.equal(after[n][1], null, `${n}: no price while a change waits`);
     const refused = await s.call('/v1/prof/spec', { character: mac.character, profession: 'smithing', rank: 100, spec: 'quartermaster', from: 'masterwright', rid: 'fp-000001' }, mac.secret);
     assert.equal(refused.body.error, 'prof-respec-pending', 'the service agrees the change waits');
   } finally { p.done(); }

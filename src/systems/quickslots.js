@@ -970,7 +970,7 @@ export const HOTBAR_TEXT = Object.freeze({
   offHandFull: 'Your off hand is full.',
   added: (name, n) => `${name} is on hotbar slot ${n}.`,
   removed: (name) => `${name} is off the hotbar.`,
-  full: 'The hotbar is full - drag onto a slot to replace it.',
+  full: 'The hotbar is full. Drag onto a slot to replace what is there.',
   // SHIELD1: the shield slot's own lines
   shieldOn: (name) => `You strap on your ${name}.`,
   shieldOff: (name) => `You take off your ${name}.`,

@@ -33,8 +33,8 @@
 // one judge for every FULL shape stamp, per fight floor, on SHARED-TIME trails (net/eliteGates/egFair.js's time law - `[t, x, y, z, h]`,
 // `t` the pose's own send time on the relay's clock), and judgePlace, the hall's own hazards at their landing. The three
 // above keep their arrival-timed trails: their enforcement is off (BODY_DEFAULT.enforce), so their error was never paid.
-import { ATTACK_BY_ID, ATTACKS, profileOf, hostBlowUnder } from './gate/gateBrain.js';
-import { inAttack, chargeStrikes, blowOf } from './gate/gateStrike.js';
+import { ATTACK_BY_ID, ATTACKS, profileOf, flameProfileOf, hostBlowUnder, screenJudged, wardTakes } from './gate/gateBrain.js';
+import { inAttack, chargeStrikes, wheelStrikes, blowOf } from './gate/gateStrike.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_RESET_PCT, SD_END_PCT, SD_ARENA_SLACK, blowShape, pulsePctOf, handSwept, behindPillar, inArena } from './superDungeon/sdRemnant.js';
 import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, GRIP, CRUSH, MAEL_GRIND, MAEL_EYE_R, coilHolds, serpentShipsFighting, serpentOnShip } from './serpent/serpentBrain.js';
 import { shapeMeets, fleetShare } from '../systems/serpent/serpentStrike.js';
@@ -105,6 +105,17 @@ function landing(a, bodies, share, inside, out, t = a.at) {
   for (const b of bodies) if (deepAt(inside, b, t)) out.push({ sub: b.sub, share });
 }
 
+/** INT11: one body's blow in flight, judged at its landing under its profile - a charge down its lane and (WB14a) the Wheel
+ *  down its turn between beats, the rest in their shape (WB14d: his, the Blade's or the Flame's). */
+function bodyBlow(a, live, P, prev, now, out) {
+  if (!a || a.bj || now < a.at) return;
+  const A = ATTACK_BY_ID[a.a], B = blowOf(a, P), share = B && !B.saved ? Math.min(1, B.pct) : 0;
+  if (!A || !(share > 0) || screenJudged(A)) a.bj = true;   // WB14a: the Chains (a pull) and the Gaze (a camera) are the struck screen's alone
+  else if (A === ATTACKS.charge) sweep(a, live, Math.max(prev, a.at), now, a.at + A.active, share, (x, z, t0, t1) => chargeStrikes(a, x, z, t1, t0, P), out);
+  else if (A === ATTACKS.wheel) sweep(a, live, Math.max(prev, a.at), now, a.at + A.active, share, (x, z, t0, t1) => wheelStrikes(a, x, z, t1, t0, P), out);   // WB14a: the Wheel down its turn, as the charge down its lane
+  else if (A.shape === 'all' || now >= a.at + BODY_AFTER_MS) landing(a, live, share, (x, z) => inAttack(a, x, z, P), out);
+}
+
 /**
  * INT11 - THE GATE: his blow in flight (`f.atk`) and each of his host's (`f.lg.ads[].atk`, the Legion-Lord's), judged
  * at its landing (net/gate/gateStrike.js inAttack - a charge down its lane between beats, chargeStrikes), each a plain blow's
@@ -114,15 +125,12 @@ function landing(a, bodies, share, inside, out, t = a.at) {
  */
 export function judgeGate(f, bodies, now) {
   if (f.fell || f.wrath) return [];
-  const out = [], live = living(f, bodies), P = profileOf(f), prev = Math.max(f.bjAt ?? -Infinity, now - 1000);
+  const out = [], live = living(f, bodies), prev = Math.max(f.bjAt ?? -Infinity, now - 1000);
   f.bjAt = now;
-  const a = f.atk;
-  if (a && !a.bj && now >= a.at) {
-    const A = ATTACK_BY_ID[a.a], B = blowOf(a, P), share = B && !B.saved ? Math.min(1, B.pct) : 0;
-    if (!A || !(share > 0)) a.bj = true;
-    else if (A === ATTACKS.charge) sweep(a, live, Math.max(prev, a.at), now, a.at + A.active, share, (x, z, t0, t1) => chargeStrikes(a, x, z, t1, t0, P), out);
-    else if (A.shape === 'all' || now >= a.at + BODY_AFTER_MS) landing(a, live, share, (x, z) => inAttack(a, x, z, P), out);
-  }
+  if (wardTakes(f.cp, f.atk)) f.atk.bj = true;   // WB14f: the Reckoning the Covenant's ward takes lands on no fighter
+  bodyBlow(f.atk, live, profileOf(f), prev, now, out);
+  if (f.sd) bodyBlow(f.sd.fl.atk, live, flameProfileOf(f), prev, now, out);   // WB14d: and his Flame's, by its own body
+  const P = profileOf(f);
   for (const ad of f.lg?.ads ?? []) {
     const h = ad.atk;
     if (!h || h.bj || now < h.at + BODY_AFTER_MS) continue;

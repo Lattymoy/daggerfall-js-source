@@ -42,9 +42,9 @@ export const STAFF_HELP_LINES = Object.freeze([
   '/tp @<player> - to their exact live position',
   '/god [on|off] - take no damage',
   '/fly [on|off] - levitate',
-  '/heal - health, fatigue and magicka full',
-  '/pos - where you stand',
-  '/relay [<setting> <value>|-] - the relay\'s settings, a developer\'s alone',
+  '/heal - restore health, fatigue and magicka',
+  '/pos - show your position',
+  '/relay [<setting> <value>|-] - server settings (developers only)',
 ]);
 
 const onOff = (word, was) => (word === 'on' ? true : word === 'off' ? false : word === undefined ? !was : null);

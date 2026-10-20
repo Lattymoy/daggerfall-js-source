@@ -90,7 +90,7 @@ let _homeSaid = null; // the House page's word on a home marked (AUDIT LEGACY II
 let _seatSaid = null; // FAMILY-SEAT: the House page's word on the seat (armed: what the second press will do)
 /** AUDIT FB1007b S5: where the seat's move is not offered, the House page says where it is - the host's refusal says the
  *  same (scenes/legacyHost.js LEGACY_TEXT.seatNowhere). FB1012d SEAT-HOME: a home of the house's own (a farm) as well. */
-export const SEAT_HINT = 'Stand in another town - its streets or one of its buildings - or at a home of the house\'s own, to make it the family\'s seat.';
+export const SEAT_HINT = 'To move the family seat, stand anywhere in another town, or at a home your family owns.';
 /** A fresh visit: nothing pressed, the tree centred, no word left over. */
 export function resetFamilyPages() { _sel = null; _zoom = 1; _pan = null; _said = null; _armed = null; _homeSaid = null; _seatSaid = null; }
 /** AUDIT LEGACY U8: another page or tab pressed - an armed act and its word never wait for the way back. */
@@ -173,7 +173,7 @@ export const modelWord = (m) => (m === MODELS.bloodline ? 'Bloodline' : 'Endurin
  *  "The House" while it has no name yet (founded where no town stands, its seat still to come). */
 export const houseTitle = (surname) => (houseWord(surname) ? `The House of ${houseWord(surname)}` : 'The House');
 export const modelLine = (m) => (m === MODELS.bloodline
-  ? 'A Bloodline: every death is final. When one of the house falls, the mantle passes to another of the blood - or the line ends.'
+  ? 'A Bloodline: every death is final. When one of the house falls, another of the blood carries on, or the line ends.'
   : 'An Enduring line: a death is not the end, but it costs years. When a life’s span is spent, the mantle passes on.');
 
 /** The chips a person wears: played, dead (and at peace, or lying unclaimed), elder, heir, spouse. Pure. */
@@ -213,7 +213,7 @@ const endedAtLabel = (cause) => (cause === 'fell' || cause === 'slain' ? 'Fell a
 /** The elder's word on the character sheet - the card's Elder chip and its Pass the mantle, and the span spent that
  *  tollLine said at the last rise. */
 export const SHEET_HOUSE_TEXT = Object.freeze({
-  elder: 'An elder of the house: the mantle may pass from you on the Family tab.',
+  elder: 'An elder of the house. You can pass the mantle on from the Family tab.',
   spent: 'Your span is spent: your next death is your last.',
 });
 
@@ -427,7 +427,7 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
   const tool = (label, title, fn) => { const b = el('button', 'act', label); b.title = title; b.setAttribute('aria-label', title); b.onclick = (e) => { e.stopPropagation?.(); fn(); }; return b; };   // AUDIT LEGACY U10: named for a reader, not by a glyph
   const zoomCentre = (f) => { ensurePan(); const w = view.clientWidth || 520, h = view.clientHeight || 340; const v = zoomAbout({ zoom: _zoom, x: _pan.x, y: _pan.y }, f, w / 2, h / 2); _zoom = v.zoom; _pan = { x: v.x, y: v.y }; apply(); };
   tools.append(tool('+', 'Zoom in', () => zoomCentre(TREE_ZOOM_STEP)), tool('−', 'Zoom out', () => zoomCentre(1 / TREE_ZOOM_STEP)),
-    tool('◎', 'Centre on the one you play', () => { _sel = family.currentId; _pan = null; rerender(); }));
+    tool('◎', 'Center on the one you play', () => { _sel = family.currentId; _pan = null; rerender(); }));
   view.append(tools);
   wrap.append(view, personCard(el, family, personOf(family, _sel), livedNow, rerender, door));
   const page = el('div', 'fam-page');   // AUDIT LEGACY III U3: the pane the stacking reads (FAMILY_CSS's @container)
@@ -499,11 +499,11 @@ function personCard(el, family, p, livedNow, rerender, door) {
   if (isAlive(p) && !played && p.kind === 'member' && p.retired == null) {
     const why = _provider?.switchRefusal?.(p.id) ?? null;
     const key = `switch:${p.id}`;
-    const b = el('button', `act${_armed === key ? ' primary' : ''}`, _armed === key ? `Yes - play as ${p.given}` : `Play as ${p.given}`);
+    const b = el('button', `act${_armed === key ? ' primary' : ''}`, _armed === key ? `Yes, play as ${p.given}` : `Play as ${p.given}`);
     b.setAttribute('data-focus', 'fam-act-switch');   // AUDIT LEGACY II U6: armed, its words change - the keyboard stays on it
     if (why && why !== 'none') { b.disabled = true; b.title = why; }
     b.onclick = () => {
-      if (_armed !== key) { _armed = key; _said = { ok: true, text: p.characterId ? `${fullNameOf(p.given, p.surname)}'s journey picks up where they left it. You are saved where you stand.` : `${fullNameOf(p.given, p.surname)} sets out for the first time from the family seat. You are saved where you stand.` }; rerender(); return; }
+      if (_armed !== key) { _armed = key; _said = { ok: true, text: p.characterId ? `${fullNameOf(p.given, p.surname)} picks up where they left off. Your game is saved where you stand.` : `${fullNameOf(p.given, p.surname)} sets out for the first time from the family seat. Your game is saved where you stand.` }; rerender(); return; }
       _armed = null;
       const r = door(() => _provider?.switchTo?.(p.id) ?? { ok: false, why: 'Not here.' });
       _said = r.ok ? { ok: true, text: `Playing as ${p.given}...` } : { ok: false, text: r.why ?? 'Not now.' };
@@ -514,7 +514,7 @@ function personCard(el, family, p, livedNow, rerender, door) {
   }
   if (played && family.model === MODELS.enduring && isElder(p, livedNow) && _provider?.passMantle) {
     const armed = _armed === 'mantle';
-    const b = el('button', `act${armed ? ' primary' : ''}`, armed ? 'Yes - pass the mantle' : 'Pass the mantle');
+    const b = el('button', `act${armed ? ' primary' : ''}`, armed ? 'Yes, pass the mantle' : 'Pass the mantle');
     b.setAttribute('data-focus', 'fam-act-mantle');   // AUDIT LEGACY II U6
     b.title = `${p.given} retires to keep the house, and you choose who carries the line on.`;   // AUDIT LEGACY III F11d: never "to the seat" - where they keep it is the house's (household.js)
     // AUDIT LEGACY U4: why not, said on the card before the press - pressed, the act takes the pause down first
@@ -538,7 +538,7 @@ export function livesLine(family, p) {
   if (isAlive(p) && p.kind === 'player') return 'With their own house, wherever its road leads';   // LEGACY7 part three: another player's character walks their own world
   if (!isAlive(p) || p.kind !== 'member' || p.id === family.currentId) return null;
   const home = homeOf(family, p);
-  if (!home) return 'On their own journey';
+  if (!home) return 'Out on their own travels';
   if (home.lent) return `In ${family.seat?.loc ?? 'the family seat'}, among its townsfolk`;
   const h = (family.houses ?? []).find((x) => sameHouse(x, home));
   const where = h?.location ? ` in ${h.location}` : '';
@@ -550,7 +550,7 @@ export function livesLine(family, p) {
 export function deedLine(family, h, holder = personOf(family, h?.by)) {
   if (!holder) return 'A deed of the house';
   const name = fullNameOf(holder.given, holder.surname);
-  if (!isAlive(holder)) return `The late ${name}'s deed - it passes to whoever carries the line`;
+  if (!isAlive(holder)) return `The late ${name}'s deed, which passes to whoever carries on the line`;
   const from = Number.isInteger(h?.from) ? personOf(family, h.from) : null;
   return from ? `${name}'s deed, left by ${fullNameOf(from.given, from.surname)}` : `${name}'s deed`;
 }
@@ -565,10 +565,10 @@ function liveLine(el, said) {
 
 /** Why a page has no family to show. LEGACY-CHOICE: a character who answered no lineage, and online one made before the
  *  question was put there (or copied in), play without a house for good - a new character founds one. */
-export const noFamilyLine = (prov) => (!prov ? 'Your family is kept in the world - open this from a game.'
+export const noFamilyLine = (prov) => (!prov ? 'Open this from a game to see your family.'
   : !prov.on?.() ? `Turn on Project Legacy (${optionPath('feat:mod-project-legacy')}) to found a family and carry your line on.`   // ORG2
     : prov.choice?.() === NO_LINEAGE ? 'This character chose to live without a house. Make a new character to found one.'
-      : prov.online?.() ? 'This character has no house - online, a house is founded only when a character is made. Make a new character to found one.'
+      : prov.online?.() ? 'This character has no house. Online, a house is founded only when a character is made. Make a new character to found one.'
         : 'Your family is founded when your character is made, or the first time an older character is loaded.');
 
 /**
@@ -579,21 +579,21 @@ export const noFamilyLine = (prov) => (!prov ? 'Your family is kept in the world
  */
 export function familyGuide(model, tollShare) {
   const pct = (/** @type {number} */ f) => `${Math.round(f * 100)}%`;
-  const enduring = `In an Enduring house a death is not the end, but it costs years: Arkay's toll takes ${pct(tollShare)} of your race's lifespan each time (a vampire or a werebeast pays none). From ${pct(ELDER_SHARE)} of the span you are an Elder; once the span is spent, your next death is final.`;
+  const enduring = `In an Enduring house a death is not the end, but it costs years: Arkay's toll takes ${pct(tollShare)} of your race's lifespan each time (vampires and werebeasts pay none). From ${pct(ELDER_SHARE)} of your lifespan you are an Elder, and once it is spent, your next death is final.`;
   const bloodline = 'In a Bloodline house every death is final.';
-  const death = model === MODELS.bloodline ? bloodline : model === MODELS.enduring ? enduring : `${enduring} ${bloodline} Which a house is, is chosen once, when its founder is made.`;
+  const death = model === MODELS.bloodline ? bloodline : model === MODELS.enduring ? enduring : `${enduring} ${bloodline} A house's model is chosen once, when its founder is made.`;
   return [
-    ['Your house', 'You belong to a family: a house with a surname, a seat town and a tree. Every member has a face, an age, stats and skills, and any grown, living member of the blood can be played.'],
+    ['Your house', 'You belong to a family with a surname, a seat town and a family tree. Every member has their own face, age, stats and skills, and any grown, living member of the blood can be played.'],
     ['Death', death],
     // AUDIT PLAIN-UI W2/W3/W10: the blood and the hearth are a newborn's, at birth (addChild); a child, a retired elder
     // carry nothing on (successors, switchRefusal); the Has an heir chip is a Bloodline house's; a mantle passed may
     // always take a newborn
-    ['Who carries on', 'At a final death you choose who carries the line: any grown, living member of the blood who has not retired, or a newborn heir of the fallen where one is born (in a Bloodline house the tree marks a member who will leave one: Has an heir; an Elder who passes the mantle may always choose a newborn). Heirs are born in the family\'s seat. With nobody left, the line ends and goes to the Hall of Ancestors.'],
+    ['Who carries on', 'At a final death you choose who carries the line: any grown, living member of the blood who has not retired, or a newborn heir of the fallen if one is born. In a Bloodline house, the tree shows Has an heir on a member who will leave one, and an Elder who passes the mantle can always choose a newborn. Heirs are born in the family seat. With nobody left, the line ends and goes to the Hall of Ancestors.'],
     ['What carries on', `Whoever carries the line on receives the estate: ${ESTATE_SHARE === 0.25 ? 'a quarter' : pct(ESTATE_SHARE)} of the gold the fallen carried, at most ${ESTATE_MAX.toLocaleString('en-US')}. A newborn is also born with the blood (up to +${BLOOD_MAX} on each stat, from the better parent's) and the hearth (up to +${HEARTH_MAX} on each of a parent's primary and major skills).`],
-    ['Heirlooms and remains', `A final death may leave an heirloom - the best weapon or armour the fallen wore - lying where they fell with their remains and ${REMAINS_GOLD_SHARE === 0.1 ? 'a tenth' : pct(REMAINS_GOLD_SHARE)} of their purse (at most ${REMAINS_GOLD_MAX.toLocaleString('en-US')}). The next of the line is given a quest to bring them home. An heirloom grows a step each time it is laid to rest beside the remains of the one who carried it (+${HEIRLOOM_DAMAGE_PER_GEN}% damage or +${HEIRLOOM_ARMOR_PER_GEN} armour a step, up to ${HEIRLOOM_GEN_MAX}), and laying the remains to rest gives +${BLESSING_POINTS} to the fallen's best skill (at most +${BLESSING_SKILL_MAX} on one skill).`],
-    ['Marriage and children', `With the Living World on: make a friend of someone (a regard of +${FRIEND_AT}), then court them under Tell me about, once a day. At ${AFFECTION_MAX} affection you may propose, and you are wed at the temple of their town. While you both live, every ${CHILD_DAYS} days you play as the married one brings a ${CHILD_CHANCE === 0.25 ? 'one in four' : pct(CHILD_CHANCE)} chance of a child, up to ${CHILDREN_MAX}. A child is played only once the line passes to them.`],
-    ['Playing another', 'Press anyone on the Family Tree to read their card. A grown, living member of the blood can be played from it (Play as) - never in a fight, nor while a Succession waits; an Enduring Elder can Pass the mantle and retire. With the Living World and Family In World on, the house lives in the world: meet one of them there to play them.'],
-    ['The tree', 'A plate is a person: ◆ marks the one you play, ✝ and a grey face the dead. A dotted line joins a wedded couple; a solid line runs from parents to their children. Drag to move, the wheel or + and − to zoom.'],
+    ['Heirlooms and remains', `When one of the house dies for good, their best weapon or armor may stay where they fell as an heirloom, with their remains and ${REMAINS_GOLD_SHARE === 0.1 ? 'a tenth' : pct(REMAINS_GOLD_SHARE)} of their purse (at most ${REMAINS_GOLD_MAX.toLocaleString('en-US')}). The next of the line gets a quest to bring them home. An heirloom grows a step each time it is laid to rest beside the remains of the one who carried it (+${HEIRLOOM_DAMAGE_PER_GEN}% damage or +${HEIRLOOM_ARMOR_PER_GEN} armor a step, up to ${HEIRLOOM_GEN_MAX}). Laying the remains to rest also gives +${BLESSING_POINTS} to the fallen's best skill (at most +${BLESSING_SKILL_MAX} on one skill).`],
+    ['Marriage and children', `With the Living World on, befriend someone (a regard of +${FRIEND_AT}), then court them under Tell me about, once a day. At ${AFFECTION_MAX} affection you can propose, and you are wed at the temple in their town. While you both live, there is a ${CHILD_CHANCE === 0.25 ? '1 in 4' : pct(CHILD_CHANCE)} chance of a child every ${CHILD_DAYS} days you play as the married one, up to ${CHILDREN_MAX} children. You can only play a child once the line passes to them.`],
+    ['Playing another', 'Click anyone on the Family Tree to see their card. A grown, living member of the blood can be played from it with Play as, but not during a fight or while a Succession waits. An Enduring Elder can Pass the mantle and retire. With the Living World and Family In World on, your family lives in the world, and you can meet one of them there to play them.'],
+    ['The tree', 'Each plate is a person. ◆ marks the one you play, and ✝ with a gray face marks the dead. A dotted line joins a married couple, and a solid line runs from parents to their children. Drag to move, and use the mouse wheel or + and − to zoom.'],
   ];
 }
 
@@ -622,7 +622,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   const g = el('div', 'fam-grid');
   const fact = (k, v) => g.append(el('span', 'k', k), el('span', 'v', v));
   fact('Model', modelWord(family.model));
-  fact('Seat', family.seat?.loc ? `${family.seat.loc}, ${family.seat.region}` : 'none yet - the first town you stand in');
+  fact('Seat', family.seat?.loc ? `${family.seat.loc}, ${family.seat.region}` : 'None yet (the first town you stand in)');
   fact('Generations', String(1 + family.people.reduce((m, p) => Math.max(m, p.gen | 0), 0)));
   // AUDIT LEGACY III A15/U9: both counts the blood's - the Fallen counted every spouse, and a player's character gone
   // from the realm, beside a Living that counted the blood alone
@@ -663,7 +663,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   detail.append(el('p', 'fam-h', 'The homes'));
   const houses = family.houses ?? [];
   if (!houses.length) {
-    detail.append(el('p', 'px-note', family.seat?.loc ? `The line holds no house of its own. Its members live in ${family.seat.loc}, among its townsfolk - buy a house at a bank, and they move in.` : 'The line holds no house of its own, and no seat yet.'));
+    detail.append(el('p', 'px-note', family.seat?.loc ? `Your family owns no house, so its members live among the townsfolk of ${family.seat.loc}. Buy a house at a bank and they will move in.` : 'Your family owns no house and has no seat yet.'));
   } else {
     const home = familyHome(family);
     const list = el('div', 'fam-hall');
@@ -689,9 +689,9 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
     detail.append(list);
     if (_homeSaid) { const n = liveLine(el, _homeSaid); n.setAttribute('tabindex', '-1'); n.setAttribute('data-focus', 'fam-home-said'); detail.append(n); setTimeout(() => n.focus?.({ preventScroll: true }), 0); _homeSaid = null; }
   }
-  if (prov.livingWorld && !prov.livingWorld()) detail.append(el('p', 'px-note', `Your family lives in the Living World\u2019s towns - turn on Living world (${optionPath('feat:living-world')}) to meet them there.`));
-  else if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family keeps out of sight: "Family In World" is off in Project Legacy\'s settings.'));
-  else detail.append(el('p', 'px-note', 'Your family lives in the world while you play another of them. Speak with one to play as them.'));
+  if (prov.livingWorld && !prov.livingWorld()) detail.append(el('p', 'px-note', `Your family lives in the Living World\u2019s towns. Turn on Living world (${optionPath('feat:living-world')}) to meet them there.`));
+  else if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family is hidden because "Family In World" is off in Project Legacy\'s settings.'));
+  else detail.append(el('p', 'px-note', 'Your family lives in the world while you play one of them. Talk to one to play as them.'));
   // the house's dead - the blood's, and a spouse's beside them (wed in: said so); one gone from the realm is no death
   const fallen = family.people.filter((p) => p.died && p.died.cause !== 'gone').sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));
   if (fallen.length) {

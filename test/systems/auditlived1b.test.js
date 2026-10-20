@@ -504,7 +504,7 @@ test('AUDIT LIVED1b R4: a character born online takes the skill check\'s stamp a
 });
 
 test('AUDIT LIVED1b U1-U8, D3: the words - two rows on the classic panel, one rounding per job, the parchment\'s own "due by", the offline card as it was, the play never rounded down, logging off', () => {
-  assert.deepEqual([...ONLINE_TRAVEL_ROWS], ['Online: the days pass on your own clock.', 'You arrive in the world\'s present.'], 'U1');
+  assert.deepEqual([...ONLINE_TRAVEL_ROWS], ['Online, the trip\'s days pass only for you.', 'The world\'s time does not move.'], 'U1');
   assert.equal(ONLINE_TRAVEL_ROWS.join(' '), ONLINE_TRAVEL_LINE);
   setSharedClock(() => 900 * D);
   setOwnMinutes(100 * D);
@@ -521,6 +521,6 @@ test('AUDIT LIVED1b U1-U8, D3: the words - two rows on the classic panel, one ro
   assert.equal(WT.sharedRealTimeText, undefined);
   assert.match(rd('src/ui/enhanced/enhancedRest.js'), /const clockLine = el\('p', 'clock-line'\);/, 'U7');
   for (const s of ['src/ui/enhanced/enhancedPlusStyle.js', 'src/ui/enhanced/enhancedStyle.js']) assert.match(rd(s), /\.rest-shell \.clock-line:empty \{ display: none; \}/, s);
-  assert.equal(OWN_TIME_ROOM_NOTE, ' - a rest spends it, logging off does not.', 'U8');
+  assert.equal(OWN_TIME_ROOM_NOTE, '. Resting uses it; logging off does not.', 'U8');
   assert.match(rd('src/scenes/world.js'), /LIVED1: the cure's minute is the character's own time/, 'D3');
 });

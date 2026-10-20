@@ -1,0 +1,108 @@
+[
+  {
+    "name": "MEND-THIRD-share-whole",
+    "file": "src/systems/item/foundMark.js",
+    "old": "export const MEND_SALE_SHARE = 1 / 3;",
+    "new": "export const MEND_SALE_SHARE = 1;",
+    "tests": [
+      "test/systems/mend_third.test.js"
+    ],
+    "why": "an owner's mend sells whole - the kit's cuirass reads 35, not 24"
+  },
+  {
+    "name": "MEND-THIRD-nothing-credited",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  const own = Math.min(Number.isInteger(item.selfMended) ? item.selfMended : 0, current - found);",
+    "new": "  const own = 0;",
+    "tests": [
+      "test/systems/mend_third.test.js",
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "SELL-AS-FOUND as it was: a kit's, a ring's and a stone's mend sell for nothing - the thread's complaint"
+  },
+  {
+    "name": "MEND-THIRD-smith-credited",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  const own = Math.min(Number.isInteger(item.selfMended) ? item.selfMended : 0, current - found);",
+    "new": "  const own = current - found;",
+    "tests": [
+      "test/systems/mend_third.test.js",
+      "test/systems/auditmendthird.test.js",
+      "test/systems/sell_as_found.test.js",
+      "test/systems/fb1019b_deathdropfound.test.js",
+      "test/systems/auditweaponpool.test.js"
+    ],
+    "why": "the first build: a third of a smith's repair credited, paid at a cheap smith and sold at a dear counter (L1-1), or at the Fighters Guild's discount (L1-2)"
+  },
+  {
+    "name": "MEND-THIRD-credit-fractional",
+    "file": "src/systems/item/foundMark.js",
+    "old": "currentCondition: found + Math.trunc(own * MEND_SALE_SHARE)",
+    "new": "currentCondition: found + own * MEND_SALE_SHARE",
+    "tests": [
+      "test/systems/mend_third.test.js"
+    ],
+    "why": "AUDIT MEND-THIRD L4-6: two points of an owner's mend read a point"
+  },
+  {
+    "name": "MEND-THIRD-rounded-up",
+    "file": "src/systems/item/foundMark.js",
+    "old": "currentCondition: found + Math.trunc(own * MEND_SALE_SHARE)",
+    "new": "currentCondition: found + Math.ceil(own * MEND_SALE_SHARE)",
+    "tests": [
+      "test/systems/mend_third.test.js"
+    ],
+    "why": "the credit rounded up: a field kit's Daedric cuirass reads 25%"
+  },
+  {
+    "name": "MEND-THIRD-no-cap-on-the-owner",
+    "file": "src/systems/item/foundMark.js",
+    "old": "    item.selfMended = Math.min(room, (Number.isInteger(item.selfMended) ? item.selfMended : 0) + above);",
+    "new": "    item.selfMended = (Number.isInteger(item.selfMended) ? item.selfMended : 0) + above;",
+    "tests": [
+      "test/systems/mend_third.test.js"
+    ],
+    "why": "a piece mended whole three times counts its room three times"
+  },
+  {
+    "name": "MEND-THIRD-below-the-mark-credited",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  const above = (item.currentCondition ?? 0) - Math.max(from ?? 0, item.foundCondition);",
+    "new": "  const above = (item.currentCondition ?? 0) - (from ?? 0);",
+    "tests": [
+      "test/systems/mend_third.test.js",
+      "test/systems/auditmendthird.test.js"
+    ],
+    "why": "a mend of wear below the mark counted as the owner's past it"
+  },
+  {
+    "name": "MEND-THIRD-kit-uncredited",
+    "file": "src/systems/smithItems.js",
+    "old": "  creditOwnMend(it, was);   // MEND-THIRD: a kit is its owner's own mend - a third of it past a found piece's mark sells\n",
+    "new": "",
+    "tests": [
+      "test/systems/mend_third.test.js"
+    ],
+    "why": "a kit's mend sells for nothing"
+  },
+  {
+    "name": "MEND-THIRD-ring-uncredited",
+    "file": "src/systems/enchantments.js",
+    "old": "      creditOwnMend(it, was);   // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells\n",
+    "new": "",
+    "tests": [
+      "test/systems/mend_third.test.js"
+    ],
+    "why": "the ring's mend sells for nothing"
+  },
+  {
+    "name": "MEND-THIRD-stone-uncredited",
+    "file": "src/systems/ayleidStones.js",
+    "old": "  pieces.forEach((it, i) => creditOwnMend(it, was[i]));",
+    "new": "",
+    "tests": [
+      "test/systems/mend_third.test.js"
+    ],
+    "why": "the Varla Stone's mend sells for nothing"
+  }
+]

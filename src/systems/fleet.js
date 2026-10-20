@@ -66,7 +66,7 @@ export const shipLabel = (rec) => (rec?.name ? rec.name : `${HULL_NAMES[rec?.hul
 /** REFIT-ORES: a metal's store - its label, its metal (`metal`), its ingots' templates, and its hint in the player's language. */
 const metalStore = (label, metal, templates, hint) => Object.freeze({ label, templates: Object.freeze(templates), metal, get hint() { return hint(); } });
 export const MATERIALS = Object.freeze({
-  timber: Object.freeze({ label: 'Timber', hint: 'Wood Bundles - a Wood-Axe gathers them - or planks and logs', templates: Object.freeze([1604, 645, 646, 647, 648, 649, 650, 651, 635, 636, 637, 638, 639, 640, 641]) }),
+  timber: Object.freeze({ label: 'Timber', hint: 'Wood Bundles (gathered with a Wood-Axe), planks or logs', templates: Object.freeze([1604, 645, 646, 647, 648, 649, 650, 651, 635, 636, 637, 638, 639, 640, 641]) }),
   iron: Object.freeze({ label: 'Iron', hint: 'Iron from an alchemist, or iron and steel ingots', templates: Object.freeze([71, 620, 621]) }),
   pitch: Object.freeze({ label: 'Pitch', hint: 'Pine Branches for their resin, or Resin itself', templates: Object.freeze([14, 653]) }),
   // REFIT-ORES (2026-10-17, bible/03-World/Naval-Refit.md REFIT-ORES): the metals of DFU's ladder past iron - each its

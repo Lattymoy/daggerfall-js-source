@@ -149,9 +149,9 @@ test('SPAWNED-DUNGEONS3: a spawn stands CENTRED in its pixel, so a walk-in is al
 
 test('SPAWNED-DUNGEONS3: the line names the distance to the nearest ten metres and the compass word - talk.js\'s own eight bands, off the scene delta (east, north)', async () => {
   const { directionHintString } = await import('../../src/systems/talk/talk.js');
-  assert.equal(dungeonSightLine(409.6, 'North'), 'You see a Dungeon 410 metres to the North!');
-  assert.equal(dungeonSightLine(354.9, 'Southwest'), 'You see a Dungeon 350 metres to the Southwest!');
-  assert.equal(dungeonSightLine(3, 'East'), 'You see a Dungeon 10 metres to the East!', 'never a zero');
+  assert.equal(dungeonSightLine(409.6, 'North'), 'You see a Dungeon 410 meters to the North!');
+  assert.equal(dungeonSightLine(354.9, 'Southwest'), 'You see a Dungeon 350 meters to the Southwest!');
+  assert.equal(dungeonSightLine(3, 'East'), 'You see a Dungeon 10 meters to the East!', 'never a zero');
   // scene x east-positive, scene z north-positive: fed straight in
   assert.equal(directionHintString(1, 0), 'east');
   assert.equal(directionHintString(0, 1), 'north');

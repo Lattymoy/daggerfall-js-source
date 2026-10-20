@@ -76,7 +76,7 @@ export const CRAFTED_FAMILIES = Object.freeze([
   Object.freeze(['bows', 'Bows']), Object.freeze(['tools', 'Tools']), Object.freeze(['kits', 'Repair Kits']),
   Object.freeze(['furniture', 'Furniture']),
   // PROF7: the loom's - the leather armour, the clothing (its dye carried with the piece), the rugs, tapestries and skins
-  Object.freeze(['leather', 'Leather Armour']), Object.freeze(['clothing', 'Clothing']), Object.freeze(['furnishings', 'Furnishings']),
+  Object.freeze(['leather', 'Leather Armor']), Object.freeze(['clothing', 'Clothing']), Object.freeze(['furnishings', 'Furnishings']),
   // PROF11: the mason's bench's - the Sculptor's column, bench, font and plinth (recipeLaw STONE_DECOR)
   Object.freeze(['stonework', 'Stonework']),
   // PROF9: the fire's - the four dishes (recipeLaw DISHES), a cook's hand carried with each
@@ -297,7 +297,7 @@ export const GOOD_ARROW_TEMPLATE = 131;
 /** The Goods view's families, by DFU's item groups (goodFamily). */
 export const GOODS_FAMILIES = Object.freeze([
   Object.freeze(['weapons', 'Weapons']), Object.freeze(['armour', 'Armour']), Object.freeze(['clothing', 'Clothing']),
-  Object.freeze(['jewellery', 'Jewellery and gems']), Object.freeze(['other', 'Everything else']),
+  Object.freeze(['jewellery', 'Jewelry and gems']), Object.freeze(['other', 'Everything else']),
 ]);
 /** One group-to-family table for both the client classifier and the service's pre-limit SQL filter. */
 export const GOOD_GROUP_FAMILIES = Object.freeze([
@@ -352,7 +352,7 @@ export function goodRefusal(rec) {
 }
 /** Each refusal in the List form's words (the piece's name before it). */
 export const GOOD_REFUSAL_WORDS = Object.freeze({
-  shape: 'not a piece the market knows',
+  shape: 'not an item the market knows',
   worn: 'worn - take it off first',
   locked: 'locked - unlock it first',
   quest: 'a quest\'s',
@@ -362,6 +362,6 @@ export const GOOD_REFUSAL_WORDS = Object.freeze({
   letter: 'a letter of credit is gold',
   boat: 'a boat\'s',
   arrows: 'arrows go in a quiver',
-  stores: 'a Stores material - the market sells it from the Stores alone',
+  stores: 'a Stores material, sold only from your Stores',
   large: 'too much to write on a board',
 });

@@ -462,7 +462,7 @@ test('WB4 the seams, by source: the world host makes the court on the link, fram
   // WB6b: the telegraph's pass and the air's life share the hook - either drawn marks the seam, once
   assert.match(w, /const told = gateCourt\?\.drawPass\(proj, view, eye, [^\n]*\);\n[^\n]*\n[^\n]*\n\s+if \(told \|\| lived\) renderer\.markForeignPass\(\);/);
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /withCourtLights\(_dgLit, \[\.\.\.\(host\.gateCourtLights\?\.\(\) \?\? \[\]\), \.\.\.courtLightsNear\(cam\.pos\)\]\)/);   // WB9b: the fight's lights first - the renderer's cap drops a far brazier, never him
+  assert.match(wm, /withCourtLights\(_dgLit, \[\.\.\.\(host\.gateCourtLights\?\.\(\) \?\? \[\]\), \.\.\.courtLightsNear\(cam\.pos, planOfDay\(dungeonLoc\.gate\)\)\]\)/);   // WB14b: the night's braziers; WB9b: the fight's lights first - the renderer's cap drops a far brazier, never him
   const bb = wm.indexOf('renderer.drawBillboards([...dungeonCtx.billboardBatches'), tg = wm.indexOf('if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });'), foes = wm.indexOf('dungeonCtx.drawFoes(dt, canvas');
   assert.ok(bb > 0 && tg > bb && tg < foes, 'the telegraph after the court and its billboards, before drawFoes\' screen quads end the world pass');
   const dc = read('src/scenes/dungeonContext.js');

@@ -46,6 +46,7 @@ import { crowdShout } from '../../systems/arena/arenaCrowd.js';   // ARENA4: the
 import { crowdHalves, crowdHalfOf, crowdWash } from '../../systems/arena/arenaCrowd.js';   // ARENA5: the crowd's half in a banner's colours
 import { drawnFlat } from '../../characters/nudeFlats.js';   // NUDE-HOSTS: Show Nudity off seats a nude figure's clothed stand-in
 import { newRecording, recordTick, recordStrike, recordEvent, finishRecording, keepReplay, replayOk, replayFeed, replayId, replayBoutId, playerMobileOf } from '../../systems/arena/arenaReplay.js';   // ARENA5: your ladder replay
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** ARENA-FIX 10: A CRIT is the formula's own critical-strike roll (combat/formulas.js calculateAttackDamage's notes,
  *  told through `observeAttackResolution` and matched to the blow the damage door hears - `attackResolved` below).
@@ -717,6 +718,7 @@ export function createArenaBouts(deps) {
       deps.notice?.([line, r.side === null ? U.practiceDraw : r.side === 0 ? U.practiceWon : U.practiceLost]);
     } else if (C.ladder) {
       const won = r.side === 0;
+      if (won) noteAct('arena-won');   // QL11: a bout won in the Arena - a ladder bout of mine (the pit's practice is no bout of the Arena's)
       const purse = won ? boutPurse(C.next.purse, C.crowd.favour[YOU] ?? 0) : 0;
       if (won && purse > 0 && !C.paid) { C.paid = true; deps.pay?.(purse); }
       const fav = C.crowd.favour[YOU] ?? 0;
@@ -1101,6 +1103,9 @@ export function createArenaBouts(deps) {
     throwAt(C, [...r.losers, ...r.winners], throws.refuse, THROWN_REFUSE);
     const mine = C.you ? boutFighter(C.b, C.you) : null;
     const won = !!mine && r.side === mine.side;
+    // AUDIT QUESTLINES ACTS-6: a LADDER bout (`pve` - the relay-run opponent, Arena.md's "The Ladder"), as this screen's own
+    // is (`verdict`, C.ladder): a bout between players - rated, casual or a private session's - is no step of the ladder
+    if (won && C.relay.kind === 'pve') noteAct('arena-won');   // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)
     const lines = [line];
     if (C.relay.kind === 'pve' && mine) {
       const purse = won ? boutPurse(C.next?.purse ?? 0, C.crowd.favour[C.you] ?? 0) : 0;

@@ -125,7 +125,7 @@ test('AUDIT LIVED1b T10 (the words unrounded, the nightfall floored): the words 
   setOwnMinutes(100 * D + 0.4);   // a played clock is a fraction
   assert.equal(ownTimeLeftText(100 * D + 20), '20 minutes of your time (2m of play)');
   assert.equal(ownTimeLeftShort(100 * D + 20), '20 minutes');
-  assert.equal(worldNightfallText(), 'The sun is the world\'s - night falls in about 30 minutes.');
+  assert.equal(worldNightfallText(), 'Online, resting does not move the sun. Night falls in about 30 minutes.');
 });
 
 test('AUDIT LIVED1b T10 (the words\' unit boundaries): the words at their unit boundaries - whole hours floored, 48 hours of play said in hours, an hour of play as 1h, a day as 1 day and an hour as 1 hour', () => {

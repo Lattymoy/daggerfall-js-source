@@ -23,21 +23,22 @@
 // ═══════════════════════════════════════════════════════════════════
 import { LabGrassRenderer, createGrassField, grassStagesOf, LAB_GRASS, GRASS_CELL } from '../render/labGrass.js';
 import { MEADOW_BLADES_PER_TUFT } from '../render/grassMeadow.js';
-import { jungleFloorArt, JUNGLE_FLOOR_ARCHIVE, JUNGLE_FLOOR_PLANTS } from '../render/jungleFloorArt.js';
+import { jungleFloorArt, JUNGLE_FLOOR_ARCHIVE, JUNGLE_FLOOR_PLANTS, JUNGLE_FLOOR_PLANTS_M2 } from '../render/jungleFloorArt.js';
 import { JUNGLE_EDGE } from '../world/jungle/jungleRegion.js';
 import { classicRecordRgba } from '../formats/derivedTexture.js';
 import { hasTextureReplacement, decodedTextureTopDown } from '../systems/textureReplacement.js';
 
 /**
  * THE FLOOR'S NUMBERS. `plants` a square metre where the floor is whole - as blades, MEADOW_BLADES_PER_TUFT a plant, over
- * the lab's own measuring span: the preview's carpet (at one the jungle's red earth still showed between the ferns,
- * 2026-10-19's photographs), thinned from 2.5 on the owner's word ("Reduce the amount of ground flora. Its a little too
- * much", 2026-10-19); `seed` its field's (never the
+ * the lab's own measuring span: JUNGLE-GRASS (render/jungleFloorArt.js JUNGLE_FLOOR_PLANTS_M2) - the meadow's own grass
+ * (2.27 at Full) and the owner's flora at the rate they judged it (BANTHA2 thinned the whole floor from 2.5 to 1.8 on
+ * "Reduce the amount of ground flora. Its a little too much"; at 1.8 its tufts and sedge were 0.88 a square metre, two fifths of the meadow's, and the owner:
+ * "Grass isnt showing within the new jungle region", 2026-10-19); `seed` its field's (never the
  * meadow's: a field of the meadow's seed at a lower density stands on a prefix of its spots); `near` how far outside the
  * jungle's line (m) the eye comes before the floor is made - the field's whole range and the layout's own fringe.
  */
 export const JUNGLE_FLOOR = Object.freeze({
-  plants: 1.8,
+  plants: JUNGLE_FLOOR_PLANTS_M2,
   seed: 0x4a464c52,   // 'JFLR'
   near: LAB_GRASS.range + JUNGLE_EDGE.out + 400,
 });

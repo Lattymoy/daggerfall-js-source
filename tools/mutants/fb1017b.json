@@ -82,8 +82,8 @@
   {
     "name": "SHAM-TRAIL-not-read",
     "file": "src/scenes/quest/questData.js",
-    "old": "      getQuestSourceLines: (name) => (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null,",
-    "new": "      getQuestSourceLines: (name) => quests.get(name) ?? null,",
+    "old": "questlineLines(name, (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null, questlines)",
+    "new": "questlineLines(name, quests.get(name) ?? null, questlines)",
     "tests": [
       "test/systems/quest/fb1017b_shamtrail.test.js"
     ],

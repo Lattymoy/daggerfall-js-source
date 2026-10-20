@@ -23,6 +23,7 @@ import { CityNavigation, NAV_CELL } from '../world/city/cityNavigation.js';
 import { collectCityLights, LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';
 import { coverProxies, coverProxy, FELLED, isCoverFlat } from '../ai/cover.js';
+import { flatBodies, jungleBody } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { doorCornersOf, doorNormalOf } from './hallBanners.js';
 import { drawnFlat } from '../characters/nudeFlats.js';
@@ -94,6 +95,7 @@ import { TownPopulation } from '../systems/town/townPopulation.js';
 import { windfallResponse } from '../systems/windfall.js';
 import { wodRockUvs } from '../world/worldOfDaggerfall/wodRockUv.js';
 import { WodSpawner } from '../world/worldOfDaggerfall/wodSpawner.js';
+import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: a pixel's statics built round a body already standing are withheld until it is clear
 
 /** @param {any} host */
 export function createPixelBuild(host) {
@@ -110,6 +112,11 @@ export function createPixelBuild(host) {
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight
   } = host;
+  // ROCK-CLEAR (FIELD BUGS 2026-10-19f): the world collider's one gate - every solid the build files below goes through
+  // it, so a part standing round the body (a neighbour's mountain reaching into the body's pixel, a pixel built round a
+  // body that outran the stream) is drawn and solid only once the body is clear of it (player/lateSolid.js); the body
+  // is the world's, the one its frame settles the gate with (none while a jump's landing builds - its law reads it whole)
+  const late = lateSolidsOf(collider);
   /**
    * THE FLATS' GROUPS STOOD (AUDIT PRECIP HOST-7: the build's and a re-skin's one law) - a batch a drawn picture, each
    * flat's group (`g.groups`, its centres) stood as Low Poly Trees' far picture, the Seasons mod's record or the plain
@@ -137,6 +144,7 @@ export function createPixelBuild(host) {
       // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
       // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
       const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);
+      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // PROP-BODIES: the record's own, whichever picture stands
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
         const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
@@ -474,8 +482,8 @@ export function createPixelBuild(host) {
             for (let i = 0; i < 3; i++) { box[i] -= MILL_SAIL_PAD; box[3 + i] += MILL_SAIL_PAD; }
             unionBox(box);
             models.push({ gpu: parts.body, local, _box: box, _order: -1, _mill: true });   // EV6: the mills group together; AUDIT PRECIP HOST-7: a body a re-skin dresses
-            collider.addMesh(key, BODY.positions, BODY.indices, local,
-              onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));   // BLOOD1 AUDIT 3: one array a bucket, not one a call - every ray asks every bucket; PERF-COL2: riding the floating origin, filed by place
+            late.add(key, BODY.positions, BODY.indices, local,
+              { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });   // BLOOD1 AUDIT 3: one array a bucket, not one a call - every ray asks every bucket; PERF-COL2: riding the floating origin, filed by place
             windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
           }
         }
@@ -537,8 +545,8 @@ export function createPixelBuild(host) {
             }
           }
           const gateKey = isCityGate(placed.modelIdNum) ? `${key}:gate:${pixelGates.length}` : key;
-          collider.addMesh(gateKey, cpu.positions, cpu.indices, local,
-            onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));   // BLOOD1 AUDIT 3: the same; PERF-COL2: riding the floating origin
+          late.add(gateKey, cpu.positions, cpu.indices, local,
+            { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });   // BLOOD1 AUDIT 3: the same; PERF-COL2: riding the floating origin
           // THE BULLETIN BOARDS. RMBLayout stands model 41739
           // STANDALONE rather than combining it (:857, :935) for the
           // sole purpose of hanging DaggerfallBulletinBoard off it
@@ -724,7 +732,7 @@ export function createPixelBuild(host) {
             const entry = { gpu: gpuB, local, _box: box, _order: BULLETIN_BOARD_MODEL_ID };
             models.push(entry);
             if (cpuB.normals && cpuB.uvs) { addStatic(cpuB, local, false); entry._batched = true; }
-            collider.addMesh(key, cpuB.positions, cpuB.indices, local, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));   // PERF-COL2: riding the floating origin
+            late.add(key, cpuB.positions, cpuB.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });   // PERF-COL2: riding the floating origin
             pixelBoards.push({ box, local, extra: true });
           }
         }
@@ -913,7 +921,7 @@ export function createPixelBuild(host) {
         const entry = { gpu, local: m.matrix, _box: box, _order: m.modelId };
         models.push(entry);
         if (cpu.normals && cpu.uvs) { addStatic(cpu, m.matrix, false, m.normalMatrix); entry._batched = true; }
-        collider.addMesh(key, cpu.positions, cpu.indices, m.matrix, wodBucket);   // CreateDaggerfallMeshGameObject's MeshCollider
+        late.add(key, cpu.positions, cpu.indices, m.matrix, { translation: wodBucket });   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate
         await breather.breathe();
       }
       for (const f of place.flats) {
@@ -1036,7 +1044,7 @@ export function createPixelBuild(host) {
           const entry = { gpu, local, _box: box, _order: hm.modelId };
           models.push(entry);
           if (cpu.normals && cpu.uvs) { addStatic(cpu, local, false); entry._batched = true; }
-          collider.addMesh(key, cpu.positions, cpu.indices, local, holdBucket);   // CreateDaggerfallMeshGameObject's MeshCollider
+          late.add(key, cpu.positions, cpu.indices, local, { translation: holdBucket });   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate
           await breather.breathe();
         }
         for (const hf of HOLD_FLATS) {
@@ -1091,6 +1099,7 @@ export function createPixelBuild(host) {
     for (const [gk, g] of jungleGroups) {
       await breather.breathe();
       const species = g.species, record = JUNGLE_SPECIES[species].record;
+      g.centers.forEach((c, i) => coverItems.push(jungleBody(c, species, g.own[i])));   // PROP-BODIES: its trunk, whichever picture stands
       if (!junglePics.has(species)) junglePics.set(species, await junglePicture(jungle.door, species));   // THE ONE CONSTRUCTION SEAM (world/naturePicture.js)
       const pic = junglePics.get(species);
       if (!pic) {   // its picture would not stand (a decode refused): the species stands as the Tree record it carries
@@ -1143,6 +1152,7 @@ export function createPixelBuild(host) {
       armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
       batches.push(batch);
       if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(coverProxy(c, size));
+      coverItems.push(...flatBodies(t, archive, record, size, centers, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));   // PROP-BODIES
     }
     // STAND-FLAT / STAND-HORSE (bible/04-Characters/Morrowind-NPCs.md section 28): each town horse and each person no
     // StaticNPC holds a batch of its own in the pixel's list (its cull, its far-ring rule, its animation and its teardown

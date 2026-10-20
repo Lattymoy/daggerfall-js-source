@@ -53,9 +53,9 @@ test('UI-CALM the saddle panel is a block in the bottom-right corner, up and awa
   assert.equal(saddleShown(S(), { touch: true, open: true }), 'full', 'tapped up');
   const winded = S({ horse: { breath: 0.1, winded: true, hungerKey: 'fed' } });
   assert.equal(saddleShown(winded, { since: 1e9 }), 'note');
-  assert.deepEqual([saddleAlert(winded), saddleNote(winded)], ['breath', 'Winded - ease off and let it breathe']);
+  assert.deepEqual([saddleAlert(winded), saddleNote(winded)], ['breath', 'Winded. Ease off and let it breathe']);
   assert.deepEqual([saddleAlert(S({ horse: { breath: 0.2, hungerKey: 'fed' } })), saddleAlert(S({ horse: { breath: 1, hungerKey: 'hungry' } }))], ['breath', 'hunger']);
-  assert.equal(saddleNote(S({ horse: { breath: 1, hungerKey: 'starving' } })), 'Starving - it will not gallop until it eats');
+  assert.equal(saddleNote(S({ horse: { breath: 1, hungerKey: 'starving' } })), 'Starving. It will not gallop until it eats');
   const wagon = (stateKey) => S({ mode: 'Cart', horse: null, wagon: { name: 'Small Cart', stateKey } });
   assert.deepEqual(['sound', 'worn', 'rickety', 'failing'].map((k) => saddleAlert(wagon(k))), [null, null, 'wagon', 'wagon']);
   assert.equal(saddleAlert(S({ horse: null, load: { kg: 801, limit: 800 } })), 'load');

@@ -150,7 +150,7 @@ test('GUIDE1 THE FEED over the real bridge: the first look is a baseline and say
   r = b.lens.look();
   assert.deepEqual(r.events, [{ type: 'completed', id: v.id, title: 'The Lens', main: false }]);
   assert.deepEqual(r.quests, []);
-  assert.deepEqual(b.questLog().ended, [{ id: v.id, name: 'Main Quest - The Lens', questName: '__GLENS', success: true }], 'the verdict the notebook files it under');
+  assert.deepEqual(b.questLog().ended, [{ id: v.id, name: 'Main Quest - The Lens', questName: '__GLENS', success: true, ql: null }], 'the verdict the notebook files it under (QL1: `ql` null - DFU\'s quest, no sheet)');
 });
 
 test('GUIDE1 THE FEED - a quest the lens has not seen is `started`; one that lost every entry (`remove log step`) drops out of the journal and, when it writes again, is `updated`, not new; a clock that runs out ends the quest and says `ended`; and a LOAD is a baseline: the bridge\'s restore resets the lens, so a quest the lens saw end and the save brings back is not `started` (mutants: known ids forgotten; restore without the reset; an ending with no verdict said)', () => {

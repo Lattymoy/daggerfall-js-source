@@ -137,7 +137,7 @@ spell, the martial law's weapons and technique, one shape). Pure model (`specGui
   line (`familyLine`: the path held, the paths open, how one opens, or why none can - the class, or the slots its
   masteries spent) over its six skills, each with the Stats page's skill bar (gold past 100) and
   its state in a word, and a door to Master Skills; then every path the class can reach as a bar (its name, its pair,
-  its state's tag) that opens its detail beneath it - "Show all fifteen paths" adds the ones out of reach (no slots, or
+  its state's tag) that opens its detail beneath it - "Show all 15 paths" adds the ones out of reach (no slots, or
   not for the class). Master Skills off: the
   page says no path can open, and where the switch is (offline, Master Skills).
 

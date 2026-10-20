@@ -475,7 +475,7 @@
   {
     "name": "QUAY-host-never-fast",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      warping.fast = true;\n      deps.say?.(`Made fast at ${portWords(dock.name)}.`, 3);",
+    "old": "      warping.fast = true;\n      deps.say?.(`Moored at ${portWords(dock.name)}.`, 3);",
     "new": "      warping.fast = true;",
     "tests": [
       "test/systems/naval/quays.test.js"
@@ -635,8 +635,8 @@
   {
     "name": "QUAY-fleet-page-away-unsaid",
     "file": "src/ui/fleetPage.js",
-    "old": "      if (s.docked != null) return { state: 'Made fast', tone: 'is-away',",
-    "new": "      if (false) return { state: 'Made fast', tone: 'is-away',",
+    "old": "      if (s.docked != null) return { state: 'Moored', tone: 'is-away',",
+    "new": "      if (false) return { state: 'Moored', tone: 'is-away',",
     "tests": [
       "test/systems/naval/quays.test.js"
     ],

@@ -103,7 +103,7 @@ const REFUSED = new Set([
 export const guildRefused = (error) => REFUSED.has(error);
 
 /** What the tab says when a deposit's answer was lost. */
-export const GUILD_DEPOSIT_UNSURE = 'The answer was lost. Read the ledger before you deposit again - the gold may already be in the treasury.';
+export const GUILD_DEPOSIT_UNSURE = 'No reply came back. Check the ledger before you deposit again: the gold may already be in the treasury.';
 
 /** GUILD1c: a membership as a key - the guild, its tag and the character's row in it; '' for none. */
 export function guildBadgeKey(guild) {

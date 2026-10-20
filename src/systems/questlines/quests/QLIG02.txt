@@ -1,0 +1,97 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE SMITH'S SECRETS, step 2 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner an hour after
+-- step 1 ends: the armourer's word is in the journal at once. The giver is unnamed (an armourer): an Armorer of the
+-- player's own town, at its armoury. The act is the Reforge's (qlActs.js piece-reforged - systems/reforge.js
+-- reforgePiece, LOOT9: one line of a Magic or Rare piece rolled again, for Welkynd Shards and gold, at the Mages Guild).
+-- AUDIT QUESTLINES LINES-10: a Person is made fresh in each step's quest (a new name, in whatever town the player
+-- stands in), so this step's giver is introduced as NEW - sent on by the last step's - never spoken of as the same one.
+Quest: QLIG02
+DisplayName: Tempered Again
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        _smith_ has stopped waiting to hear of the Reforge.
+
+QuestComplete:  [1004]
+<ce>         "Do not tell my customers what you know."
+<ce>          _smith_ counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Word from the armorer who taught me to set a
+ stone: the mages can do what no smith can, and
+ roll a piece's virtue again at the Reforge. I am
+ to have a piece reforged at a Mages Guild, then
+ tell _smith_, an armorer at _shop_ in __shop_
+ who knows the Reforge, how it went.
+
+Message:  1011
+%qdt:
+ I have had a piece reforged at the Reforge.
+ _smith_ is waiting to hear of it at _shop_ in
+ __shop_.
+
+Message:  1012
+<ce>          "The Reforge first. Welkynd shards and gold,
+<ce>           at the Mages Guild, and a Magic or Rare piece
+<ce>             to put on the press. Then come back."
+
+Message:  1013
+<ce>        "Tempered again, and better for it. Or worse -
+<ce>         and then you try again. That is the trade."
+<ce>
+<ce>       _smith_ laughs. "The shards come from breaking
+<ce>        what you do not need. Salvage the dross, reforge
+<ce>        the best, set a stone in what is left. Now you
+<ce>        know everything I know about gear."
+
+Message:  1014
+The armorer at _shop_? Sends customers to the mages now, would you believe it.
+<--->
+_smith_? Says a smith's best tool is a mage's press. Odd thing for a smith to say.
+<--->
+Looking for _smith_? Try _shop_. Follow the hammering.
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--           _smith_ occurs 7 times.
+--            _gold_ occurs 1 time.
+--            _shop_ occurs 4 times.
+--           __shop_ occurs 2 times.
+
+QBN:
+Item _gold_ gold range 100 to 200
+
+Person _smith_ group Armorer local anyInfo 1014
+Place _shop_ local armory
+
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _smith_ at _shop_
+	log 1010 step 0
+	start timer _wait_
+
+_forged_ task:
+	ql act piece-reforged 1
+	log 1011 step 1
+
+_clicked_ task:
+	clicked npc _smith_
+
+_early_ task:
+	when _clicked_ and not _forged_
+	say 1012
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _forged_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

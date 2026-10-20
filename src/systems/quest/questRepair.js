@@ -319,7 +319,7 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
  *  Repair'"): online, a dungeon's public room is laid smaller for most dungeons, and a quest's things stand in the dungeon
  *  laid whole - the player's instance (systems/instancePlaces.js questMountsHere). The repair found nothing missing, and
  *  said only that. */
-export const questElsewhereLine = () => t('quest.repair.elsewhere', "Your quest's business in this dungeon is in your instance - the shared dungeon is laid smaller and holds none of it. Leave and enter again, choosing Your instance.");
+export const questElsewhereLine = () => t('quest.repair.elsewhere', "Your quest's targets in this dungeon are only in your own instance. Leave and enter again, choosing Your instance.");
 
 /** The line the player reads after a repair - QUEST-ELSEWHERE: where its things are, never "nothing was missing", when
  *  the room the player stands in holds none of them. */

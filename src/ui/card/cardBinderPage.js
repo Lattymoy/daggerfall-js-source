@@ -35,7 +35,7 @@ export const LARGE_H = 371;
 /** The rules' and the pack's refusals of a deck, in words. */
 export const DECK_REFUSAL_WORDS = Object.freeze({
   size: 'A deck holds exactly 30 cards.', copies: 'At most two of one card.', legendary: 'At most one of a Legendary or rarer card.',
-  'unknown card': 'A card this build does not know.', 'not held': 'Your binder does not hold every card this deck names.',
+  'unknown card': 'The deck holds an unknown card.', 'not held': 'Your binder does not hold every card this deck names.',
 });
 
 /** The deck cards: the catalog's (its locations are a list of their own - net/iliac/iliacCards.js ILIAC_LOCATIONS). */
@@ -147,7 +147,7 @@ export function drawCardsPart(detail, rerender, kit) {
   const { el, divider } = kit;
   const items = kit.player?.items ?? [];
   const binder = binderOf(items);
-  if (!binder) { detail.append(el('p', 'px-note', 'No Card Binder carried.')); return; }
+  if (!binder) { detail.append(el('p', 'px-note', 'You are not carrying a Card Binder.')); return; }
   const have = collectionOf(items);
   const all = deckCards();
   const known = all.filter((c) => have.has(c.id));
@@ -205,10 +205,10 @@ function pressCard(/** @type {string} */ id, /** @type {number} */ held, rerende
     const inDeck = _editing.cards.filter((x) => x === id).length;
     const cap = copiesAllowed(c);
     if (!held) _said = `Your binder holds no ${c.name}.`;
-    else if (_editing.cards.length >= ILIAC_DECK_SIZE) _said = `The deck is full - ${ILIAC_DECK_SIZE} cards. Take one out first.`;   // AUDIT CARDS-5 D4
-    else if (inDeck >= cap) _said = cap === 1 ? `A deck holds one ${c.name} - it is Legendary or rarer.` : `A deck holds at most ${cap} of one card.`;   // AUDIT CARDS-5 D4
+    else if (_editing.cards.length >= ILIAC_DECK_SIZE) _said = `The deck is full (${ILIAC_DECK_SIZE} cards). Take one out first.`;   // AUDIT CARDS-5 D4
+    else if (inDeck >= cap) _said = cap === 1 ? `A deck can hold only one ${c.name} because it is Legendary or rarer.` : `A deck holds at most ${cap} of one card.`;   // AUDIT CARDS-5 D4
     else if (inDeck >= held) _said = `Your binder's ${copies(held, c.name)} ${held === 1 ? 'is' : 'are all'} in this deck.`;
-    else { _editing.cards = [..._editing.cards, id]; _said = `${c.name} into the deck (${_editing.cards.length} of ${ILIAC_DECK_SIZE}).`; }
+    else { _editing.cards = [..._editing.cards, id]; _said = `${c.name} added to the deck (${_editing.cards.length} of ${ILIAC_DECK_SIZE}).`; }
   } else if (c) _said = held ? `You hold ${copies(held, c.name)}.` : `You hold no ${c.name} yet.`;
   rerender();
 }
@@ -232,7 +232,7 @@ function drawDecks(detail, rerender, el, divider, items, binder) {
     drop.setAttribute('data-focus', `binder-deck-drop-${i}`);   // AUDIT CARDS-5 D2: armed, its words change - the keyboard stays on it
     drop.onclick = () => {
       if (_dropArmed !== i) { _dropArmed = i; rerender(); return; }
-      dropBinderDeck(binder, i); _dropArmed = null; _said = `${d.name} taken apart - its cards stay in your binder.`; rerender();
+      dropBinderDeck(binder, i); _dropArmed = null; _said = `${d.name} deleted. Its cards stay in your binder.`; rerender();
     };
     row.append(edit, drop);
     list.append(row);
@@ -242,7 +242,7 @@ function drawDecks(detail, rerender, el, divider, items, binder) {
     const add = el('button', 'act', 'New deck');
     add.type = 'button';
     add.setAttribute('data-focus', 'binder-deck-new');
-    add.onclick = () => { _editing = { i: decks.length, name: `Deck ${decks.length + 1}`, cards: [] }; _said = 'Press a card below to put it in the deck.'; _dropArmed = null; _picked = null; rerender(); focusNext(add, ['binder-deck-name']); };
+    add.onclick = () => { _editing = { i: decks.length, name: `Deck ${decks.length + 1}`, cards: [] }; _said = 'Press a card below to add it to the deck.'; _dropArmed = null; _picked = null; rerender(); focusNext(add, ['binder-deck-name']); };
     detail.append(add);
   }
 }
@@ -285,7 +285,7 @@ function drawEditor(detail, rerender, el, items, binder, have) {
     chip.onclick = () => {
       const k = e.cards.lastIndexOf(id);
       if (k >= 0) e.cards = e.cards.filter((_, j) => j !== k);
-      _said = `${nm} out of the deck (${e.cards.length} of ${ILIAC_DECK_SIZE}).`;   // AUDIT CARDS-5 D7
+      _said = `${nm} removed from the deck (${e.cards.length} of ${ILIAC_DECK_SIZE}).`;   // AUDIT CARDS-5 D7
       rerender();
     };
     chips.append(chip);
@@ -300,7 +300,7 @@ function drawEditor(detail, rerender, el, items, binder, have) {
   keep.onclick = () => {
     if (deckRefusal(e.cards, items)) return;
     const kept = e.name.trim() || `Deck ${e.i + 1}`;
-    if (setBinderDeck(binder, e.i, { name: kept, cards: e.cards })) { _said = `${kept} kept in your binder.`; _editing = null; }
+    if (setBinderDeck(binder, e.i, { name: kept, cards: e.cards })) { _said = `${kept} saved to your binder.`; _editing = null; }
     rerender();
     focusNext(keep, [`binder-deck-edit-${e.i}`, 'binder-deck-new']);
   };

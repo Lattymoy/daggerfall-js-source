@@ -75,7 +75,7 @@ test('SD18c ITS WORD: the taverns tell the omen its Ending sends - six of them, 
   assert.equal(Object.keys(SD_ENDING_RUMOR).length, 6);
   assert.deepEqual(Object.keys(SD_ENDING_RUMOR), SD_ENDINGS.map((E) => E.id));
   assert.equal(new Set(SD_ENDINGS.map((E) => sdRumorLine('Wayrest', E.id))).size, 6);
-  assert.equal(sdRumorLine('Wayrest', 'wayrest'), 'They say the air goes brass-coloured past the walls of Wayrest at dusk, and the tide comes in where there is no sea.');
+  assert.equal(sdRumorLine('Wayrest', 'wayrest'), 'They say the air goes brass-colored past the walls of Wayrest at dusk, and the tide comes in where there is no sea.');
   assert.match(sdRumorLine('Wayrest'), /a bell rings where there is no bell\.$/);
   // the slot's own, through the taverns and the map (the map card's line pinned whole by test/ui/enhanced/sd2c_omen.test.js)
   const O = readFileSync(new URL('../../../src/systems/superDungeon/sdOmen.js', import.meta.url), 'utf8');

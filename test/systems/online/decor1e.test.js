@@ -81,10 +81,10 @@ test('DECOR1e the panel\'s room view: two tabs - the catalogue and "In this room
   const card = one(root, 'dfdecor-card');
   const tabs = () => all(one(root, 'dfdecor-tabs'), 'dfdecor-chip').map((t) => [t.textContent, t.getAttribute('aria-pressed')]);
   assert.equal(panel.mode(), 'catalogue');
-  assert.deepEqual(tabs(), [['Catalogue', 'true'], ['In this room (2)', 'false'], ['Your things (0)', 'false'], ['Built in (0)', 'false']], 'DECOR2a: the pack\'s own list the third; BASE-HIDE: the room\'s own furniture the fourth');
+  assert.deepEqual(tabs(), [['Catalog', 'true'], ['In this room (2)', 'false'], ['Your things (0)', 'false'], ['Built in (0)', 'false']], 'DECOR2a: the pack\'s own list the third; BASE-HIDE: the room\'s own furniture the fourth');
   roomTab(root).fire('click');
   assert.deepEqual([panel.mode(), card.dataset.mode], ['room', 'room'], 'the card wears the view (the filters and Place hidden by it)');
-  assert.deepEqual(tabs(), [['Catalogue', 'false'], ['In this room (2)', 'true'], ['Your things (0)', 'false'], ['Built in (0)', 'false']]);
+  assert.deepEqual(tabs(), [['Catalog', 'false'], ['In this room (2)', 'true'], ['Your things (0)', 'false'], ['Built in (0)', 'false']]);
   const line = (r) => [one(r, 'dfdecor-row-name').textContent, one(r, 'dfdecor-row-sub').textContent, one(r, 'dfdecor-row-price').textContent];
   assert.deepEqual(rows(root).map((r) => r.dataset.key), ['c1', 'k1'], 'the room\'s pieces, not the catalogue');
   assert.deepEqual(rows(root).map(line), [
@@ -129,7 +129,7 @@ test('DECOR1e the panel\'s room view: two tabs - the catalogue and "In this room
   panel.update(view());
   assert.deepEqual([rows(root).length, pick(root)[0], tabs()[1][0]], [1, 'Choose a placed piece', 'In this room (1)'], 'the chosen piece gone');
   // showRoom, from the catalogue's view
-  chipNamed(root, 'Catalogue').fire('click');
+  chipNamed(root, 'Catalog').fire('click');
   assert.equal(panel.mode(), 'catalogue');
   panel.showRoom('c1');
   assert.deepEqual([panel.mode(), pick(root)[0], rows(root)[0].getAttribute('aria-selected')], ['room', 'Chair', 'true']);
@@ -229,7 +229,7 @@ test('DECOR1e lighting, holding and removing offline: a piece lit takes its cata
   assert.deepEqual(rig.standing[0].light, own, 'lit again - its own light, not a lamp\'s');
   // a chair has none of its own: a warm lamp's
   rig.frame();
-  chipNamed(panelOf(rig), 'Catalogue').fire('click');
+  chipNamed(panelOf(rig), 'Catalog').fire('click');
   rows(panelOf(rig)).find((r) => r.dataset.key === 'm41000').fire('click');
   btn(panelOf(rig), 'Place').fire('click');
   rig.frame();
@@ -269,7 +269,7 @@ test('DECOR1e lighting, holding and removing offline: a piece lit takes its cata
   roomPress(rig, chair.id, 'Remove');
   await settle();
   assert.deepEqual([rig.standing.map((p) => p.id), rig.w.credited], [[candle.id], [decorRefund(chair.paid)]]);
-  assert.equal(rig.said.at(-1), `${rig.entries.find((e) => e.key === 'm41000').name} removed - ${decorRefund(chair.paid)} gold back.`);
+  assert.equal(rig.said.at(-1), `${rig.entries.find((e) => e.key === 'm41000').name} removed. ${decorRefund(chair.paid)} gold back.`);
   assert.ok(decorRefund(chair.paid) < chair.paid);
 });
 
@@ -361,7 +361,7 @@ test('DECOR1e an online home\'s pieces changed: the account service first - a mo
   assert.deepEqual([rig.standing.length, rig.w.credited], [0, [100]], 'half of the 200 the service says it cost - not the client\'s word');
   // a room left before an answer
   const second = await (async () => {
-    chipNamed(panelOf(rig), 'Catalogue').fire('click');
+    chipNamed(panelOf(rig), 'Catalog').fire('click');
     rows(panelOf(rig)).find((r) => r.dataset.key === 'm41000').fire('click');
     btn(panelOf(rig), 'Place').fire('click');
     rig.frame();
@@ -485,7 +485,7 @@ test('DECOR1e a room sold takes its placed pieces: online, the service\'s count 
   // HOME-PRICE: the thousands, and the Empire's account (EMPIRE-ACCOUNT) - online, never the region's
   assert.equal(homeSoldLine(25500, 120), 'You sold your home. 25,620 gold went to your account at the Bank of the Empire, 120 of it for its placed pieces.');
   assert.equal(homeSoldLine(25500), 'You sold your home. 25,500 gold went to your account at the Bank of the Empire.', 'none placed: the sentence it always was');
-  assert.equal(homeSaleLines(25500)[2], 'Its placed pieces go too, for half of what they cost; your own things come back to your pack.', 'DECOR2a: and the owner\'s own things');
+  assert.equal(homeSaleLines(25500)[2], 'Its placed decorations are sold too, for half their cost. Your own items go back to your pack.', 'DECOR2a: and the owner\'s own things');
   // offline: the scene's pieces, taken once
   const p = (id, paid) => ({ id, model: 41000, flat: null, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, light: null, storage: true, paid });
   const cache = createSceneCache();

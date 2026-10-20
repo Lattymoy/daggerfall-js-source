@@ -205,12 +205,12 @@ test('AUDIT SHIPYARDS THE SHIPMASTER\'S GUARDS THROUGH HIS ACT (L6-6): a placing
   assert.equal(r.host.act(SITE, 'sell', 505).text, 'Not while the ship is in combat.');
   r.st.status.delete(505);
   r.own(506, 2, 'here', { cargo: 2 });
-  assert.equal(r.host.act(SITE, 'sell', 506).text, 'Empty the hold first - the shipmaster buys the ship, not the cargo.');
+  assert.equal(r.host.act(SITE, 'sell', 506).text, 'Empty the hold first. The shipmaster does not buy cargo.');
   r.st.layUp = false;
   assert.deepEqual(r.host.act(SITE, 'sell', 505), { ok: false, text: 'The ship couldn\'t be brought in to be sold.' });
   r.st.layUp = true;
   r.st.cabins.set(505, 3);
-  assert.equal(r.host.act(SITE, 'sell', 505).text, 'Empty the cabin first - anything left in it would be sold with the ship.');
+  assert.equal(r.host.act(SITE, 'sell', 505).text, 'Empty the cabin first. Anything left in it is sold with the ship.');
   // buying: the parts only into a pack that carries them; a deed's ship answers her page
   const heavy = tradeRig({ canCarry: false });
   const parts = heavy.host.act(SITE, 'buy', 0);

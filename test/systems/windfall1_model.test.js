@@ -124,9 +124,67 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
   assert.equal(wild.storm.swayAmplitude, F(0.08), 'sway 8% at most');
   assert.equal(wild.normal.shiverFrequency, 0.5, 'shiver 0.5 a second at least');
   assert.equal(wild.windy.strength, 1.5);
-  // every key the mod ships, under its section, with the mod's default, range and words (the heading's offset says it is
-  // INERT here - one wind); the mod's own General.Enabled is the port's switch
+  // every key the mod ships, under its section, with the mod's default, range and words (the heading's offset says it has
+  // no effect here - one wind); the mod's own General.Enabled is the port's switch
   const ms = JSON.parse(readFileSync(new URL('../../vendor/windfall/modsettings.json', import.meta.url), 'utf8').replace(/^\uFEFF/, ''));
+  // PLAIN-TEXT (2026-10-19): the mod's lines spoke of crown displacement, billboard height and windy-period frequencies; each is said plainly for a player - their words, exactly
+  const PLAIN = {
+    'General.WindDirectionDegrees': 'Has no effect here. The enhanced outdoors set the wind’s direction.',
+    'General.OverallWindyPeriodFrequency': 'How often windy spells come overall. 100% is the mod’s normal rate.',
+    'General.NaturalWindstormFrequency': 'How often a windy spell turns into a windstorm of 1 to 3 hours. At 100%, 8% of them do.',
+    'General.GustFrequency': 'How often breezes and gusts come. 0% turns them off, and 200% makes them twice as often.',
+    'General.GustStrength': 'How strong gusts are, in motion, leaves and sound. At 0% the steady wind still blows.',
+    'Normal.Strength': 'How much plants move on a normal day.',
+    'Normal.SwayAmountPercent': 'How far treetops sway, as a percentage of the tree’s height.',
+    'Normal.SwaySpeed': 'How fast trees sway, in sways per second.',
+    'Normal.ShiverAmountPercent': 'How much treetops shiver, as a percentage of the tree’s height.',
+    'Normal.ShiverSpeed': 'How fast treetops shiver, in shivers per second.',
+    'Season Frequency.SpringFrequency': 'How often windy spells come in spring.',
+    'Season Frequency.SummerFrequency': 'How often windy spells come in summer.',
+    'Season Frequency.FallFrequency': 'How often windy spells come in autumn.',
+    'Season Frequency.WinterFrequency': 'How often windy spells come in winter.',
+    'Regional Frequency.OceanFrequency': 'How often windy spells come by the sea.',
+    'Regional Frequency.DesertFrequency': 'How often windy spells come in the deserts.',
+    'Regional Frequency.MountainFrequency': 'How often windy spells come in the mountains.',
+    'Regional Frequency.RainforestFrequency': 'How often windy spells come in rainforests.',
+    'Regional Frequency.SwampFrequency': 'How often windy spells come in swamps.',
+    'Regional Frequency.SubtropicalFrequency': 'How often windy spells come in subtropical lands.',
+    'Regional Frequency.MountainWoodsFrequency': 'How often windy spells come in mountain woods.',
+    'Regional Frequency.WoodlandsFrequency': 'How often windy spells come in woodlands.',
+    'Regional Frequency.HauntedWoodlandsFrequency': 'How often windy spells come in haunted woodlands.',
+    'Regional Frequency.UnknownFrequency': 'How often windy spells come in any other climate.',
+    'Weather Frequency.SunnyFrequency': 'How often windy spells come in sunny weather.',
+    'Weather Frequency.CloudyFrequency': 'How often windy spells come in cloudy weather.',
+    'Weather Frequency.OvercastFrequency': 'How often windy spells come in overcast weather.',
+    'Weather Frequency.FogFrequency': 'How often windy spells come in fog.',
+    'Weather Frequency.RainFrequency': 'How often windy spells come in rain. Wind in rain is also 15% stronger.',
+    'Weather Frequency.SnowFrequency': 'How often windy spells come in snow. Wind in snow is also 10% stronger.',
+    'Windy Day.Strength': 'How much plants move on a windy day.',
+    'Windy Day.SwayAmountPercent': 'How far treetops sway, as a percentage of the tree’s height.',
+    'Windy Day.SwaySpeed': 'How fast trees sway, in sways per second.',
+    'Windy Day.ShiverAmountPercent': 'How much treetops shiver, as a percentage of the tree’s height.',
+    'Windy Day.ShiverSpeed': 'How fast treetops shiver, in shivers per second.',
+    'Gust.Strength': 'How much plants move at the height of a gust.',
+    'Gust.SwayAmountPercent': 'How far treetops sway, as a percentage of the tree’s height.',
+    'Gust.SwaySpeed': 'How fast trees sway, in sways per second.',
+    'Gust.ShiverAmountPercent': 'How much treetops shiver, as a percentage of the tree’s height.',
+    'Gust.ShiverSpeed': 'How fast treetops shiver, in shivers per second.',
+    'Storm.Strength': 'How much plants move in a storm.',
+    'Storm.SwayAmountPercent': 'How far treetops sway, as a percentage of the tree’s height.',
+    'Storm.SwaySpeed': 'How fast trees sway, in sways per second.',
+    'Storm.ShiverAmountPercent': 'How much treetops shiver, as a percentage of the tree’s height.',
+    'Storm.ShiverSpeed': 'How fast treetops shiver, in shivers per second.',
+    'Presentation.AudioEnabled': 'Plays the sounds of passing wind, gusts and rustling trees.',
+    'Presentation.AudioVolume': 'Overall volume of the wind and rustling leaves.',
+    'Presentation.RegularWindVolume': 'Volume of the steady breeze and of windy and stormy weather.',
+    'Presentation.GustVolume': 'Volume of short gusts.',
+    'Presentation.FoliageRuffleVolume': 'Volume of rustling leaves.',
+    'Presentation.LeavesEnabled': 'Leaves blow about where the climate and season have them.',
+    'Presentation.LeafAmount': 'How many leaves a gust blows off.',
+    'Presentation.AmbientLeafAmount': 'How many leaves fall near trees. More fall on windy days and in storms.',
+    'Presentation.SnowFlurriesEnabled': 'Snow drifts and blows off snow-covered trees in winter.',
+    'Presentation.SnowFlurryAmount': 'How much snow blows off the trees.',
+  };
   let n = 0;
   for (const sec of ms.Sections) for (const k of sec.Keys) {
     if (sec.Name === 'General' && k.Name === 'Enabled') continue;
@@ -134,8 +192,7 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
     assert.ok(def, `${sec.Name}.${k.Name} declared`); n++;
     assert.equal(def.default, k.Value, `${sec.Name}.${k.Name}: the mod's default`);
     if ('Min' in k) assert.deepEqual([def.min, def.max], [k.Min, k.Max], `${sec.Name}.${k.Name}: the mod's range`);
-    if (k.Name === 'WindDirectionDegrees') assert.ok(def.description.startsWith(k.Description) && /INERT here/.test(def.description), 'the heading\'s offset: the mod\'s words, and why it is inert');
-    else assert.equal(def.description, k.Description, `${sec.Name}.${k.Name}: the mod's words`);
+    assert.equal(def.description, PLAIN[`${sec.Name}.${k.Name}`] ?? k.Description, `${sec.Name}.${k.Name}: the mod's words, or their plain rewording`);
   }
   assert.equal(n, Object.keys(MOD_SETTINGS[WINDFALL_VENDOR].keys).length - 1, 'no key of the port\'s own');
   assert.equal(windfallOn(''), modSetting(WINDFALL_VENDOR, 'Enabled'));

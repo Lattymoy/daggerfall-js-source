@@ -306,6 +306,48 @@ node tools/realmReview.mjs repair <realm character id> <ticket> <faction id> <0x
 Pinned by `test/net/fb1014_summonrepair.test.js` over the real Worker and the playing tab's own session and join;
 `tools/mutants/fb1014_summonrepair.json` (16, dead).
 
+PURSE-BACK (2026-10-19, `01-Overview/bugs/Field-Bugs-2026-10-18b.md`; the owner, of a purse TRADE-WRAP left below
+nothing: "Build a workflow") runs `realm-rollback` from the Actions tab: `.github/workflows/realm-rollback.yml` and
+`tools/realmRollback.mjs` call `reviewAct` itself - its developer gate asked with the run's actor, its guards, its
+statement and its staff finding - over the service's D1 and R2 bindings answered by wrangler with the repository's
+Cloudflare token (`tools/lib/wranglerBindings.mjs`), a dry run being the act with its writes held. It asks the rollback
+only for a character whose purse went below nothing and whose clean save is older than that finding: a purse set at
+nothing since can make a later save clean, and the save from before the sale is then gone (`clean-after`). Pinned by
+`test/tooling/realm_rollback.test.js`; `tools/mutants/purseback.json` (19, dead).
+
+PURSE-MEND (FIELD BUGS 2026-10-19f, a player's private report: a purse of -8,000,000 and a carry weight of -19,995 kg
+after a sale at 0.0.235) added a third. TRADE-WRAP (FIELD BUGS 2026-10-18b) stopped the counter paying below nothing,
+and left a record it had already paid that way to "a staff repair" - which `realm-repair`, a faction's flag and a refund,
+could not reach: the purse stayed below nothing, the judge's `gold` finding held the trade, and every payment found the
+coins short and spent the letters first. `realm-findings` now says the purse the record holds (`character.purse` - the
+wealth counts a purse below nothing as none, so nothing else said it), and `realm-mend { id, ticket, was, gold, note? }`
+mends one: the record's purse, still the `was` staff reckoned from (`mend-moved` otherwise: played since, or the wrong
+character), and below nothing (`mend-not-negative` otherwise), is SET to nothing - never added to - and `gold`, what the
+character is owed, 0 to one int's worth, is given as ONE LETTER OF CREDIT at the front of the pack (0 gives none, and
+pays no faucet - AUDIT FB1019f A3): what the trade window
+itself pays for a sum the pack cannot carry (`tradeModes.js sellProceeds`), never a purse of coin (a million coins weigh
+2,500 kg). The law is `src/net/repairLaw.js` (`purseMendOf`, `applyPurseMend`), the service's and the tool's. The act is
+the repair's machinery (`review.js staffMend`, which both run): the dead mended never, once a ticket in `realm_repairs`
+(a mend's row names no faction and no bit - 0 and 0 - `was` the purse it found, `gold` the letter; a ticket names one act,
+and one of the other kind is `repair-ticket`), the record seized one sequence on with its seat taken, the gold witnessed
+and the `repair` faucet's, the act written among the findings. AND THE HOLD THE PURSE MADE GOES WITH IT: when the
+character's hold is the law's, the finding it stands on is the purse's alone (`PURSE_SIG`, the signature `lawSigOf`
+writes for `gold`) and no timed hold stands, the mend lifts it as the next clean checkpoint would - the hold and its
+signature gone, `judge_rev` one on, guarded on the judgement it read (a hold staff lay while the mend is in flight moves
+nothing - `seq`, asked again it mends under staff's hold; AUDIT FB1019f A2) - and the strike stands, fading as every strike does
+(which strike the purse struck, the row does not say). A hold the purse is not alone in, a timed hold and staff's own stay
+for the next checkpoint and for staff. The service's acct163 (with COMPANION-DROP, `11-Multiplayer/Wild-Zone.md` section 8); no
+migration: the mend's row is `realm_repairs`' own shape. The tool:
+
+```sh
+node tools/realmReview.mjs findings <realm character id>
+node tools/realmReview.mjs mend <realm character id> <ticket> <was: the purse below nothing> <gold owed> [note]
+```
+
+Pinned by `test/net/fb1019f_pursemend.test.js` over the real Worker, a record the game writes (`save.js snapshotPlayer`)
+after the old counter's sale, checkpointed so the judge holds it; `tools/mutants/fb1019f_pursemend.json` (28, dead - AUDIT FB1019f's four among them: the
+lift's guard unread and unenforced, a letter and a faucet row of nothing).
+
 ### AUTO-HOLD - no hold waits on a person (2026-10-16, `server-account/src/verdict.js`, `ledger.js`, migration 0120)
 
 Players on Discord, frozen "until staff have looked" because "copies of an item were found", none of them meaning to
@@ -348,7 +390,7 @@ hearing no `locked` at all (an older Worker, a deploy's window) keeps the set it
 answer lands and tells each piece once ON THIS DEVICE (`systems/realmSaves.js`, `dagger.realm.locked.<id>`), and the
 notice names every locked piece in the character's own lists and counts the rest (`scenes/realmHoldHost.js`, wired at
 bootWorld's one line that wired the hold's notice), in the player's language: "The realm has locked your ...: it found
-the same piece somewhere else too. A locked piece stays with you - it cannot be traded, sold, dropped or stored where
+the same piece somewhere else too. It stays with you and cannot be traded, sold, dropped or stored where
 others can take it. Your other pieces and your trading are not affected." A timed hold answers `tradeHeldWhy: { code:
 'until', t, until }` and is said with its end, written the game's language's way - and, while the law still finds a
 piece, that the hold stands past its end until the piece is gone; a timed hold run out with the piece still carried is
@@ -713,6 +755,44 @@ Mac, on "Equipped items Disappear after looting in PvP zone" (`01-Overview/bugs/
 2. **"Yes, build it" - the two-phase handoff.** The fallen loses the killer's worn piece only once the killer has it:
    held by the service in escrow from the fall, the killer's when its collect lands, its fallen's again when nobody
    collects (INT9, the drop and the room).
+
+### Decisions (2026-10-19, FIELD BUGS DUEL-BAR)
+
+Mac, asked on a player's private report - in a duel, their own health bar did not drop when the other player hit them
+(`01-Overview/bugs/Field-Bugs-2026-10-19f.md` DUEL-BAR). It was the 2026-10-09 decision above working as built: the
+bar read the save's health, which a duel never touches, and the referee's vitality stood in a line of its own under the
+battles' readout ("Your vitality: n / m"). **"Bar shows duel vitality."**
+
+- **DISPLAY ONLY.** For the length of a duel the HUD's health bar, on both skins, reads the referee's vitality - my own
+  entry of its word, off the duel manager's live duel (duelBar.js:"export function duelVitality") - and the save's
+  again when the duel ends: won, lost, yielded, left, called off, or let go where no word of the referee's comes (a
+  socket gone: the manager's own windows, as the ring and the readout end). The save's health is never written, and
+  the 2026-10-09 decision stands whole: nobody is hurt or healed by a duel. The read is a leaf of the client's own:
+  `net/duel/duelSession.js` is in the relay's bundle (the arena's bout reaches it), where a byte is a relay version,
+  and the HUD is no relay law.
+- **ONE PAIR, BOTH SKINS.** The HUD reads one health (hudVitals.js:"export function hudHealth"): drawHud's
+  `healthBar`, which the world host hands it (world.js:"healthBar: duelVitality"), else the save's. The classic
+  bars and the large HUD's draw off its snapshot (hud.js:"const health = hudHealth"), the enhanced HUD's off the pair
+  drawHud hands on (enhancedHud.js:"const hp = opts.health"); and so does everything drawn off the HUD's health - the
+  trails, the near-death tint, the blow's recoil, the lens. The turn each way is no blow and no heal
+  (hudVitals.js:"if (_lastFrom !== null && _lastFrom !== from)"): the detector primes afresh, and the enhanced bar's
+  held loss and its heal reading start again.
+- **THE OTHER BARS, THE HEALS, THE DEATH.** The referee holds vitality alone - no fatigue, no magicka, and no heal
+  between the two (duelRef.js:"last believed places") - so the fatigue and magicka bars are the save's, and a heal of
+  the save's under a duel (a potion of the player's own) moves no part of the duel's bar and floats no "+N". The death
+  screen reads the save's health as ever: a duel's fall is a loss, never a death, and a foe's blow that kills under a
+  duel ends it (the manager's `dead`).
+- **THE ARENA IS NOT THIS.** A bout between players on the arena's sand (ARENA4) writes its referee's share into the
+  save's health and its healers come at the end (arenaBouts.js:"MY HEALTH IS THE"), so its bar already fell; it keeps
+  its own law. The open zone is not this either: its foes hurt the save, and a bar that read the zone's referee would
+  hide them.
+- **THE FOUR HOSTS.** `scenes/world.js` WIRED (one entry in its one drawHud call); `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` NO DUEL on purpose (a duel is outdoors alone, INT8); `scenes/exterior.js` NOT WIRED on
+  purpose (offline, no other player).
+
+A departure from DFU, whose vitals read PlayerEntity alone (HUDVitals.Update) - DFU has no other player to duel.
+Pinned: `test/ui/fb1019f_duelbar.test.js` (the real relay refereeing the bout into the real duel manager, read by the
+real drawHud on both skins); `tools/mutants/duel_bar.json`.
 
 ### What lane 2 leaves open
 

@@ -89,8 +89,8 @@ test('EG-ZR THE LAW (section 15, net/eliteGates/egVestige.js): the numbers no ra
     ['overcharge', [0.08, 0.14, 0.20], 'client'], ['spellbane', [10, 18, 25], 'client'], ['shieldweaver', [0.20, 0.35, 0.50], 'client'], ['echo', [0.10, 0.16, 0.22], 'client'],
     ['mender', [0.15, 0.25, 0.35], 'word'],
   ]);
-  assert.equal(EG_V_BY_KEY.momentum.line(3), 'Blows on one target +4% each, to 3 stacks.');
-  assert.equal(EG_V_BY_KEY.secondwind.line(0.15), 'Once a hall, falling under 30% heals 15%.');
+  assert.equal(EG_V_BY_KEY.momentum.line(3), 'Each hit on one target adds 4% damage, up to 3 times.');
+  assert.equal(EG_V_BY_KEY.secondwind.line(0.15), 'Once a hall, falling under 30% health heals you 15%.');
   assert.ok(Math.abs(EG_FAST_RUN_MPS - runSpeed(100, 100) * (1 + EG_V_BY_KEY.fleetfoot.v[2])) < 1e-9, 'the fast build runs at Fleetfoot III');
   const R = [[vId('rally'), 1]], Bs = [[vId('bastion'), 3]];
   assert.deepEqual(egHymnOf([{ sub: 'a', vs: Bs, x: 0, z: 0 }, { sub: 'b', vs: R, x: 6, z: 8 }]), ['a'], 'ten metres: the pair');

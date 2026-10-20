@@ -65,7 +65,7 @@
   {
     "name": "SALVAGE-CLASSIC-the-page-says-another-reason",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  classic: 'Classic magic will not break - the guilds sell and make it; shards come from a piece the loot ladder graded',",
+    "old": "  classic: \"Classic magic items can't be salvaged. Only pieces with a rarity give shards\",",
     "new": "  classic: 'Nothing the Reforge can roll',",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "SALVAGE-CLASSIC-the-card-says-another-reason",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is classic, the kind the guilds sell and make. Welkynd Shards come only from a piece the loot ladder graded.`;",
+    "old": "export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is the classic kind the guilds sell and make. Welkynd Shards come only from loot with a rarity grade.`;",
     "new": "export const SALVAGE_CLASSIC = (name) => `${name} will not break.`;",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"

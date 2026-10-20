@@ -47,7 +47,7 @@ export const horseThrownWith = (/** @type {number[]|null} */ wagon, /** @type {n
 /** What the owner is told. */
 export const WARDEN_TEXT = Object.freeze({
   thrown: (/** @type {string} */ town) => `The town watch has thrown your wagon out of ${town || 'town'}!`,
-  fetch: 'It lies past the edge of town - walk out for it, or summon it.',
+  fetch: 'It lies past the edge of town. Walk out to it, or summon it.',
 });
 
 /**

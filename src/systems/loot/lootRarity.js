@@ -504,7 +504,7 @@ const THORNS_PREFIX = Object.freeze(['Barbed', 'Spiked', 'Thorned']);
 const FOCUS_PREFIX = Object.freeze(["Adept's", "Magister's", "Sorcerer's"]);
 const SLAYER_SUFFIX = Object.freeze({
   undead: ['of Rest', 'of the Gravewatch', 'of Exorcism'], daedra: ['of Banishing', 'of the Exile', "of Oblivion's Bane"],
-  humanoid: ['of the Duellist', 'of the Headsman', 'of the Warlord'], animal: ['of the Hunt', 'of the Huntsman', 'of the Wild Hunt'],
+  humanoid: ['of the Duelist', 'of the Headsman', 'of the Warlord'], animal: ['of the Hunt', 'of the Huntsman', 'of the Wild Hunt'],
 });
 const SLAYER_NOUN = Object.freeze({ undead: 'the undead', daedra: 'daedra', humanoid: 'humanoids', animal: 'animals' });
 /** LOOT14: the five social groups a standing line names - FactionFile.SocialGroups 0..4, in clothingStanding.js
@@ -974,43 +974,43 @@ export const WARDROBE_LEGENDARIES = Object.freeze([
     enchantment: Object.freeze({ type: T.ImprovesTalents, param: 1 }),   // Athleticism
     found: 'beast',
     power: Object.freeze({ name: 'Desert-Born', kind: 'climate', heat: 20, survival: true,
-      brief: 'The heat is felt 20 less', text: 'The heat is felt twenty degrees less - the sun, the sand and your own clothes' }),
+      brief: 'Feel the heat 20 degrees less', text: 'You feel the heat 20 degrees less' }),
     lore: "Worn across the Alik'r by a caravan-master who crossed it forty times and drank at every well on the way twice." }),
   Object.freeze({ id: 'wrothgar-mantle', name: 'The Wrothgar Pass Mantle', group: GARMENT_RECORD_GROUP, templates: Object.freeze([155, 192]),   // Formal Cloak
     affixes: Object.freeze([{ id: 'warmth', value: 10 }, { id: 'dry', value: 40 }, { id: 'skill', param: 18, value: 25 }]),
     enchantment: Object.freeze({ type: T.ExtraSpellPts, param: 0 }),   // During Winter
     found: 'brute',
     power: Object.freeze({ name: 'Mountain-Born', kind: 'climate', cold: 20, survival: true,
-      brief: 'The cold is felt 20 less', text: 'The cold is felt twenty degrees less - the wind, the snow and the wet' }),
+      brief: 'Feel the cold 20 degrees less', text: 'You feel the cold 20 degrees less' }),
     lore: "Orsinium's sentries hold the Wrothgar passes in these. The one that came down without its sentry has never said where he went." }),
   Object.freeze({ id: 'stendarr-vestments', name: 'The Vestments of Stendarr', group: GARMENT_RECORD_GROUP, templates: Object.freeze([164, 201]),   // Priest Robes, Priestess Robes
     affixes: Object.freeze([{ id: 'skill', param: 23, value: 25 }, { id: 'standing', param: 'scholars', value: 6 }, { id: 'stat', param: 'personality', value: 12 }]),
     enchantment: Object.freeze({ type: T.ExtraSpellPts, param: 7 }),   // Near Undead
     found: 'daedra',
     power: Object.freeze({ name: "Stendarr's Mercy", kind: 'school', school: 23, less: 25,
-      brief: 'Restoration costs 25% less', text: 'Your Restoration spells cost a quarter less magicka' }),
+      brief: 'Restoration costs 25% less', text: 'Your Restoration spells cost 25% less magicka' }),
     lore: "Stendarr's vigilants wore these into the Desecrated Temples. Some of the vigilants came back; all of the robes did." }),
   Object.freeze({ id: 'pilgrims-sandals', name: "The Pilgrim's Sandals", group: GARMENT_RECORD_GROUP, templates: Object.freeze([150, 189, 147, 186]),   // Sandals, Shoes
     affixes: Object.freeze([{ id: 'skill', param: 21, value: 25 }, { id: 'skill', param: 3, value: 22 }, { id: 'stat', param: 'personality', value: 10 }]),
     enchantment: Object.freeze({ type: T.RegensHealth, param: 1 }),   // in sunlight
     found: 'undead',
     power: Object.freeze({ name: 'The Long Road', kind: 'longroad', fatigue: 25, fall: 50,
-      brief: 'Tire 25% slower; falls hurt half', text: 'You tire a quarter slower on the road, and a fall hurts you half as much' }),
+      brief: 'Tire 25% slower; falls hurt half', text: 'You tire 25% slower when traveling, and falls deal half damage' }),
     lore: 'Worn to every shrine of the Nine in turn, and on to a tenth that no map in the Bay will show.' }),
   Object.freeze({ id: 'barenziah-silks', name: 'The Silks of Queen Barenziah', group: GARMENT_RECORD_GROUP, templates: Object.freeze([195, 196, 194, 159, 160, 143]),   // Evening Gown, Day Gown, Formal Eodoric; Formal Tunic, Toga, Kimono
     affixes: Object.freeze([{ id: 'standing', param: 'nobility', value: 8 }, { id: 'stat', param: 'personality', value: 15 }, { id: 'skill', param: 1, value: 25 }]),
     enchantment: Object.freeze({ type: T.GoodRepWith, param: 1 }),   // Merchants
     found: 'caster',
     power: Object.freeze({ name: 'Royal Bearing', kind: 'bearing', standing: 5,
-      brief: '+5 standing with every group', text: 'Every social group of the Bay takes you five the better' }),
+      brief: '+5 standing with every group', text: '+5 standing with every social group' }),
     lore: "Barenziah wore them to Eadwyre's court at Wayrest. They were stolen twice in the year after, and returned once." }),
   Object.freeze({ id: 'shades-cowl', name: "The Shade's Cowl", group: GARMENT_RECORD_GROUP, templates: Object.freeze([154, 191]),   // Casual Cloak - hooded
     affixes: Object.freeze([{ id: 'standing', param: 'underworld', value: 8 }, { id: 'skill', param: 16, value: 25 }, { id: 'skill', param: 15, value: 22 }]),
     enchantment: Object.freeze({ type: T.EnhancesSkill, param: 13 }),   // Lockpicking
     found: 'rogue',
     power: Object.freeze({ name: 'Unseen', kind: 'hood', skill: 16, more: 25,
-      brief: '+25 Stealth while hooded', text: 'While its hood is up you carry 25 more Stealth' }),
-    lore: 'Made for a Daggerfall cutpurse who was never once seen. Nobody can say what she looked like - only that the cowl was grey.' }),
+      brief: '+25 Stealth while hooded', text: 'While its hood is up, you have +25 Stealth' }),
+    lore: 'Made for a Daggerfall cutpurse who was never once seen. Nobody can say what she looked like - only that the cowl was gray.' }),
 ]);
 /** BAL9c (2026-10-12; bible/05-Combat/Balance-Arc.md section 15): THE ARCANE THREE - a caster's Legendaries, the first
  *  whose powers reach a spell's damage, its throw and its magicka (systems/spell/spellPower.js, systems/loot/lootPowers.js). LOOT3's
@@ -1024,21 +1024,21 @@ export const ARCANE_LEGENDARIES = Object.freeze([
     enchantment: Object.freeze({ type: T.ExtraSpellPts, param: 2 }),   // During Summer
     found: 'caster',
     power: Object.freeze({ name: "Magnus's Gaze", kind: 'pierce', points: 15,
-      brief: 'Spells pierce 15 resistance', text: 'Your Destruction spells meet a saving throw 15 lower - a foe immune to their element stays immune' }),
+      brief: 'Spells pierce 15 resistance', text: 'Enemies\' saving throws against your Destruction spells are 15 lower. Enemies immune to the element stay immune' }),
     lore: 'Ground from a shard of the sun the Mages Guild swears it never kept. Look through it at noon and you will not look again.' }),
   Object.freeze({ id: 'ring-of-artaeum', name: 'The Ring of Artaeum', group: 'Jewellery', templates: Object.freeze([135]),   // Ring
     affixes: Object.freeze([{ id: 'stat', param: 'willpower', value: 12 }, { id: 'skill', param: 27, value: 25 }, { id: 'resist', param: 'fire', value: 40 }]),
     enchantment: Object.freeze({ type: T.ExtraSpellPts, param: 5 }),   // During Half Moon
     found: 'caster',
     power: Object.freeze({ name: 'Wellspring of Artaeum', kind: 'attune', pct: 1, low: 2,
-      brief: 'Magicka back 1% a round', text: 'Each magic round 1% of your magicka returns, 2% while you are under half' }),
+      brief: 'Regain 1% magicka a round', text: 'Each round you regain 1% of your magicka, or 2% while below half' }),
     lore: 'A Psijic novice\'s ring, left behind when the isle was. The Order has not asked for it back; the Order rarely asks.' }),
   Object.freeze({ id: 'shalidors-brand', name: "Shalidor's Brand", group: 'Weapons', templates: Object.freeze([118, 119, 120]),   // Broadsword, Saber, Longsword
     affixes: Object.freeze([{ id: 'damage', value: 24 }, { id: 'stat', param: 'intelligence', value: 12 }, { id: 'skill', param: 22, value: 22 }]),
     enchantment: Object.freeze({ type: T.CastWhenStrikes, param: 7 }),   // Wizard's Fire
     found: 'caster',
     power: Object.freeze({ name: 'Arcane Surge', kind: 'surge', pct: 25, above: 75,
-      brief: '+25% spell damage above 75% MP', text: 'While you wield it your Destruction spells strike 25% harder while your magicka is above three quarters' }),
+      brief: '+25% spell damage above 75% MP', text: 'While you wield it and your magicka is above 75%, your Destruction spells deal 25% more damage' }),
     lore: 'The first Archmage carried a blade, his apprentices said, so that no one would think to look at his hands.' }),
 ]);
 export const legendaryById = (id) => allLegendaries().find((l) => l.id === id) ?? null;
@@ -1048,69 +1048,69 @@ export const legendaryById = (id) => allLegendaries().find((l) => l.id === id) ?
  *  records keep LR2's own shape; a mod's record may carry its own `power` (powerOf reads both). */
 export const LEGENDARY_POWERS = Object.freeze({
   wyrmbane: Object.freeze({ name: 'Dragonsbane', kind: 'bane', foes: Object.freeze([34, 40, 16]), pct: 50,
-    brief: '+50% vs dragons and giants', text: 'Its blows deal +50% damage to dragonlings and giants' }),
+    brief: '+50% vs dragons and giants', text: 'This weapon deals 50% more damage to dragonlings and giants' }),
   nightwhisper: Object.freeze({ name: 'Silent Death', kind: 'unaware', pct: 100,
-    brief: '+100% to a foe unaware', text: 'Its blows deal double damage to a foe that has not noticed you' }),
+    brief: '+100% vs unaware foes', text: 'This weapon deals double damage to enemies that have not noticed you' }),
   graveward: Object.freeze({ name: 'Sanctified', kind: 'sanctified', group: 'undead', pct: 40, heal: 10,
-    brief: '+40% vs undead; their end heals', text: 'Its blows deal +40% damage to the undead, and each undead foe you kill while you wield it heals you 10% of your health' }),
+    brief: 'Undead: +40% damage, kills heal', text: 'This weapon deals 40% more damage to undead. While you wield it, each undead you kill heals you for 10% of your health' }),
   stormcaller: Object.freeze({ name: 'Chain Lightning', kind: 'chain', metres: 6, share: 50,
-    brief: 'Arrows arc 50% to a foe near', text: 'Each of its arrows that lands arcs to the nearest other foe within 6 m, for half its damage as shock' }),
+    brief: 'Arrows jump 50% to a nearby foe', text: 'Each arrow that hits jumps to the nearest other enemy within 6 m, dealing 50% of its damage as shock' }),
   'anseis-edge': Object.freeze({ name: 'Way of the Sword', kind: 'flow', pct: 6, max: 5, seconds: 6,
-    brief: '+6% a hit, up to 5 (6s)', text: 'Each of its blows that lands grants Flow for 6 s, up to five: +6% weapon damage a stack' }),
+    brief: '+6% per hit, up to 5 (6s)', text: 'Each hit gives you Flow for 6 s, up to 5 times: +6% weapon damage each time' }),
   'tsaesci-fang': Object.freeze({ name: "Serpent's Kiss", kind: 'venom', flat: 8,
-    brief: '+8 poison, x2 under half', text: 'Its blows carry 8 poison, twice that to a foe under half its health - none to a foe immune, half to one that resists' }),
+    brief: '+8 poison, x2 under half', text: 'Each hit adds 8 poison damage, doubled against enemies below half health. Enemies that resist poison take half, and immune ones take none' }),
   'orsiniums-anvil': Object.freeze({ name: 'Earthshaker', kind: 'quake', metres: 3, share: 25,
-    brief: 'Blows quake 25% around', text: 'Each of its blows that lands shakes the ground: every other foe within 3 m takes a quarter of it' }),
+    brief: 'Hits splash 25% within 3 m', text: 'Each hit also deals 25% of its damage to every other enemy within 3 m' }),
   'glenmoril-bow': Object.freeze({ name: "Hunter's Moon", kind: 'moon', pct: 35, beast: 35,
-    brief: '+35% at night, +70% on beasts', text: 'At night its blows deal +35% damage, and +35% more to animals' }),
+    brief: 'At night: +35%, +70% vs animals', text: 'At night this weapon deals 35% more damage, or 70% more to animals' }),
   'direnni-staff': Object.freeze({ name: 'Arcane Conduit', kind: 'conduit', less: 20, mana: 3,
-    brief: '-20% spell cost; hits give 3 MP', text: 'While you wield it your spells cost 20% less magicka, and each of its blows that lands restores 3 magicka' }),
+    brief: '-20% spell cost; hits give 3 MP', text: 'While you wield it, your spells cost 20% less magicka and each hit restores 3 magicka' }),
   'gortwogs-cleaver': Object.freeze({ name: 'Orc Rage', kind: 'rage', heal: 10, below: 33, pct: 30,
-    brief: 'Kills heal 10%; +30% when low', text: 'While you wield it each foe you kill heals you 10% of your health, and under a third of your health its blows deal +30% damage' }),
+    brief: 'Kills heal 10%; +30% when low', text: 'While you wield it, each kill heals you for 10% of your health, and below 33% health its hits deal 30% more damage' }),
   'worms-tooth': Object.freeze({ name: 'Soul Siphon', kind: 'siphon', pct: 15,
-    brief: 'Kills restore 15% magicka', text: 'While you wield it each foe you kill restores 15% of your magicka' }),
+    brief: 'Kills restore 15% magicka', text: 'While you wield it, each kill restores 15% of your magicka' }),
   'warp-edge': Object.freeze({ name: 'Many Endings', kind: 'echo', chance: 10,
-    brief: '10% to strike twice', text: 'Each of its blows that lands strikes again, one time in ten, for the same damage' }),
+    brief: '10% chance to strike twice', text: 'Each hit has a 10% chance to strike again for the same damage' }),
   'the-warden': Object.freeze({ name: 'Last Stand', kind: 'laststand', below: 25, less: 25,
-    brief: '-25% damage taken when low', text: 'Under a quarter of your health, the damage you take is lessened by a quarter' }),
+    brief: '-25% damage taken when low', text: 'Below 25% health, you take 25% less damage' }),
   titanheart: Object.freeze({ name: 'Unyielding', kind: 'unyielding', most: 25,
-    brief: 'No hurt over 25% of health', text: 'No single hurt takes more than a quarter of your health' }),
+    brief: 'No hit takes over 25% health', text: 'No single hit can take more than 25% of your health' }),
   'aegis-of-dawn': Object.freeze({ name: 'Dawnward', kind: 'dawnward', charges: 5,
-    brief: 'Turns aside every 6th blow', text: 'Each foe\'s blow that lands on you charges it; at five charges, the next foe\'s blow is turned aside whole' }),
+    brief: 'Every 6th hit on you is blocked', text: 'Each enemy hit on you adds a charge. At 5 charges, the next hit is blocked completely' }),
   'lysandus-visor': Object.freeze({ name: "The Ghost-King's Vigil", kind: 'vigil', below: 33, heal: 20, recover: 60,
-    brief: 'Heal 20% when low (60s)', text: 'When a hurt leaves you under a third of your health, you are healed 20% of it. Recovers in 60 s' }),
+    brief: 'Heal 20% when low (60s)', text: 'When a hit drops you below 33% health, you heal 20% of your health. Recovers in 60 s' }),
   'wayrest-treads': Object.freeze({ name: "Courier's Haste", kind: 'haste', speed: 20, rounds: 2, recover: 10,
-    brief: 'Kills: +20 Speed (2 rounds)', text: 'A kill fortifies your Speed by 20 for two magic rounds. Recovers in 10 s' }),
+    brief: 'Kills: +20 Speed (2 rounds)', text: 'Each kill gives you +20 Speed for 2 rounds. Recovers in 10 s' }),
   // BAL7 (bible/05-Combat/Balance-Arc.md section 13): the second blow lands for half - it was the whole blow again on
   // every landed fist, the kit's 74 a swing at 3.2x the plain monk's and 4.3-5.5x the plain sword's
   'gauntlets-of-the-rose': Object.freeze({ name: 'Open Hand', kind: 'fists', share: 50,
-    brief: 'Fists land again for half', text: 'Each of your bare-handed blows that lands strikes again for half its damage' }),
+    brief: 'Fists hit again for 50%', text: 'Each bare-handed hit strikes again for 50% of its damage' }),
   'mountains-root': Object.freeze({ name: 'Bedrock', kind: 'bedrock', less: 4, max: 5, seconds: 6,
-    brief: '-4% damage a hit, up to 5', text: 'Each foe\'s blow that lands on you lessens the blows after it by 4% for 6 s, up to five times' }),
+    brief: '-4% per hit taken, up to 5', text: 'Each enemy hit on you lowers the damage of later hits by 4% for 6 s, up to 5 times' }),
   'ravens-wings': Object.freeze({ name: "Raven's Evasion", kind: 'evade', chance: 15,
-    brief: '15% to evade a blow', text: 'A foe\'s blow is turned aside whole 15 times in a hundred' }),
+    brief: '15% chance to evade a hit', text: 'You have a 15% chance to evade each enemy hit completely' }),
   'night-mothers-embrace': Object.freeze({ name: "Sweet Mother's Kiss", kind: 'execute', below: 25, pct: 50,
-    brief: '+50% to foes under 25%', text: 'Your weapon blows deal +50% damage to a foe under a quarter of its health' }),
+    brief: '+50% to foes under 25%', text: 'Your weapon deals 50% more damage to enemies below 25% health' }),
   'wall-of-daggerfall': Object.freeze({ name: 'Bulwark', kind: 'bulwark', less: 5,
-    brief: 'Blows on you: -5 damage', text: 'Each foe\'s blow on you is lessened by 5 points, never under 1' }),
+    brief: 'Blows on you: -5 damage', text: 'Each enemy hit on you deals 5 less damage, to a minimum of 1' }),
   foxglove: Object.freeze({ name: "Fortune's Favour", kind: 'fortune', mult: 1.5,
-    brief: 'Legendaries half again likelier', text: 'While you wear it, every Legendary you find is half again as likely - its source\'s own chance, times one and a half' }),
+    brief: 'Legendaries 50% more likely', text: 'While you wear it, you are 50% more likely to find a Legendary' }),
   'kings-mark': Object.freeze({ name: 'Tribute', kind: 'tribute', gold: 5,
-    brief: 'Kills pay 5 gold a level', text: 'Each foe you kill pays you 5 gold for each of its levels' }),
+    brief: 'Kills pay 5 gold per level', text: 'Each kill pays you 5 gold per level of the enemy' }),
   'archmages-loop': Object.freeze({ name: 'Spell Mastery', kind: 'mastery', less: 15, low: 30,
-    brief: '-15% spell cost, -30% when low', text: 'Your spells cost 15% less magicka, and 30% less while your magicka is under half' }),
+    brief: '-15% spell cost, -30% when low', text: 'Your spells cost 15% less magicka, or 30% less while your magicka is below half' }),
   'amulet-of-the-nine': Object.freeze({ name: 'Divine Grace', kind: 'grace', heal: 25, recover: 180,
-    brief: 'Cheat death, heal 25% (180s)', text: 'Damage that would kill you leaves you standing, healed a quarter of your health. Recovers in 180 s' }),
+    brief: 'Cheat death, heal 25% (180s)', text: 'A hit that would kill you leaves you alive and heals you for 25% of your health. Recovers in 180 s' }),
   'witch-sisters-ring': Object.freeze({ name: 'Hex', kind: 'hex', less: 25, seconds: 8,
-    brief: 'Strikers hexed: -25% (8s)', text: 'A foe whose blow lands on you is hexed for 8 s: its blows on you are lessened by a quarter' }),
+    brief: 'Attackers deal 25% less (8s)', text: 'An enemy that hits you is hexed for 8 s and deals 25% less damage to you' }),
   'duelists-vambrace': Object.freeze({ name: 'First Blood', kind: 'firstblood', pct: 60,
-    brief: '+60% first blow on a foe', text: 'Your first weapon blow on each foe deals +60% damage' }),
+    brief: '+60% on first hit per foe', text: 'Your first weapon hit on each enemy deals 60% more damage' }),
   // BAL7 (Balance-Arc.md section 13): halved - at 2% a round (4% under half) it was the kit's longest life, worth more
   // than any guard (without it the measured kit fell after 21 Ancient Liches, not 47)
   'mark-of-the-hist': Object.freeze({ name: 'Hist-Sap', kind: 'regen', pct: 1, low: 2,
-    brief: 'Regenerate 1% a round', text: 'Each magic round you regenerate 1% of your health, 2% while you are under half' }),
+    brief: 'Regenerate 1% health a round', text: 'Each round you regain 1% of your health, or 2% while below half' }),
   'reachmans-torc': Object.freeze({ name: "Hagraven's Pact", kind: 'absorb', chance: 15,
-    brief: '15% to absorb a spell', text: 'A Destruction spell that strikes you is absorbed 15 times in a hundred, as Spell Absorption is' }),
+    brief: '15% chance to absorb a spell', text: 'Destruction spells that hit you have a 15% chance to be absorbed, like Spell Absorption' }),
 });
 /** A record's power: the port's table's, else a mod's record's own `power`, else null. */
 /** GILDED1: a Gilded record's power and lore, as the ladder reads them (systems/gilded.js registers its records - it

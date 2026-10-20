@@ -124,7 +124,7 @@ test('MARKET-AUDIT P1: a 2xx whose body never came is no word on the act - `offl
 test('MARKET-AUDIT P6: a realm act\'s own words are said - never "the account service had a problem"', () => {
   const problem = accountRefusalText('server');
   for (const w of ['held', 'left', 'unknown']) assert.notEqual(accountRefusalText(w), problem, w);
-  assert.equal(accountRefusalText('held'), 'A trade or a purchase is being settled - try again in a moment.');
+  assert.equal(accountRefusalText('held'), 'A trade or purchase is being settled. Try again in a moment.');
 });
 
 test('MARKET-AUDIT P2, P3, P5: the minute\'s cache is the account\'s and character\'s; a hit says its board\'s cap; a refused collect is said', async () => {

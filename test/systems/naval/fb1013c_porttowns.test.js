@@ -95,7 +95,7 @@ test('PORT-TOWNS: a cargo goes only to a port with the sea beside it - its own p
       if (o.kind !== 'delivery') continue;
       cargoes++;
       to.add(o.to.key);
-      assert.match(o.words, /^.+, to Coast Town's harbourmaster within \d+ days\./);
+      assert.match(o.words, /^.+, to Coast Town's harbormaster within \d+ days\./);
     }
   }
   assert.ok(cargoes > 20, `cargoes were posted (${cargoes})`);

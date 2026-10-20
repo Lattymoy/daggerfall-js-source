@@ -52,9 +52,9 @@ const METHOD = 'a Room method of its own (the SCALE5 arms\' shape)';
  *  the reason written beside it: the ceiling is the line between wiring a module in and growing the knot. Each row's
  *  history, and the code-line ceilings these replaced, are in bible/01-Overview/Host-Split.md and Readability-Arc.md. */
 const CEILINGS = [
-  ['src/scenes/world.js', 'bootWorld', 36_233, MODULE],
+  ['src/scenes/world.js', 'bootWorld', 36_183, MODULE],   // FIELD BUGS 2026-10-19f: 32 logical lines out - DISENCHANT-SAID's list to profPages.js disenchantableOf (8), BOSS-DOT's serpent door to scenes/gate/standInSpell.js createSerpentSpell (24) - TOWN-EXIT's six (tvJoinedLegs' body) back with its retirement; at the merge of main (PASSAGE took the room its own wiring found) the ceiling stands at the merged host, 36,233 -> 36,196, 36,198 at the next (main's own two lines, 36,228 -> 36,230 there) 36,201 at the third (main's own three, 36,230 -> 36,233) and 36,183 at the fifth (main's OW-DUNGEON-SIZE moved its own out, 36,233 -> 36,209 there): the lines the moves freed are not room to grow
   ['src/scenes/worldModes.js', 'createWorldModes', 10_998, MODULE],
-  ['src/scenes/dungeonContext.js', 'buildDungeonContext', 8_601, MODULE],
+  ['src/scenes/dungeonContext.js', 'buildDungeonContext', 8_463, MODULE],   // FIELD BUGS 2026-10-19f STAND-IN-WHOLE: 8,601 -> 8,463, its four spell doors out (scenes/gate/standInSpell.js)
   ['src/scenes/exterior.js', 'bootExterior', 5_441, MODULE],
   ['src/scenes/naval/navalHost.js', 'createNavalHost', 6_470, MODULE],   // a *Host.js grown into a knot of its own (HOST-SPLIT NAVAL)
   ['src/systems/comeSailAway/comeSailAway.js', 'createComeSailAwayRuntime', 2_783, MODULE],   // the Come Sail Away runtime, one scope (AUDIT HOST-SPLIT NAVAL)

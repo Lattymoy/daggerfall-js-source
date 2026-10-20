@@ -210,10 +210,11 @@
   {
     "name": "BAL9c-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct158';",
+    "old": "export const ACCOUNT_VERSION = 'acct163';",
     "new": "export const ACCOUNT_VERSION = 'acct120';",
     "tests": [
       "test/systems/tech1_roster.test.js"
-    ]
+    ],
+    "note": "PURSE-MEND and COMPANION-DROP (PIN MOVED): acct163 (acct162 on its branch, renumbered past NAME-WORDS at the merge). JUNGLE-WOODS (PIN MOVED): acct161 (acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges). QL12 (PIN MOVED): acct159."
   }
 ]

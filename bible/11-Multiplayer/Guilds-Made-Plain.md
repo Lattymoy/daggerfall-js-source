@@ -164,7 +164,7 @@ Sigil's top stage beside the band's; neither is a guild's (AUDIT GUILD3's words 
   hall, the vault, a Charter, a battle, a patron's bid, and last the silver the guildmaster's account has no room for),
   and the guildmaster's view carries it (`keeps`), so the Settings page says it under "Before the guild can be
   disbanded" BEFORE any press, each in the refusal's own sentence, and Disband - and a lone guildmaster's Leave - wait on
-  it, saying why ("what is listed above first"). A refusal names the whole list too (`keeps` beside its `error`, the
+  it, saying why ("clear the list above first"). A refusal names the whole list too (`keeps` beside its `error`, the
   first as it always was): the hand-over a leave needs, and every code to a page whose service is older than its view's
   list. A disbanding asks no hand-over (it takes the members with it - the Leave button says its own). First built from
   the refusal alone; the photographs showed a guild whose gold held the button never learned the rest without clearing

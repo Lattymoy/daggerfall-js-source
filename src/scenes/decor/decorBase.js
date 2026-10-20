@@ -24,6 +24,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { DECOR_BASE_KEY_RE, DECOR_HIDDEN_CAP, decorHiddenOf } from '../../net/decorLaw.js';
+import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece put back round the body is withheld until it is clear
 
 /** A built-in model's collider bucket - its own, so a piece taken out is nothing to walk into. */
 export const baseBucketOf = (key) => `base:${key}`;
@@ -34,7 +35,10 @@ export const INTERIOR_SHELL_BUCKET = 'interior';
 /**
  * THE ROOM'S OWN PIECES. `drawList` - the room's draw list; `batches()`, `lights()` - its billboard batches and its
  * lights (the host draws and lights from all three every frame; the last two are built after the models, so they are
- * read when asked); `collider` - the room's collider (addMesh / removeBucket).
+ * read when asked); `collider` - the room's collider (addMesh / removeBucket). DECOR-CLEAR: a model put back goes into
+ * the collider through its one gate (player/lateSolid.js) - put back round the player, it draws and is solid only once
+ * they are clear of it; the gate's body, and its asking every frame, are the room's placed pieces' draw over the same
+ * collider (decorRoom.js draw, the host's `body`).
  * @param {{ drawList: any[], batches: () => any[], lights: () => any[], collider: any }} deps
  */
 export function createBaseRoom({ drawList, batches, lights, collider }) {
@@ -50,7 +54,7 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
     const p = pieces.get(key);
     if (!p || p.hidden || holds(p)) return false;
     p.hidden = true;
-    if (p.draw) { drop(drawList, p.draw); collider?.removeBucket?.(baseBucketOf(key)); }
+    if (p.draw) { drop(drawList, p.draw); lateSolidsOf(collider)?.remove(baseBucketOf(key)); }   // DECOR-CLEAR: or its triangles withheld
     if (p.furniture) p.furniture.hidden = true;
     if (p.batch) drop(batches(), p.batch);
     if (p.light) drop(lights(), p.light);
@@ -62,7 +66,8 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
     p.hidden = false;
     if (p.draw) {
       drawList.push(p.draw);
-      if (p.cpu?.positions && p.cpu?.indices) collider?.addMesh?.(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);
+      // DECOR-CLEAR: through the collider's gate - put back round the body it guards, solid once the body is clear of it
+      if (p.cpu?.positions && p.cpu?.indices) lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);
     }
     if (p.furniture) p.furniture.hidden = false;
     if (p.batch) batches().push(p.batch);

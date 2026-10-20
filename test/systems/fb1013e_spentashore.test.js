@@ -33,7 +33,7 @@ import { setLocale, patchLocaleTable, clearLocaleTables } from '../../src/system
 const { exhaustionOutcome, EXHAUSTED_SWIMMING_LINE } = REST;
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const NOON = 100000 * 1440 + 12 * 60;
-const FIGHTING_LINE = 'You are too exhausted to fight - get clear and rest!';
+const FIGHTING_LINE = 'You are too exhausted to fight. Get clear and rest!';
 const DRY_WALK = { running: false, runningTally: false, swimming: false, climbing: false, jumped: false, standing: false };
 
 function fighter({ fatigue = 5, maxHealth = 100 } = {}) {

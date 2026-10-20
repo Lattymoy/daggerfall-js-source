@@ -83,7 +83,7 @@ test('AUDIT CARDS-5 C lane\'s survivors: a card is a card only with its card; it
   assert.deepEqual(iliacCardLines(mintIliacCard(unit.id)), [`${unit.tier[0].toUpperCase()}${unit.tier.slice(1)} Unit - costs ${unit.cost}, power ${unit.power}`, cardRules(unit), cardFlavor(unit)]);   // KG-SET: the card's words, read where they are shown
   assert.equal(iliacCardLines(mintIliacCard(spell.id))[0], `${spell.tier[0].toUpperCase()}${spell.tier.slice(1)} Spell - costs ${spell.cost}`);
   assert.match(iliacCardLines(mintIliacCard(prince.id))[0], new RegExp(`Prince - costs ${prince.cost}, power ${prince.power}$`));
-  assert.deepEqual(iliacCardLines({ templateIndex: ILIAC_CARD_TEMPLATE, group: 'UselessItems2', card: 'nothing' }), ['A card this build does not know.']);
+  assert.deepEqual(iliacCardLines({ templateIndex: ILIAC_CARD_TEMPLATE, group: 'UselessItems2', card: 'nothing' }), ['An unknown card.']);
   void ILIAC_LOCATIONS;
   const info = survivalInfoTokens(mintIliacCard(unit.id)).map((t) => t.text);
   assert.equal(info[0], `Card: ${unit.name}`);

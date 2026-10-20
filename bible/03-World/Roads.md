@@ -682,6 +682,14 @@ Nothing about the tilemap the painter writes changes; without the array
 the painter is byte-for-byte what it was, which `test/world/terrain/grasspath.test.js`
 pins directly.
 
+JUNGLE-TRAILS (2026-10-19) writes the same mask: the jungle's own trails
+(`world/jungle/jungleTrails.js`, `03-World/Bantha-Jungle.md` "The trails")
+mark every tile two of whose corners are dirt, after the painter and before the
+squares run, allocating the mask where a trail runs and no network did -
+so the grass, the forests and the jungle keep off a trail exactly as they
+keep off a track. They never enter the network's bits: the map, the
+landforms and fast travel read the roads they did.
+
 The water half of the same report - *"some textures not taking the water
 tile"* - is GRASS-WET1, in `07-Rendering/Rendering.md`: the water-grass
 shore records a stream writes over grass (20-22, 49) are mostly-grass by

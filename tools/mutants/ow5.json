@@ -156,8 +156,8 @@
   {
     "name": "OW5-G1-words",
     "file": "src/ui/enhanced/enhancedTravelControl.js",
-    "old": "ground: 'until the Overworld rises'",
-    "new": "ground: 'while the land loads'",
+    "old": "get ground() { return t('travel.held.ground', 'until the Overworld rises'); },",
+    "new": "get ground() { return t('travel.held.load', 'while the land loads'); },",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js",
       "test/systems/travel/ow6_slowdown.test.js"

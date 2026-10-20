@@ -292,7 +292,7 @@ test('COMPANION-ROSTER the page: the slots a strip of wells (who stands in each,
   // Release asks
   buttons(d, 'Release')[0].onclick();
   d = draw();
-  assert.match(d.textContent, new RegExp(`Release ${a.name.replace(/[.*+?^${}()|[\]\\']/g, '\\$&')}\\? Its oath is given back`));
+  assert.match(d.textContent, new RegExp(`Release ${a.name.replace(/[.*+?^${}()|[\]\\']/g, '\\$&')}\\? It is freed from its oath`));
   assert.ok(N.revenantById(a.id).sworn, 'not at one press');
   buttons(d, 'Release')[0].onclick();
   assert.equal(N.revenantById(a.id).fate, 'released');

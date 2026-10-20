@@ -74,7 +74,7 @@
   {
     "name": "MARKET-AUDIT2-realm-word-unsaid",
     "file": "src/net/accountClient.js",
-    "old": "  'held': () => t('account.refusal.held', 'A trade or a purchase is being settled - try again in a moment.'),\n",
+    "old": "  'held': () => t('account.refusal.held', 'A trade or purchase is being settled. Try again in a moment.'),\n",
     "new": "",
     "tests": [
       "test/systems/marketaudit2.test.js"

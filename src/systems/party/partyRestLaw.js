@@ -135,7 +135,7 @@ export function restsApart(m, mineTogether) {
   return !!m?.p?.rs && (restsAlone(m) || !mineTogether);
 }
 /** REST-OPT (AUDIT C2): what the rest gate says of such a camp. */
-export const REST_APART_TEXT = 'A party member is resting apart from you nearby - rest farther away.';
+export const REST_APART_TEXT = 'A party member is resting separately nearby. Rest farther away.';
 
 /** REST-OPT: whether MY rest is the party's - my own switch on (`mineOn`), and the leader's too: a leader who rests
  *  alone leaves the whole party to rest for themselves, since nobody else may open the party's vote (PARTY-REST26).

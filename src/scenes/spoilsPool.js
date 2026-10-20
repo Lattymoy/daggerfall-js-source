@@ -131,17 +131,19 @@ export const SPOILS_TEXT = Object.freeze({
  * WB12d: `claims`, the receipt's - the faithful's rite alone (`x` 'rite') pays its ember and nothing else; the rite
  * broken too (`r`) an ember more, after the first. A receipt with neither is what it always was, piece for piece.
  * Pure.
- * @param {number} seed @param {number} level @param {{ x?: string, r?: number }|null} [claims]
+ * WB14g: a portent night's (`p`) one more piece for each portent, its picture drawn after every other's.
+ * @param {number} seed @param {number} level @param {{ x?: string, r?: number, p?: number }|null} [claims]
  */
 export function spoilsList(seed, level, claims = null) {
   const look = seededRng((seed ^ 0x5eed) >>> 0);
   const flat = () => RANDOM_TREASURE_ICONS[Math.floor(look() * RANDOM_TREASURE_ICONS.length)];
   if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: SIGIL_TIER, record: flat() }];
-  const s = rollSpoils(seed, level);
+  const s = rollSpoils(seed, level, claims?.p ?? 0);   // WB14g: a portent night's pieces more
   // AUDIT WORLD-REWARDS A1: the Dragonfire Oath's picture is drawn LAST of all (below) - drawn in its place among the pieces,
   // it moved every picture after it (the ember's, the gold's, the card's, the gems') off what the seed gave them, in
   // every spoils it came in. It still leaves among the pieces, its glow's line in the frame's first eight.
-  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: p.tier === 'gilded' ? null : flat() }));
+  const firstPortent = s.pieces.length - (s.portent ?? 0);   // WB14g: a portent's piece's picture drawn last too, as the Oath's
+  const pieces = s.pieces.map((p, i) => ({ kind: 'item', item: p.item, tier: p.tier, record: p.tier === 'gilded' || i >= firstPortent ? null : flat() }));
   const ember = { kind: 'item', item: s.sigil, tier: SIGIL_TIER, record: flat() };
   const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };
   // AUDIT CARDS-6 A8: the card's picture is drawn LAST, after the gold's - drawn between the ember's and the gold's, it
@@ -425,6 +427,9 @@ export function createSpoilsPool({
   }
 
   return {
+    /** WB14e: a piece straight into the pack by this pool's own door (`take`, the host's takeGateSpoil) - a Tithe-Imp's
+     *  tithe, which never lies on the floor. */
+    take(piece) { take(piece); },
     /**
      * THE BURST: the spoils of `day` for this player (the receipt's `seed`, the player's `level`) leave his chest `at`
      * (the dungeon's frame) toward `bearing` (the angle from him to the player). Once a day, on this device: a day

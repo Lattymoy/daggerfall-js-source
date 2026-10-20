@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { travelWalkRate, TRAVEL_VIEW_TEXT, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
-import { createLoadGovernor, unbuiltAround, TV_GOV_HOLD_S } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, unbuiltAround, unbuiltCount, TV_GOV_HOLD_S } from '../../../src/systems/travel/travelGovernor.js';
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE, TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE } from '../../../src/systems/timeScale.js';
 import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelDriveForward } from '../../../src/systems/travel/travelAutopilot.js';
@@ -40,9 +40,9 @@ test('TV-WASD x RATE-LAW: the keys travel at the GROUND\'s rate - x100 on a road
 });
 
 test('TV-WASD: the bar says the speed, and the load governor\'s hold beside it', () => {
-  assert.equal(TRAVEL_VIEW_TEXT.travelling(10), 'Travelling at ×10');
-  assert.equal(TRAVEL_VIEW_TEXT.travelling(10, 5), 'Travelling at ×5 of ×10');
-  assert.equal(TRAVEL_VIEW_TEXT.travelling(10, 10), 'Travelling at ×10', 'a hold at the full speed is no hold');
+  assert.equal(TRAVEL_VIEW_TEXT.travelling(10), 'Traveling at ×10');
+  assert.equal(TRAVEL_VIEW_TEXT.travelling(10, 5), 'Traveling at ×5 of ×10');
+  assert.equal(TRAVEL_VIEW_TEXT.travelling(10, 10), 'Traveling at ×10', 'a hold at the full speed is no hold');
   // PIN MOVED (AUDIT OW5 G3): the keys' speed first - it runs only with no journey driving, and a stopped route kept for the Resume hid it
   assert.match(WORLD, /trip: \(\) => \(tvWalking \? TRAVEL_VIEW_TEXT\.travelling\(tvWalking, tvHeld\) : tvTripLive\(\) \? tvTrip\.line : ''\),/, 'the keys\' speed, else a journey\'s own line');
 });
@@ -61,21 +61,22 @@ function rig({ onRoad = false } = {}) {
   const w = { keys: new Set(), view: { active: true, state: 'up' }, journey: false, swimming: false, boat: null, paused: false, unbuilt: new Set(), onRoad };
   const env = {
     travelControlUI: { get isShowing() { return w.journey; } },
-    travellerOnRoad: () => w.onRoad, foePaced, foeRate,   // RATE-LAW: the ground the keys travel on; ENEMY-PACE's floor
+    travellerOnRoad: () => w.onRoad, foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */   // RATE-LAW: the ground the keys travel on; ENEMY-PACE's floor
     travelOptions: { get state() { return { autopilot: w.journey ? {} : null }; } },
     travelWalkRate, TV_MOVE_ACTIONS,
     travelView: w.view,   // a live object: the tests move its state
     held: (keys, a) => keys.has(a), keys: w.keys,
     walkMode: true, playerSpawned: true,
-    player: { get isPlayerSwimming() { return w.swimming; } },
+    player: { get isPlayerSwimming() { return w.swimming; }, feetAt: () => [0, 0, 0], speed: 5 },   // OW-LEAD: on foot, 5 m/s
     csaBoatUnderMe: () => w.boat, gamePaused: () => w.paused,
     setWorldTimeScale: setTimeScale, worldTimeScale: timeScale, resetTimeScale,
     travelAsked: 20, csaHoldsTimeScale: () => false,
     travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
     // PIN MOVED (LOAD-OWED, test/systems/travel/ow_loadowed.test.js): the count asks the stream's own books - every pixel of this grid is
     // on them (`loaded`), so the rig's `unbuilt` are owed, as a stream still building them owes them
-    state: { terrainDistance: 3, loaded: { has: () => true } }, playerTravelPixel: () => ({ x: 100, y: 200 }), tvGroundGenNow: () => w.unbuilt.size,
-    unbuiltAround, built: { has: (k) => !w.unbuilt.has(k) }, StreamingWorldState,   // ETHER-OW: only what the world streams is owed a build
+    // OW-LEAD: the feet in the middle of pixel (100, 200), native (streamingWorld.js worldCoordToMapPixel's law)
+    state: { terrainDistance: 3, loaded: { has: () => true }, worldCoords: () => ({ x: 100.5 * 32768, z: (499 - 200 + 0.5) * 32768 }) }, playerTravelPixel: () => ({ x: 100, y: 200 }), tvGroundGenNow: () => w.unbuilt.size,
+    unbuiltAround, unbuiltCount, built: { has: (k) => !w.unbuilt.has(k) }, StreamingWorldState,   // ETHER-OW: only what the world streams is owed a build
     journeyThreatCap: () => ({ cap: Infinity }), journeySlowSaid: () => {},   // OW6: no enemy about (test/systems/travel/ow6_slowdown.test.js runs the cap)
   };
   return { w, g: mountGovernor(env) };
@@ -130,11 +131,13 @@ test('TV-WASD host: the load governor holds the keys\' travel to what the land r
   const { w, g } = rig({ onRoad: true });
   w.keys.add('MoveLeft');
   w.unbuilt.add('101,200');   // a pixel of the ring the view can see, not yet raised
+  // PIN MOVED (OW-LEAD, test/systems/travel/ow_lead.test.js): held by how near the hole is, from the first frame - its edge half a
+  // pixel off (409.6 m) at 5 m/s takes the TV_GOV_LEAD_S four seconds at x20.48: x20 (it ran x100 a quarter second, then halved)
   g.govern(0.1);
-  assert.equal(timeScale(), 100, 'the first frame: the road\'s full speed');
+  assert.equal(timeScale(), 20, 'the hole half a pixel off: x20');
   g.govern(TV_GOV_HOLD_S);
-  assert.equal(timeScale(), 50, 'the hole stood a quarter second: halved');
-  assert.equal(g.held(), 50, 'the bar says ×50 of ×100');
+  assert.equal(timeScale(), 20, 'and no halving after it - the hole has not come nearer');
+  assert.equal(g.held(), 20, 'the bar says ×20 of ×100');
   assert.equal(g.walking(), 100);
   resetTimeScale();
 });

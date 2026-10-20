@@ -50,6 +50,7 @@ import { writeDecalQuad, clearDecalQuad, DECAL_FLOATS } from '../../combat/blood
 import { decorIsDoor } from '../../systems/decor/decorDoorways.js';   // HOME-DOORS: a door piece hangs as one of the room's own doors
 import { drawnFlat } from '../../characters/nudeFlats.js';   // NUDE-DECOR: a nude figure stands as its clothed stand-in while Show Nudity is off
 import { StaticBatchBuilder, keyResolver } from '../../render/staticBatch.js';   // YARD-MERGE: a yard's models as one mesh, as a town's statics are
+import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece landing round the body is withheld until it is clear
 
 /** How far the eye reaches a placed piece - the room's own furniture's reach (a bed's, a shelf's: 128 units). */
 export const DECOR_REACH = DEFAULT_ACTIVATION_DISTANCE;
@@ -278,11 +279,18 @@ export function decorMatrix(piece, origin) {
  *                  (decorLightLift's height; a mount's at its centre)
  *   merge         - YARD-MERGE: `{ take() -> boolean, now() -> ms }` - the host lets the pool's models merge (take: whether
  *                  its budget allows one this frame), or null: every piece its own draw, as a room's
+ *   body          - DECOR-CLEAR: the player's body, live - the motor (its `pos` and `height`) - or none. A model's collider
+ *                  bucket goes through the collider's one gate (player/lateSolid.js): a piece landing round the body draws,
+ *                  and is solid only once the body is clear of it, asked every frame by `draw` (the host's own per-frame
+ *                  call), which hands the gate the body it guards. ROCK-CLEAR: with none (a yard's), the body the
+ *                  collider's gate guards - the world's frame settles it; none guarded, every piece solid as it stands
  */
 export function createDecorRoom({
   meshes, renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims = () => null, collider, origin, roomLights = () => null,
-  mwPicture = null, later = setTimeout, doors = null, prepareModel = null, standFlat = null, lampOf = null, merge = null,
+  mwPicture = null, later = setTimeout, doors = null, prepareModel = null, standFlat = null, lampOf = null, merge = null, body = undefined,
 }) {
+  /** DECOR-CLEAR: the gate of the collider the room stands in now (the host's collider is a visit's), or none. */
+  const late = () => lateSolidsOf(collider?.());
   /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, wbox?: number[] | null, cpu: any, mesh?: any, merged?: boolean, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any, release?: any}>} */
   const standing = new Map();
   // YARD-MERGE: the pool's merge - { gpu, matrix, box, wbox, n } - and when the pool last changed
@@ -428,7 +436,7 @@ export function createDecorRoom({
     if (entry.gpu || entry.batch) changed();
     figs.delete(entry);   // MWNPC18
     if (entry.door) { doors?.remove?.(entry.piece.id); entry.door = null; }   // HOME-DOORS: the room's door, taken down
-    collider?.()?.removeBucket?.(decorKeyOf(entry.piece.id));
+    late()?.remove(decorKeyOf(entry.piece.id));   // DECOR-CLEAR: its bucket, or the triangles withheld from the body
     if (entry.mount) { renderer?.destroyDecalBatch?.(entry.mount.batch); entry.mount = null; }   // DECOR2c
     if (entry.batch) {
       entry.anims?.remove?.(entry.batch);   // its FlatAnim goes with it (the room's animator outlives no batch)
@@ -503,7 +511,9 @@ export function createDecorRoom({
           entry.gpu = m.gpu;
           entry.mesh = m.cpu;   // YARD-MERGE: its triangles, for the pool's merge
           changed();
-          if (m.cpu?.positions && m.cpu?.indices) { entry.cpu = m.cpu; collider?.()?.addMesh?.(decorKeyOf(piece.id), m.cpu.positions, m.cpu.indices, entry.matrix); }
+          // DECOR-CLEAR: solid through the collider's gate - a piece standing round the body draws, and is solid once the
+          // body is clear of it (player/lateSolid.js; `draw` asks every frame)
+          if (m.cpu?.positions && m.cpu?.indices) { entry.cpu = m.cpu; late()?.add(decorKeyOf(piece.id), m.cpu.positions, m.cpu.indices, entry.matrix, { body }); }
         };
         // DECOR-OUTDOOR: the host's own law first (a yard's town's climate swaps) - the piece stands once it is in place,
         // never in the textures a moment and the town's the next
@@ -563,11 +573,9 @@ export function createDecorRoom({
       e.wbox = null;   // PERF-YARD: its box in the world, made again where it stands now
       if (e.batch) { const b = e.batch.origin ?? [0, 0, 0]; e.batch.origin = [b[0] + d[0], b[1] + d[1], b[2] + d[2]]; }
       if (e.light) { e.light.x += d[0]; e.light.y += d[1]; e.light.z += d[2]; }
-      if (e.cpu) {
-        const c = collider?.();
-        c?.removeBucket?.(decorKeyOf(e.piece.id));
-        c?.addMesh?.(decorKeyOf(e.piece.id), e.cpu.positions, e.cpu.indices, e.matrix);
-      }
+      // DECOR-CLEAR: its bucket taken down and stood again - a solid one at once (the body moved with it), one withheld
+      // held still, moved (the gate's `replace`: the collider's own removeBucket would forget a withheld one)
+      if (e.cpu) late()?.replace(decorKeyOf(e.piece.id), e.cpu.positions, e.cpu.indices, e.matrix);
     }
     // YARD-MERGE: the merges stand from the origin as their pieces now do - moved as one, nothing merged again
     if (merged) { merged.matrix = decorMergeMatrix(o); merged.wbox = null; }
@@ -596,6 +604,9 @@ export function createDecorRoom({
    *  box (no triangles to measure) is drawn, as before; a room's host gives none - a building is drawn whole. */
   function draw(r = renderer, texRemap = null, cull = null) {
     let n = 0;
+    // DECOR-CLEAR: the host's per-frame call hands the collider's gate the body it guards - every piece withheld (the
+    // room's own put back among them, decorBase.js show) that the body is now clear of stands
+    if (body) late()?.settle(body);
     // YARD-MERGE: merged again once the pool has settled and its host's budget allows; drawn by the same verdict, its box
     // the whole merge's, through the same remap - and its pieces not drawn on their own
     if (mergeDue && merge && merge.now() - changedAt >= DECOR_MERGE_SETTLE_MS && merge.take()) remerge();

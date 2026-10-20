@@ -56,7 +56,7 @@ test('CROWN1 THE ROYAL HUD\'S WORDS: the tourney, its prize and its end; the rin
   const t = { seat: 'Wayrest', prize: 5000, endsMs: AT + 2 * 86_400_000 + 3 * 3_600_000 };
   let s = ROYAL_STATE_EMPTY;
   let m = royalHudModel(s, t, 'p1', AT, { name });
-  assert.deepEqual(m.bar, ['THE ROYAL TOURNEY OF WAYREST   prize 5,000 silver   ends in 2d 3h', 'The ring is empty - challenge a contender from their card.']);
+  assert.deepEqual(m.bar, ['THE ROYAL TOURNEY OF WAYREST   prize 5,000 silver   ends in 2d 3h', 'The ring is empty. Challenge a contender from their card.']);
   assert.equal(m.sides, 'No bout has been won yet.');
   assert.deepEqual(m.self, ['You have no bout won yet.']);
   assert.equal(m.card, null);
@@ -76,10 +76,10 @@ test('CROWN1 THE ROYAL HUD\'S WORDS: the tourney, its prize and its end; the rin
   assert.equal(ROYAL_HUD_ROWS, 5);
   assert.ok(m.self.includes('You: 3 wins, 1 loss'));
   s = foldRoyal(s, { k: 'ask', id: 'p3' }, AT);
-  assert.ok(royalHudModel(s, t, 'p1', AT + 1000, { name }).self.includes('Cade challenges you - challenge them back from their card to accept.'));
+  assert.ok(royalHudModel(s, t, 'p1', AT + 1000, { name }).self.includes('Cade challenges you. Challenge them back from their card to accept.'));
   assert.ok(!royalHudModel(s, t, 'p1', AT + ROYAL_RING.askMs + 1, { name }).self.some((l) => l.includes('challenges you')), 'lapsed');
   s = foldRoyal(s, { k: 'bend', n: 3, w: 'p1', l: 'p2', c: 0 }, AT + 5000);
-  assert.ok(royalHudModel(s, t, 'p1', AT + 5000, { name }).self.includes('You won the bout - but you two have met three times today; the ladder did not count it.'));
+  assert.ok(royalHudModel(s, t, 'p1', AT + 5000, { name }).self.includes('You won the bout, but you two have met 3 times today, so it does not count on the ladder.'));
   assert.ok(royalHudModel(s, t, 'p2', AT + 5000, { name }).self.includes('You lost the bout.'));
   assert.ok(royalHudModel(s, t, 'p1', AT + 4999 + ROYAL_LAST_SHOWN_MS, { name }).self.some((l) => l.startsWith('You won the bout')));
   assert.ok(!royalHudModel(s, t, 'p1', AT + 5000 + ROYAL_LAST_SHOWN_MS, { name }).self.some((l) => l.startsWith('You won the bout')), 'said ten seconds');

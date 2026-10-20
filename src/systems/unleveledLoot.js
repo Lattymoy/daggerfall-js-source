@@ -240,8 +240,8 @@ export function unleveledGoldLootPiles(lootItems, { rolls = Math.random, level =
 // ── OnEnemyDeath ───────────────────────────────────────────────────
 // ASF-DEATH (2026-10-19, Discord #suggestions "Weapon/Armor Materials": "tens of thousands of gold by vendoring off the
 // daedric armor"): A DEPARTURE in both drops below - each leaves the condition it rolls as `foundCondition`, the mark
-// SELL-AS-FOUND (AUDIT ECON O1) gave Roleplay & Realism's rolls, so online a mended drop sells as it fell. The mod's own
-// rolls, and the draws they take, are unchanged.
+// SELL-AS-FOUND (AUDIT ECON O1) gave Roleplay & Realism's rolls, so online a mended drop sells as it fell and a third of
+// the mend (MEND-THIRD). The mod's own rolls, and the draws they take, are unchanged.
 /** A weapon drop: CreateItem(Weapons, Range(Dagger, Long_Bow + 1)),
  *  ApplyWeaponMaterial(material), condition 30-75% of its own max,
  *  AddItem(Back). */

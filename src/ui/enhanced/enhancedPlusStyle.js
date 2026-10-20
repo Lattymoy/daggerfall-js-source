@@ -650,6 +650,7 @@ body:has(.hud-foe.on.blade) .travelpanel { --tp-top: calc(18px + 28px * var(--hu
 .tview-title, .tview-label { font-size: 11px; letter-spacing: 0.2em; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
 .tview-where { font-size: 13px; line-height: 1.2; letter-spacing: 0.03em; color: #efe8d6; text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.5); }
 .tview-trip { font-size: 11px; letter-spacing: 0.03em; color: ${FRAME_TONES.brassHi}; text-shadow: 1px 1px 0 #050608; }
+.tview-sky { font-size: 11px; letter-spacing: 0.03em; color: #d9d2c0; text-shadow: 1px 1px 0 #050608; }   /* OW-FORECAST */
 .tview-idle { padding: 10px 14px; }
 .tview-idle-name { font-size: 16px; line-height: 1.15; letter-spacing: 0.04em; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
 .tview-idle-sub { font-size: 11px; letter-spacing: 0.04em; color: #8f8772; text-shadow: 1px 1px 0 #050608; }

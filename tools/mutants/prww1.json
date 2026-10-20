@@ -102,8 +102,8 @@
   {
     "name": "PRWW1-local-body-on-the-settings-alone",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0 });",
-    "new": "  const lookNow = () => ({ ...cfg, horse: last.horseLook ?? 0 });",
+    "old": "  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0,",
+    "new": "  const lookNow = () => ({ ...cfg, horse: last.horseLook ?? 0,",
     "tests": [
       "test/net/prww1_werewolf.test.js"
     ]

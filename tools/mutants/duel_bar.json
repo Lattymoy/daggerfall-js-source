@@ -1,0 +1,148 @@
+[
+  {
+    "name": "DUEL-BAR-the-opponents-entry",
+    "file": "src/net/duel/duelBar.js",
+    "old": "  const mine = live?.h?.find((x) => x[0] === me);\n",
+    "new": "  const mine = live?.h?.find((x) => x[0] !== me);\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-whole-for-what-is-left",
+    "file": "src/net/duel/duelBar.js",
+    "old": "  return mine ? { health: mine[1], maxHealth: mine[2] } : null;\n",
+    "new": "  return mine ? { health: mine[2], maxHealth: mine[2] } : null;\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-a-duel-over-still-read",
+    "file": "src/scenes/world.js",
+    "old": "          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),",
+    "new": "          healthBar: duelVitality(duelMgr.duel, online?.id ?? ''),",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-another-id-for-mine",
+    "file": "src/scenes/world.js",
+    "old": "          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),",
+    "new": "          healthBar: duelVitality(duelMgr.live, duelMgr.opponent ?? ''),",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-referees-maximum-unread",
+    "file": "src/ui/hud/hudVitals.js",
+    "old": "  return bar ? { health: bar.health ?? 0, maxHealth: bar.maxHealth, from: 'referee' }",
+    "new": "  return bar ? { health: bar.health ?? 0, maxHealth: entity?.maxHealth, from: 'referee' }",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/hud/hudvitals.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-turn-read-as-a-blow-or-a-heal",
+    "file": "src/ui/hud/hudVitals.js",
+    "old": "  if (_lastFrom !== null && _lastFrom !== from) _detector.primed = false;\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/hud/hudvitals.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-drawHud-never-reads-the-bar",
+    "file": "src/ui/hud/hud.js",
+    "old": "  const health = hudHealth(vitals, healthBar);\n",
+    "new": "  const health = hudHealth(vitals, null);\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/hud/hudvitals.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-snapshot-names-no-source",
+    "file": "src/ui/hud/hud.js",
+    "old": "    health: health.health, maxHealth: health.maxHealth || 1, from: health.from,\n",
+    "new": "    health: health.health, maxHealth: health.maxHealth || 1,\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/hud/hudvitals.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-drawHud-hands-the-enhanced-none",
+    "file": "src/ui/hud/hud.js",
+    "old": "      health,   // DUEL-BAR: the health its bar reads - the classic's own pair (hudHealth)\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/enhanced/enhancedHud.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-enhanced-reads-the-entity",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  const hp = opts.health ?? hudHealth(vitals);\n",
+    "new": "  const hp = hudHealth(vitals);\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/enhanced/enhancedHud.test.js",
+      "test/ui/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-held-loss-kept-through-the-turn",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    if (last.hpFrom !== undefined) { delete ghosts.health; for (const c of parts.health.chunks ?? []) stowChunk(c); last.hpSeen = null; }\n",
+    "new": "    if (last.hpFrom !== undefined) { for (const c of parts.health.chunks ?? []) stowChunk(c); last.hpSeen = null; }\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/enhanced/enhancedHud.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-falling-piece-left-through-the-turn",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    if (last.hpFrom !== undefined) { delete ghosts.health; for (const c of parts.health.chunks ?? []) stowChunk(c); last.hpSeen = null; }\n",
+    "new": "    if (last.hpFrom !== undefined) { delete ghosts.health; last.hpSeen = null; }\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/enhanced/enhancedHud.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-heal-reading-kept-through-the-turn",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    if (last.hpFrom !== undefined) { delete ghosts.health; for (const c of parts.health.chunks ?? []) stowChunk(c); last.hpSeen = null; }\n",
+    "new": "    if (last.hpFrom !== undefined) { delete ghosts.health; for (const c of parts.health.chunks ?? []) stowChunk(c); }\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-heal-read-off-the-save",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  const hpNow = Number(hp.health ?? 0);   // DUEL-BAR: the bar's own health\n",
+    "new": "  const hpNow = Number(vitals.health ?? 0);   // DUEL-BAR: the bar's own health\n",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js",
+      "test/ui/partybuffs.test.js"
+    ]
+  },
+  {
+    "name": "DUEL-BAR-the-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),   // DUEL-BAR (FIELD BUGS 2026-10-19f, the owner: \"Bar shows duel vitality\"): the referee's vitality on both skins' bar while my duel is live, the save's at its end - display only\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ]
+  }
+]

@@ -366,7 +366,7 @@ test('AUTO-HOLD client: the realm session - a timed hold heard with its end and 
   assert.equal(tradeHeldNotice(null, 'law', held[0][2]), tradeHeldUntilNotice(U1, 'Ring'));
   assert.match(tradeHeldNotice(null, 'law', held[0][2]), /the last over a Ring it carries\. Its trading is frozen until .*, and after that until the Ring is gone\.$/);
   assert.equal(tradeHeldNotice('law', 'law', held[1][2]), tradeHeldUntilNotice(U2), 'a timed hold re-said with its new end');
-  assert.match(tradeHeldUntilNotice(U2), /^The realm's law has held this character three times\. Its trading is frozen until .*, then opens on its own\.$/);
+  assert.match(tradeHeldUntilNotice(U2), /^This character has been held 3 times\. Its trading is frozen until .*, then reopens on its own\.$/);
   assert.equal(tradeHeldNotice(null, 'law', held[2][2]), tradeHeldLawNotice('Ring'));
   assert.equal(tradeHeldNotice(null, 'law', { code: 'until', t: null, until: 'soon' }), TRADE_HELD_NOTICES.law, 'an end that is no time is no timed hold');
   // a second join on this device: what it told is told no more
@@ -417,9 +417,9 @@ test('AUTO-HOLD client: over the real Worker, the third strike heard timed with 
   assert.deepEqual(lockedPiecesOf(entity, ['f6f6f6f6f6f6f6f6', 'e5e5e5e5e5e5e5e5', '0000000000000009']), { pieces: [a, a2, b], unfound: 1 });
   assert.deepEqual(lockedPiecesOf(entity, ['f6f6f6f6f6f6f6f6']), { pieces: [b], unfound: 0 });
   const tail = 'Your other pieces and your trading are not affected.';
-  assert.equal(piecesLockedNotice([itemLongName(b)], 1), `The realm has locked your ${itemLongName(b)}: it found the same piece somewhere else too. A locked piece stays with you - it cannot be traded, sold, dropped or stored where others can take it. ${tail}`);
-  assert.match(piecesLockedNotice([], 1), /^The realm has locked one of your pieces: it found the same piece somewhere else too\. A locked piece stays with you/);
-  assert.match(piecesLockedNotice([], 6), /^The realm has locked 6 of your pieces: it found the same pieces somewhere else too\. Locked pieces stay with you - they cannot be traded/);
+  assert.equal(piecesLockedNotice([itemLongName(b)], 1), `The realm has locked your ${itemLongName(b)}: it found the same piece somewhere else too. It stays with you and cannot be traded, sold, dropped or stored where others can take it. ${tail}`);
+  assert.match(piecesLockedNotice([], 1), /^The realm has locked one of your pieces: it found the same piece somewhere else too\. It stays with you/);
+  assert.match(piecesLockedNotice([], 6), /^The realm has locked 6 of your pieces: it found the same pieces somewhere else too\. They stay with you and cannot be traded/);
   assert.match(piecesLockedNotice(['A', 'B', 'C', 'D'], 6), /^The realm has locked 6 of your pieces \(A, B, C and 3 more\): it found the same pieces somewhere else too\./);
   assert.match(piecesLockedNotice(['A', 'B'], 2), /^The realm has locked 2 of your pieces \(A, B\): /);
   assert.equal(piecesLockedNotice([], 0), null);
@@ -457,7 +457,7 @@ test('AUTO-HOLD client: over the real Worker, the third strike heard timed with 
   // AUDIT: no refusal says a review will come
   const refusal = accountRefusalText('trade-held');
   assert.equal(typeof refusal === 'function' ? refusal() : refusal, 'This character\'s trading is frozen. The notice shown when it froze says why, and until when.');
-  assert.match(TRADE_HELD_STRIKES, /^ Each time the law holds it counts: the third time, trading stays frozen for a week even once it is gone \(a month if it comes to that again\)\.$/);
+  assert.match(TRADE_HELD_STRIKES, /^ Holds add up: from the third, trading stays frozen for a week even after it is gone, and for a month each time after that\.$/);
   // the host wires it at one line (HOST-SPLIT)
   const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /^  wireRealmHolds\(realmSession, \{ say: \(t\) => townTalk\.say\(t\), entity: playerEntity \}\);$/m);
@@ -470,9 +470,9 @@ test('AUTO-HOLD client (AUDIT): A PIECE THE REALM LOCKED STAYS WITH ITS HOLDER -
     setRealmLocked(['9d9d9d9d9d9d9d9d', 'abababababababab']);
     assert.deepEqual([isRealmLocked(piece), isRealmLocked(craft), isRealmLocked(free)], [true, true, false], 'by its key - an id, or a craft\'s provenance');
     assert.deepEqual([isBound(piece), isBoundByNature(piece), isBound(free)], [true, false, false]);
-    assert.equal(boundText('Dagger', piece), 'Dagger is locked by the realm: it found the same piece somewhere else too. It stays with you - it cannot be dropped, traded, sold or stored where others can take it.');
-    assert.equal(boundText('Stone', stone), 'Stone is bound to you - it cannot be dropped, traded or sold.', 'a binding of its nature says so');
-    assert.equal(boundLine(piece), 'Locked by the realm - it stays with you: it cannot be dropped, traded, sold or stored where others can take it.');
+    assert.equal(boundText('Dagger', piece), 'Dagger is locked by the realm because the same piece was found somewhere else too. It stays with you and cannot be dropped, traded, sold or stored where others can take it.');
+    assert.equal(boundText('Stone', stone), 'Stone is bound to you. It cannot be dropped, traded or sold.', 'a binding of its nature says so');
+    assert.equal(boundLine(piece), 'Locked by the realm. It stays with you and cannot be dropped, traded, sold or stored where others can take it.');
     assert.deepEqual([boundLine(stone), boundLine(free)], [BOUND_LINE, null]);
     assert.deepEqual([boundTradeText(piece), boundTradeText(stone)], ['A piece the realm locked cannot be traded.', BOUND_TRADE_TEXT]);
     assert.equal(tradeRefusal(piece), 'A piece the realm locked cannot be traded.');

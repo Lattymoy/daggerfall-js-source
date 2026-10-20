@@ -30,7 +30,7 @@
   {
     "name": "MARKET-KEEP-the-words",
     "file": "src/net/accountClient.js",
-    "old": "It stays in your pack - a piece from your pack sells for gold.'),",
+    "old": "It stays in your pack, where it sells for gold.'),",
     "new": "It is gone.'),",
     "tests": [
       "test/net/fb1001_market.test.js"
@@ -521,7 +521,7 @@
   {
     "name": "MARKET-ANY-tab-own-make-from-the-pack",
     "file": "src/ui/marketTab.js",
-    "old": "h === 'yours' ? 'your own make - list it as a crafted piece' :",
+    "old": "h === 'yours' ? 'made by you. List it as a crafted piece' :",
     "new": "h === 'yours' ? null :",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"

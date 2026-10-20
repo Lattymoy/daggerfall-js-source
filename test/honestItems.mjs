@@ -486,6 +486,7 @@ function sweep({ seeds, run, skip }) {
     runItemMaker(run, seedsOf, S, crafted, minted);
     runHomes(run, seedsOf, S, minted);
     runQuestItems(run, seedsOf);
+    runQuestRewards(run, seedsOf);   // AUDIT QUESTLINES REWARD-9: a quest's choice of three
     runPackActs(run, seedsOf, minted);
   });
 }
@@ -1344,3 +1345,29 @@ function runQuestItems(run, seedsOf) {
 }
 const QUEST_ITEM = await load('../src/systems/quest/item.js');
 const QUEST = await load('../src/systems/quest/quest.js');
+const QL_REWARDS = await load('../src/systems/questlines/qlRewards.js');
+const QL_SHEETS = await load('../src/systems/questlines/qlSheets.js');
+const SKILLS_MOD = await load('../src/systems/skills.js');
+
+/** QL3 (bible/06-Systems/Questlines-Arc.md section 5.2; AUDIT QUESTLINES REWARD-9): A QUEST'S CHOICE OF THREE - the layer's
+ *  roll (systems/questlines/qlLayer.js ending) at every tier and three levels, for a fighter, an archer, a mage (chain,
+ *  plate and every shield barred) and a class barred from every weapon, plain and with each questline ending's named
+ *  piece in turn (made from its sheet's base and named), so the item law reads a quest's piece as it reads every other. */
+function runQuestRewards(run, seedsOf) {
+  run('qlRewards.rollRewardChoice (tiers 1-4, four classes, each named piece)', (one) => {
+    const { SKILLS } = SKILLS_MOD;
+    const skills = (best) => { const sk = new Array(35).fill(20); for (const [k, v] of Object.entries(best)) sk[SKILLS[k]] = v; return sk; };
+    const entities = [
+      { career: { weaponArmorShieldsBitfield: 0, forbiddenMaterialsFlags: 0 }, skills: skills({ LongBlade: 70, Axe: 50 }) },
+      { career: { weaponArmorShieldsBitfield: 0, forbiddenMaterialsFlags: 0 }, skills: skills({ Archery: 70, ShortBlade: 50 }) },
+      { career: { weaponArmorShieldsBitfield: (6 << 6) | (0xf << 9), forbiddenMaterialsFlags: 0 }, skills: skills({ ShortBlade: 40, BluntWeapon: 35 }) },
+      { career: { weaponArmorShieldsBitfield: 0x3f, forbiddenMaterialsFlags: 0 }, skills: skills({ LongBlade: 70 }) },
+    ];
+    const named = [null];
+    for (const fam of QL_SHEETS.SHEET_FAMILIES) for (const sheet of fam.sheets) for (const o of sheet.outcomes ?? []) if (o.named) named.push(o.named);
+    let n = 0;
+    for (const s of seedsOf()) for (const level of [1, 10, 30]) for (let tier = 1; tier <= 4; tier++) for (const e of entities) {
+      for (const p of QL_REWARDS.rollRewardChoice({ seed: s ^ hashOf(`${level}:${tier}`), level, tier, entity: { ...e, level }, named: named[n++ % named.length] })) one(p.item);
+    }
+  });
+}

@@ -389,8 +389,8 @@
   {
     "name": "LW7b-deep-rest-stood",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);\n      return;",
-    "new": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);",
+    "old": "      deps.say?.(`${trip.leader.name}'s company, and ${firstNameOf(hostile[0].name)} draws on you!`);\n      return;",
+    "new": "      deps.say?.(`${trip.leader.name}'s company, and ${firstNameOf(hostile[0].name)} draws on you!`);",
     "tests": [
       "test/scenes/lw7b_beyond.test.js"
     ]
@@ -398,7 +398,7 @@
   {
     "name": "LW7b-deep-line",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);",
+    "old": "      deps.say?.(`${trip.leader.name}'s company, and ${firstNameOf(hostile[0].name)} draws on you!`);",
     "new": "      deps.say?.('');",
     "tests": [
       "test/scenes/lw7b_beyond.test.js"

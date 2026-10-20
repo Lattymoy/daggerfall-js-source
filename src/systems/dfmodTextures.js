@@ -347,8 +347,8 @@ async function readIndex(key, load) {
 }
 /** Why a stored bundle would not open or index, in the packs card's words. */
 const openWords = (e) => (e?.name === 'NotReadableError' || /could not be read/i.test(e?.message ?? '')
-  ? 'the browser could not read the stored file - remove it and add it again'
-  : /allocation failed|out of memory/i.test(e?.message ?? '') ? 'ran out of memory - lower Texture detail, or attach fewer mods'
+  ? 'the browser could not read the stored file; remove it and add it again'
+  : /allocation failed|out of memory/i.test(e?.message ?? '') ? 'ran out of memory; lower Texture detail or attach fewer mods'
     : String(e?.message ?? e));
 
 /**

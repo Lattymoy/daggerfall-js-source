@@ -91,7 +91,7 @@ test('AUDIT BODY-MOTION GAIT-20 ON A SLOPE: up and down 20 degrees the walk dips
   assert.ok(hipStep(() => ({ forward: 1, speed: 6.5, running: true, climb: 6.5 * Math.tan(30 * RAD) }), 4, 2) < 2.5, 'running up 30 degrees, no frame drops the hips past the run\'s own spring');
 });
 
-test('AUDIT BODY-MOTION GAIT-21 A RUNNING TURN: a foot in the air swings round with the hips along their arc, so a full turn a second at a run never drops the hips as the landing foot comes in reach; and a foot flung out of reach (a run reversed from one strafe to the other, or turned from back to the side) takes the hips in by degrees as it comes back within it (taken at once, 15 to 17 units in a frame) - its pace never thrown by the other\'s strike (GAIT-22: the stride\'s clock set to it, 10) (mutants: AUDIT-BODY-MOTION-flight-chord, AUDIT-BODY-MOTION-reach-taken-at-once)', () => {
+test('AUDIT BODY-MOTION GAIT-21 A RUNNING TURN: a foot in the air swings round with the hips along their arc, so a full turn a second at a run never drops the hips as the landing foot comes in reach; and a foot flung out of reach (a run reversed from one strafe to the other, or turned from back to the side) takes the hips in by degrees as it comes back within it (taken at once, 15 to 17 units in a frame) - its pace never thrown by the other\'s strike (GAIT-22: the stride\'s clock set to it, 10); and turned fast, 2 to 4 radians a second then 2 back, under 10 units (RUN-STIFF: the stiffer run\'s higher hips, let go over a tenth of a leg, dropped 12 to 13.5) (mutants: AUDIT-BODY-MOTION-flight-chord, AUDIT-BODY-MOTION-reach-taken-at-once, RUN-STIFF-the-fade-a-tenth)', () => {
   for (const dps of [180, 360]) {
     const step = hipStep((t) => ({ forward: 1, speed: 8.1, running: true, yaw: t * dps * RAD }), 4, 1);
     assert.ok(step < 3, `running and turning ${dps} degrees a second, the hips' worst frame ${step.toFixed(2)} units`);
@@ -107,9 +107,18 @@ test('AUDIT BODY-MOTION GAIT-21 A RUNNING TURN: a foot in the air swings round w
     wide = Math.max(wide, hipStep((t) => { const w = t < t0 ? { forward: -1, turn: 1.4 } : { strafe: -1, turn: -0.8 }; yaw += w.turn * (t - tp); tp = t; return { forward: w.forward ?? 0, strafe: w.strafe ?? 0, speed: 8.1, running: true, yaw }; }, t0 + 1, 1));
   }
   assert.ok(wide < 11, `a back run turned into a strafe, turning: the hips' worst frame ${wide.toFixed(2)} units`);
+  for (const [a, b] of [[2, -2], [3, -2], [4, -2]]) {
+    let fast = 0;
+    for (let k = 0; k < 12; k++) {
+      const t0 = 1.5 + k * 0.025;
+      let yaw = 0, tp = 0;
+      fast = Math.max(fast, hipStep((t) => { const w = t < t0 ? { forward: -1, turn: a } : { strafe: -1, turn: b }; yaw += w.turn * (t - tp); tp = t; return { forward: w.forward ?? 0, strafe: w.strafe ?? 0, speed: 8.1, running: true, yaw }; }, t0 + 1, 1));
+    }
+    assert.ok(fast < 10, `a back run turning ${a} radians a second turned into a strafe turning ${-b}: the hips' worst frame ${fast.toFixed(2)} units`);
+  }
 });
 
-test('AUDIT BODY-MOTION GAIT-22 THE FEET\'S CLOCK: the stride\'s clock is the ground crossed and every flight keeps to it, each stance begins on its own foot\'s clock as far on as the frame ran past the strike, and the body\'s own clock catches up by the feet\'s pace - so after a reversal the feet step half a stride apart again, each foot set down at its stance\'s start (read off the stride\'s clock as it struck, it stood its first frame on the push\'s end - 43 degrees in a frame) and lifted by its end (begun at its start, a run\'s stood past it), and a steady run\'s strikes move no clock (mutants: AUDIT-BODY-MOTION-strike-sets-the-clock, AUDIT-BODY-MOTION-strike-at-its-start, AUDIT-BODY-MOTION-flight-off-the-clock)', () => {
+test('AUDIT BODY-MOTION GAIT-22 THE FEET\'S CLOCK: the stride\'s clock is the ground crossed and every flight keeps to it, each stance begins on its own foot\'s clock as far on as the frame ran past the strike, and the body\'s own clock catches up by the feet\'s pace - so after a reversal the feet step half a stride apart again, each foot set down at its stance\'s start (read off the stride\'s clock as it struck, it stood its first frame on the push\'s end - 43 degrees in a frame) and lifted by its end (begun at its start, a run\'s stood past it), and a steady run\'s strikes move no clock - nor, after a reversal at a walk, a jog or a run, does the clock jump more than a tenth of a stride in a frame (THE RUN: set at a strike, it jumped 0.12 to 0.31 - the stiffer run\'s hips no longer showed it) (mutants: AUDIT-BODY-MOTION-strike-sets-the-clock, AUDIT-BODY-MOTION-strike-at-its-start, AUDIT-BODY-MOTION-flight-off-the-clock)', () => {
   // walking forward, then back: the strikes alternate half a cycle apart once it has settled
   const strikes = { L: [], R: [] };
   const was = { L: null, R: null };
@@ -157,6 +166,19 @@ test('AUDIT BODY-MOTION GAIT-22 THE FEET\'S CLOCK: the stride\'s clock is the gr
     }
   });
   assert.ok(lifts >= 6 && over / lifts < 0, `a run's foot lifts ${(over / lifts).toFixed(2)} units past its stance's end`);
+  // after a reversal the body's clock catches up by the feet's pace - never set where a strike says
+  for (const [way, v, running] of [['forward', 4.43, false], ['strafe', 4.43, false], ['strafe', 5.5, true], ['strafe', 8.1, true]]) {
+    let clockJump = 0;
+    for (let k = 0; k < 12; k++) {
+      const t0 = 1.5 + k * 0.025;
+      let prev = null;
+      drive((t) => ({ [way]: t < t0 ? 1 : -1, speed: v, running }), t0 + 1.2, ({ t, s }) => {
+        if (prev != null && t >= 1) { const d = s.phase - prev; clockJump = Math.max(clockJump, Math.abs(d - Math.round(d))); }
+        prev = s.phase;
+      });
+    }
+    assert.ok(clockJump < 0.1, `${way} reversed at ${v} m/s: the stride's clock jumped ${clockJump.toFixed(3)} of a stride in a frame`);
+  }
 });
 
 test('AUDIT BODY-MOTION GAIT-23 A BACKPEDAL AND A NEW KEY: a backpedal\'s foot is the walk\'s played backward (it lands on its toes, as steeply as the walk leaves them, and leaves on its heel, as shallowly as the walk lands); and a run of new keys - each foot lifted once its leg no longer reaches it at the hips\' plan, a foot just off the ground asking no more reach than it did as it left - never drops the hips more than a walk\'s own dip in a frame; and the forward share eased, so a reversal rolls a standing foot over (read at once, it turned 48 degrees in a frame) (mutants: AUDIT-BODY-MOTION-backpedal-flipped, AUDIT-BODY-MOTION-leaving-drags, AUDIT-BODY-MOTION-along-unsmoothed)', () => {
@@ -431,7 +453,7 @@ const machine = (hitAt = 0.4, seconds = 1, windShare = 0.7) => {
   return out;
 };
 
-test('AUDIT BODY-MOTION CARRY-1/2/3/7/8/9/12 EVERY CARRY ROW, HELD: in each class and gait the wrists stay in their range (ulnar deviation under 40 degrees - the guard\'s 78 to 88, the sneak\'s 70 to 75), the weapon above the ground and out of the thighs and the trunk, and a two-handed class\'s left hand on its haft (mutants: AUDIT-BODY-MOTION-two-guard-old, AUDIT-BODY-MOTION-spear-short, AUDIT-BODY-MOTION-two-sneak-low, AUDIT-BODY-MOTION-run-supinated)', () => {
+test('AUDIT BODY-MOTION CARRY-1/2/3/7/8/9/12 EVERY CARRY ROW, HELD: in each class and gait the wrists stay in their range (ulnar deviation under 40 degrees - the guard\'s 78 to 88, the sneak\'s 70 to 75), the weapon above the ground and out of the thighs and the trunk, and a two-handed class\'s left hand on its haft - the two-hander\'s at a run too, TWO-RUN (mutants: AUDIT-BODY-MOTION-two-guard-old, AUDIT-BODY-MOTION-spear-short, AUDIT-BODY-MOTION-two-sneak-low, AUDIT-BODY-MOTION-run-supinated)', () => {
   const bad = [];
   for (const cls of Object.keys(CLASS_WEAPON)) for (const [g, w] of Object.entries(GAIT)) {
     const scene = { weapon: CLASS_WEAPON[cls], hands: cls === 'dual' ? 'dual' : 'single', ...w };
@@ -441,7 +463,7 @@ test('AUDIT BODY-MOTION CARRY-1/2/3/7/8/9/12 EVERY CARRY ROW, HELD: in each clas
       if (b.lowest < 0) bad.push(`${cls} ${g}: the weapon ${(-b.lowest).toFixed(1)} into the ground`);
       if (b.into > 2) bad.push(`${cls} ${g}: the weapon ${b.into.toFixed(1)} into the body`);
       for (const side of cls === 'one' ? ['R'] : ['R', 'L']) { const u = ulnar(m, side); if (u > 40) bad.push(`${cls} ${g}: the ${side} wrist ${u.toFixed(0)} degrees ulnar`); }
-      if (['two', 'wide', 'spear'].includes(cls) && g !== 'run') {
+      if (['two', 'wide', 'spear'].includes(cls) && (g !== 'run' || cls === 'two')) {   // TWO-RUN: the two-hander's run in both hands
         const g0 = pt(m, 'weapon bone'), b0 = axisOf(m, 'weapon bone', 1), v = sub(pt(m, 'weapon bone left'), g0);
         const off = len(sub(v, scl(b0, dot(v, b0))));
         if (off > 1.5) bad.push(`${cls} ${g}: the left hand ${off.toFixed(1)} off the haft`);

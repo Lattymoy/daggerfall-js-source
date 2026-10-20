@@ -825,8 +825,8 @@ test('U59 equippedModel: every slot, in the BODY\'s order and not the enum\'s', 
   // read off SLOT_MAP's own y/x - one table for where a slot sits and
   // for what order it reads in.
   assert.ok(label('Head') >= 0 && label('Feet') >= 0);
-  assert.ok(label('Head') < label('Chest, armour'), 'the head is below the chest');
-  assert.ok(label('Chest, armour') < label('Feet'), 'the feet are above the chest');
+  assert.ok(label('Head') < label('Chest, armor'), 'the head is below the chest');
+  assert.ok(label('Chest, armor') < label('Feet'), 'the feet are above the chest');
   assert.ok(label('Head') < label('Ring'), 'the enum order leaked through');
 
   // the ITEMS are the entity's own records, not copies - the row's

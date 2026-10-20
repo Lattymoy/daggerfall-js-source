@@ -91,8 +91,7 @@ test('wave D: a move-flag FLAT tweens, and never becomes a solid', () => {
   assert.equal(flat.state, 'end');
   assert.ok(Math.abs(flat.offset[1] - 2) < 1e-6, 'and stops at the full translation');
   // never solid, at any point of the tween: `col.isTrigger = true`
-  assert.equal(c.buckets.size, 0, 'a flat mints no collider bucket');
-  assert.equal(flat.frameDelta, null, 'and is not a moving platform');
+  assert.equal(c.buckets.size, 0, 'a flat mints no collider bucket - and so is not a moving platform (PIN MOVED, FIELD BUGS 2026-10-19f MOVER-BODY: the movers carry the body from their own bucket; the frame delta a flat kept null is gone)');
 });
 
 test('wave D: a flat Translation is INSTANT - AddActionFlatHelper hands AddAction duration 0', () => {

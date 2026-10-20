@@ -82,6 +82,6 @@ test('WOD-BUSH by source: the pixel build stands the shrub alone on the ground -
   assert.match(w, /if \(isWodShrub\(m\.modelId, wodPicks\[m\.pick\]\?\.name\)\) \{[^\n]*\n\s+const dy = lowestGroundUnder\(samples, box\) - box\[1\];\n\s+m\.matrix\[13\] \+= dy; box\[1\] \+= dy; box\[4\] \+= dy;\n\s+\}/);
   const at = w.indexOf('if (isWodShrub(m.modelId, wodPicks[m.pick]?.name))');
   assert.ok(at > w.indexOf('const box = transformedAabb(archAabb(m.modelId, cpu.positions), m.matrix);'), 'after its box is read');
-  assert.ok(at < w.indexOf('collider.addMesh(key, cpu.positions, cpu.indices, m.matrix, wodBucket);'), 'before its collider is filed');
+  assert.ok(at < w.indexOf('late.add(key, cpu.positions, cpu.indices, m.matrix, { translation: wodBucket });'), 'before its collider is filed');   // PIN MOVED (ROCK-CLEAR): filed through the world collider's gate
   assert.ok(at < w.indexOf('addStatic(cpu, m.matrix, false, m.normalMatrix)', at), 'and before it is batched');   // PIN MOVED (AUDIT PRECIP HOST-7): the merge's models logged
 });

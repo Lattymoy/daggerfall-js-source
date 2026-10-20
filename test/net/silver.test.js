@@ -49,7 +49,7 @@ test('SILVER a balance reads in silver - the same word for one, none and many (m
   assert.equal(accountRefusalText('marks-short'), 'You do not hold that much silver.');
   assert.equal(accountRefusalText('guild-marks-short'), 'The treasury does not hold that much silver.');
   assert.equal(accountRefusalText('marks-need-account'), 'Silver is kept by registered accounts. Add a username to hold it.');
-  assert.equal(accountRefusalText('marks-rate'), 'You have moved a great deal of silver this hour. Try again later.');
+  assert.equal(accountRefusalText('marks-rate'), 'You have moved too much silver this hour. Try again later.');
   assert.equal(accountRefusalText('heraldry-drakes'), 'Changing the heraldry costs 500 silver from the guild\'s silver treasury, and it holds less.');
   assert.equal(bountyPaidText(20), 'The Bounty pays you 20 silver for the camp.');
   assert.equal(TIDE_WORDS.daedra, 'Gate kills give double influence and double silver.');

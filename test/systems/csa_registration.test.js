@@ -50,6 +50,8 @@ test('CSA-A: every shipped key is declared - its section and name joined with a 
   assert.equal(DEF.keys.Enabled.default, true, 'MO1: on by default');
   const shipped = [];
   let written = 0;
+  // PLAIN-TEXT (2026-10-19): the one line of the mod's that spoke of "the player", said to the player - its words, exactly
+  const PLAIN = { 'Controls.PortLocationSearchRange': 'How far from you a port can be found' };
   for (const s of SHIPPED) {
     if (/^-+$/.test(s.Name)) { assert.equal(s.Keys.length, 0, `the spacer "${s.Name}" carries no keys`); continue; }
     for (const k of s.Keys) {
@@ -70,7 +72,7 @@ test('CSA-A: every shipped key is declared - its section and name joined with a 
         }
         default: assert.fail(`${name}: a key kind the registry does not restate (${kind(k)})`);
       }
-      if (k.Description) { assert.equal(d.description, k.Description, `${name}: the mod's own words`); written += 1; }
+      if (k.Description) { assert.equal(d.description, PLAIN[name] ?? k.Description, `${name}: the mod's own words, or their plain rewording`); written += 1; }
       else assert.ok(d.description, `${name}: the port writes the line the mod left empty`);
     }
   }
@@ -93,7 +95,7 @@ test('CSA-A: the assembly names every section and every key it reads - and never
       assert.equal(heap.has(k.Name), !UNREAD.includes(name), `${name} ${UNREAD.includes(name) ? 'is never named' : 'is named'}`);
     }
   }
-  for (const k of UNREAD) assert.match(DEF.keys[k].description, /never reads it/, `${k} says so`);
+  for (const k of UNREAD) assert.equal(DEF.keys[k].description, 'Has no effect: the mod never uses this setting.', `${k} says so`);
   // what Deep Waters' swim already waits for (world/deepWater/deepWaterSwim.js isBoatEffectBundle)
   assert.ok(heap.has('I\'m On A Boat'), 'the boat\'s effect bundle is named as Iliac Puddle No More looks for it');
 });

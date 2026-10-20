@@ -20,6 +20,7 @@
 import { readSerpentReceipt } from './serpentReceipt.js';
 import { serpentBossById } from './serpentLaw.js';
 import { t } from '../../systems/textManager.js';   // AUDIT WORLD-REWARDS C2: the Old Coil's grants said in the player's language, each read when it is said
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The device's serpent receipts not yet settled with the account service: `[{ r, ch, nm, lv, cid }]` - the receipt, the
  *  character that fought it, its name, its level (the hoard rolls at it), and this device's claim id. */
@@ -43,7 +44,7 @@ export const SERPENT_ME_POLL_MS = 1000;
 
 /** The words. */
 export const SERPENT_CLAIM_TEXT = Object.freeze({
-  recorded: (n, xp, boss) => `The Bay will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} Renown XP.` : ''}`,   // AUDIT SERPENT B11: the table's name
+  recorded: (n, xp, boss) => `The Bay will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`,   // AUDIT SERPENT B11: the table's name
   guest: 'This serpent is not on your record yet: only registered accounts keep one. Add a username this week and it counts.',
   title: () => t('serpent.honour.title', 'The Bay names you Coilbreaker.'),   // SERPENT5; AUDIT WORLD-REWARDS C2: routed (the lamp's own way)
   aura: () => t('serpent.honour.aura', 'The Maelstrom turns about you.'),   // SERPENT5
@@ -124,6 +125,7 @@ export function createSerpentClaims({ claim, store = null, nowS = () => Math.flo
         const given = answer?.ok && answer.data?.spoils === true ? await granted(onSpoils, e, answer.data) : true;   // the hoard, this claim's
         if (answer?.ok && answer.data?.recorded === true) {
           recorded++;
+          noteAct('serpent-slain');   // QL11: the Sea Serpent slain - its l1 receipt counted once (`recorded`)
           const n = Number.isSafeInteger(answer.data.slain) ? answer.data.slain : null;
           const xp = Number.isSafeInteger(answer.data.renown?.credited) ? answer.data.renown.credited : 0;
           if (n != null) say(SERPENT_CLAIM_TEXT.recorded(n, xp, serpentBossById(live(e.r)?.b)));

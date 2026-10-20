@@ -87,7 +87,7 @@ export function createShipyardHost(deps) {
       aboard: s.at.boat && s.at.where === 'here' ? deps.passengersAboard?.(s.at.boat) ?? 0 : 0, atPort: true, crossed: fleetCrossed(s.row.uid),
     });
     if (why) return why;
-    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return 'Empty the cabin first - anything left in it would be sold with the ship.';
+    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return 'Empty the cabin first. Anything left in it is sold with the ship.';
     return null;
   }
   /** Her worth sold back, and what the shipmaster offers this seller for it. */
@@ -136,7 +136,7 @@ export function createShipyardHost(deps) {
       const cands = atHand.filter((s) => s.row.can?.yard == null);
       const s = pick(cands);
       return { ...base, choices: choice(cands), uid: s?.row.uid ?? null, ship: s?.row ?? null, yard: s && s.at.boat ? naval()?.yardModelOf?.(s.at.boat) ?? null : null,
-        why: !naval() ? 'The shipwrights work for the sea fight\'s ships - turn on Naval Combat.' : cands.length ? null : 'No ship of yours lies at this port or laid up.' };
+        why: !naval() ? 'Turn on Naval Combat to use the shipwrights.' : cands.length ? null : 'No ship of yours lies at this port or laid up.' };
     }
     if (page === 'refits') {
       const cands = atHand.filter((s) => s.row.can?.refit == null || s.row.loan);

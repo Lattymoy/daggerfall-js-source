@@ -37,7 +37,12 @@
 //     law (systems/healthStatus.js): a poison once it has left its
 //     waiting, a disease once its incubation is over and by the name
 //     its own message gives it (diseases.js DISEASE_NAMES), an
-//     infection never (DFU says nothing of one until the dream).
+//     infection never (DFU says nothing of one until the dream);
+//     DISEASE-UNWELL (FIELD BUGS 2026-10-19f, the owner: "Unnamed
+//     'Unwell' tile"): and while a disease incubates, one tile of no
+//     name, "Unwell", on the disease's own spore - where DFU says
+//     nothing, and the rest's and the journey's warnings already said
+//     "diseased".
 // The name stands beside each tile where there is room; on a phone, or
 // in a band too short for three rows, the tiles stand alone.
 //
@@ -49,8 +54,9 @@
 // the chat opened tall on a laptop - it stands BESIDE the diamond
 // instead, as tall as the diamond (statPlace).
 // ═══════════════════════════════════════════════════════════════════
-import { DISEASE_NAMES } from '../../systems/diseases.js';
+import { DISEASE_NAMES, diseaseIncubating } from '../../systems/diseases.js';   // DISEASE-UNWELL: and the one law of a disease still incubating
 import { HUD_NEED_WORDS, levelSaid } from '../../systems/survival/status.js';
+import { t } from '../../systems/textManager.js';   // DISEASE-UNWELL: the Unwell tile's word in the player's language, read when it is drawn
 
 /** A tile's side: a 16px picture at two to one inside a 2px frame. */
 export const STAT_TILE = 36;
@@ -252,22 +258,33 @@ export function statusGlyphSrc(name) {
   return _srcs.get(name);
 }
 
+/** DISEASE-UNWELL: the unnamed tile's word - the English, and as the player reads it. */
+export const UNWELL_TILE_TEXT = 'Unwell';
+export const unwellTileText = () => t('hud.status.unwell', UNWELL_TILE_TEXT);
+
 /**
  * The poisons and diseases the widget shows - the Status box's law (systems/healthStatus.js healthStatusRows): ONE
  * tile for being poisoned, once any poison has left its waiting (the game names none: "You have been poisoned."); a
- * tile a disease whose incubation is over, by its name; nothing for an entry that has ended, one still waiting or
- * incubating, or an infection (no disease row: `disease` null). TELL9: and a blow's bleed, its ticks left at its foot.
+ * tile a disease whose incubation is over, by its name; nothing for an entry that has ended, a poison still waiting, or
+ * an infection (no disease row: `disease` null). DISEASE-UNWELL (FIELD BUGS 2026-10-19f; the owner, 2026-10-19:
+ * "Unnamed 'Unwell' tile" - a departure from DFU, which shows nothing until the first symptom day): ONE tile of no name,
+ * "Unwell", on the disease tile's own spore, for every disease still incubating (diseases.js diseaseIncubating), where
+ * the first of them stands; the Status box says the same unnamed (systems/healthStatus.js). TELL9: and a blow's bleed,
+ * its ticks left at its foot.
  * @param {any} entity
  * @returns {{ key: string, name: string, glyph: string, foot?: string, blink?: boolean }[]}
  */
 export function afflictionRows(entity) {
   const out = [];
-  let poisoned = false;
+  let poisoned = false, unwell = false;
   for (const a of entity?.activeEffects ?? []) {
     if (!a || a.ended) continue;
     if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;
     else if (a.kind === 'disease' && a.incubationOver && a.disease != null && DISEASE_NAMES[a.disease]) {
       out.push({ key: `disease:${a.disease}`, name: DISEASE_NAMES[a.disease], glyph: 'disease' });
+    } else if (!unwell && diseaseIncubating(a)) {
+      unwell = true;
+      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'disease' });
     }
   }
   if (poisoned) out.unshift({ key: 'poison', name: 'Poisoned', glyph: 'poison' });

@@ -207,7 +207,7 @@ test('AUDIT CAPTAIN\'S SEA S5/D5: under false colours she passes for the merchan
   assert.equal(xt.name, etherShipNames(trader, seed).name, 'an Isles trader\'s name');
   aimAt(v, x);
   const xc = v.host.glass(0.1, { up: true });
-  assert.ok(xc.rows.some(([l, w]) => l === 'Colours' && w === `${ISLES_FLAG}' merchant colours`), JSON.stringify(xc.rows));
+  assert.ok(xc.rows.some(([l, w]) => l === 'Colours' && w === `${ISLES_FLAG}' merchant colors`), JSON.stringify(xc.rows));
   assert.ok(!CROWNS.some((c) => xc.rows.some(([, w]) => w.includes(c.name))), 'no Bay crown past the Veil');
 });
 
@@ -311,7 +311,7 @@ test('AUDIT CAPTAIN\'S SEA S11/S18/S22/S20: an unknown hull\'s glass title never
   assert.equal(glassCard({ hull: 2, hostile: true, distance: 500, speed: 0 }, KNOW.hull).tone, 'unknown');
   assert.deepEqual([0, 1, 2, 3, 7, 12].map(handsWords), ['no hands', 'a hand', 'a hand or two', 'about 5 hands', 'about 5 hands', 'about 10 hands']);
   assert.equal(hullWord(2), 'two-master');
-  assert.deepEqual([cargoWords(0), cargoWords(-1), cargoWords(1), cargoWords(9)], ['riding high - hold empty', 'riding high - hold empty', 'riding high - a light hold', 'riding deep - a rich hold']);
+  assert.deepEqual([cargoWords(0), cargoWords(-1), cargoWords(1), cargoWords(9)], ['riding high - hold empty', 'riding high - hold empty', 'riding high, a light hold', 'riding deep, a rich hold']);
   const s = await sea({ hull: 2 });
   const e = spawn(s, 'merchantCoaster', 400, Math.PI / 2);
   s.run(0.2);
@@ -398,8 +398,8 @@ test('AUDIT CAPTAIN\'S SEA S19: the glass holds her by her extent as she lies to
 
 test('AUDIT CAPTAIN\'S SEA S21: the black flag said as she is known to me - the trader\'s name only while her colours held, her own once seen through; "is a pirate" said only where she is seen (mutants: the colours\' arm, the studied arm, the sight gate)', () => {
   const src = rd('src/scenes/naval/navalHost.js');
-  assert.match(src, /deps\.say\?\.\(was === KNOW\.colours \? `False colours! \$\{disguiseOf\(e\)\?\.name \?\? 'The merchantman'\} runs up the black flag!` : was >= KNOW\.studied \? `\$\{s\.names\?\.name \?\? 'It'\} runs up the black flag!` : `\$\{withArticle\(hullWord\(s\.hull\)\)\} runs up the black flag!`, 4\);/);
-  assert.match(src, /if \(held > 0 \|\| dist <= Math\.max\(reach\.eye, reach\.lookout\)\) deps\.mid\?\.\(`False colours! \$\{s\.names\?\.name \?\? 'It'\} is a pirate\.`, 4\);/);
+  assert.match(src, /deps\.say\?\.\(was === KNOW\.colours \? `False colors! \$\{disguiseOf\(e\)\?\.name \?\? 'The merchantman'\} runs up the black flag!` : was >= KNOW\.studied \? `\$\{s\.names\?\.name \?\? 'It'\} runs up the black flag!` : `\$\{withArticle\(hullWord\(s\.hull\)\)\} runs up the black flag!`, 4\);/);
+  assert.match(src, /if \(held > 0 \|\| dist <= Math\.max\(reach\.eye, reach\.lookout\)\) deps\.mid\?\.\(`False colors! \$\{s\.names\?\.name \?\? 'It'\} is a pirate\.`, 4\);/);
 });
 
 test('AUDIT CAPTAIN\'S SEA S24: an unknown hull\'s hurts are no more read than her colours - GLASS-SPOT (PIN MOVED): she gives no card at all, where her card carried no bars; made out, her bar as her tag\'s (mutants: the HUD\'s)', async () => {
@@ -466,7 +466,7 @@ test('AUDIT CAPTAIN\'S SEA G2/P7: THE SWITCH SPLIT - the sea stands in every gam
   const core = w.slice(w.indexOf('  async function _teleportToPixel('));
   const land = core.indexOf('    const unstreamed = _streamedLanding(px, py);\n    if (unstreamed) { px = unstreamed.px; py = unstreamed.py; localPos = null; resolveArrival = null; }');
   assert.ok(land > core.indexOf('climbFeel.reset();') && land < core.indexOf('if (modEvent == null && !resolveArrival) csaPreJump();') && land < core.indexOf('state.init(px, py)'), 'after the resets, before the helm and the build');
-  assert.match(w, /if \(_unstreamedLanding\) \{\n\s+townTalk\.say\(_unstreamedLanding === 'ether' \? `\$\{ETHER_SEA_TITLE\} is closed in this game/);   // PIN MOVED (ELTHERIC): the sea's name its one home's
+  assert.match(w, /if \(_unstreamedLanding\) \{\n\s+townTalk\.say\(_unstreamedLanding === 'ether' \? `\$\{ETHER_SEA_TITLE\} is closed\. You wake in the Bay's waters/);   // PIN MOVED (ELTHERIC): the sea's name its one home's
   const { crossingTarget } = await import('../../../src/systems/naval/etherCrossing.js');
   const { HOME_WATERS } = await import('../../../src/world/ethericSea.js');
   assert.deepEqual(crossingTarget('home', { px: 8000, py: -5000 }), { px: HOME_WATERS.px, py: HOME_WATERS.py }, 'never a way out in the sea itself');
@@ -751,7 +751,7 @@ test('AUDIT CAPTAIN\'S SEA X2/X9: Yes is the question as it stands NOW (a load, 
   c.w.px = 150; c.w.py = 300; c.step();
   assert.equal(c.log.at(-1), 'asked', 'asked afresh in its own waters');
   c.w.passengers = 1; c.w.overlay.answer(true);
-  assert.match(c.log.at(-1), /no place for passengers/, 'a guest aboard since: refused');
+  assert.match(c.log.at(-1), /Passengers can't cross the Veil/, 'a guest aboard since: refused');
   c.w.passengers = 0;
   // another helm, no helm, the world moving, a party's arrival: each a stale question
   const { CROSS_STALE } = await import('../../../src/systems/naval/etherCrossing.js');
@@ -1037,7 +1037,7 @@ test('AUDIT CAPTAIN\'S SEA D1: a strand\'s casks float once - out of its reach a
   w.sites = []; s.run(1.2);
   w.sites = [site]; s.run(1.2);
   assert.equal(casks().length, 3, 'the same three afloat');
-  assert.equal(s.log.say.filter((t) => /pulls in to the strand/.test(t)).length, 1, 'said once');
+  assert.equal(s.log.say.filter((t) => /Your boat goes ashore and comes back with its haul/.test(t)).length, 1, 'said once');
   // bare from its FIRST cask hauled - one hauled days after never pushes the strand's day on
   const { createEtherHost, STRAND_SITE } = await import('../../../src/scenes/etherHost.js');
   const { createCaptainLedger } = await import('../../../src/systems/naval/captainLedger.js');
@@ -1223,7 +1223,7 @@ test('AUDIT CAPTAIN\'S SEA D10: the Ninefold Hunger boards, and boards again - h
   };
   const crew = e.ship.damage.crew;
   throwBack();
-  assert.ok(s.log.mid.includes('The boarders are thrown back - and Ninefold Hunger sends more over the rail!'), s.log.mid.join(' | '));
+  assert.ok(s.log.mid.includes('The boarders are thrown back, but Ninefold Hunger sends more over the rail!'), s.log.mid.join(' | '));
   assert.ok(Math.abs(e.ship.damage.crew - crew / 2) < 1e-6, 'half her hands');
   assert.equal(e.ship.damage.state, 'afloat');
   assert.equal(s.host.boarding?.kind, 'repel', 'the second wave at once, from where she lies');
@@ -1551,7 +1551,7 @@ test('AUDIT CAPTAIN\'S SEA B6/B8/B10: a chart\'s port drawn again till one has o
   assert.ok(office.raiseCache(id) > 0);
   const again = office.readChart(mintChart(5));
   assert.equal(L.charts().length, 0, 'marked nothing');
-  assert.match(again.text, /raised long since/);
+  assert.match(again.text, /raised long ago\./);
   // PIN MOVED (FIELD BUGS 2026-10-14 INLAND-PORTS, Mac: "Fix harbour seaAt too"): the office's sea is the open sea, and
   // B10's edge - past the map only where the land beyond the Bay stands - is the open sea's own (run by
   // test/systems/naval/fb1014_inlandports.test.js)
@@ -1577,9 +1577,9 @@ test('AUDIT CAPTAIN\'S SEA B9/B11/B13: a cache\'s and a chart\'s things kept in 
   assert.equal(goodIn(hold, 'wine'), 4, 'stopped short of dead in the water');
   assert.ok(r.ok);
   const again = office.exchange({ cargo: hold, room }).buy('wine', 1);
-  assert.deepEqual([again.ok, again.text], [false, 'The ship can\'t carry any more. Any heavier and it couldn\'t move.']);
+  assert.deepEqual([again.ok, again.text], [false, 'The ship can\'t carry any more.']);
   const { exchangeText } = await import('../../../src/ui/naval/navalYardWindow.js');
-  assert.match(exchangeText({ port: 'Wayrest', weight: 40, room: 10, gold: 5, rows: [] }).lede, /room for 10 kg more before the ship can't move/);
+  assert.match(exchangeText({ port: 'Wayrest', weight: 40, room: 10, gold: 5, rows: [] }).lede, /room for 10 kg more\)/);
   const { contractLine } = await import('../../../src/systems/naval/harbourBoard.js');
   assert.equal(contractLine({ until: 30, title: 't', words: 'w', kind: 'hunt', done: 0, need: 2, pay: 5 }, 0).left, '1 hour left');
   // Come Sail Away's own reckoning, read

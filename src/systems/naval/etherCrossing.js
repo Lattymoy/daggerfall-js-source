@@ -53,21 +53,21 @@ export function crossingTarget(way, from = null) {
 export function crossingRows(way, { days = CROSS_DAYS } = {}) {
   const time = `${days} ${days === 1 ? 'day' : 'days'}`;
   return way === 'out'
-    ? ['The Abecean runs empty to every horizon, and the stars', 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time} - your ship,`, 'its crew and hold go with you)']
-    : ['Ahead the Veil thins, and through it, faint as a memory,', 'lie the grey waters of the Iliac Bay.', '', `Set a course for home? (${time})`];
+    ? ['The Abecean runs empty to every horizon, and the stars', 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time}. Your ship,`, 'its crew and hold go with you.)']
+    : ['Ahead the Veil thins, and through it, faint as a memory,', 'lie the gray waters of the Iliac Bay.', '', `Set a course for home? (${time})`];
 }
 /** What the screen says at the landfall. */
 export const crossingWords = (way) => (way === 'out'
-  ? `Three days out of sight of land - and then the stars came down to meet the sea. You have crossed into ${ETHER_SEA_NAME}. Veilhaven lies ahead.`
-  : 'The Veil closes astern, and the air smells of salt and tar again. The Iliac Bay - home.');
+  ? `Three days out of sight of land, and then the stars came down to meet the sea. You have crossed into ${ETHER_SEA_NAME}. Veilhaven lies ahead.`
+  : 'The Veil closes astern, and the air smells of salt and tar again. The Iliac Bay, and home.');
 /** Why a crossing is not asked (said once in those waters; AUDIT CAPTAIN'S SEA X1: asked as soon as the deck is clear,
  *  as the words promise - the refusal once marked the way asked, and the question never came back in those waters). */
 export const CROSS_REFUSED = Object.freeze({
-  passengers: 'The Veil is no place for passengers - the crossing waits until your deck is your own.',
+  passengers: 'Passengers can\'t cross the Veil. The crossing waits until no one else is aboard.',
   hostile: 'Not with an enemy at your heels.',
 });
 /** AUDIT CAPTAIN'S SEA X2: a Yes to a question the waters no longer ask (a load, a new helm, waters left) - said, and no
  *  voyage. */
-export const CROSS_STALE = 'The moment has passed - the crossing is asked again in its own waters.';
+export const CROSS_STALE = 'The moment has passed. Return to the crossing waters to be asked again.';
 /** AUDIT CAPTAIN'S SEA X9: a voyage that could not be made - the ship and her captain where they set out. */
 export const CROSS_FAILED = 'The crossing failed. You are back where you started.';

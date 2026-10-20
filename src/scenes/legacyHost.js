@@ -65,13 +65,13 @@ export const BORN_REFLEXES = 2;
 
 /** The words. One home, so the windows and the HUD say one thing. */
 export const LEGACY_TEXT = Object.freeze({
-  founded: (sur, model) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} is founded - ${model === MODELS.bloodline ? 'a Bloodline: a death is final' : 'an Enduring line: a death costs years'}.`,   // LEGACY-NAME: named at its seat, or not yet
+  founded: (sur, model) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} is founded as ${model === MODELS.bloodline ? 'a Bloodline, where every death is final' : 'an Enduring line, where a death costs years'}.`,   // LEGACY-NAME: named at its seat, or not yet
   seat: (loc) => `${loc} is your family's seat.`,
   // FAMILY-SEAT (FIELD BUGS 2026-10-07b): the seat moved where the one played stands (the House page)
   seatMoved: (loc) => `The house moves its seat: ${loc} is your family's seat.`,
-  seatNowhere: 'Stand in another town - its streets or one of its buildings - or at a home of the house\'s own, to make it the family\'s seat.',   // AUDIT FB1007b S5: and the House page's hint; FB1012d SEAT-HOME: a farm's home too
+  seatNowhere: 'To move the family seat, stand anywhere in another town, or at a home your family owns.',   // AUDIT FB1007b S5: and the House page's hint; FB1012d SEAT-HOME: a farm's home too
   named: (sur) => `Your house takes its seat's name: the house of ${houseWord(sur)}.`,   // LEGACY-NAME: a house founded nameless, named
-  elder: (name, age) => `${name} is ${age} - an elder of the house now. The years ahead are fewer than those behind.`,
+  elder: (name, age) => `${name} is ${age} and now an elder of the house. The years ahead are fewer than those behind.`,
   born: (name, loc) => `${name} takes up the family's name in ${loc}.`,
   hunted: (foe, given) => `${foe}, who ended ${given}, will come for the house's heir.`,
   lore: (given, from, to) => `Lore surname change: ${given} chose ${to} instead of ${from}.`,   // RandomizeCharacterData's own HUD line
@@ -82,14 +82,14 @@ export const LEGACY_TEXT = Object.freeze({
   retiredLoad: (name) => `${name} has passed the mantle on. Their story is the past.`,
   fight: 'Not while you are in a fight.',
   // LEGACY7: the realm's tombstone refused or unheard - the fall stands on the record; the realm is asked again
-  unTombed: 'The realm did not hear of this death yet. It will be told again before anyone carries on.',
+  unTombed: 'The realm has not recorded this death yet. It will try again before anyone carries on.',
   pending: 'The house waits on its Succession.',
-  notSaved: 'Your journey could not be saved here - not now.',
+  notSaved: 'Your game could not be saved here right now.',
   estate: (n) => `The estate left you a letter of credit for ${n} gold.`,
   bequest: (item) => `Your elder's bequest is yours: ${item}.`,
   // PERMADEATH-HOUSES: a house of the line's dead, taken up by whoever carries the line - or waiting on a bank's one deed a region
   deed: (loc, given) => `${given}'s house${loc ? ` in ${loc}` : ''} passes to you. Its deed is yours now.`,
-  deedWaits: (loc, given) => `${given}'s house${loc ? ` in ${loc}` : ''} waits for you - you keep a house in that region already, and the bank deeds one a region. Sell yours there to take it up.`,
+  deedWaits: (loc, given) => `${given}'s house${loc ? ` in ${loc}` : ''} is waiting for you, but you already own a house in that region and the bank allows one per region. Sell yours there to take it.`,
   remainsName: (name) => `The remains of ${name}`,   // FB1013d: their own name - the map's ring and the body's plaque, one home
   remainsFound: (name) => `You have found the remains of ${name}.`,
   remainsTaken: (name) => `You carry the remains of ${name}. Lay them to rest at a temple, or at the family's seat.`,
@@ -102,17 +102,17 @@ export const LEGACY_TEXT = Object.freeze({
   kinSlain: (name) => `${name} is dead by your hand. The house will remember it.`,   // LEGACY-HOME
   kinKilled: (name) => `${name} has been killed. The house mourns.`,   // a beast of the street (WATCH-PROTECTS)
   playAs: (name) => `Play as ${name}`,
-  notNow: 'Not now - the house has another matter to settle first.',
-  notStored: 'Your family\'s record could not be written - the browser\'s storage refused it. Free some space (old saves); it will be tried again.',   // AUDIT LEGACY II P1
-  notBorn: (given) => `${given}'s first day could not be saved here. Reload to begin it again - nothing of the house is lost.`,   // AUDIT LEGACY II A2
+  notNow: 'Not now. The house has another matter to settle first.',
+  notStored: 'Your family\'s record could not be saved because the browser\'s storage refused it. Delete some old saves to free space, and it will be tried again.',   // AUDIT LEGACY II P1
+  notBorn: (given) => `${given}'s first day could not be saved here. Reload to start it again. Nothing of the house is lost.`,   // AUDIT LEGACY II A2
   claimed: (name, by) => `${by} has taken up the search for ${name}'s remains.`,   // AUDIT LEGACY II H5
   retiredKin: (given) => `${given} has passed the mantle on, and keeps the house now.`,
-  minor: (given) => `${given} is a child yet - they come of age when the mantle passes to them.`,   // LEGACY5
-  spouseKin: (given) => `${given} is wed into the house - not of the blood to carry it.`,   // LEGACY5
+  minor: (given) => `${given} is still a child. They come of age when the mantle passes to them.`,   // LEGACY5
+  spouseKin: (given) => `${given} married into the house and cannot carry the line.`,   // LEGACY5
   // AUDIT LEGACY III A1: a betrothed townsperson another member wed first - the courtship is over
   wedElsewhere: (name) => `${name} is wed into the house already. Your betrothal is over.`,
   // AUDIT LEGACY III O2/P1: online, the realm would not take the line's record (systems/legacy/realmLine.js onRefused)
-  lineRefused: (why) => `The realm would not keep your family's record. ${why} This device keeps it.`,
+  lineRefused: (why) => `The realm refused your family's record. ${why} It is kept on this device instead.`,
   // REZ-BLOODLINE AUDIT R1: a party's Resurrect the realm would not take (its window closed, another of the account's
   // characters in play) or never heard - the fallen's own words; the caster's are the fallen's pose (`fg`)
   raiseRefused: () => t('legacy.rez.refused', 'The realm will not let you rise. Your death stands.'),
@@ -899,9 +899,9 @@ export function createLegacyHost(deps) {
     return openRemains().map((r) => {
       const where = r.place?.loc ? `${r.place.loc}${r.place.region ? `, ${r.place.region}` : ''}` : (r.place?.region || 'the Bay');
       const lines = r.state === 'lying'
-        ? [`${r.name} fell at ${where}${r.place?.mode === 'dungeon' ? ', deep inside' : ''}. Their remains lie there still - marked on your map.`,
+        ? [`${r.name} fell at ${where}${r.place?.mode === 'dungeon' ? ', deep inside' : ''}. Their remains still lie there, marked on your map.`,
           ...(r.killer ? [`It was ${r.killer} that struck them down.`] : []),
-          ...(r.items.some((it) => isHeirloom(it)) ? ['Something of theirs lies with them - a piece the house will want back.'] : []),
+          ...(r.items.some((it) => isHeirloom(it)) ? ['Something of theirs lies with them, a piece the house will want back.'] : []),
           'Find them, and carry them home.']
         : [`You carry the remains of ${r.name}.`, 'Lay them to rest at any temple, or at the family’s seat, and their blessing will stay with you.'];
       return { id: `${LEGACY_QUEST_PREFIX}${r.id}`, name: `The Bones of ${r.name}`, questName: 'LEGACY', legacy: true, messages: [lines] };
@@ -920,11 +920,20 @@ export function createLegacyHost(deps) {
    *  taken from (readyList), for the world host to stand as a body where it lies (scenes/legacyRemainsStand.js). None for
    *  the past, a waiting Succession, a page not the one played's, or with the switch off - the slow tick's own guards. */
   function remainsToStand() {
+    return remainsLying().map((r) => { readyList(r); return r; });
+  }
+  /** The rows remainsToStand stands, before their lists are made ready - the slow tick's own guards, one home. */
+  function remainsLying() {
     if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];
     const p = current();
     if (!p || !isAlive(p) || !playedHere(p)) return [];
-    return openRemains().filter((r) => r.state === 'lying' && r.place).map((r) => { readyList(r); return r; });
+    return openRemains().filter((r) => r.state === 'lying' && r.place);
   }
+  /** HEIR-WHOLE (FIELD BUGS 2026-10-19f): WHERE THE LINE'S REMAINS LIE, for the instance door (scenes/instanceDoor.js) - the
+   *  rows remainsToStand would stand, as `{ line, id, place }`: the line's id and the row's, which name the heir's own
+   *  instance of a dungeon they lie in whole (systems/instancePlaces.js remainsWholeAt, remainsInstanceEpoch). A read: no
+   *  list is made ready, nothing is claimed. */
+  const remainsWhere = () => remainsLying().map((r) => ({ line: family.id, id: r.id, place: r.place }));
 
   /**
    * THE SUCCESSION'S CHOICE: `{ personId }` a living member, or `{ newborn: true }` a child of the fallen - the waiting
@@ -1581,6 +1590,7 @@ export function createLegacyHost(deps) {
     questLogEntries,
     mapMarks,
     remainsToStand,
+    remainsWhere,
     layToRest,
     takeBorn,
     bornResult,

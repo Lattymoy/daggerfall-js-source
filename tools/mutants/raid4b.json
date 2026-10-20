@@ -236,7 +236,7 @@
   {
     "name": "RAID4b-mark-unsaid",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  say('No Escape - the nearest of them is marked.');\n  sound('mark');\n",
+    "old": "  say('No Escape! The nearest enemy is marked.');\n  sound('mark');\n",
     "new": "",
     "tests": [
       "test/systems/raid4b_sets.test.js"

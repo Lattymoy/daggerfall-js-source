@@ -62,7 +62,7 @@
   {
     "name": "OWED-PACE-old-words",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "'Reputation {have} of {need} ({owed} more already earned - it arrives at most {max} a real day)'",
+    "old": "'Reputation {have} of {need} ({owed} more already earned, arriving at most {max} a real day)'",
     "new": "'Reputation {have} of {need} ({owed} more to come)'",
     "tests": [
       "test/systems/guild/fb1016c_owedpace.test.js",
@@ -235,7 +235,7 @@
   {
     "name": "QUEST-ELSEWHERE-relaid-never",
     "file": "src/scenes/instanceDoor.js",
-    "old": "relaid: dungeonSizeFor(dfLocation, { online: true }) !== 'full' };",
+    "old": "relaid: builtSizeFor(dfLocation, { online: true }) !== 'full' };",
     "new": "relaid: false };",
     "tests": [
       "test/systems/quest/instances3_door.test.js"

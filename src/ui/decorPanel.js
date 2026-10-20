@@ -310,7 +310,7 @@ export function decorWhyNot({ price, ready, gold, count, cap, yard = false, hall
 }
 
 /** WHY A PLACED PIECE CANNOT BE REMOVED, or stop holding things: what it holds would go with it. */
-export const DECOR_HOLDS_LINE = 'It holds things - empty it first.';
+export const DECOR_HOLDS_LINE = 'It holds things. Empty it first.';
 /** BASE-HIDE: what a built-in piece's row says under its name - in the room or taken out, and how far it stands. */
 export const decorBaseSub = ({ hidden, dist }) => `${hidden ? 'Taken out' : 'In the room'}${Number.isFinite(dist) ? ` - ${Math.max(0, Math.round(dist))} m away` : ''}`;
 /** BASE-HIDE: the built-in view's line when the room has no furniture of its own to take out. */
@@ -324,7 +324,7 @@ export const decorBackTo = (piece) => (piece?.item?.g === DECOR_FURNITURE_GROUP 
 /** What one placed piece's row says under its name. DECOR2a: one's own item says so - it cost nothing and goes back
  *  to the pack (DECOR2b: or, furniture, to "Your things"). */
 export function decorPlacedSub({ piece, holds }) {
-  const first = piece.item ? `yours - back to ${decorBackTo(piece)} when taken down` : `placed for ${piece.paid} gold`;
+  const first = piece.item ? `yours, back to ${decorBackTo(piece)} when taken down` : `placed for ${piece.paid} gold`;
   return [first, piece.storage ? (holds ? 'holds things (not empty)' : 'holds things') : null, piece.light ? 'gives light' : null,
     piece.station ? DECOR_STATION_NAMES[piece.station].toLowerCase() : null]   // HOME-STATIONS
     .filter(Boolean).join(' - ');
@@ -337,30 +337,30 @@ export function decorStationWords(piece, offered, armed = false) {
   const gold = `${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold`;
   // AUDIT HOME-STATIONS S4: unmaking is asked twice - the one button flips in place, and a double click that made a
   // station unmade it on the next frame, the licence gone
-  if (piece?.station === kind) return armed ? { pick, act: 'Press again to unmake - nothing back', what: 'station:none' } : { pick, act: 'Unmake station (nothing back)', what: 'arm' };
+  if (piece?.station === kind) return armed ? { pick, act: 'Press again to destroy it. Nothing is returned', what: 'station:none' } : { pick, act: 'Unmake station (nothing back)', what: 'arm' };
   // AUDIT HOME-STATIONS S6: a change of craft names that the old licence goes
   if (piece?.station) return { pick, act: `Change station - ${gold} (no refund)`, what: `station:${kind}` };
   return { pick, act: `Make station - ${gold}`, what: `station:${kind}` };
 }
 /** DECOR2a: what an item in the pack says under its name in the "Your things" list. */
-export const DECOR_OWN_LINE = 'yours - free to set down, and back to your pack when taken down';
+export const DECOR_OWN_LINE = 'yours, free to set down, and back to your pack when taken down';
 /** DECOR2c: and a weapon or a piece of armour there (ARMOR-MOUNT) - it hangs on a wall. */
-export const DECOR_MOUNT_LINE = 'yours - free to hang on a wall, and back to your pack when taken down';
+export const DECOR_MOUNT_LINE = 'yours, free to hang on a wall, and back to your pack when taken down';
 /** The line an own entry says - a delivered piece's, a mount's, or a thing's from the pack. */
 const ownLine = (e) => (e.furnishing ? decorFurnishLine(e) : e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);
 /** DECOR2b: what a piece of delivered furniture says there - never carried; set down free as the piece of its kinds the
  *  owner chooses (or, a pillow, as itself), and back here when taken down. */
 export function decorFurnishLine(e) {
   const as = e?.looks ? ` as any of the ${e.looks.map((k) => DECOR_KINDS[k].toLowerCase()).join(' or ')} you choose` : '';
-  return `delivered - free to set down${as}, and back here when taken down`;
+  return `delivered, free to set down${as}, and back here when taken down`;
 }
 /** DECOR2b: the look view's words - its button in "Your things", and its line while no look is chosen. */
 export const DECOR_LOOK_BUTTON = 'Choose its look';
-export const DECOR_LOOK_LINE = 'Choose how it looks - any of these, free.';
+export const DECOR_LOOK_LINE = 'Choose how it looks. Any of these costs nothing.';
 
 /** HOME-DOORS: what a door says beside its line - it hangs in a doorway, and how many this house has free (null: still
  *  being found). */
-export const decorDoorLine = (n) => (n == null ? 'hangs in a doorway - finding them...' : n === 0 ? 'hangs in a doorway - this house has none free'
+export const decorDoorLine = (n) => (n == null ? 'hangs in a doorway. Finding the doorways...' : n === 0 ? 'hangs in a doorway. This house has none free'
   : `hangs in a doorway - ${n} free here, marked while you place it`);
 /** HOME-LOOK: what a part's choice reads as - its set and climate, its climate and its number, or the town's own. */
 export function decorLookText(part, choice) {
@@ -374,7 +374,7 @@ export const decorLookStart = (part) => (part === 'walls' || part === 'windows' 
  *  (the painter's door's `records`). */
 export const DECOR_LOOK_STYLES = 6;
 /** HOME-RENT: what the rooms view says with no room to offer - a house of one room, or rooms still being found. */
-export const DECOR_RENT_ONE_ROOM = 'A house of one room has none to rent out. Hang a door in a doorway to part it into two.';
+export const DECOR_RENT_ONE_ROOM = 'A one-room house has no room to rent out. Hang a door in a doorway to split it into two.';
 export const DECOR_RENT_FINDING = 'Finding the rooms of your house...';
 /** HOME-RENT: the rent waiting to be collected, as the rooms view says it. */
 export const decorRentDueText = (due) => (due > 0 ? `Collect rent: ${due} gold` : 'No rent to collect');
@@ -489,7 +489,7 @@ export function createDecorPanel({
   const search = el('input', 'dfdecor-search');
   search.type = 'search';
   search.setAttribute('placeholder', t('decor.panel.search', 'Search by name'));
-  search.setAttribute('aria-label', 'Search the catalogue');
+  search.setAttribute('aria-label', 'Search the catalog');
   const kindChips = el('div', 'dfdecor-chips dfdecor-kinds');
   const sizeChips = el('div', 'dfdecor-chips');
   const hasChips = el('div', 'dfdecor-chips dfdecor-has');
@@ -753,7 +753,7 @@ export function createDecorPanel({
   function drawTabs() {
     if (card.dataset.yard !== (view?.yard ? '1' : '0')) card.dataset.yard = view?.yard ? '1' : '0';
     if (view?.yard) {   // HOME-YARD: the catalogue, the yard's pieces, and (HOME-LOOK) the house outside
-      tabs.replaceChildren(chip('Catalogue', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this yard (${(view.placed ?? []).length})`, mode === 'room', () => setMode('room'), 'nature'),
+      tabs.replaceChildren(chip('Catalog', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this yard (${(view.placed ?? []).length})`, mode === 'room', () => setMode('room'), 'nature'),
         ...(view.paint ? [chip('Exterior', mode === 'paint', () => setMode('paint'), 'paint')] : []));   // MENU-ORDER: each view's tab its picture
       roomsBar.replaceChildren();
       return;
@@ -761,7 +761,7 @@ export function createDecorPanel({
     const n = roomed(view?.placed ?? []).length;
     const m = view?.own?.length ?? 0;
     const k = roomed(view?.base ?? []).length;
-    tabs.replaceChildren(chip('Catalogue', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'room'),
+    tabs.replaceChildren(chip('Catalog', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'room'),
       chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own'), 'own'),   // DECOR2b: a look is chosen within them
       chip(`Built in (${k})`, mode === 'base', () => setMode('base'), 'furniture'),   // BASE-HIDE: the room's own furniture
       ...(view?.rent ? [chip(`Rooms to rent (${(view.rent.rows ?? []).filter((r) => r.offer).length})`, mode === 'rent', () => setMode('rent'), 'rent')] : []),   // HOME-RENT
@@ -884,7 +884,7 @@ export function createDecorPanel({
   function paintCaravanSide() {
     const row = view.paint.caravan.find((x) => x.part === paintPart) ?? null;
     pickName.textContent = row ? row.name : 'Choose a part of your caravan';
-    pickLine.textContent = row ? row.choices[row.current] ?? '' : 'Walls, floor and ceiling - each can wear another paint.';
+    pickLine.textContent = row ? row.choices[row.current] ?? '' : 'Walls, floor and ceiling can each be painted.';
     pickPrice.textContent = 'Free';
     paintClimates.replaceChildren();
     climateLabel.textContent = '';
@@ -900,7 +900,7 @@ export function createDecorPanel({
     const part = paintPart;
     const choice = part ? paintLook?.[part] ?? null : null;
     pickName.textContent = part ? HOME_LOOK_PART_NAMES[part] : 'Choose a part of your house';
-    pickLine.textContent = part ? decorLookText(part, choice) : 'Walls, windows, roof and door - each can wear another of the original game\'s own looks.';
+    pickLine.textContent = part ? decorLookText(part, choice) : 'Walls, windows, roof and door can each take another look from the original game.';
     pickPrice.textContent = 'Free';
     const set = (next) => { paintLook = { ...paintLook, [part]: next }; tryLook(); };
     const start = () => choice ?? decorLookStart(part);
@@ -928,7 +928,7 @@ export function createDecorPanel({
     const url = shape ? thumbs.get(thumbKeyOf(shape)) : null;
     if (url) previewImg.setAttribute('src', url); else previewImg.removeAttribute?.('src');
     if (preview.dataset.model !== '0') preview.dataset.model = '0';
-    pickWhy.textContent = differs ? 'Tried on your house - paint it to keep it, for everyone to see.' : '';
+    pickWhy.textContent = differs ? 'Shown on your house. Paint it to keep it, for everyone to see.' : '';
   }
   /** HOME-RENT: one of the house's rooms - its name, what it is offered at or who rents it, its price. */
   function rentRow(it) {
@@ -1068,7 +1068,7 @@ export function createDecorPanel({
       redraw();
       return;
     } else if (!entries) {
-      list.replaceChildren(el('div', 'dfdecor-empty', 'Reading the catalogue...'));
+      list.replaceChildren(el('div', 'dfdecor-empty', 'Reading the catalog...'));
     } else {
       const look = mode === 'look';   // DECOR2b: the furniture's kinds alone, and neither holding nor light asked
       const shownEntries = look
@@ -1154,7 +1154,7 @@ export function createDecorPanel({
     } else {
       pickName.textContent = it.name;
       pickLine.textContent = decorPlacedSub(it);
-      pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? " to the guild's treasury" : ''}${it.piece.station ? ' (the station licence is not)' : ''}`;   // AUDIT HOME-STATIONS S6
+      pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? " to the guild's treasury" : ''}${it.piece.station ? ' (the station license is not)' : ''}`;   // AUDIT HOME-STATIONS S6
     }
     lightBtn.textContent = it?.piece.light ? 'Light: on' : 'Light: off';
     storeBtn.textContent = it?.piece.storage ? 'Holds things: yes' : 'Holds things: no';
@@ -1204,7 +1204,7 @@ export function createDecorPanel({
     const rows = roomed(view?.base ?? []);   // DECOR-ROOMS
     pickName.textContent = it ? it.name : rows.length ? 'Choose a piece of this room\'s own furniture' : DECOR_BASE_EMPTY;
     pickLine.textContent = it ? decorBaseSub(it) : '';
-    pickPrice.textContent = it || rows.length ? 'Free - taken out or put back' : '';
+    pickPrice.textContent = it || rows.length ? 'Free to take out or put back' : '';
     baseBtn.textContent = it?.hidden ? 'Put back' : 'Take out';
     baseBtn.dataset.dficon = it?.hidden ? 'put-back' : 'take-out';   // MENU-ORDER
     baseBtn.disabled = !it || (!it.hidden && it.holds);
@@ -1219,7 +1219,7 @@ export function createDecorPanel({
     if (footCount.textContent !== c) footCount.textContent = c;
     const g = `${view.gold} gold to spend (purse and bank)`;
     if (footGold.textContent !== g) footGold.textContent = g;
-    const s = view.ready ? '' : `Reading the catalogue - ${Math.floor((view.progress ?? 0) * 100)}%`;
+    const s = view.ready ? '' : `Reading the catalog - ${Math.floor((view.progress ?? 0) * 100)}%`;
     if (footStatus.textContent !== s) footStatus.textContent = s;
     const w = view.where ?? '';
     if (where.textContent !== w) where.textContent = w;
@@ -1332,9 +1332,9 @@ const DECOR_BAR_ICONS = Object.freeze({ place: 'place', turnLeft: 'turn-left', t
 /** MENU-ORDER: THE BAR'S LEGEND - each key's name and what presses it, a pair a line (a finger's two: the stick and
  *  Fly, and the look). DECOR-FIGURE: `sized` false tells no Size key. */
 export function decorBarKeys(touch, sized = true) {
-  if (touch) return [['Fly', t('decor.bar.keys.flyTouch', 'the stick, and hold Fly up or Fly down')], ['Look', t('decor.bar.keys.lookTouch', 'drag - the piece stands where you look')]];
+  if (touch) return [['Fly', t('decor.bar.keys.flyTouch', 'the stick, and hold Fly up or Fly down')], ['Look', t('decor.bar.keys.lookTouch', 'drag: the piece stands where you look')]];
   return [['Fly', t('decor.bar.keys.fly', 'walk keys, Jump up, Crouch down, Run faster')], ['Look', t('decor.bar.keys.look', 'mouse')],
-    ['Turn', t('decor.bar.keys.turn', 'wheel or Turn Left/Right (Shift: fine; a picture turned half round faces the other way)')], ['Raise/lower', t('decor.bar.keys.raise', 'Float Up/Down')],
+    ['Turn', t('decor.bar.keys.turn', 'wheel or Turn Left/Right (Shift for fine turns; turn a picture half round to flip it)')], ['Raise/lower', t('decor.bar.keys.raise', 'Float Up/Down')],
     ...(sized ? [['Size', '- and =']] : []), ['Grid', '/'], ['Place', t('decor.bar.keys.place', 'click or Interact')], ['Back', t('decor.bar.keys.back', 'right click or Escape')]];
 }
 

@@ -259,7 +259,15 @@ export function staticNpcName(data, { getFaction = null, nameBank = null } = {})
   // (:328). The string compare here was propping up the stale
   // staticNpcData above, which wrote 'female'/'male'; that one is gone
   // and this is the C# line.
-  return fullName(bank, data.gender);
+  const drawn = fullName(bank, data.gender);
+  // QUEST-NAME-ONE (a departure): a quest Person's stand answers to the
+  // Person's own name (systems/quest/person.js personOwnName, carried as
+  // `personName` by the stand's one builder) - the name its quest's
+  // words, journal and guide say. DFU re-draws it here, and the two meet
+  // only while nothing renamed the Person (the questlines' `ql name`)
+  // and both banks agree. The draw still runs, so the classic stream
+  // stands where DFU's GetDisplayName leaves it.
+  return data.personName || drawn;
 }
 
 /** L10N3e: StaticNPC.DisplayName as DFU SHOWS it. GetDisplayName reads

@@ -166,7 +166,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   // systems/chargen.js hitPointsPerLevelUp reads hitPointsModifier = floor(endurance / 10) - 5.
   // LEVEL-EVEN (systems/levelEven.js): online the health floor reads Endurance as it stands, so every level is lifted -
   // AUDIT SUGGESTIONS-1019 L6-5: for a body under the floor; a body that rolled above it keeps its rolls and gains nothing past
-  get endurance() { return isOnlinePage() ? t('levelup.blurb.enduranceOnline', 'Raises the health you gain each level. Online, your health never falls below your class\'s average for every level at the Endurance you have now.') : t('levelup.blurb.endurance', 'Raises the health you gain each level from now on.'); },
+  get endurance() { return isOnlinePage() ? t('levelup.blurb.enduranceOnline', 'Raises the health you gain each level. Online, your health is never below your class\'s average for your level at your current Endurance.') : t('levelup.blurb.endurance', 'Raises the health you gain each level from now on.'); },
   // systems/shopStock.js:"export function calculateTradePrice" haggles Mercantile and Personality against the
   // merchant's; scenes/townTalk.js:"personality: playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50,"
   // is the talk reaction's personality / 5; systems/court.js:"let chance = legalRep" is the Not Guilty plea's.
@@ -617,7 +617,7 @@ export const ROLE_IDLE = 'idle';            // a minor that is not the best, or 
 export const ROLE_NOTE = Object.freeze({
   get [ROLE_COUNTS]() { return t('levelup.role.counts', 'Every point counts toward your next level.'); },
   get [ROLE_DROPPED]() { return t('levelup.role.dropped', 'Your lowest major skill. It doesn\'t count toward your next level.'); },
-  get [ROLE_BEST]() { return t('levelup.role.best', 'Your highest minor skill - the only minor skill that counts toward your next level.'); },
+  get [ROLE_BEST]() { return t('levelup.role.best', 'Your highest minor skill, the only minor skill that counts toward your next level.'); },
   get [ROLE_IDLE]() { return t('levelup.role.idle', 'Doesn\'t count toward your next level.'); },
 });
 

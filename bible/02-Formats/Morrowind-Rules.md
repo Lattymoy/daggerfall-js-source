@@ -7000,7 +7000,10 @@ Slot_CarriedLeft at the Shield Bone (MW-D51) - so every number is the port's own
   bone's own frame once, so it follows the hip's walk), the ANCHOR is the part's top-centre (`hangAnchor`, over all
   its shapes, after the mirror and rule 14's offset - the ring a lantern's handle ends in on any Z-up mesh, wherever
   its author put the origin), and ROT is a rig-space 3x3 the owner writes each frame - plumb times the swing
-  (`systems/lanternSwing.js lanternSwingMatrix`). The rig space is the actor's own and the body only turns in yaw, so
+  (`systems/lanternSwing.js lanternSwingMatrix`). HT-WAIST-SIZE (2026-10-20): times the hang's SIZE about the anchor -
+  `v -> rot * size * (v - anchor) + hook` - set once at the bind to hang the lantern at a belt lantern's height
+  (`combat/fpArm.js hipLanternSize`, `systems/lanternSwing.js HIP_LANTERN_HEIGHT`; `hangAnchor` measures the part's
+  height beside its anchor); 1 where unset. Handheld-Torches.md HT-WAIST-SIZE. The rig space is the actor's own and the body only turns in yaw, so
   plumb there is plumb in the world. `bindPartsInto` carries `hang` onto the part's pieces and effects;
   `effectPlacement` places a hanging part's particle systems by the same affine.
 - **The hook**: `HIP_LANTERN_HOOK` = (14, 5, 9.5) off the pelvis - the RIGHT hip, clear of the one-handed scabbard

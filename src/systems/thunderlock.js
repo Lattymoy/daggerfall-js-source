@@ -338,7 +338,7 @@ registerLegendary({
   // Dwemer's own quarrel - they knelt to no god and no daedra (systems/loot/lootPowers.js's bane, on its own shots) - and,
   // a unique find of no family, where its codex row says it is found
   power: Object.freeze({ name: 'Dwemer Defiance', kind: 'bane', foes: FOE_FAMILIES.daedra, pct: 50,
-    brief: '+50% vs daedra and atronachs', text: 'Its shots deal +50% damage to the daedra, the atronachs, imps and gargoyles - the Dwemer knelt to none of them' }),
+    brief: '+50% vs daedra and atronachs', text: 'Its shots deal 50% more damage to daedra, atronachs, imps and gargoyles. The Dwemer knelt to none of them' }),
   hint: 'Said to turn up anywhere, once in a great while',
 });
 

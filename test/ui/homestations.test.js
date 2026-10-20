@@ -81,7 +81,7 @@ test('HOME-STATIONS the tool and the panel: a placed piece made a station for it
   btn(root, /^Unmake station/).fire('click');
   await settle();
   assert.equal(rig.standing[0].station, 'spells', 'one press arms');
-  btn(root, /^Press again to unmake/).fire('click');
+  btn(root, /^Press again to de/).fire('click');
   await settle();
   assert.equal(rig.standing[0].station, undefined);
   assert.equal(rig.w.credited.length, credited, 'the licence is not refunded');
@@ -96,7 +96,7 @@ test('HOME-STATIONS the tool and the panel: a placed piece made a station for it
   await settle();
   assert.equal(rig.standing[0].station, undefined);
   assert.equal(rig.w.paid.length, paidNow);
-  assert.match(rig.said.at(-1), /^Enchanting station: 200,000 gold, and you have not that much\.$/);
+  assert.match(rig.said.at(-1), /^Enchanting station: 200,000 gold, and you do not have that much\.$/);
   // a piece that holds things is no station
   root = choose(rig, chair.id);
   btn(root, /^Holds things/).fire('click');
@@ -105,7 +105,7 @@ test('HOME-STATIONS the tool and the panel: a placed piece made a station for it
   assert.equal(rig.standing[0].storage, true);
   assert.equal(btn(root, /^Make station/).disabled, true);
   assert.deepEqual(decorStationWords({ station: 'enchant' }, 'enchant'), { pick: 'Station: Enchanting >', act: 'Unmake station (nothing back)', what: 'arm' });
-  assert.deepEqual(decorStationWords({ station: 'enchant' }, 'enchant', true), { pick: 'Station: Enchanting >', act: 'Press again to unmake - nothing back', what: 'station:none' });
+  assert.deepEqual(decorStationWords({ station: 'enchant' }, 'enchant', true), { pick: 'Station: Enchanting >', act: 'Press again to destroy it. Nothing is returned', what: 'station:none' });
 });
 
 test('HOME-STATIONS an online home: the account service first - a station it keeps is paid after its answer; one whose service drops the craft (a service from before this) is said and paid nothing (mutants: paid before the answer; paid for a dropped craft)', async () => {
@@ -215,11 +215,11 @@ test('AUDIT HOME-STATIONS S3 + S6 + S9: the room\'s view repaints when a piece\'
   await settle();
   rig.frame({ overlayUp: true });   // the next frame hands the panel the room as it stands - no row chosen again
   assert.ok(btn(root, /^Unmake station/), 'the button says what the piece now is');
-  assert.match(one(root, 'dfdecor-pick-price').textContent, / back \(the station licence is not\)$/);
+  assert.match(one(root, 'dfdecor-pick-price').textContent, / back \(the station license is not\)$/);
   assert.equal(btn(root, /^Station:/).attrs['aria-label'], 'Station craft: Alchemy - press for the next');
   // unmade: no gold moves (the view's gold does not change it), and the view still repaints - the craft is its own
   btn(root, /^Unmake station/).fire('click');
-  btn(root, /^Press again to unmake/).fire('click');
+  btn(root, /^Press again to de/).fire('click');
   await settle();
   rig.frame({ overlayUp: true });
   assert.equal(rig.standing[0].station, undefined);

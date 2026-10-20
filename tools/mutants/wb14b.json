@@ -1,0 +1,215 @@
+[
+  {
+    "name": "WB14b-every-carrier-a-portent",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "  if (((n % 2) + 2) % 2 === 1) return null;   // every other carrier\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-a-portent-on-a-Legion-night",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "export const marksCarryPortent = (md) => !(Array.isArray(md) && md.includes('legion'));",
+    "new": "export const marksCarryPortent = (md) => true;",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-Captive-never-drawn",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "export const PORTENT_BAG = Object.freeze(['vanguard', 'vanguard', 'sunder', 'sunder', 'captive', 'dire']);",
+    "new": "export const PORTENT_BAG = Object.freeze(['vanguard', 'vanguard', 'sunder', 'sunder', 'sunder', 'dire']);",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-Dire-Breach-without-its-line",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "return (ok.length > 1 ? [gateDireLine(), ...lines] : lines).join(' ');",
+    "new": "return lines.join(' ');",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-post-without-them",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "${RITE_OMEN_LINE}${marks}${pt ? ` ${pt}` : ''}`,",
+    "new": "${RITE_OMEN_LINE}${marks}`,",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-portents-unsaid-in-the-chat",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "          if (pt) say(pt);\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-map-card-without-them",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "marksLineOf(c.t.day), ...(pt ? [pt] : [])]",
+    "new": "marksLineOf(c.t.day)]",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-card-row-missing",
+    "file": "src/ui/gate/gateMarksView.js",
+    "old": "  const portents = portentRowsOf(pt);   // WB14b",
+    "new": "  const portents = portentRowsOf(null);   // WB14b",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-Vanguard-arriving-in-his-court",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "root: has('vanguard') ? FLOOR.bridgehead : FLOOR.first,",
+    "new": "root: FLOOR.first,",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-Sundering-keeping-the-third-walkway",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (has('sunder')) walks.push(WALKWAY.rift); else walks.push(WALKWAY.third);\n",
+    "new": "  walks.push(WALKWAY.third);\n",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-Pen-on-no-night",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (has('captive')) { floors.push(FLOOR.pen); walks.push(WALKWAY.pen); }\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-a-hole-said-as-nothing",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "(_, i) => (Number.isFinite(a[i]) ? a[i] : null));",
+    "new": "(_, i) => (Number.isFinite(a[i]) ? a[i] : 0));",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-fight-forgetting-its-portents",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    pt: night,",
+    "new": "    pt: null,",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14b-the-state-silent-on-them",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    ...(f.pt ? { pt: f.pt } : {}),   // WB14b",
+    "new": "    ...({}),   // WB14b",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-telegraph-over-every-floor",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "floorKs = floor ? floor.ks ?? null : PLAN_PLAIN.floors;",
+    "new": "floorKs = floor ? floor.ks ?? null : null;",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-screen-court-a-plain-night-always",
+    "file": "src/world/gate/gateArena.js",
+    "old": "export const planOfDay = (day) => (Number.isSafeInteger(day) ? nightPlan(gatePortentsOf(day)) : PLAN_PLAIN);",
+    "new": "export const planOfDay = (day) => PLAN_PLAIN;",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-arriving-in-his-court-always",
+    "file": "src/world/gate/gateArena.js",
+    "old": "  const [x, z] = COURTS[plan.root] ?? COURTS[0];",
+    "new": "  const [x, z] = COURTS[0];",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "WB14b-the-resets-lost-behind-the-arrival",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    day = d; judged = noMark(); cued = noMark(); landed = noMark(); phaseHeard = 0; fellCued = false; wrathLanded = false;\n    arriveAt(d);",
+    "new": "    day = d;\n    arriveAt(d);",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-portents-a-pair-the-table-never-makes",
+    "file": "src/net/gate/gateMods.js",
+    "old": "if (ordered.length === 2 && !(ordered[0] === GATE_DIRE[0] && ordered[1] === GATE_DIRE[1])) return undefined;",
+    "new": "void 0;",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-portents-an-unknown-word",
+    "file": "src/net/gate/gateMods.js",
+    "old": "if (!pt.every((id) => typeof id === 'string' && PORTENT_BY_ID.has(id)) || new Set(pt).size !== pt.length) return undefined;",
+    "new": "if (new Set(pt).size !== pt.length) return undefined;",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-portents-tithe-every-night",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "gateRoll(day, 21) % TITHE_ONE_IN === 0 ?",
+    "new": "gateRoll(day, 21) % 1 === 0 ?",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-floor-open-before-its-walkway-is-whole",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "!plan.floors.includes(w.b) || walkFormed(xa, k, now) < 1) continue;",
+    "new": "!plan.floors.includes(w.b) || walkFormed(xa, k, now) <= 0) continue;",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-a-walkway-from-a-floor-not-yet-reached",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (!(f > 0) || !live.includes(w.a)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz, side",
+    "new": "    if (!(f > 0)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz, side",
+    "tests": [
+      "test/net/gate/wb14b_portents.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  }
+]

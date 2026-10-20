@@ -59,7 +59,7 @@ export const SERPENT_NEAR_M = ENGAGE_R;
  *  into the wind at that, where she made 8.9: a ship its blows threw downwind of the fight sails back into it. */
 export const SERPENT_GALE = Object.freeze({ wind: 1.15, turn: 1.5 });
 /** The line the gale's first breath says, once a serpent day. */
-export const GALE_LINE = 'A gale howls about the serpent - your canvas fills on every heading!';
+export const GALE_LINE = 'A gale howls about the serpent. Your canvas fills on every heading!';
 /** The coiled ship's word is said this long after the landing at most - her own machine's moment (the brain hears an
  *  escape for COIL_ESC_MS). */
 export const COIL_WORD_MS = 400;
@@ -317,7 +317,7 @@ export function createSerpentHost(deps) {
     const c = s.coil;
     if (c && c.off > 0 && lastCoil !== `${c.i}:off`) {
       lastCoil = `${c.i}:off`;
-      if (s.broke && s.broke.at === c.off) deps.say?.(`${s.broke.n} breaks the coil! ${boss.name} reels, stunned - strike its head!`, 5);
+      if (s.broke && s.broke.at === c.off) deps.say?.(`${s.broke.n} breaks the coil! ${boss.name} reels, stunned. Strike its head!`, 5);
       else if (s.crushed === c.off) deps.say?.(`The coil crushes ${held?.i === c.i ? 'your ship' : 'a ship'}!`, 4);
     }
     if (s.fell && lastFell !== s.fell.at) {

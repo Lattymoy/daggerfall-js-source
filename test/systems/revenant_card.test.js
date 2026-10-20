@@ -254,7 +254,7 @@ test('REVENANT-PAGE: the living strongest first - name, rank, kind and trait, wh
     setPref('lootRarity', false);
     const off = el('div', 'px-sys');
     P.drawRevenantsPage(off, () => {}, { el, divider, player: player('char-none') });
-    assert.match(off.textContent, /come with Loot rarity, which is off/);
+    assert.match(off.textContent, /Revenants need Loot rarity, which is off\./);
     assert.equal(P.revenantPageShown(player('char-none')), false, 'off and none: no page on the rail');
   } finally { P._setRevenantPageIconForTests(null); delete globalThis.document; }
   const m = read('src/ui/enhanced/enhancedMenu.js');

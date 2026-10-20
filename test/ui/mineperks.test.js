@@ -93,7 +93,7 @@ test('MINE-PERKS the four choices say what they now do; the Surveyor stands on t
   assert.match(specOf('mining', 50, 'prospector').text, /within 500 m .* each vein on the Overworld by its ore/);
   assert.match(specOf('mining', 50, 'deep-delver').text, /yield double, and every vein in the dungeon is marked on the compass/);
   assert.match(specOf('mining', 100, 'motherlode-sense').text, /marked on your map from the day's start/);
-  assert.match(specOf('mining', 100, SURVEYOR).text, /witnesses the ground.*a region's own ore still waits on witnesses.*Cut Stone directly/);
+  assert.match(specOf('mining', 100, SURVEYOR).text, /You witness the ground yourself.*a region's own ore still needs the other players.*Cut Stone directly/);
 });
 
 // ─── THE PROSPECTOR ───────────────────────────────────────────────────
@@ -327,7 +327,7 @@ test('MINE-PERKS the Surveyor at the service: an unwitnessed Mountain pixel\'s v
 
 test('MINE-PERKS the Surveyor\'s ore card: no vein waits on witnesses for them - only a region\'s own ore; the world host says who reads it (mutants: the table still held back; the signature given; the host never says)', () => {
   const WAYREST = 23;
-  assert.equal(oreMapTip({ climate: C.Mountain, region: MARCH, fact: { state: 'none' }, surveyed: true }).lines.at(-1), 'No vein here waits on witnesses');
+  assert.equal(oreMapTip({ climate: C.Mountain, region: MARCH, fact: { state: 'none' }, surveyed: true }).lines.at(-1), 'No vein here needs witnesses');
   assert.match(oreMapTip({ climate: C.Mountain, region: MARCH, fact: { state: 'none' } }).lines.join('\n'), /Not yet witnessed: no Gold, Platinum or Mithril here yet/, 'anyone else: as it was');
   assert.match(oreMapTip({ climate: C.Mountain, region: WAYREST, fact: { state: 'none' }, surveyed: true }).lines.join('\n'), /Not yet witnessed: no Mithril here yet/, 'the crown\'s own ore still waits');
   const w = read('src/scenes/world.js');
@@ -355,7 +355,7 @@ test('AUDIT MINE-PERKS a change of mind come due is the book\'s at once - the se
 });
 
 test('AUDIT MINE-PERKS the Mining page tells a Surveyor what their word does on unwitnessed ground, under the line that says Silver at most - theirs alone, the choice named by its card (mutants: said to anyone; never said)', () => {
-  assert.equal(MINING_SURVEYOR_LINE, 'As a {name}, your own word witnesses the ground: your veins there can be any ore of its land. A region\'s own ore still waits on the witnesses.');
+  assert.equal(MINING_SURVEYOR_LINE, 'As a {name}, you need no witnesses: your veins can give any ore the land holds. A region\'s own ore still needs the other players.');   // VOICE1 (PIN MOVED): the same law in plain words
   const src = read('src/ui/professions/profPages.js');
   assert.match(src, /const miningSurveyorLine = \(\) => t\('prof\.page\.how\.miningSurveyor', MINING_SURVEYOR_LINE, \{ name: specOf\('mining', 100, SURVEYOR\)\?\.name \?\? '' \}\);/);
   assert.match(src, /if \(_sel === 'mining'\) pane\.append\(el\('p', 'px-note', miningGroundLine\(\)\)\);[^\n]*\n\s*if \(_sel === 'mining' && tr\.specs\?\.\[100\] === SURVEYOR\) pane\.append\(el\('p', 'px-note', miningSurveyorLine\(\)\)\);/);

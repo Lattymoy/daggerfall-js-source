@@ -120,7 +120,7 @@ const line = (text) => [{ text, center: true }];
  *  AUDIT LIVED1b U8: "logging off" - a tab left hidden still runs the character's clock (Audit-Lived1's For Mac 5),
  *  so "time away" promised what only a logout keeps; the note measures what the old one did on the parchment. */
 export const OWN_TIME_ROOM = 'The room is yours for';
-export const OWN_TIME_ROOM_NOTE = ' - a rest spends it, logging off does not.';
+export const OWN_TIME_ROOM_NOTE = '. Resting uses it; logging off does not.';
 
 /**
  * hooks:

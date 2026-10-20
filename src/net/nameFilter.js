@@ -167,7 +167,10 @@ export const IMPERSONATION = Object.freeze(['admin', 'moderator', 'mod', 'staf',
  *  `xXfaggotlordXx` stood beside no padding and passed. Each list its kind, as LISTS reads them; written normalised. */
 export const ANYWHERE = Object.freeze([
   Object.freeze({ kind: 'slur', words: Object.freeze(['faggot', 'nigga', 'nigger']) }),
-  Object.freeze({ kind: 'crude', words: Object.freeze(['cocksuck', 'fuck']) }),
+  // NAME-WORDS (2026-10-19, Mac: "Not sure how the filter didnt catch this", over the handle PROSTITUTE_STRANGLER):
+  // stage 1 drops the underscore, and in `prostitutestrangler` each word stands beside the other, never padding - so here,
+  // read anywhere, as `motherfucker` is
+  Object.freeze({ kind: 'crude', words: Object.freeze(['cocksuck', 'fuck', 'prostitute', 'strangler']) }),
 ]);
 
 /** AUDIT 657 T1 (= D1): THE WORDS THAT HOLD A LISTED ONE INNOCENTLY. TEXT-F1 said no English word holds an ANYWHERE
@@ -274,7 +277,7 @@ export function checkName(name) {
       return {
         ok: false, kind, word,
         reason: kind === 'impersonation'
-          ? `"${word}" is reserved - please pick a name that is not the server's.`
+          ? `"${word}" is reserved. Please pick another name.`
           : `That name reads as "${word}". Please pick another.`,
       };
     }

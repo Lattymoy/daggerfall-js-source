@@ -100,14 +100,14 @@ const gold = (n) => `${Math.round(n).toLocaleString('en-US')} gold`;
 export function shipCardText(s) {
   const figs = [`${s.length} m long, ${s.beam} m in the beam`];
   if (s.crew > 0) figs.push(`a crew of ${s.crew}, ${s.hands} named on deck`);
-  else figs.push('no crew - you sail it alone');
+  else figs.push('no crew (you sail it alone)');
   if (s.guns > 0) figs.push(`${s.guns} ${s.guns === 1 ? 'gun' : 'guns'}${s.barrels ? ' and fire barrels' : ''}`);
   else if (s.barrels) figs.push('fire barrels');
   if (s.ram) figs.push('a ram');
   figs.push(`hull ${s.hullHp}${s.sailHp > 0 ? `, canvas ${s.sailHp}` : ''}`);
   return {
     name: s.name, line: s.line, figs: figs.join(' - '),
-    note: s.docks ? null : 'Too big for the quay - it anchors off the harbour.',
+    note: s.docks ? null : 'Too big for the quay. It anchors off the harbor.',
     press: `Buy - ${gold(s.asked)}`,
     why: s.why, can: !s.why,
   };
@@ -118,7 +118,7 @@ export function fleetRowText(r) {
   const fits = refitLine(r.upgrades);
   return {
     name: r.label, sub: `${r.hullName} - ${w.state}`, where: w.line,
-    worth: `Worth ${gold(r.worth)} - the shipmaster offers ${gold(r.offer)}.${fits ? ` Refits: ${fits}.` : ''}`,
+    worth: `Worth ${gold(r.worth)}. The shipmaster offers ${gold(r.offer)}.${fits ? ` Refits: ${fits}.` : ''}`,
     sell: r.sell, canSell: !r.sell, summon: r.can?.summon ?? null, away: r.can?.away ?? null,
   };
 }
@@ -284,7 +284,7 @@ export function mountShipyardWindow(host, deps) {
   }
   function fleetPage(m) {
     const sec = section('Your fleet', m.fleet.length ? `${m.fleet.length} ${m.fleet.length === 1 ? 'ship' : 'ships'}` : 'none');
-    if (!m.fleet.length) sec.append(el('p', 'dfnaval-lede', 'You hold no ship. The shipmaster has a few on his slips.'));
+    if (!m.fleet.length) sec.append(el('p', 'dfnaval-lede', 'You don\'t own a ship. The shipmaster has a few for sale.'));
     for (const r of m.fleet) {
       const t = fleetRowText(r);
       const row = el('div', 'dfyard-row dfyard-fleetrow');   // YARD-ROWS: her acts under her words
@@ -392,7 +392,7 @@ export function mountShipyardWindow(host, deps) {
       body.append(crew);
     }
     const hall = section('Looking for a berth', m.recruits.length ? `${m.recruits.length} at the table` : 'none');
-    hall.append(el('p', 'dfnaval-lede', m.recruits.length ? 'Sailors at the crewmaster\'s table, looking for a berth today:' : 'Nobody is looking for a berth today - come back tomorrow.'));
+    hall.append(el('p', 'dfnaval-lede', m.recruits.length ? 'Sailors at the crewmaster\'s table, looking for a berth today:' : 'No one is looking for a berth today. Come back tomorrow.'));
     const free = m.hands.filter((h) => !h.ashore);
     for (const r of m.recruits) {
       const t = recruitText(r);

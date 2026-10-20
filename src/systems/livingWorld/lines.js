@@ -85,7 +85,7 @@ export const JOB_TALKS = Object.freeze({
     S('Captain wants the north wall walked twice.', 'Captain doesn\'t walk it.'),
   ]),
   farmer: Object.freeze([
-    S('Field\'s too wet to plough.', 'Last year it was too dry.', 'There\'s no pleasing it.'),
+    S('Field\'s too wet to plow.', 'Last year it was too dry.', 'There\'s no pleasing it.'),
     S('Lost two sheep to wolves.', 'Only two?', 'Two I could find.'),
     S('Barley\'s coming in well.', 'Don\'t say it aloud. The gods listen.'),
   ]),
@@ -169,7 +169,7 @@ export const MORNING_TALKS = Object.freeze([
   S('Up early, {b}?', 'Never went to bed.', 'It shows.'),
   S('The first bread of the day\'s out.', 'I can smell it from here.'),
   S('Cold this morning.', 'It\'ll warm up.', 'You say that every morning.'),
-  S('Sleep well?', 'The neighbours had other ideas.'),
+  S('Sleep well?', 'The neighbors had other ideas.'),
   S('The cock\'s been crowing since before light.', 'Somebody should have words with it.', 'Somebody should have it for supper.'),
   S('Dew on everything.', 'It\'ll burn off by noon.'),
   S('You\'re out early, {b}.', 'The day won\'t wait for me.', 'It\'s waited for you before.'),
@@ -240,7 +240,7 @@ export const ROOM_TALKS = Object.freeze({
   shop: Object.freeze([
     S('Is that the real price?', 'For you, {a}? The real price and a little.'),
     S('Look at the work on this.', 'Look at the price on it.', 'I am. That\'s why I said look at the work.'),
-    S('Do they have it in another colour?', 'You always ask that.', 'And they never do.'),
+    S('Do they have it in another color?', 'You always ask that.', 'And they never do.'),
     S('I need a new one. Mine broke.', 'Again? What do you do with them?'),
     S('The last one I bought here fell apart in a week.', 'Then buy the dearer one.', 'That\'s what they want you to say.'),
     S('Just looking.', 'That\'s what you said yesterday.'),
@@ -251,7 +251,7 @@ export const ROOM_TALKS = Object.freeze({
     S('The guildmaster wants a word with you.', 'A good word or a bad one?', 'With her it\'s hard to tell.'),
     S('Who\'s the new recruit?', 'Keen. Too keen.', 'We were all too keen once.'),
     S('I hear they\'re poaching our members in {region}.', 'Let them. We keep the good ones.'),
-    S('Been practising, {b}?', 'Every day.', 'It shows. A little.'),
+    S('Been practicing, {b}?', 'Every day.', 'It shows. A little.'),
   ]),
   palace: Object.freeze([
     S('Has the court sat yet?', 'Not yet. They\'re still deciding who sits where.'),
@@ -362,7 +362,7 @@ export const LIVING_GREETINGS = Object.freeze({
  *  man's own regard (`watchBand`): the honoured by name, the respected and the common citizen as the law sees them, one
  *  under its eye warned, a known criminal told so. */
 export const WATCH_GREETINGS = Object.freeze({
-  honoured: Object.freeze(['{player}. The watch salutes you.', 'An honour, {player}.', 'Safe roads, {player}.', 'Good day to you, {player}.']),
+  honoured: Object.freeze(['{player}. The watch salutes you.', 'An honor, {player}.', 'Safe roads, {player}.', 'Good day to you, {player}.']),
   respected: Object.freeze(['Good day, citizen.', 'Citizen. All well?', 'Keep well.', 'An honest face. Good day.']),
   citizen: Object.freeze(['Move along.', 'Citizen.', 'Mind the law.', 'Keep to the street.']),
   watched: Object.freeze(['I have my eye on you.', 'No trouble, now.', 'Watch yourself.', 'Mind your step in {town}.']),
@@ -391,7 +391,7 @@ export const ROAD_NEWS = Object.freeze({
   ]),
   won: Object.freeze([
     Object.freeze(['{who} came through a hard fight with {foe} near {place}.', 'Hard enough to show?', 'Bandages and a new limp. {who} will live.']),
-    Object.freeze(['They say {foe} fell on {who} on the {place} road.', 'And {who} is still walking. The gods favour the stubborn.']),
+    Object.freeze(['They say {foe} fell on {who} on the {place} road.', 'And {who} is still walking. The gods favor the stubborn.']),
   ]),
   fled: Object.freeze([
     Object.freeze(['{who} turned back before {place}. {foe} on the road.', 'No shame in that. Better turned back than carried back.']),
@@ -598,7 +598,7 @@ export const CARRIED_OPENERS = Object.freeze([
   'There\'s word from {from}.',
   'A carter in from {from} had news.',
   'You hear what they\'re saying in {from}?',
-  'Travellers from {from} are telling it.',
+  'Travelers from {from} are telling it.',
 ]);
 /** LW16: A STRANGER WHO HAS HEARD of the character greets them by it - a fight they turned on the road (`helped`), a
  *  keepsake carried home (`saved`), a band routed, one of a town struck down where it was seen (`slain`), a party robbed
@@ -749,7 +749,7 @@ const X = (/** @type {{ by: 'a'|'b'|'g', text: string, loud: boolean }[]} */ ...
 export const CHALLENGE_SCRIPTS = Object.freeze({
   civil: Object.freeze([
     X(L('a', 'You there. What\'s your business in {town}?'), L('b', 'Trade, officer. I\'ll be on my way by the week\'s end.'), L('a', 'See that you are. Keep the peace while you\'re here.')),
-    X(L('a', 'Hold a moment, traveller. Where from?'), L('b', '{place}, and glad of walls after the road.'), L('a', 'Well enough. Mind the cutpurses at the market.')),
+    X(L('a', 'Hold a moment, traveler. Where from?'), L('b', '{place}, and glad of walls after the road.'), L('a', 'Well enough. Mind the cutpurses at the market.')),
     X(L('a', 'New face. Staying long?'), L('b', 'A night or two. The tavern\'s expecting me.'), L('a', 'Then enjoy {town}. Quietly.')),
     X(L('a', 'A name, stranger.'), L('b', '{b}, of {place}. I\'m no trouble to anyone.'), L('a', 'Nobody ever is. On your way, {b}.')),
   ]),
@@ -772,7 +772,7 @@ export const CHALLENGE_SCRIPTS = Object.freeze({
 export const GATE_SCRIPTS = Object.freeze({
   civil: Object.freeze([
     X(L('a', 'Halt. What brings you to {town}?'), L('b', 'Trade, officer. I\'ll be gone by the week\'s end.'), L('a', 'Then welcome to {town}. Keep the peace.')),
-    X(L('a', 'Hold there, traveller. From where?'), L('b', '{place}, and a long road it was.'), L('a', 'In you go, then. Mind the cutpurses at the market.')),
+    X(L('a', 'Hold there, traveler. From where?'), L('b', '{place}, and a long road it was.'), L('a', 'In you go, then. Mind the cutpurses at the market.')),
     X(L('a', 'Your business in {town}?'), L('b', 'Passing through, and in want of a bed.'), L('a', 'The tavern will see to that. Go on.')),
     X(L('a', 'A name, stranger.'), L('b', '{b}, of {place}.'), L('a', 'Pass, {b}. And no trouble.')),
   ]),

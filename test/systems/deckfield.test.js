@@ -150,7 +150,7 @@ test('GUN-HOLD: the readout while the guns are laid names the hold - over any sh
   assert.equal(navalHudText(helm({ board: { name: 'The Red Wake', kind: 'board' } }), KEYS).plate.hint, 'Let go to fire - E: hold fire');
   assert.equal(navalHudText(helm(), KEYS, { touch: true }).plate.hint, 'Lift to fire - Tap: hold fire');
   assert.equal(navalHudText(helm({ aiming: false, board: { name: 'The Red Wake', kind: 'board' } }), KEYS).plate.hint, 'E: board The Red Wake', 'not laid: Activate boards');
-  assert.equal(navalHudText(helm({ ship: { name: 'Small Ship', hull: 0.1, sail: 0, crew: 0.2, fire: false, wrecked: true, braced: false } }), KEYS).plate.hint, 'Crippled - make port for a shipwright');
+  assert.equal(navalHudText(helm({ ship: { name: 'Small Ship', hull: 0.1, sail: 0, crew: 0.2, fire: false, wrecked: true, braced: false } }), KEYS).plate.hint, 'Crippled. Make for port and a shipwright');
   const codes = { aim: 'RT', board: 'A', brace: 'LB' };
   assert.deepEqual(navalPadPrompts(helm({ board: { name: 'The Red Wake', kind: 'board' } }), codes), [[['RT'], 'Let go: fire'], [['LB'], 'Hold: brace'], [['A'], 'Hold fire']]);
   assert.deepEqual(navalPadPrompts(helm({ aiming: false, board: { name: 'The Red Wake', kind: 'board' } }), codes).at(-1), [['A'], 'Board The Red Wake']);

@@ -76,8 +76,8 @@ test('LW7c the page: friends the warmest first, enemies (hostile and enemy) the 
   assert.equal(personWords({ fate: 'slain' }), 'Slain by your hand.');
   assert.equal(personWords({ fate: 'died' }), 'Fell fighting at your side.');
   assert.equal(personWords({ standing: 'friend', days: 0 }), 'A friend. Seen today.');
-  assert.equal(personWords({ standing: 'hostile', days: 1 }), 'Hostile - they mean you harm. Last seen yesterday.');
-  assert.equal(personWords({ standing: 'enemy', days: 5 }), 'An enemy - they will not speak to you. Last seen 5 days ago.');
+  assert.equal(personWords({ standing: 'hostile', days: 1 }), 'Hostile. They mean you harm. Last seen yesterday.');
+  assert.equal(personWords({ standing: 'enemy', days: 5 }), 'An enemy. They will not speak to you. Last seen 5 days ago.');
   assert.equal(personWords({ standing: 'neutral', days: 2 }), 'Knows you. Last seen 2 days ago.');
 });
 
@@ -88,7 +88,7 @@ test('LW7c the chronicle\'s People: a section of its own where the host hands th
   assert.deepEqual(chronicleModel({}), { quests: [], notes: [], messages: [], history: [] }, 'no page: the model as it was');
   const page = {
     friends: [{ id: 'a', name: 'Ada Lark', town: 'Synth', words: 'A friend. Seen today.' }],
-    enemies: [{ id: 'b', name: 'Bo Reed', town: 'Far', words: 'Slain by your hand.' }, { id: 'c', name: 'Cy Fenn', town: '', words: 'An enemy - they will not speak to you. Last seen 3 days ago.' }],
+    enemies: [{ id: 'b', name: 'Bo Reed', town: 'Far', words: 'Slain by your hand.' }, { id: 'c', name: 'Cy Fenn', town: '', words: 'An enemy. They will not speak to you. Last seen 3 days ago.' }],
     known: [],
   };
   assert.deepEqual(chronicleModel({ people: () => page }).people, page);

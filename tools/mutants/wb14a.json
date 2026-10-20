@@ -1,0 +1,410 @@
+[
+  {
+    "name": "WB14a-a-cooldown-never-read",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    && (!/** @type {GateAttack} */ (a).cd || cooled(a, ctx)));",
+    "new": "    && (!/** @type {GateAttack} */ (a).cd || !!ctx));",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-court-s-count-ignored",
+    "file": "src/net/gate/gateBrain.js",
+    "old": " >= a.cd && (ctx.n ?? 0) >= (a.nMin ?? 1);",
+    "new": " >= a.cd;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-opening-on-one",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "(ctx.used?.[a.key] ?? ctx.woke ?? -Infinity)",
+    "new": "(ctx.used?.[a.key] ?? -Infinity)",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-use-never-stamped",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (/** @type {GateAttack} */ (atk).cd && !echo) (f.used ??= {})[atk.key] = now;",
+    "new": "  if (/** @type {GateAttack} */ (atk).cd && !echo) (f.used ??= {});",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14a-the-ids-dropped",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "...(Array.isArray(a.pk) ? { pk: [...a.pk] } : {}) };   // WB14a",
+    "new": "...({}) };   // WB14a",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-brand-count-off",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "1 + Math.floor(Math.max(0, n) / 3)",
+    "new": "1 + Math.floor(Math.max(0, n) / 2)",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-slam-after-a-broken-chain",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.unshift",
+    "new": "if (ATTACK_BY_ID[was.a] === ATTACKS.chains) f.queue.unshift",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-chain-held-without-slack",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "<= CHAIN_HOLD_M + POSE_SLACK;",
+    "new": "<= CHAIN_HOLD_M;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-unmaking-the-same-wedges",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "turn: (2 * Math.PI) / ATTACKS.unmake.n, echo: true",
+    "new": "turn: (4 * Math.PI) / ATTACKS.unmake.n, echo: true",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-unmaking-a-third",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (ATTACK_BY_ID[was.a] === ATTACKS.unmake && !was.echo)",
+    "new": "if (ATTACK_BY_ID[was.a] === ATTACKS.unmake)",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-wedges-about-his-feet",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  } else if (atk === ATTACKS.unmake) tg = [[C[0], C[1]]];",
+    "new": "  } else if (atk === ATTACKS.unmake) tg = [[f.pos[0], f.pos[1]]];",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-wheel-still",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  return atk.yw + (wheelSpin(atk) * A.spin * k) / 1000;",
+    "new": "  return atk.yw;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-a-slow-frame-s-sweep-missed",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "const a0 = wheelAngle(atk, Math.max(prev, atk.at)), a1",
+    "new": "const a0 = wheelAngle(atk, Math.min(now, atk.at + A.active)), a1",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-wheel-one-way",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "export const wheelSpin = (atk) => ((Math.abs(atk?.i | 0) % 2) === 1 ? 1 : -1);",
+    "new": "export const wheelSpin = (atk) => 1;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-wheel-judged-at-its-landing",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  if (A === ATTACKS.wheel) return wheelStrikes(atk, px, pz, now, prev, P) ? 'hit' : now >= atk.at + A.active ? 'miss' : 'wait';",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-brand-bursting-on-its-own",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "    if (pk[k] && pk[k] === me) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-torment-unshared",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  for (const o of others ?? NO_PK) if (o && Math.hypot(o[0] - c[0], o[1] - c[1]) <= r) k++;",
+    "new": "  for (const o of others ?? NO_PK) if (o) k++;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-gaze-s-angle-off",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "return Math.abs(wrap(off)) <= (GAZE_HALF_DEG * Math.PI) / 180;",
+    "new": "return Math.abs(wrap(off)) <= (2 * GAZE_HALF_DEG * Math.PI) / 180;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-gaze-s-range-ignored",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  if (d > GAZE_RANGE_M) return false;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-pull-too-short",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  const v = Math.sqrt(2 * decay * run);",
+    "new": "  const v = Math.sqrt(decay * run);",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-marked-blow-on-the-ground",
+    "file": "src/net/gate/gateStrike.js",
+    "old": "  if (!A || !Number.isFinite(atk.at) || isMarkedBlow(A)) return 'miss';   // WB14a",
+    "new": "  if (!A || !Number.isFinite(atk.at)) return 'miss';   // WB14a",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ],
+    "equivalent": true,
+    "why": "inAttack has no ground for the marked shapes today (its default answers false), so strikeVerdict misses them either way; the guard stands so a shape given one later (a peril's ring) never lands it as ground"
+  },
+  {
+    "name": "WB14a-the-gaze-counted-by-the-relay",
+    "file": "src/net/bossRef.js",
+    "old": "  if (!A || !(share > 0) || screenJudged(A)) a.bj = true;",
+    "new": "  if (!A || !(share > 0)) a.bj = true;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ],
+    "equivalent": true,
+    "why": "inAttack has no ground for the Chains or the Gaze today, so the relay's landing counts neither either way; screenJudged stands so a shape given one later never makes the relay count a pull or a camera"
+  },
+  {
+    "name": "WB14a-the-relay-s-wheel-once-at-its-landing",
+    "file": "src/net/bossRef.js",
+    "old": "  else if (A === ATTACKS.wheel) sweep(",
+    "new": "  else if (A === null) sweep(",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-relay-s-bodies-nameless",
+    "file": "server/src/index.js",
+    "old": "return { sub: b.sub, id: b.id, x: c.x,",
+    "new": "return { sub: b.sub, x: c.x,",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-a-pk-of-the-wrong-length",
+    "file": "src/net/wire.js",
+    "old": "Array.isArray(a.pk) && a.pk.length === a.tg.length && a.pk.length >= 1",
+    "new": "Array.isArray(a.pk)",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-twelfth-id-refused",
+    "file": "src/net/wire.js",
+    "old": "export const GATE_ATK_ID_MAX = 31;",
+    "new": "export const GATE_ATK_ID_MAX = 15;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-ring-left-where-they-stood",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "  const placed = (k) => markAt?.(k) ?? atk.tg?.[k] ?? null;",
+    "new": "  const placed = (k) => atk.tg?.[k] ?? null;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-chain-s-colour-fixed",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "color: tether ? (held ? attackColor(A, P) : TELEGRAPH_EDGE_SAFE) :",
+    "new": "color: tether ? attackColor(A, P) :",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-blades-dark-through-their-turn",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "flash: tel.since >= 0 && !(wheel && tel.since < span) ? 1 : 0,",
+    "new": "flash: tel.since >= 0 ? 1 : 0,",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-shader-s-wedges-turned",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "      const off = Math.abs(a - per * Math.floor(a / per + 0.5)) - sh.halfArc;",
+    "new": "      const off = Math.abs(a - per * Math.floor(a / per)) - sh.halfArc;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-judged-twice",
+    "file": "src/scenes/gate/gateArsenal.js",
+    "old": "    setMark(judged, atk);\n",
+    "new": "\n",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14a-the-pull-never-sent",
+    "file": "src/scenes/gate/gateArsenal.js",
+    "old": "      if (v2) pull(v2[0], v2[1]);",
+    "new": "      if (v2) void v2;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-gaze-never-blinds",
+    "file": "src/scenes/gate/gateArsenal.js",
+    "old": "{ land(atk, P, so); blindAt = now; }",
+    "new": "{ land(atk, P, so); }",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-order-the-default",
+    "file": "src/ui/gate/gateGroundView.js",
+    "old": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside",
+    "new": "warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-white-never-fading",
+    "file": "src/ui/gate/gateGroundView.js",
+    "old": "blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 - dazzle / GAZE_BLIND_MS : 0;",
+    "new": "blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 : 0;",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-places-never-filled",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "_places.set(d.id, c); _others.push(c);",
+    "new": "_others.push(c);",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-torment-anyone-s",
+    "file": "src/scenes/gate/gateArsenal.js",
+    "old": "      if (k > 0) land(atk, P, { ...so, pct: L.pct / k, base: L.base / k });",
+    "new": "      if (k > 0) land(atk, P, so);",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-fold-forgets-the-marked",
+    "file": "src/net/gate/gateLink.js",
+    "old": "    case 'atk': return { ...s, atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg, ...(g.pk ? { pk: g.pk } : {}) }, move: null,",
+    "new": "    case 'atk': return { ...s, atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg }, move: null,",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-brand-self-at-the-burst-s-share",
+    "file": "src/scenes/gate/gateArsenal.js",
+    "old": "if (b.self) land(atk, P, { ...so, pct: ATTACKS.brand.selfPct * P.dmgX, base: ATTACKS.brand.selfBase * P.dmgX });",
+    "new": "if (b.self) land(atk, P, so);",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-chain-slam-queued-at-the-end",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.unshift({ a: 'slam' });",
+    "new": "if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.push({ a: 'slam' });",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it).",
+    "equivalent": true,
+    "why": "he chooses only with his turn's queue drained (no pending, the queue's last entry already shifted into it), so the Slam put first or last stands alone in an empty queue"
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-chains-a-wind-up-past-escape",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "windup: 3000, active: 150, recover: 1000, shape: 'tether'",
+    "new": "windup: 1800, active: 150, recover: 1000, shape: 'tether'",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-unmake-phase-two",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "shape: 'wedges', n: 8, r: COURT_R + 1, pct: 0.45, base: 12, el: null, aim: 'point', phase: 3,",
+    "new": "shape: 'wedges', n: 8, r: COURT_R + 1, pct: 0.45, base: 12, el: null, aim: 'point', phase: 2,",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "WB14a-the-seams-past-the-motor",
+    "file": "src/scenes/gate/gateArsenal.js",
+    "old": "pull: (vx, vz) => motor.blowPush(vx, vz), pullDecay };",
+    "new": "pull: () => {}, pullDecay };",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  },
+  {
+    "name": "WB14a-the-seams-read-once",
+    "file": "src/scenes/gate/gateArsenal.js",
+    "old": "myId: () => online()?.id ?? null,",
+    "new": "myId: ((v) => () => v)(online()?.id ?? null),",
+    "tests": [
+      "test/net/gate/wb14a_arsenal.test.js"
+    ]
+  }
+]

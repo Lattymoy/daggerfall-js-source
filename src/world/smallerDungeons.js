@@ -294,6 +294,16 @@ function distinctInterior(layout, dfLocation) {
   return taken;
 }
 
+/** GenerateSmallerDungeon's test (:1369-1370): a dungeon of more blocks than `threshold` is laid anew; one at or under
+ *  it is the location itself. AUDIT FB1019f B1: the one test - the build draws behind it (regenerateDungeon), and the
+ *  size a build comes out at is answered from it without drawing (builtSizeFor). */
+function laidAnew(dfLocation, threshold) {
+  const blocks = dfLocation?.dungeon?.blocks;
+  return !!blocks && blocks.length > threshold;
+}
+/** The threshold each smaller size is laid anew over: the plus's (GenerateSmallerDungeon :1369) and the medium's (DSIZE1). */
+const SIZE_THRESHOLD = Object.freeze({ small: SMALLER_DUNGEON_THRESHOLD, medium: MEDIUM_DUNGEON_THRESHOLD });
+
 /**
  * GenerateSmallerDungeon's body (:1366-1400) at a layout, NON-MUTATING: a clone of the location whose dungeon is `rows`
  * ([x, z, border], the first the starting block) drawn in order from its own pools, or the location itself at or under
@@ -306,8 +316,7 @@ function regenerateDungeon(dfLocation, threshold, rows, mark, member) {
   if (isMainStoryDungeon(dfLocation.mapTableData?.mapId)) {
     throw new Error(`${member}() must not be called on a main story dungeon.`);
   }
-  const blocks = dfLocation.dungeon?.blocks;
-  if (!blocks || blocks.length <= threshold) return dfLocation;
+  if (!laidAnew(dfLocation, threshold)) return dfLocation;
   // DFRandom.Seed = (uint)MapId (:1389) - the same layout every visit.
   setSeed(dfLocation.mapTableData.mapId);
   const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));
@@ -395,4 +404,17 @@ export function dungeonLocationFor(dfLocation, deps = {}) {
   const size = dungeonSizeFor(dfLocation, deps);
   if (size === 'small') return generateSmallerDungeon(dfLocation);
   return size === 'medium' ? generateMediumDungeon(dfLocation) : dfLocation;
+}
+
+/**
+ * AUDIT FB1019f B1 (HEIR-WHOLE's audit): THE SIZE dungeonLocationFor BUILDS AT, asked without building -
+ * `builtDungeonSize(dungeonLocationFor(dfLocation, deps))`, with no draw of the one DFRandom the world shares. The size
+ * asked for (dungeonSizeFor) is not the size built: a dungeon at or under its size's threshold is never laid anew
+ * (laidAnew), and its build is the location itself, the dungeon whole. Online the world draws 3,133 of MAPS.BSA's
+ * 4,232 dungeons small or medium, and builds 2,005 of them smaller; the other 1,128 are that small already (five blocks
+ * drawn small, five or eight drawn medium), and their public room is the dungeon whole. A dungeon site's `relaid` reads it (scenes/instanceDoor.js dungeonSite).
+ */
+export function builtSizeFor(dfLocation, deps = {}) {
+  const size = dungeonSizeFor(dfLocation, deps);
+  return size !== 'full' && laidAnew(dfLocation, SIZE_THRESHOLD[size]) ? size : 'full';
 }

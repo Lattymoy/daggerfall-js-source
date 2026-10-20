@@ -191,7 +191,7 @@
   {
     "name": "REALM4-unknown-restores",
     "file": "src/net/tradeSession.js",
-    "old": "    if (r?.unknown) { this._finish('done', 'The realm did not answer - your trade is as the realm holds it.'); return; }\n",
+    "old": "    if (r?.unknown) { this._finish('done', 'The realm did not answer. Your trade stands as the realm recorded it.'); return; }\n",
     "new": "",
     "tests": [
       "test/net/realm4.test.js"

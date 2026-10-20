@@ -26,7 +26,7 @@ test('GATE-RELOAD the link: a refusal of my `in` that says the gate is closed is
   assert.deepEqual(said, [GATE_OUTDATED_TEXT]);
   assert.deepEqual(refused, ['the gate is closed'], 'the host is handed the relay\'s own word');
   assert.match(GATE_OUTDATED_TEXT, /older than this gate/);
-  assert.match(GATE_OUTDATED_TEXT, /save, then reload \(or update the app\)/, 'what to do, and on the desktop copy too');
+  assert.match(GATE_OUTDATED_TEXT, /Save, then reload or update the app/, 'what to do, and on the desktop copy too');
   assert.doesNotMatch(GATE_OUTDATED_TEXT, /closed/i, 'never that the open gate is closed');
   assert.equal(gateRefusalText('the gate is closed'), GATE_OUTDATED_TEXT);
   for (const w of GATE_NO_WORDS.filter((x) => x !== 'the gate is closed')) assert.equal(gateRefusalText(w), GATE_NO_TEXT[w], w);

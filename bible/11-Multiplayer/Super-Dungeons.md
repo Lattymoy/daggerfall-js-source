@@ -255,6 +255,8 @@ where the Bay's broken endings still turn against each other and the last of the
 Bay's people crowd thickest, their many souls press the world thin, and a dungeon beneath them is swallowed by a seam
 of the Warp - a Hollow - whose deepest hall opens on the Hour.
 
+QL0 (2026-10-19, `06-Systems/Questlines-Arc.md` decision 5, the owner's answer): the online world is about 3E 406, eleven years before the Warp this paragraph tells. In the world the Hour is the echo of a Break to come - a Dragon Break has no before and after - and the questline that leads to it reads it so; no string a player reads names the year.
+
 The realm is a made level (`world/superDungeon/sdRealm.js`, the Court's pattern: a made location `0x7ffff200`, block index 900200,
 one pseudo-archive, 38151 - records 0-4 the realm's, 5-20 the Orrery's hall, 21-22 the Steps, 23-24 the Echoes, 25-30 the
 Endings' lights, 31-32 the Threshold's cobbles and the edge line, 33-36 the Rift's and its Return's hand-plate alight, 56-56 the
@@ -1362,8 +1364,9 @@ player sees the same step in the same place; what a foot breaks is its own.
   it at the realm's now: the Drift swinging; a Beat step there or gone - its bucket sunk far under the void
   (`SD_STEP_GONE_Y`), its draw hidden - and blinking its last 0.4 s; a Crumble step shuddering from the moment my own foot
   first stands on it (its grind heard), then its bucket gone and its draw falling, whole again 5 s after.
-- **Ridden BEFORE the motor**: the mode machine asks the set every frame of the dungeon, right after the action movers'
-  ride (`ridePlatform`) and before the motor - so the motor sweeps against the steps where they now are - and a body
+- **Ridden BEFORE the motor**: the mode machine asks the set every frame of the dungeon, before the motor - so the motor
+  sweeps against the steps where they now are (the action movers' ride, `ridePlatform` beside it then, is the movers'
+  own update since MOVER-BODY, FIELD BUGS 2026-10-19f: they carry the body as they step) - and a body
   standing on a step (`groundKey`) is carried with the step's own move, as a deck carries one (`player.carryBy`: the
   body and both ends of its render span, so a swing is no lerp). A step that went or came back carries nothing; a frame's
   hitch, or the clock put right, carries the body the step's whole move - it stays on its step.

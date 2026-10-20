@@ -151,7 +151,7 @@ const OWN_CHOICES = Object.freeze({
     50: pair(spec('prospector', 'Prospector', "Surface veins within 500 m are marked on the compass (a dungeon's within 200 m), and each vein on the Overworld by its ore; gems come a tenth more often."),
       spec('deep-delver', 'Deep Delver', 'Dungeon veins yield double, and every vein in the dungeon is marked on the compass.')),
     100: pair(spec('motherlode-sense', 'Motherlode Sense', "The day's Motherlodes are marked on your map from the day's start; warnings come 30 minutes ahead, not 10."),   // PROF2b: its Motherlodes built - chosen as any
-      spec(SURVEYOR, 'Surveyor', "Your own word witnesses the ground: unwitnessed veins can be any of their land's ores for you (a region's own ore still waits on witnesses). Quarrying yields Cut Stone directly.")),
+      spec(SURVEYOR, 'Surveyor', "You witness the ground yourself: unwitnessed veins can hold any ore of their land for you (a region's own ore still needs the other players). Quarrying yields Cut Stone directly.")),
   }),
   logging: Object.freeze({
     50: pair(spec('lumberjack', 'Lumberjack', 'Two chops fewer a tree (three at least).'),
@@ -179,13 +179,13 @@ const OWN_CHOICES = Object.freeze({
   }),
   smithing: Object.freeze({
     50: pair(spec('weaponsmith', 'Weaponsmith', 'Weapons +1 quality step.'),
-      spec('armoursmith', 'Armoursmith', 'Armour +1 quality step.')),
+      spec('armoursmith', 'Armoursmith', 'Armor +1 quality step.')),
     100: pair(spec('masterwright', 'Masterwright', 'Masterwork chance +5%.'),
       spec('quartermaster', 'Quartermaster', 'Ingots and repair kits x2.')),
   }),
   outfitting: Object.freeze({
     50: pair(spec('tailor', 'Tailor', 'Clothing +1 quality step.'),
-      spec('leatherworker', 'Leatherworker', 'Leather armour +1 quality step.')),
+      spec('leatherworker', 'Leatherworker', 'Leather armor +1 quality step.')),
     100: pair(spec('couturier', 'Couturier', 'Two-colour dyes.', 'two-colour'),   // PROF7: DFU's cloth takes one dye
       spec('saddler', 'Saddler', 'A wagon upgrade (Horse Cart and Cargo) of +100 kg.', 'wagon')),   // PROF7: DFU's wagon has one limit
   }),
@@ -208,7 +208,7 @@ const OWN_CHOICES = Object.freeze({
     50: pair(spec('brewer', 'Brewer', '3 potions a brew at Journeyman.'),
       spec('distiller', 'Distiller', 'Potent chance +10%.')),
     100: pair(spec('master-alchemist', 'Master Alchemist', 'Potent is +40%, not +25%.'),
-      spec('transmuter', 'Transmuter', 'Two of a DFU metal and a Mercury make one of the next up.')),
+      spec('transmuter', 'Transmuter', 'Two of a metal and a Mercury make one of the next metal up.')),
   }),
   enchanting: Object.freeze({
     50: pair(spec('efficient', 'Efficient', 'A further -5% cost.'),
@@ -225,7 +225,7 @@ const OWN_CHOICES = Object.freeze({
   jewelcrafting: Object.freeze({
     50: pair(spec('gemcutter', 'Gemcutter', 'A set gem adds +10% enchantment points.'),
       spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.')),
-    100: pair(spec('master-jeweller', 'Master Jeweller', 'Jewellery Masterwork chance +5%.'),
+    100: pair(spec('master-jeweller', 'Master Jeweler', 'Jewelry Masterwork chance +5%.'),
       spec('lapidary', 'Lapidary', 'Siege-cracked Gems set as any gem.')),
   }),
 });

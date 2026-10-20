@@ -55,7 +55,7 @@ test('SS1 the stone is bound by its row: every stone, one minted before the row 
   const stone = sigilStone();
   assert.equal(isLocked(stone), false, 'bound is not locked');
   for (const way of ['drop', 'sell', 'trade']) assert.equal(lockRefuses(stone, way), false, `the lock's ${way} is the player's word alone`);
-  assert.equal(BOUND_LINE, 'Bound - it cannot be dropped, traded or sold.');
+  assert.equal(BOUND_LINE, 'Bound. It cannot be dropped, traded or sold.');
   assert.equal(BOUND_TRADE_TEXT, 'Bound items cannot be traded.');
 });
 
@@ -202,8 +202,8 @@ test('SS3 the law: a bound piece may be put in the player\'s wagon and the playe
   for (const kind of ['ground', 'container', 'reward', 'elsewhere']) assert.equal(boundRefusesPut(stone, kind), true, kind);
   for (const kind of ['wagon', 'storage']) assert.equal(boundRefusesPut(stone, kind), false, kind);
   for (const kind of ['ground', 'container', 'reward', 'wagon', 'storage']) assert.equal(boundRefusesPut(gem, kind), false, `a gem: ${kind}`);
-  assert.equal(boundText('Deadlands Ember'), 'Deadlands Ember is bound to you - it cannot be dropped, traded or sold.');
-  assert.equal(boundText(''), 'That is bound to you - it cannot be dropped, traded or sold.');
+  assert.equal(boundText('Deadlands Ember'), 'Deadlands Ember is bound to you. It cannot be dropped, traded or sold.');
+  assert.equal(boundText(''), 'That is bound to you. It cannot be dropped, traded or sold.');
   assert.deepEqual(unbound([gem, stack(3), stone]), [gem]);
   assert.equal(unbound(null), null);
 });
@@ -426,7 +426,7 @@ test('SS4 the enhanced counter: a Deadlands Ember and a Broker ware pressed for 
         assert.ok(bag.includes(item), `${mode}: ${item.name} stays in the pack`);
         assert.equal(item.stackCount ?? 1, item.name === 'Deadlands Ember' ? 3 : 1, 'whole');
         assert.equal(said().length, 1, `${mode}: the counter says why`);
-        assert.match(said()[0], /^.+ is bound to you - it cannot be dropped, traded or sold\.$/);
+        assert.match(said()[0], /^.+ is bound to you\. It cannot be dropped, traded or sold\.$/);
         assert.ok(said()[0].startsWith(item.name), 'naming the piece');
         ok();
         press(gem);

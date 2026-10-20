@@ -101,11 +101,12 @@
   {
     "name": "BANTHA1-the-young-trees-scale-the-canopys",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "        const [u0, u1] = JUNGLE.underScale;",
-    "new": "        const [u0, u1] = JUNGLE.canopyScale;",
+    "old": "        const [s0, s1] = JUNGLE.underScale;",
+    "new": "        const [s0, s1] = JUNGLE.canopyScale;",
     "tests": [
       "test/world/bantha1_jungle.test.js"
-    ]
+    ],
+    "note": "SPREAD (PIN MOVED): re-aimed by content - the young trees roll a cell at a time now, and their scale reads s0, s1."
   },
   {
     "name": "BANTHA1-the-track-ignored",
@@ -877,11 +878,12 @@
   {
     "name": "AUDIT-BANTHA1-LAY-7-the-neighbour-pixels-trunks-unseen",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "    const wx = ox + i * C, wz = oz + j * C;\n    t[0] =",
-    "new": "    return false;\n    const wx = ox + i * C, wz = oz + j * C;\n    t[0] =",
+    "old": "    if (!canopySite(wx, wz)) return false;   // SPREAD: no site, no trunk\n",
+    "new": "    return false;\n",
     "tests": [
       "test/world/bantha1_jungle.test.js"
-    ]
+    ],
+    "note": "SPREAD (PIN MOVED): re-aimed by content - a neighbour pixel's cell is read past its site test now; the mutant answers no trunk for every one of them, as it did."
   },
   {
     "name": "AUDIT-BANTHA1-LAY-8-the-first-read-float64",

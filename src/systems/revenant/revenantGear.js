@@ -145,13 +145,13 @@ const holdsShield = (gear) => !!gear?.weapon && !brokenPiece(gear.weapon) && !ne
  *  (the record's, by default). */
 export function gearRefusal(r, item, { gear = r?.companion?.gear ?? {}, kindName = null } = {}) {
   if (!r?.sworn) return t('rvn.sworn.gone', 'It is no longer sworn to you.');
-  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad', 'It is abroad - its kit goes with it.');   // AUDIT RVN F10
+  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad', 'It is abroad with its kit.');   // AUDIT RVN F10
   const key = gearKeyOf(item);
-  if (!key) return t('rvn.gear.no.use', 'It cannot use that - a melee weapon, armour or a charm.');
+  if (!key) return t('rvn.gear.no.use', 'It can only use a melee weapon, armor or a charm.');
   if (item.questItem) return t('rvn.gear.no.quest', 'A quest item stays with you.');
   if ((item.timeForItemToDisappear ?? 0) !== 0) return t('rvn.gear.no.summoned', 'A summoned piece fades in any hand but yours.');
   if (gearTier(item) > 3) return t('rvn.gear.no.yours', 'It answers to you alone.');
-  if (key !== 'charm' && !armedKind(r.mobileType)) return t('rvn.gear.no.kind', '{kind} wields no weapon and wears no armour - only a charm.', { kind: kindName ?? t('rvn.gear.itsKind', 'Its kind') });
+  if (key !== 'charm' && !armedKind(r.mobileType)) return t('rvn.gear.no.kind', '{kind} wields no weapon and wears no armor, only a charm.', { kind: kindName ?? t('rvn.gear.itsKind', 'Its kind') });
   if (brokenPiece(item)) return t('rvn.gear.no.broken', 'It is broken.');
   const rank = Math.max(1, Math.min(5, r.rank | 0));
   const m = gearMetal(item), tier = gearTier(item);

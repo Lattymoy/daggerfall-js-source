@@ -34,7 +34,7 @@ export const SIEGE_BARRED_EFFECTS = Object.freeze([43, 14]);
 export const siegeSpellBarred = (sp) => (Array.isArray(sp?.effects) ? sp.effects : []).some((e) => e && SIEGE_BARRED_EFFECTS.includes(e.type));
 /** The wards' line, and the saddle's. */
 export const SIEGE_SPELL_BARRED_TEXT = 'Teleport, Recall and Levitate do nothing on a battlefield.';
-export const SIEGE_DISMOUNT_TEXT = 'No horse is ridden on a battlefield - you go on foot.';
+export const SIEGE_DISMOUNT_TEXT = "You can't ride a horse on a battlefield.";
 
 /**
  * THE NUMBERS A SPELL CARRIES TO THE REFEREE: `{ harm, heal }` - what its harmful families (duelSpellOf) deal at once (at

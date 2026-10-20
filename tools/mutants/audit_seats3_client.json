@@ -110,7 +110,7 @@
   {
     "name": "SEATS3-C6-the-hall-unsaid",
     "file": "src/net/accountClient.js",
-    "old": "15% at a crown, a point more for each tier of its Market Hall.",
+    "old": "15% at a crown, and a point more for each stage of its Market Hall.",
     "new": "15% at a crown.",
     "tests": [
       "test/net/audit_seats3_client.test.js"

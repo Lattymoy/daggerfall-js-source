@@ -16,7 +16,7 @@
     "new": "days: nwt ? 0 : travelDays(minutes), online: nwt };",
     "tests": ["test/ui/heldmap.test.js"] },
   { "name": "the-line-still-claims-no-inn-is-paid", "file": "src/ui/travel/travelPopUp.js",
-    "old": "'You arrive in the world\\'s present.']);",
+    "old": "'The world\\'s time does not move.']);",
     "new": "'You arrive now, and no inn is paid.']);",
     "tests": ["test/ui/ol2.test.js", "test/systems/online/travelinn.test.js"] }
 ]
