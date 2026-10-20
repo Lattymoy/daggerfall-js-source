@@ -367,6 +367,6 @@ test('RENOWN-CHAR the client: the account card draws the characters\' tracks - t
   assert.match(w, /onRecorded: \(data\) => \{\n\s+if \(data\?\.renown\?\.character !== characterIdOf\(playerEntity\)\) return;[^\n]*\n\s+const a = renownAnswer\(\{ \.\.\.data\.renown, order: data\.order \?\? null \}, data\.renown\.credited \?\? 0, renownSaid\);/);
   // THE DELETE DIALOG: the Renown goes with the character again
   const menu = src('src/ui/enhanced/enhancedMenu.js');
-  assert.match(menu, /and with it its Renown, its professions and their Stores, its home and its guild place\. A copy you made offline remains\./);   // PROF-DELETE: and its professions
+  assert.match(menu, /Its Renown, professions, Stores, home and guild place are lost\. Any offline copy you made stays\./);   // PROF-DELETE: and its professions
   assert.doesNotMatch(menu, /Your Renown belongs to your account/);
 });

@@ -442,7 +442,7 @@ export const HCC_TEXT = Object.freeze({
   // HOLDINGS (the port's own, no IL twin - bible/03-World/Holdings.md): the Stable page's Send away
   sendAwayOutdoorsOnly: 'You can only send your horse and wagon away from outdoors.',
   sendAwayDismount: 'Dismount before you send them away.',
-  notInTheWorld: 'Your horse and wagon do not stand in the world while physical persistence is off.',
+  notInTheWorld: 'Your horse and wagon travel with you while physical persistence is off.',
   alreadyAway: 'Your horse and wagon are already stabled.',
   sentBoth: 'Your horse and wagon go back to the stable.',
   sentWagon: 'Your wagon goes back to the stable.',

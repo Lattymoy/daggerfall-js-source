@@ -225,7 +225,7 @@ test('RVN3 THE REVEAL: my first blow of its weakness - the real strike - counts 
   assert.deepEqual(sfx, [[SOUND.Burning, [1, 0, 2]]], 'the hiss where it stands');
   const cards = shown.filter((e) => e.kind === 'weakness');
   assert.equal(cards.length, 1);
-  assert.match(cards[0].body, /^Blades - its weakness, laid bare\.$/);
+  assert.match(cards[0].body, /^Its weakness laid bare: Blades\.$/);
   assert.equal(cards[0].kicker, 'Weakness');
   calculateAttackDamage(p, o, { weapon: createWeapon(W.Longsword, 1, () => 0.5), rolls: () => 0.2 });
   assert.equal(shown.filter((e) => e.kind === 'weakness').length, 1, 'no second card');

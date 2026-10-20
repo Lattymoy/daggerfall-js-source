@@ -176,7 +176,7 @@ test('RVN-STARS XP EARNED: a fight won at my side (swornFightStep\'s win) is 5 a
   N.revenantCompanionUpdate(me, r.id, (c) => { c.xp = 70; });
   heard.length = 0;
   RC.swornFightWon(r.id);
-  assert.deepEqual(heard, [`${r.given} reaches level 2 - a star to set on the Companions page.`]);
+  assert.deepEqual(heard, [`${r.given} reaches level 2. Set its new star on the Companions page.`]);
   RC.swornFightWon(r.id);
   assert.equal(heard.length, 1, 'said once a level');
   // an errand home

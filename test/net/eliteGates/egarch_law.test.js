@@ -106,10 +106,10 @@ test('EG-F THE KEY\'S REFUSALS IN THE PAGE\'S ORDER: cold; open sky; the Portal 
   for (const [k, line] of Object.entries({ busy: 'You cannot turn the key right now.', duel: 'You cannot open a breach in a duel.', siege: 'The wards of this battle hold the key cold.', enemies: 'You cannot open a breach with enemies nearby.', journey: 'You cannot open a breach while you travel.' })) {
     assert.equal(egKeyRefusal({ online: true, hold: k }), line);
   }
-  assert.equal(EG_TEXT.within('Daggerfall'), 'Not within Daggerfall.');
+  assert.equal(EG_TEXT.within('Daggerfall'), 'You cannot open a breach within Daggerfall.');
   assert.equal(EG_TEXT.room, 'There is no room for it here.');
   assert.equal(EG_TEXT.near, 'Another breach stands near.');
-  assert.equal(EG_TEXT.cold, 'The key is cold here.');
+  assert.equal(EG_TEXT.cold, 'The key is cold. Go online to turn it.');
   assert.equal(EG_TEXT.sky, 'The key wants open sky.');
 });
 
@@ -285,7 +285,7 @@ test('EG-F THE TIMERS ROW, THE SIGHT LINE, THE SKIN: "Elite Breach opens" while 
   assert.deepEqual(row(op + 60_000, { op }).map((r) => [r.title, r.live, r.at]), [['Elite Breach opens', false, op + EG_SEALED_MS]]);
   assert.deepEqual(row(op + 60_000, { op, rh: 1 }).map((r) => r.title), ['Rehearsal opens']);
   assert.deepEqual(row(op + EG_SEALED_MS + 1, { op }).map((r) => [r.title, r.live, r.at]), [['Elite Breach open', true, op + EG_SEALED_MS + EG_ADMIT_MAX_MS]]);
-  assert.deepEqual(row(op + 700_000, { op, h: 17, until: op + 2_000_000 }).map((r) => [r.title, r.live, r.at, r.detail]), [['Hall 17', true, op + 2_000_000, 'Left on the count']]);
+  assert.deepEqual(row(op + 700_000, { op, h: 17, until: op + 2_000_000 }).map((r) => [r.title, r.live, r.at, r.detail]), [['Hall 17', true, op + 2_000_000, 'Time left']]);
   assert.deepEqual(row(op + 700_000, { op, h: 17, until: op + 2_000_000, end: 'tear' }), [], 'an ended breach has no row');
   assert.deepEqual(row(op + 3_600_000, { op }), [], 'the window past with no hall: none');
   assert.deepEqual(row(op, null), []);

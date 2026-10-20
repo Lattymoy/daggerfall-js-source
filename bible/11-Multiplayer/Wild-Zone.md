@@ -418,7 +418,7 @@ near holds the journey slower still (STRANGER-PACE, section 11).
 Then "as centered as possible not on the border to the other tier... dont override towns or other POIS.",
 "Cemeteries cannot be zone dungeons!", and of the rules that follow, "THOSE HAVE TO WORK!".
 
-- SPAWNED, NOT CHOSEN: every real dungeon inside the zone is SEALED ("The way in is sealed - only the halls marked on
+- SPAWNED, NOT CHOSEN: every real dungeon inside the zone is SEALED ("The way in is sealed. Only the halls marked on
   the map are open today.", `wildDungeonGate`, `world.js:"const wildDungeonGate"`, asked by the interior door,
   `worldModes.js:"(host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad)))"`), and the wandering spawner
   stands none there (`world.js:"{ const _wm = wildMaskOf"`). A hall is a clone of a real dungeon on an EMPTY pixel -

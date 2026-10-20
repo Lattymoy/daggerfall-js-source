@@ -366,7 +366,7 @@ test('LEGACY-HOME: the House page marks the family home; the card says where eac
   assert.equal(livesLine(f, sib), 'At the family home in Sentinel');
   assert.equal(host.markHome({ mapId: 1, buildingKey: 1 }), false);
   sib.characterId = 'c-sib';
-  assert.equal(livesLine(f, sib), 'On their own journey');
+  assert.equal(livesLine(f, sib), 'Out on their own travels');
   sib.parked = { mapId: HOUSE_A.mapId, buildingKey: HOUSE_A.buildingKey };
   assert.equal(livesLine(f, sib), 'In their own house in Gothway Garden');
   assert.equal(livesLine(f, f.people[0]), null, 'the one played');

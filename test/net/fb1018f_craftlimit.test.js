@@ -43,7 +43,7 @@ const noWait = () => Promise.resolve();
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 const kit = { el, divider: (w) => el('h3', null, w), meter: () => el('div') };
-const LIMIT = (room, prof, crafts) => `${room === 0 ? `No ${prof} experience` : `At most ${room} ${prof} experience`}: ${crafts} stand above Journeyman, and the crafter's limit holds ${prof} at rank 50.`;   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
+const LIMIT = (room, prof, crafts) => `${room === 0 ? `No ${prof} experience` : `At most ${room} ${prof} experience`}: ${crafts} are past Journeyman, so the crafter's limit holds ${prof} at rank 50.`;   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
 const FIRST = (xp, prof) => `${xp} ${prof} experience, and 500 more the first time you make this piece at this grade.`;   // PIN MOVED (VOICE2): experience in a sentence, a crafting tier a grade (Voice.md rule 3)
 
 /** A character on the real Worker, its tracks and Stores written as the service keeps them, and a book reading it. */
@@ -159,14 +159,14 @@ test('CRAFT-LIMIT-SAID THE REPORT, end to end: Smithing 50 one XP short of 51 be
     assert.deepEqual([r.data.xp, r.data.first, r.data.track.xp, r.data.track.rank, xpOf('smithing')], [0, true, HELD, 50, HELD]);
     // the craft's word, as world.js says it (one call, the book's limit handed in)
     const word = words.craftXpText(recipeById('dagger:silver'), r.data, 'Smithing', book.limit?.('smithing') ?? null);
-    assert.equal(word, '(+0 Smithing experience. Building and Provisioning stand above Journeyman, and the crafter\'s limit holds Smithing at rank 50)');   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
+    assert.equal(word, '(+0 Smithing experience. Building and Provisioning are past Journeyman, so the crafter\'s limit holds Smithing at rank 50)');   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
     assert.doesNotMatch(word, /first-time bonus/, 'a bonus the limit ate is never said as paid');
   } finally { page.done(); }
   // the Professions tab: the ceiling, not "26,009 / 26,010 XP"; the two named, and that it is for good
   assert.deepEqual(tabOf(book, 'smithing'), {
     xp: '26,009 / 26,009 XP - the crafter\'s limit holds it at rank 50',
     limit: 'Crafts above Journeyman: 2 of 2',
-    rule: 'A character raises only 2 crafts past Journeyman: yours are Building and Provisioning, so your other crafts stop at rank 50. No craft\'s rank is ever lowered.',
+    rule: 'Only 2 crafts can rise past Journeyman. Yours are Building and Provisioning, so your other crafts stop at rank 50. A craft never loses rank.',
   });
   // THE CAUSE: one of the two at 50 (not past it), and the same craft's box says 60 - and a new pattern pays its 60 and 500
   track('provisioning', xpForRank(50));
@@ -209,7 +209,7 @@ test('CRAFT-LIMIT-SAID one law: at every room the limit leaves - none, one, shor
   }
   assert.deepEqual(seen, rooms.map((room) => {
     const paid = Math.min(earned, room);
-    const word = room - paid === 0 ? `(+${paid} Smithing experience. Building and Provisioning stand above Journeyman, and the crafter's limit holds Smithing at rank 50)` : `(+${paid} Smithing experience, with the first-time bonus)`;   // PIN MOVED (VOICE2): the first's word; the limit's keeps its own
+    const word = room - paid === 0 ? `(+${paid} Smithing experience. Building and Provisioning are past Journeyman, so the crafter's limit holds Smithing at rank 50)` : `(+${paid} Smithing experience, with the first-time bonus)`;   // PIN MOVED (VOICE2): the first's word; the limit's keeps its own
     return [room, room >= earned ? FIRST(60, 'Smithing') : LIMIT(room, 'Smithing', 'Building and Provisioning'), paid, true, HELD - room + paid, word];
   }));
   // the law the line and the Worker share
@@ -306,7 +306,7 @@ test('CRAFT-LIMIT-SAID every station says it, read off the real book - Building 
   page = standPage(B.book, { fire: true, alchemy: true });
   try {
     page.press('The Alchemy Station', 'Water Breathing');
-    assert.match(page.box('The Alchemy Station')[1].join('|'), /At most 10 Provisioning experience: Smithing and Outfitting stand above Journeyman/);   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
+    assert.match(page.box('The Alchemy Station')[1].join('|'), /At most 10 Provisioning experience: Smithing and Outfitting are past Journeyman/);   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
     page.press('The Fire', 'Hunter\'s Stew');
     assert.equal(page.box('The Fire')[1].at(-1), LIMIT(10, 'Provisioning', SO));
     assert.match(page.box('The Fire')[1].at(-2), /half as much again as its 80 Provisioning experience\.$/, 'PIN MOVED (VOICE2): room left: the pans\' XP said, the limit after it');
@@ -410,7 +410,7 @@ test('CRAFT-LIMIT-SAID the tab before the choice and the top: none past - the ru
   assert.deepEqual(tabOf(book, 'smithing'), {
     xp: '16,000 / 16,810 XP',
     limit: 'Crafts above Journeyman: 0 of 2',
-    rule: 'A character raises only 2 crafts past Journeyman; once 2 of yours pass rank 50, the others stop there. No craft\'s rank is ever lowered.',
+    rule: 'Only 2 crafts can rise past Journeyman. Once 2 of yours pass rank 50, the others stop there. A craft never loses rank.',
   });
   track('building', xpForRank(70));
   track('enchanting', xpForRank(51));
@@ -437,7 +437,7 @@ test('CRAFT-LIMIT-SAID the law: craftLimit is craftXpCap\'s ceiling with its roo
   // track): the others hold it, never itself, AT ITS OWN RANK - its words were "holds Smithing at rank 50" at rank 60
   const three = L('smithing', { smithing: 60, building: 60, provisioning: 60 }, xpForRank(60));
   assert.deepEqual(three, { cap: HELD, room: 0, by: ['building', 'provisioning'], rank: 60 }, 'three past: held where it stands');
-  const AT60 = 'Building and Provisioning stand above Journeyman, and the crafter\'s limit holds Smithing at rank 60';
+  const AT60 = 'Building and Provisioning are past Journeyman, so the crafter\'s limit holds Smithing at rank 60';
   assert.equal(words.capLine('Smithing', { limit: three }, 60), `No Smithing experience: ${AT60}.`, 'the station\'s line');   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
   assert.equal(words.craftXpText(recipeById('dagger:silver'), { xp: 0, first: true }, 'Smithing', three), `(+0 Smithing experience. ${AT60})`, 'the craft\'s word');   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
   assert.equal(pages.xpLine({ xp: xpForRank(60), rank: 60 }, three), '36,000 / 36,000 XP - the crafter\'s limit holds it at rank 60', 'the tab: its own XP its ceiling, never "36,000 / 26,009 XP - ... at rank 50"');
@@ -472,13 +472,13 @@ test('AUDIT FB1018f L5-3 the tab: a third craft below the rank it is held at kee
   assert.deepEqual(await at(xpForRank(60)), Array(2).fill(HELD_AT('36,000', '36,000', 60)), 'past its cap: never "36,000 / 26,009 XP - ... at rank 50"');
 });
 
-test('AUDIT FB1018f L5-4 Master\'s word: a Master\'s craft says "(+0 Smithing XP - Smithing is at Master)", first or not, never "with the first-time bonus" nor the crafter\'s limit\'s (fails today: a Master\'s limit names no crafts and fell through to the first\'s word); at 99,800 the Worker pays a new pattern 200 of what it earns and the word is the top\'s, the first the top ate never said as paid (mutants: the top\'s word unsaid; a Master\'s word the limit\'s)', async (t) => {
+test('AUDIT FB1018f L5-4 Master\'s word: a Master\'s craft says "(+0 Smithing XP: Smithing is at Master)", first or not, never "with the first-time bonus" nor the crafter\'s limit\'s (fails today: a Master\'s limit names no crafts and fell through to the first\'s word); at 99,800 the Worker pays a new pattern 200 of what it earns and the word is the top\'s, the first the top ate never said as paid (mutants: the top\'s word unsaid; a Master\'s word the limit\'s)', async (t) => {
   t.mock.method(Date, 'now', () => NOON * 1000);
   const master = law.craftLimit('smithing', { smithing: 100 }, PROF_XP_MAX);
   for (const data of [{ xp: 0, first: true }, { xp: 0, first: false }]) {
     const w = words.craftXpText(recipeById('dagger:iron'), data, 'Smithing', master);
     assert.equal(w, '(+0 Smithing experience. Smithing is at Master)', JSON.stringify(data));   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
-    assert.doesNotMatch(w, /stand above Journeyman|first-time bonus/);
+    assert.doesNotMatch(w, /past Journeyman|first-time bonus/);
   }
   const { track, give, xpOf, book } = await standBook();
   track('smithing', PROF_XP_MAX - 200);
@@ -596,7 +596,7 @@ test('AUDIT FB1018f L5-6 the Firmament\'s hand at the fire, the alchemy station 
     page = standPage(S.book, { fire: true, cookSteps: () => 1 });
     try {
       page.press('The Fire', 'Hunter\'s Stew');
-      assert.match(page.box('The Fire')[1].join('|'), new RegExp(`${scaleXp(cookXp(30, { clean: true, steps: 1 }), pP)} Provisioning experience against a plain dish's ${scaleXp(cookXp(30, { steps: 1 }), pP)}`));   // PIN MOVED (VOICE2)
+      assert.match(page.box('The Fire')[1].join('|'), new RegExp(`${scaleXp(cookXp(30, { clean: true, steps: 1 }), pP)} Provisioning experience instead of ${scaleXp(cookXp(30, { steps: 1 }), pP)}`));   // PIN MOVED (VOICE2)
     } finally { page.done(); }
   } finally { _resetFirmamentLiveForTests(); }
 });
@@ -618,7 +618,7 @@ test('AUDIT FB1018f L5-8 the limit\'s rows in the player\'s language: German\'s 
       assert.equal(words.craftXpText(recipeById('dagger:iron'), { xp: 0, first: true }, 'Smithing', law.craftLimit('smithing', { smithing: 100 }, PROF_XP_MAX)), say('prof.craft.xpTop', { xp: 0, profession: 'Smithing' }), `${lang}: Master's word`);
       assert.equal(pages.xpLine({ xp: HELD, rank: 50 }, two), say('prof.page.xpHeld', { xp: HELD, cap: HELD, rank: 50 }), `${lang}: the tab's ceiling`);
     }
-    assert.match(words.limitRuleLine(['building', 'provisioning']), /^Персонаж поднимает выше Подмастерья только 2 ремесла: ваши — Building и Provisioning, поэтому остальные ваши ремёсла/);
-    assert.match(words.limitRuleLine(['building']), /только 2 ремесла; как только 2 из ваших пройдут ранг 50/);
+    assert.match(words.limitRuleLine(['building', 'provisioning']), /^Выше Подмастерья могут подняться только 2 ремесла\. Ваши — Building и Provisioning, поэтому остальные ваши ремёсла/);   // PLAIN-SWEEP: the row redrafted from the plain English
+    assert.match(words.limitRuleLine(['building']), /только 2 ремесла\. Как только 2 из ваших пройдут ранг 50/);
   } finally { tm.setLocale('en'); }
 });

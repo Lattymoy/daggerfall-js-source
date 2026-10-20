@@ -178,8 +178,8 @@ export function createBountyHost(deps) {
       const p = postingOf(h.id);
       if (!p) return null;
       const where = p.kind === 'dungeon' && !p.graveyard
-        ? `Where: ${p.place}, ${p.dir} of ${p.town.name} - marked on your map with a black circle.`
-        : `Where: ${p.far} ${p.dir} of ${p.town.name} - marked on your map with a black circle.`;
+        ? `Where: ${p.place}, ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`
+        : `Where: ${p.far} ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`;
       const lines = [p.tierLabel, p.story, '', `Slain: ${h.killed} of ${p.count} ${p.foes}.`, where, `Reward: ${p.gold} gold pieces and a piece of kit.`];
       // BOUNTY-TRAIL: where the hunt stands in its two groups, and the last way named
       const groups = bountyGroups(p);
@@ -417,7 +417,7 @@ export function createBountyHost(deps) {
           const before = bountyStage(p, row.killed);
           row.killed = Math.min(p.count, row.killed + 1);
           if (before === 0 && bountyStage(p, row.killed) === 1 && row.killed < p.count) {
-            deps.say(`The first group is dead - but ${p.count - row.killed} ${p.foes} got away. Look for their trail.`);
+            deps.say(`The first group is dead, but ${p.count - row.killed} ${p.foes} got away. Look for their trail.`);
           }
           repaint();
         }
@@ -473,7 +473,7 @@ export function createBountyHost(deps) {
       packs.set(row.id, entry);
       const metres = Math.round(Math.hypot(stood.dx, stood.dz));
       deps.say(underground
-        ? `You hear ${p.foes} somewhere deeper in ${p.place} - ${remaining} of them, about ${metres} meters away.`
+        ? `You hear ${p.foes} somewhere deeper in ${p.place}: ${remaining} of them, about ${metres} meters away.`
         : `You spot ${remaining} ${p.foes}, ${metres} meters to the ${compass8(stood.dx, stood.dz)}!`);
       Promise.resolve(stood.foes).then((foes) => {
         const list = (foes ?? []).filter(Boolean);

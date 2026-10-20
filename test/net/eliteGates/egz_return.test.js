@@ -560,7 +560,7 @@ test('EG-ZD THE PAD AND THE SURPLUS (section 27.8, EG-G1\'s departure 7): with a
   // the panel's mark
   const doc = fakeDoc();
   const model = egPanelModel(P.client.state(), ME, P.now());
-  for (const [focus, label] of [[3, /a fourth card/], [4, /reroll/]]) {
+  for (const [focus, label] of [[3, /a fourth card/], [4, /draw new cards/]]) {
     destroyEgHud();
     drawEgPanel(model, { doc, focus });
     const marked = find(doc.body, 'eg-focus');

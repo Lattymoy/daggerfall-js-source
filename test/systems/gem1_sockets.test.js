@@ -392,7 +392,7 @@ test('GEM3 the wells, the chooser and the pips - and in the pack: an empty well 
     const ws = kids(wells, 'sock-well');
     assert.deepEqual(ws.map((w) => [w.className, w.dataset.socket, w.dataset.gem ?? null, w.dataset.gemGrade ?? null]), [
       ['sock-well empty press', '0', null, null], ['sock-well set press', '1', 'perfect-ruby', 'perfect'], ['sock-well empty press', '2', null, null]]);
-    assert.equal(ws[1].getAttribute('title'), 'Perfect Ruby: +6 Fire damage - press again to shatter it');
+    assert.equal(ws[1].getAttribute('title'), 'Perfect Ruby: +6 Fire damage. Click again to shatter it');
     assert.equal(ws[0].getAttribute('title'), 'Empty socket');
     assert.ok('asking' in ws[1].dataset && 'open' in ws[0].dataset && !('open' in ws[2].dataset));
     ws[2].onclick({ stopPropagation() {} });
@@ -445,7 +445,7 @@ test('GEM3 the wells, the chooser and the pips - and in the pack: an empty well 
         assert.deepEqual([bow.sockets[0], said()], ['flawless-ruby', UNSET_ASK('flawless-ruby')], 'asked first');
         wellsNow()[0].onclick({ stopPropagation() {} });
         assert.deepEqual(bow.sockets, Array(3).fill(LR.SOCKET_EMPTY), 'shattered');
-        assert.ok(said().startsWith('The Flawless Ruby in') && said().endsWith('shatters; the socket is empty.'), said());
+        assert.ok(said().startsWith('The Flawless Ruby in') && said().endsWith('shatters. The socket is empty.'), said());
         assert.equal(ruby.stackCount, 1, 'the gem gone, not back');
         // a loose gem's "Set in..."
         page('valuables');

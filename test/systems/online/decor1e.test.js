@@ -269,7 +269,7 @@ test('DECOR1e lighting, holding and removing offline: a piece lit takes its cata
   roomPress(rig, chair.id, 'Remove');
   await settle();
   assert.deepEqual([rig.standing.map((p) => p.id), rig.w.credited], [[candle.id], [decorRefund(chair.paid)]]);
-  assert.equal(rig.said.at(-1), `${rig.entries.find((e) => e.key === 'm41000').name} removed - ${decorRefund(chair.paid)} gold back.`);
+  assert.equal(rig.said.at(-1), `${rig.entries.find((e) => e.key === 'm41000').name} removed. ${decorRefund(chair.paid)} gold back.`);
   assert.ok(decorRefund(chair.paid) < chair.paid);
 });
 
@@ -485,7 +485,7 @@ test('DECOR1e a room sold takes its placed pieces: online, the service\'s count 
   // HOME-PRICE: the thousands, and the Empire's account (EMPIRE-ACCOUNT) - online, never the region's
   assert.equal(homeSoldLine(25500, 120), 'You sold your home. 25,620 gold went to your account at the Bank of the Empire, 120 of it for its placed pieces.');
   assert.equal(homeSoldLine(25500), 'You sold your home. 25,500 gold went to your account at the Bank of the Empire.', 'none placed: the sentence it always was');
-  assert.equal(homeSaleLines(25500)[2], 'Its placed pieces go too, for half of what they cost; your own things come back to your pack.', 'DECOR2a: and the owner\'s own things');
+  assert.equal(homeSaleLines(25500)[2], 'Its placed decorations are sold too, for half their cost. Your own items go back to your pack.', 'DECOR2a: and the owner\'s own things');
   // offline: the scene's pieces, taken once
   const p = (id, paid) => ({ id, model: 41000, flat: null, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, light: null, storage: true, paid });
   const cache = createSceneCache();

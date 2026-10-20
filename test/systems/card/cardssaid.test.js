@@ -85,7 +85,7 @@ test('CARDS-SAID a stake the realm refused is said on the panel, beside the buy-
   h.press('Deal me in');
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(h.asked.length, 1, 'the realm asked');
-  assert.match(h.shown(), /The realm is busy settling something else\. Try again in a moment\. \(Buy in for 200-1000 gold\.\)/, 'the refusal on the panel');
+  assert.match(h.shown(), /The realm is settling something else\. Try again in a moment\. \(Buy in for 200-1000 gold\.\)/, 'the refusal on the panel');
   assert.deepEqual(h.sent.filter((w) => w.op === 'sit'), [], 'no sit');
   for (const [error, line] of [['realm-gold', 'Your purse cannot cover that stake.'], ['cards-closed', 'The realm is not holding stakes right now.'], ['whatever-else', 'The realm could not hold your stake. Try again.']]) {
     answer = { ok: false, error };

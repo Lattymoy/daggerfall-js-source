@@ -402,8 +402,8 @@
   {
     "name": "AUDITCC-UI-S8-nothing-taken",
     "file": "src/ui/credits.js",
-    "old": "Boons (the default: neglect costs nothing, and a body",
-    "new": "Boons (the default: nothing taken, and a body",
+    "old": "Boons (the default: neglect costs nothing, and staying",
+    "new": "Boons (the default: nothing taken, and staying",
     "why": "the credits say Boons takes nothing: the drink swings the attributes there",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the credits name Boons the default.",
     "tests": [

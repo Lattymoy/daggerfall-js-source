@@ -510,7 +510,7 @@
   {
     "name": "SEAT2b2-stored-words",
     "file": "src/systems/smithItems.js",
-    "old": "`You made a ${name} - it waits in your Stores`",
+    "old": "`You made a ${name}. It waits in your Stores`",
     "new": "`You made a ${name}`",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"

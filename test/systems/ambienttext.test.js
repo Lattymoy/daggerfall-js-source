@@ -53,6 +53,13 @@ test('AT0: the settings entry IS the mod’s modsettings - section, names, bound
   assert.equal(ship.Sections.length, 1, 'the mod ships one section');
   assert.equal(ship.Sections[0].Name, AMBIENT_TEXT_SECTION);
   const keys = MOD_SETTINGS[AMBIENT_TEXT_VENDOR].keys;
+  // PLAIN-TEXT (2026-10-19): the four lines said plainly for a player - their words, exactly
+  const PLAIN = {
+    textChance: 'Chance, in percent, of a line at each check',
+    interval: 'Real-time seconds between checks for a line',
+    postTextInterval: 'Real-time seconds to wait after a line is shown',
+    textDisplayTime: 'Seconds a line stays on screen',
+  };
   // Derived from the shipped file, so a hand-typed bound cannot drift:
   // every key the mod ships is restated with ITS numbers.
   for (const k of ship.Sections[0].Keys) {
@@ -61,7 +68,7 @@ test('AT0: the settings entry IS the mod’s modsettings - section, names, bound
     assert.equal(here.default, k.Value, `${k.Name}: default`);
     assert.equal(here.min, k.Min, `${k.Name}: min`);
     assert.equal(here.max, k.Max, `${k.Name}: max`);
-    assert.equal(here.description, k.Description, `${k.Name}: the description is the author’s, verbatim`);
+    assert.equal(here.description, PLAIN[k.Name] ?? k.Description, `${k.Name}: the description is the author’s, or its plain rewording`);
   }
   // ...and the port carries NOTHING the mod does not, beyond its own
   // Enabled (DFU enables a mod by listing it; the port has no list).

@@ -572,7 +572,7 @@ export const ACTION_GROUPS = Object.freeze([
     ['SocialInteract', 'Interact with player'],
   ]),
   g('Professions', [
-    ['ActChoice', 'At a profession node: the next of its acts on the list'],   // PROF-MENU: the node's list is the plaque's - the key steps its light
+    ['ActChoice', 'Next action at a profession node'],   // PROF-MENU: the node's list is the plaque's - the key steps its light
     ['Professions', 'Open your Professions page (online)'],   // CLASSIC-PAGES: the pages on either skin; AUDIT FB1018D L1-7: it lands on the Professions page (input.js `at: 'professions'`) - the Stores are the Holdings tab's   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)
   ]),
   g('Game', [

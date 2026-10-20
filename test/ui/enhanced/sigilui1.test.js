@@ -70,10 +70,10 @@ test('SIGIL-UI the block: the rune, "Sigil" and the stage, what it gives now and
     assert.equal(one(box, 'sigil-party').textContent, 'won in a fight of 3');
     assert.equal(one(box, 'sigil-note'), null, 'neither held nor fresh: no note');
     const held = sigilCard(sword(23900), { full: true });
-    assert.equal(one(held, 'sigil-note').textContent, 'Your Renown holds it at Kindled - Bright at Renown 20');
+    assert.equal(one(held, 'sigil-note').textContent, 'Your Renown limits it to Kindled. Bright at Renown 20');
     assert.deepEqual(kids(held, 'sigil-gem').map((g) => g.className), ['sigil-gem grown awake', 'sigil-gem grown awake', 'sigil-gem grown', 'sigil-gem grown', 'sigil-gem']);
     const fresh = sigilCard(sword(0, { sigil: { power: 3, party: 1, xp: 0 } }), { full: true });
-    assert.equal(one(fresh, 'sigil-note').textContent, 'It grows as this weapon earns Renown in your hand.');
+    assert.equal(one(fresh, 'sigil-note').textContent, 'It grows as you earn Renown with this weapon.');
     assert.equal(one(fresh, 'sigil-party'), null, 'a fight of one is not a fight to boast of');
     // CARD-FIT: THE CARD'S DRESS - two rows, and a line for the blow
     const c = sigilCard(sword(7420));
@@ -89,14 +89,14 @@ test('SIGIL-UI the block: the rune, "Sigil" and the stage, what it gives now and
     assert.equal(one(c, 'sigil-effect').textContent, '+2.4% damage (up to +6%)');
     for (const cls of ['sigil-meter', 'sigil-party', 'sigil-note']) assert.equal(one(c, cls), null, `no ${cls} on the card`);
     const cheld = sigilCard(sword(23900));
-    assert.equal(one(cheld, 'sigil-note').textContent, 'Renown holds it: Bright at Renown 20');
+    assert.equal(one(cheld, 'sigil-note').textContent, 'Renown limit: Bright at Renown 20');
     assert.deepEqual(kids(cheld, 'sigil-gem').map((g) => g.className.includes('next')), [false, false, false, false, true], 'its OWN growth fills - Radiant drunk, Ascendant filling - whatever my Renown lets it burn at');
     assert.equal(one(sigilCard(sword(0, { sigil: { power: 3, party: 1, xp: 0 } })), 'sigil-note'), null, 'how a sigil grows is the Info box\'s');
     setSigilOnline(false);
     const dormant = sigilCard(sword(7420), { full: true });
     assert.equal(dormant.dataset.stage, 'dormant');
-    assert.equal(one(dormant, 'sigil-effect').textContent, 'Wakes online, with your Renown: +6% damage at Ascendant');
-    assert.equal(one(sigilCard(sword(7420)), 'sigil-effect').textContent, 'Wakes online: up to +6% damage');
+    assert.equal(one(dormant, 'sigil-effect').textContent, 'Works online only: +6% damage at Ascendant');
+    assert.equal(one(sigilCard(sword(7420)), 'sigil-effect').textContent, 'Works online: up to +6% damage');
     assert.equal(sigilCard({ name: 'Mace' }), null);
     _resetSigilForTests();
   });

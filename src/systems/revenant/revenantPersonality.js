@@ -19,15 +19,15 @@
 
 /** The ten, with the card's word for each, a line for the page, and a beast's manner. */
 export const PERSONALITIES = Object.freeze({
-  brutal: Object.freeze({ label: 'Brutal', blurb: 'Savage, blunt, and hungry for blood.', manner: 'with a savage snarl' }),
-  witty: Object.freeze({ label: 'Witty', blurb: 'Sharp-tongued, sardonic, never short of a barb.', manner: 'with an almost knowing glint' }),
+  brutal: Object.freeze({ label: 'Brutal', blurb: 'Savage and hungry for blood.', manner: 'with a savage snarl' }),
+  witty: Object.freeze({ label: 'Witty', blurb: 'Sharp-tongued and never short of a barb.', manner: 'with an almost knowing glint' }),
   humorous: Object.freeze({ label: 'Humorous', blurb: 'Laughs at everything, your death included.', manner: 'with a playful yip' }),
-  arrogant: Object.freeze({ label: 'Arrogant', blurb: 'Proud, haughty, and certain it is your better.', manner: 'with its head held high' }),
-  cold: Object.freeze({ label: 'Cold', blurb: 'Quiet, patient, and utterly without mercy.', manner: 'in eerie silence' }),
-  zealous: Object.freeze({ label: 'Zealous', blurb: 'Fervent. Sees the hand of the gods in every blow.', manner: 'with wild, burning eyes' }),
-  unhinged: Object.freeze({ label: 'Unhinged', blurb: 'Manic, giggling, and impossible to predict.', manner: 'with a frenzied howl' }),
-  honourable: Object.freeze({ label: 'Honorable', blurb: 'A duelist with a code. It fights fair, and expects the same.', manner: 'with a steady, measured gaze' }),
-  craven: Object.freeze({ label: 'Craven', blurb: 'All bluster and nerves. Brave only from behind.', manner: 'with a nervous whine' }),
+  arrogant: Object.freeze({ label: 'Arrogant', blurb: 'Proud and certain it is your better.', manner: 'with its head held high' }),
+  cold: Object.freeze({ label: 'Cold', blurb: 'Quiet, patient and without mercy.', manner: 'in eerie silence' }),
+  zealous: Object.freeze({ label: 'Zealous', blurb: 'Sees the hand of the gods in every blow.', manner: 'with wild, burning eyes' }),
+  unhinged: Object.freeze({ label: 'Unhinged', blurb: 'Manic and impossible to predict.', manner: 'with a frenzied howl' }),
+  honourable: Object.freeze({ label: 'Honorable', blurb: 'A duelist who fights fair and expects the same.', manner: 'with a steady, measured gaze' }),
+  craven: Object.freeze({ label: 'Craven', blurb: 'All bluster, and brave only from behind.', manner: 'with a nervous whine' }),
   weary: Object.freeze({ label: 'Weary', blurb: 'Tired of the killing, and of you most of all.', manner: 'with a tired, rumbling sigh' }),
 });
 /** @type {readonly PersonalityId[]} */

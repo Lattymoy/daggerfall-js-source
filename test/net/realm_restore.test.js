@@ -217,6 +217,6 @@ test('RESTORE C: the maintenance switch - held, the service answers its health (
   assert.deepEqual(await ask(held, '/v1/realm/customs', proof), { status: 503, body: { error: 'maintenance' } });
   assert.deepEqual(await ask(open, '/v1/realm/customs', proof), { status: 401, body: { error: 'auth' } });
   assert.equal(rows(), before, 'the proof writes nothing, held or not');
-  assert.equal(accountRefusalText('maintenance'), 'The account service is being looked after for a minute. Try again shortly.');
+  assert.equal(accountRefusalText('maintenance'), 'The account service is under maintenance for a minute. Try again shortly.');
   assert.doesNotMatch(src('server-account/wrangler.toml'), /MAINTENANCE/, 'the switch is a deploy\'s alone, never the config\'s');
 });

@@ -224,7 +224,7 @@ test('GF2-BLOWSHAKE B7: the seams - the host steps its machines through stepAct 
   assert.doesNotMatch(blow, /\b(cam|camera|view)\.(pitch|yaw)\s*[-+*/]?=/, 'no camera written: the springs are folded into the view by every host (player/climb/climbFeel.js)');
   const menu = src('src/ui/enhanced/enhancedMenu.js');
   // PIN MOVED (AUDIT GATHER-FEEL F8): the note says what a blow does, and where - a dip, never a shake or a tilt, on the Enhanced skin alone
-  assert.match(menu, /choiceRow\('techniqueMotion', 'Technique camera motion',\n\s+'How much a weapon technique shakes and tilts the view and dips your hands - and, on the Enhanced skin, how far a tool\\'s blow dips them as you gather\.',/);
+  assert.match(menu, /choiceRow\('techniqueMotion', 'Technique camera motion',\n\s+'How much a weapon technique shakes and tilts the view and dips your hands\. On the Enhanced skin, it also sets how far your hands dip when you gather\.',/);
 });
 
 test('GF2-BLOWSHAKE B8: a blow\'s answer never stops an act - a feel that throws, and the vein is struck out and goes as its last blow lands all the same (mutant: the throw let through)', async () => {

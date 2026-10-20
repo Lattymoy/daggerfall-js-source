@@ -1355,7 +1355,7 @@ Mac: *"Remove the time dial from ships online."* Online (the host's
 `sharedClockOn()`, the runtime's new `timeLocked` dep) the helm's time dial
 is gone: the three keys - and the enhanced panel's and the pad's presses,
 which ARE those keys (`BOAT_TIME_ACTIONS`) - say *"Online, time at sea
-keeps the world's pace."* (`HELM_TIME_LOCKED_TEXT`, a second and a half)
+runs at normal speed."* (`HELM_TIME_LOCKED_TEXT`, a second and a half)
 and move nothing (`updateSailing` returns before the three key lines, which
 stand byte for byte); `helmPanelState().timeDial` is false, so the
 enhanced helm draws no `−` / `×N` / `+` (`ui/enhanced/enhancedHelm.js helmButtons`),

@@ -533,8 +533,8 @@
   {
     "name": "EGZ-panel-mark-off-the-button",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (focus === model.offer.cards.length + use) b.className = 'eg-focus';",
-    "new": "if (focus === use) b.className = 'eg-focus';",
+    "old": "`eg-k-btn${focus === offer.cards.length + use ? ' eg-focus' : ''}`",
+    "new": "`eg-k-btn${focus === use ? ' eg-focus' : ''}`",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]

@@ -3126,7 +3126,7 @@ function listCol() {
   const col = el('section', 'packcol');
   const rows = model.tabs.find((x) => x.tab === tab)?.items ?? [];
   if (!rows.length) {
-    col.append(el('p', 'packempty', 'Nothing in this pack answers to that page.'));
+    col.append(el('p', 'packempty', 'Nothing in your pack fits this page.'));
   }
   keepList(virtualRows(col, rows, (it) => itemRow(it), { onAim: rowsMoved }));   // VIRT: a long page draws the tiles on screen
   return col;
@@ -3639,9 +3639,9 @@ function askDismantle(item) {
 export const SALVAGE_ASK = (name, n) => [`Salvage ${name}?`, `It is gone for good, and you get ${shardsText(n)}.`];
 export const SALVAGED_LINE = (name, n) => `Salvaged: ${name}, for ${shardsText(n)}.`;
 /** AUDIT GEM: a piece holding a set gem is never salvaged with it (systems/reforge.js salvageRefusal 'gems'). */
-export const SALVAGE_GEMS = (name) => `${name} holds a gem. Extract it at the Reforge, or unset it, first.`;
+export const SALVAGE_GEMS = (name) => `${name} holds a gem. Extract it at the Reforge or unset it first.`;
 /** FB1012d SALVAGE-CLASSIC: a piece that wears Magic the ladder never graded (systems/reforge.js salvageRefusal 'classic'). */
-export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is classic, the kind the guilds sell and make. Welkynd Shards come only from a piece the loot ladder graded.`;
+export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is the classic kind the guilds sell and make. Welkynd Shards come only from loot with a rarity grade.`;
 function askSalvage(item) {
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
@@ -4024,7 +4024,7 @@ function detailCol() {
   // reads as an explanation rather than as clutter.
   if (line.image && !big) {
     col.append(el('p', 'iconnote',
-      `No picture for this one yet — TEXTURE.${line.image.archive} record ${line.image.record}.`));
+      `No picture for this one yet (TEXTURE.${line.image.archive} record ${line.image.record}).`));
   }
   return col;
 }

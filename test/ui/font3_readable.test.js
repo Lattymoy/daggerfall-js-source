@@ -60,7 +60,8 @@ const FLOOR_SHEETS = ['src/ui/enhanced/enhancedStyle.js', 'src/ui/enhanced/enhan
   'src/ui/profileWindow.js', 'src/ui/travel/travelViewHud.js', 'src/ui/enhanced/enhancedDeath.js', 'src/ui/enhanced/enhancedPlayerTrade.js', 'src/ui/plus/plusPad.js',
   'src/ui/enhanced/enhancedFrame.js', 'src/ui/intro/introScreen.js',   // AUDIT FONT3 C3: the film's words are the pixel face too
   'src/ui/waypointMenu.js', 'src/ui/travel/travelPaceControls.js',   // WAYPOINTS and PACE-DIALS (2026-10-06): the right-click menu and the pace box lay sheets of their own
-  'src/ui/card/cardPanelKit.js', 'src/ui/card/cardTableHud.js', 'src/ui/iliacTableHud.js', 'src/ui/gambitTableHud.js'];   // KG3: the card tables' panels - the chrome, Hold'em, Iliac Hand and The King's Gambit
+  'src/ui/card/cardPanelKit.js', 'src/ui/card/cardTableHud.js', 'src/ui/iliacTableHud.js', 'src/ui/gambitTableHud.js',   // KG3: the card tables' panels - the chrome, Hold'em, Iliac Hand and The King's Gambit
+  'src/ui/eliteGates/egKit.js', 'src/ui/eliteGates/egHud.js', 'src/ui/eliteGates/egBoardWindow.js', 'src/ui/eliteGates/egStartPanel.js', 'src/ui/eliteGates/egSpireHud.js'];   // EG-PLUS: the Elite Breach's windows and its HUD
 // a ◆, a rarity pip, the emblem's word, an SVG's own units - and (AUDIT FONT3 C3) the effect words and rounds INSIDE a
 // 16px effect icon (the party card's and the crew's), which are the icon's own marks at the icon's own scale
 const GLYPH_ONLY = /::?before|::?after|insignia-word|provlabel|dfparty-fx[wr]|dfnaval-crew-fxe/;

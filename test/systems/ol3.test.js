@@ -76,7 +76,7 @@ test('OL3 (1) + LIVED1: the tavern\'s offer says how long the room is theirs in 
   // AUDIT LIVED1 N (U2): two rows, split at the play's bracket - the classic box lays its rows out unwrapped
   assert.equal(offer.rows.length, 3);
   assert.deepEqual(offer.rows.slice(1).map((r) => r.text), [`${OWN_TIME_ROOM} 3 days of your time`, `(6h of play)${OWN_TIME_ROOM_NOTE}`]);
-  assert.deepEqual(offer.rows.slice(1).map((r) => r.text), ['The room is yours for 3 days of your time', '(6h of play) - a rest spends it, logging off does not.']);
+  assert.deepEqual(offer.rows.slice(1).map((r) => r.text), ['The room is yours for 3 days of your time', '(6h of play). Resting uses it; logging off does not.']);
   assert.equal(offer.rows[1].center, true);
   assert.equal(offer.rows[2].center, true);
   assert.deepEqual(asked, [now + 3 * MINUTES_PER_DAY], 'a fresh rental ends three days from now');

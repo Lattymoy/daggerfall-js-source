@@ -204,7 +204,7 @@ test('REALM P2.1 law: the swap - each side takes what the other gives, as the gi
   assert.deepEqual([saveA.goldPieces, saveB.items[0].stackCount], [50, 10], 'the service\'s copies are never changed in place');
   assert.deepEqual(settleRealmTrade(saveA, saveB, hA, { give: giveB, get: { ...giveA, gold: 19 }, pick: [0] }), { why: 'mismatch' });
   assert.deepEqual(settleRealmTrade(saveA, { items: [], goldPieces: 5 }, hA, hB), { why: 'goods' }, 'B\'s record holds no arrows');
-  assert.match(realmTradeRefusalText('goods'), /Nothing changed hands/);
+  assert.equal(realmTradeRefusalText('goods'), 'The realm could not find the goods offered. Nothing changed hands.');
 });
 
 // ---- the service -----------------------------------------------------------------------------------------------------

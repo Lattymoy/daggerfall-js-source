@@ -345,7 +345,7 @@ test('CRAFT1 anvil page: a recipe whose inputs are made from raw says so, its bo
   assert.equal(row.className.includes('prof-locked'), false);
   row.onclick();
   assert.match(root.textContent, /Steel Longsword - rank 10/);
-  assert.match(root.textContent, /Refined first, here: smelt ingot:iron x3, burn wood:charcoal x3, smelt ingot:steel x3, cure leather:cured x1 - from metal:iron x6, log:pine x3, hide:rat x2\./);
+  assert.match(root.textContent, /Refined first: smelt ingot:iron x3, burn wood:charcoal x3, smelt ingot:steel x3, cure leather:cured x1 - from metal:iron x6, log:pine x3, hide:rat x2\./);
   const craft = buttons().find((b) => b.textContent === 'Craft');
   assert.equal(craft.disabled, false, 'offered');
   // AUDIT CRAFT1 F1 + N1: while the craft (and its chain) is in flight, no forge work is pressed and no other bench's hands start
@@ -360,9 +360,9 @@ test('CRAFT1 anvil page: a recipe whose inputs are made from raw says so, its bo
   assert.deepEqual(crafted, ['longsword:steel']);
   held.set('metal:iron', 4);
   draw();
-  assert.match(buttons().find((b) => b.textContent.startsWith('Longsword')).textContent, /wants its inputs/, 'PIN MOVED (CRAFT2): no metal of the pattern made now or from raw');
+  assert.match(buttons().find((b) => b.textContent.startsWith('Longsword')).textContent, /needs materials/, 'PIN MOVED (CRAFT2): no metal of the pattern made now or from raw');
   press('Steel');   // the box's metal
-  assert.match(root.textContent, /From raw goods, short of metal:iron x2\./);
+  assert.match(root.textContent, /Not enough raw materials: short of metal:iron x2\./);
   assert.equal(buttons().find((b) => b.textContent === 'Craft').disabled, true);
   setPref('gentleActs', false);
   setProfessionsPages(null);
@@ -393,10 +393,10 @@ test('AUDIT CRAFT1 the other four benches drawn: the workbench\'s staff from Pin
     row('Bracer').onclick();
     // PIN MOVED (CRAFT2): the workbench and the loom list patterns - a case its row's name and its box's
     const cases = [
-      ['Staff', 'Pine Staff', 'Refined first, here: saw plank:pine x4 - from log:pine x2. The experience belongs to that work; what is left over stays in your Stores.'],
-      ['Cuirass', 'Leather Cuirass', 'Refined first, here: cure leather:cured x6 - from hide:rat x12. The experience belongs to that work; what is left over stays in your Stores.'],
-      ['Stone Column', 'Stone Column', 'Refined first, here: cut stone:cut x12, mix stone:mortar x10 - from stone:rough x29, metal:sulphur x1, metal:lead x1. The experience belongs to that work; what is left over stays in your Stores.'],
-      ['Silver Bracer', 'Silver Bracer', 'Refined first, here: cure leather:cured x1 - from hide:rat x2. The experience belongs to that work; what is left over stays in your Stores.'],
+      ['Staff', 'Pine Staff', 'Refined first: saw plank:pine x4 - from log:pine x2. The refining earns its own experience, and anything left over stays in your Stores.'],
+      ['Cuirass', 'Leather Cuirass', 'Refined first: cure leather:cured x6 - from hide:rat x12. The refining earns its own experience, and anything left over stays in your Stores.'],
+      ['Stone Column', 'Stone Column', 'Refined first: cut stone:cut x12, mix stone:mortar x10 - from stone:rough x29, metal:sulphur x1, metal:lead x1. The refining earns its own experience, and anything left over stays in your Stores.'],
+      ['Silver Bracer', 'Silver Bracer', 'Refined first: cure leather:cured x1 - from hide:rat x2. The refining earns its own experience, and anything left over stays in your Stores.'],
     ];
     for (const [name, boxed, words] of cases) {
       const r = row(name);
@@ -416,7 +416,7 @@ test('AUDIT CRAFT1 the other four benches drawn: the workbench\'s staff from Pin
     tracks.set('logging', T('logging', 100, null, 'timberwright'));
     draw();
     row('Staff').onclick();
-    assert.ok(note().some((n) => n.startsWith('Refined first, here: saw plank:pine x3 - from log:pine x1.')), JSON.stringify(note()));
+    assert.ok(note().some((n) => n.startsWith('Refined first: saw plank:pine x3 - from log:pine x1.')), JSON.stringify(note()));
     // a rank-locked row stays locked, though a chain could make its inputs (12 Scorpion hides cure to its 6 Hardened Leather)
     assert.equal(chainPlan(recipeById('leather-cuirass:hardened').inputs, (k) => held.get(k) ?? 0).ok, true);
     // PIN MOVED (CRAFT2): the Hardened Leather is the Cuirass's other material, in its box - its Cured from raw open

@@ -378,7 +378,7 @@ export const DISMANTLE_WORN = (name) => `Take off ${name} before dismantling it.
 export const DISMANTLED = (name, n) => `Dismantled: ${name}, for ${stonesText(n)}.`;
 
 /** The words a refused offer wears, and the set an offer belongs to by name. */
-export const BROKER_REFUSALS = Object.freeze({ bought: 'Bought today', stones: 'Not enough Deadlands Embers', gone: 'Gone with the day', heavy: 'Too heavy to carry' });
+export const BROKER_REFUSALS = Object.freeze({ bought: 'Bought today', stones: 'Not enough Deadlands Embers', gone: 'No longer in stock', heavy: 'Too heavy to carry' });
 export const offerSetName = (offer) => setById(offer?.set)?.name ?? '';
 export { SIGIL_STONE_TEMPLATE };
 /** Tests only: forget the record. */

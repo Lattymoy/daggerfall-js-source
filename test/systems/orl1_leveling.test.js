@@ -149,8 +149,10 @@ test('ORL1: every setting default and minimum is READ OUT OF settings.lua, and e
   // of chosen skills Morrowind does not.
   const extra = Object.keys(ours).filter((k) => !shipped.has(k));
   assert.deepEqual(extra.sort(), ['Enabled', 'primarySkillsImpact']);
-  assert.match(ours.primarySkillsImpact.description, /The original game has a tier of skills Morrowind does not/,   // PIN MOVED: BR5, the original game, not its name
-    'the port\'s own knob says in the pane that it is the port\'s');
+  // PIN MOVED (PLAIN-TEXT, 2026-10-19): the words a player reads, exactly - why the row exists, said for the player
+  // (Morrowind has no Primary tier) rather than as a note that the knob is the port's
+  assert.equal(ours.primarySkillsImpact.description, 'Points given by a Primary Skill level up (100 points required to level up). Morrowind has no Primary skills, so this starts equal to Major skills.',
+    'the port\'s own knob says in the pane why it is there');
   // ...and it ships equal to the major skills', which is the mapping
   // the page argues for: Daggerfall's primary+major (6 skills) stands
   // where Morrowind's major (5) does.
@@ -940,13 +942,13 @@ test('ORL1: the question describes the purse the game will actually hand out', (
   // from 0 to 60 and the Mods pane exposes it; the blurb used to say
   // "twelve virtues" whatever it was set to (ORL1's review).
   const words = (over) => levelingOptions(S(over)).find((o) => o.id === LEVELING_VIRTUE).lines.join(' ');
-  assert.match(words({}), /12 virtues, to spend on at most 3 attributes/);
+  assert.match(words({}), /12 virtues, to spend on up to 3 attributes/);
   assert.match(words({ attributePoints: 20, maxUpdatableAttribute: 5 }),
-    /20 virtues, to spend on at most 5 attributes/);
+    /20 virtues, to spend on up to 5 attributes/);
   assert.match(words({ attributePoints: 1 }), /\b1 virtue\b/, 'and it counts in English');
   // ...and a purse of NOTHING says so rather than promising virtues
   const none = words({ attributePoints: 0 });
-  assert.match(none, /purse to nothing/);
+  assert.match(none, /Attribute points are set to 0/);
   assert.doesNotMatch(none, /\b0 virtues/);
   // the bar's size is the mod's own number, not a second copy of it
   assert.match(words({}), new RegExp(`At ${LEVELUP_TOTAL} you level`));

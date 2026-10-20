@@ -103,7 +103,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   // sound), but it is off the picture: read aloud, never drawn. The one
   // message a player must SEE - the score failing to load - was never this
   // line's, it is the footer's.
-  const status = make(doc, 'p', 'intro-status', t('menu.intro.preparing', 'Preparing the journey…')); status.setAttribute('role', 'status');
+  const status = make(doc, 'p', 'intro-status', t('menu.intro.preparing', 'Preparing…')); status.setAttribute('role', 'status');
   gate.append(begin, status);
   const skip = make(doc, 'button', 'intro-skip', t('menu.intro.skip', 'Skip intro')); skip.type = 'button';
   const next = make(doc, 'button', 'intro-continue', t('menu.intro.tapContinue', 'Tap to continue')); next.type = 'button'; next.hidden = true;
@@ -297,7 +297,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
       await Promise.all([musicReady, decoded]);
       if (!over && transitionAt === null && phase === 'preparing') {
         phase = 'ready'; begin.disabled = false;
-        status.textContent = reduced ? t('menu.intro.readyReduced', 'Tap anywhere to begin. Reduced motion is on.') : t('menu.intro.ready', 'Tap anywhere to begin. Sound on for the full experience.');
+        status.textContent = reduced ? t('menu.intro.readyReduced', 'Tap anywhere to begin. Reduced motion is on.') : t('menu.intro.ready', 'Tap anywhere to begin. Best with sound on.');
         if (freezeAt !== null) { phase = 'playing'; gate.hidden = true; }
         else begin.focus({ preventScroll: true });
       }

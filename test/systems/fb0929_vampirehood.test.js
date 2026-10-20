@@ -64,7 +64,7 @@ test('VAMP-HOOD: a cloak worn hood down keeps the day\'s refusal and says how to
     'hood down at noon: DFU\'s refusal, and the way out after it');
   // HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): the line names the button that raises the hood - the pack card's
   // Raise hood (this suite runs on the enhanced skin; test/systems/fb0930_hoodsaid.test.js holds the classic's line)
-  assert.equal(VAMPIRE_HOOD_TEXT, 'Raise the hood of a cloak or robe to travel by day - Raise hood, on its card in the pack.');
+  assert.equal(VAMPIRE_HOOD_TEXT, 'Raise the hood of a cloak or robe to travel by day. Use Raise hood on its card in your pack.');
   // NextVariant cycles the casual cloak's six drawings (the template's `variants`), and the door follows the hood
   // through every one: variants 1, 2 and 5 are drawn hood up (the felt temperature's own reading of them)
   const open = [];

@@ -48,7 +48,7 @@ export const REFERENCE_FOES = Object.freeze([
   { id: 'soft', label: 'Soft monster', isClass: false, armorValue: 6, tip: 'A monster with armor value 6 (30 on every part): rats, imps and most of the early bestiary.' },
   { id: 'tough', label: 'Tough monster', isClass: false, armorValue: 0, tip: 'A monster with armor value 0: the middle of the bestiary.' },
   { id: 'armoured', label: 'Armored monster', isClass: false, armorValue: -10, tip: 'A monster with armor value -10 (-50 on every part): the daedra and the ancient undead.' },
-  { id: 'human', label: 'Human foe', isClass: true, armorValue: null, tip: 'A warrior in mail (60 on every part). Class foes get no monster bonus to be hit, and the overhaul reads a flat 60 off them.' },
+  { id: 'human', label: 'Human foe', isClass: true, armorValue: null, tip: 'A warrior in mail (60 on every part). Human foes get no monster bonus to be hit, and the combat overhaul uses a flat 60 for them.' },
 ]);
 
 /** The swings the melee machine offers, and the single release of a bow (WeaponManager: a bow release is StrikeDown). */

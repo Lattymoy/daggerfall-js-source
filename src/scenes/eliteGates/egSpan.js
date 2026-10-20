@@ -1291,7 +1291,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       // client's objs) - it said "Orrery stone 3" and no hour
       if (st) { const j = Number(st[1]), h = spireObjs().orr?.[j]; return { title: `${spireStoneName(j)} - ${SD_STONES[j]?.sign ?? ''}`, subs: [...(Number.isFinite(h) ? [SD_HALL_TEXT.hour(h)] : []), st[2] === 'f' ? 'Turn it forward an hour' : 'Turn it back an hour'] }; }
       const en = /^egengine:(\d+):(\d+)$/.exec(key);
-      if (en) { const spec = specs.find((q) => q.h === Number(en[1])), e = spec?.engines?.[Number(en[2])], E = e ? EG_ENGINES[e.kind] : null; if (E) return { title: E.name.charAt(0).toUpperCase() + E.name.slice(1), subs: [E.what, E.once ? 'Work it' : 'Work it, once every 30 seconds'] }; }   // AUDIT EG III: the Shelf topples once
+      if (en) { const spec = specs.find((q) => q.h === Number(en[1])), e = spec?.engines?.[Number(en[2])], E = e ? EG_ENGINES[e.kind] : null; if (E) return { title: E.name.charAt(0).toUpperCase() + E.name.slice(1), subs: [E.what, E.once ? 'Work it' : 'Work it once every 30 seconds'] }; }   // AUDIT EG III: the Shelf topples once
       return null;
     },
     /** Every Collapsing Tube segment and every island as they stand (tests). */

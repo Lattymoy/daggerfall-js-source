@@ -87,7 +87,7 @@ test('TECH-CARD the tier list: `technique: false` leaves out exactly the line th
   const all = LR.rarityLines(bow);
   const at = all.indexOf('Volley +22% [15-30]');
   assert.ok(at > 0, all.join(' | '));
-  assert.equal(all[at + 1], 'Aim: 6 arrows rain on 3.5 m, 61% each. 6 fatigue, 16s');
+  assert.equal(all[at + 1], 'Aim: 6 arrows rain down within 3.5 m, 61% each. 6 fatigue, 16s');
   assert.deepEqual(LR.rarityLines(bow, { technique: false }), [...all.slice(0, at), ...all.slice(at + 2)]);
   const plain = LR.applyRarity(createWeapon(130, 1), 'rare', lcg(7));
   plain.isIdentified = true;
@@ -105,7 +105,7 @@ test('TECH-CARD the block: the card\'s dress one row at the head - the glyph, th
   on();
   assert.deepEqual({ ...TECH_HOW }, { aims: 'hold to aim', press: 'press' });
   assert.equal(TECH_UNBOUND, 'no key bound');
-  assert.equal(TECH_DUEL_NOTE, 'Sleeps in a duel: never at a player.');
+  assert.equal(TECH_DUEL_NOTE, "Doesn't work in a duel or against players.");
   withDom(() => {
     const sword = withTech(120, 'leap', 23);
     const box = techniqueCard(sword, { keyWord: 'MOUSE3' });
@@ -131,13 +131,13 @@ test('TECH-CARD the block: the card\'s dress one row at the head - the glyph, th
     assert.equal(full.className, 'techbox');
     assert.deepEqual(one(full, 'tech-head').children.map((c) => c.className), ['tech-glyph', 'tech-word', 'tech-roll', 'tech-name'], 'the word and the roll on one row, the name the whole width under them (the sheet\'s grid areas)');
     assert.equal(one(full, 'tech-word').textContent, 'Technique');
-    assert.equal(one(full, 'tech-power').textContent, '+23% rolled (15-30) on its 140% blow: 172% of a plain blow.');
-    assert.equal(one(full, 'tech-press').textContent, 'Hold MOUSE3 to aim its mark, and let go to strike; a tap strikes where you look.');
+    assert.equal(one(full, 'tech-power').textContent, '+23% rolled (15-30) on its 140% base hit: 172% of a normal hit.');
+    assert.equal(one(full, 'tech-press').textContent, "Hold MOUSE3 to aim and release to strike. Tap it to strike where you're looking.");
     // a technique that does not aim goes on the press
     const spin = techniqueCard(withTech(120, 'whirlwind', 15), { full: true, keyWord: 'G' });
     assert.equal(one(spin, 'tech-how').textContent, 'press');
     assert.equal(one(spin, 'tech-press').textContent, 'Press G to strike.');
-    assert.equal(one(spin, 'tech-power').textContent, '+15% rolled (15-30) on its 100% blow: 115% of a plain blow.');
+    assert.equal(one(spin, 'tech-power').textContent, '+15% rolled (15-30) on its 100% base hit: 115% of a normal hit.');
     // nothing bound: the foot says so, and the Info box says where to bind it
     const loose = techniqueCard(sword, { full: true });
     assert.equal(one(loose, 'tech-key').className, 'tech-key unbound');
@@ -148,7 +148,7 @@ test('TECH-CARD the block: the card\'s dress one row at the head - the glyph, th
     try {
       for (const d of [techniqueCard(sword, { keyWord: 'MOUSE3' }), techniqueCard(sword, { full: true, keyWord: 'MOUSE3' })]) {
         assert.equal(d.dataset.state, 'asleep', d.className);
-        assert.equal(one(d, 'tech-note').textContent, 'Sleeps in a duel: never at a player.', d.className);
+        assert.equal(one(d, 'tech-note').textContent, "Doesn't work in a duel or against players.", d.className);
       }
     } finally { setSigilDueling(false); }
     // no technique, an unknown piece: no block (the ladder off is the view's - its own test)
@@ -246,7 +246,7 @@ test('TECH-CARD the pack, executed: a technique piece\'s hover card and its deta
         assert.equal(order.filter((c) => c.startsWith('techbox')).length, 1);
         const full = body.children[tb];
         assert.equal(one(full, 'tech-key').textContent, 'MOUSE3', 'the Info box names the key');
-        assert.equal(one(full, 'tech-press').textContent, 'Hold MOUSE3 to aim its mark, and let go to strike; a tap strikes where you look.');
+        assert.equal(one(full, 'tech-press').textContent, "Hold MOUSE3 to aim and release to strike. Tap it to strike where you're looking.");
         const said = kids(box2, 'inv-info-box').flatMap((b) => b.children.map((p) => p.textContent));
         assert.ok(said.includes('Rare'), said.join(' | '));
         assert.ok(!said.includes('Leap Strike +23% [15-30]') && !said.some((l) => l.startsWith('Aim: leap')), 'said once, in the block');

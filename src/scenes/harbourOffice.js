@@ -114,7 +114,7 @@ export function createHarbourOffice(deps) {
     if (!o.can) return { ok: false, text: o.why };
     deps.pay?.(o.price);
     L.setMarque(port.crown, now() + o.days * MINUTES_PER_DAY);
-    return { ok: true, text: `${port.crown}'s letter of marque is yours for ${days(o.days)}: its rivals' ships are your prizes in ${port.crown}'s eyes. Their own crowns still call it piracy.` };   // AUDIT CAPTAIN'S SEA L14
+    return { ok: true, text: `${port.crown}'s letter of marque is yours for ${days(o.days)}. ${port.crown} counts its rivals' ships as fair prizes, but their own crowns still call it piracy.` };   // AUDIT CAPTAIN'S SEA L14
   }
   /** The Admiralty's carrack bought of this port's crown - her title to the Fleet's book. */
   function buyCarrack() {
@@ -167,7 +167,7 @@ export function createHarbourOffice(deps) {
     const r = exchangeOf(port, day, L.dealtAt(port.key, day), L.stats?.().trade, townAt(port)).find((x) => x.id === id);
     if (!r || r.sells <= 0) return { ok: false, text: r?.exotic ? `${r.name} is not sold here.` : `The exchange sells no more ${goodById(id)?.name ?? 'of that'} today.` };
     const fit = roomFor(room?.(), r.kg);
-    if (fit <= 0) return { ok: false, text: 'The ship can\'t carry any more. Any heavier and it couldn\'t move.' };
+    if (fit <= 0) return { ok: false, text: 'The ship can\'t carry any more.' };
     const k = Math.min(asked(n), r.sells, Math.floor((deps.gold?.() ?? 0) / r.sell), fit);
     if (k <= 0) return { ok: false, text: `Not enough gold - ${gold(r.sell)} a ${r.unit}.` };
     deps.pay?.(k * r.sell);
@@ -226,7 +226,7 @@ export function createHarbourOffice(deps) {
     if (!site) return { ok: false, text: 'The chart\'s ink has run. You know no coast on it.' };
     if (L.charts().some((c) => c.id === site.id)) return { ok: true, text: `You have marked this cache already: ${site.words}.` };
     if (L.wasRaised?.(site.id)) return { ok: true, text: `This cache was raised long ago. The chart is worth no more than its parchment.` };   // AUDIT CAPTAIN'S SEA B8: the same chart, read again, paid again
-    if (!L.markChart(site)) return { ok: false, text: 'Your charts are crowded with marks. Raise a cache first.' };
+    if (!L.markChart(site)) return { ok: false, text: 'Your charts are full of marks. Raise a cache first.' };
     return { ok: true, text: `You mark the chart's cache on your own charts: ${site.words}. Sail there and your lookout will find it.` };
   }
   /** A cache raised (its site's id): off the charts, its gold paid. Answers the gold, or 0 for none. */

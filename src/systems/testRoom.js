@@ -50,17 +50,17 @@ import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE
  *  portrait pick the Morrowind head/hair law also reads. */
 export const TEST_PRESETS = Object.freeze([
   { id: 'nord-warrior', label: 'Nord Warrior', race: 'Nord', gender: 'male', faceIndex: 0, classIndex: 16,
-    blurb: 'The plain human male baseline - steel and a longsword.' },
+    blurb: 'A plain human male in steel, with a longsword.' },
   { id: 'breton-sorceress', label: 'Breton Sorceress', race: 'Breton', gender: 'female', faceIndex: 2, classIndex: 3,
-    blurb: 'The female body and animation column, robes in the pack - and a Fireball and a Healing Bolt to throw.' },
+    blurb: 'Robes in the pack, and Fireball and Healing Bolt to cast.' },
   { id: 'redguard-archer', label: 'Redguard Archer', race: 'Redguard', gender: 'female', faceIndex: 4, classIndex: 13,
-    blurb: 'Bows and a full quiver - the drawn arrow rides the string.' },
+    blurb: 'Bows and a full quiver, with the arrow drawn on the string.' },
   { id: 'darkelf-nightblade', label: 'Dark Elf Nightblade', race: 'DarkElf', gender: 'male', faceIndex: 1, classIndex: 5,
-    blurb: 'The elf body records, daggers and short blades.' },
+    blurb: 'An elf with daggers and short blades.' },
   { id: 'khajiit-monk', label: 'Khajiit Monk', race: 'Khajiit', gender: 'male', faceIndex: 3, classIndex: 12,
-    blurb: 'A beast race - its own skeleton, and the tail is part of the body.' },
+    blurb: 'A beast race with its own skeleton and a tail.' },
   { id: 'argonian-barbarian', label: 'Argonian Barbarian', race: 'Argonian', gender: 'female', faceIndex: 5, classIndex: 15,
-    blurb: 'The other beast race, female - both hard axes at once.' },
+    blurb: 'The other beast race, female, with both kinds of axe.' },
 ]);
 
 export const testPresetById = (id) => TEST_PRESETS.find((p) => p.id === id) ?? null;
@@ -75,7 +75,7 @@ export const testPresetById = (id) => TEST_PRESETS.find((p) => p.id === id) ?? n
  *  what `test=ride` is. */
 export const TEST_RIDE = Object.freeze({
   id: 'ride', label: 'Ride out', preset: 'nord-warrior',
-  blurb: 'The Nord Warrior on a horse, outside the town - the riding sprite. Press T to dismount.',
+  blurb: 'The Nord Warrior on a horse, outside the town. Press T to dismount.',
 });
 
 /** LR3 (loot rarity): THE LOOT LADDER - a door that opens with one of
@@ -85,7 +85,7 @@ export const TEST_RIDE = Object.freeze({
  *  the lines and the folds show; the Nord Warrior carries it. */
 export const TEST_LOOT = Object.freeze({
   id: 'loot', label: 'The loot ladder', preset: 'nord-warrior',
-  blurb: 'The Nord Warrior with a Magic and a Rare of ten base items and every Legendary in the pack, IDENTIFIED so their names and affix lines read - plus one unidentified Rare and one unidentified Legendary, which is what the two top tiers look like on the floor, and one Exalted Legendary - and Ruhn\'s Regalia whole, the Aetheric rung. The tier colours, the affix lines and the folds on the paperdoll. Turns Loot rarity on.',
+  blurb: 'The Nord Warrior with a Magic and a Rare of ten base items and every Legendary, all identified. Also one unidentified Rare and Legendary (how the top tiers look on the floor), one Exalted Legendary and the full Ruhn\'s Regalia. Turns Loot rarity on.',
 });
 
 /** FIELD BUGS 2026-09-29 (the sea) #5 (the Discord, through Mac: "Add a ship combat test menu option"): THE SEA
@@ -96,15 +96,15 @@ export const TEST_LOOT = Object.freeze({
 export const TEST_SEA = Object.freeze({
   id: 'sea', label: 'Sea battle', preset: 'nord-warrior',
   pixel: Object.freeze({ x: 209, y: 216 }), hull: 2, foe: 'pirateBrig', range: 380,
-  blurb: 'The Nord Warrior at the helm of an armed Small Ship on the open Bay south of Daggerfall, a pirate brig standing in to engage. Look to a side, hold Attack to lay a broadside and let go to fire; brace on the warning. Turns Come Sail Away and Naval Combat on.',
+  blurb: 'The Nord Warrior at the helm of an armed Small Ship on the open Bay south of Daggerfall, with a pirate brig closing in. Look to a side, hold Attack to aim a broadside and release to fire. Brace when warned. Turns Come Sail Away and Naval Combat on.',
 });
 
 /** #5: what the sea door says - the fight begun, no sea to stand it on (Come Sail Away's boats unbuilt), no open water off her
  *  bow for the pirate. */
 export const TEST_SEA_TEXT = Object.freeze({
-  begun: 'A pirate brig stands in to engage. Look to a side and hold Attack to lay a broadside - let go to fire.',
+  begun: 'A pirate brig closes in. Look to a side and hold Attack to aim a broadside, then release to fire.',
   refused: 'The sea battle needs Come Sail Away\'s boats, and they did not load.',
-  noRoom: 'No open water here for a pirate to stand in on.',
+  noRoom: 'No open water here for a pirate ship.',
 });
 
 /** The doors that start OUTDOORS - a spawn, not a character: never the classic start's dungeon (main.js's route). */
@@ -477,4 +477,4 @@ export function testRoomOnlineRefused(params, { snap: pick = null, loadSlot, mos
   return snap?.testRoom === true;
 }
 /** What the refused boot says once the world stands. */
-export const TEST_ROOM_OFFLINE_TEXT = 'A Test Room character plays offline - its armory stays in the room.';
+export const TEST_ROOM_OFFLINE_TEXT = 'A Test Room character plays offline only. Its gear stays in the room.';

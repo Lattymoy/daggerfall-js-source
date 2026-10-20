@@ -303,7 +303,7 @@ export function onlineForcedPref(key, search) {
  */
 /** AUDIT TRAVEL-ONLINE T7: what the map says if a trip over land ever reaches fast travel online (world.js's fork) -
  *  unreachable while the room holds Travel Options' switches, said rather than teleported should it ever be reached. */
-export const ONLINE_LAND_TRAVEL_REFUSAL = 'Online, a journey over land is traveled, not skipped. Turn on Travel Options and try again.';
+export const ONLINE_LAND_TRAVEL_REFUSAL = 'Online, journeys over land cannot be skipped. Turn on Travel Options and try again.';
 
 export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   'roads-hazelnut': Object.freeze({

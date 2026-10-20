@@ -76,7 +76,7 @@ test('STEED1 THE BOND: a day\'s food a day\'s bond (three points), its love time
   const r = feedHorse(pack, h, 'oats', T0);
   assert.deepEqual([r.ok, r.gained, h.horseBond, h.horseFed], [true, 30, 30, T0 + 24 * 60]);
   assert.equal(pack[1].stackCount, 2, 'one sack spent');
-  assert.match(r.text, /Your horse eats oats - your bond grows \(Wary\)\./);
+  assert.match(r.text, /Your horse eats oats\. Your bond grows \(Wary\)\./);
   const a = feedHorse(pack, h, 'apple', T0);
   assert.deepEqual([a.ok, a.gained, h.horseFed], [true, 8, T0 + 28 * 60], 'four hours, at an apple\'s love: 4/24 x 30 x 1.5 = 7.5, rounded');
   // FULL: fed this far ahead it will not eat
@@ -467,7 +467,7 @@ test('STEED1 THE STABLE PAGE: each horse its card - its bond and hunger in words
   assert.equal(buttons(d, 'Ride this one').length, 1, 'the other horse alone');
   buttons(d, 'Feed oats')[0].onclick();
   d = draw();
-  assert.match(d.textContent, /Your horse eats oats - your bond grows \(Familiar\)\./);
+  assert.match(d.textContent, /Your horse eats oats\. Your bond grows \(Familiar\)\./);
   assert.equal(a.horseBond, 430);
   buttons(d, 'Ride this one')[0].onclick();
   assert.equal(activeHorseItem(items), b);

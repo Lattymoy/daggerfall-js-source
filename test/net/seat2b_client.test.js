@@ -22,7 +22,7 @@ test('SEAT2b THE WORKS\' WORDS: a tier and what it does; a project and what it s
   assert.deepEqual(Object.entries(FORT_EFFECT_WORDS).map(([id, f]) => `${id}: ${f(2)}`), [
     'walls: the defenders\' wave 6 s faster',
     'gatehouse: its vitality 40,000',
-    'watchtowers: the holder told when a challenger passes a quarter of its defense',
+    'watchtowers: the holder is warned when a challenger gets past a quarter of its defense',
     'barracks: 4 town guards fight for the holder',
     'market: the town\'s boards list 50% more, the Tithe\'s cap 2 points higher',
     'shrine: Standing +2 a week, +100 influence for each gate felled in the region',
@@ -32,7 +32,7 @@ test('SEAT2b THE WORKS\' WORDS: a tier and what it does; a project and what it s
     'harbour: a port for the holder\'s members',
   ]);
   assert.deepEqual([FORT_EFFECT_WORDS.watchtowers(1), FORT_EFFECT_WORDS.forge(1), FORT_EFFECT_WORDS.market(1)],
-    ['the holder told when a challenger passes half of its defense', 'members smithing here a quality step better', 'the town\'s boards list 25% more, the Tithe\'s cap 1 point higher']);
+    ['the holder is warned when a challenger gets past half of its defense', 'members smithing here a quality step better', 'the town\'s boards list 25% more, the Tithe\'s cap 1 point higher']);
 });
 
 test('SEAT2b THE WORKS PANEL: the works a palace may raise (no Gatehouse below tier-3 Walls, no Harbour inland), each line; the stockpile; the holder\'s lever a work at its next tier, none for one building or at its last, none for a reader without the rank; the lever\'s press begins that work (mutants: which works; the lever\'s rules; its words; the press)', () => {

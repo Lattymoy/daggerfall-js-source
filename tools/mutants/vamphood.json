@@ -39,8 +39,8 @@
   {
     "name": "VAMPHOOD-the-line-forgets-the-robe",
     "file": "src/systems/vampirism.js",
-    "old": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day - Raise hood, on its card in the pack.';",
-    "new": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak to travel by day - Raise hood, on its card in the pack.';",
+    "old": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day. Use Raise hood on its card in your pack.';",
+    "new": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak to travel by day. Use Raise hood on its card in your pack.';",
     "tests": [
       "test/systems/fb0929_vampirehood.test.js"
     ],

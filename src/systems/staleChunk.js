@@ -67,8 +67,8 @@ export const RELOAD_KEY = 'dagger:stale-chunk-reload';
  *  happened, because "failed to fetch dynamically imported module" is
  *  a sentence about JavaScript and this one is about them. */
 export const STALE_CHUNK_TEXT =
-  'This page was loaded from an older version of the game that has since been replaced. '
-  + 'Reloading did not pick up the new version. Try a hard refresh (Ctrl-Shift-R, or Cmd-Shift-R on a Mac).';
+  'This page is from an older version of the game. '
+  + 'Reloading did not load the new one. Try a hard refresh (Ctrl-Shift-R, or Cmd-Shift-R on a Mac).';
 
 /** DISC19-D: the same event in the middle of a session - a chunk a
  *  running page asks for (the dungeon's foe subsystem is the case that

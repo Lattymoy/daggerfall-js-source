@@ -563,7 +563,7 @@ test('BAG1 (AUDIT2 K5/K6/K8/K12): a station\'s put-in refused for a later input 
   await book.refresh({ force: true });
   const r = await book.craft('dagger:iron', {}, () => {});
   assert.deepEqual(r, { ok: false, error: 'stores-full', material: 'metal:tin', moved: 1 }, 'the iron in, the tin refused');
-  assert.equal(movedFirstText(r), ' 1 of the materials went into your Stores first. The next try uses them from there.');
+  assert.equal(movedFirstText(r), ' 1 of the materials went into your Stores first. Your next try uses them from there.');
   assert.equal(movedFirstText({ moved: 0 }), '');
   assert.match(src('src/scenes/world.js'), /text: `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}` \};\n\s+\/\/ the fee for the smelt/);
   assert.equal(book.storesHeld('ingot:iron'), 1, 'the iron waits in the Stores for the next craft');
@@ -889,7 +889,7 @@ test('BAG1 (AUDIT2 H1/U2/U1/U11/U14): the Stores page empties the bag into the p
     assert.match(root.querySelectorAll('p').map((n) => n.textContent).join(' '), new RegExp(`${OAK}: ${BAG_PAGE_WORDS.storesFull}`));
   });
   setProfessionsPages(null);
-  assert.match(BAG_PAGE_WORDS.takenNote, /into your Materials Bag, then your pack\. It goes back into the Stores from your bag, pack or wagon/);
+  assert.match(BAG_PAGE_WORDS.takenNote, /into your Materials Bag, then your pack\. Put it back from your bag, pack or wagon in any town/);
 });
 
 test('BAG1 (AUDIT2 D3/D4): the bag\'s list in every door that reads a character\'s lists - the orphan sweep, the realm\'s customs, the four hosts\' inventories; an enchanted piece is no material; Put everything in passes a material the service refuses and puts the rest in (mutants: the bag unswept; an enchanted herb counted; a refusal ends the run)', async () => {
@@ -947,7 +947,7 @@ test('BAG1 a station\'s shortfall goes into the Stores first - bought before own
   const short = await book.ensureInStores([{ key: OAK, n: 4 }, { key: HERB, n: 3 }]);
   assert.deepEqual([short.ok, short.error, short.material], [false, 'materials-short', HERB]);
   assert.equal(asked.length, 0, 'nothing moved for the input that could be covered');
-  assert.equal(accountRefusalText('materials-short'), 'You do not have that many, even counting your Stores, your Materials Bag and your pack together.');
+  assert.equal(accountRefusalText('materials-short'), 'You do not have that many in your Stores, Materials Bag and pack together.');
   const ok = await book.ensureInStores([{ key: OAK, n: 3 }, { key: OAK, n: 1 }]);
   assert.deepEqual(ok, { ok: true, moved: 4 });
   assert.deepEqual(asked, [[OAK, 4, 10, 'spend']], 'summed by material, bought first');

@@ -10081,7 +10081,7 @@ home's alone - they are about other players.
   faint fill, green, and the one the eye looks at gold - and the door is FITTED into the one looked at (turned so its
   thickness runs through the doorway, sized to the tighter of the opening's width and height within the piece law,
   stood on its floor); a turn swings it the other way. The bar says "Finding the doorways...", then "Look at a marked
-  doorway to hang the door (N free) - turn to swing it the other way", or "This house has no open doorway for a door";
+  doorway to hang the door (N free). Turn to swing it the other way.", or "This house has no open doorway for a door";
   the catalogue's line for a door says how many this house has free before it is chosen.
 - **The rooms follow**: a door put in parts the rooms either side (a shut door is what parts them - DECOR-ROOMS), so
   the house's rooms are found again; a door moved or removed finds its doorways again too. A house of one room with a
@@ -14996,7 +14996,7 @@ What failed was what the HUD SAID of it, and the reports read that as nothing gi
   `no-session`) says that (`KEPT_SIGNED_OUT_LINE`); a lapse says the gathering was not counted, never "with the day" of
   its ten minutes (`LAPSED_LINE`).
 - **An act that stopped short only lost its meter.** Let go, walked off, a window over it, the dungeon left: the act
-  ended, nothing was asked, and nothing said. It says "The gathering stopped before its end - nothing was taken."
+  ended, nothing was asked, and nothing said. It says "The gathering stopped early. Nothing was taken."
   (`ACT_STOPPED_LINE`); Escape, the player's own, stays unsaid.
 - **The maintenance minute let the act go.** RESTORE's 503 is answered before any route, so the act never reached one;
   `maintenance` is an answer the book keeps and asks again (`profBook.js` RETRY), as it keeps `server` and `rate`.

@@ -735,14 +735,14 @@ test('AUDIT NAV1 H15 the shipwright\'s window: his words for her - each row what
   assert.equal(t.sub, 'Small Ship - your purse: 723 gold');
   assert.equal(t.lede, 'The shipwright can fully repair it for 1,726 gold.');
   assert.deepEqual(t.rows.map((r) => [r.label, r.state, r.press, r.can]), [
-    ['Hull', '262 of 420 - 158 wanting at 7 gold', 'Mend 103 - 721 gold', true],
-    ['Canvas', '80 of 160 - 80 wanting at 4 gold', 'Mend all - 320 gold', true],
-    ['Hands', '18 of 24 - 6 wanting at 30 gold', 'Hire all - 180 gold', true],
-    ['Fire barrels', '1 aboard - 3 wanting at 40 gold', 'Buy all - 120 gold', true],
+    ['Hull', '262 of 420 - 158 needed at 7 gold each', 'Mend 103 - 721 gold', true],
+    ['Canvas', '80 of 160 - 80 needed at 4 gold each', 'Mend all - 320 gold', true],
+    ['Hands', '18 of 24 - 6 needed at 30 gold each', 'Hire all - 180 gold', true],
+    ['Fire barrels', '1 aboard - 3 needed at 40 gold each', 'Buy all - 120 gold', true],
   ]);
-  assert.equal(t.whole, 'Make good what your purse pays - 721 gold');
+  assert.equal(t.whole, 'Repair what you can afford - 721 gold');
   assert.deepEqual(yardNote({ ok: true, id: 'crew', n: 6, cost: 180 }), { text: 'Hands hired: 6 men for 180 gold.', warn: false });
-  assert.deepEqual(yardNote({ ok: false, id: 'hull', short: 12 }), { text: 'Not enough gold - 12 gold a piece.', warn: true });
+  assert.deepEqual(yardNote({ ok: false, id: 'hull', short: 12 }), { text: 'Not enough gold. It costs 12 gold each.', warn: true });
   assert.deepEqual(yardNote({ ok: true, cost: 2676, bought: [{}], whole: true }), { text: 'Fully repaired for 2,676 gold.', warn: false });
   // a crewless boat with no stern barrels: no hands, no barrels
   const lb = yardText({ ...model, hasBarrels: false, ship: () => ({ ...st, maxCrew: 0, crew: 0 }) });
@@ -763,7 +763,7 @@ test('AUDIT NAV1 H15 the shipwright\'s window: his words for her - each row what
   assert.equal(byClass(rows2.find((r) => r.getAttribute('data-row') === 'crew'), 'dfnaval-yardbuy')[0].disabled, true, 'whole: nothing to press');
   byClass(host, 'dfnaval-whole')[0].dispatch('click', { stopPropagation() {} });
   assert.deepEqual(bought, ['crew', 'all']);
-  assert.match(byClass(host, 'dfnaval-note')[0].textContent, /^The yard made good what your purse paid: /);
+  assert.match(byClass(host, 'dfnaval-note')[0].textContent, /^The yard repaired what you could afford: /);
   keydown('Escape');
   assert.deepEqual(exits, ['close'], 'the back key leaves');
   view.unmount();

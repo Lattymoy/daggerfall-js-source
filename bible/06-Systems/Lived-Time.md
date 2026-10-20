@@ -185,7 +185,7 @@ stands.
 The sun is everyone's. A rest moves the character's clock, not the sky, so a bare-headed vampire
 still cannot set out by day. The sunlight refusals (the career's, the curse's, and PARTY-TRAVEL's) now
 add, online, when the world's night falls, in real minutes: *"You cannot initiate fast travel during
-the day. The sun is the world's - night falls in about 23 minutes."* (`worldNightfallText`). [MERGE
+the day. Online, resting does not move the sun. Night falls in about 23 minutes."* (`worldNightfallText`). [MERGE
 with main's VAMP-HOOD (`01-Overview/bugs/Field-Bugs-2026-09-29.md`): a raised hood opens the map by day,
 online and offline; bare-headed, the map door says DFU's line, the nightfall, then the hood's hint.]
 

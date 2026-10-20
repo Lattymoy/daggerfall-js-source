@@ -164,8 +164,8 @@
   {
     "name": "BR5-overhaul-by-the-game",
     "file": "src/systems/overhauls.js",
-    "old": "by: 'The original game',\n        blurb: 'The original game\\u2019s own textures for adventurers",
-    "new": "by: 'Daggerfall',\n        blurb: 'The original game\\u2019s own textures for adventurers",
+    "old": "by: 'The original game',\n        blurb: 'The original game\\u2019s own textures, for the classic look.'",
+    "new": "by: 'Daggerfall',\n        blurb: 'The original game\\u2019s own textures, for the classic look.'",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "BR5-instead-the-game",
     "file": "src/ui/settings/settingsCopy.js",
-    "old": "\"You get the original game's own climbing, exactly as it shipped.\"",
-    "new": "\"You get Daggerfall's own climbing, exactly as it shipped.\"",
+    "old": "\"You get the original game's climbing.\"",
+    "new": "\"You get Daggerfall's climbing.\"",
     "tests": [
       "test/ui/brand.test.js"
     ],

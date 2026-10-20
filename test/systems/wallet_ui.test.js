@@ -23,12 +23,12 @@ test('WALLET-UI the ledger: two parts under their names, a row a currency - a fi
   assert.deepEqual(ledger.map((p) => p.head), ['Coin', 'In the wallet']);
   assert.deepEqual(ledger.flatMap((p) => p.rows).map((r) => [r.key, r.label, r.figure, r.none, r.note]), [
     ['gold', 'Gold', '0', false, null],
-    ['silver', 'Silver', null, false, 'kept by your account online'],
+    ['silver', 'Silver', null, false, 'held in your online account'],
     ['letters', 'Letters of credit', '1', false, 'worth 5,000 gold'],
     ['embers', 'Deadlands Embers', '3', false, null],
     ['shards', 'Welkynd Shards', 'none', true, null],
   ]);
-  assert.deepEqual(walletLines(c), ['Your wallet holds:', 'Gold: 0', 'Silver: kept by your account online', 'Letters of credit: 1, worth 5,000 gold', 'Deadlands Embers: 3', 'Welkynd Shards: none'], 'the classic box: the rows as lines, its words as they were');
+  assert.deepEqual(walletLines(c), ['Your wallet holds:', 'Gold: 0', 'Silver: held in your online account', 'Letters of credit: 1, worth 5,000 gold', 'Deadlands Embers: 3', 'Welkynd Shards: none'], 'the classic box: the rows as lines, its words as they were');
   assert.equal(walletLine({ label: 'Silver', figure: '35', note: null }), 'Silver: 35');
   // an account that holds none: a figure, `none`, dimmed - never why
   const none = walletLedger(walletContents([], { goldPieces: 5 }, { silver: false, here: true }))[0].rows[1];
@@ -54,7 +54,7 @@ test('WALLET-UI the sheet: the ledger drawn - each part\'s name, a row a currenc
       ['gold', ['wallet-k', 'wallet-v']], ['silver', ['wallet-k', 'wallet-v why']], ['letters', ['wallet-k', 'wallet-v']],
       ['embers', ['wallet-k', 'wallet-v']], ['shards', ['wallet-k', 'wallet-v']],
     ]);
-    assert.equal(rows[1].children[1].textContent, 'kept by your account online', 'the silver\'s why in the figure\'s place');
+    assert.equal(rows[1].children[1].textContent, 'held in your online account', 'the silver\'s why in the figure\'s place');
     assert.deepEqual(rows.filter((r) => r.className.split(' ').includes('none')).map((r) => r.dataset.key), ['embers', 'shards'], 'the empty ones, to dim');
     assert.deepEqual(sheet.querySelectorAll('.wallet-note').map((n) => n.textContent), ['worth 5,000 gold'], 'the worth under its count, the silver\'s why said once');
     assert.equal(sheet.querySelectorAll('.itemrow').length, 1, 'then the pieces it holds');

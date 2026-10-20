@@ -324,7 +324,7 @@ export function createPartyTravel(host) {
     host.poseDirty();
     if (near !== round.at) { host.say(PARTY_TRAVEL_TEXT.lost); return; }
     follow = { at: round.at, x: round.x, y: round.y, o: round.o, acct: lead.acct, name: lead.name, since: host.clock() };
-    host.say(`The party sets out for ${dest} - you follow ${lead.name || 'the leader'}.`);
+    host.say(`The party sets out for ${dest}. You follow ${lead.name || 'the leader'}.`);
   }
 
   /** A FOLLOWER WAITS FOR THE LEADER TO ARRIVE, then goes: beside them once their pose stands in the destination's
@@ -385,7 +385,7 @@ export function createPartyTravel(host) {
   function respondTo(yes) {
     const lead = leaderRow();
     const round = roundOf(lead);
-    if (!round || round.go != null) return { line: 'There is no journey to ready up for. /leader travels to your leader.' };
+    if (!round || round.go != null) return { line: 'There is no journey to get ready for. /leader travels to your leader.' };
     if (near !== round.at && !host.nearLeader(lead)) return { line: `Gather with ${lead.name || 'the leader'} to travel with the party.` };
     if (promptFor === round.at) closePrompt();
     asked = round.at;

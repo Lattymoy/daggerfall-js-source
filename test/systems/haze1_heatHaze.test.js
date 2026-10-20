@@ -87,11 +87,18 @@ test('HAZE1 the settings: the mod\'s keys, its own Enabled the port\'s switch (o
   assert.equal(MOD_SETTINGS[HEAT_HAZE_VENDOR].keys.Enabled.default, true);
   assert.deepEqual(Object.keys(MOD_SETTINGS[HEAT_HAZE_VENDOR].keys), ['Enabled', 'Heat Haze.AllowSubtropical', 'Heat Haze.Intensity', 'Heat Haze.FullStrengthDistance', 'Heat Haze.RingHeight', 'Heat Haze.NoiseScale', 'Heat Haze.AnimationSpeed']);
   const ms = JSON.parse(read('vendor/heat-haze/modsettings.json').replace(/^﻿/, ''));
+  // PLAIN-TEXT (2026-10-19): four of the mod's lines that spoke in engine terms, said plainly for a player - their words, exactly
+  const PLAIN = {
+    'Intensity': 'How strongly the haze bends the view, in pixels.',
+    'FullStrengthDistance': 'Distance from you, in meters, of the ring of haze.',
+    'RingHeight': 'Height of the haze, in meters.',
+    'NoiseScale': 'How fine the shimmer’s ripples are.',
+  };
   for (const k of ms.Sections[0].Keys) {
     if (k.Name === 'Enabled') continue;
     const def = MOD_SETTINGS[HEAT_HAZE_VENDOR].keys[`Heat Haze.${k.Name}`];
     assert.equal(def.default, k.Value, `${k.Name}: the mod's default`);
-    assert.equal(def.description, k.Description, `${k.Name}: the mod's words`);
+    assert.equal(def.description, PLAIN[k.Name] ?? k.Description, `${k.Name}: the mod's words, or their plain rewording`);
     if ('Min' in k) assert.deepEqual([def.min, def.max], [k.Min, k.Max], `${k.Name}: the mod's range`);
   }
   const wild = { Enabled: true, 'Heat Haze.AllowSubtropical': true, 'Heat Haze.Intensity': 9, 'Heat Haze.FullStrengthDistance': 1, 'Heat Haze.RingHeight': 99999, 'Heat Haze.NoiseScale': 0, 'Heat Haze.AnimationSpeed': -3 };

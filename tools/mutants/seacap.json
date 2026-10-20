@@ -2,8 +2,8 @@
   {
     "name": "SEACAP-the-mod-s-128-again",
     "file": "src/systems/modSettings.js",
-    "old": "      'General.MaxLiveEnemies': Object.freeze({ default: 32, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum live underwater enemies'); } }),",
-    "new": "      'General.MaxLiveEnemies': Object.freeze({ default: 128, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum live underwater enemies'); } }),",
+    "old": "      'General.MaxLiveEnemies': Object.freeze({ default: 32, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum underwater enemies at once'); } }),",
+    "new": "      'General.MaxLiveEnemies': Object.freeze({ default: 128, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum underwater enemies at once'); } }),",
     "tests": ["test/systems/seacap.test.js"]
   },
   {
@@ -16,8 +16,8 @@
   {
     "name": "SEACAP-the-range-shut-at-the-default",
     "file": "src/systems/modSettings.js",
-    "old": "Object.freeze({ default: 32, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum live underwater enemies'); } })",
-    "new": "Object.freeze({ default: 32, min: 0, max: 32, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum live underwater enemies'); } })",
+    "old": "Object.freeze({ default: 32, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum underwater enemies at once'); } })",
+    "new": "Object.freeze({ default: 32, min: 0, max: 32, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'Maximum underwater enemies at once'); } })",
     "tests": ["test/systems/seacap.test.js"],
     "note": "A player offline keeps the mod's whole range."
   }

@@ -388,7 +388,7 @@ test('AUDIT C&C S6 (decision D4): AN UNIDENTIFIED PIECE\'S COMPARISON IS AS ITS 
 
 test('AUDIT C&C S8, S13: THE WORDS SAY WHAT IS SO - the credits and the Features comment say Boons\' neglect costs nothing (the drink still swings the attributes in Boons: "nothing taken" was false); the first-need page opens on the first need of any kind and says where the tiles stand (the left edge, not beside the bars), in TUT1\'s sixty words', () => {
   const cc = Object.values(CREDITS).flat().find((c) => c?.title === 'Climates & Calories');
-  assert.match(cc.what, /in four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and a body kept fed, watered and rested earns bonuses\), Casual/);
+  assert.match(cc.what, /There are four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and staying fed, watered and rested gives bonuses\), Casual/);
   assert.doesNotMatch(JSON.stringify(cc), /nothing taken/);
   const features = read('src/systems/features.js');
   assert.match(features, /\/\/ \(SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus\),/);
@@ -449,16 +449,16 @@ test('AUDIT C&C S11: THE STATUS PAGE READS THE LIVE TIER - turned from Boons to 
 // ═══ S14 - A COST SAID WITHOUT ITS COLOUR ═══════════════════════════════
 
 test('AUDIT C&C S14: A COST IS SAID WITHOUT ITS COLOUR - a need\'s tile and the HUD\'s plate say their level in words on their title and label and a costing one carries a mark (the sheets\' "!"), the pack\'s plaque says it too; the colour alone had told a costing reading from a felt one', async () => {
-  assert.deepEqual({ ...LEVEL_WORDS }, { danger: 'it costs you', warn: 'felt, it costs nothing' });
+  assert.deepEqual({ ...LEVEL_WORDS }, { danger: 'it costs you', warn: 'no cost to you yet' });
   assert.deepEqual([levelSaid('Freezing', 'danger'), levelSaid('Cold', 'warn'), levelSaid('Comfortable', 'ok'), levelSaid('Well fed', 'boon')],
-    ['Freezing - it costs you', 'Cold - felt, it costs nothing', 'Comfortable', 'Well fed']);
+    ['Freezing - it costs you', 'Cold - no cost to you yet', 'Comfortable', 'Well fed']);
   // the tiles, off the real strip: a Parched (costing in Casual) and a Wet (felt)
   const e = realPlayer('casual');
   e.survival = newSurvival(3000);
   Object.assign(e.survival, { thirst: 85, wet: 50 });
   minute(e, ROOM, 3001);
   const tiles = statusTiles({ needs: survivalHudChips(e, 3001, { rules: CASUAL }) });
-  assert.deepEqual(tiles.map((t) => [t.key, t.say, t.cost]), [['need:thirst', 'Parched - it costs you', true], ['need:wet', 'Wet - felt, it costs nothing', false]]);
+  assert.deepEqual(tiles.map((t) => [t.key, t.say, t.cost]), [['need:thirst', 'Parched - it costs you', true], ['need:wet', 'Wet - no cost to you yet', false]]);
   const b = realPlayer('boons');
   minute(b, ROOM, 3001);
   assert.deepEqual(statusTiles({ needs: survivalHudChips(b, 3001, { rules: BOONS }) }).map((t) => [t.key, t.say, t.cost]), [['need:boon:fed', null, false], ['need:boon:quenched', null, false]], 'a boon says its own name');

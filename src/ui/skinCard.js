@@ -229,7 +229,7 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null } = 
     const w = wornSkin();
     const sets = offer();
     if (!w.on) {
-      root.append(el('p', 'meta', 'Your third-person look is Eye of the Beholder\u2019s. It is off, so you have no sprite body to dress.'));
+      root.append(el('p', 'meta', 'Your third-person look comes from Eye of the Beholder, which is off. Turn it on to choose a skin.'));
       const acts = el('div', 'acts');
       const b = el('button', 'act primary', 'Turn it on');
       b.type = 'button';
@@ -238,7 +238,7 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null } = 
       root.append(acts);
       return;
     }
-    root.append(el('p', 'meta', 'How you look in third person, and to other players online who do not see you in a Morrowind body.'));
+    root.append(el('p', 'meta', 'How you look in third person, and to other players who don\u2019t see you in a Morrowind body.'));
     const layeredOn = w.layered > 0;
     const own = w.layered === LAYERED_OWN;
     if (w.layered === 1 || w.layered === 2) lastBody = w.layered;

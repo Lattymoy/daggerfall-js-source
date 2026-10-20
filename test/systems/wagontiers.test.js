@@ -225,8 +225,8 @@ test('WAGON-TIERS NO RED WHERE WEAR COSTS NOTHING, AND EACH TIER\'S WORDS: on Bo
   // the Stable page's lines, through its own builder (ui/holdingsPages.js wagonLines, by the page's words)
   const page = rd('src/ui/holdingsPages.js');
   assert.match(page, /const advice = w\.wearSlows === false && Object\.hasOwn\(WAGON_ADVICE_BOONS, w\.stateKey\) \? WAGON_ADVICE_BOONS\[w\.stateKey\]/);
-  assert.match(page, /get rickety\(\) \{ return t\('holdings\.wagon\.boons\.rickety', 'Rickety, but it still rolls at its usual pace\.'\); \}/);
-  assert.match(page, /get failing\(\) \{ return t\('holdings\.wagon\.boons\.failing', 'Failing, but it still rolls at its usual pace\.'\); \}/);
+  assert.match(page, /get rickety\(\) \{ return t\('holdings\.wagon\.boons\.rickety', 'Rickety, but it still rolls at full pace\.'\); \}/);
+  assert.match(page, /get failing\(\) \{ return t\('holdings\.wagon\.boons\.failing', 'Failing, but it still rolls at full pace\.'\); \}/);
 });
 
 test('WAGON-TIERS THE ONE ACCESSOR AND THE FOUR HOSTS: no module but the switch reads the wagon upkeep key, the old boolean switch is gone, and every reader is handed the one accessor - world.js and exterior.js hand it to the upkeep (the wear, the pace, the Stable page, the saddle panel) and to the kit\'s Use, world.js\'s Wagon Yard wright asks it, a counter\'s sale asks it; worldModes.js and dungeonContext.js stand no transport and read nothing', () => {

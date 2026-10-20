@@ -171,11 +171,11 @@ as a CHAMPION, with one TRAIT:
 
 | trait | does |
 |---|---|
-| Mighty | its blows land half again as hard |
-| Stalwart | half again its health, on top of a champion's double |
+| Mighty | its blows hit 50% harder |
+| Stalwart | it has 50% more health, on top of a champion's double |
 | Swift | thirty more Speed (at most 100): it closes and attacks sooner |
-| Vampiric | half of what its blows take from you heals it |
-| Thorned | your blows that land on it hurt you back, a seventh of them |
+| Vampiric | it heals for half the damage it deals you |
+| Thorned | your hits on it hurt you for a seventh of their damage |
 
 Every champion has twice its health and its blows a quarter harder (damageScale, multiplied - never overwriting an
 elite's). Its name is the trait's and its own - `Mighty Orc Warlord` - on the HUD's target bar, its corpse and its
@@ -914,8 +914,8 @@ half and a seventh, each at least 1 a blow - the floor is what lifts both on sma
   its on me, mine on it, through formulas.js's struck and strike tails under their own name (`CHAMPIONS_SAID`), the
   seams every pool already shares (the dungeon's, the street's, a building's, a puppet's), so no host stands it - says
   two rows on the line every skin draws (`notify.js` `popupMessage`, DaggerfallUI.PopupMessage, the line "%s just
-  died." is said on; the first producer to walk that door): `Mighty Orc stands as a champion.` and `Its blows land
-  half again as hard.` Once per champion (a rebuild or a load is a new one); never a plain foe, a blow on a peer's copy
+  died." is said on; the first producer to walk that door): `Mighty Orc stands as a champion.` and `Its blows hit
+  50% harder.` Once per champion (a rebuild or a load is a new one); never a plain foe, a blow on a peer's copy
   (another player's screen is theirs) or a peer's blow. The longest row, the Thorned's at 60 characters, measures about
   225 px in FONT0003's own advances (the `grimoire-ui` SDF cut of it, 4 px to an `a`) - inside the classic line's 320,
   which centres a row and never wraps it. On the enhanced skin each row is a toast (ENH-NOTICE3).

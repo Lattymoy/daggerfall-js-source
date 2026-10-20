@@ -86,7 +86,7 @@ export function royalHudModel(s, t, me, now, { watching = false, name = () => ''
     self.push(mine ? `You: ${mine[1]} ${mine[1] === 1 ? 'win' : 'wins'}, ${mine[2]} ${mine[2] === 1 ? 'loss' : 'losses'}` : 'You have no bout won yet.');
     for (const id of Object.keys(s.asks)) if (royalAskStands(s, id, now)) self.push(`${who(id)} challenges you. Challenge them back from their card to accept.`);
     if (s.last && (s.last.w === me || s.last.l === me) && now - s.last.at < ROYAL_LAST_SHOWN_MS) {
-      self.push(s.last.w === me ? (s.last.c ? 'You won the bout.' : 'You won the bout, but you two have met three times today, so the ladder did not count it.') : 'You lost the bout.');
+      self.push(s.last.w === me ? (s.last.c ? 'You won the bout.' : 'You won the bout, but you two have met 3 times today, so it does not count on the ladder.') : 'You lost the bout.');
     }
   }
   return { bar: [title, ring], sides: ladder || 'No bout has been won yet.', self, card: null };

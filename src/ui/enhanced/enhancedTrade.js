@@ -863,7 +863,7 @@ function localCol() {
   }
   col.append(tabsEl);
   const list = el('div', 'remotelist');
-  if (!items.length) list.append(el('p', 'packempty', 'Nothing here answers to that page.'));
+  if (!items.length) list.append(el('p', 'packempty', 'Nothing here fits this page.'));
   for (const it of items) list.append(itemRow(it, 'local'));
   col.append(list);
   return col;

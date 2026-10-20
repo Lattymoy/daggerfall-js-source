@@ -3328,7 +3328,7 @@ the GraphQL `durableObjectsPeriodicGroups` active time HUB-PULL read, by object.
 **Not a cost:** the client's idle traffic. A standing player's pose heartbeat (HEARTBEAT_MS, 20 s) wakes its cell for
 one handler, which then sleeps; pings are answered by the runtime unwoken; a hidden tab sends nothing.
 
-### GRANT-SLEEP: built (relay world226 - world225 on its branch, renumbered past GAUNTLET-SLAIN at the merge; one drop at the merge)
+### GRANT-SLEEP: built (relay world228 - world225 then world226 on its branch, renumbered past GAUNTLET-SLAIN, LORD-SHARES and PLAIN-SWEEP at the merges; one drop at the merge)
 
 The grants' window posts at a door - the first frame or close once due, and at the cell's drain - never on a timer
 (`server/src/index.js` `_grantTick`, as `_metricsTick`). `Spawn-Grants.md` section 22 is its record: what it gives up

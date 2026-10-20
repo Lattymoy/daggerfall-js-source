@@ -1226,7 +1226,7 @@ so away from row 250 none comes within sight - recorded here for that branch; th
   way under the Classic helm - the mod divides its cargo by a Cargo modifier it lacks (kept, CSA-D) - and crosses under
   the Responsive one, the default, which gives her a hold (AUDIT NAV2 F16: she was refused under the helm she sails
   best under). No boat: the sea is refused as it always was, and
-  a route a boat would have made is said ("There is no way there by land - a boat would carry you across the water.").
+  a route a boat would have made is said ("There is no way there by land. You need a boat to cross the water.").
   SHIP-SAIL (2026-09-28, Mac: "Shouldn't it already function as such?"): unless the place is one the map's ship
   passage sails to from here - then the passage is OFFERED ("Sail there by ship?", its fare and days) and, on Yes,
   taken as the map takes it (`01-Overview/bugs/Field-Bugs-2026-09-28e.md`). The passage is Daggerfall's, so it is offered
@@ -1673,7 +1673,7 @@ CAMP-SIGHT, CAMP-TRAVEL, CAMP-NOTIMER, TTL1, WORLD1's "True persistance"); the d
   (no governor there before) the mod's own ask under the enemies' cap alone, handed back whole with nothing near. The
   panel says why it is held (TRAVEL_HELD_WHY: "while the land loads", "with enemies near", and "until the Overworld
   rises" for AUDIT OW4 J5's walking pace with the view down, which had said the land was loading), and a line is said
-  once as an enemy begins to hold the journey ("Enemies near - you slow your pace."). Since the merge with main: its
+  once as an enemy begins to hold the journey ("Enemies are near. You slow your pace."). Since the merge with main: its
   reasons are AUDIT OW5 G1's words with this one beside them (`TRAVEL_HELD_WHY`: 'load', 'ground', 'foes'), and TV-WASD's
   keys' travel under the view is held the same way - fast travel too - along the way the keys last moved (`_tvWalkYaw`);
   a First-Person crossing's restore (AUDIT OW5 G5) asks the governor's rate, never over its hold. THE MERGE with the sea

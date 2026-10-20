@@ -142,7 +142,7 @@ test('DECOR-FIGURE the service: a figure placed at any size but its own is refus
   assert.deepEqual([giant.status, giant.body.error], [400, 'bad-decor'], 'C1: the item no way past the figure\'s law');
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM home_decor WHERE id = ?').get('giant').n, 0);
   // AUDIT HOME-VOTE II C2: the stale copy's refusal said in words that send the player to look again
-  assert.match(REFUSALS['decor-figure'], /own size from another game/);
+  assert.match(REFUSALS['decor-figure'], /^That figure has been set back to its normal size\. Look at the room again\.$/);
 });
 
 test('DECOR-FIGURE AUDIT C1: a figure brought back to its own size by a move pays nothing where it was shrunk before (it stands at that size for everyone already) and gives its half back where it was grown, as any shrink; any other piece grown pays as ever (mutants: the shrunk figure charged, the grown one\'s refund kept)', () => {

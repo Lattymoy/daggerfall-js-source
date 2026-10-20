@@ -118,8 +118,8 @@ test('EG15 THE LAW: The Battlemage\'s Panoply after the Brass - Aetheric, the Im
   assert.deepEqual(s.tiers.map((t) => t.brief(tierValues(t, SET_STAGE_MAX))), ['+15 all resists, +30 magicka', 'Cast arms blow +50%, 15% MP back', 'Under 20%: shield 40% of HP']);
   assert.deepEqual(s.tiers.map((t) => t.text(tierValues(t, 0))), [
     '+5 to every resistance, +10 magicka',
-    'A spell you cast arms your next weapon blow with its element: +20% of the blow. Each weapon blow returns 5% of your last spell\'s cost as magicka',
-    'When a foe\'s blow takes you below 20% health, a shield soaks 15% of your max health for 6 s, and allies within 8 m are shielded for half of it. Recovers in 240 s',
+    'Casting a spell adds its element to your next weapon hit for 20% more damage. Each weapon hit restores 5% of your last spell\'s cost as magicka',
+    'When a hit drops you below 20% health, you gain a shield worth 15% of your max health for 6 s, and allies within 8 m get half of it. Recovers in 240 s',
   ]);
   assert.deepEqual([REPRIEVE_BELOW, REPRIEVE_SECONDS, REPRIEVE_METRES, REPRIEVE_ALLY_SHARE], [0.2, 6, 8, 0.5], 'the design\'s 20%, 6 s, 8 m and half');
 });

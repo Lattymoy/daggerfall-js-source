@@ -56,8 +56,8 @@ test('CRAFT-FIRST-SHOWN the law the words say: the patterns whose first lays on 
   assert.deepEqual(MASON_RECIPES.map((w) => [w.id, !!w.act && firstCraftPays(w)]), [['cut:stone', true], ['mix:mortar', true]], 'the bench\'s line says both');
   assert.deepEqual(COOKING_RECIPES.filter((r) => !firstCraftPays(r)).map((r) => r.id), [], 'the fire\'s line stands for every dish');
   // the box's line, at the rank the craft is read at
-  assert.equal(craftXpLine(recipeById('garment-165:linen'), 0, 'Outfitting'), '20 Outfitting experience. It is made only from the Weavers\' cloth, so it earns no first-time bonus.');
-  assert.equal(craftXpLine(recipeById('fishingnet:linen'), 0, 'Outfitting'), '20 Outfitting experience. It is made only from the Weavers\' cloth, so it earns no first-time bonus.');
+  assert.equal(craftXpLine(recipeById('garment-165:linen'), 0, 'Outfitting'), '20 Outfitting experience. Pieces made only from Weavers\' cloth earn no first-time bonus.');
+  assert.equal(craftXpLine(recipeById('fishingnet:linen'), 0, 'Outfitting'), '20 Outfitting experience. Pieces made only from Weavers\' cloth earn no first-time bonus.');
   assert.equal(craftXpLine(recipeById('garment-149:linen'), 0, 'Outfitting'), '20 Outfitting experience, and 500 more the first time you make this piece at this grade.', 'a bolt and a Cured Leather: the 500');
   assert.equal(craftXpLine(recipeById('longsword:daedric'), 90, 'Smithing'), '140 Smithing experience, and 500 more the first time you make this piece at this grade.');
   assert.equal(craftXpLine(recipeById('dagger:iron'), 70, 'Smithing'), '5 Smithing experience, and 500 more the first time you make this piece at this grade.', 'tier 1 at rank 70: a quarter; the 500 whole');
@@ -76,7 +76,7 @@ test('CRAFT-FIRST-SHOWN the craft\'s word, from the real Worker\'s answer throug
     assert.equal(r.ok, true, JSON.stringify(r));
     return [r.data.xp, r.data.first, craftXpText(recipeById(id), r.data, 'Outfitting')];
   };
-  assert.deepEqual(await word('garment-141:linen'), [20, true, '(+20 Outfitting experience. Your first, but the Weavers\' cloth earns no first-time bonus)']);
+  assert.deepEqual(await word('garment-141:linen'), [20, true, '(+20 Outfitting experience. Weavers\' cloth earns no first-time bonus)']);
   assert.deepEqual(await word('garment-149:linen'), [520, true, '(+520 Outfitting experience, with the first-time bonus)']);
   assert.deepEqual(await word('garment-149:linen'), [20, false, '(+20 Outfitting experience)'], 'once');
   assert.deepEqual(await word('garment-141:linen'), [20, false, '(+20 Outfitting experience)'], 'and the cloth\'s second says nothing of a first');
@@ -139,7 +139,7 @@ test('CRAFT-FIRST-SHOWN the stations say it, read off the real book: the loom\'s
     return [b.children[0].textContent, [...b.querySelectorAll('p')].map((p) => p.textContent)];
   };
   const FIRST = (xp, prof) => `${xp} ${prof} experience, and 500 more the first time you make this piece at this grade.`;
-  const SHOP = (xp) => `${xp} Outfitting experience. It is made only from the Weavers' cloth, so it earns no first-time bonus.`;
+  const SHOP = (xp) => `${xp} Outfitting experience. Pieces made only from Weavers' cloth earn no first-time bonus.`;
   try {
     draw();
     // THE LOOM, Outfitting 10: the Weavers' cloth alone says it earns none; a boot's Cured Leather and the leathers the 500

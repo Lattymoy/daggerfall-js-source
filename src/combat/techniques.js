@@ -61,8 +61,8 @@ const SWING_GIVE_UP_S = 3;
 
 // ── the words ───────────────────────────────────────────────────────
 export const NO_TECHNIQUE_TEXT = 'This weapon has no technique.';
-export const LADDER_OFF_TEXT = 'Weapon techniques need the loot ladder, which is off.';
-export const DUEL_TEXT = 'Techniques sleep in a duel.';
+export const LADDER_OFF_TEXT = 'Weapon techniques need Loot rarity turned on.';
+export const DUEL_TEXT = "Techniques can't be used in a duel.";
 export const TIRED_TEXT = 'You are too tired.';
 export const SHEATHED_TEXT = 'Draw your weapon first.';
 export const NO_AMMO_TEXT = 'You have nothing to shoot.';
@@ -70,7 +70,7 @@ export const OUT_OF_REACH_TEXT = 'Out of reach.';
 export const NO_FOE_TEXT = 'No foe there.';
 export const CANNOT_LEAP_TEXT = 'You cannot leap from here.';
 export const NOT_HERE_TEXT = 'Not here.';
-export const BEAST_TEXT = 'The beast knows no technique.';
+export const BEAST_TEXT = "You can't use techniques in beast form.";
 export const GAUNTLETS_TEXT = 'Your gauntlets\' technique is for bare hands.';
 export const NO_ROOM_TEXT = 'No room to leap.';
 /** AUDIT TECH1: what a technique is called before its piece is known - an unidentified Rare's card names no line, and the

@@ -289,9 +289,9 @@ test('RENOWN-GATE THE PAGE SAYS SO: a held one is Held, "not before Renown 10" -
   online(10); assert.equal(P.comeWords(r, 0).tag, 'Hunting');
   assert.equal(P.lairWords(r, true), 'Lair: The Pit.', 'held: no map promised');
   assert.equal(P.lairWords({ lair: { name: 'The Pit' }, lairKnown: false }, true), 'Lair: unknown.', 'nor the towns');
-  assert.equal(P.lairWords(r, false), 'Lair: The Pit - on your map.');
+  assert.equal(P.lairWords(r, false), 'Lair: The Pit, marked on your map.');
   online(9); assert.equal(P.lairWords(r), 'Lair: The Pit.', 'the page\'s door read');
-  online(10); assert.equal(P.lairWords(r), 'Lair: The Pit - on your map.');
+  online(10); assert.equal(P.lairWords(r), 'Lair: The Pit, marked on your map.');
   // none: the note
   const note = () => {
     const kids = [];
@@ -302,9 +302,9 @@ test('RENOWN-GATE THE PAGE SAYS SO: a held one is Held, "not before Renown 10" -
     return kids.map((k) => k.textContent).join(' | ');
   };
   online(9);
-  assert.match(note(), /No foe has earned your name yet\. From Renown 10, an elite or a champion marked Unquiet that kills you/);   // UNQUIET (Revenants.md section 46): only the marked rise
+  assert.match(note(), /No foe has earned your name yet\. From Renown 10, an elite or champion marked Unquiet that escapes you, or kills you, will remember you and come back for you\./);   // UNQUIET (Revenants.md section 46): only the marked rise
   online(10);
-  assert.match(note(), /No foe has earned your name yet\. An elite or a champion marked Unquiet that kills you/);
+  assert.match(note(), /No foe has earned your name yet\. An elite or champion marked Unquiet that escapes you/);
 });
 
 test('RENOWN-GATE THE HOSTS: the gate lives in the laws - the open world\'s call and a save\'s word in the pool, both searches\' one roll, the dungeon\'s pick never asked; the page\'s door set by the streaming world alone, the bench offline, the interiors\' one elite the arena\'s bout; no host reads the gate itself', () => {

@@ -54,9 +54,9 @@ export const EG_SPOILS_TEXT = Object.freeze({
   spilled: "The Redoubt's spoils spill from the beacon.",
   gathered: "The Redoubt's spoils are in your pack.",
   granted: (w) => `Your spoils from Redoubt ${w} are in your pack.`,
-  goldOnly: (w) => `You have taken Redoubt ${w} already this week: its gold alone is yours, and its Reliquaries are 20 lumen each.`,
+  goldOnly: (w) => `You already took Redoubt ${w} this week. You get its gold, and each of its Reliquaries gives 20 lumen.`,
   opened: (n) => (n === 1 ? 'Your Reliquary opens: its spoils are in your pack.' : `Your ${n} Reliquaries open: their spoils are in your pack.`),   // AUDIT EG III
-  guest: 'Register a name with the account service to keep the Spire\'s spoils. Its gold is yours.',
+  guest: 'Add a username to keep the Spire\'s spoils. Its gold is yours.',
   recovered: "The Spire's spoils are in your pack.",
 });
 /** A Redoubt's receipt as the pool keys it spent: its breach and its number. */

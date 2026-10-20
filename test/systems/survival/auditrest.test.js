@@ -155,7 +155,7 @@ test('AUDIT REST: the dungeon fires - no candidate in a palace\'s block; every m
 
 test('AUDIT REST: the words - "Rest with my party" says the night, /ready says there is no vote online, an Ember Jar\'s last night says its embers', () => {
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /'Sleep when a party member within 15 m sleeps at a fire, a tent or a bed\.'/);
-  assert.match(rd('src/net/chatCommands.js'), /'\/ready - how your party rests online \(no vote: a night at a fire carries the party\)',/);
+  assert.match(rd('src/net/chatCommands.js'), /'\/ready - how party resting works online \(resting at a fire rests the whole party\)',/);
   assert.match(rd('src/scenes/camps.js'), /say\(best\.rec\.jar \? CAMP_TEXT\.embersOut : best\.rec\.kind === CAMP_KIND\.Fire \? CAMP_TEXT\.outOfFuel : CAMP_TEXT\.campWorn\)/);
   assert.equal(CAMP_TEXT.embersOut, 'The embers die out.');
 });

@@ -236,7 +236,7 @@ test('CAPT-CHARTS at sea: a chart among the papers of a pirate the captain ends,
   s.run(1.2);
   const chest = s.host._shots.floaters().find((f) => f.lot === `${SITE_LOT}${CHART_SITE}77`);
   assert.ok(chest, 'the cache afloat');
-  assert.ok(s.log.say.includes('Your lookout spies a chest bobbing where the chart said it would be. The cache!'));
+  assert.ok(s.log.say.includes('Your lookout spots a chest bobbing where the chart said. The cache!'));
   s.host._shots.floater(chest.id).pos = [0, 0, 0];
   s.run(0.3);
   assert.deepEqual(given.filter((it) => it.name && !isChart(it)).map((it) => it.name), [`${STRONGBOX_KEY}@${STRONGBOX_RARITY_TIER}`, `${STRONGBOX_KEY}@${STRONGBOX_RARITY_TIER}`]);
@@ -248,7 +248,7 @@ test('CAPT-TRADE the exchange\'s tab: each good\'s stand, its two prices and how
   const hold = [mintGood('iron', 3)];
   const x = h.office.exchange({ uid: 42, cargo: hold });
   const t = exchangeText(x);
-  assert.match(t.lede, /^Wayrest's exchange\. The hold carries 36 kg of goods; your purse 5,000 gold\.$/);
+  assert.match(t.lede, /^Wayrest's exchange\. The hold carries 36 kg of goods\. You have 5,000 gold\.$/);
   const wine = t.rows.find((r) => r.id === 'wine');
   assert.match(wine.words, /^Made here: cheap - buy at \d+ gold a cask \(30 left today\) - sell at \d+ gold \(4 wanted\)$/);
   const iron = t.rows.find((r) => r.id === 'iron');

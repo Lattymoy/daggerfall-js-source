@@ -99,7 +99,7 @@ import { SEAT_HALL_TEXT } from '../../net/townSeatLaw.js';   // SEAT-HALL: the C
 import { forgeOffered, PROF_STATIONS, stationColdLine } from '../../ui/professions/profPages.js';   // AUDIT 29 B2; PROF4: the workbench too
 import { VENDOR_STATION, VENDOR_COLD_LINE } from '../../net/vendorLaw.js';   // HOME-VENDOR: a trader, sold only where it trades
 /** HOME-STATIONS: an online home whose service does not keep a station yet (one from before this) - said, and nothing paid. */
-export const DECOR_STATION_UNKEPT = 'Your home could not keep a station yet. Nothing was paid.';
+export const DECOR_STATION_UNKEPT = 'Your home cannot hold a station yet. Nothing was paid.';
 /** AUDIT HOME-STATIONS S2: the gold went while the station was being made (spent elsewhere mid-write) - nothing paid. */
 export const DECOR_STATION_GOLD_WENT = 'Your gold ran short while the station was being made. Nothing was paid.';
 import { localAabb, transformedAabb } from '../../render/frustum.js';
@@ -821,7 +821,7 @@ export function createDecorTool(deps) {
       } else if (what === 'withdraw') {
         if (!row?.offer || (!row.offer.listed && row.offer.taken)) return false;
         res = await door.withdraw({ room: row.offer.room });
-        if (res?.ok) deps.say?.(res.data?.gone === false ? `Room ${row.offer.room} is still rented. It is offered to no one once its days run out.` : `Room ${row.offer.room} is no longer offered to rent.`);
+        if (res?.ok) deps.say?.(res.data?.gone === false ? `Room ${row.offer.room} is still rented. It will not be offered again once its days run out.` : `Room ${row.offer.room} is no longer offered to rent.`);
       } else if (what === 'collect') {
         res = await door.collect();
         if (res?.ok) deps.say?.(`You collected ${goldSum(res.gold)} gold in rent. It went to ${EMPIRE_ACCOUNT_WORDS}.`);
@@ -1205,7 +1205,7 @@ export function createDecorTool(deps) {
     }
     if (deps.visit?.() === visit) pool.remove(piece.id);
     if (decorIsDoor(piece)) forgetRooms();   // HOME-DOORS: its doorway open again, the rooms either side one
-    deps.say?.(toGuild > 0 ? `${entryOf(piece).name} removed - ${toGuild} gold back to the guild's treasury.` : `${entryOf(piece).name} removed - ${back} gold back.`);
+    deps.say?.(toGuild > 0 ? `${entryOf(piece).name} removed. ${toGuild} gold back to the guild's treasury.` : `${entryOf(piece).name} removed. ${back} gold back.`);
     return true;
   }
 
@@ -1338,7 +1338,7 @@ export function createDecorTool(deps) {
   const pieceWrites = new Map();
 
   /** HOME-STATIONS: a piece a station cannot be made in for want of gold. */
-  const decorStationGoldLine = (kind) => `${DECOR_STATION_NAMES[kind]}: ${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold, and you have not that much.`;
+  const decorStationGoldLine = (kind) => `${DECOR_STATION_NAMES[kind]}: ${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold, and you do not have that much.`;
 
   /** HOME-STATIONS: A PLACED PIECE MADE A CRAFTING STATION, or unmade - `kind` one of DECOR_STATIONS, or 'none'. The
    *  licence is paid once (DECOR_STATION_FEES) and never comes back; a piece that holds things, or one's own item, is

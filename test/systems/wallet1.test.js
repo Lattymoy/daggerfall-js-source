@@ -156,7 +156,7 @@ test('WALLET1 what it holds: DFU\'s letters of credit, the Deadlands Embers and 
   assert.deepEqual(c.held, [letters[0], embers, shards, letters[1]], 'in the pack\'s own order, the worn one aside');
   assert.deepEqual(walletLines(c), ['Your wallet holds:', 'Gold: 1,240', 'Silver: 35', 'Letters of credit: 2, worth 12,000 gold', 'Deadlands Embers: 12', 'Welkynd Shards: 40']);
   assert.deepEqual(walletLines(walletContents([], { goldPieces: 0 }, { silver: null })).slice(1),
-    ['Gold: 0', 'Silver: kept by your account online', 'Letters of credit: none', 'Deadlands Embers: none', 'Welkynd Shards: none']);
+    ['Gold: 0', 'Silver: held in your online account', 'Letters of credit: none', 'Deadlands Embers: none', 'Welkynd Shards: none']);
 });
 
 test('WALLET1 the silver: the host\'s reader (online, the marks book\'s balance) - none where it is not known, a reader that throws or answers nonsense none; the refresh the host\'s, never a throw (mutants: the reader unread; nonsense believed)', async () => {
@@ -208,7 +208,7 @@ test('WALLET1 the sheet: the wallet picked says its currencies, and each piece i
     // figure apart, a letter's worth under its count (it read the classic box's lines, one paragraph each)
     assert.deepEqual(sheet.querySelectorAll('.wallet-head').map((h) => h.textContent), ['Coin', 'In the wallet']);
     assert.deepEqual(sheet.querySelectorAll('.wallet-row').map((r) => [r.dataset.key, ...r.children.map((c) => c.textContent)]),
-      [['gold', 'Gold', '1,240'], ['silver', 'Silver', 'kept by your account online'], ['letters', 'Letters of credit', '2'],
+      [['gold', 'Gold', '1,240'], ['silver', 'Silver', 'held in your online account'], ['letters', 'Letters of credit', '2'],
         ['embers', 'Deadlands Embers', '12'], ['shards', 'Welkynd Shards', '40']]);
     assert.deepEqual(sheet.querySelectorAll('.wallet-note').map((n) => n.textContent), ['worth 12,000 gold']);
     const pieces = sheet.querySelectorAll('button');
@@ -252,7 +252,7 @@ test('WALLET1 the sheet\'s silver: asked afresh of the host once a mount, as the
       const first = open();
       // PIN MOVED (AUDIT 625 W5): online and not known yet, the page is ASKING - the offline words were the wrong ones
       // PIN MOVED (WALLET-UI): the silver is the ledger's own row - its figure, or why there is none
-      assert.equal(silverOf(first.sheet()), 'asking your account', 'not known yet');
+      assert.equal(silverOf(first.sheet()), 'checking your account', 'not known yet');
       assert.equal(asked, 1, 'asked as the sheet first shows');
       answer(); await flush();
       assert.equal(silverOf(first.sheet()), '35', 'redrawn with the answer');

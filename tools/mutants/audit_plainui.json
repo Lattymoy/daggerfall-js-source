@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-PLAINUI-W1-short-week-typed",
     "file": "src/ui/noticeWindow.js",
-    "old": "brings a chapter above ${STRENGTH_START} back ${STRENGTH_SHORT} toward it;",
-    "new": "brings a chapter above ${STRENGTH_START} back 2 toward it;",
+    "old": "moves a chapter above ${STRENGTH_START} back ${STRENGTH_SHORT} toward it.",
+    "new": "moves a chapter above ${STRENGTH_START} back 2 toward it.",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]

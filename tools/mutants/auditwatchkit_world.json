@@ -173,7 +173,7 @@
   {
     "name": "WK-P5-over-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "${mine?.over ? ' - more than you can carry' : ''}",
+    "old": "${mine?.over ? ' (more than you can carry)' : ''}",
     "new": "${''}",
     "tests": [
       "test/scenes/auditwatchkit_world.test.js"

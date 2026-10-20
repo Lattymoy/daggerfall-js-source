@@ -215,7 +215,7 @@ test('MODS-ONLINE-2: the lock, the pane and the door all say the same true thing
   // everyone. A player reading that and then toggling one would be
   // reading a lie the port no longer tells.
   assert.ok(!/every enhancement and every mod is on for everyone/.test(menu), 'the old claim is gone');
-  assert.match(menu, /Most mods stay your choice online\. A few are the room\\u2019s: the ones that change the ground/, 'the door says what is true');   // DW-D: "Six switches" had been false since RRI1/RR1 and DS1 - the door names the reasons, the pane the switches
+  assert.match(menu, /Most mods stay your choice online\. A few are set for everyone: those that change the ground, monsters, loot or the rules\./, 'the door says what is true');   // DW-D: "Six switches" had been false since RRI1/RR1 and DS1 - the door names the reasons, the pane the switches
 });
 
 test('MODS-ONLINE-2: a mod the player owns reaches no wire, no save and no roll', () => {

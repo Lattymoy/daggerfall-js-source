@@ -477,8 +477,8 @@
   {
     "name": "ACHAP-CEILING-LINE",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "quests raise your standing no further today. {owed} more is owed, and follows in the days to come.",
-    "new": "quests raise your standing no further today.",
+    "old": "quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.",
+    "new": "quests cannot raise your standing any further today.",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js",

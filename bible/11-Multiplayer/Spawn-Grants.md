@@ -774,7 +774,7 @@ fix, and the cause of the jump.
   (`measure` is the law unset), so from world218 (deployed 2026-10-18) every cell a player stood in kept a timer
   pending around the clock, and for ten minutes after they left: about $4 a month for each such cell, where a cell
   with one player in it had been billed only for the moments it handled a frame.
-- **Built** (`server/src/index.js` `_grantTick`; relay world226 (world225 on its branch, renumbered past GAUNTLET-SLAIN at the merge)): the window posts at a door, as the relay's metrics
+- **Built** (`server/src/index.js` `_grantTick`; relay world228 (world225 then world226 on its branch, renumbered past GAUNTLET-SLAIN, LORD-SHARES and PLAIN-SWEEP at the merges)): the window posts at a door, as the relay's metrics
   window does (`_metricsTick`) - at the first frame or close after its first fold has waited GRANT_MEASURE_MS, and when
   the cell drains (its last socket's close, forced whatever the window's age: the players it measured are gone, and the
   cell then sleeps owing nothing). At its whole bound it posts at once, as before. No timer is armed anywhere on the

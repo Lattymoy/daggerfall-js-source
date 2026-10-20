@@ -566,7 +566,7 @@ export function createWorldModes(host) {
   /** TAVERN-TABLES: why this player may not sit at the gold table (a key of CARD_GOLD_BARRED), or null - online it seats
    *  a realm character's stake, at a relay that deals, and nobody else; offline it is a table like the other. */
   const cardGoldBarred = (i) => (!cardTableGold(i) || !isOnlinePage() ? null : !host.cardStakes?.goldOk?.() ? 'realm' : !host.cardOnline?.ok?.() ? 'relay' : null);
-  const CARD_GOLD_BARRED = Object.freeze({ realm: 'This table plays for gold, and only a realm character may stake at it. The green table plays for chips.', relay: 'This table plays for gold, and the relay is not dealing right now. The green table plays for chips.' });
+  const CARD_GOLD_BARRED = Object.freeze({ realm: 'This table plays for gold, and only a realm character may stake at it. The green table plays for chips.', relay: 'This table plays for gold and is not dealing right now. The green table plays for chips.' });
   function sitAtCardTable(i) {
     // TAVERN-TABLES: told before he sits - the relay refuses a sit at the gold table with no stake, and the refusal
     // stood him up (the owner's report: one table, and "it doesnt let him use gold tables")
@@ -870,7 +870,7 @@ export function createWorldModes(host) {
   /** AUDIT CARDS-3 C4: the beat the settled cloth is left to be read before the next hand is dealt. */
   const CARD_CLOTH_REST_MS = 1200;
   /** CARDS6: the service's refusals of a stake, said. */
-  const CARD_STAKE_REFUSALS = Object.freeze({ 'realm-gold': 'Your purse cannot cover that stake.', 'bad-buy-in': 'That stake is outside the table\'s buy-in.', 'cards-closed': 'The realm is not holding stakes right now.', unknown: 'The realm did not answer. Your stake will be settled when it does.', offline: 'The realm could not be reached. Try again.', busy: 'The realm is busy settling something else. Try again in a moment.', 'cards-kept-full': 'You have too many stakes waiting to be settled. Visit the tables where you placed them first.' });   // AUDIT CARDS-4 C7: a lost answer (`unknown`) is not a stake never asked
+  const CARD_STAKE_REFUSALS = Object.freeze({ 'realm-gold': 'Your purse cannot cover that stake.', 'bad-buy-in': 'That stake is outside the table\'s buy-in.', 'cards-closed': 'The realm is not holding stakes right now.', unknown: 'The realm did not answer. Your stake will be settled when it does.', offline: 'The realm could not be reached. Try again.', busy: 'The realm is settling something else. Try again in a moment.', 'cards-kept-full': 'You have too many stakes waiting to be settled. Visit the tables where you placed them first.' });   // AUDIT CARDS-4 C7: a lost answer (`unknown`) is not a stake never asked
   /** CARDS-TIDY: a look asked for a table the client lost track of, at most this often. */
   const CARD_LOOK_AGAIN_MS = 2000;
   /** AUDIT CARDS-3 B1: a sit still pending is said again this often (a new socket, the client's gate, the relay's 'busy'). */
@@ -4946,7 +4946,7 @@ export function createWorldModes(host) {
       if (target && kind === 'container') target.openedOn = c.openedOn ?? 0;   // UXB1-O: a record cached before it carries none - never searched
     }
     interiorLootAside(interiorCtx, _intShared);   // OUTDOOR-LOOT: the cache has laid a stranger's cupboard the list of an earlier visit - online that is no one's word, the room's is
-    if (setDown) say('What a chest here held, where no chest stands now, was set down at your feet.');   // HOLD-KEPT
+    if (setDown) say('A chest that stood here is gone. What it held was set down at your feet.');   // HOLD-KEPT
     interiorCtx.guildShelves = data.guildShelves ?? {};   // GUILD-SHELF: a stale day's shelf is left for guildShelf to replace at the next open
     // #32: through the system's own restore, which settles the matrix
     // and the collider bucket (syncRestored) - a door restored open
@@ -5407,7 +5407,7 @@ export function createWorldModes(host) {
       if (item) { decorPackGive(item); back.push(item); }
     }
     // DECOR2b: furniture back among "Your things"
-    if (back.length) say(ownBackLines(back, (n) => (n === 1 ? 'One of your things no longer stood here, and came back to your pack.' : `${n} of your things no longer stood here, and came back to your pack.`)));
+    if (back.length) say(ownBackLines(back, (n) => (n === 1 ? 'One of your things was no longer here and went back to your pack.' : `${n} of your things were no longer here and went back to your pack.`)));
     return back.length;
   }
   /** HOLD-KEPT (FIELD BUGS 2026-10-12g): WHAT A STORAGE PIECE HELD THAT THE SERVICE NO LONGER HAS - one taken away while
@@ -5418,7 +5418,7 @@ export function createWorldModes(host) {
     const items = interiorDecor.takeUnserved(served);
     if (!items.length) return 0;
     interiorDropped.dropPile(items, interiorDropFeet());
-    say(items.length === 1 ? 'A thing kept in a piece that no longer stands here was set down at your feet.' : `${items.length} things kept in pieces that no longer stand here were set down at your feet.`);
+    say(items.length === 1 ? 'Something stored in a piece that is gone was set down at your feet.' : `${items.length} things stored in pieces that are gone were set down at your feet.`);
     return items.length;
   }
   /** DECOR1d: what a placement is paid with - the purse, then the region's bank account (HOME1's homes' own order);

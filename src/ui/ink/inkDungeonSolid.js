@@ -865,8 +865,8 @@ export function paintBeacon(ctx, foot, head, pulse = 0) {
 export const ORBIT_BUTTONS = Object.freeze([
   Object.freeze({ id: 'turnLeft', tip: 'Turn left (Q)' }),
   Object.freeze({ id: 'turnRight', tip: 'Turn right (E)' }),
-  Object.freeze({ id: 'tiltUp', tip: 'Tilt toward a plan (R)' }),
-  Object.freeze({ id: 'tiltDown', tip: 'Tilt toward the side (F)' }),
+  Object.freeze({ id: 'tiltUp', tip: 'Tilt toward top-down (R)' }),
+  Object.freeze({ id: 'tiltDown', tip: 'Tilt toward side view (F)' }),
   Object.freeze({ id: 'floorUp', tip: 'Up a floor (PgUp)' }),
   Object.freeze({ id: 'floorDown', tip: 'Down a floor (PgDn)' }),
   Object.freeze({ id: 'flat', tip: 'Flat plan or 3D (P)' }),

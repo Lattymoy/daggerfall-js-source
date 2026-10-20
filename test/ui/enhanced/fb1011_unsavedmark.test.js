@@ -101,10 +101,10 @@ test('UNSAVED-MARK the sticky head is the law and its buttons: the how-to scroll
     const intro = one(view.body, 'ctl-intro'), head = one(view.body, 'ctl-head');
     assert.ok(view.body.children.indexOf(intro) < view.body.children.indexOf(head), 'the intro first, above the head');
     assert.match(textOf(intro), /Click a binding, then press the key you want\./);
-    assert.match(textOf(intro), /A key that is already in use asks first/);
+    assert.match(textOf(intro), /A key already in use asks whether to move it or use it for both/);
     assert.match(textOf(intro), /A key not saved yet is marked on its row\./);
-    assert.doesNotMatch(textOf(head), /Click a binding|already in use asks first/, 'none of the how-to rides the sticky head');
-    assert.match(textOf(head), /Nothing is saved until you press Confirm, Defaults included\./);
+    assert.doesNotMatch(textOf(head), /Click a binding|already in use asks whether/, 'none of the how-to rides the sticky head');
+    assert.match(textOf(head), /Nothing is saved until you press Confirm, including Defaults\./);
   });
 });
 

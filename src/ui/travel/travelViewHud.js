@@ -350,7 +350,7 @@ function build(doc, hooks) {
   // own - a switch like the others that unfolds the waypoints as switches under it (a browser <select> wears no stone)
   const wpPick = /** @type {HTMLButtonElement} */ (el('button', 'tview-filter tview-cycle tview-cycle-wide tview-wp-pick on'));
   wpPick.type = 'button';
-  wpPick.title = 'Choose a waypoint to follow. It stays at the edge of the screen with its distance';
+  wpPick.title = 'Choose a waypoint to follow. It stays at the edge of the screen with its distance.';
   const wpPop = el('div', 'tview-wp-pop');
   wpPop.style.display = 'none';
   wpPick.onclick = (e) => { e.preventDefault(); if (wpPick.disabled) return; wpPop.style.display = wpPop.style.display === 'none' ? '' : 'none'; paintPickWord(); furniture.at = -Infinity; };

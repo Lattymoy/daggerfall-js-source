@@ -209,7 +209,7 @@ test('LOOT17: the window - a Hone press beside each line under its top, its pric
     } finally { view.unmount(); }
   });
   assert.match(read('src/scenes/worldModes.js'), /hone: \(item, line\) => honePiece\(item, line, playerEntity\),/, 'the guild\'s window hones on the player\'s own');
-  assert.equal(REFORGE_REFUSALS.top, 'At the top of its band');
+  assert.equal(REFORGE_REFUSALS.top, 'Already at its highest value');
   const garmentPiece = known(LR.applyRarity(mintCondition({ group: 'MensClothing', templateIndex: 155, name: 'Cloak', flags: 0, variant: 0 }), 'rare', lcg(3)));
   assert.deepEqual(LR.honeableLines(garmentPiece), garmentPiece.affixes.map((_, i) => i).filter((i) => garmentPiece.affixes[i].value < LR.affixBand(garmentPiece, i)[1]), 'a garment\'s lines are a Rare\'s (LOOT14)');
 });

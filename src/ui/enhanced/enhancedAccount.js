@@ -778,7 +778,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
       await globalThis.navigator.clipboard.writeText(recoveryCodesText(flow.codesFor, flow.recoveryCodes ?? []));
       flow.say(t('account.codes.copied', 'Copied. Paste them somewhere only you can read.'));
     } catch {
-      flow.say(t('account.codes.copyRefused', 'This page may not write to the clipboard. Save them as a file instead.'), true);
+      flow.say(t('account.codes.copyRefused', 'The browser blocked copying to the clipboard. Save them as a file instead.'), true);
     }
   }
 

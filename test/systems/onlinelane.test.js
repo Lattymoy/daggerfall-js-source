@@ -152,6 +152,6 @@ test('OL1 by source: the three read paths ask the one home first, the menu locks
   assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: modLockNote\(vendor, key\), value: ground \}\);/, 'a forced mod row is locked, with the reason it is actually locked FOR');   // WOD1: the ground's words for both terrain-writing vendors
   assert.match(menu, /function lockOnline\(b, main, \{ note = ONLINE_LOCK_NOTE, value = true \} = \{\}\) \{\s*b\.textContent = value \? t\('menu\.online\.lockedOn', 'On \(online\)'\) : t\('menu\.online\.lockedOff', 'Off \(online\)'\);/, 'the lock says so and answers nothing');
   assert.match(menu, /if \(tab\.id === 'mods' && isOnlinePage\(\)\) body\.append\(el\('p', 'meta opt-note', noteText\(ONLINE_MODS_NOTE\)\)\);/, 'the Mods pane says it once at the top (ORG2: the Mods & files tab, over every mod)');
-  assert.match(menu, /Every enhancement is on for everyone in the shared world, but your UI is your own, with chat, friends, the party and trading in their own panels\./, 'the Online pane (OVH3: the world\'s lane, the player\'s screens)');
+  assert.match(menu, /Every enhancement is on for everyone, but your interface is your own\./, 'the Online pane (OVH3: the world\'s lane, the player\'s screens)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## OL1 \(2026-09-14\)/, 'the record');
 });

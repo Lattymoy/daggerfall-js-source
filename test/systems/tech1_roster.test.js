@@ -77,7 +77,7 @@ test('TECH1 THE NUMBERS: one power band for every technique, the per-mille at a 
   // AUDIT TECH1: a Volley's shafts a frame wider apart than the arena's four a second - none of the six refused there
   const v = RO.TECHNIQUES.volley;
   assert.ok(v.spread / (v.arrows - 1) >= 1 / ARENA_HIT_HZ_MAX + 1 / 60, `${v.spread / (v.arrows - 1)} s a shaft`);
-  assert.equal(RO.techniqueBrief('volley', 22), 'Aim: 6 arrows rain on 3.5 m, 61% each. 6 fatigue, 16s');
+  assert.equal(RO.techniqueBrief('volley', 22), 'Aim: 6 arrows rain down within 3.5 m, 61% each. 6 fatigue, 16s');
   assert.equal(RO.techniqueBrief('execute', 0), 'Strike for 120%, to 220% on the wounded. 5 fatigue, 11s');
   assert.equal(RO.techniqueBrief('leap', 50), 'Aim: leap 9 m, strike all in 2.5 m, 210%. 5 fatigue, 12s');
   assert.equal(RO.techniqueBrief('nonesuch', 10), '');
@@ -265,7 +265,7 @@ test('TECH1 THE CARD: the line with its band, then what a press does with its nu
   const lines = LR.rarityLines(bow);
   const i = lines.indexOf('Volley +22% [15-30]');
   assert.ok(i > 0, lines.join(' | '));
-  assert.equal(lines[i + 1], 'Aim: 6 arrows rain on 3.5 m, 61% each. 6 fatigue, 16s');
+  assert.equal(lines[i + 1], 'Aim: 6 arrows rain down within 3.5 m, 61% each. 6 fatigue, 16s');
   assert.equal(LR.techniqueDetail({ id: 'damage', value: 5 }), '');
   // a Legendary's technique line - rolled at the find, Exalted or not - reads the Legendary band (its record's lines none)
   const leg = withTech(() => createWeapon(120, 1), 'leap', 41, 'legendary');

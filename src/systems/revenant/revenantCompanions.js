@@ -128,7 +128,7 @@ export function callRefusal(r, now) {
   if (!r?.sworn) return 'It is no longer sworn to you.';
   if (stateOf(r) === 'with') return null;
   if (stateOf(r) === 'resting' && now < restUntil(r, now)) return 'Still recovering.';
-  if (stateOf(r) === 'errand') return t('rvn.errand.callAbroad', 'Abroad - {left}.', { left: errandLeftWords(errandUntil(r.companion.errand, now), now) });   // RVN-ERRAND
+  if (stateOf(r) === 'errand') return t('rvn.errand.callAbroad', 'Abroad, {left}.', { left: errandLeftWords(errandUntil(r.companion.errand, now), now) });   // RVN-ERRAND
   if (wildHere() && revenantsWithYou().length >= WILD_REVENANTS_MAX) return 'Only one revenant may walk at your side in the Wrothgarian Mountains.';   // PVPDUNGEONS
   if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;
   return null;
@@ -208,7 +208,7 @@ export function sendOnErrand(id, place, venture, { now = Math.floor(ownMinutes()
   forgetSwornMember(id);
   const p = errandPlace(place);
   const where = e.city ? t('rvn.errand.cityIn', '{city}, in {province}', { city: e.city, province: p?.name }) : p?.name;
-  _errandWords.push(revenantMomentEvent('dismiss', r, _player?.name, { as: 'errand', body: t('rvn.errand.setsOut', 'It sets out for {where} - {left}.', { where, left: errandLeftWords(e.until, now) }) }));   // its own leaving words, the errand's card
+  _errandWords.push(revenantMomentEvent('dismiss', r, _player?.name, { as: 'errand', body: t('rvn.errand.setsOut', 'It sets out for {where}, {left}.', { where, left: errandLeftWords(e.until, now) }) }));   // its own leaving words, the errand's card
   return null;
 }
 /** RECALLED before its errand is done: back at once with nothing, and worn from the road - resting a rest's length
@@ -476,7 +476,7 @@ export function swornFightWon(id) {
 function levelWords(r, was) {
   const s = r ? rvnStarsOf(revenantRecord(_player, r.id)) : null;
   if (!s || s.level <= was) return null;
-  return t('rvn.stars.levelUp', '{given} reaches level {level} - {n, plural, one {a star} other {# stars}} to set on the Companions page.', { given: r.given, level: s.level, n: Math.max(1, s.points - s.set) });
+  return t('rvn.stars.levelUp', '{given} reaches level {level}. Set its new {n, plural, one {star} other {# stars}} on the Companions page.', { given: r.given, level: s.level, n: Math.max(1, s.points - s.set) });
 }
 
 /** ONE OF ITS OWN KIND EXECUTED IN ITS SIGHT (systems/revenant/revenantFate.js finishExecution - `mobileType` the executed's): each

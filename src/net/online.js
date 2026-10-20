@@ -514,7 +514,7 @@ export const peerSecret = (storage = tabStorage()) => keptToken(storage, 'dagger
  */
 /** ONE-SEAT (Mac: "the player can only have one character only at a time"): the line a superseded session says - another
  *  tab or window of this player went online (or this tab's own id was taken), so this one is out of every room. */
-export const SEAT_TEXT = 'online in another tab, window or device; this one is offline';
+export const SEAT_TEXT = 'online in another tab, window or device, so this one is offline';
 /** L10N4: SEAT_TEXT as the player reads it, read when it is said. */
 export const seatText = () => t('net.online.seat', SEAT_TEXT);
 /** AUDIT ONESEAT C1: how long a claim speaks for the player's act. A claim is the moment a tab went online (or Play online
@@ -523,7 +523,7 @@ export const seatText = () => t('net.online.seat', SEAT_TEXT);
  *  hub link's hello is a reconnect: refused while another tab holds the seat, and the way back is the button. */
 export const CLAIM_TTL_MS = 20_000;
 /** OL3: the HUD line while the relay's clock and this machine's disagree by more than a year - the world's time is read uncorrected. */
-export const CLOCK_WARNING = 'this machine\'s clock is more than a year off from the world\'s. Set it, or the shared time will be wrong here';
+export const CLOCK_WARNING = 'this computer\'s clock is off by more than a year. Set it correctly, or the game time will be wrong';
 /** L10N4: CLOCK_WARNING as the player reads it (the console keeps the English). */
 export const clockWarningText = () => t('net.online.clock', CLOCK_WARNING);
 /** ONCRASH1: how long a contained handler throw is said on the HUD line. Long enough for a player to read and report it,
@@ -2043,7 +2043,7 @@ export class OnlineSession {
   }
 
   _open() {
-    if (!this.url) { this.status = 'error'; this.error = t('net.online.badUrl', 'the relay must be a wss:// address'); this.terminal = true; this.terminalAt = this._now(); return; }
+    if (!this.url) { this.status = 'error'; this.error = t('net.online.badUrl', 'the server address must start with wss://'); this.terminal = true; this.terminalAt = this._now(); return; }
     if (!this.room || !this._WS) { this.status = 'error'; this.error = t('net.online.noSocket', 'no WebSocket'); return; }
     let ws;
     const ly = this.room === this._layerRoom && this.layer > 0 ? this.layer : this.layerHint;   // SCALE5d: a reconnect to my layer, else my party's
@@ -2212,7 +2212,7 @@ export class OnlineSession {
       // minute: the relay refused the tokenless hello and this close was terminal - the player offline until they
       // changed room. Only a missing sign-in ('no-session') or one the service stopped honouring ('auth') is final.
       if (code === CLOSE_POLICY && tokenRetryable(this._tokenless.get(ws))) { this.status = 'closed'; this.error = t('net.online.waitingAccount', 'waiting for the account service'); this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry(); this._retryAt = this._afterMintHold(this._retryAt); this._tokenRetry = true; return; }   // STORM-SHED: not before the page's next mint may be asked - DOOR-TOKEN: or the moment a token is held (`tick`)
-      if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? t('net.online.refused', 'the relay refused a frame'); this._endHalo(); this._forgetRoom(this.room); return; }
+      if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? t('net.online.refused', 'the server refused a message'); this._endHalo(); this._forgetRoom(this.room); return; }
       // AUDIT PLAN-1000 B1: AND A COURT'S UPGRADE THE WORKER REFUSED BEFORE IT OPENED (an overloaded object's 503, every copy
       // full) is its door answering too - the browser's 1006 for it says no `busy`, and the court counted it silence and
       // cast its player out at COURT_SILENT_MS; the court's wait (gateCourt.js COURT_DOOR_WAIT_MS) still bounds it
@@ -3762,7 +3762,7 @@ export class OnlineSession {
     } else if (m.t === 'error') {
       // AUDIT 68 S14-halo-error-wedges-primary: the session's status is my own room's alone - a halo's refusal is that
       // halo's, and its own onclose (a terminal code remembered, a busy one retried) follows the frame
-      if (primary) { this.status = 'error'; this.error = m.m == null ? t('net.online.relayError', 'relay error') : String(m.m); }   // the relay's own word as it said it (realmSaves.js realmDoorShut compares it)
+      if (primary) { this.status = 'error'; this.error = m.m == null ? t('net.online.relayError', 'server error') : String(m.m); }   // the relay's own word as it said it (realmSaves.js realmDoorShut compares it)
     }
   }
 
@@ -4040,7 +4040,7 @@ export class OnlineSession {
       if (this.clockWarning) return t('net.online.status', '{label}: {text}', { label, text: this.clockWarning });   // OL3: an open session with a clock a year off says so
       // ONCRASH1: a frame the port could not handle is SAID, not only swallowed - the player reporting "it crashed"
       // now has the line that names which frame, and the console has the stack behind it.
-      if (this.threw && monoNow() - this.threw.mono < THREW_SAY_MS) return t('net.online.threw', '{label}: a \'\'{kind}\'\' frame from another player was dropped - {text}', { label, kind: this.threw.kind, text: this.threw.text });
+      if (this.threw && monoNow() - this.threw.mono < THREW_SAY_MS) return t('net.online.threw', '{label}: a \'\'{kind}\'\' message from another player was dropped ({text})', { label, kind: this.threw.kind, text: this.threw.text });
       return null;
     }
     if (this.terminal || this.status === 'error') return t('net.online.status', '{label}: {text}', { label, text: this.error ?? t('net.online.error', 'error') });

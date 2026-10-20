@@ -59,7 +59,7 @@ test('LEGACY4: marked for the house - a copy carrying it, its generation kept, g
   const again = markHeirloom({ ...h, equipSlot: 1 }, { line: 'fam-1', house: 'Hlaalu', of: 9, from: 'Riadell Hlaalu' });
   assert.equal(again.heirloom.gen, 5, 'a second death keeps its generations');
   assert.equal(itemLongName(again), itemLongName(h), 'named once - never "Hlaalu\'s Hlaalu\'s"');
-  assert.match(heirloomLine(again), /Heirloom of the house of Hlaalu, first borne by Riadell Hlaalu - carried home 5 times\./);
+  assert.match(heirloomLine(again), /Heirloom of the house of Hlaalu, first borne by Riadell Hlaalu and carried home 5 times\./);
   assert.equal(heirloomLine(sword), null);
 });
 

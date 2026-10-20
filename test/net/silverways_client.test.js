@@ -43,16 +43,16 @@ test('SILVER-WAYS the lines: a counted claim says its strike, a guild deed it co
   const deed = { struck: 25, guild: { name: 'The Hound', tag: 'HND' } };
   const contracts = [{ contract: 'C1', guild: { name: 'The Silver Hand', tag: 'SH' }, pay: 38, tax: 2 }];
   assert.deepEqual(b.claimLines({ marks: { struck: 30, balance: 130 }, deed, contracts }, 'raid'), [
-    '30 silver struck to your account. You hold 130 silver.',
-    'A deed for The Hound: three of its members stood together. 25 silver struck to its treasury.',
+    '30 silver added to your account. You now hold 130 silver.',
+    'A deed for The Hound: three of its members fought together. 25 silver added to its treasury.',
     'The Silver Hand pays you 38 silver under its contract.',
   ]);
   // PIN MOVED (EG-E1): the cap's lines name the Spire's Redoubts, which strike under it too - and a Redoubt's names the Redoubt
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'raid'), ['No silver for this town. The counting-houses strike 150 silver a day for breaches closed, towns defended, serpents slain and Redoubts taken.']);
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'gate'), ['No silver for this breach. The counting-houses strike 150 silver a day for breaches closed, towns defended, serpents slain and Redoubts taken.']);
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'serpent'), ['No silver for this serpent. The counting-houses strike 150 silver a day for breaches closed, towns defended, serpents slain and Redoubts taken.'], 'SERPENT-SET: a serpent\'s capped line names the serpent');
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'eg'), ['No silver for this Redoubt. The counting-houses strike 150 silver a day for breaches closed, towns defended, serpents slain and Redoubts taken.'], 'EG-E1: a Redoubt\'s capped line names the Redoubt');
-  assert.deepEqual(b.claimLines({ marks: { struck: 50, balance: 50 }, deed: null }), ['50 silver struck to your account. You hold 50 silver.']);
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'raid'), ['No silver for this town. You can earn at most 150 silver a day from breaches, town defenses, serpents and Redoubts.']);
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'gate'), ['No silver for this breach. You can earn at most 150 silver a day from breaches, town defenses, serpents and Redoubts.']);
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'serpent'), ['No silver for this serpent. You can earn at most 150 silver a day from breaches, town defenses, serpents and Redoubts.'], 'SERPENT-SET: a serpent\'s capped line names the serpent');
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'eg'), ['No silver for this Redoubt. You can earn at most 150 silver a day from breaches, town defenses, serpents and Redoubts.'], 'EG-E1: a Redoubt\'s capped line names the Redoubt');
+  assert.deepEqual(b.claimLines({ marks: { struck: 50, balance: 50 }, deed: null }), ['50 silver added to your account. You now hold 50 silver.']);
   assert.deepEqual(b.claimLines({ recorded: true }), [], 'a service from before them');
   assert.deepEqual(b.claimLines(null), []);
   assert.equal(b.state.balance, 50, 'the balance the last strike answered');
@@ -74,8 +74,8 @@ test('SILVER-WAYS the carriers: a counted raid says its town\'s line and then ev
   await rc.flush();
   assert.deepEqual(said, [
     'The town will remember you. Towns defended: 4.',
-    '30 silver struck to your account. You hold 30 silver.',
-    'A deed for The Hound: three of its members stood together. 25 silver struck to its treasury.',
+    '30 silver added to your account. You now hold 30 silver.',
+    'A deed for The Hound: three of its members fought together. 25 silver added to its treasury.',
     'Silver Hand pays you 19 silver under its contract.',
   ]);
   const thrown = [];
@@ -91,7 +91,7 @@ test('SILVER-WAYS the carriers: a counted raid says its town\'s line and then ev
   });
   gc.add(g);
   await gc.flush();
-  assert.deepEqual(gsaid.slice(1), ['50 silver struck to your account. You hold 80 silver.', 'A deed for The Hound: three of its members stood together. 25 silver struck to its treasury.']);
+  assert.deepEqual(gsaid.slice(1), ['50 silver added to your account. You now hold 80 silver.', 'A deed for The Hound: three of its members fought together. 25 silver added to its treasury.']);
 });
 
 // ─── THE DOORS ───────────────────────────────────────────────────────────────────────────────────────────────────────

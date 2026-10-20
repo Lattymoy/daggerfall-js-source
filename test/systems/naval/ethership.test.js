@@ -239,7 +239,7 @@ test('ETHER-SHIPS the strands at sea: a wild isle\'s site floats its casks out w
   s.run(1.2);
   const casks = s.host._shots.floaters().filter((f) => f.lot === 'site:strand:300,200');
   assert.equal(casks.length, 3, 'its casks afloat');
-  assert.ok(s.log.say.includes('Your boat pulls in to the strand and back out with its haul, casks afloat alongside.'));
+  assert.ok(s.log.say.includes('Your boat goes ashore and comes back with its haul. The casks float alongside.'));
   s.host._shots.floater(casks[0].id).pos = [0, 0, 0];
   s.run(0.3);
   assert.deepEqual(gathered, ['strand:300,200']);

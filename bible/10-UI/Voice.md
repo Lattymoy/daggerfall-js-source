@@ -73,6 +73,11 @@ instructions.
   (`src/ui/craftXpWords.js`: "No Smithing experience: ...", "(+0 Smithing experience. Smithing is at Master)"), which
   shared a box with VOICE2's "60 Smithing experience". One VOICE2 change was undone: Travel Options' help lines are
   the mod's own words (`travelOptionsText.js`, TO1) and keep "travelling".
+- At PLAIN-SWEEP's merge (2026-10-20, `10-UI/Plain-Words.md` section 6.7): the two passes had rewritten many of the
+  same lines. Each was written once to both rule sets - the sweep's shorter line, in this page's words and spelling, or
+  this pass's line where it was as plain - and the sweep's own lines that merged without a conflict were brought into
+  this voice (American spelling in the mod settings' descriptions and the credits, which the sweep rewrote in the
+  game's own words; "stacks", "reroll" and "adds" said as what happens).
 
 The English catalog (`locales/en/Port_Strings.csv`) follows the source. Every VOICE2 change keeps the meaning of the
 line it replaced, so the languages keep their translations: each machine row's record was moved to the new English

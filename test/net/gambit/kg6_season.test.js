@@ -191,7 +191,7 @@ test('KG6 THE GOLD TABLE\'S PANEL: the mod\'s online stakes picked under the arm
   assert.deepEqual(t.map((n) => n.attrs['aria-disabled'] === 'true'), [true, true, false, true, true], 'the other\'s 200 to match - and the purse\'s 300 to cover');
   g.press('stake', 50);
   assert.equal(g.g.stakePick, null, 'a closed pick is said, never taken');
-  assert.match(g.g.why, /Oth stakes 200 gold: stake the same to play\./);
+  assert.equal(g.g.why, 'Oth stakes 200 gold. Match it to play.');   // PLAIN-SWEEP: the other's stake, and what to do
   g.press('stake', 200);
   assert.match(text(g.g.hud.root), /Win, and you take the pot: 400 gold\./);
   assert.ok(buttons(g.g.hud.root).some((b) => b.textContent === 'Ready - stake 200 gold'));
@@ -211,7 +211,7 @@ test('KG6 THE GOLD TABLE\'S PANEL: the mod\'s online stakes picked under the arm
   assert.match(shown, /1\. Eira - rating 1612 \(14 wins, 2 losses\)/);   // PIN MOVED (AUDIT KG II D20): the counts' plurals
   assert.match(shown, /You: rank 2, rating 1530/);
   assert.match(shown, /Grandmaster: Eira/);
-  assert.match(shown, /once they have played 10 rated games against 5 different players\. A game counts only when both players have registered accounts/);   // PIN MOVED (AUDIT KG II D10): registered, not signed in
+  assert.match(shown, /after playing 10 rated games against 5 different players\. Only games between two registered accounts count\./);   // PIN MOVED (AUDIT KG II D10): registered, not signed in; PLAIN-SWEEP: the rule said once
   g.close();
   assert.equal(freed.length, made.length);
 });

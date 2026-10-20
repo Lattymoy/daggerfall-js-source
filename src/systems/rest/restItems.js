@@ -113,13 +113,13 @@ export const REST_ITEM_TEXT = Object.freeze({
 export function restItemLines(item) {
   const n = item?.currentCondition ?? 0;
   switch (item?.templateIndex) {
-    case REST_ITEM.Bedroll: return [`${n} ${n === 1 ? 'night' : 'nights'} left`, 'A rough night\'s sleep anywhere a camp can be made.'];
+    case REST_ITEM.Bedroll: return [`${n} ${n === 1 ? 'night' : 'nights'} left`, 'A rough night\'s sleep anywhere you could camp.'];
     case REST_ITEM.EmberJar: return ['Makes a fire for one night. The fire cannot be carried.'];
     case REST_ITEM.Firewood: return [`Adds ${FIREWOOD_NIGHTS} nights of fuel to a Campfire.`];   // AUDIT REST II H13: the notes' own words
     case REST_ITEM.Tonic: return [`Restores ${Math.round(TONIC_FATIGUE * 100)}% of your fatigue.`, `With Climates & Calories, sleep can wait ${TONIC_SLEEP_HOURS} hours more.`];
     case REST_ITEM.Candle: return [`${n} ${n === 1 ? 'use' : 'uses'} left`, `Meditate by it to restore ${Math.round(CANDLE_MAGICKA * 100)}% of your magicka.`];
     case REST_ITEM.Salts: return [`${n} ${n === 1 ? 'use' : 'uses'} left`, 'Keeps weariness away for an hour, then it returns all at once.'];
-    case REST_ITEM.Draught: return ['Your next night\'s sleep is as good as a night in a bed.'];
+    case REST_ITEM.Draught: return ['Your next night counts as sleeping in a bed.'];
     default: return [];
   }
 }

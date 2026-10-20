@@ -93,7 +93,7 @@ export const TV_MOVE_ACTIONS = Object.freeze(['MoveForwards', 'MoveBackwards', '
 export const TRAVEL_VIEW_BUTTON = 'Overworld (O)';
 /** The view's own lines - the refusals the door says, and the readout's place line. */
 export const TRAVEL_VIEW_TEXT = Object.freeze({
-  enhancedOnly: 'The overworld is part of the enhanced interface.',
+  enhancedOnly: 'Turn on the enhanced interface to use the overworld.',
   indoors: 'You can only survey the land from the open air.',
   underwater: 'You cannot survey the land from under the water.',
   enemies: 'You cannot survey the land with enemies nearby.',
@@ -114,10 +114,10 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   // OWS2: the crossing's words - the trip's line when it puts to sea, and why one cannot
   bySea: (name) => `To ${name}, by sea`,
   toSpotBySea: 'To the marked spot, by sea',
-  needBoat: 'There is no way there by land. A boat would carry you across the water.',
+  needBoat: 'There is no way there by land. You need a boat to cross the water.',
   passenger: 'You are aboard another\'s boat. Its helmsman sets the course.',
   rider: 'You ride in another\'s wagon. Its driver sets the course.',   // WAGONS2: seated in the back of another's wagon (scenes/wagon/wagonRiders.js)
-  climbing: 'You cannot set out on a journey from a wall. Climb down first.',   // AUDIT FB1007b C2
+  climbing: 'You cannot set out from a wall. Climb down first.',   // AUDIT FB1007b C2
   noLaunch: 'There is no water here for your boat to float in.',
   noWayAtSea: 'Your boat can make no way toward its mark.',
   noShore: 'There is no safe landing here. Your boat stays in the water.',

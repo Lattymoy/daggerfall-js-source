@@ -35,7 +35,7 @@ import { mintTradeSid, TRADE_FRAME_MAX, TRADE_DATA_MAX, TRADE_REV_MAX } from './
 /** How long a frame may wait for the socket (its gate, a reconnect) before the trade is called broken, ms. */
 export const OUTBOX_TTL_MS = 6000;
 /** TRADE-FIT: the words for an offer too big for one trade frame. */
-export const OFFER_TOO_BIG_TEXT = 'That is more than one trade can carry. Offer fewer items.';
+export const OFFER_TOO_BIG_TEXT = 'That is too much for one trade. Offer fewer items.';
 /** TRADE-FIT: a trade frame's length as the relay reads it - the socket's own wrapper (net/online.js sendTrade). */
 export const tradeFrameBytes = (data) => JSON.stringify({ t: 'trade', data }).length;
 /** AUDIT TRADE-FIT D1: the longest data an offer's goods will ride - the COMMIT, which carries the same items and gold
@@ -84,7 +84,7 @@ export function inTradeRange(a, b, max = TRADE_RANGE_M) { return tradeDistance(a
 export function tradeWhyText(why, name = 'They') {
   switch (why) {
     case 'declined': return `${name} declined the trade`;
-    case 'left': return `${name} went away. The trade is off`;
+    case 'left': return `${name} left. The trade is off`;
     case 'busy': return `${name} is already trading`;
     case 'timeout': return 'The trade timed out';
     case 'range': return `You are more than ${TRADE_RANGE_M} m apart. The trade is off`;
@@ -97,7 +97,7 @@ export function tradeWhyText(why, name = 'They') {
  *  commit it would not take, or its own goods changed); "their offer was not valid" blamed the wrong player. */
 export const tradeRefusedText = (name = 'They') => `${name}'s game refused the trade. Nothing changed hands`;
 /** AUDIT ONLINE2 F5: an offer this build cannot read (a piece from a newer build) - said on the reader's screen. */
-export const tradeUnreadableText = (name = 'They') => `${name}'s offer holds something this game does not know. Reload for the newest version. The trade is off`;
+export const tradeUnreadableText = (name = 'They') => `${name}'s offer has an item your game does not recognize. Reload for the newest version. The trade is off`;
 
 /** Stable JSON (sorted keys) - a leaf of its own since REALM P2.1 (net/canon.js), so the account Worker bundles it alone. */
 export { canon };
@@ -339,7 +339,7 @@ export class TradeSession {
     if (d.r !== this.theirRev || d.o !== this.rev || d.g !== this.theirs.gold || canon(d.items) !== canon(this._theirRaw)) {
       // the goods are not the offer that was locked: a forged commit. Nothing of mine has moved if I have not committed.
       if (this.phase === 'open') { this._end('refused'); return; }
-      this._say(`${this.peerName}'s goods were not what was offered and were refused.`);
+      this._say(`${this.peerName}'s goods did not match the offer and were refused.`);
       this._finish('done', null); return;
     }
     this._pendingIn = d;
@@ -379,7 +379,7 @@ export class TradeSession {
     const ticket = this._escrow.hold();
     // AUDIT REALM L1-F1: the half is made against the save composed as the goods are held - a host that could not
     // compose one (a duel, the seat another tab's) trades nothing
-    if (!ticket) { this._end('refused'); this._say('The realm cannot take a trade just now. Nothing changed hands.'); return; }
+    if (!ticket) { this._end('refused'); this._say('The realm cannot take a trade right now. Nothing changed hands.'); return; }
     this._ticket = ticket;
     const pick = this.pack.picks?.(this.mine.entries) ?? null;   // which of that save's records these are, before any leaves
     const handle = this.pack.take(this.mine.entries, this.mine.gold);
@@ -406,7 +406,7 @@ export class TradeSession {
         // record carrying what its offer never showed). Taking only the gold left the tab without them, and its next
         // checkpoint wrote over the record that holds them: the session ends as a lost answer does, and a join reads it.
         this._ticket?.abandon?.();
-        this._finish('done', `The realm holds ${this.peerName}'s goods, but this game could not take them. Join again to see the trade as the realm holds it.`);
+        this._finish('done', `The realm has ${this.peerName}'s goods, but your game could not receive them. Rejoin to load the trade from the realm.`);
         return;
       }
       this._applied = true;
@@ -414,7 +414,7 @@ export class TradeSession {
       this._finish('done', `Trade with ${this.peerName} complete.`);
       return;
     }
-    if (r?.unknown) { this._finish('done', 'The realm did not answer. Your trade stands as the realm holds it.'); return; }
+    if (r?.unknown) { this._finish('done', 'The realm did not answer. Your trade stands as the realm recorded it.'); return; }
     if (handle) this.pack.restore(handle);
     this._finish('cancelled', r?.text || 'The realm refused the trade. Nothing changed hands.');
   }

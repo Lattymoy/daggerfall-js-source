@@ -48,7 +48,7 @@ test('SUNBABY2 phases: one cycle - the baby 60 s, the wrath 45 s, the baby 30 s,
   assert.equal(SUNBABY_CYCLE_S, 165);
   assert.equal(SUNBABY_MORPH_S, 1);   // SUNBABY3 moved it: "transition much faster" (6 s)
   assert.deepEqual(SUNBABY_FACE_LINES, {
-    evil: 'The sun baby stops laughing. Its eyes burn - fire rains on Daggerfall!',
+    evil: 'The sun baby stops laughing. Its eyes burn, and fire rains on Daggerfall!',
     baby: 'The sun baby giggles again.',
     todd: 'The sun baby becomes Todd Howard. Sixteen times the flowers. It just works.',
   });

@@ -142,11 +142,11 @@ export function saddleButtons(s) {
   const h = s.horse;
   if (h) {
     const why = !s.near ? 'Your horse is not here' : h.full ? 'Full. It will not eat yet' : '';
-    out.push({ act: 'feed', label: `Feed oats (${s.oats | 0})`, disabled: !(s.oats > 0) || !!why, why: why || (s.oats > 0 ? '' : 'No oats. A Stable sells them') });
+    out.push({ act: 'feed', label: `Feed oats (${s.oats | 0})`, disabled: !(s.oats > 0) || !!why, why: why || (s.oats > 0 ? '' : 'No oats. Stables sell them') });
     if (s.apples > 0) out.push({ act: 'treat', label: `Apple (${s.apples | 0})`, disabled: !!why, why });
   }
   if (s.wagon && s.wagon.kitWorks) {
-    const why = !(s.kits > 0) ? 'No repair kit. A Wagon Yard sells them' : !s.wagonNear ? 'The wagon is out of reach' : '';
+    const why = !(s.kits > 0) ? 'No repair kit. Wagon Yards sell them' : !s.wagonNear ? 'The wagon is out of reach' : '';
     out.push({ act: 'kit', label: `Repair kit (${s.kits | 0})`, disabled: !!why, why });
   }
   if (s.cargo != null) out.push({ act: 'cargo', label: 'Cargo', disabled: !s.cargo, why: s.cargo ? '' : 'The wagon is out of reach' });

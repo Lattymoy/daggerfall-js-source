@@ -480,7 +480,7 @@ test('RAID1 the lane, the row, the credit: the switch on by default, the room\'s
   assert.equal(row.effect, 'Takes effect at once.');
   const credit = CREDITS.mods.find((m) => m.vendor.includes(RAIDING_PARTIES_VENDOR));
   assert.equal(credit.version, '1.1');
-  assert.match(credit.terms, /vendor\/world-events-raiding-parties\/README\.md for the permission record/);
+  assert.equal(credit.terms, 'Made by Kamer for this game, used with his permission, with some bugs fixed.');
 });
 
 test('RAID1 the picker\'s bytes: the travel map\'s own TRAV0I01 bitmap, null until its art has loaded (mutant: never at hand)', () => {

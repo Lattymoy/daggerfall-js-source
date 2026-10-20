@@ -385,7 +385,7 @@ test('QUAYS THE HELM DOCKS, by the real host: a summoned ship\'s berth alongside
   assert.equal(h.host.dockedAt(h.boat), null, 'not yet made fast');
   warpFor(h, 30);
   assert.equal(h.log.say.filter((s) => /brings the ship in/.test(s)).length, 1, 'said once');
-  assert.equal(h.log.say.filter((s) => s === "Made fast at Sentinel's quay.").length, 1, 'made fast, said once');
+  assert.equal(h.log.say.filter((s) => s === "Moored at Sentinel's quay.").length, 1, 'made fast, said once');
   const at = alongside(b, h.boat.hull, h.harbour.hull);
   assert.ok(Math.hypot(h.boat.GameObject.position[0] - at[0], h.boat.GameObject.position[2] - at[1]) < 0.05, 'alongside');
   assert.equal(h.host.dockedAt(h.boat), 'Sentinel');
@@ -555,11 +555,11 @@ test('QUAYS COME SAIL AWAY\'S WARP SEAM, by the real runtime: each sailing step 
 });
 
 test('QUAYS THE FLEET\'S WORD: a ship shown made fast at a port\'s quay reads so, how far; afar, the last port the Fleet heard of her; one lying anywhere else is afloat', () => {
-  assert.deepEqual(whereWords({ where: 'here', metres: 40, docked: 'Sentinel' }), { state: 'Made fast', tone: '', line: "Made fast at Sentinel's quay, 40 m away." });
-  assert.deepEqual(whereWords({ where: 'here', metres: 40, docked: '' }), { state: 'Made fast', tone: '', line: 'Made fast at a quay, 40 m away.' });
+  assert.deepEqual(whereWords({ where: 'here', metres: 40, docked: 'Sentinel' }), { state: 'Moored', tone: '', line: "Moored at Sentinel's quay, 40 m away." });
+  assert.deepEqual(whereWords({ where: 'here', metres: 40, docked: '' }), { state: 'Moored', tone: '', line: 'Moored at a quay, 40 m away.' });
   assert.deepEqual(whereWords({ where: 'here', metres: 40, docked: null }), { state: 'Afloat', tone: '', line: 'Lying 40 m away.' });
-  assert.deepEqual(whereWords({ where: 'away', metres: 3277, way: 'north', docked: 'Wayrest' }), { state: 'Made fast', tone: 'is-away', line: "Made fast at Wayrest's quay, 3.3 km away to the north." });
-  assert.deepEqual(whereWords({ where: 'away', metres: null, docked: 'Wayrest' }), { state: 'Made fast', tone: 'is-away', line: "Made fast at Wayrest's quay." });
+  assert.deepEqual(whereWords({ where: 'away', metres: 3277, way: 'north', docked: 'Wayrest' }), { state: 'Moored', tone: 'is-away', line: "Moored at Wayrest's quay, 3.3 km away to the north." });
+  assert.deepEqual(whereWords({ where: 'away', metres: null, docked: 'Wayrest' }), { state: 'Moored', tone: 'is-away', line: "Moored at Wayrest's quay." });
   assert.equal(whereWords({ where: 'away', metres: null, docked: null }).state, 'Afloat');
   const src = read('src/scenes/fleetHost.js');
   assert.match(src, /docked: at\.where === 'here' \|\| at\.where === 'sailing' \? n0\(\)\?\.dockedAt\?\.\(at\.boat\) \?\? null : at\.where === 'away' \? rec\.port\?\.name \?\? null : null,/);

@@ -43,9 +43,9 @@ export function whereWords(s) {
   switch (s.where) {
     case 'sailing': return { state: 'At your helm', tone: '', line: 'You are at the helm.' };
     // QUAYS: made fast at a port's quay - where she is shown, her own place; afar, the last the Fleet heard of her
-    case 'here': return s.docked != null ? { state: 'Made fast', tone: '', line: `Made fast at ${quayWords(s.docked)}, ${farWords(s.metres)}.` } : { state: 'Afloat', tone: '', line: `Lying ${farWords(s.metres)}.` };
+    case 'here': return s.docked != null ? { state: 'Moored', tone: '', line: `Moored at ${quayWords(s.docked)}, ${farWords(s.metres)}.` } : { state: 'Afloat', tone: '', line: `Lying ${farWords(s.metres)}.` };
     case 'away':
-      if (s.docked != null) return { state: 'Made fast', tone: 'is-away', line: `Made fast at ${quayWords(s.docked)}${s.metres == null ? '' : `, ${farWords(s.metres)}${s.way ? ` to the ${s.way}` : ''}`}.` };
+      if (s.docked != null) return { state: 'Moored', tone: 'is-away', line: `Moored at ${quayWords(s.docked)}${s.metres == null ? '' : `, ${farWords(s.metres)}${s.way ? ` to the ${s.way}` : ''}`}.` };
       return { state: 'Afloat', tone: 'is-away', line: s.metres == null ? 'Afloat far from here.' : `Afloat ${farWords(s.metres)}${s.way ? ` to the ${s.way}` : ''}.` };
     case 'laidup': return { state: 'Laid up', tone: 'is-away', line: s.port ? `Laid up at ${s.port}. It can be summoned to any port.` : 'Laid up. It can be summoned to any port.' };
     case 'packed': return { state: 'Packed', tone: 'is-away', line: 'The parts are in your pack. Use them to launch the ship.' };
@@ -133,7 +133,7 @@ export function handService(h, holds = false) {
 function crewPanel(el, s, act) {
   const box = el('div', 'hld-text');
   if (!s.hands?.length) { box.append(el('span', 'hld-sub', 'This ship has no crew aboard. Hire crew at a shipwright.')); return box; }
-  box.append(el('span', 'hld-sub', 'Each crew member works at a post: the First Mate by the helm, the Bosun at the mainmast, the Carpenter by the hatch, the Cook at the galley, the Gunners at the guns and the Lookout at the bow. With no Lookout named, a crew member with no post watches the bow, or else a Gunner does. Experienced crew are better at their posts - fights and boardings raise them to Seasoned, Veteran and Old Salt. A small crew fills the first posts (Bosun, Gunner, Carpenter), so name the Lookout and the Cook here.'));   // AUDIT CAPTAIN'S SEA C7
+  box.append(el('span', 'hld-sub', 'Each crew member works at a post: the First Mate at the helm, the Bosun at the mainmast, the Carpenter by the hatch, the Cook in the galley, the Gunners at the guns and the Lookout at the bow. Experienced crew do better at their posts, and fights and boardings raise them to Seasoned, Veteran and Old Salt. A small crew fills the Bosun, Gunner and Carpenter posts first, so assign the Lookout and the Cook here.'));   // AUDIT CAPTAIN'S SEA C7
   const posts = postsOf(s.hands, new Set(s.hands.filter((h) => h.ashore).map((h) => h.name)));   // CAPT-CREW: each post's best holder aboard - the hand whose worth she sails on (AUDIT CAPTAIN'S SEA C2: none ashore with me)
   for (const h of s.hands) {
     const row = el('div', 'hld-refit hld-hand');
@@ -402,14 +402,14 @@ export function drawFleetPage(detail, rerender, { el, divider, meter = null, doo
   const m = fleet()?.model?.() ?? { ships: [], gold: 0, atPort: false };
   detail.append(divider(`Fleet (${m.ships.length})`));
   if (!m.ships.length) {
-    detail.append(el('p', 'px-note', 'You don\'t own a ship. Port shipyards sell them. A bought ship\'s title appears here and the ship is laid up where you bought it. You can also claim a ship captured by boarding.'));   // AUDIT SHIPYARDS L7-1: no general store sells one
+    detail.append(el('p', 'px-note', 'You don\'t own a ship. Buy one at a port shipyard, or capture one by boarding. A ship you buy waits at the port where you bought it.'));   // AUDIT SHIPYARDS L7-1: no general store sells one
     return;
   }
   const list = el('div', 'hld-list');
   for (const s of m.ships) list.append(shipCard(el, s, { rerender, meter, door, arms: m.guildArms ?? null }));
   detail.append(list);
   detail.append(el('p', 'hld-foot', m.atPort
-    ? 'You are at a port: a ship summoned is brought round to its quay, and its shipwright repairs and refits.'
+    ? 'You are at a port. Summoned ships come to its quay, and its shipwright can repair and refit them.'
     : 'Summon a ship to refit it at a port. The crew can repair it anywhere if there are carpenter\'s stores aboard.'));
 }
 

@@ -96,7 +96,7 @@ test('HOME-STATIONS the tool and the panel: a placed piece made a station for it
   await settle();
   assert.equal(rig.standing[0].station, undefined);
   assert.equal(rig.w.paid.length, paidNow);
-  assert.match(rig.said.at(-1), /^Enchanting station: 200,000 gold, and you have not that much\.$/);
+  assert.match(rig.said.at(-1), /^Enchanting station: 200,000 gold, and you do not have that much\.$/);
   // a piece that holds things is no station
   root = choose(rig, chair.id);
   btn(root, /^Holds things/).fire('click');

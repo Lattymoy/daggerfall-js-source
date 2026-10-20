@@ -392,7 +392,7 @@ test('PROF7 pieces: the loom\'s - leather armour DFU\'s at Leather with the qual
   assert.equal(accountRefusalText('prof-hunt-cap'), 'Your account has taken all the hides a day allows, across your characters.');
   assert.match(accountRefusalText('prof-hunt-high'), /rare hides/);
   assert.match(accountRefusalText('prof-dye'), /cannot be dyed/);
-  assert.match(accountRefusalText('prof-foe'), /No knife/);
+  assert.match(accountRefusalText('prof-foe'), /^That body cannot be skinned\.$/);
 });
 
 // ─── THE PAGES ───────────────────────────────────────────────────────
@@ -457,7 +457,7 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
   // PIN MOVED (CRAFT2): the loom lists its patterns (a garment of the clothing shown), the cloth chosen in the box - none
   // held, so its first (Linen)
   const shirt = buttons().find((b) => b.textContent.startsWith('Short Shirt') && !b.textContent.includes(','));
-  assert.match(shirt.textContent, /wants its inputs/);
+  assert.match(shirt.textContent, /needs materials/);
   shirt.onclick();
   assert.match(text(), /Linen Short Shirt - rank 0/);
   loomTrack.specs[50] = 'tailor'; draw();   // PLAIN-ODDS: a Tailor's clothing says its step
@@ -514,14 +514,14 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
     return root.textContent;
   };
   const hunting = page('Hunting');
-  assert.doesNotMatch(hunting, /not practised/);
-  assert.match(hunting, /Today: 7 hides, 1 of 3 of grades 5 and 6, counted across all the characters of your account/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): '7 of 30 hides'
-  assert.match(hunting, /Waits on a trophy to stand as/);
+  assert.doesNotMatch(hunting, /not practiced/);
+  assert.match(hunting, /Today: 7 hides, 1 of 3 of grades 5 and 6 \(shared by all your characters\)/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): '7 of 30 hides'
+  assert.match(hunting, /Comes when trophies are added/);
   assert.match(hunting, /Harpy Feathers, Dreugh Shell/);
   const outfitting = page('Outfitting');
-  assert.doesNotMatch(outfitting, /not practised/);
-  assert.match(outfitting, /Waits on a second dye the classic cloth can take/);   // PIN MOVED: BR5
-  assert.match(outfitting, /Waits on a wagon upgrade to hold/);
+  assert.doesNotMatch(outfitting, /not practiced/);
+  assert.match(outfitting, /Comes when cloth can take a second dye/);   // PIN MOVED: BR5
+  assert.match(outfitting, /Comes when wagons can be upgraded/);
   const smithing = page('Smithing');
   assert.match(smithing, /Silver.*rank 25.*Elven, Dwarven.*rank 40.*Mithril.*rank 55/s, 'PROF7 (FOUND): the three AUDIT 30\'s note swallowed');
   assert.match(smithing, /Skinning Knife/);

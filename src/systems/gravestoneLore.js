@@ -27,7 +27,7 @@ export const GRAVESTONE_PHRASES = Object.freeze([
   'Taken by the road, brought home by it too.',
   'No name. The moss took it first.',
   'They said the wolves would not come this far.',
-  'Rest well - the vault beneath answers no knock.',
+  'Rest well. The vault beneath answers no knock.',
   'A soldier who never once drew steel in anger.',
   'The dates are close together. The winter, they say.',
   'Carved by a hand that loved them, and could not spell.',

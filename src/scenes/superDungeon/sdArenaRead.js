@@ -47,7 +47,7 @@ export const SD_BEAT_TEXT = Object.freeze({
   wake: Object.freeze({ kicker: 'The Shattered Hour', main: 'The Brass Remnant', sub: 'What the Warp kept of the Numidium' }),
   break: Object.freeze({ kicker: 'II', main: 'The Dragon Break', sub: sdBreakSub(SD_ECHO_PAIR_MS) }),
   moment: Object.freeze({ kicker: 'III', main: 'The Last Moment', sub: 'Break its Hearts before the Reset lands' }),
-  last: Object.freeze({ kicker: 'The Hour', main: 'Ends in one minute', sub: '' }),
+  last: Object.freeze({ kicker: 'The Hour', main: 'Ends in 1 minute', sub: '' }),
   fell: Object.freeze({ kicker: 'The Brass Remnant', main: 'Undone', sub: '' }),
 });
 /** The words under the crosshair for the ring. */

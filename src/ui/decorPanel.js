@@ -374,7 +374,7 @@ export const decorLookStart = (part) => (part === 'walls' || part === 'windows' 
  *  (the painter's door's `records`). */
 export const DECOR_LOOK_STYLES = 6;
 /** HOME-RENT: what the rooms view says with no room to offer - a house of one room, or rooms still being found. */
-export const DECOR_RENT_ONE_ROOM = 'A house of one room has none to rent out. Hang a door in a doorway to part it into two.';
+export const DECOR_RENT_ONE_ROOM = 'A one-room house has no room to rent out. Hang a door in a doorway to split it into two.';
 export const DECOR_RENT_FINDING = 'Finding the rooms of your house...';
 /** HOME-RENT: the rent waiting to be collected, as the rooms view says it. */
 export const decorRentDueText = (due) => (due > 0 ? `Collect rent: ${due} gold` : 'No rent to collect');
@@ -884,7 +884,7 @@ export function createDecorPanel({
   function paintCaravanSide() {
     const row = view.paint.caravan.find((x) => x.part === paintPart) ?? null;
     pickName.textContent = row ? row.name : 'Choose a part of your caravan';
-    pickLine.textContent = row ? row.choices[row.current] ?? '' : 'Walls, floor and ceiling can each take another paint.';
+    pickLine.textContent = row ? row.choices[row.current] ?? '' : 'Walls, floor and ceiling can each be painted.';
     pickPrice.textContent = 'Free';
     paintClimates.replaceChildren();
     climateLabel.textContent = '';
@@ -900,7 +900,7 @@ export function createDecorPanel({
     const part = paintPart;
     const choice = part ? paintLook?.[part] ?? null : null;
     pickName.textContent = part ? HOME_LOOK_PART_NAMES[part] : 'Choose a part of your house';
-    pickLine.textContent = part ? decorLookText(part, choice) : 'Walls, windows, roof and door can each take another of the original game\'s own looks.';
+    pickLine.textContent = part ? decorLookText(part, choice) : 'Walls, windows, roof and door can each take another look from the original game.';
     pickPrice.textContent = 'Free';
     const set = (next) => { paintLook = { ...paintLook, [part]: next }; tryLook(); };
     const start = () => choice ?? decorLookStart(part);
@@ -1334,7 +1334,7 @@ const DECOR_BAR_ICONS = Object.freeze({ place: 'place', turnLeft: 'turn-left', t
 export function decorBarKeys(touch, sized = true) {
   if (touch) return [['Fly', t('decor.bar.keys.flyTouch', 'the stick, and hold Fly up or Fly down')], ['Look', t('decor.bar.keys.lookTouch', 'drag: the piece stands where you look')]];
   return [['Fly', t('decor.bar.keys.fly', 'walk keys, Jump up, Crouch down, Run faster')], ['Look', t('decor.bar.keys.look', 'mouse')],
-    ['Turn', t('decor.bar.keys.turn', 'wheel or Turn Left/Right (Shift: fine; a picture turned half round faces the other way)')], ['Raise/lower', t('decor.bar.keys.raise', 'Float Up/Down')],
+    ['Turn', t('decor.bar.keys.turn', 'wheel or Turn Left/Right (Shift for fine turns; turn a picture half round to flip it)')], ['Raise/lower', t('decor.bar.keys.raise', 'Float Up/Down')],
     ...(sized ? [['Size', '- and =']] : []), ['Grid', '/'], ['Place', t('decor.bar.keys.place', 'click or Interact')], ['Back', t('decor.bar.keys.back', 'right click or Escape')]];
 }
 

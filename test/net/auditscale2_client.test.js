@@ -96,7 +96,7 @@ test('AUDIT SCALE II C-1 the new client on a relay before the shards: no search 
   });
   assert.equal(typeof CC.FIND_RELAY_TEXT, 'string');
   assert.notEqual(CC.FIND_RELAY_TEXT, CC.FIND_OFFLINE_TEXT);
-  assert.match(CC.FIND_RELAY_TEXT, /newer relay/);
+  assert.equal(CC.FIND_RELAY_TEXT, 'Search is not available on this server yet.');
   assert.match(WORLD, /if \(cmd\.kind === 'find'\) \{ findTab = tabId; const hub = chatLinks\?\.get\('world'\); if \(!hub\?\.sendFind\(cmd\.q\)\) note\(hub\?\.welcomed && !hub\.findOk \? FIND_RELAY_TEXT : FIND_OFFLINE_TEXT\); return 'read'; \}/, 'the line says why');
 });
 

@@ -200,7 +200,7 @@
   {
     "name": "RS-codes-moved-unsaid",
     "file": "src/net/accountClient.js",
-    "old": "  'codes-moved': () => t('account.refusal.codesMoved', 'Your recovery codes changed while that was asked. Try again.'),",
+    "old": "  'codes-moved': () => t('account.refusal.codesMoved', 'Your recovery codes changed in the meantime. Try again.'),",
     "new": "",
     "tests": [
       "test/server/recoveryset.test.js",

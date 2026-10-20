@@ -225,7 +225,7 @@ test('CAPT-MARQUE at sea: under a letter a RIVAL\'s lawful ship struck is the ri
   s.host._sea.get(own).ship.flag = 'Wayrest';
   s.host._charge('fire', own);
   assert.equal(s.held(), null, 'torn up');
-  assert.ok(s.log.mid.some((t) => /letter of marque is torn up/.test(t)));
+  assert.ok(s.log.mid.some((t) => /letter of marque is revoked/.test(t)));
   assert.deepEqual(s.law.crimes.at(-1), [crownRegion('Wayrest'), CRIMES.Piracy]);
   const host = rd('src/scenes/naval/navalHost.js');
   assert.match(host, /for \(const w of sea\.values\(\)\) if \(w\.ship\.cls\.faction === 'navy' && w\.ship\.flag !== signed && dist2d\(w\.ship\.pos, s\.pos\) < WITNESS_RANGE\) provoke\(w\.ship, by, clock\);/, 'the signing crown\'s navy looks on');

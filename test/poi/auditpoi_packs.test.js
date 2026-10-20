@@ -139,7 +139,7 @@ test('AUDIT POI P2 A PACK NEVER WRITTEN THAT WILL NOT OPEN: the export holds eve
   assert.deepEqual([r.code, r.index, r.name, r.problem], ['pack-bad-poi', 1, 'New place', { path: 'parts', code: 'parts-none' }]);
   assert.deepEqual(r.problems, [{ path: 'parts', code: 'parts-none' }]);
   assert.deepEqual(asked, [], 'nothing fetched for a pack the law refuses');
-  assert.equal(packErrorText(r), 'A POI in the pack falls short of the law (New place).');
+  assert.equal(packErrorText(r), 'A POI in the pack is not valid (New place).');
   // the writer itself
   const assets = new Map([[sha, bytes]]);
   assert.equal(writePack({ pois: [shrine, empty], assets }).code, 'pack-bad-poi');

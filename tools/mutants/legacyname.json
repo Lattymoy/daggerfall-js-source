@@ -182,8 +182,8 @@
   {
     "name": "LEGACYNAME-succession-heir-raw",
     "file": "src/scenes/world.js",
-    "old": "sub: `Born of the blood, raised in ${legacyHouse(fam)} - a new heir comes of age`",
-    "new": "sub: `Born of the blood, raised in the house of ${fam?.surname ?? ''} - a new heir comes of age`",
+    "old": "sub: `Born of the blood and raised in ${legacyHouse(fam)}, a new heir comes of age`",
+    "new": "sub: `Born of the blood and raised in the house of ${fam?.surname ?? ''}, a new heir comes of age`",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]

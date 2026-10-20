@@ -197,8 +197,8 @@
   {
     "name": "CARDFIT-the-hold-unsaid-on-the-card",
     "file": "src/ui/sigilCard.js",
-    "old": "  if (v.held) box.append(el('p', 'sigil-note', `Renown holds it:",
-    "new": "  if (false) box.append(el('p', 'sigil-note', `Renown holds it:",
+    "old": "  if (v.held) box.append(el('p', 'sigil-note', `Renown limit:",
+    "new": "  if (false) box.append(el('p', 'sigil-note', `Renown limit:",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"
     ]

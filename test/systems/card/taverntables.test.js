@@ -277,7 +277,7 @@ test('TAVERN-TABLES the host: online, the gold table refused before the sit to w
   const down = host({ realm: true, relay: false });
   down.api.sitAtCardTable(HOLDEM_GOLD_TABLE);
   assert.equal(down.api.cardSeat, null);
-  assert.match(down.said.at(-1), /the relay is not dealing right now\. The green table plays for chips\./);
+  assert.match(down.said.at(-1), /plays for gold and is not dealing right now\. The green table plays for chips\./);
   // offline: a table like the other - the regulars, for the purse's gold
   const offline = host({ online: false });
   offline.api.sitAtCardTable(HOLDEM_GOLD_TABLE);

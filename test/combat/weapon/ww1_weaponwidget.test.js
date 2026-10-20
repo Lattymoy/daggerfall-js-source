@@ -57,6 +57,12 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(manifest.Files.filter((f) => /\.png$/i.test(f)).length, 173, 'the 173 double-scale textures the manifest names, none vendored');
   assert.ok(manifest.Files.some((f) => /FPSWeaponClone\.cs$/.test(f)), 'the one script the manifest names and the bundle does not carry');
   const shipped = JSON.parse(rd('vendor/weapon-widget/modsettings.json'));
+  // PLAIN-TEXT (2026-10-19): three of the mod's lines said plainly for a player (the idle bob named the shield) - their words, exactly
+  const PLAIN = {
+    'Bob.BobWhileIdle': 'Whether the weapon will slightly bob while stationary',
+    'Step.Length': 'Size of each step. Higher moves in bigger jumps.',
+    'Recoil.Chance': 'Chance, in percent, of a recoil when the condition is met',
+  };
   let n = 0;
   for (const section of shipped.Sections) {
     for (const k of section.Keys) {
@@ -70,8 +76,9 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
       else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
       else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
       else assert.fail(`${name}: an unknown key kind ${kind}`);
-      if (k.Description) assert.equal(def.description, k.Description, `${name}'s description is the mod's own`);
+      if (k.Description) assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
       else assert.ok(def.description?.length > 8, `${name}: the mod wrote no description, the port did`);
+      if (PLAIN[name]) assert.ok(k.Description && PLAIN[name] !== k.Description, `${name}: a plain rewording replaces words the mod wrote`);
     }
   }
   assert.equal(n, 41, 'the nine sections carry 41 keys');

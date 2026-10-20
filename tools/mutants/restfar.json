@@ -47,8 +47,8 @@
   {
     "name": "PARTY-REST-FAR1-radius-restated",
     "file": "src/scenes/world.js",
-    "old": "  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'} - come within ${PARTY_REST_RADIUS} m of them to ${loitering ? 'wait' : 'rest'} with the party.`;",
-    "new": "  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'} - come within 15 m of them to ${loitering ? 'wait' : 'rest'} with the party.`;",
+    "old": "  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'}. Come within ${PARTY_REST_RADIUS} m of them to ${loitering ? 'wait' : 'rest'} with the party.`;",
+    "new": "  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'}. Come within 15 m of them to ${loitering ? 'wait' : 'rest'} with the party.`;",
     "tests": [
       "test/scenes/restfar.test.js"
     ]

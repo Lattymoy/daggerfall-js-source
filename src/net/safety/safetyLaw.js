@@ -141,7 +141,7 @@ export function orderKindOf(order) {
  *  DOC-4: and a moderator's look at the reports - /cases, /case <name>, /dismiss <name> - and their list, /modhelp. */
 export const SAFETY_COMMANDS = Object.freeze(['block', 'unblock', 'blocked', 'report', 'conduct', 'rules', 'ban', 'unban', 'strikes', 'cases', 'case', 'dismiss', 'modhelp']);
 const USAGE = Object.freeze({
-  block: () => t('net.safety.usageBlock', 'Usage: /block <name> - you stop hearing them. /unblock <name> undoes it; /blocked lists them.'),
+  block: () => t('net.safety.usageBlock', 'Usage: /block <name> - hides their messages. /unblock <name> undoes it; /blocked lists them.'),
   unblock: () => t('net.safety.usageUnblock', 'Usage: /unblock <name>.'),
   report: () => t('net.safety.usageReport', 'Usage: /report <name> [harassment|hate|sexual|threat|spam][: note] - sends their recent lines, and your note, to the moderators.'),
   ban: () => t('net.safety.usageBan', 'Usage: /ban <name> [days|perm][: reason], or /unban <name>.'),
@@ -155,9 +155,9 @@ const USAGE = Object.freeze({
  *  alone (MODERATOR_HANDLES), so a player who asks reads what they could not do. */
 export const modHelpLines = () => [
   t('net.safety.modHelpHead', 'Moderators\' commands:'),
-  t('net.safety.modHelpMute', '/mute <name> [minutes], /unmute <name> - stop a player chatting for a while, or let them again'),
+  t('net.safety.modHelpMute', '/mute <name> [minutes], /unmute <name> - stop a player chatting for a while, or allow it again'),
   t('net.safety.modHelpBan', '/ban <name> [days|perm][: reason], /unban <name> - ban an account (the reason is shown to them), or lift it'),
-  t('net.safety.modHelpStrikes', '/strikes <name> - their strikes, the next rung, what stands now and their last acts'),
+  t('net.safety.modHelpStrikes', '/strikes <name> - their strikes, the next penalty, any current mute or ban, and their recent history'),
   t('net.safety.modHelpCases', '/cases - the open reports, the most credible first'),
   t('net.safety.modHelpCase', '/case <name> - one case: its lines (theirs marked >), reasons, notes and the reviewer\'s verdict (its line marked !)'),
   t('net.safety.modHelpDismiss', '/dismiss <name> - close a case with no action; an automatic mute it caused is lifted'),

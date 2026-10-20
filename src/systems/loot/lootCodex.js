@@ -79,8 +79,8 @@ export function codexKey(item) {
   if (item?.rarity === 'gilded' && typeof item.gilded === 'string' && gildedById(item.gilded)) return { kind: 'gilded', id: item.gilded };   // GILDED1
   return null;
 }
-/** The first find's words: "Wyrmbane - a Legendary! It joins your codex." */
-export const CODEX_FIND = (name, kind) => `${name} - ${kind === 'gilded' ? 'a Gilded piece' : kind === 'aetheric' ? 'an Aetheric piece' : 'a Legendary'}! It joins your codex.`;
+/** The first find's words: "Wyrmbane - a Legendary! Added to your codex." */
+export const CODEX_FIND = (name, kind) => `${name} - ${kind === 'gilded' ? 'a Gilded piece' : kind === 'aetheric' ? 'an Aetheric piece' : 'a Legendary'}! Added to your codex.`;
 
 /** NOTE A PIECE: into the codex if it is a record not yet there - said and heard unless `quiet`. Answers whether it
  *  was new. */

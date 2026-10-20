@@ -245,7 +245,7 @@ test('AUDIT KG II C8 + D21 THE INFORMATION BOX: the foes in range by name, the p
   const crowns = ['daggerfall', 'wayrest'];
   const box = infoBox(st, { piece: mine.id }, crowns, 'Ana');
   assert.ok(box.lines.some((l) => /^In range now: .+\.$/.test(l)), box.lines.join(' | '));
-  assert.ok(box.lines.some((l) => /^Fire: a piece that ends its own side's turn here loses \d+ health\.$/.test(l)), 'its cell\'s hazard');
+  assert.ok(box.lines.some((l) => /^Fire: a piece that ends its turn here loses \d+ health\.$/.test(l)), 'its cell\'s hazard');
   assert.ok(!box.lines.some((l) => /reach now/.test(l)), 'range, a blow\'s word');
 });
 

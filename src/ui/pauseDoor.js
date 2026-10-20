@@ -180,7 +180,7 @@ export function pauseMenuAct(hooks, close) {
  */
 /** CLASSIC-PAGES: what a door pressed for a professions page says when the pages are not this account's (offline, the
  *  professions' switch closed, the book not read yet). */
-export const PROF_PAGES_CLOSED_LINE = 'Your professions are kept online: your Professions and Stores open while you play online.';
+export const PROF_PAGES_CLOSED_LINE = 'Professions are online only. Your Professions and Stores pages open while you play online.';
 /** L10N4: the line in the player's language (PROF_PAGES_CLOSED_LINE stays the English the pins read). */
 export const profPagesClosedLine = () => t('pause.profPagesClosed', PROF_PAGES_CLOSED_LINE);
 /** Whether a door's landing page is one of the professions' own (the Professions key's, a station's). */

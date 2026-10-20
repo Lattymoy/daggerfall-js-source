@@ -141,8 +141,8 @@ THE PAGE (instanceDoor.js, HOST-SPLIT's shape - built once in world.js, asked by
 - **A re-laid public room** stands none of a quest's things. `questElsewhere` says once a build: "Your quest's business
   here waits in your instance."
 - **The relay's refusal** (`refused`, the realm's door's own shape - systems/realmSaves.js realmDoorShut): an instance's
-  door shut on this page is said once a room ("That instance is closed to you - only its owner and their party may stand
-  in it.") and the player is taken out (world.js onlineFrame, forceExitToExterior) - never left inside an unconnected
+  door shut on this page is said once a room ("That instance is closed to you. Only its owner and their party can
+  enter.") and the player is taken out (world.js onlineFrame, forceExitToExterior) - never left inside an unconnected
   build.
 - **The party pose's word** (`poseWord`): inside, the instance room the relay JOINED me to, never the one I meant to enter -
   a private room wins the key, a refused one is none.

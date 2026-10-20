@@ -776,7 +776,9 @@ test('DS1 settings: the mod’s own keys as modsettings ships them, the integer 
         assert.equal(def.default, k.Value, `${k.Name} default`);
         if (k.Min !== undefined) { assert.equal(def.min, k.Min); assert.equal(def.max, k.Max); assert.ok(isIntKey(def)); }
         else assert.ok(!isIntKey(def));
-        assert.equal(def.description, k.Description, `${k.Name} description is the mod’s, verbatim (AUDIT 61: the pane shows nothing the author did not write)`);
+        // PLAIN-TEXT (2026-10-19): MaxParticles is read and never applied (AUDIT 61), and the pane now says so - its words, exactly
+        if (k.Name === 'MaxParticles') assert.equal(def.description, 'Has no effect: the mod never uses this setting.', 'the pane says the slider does nothing');
+        else assert.equal(def.description, k.Description, `${k.Name} description is the mod’s, verbatim (AUDIT 61: the pane shows nothing the author did not write)`);
       }
     }
     assert.equal(modSetting('dynamic-skies', 'Enabled'), true, 'VC1 (2026-09-07) made it a choice in the Mods pane; MO1 (Mac, 2026-09-12): every mod is on by default');

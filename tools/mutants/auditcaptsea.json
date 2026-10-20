@@ -251,7 +251,7 @@
   {
     "name": "ACS-B11-room-refusal",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (fit <= 0) return { ok: false, text: 'The ship can\\'t carry any more. Any heavier and it couldn\\'t move.' };",
+    "old": "    if (fit <= 0) return { ok: false, text: 'The ship can\\'t carry any more.' };",
     "new": "    void fit;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -278,7 +278,7 @@
   {
     "name": "ACS-B11-lede",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "const room = x.room == null ? '' : x.room > 0 ? ` - room for ${x.room} kg more before the ship can't move` : ' - the ship can\\'t carry any more';",
+    "old": "const room = x.room == null ? '' : x.room > 0 ? ` (room for ${x.room} kg more)` : ' (the ship can\\'t carry any more)';",
     "new": "const room = '';",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -1782,7 +1782,7 @@
   {
     "name": "ACS-L10-office-words",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "harbormaster grants you no favors while your notoriety in its waters stands so high.`",
+    "old": "harbormaster. Your notoriety in these waters is too high for any favors.`",
     "new": "navy hunts you: its harbormaster grants no favors until your notoriety falls.`",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -1791,7 +1791,7 @@
   {
     "name": "ACS-L10-page-words",
     "file": "src/ui/captainPage.js",
-    "old": "'Its harbors keep no favors for you while your notoriety in its waters stands so high.'",
+    "old": "'Your notoriety in these waters is too high for any favors in its harbors.'",
     "new": "'Its navy hunts you - its harbours keep no favours for you.'",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -2979,8 +2979,8 @@
   {
     "name": "ACS-V1-word-in-the-arrival",
     "file": "src/scenes/world.js",
-    "old": "    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a\n    // new origin (fast travel, quickload); CreateFoe's pending waves\n    // invalidate across live AND scheduled quests.\n    questBridge?.onInitWorld();\n    // AUDIT CAPTAIN'S SEA G2/P7: a landing made for a pixel this game does not stream, said where the player now stands\n    // (below the arrival's statements, which the party's boat pins run over stand-ins: partyBoatTeleportFix)\n    if (_unstreamedLanding) {\n      townTalk.say(_unstreamedLanding === 'ether' ? `${ETHER_SEA_TITLE} is closed in this game. You wake in the waters of the Bay.` : 'That ground does not exist in this game. You wake at the edge of the Iliac Bay.', 7);\n      _unstreamedLanding = null;\n    }\n",
-    "new": "    // AUDIT CAPTAIN'S SEA G2/P7: a landing made for a pixel this game does not stream, said where the player now stands\n    // (below the arrival's statements, which the party's boat pins run over stand-ins: partyBoatTeleportFix)\n    if (_unstreamedLanding) {\n      townTalk.say(_unstreamedLanding === 'ether' ? `${ETHER_SEA_TITLE} is closed in this game. You wake in the waters of the Bay.` : 'That ground does not exist in this game. You wake at the edge of the Iliac Bay.', 7);\n      _unstreamedLanding = null;\n    }\n    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a\n    // new origin (fast travel, quickload); CreateFoe's pending waves\n    // invalidate across live AND scheduled quests.\n    questBridge?.onInitWorld();\n",
+    "old": "    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a\n    // new origin (fast travel, quickload); CreateFoe's pending waves\n    // invalidate across live AND scheduled quests.\n    questBridge?.onInitWorld();\n    // AUDIT CAPTAIN'S SEA G2/P7: a landing made for a pixel this game does not stream, said where the player now stands\n    // (below the arrival's statements, which the party's boat pins run over stand-ins: partyBoatTeleportFix)\n    if (_unstreamedLanding) {\n      townTalk.say(_unstreamedLanding === 'ether' ? `${ETHER_SEA_TITLE} is closed. You wake in the Bay's waters.` : 'That land is not part of this game. You wake at the edge of the Iliac Bay.', 7);\n      _unstreamedLanding = null;\n    }\n",
+    "new": "    // AUDIT CAPTAIN'S SEA G2/P7: a landing made for a pixel this game does not stream, said where the player now stands\n    // (below the arrival's statements, which the party's boat pins run over stand-ins: partyBoatTeleportFix)\n    if (_unstreamedLanding) {\n      townTalk.say(_unstreamedLanding === 'ether' ? `${ETHER_SEA_TITLE} is closed. You wake in the Bay's waters.` : 'That land is not part of this game. You wake at the edge of the Iliac Bay.', 7);\n      _unstreamedLanding = null;\n    }\n    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a\n    // new origin (fast travel, quickload); CreateFoe's pending waves\n    // invalidate across live AND scheduled quests.\n    questBridge?.onInitWorld();\n",
     "tests": [
       "test/systems/party/partyBoatTeleportFix.test.js"
     ]

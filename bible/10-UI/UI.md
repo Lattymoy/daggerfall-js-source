@@ -51,7 +51,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and LOOT-BULK's TAKE ALL AND STASH ALL (`storeBulk.js`: the one walk over the shown rows that moves them in a single batch, a container's or the pack's, as far as the side that takes them has room; `UI-Arc.md` LOOT-BULK)
 - and GROWTH's TAB (`growth/growthTab.js`: the pause window's Growth tab - its rail of the Level, the Specialisations, the Firmament and the Captain's Stars, and what waits on each; `growth/growthPages.js`: its landings, the leaf the boot doors read; `growth/specGuide.js`: the guide to both families' thirty paths - each one's state on this character, what opens it, what it does, Choose; `growth/growthStage.js`: a sky or the Ascension drawn in the pane and kept across the window's redraws, full screen, a phone's door; `10-UI/Growth.md`)
 - and PRIVATE-REPORT's REPORT FORM AND INBOX (`enhanced/enhancedReport.js`: a player's private report of an exploit, a bug or a security hole, written in the mailbox's window, their own reports under it, and the readers' inbox; `06-Systems/Private-Reports.md`)
-390 modules
+- and EG-PLUS' BREACH WINDOWS (`eliteGates/egKit.js`: the chrome the Elite Breach's panel, boards and start window wear in the stone-and-brass kit, and the kit's cut for the classic skin; `eliteGates/egStartPanel.js`: the start window on Enhanced Plus - where to start, the party's readiness, the Wager, the Rehearsal; `11-Multiplayer/Elite-Gates.md` section 31, EG-PLUS)
+392 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

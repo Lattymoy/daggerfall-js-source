@@ -227,9 +227,9 @@ test('THE TWO-PHASE HANDOFF (Mac, 2026-10-14: "the fallen must lose the worn pie
   // until he collects it and comes back otherwise - never that it was taken - and a line says how long
   const held = d.wi === 0 && !!d.escrow?.r;
   const lines = wildDeathLines({ killer: 'Borin', dropped: 0, claimed: 'longsword', held });
-  assert.equal(lines[0], 'Borin claimed your longsword - it is held until they collect it, and comes back to you if they do not.');
+  assert.equal(lines[0], 'Borin claimed your longsword. It is held until they collect it, and comes back to you if they do not.');
   assert.notEqual(lines[0], WILD_TEXT.deathClaim('Borin', 'longsword'));
-  assert.equal(WILD_TEXT.heldNote('Borin', 'longsword', Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)), `Your longsword is held for Borin - if they do not collect it within ${Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)} minutes, it comes back to you.`);
+  assert.equal(WILD_TEXT.heldNote('Borin', 'longsword', Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)), `Your longsword is held for Borin. If they do not collect it within ${Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)} minutes, it comes back to you.`);
   assert.equal(WILD_TEXT.heldNote(null, 'longsword', 1), 'Your longsword is held for your killer. If they do not collect it within 1 minute, it comes back to you.');
   // his game asks the room for it (the remains named it his) - and is answered a collect, not a record
   const his = hisBook(z);

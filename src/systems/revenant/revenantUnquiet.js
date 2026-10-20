@@ -343,7 +343,7 @@ export const sanitizeTrail = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v)
 /** A craft's name and what it does, as the page says them. */
 export function craftWords(craft) {
   switch (craft) {
-    case 'smoke': return { name: t('rvn.unq.craft.smoke', 'Smoke'), effect: t('rvn.unq.craft.smokeDo', 'it throws down smoke and is lost to sight as it runs, but a blow will still find it') };
+    case 'smoke': return { name: t('rvn.unq.craft.smoke', 'Smoke'), effect: t('rvn.unq.craft.smokeDo', 'it throws down smoke and vanishes as it runs, but a blow can still find it') };
     case 'blink': return { name: t('rvn.unq.craft.blink', 'Blink'), effect: t('rvn.unq.craft.blinkDo', 'it tears open a rift and is gone. Silence it, hold it, or strike it as it fades') };
     case 'sink': return { name: t('rvn.unq.craft.sink', 'Sink'), effect: t('rvn.unq.craft.sinkDo', 'it sinks into the earth. Strike it before it is under, and it rises, cornered, and runs no more') };
     case 'bolt': return { name: t('rvn.unq.craft.bolt', 'Bolt'), effect: t('rvn.unq.craft.boltDo', 'it runs faster than anything you have chased. Bring it down from range, and break its will before the killing blow') };
@@ -363,10 +363,10 @@ export function craftFleeWords(craft, given) {
 /** A wound's name and what it does to it. */
 export function woundWords(w) {
   switch (w) {
-    case 'bled': return { name: t('rvn.unq.wound.bled', 'Bled'), effect: t('rvn.unq.wound.bledDo', 'a wound that will not close: less health') };
-    case 'cracked': return { name: t('rvn.unq.wound.cracked', 'Cracked'), effect: t('rvn.unq.wound.crackedDo', 'cracked bones - it staggers more easily') };
-    case 'maimed': return { name: t('rvn.unq.wound.maimed', 'Maimed'), effect: t('rvn.unq.wound.maimedDo', 'a maimed hand: its blows are lighter') };
-    case 'lamed': return { name: t('rvn.unq.wound.lamed', 'Lamed'), effect: t('rvn.unq.wound.lamedDo', 'a lamed leg: it runs more slowly') };
+    case 'bled': return { name: t('rvn.unq.wound.bled', 'Bled'), effect: t('rvn.unq.wound.bledDo', 'a wound that will not close, so it has less health') };
+    case 'cracked': return { name: t('rvn.unq.wound.cracked', 'Cracked'), effect: t('rvn.unq.wound.crackedDo', 'cracked bones, so it staggers more easily') };
+    case 'maimed': return { name: t('rvn.unq.wound.maimed', 'Maimed'), effect: t('rvn.unq.wound.maimedDo', 'a maimed hand, so its blows are lighter') };
+    case 'lamed': return { name: t('rvn.unq.wound.lamed', 'Lamed'), effect: t('rvn.unq.wound.lamedDo', 'a lamed leg, so it runs slower') };
     case 'burned': return { name: t('rvn.unq.wound.burned', 'Burned'), effect: t('rvn.unq.wound.burnedDo', 'fire bites it deeper') };
     case 'frostbitten': return { name: t('rvn.unq.wound.frostbitten', 'Frostbitten'), effect: t('rvn.unq.wound.frostbittenDo', 'frost bites it deeper') };
     case 'stormstruck': return { name: t('rvn.unq.wound.stormstruck', 'Stormstruck'), effect: t('rvn.unq.wound.stormstruckDo', 'shock bites it deeper') };
@@ -379,8 +379,8 @@ export function woundWords(w) {
 export function ambitionWords(a) {
   switch (a) {
     case 'vengeance': return { name: t('rvn.unq.amb.vengeance', 'Vengeance'), effect: t('rvn.unq.amb.vengeanceDo', 'it comes for you sooner, and more often') };
-    case 'mastery': return { name: t('rvn.unq.amb.mastery', 'Mastery'), effect: t('rvn.unq.amb.masteryDo', 'it trains while it waits, and grows bolder every two days, not three') };
-    case 'plunder': return { name: t('rvn.unq.amb.plunder', 'Plunder'), effect: t('rvn.unq.amb.plunderDo', 'it raids the roads while it waits. The longer you leave it, the richer it grows') };
+    case 'mastery': return { name: t('rvn.unq.amb.mastery', 'Mastery'), effect: t('rvn.unq.amb.masteryDo', 'it trains while it waits, and grows bolder every 2 days instead of 3') };
+    case 'plunder': return { name: t('rvn.unq.amb.plunder', 'Plunder'), effect: t('rvn.unq.amb.plunderDo', 'it raids the roads while it waits, and grows richer the longer you leave it') };
     default: return null;
   }
 }
@@ -389,7 +389,7 @@ export const trainedWords = (given, how) => t('rvn.unq.trained', '{given} has be
 /** UNQUIET III: when its oldest wound heals, as the page says it. */
 export const healWords = (days) => t('rvn.unq.page.heals', 'The oldest heals in {days, plural, one {# day} other {# days}} unless you find it first.', { days });
 /** THE TRAIL, as its escape's card ends: where it went to ground. */
-export const trailWords = (lair) => t('rvn.unq.trail', 'Its trail leads to {lair}. It has gone to ground there to recover. Catch it before it is whole again.', { lair });
+export const trailWords = (lair) => t('rvn.unq.trail', 'Its trail leads to {lair}, where it has gone to ground to recover. Catch it before it is whole again.', { lair });
 /** AN OMEN - the day it is due, in its ambition's words (its card's body). */
 export function omenWords(a, given) {
   switch (a) {

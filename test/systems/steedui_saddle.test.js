@@ -88,7 +88,7 @@ test('STEED-UI the buttons: feed and the apple (the apple only with apples), dar
   const by = (s, a) => saddleButtons(s).find((b) => b.act === a);
   assert.deepEqual(acts(S()), ['feed', 'stable', 'dismount']);
   assert.deepEqual(by(S(), 'feed'), { act: 'feed', label: 'Feed oats (3)', disabled: false, why: '' });
-  assert.deepEqual(by(S({ oats: 0 }), 'feed'), { act: 'feed', label: 'Feed oats (0)', disabled: true, why: 'No oats. A Stable sells them' });
+  assert.deepEqual(by(S({ oats: 0 }), 'feed'), { act: 'feed', label: 'Feed oats (0)', disabled: true, why: 'No oats. Stables sell them' });
   assert.deepEqual(by(S({ horse: { ...S().horse, full: true } }), 'feed'), { act: 'feed', label: 'Feed oats (3)', disabled: true, why: 'Full. It will not eat yet' });
   assert.equal(by(S({ near: false }), 'feed').why, 'Your horse is not here');
   assert.deepEqual(acts(S({ apples: 2 })), ['feed', 'treat', 'stable', 'dismount']);
@@ -105,7 +105,7 @@ test('STEED-UI the buttons: feed and the apple (the apple only with apples), dar
   assert.deepEqual(acts(cart), ['feed', 'kit', 'cargo', 'stable', 'dismount']);
   assert.deepEqual(by(cart, 'dismount').label, 'Climb down');
   assert.deepEqual(by(cart, 'kit'), { act: 'kit', label: 'Repair kit (1)', disabled: false, why: '' });
-  assert.deepEqual(by({ ...cart, kits: 0 }, 'kit'), { act: 'kit', label: 'Repair kit (0)', disabled: true, why: 'No repair kit. A Wagon Yard sells them' });
+  assert.deepEqual(by({ ...cart, kits: 0 }, 'kit'), { act: 'kit', label: 'Repair kit (0)', disabled: true, why: 'No repair kit. Wagon Yards sell them' });
   assert.equal(by({ ...cart, wagonNear: false }, 'kit').why, 'The wagon is out of reach');
   assert.deepEqual(acts({ ...cart, wagon: { ...W, share: 0.7, kitWorks: false } }), ['feed', 'cargo', 'stable', 'dismount'], 'past the kit\'s ceiling: no kit');
   assert.deepEqual(by({ ...cart, cargo: false }, 'cargo'), { act: 'cargo', label: 'Cargo', disabled: true, why: 'The wagon is out of reach' });
@@ -354,7 +354,7 @@ test('STEED-UI the Stable page, polished: the bond a bar to the next word with t
     const card = u.model().wagon;
     assert.equal(card.stateKey, 'rickety');
     assert.ok(card.mend > 0 && card.mendAway === Math.round(card.mend * 1.5), 'fetched: half again');
-    assert.match(text, new RegExp(`Rickety\\. Its team pulls it more slowly\\. A Wagon Yard makes it whole for ${card.mend} gold, or ${card.mendAway} if its wright must go out to it\\.`));
+    assert.match(text, new RegExp(`Rickety\\. Its team pulls it more slowly\\. A Wagon Yard repairs it fully for ${card.mend} gold, or ${card.mendAway} if its wright must travel to it\\.`));
     assert.ok(meters.some(([now, max, tone]) => max === 100 && tone === '' && Math.abs(now - card.share * 100) < 0.1), 'rickety: its bar plain (sound and worn verdigris, failing blood)');
   } finally { setHoldingsProvider(null); }
   // the words alone
@@ -362,7 +362,7 @@ test('STEED-UI the Stable page, polished: the bond a bar to the next word with t
   assert.equal(statWhy({ born: 50 }, 9, 25, 'Starving'), 'Born 50, +9 from your bond, −25 starving');
   assert.equal(hungerLine({ hungerKey: 'fed', fedHours: 1.5 }), 'Fed, with food enough for 90 minutes.');
   assert.equal(hungerLine({ hungerKey: 'fed', fedHours: 0 }), 'Fed.');
-  assert.equal(hungerLine({ hungerKey: 'hungry', fedHours: 0 }), 'Hungry: every attribute ten lower, and slower to catch its breath.');
+  assert.equal(hungerLine({ hungerKey: 'hungry', fedHours: 0 }), 'Hungry: every attribute 10 lower, and slower to catch its breath.');
   assert.equal(mendLine({ mend: 0 }), 'A town’s Wagon Yard mends it.');
 });
 
