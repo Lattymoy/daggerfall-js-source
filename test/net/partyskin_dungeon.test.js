@@ -21,7 +21,6 @@ import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { bodyKey } from '../../src/net/nodeLaw.js';
 import { registerPlayerKillListener } from '../../src/systems/playerKills.js';
-import { midScreenText } from '../../src/ui/midScreenText.js';
 import { ACT_STOPPED_LINE } from '../../src/scenes/gatherHost.js';
 import { FOES_MS } from '../../src/net/online.js';
 import { skinParty, drive, fell, clock, HOST, JOINER } from './partySkinWire.mjs';
@@ -100,7 +99,6 @@ for (const first of [1, 2]) {
     await S.go(600);
     assert.ok(b.aim() && c.aim(), `PARTY-SKIN/AC2: both joiners have a node (${b.row()}, ${c.row()})`);
     const [w, l] = first === 1 ? [b, c] : [c, b];
-    midScreenText.text = '';
     assert.equal(w.host.press(), true);
     assert.equal(l.host.press(), true);
     await traceAll(S.net, [b, c], { drive: S.go });
@@ -108,7 +106,7 @@ for (const first of [1, 2]) {
     oneHarvest([b, c], w.p.id, e);
     assert.ok(String(e[3]).startsWith(`${w.p.id}:`), `the stream is skinned to the first claim (${said(e)})`);
     assert.ok(l.seen.toasts.includes(ACT_STOPPED_LINE), 'the loser\'s act is stopped');
-    assert.equal(midScreenText.text, TAKEN, 'and the loser is told');
+    assert.ok(l.p.said.includes(TAKEN), `and the loser is told (${JSON.stringify(l.p.said)})`);
     assert.equal(l.asked.length, 0);
   });
 }
@@ -132,8 +130,8 @@ test('D3 PARTY-SKIN AC8/AC4/AC6: A (the host, with a knife) skins while B looks 
 });
 
 test('D4a PARTY-SKIN AC8 (the seat): B holds, A leaves the room, C takes the seat - B\'s renewals reach C, B finishes, C marks it skinned, B harvests ONCE', async () => {
-  const S = await room({ ids: [HOST, C, JOINER] });   // C joined before B: the seat's next
-  const [c, b] = [S.ps[1], S.ps[2]];
+  const S = await room();
+  const [c, b] = [S.ps[1], S.ps[2]];   // the Room seats the eldest of the live sockets: the second to join
   const bh = await skinner(b, 0);
   await S.go(600);
   assert.ok(bh.aim(), `PARTY-SKIN/AC8: B has a node (${bh.row()})`);
@@ -145,16 +143,17 @@ test('D4a PARTY-SKIN AC8 (the seat): B holds, A leaves the room, C takes the sea
   c.reseat(); b.reseat();
   const rest = driver(S, [c, b]);
   await rest(800);
+  const heldAtC = claimsOut(b).length;
   await traceAll(S.net, [bh], { drive: rest });
   await rest(1200);
   const e = entryIn(b, REF(0));
-  oneHarvest([bh], JOINER, e);
-  assert.ok(String(e[3]).startsWith(`${JOINER}:`) && e[2] === SKINNED, `C marked it skinned to B's claim: ${said(e)}`);
-  assert.ok(claimsOut(b).some((x) => x.at > clock.t - 8000 || x.op === DONE), 'B\'s words reached the new host');
+  oneHarvest([bh], b.id, e);
+  assert.ok(String(e[3]).startsWith(`${b.id}:`) && e[2] === SKINNED, `C marked it skinned to B's claim: ${said(e)}`);
+  assert.ok(claimsOut(b).length > heldAtC, 'B\'s words went on reaching the new host');
 });
 
 test('D4b PARTY-SKIN AC8 (the seat): a lease A held lapses at C after SKIN_LEASE_MS and B can then claim; B skins ONCE', async () => {
-  const S = await room({ ids: [HOST, C, JOINER], by: 2 });
+  const S = await room({ by: 2 });
   const [c, b] = [S.ps[1], S.ps[2]];
   const [ah, bh] = [await skinner(S.H, 0), await skinner(b, 0)];
   await S.go(600);
@@ -164,17 +163,18 @@ test('D4b PARTY-SKIN AC8 (the seat): a lease A held lapses at C after SKIN_LEASE
   assert.equal(bh.row(), BEING, 'B reads the body held by A');
   S.H.online.leave();
   await S.net.settle();
+  assert.equal(c.online.isHost(), true, 'C holds the seat now');
   c.reseat(); b.reseat();
   const rest = driver(S, [c, b]);
   const seated = clock.t;
-  await untilAsync(rest, () => bh.row() === 'Skin the Rat | ready', SKIN_LEASE_MS - 3000);
-  assert.notEqual(bh.row(), 'Skin the Rat | ready', 'the lease A held is not free the moment the seat moves');
-  assert.equal(await untilAsync(rest, () => bh.row() === 'Skin the Rat | ready', 8000), true, 'and it lapses');
+  await untilAsync(rest, () => bh.row() === READY, SKIN_LEASE_MS - 3000);
+  assert.notEqual(bh.row(), READY, 'the lease A held is not free the moment the seat moves');
+  assert.equal(await untilAsync(rest, () => bh.row() === READY, 8000), true, 'and it lapses');
   const waited = clock.t - seated;
   assert.ok(waited >= SKIN_LEASE_MS - 500 && waited <= SKIN_LEASE_MS + 2000, `after SKIN_LEASE_MS at the new seat (${waited} ms)`);
   assert.equal(bh.host.press(), true);
   await traceAll(S.net, [bh], { drive: rest });
-  oneHarvest([ah, bh], JOINER, entryIn(b, REF(0)));
+  oneHarvest([ah, bh], b.id, entryIn(b, REF(0)));
 });
 
 test('D5 PARTY-SKIN AC1/AC13: B\'s blow kills (the record\'s v credits B once); C skins; B\'s private stamp is no second node for B', async () => {

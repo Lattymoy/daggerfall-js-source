@@ -33,6 +33,7 @@ import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   //
 import { partyOnlyQuestShare } from '../../src/scenes/quest/questFoeHost.js';   // QUEST-OWNER: the dungeon's quest seam, narrowed to the party (ownShare)
 import { adoptLight } from '../../src/render/lightId.js';   // LIGHT-ID: the dungeon's light copies adopt their lights
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
+import { NO_ROOM_SKINS } from '../noRoomSkins.mjs';
 
 function sliced(path) {
   const S = readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -104,6 +105,7 @@ function context({ authority, self }) {
   let batchN = 0;
   const heard = [];
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
     console: { error: () => {}, warn: () => {}, info: () => {} },

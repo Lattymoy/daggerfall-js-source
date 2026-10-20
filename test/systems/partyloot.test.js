@@ -51,6 +51,8 @@ import { planTake, applyTransfer } from '../../src/systems/item/itemTransfer.js'
 import { runBulk, bulkVerdict } from '../../src/ui/storeBulk.js';
 import '../../src/systems/card/cardSources.js';   // CARDS9's death handler registers at import, as the hosts load it
 import '../../src/scenes/physicalItemsLayer.js';   // PI1's
+import { createBodySkins } from '../../src/scenes/bodySkinHost.js';
+import { hideOfFoe } from '../../src/net/professionLaw.js';
 
 installForaging(); installSmithing(); installHealingSupply(); installRestItemLoot(); installSurvivalLoot();   // the hosts' order (scenes/shared.js), and the corpse food the online room mints
 setPref(LOOT_RARITY_KEY, true);   // the loot ladder - forced on online (OL1)
@@ -162,6 +164,7 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, ENEMY_BASICS,
     generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus,
+    createBodySkins, hideOfFoe,   // PARTY-SKIN: roomLootHost.js's imports the block reads (the lock stands off here: no hide, no skin)
     wildPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, CLAIM_KEEP_MS, CLAIMS_KEPT_MAX, SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX, sharedClassicMinutes, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,
     spawnCorpseNow: async (f) => { f.corpsePos = [...f.ai.feet]; }, renderer: { destroyBillboardBatch: () => {} }, billboardBatches: [], renownFoeRevived: () => {},

@@ -40,6 +40,7 @@ import { sayEnemyDied } from '../../src/scenes/corpseMarker.js';
 import { setValue, resetToDefaults } from '../../src/systems/settings/settings.js';
 import { validFoeRecord } from '../../src/net/wire.js';
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
+import { NO_ROOM_SKINS } from '../noRoomSkins.mjs';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -215,6 +216,7 @@ const foeRec = (mobileType = 0, entity = {}) => ({
 function killDoor() {
   const hud = [];
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes: [], _authority: true, ARENA_PUPPET_OWNER, feudWeakBlow: () => false, blowClassOf: () => null, opts: {},   // AUDIT FEUD: the hit door asks a blow's weakness (none here)
     lastPlayerFeet: [0, 0, 0], _ecvT: 0, foeDeps: null, playerEntity: { isPlayer: true, items: [] }, audio: {},
@@ -231,6 +233,7 @@ function joiner(self) {
   const hud = [];
   const foes = [foeRec(0), foeRec(7, { champion: 'vampiric' })];
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
     renownFoeDied: () => {}, reportPlayerKill: () => {}, egFindStruck: async () => false, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,

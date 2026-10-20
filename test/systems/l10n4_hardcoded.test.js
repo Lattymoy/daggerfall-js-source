@@ -73,6 +73,7 @@ const HARDCODED = {
   'src/net/arena/arenaLaw.js': 28,
   'src/net/bagLaw.js': 26,
   'src/net/boardLaw.js': 4,
+  'src/net/bodySkin.js': 2,   // PARTY-SKIN: the two lines a skinning loser is told - owed to a localisation slice with the catalog's other rows
   'src/net/card/cardLaw.js': 6,
   'src/net/chainLaw.js': 3,
   'src/net/chapterEvents.js': 13,

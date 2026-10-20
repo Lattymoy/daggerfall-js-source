@@ -421,6 +421,26 @@ test('S11c PARTY-SKIN AC9 (guard + red): an OLDER reader (Eve hears no bs) - Eve
   oneHarvest(s, [mac, eve], MAC);
 });
 
+test('S11d PARTY-SKIN AC9 (added after the red pins): an owner that SPEAKS the skin law but has said nothing of one body (the reader has not its entry) - Mac, whose own blow felled it, has no node by his private stamp beside the shared skin the owner holds; once the entry comes he skins by it', async () => {
+  let macH = null, ratSeq = null, strip = true;
+  const s = await scene('street', [MAC], { kill: false, foesFilter: (from, frame) => { if (strip) frame.bs = (frame.bs ?? []).filter((e) => e[0] !== ratSeq); return frame; }, armed: async (c) => { ratSeq = c.rat.seq; macH = await hunter(c, c.them[0], { stand: false, foe: () => c.them[0].pool().foes.find((x) => x.puppet === BOB && x.seq === ratSeq && x.corpse) }); } });
+  const decoy = await s.bob.pool().spawnFoe(0, [16, 0, 12], { feetGiven: true });
+  go(s.net, 400);
+  as(s.bob, () => s.bob.pool().damageFoe(decoy, 9999, [16, 0, 11]));   // Bob's own kill of another body: the owner speaks the law (its `bs` is heard)
+  strike(s, s.mac);
+  go(s.net, 2500);
+  macH.stand(); macH.look();
+  go(s.net, 600);
+  const pup = s.mac.pool().foes.find((x) => x.puppet === BOB && x.seq === ratSeq && x.corpse);
+  assert.ok(pup && macH.stamps.of(pup.entity), 'Mac\'s blow felled it and his kill report stamped it privately (guard)');
+  assert.deepEqual(macH.nodes().map((n) => n.key).filter((k) => k === macH.stamps.of(pup.entity).key), [], 'no node by the private stamp while the owner holds a shared skin for it');
+  strip = false;   // the entry comes with the next full frame
+  go(s.net, FOES_FULL_MS + 600);
+  const e = bsOf(s.net, BOB, ratSeq);
+  assert.ok(e && ID_RE.test(e[1]), `the owner streamed the body's entry: ${said(e)}`);
+  assert.deepEqual(macH.nodes().map((n) => n.key).filter((k) => k === keyOfId(e[1])), [keyOfId(e[1])], 'and Mac has the shared node once the entry is heard');
+});
+
 // ═══ AC10 - OFFLINE IS TODAY'S RULE ════════════════════════════════════════════════════════════════════════════════════════════════════
 test('S12 PARTY-SKIN AC10 (guard): offline (the pool with no net) - the player\'s own kill is a node by the private stamp and skins; a kill no blow of his made is no node; no bs is built, no claim sent', async () => {
   const off = await offlineOwner();
@@ -521,20 +541,22 @@ test('S16 PARTY-SKIN AC2 (the invariant): Bob, Mac and Eve, all with knives, all
     go(s.net, 600);
     const all = [bobH, mac, eve];
     for (const h of all) assert.ok(h.aim(), `PARTY-SKIN/AC2: round ${round}: ${h.p.id} has a node (${promptOf(h)})`);
-    for (const h of all) h.host.press();
+    s.net.late.set(`${MAC}>${BOB}`, Math.floor(rnd() * 400)); s.net.late.set(`${EVE}>${BOB}`, Math.floor(rnd() * 400));
+    s.net.late.set(`${BOB}>${MAC}`, Math.floor(rnd() * 400)); s.net.late.set(`${BOB}>${EVE}`, Math.floor(rnd() * 400));
+    const presses = all.filter((h, i) => i > 0 || rnd() < 0.4);   // Mac and Eve always; Bob in some rounds - the authority's local claim is first come with whatever it has received
+    for (const h of presses) h.host.press();
     const dirs = [`${MAC}>${BOB}`, `${EVE}>${BOB}`];
     const shake = () => { for (const d of dirs) { if (rnd() < 0.3) s.net.hold(d); else s.net.release(d); } cut = rnd() < 0.3 ? [MAC, EVE][rnd() < 0.5 ? 0 : 1] : null; };
-    for (let i = 0; i <= 40; i++) { shake(); await traceAll(s.net, all, { steps: 1, waitMs: 0 }); }
-    for (const d of dirs) s.net.release(d);
-    cut = null;
-    await traceAll(s.net, all, { steps: 1, waitMs: 30_000 });
+    const calm = () => { for (const d of dirs) s.net.release(d); cut = null; };
+    // the lines drawn while the relay shakes (held lanes, lost frames), the last seconds in calm
+    await traceAll(s.net, all, { steps: 40, waitMs: 24_000, onStep: (k) => (k < 70 ? shake() : calm()) });
     go(s.net, 20_000);
     const asked = asks(...all);
     assert.ok(asked.length <= 1, `round ${round}: at most one hide is asked for a body (asked ${asked.map((a) => a.account).join(', ')})`);
     ones += asked.length;
     unhunt();
   }
-  assert.ok(ones > 0, `PARTY-SKIN/AC2: the body is skinned in some rounds - one skin per body is not "no skins": ${ones} of ${rounds} rounds ended in a hide (the invariant is held vacuously by the old rule, under which two of the three have no node at all)`);
+  assert.ok(ones > rounds / 2, `PARTY-SKIN/AC2: the body is skinned in most rounds - one skin per body is not "no skins" - the winner of each round is whoever the authority received first, a hide lost for nobody being the rare price of a lossy wire: ${ones} of ${rounds} rounds ended in a hide (the invariant is held vacuously by the old rule, under which two of the three have no node at all)`);
 });
 
 // ═══ GUARDS: EVERY EXISTING HUNTING RULE STANDS, FOR A NON-KILLER WHO SKINS A PEER'S KILL ═══════════════════════════════════════════════

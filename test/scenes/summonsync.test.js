@@ -18,6 +18,7 @@ import { PARTY_ME, noteFighter, foeFighters, partyFoeLoses, partyFoeHeals, party
 import { indexText } from '../bibleIndex.mjs';
 import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
 import { partyOnlyQuestShare } from '../../src/scenes/quest/questFoeHost.js';   // QUEST-OWNER: the dungeon's quest seam, narrowed to the party (ownShare)
+import { NO_ROOM_SKINS } from '../noRoomSkins.mjs';
 
 const D = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const AST = acorn.parse(D, { ecmaVersion: 'latest', sourceType: 'module' });
@@ -77,6 +78,7 @@ function side(self, { layout = [], own = [], authority = true } = {}) {
     adoptsOrphan: () => false,
   };
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
     partyOnlyQuestShare, opts: { selfId: () => self, questShare: () => share },
     _layoutFoes: layout.length, foes, _authority: authority, _ctxDead: false, _locationKey: 'dungeon:7',

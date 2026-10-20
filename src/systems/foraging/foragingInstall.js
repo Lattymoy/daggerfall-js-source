@@ -165,7 +165,7 @@ export const PROFESSION_TOOL_HOW = Object.freeze({
   [FT.FishingNet]: (k) => `Fishing is done in water: stand in it, swim, or stand at sea until its acts show, then press ${k} (or use the Fishing-Net).`,   // ANY-HOUR: at any hour
   // TOUCH-HOLD (2026-10-01 part four - Mac: "Interact button + knife Use"): the knife's Use at a body is E there, and it
   // holds the knife for the line as the Sickle's holds the steady hand (scenes/huntHost.js)
-  [SKINNING_KNIFE.templateIndex]: (k) => `Hunting is done at a body your own blow felled: walk up to it until its acts show, then press ${k} (or use the Skinning Knife).`,
+  [SKINNING_KNIFE.templateIndex]: (k) => `Hunting is done at a body you may loot: walk up to it until its acts show, then press ${k} (or use the Skinning Knife).`,
 });
 /** TOOL-SAID: the line a Use of this tool says where no node takes it - online, with the professions open, for the
  *  five profession tools (TOUCH-HOLD: and the Skinning Knife); null otherwise (offline, a guest, the Spade: the Use is

@@ -309,7 +309,7 @@ test('AUDIT 32 wiring: a flyer\'s body where its corpse lies (H3); no click thro
   // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the dungeon's pool handed whole - huntHost.js bodiesHere reads its
   // corpseAt (H3) and corpseKeyOf (H8)
   assert.match(w, /bodiesHere\(modeNow\(\), \{ street: exteriorFoes, dungeon: modes\?\.dungeonCtx, interior: modes\?\.interiorFoes \}, bodyStamps\)/);
-  assert.match(src('src/scenes/huntHost.js'), /return bodiesOf\(pool\.foes, stamps, \(f\) => pool\.corpseAt\?\.\(f\), \(f\) => pool\.corpseKeyOf\?\.\(f\)\);/);
+  assert.match(src('src/scenes/huntHost.js'), /return bodiesOf\(pool\.foes, stamps, \(f\) => pool\.corpseAt\?\.\(f\), \(f\) => pool\.corpseKeyOf\?\.\(f\), pool\.skinOf \? \(f\) => pool\.skinOf\(f\) : null\);/);
   // PIN MOVED (AUDIT 2026-10-01 part four, CLICK-LIFT): and the click an act took, to its release - test/systems/fb1001_audit.test.js
   assert.match(w, /if \(\(\(_act\.activate && !gatherHost\?\.acting\(\) && !_actClick(?: && !nodeClicked)?\) \|\| \(useEdge && !nodeTook\)\) && !modes\.transitioning(?: && !_holdFire)?\) \{/, 'H5: the street');   // PROF-MENU: and a click a node's lit row took   // PIN MOVED (the merge with AUDIT NAV2 F31): the gate holds fire too
   assert.match(((m) => m.slice(m.indexOf('  function tryExitDungeon(')))(src('src/scenes/worldModes.js')), /if \(interact && !pressCast && host\.profPress\?\.\(\)\) return true;\n(?:\s*\/\/[^\n]*\n|\s*if \(!interact && !pressCast && !actClick && !host\.profActing\?\.\(\) && host\.profClick\?\.\(\)\) return true;\n)*\s*if \(!interact && \(actClick \|\| host\.profActing\?\.\(\)\)\) return true;/, 'H5: the dungeon');   // PROF-MENU: a node's lit row's click between

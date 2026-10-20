@@ -132,6 +132,9 @@ function huntOver(s, book, { knife = true, stamped = true, dungeonless = true } 
       host.tick(dt);
     }
     input = { held: false, attack: false, choice: false };
+    // PIN MOVED (PARTY-SKIN): online the act holds at its end for the body's authority - Bob's own pool - to mark the body skinned and say so in a
+    // foes frame it has built; the cell runs on under the held end (DESIGN-B 8: the trace keeps the cell going until the harvest is asked)
+    for (let i = 0; i < 200 && host.acting(); i++) { run(s.net, 50); host.tick(0.05); }
   };
   return { host, seen, stamps, opened, lookAtBody, trace, done() { host.dispose(); } };
 }
@@ -172,9 +175,11 @@ test('T-B4 EMPTY-BODY AC-B2 (Hunting, the addendum): Bob holding a Skinning Knif
   } finally { h.done(); }
 });
 
-test('T-B4 EMPTY-BODY AC-B2 (guard, the addendum): an emptied body the player cannot skin - the kill not stamped, or no knife in the pack - shows nothing at all: no node, no prompt, no menu, no plaque on the ray', async () => {
+test('T-B4 EMPTY-BODY AC-B2 (guard, the addendum): an emptied body the player cannot skin - no knife in the pack - shows nothing at all: no node, no prompt, no menu, no plaque on the ray', async () => {
   setForagingHost({ world: () => NIGHT });
-  for (const [what, opts] of [['no stamp', { stamped: false }], ['no knife', { knife: false }]]) {
+  // PIN MOVED (PARTY-SKIN, Travis 2026-10-19: "bodies can be skinned only once by anyone"): the 'no stamp' half is retired - online a body is the knife's
+  // whoever's blow felled it (test/net/partyskin.test.js), the kill's stamp is no longer what makes a node; offline it still is (S12 there)
+  for (const [what, opts] of [['no knife', { knife: false }]]) {
     const s = await scene('street', [MAC, EVE], { pile: BODY });
     for (const [p, piece] of [[s.mac, GOLD], [s.eve, BUCKLER], [s.mac, POTION]]) {
       const w = lootWindow(p); p.press(keyFor(s, p), w); assert.ok(w.take(choosing(piece)), `${p.id} takes ${piece}`); w.close(); run(s.net, 400);

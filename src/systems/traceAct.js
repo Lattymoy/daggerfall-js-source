@@ -41,6 +41,11 @@
 //
 // Esc (the host's `cancel`) ends it, nothing lost: the body lies, no tool
 // wears, no harvest is asked.
+//
+// THE HOLD (PARTY-SKIN, net/bodySkin.js): online, a body is skinned once, and its authority says whose. The act that reaches its end
+// while `hold()` answers true does not complete: it stands at its end (`state.waiting`, progress 1, input ignored) and asks `hold`
+// again each step, completing the step it answers false. No `hold` (offline, an authority that speaks no skin law): the machine is
+// what it always was.
 // ═══════════════════════════════════════════════════════════════════
 import { TRACE_ACT, tracePoints, traceTolerance } from '../net/professionLaw.js';
 
@@ -70,14 +75,14 @@ export function traceLine(n, rng = Math.random) {
 }
 
 /**
- * @param {{ tier: number, rank?: number, band?: number, gentle?: boolean, rng?: () => number }} o `band` the knife's
- *   attribute band's widening (professionLaw knifeBand)
+ * @param {{ tier: number, rank?: number, band?: number, gentle?: boolean, rng?: () => number, hold?: () => boolean }} o `band` the knife's
+ *   attribute band's widening (professionLaw knifeBand); `hold` - whether the act's end must wait (PARTY-SKIN)
  */
-export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng = Math.random }) {
+export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng = Math.random, hold = undefined }) {
   const points = traceLine(tracePoints(tier), rng);
   const endYaw = points[points.length - 1][0];
   const st = {
-    kind: 'trace', points, tol: traceTolerance(rank, band), gentle, t: 0, done: false, cancelled: false,
+    kind: 'trace', points, tol: traceTolerance(rank, band), gentle, t: 0, done: false, cancelled: false, waiting: false,
     /** the trace under way: started at the first point, its clock (its first move along the line - AUDIT 32 L1), the
      *  points passed (the index of the last), the furthest yaw the deviations have measured, the deviations */
     tracing: false, t0: /** @type {number|null} */ (null), reached: 0, far: 0, devs: /** @type {number[]} */ ([]),
@@ -87,6 +92,8 @@ export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng =
     /** traces let go before the last point; Gentle acts' hold; the finished trace's measure */
     slips: 0, held: 0, score: 0, seconds: 0,
   };
+  /** The act's end: complete now, or - while `hold` says the end must wait - stand at it. */
+  const finish = () => { if (hold?.()) { st.waiting = true; return false; } st.waiting = false; st.done = true; return true; };
   const reset = () => { st.tracing = false; st.t0 = null; st.devs = []; st.reached = 0; st.last = null; st.path = []; };
   /**
    * The crosshair drawn from `a` to `b`: the points passed in turn (the chord's nearest approach to each next point), and
@@ -112,13 +119,14 @@ export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng =
   return {
     state: st,
     /** How far the trace has come, 0 to 1 - the points passed against the line's. */
-    get progress() { return st.done ? 1 : gentle ? Math.min(1, st.held / TRACE_ACT.gentleS) : st.reached / Math.max(1, points.length - 1); },
+    get progress() { return st.done || st.waiting ? 1 : gentle ? Math.min(1, st.held / TRACE_ACT.gentleS) : st.reached / Math.max(1, points.length - 1); },
     /**
      * One frame. `held` - E held; `aim` - the crosshair's bearing from the body's centre, degrees.
      * @param {number} dt @param {{ held?: boolean, aim?: { yaw: number, pitch: number }|null }} input
      */
     tick(dt, { held = false, aim: given = null } = {}) {
       if (st.done || st.cancelled) return;
+      if (st.waiting) { finish(); return; }   // at its end: the hold asked again, input ignored
       const step = Math.max(0, Math.min(0.25, Number(dt) || 0));
       st.t += step;
       // AUDIT 32 L5: a bearing that is not a number is no bearing (it hung the chord's walk, or dropped its samples)
@@ -126,7 +134,7 @@ export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng =
       st.aim = aim;
       if (gentle) {
         st.held = held ? st.held + step : 0;
-        if (st.held >= TRACE_ACT.gentleS) st.done = true;
+        if (st.held >= TRACE_ACT.gentleS) finish();
         return;
       }
       if (!st.tracing) {
@@ -139,10 +147,11 @@ export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng =
       draw(/** @type {{ yaw: number, pitch: number }} */ (st.last), aim, step);
       st.last = aim;
       if (st.reached >= points.length - 1) {
-        st.done = true; st.tracing = false;
+        st.tracing = false;
         st.seconds = st.t - (st.t0 ?? st.t);
         const dev = st.devs.reduce((s, d) => s + d, 0) / st.devs.length;
         st.score = Math.max(0, 1 - dev / st.tol);
+        finish();
       }
     },
     /** Esc: ended, nothing lost. */

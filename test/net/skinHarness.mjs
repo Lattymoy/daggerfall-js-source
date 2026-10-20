@@ -61,11 +61,13 @@ export async function answered(...hs) {
  * let go, an act at its end holding for the authority's word - until every act has ended or `waitMs` have passed.
  * `pitchOff` - degrees off the line (a torn pelt); `slip` - let go on the last step.
  */
-export async function traceAll(net, hs, { steps = 40, stepMs = 50, waitMs = 8000, slip = false, pitchOff = 0, drive = null } = {}) {
+export async function traceAll(net, hs, { steps = 40, stepMs = 50, waitMs = 8000, slip = false, pitchOff = 0, drive = null, onStep = null } = {}) {
+  let k = 0;   // the step counted across the line and the wait: `onStep(k)` runs before each
   const step = drive ?? ((ms) => go(net, ms));   // the dungeon's cell runs async, through its wire
   const lines = hs.map((h) => {
     if (!h.host.acting()) return null;
     const at = h.look();
+    if (!at) return null;
     h.host.tick(0.001);
     const pts = h.seen.meter?.state?.points;
     return pts ? { h, at, pts } : null;
@@ -78,9 +80,10 @@ export async function traceAll(net, hs, { steps = 40, stepMs = 50, waitMs = 8000
       h.view.pitch = -at.pitch + pts[k][1] + (pts[k + 1][1] - pts[k][1]) * t + pitchOff;
       h.input.held = !(slip && i === steps);
     }
+    onStep?.(k++);
     await step(stepMs);
   }
-  for (let ms = 0; ms < waitMs && hs.some((h) => h.host.acting()); ms += 50) await step(50);
+  for (let ms = 0; ms < waitMs && hs.some((h) => h.host.acting()); ms += 50) { onStep?.(k++); await step(50); }
   for (const { h } of lines) h.input.held = false;
   await answered(...hs);
 }
@@ -133,7 +136,7 @@ export async function hunter(s, p, o = {}) {
   const seen = { prompt: null, meter: null, toasts: [], haul: [] };
   const hud = { setPrompt: (x) => { seen.prompt = x; }, setMeter: (m) => { seen.meter = m; }, toast: (x) => seen.toasts.push(x), banner: () => {}, setChip: () => {}, frame: () => {}, dispose: () => {} };
   const foe = o.foe ?? (() => (p === s.bob ? s.rat : p.pool().foes.find((x) => x.puppet === s.bob.id && x.corpse)));
-  const body = () => (o.bodyAt ? o.bodyAt() : bodyOf(p, foe()));
+  const body = () => { if (o.bodyAt) return o.bodyAt(); const f = foe(); return f ? bodyOf(p, f) : null; };   // null: the body is gone
   const stand = () => { const at0 = body(); p.feet[0] = at0[0]; p.feet[1] = at0[1]; p.feet[2] = at0[2] - standAt; };   // the pool's reach tests (the owner's A1/C7) read the harness's feet
   if (o.stand !== false) stand();
   const view = { yaw: 0, pitch: 0 };
@@ -154,7 +157,7 @@ export async function hunter(s, p, o = {}) {
     p, host, seen, book, stand, asked, stamps, entity, input, view, lists, account,
     click: () => host.tick(0.05),
     /** Look at the body from where the player stands. */
-    look() { const at = aimAt(eyePos(), [body()[0], body()[1] + 0.2, body()[2]], { yaw: 0, pitch: 0 }); view.yaw = -at.yaw; view.pitch = -at.pitch; return at; },
+    look() { const b = body(); if (!b) return null; const at = aimAt(eyePos(), [b[0], b[1] + 0.2, b[2]], { yaw: 0, pitch: 0 }); view.yaw = -at.yaw; view.pitch = -at.pitch; return at; },
     /** Look and let the host see it: the target, the prompt. */
     aim() { h.look(); host.tick(0.016); return host.target; },
     /** WHAT THE SKIN POP-UP SAYS over the body, as the plaque's menu lists it: the Skin row, "<label> | ready" or "<label> | <why it is

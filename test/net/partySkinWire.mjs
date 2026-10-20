@@ -54,6 +54,8 @@ import { fakeRoom } from '../fakeRoom.mjs';
 import { makeHitPend } from '../../src/net/hitPend.js';
 import { reportPlayerKill } from '../../src/systems/playerKills.js';
 import { bodiesHere } from '../../src/scenes/huntHost.js';
+import { createBodySkins } from '../../src/scenes/bodySkinHost.js';
+import { hideOfFoe } from '../../src/net/professionLaw.js';
 import { actor } from './bodyLootHarness.mjs';
 import { order } from './skinHarness.mjs';
 import '../../src/systems/card/cardSources.js';   // CARDS9's death handler registers at import, as the hosts load it
@@ -206,6 +208,8 @@ function dungeon(id, { authority, level, luck, renown, seed, foraging, partners,
     standSharedPuppet: async () => assert.fail('the encounter stands here already'), dropSharedFoe: () => assert.fail('the room lists no encounter'),
     retypeFoe: async () => assert.fail('one species at the marker'), console,
     HIT_DMG_MAX: 10000, HIT_POS_MAX: 1e6, FOES_STALE_MS,
+    dropFoeCard: () => {},   // a body outside the room's base is rolled by each copy (applyFoeRecord): the card's draw is not under test
+    createBodySkins, hideOfFoe,   // PARTY-SKIN: roomLootHost.js's imports the block reads
     sharedRecord: (r) => r, ownRides: () => false,
     windows,
   };

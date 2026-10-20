@@ -541,7 +541,7 @@ test('PROF7 wiring: the street and the dungeon stamp and list their bodies for H
   // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the pool by the mode, a building's too - huntHost.js bodiesHere
   // (test/systems/quest/fb1007_indoorskin.test.js drives it over the real pools)
   assert.match(w, /huntBodies = \(\) => bodiesHere\(modeNow\(\), \{ street: exteriorFoes, dungeon: modes\?\.dungeonCtx, interior: modes\?\.interiorFoes \}, bodyStamps\);/);
-  assert.match(src('src/scenes/huntHost.js'), /return bodiesOf\(pool\.foes, stamps, \(f\) => pool\.corpseAt\?\.\(f\), \(f\) => pool\.corpseKeyOf\?\.\(f\)\);/);
+  assert.match(src('src/scenes/huntHost.js'), /return bodiesOf\(pool\.foes, stamps, \(f\) => pool\.corpseAt\?\.\(f\), \(f\) => pool\.corpseKeyOf\?\.\(f\), pool\.skinOf \? \(f\) => pool\.skinOf\(f\) : null\);/);
   assert.match(src('src/scenes/exteriorFoes.js'), /corpseAt: corpseLens\.feetOf,/, 'where a body lies has one home (DT1)');
   assert.doesNotMatch(w, /held\(keys, 'SwingWeapon'\)/, 'the knife is drawn with E held - attack is the weapon\'s, and its swing modes hold the look');
   // PIN MOVED (2026-10-01 part four, TOUCH-HOLD): the key named unless the knife's Use holds it

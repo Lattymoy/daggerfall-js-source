@@ -70,6 +70,8 @@ import { egFindStruck, egFindKill } from '../../src/systems/eliteGates/egFind.js
 import { fakeRoom } from '../fakeRoom.mjs';
 import '../../src/systems/card/cardSources.js';   // CARDS9's death handler registers at import, as the hosts load it
 import '../../src/scenes/physicalItemsLayer.js';   // PI1's
+import { createBodySkins } from '../../src/scenes/bodySkinHost.js';
+import { hideOfFoe } from '../../src/net/professionLaw.js';
 
 installForaging(); installSmithing(); installHealingSupply(); installRestItemLoot(); installSurvivalLoot();   // the hosts' order (scenes/shared.js)
 setPref(LOOT_RARITY_KEY, true);   // the loot ladder - forced on online (OL1)
@@ -189,6 +191,7 @@ function dungeon(id, { authority, level, luck, renown, seed, foraging, partners,
     generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus, egFindStruck, egFindKill,
     CLAIM_KEEP_MS, CLAIMS_KEPT_MAX, SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX, sharedClassicMinutes,   // OUTDOOR-LOOT: the claim ledger's and the search find's constants the room block reads
+    createBodySkins, hideOfFoe,   // PARTY-SKIN: roomLootHost.js's imports the block reads (the lock stands off here: no hide, no skin)
     wildPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,
     spawnCorpseNow: async (f) => { f.corpsePos = [...f.ai.feet]; }, renderer: { destroyBillboardBatch: () => {} }, billboardBatches: [], renownFoeRevived: () => {},
