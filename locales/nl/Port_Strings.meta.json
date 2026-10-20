@@ -3264,6 +3264,16 @@
   "tr": "4fe35f0dc1fe",
   "by": "claude-in-session"
  },
+ "credits.mudex.terms": {
+  "en": "e2ad3a44cdad",
+  "tr": "b7aea22f499f",
+  "by": "claude-in-session"
+ },
+ "credits.mudex.what": {
+  "en": "dab7ae5a1402",
+  "tr": "7c4f4b0464c0",
+  "by": "claude-in-session"
+ },
  "credits.oblivionLeveling.terms": {
   "en": "be5559b7f2d4",
   "tr": "7e05524b3d1c",
@@ -3552,6 +3562,256 @@
  "death.youDied": {
   "en": "6e4f16746fcc",
   "tr": "ecc530a36cde",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.archerRider": {
+  "en": "684bf52c59e7",
+  "tr": "bc25d192a1a0",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.bat": {
+  "en": "acdf41b2a875",
+  "tr": "8fc46235ff73",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.bloodSpider": {
+  "en": "15ffad5bd573",
+  "tr": "9d3fb54ebd38",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.boar": {
+  "en": "30efd20f542c",
+  "tr": "8952a791a4cf",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.bountyHunter": {
+  "en": "e5826ada69c0",
+  "tr": "191d5e03edaa",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.centurionSphere": {
+  "en": "4e3bbaa03154",
+  "tr": "453891324bb2",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.darkSlayer": {
+  "en": "028f0235643f",
+  "tr": "2c000fd32cf9",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.direGhoul": {
+  "en": "ce50003528ba",
+  "tr": "839ae98ee7eb",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.dog": {
+  "en": "b866865be01a",
+  "tr": "b318f261f726",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.dremoraChurl": {
+  "en": "1f3623c18bbc",
+  "tr": "535921109f40",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.druid": {
+  "en": "cd770cb0f159",
+  "tr": "66dfe9ef7492",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.fadedGhost": {
+  "en": "c34b5547499b",
+  "tr": "1206da46541b",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.fireDaemon": {
+  "en": "004a8846d228",
+  "tr": "551a20196927",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.ghoul": {
+  "en": "24caf6ba794c",
+  "tr": "24caf6ba794c",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.gloomWraith": {
+  "en": "8a1bb237990c",
+  "tr": "f43fad52c1f2",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.goblin": {
+  "en": "42a2711c8294",
+  "tr": "42a2711c8294",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.grotesque": {
+  "en": "26786499dd60",
+  "tr": "3969b9d6c343",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.guard": {
+  "en": "6e66568583d1",
+  "tr": "c07c840ac66e",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.hellHound": {
+  "en": "e726f143b79d",
+  "tr": "ce787a065c1e",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.homunculus": {
+  "en": "c24357c5350a",
+  "tr": "c24357c5350a",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.iceGolem": {
+  "en": "11d3a8c51aec",
+  "tr": "f0a697300ae0",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.ironGolem": {
+  "en": "baa4025efb7a",
+  "tr": "568f79a46daf",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.knightRider": {
+  "en": "b68974d915d3",
+  "tr": "b42ca73e1997",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.landDreugh": {
+  "en": "43bf6dd66192",
+  "tr": "d660246c4e17",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.lizardMan": {
+  "en": "2f3a97599992",
+  "tr": "77917d7a50a9",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.lizardWarrior": {
+  "en": "ae7adf345efd",
+  "tr": "3005e2446f48",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.medusa": {
+  "en": "6fd5c64a2968",
+  "tr": "6fd5c64a2968",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.minotaur": {
+  "en": "25ea2b23d54b",
+  "tr": "146674995255",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.mountainLion": {
+  "en": "64b8937b72e9",
+  "tr": "40a0348bf873",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.mudcrab": {
+  "en": "6ce0989ba9ca",
+  "tr": "bee216cd244f",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.necromancerAcolyte": {
+  "en": "f948efbf677e",
+  "tr": "3aed4a78f2a1",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.necromancerAssassin": {
+  "en": "91ec473d7e4e",
+  "tr": "056fccd16c17",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.necromancerGlaivier": {
+  "en": "1a8b19cbdcf1",
+  "tr": "fd8e64d8318b",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.nymph": {
+  "en": "2038c841b564",
+  "tr": "7a596157e8fa",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.ogre": {
+  "en": "105bd2ca28e3",
+  "tr": "d9117ee234c4",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.rogueDruid": {
+  "en": "ff594fbde147",
+  "tr": "a2d28becad6a",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.rogueRider": {
+  "en": "44e662099a70",
+  "tr": "c3c31cf66e79",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.royalKnight": {
+  "en": "03100d8eb83d",
+  "tr": "c984371030ce",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.scamp": {
+  "en": "cb5d5daae07b",
+  "tr": "cb5d5daae07b",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.skeletalSoldier": {
+  "en": "c9c150a7a5ab",
+  "tr": "782be0eb27b2",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.snowWolf": {
+  "en": "37758df3bc0d",
+  "tr": "dfcd1308647e",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.spellswordRider": {
+  "en": "45120d037b3a",
+  "tr": "64e1421ea787",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.steamCenturion": {
+  "en": "baf884650a43",
+  "tr": "17c0ba238dc6",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.stoneGolem": {
+  "en": "4ed1cc58bc62",
+  "tr": "d53cf345cef1",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.thiefRider": {
+  "en": "2e96aea26226",
+  "tr": "0432e5bdaeda",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.troll": {
+  "en": "a21d79cdae32",
+  "tr": "4374ee10f528",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.vengefulKingLysandus": {
+  "en": "d2f3029dbace",
+  "tr": "b953d9f0ab67",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.willOWisp": {
+  "en": "aa2a93bc4d4c",
+  "tr": "94f718408807",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.witchDefender": {
+  "en": "69e5436f84a9",
+  "tr": "af6c6be3884c",
+  "by": "claude-in-session"
+ },
+ "dex.enemy.wolf": {
+  "en": "5b7c6cb41497",
+  "tr": "5b7c6cb41497",
   "by": "claude-in-session"
  },
  "eg.say.duelOpen": {
@@ -4075,8 +4335,8 @@
   "by": "claude-in-session"
  },
  "features.mod.meanerMonsters.effect": {
-  "en": "f290b3e84d7e",
-  "tr": "89f1ef12ccfa",
+  "en": "b2174b8fcf92",
+  "tr": "7c53563c4a87",
   "by": "claude-in-session"
  },
  "features.mod.oblivionRemasterLeveling.effect": {
@@ -7792,6 +8052,11 @@
  "mods.eyeOfTheBeholder.skin.thiefMale": {
   "en": "84aa42290a1c",
   "tr": "d9fbb5e1ebcf",
+  "by": "claude-in-session"
+ },
+ "mods.meanerMonsters.Enabled.description": {
+  "en": "0d3ed4997fe8",
+  "tr": "e9073044c5c4",
   "by": "claude-in-session"
  },
  "naval.yard.grogDrunk": {

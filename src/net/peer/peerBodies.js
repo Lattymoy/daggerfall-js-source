@@ -956,9 +956,10 @@ export class PeerBodies {
       const g = ow * this._scaleOf(b);   // MWNPC10: and its own scale
       // MWNPC16: the body casts its own shape where this lane's do - an open body (a veiled one casts nothing), never one
       // the travel view grows (OW-BIG: no giant's shadow), never one more burnt away than whole (AUDIT MWNPC16-18 R1: the
-      // dissolve's own law, as its flat keeps it - systems/dissolve.js dissolveShadowless)
+      // dissolve's own law, as its flat keeps it - systems/dissolve.js dissolveShadowless), never one whose flat casts
+      // none (AUDIT DEX B2: a NoShadow row's mobile, SetupDemoEnemy.cs:137-140 - characters/foeBodies.js foeFx)
       const fx = this._cam?.fxOf ? this._cam.fxOf(b.id) : null;
-      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve);
+      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;
       const anchored = cast && !!this._cam?.anchoredOf?.(b.id);   // AUDIT MWNPC16-18 A3
       if (this._planesOk) {
         if (!this._sees(b, 0, g)) {

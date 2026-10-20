@@ -533,3 +533,19 @@ names; 24 mutant records re-aimed by the tool, every one dead. AUDIT OW-REVISITE
 chase hearing past three lines, so it moved out too - `src/scenes/regionChaseHost.js` (`createRegionChaseHearing`), the
 host wiring it in one statement; with the forecast's new inputs and the bands' and raiders' preference for a fresh cell
 word, `bootWorld` 36,205 of its 36,233 (36,209 with main merged in the same day).
+
+AUDIT DEX (2026-10-20, `01-Overview/audits/Audit-DEX.md` D11): DEX5 had put the Troll corpse prefab's reach - the rise,
+the ash mint and its batch bookkeeping, the `cs` hit's composition - into `buildDungeonContext` (+66 logical lines) and
+`createExteriorFoes` (+65), under their ceilings but against this page's rule (the host gains the wiring, not the
+feature). It is `src/scenes/corpsePrefabHost.js` now (`createDungeonCorpsePrefabs(h)`, `createStreetCorpsePrefabs(h)`),
+each host handing it its doors - its pools, its renderer, its spawn, its hit sender - and nothing more
+(`dex5_audit.test.js` holds the hosts to the wiring). C1 added one statement to `bootWorld`'s jump core, where the host's
+own ResetState already stood (PlayerGPS's flag beside the host's): within the room the ceiling left for a fix then.
+At DEX's merge with main (2026-10-20), main's FIELD BUGS 2026-10-19f had brought the ceiling down to its host (36,183),
+and C1's `if (modEvent) resetPlayerGpsState()` - two logical lines - stood `bootWorld` two over. No raise: the rule left
+the host for the module whose rule it is - `world/playerGps.js` resets on the jumps PlayerGPS subscribes to (`RESET_ON`,
+a load and a fast travel) and the jump core hands it every jump's kind, one statement - and the road trouble's foe
+level, a lambda of the host's, left for the enemy table (`characters/enemy/enemyBasics.js` enemyLevelOf), where the
+roads' harness reads it too (its own copy still asked `>= 128` after DEX1 gave the host the bit). `bootWorld` 36,185 ->
+36,183 logical lines, at its ceiling, which stays; the relay re-hashed in place (world233 then, world234 since SD-SEA's merge; enemyBasics.js is in its
+bundle); the C1 pin and its mutants re-aimed, two more for the subscriptions.

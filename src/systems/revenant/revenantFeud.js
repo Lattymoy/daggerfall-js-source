@@ -16,6 +16,7 @@ import { SKILLS } from '../skills.js';
 import { setItemFields } from '../item/itemTemplates.js';
 import { FEUD_CLASSES } from '../feudLedger.js';
 import { possessive } from './revenantPersonality.js';   // RVN5: a signature's name
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 // ── the numbers (section 27) ────────────────────────────────────────
 /** RVN1: a fight's leading source - this share of the damage dealt or more - is a scar. */
@@ -216,7 +217,7 @@ export function weaknessPool(mobileType) {
   if (VAMPIRES.has(t)) return [['fire', 1], ['dwarven', 2], ['daylight', 2]];
   if (WEREBEASTS.has(t)) return [['fire', 1], ['dwarven', 2]];
   if (ORCS_GIANTS.has(t)) return [['fire', 1], ['shock', 1], ['elven', 1], ['arrow', 1], ['blade', 1]];
-  if (t >= 128) return [...WEAKNESS_ELEMENTS.map((e) => [e, 1]), ['silver', 1], ['dwarven', 1], ['blunt', 1], ['axe', 1], ['blade', 1], ['arrow', 1], ['h2h', 1]];
+  if (isClassEnemyId(t)) return [...WEAKNESS_ELEMENTS.map((e) => [e, 1]), ['silver', 1], ['dwarven', 1], ['blunt', 1], ['axe', 1], ['blade', 1], ['arrow', 1], ['h2h', 1]];
   return [['fire', 2], ['frost', 1], ['axe', 1], ['arrow', 1]];
 }
 /** RVN3: its weakness, drawn on its id from its kind's pool - never an element its career resists or is immune to
@@ -290,7 +291,7 @@ export function signatureFamily(mobileType) {
   if (BEASTS.has(mobileType)) return 'beast';
   if (BRUTES.has(mobileType)) return 'brute';
   if (BLADES.has(mobileType)) return 'blade';
-  if (mobileType >= 128 && mobileType !== M.None) return CASTER_CLASSES.has(mobileType) ? null : 'blade';
+  if (isClassEnemyId(mobileType) && mobileType !== M.None) return CASTER_CLASSES.has(mobileType) ? null : 'blade';
   return null;
 }
 const SIG_POOL = Object.freeze({ blade: ['slam', 'charge'], beast: ['charge', 'leap'], brute: ['ring', 'charge'] });
@@ -368,7 +369,7 @@ const CLASS_FAMILIES = Object.freeze([
  *  undead their own); a beast, a vermin or a fish its own kind. Decided here: a solitary kind (a giant, a daedra, a
  *  lich, an atronach - mobileFactions.js SOLITARY_TYPES) rides alone. */
 export function kinPool(mobileType) {
-  if (mobileType >= 128) return CLASS_FAMILIES.find((f) => f.includes(mobileType)) ?? [];
+  if (isClassEnemyId(mobileType)) return CLASS_FAMILIES.find((f) => f.includes(mobileType)) ?? [];
   const fac = factionOf(mobileType);
   if (!fac) return [];
   const members = {
@@ -401,7 +402,7 @@ export const RALLY_KIN = 2;
 const BAND_WORDS = Object.freeze({ ORC: 'Warband', BEASTPACK: 'Pack', WEREBEAST: 'Pack', UNDEAD: 'Host', FAE: 'Host', VERMIN: 'Brood', AQUATIC: 'Brood' });
 const CLASS_BAND_WORDS = Object.freeze(['Warband', 'Crew', 'Coven', 'Crew']);
 export function bandWord(mobileType) {
-  if (mobileType >= 128) { const i = CLASS_FAMILIES.findIndex((f) => f.includes(mobileType)); return i >= 0 ? CLASS_BAND_WORDS[i] : null; }
+  if (isClassEnemyId(mobileType)) { const i = CLASS_FAMILIES.findIndex((f) => f.includes(mobileType)); return i >= 0 ? CLASS_BAND_WORDS[i] : null; }
   const fac = factionOf(mobileType);
   return fac ? BAND_WORDS[fac] ?? null : null;
 }
@@ -417,7 +418,7 @@ export function bandName(r) {
  *  own), a person at the player's level - 2. */
 export function bandMembers(r, playerLevel, n = retinueCount(r?.rank)) {
   const kin = Array.isArray(r?.kin) ? r.kin : [];
-  return kin.slice(0, Math.max(0, n)).map((t) => ({ mobileType: t, level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : null }));
+  return kin.slice(0, Math.max(0, n)).map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null }));
 }
 const sanitizeKin = (v) => (Array.isArray(v) ? v.filter((t) => Number.isInteger(t) && ((t >= 0 && t < 128) || (t >= 128 && t < M.Knight_CityWatch))).slice(0, Math.max(...RETINUE)) : null);
 
@@ -625,7 +626,7 @@ export function adaptEdge(learned, weak = null) {
 export function adaptBlowClass(attacker, weapon, kind) {
   if (kind === 'arrow') return 'arrow';
   if (weapon) return weaponFeudClass(weapon).cls;
-  return attacker?.isPlayer || (attacker?.mobileType ?? -1) >= 128 ? 'h2h' : 'other';
+  return attacker?.isPlayer || isClassEnemyId(attacker?.mobileType ?? 0) ? 'h2h' : 'other';   // AUDIT DEX A2: the class bit - a mod's monster past 255 has no person's hands
 }
 
 // ── the record, whole (section 26) ──────────────────────────────────

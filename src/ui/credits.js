@@ -577,6 +577,27 @@ export const CREDITS = Object.freeze({
       get terms() { return t('credits.kingsGambit.terms', 'Used with permission, on Mac\u2019s word. The bundle names no author.'); },
       vendor: Object.freeze(['kings-gambit']),
     }),
+    // DEX0 (bible/04-Characters/Enemy-Expansion.md): Kamer & Kab's fifty enemies and their encounter tables.
+    Object.freeze({
+      get title() { return t('credits.dex.title', 'Daggerfall Enemy Expansion'); },   // the mod's name as its manifest says it (L10N4)
+      version: '1.3.4',
+      author: 'Kamer & Kab',
+      get what() { return t('credits.dex.what', 'Fifty new enemies and the encounter tables they come from (DEX): goblins, trolls that get back up, minotaurs, golems, Dwarven centurions, mounted knights, necromancers, witches, the Vengeful King Lysandus and more, ported from the authors’ own source, in Kamer’s and Kab’s art - Daggerfall’s own sprites among it, some under their paint - and in Morrowind’s bodies where Morrowind has the creature.'); },
+      get terms() { return t('credits.dex.terms', 'Ported from the shipped bundle and the authors’ own source; their art carried byte for byte (Daggerfall’s own sprites among it rebuilt from your files) - see vendor/daggerfall-enemy-expansion/README.md for the permission record.'); },
+      get contact() { return t('credits.contact.nexus', '{author}, through the Nexus page ({page})', { author: 'Kamer & Kab', page: 'daggerfallunity mod 372' }); },
+      vendor: Object.freeze(['daggerfall-enemy-expansion']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/372',
+    }),
+    // MUDEX1 (bible/04-Characters/Enemy-Expansion.md, MUDEX): Meaner Monsters' own form beside DEX, by its author.
+    Object.freeze({
+      title: 'MUDEX',
+      version: '1.0.1',
+      author: 'Ralzar',
+      get what() { return t('credits.mudex.what', 'Meaner Unleveled Daggerfall Enemy Expansion: Meaner Monsters as its author made it for Daggerfall Enemy Expansion. With both on, it sets the stats of 35 monsters, old and new, and gives every kind of dungeon its own themed, unleveled encounter tables.'); },
+      get terms() { return t('credits.mudex.terms', 'Used with permission, on Mac\u2019s word; its two tables carried byte for byte. The repository states no license.'); },
+      vendor: Object.freeze(['mudex']),
+      link: 'https://github.com/Ralzar81/MUDEX',
+    }),
   ]),
 });
 

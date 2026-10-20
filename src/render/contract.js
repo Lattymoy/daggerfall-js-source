@@ -75,6 +75,7 @@
  * @property {Float32Array} [_moveScratch]            BLOOD1b: the move's own vertex staging, kept rather than re-minted each frame
  * @property {number[]} [_box]                        EV3: the host's cull box [minX, minY, minZ, maxX, maxY, maxZ] (flatBatchAabb)
  * @property {boolean} [noShadow]                     F2: a thing lying on the ground casts nothing (a loot pile)
+ * @property {boolean} [ghost]                        DEX2: wears the ghost shader though its archive is no classic ghost's (characters/enemy/foeLook.js - a Spectral row, or a mod's word)
  * @property {boolean} [selfCard]                     DISC24-C: the player's own body card - it casts as drawn
  * @property {boolean} [castOnly]                     MWNPC5b: a foe standing in its Morrowind body - the billboard draws nothing (MWNPC16: nor casts - the body casts its own shape)
  * @property {boolean} [_dead]                        EL2: freed - a shadow record from the last frame may still hold it

@@ -56,7 +56,7 @@ async function dataAttached() {
 /** The player's face (or a save's, a portrait's) as a Morrowind head: `{ width, height, data }` or null, `px` x `ph`.
  *  A LIVE character (one with its equipment - the player's entity) is drawn as its body is built (combat/weapon/weaponRig.js
  *  armBuildOptsOf, the build's own door): its helm and hood, the vampire's head, the transformed werewolf's in its skin;
- *  the transformed wereboar keeps Daggerfall's picture, as its body does (Morrowind has no boar). An identity alone (a
+ *  the transformed wereboar keeps Daggerfall's picture, as its body does (Morrowind has no wereboar). An identity alone (a
  *  save's envelope, a chargen portrait) is its bare face. A player's face wears the port's own heads where the race has
  *  them, as the player's body does (MW-HEADS2); `npc` - a portrait's face that is an NPC's (an escort) - the data's.
  *  @param {{ race?: string, gender?: string, faceIndex?: number, equip?: any, npc?: boolean }} who  Daggerfall's race key ('DarkElf'), 'female'/'male'

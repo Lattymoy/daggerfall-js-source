@@ -38,8 +38,8 @@
  {
   "name": "MWNPC5c-pool-dead-unoffered",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "    if (npcLane) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) {",
-  "new": "    if (false) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai) {",
+  "old": "    if (npcLane) for (const f of foes) if (f.dead && f.corpse && !f.corpseDestroyed && isBodyFoe(f) && f.ai) {",
+  "new": "    if (false) for (const f of foes) if (f.dead && f.corpse && !f.corpseDestroyed && isBodyFoe(f) && f.ai) {",
   "tests": [
    "test/scenes/mwnpc5_pool.test.js"
   ]

@@ -91,6 +91,15 @@ them as a named exception (2026-10-19), as for Vanilla Enhanced and the desert's
   `node tools/layered-armor/build_hoodfix.mjs . <frames>` (needs pngjs). `build_cloak.py` does not know the female
   walk-from-behind frame 3-1's cloak moved down 4 px; rebuilding the cloak layer with it puts that frame back.
 
+## The hood on the body (HOOD-GAP, 2026-10-20)
+
+Dudey's shot of the female side walk (record 2, frames 2 and 3) showed the hood floating over the shoulders and the mace
+head pale and black. `applyCloak` no longer clears a helmet trim pixel at or below the hood's foot (3 px up from its
+lowest pixel in that column, along the hood's lower edge - a column whose foot is within 6 px of the lowest): that is
+the helmet's neck under the hood, not a tip in the air. A tip beside the hood's sides is cleared as before. `closeHoodFoot` fills a run
+of 1-5 empty pixels under the hood's lower edge with the hood's own foot colour where the body is right below it. The
+mace head of 2-2 is 2-3's, copied 3 px left in every tile (`tools/layered-armor/fix_mace_head.py`).
+
 ## Known limits
 
 - The female hurt frames have no gold trim: no trim source exists for them. Their metals come from the full-plate

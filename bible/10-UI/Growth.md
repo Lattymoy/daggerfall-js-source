@@ -148,8 +148,13 @@ sky is a canvas with a view and pending stars - so a face (the Firmament, the ca
 **mounted once a visit** into a host element of its own, and each draw of the page **moves that host** into the new
 pane (`drawStage`: the key changes, the last face is dropped; the same key, the same host).
 
-- **The window widens** while a face stands (`px-win-wide`: up to 1440 x 940, 98% of the screen) and the rail becomes a
-  strip over the face, wrapped and never scrolled so the lit page stays in sight.
+- **One window for the whole tab** (GROWTH-BOOK, 2026-10-20, Dudey: *"it looks very messy changing its sizes all the
+  time ... structure it better so it doesnt change the window each time you click an option in the growth tab"*). The
+  Growth tab always wears `px-win-growth` (up to 1320 x 860, 96% of the screen), face or none, so pressing the rail
+  never resizes the window. The rail is always the journal's left column, each entry with a short line under its name
+  (the Grimoire: the book's left page, a quarter of the book). Every page has the same bones: its title, its line (and
+  Full screen), then its stage filling the rest of the page - or, on the Specializations page, its text scrolling in
+  it. The Level page's door is a centred card: the level in a diamond, a heading, the line and Open.
 - **Full screen** moves the same host into a box over everything (on the body, so no ancestor's transform holds it)
   and back. The face stands above a strip of its own with the leave press in it (laid over the face, it sat on the
   Ascension's Ascend and the skies' summary panel), and the focus stays in the box (a Tab walked under it to the
@@ -159,8 +164,8 @@ pane (`drawStage`: the key changes, the last face is dropped; the same key, the 
   and the phone's Open door (below), the face full screen. The Ascension is laid out for the whole screen - at 1366x768
   in the pane its figure flattened to 28 px and its stars stood on each other, Ascend fell off a 1024x600 pane, and the
   Grimoire's book is scaled to the screen, not the pane (AUDIT GROWTH LANE2-8).
-- **The Grimoire's rail** is a strip over a face as Plus's is (its book's left page outranked it, and the sky lost a
-  third of its height - LANE2-9).
+- **The Grimoire's rail** is the book's left page at a quarter of the book (its usual third left the sky too little
+  room - LANE2-9), never a strip over the face (GROWTH-BOOK).
 - **A face is built only while its page stands** (a Level face dropped before its chunk landed drew its pool and played
   its fanfare - LANE2 N4), and a chunk that fails is tried once more; one a deploy took says a reload fixes it -
   MENU1's words (`enhancedChunk.js` RELOAD_TEXT), not "try again" (LANE2-10).

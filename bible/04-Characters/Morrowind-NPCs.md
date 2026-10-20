@@ -1087,6 +1087,14 @@ interiors'), and exterior.js's pool.
   not driven); and every beast Morrowind has none of (giant bat,
   sabretooth, spider, centaur, nymph, harpy, wereboar, scorpion,
   gargoyle, the dragonlings, the flesh atronach, the lamia).
+  A MOD'S MONSTERS (DEX7, 2026-10-20, `04-Characters/Enemy-Expansion.md`
+  section 10): a mod that adds mobiles past the classic ids registers its
+  own rows on the same law (`registerCreatureMatches` - a match or a
+  miss, ids as the reader keeps them, a flyer or a swimmer never in a
+  walker, never a class's mobile); CREATURE_MATCH stays the census of
+  DFU's own. Its people register beside the orcs' law
+  (`characters/foeBodies.js` registerPersonFoes): a monster that is a
+  person, in its race's body; a class that keeps its sprite (a rider).
 - THE HOSTS. `foeActor` wears a matched creature's look (`{ creature:
   [ids] }`, one frozen object a kind - a body key); `isBodyFoe` (a class
   foe, or a matched creature) is the offer's test at every foe host -

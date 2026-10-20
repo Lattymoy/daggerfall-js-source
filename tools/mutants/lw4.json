@@ -516,10 +516,19 @@
     ]
   },
   {
-    "name": "LW4-host-foe-level-flat",
+    "name": "LW4-host-foe-level-unwired",
     "file": "src/scenes/world.js",
-    "old": "    foeLevel: (type, level) => (type >= 128 ? level : ENEMY_BASICS[type]?.level ?? level),",
+    "old": "    foeLevel: enemyLevelOf,",
     "new": "    foeLevel: (type, level) => level,",
+    "tests": [
+      "test/systems/livingWorld/lw4_trouble.test.js"
+    ]
+  },
+  {
+    "name": "LW4-host-foe-level-flat",
+    "file": "src/characters/enemy/enemyBasics.js",
+    "old": "export const enemyLevelOf = (type, level) => (isClassEnemyId(type) ? level : ENEMY_BASICS[type]?.level ?? level);",
+    "new": "export const enemyLevelOf = (type, level) => level;",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
     ]

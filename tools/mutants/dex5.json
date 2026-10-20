@@ -1,0 +1,626 @@
+[
+ {
+  "name": "DEX5-executed-raised",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "const make = corpseTexture && !f.executed ? _corpsePrefabs",
+  "new": "const make = corpseTexture ? _corpsePrefabs",
+  "why": "an executed revenant's body takes a prefab - a revenant the port ended stands again",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-driven-after-gone",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "for (const f of foes) if (f.corpsePrefab && f.dead && f.corpse) f.corpsePrefab.frame?.(dt);",
+  "new": "for (const f of foes) if (f.corpsePrefab && f.dead) f.corpsePrefab.frame?.(dt);",
+  "why": "a body taken away by another road still counts down - and stands a troll",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-trigger-no-reach",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "<= s.radius + reach) return f;",
+  "new": "<= s.radius) return f;",
+  "why": "a missile must reach the trigger's centre-sphere alone - DaggerfallMissile's cast has its own radius",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-ash-on-its-foot",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "if (centre != null && size) pos[1] += centre - size.h / 2;",
+  "new": "if (centre != null && size) pos[1] += centre;",
+  "why": "the ash stood by its base, where DFU stands it by its centre",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-the-loot-kept",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "  f.corpseDisabled = true;   // PostParentedSetup",
+  "new": "  // f.corpseDisabled = true;   // PostParentedSetup",
+  "why": "the troll's body is searched, where PostParentedSetup destroyed its loot",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-the-cheat-ignored",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "if (ended || rising || !host.runs(f) || cheat()) return;",
+  "new": "if (ended || rising || !host.runs(f)) return;",
+  "why": "Cheat.DisableTrollRespawn changes nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-every-machine-counts",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "if (ended || rising || !host.runs(f) || cheat()) return;",
+  "new": "if (ended || rising || cheat()) return;",
+  "why": "a copy of another machine's body rises here too - two trolls",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-rises-in-silence",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "      host.say(t('dex.troll.recovered',",
+  "new": "      void (t('dex.troll.recovered',",
+  "why": "the HUD never says the troll recovered",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-never-burns",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "      const r = applySpell(spell, casterLevel, entity, sinks, Math.random, caster);\n      if (entity.health <= 0) burn();",
+  "new": "      const r = applySpell(spell, casterLevel, entity, sinks, Math.random, caster);",
+  "why": "a spell that brings the body to 0 leaves it lying",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-a-copy-burns",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "if (!host.runs(f)) { host.send(f, spell, casterLevel); return null; }",
+  "new": "if (!host.runs(f)) { host.send(f, spell, casterLevel); }",
+  "why": "a body another machine runs burns here too - beside the bundle sent to its runner",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-hurt-unfelt",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "if (n > 0) entity.health = Math.max(0, entity.health - n);",
+  "new": "if (n > 0) entity.health = Math.max(0, entity.health);",
+  "why": "the corpse's entity takes no damage",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-a-tougher-body",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "isPlayer: false, isClass: false, level: 0, maxHealth: 1, health: 1,",
+  "new": "isPlayer: false, isClass: false, level: 0, maxHealth: 100, health: 100,",
+  "why": "the corpse's entity is not BestiaryTrollCorpseEntity's 1 of 1",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-no-later-round",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "      runMagicRoundsFor(entity, from, to, { sinks });\n",
+  "new": "",
+  "why": "a lasting effect's later rounds never reach the body",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-the-champion-named",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "    sayEnemyDied(host.say, f.mobileType);",
+  "new": "    sayEnemyDied(host.say, f.mobileType, f.entity);",
+  "why": "the burn names the dead troll's champion title, where the corpse knows its MobileID alone",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-every-body-saved",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "    if (c.down) activeCorpses.push({ key, respawnBuffer: c.respawnBuffer });",
+  "new": "    if (true) activeCorpses.push({ key, respawnBuffer: c.respawnBuffer });",
+  "why": "a body risen, freed or of a destroyed host is saved and set again",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-a-quickload-forgets",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "    else _pending.set(key, respawnBuffer);",
+  "new": "",
+  "why": "a body stood after its record (a quickload's order) starts its ten seconds over",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-no-time-restored",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "!Number.isFinite(respawnBuffer) || respawnBuffer <= 0) continue;",
+  "new": "!Number.isFinite(respawnBuffer) || respawnBuffer < 0) continue;",
+  "why": "a body saved with no time left is set again, where RestoreSaveData skips it",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-never-installed",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "    installDexTroll(DEX_VENDOR);\n",
+  "new": "",
+  "why": "the prefab is never on the door - the troll's body is a plain corpse",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-my-missile-passes",
+  "file": "src/scenes/hostMagic.js",
+  "old": "const hitBody = m.dead ? null : corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS);",
+  "new": "const hitBody = null;",
+  "why": "my spell's missile flies through the body's trigger",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-the-street-rise-stands-none",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "if (!(await h.spawnFoe(f.mobileType, [p[0], p[1], p[2]], { feetGiven: true, replacing: true }))) return false;",
+  "new": "if (!(await ({}))) return false;",
+  "why": "the body goes and no troll stands",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-the-street-ash-unkept",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "c.pixelKey = f.corpsePixelKey = pixelKey; f.corpseMarker = c; h.corpseBatches.push(c);",
+  "new": "c.pixelKey = f.corpsePixelKey = pixelKey; f.corpseMarker = c;",
+  "why": "the ash is minted and never drawn",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5-the-dungeon-loot-gate",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "f._ownFrom == null && !f.corpseDisabled; }",
+  "new": "f._ownFrom == null; }",
+  "why": "underground the troll's body is searched",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-wire-unbounded",
+  "file": "src/net/wire.js",
+  "old": "if ((r.bg !== 1 && r.bg !== 2) || r.d !== 1) return null; out.bg = r.bg;",
+  "new": "if (r.d !== 1) return null; out.bg = r.bg;",
+  "why": "any word rides as a body gone",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-told-twice",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "if (!f?.dead || f.corpseDestroyed || (kind !== 1 && kind !== 2)) return;",
+  "new": "if (!f?.dead || (kind !== 1 && kind !== 2)) return;",
+  "why": "a body already gone is told again - a second ash, a second vanish",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-a-bare-copy-keeps-it",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "      else reach.vanish(f);   // a copy with no prefab",
+  "new": "      // else reach.vanish(f);   // a copy with no prefab",
+  "why": "a copy with no prefab of its own keeps the body its runner lost",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-a-copy-sends-nothing",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "if (!host.runs(f)) { host.send(f, spell, casterLevel); return null; }",
+  "new": "if (!host.runs(f)) { return null; }",
+  "why": "a peer's missile on the body reaches nobody",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-ash-a-vanish",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "      if (kind === 2) host.toAsh(f, TROLL_CORPSE.ash);\n      else host.vanish(f);",
+  "new": "      host.vanish(f);",
+  "why": "a copy told of a burn loses the body and stands no ash",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-street-hit-unmarked",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "h.sendHit(f, { dmg: 0, kind: 'spell', ...sp, cs: 1 });",
+  "new": "h.sendHit(f, { dmg: 0, kind: 'spell', ...sp });",
+  "why": "the peer's bundle reads as a blow on a dead foe - refused",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-owner-refuses",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    if (f?.dead && data.cs === 1 && foes.includes(f)) { const s = hitSpellOf(data); return !!s && !!f.corpsePrefab?.struck(s.spell, s.level, null); }",
+  "new": "",
+  "why": "the owner turns a peer's bundle on its body away",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-street-record-silent",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "      if (!onWatch && f.dead && f.corpseDestroyed) r.bg = f.corpseDestroyed;",
+  "new": "",
+  "why": "the owner's record never says the body burnt",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-copy-unmoved",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    if (r.d === 1 && r.bg) corpsePrefabs.told(f, r.bg);",
+  "new": "",
+  "why": "the peer's copy keeps its body after the owner's burnt",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-pile-said",
+  "file": "src/scenes/bodyLootHost.js",
+  "old": "    if (f?.corpseDisabled) return 0;   // DEX5b",
+  "new": "    // if (f?.corpseDisabled) return 0;   // DEX5b",
+  "why": "the owner says the troll's pile lies on its body - and the peer's copy opens",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-ash-a-body",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "if (npcLane) for (const f of foes) if (f.dead && f.corpse && !f.corpseDestroyed && isBodyFoe(f) && f.ai)",
+  "new": "if (npcLane) for (const f of foes) if (f.dead && f.corpse && isBodyFoe(f) && f.ai)",
+  "why": "the street's ash stands the troll's Morrowind body over it",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-dungeon-record-silent",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    if (f.dead && f.corpseDestroyed) r.bg = f.corpseDestroyed;   // DEX5b",
+  "new": "    // if (f.dead && f.corpseDestroyed) r.bg = f.corpseDestroyed;   // DEX5b",
+  "why": "a joiner never hears the body went",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-joiner-unmoved",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    if (r.d === 1 && r.bg) corpsePrefabs.told(f, r.bg);   // DEX5b: its runner's prefab took the body - this copy's goes too\n",
+  "new": "",
+  "why": "a joiner's copy keeps its body after the seat's rose or burnt",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "DEX5b-the-seat-refuses",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    if (f?.dead && data.cs === 1 && (xs || i < _layoutFoes)) { const s = hitSpellOf(data); return !!s && !!f.corpsePrefab?.struck(s.spell, s.level, null); }",
+  "new": "",
+  "why": "the seat turns a joiner's bundle on a body away",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-LD-dungeon-rise-stands-none",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "if (!(await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]]))) return false;",
+  "new": "if (!(await ({}))) return false;",
+  "why": "the dungeon's rise takes the body and stands no troll",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-LD-dungeon-every-copy-runs",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "    runs: (f) => !h.isPuppetFoe(f),",
+  "new": "    runs: (f) => true,",
+  "why": "every machine counts a copy's body down - a troll per player",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-LD-dungeon-no-key",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "return i >= 0 && i < h.layoutFoes() ? `${h.locationKey()}|${i}` : null; },",
+  "new": "return null; },",
+  "why": "no dungeon body is saved with its time",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-LD-dungeon-no-ash",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "      if (p) h.mintMarker({ corpseTexture: ash, feet: p, centre: ash.centre }).then((c) => {",
+  "new": "      if (false) h.mintMarker({ corpseTexture: ash, feet: p, centre: ash.centre }).then((c) => {",
+  "why": "a burnt body stands no ash underground",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-LD-dungeon-trigger-at-foot",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "body: (f) => (f.corpsePos ? { pos: f.corpsePos, size: f.corpseBatch?.size ?? null } : null),",
+  "new": "body: (f) => (f.corpsePos ? { pos: f.corpsePos, size: null } : null),",
+  "why": "the dungeon's trigger about the body's foot, not its flat's centre",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-LD-dungeon-rise-a-quest-foe",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]])",
+  "new": "await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]], { allied: true })",
+  "why": "the risen troll stands an ally, not CreateEnemy's hostile",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-LD-pending-never-cleared",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "export function restoreTrollSaveData(rec) {\n  _pending.clear();",
+  "new": "export function restoreTrollSaveData(rec) {",
+  "why": "a load's pending times outlive it and land on a later body",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-LD-dungeon-copy-keeps-body",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "    vanish: (f) => { f.corpseDestroyed = 1; h.freeCorpse(f); },",
+  "new": "    vanish: (f) => { f.corpseDestroyed = 1; },",
+  "why": "a body told gone (or settled) keeps lying underground",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D8-rise-frees-first",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "      if (!(await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]]))) return false;\n      if (f.dead && f.corpse) { f.corpseDestroyed = 1; h.freeCorpse(f); }",
+  "new": "      f.corpseDestroyed = 1; h.freeCorpse(f);\n      if (!(await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]]))) return false;",
+  "why": "the body taken before the stand answers - a refused stand loses the troll",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D8-refused-ends",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "if (!stood) { c.respawnBuffer = TROLL_CORPSE.respawnTime; return; }",
+  "new": "if (!stood) { end(); return; }",
+  "why": "a refused stand ends the body's countdown for good",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D8-rising-trigger",
+  "file": "src/systems/enemyExpansion/dexTroll.js",
+  "old": "    sphere() {\n      if (ended || rising) return null;",
+  "new": "    sphere() {\n      if (ended) return null;",
+  "why": "a missile meets a body already rising",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D2-unforgotten",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    corpsePrefabs.forget(f);   // AUDIT DEX D2",
+  "new": "    // AUDIT DEX D2",
+  "why": "a foe standing up again keeps its body's fate - its next death lays no body",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D1-not-relaid",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    else if (sf.dead && f.corpseDestroyed) { corpsePrefabs.forget(f); spawnCorpse(f); }",
+  "new": "    else if (false) { corpsePrefabs.forget(f); spawnCorpse(f); }",
+  "why": "a load lays no body where a prefab took it since the save",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D1-ash-kept",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "      for (const b of ashes) { const i = h.billboardBatches.indexOf(b); if (i >= 0) h.billboardBatches.splice(i, 1); h.renderer.destroyBillboardBatch(b); }",
+  "new": "      for (const b of []) { const i = h.billboardBatches.indexOf(b); if (i >= 0) h.billboardBatches.splice(i, 1); h.renderer.destroyBillboardBatch(b); }",
+  "why": "a load's rebuilt level keeps the ash",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D3-memory-drops-bg",
+  "file": "src/net/wire.js",
+  "old": "  if (sf.bg !== undefined) { if ((sf.bg !== 1 && sf.bg !== 2) || !sf.dead) return null; out.bg = sf.bg; }",
+  "new": "  if (sf.bg !== undefined) { if ((sf.bg !== 1 && sf.bg !== 2) || !sf.dead) return null; }",
+  "why": "the room's memory forgets a body's fate - a burnt troll rises again for an arrival",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D3-save-says-none",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "...(f.dead && f.corpseDestroyed ? { bg: f.corpseDestroyed } : {}),",
+  "new": "...(f.dead && f.corpseDestroyed ? { noBody: true } : {}),",
+  "why": "the save writes no kind - the memory, which drops noBody, lays the body again",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D4-unsettled",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "if (!f.dead) questPoolOps.removeFoe(f); corpsePrefabs.settle(f, sf.bg);",
+  "new": "if (!f.dead) questPoolOps.removeFoe(f);",
+  "why": "a load leaves a gone body unsettled - its record says no `bg` and every copy lays a ghost body",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D6-copy-keeps-marker",
+  "file": "src/scenes/corpsePrefabHost.js",
+  "old": "if (!f.puppet) h.removeCorpse(f); else dropMarker(f); }",
+  "new": "if (!f.puppet) h.removeCorpse(f); }",
+  "why": "a street copy told a body gone keeps its marker",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D7-cs-ungated",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "if (f?.dead && data.cs === 1) { if (f.entity?.team === 'PlayerAlly' || !(ownLoose(f) || (!!ownQuestTag(f) && ownPeerMayHit(id, f)))) return false;",
+  "new": "if (f?.dead && data.cs === 1) {",
+  "why": "any peer burns my quest or allied troll's body",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-D12-destroy-keeps",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "    destroy() { alive = false; for (const f of [...minted]) release(f); },",
+  "new": "    destroy() { alive = false; },",
+  "why": "a destroyed host's prefabs, and their foes, stay held by the save map",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A1-male-only",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "return ((f?.mobile?.gender ?? f?.gender) === 'female' && row?.femaleCorpseTexture) || row?.corpseTexture;",
+  "new": "return row?.corpseTexture;",
+  "why": "a female mobile lies as the male corpse",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-B3-no-clock",
+  "file": "src/scenes/corpseMarker.js",
+  "old": "  if (isAnimatedFlat(frames)) {",
+  "new": "  if (false) {",
+  "why": "a corpse of three frames stands on its first for ever",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-B3-unclocked",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    flatAnims.remove(f.corpseBatch);   // AUDIT DEX B3",
+  "new": "    // AUDIT DEX B3",
+  "why": "a freed body keeps a clock on its dead batch",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-B3-street-untick",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    tickCorpseMarkers(corpseBatches, dt);",
+  "new": "    ;",
+  "why": "the street's bodies never tick",
+  "tests": [
+   "test/systems/enemyExpansion/dex5_audit.test.js",
+   "test/systems/enemyExpansion/dex5_troll.test.js"
+  ]
+ }
+]

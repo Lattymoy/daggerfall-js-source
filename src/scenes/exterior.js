@@ -251,6 +251,7 @@ import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the c
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // WATER1: the water's switch
+import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 import { createCoverIndex, isCoverFlat, coverProxies } from '../ai/cover.js';   // TACT1: billboards are cover
 import { flatBodies } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door (as world.js)
@@ -2240,7 +2241,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     hurtGuard: (f, damage, feet) => cityGuards.hurtGuard?.(f, damage, feet, null),
     damageFoe: (f, damage, feet) => exteriorFoes.damageFoe(f, damage, feet, null, { kind: 'melee' }),
     voice: (f) => enemyHeavyPainVoice(f),
-    playVoice: (f, v) => audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + v.pitchLift }),   // AUDIT-RR2 G5: EnemySounds.cs:172-175
+    playVoice: (f, v) => audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], monsterVolume(), { maxDistance: 16, pitch: 1 + v.pitchLift }),   // AUDIT-RR2 G5: EnemySounds.cs:172-175
   });
   // AUDIT 62 F14: DFU's population is INACTIVE indoors. PlayerEnterExit
   // .DisableAllParents (PlayerEnterExit.cs:1047) does

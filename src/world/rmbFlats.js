@@ -37,7 +37,7 @@
 
 import { RMB_DIMENSION, SCALE_DIVISOR } from '../formats/blocksFile.js';
 import { GLOBAL_SCALE } from './meshReader.js';
-import { applyBillboardXml } from './billboardXml.js';   // MM1: the xml scale registry (a leaf)
+import { applyBillboardXml, billboardXmlScaleOf, billboardXmlGeneration } from './billboardXml.js';   // MM1: the xml scale registry (a leaf)
 import { textureReplacementEnabled, hasTextureReplacement } from '../systems/textureReplacement.js';   // AUDIT MM1: DFU's two gates on the xml scale
 import { flatFieldFor, sowField } from './flatFields.js';   // WD3: a scene model that is a field of flats (the town mods' crops)
 import { PROPS_OFFSET_Y } from './rmbLayout.js';   // FIELD BUGS 2026-10-04d CROPS: a field's batch stands where its misc model does
@@ -173,20 +173,41 @@ export function heldFootprints(autoMap, subRecords) {
  * and gets a different entry, so there is no staleness to invalidate
  * and no table to grow. Archive numbers would have needed both.
  *
- * The XML scale is NOT cached and deliberately: `applyBillboardXml`
- * reads a LIVE predicate per registered vendor (billboardXml's own
- * `isOn`), so a mod toggled in the settings menu has to be seen on the
- * next frame. It is also the cheap half - a registry walk over one or
- * two entries, against three allocations and two record reads.
+ * The XML scale is read at every ask and deliberately: billboardXml
+ * reads a LIVE predicate per registered vendor (its own `isOn`), so a
+ * mod toggled in the settings menu has to be seen on the next frame. The
+ * walk is the cheap half - one or two entries.
+ *
+ * AUDIT DEX B7: but the PRODUCT was minted at every ask - `applyBillboardXml`
+ * answers a new `{ w, h }` (and `billboardXmlScale` a new `{ x, y }` under
+ * it), two objects per foe per frame for every stand-in archive the xml
+ * names (Daggerfall Enemy Expansion's every sprite), behind a door its
+ * hosts read as "a shared, cached object". The xml-applied size is cached
+ * beside the classic one now, per texture and record, and kept while the
+ * same live table entry answers (its array, by identity - a switch turned
+ * moves it) under the same registrations (billboardXmlGeneration - a table
+ * registered again moves it).
  */
 const _mobileSize = new WeakMap();   // texture -> size by record
+const _mobileXml = new WeakMap();    // AUDIT DEX B7: texture -> by record { s, gen, size } - the xml-applied size
 
 export function mobileBillboardSize(t, record) {
   let byRecord = _mobileSize.get(t);
   if (!byRecord) { byRecord = []; _mobileSize.set(t, byRecord); }
   let size = byRecord[record];
   if (!size) { size = scaledBillboardSize(t.getSize(record), t.getScale(record)); byRecord[record] = size; }
-  return textureReplacementEnabled() ? applyBillboardXml(t?.archive, record, size) : size;
+  // DEX2: and a stand-in's whatever the switch - a mod-only archive's pictures ARE the port's vendored art, drawn
+  // ungated (systems/textureReplacement.js SURV2), so the xml that sizes them goes with them (Daggerfall Enemy
+  // Expansion's riders at 1.3, its centurion at 0.7); DFU draws a mod's enemy only under AssetInjection, scale and all
+  if (!(textureReplacementEnabled() || t?.vendor === true)) return size;
+  const s = billboardXmlScaleOf(t?.archive, record);
+  if (!s) return size;
+  let byXml = _mobileXml.get(t);
+  if (!byXml) { byXml = []; _mobileXml.set(t, byXml); }
+  const gen = billboardXmlGeneration();
+  let x = byXml[record];
+  if (!x || x.s !== s || x.gen !== gen) { x = { s, gen, size: { w: size.w * s[0], h: size.h * s[1] } }; byXml[record] = x; }   // applyBillboardXml's product
+  return x.size;
 }
 export function billboardSize(t, record) {
   const size = scaledBillboardSize(t.getSize(record), t.getScale(record));

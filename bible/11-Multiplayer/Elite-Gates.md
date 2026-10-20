@@ -2889,6 +2889,13 @@ own bodies; and every one is a company of one's to earn - the Last Armsmaster's 
 earned, never bought. The Broker's insignia stay the gate's. Cosmetic auras draw at nothing during a trial (THE QUIET
 COMPANY, section 25.4).
 
+**SPIRE-FIRST (2026-10-20): the first company came.** The account Serveride - shown in the room by his character's name,
+Severide - took Redoubt 10 first, alone, in 1:17:40 (the herald's post; the Descent's Alone bracket), and the owner
+granted it: *"Since hes world first. He should get this title plus a custom aura"*. `EG_FIRST_HANDLES` names Serveride,
+and the list is closed with him - there is one first company. Firstlight was rebuilt as that aura, its own and nobody
+else's (section 31, SPIRE-FIRST). The list is ACCOUNTS' HANDLES: the herald says the name the room reads, which since
+NAME-AS may be a character's, so a name off the herald is never put on it as it stands (section 31, SPIRE-FIRST-NAME).
+
 **EG-E1 record (2026-10-12): what a Redoubt pays.** The account service pays a Redoubt's `w` receipt at its claim, by
 the pay law `net/eliteGates/egPay.js`, and the Broker sells the Panoply's sink. File by file:
 
@@ -10109,3 +10116,101 @@ skin and DFO Grimoire at 1280x800 and 390x844 and checks the face, the carved fr
 finger: 244 of 244.
 
 **The relay.** Nothing of this is in its bundle.
+
+### SPIRE-FIRST - 2026-10-20 - FIRST OF THE SPIRE GRANTED, AND FIRSTLIGHT REBUILT AS SERVERIDE'S OWN
+
+The player, on Discord: *"Would it be possible for you to make a First of the Spire title for me? I achieved it Saturday
+night."* - the herald's post beside it: *First of the Spire: Severide's company is the first ever to take Redoubt 10 of
+the Battlespire (Hall 50), in 1:17:40 - Severide.* The owner: *"Since hes world first. He should get this title plus a
+custom aura"*.
+
+**What was there (FACT, at fc2a29e0c).** The title and its aura were built at EG-E2 and waiting: `spirefirst` First of the
+Spire and `firstlight` Firstlight, held by name off `EG_FIRST_HANDLES` (`server-account/src/titles.js` `isSpireFirst`),
+which was empty "until the first company takes Redoubt 10", with its letter written at the named account's next balance's
+read (EG-ZF, `egFirstPost`). One name in the herald's post, and the Descent's *Alone* bracket, say the company was one.
+(This record first read the post's *Severide* as the account's handle. It is not: the herald says the name the room reads,
+the token's `n`, which since NAME-AS may be the character's - SPIRE-FIRST-NAME, below, corrected it.)
+
+**The grant.** `server-account/wrangler.toml` reads `EG_FIRST_HANDLES = "Serveride"` (SPIRE-FIRST-NAME; this slice wrote
+the herald's `Severide`). Read off the config at every token and every call, case-folded (`handleList`), so once the
+account worker deploys, the account holds the title and Firstlight and is written the letter once; a near name is
+another account. No column, no migration, no version:
+both ids have been in the token's vocabulary since EG-E2.
+
+**The custom aura: Firstlight, rebuilt.** EG-E2 drew it as one dawn-white ring with a sunrise circling it and a veil to
+the shin - the plainest of the auras. A second aura beside it would have been a new id in the token's vocabulary (a relay
+version, the hello's body bound, every positional pin) for the same honour; Firstlight is held only by the first company
+and that company is Severide, so Firstlight IS his own, and it was rebuilt to say what he did. `src/render/auraRing.js`,
+the eleventh look, still added whole, in the Spire's dawn (`ui/playerBadge.js` `SPIRE_DAWN`, `SPIRE_DAWN_GOLD`, and
+`SPIRE_DAWN_ROSE`, new: the sky low at sunrise):
+- **THE CLIMB** (`dawnClimb`, node's law, the shader's `dawnTaken`/`dawnFlare` its copy): every twelve seconds the ten
+  Redoubts are taken one after another, I to X, each flaring as it is; X held - the dawn broken - for some four seconds;
+  then all of it back down, and again (`DAWN_CLIMB`).
+- **THE GROUND**: the dial - the dawn-white ring and a thinner gold line inside it - with the climb's lane between them lit
+  round from I to where the climb has come, its head bright; the ten Redoubts on the ring as lozenges (`dawnMarkAngle`),
+  an outline until taken and filled with the dawn after, X the larger and a star of four points once the dawn breaks; the
+  sunrise still circling the ring; and past it a sunburst of twenty rays, long and short by turns, gold at the ring and
+  rose at their tips, turning slowly - faint until X is taken, when the dawn's light runs out along them across the
+  ground and they brighten.
+- **THE WALL**, the pass's strip at the ring, now 1.9 m (`DAWN_H`): ten spires of light, one off each Redoubt, I the
+  lowest (0.16 m) and X the tallest (0.74 m), each a third of itself until its Redoubt is taken and standing whole after
+  (`dawnSpireH`) - rose at the foot, gold up it, white at its point, a star there; as X is taken a shaft of first light
+  shoots up off its point past the head and stands faint while the dawn holds; dawn-white motes rising off the ring, more
+  once it has broken; the veil to the shin kept. The shaft and the motes are not drawn from inside the ring, so the
+  wearer's own first person is never veiled by them (the radiance's law).
+- Every rate whole over the clock (`spireRatesWhole`, the motes' two paces too); the Redoubts, the lane and the rays whole
+  round, so no seam behind the wearer nor where the sunburst's own round closes as it turns. No third draw, no host
+  changed (THE FOUR HOSTS: `scenes/world.js` draws every look through the pass by its key; `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` draw through world.js's pass; `scenes/exterior.js` draws no aura - FLAGGED, unchanged).
+- Not a DFU member: Daggerfall Unity has no accounts, titles or auras (Ledger A's EG-PLAY row).
+
+**Seen** in headless Chromium's WebGL2 with a stand-in body: it compiles, links and draws with no GL error; from the
+wearer's third-person eye the ten spires stand round the feet and climb, the tenth crowned; from above the dial, the climb's
+lane and the sunburst; from X's side its spire and its shaft. `tools/auraProbe.mjs` reads it (94/94): the ring whole and
+warm from above, the lane lit behind the climb and dark ahead (node's law), X's spire whole once taken and a third
+before, the shaft as X is taken and none before, no seam where the ring closes, no jump at the wrap, nothing before it
+kindles (shots `firstlight.png`, `firstlight_top.png`, `firstlight_side.png`).
+
+**Pins.** `test/net/eliteGates/egeco_honours.test.js`: the config pin moved - `EG_FIRST_HANDLES` reads `Serveride` since SPIRE-FIRST-NAME (`Severide` here first; it read
+empty), held in any case, near names refused; Firstlight's crisp ring moved to read two centimetres either side of its
+line (PIN MOVED - the lit lane now lies inside the old hand's reach, and EGECO2-dawn-ring-gone survived the old pin);
+three new tests - the climb's law, the ground RUN, the wall RUN, each through the interpreter (`test/glsl.mjs`) on the
+code the GPU runs, the seam a hair either side of atan's wrap and of the sunburst's own. `tools/mutants/egeco_honours.json`:
+SPIRE-FIRST's 23 (the account left off the list; the law's taken-at-once, never-down, flare-held and a whole spire before; the
+shader's taken-at-once, order reversed, never down, lane unlit, lane lit whole, faces never filled, star always, rays
+flat, rays all long, wave gone, spires one height, spires never rise, shaft from inside, shaft never, veil past the shin,
+the wall kindled at once, the rays' seam and the wall's seam) and the list's 63 before them - 86, every one dead. The
+first run of the new pins found two survivors (a taken lozenge was told from an untaken one only by the flare and the
+lane beside it; a spire's rise only by its brightness) and the rays' seam a third (a non-whole ray count closes where the
+sunburst's own round does, which turns, not behind the wearer); each pin was aimed at what it claims.
+
+**Left as it is, said.** Not seen in a running game client - the probe and the interpreter are its readers. Like every
+aura it stands on a wearer turned beast and on a rider. The climb runs on the shared clock, not the wearer's seed: one
+company ever holds it.
+
+### SPIRE-FIRST-NAME - 2026-10-20 - THE LIST NAMES THE ACCOUNT, NOT THE NAME THE HERALD READ
+
+The owner, after SPIRE-FIRST merged (#1083): *"Its Serveride. You did the wrong name"*.
+
+**What was wrong (FACT, at d883d3778).** SPIRE-FIRST put `EG_FIRST_HANDLES = "Severide"`, the name off the herald's post,
+on the reading that the herald names an earner by the account's handle. It names them by the token's `n`, the name the
+room reads (`server/src/index.js` `_egOpen`: each member's `sanitizeName` of the hello's verified name), and since NAME-AS
+(acct122, `06-Systems/Accounts-And-Cloud-Saves-Arc.md`) that is the account's name OR the realm character's, as the
+account chose. `isSpireFirst` matches the list against `player.handle`. So the list named a handle that is not his: the
+account Serveride wears his character's name, Severide, and held nothing - and nobody else did either: NAME-AS refuses
+to sign a one-word character's name that is another account's handle (`wornNameRefusal`, `taken`), so a `Severide` worn
+in the room was no account's handle when its token was minted.
+
+**The fix.** `server-account/wrangler.toml` reads `EG_FIRST_HANDLES = "Serveride"`, on the owner's word; its comment, and
+`titles.js` beside `isSpireFirst`, now say the list is accounts' handles and never a name off the herald. The record
+above is corrected where it read the post's name as the handle.
+
+**Pins.** `test/net/eliteGates/egeco_honours.test.js`: the list reads `Serveride` (PIN MOVED), held in any case; `Severide`,
+the character's name, refused as another account beside the near names. `tools/mutants/egeco_honours.json`:
+SPIRE-FIRST-severide-not-granted re-aimed as SPIRE-FIRST-serveride-not-granted, and SPIRE-FIRST-NAME-the-character-listed
+(the list naming the character) - both dead.
+
+**Left as it is, said.** The herald still posts the name the room reads - it is the room's word, and a player who chose to
+be seen by their character is seen so in Discord too. A list in config is still a person's edit: Hour's First's names
+came from the clears' claims (`sd-clears.yml`), which carry the account; the Spire's company has no such workflow, so
+the next name put on a handle list off the herald is checked against the account first.

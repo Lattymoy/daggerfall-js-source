@@ -28,6 +28,7 @@ import { validLootList, LOOT_LIST_MAX, LOOT_NEWER_TEXT } from '../../src/systems
 import { withoutCarried } from '../../src/world/interior/interiorShared.js';
 import { carriedPieces } from '../../src/systems/item/itemIds.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
+import { corpseTextureOf } from '../../src/scenes/corpseMarker.js';   // AUDIT DEX A1: the corpse mints read it
 import { RAY_DISTANCE } from '../../src/player/activate.js';
 
 const SRC = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
@@ -94,7 +95,7 @@ function dungeon() {
     _foesFrom: 'a0a0-0001', _sharedStamp: 'st1', _roomClaimN: 0, _roomMintHold: 0, _roomNowMs: 0,
     lootKey: 'N', onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, withoutCarried, carriedPieces,
     eliteLootOpts: () => ({}), _sharedFoe: () => false, fightN: () => 1, rollPileItems: () => [], settleLootFlat: () => {}, searchHeard: () => {}, searchRoom: { ours: () => true, fields: () => ({}) },
-    ENEMY_BASICS, RAY_DISTANCE, setMidScreenText: () => {}, activeOverlay: null, droppedLoot: { physical: { owns: () => false }, pileFor: () => null, contents: () => null }, droppedTorches: { activate: () => false },
+    ENEMY_BASICS, corpseTextureOf, RAY_DISTANCE, setMidScreenText: () => {}, activeOverlay: null, droppedLoot: { physical: { owns: () => false }, pileFor: () => null, contents: () => null }, droppedTorches: { activate: () => false },
     camps: { activate: () => false }, plaqueActionFor: () => null, silverFindKey: () => null, silverFindAt: () => {}, quickLootTake: () => false, showPickups: null, lootPile: () => null, RANDOM_TREASURE_ARCHIVE: 216,
     openInventory: (source, onEmptied, o) => { const w = { source, onEmptied, lootKey: o?.lootKey ?? null, done: false }; windows.push(w); return w; },
     activateSearchable: () => 0,

@@ -13,6 +13,7 @@ import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
 import { ARMOR_ENUM, WEAPONS_ENUM, equipmentVariantFor } from '../combat/enemyEquipment.js'; import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; import { MOBILE_TYPES } from './mobile/mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
 import { npcHint } from './wardrobe.js';   // MWNPC17: the man under the kit his own - his head, his hair, the clothes' records
+import { isClassEnemyId, isClassicEnemyId } from './enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class; DEX7: a mod's person row names its own mobile
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
  *  Bay is Breton and Redguard country; the rest are travellers, the beast folk fewest. */
@@ -113,8 +114,36 @@ export const VAMPIRE_MOBILES = new Set([MOBILE_TYPES.Vampire, MOBILE_TYPES.Vampi
  *  hands PeerBodies as the wire's wolf bit, so it stands in Bloodmoon's wolf as a transformed player does (WEREWOLF1) -
  *  and where the data has no wolf, PeerBodies refuses it and the sprite stands. */
 export const WOLF_MOBILE = MOBILE_TYPES.Werewolf;
-/** MWNPC12: a foe that stands as a person - a class foe, or an orc; MWNPC14: or a vampire; MWNPC15: or a werewolf. */
-export const isPersonFoe = (f) => isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) || VAMPIRE_MOBILES.has(f?.mobileType) || f?.mobileType === WOLF_MOBILE;
+/** DEX7 (bible/04-Characters/Enemy-Expansion.md section 10): A MOD'S PEOPLE, AND ITS CLASSES THAT KEEP THEIR SPRITES.
+ *  A mod's mobile past the classic ids registers here where the default - a class a person, a monster its creature row
+ *  (creatureBodies.js registerCreatureMatches) - is wrong for it: `{ race }` a monster that is a person, drawn in that
+ *  race's body as an orc is in the Orc's (dressed from its own equip table, MWNPC12's law); `{ sprite: reason }` a class
+ *  that no person's body stands for (a rider - its horse is its sprite's), which keeps its sprite. Each mobile once;
+ *  never a classic one - DFU's own are the laws above.
+ *  @type {Map<number, Readonly<{ race?: string, sprite?: string }>>} */
+const _modPeople = new Map();
+/** Register a mod's rows: `[mobileType, { race } | { sprite: reason }]` pairs. */
+export function registerPersonFoes(rows) {
+  for (const [t, p] of rows) {
+    if (!Number.isInteger(t) || isClassicEnemyId(t) || _modPeople.has(t)) throw new Error(`registerPersonFoes: mobile ${t} is classic or already named`);
+    if (!!p.race === !!p.sprite) throw new Error(`registerPersonFoes: mobile ${t} is a person or a sprite, never both`);
+    if (p.race && !FOE_RACES.some(([r]) => r === p.race)) throw new Error(`registerPersonFoes: mobile ${t}'s race ${p.race} is none of the Bay's`);
+    if (p.sprite && !(String(p.sprite).length > 4)) throw new Error(`registerPersonFoes: mobile ${t}'s sprite says why`);
+    _modPeople.set(t, Object.freeze({ ...p }));
+  }
+}
+/** The test seam. */
+export function _resetPersonFoes() { _modPeople.clear(); }
+/** A mod's person race for a mobile, or undefined. */
+const modRace = (t) => _modPeople.get(t)?.race;
+
+/** MWNPC12: a foe that stands as a person - a class foe, or an orc; MWNPC14: or a vampire; MWNPC15: or a werewolf; DEX7:
+ *  a mod's mobile as its row says (a monster that is a person; a class that keeps its sprite is none). */
+export const isPersonFoe = (f) => {
+  const p = _modPeople.get(f?.mobileType);
+  if (p) return !!p.race;
+  return isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) || VAMPIRE_MOBILES.has(f?.mobileType) || f?.mobileType === WOLF_MOBILE;
+};
 /** MWNPC9: a foe that stands in a body - a person (MWNPC12: an orc too), or a creature Morrowind has a match for
  *  (creatureBodies.js). */
 export const isBodyFoe = (f) => isPersonFoe(f) || !!creatureLook(f);
@@ -147,7 +176,7 @@ export function foeLook(f) {
   if (f._mwLook && f._mwLookKey === wornKey && f._mwLookSeed === h) return f._mwLook;
   f._mwLookSeed = h;
   const bay = bayPerson(h), faceIndex = bay.faceIndex;
-  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : bay.race;   // MWNPC12: an orc in Morrowind's Orc body
+  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : modRace(f.mobileType) ?? bay.race;   // MWNPC12: an orc in Morrowind's Orc body; DEX7: a mod's person in its row's race
   const gender = f.gender === 'female' ? 'female' : 'male';
   f._mwLookKey = wornKey;
   return (f._mwLook = { race, gender, faceIndex, items: clothesUnder([...worn], FOE_WARDROBE[gender], h), npc: npcHint(h, 0), ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}), ...(f.mobileType === WOLF_MOBILE ? { wolf: true } : {}) });   // MWNPC14: a vampire's face; MWNPC15: a werewolf's beast; MWNPC17: the seed every machine shares, so the copy is the same man
@@ -303,30 +332,39 @@ export function rosterLook(rec, { mobileType, gender = 'male', seed = 0, race = 
   const orc = ORC_MOBILES.has(mobileType);   // MWNPC12: a person, never a creature
   const vampire = VAMPIRE_MOBILES.has(mobileType);   // MWNPC14: and a vampire
   const wolf = mobileType === WOLF_MOBILE;   // MWNPC15: and a werewolf
-  if (!orc && !vampire && !wolf && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));
+  const mod = _modPeople.get(mobileType);   // DEX7: a mod's mobile as its row says
+  if (mod?.sprite) return (rec._mwRosterLook = null);
+  if (!orc && !vampire && !wolf && !mod && !isClassEnemyId(mobileType)) return (rec._mwRosterLook = creatureLook({ mobileType }));
   const h = mix((seed >>> 0) ^ mix((mobileType | 0) + 0x9e3779b9));
   const bay = bayPerson(h);
   const g = gender === 'female' ? 'female' : 'male';
-  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : vampire || wolf ? [] : [rosterBlade(h)]);   // MWNPC14: a vampire's claws are its own
+  const items = /** @type {any[]} */ (orc ? orcKit(mobileType, h) : vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);   // MWNPC14: a vampire's claws are its own; DEX7: and a mod's monster's (SetEnemyCareer's table arms none - equipmentVariantFor)
   if (STEEL_CLASSES.has(mobileType)) {
     for (const [slot, piece] of STEEL_PLATE) items.push({ templateIndex: ARMOR_ENUM[piece], group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });   // steel (MWNPC12: by mwArmorRecords' own table)
     if (mobileType === MOBILE_TYPES.Knight_CityWatch) items.push({ templateIndex: ARMOR_ENUM.Helm, group: 'Armor', equipSlot: EQUIP_SLOTS.Head, material: ARMOR_MATERIAL.Steel });
   }
-  return (rec._mwRosterLook = { race: orc ? 'Orc' : race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h), npc: npcHint(h, 0), ...(vampire ? { vampire: true } : {}), ...(wolf ? { wolf: true } : {}) });   // MWNPC17
+  return (rec._mwRosterLook = { race: orc ? 'Orc' : mod?.race ?? race ?? bay.race, gender: g, faceIndex: bay.faceIndex, items: clothesUnder(items, FOE_WARDROBE[g], h), npc: npcHint(h, 0), ...(vampire ? { vampire: true } : {}), ...(wolf ? { wolf: true } : {}) });   // MWNPC17
 }
 
 /** The tells the host has dressed the foe's billboard in this frame, for its body's quad (renderer.js
  *  drawCharacterSpriteQuad `fx`): the glint, the elite's pulse and clock, the dissolve - one object on the foe, rewritten
  *  in place each frame (no allocation a frame). Null when it wears none. `batch` the one to read - a corpse's flat for
- *  the dead (an elite's corpse keeps its rim). */
+ *  the dead (an elite's corpse keeps its rim).
+ *  AUDIT DEX B2: and `noShadow`, the flat's - the body standing in its place casts where the flat would have
+ *  (net/peer/peerBodies.js `cast`). A NoShadow row's mobile (SetupDemoEnemy.cs:137-140 `if (dfMobile.Enemy.NoShadow)
+ *  meshRenderer.shadowCastingMode = Off`, characters/enemy/foeLook.js setupFoeLook - the classic vampires, the frost and
+ *  fire daedra, the fire atronach, the mod's NoShadow rows) cast its Morrowind body's shadow while its billboard, cast-only,
+ *  was passed over. A corpse's flat carries none of the row's: DFU's NoShadow is the mobile's renderer, and a corpse is
+ *  another billboard. */
 export function foeFx(f, batch = f?.batch) {
   if (!batch) return null;
   const glint = batch.glint && batch.glint[3] > 0 ? batch.glint : null;
   const elite = batch.eliteGlow || 0;
   const dissolve = batch.dissolve && batch.dissolve[0] > 0 ? batch.dissolve : null;
-  if (!glint && !elite && !dissolve) return null;
-  const fx = f._mwFx ?? (f._mwFx = { glint: null, elite: 0, time: 0, dissolve: null });
-  fx.glint = glint; fx.elite = elite; fx.time = batch.eliteTime || 0; fx.dissolve = dissolve;
+  const noShadow = batch.noShadow === true;
+  if (!glint && !elite && !dissolve && !noShadow) return null;
+  const fx = f._mwFx ?? (f._mwFx = { glint: null, elite: 0, time: 0, dissolve: null, noShadow: false });
+  fx.glint = glint; fx.elite = elite; fx.time = batch.eliteTime || 0; fx.dissolve = dissolve; fx.noShadow = noShadow;
   return fx;
 }
 

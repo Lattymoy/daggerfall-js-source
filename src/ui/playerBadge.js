@@ -238,7 +238,7 @@ export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
  *  SPIRE'S COLOURS, named once - the three titles whose auras are drawn in them read them here, as the auras do
  *  (render/auraRing.js SPIRE_RGB): the beacon's flame and its white heart (Beacon-Lighter; Kynbane's Beaconlight, its
  *  motes), the Kyn's blood (Kynbane), the Wellhead's ember and its coal (Wellhead-Walker; The Burning Stair), and the
- *  dawn and its gold (First of the Spire; Firstlight, its ring). */
+ *  dawn and its gold (First of the Spire; Firstlight, its ring) - and, SPIRE-FIRST, its rose (Firstlight's spires and rays). */
 export const SPIRE_BEACON = Object.freeze([1, 0.902, 0.62, 1]);        // #ffe69e - paler and whiter than the Crowned's gold
 export const SPIRE_BEACON_WHITE = Object.freeze([1, 0.976, 0.902, 1]); // #fff9e6
 export const SPIRE_KYN = Object.freeze([0.69, 0.157, 0.118, 1]);       // #b0281e - darker and bloodier than the Developer's red
@@ -246,6 +246,7 @@ export const SPIRE_EMBER = Object.freeze([0.941, 0.416, 0.208, 1]);    // #f06a3
 export const SPIRE_COAL = Object.freeze([0.62, 0.122, 0.039, 1]);      // #9e1f0a
 export const SPIRE_DAWN = Object.freeze([0.992, 0.886, 0.816, 1]);     // #fde2d0 - a blush of dawn, paler than Hour's First's rose gold
 export const SPIRE_DAWN_GOLD = Object.freeze([1, 0.792, 0.522, 1]);    // #ffca85
+export const SPIRE_DAWN_ROSE = Object.freeze([1, 0.624, 0.502, 1]);    // #ff9f80 - SPIRE-FIRST: the sky low at sunrise, Firstlight's spires' feet and its rays' tips
 /** WIKIMAID (2026-10-17, for SylviaBun: "Honestly as dumb as this is gonna sound the WikiMaid title and a purple aura with
  *  bunnies would be dope as hell" - "Lets go all out for this"). No colour was named for the title; the aura was asked
  *  purple, and the title and its glyph are drawn in the same family so the three read as one grant: an AMETHYST, the

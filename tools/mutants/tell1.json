@@ -227,7 +227,7 @@
   {
     "name": "TELL1-striker-hands",
     "file": "src/scenes/hostCombat.js",
-    "old": "claws: !((striker.mobileType ?? 0) >= 128)",
+    "old": "claws: !isClassEnemyId(striker.mobileType ?? 0)",
     "new": "claws: false",
     "tests": [
       "test/systems/tell1_poise.test.js"

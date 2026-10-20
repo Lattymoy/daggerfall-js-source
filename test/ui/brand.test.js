@@ -355,7 +355,7 @@ test('BR5: the original game is named only where it must be - in what a player r
   // kingdom, the bank). Everywhere else the reader is told "the original game"
   // or "classic". Read off the PRODUCERS, not the files, so a new row that
   // says "as Daggerfall does" reddens here wherever it is written.
-  const OTHERS = /Daggerfall Unity|(World|Windmills|Villages|Cities) of Daggerfall/g;
+  const OTHERS = /Daggerfall Unity|Daggerfall Enemy Expansion|(World|Windmills|Villages|Cities) of Daggerfall/g;   // DEX0: a mod by its own name
   const named = (v) => /Daggerfall/.test(String(v).replace(OTHERS, ''));
   const strings = (v, out = [], at = '') => {
     if (typeof v === 'string') out.push([at, v]);

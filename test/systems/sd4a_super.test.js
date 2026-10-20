@@ -146,7 +146,7 @@ test('SD4a the host by source: the tier read once by its one law before the fire
   assert.match(DC.slice(fires, fires + 1200), /\n {4}cold: _superTier(?: \|\| _sdRealm)?,[^\n]*\n {2}\}\);/);   // SD5a (PIN MOVED): and the Shattered Hour's
   assert.match(DC, /playerLevel: _superTier \? superFoeLevel\(effectiveLevel\(playerEntity\)\) : effectiveLevel\(playerEntity\),[^\n]*SOFTCAP2: a mentor's dungeon/, 'the layout\'s roll');
   assert.match(DC, /playerLevel: _superTier \? superFoeLevel\(effectiveLevel\(playerEntity\)\) : effectiveLevel\(playerEntity\),[^\n]*SOFTCAP2: mentor mode/, 'the rest\'s roll');
-  assert.match(DC, /D\.makeEnemyEntity\(e\.mobileType, basics, cf\.career, e\.level \?\? \(_superTier \? superFoeLevel\(effectiveLevel\(D\.playerEntity\)\) : effectiveLevel\(D\.playerEntity\)\)\);/, 'a class foe at the band (a revenant\'s or a bout\'s own level first)');
+  assert.match(DC, /D\.makeEnemyEntity\(e\.mobileType, basics, await D\.loadEnemyCareer\(e\.mobileType, D\.fetchBytes\), e\.level \?\? \(_superTier \? superFoeLevel\(effectiveLevel\(D\.playerEntity\)\) : effectiveLevel\(D\.playerEntity\)\)\);/, 'a class foe at the band (a revenant\'s or a bout\'s own level first)');
   assert.match(DC, /const enemies = dfLocation\?\.elite \|\| _superTier[^\n]*\n {4}\? expandEliteEnemies\(_layoutEnemies, \{\n {6}copies: ELITE_FOE_MULTIPLIER,/);
   assert.match(DC, /\n {2}if \(_superTier\) for \(const e of enemies\) e\.superTier = true;/);
   assert.ok(DC.indexOf('if (_superTier) for (const e of enemies) e.superTier = true;') < DC.indexOf('if (elitesAllowed({ onlinePage: isOnlinePage()'), 'marked before the pick and every build');

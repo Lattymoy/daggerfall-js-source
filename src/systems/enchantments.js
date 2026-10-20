@@ -46,7 +46,7 @@
 // spawner), isResting(), allowMagicRepairs (a DFU setting, default
 // false), say(msg).
 
-import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';
 import { equipTableOf, lowerCondition, setEnchantmentHooks } from './equip.js';
 import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - worldTick re-exports it and imports the pump below, so this leaf must not close the cycle
 import { syntheticTimeIncrease } from './effectBroker.js';   // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease - a LEAF, for the same reason
@@ -351,7 +351,7 @@ function enchantLowerCondition(item, amount, entity, ctx, collection = null) {
 // (128+) are Human in DFU's table.
 const AFFINITY_PARAM = Object.freeze({ Undead: 0, Daedra: 1, Humanoid: 2, Animals: 3 });
 export function mobileAffinityMatches(mobileType, paramType) {
-  const affinity = mobileType >= 128 ? 'Human' : (ENEMY_BASICS[mobileType]?.affinity ?? 'None');
+  const affinity = isClassEnemyId(mobileType) ? 'Human' : (ENEMY_BASICS[mobileType]?.affinity ?? 'None');
   return (paramType === AFFINITY_PARAM.Undead && affinity === 'Undead')
     || (paramType === AFFINITY_PARAM.Daedra && affinity === 'Daedra')
     || (paramType === AFFINITY_PARAM.Humanoid && affinity === 'Human')

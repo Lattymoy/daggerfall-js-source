@@ -468,7 +468,8 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t('mods.meanerMonsters.Enabled.description', 'Many monsters hit harder and take more to kill, while rats, bats and zombies are weaker. 20 monsters '
             + 'are changed, and werebeasts and the dragonling are bigger. With Physical Combat And Armor Overhaul '
-            + 'also on, that mod’s version of these changes is used.');
+            + 'also on, that mod’s version of these changes is used. With Daggerfall Enemy Expansion on, MUDEX, the '
+            + 'author’s version made for it, is used instead.');
         },
       }),
     }),
@@ -1651,6 +1652,27 @@ export const MOD_SETTINGS = Object.freeze({
       'Legacy.Heirloom Chance': Object.freeze({ default: 50, min: 0, max: 100, description: 'The chance a Bloodline death leaves an heirloom for the heir to recover.' }),
       // LEGACY-HOME (Legacy-Arc section 10b; Mac: "itll be default on but can be toggled off").
       'Legacy.Family In World': Object.freeze({ default: true, description: 'Family members you aren’t playing go about their day at the family home, or in your town if the family has no house. Talk to one to play as them.' }),
+    }),
+  }),
+  // DEX0: DAGGERFALL ENEMY EXPANSION 1.3.4 (Kamer & Kab). Its one section and key as modsettings.json ships them
+  // (vendor/daggerfall-enemy-expansion/modsettings.json: Cheat.DisableTrollRespawn, a ToggleKey, off), read by the
+  // troll's corpse each frame it counts down (BestiaryMod.LoadSettings, :136-139 - the mod reads it at load and on a
+  // settings change). `Enabled` is the port's (MO1: on) - the whole mod: its enemies, its tables, its art.
+  'daggerfall-enemy-expansion': Object.freeze({
+    get title() { return t('mods.daggerfallEnemyExpansion.title', 'Daggerfall Enemy Expansion'); },   // the manifest's ModTitle (L10N4)
+    author: 'Kamer & Kab',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        get description() {
+          return t('mods.daggerfallEnemyExpansion.Enabled.description', 'Fifty new enemies - goblins, trolls, minotaurs, golems, '
+            + 'mounted knights, necromancers, witches and more - in new encounter tables for every dungeon and climate.');
+        },
+      }),
+      'Cheat.DisableTrollRespawn': Object.freeze({
+        default: false,
+        get description() { return t('mods.daggerfallEnemyExpansion.DisableTrollRespawn.description', 'Prevent trolls from respawning after death (use for No Magic runs)'); },
+      }),
     }),
   }),
 });

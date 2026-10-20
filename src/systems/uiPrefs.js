@@ -166,6 +166,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // assets are - only a look a player might prefer to opt OUT of.
   peerClassSprites: true,
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
+  monsterVolume: 1,   // MONSTER-VOL: a monster's calls, attack sounds and pain cries, 0..1 (systems/monsterVolume.js)
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): how many other players an
   // Oblivion Gate's court draws at once - the nearest, the party always (net/gate/gateCrowd.js GATE_CROWD_TIERS; 0 everyone,

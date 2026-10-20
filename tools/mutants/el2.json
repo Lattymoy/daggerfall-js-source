@@ -236,8 +236,8 @@
   {
     "name": "replay-concealed-casts",
     "file": "src/render/shadowPass.js",
-    "old": "          if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;",
-    "new": "          if (!b?.vao || b._dead || f.isSpectral(b.archive)) continue;",
+    "old": "          if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive) || b.ghost) continue;",
+    "new": "          if (!b?.vao || b._dead || f.isSpectral(b.archive) || b.ghost) continue;",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]

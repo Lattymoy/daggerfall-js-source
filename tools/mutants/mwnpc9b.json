@@ -227,8 +227,8 @@
  {
   "name": "MWNPC9b-pool-dead-class-only",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "if (f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse",
-  "new": "if (f.dead && f.corpse && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse",
+  "old": "if (f.dead && f.corpse && !f.corpseDestroyed && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse",
+  "new": "if (f.dead && f.corpse && !f.corpseDestroyed && isClassFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse",
   "tests": [
    "test/characters/mwnpc9b_creaturerig.test.js"
   ]

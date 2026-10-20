@@ -475,6 +475,7 @@ import { chapterHallFactor, chapterHallShelf, chapterHallShut, CHAPTER_HALL_SHUT
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import '../ui/tutorialPopup.js';   // TUT1: the popup's handler, registered by this host (the four hosts' rule)
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a tinted copy of a light is that light (the dungeon's flame tint, the abyss's candle)
+import { createQuestClickFirst, clickHeardByQuest } from './quest/questClickFirst.js';   // QUEST-WORDS-FIRST: a quest's words and reward before the NPC's door
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -2599,7 +2600,10 @@ export function createWorldModes(host) {
    *  untouched, and `interiorWindows.reconcile` reads the slot back
    *  once a frame and turns "the slot went empty" into PopWindow - so
    *  the window the box was laid over comes back. */
-  const interiorWindows = makeWindowStack({ onTop: (w) => { interiorOverlay = w; } });
+  // QUEST-WORDS-FIRST (scenes/quest/questClickFirst.js): a click a quest heard ticks the machine at once, and the NPC's door
+  // waits for the windows that tick raised in this slot
+  const questWordsFirst = createQuestClickFirst({ tick: () => questBridge?.tick(1), top: () => interiorOverlay, heard: () => clickHeardByQuest(questBridge?.machine) });
+  const interiorWindows = makeWindowStack({ onTop: (w) => { interiorOverlay = w; questWordsFirst.settled(w); } });
   /** THE PAUSE - ONE ANSWER, ASKED OF THE STACK.
    *
    *  DFU stops the world in exactly one place. AddWindow
@@ -4372,7 +4376,7 @@ export function createWorldModes(host) {
     townTalk?.say?.(presentNpcInfoText(displayName));
   }
 
-  function openStaticNpc(pn, { forceTalk = false } = {}) {
+  function openStaticNpc(pn, { forceTalk = false, clicked = null } = {}) {   // QUEST-WORDS-FIRST: `clicked` - the click already stamped, its quest's words read
     // Q4-v: PlayerActivate's questor half - EVERY static-NPC click
     // stamps LastNPCClicked before the routing decides what opens (the
     // Person questor sweep rides machine.setLastNPCClicked).
@@ -4390,7 +4394,7 @@ export function createWorldModes(host) {
     // exterior host stood carries its own context; a building person
     // has none and takes staticNpcData's Building default.
     const npcSceneCtx = staticNpcSceneCtx(pn);
-    const npcData = questBridge?.clickNpc(pn, npcSceneCtx) ?? staticNpcData(pn, npcSceneCtx);
+    const npcData = clicked ?? questBridge?.clickNpc(pn, npcSceneCtx) ?? staticNpcData(pn, npcSceneCtx);
     talkedTo.set(npcData, pn);   // PORTRAIT3D: whose face the talk window shows
     // AUDIT 24 (wave 20): PlayerActivate.cs:1523-1528, the return the
     // port never had. A clicked NPC whose GameObject carries a
@@ -4399,12 +4403,17 @@ export function createWorldModes(host) {
     // talk window, no guild service popup. The port stamped
     // LastNPCClicked and walked straight on to the routing, so handing
     // a questor their letter also opened their shop.
-    if (pn.questBehaviour?.doClick()) return;
+    // QUEST-WORDS-FIRST (a departure, the owner's call): where the quest's click raised its words, the NPC's own door opens
+    // after them instead of never; a click that raised nothing ends the activation as DFU's does
+    const afterWords = () => { if (mode === 'interior' && (interiorCtx?.people ?? []).includes(pn)) openStaticNpc(pn, { forceTalk, clicked: npcData }); };   // a door left behind is never opened
+    if (!clicked && pn.questBehaviour?.doClick()) { questWordsFirst.hold(afterWords); return; }
     // PlayerActivate.cs:1530-1535: a quest actively LISTENING on this
     // NPC's faction (WhenNpcIsAvailable) shuts down all further
     // routing - no talk, no service popup, nothing (C#'s own TODO
     // about releasing listeners rides with it).
     if (questBridge?.machine.factionListeners.has(pn.factionID)) return;
+    // QUEST-WORDS-FIRST: the quest's words and its reward first, then this door
+    if (!clicked && questWordsFirst.hold(afterWords)) return;
     const dict = townTalk?.factionDict ?? null;
     const npcFaction = dict?.get(pn.factionID) ?? null;
     const buildingFactionId = interiorBuilding?.factionId ?? 0;

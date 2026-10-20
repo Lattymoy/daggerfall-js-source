@@ -142,8 +142,8 @@
   {
     "name": "FOE-BOUNDS-row-one-off",
     "file": "src/net/foeBounds.js",
-    "old": "  [0, [35, 1]],",
-    "new": "  [0, [36, 1]],",
+    "old": "  [0, [35, 1, 1]],",
+    "new": "  [0, [36, 1, 1]],",
     "why": "a monster's row one off its profiles' most",
     "tests": [
       "test/net/foebounds_law.test.js"

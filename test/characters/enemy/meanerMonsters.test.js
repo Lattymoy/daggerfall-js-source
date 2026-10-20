@@ -151,5 +151,5 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
   const credit = CREDITS.mods.find((c) => c.title === 'Meaner Monsters');
   assert.ok(credit); assert.equal(credit.author, 'Ralzar'); assert.equal(credit.version, '1.5.2'); assert.deepEqual([...credit.vendor], ['meanerMonsters']); assert.match(credit.terms, /MIT/);
   assert.match(rd('vendor/meanerMonsters/README.md'), /Ralzar/); assert.match(rd('vendor/meanerMonsters/README.md'), /MIT/);
-  assert.match(rd('src/characters/enemy/enemyEntity.js'), /const basics = pcaaoMeanerMonstersRow\(mobileType, applyMeanerMonsters\(mobileType, basicsIn\)\);/, 'Ralzar\'s row, then the overhaul\'s edit over it');
+  assert.match(rd('src/characters/enemy/enemyEntity.js'), /const basics = editAtMint\(mobileType, pcaaoMeanerMonstersRow\(mobileType, applyMeanerMonsters\(mobileType, basicsIn\)\)\);/, 'Ralzar\'s row, then the overhaul\'s edit over it (DEX1: and a Start-time mod\'s over both, registerMintRowEditor)');
 });

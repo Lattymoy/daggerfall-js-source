@@ -1546,7 +1546,8 @@ test('INV1: a drag equips through the one act, and never crosses a side', () => 
   // TRANSFER THE SCREEN ALREADY OFFERS (`stow` is the function behind the
   // STOW_LABEL button beside the item) - and closed it again.
   // HAND-DRAG (2026-10-08): a weapon onto a hand's own panel - the other hand, or the hand a pack piece is worn in
-  assert.deepEqual(acts, ['dropOnBody', 'dropOnHand', 'reorderPack', 'slotOnHotbar', 'stow'],   // HB1: a slot on the hotbar is a target too - it moves nothing, it names the kind
+  // BELT-LANTERN (2026-10-20): and the lantern's own socket - a lantern hung at the belt or taken off it
+  assert.deepEqual(acts, ['dropOnBody', 'dropOnHand', 'hangLantern', 'reorderPack', 'slotOnHotbar', 'stow', 'unhangLantern'],   // HB1: a slot on the hotbar is a target too - it moves nothing, it names the kind
     `a drop performs the body act, the reorder or the screen's own transfer and NOTHING else (read: ${acts.join(', ')})`);
   assert.match(release, /if \(want\?\.kind === 'body'\) dropOnBody\(d\.item\);/, 'the body is the equip target');
 
@@ -2462,8 +2463,8 @@ test('PLUS11: under Plus the twelve accessory slots stand on a shelf of labelled
       assert.equal(dom.doc.querySelectorAll('.wornshelf').length, 1, 'one shelf');
       assert.equal(dom.doc.querySelectorAll('.transport').length, 0, 'and no Mount / Cart strip - they moved into the grid');
       assert.deepEqual(dom.doc.querySelectorAll('.shelflabel').map((n) => n.textContent),
-        ['Amulets', 'Rings', 'Bracelets', 'Bracers', 'Marks', 'Crystals'], 'the classic shelf\'s six pairs');
-      assert.equal(dom.doc.querySelectorAll('.wornsock').length, 12, 'twelve sockets');
+        ['Amulets', 'Rings', 'Bracelets', 'Bracers', 'Marks', 'Crystals', 'Lantern'], 'the classic shelf\'s six pairs, and (BELT-LANTERN) the lantern\'s one socket');
+      assert.equal(dom.doc.querySelectorAll('.wornsock').length, 13, 'twelve sockets and the lantern\'s');
       const filled = dom.doc.querySelectorAll('.wornsock').filter((n) => !n.classList.contains('wornempty'));
       assert.equal(filled.length, 2, 'the amulet and the ring, each in its own socket');
       for (const n of filled) {

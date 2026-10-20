@@ -97,7 +97,10 @@ test('AUDIT 23 FTD-2/3: the spell index fold keeps the FIRST record and the load
   const map = spellsByIndexMap([first, dup]);
   assert.equal(map.get(58).name, 'Holy Word');
   const cs = src('src/systems/chargenSession.js');
-  assert.ok(cs.includes('spellsByIndexMap(readSpellsStd('), 'loadSpellIndex rides the first-wins fold');
+  // PIN MOVED (DEX4a): the loader builds RebuildClassicSpellsDict whole (systems/spell/standardSpells.js - the mods'
+  // SpellRecords.json merged, then the same first-wins fold)
+  assert.ok(cs.includes('standardSpellsByIndex(await fetchBytes('), 'loadSpellIndex rides the one rebuild');
+  assert.ok(src('src/systems/spell/standardSpells.js').includes('spellsByIndexMap(mergeSpellRecords(readSpellsStd(bytes)))'), 'and the rebuild rides the first-wins fold');
   assert.equal(/new Map\(readSpellsStd\(/.test(cs), false, 'the last-wins fold is gone');
 });
 

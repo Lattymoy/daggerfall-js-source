@@ -2499,7 +2499,7 @@ function stepRow(key, name, note, { min, max, step: inc, fmt }) {
   if (note) main.append(el('div', 'row-note', note));
   row.append(main);
   const ctl = el('div', 'ctl');
-  const cur = () => Number(getPref(key)) || 1;
+  const cur = () => { const v = Number(getPref(key)); return Number.isFinite(v) ? v : 1; };   // MONSTER-VOL: 0 is a value (a muted volume), not unset
   const val = el('span', 'val', fmt(cur()));
   const step = (delta, label) => {
     const b = el('button', 'step', label);
@@ -2812,7 +2812,41 @@ function portRowsAudio() {
   if (!can) b.disabled = true;
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
-  return [row];
+  return [row, monsterVolumeRow()];
+}
+
+/** MONSTER-VOL (2026-10-20, the owner: "add an option under audio for it called Monster Volume with 0 - 100%"): the
+ *  Audio tab's Volume row for what monsters say - calls, attack sounds, pain cries (systems/monsterVolume.js). */
+export const MONSTER_VOLUME_NAME = 'Monster Volume';
+function monsterVolumeRow() {
+  // drawn as Sound Volume and Music Volume are (settingRow's number arm): the name alone, then the value and its two
+  // arrows - 5% a press, 20% with Shift - and the row's tier
+  const key = 'monsterVolume';
+  const name = t('menu.audio.monsterVolume', MONSTER_VOLUME_NAME);
+  const row = el('div', 'row');
+  row.dataset.opt = key; row.dataset.pref = key;   // ORG2
+  const main = el('button', 'row-main');
+  main.append(el('div', 'row-name', name));
+  main.title = t('menu.audio.monsterVolumeNote', 'How loud monsters call, strike and cry out.');
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const cur = () => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };
+  const pct = (v) => `${Math.round(v * 100)}%`;
+  const val = el('span', 'val', pct(cur()));
+  ctl.append(val);
+  for (const [dir, glyph] of [[-1, '\u2039'], [1, '\u203a']]) {
+    const b = el('button', 'step', glyph);
+    b.setAttribute('aria-label', dir < 0 ? t('menu.settings.less', 'less {name}', { name }) : t('menu.settings.more', 'more {name}', { name }));
+    b.onclick = (e) => {
+      const next = Math.round(Math.max(0, Math.min(1, cur() + dir * (e.shiftKey ? 0.2 : 0.05))) * 100) / 100;
+      setPref(key, next);
+      val.textContent = pct(next);
+    };
+    ctl.append(b);
+  }
+  ctl.append(el('span', 'tier live'));
+  row.append(ctl);
+  return row;
 }
 
 /** The CONTROLS category's port rows: the touch layer's knobs, only
@@ -4586,7 +4620,7 @@ function pauseWindow() {
 
   const body = el('div', 'px-body');
   ({ quests: pauseQuests, stats: pauseStats, growth: pauseGrowth, holdings: pauseHoldings, family: pauseFamily, tutorials: drawTutorialsPane, system: pauseSystem })[pauseTab](body);   // TUT1 - GROWTH1
-  if (pauseTab === 'growth' && stageLive()) win.classList.add('px-win-wide');   // GROWTH3: a face on the stage - the window nearly the screen's
+  if (pauseTab === 'growth') win.classList.add('px-win-growth');   // GROWTH-BOOK: one size for every page of the tab (was GROWTH3's px-win-wide, a face up only)
   win.append(body);
   return win;
 }

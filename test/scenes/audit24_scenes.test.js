@@ -87,12 +87,12 @@ test('audit24 render: the two citations point at the lines they quote', () => {
 
 test('audit24 wave20: StaticNPCClick runs stamp -> DoClick return -> listener return, in that order', () => {
   const s = rd('src/scenes/worldModes.js');
-  const i = s.indexOf('function openStaticNpc(pn, { forceTalk = false } = {}) {');   // R1: the merchant repair popup's talk re-entry rides the signature
+  const i = s.indexOf('function openStaticNpc(pn, { forceTalk = false, clicked = null } = {}) {');   // R1: the merchant repair popup's talk re-entry rides the signature; QUEST-WORDS-FIRST: and the click already read
   assert.ok(i > 0, 'openStaticNpc must exist');
   const body = s.slice(i, s.indexOf('const route = staticNpcRoute(', i));
 
   const stamp = body.indexOf('questBridge?.clickNpc(pn,');
-  const click = body.indexOf('if (pn.questBehaviour?.doClick()) return;');
+  const click = body.indexOf('if (!clicked && pn.questBehaviour?.doClick()) { questWordsFirst.hold(afterWords); return; }');   // QUEST-WORDS-FIRST: a door opened after the quest's words clicks nothing twice
   const listen = body.indexOf('factionListeners.has(pn.factionID)) return;');
   assert.ok(stamp >= 0, 'LastNPCClicked is stamped first (:1521)');
   assert.ok(click >= 0, 'the quest-resource DoClick early return (:1523-1528)');

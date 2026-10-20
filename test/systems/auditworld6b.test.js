@@ -7,7 +7,7 @@ import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { hitOwnerOf, validFoeRecord, CELL_FRAME_RECORDS_MAX, CELL_PUPPETS_MAX, CELL_LOOSE_PUPPETS, FOE_SEQ_MAX, FOE_HEALTH_MAX, POSE_BOUND, POSE_Y_BOUND, PIXEL_UNITS, MAX_FRAME_BYTES, DROP_STRIKES_MAX, HIT_ROOM_HZ_MAX, FOES_ROOM_BYTES_PER_S, RANGE_PIXELS } from '../../src/net/wire.js';
+import { hitOwnerOf, validFoeRecord, FOE_TYPE_MAX, CELL_FRAME_RECORDS_MAX, CELL_PUPPETS_MAX, CELL_LOOSE_PUPPETS, FOE_SEQ_MAX, FOE_HEALTH_MAX, POSE_BOUND, POSE_Y_BOUND, PIXEL_UNITS, MAX_FRAME_BYTES, DROP_STRIKES_MAX, HIT_ROOM_HZ_MAX, FOES_ROOM_BYTES_PER_S, RANGE_PIXELS } from '../../src/net/wire.js';
 import * as relay from '../../server/src/relay.js';
 import { relayVersionAtLeast } from '../relayVersion.mjs';
 import { OnlineSession, FOES_STALE_MS } from '../../src/net/online.js';
@@ -29,7 +29,8 @@ test('AUDIT WORLD6b A5/B3/C2: the wire - an owner is an id by the wire\'s own la
   const full = { i: 5, t: 0, x: 1, f: [20, 0, 20], y: 1.5, h: 9, d: 0, a: 4, m: 1 };
   assert.deepEqual(validFoeRecord(full), full, 'a whole record, whole'); assert.notEqual(validFoeRecord(full).f, full.f, 'copied, not aliased');
   assert.deepEqual(validFoeRecord({ i: 0 }), { i: 0 }, 'the number alone is a record (a delta)');
-  for (const r of [null, 7, [], { i: -1 }, { i: 1.5 }, { i: FOE_SEQ_MAX + 1 }, { i: 1, t: 256 }, { i: 1, t: -1 }, { i: 1, t: 0.5 }, { i: 1, x: 2 }, { i: 1, d: 'yes' }, { i: 1, m: -1 },
+  assert.equal(FOE_TYPE_MAX, 0xffff); for (const t of [42, 146, 256, 398]) assert.equal(validFoeRecord({ i: 1, t })?.t, t, `DEX1: a mod's kind (${t}) crosses, as a classic one does`);
+  for (const r of [null, 7, [], { i: -1 }, { i: 1.5 }, { i: FOE_SEQ_MAX + 1 }, { i: 1, t: FOE_TYPE_MAX + 1 }, { i: 1, t: -1 }, { i: 1, t: 0.5 }, { i: 1, x: 2 }, { i: 1, d: 'yes' }, { i: 1, m: -1 },
     { i: 1, f: [1, 2] }, { i: 1, f: [1, 2, 'x'] }, { i: 1, f: [POSE_BOUND + 1, 0, 0] }, { i: 1, f: [0, POSE_Y_BOUND + 1, 0] }, { i: 1, f: [0, 0, -POSE_BOUND - 1] }, { i: 1, f: [NaN, 0, 0] },
     { i: 1, y: Infinity }, { i: 1, h: -1 }, { i: 1, h: FOE_HEALTH_MAX + 1 }, { i: 1, h: 'x' }, { i: 1, a: -1 }, { i: 1, a: 2 ** 31 }, { i: 1, a: 1.5 }]) assert.equal(validFoeRecord(r), null, `C2: refused whole: ${JSON.stringify(r)}`);
   assert.equal(CELL_PUPPETS_MAX, MAX_ACTIVE_ENCOUNTER_FOES + CELL_LOOSE_PUPPETS, 'B3: an owner\'s live cap is the pool\'s own - AUDIT PSCALE1 COUNT-4: and its loose stands, which ride outside it'); assert.equal(CELL_LOOSE_PUPPETS, 4); assert.equal(CELL_FRAME_RECORDS_MAX, 64);
@@ -201,7 +202,7 @@ test('AUDIT WORLD6b B1/B2/B10: the pool - a fall\'s, another foe\'s and a relaye
   assert.equal(pool.applyHit('bob-0002', { k: 'world:4,4', i: rat.seq, dmg: 5 }), false, 'A7: another cell\'s blow is refused');
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /const trap = peer \|\| _peerTrap \? \{ allowDeath: true \} : attemptSoulTrap\(f\.entity, f\.mobileType, playerEntity\.items, Math\.random\(\)\);/, 'B2: the trap, by source (STRIKE-SHARED: and a peer\'s trap reads no gem of mine either)');
-  assert.match(x, /if \(!peer && f\.mobileType < 128 && isAzurasStarEquipped\(playerEntity\)/, 'B2: the Star, by source');
+  assert.match(x, /if \(!peer && !isClassEnemyId\(f\.mobileType\) && isAzurasStarEquipped\(playerEntity\)/, 'B2: the Star, by source');
   assert.match(x, /if \(fromPlayer && !peer\) \{\s*(?:\/\/[^\n]*\n\s*)*const _pt = f\._divertPt \?\? null; f\._divertPt = null;\s*(?:\/\/[^\n]*\n\s*)*const _wc = [^\n]*blowClassOf\([^\n]*\n\s*f\._divertFrame = _peerFrame;\s*f\._struckAt = _now\(\);[^\n]*\n\s*_net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, dmg: Math\.max\(0, Math\.round\(Number\(damage\) \|\| 0\)\), kind,[^\n]*\n\s*\.\.\.\(_pAt \? \{ p: [^\n]*\n\s*\.\.\.\(knockDir \? \{ d: [^\n]*\n\s*\.\.\.\(_pt != null \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(_wc \? \{ wc: hitClassField\(_wc\) \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\),\n\s*\.\.\.\(spell \?\? \{\}\),[^\n]*\n\s*\.\.\.\(_whole \? \{ z: 1 \} : \{\}\) \}\);[^\n]*\n\s*\}\s*return;/, 'B1: the divert\'s gate, by source (WORLD6b-ii: the striker\'s feet and the blow\'s direction ride; WORLD6b-iii(e): the poison and the shaft; DISC10-E: the blow stamped for the owner\'s `slain` answer; AUDIT PSCALE1 DOORS-1: a kill rides as one; STRIKE-SHARED: a strike spell rides whole; PIN MOVED - TELL8: the blow\'s class rides beside the poison)');
   assert.match(rd('src/scenes/shared.js'), /if \(!f \|\| f\.dead \|\| !f\.entity \|\| f\.puppet\) continue;/, 'B1: the magic-round broker skips a puppet');
 });

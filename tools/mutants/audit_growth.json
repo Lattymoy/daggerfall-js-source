@@ -394,14 +394,14 @@
     "note": "The Level page asks for its door and gets a stage."
   },
   {
-    "name": "AUDIT-GROWTH-L2-9-grimoire-book-over-the-strip",
+    "name": "GROWTH-BOOK-grimoire-left-page",
     "file": "src/ui/growth/growthTab.js",
-    "old": ":root[data-plus-dress=\"grimoire\"] .px-journal.gr-faced > .px-qrail { width: auto;",
-    "new": ":root[data-plus-dress=\"grimoire\"] .px-journal.gr-faced > .px-qrail-x { width: auto;",
+    "old": ":root[data-plus-dress=\"grimoire\"] .px-journal.gr-book > .px-qrail { width: 25%;",
+    "new": ":root[data-plus-dress=\"grimoire\"] .px-journal.gr-book > .px-qrail-x { width: 25%;",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],
-    "note": "The Grimoire's book page outranks the strip: the sky a third shorter."
+    "note": "The Grimoire's page list falls back to the book's wide left page: the sky loses room."
   },
   {
     "name": "AUDIT-GROWTH-L2-10-no-retry",

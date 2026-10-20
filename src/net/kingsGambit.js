@@ -36,7 +36,7 @@
 // so a relay keeps its last good state); one it takes answers the next state and the events it made.
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
-import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemy/enemyBasics.js';
+import { VANILLA_ENEMY_BASICS, enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // DEX1: the vanilla rows by name - a mod that writes the live table's (Daggerfall Enemy Expansion's classic lines) never moves the roster, whenever this module is first read
 import { drawBelow } from './dice.js';
 import { roundToInt } from '../systems/mathf.js';   // Mathf.RoundToInt's one home
 
@@ -139,7 +139,7 @@ const f32 = Math.fround;
  * @returns {GambitUnit|null}
  */
 export function makeUnit(mobileType, { king = false, ranged = false } = {}) {
-  const row = Number.isInteger(mobileType) ? ENEMY_BASICS[String(mobileType)] : undefined;
+  const row = Number.isInteger(mobileType) ? VANILLA_ENEMY_BASICS[String(mobileType)] : undefined;
   if (!row) return null;
   const calling = mobileType >= 128;
   if (!king && !calling && !(Number.isInteger(row.level) && Number.isInteger(row.minHealth) && Number.isInteger(row.maxHealth))) return null;
@@ -161,8 +161,8 @@ export const KG_ROSTER = Object.freeze(buildRoster());
 function buildRoster() {
   /** @type {GambitUnit[]} */
   const out = [];
-  for (const key of Object.keys(ENEMY_BASICS)) {
-    const id = Number(key), row = ENEMY_BASICS[key];
+  for (const key of Object.keys(VANILLA_ENEMY_BASICS)) {
+    const id = Number(key), row = VANILLA_ENEMY_BASICS[key];
     if (!(row.maleTexture > 0)) continue;
     let ranged;
     if (id < 128) ranged = row.hasRangedAttack1 === true;

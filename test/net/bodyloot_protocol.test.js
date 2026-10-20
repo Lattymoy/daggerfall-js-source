@@ -661,7 +661,9 @@ const NEW_KEYS = ['bw', 'bp', 'br', 'bq', 'bv'];
  *  applyHit that reads it, so an older build still falls to its blow arm (no dmg) and refuses. */
 const CLAIM_EXTRA_KEYS = ['g'];
 /** DESIGN.md 3.4: the old hit arms' keys, and the routing every hit frame carries. */
-const OLD_KEYS = ['dmg', 'take', 'back', 'grant', 'slain', 'fb', 'ar', 'al', 'ac', 'sf', 'z', 'wc', 'sp', 'lv', 'pt', 'p', 'd', 'kind', 'nv', 'own', 'to', 'k', 'i', 'n'];
+/** PIN EXTENDED (DEX5b, bible/04-Characters/Enemy-Expansion.md section 11): `cs` - a strike spell's hit (`sp`, `lv`) on a mod's corpse
+ *  prefab's body, the blow arm's own (ahead of its dead-foe refusal); an older build falls to the blow arm and refuses a dead foe. */
+const OLD_KEYS = ['dmg', 'take', 'back', 'grant', 'slain', 'fb', 'ar', 'al', 'ac', 'sf', 'z', 'wc', 'sp', 'lv', 'pt', 'p', 'd', 'kind', 'nv', 'own', 'to', 'k', 'i', 'n', 'cs'];
 
 test('T16(a) AC6 (guard - passes today): the new frames\' keys (bw, bp, br, bq, bv - and the claim frame\'s g) are disjoint from the old applyHit arms\' keys, and applyHit reads no key of `data` the design does not name', () => {
   assert.deepEqual([...NEW_KEYS, ...CLAIM_EXTRA_KEYS].filter((k) => OLD_KEYS.includes(k)), [], 'a new frame key collides with an old arm\'s: an older build would take the frame for a blow, a take or a grant');

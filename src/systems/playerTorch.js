@@ -227,9 +227,10 @@ export const playerTorchOffsetOverride = () => _offsetOverride;
 export const LANTERN_HIP = Object.freeze({ left: -0.2, up: 1.0, forward: 0.1 });
 
 /** Is this light a lantern hung at the waist - the lantern template, with Handheld Torches on and its waist
- *  switch on. Torches and candles are always held. */
+ *  switch on, or one hung in the inventory's lantern slot (BELT-LANTERN). Torches and candles are always held. */
 export function lanternAtWaist(item) {
   if (!item || item.templateIndex !== LANTERN_TEMPLATE) return false;
+  if (item.beltLantern === true) return true;   // BELT-LANTERN: the inventory's lantern slot hangs it whatever the switch says (systems/beltLantern.js)
   return modSetting('handheld-torches', 'Enabled') === true && modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;
 }
 

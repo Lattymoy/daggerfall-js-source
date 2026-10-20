@@ -236,7 +236,7 @@
   {
     "name": "RVN2-claws-are-fists",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  return attacker?.isPlayer || (attacker?.mobileType ?? -1) >= 128 ? 'h2h' : 'other';",
+    "old": "  return attacker?.isPlayer || isClassEnemyId(attacker?.mobileType ?? 0) ? 'h2h' : 'other';   // AUDIT DEX A2: the class bit - a mod's monster past 255 has no person's hands",
     "new": "  return 'h2h';",
     "tests": [
       "test/systems/rvn2_adapt.test.js"

@@ -196,6 +196,22 @@ export const STATUS_GLYPHS = Object.freeze({
     '.kbaaaaaaak.kkk.', '.kbaaaaaackkkakk', '.kaaaaaaackkaaak', '.kkaaaaacckkaaak',
     '..kkaaacckkkbaak', '...kkkkkkk.kacck', '...........kkkkk', '................',
   ] }),
+  // SKILL-READY (2026-10-20, Dudey: "a symbol ... left of the renown bar when skills are ready to level up"): an arrow
+  // up in the level's gold - the skills a rest or a journey would raise (ui/hud/hudAdvance.js)
+  skillup: Object.freeze({ pal: { a: '#ffd24a', b: '#fff6c8', c: '#c8902a' }, rows: [
+    '................', '......kkkk......', '.....kkbckk.....', '....kkbbackk....',
+    '...kkbbaacckk...', '..kkbbaaaacckk..', '.kkbbaaaaaacckk.', '.kbbaaaaaaaacck.',
+    '.kkkkbbaacckkkk.', '....kbbaacck....', '....kbbaacck....', '....kbbaacck....',
+    '....kbbaacck....', '....kcccccck....', '....kkkkkkkk....', '................',
+  ] }),
+  // FIRM-STARS (2026-10-20, Dudey: "a symbol ... on the right of the renown bar" while the Firmament has stars not yet
+  // placed): a five-point star in the night sky's silver-blue (ui/hud/hudAdvance.js)
+  firmstar: Object.freeze({ pal: { a: '#bcd4ff', b: '#ffffff', c: '#6f8fd0' }, rows: [
+    '......kkk.......', '.....kkbkk......', '.....kbbak......', '....kkbbakk.....',
+    'kkkkkbbbaakkkkk.', 'kbbbbbbbaaaaaak.', 'kkbbbbbbaaaaakk.', '.kkaaaabaccckk..',
+    '..kkaaabccckk...', '..kkaaabccckk...', '..kaaaaacccck...', '.kkaaaakcccckk..',
+    '.kaaaakkkcccck..', '.kaakkk.kkkcck..', '.kkkk.....kkkk..', '................',
+  ] }),
   // a spore
   disease: Object.freeze({ pal: { a: '#c8d24a', b: '#eef59a', c: '#6e7a18' }, rows: [
     '....kkkkkkkk....', '...kkaakkaakk...', '...kaaakkaaak...', '.kkkkaakkaakkkk.',

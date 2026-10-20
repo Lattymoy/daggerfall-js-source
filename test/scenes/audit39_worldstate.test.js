@@ -33,7 +33,7 @@ test('AUDIT 39 #59: the two above-ground hosts gate the motor and the weapon on 
   // HandleJumpInput (:64-70) and LevitateMotor.Update (:67-69) return
   // early, WeaponManager (:235-239) does ShowWeapons(false) and takes
   // no swing. Only dungeon.js and worldModes' dungeon arm carried it,
-  // and exteriorFoes' castParalyze mints the spell out of the
+  // and exteriorFoes' readySpell mints the spell out of the
   // wilderness encounter tables - so a landed paralysis was inert.
   for (const [name, s] of HOSTS) {
     assert.match(s, /import \{ isInvisible, entityIsParalyzed(?:, concealBits)? \} from '\.\.\/systems\/effects\.js';/,

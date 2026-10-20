@@ -278,6 +278,9 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const key = `${record}#${frame}`;
     const t = textureFiles.get(archive); freshen(archive);   // AUDIT VE R1
     if (!t) return;
+    // GATE-MIX: a frame already on the GPU is not decoded again only for uploadTexture to turn it away - held for the
+    // place asking as that hit would hold it. Not a spectral or self-lit frame: those carry a second picture of their own.
+    if (!TextureFile.isSpectralArchive(archive) && !isEmissive(archive, record) && renderer.heldTexture?.(archive, key)) return;
     const bitmap = t.getDFBitmap(record, frame);
     if (TextureFile.isSpectralArchive(archive)) {
       const spec = { ...bitmap, data: bitmap.data.slice() };
@@ -297,10 +300,16 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const color32 = swapFrame ?? t.getColor32(bitmap, 0);
     const replacement = !!swapFrame;   // AUDIT RETRO1 A4 (second pass F2): a pack's frame is TryImportTexture's too
     renderer.uploadTexture(archive, key, color32, { replacement });
+    // DEX2: A FRAME'S OWN EMISSION MAP - TextureReplacement.GetMobileBillboardMaterial imports a frame's `_Emission`
+    // beside its albedo and lights it white (a mod's glowing enemy: Daggerfall Enemy Expansion's Will-o'-wisp, 1610, and
+    // Hell Hound, 1614). Only beside an imported frame, as there: a classic frame has no map to import.
+    const lit = swapFrame ? decodedTexture(archive, record, frame, 'Emission') : null;
     // F49: the auto-emissive arm follows the FRAME - DFU builds a
     // material per frame, and a torch's every frame is self-lit. The
     // billboard path looks the mask up under this same composite key.
-    if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
+    if (lit) {
+      renderer.uploadEmissionTexture(archive, key, lit, { white: true, replacement: true });
+    } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
       renderer.uploadEmissionTexture(archive, key, color32, { white: true, replacement });
     } else if (isEmissive(archive, record) && !t.vendor) {
       // EG-ZH: the fire walls' frame - GetFireWallColors32 over the classic frame's albedo (TextureReader.cs:309-320)

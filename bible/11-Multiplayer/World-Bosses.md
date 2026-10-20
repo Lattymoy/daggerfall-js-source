@@ -2778,6 +2778,65 @@ dead - AUDIT FB1019f's three among them: the ward read off the record alone, a r
 re-aimed by content (all dead): `fb1019f_standinwhole.json`'s the-claim-clipped and the-count-takes, `egz_vestiges.json`'s
 EGZR-stacks-any-body.
 
+## 28. Heard without the clip, drawn without the wait (GATE-MIX, 2026-10-20)
+
+The owner: "in oblivion gates ... while performance is overall good, the game hitches, audio becomes super loud and even
+distorts". The causes, landing in the same frames - his big landings, a wave rising, the Sundering:
+
+- **A cue at its targets, thinned** (`gateBoss.js:"export function cueTargetPlaces(points, ear) {"`). A cue `at: 'targets'`
+  (the Hellfire's release and landing, the Meteor's, the Brand's, the Torment's) played one copy at every target: a
+  Hellfire on five players was five of the fire's full-scale cast in one frame, ten in his third phase (its second volley
+  within 3 m of the first), and over a reach of 40 to 80 m with a linear fall every copy near a group came in at nearly
+  its whole level. Now the court's `sound` plays the target nearest my ear first, then the next standing
+  CUE_TARGET_APART_M (10 m) from every one kept, at most CUE_TARGET_COPIES (2): where it lands on me is still heard at my
+  feet, a fall across the court still from across it, and no two copies of one clip stand on one spot. What was left of
+  the overload - one cue at 2.2, a landing and its quake together, the pressed score under them - the limiter at the
+  speakers now holds (`08-Audio/Audio.md`, GATE-MIX). No cue's level moved.
+- **The passes made before they are wanted** (`gateCourt.js:"  function warmPasses() {"`). His landings' sparks and the
+  meteor (`render/gate/gateFx.js` GateFxRenderer), the Reckoning's crystals (`render/courtCrystals.js`) and the way home's
+  fire (`render/gate/gatePass.js` GatePassRenderer) were each compiled in the frame that first drew them - the first
+  landing of the fight, the first Reckoning, his fall - two programs each, and a compile is a frame's hitch. Now each is
+  made as I stand in the court, one pass a frame (the step's veil is over the screen for the first of them); the draws
+  still make one that was not, and a pass that would not build is tried once, as before.
+
+- **The night's bodies made ready** (`gateSpriteWarm.js:"export function createSpriteWarm({ getTexture = null, uploadRecordFrame = null, has = () => false } = {}) {"`).
+  His host's, his Flame's and his own sprites were fetched when their first body was drawn (a wave's first rising, the
+  Sundering), and each frame decoded and uploaded the first time it showed (a new angle, a first swing, a first hurt).
+  Now, as I stand in the court, it asks for the archive of every body the night can show (`nightMobiles`: him and the
+  Tithe-Imp any night; his host on a Legion-Lord's; the Vanguard's kinds, his Flame and the Gaolers on their portents'
+  nights - each by his aspect) and uploads their frames SPRITE_WARM_UPLOADS (4) a frame, looking over at most
+  SPRITE_WARM_LOOKS (48), until all stand. The draws upload whatever they still find missing, as before; the warm-up is
+  forgotten with the court, and the places' hold (PLACE-LRU) lets its pictures go with it.
+- **A frame on the GPU is not decoded again** (`renderer.js:"  heldTexture(archive, record) {"`). `uploadRecordFrame`
+  decoded a frame's palette into RGBA before the renderer's cache turned it away, so a hit's splash
+  (`hitEffects.js` spawn - every hit on him and his host) decoded all its frames again each time. It asks `heldTexture`
+  first: a real picture under the frame's plain key is held for the place asking, as an `uploadTexture` hit holds it,
+  and nothing is decoded. A placeholder answers no (the real picture replaces it), and a spectral or self-lit frame
+  still goes the whole way (each carries a second picture).
+- **A flash casts no shadow** (`gateArena.js:"export function withCourtLights(lit, lights) {"`). His landings' lights
+  (the Meteor's, the Hellfire's - one under each mark), his fall's white and the Wrath's light took a shadow caster's
+  slot by nearness alone (`render/shadowPass.js` pickShadowCasters), each a new light that rebuilt a cube map under
+  Enhanced Lighting's shadows, for half a second of light; the running Tithe-Imp's moved its cube every frame. Each now
+  wears `carried`, the mask a spell's impact light wears (`render/spellImpactFx.js`), and `withCourtLights` carries it
+  into the frame's mask: lit as before, no caster. The braziers, the crystals, a Ward-Bearer's ward and his glow cast as
+  they did.
+- **The peers down in the court** (`gateCourt.js:"  function peersHeard(inCourt) {"`). Every other player's sound
+  (`net/peer/peerFx.js` peerHeard) plays EG_MIX.peerDb (4 dB) under itself while I stand in the court, as THE SPIRE MIX
+  has it (`Elite-Gates.md` section 26), so a crowd's blows sit under his cues. The court hands the one scope in only when
+  no place holds it and takes it back only while it is still its own.
+
+Pins: `test/net/gate/gatemix_targets.test.js` (3: the thinning's law; a phase-three Hellfire on five players heard twice
+at most, at my feet first; the passes compiled on arrival, one a frame, and nothing compiled at his first landing);
+`gatemix_sprites.test.js` (4: the night's mobiles; the budget, each frame once, the night asked once; the look's bound;
+the real court warming a Legion-Lord's host before any of it rose); `gatemix_frames.test.js` (2: heldTexture's law; the
+freeware's blood splash decoded once over four hits); `gatemix_lights.test.js` (3: the mask carried; the shadow pick
+passing a flash by; the court's landing lights masked, his glow not); `gatemix_peers.test.js` (2: four decibels down in
+the court and as it was out of it; the Spire's scope never taken or cleared). PIN MOVED: `wb4_gate_boss` (its Hellfire's
+two marks now stand 12 m apart - the 8 m it had are one copy now); `wb11_gate_host` (the warm-up asks the night's
+archives too: each archive the host's own once, a frame uploaded once by either); `lightid` (a burst's flash record
+now carries its mask). `tools/mutants/gatemix.json` (36 dead
+with the limiter's, and one kept alive on purpose: the night's key in the warm-up, a cost and not a law).
+
 ## Shipped
 
 **WB1 (2026-09-25) - the omen.** `net/gate/gateLaw.js` (the schedule, the room's key and window, the rolls, the boss table,

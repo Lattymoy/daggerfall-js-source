@@ -42,8 +42,8 @@
 // module's own contract is "well OUTSIDE camps has this roll go up" -
 // a check duplicated across a party would silently double this
 // section's frequency for anyone travelling together.
-import { chooseRandomEnemy, resolveEncounterTableIndex } from './encounters.js';
-import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
+import { chooseRandomEnemy, resolveEncounterTableIndex, playerReading } from './encounters.js';
+import { encounterTable } from '../characters/encounterTableDoor.js';   // DEX3: the one table a group rolls from
 import { factionOf, SOLITARY_TYPES, NIGHT_ONLY_FACTIONS } from '../characters/mobile/mobileFactions.js';
 import { CLASSIC_MINUTES_PER_SECOND } from './worldTick.js';   // real-seconds -> game-minutes, so the cadence below can be stated in real play time
 
@@ -248,7 +248,10 @@ export function amGroupRollOwner(myId, myFeet, peers, radius = GROUP_ROLL_RADIUS
 export function rollGroupComposition(ctx, rolls) {   // TV7: exported - a roaming band is made of the same themed group
   const timeOfDay = ((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440 + 1440) % 1440;   // LIVED1: the sky's day and night, when handed
   const isDay = timeOfDay >= 360 && timeOfDay <= 1080;
-  const rollCtx = { ...ctx, isDay };
+  // DEX3: ONE TABLE for the seed and its mates, read once as the door reads this roll (characters/encounterTableDoor.js):
+  // the player's own camp as a mod's events wrote it, a band's or a road's trouble by its own die among the mod's
+  const tableIdx = resolveEncounterTableIndex({ ...ctx, isDay });
+  const rollCtx = { ...ctx, isDay, table: tableIdx != null ? (ctx.table ?? encounterTable(tableIdx, { ...ctx, isDay }, rolls)) : null };
 
   // Seed roll: same odds as a lone wanderer would get, but re-rolled
   // away from SOLITARY types (never forced into a group), and away
@@ -280,8 +283,7 @@ export function rollGroupComposition(ctx, rolls) {   // TV7: exported - a roamin
   // time-of-day are exactly as restrictive as they were before this
   // change - only now narrowed to "things that belong with the seed".
   const theme = factionOf(seed);
-  const tableIdx = resolveEncounterTableIndex(rollCtx);
-  const table = tableIdx != null ? ENCOUNTER_TABLES[tableIdx] : null;
+  const { table } = rollCtx;
   const pool = theme && table ? table.filter((id) => factionOf(id) === theme) : [];
 
   for (let i = 1; i < size; i++) {
@@ -322,6 +324,7 @@ const campGateOk = (ctx) => !(ctx.inside || ctx.inLocationRect || ctx.preventEne
  * ring return null before any roll is spent.
  */
 export function rollCampEncounter(ctx, rolls = Math.random) {
+  ctx = playerReading(ctx);   // DEX3: the player's own roll, where it stands
   if (!campGateOk(ctx)) return null;
   if (!campWindowOpen(ctx.gameMinutes)) return null;
   // GUARANTEED: no chance check here any more - every open window (once
@@ -329,9 +332,15 @@ export function rollCampEncounter(ctx, rolls = Math.random) {
   return rollGroupComposition(ctx, rolls);
 }
 
+/** AUDIT DEX C7: what a chunk-load roll tells PlayerGPS - the climate of the pixel just entered (UpdateWorldInfo runs
+ *  before RaiseEvents, PlayerGPS.cs:561-576) and no rect: its `inLocationRect` is the camp gate's ring of any town about
+ *  that pixel (DISC19-F), not PlayerGPS's rect of the pixel's own location, which the minute's roll reads. */
+const chunkGps = (ctx) => ({ climateIndex: ctx.climateIndex });
+
 /** The chunk-load twin: same chance, same composition, no time gate at
  *  all - the caller's own `pixelChanged` event IS the cadence. */
 export function rollCampEncounterOnChunkLoad(ctx, rolls = Math.random) {
+  ctx = playerReading(ctx, chunkGps(ctx));   // DEX3: the player's own roll, where it stands
   if (!campGateOk(ctx)) return null;
   if (!rollCampChanceOnChunkLoad(rolls())) return null;
   return rollGroupComposition(ctx, rolls);
@@ -341,6 +350,7 @@ export function rollCampEncounterOnChunkLoad(ctx, rolls = Math.random) {
  *  hit, each group rolls its own composition (so one can be bandits and the next wolves) and
  *  takes its own bearing round the player. Null on a miss, else the non-empty list of groups. */
 export function rollCampEncountersOnChunkLoad(ctx, rolls = Math.random, { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {}) {
+  ctx = playerReading(ctx, chunkGps(ctx));   // DEX3: the player's own roll, where it stands
   if (!campGateOk(ctx)) return null;
   if (!rollCampChanceOnChunkLoad(rolls())) return null;
   const bearings = campGroupBearings(fovDegrees, groups);

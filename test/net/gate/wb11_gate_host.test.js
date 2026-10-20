@@ -710,7 +710,11 @@ test('WB11 the bodies drawn: each one standing a billboard of its own mobile\'s 
   frame(1000, stOf({ lg: { ads: [ad({ i: 1, x: 20, z: 6, rose: -Infinity }), ad({ i: 2, k: HOST.sapper, x: -20, z: 6, rose: 900 })], gone: [] } }));
   await new Promise((r) => setTimeout(r, 0));
   frame(1016);
-  assert.deepEqual(loaded.filter((a) => a !== ENEMY_BASICS[31].maleTexture).sort(), [ENEMY_BASICS[1].maleTexture, ENEMY_BASICS[35].maleTexture].sort(), 'each mobile\'s sprite, loaded once (his own beside them)');
+  // GATE-MIX: the court's warm-up (scenes/gate/gateSpriteWarm.js) asks for every archive the night can show as well - the
+  // Ward-Bearers' among them, none of which has risen - so each is asked twice at most: the warm-up's once and the host's once
+  const asked = loaded.filter((a) => a !== ENEMY_BASICS[31].maleTexture), times = (a) => asked.filter((x) => x === a).length;
+  assert.deepEqual([...new Set(asked)].sort(), [ENEMY_BASICS[1].maleTexture, ENEMY_BASICS[35].maleTexture, ENEMY_BASICS[26].maleTexture].sort(), 'each mobile\'s sprite (his own beside them), and the night\'s by the warm-up');
+  assert.deepEqual([times(ENEMY_BASICS[1].maleTexture), times(ENEMY_BASICS[35].maleTexture), times(ENEMY_BASICS[26].maleTexture)], [2, 2, 1], 'the host asks each of its own once');
   const host = c.batches().filter((b) => b.archive === ENEMY_BASICS[1].maleTexture || b.archive === ENEMY_BASICS[35].maleTexture);
   assert.equal(host.length, 2, 'a billboard each, handed on with the court\'s');
   const imp = host.find((b) => b.archive === ENEMY_BASICS[1].maleTexture), sapper = host.find((b) => b.archive === ENEMY_BASICS[35].maleTexture);
@@ -718,9 +722,8 @@ test('WB11 the bodies drawn: each one standing a billboard of its own mobile\'s 
   assert.ok(Math.abs(imp.origin[0] - impAt[0]) < 1e-9 && Math.abs(imp.origin[2] - impAt[2]) < 1e-9, 'where it stands');
   assert.ok(imp.origin[1] > impAt[1] + 0.5, 'an Imp over the floor');
   assert.ok(sapper.origin[1] < courtToDungeon(-20, 0, 6)[1], 'one still rising: under the floor yet');
-  const n = uploads.length;
   frame(1032);
-  assert.equal(uploads.length, n, 'a frame uploaded once');
+  assert.equal(new Set(uploads).size, uploads.length, 'a frame uploaded once (GATE-MIX: the warm-up\'s and the bodies\' alike)');
   // one gone: its fall played, then put away
   frame(2000, stOf({ lg: { ads: [ad({ i: 2, k: HOST.sapper, x: -20, z: 6, rose: 900 })], gone: [{ i: 1, k: 0, x: 20, z: 6, w: 0, n: 'Ann', at: 1990 }] } }));
   assert.ok(c.batches().includes(imp), 'falling, still drawn');

@@ -19918,3 +19918,44 @@ The whole suite on the slice: 28,025 passed and one failed - `test/systems/profe
 (its "a mix" card not found). It fails the same way on the commit before VIRT, in the same 248-file batch at four at a
 time, and passes alone and under a loaded CPU on both: older than this slice, and left for its own.
 
+
+## SKILL-READY, FIRM-STARS, STATUS-TIPS, BELT-LANTERN, MONSTER-VOL (2026-10-20, Dudey)
+
+The owner's words: "add a symbol that tells you when you hover over it that you have stars not applied for the
+firmament ... on the right of the renown bar and when skills are ready to level up left of the renown bar (dont use this
+annoying message bar for this anymore) and when you click the firmament symbol it can bring you to firmament"; "make every
+other icon of debuffs, buffs, hunger etc hoverable ... so it tells you in a toolbox like in the inventory what it does";
+"can we add an lantern only slot in the inventroy"; "decrease the monster scream frequenzy by 60% please and also add an
+option under audio for it called Monster Volume with 0 - 100%".
+
+- **The two tiles beside the Renown bar** (`ui/hud/hudAdvance.js`, built by `ui/enhanced/enhancedHud.js` advTile). Left:
+  the skills a rest or a journey would raise (`levelNotice.js` skillsImprovable), their count at the foot. Right: the
+  Firmament's stars and craft points not yet placed (the book's purses less the tree in force, `firmamentLaw.js`
+  pointsLeft); a press opens the Growth tab's Firmament page (`setHudPauseAt`, wired by `scenes/world.js`). Each is a
+  buff's own tile with a 16px glyph (`hudStatus.js` STATUS_GLYPHS `skillup`, `firmstar`), on the bar's line and past the
+  hotbar's ends where the hotbar is wider (CLEAR-HOTBAR, `advanceReach`). Each is its own piece of the movable HUD
+  (Alt+U: `skillsReady`, `starsUnspent`). The book is read once, again when the Renown rises, and again after
+  `BOOK_RETRY_MS` when a read found no sky. The level strip no longer draws the skills' standing line; the level's own row
+  stays, and under DFO Grimoire its words are in the page's full ink (LEVEL-INK).
+- **The status tiles' hover card** (`ui/hud/statusTips.js`, `ui/hud/hudTip.js`): with the mouse freed every tile shows
+  the pack's hover card - a spell's effects from its live entries, a disease's daily losses, a need's meaning and what
+  the needs take now, a boon's gains, a set power's tier, the open zone's rules. The browser's own title stands down.
+- **The lantern's slot** (`systems/beltLantern.js`): one socket after the Crystals (Plus's row, the Grimoire's column -
+  there each socket is the column's height shared out, so it fits without scrolling). A lantern there carries
+  `beltLantern: true`, hangs at the waist when lit whatever Handheld Torches' waist switch says (`playerTorch.js`
+  lanternAtWaist, `handheldTorches.js` atWaist), and is lit when hung and put out when taken off.
+- **Monsters** (`characters/enemy/enemySounds.js` attractStep, `scenes/hostCombat.js` tickEnemySound): a monster's attract
+  clock runs at 1/2.5 of the game's, so it calls 40% as often; the city watch and a companion keep theirs. The Audio
+  tab's **Monster Volume** (`systems/monsterVolume.js`, uiPrefs `monsterVolume`, 0-100%) scales a monster's call, its
+  attack sound and its pain cry.
+
+- **A quest's words before the NPC's door** (QUEST-WORDS-FIRST, `scenes/quest/questClickFirst.js`, wired in
+  `scenes/worldModes.js` openStaticNpc; Dudey: "you get the complete quest message plus reward when you press exit in
+  the dialog options which is weird and wrong"). A click on a building's NPC that a live quest's Person heard ticks the
+  quest machine at once; if that raised a window in the building's slot (the quest's box, then its reward), the talk
+  window or the guild's or shop's popup opens once the slot is clear. Before, the talk window paused the world and drew
+  over the building's slot, so the quest's tick, its words and its reward came only after Exit. A departure from
+  PlayerActivate.cs:1523-1528 (the owner's call): a DoClick that raised words opens the NPC's door after them; one that
+  raised nothing still ends the activation.
+
+`test/ui/hud/hud_advance_tips.test.js`.

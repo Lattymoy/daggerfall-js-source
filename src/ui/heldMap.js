@@ -172,7 +172,7 @@ import { actionsForCode } from '../systems/inputActions.js';   // UXB1-S: every 
 import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
 import { hubMapWord, hubTitle } from '../systems/region/regionHubs.js';   // HUB1: a region hub's word on the label and its title in the box
 import { tierPhrase } from '../systems/dungeon/dungeonTier.js';   // TIER1: a dungeon's tier and size on the label and in the box, online
-import { TV_WHO_GROUPS, TV_WHO_TEXT, TV_KIN_COLORS, TV_KIN_LEGEND, travelViewWho, toggleTravelViewWho, cycleTravelViewRenown, playerShown } from '../systems/travel/travelViewFilters.js';   // OW-WHO / OW-KIN: the players' filters and colours, the Overworld's own
+import { TV_WHO_GROUPS, TV_WHO_TEXT, TV_KIN_COLORS, TV_KIN_LEGEND, travelViewWho, toggleTravelViewWho, cycleTravelViewRenown, playerShown, playersOnMaps, toggleTravelViewFilter } from '../systems/travel/travelViewFilters.js';   // OW-WHO / OW-KIN: the players' filters and colours, the Overworld's own
 import { seatInfoLine, seatTipOf } from '../net/townSeatLaw.js';   // SEAT1a: a seat's Charter in the box
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
@@ -1338,7 +1338,7 @@ export class HeldMapWindow {
           raids: this._raids,   // EVENT-TIP: the towns under attack
           quests: this._quests,   // GUIDE5: where the quests point
           vendor: this._vendor,   // HOME-VENDOR: the trader's waypoint
-          travellers: this._trav.filter((t) => playerShown(t)).map((t) => ({ x: t.x, y: t.y, name: t.name, color: TV_KIN_COLORS[t.kin] ?? TRAVELLER_MARK_CSS, journey: t.journey, ship: t.ship })),   // TV3; OWS1: at sea, a ship; OW-WHO: the players' filters; OW-KIN: a friend's and a guild-mate's in theirs
+          travellers: this._trav.filter((t) => playersOnMaps() && playerShown(t)).map((t) => ({ x: t.x, y: t.y, name: t.name, color: TV_KIN_COLORS[t.kin] ?? TRAVELLER_MARK_CSS, journey: t.journey, ship: t.ship })),   // TV3; OWS1: at sea, a ship; OW-WHO: the players' filters; OW-KIN: a friend's and a guild-mate's in theirs
           pulse: env.pulse,
         });
         // ZONE-GIANTS: the zone's giants where they walk, on both maps - UNDER the waypoints (the owner: "when you mark the
@@ -2112,7 +2112,7 @@ export class HeldMapWindow {
     const leg = this._chrome?.legend;
     if (!leg) return;
     leg.innerHTML = '';
-    const trav = this._trav.filter((t) => playerShown(t));   // OW-WHO: the legend speaks for the players the sheet draws
+    const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
     if (!this._party.length && !this._gate && !this._serpent && !this._sd && !this._arch && !this._bounties.length && !this._revenants.length && !this._raids.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
@@ -2232,7 +2232,7 @@ export class HeldMapWindow {
     const who = travelViewWho();
     const wpShown = waypointKindsShown(), wpAll = listWaypoints();
     const sig = [band, inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0)),
-      this._trav.length ? 1 : 0, ...TV_WHO_GROUPS.map((g) => (who[g] ? 1 : 0)), who.renown,
+      this._trav.length ? 1 : 0, playersOnMaps() ? 1 : 0, ...TV_WHO_GROUPS.map((g) => (who[g] ? 1 : 0)), who.renown,
       ...WAYPOINT_KINDS.map((k) => `${wpShown[k] ? 1 : 0}:${wpAll.filter((w) => w.kind === k).length}`), this.deps.wildMask?.() ? 1 : 0].join('|');   // OW-WHO: and the players' row; WAYPOINTS: and theirs; WILD1: and the open zone's
     if (sig === this._keySig) return;
     this._keySig = sig;
@@ -2271,7 +2271,9 @@ export class HeldMapWindow {
     // OW-WHO (FIELD BUGS 2026-10-04e, "More filters for players in general ... both in Overworld map and travel map"):
     // THE PLAYERS' ROW - while the region's travellers are drawn: friends, guild, the rest, and the least Renown, the
     // Overworld's own switches (systems/travel/travelViewFilters.js - one store, so both maps answer alike)
-    if (this._trav.length) {
+    // MAP-PLAYERS: and its one switch for every player, standing wherever players can be drawn - with none in the region
+    // yet too, so they can be hidden before the first one comes; the finer switches while players are shown and here
+    if (this._trav.length || typeof this.deps.travellers === 'function') {
       const row = el('div', 'hmkeyrow');
       row.append(el('span', 'hmkeywho', TV_WHO_TEXT.title));   // never .hmkeyname: a phone hides those, and the grid would shift
       const btns = el('div', 'hmkeykinds');
@@ -2284,8 +2286,12 @@ export class HeldMapWindow {
         b.onclick = () => this._toggleWho(act);
         return b;
       };
-      for (const g of TV_WHO_GROUPS) btns.append(btn(TV_WHO_TEXT[g], who[g] !== false, TV_WHO_TEXT.tip(TV_WHO_TEXT[g], who[g] !== false), g));
-      btns.append(btn(TV_WHO_TEXT.renown(who.renown), true, TV_WHO_TEXT.renownTip, 'renown'));
+      const all = playersOnMaps();
+      btns.append(btn(TV_WHO_TEXT.all(all), all, TV_WHO_TEXT.allTip(all), 'all'));
+      if (all && this._trav.length) {
+        for (const g of TV_WHO_GROUPS) btns.append(btn(TV_WHO_TEXT[g], who[g] !== false, TV_WHO_TEXT.tip(TV_WHO_TEXT[g], who[g] !== false), g));
+        btns.append(btn(TV_WHO_TEXT.renown(who.renown), true, TV_WHO_TEXT.renownTip, 'renown'));
+      }
       row.append(btns);
       box.append(row);
     }
@@ -2341,7 +2347,8 @@ export class HeldMapWindow {
    *  again. Dead under a box, as the key's own filters are. */
   _toggleWho(which) {
     if (this._top || this._info || this._phase !== 'map') return;
-    if (which === 'renown') cycleTravelViewRenown(); else toggleTravelViewWho(which);
+    if (which === 'all') toggleTravelViewFilter('travellers');   // MAP-PLAYERS: the Overworld's Travellers switch
+    else if (which === 'renown') cycleTravelViewRenown(); else toggleTravelViewWho(which);
     this._dirty = true;
     this._renderKey();
     this._renderLegend();   // the kins it hid leave the legend with their marks

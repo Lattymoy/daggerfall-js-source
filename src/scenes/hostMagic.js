@@ -44,6 +44,7 @@ import {
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, BODY_CAPSULE_RADIUS, pickTouchTarget, sweepFoes, sphereOverlapsCapsule,   // ROAD-H H2: DoAreaOfEffect's OverlapSphere, against the player's capsule too
   missileHitsCapsule, PLAYER_BODY_RADIUS,   // AUDIT 62 F21 (review): the SphereCast contact test   // AUDIT 65 CV-2: the PLAYER's own controller radius (motor.js CAPSULE_RADIUS), not the foe's
 } from '../systems/spellcast.js';
+import { corpsePrefabStruck } from './corpseMarker.js';   // DEX5: a body a mod's corpse prefab stands, which my missile meets
 import { toBoxLocal } from '../systems/naval/navalBallistics.js';   // SERPENT4: a missile inside a box mark
 import { silenceBlocksCast, silencedText, pressButtonToFireSpellText, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, castSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';   // SCHOOLS3: castSchool - the school a signature spell teaches
@@ -1399,7 +1400,7 @@ export function createPlayerMagic({
           if (m.left <= 0) { showImpactFlash(m, m.to); retireMissile(m); continue; }
         }
         const body = (playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS))
-          || foes().some((f) => !f.dead && missileHitsFoe(m.pos, f))
+          || foes().some((f) => !f.dead && missileHitsFoe(m.pos, f)) || !!corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS)   // DEX5: where its caster's own stops (a prefab's body, below)
           || (peerBodies?.() ?? []).some((q) => q && q.id !== m.casterId && Array.isArray(q.feet) && missileHitsCapsule(m.pos, q.feet, q.height ?? CAPSULE_HEIGHT, PLAYER_BODY_RADIUS));
         if (body) { showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]); retireMissile(m); }
         continue;
@@ -1483,6 +1484,16 @@ export function createPlayerMagic({
           retireMissile(m);
           break;
         }
+      }
+      // DEX5 (bible/04-Characters/Enemy-Expansion.md section 11): ...and a body a mod's corpse prefab stands (corpseMarker.js
+      // registerCorpsePrefab - the troll's trigger sphere): DaggerfallMissile's cast meets the trigger and the bundle goes to
+      // the body's own entity; an AreaAtRange one bursts there too (its OverlapSphere ignores triggers - no other body)
+      const hitBody = m.dead ? null : corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS);
+      if (hitBody) {
+        hitBody.corpsePrefab.struck(m.spell, effectiveLevel(playerEntity), playerCaster(m.cast ?? null));
+        if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, effectiveLevel(playerEntity), playerFeet, playerCaster(m.cast ?? null), { playerHeight, allies: !!m.ally, duel: !!m.duel, boss: m.boss ?? !!m.duel });
+        showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);
+        retireMissile(m);
       }
     }
     // EVERY ALLOCATION HAS AN OWNER: retired missiles leave the list

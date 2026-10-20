@@ -16,6 +16,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { MobileUnit } from '../characters/mobile/mobileUnit.js';
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { setupFoeLook } from '../characters/enemy/foeLook.js';   // AUDIT DEX B6: SetupDemoEnemy.cs:129-151, the mobile's renderer
 import { mobileBillboardSize } from './rmbFlats.js';
 
 /** Past this (m) a band is only its mark. */
@@ -110,7 +111,9 @@ export function createBandSprites({ renderer, getTexture, uploadRecordFrame }) {
       const g = Math.max(1, grow || 1);
       const size = { w: (out.flip ? -sz.w : sz.w) * g, h: sz.h * g };
       if (!r.batch) {
-        r.batch = renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null;
+        // AUDIT DEX B6: dressed as SetupDemoEnemy dresses a mobile, as the hosts' foes are - a Spectral row's band (the
+        // mod's Will-o'-wisp and Faded Ghost) its ghost, a NoShadow row's (the vampires) casting none; the band stood opaque
+        r.batch = setupFoeLook(renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null, b.mobileType);
         if (!r.batch) continue;
         r.batch.origin = [0, 0, 0];
       } else {

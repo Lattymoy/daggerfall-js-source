@@ -357,9 +357,11 @@ const _courtLightsNear = new Map();
  * The braziers joined to the frame's lights. The paired shape the dungeon host hands the renderer in (`{ data, colors }`,
  * scenes/magicCandle.js withPlayerLights - the carried mask on `data`), the same shape out, the braziers AFTER all it
  * held: the player's own lights keep their slots and their mask (the torch is still the hand's, and casts no shadow),
- * and the renderer's cap drops a brazier before any of them. Not a player-light composer - nothing here is carried.
+ * and the renderer's cap drops a brazier before any of them. Not a player-light composer: a light here is masked only
+ * when it says `carried` (GATE-MIX - a flash, or a light that runs, takes no shadow caster's slot, as a spell's impact
+ * light does).
  * @param {{ data: Float32Array & { carried?: Uint8Array }, colors: Float32Array }} lit
- * @param {Array<{ x: number, y: number, z: number, range: number, color: readonly number[] }>} lights
+ * @param {Array<{ x: number, y: number, z: number, range: number, color: readonly number[], carried?: boolean }>} lights
  */
 export function withCourtLights(lit, lights) {
   const n = lit.data.length / 4, k = lights.length;
@@ -368,7 +370,7 @@ export function withCourtLights(lit, lights) {
   copyLights(data, 0, lit.data, 0, n);
   colors.set(lit.colors.subarray(0, n * 3));
   if (lit.data.carried) carried.set(lit.data.carried.subarray(0, n));
-  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); });
+  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); if (l.carried) carried[n + i] = 1; });   // GATE-MIX: a flash's mask - no shadow caster
   data.carried = carried;
   return { data, colors, carried };
 }

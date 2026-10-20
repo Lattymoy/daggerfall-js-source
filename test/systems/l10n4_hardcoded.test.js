@@ -362,6 +362,11 @@ const HARDCODED = {
   'src/systems/eliteGates/egSpoils.js': 8,
   'src/systems/enchanting.js': 7,
   'src/systems/enchantmentCatalogue.js': 65,
+  'src/systems/enemyExpansion/dexTableText.js': 5,   // DEX0: the mod's tables as text, verbatim (data, read by its own parser). AUDIT DEX A6: the fifty enemies' names among it are the game's own English (the Foes table's keys, the save); a player reads them through enemyExpansion/dexNames.js, in the player's language (getLocalizedEnemyName's custom arm), where DFU shows a custom enemy's English in every language
+  'src/systems/enemyExpansion/mudexTableText.js': 2,   // MUDEX1: MUDEX's two tables as text, verbatim (data, read by DEX's parser) - its classic lines' names ("Sabertooth Tiger") are a classic row's properties, never shown; its enemies' names are DEX's
+  'src/systems/enemyExpansion/dexBodies.js': 8,   // DEX7: the census's miss and sprite reasons (creatureBodies.js's eight are the classic table's) - read by the tests, never shown to a player: a miss keeps its sprite
+  'src/systems/enemyExpansion/dexSpells.js': 1,   // DEX4a: the mod's `[DEX] Unknown enemy spell table` Debug.LogError line, verbatim - through the install's `log` seam, never shown to a player
+  'src/systems/enemyExpansion/dexTables.js': 29,   // DEX1 (24) and DEX3 (5, ParseEncounterTables' and the first Update's): the mod's `[DEX]` Debug.LogError lines, verbatim - console diagnostics through the reading's `log` seam (a test silences it), never shown to a player
   'src/systems/equip.js': 3,
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
@@ -529,7 +534,7 @@ const HARDCODED = {
   'src/systems/travel/travelOptionsText.js': 30,
   'src/systems/travel/travelPace.js': 5,
   'src/systems/travel/travelPathMode.js': 3,
-  'src/systems/travel/travelViewFilters.js': 6,
+  'src/systems/travel/travelViewFilters.js': 7,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (MAP-PLAYERS: +1, the Players switch's tip)
   'src/systems/tutorialCatalogue.js': 214,
   'src/systems/uiSkin.js': 1,
   'src/systems/upkeep/upkeepItemRows.js': 2,
@@ -606,8 +611,8 @@ const HARDCODED = {
   'src/ui/enhanced/enhancedFrame.js': 2,
   'src/ui/enhanced/enhancedHelm.js': 16,
   'src/ui/enhanced/enhancedHotbar.js': 13,
-  'src/ui/enhanced/enhancedHud.js': 6,
-  'src/ui/enhanced/enhancedInventory.js': 84,
+  'src/ui/enhanced/enhancedHud.js': 9,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: +3, the two tiles' names and their cell's class)
+  'src/ui/enhanced/enhancedInventory.js': 89,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (BELT-LANTERN: +5, the lantern slot's acts)
   'src/ui/enhanced/enhancedLevelingChoice.js': 6,
   'src/ui/enhanced/enhancedMenu.js': 62,   // AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main
   'src/ui/enhanced/enhancedMerchantPanel.js': 1,
@@ -637,6 +642,7 @@ const HARDCODED = {
   'src/ui/gate/gateMarksView.js': 18,
   'src/ui/gate/gateTitleCard.js': 1,
   'src/ui/grimoireDress.js': 13,
+  'src/ui/growth/growthStage.js': 1,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (GROWTH-BOOK)
   'src/ui/guildServiceWindow.js': 1,
   'src/ui/guildServiceWindows.js': 8,
   'src/ui/hallOfRecords.js': 4,
@@ -646,8 +652,10 @@ const HARDCODED = {
   'src/ui/hitNumbers.js': 1,
   'src/ui/holdingsPages.js': 59,
   'src/ui/howManyField.js': 1,
+  'src/ui/hud/hudAdvance.js': 8,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: ADV_WORDS, the tiles' hover card)
   'src/ui/hud/hudLayout.js': 28,
   'src/ui/hud/hudStatus.js': 1,
+  'src/ui/hud/statusTips.js': 53,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (STATUS-TIPS: what each status tile says under the pointer)
   'src/ui/iliacTableHud.js': 63,
   'src/ui/ink/inkDungeonGL.js': 1,
   'src/ui/ink/inkDungeonSolid.js': 6,

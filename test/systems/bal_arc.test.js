@@ -472,6 +472,7 @@ test('AUDIT BAL the saved dungeon\'s elites: the save writes each foe\'s word, a
       foes, _layoutFoes: 2, _eliteOnline: online, renderer: { destroyBillboardBatch() {} }, freeCorpse() {}, dropCandidate() {}, _sharedById: new Map(),
       lootPiles: [], settleLootFlat() {}, droppedLoot: { restorePiles() {} }, droppedTorches: { restore() {} }, camps: { dropOwn() {}, restore() {} },
       actions: { restoreSaveData() {} }, playerEntity: {}, clearOwnPuppets() {}, questPoolOps: { removeFoe() {} }, respawnDue: () => false, _wallNow: () => null,
+      corpsePrefabs: { clearAsh() {}, settle() {}, forget() {} },   // AUDIT DEX D1/D3: the load's prefab doors (scenes/corpsePrefabHost.js)
       applyLoot() {}, bodyRecords: () => [], respawnFoe() {},
       retypeFoe: async (i) => { retyped.push({ i, elite: !!foes[i].src.eliteFoe }); return true; },
       patchFoe: (f, sf) => { patched.push(f.i); },

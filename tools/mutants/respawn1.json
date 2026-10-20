@@ -49,8 +49,8 @@
   {
     "name": "RESPAWN1-F5-a-published-field-is-admitted-and-then-silently-dropped",
     "file": "src/net/wire.js",
-    "old": "  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > 255) return null; out.mobileType = sf.mobileType; }",
-    "new": "  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > 255) return null; }",
+    "old": "  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > FOE_TYPE_MAX) return null; out.mobileType = sf.mobileType; }",
+    "new": "  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > FOE_TYPE_MAX) return null; }",
     "tests": [
       "test/net/respawn1.test.js"
     ]

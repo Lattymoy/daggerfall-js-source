@@ -119,8 +119,8 @@
   {
     "name": "RVN6-person-level-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : null",
-    "new": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 1) : null",
+    "old": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null",
+    "new": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 1) : null",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RVN6-person-level-unfloored",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : null",
-    "new": "level: t >= 128 ? (playerLevel | 0) - 2 : null",
+    "old": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null",
+    "new": "level: isClassEnemyId(t) ? (playerLevel | 0) - 2 : null",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RVN6-monster-at-my-level",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : null",
-    "new": "level: t >= 128 ? Math.max(1, (playerLevel | 0) - 2) : playerLevel",
+    "old": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null",
+    "new": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : playerLevel",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]

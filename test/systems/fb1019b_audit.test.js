@@ -273,7 +273,9 @@ test('AUDIT L6-3 and L2-2, by source (the hosts and the canvas sheet do not run 
   const { readFileSync } = await import('node:fs');
   const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
   const notice = src('src/ui/levelUp/levelNotice.js');
-  assert.match(notice, /const rows = hidden \? \[\] : levelNotices\.frame\(now, \{ owed, improvable: improvable \?\? skillsImprovable\(\) \}\);/);
+  // SKILL-READY (2026-10-20): the strip no longer counts them - the HUD's tile beside the Renown bar does (ui/hud/hudAdvance.js)
+  assert.match(notice, /const rows = hidden \? \[\] : levelNotices\.frame\(now, \{ owed, improvable: improvable \?\? 0 \}\);/);
+  assert.match(src('src/ui/hud/hudAdvance.js'), /skillsImprovable\(/, 'the tile counts the skills');
   assert.match(notice, /export const skillsImprovable = \(e = playerEntity\) => countReadyToImprove\(e, \{ now: ownMinutes\(\) \}\);/);
   assert.match(src('src/ui/hud/hud.js'), /drawLevelNotices\(\{ hidden: [^}]*\}\);/, 'the HUD hands no count of its own');
   assert.match(src('src/ui/charsheet.js'), /Object\.assign\(this\.entity\.stats, this\.working\);[^\n]*\n\s+refreshOnlineLayer\(this\.entity, \{ keepHealth: true \}\);/);

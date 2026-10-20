@@ -415,6 +415,11 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   border-top: 2px solid rgba(5,6,8,0.45); box-shadow: inset 0 1px 0 rgba(163,152,128,0.16); }
 .inv-tip dt { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #a89f88; align-self: center; }
 .inv-tip dd { margin: 0; font-size: 14px; color: #efe8d6; text-align: right; font-variant-numeric: tabular-nums; }
+/* HUD-TIP / STATUS-TIPS (ui/hud/hudTip.js): the HUD's hover card is the pack's card - a narrower one, its lines plain words */
+.inv-tip.hud-tip { width: min(260px, 80vw); z-index: 39; }   /* over the HUD (z 4), under the asset picker (dataSource.js ASSET_PICKER_Z, MWFIX 1) */
+.inv-tip.hud-tip .hud-tip-line { margin: 0 0 4px; font-size: 14px; line-height: 1.3; color: #efe8d6; }
+.inv-tip.hud-tip .hud-tip-foot { margin: 6px 0 0; padding-top: 6px; font-size: 12px; color: #a89f88;
+  border-top: 2px solid rgba(5,6,8,0.45); box-shadow: inset 0 1px 0 rgba(163,152,128,0.16); }
 .inv-menu { min-width: 190px; padding: 6px; display: flex; flex-direction: column; border: 2px solid; }
 .inv-menu-head { margin: 2px 6px 6px; padding-bottom: 6px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
   color: ${FRAME_TONES.brassHi}; border-bottom: 2px solid rgba(5,6,8,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -526,6 +531,11 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
 .pack-shell .wornsock.dragging { opacity: 0.4; }
 body.draglock .pack-shell .wornsock { touch-action: none; }
 .pack-shell .wornshelf.dragover { outline: 2px solid var(--brass); outline-offset: 3px; }
+/* BELT-LANTERN: the lantern's own socket - one, not a pair; a lantern on the belt unlit stands dimmed; a lantern carried
+   over it lights its frame */
+.pack-shell .shelfpair.shelfone { grid-template-columns: calc((100% - 4px) / 2); justify-content: center; }   /* one socket, a pair's socket's size */
+.pack-shell .wornsock.unlit .tile img { filter: grayscale(0.6) brightness(0.7); }
+.pack-shell .shelfgrp-lantern .wornsock.dragover { outline: 2px solid var(--brass); outline-offset: 2px; }
 .pack-shell .shelflabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
 @media (max-width: 640px) { .pack-shell .shelflabel { letter-spacing: 0; } }   /* AUDIT FONT3 L6: after the rule it narrows - AMULETS and CRYSTALS whole in a 52px group (BRACELETS was cut before FONT3 too) */

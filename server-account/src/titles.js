@@ -172,8 +172,9 @@ export const isHoursFirst = (player, env) =>
 /** HOURS-FIRST: the aura Hour's First carries - The Turning Hour in the first dawn's light (render/auraRing.js). */
 export const HOURS_FIRST_AURA = 'firsthour';
 /** EG-E2 (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): FIRST OF THE SPIRE - the first company
- *  ever to take Redoubt 10, by name, granted as Hour's First is: a list in config (wrangler.toml EG_FIRST_HANDLES, empty
- *  until that company comes), held while listed, never a guest's. The title and its aura, Firstlight. */
+ *  ever to take Redoubt 10, by name, granted as Hour's First is: a list in config (wrangler.toml EG_FIRST_HANDLES - SPIRE-FIRST,
+ *  2026-10-20: the account Serveride, who took it alone - SPIRE-FIRST-NAME: shown in the room by his character's name,
+ *  Severide; this list is the account's HANDLE, never the name the herald reads), held while listed, never a guest's. The title and its aura, Firstlight. */
 export function egFirstHandles(env) {
   return handleList(env?.EG_FIRST_HANDLES);
 }

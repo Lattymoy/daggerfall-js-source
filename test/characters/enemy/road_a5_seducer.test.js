@@ -311,7 +311,7 @@ test('seducer pins: the hosts stand the behaviour, fold CanFly, and bill the win
     assert.ok(src.includes(`if (${f}.seducer) ${f}.ai.flies = ${f}.mobile.basics.behaviour === 'Flying' || ${f}.mobile.basics.behaviour === 'Spectral';`),
       `${file}: CanFly re-reads the behaviour the transform rewrites`);
     // EnemyDeath.cs:86-92 reads the mobile's own CorpseTexture.
-    assert.ok(src.includes('f.mobile?.basics?.corpseTexture ?? ENEMY_BASICS[f.mobileType]?.corpseTexture'),
+    assert.ok(src.includes('const ct = corpseTextureOf(f);'),   // PIN MOVED, AUDIT DEX A1: the read is corpseMarker.js corpseTextureOf (and a female's corpse)
       `${file}: the corpse comes off the mobile's copy`);
     // ROAD-U: and the pause reaches the two components DFU gates -
     // without this wiring the motor and the attack machine take the

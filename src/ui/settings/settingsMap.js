@@ -93,7 +93,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("combat", "Combat", [
     sec("enemies", "Enemies", [
-      "feat:enhanced-ai", "Enhancements/EnhancedCombatAI", "feat:mod-meanermonsters", "feat:enemy-infighting", "Enhancements/EnemyInfighting"]),
+      "feat:enhanced-ai", "Enhancements/EnhancedCombatAI", "feat:mod-meanermonsters", "feat:mod-daggerfall-enemy-expansion", "feat:enemy-infighting", "Enhancements/EnemyInfighting"]),
     sec("rules", "Rules & armour", [
       "feat:mod-pcaao", "MeleeAttacks/MeleeAttackFriendlyProtection", "MeleeAttacks/MeleeAttackDetection"]),
     sec("weapons", "Weapons in hand", [
@@ -153,7 +153,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("audio", "Audio", [
     sec("volume", "Volume", [
-      "Controls/SoundVolume", "Controls/MusicVolume"]),
+      "Controls/SoundVolume", "Controls/MusicVolume", "port:monsterVolume"]),
     sec("music", "Music", [
       "Audio/AlternateMusic", "Audio/SoundFont", "port:midiOut"]),
     sec("sounds", "Sounds", [

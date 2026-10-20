@@ -77,7 +77,7 @@ import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: Player
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer, duelSpare, staffFly, levitateWarded, freeFlight } from '../characters/playerEntity.js';   // DUEL1: the duel's floor, for its damage over time   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
-import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
+import { standardSpellsByIndex } from '../systems/spell/standardSpells.js';   // G4: the two magic registries, one home; DEX4a: a mod's SpellRecords.json merged, as RebuildClassicSpellsDict merges it
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot/loot.js';
 import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the painting descriptions' file
@@ -101,6 +101,7 @@ import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; impo
 import '../systems/sigil/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
 import { installRoleplayRealism } from '../systems/roleplayRealism/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
+import { installEnemyExpansion } from '../systems/enemyExpansion/dexInstall.js';   // DEX1: Daggerfall Enemy Expansion's fifty enemies, their careers and the classic edits, once at boot
 import { getBool, getInt } from '../systems/settings/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/song/songManager.js';
 import { festivalEnvironment } from './seatFestival.js';   // FESTIVAL-STAGE: a Festival town's streets hear the tavern
@@ -151,7 +152,7 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
   let spellsByIndex = null;
   let magicItemTemplates = null;
   try {
-    const byIndex = spellsByIndexMap(readSpellsStd(await fetch('SPELLS.STD')));   // AUDIT 68 S12-spellsstd-dup: the one first-wins fold
+    const byIndex = standardSpellsByIndex(await fetch('SPELLS.STD'));   // AUDIT 68 S12-spellsstd-dup: the one first-wins fold (DEX4a: after the mods' merge)
     spellsByIndex = byIndex;
     setSpellRecordsByIndex(byIndex);
   } catch { /* data absent: casts no-op, and a CastWhen* slot prices at 0 - DFU's own answer */ }
@@ -1395,6 +1396,7 @@ export function ensureAudio(fetch = fetchBytes) {
   installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons
   installRoleplayRealismItems();
   installRoleplayRealism();   // RR1: the formula overrides, the guild classes, the hooks - once, in InitMod's order   // RRI1: the fourteen rows and the twenty patches before anything mints, the 280 sprites on the door
+  installEnemyExpansion();   // DEX1: BestiaryMod.Start - after every Init above (RR's enemy appearance among them), as DFU runs a MonoBehaviour's Start
   // AUDIT VE R2: the texture store's ONE registration (dataSource.js registerTextureStore) - the loose pack, Seasons of
   // the Iliac Bay (SIB1), Weapon Widget (WW1), Diverse Weapons (DW1) and every attached .dfmod from its stored index
   // (DFMOD1/DFMOD2), the shipped mods first (VE4), before the first archive loads (the hosts await it), warmed. This
@@ -1790,6 +1792,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
   return ticker.subscribe((from, to, dt) => {
     for (const pool of pools) {
       for (const f of pool() ?? []) {
+        if (f?.dead && !f.puppet) f.corpsePrefab?.rounds?.(from, to);   // DEX5: a prefab's body has an effect manager of its own (scenes/corpseMarker.js)
         if (!f || f.dead || !f.entity || f.puppet) continue;   // AUDIT WORLD6b B1: a PUPPET's entity is its owner's simulation - no round of mine ticks it (a poison put on it locally reached the divert as my blow)
         const sinks = sinksFor(f, false);   // AUDIT 68 review (R-scenes-round-tick-provenance-three-hosts): a round is nobody's blow unless its tick says so - the dungeon's law (foeSinks(f, false)), all four hosts
         runMagicRoundsFor(f.entity, from, to, { sinks });

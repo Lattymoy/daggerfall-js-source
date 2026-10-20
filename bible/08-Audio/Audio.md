@@ -890,3 +890,33 @@ Mac: "Do the not done." The record is `06-Systems/Professions-Arc.md` section 45
   heard at the net however its landing was missed (W1).
 - **Not heard here**: the creak, the fall, the logs, a vein's rubble and its chunks are the node's, and the node is each
   character's own - another's tree still stands for you.
+
+## GATE-MIX (2026-10-20): the limiter - every bus to the speakers through one stage
+
+The owner: "in oblivion gates ... while performance is overall good, the game hitches, audio becomes super loud and even
+distorts". Nothing stood between the mix and the speakers: the listener's bus (DW-D) went straight to `ctx.destination`,
+and a sum past full scale was cut square by the browser. The Burning Court reaches it easily - the boss's own clips peak
+at full scale in DAGGER.SND (measured: his bark and attack, records 208 and 209, a body's fall, 15, the fire's cast, 84,
+all at 0 dBFS; the burning loop, 420, at -8.9), his cues play them at 1.3 to 2.2 (`gateBoss.js:"export const BOSS_CUES = Object.freeze({"`),
+a landing sounds two of them in one frame (the slam's land and the quake), and the court's score is pressed to a decibel
+under the clip (WB10a). At the default SoundVolume of 0.5 a single cue at 2.2 already passed 1; at a higher one, most of
+his heavy blows did. The per-target copies that made it worse, and the other players' sounds now 4 dB down in the
+court as in the Spire, are `11-Multiplayer/World-Bosses.md` section 28.
+
+- **The stage** (`audio.js:"  _limiter() {"`): the listener's bus into a DynamicsCompressorNode run as a limiter (LIMITER:
+  -3 dB, no knee, 20:1, 1 ms in, 120 ms out), a trim, and a soft ceiling - a WaveShaper whose curve (`limitAmplitude`) is
+  the signal itself up to LIMIT_LINEAR (0.75) and a tangent's shoulder over it toward LIMIT_CEILING (0.98), reaching 12 dB
+  over full scale (LIMIT_RANGE 4). The compressor holds a loud moment down cleanly; the ceiling rounds off what its attack
+  lets through, so nothing reaches the speakers past 0.98 by construction.
+- **Unity under the threshold.** The Web Audio compressor applies its own make-up gain - (1 / full-range gain)^0.6, the
+  spec's - which would have raised the whole mix 1.7 dB; `limiterTrim` takes it back out, so everything under -3 dBFS
+  plays exactly as before (the curve is straight there and the shaper is not oversampled, so it is exact).
+- **Every bus.** The effects master, the reverb's wet and the music's master all reach the listener's bus already
+  (DW-D), so all of them reach the limiter; the underwater low-pass (`setListenerLowPass`) hangs before it and comes off
+  back onto it. A context with no compressor or no shaper plays straight through, as before.
+- **Not a DFU member.** Unity's mixer clips the same way; this is the port's own stage, past DFU on purpose, and moves no
+  DFU volume - every call site's level is as it was.
+
+Pins: `test/systems/gatemix_limiter.test.js` (4: the ceiling's law; the curve as the WaveShaper reads it; the trim
+against the spec's make-up; the graph - the listener into the limiter, the low-pass before it, an old context straight
+through). `tools/mutants/gatemix.json` (with section 28's: 36 dead, one equivalent as recorded).

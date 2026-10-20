@@ -780,7 +780,7 @@ repository holds no bill. [Corrected by AUDIT GRANT-SLEEP C1, below: the first d
   ten minutes); a player who stands nothing new held their cell at most ten minutes past its last mint (idle in a town
   by day, in a dungeon or a building, or with their foes already standing). A cell held all month is some $4.20; a cell
   with one player in it had been billed only for the moments it handled a frame.
-- **Built** (`server/src/index.js` `_grantTick`; relay world234 (world225, world226, world228, world229, world230 then world231 on its branch, renumbered past main's versions at each merge, to world233)): the window posts at a door, as the relay's metrics
+- **Built** (`server/src/index.js` `_grantTick`; relay world235 (world225, world226, world228, world229, world230, world231 then world234 on its branch, renumbered past main's versions at each merge, to DEX1's world234)): the window posts at a door, as the relay's metrics
   window does (`_metricsTick`) - at the first frame or close after its first fold has waited GRANT_MEASURE_MS, and when
   the cell drains (its last socket's close, forced whatever the window's age: the players it measured are gone, and the
   cell then sleeps owing nothing). At its whole bound it posts at once, as before; a case's evidence posts at its door

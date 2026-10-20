@@ -1313,6 +1313,12 @@ it; a seat answers its hover with the EVENT-TIP card (who holds it, this week's 
 not 80), and the I box names a held seat's holder - it read "unheld" whoever held it. The record:
 `01-Overview/bugs/Field-Bugs-2026-10-04e.md`.
 
+MAP-PLAYERS (2026-10-20, Dudey: *"add a filter button on the Worldmap not overworld map (theres is already one for it) to
+show and not show players"*): the key's Players row stands wherever players can be drawn, with none in the region too,
+and opens on one switch, Shown / Hidden, that takes every other player off the sheet and its legend. It is the
+Overworld's Travellers switch (`travelViewFilters.js` playersOnMaps - one store, so both maps answer alike); Friends,
+Guild, Others and the Renown floor follow it while players are shown and in the book. My party is drawn either way.
+
 ## TAMRIEL1 - the continent round the Bay (2026-10-08)
 
 The world sheet zooms out past the Bay's own fit onto the whole of Tamriel, inked in the same hand round the Bay's

@@ -47,8 +47,8 @@
  {
   "name": "MWNPC15-roster-wolf-armed",
   "file": "src/characters/foeBodies.js",
-  "old": ": vampire || wolf ? [] : [rosterBlade(h)]);",
-  "new": ": vampire ? [] : [rosterBlade(h)]);",
+  "old": ": vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);",
+  "new": ": vampire || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);",
   "tests": [
    "test/characters/mwnpc15_werewolf.test.js"
   ]

@@ -14,6 +14,7 @@ import {
   EnemySoundSource, ignoreHumanSounds, rollAttractDelay,
   ATTRACT_RADIUS, MIN_ATTRACT_DELAY, MAX_ATTRACT_DELAY,
   OCCLUDED_VOLUME_SCALE, MOVE_SOUND_THRESHOLD, ATTACK_SOUND_THRESHOLD,
+  FOE_ATTRACT_SCALE,
 } from '../../../src/characters/enemy/enemySounds.js';
 import { enemySoundOccluded, tickEnemySound, playEnemyClip } from '../../../src/scenes/hostCombat.js';
 import { ENEMY_BASICS } from '../../../src/characters/enemy/enemyBasics.js';
@@ -230,7 +231,8 @@ test('audit24 wave41: the host seam - the occlusion cast and the LINEAR rolloff'
   // the whole FixedUpdate, end to end
   played.length = 0;
   const src = new EnemySoundSource(RAT, scripted(0, 0.5, 0));
-  tickEnemySound(src, [0, 0, 0], [0, 0, 100], 4, { audio, collider: clear });
+  // MONSTER-QUIET (2026-10-20): the seam runs a monster's clock at 1 / FOE_ATTRACT_SCALE - DFU's 4 s is 4 x 2.5 of the game's
+  tickEnemySound(src, [0, 0, 0], [0, 0, 100], 4 * FOE_ATTRACT_SCALE, { audio, collider: clear });
   assert.equal(played.length, 0, 'out of range');
   tickEnemySound(src, [0, 0, 0], [0, 0, 5], 0.1, { audio, collider: clear });
   assert.equal(played.length, 1, 'in range, and it spoke');

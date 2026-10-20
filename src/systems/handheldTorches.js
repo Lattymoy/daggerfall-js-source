@@ -247,7 +247,7 @@ export function createHandheldTorches({
    *  why; this is the same question off the component's own settings frame, so a pin's store drives it). It
    *  takes no hand, so the hand law never stows it, the no-hand refusals let it through, and the first-person
    *  hand never holds it. With the switch off every line below reads exactly as it did. */
-  const atWaist = (it) => !!w.s.lanternsAtWaist && isLantern(it);
+  const atWaist = (it) => isLantern(it) && (!!w.s.lanternsAtWaist || it.beltLantern === true);   // BELT-LANTERN: and one in the lantern slot
 
   // ---- InitializeTextures (IL 0x1034): 112359 records 0 (torch) and 1 (lantern), frames until one is missing ----
   const loadTextures = (renderer) => {

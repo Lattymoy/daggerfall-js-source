@@ -171,6 +171,7 @@ import { SOUND } from '../../systems/soundClips.js';
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { isLanternItem, beltLanternOf, hangBeltLantern, unhangBeltLantern } from '../../systems/beltLantern.js';   // BELT-LANTERN: the lantern's own slot on the shelf
 /** Slot id -> where it sits on the body, and what to call it.
  *
  *  THE FIGURE FACES THE READER, so the character's RIGHT arm is drawn
@@ -331,7 +332,8 @@ export function equippedModel(entity = {}) {
   // made-up EQUIP_SLOTS value, and the counts below still walk the
   // REAL table, so "27 slots" stays DFU's 27 and nothing that counts
   // slots learns about this one.
-  const light = entity?.lightSource ?? null;
+  // BELT-LANTERN: a lit lantern on the belt is the shelf's (its own slot), not the hand's
+  const light = entity?.lightSource && entity.lightSource.beltLantern !== true ? entity.lightSource : null;
   const visible = rows.filter((r) => r.item || !r.hidden);
   return {
     rows: light
@@ -1002,6 +1004,13 @@ function dropOnHand(item, to) {
   picked = null;
   render();
 }
+/** BELT-LANTERN: off the belt there is one way, into the pack; onto the lantern's socket only a lantern goes. Null where
+ *  the belt has no say (dropIntent's own law). */
+function beltIntent(item, over, source) {
+  if (source === 'belt') return over?.closest?.('.pack-dock') ? { kind: 'unbelt', label: 'Take off belt' } : { kind: 'none', label: '' };
+  if (!over?.closest?.('.shelfgrp-lantern')) return null;
+  return isLanternItem(item) && item.beltLantern !== true ? { kind: 'belt', label: 'Hang at belt' } : { kind: 'nope', label: null };
+}
 function dropIntent(item, over, fromItem, source = 'local') {
   // MAC-M2 (2026-09-16, Mac: "Hold to drag enhanced functionality
   // doesn't work when trying to take items off your character"): A DRAG
@@ -1022,6 +1031,8 @@ function dropIntent(item, over, fromItem, source = 'local') {
   if (hot) return hot;
   const hand = handIntent(item, over, source);   // HAND-DRAG: a weapon onto a hand's own panel
   if (hand) return hand;
+  const belt = beltIntent(item, over, source);   // BELT-LANTERN: the lantern's own socket
+  if (belt) return belt;
   if (source === 'worn') {
     const act = localPrimaryAct(item, deps.entity);
     return over?.closest?.('.pack-dock') && act
@@ -1081,6 +1092,8 @@ function dragTo(x, y) {
   // MAC-M2: the other direction lights the DOCK - the pack is one
   // target the way the map is one, not a grid of twelve tiles.
   else if (want?.kind === 'offbody') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
+  else if (want?.kind === 'belt') document.elementFromPoint?.(x, y)?.closest?.('.shelfgrp-lantern')?.querySelector?.('.wornsock')?.classList.add('dragover');   // BELT-LANTERN
+  else if (want?.kind === 'unbelt') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
   else if (want?.kind === 'reorder') { for (const n of document.querySelectorAll('.itemrow')) if (rowItems.get(n) === want.item) n.classList.add('dragover'); }
   else if (want?.kind === 'hotbar') hotbarSlotNode(document.elementFromPoint?.(x, y))?.classList.add('dragover');   // HB1
 }
@@ -1138,6 +1151,8 @@ function dragStop(commit) {
   const want = dropIntent(d.item, overAtRelease, d.item, d.source);
   if (want?.kind === 'hand') dropOnHand(d.item, want.to);   // HAND-DRAG
   else if (want?.kind === 'body') dropOnBody(d.item);
+  else if (want?.kind === 'belt') hangLantern(d.item);   // BELT-LANTERN
+  else if (want?.kind === 'unbelt') unhangLantern(d.item);
   // MAC-M2: THE SAME DOOR. A piece carried OFF the body performs the
   // act its own card offers, exactly as one carried onto it does, so
   // the two directions cannot answer differently - and the closed act
@@ -2107,6 +2122,10 @@ const WORN_FAMILIES = Object.freeze([
 const SHELF_GROUPS = Object.freeze([
   { label: 'Amulets', slot: 'Amulet' }, { label: 'Rings', slot: 'Ring' }, { label: 'Bracelets', slot: 'Bracelet' },
   { label: 'Bracers', slot: 'Bracer' }, { label: 'Marks', slot: 'Mark' }, { label: 'Crystals', slot: 'Crystal' },
+  // BELT-LANTERN (Dudey: "an lantern only slot ... in the row for enhanced plus and ... in dfo grimoire in the middle under
+  // crystals"): one socket, a lantern hung at the belt (systems/beltLantern.js) - after the Crystals in Plus's row, under
+  // them in the Grimoire's column (the same shelf, each dress's own flow)
+  { label: 'Lantern', lantern: true },
   { label: 'Other', slot: 'Unnamed', hiddenEmpty: true },
 ]);
 const DOLL_AREA = '1 / 2 / span 5 / auto';
@@ -2364,6 +2383,7 @@ function accessoryShelf() {
     bySlot.get(row.label).push(row);
   }
   for (const g of SHELF_GROUPS) {
+    if (g.lantern) { shelf.append(lanternGroup(g)); continue; }   // BELT-LANTERN
     const rows = bySlot.get(g.slot) ?? [];
     if (g.hiddenEmpty && !rows.some((r) => r.item)) continue;
     const grp = el('div', 'shelfgrp');
@@ -2374,9 +2394,10 @@ function accessoryShelf() {
     grp.append(pair, el('span', 'shelflabel', g.label));
     shelf.append(grp);
   }
+  shelf.style.setProperty('--shelf-n', String(shelf.children.length));   // BELT-LANTERN: how many groups a column's sockets share its height by (the Grimoire's)
   return shelf;
 }
-function shelfSocket(r, g) {
+function shelfSocket(r, g, source = 'worn') {
   if (!r.item) {
     const d = el('div', 'wornsock wornempty');
     d.title = g.label;
@@ -2389,10 +2410,10 @@ function shelfSocket(r, g) {
   markItemFrame(b, item);   // RARITY-UI / SIGIL-UI: a socket is the icon's frame
   b.title = `${r.label}: ${line.name}${itemStatSuffix(line)}`;
   b.append(tileWithWear(line, b, SLOT_BOX.socket, false));   // WEAR-UI
-  dragFrom(b, item, 'worn');   // MAC-M2's hold: off the body and into the pack
+  dragFrom(b, item, source);   // MAC-M2's hold: off the body and into the pack (BELT-LANTERN: off the belt)
   b.onclick = (e) => {
     if (takeDragClick()) return;
-    if (equipByDoubleClick(secondClick(item, item, e))) return;   // DBLEQUIP: the socket's second click takes it off
+    if (equipByDoubleClick(secondClick(item, item, e))) return;   // DBLEQUIP: the socket's second click takes it off (BELT-LANTERN: lights or douses the lantern)
     picked = picked === item ? null : item;
     if (picked) goldEntry = null;   // AUDIT2 GOLD-DROP 2
     pickedAt = 'worn';
@@ -2406,6 +2427,45 @@ function shelfSocket(r, g) {
   b.onmouseleave = hideTip;
   b.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, 'local', e.clientX, e.clientY); };   // DROPS-AUDIT F10
   return b;
+}
+
+/** BELT-LANTERN: the shelf's lantern socket - the lantern on the belt (lit or not; unlit it stands dimmed), or the open
+ *  diamond. A lantern dropped on it hangs there and is lit; dragged off it to the pack it comes off and goes out. A
+ *  click reads it (its card: Light or Douse, Take off belt), a second click lights or douses it, as a worn piece's
+ *  second click puts it on or takes it off. */
+function lanternGroup(g) {
+  const grp = el('div', 'shelfgrp shelfgrp-lantern');
+  const pair = el('div', 'shelfpair shelfone');
+  const item = beltLanternOf(deps.entity);
+  if (!item) {
+    const d = el('div', 'wornsock wornempty');
+    d.dataset.lantern = '';
+    d.title = 'Lantern: drop a lantern here to hang it at your belt';
+    d.append(el('span', 'worntile', '\u25c7'));
+    pair.append(d);
+  } else {
+    const lit = deps.entity?.lightSource === item;
+    const b = shelfSocket({ label: g.label, item }, g, 'belt');
+    b.dataset.lantern = '';
+    if (!lit) b.classList.add('unlit');
+    pair.append(b);
+  }
+  grp.append(pair, el('span', 'shelflabel', g.label));
+  return grp;
+}
+/** BELT-LANTERN: hang a lantern at the belt and light it (one act, the light's own door - useItem - after the mark, so
+ *  the hand law sees the belt and asks no hand). */
+function hangLantern(item) {
+  if (!hangBeltLantern(deps.entity, item)) return;
+  if (deps.entity?.lightSource !== item) use(item, null);
+  else { refresh(); refreshFigure(); render(); }
+}
+/** BELT-LANTERN: take it off the belt; a lit one goes out. */
+function unhangLantern(item) {
+  const lit = deps.entity?.lightSource === item;
+  unhangBeltLantern(item);
+  if (lit) use(item, null);
+  else { refresh(); refreshFigure(); render(); }
 }
 
 function characterCol() {
@@ -3416,6 +3476,13 @@ function itemActs(picked, side, { qty = true } = {}) {
         // (:1980), so the act that lights a torch can consume nothing.
         : () => use(picked, null);
       acts.append(b);
+    }
+    // BELT-LANTERN: a lantern hangs at the belt from its card, and comes off it there
+    if (isLanternItem(picked)) {
+      const onBelt = picked.beltLantern === true;
+      const lb = el('button', 'act', onBelt ? 'Take off belt' : 'Hang at belt');
+      lb.onclick = onBelt ? () => unhangLantern(picked) : () => hangLantern(picked);
+      acts.append(lb);
     }
     // The verb names the DESTINATION, and the destination is whichever
     // list is showing. Drawn only when the law would either move

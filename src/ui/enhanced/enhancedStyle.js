@@ -3472,6 +3472,24 @@ ${paceControlsCss('tview')}
    width (1.6em of 13px, 5px of padding and a 2px frame a side), and the box stretches to it. */
 .hud-renown { display: none; align-items: center; gap: 8px; height: 22px; width: calc(3 * min(190px, 23vw) + 28px); }   /* RENOWN4b: 22px, the box's own height - the lift below counts it */
 .hud-renown.on { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; }
+/* SKILL-READY / FIRM-STARS (ui/hud/hudAdvance.js): the two tiles outside the row's two ends - the skills ready left of the
+   box, the Firmament's stars right of the bar's empty column, on the bar's line but never under the hotbar - each a buff's own tile and
+   frame (.hst-cell, .hst-tile), the level's gold for the skills and the night sky's silver-blue for the stars. They take
+   the pointer: a hover says what they are, a press on the stars opens the Firmament. The row stands for them alone where
+   it has no bar of its own (adv-only - offline). */
+.hud-renown { position: relative; }
+.hud-adv { display: none; position: absolute; top: 50%; transform: translateY(-50%); pointer-events: auto; }   /* transform, not translate: the movable HUD owns the translate property */
+.hud-adv.on { display: flex; }
+.hst-cell.hud-adv:not(.on) { display: none; }   /* nothing to say, nothing shown - over .hst-cell's own display, which comes later in this sheet */
+.hud-adv-skill { right: calc(100% + var(--adv-left, 10px)); cursor: pointer; }   /* CLEAR-HOTBAR: past the hotbar's end where it is wider (hudAdvance.js advanceReach) */
+.hud-adv-firm { left: calc(100% + var(--adv-right, 10px)); cursor: pointer; }
+.hst-cell.hud-adv-skill { --hst-hi: rgb(243,239,44); --hst-lo: rgb(93,77,12); }
+.hst-cell.hud-adv-firm { --hst-hi: #cfe0ff; --hst-lo: #2f4a8a; }
+.hud-adv .hst-tile { box-shadow: 0 0 0 1px #050608, 2px 2px 0 1px rgba(0,0,0,0.45), 0 0 8px rgba(243,239,44,0.28); }
+.hud-adv-firm .hst-tile { box-shadow: 0 0 0 1px #050608, 2px 2px 0 1px rgba(0,0,0,0.45), 0 0 8px rgba(160,190,255,0.35); }
+.hud-adv-firm:hover .hst-tile { border-color: #ffffff #4a6ab0 #4a6ab0 #ffffff; }
+.hud-renown.adv-only:not(.on) { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; visibility: hidden; }
+.hud-renown.adv-only:not(.on) .hud-adv.on { visibility: visible; }
 .hud-renownbox { flex: 0 0 auto; min-width: 1.6em; padding: 1px 5px; text-align: center;
   font-size: 13px; line-height: 1.2; font-variant-numeric: tabular-nums;
   color: #f2c46b; background: rgba(14,16,19,0.78); border: 2px solid rgba(242,196,107,0.8); }
@@ -3732,6 +3750,7 @@ ${paceControlsCss('tview')}
 .hst-cell.debuff { --hst-hi: #f2a597; --hst-lo: #8a2820; }
 /* BUFF-END: with the mouse freed a spell the player may end takes the pointer (the HUD stays pointer-transparent
    otherwise) - a right-click ends it; the hover lights its frame the way a pressed button lights */
+.hud-stat.ending .hst-cell { pointer-events: auto; }   /* STATUS-TIPS: with the mouse freed every tile says what it is on a hover */
 .hud-stat.ending .hst-cell.can-end { pointer-events: auto; cursor: pointer; }
 .hud-stat.ending .hst-cell.can-end:hover .hst-tile { border-color: rgb(243,239,44) rgb(93,77,12) rgb(93,77,12) rgb(243,239,44); }
 .hst-cell.warn { --hst-hi: #f3cf86; --hst-lo: #7a5424; }

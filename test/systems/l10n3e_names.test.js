@@ -35,6 +35,7 @@ const NAMED = {
   'src/systems/daedraSummoning.js': 2,   // SUMMON-OFFER: noQuestText's prince
   'src/systems/decor/decorItems.js': 1,
   'src/systems/enchantmentCatalogue.js': 2,
+  'src/systems/enemyExpansion/dexTroll.js': 1,   // DEX5: the troll's recovery line names its kind in the player's language
   'src/systems/item/itemInfo.js': 4,
   'src/systems/loot/loot.js': 1,
   'src/systems/notebook.js': 2,   // L10N5: a header's place drawn again in the language of the load

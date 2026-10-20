@@ -31,7 +31,7 @@
 // One registry of tokens, by target: the local player is one key, every other target its own object.
 
 import { getPref } from '../systems/uiPrefs.js';
-import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { throwsBlows, blowShapesOf, blowFamily, makeBlow, fitBlowToGround, inBlow, setLiveBlow, shatterBlow, windupNear, offsetBlows, BLOW, BLOW_CHANCE, BLOW_COLOR, IRON_COLOR, BLOW_VERDICT_LIFE, BLOW_STALE, setBlowTargetOf } from './foeBlows.js';   // TACT4; TELL3: iron; TELL5: the family, the shapes' lengths
 import { coverDistance } from './cover.js';   // TELL6: a charge's lane must be free of cover
@@ -727,7 +727,7 @@ export function blowPool(ai, ent, dist, near, dx, dz) {
 /** TELL6d: does this foe aim its shots - a class archer (a bow) of the whole set (section 9: an ordinary archer of the
  *  tier keeps DFU's plain shot, as TACT4 left it)? */
 export function aimsShots(ai, ent) {
-  return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && ent.mobileType >= 128;
+  return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && isClassEnemyId(ent.mobileType);
 }
 // TELL6d: an aimed shot that strikes weighs x BLOW.aimed.mult - the arrow says so at contact (formulas' blowInfo)
 registerBlowTakenMod('tell-aimed', (attacker, target, weapon, info) => (info?.aimed ? BLOW.aimed.mult : 1));

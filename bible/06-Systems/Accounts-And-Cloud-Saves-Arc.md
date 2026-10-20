@@ -5887,3 +5887,23 @@ accounts, titles, glyphs or auras, so there is no DFU member to read or depart f
   rabbits are upright cards leaning back toward the eye, so straight down from overhead they are foreshortened to half
   their height; like every aura they stand on a wearer turned beast and on a rider; one program draws all twelve
   looks, so a compile failure would take them all (the probe and `shadowcloak.test.js`'s eager compile are the guard).
+
+## SPIRE-FIRST — Serveride: First of the Spire, and Firstlight his own (2026-10-20)
+
+The account Serveride (seen in the room as his character, Severide - NAME-AS) took Redoubt 10 of the Battlespire first,
+alone, in 1:17:40, and asked for the title; the owner: "Since hes world first. He should get this title plus a custom
+aura". `server-account/wrangler.toml` reads `EG_FIRST_HANDLES = "Serveride"` (it was empty until the first company came;
+SPIRE-FIRST wrote the herald's `Severide`, his character's name, and SPIRE-FIRST-NAME corrected it on the owner's word:
+"Its Serveride. You did the wrong name"). The list is read fresh at every token and every call (ACC3), so once the
+account worker deploys, Serveride holds `spirefirst` First of the Spire and `firstlight` Firstlight (`titles.js`
+`isSpireFirst`), and the next balance's read writes First of the Spire's letter to the account once (EG-ZF, `egFirstPost`).
+Case-folded as every list is; a near name is another account. No column, no migration, no relay or account version: both
+ids have been in the token's vocabulary since EG-E2. The custom aura is Firstlight itself, rebuilt as his own - held only
+by the first company, which is Serveride - rather than a second aura for the same honour (a new id would have taken a relay
+version and the hello's body bound for nothing the player would see differently): the ten Redoubts climbed round a dial
+at the feet, ten graduated spires rising one after another, the dawn breaking in a sunburst and a shaft of first light
+when the tenth is taken (`bible/11-Multiplayer/Elite-Gates.md` section 31, SPIRE-FIRST, the whole record). Pins:
+`test/net/eliteGates/egeco_honours.test.js` (the list reads Serveride - PIN MOVED, it read empty, then Severide; any case;
+the character's name and near names refused) and `tools/mutants/egeco_honours.json` SPIRE-FIRST-serveride-not-granted and
+SPIRE-FIRST-NAME-the-character-listed (dead). A handle list takes the account's handle, never a name off the herald,
+which since NAME-AS may be a character's (`bible/11-Multiplayer/Elite-Gates.md` section 31, SPIRE-FIRST-NAME).

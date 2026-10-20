@@ -400,7 +400,7 @@ export async function loadHudLargeHead({ fetchBytes, palette, renderer }, entity
     // PORTRAIT3D (2026-10-15, the owner: "#2 is exactly I wanted", and of the curse's heads: "Do this"): with Morrowind's
     // data attached, the head is the Morrowind head the player's body wears - the vampire's head, the transformed
     // werewolf's, the helm worn - its picture the head rect's own shape at four times its pixels. Where none is drawn
-    // (no data, the wereboar - Morrowind has no boar) Daggerfall's stand, the curse's override first.
+    // (no data, the wereboar - Morrowind has no wereboar; Bloodmoon's boar is a beast) Daggerfall's stand, the curse's override first.
     const [rw, rh] = [LARGE_HUD_RECTS.head[2], LARGE_HUD_RECTS.head[3]];
     const mw = await playerHeadImage(entity, { px: rw * 4, ph: rh * 4, renderer }).catch(() => null);
     if (mw) { const mwKey = `mwhead#hud#${++_mwHeadSeq}`; return { tex: renderer.uploadTexture('img', mwKey, toScreenOrder(mw)), w: mw.width, h: mw.height, mwKey }; }   // HUD-HEAD: its name, so the head that replaces it lets it go

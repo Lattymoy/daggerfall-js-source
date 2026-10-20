@@ -23,6 +23,7 @@
 
 import { srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { ENCOUNTER_TABLES } from './encounterTables.js';
+import { encounterTable } from './encounterTableDoor.js';   // DEX3: the dungeon's tables as a mod's pick left them
 import { MOBILE_TYPES } from './mobile/mobileTypes.js';
 import { getBool } from '../systems/settings/settings.js';   // AUDIT 28 W3: AlternateRandomEnemySelection
 
@@ -108,9 +109,23 @@ export function alternateRandomEnemyType(table, playerLevel, rng, variance = RAN
   return table[rng(min, max + 1)];
 }
 
-export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, playerLevel = 1,
+/** DEX3: the dungeon as a mod's transition event sees it - its LocationId (the fill's seed) and the place a table is
+ *  picked for (`dungeon`: DFLocation.Dungeon.RecordElement.Header.Unknown2 and the region, the seed Daggerfall Enemy
+ *  Expansion's SelectDungeonTable draws its pick from, BestiaryMod.cs:1740-1743). A host spreads it into the options. */
+export const dungeonPlace = (dfLocation) => ({
+  locationId: dfLocation.dungeon.recordElement.header.locationId,
+  dungeon: { unknown2: dfLocation.dungeon.recordElement.header.unknown2, region: dfLocation.regionIndex },
+});
+
+export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, dungeon = null, playerLevel = 1,
   alternate = getBool('Enhancements', 'AlternateRandomEnemySelection') } = {}) {
   const slotRng = makeSlotRng(locationId);
+  // DEX3: the two tables as the transition left them - a mod picks on PlayerEnterExit.OnPreTransition, before the
+  // dungeon is laid out (characters/encounterTableDoor.js); DFU's own where no mod writes. The player's own dungeon, so
+  // read as written where no `dungeon` is handed. Read before the fill seeds its stream, as the pick came before the
+  // layout there.
+  const place = { dungeon, local: true };
+  const dungeonTable = encounterTable(dungeonType, place), underwaterTable = encounterTable(UNDERWATER_TABLE, place);
   const nonWater = new Array(256);
   const water = new Array(256);
   if (!alternate) {
@@ -119,8 +134,8 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
     // Verbatim fill: DFU indexes EncounterTables[dungeonType] with no
     // guard here (out of range throws before any flat, same as C#); the
     // per-flat range check below mirrors AddRandomRDBEnemyClassic.
-    for (let i = 0; i < 256; i++) nonWater[i] = chooseRandomEnemyType(ENCOUNTER_TABLES[dungeonType], playerLevel);
-    for (let i = 0; i < 256; i++) water[i] = chooseRandomEnemyType(ENCOUNTER_TABLES[UNDERWATER_TABLE], playerLevel);
+    for (let i = 0; i < 256; i++) nonWater[i] = chooseRandomEnemyType(dungeonTable, playerLevel);
+    for (let i = 0; i < 256; i++) water[i] = chooseRandomEnemyType(underwaterTable, playerLevel);
   }
 
   const out = [];
@@ -178,7 +193,7 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
         if (alternate) {
           // AddRandomRDBEnemy: no slot, no lists - the table by water
           // and the pick by the player's power.
-          const table = ENCOUNTER_TABLES[usingWater ? UNDERWATER_TABLE : dungeonType];
+          const table = usingWater ? underwaterTable : dungeonTable;
           emit(marker, block, alternateRandomEnemyType(table, playerLevel, slotRng), false);
           continue;
         }

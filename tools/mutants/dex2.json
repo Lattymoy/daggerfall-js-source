@@ -1,0 +1,232 @@
+[
+ {
+  "name": "DEX2-a-stand-in-one-frame-a-record",
+  "file": "src/systems/textureReplacement.js",
+  "old": "    getFrameCount: (record) => vendorFrameCount(archive, record),",
+  "new": "    getFrameCount: () => 1,",
+  "why": "every mobile drawn from a stand-in stands on its first frame",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-a-gap-not-the-end",
+  "file": "src/systems/textureReplacement.js",
+  "old": "    for (const [r, set] of frames) { let n = 0; while (set.has(n)) n++; counts.set(r, n); }",
+  "new": "    for (const [r, set] of frames) counts.set(r, Math.max(...set) + 1);",
+  "why": "a frame past a gap counted - DFU imports a record's frames to the first missing",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-xml-gated-on-a-stand-in",
+  "file": "src/world/rmbFlats.js",
+  "old": "  if (!(textureReplacementEnabled() || t?.vendor === true)) return size;",
+  "new": "  if (!textureReplacementEnabled()) return size;",
+  "why": "the mod's riders stand at their pictures' size with AssetInjection off",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-albedo-never-the-emission",
+  "file": "src/systems/enemyExpansion/dexSprites.js",
+  "old": "        else if (art.emission) out.push(",
+  "new": "        else if (false) out.push(",
+  "why": "an emissive archive's frame with no map of its own goes unlit",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-a-frame-emission-map-dropped",
+  "file": "src/scenes/dataPipeline.js",
+  "old": "    const lit = swapFrame ? decodedTexture(archive, record, frame, 'Emission') : null;",
+  "new": "    const lit = null;",
+  "why": "a mod frame's emission map never uploaded",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-ghost-by-archive-alone",
+  "file": "src/render/renderer.js",
+  "old": "export const ghostShaded = (b) => isSpectralArchive(b.archive) || b.ghost === true;",
+  "new": "export const ghostShaded = (b) => isSpectralArchive(b.archive);",
+  "why": "a mod's spectral enemy, on an archive of its own, drawn opaque",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-a-spectral-row-no-ghost",
+  "file": "src/characters/enemy/foeLook.js",
+  "old": "row?.behaviour === 'Spectral' || _ghosts",
+  "new": "_ghosts",
+  "why": "the ghost shader by the behaviour gone - DFU's test",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-noshadow-ignored",
+  "file": "src/characters/enemy/foeLook.js",
+  "old": "  if (row?.noShadow === true) batch.noShadow = true;\n",
+  "new": "",
+  "why": "a NoShadow row's mobile casts a shadow",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-opaque-phase-skips-by-archive",
+  "file": "src/render/renderer.js",
+  "old": "      if (ghostShaded(b) || b.conceal) continue;",
+  "new": "      if (isSpectralArchive(b.archive) || b.conceal) continue;",
+  "why": "AUDIT DEX B4: a mod's spectral mobile, on an archive of its own, drawn in the opaque phase as well as the blended",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-blended-uniform-by-archive",
+  "file": "src/render/renderer.js",
+  "old": "        gl.uniform1i(this.bbUSpectral, ghostShaded(b) ? 1 : 0);",
+  "new": "        gl.uniform1i(this.bbUSpectral, isSpectralArchive(b.archive) ? 1 : 0);",
+  "why": "AUDIT DEX B4: a mod's spectral mobile blended without the ghost shader (uSpectral off)",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-band-undressed",
+  "file": "src/world/bandSprites.js",
+  "old": "        r.batch = setupFoeLook(renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null, b.mobileType);",
+  "new": "        r.batch = renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null;",
+  "why": "AUDIT DEX B6: an Overworld band of a Spectral or NoShadow row drawn opaque and casting",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-xml-size-never-kept",
+  "file": "src/world/rmbFlats.js",
+  "old": "  if (!x || x.s !== s || x.gen !== gen) { x = {",
+  "new": "  if (true) { x = {",
+  "why": "AUDIT DEX B7: two objects minted per foe per frame for a stand-in the xml scales",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-xml-size-blind-to-a-switch",
+  "file": "src/world/rmbFlats.js",
+  "old": "  if (!x || x.s !== s || x.gen !== gen) { x = {",
+  "new": "  if (!x || x.gen !== gen) { x = {",
+  "why": "AUDIT DEX B7: a registrant's switch turned and the cached size kept",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-xml-size-blind-to-a-registration",
+  "file": "src/world/rmbFlats.js",
+  "old": "  if (!x || x.s !== s || x.gen !== gen) { x = {",
+  "new": "  if (!x || x.s !== s) { x = {",
+  "why": "AUDIT DEX B7: a table registered again and the cached size kept",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-frame-counts-never-stale",
+  "file": "src/systems/textureReplacement.js",
+  "old": "  if (!held || held.gen !== _tierGen) {",
+  "new": "  if (!held) {",
+  "why": "AUDIT DEX B10: an archive's frame counts kept past a registration that moves them",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-a-readonly-picture-kept",
+  "file": "src/systems/textureReplacement.js",
+  "old": "  if (pic) { const e = liveEntry(key); if (e?.readOnly) release(key, e, pic); }",
+  "new": "",
+  "why": "AUDIT DEX B5: every picture an archive decoded stays on the CPU for the session (DFU imports a mobile's readOnly)",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-preload-decodes-the-released",
+  "file": "src/systems/textureReplacement.js",
+  "old": "!decodedFrom(key, entry) && !releasedFrom(key, entry)) todo.push([key, entry]);",
+  "new": "!decodedFrom(key, entry)) todo.push([key, entry]);",
+  "why": "AUDIT DEX B5: an archive's refresh decodes back every picture the GPU already holds",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-pending-picture-uploaded",
+  "file": "src/render/renderer.js",
+  "old": "    if (color32?.pending) { if (!this.textures.has(key)) color32.pending(); return this.textures.get(key) ?? null; }\n",
+  "new": "",
+  "why": "AUDIT DEX B5: a frame on its way stands as a clear texel at its key for good",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-a-hit-decodes",
+  "file": "src/render/renderer.js",
+  "old": "    if (color32?.pending) { if (!this.textures.has(key)) color32.pending();",
+  "new": "    if (color32?.pending) { color32.pending();",
+  "why": "AUDIT DEX B5: an upload of a frame the GPU holds decodes its picture back onto the CPU",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-a-released-size-forgotten",
+  "file": "src/systems/textureReplacement.js",
+  "old": "  const size = (record) => { const d = measuredOf(archive, record);",
+  "new": "  const size = (record) => { const d = decodedOf(archive, record);",
+  "why": "AUDIT DEX B5: a stand-in whose pictures went to the GPU measures 1x1",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-the-map-after-its-albedo",
+  "file": "src/systems/textureReplacement.js",
+  "old": "      lit.then(() => preloadTextureRecord(archive, record, frame)).then(",
+  "new": "      preloadTextureRecord(archive, record, frame); lit.then(() => null).then(",
+  "why": "AUDIT DEX B5: an evicted frame's albedo lands before its emission map and is uploaded unlit for good",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-another-records-picture-on-a-miss",
+  "file": "src/systems/textureReplacement.js",
+  "old": "      if (_vendor.get(key)?.readOnly) return _decoded.get(key) ?? pendingPicture(archive, r, f);\n",
+  "new": "",
+  "why": "AUDIT DEX B5: a readOnly frame asked again answers another record's picture (or nothing, and the upload throws)",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ },
+ {
+  "name": "DEX2-a-pending-picture-asked-every-frame",
+  "file": "src/systems/textureReplacement.js",
+  "old": "      if (asking) return;\n",
+  "new": "",
+  "why": "AUDIT DEX B5: a readOnly picture that will not decode is fetched and decoded again every frame a foe draws it",
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
+ }
+]

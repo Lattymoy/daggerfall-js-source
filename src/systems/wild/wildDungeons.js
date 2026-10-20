@@ -23,6 +23,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_RINGS } from './wildZone.js';
 import { WATER_SPECIES } from '../../characters/dungeonEnemies.js';   // SLAUGHTER-BOX: RDBLayout's water species, one home
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 export const WILD_DUNGEONS_PER_RING = Object.freeze([10, 8, 6, 4]);
 /** A hall keeps at least this many pixels from every other hall (they never crowd one valley). */
@@ -193,7 +194,7 @@ export const WILD_HALL_FOES = Object.freeze({
 });
 const HIGH = new Set(Object.values(WILD_HALL_FOES).flat());
 /** Is this monster one of the high tiers a hall keeps as it is? (A human class always.) */
-export const wildHallKeeps = (mobileType) => mobileType >= 128 || HIGH.has(mobileType);
+export const wildHallKeeps = (mobileType) => isClassEnemyId(mobileType) || HIGH.has(mobileType);
 const mix = (a, b) => { let h = (a ^ Math.imul(b + 0x7f4a7c15, 0x9e3779b1)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0; h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
 /**
  * A hall's foes with every low tier swapped for its ring's high tier: `enemies` the layout's records (each `{ mobileType }`),

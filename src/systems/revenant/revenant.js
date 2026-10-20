@@ -85,7 +85,7 @@ import { hudTextWhenShown } from '../notify.js';   // STEED-KEPT: a piece home a
 import { isLetterOfCredit } from '../peerWord.js';   // LETTERS-HOME: nor a letter of credit - its worth is gold
 import { itemLongName } from '../item/itemInfo.js';   // RVN8: the piece by the name the pack shows
 import { itemValueOf } from '../item/itemTemplates.js';   // RVN8: the most valuable
-import { enemyDisplayName, ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
+import { enemyDisplayName, ENEMY_BASICS, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { firstName, monsterName, BANK_TYPES, GENDERS } from '../../characters/nameHelper.js';
 import { getSeed, setSeed, srand } from '../../formats/dfRandom.js';
@@ -294,7 +294,7 @@ export function revenantGivenName(id, mobileType, gender = 'male') {
     srand(h);
     const g = gender === 'female' ? GENDERS.Female : GENDERS.Male;
     let name = '';
-    if (mobileType >= 128) {
+    if (isClassEnemyId(mobileType)) {
       const banks = [BANK_TYPES.Breton, BANK_TYPES.Redguard, BANK_TYPES.Nord, BANK_TYPES.DarkElf, BANK_TYPES.HighElf, BANK_TYPES.WoodElf, BANK_TYPES.Khajiit, BANK_TYPES.Imperial];
       name = firstName(banks[h % banks.length], g);
     } else {
@@ -1028,7 +1028,7 @@ export function releaseRevenantStand(r) {
 /** The spawn options a returning revenant stands with (scenes/exteriorFoes.js spawnFoe): its record, its gender, and a
  *  class foe's level over the player's. */
 export function revenantSpawnOptions(r, playerLevel) {
-  return { revenant: r, gender: r.mobileType >= 128 ? r.gender : null, level: r.mobileType >= 128 ? Math.max(1, (playerLevel | 0) + r.rank * REVENANT_LEVEL_PER_RANK) : null };   // a monster's sprite is its kind's, whatever its gender
+  return { revenant: r, gender: isClassEnemyId(r.mobileType) ? r.gender : null, level: isClassEnemyId(r.mobileType) ? Math.max(1, (playerLevel | 0) + r.rank * REVENANT_LEVEL_PER_RANK) : null };   // a monster's sprite is its kind's, whatever its gender
 }
 /** Stand the record on a freshly built entity (before its loot): its name, its rank's health and blows. The record is
  *  OUT from here until the foe dies, escapes or leaves the world. RVN11c: `turned` - a betrayer standing where it

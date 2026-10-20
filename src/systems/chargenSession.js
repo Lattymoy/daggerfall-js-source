@@ -29,7 +29,7 @@ import { isEnhanced } from './uiSkin.js';   // THE SKIN: which wizard
 import { assignStartingEquipment } from './startingGear.js';   // S3d; RRI2: AssignStartingEquipment, the delegate
 import { giveBinderAtChargen } from './iliac/iliacItems.js';   // CARDS8: the Card Binder and the starter deck, the kit's own tail
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // wave 28: CharacterDocument's 7-part table
-import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
+import { standardSpellsByIndex } from './spell/standardSpells.js';   // DEX4a: the one RebuildClassicSpellsDict
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
 import { applyBiographyEffects } from './biography.js';   // S3e
 import { customSpellSetIndex } from './customClass.js';   // U20a
@@ -56,7 +56,7 @@ import { isLegacyChoice } from './legacy/family.js';   // LEGACY-CHOICE: the ans
  *  unavailable, which is the pre-existing no-magic fallback. */
 export async function loadSpellIndex(fetchBytes) {
   try {
-    return spellsByIndexMap(readSpellsStd(await fetchBytes('SPELLS.STD')));   // AUDIT 23 (FTD-2): FIRST record wins a duplicate index (RebuildClassicSpellsDict)
+    return standardSpellsByIndex(await fetchBytes('SPELLS.STD'));   // AUDIT 23 (FTD-2): FIRST record wins a duplicate index (RebuildClassicSpellsDict); DEX4a: the mods' records merged first
   } catch (e) {
     console.warn('[chargen] SPELLS.STD unavailable; the starting spellbook stays empty', e);
     return null;

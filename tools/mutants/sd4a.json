@@ -128,8 +128,8 @@
   {
     "name": "SD4A-the-class-foe-at-the-player's-level",
     "file": "src/scenes/dungeonContext.js",
-    "old": "cf.career, e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity)) : effectiveLevel(D.playerEntity)));",
-    "new": "cf.career, e.level ?? effectiveLevel(D.playerEntity));",
+    "old": "await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity)) : effectiveLevel(D.playerEntity)));",
+    "new": "await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? effectiveLevel(D.playerEntity));",
     "tests": [
       "test/systems/sd4a_super.test.js"
     ]

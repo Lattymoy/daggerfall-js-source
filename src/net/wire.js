@@ -1232,7 +1232,15 @@ export const FOE_WEAK_MAX = 13;
 export const FOE_BLOWS_MIN = 1000;
 export const FOE_BLOWS_MAX = 4000;
 const bitsOf = (v) => { let n = 0; for (let x = v; x; x &= x - 1) n++; return n; };
-/** One streamed foe record projected: `i` a whole number in [0, FOE_SEQ_MAX]; `t` a whole number in [0, 255] or
+/** DEX1: a foe's kind on the wire - MobileTypes' own space (a u16, None its top), where a mod's enemies join the
+ *  classic 0-42 and 128-146 (Daggerfall Enemy Expansion's 256-290 and 384-398: systems/enemyExpansion/). It was 255, which
+ *  refused every record of a mod's foe whole. A kind no row names lands as one did before: a peer finds no row for it. */
+export const FOE_TYPE_MAX = 0xffff;
+/** DEX4a: a cast's spell on the wire - a standard spell's index (systems/spell/standardSpells.js), SPELLS.STD's bytes and
+ *  a mod's SpellRecords.json beside them (Daggerfall Enemy Expansion's 500-503). It was 255, which refused every record
+ *  of a foe casting a mod's spell whole. */
+export const SPELL_INDEX_MAX = 0xffff;
+/** One streamed foe record projected: `i` a whole number in [0, FOE_SEQ_MAX]; `t` a whole number in [0, FOE_TYPE_MAX] or
  *  absent; `x`, `d`, `m` 0 or 1 or absent; `f` three finite numbers inside the pose's bounds or absent; `y` finite
  *  or absent; `h` finite in [0, FOE_HEALTH_MAX] or absent; `a` a whole number in [0, 2^31) or absent. Null when
  *  any present field is outside its law - a record is refused whole, never half landed. */
@@ -1240,7 +1248,7 @@ export function validFoeRecord(r) {
   if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
   if (!Number.isInteger(r.i) || r.i < 0 || r.i > FOE_SEQ_MAX) return null;
   const out = { i: r.i };
-  if (r.t !== undefined) { if (!Number.isInteger(r.t) || r.t < 0 || r.t > 255) return null; out.t = r.t; }
+  if (r.t !== undefined) { if (!Number.isInteger(r.t) || r.t < 0 || r.t > FOE_TYPE_MAX) return null; out.t = r.t; }
   for (const k of ['x', 'd', 'm', 'z']) if (r[k] !== undefined) { if (r[k] !== 0 && r[k] !== 1) return null; out[k] = r[k]; }   // ELITE FOES: `z` an elite foe (systems/eliteFoes.js)
   if (r.f !== undefined) {
     if (!Array.isArray(r.f) || r.f.length !== 3 || !r.f.every(Number.isFinite)) return null;
@@ -1261,9 +1269,9 @@ export function validFoeRecord(r) {
   // weapon), resolved against MY stats; copied, never rolled (AUDIT WORLD6b B14)
   if (r.l !== undefined) { if (!Number.isInteger(r.l) || r.l < 0 || r.l > FOE_LEVEL_MAX) return null; out.l = r.l; }
   // WORLD6b-iii: the cast rides the record - `c` the cast count, `s` the spell index (WORLD3's spelling for the dungeon)
-  // AUDIT WORLD6b-iii(a) C8: `s` is a SPELLS.STD record index, a u8 (spellsStd.js reads it as one) - bounded as `t` is
+  // AUDIT WORLD6b-iii(a) C8: `s` is a standard spell's index - bounded as `t` is (DEX4a: SPELL_INDEX_MAX, a mod's spells too)
   if (r.c !== undefined) { if (!Number.isInteger(r.c) || r.c < 0 || r.c > 0xffff) return null; out.c = r.c; }
-  if (r.s !== undefined) { if (!Number.isInteger(r.s) || r.s < 0 || r.s > 255) return null; out.s = r.s; }
+  if (r.s !== undefined) { if (!Number.isInteger(r.s) || r.s < 0 || r.s > SPELL_INDEX_MAX) return null; out.s = r.s; }
   // AUDIT WORLD6b-iii(a) A3: the RECIPIENT rides with the count - `u` whom the last cast was at, `b` whom the last blow
   // was at, in `g`'s spelling ('.' the owner, a peer id, '' none): `g` is the LIVE hunt when the frame goes out, and a
   // foe that cast at its owner then turned to a peer inside the frame's 200 ms sent the peer a cast it never made
@@ -1298,6 +1306,9 @@ export function validFoeRecord(r) {
   }
   // AUDIT SET P-M3: `v` the joiner whose blow killed the foe - on a dead foe's record alone (the host's, dungeonContext.js)
   if (r.v !== undefined) { if (typeof r.v !== 'string' || !ID_RE.test(r.v) || r.d !== 1) return null; out.v = r.v; }
+  // DEX5b: `bg` a dead foe's BODY GONE - destroyed by a mod's corpse prefab (scenes/corpseMarker.js - the troll's): 1 taken
+  // away (it rose), 2 burnt to its ash - on a dead foe's record alone, so every copy loses the body its runner did
+  if (r.bg !== undefined) { if ((r.bg !== 1 && r.bg !== 2) || r.d !== 1) return null; out.bg = r.bg; }
   // STRIKE-SHARED: `j` the player whose SOUL TRAP was on the foe as it fell and `q` the trap's chance - on a dead foe's
   // record alone, the two together. The soul is its caster's (mysticism.js attemptSoulTrap: "the soul goes to the player
   // who cast it"), so the owner reads no gem of its own for a peer's trap and the caster rolls it against its own pack
@@ -1394,7 +1405,7 @@ export function validSharedFoe(sf) {
     out[k] = sf[k];
   }
   if (sf.died !== undefined && sf.died !== null) { if (!finite(sf.died)) return null; out.died = sf.died; }
-  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > 255) return null; out.mobileType = sf.mobileType; }
+  if (sf.mobileType !== undefined) { if (!Number.isInteger(sf.mobileType) || sf.mobileType < 0 || sf.mobileType > FOE_TYPE_MAX) return null; out.mobileType = sf.mobileType; }
   if (sf.gender !== undefined && sf.gender !== null) { if (typeof sf.gender !== 'string' || sf.gender.length > 16) return null; out.gender = sf.gender; }
   // RESPAWN1 (2026-09-17, Mac, from a patch he was sent): THE TEAM PAIR IS A
   // STRING, AND THIS ASKED FOR A NUMBER - so every foe record a dungeon ever
@@ -1419,6 +1430,9 @@ export function validSharedFoe(sf) {
     out[k] = sf[k];
   }
   for (const k of ['dead', 'hostile', 'encountered', 'wabbajackActive', 'specialTransformationCompleted']) if (sf[k] !== undefined) out[k] = !!sf[k];
+  // AUDIT DEX D3 (world234, grown in place as world231): a body a mod's corpse prefab destroyed - 1 risen, 2 burnt (validFoeRecord's `bg`, the stream's
+  // word) - kept by the room's memory too, so an arrival lays no body for a troll the room saw rise or burn (a dead record's alone)
+  if (sf.bg !== undefined) { if ((sf.bg !== 1 && sf.bg !== 2) || !sf.dead) return null; out.bg = sf.bg; }
   if (sf.anchor !== undefined) out.anchor = sf.anchor;   // REVIEW 2026-09-05's stamp: read for its presence alone
   // The effect bundles ride as they are - `patchFoe` copies them shallowly and the effect spine reads them by name -
   // but the LIST is bounded, because it is the one field a memory's foe can grow without bound.
@@ -1520,7 +1534,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world234';   // GRANT-SLEEP (2026-10-20, the owner: "the server cost is skyrocketing", then "Its the durable objects"; renumbered at the merges past GAUNTLET-SLAIN (world225), LORD-SHARES (world226), PLAIN-SWEEP (world227), the questlines QL12 (world228), WB14 (world229), OW-CHASE-RANGE (world230) and main to world233 - world225, world226, world228, world229, world230 then world231 on its branch; bible/11-Multiplayer/Spawn-Grants.md section 22, bible/11-Multiplayer/Scale-Arc.md ROOM-SLEEP; NOT YET DEPLOYED): a cell's spawn-grant measure posts its window at the first frame or close once it is due, at the cell's drain, and a case's evidence at its own door (AUDIT GRANT-SLEEP S1: GRANT-ASKS' line crossed, a tally) - never on the ten-minute timer GRANT2 armed, which held each room that took a mint awake ten minutes from its window's first fold. No frame changes shape: deploy in either order.
+export const RELAY_VERSION = 'world235';   // GRANT-SLEEP and its audit (2026-10-20, the owner: "the server cost is skyrocketing", then "Its the durable objects", then "Audit this"; renumbered at the merges past the versions of main to world234 (DEX1) - world225, world226, world228, world229, world230, world231 then world234 on its branch; bible/11-Multiplayer/Spawn-Grants.md section 22, bible/11-Multiplayer/Scale-Arc.md ROOM-SLEEP; NOT YET DEPLOYED): a cell's spawn-grant measure posts its window at the first frame or close once it is due, at the cell's drain, and a case's evidence at its own door (AUDIT GRANT-SLEEP S1: GRANT-ASKS' line crossed, a tally) - never on the ten-minute timer GRANT2 armed, which held each room that took a mint awake ten minutes from its window's first fold. No frame changes shape: deploy in either order.
+// world234: DEX1 (2026-10-19, Mac: "I want to implement this as our next mod 1:1"; bible/04-Characters/Enemy-Expansion.md; world225 on its branch, renumbered past main's world225-world233 at the merges; NOT YET DEPLOYED): a foe's kind on the wire is MobileTypes' u16 (FOE_TYPE_MAX), so a mod's enemies (Daggerfall Enemy Expansion's 256-398) cross - it was 255; the enemy table the relay reads takes a mod's rows (characters/enemy/customEnemies.js joins the bundle) and carries MobileBehaviour's one home; a mod's monster past 255 throws no class's telegraphed blow (ai/blowShapes.js); the relay's foe bounds hold the mod's classic rows too (net/foeBounds.js, six profiles, no table read) and King's Gambit's roster reads the vanilla rows by name (VANILLA_ENEMY_BASICS). DEX4a (2026-10-20, grown in place): a cast's spell index is a standard spell's to a u16 (SPELL_INDEX_MAX), so a foe casting a mod's spell (Daggerfall Enemy Expansion's 500-503) crosses - it was a u8, SPELLS.STD's. DEX5b (2026-10-20, grown in place): a dead foe's record may say its body GONE (`bg` - 1 risen, 2 burnt to its ash), a mod's corpse prefab's word to every copy (validFoeRecord). AUDIT DEX D3 (2026-10-20, grown in place): and the room's memory keeps it (validSharedFoe), so an arrival lays no body the room saw rise or burn.
 // world233: SD-SEA (FIELD BUGS 2026-10-20b, world226 on its branch, renumbered past world226-world232 at the merges; NOT YET DEPLOYED; bible/01-Overview/bugs/Field-Bugs-2026-10-20b.md; the owner: "Abyss Dungeons dont seem to be spawning anymore"): the Abyss Dungeon's census never chooses a region with no town to rise by (net/superDungeon/sdLaw.js SD_TOWNLESS_REGIONS, pickSdRegion) - the sea's above all, every water pixel's region (High Rock sea coast), whose crowd aboard ships raised Hollows that stood by no city on any client. No frame changes shape. Deploy relay before clients or after: a client of this build stands a record an older relay raised there by the Bay's great cities (scenes/superDungeon/sdHost.js).
 // world232: FIELD BUGS 2026-10-19f GAUNTLET-PLATES (2026-10-19, a player's private report; world224 on its branch, renumbered past main's world224 (LAYERED-GEAR and VOICE2), world225 (GAUNTLET-SLAIN), world226 (LORD-SHARES), world227 (PLAIN-SWEEP), world228 (QL12), world229 (WB14b), world230 (OW-CHASE-RANGE) and world231 (NAME-WORDS) at the merges; bible/01-Overview/bugs/Field-Bugs-2026-10-19f.md, bible/11-Multiplayer/Elite-Gates.md section 8.3; world231 before it; NOT YET DEPLOYED): a Gauntlet's progress word says each plate's state - `silenced`, plate by plate in `spots.pillar`'s order, 1 once its Caster is silenced (net/eliteGates/egBrain.js trialStep, from the wake), so every screen marks the plates still to hold and dims a held one; no hall's bytes move (the objective naming the plates is the screen's own, ui/eliteGates/egHud.js egObjectiveText - net/eliteGates/egLaw.js EG_OBJECTIVES keeps the spec's word). Either end may deploy first: an older client passes the word through egProgress (a short list) and reads nothing from it, and a client facing world231 or older draws every plate the hall lays while a Caster is left
 // world231: NAME-WORDS (2026-10-19, world224 on its branch, renumbered past OW-CHASE-RANGE's world230 at the merge; Mac: "Not sure how the filter didnt catch this", over the handle PROSTITUTE_STRANGLER, then "Yes"; NOT YET DEPLOYED): net/nameFilter.js reads `prostitute` and `strangler` ANYWHERE - a name holding either is refused, a line stars them. world230: OW-CHASE-RANGE (2026-10-19, the owner, of the Overworld's gaps: "4. Fix it"; bible/06-Systems/Travel-View.md OW-CHASE-RANGE; world224 on its branch, renumbered past LAYERED-GEAR's world224 at one merge, then world225 past GAUNTLET-SLAIN's world225, LORD-SHARES's world226, PLAIN-SWEEP's world227, QL12's world228 and WB14b's world229 at the next; NOT YET DEPLOYED; AUDIT OW-REVISITED L4-1, re-hashed in place): a traveller's trav frame carries its chase words BESIDE its mark - `bd` the bands', `sr` the raiders' (TV7b's and OW6's shapes: [[id, x, z, 1|2]], at most TRAV_BANDS_MAX each, a chase within TRAV_CHASE_NEAR_PX of the mark) - checked whole by validTravWords at the door, kept on the attachment with the mark and fanned and welcomed with it; an older relay reads the mark and drops the words (nothing refused), an older client reads the mark and never the words

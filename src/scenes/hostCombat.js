@@ -39,8 +39,8 @@ import { swingSoundFor, hitSoundFor, ENEMY_HIT_VOLUME, SOUND } from '../systems/
 import { bloodCentre } from './hitEffects.js';   // AUDIT 62 F19: EnemyAttack.cs:326-328's one home, the same law the four player-melee sites cite
 import { bloodHit } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
-import { ATTRACT_RADIUS, ignoreHumanSounds } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41); TELL2: a person's wind-up is a swing, not a voice
-import { enemyDisplayName, ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';   // AUDIT 24 (wave 42); TELL1: the bark a breaking blow wrings out
+import { ATTRACT_RADIUS, ignoreHumanSounds, attractStep } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41); TELL2: a person's wind-up is a swing, not a voice
+import { enemyDisplayName, ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // AUDIT 24 (wave 42); TELL1: the bark a breaking blow wrings out
 import { getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3e: the enemy's name in the player's language
 import { windupHolds, windupStruck, tacticsNow, overreachOpen, poiseTrack, LOCAL_TARGET } from '../ai/tactics.js';   // TELL1: poise and the stagger (bible/12-Enhanced-AI/Feud-Arc.md section 3); TELL2: the cues' clock; TELL4: the punish window
 import { blowK, blowWeight, behind, TELL } from '../ai/tells.js';   // TELL1: a blow's weight on the poise meter; TELL2: the cues' numbers
@@ -71,6 +71,7 @@ import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the
 // the callers that speak this file's name keep working.
 export { weaponSkillUsed } from '../characters/weapons.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
+import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: the Audio tab's Monster Volume
 
 
 /** CalculateAttackDamage's skillID pick (FormulaHelper.cs:573-590):
@@ -236,9 +237,11 @@ export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random,
   entity.armorValues = eq.armorValues;
   entity.weapon = eq.rightHand;
   // S19b: ItemHelper's poisoned-weapon roll rides the spawn -
-  // class enemies + Orc/Centaur/OrcSergeant, 5% (Assassin 60%)
-  if (entity.weapon) {
-    const pt = rollEnemyWeaponPoison(mobileType, playerLevel, rolls);   // PARTY-LOOT: and its poison
+  // class enemies + Orc/Centaur/OrcSergeant, 5% (Assassin 60%) - unless
+  // the arm rolled it in its own place (AUDIT DEX E3: RRI's monster arm,
+  // ahead of ConvertOrcish); a bare right hand rolls none (`mainWeapon != null`)
+  if (entity.weapon && !eq.poisonRolled) {
+    const pt = rollEnemyWeaponPoison(eq.poisonClass ?? mobileType, playerLevel, rolls);   // PARTY-LOOT: and its poison; DEX6: its Assassin asked as the kit's arm asks it (DEX_RRICompat: by the equipment table)
     if (pt != null) entity.weapon.poisonType = pt;
   }
   // AssignEnemyStartingEquipment adds every equipped piece to the
@@ -278,6 +281,8 @@ export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random,
   // DamageEquipment reads the table, and a break unequips through
   // DaggerfallUnityItem.UnequipItem's identity scan (equip.js's
   // unequipItem), which is how DFU finds the slot too.
+  // AUDIT DEX E2: `worn` is the table as the arm's EquipItems left it (a two-hander a shield took off is not in it), so
+  // GetEquipSlot over it, in AddItem order, lays each piece where it stood.
   const slots = equipTableOf(entity);
   for (const it of worn) {
     const slot = getEquipSlot(entity, it);   // GetEquipSlot routes the shield to LeftHand and each piece to its own slot
@@ -572,7 +577,7 @@ export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, col
   // No player position yet: the counter still steps, exactly as DFU's
   // does with playerInAttractRadius false.
   const dist = playerFeet ? Math.hypot(dx, dy, dz) : Infinity;
-  const out = source.tick(dt, dist, () => enemySoundOccluded(collider, feet, playerFeet), { companion });   // QUIET-COMPANIONS
+  const out = source.tick(attractStep(source, dt, companion), dist, () => enemySoundOccluded(collider, feet, playerFeet), { companion });   // QUIET-COMPANIONS; MONSTER-QUIET: a monster's clock at 40%
   if (out) playEnemyClip(audio, out, feet, hearing);
   return out;
 }
@@ -585,7 +590,7 @@ export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, col
  *  clip rides. */
 export function playEnemyClip(audio, out, feet, hearing = 1) {
   if (!out || out.clip == null) return null;
-  audio?.play3d?.(out.clip, [feet[0], feet[1] + 1, feet[2]], out.volume,
+  audio?.play3d?.(out.clip, [feet[0], feet[1] + 1, feet[2]], out.volume * monsterVolume(),   // MONSTER-VOL
     { maxDistance: ATTRACT_RADIUS * hearing, distanceModel: 'linear' });
   return out.clip;
 }
@@ -740,7 +745,7 @@ export function windupDoor(f, damage, { kind = 'melee', weapon = null, round = f
   // flag, its weakness); without one, K_PEER and never from behind (`from` is no peer's feet here)
   const k = peer ? (wc ? wc.k : blowK({ kind, round, peer }))
     : striker
-      ? blowK({ kind, weapon: striker.entity?.weapon ?? null, claws: !((striker.mobileType ?? 0) >= 128), round, peer })
+      ? blowK({ kind, weapon: striker.entity?.weapon ?? null, claws: !isClassEnemyId(striker.mobileType ?? 0), round, peer })
       : blowK({ kind, weapon, claws, round, peer });
   const back = peer ? !!wc?.back : behind(blow.origin, blow.yaw, from);
   const watchful = f.entity?.revenant?.edge?.watchful === true;   // RVN2: a Watchful revenant's poise takes no back multiplier
@@ -781,7 +786,7 @@ export function windupFeedback(word, f, { audio = null, hitEffects = null, shake
   if (word === 'stagger') {
     hitEffects?.showMissEffect?.('clang', at, { scale: 2.5 });
     audio?.play3d?.(SOUND.Hit2, at, 1, { maxDistance: 16 });
-    if (basics?.barkSound != null && (f.mobileType < 128 || (f.mobileType === KNIGHT_CITY_WATCH && !f.quietVoice))) audio?.play3d?.(basics.barkSound, at, 1, { maxDistance: 16, pitch: 0.7 });   // HALT-ONE: the living watch's stagger is a person's - its one voice is its call (cityGuards.js)
+    if (basics?.barkSound != null && (!isClassEnemyId(f.mobileType) || (f.mobileType === KNIGHT_CITY_WATCH && !f.quietVoice))) audio?.play3d?.(basics.barkSound, at, 1, { maxDistance: 16, pitch: 0.7 });   // HALT-ONE: the living watch's stagger is a person's - its one voice is its call (cityGuards.js)
     shake?.(0.6);
   } else if (word === 'hold' && basics?.parrySounds) {
     audio?.play3d?.(PARRY_1 + Math.floor(rolls() * PARRY_SOUND_COUNT), at, PARRY_VOLUME, { maxDistance: 16 });

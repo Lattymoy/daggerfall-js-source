@@ -45,6 +45,8 @@ export const FX_MIN_GAP_S = 0.25;
 let _peerScope = null;
 /** The place's scope over every peer sound (`(run) => run()` with a gain about it), or null to let them be. */
 export function setPeerSoundScope(fn) { _peerScope = typeof fn === 'function' ? fn : null; }
+/** GATE-MIX: the scope set now (null: none) - a place that hands one in takes it back only while it is still its own. */
+export function peerSoundScope() { return _peerScope; }
 /** A peer's sound (`run` plays it), through the place's scope where one is set. Answers what `run` answers. */
 export function peerHeard(run) {
   if (!_peerScope) return run();

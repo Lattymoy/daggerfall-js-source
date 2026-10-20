@@ -272,7 +272,7 @@ test('AUDIT 26 F017: the popup Talk reads the same StaticNPC.Data the click deri
 
   // the host derives it ONCE per click and lends it to the popup, which is
   // what DFU's single StaticNPC component is
-  assert.match(WM, /const npcData = questBridge\?\.clickNpc\(pn, npcSceneCtx\) \?\? staticNpcData\(pn, npcSceneCtx\);/);
+  assert.match(WM, /const npcData = clicked \?\? questBridge\?\.clickNpc\(pn, npcSceneCtx\) \?\? staticNpcData\(pn, npcSceneCtx\);/);   // PIN MOVED (QUEST-WORDS-FIRST): a door reopened after the quest's words lends the record its click derived
   assert.match(WM, /function openGuildService\(pn, route, npcData\) \{/);
   assert.match(WM, /openGuildService\(pn, route, npcData\);/);
   const popup = bodyOf(WM, 'function openGuildService(pn, route, npcData) {');
