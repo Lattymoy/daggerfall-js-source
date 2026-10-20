@@ -183,6 +183,11 @@ export function choiceBoxes(q, message, choices, respond) {
   return { ...question(), behind: true };
 }
 
+/** The host's door for the questlines' `ask`: the chain above, handed to that host's own quest box. HOST-SPLIT
+ *  (bible/01-Overview/Host-Split.md): built here, so world.js's bootWorld and exterior.js's bootExterior each wire it in one
+ *  entry - `showChoice: choiceDoor(showQuestBox)` - never an arrow of their own (bootWorld met its ceiling at the merge). */
+export const choiceDoor = (showQuestBox) => (q, message, choices, respond) => showQuestBox(choiceBoxes(q, message, choices, respond));
+
 /** StartGameBehaviour.cs:445-447 - the two quests a new character
  *  always starts, in this order. _BRISIEN is the main quest's first.
  *
