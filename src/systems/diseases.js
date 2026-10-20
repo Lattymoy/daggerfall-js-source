@@ -172,6 +172,13 @@ export function startDisease(target, diseaseType, currentDay, rolls = Math.rando
  *  is money and not decoration. */
 export const diseaseCount = (entity) =>
   (entity?.activeEffects ?? []).filter((a) => a.kind === 'disease' && !a.ended).length;
+/** DISEASE-UNWELL (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Unnamed 'Unwell' tile"): a PLAIN disease still in
+ *  its incubation - caught, live, a classic type, its first symptom day (the day's turn on the character's own clock,
+ *  updateDiseases) not come. DFU says nothing of one (CreateHealthStatusBox reads IncubationOver; no disease shows a HUD
+ *  icon, ShowSpellIcon false) while its travel popup counts it; the port's HUD shows it unnamed - "Unwell" - and the
+ *  Status box says the character feels unwell (ui/hud/hudStatus.js afflictionRows, systems/healthStatus.js). A
+ *  vampirism or lycanthropy infection is never one (it carries no type - DFU's Diseases.None). */
+export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.ended && !a.incubationOver && a.disease != null;
 /** FIELD BUGS 29h (INFECTION-KEPT): the diseases the next cure ENDS - the plain ones while any runs, else the
  *  lycanthropy or vampirism infections (GetDiseaseCount then) - so the temple prices and claims what it takes
  *  (effects.js cureDiseasesInfectionsLast). */

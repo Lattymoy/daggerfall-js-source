@@ -98,7 +98,8 @@ test('AUDIT39 #32: the interior scene caches the whole action record and restore
 // ---------------------------------------------------------------
 
 test('AUDIT39 #33: the interior movers are held under a window, like the dungeon arm twelve lines up', () => {
-  assert.match(WM, /if \(!overlayHeld\) interiorCtx\.actions\.update\(dt\);/,
+  // PIN MOVED (FIELD BUGS 2026-10-19f MOVER-BODY): the movers are handed the body they may carry or hold (player/moverBody.js)
+  assert.match(WM, /if \(!overlayHeld\) interiorCtx\.actions\.update\(dt, player\);/,
     'PauseGame sets timeScale 0 and DFU\'s door tween never opts out of it');
   assert.match(WM, /if \(!overlayHeld\) advanceMachinery\(r\.state, dt, r\.child\);/,
     'the mill rotors are movers too');
@@ -106,7 +107,7 @@ test('AUDIT39 #33: the interior movers are held under a window, like the dungeon
   const rotors = WM.slice(WM.indexOf('for (const r of interiorCtx.rotors) {'));
   assert.match(rotors.slice(0, 500), /renderer\.drawMesh\(r\.gpu, mountMachineryChild\(/);
   // the dungeon arm's gate, unchanged - the pin that made the asymmetry visible
-  assert.match(WM, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt\);/);
+  assert.match(WM, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt, player\);/);
 });
 
 test('AUDIT39 #34: an in-flight interior swing does not land its hit frame under a window', () => {

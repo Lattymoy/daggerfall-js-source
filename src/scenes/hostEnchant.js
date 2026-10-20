@@ -198,7 +198,7 @@ export function createEnchantCtx({
       };
       if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
       // AUDIT WBX F2: a Cast When Strikes spell on the Oblivion Gate's boss goes by the court's own spell door (the host's
-      // `bossSpell` - scenes/dungeonContext.js spellOnBoss): his stand-in is no foe of the list, and the spell went nowhere.
+      // `bossSpell` - scenes/gate/standInSpell.js spellOnStandIn): his stand-in is no foe of the list, and the spell went nowhere.
       // AUDIT WB11 W1: the stand-in it met goes with it - one of his host's or a crystal's names its body, and the court's
       // door lands the spell on THAT body (every `spareGear` stand-in went to him: a blade that cut an Imp cast on him)
       if (target?.spareGear) { bossSpell?.(record, target); return; }

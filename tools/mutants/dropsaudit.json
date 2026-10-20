@@ -101,7 +101,7 @@
   {
     "name": "DA-F6-notice-lets-tiles-act",
     "file": "src/ui/enhanced/enhancedPort.js",
-    "old": "      if (win.box && !win.box.buttons?.length && !win.picker) { win.click?.(-1, -1); return; }\n",
+    "old": "      if (noticeShown(win)) { win.click?.(-1, -1); return; }\n",
     "new": "",
     "tests": [
       "test/ui/enhanced/dropsaudit.test.js"

@@ -30,14 +30,43 @@ export const NORMAL_POWER_CONCEALMENTS = Object.freeze(['chameleonNormal', 'invi
  * is also why the port has no separate IsMagicallyConcealedNormalPower
  * member: it would be a ported function with no caller.
  *
+ * HELD-CONCEAL (FIELD BUGS 2026-10-19f, a player's private report: a
+ * worn item's Invisibility stopped working until it was taken off and
+ * put on again). EndIncumbentEffect<T> (:759-766) ENDS the effect -
+ * `RoundsRemaining = 0; End()` - and removes nothing. A spell's bundle
+ * then has no rounds left and goes at the next DoMagicRound, so the
+ * port's removal is the same end, a round sooner. A WORN ITEM'S bundle
+ * does not go: DoMagicRound keeps a bundle "alive until item breaks or
+ * is unequipped" (:1739-1742), the ended effect inside it sets no
+ * concealment flag (DoConstantEffects skips HasEnded at :1693, and
+ * DaggerfallEntity.ClearConstantEffects clears the flags every frame),
+ * and its item stays scheduled for the reroll that recasts it fresh
+ * (:1750-1753, RerollItemEffects :2001-2034). So an item-pinned entry is
+ * ENDED in place - `ended`, its rounds 0 - and keeps its pin: every reader of
+ * the concealment sees it broken (effects.js hasActiveEffect, the HUD's
+ * liveBundles), and enchantments.js's reroll still visits its item.
+ * Removed outright, as it was, the pin went with it, the reroll never
+ * visited the item again, and the concealment was gone for as long as
+ * the piece was worn.
+ *
+ * Every LIVE normal power ends at once. DFU's EndIncumbentEffect<T>
+ * ends the first effect of its type that FindIncumbentEffect<T> meets
+ * (:666-678), an ended one included - so a worn item's and a spell's
+ * Invisibility both live took one blow each, and once the worn one was
+ * ended it shielded the spell's from every blow until the reroll. The
+ * port ends each live one, and never counts an ended one as concealing.
+ *
  * @returns {boolean} true if anything was actually ended
  */
 export function breakNormalPowerConcealment(entity) {
   const list = entity?.activeEffects;
   if (!list || !list.length) return false;
-  const kept = list.filter((a) => !NORMAL_POWER_CONCEALMENTS.includes(a.kind));
-  if (kept.length === list.length) return false;
-  entity.activeEffects = kept;
+  const broken = list.filter((a) => NORMAL_POWER_CONCEALMENTS.includes(a.kind) && !a.ended);
+  if (!broken.length) return false;
+  for (const a of broken) {
+    if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }
+  }
+  entity.activeEffects = list.filter((a) => a.heldItem || !broken.includes(a));
   return true;
 }
 

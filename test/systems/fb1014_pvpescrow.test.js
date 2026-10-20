@@ -392,7 +392,7 @@ test('THE HANDOFF\'S DOORS: a tab asks the escrow only for a room that signs col
   assert.equal(d.escrow, undefined, 'no collect asked: the room\'s old take');
   assert.equal(escrowRow(z.svc, d.r), undefined);
   const w = rd('src/scenes/world.js');
-  assert.ok(w.includes("realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildCartWord("), 'my drop asks it for my room alone');   // PIN MOVED (CART-AWAY, Mac, 2026-10-15): my wagon's word beside it (test/systems/fb1015_cartaway.test.js)
+  assert.ok(w.includes("realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords("), 'my drop asks it for my room alone');   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js); PIN MOVED (CART-AWAY, Mac, 2026-10-15): my wagon's word beside it (test/systems/fb1015_cartaway.test.js)
   // PIN MOVED (HOST-SPLIT, FIELD BUGS 2026-10-15c): the handoff's two sides live in scenes/wildEscrowHost.js, the host wiring them
   const eh = rd('src/scenes/wildEscrowHost.js');
   assert.ok(w.includes('const wildEscrow = createWildEscrowHost({ townTalk, session: realmSession, modes: () => modes, wildAccount, checkpoint: () => onlineCheckpoint() });'), 'the host wires the handoff');

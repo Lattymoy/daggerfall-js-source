@@ -824,6 +824,23 @@ deed underground makes that dungeon its lair.
   isLetterOfCredit`), a deserter's or a betrayer's letter comes back with its gold (`splitPack` asks the same law), and a
   letter a record took before is handed home at the mirror's merge (`ensureMirror`, from the save's copy of `took` - the
   pack it came out of is that save's, so never twice).
+  STEED-KEPT (FIELD BUGS 2026-10-19f; THE OWNER'S DECISION, 2026-10-19: "Exclude, and return taken ones"): and never
+  what never changes hands, as the open zone's death reads it (`wildDropLaw.js wildCanLose`) - a VEHICLE or a DEED (the
+  zone's own groups, `WILD_NEVER_GROUPS`: a horse, every cart; the decor's kept-back list, `DECOR_OWN_KEPT_BACK`: a house's
+  or a ship's deed as Daggerfall files them, and the spellbook with them - KEEP-SPELLBOOK's "Your spellbook never leaves
+  you"), or a SHIP'S DEED or her PARTS (`realmTradeLaw.js BOAT_TEMPLATES` - a deed handed on is a second boat). Owning a
+  horse or a cart is having it in the pack (DFU's `Items.Contains(Transportation, Horse)`), so a stable's horse - worth
+  more than most of a pack - was drawn one death in six beside a worn longsword and four spare weapons, and "vanished":
+  not in the pack, not at the stable. DECIDED, named (the owner left it to the slice): a BOUND piece stays its own, as
+  AUDIT 625 W2 pinned it ("RVN8 names its own exclusions") - by the zone's reasoning, which keeps a bound piece at a death
+  because a death's remains are anyone's, while what a revenant takes never rides to another player (its body hands what
+  it carried to its owner alone - `bodyLoot.js shareableRecord`, `peerWord.js neverPeerHanded`); and by RVN8's own,
+  which refuses what must never leave the pack (the pack-only wallet, itself bound) and lets a slain or spared one give
+  back the rest. THE RETURN: the mirror's merge now hands home every
+  piece `revenantMayTake` refuses (LETTERS-HOME's hand-back, widened) into the pack - where the game keeps owned
+  transport, the very horse the stable sold - each said ONCE, as the owner asked (`revenant.js:"export const tookHomeLine = (r, item) =>"`, through
+  `notify.js hudTextWhenShown`: the merge can run before a host stands); a returning letter is said now too, one law,
+  one word. A deserter's or a betrayer's split asks the same law, so a ship's deed in its pack comes back with the rest.
 - **Moved**: `equip.unequipItem`, out of `entity.items`, onto the record's `took` (items are plain objects - the sworn
   pack's precedent). **The save's copy wins** (REVENANT-FATE's audit rule for a pack): the mirror never brings back a
   piece the save holds.
@@ -2311,6 +2328,9 @@ and `dungeonContext.js`.
 - **Not built here** - its next taunt's word on it (RVN12, `{item}`); the page's *Took* (RVN12).
 - Pins `test/systems/rvn8_took.test.js` (6). Mutants `tools/mutants/rvn8.json` (34): 34 dead. Mutant record re-aimed by
   content (1): `revenantaudit`'s A6 (the cap's filter now spares a holder too) - judged again: dead.
+- STEED-KEPT (FIELD BUGS 2026-10-19f, section 19): `test/systems/revenant/fb1019f_steedkept.test.js` (4);
+  `tools/mutants/fb1019f_steedkept.json` (7, all dead); `fb1018b_letters.json`'s LETTERS-HOME-letter-takeable is
+  `equivalent` now (the letter refused through a second door, the kept-back list).
 
 ### RVN9 - BUILT 2026-10-04 (the loot-rarity row on; every host's encounter tick)
 

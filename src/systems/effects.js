@@ -332,8 +332,11 @@ export const spellSways = (sp) => (sp?.effects ?? []).some((e) => e && (isPacify
 export const isIdentifyEffect = (e) => e.type === 40 && classicSub(e) === 255;
 /** Identify.cs:54-55 - the refund never drops below 5. */
 export const IDENTIFY_REFUND_FLOOR = 5;
+/** presence = active; expired entries End on the NEXT tick pass (DFU shape). HELD-CONCEAL: an ENDED entry is not -
+ *  DoConstantEffects runs no ConstantEffect once HasEnded (EntityEffectManager.cs:1693-1694), so it sets no flag. A worn
+ *  item's concealment a blow broke stands ended on its item until the reroll (concealment.js). */
 export const hasActiveEffect = (entity, kind) =>
-  !!entity?.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
+  !!entity?.activeEffects?.some((a) => a.kind === kind && !a.ended);
 /** CSA-I: Come Sail Away's WaterWalkingSilent (WaterWalkingSilent.cs) - an incumbent of its own kind, as its
  *  IsLikeKind keeps it from stacking onto the spell's Water Walking; no spell icon (ShowSpellIcon false). */
 export const WATER_WALKING_SILENT_KIND = 'waterWalkingSilent';

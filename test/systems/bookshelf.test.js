@@ -104,15 +104,17 @@ test('F198: the health box decision, arm by arm - over the entries the PRODUCER 
   assert.deepEqual(healthStatusRows({ activeEffects: [] }, rows), rows(YOU_ARE_HEALTHY_ID));
   assert.equal(YOU_ARE_HEALTHY_ID, 18);
   assert.equal(YOU_HAVE_BEEN_POISONED_ID, 117);
-  // an INCUBATING disease (contracted today) shows nothing - and nothing
-  // qualified means record 18 again (the `if (tokens == null)` tail);
-  // the travel popup's condition (diseaseCount > 0) already warns - the
-  // one DFU-faithful disagreement between the two texts
+  // an INCUBATING disease (contracted today) showed nothing in DFU - and
+  // nothing qualified meant record 18 again (the `if (tokens == null)`
+  // tail) while the travel popup's condition (diseaseCount > 0) already
+  // warned. PIN MOVED (FIELD BUGS 2026-10-19f DISEASE-UNWELL, the owner's
+  // departure, "Unnamed 'Unwell' tile"): the box says the house's unwell
+  // line, naming none, in the shape of the host's own rows
   const pc = P();
   const plague = startDisease(pc, DISEASES.Plague, 100);
   assert.ok(plague && plague.disease === DISEASES.Plague && plague.diseaseType === undefined, 'the producer\'s field is `disease`');
   assert.equal(diseaseCount(pc), 1, 'the travel warning fires');
-  assert.deepEqual(healthStatusRows(pc, rows), rows(18), 'incubating: the healthy line, as CreateHealthStatusBox :1694-1697');
+  assert.deepEqual(healthStatusRows(pc, rows), [{ text: 'You feel unwell.', center: true }], 'incubating: unwell, unnamed - never the healthy line beside the travel warning');
   // incubation over (the first day-crossing tick): the classic contracted
   // message, record 100 + type - THE line the player did not get
   updateDiseases(pc, 101, sinks, seq(0.5));

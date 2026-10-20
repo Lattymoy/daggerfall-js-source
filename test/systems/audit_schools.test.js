@@ -591,16 +591,22 @@ test('AUDIT SCHOOLS L5 M3 / L2 F9: ILLUSION PAST 100 LENGTHENS CHAMELEON AND SHA
 
 test('AUDIT SCHOOLS L2 F4: MY SPELL ON THE RELAY\'S STAND-INS IS TOLD TO THE RIDERS - the court\'s Warden, its crystals, its host and the serpent\'s hide each tell the landing (no foe record: the relay holds the body), and the cast engine hands each its cast\'s wrapper (by source: the stand-ins live inside the page builders) (mutants: a stand-in untold; the caster dropped)', () => {
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /function tellStandIn\(sp, entity, r, dealt, caster\) \{\n\s*tellSpellLanded\(\{ caster: playerEntity, target: entity, foe: null, spell: sp, r, self: false, took: dealt, cast: caster\?\.cast \?\? null \}\);/);
-  for (const [fn, who] of [['spellOnCrystal', 'cr'], ['spellOnHost', 'hb'], ['spellOnBoss', 'boss']]) {
-    assert.match(dc, new RegExp(`function ${fn}\\(sp, [^)]*caster = null\\) \\{[\\s\\S]*?r = applySpell\\(harm, playerEntity\\.level, ${who}\\.entity, sinks, Math\\.random, \\{ entity: playerEntity \\}\\);[^\\n]*\\n\\s*if \\(!\\(dealt >= 1\\)\\) return false;\\n\\s*tellStandIn\\(sp, ${who}\\.entity, r, dealt, caster\\);`), fn);
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): the court's three spell doors left the context as one
+  // (scenes/gate/standInSpell.js onBody) - each counted on its stand-in and told, and what the riders are told is what can
+  // land there (the number the HUD says), never a claim no relay lands
+  const sis = src('src/scenes/gate/standInSpell.js');
+  assert.match(sis, /function tellStandIn\(sp, entity, r, took, caster\) \{\n\s*tellSpellLanded\(\{ caster: player, target: entity, foe: null, spell: sp, r, self: false, took, cast: caster\?\.cast \?\? null \}\);/);
+  assert.match(sis, /const \{ dealt, r, kept \} = countOnStandIn\(harm, body\.entity, player\.level, player, rolls, rounds\.carried\(key\)\);\n\s*if \(!\(dealt >= 1\)\) \{[^]*?\n\s*\}\n\s*const shown = standInShown\(dealt, standInBlowCap\(body\.entity, player\.level\)\);\n\s*tellStandIn\(sp, body\.entity, r, shown, caster\);/);
+  for (const [fn, who, land] of [['spellOnCrystal', 'cr', 'landOnCrystal'], ['spellOnHost', 'hb', 'landOnHost'], ['spellOnBoss', 'boss', 'landOnBoss']]) {
+    assert.match(sis, new RegExp(`function ${fn}\\(sp, [^)]*caster = null\\) \\{[\\s\\S]*?return onBody\\(sp, ${who}, harm, caster, host\\.${land}, `), fn);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): each its rounds' key
   }
   assert.match(dc, /castAtBoss: opts\.gateBoss \? \(sp, caster\) => spellOnBoss\(sp, caster\) : null,/);
   assert.match(dc, /castAtCrystal: opts\.gateCrystals \? \(sp, c, caster\) => spellOnCrystal\(sp, c, caster\) : null,/);
   assert.match(dc, /castAtHost: opts\.gateHost \? \(sp, i, caster\) => spellOnHost\(sp, i, caster\) : null,/);
   const w = src('src/scenes/world.js');
-  assert.match(w, /tellSpellLanded\(\{ caster: playerEntity, target: e, foe: null, spell: sp, r, self: false, took: dealt, cast: caster\?\.cast \?\? null \}\);/);
-  assert.match(w, /castAtBox: \(sp, q, caster\) => serpentSpellOn\(sp, q, caster\),/);
+  // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): the serpent's door left bootWorld for scenes/gate/standInSpell.js createSerpentSpell, which tells the riders
+  assert.match(sis, /tellSpellLanded\(\{ caster: player, target: e, foe: null, spell: sp, r, self: false, took: standInShown\(dealt, SERPENT_HIT_CAP_X \* SERPENT_HAND_REF\), cast: caster\?\.cast \?\? null \}\);/);
+  assert.match(w, /castAtBox: \(sp, q, caster\) => serpentSpell\.cast\(sp, q, caster\),/);
   const hm = src('src/scenes/hostMagic.js');
   assert.match(hm, /function giveToBoss\(mark, sp, caster = null\) \{/);
   assert.match(hm, /else giveToBoss\(hitBoss, m\.spell, playerCaster\(m\.cast \?\? null\)\);/);

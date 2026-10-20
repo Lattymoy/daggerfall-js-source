@@ -592,7 +592,7 @@ const HARDCODED = {
   'src/ui/eliteGates/egArchMapMark.js': 1,
   'src/ui/eliteGates/egBeats.js': 85,
   'src/ui/eliteGates/egBoardWindow.js': 15,
-  'src/ui/eliteGates/egHud.js': 33,   // AUDIT EG V (a1): +2, the rest's beacon - *The next circle bears: ...* and *The next Court: ...* (egNextCircleText) - the arc's English, owed its localization wave with the rest; EG-PLUS: -6, the panel's heads, the asks' lines and its foot through the text core
+  'src/ui/eliteGates/egHud.js': 32,   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: -1, the Gauntlet's line routed (eg.progress.gauntlet). AUDIT EG V (a1): +2, the rest's beacon - *The next circle bears: ...* and *The next Court: ...* (egNextCircleText) - the arc's English, owed its localization wave with the rest; EG-PLUS: -6, the panel's heads, the asks' lines and its foot through the text core
   'src/ui/eliteGates/egSpireHud.js': 15,   // AUDIT EG IV (the lords' group): +1, an errand's numerals' markup (egSigilHtml's `given` - a template the scan counts; its words are the company's numerals and names)
   'src/ui/eliteGates/egStartWindow.js': 5,
   'src/ui/enhanced/enhancedAccount.js': 8,

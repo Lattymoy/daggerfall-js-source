@@ -128,8 +128,9 @@ export class CovenWindow {
   _quest() {
     const r = this.hooks.onQuest?.();
     // GetQuest either dispatched an offer window (which replaced this
-    // one) or bailed on an active questor - CloseWindow both ways
-    // (:125-129, and the message box rides its own window).
+    // one) or bailed - CloseWindow both ways (:125-129, and the message
+    // box rides its own window). QUESTOR-SAID: an active questor's bail
+    // dispatches its words now (offerFlow.js questorBusy), a box of its own.
     if (r?.dispatched || !r) this._close();
   }
 

@@ -796,6 +796,9 @@ const REFUSAL_WORDS = {
   'firm-respec-empty': () => t('account.refusal.firmRespecEmpty', 'Nothing is learned yet.'),
   'repair-no-faction': () => t('account.refusal.repairNoFaction', 'That character\'s record holds no such faction, so nothing was repaired.'),   // SUMMON-REPAIR: the review's repair (tools/realmReview.mjs)
   'repair-not-set': () => t('account.refusal.repairNotSet', 'That faction does not have that flag on this character, so nothing was repaired. Check that it is the right character.'),   // SUMMON-REPAIR: a repair aimed at the wrong character mends nothing
+  'mend-not-negative': () => t('account.refusal.mendNotNegative', 'That character\'s gold is not below zero, so nothing was mended. Check that it is the right character.'),   // PURSE-MEND: the review's mend (tools/realmReview.mjs)
+  'mend-moved': () => t('account.refusal.mendMoved', 'That character\'s gold has changed since its findings were read, so nothing was mended. Read the findings again and try again.'),   // PURSE-MEND: played since, or the wrong character
+  'repair-ticket': () => t('account.refusal.repairTicket', 'That ticket is already used for another fix on this character, so nothing was done. Use a new ticket.'),   // PURSE-MEND: a ticket names one act, a repair or a mend
   // SAFE1-SAFE7 (bible/11-Multiplayer/Chat-Safety-Arc.md): the chat's safety - a block, a report, the code of conduct, a ban
   'block-self': () => t('account.refusal.blockSelf', 'You cannot block yourself.'),
   'blocks-full': () => t('account.refusal.blocksFull', 'Your block list is full. Unblock someone first.'),
@@ -962,6 +965,9 @@ export function _resetBusyForTests() { _busy = { n: 0, until: 0 }; }
 /** BUSY-GATE: the moment the reads may be asked again (ms; 0 when the service has said nothing). */
 export const busyUntil = () => _busy.until;
 const holdFor = (/** @type {number} */ ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+/** AUDIT LEAN-READS: whether an overload's word on a call that left at `sentAt` is a new one - the call left after the last
+ *  hold ran out. One left before it is the stall or the burst that hold already answered. */
+const busyAgain = (/** @type {number} */ sentAt) => sentAt >= _busy.until;
 
 /** QUEST-HOME: the page's ears for a home that moved (onHomeOrders). */
 const _homeOrderEars = new Set();
@@ -1008,6 +1014,9 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
   if (pass) headers[SESSION_PASS_HEADER] = pass;
 
   let res;
+  // AUDIT LEAN-READS: when this call left - an overload's word (a timeout, a 503) on a call that left before the last hold
+  // ran out is the stall that hold answered, never a second word on it (busyAgain)
+  const sentAt = now();
   try {
     res = await fetch(`${base}${path}`, {
       method,
@@ -1023,6 +1032,18 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     // button. Every arm of this function returns the same shape.
     forgetD1Bookmark();   // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them
     if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: the same, for the pass's - but a timeout's (E7)
+    // SLOW-SHED (bible/11-Multiplayer/Scale-Arc.md SLOW-SHED): A READ THE SERVICE WAS TOO SLOW TO ANSWER IS ITS OVERLOAD'S
+    // WORD - its reads stand back as an overload answer stands them back. In the 18:05 overload the database answered
+    // slowly and refused almost nothing: each tab's read timed out, was `offline` to the gate, and was asked again, and
+    // the region's traders were asked four times as often. A write, a sign-in or an act that times out holds nothing.
+    // AUDIT LEAN-READS C3: ONE STALL IS ONE WORD - the reads out together when the line stalls all time out together, and
+    // counted each they held the page a minute for one stall; a timeout of a call that left before the last hold ran out
+    // counts nothing (a read waits 15 s to time out, past the first hold's 2.5-5 s), so a stall holds the first wait
+    // (BUSY_BASE_MS's), and the wait doubles only while reads sent after it keep timing out.
+    if (e?.name === 'TimeoutError' && busyRead(path, method) && busyAgain(sentAt)) {
+      const n = _busy.n + 1;
+      _busy = { n, until: now() + busyWaitMs(n, rand()) };
+    }
     return { ok: false, error: 'offline' };
   }
   if (PASS_MOVES.has(path)) forgetSessionPass(); else noteSessionPass(secret, res);   // SESSION-SIGN E2
@@ -1045,8 +1066,11 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     if (busyAnswer(res.status, typeof data?.error === 'string' ? data.error : 'server')) {
       let after = null;
       try { after = res.headers?.get?.('retry-after') ?? null; } catch { after = null; }
-      const n = _busy.n + 1;
-      _busy = { n, until: Math.max(_busy.until, now() + Math.max(busyWaitMs(n, rand()), retryAfterMs(after))) };
+      // AUDIT LEAN-READS: and ONE BURST IS ONE WORD - the reads out together when the shed opens are all answered 503, and
+      // counted each they held the page up to a minute; the answer's own Retry-After stands either way
+      const again = busyAgain(sentAt);
+      const n = again ? _busy.n + 1 : _busy.n;
+      _busy = { n, until: Math.max(_busy.until, now() + Math.max(again ? busyWaitMs(n, rand()) : 0, retryAfterMs(after))) };
     }
     // The service says `{ error: '<word>' }`. A proxy, a 502 or an
     // HTML error page says nothing we can read, and `server` is the

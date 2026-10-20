@@ -226,8 +226,8 @@ BUSY-GATE and CRAFT-PROCS at the merge of main).
   (dungeons). It tells the landed listeners (`applySpellToFoe` for my spell at a foe, `applySpellToPlayer` for my own
   cast on me - with `took`, what the target could lose, and `cast`, the cast's TOKEN: `{ cost }`, minted at the release
   and carried by every landing of that one cast, a missile's, each foe an area sweeps, the court's boss) and tallies by
-  castSchool. The relay's stand-ins tell them too (`scenes/dungeonContext.js` tellStandIn - the Burning Court's Warden,
-  its crystals, its host; `scenes/world.js` serpentSpellOn - the serpent's hide), with no foe record: the relay holds
+  castSchool. The relay's stand-ins tell them too (`scenes/gate/standInSpell.js` tellStandIn - the Burning Court's Warden,
+  its crystals, its host; its createSerpentSpell - the serpent's hide), with no foe record: the relay holds
   the body (AUDIT SCHOOLS L2 F4). `arcanePowers.js` is imported by `scenes/hostMagic.js` itself, so every page that
   builds the engine has the paths' powers - the standalone dungeon page had their price and none of their powers
   (AUDIT SCHOOLS L2 F8).

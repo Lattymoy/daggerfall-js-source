@@ -214,7 +214,7 @@ test('AUDIT SCALE D2: the clock\'s moment in seconds - scheduled() hands runCron
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(g.id).n, 1);
 });
 
-test('AUDIT SCALE D7: on a quiet world the clock is ten statements a minute and thirty an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job (mutants: TOWNECON-AUDIT2-SVC3-kept-read-each-minute)', async () => {
+test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute and thirty-four an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job (mutants: TOWNECON-AUDIT2-SVC3-kept-read-each-minute)', async () => {
   clock(T0);
   const svc = await standService({ SEATS_OPEN: 'on', PROFESSIONS_OPEN: 'on' });
   _resetCronForTests();
@@ -225,7 +225,8 @@ test('AUDIT SCALE D7: on a quiet world the clock is ten statements a minute and 
   // PIN MOVED (SAFE, Chat-Safety-Arc.md section 6): the chat safety's minute - the reviewer's feed and cases, and the
   // moderators' cards - asks nothing while neither the reviewer nor Discord is set, as on this world
   // PIN MOVED (AUDIT TOWN-ECON 2 SVC-3): and the towns' shares kept once a keeping - the minute after asks nothing
-  assert.deepEqual(minute.map((j) => j.statements), [1, 1, 1, 1, 2, 0, 1, 1, 1, 1, 0, 0], JSON.stringify(minute.map((j) => [j.name, j.statements])));   // PIN MOVED (REZ-BLOODLINE AUDIT R1): the falls held for a Resurrect whose window closed, asked once (legacy.js settleHolds); PIN MOVED (CARDS10): Iliac Hand's season #1 asks once too; PIN MOVED (KG6): and The King's Gambit's (gambit.js gambitChampionClock)
+  // PIN MOVED (YARD-SNAP): and the towns' yards a write left stale built - one statement, none stale on a quiet world
+  assert.deepEqual(minute.map((j) => j.statements), [1, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 0, 0], JSON.stringify(minute.map((j) => [j.name, j.statements])));   // PIN MOVED (REZ-BLOODLINE AUDIT R1): the falls held for a Resurrect whose window closed, asked once (legacy.js settleHolds); PIN MOVED (CARDS10): Iliac Hand's season #1 asks once too; PIN MOVED (KG6): and The King's Gambit's (gambit.js gambitChampionClock)
   const hour = await runCron(svc.env, { cron: CRON_HOUR, nowS: T0 + 120, rand });
   // PIN MOVED (INT2/INT5, 2026-10-09): the hour sweeps the judge's findings and the wealth-hours past their keep - one
   // statement each, its page short; seventeen became nineteen. PIN MOVED (INT9): and a death in the zone's drop past its
@@ -244,7 +245,7 @@ test('AUDIT SCALE D7: on a quiet world the clock is ten statements a minute and 
   // case's lines, notes and reviewer's reason swept apart - the case marked first, its card redrawn without them - thirty
   // PIN MOVED (INT17, Integrity-Arc section 7): the progression claims' hours swept past the wealth's keeping - thirty-one
   assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['town-econ', 3], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['progress-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['patrons', 1], ['eg-stakes', 1], ['safety-sweep', 6]]);
-  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 10 + 34);   // PIN MOVED (AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are; TOWN-ECON TE2: a town's days, acts and seen ticks)
+  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 11 + 34);   // PIN MOVED (YARD-SNAP: the minute's stale yards; AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are; TOWN-ECON TE2: a town's days, acts and seen ticks)
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });
   _resetCronForTests();

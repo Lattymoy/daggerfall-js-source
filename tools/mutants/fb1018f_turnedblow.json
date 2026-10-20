@@ -412,33 +412,14 @@
   },
   {
     "name": "TURNED-BLOW-host-spell-number-blind",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "reportPlayerAttack({ hit: true, damage: Math.round(dealt), target: hb.entity });",
-    "new": "reportPlayerAttack({ hit: true, damage: Math.round(dealt) });",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "reportPlayerAttack({ hit: true, damage: Math.round(shown), target: body.entity });",
+    "new": "reportPlayerAttack({ hit: true, damage: Math.round(shown) });",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
-    "why": "AUDIT FB1018f L3-2: a spell on a turned body pops its claim as a number"
-  },
-  {
-    "name": "TURNED-BLOW-crystal-spell-number-blind",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "reportPlayerAttack({ hit: true, damage: Math.round(dealt), target: cr.entity });",
-    "new": "reportPlayerAttack({ hit: true, damage: Math.round(dealt) });",
-    "tests": [
-      "test/net/eliteGates/fb1018f_turnedblow.test.js"
-    ],
-    "why": "AUDIT FB1018f L3-2: a spell on a crystal pops its number blind to its stand-in"
-  },
-  {
-    "name": "TURNED-BLOW-warden-spell-number-blind",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "reportPlayerAttack({ hit: true, damage: Math.round(dealt), target: boss.entity });",
-    "new": "reportPlayerAttack({ hit: true, damage: Math.round(dealt) });",
-    "tests": [
-      "test/net/eliteGates/fb1018f_turnedblow.test.js"
-    ],
-    "why": "AUDIT FB1018f L3-2: a spell into the Warden's ward pops its claim as a number"
+    "why": "AUDIT FB1018f L3-2: a spell on a turned body pops its claim as a number",
+    "note": "FIELD BUGS 2026-10-19f STAND-IN-WHOLE (HOST-SPLIT): re-aimed by content - the three spell doors left buildDungeonContext as one (scenes/gate/standInSpell.js onBody), and this one line is all three doors' number; the crystal's and the Warden's records, aimed at the copies that are gone, were retired with them"
   },
   {
     "name": "TURNED-BLOW-reach-unasked-on-screen",

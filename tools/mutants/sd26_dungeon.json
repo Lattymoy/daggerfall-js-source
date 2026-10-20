@@ -209,8 +209,8 @@
   {
     "name": "SD26-F37-the-hosts-ground-unhanded",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "findSdSite(r, sc, cities(r.r), ground)",
-    "new": "findSdSite(r, sc, cities(r.r))",
+    "old": "findSdSite(at, sc, near, ground)",
+    "new": "findSdSite(at, sc, near)",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]

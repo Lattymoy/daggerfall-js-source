@@ -303,7 +303,11 @@ export const EG_HALL_NAMES = Object.freeze({
   riftyard: 'The Rift-Yard', wellspring: 'The Wellspring', muster: 'The Muster', holdfast: 'The Holdfast', wellmouth: 'The Wellmouth',
   siege: 'The Siege-Walk', fallingwall: 'The Falling Wall', winch: 'The Winch', gauntlet: 'The Gauntlet', forgebridge: 'The Forge Bridge',
 });
-/** What each hall asks (section 27.3's objective chip), by variant where it has one, else by kind. */
+/** What each hall asks (section 27.3's objective chip), by variant where it has one, else by kind. Each spec carries its
+ *  hall's (`objective`), so these words are a hall's bytes (section 22's law pin - egSpecDigest, every law's halls hashed
+ *  whole) and stay as laid. FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the screen no longer shows the Gauntlet's - "Silence the
+ *  casters." sent a company to kill them, and a slain Caster is not silenced (net/eliteGates/egBrain.js trialStep); it says
+ *  ui/eliteGates/egHud.js egObjectiveText's, the plates named, in the player's language. */
 export const EG_OBJECTIVES = Object.freeze({
   yard: 'Close the rifts.', riftyard: 'Close the rifts.', wellspring: 'Break the anchors, then the Wellspring.', muster: 'Fell the standard.', holdfast: 'Hold the relic.', wellmouth: 'Close the wandering rifts.',
   rampart: 'Break the wards at the portcullis.', siege: 'Break the wards at the portcullis.', fallingwall: 'Outrun the falling wall. Break the wards.', winch: 'Hold the winch plates.', gauntlet: 'Silence the casters.', forgebridge: 'Climb the forge bridge. Break the wards.',

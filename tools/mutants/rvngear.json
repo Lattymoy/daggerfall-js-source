@@ -344,8 +344,8 @@
   {
     "name": "RVN-GEAR-release-forgets",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  const items = [...(r.companion?.items ?? []), ...gearItems(r.companion?.gear)];",
-    "new": "  const items = [...(r.companion?.items ?? [])];",
+    "old": "  const items = [...(r.companion?.items ?? []), ...gearItems(r.companion?.gear)];   // RVN-GEAR: and its kit",
+    "new": "  const items = [...(r.companion?.items ?? [])];   // RVN-GEAR: and its kit",
     "tests": [
       "test/systems/revenant/rvngear.test.js"
     ]

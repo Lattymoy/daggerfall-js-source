@@ -65,6 +65,8 @@
 // FB1018D (2026-10-18, FIELD BUGS 2026-10-18d; Boar, #bug-reports): THE CHALLENGE'S RING OF FIRE drawn where the room stands it
 // (duelRing - only the motor was kept to it), A WINCH'S PLATES marked as the stood-on errands are (winchPlates), the open duel
 // said as one at n = 1, the Conquest's word saying what its banners do, and every beat's word past the fold's twelve (beats).
+// FIELD BUGS 2026-10-19f GAUNTLET-PLATES (2026-10-19, a player's private report): A GAUNTLET'S PLATES marked as the Winch's are,
+// on their pillars' tops, each dimmed once its Caster is silenced (gauntletPlates, egPlateY).
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
 import { HIT_KINDS, CRYSTAL_R, CRYSTAL_H } from '../../net/gate/gateBrain.js';
@@ -119,13 +121,13 @@ import { createSpireMix } from '../../systems/eliteGates/egMix.js';   // EG-G2: 
 import { EG_LOOK_BIT } from '../../world/eliteGates/egLook.js';   // EG-ZD: a cut feint's dashed fade
 import { TELL_FEINT_FADE } from '../../ai/blowShapes.js';   // EG-ZD (section 13.2): the feint's fade - Feud-Arc section 7.3's one number
 import { egCensusDr, EG_HEAL_WORD_MS, EG_LIFELINE_MS } from '../../net/eliteGates/egBrain.js';   // EG-ZP (sections 15 and 21): THE CENSUS'S VESTIGES, the relay's own law; Lifeline's window
-import { EG_TOUCH_M } from '../../net/eliteGates/egBrain.js';   // FB1018D WINCH-PLATES: the reach the room counts a member on a winch plate within
+import { EG_TOUCH_M } from '../../net/eliteGates/egBrain.js';   // FB1018D WINCH-PLATES: the reach the room counts a member on a winch plate within (FIELD BUGS 2026-10-19f GAUNTLET-PLATES: and on a Gauntlet's)
 import { EG_TRAIL_MS } from '../../net/eliteGates/egFair.js';   // EG-ZP: how long the census keeps a trail - and a Lifeline window
 import { egBlowLandsOn } from '../../net/eliteGates/egFair.js';   // THE ASCENT - HEIGHT: a blow lands on its own storey, on every screen as on the relay
 import { egFightView } from '../../net/eliteGates/egWalkGraph.js';   // EG-ZP: the hall's fight ground, the census's floor
 import { egFeetY, egBears, egByHeight, egOneStorey, egStoreyY } from '../../net/eliteGates/egWalkGraph.js';   // THE ASCENT - HEIGHT: a zone lies on its own floor, a blow is mine on my storey alone
 import { egRunOfMember } from '../../net/eliteGates/egLink.js';   // EG-ZP: each member's Vestiges and Mastery
-import { egVOf, egHymnOf, EG_BLOODIED_UNDER, EG_HYMN_MS } from '../../net/eliteGates/egVestige.js';   // EG-ZR (section 15): the holder's Vestiges, Shield-Hymn's pair
+import { egVOf, egHymnOf, egDeclaredX, EG_BLOODIED_UNDER, EG_HYMN_MS } from '../../net/eliteGates/egVestige.js';   // EG-ZR (section 15): the holder's Vestiges, Shield-Hymn's pair
 import { egAccordMates, EG_ECHO_Q } from '../../net/eliteGates/egVestige.js';   // EG-ZS (section 15): the pair law; an Echo's number
 import { EG_MASTERIES } from '../../net/eliteGates/egVestige.js';   // AUDIT EG III (lane4 #10): Immovable's number - the census asked only for its holder
 import { egHolderBlow } from '../../systems/eliteGates/spireVestiges.js';   // EG-ZR: a blow of mine with the Vestiges I hold
@@ -228,6 +230,25 @@ export const EG_SAY = Object.freeze({
   hornfoul: () => 'Another steps into the ring. The crowd throws fire! Ash falls in the Pit.', niche: (n) => `${n || 'Someone'} rests at the Battlemage's niche.`,
   hcache: (n) => `${n || 'Someone'} takes a Reliquary from the High Road's cache.`, lowroad: () => 'Something stirs on the Low Road.',
 });
+
+/**
+ * FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the height (m) of the ground under a Gauntlet's plate - `q` a pillar's spot, its plate
+ * `[x, z]` in the hall's frame (net/eliteGates/egLaw.js rampartWalk): the top of the pillar it stands on (from spec law 10,
+ * THE BROKEN WAY, beside its stair's head), else its stair's height under it (laws 8 and 9 laid it 3 m up the stair - a flat
+ * mark there crosses the slope at its middle), else the walkway's floor (the laws before laid the side span flat, and every
+ * Rampart's walkway lies at the hall's floor). Pure.
+ * @param {any} spec @param {any} q
+ */
+export function egPlateY(spec, q) {
+  const [x, z] = q.plate;
+  const top = (spec.discs ?? []).find((d) => d.role === 'pillar' && Math.hypot(x - d.x, z - d.z) <= d.r);
+  if (top) return top.y ?? 0;
+  for (const r of spec.ramps ?? []) {
+    const dx = r.bx - r.ax, dz = r.bz - r.az, u = ((x - r.ax) * dx + (z - r.az) * dz) / (dx * dx + dz * dz || 1);
+    if (u >= 0 && u <= 1 && Math.hypot(x - r.ax - u * dx, z - r.az - u * dz) <= r.hw) return r.y0 + (r.y1 - r.y0) * u;   // along its run, within its width
+  }
+  return 0;
+}
 
 /**
  * EG-G2 (sections 25.2, 25.4 and 25.7): THE LOOK LAID ON a frame's shapes - every danger line in the shelf's palette's
@@ -675,6 +696,10 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
    *  the floors it lands on (net/eliteGates/egFair.js egBlowLandsOn - the relay's rule) waits while its span lasts, then misses. A hall
    *  that judges in plan alone keeps the verdict as it was. */
   const onStorey = (v, bl, x, y, z, t) => (v !== 'hit' || egBlowLandsOn(egFightView(spec), bl, x, y, z) ? v : t >= bl.at + Math.max(1, bl.sp ?? 0) ? 'miss' : 'wait');
+  /** FIELD BUGS 2026-10-19f STAND-IN-WHOLE: the factor the relay grows my bucket by here (THE TRUST LAW: my Vestiges'
+   *  declared factor - net/eliteGates/egRun.js egVestigeX's `bx`), read by what one blow of mine can land on a stand-in of
+   *  this hall (world/gate/gateBoss.js standInBlowCap). */
+  const myBlowX = () => { const E = link.state(); return E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1; };
   /** One body drawn: its look's sprite at its act's frame, at its place. EG-LOOK (section 9): at its DRAWN size (a lord's
    *  presence over its body's scale), its feet on the body's place - the quad stands up from its base - a flyer's hover its
    *  drawn one; a grown sprite casts no shadow; `top` its drawn head this frame (NaN while it stands nowhere on this screen). */
@@ -714,7 +739,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     // you see meets him, never passes through it); it stands where the sprite's feet are drawn
     if (!b.fellAt && b.hp > 0 && (b.fl & (EG_FL.friend | EG_FL.hidden)) === 0) {
       // FIELD BUGS 2026-10-18f RELAY-SHARE: its stand-in reads its health as the relay says it - `hp` of its whole, refilled below
-      d.target ??= { i: b.i, feet: [0, 0, 0], height: 2, radius: 0.6, entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m)), mobile: look.mobile, name: look.name, m: b.max, hp: b.hp };
+      d.target ??= { i: b.i, feet: [0, 0, 0], height: 2, radius: 0.6, entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m), myBlowX), mobile: look.mobile, name: look.name, m: b.max, hp: b.hp };
       d.target.feet[0] = d.at[0]; d.target.feet[1] = centre[1] + y; d.target.feet[2] = d.at[2];
       d.target.height = (look.lord ? 2.2 : EG_LEGION_KINDS[b.k]?.h ?? 2) * (look.lord ? look.drawn / 1.2 : 1); d.target.radius = look.lord ? Math.max(0.8, (1.8 * look.scale) / 3) : EG_LEGION_KINDS[b.k]?.r ?? 0.6; d.target.m = b.max; d.target.hp = b.hp;
       turnStandIn(d.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from where I stand, on it as it stands, that the relay will refuse is turned here too
@@ -735,7 +760,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     c.grow = (b.fl & EG_FL.ward) !== 0 ? 0.6 : 1;
     _crystals.push(c);
     if (!b.goneAt && (b.fl & EG_FL.ward) === 0) {
-      c.target ??= { i: b.i, feet: [0, 0, 0], height: CRYSTAL_H, radius: CRYSTAL_R, entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp), mobile: 31, name: key, m: b.max };   // FIELD BUGS 2026-10-18f RELAY-SHARE: its health as the relay says it (`c.hp`, the share it is drawn at)
+      c.target ??= { i: b.i, feet: [0, 0, 0], height: CRYSTAL_H, radius: CRYSTAL_R, entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX), mobile: 31, name: key, m: b.max };   // FIELD BUGS 2026-10-18f RELAY-SHARE: its health as the relay says it (`c.hp`, the share it is drawn at)
       c.target.feet[0] = c.at[0]; c.target.feet[1] = c.at[1]; c.target.feet[2] = c.at[2]; c.target.m = b.max;
       turnStandIn(c.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: an errand's object struck from traversal ground (but one standing off the floor, struck from beside it)
       _targets.push(c.target);
@@ -768,6 +793,26 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       sh.color = GROUND_COLORS.plate; sh.edge = TELEGRAPH_EDGE_SAFE; sh.pool = TELEGRAPH_POOL.ground; sh.t = 1; sh.flash = 0; sh.alpha = 0.85;
       sh.style = TELEGRAPH_STYLE.weight; sh.since = (t % 60_000) / 1000; sh.span = 1; sh.after = -1; sh.court = 0;
       sh.y = Number.isFinite(q.y) ? q.y / 100 : 0;   // the spot's height in centimetres, as the law lays it
+      _shapes.push(sh);
+    }
+  }
+  /** FIELD BUGS 2026-10-19f GAUNTLET-PLATES (section 8.3, the Gauntlet: "each silenced by standing 3 s on its plate"): each
+   *  caster's plate the room counts (net/eliteGates/egBrain.js trialStep's Gauntlet - a member within EG_TOUCH_M of
+   *  `spots.pillar[j].plate`, EG_SILENCE_MS unbroken) drawn as the winch's are (winchPlates - gold, EG_TOUCH_M, its own surface)
+   *  through the trial, at its ground's height (egPlateY); one whose Caster is silenced (the room's `pg.silenced[j]`) dimmed as
+   *  an unlit rune is - done, by its plate held or by its Caster slain (GAUNTLET-SLAIN, the same trialStep: a blow or a spell
+   *  that kills a Caster silences it). A relay before world232 (world231 or older) says no plate's word: every plate the hall
+   *  lays is drawn while a Caster is left (`pg.left`). Before it the plates the objective now names were marked by nothing. */
+  function gauntletPlates(F, t) {
+    if (stageNow !== 'trial' || F.pg?.obj !== 'gauntlet') return;
+    const pillars = spec.spots?.pillar ?? [], said = Array.isArray(F.pg.silenced) ? F.pg.silenced : null;
+    if (!said && !(F.pg.left > 0)) return;
+    for (let j = 0; j < (said ? Math.min(said.length, pillars.length) : pillars.length); j++) {
+      const q = pillars[j], sh = (_slots[_shapes.length] ??= slot());
+      sh.kind = TELEGRAPH_KIND.disc; sh.origin[0] = q.plate[0]; sh.origin[1] = q.plate[1]; sh.r = EG_TOUCH_M; sh.points.length = 0; sh.n = 0;
+      sh.color = GROUND_COLORS.plate; sh.edge = TELEGRAPH_EDGE_SAFE; sh.pool = TELEGRAPH_POOL.ground; sh.t = 1; sh.flash = 0; sh.alpha = said?.[j] ? 0.35 : 0.85;
+      sh.style = TELEGRAPH_STYLE.weight; sh.since = (t % 60_000) / 1000; sh.span = 1; sh.after = -1; sh.court = 0;
+      sh.y = egPlateY(spec, q);
       _shapes.push(sh);
     }
   }
@@ -1184,6 +1229,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       for (const b of F.bodies) liveBody(b, t);
       for (const g of F.gone) if (t - g.goneAt < FALL_MS) liveBody(g, t);
       winchPlates(F, t);   // FB1018D WINCH-PLATES: the stood-on plates that are no body
+      gauntletPlates(F, t);   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: and the Gauntlet's, each caster's
       for (const [i, d] of drawn) if (!live.has(i)) { destroy(d); drawn.delete(i); }
       for (const i of crystalSlots.keys()) if (!live.has(i)) crystalSlots.delete(i);
       mix.barks(_barks, cam(), (b) => play3(b.cue, b.at));   // EG-G2: the legion's barks, four a kind, nearest first
@@ -1276,7 +1322,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     hit: () => false,
     /** Every body my blows meet - lords, the legion, the struck objects - and a blow of mine on one (`hit` by number). */
     hostTargets: () => _targets,
-    hostHit({ i, d, r } = /** @type {any} */ ({})) {
+    hostHit({ i, d, r, tick = false } = /** @type {any} */ ({})) {
       if (!Number.isInteger(i) || !(Math.round(d) >= 1) || !Object.values(HIT_KINDS).includes(r)) return false;
       const E = link.state(), b = E.fight.bodies.find((q) => q.i === i);
       if (!b || (drawn.get(i)?.target ?? crystalSlots.get(i)?.target)?.entity?.warded) return false;   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow the relay will refuse is never sent, nor flashes it
@@ -1285,8 +1331,9 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       // this body, Bloodied Fury under half my health, Overcharge on a spell (egHolderBlow); the relay's bucket grown by
       // their declared factor takes the claim
       const vs = egRunOfMember(E, me()).vs, e = player(), q = blowQ(`e${i}`);
-      const dmg = Math.round(egHolderBlow(vs, d, r, { stacks: mom.i === i ? mom.n : 0, low: !!e && e.health < e.maxHealth * EG_BLOODIED_UNDER }));
+      const dmg = Math.round(egHolderBlow(vs, d, r, { stacks: !tick && mom.i === i ? mom.n : 0, low: !!e && e.health < e.maxHealth * EG_BLOODIED_UNDER }));
       if (!sendHit({ i, q, d: dmg, r })) return false;
+      if (tick) return true;   // FIELD BUGS 2026-10-19f BOSS-DOT: a round of my lasting harm (`tick`) is no blow - it takes no Momentum, builds none and rolls no Echo
       if (q !== mom.q) mom = { i, n: mom.i === i ? mom.n + 1 : 1, q };   // a blow builds one stack, on the first body it met
       // ARCANE ECHO: a damage spell repeats, its share of casts - one roll a cast, a blow of its own on each body. EG-ZS: claimed
       // at the cast's whole; the relay takes its share - half, or the whole in War-Chorus (net/eliteGates/egRun.js egEchoShare)

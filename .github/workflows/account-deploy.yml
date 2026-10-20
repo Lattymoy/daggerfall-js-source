@@ -135,6 +135,7 @@ on:
       - "src/net/wild/wildReceipt.js"
       - "src/net/wild/wildLaw.js"
       - "src/systems/wild/wildDropLaw.js"
+      - "src/systems/wild/wildLeaf.js"
       - "src/systems/item/itemKinds.js"
       - "src/net/gate/gateMods.js"
       - "src/net/insignia.js"
@@ -570,7 +571,11 @@ jobs:
       # safe; it is asked again on that answer alone, after 20, 40, 60, 90
       # and 120 s (5.5 minutes, the 2026-10-06 storm's worst five). Any
       # other failure - a migration that does not apply - stops the deploy
-      # at once, as it always has.
+      # at once, as it always has. AUDIT LEAN-READS D3 (2026-10-20): D1
+      # answers code 7429 for a reset too - "D1 DB exceeded its CPU time
+      # limit and was reset" - and a migration that ran past the limit,
+      # asked again, resets the live database again, five more times. The
+      # overload is known by its words, and a reset is never asked again.
       - name: Apply migrations
         working-directory: server-account
         run: |
@@ -578,7 +583,11 @@ jobs:
           log="${RUNNER_TEMP:-/tmp}/migrations.log"
           for wait in 20 40 60 90 120 0; do
             if $WRANGLER d1 migrations apply "$DB_NAME" --remote 2>&1 | tee "$log"; then exit 0; fi
-            if ! grep -qiE 'overloaded|code: 7429' "$log"; then
+            if grep -qiE 'CPU time limit|was reset' "$log"; then
+              echo "::error::a migration ran past D1's CPU limit and the database was reset - never asked again; make the migration lighter"
+              exit 1
+            fi
+            if ! grep -qiE 'overloaded|queued for too long' "$log"; then
               echo "::error::the migrations failed, and not on an overloaded database - not retried"
               exit 1
             fi
@@ -1225,9 +1234,17 @@ jobs:
           # is refused as homes-need-account, never taken (a 404 is a route
           # that did not deploy). Nothing is claimed here: a smoke that
           # bought a home would leave a building owned by nobody real.
+          # AUDIT LEAN-READS 2 D5: A DISPLAY READ SHED AS BUSY IS NO BROKEN DEPLOY. SLOW-SHED opens the shed on a slow
+          # D1 alone, and the shed answers every BUSY read (busyLaw.js) 503 with its Retry-After, asking no statement;
+          # `ask` waits seven tries through a short one, and a slow evening outlasts them - a deploy whose Worker had
+          # taken failed after it went live, its public key's check and Discord's step unrun. So a BUSY read's 503 after
+          # every try is said and passed; a route that did not deploy (404), a migration that did not apply (500) or a
+          # wrong answer still fails.
+          shed() { [ "$1" = "503" ] && echo "::warning::$2 was shed as busy through every try (a slow or overloaded D1: SLOW-SHED, BUSY-GATE) - the Worker answers; its answer was not read"; }
           code=$(post /tmp/homes.json "$base/v1/homes/town" "{\"secret\":\"$secret\",\"mapId\":1}")
           echo "homes/town -> $code"
-          if [ "$code" != "200" ] || ! grep -q '"homes":\[' /tmp/homes.json; then
+          if shed "$code" /v1/homes/town; then :
+          elif [ "$code" != "200" ] || ! grep -q '"homes":\[' /tmp/homes.json; then
             echo "::error::/v1/homes/town did not answer a town's homes ($code)"; cat /tmp/homes.json || true; exit 1
           fi
           code=$(post /tmp/claim.json "$base/v1/homes/claim" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"region\":0,\"character\":\"deploy-smoke\",\"price\":1}")
@@ -1242,13 +1259,54 @@ jobs:
           # did not deploy). Nothing is placed: a guest owns no home to place in.
           code=$(post /tmp/decor.json "$base/v1/homes/decor" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1}")
           echo "homes/decor -> $code"
-          if [ "$code" != "200" ] || ! grep -q '"pieces":\[' /tmp/decor.json; then
+          if shed "$code" /v1/homes/decor; then :
+          elif [ "$code" != "200" ] || ! grep -q '"pieces":\[' /tmp/decor.json; then
             echo "::error::/v1/homes/decor did not answer a home's pieces ($code)"; cat /tmp/decor.json || true; exit 1
           fi
           code=$(post /tmp/place.json "$base/v1/homes/decor/place" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"character\":\"deploy-smoke\",\"piece\":{}}")
           echo "homes/decor/place as a guest -> $code"
           if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/place.json; then
             echo "::error::/v1/homes/decor/place did not refuse a guest as homes-need-account ($code)"; cat /tmp/place.json || true; exit 1
+          fi
+          # LEAN-READS (AUDIT LEAN-READS D7): THE KEPT BOARDS ARE LIVE, on D1
+          # itself - a town's yards (home_yards and home_yards_ver, read by anyone) and the
+          # arena's board (arena_board_ver and arena_boards: read and
+          # counted). A 500 is a migration that did not apply, or a read
+          # D1 refuses that node:sqlite ran. AND KEPT (audit two, C3): a
+          # board's keep is a guarded upsert D1 runs after the answer is
+          # made, and a refused keep is caught - the answer stands, alike
+          # whether it ran or not - so the kept rows are asked of D1 itself
+          # (`kept`): a board at its version, in a shape. A write landing
+          # between the read and the ask is asked again, three times.
+          kept() { timeout 60 $WRANGLER d1 execute "$DB_NAME" --remote --command "$1" --json 2>/dev/null | jq -r '.[0].results[0].n // 0' 2>/dev/null || echo 0; }
+          n=$(kept "SELECT (SELECT COUNT(*) FROM home_yards_ver) = 0 OR EXISTS (SELECT 1 FROM home_yards y JOIN home_yards_ver v ON v.map_id = y.map_id WHERE y.built = v.ver AND y.shape IS NOT NULL) AS n")
+          if [ "$n" != "1" ]; then
+            echo "::error::no town's yards stand built in a shape on D1 - migration 0136's build did not run there"; exit 1
+          fi
+          # AUDIT LEAN-READS 2 D5: a town that stands yards, so the read answers off a row D1 itself built (a town with
+          # none answers before it reads any)
+          map=$(kept "SELECT y.map_id AS n FROM home_yards y JOIN home_yards_ver v ON v.map_id = y.map_id WHERE y.built = v.ver AND y.rows IS NOT NULL AND y.rows != '[]' LIMIT 1")
+          [ "$map" -gt 0 ] 2>/dev/null || map=1
+          code=$(post /tmp/yards.json "$base/v1/homes/yards" "{\"secret\":\"$secret\",\"mapId\":$map}")
+          echo "homes/yards (town $map) -> $code"
+          if shed "$code" /v1/homes/yards; then :
+          elif [ "$code" != "200" ] || ! grep -q '"yards":\[' /tmp/yards.json; then
+            echo "::error::/v1/homes/yards did not answer a town's yards ($code)"; cat /tmp/yards.json || true; exit 1
+          elif [ "$map" != "1" ] && ! grep -q '"yards":\[{' /tmp/yards.json; then
+            echo "::warning::town $map's built yards answered none - every piece the law's to hide?"
+          fi
+          code=$(post /tmp/arena.json "$base/v1/arena/board" "{\"secret\":\"$secret\"}")
+          echo "arena/board -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"pvp":{' /tmp/arena.json; then
+            echo "::error::/v1/arena/board did not answer the arena's board ($code)"; cat /tmp/arena.json || true; exit 1
+          fi
+          for i in 1 2 3; do
+            n=$(kept "SELECT COUNT(*) AS n FROM arena_boards b JOIN arena_board_ver v ON v.id = 1 WHERE b.built = v.ver AND b.shape IS NOT NULL")
+            [ "$n" -ge 1 ] && break
+            [ "$i" = 3 ] || post /tmp/arena.json "$base/v1/arena/board" "{\"secret\":\"$secret\"}" >/dev/null
+          done
+          if [ "$n" -lt 1 ]; then
+            echo "::error::the arena's board was read but never kept on D1 - its keep (arena.js ARENA_BOARD_KEEP) is refused there"; exit 1
           fi
 
           # PATRON-LOAD II (2026-10-11, the owner's screenshot of #766's deploy: "register -> 500 {"error":"server"}"):
@@ -1273,6 +1331,27 @@ jobs:
             exit 1
           fi
           echo "VERIFIED: a password route runs on the real platform"
+          # LEAN-READS (AUDIT LEAN-READS D7): AND THE REGION'S TRADERS, a
+          # registered account's read - market_vendor_ver and market_vendor_boards read and kept
+          # by its upsert on D1 itself. A closed market reads no board.
+          code=$(post /tmp/vendors.json "$base/v1/market/vendors" "{\"secret\":\"$secret\",\"region\":17}")
+          echo "market/vendors -> $code"
+          if [ "$code" = "403" ] && grep -q '"market-closed"' /tmp/vendors.json; then
+            echo "::notice::the market is closed - the traders' board was not read"
+          elif shed "$code" /v1/market/vendors; then :
+          elif [ "$code" != "200" ] || ! grep -q '"rows":\[' /tmp/vendors.json; then
+            echo "::error::/v1/market/vendors did not answer the region's traders ($code)"; cat /tmp/vendors.json || true; exit 1
+          fi
+          if [ "$code" = "200" ]; then
+            for i in 1 2 3; do
+              n=$(kept "SELECT COUNT(*) AS n FROM market_vendor_boards b JOIN market_vendor_ver v ON v.region = b.region WHERE b.region = 17 AND b.built = v.ver AND b.shape IS NOT NULL")
+              [ "$n" -ge 1 ] && break
+              [ "$i" = 3 ] || post /tmp/vendors.json "$base/v1/market/vendors" "{\"secret\":\"$secret\",\"region\":17}" >/dev/null
+            done
+            if [ "$n" -lt 1 ]; then
+              echo "::error::the region's traders were read but never kept on D1 - their keep (market.js VENDOR_BOARD_KEEP) is refused there"; exit 1
+            fi
+          fi
 
       # AND THE PUBLIC KEY IS REACHABLE, which is what makes the minting
       # step's "nobody ever sees it" safe. A pair minted into a Worker

@@ -468,8 +468,8 @@
   {
     "name": "CHAP3A-LIST-OWNER",
     "file": "server-account/src/professions.js",
-    "old": "AND (owner = '' OR owner = ?3) ORDER BY kind, faction, slot\")",
-    "new": "ORDER BY kind, faction, slot\")",
+    "old": "AND owner IN ('', ?3) ORDER BY +kind, faction, slot\")",
+    "new": "ORDER BY +kind, faction, slot\")",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]

@@ -8,6 +8,12 @@
 // open's stake, a claim's roll) RESTACKS the pack to it (`restackWeirKeys`). A key the service does not count does
 // nothing: the open is the service's to refuse, and the pack is restacked to what it says.
 //
+// THE FACE IS THE PACK'S ALONE (FIELD BUGS 2026-10-19f KEY-FACE): the restack reads the pack and nothing else, so its row
+// is pack-only (weirKeyRow.js `packOnly` - systems/item/itemBound.js isPackOnly, the Wallet's law: no wagon, no storage, no
+// room's decoration, no revenant's take); and a save that holds a face anywhere else - stowed before the row said so, or
+// thrown on a body (egFind.js) and never taken up - has it folded away as it loads (`foldStrayWeirKeys`, save.js
+// restorePlayer): a face out of the pack counts nothing, and carried back it showed keys the account never held.
+//
 // ITS USE is the host's: the world host registers its opener (`setWeirKeyOpener` - scenes/world.js egUseKey), which
 // answers the line to show and starts the open's asks; a host with none (the ?exterior bench, a game offline) answers
 // "The key is cold here." Every reader shows a `text` result (useItem.js's registered arm), so no reader needs a new
@@ -26,7 +32,7 @@ import { addVendorTextures } from '../textureReplacement.js';
 import { WEIR_KEY_TEMPLATE, WEIR_KEY_LAW_ROW } from './weirKeyRow.js';   // KEY-LAW: its row a leaf, so the law knows it headless
 
 export { WEIR_KEY_TEMPLATE };
-/** Its row: the leaf's (weirKeyRow.js - bound, stacked) with its name and its picture. */
+/** Its row: the leaf's (weirKeyRow.js - bound, stacked, pack-only) with its name and its picture. */
 export const WEIR_KEY_ROW = Object.freeze({
   ...WEIR_KEY_LAW_ROW, name: EG_TEXT.keyName, worldTextureArchive: WEIR_KEY_ART.archive, worldTextureRecord: WEIR_KEY_ART.record,
 });
@@ -52,6 +58,26 @@ export function restackWeirKeys(items, n) {
   for (const it of held) items.splice(items.indexOf(it), 1);
   if (n > 0) items.push(weirKeys(n));
   return true;
+}
+/**
+ * KEY-FACE (FIELD BUGS 2026-10-19f): A FACE OUT OF THE PACK IS FOLDED AWAY. Every Weir Key out of each of `lists` (never
+ * hand it the pack - the restack's), and out of each of `records` (`{ id: item }`, a room's own things standing - DECOR2a
+ * `decorOwn`), in place. The balance is the account's: what was folded comes back as the pack's own face at the next
+ * restack. Answers how many keys the folded faces showed - each face once, however many of the lists named it (the load's
+ * walk lists a record's items too).
+ * @param {any[][]} lists @param {any[]} [records]
+ */
+export function foldStrayWeirKeys(lists, records = []) {
+  const folded = new Set();
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (let i = list.length - 1; i >= 0; i--) if (isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);
+  }
+  for (const r of records) {
+    if (!r || typeof r !== 'object') continue;
+    for (const [id, item] of Object.entries(r)) if (isWeirKey(item)) { folded.add(item); delete r[id]; }
+  }
+  return [...folded].reduce((n, it) => n + Math.max(1, it.stackCount ?? 1), 0);
 }
 /** The host's opener: answers the line its use shows, and starts the open (scenes/world.js). AUDIT STAKE-ROW (L1-2): an
  *  empty line is the opener's "the start window will ask" (scenes/eliteGates/egClient.js useKey) - the use closes the pack,

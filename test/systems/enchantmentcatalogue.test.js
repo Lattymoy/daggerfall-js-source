@@ -9,7 +9,7 @@ import {
   enchantmentKey, enchantmentSettings,
   SOUL_FORCED_ENCHANTMENTS, forcedEnchantments,
   pickEnchantment, removeEnchantment, NO_ROOM_IN_ITEM,
-  ITEM_MAKER_FLAGS, hasItemMakerFlag, isExclusiveTo,
+  ITEM_MAKER_FLAGS, ITEM_MAKER_EFFECT_FLAGS, hasItemMakerFlag, isExclusiveTo,
   primaryPickerList, primaryPick,
 } from '../../src/systems/enchantmentCatalogue.js';
 import { SKILLS, SKILL_COUNT, SKILL_NAMES } from '../../src/systems/skills.js';
@@ -398,10 +398,15 @@ test('M4: the flags, four of which are NONE and one of which is missing entirely
   const weaponOnly = enchantmentTypes().filter((t) => hasItemMakerFlag(t, ITEM_MAKER_FLAGS.WeaponOnly));
   assert.deepEqual(weaponOnly.sort(), ['CastWhenStrikes', 'LowDamageVs', 'PotentVs']);
 
-  // TWO allow the same secondary twice - the two that can deteriorate
-  // or hurt you under more than one condition at once
+  // NONE allows the same secondary twice. DFU gives it to two - the two
+  // that can deteriorate or hurt you under more than one condition at
+  // once (UserTakesDamage.cs:35, ItemDeteriorates.cs:37) - and SIDE-ONCE
+  // (FIELD BUGS 2026-10-19f, the owner) took it from both: a setting is
+  // picked once. PIN MOVED from ['ItemDeteriorates', 'UserTakesDamage'];
+  // both still allow more than one primary (`once` above)
   const twice = enchantmentTypes().filter((t) => hasItemMakerFlag(t, ITEM_MAKER_FLAGS.AllowMultipleSecondaryInstances));
-  assert.deepEqual(twice.sort(), ['ItemDeteriorates', 'UserTakesDamage']);
+  assert.deepEqual(twice, []);
+  assert.deepEqual([ITEM_MAKER_EFFECT_FLAGS.ItemDeteriorates, ITEM_MAKER_EFFECT_FLAGS.UserTakesDamage], [1, 1]);
 
   // FIVE alpha-sort their secondary list, and they are exactly the
   // five whose params are names rather than a short fixed menu
@@ -535,11 +540,13 @@ test('M4: the secondary list alpha-sorts when flagged, and filters what is alrea
   const taken = [enchantmentSettings('PotentVs', 0)];
   const left = primaryPick('PotentVs', { powers: taken }).options.map((o) => o.param);
   assert.deepEqual(left, [1, 2, 3], 'Undead is gone, the rest remain');
-  // ...unless the effect allows multiple secondary instances, which
-  // exactly two do
+  // ...and a side effect's too: SIDE-ONCE (FIELD BUGS 2026-10-19f, the
+  // owner) took AllowMultipleSecondaryInstances from the two DFU gives
+  // it, so "all the time" leaves and the other two settings stay. PIN
+  // MOVED from [0, 1, 2], 'all three stay'
   const deteriorating = [enchantmentSettings('ItemDeteriorates', 0)];
   const stillThere = primaryPick('ItemDeteriorates', { sideEffects: deteriorating, selectingPowers: false });
-  assert.deepEqual(stillThere.options.map((o) => o.param), [0, 1, 2], 'all three stay');
+  assert.deepEqual(stillThere.options.map((o) => o.param), [1, 2], 'the taken setting gone, the other two stay');
 
   // the cross-effect exclusion reaches the secondary list at its own
   // param: with Potent vs Undead taken, Low Damage vs Undead is gone

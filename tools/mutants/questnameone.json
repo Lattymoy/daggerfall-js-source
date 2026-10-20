@@ -1,0 +1,47 @@
+[
+  {
+    "name": "QUEST-NAME-ONE-the-namer-re-draws",
+    "file": "src/characters/staticNpc.js",
+    "old": "  return data.personName || drawn;\n",
+    "new": "  return drawn;\n",
+    "tests": [
+      "test/systems/fb1020_questnameone.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-ONE-the-name-before-the-draw",
+    "file": "src/characters/staticNpc.js",
+    "old": "  srand(data.nameSeed);\n  const bank = nameBank ?? BANK_TYPES.Breton;",
+    "new": "  if (data.personName) return data.personName;\n  srand(data.nameSeed);\n  const bank = nameBank ?? BANK_TYPES.Breton;",
+    "tests": [
+      "test/systems/fb1020_questnameone.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-ONE-the-stand-carries-no-name",
+    "file": "src/scenes/worldModes.js",
+    "old": "      personName: personOwnName(person),   // QUEST-NAME-ONE: the Person's own name - its words', its journal's (characters/staticNpc.js staticNpcName)\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1020_questnameone.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-ONE-the-faction-test-dropped",
+    "file": "src/systems/quest/person.js",
+    "old": "(person?.isPerson === true && !namedByFaction(person.factionData) && person.displayName)",
+    "new": "(person?.isPerson === true && person.displayName)",
+    "tests": [
+      "test/systems/fb1020_questnameone.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-NAME-ONE-anything-carries-a-name",
+    "file": "src/systems/quest/person.js",
+    "old": "(person?.isPerson === true && !namedByFaction(person.factionData) && person.displayName)",
+    "new": "(!namedByFaction(person?.factionData) && person?.displayName)",
+    "tests": [
+      "test/systems/fb1020_questnameone.test.js"
+    ]
+  }
+]

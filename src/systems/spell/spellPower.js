@@ -91,8 +91,9 @@ export function spellPowerMult(caster, target, opts = {}) {
  *  turned back at me; `took` what the target could lose (never the overkill past its health); `cast` the cast's token
  *  (`{ cost }`, the magicka it took - one token for every landing of one cast; null for a landing no cast released, a
  *  Cast When Strikes proc's). The cast engine tells them (scenes/hostMagic.js applySpellToFoe, applySpellToPlayer) - the
- *  one engine every host casts through - and the relay's stand-ins (scenes/dungeonContext.js tellStandIn, scenes/world.js
- *  serpentSpellOn). A non-function removes the name; one that throws is skipped. */
+ *  one engine every host casts through - and the relay's stand-ins (scenes/gate/standInSpell.js tellStandIn - what can land
+ *  there, FIELD BUGS 2026-10-19f STAND-IN-WHOLE; and the sea serpent's door, createSerpentSpell, out of bootWorld by BOSS-DOT -
+ *  what a hand's purse can land, SERPENT_HIT_CAP_X of SERPENT_HAND_REF: 21). A non-function removes the name; one that throws is skipped. */
 const _landed = new Map();
 export function registerSpellLandedListener(name, fn) { if (typeof fn === 'function') _landed.set(name, fn); else _landed.delete(name); }
 export function tellSpellLanded(info) {

@@ -275,8 +275,8 @@
   {
     "name": "EGZR-stacks-any-body",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "stacks: mom.i === i ? mom.n : 0,",
-    "new": "stacks: mom.n,",
+    "old": "stacks: !tick && mom.i === i ? mom.n : 0,",
+    "new": "stacks: !tick && mom.n,",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],

@@ -78,6 +78,10 @@ import { unequipItem, equipTableOf, EQUIP_SLOTS } from '../equip.js';   // RVN8:
 import { isLocked } from '../item/itemLock.js';   // RVN8: LOCK1's promise - a locked piece stays yours
 import { isBagItem } from '../../net/bagLaw.js';   // RVN8: never the Materials Bag
 import { isPackOnly } from '../item/itemBound.js';   // AUDIT 625 W2: nor a pack-only piece (the Wallet)
+import { WILD_NEVER_GROUPS } from '../wild/wildLeaf.js';   // STEED-KEPT: nor what never changes hands - a vehicle, a deed (the zone's own leaf - never the drop law's graph)
+import { BOAT_TEMPLATES } from '../../net/realm/realmTradeLaw.js';   // STEED-KEPT: nor a ship's deed or parts
+import { DECOR_OWN_KEPT_BACK } from '../../net/decorLaw.js';   // STEED-KEPT: nor a deed as Daggerfall files one, nor the spellbook
+import { hudTextWhenShown } from '../notify.js';   // STEED-KEPT: a piece home again, said once the world can say it
 import { isLetterOfCredit } from '../peerWord.js';   // LETTERS-HOME: nor a letter of credit - its worth is gold
 import { itemLongName } from '../item/itemInfo.js';   // RVN8: the piece by the name the pack shows
 import { itemValueOf } from '../item/itemTemplates.js';   // RVN8: the most valuable
@@ -448,7 +452,11 @@ function ensureMirror(player) {
     r.took = s?.took ? s.took.slice() : [];   // RVN8 (Feud-Arc.md 19): what it took is inventory too - the save's copy wins (the mirror never brings back a piece the save holds)
     // LETTERS-HOME (FIELD BUGS 2026-10-18b): a letter of credit one took before revenantMayTake refused it is mine again -
     // living, fallen with a body that never carried it, or kept by a deserter. The save's copy, so never one its pack holds.
-    if (r.took.some(isLetterOfCredit)) { player.items ??= []; for (const it of r.took.filter(isLetterOfCredit)) addItem(player.items, it); r.took = r.took.filter((it) => !isLetterOfCredit(it)); }
+    // STEED-KEPT (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Exclude, and return taken ones"): and EVERY piece it may
+    // no longer take - a horse, a cart, a deed, a ship's deed or parts, the spellbook - into my pack, where the game keeps
+    // owned transport (DFU's Items.Contains(Transportation, Horse)), each said once the world can say it
+    const home = r.took.filter((it) => !revenantMayTake(it));
+    if (home.length) { player.items ??= []; for (const it of home) { addItem(player.items, it); hudTextWhenShown(tookHomeLine(r, it)); } r.took = r.took.filter((it) => revenantMayTake(it)); }
   }
   _state.mirrorId = id;
 }
@@ -928,12 +936,24 @@ export function forgetLastSlew() { _lastSlew = null; }
  *  Wallet's row): what it takes leaves the pack for its record, one that escapes keeps it, and a character is given its
  *  wallet once. LETTERS-HOME (FIELD BUGS 2026-10-18b): nor a LETTER OF CREDIT - a letter is gold (its `value` is the
  *  gold it stands for), and "gold" was the coin alone, so a 500,000-gold letter was the pack's most valuable piece and
- *  the likeliest drawn. */
+ *  the likeliest drawn. STEED-KEPT (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Exclude, and return taken ones"):
+ *  nor what never changes hands, as the open zone's death reads it (wildDropLaw.js wildCanLose) - A VEHICLE (the zone's
+ *  own groups, WILD_NEVER_GROUPS: a horse, a cart), A DEED (those groups' Deeds, and the decor's kept-back list,
+ *  decorLaw.js DECOR_OWN_KEPT_BACK - a house's or a ship's deed as Daggerfall files them, and the spellbook with them:
+ *  "Your spellbook never leaves you", KEEP-SPELLBOOK), or A SHIP'S DEED OR PARTS (Come Sail Away's own two,
+ *  realmTradeLaw.js BOAT_TEMPLATES - a deed handed on is a second boat): a stable's horse beside a worn longsword was drawn
+ *  one death in six. A BOUND piece stays its own (AUDIT 625 W2, "RVN8 names its own exclusions"), decided again: the zone
+ *  keeps one because a death's remains are anyone's, and what a revenant takes never rides to another player - its body
+ *  hands what it carried to its owner alone (net/bodyLoot.js shareableRecord, peerWord.js neverPeerHanded). */
 export const revenantMayTake = (item) => !!item && typeof item === 'object' && Number.isInteger(item.templateIndex) && !isLetterOfCredit(item)
+  && !WILD_NEVER_GROUPS.has(item.group) && !DECOR_OWN_KEPT_BACK.has(item.templateIndex) && !BOAT_TEMPLATES.includes(item.templateIndex)   // STEED-KEPT
   && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);
 /** AUDIT FEUD: a piece it took, named after "your", "my" or "lovely" - the name the pack shows, its own article gone
  *  (a legendary's "The Glenmoril Bow": "your Glenmoril Bow", never "your The ..."). */
 export const takenName = (item) => String(itemLongName(item) ?? '').replace(/^the\s+/i, '');
+/** STEED-KEPT (FIELD BUGS 2026-10-19f): a piece it took and may no longer keep, home in my pack at the load - the
+ *  words (ensureMirror says each once, through the text core). */
+export const tookHomeLine = (r, item) => t('rvn.took.home', '{name} could not keep your {item}. It is back in your pack.', { name: r?.name ?? '', item: takenName(item) });
 /** RVN8 (19): the piece it takes - drawn on its id and its kill count from my equipped weapon and my pack's five most
  *  valuable pieces (each takeable). Null with none. */
 export function pickTaken(id, kills, weapon, items) {

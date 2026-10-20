@@ -1,0 +1,21 @@
+-- WRIT-BOARD (2026-10-19, the account database overloaded again; bible/11-Multiplayer/Scale-Arc.md WRIT-BOARD): A
+-- REGION'S WRITS READ BY THEIR OWNER.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). Deploy this service (acct161) with the site; no
+-- relay change.
+--
+-- The Notice Board's writs (professions.js boardWrits) are the region's day posted to everyone (`owner` '') and the
+-- caller's own member writs - but the only index that seeks a region's day (the table's UNIQUE (day, region, kind,
+-- faction, owner, slot)) names the owner fifth, so every read walked every member's own writs of the region's day to keep
+-- its own: some 10,000 rows a read on the day, 22-41 ms. And a member's writs posted for the day (postMemberWrits) asked
+-- `day` and `owner` with no region - every writ of the day, every region's.
+--
+--   idx_writs_owner   a day's writs by owner, then region (and the member's kind and faction, so its read is the
+--                     index's alone): the board's two owners ('' and the caller's) each sought to
+--                     its region, and a member's own writs of the day, every region's, found by the member - one index
+--                     for both (AUDIT LEAN-READS D2: built on the live table's some 860,000 rows, it holds the primary for
+--                     the build - one build, not two)
+CREATE INDEX IF NOT EXISTS idx_writs_owner ON writs (day, owner, region, kind, faction);

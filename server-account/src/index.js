@@ -81,6 +81,8 @@
 //        | realm-gains { days? } | realm-trades { id }   HACKED-GOLD: who gained past the bucket; a character's trades (review.js)
 //        | realm-characters { name } | realm-repair { id, ticket, faction, flag, gold, note? }   SUMMON-REPAIR: an account's
 //          realm characters by handle; one character mended by staff - a flag bit cleared, gold given back, once a ticket
+//        | realm-mend { id, ticket, was, gold, note? }   PURSE-MEND: a purse a wrapped sale left below nothing set to nothing, what
+//          the character is owed given as a letter of credit, once a ticket - and the law's hold lifted when the purse was all it held on
 // DUEL1, the duelling record. The caller of `loss` is the loser:
 //   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
 //   POST /v1/duel/record { id }           -> { id, wins, losses, gates }
@@ -298,7 +300,7 @@ const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsO
 /** CHAP4c: and the chapters' seats' titles its characters hold, while CHAPTER_TITLES is on (npcChapters.js). */
 const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => (chapterTitlesOpenFor(player, env)
   ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
-import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
+import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards, settleYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
 import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, temperPiece, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
@@ -459,7 +461,7 @@ const ROLL_STATUS = Object.freeze({
   'no-season': 409, 'no-chapter': 404, 'patron-low': 409, 'guild-marks-short': 409,
 });
 /** INT6: the review's refusals - no developer 403, no such character 404, nothing clean to roll back to 409. */
-const REVIEW_STATUS = Object.freeze({ 'not-developer': 403, 'no-realm-character': 404, 'no-clean': 409, 'service-moved': 409, 'dead': 409, 'no-player': 404, 'repair-no-faction': 409, 'repair-not-set': 409, seq: 409 });   // SUMMON-REPAIR: the last four
+const REVIEW_STATUS = Object.freeze({ 'not-developer': 403, 'no-realm-character': 404, 'no-clean': 409, 'service-moved': 409, 'dead': 409, 'no-player': 404, 'repair-no-faction': 409, 'repair-not-set': 409, seq: 409, 'mend-not-negative': 409, 'mend-moved': 409, 'repair-ticket': 409 });   // SUMMON-REPAIR: from 'no-player' on; PURSE-MEND: the last three
 /** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
  *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */
 const GUILD_STATUS = Object.freeze({
@@ -1620,6 +1622,7 @@ const service = {
               : path === '/v1/homes/decor/hidden' ? await hideDecorBase(hctx, who.player, body)   // BASE-HIDE
                 : await removeDecor(hctx, who.player, body);
           forgetYards(body?.mapId);   // YARD-SHED: the town's kept yards let go, whatever the write did
+          await settleYards(ctx.db, body?.mapId).catch((e) => console.warn('[yards] the town not built', e?.message ?? e));   // YARD-SNAP: and built again (the clock builds one this misses)
           if (!('error' in r)) return json(r, 200, origin);
           const said = realmNo(r);
           if (said) return said;

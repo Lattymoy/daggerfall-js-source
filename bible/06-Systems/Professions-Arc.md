@@ -3672,6 +3672,20 @@ Seats-Arc 7.5). What sections 1, 2, 3.3, 4.1, 4.3, 4.5, 9.3 and 9.4 left open fo
   (no provenance in the pack, never listed) disenchanted - refused (`prof-no-essence`, `pieceListable`); **S7** (LOW) a
   dish's 500 paid twice, north and south - once a dish (`firstCraftKey`, J7's "once per piece and base"); **S8** the
   service's route list. Pinned in eight tests, 19 mutants added, all dead; four re-aimed by content (prof12, seat2b_peace).
+- **DISENCHANT-SAID** (FIELD BUGS 2026-10-19f, a player's private report: crafted greaves and pauldrons could not be
+  disenchanted; the owner, 2026-10-19: "List them greyed with the reason"). The law stands: a piece's points are its DFU
+  template's, one Essence a hundred - the **Greaves 50** and **either Pauldron 40**, so none at any metal, of chain or of
+  leather (and most of DFU's garments, 5 to 80), and the service refuses them (`prof-no-essence`). What was wrong was the
+  silence: the station's list dropped every piece under one Essence and the page explained only a list with nothing on
+  it, so the greaves vanished without a word. The station now **lists them greyed**, `{points} points: under one Arcane
+  Essence (100 points make one)` beside each (l10n `prof.page.enchant.under`, the hundred the law's `ESSENCE_POINTS`), its
+  Disenchant disabled and never asked; the line for nothing to take apart stands while no piece gives Essence. A form with
+  no points at all (a dish, a tool, a Repair Kit, the mason's stone) is no enchanter's piece and stays off the list.
+  HOST-SPLIT: the list is made by the page's module (`profPages.js` disenchantableOf - the pack's crafted pieces that may
+  leave it, its points, its Essence, a Disenchanter's twice, its recipe); `world.js` wires it in one line, and bootWorld
+  came down 8 logical lines (its ceiling 36,233 -> 36,225). Pinned: `test/systems/fb1019f_disenchantsaid.test.js` (3);
+  PIN MOVED `prof12_client.test.js` (AUDIT PROF12 E2's host pin, onto the module and the wiring line);
+  `tools/mutants/fb1019f_disenchantsaid.json` (13, all dead).
 - **Pinned**: `test/systems/prof12_law.test.js` (15), `test/net/prof12_service.test.js` (13, through the real Worker),
   `test/systems/prof12_client.test.js` (16), `test/net/prof12_apothecary.test.js` (4, the Apothecary through the real Worker). Mutants:
   `tools/mutants/prof12.json` (206: 205 dead - AUDIT PROF-541 R2's six among them - and PROF12-spends-no-hash recorded equivalent - B1's ingredient comparison holds everything DFU's hash refused).

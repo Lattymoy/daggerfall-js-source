@@ -167,8 +167,9 @@ grows UP from the caption and can never meet the diamond. One tile an effect, in
 - a POISON and a DISEASE, shown at last (a skull, a spore), on the Status box's own law (`systems/healthStatus.js`):
   ONE tile, "Poisoned", once any poison has left its waiting and until its damage has healed (the game names no poison:
   "You have been poisoned."); a tile a disease once its incubation is over, by the name its own contracted message
-  gives it (`diseases.js DISEASE_NAMES`, TEXT.RSC 100-116); nothing for a poison still waiting, a disease still
-  incubating, or an infection (DFU says nothing of one until the dream).
+  gives it (`diseases.js DISEASE_NAMES`, TEXT.RSC 100-116); while a disease still incubates, ONE tile of no name,
+  "Unwell", on the same spore (DISEASE-UNWELL, below - the owner's departure from DFU, which says nothing then);
+  nothing for a poison still waiting, or an infection (DFU says nothing of one until the dream).
 
 The ten glyphs are drawn on the classic spell icons' 16px grid, each pixel a letter in the module, every lit pixel
 outlined in the kit's black so it reads over any ground (made from shapes, outlined by a machine, then looked at). The
@@ -450,3 +451,35 @@ shown slot.
 Pins moved: `test/systems/ft18_features.test.js` (four tiers), `test/systems/hb_lycfree.test.js` (Diamond stores
 `'diamond'`), `test/systems/qs2_tooltip.test.js` (the pack's import), `test/ui/enhanced/qs3_hud.test.js` (the row's
 covered prefs), `test/ui/enhanced/ui3_status.test.js` (the quickslot block's children include the diamond dock). New: `test/ui/enhanced/diamondhb_hotbar.test.js` (6).
+
+## DISEASE-UNWELL - a disease incubating shows an unnamed tile (FIELD BUGS 2026-10-19f)
+
+A player's private report: after catching a disease, the rest's and the journey's warnings said they were diseased, and
+no disease's tile or name appeared until the character had died of it.
+
+**Both laws were DFU's, and they disagreed.** The warnings count every live disease, one still incubating too - the
+rest's (restWarning.js:"const plainDiseases") and the travel popup's (travelPopUp.js:"DiseaseCount > 0", DFU's
+own). The widget's tile (hudStatus.js:"=== 'disease' &&") and the Status box (healthStatus.js:"=== 'disease' &&")
+name a disease only once its incubation is over, which is DFU's `CreateHealthStatusBox` reading
+`DiseaseEffect.IncubationOver` - the first round past the day's turn on the character's own clock (`updateDiseases`,
+LIVED1's own minutes online). A rest or a journey catches those days up under a hidden HUD, so a disease could be
+caught, take hold and run its course with nothing on the screen but the warning. The classic skin shows a disease
+never: DFU's every classic disease sets `ShowSpellIcon = false` (`Plague.cs` SetProperties), so `HUDActiveSpells`
+leaves it out, and the port's row reads bundles alone (mysticism.js:"export function liveBundles") - a disease
+carries none.
+
+**The owner's decision (Mac, 2026-10-19): "Unnamed 'Unwell' tile"** - a departure from DFU, in Ledger A. While a plain
+disease incubates (diseases.js:"export const diseaseIncubating" - caught, live, a classic type, its incubation not
+over, never a vampirism or lycanthropy infection), the widget shows ONE tile of no name, "Unwell", on the disease
+tile's own spore, where the first of them stands (hudStatus.js:"} else if (!unwell && diseaseIncubating(a))"); the
+Status box both skins open says "You feel unwell." once in its place, in the shape of the host's own rows
+(healthStatus.js:"if (!unwell && diseaseIncubating(a))"). Once incubation is over, the named tile and the
+contracted message, as DFU; cured (the temple's or a spell's cure), nothing. A named disease and one still incubating
+show both. The word and the line are the catalog's (`hud.status.unwell`, `status.health.unwell` -
+hudStatus.js:"export const unwellTileText", healthStatus.js:"export const UNWELL_LINE_TEXT"), drafted for every
+whole language. The classic skin keeps DFU's: no disease icon, named or not; its Status box says unwell as the
+enhanced skin's does. The warnings are unchanged - they were right.
+
+Pinned: `test/ui/fb1019f_unwell.test.js` (5: on the real producer, the character's own clock and the rest's magic
+rounds); PIN MOVED: `test/ui/enhanced/ui3_status.test.js` (the afflictions' law), `test/systems/bookshelf.test.js`
+(F198's incubating arm). Mutants: `tools/mutants/disease_unwell.json`.

@@ -1143,7 +1143,7 @@ export function createGateCourt({
       return !!sendCrystal({ c, q: blowQ(`x${c}`), d: dmg, r });
     },
     /**
-     * WBX7: A SOUL TRAP OF MINE LAID ON HIM (the dungeon context's spell door - scenes/dungeonContext.js spellOnBoss): its
+     * WBX7: A SOUL TRAP OF MINE LAID ON HIM (the dungeon context's spell door - scenes/gate/standInSpell.js spellOnBoss): its
      * chance and its rounds, kept on the relay's clock until his fall rolls it. A trap already running takes the new
      * rounds - renewed, never stacked (STACK-CAP, systems/effects.js renewRounds) - and keeps its own chance (AddState,
      * SoulTrap.cs:94-97). Answers whether it

@@ -865,6 +865,18 @@ export class QuestMachine {
    *  struct here where C# NREs on lastNPCClicked.Data - unreachable
    *  through the windows, which only open off a click. */
   isLastNPCClickedAnActiveQuestor(mcp = null) {
+    const hit = this.lastNPCClickedQuestorOf();
+    if (!hit) return false;
+    console.log(`[quest] This person is used in quest as Person ${hit.person.symbol?.original}`);
+    if (mcp != null) hit.quest.externalMCP = mcp;
+    return true;
+  }
+
+  /** The scan IsLastNPCClickedAnActiveQuestor makes (:918-941), answering what it found: `{ quest, person }` - the open
+   *  quest whose questor Person the last click was, the first in the machine's order - or null. QUESTOR-SAID (FIELD
+   *  BUGS 2026-10-19f): one scan, two readers - the DFU member above, and the offer flow's close, which names the quest
+   *  (offerFlow.js questorBusy). It stamps nothing. */
+  lastNPCClickedQuestorOf() {
     const clicked = this.getLastNPCClicked();
     for (const quest of this.quests.values()) {
       if (quest.questComplete) continue;
@@ -873,14 +885,10 @@ export class QuestMachine {
       if (isShelved(quest)) continue;
       for (const resource of quest.resources.values()) {
         if (!resource.isPerson || !resource.isQuestor) continue;
-        if (this.isNPCDataEqual(resource.questorData, clicked)) {
-          console.log(`[quest] This person is used in quest as Person ${resource.symbol?.original}`);
-          if (mcp != null) quest.externalMCP = mcp;
-          return true;
-        }
+        if (this.isNPCDataEqual(resource.questorData, clicked)) return { quest, person: resource };
       }
     }
-    return false;
+    return null;
   }
 
   /** CreateMessagePrompt (:888-910): a Yes/No prompt descriptor from

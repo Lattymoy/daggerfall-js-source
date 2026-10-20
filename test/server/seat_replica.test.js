@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { seatReportText } from '../../src/net/townSeatLaw.js';
-import { listSeats, confirmedSeats, witnessSeat, strikeSeat, SEAT_ROWS_KEPT_S, SEAT_ROWS_FROM } from '../../server-account/src/townSeats.js';
+import { listSeats, confirmedSeats, witnessSeat, strikeSeat, SEAT_ROWS_KEPT_S, SEAT_ROWS_FROM, SEAT_ROWS_SQL, SEAT_JUDGED_SQL } from '../../server-account/src/townSeats.js';
 import { countedDb } from '../../server-account/src/metrics.js';
 import { standService, d1Position, T0 } from '../accountDb.mjs';
 
@@ -18,7 +18,7 @@ const DAY = 86400;
 const ENV = { SEATS_OPEN: 'on', DEVELOPER_HANDLES: 'Devra' };
 const ANTICLERE = { key: 3021, name: 'Anticlere', region: 21, tier: 'palace', pixel: [402, 151] };
 const ALCAIRE = { key: 3022, name: 'Alcaire', region: 21, tier: 'palace', pixel: [410, 160] };
-const WITNESS_SQL = "SELECT key, account, report, at FROM world_witness WHERE kind = 'seat'";
+const seatRead = (sql) => sql === SEAT_ROWS_SQL || sql === SEAT_JUDGED_SQL;   // LEAN-WITNESS (PIN MOVED): the rows the law judges by are a read of them
 const PLAYER = { id: 'p-somebody', handle: 'Somebody', registered_at: T0 - 30 * DAY };
 const DEV = { id: 'p-devra', handle: 'Devra', registered_at: T0 - 30 * DAY };
 
@@ -35,7 +35,7 @@ async function seatsDb() {
   const db = Object.create(base);
   db.prepare = (sql) => {
     const st = base.prepare(sql);
-    if (sql !== WITNESS_SQL) return st;
+    if (!seatRead(sql)) return st;
     c.n++;
     return {
       all: async () => {
@@ -46,7 +46,7 @@ async function seatsDb() {
       },
     };
   };
-  const seatSessions = () => base._sessions.filter((s) => s.statements.includes(WITNESS_SQL)).map((s) => s.constraint);
+  const seatSessions = () => base._sessions.filter((s) => s.statements.some(seatRead)).map((s) => s.constraint);
   return { svc, base, db, c, seatSessions };
 }
 

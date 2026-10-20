@@ -3,12 +3,13 @@
 // The player approaches, should be met with an enhanced UI popup that lets them select public or instanced (if
 // applicable)"; asked where: "Dungeons with your quest", "Privateer's Hold", "Building interiors"; who: "You and your
 // party"; bible/11-Multiplayer/Instances.md): THE DOOR'S LAW - pure, no page. Which quests point at a place, what its
-// door offers, and where a quest's things stand online.
+// door offers, and where a quest's things stand online - and (HEIR-WHOLE) which of the line's remains lie in it whole.
 //
 // The room is net/instanceRoom.js's; the popup and the digests are scenes/instanceDoor.js's; the hosts only ask.
 import { SITE_TYPES } from './quest/place.js';
 import { isShelved } from './quest/quest.js';
-import { instanceOf, isInstanceEpoch } from '../net/instanceRoom.js';
+import { instanceOf, isInstanceEpoch, INSTANCE_EPOCH_HEX } from '../net/instanceRoom.js';
+import { digest } from '../net/privateInterior.js';
 
 /** A quest that still runs and stands in the world: not ended, not thrown away, not set aside (QUEST-SHELF). */
 const live = (q) => !!q && !q.questComplete && !q.questTombstoned && !isShelved(q);
@@ -62,6 +63,33 @@ export function questInstanceEpoch(quest, random = randomEpoch) {
   if (!quest) return null;
   if (!isInstanceEpoch(quest.instanceEpoch)) quest.instanceEpoch = random();
   return isInstanceEpoch(quest.instanceEpoch) ? quest.instanceEpoch : null;
+}
+
+/**
+ * HEIR-WHOLE (FIELD BUGS 2026-10-19f): THE LINE'S REMAINS THAT LIE IN THIS DUNGEON WHOLE, where the world builds its
+ * public room smaller (AUDIT FB1019f B1: `relaid` is the size built - a dungeon the world draws smaller but whose blocks
+ * are at or under that size's threshold is built whole in public, and its public room stands them). A death records the
+ * size its dungeon was BUILT at (world.js legacyHere's `dungeon.size`), and the remains stand only in a build of that size
+ * (legacyInDungeonOf: another size is another layout). A death in an instance - or in a quest's dungeon entered whole -
+ * lies in the dungeon whole, which the public room of a re-laid dungeon never is, and
+ * another player's instance admits only its owner's party: so the death quest's place is "a dungeon with your quest", and
+ * its door offers the heir an instance of their own - the dungeon whole, which stands them where they fell. `rows` are the
+ * line's lying remains (scenes/legacyHost.js remainsWhere: `{ line, id, place }`; a place has a `dungeon` underground
+ * alone); the site a dungeon's (scenes/instanceDoor.js dungeonSite - `relaid` is a dungeon site's alone), by its map id:
+ * the place's `mapId` is the location the fallen stood on, both read unsigned. Remains laid in the public room's own
+ * size, or in a row from before the size was kept (any build stands them), are the public room's, as they always were:
+ * none here. Not a DFU member (DFU has one player and no rooms; Ledger A, INSTANCES).
+ */
+export function remainsWholeAt(rows, site) {
+  if (site?.relaid !== true) return [];
+  return (rows ?? []).filter((r) => r?.place?.dungeon?.size === 'full' && r.place.mapId === site.mapId);
+}
+
+/** HEIR-WHOLE: THE EPOCH OF THE ROOM A LINE'S REMAINS OPEN - eight hex of SHA-256 over the line's id and the row's (one
+ *  row a death: `r<person>`), the Privateer's Hold's shape (net/instanceRoom.js holdEpochOf): no save to keep it in, the
+ *  same on every device the line is played on, and no other remains' ever. Null for a row with no line or id. */
+export async function remainsInstanceEpoch(row) {
+  return row?.line && row.id ? digest(`instance:epoch:${row.line}:${row.id}:remains`, INSTANCE_EPOCH_HEX / 2) : null;
 }
 
 /** Where a quest's things stand online: a dungeon whole (an instance, a main story's keep, a dungeon the world gives

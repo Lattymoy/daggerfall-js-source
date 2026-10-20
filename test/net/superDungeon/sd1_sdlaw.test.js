@@ -138,19 +138,19 @@ test('SD1: the director\'s step - first, gone, rise, or nothing until the next i
 test('SD1: the census\'s region - the fullest at the minimum or more, a tie broken by the slot\'s roll, the last region resting while another qualifies; none, the Bay\'s great cities', () => {
   const counts = (o) => Object.assign(new Array(SD_REGION_COUNT).fill(0), o);
   assert.equal(pickSdRegion(1, counts({})), -1, 'nobody: the great cities');
-  assert.equal(pickSdRegion(1, counts({ 4: 1 })), -1, 'one player is no crowd');
-  assert.equal(pickSdRegion(1, counts({ 4: 2 })), 4);
-  assert.equal(pickSdRegion(1, counts({ 4: 2, 9: 5, 17: 3 })), 9, 'the fullest');
+  assert.equal(pickSdRegion(1, counts({ 5: 1 })), -1, 'one player is no crowd');   // PIN MOVED (SD-SEA): Dwynnen (5), not Yeorth Burrowland (4) - a region with no town the census never chooses (sdLaw.js SD_TOWNLESS_REGIONS)
+  assert.equal(pickSdRegion(1, counts({ 5: 2 })), 5);
+  assert.equal(pickSdRegion(1, counts({ 5: 2, 9: 5, 17: 3 })), 9, 'the fullest');
   // a tie: the slot's own roll picks, the same for every asker, and the slots spread over the tied regions
-  const tie = counts({ 4: 5, 9: 5, 17: 5 });
-  for (let s = 1; s <= 20; s++) assert.equal(pickSdRegion(s, tie), [4, 9, 17][sdRoll(s, 1) % 3], `slot ${s}`);
+  const tie = counts({ 5: 5, 9: 5, 17: 5 });
+  for (let s = 1; s <= 20; s++) assert.equal(pickSdRegion(s, tie), [5, 9, 17][sdRoll(s, 1) % 3], `slot ${s}`);
   assert.ok(new Set(Array.from({ length: 30 }, (_, i) => pickSdRegion(i + 1, tie))).size === 3, 'every tied region takes a turn');
   // the last Hollow's region rests while another qualifies - even a fuller one
   assert.equal(pickSdRegion(2, counts({ 9: 50, 17: 2 }), 9), 17);
   assert.equal(pickSdRegion(2, counts({ 9: 50 }), 9), 9, 'the only crowd is the crowd');
   assert.equal(pickSdRegion(2, counts({ 9: 50, 17: 1 }), 9), 9, 'a region under the minimum does not take its turn');
   assert.equal(pickSdRegion(1, null), -1);
-  assert.equal(pickSdRegion(1, counts({ 61: 3 })), 61, 'the last region counts');
+  assert.equal(pickSdRegion(1, counts({ 60: 3 })), 60, 'the last region with a town counts');   // PIN MOVED (SD-SEA): Ilessan Hills (60) - Cybiades (61) has no town
   assert.equal(sdRoll(7, 1), gateHash(SD_SALT, 7, 1), 'the gate\'s mix, the Hollow\'s salt');
 });
 

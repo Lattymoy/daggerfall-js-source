@@ -1,0 +1,352 @@
+[
+  {
+    "name": "VENDORB-listed-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed AFTER INSERT ON market_listings WHEN NEW.vendor_id IS NOT NULL",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed AFTER INSERT ON market_listings WHEN 0",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a listing put up at a trader leaves the region's board kept"
+  },
+  {
+    "name": "VENDORB-listing-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "  expires_at, state, currency, seller, vendor_map, vendor_id ON market_listings WHEN OLD.vendor_id IS NOT NULL OR NEW.vendor_id IS NOT NULL",
+    "new": "  expires_at, state, currency, seller, vendor_map, vendor_id ON market_listings WHEN 0",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a listing bought or cancelled stays on the kept board"
+  },
+  {
+    "name": "VENDORB-listing-price-unwatched",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_listing AFTER UPDATE OF id, kind, region, material, item, own, bought, units, price, fee, wear, at,",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_listing AFTER UPDATE OF id, kind, region, material, item, own, bought, units, fee, wear, at,",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B7: a column the board reads (the price) left out of the trigger's - a repriced piece stays at its old price"
+  },
+  {
+    "name": "VENDORB-listing-every-column",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_listing AFTER UPDATE OF id, kind, region, material, item, own, bought, units, price, fee, wear, at,\n  expires_at, state, currency, seller, vendor_map, vendor_id ON market_listings",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_listing AFTER UPDATE ON market_listings",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B7: the hour's patron bookkeeping and the board's pixel move every board of the region"
+  },
+  {
+    "name": "VENDORB-listing-old-region",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "BEGIN\n  INSERT INTO market_vendor_ver (region, ver) SELECT r, COALESCE((SELECT built FROM market_vendor_boards b WHERE b.region = r), 0) + 1 FROM (SELECT OLD.region AS r UNION SELECT NEW.region) WHERE r IS NOT NULL\n    ON CONFLICT (region) DO UPDATE SET ver = ver + 1;\nEND;\nCREATE TRIGGER IF NOT EXISTS vendor_board_unlisted",
+    "new": "BEGIN\n  INSERT INTO market_vendor_ver (region, ver) SELECT r, COALESCE((SELECT built FROM market_vendor_boards b WHERE b.region = r), 0) + 1 FROM (SELECT NEW.region AS r) WHERE r IS NOT NULL\n    ON CONFLICT (region) DO UPDATE SET ver = ver + 1;\nEND;\nCREATE TRIGGER IF NOT EXISTS vendor_board_unlisted",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a listing moved to another region stays on the old region's board"
+  },
+  {
+    "name": "VENDORB-trader-in-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "  WHEN NEW.yard = 0 AND CASE WHEN json_valid(NEW.place) THEN json_extract(NEW.place, '$.station') END = 'vendor'\nBEGIN",
+    "new": "  WHEN 0\nBEGIN",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a trader set down leaves its region's board kept"
+  },
+  {
+    "name": "VENDORB-trader-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "  WHEN (OLD.yard = 0 AND CASE WHEN json_valid(OLD.place) THEN json_extract(OLD.place, '$.station') END = 'vendor') OR (NEW.yard = 0 AND CASE WHEN json_valid(NEW.place) THEN json_extract(NEW.place, '$.station') END = 'vendor')",
+    "new": "  WHEN (NEW.yard = 0 AND CASE WHEN json_valid(NEW.place) THEN json_extract(NEW.place, '$.station') END = 'vendor')",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a trader taken off its station leaves its listings on the kept board"
+  },
+  {
+    "name": "VENDORB-house-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_house AFTER UPDATE OF player, char_id, owner_name, region, entry, guild_id ON homes",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_house AFTER UPDATE OF price ON homes",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a house's door, owner, guild or region changed leaves the board kept"
+  },
+  {
+    "name": "VENDORB-house-old-region",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "BEGIN\n  INSERT INTO market_vendor_ver (region, ver) SELECT r, COALESCE((SELECT built FROM market_vendor_boards b WHERE b.region = r), 0) + 1 FROM (SELECT OLD.region AS r UNION SELECT NEW.region) WHERE r IS NOT NULL\n    ON CONFLICT (region) DO UPDATE SET ver = ver + 1;\nEND;\nCREATE TRIGGER IF NOT EXISTS vendor_board_house_in",
+    "new": "BEGIN\n  INSERT INTO market_vendor_ver (region, ver) SELECT r, COALESCE((SELECT built FROM market_vendor_boards b WHERE b.region = r), 0) + 1 FROM (SELECT NEW.region AS r) WHERE r IS NOT NULL\n    ON CONFLICT (region) DO UPDATE SET ver = ver + 1;\nEND;\nCREATE TRIGGER IF NOT EXISTS vendor_board_house_in",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a house moved to another region stays on the old region's board"
+  },
+  {
+    "name": "VENDORB-house-in-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_house_in AFTER INSERT ON homes\nBEGIN",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_house_in AFTER INSERT ON homes WHEN 0\nBEGIN",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B6: a house replaced - its implied delete fires nothing - leaves its pieces on the kept board"
+  },
+  {
+    "name": "VENDORB-house-gone-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_house_gone AFTER DELETE ON homes\nBEGIN\n  INSERT INTO market_vendor_ver (region, ver) SELECT r, COALESCE((SELECT built FROM market_vendor_boards b WHERE b.region = r), 0) + 1 FROM (SELECT OLD.region AS r) WHERE r IS NOT NULL",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_house_gone AFTER DELETE ON homes\nBEGIN\n  INSERT INTO market_vendor_ver (region, ver) SELECT r, COALESCE((SELECT built FROM market_vendor_boards b WHERE b.region = r), 0) + 1 FROM (SELECT OLD.region AS r) WHERE 0",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a house released stays on the kept board"
+  },
+  {
+    "name": "VENDORB-patron-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_patron AFTER INSERT ON market_patron_sales\nBEGIN",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_patron AFTER INSERT ON market_patron_sales WHEN 0\nBEGIN",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a patron's sale missing from the kept board"
+  },
+  {
+    "name": "VENDORB-expiry-unindexed",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_market_vendor_expiry ON market_listings (region, expires_at) WHERE state = 'open' AND vendor_id IS NOT NULL;\n",
+    "new": "",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B8: the board's next listing to run out found by every open trader listing of the region"
+  },
+  {
+    "name": "VENDORB-runout-kept",
+    "file": "server-account/src/market.js",
+    "old": "  const fresh = kept?.ver != null && Number(kept.built) === Number(kept.ver) && kept.shape === VENDOR_BOARD_SHAPE\n    && Number(kept.since) <= nowS && nowS < Number(kept.until) ? vendorBoardOf(kept.rows) : null;",
+    "new": "  const fresh = kept?.ver != null && Number(kept.built) === Number(kept.ver) && kept.shape === VENDOR_BOARD_SHAPE\n    && Number(kept.since) <= nowS ? vendorBoardOf(kept.rows) : null;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a listing run out still on the board"
+  },
+  {
+    "name": "VENDORB-version-unread",
+    "file": "server-account/src/market.js",
+    "old": "  const fresh = kept?.ver != null && Number(kept.built) === Number(kept.ver) && kept.shape === VENDOR_BOARD_SHAPE\n    && Number(kept.since) <= nowS && nowS < Number(kept.until) ? vendorBoardOf(kept.rows) : null;",
+    "new": "  const fresh = kept?.ver != null && kept.shape === VENDOR_BOARD_SHAPE\n    && Number(kept.since) <= nowS && nowS < Number(kept.until) ? vendorBoardOf(kept.rows) : null;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a board kept through every write"
+  },
+  {
+    "name": "VENDORB-shape-unread",
+    "file": "server-account/src/market.js",
+    "old": "  const fresh = kept?.ver != null && Number(kept.built) === Number(kept.ver) && kept.shape === VENDOR_BOARD_SHAPE\n    && Number(kept.since) <= nowS && nowS < Number(kept.until) ? vendorBoardOf(kept.rows) : null;",
+    "new": "  const fresh = kept?.ver != null && Number(kept.built) === Number(kept.ver)\n    && Number(kept.since) <= nowS && nowS < Number(kept.until) ? vendorBoardOf(kept.rows) : null;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B1: another deploy's board served by this one's reads"
+  },
+  {
+    "name": "VENDORB-floor-unread",
+    "file": "server-account/src/market.js",
+    "old": "  const fresh = kept?.ver != null && Number(kept.built) === Number(kept.ver) && kept.shape === VENDOR_BOARD_SHAPE\n    && Number(kept.since) <= nowS && nowS < Number(kept.until) ? vendorBoardOf(kept.rows) : null;",
+    "new": "  const fresh = kept?.ver != null && Number(kept.built) === Number(kept.ver) && kept.shape === VENDOR_BOARD_SHAPE\n    && nowS < Number(kept.until) ? vendorBoardOf(kept.rows) : null;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B3: a caller whose second came before the board's read is told the listings run out by its reader's"
+  },
+  {
+    "name": "VENDORB-keep-unguarded",
+    "file": "server-account/src/market.js",
+    "old": "  SELECT ?1, ?2, ?3, ?5, ?6, ?7 WHERE (SELECT ver FROM market_vendor_ver WHERE region = ?1) = ?2",
+    "new": "  SELECT ?1, ?2, ?3, ?5, ?6, ?7 WHERE ?2 IS NOT NULL",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a board read before a write kept as the board after it"
+  },
+  {
+    "name": "VENDORB-keep-rewrites",
+    "file": "server-account/src/market.js",
+    "old": "\n  WHERE NOT (built = excluded.built AND shape IS excluded.shape AND until > ?4)`;",
+    "new": "`;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B2: every caller that missed rewrites the region's board"
+  },
+  {
+    "name": "VENDORB-read-writes-first",
+    "file": "server-account/src/market.js",
+    "old": "  if (fresh) return fresh;\n  const [v, newest, houses, patrons, span] = await db.batch([",
+    "new": "  if (fresh) return fresh;\n  if (kept?.ver == null) await db.prepare('INSERT OR IGNORE INTO market_vendor_ver (region) VALUES (?1)').bind(region).run();\n  const [v, newest, houses, patrons, span] = await db.batch([",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS D5: a read writes before its reads - on a replica's session, its reads wait for the write"
+  },
+  {
+    "name": "VENDORB-keep-before-caller",
+    "file": "server-account/src/market.js",
+    "old": "  const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';\n  const [mates, rooms] = me ? await db.batch([",
+    "new": "  const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';\n  const early = await vendorBoard(ctx, region);\n  const [mates, rooms] = me ? await db.batch([",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS D5: the board kept before the caller's own rows are read - those wait for the keep's position"
+  },
+  {
+    "name": "VENDORB-column-dropped",
+    "file": "server-account/src/market.js",
+    "old": "const VENDOR_COLUMNS = `l.id, l.kind, l.region, l.material, l.item, l.own, l.bought, l.units, l.price, l.fee,",
+    "new": "const VENDOR_COLUMNS = `l.id, l.kind, l.region, l.material, l.item, l.own, l.bought, l.units, l.fee,",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B5: a column the answer shows left out of the board"
+  },
+  {
+    "name": "VENDORB-bytes-as-chars",
+    "file": "server-account/src/keptBoard.js",
+    "old": "  if (text.length <= KEPT_BOARD_MAX_BYTES / 3 || encoder.encode(text).length <= KEPT_BOARD_MAX_BYTES) return true;",
+    "new": "  if (text.length <= KEPT_BOARD_MAX_BYTES) return true;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B10: the bound in characters - a board of names past ASCII fails its keep under it"
+  },
+  {
+    "name": "VENDORB-patrons-past-day",
+    "file": "server-account/src/market.js",
+    "old": "    patrons: board.patrons.filter((/** @type {any} */ r) => Number(r.at) > since).map(patronView),",
+    "new": "    patrons: board.patrons.map(patronView),",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a kept board tells a patron's sale past its day"
+  },
+  {
+    "name": "VENDORB-mine-any-char",
+    "file": "server-account/src/market.js",
+    "old": "mine: l.v_player === player.id && l.v_char === me,",
+    "new": "mine: l.v_player === player.id,",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "every character of the account told the house is its own"
+  },
+  {
+    "name": "VENDORB-guildmate-any-door",
+    "file": "server-account/src/market.js",
+    "old": "          ...(l.v_entry === 'guild' && mate.has(`${l.v_player}\\n${l.v_char}`) ? { guildmate: true } : {}),",
+    "new": "          ...(mate.has(`${l.v_player}\\n${l.v_char}`) ? { guildmate: true } : {}),",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a guildmate's private house told as a guild's"
+  },
+  {
+    "name": "VENDORB-expiry-unread",
+    "file": "server-account/src/market.js",
+    "old": "until: Math.min(Number(row?.next ?? Infinity), nowS + VENDOR_BOARD_KEPT_S) };",
+    "new": "until: nowS + VENDOR_BOARD_KEPT_S };",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "a board kept past its first listing's end"
+  },
+  {
+    "name": "VENDORB2-house-char-unwatched",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "AFTER UPDATE OF player, char_id, owner_name, region, entry, guild_id ON homes",
+    "new": "AFTER UPDATE OF player, owner_name, region, entry, guild_id ON homes",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B1: an heir's house (inheritHome: the char_id alone) leaves the board telling the fallen character it is theirs"
+  },
+  {
+    "name": "VENDORB2-trader-out-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_trader_out AFTER DELETE ON home_decor\n  WHEN OLD.yard = 0 AND",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_trader_out AFTER DELETE ON home_decor\n  WHEN 0 AND",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B1: a trader piece deleted outright stays on the kept board"
+  },
+  {
+    "name": "VENDORB2-unlisted-unmoved",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_unlisted AFTER DELETE ON market_listings WHEN OLD.vendor_id IS NOT NULL",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_unlisted AFTER DELETE ON market_listings WHEN 0",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B1: a listing deleted outright stays on the kept board"
+  },
+  {
+    "name": "VENDORB2-version-made-at-one",
+    "file": "server-account/migrations/0137_vendor_board.sql",
+    "old": "AFTER UPDATE OF id, kind, region, material, item, own, bought, units, price, fee, wear, at,\n  expires_at, state, currency, seller, vendor_map, vendor_id ON market_listings WHEN OLD.vendor_id IS NOT NULL OR NEW.vendor_id IS NOT NULL\nBEGIN\n  INSERT INTO market_vendor_ver (region, ver) SELECT r, COALESCE((SELECT built FROM market_vendor_boards b WHERE b.region = r), 0) + 1 FROM",
+    "new": "AFTER UPDATE OF id, kind, region, material, item, own, bought, units, price, fee, wear, at,\n  expires_at, state, currency, seller, vendor_map, vendor_id ON market_listings WHEN OLD.vendor_id IS NOT NULL OR NEW.vendor_id IS NOT NULL\nBEGIN\n  INSERT INTO market_vendor_ver (region, ver) SELECT r, 1 FROM",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B4: a version row lost and made again at 1 - a board kept at 1 long before served as the board"
+  },
+  {
+    "name": "VENDORB2-gone-unread",
+    "file": "server-account/src/market.js",
+    "old": "  const gone = row?.gone == null ? 0 : Number(row.gone);",
+    "new": "  const gone = 0;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B2: a lagging caller served the board without the listing it should still see open"
+  },
+  {
+    "name": "VENDORB2-told-unread",
+    "file": "server-account/src/market.js",
+    "old": "  const told = patrons < VENDOR_BOARD_SHOWN && row?.told != null ? Number(row.told) + PATRON_TOLD_S : 0;",
+    "new": "  const told = 0;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B2: a lagging caller served the board without a patron's sale still in its day"
+  },
+  {
+    "name": "VENDORB2-told-when-full",
+    "file": "server-account/src/market.js",
+    "old": "  const told = patrons < VENDOR_BOARD_SHOWN && row?.told != null ? Number(row.told) + PATRON_TOLD_S : 0;",
+    "new": "  const told = row?.told != null ? Number(row.told) + PATRON_TOLD_S : 0;",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B2: a full board's lagging callers read again for a sale it could never tell"
+  },
+  {
+    "name": "VENDORB2-shape-parts",
+    "file": "server-account/src/market.js",
+    "old": "  VENDOR_SPAN_SQL, PATRON_TOLD_S, VENDOR_BOARD_KEPT_S, VENDOR_BOARD_SHOWN);",
+    "new": "  PATRON_TOLD_S);",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B5: the board's bounds and the seconds they span no part of its shape - a deploy that changes them serves the old boards"
+  }
+]

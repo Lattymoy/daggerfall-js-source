@@ -67,6 +67,7 @@ import { firmamentStats } from '../../systems/firmamentLive.js';   // CRAFT-LIMI
 import {
   POTIONS, brewKeys, brewSpends, brewCount, potentChance, potentPct, potentLasts, potentAble, brewXp, brewFirstPays, ingredientKeys, DISTILLER, POTENT,
   enchantDiscountPct, DISENCHANTER, disenchantXp, essenceOf,
+  piecePoints, ESSENCE_POINTS,   // DISENCHANT-SAID: the station's list made here, and a piece under one Essence said
 } from '../../net/alchemyLaw.js';   // PROF12: Alchemy's brew, Enchanting's layer and Disenchanting
 import {
   RECIPES, recipeOpen, qualityOdds, QUALITY_NAMES, HEAT_ACT, takesQuality, rollsQuality, recipeInputs, takesHeartwood, PLANE_ACT, STITCH_ACT,
@@ -84,6 +85,9 @@ import { createChiselAct } from '../../systems/chiselAct.js';   // PROF11
 import { createPanAct } from '../../systems/panAct.js';   // PROF9
 import { createFacetAct } from '../../systems/facetAct.js';   // PROF10
 import { templateByIndex } from '../../systems/item/itemTemplates.js';   // PROF10: a piece's DFU template - its enchantment points
+import { itemLongName } from '../../systems/item/itemInfo.js';   // DISENCHANT-SAID: a piece the station lists, named as the pack names it
+import { tradeRefusal } from '../../systems/tradePack.js';   // DISENCHANT-SAID: a piece that may not leave the pack is not the station's (PROF12)
+import { isLocked } from '../../systems/item/itemLock.js';   // DISENCHANT-SAID: nor a locked one (PROF5)
 import { DYE_NAMES } from '../../characters/dyes.js';
 import { isTextEntryTarget, isDomControlTarget } from '../input.js';   // AUDIT 30 A9: a field's keys and a button's are their own
 import { createHeatAct } from '../../systems/heatAct.js';
@@ -140,7 +144,9 @@ import { t, localizedText, formatMessage, formatNumber } from '../../systems/tex
  *   where the player's guild holds it (fortLaw stationSteps) - 0 elsewhere
  * @property {() => ({ kind: 'shop'|'home', fee: number }|null)} [enchanter]   PROF12: the enchanting station the player stands at
  * @property {() => Array<{ provenance: string, name: string, points: number, essence: number, recipe?: string }>} [disenchantable]   PROF12: the
- *   pack's crafted pieces an enchanting station may take apart, each its Essence (AUDIT PROF12 E2: and its recipe, the XP's tier)
+ *   pack's crafted pieces the enchanting station lists (disenchantableOf), each its points and its Essence (AUDIT PROF12 E2:
+ *   and its recipe, the XP's tier) - the pieces it may take apart, and (DISENCHANT-SAID) those whose points make no
+ *   Essence, `essence` 0, which the page greys with the reason and the station never takes apart
  * @property {(provenance: string) => Promise<{ ok: boolean, text: string }>} [disenchant]   PROF12: a piece taken apart
  * @property {(where: 'anvil'|'loom') => Array<{ item: any, name: string, recipe: string, quality: number, provenance: string|null }>} [temperable]
  *   CRAFT4: the pack's pieces the station's craft tempers (the smith's at the anvil, the tailor's at the loom), each its
@@ -2797,6 +2803,33 @@ const enchantAwayLine = () => t('prof.page.enchant.away', ENCHANT_AWAY, { fee: E
 export const _enchantForTests = () => _enchant;
 /** AUDIT PROF-541 B8: a piece whose Essence the Stores have no room for. */
 export const ENCHANT_FULL_LINE = (room) => t('prof.page.enchant.full', 'Your Stores have room for {n} more Arcane Essence, not enough for this piece.', { n: Math.max(0, room) });
+/** DISENCHANT-SAID: a piece whose points make no Essence - listed, greyed, and why (alchemyLaw ESSENCE_POINTS). */
+export const ENCHANT_UNDER_LINE = (points) => t('prof.page.enchant.under', '{points, number} points. One Arcane Essence needs {per, number}.', { points, per: ESSENCE_POINTS });
+/**
+ * DISENCHANT-SAID (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "List them greyed with the reason"): THE PIECES THE
+ * ENCHANTING STATION LISTS, made here and wired by the host (scenes/world.js `disenchantable`), never in it. A player's
+ * private report: crafted greaves and pauldrons could not be disenchanted, and the station never said why. PROF12 (9.3,
+ * 37) gives a piece its DFU template's enchantment points, one Essence a hundred - Greaves 50, either Pauldron 40, so
+ * none at any metal (alchemyLaw piecePoints, essenceOf), and the service refuses them (`prof-no-essence`); the host's
+ * list dropped them (`essence > 0`), and the page explained only an empty list. Now the list keeps them: the pack's
+ * crafted pieces (a provenance and a recipe - loot never comes apart) that may leave the pack (tradePack tradeRefusal:
+ * not worn, bound or a quest's; itemLock isLocked) and carry no market act (`kept`, the market's and the writs' hold),
+ * each its points, its Essence (a Disenchanter's twice - `book`'s Enchanting at 50) and its recipe (AUDIT PROF12 E2: the
+ * XP's tier). A piece whose form carries enchantment points but under a hundred stays on it with `essence` 0, and the
+ * page greys it with the reason; a form with none at all (a dish, a tool, a Repair Kit, the mason's stone) is no
+ * enchanter's piece and is left off, as before. No change to the law or the service.
+ * @param {any[]|null|undefined} items the pack @param {{ kept?: (provenance: string) => boolean, book?: any }} [o]
+ * @returns {Array<{ provenance: string, name: string, points: number, essence: number, recipe: string }>}
+ */
+export function disenchantableOf(items, { kept = () => false, book = null } = {}) {
+  const disenchanter = book?.track?.('enchanting')?.specs?.[50] === DISENCHANTER;
+  return (items ?? []).filter((it) => it?.provenance && typeof it.recipe === 'string' && !tradeRefusal(it) && !isLocked(it) && !kept(it.provenance))
+    .map((it) => {
+      const r = recipeById(it.recipe);
+      const points = r?.kind === 'jewel' && Number.isSafeInteger(it.enchantmentPoints) ? it.enchantmentPoints : piecePoints(r);
+      return { provenance: it.provenance, name: itemLongName(it), points, essence: essenceOf(points, disenchanter), recipe: it.recipe };
+    }).filter((x) => x.points > 0);
+}
 /**
  * PROF12: THE ENCHANTING STATION - the pack's crafted pieces (a provenance - loot is never disenchanted), each the Arcane
  * Essence it would give (a hundred of its enchantment points an Essence, a Disenchanter's twice) and the XP; Disenchant,
@@ -2825,13 +2858,25 @@ function drawEnchantingStation(detail, rerender, { el, divider }) {
   // AUDIT PROF-541 B8: the Essence's room - every origin counted, as the service counts it (storesFullIn's sum)
   const ess = book.store?.(ARCANE_ESSENCE.key) ?? { own: workOf(book, ARCANE_ESSENCE.key) };
   const room = (book.state?.caps?.stores ?? STORES_MAX) - ((ess.own | 0) + (ess.bought | 0) + (ess.gold | 0));
-  if (!pieces.length) detail.append(el('p', 'px-note', t('prof.page.enchant.none', 'No crafted piece in your pack has enough enchantment to give Essence. Only pieces a player crafted online can be taken apart.')));
+  // DISENCHANT-SAID: said when no piece gives Essence - a piece listed under one stands greyed below, its reason beside it
+  if (!pieces.some((pc) => pc.essence >= 1)) detail.append(el('p', 'px-note', t('prof.page.enchant.none', 'No crafted piece in your pack has enough enchantment to give Essence. Only pieces a player crafted online can be taken apart.')));
   // CRAFT-LIMIT-SAID: each piece's XP as the service credits it (the Firmament's percent on disenchantXp, under the room the
   // track has left), and the limit's line once where it holds one of them under what it earns
   const pay = craftPayOf(book, 'enchanting');
   const capped = capLine(professionName('enchanting'), pay, Math.max(0, ...pieces.map((pc) => paidXp(disenchantXp(recipeById(pc.recipe), rank, essenceOf(pc.points)), { pct: pay.pct }))));
   if (capped) detail.append(el('p', 'px-note', capped));
   for (const pc of pieces) {
+    // DISENCHANT-SAID (the owner: "List them greyed with the reason"): a piece under one Essence - greyed, its reason, its
+    // Disenchant never pressed (the service would refuse it: prof-no-essence)
+    if (!(pc.essence >= 1)) {
+      const row = el('div', 'prof-smelt prof-locked');
+      const b = el('button', 'act', t('prof.page.enchant.go', 'Disenchant'));
+      b.type = 'button';
+      b.disabled = true;
+      row.append(el('b', null, pc.name), el('span', 'prof-split', ENCHANT_UNDER_LINE(pc.points)), b);
+      detail.append(row);
+      continue;
+    }
     const row = el('div', 'prof-smelt');
     const base = essenceOf(pc.points);
     const gives = { points: pc.points, essence: pc.essence, xp: paidXp(disenchantXp(recipeById(pc.recipe), rank, base), pay) };

@@ -308,8 +308,8 @@
   {
     "name": "LW15-vendors-told",
     "file": "server-account/src/market.js",
-    "old": "    patrons: await patronsTold(db, { region }, nowS).catch(() => []),",
-    "new": "    patrons: await patronsTold(db, results.map((l) => Number(l.v_map)), nowS).catch(() => []),",
+    "old": "    patrons: board.patrons.filter((/** @type {any} */ r) => Number(r.at) > since).map(patronView),",
+    "new": "    patrons: board.patrons.filter((/** @type {any} */ r) => Number(r.at) > since && results.some((l) => Number(l.v_map) === Number(r.map))).map(patronView),",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]

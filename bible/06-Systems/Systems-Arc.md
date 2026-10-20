@@ -8476,3 +8476,45 @@ branch moved, but for three synthetic examples in citeShift's own header and pin
 **Said, not changed.** Since REP1 the passive levy on a hated name (WERE-LEVY's) has no caller: the watch stops a known
 criminal only by sight, and never a beast, so a fright is not undone by a levy the next minute. A man asked the question
 who turns beast afterwards does not get a roar for that watch - the question is once a watch, and it was asked.
+
+### HELD-CONCEAL - A WORN CONCEALMENT A BLOW BROKE COMES BACK (2026-10-19)
+
+A player's private report: an item that makes its wearer invisible while worn (Cast When Held) stopped working after
+Overworld travel, and worked again only once it was taken off and put on again. TRAVEL WAS NOT IT - the worn pin rode
+37 hours of travel rounds and the six-hour reroll untouched. ONE LANDED BLOW WAS, wherever it landed (a journey's
+ambush is the likely one). Wave 31's break (`concealment.js` breakNormalPowerConcealment, at the attack formula's tail
+and every FromSource damage door) removed every normal-power concealment entry, the worn item's with the spells' - and
+the item's pin went with it, and the reroll (`enchantments.js` enchantmentMagicRound) visits only an item that still
+holds one. So the piece stood worn and inert for as long as it was worn. DFU's EndIncumbentEffect<T>
+(EntityEffectManager.cs:759-766) ENDS the effect - `RoundsRemaining = 0; End()` - and removes nothing: a spell's bundle,
+no rounds left, goes at the next DoMagicRound, but a worn item's is kept "alive until item breaks or is unequipped"
+(EntityEffectManager.cs:1739-1742), its ended effect sets no flag (DoConstantEffects skips HasEnded,
+EntityEffectManager.cs:1693), and the item stays scheduled for RerollItemEffects, which strips the bundle and recasts it.
+
+THE FIX, at the one door every breaker goes through - the blow (WeaponManager's and EnemyAttack's two lines, at the
+formula's tail), the FromSource damage of a spell (HandleAttackFromSource) and Silence's aggro. A spell's entry is
+removed, as before: DFU's end, a round sooner. An item-pinned one is ENDED in place - `ended`, its rounds 0 - and keeps
+its pin. `effects.js` hasActiveEffect reads an ended entry as absent (DFU's HasEnded skip), so IsInvisible, IsBlending
+and IsAShade, the senses' closures and the pose's concealment bits all read it broken, and `mysticism.js` liveBundles
+already skipped an ended entry, so the HUD's icon goes with it. The reroll recasts it once the item's six hours since
+its last roll are out (REROLL_MINIMUM_HOURS, E2's cadence, unchanged); taking the piece off sweeps the ended entry with
+its item, and putting it on again casts it at once. The TRUE powers are untouched, as ever. The other readers of an
+ended entry, checked: the HUD's status rows skip it; effectsAlreadyOnTarget counts it, as EnemyMotor's own does (no
+HasEnded test there); the arena's sand strip reads hasActiveEffect and takes a recast off on the next frame; the save
+never carries a pin.
+
+**Said, not changed.** Two places this leaves DFU (Port-Ledger A), and two left as they were:
+- every LIVE normal power ends on a break. EndIncumbentEffect<T> ends the first effect of its type FindIncumbentEffect<T>
+  meets (EntityEffectManager.cs:666-678), an ended one included - so a worn and a spell's Invisibility both live took a
+  blow each, and a worn one already ended shielded a spell's from every blow until the reroll;
+- DFU's HUD keeps an equipped item's bundle icon up whatever its effects (HUDActiveSpells.ShowIcon,
+  `|| bundle.fromEquippedItem != null`); the port's shows no concealment that is not there;
+- as it was: a load recasts every worn piece's spells fresh (ENCHANT-LOAD's restartHeldEnchantments - the save carries
+  no pin), a broken concealment included, where DFU's save keeps `effectEnded`. Re-wearing the piece does the same in
+  both, and HELD-REWEAR makes it free inside the six hours, so a load gives nothing a re-wear does not;
+- as it was: DFU recasts at a sleep's end or a synthetic time jump's end (RerollItemEffects' only two callers,
+  EntityEffectManager.cs:2170-2178), for an item DoMagicRound flagged at six hours; the port's reroll runs at the round
+  that finds the six hours out (E2's, unchanged - AUDIT 63 F13 above).
+
+Pinned in `test/systems/fb1019f_heldconceal.test.js` (5, on the real equip door, a real blow, a real spell's damage, the
+real magic-round pump and the HUD's icon row); `tools/mutants/fb1019f_heldconceal.json`, 9 mutants, 9 dead.

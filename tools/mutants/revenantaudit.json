@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-A5-the-pack-destroyed",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "    for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }",
-    "new": "    void items;",
+    "old": "  for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }",
+    "new": "  void items;",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]

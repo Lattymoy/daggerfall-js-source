@@ -17,7 +17,7 @@
 // or a picker, and each able to push the next.
 
 import { nativeMetrics } from './native/nativePanel.js';
-import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, fitBoxRows } from './messageBox.js';   // AUDIT FB1019f F1: fitBoxRows, a long row wrapped on the screen
 import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { wrapText } from './talkWindow.js';
@@ -242,7 +242,10 @@ export class ServiceFlowWindow {
     // ENH-NOTICE2: a plain text step (no buttons, no picker, no field)
     // is DFU's click-anywhere box and the enhanced panel
     if (noticeFrame(this, buttons.length ? null : t.rows)) { this._box = null; return; }
-    this._box = layoutMessageBox(font, t.rows, buttons);
+    // AUDIT FB1019f F1: a row the port writes - QUESTOR-SAID's busy line names a quest - wraps on the screen (SS5's
+    // fitBoxRows, as the guild popup's own box: AUDIT GUILD-WORDS II F-2), where it ran past both edges; a TEXT.RSC row
+    // that fits is left as it is
+    this._box = layoutMessageBox(font, fitBoxRows(font, t.rows), buttons);
     drawMessageBox(renderer, m, font, this._box);
   }
 }

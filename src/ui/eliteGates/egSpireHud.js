@@ -53,7 +53,7 @@
 // One node each, UPDATED, NOT REBUILT, hidden with the HUD. The models are pure.
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
-import { egHallOf, egCircleOfHall, egSlotOfHall, egCountText, egObjectiveOf, EG_LAST_WORD_MS, EG_COUNT_START_MS, EG_REDOUBT_HOLD_MS, EG_BANDS, EG_DECREES, EG_DECREE_BY_KEY, EG_TWIST_LINES, EG_TEXT } from '../../net/eliteGates/egLaw.js';
+import { egHallOf, egCircleOfHall, egSlotOfHall, egCountText, EG_LAST_WORD_MS, EG_COUNT_START_MS, EG_REDOUBT_HOLD_MS, EG_BANDS, EG_DECREES, EG_DECREE_BY_KEY, EG_TWIST_LINES, EG_TEXT } from '../../net/eliteGates/egLaw.js';
 import { egCountAt, egLivingCount, egMemberOf, egRunOfMember } from '../../net/eliteGates/egLink.js';
 import { egGatherOf } from '../../net/eliteGates/egLink.js';   // AUDIT EG V (c, L3-10): the gather, as the room counts it
 import { EG_ROLE, EG_FL } from '../../net/eliteGates/egBodies.js';
@@ -62,6 +62,7 @@ import { egMarkynazDecree } from '../../net/eliteGates/egLords.js';   // EG-ZS (
 import { EG_CHAMPIONS } from '../../net/eliteGates/egLaw.js';   // EG-ZS: the champion's signature's title
 import { egProgressText, EG_MARK_NAMES, EG_POTIONS_PER_HALL } from './egHud.js';
 import { egNextCircleText } from './egHud.js';   // AUDIT EG V (L2-11): a rest's beacon - the next circle's decrees and lord
+import { egObjectiveText } from './egHud.js';   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the objective as the screen says it (the Gauntlet's in the player's language)
 import { egTwistShown } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (L2-4): no Bargain's line when no family is free
 import { EG_PRES_TEXT, EG_BAND_LINES } from './egBeats.js';
 import { EG_PARTY_CSS } from './egParty.js';
@@ -208,7 +209,7 @@ export function egArrivalCard(E, { first = false } = {}) {
   return {
     kicker: bandCard || court ? band?.name ?? '' : spec.name,
     main: court ? EG_PRES_TEXT.hallCourt(E.h) : EG_PRES_TEXT.hallBand(E.h, theOf(band?.name)),
-    sub: court ? spec.name : egObjectiveOf(spec),
+    sub: court ? spec.name : egObjectiveText(spec),
     twist: egTwistShown(spec, E.dc) ? EG_TWIST_LINES[spec.twist] ?? '' : '',
     dec: dec.length ? dec.join(' - ') : '',
     band: bandCard ? EG_BAND_LINES[spec.band] ?? '' : '',
@@ -418,7 +419,7 @@ export function egSpireHudModel(E, me, now, { ff = 'desktop', witness = false, p
     potion: L.potion ? `${potions}/${EG_POTIONS_PER_HALL}` : '',
     recall: mine && mine.alive && !mine.home && !mine.recall ? EG_PRES_TEXT.recallSpent : '',   // my last life (PARTY8-B's law: a fact when it is actionable)
     dec, decFold: L.dec === 'fold' && dec.length > 0 ? EG_PRES_TEXT.decrees(dec.length) : '', foldOpen,
-    objective: E.sg === 'trial' && !watching ? egObjectiveOf(spec) : '', progress: E.sg === 'trial' && !watching ? egProgressText(spec, E.fight?.pg) : '',
+    objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : '', progress: E.sg === 'trial' && !watching ? egProgressText(spec, E.fight?.pg) : '',
     riddles: E.sg === 'trial' && !watching ? spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\n') : '',   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to
     stage: watching ? witLine : [stageLine(E, now), E.sg === 'rest' ? egRestLine(E, run, restP) : '', egNextCircleText(E), egBridgeLine(E, now, bridge && !watching)].filter(Boolean).join(' '),   // AUDIT EG V (c, L2-9, NEW-1): the rest card's stake and its heal; (a1, L2-11): the next circle named
     marks, marksSaid: marks.map((m) => `${EG_MARK_NAMES[m.k] ?? ''} ${m.secs}s`).join(' - '),

@@ -86,7 +86,7 @@ import { mintStores } from '../../systems/naval/navalStores.js';   // SALVAGE: a
 import { mintDeed } from '../../systems/comeSailAway/comeSailAwayItems.js';   // SHIP-CLAIM: a claimed prize's deed, the shelf's own mint
 import { createPassageBerths } from './passageBerths.js';   // PASSAGE: a berth's ship to book, and her boat made the voyage's
 import { yardOffer, yardAll, fieldMend, FIELD_QUIET_S, FIELD_REFLOAT, YARD_PRICE, provisionOffer, seaRepair, wantsRepair, paidDamage, STORE_POINTS, STORES_STOCK, storesToWhole, SEA_REPAIR_UNDER_FIRE, FIELD_MEND_CAP } from '../../systems/naval/navalYard.js';
-import { createCompanions, companionRows } from '../../systems/naval/crewCompanions.js';   // CREW-COMPANIONS
+import { createCompanions, companionRows, heldAtSide, packStaysAshore } from '../../systems/naval/crewCompanions.js';   // CREW-COMPANIONS - COMPANION-DROP: the zone keeps him at my side
 import { createShipCrew, reloadScaleOf, mendScaleOf, handsBonusOf, crewCard, CREW_ORDERS, ORDER_TEXT, spiritsOf, LOOKOUT_ROLE, FIRST_MATE, crewWorth, NO_WORTH, SEASONED_HIRE } from '../../systems/naval/shipCrew.js';   // SHIP-CREW; CAPT-CREW: what her posts are worth
 import { crewRoster, playerCrewCount } from '../../systems/naval/crewLife.js';   // AUDIT NAV1: the shipwright, the mending at sea
 import { enlistPlan, releasePlan, CREW_HALL_TEXT } from '../../systems/crewHall.js';   // SHIPYARDS: the crew hall's recruits signed on to her deck by name, and paid off
@@ -5337,7 +5337,7 @@ export function createNavalHost(deps) {
    *  his gold into my purse - and said as it went: the HUD said "stowed in your pack" over six claymores gone. */
   function stowPack(uid, items, name) {
     if (!items?.length) return;
-    const boat = (csa()?.state?.AllBoats ?? []).find((b) => b?.uid === uid) ?? null;
+    const boat = packStaysAshore() ? null : (csa()?.state?.AllBoats ?? []).find((b) => b?.uid === uid) ?? null;   // COMPANION-DROP: in the open zone, mine - it drops with my pack there
     const rest = boat ? deps.board?.giveItems?.(items, boat)?.left ?? [] : items;
     const mine = rest.length ? deps.board?.giveItems?.(rest, null, { force: true }) ?? null : null;
     const where = !rest.length ? 'in the hold' : rest.length === items.length ? 'in your pack' : 'in the hold and your pack';
@@ -5350,6 +5350,7 @@ export function createNavalHost(deps) {
     const hand = st.crew.hands.find((h) => h.name === name);
     if (!hand) return null;
     if (companions.isAshore(boat.uid, name)) {
+      if (heldAtSide(name, deps.say)) return null;   // COMPANION-DROP (crewCompanions.js): never sent back from inside the open zone
       const pack = companions.takePack(boat.uid, name);   // COMPANION-KIT: his pack stowed in her hold
       companions.sendBack(boat.uid, name);
       deps.say?.(`${name} goes back aboard.`, 3);

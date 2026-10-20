@@ -111,8 +111,8 @@
   {
     "name": "HOMEVENDOR-a-private-house-shown",
     "file": "server-account/src/market.js",
-    "old": "      h.entry AS v_entry,",
-    "new": "      'public' AS v_entry,",
+    "old": "      h.char_id AS v_char, h.entry AS v_entry`;",
+    "new": "      h.char_id AS v_char, 'public' AS v_entry`;",
     "tests": [
       "test/net/homevendor_service.test.js"
     ]
@@ -120,7 +120,7 @@
   {
     "name": "HOMEVENDOR-the-owners-own-hidden",
     "file": "server-account/src/market.js",
-    "old": "mine: Number(l.v_mine) === 1,",
+    "old": "mine: l.v_player === player.id && l.v_char === me,",
     "new": "mine: false,",
     "tests": [
       "test/net/homevendor_service.test.js"

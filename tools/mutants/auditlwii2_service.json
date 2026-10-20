@@ -310,8 +310,8 @@
   {
     "name": "AUDITLWII2-W6-houses",
     "file": "server-account/src/market.js",
-    "old": "const results = [...newest, ...houses.filter((l) => !shown.has(traderOf(l)))];",
-    "new": "const results = newest;",
+    "old": "const results = [...board.newest, ...board.houses.filter((/** @type {any} */ l) => !shown.has(traderOf(l)))];",
+    "new": "const results = board.newest;",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "AUDITLWII2-W6-once",
     "file": "server-account/src/market.js",
-    "old": "...houses.filter((l) => !shown.has(traderOf(l)))]",
-    "new": "...houses]",
+    "old": "...board.houses.filter((/** @type {any} */ l) => !shown.has(traderOf(l)))]",
+    "new": "...board.houses]",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

@@ -556,7 +556,9 @@ function makerFindings(/** @type {any} */ item, /** @type {any[]} */ rows, /** @
   for (const c of chosen) {
     if (hasItemMakerFlag(c.key, ITEM_MAKER_FLAGS.WeaponOnly) && item.group !== 'Weapons') return ['enchantments'];
     // one of a kind where the kind allows one - a kind that allows many takes even its one setting twice (the window's
-    // own: primaryPick's single-setting arm adds it again, past the list's filter), within the budget below
+    // own: primaryPick's single-setting arm adds it again, past the list's filter), within the budget below. SIDE-ONCE
+    // (FIELD BUGS 2026-10-19f; the owner, 2026-10-19) left this counting by kind on purpose: the window picks a side
+    // effect's setting once from then on, and a piece made before, its setting taken many times, keeps its copies
     const many = hasItemMakerFlag(c.key, ITEM_MAKER_FLAGS.AllowMultiplePrimaryInstances) || hasItemMakerFlag(c.key, ITEM_MAKER_FLAGS.AllowMultipleSecondaryInstances);
     counts.set(c.key, (counts.get(c.key) ?? 0) + 1);
     if (counts.get(c.key) > 1 && !many) return ['enchantments'];

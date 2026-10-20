@@ -74,7 +74,7 @@ export class WaitWindow {
     // THE PAGE IS THE PANEL'S. It is drawn with `drawMessageBox` and no
     // buttons, in the parchment's shape - but it is the PORT'S page, not
     // a DaggerfallUI.MessageBox, and it takes no click and no key. So it
-    // rides the same per-frame door the eight classic windows take
+    // rides the same per-frame door the nine classic windows take
     // (ui/restWindow.js, ui/bankWindow.js) with no caption, never "click
     // or press a key" (AUDIT ENH-NOTICE3 B2 - the hint tells the truth).
     // A per-frame door and not noticeHold: this window IS drawn every

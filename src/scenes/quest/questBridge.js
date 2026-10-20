@@ -69,7 +69,7 @@ import { isOnlinePage } from '../../systems/online/onlineLane.js';   // AUDIT DE
 import { isShelved } from '../../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
 import { WA_RAID_QUESTS } from '../../systems/warmAshesShips.js';   // QUEST-SHELF: a raid the world runs is never set aside
 import { QuestListsManager } from '../../systems/quest/questLists.js';
-import { QuestOfferFlow } from '../../systems/quest/offerFlow.js';
+import { QuestOfferFlow, ACTIVE_QUESTOR } from '../../systems/quest/offerFlow.js';   // QUESTOR-SAID: a close that says why
 import { localizedQuestDisplayName } from '../../systems/quest/localizedQuest.js';   // L10N3c: the pickers' localized labels
 import { PlayerNotebook } from '../../systems/notebook.js';
 import { GENDERS } from '../../characters/nameHelper.js';
@@ -302,6 +302,14 @@ export function shelfRefusalText(reason) {
     case 'twin': return 'You have taken that quest up again. Finish or abandon it first.';
     default: return 'That cannot be done now.';
   }
+}
+/** QUESTOR-SAID (FIELD BUGS 2026-10-19f): a questor's close in words - the quest still open, by the name the journal
+ *  gives it (its DisplayName, a translation's -LOC one where it has one); with none, the work alone. The player's
+ *  language (L10N4). */
+export function questorBusyRows(quest) {
+  const name = quest?.displayName || '';
+  return [{ text: name ? t('quest.offer.questorBusy', 'You have not finished the work you were given here: {quest}.', { quest: name })
+    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.'), center: true }];
 }
 /** QUEST-RESET: why a quest could not be restarted, in words (machine.js restartRefusal) - the player's language (L10N4). */
 export function restartRefusalText(reason) {
@@ -853,12 +861,15 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     },
 
     /** An offer-flow step as a ServiceFlowWindow box chain. C#'s
-     *  silent faces ('close', a null step) show nothing. rows(id) is
-     *  the host's TEXT.RSC record reader (townTalk.lines). */
+     *  silent faces ('close', a null step) show nothing - but a popup's
+     *  close on a questor whose quest is still open SAYS so (QUESTOR-SAID,
+     *  offerFlow.js questorBusy: the guild's popup read the empty chain as
+     *  no service and printed "That service is not available yet."). rows(id)
+     *  is the host's TEXT.RSC record reader (townTalk.lines). */
     offerBoxes(step, rows) {
       if (!step) return [];
       switch (step.kind) {
-        case 'close': return [];
+        case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];
         case 'fail': return [{ rows: rows?.(step.textId) ?? [] }];
         case 'offer': return [{
           rows: tokensToRows(step.prompt.tokens),

@@ -207,7 +207,7 @@ test('AUDIT C4-C6: the rest never reads longer than a rest (an older save\'s clo
 
 test('AUDIT C3/C7: the world keeps the slots and the words true - past the slots the most lately sworn steps away; opposite acts in one pause cancel; a load forgets the words and the members (mutants: a fourth at the side; a dismiss said for one that never left)', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /if \(companionsWithYou\(\) > COMPANION_SLOTS\) \{\n\s*const last = revenantsWithYou\(\)\.sort\(\(a, b\) => \(b\.swornAt \?\? 0\) - \(a\.swornAt \?\? 0\)\)\[0\];\n\s*if \(last && sendRevenantAway\(last\.id, \{ byYou: false \}\)\)/);   // PIN MOVED (RVN11a, Feud-Arc.md 22.1): the slots' hold, never the player's sending - no loyalty lost
+  assert.match(w, /if \(companionsWithYou\(\) > COMPANION_SLOTS\) \{\n\s*const last = revenantsWithYou\(\)\.filter\(\(r\) => !leaveRefusal\(r\)\)\.sort\(\(a, b\) => \(b\.swornAt \?\? 0\) - \(a\.swornAt \?\? 0\)\)\[0\];.*\n\s*if \(last && sendRevenantAway\(last\.id, \{ byYou: false \}\)\)/);   // PIN MOVED (RVN11a, Feud-Arc.md 22.1): the slots' hold, never the player's sending - no loyalty lost; PIN MOVED (COMPANION-DROP): never the one at my side in the open zone
   assert.match(w, /if \(kind === 'arrive'\) \{ if \(sentAt >= 0\) _revenantDepartures\.splice\(sentAt, 1\); else noteRevenantArrival\(r\.id\); return; \}/);
   // PIN MOVED (AUDIT FEUD: a load forgets a turning queued under a window too)
   assert.match(w, /const clearSworn = \(\) => \{ revenantAshore\.clear\(\); _revenantArrivals\.clear\(\); _revenantDepartures\.length = 0; _revenantBetrayals\.length = 0; forgetSwornMember\(\); \};/);

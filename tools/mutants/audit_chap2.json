@@ -447,15 +447,15 @@
   {
     "name": "T-HALLS-WITNESS-FORGET",
     "file": "server-account/src/npcHalls.js",
-    "old": "  if (r?.meta?.changes) _kept.delete(h.region);   // AUDIT CHAP2 E9: a report that changed nothing is no news\n",
-    "new": "  if (r?.meta?.changes) { /* forgets nothing */ }\n",
+    "old": "  if (moved?.meta?.changes) _kept.delete(h.region);   // AUDIT CHAP2 E9: a report that changed nothing is no news\n",
+    "new": "  if (moved?.meta?.changes) { /* forgets nothing */ }\n",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
       "test/systems/guild/chap1_roll.test.js",
       "test/net/chap2_halls.test.js"
     ],
-    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved. AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's."
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved. AUDIT CHAP5 T1-T3: re-aimed - the mutant failed for its own reason (a name it does not import, a statement that does not parse), never the law's. LEAN-READS: re-aimed by content at the code the slice moved."
   },
   {
     "name": "T-HALLS-KEPT-SET",
@@ -537,8 +537,8 @@
   {
     "name": "T-LIST-ORDER",
     "file": "server-account/src/professions.js",
-    "old": "ORDER BY kind, faction, slot",
-    "new": "ORDER BY kind, slot",
+    "old": "ORDER BY +kind, faction, slot\")",
+    "new": "ORDER BY +kind, slot\")",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1179,9 +1179,10 @@
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
       "test/systems/guild/chap1_roll.test.js",
-      "test/net/chap2_halls.test.js"
+      "test/net/chap2_halls.test.js",
+      "test/server/lean_witness.test.js"
     ],
-    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
+    "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved. LEAN-READS: the full read is the developers' audit list's and the oracle's (lean_witness), which holds the judged read to it."
   },
   {
     "name": "T-HALLS-SORT",
@@ -1757,8 +1758,8 @@
   {
     "name": "AUDIT-CHAP2-E1-STRIKE-DELETE",
     "file": "server-account/src/npcHalls.js",
-    "old": "    db.prepare(`DELETE FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND key LIKE ?`).bind(`%:${key}`),",
-    "new": "    db.prepare('SELECT ?').bind(`%:${key}`),",
+    "old": "    ...strikeWitness(db, HALL_WITNESS_KIND, 'key LIKE ?1', `%:${key}`),",
+    "new": "    ...strikeWitness(db, HALL_WITNESS_KIND, 'key LIKE ?1 AND 0', `%:${key}`),",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1817,7 +1818,7 @@
   {
     "name": "AUDIT-CHAP2-E1-IGNORED-WITNESS",
     "file": "server-account/src/npcHalls.js",
-    "old": "  if (hallFacts(await regionRows(db, h.region), nowS).ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };\n",
+    "old": "  if (await mayBeIgnored(db, HALL_WITNESS_KIND, player.id, nowS)\n    && hallFacts(await judgedRows(db, h.region, nowS), nowS).ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };\n",
     "new": "",
     "tests": [
       "test/net/audit_chap1.test.js",
@@ -1913,8 +1914,8 @@
   {
     "name": "AUDIT-CHAP2-E7-VERSION-READ",
     "file": "server-account/src/npcHalls.js",
-    "old": "AND region = ? AND key LIKE ?)`).bind(region, `${HALL_REPORT_V}:%`).all();",
-    "new": "AND region = ? AND ? IS NOT NULL)`).bind(region, `${HALL_REPORT_V}:%`).all();",
+    "old": "AND ${LEAN_ROWS} AND region = ? AND key LIKE ?)`).bind(",
+    "new": "AND ${LEAN_ROWS} AND region = ? AND ? IS NOT NULL)`).bind(",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",

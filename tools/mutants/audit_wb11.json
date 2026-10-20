@@ -39,7 +39,7 @@
   },
   {
     "name": "AUDIT-WB11-W1-every-stand-in-to-him",
-    "file": "src/scenes/dungeonContext.js",
+    "file": "src/scenes/gate/standInSpell.js",
     "old": "    if (target?.hostI != null) return spellOnHost(record, target.hostI);\n",
     "new": "",
     "tests": [

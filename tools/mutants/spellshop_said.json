@@ -1,0 +1,113 @@
+[
+  {
+    "name": "SPELLSHOP-SAID-no-notice-at-all",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "    if (noticeFrame(this, NOTES.includes(this.top) ? this._boxRows() : null)) {\n",
+    "new": "    if (noticeFrame(this, null)) {\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-no-book-unsaid",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note']);\n",
+    "new": "const NOTES = Object.freeze(['notEnoughGold', 'note']);\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-no-gold-unsaid",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note']);\n",
+    "new": "const NOTES = Object.freeze(['noSpellbook', 'note']);\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-a-note-unsaid",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note']);\n",
+    "new": "const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold']);\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-the-decision-a-notice",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note']);\n",
+    "new": "const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note', 'trade']);\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-the-trade-asks-nothing",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "const ASKS = Object.freeze(['delete', 'sort', 'trade']);\n",
+    "new": "const ASKS = Object.freeze(['delete', 'sort']);\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js",
+      "test/systems/spellbookwindow.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-the-box-buttons-dropped",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "      this._box = layoutMessageBox(font, this._boxRows(), ASKS.includes(this.top) ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : []);\n",
+    "new": "      this._box = layoutMessageBox(font, this._boxRows(), []);\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-the-yes-no-click-unheard",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "    if (ASKS.includes(this.top)) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js",
+      "test/systems/spellbookwindow.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-close-keeps-the-panel",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "    noticeRelease(this);   // SPELLSHOP-SAID: a host drops a closed window and never draws it again\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js",
+      "test/ui/enhancedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-the-port-blind-to-the-notice",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "      if (noticeShown(win)) { win.click?.(-1, -1); return; }\n",
+    "new": "      if (win.box && !win.box.buttons?.length && !win.picker) { win.click?.(-1, -1); return; }\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-a-key-taken-for-a-panel",
+    "file": "src/ui/enhanced/enhancedNotice.js",
+    "old": "export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);\n",
+    "new": "export const noticeShown = (owner) => owner?._noticeKey != null;\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  },
+  {
+    "name": "SPELLSHOP-SAID-no-panel-ever-shown",
+    "file": "src/ui/enhanced/enhancedNotice.js",
+    "old": "export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);\n",
+    "new": "export const noticeShown = (owner) => owner?._noticeKey == null && panels.has(owner._noticeKey);\n",
+    "tests": [
+      "test/ui/fb1019f_spellshopsaid.test.js"
+    ]
+  }
+]

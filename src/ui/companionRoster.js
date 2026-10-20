@@ -28,7 +28,7 @@
 // well, the rank and the personality chips, the acts buttons (Release the warn) - this sheet writes geometry and the
 // words' colours alone.
 
-import { retinue, revenantsWithYou, revenantsAway, callRevenant, callRefusal, sendRevenantAway, releaseRevenant, restUntil, REVENANT_RETINUE_MAX } from '../systems/revenant/revenantCompanions.js';
+import { retinue, revenantsWithYou, revenantsAway, callRevenant, callRefusal, sendRevenantAway, leaveRefusal, releaseRevenant, restUntil, REVENANT_RETINUE_MAX } from '../systems/revenant/revenantCompanions.js';
 import { companionsWithYou, companionRoster, COMPANION_SLOTS } from '../systems/companionSlots.js';
 import { revenantPortrait, revenantRankNumeral } from '../systems/revenant/revenant.js';
 import { PERSONALITIES } from '../systems/revenant/revenantPersonality.js';
@@ -347,7 +347,7 @@ function row(el, r, { now, rerender, meter, here, kindName, stars }) {
     if (state === 'with') {
       const away = el('button', 'act', 'Send away');
       away.title = 'It steps out through a portal and waits until you call it';
-      away.onclick = () => { _notice = null; sendRevenantAway(r.id); rerender(); };
+      away.onclick = () => { const no = leaveRefusal(r); _notice = no ? { id: r.id, text: no } : null; if (!no) sendRevenantAway(r.id); rerender(); };   // COMPANION-DROP: never from my side inside the open zone - said
       acts.append(away);
     } else {
       const why = callRefusal(r, now);

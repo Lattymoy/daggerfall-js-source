@@ -119,11 +119,12 @@
   {
     "name": "ESCROW-the-escrow-asked-of-any-room",
     "file": "src/scenes/world.js",
-    "old": "realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildCartWord(",
-    "new": "realm: at, room: lay, collect: 1, ...wildCartWord(",
+    "old": "realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(",
+    "new": "realm: at, room: lay, collect: 1, ...wildFallWords(",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1019f B2 (re-aimed): the fallen's own ask says its words through wildFallWords (systems/wild/wildDeath.js), the wagon's among them."
   },
   {
     "name": "ESCROW-the-held-records-piece-taken",

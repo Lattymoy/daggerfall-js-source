@@ -2034,6 +2034,16 @@
   "tr": "ec4b96c31b6a",
   "by": "claude-in-session"
  },
+ "account.refusal.mendMoved": {
+  "en": "09f51592c6f3",
+  "tr": "609bf1878bcc",
+  "by": "claude-in-session"
+ },
+ "account.refusal.mendNotNegative": {
+  "en": "7a93371171ae",
+  "tr": "58407af140e4",
+  "by": "claude-in-session"
+ },
  "account.refusal.method": {
   "en": "3828c1bd90e5",
   "tr": "e22d7b699220",
@@ -2912,6 +2922,11 @@
  "account.refusal.repairNotSet": {
   "en": "6ee1527e65ec",
   "tr": "65c0f13f8462",
+  "by": "claude-in-session"
+ },
+ "account.refusal.repairTicket": {
+  "en": "d751d8e5031b",
+  "tr": "84fe47d308ca",
   "by": "claude-in-session"
  },
  "account.refusal.reportBody": {
@@ -8074,6 +8089,11 @@
   "tr": "fbcefd6e3d7d",
   "by": "claude-in-session"
  },
+ "eg.objective.gauntlet": {
+  "en": "01c638f93cdc",
+  "tr": "60ae34de11b7",
+  "by": "claude-in-session"
+ },
  "eg.panel.circles": {
   "en": "947d116e6748",
   "tr": "129a595a14ea",
@@ -8147,6 +8167,11 @@
  "eg.ping.wait": {
   "en": "07e0ce65e7b1",
   "tr": "323b9097bf9e",
+  "by": "claude-in-session"
+ },
+ "eg.progress.gauntlet": {
+  "en": "83d2b8b37cf7",
+  "tr": "7600e09dd12b",
   "by": "claude-in-session"
  },
  "eg.recap.close": {
@@ -11087,6 +11112,11 @@
  "holdings.wagon.boons.sound": {
   "en": "71476c661351",
   "tr": "ab1e097acdc6",
+  "by": "claude-in-session"
+ },
+ "hud.status.unwell": {
+  "en": "64e010f7422a",
+  "tr": "8ab13f3dd171",
   "by": "claude-in-session"
  },
  "instance.door.holdLine": {
@@ -19374,6 +19404,11 @@
   "tr": "2701a94c0eb5",
   "by": "claude-in-session"
  },
+ "player.dungeonVoid": {
+  "en": "48bb867188de",
+  "tr": "566a72b87c76",
+  "by": "claude-in-session"
+ },
  "poi.diff.about": {
   "en": "bb665c2abed8",
   "tr": "6ad8ec42840c",
@@ -21922,6 +21957,11 @@
  "prof.page.enchant.shop": {
   "en": "af0ec3061860",
   "tr": "fc54dc9fe756",
+  "by": "claude-in-session"
+ },
+ "prof.page.enchant.under": {
+  "en": "1b71e3df149f",
+  "tr": "15d8bb35dec8",
   "by": "claude-in-session"
  },
  "prof.page.family.armour": {
@@ -24594,6 +24634,16 @@
   "tr": "26b1e89bf788",
   "by": "claude-in-session"
  },
+ "quest.offer.questorBusy": {
+  "en": "d9c7f3c4fe22",
+  "tr": "a039e18a49dd",
+  "by": "claude-in-session"
+ },
+ "quest.offer.questorBusyUnnamed": {
+  "en": "c624798a2c3a",
+  "tr": "8ae248e834af",
+  "by": "claude-in-session"
+ },
  "quest.outcome.filed": {
   "en": "928a8c2089a6",
   "tr": "8bb9ee751f61",
@@ -26242,6 +26292,11 @@
  "rvn.sworn.gone": {
   "en": "d6b14041d575",
   "tr": "b9ad024cef2f",
+  "by": "claude-in-session"
+ },
+ "rvn.took.home": {
+  "en": "885996d181e9",
+  "tr": "9304fa359dc7",
   "by": "claude-in-session"
  },
  "rvn.unq.amb.mastery": {
@@ -27974,6 +28029,11 @@
   "tr": "5c31be9f2a5c",
   "by": "claude-in-session"
  },
+ "status.health.unwell": {
+  "en": "a640de0c2ebd",
+  "tr": "e6f16c45ffec",
+  "by": "claude-in-session"
+ },
  "stolen.card": {
   "en": "b64470fd53d6",
   "tr": "f69cbbd07d6f",
@@ -28327,6 +28387,31 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "c51d5fc556fb",
+  "by": "claude-in-session"
+ },
+ "wild.companion.away": {
+  "en": "488eae2a81a1",
+  "tr": "b6e87984f29d",
+  "by": "claude-in-session"
+ },
+ "wild.companion.left": {
+  "en": "4b3bcdd7b011",
+  "tr": "cc0979ee59d7",
+  "by": "claude-in-session"
+ },
+ "wild.companion.stays": {
+  "en": "137d146989f7",
+  "tr": "231f976c7912",
+  "by": "claude-in-session"
+ },
+ "wild.companion.yours": {
+  "en": "370154673ec6",
+  "tr": "57e3a0f246da",
+  "by": "claude-in-session"
+ },
+ "wild.companion.yoursFirst": {
+  "en": "d601a60c609f",
+  "tr": "139df5b422f8",
   "by": "claude-in-session"
  },
  "wild.death.burnt": {

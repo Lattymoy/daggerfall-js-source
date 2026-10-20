@@ -437,6 +437,15 @@ are unnamed townsfolk where the feature lives, and a later step's giver is a new
 QUESTLINES LINES-10: the words treated them as one, who changed name and town between steps; Corvane "keeps no room
 long").
 
+QUEST-NAME-ONE (FIELD BUGS 2026-10-20, Harlander: "the name mentioned in the quest text doesn't match the name of the NPC
+you talk to to progress it"; `01-Overview/bugs/Field-Bugs-2026-10-20.md`). `ql name` renamed the Person, and nothing
+told the NPC stood for them: StaticNPC.GetDisplayName draws a static NPC's name again from its seed, so the plate, the
+Info line, the plaque and the talk partner said the name the seed drew while the words, the journal and the guide said
+Ysolde Marnhel, Prior Anselm Vey, Hamid al-Rasheen or Corvane Tull - in all sixteen steps a named giver gives. The NPC
+stood for a quest Person now answers to the Person's own name (`systems/quest/person.js` personOwnName, carried by the
+stand's one builder and answered by `characters/staticNpc.js` staticNpcName - Port-Ledger's QUESTLINES row, departure
+11). Pinned by `test/systems/fb1020_questnameone.test.js`, which reads every `ql name` the scripts hold.
+
 ### 4.1 THE DAGON CYCLE - three lines, one story (online)
 
 The breach, the covens and the Spire are already one story in the shipped lore: Dagon's mortal faithful open the

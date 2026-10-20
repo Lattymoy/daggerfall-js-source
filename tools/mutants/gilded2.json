@@ -74,8 +74,8 @@
   {
     "name": "GILDED2-every-foe-burns",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "for (const f of near(door, struck.ai.feet, metres, target)) if (foeGroup(f.entity) === group) door.hurtFoe",
-    "new": "for (const f of near(door, struck.ai.feet, metres, target)) door.hurtFoe",
+    "old": "for (const f of near(door, struck.ai.feet, metres, target)) if (foeGroup(f.entity) === group) reachOn(door, f,",
+    "new": "for (const f of near(door, struck.ai.feet, metres, target)) reachOn(door, f,",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GILDED2-the-elements-share-taken",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "door.hurtFoe(f, Math.max(1, Math.round(amount)));\n}\n/** Earthshaker",
-    "new": "door.hurtFoe(f, Math.max(1, Math.round(amount * elementShare(f.entity, 'fire'))));\n}\n/** Earthshaker",
+    "old": "reachOn(door, f, Math.max(1, Math.round(amount)), word);   // CHAIN-SEEN\n}\n/** Earthshaker",
+    "new": "reachOn(door, f, Math.max(1, Math.round(amount * elementShare(f.entity, 'fire'))), word);   // CHAIN-SEEN\n}\n/** Earthshaker",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -174,7 +174,7 @@
   {
     "name": "GILDED2-the-struck-one-spared",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!(amount > 0)) return;\n  again(target, amount);\n",
+    "old": "  if (!(amount > 0)) return;\n  again(target, amount, word);   // FIELD BUGS 2026-10-19f CHAIN-SEEN: its number tagged with its name, as Many Endings' is\n",
     "new": "  if (!(amount > 0)) return;\n",
     "tests": [
       "test/systems/gilded2_world.test.js"
@@ -201,8 +201,8 @@
   {
     "name": "GILDED2-AUDIT-reach-past-3m",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group);",
-    "new": "case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres * 1.13, p.group);",
+    "old": "case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name);",
+    "new": "case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres * 1.13, p.group, p.name);",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

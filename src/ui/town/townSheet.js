@@ -36,7 +36,7 @@
 // often than the town does.
 // ═══════════════════════════════════════════════════════════════════
 
-import { boundarySegments, linkSegments, fitView, toPaper, NAME_FACE } from '../ink/inkMap.js';
+import { boundarySegments, linkSegments, fitView, toPaper, viewCentredOn, SCALE_MAX, NAME_FACE } from '../ink/inkMap.js';
 import {
   townBytes, townChains, quarterChains, quarterOfType, isBuilt, QUARTERS, sheetY,
   paintTownStatic, paintTownOverlay, BLOCK_PX, TOWN_MARK_HALF,
@@ -76,6 +76,10 @@ export const QUEST_WEIGHT = 1.2;
 /** Below this zoom no name is laid at all - at a whole-town fit they
  *  are a grey band rather than words, and the solver's work is wasted. */
 export const NAME_ZOOM_MIN = 0.55;
+/** FINDME-TOWN: Find me's street zoom - this many blocks across the paper's short side. Near enough that the streets
+ *  round the player read and their names are lettered (far past NAME_ZOOM_MIN), far enough that the next block over is
+ *  on the paper too. */
+export const FIND_ME_BLOCKS = 2;
 
 const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
 
@@ -418,6 +422,20 @@ export function createTownSheet(deps = {}) {
     /** At rest the whole town is on the sheet, centred on the player. */
     homeView(limits) {
       return fitView(limits, playerOnSheet());
+    },
+
+    /** FINDME-TOWN: where the player stands on the streets - their caret, which the window's Find me crosses. */
+    me: playerOnSheet,
+
+    /** FINDME-TOWN: THE WINDOW'S FIND ME, ON THE STREETS - the view centred on the player's own caret at street zoom
+     *  (FIND_ME_BLOCKS blocks across the paper's short side), or nearer where the plan is zoomed past it already. Null
+     *  where the host hands no player: no town door hands the bay's pixel, and none is ever read here.
+     *  @param {{paperW:number, paperH:number}} limits @param {{scale:number}|null} [view] */
+    findMe(limits, view = null) {
+      const me = playerOnSheet();
+      if (!me) return null;
+      const street = Math.min(limits.paperW, limits.paperH) / (FIND_ME_BLOCKS * BLOCK_PX);
+      return viewCentredOn(me.x, me.y, Math.min(SCALE_MAX, Math.max(street, view?.scale ?? 0)), limits);
     },
 
     // ── handles for the pins ────────────────────────────────────────

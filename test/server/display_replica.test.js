@@ -55,7 +55,7 @@ test('DISPLAY-REPLICA: a seat read asked from a request already on a session (a 
   for (const w of [await svc.guest(), await svc.guest(), await svc.guest()]) base._raw.prepare("INSERT INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)").run(String(anticlere.key), w.id, seatReportText(anticlere), anticlere.region, T0 - 86400);
   const request = replicaDb(base, d1Position(base));
   const player = { id: 'p-somebody', handle: 'Somebody', registered_at: T0 - 30 * 86400 };
-  const seatSessions = () => base._sessions.filter((s) => s.statements.some((q) => q.includes("world_witness WHERE kind = 'seat'"))).map((s) => s.constraint);
+  const seatSessions = () => base._sessions.filter((s) => s.statements.some((q) => /world_witness (?:INDEXED BY \w+ )?WHERE kind = 'seat'/.test(q))).map((s) => s.constraint);   // PIN MOVED (AUDIT LEAN-READS 2 A3): the judged read names its index
   const first = await listSeats({ db: request, nowS: T0 }, player, ENV);
   assert.deepEqual(first.seats.map((s) => s.key), [anticlere.key]);
   assert.deepEqual(seatSessions(), [SEAT_ROWS_FROM], 'its own session, off the binding - not the request\'s');

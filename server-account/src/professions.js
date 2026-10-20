@@ -1704,7 +1704,9 @@ export async function listWrits({ db, nowS }, player, env, { character, region }
   await postMemberWrits(db, day, region, nowS, character, members, zero);
   // CHAP3a: a member's own writ to its owner alone - never another's, never another character's of the account - and only
   // while it is the guild's member (or once it filled it)
-  const { results = [] } = await db.prepare("SELECT * FROM writs WHERE day = ?1 AND region = ?2 AND (owner = '' OR owner = ?3) ORDER BY kind, faction, slot")
+  // WRIT-BOARD (migration 0138): the two owners each sought to its region on idx_writs_owner - `+kind` keeps the table's UNIQUE index
+  // from being chosen for its order, which walked every member's own writs of the region's day to keep the caller's
+  const { results = [] } = await db.prepare("SELECT * FROM writs WHERE day = ?1 AND region = ?2 AND owner IN ('', ?3) ORDER BY +kind, faction, slot")
     .bind(day, region, character).all();
   // and a hidden guild's to its members alone (and the one who filled it)
   const hidden = halls && results.some((w) => w.kind === 'hall' && hallHidden(Number(w.faction))) ? await hiddenMemberships(db, player.id, character) : null;

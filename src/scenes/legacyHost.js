@@ -920,11 +920,20 @@ export function createLegacyHost(deps) {
    *  taken from (readyList), for the world host to stand as a body where it lies (scenes/legacyRemainsStand.js). None for
    *  the past, a waiting Succession, a page not the one played's, or with the switch off - the slow tick's own guards. */
   function remainsToStand() {
+    return remainsLying().map((r) => { readyList(r); return r; });
+  }
+  /** The rows remainsToStand stands, before their lists are made ready - the slow tick's own guards, one home. */
+  function remainsLying() {
     if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];
     const p = current();
     if (!p || !isAlive(p) || !playedHere(p)) return [];
-    return openRemains().filter((r) => r.state === 'lying' && r.place).map((r) => { readyList(r); return r; });
+    return openRemains().filter((r) => r.state === 'lying' && r.place);
   }
+  /** HEIR-WHOLE (FIELD BUGS 2026-10-19f): WHERE THE LINE'S REMAINS LIE, for the instance door (scenes/instanceDoor.js) - the
+   *  rows remainsToStand would stand, as `{ line, id, place }`: the line's id and the row's, which name the heir's own
+   *  instance of a dungeon they lie in whole (systems/instancePlaces.js remainsWholeAt, remainsInstanceEpoch). A read: no
+   *  list is made ready, nothing is claimed. */
+  const remainsWhere = () => remainsLying().map((r) => ({ line: family.id, id: r.id, place: r.place }));
 
   /**
    * THE SUCCESSION'S CHOICE: `{ personId }` a living member, or `{ newborn: true }` a child of the fallen - the waiting
@@ -1581,6 +1590,7 @@ export function createLegacyHost(deps) {
     questLogEntries,
     mapMarks,
     remainsToStand,
+    remainsWhere,
     layToRest,
     takeBorn,
     bornResult,

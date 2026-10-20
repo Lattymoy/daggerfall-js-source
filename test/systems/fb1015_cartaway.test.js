@@ -177,8 +177,9 @@ test('CART-AWAY THE CLIENT\'S WORD (systems/wild/wildCart.js wildCartAway / wild
   assert.deepEqual(wildCartWord(false, WAGON.stabled(), mask), { cart: 1 }, 'the mod off: the cart goes where its owner goes');
   // the host: the fallen's own ask carries the word, over the runtime's record and the zone's mask; the seizure none
   const w = rd('src/scenes/world.js');
-  assert.ok(w.includes('...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildCartWord(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),'), 'my drop says where my wagon is');
-  assert.ok(w.includes("import { wildCartWord } from '../systems/wild/wildCart.js';"));
+  assert.ok(w.includes('...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),'), 'my drop says where my wagon is');   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js)
+  assert.ok(w.includes("wildFallWords, wildTookAny } from '../systems/wild/wildDeath.js';"));
+  assert.ok(rd('src/systems/wild/wildDeath.js').includes('export const wildFallWords = (on, rec, mask) => ({ ...wildCartWord(on, rec, mask), packs: WILD_FALL_PACKS });'), 'the wagon\'s word among them');
   assert.ok(w.includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then('), 'a seizure says nothing of another\'s wagon');
 });
 

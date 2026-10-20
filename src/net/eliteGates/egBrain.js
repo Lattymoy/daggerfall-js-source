@@ -754,7 +754,7 @@ function standFight(B, spec, now, rng, out) {
       const k = Math.min(pillars.length, 2 + Math.ceil(n / 2));
       F.gauntlet = pillars.slice(0, k).map((p) => ({ p, stood: 0, at: 0, done: 0 }));
       for (const g of F.gauntlet) { const [c] = egLegionRaise(F, [EG_KIND.caster], [onPillar(g.p)], now, out); if (c) { c.pinned = 1; g.i = c.i; } }
-      P.obj = 'gauntlet'; P.left = F.gauntlet.length;
+      P.obj = 'gauntlet'; P.left = F.gauntlet.length; P.silenced = F.gauntlet.map((g) => g.done);   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: each plate's word from the wake (trialStep's)
     } else {
       if (v !== 'winch') egLegionRaise(F, [EG_KIND.bearer, EG_KIND.bearer], spec.gate.bearers.map((q) => [q.x, q.z]), now, out);
       const k = Math.min(pillars.length, 1 + Math.ceil(n / 3));
@@ -1657,6 +1657,10 @@ function trial(B, spec, now, inHall, rng, out) {
         if (on) { g.stood = g.stood ? g.stood : now; if (now - g.stood >= EG_SILENCE_MS) { g.done = 1; const c = egBodyById(F, g.i); if (c) egGone(F, [c], EG_GONE.crumbled, '', now, out); out.push({ k: 'esay', w: 'silenced' }); } } else g.stood = 0;
       }
       F.pg.left = F.gauntlet.filter((g) => !g.done).length;
+      // FIELD BUGS 2026-10-19f GAUNTLET-PLATES (section 8.3): and plate by plate, in `spots.pillar`'s order, whether its Caster is
+      // silenced (1) - by its plate held or its death (GAUNTLET-SLAIN, above) - so the screen marks the plates still to hold
+      // and dims a silenced one (scenes/eliteGates/egFight.js gauntletPlates).
+      F.pg.silenced = F.gauntlet.map((g) => g.done);
       if (!F.pg.left) { door(B, spec, now, out); return; }
     } else if (v === 'winch') {
       const plates = spec.spots.winch ?? [], need = Math.min(2, living(B).length);   // AUDIT EG V (L3-2; section 8.3): `n` the living company now, never the wake's

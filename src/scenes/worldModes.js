@@ -34,7 +34,7 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // RESURRECT1:
 import { horseCareRules } from '../systems/upkeep/upkeepSwitch.js';   // STEED1: a Stable prices its horses by what they are while horses are cared for (HORSE-TIERS: any tier but Off, through the one accessor)
 import { bloodDecalDeps } from '../combat/blood/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/blood/bloodMarks.js';   // BLOOD1a
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the interior cache's frame and the ground its legacy heights stood on
 import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the body's limbs on the climb
@@ -165,7 +165,7 @@ import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { SOUND, swingSoundFor } from '../systems/soundClips.js';   // AUDIT 23: the bow loose + no-enemy swing sounds
-import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
+import { fetchBytes, applyMotorEffectFlags, applyFallLanding } from './shared.js';
 import { setDeathPresenter, setAvoidDeathHook, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY
@@ -443,6 +443,7 @@ import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/poti
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/item/itemMakerWindow.js';
 import { createPotion, getMagicItemTemplates, LOOT_NEWER_TEXT, shownSpellName } from '../systems/loot/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry; L10N3e: a spell's name as shown
 import { SITE_TYPES } from '../systems/quest/place.js';
+import { personOwnName } from '../systems/quest/person.js';   // QUEST-NAME-ONE: a quest stand answers to its Person's own name
 import { placeFoeFreely, questStandBox, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, MARKER_FLOOR_REACH } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop
 import { chestIdentity, matchChests } from './chestRecords.js';   // HOLD-KEPT: a house chest's record by which chest it is
 import { placeFoeEnv, placeRoomQuestFoe, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave, heldSpots, holdSpotWhile, restandMendedQuestFoe } from './quest/questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
@@ -1806,6 +1807,7 @@ export function createWorldModes(host) {
     collider: () => interiorCtx?.collider ?? null, origin: () => buildingOrigin(), roomLights: () => interiorCtx?.lights ?? null,
     mwPicture: decorMwPicture,
     doors: decorDoorHooks,   // HOME-DOORS: a placed door hangs as one of the room's own action doors
+    body: player,   // DECOR-CLEAR: a piece landing round the body - or the room's own put back - is solid once it is clear (player/lateSolid.js)
   });
   let _decorVisit = 0;   // a visit's token: an online home's pieces landing after the visit ended stand nowhere
   let _decorListed = -1;   // DECOR-SHELL: the visit whose online home's list has stood (AUDIT DECOR-SHELL 2) - no decorating before it
@@ -2066,6 +2068,7 @@ export function createWorldModes(host) {
       nameSeed: person.nameSeed ?? -1,
       buildingKey,
       mapID: 0,
+      personName: personOwnName(person),   // QUEST-NAME-ONE: the Person's own name - its words', its journal's (characters/staticNpc.js staticNpcName)
     });
   };
   const questStandLook = (s, buildingKey) => {
@@ -3776,7 +3779,9 @@ export function createWorldModes(host) {
    *  window's, by construction, and no drain has to remember it. */
   /** DISC10-E L3: what a service arm answers when the TRADE DOOR refused
    *  its counter (ui/tradeDoor.js - a transformed lycanthrope). The door
-   *  has already said the line; the popup reads this as a dispatch. */
+   *  has already said the line; the popup reads this as a dispatch.
+   *  QUESTOR-SAID: and the guild's quest door's silent close, C#'s
+   *  CloseWindow with nothing pushed - a dispatch of nothing. */
   const DOOR_REFUSED = Object.freeze({ refusedByDoor: true });
   function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}, road = null) {
     // AUDIT 63 F11: CalculateTradePrice's player reads are BOTH live on
@@ -6747,8 +6752,7 @@ export function createWorldModes(host) {
         entity: playerEntity,
         onClose: () => closeSpellWindow(potionWin),
       });  potionWin = enhancedWindow(potionWin, 'potionMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
-      mountServiceWindow(potionWin);
-      return null;
+      return mountServiceWindow(potionWin);   // QUESTOR-SAID: handed back, as the book's - a null read "not available yet" over it
     }
     // M4: the item maker, the Mages Guild's own enchanter. M4 wired
     // the destination immediately below - ItemMakerWindow into the
@@ -6765,8 +6769,7 @@ export function createWorldModes(host) {
         onEnchanted: () => surfacePlayer(),
         onClose: () => closeSpellWindow(itemWin),
       });  itemWin = enhancedWindow(itemWin, 'itemMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
-      mountServiceWindow(itemWin);
-      return null;
+      return mountServiceWindow(itemWin);   // QUESTOR-SAID: handed back, as the book's - a null read "not available yet" over it
     }
     // U42: BUY SPELLS. DFU pushes the spellbook itself in BUY MODE
     // from the service popup - one window, one `true` argument
@@ -6803,10 +6806,10 @@ export function createWorldModes(host) {
         onClose: () => closeSpellWindow(bookWin),
       }, { buyMode: true });
       bookWin = enhancedWindow(bookWin, 'spellShop');   // SHOP-PLUS: the Enhanced Plus face; the classic window unchanged
-      // Mount AND hand back, the repair arm's shape rather than the
-      // maker windows' `return null` - the popup's onService reads the
-      // return value, and a null makes it answer "not available yet"
-      // over a window that just opened.
+      // Mount AND hand back, the repair arm's shape (and since
+      // QUESTOR-SAID the potion and item makers' too) - the popup's
+      // onService reads the return value, and a null makes it answer
+      // "not available yet" over a window that just opened.
       return mountServiceWindow(bookWin);
     }
     // E8: the spell maker is a NATIVE window now (INFO01I0), so it
@@ -6903,9 +6906,11 @@ export function createWorldModes(host) {
         buildingFactionId: route.buildingFactionId,
       });
       const boxes = questBridge.offerBoxes(step, rows);
-      // A guild offer's first step is 'offer' or 'fail' - both box; an
-      // empty chain is the silent-close face and opens nothing.
-      if (boxes.length) flow = new ServiceFlowWindow(boxes, { onClose: () => closeSelf() });
+      // A guild offer's first step is 'offer' or 'fail' - both box - and a
+      // questor whose quest is open says so (QUESTOR-SAID). An empty chain
+      // is C#'s silent close (a drawn quest with no offer message): the
+      // popup closes on nothing, never "That service is not available yet."
+      flow = boxes.length ? new ServiceFlowWindow(boxes, { onClose: () => closeSelf() }) : DOOR_REFUSED;
     }
     return flow;
   }
@@ -10585,11 +10590,6 @@ export function createWorldModes(host) {
     // DFU's own script-order indeterminacy between InputManager.Update
     // and PlayerMotor.Update.
     const axes = overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, { ...mv, autorun: player.toggleAutorun });
-    // Platform riding (the DFU MoveWithMovingPlatform shape) was wired
-    // ONLY into the standalone ?dungeon scene, so a world/exterior
-    // hosted dungeon dropped the mover delta and the lift penetrated
-    // the capsule. The delta applies BEFORE the player's own move.
-    if (!overlayHeld) ridePlatform(player, mode === 'dungeon' ? dungeonCtx?.actions : interiorCtx?.actions);
     // SD7b (Super-Dungeons.md section 9): THE UNMOORED STEPS ride before the motor too - each step stood where the realm's
     // clock has it and a body on one carried with it (under a window as well: the realm's clock runs on), and while the
     // motor runs the breath's push and the void's cast-back
@@ -10942,9 +10942,9 @@ export function createWorldModes(host) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
-      if (pendingDungeonExit) { pendingDungeonExit = false; if (aliveUnder()) { exitDungeonNow(); return true; } }   // F-A5: outside any overlay dispatch; AUDIT WB B2: a death taken since is the death's to resolve (the court's casts out before its gate) - never a dead player walked out
+      if (pendingDungeonExit) { pendingDungeonExit = false; if (aliveUnder()) { exitDungeonNow(); return true; } } else if (standFromVoid(dungeonCtx.voidRescue(), player)) dungeonCtx.hudSay(dungeonVoidText());   // F-A5: outside any overlay dispatch; AUDIT WB B2: a death taken since is the death's to resolve (the court's casts out before its gate) - never a dead player walked out; FIELD BUGS 2026-10-19f VOID-DUNGEON: VOID-ENTRY's failsafe underground - a body below everything the dungeon stands on stands again where the dungeon places one (dungeonContext.js voidRescue), and is told
       if (pendingDungeonWagonOpen) { pendingDungeonWagonOpen = false; dungeonCtx.openInventoryWithWagon(); }   // DISC21-B: the box is off the slot now
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:"if (!overlayHeld) ctx.actions.update"'s `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt, player);   // dungeon.js:"if (!overlayHeld) ctx.actions.update"'s `if (!held)` - a paused game advances no movers; MOVER-BODY: and the movers carry the body they meet, or hold (world/actionSystem.js _standMover)
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       const _deadS = isGateArena(dungeonLoc) ? (host.deadlandsSeconds?.() ?? performance.now() / 1000) : 0;   // WB6b: the sky's clock, for the court's flash and its shards
@@ -11161,9 +11161,9 @@ export function createWorldModes(host) {
     // A paused game advances no movers - DFU's door swing is an iTween
     // that never opts out of timeScale - so a swing begun before the
     // window opened used to complete under it and ring its close sound
-    // over a frozen world, while the frame's own ridePlatform (gated)
-    // declined to carry the player with it.
-    if (!overlayHeld) interiorCtx.actions.update(dt);
+    // over a frozen world. MOVER-BODY: the movers carry the body they
+    // meet, or hold (world/actionSystem.js _standMover).
+    if (!overlayHeld) interiorCtx.actions.update(dt, player);
     // ROAD-C c2/S9: the 5 Hz reveal probes, the dungeon arm's own gate.
     // CheckForNewlyDiscoveredMeshes runs on IsPlayerInsideBuilding
     // exactly as it runs in a dungeon (Automap.cs:1155).
@@ -11769,7 +11769,8 @@ export function createWorldModes(host) {
       const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
       // The real caller assigns what openServiceFlow RETURNS - the
       // trade arms hand back a flow for the popup to mount, where the
-      // maker windows mount themselves and answer null. A probe that
+      // maker windows mount themselves and hand themselves back
+      // (QUESTOR-SAID: a null read "not available yet"). A probe that
       // dropped the return value would test only half of them.
       const flow = openServiceFlow(destination, { guild, memberships, store: null, rows: null, route: null });
       // the same contract the real caller keeps: a window mounts, a

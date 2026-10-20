@@ -36,6 +36,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { swallowBrowserKey } from '../input.js';   // AUDIT 27h H2: the typed field still swallows the keys the browser would steal
 import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';   // DISC29-D: the watchdog counts frames, not milliseconds
+import { noticeShown } from './enhancedNotice.js';   // SPELLSHOP-SAID: the notice a ported window raised takes the first click
 
 /** A renderer that paints nothing and answers the canvas. */
 export function quietRenderer(renderer) {
@@ -384,8 +385,9 @@ export function portWindow(win, spec, doc = globalThis.document) {
       e.stopPropagation();
       if (b && !b.disabled) commitTyped();   // AUDIT 27h H7: at the click, not the press - a commit at the press rebuilt the buttons before the release, and the click never came
       // DROPS-AUDIT F6: a click-anywhere notice the classic window holds (a box with no buttons) takes the first
-      // click, as the classic click does - dismissed there, and nothing under it acts
-      if (win.box && !win.box.buttons?.length && !win.picker) { win.click?.(-1, -1); return; }
+      // click, as the classic click does - dismissed there, and nothing under it acts. SPELLSHOP-SAID: the notice is
+      // the PANEL the window raised (noticeFrame, ENH-NOTICE2) - not a `box` field only some windows keep
+      if (noticeShown(win)) { win.click?.(-1, -1); return; }
       if (!b || b.disabled) return;
       const fn = acts[Number(b.dataset.a)];
       if (typeof fn === 'function') fn();

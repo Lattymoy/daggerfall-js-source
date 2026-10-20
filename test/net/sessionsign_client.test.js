@@ -5,7 +5,7 @@
 // service it was not handed by refuses at the preflight.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { call, sessionPassFor, forgetSessionPass, forgetSession, register, SESSION_KEY } from '../../src/net/accountClient.js';
+import { call, sessionPassFor, forgetSessionPass, forgetSession, register, SESSION_KEY, _resetBusyForTests } from '../../src/net/accountClient.js';
 import { SESSION_PASS_HEADER } from '../../src/net/sessionPassLaw.js';
 import { realmList } from '../../src/systems/realmSaves.js';
 
@@ -43,6 +43,7 @@ test('SESSION-SIGN the page keeps the pass an answer handed it, with its secret,
     d.throws = new DOMException('gone', name);
     assert.equal((await call({ fetch: d.fetch, secret: 'secret-of-eve-0001' }, '/v1/heartbeat', { mail: true })).error, 'offline');
     assert.equal(sessionPassFor('secret-of-eve-0001'), 'p1.eve.mac', `kept through a ${name}`);
+    _resetBusyForTests();   // PIN MOVED (SLOW-SHED): a heartbeat timed out holds the reads now; the pass's law is the same
   }
   // a call that could not be made - a preflight refusing the header, a service rolled back past SESSION-SIGN
   d.throws = true;

@@ -992,6 +992,9 @@ export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = nul
   // payload if the item is still equipped, restamping the clock).
   // ENCHANT-LOAD: the strip is the ITEM's, once, before every row
   // recasts (:2012-2021) - not each row's, which kept only the last.
+  // HELD-CONCEAL: a pin a blow ENDED still counts - DFU keeps the bundle
+  // while its item is worn (:1739-1742) and schedules it all the same, so
+  // a broken Invisibility comes back here (concealment.js).
   if (entity.isPlayer && entity.activeEffects?.length) {
     for (const item of items) {
       if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;

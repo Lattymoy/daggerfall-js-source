@@ -75,6 +75,7 @@ import { WILD_FALLS_KEEP_S } from './wild.js';   // INT9: a death's drop's keepi
 import { settleHolds, REZ_SETTLE_MAX } from './legacy.js';   // REZ-BLOODLINE AUDIT R1: a held fall's window closed
 import { spendLapsedStakes } from './eg.js';   // EG-ZM: the Weir Key's stake's clock
 import { TOWN_ECON_SWEEPS, TOWN_ECON_SEEN_SWEEP, townEconKeptFrom, townEconSeenFrom, keepTownShares, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: a town's acts past the days kept; AUDIT TOWN-ECON 2 SVC-3: the shares kept once
+import { settleStaleYards } from './decor.js';   // YARD-SNAP: a town's yards built again where a write left them stale
 
 /** The two schedules - wrangler.toml's [triggers] crons name exactly these (test/server/scale4b.test.js holds the two to
  *  each other). The hour's minute is off the hour, where every other Worker's cron lands. */
@@ -136,6 +137,9 @@ export const MINUTE_JOBS = Object.freeze([
   // AUDIT TOWN-ECON 2 SVC-3 (townEcon.js keepTownShares): the towns' shares counted once for the whole service each keeping,
   // into the one row every isolate reads - where every isolate read every town's days on the primary
   ['town-shares', async (ctx, env) => (townsOpen(env) ? keepTownShares(ctx.db, ctx.nowS) : 0)],
+  // YARD-SNAP (decor.js settleStaleYards): a town's yards built again where a write no decor route made left them stale -
+  // a home released, an account gone, a sweep; until then the town's yards are read from its rows, as before
+  ['yard-snap', (ctx) => settleStaleYards(ctx.db)],
   // the season's #1, counted before a reader would count it (arena.js championNow, STORM-SHED 2's kept word). AUDIT SCALE
   // A4: COUNTED ONLY WHEN A BOUT HAS COME SINCE - the board moves through a bout alone (claimArena counts it at once; no
   // route deletes an account), so a kept word no bout is newer than is stamped again rather than counted: the count

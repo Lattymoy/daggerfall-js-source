@@ -128,7 +128,9 @@ through `/internal/sd/census`, each call bounded by `ROOM_CALL_MS`. A region roo
 verified, linked accounts among its sockets (a guest is not counted - one click makes a guest). The hub takes the
 region with the most, at least `SD_CENSUS_MIN` (2); ties are broken by the slot's hash, and the region the last Hollow
 rose in is skipped when another qualifies (the gate's bag seam rule, so one crowd does not keep every Hollow). With no
-region at the minimum, `r = -1`.
+region at the minimum, `r = -1`. A region with no town to rise by is never chosen, however full (SD-SEA,
+`SD_TOWNLESS_REGIONS`): the sea's above all. Every water pixel reads as High Rock sea coast (31), so every player
+aboard a ship stands in that channel.
 
 The census is taken ONCE per rise, never on a timer (RELAY-H1: objects are billed for awake seconds). It is honest
 about its limit, as the rite is: a region is the one a client says it stands in.
@@ -141,7 +143,8 @@ failed to load stood its Hollow by another city - AUDIT SD IV S2), and the templ
 1. The candidates are the populated places of region `r`, ranked as its hub is chosen (`systems/region/regionHubs.js`
    `hubClaim`): a city over a hamlet over a village, then the one named for its region, then its RMB blocks, then its
    buildings. With `r = -1` the candidates are the Bay's first eight cities by that ranking (`SD_GREAT_CITIES`), and the
-   slot's hash picks one.
+   slot's hash picks one. A record whose region has no populated place stands as `r = -1` does (SD-SEA). Only a
+   relay from before SD-SEA raises one.
 2. Around the chosen city, the site is a pixel the gate's own scan calls suitable (`systems/gate/gateSite.js`: land, no
    location on it or its eight neighbours, not a spawned dungeon's pixel) whose nearest fast-travel town is that city -
    two to four pixels out (`GATE_TOWN_MIN_PX`..`GATE_TOWN_MAX_PX`). The slot's hash picks among the pixels that pass;
@@ -1364,8 +1367,9 @@ player sees the same step in the same place; what a foot breaks is its own.
   it at the realm's now: the Drift swinging; a Beat step there or gone - its bucket sunk far under the void
   (`SD_STEP_GONE_Y`), its draw hidden - and blinking its last 0.4 s; a Crumble step shuddering from the moment my own foot
   first stands on it (its grind heard), then its bucket gone and its draw falling, whole again 5 s after.
-- **Ridden BEFORE the motor**: the mode machine asks the set every frame of the dungeon, right after the action movers'
-  ride (`ridePlatform`) and before the motor - so the motor sweeps against the steps where they now are - and a body
+- **Ridden BEFORE the motor**: the mode machine asks the set every frame of the dungeon, before the motor - so the motor
+  sweeps against the steps where they now are (the action movers' ride, `ridePlatform` beside it then, is the movers'
+  own update since MOVER-BODY, FIELD BUGS 2026-10-19f: they carry the body as they step) - and a body
   standing on a step (`groundKey`) is carried with the step's own move, as a deck carries one (`player.carryBy`: the
   body and both ends of its render span, so a swing is no lerp). A step that went or came back carries nothing; a frame's
   hitch, or the clock put right, carries the body the step's whole move - it stays on its step.
@@ -3311,3 +3315,44 @@ beat off the alarm (the alarm line ends with this herald's beat) - both lists an
 THE FOUR HOSTS: none wired - the herald is the relay's alone. `scenes/world.js`, `scenes/worldModes.js`,
 `scenes/dungeonContext.js` and `scenes/exterior.js` are untouched (the chat's lines at a find, a fall and a fade are
 `scenes/superDungeon/sdHost.js`'s, unchanged).
+
+### SD-SEA - 2026-10-20 (no Hollow rises at sea)
+
+The owner, 2026-10-20: *"Abyss Dungeons dont seem to be spawning anymore"*. The record is
+`01-Overview/bugs/Field-Bugs-2026-10-20b.md`.
+
+**Found.** The census (section 3) counts each region's channel, and a channel is the region a client stands in by the
+politic map (`formats/mapsFile.js` `getRegionIndexAt`, DFU's `PlayerGPS.CurrentRegionIndex`). Politic 64 covers every
+water pixel of the Bay and the ocean (180,215 of the map's 500,000 pixels) and reads as region 31, High Rock sea
+coast. So every player aboard a ship stands in region 31's channel. Region 31 has no city, town or village. When the
+crowd at sea was the largest, the director raised the Hollow in region 31. Every client then found no city to stand it
+by (`sdCities` empty, logged as *"[sd] slot N: the world offers no Hollow (no site)"*). The Hollow stood nowhere for its
+48 hours, and the next one rose only after its 2-hour rest. The more the game's sailing grew, the likelier this was.
+
+**Changed.**
+
+- **The relay never chooses a region with no town** (`net/superDungeon/sdLaw.js` `SD_TOWNLESS_REGIONS`,
+  `pickSdRegion`). These are the 19 regions MAPS.BSA gives no populated place: the sea's (31), Cybiades (61: one place,
+  no town) and seventeen with no place at all. A crowd at sea is not counted, and the fullest region with a town wins.
+  With none, the Hollow rises by the Bay's great cities (`-1`), as before. The relay holds no map, so the list is
+  written in the law and pinned against MAPS.BSA.
+- **A client stands a record from an older relay** (`scenes/superDungeon/sdHost.js`): a record whose region has no
+  populated place stands as `r = -1` would, by the great cities and the slot's roll. Every client of this build stands
+  it on the same pixel, so a Hollow risen at sea before the relay deploys appears without waiting out its 48 hours.
+
+**Not changed.** The Discord herald still names the record's own region (`sdRegionName`). A Hollow the old relay raised
+at sea is announced *in the High Rock sea coast* when it is found, falls or fades. This relay never raises another.
+
+**The relay: `world233`** (`world226` on its branch, renumbered past `world226`-`world232` at the merges; NOT YET DEPLOYED). No frame changes shape. The relay and the clients can deploy in either
+order: until the relay deploys, this build's clients stand the sea's Hollows by the great cities.
+
+Pins: `test/net/superDungeon/fb1020b_sdsea.test.js` (5: the list, the census, the hub's director over the real Room, the
+client's fallback and, with ARENA2, the list against MAPS.BSA, every water pixel's region and a Hollow placed for every
+region the census can choose); `tools/mutants/fb1020b_sdsea.json` (5, all dead). PIN MOVED: `sd1_sdlaw.test.js`'s
+census pins (Dwynnen, 5, for Yeorth Burrowland, 4, and Ilessan Hills, 60, for Cybiades, 61, as the last region with a
+town); `sd3_relay.test.js`'s census rest (Wayrest, 23, for High Rock bay coast, 30); RELAY_VERSION's pin in 42 files,
+disc7's list of versions and soc1.json's version record (world233).
+
+THE FOUR HOSTS: none wired. `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js` and
+`scenes/exterior.js` are untouched. The fallback is `scenes/superDungeon/sdHost.js`'s, which `scenes/world.js` wires
+online alone.

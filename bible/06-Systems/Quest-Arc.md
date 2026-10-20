@@ -6767,3 +6767,48 @@ touches a quest whose own state says its foe is dead.
   linked copy (`sharedQuestFoe`) is the party's and is unchanged. A save already broken this way is the restart's.
 
 `test/scenes/quest/questreset1.test.js` (6); `tools/mutants/questreset1.json` (18), all dead.
+
+## QUESTOR-SAID - a questor with your quest open says so (FIELD BUGS 2026-10-19f)
+
+Players' private reports: a guild - the Fighters Guild, the Knights of the Dragon - refused a new quest with "That
+service is not available yet." while one of its quests was still open. GQL1 above had named this path and left it: an
+empty chain is C#'s silent close - an active questor among its two causes - and the popup's null face is that one
+sentence, which says the service is unbuilt.
+
+- **THE LAW IS DFU'S, THE WORDS ARE THE PORT'S.** A questor whose quest is open offers nothing:
+  `DaggerfallGuildServicePopupWindow.GetQuest` (`DaggerfallGuildServicePopupWindow.cs:550-553`) and the coven's
+  (`DaggerfallWitchesCovenPopupWindow.cs:125-129`) ask `IsLastNPCClickedAnActiveQuestor` and close. DFU closes in silence; the popups' two doors now say why
+  (`offerFlow.js:"export function questorBusy(machine) {"` - `{ kind: 'close', reason: 'activeQuestor', quest }`), and
+  the bridge boxes it (`questBridge.js:"case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];"`):
+  "You have not finished the work you were given here: The Offered Errand." - the quest by the name the journal gives it
+  (its DisplayName, a translation's -LOC one where it has one), the work alone where it has none. The text core's
+  (`quest.offer.questorBusy`, `quest.offer.questorBusyUnnamed`), drafted in the thirteen whole languages. The guild
+  popup shows it as a one-box flow over the closed popup (DFU's own CloseWindow, then a box); the coven the same. The
+  social door (DaggerfallQuestOfferWindow) keeps C#'s bare close: its talk session declines an active questor before the
+  door is reached (`npcSession.isNpcOfferingQuest`).
+- **ONE SCAN.** The quest named is the one `IsLastNPCClickedAnActiveQuestor` found:
+  `machine.js:"lastNPCClickedQuestorOf() {"` is the scan, and the DFU member answers from it - its mcp stamp, its log
+  line and QUEST-SHELF's set-aside skip unchanged.
+- **EVERY OTHER WAY TO THE SENTENCE, READ.** What still reaches it is a service that is not there in that moment: a
+  service no destination maps (genuinely unbuilt), a window whose art or SPELLS.STD has not come in, no teleport map, the
+  inventory door not ready, no quest machine or no FACTION.TXT on the host. Two did not: the guild quest door's empty
+  chain (now only a drawn quest with no QuestorOffer message, which DFU shows nothing for) is C#'s silent close, a
+  dispatch of nothing (`worldModes.js:"flow = boxes.length ? new ServiceFlowWindow(boxes, { onClose: () => closeSelf() }) : DOOR_REFUSED;"`);
+  and the potion and item makers mounted their window and answered null, which pushed the sentence onto the popup they
+  had just replaced - they hand the window back now, as the book and the repair list do. The host: three logical lines
+  fewer.
+- **THE BOX STANDS ON THE SCREEN** (AUDIT FB1019f F1). The line is one row, and the flow's box laid its rows as they came:
+  on the classic skin, in the interior's shop font (FONT0003), the line naming a guild's quest ran past both edges of
+  the 320-px panel for 177 of the 178 guild quests' titles. ServiceFlowWindow wraps a long row now, as the guild popup's
+  own box does (SS5's fitBoxRows - AUDIT GUILD-WORDS II F-2): `guildServiceWindows.js:"this._box = layoutMessageBox(font, fitBoxRows(font, t.rows), buttons);"`.
+  A row that fits is left as it is: the service flows' TEXT.RSC records (training, donation, the cure, the tavern - 140
+  rows, the widest 251 px of the 288 a box holds) lay out row for row as they did. A quest's own box wraps a row past the
+  screen too, under SS5's departure (`01-Overview/Port-Ledger.md` section A, the MESSAGE BOX row).
+
+`test/systems/quest/fb1019f_questorsaid.test.js` (7) - through the real bridge on the guide world, the questor bound by
+the machine at the accept: the guild's close and its box through the real ServiceFlowWindow, and the door open again once
+the quest is done; the unnamed quest; the coven's door the same and the social door's bare close; the words in French and
+every whole language's `{quest}`; what still reaches the sentence; the classic box wrapped on the screen, and in the real
+FONT0003 for every guild quest's title, the service records unchanged (ARENA2, the suite's usual skip). PIN MOVED:
+`test/systems/quest/covenwindow.test.js` (the coven's close carries its reason and its quest).
+`tools/mutants/questor_said.json` (16), all dead.

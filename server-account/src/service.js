@@ -31,7 +31,7 @@ import { busyRead, BUSY_SHED_MS } from '../../src/net/busyLaw.js';   // BUSY-GAT
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/server/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct161';   // acct161: JUNGLE-WOODS (2026-10-19, acct159 then acct160 on its branch, renumbered past QL12's acct159 and WB14's acct160 at the merges; the owner: "The forest region we recently implemented should be a large tree gathering spot. Moreso than other places within daggerfall"; bible/06-Systems/Professions-Arc.md JUNGLE-WOODS, bible/03-World/Bantha-Jungle.md) - a map pixel of the Jungle of Bantha (src/world/jungle/banthaArea.js) stands JUNGLE_TREE_SLOTS (48) trees a day, four times the richest woods' (src/net/nodeLaw.js treeSlots), and every slot a tree: one whose wood waits on the witnesses stands Pine there; the harvest's slot check reads a tree's slots as the law does; no migration.
+export const ACCOUNT_VERSION = 'acct164';   // acct164: LEAN-READS (2026-10-19, acct159, acct160, acct161, acct162 then acct163 and migrations 0133-0137 then 0134-0138 on its branch, renumbered past QL12's acct159 and 0133, WB14's acct160, JUNGLE-WOODS' acct161, NAME-WORDS' acct162 and 0134 and PURSE-MEND's acct163 at the merges; the account database overloaded again from 18:05 UTC - "D1 DB is overloaded. Requests queued for too long." on the harvest and the pixels, the median request 10 s; the owner: "Do everything. No band aids. No short fixes."; bible/11-Multiplayer/Scale-Arc.md THE OVERLOAD OF 2026-10-19) - LEAN-WITNESS: a hall's and a seat's answers that agree with their key's confirmation a second after it are late, kept by the database (witness_confirmed, its triggers), and the reads that judge read the rest - a hall witness reads no region unless its own answers could have it ignored, and a late report moves no region (leanWitness.js, npcHalls.js, townSeats.js; migration 0135); YARD-SNAP: a town's yards one row, built at the version the database moves on every yard row written (decor.js, migration 0136); VENDOR-BOARD: a region's traders one row, the caller's door off its own rows (market.js vendorBoard, migration 0137); WRIT-BOARD: a region's writs sought by their owner (professions.js, migration 0138); ARENA-BOARD: the arena board's counts one row a season (arena.js arenaShared, migration 0139); SLOW-SHED: an isolate whose requests wait SLOW_SHED_WAIT_MS a trip sheds what an overload sheds (service.js noteD1Wait); AUDIT LEAN-READS (2026-10-20, the owner: "Audit this and ensure perfection"): a key's answers settled at the cost of the rows that change (a strike, the old Worker's too, a confirmer at a time), every kept board in its reads' shape (keptBoard.js), kept once, last and only where it serves - the vendor board from the second it was read at - and the shed weighed by trips; AUDIT LEAN-READS 2 (2026-10-20, the owner: "Audit this"): a strike deletes each row once (leanWitness.js strikeWitness), every trigger read names its index, a late report whose town rests on a confirmer the law may ignore moves its region, the boards' versions narrow rows of their own and the traders' board served to a lagging clock (market.js vendorSpan), a trip capped where it is measured
 // acct160: WB14g (2026-10-19, acct159 on its branch, renumbered past the acct159 of QL12 at the merge; Mac: "This is all yours to take on"; bible/11-Multiplayer/Breach-Portents.md section 11) - a kill receipt's portents (net/gate/gateReceipt.js `p`, a bit each: the Vanguard, the Sundering, the Captive freed) read and verified, and a portent night's receipt rolls the Weir Key at the rite's odds (eg.js EG_KEY_ODDS_PORTENT, a quarter); AUDIT WB14 (WIRE-6, before it shipped): and fills the wealth budget a piece's room more for each portent (budget.js SPOILS_GRANT_PIECE, portentPieces)
 // acct159: QL12 (2026-10-19, acct157 on its branch, renumbered past PLAN-1000 and FOE-BOUNDS, acct157 and acct158, at the merge; the owner: "New questlines tying into and introduced the oblivion gates, abyss dungeons, elite dungeons and elite breaches"; bible/06-Systems/Questlines-Arc.md sections 1 and 5.3) - the questlines' claim (/v1/ql/claim, questlines.js): a step opened by its first claim, witnessed by its endgame receipt written after it (gate_kills, eg_redoubts - no Rehearsal's -, sd_kills, serpent_kills); a line's title on `players.ql_titles`, held for good (titles.js titlesHeld - the five in the vocabulary, RELAY world228 first), and the Covens' Hoard's Weir Key once an account (`ql_key`, `eg_keys` + 1); QUESTLINES_OPEN; migration 0133.
 // acct158: FOE-BOUNDS and GRANT-ASKS (2026-10-19, acct156 on its branch, renumbered past TOWN-ECON's acct156 and PLAN-1000's acct157 at the merges; Mac: "Spec + B + A"; bible/11-Multiplayer/Spawn-Grants.md sections 19 and 21) - the relay's own count opens a moderators' case: a record it stripped because no builder could give it (the batch's `~relay` tally, its evidence on the line) and an account's own asks far past its budget in a window; one batch's findings on an account are one line; the count opens at most GRANT_OWN_CASES_HOUR cases an hour; a tally's `stats` is a case's reason; the Discord card says the spawn grants opened a case of theirs
@@ -83,7 +83,51 @@ export function noteOverload(/** @type {number} */ nowMs) { busyShedUntil = Math
 /** BUSY-GATE: whether this request is a read the isolate sheds at `nowMs`. */
 export const shedding = (/** @type {string} */ path, /** @type {string} */ method, /** @type {number} */ nowMs) => busyRead(path, method) && nowMs < busyShedUntil;
 /** BUSY-GATE: a stood service is a fresh isolate - nothing shed. */
-export function _resetBusyShed() { busyShedUntil = 0; }
+export function _resetBusyShed() { busyShedUntil = 0; slowWaits.length = 0; slowSum.ms = 0; slowSum.trips = 0; }
+
+/** SLOW-SHED (2026-10-19, the account database overloaded again, 18:05-18:25 UTC; bible/11-Multiplayer/Scale-Arc.md
+ *  SLOW-SHED): A DATABASE TOO SLOW TO ANSWER IS SHED AS ONE THAT REFUSES. BUSY-GATE's shed opened only on D1's own word
+ *  (`overloaded`), and it left the case it could not measure yet - "a slow database that is not yet refusing opens neither
+ *  gate". In the overload it is the case that held: 52 refusals logged in twelve minutes while the median request waited
+ *  10 s and the region's traders were asked four times as often (each tab's read timing out and asked again).
+ *
+ *  THE MEASURE IS A TRIP'S WAIT (AUDIT LEAN-READS C1): the queue makes each round trip wait - a statement awaited alone,
+ *  or a batch whole - so a request's D1 wait over its trips (metrics.js measured) is the queue's depth whatever the
+ *  request batches; over its statements a batch of twelve read twelve times shorter. Measured over thirty hours of the
+ *  service's own metrics (each request's wait over its statements, ten-minute points; a trip carries 1 to 1.2 statements,
+ *  PRIMARY-TRIPS): a healthy service 40-680 ms a statement, so at most some 820 ms a trip; every overload 1,212 ms a
+ *  statement or more, so as much a trip at the least. SLOW_SHED_WAIT_MS stands between (C2: 1,500 was above the lowest
+ *  overload). Each trip counts SLOW_SHED_TRIP_CAP_MS at most (C4: one heavy statement in a quiet isolate's window is no
+ *  queue). While the last SLOW_SHED_SPAN_MS of SLOW_SHED_MIN requests or more average SLOW_SHED_WAIT_MS a trip, each request
+ *  itself that slow opens what an overload opens (noteOverload) - so it closes BUSY_SHED_MS after the last one once the
+ *  database answers quickly again - and says so in the log when it opens (C6). A shed read asks the database nothing and
+ *  adds nothing here. */
+export const SLOW_SHED_WAIT_MS = 1_000;
+export const SLOW_SHED_TRIP_CAP_MS = 5_000;
+export const SLOW_SHED_SPAN_MS = 30_000;
+export const SLOW_SHED_MIN = 16;
+/** SLOW-SHED: this isolate's recent requests - `{ at, ms, trips }` their D1 wait (each trip capped) over their trips - and
+ *  their sums, kept as they come and go (AUDIT LEAN-READS: an overload's window is the busiest; it is never added up again). */
+const slowWaits = /** @type {{ at: number, ms: number, trips: number }[]} */ ([]);
+const slowSum = { ms: 0, trips: 0 };
+/** SLOW-SHED: a request's D1 wait (`ms`) over its `trips`, ended at `nowMs` - and the shed opened where the span averages
+ *  too slow. A request that asked the database nothing says nothing of it. */
+export function noteD1Wait(/** @type {number} */ ms, /** @type {number} */ trips, /** @type {number} */ nowMs) {
+  if (!(trips > 0) || !Number.isFinite(ms)) return;
+  const waited = Math.min(ms, trips * SLOW_SHED_TRIP_CAP_MS);   // metrics.js caps each trip; a caller that hands the whole is held to the same bound
+  slowWaits.push({ at: nowMs, ms: waited, trips });
+  slowSum.ms += waited;
+  slowSum.trips += trips;
+  while (slowWaits.length && nowMs - slowWaits[0].at > SLOW_SHED_SPAN_MS) {
+    const gone = /** @type {{ ms: number, trips: number }} */ (slowWaits.shift());
+    slowSum.ms -= gone.ms;
+    slowSum.trips -= gone.trips;
+  }
+  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open
+  if (slowSum.ms / slowSum.trips < SLOW_SHED_WAIT_MS) return;
+  if (nowMs >= busyShedUntil) console.warn(`[busy] slow: the shed opened - ${slowWaits.length} requests in ${SLOW_SHED_SPAN_MS / 1000} s waited ${Math.round(slowSum.ms / slowSum.trips)} ms a trip`);
+  noteOverload(nowMs);
+}
 
 /** SCALE4d (2026-10-10, Mac: "we just hit 500 online people. I think its time to scale up our server and improve
  *  performance for more people"): THE ROUTES WHOSE READS A D1 READ REPLICA MAY SERVE. The token's mint is a dozen
@@ -112,6 +156,11 @@ export const REPLICA_ROUTES = new Map([
   // the bookmark a tab carries, every statement a replica's; with none - a page from before this, or the read after a
   // write, which the client forgets its bookmark for (net/accountClient.js `call`, AUDIT SCALE II A-2) - the first, the
   // session's lookup, the primary's, and every one after it a replica's at least as new: the caller's own writes read.
+  // LEAN-READS (AUDIT LEAN-READS B4): two of them write now - the region's traders (market.js vendorBoard) and the
+  // arena's board (arena.js arenaShared) keep their board's one row where it was stale, a write the session sends to the
+  // primary, after every read the request makes (D5) and only where the version it read is the primary's still: a
+  // replica is a prefix of the primary and a version only rises, so a board read on a replica is kept at its version or
+  // not at all. Neither keeps anything an isolate shares.
   ['/v1/homes/town', 'POST'],
   ['/v1/homes/mine', 'POST'],
   ['/v1/homes/rooms', 'POST'],
@@ -337,6 +386,7 @@ export const ROUTES = new Set([
   '/v1/mod/realm-trades',   // HACKED-GOLD: a character's realm trades, whom it traded with (review.js tradesOf)
   '/v1/mod/realm-characters',   // SUMMON-REPAIR: an account's realm characters by handle (review.js)
   '/v1/mod/realm-repair',       // SUMMON-REPAIR: one character mended by staff, once a ticket (review.js repairAct)
+  '/v1/mod/realm-mend',         // PURSE-MEND: a purse below nothing mended by staff, once a ticket (review.js mendAct)
   // ACC2: the LISTING is a fixed path; every other save route carries
   // the slot in it and is matched by `savePathOf`.
   '/v1/saves',

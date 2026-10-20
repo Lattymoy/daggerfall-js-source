@@ -100,9 +100,9 @@
   },
   {
     "name": "ARENA4b-BLOW-SPELL-AS-SWING",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "    return landOnRival(rb, dealt, 'spell');",
-    "new": "    return landOnRival(rb, dealt, 'melee');",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    return host.landOnRival(rb, dealt, 'spell');",
+    "new": "    return host.landOnRival(rb, dealt, 'melee');",
     "tests": [
       "test/net/arena/arena4b_blows.test.js"
     ]

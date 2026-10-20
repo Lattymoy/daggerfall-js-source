@@ -76,8 +76,11 @@ test('WB8a: the doors, by source - the flag\'s door skips him; a sway stops at h
   assert.match(hm, /if \(r\.pacify && foe\.ai && !foe\.entity\?\.pacifyImmune\) foe\.ai\.isHostile = false;/);
   assert.match(hm, /function bossMarksFor\(sp\) \{\n\s*if \(!bossMark \|\| !castAtBoss \|\| !sp \|\| !\(duelSpellOf\(sp\) \|\| \(sp\.effects \?\? \[\]\)\.some\(\(e\) => e && isSoulTrapEffect\(e\)\) \|\| spellSways\(sp\)\)\) return \[\];/);
   assert.match(hm, /boss: !!duelSpellOf\(sp\) \|\| \(sp\.effects \?\? \[\]\)\.some\(\(e\) => e && isSoulTrapEffect\(e\)\) \|\| spellSways\(sp\) \}\);/);
-  const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /const sways = spellSways\(sp\) && !!boss\.entity\.pacifyImmune;\n\s*if \(sways && Date\.now\(\) - swayToldAt >= BOSS_SWAY_TELL_MS\) \{ swayToldAt = Date\.now\(\); hudText\.add\(BOSS_SWAY_TEXT\(boss\.entity\.name\)\); \}/);
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): his spell door left the dungeon context for
+  // scenes/gate/standInSpell.js, which the context wires with its mid-screen line
+  assert.match(read('src/scenes/dungeonContext.js'), /createStandInSpell\(\{\n\s*player: playerEntity, say: \(line\) => hudText\.add\(line\),/);
+  const dc = read('src/scenes/gate/standInSpell.js');
+  assert.match(dc, /const sways = spellSways\(sp\) && !!boss\.entity\.pacifyImmune;\n\s*if \(sways && now\(\) - swayToldAt >= BOSS_SWAY_TELL_MS\) \{ swayToldAt = now\(\); say\(BOSS_SWAY_TEXT\(boss\.entity\.name\)\); \}/);
   assert.match(dc, /if \(!harm\) return laid \|\| sways;/, 'a sway alone met him - the missile is spent there');
   assert.match(read('src/scenes/hostCombat.js'), /if \(isQuestFoe\) return null;\n\s*if \(entity\?\.pacifyImmune\) return null;/);
 });

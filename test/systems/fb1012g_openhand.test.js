@@ -60,7 +60,7 @@ test('OPEN-HAND the dungeon host\'s claims carry what is owed - the Warden\'s, a
   const dc = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   assert.match(dc, /function landOnBoss\(boss, damage, r\) \{\n\s*damage \+= takeOwed\(boss\.entity\);/);
   assert.match(dc, /const landOnCrystal = \(cr, damage, r\) => \{ damage \+= takeOwed\(cr\.entity\); return /);
-  assert.match(dc, /const landOnHost = \(hb, damage, r\) => \{ damage \+= takeOwed\(hb\.entity\); return /);
+  assert.match(dc, /const landOnHost = \(hb, damage, r, tick = false\) => \{ damage \+= takeOwed\(hb\.entity\); return /);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): and a round's mark
   assert.match(dc, /const landOnRival = \(rb, damage, kind\) => \(takeOwed\(rb\.entity\), !!opts\.onArenaHit\?\.\(\{ i: rb\.rival, d: damage, kind,/);
   const lp = readFileSync(new URL('../../src/systems/loot/lootPowers.js', import.meta.url), 'utf8');
   assert.match(lp, /if \(f\) \{ if \(!f\.dead\) door\.hurtFoe\(f, n\); return; \}\n\s*oweFoe\(target, n\);/);

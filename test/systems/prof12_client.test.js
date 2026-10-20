@@ -32,10 +32,12 @@ import { ItemMakerWindow } from '../../src/ui/item/itemMakerWindow.js';
 import { ITEM_FIELDS, isDeclaredItemField } from '../../src/systems/item/itemFields.js';
 import { materialLabel, materialCountLabel, mintMaterialItem } from '../../src/systems/professions/profItems.js';
 import { templateByIndex } from '../../src/systems/item/itemTemplates.js';
+import { mintPiece } from '../../src/systems/smithItems.js';   // DISENCHANT-SAID: a crafted ring, as the jeweller's craft mints it
 import '../../src/systems/professions/profTemplates.js';
 import {
   setProfessionsPages, drawStoresPage, drawProfessionsPage, resetProfPages, enchantGoldPct, _alchemyForTests, ALCHEMY_AWAY_LINE, ENCHANT_AWAY_LINE,
   ESSENCE_STAYS_LINE,   // AUDIT PROF12 E1
+  disenchantableOf,   // DISENCHANT-SAID: the station's list, made by the page's module
   POTENT_NONE_LINE, ENCHANT_FULL_LINE,   // AUDIT PROF-541 B3, B8
 } from '../../src/ui/professions/profPages.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
@@ -453,7 +455,12 @@ test('AUDIT PROF12 E2 client: the Enchanting Station says a piece\'s XP by its r
   assert.match(page.text(), /Iron Longsword600 points: 6 Arcane Essence, \+7 Enchanting experience/, 'AUDIT PROF12 E2: the Iron sword\'s tier 1, quartered at 7 - 30 / 4');   // PIN MOVED (VOICE2): no dash aside, no "XP" in a sentence (Voice.md rules 3, 5)
   page.done();
   setProfessionsPages(null);
-  assert.match(hostText('src/scenes/world.js'), /essence: essenceOf\(points, profBook\?\.track\('enchanting'\)\?\.specs\?\.\[50\] === DISENCHANTER\), recipe: it\.recipe \}/);
+  // PIN MOVED (FIELD BUGS 2026-10-19f DISENCHANT-SAID): the list is made by the page's module (profPages.js
+  // disenchantableOf) and the host wires it - each piece its recipe, a Disenchanter's twice, from the real producer
+  const ring = mintPiece({ recipe: 'ring:gold:ruby', quality: 1, seed: 1, maker: 'Mac' }, 'dddddddddddddddd');
+  assert.deepEqual(disenchantableOf([ring]), [{ provenance: 'dddddddddddddddd', name: 'Gold Ruby Ring', points: 2160, essence: 21, recipe: 'ring:gold:ruby' }]);
+  assert.equal(disenchantableOf([ring], { book: { track: () => ({ specs: { 50: 'disenchanter', 100: null } }) } })[0].essence, 42, 'a Disenchanter\'s twice');
+  assert.match(hostText('src/scenes/world.js'), /disenchantable: \(\) => disenchantableOf\(playerEntity\.items, \{ kept: pieceKept, book: profBook \}\),/);
 });
 
 test('AUDIT PROF12 A2 client: a quick slot keeps a Potent potion and a plain one of the same recipe apart - two kinds, and the HUD\'s count each its own', async () => {

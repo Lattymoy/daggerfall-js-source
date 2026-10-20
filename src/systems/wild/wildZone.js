@@ -494,6 +494,13 @@ export const WILD_TEXT = Object.freeze({
   travelWait: (min) => `The mountain carriages run every ten minutes. The next leaves in ${min} minute${min === 1 ? '' : 's'}.`,
   travelPoor: (fee) => `A journey inside the ${WILD_NAME} costs ${fee.toLocaleString('en-US')} gold here.`,
   travelPaid: (fee) => `You pay ${fee.toLocaleString('en-US')} gold for the mountain road.`,
+  // COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner: "Bag drops; no send-off in zone"): a companion at my side drops his
+  // pack with mine, so none is sent off from inside the zone (the teleport's own refusal, said of a companion), nothing of
+  // mine reaches one waiting outside it, and one carried off knocked out leaves what it carries with me - through the
+  // text core (L10N4), read when they are said
+  companionStays: (name) => t('wild.companion.stays', '{name} stays at your side until you leave the {zone}.', { zone: WILD_NAME, name: name || t('wild.companion.yours', 'your companion') }),
+  companionAway: (name) => t('wild.companion.away', '{name} is waiting outside the {zone}. Come out to hand over gear.', { zone: WILD_NAME, name: name || t('wild.companion.yoursFirst', 'Your companion') }),
+  companionLeft: (name, n) => t('wild.companion.left', '{name} hands you {n, plural, one {# item} other {# items}} before leaving.', { zone: WILD_NAME, name: name || t('wild.companion.yoursFirst', 'Your companion'), n }),
   // WILD2: the rings
   ring: (r) => `${wildRingName(r)}: ${wildRingBonus(r)}.`,
   ringCross: (r, deeper) => `${deeper ? 'Deeper' : 'Back out'} - ${wildRingName(r)}: ${wildRingBonus(r)}.`,

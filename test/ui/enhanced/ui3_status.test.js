@@ -100,7 +100,7 @@ test('UI3 the needs\' glyphs: every need the strip can raise has one - the tempe
 
 // ── THE POISONS AND DISEASES ────────────────────────────────────────
 
-test('UI3 the afflictions: the Status box\'s own law - one tile for being poisoned once a poison has left its waiting (however many, and still while its damage heals), a tile a disease once its incubation is over, by the name its message gives, and nothing for one still waiting or incubating, one ended, or an infection - the same entities the box itself answers (mutants: a waiting poison shown; a tile a poison; an incubating disease shown; an infection shown; an ended one shown)', () => {
+test('UI3 the afflictions: the Status box\'s own law - one tile for being poisoned once a poison has left its waiting (however many, and still while its damage heals), a tile a disease once its incubation is over, by the name its message gives, and nothing for a poison still waiting, one ended, or an infection - the same entities the box itself answers; PIN MOVED (FIELD BUGS 2026-10-19f DISEASE-UNWELL, the owner: "Unnamed \'Unwell\' tile"): a disease still incubating is one unnamed tile, "Unwell", and the box\'s one unwell line, where it showed nothing (mutants: a waiting poison shown; a tile a poison; an incubating disease named; an infection shown; an ended one shown)', () => {
   assert.deepEqual(afflictionRows(null), []);
   assert.deepEqual(afflictionRows({ activeEffects: [] }), []);
   const poison = (state, extra = {}) => ({ kind: 'poison', poison: POISONS.Arsenic, state, statMods: {}, ...extra });
@@ -111,7 +111,9 @@ test('UI3 the afflictions: the Status box\'s own law - one tile for being poison
     [[poison('active'), { ...poison('waiting'), poison: POISONS.Moonseed }, { ...poison('active'), poison: POISONS.Thyrwort }], ['Poisoned']],
     [[poison('complete', { statMods: { strength: -4 } })], ['Poisoned']],
     [[poison('active', { ended: true })], []],
-    [[disease(DISEASES.WitchesPox, false)], []],
+    [[disease(DISEASES.WitchesPox, false)], ['Unwell']],   // PIN MOVED (DISEASE-UNWELL): it showed nothing
+    [[disease(DISEASES.WitchesPox, false), disease(DISEASES.Plague, false)], ['Unwell']],   // one tile, however many incubate
+    [[disease(DISEASES.WitchesPox, false), disease(DISEASES.Plague, true), disease(DISEASES.Cholera, false)], ['Unwell', 'Plague']],   // where the first of them stands
     [[disease(DISEASES.WitchesPox, true)], ["Witches' Pox"]],
     [[disease(DISEASES.Plague, true), disease(DISEASES.WizardFever, true), poison('active')], ['Poisoned', 'Plague', 'Wizard Fever']],
     [[disease(DISEASES.Cholera, true, { ended: true })], []],
@@ -125,6 +127,7 @@ test('UI3 the afflictions: the Status box\'s own law - one tile for being poison
     const box = healthStatusRows(e, (id) => [`#${id}`]);
     assert.equal(box.includes('#117'), want.includes('Poisoned'), 'the box says poisoned when the widget does');
     for (const [i, name] of DISEASE_NAMES.entries()) assert.equal(box.includes(`#${100 + i}`), want.includes(name), `${name}: the box and the widget agree`);
+    assert.equal(box.filter((r) => r === 'You feel unwell.').length, want.includes('Unwell') ? 1 : 0, 'DISEASE-UNWELL: the box says unwell, once, exactly when the widget does');
     assert.deepEqual(rows.map((r) => r.glyph), want.map((w) => (w === 'Poisoned' ? 'poison' : 'disease')));
   }
 });

@@ -380,7 +380,9 @@ function roundHarness(foes) {
   const aggro = [];
   for (const f of foes) f.ai.makeEnemyHostileToAttacker = (t) => aggro.push({ foe: f, t });
   const h = killHarness({ foes, foeDeps: { PLAYER_TARGET, resetAllyTeamOnPlayerAttack, isLocalPlayerTarget, withinYaw: () => true } });
-  Object.assign(h.state, { runMagicRoundsFor, killIfAnyLiveStatZero, dt: 1 / 60, foeSinks: h.foeSinks });
+  // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): the block now also calls the relay's bodies' rounds (scenes/gate/standInSpell.js
+  // standInRound) between the foes' rounds and the kill - none here, so its door answers nothing
+  Object.assign(h.state, { runMagicRoundsFor, killIfAnyLiveStatZero, standInRound: () => {}, dt: 1 / 60, foeSinks: h.foeSinks });
   const block = foeRoundBlock();
   const frame = mount(`const run = (from, to) => { const _tick = { magicRoundWindow: { from, to } };\n${block}\n}; return { run };`, h.state);
   // the call site's own statements; only the dice are fixed - every round's saving throw rolls Math.random

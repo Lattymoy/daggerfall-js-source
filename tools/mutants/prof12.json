@@ -1503,12 +1503,14 @@
   },
   {
     "name": "PROF12-E2-world-no-recipe",
-    "file": "src/scenes/world.js",
-    "old": ", recipe: it.recipe };   // AUDIT PROF12 E2: its recipe, the XP's tier",
-    "new": " };",
+    "file": "src/ui/professions/profPages.js",
+    "old": ", essence: essenceOf(points, disenchanter), recipe: it.recipe };",
+    "new": ", essence: essenceOf(points, disenchanter) };",
     "tests": [
-      "test/systems/prof12_client.test.js"
-    ]
+      "test/systems/prof12_client.test.js",
+      "test/systems/fb1019f_disenchantsaid.test.js"
+    ],
+    "note": "Re-aimed by content (FIELD BUGS 2026-10-19f DISENCHANT-SAID): the station's list left world.js for profPages.js disenchantableOf."
   },
   {
     "name": "PROF12-A1-spend-no-clamp",

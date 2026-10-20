@@ -94,7 +94,10 @@ test('AUDIT WB11 W1 a Cast When Strikes blade that cut one of his host cast on H
     assert.equal(got[0], a, `${file}: the stand-in through the mount`);
   }
   // the context lands it on the body the stand-in names - one of his host, a crystal, else him
-  const fn = /function spellOnStandIn\(record, target = null\) \{\n([\s\S]*?)\n {2}\}/.exec(read('src/scenes/dungeonContext.js'));
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): the router left the context with the spell doors
+  // (scenes/gate/standInSpell.js), which the context wires (its enchant door and its api ask spellOnStandIn)
+  assert.match(read('src/scenes/dungeonContext.js'), /const \{ spellOnBoss, spellOnCrystal, spellOnHost, spellOnRival, spellOnStandIn, standInRound \} = createStandInSpell\(\{/);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): and the rounds' frame
+  const fn = /function spellOnStandIn\(record, target = null\) \{\n([\s\S]*?)\n {2}\}/.exec(read('src/scenes/gate/standInSpell.js'));
   assert.ok(fn, 'the context routes a strike spell by the stand-in it met');
   const route = new Function('spellOnHost', 'spellOnCrystal', 'spellOnBoss', `return (record, target = null) => {\n${fn[1]}\n};`)((r, i) => `host ${i}`, (r, c) => `crystal ${c}`, () => 'him');
   assert.deepEqual([route(FIRE, a), route(FIRE, GBoss.crystalStandIn(GBoss.bossLookOf('ruhn'), 1)), route(FIRE, GBoss.bossStandIn(GBoss.bossLookOf('ruhn'), 'Valkynaz Ruhn'))], ['host 3', 'crystal 1', 'him']);

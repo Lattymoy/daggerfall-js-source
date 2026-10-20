@@ -305,6 +305,15 @@ enhanced plus UI feature."
   (Call - refused, and saying why, while the slots are full or it is still hurt; its rest), **Release** asked twice.
 - **Its words**: as it arrives when called, as it is sent away or released, when it falls, now and then as it goes into
   a fight or over a kill (a minute between each one's, twenty seconds between any) - all in its voice.
+- **In the open zone (COMPANION-DROP, FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in
+  zone")**: the one at my side there - `swornAtYourSide`, the first walking with me as the record lists it, the one the
+  zone stands (PVPDUNGEONS; the rest wait outside the zone) - carries its pack and its kit at stake with mine: a death
+  there drops them as it drops my bag (`11-Multiplayer/Wild-Zone.md` section 4,
+  `wildDropLaw.js:"export function wildPacks"`). So it is never sent away nor on an errand from my side there
+  (`revenantCompanions.js:"export const leaveRefusal = (r) =>"` - the roster says it, and the slots' hold sends
+  another), nothing of mine is given as kit to one waiting outside the zone, and knocked out there it hands me its pack
+  and its kit before it goes, said once (`revenantCompanions.js:"function leftWithYou(r)"`; one carrying nothing hands
+  nothing and says nothing - AUDIT FB1019f B4): nothing it carries leaves the zone but at my side.
 
 ## 14. The portals and the dissolve (COMPANION-PORTAL, DISSOLVE)
 
@@ -511,6 +520,14 @@ LETTERS-HOME (FIELD BUGS 2026-10-18b, `01-Overview/bugs/Field-Bugs-2026-10-18b.m
 it never takes one. "Gold" was read as the coin alone, so a letter - worth hundreds of thousands, by far the pack's most
 valuable piece - was in every draw. A letter one took before is the player's again at the next load; a deserter's
 letter comes back with its gold.
+
+STEED-KEPT (FIELD BUGS 2026-10-19f, a player's private report - their horse gone after a death in a dungeon; the owner,
+2026-10-19: "Exclude, and return taken ones"): it never takes what never changes hands, as the open zone's death reads
+it - a horse or a cart (owning one is having it in the pack), a deed (Daggerfall's, and a ship's deed or her packed
+parts) or the spellbook (`revenant.js:"export const revenantMayTake = (item) =>"`); a bound piece stays its own (AUDIT
+625 W2). A stable's horse beside a worn longsword was drawn one death in six. One it took before comes home to the pack
+at the next load, from the save's own copy, and is said once ("Grushnak the Butcher could not keep your Horse. It is
+back in your pack."); a deserter's ship's deed comes back with the rest. The law: `12-Enhanced-AI/Feud-Arc.md` section 19.
 
 ## 25. Festering (FEUD RVN9, 2026-10-04)
 
@@ -789,7 +806,10 @@ A sworn revenant wears what the player gives it. `systems/revenant/revenantGear.
   item lists customs and the load's repairs read (`net/realm/realmGoldLaw.js stashedItemLists`, AUDIT RVN G10: customs
   itself moves gold and letters, never a piece) and the realm's own (`systems/item/possessedItems.js`) - a release hands
   it back with its pack, and a deserter or a betrayer weighs it with its pack (`splitPack` - it keeps the more valuable
-  half). Abroad, its kit goes with it: nothing is given or taken back (AUDIT RVN F10).
+  half). Abroad, its kit goes with it: nothing is given or taken back (AUDIT RVN F10). COMPANION-DROP (FIELD BUGS
+  2026-10-19f, section 13): in the open zone the kit of the one at my side drops with my bag at a death there, as its pack
+  does - DECIDED there, named: its pieces are mine, given from the pack and taken back at will, worn by it and never by me,
+  so my own worn law is not theirs - and nothing of mine is given to one waiting outside the zone.
 - **Its weight abroad** (`gearPower`, section 42): a twentieth of a point a piece worn, and its tier's share more (Magic
   0.1, Rare 0.2, Legendary 0.35), at most two (AUDIT RVN G8 - ten Common pieces weighed what three Legendaries did).
 - **The page**: the Companions page's **Gear** opens a sheet under its card - a well a slot it may fill (a beast's the

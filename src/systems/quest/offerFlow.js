@@ -72,6 +72,22 @@ export const FAIL_QUEST_FLAVOUR_ID = 600;
  *  %pcf expands in the message box's generic pass, not here. */
 export const GETTING_QUESTS_1 = 'Hmm, let me see what tasks we have available.';
 export const GETTING_QUESTS_2 = 'Please have patience and wait here a moment, %pcf.';
+/** QUESTOR-SAID: why a door closed - the clicked NPC is the questor of a quest still open. */
+export const ACTIVE_QUESTOR = 'activeQuestor';
+
+/**
+ * QUESTOR-SAID (FIELD BUGS 2026-10-19f, players' private reports: a guild - the Fighters Guild, the Knights of the
+ * Dragon - answered "That service is not available yet." while one of its quests was still open). A popup's door that
+ * closes on IsLastNPCClickedAnActiveQuestor says WHY, and names the quest still open: `{ kind: 'close', reason, quest }`
+ * (the quest null where the scan cannot be asked). DFU closes the window and says nothing - the guild's GetQuest
+ * (DaggerfallGuildServicePopupWindow.cs:550-553) and the coven's (DaggerfallWitchesCovenPopupWindow.cs:125-129) - and
+ * the port's guild popup read that silence as no service at all. The departure is the words (questBridge.offerBoxes
+ * says them); the law - no new quest from a questor whose quest is open - is DFU's. The social door keeps DFU's bare
+ * close: its talk session declines such a questor before it is reached (npcSession.isNpcOfferingQuest).
+ */
+export function questorBusy(machine) {
+  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };
+}
 
 export class QuestOfferFlow {
   constructor(machine, questLists, deps = {}) {
@@ -174,8 +190,8 @@ export class QuestOfferFlow {
     this.menu = false;
     this._guild = null;
     this._guildCtx = { guildGroup: GUILD_GROUPS.Witches, buildingFactionId: factionId };
-    // Just exit if this NPC already involved in an active quest (:125-129)
-    if (this.machine.isLastNPCClickedAnActiveQuestor()) return { kind: 'close' };
+    // Just exit if this NPC already involved in an active quest (:125-129) - QUESTOR-SAID: saying why
+    if (this.machine.isLastNPCClickedAnActiveQuestor()) return questorBusy(this.machine);
     const level = this.machine.deps.playerLevel?.() ?? 0;
     this.offeredQuest = this.questLists.getGuildQuest(
       GUILD_GROUPS.Witches, MEMBERSHIP_STATUS.Nonmember, factionId, reputation, level);
@@ -188,8 +204,8 @@ export class QuestOfferFlow {
     this._guild = guild;
     this._guildCtx = { guildGroup, buildingFactionId };
     // Just exit if this NPC is already involved in an active quest -
-    // the guild rides in as the active quest's external MCP.
-    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return { kind: 'close' };
+    // the guild rides in as the active quest's external MCP. QUESTOR-SAID: the close says why
+    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return questorBusy(this.machine);
     // Member status, including the Temple's deity-specific statuses
     // (Enum.Parse throws on a name outside the enum, mirrored).
     let status = guild.isMember() ? MEMBERSHIP_STATUS.Member : MEMBERSHIP_STATUS.Nonmember;

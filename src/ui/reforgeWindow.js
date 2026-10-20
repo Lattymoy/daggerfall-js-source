@@ -87,8 +87,11 @@ export const CODEX_SUB = 'Every Gilded, Legendary and Aetheric piece you have fo
 export const IMPRINTED = (name, rec, power) => `Imprinted: ${name} - ${power} (of ${rec}).`;
 export const IMPRINT_NONE = 'Your codex has no Legendary of this kind yet. Find one to unlock its power here.';
 export const IMPRINT_ONCE = 'A Rare can take only one power.';
+/** PURSE-MEND (FIELD BUGS 2026-10-19f): the gold the window says - the coins and the letters (court.js totalGoldAmount),
+ *  whole and never below nothing; `| 0` wrapped a total past 2^31 (letters past one int's worth) to nothing. */
+const goldSaid = (gold) => Math.max(0, Math.trunc(gold) || 0);
 /** The purse: the shards a press may spend, and the gold. */
-export const reforgePurseText = (shards, gold) => `${shardsText(shards)} · ${Math.max(0, gold | 0)} gold`;
+export const reforgePurseText = (shards, gold) => `${shardsText(shards)} · ${goldSaid(gold)} gold`;
 /** A price, said: "4 Welkynd Shards and 400 gold". */
 export const reforgePriceText = (p) => (p ? `${shardsText(p.shards)} and ${p.gold} gold` : '');
 /** The whole reason a press is refused (its title), by the law's word. */
@@ -648,7 +651,7 @@ export function mountReforgeWindow(host, deps) {
   }
   /** LOOT16: THE TEMPLE'S LIFTING - every known cursed piece of the pack, its drawback and its price; a press lifts it. */
   function renderLift(items, payer, have, picture) {
-    purse.textContent = `${Math.max(0, have.gold | 0)} gold`;
+    purse.textContent = `${goldSaid(have.gold)} gold`;
     const rows = cursedKnown(items);
     if (!rows.length) list.append(head2(LIFT_NONE));
     for (const it of rows) {

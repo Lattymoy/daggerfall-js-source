@@ -93,6 +93,7 @@ import { takeTradeGoods, giveTradeGoods } from '../../src/net/realm/realmTradeLa
 import { prepareCraftedPiece, pieceComingBack } from './craftedPiece.js';   // INT19: a crafted piece out of its seller's record, and back as it
 import { vendorOf, VENDOR_STATION, VENDOR_LISTING_S, VENDOR_STOCK_SHOWN, VENDOR_STOCK_MAX, VENDOR_BOARD_SHOWN } from '../../src/net/vendorLaw.js';   // HOME-VENDOR: a home's trader
 import { tradeActStatements, patronActStatements } from './townEcon.js';   // TOWN-ECON TE2: a trader's sale and a patron's, counted at their town
+import { shapeOf, keptFits } from './keptBoard.js';   // AUDIT LEAN-READS B1/B10: a kept board's shape, and its bound in bytes
 
 const DAY_S = 86_400;
 /** GOLD-MARKET: the Stores origin of units bought in the row's own currency (a listing's or a sale's `currency`). */
@@ -2063,50 +2064,121 @@ export async function marketVendors(ctx, player, env, { region, character = null
   const closed = shut(player, env);
   if (closed) return closed;
   if (!regionOk(region)) return { error: 'bad-region' };
-  // PATRON-LOAD (2026-10-10, Mac: "the newest update account service keeps failing"): THE REGION'S READ RECKONS NOTHING.
-  // Every online client standing in a living town reads it each PATRON_READ_S (scenes/world.js livingPatronsRead), and
-  // its lazy reckoning - up to PATRON_READ_STATEMENTS statements a read, one region's run by each of its readers at once,
-  // all of them on a deploy's reload - backed the database's writes up until D1 refused as overloaded and the deploy's own
-  // guest mint answered 500. The hour's cron reckons the towns waiting longest; a trader opened (/vendor) and a seller's
-  // own page (/myvendors) reckon their towns; this read tells what they sold.
-  // PATRON-LOAD II (2026-10-11, the owner: "I think the database is overloaded"; migration 0107): AND BY THE LISTING'S OWN
-  // REGION. Both statements walked every open listing in the market and, for each, every piece in its town (~720,000 rows
-  // a statement, 4.2 billion of the day's 5.66 billion). A trader's listing carries its home's region (listGood), so
-  // `l.region = ?2` asks what `h.region = ?2` asks, and idx_market_vendor_region answers it: the region's trader listings
-  // alone, newest first, each found its piece by idx_home_decor_piece.
+  // VENDOR-BOARD (2026-10-19; bible/11-Multiplayer/Scale-Arc.md VENDOR-BOARD; migration 0137): THE REGION'S BOARD, EVERY
+  // CALLER'S ALIKE, IS ONE ROW (vendorBoard), and the caller's own door - its own house, its guild's, a room it rents -
+  // is read off two of its own rows, where the board's two statements asked them of every listing
+  // AUDIT LEAN-READS D5: the caller's own rows read first - the board may keep its row last, and on a replica's session a
+  // read after a write waits for the write's position
   const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';
-  const columns = `l.*, d.map_id AS v_map, d.id AS v_id, h.building_key AS v_key, h.owner_name AS v_owner, h.player AS v_player,
-      h.entry AS v_entry, (h.player = ?3 AND h.char_id = ?4) AS v_mine,
-      (h.entry = 'guild' AND EXISTS (SELECT 1 FROM guild_members a JOIN guild_members b ON b.guild_id = a.guild_id
-        WHERE a.player = h.player AND a.char_id = h.char_id AND b.player = ?3 AND b.char_id = ?4)) AS v_guildmate,
-      (SELECT MAX(r.until) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.tenant = ?3 AND r.tenant_char = ?4 AND r.until > ?1) AS v_tenancy`;
-  const { results: newest = [] } = await db.prepare(`SELECT ${columns}
-    FROM market_listings l JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
-    JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
-    WHERE l.state = 'open' AND l.expires_at > ?1 AND l.vendor_id IS NOT NULL AND l.region = ?2 AND h.region = ?2 AND h.player = l.seller AND d.yard = 0
-      AND h.guild_id IS NULL AND json_extract(d.place, '$.station') = '${VENDOR_STATION}'
-    ORDER BY l.at DESC LIMIT ${VENDOR_BOARD_SHOWN}`).bind(nowS, region, player.id, me).all();
-  // AUDIT LW-II-2 W6: AND EVERY PUBLIC TRADER OF THE REGION its patrons may buy of - each such house's newest piece, where
-  // the board's VENDOR_BOARD_SHOWN newest left the house out: the towns' word reads its traders off these rows (world.js
-  // livingPatronsStep), and a quieter trader under a busier region's newest three hundred stood in no town - no browser
-  // came, and its town's word was forgotten. Bounded as the board is: a house a row, VENDOR_BOARD_SHOWN of them
-  const { results: houses = [] } = await db.prepare(`SELECT * FROM (SELECT ${columns},
-      ROW_NUMBER() OVER (PARTITION BY d.map_id, d.building_key, d.id ORDER BY l.at DESC, l.id) AS v_rank
-    ${PATRON_FROM} WHERE ${PATRON_SQL} AND l.expires_at > ?1 AND l.region = ?2 AND h.region = ?2) WHERE v_rank = 1
-    ORDER BY at DESC LIMIT ${VENDOR_BOARD_SHOWN}`).bind(nowS, region, player.id, me).all();
+  const [mates, rooms] = me ? await db.batch([
+    db.prepare('SELECT a.player, a.char_id FROM guild_members a JOIN guild_members b ON b.guild_id = a.guild_id WHERE b.player = ?1 AND b.char_id = ?2').bind(player.id, me),
+    db.prepare(`SELECT map_id, building_key, MAX(until) AS until FROM home_rooms WHERE tenant = ?1 AND tenant_char = ?2 AND until > ?3
+      GROUP BY map_id, building_key`).bind(player.id, me, nowS),
+  ]) : [null, null];
+  const board = await vendorBoard(ctx, region);
+  const mate = new Set((mates?.results ?? []).map((/** @type {any} */ m) => `${m.player}\n${m.char_id}`));
+  const rent = new Map((rooms?.results ?? []).map((/** @type {any} */ r) => [`${r.map_id}:${r.building_key}`, Number(r.until)]));
   const traderOf = (/** @type {any} */ l) => `${l.v_map}:${l.v_key}:${l.v_id}`;
-  const shown = new Set(newest.map(traderOf));
-  const results = [...newest, ...houses.filter((l) => !shown.has(traderOf(l)))];
+  const shown = new Set(board.newest.map(traderOf));
+  const results = [...board.newest, ...board.houses.filter((/** @type {any} */ l) => !shown.has(traderOf(l)))];
+  const since = nowS - PATRON_TOLD_S;
   return {
     ok: true, region,
-    patrons: await patronsTold(db, { region }, nowS).catch(() => []),   // LW15: the region's patrons' purchases, for its towns to draw
-    rows: results.map((l) => listingView(l, player.id, {
-      vendor: { map: Number(l.v_map), id: l.v_id }, map: Number(l.v_map), buildingKey: Number(l.v_key), owner: l.v_owner,
-      // the house's door, as the town answer says it to this character (homeMayEnter's own fields)
-      home: { owner: l.v_owner, entry: l.v_entry, mine: Number(l.v_mine) === 1,
-        ...(Number(l.v_guildmate) === 1 ? { guildmate: true } : {}), ...(Number.isSafeInteger(l.v_tenancy) && l.v_tenancy > nowS ? { tenant: Number(l.v_tenancy) } : {}) },
-    })),
+    patrons: board.patrons.filter((/** @type {any} */ r) => Number(r.at) > since).map(patronView),   // LW15: the region's patrons' purchases, for its towns to draw
+    rows: results.map((l) => {
+      const tenancy = rent.get(`${l.v_map}:${l.v_key}`);
+      return listingView(l, player.id, {
+        vendor: { map: Number(l.v_map), id: l.v_id }, map: Number(l.v_map), buildingKey: Number(l.v_key), owner: l.v_owner,
+        // the house's door, as the town answer says it to this character (homeMayEnter's own fields)
+        home: { owner: l.v_owner, entry: l.v_entry, mine: l.v_player === player.id && l.v_char === me,
+          ...(l.v_entry === 'guild' && mate.has(`${l.v_player}\n${l.v_char}`) ? { guildmate: true } : {}),
+          ...(Number.isSafeInteger(tenancy) ? { tenant: tenancy } : {}) },   // the rooms read rents still running alone
+      });
+    }),
   };
+}
+
+/**
+ * VENDOR-BOARD (2026-10-19, the account database overloaded again: the region's traders the read most asked again in
+ * the 18:05 overload - 1,517 asks in five minutes where 330 was the rate; bible/11-Multiplayer/Scale-Arc.md VENDOR-BOARD;
+ * migration 0137): THE REGION'S TRADERS AS EVERY CALLER READS THEM - `{ newest, houses, patrons }`, the rows the board's
+ * three reads answer, before any caller's own door. Its kept row while it is its version's (the database moves it on
+ * every trader listing, trader, trader's house and patron sale written - in a row of its own, AUDIT LEAN-READS 2 B3; no
+ * such row, no board kept: B4), its shape's (these reads' and their bounds' - keptBoard.js) and the caller's second is
+ * between `since` and `until` (vendorSpan: AUDIT LEAN-READS B3, a caller whose second came before the read's is told the
+ * listings still open at its own - and 2 B2, served the board where none ran out between); else read - writing nothing
+ * first (D5) - the version, the three reads and the board's bounds in ONE batch, one snapshot, and kept at the version it
+ * read: a write landing between leaves the version past it, so the next caller reads again. Kept only where the version
+ * is still the one it read, so a slow reader never puts an older board over a newer one, and only where no board kept
+ * meanwhile serves its second or a later one already, so readers that missed together write it once (B2).
+ *
+ * PATRON-LOAD (2026-10-10, Mac: "the newest update account service keeps failing"): THE REGION'S READ RECKONS NOTHING.
+ * Every online client standing in a living town reads it each PATRON_READ_S (scenes/world.js livingPatronsRead), and its
+ * lazy reckoning - up to PATRON_READ_STATEMENTS statements a read - backed the database's writes up until D1 refused as
+ * overloaded. The hour's cron reckons the towns waiting longest; a trader opened (/vendor) and a seller's own page
+ * (/myvendors) reckon their towns; this read tells what they sold. PATRON-LOAD II (migration 0107): AND BY THE LISTING'S
+ * OWN REGION - a trader's listing carries its home's region (listGood), so `l.region = ?2` asks what `h.region = ?2`
+ * asks, and idx_market_vendor_region answers it. AUDIT LW-II-2 W6: AND EVERY PUBLIC TRADER OF THE REGION its patrons may
+ * buy of - each such house's newest piece, where the board's VENDOR_BOARD_SHOWN newest left the house out: the towns'
+ * word reads its traders off these rows (world.js livingPatronsStep). Bounded as the board is: a house a row,
+ * VENDOR_BOARD_SHOWN of them.
+ * @param {{ db: any, nowS: number }} ctx @param {number} region
+ */
+export async function vendorBoard({ db, nowS }, region) {
+  const kept = await db.prepare(VENDOR_BOARD_READ).bind(region).first();
+  const fresh = kept?.ver != null && Number(kept.built) === Number(kept.ver) && kept.shape === VENDOR_BOARD_SHAPE
+    && Number(kept.since) <= nowS && nowS < Number(kept.until) ? vendorBoardOf(kept.rows) : null;
+  if (fresh) return fresh;
+  const [v, newest, houses, patrons, span] = await db.batch([
+    db.prepare('SELECT ver FROM market_vendor_ver WHERE region = ?1').bind(region),
+    db.prepare(VENDOR_NEWEST_SQL).bind(nowS, region),
+    db.prepare(VENDOR_HOUSES_SQL).bind(nowS, region),
+    db.prepare(VENDOR_PATRONS_SQL).bind(nowS - PATRON_TOLD_S, region),
+    db.prepare(VENDOR_SPAN_SQL).bind(region, nowS, nowS - PATRON_TOLD_S),
+  ]);
+  const read = { newest: newest?.results ?? [], houses: houses?.results ?? [], patrons: patrons?.results ?? [] };
+  const ver = v?.results?.[0]?.ver;   // AUDIT LEAN-READS 2 B4: no version row, no board kept - read every time
+  const text = JSON.stringify(read);
+  if (Number.isSafeInteger(ver) && keptFits(text, 'a region\'s traders')) {
+    const { since, until } = vendorSpan(span?.results?.[0], read.patrons.length, nowS);
+    await db.prepare(VENDOR_BOARD_KEEP).bind(region, ver, VENDOR_BOARD_SHAPE, nowS, since, until, text).run()
+      .catch((/** @type {any} */ e) => console.warn('[market] the region\'s board not kept', e?.message ?? e));   // the answer stands; the next caller reads it again
+  }
+  return read;
+}
+/** VENDOR-BOARD: a region's version and its kept board - one row each, the version's its own (AUDIT LEAN-READS 2 B3). */
+export const VENDOR_BOARD_READ = `SELECT v.ver, b.built, b.shape, b.since, b.until, b.rows
+  FROM (SELECT ?1 AS r) q LEFT JOIN market_vendor_ver v ON v.region = q.r LEFT JOIN market_vendor_boards b ON b.region = q.r`;
+/** VENDOR-BOARD: a board read kept - where the region's version row still holds the version it read (?2; AUDIT LEAN-READS
+ *  2 B4: a row deleted after the read keeps nothing) and no board of that version and shape is kept for its second (?4)
+ *  or a later one already: one serving it already (B2: readers that missed together write it once), or one read at a
+ *  later second, which a caller whose clock lagged never puts back to its own. */
+export const VENDOR_BOARD_KEEP = `INSERT INTO market_vendor_boards (region, built, shape, since, until, rows)
+  SELECT ?1, ?2, ?3, ?5, ?6, ?7 WHERE (SELECT ver FROM market_vendor_ver WHERE region = ?1) = ?2
+  ON CONFLICT (region) DO UPDATE SET built = excluded.built, shape = excluded.shape, since = excluded.since, until = excluded.until, rows = excluded.rows
+  WHERE NOT (built = excluded.built AND shape IS excluded.shape AND until > ?4)`;
+/** VENDOR-BOARD: how long a board with no listing to run out is kept before it is read again regardless. */
+export const VENDOR_BOARD_KEPT_S = 86_400;
+/**
+ * VENDOR-BOARD: THE SECONDS A BOARD READ AT `nowS` IS THE BOARD FOR - `{ since, until }` off VENDOR_SPAN_SQL's row (its
+ * bounds read in the board's own batch: one snapshot). `until`: its first listing to run out, a day at most. `since`
+ * (AUDIT LEAN-READS 2 B2): a caller's second before `nowS` reads the listings that ran out between as open (`expires_at
+ * > ?1`) - none after the last to run out by `nowS`, so from there - and the patrons' sales that left the day between
+ * (`at > ?1 - PATRON_TOLD_S`) - which change its answer only where the board tells fewer than VENDOR_BOARD_SHOWN, newest
+ * first, so from the last such sale's leaving. Where the reads read with the overload's lag, the board read at the
+ * read's second is the board for its callers' seconds as well.
+ * @param {any} row @param {number} patrons the board's patrons told @param {number} nowS
+ */
+export function vendorSpan(row, patrons, nowS) {
+  const gone = row?.gone == null ? 0 : Number(row.gone);
+  const told = patrons < VENDOR_BOARD_SHOWN && row?.told != null ? Number(row.told) + PATRON_TOLD_S : 0;
+  return { since: Math.min(nowS, Math.max(0, gone, told)), until: Math.min(Number(row?.next ?? Infinity), nowS + VENDOR_BOARD_KEPT_S) };
+}
+/** VENDOR-BOARD: a kept board's text read back, or null for one that is not a board. */
+export function vendorBoardOf(/** @type {unknown} */ text) {
+  let o;
+  try { o = JSON.parse(String(text)); } catch { return null; }
+  return o && Array.isArray(o.newest) && Array.isArray(o.houses) && Array.isArray(o.patrons) ? o : null;
 }
 
 /**
@@ -2190,6 +2262,35 @@ export const PATRON_COUNTS_SQL = `SELECT NULL AS seller, COUNT(*) AS n, 0 AS g F
 /** AUDIT LW-II P6: the region's read of its last day's sales (idx_patron_sales_region), and the towns' (`?2...`). */
 export const PATRON_TOLD_SQL = (/** @type {string} */ where) => `SELECT s.listing, s.map, s.hour, s.minute, s.seed, s.price, s.at, s.building_key, l.item, l.vendor_id
   FROM market_patron_sales s JOIN market_listings l ON l.id = s.listing WHERE ${where} AND s.at > ?1 ORDER BY s.at DESC LIMIT ${VENDOR_BOARD_SHOWN}`;
+
+/** VENDOR-BOARD: a trader listing's columns as the board keeps them - the ones listingView reads (AUDIT LEAN-READS B7: its
+ *  bookkeeping is none of the board's, and migration 0137's trigger moves the board on these alone) - and its trader's. */
+const VENDOR_COLUMNS = `l.id, l.kind, l.region, l.material, l.item, l.own, l.bought, l.units, l.price, l.fee, l.wear, l.at, l.expires_at, l.state,
+      l.currency, l.seller, d.map_id AS v_map, d.id AS v_id, h.building_key AS v_key, h.owner_name AS v_owner, h.player AS v_player,
+      h.char_id AS v_char, h.entry AS v_entry`;
+/** VENDOR-BOARD: the board's reads (?1 now, ?2 the region) - the region's newest trader listings, each public house's
+ *  newest, the region's patrons of the day (?1 the day's first second) and its next listing to run out (?1 the region). */
+export const VENDOR_NEWEST_SQL = `SELECT ${VENDOR_COLUMNS}
+    FROM market_listings l JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
+    JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
+    WHERE l.state = 'open' AND l.expires_at > ?1 AND l.vendor_id IS NOT NULL AND l.region = ?2 AND h.region = ?2 AND h.player = l.seller AND d.yard = 0
+      AND h.guild_id IS NULL AND json_extract(d.place, '$.station') = '${VENDOR_STATION}'
+    ORDER BY l.at DESC LIMIT ${VENDOR_BOARD_SHOWN}`;
+export const VENDOR_HOUSES_SQL = `SELECT * FROM (SELECT ${VENDOR_COLUMNS},
+      ROW_NUMBER() OVER (PARTITION BY d.map_id, d.building_key, d.id ORDER BY l.at DESC, l.id) AS v_rank
+    ${PATRON_FROM} WHERE ${PATRON_SQL} AND l.expires_at > ?1 AND l.region = ?2 AND h.region = ?2) WHERE v_rank = 1
+    ORDER BY at DESC LIMIT ${VENDOR_BOARD_SHOWN}`;
+const VENDOR_PATRONS_SQL = PATRON_TOLD_SQL('s.region = ?2');
+/** VENDOR-BOARD: a board's bounds (?1 the region, ?2 now, ?3 the patrons' day's first second) - its next listing to run
+ *  out, the last that ran out by now (idx_market_vendor_expiry, each), and the last patron's sale that left the day
+ *  (idx_patron_sales_region): vendorSpan's. */
+export const VENDOR_SPAN_SQL = `SELECT (SELECT MIN(expires_at) FROM market_listings WHERE state = 'open' AND vendor_id IS NOT NULL AND region = ?1 AND expires_at > ?2) AS next,
+    (SELECT MAX(expires_at) FROM market_listings WHERE state = 'open' AND vendor_id IS NOT NULL AND region = ?1 AND expires_at <= ?2) AS gone,
+    (SELECT MAX(at) FROM market_patron_sales WHERE region = ?1 AND at <= ?3) AS told`;
+/** VENDOR-BOARD (AUDIT LEAN-READS B1, 2 B5): what a kept board is - its reads, its bounds' and the seconds they span, and
+ *  the text it is written as - so a deploy that changes any reads every board again. */
+export const VENDOR_BOARD_SHAPE = shapeOf('vendor-board: {newest, houses, patrons} from since to until', VENDOR_NEWEST_SQL, VENDOR_HOUSES_SQL, VENDOR_PATRONS_SQL,
+  VENDOR_SPAN_SQL, PATRON_TOLD_S, VENDOR_BOARD_KEPT_S, VENDOR_BOARD_SHOWN);
 
 /**
  * AUDIT LW-II P10: THE DRAW'S SECRET (patronLaw.js patronDraw) - the service's own, derived from a secret it already keeps
@@ -2363,6 +2464,8 @@ export async function patronsTold(db, of, nowS) {   // AUDIT LW-III: exported fo
   const since = nowS - PATRON_TOLD_S;
   const { results = [] } = await db.prepare(PATRON_TOLD_SQL(where))
     .bind(since, ...(maps ? [...maps, Math.floor(since / PATRON_HOUR_S)] : [/** @type {{ region: number }} */ (of).region])).all();
-  return results.map((r) => ({ listing: r.listing, map: Number(r.map), vendor: r.vendor_id, buildingKey: r.building_key == null ? null : Number(r.building_key),
-    hour: Number(r.hour), minute: Number(r.minute), seed: Number(r.seed), price: Number(r.price), at: Number(r.at), name: String(goodOf(r.item)?.name ?? '') }));
+  return results.map(patronView);
 }
+/** A patron's purchase as a reader is told it (patronsTold's rows, VENDOR-BOARD's kept ones). */
+const patronView = (/** @type {any} */ r) => ({ listing: r.listing, map: Number(r.map), vendor: r.vendor_id, buildingKey: r.building_key == null ? null : Number(r.building_key),
+  hour: Number(r.hour), minute: Number(r.minute), seed: Number(r.seed), price: Number(r.price), at: Number(r.at), name: String(goodOf(r.item)?.name ?? '') });

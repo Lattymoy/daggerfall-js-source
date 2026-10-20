@@ -1217,18 +1217,6 @@ export function applyMotorEffectFlags(player, entity, { waterSurfaceY = null, sw
   player.slowFalling = hasActiveEffect(entity, 'slowfall');
 }
 
-/** Platform riding (DFU's MoveWithMovingPlatform shape): standing on a
- *  mover applies its frame delta through the resolver BEFORE the
- *  player's own move. Was wired only into the standalone ?dungeon
- *  scene, so a world/exterior-hosted dungeon dropped the delta and the
- *  lift penetrated the capsule (the out-of-bounds ejection report). */
-export function ridePlatform(player, actions) {
-  const gk = player.groundKey;
-  if (!gk || gk === 'dungeon') return;
-  const d = actions?.objects?.get(gk)?.frameDelta;
-  if (d && (d[0] || d[1] || d[2])) player.collider.move(player.pos, d[0], d[1], d[2], player.height);   // PH1: the rider's own stance, not the standing default
-}
-
 /** AcrobatMotor.AdjustFallStart (:231-237), called by
  *  FloatingOrigin.OffsetPlayerController (:176-181) in the same breath
  *  as the position shift: "Call this when floating origin ticks on Y

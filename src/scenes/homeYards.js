@@ -558,6 +558,8 @@ export function createHomeYards(deps) {
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
+      // DECOR-CLEAR / ROCK-CLEAR: no body of its own - a piece landing round a passer-by is held back from the body the
+      // world collider's gate guards (world.js settles it every frame), solid once they are clear of it
       // YARD-LIGHT: a lamp lights as the town's (yardLampOf) - the room's machinery mounts it when its picture stands, moves
       // it with a recentre (restand) and takes it down with the piece; `lamps` reads them in the order the pieces stand
       lampOf: yardLampOf,

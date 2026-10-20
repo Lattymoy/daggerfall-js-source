@@ -490,6 +490,19 @@ same holds for a Rare that carries one.
 **Seen.** `lootHudChips` - Flow's and Bedrock's stacks, Dawnward's charges, a recovery running - beside the sets' chips
 (`scenes/world.js` hands the HUD both, line-neutral), in the Legendary's orange (`ui/enhanced/enhancedHud.js`).
 
+**A reach says its harm** (FIELD BUGS 2026-10-19f CHAIN-SEEN; a player's private report: a Legendary bow's Chain Lightning
+shows nothing). The arc landed - half the shaft, as shock, on the nearest other foe within 6 m - through that foe's own
+pool's door, which runs no formula, so HN1's numbers (`10-UI/UI-Arc.md`) never heard it: no number, no word, while
+`again()`'s follow-up beside it raised its own since ROSE-SEEN. Every reach of a blow on another foe was the same
+omission - Earthshaker's quake, Dragonfire's burst - and Dragonfire's own second burn rose untagged. Each lands through
+one door now (`lootPowers.js:"function reachOn(door, f, n, word) {"`), its number risen and tagged with its power's name
+(`showFollowUp`), before the foe takes it; enhanced only, as HN1 is. NOT the same omission, left: thorns, an affix line
+that answers a foe's blow where its attacker stands (as the sets' Spite of the Spurned does), not a reach of my blow at the
+reticle - a number of its own is the owner's call; and the arcane paths' arcs (`arcanePowers.js` - Rift Lance, the
+Elementalist's own Chain Lightning, Blood Boil, Dawnbolt's burn), the same silence outside this page.
+Pinned: `test/systems/fb1019f_chainseen.test.js` (2); `tools/mutants/fb1019f_chainseen.json` (9, all dead); `gilded2.json`'s
+four Dragonfire records re-aimed by content (all dead).
+
 **What it moved.** SET5's pin on the HUD's wiring reads both lists; five mutant records whose anchors the arc's edits
 moved were re-aimed by content (DISC29-B's unguarded name, SET3's import and its fall, SET5's chips, LOOT4's focus
 cap) and still die (`test/tooling/mutantdrift.test.js`).
