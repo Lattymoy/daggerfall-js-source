@@ -691,8 +691,8 @@
   {
     "name": "DEV-ENV-a-cron-of-its-own",
     "file": "ops/dev/dfo-dev-cron",
-    "old": "cron=41+*+*+*+*'",
-    "new": "cron=0+*+*+*+*'",
+    "old": "fire '41+*+*+*+*'",
+    "new": "fire '0+*+*+*+*'",
     "tests": [
       "test/tooling/releaseflow.test.js"
     ],
@@ -1017,5 +1017,308 @@
       "test/tooling/releaseflow.test.js"
     ],
     "note": "A step no other test runs, unparseable."
+  },
+  {
+    "name": "RELEASE-FLOW-D1-var-lib-left-dfos",
+    "file": "ops/dev/bootstrap.sh",
+    "old": "install -d -o root -g root -m 0755 /var/lib/dfo-dev\n",
+    "new": "install -d -o dfo -g dfo -m 0755 /var/lib/dfo-dev\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "dfo swaps state for a symlink to /etc; the next bootstrap makes /etc dfo's."
+  },
+  {
+    "name": "RELEASE-FLOW-D1-the-releases-made-by-root",
+    "file": "ops/dev/bootstrap.sh",
+    "old": "runuser -u dfo -- install -d -m 0755 /srv/dfo-dev/releases\n",
+    "new": "install -d -o dfo -g dfo -m 0755 /srv/dfo-dev/releases\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Root makes a directory beneath one dfo owns."
+  },
+  {
+    "name": "RELEASE-FLOW-D1-the-key-in-dfos-home",
+    "file": "ops/dev/bootstrap.sh",
+    "old": "| install -m 0644 /dev/stdin /etc/dfo-dev/authorized_keys\n",
+    "new": "| install -o dfo -g dfo -m 0600 /dev/stdin /var/lib/dfo-dev/home/.ssh/authorized_keys\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Root writes the key through a path dfo controls."
+  },
+  {
+    "name": "RELEASE-FLOW-D1-the-refusal-gone",
+    "file": "ops/dev/bootstrap.sh",
+    "old": "for place in /var/lib/dfo-dev/state /var/lib/dfo-dev/home /srv/dfo-dev; do\n  if [ -L \"$place\" ] || { [ -e \"$place\" ] && [ ! -d \"$place\" ]; }; then echo \"$place is not a directory - nothing is touched\" >&2; exit 1; fi\ndone\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A symlink planted before the parent was made root's is followed."
+  },
+  {
+    "name": "RELEASE-FLOW-D2-the-admin-api-open",
+    "file": "ops/dev/Caddyfile",
+    "old": "\tadmin off\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Any local process may load a config that opens port 80 to a Worker."
+  },
+  {
+    "name": "RELEASE-FLOW-D3-the-chat-feed-http",
+    "file": "ops/dev/dfo-dev-relay.service",
+    "old": "--var MOD_FEED_URL:https://daggerfall-accounts/v1/mod/feed ",
+    "new": "--var MOD_FEED_URL:http://127.0.0.1:8788/v1/mod/feed ",
+    "tests": [
+      "test/net/devenv_feeds.test.js",
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "No public line reaches the dev reviewer's feed."
+  },
+  {
+    "name": "RELEASE-FLOW-D3-the-grant-feed-http",
+    "file": "ops/dev/dfo-dev-relay.service",
+    "old": "--var GRANT_FEED_URL:https://daggerfall-accounts/v1/mod/grant-feed ",
+    "new": "--var GRANT_FEED_URL:http://127.0.0.1:8788/v1/mod/grant-feed ",
+    "tests": [
+      "test/net/devenv_feeds.test.js",
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "No grant window is posted in dev."
+  },
+  {
+    "name": "RELEASE-FLOW-D3-the-law-door-http",
+    "file": "ops/dev/dfo-dev-accounts.service",
+    "old": "--var RELAY_LAW_URL:https://daggerfall-online/v1/law ",
+    "new": "--var RELAY_LAW_URL:http://127.0.0.1:8787/v1/law ",
+    "tests": [
+      "test/net/devenv_feeds.test.js",
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "No mute or ban is pushed live in dev."
+  },
+  {
+    "name": "RELEASE-FLOW-D4-members-reaching-each-other",
+    "file": "ops/dev/nftables.conf",
+    "old": "iifname \"wg0\" oifname \"wg0\" ip daddr 10.66.0.3-10.66.0.9 accept",
+    "new": "iifname \"wg0\" oifname \"wg0\" accept",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Every member reaches every other member's machine."
+  },
+  {
+    "name": "RELEASE-FLOW-D5-the-ci-key-taken",
+    "file": "ops/dev/dfo-dev-root",
+    "old": "      while read -r k; do seen[\"key:$k\"]=base; done < <(sed -n 's/^PublicKey = //p' \"$WG_DIR/wg0.base\"; [ ! -s \"$WG_DIR/wg0.key\" ] || wg pubkey < \"$WG_DIR/wg0.key\")\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A member given the CI runner's key takes its peer, and no deploy reaches the VM again."
+  },
+  {
+    "name": "RELEASE-FLOW-D5-a-failed-strip-synced",
+    "file": "ops/dev/dfo-dev-root",
+    "old": "    stripped=$(wg-quick strip wg0)\n    grep -q '^\\[Interface\\]' <<< \"$stripped\" || { echo \"wg-quick strip gave no config - nothing synced\" >&2; exit 1; }\n    wg syncconf wg0 <(printf '%s\\n' \"$stripped\")\n",
+    "new": "    wg syncconf wg0 <(wg-quick strip wg0)\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "An empty config synced drops every peer, the CI runner's too."
+  },
+  {
+    "name": "RELEASE-FLOW-D6-the-members-after-the-swap",
+    "file": "ops/dev/deploy.sh",
+    "old": "root peers \"$rel/repo/ops/dev/peers.json\"\n\n# wrangler, as server/package-lock.json pins it: the one this release holds already (the same commit shipped again), the\n# release before's linked when the lock did not move, else installed - into a cache of the release's own, pruned with it\n# (D14: ~/.npm grew with every lock that moved)\nprev=$(readlink -f \"$SRV/current\" 2>/dev/null || true)\nif [ -x \"$rel/repo/server/node_modules/.bin/wrangler\" ]; then\n  :\nelif [ -n \"$prev\" ] && [ \"$prev\" != \"$rel\" ] && [ -d \"$prev/repo/server/node_modules\" ] && cmp -s \"$prev/repo/server/package-lock.json\" \"$rel/repo/server/package-lock.json\"; then\n  cp -al \"$prev/repo/server/node_modules\" \"$rel/repo/server/node_modules\"\nelse\n  (cd \"$rel/repo/server\" && npm ci --no-audit --no-fund --loglevel=error --cache \"$rel/.npm\")\nfi\nwrangler=$rel/repo/server/node_modules/.bin/wrangler\n\ntrap 'echo \"the deploy failed before the swap - the release before is started again\" >&2; root start' EXIT\nroot stop\n(cd \"$rel/repo/server-account\" && \"$wrangler\" d1 migrations apply daggerfall-accounts --local --persist-to \"$LIB/state\")\ntouch \"$rel\"\nln -sfn \"$rel\" \"$SRV/current.next\"\nmv -T \"$SRV/current.next\" \"$SRV/current\"\ntrap - EXIT\nroot start\n",
+    "new": "\n# wrangler, as server/package-lock.json pins it: the one this release holds already (the same commit shipped again), the\n# release before's linked when the lock did not move, else installed - into a cache of the release's own, pruned with it\n# (D14: ~/.npm grew with every lock that moved)\nprev=$(readlink -f \"$SRV/current\" 2>/dev/null || true)\nif [ -x \"$rel/repo/server/node_modules/.bin/wrangler\" ]; then\n  :\nelif [ -n \"$prev\" ] && [ \"$prev\" != \"$rel\" ] && [ -d \"$prev/repo/server/node_modules\" ] && cmp -s \"$prev/repo/server/package-lock.json\" \"$rel/repo/server/package-lock.json\"; then\n  cp -al \"$prev/repo/server/node_modules\" \"$rel/repo/server/node_modules\"\nelse\n  (cd \"$rel/repo/server\" && npm ci --no-audit --no-fund --loglevel=error --cache \"$rel/.npm\")\nfi\nwrangler=$rel/repo/server/node_modules/.bin/wrangler\n\ntrap 'echo \"the deploy failed before the swap - the release before is started again\" >&2; root start' EXIT\nroot stop\n(cd \"$rel/repo/server-account\" && \"$wrangler\" d1 migrations apply daggerfall-accounts --local --persist-to \"$LIB/state\")\ntouch \"$rel\"\nln -sfn \"$rel\" \"$SRV/current.next\"\nmv -T \"$SRV/current.next\" \"$SRV/current\"\ntrap - EXIT\nroot start\nroot peers \"$rel/repo/ops/dev/peers.json\"\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A list refused fails the deploy after the swap."
+  },
+  {
+    "name": "RELEASE-FLOW-D6-a-failed-migration-leaving-dev-down",
+    "file": "ops/dev/deploy.sh",
+    "old": "trap 'echo \"the deploy failed before the swap - the release before is started again\" >&2; root start' EXIT\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A refused migration leaves both Workers stopped."
+  },
+  {
+    "name": "RELEASE-FLOW-D7-the-current-pruned",
+    "file": "ops/dev/deploy.sh",
+    "old": "find \"$SRV/releases\" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\\n' | sort -rn | cut -d' ' -f2- | { grep -vxF \"$cur\" || true; } | tail -n +5 | xargs -r rm -rf",
+    "new": "find \"$SRV/releases\" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\\n' | sort -rn | tail -n +6 | cut -d' ' -f2- | xargs -r rm -rf",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A rollback to an old release deletes the release just made current."
+  },
+  {
+    "name": "RELEASE-FLOW-D7-the-current-left-old",
+    "file": "ops/dev/deploy.sh",
+    "old": "touch \"$rel\"\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The release rolled back to is pruned at the next deploy."
+  },
+  {
+    "name": "RELEASE-FLOW-D7-a-lone-release-failing-the-prune",
+    "file": "ops/dev/deploy.sh",
+    "old": "{ grep -vxF \"$cur\" || true; }",
+    "new": "grep -vxF \"$cur\"",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The first deploy fails at its prune."
+  },
+  {
+    "name": "RELEASE-FLOW-D7-the-wrangler-reinstalled",
+    "file": "ops/dev/deploy.sh",
+    "old": "if [ -x \"$rel/repo/server/node_modules/.bin/wrangler\" ]; then\n  :\nelif ",
+    "new": "if ",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Shipping the current commit again reinstalls node_modules under the running Workers."
+  },
+  {
+    "name": "RELEASE-FLOW-D7-node-modules-deleted",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": " --exclude=node_modules/ --exclude=.wrangler/",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Shipping the current commit again deletes the running release's wrangler."
+  },
+  {
+    "name": "RELEASE-FLOW-D8-linked-by-time",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": "rsync -a --no-times --checksum --delete --exclude=node_modules/",
+    "new": "rsync -a --delete --exclude=node_modules/",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Nothing is ever linked; every release a whole copy."
+  },
+  {
+    "name": "RELEASE-FLOW-D9-the-aaaa-asked-upstream",
+    "file": "ops/dev/dnsmasq.conf",
+    "old": "local=/@DEV_HOST@/\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A public AAAA sends members to the VM's shut public address."
+  },
+  {
+    "name": "RELEASE-FLOW-D10-tls-alpn-tried",
+    "file": "ops/dev/Caddyfile",
+    "old": "\t\t\tdisable_tlsalpn_challenge\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Half the certificate attempts fail at a shut 443 first."
+  },
+  {
+    "name": "RELEASE-FLOW-D11-passwords-back",
+    "file": "ops/dev/sshd-dfo-dev.conf",
+    "old": "PasswordAuthentication no\n",
+    "new": "PasswordAuthentication yes\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A cloud image's password login stands."
+  },
+  {
+    "name": "RELEASE-FLOW-D11-the-key-unrestricted",
+    "file": "ops/dev/bootstrap.sh",
+    "old": "printf 'restrict,from=\"10.66.0.2\" %s\\n' \"$CI_SSH_PUBLIC_KEY\"",
+    "new": "printf '%s\\n' \"$CI_SSH_PUBLIC_KEY\"",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The deploy key opens a forwarding shell from anywhere it reaches."
+  },
+  {
+    "name": "RELEASE-FLOW-D12-the-build-in-the-deploys-job",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": "      - name: The site the build made\n",
+    "new": "      - name: Install dependencies\n        run: npm ci\n\n      - name: The site the build made\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A dependency's install scripts run beside the network's key."
+  },
+  {
+    "name": "RELEASE-FLOW-D12-a-secret-in-the-build",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": "      - name: Install dependencies\n        run: npm ci\n",
+    "new": "      - name: Install dependencies\n        env:\n          WG_PRIVATE_KEY: ${{ secrets.DEV_WG_PRIVATE_KEY }}\n        run: npm ci\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The build machine holds the network's key."
+  },
+  {
+    "name": "RELEASE-FLOW-D13-node-unchecked",
+    "file": "ops/dev/bootstrap.sh",
+    "old": "  printf '%s  %s\\n' \"${NODE_SHA256[$arch]}\" \"$tmp/$file\" | sha256sum -c -\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Whatever nodejs.org serves is installed as root."
+  },
+  {
+    "name": "RELEASE-FLOW-D14-restarting-forever",
+    "file": "ops/dev/dfo-dev-relay.service",
+    "old": "ConditionPathExists=/srv/dfo-dev/current/repo/server\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Before the first deploy, a reboot restarts the relay every five seconds."
+  },
+  {
+    "name": "RELEASE-FLOW-D14-a-down-service-failing-every-minute",
+    "file": "ops/dev/dfo-dev-cron",
+    "old": "  if [ \"$rc\" = 7 ]; then echo \"the account service is not up - no cron fired\"; exit 0; fi\n",
+    "new": "",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A service down fails the cron every minute beside its own unit."
+  },
+  {
+    "name": "RELEASE-FLOW-D14-a-refusal-passed-over",
+    "file": "ops/dev/dfo-dev-cron",
+    "old": "  return \"$rc\"\n",
+    "new": "  return 0\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A cron the service refuses passes."
+  },
+  {
+    "name": "RELEASE-FLOW-F5-vendor-unshipped",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": " server server-account src vendor ops ",
+    "new": " server server-account src ops ",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The account Worker's vendored files are missing on the VM."
   }
 ]

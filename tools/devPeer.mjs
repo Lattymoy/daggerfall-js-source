@@ -22,8 +22,10 @@ import { isMain } from './lib/isMain.mjs';
 export const WG_KEY_RE = /^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw480]=$/;
 /** A member's name: their GitHub login, or a service's own name. */
 export const MEMBER_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,38}$/;
-/** The network: this VM is .1, the CI runner .2, and the members .3 to .250. */
-export const NETWORK = Object.freeze({ prefix: '10.66.0.', hub: '10.66.0.1', ci: '10.66.0.2', first: 3, last: 250 });
+/** The network: this VM is .1, the CI runner .2, and the members .3 to .250 - of whom .3 to .9 are the team's services
+ *  (a VM of its own, such as the admin panel), the only members another member may reach (ops/dev/nftables.conf's
+ *  forward chain, AUDIT RELEASE-FLOW D4). A person takes an address from .10. */
+export const NETWORK = Object.freeze({ prefix: '10.66.0.', hub: '10.66.0.1', ci: '10.66.0.2', first: 3, last: 250, services: Object.freeze({ first: 3, last: 9 }) });
 
 const b64 = (b64url) => Buffer.from(b64url, 'base64url').toString('base64');
 /** PKCS#8's wrapping of a raw X25519 private key (RFC 8410). */

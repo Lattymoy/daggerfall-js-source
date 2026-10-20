@@ -70,7 +70,7 @@ test('REL8: the merge that brings the line is Update 0.0.1 - whatever merged bef
   assert.equal(r.at(), '1.0.1');
 });
 
-test('RELEASE-FLOW: on release each promotion of main and each hotfix is the next update, however many merges main took between - and a line set on main is .1 at the promotion that brings it; main counts on, the dev environment\'s number', (t) => {
+test('RELEASE-FLOW: on release each promotion of main and each hotfix is the next update, however many merges main took between - and a line set on main is .1 at the promotion that brings it; main counts on, numbering no build of its own (a dev build names its commit - AUDIT RELEASE-FLOW F8)', (t) => {
   const r = repo(t);
   r.put('a.txt', 'a\n'); r.commit('root');
   r.pr('numbering', [[UPDATE_LINE_FILE, LINE_TEXT]]);

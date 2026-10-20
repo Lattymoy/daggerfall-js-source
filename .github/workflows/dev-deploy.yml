@@ -13,6 +13,11 @@
 # address and port) and DEV_SSH_PRIVATE_KEY / DEV_SSH_KNOWN_HOSTS (the deploy's key and the VM's host key) as secrets,
 # and DEV_WG_SERVER_KEY (the VM's public key) as a variable - bootstrap.sh prints what each takes. Nothing of
 # production's is here: the dev services have their own keys, made on the VM.
+#
+# AUDIT RELEASE-FLOW D12: TWO JOBS, TWO MACHINES. The build runs every dependency's install scripts and Vite, on a runner
+# whose user has passwordless sudo - and in one job with the deploy, the network's key and the deploy's were written to
+# that same machine minutes later. The build hands the site on as an artifact and holds no secret; the deploy, in the
+# `dev` environment, runs nothing a dependency ships.
 name: dev-deploy
 
 on:
@@ -26,9 +31,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment: dev
     env:
       DEV_HOST: dev.daggerfalljs.dev
     steps:
@@ -71,6 +75,31 @@ jobs:
             exit 1
           fi
 
+      - name: Hand the site on
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-site
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      DEV_HOST: dev.daggerfalljs.dev
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: The site the build made
+        uses: actions/download-artifact@v4
+        with:
+          name: dev-site
+          path: dist/
+
       - name: Into the dev network
         env:
           WG_PRIVATE_KEY: ${{ secrets.DEV_WG_PRIVATE_KEY }}
@@ -92,6 +121,9 @@ jobs:
           echo "::error::the dev VM does not answer inside the network (10.66.0.1)"
           exit 1
 
+      # AUDIT RELEASE-FLOW D8: by content, never by time - a fresh checkout and a fresh build give every file a new mtime,
+      # so linking by size and time linked nothing and every release was a whole copy; D7: the wrangler a release
+      # already holds (node_modules, .wrangler) is left where it is when its commit is shipped again
       - name: Ship the release, and make it current
         env:
           SSH_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
@@ -105,9 +137,9 @@ jobs:
           ssh="ssh -i $HOME/.ssh/dfo-dev -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
           rel="/srv/dfo-dev/releases/$GITHUB_SHA"
           # the files the release before already holds are linked, not sent again
-          rsync -a --delete -e "$ssh" --rsync-path="mkdir -p $rel/repo $rel/site && rsync" --link-dest=/srv/dfo-dev/current/repo/ \
-            server server-account src vendor ops "dfo@10.66.0.1:$rel/repo/"
-          rsync -a --delete -e "$ssh" --link-dest=/srv/dfo-dev/current/site/ dist/ "dfo@10.66.0.1:$rel/site/"
+          rsync -a --no-times --checksum --delete --exclude=node_modules/ --exclude=.wrangler/ -e "$ssh" --rsync-path="mkdir -p $rel/repo $rel/site && rsync" \
+            --link-dest=/srv/dfo-dev/current/repo/ server server-account src vendor ops "dfo@10.66.0.1:$rel/repo/"
+          rsync -a --no-times --checksum --delete -e "$ssh" --link-dest=/srv/dfo-dev/current/site/ dist/ "dfo@10.66.0.1:$rel/site/"
           $ssh dfo@10.66.0.1 "$rel/repo/ops/dev/deploy.sh" "$GITHUB_SHA"
 
       # as a member's browser asks: the site by its name, over TLS (Caddy's certificate), at the VM's network address

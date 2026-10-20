@@ -6,7 +6,9 @@
 // on it), it is the same number on every machine that has the history, and it reads 1 for the merge that brought the
 // line, whatever merged first. RELEASE-FLOW (2026-10-19, bible/01-Overview/Release-Flow.md): a release is cut by hand
 // from `release` now, so the count is along release's first parents - one a promotion of main, one a hotfix - where it
-// was along main's while every merge to main was released (REL3); main's own count is the dev environment's.
+// was along main's while every merge to main was released (REL3). Main's own first parents count on, but no build of
+// main is numbered: a number is a release's, and the dev environment's build names its commit instead (dev-deploy.yml,
+// a depth-1 checkout - AUDIT RELEASE-FLOW F8: this said main's count was the dev environment's).
 //
 // It is NOT the installer's version. The desktop updater compares installer versions (REL3's app-v0.1.<count>) and
 // never takes a lower one, so the installers keep theirs and the update number rides beside it: stamped into the

@@ -1,18 +1,22 @@
 # DEV-ENV (bible/01-Overview/Release-Flow.md): the dev environment's relay - server/ in Cloudflare's own runtime
 # (workerd, by `wrangler dev`), its Durable Objects local and kept in /var/lib/dfo-dev/state. On the loopback alone:
 # Caddy hands it wss://$DEV_HOST/relay/. It verifies the dev account service's identity key and signs with its own gate
-# key (/etc/dfo-dev/relay.env, made by bootstrap.sh), and its feeds are the dev account service's, never production's.
+# key (/etc/dfo-dev/relay.env, made by bootstrap.sh), and its feeds are the dev account service's, never production's -
+# posted through its ACCOUNTS binding, which wrangler's dev registry points at the dev account service's own session
+# (the same HOME): the URL names the path, and must be https:// or the relay sends nothing (AUDIT RELEASE-FLOW D3: an
+# http:// one silenced both feeds). Not started before a release is current (D14: a reboot then restarted it forever).
 [Unit]
 Description=DFO dev environment: the relay (wrangler dev)
 After=network-online.target dfo-dev-accounts.service
 Wants=network-online.target
+ConditionPathExists=/srv/dfo-dev/current/repo/server
 
 [Service]
 User=dfo
 Group=dfo
-Environment=HOME=/var/lib/dfo-dev/home CI=1 WRANGLER_SEND_METRICS=false
+Environment=HOME=/var/lib/dfo-dev/home CI=1 WRANGLER_SEND_METRICS=false WRANGLER_WRITE_LOGS=false
 WorkingDirectory=/srv/dfo-dev/current/repo/server
-ExecStart=/srv/dfo-dev/current/repo/server/node_modules/.bin/wrangler dev --ip 127.0.0.1 --port 8787 --inspector-port 9230 --persist-to /var/lib/dfo-dev/state --env-file /etc/dfo-dev/relay.env --var MOD_FEED_URL:http://127.0.0.1:8788/v1/mod/feed --var GRANT_FEED_URL:http://127.0.0.1:8788/v1/mod/grant-feed --show-interactive-dev-session=false
+ExecStart=/srv/dfo-dev/current/repo/server/node_modules/.bin/wrangler dev --ip 127.0.0.1 --port 8787 --inspector-port 9230 --persist-to /var/lib/dfo-dev/state --env-file /etc/dfo-dev/relay.env --var MOD_FEED_URL:https://daggerfall-accounts/v1/mod/feed --var GRANT_FEED_URL:https://daggerfall-accounts/v1/mod/grant-feed --show-interactive-dev-session=false
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true

@@ -4,8 +4,15 @@
 # Cloudflare fires server-account/wrangler.toml's [triggers] crons; `wrangler dev` fires none by itself, and opens a
 # door to fire one (--test-scheduled, on the loopback alone - Caddy refuses `/__*` from the network). dfo-dev-cron.timer
 # runs this each minute: every minute's cron, and at :41 the hour's (server-account/src/cron.js CRON_MINUTE, CRON_HOUR).
+#
+# AUDIT RELEASE-FLOW D14: a service that is not up is dfo-dev-accounts.service's own failure to say - this says it once a
+# minute no more (curl's 7: nothing listens); a service that answers and refuses is this run's failure, as before.
 set -euo pipefail
-curl -fsS --max-time 50 -o /dev/null 'http://127.0.0.1:8788/__scheduled?cron=*+*+*+*+*'
-if [ "$(date -u +%M)" = 41 ]; then
-  curl -fsS --max-time 50 -o /dev/null 'http://127.0.0.1:8788/__scheduled?cron=41+*+*+*+*'
-fi
+fire() {
+  local rc=0
+  curl -fsS --max-time 50 -o /dev/null "http://127.0.0.1:8788/__scheduled?cron=$1" || rc=$?
+  if [ "$rc" = 7 ]; then echo "the account service is not up - no cron fired"; exit 0; fi
+  return "$rc"
+}
+fire '*+*+*+*+*'
+if [ "$(date -u +%M)" = 41 ]; then fire '41+*+*+*+*'; fi

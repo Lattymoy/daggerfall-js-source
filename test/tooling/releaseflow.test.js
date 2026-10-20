@@ -9,7 +9,7 @@
 // settings they name - and the workflows' own bash, run as a runner runs it, against real git and a `gh` that records.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, writeFileSync, mkdtempSync, rmSync, mkdirSync, chmodSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, mkdtempSync, rmSync, mkdirSync, chmodSync, existsSync, utimesSync, readlinkSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +17,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { readSettings, codeownersReviewers, planSettings, sameRuleset, notMainsOwn, ROLES } from '../../tools/repoSettings.mjs';
 import { wgKeyPair, wgPublicOf, memberConfig, memberIpProblem, WG_KEY_RE, MEMBER_NAME_RE, NETWORK } from '../../tools/devPeer.mjs';
 import { releaseLineProblem, previousReleaseTag } from '../../scripts/desktopRelease.mjs';
+import { graph } from '../importGraph.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -725,9 +726,10 @@ test('CHECK-ASK: check.yml says a dispatched run\'s result on its commit as `che
 test('DEV-ENV: the dev deploy is dispatched on main alone, in the dev environment; it builds the site to call the dev services home and ships nothing that does not - its stamps asked of the client\'s own laws before anything is built (AUDIT RELEASE-FLOW E1); it passes only when the site, the relay and the account service answer with this commit, by name and over TLS through the network (mutants: the build unstamped; a deploy from any branch; the stamps unasked)', { skip: BASH }, (t) => {
   const yml = WF('dev-deploy.yml');
   assert.equal(onOf(yml), 'on:\n  workflow_dispatch:\n\n');
-  const [job] = jobsOf(yml);
-  assert.match(job.text, /\n {4}environment: dev\n/);
-  assert.ok(job.text.includes('    steps:\n      - name: Only main is the dev environment\'s\n        if: github.ref != \'refs/heads/main\'\n'), 'the door is the first step');
+  const [buildJob, deployJob] = jobsOf(yml);
+  assert.deepEqual([buildJob.name, deployJob.name], ['build', 'deploy']);
+  assert.ok(buildJob.text.includes('    steps:\n      - name: Only main is the dev environment\'s\n        if: github.ref != \'refs/heads/main\'\n'), 'the door is the first job\'s first step');
+  assert.match(deployJob.text, /^ {2}deploy:\n {4}needs: build\n {4}runs-on: ubuntu-latest\n {4}environment: dev\n/, 'the deploy after it, in the dev environment, which admits main alone');
   assert.match(yml, /\n {6}DEV_HOST: dev\.daggerfalljs\.dev\n/);
   assert.match(yml, /VITE_DFO_RELAY: wss:\/\/\$\{\{ env\.DEV_HOST \}\}\/relay\n {10}VITE_DFO_ACCOUNTS: https:\/\/\$\{\{ env\.DEV_HOST \}\}\/accounts\n/, 'the stamp src/net/serviceHome.js reads');
   const build = runBlock(yml, 'Build the site for the dev environment');
@@ -766,10 +768,12 @@ test('DEV-ENV: the VM\'s parts agree - the Workers\' ports in their units, in Ca
     assert.match(caddy, new RegExp(`handle_path /${path}/\\* \\{\\n\\t\\t@inner path /cdn-cgi/\\* /__\\*\\n\\t\\trespond @inner 404\\n\\t\\treverse_proxy 127\\.0\\.0\\.1:${port} \\{\\n\\t\\t\\theader_up Cf-Connecting-Ip \\{remote_host\\}\\n`), `${path}: proxied, its own doors refused`);
     assert.ok(deploy.includes(`http://127.0.0.1:${port}${health}`), `${path}: the deploy waits for it`);
   }
-  assert.match(relay, /--var MOD_FEED_URL:http:\/\/127\.0\.0\.1:8788\/v1\/mod\/feed --var GRANT_FEED_URL:http:\/\/127\.0\.0\.1:8788\/v1\/mod\/grant-feed /, 'the relay\'s feeds are the dev account service\'s');
-  assert.match(accounts, /--var RELAY_LAW_URL:http:\/\/127\.0\.0\.1:8787\/v1\/law /, 'and the service\'s law door the dev relay\'s');
+  // PIN MOVED (AUDIT RELEASE-FLOW D3): the feeds and the law door, https:// and through the bindings - test/net/devenv_feeds.test.js
+  // drives each one with these very values
+  assert.match(relay, /--var MOD_FEED_URL:https:\/\/daggerfall-accounts\/v1\/mod\/feed --var GRANT_FEED_URL:https:\/\/daggerfall-accounts\/v1\/mod\/grant-feed /, 'the relay\'s feeds are the dev account service\'s');
+  assert.match(accounts, /--var RELAY_LAW_URL:https:\/\/daggerfall-online\/v1\/law /, 'and the service\'s law door the dev relay\'s');
   const crons = JSON.parse(/^crons = (\[[^\]]*\])$/m.exec(rd('server-account/wrangler.toml'))[1]);
-  const fired = [...rd('ops/dev/dfo-dev-cron').matchAll(/__scheduled\?cron=([^']+)'/g)].map((m) => m[1].replace(/\+/g, ' '));
+  const fired = [...rd('ops/dev/dfo-dev-cron').matchAll(/\bfire '([^']+)'/g)].map((m) => m[1].replace(/\+/g, ' '));
   assert.deepEqual(fired, crons, 'the dev environment fires the crons production\'s Worker is given');
   const boot = rd('ops/dev/bootstrap.sh');
   assert.match(boot, /node "\$HERE\/\.\.\/\.\.\/tools\/mintIdentityKeys\.mjs" --pipe/);
@@ -777,23 +781,34 @@ test('DEV-ENV: the VM\'s parts agree - the Workers\' ports in their units, in Ca
   assert.match(rd('ops/dev/nftables.conf'), /\n\t\tudp dport 51820 accept\n\t\ttcp dport 80 accept\n\t\t@PUBLIC_SSH@\n\t\tiifname "wg0" tcp dport \{ 22, 443 \} accept\n/, 'from outside: WireGuard and the challenge; the rest from inside');
 });
 
-test('DEV-ENV: the members\' list is checked whole before any of it is applied - the committed one passes; a key, an address or a name that is not one, or one twice, is refused and the network left as it was; the members\' tool makes WireGuard\'s own keys and holds a member to the same rules (mutants: a stranger\'s address taken; a key twice)', { skip: BASH }, (t) => {
+test('DEV-ENV: the members\' list is checked whole before any of it is applied - the committed one passes; a key, an address or a name that is not one, or one twice, or a key the base holds (AUDIT RELEASE-FLOW D5: the CI runner\'s, or the VM\'s own), is refused and the network left as it was; a strip that gives no config syncs nothing; the members\' tool makes WireGuard\'s own keys and holds a member to the same rules (mutants: a stranger\'s address taken; a key twice; the CI runner\'s key taken; a failed strip synced)', { skip: BASH }, (t) => {
   const d = scratch(t, 'peers');
   const wgDir = join(d, 'wg');
   mkdirSync(wgDir);
-  writeFileSync(join(wgDir, 'wg0.base'), '[Interface]\nAddress = 10.66.0.1/24\n');
+  // the VM's base as bootstrap.sh writes it - the CI runner's peer held - and the VM's own key beside it
+  const ci = wgKeyPair().publicKey, vm = wgKeyPair();
+  const BASE = `[Interface]\nAddress = 10.66.0.1/24\n\n[Peer]\nPublicKey = ${ci}\nAllowedIPs = 10.66.0.2/32\n`;
+  writeFileSync(join(wgDir, 'wg0.base'), BASE);
+  writeFileSync(join(wgDir, 'wg0.key'), `${vm.privateKey}\n`);
   writeFileSync(join(wgDir, 'wg0.conf'), 'the network as it was\n');
   const bin = join(d, 'bin');
   mkdirSync(bin);
-  for (const tool of ['wg', 'wg-quick']) { writeFileSync(join(bin, tool), '#!/bin/bash\necho "$0 $*" >> "$WG_CALLS"\n'); chmodSync(join(bin, tool), 0o755); }
-  const apply = (list) => {
+  // `wg` answers `pubkey` with the VM's key and keeps what `syncconf` is handed; `wg-quick strip` gives the config back -
+  // or fails, or gives nothing, as STRIP says
+  writeFileSync(join(bin, 'wg'), '#!/bin/bash\necho "wg $*" >> "$WG_CALLS"\ncase "$1" in\n  pubkey) cat > /dev/null; echo "$VM_KEY" ;;\n  syncconf) cat "$3" > "$SYNCED" ;;\nesac\nexit 0\n');
+  writeFileSync(join(bin, 'wg-quick'), '#!/bin/bash\necho "wg-quick $*" >> "$WG_CALLS"\nif [ "$1" = strip ]; then\n  case "${STRIP:-}" in\n    fail) exit 1 ;;\n    empty) exit 0 ;;\n    *) cat "$DFO_DEV_WG_DIR/$2.conf" ;;\n  esac\nfi\nexit 0\n');
+  for (const tool of ['wg', 'wg-quick']) chmodSync(join(bin, tool), 0o755);
+  const apply = (list, strip = '') => {
     const file = join(d, 'peers.json');
     writeFileSync(file, typeof list === 'string' ? list : JSON.stringify(list));
-    return spawnSync('bash', [join(ROOT, 'ops/dev/dfo-dev-root'), 'peers', file], { encoding: 'utf8', env: { PATH: `${bin}:${process.env.PATH}`, DFO_DEV_WG_DIR: wgDir, WG_CALLS: join(d, 'calls') } });
+    rmSync(join(d, 'synced'), { force: true });
+    return spawnSync('bash', [join(ROOT, 'ops/dev/dfo-dev-root'), 'peers', file], { encoding: 'utf8', env: { PATH: `${bin}:${process.env.PATH}`, DFO_DEV_WG_DIR: wgDir, WG_CALLS: join(d, 'calls'), VM_KEY: vm.publicKey, SYNCED: join(d, 'synced'), STRIP: strip } });
   };
   const conf = () => readFileSync(join(wgDir, 'wg0.conf'), 'utf8');
   const a = wgKeyPair().publicKey, b = wgKeyPair().publicKey;
   for (const [list, why] of [
+    [[{ name: 'thief', key: ci, ip: '10.66.0.10' }], /key \S+ is this VM's or the CI runner's - never a member's/],
+    [[{ name: 'thief', key: vm.publicKey, ip: '10.66.0.10' }], /key \S+ is this VM's or the CI runner's - never a member's/],
     [[{ name: 'a', key: a, ip: '10.66.0.2' }], /no member's address/],
     [[{ name: 'a', key: a, ip: '10.66.0.251' }], /no member's address/],
     [[{ name: 'a', key: a, ip: '10.66.0.07' }], /no member's address/],
@@ -810,11 +825,20 @@ test('DEV-ENV: the members\' list is checked whole before any of it is applied -
     assert.match(r.stderr, why);
     assert.equal(conf(), 'the network as it was\n', 'nothing applied');
   }
-  const ok = apply([{ name: 'Lattymoy', key: a, ip: '10.66.0.10' }, { name: 'admin-panel', key: b, ip: '10.66.0.3' }]);
+  const members = [{ name: 'Lattymoy', key: a, ip: '10.66.0.10' }, { name: 'admin-panel', key: b, ip: '10.66.0.3' }];
+  const ok = apply(members);
   assert.equal(ok.status, 0, ok.stderr);
-  assert.equal(conf(), `[Interface]\nAddress = 10.66.0.1/24\n\n# Lattymoy\n[Peer]\nPublicKey = ${a}\nAllowedIPs = 10.66.0.10/32\n\n# admin-panel\n[Peer]\nPublicKey = ${b}\nAllowedIPs = 10.66.0.3/32\n`);
+  const want = `${BASE}\n# Lattymoy\n[Peer]\nPublicKey = ${a}\nAllowedIPs = 10.66.0.10/32\n\n# admin-panel\n[Peer]\nPublicKey = ${b}\nAllowedIPs = 10.66.0.3/32\n`;
+  assert.equal(conf(), want);
   assert.match(readFileSync(join(d, 'calls'), 'utf8'), /wg syncconf wg0 /, 'applied without dropping a session');
-  const committed = spawnSync('bash', [join(ROOT, 'ops/dev/dfo-dev-root'), 'peers', join(ROOT, 'ops/dev/peers.json')], { encoding: 'utf8', env: { PATH: `${bin}:${process.env.PATH}`, DFO_DEV_WG_DIR: wgDir, WG_CALLS: join(d, 'calls') } });
+  assert.equal(readFileSync(join(d, 'synced'), 'utf8'), want, 'what is synced is the config, the CI runner\'s peer in it');
+  // AUDIT RELEASE-FLOW D5: a strip that fails, or gives nothing, is no config - syncing it would drop every peer
+  for (const strip of ['fail', 'empty']) {
+    const r = apply(members, strip);
+    assert.notEqual(r.status, 0, `a strip that ${strip === 'fail' ? 'fails' : 'gives nothing'}: the run fails`);
+    assert.equal(existsSync(join(d, 'synced')), false, 'and nothing is synced');
+  }
+  const committed = spawnSync('bash', [join(ROOT, 'ops/dev/dfo-dev-root'), 'peers', join(ROOT, 'ops/dev/peers.json')], { encoding: 'utf8', env: { PATH: `${bin}:${process.env.PATH}`, DFO_DEV_WG_DIR: wgDir, WG_CALLS: join(d, 'calls'), VM_KEY: vm.publicKey, SYNCED: join(d, 'synced') } });
   assert.equal(committed.status, 0, `ops/dev/peers.json: ${committed.stderr}`);
   // the tool: X25519 as RFC 7748 has it (WireGuard's own), a member's config, the helper's rules
   const hex = (h) => Buffer.from(h, 'hex').toString('base64');
@@ -829,4 +853,223 @@ test('DEV-ENV: the members\' list is checked whole before any of it is applied -
   assert.ok(helper.includes(`[[ "$name" =~ ${MEMBER_NAME_RE.source} ]]`), 'one rule for a name');
   assert.ok(helper.includes(`[[ "$key" =~ ${WG_KEY_RE.source} ]]`), 'one rule for a key');
   assert.ok(helper.includes(`-lt ${NETWORK.first} ]`) && helper.includes(`-gt ${NETWORK.last} ]`), 'one range of members');
+});
+
+// ═══ AUDIT RELEASE-FLOW, LANE D: THE DEV VM ═══════════════════════════════════════════════════════════════════════
+
+test('AUDIT RELEASE-FLOW D1: bootstrap.sh, run again as root over a VM an earlier bootstrap laid out, writes nothing beneath a directory dfo owns - dfo could have swapped any path there for a symlink, and root\'s write through it lands where dfo pointed it (/etc made dfo\'s); a place that is no directory is refused before anything is made (mutants: /var/lib/dfo-dev left dfo\'s; the releases made by root; the key written into dfo\'s home; the refusal gone)', { skip: BASH }, (t) => {
+  const boot = rd('ops/dev/bootstrap.sh');
+  const from = boot.indexOf('echo "== the deploy\'s user and its places"\n');
+  const to = boot.indexOf('\necho "== ', from + 1);
+  assert.ok(from > 0 && to > from, 'the places, read');
+  const section = boot.slice(from, to);
+  assert.doesNotMatch(section, />>?\s*"?\/(?!dev\/)/, 'no redirection writes a file - every write is a command this test sees');
+  const refused = section.indexOf('if [ -L "$place" ] || { [ -e "$place" ] && [ ! -d "$place" ]; }; then');
+  assert.ok(refused > 0 && refused < section.indexOf('install -d -o dfo'), 'a place that is no directory refused before dfo\'s are made');
+  // the section as root runs it, each command a stand-in that records it
+  const d = scratch(t, 'places');
+  const bin = join(d, 'bin');
+  mkdirSync(bin);
+  for (const tool of ['install', 'runuser', 'useradd', 'id', 'chown', 'chmod', 'ln', 'mv', 'cp', 'rm', 'mkdir', 'tee', 'touch', 'sshd', 'systemctl']) {
+    writeFileSync(join(bin, tool), '#!/bin/bash\n{ printf \'%s\' "${0##*/}"; printf \'\\t%s\' "$@"; printf \'\\n\'; } >> "$CALLS"\n[[ " $* " != *" /dev/stdin "* ]] || cat > /dev/null\nexit 0\n');
+    chmodSync(join(bin, tool), 0o755);
+  }
+  const r = spawnSync('bash', ['-c', `set -euo pipefail\nHERE=${JSON.stringify(join(ROOT, 'ops/dev'))}\n${section}`], { encoding: 'utf8', env: { PATH: `${bin}:${process.env.PATH}`, CALLS: join(d, 'calls'), CI_SSH_PUBLIC_KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB' } });
+  assert.equal(r.status, 0, r.stderr);
+  const calls = readFileSync(join(d, 'calls'), 'utf8').trim().split('\n').map((l) => l.split('\t'));
+  // what an earlier bootstrap left: every place dfo's, /var/lib/dfo-dev and dfo's .ssh among them
+  const owner = new Map(['/var/lib/dfo-dev', '/var/lib/dfo-dev/state', '/var/lib/dfo-dev/home', '/var/lib/dfo-dev/home/.ssh', '/srv/dfo-dev', '/srv/dfo-dev/releases'].map((p) => [p, 'dfo']));
+  const parents = (p) => { const out = []; for (let q = dirname(p); q !== '/'; q = dirname(q)) out.push(q); return out; };
+  const wrote = [];
+  for (const [cmd, ...args] of calls) {
+    if (cmd === 'runuser') { assert.deepEqual(args.slice(0, 3), ['-u', 'dfo', '--'], 'dfo\'s own hand'); continue; }
+    if (cmd !== 'install') { assert.ok(['id', 'useradd', 'sshd', 'systemctl'].includes(cmd), `root runs ${cmd} ${args.join(' ')} - a write this test does not read`); continue; }
+    let dir = false, as = 'root';
+    const paths = [];
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '-d') dir = true;
+      else if (['-o', '-g', '-m'].includes(args[i])) { if (args[i] === '-o') as = args[i + 1]; i++; } else paths.push(args[i]);
+    }
+    for (const p of dir ? paths : [paths.at(-1)]) {
+      const held = parents(p).filter((q) => (owner.get(q) ?? 'root') !== 'root');
+      assert.deepEqual(held, [], `root writes ${p} beneath ${held.join(', ')} - dfo's, and dfo's to swap for a symlink`);
+      if (dir) owner.set(p, as);
+      wrote.push(p);
+    }
+  }
+  assert.ok(wrote.includes('/etc/dfo-dev/authorized_keys'), 'the deploy\'s key, in root\'s own tree');
+  assert.ok(calls.some(([cmd, ...a]) => cmd === 'runuser' && a.join(' ') === '-u dfo -- install -d -m 0755 /srv/dfo-dev/releases'), 'what lies beneath dfo\'s places, dfo makes');
+});
+
+test('AUDIT RELEASE-FLOW D6, D7: deploy.sh - the members applied before anything stops; a deploy that fails before the swap starts the release before again, still current; the release made current is the newest, the current one is never pruned, and a commit shipped again keeps the wrangler it holds (mutants: the members applied after the swap; a failed migration leaving dev down; the current release pruned as the oldest; the release made current left old; a lone release failing the prune; the wrangler reinstalled under the running Workers)', { skip: BASH }, (t) => {
+  const d = scratch(t, 'deploy');
+  const SRV = join(d, 'srv'), LIB = join(d, 'lib');
+  mkdirSync(join(SRV, 'releases'), { recursive: true });
+  mkdirSync(join(LIB, 'home'), { recursive: true });
+  const bin = join(d, 'bin');
+  mkdirSync(bin);
+  const stub = (name, body) => { writeFileSync(join(bin, name), `#!/bin/bash\n${body}\n`); chmodSync(join(bin, name), 0o755); };
+  // the root helper's verbs, recorded - `peers` refused when PEERS_REFUSED says so
+  stub('sudo', 'shift; echo "$*" >> "$CALLS"; [ "$1" != peers ] || [ -z "${PEERS_REFUSED:-}" ] || exit 1');
+  // npm ci installs a wrangler that records what it is asked, refusing the migrations when MIGRATION_REFUSED says so
+  stub('npm', 'echo "npm $*" >> "$CALLS"\nmkdir -p node_modules/.bin\nprintf \'#!/bin/bash\\necho "wrangler $*" >> "$CALLS"\\n[ -z "${MIGRATION_REFUSED:-}" ] || exit 1\\n\' > node_modules/.bin/wrangler\nchmod +x node_modules/.bin/wrangler');
+  stub('curl', 'case "$*" in *8787/health*) echo \'{"version":"world1"}\' ;; *8788/v1/health*) echo \'{"v":"acct1"}\' ;; esac');
+  stub('sleep', ':');
+  const sha = (n) => n.toString(16).padStart(40, '0');
+  const at = (n, ago) => { const s = Date.now() / 1000 - ago; utimesSync(join(SRV, 'releases', sha(n)), s, s); };
+  const release = (n) => {   // a release as dev-deploy.yml leaves it
+    const rel = join(SRV, 'releases', sha(n));
+    for (const dir of ['repo/server', 'repo/server-account', 'repo/ops/dev', 'site']) mkdirSync(join(rel, dir), { recursive: true });
+    writeFileSync(join(rel, 'repo/server/package-lock.json'), '{ "lock": 1 }\n');
+    writeFileSync(join(rel, 'repo/ops/dev/peers.json'), '[]\n');
+    writeFileSync(join(rel, 'site/index.html'), 'site\n');
+    return rel;
+  };
+  const deploy = (n, env = {}) => {
+    writeFileSync(join(d, 'calls'), '');
+    const r = spawnSync('bash', [join(ROOT, 'ops/dev/deploy.sh'), sha(n)], { encoding: 'utf8', env: { PATH: `${bin}:${process.env.PATH}`, DFO_DEV_SRV: SRV, DFO_DEV_LIB: LIB, CALLS: join(d, 'calls'), ...env } });
+    return { status: r.status, out: r.stdout + r.stderr, calls: readFileSync(join(d, 'calls'), 'utf8').trim().split('\n').filter(Boolean) };
+  };
+  const verbs = (run) => run.calls.map((c) => c.split(' ')[0]);
+  const current = () => readlinkSync(join(SRV, 'current'));
+  // the first: the members, the install, then the migrations between the stop and the start - a lone release pruned of nothing
+  const r1 = release(1);
+  const first = deploy(1);
+  assert.equal(first.status, 0, first.out);
+  assert.deepEqual(verbs(first), ['peers', 'npm', 'stop', 'wrangler', 'start']);
+  assert.equal(current(), r1);
+  // a list refused stops nothing
+  const r2 = release(2);
+  const refused = deploy(2, { PEERS_REFUSED: '1' });
+  assert.notEqual(refused.status, 0);
+  assert.deepEqual(refused.calls, [`peers ${r2}/repo/ops/dev/peers.json`], 'refused before anything is stopped');
+  // a migration refused: the release before started again, still current
+  const failed = deploy(2, { MIGRATION_REFUSED: '1' });
+  assert.notEqual(failed.status, 0);
+  assert.deepEqual(verbs(failed), ['peers', 'stop', 'wrangler', 'start'], 'stopped, refused, started again');
+  assert.equal(current(), r1, 'the release before is still the one running');
+  assert.match(failed.out, /the deploy failed before the swap - the release before is started again/);
+  assert.equal(deploy(2).status, 0);
+  assert.equal(current(), r2);
+  // the same commit shipped again: the wrangler it holds is kept, nothing installed under the running Workers
+  const again = deploy(2);
+  assert.equal(again.status, 0, again.out);
+  assert.ok(!again.calls.some((c) => c.startsWith('npm')), 'nothing installed');
+  // a rollback to the oldest: made current and the newest, and kept beside the four newest others
+  for (let n = 3; n <= 8; n++) release(n);
+  at(1, 1000); at(2, 50); for (let n = 3; n <= 8; n++) at(n, 120 - n * 10);
+  assert.equal(deploy(1).status, 0);
+  assert.equal(current(), r1);
+  assert.deepEqual(readdirSync(join(SRV, 'releases')).sort(), [1, 2, 6, 7, 8].map(sha).sort(), 'the current and the four newest besides it');
+  // and the next release keeps it: the one rolled back to is among the newest, for it was made current last
+  release(9);
+  assert.equal(deploy(9).status, 0);
+  assert.ok(readdirSync(join(SRV, 'releases')).includes(sha(1)), 'the release rolled back to, kept');
+  // the current is never pruned, whatever the times say: five releases stamped later than now - a clock set back since
+  // they were shipped - and the current one shipped again still stands
+  for (let n = 10; n <= 14; n++) { release(n); at(n, -1000 - n); }
+  assert.equal(deploy(9).status, 0);
+  assert.equal(current(), join(SRV, 'releases', sha(9)));
+  assert.ok(existsSync(current()), 'the running release is where it was');
+});
+
+test('AUDIT RELEASE-FLOW D8, D7: the dev release is shipped by content - a fresh checkout\'s files, every mtime new, are linked to the release before\'s, not copied; and a commit shipped again leaves the wrangler its release holds (mutants: the release linked by time; node_modules deleted under the running Workers)', { skip: BASH }, (t) => {
+  const step = runBlock(WF('dev-deploy.yml'), 'Ship the release, and make it current');
+  const repoLine = step.slice(step.indexOf('rsync '), step.indexOf(' server server-account src vendor ops ')).replace(/\\\n/g, ' ');
+  const flags = repoLine.replace(/"[^"]*"/g, '""').split(/\s+/).filter((f) => f.startsWith('-') && f !== '-e' && !f.startsWith('--rsync-path') && !f.startsWith('--link-dest'));
+  assert.ok(flags.includes('--delete'), `the flags read: ${flags.join(' ')}`);
+  const siteLine = step.slice(step.indexOf('rsync ', step.indexOf(' server server-account src vendor ops ')), step.indexOf(' dist/ '));
+  for (const f of ['--no-times', '--checksum']) assert.ok(siteLine.includes(` ${f} `), `the site shipped by content too (${f})`);
+  const d = scratch(t, 'rsync');
+  const src = join(d, 'checkout'), one = join(d, 'one'), two = join(d, 'two');
+  mkdirSync(join(src, 'server'), { recursive: true });
+  writeFileSync(join(src, 'server/a.js'), 'a\n');
+  writeFileSync(join(src, 'server/b.js'), 'b\n');
+  const ship = (to, linkDest) => spawnSync('rsync', [...flags, ...(linkDest ? [`--link-dest=${linkDest}/`] : []), `${src}/`, `${to}/`], { encoding: 'utf8' });
+  assert.equal(ship(one).status, 0);
+  // the next commit's checkout: the same bytes in a.js under a new mtime, b.js changed
+  const later = Date.now() / 1000 + 100;
+  utimesSync(join(src, 'server/a.js'), later, later);
+  writeFileSync(join(src, 'server/b.js'), 'b2\n');
+  const shipped = ship(two, one);
+  assert.equal(shipped.status, 0, shipped.stderr);
+  assert.equal(statSync(join(two, 'server/a.js')).ino, statSync(join(one, 'server/a.js')).ino, 'an unchanged file is the release before\'s, linked');
+  assert.notEqual(statSync(join(two, 'server/b.js')).ino, statSync(join(one, 'server/b.js')).ino, 'a changed one is its own');
+  // D7: shipped again over its own release, the wrangler deploy.sh installed there stays
+  mkdirSync(join(two, 'server/node_modules/.bin'), { recursive: true });
+  writeFileSync(join(two, 'server/node_modules/.bin/wrangler'), 'wrangler\n');
+  mkdirSync(join(two, 'server/.wrangler'), { recursive: true });
+  assert.equal(ship(two, one).status, 0);
+  assert.ok(existsSync(join(two, 'server/node_modules/.bin/wrangler')) && existsSync(join(two, 'server/.wrangler')), 'node_modules and .wrangler left where they are');
+});
+
+test('AUDIT RELEASE-FLOW D12: the dev deploy builds on one machine and deploys from another - the build holds no secret and hands the site on; the deploy, holding the network\'s key and the deploy\'s, runs nothing a dependency ships (mutants: the build in the deploy\'s job; a secret in the build)', () => {
+  const [buildJob, deployJob] = jobsOf(WF('dev-deploy.yml'));
+  assert.doesNotMatch(buildJob.text, /\$\{\{ (secrets|vars)\./, 'the build holds no secret');
+  assert.doesNotMatch(buildJob.text, /\n {4}environment:/, 'nor the environment that keeps them');
+  assert.match(buildJob.text, /\n {8}run: npm ci\n/);
+  assert.match(buildJob.text, /uses: actions\/upload-artifact@v4\n {8}with:\n {10}name: dev-site\n {10}path: dist\/\n/, 'the site handed on');
+  assert.match(deployJob.text, /uses: actions\/download-artifact@v4\n {8}with:\n {10}name: dev-site\n {10}path: dist\/\n/, 'and taken up');
+  const runs = runsOf(deployJob.text).map((r) => r.text).join('\n');
+  assert.doesNotMatch(runs, /\b(npm|npx|node|yarn|pnpm|vite)\b/, 'the deploy runs no dependency\'s code');
+  assert.doesNotMatch(deployJob.text, /actions\/setup-node/, 'nor sets up a runtime for one');
+});
+
+test('AUDIT RELEASE-FLOW F5: the dev release carries every file each Worker bundles - the directories dev-deploy.yml ships hold both import graphs whole, so a Worker that comes to import from another directory fails here, not on the VM after both Workers were stopped (mutants: a directory the account Worker bundles left unshipped)', () => {
+  const step = runBlock(WF('dev-deploy.yml'), 'Ship the release, and make it current');
+  const dirs = /--link-dest=\/srv\/dfo-dev\/current\/repo\/ ([a-z -]+?) "dfo@10\.66\.0\.1:\$rel\/repo\/"/.exec(step)?.[1].split(' ');
+  assert.ok(dirs?.length, 'the directories shipped, read');
+  for (const entry of ['server/src/index.js', 'server-account/src/index.js']) {
+    assert.deepEqual(graph(entry).filter((f) => !dirs.includes(f.split('/')[0])), [], `${entry} bundles files dev-deploy.yml never ships`);
+  }
+  assert.ok(dirs.includes('ops'), 'and ops/, whose deploy.sh and members\' list the VM runs');
+});
+
+test('AUDIT RELEASE-FLOW D14: the dev crons - a service that is not up passes over the run (its own unit says it is down), one that answers and refuses fails it, and the hour\'s cron fires at :41 (mutants: a down service failing every minute; a refusal passed over)', { skip: BASH }, (t) => {
+  const d = scratch(t, 'cron');
+  const bin = join(d, 'bin');
+  mkdirSync(bin);
+  writeFileSync(join(bin, 'curl'), '#!/bin/bash\necho "${@: -1}" >> "$CALLS"\nexit "${CURL_EXIT:-0}"\n');
+  writeFileSync(join(bin, 'date'), '#!/bin/bash\necho "$MINUTE"\n');
+  for (const f of ['curl', 'date']) chmodSync(join(bin, f), 0o755);
+  const run = (exit, minute) => {
+    writeFileSync(join(d, 'calls'), '');
+    const r = spawnSync('bash', [join(ROOT, 'ops/dev/dfo-dev-cron')], { encoding: 'utf8', env: { PATH: `${bin}:${process.env.PATH}`, CALLS: join(d, 'calls'), CURL_EXIT: String(exit), MINUTE: minute } });
+    return { status: r.status, calls: readFileSync(join(d, 'calls'), 'utf8').trim().split('\n').filter(Boolean) };
+  };
+  const door = 'http://127.0.0.1:8788/__scheduled?cron=';
+  assert.deepEqual(run(0, '12'), { status: 0, calls: [`${door}*+*+*+*+*`] });
+  assert.deepEqual(run(0, '41'), { status: 0, calls: [`${door}*+*+*+*+*`, `${door}41+*+*+*+*`] });
+  assert.deepEqual(run(7, '41'), { status: 0, calls: [`${door}*+*+*+*+*`] }, 'nothing listens: passed over, said once by its own unit');
+  assert.equal(run(22, '12').status, 22, 'a service that answers and refuses fails the run');
+});
+
+test('AUDIT RELEASE-FLOW D2, D4, D9, D10, D11, D13, D14: the VM\'s doors as the audit left them - Caddy\'s admin API off, the certificate by the HTTP challenge alone, no HTTP/3; a member reaches the services\' addresses alone; the site\'s name answered on the network for both families; key login alone, the deploy\'s key root\'s file held to the CI runner\'s address; Node pinned to a hash; the Workers not started before a release, writing no log files (mutants: the admin API open; members reaching each other; the AAAA asked upstream; passwords back; the key unrestricted; Node from latest, unchecked; a unit restarting forever before the first deploy)', () => {
+  const caddy = rd('ops/dev/Caddyfile'), boot = rd('ops/dev/bootstrap.sh');
+  assert.match(caddy, /\n\{\n\tadmin off\n\tservers \{\n\t\tprotocols h1 h2\n\t\}\n\}\n/, 'D2, D10: no admin API, no HTTP/3');
+  assert.match(caddy, /\n\{\$DFO_DEV_HOST\} \{\n\tencode zstd gzip\n\ttls \{\n\t\tissuer acme \{\n\t\t\tdisable_tlsalpn_challenge\n\t\t\}\n\t\}\n/, 'D10: the HTTP challenge alone');
+  assert.match(boot, /\nsystemctl restart caddy\n/, 'Caddy restarted - never reloaded, which asks the API that is off');
+  assert.doesNotMatch(boot, /reload caddy|caddy reload/);
+  const nft = rd('ops/dev/nftables.conf');
+  const fwd = nft.slice(nft.indexOf('\tchain forward {'), nft.indexOf('\t}', nft.indexOf('\tchain forward {')));
+  const services = `${NETWORK.prefix}${NETWORK.services.first}-${NETWORK.prefix}${NETWORK.services.last}`;
+  assert.equal(fwd, `\tchain forward {\n\t\ttype filter hook forward priority filter; policy drop;\n\t\tct state established,related accept\n\t\tiifname "wg0" oifname "wg0" ip daddr ${services} accept\n`, 'D4: forwarded to the services alone');
+  assert.ok(NETWORK.services.first === NETWORK.first && NETWORK.services.last < NETWORK.last, 'the services, members of the network');
+  assert.match(rd('ops/dev/dnsmasq.conf'), /\nhost-record=@DEV_HOST@,10\.66\.0\.1\nlocal=\/@DEV_HOST@\/\nserver=\/\*\.@DEV_HOST@\/#\n/, 'D9: the name kept here for both families, its subdomains handed on');
+  assert.match(rd('ops/dev/sshd-dfo-dev.conf'), /\nPasswordAuthentication no\nKbdInteractiveAuthentication no\nMatch User dfo\n\tAuthorizedKeysFile \/etc\/dfo-dev\/authorized_keys\nMatch all\n$/, 'D11, D1: keys alone; dfo\'s, root\'s file');
+  assert.match(boot, /\nprintf 'restrict,from="10\.66\.0\.2" %s\\n' "\$CI_SSH_PUBLIC_KEY" \| install -m 0644 \/dev\/stdin \/etc\/dfo-dev\/authorized_keys\n/, 'D11: the key from the CI runner alone, nothing forwarded');
+  assert.match(boot, /\ninstall -m 0644 "\$HERE\/sshd-dfo-dev\.conf" \/etc\/ssh\/sshd_config\.d\/00-dfo-dev\.conf\nsshd -t\n/, 'first of the drop-ins, checked before anything reloads');
+  // D13
+  assert.match(boot, /^NODE_VERSION=22\.\d+\.\d+$/m, 'a version, pinned');
+  assert.deepEqual([...boot.matchAll(/^ {2}\[(x64|arm64)\]=([0-9a-f]{64})$/gm)].map((m) => m[1]), ['x64', 'arm64'], 'a hash for each build');
+  assert.match(boot, /\n {2}curl -fsSL "https:\/\/nodejs\.org\/dist\/v\$NODE_VERSION\/\$file" -o "\$tmp\/\$file"\n {2}printf '%s {2}%s\\n' "\$\{NODE_SHA256\[\$arch\]\}" "\$tmp\/\$file" \| sha256sum -c -\n/, 'the tarball held to it');
+  assert.doesNotMatch(boot.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n'), /latest-v|SHASUMS256/, 'never a hash fetched beside the tarball');
+  // D14
+  for (const [unit, dir] of [['dfo-dev-relay.service', 'server'], ['dfo-dev-accounts.service', 'server-account']]) {
+    const u = rd(`ops/dev/${unit}`);
+    assert.match(u, new RegExp(`\\nConditionPathExists=/srv/dfo-dev/current/repo/${dir}\\n`), `${unit}: not started before a release is current`);
+    assert.match(u, new RegExp(`\\nWorkingDirectory=/srv/dfo-dev/current/repo/${dir}\\n`), `${unit}: the condition is the directory it runs in`);
+    assert.match(u, /\nEnvironment=[^\n]* WRANGLER_WRITE_LOGS=false\n/, `${unit}: no log files of wrangler's own`);
+  }
+  assert.match(rd('ops/dev/deploy.sh'), /\nexport [^\n]* WRANGLER_WRITE_LOGS=false\n/);
 });

@@ -8,8 +8,26 @@
 # Each Worker's own doors stay on the loopback: wrangler's explorer (`/cdn-cgi/`) and its cron door (`/__scheduled`)
 # are refused from the network. Each request names its member's address as Cloudflare would (Cf-Connecting-Ip), so the
 # services' per-address limits hold per member, not for the whole network as one.
+#
+# AUDIT RELEASE-FLOW D2: NO ADMIN API. Caddy's own answers any local process on localhost:2019 unasked, and a `POST /load`
+# from dfo's code turned the internet's port 80 into a proxy to a Worker - the one public door dfo could have opened.
+# bootstrap.sh restarts Caddy (it never reloads, which asks that API). D10: the certificate is asked by the HTTP
+# challenge alone - 443 is shut outside, so a TLS-ALPN one always failed first - and HTTP/3 is not offered, since UDP 443
+# is open nowhere and a browser's QUIC attempt met silence before it fell back.
+{
+	admin off
+	servers {
+		protocols h1 h2
+	}
+}
+
 {$DFO_DEV_HOST} {
 	encode zstd gzip
+	tls {
+		issuer acme {
+			disable_tlsalpn_challenge
+		}
+	}
 
 	handle_path /relay/* {
 		@inner path /cdn-cgi/* /__*

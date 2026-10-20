@@ -5,8 +5,10 @@
 # it alone (/etc/sudoers.d/dfo-dev). Three verbs:
 #   peers [<peers.json>]  the dev network's members as a release names them, over this VM's own base (its key and the
 #                         CI runner's peer, written by bootstrap.sh): EVERY ENTRY CHECKED BEFORE ANYTHING IS APPLIED -
-#                         a name, a WireGuard key, a member's address (10.66.0.3 to .250), none twice - and applied
-#                         without dropping a session (wg syncconf). With no file, the base alone.
+#                         a name, a WireGuard key, a member's address (10.66.0.3 to .250), none twice, and no key the
+#                         base holds (AUDIT RELEASE-FLOW D5: a member given the CI runner's key took its peer's address
+#                         from it, and no deploy could reach the VM to undo it) - and applied without dropping a session
+#                         (wg syncconf). With no file, the base alone.
 #   stop | start          the two Workers' services and the account service's cron timer
 # It runs no code a release ships: the list is data, read with jq.
 set -euo pipefail
@@ -22,6 +24,8 @@ case "${1:-}" in
       [ -f "$file" ] || { echo "no members' list at $file" >&2; exit 1; }
       jq -e 'type == "array" and all(.[]; type == "object")' "$file" >/dev/null || { echo "$file is no list of members" >&2; exit 1; }
       declare -A seen=()
+      # the base's own keys are taken already: the CI runner's peer, and this VM's own
+      while read -r k; do seen["key:$k"]=base; done < <(sed -n 's/^PublicKey = //p' "$WG_DIR/wg0.base"; [ ! -s "$WG_DIR/wg0.key" ] || wg pubkey < "$WG_DIR/wg0.key")
       n=$(jq 'length' "$file")
       for ((i = 0; i < n; i++)); do
         name=$(jq -r --argjson i "$i" '.[$i].name // ""' "$file")
@@ -32,6 +36,7 @@ case "${1:-}" in
         if ! [[ "$ip" =~ ^10\.66\.0\.([1-9][0-9]{0,2})$ ]] || [ "${BASH_REMATCH[1]}" -lt 3 ] || [ "${BASH_REMATCH[1]}" -gt 250 ]; then
           echo "$name: $ip is no member's address (10.66.0.3 to 10.66.0.250)" >&2; exit 1
         fi
+        [ "${seen["key:$key"]:-}" != base ] || { echo "$name: key $key is this VM's or the CI runner's - never a member's" >&2; exit 1; }
         for k in "name:$name" "key:$key" "ip:$ip"; do
           [ -z "${seen[$k]:-}" ] || { echo "$name: ${k%%:*} ${k#*:} is a second member's too" >&2; exit 1; }
           seen[$k]=1
@@ -40,7 +45,10 @@ case "${1:-}" in
       done
     fi
     install -m 0600 "$out" "$WG_DIR/wg0.conf"
-    wg syncconf wg0 <(wg-quick strip wg0)
+    # a strip that fails is no config: syncing nothing would drop every peer, the CI runner's too (AUDIT RELEASE-FLOW D5)
+    stripped=$(wg-quick strip wg0)
+    grep -q '^\[Interface\]' <<< "$stripped" || { echo "wg-quick strip gave no config - nothing synced" >&2; exit 1; }
+    wg syncconf wg0 <(printf '%s\n' "$stripped")
     echo "the dev network holds $(wg show wg0 peers | wc -l) peers"
     ;;
   stop) systemctl stop dfo-dev-cron.timer dfo-dev-relay dfo-dev-accounts ;;
