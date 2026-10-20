@@ -62,6 +62,12 @@ on:
         description: Seeds a band the course sweep crosses with the real motor (eg-sweep.yml) - 25 on a pull request, 500 before a relay deploy.
         type: number
         default: 25
+      ceilings:
+        # AUDIT RELEASE-FLOW F1: said by the caller, not guessed from the event - the ceiling was read off
+        # GITHUB_EVENT_NAME, so `/check` (a dispatch) skipped it while the deploys' dispatches were meant to
+        description: Hold the hosts to their ceilings (HOST-SPLIT, test/scenes/hostceiling.test.js) - every check of a change does; a deploy never.
+        type: boolean
+        default: true
     outputs:
       times:
         description: The cache key of the times the shards were split by (empty - the committed tools/testTimes.json); test-times.yml merges this run's records onto them.
@@ -148,6 +154,8 @@ jobs:
           key: ${{ needs.times.outputs.key }}
           fail-on-cache-miss: true
       - name: Test shard ${{ matrix.shard }} of 8
+        env:
+          DFO_HOST_CEILINGS: ${{ inputs.ceilings && '1' || '0' }}
         run: node tools/testShards.mjs ${{ matrix.shard }}/8 --record "$RUNNER_TEMP/test-times.json"
       - name: Keep this shard's times
         if: ${{ !cancelled() }}

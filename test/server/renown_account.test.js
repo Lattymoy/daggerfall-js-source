@@ -111,8 +111,7 @@ test('RENOWN-ACCOUNT the migration (0021), as it ran: each account started at it
   assert.match(sql, /WHY A TABLE OF ITS OWN/, 'the schema\'s choice, justified where it is made');
 });
 
-test('RENOWN-ACCOUNT the relay is untouched: the law is the account Worker\'s and the page\'s, never in the relay\'s bundle (test/net/relayversion.test.js holds that bundle\'s hash); the Worker bundles it and its deploy filter names it', () => {
+test('RENOWN-ACCOUNT the relay is untouched: the law is the account Worker\'s and the page\'s, never in the relay\'s bundle (test/net/relayversion.test.js holds that bundle\'s hash); the Worker bundles it', () => {
   assert.equal(graph('server/src/index.js').includes('src/net/renown.js'), false, 'not the relay\'s');
   assert.ok(graph('server-account/src/index.js').includes('src/net/renown.js'), 'the account Worker\'s');
-  assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/renown\.js"/);
 });

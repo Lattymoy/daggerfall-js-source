@@ -6,7 +6,8 @@ name: Realm restore (what a deleted customs character took with it)
 # hidden furniture - its guild place and its track with it, and left the census spent
 # (bible/01-Overview/bugs/Field-Bugs-2026-09-29.md). Those rows are gone from the database; D1 Time Travel still holds them.
 #
-# RUN BY HAND from the Actions tab, on main, at a quiet hour:
+# RUN BY HAND from the Actions tab, on release (RELEASE-FLOW: the production environment admits it alone), at a quiet
+# hour:
 #   1. with apply off (the default): a DRY RUN. The run's summary lists who gets what back, who is held for you (an
 #      account whose deleted character traded in the realm), and what someone else holds now. Nothing is written.
 #   2. read it; then run again with apply on.
@@ -41,13 +42,20 @@ permissions:
   contents: read
 
 # Never beside a deploy's migrations, a recovery or another restore: the deploy's own group, queued.
+# AUDIT RELEASE-FLOW A5: every run waits its turn - GitHub keeps ONE pending run a group by default and cancels it
+# for the next, and with a deploy waiting hours for its approval or its relay, a data operation dispatched behind
+# it was cancelled by the next one without a word
 concurrency:
   group: account-deploy
   cancel-in-progress: false
+  queue: max
 
 jobs:
   restore:
     runs-on: ubuntu-latest
+    # RELEASE-FLOW (bible/01-Overview/Release-Flow.md): production's token, in the environment that keeps it - run on
+    # release, with a release manager's approval
+    environment: production
     defaults:
       run:
         shell: bash
@@ -72,7 +80,7 @@ jobs:
       - name: Refuse to start without a token
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
-            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set in the production environment - nothing else in this job can work"
             exit 1
           fi
 

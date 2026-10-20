@@ -79,10 +79,13 @@ slice frees never becomes room to grow back into.
 
 THE CEILING GATES A CHANGE, NEVER A DEPLOY. Every open pull request is measured
 against the base it last saw, so two that each fit can land together and
-overflow - and the deploys run the suite. So the ceiling holds on a pull request
-and on a contributor's machine, and stands aside on the push that deploys: an
-overflow on main is the next pull request's to fix, by moving code out or by a
-raise with its reason, never a held deploy.
+overflow - and the deploys run the suite. So the ceiling holds wherever a change
+is checked - a pull request's `check`, main's own, a `/check` - and on a
+contributor's machine, and stands aside in the deploys, whose suite is called
+with `ceilings: false` (`verify.yml`; AUDIT RELEASE-FLOW F1: it was read off the
+run's event, so a `/check`, a dispatch, passed over it too): an overflow on main
+is the next pull request's to fix, by moving code out or by a raise with its
+reason, never a held deploy.
 
 ## The map
 

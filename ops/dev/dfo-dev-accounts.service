@@ -1,0 +1,28 @@
+# DEV-ENV (bible/01-Overview/Release-Flow.md): the dev environment's account service - server-account/ in Cloudflare's
+# own runtime (workerd, by `wrangler dev`), its D1, R2 and Durable Objects local and kept in /var/lib/dfo-dev/state. On
+# the loopback alone: Caddy hands it https://$DEV_HOST/accounts/. Its keys are the dev environment's own pair
+# (/etc/dfo-dev/accounts.env, made by bootstrap.sh), never production's; the crons are dfo-dev-cron.timer's. Its pushes
+# of a mute or a ban go to the dev relay through its RELAY binding (dfo-dev-relay.service says how; AUDIT RELEASE-FLOW
+# D3). Not started before a release is current (D14).
+[Unit]
+Description=DFO dev environment: the account service (wrangler dev)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/srv/dfo-dev/current/repo/server-account
+
+[Service]
+User=dfo
+Group=dfo
+Environment=HOME=/var/lib/dfo-dev/home CI=1 WRANGLER_SEND_METRICS=false WRANGLER_WRITE_LOGS=false
+WorkingDirectory=/srv/dfo-dev/current/repo/server-account
+ExecStart=/srv/dfo-dev/current/repo/server/node_modules/.bin/wrangler dev --ip 127.0.0.1 --port 8788 --inspector-port 9231 --persist-to /var/lib/dfo-dev/state --env-file /etc/dfo-dev/accounts.env --var RELAY_LAW_URL:https://daggerfall-online/v1/law --test-scheduled --show-interactive-dev-session=false
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/dfo-dev /srv/dfo-dev
+
+[Install]
+WantedBy=multi-user.target

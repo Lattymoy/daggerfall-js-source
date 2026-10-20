@@ -110,11 +110,13 @@ test('REL4: the notes are the patch notes the release brings, once, and say so p
   assert.equal(composeReleaseNotes([]), `${NO_NOTES_TEXT}\n`);
   assert.equal(composeReleaseNotes([{ pr: 3, text: '  \n' }]), `${NO_NOTES_TEXT}\n`, 'empty notes are no note');
   assert.equal(composeReleaseNotes(undefined), `${NO_NOTES_TEXT}\n`);
+  // RELEASE-FLOW (PIN MOVED): the newest release HEAD holds, by version - never `git describe`'s nearest
   assert.equal(previousReleaseTag('app-v0.1.4644', (args) => {
-    assert.equal(args.join(' '), 'describe --tags --abbrev=0 --match app-v* --exclude app-v0.1.4644 HEAD', 'the tag being cut is never its own "previous"');
-    return 'app-v0.1.4615';
-  }), 'app-v0.1.4615');
-  assert.equal(previousReleaseTag('app-v0.1.1', () => { throw new Error('no names found'); }), null);
+    assert.equal(args.join(' '), 'tag --merged HEAD --list app-v* --sort=-v:refname', 'the releases HEAD holds, newest first by version');
+    return 'app-v0.1.4644\napp-v0.1.4615\napp-v0.1.960';
+  }), 'app-v0.1.4615', 'the tag being cut is never its own "previous"');
+  assert.equal(previousReleaseTag('app-v0.1.1', () => ''), null, 'no release before it');
+  assert.equal(previousReleaseTag('app-v0.1.1', () => { throw new Error('not a git repository'); }), null);
   const never = () => { throw new Error('never asked'); };
   assert.deepEqual(pullRequestNotesSince(null, { run: never, api: never }), [], 'no previous release, no pile of every note ever written');
 });
@@ -268,11 +270,75 @@ test('REL6: the pull requests a release brings - every merge on the first-parent
   } finally { rmSync(repo, { recursive: true, force: true }); }
 });
 
+test('RELEASE-FLOW: a release cut from `release` brings its promotion\'s and its hotfixes\' pull requests and, under each promotion, main\'s since the release before - never a hotfix twice, never a pull request merged into a branch; a clone with no main refuses (mutants: no descent into a promotion; every merge descended; no main read as no promotion)', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'relflow-prs-'));
+  const git = (...args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8', maxBuffer: 1 << 24 }).trim();
+  let n = 0;
+  const commit = (msg) => { writeFileSync(join(repo, `${n++}.txt`), `${msg}\n`); git('add', '-A'); git('commit', '-q', '-m', msg); };
+  /** A pull request into `base`: a branch off it, a commit, GitHub's merge commit. */
+  const merged = (pr, branch, base) => {
+    git('checkout', '-q', '-b', branch, base);
+    commit(`${branch} work`);
+    git('checkout', '-q', base);
+    git('merge', '--no-ff', '-q', '-m', `Merge pull request #${pr} from o/${branch}`, branch);
+  };
+  /** main into release, by the promotion's pull request. */
+  const promoted = (pr) => {
+    git('checkout', '-q', 'release');
+    git('merge', '--no-ff', '-q', '-m', `Merge pull request #${pr} from o/main`, 'main');
+  };
+  const run = (args) => git(...args);
+  try {
+    git('init', '-q', '-b', 'main');
+    git('config', 'user.email', 'probe@example.invalid');
+    git('config', 'user.name', 'probe');
+    git('config', 'commit.gpgsign', 'false');
+    commit('start');
+    git('tag', 'app-v0.1.1');                  // the last release main cut
+    git('branch', 'release');
+    merged(21, 'f1', 'main');
+    git('checkout', '-q', 'main');
+    commit('Fix the boat (#22)');              // a squash on main
+    promoted(30);
+    git('tag', 'app-v0.1.2');
+    assert.deepEqual(pullRequestsSince('app-v0.1.1', run, 'app-v0.1.2'), [30, 22, 21],
+      'the promotion, then main\'s pull requests it brought, newest first');
+    merged(31, 'hotfix/x', 'release');         // a hotfix, into release
+    git('tag', 'app-v0.1.3');
+    assert.deepEqual(pullRequestsSince('app-v0.1.2', run, 'app-v0.1.3'), [31], 'a hotfix release is its hotfix');
+    merged(23, 'f2', 'main');
+    git('checkout', '-q', '-b', 'backmerge/release', 'release');
+    git('checkout', '-q', 'main');
+    git('merge', '--no-ff', '-q', '-m', 'Merge pull request #32 from o/backmerge/release', 'backmerge/release');
+    git('checkout', '-q', '-b', 'side', 'main');
+    commit('side work');
+    git('checkout', '-q', '-b', 'f3', 'main');
+    commit('f3 work');
+    git('merge', '--no-ff', '-q', '-m', 'Merge pull request #77: into the branch, not main', 'side');
+    git('checkout', '-q', 'main');
+    git('merge', '--no-ff', '-q', '-m', 'Merge pull request #24 from o/f3', 'f3');
+    promoted(33);
+    assert.deepEqual(pullRequestsSince('app-v0.1.3', run), [33, 24, 32, 23],
+      'main\'s line since the hotfix release - the back-merge among it, the hotfix not again, #77 never');
+    assert.deepEqual(pullRequestsSince('app-v0.1.1', run, 'app-v0.1.1'), [], 'nothing between a release and itself');
+    // a release main cut itself reads as it always did: main's line is release's line
+    git('checkout', '-q', 'main');
+    assert.deepEqual(pullRequestsSince('app-v0.1.1', run), [24, 32, 23, 22, 21]);
+    // no main to read: a promotion cannot be told, so nothing is read at all
+    git('checkout', '-q', 'release');
+    git('branch', '-q', '-m', 'main', 'trunk');
+    assert.throws(() => pullRequestsSince('app-v0.1.3', run), /no main in this clone/);
+  } finally { rmSync(repo, { recursive: true, force: true }); }
+});
+
 test('REL6: only a merged pull request the repository\'s own people opened brings notes, capped; a 404 is none, any other failure stops the notes', () => {
-  const subjects = ['Merge pull request #5: outside', 'Merge pull request #4: big', 'Merge pull request #3: open', 'Merge pull request #2: gone', 'Merge pull request #1: ours'].join('\n');
+  const subjects = ['Merge pull request #5: outside', 'Merge pull request #4: big', 'Merge pull request #3: open', 'Merge pull request #2: gone', 'Merge pull request #1: ours'];
+  const rows = subjects.map((s, i) => `c${i} p${i} f${i}\t${s}`).join('\n');   // each a merge of a feature branch, none on main's line
   const run = (args) => {
-    assert.deepEqual(args, ['log', '--first-parent', '--format=%s', 'app-v0.1.1..HEAD']);
-    return subjects;
+    if (args[0] === 'rev-parse') return args[3] === 'refs/remotes/origin/main^{commit}' ? 'mainsha' : '';
+    if (args[0] === 'rev-list') { assert.deepEqual(args, ['rev-list', '--first-parent', 'app-v0.1.1..refs/remotes/origin/main']); return 'c0\nc1\nc2\nc3\nc4'; }
+    assert.deepEqual(args, ['log', '--first-parent', '--format=%H %P%x09%s', 'app-v0.1.1..HEAD']);
+    return rows;
   };
   const notes = (title, line) => `## Patch notes: ${title}\n\n- ${line}\n\n## Verification\n- tests`;
   const big = `## Patch notes: Big\n\n${Array.from({ length: 4000 }, (_, i) => `- Line ${i} of a very long list of changes.`).join('\n')}`;

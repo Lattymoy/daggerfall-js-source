@@ -20,13 +20,20 @@ permissions:
 
 # AUDIT SERVER-POST: its own group, never the deploy's - a group keeps ONE pending run, and a read dispatched while a
 # deploy waited behind another would have cancelled that deploy. It only reads.
+# AUDIT RELEASE-FLOW A5: every run waits its turn - GitHub keeps ONE pending run a group by default and cancels it
+# for the next, and with a deploy waiting hours for its approval or its relay, a data operation dispatched behind
+# it was cancelled by the next one without a word
 concurrency:
   group: sd-clears
   cancel-in-progress: false
+  queue: max
 
 jobs:
   read:
     runs-on: ubuntu-latest
+    # RELEASE-FLOW (bible/01-Overview/Release-Flow.md): production's token, in the environment that keeps it - run on
+    # release, with a release manager's approval
+    environment: production
     defaults:
       run:
         shell: bash
@@ -47,7 +54,7 @@ jobs:
       - name: Refuse to start without a token
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
-            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set in the production environment - nothing else in this job can work"
             exit 1
           fi
 

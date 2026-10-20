@@ -2,16 +2,16 @@
   {
     "name": "REL6-1-no-previous-release-reads-everything",
     "file": "scripts/desktopRelease.mjs",
-    "old": "  if (!from) return [];\n  const numbers = new Set();",
-    "new": "  const numbers = new Set();",
+    "old": "  if (!from) return [];\n  const mainline = mainlineRef(run);",
+    "new": "  const mainline = mainlineRef(run);",
     "tests": ["test/tooling/rel4_release.test.js"],
     "note": "With no release before it, the first would read every merge ever made."
   },
   {
     "name": "REL6-2-a-branch-s-own-merges-count",
     "file": "scripts/desktopRelease.mjs",
-    "old": "run(['log', '--first-parent', '--format=%s', `${from}..${to}`])",
-    "new": "run(['log', '--format=%s', `${from}..${to}`])",
+    "old": "run(['log', '--first-parent', '--format=%H %P%x09%s', `${from}..${to}`])",
+    "new": "run(['log', '--format=%H %P%x09%s', `${from}..${to}`])",
     "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A pull request merged into a branch would bring its notes beside the branch's own."
   },

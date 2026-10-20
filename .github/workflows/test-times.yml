@@ -1,5 +1,6 @@
 # CI-TIMES (2026-10-19, Mac: "Do it"): THE SHARDS' TIMES, SAVED. After a
-# green verification (check.yml on a pull request, deploy.yml on main) this
+# green verification (check.yml on a pull request and on main - RELEASE-FLOW;
+# deploy.yml on release) this
 # merges the eight shards' records (verify.yml's `test-times-shard-*`
 # artifacts, each file's wall time in that run) onto the times the run was
 # split by, and saves them in the Actions cache - the newest of which every

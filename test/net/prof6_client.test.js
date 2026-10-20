@@ -401,7 +401,7 @@ test('PROF6 the Guild tab: the guild Stores read once, each material\'s count an
 
 // ─── THE WIRING ──────────────────────────────────────────────────────
 
-test('PROF6 wiring: the routes behind a session and in the Worker\'s table with their statuses; the door\'s calls; every refusal a sentence; the host\'s books and the board\'s and guild\'s hand-offs; the styles; the deploy carries the law; the Court writ\'s word names its profession (FOUND: it said Herbalism for every writ)', () => {
+test('PROF6 wiring: the routes behind a session and in the Worker\'s table with their statuses; the door\'s calls; every refusal a sentence; the host\'s books and the board\'s and guild\'s hand-offs; the styles; the Court writ\'s word names its profession (FOUND: it said Herbalism for every writ)', () => {
   const service = src('server-account/src/service.js'), idx = src('server-account/src/index.js');
   const routes = ['/v1/writs/post', '/v1/writs/supply', '/v1/writs/withdraw', '/v1/writs/budget', '/v1/writs/commission', '/v1/writs/fulfil',
     '/v1/writs/cancel', '/v1/writs/decline', '/v1/stores/guild', '/v1/stores/guild-deposit', '/v1/stores/guild-withdraw'];
@@ -423,5 +423,4 @@ test('PROF6 wiring: the routes behind a session and in the Worker\'s table with 
   const css = src('src/ui/enhanced/enhancedPlusStyle.js');
   assert.match(css, /\.notice-card\.seal-commission, \.notice-read\.seal-commission \{ --seal: #3f7a3a; \}/);
   assert.match(css, /\.work-row \{ display: flex; flex-wrap: wrap;/);
-  assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/writLaw\.js"/);
 });

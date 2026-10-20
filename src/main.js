@@ -46,7 +46,7 @@ import { installFramePacer } from './systems/frameCap.js';   // FPS-VSYNC (AUDIT
 import { setScreenshotCanvas } from './ui/screenshot.js';   // KB1: the PrintScreen action's canvas - the key itself is routed by the hosts (AUDIT KB1)
 import { getPref } from './systems/uiPrefs.js';   // FPS1: its switch
 import { publishBootParams, BOOT_DOOR_KEYS } from './systems/online/onlineLane.js';   // MAC-N3: the boot's params are the URL, or the online lane reads nothing
-// The deployed site is redeployed several times a day and every deploy
+// The deployed site is published again with every release, and every deploy
 // renames chunks, so a page held open across one is holding a map of a
 // build that is gone. Recoverable, and the law of that is its own file.
 import { staleChunkAction, RELOAD_KEY, STALE_CHUNK_TEXT } from './systems/staleChunk.js';

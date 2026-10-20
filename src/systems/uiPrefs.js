@@ -117,7 +117,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // hold A - systems/peerMenuBind.js). Online only.
   peerMenuKey: null, peerMenuPad: null,
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
-  // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
+  // player's head and the relay to join (net/online.js HOME_SERVER when empty - this build's own, DEV-ENV).
   onlineServer: '',
   // CHAT-R2 (2026-09-16, Mac: "a hide chat button"): the chat put
   // away, across sessions. A player who hid it wants it hidden next

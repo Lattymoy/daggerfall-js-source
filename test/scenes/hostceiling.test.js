@@ -15,11 +15,14 @@
 //   cheapest way to make room.
 // - IT GATES A CHANGE, NEVER A DEPLOY. Every open pull request is measured
 //   against the base it last saw, so two that each fit can land together and
-//   overflow; on the push that deploys them that is no reason to hold the
-//   deploy (deploy.yml and relay-deploy.yml run the suite). The ceiling holds
-//   on a pull request (GITHUB_EVENT_NAME pull_request*) and on a contributor's
-//   own machine (no GITHUB_EVENT_NAME) - an overflow on main is the next pull
-//   request's to fix, by moving code out or by a raise with its reason.
+//   overflow; on the deploy that ships them that is no reason to hold it. The
+//   ceiling holds on every check of a change - a pull request's, main's own,
+//   a `/check` - and on a contributor's own machine; a deploy's verify.yml run
+//   says `ceilings: false` (DFO_HOST_CEILINGS=0). An overflow on main is the
+//   next pull request's to fix, by moving code out or by a raise with its
+//   reason. AUDIT RELEASE-FLOW F1: it was told from GITHUB_EVENT_NAME, which
+//   held a pull request and nothing else - so `/check`, a dispatch like the
+//   deploys, skipped it while its record called it the whole check.
 //
 // LEGIBLE 1 (bible/01-Overview/Readability-Arc.md) added a third:
 // - IT IS BLIND TO LAYOUT. The ceiling counts LOGICAL lines (tools/hostScope.mjs
@@ -37,9 +40,8 @@ import { fileURLToPath } from 'node:url';
 import { parseModule, findHostFunction, logicalLines } from '../../tools/hostScope.mjs';
 
 const ROOT = join(fileURLToPath(new URL('..', import.meta.url)), '..');
-const EVENT = process.env.GITHUB_EVENT_NAME;
-const GATED = !EVENT || EVENT.startsWith('pull_request');
-const SKIP = GATED ? false : `the ceiling gates a change, never a deploy (${EVENT})`;
+const GATED = process.env.DFO_HOST_CEILINGS !== '0';
+const SKIP = GATED ? false : 'the ceiling gates a change, never a deploy (DFO_HOST_CEILINGS=0: verify.yml\'s `ceilings: false`)';
 
 /** The room a ceiling leaves above its host, in logical lines - a fix's worth, not a feature's (250 code lines before
  *  LEGIBLE 1, at the 1.6 logical lines per code line the hosts measured then). */

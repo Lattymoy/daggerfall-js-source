@@ -24,7 +24,7 @@ test('DA6/REL1/REL3: the release\'s number is ONE variable - the tag and the sta
   // both the release tag and the `npm version` stamp electron-builder
   // bakes in read that variable. There is no second number to drift.
   const wf = fs.readFileSync(path.join(root, '.github/workflows/release-desktop.yml'), 'utf8');
-  assert.match(wf, /TAG="app-v\$\{BASE\}\.\$\(git rev-list --count HEAD\)"/, 'a main push derives the tag from the base and the commit count');
+  assert.match(wf, /TAG="app-v\$\{BASE\}\.\$\(git rev-list --count HEAD\)"/, 'a run on release derives the tag from the base and the commit count');
   assert.match(wf, /BASE=\$\(node -p "require\('\.\/app\/package\.json'\)\.version\.split\('\.'\)\.slice\(0,2\)\.join\('\.'\)"\)/, 'the base is the committed MAJOR.MINOR');
   // AUDIT INSTALL L1-5: the tag is app-v<n>.<n>.<n> EXACTLY or the run fails - a tag name can carry quotes and `$`
   assert.ok(wf.includes('if [ -n "$TAG" ] && ! [[ "$TAG" =~ ^app-v[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then'), 'the tag is held to its shape before anything reads it');
@@ -48,13 +48,18 @@ test('DA6/REL1/REL3: the release\'s number is ONE variable - the tag and the sta
   assert.deepEqual(parseReleaseTag(derived), [0, 1, 960]);
   assert.equal(isNewerRelease('0.1.5', derived), true, 'a commit-count patch outranks every hand-cut release');
   assert.equal(isNewerRelease('0.1.960', derived), false, 'a build of this very release must not nag');
-  // every main push is a release: no paths filter narrows the door, and runs queue rather than cancel
+  // RELEASE-FLOW (bible/01-Overview/Release-Flow.md): a release is cut by hand, from release - the one trigger is a
+  // dispatch, the derived tag is release's alone (anywhere else: artifacts), and no door names a tag by hand
   const on = wf.slice(wf.indexOf('\non:'), wf.indexOf('\npermissions:'));
-  assert.match(on, /branches:\n\s+- main\n/, 'main pushes cut releases');
-  assert.doesNotMatch(on, /paths:/, 'every merge, not a marker');
-  // a release half uploaded is worse than one late - and AUDIT INSTALL L3-6: main pushes share one group (the newest
-  // waiting merge is cut next), while a manual door is a group of its own that no merge cancels
-  assert.match(wf, /concurrency:\n  group: \$\{\{ github\.event_name == 'push' && github\.ref == 'refs\/heads\/main' && 'release-desktop-main' \|\| format\('release-desktop-\{0\}', github\.run_id\) \}\}\n  cancel-in-progress: false/,
+  assert.equal(on, '\non:\n  workflow_dispatch:\n', 'a dispatch, nothing pushed - no merge, no tag cuts a release');
+  const resolve = wf.slice(wf.indexOf('- name: Resolve release version'), wf.indexOf('VERSION="${TAG#app-v}"'));
+  assert.match(resolve, /\n {10}TAG=''\n {10}if \[ "\$GITHUB_REF" = refs\/heads\/release \]; then\n {12}BASE=[^\n]+\n {12}TAG="app-v\$\{BASE\}\.\$\(git rev-list --count HEAD\)"\n(?: {12}#[^\n]*\n)* {12}node scripts\/desktopRelease\.mjs line "\$TAG"\n {10}fi\n/,
+    'the tag is derived on release, and on nothing else - and asked whether release\'s line holds the release before (releaseflow.test.js)');
+  const code = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+  assert.doesNotMatch(code, /release_tag|RELEASE_TAG|refs\/tags/, 'the hand doors are gone');
+  // a release half uploaded is worse than one late - and AUDIT INSTALL L3-6: release's runs share one group (the newest
+  // waiting is cut next), while an artifacts-only run is a group of its own that no release cancels
+  assert.match(wf, /concurrency:\n  group: \$\{\{ github\.ref == 'refs\/heads\/release' && 'release-desktop-release' \|\| format\('release-desktop-\{0\}', github\.run_id\) \}\}\n  cancel-in-progress: false/,
     'a release half uploaded is worse than one late');
 });
 

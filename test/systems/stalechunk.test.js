@@ -4,9 +4,9 @@
 // module` on the deployed site. The build was sound - a fresh one
 // fetches every chunk - and the cause was between deploys: index.html
 // hard-references seventeen hashed chunk URLs, every deploy renames
-// eight of them, GitHub Pages DELETES the old artifact, and main is
-// redeployed several times a day. A cached index is a map of a build
-// that is gone.
+// eight of them, GitHub Pages DELETES the old artifact, and the site is
+// published again with every release (each merge to main, when this was
+// written). A cached index is a map of a build that is gone.
 //
 // The recovery is a reload. What is pinned here is the ladder that
 // decides on one, and the two ways it can go wrong: not recognising a

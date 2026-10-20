@@ -784,7 +784,7 @@ import { poiMe } from '../poi/poiService.js';   // POI-3: the store's word on wh
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
-import { OnlineSession, steadyNow, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS, SHOWN_MOVE_HOLD_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory; AUDIT 637 D7: the move hold, one law both ends
+import { OnlineSession, steadyNow, roomKeyFor, HOME_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS, SHOWN_MOVE_HOLD_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory; AUDIT 637 D7: the move hold, one law both ends
 import { createSeatClock } from '../net/seatLive.js';   // FIELD BUGS 2026-10-18d SEAT-LIVE: the named seat's patience, which this page's own absence never spends
 import { pageWave } from '../net/reconnectWave.js';   // SCALE2c: a relay deploy's reconnect, spread by the hub's count
 import { quietFoesGate } from '../net/foesQuiet.js';   // SCALE2c: a full foes frame that says nothing, said once
@@ -21147,7 +21147,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const grants = createGrantHost({ session: () => online, climateAt: (x, y) => maps.getClimateIndex(x, y) });   // GRANT3: the spawn grants (scenes/grantHost.js) - the pool's net and my session's answers
   const onlineStart = () => {
     online = new OnlineSession({
-      url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
+      url: params.get('server') || getPref('onlineServer') || HOME_SERVER,
       // ACC1g: THE RELAY TAKES THE NAME OUT OF THE TOKEN AND IGNORES
       // THIS ONE. Two typed sources stood here - a `?name=` in the URL
       // and the `onlineName` pref - and both were the impersonation
@@ -28017,9 +28017,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // SCALE5c: and whether the relay keeps the hub's shards, remembered for the next page (`channelLinkRoom`) - AUDIT SCALE II
   // C-2: under this relay's own key, and a relay without them takes the links off their shards
   const onRelayVersion = (v) => { const keeps = hubShardsSupported(v); try { appStorage()?.setItem?.(hubShardsSeenKey(), keeps ? '1' : '0'); } catch { /* storage refused: the hub itself says it again */ } if (!keeps) channelLinksOffShards(); _relayKeepsRite = relaySupportsRite(v); _relayKeepsCage = relaySupportsCage(v); if (relayVersionSeen(v) === 'changed') chatNotice(relayRestartText()); };   // AUDIT BROKER-CAGE C4, C6: and whether it keeps the rite and the cage
-  // SRV-N: THE BUILD POLL. The relay moves by hand and rarely; the client
-  // moves on every merge, which is what "whenever we push" actually is
-  // for this project. Nothing tells a tab held open across a deploy that
+  // SRV-N: THE BUILD POLL. The relay moves rarely, when a release moved its
+  // version; the client moves with every release (RELEASE-FLOW: the site is
+  // published from `release`, a promotion of main or a hotfix - until then
+  // it moved with each merge). Nothing tells a tab held open across a deploy that
   // it is now running code we have replaced - it finds out when a lazy
   // chunk 404s and systems/staleChunk.js reloads it out from under the
   // player. So ask the site, on the site's own rhythm rather than the

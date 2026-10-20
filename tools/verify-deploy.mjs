@@ -1,7 +1,9 @@
 // Deploy verification BY CONTENT (standing lesson: a failed deploy
 // leaves the site on the previous build - HTTP 200 proves nothing).
 // The pipeline is the CI workflow (.github/workflows/deploy.yml,
-// Pages build_type: workflow - push to main deploys). This tool
+// Pages build_type: workflow). RELEASE-FLOW (2026-10-19,
+// bible/01-Overview/Release-Flow.md): a release manager dispatches it
+// on `release` - a push to main no longer deploys. This tool
 // closes the loop: build the commit locally (buildTag = commit sha,
 // so hashes are commit-deterministic), then run this to poll the
 // live index until it can prove your commit is what the site serves.
@@ -11,7 +13,9 @@
 // rewritten. Exact chunk-hash equality only holds while YOUR build
 // tag is the head that CI built - and other sessions push to main
 // constantly, so the deploy that actually landed is routinely a
-// DESCENDANT of your commit rather than your commit. That is a pass,
+// DESCENDANT of your commit rather than your commit (since
+// RELEASE-FLOW always: what ships is release's head, the promotion
+// merge that carries your commit). That is a pass,
 // not a timeout: the bundle on the site contains your work. Four
 // separate cycles were spent re-running a red verifier against a
 // perfectly good deploy before this arm existed. So: match the entry
@@ -101,8 +105,9 @@ export function gitContains(a, d) {
   };
   let out = ask();
   if (out === null) {
-    // The deployed head can be a commit this clone has not seen yet.
-    try { execFileSync('git', ['fetch', 'origin', 'main'], { stdio: 'ignore' }); } catch { /* offline */ }
+    // The deployed head can be a commit this clone has not seen yet -
+    // release's, since RELEASE-FLOW: the site ships from that branch.
+    try { execFileSync('git', ['fetch', 'origin', 'release'], { stdio: 'ignore' }); } catch { /* offline */ }
     out = ask();
   }
   return out;

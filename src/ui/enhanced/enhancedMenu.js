@@ -133,7 +133,7 @@ import { uiSkin, SKIN_NAMES, isEnhanced } from '../../systems/uiSkin.js';   // F
 import { getPref, setPref, isOpen, setOpen, PREF_DEFAULTS } from '../../systems/uiPrefs.js';
 import { EG_DANGER_PALETTES, EG_DANGER_PALETTE_KEYS } from '../eliteGates/egAccess.js';   // EG-G1: the Spire's danger palettes, named once
 import { TOUCH_BUTTON_SLOTS, touchButtonSlots, nextTouchButton, touchButtonChoices } from '../touch/touchButtons.js';   // TOUCH-BUTTONS: the corner's three slots
-import { DEFAULT_SERVER } from '../../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
+import { HOME_SERVER } from '../../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder (DEV-ENV: this build's own)   // R7: the port's own switches; SO1: the folded tiers' memory
 import { GATE_CROWD_TIERS } from '../../net/gate/gateCrowd.js';   // GATE-CROWD: how many other players a gate's court draws
 import { PEER_RANGE_TIERS, peerRangeOf } from '../../net/peer/peerRange.js';
 import { YARD_RANGE_TIERS, yardRangeOf } from '../../net/yardRange.js';   // YARD-RANGE: how far other players' yards are drawn   // PEER-RANGE: how far out other players are drawn, and the distance a stored value stands for
@@ -1274,7 +1274,7 @@ function paneOnline(body) {
   const foot = el('div', 'card svonlinefoot');
   // L10N4: ONE pattern, the sky's sentence an argument in it (skyDayWords is itself routed)
   foot.append(el('p', 'meta', t('menu.online.rules', 'Everyone plays their own save, and you can see and talk to each other anywhere. Dungeons and buildings are shared: enemies, doors, levers and opened chests are the same for everyone and stay that way. In towns and the wilds, everyone nearby sees the same monsters and can fight them, and they can hurt you too. {skyDay} The world\u2019s clock and sky run on real time. Resting, travel, jail and training don\u2019t move them, so a quest waiting for a time of day waits for the world\u2019s, and a lycanthrope\u2019s full moon lasts one night. Your character also has their own clock. It runs while you play and stops while you are logged off. Resting, travel, jail and training use it. Your wounds, spells, hunger, diseases, curses, guild ranks, rented rooms, loans and repairs run on it. Quest timers run on the world\u2019s clock while you play. Resting, waiting and traveling don\u2019t use up a quest\u2019s days, and time logged off never counts. A quest that only asks you to wait, like a letter or \u201ccome back in a few days\u201d, moves on after a couple of minutes of play. Rest at a fire, a tent or a bed: a night passes at once, at most once every 10 minutes of play, and party members within 15 meters sleep with you. Every enhancement is on for everyone, but your interface is your own. Most mods stay your choice online. A few are set for everyone: those that change the ground, monsters, loot or the rules. The Mods page marks each one.', { skyDay: skyDayWords() })));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door; QCLOCK-WORLD: the quests' clock; REST8: the short wait; REST9: the rest act and the party's night
-  foot.append(field(t('menu.online.relay', 'Relay'), 'onlineServer', DEFAULT_SERVER, 200));
+  foot.append(field(t('menu.online.relay', 'Relay'), 'onlineServer', HOME_SERVER, 200));
   body.append(foot);
   body.append(onlineSyncCard());   // UXB1-E: under the rules it copies
 }

@@ -111,6 +111,7 @@ import { validSerpentIn, validSerpentOut, serpentGate, relaySupportsSerpent, rel
 import { owIdInCell, owRowInCell, owRowSane } from './overworldLaw.js';   // OW6L: and the cell's law, held at home before a word is said
 import { reconnectWave } from './reconnectWave.js';   // SCALE2c: a relay deploy's reconnect, spread by the hub's count
 import { readWatchReceipt } from './watchReceipt.js';   // SEAT1b: the Watch's tick, read (never judged) at home
+import { BUILD_RELAY } from './serviceHome.js';   // DEV-ENV: the relay a build made for the dev environment calls home
 import { t } from '../systems/textManager.js';   // L10N4: the HUD line's words in the player's language (the relay's own words pass as it said them)
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
@@ -211,6 +212,16 @@ const TRADE_IN_SENDERS_MAX = 64;
  *  other seat of my party sharing at the hub's own per-socket cooldown (QUEST_HUB_MIN_MS), with all of them at once for its burst. */
 const QUEST_IN_ROOM_HZ = ((PARTY_MAX - 1) * 1000) / QUEST_HUB_MIN_MS;
 export const DEFAULT_SERVER = 'wss://daggerfall-online.mackcothran.workers.dev';
+/** DEV-ENV (serviceHome.js): the relay a build stamped with `built` calls home. None stamped: the players'
+ *  (DEFAULT_SERVER, the one the deploys read). Stamped: that relay, exactly as the relay law writes it (relayUrl) - or
+ *  none at all. AUDIT RELEASE-FLOW E1: a refused stamp used to become the players' relay; now it stops the build. */
+export const homeServerOf = (built) => {
+  if (built == null) return DEFAULT_SERVER;
+  if (relayUrl(built) !== built) throw new Error(`this build is stamped with the relay ${JSON.stringify(built)} (VITE_DFO_RELAY), which is no relay a client may connect to as written - it calls no relay home, the players' least of all`);
+  return built;
+};
+/** The relay this BUILD calls home: the dev environment's in a build made for it, the players' in every other. */
+export const HOME_SERVER = homeServerOf(BUILD_RELAY);
 /** A peer silent this long is HIDDEN (out of range, or its socket is
  *  gone and the leave is on its way); only the room's leave removes it. */
 // RELAY-H1: DERIVED from the heartbeat, never a literal beside it. The silence law hides a peer this long after its
@@ -553,8 +564,8 @@ export function steadyClock(wall = () => Date.now()) {
 export const steadyNow = steadyClock();
 
 export class OnlineSession {
-  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, acct = null, asecret = null, mintToken = null, WebSocketImpl = globalThis.WebSocket, now = steadyNow, rand = Math.random, wave = reconnectWave(), wire2 = false } = {}) {
-    this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
+  constructor({ url = HOME_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, acct = null, asecret = null, mintToken = null, WebSocketImpl = globalThis.WebSocket, now = steadyNow, rand = Math.random, wave = reconnectWave(), wire2 = false } = {}) {
+    this.url = relayUrl(url || HOME_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
     this.secret = secret ?? peerSecret();
     // SOC2: the ACCOUNT rides the hello only when the caller hands both halves in - the hub link's alone (world.js
     // chatStart); a presence session names none, and a session made without them is a build before this slice to

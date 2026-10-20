@@ -39,12 +39,14 @@ its push to the site; the suite alone ~6 minutes on a four-core runner, two whol
   (`fail-on-cache-miss`), so all eight split by the same times and every file is still in exactly one shard; with
   none saved, the committed file, as before. A runner a test starts of its own never writes into a shard's record (the
   reporter takes the path out of the environment as it loads). A pull request's saved times are its own (the cache
-  keeps a branch's to it); main's, saved by the deploy, are everyone's. Pinned by `test/tooling/citimes.test.js`.
+  keeps a branch's to it); main's are everyone's - saved by `check.yml`'s run on each push to main since RELEASE-FLOW
+  (2026-10-19, `01-Overview/Release-Flow.md`), by the deploy's before it moved to release. Pinned by
+  `test/tooling/citimes.test.js` and `releaseflow.test.js`.
 - **CI, in parallel (FLOW1).** `.github/workflows/verify.yml` is the one check - lint and the types, the suite in eight
   shards (four until CI-FAST, below), the build - as jobs that run at once. `check.yml` (the PR) calls it, and its `check` job passes only when all
   of it did (it runs `always()` and reads the result: a required check SKIPPED because its need failed would pass).
-  `deploy.yml` pins main's head once, verifies that commit with the same jobs beside the site's own build of it, and
-  publishes only after both passed. `release-desktop.yml`'s `gate` calls it too, on the release's own commit, and every
+  `deploy.yml` pins release's head once (main's until RELEASE-FLOW), verifies that commit with the same jobs beside
+  the site's own build of it, and publishes only after both passed. `release-desktop.yml`'s `gate` calls it too, on the release's own commit, and every
   OS leg waits for it (REL-FAST, 2026-10-15, Mac: "Yes, thats insanely slow" - the gate was `npm run check` in series,
   27.4 of a release's 33 minutes); none of its checkouts keeps a token (AUDIT INSTALL L1-1). The shards: `tools/testShards.mjs` splits the files by their recorded times - the
   longest first, each onto the lightest shard - so the four finish together (~245 s of recorded time each, ~80 s a
@@ -60,9 +62,16 @@ its push to the site; the suite alone ~6 minutes on a four-core runner, two whol
   citedrift, mutantdrift, audit18_bible_docs, ledger - ALWAYS: the audit found test:changed picks none of them for a one-module
   change, and this very slice's road edit moved a mutant record and a cite only they catch) and `npm run test:changed`;
   when that is most of the suite (a change to a host the source pins read), the change's own files and CI the rest. A
-  pull request that conflicts with its base runs no workflow at all - the base is merged in before the push that is to
-  be verified (the audit found this one's FAST-SUITE head never verified: main had moved under it). The whole `npm run check` (lint, types, the
-  suite, the build, in series - ~15 minutes on four cores) is for when CI cannot run it; CI runs it all either way.
+  pull request that conflicts with its base runs no `pull_request` workflow at all - the base is merged in before the
+  push that is to be verified (the audit found this one's FAST-SUITE head never verified: main had moved under it).
+  CHECK-ASK (2026-10-19, `01-Overview/Release-Flow.md`): a comment whose first line is `/check`, from someone who can
+  push here, runs the whole check on the pull request's branch as it stands - conflicted or not, the hosts' ceilings
+  among it - and says it on its head as `check (asked)` (`.github/workflows/check-ask.yml`). GitHub reads no check a
+  dispatched run reports for a pull request, so it informs and never passes one: the required `check` is the merge's,
+  tested once the base is in (AUDIT RELEASE-FLOW B1, F1). The deploys run the same jobs with the ceilings off - the
+  ceiling gates a change, never a deploy (`verify.yml`'s `ceilings`). The whole
+  `npm run check` (lint, types, the suite, the build, in series - ~15 minutes on four cores) is for when CI cannot run
+  it; CI runs it all either way.
 - **Longest first, every core (FAST-SUITE, 2026-10-04, Mac: "Our workflow is extremely slow").** `npm test` is
   `tools/testShards.mjs 1/1` - the whole suite as one shard - and every list of tests (a CI shard, `test:changed`) runs
   through the one `runTests`: the files longest first by the recorded times, and `--test-concurrency` at the machine's

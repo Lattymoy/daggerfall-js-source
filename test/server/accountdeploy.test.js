@@ -28,7 +28,7 @@ import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
-import { graph } from '../importGraph.mjs';   // ACC4: the deploy filter is held to the Worker's real import graph
+import { graph } from '../importGraph.mjs';   // IMPORT-GRAPH1: each Worker's import graph, held to what the bundler bundles
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -396,31 +396,27 @@ test('ACC1-CI: the deploy is verified BY CONTENT, and reads the host and version
   assert.ok(inCode, 'server-account/src/service.js no longer declares ACCOUNT_VERSION');
   assert.equal(inToml[1], inCode[1], 'the config and the code name different deploys - the verify step would never go green');
 
-  // A path filter is allowed HERE and is refused on the relay. The
-  // difference is not taste: this Worker holds no sockets. Hold the
-  // filter, so a slice that moves the service somewhere the filter does
-  // not cover reddens rather than silently stopping the deploys.
-  const paths = /paths:\s*\n((?:\s*-\s*"[^"]+"\n)+)/.exec(wf);
-  assert.ok(paths, 'the trigger no longer has a path filter');
-  assert.match(paths[1], /server-account\/\*\*/, 'a change to the service itself would not deploy it');
-  // ACC4: DERIVED FROM WHAT THE WORKER REALLY BUNDLES. This pin used to
-  // name identityToken.js alone, and the Worker also bundled the handle
-  // shape, the name filter, the wire, mat4 and the name tables - five
-  // files whose changes shipped nowhere. Walked from the entry now, so a
-  // file that joins the bundle without joining the filter reddens here.
-  const listed = [...paths[1].matchAll(/-\s*"([^"]+)"/g)].map((m) => m[1]);
-  const outside = graph('server-account/src/index.js').filter((f) => !f.startsWith('server-account/'));
-  assert.ok(outside.includes('src/net/identityToken.js') && outside.includes('src/net/playClock.js'),
-    `the walk no longer sees the files it must - it would pass over any filter: ${outside.join(', ')}`);
-  for (const f of outside) {
-    assert.ok(listed.includes(f), `${f} is bundled into the account Worker and a change to it would not deploy`);
-  }
+  // RELEASE-FLOW (bible/01-Overview/Release-Flow.md): NO PATH FILTER, because nothing is pushed. One was allowed here
+  // and refused on the relay - this Worker holds no sockets - and ACC4 held it to the Worker's real import graph, because
+  // a file left off it shipped nowhere (the handle shape, the name filter, the wire, mat4 and the name tables once did).
+  // Now a release manager dispatches this on release and it deploys the release whole: no file the Worker bundles can be
+  // left out of a filter that is not there.
+  const on = wf.slice(wf.search(/^on:/m), wf.search(/^permissions:/m));
+  assert.equal(on, 'on:\n  workflow_dispatch:\n\n', 'a dispatch, nothing pushed - and no filter to leave a bundled file out of');
+});
+
+test('RELEASE-FLOW: the account service deploys from release alone - a run anywhere else stops before the suite - and its deploy waits in the production environment, which holds the secrets it puts (mutants: a branch that is not release deployed; the deploy out of the environment)', () => {
+  const wf = rd(WF);
+  assert.match(wf, /\njobs:\n(?: {2}#[^\n]*\n)* {2}release:\n {4}runs-on: ubuntu-latest\n {4}steps:\n {6}- name: Only release deploys the account service\n {8}if: github\.ref != 'refs\/heads\/release'\n {8}run: \|\n[^\n]*\n {10}exit 1\n/,
+    'the first job stops a run on any other branch');
+  assert.match(wf, /\n {2}verify:\n {4}needs: release\n {4}uses: \.\/\.github\/workflows\/verify\.yml\n/, 'the suite runs only after it');
+  assert.match(wf, /\n {2}deploy:\n {4}needs: verify\n {4}runs-on: ubuntu-latest\n {4}environment: production\n/, 'the deploy waits on a release manager');
 });
 
 test('IMPORT-GRAPH1: the walk is what the bundler bundles - each Worker\'s graph is exactly the files esbuild bundles from its entry, a JSON table a leaf; the relay\'s order is the hash\'s (mutants: a re-export unread; a named re-export unread; a dynamic import unread; a table parsed; a package walked)', async () => {
   // test/importGraph.mjs parses each file - the regex it replaced stripped block comments before line comments, so a stray
-  // `/*` in a line comment swallowed the account Worker's imports of nine files, and the filter above never asked for
-  // them. Held here to the bundler itself: wrangler bundles with esbuild, so its inputs ARE the Worker.
+  // `/*` in a line comment swallowed the account Worker's imports of nine files, and the deploy's path filter (retired by
+  // RELEASE-FLOW) never asked for them. Held here to the bundler itself: wrangler bundles with esbuild, so its inputs ARE the Worker.
   const { build } = await import('esbuild');
   for (const entry of ['server/src/index.js', 'server-account/src/index.js']) {
     const r = await build({ entryPoints: [entry], bundle: true, write: false, metafile: true, format: 'esm', platform: 'neutral', logLevel: 'silent', external: ['cloudflare:*', 'node:*'], loader: { '.json': 'json' } });
@@ -467,11 +463,12 @@ test('ACC1-CI: nothing in the service still claims a person has to do this by ha
 
   if (automatic) {
     assert.deepEqual(liars, [],
-      'the deploy is automatic and these files still tell a reader to do it by hand');
+      'the deploy\'s work is the workflow\'s and these files still tell a reader to do it by hand');
     // ...and the config says what IS true, so a reader who never opens
-    // the workflow still learns where the deploy comes from.
-    assert.match(rd(TOML), /THE DEPLOY IS AUTOMATIC/,
-      'the config no longer says the deploy is automatic');
+    // the workflow still learns where the deploy comes from (RELEASE-FLOW:
+    // a person dispatches it on release; every step in it is the workflow's)
+    assert.match(rd(TOML), /THE DEPLOY IS BY HAND, FROM `release`; EVERY STEP IN IT IS AUTOMATIC/,
+      'the config no longer says how the deploy is run');
     assert.ok(rd(TOML).includes('account-deploy.yml'),
       'the config does not name the workflow that deploys it');
   } else {
@@ -589,14 +586,14 @@ test('GATE-KEYS: the deploy mints the gate\'s receipt pair ONCE, puts each half 
   assert.ok(at('Mint the gate receipt pair if either Worker lacks its half') < at('Verify the service holds the gate\'s public half'), 'the proof comes after the mint');
 });
 
-test('AUDIT B1 (SHADOW-FANG, 2026-09-26): the service deploys only once the relay serves this push\'s version - it signs what the relay verifies, and a title or glyph the running relay did not know was refused whole ("token claims"), terminal on the presence socket (mutants: the wait dropped; the wait after the deploy; the relay\'s address typed)', () => {
+test('AUDIT B1 (SHADOW-FANG, 2026-09-26): the service deploys only once the relay serves this release\'s version - it signs what the relay verifies, and a title or glyph the running relay did not know was refused whole ("token claims"), terminal on the presence socket (mutants: the wait dropped; the wait after the deploy; the relay\'s address typed)', () => {
   const wf = rd(WF);
   const step = (name) => {
     const i = wf.indexOf(`- name: ${name}`);
     assert.ok(i > 0, `the workflow has no step called "${name}"`);
     return i;
   };
-  const wait = step('Wait for the relay to serve this push\'s version');
+  const wait = step('Wait for the relay to serve this release\'s version');
   const deploy = step('Deploy');
   assert.ok(wait < deploy, 'the relay first, then the service');
   const body = wf.slice(wait, deploy);

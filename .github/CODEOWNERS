@@ -1,0 +1,6 @@
+# REVIEWS (RELEASE-FLOW, 2026-10-19, bible/01-Overview/Release-Flow.md): every pull request is asked of the
+# reviewers below, and main and release merge one only with a reviewer's approval (the rulesets in
+# ops/github/settings.json require a code owner's). This line is ops/github/settings.json's `roles.reviewers`, in its
+# order - test/tooling/releaseflow.test.js holds the two together, and tools/repoSettings.mjs refuses to run on a
+# difference. To give someone the role: add them in both, by a pull request.
+* @Lattymoy @EdoardoBramini

@@ -192,14 +192,5 @@
       "test/combat/enemyequipment.test.js",
       "test/systems/rri1_items.test.js"
     ]
-  },
-  {
-    "name": "AUDIT-CLAWS-CI-the-deploy-filter-without-it",
-    "file": ".github/workflows/account-deploy.yml",
-    "old": "      - \"src/combat/clawMetal.js\"\n",
-    "new": "",
-    "tests": [
-      "test/server/accountdeploy.test.js"
-    ]
   }
 ]

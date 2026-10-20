@@ -22,9 +22,25 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   to CI. CI's `verify` runs the whole gate - lint, types, every test file in
   eight shards, the build - on every pull request and before every deploy, and
   a pull request is not done until it is green on its head. A pull request
-  that conflicts with its base runs NO workflow: merge the base in before the
-  push that is meant to be verified. The whole `npm run check` in series (~15
-  minutes on four cores) is for when CI cannot run it.
+  that conflicts with its base runs NO `pull_request` workflow: merge the base
+  in before the push that is meant to be verified - or comment `/check` on it,
+  which runs the whole check on its branch as it stands and says it on the head
+  as `check (asked)` (CHECK-ASK); the required `check` still comes once it
+  merges cleanly. The whole
+  `npm run check` in series (~15 minutes on four cores) is for when CI cannot
+  run it.
+- **Main is development, `release` is production** (RELEASE-FLOW,
+  `bible/01-Overview/Release-Flow.md`): a pull request targets main - a hotfix
+  alone targets release, branched from release - and needs a reviewer's
+  approval (`.github/CODEOWNERS`). Main is played in the dev environment
+  (`dev-deploy.yml`, inside WireGuard); the relay, the account service, the
+  site and the desktop release move only when their workflows are dispatched on
+  release and a release manager approves them. GitHub lets only an admin merge
+  into release and only a release manager approve; anyone who can push may
+  dispatch, so: a session never merges into release and never dispatches or
+  approves a production workflow; it may open the pull request that promotes
+  main or carries a hotfix. Roles are code:
+  `ops/github/settings.json`, applied by an admin (`tools/repoSettings.mjs`).
 - **A cite into our own code is an anchor** (`bible/Home.md`, A CITE NAMES
   WHAT IT POINTS AT): `world.js:"const livingQuarry = () =>"`, the one line
   that holds that text - never `world.js:6153`. Write a number and
@@ -42,7 +58,8 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   and answers are `server-account/src/discord.js`, its channel and moderators are
   `server-account/wrangler.toml`. The account deploy writes them to Discord (`account-deploy.yml`,
   "Point Discord at the service": the Interactions Endpoint URL, the whole command list, the bot's
-  permissions in the channel checked). Change Discord by changing those and merging - never ask for
+  permissions in the channel checked). Change Discord by changing those and merging; it reaches
+  Discord with the release that carries it (RELEASE-FLOW) - never ask for
   the bot's token or for Developer Portal clicks the deploy can do. A person still invites the bot,
   grants its roles, and rotates its token (the `DISCORD_BOT_TOKEN` secret).
 - **The hosts do not grow** (HOST-SPLIT, `bible/01-Overview/Host-Split.md`):

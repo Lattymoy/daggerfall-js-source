@@ -18,9 +18,11 @@ this tree (BR1, BR5).
 Play it: https://daggerfalljs.dev/
 
 The site is `index.html` (what it is, how to play, credits); the game is
-`play/index.html`, served at `/play/`. Both deploy from `main` to GitHub
-Pages. The landing page takes its palette and fonts from the enhanced skin
-at build (`scripts/landingHtml.mjs`) and carries no game data or imagery.
+`play/index.html`, served at `/play/`. Both deploy to GitHub Pages from the
+`release` branch, by hand, once `main` has been played in the dev environment
+(`bible/01-Overview/Release-Flow.md`). The landing page takes its palette and
+fonts from the enhanced skin at build (`scripts/landingHtml.mjs`) and carries
+no game data or imagery.
 
 Docs live in `bible/` - start at `bible/Home.md`.
 
@@ -60,7 +62,7 @@ Node 20.19+ or 22.12+ (Vite 8's floor; CI runs 22).
 - `npm run cites [-- --apply | -- --check]` - write a line number cited into our code as an anchor, `file.js:"the line's text"`, and resolve every anchor (tools/citeAnchor.mjs)
 - `npm run shot [out.png]` - headless render proof (needs ARENA2_PATH + provisioned Chromium)
 - `node tools/landingProbe.mjs` - the landing page and `/play/` in a real browser, no ARENA2 needed
-- `node tools/verify-deploy.mjs` - after a push: proves the live `/play/` serves your commit
+- `node tools/verify-deploy.mjs` - after a release: proves the live `/play/` serves your commit
 
 ## Desktop app
 
@@ -88,17 +90,18 @@ unpacked DaggerfallGameFiles.zip. An update that lands mid-session is
 told in the game and waits under File > Restart to Update (on macOS and
 the portable exe, File > Download v...).
 
-`npm run dist` in `app/` packages installers. Every push to main
-builds them for all three OSes and publishes them as ONE GitHub Release
-(`.github/workflows/release-desktop.yml`: staged as a draft, published
-whole once every OS built) at `app-v<major>.<minor>.<commit count>` -
-the version is derived from the commit, never bumped by hand - with the
+`npm run dist` in `app/` packages installers. A release dispatched on
+the `release` branch builds them for all three OSes and publishes them as
+ONE GitHub Release (`.github/workflows/release-desktop.yml`: staged as a
+draft, published whole once every OS built and a release manager approved)
+at `app-v<major>.<minor>.<commit count>` - the version is derived from the
+commit, never bumped by hand - with the
 `## Patch notes` of every pull request it brings as its notes (written in
 the PR description, never as a file in the tree). The files carry no version in
 their names, so `releases/latest/download/DFO-Online-win-x64-setup.exe`
 (and `-mac-arm64.dmg`, `-linux-x86_64.AppImage`) is always the newest,
-and the landing page links each directly. Pushing a tag shaped `app-v*`
-cuts one by hand. Details
+and the landing page links each directly. Dispatched on any other branch
+it builds the installers as run artifacts and publishes nothing. Details
 in `bible/01-Overview/Desktop-App.md`; headless proof:
 `xvfb-run -a node tools/appShellProbe.mjs` (point `DAGGER_SHELL_EXE`
 at a packaged binary to prove an installer's payload). The packaged

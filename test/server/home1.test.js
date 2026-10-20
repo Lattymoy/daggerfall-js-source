@@ -234,9 +234,8 @@ test('HOME1 the client\'s door: every call rides the one session as a Bearer hea
     assert.equal(typeof REFUSALS[w], 'string', `${w} has its sentence`);
   }
   assert.match(REFUSALS['home-cap'], /at most 3 homes/);
-  // the deploy: the law is bundled, so a change to it deploys the Worker; and the smoke reads a town and refuses a guest
+  // the deploy's smoke reads a town and refuses a guest
   const wf = src('.github/workflows/account-deploy.yml');
-  assert.match(wf, /- "src\/net\/homeLaw\.js"/);
   assert.match(wf, /\$base\/v1\/homes\/town/);
   assert.match(wf, /grep -q '"homes-need-account"' \/tmp\/claim\.json/);
 });

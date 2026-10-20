@@ -11,44 +11,55 @@
 # ═══ THIS DROPS EVERY CONNECTED PLAYER ════════════════════════════
 #
 # A relay deploy restarts every Durable Object and drops every open socket
-# at once - peers vanish, chat goes quiet, everyone reconnects. So the
-# trigger has to fire on a real relay change and on nothing else.
+# at once - peers vanish, chat goes quiet, everyone reconnects. So it has
+# to fire on a real relay change and on nothing else.
 #
-# ═══ WHY NOT `on: push` WITH A PATH FILTER ════════════════════════
+# ═══ RELEASE-FLOW (2026-10-19): BY HAND, FROM `release` ═══════════
 #
-# The obvious automation is `paths: [server/**]`, and it would be WRONG.
-# The relay's law lives in `src/net/wire.js` - one home, both ends,
+# Every push to main ran this until RELEASE-FLOW
+# (bible/01-Overview/Release-Flow.md). Now the relay moves when a release
+# manager says so: it is dispatched on `release` - a run dispatched on any
+# other branch stops at its first job - and its deploy job waits in the
+# `production` environment until a release manager approves it.
+#
+# ═══ WHY NOT A PATH FILTER ════════════════════════════════════════
+#
+# The obvious automation was `paths: [server/**]`, and it would have been
+# WRONG. The relay's law lives in `src/net/wire.js` - one home, both ends,
 # re-exported whole by `server/src/relay.js` - and that file changes
 # constantly for reasons the running Worker does not care about. A path
-# filter would drop every player in the game several times a day over
-# comments and client-side constants.
+# filter would drop every player in the game over comments and
+# client-side constants.
 #
-# ═══ THE TRIGGER IS THE VERSION ═══════════════════════════════════
+# ═══ THE DECISION IS THE VERSION ══════════════════════════════════
 #
 # Because the version already means exactly this. `RELAY_VERSION` is
 # bumped by a relay-changing slice and by nothing else - that is the
 # standing rule, written into the constant since AUDIT WORLD34 D4. So
-# every push asks ONE cheap question: does the live relay serve the
-# version main says it should? It deploys only when the answer is no.
+# every run asks ONE cheap question: does the live relay serve the
+# version release says it should? It deploys only when the answer is no.
 #
-# A push that changed no relay behaviour bumped no version, answers yes,
-# and stops at a curl. That makes this job IDEMPOTENT - safe to re-run,
-# and a merge whose deploy failed is retried by the next push instead of
-# silently staying stale, which is the whole failure this exists to end.
-#
-# `workflow_dispatch` stays, for forcing a redeploy at an unchanged
-# version (a rolled-back Worker, a wrangler config change).
+# A release that changed no relay behaviour bumped no version, answers
+# yes, and stops at a curl - nobody is dropped for a release that did not
+# touch the relay. That makes this job IDEMPOTENT: safe to re-run, and a
+# deploy that failed is simply dispatched again.
 name: Deploy relay (drops every connected player)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       # SEAT2a part three (Seats-Arc 17): an urgent deploy may be forced through a siege's blackout - and a forced deploy
-      # during a siege voids it (the room is lost; the holder keeps the seat, the Right carries to the next week)
+      # during a siege voids it (the room is lost; the holder keeps the seat, the Right carries to the next week).
       force:
         description: 'Deploy now even while a siege is live (voids it)'
+        type: boolean
+        default: false
+      # AUDIT RELEASE-FLOW A4: deploying over a relay whose /health does not answer is its own ask. RELEASE-FLOW had
+      # folded it into `force`, so a hotfix over a relay that timed out under load voided every live siege and breach
+      # with it - where a dispatch had deployed over it with every wait kept. Asked first, in `drift`, so neither the
+      # sweep runs nor an approval is asked for a deploy that would refuse.
+      blind:
+        description: 'Deploy over a relay whose /health does not answer (sieges and breaches still waited for)'
         type: boolean
         default: false
 
@@ -58,29 +69,45 @@ permissions:
 # One at a time, and never cancelled halfway. A run interrupted between
 # `wrangler` and the verify step is the one state this must not leave
 # behind: the next run would compare against a live version nothing had
-# confirmed, and call the drift gone.
+# confirmed, and call the drift gone. AUDIT RELEASE-FLOW A3: and release's
+# runs are a group of their own - a run dispatched on any other branch,
+# which stops at its first step, took the place of a release run pending
+# in the group, cancelling it (deploy.yml's and release-desktop.yml's shape)
 concurrency:
-  group: relay-deploy
+  group: ${{ github.ref == 'refs/heads/release' && 'relay-deploy' || format('relay-deploy-{0}', github.run_id) }}
   cancel-in-progress: false
 
 jobs:
   # SCALE1 (2026-09-30, the scaling audit): THE SUITE BEFORE A DEPLOY THAT
-  # DROPS EVERY PLAYER - and only then. Most pushes deploy nothing here
+  # DROPS EVERY PLAYER - and only then. Most releases deploy nothing here
   # (the relay is already current), so the suite runs only when the
   # version in source differs from the live one; the deploy job below
   # asks the same question again and decides as it always did.
+  # RELEASE-FLOW: and nothing at all runs from a branch that is not release.
   drift:
     runs-on: ubuntu-latest
     outputs:
       deploying: ${{ steps.d.outputs.deploying }}
     steps:
+      - name: Only release deploys the relay
+        if: github.ref != 'refs/heads/release'
+        run: |
+          echo "::error::the relay is deployed from the release branch alone - dispatch this on release (bible/01-Overview/Release-Flow.md)"
+          exit 1
       - uses: actions/checkout@v4
       - id: d
+        env:
+          BLIND: ${{ github.event.inputs.blind }}
         run: |
           v=$(grep -oP "^export const RELAY_VERSION = '\\K[^']+" src/net/wire.js || true)
           got=$(curl -fsS --max-time 15 'https://daggerfall-online.mackcothran.workers.dev/health' | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' || true)
+          if [ -z "$got" ] && [ "$BLIND" != true ]; then
+            echo "::error::/health did not answer - not deploying blind. Dispatch again once it is reachable, or with blind to deploy over it."
+            exit 1
+          fi
           if [ -n "$v" ] && [ "$v" != "$got" ]; then echo "deploying=true" >> "$GITHUB_OUTPUT"; else echo "deploying=false" >> "$GITHUB_OUTPUT"; fi
           echo "source says '${v}', live says '${got:-unreachable}'"
+          if [ -n "$v" ] && [ "$v" = "$got" ]; then echo "::notice::the relay already serves $v - nothing to deploy, nobody dropped"; fi
 
   # EG6a: and the Elite Breach's course sweep at 500 seeds a band, not a pull request's 25 - a relay that draws the halls
   # is deployed only when every course of them a real motor crossed (eg-sweep.yml)
@@ -91,12 +118,16 @@ jobs:
     with:
       build: false
       sweep: 500
+      ceilings: false   # AUDIT RELEASE-FLOW F1: the ceiling gates a change, never a deploy
 
+  # RELEASE-FLOW: only a release that moves the relay reaches this job, and it waits in the `production` environment
+  # until a release manager approves it - nobody is asked to approve a deploy that would do nothing
   deploy:
     needs: [drift, verify]
-    # the suite passed, or had nothing to pass because nothing deploys (skipped)
-    if: ${{ !cancelled() && needs.drift.result == 'success' && (needs.verify.result == 'success' || needs.verify.result == 'skipped') }}
+    # the drift said deploy, and the suite passed
+    if: ${{ !cancelled() && needs.drift.result == 'success' && needs.drift.outputs.deploying == 'true' && needs.verify.result == 'success' }}
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -116,10 +147,10 @@ jobs:
           v=$(grep -oP "^export const RELAY_VERSION = '\\K[^']+" src/net/wire.js)
           test -n "$v" || { echo "::error::could not read RELAY_VERSION from src/net/wire.js"; exit 1; }
           echo "version=$v" >> "$GITHUB_OUTPUT"
-          echo "main says the relay should be $v"
+          echo "release says the relay should be $v"
 
-      # ...AND WHAT IS ACTUALLY LIVE. The push got us here; the DRIFT
-      # decides. This is the trigger proper.
+      # ...AND WHAT IS ACTUALLY LIVE, asked again: the dispatch got us
+      # here; the DRIFT decides.
       - name: Ask the live relay what it is serving
         id: live
         run: |
@@ -136,11 +167,14 @@ jobs:
       # deploy either. Deploying blind over a relay we could not read turns
       # an outage into a redeploy nobody asked for, and drops every player
       # who was still connected to a Worker that was merely slow to answer.
-      # A human dispatch can force it; a push may not.
+      # A dispatch with `blind` deploys over it; one without may not
+      # (RELEASE-FLOW: every run is a dispatch now - this was a push's rule;
+      # AUDIT RELEASE-FLOW A4: its own ask, never `force`'s). Asked again
+      # here: the relay may have stopped answering since `drift` read it.
       - name: Refuse to deploy over a relay that could not be read
-        if: steps.live.outputs.version == '' && github.event_name == 'push'
+        if: steps.live.outputs.version == '' && github.event.inputs.blind != 'true'
         run: |
-          echo "::error::/health did not answer - not deploying blind on a push. Dispatch by hand once it is reachable."
+          echo "::error::/health did not answer - not deploying blind. Dispatch again once it is reachable, or with blind to deploy over it."
           exit 1
 
       # ═══ ACC1d D2: THE KEY THIS RELAY WOULD DEPLOY WITH ══════════
@@ -188,7 +222,7 @@ jobs:
       # the account service being slow must not hold the relay (the
       # coupling D1 and D2 refuse) - it is said, and the deploy goes on.
       # GitHub's own six hours bound the job; a blackout past it fails the
-      # run, and the next push asks again.
+      # run, and the next dispatch asks again.
       - name: Wait out any live siege (the blackout)
         if: steps.live.outputs.version != steps.ver.outputs.version && github.event.inputs.force != 'true'
         run: |

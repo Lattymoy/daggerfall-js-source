@@ -1,0 +1,139 @@
+# HOTFIX-BACK (2026-10-19, bible/01-Overview/Release-Flow.md): A FIX MADE ON RELEASE GOES BACK TO MAIN BY A PULL
+# REQUEST OF ITS OWN.
+#
+# A hotfix is branched from `release` and merged into release first, so the players get it at the next dispatch of the
+# deploys - and then main must have it too, or the dev environment runs without it and main's next change to those
+# lines brings the bug back. Nobody has to remember: whenever release holds what main lacks, this opens - or brings up
+# to date - ONE pull request into main, from `backmerge/release`, a branch this workflow keeps level with release. It is
+# merged like any other pull request (a reviewer's approval, the check), and WITH A MERGE COMMIT, so main's history
+# holds release's commits. A conflict is resolved on backmerge/release - main merged into it - never on release; a
+# later push to release is merged into that branch on top of the resolution.
+#
+# WHAT "RELEASE HOLDS WHAT MAIN LACKS" MEANS (AUDIT RELEASE-FLOW B3): a commit of release's own - not a merge - that
+# main's history does not hold, or a merge of release into main that would change main's tree (asked of git itself,
+# merge-tree). History as well as the tree, because a fix carried to main by hand, or a back-merge squashed, leaves the
+# trees alike and the histories apart - and main's next change to those lines then conflicts with release at the next
+# promotion, with no back-merge open to say so (only the tree was asked, and only on a push to release). So it is asked
+# on every push to main as well as to release - a squashed back-merge opens the next at once - and by hand.
+#
+# ITS CHECK (AUDIT RELEASE-FLOW B1): GitHub holds the `pull_request` run of a pull request that a workflow's own token
+# opened or pushed until someone who can push here approves it (*Approve workflows to run*, in the merge box) - and a
+# run dispatched instead is never read for a pull request at all. So the pull request says so, and nothing is
+# dispatched.
+name: release-backmerge
+
+on:
+  push:
+    branches: [release, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# one at a time, in order: each run reads release and main as they stand when it starts
+concurrency:
+  group: release-backmerge
+  cancel-in-progress: false
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # backmerge/release, kept level with release
+      pull-requests: write   # the pull request into main, and what is said on it
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # main's history and release's, the one merged into the other; this job pushes, so the token stays
+
+      - name: What release has that main does not
+        id: lack
+        run: |
+          set -euo pipefail
+          git log --no-merges --format='- %h %s' origin/main..origin/release > "$RUNNER_TEMP/commits.md"
+          if [ ! -s "$RUNNER_TEMP/commits.md" ] && tree=$(git merge-tree --write-tree origin/main origin/release) && [ "$tree" = "$(git rev-parse 'origin/main^{tree}')" ]; then
+            echo "main already holds everything release has - nothing to bring back"
+            echo "lack=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [ -s "$RUNNER_TEMP/commits.md" ] || echo '- (none of its own: release'"'"'s merges carry changes main does not)' > "$RUNNER_TEMP/commits.md"
+          echo "release carries what main does not:"
+          cat "$RUNNER_TEMP/commits.md"
+          echo "lack=yes" >> "$GITHUB_OUTPUT"
+
+      # An open pull request's branch may carry a conflict someone resolved, so release is MERGED INTO it, never put over
+      # it - and a merge that conflicts again, or that this token may not push, is left to a person, said on the pull
+      # request. With none open the branch is this workflow's own, set to release's head whatever an old one held.
+      - name: Keep backmerge/release level with release
+        id: branch
+        if: steps.lack.outputs.lack == 'yes'
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # AUDIT RELEASE-FLOW B2: this repository's own branch alone - a fork's branch of the same name is not the back-merge
+          gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&head=$GITHUB_REPOSITORY_OWNER:backmerge/release&per_page=100" > "$RUNNER_TEMP/pulls.json"
+          pr=$(jq -r --arg repo "$GITHUB_REPOSITORY" '[.[] | select(.head.repo.full_name == $repo)][0].number // ""' "$RUNNER_TEMP/pulls.json")
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+          say() { printf '%s\n' "$1" > "$RUNNER_TEMP/say.md"; gh pr comment "$pr" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/say.md"; }
+          if [ -n "$pr" ] && git rev-parse -q --verify refs/remotes/origin/backmerge/release >/dev/null; then
+            git checkout -q -B backmerge/release refs/remotes/origin/backmerge/release
+            if ! git merge -q --no-edit -m 'Merge release into backmerge/release' origin/release; then
+              git merge --abort
+              echo "conflict=yes" >> "$GITHUB_OUTPUT"
+              say 'release moved, and merging it into `backmerge/release` conflicts with what this branch holds - merge `release` into `backmerge/release` by hand and push (HOTFIX-BACK, bible/01-Overview/Release-Flow.md).'
+              exit 0
+            fi
+            # AUDIT RELEASE-FLOW B4: this token may not write a workflow file that no branch holds - a merge making one is
+            # refused by GitHub, and said here, for a person to push
+            if ! git push -q origin HEAD:refs/heads/backmerge/release; then
+              echo "conflict=yes" >> "$GITHUB_OUTPUT"
+              say 'release moved, and the merge of it into `backmerge/release` could not be pushed by this workflow (its token may not write a workflow file that no branch holds) - merge `release` into `backmerge/release` by hand and push (HOTFIX-BACK, bible/01-Overview/Release-Flow.md).'
+              exit 0
+            fi
+          else
+            # leased to what this run read: a branch someone pushed to since is never forced over
+            old=$(git rev-parse -q --verify refs/remotes/origin/backmerge/release || true)
+            git checkout -q -B backmerge/release origin/release
+            git push -q --force-with-lease="backmerge/release:$old" origin HEAD:refs/heads/backmerge/release
+          fi
+          echo "backmerge/release is at $(git rev-parse --short HEAD)"
+
+      - name: The pull request into main
+        if: steps.lack.outputs.lack == 'yes' && steps.branch.outputs.conflict != 'yes'
+        env:
+          PR: ${{ steps.branch.outputs.pr }}
+        run: |
+          set -euo pipefail
+          {
+            cat <<'TOP'
+          Back-merge of `release` into `main` (HOTFIX-BACK, `bible/01-Overview/Release-Flow.md`).
+
+          `release` carries changes `main` does not have - fixes merged into release first. This brings them back, so the
+          dev environment and every later promotion have them. Opened and kept current by
+          `.github/workflows/release-backmerge.yml`.
+
+          Commits release has that main does not:
+
+          TOP
+            cat "$RUNNER_TEMP/commits.md"
+            cat <<'FOOT'
+
+          **Its check waits for you.** GitHub holds the `check` of a pull request that a workflow opened or pushed until
+          someone who can push here approves it: *Approve workflows to run*, in the merge box - again after every push
+          the workflow makes to this branch.
+
+          **Merge it with a merge commit, not a squash**: a merge keeps release's commits in main's history; a squash
+          leaves them out, and the back-merge opens again to bring the history back. One that shows no change is doing
+          exactly that - merge it all the same, or main's next change to those lines conflicts with release at the next
+          promotion. A conflict is resolved here, on `backmerge/release` (merge `main` into it), never on `release`. Its
+          patch notes were the fix's own release's; this one carries none.
+          FOOT
+          } > "$RUNNER_TEMP/body.md"
+          if [ -z "$PR" ]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head backmerge/release --title 'Back-merge release into main' --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/body.md"
+          fi

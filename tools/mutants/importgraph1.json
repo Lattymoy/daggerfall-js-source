@@ -43,14 +43,5 @@
     "tests": [
       "test/server/accountdeploy.test.js"
     ]
-  },
-  {
-    "name": "IMPORT-GRAPH1-the-nine-unlisted",
-    "file": ".github/workflows/account-deploy.yml",
-    "old": "      - \"src/systems/loot/lootThemes.js\"\n",
-    "new": "",
-    "tests": [
-      "test/server/accountdeploy.test.js"
-    ]
   }
 ]

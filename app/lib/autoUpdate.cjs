@@ -3,8 +3,9 @@
 // THE AUTO-UPDATER'S PURE HALF - which transport a running copy of the
 // app updates by.
 //
-// Every main push cuts a release (REL3), so a player on the DA6 notice
-// alone was asked to download and install several times a day. The
+// Every main push cut a release then (REL3 - by hand from `release` since
+// RELEASE-FLOW, 2026-10-19), so a player on the DA6 notice alone was
+// asked to download and install several times a day. The
 // installers electron-builder already cuts - NSIS on Windows, AppImage
 // on Linux - are exactly the two electron-updater can replace in place:
 // it reads the release's `latest.yml`, downloads the new installer (a

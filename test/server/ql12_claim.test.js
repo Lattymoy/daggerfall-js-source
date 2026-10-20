@@ -385,7 +385,6 @@ test('QL12 THE ROUTE (AUDIT FIVE-ASKS A1\'s lesson): /v1/ql/claim is listed, beh
   assert.match(sql, /^ {2}seen_at {3}INTEGER,$/m, 'AUDIT QUESTLINES SERVICE-5: the receipt that witnessed a step, so no receipt witnesses two');
   assert.match(sql, /^ALTER TABLE players ADD COLUMN ql_titles INTEGER NOT NULL DEFAULT 0;$/m);
   assert.match(sql, /^ALTER TABLE players ADD COLUMN ql_key INTEGER NOT NULL DEFAULT 0;$/m);
-  assert.match(read('.github/workflows/account-deploy.yml'), /^ {6}- "src\/net\/questlineClaims\.js"$/m, 'the shared law deploys the service');
 });
 
 test('QL12 THE VOCABULARY: the five join TITLES last, in QL_TITLES\' order; a registered row holds each by its bit and a guest none; their words; their colours - each its own, more than 40 from every title\'s; a title\'s loot banner (mutants: the order; the guest; a word)', () => {

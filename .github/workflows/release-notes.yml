@@ -32,14 +32,19 @@ on:
 permissions:
   contents: read
 
+# AUDIT RELEASE-FLOW A5: each run is one pull request's edit, so each waits its turn - GitHub keeps ONE pending run a
+# group by default and cancels it for the next, and a description edited while two others were read never reached its
+# release
 concurrency:
   group: release-notes
   cancel-in-progress: false
+  queue: max
 
 jobs:
   renotes:
-    # by hand; or a pull request MERGED into the default branch whose DESCRIPTION changed (a title is not notes)
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged && github.event.changes.body && github.event.pull_request.base.ref == github.event.repository.default_branch)
+    # by hand; or a pull request MERGED into the default branch whose DESCRIPTION changed (a title is not notes) - or,
+    # RELEASE-FLOW, into release: a hotfix's notes are its release's as well
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged && github.event.changes.body && (github.event.pull_request.base.ref == github.event.repository.default_branch || github.event.pull_request.base.ref == 'release'))
     runs-on: ubuntu-latest
     permissions:
       contents: write        # the release's body

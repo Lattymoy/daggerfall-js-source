@@ -14,7 +14,8 @@
 //      module `main` imports and the change cascades.
 //   3. GitHub Pages replaces the whole artifact. The old hashed files
 //      are DELETED, not kept beside the new ones.
-//   4. `main` is redeployed several times a day.
+//   4. The site is published again with every release - a promotion of
+//      main or a hotfix (RELEASE-FLOW; until then with each merge to main).
 //
 // So a returning player whose browser still holds that page from an
 // earlier deploy starts the page from cache and then asks for a chunk
