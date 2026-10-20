@@ -28,18 +28,18 @@
   },
   {
     "name": "AUDIT0929-T2-site-never-waits",
-    "file": ".github/workflows/deploy.yml",
-    "old": "            if [ \"$got\" = \"$WANT\" ] || { [ -n \"$got\" ] && [ \"$(n \"$got\")\" -ge \"$(n \"$WANT\")\" ]; }; then\n              echo \"the account service serves ${got} - this build's forms may ask it\"",
-    "new": "            if true; then\n              echo \"the account service serves ${got} - this build's forms may ask it\"",
+    "file": "scripts/serviceWait.sh",
+    "old": "  if served \"$relay\" \"$relay_want\" && served \"$got\" \"$want\"; then",
+    "new": "  if true; then",
     "tests": [
       "test/server/audit0929_terms.test.js"
     ]
   },
   {
     "name": "AUDIT0929-T2-an-older-service-taken",
-    "file": ".github/workflows/deploy.yml",
-    "old": "[ \"$(n \"$got\")\" -ge \"$(n \"$WANT\")\" ]; }; then\n              echo \"the account service serves",
-    "new": "[ \"$(n \"$got\")\" -ge \"$(( $(n \"$WANT\") - 1 ))\" ]; }; then\n              echo \"the account service serves",
+    "file": "scripts/serviceWait.sh",
+    "old": "served() { [ \"$1\" = \"$2\" ] || { [ -n \"$1\" ] && [ \"$(n \"$1\")\" -ge \"$(n \"$2\")\" ]; }; }",
+    "new": "served() { [ \"$1\" = \"$2\" ] || { [ -n \"$1\" ] && [ \"$(n \"$1\")\" -ge \"$(( $(n \"$2\") - 1 ))\" ]; }; }",
     "tests": [
       "test/server/audit0929_terms.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT0929-T2-publish-before-the-wait",
     "file": ".github/workflows/deploy.yml",
-    "old": "      - name: Wait for the account service to serve this build's version\n        env:",
-    "new": "      - name: Wait for the account service to serve this build's version (after)\n        env:",
+    "old": "      - name: Wait for the relay and the account service to serve this release\n        run: scripts/serviceWait.sh\n\n      - id: deployment\n        uses: actions/deploy-pages@v4\n",
+    "new": "      - id: deployment\n        uses: actions/deploy-pages@v4\n\n      - name: Wait for the relay and the account service to serve this release\n        run: scripts/serviceWait.sh\n",
     "tests": [
       "test/server/audit0929_terms.test.js"
     ]

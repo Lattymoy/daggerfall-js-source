@@ -250,10 +250,13 @@ jobs:
         run: node scripts/desktopRelease.mjs pack dist app/release
 
       # REL4: a leg hands its files on and publishes nothing. When a
-      # release follows, the publish job takes them within minutes and
-      # the release holds them for good, so a day is kept (a re-run of a
-      # failed publish); an artifacts-only run keeps its installers two
-      # weeks for whoever asked for them.
+      # release follows, the publish job takes them once a release
+      # manager approves it and the release holds them for good, so a
+      # week is kept - the approval's wait and a re-run of a failed
+      # publish (AUDIT RELEASE-FLOW A2: a day, kept until RELEASE-FLOW
+      # put an approval between the legs and the publish, failed every
+      # release approved the day after); an artifacts-only run keeps its
+      # installers two weeks for whoever asked for them.
       - name: Hand the installers on
         uses: actions/upload-artifact@v4
         with:
@@ -266,7 +269,7 @@ jobs:
             app/release/*.blockmap
             app/release/DFO-Online-game.*
           if-no-files-found: error
-          retention-days: ${{ needs.version.outputs.tag != '' && 1 || 14 }}
+          retention-days: ${{ needs.version.outputs.tag != '' && 7 || 14 }}   # AUDIT RELEASE-FLOW A2: a release's wait for its approval, a week
 
   # REL4: ONE publish, and only when every leg passed - `needs: build`
   # waits for the whole matrix, and a failed leg skips this job, so no
@@ -293,6 +296,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      # AUDIT RELEASE-FLOW A6: nothing reaches the players before the services it talks to serve it - the relay its
+      # RELAY_VERSION, the account service its ACCOUNT_VERSION - the site's publish waits by the same script
+      - name: Wait for the relay and the account service to serve this release
+        run: scripts/serviceWait.sh
 
       - name: Collect every leg's files
         uses: actions/download-artifact@v4

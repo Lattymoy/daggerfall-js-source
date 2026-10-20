@@ -126,6 +126,112 @@ test('RELEASE-BRANCH: the environments the workflows name are the ones ops/githu
   assert.equal(onOf(WF('check.yml')), 'on:\n  pull_request:\n  push:\n    branches: [main]\n  workflow_dispatch:\n\n');
 });
 
+/** Every `run:` of a workflow - a block (`run: |`) or a line - as the runner hands it to its shell, each `${{ }}`
+ *  stood in for by a word as GitHub stands its value in, with the step's own `shell:` if it names one. */
+function runsOf(yml) {
+  const lines = yml.split('\n');
+  const out = [];
+  lines.forEach((line, i) => {
+    const m = /^( *)(- )?run: ?(.*)$/.exec(line);
+    if (!m || (!m[2] && !m[3].trim())) return;   // `defaults: run: shell:` is a mapping, not a step
+    const key = m[1].length + (m[2] ? 2 : 0);
+    let text;
+    if (/^\|[-+]?\s*$/.test(m[3])) {
+      const body = [];
+      let indent = null;
+      for (let j = i + 1; j < lines.length; j++) {
+        const l = lines[j];
+        if (!l.trim()) { body.push(''); continue; }
+        const at = l.length - l.trimStart().length;
+        if (at <= key) break;
+        indent ??= at;
+        body.push(l.slice(indent));
+      }
+      text = body.join('\n');
+    } else {
+      assert.ok(m[3] && !/^["'>]/.test(m[3]), `line ${i + 1}: a run this walk does not read (${m[3]})`);
+      const next = lines[i + 1] ?? '';
+      assert.ok(!next.trim() || next.length - next.trimStart().length <= key, `line ${i + 1}: a run carried onto the next line`);
+      text = m[3];
+    }
+    // the step's own lines: back to its `- `, on to the next step or the job's end
+    let from = i;
+    while (from > 0 && !lines[from].startsWith(`${' '.repeat(key - 2)}- `)) from--;
+    let to = i + 1;
+    while (to < lines.length && !(lines[to].trim() && lines[to].length - lines[to].trimStart().length < key)) to++;
+    const shell = /^ *shell: (\S+)/m.exec(lines.slice(from, to).filter((l) => l.length - l.trimStart().length === key || l.startsWith(`${' '.repeat(key - 2)}- shell:`)).join('\n'))?.[1] ?? 'bash';
+    out.push({ line: i + 1, shell, text: text.replace(/\$\{\{[^}]*\}\}/g, 'GH_EXPR') });
+  });
+  return out;
+}
+
+test('AUDIT RELEASE-FLOW V1: every `run:` of every workflow parses as the shell it runs in - a quote ended inside a message stopped the account deploy\'s chat-safety step with a syntax error after its Worker had gone live, and nothing in the suite read the step (mutants: a quote ended early in a message; an `if` left open)', { skip: BASH }, (t) => {
+  const dir = scratch(t, 'runs');
+  const checked = [];
+  for (const f of WORKFLOWS) {
+    for (const r of runsOf(WF(f))) {
+      assert.ok(['bash', 'sh'].includes(r.shell), `${f}:${r.line}: a step in ${r.shell} - read it as that shell here`);
+      const file = join(dir, `${f}.${r.line}.sh`);
+      writeFileSync(file, `${r.text}\n`);
+      checked.push([`${f}:${r.line}`, file]);
+    }
+  }
+  assert.ok(checked.length >= 140, `the walk found the runs it must (${checked.length})`);
+  // one bash asks bash -n of each, the way it would read the step
+  const listing = join(dir, 'all.txt');
+  writeFileSync(listing, checked.map(([, file]) => file).join('\n'));
+  const r = spawnSync('bash', ['-c', 'while IFS= read -r f; do bash -n "$f" 2>&1 || echo "FAILED $f"; done < "$1"', '_', listing], { encoding: 'utf8' });
+  const failed = [...r.stdout.matchAll(/^FAILED (.+)$/gm)].map((m) => checked.find(([, file]) => file === m[1])?.[0]);
+  assert.deepEqual(failed, [], `a run bash cannot parse:\n${r.stdout}`);
+});
+
+// AUDIT RELEASE-FLOW A5: the groups whose newest run is the one meant - each reads the state it acts on as it runs, so a
+// pending run replaced by a later one loses nothing; every other group's runs carry their own ask and wait their turn
+const SUPERSEDING = ['deploy.yml', 'dev-deploy.yml', 'relay-deploy.yml', 'release-backmerge.yml', 'release-desktop.yml'];
+
+test('AUDIT RELEASE-FLOW A2, A3, A5, A7, F2: what a release manager approves survives the wait for the approval - what it publishes kept a week, never cancelled by a later dispatch, never dropped from a queue; the publish alone holds the right to publish; the preview built at the commit the file names (mutants: a day kept again; the site kept a day; the site cancelled by a dispatch anywhere; a run on release cancelled; an operation dropped from its queue; the site job holding the publish; the preview at its branch\'s tip again; the preview holding the token)', () => {
+  const site = WF('deploy.yml'), desk = WF('release-desktop.yml');
+  // A2: GitHub holds a job waiting on its reviewers for up to thirty days, and a day was kept - a release approved the
+  // next day found nothing to publish
+  const kept = /retention-days: \$\{\{ needs\.version\.outputs\.tag != '' && (\d+) \|\| (\d+) \}\}/.exec(desk);
+  assert.ok(kept && Number(kept[1]) >= 7, `the desktop release's installers kept a week while its publish waits (${kept?.[1]} days)`);
+  assert.equal(Number(kept[2]), 14, 'and an artifacts-only run\'s two weeks');
+  const pagesKept = /uses: actions\/upload-pages-artifact@v3\n {8}with:\n {10}path: site\n {10}retention-days: (\d+)/.exec(site);
+  assert.ok(pagesKept && Number(pagesKept[1]) >= 7, `the site's artifact kept a week (${pagesKept?.[1]} days; the action's own default is one)`);
+  // A3: a run on release is one group and never cancelled; a run anywhere else is a group of its own - an approved
+  // publish waiting on its services was cancelled by any later dispatch, one on another branch that stopped at its door
+  for (const [f, text, group] of [['deploy.yml', site, 'pages'], ['release-desktop.yml', desk, 'release-desktop']]) {
+    const on = group === 'pages' ? 'pages' : 'release-desktop-release';
+    assert.match(text, new RegExp(`\\nconcurrency:\\n {2}group: \\$\\{\\{ github\\.ref == 'refs/heads/release' && '${on}' \\|\\| format\\('${group}-\\{0\\}', github\\.run_id\\) \\}\\}\\n {2}cancel-in-progress: false\\n`), `${f}: release's own group, never cancelled; any other run alone`);
+  }
+  // A5: every group whose runs carry their own ask queues them - GitHub keeps ONE pending run a group by default and
+  // cancels it for the next
+  let queued = 0;
+  for (const f of WORKFLOWS) {
+    const c = /^concurrency:\n((?: {2}[^\n]*\n)+)/m.exec(WF(f))?.[1];
+    if (!c || /cancel-in-progress: true/.test(c)) continue;
+    if (SUPERSEDING.includes(f)) continue;
+    assert.match(c, /^ {2}queue: max$/m, `${f}: its runs carry their own ask, and wait their turn (queue: max)`);
+    queued++;
+  }
+  assert.equal(queued, 10, 'the five sharing the account service\'s group, the post, the clears, the two load reads and the notes');
+  for (const f of SUPERSEDING) assert.match(WF(f), /\nconcurrency:\n {2}group: [^\n]+\n {2}cancel-in-progress: false\n/, `${f}: a group whose newest run is the one meant (the list names real ones)`);
+  // A7: the right to publish is the publishing job's alone - the site job builds the preview's code too
+  for (const f of WORKFLOWS) {
+    const text = WF(f);
+    assert.doesNotMatch(text.slice(0, text.search(/^jobs:/m)), /pages: write|id-token: write/, `${f}: every job handed the right to publish`);
+    for (const job of jobsOf(text)) {
+      if (/pages: write|id-token: write/.test(job.text)) assert.match(job.text, /\n {4}environment:/, `${f} ${job.name}: the right to publish outside a protected environment`);
+    }
+  }
+  assert.match(site, /\npermissions:\n {2}contents: read\n\n/, 'deploy.yml: read, by default');
+  // F2: the preview is built at a commit the file names - its branch's tip was any writer's, and reached the players'
+  // own origin unreviewed - and its build holds no token
+  const preview = site.slice(site.indexOf('- name: Checkout exact-face-atlas preview\n'), site.indexOf('- name: Install preview dependencies\n'));
+  assert.match(preview, /\n {10}ref: [0-9a-f]{40}(?: |\n)/, 'a commit, never a branch');
+  assert.match(preview, /\n {10}persist-credentials: false\n/, 'and no token left in its checkout');
+});
+
 test('RELEASE-BRANCH: where release begins - the release before must stand on the first-parent line a release is cut from, since the update number counts that line and the notes read it from there: release branched at main\'s last release passes, and so does every release cut from release after it, a hotfix\'s and a promotion\'s; branched before it, both would repeat main\'s, so the desktop release and the site refuse, said; the release before is the newest a commit holds BY VERSION, whatever git\'s describe would call nearest (mutants: the line read as ancestry; the line unread; the refusal passed; the desktop release unasked; the site unasked; the release before by name; the release before by nearness)', { skip: BASH }, (t) => {
   // both jobs that publish an update number ask, before they publish it
   assert.match(runBlock(WF('release-desktop.yml'), 'Resolve release version'), /^if \[ "\$GITHUB_REF" = refs\/heads\/release \]; then\n(?: {2}[^\n]*\n)*? {2}node scripts\/desktopRelease\.mjs line "\$TAG"\nfi\n/m,

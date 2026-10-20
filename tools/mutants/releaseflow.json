@@ -104,8 +104,8 @@
   {
     "name": "RELEASE-FLOW-the-site-published-from-main-again",
     "file": ".github/workflows/deploy.yml",
-    "old": "on:\n  workflow_dispatch:\n\npermissions:",
-    "new": "on:\n  push:\n    branches: [main]\n  workflow_dispatch:\n\npermissions:",
+    "old": "on:\n  workflow_dispatch:\n\n# AUDIT RELEASE-FLOW A7",
+    "new": "on:\n  push:\n    branches: [main]\n  workflow_dispatch:\n\n# AUDIT RELEASE-FLOW A7",
     "tests": [
       "test/tooling/releaseflow.test.js"
     ],
@@ -817,5 +817,205 @@
       "test/net/servicehome.test.js"
     ],
     "note": "AUDIT RELEASE-FLOW E1: every call would join `//v1/...` on."
+  },
+  {
+    "name": "RELEASE-FLOW-A6-the-relay-never-asked",
+    "file": "scripts/serviceWait.sh",
+    "old": "  if served \"$relay\" \"$relay_want\" && served \"$got\" \"$want\"; then",
+    "new": "  if served \"$got\" \"$want\"; then",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "A release that moved the relay reaches the players while its relay waits for its approval."
+  },
+  {
+    "name": "RELEASE-FLOW-A6-the-desktop-release-unwaited",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "      # AUDIT RELEASE-FLOW A6: nothing reaches the players before the services it talks to serve it - the relay its\n      # RELAY_VERSION, the account service its ACCOUNT_VERSION - the site's publish waits by the same script\n      - name: Wait for the relay and the account service to serve this release\n        run: scripts/serviceWait.sh\n\n",
+    "new": "",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "The desktop release published ahead of the services it talks to."
+  },
+  {
+    "name": "RELEASE-FLOW-A6-a-round-past-the-budget",
+    "file": "scripts/serviceWait.sh",
+    "old": "  [ $(( $(date +%s) + 20 )) -lt \"$deadline\" ] || break",
+    "new": "  [ \"$(date +%s)\" -lt \"$deadline\" ] || break",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "A round started after the budget, toward the job's ceiling."
+  },
+  {
+    "name": "RELEASE-FLOW-A6-a-tree-not-read-taken-as-anything",
+    "file": "scripts/serviceWait.sh",
+    "old": "for v in relay_want relay_host want base; do\n  [ -n \"${!v}\" ] || { echo \"::error::could not read $v off the tree - nothing is published\"; exit 1; }\ndone\n",
+    "new": "",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "A version not read is no version, and any answer serves it."
+  },
+  {
+    "name": "RELEASE-FLOW-A6-a-file-left-out-of-the-sites-checkout",
+    "file": ".github/workflows/deploy.yml",
+    "old": "            scripts/serviceWait.sh\n            src/net/wire.js\n",
+    "new": "            scripts/serviceWait.sh\n",
+    "tests": [
+      "test/server/audit0929_terms.test.js"
+    ],
+    "note": "The site's wait cannot read the relay's version and publishes nothing, ever."
+  },
+  {
+    "name": "RELEASE-FLOW-A4-the-drift-deploying-over-a-silent-relay",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "          if [ -z \"$got\" ] && [ \"$BLIND\" != true ]; then\n            echo \"::error::/health did not answer - not deploying blind. Dispatch again once it is reachable, or with blind to deploy over it.\"\n            exit 1\n          fi\n",
+    "new": "",
+    "tests": [
+      "test/server/relaydeploy.test.js"
+    ],
+    "note": "The sweep runs and an approval is asked for a deploy that will refuse."
+  },
+  {
+    "name": "RELEASE-FLOW-A4-blind-read-as-anything-set",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "[ -z \"$got\" ] && [ \"$BLIND\" != true ]; then",
+    "new": "[ -z \"$got\" ] && [ -z \"$BLIND\" ]; then",
+    "tests": [
+      "test/server/relaydeploy.test.js"
+    ],
+    "note": "An unticked box (false) read as blind."
+  },
+  {
+    "name": "RELEASE-FLOW-A4-the-refusal-asking-force-again",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "        if: steps.live.outputs.version == '' && github.event.inputs.blind != 'true'",
+    "new": "        if: steps.live.outputs.version == '' && github.event.inputs.force != 'true'",
+    "tests": [
+      "test/server/relaydeploy.test.js"
+    ],
+    "note": "A hotfix over a relay slow to answer voids every live siege and breach."
+  },
+  {
+    "name": "RELEASE-FLOW-A2-a-day-kept-again",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "&& 7 || 14 }}",
+    "new": "&& 1 || 14 }}",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A release approved the next day finds nothing to publish."
+  },
+  {
+    "name": "RELEASE-FLOW-A2-the-site-kept-a-day",
+    "file": ".github/workflows/deploy.yml",
+    "old": "          path: site\n          retention-days: 7",
+    "new": "          path: site",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The site approved the next day finds no artifact (the action's default is one day)."
+  },
+  {
+    "name": "RELEASE-FLOW-A3-the-site-cancelled-by-a-dispatch-anywhere",
+    "file": ".github/workflows/deploy.yml",
+    "old": "  group: ${{ github.ref == 'refs/heads/release' && 'pages' || format('pages-{0}', github.run_id) }}",
+    "new": "  group: pages",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A dispatch on main cancels release's approved publish, then stops at its own door."
+  },
+  {
+    "name": "RELEASE-FLOW-A3-a-run-on-release-cancelled",
+    "file": ".github/workflows/deploy.yml",
+    "old": "format('pages-{0}', github.run_id) }}\n  cancel-in-progress: false",
+    "new": "format('pages-{0}', github.run_id) }}\n  cancel-in-progress: true",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A second dispatch on release cancels the first one's approved publish mid-wait."
+  },
+  {
+    "name": "RELEASE-FLOW-A5-an-operation-dropped-from-its-queue",
+    "file": ".github/workflows/realm-restore.yml",
+    "old": "  group: account-deploy\n  cancel-in-progress: false\n  queue: max\n",
+    "new": "  group: account-deploy\n  cancel-in-progress: false\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A restore pending behind a deploy is cancelled by the next operation dispatched."
+  },
+  {
+    "name": "RELEASE-FLOW-A5-a-notes-edit-dropped",
+    "file": ".github/workflows/release-notes.yml",
+    "old": "  group: release-notes\n  cancel-in-progress: false\n  queue: max\n",
+    "new": "  group: release-notes\n  cancel-in-progress: false\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A description edited while two others were read never reaches its release."
+  },
+  {
+    "name": "RELEASE-FLOW-A7-every-job-handed-the-publish",
+    "file": ".github/workflows/deploy.yml",
+    "old": "permissions:\n  contents: read\n\n# AUDIT RELEASE-FLOW A3",
+    "new": "permissions:\n  contents: read\n  pages: write\n  id-token: write\n\n# AUDIT RELEASE-FLOW A3",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The site job, which builds the preview's code, holds the right to publish."
+  },
+  {
+    "name": "RELEASE-FLOW-A7-the-site-job-holding-the-publish",
+    "file": ".github/workflows/deploy.yml",
+    "old": "      pages: read   # configure-pages reads the site's settings",
+    "new": "      pages: write",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The build job holds the publish, outside the protected environment."
+  },
+  {
+    "name": "RELEASE-FLOW-F2-the-preview-at-its-tip-again",
+    "file": ".github/workflows/deploy.yml",
+    "old": "          ref: d896c216f823ffd0103a895a02401d133095c6ae   # chatgpt/exact-face-atlas's tip since 2026-08-26, what the site has served",
+    "new": "          ref: chatgpt/exact-face-atlas",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "Any writer's push to the preview branch reaches the players' origin unreviewed."
+  },
+  {
+    "name": "RELEASE-FLOW-F2-the-preview-holding-the-token",
+    "file": ".github/workflows/deploy.yml",
+    "old": "          path: exact-face-atlas\n          persist-credentials: false\n",
+    "new": "          path: exact-face-atlas\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The preview's install scripts read the token from its checkout."
+  },
+  {
+    "name": "RELEASE-FLOW-V1-a-quote-ended-early",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "echo 'not among the secrets of the production environment - the Worker keeps any token put before'",
+    "new": "echo 'not among the production environment's secrets - the Worker keeps any token put before'",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "The chat-safety step dies on a syntax error after the Worker went live (the regression this law was written for)."
+  },
+  {
+    "name": "RELEASE-FLOW-V1-an-if-left-open",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "{PATREON_CLIENT_SECRET, PATREON_WEBHOOK_SECRET} | with_entries(select(.value != null and .value != \"\"))' | $WRANGLER secret bulk\n          fi\n",
+    "new": "{PATREON_CLIENT_SECRET, PATREON_WEBHOOK_SECRET} | with_entries(select(.value != null and .value != \"\"))' | $WRANGLER secret bulk\n",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A step no other test runs, unparseable."
   }
 ]

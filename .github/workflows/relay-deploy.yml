@@ -50,9 +50,16 @@ on:
     inputs:
       # SEAT2a part three (Seats-Arc 17): an urgent deploy may be forced through a siege's blackout - and a forced deploy
       # during a siege voids it (the room is lost; the holder keeps the seat, the Right carries to the next week).
-      # RELEASE-FLOW: and over a relay whose /health did not answer, which nothing else deploys over
       force:
-        description: 'Deploy now - even while a siege is live (voids it), or over a relay that does not answer'
+        description: 'Deploy now even while a siege is live (voids it)'
+        type: boolean
+        default: false
+      # AUDIT RELEASE-FLOW A4: deploying over a relay whose /health does not answer is its own ask. RELEASE-FLOW had
+      # folded it into `force`, so a hotfix over a relay that timed out under load voided every live siege and breach
+      # with it - where a dispatch had deployed over it with every wait kept. Asked first, in `drift`, so neither the
+      # sweep runs nor an approval is asked for a deploy that would refuse.
+      blind:
+        description: 'Deploy over a relay whose /health does not answer (sieges and breaches still waited for)'
         type: boolean
         default: false
 
@@ -86,9 +93,15 @@ jobs:
           exit 1
       - uses: actions/checkout@v4
       - id: d
+        env:
+          BLIND: ${{ github.event.inputs.blind }}
         run: |
           v=$(grep -oP "^export const RELAY_VERSION = '\\K[^']+" src/net/wire.js || true)
           got=$(curl -fsS --max-time 15 'https://daggerfall-online.mackcothran.workers.dev/health' | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' || true)
+          if [ -z "$got" ] && [ "$BLIND" != true ]; then
+            echo "::error::/health did not answer - not deploying blind. Dispatch again once it is reachable, or with blind to deploy over it."
+            exit 1
+          fi
           if [ -n "$v" ] && [ "$v" != "$got" ]; then echo "deploying=true" >> "$GITHUB_OUTPUT"; else echo "deploying=false" >> "$GITHUB_OUTPUT"; fi
           echo "source says '${v}', live says '${got:-unreachable}'"
           if [ -n "$v" ] && [ "$v" = "$got" ]; then echo "::notice::the relay already serves $v - nothing to deploy, nobody dropped"; fi
@@ -151,12 +164,14 @@ jobs:
       # deploy either. Deploying blind over a relay we could not read turns
       # an outage into a redeploy nobody asked for, and drops every player
       # who was still connected to a Worker that was merely slow to answer.
-      # A dispatch with `force` deploys over it; one without may not
-      # (RELEASE-FLOW: every run is a dispatch now - this was a push's rule).
+      # A dispatch with `blind` deploys over it; one without may not
+      # (RELEASE-FLOW: every run is a dispatch now - this was a push's rule;
+      # AUDIT RELEASE-FLOW A4: its own ask, never `force`'s). Asked again
+      # here: the relay may have stopped answering since `drift` read it.
       - name: Refuse to deploy over a relay that could not be read
-        if: steps.live.outputs.version == '' && github.event.inputs.force != 'true'
+        if: steps.live.outputs.version == '' && github.event.inputs.blind != 'true'
         run: |
-          echo "::error::/health did not answer - not deploying blind. Dispatch again once it is reachable, or with force to deploy over it."
+          echo "::error::/health did not answer - not deploying blind. Dispatch again once it is reachable, or with blind to deploy over it."
           exit 1
 
       # ═══ ACC1d D2: THE KEY THIS RELAY WOULD DEPLOY WITH ══════════

@@ -34,9 +34,13 @@ permissions:
   contents: read
 
 # Never beside a deploy's migrations, a recovery or a restore: the deploy's own group, queued.
+# AUDIT RELEASE-FLOW A5: every run waits its turn - GitHub keeps ONE pending run a group by default and cancels it
+# for the next, and with a deploy waiting hours for its approval or its relay, a data operation dispatched behind
+# it was cancelled by the next one without a word
 concurrency:
   group: account-deploy
   cancel-in-progress: false
+  queue: max
 
 jobs:
   grant:
@@ -66,7 +70,7 @@ jobs:
       - name: Refuse to start without a token
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
-            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set in the production environment - nothing else in this job can work"
             exit 1
           fi
 

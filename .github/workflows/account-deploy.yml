@@ -46,9 +46,13 @@ permissions:
 
 # One at a time. Two runs racing on `d1 create` or `migrations apply`
 # is the one state this must not get into.
+# AUDIT RELEASE-FLOW A5: every run waits its turn - GitHub keeps ONE pending run a group by default and cancels it
+# for the next, and with a deploy waiting hours for its approval or its relay, a data operation dispatched behind
+# it was cancelled by the next one without a word
 concurrency:
   group: account-deploy
   cancel-in-progress: false
+  queue: max
 
 jobs:
   # RELEASE-FLOW: production deploys from release alone - a run dispatched
@@ -102,7 +106,7 @@ jobs:
       - name: Refuse to start without a token
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
-            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set in the production environment - nothing else in this job can work"
             exit 1
           fi
 
@@ -550,7 +554,7 @@ jobs:
           set -euo pipefail
           base="${{ steps.deploy.outputs.base }}"
           if [ -z "${PATREON_CLIENT_SECRET}" ] && [ -z "${PATREON_WEBHOOK_SECRET}" ]; then
-            echo "neither PATREON_CLIENT_SECRET nor PATREON_WEBHOOK_SECRET is set for this repository - Patreon linking stays off"
+            echo "neither PATREON_CLIENT_SECRET nor PATREON_WEBHOOK_SECRET is set in the production environment - Patreon linking stays off"
           else
             jq -n 'env | {PATREON_CLIENT_SECRET, PATREON_WEBHOOK_SECRET} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
           fi
@@ -579,15 +583,15 @@ jobs:
           set -euo pipefail
           base="${{ steps.deploy.outputs.base }}"
           if [ -z "${ANTHROPIC_API_KEY}" ] && [ -z "${DISCORD_BOT_TOKEN}" ]; then
-            echo "neither ANTHROPIC_API_KEY nor DISCORD_BOT_TOKEN is set for this repository - the reviewer and the Discord queue stay off"
+            echo "neither ANTHROPIC_API_KEY nor DISCORD_BOT_TOKEN is set in the production environment - the reviewer and the Discord queue stay off"
           else
             jq -n 'env | {ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
           fi
           {
             echo "### Chat safety"
             echo ""
-            echo "- the reviewer's key: $([ -n "${ANTHROPIC_API_KEY}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any key put before (AUDIT SAFE DISCORD-12)')"
-            echo "- the Discord bot's token: $([ -n "${DISCORD_BOT_TOKEN}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any token put before')"
+            echo "- the reviewer's key: $([ -n "${ANTHROPIC_API_KEY}" ] && echo put || echo 'not among the secrets of the production environment - the Worker keeps any key put before (AUDIT SAFE DISCORD-12)')"
+            echo "- the Discord bot's token: $([ -n "${DISCORD_BOT_TOKEN}" ] && echo put || echo 'not among the secrets of the production environment - the Worker keeps any token put before')"
             echo "- the Discord application's Interactions Endpoint URL: \`$base/v1/discord/interactions\`"
           } >> "$GITHUB_STEP_SUMMARY"
 

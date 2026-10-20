@@ -7,16 +7,18 @@
 // from before TERMS1 has a sentence for (T1) - and a card whose repaint left the focus on nothing (T3).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, mkdtempSync, mkdirSync, copyFileSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 import { TERMS_VERSION, PRIVACY_VERSION, ACCEPTED } from '../../src/net/legalLaw.js';
 import { AccountFlow, LOCAL_REFUSALS } from '../../src/ui/accountFlow.js';
 import { accountCard } from '../../src/ui/enhanced/enhancedAccount.js';
 import { DEFAULT_ACCOUNT_SERVICE, REFUSALS, accountRefusalText } from '../../src/net/accountClient.js';
+import { DEFAULT_SERVER } from '../../src/net/online.js';
+import { RELAY_VERSION } from '../../src/net/wire.js';
 import { ACCOUNT_VERSION } from '../../server-account/src/service.js';
 import worker from '../../server-account/src/index.js';
 
@@ -72,59 +74,125 @@ test('AUDIT PRE-MERGE 0929 T-CI: every request a workflow makes that opens or na
   assert.equal(asked, 3, 'the account deploy asks the two routes three times: the gate\'s half, the password route\'s guest and its name');
 });
 
-test('AUDIT PRE-MERGE 0929 T2: the site is published only once the account service serves the version its forms need - a site ahead of its service named accounts whose rows say "never asked" for players who ticked both boxes (mutants: no wait; the wait after the publish; an older service taken; the loop that never fails)', () => {
-  const yml = read('.github/workflows/deploy.yml');
-  // what the tree needs, read by the site job's own step - run here as the runner runs it (from the checkout)
-  const outFile = join(mkdtempSync(join(tmpdir(), 'a0929-')), 'out');
-  writeFileSync(outFile, '');
-  const r = bash(runBlock(yml, 'Read the account service this build talks to'), { GITHUB_OUTPUT: outFile });
-  assert.equal(r.status, 0, r.stderr);
-  const outs = Object.fromEntries(readFileSync(outFile, 'utf8').trim().split('\n').map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
-  assert.deepEqual(outs, { version: ACCOUNT_VERSION, base: DEFAULT_ACCOUNT_SERVICE });
-  assert.match(yml, /account_version: \$\{\{ steps\.account\.outputs\.version \}\}/);
-  assert.match(yml, /account_base: \$\{\{ steps\.account\.outputs\.base \}\}/);
-  // the deploy job waits BEFORE it publishes
-  const deployJob = yml.slice(yml.indexOf('\n  deploy:\n'));
-  const wait = deployJob.indexOf('- name: Wait for the account service to serve this build\'s version');
-  assert.ok(wait > 0 && wait < deployJob.indexOf('actions/deploy-pages'), 'the site is published before the service is asked');
-  assert.match(deployJob, /WANT: \$\{\{ needs\.site\.outputs\.account_version \}\}/);
-  assert.match(deployJob, /BASE: \$\{\{ needs\.site\.outputs\.account_base \}\}/);
-  // the loop itself, over a service that answers as the real one does (`{ ok, v }`, index.js /v1/health)
-  const loop = runBlock(deployJob, 'Wait for the account service to serve this build\'s version');
-  const against = (answers, { upto = 0 } = {}) => {
-    // each ask runs in the $( ) subshell the step puts it in, so the stub counts its asks in a file, not a variable;
-    // `upto` cuts the loop's `seq` short (DEPLOY-WAIT: 1050 asks of stubs cost the suite twelve seconds) - the count
-    // itself is read off the source below
-    const script = `A=(${answers.map((a) => `'${a}'`).join(' ')})
-curl() { local i; i=$(wc -l < "$CALLS"); echo "$*" >> "$CALLS"; local a="\${A[$i]-\${A[-1]}}"; [ -n "$a" ] && printf '%s' "$a"; return 0; }
-sleep() { :; }
-${upto ? `seq() { command seq 1 ${upto}; }\n` : ''}${loop}`;
-    const calls = join(mkdtempSync(join(tmpdir(), 'a0929-')), 'calls');
-    writeFileSync(calls, '');
-    const res = bash(script, { WANT: 'acct20', BASE: 'https://svc.invalid', CALLS: calls });
-    return { status: res.status, asked: readFileSync(calls, 'utf8').trim().split('\n').filter(Boolean) };
+/** scripts/serviceWait.sh as a publish job's step runs it - `run: scripts/serviceWait.sh`, from the root of the tree it
+ * is given - over a relay and an account service that answer as the real ones do (the relay's /health
+ * `{ ok, service, version, t }`, server/src/index.js; the service's /v1/health `{ ok, v }`, server-account/src/index.js),
+ * each from its own list in turn, its last answer kept; '' is an answer that never came (curl -f fails). The clock is the
+ * stubs' own: `sleep` moves it by what it is asked and each ask by `lag`, so a budget of hours is spent in a moment. */
+function serviceWait({ relay, account }, { lag = 0, tree = ROOT.pathname } = {}) {
+  const dir = mkdtempSync(join(tmpdir(), 'a0929-'));
+  mkdirSync(join(dir, 'bin'));
+  const stub = (name, body) => writeFileSync(join(dir, 'bin', name), `#!/usr/bin/env bash\nset -eu\nD=${JSON.stringify(dir)}\n${body}\n`, { mode: 0o755 });
+  stub('date', '[ "$*" = +%s ] || { echo "date: +%s alone, not $*" >&2; exit 2; }\ncat "$D/clock"');
+  stub('sleep', 'echo $(( $(cat "$D/clock") + $1 )) > "$D/clock"');
+  stub('curl', `url=\${!#}
+case "$url" in */v1/health) k=account ;; */health) k=relay ;; *) echo "curl: no service at $url" >&2; exit 2 ;; esac
+t=$(cat "$D/clock"); echo "$t $url" >> "$D/asked"; echo "$t" >> "$D/$k.asked"; echo $(( t + ${lag} )) > "$D/clock"
+mapfile -t A < "$D/$k"
+n=$(wc -l < "$D/$k.asked")
+a=\${A[$((n - 1))]-\${A[-1]}}
+[ -n "$a" ] || exit 22
+printf '%s' "$a"`);
+  writeFileSync(join(dir, 'relay'), `${relay.join('\n')}\n`);
+  writeFileSync(join(dir, 'account'), `${account.join('\n')}\n`);
+  writeFileSync(join(dir, 'clock'), String(T0));
+  writeFileSync(join(dir, 'asked'), '');
+  const r = spawnSync('bash', ['-c', 'scripts/serviceWait.sh'], { cwd: tree, env: { PATH: `${join(dir, 'bin')}:${process.env.PATH}` }, encoding: 'utf8', timeout: 30_000 });
+  const asked = readFileSync(join(dir, 'asked'), 'utf8').trim().split('\n').filter(Boolean).map((l) => ({ t: Number(l.slice(0, l.indexOf(' '))), url: l.slice(l.indexOf(' ') + 1) }));
+  return { status: r.status, out: r.stdout + r.stderr, asked, end: Number(readFileSync(join(dir, 'clock'), 'utf8')) };
+}
+const T0 = 1_000_000;   // the stubs' clock as the wait begins
+
+test('AUDIT PRE-MERGE 0929 T2, AUDIT RELEASE-FLOW A6: the site and the desktop release are published only once the account service serves the version their forms need and the relay its RELAY_VERSION - a site ahead of its service named accounts whose rows say "never asked" for players who ticked both boxes, and a release that moved the relay put every client ahead of it for as long as the relay\'s approval waited (mutants: no wait; the wait after the publish; the desktop release unwaited; an older service taken; the relay never asked; the loop that never fails; a tree not read taken as anything; a file it reads left out of the site\'s checkout; the budget by the count of asks)', () => {
+  const deploy = read('.github/workflows/deploy.yml');
+  const desktop = read('.github/workflows/release-desktop.yml');
+  const script = read('scripts/serviceWait.sh');
+  const STEP = '- name: Wait for the relay and the account service to serve this release\n        run: scripts/serviceWait.sh\n';
+  const job = (yml, name) => {
+    const at = yml.indexOf(`\n  ${name}:\n`);
+    assert.ok(at >= 0, `no job ${name}`);
+    const next = yml.slice(at + 1).search(/\n {2}[\w-]+:\n/);
+    return next < 0 ? yml.slice(at) : yml.slice(at, at + 1 + next);
   };
-  const now = against(['{"ok":true,"v":"acct20"}']);
-  assert.deepEqual([now.status, now.asked.length], [0, 1], 'a service already serving it: one request');
-  assert.match(now.asked[0], /https:\/\/svc\.invalid\/v1\/health/);
-  assert.deepEqual([against(['{"ok":true,"v":"acct19"}', '', '{"ok":true,"v":"acct20"}']).status], [0], 'waited through an old service and a silent one');
-  assert.equal(against(['{"ok":true,"v":"acct21"}']).status, 0, 'a later service serves this build too');
-  const never = against(['{"ok":true,"v":"acct19"}'], { upto: 3 });
-  assert.equal(never.status, 1, 'a service that never came: the site is not published');
-  assert.equal(never.asked.length, 3, 'one ask a turn, and none after the last');
+  // PIN MOVED (AUDIT RELEASE-FLOW A6): the wait was the site's own step and asked the account service alone; it is one
+  // script now, run by both publishes, and it asks the relay too. BOTH WAIT, BEFORE ANYTHING IS PUBLISHED.
+  const site = job(deploy, 'deploy');
+  const release = job(desktop, 'publish');
+  for (const [where, j, publish] of [['deploy.yml deploy', site, 'uses: actions/deploy-pages'], ['release-desktop.yml publish', release, 'uses: softprops/action-gh-release']]) {
+    const at = j.indexOf(STEP);
+    assert.ok(at > 0, `${where}: no step runs scripts/serviceWait.sh`);
+    assert.ok(j.indexOf(publish) > at, `${where}: published before the services are asked`);
+    assert.doesNotMatch(j, /timeout-minutes:\s*([0-9]|[0-9][0-9]|[0-2][0-9][0-9]|3[0-4][0-9])\n/, `${where}: a job timeout shorter than the wait`);
+  }
+  assert.ok(statSync(new URL('scripts/serviceWait.sh', ROOT)).mode & 0o100, 'the step runs the file itself: it is executable');
+  // the site's wait reads the release it publishes, and its checkout holds every file the script reads - run in a tree
+  // holding those alone
+  const checkout = site.slice(site.indexOf('- name: The release\'s tree, for what it waits on\n'), site.indexOf(STEP));
+  assert.match(checkout, /\n {10}ref: \$\{\{ needs\.release\.outputs\.sha \}\}\n/, 'the release this run verified and built');
+  assert.match(checkout, /\n {10}sparse-checkout-cone-mode: false\n/, 'files by their paths, not cones of directories');
+  const sparse = /\n {10}sparse-checkout: \|\n((?: {12}\S+\n)+)/.exec(checkout)?.[1].trim().split(/\s+/) ?? [];
+  assert.ok(sparse.includes('scripts/serviceWait.sh'), 'the script itself');
+  const tree = mkdtempSync(join(tmpdir(), 'a0929-tree-'));
+  for (const f of sparse) {
+    mkdirSync(join(tree, dirname(f)), { recursive: true });
+    copyFileSync(new URL(f, ROOT), join(tree, f));
+  }
+
+  // THE SCRIPT, as its step runs it. What it waits for is read off the tree: the versions and both hosts.
+  const relayAt = `${DEFAULT_SERVER.replace(/^wss:\/\//, 'https://')}/health`;
+  const accountAt = `${DEFAULT_ACCOUNT_SERVICE}/v1/health`;
+  const bump = (v, d) => v.replace(/\d+$/, (n) => String(Number(n) + d));
+  const R = (d) => JSON.stringify({ ok: true, service: 'daggerfall-online', version: bump(RELAY_VERSION, d), t: 1 });
+  const S = (d) => JSON.stringify({ ok: true, v: bump(ACCOUNT_VERSION, d) });
+  const now = serviceWait({ relay: [R(0)], account: [S(0)] }, { tree });
+  assert.equal(now.status, 0, now.out);
+  assert.deepEqual(now.asked.map((a) => a.url), [relayAt, accountAt], 'both serving it already: one request each, to the hosts the tree names - in the site\'s sparse tree');
+  // the account service (T2): an old one and a silent one waited through; a later one serves this build too
+  const svc = serviceWait({ relay: [R(0)], account: [S(-1), '', S(0)] });
+  assert.deepEqual([svc.status, svc.asked.filter((a) => a.url === accountAt).length], [0, 3], `waited through an old service and a silent one: ${svc.out}`);
+  assert.equal(serviceWait({ relay: [R(0)], account: [S(1)] }).status, 0, 'a later service serves this build too');
+  // the relay (A6): the same
+  const rel = serviceWait({ relay: [R(-1), '', R(0)], account: [S(0)] });
+  assert.deepEqual([rel.status, rel.asked.filter((a) => a.url === relayAt).length], [0, 3], `waited through an old relay and a silent one: ${rel.out}`);
+  assert.equal(serviceWait({ relay: [R(1)], account: [S(0)] }).status, 0, 'a later relay serves this build too');
+
+  // EITHER ONE THAT NEVER COMES: nothing is published - and the budget is the CLOCK's (AUDIT RELEASE-FLOW A6: it was a
+  // count of asks, which slow answers carried past the job's ceiling). Asks 2091 seconds slow end the fifth round ten
+  // seconds inside the budget, where a sixth would start past it: five rounds, and nothing slept after the last.
+  const budget = Number(/^deadline=\$\(\( \$\(date \+%s\) \+ (\d+) \)\)$/m.exec(script)?.[1]);
+  const pause = Number(/^ +sleep (\d+)$/m.exec(script)?.[1]);
+  const LAG = 2091;
+  for (const [what, answers] of [['relay', { relay: [R(-1)], account: [S(0)] }], ['account service', { relay: [R(0)], account: [S(-1)] }]]) {
+    const never = serviceWait(answers, { lag: LAG });
+    assert.equal(never.status, 1, `a ${what} that never came: nothing is published - ${never.out}`);
+    assert.match(never.out, /::error::the relay and the account service never came to serve/, 'and it says why');
+    const rounds = never.asked.filter((a) => a.url === relayAt).map((a) => a.t);
+    assert.deepEqual(never.asked.map((a) => a.url), rounds.flatMap(() => [relayAt, accountAt]), `each round asks both (${what})`);
+    assert.deepEqual(rounds, [0, 1, 2, 3, 4].map((k) => T0 + k * (2 * LAG + pause)), `one round a pause apart (${what})`);
+    assert.ok(rounds.at(-1) < T0 + budget, 'no round starts past the budget');
+    assert.ok(rounds.at(-1) + 2 * LAG + pause >= T0 + budget, 'and none is left unasked before it');
+    assert.equal(never.end, rounds.at(-1) + 2 * LAG, 'nothing slept after the last');
+  }
+  // a tree it cannot read is no version at all: nothing asked, nothing published
+  const bare = mkdtempSync(join(tmpdir(), 'a0929-bare-'));
+  mkdirSync(join(bare, 'scripts'));
+  copyFileSync(new URL('scripts/serviceWait.sh', ROOT), join(bare, 'scripts/serviceWait.sh'));
+  const blind = serviceWait({ relay: [R(0)], account: [S(0)] }, { tree: bare });
+  assert.deepEqual([blind.status, blind.asked], [1, []], 'a tree without the versions publishes nothing');
+  assert.match(blind.out, /::error::could not read relay_want off the tree/);
+
   // PIN MOVED (DEPLOY-WAIT, 2026-10-17): 90 asks, thirty minutes, gave up on #983's site six minutes before its service
   // came - the service waits up to five and a half hours on the relay. Now as long as that chain may take, and no longer
-  // than a job may run.
-  const asks = (src, name) => Number(/for i in \$\(seq 1 (\d+)\); do/.exec(runBlock(src, name))?.[1]);
-  const pause = (src, name) => Number(/\n\s+sleep (\d+)\n/.exec(runBlock(src, name))?.[1]);
-  const siteS = asks(deployJob, 'Wait for the account service to serve this build\'s version') * pause(deployJob, 'Wait for the account service to serve this build\'s version');
+  // than a job may run: the budget, the last round's two asks at their longest, and five minutes to publish.
   const acct = read('.github/workflows/account-deploy.yml');
-  const relayS = asks(acct, 'Wait for the relay to serve this release\'s version') * pause(acct, 'Wait for the relay to serve this release\'s version');
-  assert.equal(asks(deployJob, 'Wait for the account service to serve this build\'s version'), 1050, 'five hours fifty minutes of asking');
-  assert.ok(relayS > 0 && siteS > 0, 'both waits read');
-  assert.ok(siteS >= relayS + 10 * 60, `the site outwaits the service's own wait on the relay, and ten minutes of its deploy and checks (${siteS} s against ${relayS} s)`);
-  assert.ok(siteS + 5 * 60 <= 360 * 60, `and leaves five minutes to publish inside GitHub's six-hour job ceiling (${siteS} s)`);
-  assert.doesNotMatch(yml.slice(yml.indexOf('\n  deploy:\n')), /timeout-minutes:\s*([0-9]|[0-9][0-9]|[0-2][0-9][0-9]|3[0-4][0-9])\n/, 'no job timeout shorter than the wait');
+  const relayWait = runBlock(acct, 'Wait for the relay to serve this release\'s version');
+  const relayS = Number(/for i in \$\(seq 1 (\d+)\); do/.exec(relayWait)?.[1]) * Number(/\n\s+sleep (\d+)\n/.exec(relayWait)?.[1]);
+  const asks = [...script.matchAll(/curl -fsS --max-time (\d+) /g)].map((m) => Number(m[1]));
+  assert.equal(asks.length, 2, 'two asks a round, each bounded');
+  assert.equal(budget, 21000, 'five hours fifty minutes of waiting');
+  assert.ok(relayS > 0, 'the account deploy\'s own wait read');
+  assert.ok(budget >= relayS + 10 * 60, `the wait outlasts the service's own wait on the relay, and ten minutes of its deploy and checks (${budget} s against ${relayS} s)`);
+  assert.ok(budget + asks[0] + asks[1] + 5 * 60 <= 360 * 60, `and its last round ends with five minutes to publish inside GitHub's six-hour job ceiling (${budget} s)`);
 });
 
 // ── THE SERVICE ─────────────────────────────────────────────────────

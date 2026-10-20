@@ -1,9 +1,9 @@
 [
   {
     "name": "DWAIT-thirty-minutes-again",
-    "file": ".github/workflows/deploy.yml",
-    "old": "for i in $(seq 1 1050); do",
-    "new": "for i in $(seq 1 90); do",
+    "file": "scripts/serviceWait.sh",
+    "old": "deadline=$(( $(date +%s) + 21000 ))",
+    "new": "deadline=$(( $(date +%s) + 1800 ))",
     "tests": [
       "test/server/audit0929_terms.test.js"
     ],
@@ -11,9 +11,9 @@
   },
   {
     "name": "DWAIT-past-the-job-ceiling",
-    "file": ".github/workflows/deploy.yml",
-    "old": "for i in $(seq 1 1050); do",
-    "new": "for i in $(seq 1 1100); do",
+    "file": "scripts/serviceWait.sh",
+    "old": "deadline=$(( $(date +%s) + 21000 ))",
+    "new": "deadline=$(( $(date +%s) + 22000 ))",
     "tests": [
       "test/server/audit0929_terms.test.js"
     ],
@@ -31,9 +31,9 @@
   },
   {
     "name": "DWAIT-gives-up-green",
-    "file": ".github/workflows/deploy.yml",
-    "old": "not publishing a site whose forms it would not answer (see account-deploy.yml's run, then re-run this)\"\n          exit 1",
-    "new": "not publishing a site whose forms it would not answer (see account-deploy.yml's run, then re-run this)\"\n          exit 0",
+    "file": "scripts/serviceWait.sh",
+    "old": "then re-run this)\"\nexit 1",
+    "new": "then re-run this)\"\nexit 0",
     "tests": [
       "test/server/audit0929_terms.test.js"
     ],

@@ -18,10 +18,11 @@ on:
 permissions:
   contents: read
 
-# Its own group, never the deploy's (d1-load.yml's law).
+# Its own group, never the deploy's (d1-load.yml's law), where each read waits its turn (AUDIT RELEASE-FLOW A5).
 concurrency:
   group: relay-load
   cancel-in-progress: false
+  queue: max
 
 jobs:
   read:
@@ -51,7 +52,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
-            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set in the production environment - nothing else in this job can work"
             exit 1
           fi
           node tools/relayLoad.mjs --sql kinds "$HOURS" > /dev/null

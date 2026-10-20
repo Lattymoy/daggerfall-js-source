@@ -23,10 +23,12 @@ permissions:
   contents: read
 
 # Its own group, never the deploy's (sd-clears.yml's law): a group keeps ONE pending run, and a read dispatched while a
-# deploy waited behind another would have cancelled that deploy.
+# deploy waited behind another would have cancelled that deploy. AUDIT RELEASE-FLOW A5: and in its own group a read
+# waits its turn - each asks its own hours, and one waiting on its approval was cancelled by the next without a word.
 concurrency:
   group: d1-load
   cancel-in-progress: false
+  queue: max
 
 jobs:
   read:
@@ -54,7 +56,7 @@ jobs:
       - name: Refuse to start without a token
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
-            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set in the production environment - nothing else in this job can work"
             exit 1
           fi
           node tools/d1Load.mjs --sql routes "$HOURS" > /dev/null

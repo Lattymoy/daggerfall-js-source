@@ -53,9 +53,13 @@ permissions:
 # One send at a time. AUDIT SERVER-POST: ITS OWN GROUP, never the deploy's - a group keeps ONE pending run, and a send
 # dispatched while a deploy waited behind another would have cancelled that deploy. Beside a migration it is harmless: it
 # only inserts into server_post, and before 0093 lays the table it fails with nothing written.
+# AUDIT RELEASE-FLOW A5: every run waits its turn - GitHub keeps ONE pending run a group by default and cancels it
+# for the next, and with a deploy waiting hours for its approval or its relay, a data operation dispatched behind
+# it was cancelled by the next one without a word
 concurrency:
   group: server-post
   cancel-in-progress: false
+  queue: max
 
 jobs:
   send:
@@ -88,7 +92,7 @@ jobs:
       - name: Refuse to start without a token
         run: |
           if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
-            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set in the production environment - nothing else in this job can work"
             exit 1
           fi
 

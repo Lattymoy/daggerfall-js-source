@@ -15,10 +15,13 @@
 //   it moves again the test reddens rather than the deploy.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RELAY_GRAPH } from '../net/relayversion.test.js';   // the files a relay deploy would have to reship
+import { RELAY_VERSION } from '../../src/net/wire.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -60,9 +63,10 @@ test('SRV-N/CI: the deploy is decided by the VERSION drifting, not by a path fil
   const wf = rd(WF);
 
   // RELEASE-FLOW (bible/01-Overview/Release-Flow.md): it is dispatched, never pushed - on release, whose first job
-  // stops a run on any other branch before anything is checked out...
+  // stops a run on any other branch before anything is checked out... PIN MOVED (AUDIT RELEASE-FLOW A4): `force` is the
+  // siege's and the Spire's alone again, and deploying over a relay that does not answer is `blind`'s ask
   assert.equal(wf.slice(wf.search(/^on:/m), wf.search(/^permissions:/m)).replace(/\n {6}#[^\n]*/g, ''),
-    "on:\n  workflow_dispatch:\n    inputs:\n      force:\n        description: 'Deploy now - even while a siege is live (voids it), or over a relay that does not answer'\n        type: boolean\n        default: false\n\n",
+    "on:\n  workflow_dispatch:\n    inputs:\n      force:\n        description: 'Deploy now even while a siege is live (voids it)'\n        type: boolean\n        default: false\n      blind:\n        description: 'Deploy over a relay whose /health does not answer (sieges and breaches still waited for)'\n        type: boolean\n        default: false\n\n",
     'a dispatch, and nothing pushed');
   const drift = wf.slice(wf.indexOf('\n  drift:\n'), wf.indexOf('\n  verify:\n'));
   assert.match(drift, /\n {4}steps:\n {6}- name: Only release deploys the relay\n {8}if: github\.ref != 'refs\/heads\/release'\n {8}run: \|\n[^\n]*\n {10}exit 1\n {6}- uses: actions\/checkout@v4\n/,
@@ -89,13 +93,60 @@ test('SRV-N/CI: the deploy is decided by the VERSION drifting, not by a path fil
   assert.match(wf, /steps\.live\.outputs\.version == steps\.ver\.outputs\.version/,
     'and says so, rather than silently doing nothing, when they agree');
 
-  // An unreadable relay is not "no drift" and is not a reason to deploy.
-  assert.match(wf, /- name: Refuse to deploy over a relay that could not be read\n {8}if: steps\.live\.outputs\.version == '' && github\.event\.inputs\.force != 'true'\n/,
-    'a dispatch without force will not deploy blind over a relay it could not read');
+  // An unreadable relay is not "no drift" and is not a reason to deploy (AUDIT RELEASE-FLOW A4: unless `blind` says so).
+  assert.match(wf, /- name: Refuse to deploy over a relay that could not be read\n {8}if: steps\.live\.outputs\.version == '' && github\.event\.inputs\.blind != 'true'\n/,
+    'a dispatch without blind will not deploy blind over a relay it could not read');
 
   // One at a time, and not cancelled between deploy and verify.
   assert.match(wf, /concurrency:\s*\n\s*group: relay-deploy\s*\n\s*cancel-in-progress: false/,
     'serialized, and never cancelled halfway - an interrupted run leaves a live version nothing confirmed');
+});
+
+/** A step's `run: |` block, found by its `id:`, as the runner hands it to bash (its indentation taken off). */
+function runOf(wf, id) {
+  const at = wf.indexOf(`- id: ${id}\n`);
+  assert.ok(at >= 0, `no step with id ${id}`);
+  const from = wf.indexOf('run: |\n', at) + 'run: |\n'.length;
+  const lines = [];
+  for (const line of wf.slice(from).split('\n')) {
+    if (line.trim() && !line.startsWith('          ')) break;
+    lines.push(line.slice(10));
+  }
+  return lines.join('\n');
+}
+
+test('AUDIT RELEASE-FLOW A4: deploying over a relay whose /health does not answer is `blind`\'s own ask, refused in `drift` before the sweep runs or an approval is asked - and `force`, which voids every live siege and breach, is never needed for it (mutants: the drift deploying over a silent relay; blind read as anything set; the refusal asking force again)', () => {
+  const wf = rd(WF);
+  // the drift step, run as the runner runs it (`bash --noprofile --norc -eo pipefail`), over a relay that answers - or
+  // does not (curl -f fails)
+  const step = runOf(wf, 'd');
+  const drift = (answer, blind) => {
+    const dir = mkdtempSync(join(tmpdir(), 'a4-'));
+    mkdirSync(join(dir, 'bin'));
+    writeFileSync(join(dir, 'bin', 'curl'), answer == null ? '#!/bin/sh\nexit 22\n' : `#!/bin/sh\nprintf '%s' '${answer}'\n`, { mode: 0o755 });
+    writeFileSync(join(dir, 'out'), '');
+    const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', step], { cwd: root, encoding: 'utf8', env: { PATH: `${join(dir, 'bin')}:${process.env.PATH}`, GITHUB_OUTPUT: join(dir, 'out'), BLIND: blind } });
+    return { status: r.status, out: r.stdout + r.stderr, deploying: /^deploying=(\w+)$/m.exec(readFileSync(join(dir, 'out'), 'utf8'))?.[1] ?? null };
+  };
+  const live = (v) => JSON.stringify({ ok: true, service: 'daggerfall-online', version: v, t: 1 });
+  const older = RELAY_VERSION.replace(/\d+$/, (n) => String(Number(n) - 1));
+  for (const blind of ['false', '']) {
+    const silent = drift(null, blind);
+    assert.deepEqual([silent.status, silent.deploying], [1, null], `a silent relay, blind ${JSON.stringify(blind)}: refused before anything else runs - ${silent.out}`);
+    assert.match(silent.out, /::error::\/health did not answer - not deploying blind\. Dispatch again once it is reachable, or with blind to deploy over it\./);
+  }
+  assert.deepEqual([drift(null, 'true').status, drift(null, 'true').deploying], [0, 'true'], 'blind: deployed over it');
+  assert.equal(drift(live(RELAY_VERSION), 'false').deploying, 'false', 'a relay serving release\'s version: nothing to deploy');
+  assert.equal(drift(live(older), 'false').deploying, 'true', 'a relay behind release: deployed');
+  // and the two asks stay apart: `blind` is read by the drift and the refusal alone, `force` by the siege's wait, the
+  // Spire's drain and hold and the deploy's void stamp alone
+  assert.match(wf, /- id: d\n {8}env:\n {10}BLIND: \$\{\{ github\.event\.inputs\.blind \}\}\n/, 'the drift reads blind');
+  assert.deepEqual([...wf.matchAll(/github\.event\.inputs\.(\w+)/g)].map((m) => m[1]), ['blind', 'blind', 'force', 'force', 'force'],
+    'blind in the drift and the refusal; force in the siege\'s wait, the Spire\'s hold and the deploy - in that order');
+  const steps = (name) => wf.slice(wf.indexOf(`- name: ${name}\n`), wf.indexOf('\n      - ', wf.indexOf(`- name: ${name}\n`) + 1));
+  assert.match(steps('Wait out any live siege (the blackout)'), /github\.event\.inputs\.force != 'true'/);
+  assert.match(steps('The Spire\'s drain and hold'), /github\.event\.inputs\.force != 'true'/);
+  assert.match(steps('Deploy'), /FORCE: \$\{\{ github\.event\.inputs\.force \}\}/);
 });
 
 test('SRV-N/CI: the deploy PROVES it landed, because an exit code does not', () => {

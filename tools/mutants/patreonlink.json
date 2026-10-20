@@ -472,7 +472,7 @@
   {
     "name": "PL-secrets-echoed",
     "file": ".github/workflows/account-deploy.yml",
-    "old": "            echo \"neither PATREON_CLIENT_SECRET nor PATREON_WEBHOOK_SECRET is set for this repository - Patreon linking stays off\"",
+    "old": "            echo \"neither PATREON_CLIENT_SECRET nor PATREON_WEBHOOK_SECRET is set in the production environment - Patreon linking stays off\"",
     "new": "            echo \"${PATREON_CLIENT_SECRET}\"",
     "tests": [
       "test/server/patreon_link.test.js"

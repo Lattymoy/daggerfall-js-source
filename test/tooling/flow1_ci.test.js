@@ -73,7 +73,9 @@ test('FLOW1 the workflows: verify.yml is the one check - lint and the types, eve
   assert.match(d, /\n {2}release:\n {4}runs-on: ubuntu-latest\n {4}outputs:\n {6}sha: \$\{\{ steps\.sha\.outputs\.sha \}\}\n {4}steps:\n {6}- name: Only release publishes the site\n {8}if: github\.ref != 'refs\/heads\/release'\n {8}run: \|\n[^\n]*\n {10}exit 1\n {6}- id: sha\n {8}run: echo "sha=\$GITHUB_SHA" >> "\$GITHUB_OUTPUT"\n/, 'release\'s head, pinned once');
   assert.match(d, /\n {2}verify:\n {4}needs: release\n {4}uses: \.\/\.github\/workflows\/verify\.yml\n {4}with:\n {6}ref: \$\{\{ needs\.release\.outputs\.sha \}\}\n {6}build: false/);
   assert.match(d, /\n {2}site:\n {4}needs: release[\s\S]*?Checkout production\n[\s\S]*?ref: \$\{\{ needs\.release\.outputs\.sha \}\}[\s\S]*?run: npm run build\n {8}working-directory: production/);
-  assert.match(d, /\n {2}deploy:\n {4}needs: \[verify, site\]\n[\s\S]*?uses: actions\/deploy-pages@v4/);
+  // PIN MOVED (AUDIT RELEASE-FLOW A6): and `release`, whose sha its wait checks out - a job reads the outputs of the
+  // jobs it needs alone
+  assert.match(d, /\n {2}deploy:\n {4}needs: \[release, verify, site\]\n[\s\S]*?uses: actions\/deploy-pages@v4/);
   assert.doesNotMatch(d, /ref: (?:main|release)\n/, 'no job reads a production branch by name - every one the commit the pin took');
   assert.equal((d.match(/actions\/deploy-pages/g) ?? []).length, 1);
   // REL-FAST (2026-10-15, Mac: "Yes, thats insanely slow" - a release spent 27.4 of its 33 minutes on `npm run check` in

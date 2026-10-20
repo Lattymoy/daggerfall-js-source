@@ -32,9 +32,13 @@ on:
 permissions:
   contents: read
 
+# AUDIT RELEASE-FLOW A5: each run is one pull request's edit, so each waits its turn - GitHub keeps ONE pending run a
+# group by default and cancels it for the next, and a description edited while two others were read never reached its
+# release
 concurrency:
   group: release-notes
   cancel-in-progress: false
+  queue: max
 
 jobs:
   renotes:

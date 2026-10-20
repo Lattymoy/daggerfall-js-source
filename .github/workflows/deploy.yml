@@ -8,7 +8,10 @@
 # once all of them passed. The same gate as one serial `npm run check`.
 # The exact-face-atlas experiment is built separately and mounted beneath
 # /preview/exact-face-atlas/ so it can be opened on a phone without merging
-# experimental rendering code into production.
+# experimental rendering code into production - at the commit this file
+# names (AUDIT RELEASE-FLOW F2: it was the branch's tip, which any writer
+# moves and no review or release ever saw, served on the players' own
+# origin beside their account's stored secret).
 #
 # RELEASE-FLOW (2026-10-19, bible/01-Overview/Release-Flow.md): THE SITE IS
 # PUBLISHED BY HAND, FROM `release`. Every push to main published it until
@@ -20,23 +23,27 @@
 # IMPORTANT: only release is allowed to publish Pages. A preview-branch push
 # used to start a second Pages run in the same concurrency group, cancel the
 # production build, then fail the protected github-pages environment before
-# any steps ran. Release still checks out the preview branch below, so every
-# deploy carries the latest preview without letting the preview branch
-# deploy by itself.
+# any steps ran. Release checks the preview out below, at the commit pinned
+# there - a new preview is a pull request moving the pin, reviewed and
+# promoted like any change - so the preview branch never deploys by itself.
 # Preview refresh: traced classic weapon/shield art on voxel held items.
 name: deploy
 
 on:
   workflow_dispatch:
 
+# AUDIT RELEASE-FLOW A7: read alone, and the publish's own job alone holds
+# what publishes - the site job builds the preview's code, and held them too
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
+# AUDIT RELEASE-FLOW A3: a run on release is never cancelled - an approved
+# publish waiting on its services was cancelled by any later dispatch, even
+# one on another branch that then stopped at its first step; a run anywhere
+# else is a group of its own (release-desktop.yml's shape)
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: ${{ github.ref == 'refs/heads/release' && 'pages' || format('pages-{0}', github.run_id) }}
+  cancel-in-progress: false
 
 jobs:
   # the one commit every job below verifies, builds and publishes: release's
@@ -76,9 +83,9 @@ jobs:
   site:
     needs: release
     runs-on: ubuntu-latest
-    outputs:
-      account_version: ${{ steps.account.outputs.version }}
-      account_base: ${{ steps.account.outputs.base }}
+    permissions:
+      contents: read
+      pages: read   # configure-pages reads the site's settings
     steps:
       - name: Checkout production
         uses: actions/checkout@v4
@@ -88,20 +95,6 @@ jobs:
           # REL8: the whole history - the build stamps the player's update number (scripts/updateNumber.mjs), counted
           # along release's first parents from the merge that set the line; a depth-1 clone cannot count it
           fetch-depth: 0
-
-      # AUDIT PRE-MERGE 0929 T2: the account service this build's forms
-      # ask, and the version it must serve before they may (the deploy
-      # job waits on it) - read off the tree, never typed here
-      - name: Read the account service this build talks to
-        id: account
-        working-directory: production
-        run: |
-          set -euo pipefail
-          v=$(grep -oP "^export const ACCOUNT_VERSION = '\K[^']+" server-account/src/service.js)
-          base=$(grep -oP "^export const DEFAULT_ACCOUNT_SERVICE = '\K[^']+" src/net/accountClient.js)
-          test -n "$v" || { echo "::error::could not read ACCOUNT_VERSION from server-account/src/service.js"; exit 1; }
-          test -n "$base" || { echo "::error::could not read DEFAULT_ACCOUNT_SERVICE from src/net/accountClient.js"; exit 1; }
-          { echo "version=$v"; echo "base=$base"; } >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
         with:
@@ -128,11 +121,13 @@ jobs:
           mkdir -p site
           cp -a production/dist/. site/
 
+      # the preview, at the commit this file names (F2) - moving it is a pull request, reviewed and promoted
       - name: Checkout exact-face-atlas preview
         uses: actions/checkout@v4
         with:
-          ref: chatgpt/exact-face-atlas
+          ref: d896c216f823ffd0103a895a02401d133095c6ae   # chatgpt/exact-face-atlas's tip since 2026-08-26, what the site has served
           path: exact-face-atlas
+          persist-credentials: false
 
       - name: Install preview dependencies
         run: npm ci
@@ -176,10 +171,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+          retention-days: 7   # AUDIT RELEASE-FLOW A2: kept while the publish waits for its approval - a day was the default
 
   deploy:
-    needs: [verify, site]
+    needs: [release, verify, site]
     runs-on: ubuntu-latest
+    permissions:
+      pages: write      # the publish - this job's alone
+      id-token: write
+      contents: read
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -189,41 +189,30 @@ jobs:
       # THE FORMS ASK WHAT THE SERVICE RECORDS. TERMS1's Create account
       # sends the versions its player ticked, and a service from before
       # it answers 200 and records nothing - a named account whose row
-      # says "never asked" for a player who ticked both boxes. This job
-      # and account-deploy.yml start on the same push with nothing
-      # ordering them, and that job itself waits on the relay - or
-      # deploys nothing. So the site is published only once the
-      # service's /v1/health serves the version this tree names (or a
-      # later one), and not at all if it never does: the old site keeps
-      # asking the old service, which it knows. A push that changed no
-      # account behaviour finds it served already: one request.
-      # DEPLOY-WAIT (2026-10-17, #983's site gave up at 15:30 and its
-      # service came at 15:36): AS LONG AS THE SERVICE MAY TAKE. The
-      # account deploy waits up to five and a half hours on the relay
-      # (1000 asks, SEAT2a's siege blackout) - and a relay bump's
-      # 500-seed sweep alone ran 47 minutes - so thirty minutes gave up
-      # on a chain still moving. 1050 asks: the relay's wait, then the
-      # service's own deploy and checks, inside GitHub's six-hour job
-      # ceiling (test/server/audit0929_terms.test.js holds the three).
-      - name: Wait for the account service to serve this build's version
-        env:
-          WANT: ${{ needs.site.outputs.account_version }}
-          BASE: ${{ needs.site.outputs.account_base }}
-        run: |
-          set -euo pipefail
-          test -n "$WANT" && test -n "$BASE" || { echo "::error::the site job named no account service"; exit 1; }
-          n() { printf '%s' "$1" | grep -oE '[0-9]+$' || echo -1; }
-          for i in $(seq 1 1050); do
-            got=$(curl -fsS --max-time 15 "$BASE/v1/health" | sed -n 's/.*"v":"\([^"]*\)".*/\1/p' || true)
-            if [ "$got" = "$WANT" ] || { [ -n "$got" ] && [ "$(n "$got")" -ge "$(n "$WANT")" ]; }; then
-              echo "the account service serves ${got} - this build's forms may ask it"
-              exit 0
-            fi
-            echo "the account service serves '${got:-unreachable}', not $WANT yet - waiting (${i}/1050)"
-            sleep 20
-          done
-          echo "::error::the account service never came to serve $WANT in five hours fifty minutes - not publishing a site whose forms it would not answer (see account-deploy.yml's run, then re-run this)"
-          exit 1
+      # says "never asked" for a player who ticked both boxes. So the
+      # site is published only once the service's /v1/health serves the
+      # version this tree names (or a later one), and not at all if it
+      # never does: the old site keeps asking the old service, which it
+      # knows. DEPLOY-WAIT (2026-10-17): as long as the service may take.
+      # AUDIT RELEASE-FLOW A6: AND THE RELAY TOO. The deploys are
+      # dispatched together and approved apart, the relay's at an hour
+      # the players can spare - so the site waits for both, the one
+      # script the desktop release waits by as well (scripts/serviceWait.sh,
+      # its versions read off this release's own tree).
+      - name: The release's tree, for what it waits on
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/serviceWait.sh
+            src/net/wire.js
+            src/net/online.js
+            src/net/accountClient.js
+            server-account/src/service.js
+          sparse-checkout-cone-mode: false
+      - name: Wait for the relay and the account service to serve this release
+        run: scripts/serviceWait.sh
 
       - id: deployment
         uses: actions/deploy-pages@v4
