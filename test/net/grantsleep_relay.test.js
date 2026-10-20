@@ -33,11 +33,15 @@ async function cell(t, n = 1) {
   r.env.GRANT_FEED_URL = 'https://accounts.example/v1/mod/grant-feed';
   const posts = [];
   r.env.ACCOUNTS = { fetch: async (req) => { posts.push({ sig: req.headers.get(GRANT_MEASURE_SIG_HEADER), body: new Uint8Array(await req.arrayBuffer()) }); return new Response('{}', { status: 202 }); } };
+  // a post is never awaited by the frame that begins it, so the pins await the room's own flushes - its signing takes a
+  // turn of its own, which no count of idle turns is sure to outlast on a loaded machine
+  const flushes = [], flush = r.room._grantFlush.bind(r.room);
+  r.room._grantFlush = () => { const p = flush(); flushes.push(p); return p; };
   const ws = [];
   for (let i = 0; i < n; i++) { ws.push(r.connect()); await r.hello(ws[i], `peer-000${i + 1}`, P0, { lv: 7, charLevel: 12 }); }
   const ask = (kind, k, id) => r.raw(ws[0], JSON.stringify({ t: 'grant', k: 'mint', id, kind, n: k }));
-  /** The posts the room has made once every post it began has finished (a post is never awaited by the frame). */
-  const posted = async () => { for (let i = 0; i < 50; i++) await new Promise((res) => setImmediate(res)); return posts; };
+  /** The posts the room has made once every post it began has finished. */
+  const posted = async () => { await Promise.all(flushes); return posts; };
   return { r, ws, kp, ask, posts, posted, timers, tick: (ms) => { now += ms; }, get now() { return now; } };
 }
 
