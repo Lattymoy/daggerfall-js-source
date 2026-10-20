@@ -65,8 +65,11 @@ its push to the site; the suite alone ~6 minutes on a four-core runner, two whol
   pull request that conflicts with its base runs no `pull_request` workflow at all - the base is merged in before the
   push that is to be verified (the audit found this one's FAST-SUITE head never verified: main had moved under it).
   CHECK-ASK (2026-10-19, `01-Overview/Release-Flow.md`): a comment whose first line is `/check`, from someone who can
-  push here, runs the whole check on the pull request's branch as it stands - conflicted or not - and reports it as
-  `check` on its head (`.github/workflows/check-ask.yml`); the merge is still tested once the base is in. The whole
+  push here, runs the whole check on the pull request's branch as it stands - conflicted or not, the hosts' ceilings
+  among it - and says it on its head as `check (asked)` (`.github/workflows/check-ask.yml`). GitHub reads no check a
+  dispatched run reports for a pull request, so it informs and never passes one: the required `check` is the merge's,
+  tested once the base is in (AUDIT RELEASE-FLOW B1, F1). The deploys run the same jobs with the ceilings off - the
+  ceiling gates a change, never a deploy (`verify.yml`'s `ceilings`). The whole
   `npm run check` (lint, types, the suite, the build, in series - ~15 minutes on four cores) is for when CI cannot run
   it; CI runs it all either way.
 - **Longest first, every core (FAST-SUITE, 2026-10-04, Mac: "Our workflow is extremely slow").** `npm test` is

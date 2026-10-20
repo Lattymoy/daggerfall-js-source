@@ -69,9 +69,12 @@ permissions:
 # One at a time, and never cancelled halfway. A run interrupted between
 # `wrangler` and the verify step is the one state this must not leave
 # behind: the next run would compare against a live version nothing had
-# confirmed, and call the drift gone.
+# confirmed, and call the drift gone. AUDIT RELEASE-FLOW A3: and release's
+# runs are a group of their own - a run dispatched on any other branch,
+# which stops at its first step, took the place of a release run pending
+# in the group, cancelling it (deploy.yml's and release-desktop.yml's shape)
 concurrency:
-  group: relay-deploy
+  group: ${{ github.ref == 'refs/heads/release' && 'relay-deploy' || format('relay-deploy-{0}', github.run_id) }}
   cancel-in-progress: false
 
 jobs:

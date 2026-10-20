@@ -45,7 +45,7 @@ function repo(t) {
 const LINE_TEXT = readFileSync(join(ROOT, UPDATE_LINE_FILE), 'utf8');
 const lineAs = (v) => LINE_TEXT.replace(UPDATE_LINE_RE, `export const UPDATE_LINE = '${v}';`);
 
-test('REL8: the merge that brings the line is Update 0.0.1 - whatever merged before it - and each merge to main after it the next; a commit pushed to main is one too; a comment edit moves nothing; a new line starts at its .1', (t) => {
+test('REL8: the merge that brings the line is Update 0.0.1 - whatever merged before it - and each merge after it, on the branch releases are cut from, the next (main\'s until RELEASE-FLOW, release\'s since); a commit pushed straight to it is one too; a comment edit moves nothing; a new line starts at its .1', (t) => {
   const r = repo(t);
   r.put('a.txt', 'a\n'); r.commit('root');
   assert.equal(r.at(), null, 'no line yet: no number');
@@ -58,7 +58,7 @@ test('REL8: the merge that brings the line is Update 0.0.1 - whatever merged bef
   r.pr('next', [['e.txt', 'e\n'], ['f.txt', 'f\n']]);
   assert.equal(r.at(), '0.0.2', 'one merge, one update - however many commits it carries');
   r.put('g.txt', 'g\n'); r.commit('pushed to main');
-  assert.equal(r.at(), '0.0.3', 'a commit on main is a release of its own (REL3)');
+  assert.equal(r.at(), '0.0.3', 'a commit pushed straight to the releasing branch counts as one (REL3\'s main, release\'s since RELEASE-FLOW)');
   r.pr('comment', [[UPDATE_LINE_FILE, `// a note\n${LINE_TEXT}`]]);
   assert.equal(r.at(), '0.0.4', 'the file\'s comments are not the line');
   assert.equal(r.at(first), '0.0.1', 'a commit keeps its number');

@@ -1,6 +1,8 @@
 // The import graph of a Worker entry, as wrangler bundles it - moved here
 // from relayversion.test.js (SLAM13) at ACC4 so the account Worker's
-// deploy filter can be held to its own graph by the SAME walk. The
+// deploy filter could be held to its own graph by the SAME walk (the filter
+// retired with RELEASE-FLOW; the dev release's directories are held to both
+// graphs now, AUDIT RELEASE-FLOW F5). The
 // relay's hash reads the order this returns, so the walk is unchanged
 // byte for byte in what it visits and when.
 //

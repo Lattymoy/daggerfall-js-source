@@ -109,7 +109,9 @@ picker, so the launcher asks nothing; the probe still presses Play).
 ## The release channel
 
 **REL3 (2026-09-21, Mac: "is there a way to auto push a release on each
-merge?"): EVERY MAIN PUSH CUTS A RELEASE**, from the same commit the site
+merge?"): ~~EVERY MAIN PUSH CUTS A RELEASE~~** (RELEASE-FLOW, 2026-10-19: a
+release is cut when a release manager dispatches it on `release` - the last
+paragraph of this section; AUDIT RELEASE-FLOW F6), from the same commit the site
 deploys. The version is DERIVED, never bumped by hand: MAJOR.MINOR from
 `app/package.json`'s committed base (`0.1.0` - CI owns the patch), PATCH
 the count of commits on main (`git rev-list --count HEAD`, so the
@@ -128,8 +130,8 @@ version from the tag they name.~~ (RELEASE-FLOW: gone - below.) A new tag is cut
 installers were built from (`target_commitish`, AUDIT 68), never at
 wherever main's head has moved to by upload time. Runs queue in one
 concurrency group rather than cancel - a release half uploaded is worse than one late.
-The cost is what it is: three OS builds per merge, and the desktop
-update notice fires per merge, exactly as the site's own new-build
+The cost is what it is: ~~three OS builds per merge, and the desktop
+update notice fires per merge~~ (RELEASE-FLOW: per release), exactly as the site's own new-build
 notice (SRV-N2) does. Pinned in `test/tooling/updatecheck.test.js`. The
 paragraph below is the history it replaced.
 
@@ -241,7 +243,9 @@ is the door. `test/tooling/rel7_renotes.test.js` (3), `tools/mutants/rel7.json`
 (15, all dead).
 
 **REL8 (2026-10-09, Mac: "Let's officially start numbering updates
-beginning with 0.0.1"): EVERY MERGE TO MAIN IS A NUMBERED UPDATE.** The
+beginning with 0.0.1"): ~~EVERY MERGE TO MAIN IS A NUMBERED UPDATE~~ EVERY
+RELEASE IS ONE** (RELEASE-FLOW: counted along release's first parents - each
+promotion of main, each hotfix; AUDIT RELEASE-FLOW F6). The
 player's number is MAJOR.MINOR.PATCH, and it is not the installer's.
 MAJOR.MINOR is the line, `scripts/updateLine.mjs` (`0.0`), written by
 hand; PATCH is derived by `scripts/updateNumber.mjs`: the commit on main's
@@ -249,8 +253,9 @@ first-parent history whose diff last changed the line (`git log -G`, a
 merge read against its first parent) is the line's update 1, and each
 first-parent commit after it the next. So the merge that brought the line
 is Update 0.0.1 whatever merged before it, each merge after is the next
-(one merge, one update, however many commits it carries; a commit pushed
-to main is one too, as it is a release, REL3), nothing is bumped by hand
+(one merge, one update, however many commits it carries; ~~a commit pushed
+to main is one too, as it is a release, REL3~~ a commit pushed straight to the
+branch counted is one too), nothing is bumped by hand
 and no two branches conflict on it; a new line (`0.1`, `1.0`) is a change
 to that one declaration, and the merge carrying it is its `.1` - an edit
 to the file's comments moves nothing. It cannot be REL3's version: the

@@ -26,8 +26,10 @@ on:
 permissions:
   contents: read
 
+# one at a time; a run on main is never cancelled, and a run dispatched anywhere else - which stops at its first step -
+# is a group of its own, never taking a pending main run's place (AUDIT RELEASE-FLOW A3's shape)
 concurrency:
-  group: dev-deploy
+  group: ${{ github.ref == 'refs/heads/main' && 'dev-deploy' || format('dev-deploy-{0}', github.run_id) }}
   cancel-in-progress: false
 
 jobs:

@@ -98,7 +98,8 @@ test('SRV-N/CI: the deploy is decided by the VERSION drifting, not by a path fil
     'a dispatch without blind will not deploy blind over a relay it could not read');
 
   // One at a time, and not cancelled between deploy and verify.
-  assert.match(wf, /concurrency:\s*\n\s*group: relay-deploy\s*\n\s*cancel-in-progress: false/,
+  // PIN MOVED (AUDIT RELEASE-FLOW A3): release's runs one group, any other run a group of its own
+  assert.match(wf, /concurrency:\s*\n\s*group: \$\{\{ github\.ref == 'refs\/heads\/release' && 'relay-deploy' \|\| format\('relay-deploy-\{0\}', github\.run_id\) \}\}\s*\n\s*cancel-in-progress: false/,
     'serialized, and never cancelled halfway - an interrupted run leaves a live version nothing confirmed');
 });
 
@@ -227,7 +228,7 @@ test('SRV-N/CI: the token is the repo\'s, never a literal', () => {
 // The exclusion is DERIVED from `RELAY_GRAPH`, not listed: if wire.js
 // ever leaves the bundle it falls straight back into the population, and
 // a file that JOINS the bundle leaves it without anyone editing this.
-const AUTO_CLAIM = /(deploy is automatic|on every (?:push|merge) to main|runs on every push|every (?:push|merge) to main (?:cuts|deploys|publishes))/i;
+const AUTO_CLAIM = /(deploy is automatic|on every (?:push|merge) to main|runs on every push|every (?:push|merge) to main (?:cuts|deploys|publishes)|redeployed several times a day|moves on every merge)/i;   // AUDIT RELEASE-FLOW F6: the site's own cadence, said two more ways
 const OUTSIDE_CI_CLAIM = /(by\s+hand\s*[-,(]\s*`?npx wrangler|manual on purpose|nothing in CI does it|hand-deployed)/i;
 /** A text's prose with its comment markers and line breaks read through - a claim may run across lines. */
 const proseOf = (text) => text.replace(/\s*\n\s*(?:\/\/+|#+|\*+(?!\/))?\s*/g, ' ');
@@ -252,6 +253,9 @@ test('SRV-N/CI + RELEASE-FLOW: live source says how the relay really moves - by 
     '# `.github/workflows/relay-deploy.yml` runs on EVERY PUSH TO MAIN. It',
     proseOf('//   SRV-N/CI it is deployed by `.github/workflows/relay-deploy.yml` on\n//   every push to main, but only when RELAY_VERSION has moved - so it'),
     '// Every merge to main cuts a release (REL3) and deploys the site; each is a player\'s UPDATE, numbered',
+    '// The deployed site is redeployed several times a day and every deploy',
+    '//   4. `main` is redeployed several times a day.',
+    proseOf('  // SRV-N: THE BUILD POLL. The relay moves by hand and rarely; the client\n  // moves on every merge, which is what "whenever we push" actually is'),
   ]) {
     assert.match(real, AUTO_CLAIM, 'the gate can no longer see the sentence it exists to catch');
   }

@@ -14,8 +14,8 @@ one that actually happens.
 
 | | what it is | how often | what a player sees |
 |---|---|---|---|
-| **the relay** | `server/`, a Cloudflare Worker and its Durable Objects | **in CI since SRV-N/CI (PR #209, 2026-09-17)**: `.github/workflows/relay-deploy.yml` runs on every push to main, reads `RELAY_VERSION` from `src/net/wire.js`, asks the live `/health`, and deploys only when they differ, then polls `/health` until it names the new version (a `workflow_dispatch` forces one). Before #209 it was by hand - `npx wrangler deploy` - and the slices below say so as they stood | every socket drops at once: peers vanish, chat goes quiet |
-| **the build** | the client, on GitHub Pages | **every merge to main**, several times a day | nothing — they keep running code we replaced |
+| **the relay** | `server/`, a Cloudflare Worker and its Durable Objects | **by hand, from `release`, in CI since RELEASE-FLOW (2026-10-19, `01-Overview/Release-Flow.md`)**: a release manager dispatches `.github/workflows/relay-deploy.yml` on release; it reads `RELAY_VERSION` from `src/net/wire.js`, asks the live `/health`, and deploys only when they differ - after the release manager's approval - then polls `/health` until it names the new version. From SRV-N/CI (PR #209, 2026-09-17) until then it ran on every push to main; before #209 it was by hand - `npx wrangler deploy` - and the slices below say so as they stood | every socket drops at once: peers vanish, chat goes quiet |
+| **the build** | the client, on GitHub Pages | **every release** - a promotion of main or a hotfix, published from `release` by hand (RELEASE-FLOW); every merge to main, several times a day, until then | nothing — they keep running code we replaced |
 
 Mac's words name the first. Mac's *situation* is the second: "whenever
 we push" is, for this project, a CI deploy of the client, and the relay
@@ -143,7 +143,7 @@ page load on the CDN twice for an answer we already have.
 Worker is `world66`, its welcomes carry no `v`, and the client reads a
 missing version as `unknown` and stays silent — which is correct, and is
 also why nothing will be seen until someone runs `npx wrangler deploy`
-(as it stood; since SRV-N/CI the push to main deploys it - the table above).
+(as it stood; SRV-N/CI deployed it on each push to main, and since RELEASE-FLOW a release manager dispatches it - the table above).
 
 And the deploy that lands it is **itself silent**, which follows from the
 ladder rather than working around it: a player connected across the

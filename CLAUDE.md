@@ -24,7 +24,9 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   a pull request is not done until it is green on its head. A pull request
   that conflicts with its base runs NO `pull_request` workflow: merge the base
   in before the push that is meant to be verified - or comment `/check` on it,
-  which runs the whole check on its branch as it stands (CHECK-ASK). The whole
+  which runs the whole check on its branch as it stands and says it on the head
+  as `check (asked)` (CHECK-ASK); the required `check` still comes once it
+  merges cleanly. The whole
   `npm run check` in series (~15 minutes on four cores) is for when CI cannot
   run it.
 - **Main is development, `release` is production** (RELEASE-FLOW,
@@ -32,10 +34,12 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   alone targets release, branched from release - and needs a reviewer's
   approval (`.github/CODEOWNERS`). Main is played in the dev environment
   (`dev-deploy.yml`, inside WireGuard); the relay, the account service, the
-  site and the desktop release move only when a release manager dispatches
-  their workflows on release and approves them. A session never merges into
-  release and never dispatches or approves a production workflow; it may open
-  the pull request that promotes main or carries a hotfix. Roles are code:
+  site and the desktop release move only when their workflows are dispatched on
+  release and a release manager approves them. GitHub lets only an admin merge
+  into release and only a release manager approve; anyone who can push may
+  dispatch, so: a session never merges into release and never dispatches or
+  approves a production workflow; it may open the pull request that promotes
+  main or carries a hotfix. Roles are code:
   `ops/github/settings.json`, applied by an admin (`tools/repoSettings.mjs`).
 - **A cite into our own code is an anchor** (`bible/Home.md`, A CITE NAMES
   WHAT IT POINTS AT): `world.js:"const livingQuarry = () =>"`, the one line

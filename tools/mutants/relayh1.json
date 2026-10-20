@@ -57,7 +57,7 @@
   {
     "name": "DEPLOY-2-a-stale-claim-passes",
     "file": "test/server/relaydeploy.test.js",
-    "old": "const AUTO_CLAIM = /(deploy is automatic|on every (?:push|merge) to main|runs on every push|every (?:push|merge) to main (?:cuts|deploys|publishes))/i;",
+    "old": "const AUTO_CLAIM = /(deploy is automatic|on every (?:push|merge) to main|runs on every push|every (?:push|merge) to main (?:cuts|deploys|publishes)|redeployed several times a day|moves on every merge)/i;",
     "new": "const AUTO_CLAIM = /this phrase appears in no file/i;",
     "tests": [
       "test/server/relaydeploy.test.js"

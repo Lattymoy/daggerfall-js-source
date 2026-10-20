@@ -201,9 +201,9 @@ test('AUDIT RELEASE-FLOW A2, A3, A5, A7, F2: what a release manager approves sur
   assert.ok(pagesKept && Number(pagesKept[1]) >= 7, `the site's artifact kept a week (${pagesKept?.[1]} days; the action's own default is one)`);
   // A3: a run on release is one group and never cancelled; a run anywhere else is a group of its own - an approved
   // publish waiting on its services was cancelled by any later dispatch, one on another branch that stopped at its door
-  for (const [f, text, group] of [['deploy.yml', site, 'pages'], ['release-desktop.yml', desk, 'release-desktop']]) {
-    const on = group === 'pages' ? 'pages' : 'release-desktop-release';
-    assert.match(text, new RegExp(`\\nconcurrency:\\n {2}group: \\$\\{\\{ github\\.ref == 'refs/heads/release' && '${on}' \\|\\| format\\('${group}-\\{0\\}', github\\.run_id\\) \\}\\}\\n {2}cancel-in-progress: false\\n`), `${f}: release's own group, never cancelled; any other run alone`);
+  for (const [f, branch, own, group] of [['deploy.yml', 'release', 'pages', 'pages'], ['release-desktop.yml', 'release', 'release-desktop-release', 'release-desktop'],
+    ['relay-deploy.yml', 'release', 'relay-deploy', 'relay-deploy'], ['dev-deploy.yml', 'main', 'dev-deploy', 'dev-deploy']]) {
+    assert.match(WF(f), new RegExp(`\\nconcurrency:\\n {2}group: \\$\\{\\{ github\\.ref == 'refs/heads/${branch}' && '${own}' \\|\\| format\\('${group}-\\{0\\}', github\\.run_id\\) \\}\\}\\n {2}cancel-in-progress: false\\n`), `${f}: ${branch}'s own group, never cancelled; any other run alone`);
   }
   // A5: every group whose runs carry their own ask queues them - GitHub keeps ONE pending run a group by default and
   // cancels it for the next

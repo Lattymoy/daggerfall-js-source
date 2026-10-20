@@ -1320,5 +1320,36 @@
       "test/tooling/releaseflow.test.js"
     ],
     "note": "The account Worker's vendored files are missing on the VM."
+  },
+  {
+    "name": "RELEASE-FLOW-A3-the-relay-run-taken-by-a-stray",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "  group: ${{ github.ref == 'refs/heads/release' && 'relay-deploy' || format('relay-deploy-{0}', github.run_id) }}",
+    "new": "  group: relay-deploy",
+    "tests": [
+      "test/tooling/releaseflow.test.js",
+      "test/server/relaydeploy.test.js"
+    ],
+    "note": "A dispatch on main takes a pending release run's place, cancelling it, then stops at its door."
+  },
+  {
+    "name": "RELEASE-FLOW-A3-the-dev-run-taken-by-a-stray",
+    "file": ".github/workflows/dev-deploy.yml",
+    "old": "  group: ${{ github.ref == 'refs/heads/main' && 'dev-deploy' || format('dev-deploy-{0}', github.run_id) }}",
+    "new": "  group: dev-deploy",
+    "tests": [
+      "test/tooling/releaseflow.test.js"
+    ],
+    "note": "A dispatch off main takes a pending dev deploy's place, cancelling it."
+  },
+  {
+    "name": "RELEASE-FLOW-F6-the-cadence-said-again",
+    "file": "src/systems/staleChunk.js",
+    "old": "//   4. The site is published again with every release - a promotion of\n//      main or a hotfix (RELEASE-FLOW; until then with each merge to main).\n",
+    "new": "//   4. `main` is redeployed several times a day.\n",
+    "tests": [
+      "test/server/relaydeploy.test.js"
+    ],
+    "note": "A comment over running code says the site moves with every merge again."
   }
 ]

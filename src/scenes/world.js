@@ -28012,9 +28012,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // SCALE5c: and whether the relay keeps the hub's shards, remembered for the next page (`channelLinkRoom`) - AUDIT SCALE II
   // C-2: under this relay's own key, and a relay without them takes the links off their shards
   const onRelayVersion = (v) => { const keeps = hubShardsSupported(v); try { appStorage()?.setItem?.(hubShardsSeenKey(), keeps ? '1' : '0'); } catch { /* storage refused: the hub itself says it again */ } if (!keeps) channelLinksOffShards(); _relayKeepsRite = relaySupportsRite(v); _relayKeepsCage = relaySupportsCage(v); if (relayVersionSeen(v) === 'changed') chatNotice(relayRestartText()); };   // AUDIT BROKER-CAGE C4, C6: and whether it keeps the rite and the cage
-  // SRV-N: THE BUILD POLL. The relay moves by hand and rarely; the client
-  // moves on every merge, which is what "whenever we push" actually is
-  // for this project. Nothing tells a tab held open across a deploy that
+  // SRV-N: THE BUILD POLL. The relay moves rarely, when a release moved its
+  // version; the client moves with every release (RELEASE-FLOW: the site is
+  // published from `release`, a promotion of main or a hotfix - until then
+  // it moved with each merge). Nothing tells a tab held open across a deploy that
   // it is now running code we have replaced - it finds out when a lazy
   // chunk 404s and systems/staleChunk.js reloads it out from under the
   // player. So ask the site, on the site's own rhythm rather than the
