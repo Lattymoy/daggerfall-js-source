@@ -143,7 +143,7 @@ export function techniqueParts(id, value) {
   const m = techniqueMult(t.base, value);
   const what = (() => {
     switch (id) {
-      case 'volley': return `Aim: ${t.arrows} arrows rain on ${t.radius} m, ${pct(m)} each`;
+      case 'volley': return `Aim: ${t.arrows} arrows rain down within ${t.radius} m, ${pct(m)} each`;
       case 'pierce': return `Aim: a shot through ${t.through} foes, ${pct(m)} each`;
       case 'leap': return `Aim: leap ${t.range[1]} m, strike all in ${t.radius} m, ${pct(m)}`;
       case 'kick': return `Bare-handed, aim: leap ${t.range[1]} m, strike all in ${t.radius} m, ${pct(m)}`;   // AUDIT TECH1: the Gauntlets' - say they sleep with a weapon drawn

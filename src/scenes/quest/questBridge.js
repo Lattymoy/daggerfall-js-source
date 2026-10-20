@@ -271,8 +271,8 @@ export function restartRefusalText(reason) {
     case 'shelved': return t('pause.journal.restartShelved', 'That quest is abandoned. Reclaim it first.');
     case 'ending': return t('pause.journal.restartEnding', 'That quest is ending.');
     case 'protected': return t('pause.journal.restartProtected', 'That quest cannot be restarted.');
-    case 'questor': return t('pause.journal.restartQuestor', 'That quest was given by someone. Abandon it and ask them again.');
-    case 'child': return t('pause.journal.restartChild', 'Another quest is waiting on that one. It cannot be restarted.');
+    case 'questor': return t('pause.journal.restartQuestor', 'Someone gave you that quest. Abandon it and ask them for it again.');
+    case 'child': return t('pause.journal.restartChild', 'Another quest depends on that one, so it cannot be restarted.');
     case 'raid': return t('pause.journal.restartRaid', 'Not while the raid is on.');
     case 'unparsed': return t('pause.journal.restartUnparsed', 'That quest could not be started again here.');
     case 'failed': return t('pause.journal.restartFailed', 'That quest could not be started again.');
@@ -633,7 +633,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       abandon(id) {
         const r = machine.shelveQuest(Number(id), { refuse: refuseRaid });
         if (r.ok && questTracker.pinned != null && Number(questTracker.pinned) === Number(id)) questTracker.pinned = null;
-        return { ...r, quest: undefined, text: r.ok ? `Abandoned: ${r.quest.displayName || r.quest.questName}. Reclaim it from your journal.${r.quest.shelvedItems?.length ? ` ${t('pause.journal.shelfItemsFree', 'Its items may be thrown away now. If it is reclaimed, they come back.')}` : ''}` : shelfRefusalText(r.reason) };
+        return { ...r, quest: undefined, text: r.ok ? `Abandoned: ${r.quest.displayName || r.quest.questName}. Reclaim it from your journal.${r.quest.shelvedItems?.length ? ` ${t('pause.journal.shelfItemsFree', 'You can throw its items away now. They come back if you reclaim it.')}` : ''}` : shelfRefusalText(r.reason) };
       },
       /** QUEST-SHELF: RECLAIM - the quest back as it was (machine.js reclaimQuest), on the journal's page: one the player
        *  had hidden is shown again (its audit - taken up again, it was put where no row showed it). Answers

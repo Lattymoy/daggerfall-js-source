@@ -293,18 +293,18 @@ export const READOUT = Object.freeze({
 /** The sentence that says what you get INSTEAD - shown in the detail
  *  dialog. Every unavailable key has one. */
 export const INSTEAD = Object.freeze({
-  'Enhancements/EnhancedCombatAI': "You get the original game's own enemy behavior, exactly as it shipped.",
-  'Enhancements/AdvancedClimbing': "You get the original game's own climbing, exactly as it shipped.",
-  'Enhancements/LypyL_ModSystem': 'Nothing to add yet. When add-ons arrive they will be listed on this page.',
-  'Enhancements/CompressModdedTextures': 'Nothing to add yet. When add-ons arrive they will be listed on this page.',
-  'Experimental/CustomBooksImport': 'Nothing to add yet. When add-ons arrive they will be listed on this page.',
+  'Enhancements/EnhancedCombatAI': "You get the original game's enemy behavior.",
+  'Enhancements/AdvancedClimbing': "You get the original game's climbing.",
+  'Enhancements/LypyL_ModSystem': 'Nothing to add yet. Add-ons will be listed on this page when they arrive.',
+  'Enhancements/CompressModdedTextures': 'Nothing to add yet. Add-ons will be listed on this page when they arrive.',
+  'Experimental/CustomBooksImport': 'Nothing to add yet. Add-ons will be listed on this page when they arrive.',
   'Daggerfall/MyDaggerfallPath': 'The game reads the files you chose, straight from this browser.',
   'Daggerfall/MyDaggerfallUnitySavePath': 'Saves live in this browser and survive a reload.',
   'Daggerfall/MyDaggerfallUnityScreenshotsPath': 'Pictures go wherever your browser puts downloads.',
   'Video/ResolutionWidth': 'The picture already fills the window you give it.',
   'Video/ResolutionHeight': 'The picture already fills the window you give it.',
-  'Video/ExclusiveFullscreen': "Use your browser's own fullscreen from its menu, since F11 is the game's Quick Load. In the desktop app: View > Toggle Full Screen (Alt+Enter on Windows and Linux).",   // DEATH-LOAD (issue #642): F11 never was fullscreen here - the page and the shell spend it on QuickLoad
-  'Video/Fullscreen': "Use your browser's own fullscreen from its menu, since F11 is the game's Quick Load. In the desktop app: View > Toggle Full Screen (Alt+Enter on Windows and Linux).",   // DEATH-LOAD (issue #642): F11 never was fullscreen here - the page and the shell spend it on QuickLoad
+  'Video/ExclusiveFullscreen': "Use your browser's fullscreen, from its menu (F11 is Quick Load in this game). In the desktop app, use View > Toggle Full Screen (Alt+Enter on Windows and Linux).",   // DEATH-LOAD (issue #642): F11 never was fullscreen here - the page and the shell spend it on QuickLoad
+  'Video/Fullscreen': "Use your browser's fullscreen, from its menu (F11 is Quick Load in this game). In the desktop app, use View > Toggle Full Screen (Alt+Enter on Windows and Linux).",   // DEATH-LOAD (issue #642): F11 never was fullscreen here - the page and the shell spend it on QuickLoad
   'Video/VSync': 'Frames always wait for your screen. To run slower than it, set a Frame Rate Cap.',
 });
 
@@ -312,6 +312,6 @@ export const INSTEAD = Object.freeze({
 export const TIER_TEXT = Object.freeze({
   live: 'This works now.',
   restart: 'Takes effect the next time the app starts.',   // FPS-VSYNC: the desktop shell reads it at launch
-  stored: 'Your choice is saved, but nothing reads it yet.',
-  unavailable: 'Fixed. It cannot be changed in this version.',
+  stored: 'Your choice is saved but has no effect yet.',
+  unavailable: "This can't be changed here.",
 });

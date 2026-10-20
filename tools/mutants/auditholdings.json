@@ -587,8 +587,8 @@
   {
     "name": "AH-Q9-an-unnamed-quay-afloat",
     "file": "src/ui/fleetPage.js",
-    "old": "      if (s.docked != null) return { state: 'Made fast', tone: 'is-away',",
-    "new": "      if (s.docked) return { state: 'Made fast', tone: 'is-away',",
+    "old": "      if (s.docked != null) return { state: 'Moored', tone: 'is-away',",
+    "new": "      if (s.docked) return { state: 'Moored', tone: 'is-away',",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "AH-C7-the-stores-key-misnamed",
     "file": "src/scenes/gatherHost.js",
-    "old": "the pause menu's Holdings > Stores${key ? ` (${key} opens your Professions)` : ''}.`);",
-    "new": "${key ? `${key} opens your Stores page` : 'the pause menu\\'s Stores page'}.`);",
+    "old": "under Holdings in the pause menu.${key ? ` ${key} opens your Professions.` : ''}`);",
+    "new": "under Holdings in the pause menu.${key ? ` ${key} opens your Stores page.` : ''}`);",
     "tests": [
       "test/systems/classicpages.test.js"
     ]

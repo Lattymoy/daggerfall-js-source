@@ -173,13 +173,14 @@ test('EG-E2 THE BOARD WINDOW, OPENED: the enhanced skin\'s one panel - its five 
   const panel = doc.body.children.at(-1);
   assert.match(text(panel), /Reading the boards/);
   await settle();
-  assert.match(text(panel), /Hall 47 \(The Soul Cairn\)/);
-  assert.equal(all(panel, 'on').length, 1);
-  const tabs = panel.children.find((c) => c.className === 'tabs').children;
+  assert.match(text(panel), /Hall 47 - The Soul Cairn/);   // EG-PLUS: a row's facts its own parts (egBoardView)
+  assert.equal(all(panel, 'eg-k-tab').filter((x) => /\bon\b/.test(x.className)).length, 1, 'one tab shown');
+  const tabs = all(panel, 'eg-k-tabs')[0].children;
   assert.deepEqual(tabs.map((x) => x.textContent), EG_BOARD_TABS.map((k) => EG_BOARD_TAB_TEXT[k]));
   tabs[3].fire('click');
   assert.equal(h.tab(), 'depths');
-  assert.match(text(doc.body.children.at(-1)), /Dare - Hall 80 from Redoubt 4/);
+  const dare = all(doc.body.children.at(-1), 'eg-k-row').find((r) => text(r).includes('Dare'));
+  assert.deepEqual([all(dare, 'eg-k-who')[0].textContent, all(dare, 'eg-k-sub')[0].textContent, all(dare, 'eg-k-val')[0].textContent], ['Dare', 'From Redoubt 4 - wagered', 'Hall 80']);
   h.close(); h.close();
   assert.deepEqual([closed, doc.body.children.at(-1).removed], [1, true], 'closed once, taken away');
   // CLASSIC

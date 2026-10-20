@@ -38,10 +38,10 @@ export const SD_MARK_TIPS = Object.freeze({
   wayrest: 'Its Hand reaches three quarters round. Keep a pillar near.',
   orsinium: 'It closes fast; give its Stomp a wider berth.',
   underking: 'Heal between Pulses; they come quicker.',
-  blades: 'Fell Gold and Silver within ten seconds of each other.',   // AUDIT SD III (T14): the Dragon Break's window in its one form
+  blades: 'Fell Gold and Silver within 10 seconds of each other.',   // AUDIT SD III (T14): the Dragon Break's window in its one form
   brazen: 'Bring more damage.',
   quickened: 'Move at the word, before the fill.',
-  short: 'Fell it in twelve minutes.',
+  short: 'Fell it in 12 minutes.',
   hardened: 'Bring everyone to the Hearts.',
   burning: 'Fight clear of the brass.',
   fraying: 'Learn the gearing before you spend turns.',

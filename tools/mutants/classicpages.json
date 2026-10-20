@@ -78,7 +78,7 @@
   {
     "name": "CLASSICPAGES-where-line-no-key",
     "file": "src/scenes/gatherHost.js",
-    "old": "${key ? ` (${key} opens your Professions)` : ''}",
+    "old": "${key ? ` ${key} opens your Professions.` : ''}",
     "new": "",
     "tests": [
       "test/systems/classicpages.test.js"

@@ -88,9 +88,9 @@ test('UNQUIET III A WOUND HEALS: left alone, its oldest wound heals every five d
 });
 
 test('UNQUIET III THE PAGE: its wounds and when the oldest heals - "unless you find it first"; with no day known, the wounds alone (mutants: unsaid; the days wrong)', () => {
-  assert.equal(PG.woundLine({ wounds: ['lamed'], woundDay: 10 }, DAY * 11 + 60), 'Wounds you left: Lamed (a lamed leg: it runs more slowly). The oldest heals in 4 days unless you find it first.');
+  assert.equal(PG.woundLine({ wounds: ['lamed'], woundDay: 10 }, DAY * 11 + 60), 'Wounds you left: Lamed (a lamed leg, so it runs slower). The oldest heals in 4 days unless you find it first.');
   assert.ok(PG.woundLine({ wounds: ['lamed'], woundDay: 10 }, DAY * 14).endsWith('heals in 1 day unless you find it first.'));
-  assert.equal(PG.woundLine({ wounds: ['lamed'] }), 'Wounds you left: Lamed (a lamed leg: it runs more slowly).');
+  assert.equal(PG.woundLine({ wounds: ['lamed'] }), 'Wounds you left: Lamed (a lamed leg, so it runs slower).');
   assert.equal(PG.woundLine({ wounds: [], woundDay: 10 }, DAY * 11), '');
 });
 

@@ -337,7 +337,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'tavern-cards', group: 'towns', title: 'Card Games', trigger: 'When you first sit at a card table.',
     body: [
-      'Play Texas Hold\'em, Iliac Hand or The King\'s Gambit against the locals, and the first two against other players as well. Online, one table plays for real gold.',
+      'Play Texas Hold\'em, Iliac Hand or The King\'s Gambit against the locals, and the first two against other players too. Online, one table plays for real gold.',
       'Cards you collect go into your Card Binder, kept under Menu > Holdings > Collections.',
     ],
   }),
@@ -608,7 +608,7 @@ export const TUTORIALS = Object.freeze([
         // AUDIT GUILD-WORDS L3-2, L3-4: the pace a quest's reward keeps (writs and receipts add beyond it - the guide says
         // so), the real day it counts by - II C-8: a UTC day, said; II C-3: no quest is free of its own guild's losses
         // (REPUTE-GATE gates the two that cost the most instead), so the page no longer says one is; II C-2: chairs
-        t('tutorials.chapters.body1', 'Online, the realm keeps your standing with your guild. Each quest raises it by no more than {max} a real day (days turn at midnight UTC); the rest is counted later.', { max: ROLL_GAIN_DAY_MAX }),
+        t('tutorials.chapters.body1', 'Online, quests raise your standing with each guild by at most {max} a real day (days start at midnight UTC). Any more is added on later days.', { max: ROLL_GAIN_DAY_MAX }),
         t('tutorials.chapters.body2', 'Reviews promote you up to rank {cap}. Ranks {officer} and {master} are chapter chairs, won by Merit at each Sunday\'s Turning. A notice board explains chapters.', { cap: ROLL_BOOK_RANK_MAX, officer: SEAT_RANK.officer, master: SEAT_RANK.master }),
       ];
     },

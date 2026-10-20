@@ -386,7 +386,7 @@ export function drawSpecGuide(detail, rerender, { el, divider, skillMeter = null
   }
   detail.append(list);
   if (reachable.length < fam.paths.length) {
-    const more = el('button', 'act gr-more', _all ? t('growth.spec.showReach', 'Show only paths you can get') : t('growth.spec.showAll', 'Show all fifteen paths'));
+    const more = el('button', 'act gr-more', _all ? t('growth.spec.showReach', 'Show only paths you can get') : t('growth.spec.showAll', 'Show all 15 paths'));
     more.onclick = () => { _all = !_all; rerender(); };
     detail.append(more);
   }

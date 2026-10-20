@@ -413,7 +413,7 @@ test('SCALE5c the World tab\'s search and the Guild tab\'s list: `/find` and `/w
   assert.equal(foundText({ q: 'al', l: [{ name: 'Aldric' }, { name: 'Alma' }] }), 'Online, by "al": Aldric, Alma.');
   assert.equal(foundText({ q: 'zz', l: [] }), 'No one online by "zz".');
   assert.equal(foundText({ q: 'a', l: Array.from({ length: H.HUB_FIND_MAX }, (_, i) => ({ name: `N${i}` })) }).includes(`(the first ${H.HUB_FIND_MAX})`), true);
-  assert.match(foundText({ q: 'a', l: [], busy: true }), /^Too many are searching/);
+  assert.match(foundText({ q: 'a', l: [], busy: true }), /^Too many players are searching/);
   await quiet(() => {
     const { FakeWS, sockets } = fakeSocketClass();
     let t = 1_000_000;

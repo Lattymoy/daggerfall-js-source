@@ -287,7 +287,7 @@ export const NICE_BOAT_TEXT = 'Nice Boat!';
 /** CSA-K (DECLARED): the pack's refusal while another player stands on the deck, in the driver's words' shape. */
 export const PASSENGERS_ABOARD_TEXT = 'You cannot pack a boat with passengers aboard!';
 /** AUDIT HOLDINGS F1 (the port's own): parts whose boat already stands are refused - never a second boat of one number. */
-export const PARTS_STANDING_TEXT = 'This ship is already afloat - these are its parts.';
+export const PARTS_STANDING_TEXT = 'This ship is already afloat. These are its parts.';
 /** SHIP-PACK (the port's own): the pack's refusal of a deed ship whose deed is not in the pack - her parts take its place,
  *  and a deed left elsewhere would call a second ship of hers to a port. */
 export const DEED_NOT_HELD_TEXT = 'You need the ship\'s deed in your pack to pick it up.';
@@ -316,7 +316,7 @@ export const IRONS_TELL_WAY = 0.4;
  *  heave-to asked up to 47 in a storm, and its ship ran past the one she hove to beside. */
 export const CSA_BRAKE_MAX = 20;
 export const IRONS_TELL_S = 2;
-export const IRONS_TEXT = 'In irons - the wind is dead ahead. Strike sail and row to turn.';
+export const IRONS_TEXT = 'In irons: the wind is dead ahead. Strike sail and row to turn.';
 /**
  * HELM-LADDER (2026-10-04, from the field: "WASD and Arrow keys should function the same when controlling. Allowing you
  * to lower and raise sails" - the throttle ladder chosen; DECLARED, the Port-Ledger's Come Sail Away row): THE HELM'S
@@ -489,7 +489,7 @@ export const WEATHER_TYPE = Object.freeze({ Sunny: 0, Cloudy: 1, Overcast: 2, Fo
 export const TIME_SCALES = Object.freeze([1, 5, 10, 15, 30]);
 /** HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online"): what a time key says at the helm while
  *  the dial is retired (online) - the step is the player's offline alone. */
-export const HELM_TIME_LOCKED_TEXT = 'Online, time at sea keeps the world\'s pace.';
+export const HELM_TIME_LOCKED_TEXT = 'Online, time at sea runs at normal speed.';
 /** A point through a column-major matrix, and back through its inverse. */
 const applyMatrix = (m, p) => [
   m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14],

@@ -315,7 +315,7 @@ import { grantKindOf } from '../net/grantLaw.js';   // GRANT4: the own lane's st
  *  reads it. */
 const LOOSE_PUPPETS_MAX = Math.max(24, CELL_LOOSE_PUPPETS);
 /** DESYNC-ZERO: what a player whose dungeon the host builds otherwise is told (once a dungeon). */
-export const LAYOUT_MISMATCH_TEXT = 'This dungeon is laid out differently for another player here. One of you may be on an older version. Reload the page so you all see the same monsters.';
+export const LAYOUT_MISMATCH_TEXT = 'Another player here has this dungeon laid out differently, maybe from an older version of the game. Reload the page so you all see the same monsters.';
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/party/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
 import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
 import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
@@ -9760,7 +9760,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const p = this.startSpawn({ preferEnterMarker: false });
         if (p) {
           setPlayerPos(p);
-          hudText.add('The dungeon size setting changed. You have been moved to the dungeon\'s entrance.');
+          hudText.add('The dungeon size setting changed, so you were moved to the entrance.');
         }
       }
       // F222/F101 + AUDIT 63 F25: Sheathed and UsingRightHand as ONE

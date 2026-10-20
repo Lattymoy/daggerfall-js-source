@@ -199,12 +199,12 @@ export const hungerTone = (h, care) => (care?.hungerCosts === false && h.hungerK
  *  each tier's own words - Hard's what hunger takes, Boons' only the gallop a starving horse has not earned. */
 const HUNGER_LINE = Object.freeze({
   fed: 'Fed.',
-  hungry: 'Hungry: every attribute ten lower, and slower to catch its breath.',
-  starving: 'Starving: every attribute twenty-five lower, no gallop, and your bond is fading. Feed it.',
+  hungry: 'Hungry: every attribute 10 lower, and slower to catch its breath.',
+  starving: 'Starving: every attribute 25 lower, no gallop, and your bond is fading. Feed it.',
 });
 const HUNGER_LINE_BOONS = Object.freeze({   // HORSE-TIERS: in the player's language (L10N4's ratchet), read as it is shown
   fed: 'Fed.',
-  get hungry() { return t('holdings.horse.boons.hungry', 'Hungry, though it costs nothing yet.'); },
+  get hungry() { return t('holdings.horse.boons.hungry', 'Hungry, but no penalty yet.'); },
   get starving() { return t('holdings.horse.boons.starving', 'Starving. It will not gallop until it eats. Feed it.'); },
 });
 /** STEED-UI: the bond's row - the kit's bar of the way from its word to the next, and the points still to go (whole at
@@ -271,12 +271,12 @@ export const wagonMeterTone = (w) => (w.wearSlows === false && w.stateKey === 'f
 /** WAGON-TIERS: Boons' words - a worn-down wagon rolls at its pace (the yard's price follows, mendLine), and a Sound one
  *  rolls faster for it. */
 const WAGON_ADVICE_BOONS = Object.freeze({   // in the player's language (L10N4's ratchet), read as it is shown
-  get rickety() { return t('holdings.wagon.boons.rickety', 'Rickety, but it still rolls at its usual pace.'); },
-  get failing() { return t('holdings.wagon.boons.failing', 'Failing, but it still rolls at its usual pace.'); },
+  get rickety() { return t('holdings.wagon.boons.rickety', 'Rickety, but it still rolls at full pace.'); },
+  get failing() { return t('holdings.wagon.boons.failing', 'Failing, but it still rolls at full pace.'); },
   get sound() { return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.'); },   // Mac: "Sound wagon rolls faster"
 });
 /** STEED-UI: what a Wagon Yard asks to make it whole - at the yard, and with its wright going out to it. */
-export const mendLine = (w) => (w.mend > 0 ? `A Wagon Yard makes it whole for ${w.mend} gold, or ${w.mendAway} if its wright must go out to it.` : 'A town’s Wagon Yard mends it.');
+export const mendLine = (w) => (w.mend > 0 ? `A Wagon Yard repairs it fully for ${w.mend} gold, or ${w.mendAway} if its wright must travel to it.` : 'A town’s Wagon Yard mends it.');
 /** WAGONS4: the wagon's soundness on its card - its condition, its state's word, and a kit's act. STEED-UI: its bar in
  *  its state's tone, and the yard's price. */
 function wagonLines(el, meter, w, care, act) {
@@ -432,7 +432,7 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   const words = stableWords(m);
   detail.append(divider('Stable'));
   if (!words.horse && !words.wagon) {
-    detail.append(el('p', 'px-note', 'You own no horse and no wagon. A city\'s or town\'s Stable sells horses to ride, and its Wagon Yard carts and wagons to carry what your back cannot.'));
+    detail.append(el('p', 'px-note', 'You own no horse and no wagon. A city\'s or town\'s Stable sells horses to ride, and its Wagon Yard carts and wagons to carry more than you can.'));
     return;
   }
   const v = m.hcc ? m.view : null;

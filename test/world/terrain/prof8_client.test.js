@@ -253,8 +253,8 @@ test('PROF8 kind: the plan (the page\'s rank, the ground\'s words - CAP-OFF: no 
     assert.equal(a.tool, NET);
     assert.deepEqual(k.tally(), { n: 5 });   // PIN MOVED (CAP-OFF): the account's day against no cap - it was { n: 5, cap: 40 }
     assert.equal(k.actNote({ clean: true }), ' (a full net)');
-    assert.equal(k.actNote({ clean: false, why: 'missed' }), ' (the tug missed, a plain haul)');
-    assert.equal(k.actNote({ clean: false, why: 'slipped' }), ' (the net slipped, a plain haul)');
+    assert.equal(k.actNote({ clean: false, why: 'missed' }), ' (the tug missed: a plain haul)');
+    assert.equal(k.actNote({ clean: false, why: 'slipped' }), ' (the net slipped: a plain haul)');
     assert.equal(k.title(), 'Angler');
   } finally { setForagingHost(prev); }
 });
@@ -311,7 +311,7 @@ test('PROF8 answers: the goods\' line the kind\'s (the species named), and a tro
   k.answered({ node, qty: 1, trophy: true, repeat: true }, (t) => said.push(t));
   k.answered({ node: haulKey({ x: 300, y: 200, day: 20724, id: '000000000001' }), qty: 1 }, (t) => said.push(t));
   assert.deepEqual(minted, [species.templateIndex]);
-  assert.deepEqual(said, [`A trophy ${species.itemName} - it is in your pack.`]);
+  assert.deepEqual(said, [`A trophy ${species.itemName}. It is in your pack.`]);
   // the host hooks read them
   const gh = src('src/scenes/gatherHost.js');
   assert.match(gh, /hud\.toast\(k\?\.storesLine \? k\.storesLine\(d\) : storesLine\(d\), \{ keep: true \}\);/);
@@ -349,7 +349,7 @@ test('PROF8 book, page, words and wiring: the book keeps the account\'s hauls (t
   assert.doesNotMatch(pb, /'prof-fish-cap'/, 'no forty to learn');   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills")
   const pp = src('src/ui/professions/profPages.js');
   assert.match(pp, /const PRACTISED = Object\.freeze\(\['herbalism', 'mining', 'hunting', 'fishing',/);
-  assert.match(pp, /t\('prof\.page\.today\.hauls', 'Today: \{hauls, plural, one \{# haul\} other \{# hauls\}\} - your account\\'s, across your characters', \{ hauls \}\)/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): 'of forty'; PIN MOVED (L10N4): the line through t(), its plural ICU's
+  assert.match(pp, /t\('prof\.page\.today\.hauls', 'Today: \{hauls, plural, one \{# haul\} other \{# hauls\}\} \(shared by all your characters\)', \{ hauls \}\)/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): 'of forty'; PIN MOVED (L10N4): the line through t(), its plural ICU's
   const w = src('src/scenes/world.js');
   assert.match(w, /fishKind\(\{ book: profBook, host: \{/);
   assert.match(w, /storm: \(\) => currentWeather\(\) === 'thunder',/);

@@ -331,7 +331,7 @@ export function reviewWarnings(entity, guild, book, store, ctx = null) {
  *  ROLL_GAIN_DAY_MAX a real day and owes the rest (npcChapterLaw.js rollCredit). So the row says the owed is EARNED and
  *  the pace it arrives at. */
 const reputationLine = (n, owed) => (owed > 0
-  ? t('guild.rankNeeds.reputationOwed', 'Reputation {have} of {need} ({owed} more already earned; it arrives at no more than {max} a real day)', { have: n.reputation, need: n.reputationNeed, owed, max: ROLL_GAIN_DAY_MAX })
+  ? t('guild.rankNeeds.reputationOwed', 'Reputation {have} of {need} ({owed} more already earned, arriving at most {max} a real day)', { have: n.reputation, need: n.reputationNeed, owed, max: ROLL_GAIN_DAY_MAX })
   : t('guild.rankNeeds.reputation', 'Reputation {have} of {need}', { have: n.reputation, need: n.reputationNeed }));
 
 /** PROMO-NOW (FIELD BUGS 2026-10-15, "passed 200 days still no promotion i meet the requirements"): the hall's line for
@@ -358,11 +358,11 @@ export function rankNeedsLines(entity, guild, memberships, store, ctx = null) {
     return [
       ...warnings,
       next,
-      t('guild.rankNeeds.seat', "Ranks {officer} and {master} are each chapter's council and Master, won by Merit. No review grants them",
+      t('guild.rankNeeds.seat', "Ranks {officer} and {master} are each chapter's council and Master, won only by Merit",
         { officer: SEAT_RANK.officer, master: SEAT_RANK.master }),
       ...(n.reputation < n.reputationNeed ? [reputationLine(n, owed)] : []),
       // AUDIT GUILD-WORDS L3-4: the seats' days and weeks are real ones (UTC), the review's the character's - said so
-      t('guild.rankNeeds.seatMerit', 'Each Sunday\'s Turning gives the chairs to the most Merit of the last {weeks} weeks, among members {days} real days in the guild, on accounts {age} real days old',
+      t('guild.rankNeeds.seatMerit', 'At each Sunday\'s Turning the chairs go to the members with the most Merit over the last {weeks} weeks, with {days} real days in the guild and accounts {age} real days old',
         { weeks: SEAT_MERIT_WEEKS, days: SEAT_TENURE_S / 86_400, age: SEAT_ACCOUNT_AGE_S / 86_400 }),
     ];
   }
@@ -429,7 +429,7 @@ export function wayBackLines(guild, entity, memberships, store, ctx = null) {
     ...(ctx?.shut ? [t('guild.wayBack.shut', 'This hall is shut this Season. The guild\'s halls in other regions still give work.')] : []),
     t('guild.wayBack.drift', 'Below 0 your standing also recovers a point {days, plural, one {every day} other {every # days}} of your own time. Rests and journeys count{online, select, yes {, and so does time logged off} other {}}.',
       { days: RECOVERY_INTERVAL_MINUTES / MINUTES_PER_DAY, online: ctx?.online ? 'yes' : 'no' }),
-    ...(ctx?.paced ? [t('guild.wayBack.paced', 'Online, quests and the recovery raise it at most {max} a real day (days turn at midnight UTC){owed, plural, =0 {} other { - # more standing on the way}}. Beyond that pace, a chapter writ of the guild\'s on a notice board adds {writ}.',
+    ...(ctx?.paced ? [t('guild.wayBack.paced', 'Online, quests and the recovery raise it by at most {max} a real day (days start at midnight UTC){owed, plural, =0 {} other {, with # more standing on the way}}. On top of that, a chapter writ of the guild\'s on a notice board adds {writ}.',
       { max: ROLL_GAIN_DAY_MAX, owed: w.owed, writ: HALL_WRIT_REP })] : []),
   ];
 }

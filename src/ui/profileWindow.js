@@ -114,8 +114,8 @@ export const PROFILE_STATES = Object.freeze(['asking', 'answered', 'silent', 'un
 /** The line under the card for each state - the one place its words live. */
 export function profileNote(state, who = 'They') {
   if (state === 'asking') return `Asking ${who} for their card...`;
-  if (state === 'silent') return `${who} did not answer. This is what they wear.`;
-  if (state === 'unsupported') return `The server cannot carry a card yet. This is what ${who} wears.`;
+  if (state === 'silent') return `${who} did not answer. This is what they are wearing.`;
+  if (state === 'unsupported') return `Their card is not available yet. This is what ${who} is wearing.`;
   return null;
 }
 

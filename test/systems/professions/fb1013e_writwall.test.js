@@ -46,7 +46,7 @@ const HUBS = { [DF]: [207, 212] };
 const tick = () => new Promise((r) => setImmediate(r));
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 /** THE REPORT'S WORDS, written out - the helper's English pinned apart from the helper. */
-const SAID = (n) => `${n} Iron you hold cannot fill a writ. Only what you gathered, or bought with silver, counts. What was looted, bought at a shop or with gold, or given by another player does not.`;
+const SAID = (n) => `${n} Iron you hold can't fill a writ. Only what you gathered or bought with silver counts.`;
 
 async function stand() {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on', CHAPTERS_OPEN: 'on' });
@@ -242,7 +242,7 @@ test('WRIT-WALL mined Iron, counted: no walled line, Take open and delivering fr
   card = b.card('Chapter writ');
   assert.equal(takeOf(card).disabled, true);
   assert.deepEqual(walledOf(card), []);
-  assert.equal(takeOf(card).title, 'Not enough, even counting your Stores, Materials Bag and pack together');
+  assert.equal(takeOf(card).title, 'Not enough in your Stores, Materials Bag and pack together');
   b.v.unmount();
 });
 

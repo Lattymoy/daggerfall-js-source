@@ -144,7 +144,7 @@ export function widgetFor(key) {
 
 /** Why an operable-looking control is not operable. */
 export function blockedReason(key) {
-  return UNAVAILABLE[key] ?? 'not available in this port';
+  return UNAVAILABLE[key] ?? 'not available here';
 }
 
 const fmtNumber = (n, law) => {

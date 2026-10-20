@@ -518,7 +518,7 @@ test('AUDIT HOLDINGS Q9: a quay\'s lay that failed is laid again QUAY_RETRY_S la
   h.run(0.2);
   h.host.warp(h.boat, { struck: true, oars: false, dt: 0.1 });
   assert.equal(h.log.say.filter((s) => /brings the ship in alongside/.test(s)).length, 2, 'said again after the sea was cleared');
-  assert.deepEqual(whereWords({ where: 'away', docked: '', metres: null }), { state: 'Made fast', tone: 'is-away', line: 'Made fast at a quay.' });
+  assert.deepEqual(whereWords({ where: 'away', docked: '', metres: null }), { state: 'Moored', tone: 'is-away', line: 'Moored at a quay.' });
 });
 
 // ── THE REFUSALS AND THE GUNS ─────────────────────────────────────────────────────────────────────────────────────────

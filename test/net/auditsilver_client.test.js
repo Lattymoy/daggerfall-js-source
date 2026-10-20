@@ -48,7 +48,7 @@ function rig({ rand = () => 0, ok = () => true } = {}) {
 }
 
 test('AUDIT SILVER-WAYS A3 (the Guild tab): the silver treasury says the day\'s guild deeds against their four, and what earns one (mutants: the line unsaid)', () => {
-  assert.equal(guildDeedsText(2, 4), 'Guild deeds today: 2 of 4. When 3 members of 7 days defend the same town or close the same gate, the treasury earns 25 silver.');
+  assert.equal(guildDeedsText(2, 4), 'Guild deeds today: 2 of 4. When 3 members who joined at least 7 days ago defend the same town or close the same gate, the treasury earns 25 silver.');
   assert.match(src('src/ui/socialPanel.js'), /if \(Number\.isSafeInteger\(v\.deedsMax\)\) out\.push\(el\('div', 'dfsocial-note', guildDeedsText\(v\.deeds, v\.deedsMax\)\)\);/);
 });
 
@@ -103,7 +103,7 @@ test('AUDIT SILVER-WAYS D2: a strike\'s refusal is learned - `motherlode-full` i
 });
 
 test('AUDIT SILVER-WAYS D3: the Watch\'s refusal tells a miner to move on the Motherlode\'s ground - the relay marks a pose that moved (mutants: "stand")', () => {
-  assert.match(MOTHERLODE_TEXT.watch, /Walk about on it/);
+  assert.equal(MOTHERLODE_TEXT.watch, 'The Watch has not seen you on the Motherlode lately. Keep moving on its ground: the Watch checks every 2 minutes.');
   assert.doesNotMatch(MOTHERLODE_TEXT.watch, /Stand a moment/);
   assert.match(src('src/net/watchReceipt.js'), /export const watchDue = \(w, now\) => now - w\.moved <= WATCH_MOVED_MS/);
 });

@@ -447,7 +447,7 @@ test('AUDIT POI U9 A PACK GOES IN ONCE, AND CANCEL STOPS IT: pressed twice it up
   assert.equal(Q.edit.has(pack.doc.id), false, 'nothing opened');
   assert.equal(Q.svc.count('/v1/poi/shelf', 'PUT'), 0, 'nothing more put after the stop');
   assert.ok(Q.root.contains(importDlg), 'the dialog opened since left open');
-  assert.equal(statusOf(Q), 'Stopped: nothing was opened. What went up before the stop stays in the store.');
+  assert.equal(statusOf(Q), 'Stopped. Nothing was opened, but files uploaded before the stop stay in the store.');
 
   // the import: Cancel while its parts go up - nothing placed, the dialog opened since left open
   const glb = writeGlb({ name: 'Pair', parts: [{ key: 'left', name: 'left', mesh: quad(), t: [0, 0, 0], r: [0, 0, 0, 1], s: [1, 1, 1], materials: [{ ...DEFAULT_MATERIAL }, { ...DEFAULT_MATERIAL }] }], lights: [], pictures: new Map() });
@@ -691,7 +691,7 @@ test('AUDIT POI C1 C3 T8 THE QUEUE: a submission changed since it was listed is 
   press(button(P.root, 'Approvals'));
   await until(() => !!P.panel.review.queue(), 'listed'); await flush();
   const dlg = () => P.panel.review.dialog();
-  assert.ok(all(dlg()).some((n) => n.textContent === 'More submissions wait than are listed: decide on these to see the rest.'));
+  assert.ok(all(dlg()).some((n) => n.textContent === 'More submissions are waiting. Decide on these to see the rest.'));
   assert.equal(all(dlg()).filter((n) => n.className === 'dfpoi-warn' && /older live revision/.test(n.textContent)).length, 1, 'the stale one alone warned');
   // a retirement: nothing after; its before the live one
   const looks = () => all(dlg()).filter((n) => n.tagName === 'BUTTON' && n.textContent === 'Look at it');

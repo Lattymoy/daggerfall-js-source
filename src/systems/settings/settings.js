@@ -300,19 +300,20 @@ export const LIVE = Object.freeze({
  *  ONE side of the branch. The launcher shows these disabled WITH the
  *  reason rather than hiding them - a hidden setting is a setting the
  *  player cannot find out about. */
+const NO_MOD_LOADER = 'there is no mod loader to set up';
 export const UNAVAILABLE = Object.freeze({
-  'Enhancements/EnhancedCombatAI': 'the port implements the CLASSIC enemy AI only (Ledger A)',
-  'Enhancements/AdvancedClimbing': 'the port implements the CLASSIC climbing path only (Ledger A)',
-  'Enhancements/LypyL_ModSystem': 'no mod system (Ledger C, Not planned)',
-  'Enhancements/CompressModdedTextures': 'no mod system (Ledger C, Not planned)',
-  'Experimental/CustomBooksImport': 'no mod system (Ledger C, Not planned)',
-  'Daggerfall/MyDaggerfallPath': 'the browser picks a folder or zip; there is no path (dataSource.js)',
-  'Daggerfall/MyDaggerfallUnitySavePath': 'saves live in browser storage',
-  'Daggerfall/MyDaggerfallUnityScreenshotsPath': 'the browser owns downloads',
-  'Video/ResolutionWidth': 'the browser sizes its own canvas',
-  'Video/ResolutionHeight': 'the browser sizes its own canvas',
-  'Video/Fullscreen': 'the browser owns fullscreen',
-  'Video/ExclusiveFullscreen': 'the browser owns fullscreen',
+  'Enhancements/EnhancedCombatAI': 'this game uses the classic enemy AI',
+  'Enhancements/AdvancedClimbing': 'this game uses the classic climbing',
+  'Enhancements/LypyL_ModSystem': NO_MOD_LOADER,
+  'Enhancements/CompressModdedTextures': NO_MOD_LOADER,
+  'Experimental/CustomBooksImport': NO_MOD_LOADER,
+  'Daggerfall/MyDaggerfallPath': 'you choose a folder or zip in your browser instead of a path',
+  'Daggerfall/MyDaggerfallUnitySavePath': 'saves are kept in your browser',
+  'Daggerfall/MyDaggerfallUnityScreenshotsPath': 'your browser decides where downloads go',
+  'Video/ResolutionWidth': 'the game fills your browser window',
+  'Video/ResolutionHeight': 'the game fills your browser window',
+  'Video/Fullscreen': 'your browser controls fullscreen',
+  'Video/ExclusiveFullscreen': 'your browser controls fullscreen',
   // FPS-CAP1: a page's frames always wait for the screen - there is no other mode to switch to. The Frame Rate Cap
   // holds under it (systems/frameCap.js: DFU's cap does nothing under VSync, which here would be never).
   // FPS-VSYNC: in the BROWSER. The desktop app answers it at launch (SHELL_AT_LAUNCH, below).

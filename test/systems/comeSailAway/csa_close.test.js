@@ -449,9 +449,9 @@ test('CSA-J (the audit): the load\'s doors - OnStartLoad ahead of the save\'s pl
   assert.match(m, /modLoaded: \(\) => host\.modLoaded\?\.\(\),/);
   // landed elsewhere: the four branches, and the helm let go
   assert.equal((w.match(/csaElsewhere = true/g) ?? []).length, 3, 'the online wake, no door, a save of elsewhere');
-  assert.match(w, /csaElsewhere = !pixel;[^\n]*\n\s+if \(!pixel\) townTalk\.say\('\(saved in a dungeon this world cannot find/, 'the dungeon not found');
+  assert.match(w, /csaElsewhere = !pixel;[^\n]*\n\s+if \(!pixel\) townTalk\.say\('\(the dungeon you saved in could not be found/, 'the dungeon not found');
   assert.match(w, /townTalk\.say\(undergroundWakeText\(wake\.kind\)\);\n\s+csaElsewhere = true;/);
-  assert.match(w, /else \{ _wodInside = false; townTalk\.say\('\(the dungeon has no entrance here[^\n]*\n\s+if \(!entered\) csaElsewhere = true;/);
+  assert.match(w, /else \{ _wodInside = false; townTalk\.say\('\(the dungeon could not be entered[^\n]*\n\s+if \(!entered\) csaElsewhere = true;/);
   assert.match(w, /return rec && rec\.currentBoat >= 0 \? \{ \.\.\.modData, \[COME_SAIL_AWAY_VENDOR\]: \{ \.\.\.rec, currentBoat: -1 \} \} : modData;/);
   assert.match(w, /ohAbyss\?\.onRespawnerComplete\(\);[^\n]*\n\s+if \(csaRuntime\) await csa\.preload\(\);[^\n]*\n\s+if \(csaElsewhere\) extras\.modData = csaHelmLeft\(extras\.modData\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s+const hccRecord = extras\.modData\?\.\[HCC_VENDOR\] \?\? null;\n\s+if \(hccRecord\) hccRuntime\.restoreSaveData\(hccRecord\);\n\s+restoreModSaveRecords\(extras\.modData, csaModLoadFailed\);/, 'both before the mod loop (and HCC\'s restore, which reads the same record set)');
   // PIN MOVED (ETHER-CROSSING, bible/03-World/Eltheric-Ocean.md): and the ship held while the crossing carries her across

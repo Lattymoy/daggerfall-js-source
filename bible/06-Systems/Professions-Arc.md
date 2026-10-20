@@ -4355,7 +4355,7 @@ already yields Cut Stone (section 23), so the Stonebreaker gave only the unclean
   ground; the service decides it (`server-account/src/professions.js`: `surveyed` = a vein, not confirmed, the
   character's `spec100`), and the client stands the same vein (`scenes/mineHost.js` standMineNodes, and the gathering
   host stands the pixels again when Mining's choice at 100 changes - SEASONAL-EYE's key, widened). The held map's ore
-  card says so in its own words (`ui/oreMapTip.js`: "No vein here waits on witnesses", or only the region's own ore),
+  card says so in its own words (`ui/oreMapTip.js`: "No vein here needs witnesses", or only the region's own ore),
   and the Mining page under its witnesses' line (43.1).
   WHAT IT IS NOT, by intent: never a **signature** (a region's own ore, which waits on the witnesses still - the region
   is the claim a lie is worth most on, and `veinSlots` counts no signature slot on the Surveyor's word); never the

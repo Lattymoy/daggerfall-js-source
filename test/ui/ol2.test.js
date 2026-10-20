@@ -117,7 +117,7 @@ test('OL2 (6) + TRAVEL-FARE + LIVED1: online the trip\'s days are the traveller\
   // TRAVEL-FARE: the line said "no inn is paid" and that is not true
   // any more - a claim a player can read has to move with the law it
   // describes, or the window is lying about the number beside it.
-  assert.equal(ONLINE_TRAVEL_LINE, 'Online: the days pass on your own clock. You arrive in the world\'s present.', 'LIVED1: whose days, and where the arrival lands');
+  assert.equal(ONLINE_TRAVEL_LINE, 'Online, the trip\'s days pass only for you. The world\'s time does not move.', 'LIVED1: whose days, and where the arrival lands');
   assert.deepEqual(LABEL_POS.time, [129, 117]);
   void painted; void font; void renderer;
   assert.match(rd('src/ui/travel/travelMapWindow.js'), /noWorldTime: this\.deps\.noWorldTime,/, 'threaded through the map window');

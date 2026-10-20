@@ -124,7 +124,7 @@ test('CAPT-BOARD the offers\' words and terms: a bounty names her captain and sh
   const d = by.delivery;
   assert.equal(d.to.name, 'Sentinel', 'the port six or more off - never the near one');
   assert.equal(d.days, 2 + Math.ceil(20 / 6));
-  assert.match(d.words, /to Sentinel's harbormaster within 6 days\. It goes in your hold\. Lose your ship and it is lost\.$/);
+  assert.match(d.words, /to Sentinel's harbormaster within 6 days\. It goes in your hold\. If you lose your ship, you lose the cargo\.$/);
   assert.equal(by.salvage.target.px != null && /^Salvage: /.test(by.salvage.title), true);
   assert.deepEqual(['east', 'north', 'south-west'], [compassWords(1, 0), compassWords(0, -1), compassWords(-1, 1)]);
   assert.deepEqual([leaguesWords(6), leaguesWords(1)], ['1 league', '0.2 leagues']);
@@ -232,7 +232,7 @@ test('CAPT-BOARD the letters: a crown\'s letter of marque to its Privateers for 
   assert.match(marqueOffer({ crown: 'Wayrest', perks: RANK_PERKS[1], gold: 9999 }).why, /Privateers/);
   assert.equal(marqueOffer({ crown: 'Wayrest', perks: priv, gold: 1499 }).can, false);
   assert.deepEqual(marqueOffer({ crown: 'Wayrest', perks: priv, gold: 1500 }), { can: true, price: 1500, days: 7, why: '' });
-  assert.match(marqueOffer({ crown: 'Wayrest', perks: priv, gold: 5000, held: { crown: 'Sentinel' } }).why, /Sentinel's letter\. You may hold only one crown's at a time/);
+  assert.match(marqueOffer({ crown: 'Wayrest', perks: priv, gold: 5000, held: { crown: 'Sentinel' } }).why, /Sentinel's letter\. You can only hold one at a time/);
   const price = Math.round(HULL_PRICES[4] * 0.8);
   assert.deepEqual(admiraltyOffer({ crown: 'Wayrest', perks: com, gold: price }), { can: true, price, why: '' });
   assert.equal(admiraltyOffer({ crown: 'Wayrest', perks: priv, gold: price }).can, false);

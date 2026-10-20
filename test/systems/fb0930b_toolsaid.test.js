@@ -461,7 +461,7 @@ test('TOOL-USE: the Professions page says a tool\'s Use at the node is the key\'
   assert.match(GATHER_HOW.logging, /The axe can also be used from your hotbar or quick slots\. Used from your pack, a tool only tells you where it can be used\.$/);   // VOICE1 (PIN MOVED): the same law in plain words
   for (const k of ['herbalism', 'mining', 'logging']) assert.doesNotMatch(GATHER_HOW[k], /Foraging|earns no XP/);
   // PIN MOVED (2026-10-01 part four, TOUCH-HOLD): and the Skinning Knife's Use
-  assert.match(STORES_EMPTY_LINE, /may also use the matching tool from your hotbar or a quick slot\. Tools used from your pack gather nothing\.$/);
+  assert.match(STORES_EMPTY_LINE, /You can also use the matching tool from your hotbar or a quick slot\. Tools used from your pack gather nothing\.$/);
   const src = readFileSync(new URL('../../src/ui/professions/profPages.js', import.meta.url), 'utf8');
   assert.match(src, /if \(GATHER_HOW\[_sel\]\) pane\.append\(el\('p', 'px-note', gatherHow\(_sel\)\)\);/);   // PIN MOVED (L10N4): said through its reader
   assert.match(src, /: storesEmptyLine\(\)\)\);/);

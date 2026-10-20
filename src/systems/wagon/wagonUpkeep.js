@@ -138,7 +138,7 @@ export const WAGON_UPKEEP_TEXT = Object.freeze({
   noWagon: 'You do not own a wagon.',
   whole: (name) => `Your ${name} needs no mending.`,
   mended: (name, price) => `Your ${name} is mended${price ? ` for ${price} gold` : ''}.`,
-  poor: (price) => `The wright wants ${price} gold. You have not got it.`,
+  poor: (price) => `The wright asks ${price} gold. You don't have enough.`,
   kitCeiling: (name) => `A kit will do no more for your ${name}. A Wagon Yard can make it whole.`,
   kitNotNear: (name) => `Your ${name} is not here to mend.`,
   kitDone: (name, pct) => `You spend an hour mending your ${name}. It is ${pct}% sound.`,

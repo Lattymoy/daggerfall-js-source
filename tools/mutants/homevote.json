@@ -792,8 +792,8 @@
   {
     "name": "HOME-VOTE-II-owner-told-hall",
     "file": "src/net/homeVoteLaw.js",
-    "old": "hall ? \"your hall's\" : \"your home's\"",
-    "new": "hall ? \"your hall's\" : \"your hall's\"",
+    "old": "hall ? \"Your hall's\" : \"Your home's\"",
+    "new": "hall ? \"Your hall's\" : \"Your hall's\"",
     "tests": [
       "test/net/homevote.test.js"
     ],

@@ -176,7 +176,7 @@ test('AUDIT 31 U2, U10: every field under its visible name; a Post or a Commissi
   const go = () => btn(byClass(r.host, 'work-form')[0], 'Commission');
   assert.equal(go().getAttribute('title'), 'Name the crafter.');
   who.value = '1x'; who.oninput();
-  assert.equal(go().getAttribute('title'), 'That is not a name a crafter could have.');
+  assert.equal(go().getAttribute('title'), 'That isn\'t a valid username.');
   who.value = 'merra'; who.oninput();
   assert.equal(go().getAttribute('title'), 'You cannot commission yourself.');
   who.value = 'Silverthorn'; who.oninput();

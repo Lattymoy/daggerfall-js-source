@@ -35,7 +35,7 @@ export const SD_ME_POLL_MS = 1000;
 export const SD_CLAIM_TEXT = Object.freeze({
   recorded: (n) => `The Hour is broken. Hours broken: ${n}.`,
   title: 'The Hour names you Hourbreaker.',
-  aura: 'The Turning Hour turns about you.',
+  aura: 'You earn the Turning Hour aura.',
   guest: 'Hour not recorded. Add a username within a week to keep it.',
 });
 

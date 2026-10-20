@@ -174,7 +174,7 @@ test('AUDIT CARDS-5 D1-D7 and lane D\'s survivors: the Cards part - faces painte
   assert.match(all(r(), (c) => c.classList?.contains('binder-said'))[0].textContent, /The deck is full/);
   const chip = all(r(), (c) => c.classList?.contains('binder-chip'))[0];
   chip.onclick();
-  assert.match(all(r(), (c) => c.classList?.contains('binder-said'))[0].textContent, /out of the deck \(29 of 30\)/);
+  assert.match(all(r(), (c) => c.classList?.contains('binder-said'))[0].textContent, /removed from the deck \(29 of 30\)/);
   button(r(), 'Cancel').onclick();
   assert.equal(all(r(), (c) => c.classList?.contains('binder-edit')).length, 0, 'cancelled');
   // the shortfall marked: a deck naming more than the binder holds
@@ -240,7 +240,7 @@ test('AUDIT CARDS-5 lane D\'s survivors (second pass): the Collections page - a 
   setCollectionsPart('cards');
   let p = page(me);
   assert.ok(all(p.root, (c) => c.classList?.contains('codex-line')).length > 0, 'the codex drawn');
-  assert.equal(all(p.root, (c) => c.textContent === 'No Card Binder carried.').length, 0);
+  assert.equal(all(p.root, (c) => c.textContent === 'You are not carrying a Card Binder.').length, 0);
   // an unfound row: its group and its hint
   const rows = CX.codexRows();
   const u = rows.find((r) => !r.found && r.hint);

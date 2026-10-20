@@ -571,5 +571,5 @@ test('AUDIT POI U13: a full shelf and an entry taken off are said in their own w
   const server = accountRefusalText('server');
   for (const w of ['poi-changed', 'poi-drafts-full', 'poi-shelf-full', 'poi-shelf-spent', 'poi-gone']) assert.notEqual(accountRefusalText(w), server, `${w} has its sentence`);
   assert.notEqual(accountRefusalText('poi-shelf-full'), accountRefusalText('poi-quota'));
-  assert.match(accountRefusalText('poi-gone'), /taken off the shelf/);
+  assert.match(accountRefusalText('poi-gone'), /^That library entry has been removed\.$/);
 });

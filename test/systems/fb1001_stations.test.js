@@ -50,7 +50,7 @@ test('CHARCOAL-BUY: at a smith\'s forge with no Charcoal held, the Forge offers 
   assert.ok(sale, 'the smith sells Charcoal');
   const p = pages({ forge: () => ({ kind: 'shop', fee: 50 }), workbench: () => null });
   try {
-    assert.match(p.text(), /Steel wants Charcoal: a log burns to it here \(Logging's\), and the smith sells it\./);
+    assert.match(p.text(), /Steel needs Charcoal\. Burn a log here to make it, or buy it from the smith\./);
     const buy = p.btn('Buy 1 from the smith');
     assert.ok(buy, `the counter stands at the Forge: ${p.text().slice(0, 400)}`);
     assert.equal(buy.textContent, `Buy 1 from the smith - ${sale.marks} silver`);
@@ -60,12 +60,12 @@ test('CHARCOAL-BUY: at a smith\'s forge with no Charcoal held, the Forge offers 
   } finally { done(); }
   const home = pages({ forge: () => ({ kind: 'home', fee: 0 }), workbench: () => null });
   try {
-    assert.match(home.text(), /Steel wants Charcoal/);
+    assert.match(home.text(), /Steel needs Charcoal/);
     assert.equal(home.btn('Buy 1 from the smith'), undefined, 'your own forge has no counter');
   } finally { done(); }
   const stocked = pages({ forge: () => ({ kind: 'shop', fee: 50 }), workbench: () => null }, { 'wood:charcoal': 3 });
   try {
-    assert.doesNotMatch(stocked.text(), /Steel wants Charcoal/);
+    assert.doesNotMatch(stocked.text(), /Steel needs Charcoal/);
     assert.equal(stocked.btn('Buy 1 from the smith'), undefined, 'Charcoal held: no word, no counter');
   } finally { done(); }
 });

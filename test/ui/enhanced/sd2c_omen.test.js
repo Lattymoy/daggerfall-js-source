@@ -94,7 +94,7 @@ test('SD2c the Timers row: none while it has only risen, its fading once found, 
   const rows = (rec, now, more = {}) => eventTimerRows({ now, sd: { rec, name: 'The Stopped Bell', place: 'Copperham', ...more } }).filter((x) => x.kind === 'super');
   assert.deepEqual(rows(r, T0 + M), [], 'risen: a find');
   const f = sdFind(r, T0 + H, 'Mara');
-  assert.deepEqual(rows(f, T0 + 2 * H), [{ id: 'sd:1', kind: 'super', title: 'The Stopped Bell stands', where: 'Near Copperham', detail: 'Found. It fades away unbroken when this runs out', live: true, at: f.until, until: f.until }]);
+  assert.deepEqual(rows(f, T0 + 2 * H), [{ id: 'sd:1', kind: 'super', title: 'The Stopped Bell stands', where: 'Near Copperham', detail: 'Found. It fades away unbeaten when this runs out', live: true, at: f.until, until: f.until }]);
   const k = sdFell(f, T0 + 3 * H, { top: 'Mara', n: 2 });
   const [c] = rows(k, T0 + 3 * H + M);
   assert.equal(c.title, 'The Stopped Bell collapses');

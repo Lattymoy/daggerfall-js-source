@@ -956,8 +956,8 @@
   {
     "name": "AUDIT-LANDFORMS-C4-rivers-unnamed",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "(roads, rivers, camp sites,",
-    "new": "(roads, camp sites,",
+    "old": "ground: roads, rivers, camp sites,",
+    "new": "ground: roads, camp sites,",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

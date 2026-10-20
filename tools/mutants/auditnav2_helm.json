@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-NAV2-F14-the-row-says-at-once",
     "file": "src/systems/features.js",
-    "old": "    get effect() { return t('features.navalCombat.effect', 'Takes effect at once; Ship handling, the next time you take the helm. Online, the sea is on for everyone.'); },",
-    "new": "    get effect() { return t('features.navalCombat.effect', 'Takes effect at once. Online, the sea is on for everyone.'); },",
+    "old": "    get effect() { return t('features.navalCombat.effect', 'Takes effect at once; Ship handling, the next time you take the helm. Online it is always on.'); },",
+    "new": "    get effect() { return t('features.navalCombat.effect', 'Takes effect at once. Online it is always on.'); },",
     "tests": [
       "test/systems/comeSailAway/auditnav2_helm.test.js"
     ]

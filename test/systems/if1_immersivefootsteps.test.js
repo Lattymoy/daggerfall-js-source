@@ -100,6 +100,19 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   for (const f of manifest.Files.filter((f) => /\.cs$/.test(f))) assert.ok(rd(`vendor/immersive-footsteps/Scripts/${f.split('/').pop()}`).length > 10000, `${f} is vendored`);
   assert.match(rd('vendor/immersive-footsteps/Scripts/ImmersiveFootstepsMain.cs'), /License:\s+MIT License/, 'the main script carries the author\'s MIT header (the object script has none; the README says so)');
   const shipped = JSON.parse(rd('vendor/immersive-footsteps/modsettings.json'));
+  // PLAIN-TEXT (2026-10-19): every line the mod wrote in Title Case with "|| Default = True", said plainly for a player (the two logging keys say they do nothing here) - their words, exactly
+  const PLAIN = {
+    'AudioQualitySettings.SoundClipQuality': 'Quality of the footstep sounds',
+    'FootstepSettings.AllowFootstepSounds': 'Your footsteps make a sound',
+    'FootstepSettings.FootstepVolumeMulti': 'Volume of footstep sounds',
+    'FootstepSettings.FootstepFrequency': 'How often footsteps sound. Lower is more often',
+    'ArmorSwaySettings.AllowArmorSwaySounds': 'Your armor makes a sound as you move',
+    'ArmorSwaySettings.ArmorSwayVolumeMulti': 'Volume of armor sounds',
+    'ArmorSwaySettings.ArmorSwayFrequency': 'How often armor sounds play. Lower is more often',
+    'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings': 'Warns you when another mod clashes with this one',
+    'ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging': 'Has no effect here: this game keeps no error log.',
+    'ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs': 'Has no effect here: this game keeps no error log.',
+  };
   let n = 0;
   const kinds = new Set();
   for (const section of shipped.Sections) {
@@ -115,7 +128,7 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
       else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
       else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
       else assert.fail(`${name}: a key kind the mod does not ship (${kind})`);
-      assert.equal(def.description, k.Description, `${name}'s description is the mod's own`);
+      assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
     }
   }
   assert.equal(n, 10, 'the four sections carry ten keys');

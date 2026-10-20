@@ -35,10 +35,10 @@ test('ORE-MAP: the card says a pixel\'s veins, its dungeons\', its kingdom\'s ow
     'Sentinel\'s own ore: Ebony', 'Not yet witnessed: no Gold or Ebony here yet', ORE_WITNESS_RULE,
   ], 'the desert\'s Gold and Ebony wait on the witnesses');
   assert.deepEqual(oreMapTip({ climate: CLIMATES.Mountain, region: ORSINIUM, fact: { state: 'confirmed' } }).lines.slice(2), [
-    `${REGION_NAMES[ORSINIUM]}'s own ore: Orichalcum`, 'Witnessed ground: all its veins can stand here',
+    `${REGION_NAMES[ORSINIUM]}'s own ore: Orichalcum`, 'Witnessed ground: every vein can appear here',
   ], 'a Free Land\'s own, by its name; witnessed ground holds all of it');
-  assert.equal(oreMapTip({ climate: CLIMATES.Mountain, region: ORSINIUM, fact: { state: 'disputed' } }).lines.at(-1), 'Witnessed ground: all its veins can stand here', 'a disputed pixel keeps its confirmed answer');
-  assert.deepEqual(oreMapTip({ climate: CLIMATES.Woodlands, region: BETONY, fact: { state: 'none' } }).lines.slice(2), ['No vein here waits on witnesses'], 'a March\'s woodland - no crown\'s own ore - holds nothing over Silver');
+  assert.equal(oreMapTip({ climate: CLIMATES.Mountain, region: ORSINIUM, fact: { state: 'disputed' } }).lines.at(-1), 'Witnessed ground: every vein can appear here', 'a disputed pixel keeps its confirmed answer');
+  assert.deepEqual(oreMapTip({ climate: CLIMATES.Woodlands, region: BETONY, fact: { state: 'none' } }).lines.slice(2), ['No vein here needs witnesses'], 'a March\'s woodland - no crown\'s own ore - holds nothing over Silver');
   assert.equal(oreMapTip({ climate: CLIMATES.Ocean, region: GLENUMBRA }), null, 'the sea stands no vein');
   assert.equal(oreWord('ore:mithril'), 'Mithril');
   assert.equal(oreWord('ore:dwarven'), 'Dwarven Scrap');

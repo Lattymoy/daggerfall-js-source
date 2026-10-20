@@ -76,7 +76,7 @@ test('LEGACY-NAME the host names the house as it notes the seat - the founder\'s
   const f = host.family;
   assert.equal(f.surname, '');
   assert.ok(f.people.length > 1, 'siblings rolled at the founding');
-  assert.equal(w.said[0], 'Your house is founded - an Enduring line: a death costs years.', 'never "The house of  is founded"');
+  assert.equal(w.said[0], 'Your house is founded as an Enduring line, where a death costs years.', 'never "The house of  is founded"');
   w.town = { ...SENTINEL };
   host.tick();
   assert.equal(f.surname, 'of Sentinel');
@@ -111,7 +111,7 @@ test('LEGACY-NAME the words: a seat\'s house says itself once - the pages, the s
   assert.equal(houseTitle(''), 'The House');
   const f = foundFamily(ent('Janome'), { seat: SENTINEL, rng: familyRng(1), id: 'f4' });
   assert.equal(sheetHouse({ on: () => true, family: () => f, lived: () => 0 }).title, 'The House of Sentinel');
-  assert.equal(LEGACY_TEXT.founded('of Sentinel', MODELS.bloodline), 'The house of Sentinel is founded - a Bloodline: a death is final.');
+  assert.equal(LEGACY_TEXT.founded('of Sentinel', MODELS.bloodline), 'The house of Sentinel is founded as a Bloodline, where every death is final.');
   assert.equal(LEGACY_TEXT.ended('of Sentinel'), 'The house of Sentinel goes on.');
   assert.equal(MARRIAGE_TEXT.wed('Aldo Marane', 'of Sentinel'), 'You and Aldo Marane are wed. Aldo Marane is of the house of Sentinel now.');
   assert.match(heirloomLine({ heirloom: { line: 'f4', house: 'of Sentinel', from: 'Janome', gen: 0 } }), /^Heirloom of the house of Sentinel, first borne by Janome/);

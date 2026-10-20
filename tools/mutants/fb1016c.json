@@ -62,7 +62,7 @@
   {
     "name": "OWED-PACE-old-words",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "'Reputation {have} of {need} ({owed} more already earned; it arrives at no more than {max} a real day)'",
+    "old": "'Reputation {have} of {need} ({owed} more already earned, arriving at most {max} a real day)'",
     "new": "'Reputation {have} of {need} ({owed} more to come)'",
     "tests": [
       "test/systems/guild/fb1016c_owedpace.test.js",

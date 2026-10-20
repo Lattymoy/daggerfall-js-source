@@ -110,9 +110,9 @@ export const DUEL_REF_TEXT = Object.freeze({
 });
 /** INT8: a duel I lost, and why - the referee's word (a fall, a yield, my leaving it). */
 export function duelLostText(why, name = 'They') {
-  if (why === 'yield') return `You yield - ${name} wins the duel.`;
-  if (why === 'fell') return `You have fallen - ${name} wins the duel.`;
-  return `You left the duel - ${name} wins it.`;
+  if (why === 'yield') return `You yield. ${name} wins the duel.`;
+  if (why === 'fell') return `You have fallen. ${name} wins the duel.`;
+  return `You left the duel. ${name} wins it.`;
 }
 /** INT8: a duel I won, and why. */
 export function duelWonText(why, name = 'They') {
@@ -130,7 +130,7 @@ export function duelWhyText(why, name = 'They') {
     case 'range': return `You are more than ${DUEL_RANGE_M} m apart. The duel is called off.`;
     case 'outdoors': return 'A duel must be fought outdoors. The duel is called off.';
     case 'left': return 'The duel is called off. A duelist left the ring.';
-    case 'dead': return 'The duel is called off. A duelist has fallen to something else.';
+    case 'dead': return 'The duel is called off. A duelist was killed by something else.';
     case 'draw': return 'Time is up. The duel is a draw.';
     case 'fell': return `${name} has fallen. You won the duel!`;
     case 'yield': return `${name} yields. You won the duel!`;

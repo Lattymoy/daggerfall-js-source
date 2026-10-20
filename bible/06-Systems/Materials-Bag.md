@@ -187,7 +187,7 @@ went and why any stayed ("Into your bag - 2 stay in your Stores: no room in your
 was still being counted"; "4 on their way from your Stores: the counting-house has not answered yet"; a refusal's own
 words). Every unit the service hands over is minted - into the bag, the pack, then the pack past its weight
 (`giveCarried`), as a withdrawal always came: the service counted them carried. A station's refusal after some inputs
-went in says so ("1 of the materials went into your Stores first - the next try spends them there."); a press while a
+went in says so ("1 of the materials went into your Stores first. Your next try uses them from there."); a press while a
 put-in of an input is unanswered says `deposit-kept` at once, and no craft is kept (the second audit's K4-K10). DFU's own potion maker reads and spends the bag
 after the cart (`scenes/worldModes.js`). The guild Stores and Disenchanting read the Stores alone, as they did: a
 material is given to the guild or sold back from the Stores, so it is put in first. The market's silver listing and its

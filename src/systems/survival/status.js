@@ -53,7 +53,7 @@ export function needLevel(key, stage, { rules = null, felt = 0, warmed = false, 
 /** AUDIT C&C S14: A LEVEL IN WORDS, for a reader who cannot tell the amber from the red - a need's tile, the HUD's
  *  temperature plate and the pack's plaque say it on their title and label, and a costing one carries a mark (the
  *  sheets' `!`): the colour was the only thing that said a reading costs. */
-export const LEVEL_WORDS = Object.freeze({ danger: 'it costs you', warn: 'felt, it costs nothing' });
+export const LEVEL_WORDS = Object.freeze({ danger: 'it costs you', warn: 'no cost to you yet' });
 /** "Freezing - it costs you"; the word alone where its level says nothing of a cost (comfortable, a boon). */
 export const levelSaid = (word, level) => (Object.hasOwn(LEVEL_WORDS, level) ? `${word} - ${LEVEL_WORDS[level]}` : word);
 /**
@@ -158,7 +158,7 @@ export function temperatureReadout(entity, felt = entity?.survival?.felt, { rule
 /** AUDIT SURV-BOONS C13: what a boon gives, in words - the page's line and the Stats side's row say it through this one
  *  helper: the attributes as the sheet names them, in its order (C11), or the hearth's stamina. */
 export function boonEffect(id) {
-  if (id === 'hearth') return 'stamina back beside a lit fire';
+  if (id === 'hearth') return 'regain stamina beside a lit fire';
   return BOON[id] ? STAT_KEYS_ORDER.filter((k) => BOON[id][k]).map((k) => `+${BOON[id][k]} ${k[0].toUpperCase()}${k.slice(1)}`).join(', ') : '';
 }
 /** The hours a Well rested bank has left, whole, said singular at one (C10): "12 hours", "1 hour" - '' with none. */

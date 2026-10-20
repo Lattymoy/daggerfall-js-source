@@ -844,7 +844,7 @@ export function survivalInfoTokens(item) {
   else if (isCardBinder(item)) for (const text of BINDER_CARD_LINES) out.push({ text, center: true });   // CARDS8
   else if (isCardPack(item)) for (const text of CARD_PACK_LINES) out.push({ text, center: true });   // CARDS9: the sealed pack
   else if (isOatsItem(item)) out.push({ text: 'A day\u2019s food for a horse. Use it to feed the horse you ride.', center: true });   // STEED1
-  else if (isWagonKitItem(item)) out.push({ text: `Mends ${Math.round(KIT_MEND * 100)}% of a wagon, to ${Math.round(WAGON_KIT_CEILING * 100)}% at most, an hour's work.`, center: true });   // WAGONS4
+  else if (isWagonKitItem(item)) out.push({ text: `Repairs ${Math.round(KIT_MEND * 100)}% of a wagon, up to ${Math.round(WAGON_KIT_CEILING * 100)}%. Takes an hour.`, center: true });   // WAGONS4
   return out;
 }
 

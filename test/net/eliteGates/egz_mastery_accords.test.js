@@ -284,14 +284,14 @@ test('EG-ZS THE OFFER\'S CARD NAMES ITS ACCORD (section 15: "The offer card name
   const E = () => foldEg(foldEg(EG_STATE_EMPTY, wire(egStateOf(S.B, S.now())), S.now()), wire({ k: 'offer', v: cards, n: 1 }), S.now());
   const lines = () => egPanelModel(E(), 'acct-0', S.now()).offer.cards.map((c) => c.accord);
   // AUDIT EG III (PIN MOVED): and what each Accord does
-  assert.deepEqual(lines(), ["Takes an Accord with M1's Hunter's Mark. Hammer and Anvil: A foe the mark's holder marked takes +8% from the oath's holder.", "Takes an Accord with M1's Arcane Echo. War-Chorus: Near the Standard, an Echo repeats at full.", "Takes an Accord with M2's Mender's Grace. Living Wall: Heals on the Stoneskin holder +10%.", '', '']);
+  assert.deepEqual(lines(), ["Takes an Accord with M1's Hunter's Mark. Hammer and Anvil: A foe under Hunter's Mark takes +8% damage from the Challenger's Oath holder.", "Takes an Accord with M1's Arcane Echo. War-Chorus: Near the Standard, Arcane Echo repeats at full strength.", "Takes an Accord with M2's Mender's Grace. Living Wall: Heals on the Stoneskin holder are 10% stronger.", '', '']);
   S.B.mem['acct-2'].alive = 0;
   assert.deepEqual(lines().slice(2, 3), [''], 'a fallen companion takes no Accord');
   const doc = fakeDocument();
   destroyEgHud();
   drawEgPanel(egPanelModel(E(), 'acct-0', S.now()), { doc });
   const notes = find(doc.body, 'eg-accord').map((n) => n.textContent);
-  assert.deepEqual(notes, ["Takes an Accord with M1's Hunter's Mark. Hammer and Anvil: A foe the mark's holder marked takes +8% from the oath's holder.", "Takes an Accord with M1's Arcane Echo. War-Chorus: Near the Standard, an Echo repeats at full."], 'drawn under their cards');
+  assert.deepEqual(notes, ["Takes an Accord with M1's Hunter's Mark. Hammer and Anvil: A foe under Hunter's Mark takes +8% damage from the Challenger's Oath holder.", "Takes an Accord with M1's Arcane Echo. War-Chorus: Near the Standard, Arcane Echo repeats at full strength."], 'drawn under their cards');
   destroyEgHud();
 });
 

@@ -116,7 +116,7 @@ test('SEAT2a part four THE READOUT: made on the first update and updated, never 
   hud.update(siegeHudModel(s, BATTLE, 'me-00001', AT + 1_800_000, { claimable: true }));
   assert.equal(card.style.display, '');
   assert.match(card.textContent, /THE SILVER HAND HOLDS THE THRONE OF ANTICLERE/);
-  assert.match(card.textContent, /Your receipt is kept/);
+  assert.match(card.textContent, /Your receipt is saved\. Claim it for your Honors\./);
   const claim = card.querySelector('button');
   assert.equal(claim.style.display, '');
   claim.click();

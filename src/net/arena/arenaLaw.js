@@ -728,7 +728,7 @@ export const ARENA_NO_TEXT = Object.freeze({
   declined: 'Your opponent declined the bout. Back in the queue.',
   lapsed: 'The bout was not accepted in time.',
   left: 'You left the queue.',
-  guest: 'Only a registered account fights a rated bout.',
+  guest: 'Only registered accounts can fight rated bouts.',
   'no bout': 'That bout is over.',
   'seats full': 'The stands are full.',
   'not yours': 'That bout is not yours to fight.',
@@ -740,7 +740,7 @@ export const ARENA_NO_TEXT = Object.freeze({
   'no session': 'No private session has that code.',
   removed: 'The host removed you from this session.',
   'session full': 'That private session is full.',
-  locked: 'That private session is locked. The host is letting no one new in.',   // AUDIT PRE-MERGE 1003b S4
+  locked: 'That private session is locked to new players.',   // AUDIT PRE-MERGE 1003b S4
   'host only': 'Only the session\'s host can do that.',
   'not member': 'Join the session first.',
   'not here': 'That fighter is not here.',
@@ -748,7 +748,7 @@ export const ARENA_NO_TEXT = Object.freeze({
   'same fighter': 'Red and Blue must be two different fighters.',
   'bout on': 'A bout is under way. End it first.',
   'no picks': 'Pick a Red and a Blue first.',
-  voided: 'The host ended the bout. No result.',
+  voided: 'The host ended the bout with no result.',
   'has result': 'That bout has its result and will end on its own.',   // AUDIT PRE-MERGE 1003b R8/S1: End bout after the result
   closed: 'The host closed the session.',
   ended: 'The private session has ended.',

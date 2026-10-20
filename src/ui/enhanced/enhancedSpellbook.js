@@ -312,7 +312,7 @@ function paint() {
     const slot = el('button', `act sb-slot${inSlot ? ' on' : ''}`, inSlot ? 'Unslot' : 'Quickslot');
     slot.onclick = () => {
       if (inSlot) clearSpellQuickslot(); else setSpellQuickslot(sel.spell);
-      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quick slot. Press its key to ready it, or hold it to cycle through the book.';
+      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot. Press its key to ready it, or hold the key to cycle through your spells.';
       render();
     };
     acts.append(slot);

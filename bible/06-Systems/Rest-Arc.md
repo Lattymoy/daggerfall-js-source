@@ -667,7 +667,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
     rest kind, read off the open - an older build's window open lands on one three times in a thousand; still no relay
     bump), and a carried member sleeps the better of it and their own (`carriedRestKind`; a Sleeping Draught is its
     drinker's, never the party's). P3: a dead member was told they slept. P4: PARTY-REST-FAR1's word comes back online -
-    a mate who rests a night in the same place beyond 15 m is said once ("Ada rested a night without you - come within 15
+    a mate who rests a night in the same place beyond 15 m is said once ("Ada rested a night without you. Come within 15
     m of them to rest with the party."). P5: the vote's tally no longer counts online, where there is no vote.
   - **The ambush (REST4) never broke a night online - A1, the arc's worst.** Every host stands its resting encounter
     asynchronously (its art awaited), and the night ran as one synchronous call, so no foe joined a pool inside it: a

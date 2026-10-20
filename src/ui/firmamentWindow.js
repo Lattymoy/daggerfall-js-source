@@ -689,7 +689,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     if (st.error === 'firm-closed') return t('firm.readFail.closed', 'The Firmament is turned off on this server for now, so your stars can\'t be loaded.');
     if (st.error === 'no-session') return t('firm.readFail.session', 'Sign in to see your stars.');
     if (st.error === 'offline') return t('firm.readFail.offline', 'The server didn\'t answer, so your stars couldn\'t be loaded. Try again in a moment.');
-    if (st.status === 404) return t('firm.readFail.missing', 'This server doesn\'t have the Firmament yet (404). Its account service needs an update. Your stars are not lost.');
+    if (st.status === 404) return t('firm.readFail.missing', 'This server doesn\'t have the Firmament yet. Your stars are not lost.');
     return t('firm.readFail.other', 'Your stars couldn\'t be loaded (the server answered {why}). The points shown are not your real totals.', { why: st.status ?? st.error });
   }
   async function commit() {

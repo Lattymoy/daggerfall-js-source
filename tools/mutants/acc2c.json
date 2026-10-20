@@ -50,8 +50,8 @@
   {
     "name": "ONLY-7-no-saved-games-over-a-shelf-of-backups",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "  if (!saves.length && !onlyCloud) body.append(empty(t('menu.saves.none', 'No saved games'), t('menu.load.noneHint', 'Save a game and every slot of it appears here.')));",
-    "new": "  if (!saves.length) body.append(empty(t('menu.saves.none', 'No saved games'), t('menu.load.noneHint', 'Save a game and every slot of it appears here.')));",
+    "old": "  if (!saves.length && !onlyCloud) body.append(empty(t('menu.saves.none', 'No saved games'), t('menu.load.noneHint', 'Your saved games appear here.')));",
+    "new": "  if (!saves.length) body.append(empty(t('menu.saves.none', 'No saved games'), t('menu.load.noneHint', 'Your saved games appear here.')));",
     "tests": ["test/server/cloudsaves.test.js"],
     "note": "The sentence ends 'Save a game and every slot of it appears here', which told a player with a shelf full of backups that they had none. It is the very sentence this slice exists to stop being shown, and it would sit directly above the tiles that disprove it."
   },

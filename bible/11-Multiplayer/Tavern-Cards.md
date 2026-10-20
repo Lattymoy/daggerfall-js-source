@@ -965,9 +965,9 @@ Told the cause, the owner: **"Two tables per tavern"** - one always for gold (re
   `cardTablePropModel({ felt })`) - the chips table's green beside it, told apart at a glance. `cards.html?gold` lays
   the lab's table red.
 - **THE HOST** (`scenes/worldModes.js` `cardTableGold`, `cardGoldBarred`). Online, the gold table seats a realm
-  character at a relay that deals and nobody else - anyone else is told before he sits ("This table plays for gold -
-  only a realm character may stake at it. The green table plays for chips."; with the relay not dealing, "... the
-  relay is not dealing right now - the green table plays for chips."), never sat and stood up. A realm character plays
+  character at a relay that deals and nobody else - anyone else is told before he sits ("This table plays for gold,
+  and only a realm character can stake at it. The green table plays for chips."; with the relay not dealing, "This
+  table plays for gold and is not dealing right now. The green table plays for chips."), never sat and stood up. A realm character plays
   for gold at the gold table (`goldOnline` is the gold table's alone) and for chips at the chips table, beside everyone
   else. Offline both tables are the regulars', for the purse's gold, as a tavern's table always was.
 - **Pins:** `test/systems/card/taverntables.test.js` 9 (the law, the walk's box, the build in three rooms, the relay's report and

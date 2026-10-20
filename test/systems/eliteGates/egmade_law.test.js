@@ -238,7 +238,7 @@ test('EG-H2 THE SPIRE\'S TRAVERSAL GROUND AND THE CLIENT\'S LAW PIN (sections 10
   client.frame(); client.frame();
   const asked = sent.filter((w) => w.k === 'spec').map((w) => w.h);
   assert.deepEqual(asked, [1, 2, 3, 4, 5], 'each hall of my circle asked, once');
-  assert.equal(said.filter((t) => /another law/.test(t)).length, 1, 'told once');
+  assert.equal(said.filter((t) => t === 'The Spire sends you this breach\'s halls.').length, 1, 'told once');
   try {
     for (const h of [1, 2, 3, 4]) tell({ k: 'spec', egv: B.egv, h, sp: { ...JSON.parse(JSON.stringify(egHallOf(77, h, 0))), laid: 90 + h } });
     assert.equal(egHallOf(77, 2, 0).laid, 92, 'a given hall read before any draw');

@@ -53,10 +53,10 @@ test('SERVER-POST the box: a sitting\'s first look says what waits, a later one 
   assert.deepEqual(said[1].post.map((p) => p.subject), ['Another']);
   assert.equal(postNoticeText(said[1]), `Post from ${POST_SENDER}: "Another". Open the mailbox beside the hourglass in the pause menu, or type /mail.`);
   assert.equal(postNoticeText({ kind: 'new', post: [{ from: POST_SENDER, subject: 'The Hourlock', item: { name: 'The Hourlock' } }] }),
-    `Post from ${POST_SENDER}: "The Hourlock" - The Hourlock is waiting for you. Open the mailbox beside the hourglass in the pause menu, or type /mail.`, 'a gift said by name');
+    `Post from ${POST_SENDER}: "The Hourlock", with The Hourlock to claim. Open the mailbox beside the hourglass in the pause menu, or type /mail.`, 'a gift said by name');
   // AUDIT SERVER-POST: the thirteen's first word of the Hourlock is a sitting's first look - one waiting gift, by name
   assert.equal(postNoticeText({ kind: 'waiting', count: 1, post: [{ from: POST_SENDER, subject: "Hour's First", item: { name: 'The Hourlock' }, claimed: false }] }),
-    `Post from ${POST_SENDER}: "Hour's First" - The Hourlock is waiting for you. Open the mailbox beside the hourglass in the pause menu, or type /mail.`);
+    `Post from ${POST_SENDER}: "Hour's First", with The Hourlock to claim. Open the mailbox beside the hourglass in the pause menu, or type /mail.`);
   // read, it no longer counts; a gift counts until it is claimed
   const gift = box.post.find((p) => p.item);
   assert.equal((await box.open(gift.id)).ok, true);

@@ -32,7 +32,7 @@ import { MARKS_COMBAT, MARKS_FAUCETS } from '../net/marksLaw.js';
 
 /** A strike the day's combat cap refused, as its muted card says it - the chat's own line keeps the whole of it.
  *  SERPENT-SET: the serpents strike under the same cap; EG-E1: and the Spire's Redoubts. */
-export const HAUL_CAPPED_TEXT = `No silver. The day's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts is reached`;
+export const HAUL_CAPPED_TEXT = `No silver: you've reached today's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts`;
 /** A gather card holds a little longer than a pickup's (ui/pickupFeed.js PICKUP_FEED_HOLD_MS) - it says more. */
 export const HAUL_HOLD_MS = 3200;
 /** A Motherlode's card stands longer still - the day's one. */

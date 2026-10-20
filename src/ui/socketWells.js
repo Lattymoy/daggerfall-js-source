@@ -95,7 +95,7 @@ export function socketWells(item, { picture = null, onWell = null, asking = null
       const pic = picture?.(v) ?? null;
       if (pic) w.append(pic);
     }
-    const said = asking === at && v !== SOCKET_EMPTY ? `${wellText(item, v)} - press again to shatter it` : wellText(item, v);
+    const said = asking === at && v !== SOCKET_EMPTY ? `${wellText(item, v)}. Click again to shatter it` : wellText(item, v);
     w.setAttribute('title', said);
     w.setAttribute('aria-label', said);
     if (asking === at && v !== SOCKET_EMPTY) w.dataset.asking = '';

@@ -349,12 +349,15 @@ test('AUDIT EG V L7-19 THE LAST FIVE RUNS ARE READ (section 27.6 - "The last fiv
   doc.defaultView = { addEventListener() {}, removeEventListener() {} };
   const panel = createEgBoardPanel({ doc, onTab: () => {}, onClose: () => {}, runs: () => egRecapsKept(store) });
   panel.render({ error: 'offline' }, 'runs');
-  assert.ok(find(doc.body, 'line').some((n) => n.textContent === lines[1]));
+  const runRow = (d) => find(d.body, 'eg-k-row').map((n) => [find(n, 'eg-k-who')[0].textContent, find(n, 'eg-k-sub')[0].textContent, find(n, 'eg-k-val')[0].textContent]);   // EG-PLUS: a run's title, its day and why, its time
+  const r0 = egRecapsKept(store).at(-1);
+  const shown = runRow(doc);
+  assert.deepEqual(shown[0], [r0.title, '2026-10-15 - You walk home.', r0.time], 'the newest first: its depth, its day and why, its time');
   panel.destroy();
   const doc2 = fakeDocument();
   doc2.defaultView = { addEventListener() {}, removeEventListener() {} };
   const open = openEgBoard({ doc: doc2, fetchBoard: () => new Promise(() => {}), tab: 'runs', runs: () => egRecapsKept(store) });
-  assert.ok(find(doc2.body, 'line').some((n) => n.textContent === lines[1]), 'the opener hands its runs to the panel');
+  assert.deepEqual(runRow(doc2), shown, 'the opener hands its runs to the panel');
   open.close();
   assert.match(rd('src/scenes/world.js'), /runs: \(\) => egRecapsKept\(appStorage\(\)\), \.\.\.o \}\)/);
 });
@@ -374,11 +377,11 @@ test('AUDIT EG V L7-20 NO LINE TELLS A SCREEN IN HAND TO TYPE (section 27.8): th
   void Ew;
   const C = rd('src/scenes/eliteGates/egClient.js');
   assert.ok(!C.includes('/breach forsake again to go.') && C.includes('Forsake the breach? Your recall is lost. Forsake again to go.'));
-  assert.ok(!C.includes('type /breach then to step through') && C.includes('step through the arch, or answer the call where you stand.'));
+  assert.ok(!C.includes('type /breach then to step through') && C.includes('Step through the arch, or answer the call where you stand.'));
   const doc = fakeDocument();
   destroyEgHud();
   drawEgPanel({ offer: null, asks: [{ q: 'ready', title: 'Ready?', opts: ['Not yet', 'Ready'], left: 5000, mine: null, tally: [] }] }, { doc, touch: true });
-  assert.ok(find(doc.body, 'eg-note').some((n) => n.textContent === 'Tap a card or a choice.'));
+  assert.ok(find(doc.body, 'eg-k-foot').some((n) => n.textContent === 'Tap a card or a choice.'));
   destroyEgHud();
 });
 

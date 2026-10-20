@@ -228,7 +228,7 @@ export function sigilRiseLine(name, rank) {
   const line = `The sigil on your ${name} brightens: ${stage.name}.`;
   const cap = renownSigilStage(_renown);
   if (cap < 0 || cap >= rank) return line;
-  return `${line} Your Renown holds it at ${SIGIL_STAGES[cap].name} until Renown ${SIGIL_STAGES[cap + 1].renown}.`;
+  return `${line} Your Renown limits it to ${SIGIL_STAGES[cap].name} until Renown ${SIGIL_STAGES[cap + 1].renown}.`;
 }
 
 // ── the blow ───────────────────────────────────────────────────────
@@ -265,11 +265,11 @@ export function sigilLines(item) {
   // (systems/sigil/sigilSets.js setLines)
   const blow = sigilHasBlow(s);
   const full = blow ? `: +${s.power}% at Ascendant` : '';
-  if (_renown == null) return [`Sigil (Dormant. It wakes online, with your Renown)${full}`];
+  if (_renown == null) return [`Sigil (Dormant: works online only)${full}`];
   const st = sigilStageIn(s, _renown);
   const out = [blow ? `Sigil (${SIGIL_STAGES[st].name}): +${pctText(sigilPercent(s, _renown))}% damage, +${s.power}% at Ascendant` : `Sigil (${SIGIL_STAGES[st].name})`];
   const next = SIGIL_STAGES[rank + 1];
-  if (rank > st) out.push(`Held at ${SIGIL_STAGES[st].name} by your Renown (${SIGIL_STAGES[st + 1].name} at Renown ${SIGIL_STAGES[st + 1].renown})`);
+  if (rank > st) out.push(`Limited to ${SIGIL_STAGES[st].name} by your Renown (${SIGIL_STAGES[st + 1].name} at Renown ${SIGIL_STAGES[st + 1].renown})`);
   else if (next) out.push(`${SIGIL_STAGES[rank].name}: ${s.xp.toLocaleString('en-US')} / ${next.xp.toLocaleString('en-US')} to ${next.name}`);
   if (s.party > 1) out.push(`Won in a fight of ${s.party}`);
   return out;

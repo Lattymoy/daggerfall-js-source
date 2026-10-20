@@ -52,10 +52,10 @@ test('TO-ROADS THE SWITCH: the port\'s own key beside First-Person Travel - OFF 
   assert.ok(def, 'declared on Travel Options\' pane');
   assert.equal(def.default, false, 'OFF - First-Person Travel keeps "the original travel option" (Mac, OW-TOGGLE)');
   assert.equal(typeof def.default, 'boolean', 'a toggle');
-  assert.match(def.description, /^With First Person Travel on, a journey picked on the travel map follows the roads and tracks as the Overworld’s journeys do - planned by land, and refused where no way by land reaches - and is walked in first person, the Overworld view not raised\./);
-  assert.match(def.description, / Off, it walks straight to its destination, as Travel Options does\./);
-  assert.match(def.description, / Takes effect at once\. /, 'read live, as First-Person Travel is (AUDIT OW5 T1) - the tile\'s "when the world next loads" is the mod\'s other keys\'');
-  assert.match(def.description, /\(This port’s own switch - the mod has none\.\)$/);
+  // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - what it does on and off, and that it takes effect at once
+  // (read live, as First-Person Travel is - AUDIT OW5 T1; the tile's "when the world next loads" is the mod's other keys');
+  // the note that the switch is the port's own is gone from the pane
+  assert.equal(def.description, 'With First Person Travel on, journeys follow the roads and tracks as Overworld journeys do, and a place with no way there by land can\u2019t be picked. Off, you head straight for your destination. Takes effect at once.');
   const shipped = JSON.parse(read('vendor/travel-options/modsettings.json'));
   assert.ok(!shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`)).includes(KEY), 'the author\'s file is untouched');
   const tile = MOD_CURATED['travel-options'];

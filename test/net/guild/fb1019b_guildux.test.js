@@ -84,7 +84,7 @@ test('GUILD-UX the guild Stores: the form and its acts come first and the stored
   const seen = order(r.panel.root);
   const putAt = seen.indexOf('Put in'), rowAt = seen.findIndex((x) => /Oak Logs$/.test(x) && /^\d/.test(x));
   assert.ok(putAt >= 0 && rowAt > putAt, `the form first (${putAt}) and the rows after (${rowAt})`);
-  const units = find(r.panel.root, 'dfsocial-field').find((f) => f.attrs['aria-label'] === 'Units (all of it when empty)');
+  const units = find(r.panel.root, 'dfsocial-field').find((f) => f.attrs['aria-label'] === 'Units (leave empty for all)');
   assert.ok(units, 'the field says what empty means');
   button(r.panel.root, 'Put in').fire('click');
   await settle(); await settle();

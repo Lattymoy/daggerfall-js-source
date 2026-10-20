@@ -84,7 +84,7 @@ test('BAL7 HIST-SAP and OPEN HAND: the Mark regenerates 1% a round, 2% under hal
   fresh();
   const hist = LR.powerOf('mark-of-the-hist');
   assert.deepEqual([hist.pct, hist.low], [1, 2]);
-  assert.match(hist.text, /1% of your health, 2% while you are under half/);
+  assert.match(hist.text, /1% of your health, or 2% while below half/);
   let me = player();
   wear(me, legendary('mark-of-the-hist'));
   me.health = 60;
@@ -96,7 +96,7 @@ test('BAL7 HIST-SAP and OPEN HAND: the Mark regenerates 1% a round, 2% under hal
   fresh();
   const open = LR.powerOf('gauntlets-of-the-rose');
   assert.equal(open.share, 50);
-  assert.match(open.text, /half its damage/);
+  assert.match(open.text, /50% of its damage/);
   me = player();
   wear(me, legendary('gauntlets-of-the-rose'));
   const struck = { careerIndex: 7, career: {}, health: 100, maxHealth: 100 };

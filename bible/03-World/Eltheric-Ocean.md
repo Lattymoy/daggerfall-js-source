@@ -315,7 +315,7 @@ pixel; never in the sea's box; past the Bay's west edge the Eltheric counts), HO
 any skin. A way is asked ONCE each time the ship comes into its waters (`createCrossingGate`) - marked asked when the box
 shows (X1: a refusal marked it, and it never came): refused, it is not asked again until she has left them. An enemy
 near or another player aboard is said instead, once while she stays in those waters ("Not with an enemy at your
-heels." / "The Veil is no place for passengers..."), and the question asked as soon as the deck is clear. YES IS THE
+heels." / "Passengers can't cross the Veil..."), and the question asked as soon as the deck is clear. YES IS THE
 QUESTION AS IT STANDS NOW (`crossYes` - X2): a load, another helm, the waters left, an enemy or a passenger since - said,
 no voyage, asked afresh (CROSS_STALE); the box is taken back at a load or a jump (`withdrawCrossing`), and a way out
 kept is never one in the sea (`captainLedger.js wayOutOf`).

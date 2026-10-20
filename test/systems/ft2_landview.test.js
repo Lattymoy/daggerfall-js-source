@@ -78,7 +78,7 @@ test('FT2: the registry row - both labels, over the pref, showing and writing th
   assert.equal(c.tiers, LAND_VIEW_TIERS);
   assert.equal(c.read, landViewRead); assert.equal(c.write, landViewWrite);
   assert.equal(c.initial, 5); assert.equal(c.online, 'player', 'a dial is the player\'s online');
-  assert.match(f.note, /outdoors off, stop at 4/); assert.match(f.effect, /world next loads/);
+  assert.match(f.note, /up to 6 with the enhanced outdoors, and up to 4 on the classic UI or with the outdoors off\./); assert.match(f.effect, /world next loads/);
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('prefs', 'landViewDistance'), f);
   // the DFU key it condenses is COVERED: the settings pane's Video row points here instead of drawing a second switch

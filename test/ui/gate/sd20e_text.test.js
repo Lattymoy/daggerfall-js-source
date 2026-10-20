@@ -197,7 +197,7 @@ test('SD20e THE DRAGON\'S TWO NAMES AND ITS WINDOW\'S ONE FORM (T9, T14): no End
   assert.equal(SD_FIGHT_TEXT.dragonBreak(10_000), 'The Dragon Break! Fell Gold and Silver within 10 seconds of each other.');
   assert.equal(SD_FIGHT_TEXT.dragonBreak(SD_ECHO_PAIR_MS), 'The Dragon Break! Fell Gold and Silver within 15 seconds of each other.');
   assert.match(SD_MARK_TIPS.blades, form);
-  assert.match(SD_ENDINGS.find((E) => E.id === 'blades').text, /within ten seconds of each other/);
+  assert.match(SD_ENDINGS.find((E) => E.id === 'blades').text, /within 10 seconds of each other/);
   assert.match(read('src/net/superDungeon/sdFightLink.js'), /SD_FIGHT_TEXT\.dragonBreak\(sdProfileOf\(state\)\.pairMs\)/, 'the turn\'s line by the fight\'s own window');
 });
 

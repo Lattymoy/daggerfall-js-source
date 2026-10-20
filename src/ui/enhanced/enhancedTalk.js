@@ -269,7 +269,7 @@ function render() {
   const foot = el('footer', 'talk-say');
   foot.append(el('div', `talk-q${m.question ? '' : ' none'}`, m.question || (m.mode === 'none' ? '' : 'Pick a topic.')));
   const note = el('button', 'act', 'Note');
-  note.title = 'Copy the selected line to your logbook; right-click copies the whole conversation';
+  note.title = 'Copy the selected line to your logbook. Right-click to copy the whole conversation';
   note.onclick = () => act(() => model.press('logbook'));
   note.oncontextmenu = (e) => { e.preventDefault(); act(() => model.press('logbook', true)); };
   foot.append(note);

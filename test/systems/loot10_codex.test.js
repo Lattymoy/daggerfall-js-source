@@ -60,13 +60,13 @@ test('LOOT10: a find - a Legendary\'s record or an Aetheric piece, first found o
   assert.equal(CX.codexKey(LR.applyRarity(createWeapon(113, 1), 'rare', lcg(2))), null, 'a Rare is no record');
   assert.equal(CX.codexKey({ rarity: 'legendary', legendary: 'no-such' }), null);
   const a = heard(() => assert.equal(CX.noteFind(w), true));
-  assert.deepEqual(a.lines, ['Wyrmbane - a Legendary! It joins your codex.']);
+  assert.deepEqual(a.lines, ['Wyrmbane - a Legendary! Added to your codex.']);
   assert.deepEqual(a.sounds, [SOUND.LevelUp], 'the level-up\'s fanfare');
   assert.ok(Number.isInteger(CX.foundDay('legendary', 'wyrmbane')));
   const b = heard(() => assert.equal(CX.noteFind(legend('wyrmbane')), false));
   assert.deepEqual([b.lines, b.sounds], [[], []], 'once');
   const c = heard(() => CX.noteFind(ae));
-  assert.deepEqual(c.lines, [`${AETHERIC_RECORDS[0].name} - an Aetheric piece! It joins your codex.`]);
+  assert.deepEqual(c.lines, [`${AETHERIC_RECORDS[0].name} - an Aetheric piece! Added to your codex.`]);
   _resetForTests(); setPref('lootRarity', false);
   assert.equal(CX.noteFind(legend('nightwhisper')), false, 'off: nothing');
 });
@@ -147,7 +147,7 @@ test('LOOT10: the imprint - a known, unworn Rare takes a found power of its grou
   assert.deepEqual(CX.imprintPiece(rare, 'nightwhisper', me), { ok: true });
   assert.deepEqual([rare.imprint, rare.rarity, shardsHeld(me.items), me.goldPieces], ['nightwhisper', 'rare', 5, 1000], 'it stays Rare; paid');
   assert.equal(CX.imprintRefusal(rare, 'graveward', me), 'imprinted', 'once');
-  assert.equal(LR.imprintLine(rare), 'Imprint: Silent Death (of Nightwhisper) - +100% to a foe unaware');
+  assert.equal(LR.imprintLine(rare), 'Imprint: Silent Death (of Nightwhisper) - +100% vs unaware foes');
   assert.ok(LR.rarityLines(rare).includes(LR.imprintLine(rare)), 'its card says so');
   equipItem(me, rare);
   assert.ok(wornPowers(me).some((p) => p.id === 'nightwhisper' && p.power.name === 'Silent Death' && p.item === rare), 'its power works as the Legendary\'s');

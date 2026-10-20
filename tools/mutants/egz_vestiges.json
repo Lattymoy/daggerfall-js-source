@@ -64,8 +64,8 @@
   {
     "name": "EGZR-second-wind-line-literal",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "falling under ${pc(EG_SECOND_WIND_UNDER)} heals",
-    "new": "falling under ${pc(EG_BLOODIED_UNDER)} heals",
+    "old": "falling under ${pc(EG_SECOND_WIND_UNDER)} health heals",
+    "new": "falling under ${pc(EG_BLOODIED_UNDER)} health heals",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -74,8 +74,8 @@
   {
     "name": "EGZR-momentum-line-literal",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "+${pc(EG_MOMENTUM_STEP)} each",
-    "new": "+${pc(EG_ECHO_SHARE)} each",
+    "old": "adds ${pc(EG_MOMENTUM_STEP)} damage",
+    "new": "adds ${pc(EG_ECHO_SHARE)} damage",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],

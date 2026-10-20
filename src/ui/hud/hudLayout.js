@@ -459,7 +459,7 @@ function syncBanner(doc, edit) {
   b = doc.createElement('div');
   b.id = BANNER_ID;
   const text = doc.createElement('span');
-  text.textContent = `HUD unlocked: free the mouse (${freeKey}) and drag any outlined piece (drag this text to move this box). Corner square: size. Edge bar: length. ✕: hide or show it again. Double-click: put it back. Alt+U: lock.`;
+  text.textContent = `HUD unlocked. Free the mouse (${freeKey}) and drag any outlined piece. Drag this text to move this box. Corner square: size. Edge bar: length. ✕: hide or show. Double-click: reset. Alt+U: lock.`;
   const reset = doc.createElement('button');
   reset.type = 'button'; reset.className = 'ghost'; reset.textContent = 'Reset';
   reset.addEventListener('click', (e) => { e.stopPropagation(); resetHudLayout(); });

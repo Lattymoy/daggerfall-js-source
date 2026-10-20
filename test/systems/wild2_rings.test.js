@@ -83,7 +83,7 @@ test('WILD3: a fast journey - never into or out of the zone; inside it 2,500 gol
   assert.deepEqual([{ x: 40, y: 30 }, { x: 20, y: 20 }, { x: 29, y: 19 }].map((to) => [wildRingAt(to.x, to.y, mask), wildJourney({ from: inB, to, mask, gold: 1e6 }).fee]), [[2, 5000], [3, 10000], [4, 15000]]);
   assert.match(wildJourney({ from: inB, to: { x: 29, y: 19 }, mask, gold: 14_999 }).text, /15,000/, 'the heart\'s fee in coin');
   const now = 1e9;
-  assert.match(wildJourney({ from: inA, to: inB, mask, gold: 1e6, now, lastAt: now - 60_000 }).text, /9 more minutes/);
+  assert.match(wildJourney({ from: inA, to: inB, mask, gold: 1e6, now, lastAt: now - 60_000 }).text, /The next leaves in 9 minutes/);
   assert.equal(wildJourney({ from: inA, to: inB, mask, gold: 1e6, now, lastAt: now - WILD_TRAVEL_COOLDOWN_MS }).ok, true);
   assert.deepEqual(wildJourney({ from: inA, to: out, mask: null }), { ok: true, fee: 0 }, 'offline there is no zone');
   const w = W('src/scenes/world.js');

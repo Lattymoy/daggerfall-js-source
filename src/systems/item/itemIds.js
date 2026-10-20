@@ -109,7 +109,7 @@ export function stampItemIds(entity, rand) {
 export { TRADE_HELD_NOTICES };
 export const TRADE_OPEN_NOTICE = 'This character\'s trading is open again.';
 /** The law's hold, naming the piece it found (`name`, its template's). */
-export const tradeHeldLawNotice = (/** @type {string} */ name) => `The realm is reviewing this character: a ${name} it carries is not as the game makes it. Trading is frozen until it is gone.${TRADE_HELD_STRIKES}`;   // RING-WARN: the strikes said
+export const tradeHeldLawNotice = (/** @type {string} */ name) => `The realm is reviewing this character: it carries a ${name} the game could not have made. Trading is frozen until it is gone.${TRADE_HELD_STRIKES}`;   // RING-WARN: the strikes said
 /** What to say when a checkpoint's answer moves the hold from `prev` to `now` (each a reason or null) - a notice, or
  *  null when nothing changed or nothing is known (`undefined`: no answer that says). `why`: the first thing the law found
  *  (`{ t }`, its template) - the notice names it, so a player held over a piece can find it - or (AUTO-HOLD) the law's

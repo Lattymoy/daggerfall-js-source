@@ -270,5 +270,5 @@ export function errandWords(e, now) {
   const p = errandPlace(e?.place);
   if (!p) return t('rvn.errand.abroad', 'Abroad');
   const where = e.city ? t('rvn.errand.cityOf', '{city}, {province}', { city: e.city, province: p.name }) : p.name;
-  return t('rvn.errand.where', 'In {where} ({venture}) - {left}', { where, venture: VENTURES[e.venture]?.label ?? e.venture, left: errandLeftWords(errandUntil(e, now), now) });
+  return t('rvn.errand.where', 'In {where} ({venture}), {left}', { where, venture: VENTURES[e.venture]?.label ?? e.venture, left: errandLeftWords(errandUntil(e, now), now) });
 }

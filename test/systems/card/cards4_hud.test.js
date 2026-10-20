@@ -40,7 +40,7 @@ test('CARDS4 the panel at the buy-in: gold or chips, affordable or not', () => {
   assert.equal(poor.actions[0].enabled, false);
   const friendly = cardHudModel({ phase: 'buyin', buyIn: { min: 200, max: 1000 }, stakes: TABLE_STAKES, friendly: true });
   assert.equal(friendly.title, 'Card table - 5/10 chips');
-  assert.match(friendly.note, /online, no gold changes hands/);
+  assert.match(friendly.note, /Online, no gold changes hands/);
 });
 
 test('CARDS4 the panel in play: the seats, the cards each may see, the pot, the buttons the law allows', () => {

@@ -931,7 +931,7 @@ export class CharSheet {
     const pool = martialChoices(e);
     if (!pool.length) return;
     const p = pool[(this._martialPick = ((this._martialPick ?? -1) + 1)) % pool.length];
-    const more = pool.length > 1 ? ['', t('martial.sheet.next', '{n, plural, one {# martial specialization is open - No, then W, for the next.} other {# martial specializations are open - No, then W, for the next.}}', { n: pool.length })] : [];
+    const more = pool.length > 1 ? ['', t('martial.sheet.next', '{n, plural, one {# martial specialization is open. Choose No, then press W to see the next.} other {# martial specializations are open. Choose No, then press W to see the next.}}', { n: pool.length })] : [];
     this.child = new YesNoBoxWindow({
       rows: [...martialChoiceRows(e, p.id, { others: false }), ...more],
       onYes: () => { const r = chooseMartialPath(e, p.id); if (r.ok) computeEntityMods(e); this.notice = r.text; this.noticeOk = r.ok; },
@@ -950,7 +950,7 @@ export class CharSheet {
     const pool = pathChoices(e);
     if (!pool.length) return;
     const p = pool[(this._pathPick = ((this._pathPick ?? -1) + 1)) % pool.length];
-    const more = pool.length > 1 ? ['', t('schools.sheet.next', '{n, plural, one {# specialization is open - No, then S, for the next.} other {# specializations are open - No, then S, for the next.}}', { n: pool.length })] : [];
+    const more = pool.length > 1 ? ['', t('schools.sheet.next', '{n, plural, one {# specialization is open. Choose No, then press S to see the next.} other {# specializations are open. Choose No, then press S to see the next.}}', { n: pool.length })] : [];
     this.child = new YesNoBoxWindow({
       rows: [...pathChoiceRows(e, p.id, { others: false }), ...more],
       onYes: () => { const r = choosePath(e, p.id); if (r.ok) computeEntityMods(e); this.notice = r.text; this.noticeOk = r.ok; },
@@ -979,7 +979,7 @@ export class CharSheet {
         return;
       }
       const id = pool[(this._masteryPick = ((this._masteryPick ?? -1) + 1)) % pool.length];
-      const more = pool.length > 1 ? ['', `${pool.length} skills are ready. Answer No, then press M for the next.`] : [];   // SOFTCAP6
+      const more = pool.length > 1 ? ['', `${pool.length} skills are ready. Choose No, then press M to see the next.`] : [];   // SOFTCAP6
       this.child = new YesNoBoxWindow({
         rows: [...masteryChoiceRows(e, id, SKILL_NAMES), ...more],
         onYes: () => { const r = masterSkill(e, id, SKILL_NAMES); this.notice = r.text; this.noticeOk = r.ok; },

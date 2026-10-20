@@ -1830,7 +1830,7 @@ test('AUDIT LEGACY III O2/P1 (the world host, by source): a line the realm refus
   assert.match(src, /createRealmLine\(\{ io: realmIoNow, storage: \(\) => appStorage\(\), onRefused: \(id, error\) => \{ townTalk\.say\(LEGACY_TEXT\.lineRefused\(realmRefusalText\(error\)\)\); \} \}\)/);
   assert.match(src, /for \(let i = 0; born && legacyRealmLine\?\.unwrittenOf\(fam\.id\) && !legacyRealmLine\.refusalOf\(fam\.id\) && i < 2; i\+\+\) \{/);
   assert.match(src, /const unwritten = born \? legacyRealmLine\?\.unwrittenOf\(fam\.id\) \?\? null : null;\n    if \(unwritten\) return \{ ok: false, error: unwritten \};\n    let made = null;/);
-  assert.match(LEGACY_TEXT.lineRefused('X.'), /^The realm would not keep your family's record\. X\. This device keeps it\.$/);
+  assert.match(LEGACY_TEXT.lineRefused('X.'), /^The realm refused your family's record\. X\. It is kept on this device instead\.$/);
 });
 
 test('AUDIT LEGACY III U1/U2 (the pause window, by source - driven in Chromium): a held Enter or Space presses nothing (the Succession\'s own rule: Play as and Pass the mantle armed and fired on one held press); the keyboard comes into the window - a Tab from outside lands on its first control, and the window takes the focus as it mounts', () => {

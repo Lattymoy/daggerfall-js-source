@@ -48,7 +48,7 @@ test('HAUL-CARDS the law: a material\'s tier wears the loot\'s colours - 1 and 2
   assert.equal(rankProgress(xpForRank(100) + 5000), 1, 'the top rank');
   assert.ok(HAUL_HOLD_MS > 2500 && LODE_HOLD_MS > HAUL_HOLD_MS);
   assert.deepEqual([HAUL_ICON_BOX, LODE_ICON_BOX], [32, 38]);
-  assert.equal(HAUL_CAPPED_TEXT, `No silver. The day's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts is reached`);   // SERPENT-SET: the serpents strike under the same cap; PIN MOVED (EG-E1): and the Spire's Redoubts; PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
+  assert.equal(HAUL_CAPPED_TEXT, `No silver: you've reached today's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts`);   // SERPENT-SET: the serpents strike under the same cap; PIN MOVED (EG-E1): and the Spire's Redoubts; PIN MOVED (VOICE2, in PLAIN-SWEEP's words): no dash aside (Voice.md rule 5)
 });
 
 test('HAUL-CARDS a harvest\'s cards: the goods one card - "+3", its material\'s name and tier, its picture the pack\'s own item, "Stores 41" (own, bought and gold\'s), the XP on it and the rank\'s bar, a clean act\'s words its head - and a gem and a second find each their own; nothing for an answer it cannot read (mutants: the Stores\' count; the XP off the card; the gem dropped; the head unsaid)', () => {

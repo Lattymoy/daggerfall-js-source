@@ -38,16 +38,16 @@ test('L10N6 a language\'s row: Claude\'s drafts said to be drafts, the people wh
   const [fr, de, it, es] = rows;
   assert.equal(fr.title, 'Français', 'the language by its own name');
   assert.equal(fr.author, 'Claude (Anthropic)');
-  assert.match(fr.what, /machine translation by Claude, still being checked/);
+  assert.match(fr.what, /Machine translation by Claude, still being checked/);
   assert.equal(fr.terms, undefined);
   assert.equal(fr.link, undefined);
   assert.equal(de.author, 'Anna and Bernd', 'the people who checked it, as the language lists names');
-  assert.match(de.what, /machine translation by Claude, checked and corrected by Anna and Bernd\./);
+  assert.match(de.what, /Machine translation by Claude, checked and corrected by Anna and Bernd\./);
   assert.equal(it.author, 'A. Traducteur, B. Relecteur, and Carla', 'the pack\'s authors, then the translators');
-  assert.match(it.what, /^The port's own words translated by Carla\. Daggerfall's own text is Pacchetto, carried with its authors' permission\.$/);
+  assert.match(it.what, /^Translated by Carla\. Daggerfall’s original text is Pacchetto, used with its authors’ permission\.$/);
   assert.equal(it.terms, 'CC-BY-4.0: bundling allowed with credit (2026-10-01)');
   assert.equal(it.link, undefined, 'a source that is no address is no link');
-  assert.match(es.what, /translated by the community/);
+  assert.match(es.what, /Translated by the community/);
   assert.ok(Object.isFrozen(fr));
 });
 

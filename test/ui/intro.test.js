@@ -234,7 +234,7 @@ test('INTRO-FIELD: the gate is the BEGIN button and nothing drawn beside it - th
   // 2. THE STATUS LINE IS SPOKEN, NOT DRAWN. It stays a node because it
   // is the live region a screen reader is owed, and because it is what
   // says the tap enables sound - but it takes no space on the picture.
-  assert.match(src, /const status = make\(doc, 'p', 'intro-status', t\('menu\.intro\.preparing', 'Preparing the journey…'\)\); status\.setAttribute\('role', 'status'\);/,
+  assert.match(src, /const status = make\(doc, 'p', 'intro-status', t\('menu\.intro\.preparing', 'Preparing…'\)\); status\.setAttribute\('role', 'status'\);/,
     'still a role=status live region');
   const rule = src.match(/\.intro-status\{([^}]*)\}/);
   assert.ok(rule, 'and it still has a rule of its own');

@@ -158,7 +158,7 @@ export const letterWorthLine = (/** @type {any} */ item) => { const g = letterWo
  *  account keeps it; online the page is asking it (every look asks afresh - the sheet, the classic box, the hotbar); an
  *  account that holds none (a guest's, the counting-houses not striking yet). The online wait once said the offline
  *  words. */
-export const SILVER_WHY = Object.freeze({ offline: 'kept by your account online', asking: 'asking your account', none: 'none' });
+export const SILVER_WHY = Object.freeze({ offline: 'held in your online account', asking: 'checking your account', none: 'none' });
 /**
  * WALLET-UI (2026-10-07, Mac: "Polish and organize the ingame wallet item for ease of readability"): THE WALLET'S
  * LEDGER - its currencies in two parts, the coin (the purse's gold, the account's silver) and what the wallet holds (the

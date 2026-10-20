@@ -53,10 +53,10 @@ test('RVN12b WHAT IT LEARNED: chips, each its name and what it does, oldest firs
 
 test('RVN12b WHAT IT TOOK, ITS FESTERING, A SWORN ONE\'S LOYALTY: in words - each piece by its pack name; three pips, filled by its wrath (none without one); its loyalty and its word (mutants: a piece unnamed; the pips unfilled; the word wrong)', () => {
   const a = createWeapon(W.Longsword, 1, () => 0.5), b = createWeapon(W.Dagger, 1, () => 0.5);
-  assert.equal(PG.tookWords({ took: [a] }), `Took: your ${itemLongName(a)} - take it back from it.`);
-  assert.equal(PG.tookWords({ took: [a, b] }), `Took: your ${itemLongName(a)} and ${itemLongName(b)} - take them back from it.`);
+  assert.equal(PG.tookWords({ took: [a] }), `Took: your ${itemLongName(a)}. Take it back from it.`);
+  assert.equal(PG.tookWords({ took: [a, b] }), `Took: your ${itemLongName(a)} and ${itemLongName(b)}. Take them back from it.`);
   assert.equal(PG.tookWords({ took: [] }), '');
-  assert.deepEqual(PG.festerPips({ wrath: 2 }), { filled: 2, of: 3, words: 'Festering: 2 of 3 - it grows stronger the longer you leave it.' });
+  assert.deepEqual(PG.festerPips({ wrath: 2 }), { filled: 2, of: 3, words: 'Festering: 2 of 3. It grows stronger the longer you leave it.' });
   assert.deepEqual(PG.festerPips({ wrath: 9 }).filled, 3);
   assert.equal(PG.festerPips({}).words, '');
   assert.equal(PG.swornLoyaltyWords({ companion: { loyalty: 92 } }), 'Loyalty: 92 - Devoted.');

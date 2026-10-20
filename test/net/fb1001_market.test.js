@@ -67,7 +67,7 @@ test('MARKET-KEEP: a crafted piece handed on in a trade, listed by its new holde
   assert.equal(r.error, 'market-not-yours', 'the service\'s own word');
   assert.deepEqual(pack, [sword], 'the very piece back in the pack - it was taken out and never put back');
   assert.equal(book.pending, 0, 'nothing kept');
-  assert.match(accountRefusalText('market-not-yours'), /only they can sell it at the counting-house\. It stays in your pack/);
+  assert.match(accountRefusalText('market-not-yours'), /only they can list it as a crafted piece\. It stays in your pack/);
   assert.equal(PIECE_GONE.includes('market-not-yours'), false);
   assert.deepEqual([...PIECE_GONE].sort(), ['market-listed', 'market-standing', 'market-uncollected'], 'the answers that do say it is elsewhere ON THE SERVICE');
 });

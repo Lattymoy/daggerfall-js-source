@@ -75,7 +75,7 @@ export function drawCollectionsPage(detail, rerender, kit) {
   ensureStyle(typeof document === 'undefined' ? null : document);
   const { el } = kit;
   const parts = collectionParts(kit.player ?? null);
-  if (!parts.length) { detail.append(el('p', 'px-note', 'Nothing gathered yet. Legendaries come with Loot rarity, and cards with a Card Binder.')); return; }
+  if (!parts.length) { detail.append(el('p', 'px-note', 'Nothing collected yet. Legendaries need Loot rarity turned on, and cards need a Card Binder.')); return; }
   if (!parts.some(([id]) => id === _part)) _part = parts[0][0];
   if (parts.length > 1) {
     const sw = el('div', 'coll-parts');

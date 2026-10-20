@@ -634,7 +634,7 @@ export function mountEtherChartWindow(host, deps) {
   stage.append(canvas);
   const chart = el('div', 'dfchart-chart');
   chart.append(ruler, stage);
-  const hint = el('p', 'dfnaval-lede dfchart-hint', t('sea.chart.hint', 'Drag or use the arrows to pan. The wheel, a pinch, or + and - zoom. C finds your ship. Point at or tap an isle to name it.'));
+  const hint = el('p', 'dfnaval-lede dfchart-hint', t('sea.chart.hint', 'Drag or use the arrow keys to pan. Scroll, pinch or press + and - to zoom. C finds your ship. Point at or tap an isle to see its name.'));
   // AUDIT CAPTAIN'S SEA X6: the window's own presses - a finger and a pad's cursor zoom and find the ship by them
   const tools = el('div', 'dfnaval-chart-tools dfchart-tools');
   const tool = (label, fn) => { const b = /** @type {HTMLButtonElement} */ (el('button', 'dfnaval-btn', label)); b.type = 'button'; b.style.minWidth = '0'; b.addEventListener('click', () => { fn(); draw(); }); tools.append(b); return b; };

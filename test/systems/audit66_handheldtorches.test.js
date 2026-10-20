@@ -279,7 +279,7 @@ test('AUDIT 66 F9: DrawTrajectory is a law, not a frame - the arc integrates fro
   near(Math.hypot(wall[1][0] - wall[0][0], wall[1][1] - wall[0][1], wall[1][2] - wall[0][2]), 0.25, 1e-9, 'and the arc stops AT the hit, not past it');
   // the switch says what it does, beside the other one the port cannot draw
   const def = MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys['Throwing.ShowTrajectory'];
-  assert.match(def.description, /no world-space line|DFU only/i, 'the pane says the arc is not drawn here');
+  assert.equal(def.description, 'Has no effect here: the throw\u2019s arc isn\u2019t drawn in this game.', 'the pane says the arc is not drawn here');
 });
 
 test('AUDIT 66 F10: the dropped light\'s range carries no PlayerTorchLightScale - the port holds that setting inert for a radius, in one place - and the dep no host could feed is gone', () => {

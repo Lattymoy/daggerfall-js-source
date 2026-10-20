@@ -135,7 +135,7 @@ export const paidText = (pay, tax) => (tax > 0 ? t('prof.work.paidTax', '{pay} s
  *  gold wall in UNCOUNTED's words, on the card and on its button's title alike: a Court or chapter writ's
  *  (ui/noticeWindow.js writNode) and a guild writ's (guildWritCard). `material` its name, counted. */
 export const writWalledText = (n, material) => t('prof.work.writ.walled',
-  '{n, number} {material} you hold cannot fill a writ. Only what you gathered, or bought with silver, counts. What was looted, bought at a shop or with gold, or given by another player does not.',
+  '{n, number} {material} you hold can\'t fill a writ. Only what you gathered or bought with silver counts.',
   { n: Number(n), material });
 
 /**
@@ -265,7 +265,7 @@ export function createWorkTab(w, ui) {
     const bar = el('div', 'writ-take');
     const own = data?.guild?.id === x.guild?.id && !contractPaidMay(data.guild.rank);
     bar.append(el('span', 'work-none', own ? t('prof.work.contract.ownGuild', 'Officers and the Guildmaster are not paid by their own guild\'s contracts.')
-      : t('prof.work.contract.how', 'Strike a raider in a town here and stay until it is cleansed: paid when the raid is counted, less {tax} tax.', { tax: marksText(saleTax(x.pay)) })));   // AUDIT 657 B6: what earns it said (raidLaw.js - a blow struck, and the town stood in at the cleanse)
+      : t('prof.work.contract.how', 'Hit a raider in a town here and stay until the town is cleansed. You are paid when the raid is counted, less {tax} tax.', { tax: marksText(saleTax(x.pay)) })));   // AUDIT 657 B6: what earns it said (raidLaw.js - a blow struck, and the town stood in at the cleanse)
     if (x.may) bar.append(withdrawContract(x));
     li.append(bar, el('span', 'notice-seal', ''));
     return li;
@@ -296,7 +296,7 @@ export function createWorkTab(w, ui) {
     if (!pieces.length) {
       // AUDIT 31 H8: one that answers it is in the pack but will not leave it - said, never "you carry none"
       return [el('span', 'work-none', /** @type {any} */ (pieces).blocked > 0 ? t('prof.work.fill.blocked', 'Your piece for it is equipped, locked or bound. Free it first.')
-        : t('prof.work.fill.none', 'You carry no unworn piece of your own make for it.'))];
+        : t('prof.work.fill.none', 'You carry no unworn piece you made for it.'))];
     }
     const picked = () => pieces.find((p) => p.item.provenance === st.pick[c.id]) ?? pieces[0];
     const label = (p) => (p.quality != null ? t('prof.work.fill.pieceQuality', '{name} ({quality})', { name: p.name, quality: QUALITY_NAMES[p.quality] }) : p.name);
@@ -475,7 +475,7 @@ export function createWorkTab(w, ui) {
       // AUDIT 31 U10: every bound the service keeps, said before the press
       const reason = busyWhy()
         || (!name ? t('prof.work.comm.noName', 'Name the crafter.')
-          : !HANDLE_RE.test(name) ? t('prof.work.comm.badName', 'That is not a name a crafter could have.')
+          : !HANDLE_RE.test(name) ? t('prof.work.comm.badName', 'That isn\'t a valid username.')
             : data?.me && name.toLowerCase() === String(data.me).toLowerCase() ? t('prof.work.comm.self', 'You cannot commission yourself.')
               : !f.recipe ? t('prof.work.comm.noRecipe', 'Choose the piece.')
                 : mineOpen >= COMMISSIONS_MAX ? t('prof.work.comm.full', 'You have {n} commissions posted already.', { n: COMMISSIONS_MAX })

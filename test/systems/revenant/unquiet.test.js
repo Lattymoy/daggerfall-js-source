@@ -496,7 +496,7 @@ test('UNQUIET THE DREAD: a rank-V revenant that gets away once more ascends - "t
   assert.deepEqual(r.history.at(-1), { deed: 'ascended', at: DAY * 30 });
   const ev = N.revenantEscapeEvent(r, 'Ayla', { rolls: () => 0 });
   assert.equal(ev.kind, 'ascended');
-  assert.equal(ev.body, `${r.given} will run no more. It has gone to ground in Tomb of Vaness, now called the Dread, and waits for you there.`);
+  assert.equal(ev.body, `${r.given} will run no more. It is the Dread now, and waits for you in Tomb of Vaness.`);
   assert.equal(ev.kicker, 'The Dread');
   assert.equal(PG.historyWords({ deed: 'ascended', at: 1 }), 'became the Dread');
   assert.match(REVENANT_CARD_CSS, /\.rvncard\.is-ascended \{ border-left-color: #2a0a12; box-shadow: inset 0 0 0 1px #7a1020; \}/);
@@ -611,21 +611,21 @@ test('UNQUIET THE PAGE: how it gets away (its craft, from rank II), the wounds I
   assert.equal(PG.craftLine({ mobileType: M.Mage, rank: 2 }), 'Its flight: Blink - it tears open a rift and is gone. Silence it, hold it, or strike it as it fades.');
   // PIN MOVED (AUDIT UNQUIET, section 49): each true on both skins and past its will - a struck sinker's will may still tear it away
   assert.equal(PG.craftLine({ mobileType: M.Zombie, rank: 3 }), 'Its flight: Sink - it sinks into the earth. Strike it before it is under, and it rises, cornered, and runs no more.');
-  assert.equal(PG.craftLine({ mobileType: M.Thief, rank: 3 }), 'Its flight: Smoke - it throws down smoke and is lost to sight as it runs, but a blow will still find it.');
+  assert.equal(PG.craftLine({ mobileType: M.Thief, rank: 3 }), 'Its flight: Smoke - it throws down smoke and vanishes as it runs, but a blow can still find it.');
   assert.equal(PG.craftLine({ mobileType: M.Orc, rank: 3 }), 'Its flight: Bolt - it runs faster than anything you have chased. Bring it down from range, and break its will before the killing blow.');
   assert.equal(PG.craftLine({ dread: true }), 'At home it has nowhere to run: it never flees, and kneels at the end.');
-  assert.equal(PG.woundLine({ wounds: ['lamed'] }), 'Wounds you left: Lamed (a lamed leg: it runs more slowly).');
+  assert.equal(PG.woundLine({ wounds: ['lamed'] }), 'Wounds you left: Lamed (a lamed leg, so it runs slower).');
   assert.equal(PG.woundLine({ wounds: [] }), '');
-  assert.equal(PG.ambitionLine({ personality: 'witty' }), 'Its ambition: Plunder - it raids the roads while it waits. The longer you leave it, the richer it grows.');
+  assert.equal(PG.ambitionLine({ personality: 'witty' }), 'Its ambition: Plunder - it raids the roads while it waits, and grows richer the longer you leave it.');
   assert.equal(PG.ambitionLine({ personality: 'witty', dread: true }), '');
-  assert.equal(PG.bloodLine({ blood: 1, rank: 2 }), 'One more kill of you, or one more companion felled, and it grows bolder.');   // PIN MOVED (AUDIT UNQUIET): a companion is felled
+  assert.equal(PG.bloodLine({ blood: 1, rank: 2 }), 'If it kills you once more, or fells one more companion, it grows bolder.');   // PIN MOVED (AUDIT UNQUIET): a companion is felled
   assert.deepEqual([PG.bloodLine({ blood: 0, rank: 2 }), PG.bloodLine({ blood: 1, rank: 5 })], ['', '']);
   assert.equal(PG.dreadStandLine({ dread: true, rank: 5 }), `Last stands: twice in a fight it rises again, at ${Math.round(F.lastStandHealth(5) * 100)}% and at 25% of its health.`);
   assert.equal(PG.comeWords({ dread: true, lair: { name: 'Tomb of Vaness' }, dueAt: 0 }, 0, false).tag, 'The Dread');
   const src = read('src/ui/revenant/revenantPage.js');
   assert.match(src, /for \(const line of fallen \? \[\] : \[craftLine\(r\), woundLine\(r, now\), ambitionLine\(r\), bloodLine\(r\), tearLine\(r\)\]\) if \(line\)/);
   assert.match(src, /const will = fallen \|\| r\.dread \? '' : willWords\(r\);/);
-  assert.match(src, /'An elite or a champion marked Unquiet that kills you, or, far more often, breaks, runs and escapes, will remember you and come back for you\.'/);
+  assert.match(src, /'An elite or champion marked Unquiet that escapes you, or kills you, will remember you and come back for you\.'/);
 });
 
 test('UNQUIET HOST-SPLIT: the craft runs in the flee law both pools share, its look through the pools\' dissolve and the scene\'s door - no host grows (mutants: a host wired)', () => {

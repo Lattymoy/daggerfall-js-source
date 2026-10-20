@@ -48,7 +48,7 @@ export const NOTE_LETTER_START = Object.freeze({
   duel: 'I accept your challenge. Where shall we meet?',
 });
 /** What a letter that cannot open says once the minute is out (the host's pending letter). */
-export const NOTE_LETTER_LOST = 'Your letters could not open. The note is still on the board.';
+export const NOTE_LETTER_LOST = 'Your letters could not be opened. The note is still on the board.';
 
 /**
  * AUDIT 28 N1/N16: HOW A NOTE'S BUTTON IS ANSWERED - one plan, the same shape from every exit (THE MODAL CONTRACT):

@@ -24,14 +24,14 @@ const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf
 const WORLD = read('src/scenes/world.js');
 const KEY = 'GeneralOptions.FirstPersonTravel';
 
-test('OW-TOGGLE THE SWITCH: the port\'s own key on Travel Options\' pane - OFF by default, a toggle, saying it is the port\'s and takes effect at once, on the tile; the vendored modsettings.json does not carry it', () => {
+test('OW-TOGGLE THE SWITCH: the port\'s own key on Travel Options\' pane - OFF by default, a toggle, saying it takes effect at once, on the tile; the vendored modsettings.json does not carry it', () => {
   const def = MOD_SETTINGS['travel-options'].keys[KEY];
   assert.ok(def, 'declared');
   assert.equal(def.default, false, 'OFF - the Overworld\'s journeys stay the default (Mac: "Off by default")');
   assert.equal(typeof def.default, 'boolean', 'a toggle');
-  assert.match(def.description, /first person/);
-  assert.match(def.description, /Takes effect at once\./, 'AUDIT OW5 T1: read live - the tile\'s "when the world next loads" is the mod\'s other keys\'');
-  assert.match(def.description, /port’s own switch - the mod has none/);
+  // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - "Takes effect at once" kept (AUDIT OW5 T1: read live - the
+  // tile's "when the world next loads" is the mod's other keys'); the note that the switch is the port's own is gone
+  assert.equal(def.description, 'Makes time accelerated journeys in first person, on the ground. Off, the enhanced interface makes them in the Overworld view. Takes effect at once.');
   const shipped = JSON.parse(read('vendor/travel-options/modsettings.json'));
   assert.ok(!shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`)).includes(KEY), 'the author\'s file is untouched');
   assert.ok(MOD_CURATED['travel-options'].includes(KEY) && modDials('travel-options').includes(KEY), 'reachable: on the tile');

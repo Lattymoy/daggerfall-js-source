@@ -93,7 +93,7 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
   close.addEventListener('click', () => onClose());
   head.append(close);
   body.append(head);
-  body.append(el('p', 'tm-lead', 'Times are in your own clock. The countdowns run live.'));
+  body.append(el('p', 'tm-lead', 'Times are shown in your local time. The countdowns update live.'));
   const list = el('div', 'tm-list');
   body.append(list);
   win.append(body);

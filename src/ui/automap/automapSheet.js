@@ -1646,8 +1646,8 @@ export function createAutomapSheet(deps = {}) {
       return [
         { id: 'turnLeft', group: 'turn', label: 'Turn', key: 'Q', icon: 'turnLeft', title: 'Turn left' },
         { id: 'turnRight', group: 'turn', label: 'Turn', key: 'E', icon: 'turnRight', title: 'Turn right' },
-        { id: 'tiltUp', group: 'tilt', label: 'Tilt', key: 'R', icon: 'tiltUp', title: 'Tilt toward a plan', disabled: orbit.goalPitch >= ORBIT.pitchMax - 1e-3 },
-        { id: 'tiltDown', group: 'tilt', label: 'Tilt', key: 'F', icon: 'tiltDown', title: 'Tilt toward the side', disabled: orbit.goalPitch <= ORBIT.pitchMin + 1e-3 },
+        { id: 'tiltUp', group: 'tilt', label: 'Tilt', key: 'R', icon: 'tiltUp', title: 'Tilt toward top-down', disabled: orbit.goalPitch >= ORBIT.pitchMax - 1e-3 },
+        { id: 'tiltDown', group: 'tilt', label: 'Tilt', key: 'F', icon: 'tiltDown', title: 'Tilt toward side view', disabled: orbit.goalPitch <= ORBIT.pitchMin + 1e-3 },
         ...(fw ? [
           { id: 'floorDown', group: 'floor', label: 'Down', key: 'PgDn', icon: 'floorDown', title: 'Down a floor', disabled: fw.bottom },
           { id: 'floorUp', group: 'floor', label: 'Up', key: 'PgUp', icon: 'floorUp', title: 'Up a floor', disabled: fw.top },

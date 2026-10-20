@@ -306,8 +306,8 @@
   {
     "name": "AUDIT32-R1-label-herbs-alone",
     "file": "src/systems/inputActions.js",
-    "old": "'At a profession node: the next of its acts on the list'",
-    "new": "'At a profession node'",
+    "old": "'Next action at a profession node'",
+    "new": "'Next action'",
     "tests": [
       "test/scenes/audit32_client.test.js"
     ]

@@ -89,8 +89,8 @@ test('DECOR2b the furnisher\'s pieces: Daggerfall\'s Furniture group, twenty-nin
   assert.deepEqual([pillow.flat, pillow.looks, pillow.icon, pillow.item.g], [[200, 11], null, { archive: 200, record: 11, dye: null }, 8]);
   assert.equal(decorFurnishingEntry(statue(), 0), null);
   // what is said
-  assert.equal(furnishingDeliveredLine(['Oak Chair']), 'The Oak Chair will be delivered. Set it down from the Decorate panel in any room you can decorate.');
-  assert.equal(furnishingDeliveredLine(['Oak Chair', 'Curtains', 'Small Pillow']), '3 pieces of furniture will be delivered. Set them down from the Decorate panel in any room you can decorate.');
+  assert.equal(furnishingDeliveredLine(['Oak Chair']), 'The Oak Chair will be delivered. Place it from the Decorate panel in any room you can decorate.');
+  assert.equal(furnishingDeliveredLine(['Oak Chair', 'Curtains', 'Small Pillow']), '3 pieces of furniture will be delivered. Place them from the Decorate panel in any room you can decorate.');
   assert.equal(furnishingBackLine(1), 'A piece of your furniture came back to Your things.');
   assert.equal(furnishingBackLine(2), '2 pieces of your furniture came back to Your things.');
   assert.equal(ownBackLines([statue(), furn(221), statue(), furn(229)], decorOwnBackLine),

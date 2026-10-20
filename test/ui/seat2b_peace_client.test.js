@@ -130,7 +130,7 @@ test('SEAT2b part two THE HOST\'S SEAMS: a members\' Harbour is the travel map\'
   assert.match(W, /name: typeof playerEntity\?\.name === 'string' \? playerEntity\.name : null, seat \}, profMintCraft\);/);
   assert.match(W, /\{ const g = guildBook\?\.guild\?\.id \?\? null; if \(g && seatBook\?\.towersDue\(g\)\) seatBook\.towers\(g, \(t\) => townTalk\.say\(t, 6\)\)\.catch\(\(\) => \{\}\); \}/);
   assert.match(W, /const made = rec\?\.kind === 'siege' \? storedText\(rec\.name, Number\(r\.data\.count\) \|\| 1\) : craftedText\(mintPieces\(r\.data\)\);/);
-  assert.equal(storedText('Ram Kit'), 'You made a Ram Kit - it waits in your Stores');
+  assert.equal(storedText('Ram Kit'), 'You made a Ram Kit. It waits in your Stores');
   assert.equal(storedText('Ram Kit', 2), 'You made 2 Ram Kits. They wait in your Stores');
   assert.notEqual(SIEGE_STAYS_LINE, STOCK_STAYS_LINE);
   assert.match(SIEGE_STAYS_LINE, /Siege Camp/);

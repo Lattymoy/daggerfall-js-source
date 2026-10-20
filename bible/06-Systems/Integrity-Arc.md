@@ -357,7 +357,7 @@ hearing no `locked` at all (an older Worker, a deploy's window) keeps the set it
 answer lands and tells each piece once ON THIS DEVICE (`systems/realmSaves.js`, `dagger.realm.locked.<id>`), and the
 notice names every locked piece in the character's own lists and counts the rest (`scenes/realmHoldHost.js`, wired at
 bootWorld's one line that wired the hold's notice), in the player's language: "The realm has locked your ...: it found
-the same piece somewhere else too. A locked piece stays with you - it cannot be traded, sold, dropped or stored where
+the same piece somewhere else too. It stays with you and cannot be traded, sold, dropped or stored where
 others can take it. Your other pieces and your trading are not affected." A timed hold answers `tradeHeldWhy: { code:
 'until', t, until }` and is said with its end, written the game's language's way - and, while the law still finds a
 piece, that the hold stands past its end until the piece is gone; a timed hold run out with the piece still carried is

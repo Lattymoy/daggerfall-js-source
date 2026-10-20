@@ -428,8 +428,8 @@
   {
     "name": "AUDIT-UXB1-F10-the-note-forgets-the-third-answer",
     "file": "src/systems/controlsConfig.js",
-    "old": "so the key does both as it is, without ${SHARE_KEY_LABEL}: answer No",
-    "new": "so the key does both as it is: answer No",
+    "old": "so this key already does both without ${SHARE_KEY_LABEL}. Answer No",
+    "new": "so this key already does both. Answer No",
     "tests": [
       "test/ui/enhanced/enhancedControls.test.js"
     ]

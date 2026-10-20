@@ -28,7 +28,7 @@ test('PARTY-REST-FAR1: told ONCE per nap - the same far frame sixty times says i
   const rest = { mode: 1, hoursRemaining: 6, totalHours: 8 };
   const leader = { acct: 'a1', name: 'Mac' };
   for (let i = 0; i < 60; i++) notice(rest, false, leader);
-  assert.deepEqual(said, ['Mac is resting - come within 15 m of them to rest with the party.'], 'once, with the leader\'s name and the radius');
+  assert.deepEqual(said, ['Mac is resting. Come within 15 m of them to rest with the party.'], 'once, with the leader\'s name and the radius');
   notice(rest, true, leader);
   assert.equal(said.length, 1, 'near: nothing said (the mirror opens instead)');
   notice(rest, false, leader);
@@ -37,12 +37,12 @@ test('PARTY-REST-FAR1: told ONCE per nap - the same far frame sixty times says i
   notice(null, false, leader);
   assert.equal(said.length, 2, 'no rest: nothing');
   notice(rest, false, null);
-  assert.equal(said[2], 'A party member is resting - come within 15 m of them to rest with the party.', 'the rest ended and began again: said again, with the fallback name (any party mate may be the rester - PARTY-REST1c)');
+  assert.equal(said[2], 'A party member is resting. Come within 15 m of them to rest with the party.', 'the rest ended and began again: said again, with the fallback name (any party mate may be the rester - PARTY-REST1c)');
   notice(rest, false, { acct: 'a1', name: '' });
   assert.equal(said.length, 3, 'still latched');
   notice(null, false, leader);
   notice({ mode: 0, hoursRemaining: 2, totalHours: 2 }, false, leader);
-  assert.equal(said[3], 'Mac is loitering - come within 15 m of them to wait with the party.', 'AUDIT DROPS D3: a loiter is said as one');
+  assert.equal(said[3], 'Mac is loitering. Come within 15 m of them to wait with the party.', 'AUDIT DROPS D3: a loiter is said as one');
   assert.ok(secs.every((s) => s === 4), 'AUDIT DROPS D3: four seconds on the label, every time');
 });
 
@@ -52,7 +52,7 @@ test('PARTY-REST-FAR1 by source: the notice reads the SAME `nearAccount` the mir
     'a party mate resting where I cannot mirror them, told once, not while dead (AUDIT DROPS D3), an offline row ignored');
   assert.ok(tick.indexOf('partyRestFarNotice(') < tick.indexOf('const restingRow = nearRestMembers().find('), 'before the mirror opens on a near rester');   // REST-OPT: over those who rest with the party
   assert.match(tick, /if \(!social\?\.party\) \{\s*\n\s*if \(mirroring\) ov\._end\(ov\.session\.endEarly\(\)\);[^\n]*\n\s*_partyRestFarSaid = false;/, 'no party: the latch stands down');
-  assert.match(w, /const PARTY_REST_FAR_TEXT = \(who, loitering = false\) => `\$\{who\} is \$\{loitering \? 'loitering' : 'resting'\} - come within \$\{PARTY_REST_RADIUS\} m of them to \$\{loitering \? 'wait' : 'rest'\} with the party\.`;/, 'the radius is the one law\'s own number, never restated; a loiter is not a rest (AUDIT DROPS D3)');
+  assert.match(w, /const PARTY_REST_FAR_TEXT = \(who, loitering = false\) => `\$\{who\} is \$\{loitering \? 'loitering' : 'resting'\}\. Come within \$\{PARTY_REST_RADIUS\} m of them to \$\{loitering \? 'wait' : 'rest'\} with the party\.`;/, 'the radius is the one law\'s own number, never restated; a loiter is not a rest (AUDIT DROPS D3)');
   assert.match(w, /const partyRestFarNotice = \(rest, near, row\) => \{\s*if \(!rest \|\| near\) \{ _partyRestFarSaid = false; return; \}\s*if \(_partyRestFarSaid\) return;\s*_partyRestFarSaid = true;\s*setMidScreenText\(PARTY_REST_FAR_TEXT\(row\?\.name \|\| 'A party member', rest\.mode === 0\), PARTY_REST_FAR_SECONDS\);\s*\};/);
   assert.match(w, /const PARTY_REST_FAR_SECONDS = 4;/, 'AUDIT DROPS D3: long enough to be read - the label\'s 1.5 s default is a refusal\'s');
   assert.match(w, /import \{ setMidScreenText, midScreenText as _wildMidText \} from '\.\.\/ui\/midScreenText\.js';/, 'the HUD\'s own centred label - the door every refusal takes');   // WILD1: the label's own text read beside it (the zone's line)

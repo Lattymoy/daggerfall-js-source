@@ -654,7 +654,7 @@ test('AUDIT SHIPYARDS THE WORDS SEND THE PLAYER TO THE SHIPYARD (L7-1, L7-4, L7-
     resetFleetPage();
     const d = el('div');
     drawFleetPage(d, () => {}, { el, divider: (t) => el('h4', null, t) });
-    assert.match(d.textContent, /You don't own a ship\. Port shipyards sell them/);
+    assert.match(d.textContent, /You don't own a ship\. Buy one at a port shipyard/);
     assert.doesNotMatch(d.textContent, /general store/i);
   } finally { setHoldingsProvider(null); globalThis.document = prevDoc; }
   const csa = MOD_SETTINGS['come-sail-away'].keys.Enabled.description;

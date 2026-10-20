@@ -42,7 +42,7 @@ const keepInGallery = (blob, place) => import('../systems/shotGallery.js').then(
 export function keptLine(kept, downloaded) {
   if (kept === 'full') return downloaded ? 'Screenshot saved. The gallery is full. Delete some under Screenshots.' : 'The gallery is full. Delete some under Screenshots.';
   if (kept == null) return downloaded ? 'Screenshot saved.' : 'The screenshot could not be kept.';
-  return 'Screenshot kept. See Screenshots in the menu.';
+  return 'Screenshot added to Screenshots in the menu.';
 }
 const sayOnHud = (line) => import('../systems/notify.js').then((n) => n.hudText(line)).catch(() => {});
 

@@ -37,7 +37,7 @@
     "tests": [
       "test/systems/travel/fb0929d_toroads.test.js"
     ],
-    "note": "The classic skin's pick is routed too - refused in the Overworld's words ('part of the enhanced interface'), no journey at all: Travel Options no longer exact there."
+    "note": "The classic skin's pick is routed too - refused in the Overworld's words ('Turn on the enhanced interface'), no journey at all: Travel Options no longer exact there."
   },
   {
     "name": "TO-ROADS-first-person-only",

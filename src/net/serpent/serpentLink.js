@@ -91,7 +91,7 @@ export const SERPENT_NO_TEXT = Object.freeze({
   'it is already slain': 'The serpent is already slain.',
   'too far from its waters': 'Sail closer to the serpent\'s waters.',
   'the waters are full': 'There are too many ships in the serpent\'s waters.',
-  reload: 'Your game is older than this serpent. Save, then reload (or update the app) to fight it.',
+  reload: 'Your game is out of date. Save, then reload (or update the app) to fight this serpent.',
 });
 /** A kill's key: its day and its site's name. */
 const fallKey = (day, site) => `${day}|${serpentSiteKey(site.sx, site.sz)}`;

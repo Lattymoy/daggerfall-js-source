@@ -121,5 +121,5 @@ test('LEVEL-EVEN: the Firmament\'s Endurance reaches the floor through its own l
 test('LEVEL-EVEN: the level-up screen\'s Endurance says so - online every level gained and to come, offline from now on (mutant: the online words never read)', async () => {
   const { ATTRIBUTE_BLURB } = await import('../../src/ui/levelUp/levelUpView.js');
   assert.equal(ATTRIBUTE_BLURB.endurance, 'Raises the health you gain each level from now on.');
-  online(() => assert.equal(ATTRIBUTE_BLURB.endurance, 'Raises the health you gain each level. Online, your health never falls below your class\'s average for every level at the Endurance you have now.'));   // AUDIT SUGGESTIONS-1019 L6-5
+  online(() => assert.equal(ATTRIBUTE_BLURB.endurance, 'Raises the health you gain each level. Online, your health is never below your class\'s average for your level at your current Endurance.'));   // AUDIT SUGGESTIONS-1019 L6-5
 });

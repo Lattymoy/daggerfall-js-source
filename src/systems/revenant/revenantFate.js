@@ -142,7 +142,7 @@ export function beginYield(player, f, { now = Date.now(), rolls = Math.random } 
   const r = revenantYielded(player, f.entity);
   if (!r) return null;
   f.trophy = revenantTrophy(r, { entity: f.entity, level: player?.level ?? 1, rolls });
-  const ev = revenantMomentEvent('yield', r, player?.name, { body: 'Beaten, it awaits your judgment. Go to it, and kill it or spare it.', archive: f.archive, rolls });
+  const ev = revenantMomentEvent('yield', r, player?.name, { body: 'Beaten, it awaits your judgment. Go to it to kill it or spare it.', archive: f.archive, rolls });
   f.yieldEvent = ev;
   return ev;
 }
@@ -223,7 +223,7 @@ export function beginSpare(player, f, { now = Date.now(), rolls = Math.random } 
   if (state === 'with') holdSworn(r.id, SPARING_MS);   // AUDIT (2026-10-02): its companion steps out once the kneeling one is through
   const body = (state === 'with'
     ? `Sworn to you. ${r.given} walks at your side now.`
-    : `Sworn to you. Your companions are full - ${r.given} waits until you call it.`)
+    : `Sworn to you. Your companions are full, so ${r.given} waits until you call it.`)
     + (back.length ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: "It's yours. It always was."` : '');   // AUDIT FEUD 2: its article gone after "your"
   return { r, state, event: revenantMomentEvent('spared', r, player?.name, { body, archive: f.archive, rolls }) };
 }
@@ -291,7 +291,7 @@ export function fateModel(player, f, { choose } = /** @type {any} */ ({})) {
       {
         id: 'spare', key: 'S', label: 'Spare', verb: 'Spare', tone: 'primary',
         title: `Spare ${r.given}`,
-        detail: !room ? `You keep ${REVENANT_RETINUE_MAX} sworn already. Release one first`
+        detail: !room ? `You already have ${REVENANT_RETINUE_MAX} sworn. Release one first`
           : free ? `It joins you as a companion (${used + 1} of ${COMPANION_SLOTS})`
             : `It is sworn to you, and waits until you call it (your ${COMPANION_SLOTS} companion slots are full)`,
         confirm: free ? `Spare ${r.name}? It will walk at your side.` : `Spare ${r.name}? It will wait, sent away, until you call it.`,

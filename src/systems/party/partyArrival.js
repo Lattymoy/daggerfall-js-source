@@ -6,7 +6,7 @@ export const PARTY_ARRIVAL_WAIT_MS = 4000;
 export const PARTY_ARRIVAL_POLL_MS = 100;
 export const PARTY_ARRIVAL_TEXT = Object.freeze({
   waiting: 'Waiting for a safe party landing...',
-  returned: 'No safe landing. Returned; no fare charged.',
+  returned: 'No safe landing found. You were sent back and not charged.',
 });
 export class PartyArrivalUnavailable extends Error {
   constructor() { super('No supported party arrival'); this.name = 'PartyArrivalUnavailable'; }

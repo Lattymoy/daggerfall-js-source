@@ -94,7 +94,7 @@ export function rvnStarRefusal(held, id, points) {
   const h = rvnHeldStars(held);
   if (h.includes(id)) return null;
   const way = rvnWayTo(h, id);
-  if (!way?.length) return t('rvn.stars.no.way', 'This star isn\'t connected to any of its stars.');
+  if (!way?.length) return t('rvn.stars.no.way', 'This star isn\'t connected to any star it has taken.');
   const left = points - (h.length - 1);
   if (way.length > left) return t('rvn.stars.no.pointsAfter', 'Reaching this star costs {need} {need, plural, one {point} other {points}}. It has {left}. It gets one point per level after the first, and one per rank past the first.', { need: way.length, left: Math.max(0, left) });
   return null;
@@ -174,7 +174,7 @@ export function mountRevenantStarsWindow(host, { id, book = swornStarsBook(id), 
       for (const l of lines) ul.append(el('li', l.neg ? 'neg' : null, l.text));
       parts.push(ul);
       parts.push(el('h3', null, ASPECTS.blade()), el('p', 'fmt-sign', t('rvn.stars.bladeLore', 'Its body: health and damage.')));
-      parts.push(el('h3', null, ASPECTS.grave()), el('p', 'fmt-sign', t('rvn.stars.graveLore', 'Its art: how strong it is and how often it can use it, and an art for a revenant born without one.')));
+      parts.push(el('h3', null, ASPECTS.grave()), el('p', 'fmt-sign', t('rvn.stars.graveLore', 'Its art: how strong it is, how often it can use it, and an art for a revenant born without one.')));
       const art = rvnArtNote(r);
       if (art) parts.push(el('p', 'fmt-note', art));
       parts.push(el('h3', null, ASPECTS.road()), el('p', 'fmt-sign', t('rvn.stars.roadLore', 'Missions and loyalty: mission odds, loot, travel time, loyalty and rest.')));

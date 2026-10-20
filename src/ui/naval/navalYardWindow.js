@@ -79,7 +79,7 @@ export function yardText(model) {
     const w = WORDS[r.id];
     return {
       id: r.id, label: w.label,
-      state: r.missing === 0 ? `${have[r.id]} - whole` : `${have[r.id]} - ${r.missing} wanting at ${gold(r.price)}`,
+      state: r.missing === 0 ? `${have[r.id]} - whole` : `${have[r.id]} - ${r.missing} needed at ${gold(r.price)} each`,
       press: r.missing === 0 ? 'Whole' : r.afford === 0 ? `${w.verb} - ${gold(r.price)} each`
         : r.afford === r.missing ? `${w.verb} all - ${gold(r.cost)}` : `${w.verb} ${r.afford} - ${gold(r.cost)}`,
       can: r.missing > 0 && r.afford > 0,
@@ -96,8 +96,8 @@ export function yardText(model) {
     const w = WORDS[r.id];
     const state = r.id === 'stores'
       ? (r.missing === 0 ? `${r.have} in the hold. Stores are full` : `${r.have} in the hold - ${r.missing} more at ${gold(r.price)} each`)
-      : r.drunk ? t('naval.yard.grogDrunk', 'Crew spirits are {spirits, select, roaring {roaring} high {high} steady {steady} low {low} other {grim}} - they\'ve had today\'s round', { spirits: spiritsWord(r.have) })   // GROG-WORD: never "as high as they go" below the top
-        : (r.missing === 0 ? 'Crew spirits are as high as they go' : `Crew spirits are ${spiritsWord(r.have)} - a round is ${gold(r.price)}`);
+      : r.drunk ? t('naval.yard.grogDrunk', 'Crew spirits are {spirits, select, roaring {roaring} high {high} steady {steady} low {low} other {grim}}, and they\'ve had today\'s round', { spirits: spiritsWord(r.have) })   // GROG-WORD: never "as high as they go" below the top
+        : (r.missing === 0 ? 'Crew spirits are as high as they go' : `Crew spirits are ${spiritsWord(r.have)}. A round costs ${gold(r.price)}`);
     return {
       id: r.id, label: w.label, state,
       press: r.missing === 0 ? (r.id === 'stores' ? 'Full' : r.drunk ? 'Tomorrow' : 'No need') : r.afford === 0 ? `${w.verb} - ${gold(r.price)}${r.id === 'stores' ? ' each' : ''}`
@@ -112,7 +112,7 @@ export function yardText(model) {
     lede: bill === 0 ? 'The ship is in full repair. There is nothing to fix.'
       : sh.wrecked ? `The ship came in wrecked. The shipwright can fully repair it for ${gold(bill)}.` : `The shipwright can fully repair it for ${gold(bill)}.`,
     rows,
-    whole: bill === 0 ? null : paid >= bill ? `Repair all - ${gold(bill)}` : paid > 0 ? `Make good what your purse pays - ${gold(paid)}` : `Repair all - ${gold(bill)}`,
+    whole: bill === 0 ? null : paid >= bill ? `Repair all - ${gold(bill)}` : paid > 0 ? `Repair what you can afford - ${gold(paid)}` : `Repair all - ${gold(bill)}`,
     canWhole: paid > 0,
   };
 }
@@ -128,7 +128,7 @@ export function officeText(o) {
   if (o.ether) return etherOfficeText(o);   // ETHER-SEA: a freeport past the Veil
   // AUDIT CAPTAIN'S SEA L10: the favours are refused at a quarter of the notoriety its navy hunts at - never "hunts you";
   // B14: "an Admiral"
-  const lede = o.hunted ? `${o.port} - ${o.crown}'s harbormaster grants you no favors while your notoriety in its waters stands so high.`
+  const lede = o.hunted ? `${o.port} - ${o.crown}'s harbormaster. Your notoriety in these waters is too high for any favors.`
     : `${o.port} - ${o.crown}'s harbormaster. You are ${o.rank === 'Unsworn' ? 'Unsworn' : `${/^[aeiou]/i.test(o.rank) ? 'an' : 'a'} ${o.rank}`} of ${o.crown} (standing ${o.standing}).`;
   const board = (o.board ?? []).map((b) => ({ id: b.id, title: b.title, words: b.words, terms: `${b.pay} - ${b.term} - ${b.standing}`, press: 'Take', can: !!b.can, why: b.why ?? '' }));
   const held = (o.held ?? []).map((h) => ({ id: h.id, title: h.title, words: h.progress, state: `${h.left} - ${h.pay}` }));
@@ -164,11 +164,11 @@ export function etherOfficeText(o) {
 export function exchangeText(x) {
   if (!x) return null;
   const g = (n) => `${Math.round(n).toLocaleString('en-US')} gold`;
-  const room = x.room == null ? '' : x.room > 0 ? ` - room for ${x.room} kg more before the ship can't move` : ' - the ship can\'t carry any more';   // AUDIT CAPTAIN'S SEA B11
+  const room = x.room == null ? '' : x.room > 0 ? ` (room for ${x.room} kg more)` : ' (the ship can\'t carry any more)';   // AUDIT CAPTAIN'S SEA B11
   // SEA-TRADE (Town-Economy-Arc section 8): online, the port town's economy, whose prices the exchange keeps
-  const band = x.band ? ` ${t('sea.exchange.band', 'Port economy: {band}. The exchange\'s prices follow it.', { band: townBandWord(x.band) })}` : '';
+  const band = x.band ? ` ${t('sea.exchange.band', 'Port economy: {band}. Exchange prices follow it.', { band: townBandWord(x.band) })}` : '';
   const lede = (x.weight == null ? `${x.port}'s exchange. Trade from the helm, into the hold.`
-    : `${x.port}'s exchange. The hold carries ${Math.round(x.weight)} kg of goods${room}; your purse ${g(x.gold)}.`) + band;
+    : `${x.port}'s exchange. The hold carries ${Math.round(x.weight)} kg of goods${room}. You have ${g(x.gold)}.`) + band;
   const STAND = { makes: 'Made here: cheap', wants: 'Wanted here: dear', neither: '' };
   const rows = (x.rows ?? []).map((r) => ({
     id: r.id, title: r.name, canBuy: r.sells > 0 && x.weight != null, canSell: r.have > 0 && r.buys > 0,
@@ -182,12 +182,12 @@ export function exchangeText(x) {
 export function yardNote(result) {
   if (!result) return null;
   if (Array.isArray(result.bought)) {
-    if (!result.ok) return { text: 'Your purse will not pay for a thing here.', warn: true };
-    return result.whole ? { text: `Fully repaired for ${gold(result.cost)}.`, warn: false } : { text: `The yard made good what your purse paid: ${gold(result.cost)}.`, warn: false };
+    if (!result.ok) return { text: 'You can\'t afford anything here.', warn: true };
+    return result.whole ? { text: `Fully repaired for ${gold(result.cost)}.`, warn: false } : { text: `The yard repaired what you could afford: ${gold(result.cost)}.`, warn: false };
   }
   const w = WORDS[result.id];
   if (!w) return null;
-  if (!result.ok) return result.short ? { text: `Not enough gold - ${gold(result.short)} a piece.`, warn: true } : null;
+  if (!result.ok) return result.short ? { text: `Not enough gold. It costs ${gold(result.short)} each.`, warn: true } : null;
   return { text: `${w.done}: ${w.unit(result.n)} for ${gold(result.cost)}.`, warn: false };
 }
 
@@ -248,7 +248,7 @@ export function mountNavalYardWindow(host, deps) {
   const lede = el('p', 'dfnaval-lede');
   const sec = el('section', 'dfnaval-sec');
   const secHead = el('h3', 'dfnaval-sechead');
-  secHead.append(el('span', null, 'Repairs and supplies'), el('span', 'dfnaval-count', 'as much as your purse pays'));
+  secHead.append(el('span', null, 'Repairs and supplies'), el('span', 'dfnaval-count', 'as much as you can afford'));
   const list = el('ul', 'dfnaval-holdlist');
   const acts = el('div', 'dfnaval-acts');
   const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => { note = yardNote(m.buyAll?.()); render(); });

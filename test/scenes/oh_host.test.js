@@ -311,10 +311,17 @@ test('OH-B ApplySettings off the declared keys: the midpoint\'s values, as the C
   assert.deepEqual(Object.keys(MOD_SETTINGS['ocean-holes'].keys), ['Enabled', 'General.PitSpawnRate', 'General.SurfaceHoleSize', 'General.SeafloorHoleSize',
     'General.MiasmaParticleCount', 'General.MiasmaHeight', 'General.DungeonVisualIntensity', 'General.DungeonVisualDarkness'], 'the shipped order');
   const shipped = JSON.parse(readFileSync(new URL('../../vendor/ocean-holes/modsettings.json', import.meta.url), 'utf8'));
+  // PLAIN-TEXT (2026-10-19): four of the mod's lines said plainly for a player - their words, exactly
+  const PLAIN = {
+    PitSpawnRate: 'How many blue holes there are: none at 0, 1 square in 48 at the middle, 1 in 24 at most',
+    MiasmaParticleCount: 'Amount of mist over a hole',
+    MiasmaHeight: 'Height of the mist over a hole',
+    DungeonVisualDarkness: 'How dark the fog and light are in flooded dungeons',
+  };
   for (const k of shipped.Sections[0].Keys) {
     const d = MOD_SETTINGS['ocean-holes'].keys[`General.${k.Name}`];
     assert.equal(d.default, k.Value, k.Name);
-    assert.equal(d.description, k.Description, k.Name);
+    assert.equal(d.description, PLAIN[k.Name] ?? k.Description, k.Name);
     assert.equal(d.min, k.Min);
     assert.equal(d.max, k.Max);
   }

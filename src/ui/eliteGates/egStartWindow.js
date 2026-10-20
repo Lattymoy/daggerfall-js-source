@@ -146,9 +146,13 @@ export function egStartListDoors({ ready, makeList, slot }) {
  * @param {{ keys: number, me: string, members: { sub: string, name: string }[], starts: Record<string, number[]|null>, rehearsal?: boolean, questDue?: boolean,
  *   openList: (labels: string[], onPick: (i: number) => void, onCancel: () => void) => any, closeList: (handle: any) => void,
  *   ask: (lines: string[], onYes: () => void, onNo: () => void, onGone?: () => void) => void, say?: (text: string) => void,
- *   onChoose: (c: { ew: number, wg: number[], rh: boolean }) => void, onCancel?: () => void, board?: ((onClosed: () => void) => any) | null }} o
+ *   onChoose: (c: { ew: number, wg: number[], rh: boolean }) => void, onCancel?: () => void, board?: ((onClosed: () => void) => any) | null,
+ *   panel?: { open: (o: any) => any } | null }} o
  */
 export function openEgStartWindow(o) {
+  // EG-PLUS: on Enhanced Plus the host hands the start window's own doors (ui/eliteGates/egStartPanel.js egStartPanelDoors) and
+  // the window is a breach window of its own; the list stands where it cannot open (no page to draw on)
+  if (o.panel) { const p = o.panel.open(o); if (p) return p; }
   let wager = [], handle = null, view = 'main', done = false, rows = [];
   const say = o.say ?? (() => {});
   const shut = () => { const h = handle; handle = null; if (h) o.closeList(h); };   // the slot emptied first

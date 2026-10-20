@@ -1446,7 +1446,7 @@
   {
     "name": "PROF12-E1-refusal-words",
     "file": "src/net/accountClient.js",
-    "old": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays in the Stores. It never goes into your pack.'),",
+    "old": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays in the Stores and cannot go in your pack.'),",
     "new": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays at the bench until its own craft is practised.'),",
     "tests": [
       "test/systems/prof12_client.test.js"
@@ -1668,8 +1668,8 @@
   {
     "name": "PROF12-E3-card-three",
     "file": "src/net/professionLaw.js",
-    "old": "spec('transmuter', 'Transmuter', 'Two of a DFU metal and a Mercury make one of the next up.')",
-    "new": "spec('transmuter', 'Transmuter', 'Three of a DFU metal make one of the next up.')",
+    "old": "spec('transmuter', 'Transmuter', 'Two of a metal and a Mercury make one of the next metal up.')",
+    "new": "spec('transmuter', 'Transmuter', 'Three of a metal make one of the next metal up.')",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1677,8 +1677,8 @@
   {
     "name": "PROF12-E3-page-three",
     "file": "src/ui/professions/profPages.js",
-    "old": "turns two of a metal and one Mercury into one of the next",
-    "new": "turns three of a metal and one Mercury into one of the next",
+    "old": "turns two of a metal and a Mercury into one of the next",
+    "new": "turns three of a metal and a Mercury into one of the next",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1975,8 +1975,8 @@
   {
     "name": "PROF541-R2-S1-page-note",
     "file": "src/ui/professions/profPages.js",
-    "old": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 1 ? ` ${t('prof.page.alchemy.counterOne', 'A potion wholly of the Apothecaries\\' goods brews one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
-    "new": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 9 ? ` ${t('prof.page.alchemy.counterOne', 'A potion wholly of the Apothecaries\\' goods brews one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
+    "old": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 1 ? ` ${t('prof.page.alchemy.counterOne', 'A potion made only from the Apothecaries\\' goods brews just one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
+    "new": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 9 ? ` ${t('prof.page.alchemy.counterOne', 'A potion made only from the Apothecaries\\' goods brews just one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
     "tests": [
       "test/systems/prof12_client.test.js"
     ],

@@ -256,7 +256,7 @@ test('KG5 TWO PLAYERS OVER THE RELAY: each sits at the board, builds an army and
   assert.match(shown(A), /You win/); assert.match(shown(A), /peer-b gave up the game\./);
   assert.match(shown(B), /You lose by forfeit/);
   assert.match(shown(C), /peer-a wins/, 'the watcher\'s headline names the winner');
-  assert.match(shown(A), /Played for sport\. No gold changed hands\./);
+  assert.match(shown(A), /Played for fun\. No gold changed hands\./);
   // Play again: the army again, Ready said again
   tick(300); A.g.press('again'); await A.pump();
   assert.equal(A.g.g.phase, 'army');

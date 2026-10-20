@@ -250,7 +250,7 @@ export const revoltDue = (standing) => Number(standing) <= 0;
 export const FORT_EFFECT_WORDS = Object.freeze({
   walls: (t) => `the defenders' wave ${(WALLS_WAVE_STEP_MS / 1000) * t} s faster`,
   gatehouse: (t) => `its vitality ${gatehouseVitality(t).toLocaleString('en-US')}`,
-  watchtowers: (t) => `the holder told when a challenger passes ${t >= 2 ? 'a quarter' : 'half'} of its defense`,
+  watchtowers: (t) => `the holder is warned when a challenger gets past ${t >= 2 ? 'a quarter' : 'half'} of its defense`,
   barracks: (t) => `${barracksGuards(t)} town guards fight for the holder`,
   market: (t) => `the town's boards list ${25 * t}% more, the Tithe's cap ${t} ${t === 1 ? 'point' : 'points'} higher`,
   shrine: (t) => `Standing +${shrineStanding(t)} a week, +${shrineGateInfluence(t)} influence for each gate felled in the region`,

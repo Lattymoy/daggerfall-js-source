@@ -265,11 +265,11 @@ export const BOUNTY_STORIES = Object.freeze({
   ]),
   orc: Object.freeze([
     'A band of {foes} has made camp {dir} of {town}, {far} out. {count} of them, bold enough to light fires. Break the camp before they come for the gates.',
-    'Merchants will not use the road {dir} of {town} since the {foes} took it - {count} blades at the last count. Clear the road.',
+    'Merchants will not use the road {dir} of {town} since the {foes} took it, {count} blades at the last count. Clear the road.',
   ]),
   undead: Object.freeze([
     'The old barrows {dir} of {town} are restless. {count} {foes} have been seen walking the fields at dusk. Lay them to rest, for good this time.',
-    'Our dead will not stay buried. The gravediggers fled when {foes} came up out of the ground {dir} of town - {count} of them. End this.',
+    'Our dead will not stay buried. The gravediggers fled when {foes} came up out of the ground {dir} of town, {count} of them. End this.',
   ]),
   giant: Object.freeze([
     'The earth shakes {dir} of {town}. {count} {foes} have come down from the high country and are tearing up the farmsteads. We need a hero, and we will pay like it.',
@@ -282,9 +282,9 @@ export const BOUNTY_STORIES = Object.freeze({
 /** The notices that send a hunter underground. {place} the dungeon's name, the rest as above. */
 export const BOUNTY_DUNGEON_STORIES = Object.freeze([
   '{count} {foes} have made their lair in {place}, {far} {dir} of {town}. They come up at night and are growing bolder. Go down there and put an end to them.',
-  'The last patrol sent into {place} did not come back. The one survivor found crawling out speaks of {foes} - {count} of them, deep inside. Clear the place.',
+  'The last patrol sent into {place} did not come back. The one survivor found crawling out speaks of {foes}, {count} of them, deep inside. Clear the place.',
   'Whatever sleeps in {place} has woken: {count} {foes} now roam its halls, and the farms {dir} of {town} lie in their shadow. Descend and cleanse it.',
-  'A reward is offered to any blade willing to enter {place}, {dir} of {town}, and slay the {foes} nesting there - {count} strong, by the trappers\' count.',
+  'A reward is offered to any blade willing to enter {place}, {dir} of {town}, and slay the {foes} nesting there, {count} strong by the trappers\' count.',
 ]);
 /** A notice that speaks of a farm - its granary, its orchard, its cattle, its sheep - stands a farm on its pixel
  *  (BOUNTY-FARM, scenes/bountyFarms.js). Read off the notice's own words, so a new story that names a farm gets one. */
@@ -296,7 +296,7 @@ export const BOUNTY_GRAVEYARD_STORIES = Object.freeze([
   '{count} {foes} have been seen at {place}, {far} {dir} of {town}. They stir among the stones after dark. Hunt them down before they reach the road.',
   'The gravedigger at {place} refuses to work after dusk: {foes}, {count} of them, have taken to the place. Put an end to them, {dir} of {town}, for good.',
   'Mourners were driven from {place}, {dir} of {town}, by {count} {foes}. Rid the graveyard of them.',
-  'A reward is offered to any blade willing to stand watch at {place}, {dir} of {town}, and slay the {foes} haunting it - {count} strong, by the sexton\'s count.',
+  'A reward is offered to any blade willing to stand watch at {place}, {dir} of {town}, and slay the {foes} haunting it, {count} strong by the sexton\'s count.',
 ]);
 /** ...and a dungeon's names the place. */
 export const bountyDungeonMapLine = (place) => `Take a look at your map: ${place} is marked with a black circle.`;

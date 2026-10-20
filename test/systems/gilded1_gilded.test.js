@@ -280,7 +280,7 @@ test('GILDED1 THE LOOK: named as an artifact is (no metal before it); its card t
     assert.deepEqual(CX.codexKey(h), { kind: 'gilded', id: 'the-hourlock' });
     assert.deepEqual(CX.codexGilded()[0] && [CX.codexGilded()[0].id, CX.codexGilded()[0].found, CX.codexGilded()[0].name, CX.codexGilded()[0].hint], ['the-hourlock', false, null, CX.GILDED_HINT], 'listed, unfound, by its hint alone');   // PIN MOVED (GILDED2): the first of the rows
     assert.equal(CX.noteFind(h), true);
-    assert.deepEqual(lines, ['The Hourlock - a Gilded piece! It joins your codex.']);
+    assert.deepEqual(lines, ['The Hourlock - a Gilded piece! Added to your codex.']);
     assert.equal(CX.noteFind(mintHourlock()), false, 'once');
     const row = CX.codexGilded()[0];
     assert.deepEqual([row.found, row.name, row.power, row.lore], [true, 'The Hourlock', HOUR_TOLLS, HOURLOCK.lore]);

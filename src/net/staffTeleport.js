@@ -145,7 +145,7 @@ export async function followStaffPlayer(name, { ask, prepare, place, allowed = (
 export const STAFF_TP_ERROR_TEXT = Object.freeze({
   offline: 'That player is not online.', ambiguous: 'More than one player matches. Use their full name.',
   busy: 'A player is changing locations or the server is busy. Try again.',
-  private: 'That private room is not ready. Both players and the server need the updated client/relay.',
+  private: 'That private room is not ready. Both players and the server need the latest update.',
   battle: 'That player is in a battle instance. Use its authorized entry.',
   unavailable: 'The target location is unavailable or their client needs updating.',
   denied: 'The server did not authorize this staff teleport.',

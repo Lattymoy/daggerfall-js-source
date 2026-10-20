@@ -30,15 +30,15 @@ const lantern = () => ({ group: 'UselessItems2', templateIndex: TEMPLATES.Lanter
 const torch = () => ({ group: 'UselessItems2', templateIndex: TEMPLATES.Torch, currentCondition: 50, maxCondition: 50 });
 const candle = () => ({ group: 'UselessItems2', templateIndex: TEMPLATES.Candle, currentCondition: 16, maxCondition: 16 });
 
-test('HT-WAIST: the switch is on the Handheld Torches pane - a toggle, ON by default (HT-WAIST-ON), its words the mod\'s kind and saying it is the port\'s; the shipped modsettings.json does not carry it (mutant: the key gone, defaulted off, or its words silent)', () => {
+test('HT-WAIST: the switch is on the Handheld Torches pane - a toggle, ON by default (HT-WAIST-ON), its words the mod\'s kind (PLAIN-TEXT: no note to a developer); the shipped modsettings.json does not carry it (mutant: the key gone, defaulted off, or its words silent)', () => {
   const def = MOD_SETTINGS[V].keys[KEY];
   assert.ok(def, 'the key is declared on the vendored pane');
   assert.equal(def.default, true, 'ON by default - HT-WAIST-ON (2026-09-24, Mac: "Have the lantern change on by default"); a player turns it off');
   assert.equal(typeof def.default, 'boolean', 'a ToggleKey, not a slider or a choice');
   assert.equal(def.options, undefined); assert.equal(def.min, undefined); assert.equal(def.text, undefined);
-  assert.match(def.description, /^If enabled, lanterns hang at your waist instead of being held/, 'in the mod\'s own voice - RelaxedLanterns\' "If enabled, ..."');
-  assert.match(def.description, /Torches and candles are still held/);
-  assert.match(def.description, /port’s own switch - the mod has none/, 'the pane says the knob is the port\'s, as ORL1\'s primarySkillsImpact does');
+  // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - in the mod's own voice (RelaxedLanterns' "If enabled, ..."),
+  // and no longer a note that the switch is the port's: the pane says what it does
+  assert.equal(def.description, 'If enabled, lanterns hang at your waist instead of being held, so they never need a free hand and are never put away. Torches and candles are still held.');
   // the vendored file is the mod's: the port adds its key on its own pane, never to the author's json
   const shipped = JSON.parse(read('vendor/handheld-torches/modsettings.json'));
   const names = shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`));

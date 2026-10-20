@@ -2300,7 +2300,7 @@ export class HeldMapWindow {
       const open = el('button', 'act hmkeyflt on hmkeyzone', 'Zone map');
       open.type = 'button'; open.tabIndex = -1;
       open.onpointerdown = (ev) => ev.preventDefault?.();   // never the focus (the key's own law)
-      open.title = 'Open the Wrothgarian Mountains: its four rings and their loot';
+      open.title = 'Open the Wrothgarian Mountains map, with its four rings and their loot';
       open.onclick = () => { if (this._top || this._info || this._phase !== 'map') return; this._openZoneMap(); };
       kinds.append(open);
       row.append(kinds);

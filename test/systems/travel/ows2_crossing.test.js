@@ -327,7 +327,7 @@ test('OWS2 words: the trip\'s line says a crossing; the refusals say why', () =>
   assert.equal(travelTripLine({ name: 'Wayrest', sea: true }), 'To Wayrest, by sea');
   assert.equal(travelTripLine({ spot: true, sea: true }), 'To the marked spot, by sea');
   assert.equal(travelTripLine({ name: 'Wayrest', share: 0.9 }), 'To Wayrest, by the road');
-  assert.equal(TRAVEL_VIEW_TEXT.needBoat, 'There is no way there by land. A boat would carry you across the water.');
+  assert.equal(TRAVEL_VIEW_TEXT.needBoat, 'There is no way there by land. You need a boat to cross the water.');
   for (const k of ['passenger', 'noLaunch', 'noWayAtSea', 'leftMoored', 'noBoat', 'aground']) assert.equal(typeof TRAVEL_VIEW_TEXT[k], 'string', k);
 });
 

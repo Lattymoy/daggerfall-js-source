@@ -116,6 +116,6 @@ export function regardBadge(card) {
   return {
     standing, label: STANDING_NAMES[standing], value: `${r > 0 ? '+' : ''}${r}`, share: (r + REGARD_MAX) / (2 * REGARD_MAX),
     words: `How they regard you: ${r > 0 ? '+' : ''}${r}, from -${REGARD_MAX} to +${REGARD_MAX}. A friend from +${FRIEND_AT}; an enemy from ${ENEMY_AT}, who will not speak to you; hostile from ${HOSTILE_AT}. `
-      + 'Talking once a day, speaking in a tone they like and fighting at their side raise it. A tone they dislike, a crime they witness, a blow and, worst of all, one of their own struck down lower it. Townsfolk prefer a Blunt word to a Polite one. It fades on days you are apart.',   // TONE-TASTE
+      + 'Talking once a day, speaking in a tone they like and fighting at their side raise it. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 on days you are apart.',   // TONE-TASTE
   };
 }

@@ -85,10 +85,10 @@ export function eventTimerRows(src) {
   const sdNow = sdPhase(sdRec, now);
   const sdName = src?.sd?.name || 'The Abyss Dungeon';
   const sdWhere = src?.sd?.place ? `Near ${src.sd.place}` : null;
-  if (sdNow === 'found') live(`sd:${sdRec.s}`, 'super', `${sdName} stands`, sdRec.until, sdWhere, 'Found. It fades away unbroken when this runs out');
-  else if (sdNow === 'fell') live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken. It folds in on itself when this runs out');
+  if (sdNow === 'found') live(`sd:${sdRec.s}`, 'super', `${sdName} stands`, sdRec.until, sdWhere, 'Found. It fades away unbeaten when this runs out');
+  else if (sdNow === 'fell') live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken. It collapses when this runs out');
   // SD19: the next one's rise, once this one is gone - never where (a Hollow risen is a find), only not before when
-  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(`sd:${(sdRec.s ?? 0) + 1}`, 'super', 'An Abyss Dungeon rises', sdRec.next, null, 'Not before this. It will rise somewhere in the Bay, its omen burning brass above it');
+  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(`sd:${(sdRec.s ?? 0) + 1}`, 'super', 'An Abyss Dungeon rises', sdRec.next, null, 'Not before this. Watch the Bay for its brass omen');
 
   // ── AN ELITE BREACH (net/eliteGates/egLaw.js egTimes: the call's opening, the open window, THE COUNT) ── EG-F (bible/11-Multiplayer/
   // Elite-Gates.md section 2, the Timers row): the company's alone (the host hands it only the call it holds) - a new kind
@@ -97,7 +97,7 @@ export function eventTimerRows(src) {
   const el = src?.elite ?? null;
   if (el && Number.isFinite(el.op) && !el.end) {
     const T = egTimes({ openedAt: el.op }), what = el.rh ? 'Rehearsal' : 'Elite Breach';
-    if ((el.h ?? 0) > 0 && Number.isFinite(el.until)) live(`elite:${el.op}`, 'elite', `Hall ${el.h}`, /** @type {number} */ (el.until), null, 'Left on the count');
+    if ((el.h ?? 0) > 0 && Number.isFinite(el.until)) live(`elite:${el.op}`, 'elite', `Hall ${el.h}`, /** @type {number} */ (el.until), null, 'Time left');
     else if (now < T.openAt) coming(`elite:${el.op}`, 'elite', `${what} opens`, T.openAt, null, 'Your company is called');
     else if (now < T.admitUntil) live(`elite:${el.op}`, 'elite', `${what} open`, T.admitUntil, null, 'Answer the call before this runs out');
   }
@@ -139,12 +139,12 @@ export function eventTimerRows(src) {
   // ── THE RAID DAY (the event clock's day - two real hours: the bounty board's hunts and the raids roll with it) ──
   // AUDIT TIMERS1 D4: NOT the calendar's day - since TIME1 the sky's date turns every real hour - so it says what turns
   const nextDay = Math.round(wallMsForClassicMinutes((gameDayAt(now) + 1) * GATE_DAY_MINUTES));
-  coming('gameday', 'reset', 'New bounty hunts and raids', nextDay, null, 'The bounty board posts a new day\'s hunts; new town raids are rolled');
+  coming('gameday', 'reset', 'New bounty hunts and raids', nextDay, null, 'New hunts on the bounty board and new town raids');
 
   // ── THE UTC DAY (the daily caps the service counts on its UTC day) ──
   // AUDIT TIMERS1 D10: the caps as they are - the Watch's only where the seats are open
   coming('daily', 'reset', 'Daily reset', (Math.floor(now / DAY_MS) + 1) * DAY_MS, '00:00 UTC',
-    `The day's nodes stand anew; rare hides, silver and Court writs${src?.seatsOpen ? ', and the Watch' : ''}: their daily limits start again`);   // CAP-OFF: gathering, hides and hauls keep no day's limit
+    `Gathering nodes come back. Daily limits reset for rare hides, silver and Court writs${src?.seatsOpen ? ', and the Watch' : ''}`);   // CAP-OFF: gathering, hides and hauls keep no day's limit
 
   // ── THE SEAT WEEK (Muster, Reckoning, the Turning - Sunday 18:00 UTC) ──
   // AUDIT TIMERS1 D5: the seats' rows for an account the seats are open to (the service says, `seatBook.open`)
@@ -154,7 +154,7 @@ export function eventTimerRows(src) {
   if (src?.seatsOpen) {
     if (seatPhaseOf(now) === 'muster') coming('reckoning', 'seat', 'The Reckoning', reckoningAt, 'Friday 18:00 UTC', 'Pledges lock until the Turning');
     else live('reckoning', 'seat', 'The Reckoning', turningAt, 'Pledges are locked', 'Ends at the Turning');
-    coming('turning', 'seat', 'The Turning', turningAt, 'Sunday 18:00 UTC', 'Seats change hands; the Officers\' writ budget, the weekly caps and the Tides start again');
+    coming('turning', 'seat', 'The Turning', turningAt, 'Sunday 18:00 UTC', 'Seats change hands. The Officers\' writ budget, the weekly caps and the Tides reset');
     const season = seasonOf(week, src?.zero ?? null);
     if (season) {
       const name = seatSeasonName(season.n);

@@ -105,7 +105,7 @@ export function portalHold({ dead = false, busy = false, duel = false, siege = f
 /** The stone's card lines (systems/item/itemInfo.js builds the name and the weight around them). */
 export const portalStoneLines = () => [
   'Opens a portal to any place on the map.',
-  `It stands ${Math.round(PORTAL_OPEN_MS / 1000)} seconds, for anyone to step through.`,
+  `It stays open for ${Math.round(PORTAL_OPEN_MS / 1000)} seconds, and anyone can step through.`,
 ];
 
 // ---- the counter ---------------------------------------------------

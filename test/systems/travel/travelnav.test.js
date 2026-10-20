@@ -1117,13 +1117,14 @@ test('TRAVEL-NAV1 raycastHit\'s `out`: the caller\'s own result, written and ret
 
 // ─── the switch and the host ────────────────────────────────────────────
 
-test('TRAVEL-NAV1 THE SWITCH: the port\'s own key on the mod\'s pane - on by default, saying it is the port\'s, on the tile, read into the settings; the vendored modsettings.json does not carry it', () => {
+test('TRAVEL-NAV1 THE SWITCH: the port\'s own key on the mod\'s pane - on by default, saying what it does, on the tile, read into the settings; the vendored modsettings.json does not carry it', () => {
   const KEY = 'GeneralOptions.AvoidObstacles';
   const def = MOD_SETTINGS['travel-options'].keys[KEY];
   assert.ok(def, 'declared');
   assert.equal(def.default, true, 'ON - the improvement Mac asked for is the default');
   assert.equal(typeof def.default, 'boolean', 'a toggle');
-  assert.match(def.description, /port’s own switch - the mod has none/);
+  // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - the note that the switch is the port's own is gone
+  assert.equal(def.description, 'Steers time accelerated travel around buildings, walls and rocks, and pauses the journey before walking into something it can\u2019t get round.');
   const shipped = JSON.parse(read('vendor/travel-options/modsettings.json'));
   assert.ok(!shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`)).includes(KEY), 'the author\'s file is untouched');
   assert.ok(MOD_CURATED['travel-options'].includes(KEY) && modDials('travel-options').includes(KEY), 'reachable: on the tile');

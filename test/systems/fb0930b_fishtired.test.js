@@ -35,7 +35,7 @@ import { MOBILE_TYPES } from '../../src/characters/mobile/mobileTypes.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
 
 const NOON = 100000 * 1440 + 12 * 60;   // a day's noon on the classic clock
-const TIRED = 'too tired to fish in the water. Get out and rest';
+const TIRED = 'too tired to fish in the water: get out and rest';
 
 /** An angler with a Fishing-Net, in a lake (swimming) or on a pier at sea (not), `share` of the fatigue pool left. */
 function stand({ swimming = true, share = 1 } = {}) {

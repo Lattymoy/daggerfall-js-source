@@ -76,7 +76,7 @@ export function rowCode(store, row) {
 export function bindRefusal(code, { crossbar = crossbarInForce() } = {}) {
   if (typeof code !== 'string') return 'not a controller button';
   if (code === 'JoystickAxis9Button0' || code === 'JoystickAxis10Button0') return null;   // LT, RT
-  if (Object.values(DPAD_CODES).includes(code)) return 'the d-pad is set below, under D-pad';
+  if (Object.values(DPAD_CODES).includes(code)) return 'set the d-pad below, under D-pad';
   if (/^JoystickAxis\d+Button[01]$/.test(code)) return 'a stick is not a button';
   if (!/^JoystickButton\d+$/.test(code)) return 'not a controller button';
   if (crossbar && CROSSBAR_HOLD.includes(code)) return 'LB and RB hold the crossbar (turn it off on the Plus card to use them)';

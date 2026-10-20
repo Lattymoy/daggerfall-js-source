@@ -122,7 +122,7 @@ function composePane(k, key) {
   bodyField.append(el('span', 'pr-label', t('report.bodyLabel', 'What happens, and how to make it happen')), body);
 
   root.append(kinds, subjectField, bodyField, count,
-    el('p', 'pr-sends', t('report.sends', 'Sent with it: your username, and this game\'s build - {build}.', { build: reportBuildText(desk.context()) })));
+    el('p', 'pr-sends', t('report.sends', 'Sent with it: your username and this game\'s build ({build}).', { build: reportBuildText(desk.context()) })));
 
   const sendWord = () => (desk.sending ? t('prof.page.stores.sending', 'Sending...') : t('report.send', 'Send privately'));
   const send = keyed(button('pm-send primary', sendWord(), () => sendIt()), 'send');

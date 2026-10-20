@@ -100,7 +100,7 @@ test('AUDIT FEUD V1: A PIECE BY ITS NAME AFTER "YOUR" - a legendary\'s article d
   const t = N.revenantTakes(me, { online: true });
   assert.equal(t.line, `${r.name} took your Glenmoril Bow.`);
   assert.deepEqual(N.tauntMoment(N.revenantById(r.id)).vars, { item: 'Glenmoril Bow' });
-  assert.equal(PG.tookWords(N.revenantById(r.id)), 'Took: your Glenmoril Bow - take it back from it.');
+  assert.equal(PG.tookWords(N.revenantById(r.id)), 'Took: your Glenmoril Bow. Take it back from it.');
   // a deserter's card
   const s = sworn('away', { loyalty: 3, personality: 'honourable' });
   N.revenantCompanionUpdate(me, s.id, (c) => { c.items = [glenmoril()]; });

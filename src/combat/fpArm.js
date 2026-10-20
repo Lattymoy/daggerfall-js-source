@@ -1952,7 +1952,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
       // Not "your archives do not carry it": ours is SHIPPED, so a miss
       // here is the build's fault and not the player's, and saying so
       // is the difference between a bug report and a wild goose chase.
-      notes.push(`weapon: ${path} ships with the port and did not load - this is a build problem, not your data`);
+      notes.push(`weapon: ${path} comes with the game and did not load. This is a game problem, not your files`);
     } else if (!skeletonHasBone(skeletonBytes, own.bone)) {
       notes.push(noBoneNote('weapon', own.bone, own.name));
     } else {
@@ -3153,8 +3153,8 @@ export async function buildFpArm({
       return {
         ok: false,
         stage: 'camera',
-        error: 'this skeleton has no "Camera" bone and no "Head" bone - '
-          + 'rule 54 has nothing to track',
+        error: 'this skeleton has no "Camera" bone and no "Head" bone '
+          + 'for the view to follow',
         notes: [...missing, ...(arm.notes || [])],
         rows: wanted,
       };

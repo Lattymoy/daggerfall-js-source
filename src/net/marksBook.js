@@ -89,15 +89,15 @@ const owedFind = (/** @type {any} */ f) => !!f && typeof f === 'object' && typeo
 
 /** The words. */
 export const MARKS_TEXT = Object.freeze({
-  struck: (n, balance) => `${marksText(n)} struck to your account. You hold ${marksText(balance)}.`,
+  struck: (n, balance) => `${marksText(n)} added to your account. You now hold ${marksText(balance)}.`,
   // WB12a; WB13b: the record's own line says it is recorded; SILVER: the currency's name; SILVER-WAYS: the day's cap is
   // the gates' and the raids' together - SERPENT-SET: and the serpents' - EG-E1: and the Spire's Redoubts'
-  capped: `No silver for this breach. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended, serpents slain and Redoubts taken.`,
-  cappedRaid: `No silver for this town. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended, serpents slain and Redoubts taken.`,
-  cappedSerpent: `No silver for this serpent. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended, serpents slain and Redoubts taken.`,
-  cappedEg: `No silver for this Redoubt. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended, serpents slain and Redoubts taken.`,   // EG-E1: a Redoubt of the Elite Breach
+  capped: `No silver for this breach. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents and Redoubts.`,
+  cappedRaid: `No silver for this town. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents and Redoubts.`,
+  cappedSerpent: `No silver for this serpent. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents and Redoubts.`,
+  cappedEg: `No silver for this Redoubt. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents and Redoubts.`,   // EG-E1: a Redoubt of the Elite Breach
   /** SILVER-WAYS: a guild deed this claim completed - three of the guild's accounts on one raid or gate. */
-  deed: (n, guild) => `A deed for ${guild?.name ?? 'your guild'}: three of its members stood together. ${marksText(n)} struck to its treasury.`,
+  deed: (n, guild) => `A deed for ${guild?.name ?? 'your guild'}: three of its members fought together. ${marksText(n)} added to its treasury.`,
   /** SILVER-WAYS: a guild contract's pay for a town defended. */
   contract: (pay, guild) => `${guild?.name ?? 'A guild'} pays you ${marksText(pay)} under its contract.`,
   sold: (marks, gold) => `The Bank buys ${marksText(marks)} for ${gold.toLocaleString('en-US')} gold, paid into your account here.`,

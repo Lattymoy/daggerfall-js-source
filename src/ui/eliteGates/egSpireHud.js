@@ -443,7 +443,7 @@ export const EG_SPIRE_CSS = `
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px; max-width: 300px; }
 .eg-chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .eg-chip { padding: 2px 7px; font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.eg-spire.enhanced .eg-chip { background: rgba(12,14,18,0.78); border: 2px solid #5a5446; }
+.eg-spire.enhanced .eg-chip { border-width: 2px; border-style: solid; }   /* EG-PLUS: the kit's chip paints it (ui/enhanced/enhancedFrame.js FRAME_ROLES) */
 .eg-spire.classic .eg-chip { background: rgba(0,0,0,0.55); border: 1px solid ${EG_CLASSIC_SHADOW_CSS}; }
 .eg-chip:empty { display: none; }
 .eg-count { font-size: 18px; letter-spacing: 0.04em; }
@@ -482,7 +482,9 @@ export const EG_SPIRE_CSS = `
 .eg-sigrow .eg-sig-stone { color: #e8c473; }
 .eg-sigrow .eg-sig-stone b { font-size: 14px; }
 .eg-first { color: #b9d0ff; font-style: italic; }
-.eg-fold { pointer-events: auto; font: inherit; color: inherit; background: rgba(12,14,18,0.78); border: 1px solid #5a5446; padding: 2px 8px; cursor: pointer; }
+.eg-fold { pointer-events: auto; font: inherit; color: inherit; padding: 2px 8px; cursor: pointer; }
+.eg-spire.classic .eg-fold { background: rgba(12,14,18,0.78); border: 1px solid #5a5446; }
+.eg-spire.enhanced .eg-fold { border-width: 2px; border-style: solid; }   /* EG-PLUS: the kit's button */
 .eg-fold:empty { display: none; }
 .eg-lord { position: absolute; left: 50%; top: calc(18px + 28px * var(--s) + 12px); transform: translateX(-50%) scale(var(--s)); transform-origin: top center; width: 460px; max-width: 88vw; display: none; }
 .eg-lord.on { display: block; }
@@ -500,7 +502,8 @@ export const EG_SPIRE_CSS = `
 .eg-door-arrow { display: block; font-size: 22px; line-height: 22px; }
 .eg-touch { position: absolute; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; gap: 10px; }
 .eg-touch:empty { display: none; }
-.eg-touch button { pointer-events: auto; min-width: 88px; min-height: 44px; font: inherit; color: inherit; background: rgba(12,14,18,0.82); border: 2px solid #5a5446; }
+.eg-touch button { pointer-events: auto; min-width: 88px; min-height: 44px; font: inherit; color: inherit; border: 2px solid #5a5446; }
+.eg-spire.classic .eg-touch button { background: rgba(12,14,18,0.82); }   /* EG-PLUS: on Enhanced Plus the kit's button paints it */
 .eg-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .eg-spire.upright .eg-col { left: 50%; top: calc(10px + 28px * var(--s) + 8px); transform: translateX(-50%) scale(var(--s)); transform-origin: top center; align-items: center; max-width: 92vw; }
 .eg-spire.upright .eg-count { font-size: 18px; }

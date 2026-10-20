@@ -169,8 +169,8 @@ export const PAD_ARRANGE_TEXT = Object.freeze({
   choose: (name) => `Choose a hotbar slot for ${name}.`,
   picked: (name) => `${name} is in hand. Choose a slot for it.`,
   hint: 'Select a slot to take it in hand, then another to put it there. Options clears a slot.',
-  hintHand: 'Choose a slot: select it, or hold a bumper and press the slot\'s button.',
-  hintHandRow: 'Choose a slot: select it.',
+  hintHand: 'Choose a slot, or hold a bumper and press the slot\'s button.',
+  hintHandRow: 'Select a slot to choose it.',
 });
 /** The bar's raise and its picked slot, from every reason it may be up under a window. */
 function raiseSync() {

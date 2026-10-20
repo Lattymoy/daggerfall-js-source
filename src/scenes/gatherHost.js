@@ -183,9 +183,9 @@ export function leftWords(d) {
 // AUDIT HOLDINGS C7: the Stores page is on the pause menu's Holdings tab now - the Professions key lands on the Stats
 // tab's Professions page, and the line said it opened the Stores
 export const storesWhereLine = (key, carrying = false) => (carrying ? BAG_WORDS.where   // BAG1: into the bag, then the pack
-  : `Gathered goods go to your Stores, not your pack: the pause menu's Holdings > Stores${key ? ` (${key} opens your Professions)` : ''}.`);
+  : `Gathered goods go straight to your Stores, under Holdings in the pause menu.${key ? ` ${key} opens your Professions.` : ''}`);
 /** GATHER-SAID: an act that ended before its end - let go, walked off, a window over it, the dungeon left - nothing asked. */
-export const ACT_STOPPED_LINE = 'The gathering stopped before its end. Nothing was taken.';
+export const ACT_STOPPED_LINE = 'The gathering stopped early. Nothing was taken.';
 /** A harvest the service did not answer, kept and asked again (net/profBook.js PROF_QUEUE_MS: ten minutes). */
 /** AUDIT PACK-OVER C: the over-weight line, said at most once in this long (ms). */
 export const OVER_SAID_MS = 10_000;
@@ -193,7 +193,7 @@ export const KEPT_LINE = 'The counting-house is slow to answer. Your gathering i
 /** GATHER-SAID: kept because the account is signed out ('auth', 'no-session') - asked again once there is a session. */
 export const KEPT_SIGNED_OUT_LINE = 'You are signed out. Your gathering is kept for ten minutes, and counted once you sign in.';
 /** A kept harvest let go unanswered: its ten minutes out, or the UTC day turned under it. */
-export const LAPSED_LINE = 'A gathering the counting-house never answered has lapsed. It was not counted.';
+export const LAPSED_LINE = 'A gathering the counting-house never answered has lapsed and was not counted.';
 
 /** The shortest signed angle a - b, degrees in (-180, 180]. */
 export const wrapDeg = (d) => { let x = d % 360; if (x > 180) x -= 360; if (x <= -180) x += 360; return x; };
@@ -933,7 +933,7 @@ export function createGatherHost(deps) {
         if (crossed.length) {
           const at = crossed[crossed.length - 1];
           hud.banner(`${rankName(at)} ${k?.title(profession) ?? professionName(profession)}`);
-          if (at === 50 || at === 100) hud.toast('A specialization may be chosen on the Professions page (the pause menu\'s Stats).');
+          if (at === 50 || at === 100) hud.toast('You can now choose a specialization on the Professions page (pause menu > Stats).');
         }
       }
       try { k?.answered?.(d, (t) => hud.toast(t), { hauled }); } catch (e) { console.warn('[gather] an answer', e); }   // PROF8: a trophy into the pack; HAUL-CARDS: `hauled` - its card said the goods (a Motherlode's silver on it)

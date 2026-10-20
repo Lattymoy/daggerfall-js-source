@@ -49,7 +49,7 @@ test('EG-F THE START WINDOW: the stake, the warning, Hall 1 and every Redoubt th
   const starts = { [ME]: [12, 7, 0], 'acct-mara': [7, 0], 'acct-ann': null };
   const rows = egStartRows({ keys: 3, me: ME, members, starts, rehearsal: true, questDue: true, wager: [0, 4] });
   assert.deepEqual(rows.map((r) => r.label), [
-    'Weir Keys: 3 - one will be staked.',
+    'Weir Keys: 3. One will be staked.',
     'A quest falls due before the breach can close.',
     'Redoubt 12 - the Shade Perilous [+xx]',
     'Redoubt 7 - the Soul Cairn [++x]',
@@ -108,7 +108,7 @@ test('EG-F THE START WINDOW: the stake, the warning, Hall 1 and every Redoubt th
   pick('Rehearse: Halls 1-5, no key');
   assert.deepEqual(R.log.at(-1), ['choose', { ew: 0, wg: [], rh: true }]);
   R = run();
-  pick('Weir Keys: 3 - one will be staked.');
+  pick('Weir Keys: 3. One will be staked.');
   // PIN MOVED (FIELD BUGS 2026-10-18c STAKE-ROW): the port's picker closes itself on any pick (ui/listPicker.js _pick; DFU's
   // leaves the close to its owner), so the stake picked asks the list again - the old list closed, a new one open
   // (test/ui/eliteGates/fb1018c_stakerow.test.js drives the real picker on the real slot)
@@ -357,7 +357,7 @@ test('EG-F THE CLIENT ON THE RELAY: the key\'s refusals over the host\'s facts; 
   let facts = () => ({ within: 'Daggerfall', site: SITE });
   await withArch(async (P) => {
     const { client, said, asked, prompts, horns, settle, arches, portal, pair, eg, step, setFeet } = P;
-    assert.equal(client.useKey(), 'Not within Daggerfall.');
+    assert.equal(client.useKey(), 'You cannot open a breach within Daggerfall.');
     facts = () => ({ nearGate: true, site: SITE });
     assert.equal(client.useKey(), EG_TEXT.near);
     facts = () => ({ hold: 'duel', site: SITE });

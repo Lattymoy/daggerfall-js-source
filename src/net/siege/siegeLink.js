@@ -230,7 +230,7 @@ export function siegeHudModel(s, battle, me, now, { watching = false, honours = 
     title: siegeResultTitle(s.end, battle),
     line: siegeResultLine(s),
     // SEAT2b part two (c): a revolt earns no Honours (net/siege/siegeRef.js honoured) - its claim settles the result alone
-    honour: watching ? '' : battle.kind === 'revolt' ? SIEGE_REVOLT_HONOUR : honours === undefined ? (claimable ? 'Your receipt is kept. Claim it for your Honors.' : '') : siegeHonourLine(honours),
+    honour: watching ? '' : battle.kind === 'revolt' ? SIEGE_REVOLT_HONOUR : honours === undefined ? (claimable ? 'Your receipt is saved. Claim it for your Honors.' : '') : siegeHonourLine(honours),
     claim: !watching && honours === undefined && claimable,
   } : null;
   return {

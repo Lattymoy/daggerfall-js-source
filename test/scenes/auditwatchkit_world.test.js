@@ -131,7 +131,7 @@ test('AUDIT WK-P5 a companion\'s pack is never thrown away: with no boat of his 
   const claymores = () => Array.from({ length: 6 }, (_, i) => ({ name: `Claymore ${i}` }));
   s.host.companionKnocked({ boat: 77, name: 'Hilda', gender: 'female', items: claymores() });   // her boat gone (purged)
   assert.deepEqual(calls, [{ n: 6, boat: null, force: true }], 'into my pack, forced');
-  assert.ok(s.log.say.some((t) => t === 'Hilda\'s pack is stowed in your pack - more than you can carry.'), s.log.say.join(' | '));
+  assert.ok(s.log.say.some((t) => t === 'Hilda\'s pack is stowed in your pack (more than you can carry).'), s.log.say.join(' | '));
   calls.length = 0;
   s.host.companionKnocked({ boat: 42, name: 'Olaf', gender: 'male', items: claymores() });   // her boat at hand
   assert.deepEqual(calls, [{ n: 6, boat: 42, force: false }]);

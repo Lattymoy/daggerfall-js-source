@@ -295,7 +295,7 @@ test('TOUCH-HOLD knife: away from a body the Use says where Hunting is done; off
   const s = stage();
   try {
     assert.equal(professionToolLine(SKINNING_KNIFE.templateIndex), PROFESSION_TOOL_HOW[SKINNING_KNIFE.templateIndex]('E'));
-    assert.match(professionToolLine(SKINNING_KNIFE.templateIndex), /^Hunting is done at a body your own blow felled: walk up to it until its acts show, then press E \(or use the Skinning Knife\)\.$/);   // PROF-MENU: its acts - the list, or the prompt
+    assert.match(professionToolLine(SKINNING_KNIFE.templateIndex), /^Hunting is done at a body you killed: walk up to it until its acts show, then press E \(or use the Skinning Knife\)\.$/);   // PROF-MENU: its acts - the list, or the prompt
     const r = useItem(s.knife, s.e.items, { entity: s.e });
     assert.deepEqual([r?.kind, r?.refused, r?.text], ['foraging', true, professionToolLine(SKINNING_KNIFE.templateIndex)], 'no body: the way said');
     assert.equal(s.host.acting(), false);

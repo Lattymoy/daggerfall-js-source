@@ -51,7 +51,7 @@ test('RING-HOLD: a trade refused over my own law hold names the piece the sessio
   const half = { sid: 's'.repeat(16), give: { items: [], gold: 1 }, get: { items: [], gold: 0 }, pick: [] };
   const r = await settleRealmTradeHalf({ session, half, wait: async () => {}, heldSaid: () => tradeHeldNotice(null, session.tradeHeld, session.tradeHeldWhy) });
   assert.equal(r.why, 'trade-held');
-  assert.match(r.text, /a Ring it carries/);
+  assert.match(r.text, /it carries a Ring/);
   assert.doesNotMatch(r.text, /something/);
 });
 
@@ -60,8 +60,8 @@ test('RING-WARN: a law hold\'s notice says each hold counts and the third is tim
   const named = tradeHeldNotice(null, 'law', { code: 'crafted', t: 135 });
   assert.equal(named, tradeHeldLawNotice('Ring'));
   for (const text of [named, TRADE_HELD_NOTICES.law]) {
-    assert.match(text, /until it is gone\. Each time the law holds it counts: the third time, trading stays frozen for a week even once it is gone \(a month if it comes to that again\)\.$/);   // PIN MOVED (AUDIT AUTO-HOLD): "then opens on its own" was false with the piece still carried
+    assert.match(text, /until it is gone\. Holds add up: from the third, trading stays frozen for a week even after it is gone, and for a month each time after that\.$/);   // PIN MOVED (AUDIT AUTO-HOLD): "then opens on its own" was false with the piece still carried
   }
-  assert.match(tradeHeldUntilNotice(1_800_000_000), /three times/);
+  assert.match(tradeHeldUntilNotice(1_800_000_000), /held 3 times/);
   assert.deepEqual(Object.keys(TRADE_HELD_NOTICES).sort(), ['budget', 'law', 'staff'], 'AUTO-HOLD: no notice says a copy holds the character, or a review');
 });

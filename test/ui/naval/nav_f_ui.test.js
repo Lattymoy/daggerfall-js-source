@@ -307,9 +307,9 @@ test('NAV-F the plunder window\'s words: her name, class and captain, the lede (
   assert.equal(raid.take, 'Take all into your pack', 'a raid\'s goods go to the pack');
   assert.equal(plunderText({ ...m, items: [{ id: 7 }] }, (it) => `#${it.id}`).rows[0], '#7', 'the host names the pieces');
   assert.equal(thingsText(2), '2 things');
-  assert.equal(takenText({ taken: 3, left: 0, where: 'hold' }, 'Carrack'), "3 things to your Carrack's hold.");
-  assert.equal(takenText({ taken: 1, left: 2, where: 'pack' }), '1 thing into your pack - 2 things will not fit and stay in the hold.');
-  assert.equal(takenText({ taken: 0, left: 4 }), 'You cannot carry any of it - 4 things stay in the hold.');
+  assert.equal(takenText({ taken: 3, left: 0, where: 'hold' }, 'Carrack'), "3 things moved to your Carrack's hold.");
+  assert.equal(takenText({ taken: 1, left: 2, where: 'pack' }), '1 thing moved into your pack. 2 things will not fit and stay in the hold.');
+  assert.equal(takenText({ taken: 0, left: 4 }), 'You cannot carry any of it. 4 things stay in the hold.');
   assert.equal(takenText(null), 'The hold is empty.');
 });
 
@@ -357,7 +357,7 @@ test('NAV-F the plunder window, driven: it opens on Take All; Take All empties h
   // take all
   press(take);
   assert.deepEqual(m.log, ['takeAll']);
-  assert.equal(byClass(shell, 'dfnaval-note')[0].textContent, "3 things to your Carrack's hold.");
+  assert.equal(byClass(shell, 'dfnaval-note')[0].textContent, "3 things moved to your Carrack's hold.");
   assert.deepEqual(byClass(shell, 'dfnaval-item').map((n) => n.textContent), ['Nothing left in the hold.']);
   assert.equal(take.getAttribute('disabled'), '', 'nothing left to take');
   assert.equal(byClass(shell, 'dfnaval-open')[0].getAttribute('disabled'), '');

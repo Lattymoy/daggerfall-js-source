@@ -352,7 +352,7 @@ export function goodRefusal(rec) {
 }
 /** Each refusal in the List form's words (the piece's name before it). */
 export const GOOD_REFUSAL_WORDS = Object.freeze({
-  shape: 'not a piece the market knows',
+  shape: 'not an item the market knows',
   worn: 'worn - take it off first',
   locked: 'locked - unlock it first',
   quest: 'a quest\'s',
@@ -362,6 +362,6 @@ export const GOOD_REFUSAL_WORDS = Object.freeze({
   letter: 'a letter of credit is gold',
   boat: 'a boat\'s',
   arrows: 'arrows go in a quiver',
-  stores: 'a Stores material, which the market sells only from the Stores',
+  stores: 'a Stores material, sold only from your Stores',
   large: 'too much to write on a board',
 });

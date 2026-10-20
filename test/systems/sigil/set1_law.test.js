@@ -106,8 +106,8 @@ test('SET1 the record: a sigil carries a power, a set, or both - never neither -
     const v = sigilView(piece);
     assert.equal(v.blow, false); assert.equal(v.pct, 0); assert.equal(v.full, null); assert.equal(v.set, 'dagon');
     setSigilOnline(false);
-    assert.deepEqual(sigilLines(piece), ['Sigil (Dormant. It wakes online, with your Renown)']);
-    assert.deepEqual(sigilLines(weapon(120, null)), ['Sigil (Dormant. It wakes online, with your Renown): +5% at Ascendant'], 'a weapon\'s words are what they were');
+    assert.deepEqual(sigilLines(piece), ['Sigil (Dormant: works online only)']);
+    assert.deepEqual(sigilLines(weapon(120, null)), ['Sigil (Dormant: works online only): +5% at Ascendant'], 'a weapon\'s words are what they were');
   } finally { _resetSigilForTests(); }
   assert.deepEqual(validItemField('sigil', armourSigil), armourSigil);
   assert.equal(validItemField('sigil', { set: 'nobody', party: 1, xp: 0 }), undefined);
@@ -168,8 +168,8 @@ test('SET1 the stage: the lowest worn piece\'s rank capped by the Renown\'s stag
   assert.equal(st.heldRenown, false);
   assert.deepEqual(st.tiers.map((t) => t.awake), [true, true, false], 'four pieces: the 2 and the 4');
   assert.deepEqual(st.tiers[0].values, { strength: 3, critical: 6 }, 'Kindled\'s numbers');
-  assert.equal(st.tiers[1].text, 'Your weapon blows deal +6% damage, +12% below half health');
-  assert.equal(st.tiers[1].full, 'Your weapon blows deal +12% damage, +24% below half health', 'and what it is at Ascendant');
+  assert.equal(st.tiers[1].text, 'Your weapon deals 6% more damage, or 12% more while you are below half health');
+  assert.equal(st.tiers[1].full, 'Your weapon deals 12% more damage, or 24% more while you are below half health', 'and what it is at Ascendant');
   // Renown 9 opens only Faint: the Renown holds it
   st = setState('dagon', pieces, 9, true);
   assert.equal(st.stage, 0);

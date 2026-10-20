@@ -47,11 +47,11 @@ export const DAGGERFALL_DEFAULT_SHADOW_POS = Object.freeze([1, 1]);
 
 /** The five help lines (4138-4142), each 20 pixels under the last from the screen's corner, and the colour line. */
 export const MAP_HELP_LINES = Object.freeze([
-  'LMB click to place a marker',
-  'RMB click to remove a marker',
-  'Press Keys 1-8 to change marker color',
-  'Hold Left Shift to change marker precision',
-  'Press ESC to exit',
+  'Left-click to place a marker',
+  'Right-click to remove a marker',
+  'Press 1-8 to change the marker color',
+  'Hold Left Shift for finer placement',
+  'Press Esc to exit',
 ]);
 
 /**

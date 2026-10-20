@@ -353,7 +353,7 @@
  {
   "name": "SEAT2a4-model-kept",
   "file": "src/net/siege/siegeLink.js",
-  "old": "honours === undefined ? (claimable ? 'Your receipt is kept. Claim it for your Honors.' : '')",
+  "old": "honours === undefined ? (claimable ? 'Your receipt is saved. Claim it for your Honors.' : '')",
   "new": "honours === undefined ? ''",
   "tests": [
    "test/net/siege/seat2a_siege_play.test.js"

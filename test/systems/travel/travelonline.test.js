@@ -58,7 +58,7 @@ test('TRAVEL-ONLINE by source: the world loads the mod through modSetting (the r
   // AUDIT TRAVEL-ONLINE T7: the floor under the switches - online a trip over land never reaches fast travel's teleport
   // AUDIT IT1 W3: a driver's trip never meets this floor - openImmersiveMap's own onTravel calls fastTravelTo
   assert.match(w, /if \(isOnlinePage\(\) && !opts\?\.travelShip\) \{ townTalk\.say\(ONLINE_LAND_TRAVEL_REFUSAL\); hudFade\.clearFade\(\); \} else fastTravelTo\(pick, opts, computed\);/);
-  assert.match(ONLINE_LAND_TRAVEL_REFUSAL, /^Online, a journey over land is traveled/);
+  assert.equal(ONLINE_LAND_TRAVEL_REFUSAL, 'Online, journeys over land cannot be skipped. Turn on Travel Options and try again.');
 });
 
 test('TRAVEL-ONLINE (AUDIT T1): the ports rule is the room\'s too - with it off in the player\'s store, a trip from the wilderness to an inland place on the ship toggle (on by default) stays a ship, and a ship is never walked: the teleport; online the rule holds, the ship is knocked off and the trip is walked (mutant: the ports key)', () => {

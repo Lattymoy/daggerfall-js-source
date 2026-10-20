@@ -275,7 +275,7 @@
   {
     "name": "AUDIT-REALM2-C8-the-door-says-back-up",
     "file": "src/systems/realmSaves.js",
-    "old": "  if (error === 'too-large') return 'This character\\'s save is too big for the realm to take. The realm keeps the last save it took.';   // AUDIT REALM2 C8\n",
+    "old": "  if (error === 'too-large') return 'This character\\'s save is too big for the realm. The realm keeps the last save it accepted.';   // AUDIT REALM2 C8\n",
     "new": "",
     "tests": [
       "test/systems/auditrealm2_client.test.js"

@@ -215,7 +215,7 @@ test('DICE1 at the chat: /roll and /dice take the dice\'s grammar - a d20 with n
   assert.deepEqual(parseChatLine('/ROLL 2d6+3'), { kind: 'roll', spec: { n: 2, m: 6, k: 3 } });
   assert.deepEqual(parseChatLine('/dice d%'), { kind: 'roll', spec: { n: 1, m: 100, k: 0 } });
   assert.deepEqual(parseChatLine('/roll 50d6'), { kind: 'badroll', name: 'roll' });
-  assert.equal(badRollText('roll'), '/roll takes dice like 2d6+3, d20 or 100 - at most 10 dice of up to 1000 sides.');
+  assert.equal(badRollText('roll'), '/roll takes dice like 2d6+3, d20 or 100, with at most 10 dice of up to 1000 sides.');
   assert.ok(HELP_LINES.some((l) => l.startsWith('/roll or /dice')), '/help says it');
 });
 

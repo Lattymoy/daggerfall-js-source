@@ -138,7 +138,7 @@ test('ONCRASH1: the throw is SAID - the FULL text on the console once per distin
   // the HUD line: the player reporting "it crashed" has the KIND and the TEXT - the text is the whole point, and
   // dropping it from the line passed the first cut's pin
   const line = s.statusLine();
-  assert.match(line, /a 'act' frame from another player was dropped/);
+  assert.match(line, /a 'act' message from another player was dropped/);
   assert.match(line, /Error: door/, 'the error itself is on the line, not just that one happened');
   assert.match(s.statusLine('chat'), /^chat: /, 'the label is the session\'s own');
 });

@@ -286,7 +286,7 @@ test('AUDIT CHAP5 E4: a guild whose bid for a chapter\'s patronage stands does n
   const disband = () => s.call('/v1/guilds/disband', { character: a.who.character }, a.who.secret);
   let r = await disband();
   assert.deepEqual([r.status, r.body.error], [409, 'guild-patron']);
-  assert.equal(accountRefusalText('guild-patron'), 'The guild has bid for a chapter\'s patronage. It cannot go until the Season opens and the bid is decided.');
+  assert.equal(accountRefusalText('guild-patron'), 'The guild has bid for a chapter\'s patronage. It cannot be disbanded until the Season opens and the bid is decided.');
   assert.ok(s.raw.prepare('SELECT 1 FROM guilds WHERE id = ?').get(a.id), 'it stands');
   assert.equal(await settleChaptersDue(s.env.DB, turnOf(LAST), ZERO, 'on'), 7);
   r = await disband();

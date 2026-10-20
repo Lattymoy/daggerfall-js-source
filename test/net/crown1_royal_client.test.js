@@ -79,7 +79,7 @@ test('CROWN1 THE ROYAL HUD\'S WORDS: the tourney, its prize and its end; the rin
   assert.ok(royalHudModel(s, t, 'p1', AT + 1000, { name }).self.includes('Cade challenges you. Challenge them back from their card to accept.'));
   assert.ok(!royalHudModel(s, t, 'p1', AT + ROYAL_RING.askMs + 1, { name }).self.some((l) => l.includes('challenges you')), 'lapsed');
   s = foldRoyal(s, { k: 'bend', n: 3, w: 'p1', l: 'p2', c: 0 }, AT + 5000);
-  assert.ok(royalHudModel(s, t, 'p1', AT + 5000, { name }).self.includes('You won the bout, but you two have met three times today, so the ladder did not count it.'));
+  assert.ok(royalHudModel(s, t, 'p1', AT + 5000, { name }).self.includes('You won the bout, but you two have met 3 times today, so it does not count on the ladder.'));
   assert.ok(royalHudModel(s, t, 'p2', AT + 5000, { name }).self.includes('You lost the bout.'));
   assert.ok(royalHudModel(s, t, 'p1', AT + 4999 + ROYAL_LAST_SHOWN_MS, { name }).self.some((l) => l.startsWith('You won the bout')));
   assert.ok(!royalHudModel(s, t, 'p1', AT + 5000 + ROYAL_LAST_SHOWN_MS, { name }).self.some((l) => l.startsWith('You won the bout')), 'said ten seconds');

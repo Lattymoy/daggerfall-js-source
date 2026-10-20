@@ -394,7 +394,7 @@ test('AUDIT POI L8 A DAMAGED MODEL SAID AS WHAT IT IS: a number that is no numbe
   assert.equal(poiMeshError(nan), 'not-finite');
   const far = quad(); far.indices[2] = 9;
   assert.equal(poiMeshError(far), 'index-range');
-  assert.equal(meshErrorText('not-finite'), 'A part\'s model holds a number that is not a number (NaN or infinite). Export it again.');
+  assert.equal(meshErrorText('not-finite'), 'A part\'s model holds an invalid number (NaN or infinity). Export it again.');
   assert.equal(meshErrorText('index-range'), 'A part\'s model names a vertex it does not have. Export it again.');
 });
 

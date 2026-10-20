@@ -259,7 +259,7 @@ test('FIELD-GUN-MW2: a missing shipped file SAYS it is the build\'s fault', () =
   });
   assert.equal(res.parts.length, 0);
   assert.equal(res.notes.length, 1);
-  assert.match(res.notes[0], /ships with the port/);
+  assert.equal(res.notes[0], 'weapon: meshes/thunderlock.nif comes with the game and did not load. This is a game problem, not your files');   // PLAIN-SWEEP: the build's fault, said plainly
   assert.doesNotMatch(res.notes[0], /your archives/, 'it is not the player\'s data that is missing');
 
   // And a skeleton without the bone says THAT, rather than throwing

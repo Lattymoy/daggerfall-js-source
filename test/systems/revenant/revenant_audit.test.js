@@ -134,7 +134,7 @@ test('AUDIT A4/A5: A SWORN ONE\'S PACK IS THE SAVE\'S - a load lays the save\'s 
   RC.releaseRevenant(r.id);
   assert.equal(me.items.length, items0 + 1, 'the sword into the pack');
   assert.equal(me.goldPieces, 40, 'the gold into the purse, never a row');
-  assert.match(read('src/ui/companionRoster.js'), /hands you back what it carries/, 'the confirm says so (AUDIT RVN G6: its pack and its kit)');
+  assert.match(read('src/ui/companionRoster.js'), /giving back what it carries/, 'the confirm says so (AUDIT RVN G6: its pack and its kit)');
 });
 
 test('AUDIT A7-A15: its words - the tally taunt only with kills to count, a revenant\'s flight knows the player\'s name, a beast\'s moment keeps what it says, a skeleton is never a wit, a $ in a name is a letter, three risen taunts each, one possessive for every title, the cornered say their words (mutants: the tally for a runner; a stranger to its own revenant; the body dropped; a mute kind talking temperaments)', () => {

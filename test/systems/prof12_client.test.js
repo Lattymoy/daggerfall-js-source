@@ -110,7 +110,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
   try {
     assert.match(page.text(), /The Alchemy Station/);
     assert.match(page.text(), /The alchemist's station - 50 gold a brew\. Provisioning 0 \(Novice\): a potion a brew; Potent 0% \(\+25% magnitude or duration\), \+5% for each herb you picked unbruised\./);   // PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
-    assert.equal(page.recipe('Healing').textContent, 'Healingwants its ingredients');
+    assert.equal(page.recipe('Healing').textContent, 'Healingneeds ingredients');
     assert.equal(page.recipe('Invisibility').textContent, 'Invisibilityrank 70');
     page.recipe('Healing').onclick();
     assert.match(page.text(), /Healing - rank 0Red Berries \(northern\) 1 \/ 1 \(1 stored\)Troll's Blood 0 \/ 1 \(0 stored\)Buy 1 from the Apothecaries - 4 silver/);
@@ -154,8 +154,8 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     assert.match(page.text(), /The Enchanting Station.*The guild's enchanter - 50 gold a piece\. Enchanting 0 \(Novice\)\./);
     assert.match(page.text(), /2,160 points: 21 Arcane Essence, \+315 Enchanting experience/);   // AUDIT PROF12 E2: 5 x the Gold ring's tier 3 x 21
     page.button('Disenchant').onclick();
-    assert.ok(page.button('Press again: it is gone'), 'pressed once: armed, nothing asked');
-    page.button('Press again: it is gone').onclick();
+    assert.ok(page.button('Press again to destroy it'), 'pressed once: armed, nothing asked');
+    page.button('Press again to destroy it').onclick();
     for (let i = 0; i < 40 && book.held('essence:arcane') === 0; i++) await new Promise((r) => setTimeout(r, 5));
     assert.deepEqual([book.held('essence:arcane'), book.track('enchanting').xp, player.items.some((it) => it.provenance)], [21, 315, false]);
   } finally { page.done(); setProfessionsPages(null); }
@@ -198,7 +198,7 @@ test('PROF12 pages: The Alchemy Station - away, the word; at a home\'s, no fee; 
   page = pageOf();
   assert.match(page.text(), /Your alchemy station\. Provisioning 50 \(Journeyman\): 3 potions a brew; Potent 0%/);   // PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
   for (const [name, rank] of [['Stamina', 0], ['Resist Fire', 10], ['Cure Disease', 25], ['Levitation', 40], ['Shadow Form', 55], ['Invisibility', 70], ['Purification', 90]]) {
-    assert.equal(page.recipe(name).textContent, `${name}${rank <= 50 ? 'wants its ingredients' : `rank ${rank}`}`, 'open at Journeyman to rank 40, shut above it');
+    assert.equal(page.recipe(name).textContent, `${name}${rank <= 50 ? 'needs ingredients' : `rank ${rank}`}`, 'open at Journeyman to rank 40, shut above it');
   }
   assert.equal(page.recipe('Healing').textContent, 'Healingcan brew now');
   page.recipe('Healing').onclick();
@@ -208,11 +208,11 @@ test('PROF12 pages: The Alchemy Station - away, the word; at a home\'s, no fee; 
   assert.deepEqual(calls, [['brew', 'healing', ['p2:16', 'reagent:troll-blood', 'reagent:elixir-vitae', 'metal:mercury']]]);
   // AUDIT PROF-541 R2-S1: a Brewer's three - but the Apothecaries' goods alone brew one, and the station says so
   assert.match(page.text(), /3 potions a brew\. Potent 0%/, 'the Healing\'s three');
-  assert.match(page.text(), /picked unbruised\. A potion wholly of the Apothecaries' goods brews one\./);
+  assert.match(page.text(), /picked unbruised\. A potion made only from the Apothecaries' goods brews just one\./);
   page.recipe('Levitation').onclick();
   assert.match(page.text(), /A potion a brew\. Potent 0%/, 'Levitation\'s cauldron is the counter\'s alone: one');
   page.recipe('Healing').onclick();
-  assert.match(page.text(), /A Transmuter, the Alchemy choice at 100, turns two of a metal and one Mercury/);
+  assert.match(page.text(), /A Transmuter \(an Alchemy choice at 100\) turns two of a metal and a Mercury/);
   assert.equal(page.button('Transmute'), null);
   page.done();
   const { calls: calls2 } = stubPages({ alchemy: { kind: 'shop', fee: ALCHEMY_FEE }, alchemyTrack: { rank: 100, specs: { 50: 'distiller', 100: 'transmuter' } }, held: { 'metal:tin': 3, 'metal:mercury': 1 } });
@@ -236,7 +236,7 @@ test('PROF12 pages: The Enchanting Station - away, the word; at a Mages Guild ha
   page.done();
   const { calls } = stubPages({ enchanter: { kind: 'shop', fee: ENCHANT_FEE }, enchantingTrack: { rank: 100, specs: { 50: 'efficient', 100: null } } });
   page = pageOf();
-  assert.match(page.text(), /The guild's enchanter - 50 gold a piece\. Enchanting 100 \(Master\): the item maker's gold 25% less\./);
+  assert.match(page.text(), /The guild's enchanter - 50 gold a piece\. Enchanting 100 \(Master\): the item maker costs 25% less\./);
   // PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): a Master's track takes no more XP - the service credits
   // MIN(earned, PROF_XP_MAX - held), none - so the piece says +0 and the station why (it said +7, which the Worker never
   // paid); AUDIT PROF12 E2's quarter is pinned at an Expert's 90 below, where it is paid
@@ -251,7 +251,7 @@ test('PROF12 pages: The Enchanting Station - away, the word; at a Mages Guild ha
   assert.equal(new ItemMakerWindow({ packItems: () => [], player, entity: player, icons: null, goldDiscountPct: () => 150 }).goldDiscountPct(), 0, 'a share past the whole none');
   page.button('Disenchant').onclick();
   assert.deepEqual(calls, [], 'once: armed');
-  page.button('Press again: it is gone').onclick();
+  page.button('Press again to destroy it').onclick();
   await new Promise((r) => setTimeout(r, 10));
   assert.deepEqual(calls, [['disenchant', 'aaaaaaaaaaaaaaaa']]);
   page.done();
@@ -292,13 +292,13 @@ test('PROF12 pages: Alchemy and Enchanting practised on the Professions page - t
       'Alchemy: Slow Falling, Water Breathing, Cure Disease, Heal Truerank 25', 'Alchemy: Resist Poison, Free Action, Levitationrank 40',
       'Alchemy: Chameleon Form, Shadow Form, Cure Poisonrank 55', 'Alchemy: Invisibilityrank 70', 'Cooking: Feast of the Hearthrank 70', 'Alchemy: Purificationrank 90',
     ]);
-    assert.match(page.text(), /Potions are brewed at an alchemy station/);   // VOICE1 (PIN MOVED): the same law in plain words
-    assert.doesNotMatch(page.text(), /not practised in the Bay yet/);
+    assert.match(page.text(), /Brew at an alchemy station/);   // VOICE1 (PIN MOVED): the same law in plain words
+    assert.doesNotMatch(page.text(), /not practiced in the Bay yet/);
     page.buttonStarting('Enchanting').onclick();
     page.draw();
     assert.match(page.text(), /Enchanting improves as you break crafted pieces down into Arcane Essence at an enchanting station/);   // VOICE1 (PIN MOVED): the same law in plain words
     assert.match(page.text(), /From Journeyman on, your rank lowers its prices/);   // VOICE1 (PIN MOVED)
-    assert.doesNotMatch(page.text(), /not practised in the Bay yet/);
+    assert.doesNotMatch(page.text(), /not practiced in the Bay yet/);
   } finally { page.done(); setProfessionsPages(null); }
 });
 
@@ -424,7 +424,7 @@ test('AUDIT PROF12 E1 client: the Stores page offers no Withdraw for Arcane Esse
     card('essence:arcane').onclick();
     assert.equal(page.button('Withdraw to pack'), null, 'no Withdraw at all');
     assert.ok(page.text().includes(ESSENCE_STAYS_LINE));
-    assert.doesNotMatch(page.text(), /Withdrawn, a material is an item in your pack/);
+    assert.doesNotMatch(page.text(), /A withdrawn material becomes an item in your pack/);
     card('reagent:ichor').onclick();
     assert.ok(page.button('Withdraw to pack'), 'a reagent goes to the pack');
     assert.equal(page.button('Withdraw to pack').disabled, false);
@@ -551,7 +551,7 @@ test('AUDIT PROF-541 B2 client: a realm character\'s disenchant names where its 
   asked.length = 0;
   await book.disenchant('bbbbbbbbbbbbbbbb');
   assert.ok(asked.length > 1 && asked.every(([, r]) => r === null), 'offline: the book asks again');
-  assert.match(accountRefusalText('prof-piece-gone'), /record does not show that piece/);
+  assert.match(accountRefusalText('prof-piece-gone'), /^That piece is not loose in your pack, so it cannot be disenchanted\.$/);
   const bodies = [];
   const wire = accountProf({ fetch: async (u, i) => { bodies.push(JSON.parse(i.body)); return new Response('{}', { status: 200 }); }, storage: sessionStorageOf(SESSION_KEY, { secret: 's'.repeat(43), id: 'acc' }) });
   await wire.disenchant('char-1', 'aaaaaaaaaaaaaaaa', 'rid-1', at);
