@@ -619,6 +619,12 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "const owForecast = createOverworldForecast({ climateAt, ground: mapGroundHere, minuteNow: () => playerTicker.classicMinutes,",
+   "clock": "event",
+   "why": "OW-FORECAST: the weather ahead read at the minute the sky's weather is sampled at (sampleWeatherField's) - the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "nowMinutes: playerTicker.classicMinutes, tsec",
    "clock": "event",
    "why": "the weather's pace"

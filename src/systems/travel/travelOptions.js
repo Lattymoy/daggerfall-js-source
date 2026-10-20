@@ -48,12 +48,13 @@ import {
   mapPixelWorldOrigin, normalisedYaw, directionOfYaw, targetPixel, countSetBits,
   playerOnPathAt, pathsDataPoint, roadsDataPoint, nextPathDirection,
 } from './travelPaths.js';
-import { TravelAutopilot, rectOf, rectMinMax, rectContains } from './travelAutopilot.js';
+import { TravelAutopilot, rectOf, rectMinMax, rectContains, rectCentre, ARRIVAL_BUFFER } from './travelAutopilot.js';
+import { TOWN_PACE_MAX } from './townWalk.js';   // OW-TOWN-WALK: a town's streets walked at a town's pace
 import { TRAVEL_OPTIONS_TEXT as T, TRAVEL_NAV_TEXT, format, localize } from './travelOptionsText.js';
 import { hasPortFor } from './travelPorts.js';   // SEAT2b part two: HasPort, or a members' Harbour at a seat
 import { FATIGUE_MULTIPLIER } from '../statMods.js';
 import { LOCATION_TYPES, CLIMATES, worldCoordToMapPixel } from '../../formats/mapsFile.js';
-import { joinPoint, dryLine as dryLineOf } from './travelRoute.js';   // AUDIT OW3 J3: a resume rejoins the road where the start's join did; AUDIT DEEP T2-1's law, one home (OWS2)
+import { joinPoint, dryLine as dryLineOf, finalRoadVia } from './travelRoute.js';   // AUDIT OW3 J3: a resume rejoins the road where the start's join did; AUDIT DEEP T2-1's law, one home (OWS2)
 import { travelRateOf } from '../timeScale.js';   // RATE-LAW: the journey's rate is its ground's
 
 export const TRAVEL_OPTIONS_VENDOR = 'travel-options';
@@ -64,9 +65,10 @@ export const ROAD_LEG_KINDS = Object.freeze(['road', 'track']);
 /** ROAD-BRIDGE (2026-10-12, Mac's video: "sometimes your multiplier slows down randomly without an enemy nearby"): a
  *  road's route can step off its painted pixels for ONE pixel - a bend the network draws as a diagonal gap, a crossing
  *  whose cell holds no road bit - and that single open leg, a road leg on each side, dropped the clock from x100 to x60
- *  and back within a second or two. The traveller never left the road; the route's pixels did. One open leg between two
- *  road legs, one map pixel from the leg before it, is the road's. A longer open stretch, or the last stretch to a spot,
- *  is still the open ground's. */
+ *  and back within a second or two. The traveller never left the road; the route's pixels did (AUDIT OW-REVISITED L2,
+ *  outside its diff: all but always - one bridged leg of the real map's, 923,244 to 928,257, runs 578 m from any painted
+ *  road, and walks at the road's rate there). One open leg between two road legs, one map pixel from the leg before it,
+ *  is the road's. A longer open stretch, or the last stretch to a spot, is still the open ground's. */
 export function bridgedRoadLeg(legs, i) {
   const leg = legs?.[i], prev = legs?.[i - 1], next = legs?.[i + 1];
   if (!leg || leg.kind !== 'open' || !prev || !next) return false;
@@ -316,14 +318,31 @@ export function ringPassPoints(locationRect, locationBorderRect, from, to, mid) 
   const wx = (B.xMin + L.xMin) / 2, ex = (L.xMax + B.xMax) / 2, nz = (L.zMax + B.zMax) / 2, sz = (B.zMin + L.zMin) / 2;
   const cx = Math.min(L.xMax, Math.max(L.xMin, mid.x)), cz = Math.min(L.zMax, Math.max(L.zMin, mid.z));
   const at = { n: { x: cx, z: nz }, ne: { x: ex, z: nz }, e: { x: ex, z: cz }, se: { x: ex, z: sz }, s: { x: cx, z: sz }, sw: { x: wx, z: sz }, w: { x: wx, z: cz }, nw: { x: wx, z: nz } };
+  // AUDIT OW-REVISITED L2-3: A DIAGONAL ROAD MEETS THE RING WHERE IT CROSSES IT - the road's own diagonal through the
+  // pixel's middle (the painter's x == y arms) at the middle of the band it crosses; the corner square's middle stood
+  // |hx - hz| / sqrt 2 off it for every town not square (61% of the game's town-to-town routes, up to 72 m off the road).
+  // Where that crossing lies in a side's band rather than the corner's square, the walk passes the corner's square on
+  // its way round when it goes that way, so no straight walk cuts the town's corner
+  const road = (side) => {
+    const sx = side.includes('e') ? 1 : -1, sz2 = side.includes('n') ? 1 : -1;
+    const sIn = Math.max(0, Math.min(sx > 0 ? L.xMax - mid.x : mid.x - L.xMin, sz2 > 0 ? L.zMax - mid.z : mid.z - L.zMin));
+    const sOut = Math.max(sIn, Math.min(sx > 0 ? B.xMax - mid.x : mid.x - B.xMin, sz2 > 0 ? B.zMax - mid.z : mid.z - B.zMin));
+    const q = { x: mid.x + sx * (sIn + sOut) / 2, z: mid.z + sz2 * (sIn + sOut) / 2 };
+    const band = q.x > L.xMin && q.x < L.xMax ? (sz2 > 0 ? 'n' : 's') : q.z > L.zMin && q.z < L.zMax ? (sx > 0 ? 'e' : 'w') : side;
+    return { q, band };
+  };
   const a = RING_ORDER.indexOf(ringSideOf(from[0], from[1])), b = RING_ORDER.indexOf(ringSideOf(to[0], to[1]));
   if (a < 0 || b < 0) return [];
-  if (a === b) return [at[RING_ORDER[a]]];
+  const sideA = RING_ORDER[a], sideB = RING_ORDER[b];
+  const inA = sideA.length === 2 ? road(sideA) : { q: at[sideA], band: sideA }, outB = sideB.length === 2 ? road(sideB) : { q: at[sideB], band: sideB };
+  if (a === b) return [inA.q];
   // the shorter way round (clockwise on a tie: the ring is paved all the way, either way is the road)
   const cw = (b - a + 8) % 8, step = cw <= 4 ? 1 : -1;
-  const out = [at[RING_ORDER[a]]];
+  const out = [inA.q];
+  if (inA.band !== sideA && (RING_ORDER.indexOf(inA.band) + step + 8) % 8 === a) out.push(at[sideA]);   // round the corner it came in beside
   for (let i = (a + step + 8) % 8; i !== b; i = (i + step + 8) % 8) if (RING_ORDER[i].length === 2) out.push(at[RING_ORDER[i]]);
-  out.push(at[RING_ORDER[b]]);
+  if (outB.band !== sideB && (RING_ORDER.indexOf(outB.band) - step + 8) % 8 === b) out.push(at[sideB]);   // round the corner it leaves beside
+  out.push(outB.q);
   return out;
 }
 
@@ -389,6 +408,7 @@ export function createTravelOptions(deps = {}) {
     // TRAVEL-NAV1: the autopilot whose bearing the steering turned the body
     // off last frame, or null - see yawDeg.
     steeredBy: null,
+    shutStop: false,   // OW-TOWN-WALK: a walled city's gates found shut on the way out - the journey stopped on the next update
     // TV2: the port's own journey from the travel view's click - the legs a
     // road route walks, the one it is on, and where it ends (a place's
     // summary, or a spot on open ground). Null for every journey of the mod's.
@@ -561,11 +581,84 @@ export function createTravelOptions(deps = {}) {
    *  sea's own (SEA_SPOT_SIZE) - a boat under sail comes about in a hundred metres, and never threads a road's width. */
   const spotRect = (pt, afloat = false) => { const w = afloat ? SEA_SPOT_SIZE : P_SIZE; return rectOf(pt.x - w / 2, pt.z - w / 2, w, w); };
 
+  /** OW-TOWN-WALK: the square a street's way arrives in at its end - three of the town grid's cells (CityNavigation's
+   *  1.6 m, in world units), a street's width. */
+  const STREET_END_SIZE = 192;
+  /** OW-TOWN-WALK: how far ahead along a street's way the walk aims at the least - a cell and a half (2.4 m): a corner
+   *  turned at the corner, never cut across the building it goes round (a road's look, a path's width, would shave
+   *  twelve metres off it); at a town's pace a frame's three steps are well inside it. */
+  const STREET_LOOK = 96;
+  /** OW-TOWN-WALK: the point the leg the route is on aims at - startRouteLeg's own: a rejoin's, a place's middle, a
+   *  spot, a join's or a ring's own point, a pixel's middle. */
+  function routeAim(r) {
+    if (r.join) return r.join;
+    const final = r.i >= r.legs.length - 1;
+    if (final && r.summary) { const rect = deps.locationWorldRect?.(r.summary); if (rect) return rectCentre(rect); }
+    if (final && r.point) return { x: r.point.x, z: r.point.z };
+    const leg = r.legs[Math.min(r.i, r.legs.length - 1)];
+    return leg ? (leg.at ?? legMiddle(leg)) : null;
+  }
+  /** OW-TOWN-WALK (systems/travel/townWalk.js): IN A TOWN, ITS STREETS FIRST - the way from where the traveller stands
+   *  toward the leg's point through the town's own grid (`deps.townWay`, the host's: native points, the traveller's own
+   *  cell left out), once a leg and a town (`streetFor`); null where the traveller stands in no town (`deps.townKey`), on
+   *  a leg round a town's ring (walked outside it), at sea, or once this leg walked this town's way already. */
+  function streetRun(r) {
+    r.townAt = deps.townKey?.(pos()) ?? null;
+    const leg = r.legs[Math.min(r.i, r.legs.length - 1)];
+    const key = `${r.i}|${r.townAt}`;
+    if (!r.townAt || !deps.townWay || leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key) return null;
+    if (r.summary && r.i >= r.legs.length - 1 && arrivedAtPlace(r)) return null;   // in the place it is bound for: arrived, not walked across
+    r.streetFor = key;
+    const aim = routeAim(r);
+    const way = aim ? deps.townWay(pos(), aim) : null;
+    if (way?.shut) st.shutStop = true;   // a walled city's gates shut for the night between the traveller and the point: said, never walked into
+    return way?.pts?.length ? { pts: way.pts.map((q) => ({ x: q.x, z: q.z })) } : null;
+  }
+  /** OW-TOWN-WALK: the traveller stands within the place's arrival - its rect grown by ARRIVAL_BUFFER, as the mod's
+   *  location journey arrives (:62-73). */
+  function arrivedAtPlace(r) {
+    const rect = deps.locationWorldRect?.(r.summary), p = pos();
+    return !!rect && p.x >= rect.xMin - ARRIVAL_BUFFER && p.x < rect.xMax + ARRIVAL_BUFFER && p.z >= rect.zMin - ARRIVAL_BUFFER && p.z < rect.zMax + ARRIVAL_BUFFER;
+  }
+  /** OW-ROAD-TRUE (travelAutopilot.js lanePursuit): THE ROAD'S OWN LINE a leg walks - from the last leg's pixel middle to
+   *  this one's, the lane a road or a track runs on (travelPaths.js: middle to middle) - for a leg walked on a road or a
+   *  track; null for the rest: open ground has no line to keep, a sea leg is the helm's, a join aims at its own point
+   *  (OW-ROADSIDE), the ring's points between themselves walk its paving point to point (OW-TOWN-RING), and the route's
+   *  first leg has no leg behind it. AUDIT OW-REVISITED L2-3: the road INTO a town's ring is laned to the ring's point
+   *  (its own line, ringPassPoints), and the road out of it from the ring's last point - both lie on the road. */
+  function routeLane(r, i) {
+    const leg = r.legs[i], prev = r.legs[i - 1];
+    if (!leg || !prev || !ROAD_LEG_KINDS.includes(leg.kind) || (leg.at && !leg.ring) || (leg.ring && prev.ring)) return null;
+    const a = prev.ring ? prev.at : legMiddle(prev), b = leg.ring ? leg.at : legMiddle(leg);
+    return { ax: a.x, az: a.z, bx: b.x, bz: b.z };
+  }
+  /** AUDIT OW-REVISITED L2-1 / L2-2: THE LAST LEG'S LINE - its road from the leg behind it to where it leaves the road
+   *  (travelRoute.js finalRoadVia: a place's road end, a spot's nearest point of the road), then on to the journey's end;
+   *  null where the last leg walks no road. */
+  function finalPath(r, end, place) {
+    const n = r.legs.length, lane = routeLane(r, n - 1);
+    const via = lane ? finalRoadVia(r.legs, end, legMiddle, { place }) : null;
+    if (!via) return null;
+    const pts = [[lane.ax, lane.az], [via.x, via.z], [end.x, end.z]].filter((q, k, a) => k === 0 || Math.hypot(q[0] - a[k - 1][0], q[1] - a[k - 1][1]) > 1);
+    return pts.length >= 2 ? pts : null;
+  }
   /** The leg the route is on: a pixel's middle while legs remain, and at the last the place itself (its rect grown by
    *  the arrival buffer, as the mod's own location journey, :62-73) or the spot. */
   function startRouteLeg() {
     const r = st.route;
     if (!r) return;
+    // OW-TOWN-WALK: IN A TOWN, ITS STREETS FIRST - walked as one line of runs to the street nearest the leg's point (or
+    // the town's edge toward it), at the town's pace (applyRate); then the leg, from where the way ends
+    r.street ??= streetRun(r);
+    if (r.street) {
+      const pts = r.street.pts, end = pts[pts.length - 1], me = pos(), ep = worldCoordToMapPixel(end.x, end.z);
+      const rect = rectOf(end.x - STREET_END_SIZE / 2, end.z - STREET_END_SIZE / 2, STREET_END_SIZE, STREET_END_SIZE);
+      const path = [[me.x, me.z], ...pts.map((q) => [q.x, q.z])];
+      if (st.autopilot == null) st.autopilot = new TravelAutopilot(ep, rect, routeLegSpeed('road'), { path, lookMin: STREET_LOOK, lookMax: STREET_LOOK });
+      else st.autopilot.initTargetRect(ep, rect, routeLegSpeed('road'), { path, lookMin: STREET_LOOK, lookMax: STREET_LOOK });
+      st.autopilot.onArrival = () => { if (st.route !== r) return; r.street = null; startRouteLeg(); };
+      return;
+    }
     // AUDIT OW3 J3: THE ROAD REJOINED FIRST. A resume off the road's line (a fight, an avoid roll, a stop in the start
     // pixel) walks to the nearest point of the run it takes up (`resumeRoute`'s `join`), then the leg - never beside the
     // road to the run's far end. Aimed in the join's OWN pixel: the autopilot asks for its arrival only there.
@@ -581,13 +674,14 @@ export function createTravelOptions(deps = {}) {
       const rect = deps.locationWorldRect?.(r.summary);
       if (rect) {
         st.autopilot = new TravelAutopilot(r.summary.pixel, rect, routeLegSpeed(r.legs.at(-1)?.kind ?? 'road'),
-          { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });
+          { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles, path: finalPath(r, rectCentre(rect), true) });   // OW-ROAD-TRUE: up the road into the place (AUDIT OW-REVISITED L2-1: and on to its middle)
         st.autopilot.onArrival = () => arriveRoute(r.quiet);
         return;
       }
     }
     if (final && r.point) {
-      st.autopilot = new TravelAutopilot(r.point.pixel, spotRect(r.point, SEA_LEG_KINDS.includes(r.legs.at(-1)?.kind)), routeLegSpeed(r.legs.at(-1)?.kind ?? 'open'));
+      st.autopilot = new TravelAutopilot(r.point.pixel, spotRect(r.point, SEA_LEG_KINDS.includes(r.legs.at(-1)?.kind)), routeLegSpeed(r.legs.at(-1)?.kind ?? 'open'),
+        { path: finalPath(r, r.point, false) });   // AUDIT OW-REVISITED L2-2: a spot's last road run walked on the road, then off it
       st.autopilot.onArrival = () => arriveRoute(r.quiet);
       return;
     }
@@ -597,8 +691,9 @@ export function createTravelOptions(deps = {}) {
     // OWS2: a leg sailed to a water pixel arrives in the middle quarter of it, not a road's width at its heart
     // OW-ROADSIDE: the join is a point of the road's own lane
     const rect = leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(o.x + SEA_LEG_LO, o.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);
-    if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind));
-    else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind));
+    const lane = routeLane(r, Math.min(r.i, r.legs.length - 1));   // OW-ROAD-TRUE: a road's leg walks its line
+    if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), { lane });
+    else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind), { lane });
     st.autopilot.onArrival = () => {
       if (st.route !== r) return;
       r.i++;
@@ -651,6 +746,8 @@ export function createTravelOptions(deps = {}) {
     if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;   // OW-TOWN-RING: a ring's point is no join
     r.i = best;
     r.join = rejoinPoint(r);
+    r.street = null; r.streetFor = null;   // OW-TOWN-WALK: a resume in a town takes its streets again, from where it stands
+    st.shutStop = false;   // AUDIT OW-REVISITED L1-5: a shut gate's word is its own journey's, never the next's
     st.autopilot = null;
     st.walk = null;   // RATE-LAW: the route's legs say their ground
     startRouteLeg();
@@ -669,7 +766,7 @@ export function createTravelOptions(deps = {}) {
     if (!plan || (!plan.summary && !plan.point)) return false;
     const legs = (plan.legs ?? []).map((l) => ({ x: l.x, y: l.y, kind: l.kind ?? 'open', ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}), ...(l.ring ? { ring: true } : {}) }));   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point
     const name = plan.summary ? (deps.localizedLocationName?.(plan.summary) ?? plan.summary.name ?? plan.name ?? '') : (plan.name ?? '');
-    st.route = { legs, i: 0, summary: plan.summary ?? null, point: plan.point ?? null, quiet: typeof quiet === 'function' ? quiet : !!quiet, join: null };   // AUDIT OW3 J3: `join` a resume's rejoin
+    st.route = { legs, i: 0, summary: plan.summary ?? null, point: plan.point ?? null, quiet: typeof quiet === 'function' ? quiet : !!quiet, join: null, street: null, streetFor: null, townAt: null };   // AUDIT OW3 J3: `join` a resume's rejoin; OW-TOWN-WALK: a town's way, the leg it was walked for, the town stood in
     // AUDIT TV A3: not a ring walk - its path-crossing watch would stop this journey at the first pixel middle
     st.circumnavigatePathsDataPt = 0;
     st.lastCrossed = 0;
@@ -680,6 +777,7 @@ export function createTravelOptions(deps = {}) {
     ui?.setDestinationName(name);
     st.walk = null;   // RATE-LAW: the route's legs say their ground
     st.autopilot = null;
+    st.shutStop = false;   // AUDIT OW-REVISITED L1-5: a shut gate's word is its own journey's, never the next's
     startRouteLeg();
     st.beginTime = deps.worldTimeNow?.() ?? 0;
     st.lastLocation = deps.currentLocation?.() ?? null;
@@ -712,13 +810,27 @@ export function createTravelOptions(deps = {}) {
     if (st.walk === 'path' || st.walk === 'ring') return true;
     return !!deps.onRoad?.();
   }
+  /** AUDIT OW-REVISITED L3-1: A STRETCH OF THE WAY'S OWN PACE - the forward force its leg walks at (routeLegSpeed) and the
+   *  rate its ground runs at (journeyOnRoad's law: a road or a track, or a bridged run, the road's; a town's streets a
+   *  town's pace, applyRate's; the walk back to the road the open ground's) - and whether it is sailed. `of` a leg's index
+   *  in the route, 'street' or 'join' (travelRoute.js wayStillToWalk); null for none. The forecast asks each stretch its
+   *  minutes by it: the clock runs with the rate offline and not online, and the motor with the force always. */
+  function wayPace(of) {
+    const r = st.route;
+    if (!r) return null;
+    if (of === 'street') return { fwd: routeLegSpeed('road'), rate: Math.min(TOWN_PACE_MAX, travelRateOf(true)), sea: false };
+    if (of === 'join') return { fwd: routeLegSpeed('open'), rate: travelRateOf(false), sea: false };
+    const leg = r.legs[of];
+    return leg ? { fwd: routeLegSpeed(leg.kind), rate: travelRateOf(ROAD_LEG_KINDS.includes(leg.kind) || bridgedRoadLeg(r.legs, of)), sea: SEA_LEG_KINDS.includes(leg.kind) } : null;
+  }
   /** RATE-LAW: the rate the journey's ground runs at (systems/timeScale.js travelRateOf) - under the ring walk's own
    *  ceiling (:34, MAX_CIRCUMNAVIGATION_ACCEL, a steering bound and no dial) - written to the panel and asked of the
    *  clock when it changes (`force`: a journey starting, whatever the last one asked). The host's governor may hold
    *  the clock under it (the land loading, an alerted enemy near); this is the rate it hands back to. */
   function applyRate(force = false) {
-    const onRoad = journeyOnRoad();
-    const rate = st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);
+    const street = !!st.route?.street;   // OW-TOWN-WALK: a town's streets, at a town's pace - paved ground (a street's grid weighs its roads best)
+    const onRoad = street || journeyOnRoad();
+    const rate = street ? Math.min(TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);
     if (!force && rate === st.rate && onRoad === st.rateOnRoad) return;
     st.rate = rate;
     st.rateOnRoad = onRoad;
@@ -957,6 +1069,7 @@ export function createTravelOptions(deps = {}) {
   function interruptTravel() {
     setTimeScale(1);
     st.circumnavigatePathsDataPt = 0;
+    st.shutStop = false;   // AUDIT OW-REVISITED L1-5: a stop in the same frame (a foe, the steering) takes the gates' word with it
     // TV2 (AUDIT TV A4): a SPOT's journey is not a named one, so nothing resumes it (the map's prompt asks only for a
     // named destination) - stopped, it is over, and the view's mark and line go with it. A place's route stays for the
     // resume.
@@ -1095,6 +1208,20 @@ export function createTravelOptions(deps = {}) {
     if (frame.topWindowIsTravelUI && frame.helpKeyDown) messageBox(helpText());
 
     let drive = null;
+    // OW-TOWN-WALK: A TOWN WALKED INTO on the way (a spot clicked in its square): the leg begun again from the town's edge -
+    // its streets first (startRouteLeg's streetRun), at the town's pace
+    if (st.autopilot && st.route && !st.route.street && deps.townKey) {
+      const k = deps.townKey(pos());
+      if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } else st.route.streetFor = null; }   // AUDIT OW-REVISITED L1-9: left, the town is asked again if walked back into
+    }
+    // OW-TOWN-WALK: THE GATES SHUT - the way out of a walled city lies behind its gates at night (offline: DaggerfallCityGate
+    // swaps a wall in): stopped as the steering stops a way it cannot find, before contact, the mod's own kind of word
+    if (st.autopilot && st.shutStop) {
+      st.shutStop = false;
+      stopTravelWithMessage(TRAVEL_NAV_TEXT.MsgGatesShut);
+      if (st.autopilot) interruptTravel();
+      return { handled: true, stopped: 'shut' };
+    }
     if (st.autopilot) {
       const p = pos();
       drive = st.autopilot.update({ worldX: p.x, worldZ: p.z, mapPixelX: mp.x, mapPixelY: mp.y });
@@ -1264,5 +1391,7 @@ export function createTravelOptions(deps = {}) {
     encounter,   // AUDIT OW5b E1: the enemies stop, asked by the encounter that meets the traveller
     // PACE-DIALS: a dial turned under a running journey - its ground's rate asked of the clock again at once
     reapplyRate: () => { if (st.autopilot && ui?.isShowing) applyRate(true); },
+    wayPace,   // AUDIT OW-REVISITED L3-1: each stretch of the way's own pace (the forecast's minutes)
+    get paceNow() { return st.autopilot ? { fwd: st.autopilot.speedMultiplier, sea: SEA_LEG_KINDS.includes(st.route?.legs?.[Math.min(st.route.i, st.route.legs.length - 1)]?.kind) } : null; },   // ...and the stretch walked now (null: not driving)
   };
 }

@@ -61,7 +61,7 @@ function rig({ onRoad = false } = {}) {
   const w = { keys: new Set(), view: { active: true, state: 'up' }, journey: false, swimming: false, boat: null, paused: false, unbuilt: new Set(), onRoad };
   const env = {
     travelControlUI: { get isShowing() { return w.journey; } },
-    travellerOnRoad: () => w.onRoad, foePaced, foeRate,   // RATE-LAW: the ground the keys travel on; ENEMY-PACE's floor
+    travellerOnRoad: () => w.onRoad, foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */   // RATE-LAW: the ground the keys travel on; ENEMY-PACE's floor
     travelOptions: { get state() { return { autopilot: w.journey ? {} : null }; } },
     travelWalkRate, TV_MOVE_ACTIONS,
     travelView: w.view,   // a live object: the tests move its state

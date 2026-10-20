@@ -276,7 +276,7 @@ test('TO-ROADS, the journey\'s life (the host\'s own code): a foe stops it as th
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
       travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
-      foePaced, foeRate, travellerOnRoad: () => false,
+      foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */ travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // the view left down

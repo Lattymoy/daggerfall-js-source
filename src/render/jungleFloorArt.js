@@ -17,7 +17,7 @@
 // as the meadow's do; which plant a tuft wears is the width byte's, by shares the patch leans (a lush patch more fern and
 // leaf, a poor one more grass and sedge) - ladderPick's law in the vertex stage, floorPick's here.
 // ═══════════════════════════════════════════════════════════════════
-import { fitSprite, meadowSpriteBox, buildMeadowAtlas, buildMeadowMips, cardMeasures, MEADOW_SLOTS, MEADOW_GREEN, MEADOW_LUSH, MEADOW_PATCH_SCALE } from './grassMeadow.js';
+import { fitSprite, meadowSpriteBox, buildMeadowAtlas, buildMeadowMips, cardMeasures, MEADOW_SLOTS, MEADOW_GREEN, MEADOW_LUSH, MEADOW_PATCH_SCALE, MEADOW_BLADES_PER_TUFT } from './grassMeadow.js';
 import { MEADOW_SPRITES } from './meadowArt.js';
 import { ladderPick, heightFloor, heightSpan, LAB_GRASS } from './labGrass.js';
 import { smoothstep } from '../systems/mathf.js';
@@ -25,22 +25,50 @@ import { smoothstep } from '../systems/mathf.js';
 /** The rainforest's archive: its low cover (TREE_RECORDS' others - world/terrain/terrainNature.js). */
 export const JUNGLE_FLOOR_ARCHIVE = 500;
 /**
- * THE PLANTS, in atlas order. `record` archive 500's (null: the owner's tall tuft); `height` the mean drawn height of its
- * card (m - the cover a walker wades through: grass and sedge to the knee, ferns and palmlets to the waist, archive 500's
- * own billboards stand two and three metres); `stiff` its share of its own standing lean and `sway` of the wind's (the
- * meadow's own: grass whole, a woody bush 0.3 and 0.6, fronds between); `share` its share of the width byte at the poor
- * patch's end and the lush's - the last takes the rest.
+ * THE PLANTS AS THE OWNER JUDGED THEM, in atlas order. `record` archive 500's (null: the owner's tall tuft); `height` the
+ * mean drawn height of its card (m - the cover a walker wades through: grass and sedge to the knee, ferns and palmlets to
+ * the waist, archive 500's own billboards stand two and three metres); `stiff` its share of its own standing lean and
+ * `sway` of the wind's (the meadow's own: grass whole, a woody bush 0.3 and 0.6, fronds between); `grass` whether it is
+ * the floor's grass (the tuft and the sedge) or its flora; `judged` its share of the width byte at the poor patch's end
+ * and the lush's in the floor the owner judged - JUNGLE_FLOOR_JUDGED plants a square metre (BANTHA2: "a little too much"
+ * at 2.5), the last taking the rest.
  */
-export const JUNGLE_FLOOR_PLANTS = Object.freeze([
-  Object.freeze({ name: 'grass', record: null, height: 0.5, stiff: 1, sway: 1, share: Object.freeze([0.42, 0.3]) }),
-  Object.freeze({ name: 'sedge', record: 7, height: 0.5, stiff: 1, sway: 1, share: Object.freeze([0.16, 0.1]) }),
-  Object.freeze({ name: 'fern', record: 9, height: 1.2, stiff: 0.6, sway: 0.8, share: Object.freeze([0.12, 0.2]) }),
-  Object.freeze({ name: 'frond', record: 10, height: 0.95, stiff: 0.6, sway: 0.8, share: Object.freeze([0.1, 0.16]) }),
-  Object.freeze({ name: 'broadleaf', record: 1, height: 0.9, stiff: 0.3, sway: 0.6, share: Object.freeze([0.05, 0.08]) }),
-  Object.freeze({ name: 'palmlet', record: 27, height: 1, stiff: 0.5, sway: 0.7, share: Object.freeze([0.06, 0.07]) }),
-  Object.freeze({ name: 'bloom', record: 21, height: 0.9, stiff: 0.5, sway: 0.7, share: Object.freeze([0.04, 0.05]) }),
-  Object.freeze({ name: 'spike', record: 6, height: 1.1, stiff: 0.4, sway: 0.7, share: Object.freeze([0.04, 0.04]) }),
-]);
+const JUDGED_PLANTS = [
+  { name: 'grass', record: null, height: 0.5, stiff: 1, sway: 1, grass: true, judged: [0.42, 0.3] },
+  { name: 'sedge', record: 7, height: 0.5, stiff: 1, sway: 1, grass: true, judged: [0.16, 0.1] },
+  { name: 'fern', record: 9, height: 1.2, stiff: 0.6, sway: 0.8, grass: false, judged: [0.12, 0.2] },
+  { name: 'frond', record: 10, height: 0.95, stiff: 0.6, sway: 0.8, grass: false, judged: [0.1, 0.16] },
+  { name: 'broadleaf', record: 1, height: 0.9, stiff: 0.3, sway: 0.6, grass: false, judged: [0.05, 0.08] },
+  { name: 'palmlet', record: 27, height: 1, stiff: 0.5, sway: 0.7, grass: false, judged: [0.06, 0.07] },
+  { name: 'bloom', record: 21, height: 0.9, stiff: 0.5, sway: 0.7, grass: false, judged: [0.04, 0.05] },
+  { name: 'spike', record: 6, height: 1.1, stiff: 0.4, sway: 0.7, grass: false, judged: [0.05, 0.04] },
+];
+/** The floor the owner judged, plants a square metre (BANTHA2: thinned from 2.5 on "Reduce the amount of ground flora. Its
+ *  a little too much"). */
+export const JUNGLE_FLOOR_JUDGED = 1.8;
+/** JUNGLE-GRASS (2026-10-19, the owner: "Grass isnt showing within the new jungle region"): THE GRASS THE FLOOR STANDS a
+ *  square metre - the meadow's own (its blades over the lab's measuring span, MEADOW_BLADES_PER_TUFT a tuft: 2.27 at the
+ *  grass row's Full), so the jungle's ground carries the grass every other meadow does. The judged floor stood 0.88 tufts and
+ *  sedge a square metre between its ferns - two fifths of it - and the meadow's own grass keeps out of the floor (its
+ *  colour law would take the jungle's red earth's hue), so the jungle read as leaves on bare mud. */
+export const JUNGLE_FLOOR_GRASS = LAB_GRASS.density / MEADOW_BLADES_PER_TUFT / (2 * LAB_GRASS.densitySpan) ** 2;
+const floraShare = (end) => JUDGED_PLANTS.reduce((s, p) => s + (p.grass ? 0 : p.judged[end]), 0);
+const grassShare = (end) => 1 - floraShare(end);
+/** THE FLOOR'S PLANTS a square metre: the meadow's grass, and the owner's flora at the rate they judged it (its mean over
+ *  the patch's two ends). */
+export const JUNGLE_FLOOR_PLANTS_M2 = JUNGLE_FLOOR_GRASS + (JUNGLE_FLOOR_JUDGED * (floraShare(0) + floraShare(1))) / 2;
+/**
+ * THE PLANTS, in atlas order, each with its `share` of the width byte at the poor patch's end and the lush's (the last
+ * takes the rest), at JUNGLE_FLOOR_PLANTS_M2: a plant of the flora at its judged share's rate (its share times the judged
+ * floor over this one - a fern stands as often a square metre as the owner judged it), the grass the rest, its tuft and
+ * its sedge in their judged proportion - so a poor patch keeps more grass than a lush one, as it did.
+ */
+export const JUNGLE_FLOOR_PLANTS = Object.freeze(JUDGED_PLANTS.map((p) => Object.freeze({
+  name: p.name, record: p.record, height: p.height, stiff: p.stiff, sway: p.sway, grass: p.grass,
+  share: Object.freeze([0, 1].map((end) => (p.grass
+    ? (p.judged[end] / grassShare(end)) * (1 - (floraShare(end) * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2)
+    : (p.judged[end] * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2))),
+})));
 /** The lab's mean blade height (m): a card's side is a blade's height times its plant's scale. */
 export const FLOOR_MEAN_BLADE = heightFloor(LAB_GRASS.height) + heightSpan(LAB_GRASS.height) / 2;
 

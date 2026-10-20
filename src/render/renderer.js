@@ -1983,6 +1983,9 @@ export class Renderer {
     }
     this._flatWind = new Float32Array(4);   // WIND3: rate x, z, clock, gust - zero until an exterior host sets it, and zero is still
     this._windfall = new Float32Array(8);   // WINDFALL1: the mod's law (render/windfallSway.js windfallUniforms) - zero is WIND3's
+    this._bbRight = new Float32Array([1, 0, 0]);   // NODE-OUTLINE: the last flats' call's basis (render/nodeOutline.js draws a node's flat again on it)
+    this._bbUp = new Float32Array([0, 1, 0]);
+    this._lptDrawn = [null, null];   // NODE-OUTLINE: the 3D trees' frames this frame drew, each slot's (spent in the flats' call - lptDrawnFrames)
     this._windfallSway = this._windfall.subarray(0, 4);   // its two vec4s, viewed once (EVERY ALLOCATION HAS AN OWNER: none a call)
     this._windfallAxis = this._windfall.subarray(4, 8);
     this._proj = null;
@@ -5588,6 +5591,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!this._focusArmed && this._focus[3] !== 0) this._focus.fill(0);   // AUDIT TV B1: the travel view's focus too, unless set since the last beginFrame (setFocus)
     this._focusArmed = false;
     this._dwColumn = null;   // DW-F: and the water column's share over the flats
+    this._lptDrawn?.fill(null);   // NODE-OUTLINE: and the 3D trees a frame drew
     // EV6: the shadows reset with the counters - whatever ran between
     // frames (UI passes, another context's work) is not trusted. The
     // cloud-shadow upload stamps are the same kind of claim (RS-3) and
@@ -8129,6 +8133,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    */
   setLowPolyTrees(frame, slot = 0) { (this._lptSlots ??= [null, null])[slot] = frame && frame.gpu ? frame : null; }   // ??=: a test's bare prototype has no constructor run
 
+  /** NODE-OUTLINE (render/nodeOutline.js): the 3D trees' frames this frame DREW, each slot's or null - the slots are spent
+   *  in the flats' call, so a pass after it (a node's outline, drawn on the very trees and far pictures the frame stood)
+   *  reads them here; a beginFrame forgets them. */
+  lptDrawnFrames() { return this._lptDrawn ?? []; }
+
   /** BANTHA1: the slot's frame that draws the 3D trees a far picture's handle stands for this frame, or null - the
    *  picture keeps whole. */
   _lptFrameOf(proto) {
@@ -8273,6 +8282,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // and the wind, which the host sets for its flats' call and not with the frame
     gl.uniform3fv(this.bbURight, camRight);
     gl.uniform3fv(this.bbUUp, camUp);
+    // NODE-OUTLINE: kept for the nodes' outline (render/nodeOutline.js) - the three components the vec3 uniforms read, as
+    // they read them: a caller's longer array (a seam test hands a matrix) is no basis to copy whole
+    const bbR = (this._bbRight ??= new Float32Array(3)), bbU = (this._bbUp ??= new Float32Array(3));
+    bbR[0] = camRight[0]; bbR[1] = camRight[1]; bbR[2] = camRight[2];
+    bbU[0] = camUp[0]; bbU[1] = camUp[1]; bbU[2] = camUp[2];
     if (this.bbUFlatWind) gl.uniform4fv(this.bbUFlatWind, this._flatWind ?? ZERO_FLAT_WIND);   // WIND3: one upload a call; uSway is the batch's
     if (this.bbUWindfallAxis) { gl.uniform4fv(this.bbUWindfallSway, this._windfallSway); gl.uniform4fv(this.bbUWindfallAxis, this._windfallAxis); }   // WINDFALL1: the mod's law, one upload a call
     const wfLaw = windfallLawOn(this._windfall);   // WINDFALL1: a batch's share is its mask under the mod's law
@@ -8492,6 +8506,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, 1, 1, 1); gl.uniform1f(this.bbUBatchDye, 0); this._bbTintOn = false; }
       if (this._bbColumnOn) { gl.uniform1f(bc.uColumnOn, 0); this._bbColumnOn = 0; }
       for (let i = 0; i < slots.length; i++) if (slots[i]?.runs.length) this._drawLowPolyTrees(slots[i]);   // BANTHA1: every slot's trees
+      const drawn = this._lptDrawn ??= [null, null];
+      for (let i = 0; i < slots.length; i++) drawn[i] = slots[i]?.runs.length ? slots[i] : null;   // NODE-OUTLINE: what this frame drew, for the nodes' outline
       lastKey = null; lastW = NaN; lastH = NaN; lastOx = NaN; lastOy = NaN; lastOz = NaN; lastSway = null;
       this._bbLptCutOn = undefined;   // whatever the next batch's slot, it is sent
     }

@@ -21,8 +21,9 @@
   {
     "name": "NODE-MARKS-the-lift-kept",
     "file": "src/scenes/gatherHost.js",
-    "old": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty, n.local[2] + tz); }",
-    "new": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty + (n.lift ?? 0.3), n.local[2] + tz); }",
+    "old": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty, n.local[2] + tz, s); }",
+    "new": "for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty + (n.lift ?? 0.3), n.local[2] + tz, s); }",
+    "note": "NODE-OUTLINE (PIN MOVED): the walk hands each mark its place (`s`) - where its pictures are found",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -93,8 +94,9 @@
   {
     "name": "NODE-MARKS-the-loose-nodes-never-walked",
     "file": "src/scenes/gatherHost.js",
-    "old": "          if (isVec3(w)) add(k, n, w[0], w[1], w[2]);",
-    "new": "          if (isVec3(w) && false) add(k, n, w[0], w[1], w[2]);",
+    "old": "          if (isVec3(w)) add(k, n, w[0], w[1], w[2], null);",
+    "new": "          if (isVec3(w) && false) add(k, n, w[0], w[1], w[2], null);",
+    "note": "NODE-OUTLINE (PIN MOVED): a loose node hands no place (`null` - no pictures, the glow)",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -321,7 +323,7 @@
   {
     "name": "NODE-MARKS-the-glow-never-drawn",
     "file": "src/scenes/world.js",
-    "old": "peerBodies?.drawVeiled(); drawAuras(); nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };",
+    "old": "peerBodies?.drawVeiled(); drawAuras(); nodeOutlinePass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };",
     "new": "peerBodies?.drawVeiled(); drawAuras(); };",
     "tests": [
       "test/scenes/nodemarks.test.js",
@@ -331,8 +333,8 @@
   {
     "name": "NODE-MARKS-lit-under-the-travel-view",
     "file": "src/scenes/world.js",
-    "old": "nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet()));",
-    "new": "nodeGlowPass.draw(nodeMarksAt(enchantFeet()));",
+    "old": "nodeOutlinePass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet()));",
+    "new": "nodeOutlinePass.draw(nodeMarksAt(enchantFeet()));",
     "tests": [
       "test/scenes/nodemarks.test.js",
       "test/net/invislook.test.js"

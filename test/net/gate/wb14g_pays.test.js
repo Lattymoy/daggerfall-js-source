@@ -101,6 +101,6 @@ test('WB14g the Weir Key: a portent night\'s receipt rolls at the rite\'s odds -
   roll(claims({ p: 1 }));
   roll(claims({ r: 1 }));
   assert.deepEqual(binds.map((a) => a[2]), [0, 1, 1], 'plain, a portent night\'s, the rite\'s');
-  assert.equal(ACCOUNT_VERSION, 'acct160');   // PIN MOVED: acct160 - acct159 on its branch, renumbered past the acct159 of QL12 at the merge
-  assert.match(read('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct160"$/m);
+  assert.equal(ACCOUNT_VERSION, 'acct161');   // PIN MOVED: acct161, JUNGLE-WOODS (a jungle pixel stands 48 trees a day, every slot a tree, the service counting them as the law does; acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges); PIN MOVED: acct160 - acct159 on its branch, renumbered past the acct159 of QL12 at the merge
+  assert.match(read('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct161"$/m);
 });

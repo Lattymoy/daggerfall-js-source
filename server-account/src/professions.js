@@ -74,7 +74,7 @@ import {
   parseNodeKey, nodeCount, herbPatch, herbSeasonMult, daySeason, HERB_TABLES, HERB_YIELD, FOOD_YIELD, herbYield, foodYield,
   basketFood, isMarch, regionOk, pixelOk, pixelKey, pixelReport, witnessedFact, factConfirmed, WITNESS, material,
   regionWritTable, courtWrits, VEIN_TABLES, vein, boulder, dungeonVein, dungeonOk, veinYield, boulderYield, VEIN_YIELD,
-  BOULDER_YIELD, veinGem, veinSlots, WOOD_TABLES, tree, TREE_YIELD, treeYield, treeFinds, hideYield, bodyFinds,
+  BOULDER_YIELD, veinGem, veinSlots, treeSlots, WOOD_TABLES, tree, TREE_YIELD, treeYield, treeFinds, hideYield, bodyFinds,
   haulYield, haulFinds, haulAtSea,   // PROF8
 } from '../../src/net/nodeLaw.js';
 import { CLIMATES } from '../../src/formats/mapsTables.js';
@@ -558,9 +558,10 @@ export async function harvestNode(ctx, player, env, body = {}) {
     }
     return { error: 'prof-pixel' };
   }
-  // a vein's slots are its climate's and, on confirmed ground, its region's signature beside them (AUDIT 29 A6); a body
-  // has none (AUDIT 32 S2: its unchecked ground is never read)
-  if (!deep && !isBody && !isHaul && n.slot >= (n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : nodeCount(climate, n.kind))) return { error: 'bad-node' };
+  // a vein's slots are its climate's and, on confirmed ground, its region's signature beside them (AUDIT 29 A6); a tree's
+  // its climate's, and the jungle's in the owner's area (JUNGLE-WOODS); a body has none (AUDIT 32 S2: its unchecked
+  // ground is never read)
+  if (!deep && !isBody && !isHaul && n.slot >= (n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : n.kind === 'tree' ? treeSlots({ x: n.x, y: n.y, climate }) : nodeCount(climate, n.kind))) return { error: 'bad-node' };
 
   // THE TRACK it is worked under
   const row = trackRows[0] ?? null;

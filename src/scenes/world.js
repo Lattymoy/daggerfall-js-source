@@ -37,7 +37,7 @@ import { attachTouch } from '../ui/touch/touch.js';
 import { attachGamepad, GLASS_PAD_ZOOM } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks - AUDIT CAPTAIN'S SEA S3: the glass's magnifying click
 import { BlocksFile } from '../formats/blocksFile.js';
 import { bindWorldDataBlocks } from '../formats/worldData/worldDataReplacement.js';   // RR3b
-import { isClimateFreeModel, NO_CLIMATE_REMAP, customModelFor, hasCustomModel, customModelNeeds, classicModelIdOf } from '../world/customModels.js';   // ARENA1: RuntimeMaterials' ApplyClimate 0 - the colosseum wears its own pictures; AUDIT MERCHANT-YARDS G1: the yards measure the registered models
+import { customModelFor, hasCustomModel, customModelNeeds, classicModelIdOf } from '../world/customModels.js';   // ARENA1: RuntimeMaterials' ApplyClimate 0 - the colosseum wears its own pictures; AUDIT MERCHANT-YARDS G1: the yards measure the registered models
 import { isUndercroftDoor, undercroftLocation, isArenaUndercroft, isArenaCity, inArenaCell, ARENA_REGION, ARENA_LOCATION, ARENA_BLOCK, ARENA_GATE_PEOPLE, arenaTownLandmark } from '../world/arena/arenaCity.js';   // ARENA1: the undercroft's stair and its record, the city's cell; ARENA2: the colosseum's block in a built pixel, the Herald's place; ARENA-MAP: its name on the town map
 import { isFurnishing } from '../systems/decor/decorFurnish.js';   // ARENA2: a moved house's furniture back among the furnishings
 import { createArenaBouts } from './arena/arenaBouts.js';   // ARENA2: the bout on this screen - its law over real bodies, its crowd, its HUD
@@ -265,7 +265,7 @@ import { createMotherlodeBook } from '../net/motherlodeBook.js';   // PROF2b: th
 import { createProfHud } from '../ui/professions/profHud.js';   // PROF1: the prompt, the act's meter, the toasts, the day's chip, the rank's banner
 import { createGatherHost } from './gatherHost.js'; // PROF1/PROF2: the gathering professions in the streaming world - the nodes, the target, the act
 import { herbKind } from './herbHost.js';   // PROF1: Herbalism's patches, a kind in it
-import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlowPass } from '../render/nodeGlow.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand
+import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeOutlinePass } from '../render/nodeOutline.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand; NODE-OUTLINE: ringed along their own pictures
 import { treeKind } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it
 import { createTreesHost } from './treesHost.js';   // LPT1 / BANTHA1 (HOST-SPLIT): the near 3D trees - Low Poly Trees' door and the jungle's, and their frame
 import { createJungleHost } from './jungleHost.js';   // BANTHA1: Bantha's jungle - its field, its trees' door, its haze
@@ -480,7 +480,7 @@ import { markFoeStruck } from '../ui/hud/hudFoeTarget.js';   // DUEL1: my duel o
 import { lowerCondition, dfuBlowWear } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent; BALANCE1: on the port's wear scale
 import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn, reticleAnchor } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
-import { dungeonModelSet, dungeonEntranceModel, owDungeonGrow, owDungeonDrawn, grownModelMatrix, modelFoot, TV_DUNGEON_MODELS_MAX, startDungeonLoads } from '../systems/travel/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: started one a frame
+import { TV_DUNGEON_MODELS_MAX } from '../systems/travel/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: started one a frame
 import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js';   // OW-FACE: the body faces the keys' way under the Overworld; OW-PEERS: the others grown as the traveller is
 import { createTravelView, TV_MOVE_ACTIONS, TRAVEL_VIEW_TEXT, travelViewLine, travelTripLine, travelWalkRate, shipPassageRows } from './travelView.js';   // TV1: the travel view (bible/06-Systems/Travel-View.md) - the raised eye, its input and its ways out
 import { showTravelViewHud, hideTravelViewHud, updateTravelViewHud, travelViewHudPickAt, showTravelViewConfirm, hideTravelViewConfirm, travelViewConfirmOpen, setTravelViewArmsOf } from '../ui/travel/travelViewHud.js';   // TV1: its readout; AUDIT HERALDRY H4: the tag's arms
@@ -1142,6 +1142,12 @@ import { createTravelViewMarks } from './travelViewMarks.js';   // HOST-SPLIT
 import { createSearchParty } from './searchPartyHost.js';   // HOST-SPLIT
 import { createPixelBuild } from './pixelBuild.js';   // HOST-SPLIT
 import { createTownProbes } from './townProbes.js';   // HOST-SPLIT
+import { createTravelViewDungeonModels } from './travelViewDungeonModels.js';   // HOST-SPLIT
+import { createTownWalk } from './townWalkHost.js';   // OW-TOWN-WALK
+import { createOverworldForecast } from './overworldForecastHost.js';   // OW-FORECAST
+import { regionChaseWords } from '../systems/travel/regionChase.js';   // OW-CHASE-RANGE: a chase seen as far as its band is drawn
+import { createRegionChaseHearing } from './regionChaseHost.js';   // OW-CHASE-RANGE: the region's chase words heard (AUDIT OW-REVISITED L4-2, L4-3)
+import { TOWN_PACE_MAX } from '../systems/travel/townWalk.js';   // OW-TOWN-WALK: the keys' travel in a town, held to a town's pace
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -5486,9 +5492,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  FAR-SEA1 L1: one home - Iliac Puddle No More's sea and the far ring's sea beside it take the same body. */
   function seaGroundArchive() {
     const here = playerTravelPixel();
-    let arch = here ? built.get(`${here.x},${here.y}`)?.groundArchive : null;   // the sea's water is the camera's climate's
-    if (arch == null) for (const p of built.values()) if (p.groundArchive != null) { arch = p.groundArchive; break; }
-    return arch;
+    let ga = here ? built.get(`${here.x},${here.y}`)?.groundArchive : null;   // the sea's water is the camera's climate's
+    if (ga == null) for (const p of built.values()) if (p.groundArchive != null) { ga = p.groundArchive; break; }
+    return ga;   // (never `arch`: the host's own Arch3dFile, a settled name its moved modules take - HOST-SPLIT's seam)
   }
   function drawDeepWatersSurfaces(nowMs, cells = null) {
     const f = _dwFrame;
@@ -16458,7 +16464,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  site guards - a player who turns Travel Options off has the
    *  classic travel map and classic fast travel, whole. */
   _travelUIHolder.ui = travelControlUI;   // AUDIT-TO1 F2: the holder the enchant ctx reads
+  const townWalk = createTownWalk({ built, state });   // OW-TOWN-WALK: the town a journey stands in, and its streets (scenes/townWalkHost.js)
+  const tvInTown = () => !!townWalk.townPace(state.worldCoords(player.pos));   // OW-TOWN-WALK: the traveller stands in a town's streets (AUDIT OW-REVISITED L1-4: never a walled city's fields)
   travelOptions = travelOptionsOn ? createTravelOptions({   // BOOT-TDZ: ASSIGNED here; the binding stands above the stream that reads it
+    townKey: townWalk.townKey, townWay: townWalk.townWay,   // OW-TOWN-WALK: in a town, its streets first, at its pace
     settings: travelOptionsSettings,
     ui: travelControlUI,
     junctionMap: travelJunctionMap,
@@ -21514,11 +21523,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (tab.room === SOCIAL_ROOM) link.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };   // AUDIT SD: the hub's hand of my Hour receipt - at the kill when I stood outside its realm, and at my hello - to the account service and the spoils, as the realm's is
       if (tab.room === SOCIAL_ROOM) link.onRaid = (f, room) => (f.k === 'tw' ? offerRaidTowns(link, f.h) : raidRelayWord(f, room));   // RAID3: the hub's word of a cleanse anywhere, and the day's at my hello; RAID-ROLL: its ask for the towns table
       if (tab.id === 'region') {   // TV3: the region's travellers, into the book
-        link.onTraveller = (f) => travellerBook.put(f, Date.now());
+        link.onTraveller = (f) => { travellerBook.put(f, Date.now()); regionChase.hear(f); };   // OW-CHASE-RANGE: a far traveller's chases (withdrawn with a clear - AUDIT OW-REVISITED L4-2)
         // AUDIT TV C1: a welcome is a socket the room has just opened - its attachment holds nothing of mine, whatever I
         // last sent through the one before (a blip, a relay deploy): the next frame sends my mark again
-        link.onTravellerRoom = (list) => { travellerBook.reset(list, Date.now()); travellerSent.last = null; travellerSent.at = 0; };
-        link.onTravellerLeft = (id) => travellerBook.drop(id);
+        link.onTravellerRoom = (list) => { travellerBook.reset(list, Date.now()); travellerSent.last = null; travellerSent.at = 0; regionChase.room(list); };
+        link.onTravellerLeft = (id) => { travellerBook.drop(id); regionChase.hear({ id, p: null }); };   // AUDIT OW-REVISITED L4-2: a leave withdraws their chases
       }
       // ACC1d: the channel link mints too, and it is the link that most
       // needs to - the hub is where a name is READ, so an unsigned name
@@ -26259,7 +26268,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const near = nodeMarksAt(feet), far = motherlodeMarks();
     return nodeCompassPoints(far.length ? [...far, ...(near ?? [])] : near, trackerAnimals());   // PROF2b: the far Motherlodes beside the near nodes - LODE-MARK: drawn over them
   };
-  const nodeGlowPass = createNodeGlowPass(renderer);   // NODE-MARKS: kindled node by node, built at idle; never in a building (nodeMarksAt) nor under the travel view (the hook's own gate)
+  const nodeOutlinePass = createNodeOutlinePass(renderer);   // NODE-MARKS: kindled node by node, built at idle; never in a building (nodeMarksAt) nor under the travel view (the hook's own gate); NODE-OUTLINE: ringed along its own picture - the glow a node with none
   /** COMPASS-PARTY (2026-09-27, Discord - Ashley: "being able to see where party members are on compass? - just lil
    *  green marks that point in that direction"): the party on MY compass, in this scene's XZ (ui/partyMapMarks.js
    *  partyCompassPoints) - the bodies the maps mark where they stand, and the rest where their poses say: the leader's
@@ -28239,7 +28248,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // OWS1: at a helm or aboard, the region sees a ship, headed as its bow (a changed way is sent at once - travellerDue)
     const ship = n ? csaBoatUnderMe() : null;
     const mark = n ? travellerMarkOf({ x: n.x, z: n.z, yaw: ship ? csaBoatYaw(ship) : cam.yaw, mode: ship ? TRANSPORT_MODES.Ship : player.transportMode, journey: !!travelControlUI?.isShowing }) : null;
-    const due = travellerDue(travellerSent, { now, mark, alone: link.othersHere === 0, shown });   // WILD1: no mark (wildHidden) is a clear
+    if (mark) Object.assign(mark, regionChaseWords(bandWordOf(_bandChase, _bandSpentAt), raiderWordOf(seaRaidHeld(), tvRaid.spentAt), Math.floor(bandNowMs() / BAND_LIFE_MS), Math.floor(raidNowMs() / RAIDER_LIFE_MS)));   // OW-CHASE-RANGE: my chases, region-wide, beside the mark (systems/travel/regionChase.js)
+    const due = travellerDue(travellerSent, { now, mark, alone: link.othersHere === 0, shown, chasing: _bandChase.size > 0 || tvRaid.chase.size > 0 });   // WILD1: no mark (wildHidden) is a clear; AUDIT OW-REVISITED L4-8: refreshed while a chase runs, never for a ship that only stands
     if (due === 'send' && link.sendTraveller(mark)) { travellerSent.last = mark; travellerSent.at = now; }
     else if (due === 'clear' && link.sendTraveller(null)) { travellerSent.last = null; travellerSent.at = now; }
   };
@@ -29166,7 +29176,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye }); };   // LEGACY7 part four: and the line's own bodies, in the place they stood   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** INVIS-LOOK: the concealed peers' Morrowind bodies, translucent - blended with no depth write, so every mode's pass
    *  calls this AFTER its opaque world (net/peer/peerBodies.js drawVeiled), with the camera its body pass took. */
-  const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); drawAuras(); nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' glow
+  const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); drawAuras(); nodeOutlinePass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' glow
   /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"):
    *  DAGON'S FIRE AT THE FEET (render/auraRing.js) - mine, as the service signed it (the session's `au`, adopted at each
    *  mint), and every peer's the relay vouched for (their hello's `au`), each kindling as it first stands. Gathered with
@@ -31344,8 +31354,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (key.startsWith('wp:')) { travelViewWaypointWalk(key.slice(3)); return; }   // WAYPOINTS: a flag - a walk to it
     if (key === 'dest') { const summary = tvTripLive() ? tvTrip.plan?.summary : null; if (summary && travelViewCanGo()) travelViewRouteTo(summary); return; }
     if (key.startsWith('spawn:')) { travelViewSpawnWalk(key); return; }   // AUDIT OW3 D1: a spawn's plate - a walk to its door
-    const plate = tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
-    if (plate && travelViewCanGo()) travelViewRouteTo(plate.summary);
+    const qp = /^quest:(\d+),(\d+)$/.exec(key);   // OW-QUEST: a quest's diamond - its place, by the roads, wherever on the map it lies
+    const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2])) } : tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
+    if (plate?.summary && travelViewCanGo()) travelViewRouteTo(plate.summary);
   }
   /** The known places whose pixels lie in the view's reach (the grid's own radius), rebuilt when the traveller's pixel
    *  changes; their plates stand over the town's middle. */
@@ -31429,89 +31440,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvDng = { at, dg, grid, n, list };
     return list;
   }
-  /** OW-DUNGEONS (2026-10-08, Mac: "with dungeons on the overworld it doesnt show a dungeon model"; "Its own model,
-   *  enlarged"; systems/travel/travelDungeonModels.js, bible/06-Systems/Travel-View.md OW-DUNGEONS): THE DUNGEONS STANDING AS
-   *  MODELS - TV6's own law (nearDungeons) with none left to TV2's grid (a found one there is a speck from the eye too)
-   *  and a standing Abyss Dungeon among the spawns (its own host stands and takes it - it is known from its rise), the
-   *  nearest TV_DUNGEON_MODELS_MAX; read again as TV6's is, when the pixel, the finds or the index move. */
-  function tvDungeonModelList() {
-    if (typeof _tvListsReady !== 'undefined' && !_tvListsReady) return [];   // BOOT-TDZ II (typeof: a slice lifted without the flag reads as standing)
-    const at = playerTravelPixel(), dg = tvKnownGen(), n = _locIndexGen;   // AUDIT ETHER-OW C2-2: the finds and the charts
-    if (tvDngModels.list.some((g) => g.spawn && !g.loc?.superTier && tvSpawnGone(g.px, g.py))) tvDngModels.at = null;   // AUDIT OW4 D2's law: a spawn whose time ran out goes
-    if (tvDngModels.at && tvDngModels.at.x === at.x && tvDngModels.at.y === at.y && tvDngModels.dg === dg && tvDngModels.n === n) return tvDngModels.list;
-    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),
-      spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)], spawnKnown: (s) => !!s.loc?.superTier || tvSpawnKnown(s), spawnFound: tvSpawnFound,
-      spawnGone: (s) => !s.loc?.superTier && tvSpawnGone(s.x, s.y), max: Infinity });
-    const list = dungeonModelSet(near).map((g) => ({ key: g.key, px: g.x, py: g.y, loc: g.loc, spawn: g.spawn }));
-    tvDngModels = { at, dg, n, list };
-    return list;
-  }
-  /** OW-DUNGEONS: a dungeon's model, loaded for the view - its blocks laid as its pixel's build lays them, its entrance
-   *  model picked (dungeonEntranceModel), held by its own place (PLACE-LRU `owdungeon`) and dressed in its climate and
-   *  the season as its pixel would (the bounty farm's way, BOUNTY-FARM); ready once its box is known. */
-  function tvDungeonModelLoad(g) {
-    const e = { key: g.key, px: g.px, py: g.py, ready: false, gpu: null, local: null, box: null, h: 0, texRemap: null, matrix: new Float32Array(16), hold: pipeline.holdPlace('owdungeon', g.key) };
-    _tvDngModel.set(g.key, e);
-    (async () => {
-      const lay = layoutLocation(g.loc, maps, blocks, { enhanced: isEnhanced(), windmills: false });
-      const tile = getLocationTerrainTileOrigin(g.loc);
-      const meshOf = (id) => { const i = arch.getRecordIndex(id); return i === -1 ? null : arch.getMesh(i); };
-      const pick = dungeonEntranceModel(lay.blocks, tile.x * tileSide, tile.y * tileSide, meshOf, isEnhanced());
-      if (!pick) return;
-      const gpu = await e.hold.getGpuMesh(pick.modelIdNum);
-      const cpu = cpuModels.get(pick.modelIdNum);
-      if (!gpu || !cpu || _tvDngModel.get(g.key) !== e) return;
-      const free = isClimateFreeModel(pick.modelIdNum);   // ARENA1's law, as the build's
-      const texRemap = free ? NO_CLIMATE_REMAP : new Map();
-      const climate = g.loc.climate?.climateType ?? getWorldClimateSettings(maps.getClimateIndex(g.px, g.py)).climateType;
-      // TV-PIN (FIELD BUGS 2026-10-09): the climate's pictures through the place's OWN door - held by its hold, and let go
-      // with it. The host's `pipeline` is the pinned door (dataPipeline.js pinnedUpload), and every climate and season
-      // picture of every dungeon the view ever stood stayed on the GPU for the session
-      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });
-      if (_tvDngModel.get(g.key) !== e) return;
-      const box = transformedAabb(archAabb(pick.modelIdNum, cpu.positions), pick.local);
-      Object.assign(e, { ready: true, gpu, local: pick.local, box, h: Math.max(0.5, box[4] - Math.max(0, box[1])), texRemap });
-    })().catch((err) => console.warn('[overworld] a dungeon\'s model', g.key, err?.message ?? err));
-  }
-  /** OW-DUNGEONS: the set kept in step - a new one's model asked for, one gone released - and each drawn grown with the
-   *  eye's distance (owDungeonGrow) about its foot, where its real one stands: over a built pixel on the real model's
-   *  own level, past the grid on the far ring's ground. No giant's shadow (the view's law, WAGON-HITCH B2). Under the
-   *  view alone: in play the world's own entrance is the model. TV-BURST (FIELD BUGS 2026-10-09): `up` the view fully up
-   *  (the frame's `fullyUp`) - the loads start one a frame from then, the nearest first (startDungeonLoads); they all
-   *  started on the view's first frame, a whole set's layouts, meshes and pictures inside one draw. */
-  const _tvDngAt = [0, 0, 0];
-  function drawTvDungeonModels(eye, up) {
-    if (!eye) return;
-    const list = tvDungeonModelList();
-    const keep = new Set();
-    for (const g of list) keep.add(g.key);
-    startDungeonLoads(list, _tvDngModel, up, tvDungeonModelLoad);
-    for (const [k, e] of _tvDngModel) if (!keep.has(k)) { e.hold.release(); _tvDngModel.delete(k); }
-    for (const e of _tvDngModel.values()) {
-      if (!e.ready) continue;
-      const t = state.pixelTranslation(e.px, e.py, e.t ??= [0, 0, 0]);
-      const foot = (e.foot ??= modelFoot(e.box));
-      const level = built.get(`${e.px},${e.py}`)?.locOrigin ?? null;   // the real model's own level, where its pixel stands
-      _tvDngAt[0] = t[0] + foot[0]; _tvDngAt[2] = t[2] + foot[2];
-      if (level) _tvDngAt[1] = t[1] + level[1];
-      else {   // past the grid: the far ring's ground, asked again only as the ground moves (TV3's tvSceneKept's way)
-        const gen = tvGroundGenNow();
-        if (e.groundGen !== gen) { e.groundY = tvGroundAt(_tvDngAt[0], _tvDngAt[2]); e.groundGen = gen; }
-        _tvDngAt[1] = e.groundY;
-      }
-      const g = owDungeonGrow(Math.hypot(eye[0] - _tvDngAt[0], eye[1] - _tvDngAt[1], eye[2] - _tvDngAt[2]), e.h);
-      if (!owDungeonDrawn(g, !!level)) continue;
-      renderer.drawMesh(e.gpu, grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, { noShadow: true });
-    }
-  }
-  /** TV-BURST (FIELD BUGS 2026-10-09): THE VIEW DOWN, ITS MODELS LET GO - every place released to its kind's shelf
-   *  (PLACE-LRU keeps TV_DUNGEON_MODELS_MAX of them warm, so a view raised again where it was builds nothing again) and the
-   *  map emptied, so the next view starts its own one a frame; a load still in flight finds itself gone and stops
-   *  (tvDungeonModelLoad's own guards). They were held, undrawn, until a load. */
-  function dropTvDungeonModels() {
-    for (const e of _tvDngModel.values()) e.hold.release();
-    _tvDngModel.clear();
-  }
+  const { drawTvDungeonModels, dropTvDungeonModels } = createTravelViewDungeonModels({   // HOST-SPLIT: src/scenes/travelViewDungeonModels.js
+    _tvDngModel, arch, archAabb, blocks, built, cpuModels, locationIndex, maps, pipeline, playerTravelPixel,
+    renderer, state, tileSide, tvDungeonAt, tvDungeonRowsAt, tvFiledSpawns, tvGroundAt, tvGroundGenNow, tvKnownGen,
+    tvPlaceSummary, tvSpawnFound, tvSpawnGone, tvSpawnKnown,
+    get _locIndexGen() { return _locIndexGen; },
+    get _tvListsReady() { return _tvListsReady; },
+    get season() { return season; },
+    get tvDngModels() { return tvDngModels; }, set tvDngModels(v) { tvDngModels = v; },
+  });
   /** AUDIT OW5 D1 (the audit before the merge, 2026-09-29): THE FIND ASKS EVERY UNFOUND DUNGEON IN ITS REACH - never the
    *  plates' list above, which keeps TV_DUNGEON_MAX with the FOUND first (AUDIT OW4 D7), so a traveller who had found a
    *  dozen about them never found another on approach. The dungeons within TV_FIND_REACH map pixels of the traveller's
@@ -31783,7 +31720,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   function bandPeerChase(id) {
     const p = _bandPeer.get(id);
     if (!p) return null;
-    if (performance.now() - p.at > BAND_WORD_MS) { _bandPeer.delete(id); return null; }
+    if (performance.now() - p.at > p.hold) { _bandPeer.delete(id); return null; }   // OW-CHASE-RANGE: a region's word stands longer than a cell's
     return p;
   }
   /** TV7b: a band spent here - gone for its life, and said on my frames so the others spend it too. */
@@ -31796,16 +31733,22 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (_bandSpentAt.length > BANDS_WIRE_MAX) _bandSpentAt.length = BANDS_WIRE_MAX;
   }
   /** TV7b: a peer's band word, heard off their foes frame (past the room test): their chases shown where they are - one
-   *  I chase too goes to the lower id - and their spent bands spent here. */
-  function bandHear(from, raw) {
+   *  I chase too goes to the lower id - and their spent bands spent here. OW-CHASE-RANGE: `hold` how long the word stands
+   *  (a region's, TRAV_BAND_HOLD_MS). */
+  function bandHear(from, raw, hold = BAND_WORD_MS, aged = 0) {
     const now = performance.now(), at = bandPixelOf(playerTravelPixel()), life = Math.floor(bandNowMs() / BAND_LIFE_MS);   // AUDIT OW4 B1
     for (const [id, x, z, flag] of validBandWord(raw)) {
       if (!bandNearMe(id, at, life)) continue;   // AUDIT OW3 T7-9: only a band that can be about me
       if (flag === 2) { _bandSpent.add(id); _bandChase.delete(id); _bandPeer.delete(id); continue; }
-      _bandPeer.set(id, { x, z, at: now, from });
+      const cur = _bandPeer.get(id);
+      if (hold > BAND_WORD_MS && cur && cur.hold <= BAND_WORD_MS && now - cur.at < cur.hold) continue;   // AUDIT OW-REVISITED L4-4: a fresh cell word for it says better
+      _bandPeer.set(id, { x, z, at: now - aged, from, hold });
       if (_bandChase.has(id) && chaseYields(online?.id ?? '', from)) { _bandChase.delete(id); wildBands.forget(id); }   // AUDIT-F3: the peer's chase now - its notice of me with it (a stale word was a chase again from anywhere, unchecked)
     }
   }
+  // OW-CHASE-RANGE (scenes/regionChaseHost.js): a traveller's chases, off the words beside their region mark - withdrawn
+  // when it no longer names them, never heard of one my map hides (WILD1: the guild's mark is no stranger's)
+  const regionChase = createRegionChaseHearing({ bandHear, seaRaidHear, bands: () => _bandPeer, raids: () => tvRaid.peer, me: () => playerTravelPixel(), wildHides: wildHidesPlayer, social: () => social, guildTag: myGuildTag });
   /** TV7b: my band word, on the cell's foes frame - asked with `frame` null whether it must ride (a chase moves every
    *  frame; a spent band is said on the full frames too), then written into the frame. */
   let _bandWordKey = '';
@@ -31925,12 +31868,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     return holder._tvAt;
   }
+  const owForecast = createOverworldForecast({ climateAt, ground: mapGroundHere, minuteNow: () => playerTicker.classicMinutes, here: () => state.worldCoords(player.pos), alt: () => fieldXZ()[2], tvTrip, tvTripLive, travel: () => travelOptions, shared: sharedClockOn, rateNow: worldTimeScale, held: () => sunbaby.on });   // OW-FORECAST: the weather ahead (scenes/overworldForecastHost.js)
   const { travelViewMarks } = createTravelViewMarks({   // HOST-SPLIT: src/scenes/travelViewMarks.js
     TV_PLACE_LIFT, _bandChase, _bandSpent, _hiddenPeers, _lodesSensed, _peerMapPoses, _townOfMapId, _tvBountyHold,
     _tvLodeHold, _tvPartyHold, _tvVendorHold, _tvWaypointHold, _veils, _wildStrangerIds, bandMake, bandNowMs,
     bandPlace, cam, carriageTown, csaOn, exteriorFoes, livingHideoutsHostOf, lodeSense, lodeWords, motherlodeBook,
-    myGuildTag, params, player, playerTravelPixel, seaRaidPeerChase, townEcon, state, travelViewBands,
-    travelViewCamps, travelViewDungeons, travelViewFarPlaces, travelViewPlaces, travelViewRaiders, travellerBook,
+    myGuildTag, owForecast, params, player, playerTravelPixel, questPixel, seaRaidPeerChase, townEcon, state, travelViewBands,
+    travelViewCamps, travelViewDungeons, travelViewFarPlaces, travelViewPlaces, travelViewRaiders, travellerBook, tvPlaceRect, tvPlaceSummary,
     tvRaid, tvSceneKept, tvTrip, tvTripLive, walkMode, wildCampKeys, wildHidesPlayer,
     get _sharedOffsetMs() { return _sharedOffsetMs; },
     get bountyHost() { return bountyHost; },
@@ -32028,17 +31972,20 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   function seaRaidPeerChase(id) {
     const p = tvRaid.peer.get(id);
     if (!p) return null;
-    if (performance.now() - p.at > RAIDER_WORD_MS) { tvRaid.peer.delete(id); return null; }
+    if (performance.now() - p.at > p.hold) { tvRaid.peer.delete(id); return null; }   // OW-CHASE-RANGE: a region's word stands longer than a cell's
     return p;
   }
   /** OW6: a peer's raider word, heard off their foes frame (past the room test): their chases drawn where they sail - one I
-   *  chase too goes to the lower id - and their spent raiders spent here. Only a raider that can be about me is kept. */
-  function seaRaidHear(from, raw) {
+   *  chase too goes to the lower id - and their spent raiders spent here. Only a raider that can be about me is kept.
+   *  OW-CHASE-RANGE: `hold` as bandHear's. */
+  function seaRaidHear(from, raw, hold = RAIDER_WORD_MS, aged = 0) {
     const now = performance.now(), at = playerTravelPixel(), life = Math.floor(raidNowMs() / RAIDER_LIFE_MS);
     for (const [id, x, z, flag] of validRaiderWord(raw)) {
       if (!raiderNearMe(id, at, life)) continue;
       if (flag === 2) { tvRaid.spent.add(id); tvRaid.chase.delete(id); tvRaid.peer.delete(id); continue; }
-      tvRaid.peer.set(id, { x, z, at: now, from });
+      const cur = tvRaid.peer.get(id);
+      if (hold > RAIDER_WORD_MS && cur && cur.hold <= RAIDER_WORD_MS && now - cur.at < cur.hold) continue;   // AUDIT OW-REVISITED L4-4: a fresh cell word for it says better
+      tvRaid.peer.set(id, { x, z, at: now - aged, from, hold });
       if (tvRaid.chase.has(id) && chaseYields(online?.id ?? '', from)) tvRaid.chase.delete(id);
     }
   }
@@ -32195,9 +32142,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // OWS2: over the water the line rides the sea's top, never the seabed Deep Waters carves under it
     const leg = (ax, az, bx, bz, out) => { for (let k = 1; k <= 4; k++) { const q = tvSceneOf(ax + (bx - ax) * (k / 4), az + (bz - az) * (k / 4), 1); if (deepWaters) q[1] = Math.max(q[1], tvSeaY() + 1); out.push(q); } };
     // AUDIT OW3 J3: a resume off the road walks to the road first (travelOptions.js `join`) - and the line goes there too
-    const j = travelOptions.route?.join;
-    if (j) { leg(me.x, me.z, j.x, j.z, pts); leg(j.x, j.z, n[start][0], n[start][1], pts); }
-    else leg(me.x, me.z, n[start][0], n[start][1], pts);   // the traveller's own leg moves with them
+    // OW-TOWN-WALK: and a town's streets before both - the runs still ahead of the walk (its autopilot's `seg`)
+    const j = travelOptions.route?.join, sw = travelOptions.route?.street?.pts.slice(travelOptions.state?.autopilot?.seg ?? 0) ?? [];
+    let at = me;
+    for (const q of j ? [...sw, j] : sw) { leg(at.x, at.z, q.x, q.z, pts); at = q; }
+    leg(at.x, at.z, n[start][0], n[start][1], pts);   // the traveller's own leg moves with them
     // PERF-TV: the legs past it are the same every frame - kept while the ground and the leg being walked hold (a long
     // road re-read hundreds of terrain points a frame)
     const gen = tvGroundGenNow(), kept = tvTrip._tail;
@@ -32368,10 +32317,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const want = journey ? travelAsked : walk;   // AUDIT TV A2: what the mod asked - its ground's rate under its own cap (RATE-LAW); TV-WASD: or the keys' travel
     const load = travelGovernor.step(dt, { unbuilt, requested: want, owed: uc.owed, feet: unbuilt ? state.worldCoords(player.feetAt()) : null, speedMps: player?.speed ?? 0 });   // OW-LEAD: held by how near the nearest owed pixel is, at the traveller's own pace
     const foeCap = foes.strangerRate ? Math.min(foeRate(foes, want), foes.strangerRate) : foeRate(foes, want);   // ENEMY-PACE: the enemies' cap, never under the near-enemy pace (RATE-LAW: fixed)
-    const rate = Math.min(load, foeCap);   // OW6: the ground's cap and the enemies', the lower
+    const town = tvInTown() ? TOWN_PACE_MAX : Infinity;   // OW-TOWN-WALK: in a town, a town's pace - a journey's own streets ask it already, the keys' travel is held to it
+    const rate = Math.min(load, foeCap, town);   // OW6: the ground's cap and the enemies', the lower
     if (worldTimeScale() !== rate) setWorldTimeScale(rate);
     tvHeld = rate < want ? rate : null;
-    tvHeldWhy = tvHeld == null ? null : foeCap < load ? 'foes' : 'load';
+    tvHeldWhy = tvHeld == null ? null : town < Math.min(load, foeCap) ? 'town' : foeCap < load ? 'foes' : 'load';
     journeySlowSaid(tvHeldWhy);
     tvWalking = journey ? 0 : walk;
   }
@@ -32414,6 +32364,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     followDist: () => travelViewFollowDist(),   // WAYPOINTS: the followed rows' distances
     marks: travelViewMarks,
     route: travelViewRoute,
+    sky: () => owForecast.line(performance.now()),   // OW-FORECAST: the weather ahead - the way's while a journey runs, else here
     trip: () => (tvWalking ? TRAVEL_VIEW_TEXT.travelling(tvWalking, tvHeld) : tvTripLive() ? tvTrip.line : ''),   // TV-WASD: the keys' travel says its speed - AUDIT OW5 G3: first, as it runs only with no journey driving (a stopped route kept for the Resume read "To X, by the road" over it)
     hintKeys: () => {   // AUDIT DEEP T1-12: the hint names the player's own keys
       const store = bindings();
@@ -34253,7 +34204,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer, null, yardCull);   // SURV3: the tents, the cart's own pass; PERF-WAGON: by the street's view test
     hcc.draw(renderer, null, tvf ? { selfGrow: tvf.grow, grow: peerGrow } : undefined, yardCull);   // PERF-TEAMS: each wagon culled as the town's own models are; HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass); WAGON-HITCH x OW-BIG: a cart's wagon grown with its rider under the Overworld
-    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: loaded once the view is up, one a frame
+    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp, tvf.blend);   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: loaded once the view is up, one a frame; OW-DUNGEON-SIZE: to its one height as the view rises
     else if (_tvDngModel.size) dropTvDungeonModels();   // TV-BURST: the view down, its models let go (kept warm on their shelf)
     if (livingRoads && livingWorldOn() && _mode() === 'exterior') livingRoads.drawTeams(renderer, yardCull);   // LW10: the living world's wagons, in the cart's own pass; PERF-WAGON: by the street's view test
     _livingHideoutsHost?.draw(renderer, null, yardCull);   // LW12: a band's tents; PERF-WAGON: by the street's view test

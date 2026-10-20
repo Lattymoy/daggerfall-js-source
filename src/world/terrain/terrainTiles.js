@@ -48,8 +48,10 @@ const RMB_TILES_PER_TERRAIN = 128;
 export const BEACH_JITTER = 1.5;
 
 const SEED = 417028; // Use same seed to ensure continuous tiles
-const WATER = 0;
-const DIRT = 1;
+/** The tile data's ground classes (GenerateTileDataJob's): water, dirt, grass, stone - JUNGLE-TRAILS
+ *  (world/jungle/jungleTrails.js) paints its corners dirt over the land. */
+export const WATER = 0;
+export const DIRT = 1;
 const GRASS = 2;
 const STONE = 3;
 

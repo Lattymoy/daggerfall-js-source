@@ -2,7 +2,7 @@
   {
     "name": "RUN-STIFF-the-swing-kicks",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    lift: 0.12, liftFast: 0.18, land: 0.35,",
+    "old": "    lift: 0.18, liftFast: 0.29, land: 0.35,",
     "new": "    lift: 0.24, liftFast: 0.4, land: 0.35,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_run.test.js"
@@ -11,7 +11,7 @@
   {
     "name": "RUN-STIFF-the-run-sinks",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    height: 0.95, heightFast: 0.93, bob: 0.028, sway: 0.012,",
+    "old": "    height: 0.925, heightFast: 0.9, bob: 0.035, sway: 0.012,",
     "new": "    height: 0.9, heightFast: 0.87, bob: 0.042, sway: 0.012,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_run.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "TWO-RUN-the-turn-never-laid",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "(gp.chest.yaw + runTurn) * (1 - k)",
-    "new": "gp.chest.yaw * (1 - k)",
+    "old": "gp.chest.wave.yaw * (1 - wave) + runTurn) * (1 - k)",
+    "new": "gp.chest.wave.yaw * (1 - wave)) * (1 - k)",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]

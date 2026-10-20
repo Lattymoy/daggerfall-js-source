@@ -1749,9 +1749,9 @@ export class Room {
     let n = 0;
     for (const [w, b] of this._all()) {
       if (w === vws || !b.id || !b.tm || now - b.tm.at > TRAV_STALE_MS || this._dead.has(w) || this._gone.has(w)) continue;
-      const p = { ...b.tm };
-      delete p.at;
-      this._send(vws, JSON.stringify(badged({ t: 'trav', id: b.id, name: b.name, sub: b.sub, p }, b)));
+      const { bd, sr } = b.tm, p = { ...b.tm };   // OW-CHASE-RANGE: the chase words kept beside the mark, said beside it
+      delete p.at; delete p.bd; delete p.sr;
+      this._send(vws, JSON.stringify(badged({ t: 'trav', id: b.id, name: b.name, sub: b.sub, p, ...(bd ? { bd } : {}), ...(sr ? { sr } : {}) }, b)));
       if (++n >= TRAV_WELCOME_MAX) break;
     }
   }
@@ -3508,7 +3508,7 @@ export class Room {
         // badged as the roster is, cut at TRAV_WELCOME_MAX; no field is no traveller (an old client reads none)
         // AUDIT DEEP T3-6: each with its AGE (`ag`, whole seconds) - a joiner stamps it that old, so a mark four minutes
         // stale here is not five minutes fresh there
-        const tr = isRegionRoom(a.key) ? others.filter((b) => b.tm && now - b.tm.at <= TRAV_STALE_MS).slice(0, TRAV_WELCOME_MAX).map((b) => { const p = { ...b.tm }; delete p.at; return badged({ id: b.id, name: b.name, sub: b.sub, p, ag: Math.max(0, Math.floor((now - b.tm.at) / 1000)) }, b); }) : [];
+        const tr = isRegionRoom(a.key) ? others.filter((b) => b.tm && now - b.tm.at <= TRAV_STALE_MS).slice(0, TRAV_WELCOME_MAX).map((b) => { const { at, bd, sr, ...p } = b.tm; return badged({ id: b.id, name: b.name, sub: b.sub, p, ...(bd ? { bd } : {}), ...(sr ? { sr } : {}), ag: Math.max(0, Math.floor((now - at) / 1000)) }, b); }) : [];
         if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: shard ? this._hubN(others.length + 1) : others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(ev ? { ev } : {}), ...(tr.length ? { tr } : {}) }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
         // AUDIT SCALE5a C1-C3: AND THE ROOM'S COUNT, as the welcome says it (`n`). A client whose roster the welcome cut at
         // CHAT_ROSTER_MAX kept the count by arithmetic, a join +1 and a leave -1, and every door that says one without the
@@ -4312,7 +4312,7 @@ export class Room {
       if (!m.p && !a.tm) return;
       const rest = { ...a };
       delete rest.tm;
-      if (!this._setAttach(ws, m.p ? { ...rest, tm: { ...m.p, at: now } } : rest)) return;
+      if (!this._setAttach(ws, m.p ? { ...rest, tm: { ...m.p, at: now, ...(m.bd ? { bd: m.bd } : {}), ...(m.sr ? { sr: m.sr } : {}) } } : rest)) return;   // OW-CHASE-RANGE: its chase words kept beside it
       // AUDIT TV C2: A CLEAR IS SAID (AUDIT DEEP2 C2: at once, or owed below). A mark over the budget is kept and the next refresh carries it; a clear has no
       // next - the client holds nothing to refresh - so a dropped one left the player standing on every screen in the
       // room for TRAV_STALE_MS. AUDIT DEEP T3-2: on its OWN budget, so a room's marks never spend it (nor it theirs).
@@ -4320,7 +4320,7 @@ export class Room {
       if (!clear) this._travOwed.delete(a.id);   // a new mark says where they are - the owed clear is moot
       const room = travRoomGate(clear ? this._travClearFan : this._travFan, now);
       if (clear) this._travClearFan = room.bucket; else this._travFan = room.bucket;
-      const out = JSON.stringify(badged({ t: 'trav', id: a.id, name: a.name, sub: a.sub, p: m.p ?? null }, a));
+      const out = JSON.stringify(badged({ t: 'trav', id: a.id, name: a.name, sub: a.sub, p: m.p ?? null, ...(m.bd ? { bd: m.bd } : {}), ...(m.sr ? { sr: m.sr } : {}) }, a));
       // AUDIT DEEP2 C2: A CLEAR OVER THE BUDGET IS OWED, not lost - the attachment's mark is gone and the client holds
       // nothing to send again, so a dropped one left the player drawn for TRAV_STALE_MS; it is said on the budget's next
       // pass (the room's next traveller frame - a room over the budget has them every moment)

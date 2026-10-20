@@ -46,7 +46,7 @@
   },
   {
     "name": "TVB-host-every-load-at-once",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonModels.js",
     "old": "    startDungeonLoads(list, _tvDngModel, up, tvDungeonModelLoad);",
     "new": "    startDungeonLoads(list, _tvDngModel, up, tvDungeonModelLoad, Infinity);",
     "tests": [
@@ -56,7 +56,7 @@
   },
   {
     "name": "TVB-host-rising-loads",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonModels.js",
     "old": "    startDungeonLoads(list, _tvDngModel, up, tvDungeonModelLoad);",
     "new": "    startDungeonLoads(list, _tvDngModel, true, tvDungeonModelLoad);",
     "tests": [
@@ -67,8 +67,8 @@
   {
     "name": "TVB-host-fullyUp-unread",
     "file": "src/scenes/world.js",
-    "old": "    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp);",
-    "new": "    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, true);",
+    "old": "    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, tvf.fullyUp, tvf.blend);",
+    "new": "    if (tvf) drawTvDungeonModels(travelView?.eye ?? null, true, tvf.blend);",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js",
       "test/world/owdungeons.test.js"
@@ -85,7 +85,7 @@
   },
   {
     "name": "TVB-host-drop-releases-nothing",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonModels.js",
     "old": "    for (const e of _tvDngModel.values()) e.hold.release();\n    _tvDngModel.clear();",
     "new": "    _tvDngModel.clear();",
     "tests": [
@@ -94,7 +94,7 @@
   },
   {
     "name": "TVB-host-drop-keeps-the-map",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonModels.js",
     "old": "    for (const e of _tvDngModel.values()) e.hold.release();\n    _tvDngModel.clear();",
     "new": "    for (const e of _tvDngModel.values()) e.hold.release();",
     "tests": [
@@ -103,9 +103,9 @@
   },
   {
     "name": "TVP-the-pinned-door-again",
-    "file": "src/scenes/world.js",
-    "old": "(a, r) => applyClimate(a, r, climate, season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
-    "new": "(a, r) => applyClimate(a, r, climate, season), pipeline);",
+    "file": "src/scenes/travelViewDungeonModels.js",
+    "old": "(a, r) => applyClimate(a, r, climate, host.season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
+    "new": "(a, r) => applyClimate(a, r, climate, host.season), pipeline);",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js",
       "test/world/owdungeons.test.js"
@@ -113,7 +113,7 @@
   },
   {
     "name": "TVP-the-holds-door-unasked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonModels.js",
     "old": "{ getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
     "new": "{ getTexture: pipeline.getTexture, uploadRecord: pipeline.uploadRecord });",
     "tests": [

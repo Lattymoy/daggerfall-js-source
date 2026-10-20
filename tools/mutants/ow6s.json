@@ -112,8 +112,8 @@
   {
     "name": "OW6-S-view-cap-unmet",
     "file": "src/scenes/world.js",
-    "old": "    const rate = Math.min(load, foeCap);   // OW6: the ground's cap and the enemies', the lower",
-    "new": "    const rate = load;",
+    "old": "    const rate = Math.min(load, foeCap, town);   // OW6: the ground's cap and the enemies', the lower",
+    "new": "    const rate = Math.min(load, town);",
     "tests": [
       "test/systems/travel/ow6_slowdown.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "OW6-S-reason-always-load",
     "file": "src/scenes/world.js",
-    "old": "    tvHeldWhy = tvHeld == null ? null : foeCap < load ? 'foes' : 'load';",
-    "new": "    tvHeldWhy = tvHeld == null ? null : 'load';",
+    "old": "    tvHeldWhy = tvHeld == null ? null : town < Math.min(load, foeCap) ? 'town' : foeCap < load ? 'foes' : 'load';",
+    "new": "    tvHeldWhy = tvHeld == null ? null : town < Math.min(load, foeCap) ? 'town' : 'load';",
     "tests": [
       "test/systems/travel/ow6_slowdown.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "OW6-S-keys-uncapped",
     "file": "src/scenes/world.js",
-    "old": "    const rate = Math.min(load, foeCap);   // OW6: the ground's cap and the enemies', the lower",
-    "new": "    const rate = journey ? Math.min(load, foeCap) : load;",
+    "old": "    const rate = Math.min(load, foeCap, town);   // OW6: the ground's cap and the enemies', the lower",
+    "new": "    const rate = journey ? Math.min(load, foeCap, town) : Math.min(load, town);",
     "tests": [
       "test/systems/travel/ow6_slowdown.test.js"
     ],

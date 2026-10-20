@@ -76,10 +76,10 @@ export const GAIT_STYLES = Object.freeze({
   }),
   run: Object.freeze({
     strideMax: 4.1, duty: Object.freeze([0.42, 0.3]), frFull: 7,
-    height: 0.95, heightFast: 0.93, bob: 0.028, sway: 0.012,
-    lift: 0.12, liftFast: 0.18, land: 0.35,
+    height: 0.925, heightFast: 0.9, bob: 0.035, sway: 0.012,
+    lift: 0.18, liftFast: 0.29, land: 0.35,
     heel: 4, toeOff: 50, swingToe: 14, flat: Object.freeze([0.1, 0.32]),
-    width: 0.42, hipYaw: 8, hipList: 4, hipTilt: 8, hipTiltWave: 2,
+    width: 0.42, hipYaw: 9.5, hipList: 5, hipTilt: 9, hipTiltWave: 2.5,
     chestYaw: 14, chestRoll: 3, lean: 11,
     arm: Object.freeze({ swing: 42, bias: 7, elbow: Object.freeze([74, 96]), abduct: 18 }),
   }),
@@ -900,7 +900,8 @@ export function gaitPose(state, input, body) {
   // ---- the chest ----
   const breath = Math.sin(breathT) * STAND.breathPitch * RAD * idle;
   const chestYaw = P.chestYaw * RAD * Math.cos(2 * Math.PI * phi) * move * c;
-  const chestRoll = -P.chestRoll * RAD * listWave * move + s.bank;
+  const counterDrop = -P.chestRoll * RAD * listWave * move;
+  const chestRoll = counterDrop + s.bank;
   const standLean = lerp(STAND.lean, STAND.sneak.lean, s.sneak) * P.standLean;
   const chestPitch = lerp(standLean, P.lean, move) * RAD + s.lean - breath + (stance?.lean ?? 0) * RAD * idle;
   // ---- the free arms: a backpedal swings them the other way, eased over (GAIT-12) ----
@@ -908,7 +909,9 @@ export function gaitPose(state, input, body) {
   return {
     move, phase: phi, duty: beta, stride, frShare, run: P.run, sneak: P.sneak, back: s.back, speed: s.speed,
     hip: { at: [hipXY[0], hipXY[1], hipZ], yaw: hipYaw, roll: hipRoll, pitch: hipPitch, limits },
-    chest: { yaw: chestYaw, roll: chestRoll, pitch: chestPitch, breath: Math.sin(breathT) * idle },
+    // `wave`: the stride's own share of the chest's turn - the counter-turn and the counter-drop the swinging arms ride
+    // (a held weapon's arm takes them by its row's swing share alone - carry.js carryHands, HELD-STEADY)
+    chest: { yaw: chestYaw, roll: chestRoll, pitch: chestPitch, breath: Math.sin(breathT) * idle, wave: { yaw: chestYaw, roll: counterDrop } },
     feet,
     arm: { swing, bias: P.arm.bias * RAD * move, elbow: P.arm.elbow, abduct: P.arm.abduct * RAD, phase: phi },
   };

@@ -37,6 +37,7 @@ import {
 } from './professionLaw.js';
 import { kingdomOf, FREE_LANDS, MARCH_REGIONS, isMarch } from './kingdomLaw.js';   // SEAT0 4.3's map, one home (PROF2)
 import { onBayOrEther } from '../world/ethericSea.js';   // ETHER-NODES: the Bay's map or the Eltheric Ocean's box, one home (ETHER-OW; pure: formats/ alone)
+import { banthaAreaHas } from '../world/jungle/banthaArea.js';   // JUNGLE-WOODS: the owner's jungle, one home (pure: its rows alone)
 
 /** The one salt every client stands a day's nodes with. Changing it moves every node in the world. */
 export const NODE_SALT = 0x5e3d;
@@ -382,29 +383,46 @@ export const PINE_WOOD = 'log:pine';
 export const PINE_SHARE = NODE_TIER_WEIGHTS[0] / 100;
 /** Whether a climate's own woods hold no tier-1 wood (so PINE_SHARE of its trees stand as Pine). */
 const needsPine = (table) => !!table && !table.some((k) => tierOfKey(k) === 1);
+/** JUNGLE-WOODS (2026-10-19, the owner: "The forest region we recently implemented should be a large tree gathering
+ *  spot. Moreso than other places within daggerfall"): a map pixel of the Jungle of Bantha - the owner's area
+ *  (world/jungle/banthaArea.js, bible/03-World/Bantha-Jungle.md) - stands this many trees a day: four times the richest
+ *  woods' anywhere else (the Woodlands' and the Rainforest's twelve), so the next tree stands about half as far. The
+ *  area's, never the switch's: the service recomputes every tree from this law, and a room has one jungle. */
+export const JUNGLE_TREE_SLOTS = 48;
+/** How many trees a pixel's day holds: none where its climate grows no wood; the jungle's in the owner's area (each one
+ *  standing - `tree`); else its climate's count. */
+export function treeSlots({ x, y, climate }) {
+  if (!WOOD_TABLES[climate]) return 0;
+  return banthaAreaHas(x, y) ? JUNGLE_TREE_SLOTS : nodeCount(climate, 'tree');
+}
 /**
  * ONE TREE of a pixel's day: its law point (`u`, `v`), its tier and wood. A rare wood's one in twenty is its own roll,
  * first, on a confirmed pixel; then, in a forest whose own woods hold no tier 1, PINE_SHARE of its trees are Pine, on
  * any ground (PINE-SHARE); else the tier is drawn over the tiers the climate's woods hold by the weights, held to
  * tier 2 on a pixel not confirmed - so an unconfirmed Rainforest or Subtropical pixel, whose woods are all past tier 2,
- * stands only its Pine (PROF0 25: no Teak on anyone's word). Null past the day's count, or where no tree grows.
+ * stands only its Pine (PROF0 25: no Teak on anyone's word). Null past the day's count (treeSlots - JUNGLE-WOODS: the
+ * jungle's), or where no tree grows.
  * @param {{ x: number, y: number, day: number, slot: number, climate: number, confirmed?: boolean }} p
  */
 export function tree({ x, y, day, slot, climate, confirmed = false }) {
   const table = WOOD_TABLES[climate];
-  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= nodeCount(climate, 'tree')) return null;
+  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= treeSlots({ x, y, climate })) return null;
   const u = 0.04 + 0.92 * unit('tree', x, y, day, slot, 1);
   const v = 0.04 + 0.92 * unit('tree', x, y, day, slot, 2);
   const rare = RARE_WOODS[climate];
   if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };
   if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };   // PINE-SHARE
   const d = drawFromTable(table, unit('tree', x, y, day, slot, 3), unit('tree', x, y, day, slot, 4), confirmed ? 7 : 2);
-  return d ? { slot, u, v, tier: d.tier, material: d.material, rare: false } : null;
+  if (d) return { slot, u, v, tier: d.tier, material: d.material, rare: false };
+  // JUNGLE-WOODS: every slot of the jungle stands a tree - a slot whose wood waits on the witnesses (the Rainforest's Teak
+  // and Mahogany, past tier 2) stands Pine there, where elsewhere it stands nothing (3 in 5 of an unconfirmed
+  // Rainforest's slots)
+  return banthaAreaHas(x, y) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;
 }
 /** Every tree of a pixel's day, slot 0 first. */
 export function trees(p) {
   const out = [];
-  for (let slot = 0; slot < nodeCount(p.climate, 'tree'); slot++) { const n = tree({ ...p, slot }); if (n) out.push(n); }
+  for (let slot = 0; slot < treeSlots(p); slot++) { const n = tree({ ...p, slot }); if (n) out.push(n); }
   return out;
 }
 /** A tree's base roll (the service's dice): 2 to 4 logs. */

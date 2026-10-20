@@ -20,13 +20,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { pickLanternRecord, pickTorchRecord, assembleFirstPersonArm, poseAssembly, hangAffine, MW_LIGHT_CARRY } from '../../src/formats/morrowind/mwFirstPerson.js';
+import { pickLanternRecord, pickTorchRecord, assembleFirstPersonArm, poseAssembly, hangAffine, hangAnchor, MW_LIGHT_CARRY, MW_UNITS_PER_METER } from '../../src/formats/morrowind/mwFirstPerson.js';
 import {
-  createFpArm, resolveHipLanternPart, hipLanternPartPaths, hangHipLight, effectPlacement,
+  createFpArm, resolveHipLanternPart, hipLanternPartPaths, hangHipLight, effectPlacement, hipLanternSize,
   HIP_LIGHT_BONE, HIP_LIGHT_SLOT, HIP_LANTERN_HOOK,
 } from '../../src/combat/fpArm.js';
+import { HIP_LANTERN_SPRITE } from '../../src/player/eyeOfTheBeholder/eotbLantern.js';
 import { fixtureFile, countingRenderer, hipLanternBodyDeps } from '../fixtures/mw/bodyRig.mjs';   // HT-WAIST-NET: the lantern body lives there once - the peers' pin builds the same rig
-import { createLanternSwing, lanternSwingMatrix } from '../../src/systems/lanternSwing.js';
+import { createLanternSwing, lanternSwingMatrix, HIP_LANTERN_HEIGHT } from '../../src/systems/lanternSwing.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const SKEL = new Uint8Array(readFileSync(new URL('../../vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif', import.meta.url)));
@@ -158,6 +159,32 @@ test('HT-WAIST the hang: a hanging part\'s particle system (a lantern\'s flame) 
   for (let i = 0; i < 3; i++) assert.ok(Math.abs(m.t[i] - want.t[i]) < 1e-4, 'the flame\'s origin is the hang\'s');
   const bone = arm.mats.get(pelvisRef);
   assert.ok(Math.hypot(m.t[0] - bone.t[0], m.t[1] - bone.t[1], m.t[2] - bone.t[2]) > 5, 'not the bare pelvis');
+});
+
+test('HT-WAIST-SIZE the hang: whatever size its mesh was made at, the lantern hangs a belt lantern\'s height - HIP_LANTERN_HEIGHT in the rig\'s units, the height Eye Of The Beholder\'s picture hangs at - by its top from the same hook, plumb and swinging as before (Mac: "the lantern attached to the waist in absolutely gigantic on the morrowind model" - the hang placed a street or hand lantern\'s mesh at its own size; the fixture\'s is 2 units tall) (mutants: HT-WAIST-SIZE-unsized, HT-WAIST-SIZE-the-size-unlaid, HT-WAIST-SIZE-scaled-about-the-origin, HT-WAIST-SIZE-height-from-the-origin)', async () => {
+  const { arm, hang, piece } = await hungOnRetailSkeleton();
+  poseAssembly(arm);
+  const want = HIP_LANTERN_HEIGHT * MW_UNITS_PER_METER;
+  const b = bbox(piece.positions);
+  assert.ok(Math.abs(hang.height - 2) < 1e-3, `the fixture mesh's own height (${hang.height})`);
+  // a part whose foot is not at its origin: the height is its own, from its top to its foot
+  const off = { rot: null };
+  hangAnchor([{ hang: off, source: Float32Array.from([-1, 0, 5, 1, 2, 9]), boneOffset: null, mirrored: false }], off);
+  assert.deepEqual([off.anchor, off.height], [[0, 1, 9], 4], 'measured from the top to the foot, never from the origin');
+  assert.ok(Math.abs((b.mx[2] - b.mn[2]) - want) < 1e-3, `hung ${(b.mx[2] - b.mn[2]).toFixed(3)} units tall, not ${want.toFixed(3)}`);
+  const pelvis = arm.mats.get(arm.skeleton.byName.get('bip01 pelvis')).t;
+  close(b.top, [pelvis[0] + HIP_LANTERN_HOOK[0], pelvis[1] + HIP_LANTERN_HOOK[1], pelvis[2] + HIP_LANTERN_HOOK[2]], 1e-3, 'sized about its top: still at the hook');
+  // the law, for any mesh: a mesh three times as tall hangs at a third the scale - the same height
+  assert.ok(Math.abs(hipLanternSize(hang.height * 3) * 3 - hipLanternSize(hang.height)) < 1e-9);
+  assert.equal(hipLanternSize(0), 1, 'a part with no height to read hangs as it was made');
+  assert.equal(HIP_LANTERN_SPRITE.height, HIP_LANTERN_HEIGHT, 'one height for both bodies');
+  // swung, it keeps its size and its hook
+  const sw = createLanternSwing(); sw.side = 25 * Math.PI / 180;
+  lanternSwingMatrix(sw, hang.rot);
+  poseAssembly(arm);
+  let far = 0;
+  for (let v = 0; v < piece.positions.length; v += 3) far = Math.max(far, Math.hypot(piece.positions[v] - b.top[0], piece.positions[v + 1] - b.top[1], piece.positions[v + 2] - b.top[2]));
+  assert.ok(far < want * 1.2 && far > want * 0.9, `swung, its foot ${far.toFixed(2)} units from the hook`);
 });
 
 // ---------------------------------------------------------------

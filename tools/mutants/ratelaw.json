@@ -72,8 +72,8 @@
   {
     "name": "RATE-ring-ceiling-dropped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const rate = st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);",
-    "new": "    const rate = travelRateOf(onRoad);",
+    "old": ": st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);",
+    "new": ": travelRateOf(onRoad);",
     "tests": [
       "test/systems/travel/travel_speed_preference.test.js"
     ]

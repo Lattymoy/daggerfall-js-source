@@ -463,6 +463,8 @@ BOULDERS (FIELD BUGS 2026-10-01, Mac: "Fix the rest"; the service's acct47): the
 
 MORE-NODES (2026-10-02, Mac: "increase all profession nodes", asked: "Double"; the service's acct48): the trees, the herb patches and the veins twice what they were, every climate (the table above). The day's sixty a profession (and the account's bound) are unchanged, so what doubles is how close the next node stands, not what a day yields (CAP-OFF, 2026-10-07: the sixty and the account's bound are gone - the nodes and the walk between them are the day's whole bound). A signature region's veins stand in the slots after the climate's (a Mountain's thirteenth, Daggerfall's fifth and sixth in the woods).
 
+JUNGLE-WOODS (2026-10-19, the owner: "The forest region we recently implemented should be a large tree gathering spot. Moreso than other places within daggerfall"; the service's acct161, acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges): a map pixel of the Jungle of Bantha - the owner's area, `world/jungle/banthaArea.js` (`03-World/Bantha-Jungle.md`) - stands **48 trees a day** (`net/nodeLaw.js` `JUNGLE_TREE_SLOTS`), four times the richest woods' anywhere else (the Woodlands' and the Rainforest's 12), so the next tree stands about half as far; whatever the pixel's climate (the area holds the Rainforest and, in the Dragontail foothills, the Mountain), none where no wood grows (`treeSlots`). And **every jungle slot stands a tree**: a slot whose wood waits on the witnesses - an unconfirmed Rainforest's Teak and Mahogany, past tier 2 - stands Pine there, where elsewhere it stands nothing (PINE-SHARE left 3 in 5 of an unconfirmed Rainforest's slots empty, so the jungle stood about 5 trees a pixel until three accounts vouched for it); on confirmed ground the jungle's own woods and the rare Ironwood stand as the Rainforest's do. The law is the area's, never the Features row's: the service recomputes every tree from it (the harvest's slot check reads `treeSlots` beside a vein's `veinSlots`), and a room has one jungle - offline with the jungle off, the area's count stands at DFU's palms. The jungle's ~5,400 tree flats a pixel carry them easily (`scenes/treeHost.js` `standTrees`, its rock check now asked once a flat, not once a flat a tree). `world/jungle/banthaArea.js` joins the account deploy's path filter (the law imports it). Pinned by `test/net/junglewoods.test.js` (5) and `tools/mutants/junglewoods.json` (12, all dead).
+
 UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, the Discord's "Mining veins": "I mined about 200-300 veins of iron, but there were not a single vein of silver, gold, platinum or mithril in the mountains ... maybe Mountain area and MountainWoods area are bugged"; the service's acct102): not a bug - the law. A vein on a pixel nobody else had vouched for was held to tier 2, and the Mountain's table holds Iron at 1 and nothing again until Silver at 3: every mountain pixel a lone miner worked stood Iron alone, the Mountain Woods never its Silver, and a lone miner's word confirms nothing (three accounts a week old, the witnessed world above), so the far mountains never came to the rest. A vein on such ground is held where a dungeon's deep vein already is on anyone's word - `UNCONFIRMED_VEIN_TIER`, 3 (`net/nodeLaw.js`, the one cap the wilderness vein, the deep vein and the Court's vein metals read) - so the Mountain stands Silver beside its Iron (73 : 27 by the weights) and the Mountain Woods its Silver beside its three; no other climate's table holds a tier 3, so no other ground moves. Gold, Platinum, Mithril and a region's signature still wait on the witnesses, and a lie about a pixel buys Silver at most - what a dungeon's vein already gives it. The herbs and the trees keep 2. The Mining page says so in the player's words (`ui/professions/profPages.js` MINING_GROUND_LINE). PIN MOVED: PROF2's "an unconfirmed Mountain pixel yields Iron alone" (`test/net/prof2_law.test.js`). Pinned by `test/net/fb1009e_unwitnessedore.test.js`; `tools/mutants/fb1009e_unwitnessedore.json` (4, all dead). ORE-MAP (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): the held map's bare ground says it for a place - its veins, its dungeons', its kingdom's own ore and whether its ground is witnessed (`ui/oreMapTip.js`).
 
 GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being overwhelming, maybe a glyph marker showing where a group of them are"; asked: "Groups nearby"): on the Overworld each profession's group on a stood pixel - its nodes not yet worked today, as NODE-MARKS would mark them - is one diamond in its compass colour at their middle, its count beside it ("Mining ×6"), the nearest twelve within 3 km (the land streams three pixels out), read again twice a second; the view's filters have a Gathering switch. Not a click of its own: a click there walks to the ground under it. None with the professions shut, nor underground; Hunting's bodies are no group. `scenes/gatherHost.js` overworldGroups, `systems/travel/travelViewFilters.js`, `ui/travel/travelViewHud.js`, `scenes/travelViewMarks.js` travelViewMarks (out of world.js since HOST-SPLIT 1).
@@ -3099,7 +3101,8 @@ and nothing in the world set a node apart from the ground about it. DECIDED here
   view's focus when one is set, every rate a whole number of cycles over its 60 s clock. Drawn after each mode's
   opaque world through the veiled bodies' hook, as the auras are (the street's pass, the dungeon's `lateWorldDraw`);
   never under the travel view; built at idle once a node is first marked; a glow that will not build costs the glow,
-  never the game (`createNodeGlowPass`, the world host's one door to it).
+  never the game (`createNodeGlowPass`, the world host's one door to it). NODE-OUTLINE (section 46, 2026-10-19): a node with a
+  picture is ringed along its own picture instead; the glow lights a node with none (a body drawn as a 3D character).
 - **Not built, named**: the held map's node marks (section 21's "the held map marks the patches and veins a character
   has worked before" - still as PROF1 and PROF2 left it); no setting turns the glow or the marks off (the professions'
   own switch does).
@@ -4731,6 +4734,49 @@ the slice wires a line into (`scenes/world.js`, `scenes/dungeonContext.js`, `net
 `ui/enhanced/enhancedMenu.js`, `systems/uiPrefs.js`) were not judged whole again: their records still apply
 (`test/tooling/mutantdrift.test.js`), and those on the lines the slice moved were re-aimed and judged above.
 Ledger A (PROFESSIONS, GATHER-FEEL II).
+
+## 46. NODE-OUTLINE - a node ringed along its own picture (BUILT 2026-10-19)
+
+The owner: **"Overhaul gathering material visuals. Actually outline the sprite itself instead of a faint sparkle like it
+is now."** FACT: NODE-MARKS' glow (section 31) is a card stood before the node - a halo, a shimmer and motes, slight by
+intent - so the eye found a sparkle near a node, never the node's own shape; a tree's glow was a 2.6 x 3.4 m patch about
+its root under a 20 m crown. DECIDED and BUILT (`render/nodeOutline.js`):
+
+- **Its own picture.** The gathering host's marks carry each node's PICTURES (`scenes/gatherHost.js`, `pictures` on a
+  mark): the flats it stood for the node - which batch, which of its flats (`first`, `count` - nodes share a batch by
+  record) and their centres, recorded where the batch is made - a dungeon vein's own batches, and for a tree its kind's
+  own (`GatherKind.picturesOf`; `scenes/treeHost.js`: the forest's flat, and its centre - the very array its pixel's 3D
+  tree set holds, so the Low Poly Trees' or the jungle's 3D tree that stands for it near the eye is found by it). The
+  renderer keeps the flats' basis and the 3D trees' frames it drew (`lptDrawnFrames`, spent in the flats' call,
+  forgotten each beginFrame), so the outline is drawn on the very trees and far pictures the frame stood.
+- **A silhouette, then its ring.** Each frame a node's pictures are drawn again, unmoved, by the billboard program's own
+  vertex stage (`bbVertexShader` - they stand, sway and give way to their 3D tree as the world drew them) into its tile
+  of a depth-only atlas (`OUTLINE_GRID` x `OUTLINE_GRID` tiles of `OUTLINE_TILE` texels, a node a tile - its rectangle
+  on screen snapped to whole pixels and fitted in, a texel a pixel where it fits), cut where the picture is cut. Then
+  over the node's rectangle a fragment outside the silhouette within the ring's width of it (16 taps: 8 directions at
+  the width and half of it) is the ring, in the profession's colour (`ui/nodeMarks.js`, the compass's) at the depth of
+  the silhouette it borders, stood `OUTLINE_RING_BACK` behind it - so a wall before the node hides it, the ground or a
+  tree behind it shows it, and it never draws over the node itself. **Why not shifted copies** (WEAPON-GLOW1's law): the
+  copies of a 3D tree's front cards drew over its own back cards - lines through the canopy (`tools/nodeOutlineProbe.mjs`,
+  2026-10-19: 18% of the ring over the tree); pushing the copies behind the whole tree hid the ring wherever another tree
+  stood close behind, which in the jungle is everywhere.
+- **Its measure.** `OUTLINE_PX` 2.5 pixels at 1080 rows, with the image, never under 1.5 (a retro image's pixels are
+  large); `OUTLINE_ALPHA` 0.95, breathing 12% at a quarter hertz (still under reduced motion); kindled and faded with
+  distance by the glow's own law (`nodeGlows`: 0.6 s, 80 to 120 m), 16 at most (the atlas's tiles - the glow's budget);
+  fogged and hazed by the frame's fog and the jungle's haze where its depth stands.
+- **The glow stays where there is no picture.** A mark with none - Hunting's body drawn as a 3D character - is lit by the
+  glow as before (`createNodeOutlinePass`'s `glow`, the world host's `createNodeGlowPass`); SENSE1's look round keeps
+  the glow too (its finds have no picture). An outline that will not build hands every mark to the glow.
+- **Where.** The world host's hook after each mode's opaque world, as the glow was (the street's, a dungeon's
+  `lateWorldDraw`); never in a building nor under the travel view. One draw a picture into the atlas and one quad a node
+  on screen; the frame's target, its viewport and the world's baseline handed back (blend off, depth LESS and written,
+  faces culled, a scissor where one stood).
+- **Pinned**: `test/scenes/nodeoutline.test.js` (9); `tools/nodeOutlineProbe.mjs` compiles and links both programs in a
+  real WebGL2 context, draws a herb flat of a two-flat batch and a 3D tree of crossed cards through the pass, and reads
+  the frame back (15 checks: the ring outside every picture and within its width, the neighbour flat unringed, the
+  colours, one even ring at half kindling, a wall hiding it, the baseline back). Mutants: `tools/mutants/nodeoutline.json`
+  (26, all dead). PIN MOVED: NODE-MARKS' and WB9g's hook pins (`nodemarks.test.js`, `invislook.test.js`,
+  `wb9g_insignia.test.js`, `nodemarks.json`, `wb9g.json`) read `nodeOutlinePass`.
 
 ## Appendix A - a day of a gatherer
 

@@ -3,7 +3,9 @@
 // and first person."; bible/04-Characters/Body-Motion.md) - on the vendored retail biped, measured on the solved body.
 //
 // What is pinned: RUN-STIFF - the run's knee folds less in the swing and the hips ride higher on the standing leg (the
-// knee folded 98 degrees past the standing leg's at a run, the hips sank to 0.87 of their standing height); RUN-WIDE -
+// knee folded 98 degrees past the standing leg's at a run, the hips sank to 0.87 of their standing height) - and RUN-EASE
+// (2026-10-20, Mac: "I think we went way too stiff"), no further: RUN-STIFF's own 59 degrees and 0.935 were a stiff-legged
+// lope, so the run's legs stand between the two; RUN-WIDE -
 // the running hands stay on their own sides of the body, as far apart as the walk's at their nearest (the run's crossed
 // the middle, 4.3 units apart against the walk's 22). The greatsword's run in both hands (TWO-RUN) is pinned with the
 // rest of the two-hander's carry (bodymotion_carry.test.js), the first person's running fists with the rest of the
@@ -55,11 +57,11 @@ function legs(speed) {
   return { fold, hips: hips / standHips };
 }
 
-test('RUN-STIFF THE RUN\'S LEGS: at a run and a jog the knee folds under 65 degrees past the standing leg\'s (it folded 98 at a run, 87 at a jog - the heel kicked to the seat) and the hips ride at 0.92 of their standing height or over (they sank to 0.87 and 0.88 on a bent knee) (mutants: RUN-STIFF-the-swing-kicks, RUN-STIFF-the-run-sinks)', () => {
-  for (const speed of [8.1, 5.5]) {
+test('RUN-STIFF / RUN-EASE THE RUN\'S LEGS, BETWEEN THE TWO: at a run the knee folds 70 to 90 degrees past the standing leg\'s and at a jog 60 to 80 (the first run\'s 98 and 87 kicked the heel to the seat; RUN-STIFF\'s 59 and 50 - "way too stiff" - barely bent it), and the hips ride at 0.88 to 0.925 of their standing height (they sank to 0.87 on a bent knee, then rode at 0.935 and 0.945 on a straight one) (mutants: RUN-STIFF-the-swing-kicks, RUN-STIFF-the-run-sinks, RUN-EASE-the-stiff-swing, RUN-EASE-the-stiff-carriage)', () => {
+  for (const [speed, lo, hi] of [[8.1, 70, 90], [5.5, 60, 80]]) {
     const r = legs(speed);
-    assert.ok(r.fold < 65, `${speed} m/s: the knee folded ${r.fold.toFixed(1)} degrees`);
-    assert.ok(r.hips >= 0.92, `${speed} m/s: the hips sank to ${r.hips.toFixed(3)} of their standing height`);
+    assert.ok(r.fold > lo && r.fold < hi, `${speed} m/s: the knee folded ${r.fold.toFixed(1)} degrees`);
+    assert.ok(r.hips >= 0.88 && r.hips <= 0.925, `${speed} m/s: the hips rode at ${r.hips.toFixed(3)} of their standing height`);
   }
 });
 
@@ -75,13 +77,13 @@ function handsAcross(scene) {
   return { across, own };
 }
 
-test('RUN-WIDE THE RUNNING HANDS APART: at a run, empty-handed and with the fists, each hand stays on its own side of the body\'s middle and the two come no nearer each other across it than the walk\'s do, less a tenth (they crossed the middle - 4.3 units apart, the fists 3.5, the walk\'s 22) (mutants: RUN-WIDE-the-forearm-turned-in, RUN-WIDE-the-arm-held-in)', () => {
+test('RUN-WIDE THE RUNNING HANDS APART: at a run, empty-handed and with the fists, each hand stays on its own side of the body\'s middle and the two come no nearer each other across it than the walk\'s do, less a twentieth (they crossed the middle - 4.3 units apart, the fists 3.5, the walk\'s 22; PIN MOVED, RUN-EASE: less a tenth let the arm held in by 8 degrees through by 0.008 units once the run\'s hips rode lower) (mutants: RUN-WIDE-the-forearm-turned-in, RUN-WIDE-the-arm-held-in)', () => {
   const walk = handsAcross({ forward: 1, speed: 4.43 });
   for (const [name, scene] of [['free', {}], ['fists', { weapon: MW_WEAPON_TYPE.HandToHand, hands: 'fists' }]]) {
     for (const speed of [8.1, 5.5]) {
       const run = handsAcross({ ...scene, forward: 1, speed, running: true });
       assert.ok(run.own > 2, `${name} at ${speed} m/s: a hand came ${run.own.toFixed(1)} units from the middle on its own side`);
-      assert.ok(run.across > 0.9 * walk.across, `${name} at ${speed} m/s: the hands ${run.across.toFixed(1)} units apart at their nearest (the walk's ${walk.across.toFixed(1)})`);
+      assert.ok(run.across > 0.95 * walk.across, `${name} at ${speed} m/s: the hands ${run.across.toFixed(1)} units apart at their nearest (the walk's ${walk.across.toFixed(1)})`);
     }
   }
 });

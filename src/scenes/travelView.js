@@ -628,7 +628,7 @@ export function createTravelView(deps) {
     deps.hud.update({
       feet: f, heading: lastHeading, yaw: camera?.yaw ?? 0, where: deps.where?.() ?? '',
       touch: !!deps.touch, fade: t, marks, keys: hintKeys,
-      route: routeWorld.map(proj), trip: deps.trip?.() ?? '',
+      route: routeWorld.map(proj), trip: deps.trip?.() ?? '', sky: deps.sky?.() ?? '',   // OW-FORECAST: the weather ahead
       routeDots: routeGroundDots(routeWorld, proj, { w: deps.canvas?.clientWidth || Infinity, h: deps.canvas?.clientHeight || Infinity, keep: dotSpacing }),   // OW-DOTS-GROUND; OW-DOTS-EVEN: the line's spacing kept frame to frame
       routeDotSizes: ROUTE_DOT_SIZES,   // OW-DOTS-EVEN: the readout's path pair a size
       followDist: deps.followDist?.() ?? null,   // WAYPOINTS: the followed list's distances

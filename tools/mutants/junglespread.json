@@ -1,0 +1,92 @@
+[
+  {
+    "name": "SPREAD-every-cell-a-site",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "export const canopySite = (wx, wz) => (((wx + wz) / JUNGLE.cell) & 1) === 0;",
+    "new": "export const canopySite = (wx, wz) => wx === wx && wz === wz;",
+    "tests": [
+      "test/world/junglespread.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-the-canopy-unsited",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "      if (!canopySite(wx, wz)) continue;   // SPREAD: every other cell\n",
+    "new": "",
+    "tests": [
+      "test/world/junglespread.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-a-neighbour-pixels-every-cell-held",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "    if (!canopySite(wx, wz)) return false;   // SPREAD: no site, no trunk\n",
+    "new": "",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-the-canopy-s-old-jitter",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "  inset: Object.freeze([0.25, 0.75]),",
+    "new": "  inset: Object.freeze([0.2, 0.8]),",
+    "tests": [
+      "test/world/junglespread.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-the-understorey-s-spot-the-whole-cell",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "  underInset: Object.freeze([0.2, 0.8]),",
+    "new": "  underInset: Object.freeze([0, 1]),",
+    "tests": [
+      "test/world/junglespread.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-the-understorey-a-tile-s",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "  for (let cy = 0; cy < cells; cy++) {\n    for (let cx = 0; cx < cells; cx++) {\n      const wx = ox + cx * C, wz = oz + cy * C;\n      const tx = cx * C + C * (u0 + (u1 - u0) * tileDraw(wx, wz, 40)), tz = cy * C + C * (u0 + (u1 - u0) * tileDraw(wx, wz, 41));",
+    "new": "  for (let ty = 0; ty < tDim; ty++) {\n    for (let tx0 = 0; tx0 < tDim; tx0++) {\n      const cx = Math.floor(tx0 / C), cy = Math.floor(ty / C), wx = ox + tx0, wz = oz + ty;\n      const tx = tx0 + u0 + (u1 - u0) * tileDraw(wx, wz, 40), tz = ty + u0 + (u1 - u0) * tileDraw(wx, wz, 41);",
+    "tests": [
+      "test/world/junglespread.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-the-light-gap-a-cell-without-its-tree",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "const gap = !crowded(mx, mz, cx, cy, JUNGLE.crown);",
+    "new": "const gap = Number.isNaN(trunks[(cy * cells + cx) * 3]);",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-no-crown-reaches",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "  crown: 9,",
+    "new": "  crown: 0,",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-the-understorey-crowds-the-trunks",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "if (roll >= under + palm || crowded(mx, mz, cx, cy, JUNGLE.underClear)) continue;",
+    "new": "if (roll >= under + palm) continue;",
+    "tests": [
+      "test/world/bantha1_jungle.test.js"
+    ]
+  },
+  {
+    "name": "SPREAD-a-plant-on-the-understorey-s-tile",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "      if (!ground || taken[ti]) continue;",
+    "new": "      if (!ground) continue;",
+    "tests": [
+      "test/world/junglespread.test.js"
+    ]
+  }
+]

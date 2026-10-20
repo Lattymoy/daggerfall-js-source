@@ -64,6 +64,7 @@ import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from '../system
 import { rollLootRarity, pileSource, INTERIOR_RARITY_TIER, stampWonWeapons } from '../systems/loot/lootRarity.js';   // LR1: a tavern's pile rolls at the town's tier; SIGIL1: its weapons' sigils
 import { generateItems as generateLootItems, addPileLootExtras, DUNGEON_LOOT_KEYS, DROP_ICON_ARCHIVES } from '../systems/loot/loot.js';
 import { createCoverIndex, isCoverFlat, coverProxy } from '../ai/cover.js';   // TACT1: billboards are cover
+import { flatBodies } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 // TACT1: the Enhanced AI switch is ai/cover.js's to read (createCoverIndex's default), not this host's
 
 /** AUDIT 63 F22: DaggerfallInterior.AddFlats' treasure arm
@@ -786,6 +787,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
     if (isCoverFlat(archive, record, size)) collider.cover.add('tact1:flats', centers.map((c) => coverProxy(c, size)));   // TACT1 (a furnishable room's own pieces, which can be taken out, are not)
+    collider.cover.add('prop-bodies', flatBodies(t, archive, record, size, centers));   // PROP-BODIES
   }
 
   // The build's stand: from this line SetActive is live (makeInteriorPersonHost), so a flip that lands while these

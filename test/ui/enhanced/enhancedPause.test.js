@@ -27,6 +27,7 @@ import { readFileSync } from 'node:fs';
 import { openPauseFlow, pauseDoorReady, pauseArtLoaded } from '../../../src/ui/pauseDoor.js';
 import { _resetForTests } from '../../../src/systems/uiPrefs.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+import { remainWords } from '../../../src/ui/quest/questRail.js';   // PX22: the words, pinned by what they say (AUDIT OW-REVISITED L5-6)
 
 const root = new URL('../../../', import.meta.url).pathname.replace(/\/$/, '');
 const read = (p) => hostText(p);
@@ -433,10 +434,10 @@ test('PX22: the timer PX5 designed is still there, and only when there is one', 
   const rail = read('src/ui/quest/questRail.js');
   assert.match(rail, /export function remainWords\(s\) \{/);
   assert.match(src, /remainWords \} from '\.\.\/quest\/questRail\.js'/);
-  const words = rail.slice(rail.indexOf('function remainWords(s) {'), rail.indexOf('function remainWords(s) {') + 420);
-  assert.match(words, /if \(d > 0\) return `\$\{d\} day\$\{d === 1 \? '' : 's'\}/);
-  assert.match(words, /if \(h > 0\) return `\$\{h\} hour/);
-  assert.match(words, /return `\$\{Math\.max\(1, m2\)\} min`;/, 'never "0 min" - a live clock always has a minute left');
+  // PIN MOVED (AUDIT OW-REVISITED L5-6): the words go through the text core now - pinned by what they say
+  assert.deepEqual([remainWords(2 * 86400 + 3 * 3600), remainWords(86400), remainWords(86400 + 3600)], ['2 days 3 hours', '1 day', '1 day 1 hour']);
+  assert.deepEqual([remainWords(3 * 3600 + 5 * 60), remainWords(3600), remainWords(25 * 60)], ['3 hours 5 min', '1 hour', '25 min']);
+  assert.equal(remainWords(30), '1 min', 'never "0 min" - a live clock always has a minute left');
   // TWO PLACES, both conditional: a gem on the rail row, the words in
   // the detail. A quest with no clock gets neither.
   assert.match(src, /if \(q\.clockSeconds != null\) b\.append\(el\('span', 'px-qtimed', '\\u25c6'\)\);/);

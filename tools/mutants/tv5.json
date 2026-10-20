@@ -553,7 +553,7 @@
   {
     "name": "AUDIT-DEEP2-E2-a-taller-bar-unmeasured",
     "file": "src/ui/travel/travelViewHud.js",
-    "old": "  if (`${last.where}|${last.hint}|${last.trip}` !== words) furniture.at = -Infinity;",
+    "old": "  if (`${last.where}|${last.hint}|${last.trip}|${last.sky}` !== words) furniture.at = -Infinity;",
     "new": "",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"

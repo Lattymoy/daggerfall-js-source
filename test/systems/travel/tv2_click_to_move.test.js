@@ -527,7 +527,8 @@ test('TV2 host wiring: the click is a ray from the VIEW\'s eye through this fram
   assert.match(w, /tvTrip\.natives = routeDrawPoints\(state\.worldCoords\(player\.pos\), legs, \{ x: rect\.cx, z: rect\.cz \}, tvLegMid\);/);   // AUDIT OW3 J4: through the one law
   assert.match(w, /const tvLegMid = \(p\) => \{ const o = mapPixelToWorldCoords\(p\.x, p\.y\); return \[o\.x \+ 16384, o\.z \+ 16384\]; \};/, 'a leg\'s pixel middle');
   assert.match(w, /const start = Math\.min\(n\.length - 1, from \+ 1\);/);
-  assert.match(w, /leg\(me\.x, me\.z, n\[start\]\[0\], n\[start\]\[1\], pts\);[^\n]*\n(\s*\/\/[^\n]*\n)*\s*const gen = tvGroundGenNow\(\), kept = tvTrip\._tail;\n\s*let tail = kept && kept\.gen === gen && kept\.start === start && kept\.n === n \? kept\.pts : null;/, 'PERF-TV: the legs past the traveller\'s own kept while the ground and the leg hold');
+  // PIN MOVED (OW-TOWN-WALK, 2026-10-19): the traveller's own leg leaves from the last of a town's streets and the join (`at`)
+  assert.match(w, /leg\(at\.x, at\.z, n\[start\]\[0\], n\[start\]\[1\], pts\);[^\n]*\n(\s*\/\/[^\n]*\n)*\s*const gen = tvGroundGenNow\(\), kept = tvTrip\._tail;\n\s*let tail = kept && kept\.gen === gen && kept\.start === start && kept\.n === n \? kept\.pts : null;/, 'PERF-TV: the legs past the traveller\'s own kept while the ground and the leg hold');
   // AUDIT TV A5: a town's grown rect asked across the 3x3 about the hit
   assert.match(w, /for \(let dy = -1; dy <= 1; dy\+\+\) \{\n\s*for \(let dx = -1; dx <= 1; dx\+\+\) \{\n\s*const summary = tvPlaceSummary\(pix\.x \+ dx, pix\.y \+ dy\);/);
   // PIN MOVED (AUDIT OW5 S4): an own-pixel sea spot is given its one sea leg first; AUDIT OW5b D3: the walk carries its door
@@ -546,7 +547,8 @@ test('TV2 host wiring: THE CAP - governed before the frame reads the travel scal
   // PIN MOVED (WILD3/PVPNEAR, the Wrothgarian zone's merge): the enemies' cap, and under it a near stranger's own pace
   assert.match(w, /const rate = csaHoldsTimeScale\(\) \? null : \(foes\.strangerRate \? Math\.min\(foeRate\(foes, travelAsked\), foes\.strangerRate\) : foeRate\(foes, travelAsked\)\);\n\s*if \(rate != null && worldTimeScale\(\) !== rate\) setWorldTimeScale\(rate\);\n\s*tvHeld = rate != null && rate < travelAsked \? rate : null;/, 'the mod\'s own ask back');
   // PIN MOVED (OW-LEAD, test/systems/travel/ow_lead.test.js): the land's cap is how near the nearest owed pixel is, at the traveller's pace
-  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want, owed: uc\.owed, feet: unbuilt \? state\.worldCoords\(player\.feetAt\(\)\) : null, speedMps: player\?\.speed \?\? 0 \}\);[^\n]*\n\s*const foeCap = foes\.strangerRate \? Math\.min\(foeRate\(foes, want\), foes\.strangerRate\) : foeRate\(foes, want\);[^\n]*\n\s*const rate = Math\.min\(load, foeCap\);/);
+  // PIN MOVED (OW-TOWN-WALK, 2026-10-19): a town's pace may stand between the enemies' cap and the rate
+  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want, owed: uc\.owed, feet: unbuilt \? state\.worldCoords\(player\.feetAt\(\)\) : null, speedMps: player\?\.speed \?\? 0 \}\);[^\n]*\n\s*const foeCap = foes\.strangerRate \? Math\.min\(foeRate\(foes, want\), foes\.strangerRate\) : foeRate\(foes, want\);[^\n]*\n(?:\s*const town = [^\n]*\n)?\s*const rate = Math\.min\(load, foeCap(?:, town)?\);/);
   // AUDIT TV A2: the ASK is the mod's - its ground's rate (RATE-LAW; it was the spinner) and its own caps (the ring walk's
   // x15, an interrupt's x1), recorded where the mod sets the clock - so the governor never lifts a journey past the mod's
   assert.doesNotMatch(w, /onTimeAccelerationChanged/, 'RATE-LAW: no spinner to tell the host');
@@ -763,7 +765,8 @@ test('AUDIT OW3 J3: a resumed road journey REJOINS the road - from the start pix
   assert.equal(g.to.route.i, 1);
   assert.equal(g.to.route.join, null, 'across country: straight on - no line to keep to');
   // the view's line goes where the walk does
-  assert.match(hostText('src/scenes/world.js'), /const j = travelOptions\.route\?\.join;\n\s*if \(j\) \{ leg\(me\.x, me\.z, j\.x, j\.z, pts\); leg\(j\.x, j\.z, n\[start\]\[0\], n\[start\]\[1\], pts\); \}\n\s*else leg\(me\.x, me\.z, n\[start\]\[0\], n\[start\]\[1\], pts\);/);
+  // PIN MOVED (OW-TOWN-WALK, 2026-10-19): a town's streets drawn before the join, the traveller's own leg from the last of them
+  assert.match(hostText('src/scenes/world.js'), /const j = travelOptions\.route\?\.join, sw = [^\n]*;\n\s*let at = me;\n\s*for \(const q of j \? \[\.\.\.sw, j\] : sw\) \{ leg\(at\.x, at\.z, q\.x, q\.z, pts\); at = q; \}\n\s*leg\(at\.x, at\.z, n\[start\]\[0\], n\[start\]\[1\], pts\);/);
 });
 
 test('AUDIT OW3 J1: a journey is stopped through its PANEL (the mod\'s Camp: pauseTravel) - the panel down, so it reads stopped, the destination kept for the map\'s Resume; a bare interrupt left the panel up and the journey "active"', () => {

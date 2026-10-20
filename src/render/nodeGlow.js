@@ -73,7 +73,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3;
 
 /**
- * @typedef {{ at: number[], w: number, h: number, rgb: readonly number[], alpha: number, seed: number, form: readonly number[], pull?: number }} NodeGlow
+ * @typedef {{ at: number[], w: number, h: number, rgb: readonly number[], alpha: number, seed: number, form: readonly number[], pull?: number, mark?: any }} NodeGlow
  * @typedef {{ nodes: Map<string, { kindle: number, seen: number, seed: number }>, frame: number, lastS: number|null, pool: NodeGlow[] }} NodeGlowState
  */
 /** A fresh state for `nodeGlows` - each node's kindling, by its key, and the records `out` is refilled from. */
@@ -107,8 +107,9 @@ export function nodeGlows(marks, eye, nowS, state, out) {
       const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);
       if (!(alpha > 0.001)) continue;
       const rgb = m.rgb ?? nodeMarkRgb(m.profession);
-      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM, pull: NODE_GLOW_PULL };
+      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM, pull: NODE_GLOW_PULL, mark: m };
       g.at = m.at; g.w = m.w; g.h = m.h; g.rgb = rgb; g.alpha = alpha; g.seed = n.seed;
+      g.mark = m;   // NODE-OUTLINE: the mark it is - its pictures, which the outline rings (render/nodeOutline.js)
       g.pull = Number.isFinite(m.pull) ? m.pull : NODE_GLOW_PULL;   // AUDIT BANTHA1 TREE-3: a mark may stand its card further out (a jungle trunk's)
       g.form = m.form ?? NODE_GLOW_FORM;   // AUDIT DELVE D6: a sense mark's own form (systems/dungeon/dungeonSense.js SENSE_FORM); a node's is whole
       out.push(g);

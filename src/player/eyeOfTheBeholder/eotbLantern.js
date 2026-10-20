@@ -43,7 +43,7 @@
 // option bags, so the per-frame paths build nothing.
 
 import { RECORD_OFFSETS, ORIENTATIONS } from './eotbBillboard.js';
-import { createLanternSwing, stepLanternSwing, lanternSwingDown } from '../../systems/lanternSwing.js';
+import { createLanternSwing, stepLanternSwing, lanternSwingDown, HIP_LANTERN_HEIGHT } from '../../systems/lanternSwing.js';
 import { LANTERN_TEMPLATE } from '../../systems/playerTorch.js';
 import { templateByIndex } from '../../systems/item/itemTemplates.js';
 import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the one angle wrap
@@ -58,8 +58,9 @@ export function isRearView(orientation) {
 }
 
 /** The hook, off the sprite: a fraction of the quad's height above its base, the hip's side out along the
- *  facing's right (scaled with the sprite), and a nudge toward the eye so it never shares the body's depth. */
-export const HIP_LANTERN_SPRITE = Object.freeze({ heightFraction: 0.5, side: 0.2, towardEye: 0.06, height: 0.3, minLength: 0.6 });
+ *  facing's right (scaled with the sprite), and a nudge toward the eye so it never shares the body's depth; the
+ *  picture's height the one both bodies hang (HT-WAIST-SIZE - systems/lanternSwing.js HIP_LANTERN_HEIGHT). */
+export const HIP_LANTERN_SPRITE = Object.freeze({ heightFraction: 0.5, side: 0.2, towardEye: 0.06, height: HIP_LANTERN_HEIGHT, minLength: 0.6 });
 /** The renderer's key for the picture: its own, so no world flat of the same record is ever replaced by it. */
 export const LANTERN_ART_KEY = 'htwaist-lantern';
 

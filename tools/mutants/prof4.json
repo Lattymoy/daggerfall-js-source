@@ -594,8 +594,9 @@
   {
     "name": "PROF4-tree-flat-shared",
     "file": "src/scenes/treeHost.js",
-    "old": "if (claimed.has(f.id) || insideRocks(rocks, f.x, f.z)) continue;",
-    "new": "if (insideRocks(rocks, f.x, f.z)) continue;",
+    "old": "      if (claimed.has(f.id)) continue;",
+    "new": "",
+    "note": "JUNGLE-WOODS (PIN MOVED): the rock check is asked once a flat, before the trees' loop - the mutation is the claim's check gone, as it was",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

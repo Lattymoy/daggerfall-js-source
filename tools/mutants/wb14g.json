@@ -112,10 +112,11 @@
   {
     "name": "WB14g-the-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct160';",
+    "old": "export const ACCOUNT_VERSION = 'acct161';",
     "new": "export const ACCOUNT_VERSION = 'acct159';",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
-    ]
+    ],
+    "note": "JUNGLE-WOODS (PIN MOVED): acct161 (acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges)."
   }
 ]

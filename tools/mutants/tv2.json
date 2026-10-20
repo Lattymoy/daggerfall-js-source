@@ -122,8 +122,8 @@
   {
     "name": "TV2-a-new-autopilot-each-leg",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind));\n    else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind));",
-    "new": "    st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind));",
+    "old": "    if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), { lane });\n    else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind), { lane });",
+    "new": "    st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), { lane });",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

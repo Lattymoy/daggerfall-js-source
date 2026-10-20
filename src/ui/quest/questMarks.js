@@ -31,6 +31,7 @@
 import { isEnhanced } from '../../systems/uiSkin.js';
 import { getPref } from '../../systems/uiPrefs.js';
 import { timeLeftWords } from './questRail.js';   // the quest faces' one phrase for the time left
+import { t } from '../../systems/textManager.js';   // AUDIT OW-REVISITED L5-6: the card's own words
 
 /** The switch's prefs key (systems/features.js row `quest-marks`). */
 export const MARKS_PREF = 'questMarks';
@@ -114,7 +115,7 @@ export function questMapMarks(views, trackedId, pixelOf) {
       // one quest: its title, where, and the time left; several: how many, the town, and each quest
       tip: one
         ? { title: fitHead(titles[0] || QUEST_LEGEND_TEXT, '', QUEST_TIP_TEXT), lines: [fitHead(place, '', QUEST_TIP_TEXT), left(quests[0])].filter(Boolean) }
-        : { title: `${quests.length} quests`, lines: [fitHead(place, '', QUEST_TIP_TEXT), ...listed.map(lineOf), ...(more ? [`+${more} more`] : [])] },
+        : { title: t('quest.mark.many', '{n, plural, one {# quest} other {# quests}}', { n: quests.length }), lines: [fitHead(place, '', QUEST_TIP_TEXT), ...listed.map(lineOf), ...(more ? [t('quest.mark.more', '+{n} more', { n: more })] : [])] },   // AUDIT OW-REVISITED L5-6: in the player's language
       // AUDIT GUIDE K8: the place card names them (a keyboard or a finger that never hovers learns them there)
       quests: quests.map((q) => ({ title: q.title, left: left(q) })),
     };

@@ -163,7 +163,7 @@ test('OW-TOGGLE host: a first-person journey under a view brought down runs at t
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
       travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
-      foePaced, foeRate, travellerOnRoad: () => false,
+      foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */ travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // brought down

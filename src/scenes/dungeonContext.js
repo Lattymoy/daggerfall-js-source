@@ -332,6 +332,7 @@ import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonW
 import { foeHitFlash, setBatchHitFlash, puppetHurtStep, setBatchGlint, prefersReducedMotion } from '../systems/hitFlash.js';   // HITFLASH1; TELL2: a wind-up's glint
 import { localizedText, getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the place names shown
 import { coverDistance, coverStep, createCoverIndex, isCoverFlat, coverProxy } from '../ai/cover.js';   // TACT1: billboards are cover
+import { flatBodies } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { blowConnects, blowScaled } from '../ai/foeBlows.js';   // TACT4
 import { foeGlint, tacticsNow, beginRoar } from '../ai/tactics.js';   // TELL2: a wind-up's glint (bible/12-Enhanced-AI/Feud-Arc.md section 4.2); TELL8: the record's wind-up on the foes' clock; RVN4: a last stand's roar
 import { lastStandGlint, lastStandSize, pyreSpell, LAIR_GOLD, bandMembers, bandName, bandWord, BAND_SCATTER_S, BAND_SPACING, RALLY_KIN, feudWire, feudFromWire, puppetRevenantBlows, SIG } from '../systems/revenant/revenantFeud.js';   // RVN4: phase two's rim and size; RVN5: the pyre's blast; RVN7d: a lair's gold, its band; RVN13: the wire's feud fields; FEUD WIRE: a puppet's blows and signature
@@ -4037,6 +4038,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const batch = renderer.createBillboardBatch(archive, record, size, based);
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
+    coverItems.push(...flatBodies(t, archive, record, size, based));   // PROP-BODIES (a person's none: its noCover)
     if (isCoverFlat(archive, record, size)) for (const c of based) coverItems.push(coverProxy(c, size));
   }
   collider.cover.add('tact1:flats', coverItems);

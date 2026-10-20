@@ -29,7 +29,7 @@
   {
     "name": "GUIDE3-time-left-words",
     "file": "src/ui/quest/questRail.js",
-    "old": "export const timeLeftWords = (s) => `${remainWords(s)} left`;",
+    "old": "export const timeLeftWords = (s) => t('quest.remain.left', '{time} left', { time: remainWords(s) });",
     "new": "export const timeLeftWords = (s) => `${Math.round(s / 3600)} hours left`;",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"

@@ -2295,3 +2295,55 @@ massif; and the collider's floor is the bilinear read where the drawn landform g
 metres on the steepest ridges. `test/player/unstuckout.test.js` (2) - the real collider over real closed rock meshes;
 `tools/mutants/unstuckout.json` (7), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): `tvSeaY` declared
 beside `state`, before the boot's own load reads it (the outdoor arm's refusals that audit worded went with the arm).
+
+## PROP-BODIES - a tree's trunk, a rock, a barrel walked round (2026-10-19, the owner)
+
+The owner: "I dont nessecarly want to implement prop collison, but walking through trees and objects is very immersion
+breaking. What could we do?", then "Implement collision for all props".
+
+DFU's flats are billboards with no collider (`DaggerfallBillboard`: a quad and a material; SH1 above: "wilderness trees
+are billboards with no collider at all"), so the player walked through every tree, rock, barrel and statue. Now a solid
+flat stands a BODY - an upright cylinder at its foot - and the player, on foot or mounted, is kept out of it.
+
+**Which flats** (`world/propBodies.js` `flatBody`): the solid ones - "all props", never the flora a body walks through.
+- A **tree** its trunk, never its crown: a Tree record of its climate (`terrainNature.js` `TREE_RECORDS`) or a record
+  Windfall sways Full (`systems/windfall.js` `RESPONSE.full` - the mod's own tier for the trees and the tall, stemmed
+  plants: the rainforest's twisted 500.3, the temperate 504.11 the tree table does not name), the trunk a tree's cover
+  stands (`COVER_TRUNK_R`, 0.3 m, to where its crown begins); a jungle tree its own measured girth (`JUNGLE_MEASURES`,
+  `jungleBody`) at its own scale.
+- A **still nature record** - a rock, a stump, a fallen log, a bare tree: Windfall's 0, the records it never sways - and
+  **every prop that is not nature** (a barrel, a crate, a statue, a well, a cart, a signpost): its foot MEASURED off its
+  own classic picture (`footShare`) - the median, over the rows between a step over its base and a capsule's height, of
+  how much of each row is picture, not air. A flat's drawn width is its widest reach - a bare tree's roots and branches,
+  a signpost's board - never what a body walks into: 511.2, a bare winter tree 4.1 m across, stands a 1 m foot, 504.24
+  a sapling 0.11 m, the temperate rocks 0.3 m, its stumps 0.55-0.68 m, the swamp's buttressed giant (502.24) 2.2 m.
+  The still records of all twelve climate archives were drawn off the player's ARENA2 (in a scratch directory, never the
+  tree) and six archives read by eye whole - 500, 502, 504, 508, 510, 511 - before the rule stood.
+- **None**: the flora Windfall sways Low or Medium (grass, flowers, ferns, bushes - a jungle of solid ferns could not be
+  walked), by the flat's own archive (`rmbFlats.js` `isNatureArchive` - the jungle's archive 500 in a mountain pixel
+  too); anything under a step (`STEP_OFFSET`: what the feet step over is no wall); a person, a town animal, a light,
+  the editor's markers and treasure (cover's `NOT_COVER_ARCHIVES`).
+
+**Where it lives.** A body rides the cover index (`ai/cover.js`, a proxy marked `body`) - filed in a grid of its own
+that no sight ray or missile reads, so cover's counts and every TACT1 law are as they were - and so it rides every set's
+lifecycle: a pixel, a building or a dungeon that leaves takes its bodies with it, a recentre moves them (the set's frame),
+a re-skin trades them in place, and a felled tree's body is gone with it (`FELLED`). Never the collider: the collider is
+shared, and a column there would stop arrows, foes, the camera and every activation ray - and a 0.3 m trunk in its
+triangle soup is walked through anyway (SH1's thin geometry). The hosts file a flat's body beside its cover: the stream
+once a group by the record's own size, the jungle's trunks, the scaled flats (`scenes/pixelBuild.js`); the city
+(`exterior.js`) and the rooms (`interiorContext.js`) a set of their own (`prop-bodies`); the dungeon
+(`dungeonContext.js`).
+
+**The clamp** (`player/bodyClamp.js` `keepOffBodies`, called each step after the arena's - DUEL1's ring's shape, not a
+mesh in the collider). Each body whose span the capsule's meets and whose foot circle, widened by the capsule's radius,
+the feet stand in puts the feet back to its edge along the line from its middle - so a walk into a trunk slides round
+it - and takes away the airborne momentum that points into it; a rock under the feet in a jump is cleared. A body the
+step BEGAN inside (a spawn, a teleport, a mount taken beside a tree) is never a trap: the feet are put back no deeper
+than they stood, so they walk out. The put-back is the collider's own move, so a wall still stops it. Nothing holds a
+body that nothing holds a wall for: a body the motor holds, the hands (a climb, a wall, a parkour move), a journey's
+pace. Foes, peers, the navmesh and the camera are as they were - the clamp is the player's; online nothing crosses the
+wire (a body's place is the layout's, the same on every client, and a felled tree's the character's own).
+
+Pinned by `test/player/propbodies.test.js` (the real motor and collider walking into a trunk, sliding round one, under a
+crown, through a felled tree; the clamp; the foot; which flats; the index; the hosts by source) and
+`tools/mutants/propbodies.json` (26, all dead). Port-Ledger A, THE SOLID FLATS STAND BODIES.

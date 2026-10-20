@@ -27,7 +27,7 @@
 
 import { isMainQuestName as isMainQuest } from '../../systems/quest/questLists.js';   // AUDIT 68 S31-questshare-mainquest-dup: the share gates' own predicate, one home
 import { dayNames, monthNames } from '../../systems/gameDate.js';   // GUIDE3: the date header an entry opens with
-import { localizedText } from '../../systems/textManager.js';   // L10N3d: and the format it is written in
+import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: and the format it is written in
 
 /** The token formattings that carry a printable line - questJournal's
  *  own counted set (`LINE_FORMATTINGS`). */
@@ -161,14 +161,15 @@ export const QUEST_URGENT_SECONDS = 86400;
  *  key opens - reads exactly as the pause tab's does. */
 export function remainWords(s) {
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m2 = Math.floor((s % 3600) / 60);
-  if (d > 0) return `${d} day${d === 1 ? '' : 's'}${h ? ` ${h} hour${h === 1 ? '' : 's'}` : ''}`;
-  if (h > 0) return `${h} hour${h === 1 ? '' : 's'}${m2 ? ` ${m2} min` : ''}`;
-  return `${Math.max(1, m2)} min`;
+  // AUDIT OW-REVISITED L5-6: in the player's language (L10N4) - OW-QUEST put it under every quest mark on the Overworld
+  if (d > 0) return h ? t('quest.remain.daysHours', '{d, plural, one {# day} other {# days}} {h, plural, one {# hour} other {# hours}}', { d, h }) : t('quest.remain.days', '{d, plural, one {# day} other {# days}}', { d });
+  if (h > 0) return m2 ? t('quest.remain.hoursMin', '{h, plural, one {# hour} other {# hours}} {m} min', { h, m: m2 }) : t('quest.remain.hours', '{h, plural, one {# hour} other {# hours}}', { h });
+  return t('quest.remain.min', '{m} min', { m: Math.max(1, m2) });
 }
 
 /** GUIDE3-GUIDE5: the time left as the quest faces say it - remainWords' own count and one word ("2 days 3 hours
  *  left"): the herald's line, the tracker's card and a map mark's card, one phrase. */
-export const timeLeftWords = (s) => `${remainWords(s)} left`;
+export const timeLeftWords = (s) => t('quest.remain.left', '{time} left', { time: remainWords(s) });
 
 /** GUIDE1: the order a row's entries were WRITTEN, as indices into its
  *  `messages`. The machine keeps its log in a Map keyed by step and

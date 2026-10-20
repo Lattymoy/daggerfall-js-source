@@ -258,9 +258,12 @@ test('TV7b host: the band word rides my cell\'s foes frame (a chase asks for a f
   assert.match(w, /if \(cell\) csaWord\(frame, full\);(?: if \(cell\) csaAboardWord\(frame, full\);)? if \(cell\) bandWord\(frame, full\);/, 'and rides it');
   assert.match(w, /if \(!full && !_bandChase\.size && key === _bandWordKey\) return false;/, 'a chase is said every frame; a spent list on a change and the full frames');
   assert.match(w, /if \(flag === 2\) \{ _bandSpent\.add\(id\); _bandChase\.delete\(id\); _bandPeer\.delete\(id\); continue; \}/, 'a peer\'s spent band: spent here');
-  assert.match(w, /_bandPeer\.set\(id, \{ x, z, at: now, from \}\);\n\s*if \(_bandChase\.has\(id\) && chaseYields\(online\?\.id \?\? '', from\)\) \{ _bandChase\.delete\(id\); wildBands\.forget\(id\); \}/, 'one band, one chaser (WILD-ALERT-FIX: its notice of me with it)');
+  // PIN MOVED (OW-CHASE-RANGE, 2026-10-19): a peer's word keeps how long it stands - a cell's BAND_WORD_MS, a region mark's TRAV_BAND_HOLD_MS
+  // PIN MOVED (AUDIT OW-REVISITED L4-2): a welcome row's age taken from the word's stand (`at: now - aged`)
+  assert.match(w, /_bandPeer\.set\(id, \{ x, z, at: now - aged, from, hold \}\);\n\s*if \(_bandChase\.has\(id\) && chaseYields\(online\?\.id \?\? '', from\)\) \{ _bandChase\.delete\(id\); wildBands\.forget\(id\); \}/, 'one band, one chaser (WILD-ALERT-FIX: its notice of me with it)');
   assert.match(w, /const pc = bandPeerChase\(b\.id\);\n\s*if \(pc\) return pc;/, 'a peer\'s chase shown where it runs');
-  assert.match(w, /if \(performance\.now\(\) - p\.at > BAND_WORD_MS\) \{ _bandPeer\.delete\(id\); return null; \}/, 'a word gone stale: the band wanders on');
+  assert.match(w, /if \(performance\.now\(\) - p\.at > p\.hold\) \{ _bandPeer\.delete\(id\); return null; \}/, 'a word gone stale: the band wanders on');
+  assert.match(w, /function bandHear\(from, raw, hold = BAND_WORD_MS, aged = 0\) \{/, 'a cell\'s word stands BAND_WORD_MS');   // PIN MOVED (AUDIT OW-REVISITED L4-2): a welcome row's age
 });
 
 
@@ -305,7 +308,7 @@ const bandHost = async (over = {}) => {
   const make = new Function('d', 'law', `
     const { ${names.join(', ')} } = d;
     const { bandChaseStep, bandSight, validBandWord, bandNearMe, bandPixelOf, chaseYields, BAND_CONTACT_M, BAND_STAND_M, BAND_STAND_TRIES,
-      BAND_STAND_RETRY_MS, BANDS_WIRE_MAX, BAND_LIFE_MS, BAND_STAND_MIN_M } = law;
+      BAND_STAND_RETRY_MS, BANDS_WIRE_MAX, BAND_LIFE_MS, BAND_STAND_MIN_M, BAND_WORD_MS } = law;
     const NATIVE_PER_M = 40, PACK_SPACING = 6, PACK_ALERT_RADIUS = 30;
     const partyGroupMembers = (t) => t, partySize = () => 1, campMembers = (t) => t, exteriorFoes = { encounterRoom: () => d.room ?? Infinity };
     const _standCampEncounter = (hit) => { d.standCalls.push(hit.yawRad); d.standAt?.push([hit.minDistance, hit.maxDistance]); d.order?.push('stand'); return d.standOk(hit) ? { foes: Promise.resolve([]), anchorFeet: [0, 0, 0] } : null; };   // the host's own shape: what stood, or null

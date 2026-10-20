@@ -2,8 +2,8 @@
   {
     "name": "TN-open-road-pursues",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "    if (s.episode || Math.abs(f.lat) > P.onLine) {",
-    "new": "    if (true) {",
+    "old": "    if (!inp.pathed && (s.episode || Math.abs(f.lat) > P.onLine)) {",
+    "new": "    if (!inp.pathed) {",
     "tests": ["test/systems/travel/travelnav.test.js"]
   },
   {
@@ -121,7 +121,7 @@
   {
     "name": "TN-goal-ignored",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "    const lookWant = Math.min(look, Math.max(0, inp.goal) + P.standoff);",
+    "old": "    const lookWant = Math.min(look, Math.max(0, inp.goal) + (inp.pathed ? 0 : P.standoff));",
     "new": "    const lookWant = look;",
     "tests": ["test/systems/travel/travelnav.test.js"]
   },

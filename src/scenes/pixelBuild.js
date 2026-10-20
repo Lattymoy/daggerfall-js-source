@@ -23,6 +23,7 @@ import { CityNavigation, NAV_CELL } from '../world/city/cityNavigation.js';
 import { collectCityLights, LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
 import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';
 import { coverProxies, coverProxy, FELLED, isCoverFlat } from '../ai/cover.js';
+import { flatBodies, jungleBody } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { doorCornersOf, doorNormalOf } from './hallBanners.js';
 import { drawnFlat } from '../characters/nudeFlats.js';
@@ -137,6 +138,7 @@ export function createPixelBuild(host) {
       // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
       // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
       const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);
+      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // PROP-BODIES: the record's own, whichever picture stands
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
         const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
@@ -1091,6 +1093,7 @@ export function createPixelBuild(host) {
     for (const [gk, g] of jungleGroups) {
       await breather.breathe();
       const species = g.species, record = JUNGLE_SPECIES[species].record;
+      g.centers.forEach((c, i) => coverItems.push(jungleBody(c, species, g.own[i])));   // PROP-BODIES: its trunk, whichever picture stands
       if (!junglePics.has(species)) junglePics.set(species, await junglePicture(jungle.door, species));   // THE ONE CONSTRUCTION SEAM (world/naturePicture.js)
       const pic = junglePics.get(species);
       if (!pic) {   // its picture would not stand (a decode refused): the species stands as the Tree record it carries
@@ -1143,6 +1146,7 @@ export function createPixelBuild(host) {
       armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
       batches.push(batch);
       if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(coverProxy(c, size));
+      coverItems.push(...flatBodies(t, archive, record, size, centers, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));   // PROP-BODIES
     }
     // STAND-FLAT / STAND-HORSE (bible/04-Characters/Morrowind-NPCs.md section 28): each town horse and each person no
     // StaticNPC holds a batch of its own in the pixel's list (its cull, its far-ring rule, its animation and its teardown

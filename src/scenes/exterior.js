@@ -252,6 +252,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // WATER1: the water's switch
 import { createCoverIndex, isCoverFlat, coverProxies } from '../ai/cover.js';   // TACT1: billboards are cover
+import { flatBodies } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door (as world.js)
 import { LPT_SCALE_MAX, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { spherePlanes } from '../render/bounds.js';   // LPT1 (AUDIT LPT B4): the near trees' sphere test reads normalised planes
@@ -1162,6 +1163,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // SIB1: the cache's answer for this archive; LPT1: its far picture and its 3D tree near - AUDIT 05b A12: the choice is
     // every host's one (world/naturePicture.js)
     const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons, renderer, uploadRecord }, t, archive, record);
+    collider.cover.add('prop-bodies', flatBodies(t, archive, record, plain, centers, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));   // PROP-BODIES: the record's own
     if (far) {
       lowPolyTrees.acquire(far); lptHandles.push(far);
       lptGroups.push({ h: lptHandles.length - 1, centers, wild: null });

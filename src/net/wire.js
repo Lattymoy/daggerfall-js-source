@@ -1520,7 +1520,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world230';   // GRANT-SLEEP (2026-10-20, the owner: "the server cost is skyrocketing", then "Its the durable objects"; renumbered at the merges past GAUNTLET-SLAIN (world225), LORD-SHARES (world226), PLAIN-SWEEP (world227), the questlines QL12 (world228) and WB14 (world229) - world225, world226, world228 then world229 on its branch; bible/11-Multiplayer/Spawn-Grants.md section 22, bible/11-Multiplayer/Scale-Arc.md ROOM-SLEEP; NOT YET DEPLOYED): a cell's spawn-grant measure posts its window at the first frame or close once it is due, and at the cell's drain - never on the ten-minute timer GRANT2 armed, which kept every cell a player stood in awake and billed around the clock. No frame changes shape: deploy in either order.
+export const RELAY_VERSION = 'world231';   // GRANT-SLEEP (2026-10-20, the owner: "the server cost is skyrocketing", then "Its the durable objects"; renumbered at the merges past GAUNTLET-SLAIN (world225), LORD-SHARES (world226), PLAIN-SWEEP (world227), the questlines QL12 (world228), WB14 (world229) and OW-CHASE-RANGE (world230) - world225, world226, world228, world229 then world230 on its branch; bible/11-Multiplayer/Spawn-Grants.md section 22, bible/11-Multiplayer/Scale-Arc.md ROOM-SLEEP; NOT YET DEPLOYED): a cell's spawn-grant measure posts its window at the first frame or close once it is due, and at the cell's drain - never on the ten-minute timer GRANT2 armed, which kept every cell a player stood in awake and billed around the clock. No frame changes shape: deploy in either order.
+// world230: OW-CHASE-RANGE (2026-10-19, the owner, of the Overworld's gaps: "4. Fix it"; bible/06-Systems/Travel-View.md OW-CHASE-RANGE; world224 on its branch, renumbered past LAYERED-GEAR's world224 at one merge, then world225 past GAUNTLET-SLAIN's world225, LORD-SHARES's world226, PLAIN-SWEEP's world227, QL12's world228 and WB14b's world229 at the next; NOT YET DEPLOYED; AUDIT OW-REVISITED L4-1, re-hashed in place): a traveller's trav frame carries its chase words BESIDE its mark - `bd` the bands', `sr` the raiders' (TV7b's and OW6's shapes: [[id, x, z, 1|2]], at most TRAV_BANDS_MAX each, a chase within TRAV_CHASE_NEAR_PX of the mark) - checked whole by validTravWords at the door, kept on the attachment with the mark and fanned and welcomed with it; an older relay reads the mark and drops the words (nothing refused), an older client reads the mark and never the words
 // world229: WB14b (2026-10-19, bible/11-Multiplayer/Breach-Portents.md sections 1, 2 and 10; world222 on its branch, renumbered past GATE-DOOR and COURT-WATCH's world222, then world223 past FOE-BOUNDS and GRANT-DOOR's world223, then world224 past LAYERED-GEAR and VOICE2's world224, then world225 past GAUNTLET-SLAIN's world225, then world226 past LORD-SHARES's world226, then world227 past PLAIN-SWEEP's world227, then world228 past QL12's world228 at the merges; NOT YET DEPLOYED): THE BREACH'S PORTENTS - the relay draws a night's portents with its fight (net/gate/gateLaw.js gatePortentsOf) and says them in every state (`pt`), the crossings by walkway (`xa`, six, a walkway not laid null), GATE_BRAIN_V and GATE_BRAIN_MIN 6 (a game from before is told to reload); WB14a: the Warden's new arsenal - an atk word names its marked by peer id (`pk`), attack ids to GATE_ATK_ID_MAX (31), the relay's judge counts the Wheel down its turn and never a marked blow or the Gaze; WB14c: the Vanguard - its stages in the state (`vg`) and in words (`vgw`), three host kinds more (GATE_HOST_KINDS 6), a blow on one taken from the floor its body stands on, GATE_HZ_MAX 28; WB14d: the Sundering - its halves in the state (`sd`) and in words (`sdh`, `kn`, `kr`, `rj`), the half a blow lands on (`hit`'s `b`) and the Flame's own words (`atk`, `mv`, `ph` with `b` 1), the Sundering and the Rejoining (attacks 17 and 18). WB14e: the Tithe-Imp - a host kind more (GATE_HOST_KINDS 7), its flight (`adie`'s `w` 3, GATE_HOST_GONE 4), and its tithe to its catcher alone (`tithe`). WB14f: the Captive - his gaolers a host kind more (GATE_HOST_KINDS 8), the state's `cp`, his freeing (`cpf`) and the Reckoning his ward takes (`cpw`, the relay's judge sparing it). WB14g: a kill receipt says the night's portents (`p`, net/gate/gateReceipt.js). AUDIT WB14 (bible/01-Overview/audits/Audit-Breach-Portents.md): the brain's fixes, and a Tithe-Imp's tithe paid at its catch, the fight kept before it is said. Deploy the relay with the client.
 // world228: QL12 (2026-10-19, world222 on its branch, renumbered past GATE-DOOR, FOE-BOUNDS, LAYERED-GEAR and VOICE2, GAUNTLET-SLAIN, LORD-SHARES and PLAIN-SWEEP, world222 to world227, at the merges; bible/06-Systems/Questlines-Arc.md section 5.3; NOT YET DEPLOYED): the vocabulary's five new words - THE QUESTLINES' TITLES last of TITLES (net/identityToken.js: doorwarden, covenbane, weirwalker, hourwitness, satakalwitness, in net/questlineClaims.js QL_TITLES' order), which the account service (acct159) lays on a row at a line's last witnessed step. A relay before it refuses a token wearing one, so THE RELAY FIRST, then the account service, then the site (WIKIMAID's order). Nothing else of the relay moves.
 // world227: PLAIN-SWEEP (2026-10-19, world224 on its branch, renumbered past LAYERED-GEAR's world224, GAUNTLET-SLAIN's world225 and LORD-SHARES' world226 at the merges; the owner: "Renove overexplaining text and replace it with proper palatable descriptions"; bible/10-UI/Plain-Words.md PLAIN-SWEEP; NOT YET DEPLOYED): words only - the relay's bundle carries player-facing lines (the Elite Breach's law, the arena's, the duel's, the serpent's herald, the name filter's, the staff commands'), and their plain rewrite is new bytes. No frame, no law and no behaviour moved.
@@ -2432,7 +2433,8 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'trav before hello' };
     if (m.p === null) return { t: 'trav', p: null };
     const p = validTravellerMark(m.p);
-    return p ? { t: 'trav', p } : { error: 'bad trav' };
+    const words = p ? validTravWords(m, p) : null;   // OW-CHASE-RANGE: the chase words beside it, whole or the frame refused
+    return p && words ? { t: 'trav', p, ...words } : { error: 'bad trav' };
   }
   if (m.t === 'party') {   // SOC1: my party pose, to the hub - projected by the pose's own law
     if (!hasHello) return { error: 'party before hello' };
@@ -3193,8 +3195,52 @@ export function validPartyFrame(m) {
   return acct && p ? { t: 'party', acct, p } : null;
 }
 
-/** TV3: the mark's seven keys - and no other: a mark with an eighth is refused whole, so nothing rides it. */
+/** TV3: the mark's seven keys - and no other: a mark with an eighth is refused whole, so nothing rides it. (AUDIT
+ *  OW-REVISITED L4-1: OW-CHASE-RANGE's chase word rode as an eighth key, and every client before it - this law, refusing
+ *  the eighth - dropped the traveller whole from its book for the rest of the session; the words ride BESIDE the mark.) */
 export const TRAV_KEYS = Object.freeze(['px', 'py', 'fx', 'fy', 'h', 'm', 'tv']);
+/** OW-CHASE-RANGE: the most entries a mark's chase word holds - the foes frame's own (systems/travel/travelBands.js
+ *  BANDS_WIRE_MAX, pinned equal: the relay's graph stays flat) - for each of its two words. */
+export const TRAV_BANDS_MAX = 8;
+/** AUDIT OW-REVISITED L4-5: how far from the mark's own pixel a chase it says may run - a band's leash (900 m) and a
+ *  raider's (3 km) and a pixel to spare; past it the word is no chase of this traveller's and is refused. */
+export const TRAV_CHASE_NEAR_PX = 5;
+/** OW-CHASE-RANGE (AUDIT OW-REVISITED L4-1, L4-5, L4-6): A CHASE WORD BESIDE A MARK - `bd` the bands', `sr` the raiders'
+ *  (the cell's foes frame's own two words, each its own TRAV_BANDS_MAX: one shared word let eight spent bands keep every
+ *  raider off it), checked whole: each entry [id, x, z, flag] of the word's own kind (OW_BAND_ID_RE / OW_RAIDER_ID_RE) and
+ *  named once - flag 1 a chase at (x, z), native whole units on the world's pixels within TRAV_CHASE_NEAR_PX of the mark's
+ *  `p` (a chase is about its chaser - a word naming a chase across the region was any traveller spending every band about
+ *  a reader); flag 2 one spent, (0, 0). Null for any entry that is not, or too many. */
+export function validTravWord(v, idRe, p) {
+  if (!Array.isArray(v) || v.length > TRAV_BANDS_MAX || !p) return null;
+  const out = [], seen = new Set();
+  for (const e of v) {
+    if (!Array.isArray(e) || e.length !== 4) return null;
+    const [id, x, z, flag] = e;
+    if (typeof id !== 'string' || !idRe.test(id) || seen.has(id) || (flag !== 1 && flag !== 2)) return null;
+    if (flag === 1) {
+      if (!(Number.isInteger(x) && Number.isInteger(z))) return null;
+      const cx = Math.floor(x / PIXEL_UNITS), cy = 499 - Math.floor(z / PIXEL_UNITS);
+      if (!worldPixelOk(cx) || !worldPixelOk(cy) || Math.max(Math.abs(cx - p.px), Math.abs(cy - p.py)) > TRAV_CHASE_NEAR_PX) return null;
+    }
+    if (flag === 2 && (x !== 0 || z !== 0)) return null;
+    seen.add(id);
+    out.push([id, x, z, flag]);
+  }
+  return out;
+}
+/** The words beside a mark `p`, each checked (validTravWord) and kept only when it says something: `{ bd?, sr? }`, or null
+ *  where one is there and refused. */
+export function validTravWords(m, p) {
+  const out = {};
+  for (const [k, re] of /** @type {Array<[string, RegExp]>} */ ([['bd', OW_BAND_ID_RE], ['sr', OW_RAIDER_ID_RE]])) {
+    if (m?.[k] == null) continue;
+    const w = validTravWord(m[k], re, p);
+    if (!w) return null;
+    if (w.length) out[k] = w;
+  }
+  return out;
+}
 /** TV3: a traveller mark {px, py, fx, fy, h, m, tv}, projected, or null for one that is not - refused WHOLE (the party
  *  pose's law): a pixel off the world (TV-BEYOND: WORLD_PIXEL_BOUND), a byte past 255, a mode past the four, an eighth key. `tv` absent reads 0. */
 export function validTravellerMark(p) {
@@ -3208,15 +3254,17 @@ export function validTravellerMark(p) {
   if (tv == null) return null;
   return { px, py, fx, fy, h, m, tv };
 }
-/** TV3: a traveller's mark from the region room ({t:'trav', id, name, sub?, p} - `p` null when they went indoors, hid,
- *  or the room dropped them), projected with its badge, or null. The name is the relay's, off the verified token. */
+/** TV3: a traveller's mark from the region room ({t:'trav', id, name, sub?, p, bd?, sr?} - `p` null when they went
+ *  indoors, hid, or the room dropped them), projected with its badge, or null. The name is the relay's, off the verified
+ *  token. OW-CHASE-RANGE: the chase words beside the mark (validTravWords) - one refused is dropped, never the mark. */
 export function validTravellerFrame(m) {
   if (!m || typeof m !== 'object' || Array.isArray(m) || m.t !== 'trav') return null;
   const id = idOf(m.id);
   if (!id) return null;
   const p = m.p === null ? null : validTravellerMark(m.p);
   if (m.p !== null && !p) return null;
-  return { t: 'trav', id, name: sanitizeName(m.name), sub: idOf(m.sub), p, ...readBadge(m), lv: readRenown(m), gt: readGuildTag(m), rb: readRibbon(m) };   // OVERWORLD NAMES: and the Renown and the guild's tag the relay stamps (badged) - the name as it reads in play; AUDIT-SEATS: and a Season's banner ribbon
+  const words = p ? (validTravWords(m, p) ?? {}) : {};
+  return { t: 'trav', id, name: sanitizeName(m.name), sub: idOf(m.sub), p, ...words, ...readBadge(m), lv: readRenown(m), gt: readGuildTag(m), rb: readRibbon(m) };   // OVERWORLD NAMES: and the Renown and the guild's tag the relay stamps (badged) - the name as it reads in play; AUDIT-SEATS: and a Season's banner ribbon
 }
 
 /** QUEST1: a quest shared by a party member, from the hub ({t:'quest', acct, name, quest:{questName, displayName,

@@ -1,0 +1,111 @@
+[
+  {
+    "name": "JUNGLE-WOODS-the-climate-s-count",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const JUNGLE_TREE_SLOTS = 48;",
+    "new": "export const JUNGLE_TREE_SLOTS = 12;",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-a-count-short",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const JUNGLE_TREE_SLOTS = 48;",
+    "new": "export const JUNGLE_TREE_SLOTS = 47;",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-area-unread",
+    "file": "src/net/nodeLaw.js",
+    "old": "  return banthaAreaHas(x, y) ? JUNGLE_TREE_SLOTS : nodeCount(climate, 'tree');",
+    "new": "  return nodeCount(climate, 'tree');",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-woods-unasked",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (!WOOD_TABLES[climate]) return 0;\n  return banthaAreaHas(x, y)",
+    "new": "  return banthaAreaHas(x, y)",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-law-s-bound-the-climate-s",
+    "file": "src/net/nodeLaw.js",
+    "old": "slot >= treeSlots({ x, y, climate })) return null;",
+    "new": "slot >= nodeCount(climate, 'tree')) return null;",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-day-the-climate-s",
+    "file": "src/net/nodeLaw.js",
+    "old": "  for (let slot = 0; slot < treeSlots(p); slot++) { const n = tree({ ...p, slot }); if (n) out.push(n); }",
+    "new": "  for (let slot = 0; slot < nodeCount(p.climate, 'tree'); slot++) { const n = tree({ ...p, slot }); if (n) out.push(n); }",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-fill-gone",
+    "file": "src/net/nodeLaw.js",
+    "old": "  return banthaAreaHas(x, y) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-fill-everywhere",
+    "file": "src/net/nodeLaw.js",
+    "old": "  return banthaAreaHas(x, y) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;",
+    "new": "  return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };",
+    "tests": [
+      "test/net/junglewoods.test.js",
+      "test/net/pineshare.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-fill-past-tier-one",
+    "file": "src/net/nodeLaw.js",
+    "old": "  return banthaAreaHas(x, y) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;",
+    "new": "  return banthaAreaHas(x, y) ? { slot, u, v, tier: 4, material: 'log:teak', rare: false } : null;",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-service-s-slots-the-climate-s",
+    "file": "server-account/src/professions.js",
+    "old": "n.kind === 'tree' ? treeSlots({ x: n.x, y: n.y, climate }) : nodeCount(climate, n.kind)",
+    "new": "nodeCount(climate, n.kind)",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-rock-check-gone",
+    "file": "src/scenes/treeHost.js",
+    "old": "(woods.length ? woods : all).filter((f) => !insideRocks(rocks, f.x, f.z))",
+    "new": "(woods.length ? woods : all)",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-WOODS-the-claim-unkept",
+    "file": "src/scenes/treeHost.js",
+    "old": "      if (claimed.has(f.id)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/net/junglewoods.test.js"
+    ]
+  }
+]

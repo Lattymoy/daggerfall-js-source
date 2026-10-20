@@ -3196,6 +3196,7 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 .tview-route-line { fill: none; stroke: #e8be6e; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 @media (prefers-reduced-motion: reduce) { .tview-ring::after { animation: none; } }
 .tview-trip { font-size: 11.5px; color: var(--brass); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tview-sky { font-size: 11.5px; color: var(--bone); opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* OW-FORECAST: the weather ahead, under the journey */
 /* OW-BLOCK (2026-09-29, the player: "the whole bar in the top is too much ... a light weight block menu ... as much free
    screen as possible", "put the overworld block to the right"): THE OVERWORLD'S BLOCK - one compact column in the bottom-right corner,
    top to bottom: where (the compass beside it), the journey or none, the path and the map, the filters, the way back.

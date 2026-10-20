@@ -117,7 +117,9 @@ export const CARRY = Object.freeze({
   dual: Object.freeze({
     idle: { R: row(8, 23, 12, -34, 0, { blade: dir(0.24, 0.8, -0.55), edge: dir(-0.49, -0.39, -0.78) }), L: row(8, 23, 12, -34, 0, { blade: dir(0.24, 0.8, -0.55), edge: dir(-0.49, -0.39, -0.78), mirror: true }) },
     walk: { R: row(5, 24, 6, 28, 0.28, { blade: dir(0.31, 0.81, -0.51), edge: dir(-0.38, -0.38, -0.84) }), L: row(5, 24, 6, 28, 0.28, { blade: dir(0.31, 0.81, -0.51), edge: dir(-0.38, -0.38, -0.84), mirror: true }) },
-    run: { R: row(-47, 21, 7, 0, 0.1, { blade: dir(0.3, -0.93, 0.21), edge: dir(0.28, -0.12, -0.95) }), L: row(-47, 21, 7, 0, 0.1, { blade: dir(0.3, -0.93, 0.21), edge: dir(0.28, -0.12, -0.95), mirror: true }) },
+    // DUAL-RUN (2026-10-20, Mac: "super stiff"): pumping a fifth of the gait's elbow and 0.4 of its swing behind the hips,
+    // the shoulder turned out 60 so the forearm turns 66 off its hinge (locked straight and swinging a tenth, it turned 128)
+    run: { R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }), L: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2, mirror: true }) },
     sneak: { R: row(20, 20, 30, -44, 0.15, { blade: dir(0.12, 0.98, -0.18), edge: dir(0.26, -0.2, -0.95) }), L: row(20, 20, 30, -44, 0.15, { blade: dir(0.12, 0.98, -0.18), edge: dir(0.26, -0.2, -0.95), mirror: true }) },
     stand: { feet: { L: [-0.03, 0.06], R: [0.03, -0.04] }, hipYaw: -4 },
     runLean: 7,
@@ -131,6 +133,21 @@ export const CARRY = Object.freeze({
     stand: { feet: { L: [0, 0.16], R: [0.03, -0.08] }, hipYaw: -18, lean: 4 },
   }),
 });
+
+/** HELD-STEADY: the share of the stride's counter-turn and counter-drop an arm's row rides - an empty arm's swing share,
+ *  none for a hand that holds a blade (carryHands' head). */
+export const rideOf = (r) => (r.blade ? 0 : clamp01(r.swing));
+
+/**
+ * HELD-STEADY: the share of the stride's counter-turn and counter-drop the CHEST takes under a class's carry at the
+ * gait's `shares` - all of it, but as far as the left hand closes on the right's haft (`armWL` how far the layer has
+ * that arm): a weapon in both hands binds the shoulders to it, and its blade is held still. With the right held steady
+ * while the left's shoulder rode the chest, the two-hander's left hand fell 3.2 units off its hilt at a run and a
+ * staff's 2.4 off its haft at a walk. Pure.
+ */
+export function strideRide(cls, shares, armWL = 1) {
+  return 1 - clamp01(blendRow(cls, 'L', shares).grip) * clamp01(armWL);
+}
 
 /** The gait's four shares (idle, walk, run, sneak) - summing to one. */
 export function gaitShares(gp) {
@@ -243,6 +260,18 @@ function withSwing(side, r, gp) {
   };
 }
 
+/** A hand request turned by the rotation `R` about the point `S` (its shoulder): the wrist, the grip and every way. */
+export function turnAbout(h, S, R) {
+  if (!h) return h;
+  const pt = (p) => add(S, apply(R, sub(p, S)));
+  const way = (d) => (d ? apply(R, d) : d);
+  return {
+    ...h, at: pt(h.at), fingers: way(h.fingers), palm: way(h.palm), pole: way(h.pole),
+    ...(h.grip ? { grip: pt(h.grip) } : {}),
+    ...(h.frame ? { frame: { blade: apply(R, h.frame.blade), edge: apply(R, h.frame.edge), flat: apply(R, h.frame.flat) } } : {}),
+  };
+}
+
 /** Mirror a hand request across the plane through `C` with normal `n`: the point and every way. */
 export function mirrorRequest(h, C, n) {
   if (!h) return null;
@@ -278,14 +307,30 @@ export function hafHand(rightReq, rightGrip, Rblade, along, arm, slide = null) {
  * `cls` at the gait `gp`, on the frame the trunk now stands in (`ctx` - bodySolve.js's: body, mats, frames). `wb`,
  * `wbL` the Weapon Bones. A weapon row turns the hand so the blade stands as the row says; the left of a pair is its
  * right's mirror across the chest's middle; a two-handed class's left closes on the haft. Pure.
+ *
+ * HELD-STEADY (2026-10-20, Mac: "When wielding 2 daggers and running, the character is super stiff and wobbles side to
+ * side"): `steady` ({ turn, ride }, or null) - `turn` the rig rotation that takes the chest as it stands back to the
+ * chest without the stride's counter-turn and counter-drop (gait.js gaitPose's `chest.wave`), `ride` the share of that
+ * wave the chest was laid with (strideRide). A runner's chest turns against the hips because the swinging arms ride
+ * it - an empty arm rides it by its row's own swing share (all of it in a run's pump, a little of it in a guard); a
+ * hand that holds a blade holds the blade's way still against it, and pumps by its row's swing about that steadied
+ * frame (`rideOf`). Each arm is turned back about its shoulder by what the chest carries past its own share. Laid on
+ * the chest's frame whole, the pair's run - both arms held back - swung both blades' tips 50 units side to side
+ * together, the two-hander's 44, the one-hander's 29.
  */
-export function carryHands(cls, gp, ctx, { armW = { L: 1, R: 1 }, shares: given = null } = {}) {
+export function carryHands(cls, gp, ctx, { armW = { L: 1, R: 1 }, shares: given = null, steady = null } = {}) {
   if (cls === 'clip') return { L: null, R: null };
   const { body, mats, frames } = ctx;
   const F = { right: frames.right, fwd: frames.fwd, up: frames.up };
   const shares = given ?? gaitShares(gp);
   const out = { L: null, R: null, grip: { L: null, R: null } };
   const C = scale(add(frames.shoulder.L, frames.shoulder.R), 0.5);
+  /** The arm's request held against the stride's turn by what the chest carries past its row's own swing (HELD-STEADY,
+   *  the head). */
+  const held = (req, S, r) => {
+    const k = steady && steady.ride > 1e-6 ? clamp01(1 - rideOf(r) / steady.ride) : 0;
+    return req && k > 1e-6 ? turnAbout(req, S, k < 1 - 1e-9 ? rotFraction(steady.turn, k) : steady.turn) : req;
+  };
   for (const side of ['R', 'L']) {
     if (!(armW[side] > 0)) continue;
     const r = withSwing(side, blendRow(cls, side, shares), gp);
@@ -297,18 +342,18 @@ export function carryHands(cls, gp, ctx, { armW = { L: 1, R: 1 }, shares: given 
       // the pair's left: the right's own request for the mirrored arm, reflected back across the chest's middle
       const arm = armByAngles('R', add(C, reflect(sub(S, C), F.right)), F, a, b, r);
       const req = gripRequest(mats, body, 'R', body.wb, { wrist: arm.wrist, blade: inFrame(frames.chest, r.blade), edge: inFrame(frames.chest, r.edge), pole: arm.pole, w: armW.L });
-      out.L = req && mirrorRequest(req, C, F.right);
+      out.L = held(req && mirrorRequest(req, C, F.right), S, r);
       continue;
     }
     const arm = armByAngles(side, S, F, a, b, r);
     if (r.blade && side === 'R') {
-      const req = gripRequest(mats, body, 'R', body.wb, { wrist: arm.wrist, blade: inFrame(frames.chest, r.blade), edge: inFrame(frames.chest, r.edge), pole: arm.pole, w: armW.R });
+      const req = held(gripRequest(mats, body, 'R', body.wb, { wrist: arm.wrist, blade: inFrame(frames.chest, r.blade), edge: inFrame(frames.chest, r.edge), pole: arm.pole, w: armW.R }), S, r);
       out.R = req;
       if (req) out.grip.R = req.grip;
       continue;
     }
     const hand = freeHand(side, arm, F, r.fist);
-    out[side] = { at: arm.wrist, fingers: hand.fingers, palm: hand.palm, pole: arm.pole, w: armW[side] };
+    out[side] = held({ at: arm.wrist, fingers: hand.fingers, palm: hand.palm, pole: arm.pole, w: armW[side] }, S, r);
   }
   const lRow = blendRow(cls, 'L', shares);
   if (lRow.grip > 0 && out.R && out.grip.R && TWO_HAND_GRIP[cls] != null && armW.L > 0) {

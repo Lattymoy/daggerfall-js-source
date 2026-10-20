@@ -181,7 +181,8 @@ test('TV6 host: the dungeons gathered once, listed on a pixel or a find, marked 
   assert.match(w, /if \(discoverLocation\(g\.row\.mapID, \{ regionName: maps\.getRegionName\(g\.row\.regionIndex\), locationName: g\.loc\.name \}\)\) tvSay\(dungeonFoundText\(g\.loc\.name\), 5\);/, 'the port\'s own store, and said');
   assert.match(w, /tvFar = \{ at: null, near: -1, list: \[\] \};   \/\/ TV5: nor the far places\n\s*tvDng = \{ at: null, dg: -1, list: \[\] \};   \/\/ TV6: nor the dungeons\n/, 'a load forgets them');
   assert.match(w, /dungeonFindFrame\(performance\.now\(\)\);   \/\/ TV6/, 'the find asked every frame (itself four times a second)');
-  assert.match(w, /const plate = tvPlates\.list\.find\(\(p\) => p\.key === key\) \?\? tvFar\.list\.find\(\(p\) => p\.key === key\) \?\? tvDng\.list\.find\(\(p\) => p\.key === key && p\.summary\);/, 'a found dungeon\'s plate is its journey');
+  // PIN MOVED (OW-QUEST, 2026-10-19): a quest's diamond answers first, by its pixel - the plates' lists after it, unchanged
+  assert.match(w, /const plate = qp \? \{ summary: [^\n]*\} : tvPlates\.list\.find\(\(p\) => p\.key === key\) \?\? tvFar\.list\.find\(\(p\) => p\.key === key\) \?\? tvDng\.list\.find\(\(p\) => p\.key === key && p\.summary\);/, 'a found dungeon\'s plate is its journey');
 });
 
 test('AUDIT OW3 D1 host: the spawns off the live index, told as the spawned feature tells them (its line this session, or the pixel entry\'s filing - the name), the list kept only while the index holds (lifted and run)', async () => {
@@ -215,7 +216,7 @@ test('AUDIT OW3 D1 host: the spawns off the live index, told as the spawned feat
 
 test('AUDIT OW3 D1 host: a spawn\'s plate is a walk to its door - TV2\'s spot journey to its exterior\'s edge, asked of the live list (an unnamed or a vanished spawn walks nowhere); the click reaches it before the place plates; AUDIT OW4 D1/D6: walked as a place\'s door (its rect handed on - the edge is aimed once the route is known); D2: asked its clocks at the click (lifted and run)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /if \(key === 'dest'\) \{[^\n]*\n\s*if \(key\.startsWith\('spawn:'\)\) \{ travelViewSpawnWalk\(key\); return; \}[^\n]*\n\s*const plate = /, 'the click');
+  assert.match(w, /if \(key === 'dest'\) \{[^\n]*\n\s*if \(key\.startsWith\('spawn:'\)\) \{ travelViewSpawnWalk\(key\); return; \}[^\n]*\n\s*const qp = [^\n]*\n\s*const plate = /, 'the click');   // PIN MOVED (OW-QUEST): a quest's pixel read between them
   const m = /\n {2}(function travelViewSpawnWalk\(key\) \{\n[\s\S]*?\n {2}\})\n/.exec(w);
   assert.ok(m, 'the walk');
   const rect = { minX: 10000, maxX: 14096, minZ: 20000, maxZ: 24096 };

@@ -481,3 +481,20 @@ the naval host's boat in play; and the voyage the planner is asked for rides the
 (`tvSeaMeans`' `voyage`) instead of a copy of them. `bootWorld` 36,264 -> 36,230 logical lines, under its ceiling,
 which stays. The pins that read the wiring by source moved with it (`passagehost.test.js`, `passageaudit.test.js`,
 `ows2_crossing.test.js`), the boat in play now held by behaviour, and 21 mutant records re-aimed and dead.
+
+## OW-DUNGEON-SIZE's move - the dungeons' models out of bootWorld (2026-10-19)
+
+THE OVERWORLD REVISITED (`06-Systems/Travel-View.md`) wires six slices into the streaming host, and `bootWorld` stood at
+36,230 of its 36,233 logical lines. The slice that changes OW-DUNGEONS' grow moved OW-DUNGEONS' own host code out first:
+`tvDungeonModelList`, `tvDungeonModelLoad`, `_tvDngAt`, `drawTvDungeonModels` and `dropTvDungeonModels` - contiguous
+members - to `src/scenes/travelViewDungeonModels.js` (`createTravelViewDungeonModels(host)`) by `tools/hostMove.mjs`:
+23 names by value, four live (`_locIndexGen`, `_tvListsReady`, `season`, `tvDngModels` - written, so a getter and a
+setter), the two the host draws and drops by returned. 86 logical lines freed (36,230 -> 36,144); the six slices'
+wiring took 39 of them back (`bootWorld` 36,183; 36,181 after the merge with main), each slice's behaviour a module of its own
+(`scenes/townWalkHost.js`, `scenes/overworldForecastHost.js`, `systems/travel/regionChase.js`, `systems/travel/townWalk.js`,
+`systems/weather/owForecast.js`). The ceiling stays. The three pins that lifted the moved code read the host whole now
+(`test/hostText.mjs`: `owdungeons`, `fb1009_travelperf`, `ether_ow`), their lifted functions handed `host` for the live
+names; 24 mutant records re-aimed by the tool, every one dead. AUDIT OW-REVISITED (2026-10-20, `01-Overview/audits/Audit-Overworld-Revisited.md`): its fixes grew the region's
+chase hearing past three lines, so it moved out too - `src/scenes/regionChaseHost.js` (`createRegionChaseHearing`), the
+host wiring it in one statement; with the forecast's new inputs and the bands' and raiders' preference for a fresh cell
+word, `bootWorld` 36,205 of its 36,233 (36,209 with main merged in the same day).
