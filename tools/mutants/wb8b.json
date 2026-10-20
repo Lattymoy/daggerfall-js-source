@@ -84,17 +84,18 @@
   {
     "name": "WB8b-colossal-share-unscaled",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX;",
-    "new": "  const share = BOSS_TTK_S * dpsRef(level);",
+    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1);",
+    "new": "  const share = BOSS_TTK_S * dpsRef(level) * (f.vg ? VG_SHARE_X : 1);",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB8b-the-gap-from-the-old-body",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const gap = dist(pose.x, pose.z, f.pos[0], f.pos[1]) - P.bossR;",
-    "new": "  const gap = dist(pose.x, pose.z, f.pos[0], f.pos[1]) - BOSS_R;",
+    "old": "  const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - P.bossR;",
+    "new": "  const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - BOSS_R;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -102,11 +103,12 @@
   {
     "name": "WB8b-unyielding-blow-whole",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const want = d * P.hitX * (now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
-    "new": "  const want = d * (now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
+    "old": "  const want = d * P.hitX * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
+    "new": "  const want = d * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB8b-the-ward-counted-as-clipped",
@@ -156,8 +158,8 @@
   {
     "name": "WB8b-fed-past-his-whole",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      f.hp = Math.min(f.max, f.hp + P.feed * f.max);",
-    "new": "      f.hp = f.hp + P.feed * f.max;",
+    "old": "      else f.hp = Math.min(f.max, f.hp + P.feed * f.max);",
+    "new": "      else f.hp = f.hp + P.feed * f.max;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -298,8 +300,8 @@
   {
     "name": "WB8b-the-wire-takes-any-marks",
     "file": "src/net/wire.js",
-    "old": " || md === undefined) return null;",
-    "new": ") return null;",
+    "old": " || md === undefined || pt === undefined) return null;",
+    "new": " || pt === undefined) return null;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -316,8 +318,8 @@
   {
     "name": "WB8b-the-old-law-let-in",
     "file": "src/net/wire.js",
-    "old": "export const GATE_BRAIN_MIN = 5;",
-    "new": "export const GATE_BRAIN_MIN = 4;",
+    "old": "export const GATE_BRAIN_MIN = 6;",
+    "new": "export const GATE_BRAIN_MIN = 5;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -325,8 +327,8 @@
   {
     "name": "WB8b-the-relay-fights-unmarked",
     "file": "server/src/index.js",
-    "old": "boss: gateBossOf(day).id, md: gateModsOf(day) });   // WB8b",
-    "new": "boss: gateBossOf(day).id });   // WB8b",
+    "old": "boss: gateBossOf(day).id, md: gateModsOf(day), pt: gatePortentsOf(day), ti: gateTitheOf(day) });   // WB8b",
+    "new": "boss: gateBossOf(day).id, pt: gatePortentsOf(day), ti: gateTitheOf(day) });   // WB8b",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js",
       "test/net/gate/wb8c_gate_detail.test.js"

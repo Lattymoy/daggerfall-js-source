@@ -1113,7 +1113,7 @@ export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey
   const recorded = Number(r?.meta?.changes ?? 0) > 0;
   const struck = !!stmt && Number(m?.meta?.changes ?? 0) > 0;
   const deedStruck = !!deed && Number(d[1]?.meta?.changes ?? 0) > 0;
-  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(deed ? { deedStruck } : {}), ...(roll ? { weirRow: w?.results?.[0] ?? null } : {}), ...(await gateRecordOf({ db }, player.id)) };
+  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.p > 0 ? { portent: c.p } : {}), ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(deed ? { deedStruck } : {}), ...(roll ? { weirRow: w?.results?.[0] ?? null } : {}), ...(await gateRecordOf({ db }, player.id)) };
   // AUDIT WB12d (A1): A FIGHTER'S `r` COUNTED AT ONE EMBER - a service from before acct62 took the receipt as a plain one
   // and kept its row - is made good when the receipt is claimed again (the game keeps an `r` receipt until a service
   // that answers its embers has counted it). One row a (day, account), one receipt a kill: the row is this receipt's

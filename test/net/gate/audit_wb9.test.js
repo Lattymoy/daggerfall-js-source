@@ -272,9 +272,9 @@ test('AUDIT WB9 court F4 - his shapes and his burning ground are drawn on over t
   // the court hands the pass how far each walkway is laid, every frame, for his shapes and his ground (never his mark)
   const court = readFileSync(new URL('../../../src/scenes/gate/gateCourt.js', import.meta.url), 'utf8');
   assert.match(court, /for \(const w of WALKS\) _walked\[w\.k\] = walkFormed\(s\.xa, w\.k, t\);/);
-  assert.match(court, /for \(const ps of poolDraw\) \{ pass\.draw\(ps, proj, view, eye, seconds, fog, COURT_CENTRE, _walked\);/);
+  assert.match(court, /for \(const ps of poolDraw\) \{ pass\.draw\(ps, proj, view, eye, seconds, fog, COURT_CENTRE, _walked, _floors\);/);   // WB14b: and the night's floors
   assert.match(court, /if \(mark\) \{ pass\.draw\(mark, proj, view, eye, seconds, fog\); drew = true; \}/);
-  assert.match(court, /if \(shape\) \{ pass\.draw\(shape, proj, view, eye, seconds, fog, COURT_CENTRE, _walked\);/);
+  assert.match(court, /if \(shape\) \{ pass\.draw\(shape, proj, view, eye, seconds, fog, COURT_CENTRE, _walked, _floors\);/);
   assert.equal(fs({ uOnWalk: 1 }, rim), -1, 'inside the court\'s disc the walkway\'s strip draws nothing - the court\'s pass has it');
   assert.ok(fs({ uOnWalk: 0 }, rim) > 0, 'where the court\'s pass draws it');
 });

@@ -430,6 +430,7 @@ import { egReliquaryGrant } from '../systems/eliteGates/egSpoils.js';   // AUDIT
 import { createSdSpoils, clearOfPillars } from './superDungeon/sdSpoils.js';   // SD9e: thrown from where it fell; AUDIT SD: the way home clear of the arena's pillars
 import { slainLine, serpentBossOf, serpentBossById, sameSerpentSite, SERPENT_NATIVE_PER_M } from '../net/serpent/serpentLaw.js';   // SERPENT1: the hub's word of its kill, in the chat (AUDIT SERPENT S1: my own site's alone)
 import { createGateCourt, courtSaySeconds } from './gate/gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
+import { arsenalSeams } from './gate/gateArsenal.js';   // WB14a: the arsenal's seams on my peer id and my body, wired in one entry
 import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
 import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
 import { createGateVeil } from '../ui/gate/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
@@ -442,10 +443,10 @@ import { breachBookFor, BREACH_BOOK_TEXT } from '../systems/breachBook.js';   //
 import { bossPlace } from '../world/gate/gateBoss.js';   // AUDIT WBX F3: where he fell - a charge's head, a leap's flight - frozen by the link's fold   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { itemIconColor32 } from '../ui/item/itemIconColor32.js';   // WBX3: a spoil's own picture on the court's floor
 import { setCourtRules } from '../systems/courtRules.js';   // WBX6: the court's laws, switched by the frame
-import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, GATE_COLLAPSE_MS } from '../net/gate/gateLaw.js';   // WB3b: the court's room, and its day's end
+import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, gatePortentsOf, GATE_COLLAPSE_MS } from '../net/gate/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { createGateCrowd, gateCrowdMax } from '../net/gate/gateCrowd.js';   // GATE-CROWD: a gate's court draws the nearest of a crowd
 import { createPeerRange, peerRangeOf } from '../net/peer/peerRange.js';   // PEER-RANGE: the others drawn out to the distance on the Other players card
-import { gateLandingFor, courtRing, courtArena, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gate/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
+import { gateLandingFor, courtRing, courtArena, courtArenaAt, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gate/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -746,7 +747,7 @@ import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, c
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby, liveBundles, attemptSoulTrap, SOUL_TRAP_TEXT } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed); WBX7: the kill's soul trap roll, for the court's boss
 import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the body's limbs on the climb
-import { PlayerMotor, startRestGroundedCheck, motionBagOf, climbPoseOf, MAX_FRAME_DT, CAPSULE_HEIGHT, CAPSULE_RADIUS, RIDE_EYE_HEIGHT, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
+import { PlayerMotor, BLOW_PUSH_DECAY, startRestGroundedCheck, motionBagOf, climbPoseOf, MAX_FRAME_DT, CAPSULE_HEIGHT, CAPSULE_RADIUS, RIDE_EYE_HEIGHT, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
 import { travelDriveForward, travelLookaheadFor } from '../systems/travel/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travel/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
@@ -24183,6 +24184,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     me: () => online?.name ?? null,   // GATE-UX: my row of the damage chart - the relay's name for me (ACC1g: the issued one)
     yaw: () => cam.yaw,   // WB13a: the way out of a blow on me, turned as the screen is
+    ...arsenalSeams(player, () => online, BLOW_PUSH_DECAY),   // WB14a: the marked blows name my peer id; the Chains reel my body (the motor's blow push)
     shake: (amount) => betterAmbience.weaponKick(amount),   // WB13d: his landings near me felt, under the player's own maxShake
   }) : null;
   // EG-PLAY (bible/11-Multiplayer/Elite-Gates.md section 31, EG-PLAY): AN ELITE BREACH ON THIS SCREEN (scenes/eliteGates/egClient.js) -
@@ -25888,7 +25890,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (royalRing) player.arena = { centre: campToScene([royalRing.centre[0], campToWire(player.feetAt())[1], royalRing.centre[1]]), radius: royalRing.radius };
     // WB3b: the court's floor is a ring the body cannot leave - WB9b: the three courts' floor, as far as the walkways
     // between them are laid (one arena, its crossings and clock refilled each frame)
-    if (!player.arena && modes?.gateArenaDay?.() != null) { _courtArena.xa = gateLink?.state()?.xa ?? _gateFloor.none; _courtArena.now = Date.now() + _sharedOffsetMs; player.arena = _courtArena; }
+    if (!player.arena && modes?.gateArenaDay?.() != null) player.arena = courtArenaAt(_courtArena, gateLink?.state()?.xa ?? _gateFloor.none, Date.now() + _sharedOffsetMs, modes?.gateArenaDay?.());   // WB9b: the one arena refilled a frame; WB14b: and the night whose plan holds me (world/gate/gateArena.js courtArenaAt)
     if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdArenaHeld() ? _realmArenaHeld : sdConcordHere() ? _realmArenaBridged : _realmArena;   // AUDIT SD III (F2): standing in it, joined to its living fight, the arena's rim holds me   // SD5a: the Hour's floors are an edge the body cannot leave - the void under them; SD6c: with the Concord, the bridge and the first step among them
     if (!player.arena) player.arena = arenaBouts.ring(); if (!player.arena) { const s = arenaOnline?.session?.(); player.arena = standsRail(modes?.arenaFloorStage?.()?.centre?.() ?? null, player.feetAt()[1], !!s && (s.state ? s.state.h === 1 : !!s.host)); }   // ARENA2: my bout's ring on the arena's sand (the duel's clamp); HOTFIX 1003i: else the stands' rail - no watcher jumps down onto the sand (the session's host may)
     duelPrompt?.render();
@@ -29530,7 +29532,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     gateVeil: () => gateVeil,   // WB6c: the step through the gate's fire, both ways
     // AUDIT WB B5: why the gate's door refuses the step now it has closed, or null - no relay to hold the court, its
     // master fallen, or sealed while the fire burned (the pool's own words where it has them)
-    gateRefusal: (g) => (!online?.gateOk || online?.terminal ? GATE_TEXT.notYet
+    gateRefusal: (g) => (!online?.gateOk || online?.terminal || (!!gatePortentsOf(g.day) && !online?.portentsOk) ? GATE_TEXT.notYet   // AUDIT WB14 (WIRE-1): a portent night on a relay from before them
       : Number.isFinite(gateLink?.fellAt(g.day)) ? GATE_NO_TEXT['the gate is closing']
         : !gateAdmits(g.day, Date.now() + _sharedOffsetMs) ? GATE_TEXT.sealed : null),
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),

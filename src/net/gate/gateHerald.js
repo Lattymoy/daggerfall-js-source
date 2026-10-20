@@ -22,7 +22,7 @@
 //   digits, spaces and a little punctuation, so no markdown, no link and no mention rides them.
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (DISCORD-GATES).
-import { gameDayAt, isGateDay, gateAt, gateTimes, gateBossOf, gateModsOf, GATE_EVERY_DAYS, GATE_COLLAPSE_MS } from './gateLaw.js';
+import { gameDayAt, isGateDay, gateAt, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, portentsLine, GATE_EVERY_DAYS, GATE_COLLAPSE_MS } from './gateLaw.js';
 import { GATE_TOP_MAX, NAME_MAX } from '../wire.js';
 import { readGateMods } from './gateMods.js';   // WB8c: tonight's marks in the omen's post
 import { RITE_OMEN_LINE } from './gateRite.js';
@@ -63,6 +63,7 @@ export const heraldList = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')
 /**
  * THE OMEN'S POST: where the sky burns, when the gate opens and seals, and who holds it - the role pinged first. WB8c:
  * and the marks he comes under tonight (net/gate/gateLaw.js gateModsOf - the words are the tables', never a player's).
+ * WB14b: and the night's portents, after the marks (gateLaw.js portentsLine - nothing on a plain night).
  * @param {{day: number, place?: string|null, role?: string|null}} o
  */
 export function omenPost({ day, place = null, role = null }) {
@@ -72,8 +73,9 @@ export function omenPost({ day, place = null, role = null }) {
   const map = place ? '' : ' It is marked on your map.';
   // WB13b: two sentences for the two times, and the marks in the chat's own sentence (net/gate/gateLaw.js marksLine)
   const marks = ` ${boss.name} comes **${aspect.epithet}** tonight${trials.length ? `, ${heraldList(trials.map((x) => x.name))}` : ''}.`;
+  const pt = portentsLine(gatePortentsOf(day));   // WB14b: and the night's portents after them, the chat's own line (bible Breach-Portents.md section 6)
   return {
-    content: `${ping}**The sky burns ${where}.** Dagon's faithful open a breach ${heraldStamp(t.openAt, 'R')} (${heraldStamp(t.openAt, 't')}). The Covenant seals it at ${heraldStamp(t.sealAt, 't')}.${map} ${RITE_OMEN_LINE}${marks}`,   // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, right after the breach they say is near
+    content: `${ping}**The sky burns ${where}.** Dagon's faithful open a breach ${heraldStamp(t.openAt, 'R')} (${heraldStamp(t.openAt, 't')}). The Covenant seals it at ${heraldStamp(t.sealAt, 't')}.${map} ${RITE_OMEN_LINE}${marks}${pt ? ` ${pt}` : ''}`,   // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, right after the breach they say is near
     allowed_mentions: role ? { roles: [role] } : { parse: [] },
   };
 }

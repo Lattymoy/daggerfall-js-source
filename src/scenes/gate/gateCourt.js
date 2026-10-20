@@ -16,12 +16,12 @@
 // has already cued, landed and judged, and the host's doors.
 //
 // Not a DFU member. Ledger A (WB).
-import { ATTACK_BY_ID, ATTACKS, COURT_CENTRE, COURTS, COURT_R, HIT_KINDS, POOL_TICK_MS, PHASE_NAMES, profileOf, nearestCourt, windupOf, CRYSTAL_R, CRYSTAL_H, inCourt, POSE_SLACK, RECKON_CLOSE_MS, WALKS, walkFormed, HOST_BLOWS, hostBlowUnder } from '../../net/gate/gateBrain.js';
-import { strikeVerdict, blowOf, strikeDamage, savedShare, landingPools, poolUnder, inAttack, chargeHead, segmentDistance } from '../../net/gate/gateStrike.js';
+import { ATTACK_BY_ID, ATTACKS, COURT_CENTRE, COURTS, COURT_R, HIT_KINDS, POOL_TICK_MS, PHASE_NAMES, profileOf, nearestCourt, windupOf, CRYSTAL_R, CRYSTAL_H, inCourt, POSE_SLACK, RECKON_CLOSE_MS, WALKS, walkFormed, HOST_BLOWS, hostBlowUnder, planOf, HOST, HOST_GONE, hostAt, wardTakes } from '../../net/gate/gateBrain.js';
+import { strikeVerdict, blowOf, strikeDamage, savedShare, landingPools, poolUnder, inAttack, chargeHead, segmentDistance, wheelStrikes } from '../../net/gate/gateStrike.js';
 import { GATE_BOSSES, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../../net/gate/gateLaw.js';   // GATE-FBX: and when the court comes apart
 import { COURT_WATCH_ASK_MS } from '../../net/gate/gateBrain.js';   // COURT-WATCH: a watcher's ask for a seat, this often
 import { bossAct, bossFrame, bossGlow, bossPlace, bossHop, bossLookOf, bossStandIn, bossCue, BOSS_CUES, BOSS_STRIDE_M, GROWL_EVERY_MS, HURT_GAP_MS, HURT_SHARE, QUAKE_ON, THUD_AT_MS, WARD_COLOR, EMBER_COLOR, poolColor, emberColor, attackColor, crystalStandIn, crystalColor, groundStepCue, hostPulseColor, gateHitFlash, GATE_FLASH_SHARE, RELEASE_LEAD_MS, landShake, LANDING_LIGHT_Y, CORPSE_SCALE, WAKE_LEAD_MS, LOW_HEALTH } from '../../world/gate/gateBoss.js';
-import { courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT, WAY_IN_Z, WAY_IN_HOLD_MS, WAY_IN_NEAR_M, ARRIVE_Z, COURT_SILENT_MS, COURT_FRAME_GAP_MS, COURT_DOOR_WAIT_MS, wayInStep, portalFade } from '../../world/gate/gateArena.js';
+import { courtToDungeon, portalDoor, PORTAL_AFTER_MS, PORTAL_RISE_MS, PORTAL_DROP, COURT_TEXT, WAY_IN_Z, WAY_IN_HOLD_MS, WAY_IN_NEAR_M, ARRIVE_Z, arrivalOf, planOfDay, COURT_SILENT_MS, COURT_FRAME_GAP_MS, COURT_DOOR_WAIT_MS, wayInStep, portalFade } from '../../world/gate/gateArena.js';
 import { GateTelegraphRenderer, telegraphShape, markShape, poolShapes, telegraphEdge, TELEGRAPH_STYLE, TELEGRAPH_EDGE, TELEGRAPH_NOW_MS } from '../../render/gate/gateTelegraph.js';
 import { CourtCrystalRenderer, crystalGrowth, CRYSTAL_GROW_MS, CRYSTAL_SHATTER_MS, CRYSTAL_FLASH_MS, CRYSTALS_DRAW_MAX } from '../../render/courtCrystals.js';   // WB9c: the crystals of Oblivion, drawn
 import { GateFxRenderer, fxBurstOf, meteorFall, FX_BURST_MS, FX_BURSTS_MAX, FX_KINDS, FX_LIGHT_MS } from '../../render/gate/gateFx.js';   // WB9e: his blows seen landing
@@ -37,6 +37,14 @@ import { bossBarModel, drawGateBossBar, BOSS_BAR_TEXT } from '../../ui/gate/gate
 import { titleCardModel, drawGateTitleCard, TITLE_HOLD_MS } from '../../ui/gate/gateTitleCard.js';   // WB13e: the fight's beats, large
 import { marksCardModel, drawGateMarksCard } from '../../ui/gate/gateMarksView.js';   // WB9a: the night's marks over the screen as a fighter steps in
 import { groundViewModel, drawGateGround } from '../../ui/gate/gateGroundView.js';   // WB9d: his ground and his element, felt
+import { createGateArsenal } from './gateArsenal.js';   // WB14a: the blows that strike by who they mark, and the Gaze
+import { vanguardLine } from './gateVanguard.js';   // WB14c: the Vanguard's words
+import { createGateFlame, flameOf, FLAME_I } from './gateFlame.js';   // WB14d: his Flame, the Sundering's second body
+import { createGateCaptive } from './gateCaptive.js';   // WB14f: the Captive - his body, his chains, his words
+import { hasPortent } from '../../net/gate/gateMods.js';   // WB14d: a Sundering night's own cards
+import { titheList } from '../../systems/gate/gateSpoils.js';   // WB14e: a Tithe-Imp's tithe, off its seed
+import { TITHE_GOLD } from '../../world/gate/gateBoss.js';   // WB14e: its gold
+import { t } from '../../systems/textManager.js';   // WB14d: its words in the player's language (L10N4)
 import { damageChartModel, drawGateDamageChart } from '../../ui/gate/gateDamageChart.js';   // GATE-UX: every challenger's damage, ranked, once he has fallen
 import { readReceipt } from '../../net/gate/gateReceipt.js';
 import { bodySayer } from '../../net/bossBody.js';   // INT15: my body, said to the court's room
@@ -62,8 +70,23 @@ export const COURT_STRIKE_TEXT = Object.freeze({
  *  and what it asks. WB13e (2026-10-01, Mac: "AAA grade polish"): a title card (ui/gate/gateTitleCard.js) - its numeral, its
  *  name, and its one order under it until he lands (WB9b/c: the turn crosses to the next court); nothing said beside it. */
 export const PHASE_NUMERALS = Object.freeze(['I', 'II', 'III']);
-export const courtPhaseOrder = (n) => (n === 2 ? 'Follow him over the walkway.' : n === 3 ? 'Follow him to the last court.' : null);
-export const courtPhaseCard = (n) => { const sub = courtPhaseOrder(n); return sub ? { kicker: PHASE_NUMERALS[n - 1], main: PHASE_NAMES[n - 1], sub } : null; };
+export const courtPhaseOrder = (n) => (n === 2 ? t('gate.phase.follow2', 'Follow him over the walkway.') : n === 3 ? t('gate.phase.follow3', 'Follow him to the last court.') : null);   // AUDIT WB14 (TEXT-9): in the player's language, as the Sundering's are
+/** WB14d: a Sundering night's turns, carded - the Sundering itself, and the Rejoining's last stand back in the first court
+ *  (read through the text core - L10N4). */
+/** WB14e: what a Tithe-Imp's tithe paid me (read through the text core - L10N4). */
+export const COURT_TITHE_TEXT = Object.freeze({
+  mine: (gold, gem) => t('gate.tithe.mine', 'You take its tithe of {gold, number} gold and {gem, select, Amber {an Amber} Emerald {an Emerald} other {a {gem}}}.', { gold, gem }),   // AUDIT WB14 (TEXT-1): the gem with its article - the classic eight's names (Emerald and Amber the vowels)
+});
+export const SUNDER_CARD = Object.freeze({
+  main: () => t('gate.card.sunder', 'The Sundering'),
+  sub: () => t('gate.card.sunderSub', 'Bring both halves down together.'),
+  back: () => t('gate.card.rejoinSub', 'Back to the first court.'),
+});
+export const courtPhaseCard = (n, pt = null) => {
+  if (hasPortent(pt, 'sunder') && (n === 2 || n === 3)) return { kicker: PHASE_NUMERALS[n - 1], main: n === 2 ? SUNDER_CARD.main() : PHASE_NAMES[2], sub: n === 2 ? SUNDER_CARD.sub() : SUNDER_CARD.back() };
+  const sub = courtPhaseOrder(n);
+  return sub ? { kicker: PHASE_NUMERALS[n - 1], main: PHASE_NAMES[n - 1], sub } : null;
+};
 /** WB13e: DAGON'S WRATH, said - a minute out (WRATH_WARN_AT_MS, said only while news), and as it gathers. */
 export const COURT_WRATH_TEXT = Object.freeze({ minute: "Dagon's Wrath in 1:00. Bring him down!", windup: "Dagon's Wrath!" });
 export const WRATH_WARN_AT_MS = 60_000;
@@ -181,6 +204,8 @@ export function wayOut(inside, fx, fz, court) {
 /** WB13a: a bearing in the court's frame as the screen turns it, degrees - 0 ahead, 90 to the right - for a camera of
  *  `yaw` (scenes/world.js cam.yaw: ahead [sin, cos], right [cos, -sin]). */
 export const screenBearing = (dir, yaw) => (Math.atan2(dir[0] * Math.cos(yaw) - dir[1] * Math.sin(yaw), dir[0] * Math.sin(yaw) + dir[1] * Math.cos(yaw)) * 180) / Math.PI;
+/** AUDIT WB14 (SCREEN-7): how far ahead the Wheel's peril looks down its blades' turn. */
+export const WHEEL_PERIL_MS = 1000;
 /**
  * WB13a (2026-10-01, Mac: "hone in telegraphs"): A BLOW STILL TO COME ON MY FEET - in first person at sword reach the
  * ground under me is out of sight (his Cleave's shape is none of the frame). The one landing soonest of his blow in
@@ -193,12 +218,15 @@ export function perilAt(s, t, P, fx, fz, yaw = null) {
   let best = null, inside = null;
   const atk = s.atk, A = atk ? ATTACK_BY_ID[atk.a] : null;
   if (A && A.shape !== 'all' && Number.isFinite(atk.at)) {
-    const w = windupOf(A, s.phase), run = A === ATTACKS.charge ? Math.max(A.active, 1) : 0, end = atk.tg?.[0];
+    const w = windupOf(A, s.phase), run = A === ATTACKS.charge || A === ATTACKS.wheel ? Math.max(A.active, 1) : 0, end = atk.tg?.[0];
     if (t >= atk.at - w && t < atk.at + run) {
       // the charge's run: the lane ahead of his head - the ground behind him is safe once he has passed
-      const head = run && t >= atk.at ? chargeHead(atk, t) : null;
-      const on = head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);
-      if (on) { best = { at: atk.at, name: P.atk[A.key].name, t: w > 0 ? Math.max(0, Math.min(1, (t - (atk.at - w)) / w)) : 1, color: telegraphEdge(A) }; inside = (x, z) => inAttack(atk, x, z, P); }
+      const head = A === ATTACKS.charge && t >= atk.at ? chargeHead(atk, t) : null;
+      // AUDIT WB14 (SCREEN-7): the Wheel's blades the whole of their turn - the ground a blade sweeps over within
+      // WHEEL_PERIL_MS of now (of its first turning, while it winds up)
+      const from = Math.max(t, atk.at), soon = (x, z) => wheelStrikes(atk, x, z, from + WHEEL_PERIL_MS, from, P);
+      const on = A === ATTACKS.wheel ? soon(fx, fz) : head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);
+      if (on) { best = { at: A === ATTACKS.wheel ? from : atk.at, name: P.atk[A.key].name, t: w > 0 ? Math.max(0, Math.min(1, (t - (atk.at - w)) / w)) : 1, color: telegraphEdge(A) }; inside = A === ATTACKS.wheel ? soon : (x, z) => inAttack(atk, x, z, P); }
     }
   }
   for (const a of s.lg?.ads ?? NONE) {
@@ -211,6 +239,14 @@ export function perilAt(s, t, P, fx, fz, yaw = null) {
   if (!best) return null;
   const out = Number.isFinite(yaw) ? wayOut(inside, fx, fz, nearestCourt(fx, fz)) : null;
   return { name: best.name, t: best.t, now: best.at - t <= TELEGRAPH_NOW_MS, color: best.color, arrow: out ? screenBearing(out.dir, /** @type {number} */ (yaw)) : null, way: out };
+}
+
+/** WB14a: an order of the new arsenal's as the ground view's peril (gateArsenal.js order): its name, its wind-up's share, its
+ *  last moment, its rim (the danger edge unless it says its own), its order, and its way as the screen turns it. */
+export function orderPeril(o, yaw = null) {
+  if (!o) return null;
+  const dir = o.dir && Math.hypot(o.dir[0], o.dir[1]) > 1e-6 ? o.dir : null;
+  return { name: o.name, t: o.t, now: !!o.now, color: o.color ?? TELEGRAPH_EDGE, order: o.order, arrow: dir && Number.isFinite(yaw) ? screenBearing(dir, /** @type {number} */ (yaw)) : null };
 }
 
 /** GATE-HEAL (2026-10-01, Mac: "Can we add a line on the damage round up showing the amount healed?" - each challenger's;
@@ -241,12 +277,13 @@ export const HEAL_SEND_MS = 1000;
  *   sendHost?: (hit: { i: number, q: number, d: number, r: number }) => boolean,
  *   sendHeal?: (heal: { h: Array<[string, number]> }) => boolean,
  *   sendBody?: (v: number) => boolean,
- *   rng?: () => number,
+ *   rng?: () => number, takeSpoil?: (piece: any) => void,
  *   portalDoor?: (door: any) => void,
  *   soulTrap?: (trap: { chance: number, mobile: number, name: string }) => void,
  *   me?: () => (string|null),
  *   yaw?: () => (number|null),
  *   shake?: (amount: number) => void,
+ *   myId?: () => (string|null), pull?: (vx: number, vz: number) => void, pullDecay?: number,
  *   wantBodies?: () => boolean,
  *   makeBodies?: (() => any) | null,
  * }} deps
@@ -268,7 +305,9 @@ export function createGateCourt({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
   link, spoils = null, now, door = () => null, cam = () => null, feet = () => null, player = () => null, save = () => 100,
   strike = () => {}, say = () => {}, hudHidden = () => false, veiled = () => false, send = () => false, sendCrystal = () => false, sendHost = () => false, sendHeal = () => false, sendBody = () => false, rng = Math.random,
+  takeSpoil = (piece) => spoils?.take?.(piece),   // WB14e: a piece into my pack by the spoils' own door (scenes/spoilsPool.js take, the host's takeGateSpoil), for a Tithe-Imp's tithe
   portalDoor: layPortalDoor = () => {}, soulTrap = () => {}, me = () => null, yaw = () => null, shake = () => {},
+  myId = () => null, pull = () => {}, pullDecay = 0,   // WB14a: my peer id (the marked blows name it), my body's push (the Chains' reel) and its decay
   wantBodies = undefined, makeBodies = null,   // MWNPC10: the body lane's seams (a test's own)
 }) {
   // MWNPC10 (bible/04-Characters/Morrowind-NPCs.md section 15a): HIM AND HIS HOST IN THEIR MORROWIND BODIES, on a lane of
@@ -305,6 +344,41 @@ export function createGateCourt({
   let healSentAt = -Infinity;
   const healOwed = new Map();
   const sayBody = bodySayer((v) => !watching() && sendBody(v));   // INT15; COURT-WATCH: a watcher holds no fighter's body
+  /** WB14a: WHERE THIS SCREEN SEES THE OTHERS - each fighter of the online frame by peer id (the court's frame), their
+   *  names, and every place (stepsIn, each frame) - the marked blows' rings stand where they are, and the Torment's share
+   *  counts who stands in it. Mine is my feet. */
+  const _places = new Map(), _names = new Map(), _others = [];
+  const arsenal = createGateArsenal({
+    me: () => myId(), placeOf: (id) => _places.get(id) ?? null, nameOf: (id) => _names.get(id) ?? null, others: () => _others,
+    land: (atk, P, so) => land(atk, P, so), pull: (vx, vz) => !watching() && pull(vx, vz), pullDecay,   // COURT-WATCH: a watcher is never reeled
+    sting: (atk) => { const s = link.state(); if (s) sound(BOSS_CUES.sting, s, now(), atk, feet()); },
+    watching: () => watching(),   // AUDIT WB14 (SCREEN-5): nor blinded, nor told to look away
+  });
+  /** WB14d: HIS FLAME (scenes/gate/gateFlame.js) - the Sundering's second body, through the court's own doors: its sounds, its
+   *  blows on me, its bursts and felt landings, its burning ground among his, my blows on it as the `hit` word's `b` 1, and a
+   *  Brand of its own judged by an arsenal of its own over the same places */
+  const flame = createGateFlame({
+    renderer, getTexture, uploadRecordFrame, cam, feet, player, say,
+    sound: (c, st, t, atk, point) => sound(c, st, t, atk, point), land: (atk, P) => land(atk, P), burst: (atk, A, P) => burstsOf(atk, A, P),
+    felt: (st, t, A, atk) => feltLanding(st, t, A, atk), lay: (ps) => { for (const p of ps) pools.push(p); },
+    send: (x) => !watching() && send(x), blowQ: (who) => blowQ(who), watching,
+    arsenal: createGateArsenal({
+      me: () => myId(), placeOf: (id) => _places.get(id) ?? null, nameOf: (id) => _names.get(id) ?? null, others: () => _others,
+      land: (atk, P, so) => land(atk, P, so), pull: (vx, vz) => !watching() && pull(vx, vz), pullDecay,
+      sting: (atk) => { const F = flameOf(link.state()); if (F) sound(BOSS_CUES.sting, F, now(), atk, feet()); },
+      watching: () => watching(),
+    }),
+    bossName: (st) => bossOf(st).name,
+  });
+  /** WB14f: THE CAPTIVE (scenes/gate/gateCaptive.js) - his body and chains in the court's passes, his words in its chat, and the
+   *  gold at his freeing and his going in its bursts */
+  const captive = createGateCaptive({ renderer, getTexture, uploadRecordFrame, cam, say, burst: (p, at0) => addBurst(p, at0, FX_KINDS.spoils, WARD_COLOR) });
+  /** WB14a: my feet in the court's frame, or null; a marked blow's order on them as the ground view's peril. */
+  // AUDIT WB14 (SCREEN-10): my feet in the court's frame, one pair refilled (AUDIT WB D10's law) - read at once by each
+  // caller, kept by none (a marked ring's place is copied into its shape)
+  const _mine = [0, 0];
+  const mineXZ = () => { const f = feet(); if (!f) return null; _mine[0] = f[0] - COURT_CENTRE[0]; _mine[1] = f[2] - COURT_CENTRE[2]; return _mine; };
+  const arsenalPeril = (s, t, P, y) => orderPeril(arsenal.order(s, t, P, mineXZ(), y), y);
   const healLive = (s) => !!s && s.day !== null && !s.fell && s.wrath == null;
   /** What my mates healed in me, out as the wire's `heal`: whole points (the fractions kept for the next), each caster once. */
   function sendOwed(t) {
@@ -330,7 +404,7 @@ export function createGateCourt({
   /** WB13e: the card over the court (its beat), his wake heard, his roar still to come after a turn's bark, the Wrath's
    *  words said (1 a minute out, 2 as it gathers), the last spark of his sputter, each Meteor and Leap stung once, his fall
    *  seen (its light's moment, the embers' bursts, its card) and his body left on the floor (its sprite, once read) */
-  let beat = null, wakeHeard = false, roarAt = null, wrathSaid = 0, sputterAt = -Infinity, stung = noMark();
+  let beat = null, wakeHeard = false, roarAt = null, wrathSaid = 0, sputterAt = -Infinity, stung = noMark(), rjCarded = false;   // WB14d: the Rejoining's card shown
   let fellSeen = false, fallFlashAt = -Infinity, columnN = 0, fallCardSet = false, corpse = null, corpseTex = null, corpseTried = false;
   /** WBX5: the burning ground the landings this screen saw have left (net/gate/gateStrike.js landingPools), the attack whose
    *  pools were laid last, and when the fire under my feet last bit; WBX4: his mark on the floor, and the pools' shapes */
@@ -340,7 +414,7 @@ export function createGateCourt({
   let _mark = markShape([0, 0], 0, MARK_COLOR), _markOf = null, markEmber = MARK_COLOR;   // WB8b: his mark and its ember, remade when his profile is another
   /** WB8c: whether his marks have been said to me on this entry, and the last feeding heard; WB9a: when they were (the
    *  marks' card stands from then - ui/gate/gateMarksView.js MARKS_CARD_ARRIVE_MS) */
-  let marksSaid = false, fedHeard = null, marksAt = null;
+  let marksSaid = false, fedHeard = null, marksAt = null, vgwHeard = null, titheTaken = null;   // WB14c: the Vanguard's last word heard; WB14e: the tithe taken
   /** GATE-UX: when this screen first saw his fall (the relay's clock) - the damage chart stands from then */
   let chartAt = null;
   /** WBX2: the portal home once he has fallen - where it stands (the court's frame) and how far it has risen, its fire's
@@ -356,10 +430,17 @@ export function createGateCourt({
   let arrivedAt = null, heardSeen = null, wordAt = null, frameAt = null, peersPrimed = false;
   let doorSeen = null;   // GATE-DOOR: the court's last busy answer this screen counted
   let _peersWere = new Set(), _peersNow = new Set();
-  const ARRIVAL = courtToDungeon(0, 0, ARRIVE_Z);
+  const ARRIVAL = courtToDungeon(0, 0, ARRIVE_Z);   // WB14b: the night's root floor's (reset - the Vanguard's Bridgehead)
   /** GATE-FBX: the court's fires this frame - the way home and the way in - one list, refilled (AUDIT WB D10's law) */
   const _fires = [], _portalFire = { origin: [0, 0, 0], yaw: 0, open: 1, fade: 0, spin: 0 };
   const _wayIn = { origin: courtToDungeon(0, -PORTAL_DROP, WAY_IN_Z), yaw: 0, open: 1, fade: 0, spin: 0, fireOnly: true };
+  /** WB14b: the night's arrival and its way in, by its plan (world/gate/gateArena.js arrivalOf) - the court's frame's own */
+  function arriveAt(d) {
+    const a = arrivalOf(planOfDay(d));
+    const p = courtToDungeon(a.at[0], 0, a.at[1]), w = courtToDungeon(a.wayIn[0], -PORTAL_DROP, a.wayIn[1]);
+    ARRIVAL[0] = p[0]; ARRIVAL[1] = p[1]; ARRIVAL[2] = p[2];
+    _wayIn.origin = w;
+  }
   /** WBX7: my soul trap on him - its chance (frozen at the cast) and when it runs out on the relay's clock - and whether
    *  his fall has rolled it */
   let trapMark = null, trapJudged = null;   // AUDIT WBX F6: the day whose fall rolled it - once a fight, across a walk out and back
@@ -380,6 +461,9 @@ export function createGateCourt({
   const _targets = [], _crystalDraw = [], _crystalSlots = [], _crystalLights = [], _chest = [0, 0, 0];
   /** AUDIT WB9 (court F4): how far each walkway is laid this frame (net/gate/gateBrain.js walkFormed) - refilled, never made */
   const _walked = WALKS.map(() => 0);
+  /** WB14b: the night's floors as the telegraph pass draws over them (render/gate/gateTelegraph.js `floor` - the whole arena's
+   *  shape over the plan's floors alone), refilled each frame */
+  const _floors = { courts: COURTS, r: COURT_R, ks: planOf(null).floors };
   /** WB9d: his ground and his element, felt - the ground I stand in (its name and colour) and the last bite or elemental
    *  blow that landed on me (when, and its colour) */
   let groundName = '', groundColor = null, biteAt = -Infinity, biteColor = null;
@@ -394,14 +478,17 @@ export function createGateCourt({
 
   function reset(d) {
     day = d; judged = noMark(); cued = noMark(); landed = noMark(); phaseHeard = 0; fellCued = false; wrathLanded = false;
+    arriveAt(d);   // WB14b: where the night's fighters arrive, and its way in
+    arsenal.reset();   // WB14a
+    flame.reset();   // WB14d
     prevT = -Infinity; hurtAt = -Infinity; shape = null; standIn = null; spewed = false; spoilsSaid = false;
     stepFrom = null; strideRun = 0; growlAt = null; hpHeard = null; gruntAt = -Infinity; quaked = noMark(); thunderPhase = 0; thudCued = false;
     released = noMark(); courtFlashAt = -Infinity; hpFlashSeen = null;   // WB13d
-    beat = null; wakeHeard = false; roarAt = null; wrathSaid = 0; sputterAt = -Infinity; stung = noMark();   // WB13e
+    beat = null; wakeHeard = false; roarAt = null; wrathSaid = 0; sputterAt = -Infinity; stung = noMark(); rjCarded = false;   // WB13e; WB14d
     fellSeen = false; fallFlashAt = -Infinity; columnN = 0; fallCardSet = false;
     if (corpse) { renderer?.destroyBillboardBatch?.(corpse); corpse = null; }
     pools = []; pooled = noMark(); burnAt = -Infinity; inFire = false; outAt = -Infinity; mark = null; poolDraw = [];
-    marksSaid = false; fedHeard = null; marksAt = null; chartAt = null;   // GATE-UX
+    marksSaid = false; fedHeard = null; marksAt = null; chartAt = null; vgwHeard = null; titheTaken = null;   // GATE-UX; WB14c; WB14e
     healOwed.clear();   // GATE-HEAL
     portal = null; spin = 0; portalLaid = false; portalSaid = false;
     wayIn = 0; wayInHeld = -Infinity; wayInMine = false;   // GATE-FBX
@@ -534,14 +621,15 @@ export function createGateCourt({
     const f = feet(), e = player();
     const standing = !!f && !!e && e.health > 0;
     if (atk && !marked(judged, atk) && standing) {
-      const v = strikeVerdict(atk, f[0] - COURT_CENTRE[0], f[2] - COURT_CENTRE[2], t, prevT, P);
+      const v = strikeVerdict(atk, f[0] - COURT_CENTRE[0], f[2] - COURT_CENTRE[2], t, Number.isFinite(prevT) ? prevT : t, P);   // AUDIT WB14 (SCREEN-2): a court I have just stepped into is judged from this frame - never the sweep of a charge or a Wheel that passed where I stand before I stood there
       if (v !== 'wait') {
         setMark(judged, atk);
-        if (v === 'hit') { if (ATTACK_BY_ID[atk.a] === ATTACKS.wrath) wrathLanded = true; land(atk, P); }
+        if (v === 'hit' && !wardTakes(s.cp, atk)) { if (ATTACK_BY_ID[atk.a] === ATTACKS.wrath) wrathLanded = true; land(atk, P); }   // WB14f: the Reckoning the Covenant's ward takes lands on none of us
       }
     }
     // the Wrath's own word, when it overtook its attack's landing on this screen: it lands all the same
     if (s.wrath != null && !wrathLanded) { wrathLanded = true; if (standing) land({ a: ATTACKS.wrath.id }, P); }
+    arsenal.judge(s, t, P, f ? mineXZ() : null, yaw(), standing);   // WB14a: the marked blows and the Gaze
   }
 
   function cue(s, t, P) {
@@ -563,7 +651,9 @@ export function createGateCourt({
     }
     // WBX5: the turn, by its name - WB13e: its card (its numeral, its name and its one order) held until he lands, and his
     // roar a moment after the bound's bark
-    if (s.phase > phaseHeard) { if (phaseHeard > 0) { roarAt = t + ROAR_AFTER_MS; const c = courtPhaseCard(s.phase); if (c) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...c }; } phaseHeard = s.phase; }
+    if (s.phase > phaseHeard) { if (phaseHeard > 0) { roarAt = t + ROAR_AFTER_MS; const c = courtPhaseCard(s.phase, s.pt); if (c && !(s.phase === 3 && rjCarded)) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...c }; } phaseHeard = s.phase; }
+    // WB14d: THE REJOINING carded as it begins (the halves bound back - the court runs with them), never again at the turn
+    if (s.sd?.rj && !rjCarded) { rjCarded = true; if (t - s.sd.rj <= FED_LATE_MS) { const c = courtPhaseCard(3, s.pt); if (c) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...c }; } }
     if (roarAt !== null && t >= roarAt) { roarAt = null; sound(BOSS_CUES.roar, s, t, null); }
     if (beat?.kind === 'phase' && A === ATTACKS.cross) beat.until = Math.max(beat.until, atk.at + Math.max(A.active, 1) + 400);
     // WB13e: DAGON'S WRATH, said - a minute out (while it is news), and as it gathers
@@ -581,6 +671,8 @@ export function createGateCourt({
     // AUDIT PRE-MERGE 0929 W2-3: a feeding is said while it is news, judged by its age alone - "the first of this
     // entry" stood in for "stale", and a tab hidden through a second feeding said it, and growled, a minute late
     if (s.fed && s.fed.at !== fedHeard) { fedHeard = s.fed.at; if (t - s.fed.at <= FED_LATE_MS) { say(COURT_MARKS_TEXT.fed(bossOf(s).name, s.fed.ns)); sound(BOSS_CUES.growl, s, t, null); } }
+    // WB14c: a stage of the Vanguard, said while it is news (its first wave, a platform cleared, the Markynaz, his patience)
+    if (s.vgw && `${s.vgw.e}@${s.vgw.at}` !== vgwHeard) { vgwHeard = `${s.vgw.e}@${s.vgw.at}`; const line = t - s.vgw.at <= FED_LATE_MS ? vanguardLine(s.vgw, bossOf(s).name) : null; if (line) say(line); }
     if (s.fell && !fellCued) { fellCued = true; if (t < s.fell.at + FALL_CRY_LATE_MS) sound(BOSS_CUES.fall, s, t, null); }   // AUDIT WB B7: never a cry from long ago
     bodySounds(s, t, A);
   }
@@ -635,6 +727,19 @@ export function createGateCourt({
     }
   }
 
+  /** WB14e: A TITHE-IMP I STRUCK WAS CAUGHT (the relay's `tithe`, its seed - to me alone): its gold and its gem into my
+   *  pack once, its gold burst where it fell, and what it was said. */
+  function titheFrame(s, t) {
+    const T = s.tithe;
+    if (!T || T.c === titheTaken || watching()) return;
+    titheTaken = T.c;
+    const list = titheList(T.c, player()?.level ?? 1);
+    for (const piece of list) takeSpoil(piece);
+    const g = s.lg?.gone?.find((x) => x.k === HOST.tithe && x.w === HOST_GONE.slain), f = feet();
+    const at = g ? courtToDungeon(g.x, 1, g.z) : f;
+    if (at && t - T.at <= FED_LATE_MS) addBurst(at, t, FX_KINDS.spoils, TITHE_GOLD);
+    say(COURT_TITHE_TEXT.mine(list[0].gold, list[1].item?.name ?? ''));
+  }
   /** WB9e: THE BURSTS A LANDING THROWS (render/gate/gateFx.js fxBurstOf) - at his feet for his own (the slam, the nova,
    *  Dagon's), where it lands for a leap, a bound or a meteor, under each mark for Hellfire - from its moment on the
    *  relay's clock, in its colour under his profile; a slot reused, the oldest given up past FX_BURSTS_MAX. */
@@ -736,6 +841,28 @@ export function createGateCourt({
     return inCourt(f[0] - COURT_CENTRE[0], f[2] - COURT_CENTRE[2], nearestCourt(bx, bz), POSE_SLACK);
   };
 
+  /** WB14f (AUDIT of WB14c - a blow on a Vanguard's body from its platform was refused here, where the relay takes it): the
+   *  floor my feet stand on (COURTS, the relay's POSE_SLACK past its rim), or -1; and do they stand on the floor body `i` of
+   *  his host stands on - the relay takes a blow on it from nowhere else (net/gate/gateBrain.js applyHostHit). */
+  const myFloor = () => {
+    const f = feet();
+    if (!f) return -1;
+    const x = f[0] - COURT_CENTRE[0], z = f[2] - COURT_CENTRE[2], k = nearestCourt(x, z);
+    return inCourt(x, z, k, POSE_SLACK) ? k : -1;
+  };
+  const fromItsFloor = (s, i, t) => {
+    const a = s.lg?.ads.find((o) => o.i === i);
+    if (!a) return false;
+    const [x, z] = hostAt(a, t), k = myFloor();
+    return k >= 0 && k === nearestCourt(x, z);
+  };
+  const _hostMine = [];
+
+  /** WB14d: do my feet (`fp`, the dungeon's frame) stand in his Flame's court and not the Blade's (the bar calls the Flame's blow)? */
+  const flameCourtMine = (F, t, fp) => {
+    const fx = fp[0] - COURT_CENTRE[0], fz = fp[2] - COURT_CENTRE[2], [x, z] = bossPlace(F, t), k = nearestCourt(x, z);
+    return inCourt(fx, fz, k, POSE_SLACK) && !fromHisCourt(link.state(), t);
+  };
   /** WB9c: is `X` (the state's crystals) the Reckoning `r` this screen holds (or ended) - its number and its first spot? */
   const sameCx = (r, X) => !!r && !!X && r.i === X.i && r.x0 === X.c[0][0] && r.z0 === X.c[0][1];
 
@@ -817,7 +944,7 @@ export function createGateCourt({
     // THE STUN, said once as it comes (the Reckoning broken) - AUDIT WB9 (court F2): AFTER the last crystal's word, which
     // the same beat carries (the relay's cxb and stun, folded before this frame): said before it, the shatter's line took
     // the screen's one label and the stun's was never read
-    if (s.stunAt && s.stunAt !== stunHeard && t < s.stunUntil) {
+    if (s.stunAt && s.stunAt !== stunHeard && t < s.stunUntil && !s.sd) {   // WB14d: a half's kneel is its own word (scenes/gate/gateFlame.js)
       stunHeard = s.stunAt;
       if (t - s.stunAt <= RECKON_LATE_MS) { say(COURT_RECKON_TEXT.broken()); sound(BOSS_CUES.stunned, s, t, null); }
     }
@@ -903,28 +1030,35 @@ export function createGateCourt({
       cue(s, t, P);
       crystals(s, t, P);   // WB9c: the Reckoning's crystals - seen, struck, broken, drawn
       host.frame(s, t, P, bossOf(s).name);   // WB11c: his host - seen, heard, struck, its blows judged on me
+      flame.frame(s, t);   // WB14d: his Flame - seen, heard, struck, its blows judged on me
+      captive.frame(s, t);   // WB14f: the Captive - seen, his chains, his words
       fallEvent(s, t, P);   // WB13e: his fall, an event
       sputterSparks(s, t, P);   // WB13e: his ember sputtering under his low health
       fxFrame(s, t, P);   // WB9e: the sparks of his landings and the meteor's fall
       drawBody(s, t, P);
       burst(s, t);
+      titheFrame(s, t);   // WB14e: a Tithe-Imp I struck, caught - its tithe mine
       spoils?.frame(onSpoilRest);   // WB9f: each piece's landing sparks
-      shape = s.fell ? null : telegraphShape(s.atk, s.phase, t, P);
+      { const mine = mineXZ(); shape = s.fell ? null : captive.dress(telegraphShape(s.atk, s.phase, t, P, (k) => arsenal.at(s.atk, k, mine)), s); }   // WB14a: a marked ring where this screen sees its fighter; WB14f: the warded Reckoning in the ward's gold
       // WBX4: his mark under him, while he stands; WBX5: the burning ground (WB8b: his aspect's)
       if (_markOf !== P) { _markOf = P; const ember = emberColor(P); markEmber = ember === EMBER_COLOR ? MARK_COLOR : markColorOf(ember); _mark = markShape([0, 0], 0, markEmber, P.bossR); }
       if (s.fell || s.wrath != null || bossAct(s, t, hurtAt).act === 'gone') mark = null;
       else { const [mx, mz] = bossPlace(s, t); _mark.origin[0] = mx; _mark.origin[1] = mz; _mark.yaw = s.yaw; _mark.color = t < s.shieldUntil ? WARD_COLOR : markEmber; _mark.court = nearestCourt(mx, mz); mark = _mark; }   // AUDIT WB D10's law: one shape, refilled; WB9b: over the court he stands in
       poolDraw = pools.length ? poolShapes(pools, t, poolColor(P), TELEGRAPH_STYLE[P.el] ?? TELEGRAPH_STYLE.fire) : NONE;   // WB9e: his ground in its own grain
       for (const w of WALKS) _walked[w.k] = walkFormed(s.xa, w.k, t);   // AUDIT WB9 (court F4): how far each walkway is laid - his shapes go on over it
+      _floors.ks = planOf(s).floors;   // WB14b: the night's
       // WB13a: a blow still to come on my feet (WB13c: the bar says MOVE by its name; never over the step's fire)
       const fp = feet(), alive = !!fp && (player()?.health ?? 0) > 0;
       const peril = alive ? perilAt(s, t, P, fp[0] - COURT_CENTRE[0], fp[2] - COURT_CENTRE[2], yaw()) : null;
-      drawGateBossBar(bossBarModel(s, t, bossOf(s), peril?.name ?? null), { hidden: hudHidden() || veiled() });
+      // WB14d: and his Flame's blow on my feet - his own landing first, unless the Flame's is the one landing now
+      const F = flameOf(s), pF = alive && F ? perilAt(F, t, profileOf(F), fp[0] - COURT_CENTRE[0], fp[2] - COURT_CENTRE[2], yaw()) : null;
+      const onMe = peril && pF ? (pF.now && !peril.now ? pF : peril) : peril ?? pF;
+      drawGateBossBar(bossBarModel(s, t, bossOf(s), onMe?.name ?? null, { flame: F, flameMine: !!F && !!fp && flameCourtMine(F, t, fp) }), { hidden: hudHidden() || veiled() });
       // WB9a (Mac: "Allow people to see the modifers/trial as a popup before it starts"): THE MARKS' CARD as I step in -
       // his aspect and his trials, each with its sign, its line and how to meet it, while he stands to be read
       // (net/gate/gateBrain.js OPENING_MS); gone once he has fallen, and never over the step's fire
       if (marksAt !== null && s.fell) marksAt = null;
-      drawGateMarksCard(marksAt !== null ? marksCardModel(s.md, bossOf(s), { mode: 'arrive', since: marksAt, now: t }) : null, { hidden: hudHidden() || veiled() });
+      drawGateMarksCard(marksAt !== null ? marksCardModel(s.md, bossOf(s), { mode: 'arrive', since: marksAt, now: t, pt: s.pt }) : null, { hidden: hudHidden() || veiled() });
       drawGateTitleCard(titleCardModel(beat, t), { hidden: hudHidden() || veiled() });   // WB13e: his wake, a phase's turn, his fall
       // GATE-UX (Mac: "a detailed damage chart after the boss kill, showing and ranking everyone's damage"): THE DAMAGE
       // CHART once he has fallen - the relay's own count of every challenger's part, to the side, never over the step's fire
@@ -932,7 +1066,8 @@ export function createGateCourt({
       drawGateDamageChart(chartAt !== null ? damageChartModel(s.fell, { boss: bossOf(s).name, me: me(), since: chartAt, now: t }) : null, { hidden: hudHidden() || veiled() });
       // WB9d: his ground under me and his element on me, felt - the screen's rim in its colour, the warning while I stand in
       // it; WB13a: and a blow still to come on my feet, over all of it, with the way out
-      drawGateGround(groundViewModel({ inside: inFire, ground: groundName, color: groundColor, biteAt, biteColor, now: t, peril }), { hidden: hudHidden() });
+      const order = alive ? arsenalPeril(s, t, P, yaw()) ?? orderPeril(flame.order(s, t, mineXZ(), yaw()), yaw()) : null;   // WB14a: a marked blow's order, over the ground's; WB14d: and the Flame's Brand
+      drawGateGround(groundViewModel({ inside: inFire, ground: groundName, color: groundColor, biteAt, biteColor, now: t, peril: order ?? onMe, blindAt: arsenal.blindAt() }), { hidden: hudHidden() });
       if (healOwed.size && t - healSentAt >= HEAL_SEND_MS) sendOwed(t);   // GATE-HEAL: what my mates healed in me, out
       // INT15: MY BODY, in my own word, while I stand alive in a fight that lives (net/bossBody.js bodySayer's pace)
       { const e = player(); if (alive && healLive(s) && e?.maxHealth > 0) sayBody(e.health / e.maxHealth, t); }
@@ -959,7 +1094,7 @@ export function createGateCourt({
       if (!s || s.day === null || s.fell || s.wrath != null || bossAct(s, t).act === 'gone') return null;
       standIn ??= bossStandIn(bossLookOf(s.boss), bossOf(s).name, () => { const q = link.state(); return wordShare(q?.hp, q?.max); });   // FIELD BUGS 2026-10-18f RELAY-SHARE: his health as the relay says it (the bar's)
       const [x, z] = bossPlace(s, t), P = profileOf(s);
-      return { feet: courtToDungeon(x, 0, z), yaw: s.yaw, height: P.bossH, radius: P.bossR, warded: t < s.shieldUntil, entity: standIn, mobile: bossLookOf(s.boss).mobile };   // WB8b: his profile's body - the relay measures a blow from the same
+      return { feet: courtToDungeon(x, 0, z), yaw: s.yaw, height: P.bossH, radius: P.bossR, warded: t < s.shieldUntil || (!!s.sd && t < s.stunUntil), entity: standIn, mobile: bossLookOf(s.boss).mobile };   // WB14d: a kneeling Blade turns a blow as his ward does   // WB8b: his profile's body - the relay measures a blow from the same
     },
     /**
      * WB4b: A BLOW OF MINE MET HIM - `d` the formula's number on this machine, `r` its kind (net/gate/gateBrain.js
@@ -969,7 +1104,7 @@ export function createGateCourt({
     hit({ d, r }) {
       const s = link.state(), t = now();
       if (!s || s.day === null || s.fell || s.wrath != null || !Object.values(HIT_KINDS).includes(r)) return false;   // AUDIT WB B6
-      if (t < s.shieldUntil) return false;
+      if (t < s.shieldUntil || (s.sd && t < s.stunUntil)) return false;   // WB14d: nor a kneeling Blade
       if (!fromHisCourt(s, t)) return false;   // AUDIT WB9 (brain F1): the relay takes no blow from outside the court he fights in
       const dmg = Math.round(d);
       if (!(dmg >= 1)) return false;
@@ -1030,7 +1165,16 @@ export function createGateCourt({
      */
     hostTargets() {
       const s = link.state(), t = now();
-      return !s || s.day === null || s.fell || s.wrath != null || !s.lg || !fromHisCourt(s, t) ? NONE : host.targets();
+      if (!s || s.day === null || s.fell || s.wrath != null) return NONE;
+      if (!s.lg && !s.sd) return NONE;
+      // WB14f (AUDIT of WB14c): from the floor I stand on, each body on it - the relay takes a blow on one from the floor its
+      // body stands on (net/gate/gateBrain.js applyHostHit): his court, a Vanguard's platform, the Captive's Pen. WB14d: his
+      // Flame, from its own court - AUDIT WB14 (SCREEN-1): beside the host (a Tithe-Imp rises in the Blade's court sundered)
+      const k = myFloor();
+      _hostMine.length = 0;
+      if (s.sd) for (const T of flame.targets()) _hostMine.push(T);
+      if (k >= 0 && s.lg) for (const T of host.targets()) if (nearestCourt(T.feet[0] - COURT_CENTRE[0], T.feet[2] - COURT_CENTRE[2]) === k) _hostMine.push(T);
+      return _hostMine;
     },
     /**
      * WB11c: A BLOW OF MINE MET ONE OF HIS HOST - `i` its number, `d` the formula's number on this machine, `r` its kind:
@@ -1039,7 +1183,8 @@ export function createGateCourt({
      */
     hostHit({ i, d, r } = /** @type {any} */ ({})) {
       const s = link.state(), t = now();
-      if (!s || s.day === null || s.fell || s.wrath != null || !s.lg || !Object.values(HIT_KINDS).includes(r) || !fromHisCourt(s, t)) return false;
+      if (i === FLAME_I) return !!s && s.day !== null && flame.hit(s, { d, r }, t);   // WB14d: a blow on his Flame - the `hit` word's `b` 1
+      if (!s || s.day === null || s.fell || s.wrath != null || !s.lg || !Object.values(HIT_KINDS).includes(r) || !fromItsFloor(s, i, t)) return false;   // WB14f (AUDIT of WB14c): from the floor its body stands on
       return host.hit({ i, d, r }, t);
     },
     /** AUDIT WBX F6: my soul trap on him while it runs (`{chance}`), or null - a recast renews it as it would on any
@@ -1051,6 +1196,8 @@ export function createGateCourt({
       if (batch && batchShown) _batches.push(batch);
       if (corpse) _batches.push(corpse);   // WB13e: his body left where he fell
       for (const b of host.batches()) _batches.push(b);   // WB11c: his host
+      for (const b of flame.batches()) _batches.push(b);   // WB14d: his Flame
+      for (const b of captive.batches()) _batches.push(b);   // WB14f: the Captive
       for (const b of spoils?.batches() ?? NONE) _batches.push(b);
       return _batches;
     },
@@ -1091,6 +1238,8 @@ export function createGateCourt({
         _lights.push(L);
       }
       for (const l of host.lights()) _lights.push(l);   // WB11c: a Ward-Bearer holding his ward glows in its gold
+      if (s && s.day !== null) for (const l of flame.lights(s, t)) _lights.push(l);   // WB14d: his Flame's glow
+      for (const l of captive.lights()) _lights.push(l);   // WB14f: the Captive free, in the Covenant's gold
       for (const l of spoils?.lights() ?? NONE) _lights.push(l);
       return _lights;
     },
@@ -1103,10 +1252,12 @@ export function createGateCourt({
         if (crystalPass) { crystalPass.draw(_crystalDraw, proj, view, eye, seconds, fog); drew = drew || crystalPass.drawn > 0; }
       }
       if (pass) {
-        for (const ps of poolDraw) { pass.draw(ps, proj, view, eye, seconds, fog, COURT_CENTRE, _walked); drew = true; }   // WBX5: the burning ground under all
+        for (const ps of poolDraw) { pass.draw(ps, proj, view, eye, seconds, fog, COURT_CENTRE, _walked, _floors); drew = true; }   // WBX5: the burning ground under all
         if (mark) { pass.draw(mark, proj, view, eye, seconds, fog); drew = true; }   // WBX4: where he stands and faces
-        if (shape) { pass.draw(shape, proj, view, eye, seconds, fog, COURT_CENTRE, _walked); drew = true; }   // AUDIT WB9 (court F4): and over the laid walkways
-        for (const hs of host.shapes()) { pass.draw(hs, proj, view, eye, seconds, fog, COURT_CENTRE, _walked); drew = true; }   // WB11c: his host's blows, its paths and its tethers
+        if (shape) { pass.draw(shape, proj, view, eye, seconds, fog, COURT_CENTRE, _walked, _floors); drew = true; }   // AUDIT WB9 (court F4): and over the laid walkways; WB14b: the night's floors
+        for (const hs of host.shapes()) { pass.draw(hs, proj, view, eye, seconds, fog, COURT_CENTRE, _walked, _floors); drew = true; }   // WB11c: his host's blows, its paths and its tethers
+        for (const fs of flame.shapes()) { pass.draw(fs, proj, view, eye, seconds, fog, COURT_CENTRE, _walked, _floors); drew = true; }   // WB14d: his Flame's mark and its blow
+        for (const cs of captive.shapes()) { pass.draw(cs, proj, view, eye, seconds, fog, COURT_CENTRE, _walked, _floors); drew = true; }   // WB14f: the Captive's chains
       }
       if (_fxLive.length || meteorNow) {   // WB9e: his blows landing - the sparks and the meteor's fall, over the telegraph
         if (!fxTried && gl) { fxTried = true; try { fxPass = new GateFxRenderer(gl); } catch (e) { console.warn('[gate] his effects would not build', e?.message ?? e); fxPass = null; } }
@@ -1134,6 +1285,7 @@ export function createGateCourt({
       // WB9e: the sparks flying and the meteor falling
       bursts: _fxLive.map((b) => ({ at: [...b.at], t: b.t, kind: b.kind, color: b.color })), meteor: meteorNow ? { at: [...meteorNow.at] } : null,
       host: host.state(),   // WB11c: his host as this screen holds it
+      flame: flame.state(),   // WB14d: his Flame as this screen holds it
       marksAt,   // WB13b: when the marks' card stood up (the step into the court) - held, never moved by a frame
       beat: beat ? { ...beat } : null, corpse: !!corpse,   // WB13e: the card over the court, and his body left on the floor
     }),
@@ -1157,6 +1309,7 @@ export function createGateCourt({
             scale: (body.scale ?? 1) * (profileOf(s).size ?? 1) }), shown, null, shown.hitFlash || 0);   // AUDIT MW-NPC II H5: WB13d's flash (mine whole, the court's light) on the body - the billboard is cast-only
         }
         host.offerBodies(bodiesLane);
+        flame.offerBodies(bodiesLane, s, now());   // WB14d: his Flame
       }
       bodiesLane.draw(canvas, proj, view, eye, dt);
     },
@@ -1167,15 +1320,17 @@ export function createGateCourt({
      * dungeon's frame): one here now and not last call, standing within WAY_IN_NEAR_M of where the players arrive, has
      * just stepped out of the way in - it opens for them. The first look after my arrival only learns who is here. The
      * relay's count of fighters it replaces came STATE_SEND_MS late, and never rose for a fighter walking back in.
-     * @param {Iterable<{id: string}>} list @param {(d: any) => (number[]|null)} at
+     * @param {Iterable<{id: string, name?: string}>} list @param {(d: any) => (number[]|null)} at
      */
     stepsIn(list, at) {
+      _places.clear(); _names.clear(); _others.length = 0;   // WB14a: where this screen sees each of them, this frame
       if (arrivedAt === null) return;
       const t = now();
       _peersNow.clear();
       for (const d of list) {
         if (!d) continue;
         _peersNow.add(d.id);
+        { const q = at(d); if (q && typeof d.id === 'string') { const c = [q[0] - COURT_CENTRE[0], q[2] - COURT_CENTRE[2]]; _places.set(d.id, c); _others.push(c); if (d.name) _names.set(d.id, d.name); } }
         if (!peersPrimed || _peersWere.has(d.id)) continue;
         const p = at(d);
         if (p && Math.hypot(p[0] - ARRIVAL[0], p[2] - ARRIVAL[2]) <= WAY_IN_NEAR_M) wayInHeld = Math.max(wayInHeld, t + WAY_IN_HOLD_MS);
@@ -1216,6 +1371,8 @@ export function createGateCourt({
       drawGateGround(null);   // WB9d
       drawGateTitleCard(null);   // WB13e
       host.leave();   // WB11c: his host's bodies put away
+      flame.leave();   // WB14d: and his Flame's
+      captive.leave();   // WB14f: and the Captive's
       reset(null);
     },
   };

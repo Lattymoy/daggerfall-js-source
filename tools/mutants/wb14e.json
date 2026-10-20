@@ -1,0 +1,372 @@
+[
+  {
+    "name": "WB14e-every-night",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "gateRoll(day, 21) % TITHE_ONE_IN === 0 ?",
+    "new": "true ?",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-its-moment-past-the-spread",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "(gateRoll(day, 22) % (TITHE_SPREAD_MS / 1000)) * 1000",
+    "new": "(gateRoll(day, 22) % (TITHE_SPREAD_MS / 100)) * 1000",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-outrunning-a-runner",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "Object.freeze({ id: 6, key: 'tithe', r: 0.65, h: 1.95, speed: 6.8 }),",
+    "new": "Object.freeze({ id: 6, key: 'tithe', r: 0.65, h: 1.95, speed: 8 }),",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14e-a-tithe-at-the-fight-s-birth",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (!Number.isFinite(woke) || now < woke + OPENING_MS + f.ti || f.phase > 2 || !here.length || f.sd?.rj || f.atk?.a === ATTACKS.cross.id) return;",
+    "new": "    if (!Number.isFinite(woke) || f.phase > 2 || !here.length || f.sd?.rj || f.atk?.a === ATTACKS.cross.id) return;",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14e-risen-to-an-empty-court",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "now < woke + OPENING_MS + f.ti || f.phase > 2 || !here.length || f.sd?.rj ||",
+    "new": "now < woke + OPENING_MS + f.ti || f.phase > 2 || f.sd?.rj ||",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14e-risen-in-his-last-phase",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "now < woke + OPENING_MS + f.ti || f.phase > 2 ||",
+    "new": "now < woke + OPENING_MS + f.ti ||",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-at-the-rim-beside-him",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    const spots = rimSpots(C, 1, here, rng, away, SAP_SPREAD);\n    if (!spots.length) return;   // a rim with no clear spot",
+    "new": "    const spots = rimSpots(C, 1, here, rng, away + Math.PI, SAP_SPREAD);\n    if (!spots.length) return;   // a rim with no clear spot",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-its-health-the-floor-s",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "raiseHost(f, HOST.tithe, spots, titheHpFor(here.map((b) => f.players[b.sub].lv)), now, out);",
+    "new": "raiseHost(f, HOST.tithe, spots, HOST_HP_MIN, now, out);",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-risen-twice",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    T.at = now; T.i = H.n; T.ct = f.court | 0;\n",
+    "new": "    T.i = H.n; T.ct = f.court | 0;\n",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14e-the-tithe-paid-twice",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  T.paid = true; T.c = {};",
+    "new": "  T.c = {};",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14e-the-tithe-to-everyone",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  for (const sub of T.by) { const c = Math.floor(rng() * 0x100000000) >>> 0; T.c[sub] = c; out.push({ k: 'tithe', to: sub, c, at: now }); }",
+    "new": "  for (const sub of Object.keys(f.players)) { const c = Math.floor(rng() * 0x100000000) >>> 0; T.c[sub] = c; out.push({ k: 'tithe', to: sub, c, at: now }); }",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14e-a-struck-for-nothing-paid",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (a.k === HOST.tithe && got > 0 && !(a.by ??= []).includes(sub)) a.by.push(sub);",
+    "new": "if (a.k === HOST.tithe && !(a.by ??= []).includes(sub)) a.by.push(sub);",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-never-caught",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (a.k === HOST.tithe) { f.tt = { ...(f.tt ?? {}), by: [...a.by], caughtAt: now }; payTithe(f, now, rng, out); }",
+    "new": "  void 0;",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14e-it-never-leaves",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (now >= T.at + TITHE_LIFE_MS || ct !== (f.court | 0)) { hostGone(f, now, out, HOST_GONE.fled, (o) => o === a); return; }",
+    "new": "  void ct;",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14e-it-crumbles-at-the-turn",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    hostGone(f, now, out, HOST_GONE.fled, (a) => a.k === HOST.tithe);   // WB14e",
+    "new": "    void HOST_GONE.fled;   // WB14e",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-running-at-them",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const d = dist(a.x, a.z, near.x, near.z) || 1, ux = (a.x - near.x) / d, uz = (a.z - near.z) / d;",
+    "new": "  const d = dist(a.x, a.z, near.x, near.z) || 1, ux = (near.x - a.x) / d, uz = (near.z - a.z) / d;",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-stopping-at-the-rim",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (dist(gx, gz, a.x, a.z) < TITHE_CORNER_M) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-stepped-as-a-bearer",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    else if (a.k === HOST.bearer) bearerBeat(a, now, here, blows);",
+    "new": "    else bearerBeat(a, now, here, blows);",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-its-moment-dropped-at-birth",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    ti: Number.isSafeInteger(ti) && ti >= 0 ? ti : null, tt: null,",
+    "new": "    ti: null, tt: null,",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-the-seam-drops-its-moment",
+    "file": "src/net/bossSeam.js",
+    "old": "newFight(day, now, wrathAt, boss, md, pt, ti)",
+    "new": "newFight(day, now, wrathAt, boss, md, pt)",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-the-tithe-fanned-to-the-court",
+    "file": "server/src/index.js",
+    "old": "if (b.sub === to) this._send(ws, s); }",
+    "new": "this._send(ws, s); }",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-a-fifth-way-of-going",
+    "file": "src/net/wire.js",
+    "old": "export const GATE_HOST_GONE = 4;",
+    "new": "export const GATE_HOST_GONE = 5;",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-a-seed-past-32-bits",
+    "file": "src/net/wire.js",
+    "old": "m.c >= 0 && m.c <= 0xffffffff && gateMs(m.at) ? { k: 'tithe'",
+    "new": "m.c >= 0 && gateMs(m.at) ? { k: 'tithe'",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-the-tithe-lost-at-the-next-state",
+    "file": "src/net/gate/gateLink.js",
+    "old": "      tithe: same ? s.tithe ?? null : null,   // WB14e",
+    "new": "      tithe: null,   // WB14e",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-carried-into-another-fight",
+    "file": "src/net/gate/gateLink.js",
+    "old": "      tithe: same ? s.tithe ?? null : null,   // WB14e",
+    "new": "      tithe: s.tithe ?? null,   // WB14e",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-the-gold-unscaled",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "  const gold = Math.round(TITHE_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));\n  return [{ kind: 'gold', gold, tier: 'common' }",
+    "new": "  const gold = Math.round(TITHE_GOLD_PER_LEVEL * (0.8 + 0.4 * rolls()));\n  return [{ kind: 'gold', gold, tier: 'common' }",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-the-spoils-seed-s-gem",
+    "file": "src/systems/gate/gateSpoils.js",
+    "old": "  const rolls = seededRng(((seed >>> 0) ^ 0x7177e) >>> 0);\n  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const gold = Math.round(TITHE_GOLD_PER_LEVEL",
+    "new": "  const rolls = seededRng(7);\n  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const gold = Math.round(TITHE_GOLD_PER_LEVEL",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-taken-every-frame",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    titheTaken = T.c;\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-a-watcher-paid",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (!T || T.c === titheTaken || watching()) return;",
+    "new": "    if (!T || T.c === titheTaken) return;",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-never-said",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    say(COURT_TITHE_TEXT.mine(list[0].gold, list[1].item?.name ?? ''));\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-no-gold-where-it-fell",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (at && t - T.at <= FED_LATE_MS) addBurst(at, t, FX_KINDS.spoils, TITHE_GOLD);",
+    "new": "    void at;",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-no-line-at-its-rising",
+    "file": "src/scenes/gate/gateHost.js",
+    "old": "    : k === HOST.tithe ? COURT_HOST_TEXT.tithe() : null;   // WB14e",
+    "new": "    : null;   // WB14e",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-an-escape-said-as-a-catch",
+    "file": "src/scenes/gate/gateHost.js",
+    "old": "say(g.w === 0 ? COURT_HOST_TEXT.titheCaught(g.n) : COURT_HOST_TEXT.titheEscaped());",
+    "new": "say(COURT_HOST_TEXT.titheCaught(g.n));",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-an-imp-s-size",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "winged: mobile === 29, scale: tithe ? TITHE_SCALE : 1 };",
+    "new": "winged: mobile === 29, scale: 1 };",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-it-falls-where-it-fled",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "sink: g.w === 2 || g.w === 3 ?",
+    "new": "sink: g.w === 2 ?",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-counted-on-the-bar",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "else if (a.k !== HOST.tithe) others++; }",
+    "new": "else others++; }",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-tithe-health-a-court-s",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "export const titheHpFor = (lvs) => Math.max(HOST_HP_MIN, Math.round(lvs.length ? (TITHE_S * lvs.reduce((s, lv) => s + dpsRef(lv), 0)) / lvs.length : 0));",
+    "new": "export const titheHpFor = (lvs) => Math.max(HOST_HP_MIN, Math.round(lvs.length ? (TITHE_S * lvs.reduce((s, lv) => s + dpsRef(lv), 0)) : 0));",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-tithe-a-blow-of-its-own",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  null,   // WB14e: the Tithe-Imp strikes nobody",
+    "new": "  Object.freeze({ kind: 6, key: 'bite', name: 'Bite', windup: 900, active: 200, recover: 900, r: 2, pct: 0.12, base: 4, el: null }),",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "WB14e-the-pool-s-door-shut",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    take(piece) { take(piece); },",
+    "new": "    take() {},",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  },
+  {
+    "name": "WB14e-the-court-past-the-pool",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "  takeSpoil = (piece) => spoils?.take?.(piece),",
+    "new": "  takeSpoil = () => {},",
+    "tests": [
+      "test/net/gate/wb14e_tithe.test.js"
+    ]
+  }
+]

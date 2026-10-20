@@ -173,8 +173,8 @@
   {
     "name": "EVENT-TIP-the-fall-never-said",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)])",
-    "new": "...([`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)])",
+    "old": "...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])])",
+    "new": "...([`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])])",
     "tests": [
       "test/ui/eventtip.test.js"
     ]

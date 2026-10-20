@@ -336,8 +336,8 @@
   {
     "name": "WB4-the-glow-not-lit",
     "file": "src/scenes/worldModes.js",
-    "old": "withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos)])",
-    "new": "withCourtLights(_dgLit, courtLightsNear(cam.pos))",
+    "old": "withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos, planOfDay(dungeonLoc.gate))])",
+    "new": "withCourtLights(_dgLit, courtLightsNear(cam.pos, planOfDay(dungeonLoc.gate)))",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]

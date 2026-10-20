@@ -731,9 +731,11 @@ test('WORLD-HOVER: the dungeon\'s target list has ONE builder, and the hover rea
   // undercroft, and until its wall has stood), registered beside their namer (test/systems/arena/arena5_plaques.test.js)
   // SD9e (PIN MOVED): and an EIGHTH, the Brass Remnant's spoils on the arena's floor, registered where the Hour is stood
   // (standSdRealm) - the court's own family, answered by the same host hooks for the floor the player stands on
-  assert.equal((wm.match(/ctx\.addActivationTargets\(/g) ?? []).length, 8,
+  // WB14b (PIN MOVED): the court's own is stood by scenes/gate/gateStand.js, out of the host - seven here and that one
+  const gs = read('src/scenes/gate/gateStand.js');
+  assert.equal((wm.match(/ctx\.addActivationTargets\(/g) ?? []).length + (gs.match(/ctx\.addActivationTargets\(/g) ?? []).length, 8,
     'the exit doors, the quest stands, the Records shelves, the throne room\'s pieces, the Hall\'s plaques and the static NPCs - six, named - and the court\'s spoils, and the Hour\'s');
-  assert.match(wm, /ctx\.addActivationTargets\(\(\) => host\.spoilTargets\?\.\(\) \?\? NO_TARGETS\);\n\s*ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('spoil'\) \? host\.spoilName\?\.\(key\) \?\? null : null\)\);/,
+  assert.match(gs, /ctx\.addActivationTargets\(\(\) => host\.spoilTargets\?\.\(\) \?\? NO_TARGETS\);\n\s*ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('spoil'\) \? host\.spoilName\?\.\(key\) \?\? null : null\)\);/,
     'the spoils stood with their words');
   assert.doesNotMatch(read('src/scenes/dungeon.js'), /addActivationTargets/,
     'and the dev door stands none of them, on purpose');

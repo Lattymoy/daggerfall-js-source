@@ -201,7 +201,7 @@
   },
   {
     "name": "WB6b-the-land-never-stood",
-    "file": "src/scenes/worldModes.js",
+    "file": "src/scenes/gate/gateStand.js",
     "old": "    standDeadlands(ctx);   // WB6b: and the land round it, cut from the same stone",
     "new": "",
     "tests": [

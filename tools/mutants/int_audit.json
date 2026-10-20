@@ -213,11 +213,12 @@
   {
     "name": "INTA-the-claimed-level-paid",
     "file": "server-account/src/budget.js",
-    "old": "MAX(1, COALESCE(level_seen, 1))'",
-    "new": "MAX(1, COALESCE(1000, level_seen, 1))'",
+    "old": "MAX(1, COALESCE(level_seen, 1)) + ?4'",
+    "new": "MAX(1, COALESCE(1000, level_seen, 1)) + ?4'",
     "tests": [
       "test/server/int5_budget.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "INTA-the-cutover-unread",

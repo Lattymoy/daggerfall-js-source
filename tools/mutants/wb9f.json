@@ -172,7 +172,7 @@
   },
   {
     "name": "WB9f-the-court-stands-no-spoils",
-    "file": "src/scenes/worldModes.js",
+    "file": "src/scenes/gate/gateStand.js",
     "old": "    ctx.addActivationTargets(() => host.spoilTargets?.() ?? NO_TARGETS);",
     "new": "",
     "tests": [

@@ -210,8 +210,8 @@
   {
     "name": "GILDED2-AUDIT-the-oaths-picture-in-its-place",
     "file": "src/scenes/spoilsPool.js",
-    "old": "record: p.tier === 'gilded' ? null : flat() }));",
-    "new": "record: flat() }));",
+    "old": "record: p.tier === 'gilded' || i >= firstPortent ? null : flat() }));",
+    "new": "record: i >= firstPortent ? null : flat() }));",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

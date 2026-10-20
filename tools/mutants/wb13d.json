@@ -104,8 +104,8 @@
   {
     "name": "WB13d-the-shake-for-every-landing",
     "file": "src/world/gate/gateBoss.js",
-    "old": "const landShake = (A, d) => { const w = LAND_SHAKE[A?.key]; return !w ? 0 :",
-    "new": "const landShake = (A, d) => { const w = LAND_SHAKE[A?.key]; return !w ? 1 :",
+    "old": "const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]; return !w ? 0 :",
+    "new": "const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]; return !w ? 1 :",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]

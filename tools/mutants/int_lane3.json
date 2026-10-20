@@ -272,8 +272,8 @@
   {
     "name": "INT11-JUDGE-AT-LANDING",
     "file": "src/net/bossRef.js",
-    "old": "    else if (A.shape === 'all' || now >= a.at + BODY_AFTER_MS) landing(a, live, share, (x, z) => inAttack(a, x, z, P), out);",
-    "new": "    else landing(a, live, share, (x, z) => inAttack(a, x, z, P), out);",
+    "old": "  else if (A.shape === 'all' || now >= a.at + BODY_AFTER_MS) landing(a, live, share, (x, z) => inAttack(a, x, z, P), out);",
+    "new": "  else landing(a, live, share, (x, z) => inAttack(a, x, z, P), out);",
     "tests": [
       "test/net/int11_body.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "INT11-RELAY-CENSUS-RAW",
     "file": "server/src/index.js",
-    "old": "      this._gateFan(GATE_SEAM.step(f, now, this._bodiesBare(census()), rand01));",
-    "new": "      this._gateFan(GATE_SEAM.step(f, now, this._bodiesBare(this._gateBodies(f)), rand01));",
+    "old": "      await this._gateFanKept(f, GATE_SEAM.step(f, now, this._bodiesBare(census()), rand01), now);",
+    "new": "      await this._gateFanKept(f, GATE_SEAM.step(f, now, this._bodiesBare(this._gateBodies(f)), rand01), now);",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "INT14-RELAY-GATE-NO-MEASURE",
     "file": "server/src/index.js",
-    "old": "...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, GATE_SEAM.earned) }",
-    "new": "...(helped.has(sub) ? { r: 1 } : {}) }",
+    "old": "...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, GATE_SEAM.earned), ...(receiptPortents",
+    "new": "...(helped.has(sub) ? { r: 1 } : {}), ...(receiptPortents",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "INT14-GATE-RECEIPT-DROPS-M",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "...(m !== undefined ? { m } : {}), i: nowS, e: nowS + RECEIPT_TTL_S",
-    "new": "i: nowS, e: nowS + RECEIPT_TTL_S",
+    "old": "...(m !== undefined ? { m } : {}), ...(p > 0 ? { p } : {}), i: nowS, e: nowS + RECEIPT_TTL_S",
+    "new": "...(p > 0 ? { p } : {}), i: nowS, e: nowS + RECEIPT_TTL_S",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]

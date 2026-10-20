@@ -314,7 +314,7 @@ import {
   listRealm, createRealm, customsRealm, joinRealm, checkpointRealm, getRealmBlob, leaveRealm, deleteRealm, undoRealm,
   realmMintFacts, grantCustomsPass, REALM_CHARACTERS_MAX, REALM_MAX_BYTES, objectBytesOf,
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
-import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget
+import { grantSpoils, portentPieces } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget (AUDIT WB14 WIRE-6: a portent's pieces with them)
 import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
 import { doorReads } from './door.js';   // PRIMARY-FOLD: the door's reads in one trip
 import { passRoute, passKey, mintPass, readPass, passMintable } from './sessionPass.js';   // SESSION-SIGN: the hot routes believe a pass
@@ -1317,12 +1317,12 @@ const service = {
         // AUDIT WB A5: a refused receipt says WHICH rung refused it - the client keeps one the service can mend (its key
         // not the relay's pair, a clock) and lets go of one it cannot
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
-        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
+        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id, portentPieces(r.portent));   // INT5: a signed win's spoils, the budget's fill - AUDIT WB14 (WIRE-6): and a portent night's pieces
         // MARKS1: THE FIRST FAUCET - a receipt that made its row strikes the gate's Marks, in the row's own batch
         // (marks.js gateStrikeStatement: 50 under SILVER-WAYS' day's combat cap with the raids', the gate's own day its
         // line's id); `marks` null where Marks are not this account's
         const answer = { ...r };
-        delete answer.day; delete answer.struck; delete answer.deedStruck; delete answer.weirRow;   // the service's own: the line's day and whether the batch struck (AUDIT EG IV: and the key's row)
+        delete answer.day; delete answer.struck; delete answer.deedStruck; delete answer.weirRow; delete answer.portent;   // the service's own: the line's day and whether the batch struck (AUDIT EG IV: and the key's row; AUDIT WB14: the receipt's portents, the fill's)
         if (r.recorded && !r.rite && r.deedStruck !== undefined) answer.deed = await deedAnswer(db, who.player, deedEvent('gate', r.day), r.deedStruck);   // SILVER-WAYS: where a deed was this claim's to try
         // SEAT1b (Seats-Arc 4.2): a kill recorded now is influence for the account's war-guild where it pledged in the
         // region the claim named (`seat` the answer: counted, or why not - the kill stands either way). WB12d: the rite

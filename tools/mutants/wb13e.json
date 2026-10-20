@@ -29,7 +29,7 @@
   {
     "name": "WB13e-the-opening-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    ...(Number.isSafeInteger(f.startedAt) ? { op: f.startedAt + OPENING_MS } : {}),   // WB13e: the opening's end - his wake, on every screen\n",
+    "old": "    ...(Number.isSafeInteger(openedAt(f)) ? { op: openedAt(f) + OPENING_MS } : {}),   // WB13e: the opening's end - his wake, on every screen (WB14c: none while his Vanguard holds)\n",
     "new": "",
     "tests": [
       "test/net/gate/wb13e_beats.test.js",

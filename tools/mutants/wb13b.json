@@ -31,11 +31,12 @@
   {
     "name": "WB13b-the-old-turn",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "export const courtPhaseOrder = (n) => (n === 2 ? 'Follow him over the walkway.'",
-    "new": "export const courtPhaseOrder = (n) => (n === 2 ? 'He bounds across the fire - follow him over the walkway.'",
+    "old": "export const courtPhaseOrder = (n) => (n === 2 ? t('gate.phase.follow2', 'Follow him over the walkway.')",
+    "new": "export const courtPhaseOrder = (n) => (n === 2 ? t('gate.phase.follow2', 'He bounds across the fire - follow him over the walkway.')",
     "tests": [
       "test/net/gate/wb13b_words.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB13b-the-label-in-the-body",
