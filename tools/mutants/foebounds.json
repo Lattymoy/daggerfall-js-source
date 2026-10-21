@@ -462,9 +462,9 @@
   },
   {
     "name": "GRANT-ASKS-bucket-not-asks",
-    "file": "server-account/src/grants.js",
-    "old": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow || r.asks - allow < GRANT_ASK_CASE_OVER_MIN) return null;",
-    "new": "  if (r.bucket < GRANT_ASK_CASE_TIMES * allow || r.bucket - allow < GRANT_ASK_CASE_OVER_MIN) return null;",
+    "file": "src/net/grantMeasure.js",
+    "old": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow || r.asks - allow < GRANT_ASK_CASE_OVER_MIN) return 0;",
+    "new": "  if (r.bucket < GRANT_ASK_CASE_TIMES * allow || r.bucket - allow < GRANT_ASK_CASE_OVER_MIN) return 0;",
     "why": "a flood counted `ceiling` never a case",
     "tests": [
       "test/server/grantcase_own.test.js"
@@ -472,9 +472,9 @@
   },
   {
     "name": "GRANT-ASKS-floor-dropped",
-    "file": "server-account/src/grants.js",
-    "old": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow || r.asks - allow < GRANT_ASK_CASE_OVER_MIN) return null;",
-    "new": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow) return null;",
+    "file": "src/net/grantMeasure.js",
+    "old": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow || r.asks - allow < GRANT_ASK_CASE_OVER_MIN) return 0;",
+    "new": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow) return 0;",
     "why": "a handful of asks past a tiny budget a case",
     "tests": [
       "test/server/grantcase_own.test.js"

@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-GRANT-A4-tally-folded-whole",
     "file": "server/src/index.js",
-    "old": "      if (foldGrantTally(G.w, reader, sender, row.r, row.n)) { void this._grantFlush(); folded = false; }",
-    "new": "      foldGrantTally(G.w, reader, sender, row.r, row.n);",
+    "old": "      if (foldGrantTally(G.w, reader, sender, row.r, row.n)) void this._grantFlush();",
+    "new": "      if ((foldGrantTally(G.w, reader, sender, row.r, row.n), false)) void this._grantFlush();",
     "why": "a tally folded past the window's bound",
     "tests": [
       "test/net/grantaudit_relay.test.js"

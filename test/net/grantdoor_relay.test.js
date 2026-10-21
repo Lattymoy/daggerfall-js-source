@@ -95,6 +95,10 @@ test('FOE-BOUNDS THE RELAY STRIPS WHAT NO BUILDER COULD GIVE: with `grantStrip` 
   const C = await cell(t, { GRANT_STRIP: 'on' });
   const mac = await C.join('sock-mac-01', CURRENT), zed = await C.join('sock-zed-01', CURRENT);
   const mx = foeHealthBound({ t: 0 }, { lane: 'street', wild: true, camp: false });
+  // AUDIT GRANT-SLEEP S1 (Spawn-Grants.md section 22): the relay's count is a case's evidence and posts at its frame's
+  // door, never awaited by it - the pin awaits the room's own flushes
+  const flushes = [], flush = C.r.room._grantFlush.bind(C.r.room);
+  C.r.room._grantFlush = () => { const p = flush(); flushes.push(p); return p; };
   const f = [
     { i: 1, t: 0, f: [1, 2, 3], k: 99_999, h: 99_999 },   // no builder's rat
     { i: 2, t: 0, f: [1, 2, 3], k: mx, h: mx },   // at its bound - but with no grant, from a sender the door holds to them
@@ -103,7 +107,8 @@ test('FOE-BOUNDS THE RELAY STRIPS WHAT NO BUILDER COULD GIVE: with `grantStrip` 
   for (let n = 1; n <= 3; n++) await C.r.raw(mac.ws, JSON.stringify({ t: 'foes', data: { n, k: CELL, full: 1, f, cp: [3], cn: ['Sworn'] } }));
   assert.deepEqual(zed.foes().at(-1)?.data?.f.map((r) => r.i), [3], 'the forged rat and the ungranted one went nowhere; the ally passed');
   await C.r.room._grantFlush();
-  assert.equal(C.posts.length, 1);
+  await Promise.all(flushes);
+  assert.equal(C.posts.length, 1, 'one post, at the first frame\'s door: the frames after it counted nothing');
   const opened = await openGrantMeasure(C.posts[0].body, C.posts[0].sig, C.kp.publicKey, { subtle, nowMs: C.now });
   assert.ok(opened.ok, opened.error ?? '');
   assert.deepEqual(opened.batch.tl, [{ a: GRANT_RELAY_READER, b: 'acct-sock-mac-01', r: 'stats', n: 1, e: { t: 0, k: 99_999, mx } }], 'once, under the relay\'s name, with its evidence');

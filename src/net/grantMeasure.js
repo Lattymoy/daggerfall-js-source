@@ -5,10 +5,13 @@
 //
 // A cell room folds every ask it answers (foldGrantAsk): per account and kind, the asks, the members asked for, and what
 // the gate would have refused - the account's bucket, the cell's ceiling - and the most granted hostile members the cell
-// held live at once. Every GRANT_MEASURE_MS, or once GRANT_MEASURE_ROWS accounts and kinds wait, it posts the batch.
+// held live at once. At the first frame or close after its first ask has waited GRANT_MEASURE_MS, when the cell drains,
+// once GRANT_MEASURE_ROWS accounts and kinds wait, or at once for a case's evidence (an account past GRANT-ASKS' line, a
+// tally - AUDIT GRANT-SLEEP S1), it posts the batch - never on a timer, which would keep the cell's Durable Object awake
+// and billed (GRANT-SLEEP, bible/11-Multiplayer/Spawn-Grants.md section 22).
 // THE DOOR IS THE CHAT FEED'S (net/safety/chatFeed.js), kept as narrow:
 //   - ONE WAY. The relay posts; nothing the relay does waits on the answer. A post that fails is dropped: a measure is a
-//     sample, and a cell that sleeps before its post loses its window.
+//     sample, and a cell evicted before its post loses its window.
 //   - OFF UNTIL ASKED. The relay posts only while its GRANT_FEED_URL is set (server/wrangler.toml).
 //   - SIGNED with the relay's receipt key over "grant-measure1\n" + the body's bytes, in GRANT_MEASURE_SIG_HEADER; the
 //     service checks it with the public half, and a batch it has seen (`id`) is not read twice.
@@ -27,7 +30,7 @@ import { GRANT_KINDS, GRANT_READER_REFUSALS } from './grantLaw.js';
 export const GRANT_MEASURE_V = 'grant-measure1';
 /** The header the batch's signature rides. */
 export const GRANT_MEASURE_SIG_HEADER = 'x-relay-grant-sig';
-/** A cell posts its window this often, ms... */
+/** A cell posts its window at its first frame once the window's first ask has waited this long, ms... */
 export const GRANT_MEASURE_MS = 10 * 60 * 1000;
 /** ...or once this many accounts and kinds wait (the batch's whole bound: the relay posts at it). */
 export const GRANT_MEASURE_ROWS = 128;
@@ -89,6 +92,42 @@ export function foldGrantTally(w, a, b, r, n, e = null) {
   if (e && (!kept.e || e.k - e.mx > kept.e.k - kept.e.mx)) kept.e = { t: e.t, k: e.k, mx: e.mx };
   return full(w);
 }
+
+/** The shortest window an account's rate is read over, s - a cell that slept a minute after one ask is not sixty an hour.
+ *  AUDIT GRANT-SLEEP S1 (2026-10-20): it and GRANT-ASKS' two numbers below moved here from server-account/src/grants.js,
+ *  which reads them from here, so the relay and the service hold one line. */
+export const GRANT_RATE_SPAN_MIN_S = 600;
+/** GRANT-ASKS (Spawn-Grants section 21): an account's own asks of a kind in one cell's window open its case at this many
+ *  times the most its budget lets honest play ask in that window (the kind's `cap` and its `rate` over the window, never
+ *  under GRANT_RATE_SPAN_MIN_S) - and at least GRANT_ASK_CASE_OVER_MIN asks past it, so a kind whose budget is a handful
+ *  is not a case at its fourth. The buckets are GRANT5's to set; both numbers ride with them. */
+export const GRANT_ASK_CASE_TIMES = 4;
+export const GRANT_ASK_CASE_OVER_MIN = 16;
+/**
+ * GRANT-ASKS' LINE: row `r` (an account's asks of a kind in one cell's window of `span` seconds) stands at or past it -
+ * GRANT_ASK_CASE_TIMES the most its budget lets honest play ask there, and GRANT_ASK_CASE_OVER_MIN past it. Answers that
+ * most (`allow`, the case's own words carry it), or 0 short of the line. Its asks, not its bucket's refusals: the cell's
+ * ceiling is asked first, so a flood that filled the cell is counted `ceiling` from then on. Pure.
+ * @param {any} r @param {number} span
+ */
+export function grantAsksPastLine(r, span) {
+  const law = GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r?.k)];
+  if (!law || !Number.isFinite(r.asks)) return 0;
+  const allow = Math.ceil(law.cap + law.rate * Math.max(span, GRANT_RATE_SPAN_MIN_S));
+  if (r.asks < GRANT_ASK_CASE_TIMES * allow || r.asks - allow < GRANT_ASK_CASE_OVER_MIN) return 0;
+  return allow;
+}
+/** AUDIT GRANT-SLEEP S1: does account `a`'s row of kind `k` in window `w` stand at GRANT-ASKS' line at `nowMs`? The relay
+ *  posts such a window at the frame that crossed it - a case's evidence is never left to a window an evicted cell loses.
+ *  Pure. @param {GrantMeasure} w @param {string} a @param {string} k @param {number} nowMs */
+export const grantRowPastLine = (w, a, k, nowMs) => {
+  const r = w.rows.get(`${a}|${k}`);
+  return !!r && grantAsksPastLine(r, (nowMs - w.from) / 1000) > 0;
+};
+/** AUDIT GRANT-SLEEP S1: a window holding a tally - a reader's, or the relay's own - posts at the next door no sooner than
+ *  this after the cell's last evidence post, ms: the runtime's horizon to hibernation, so a sender streaming fresh bad
+ *  records cannot turn the relay into a post a frame. */
+export const GRANT_EVIDENCE_GAP_MS = 10_000;
 
 const count = (n) => Number.isSafeInteger(n) && n >= 0 && n <= GRANT_MEASURE_COUNT_MAX;
 /** FOE-BOUNDS: a tally's evidence - none, or a type, a claim and a bound, each a number in its law. */
