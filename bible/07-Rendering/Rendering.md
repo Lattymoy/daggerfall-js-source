@@ -1512,6 +1512,37 @@ See `Seasons-Iliac-Bay.md` for SIB1: RosyTheRascal's Seasons of the Iliac Bay mo
 
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.
 
+## SWAY-SOFT - A GENTLER GRASS SWAY, FAINTER WIND WISPS (2026-10-21)
+
+Mac, 2026-10-21: *"Can we make the grass sway more subtle and the wind
+effect more subtle and transparent?"* Numbers only - neither law changes
+shape. The lab's grass field and its lean are our own (GR2, AUDIT 39
+F1), not a Daggerfall Unity system, so there is no DFU number to keep.
+
+- **The grass.** The lab's lean (`LAB_GRASS_VS`, so the blade, the pixel
+  style and the meadow's cards alike) is `wdir * push * 0.032` where it
+  was 0.055, and the push `|wind| x (0.6 + gust x 0.45)` where it was
+  `0.55 + gust x 0.75`: a blade's top leans under half as far at a full
+  gust (0.032 against 0.0715 a metre a second of wind), and the gust
+  pulses 1.75x over the steady push where it pulsed 2.4x - a field that
+  breathes, not one that whips. `grassMeadow.js`'s `LAB_LEAN_PER_PUSH`
+  and `LAB_GUST_MAX` (0.032, 1.05) follow the shader, so `MEADOW_WIND_REACH`
+  and the cards' culling box shrink with it. The gust's travel (`uTime *
+  1.7`, `along * 0.35`) is untouched. The trees' sway (`BB_VS`) is not
+  the grass's and is not changed.
+- **The wisps.** `WISP_LOOK`'s alpha is 0.09/0.11, under half
+  DISC17-A's 0.20/0.24: a streak at its darkest is 0.20 in a gale and
+  0.09 in a calm (0.44 and 0.20 before). Its length is 1.2 m plus up to
+  1.8 (WIND3's 1.6 plus 2.4), so each mark is shorter as well as fainter.
+  The count (`WISP_MAX` 120, the calm's 10), the colour and the sand's
+  look are unchanged.
+- **Pinned** by `grassmeadow.test.js` (the constants, the shader's lines,
+  the cards' wind lean and reach), `grasspx.test.js` (the lean line),
+  `gr3_wind.test.js` (a blade still visibly moves: about 9% of its height
+  over half a gust, the floor 6%), and `disc17.test.js`,
+  `wind3_windworld.test.js` and `weather2d_sandstorm.test.js` (the look's
+  alpha and length, the darkest streak through both shaders).
+
 ## ECOTONE1 - BLENDED CLIMATES: A BORDER, NOT A LINE (2026-10-07, a port departure)
 
 Mac: *"Making it where bione transitions are insta t and instead fade and

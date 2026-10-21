@@ -28,11 +28,11 @@ import { _resetForTests } from '../../src/systems/uiPrefs.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
-test('DISC17-A: half the wisps, each twice as dark - 120 at a gale and 10 in a calm; a streak at its darkest 0.44 in a gale and 0.20 in a calm, twice WIND3\'s (WISPS-RETURN: the flourish\'s ink heart was 0.70) (mutants: the count back at 240; the alpha back at WIND3\'s)', () => {
+test('DISC17-A: half the wisps, each twice as dark - 120 at a gale and 10 in a calm; a streak at its darkest 0.20 in a gale and 0.09 in a calm (SWAY-SOFT: twice WIND3\'s, 0.44 and 0.20, until 2026-10-21) (WISPS-RETURN: the flourish\'s ink heart was 0.70) (mutants: the count back at 240; the alpha back at WIND3\'s)', () => {
   assert.equal(WISP_MAX, 120);
   assert.deepEqual([wispCount(1), wispCount(0)], [120, 10], 'a gale and a dead calm (the floor is the same share)');
   assert.equal(WISP_FLOOR, 0.08);
-  assert.deepEqual([...WISP_LOOK.alpha], [0.20, 0.24]);
+  assert.deepEqual([...WISP_LOOK.alpha], [0.09, 0.11]);   // SWAY-SOFT (2026-10-21): under half DISC17-A's 0.20, 0.24
   // WISPS-RETURN (2026-09-25): a wisp is a streak again, and its darkest is the look's own alpha at the strength - read
   // off a frame the renderer draws, through both shaders' main()s, at the height of a wisp's life, over its length and
   // across its width
@@ -45,8 +45,7 @@ test('DISC17-A: half the wisps, each twice as dark - 120 at a gale and 10 in a c
     return m;
   };
   const gale = darkest(1), calm = darkest(0);
-  assert.ok(Math.abs(gale - 0.44) < 1e-6 && Math.abs(calm - 0.20) < 1e-6, `a gale ${gale}, a calm ${calm}`);
-  assert.ok(Math.abs(gale - 2 * (0.10 + 0.12)) < 1e-6 && Math.abs(calm - 2 * 0.10) < 1e-6, 'twice WIND3\'s streak');
+  assert.ok(Math.abs(gale - 0.20) < 1e-6 && Math.abs(calm - 0.09) < 1e-6, `a gale ${gale}, a calm ${calm}`);   // SWAY-SOFT: 0.44 and 0.20 before
   // drawn: a gale puts up 120 streaks with the new alpha
   const calls = [];
   const gl = new Proxy({}, {
@@ -61,7 +60,7 @@ test('DISC17-A: half the wisps, each twice as dark - 120 at a gale and 10 in a c
   const r = new WindWispsRenderer(gl);
   r.draw({ on: true, strength01: 1, step: [0, 0], windV: [3, 0] }, new Float32Array(16), new Float32Array(16), new Float32Array(3), 1);
   assert.equal(r.drawn, 120);
-  assert.deepEqual(calls.find((c) => c[0] === 'uniform2f' && c[1] === 'uAlpha').slice(2), [0.20, 0.24]);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform2f' && c[1] === 'uAlpha').slice(2), [0.09, 0.11]);
 });
 
 /** A WebAudio graph that records the listener and every panner the engine makes, with a clock. */

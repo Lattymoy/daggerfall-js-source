@@ -7,7 +7,7 @@ import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second
 
 const lab = () => readFileSync('grass-proto.html', 'utf8');
 
-test('GR1/GRASS2/GRASS5/GRASS6: the shaders are the lab\u2019s own but for four DECLARED edits, and the port\u2019s height, range and byte layout are its own', () => {
+test('GR1/GRASS2/GRASS5/GRASS6: the shaders are the lab\u2019s own but for five DECLARED edits, and the port\u2019s height, range and byte layout are its own', () => {
   const src = lab();
   const vsStart = src.indexOf('layout(location=0) in vec2 aCorner;      // one blade quad, 0..1\nlayout(location=1) in vec4 aInst;        // xz, height, phase');
   const vsEnd = src.indexOf('}`, HEAD + `', vsStart) + 1;
@@ -23,13 +23,13 @@ test('GR1/GRASS2/GRASS5/GRASS6: the shaders are the lab\u2019s own but for four 
   // not compared; the CODE is.
   const noComments = (t) => t.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   let want = src.slice(vsStart, vsEnd);
-  assert.equal(GRASS2_VS_EDITS.length, 4, 'four departures, no more - a fifth is a decision, not a detail (GRASS6 took the tint edit back to the placer, so the lab\u2019s own vTint line compiles again)');
+  assert.equal(GRASS2_VS_EDITS.length, 5, 'five departures, no more - a sixth is a decision, not a detail (GRASS6 took the tint edit back to the placer, so the lab\u2019s own vTint line compiles again; SWAY-SOFT, 2026-10-21, was Mac\u2019s decision: the softer sway)');
   for (const e of GRASS2_VS_EDITS) {
     assert.ok(want.includes(e.from), `the lab still carries the line this edit replaces: ${e.why}`);
     assert.ok(e.why && e.why.length > 20, 'every departure says why, on the departure itself');
     want = want.replace(e.from, e.to);
   }
-  assert.equal(noComments(LAB_GRASS_VS), noComments(want), 'the vertex stage is the lab\u2019s text with the four declared edits, and nothing else');
+  assert.equal(noComments(LAB_GRASS_VS), noComments(want), 'the vertex stage is the lab\u2019s text with the five declared edits, and nothing else');
   assert.equal(LAB_GRASS_FS, src.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s text, byte for byte - GRASS2 changed no fragment law');
   const headStart = src.indexOf('const HEAD = `');
   assert.equal(LAB_GRASS_HEAD, src.slice(headStart + 'const HEAD = `'.length, src.indexOf('`;', headStart)));
